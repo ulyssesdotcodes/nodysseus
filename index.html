@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Copane</title>
+  <!-- <link rel="stylesheet" href="https://cdn.skypack.dev/codemirror/lib/codemirror.css"> -->
+</head>
+<body>
+  <div id="editor"></div>
+  <div id="render"></div>
+  <script type='module'>
+    import * as cm from 'https://cdn.skypack.dev/@codemirror/basic-setup';
+    import { html, render } from 'https://unpkg.com/htm/preact/standalone.module.js'
+
+
+    function isFunction(functionToCheck) {
+      return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]';
+    }
+
+    // Attempts to update, returns a message if it doesn't
+    const attemptUpdate = (pending) => {
+      try {
+        return JSON.parse(pending.replace(/[\n\r]+/gm, ""));
+      } catch(err) {
+        return { status: "error", message: err.message };
+      }
+    }
+
+
+    const editorEl = document.getElementById("editor");
+    const renderEl = document.getElementById("render");
+
+    const renderNode = (fn) => render(fn, renderEl);
+    const state = {
+      text: localStorage.getItem('data') ? localStorage.getItem('data') : JSON.stringify({
+        run: ""
+      })
+    };
+
+    state.data = attemptUpdate(state.text);
+
+    const parseData = (json) => {
+      // Updates, adding "status: 'ok'" if it parses
+      const update = {status: "ok", ...attemptUpdate(json)};
+      if(update.status != "error") {
+        try {
+          new Function('state', 'html', 'render', 'editorState', update.run)({...state, text: json, data: update}, html, renderNode, editorState)
+
+          // If it runs, add everything to state
+          state.text = json;
+          state.data = update;
+        } catch(err) {
+          // If it doesn't run, only add the error message to the state, and rerun the old function
+          state.data = {...state.data, status: "error", message: err.message };
+          new Function('state', 'html', 'render', 'editorState', state.data.run)(state, html, renderNode, editorState)
+        }
+      } else {
+        // If it doesn't parse, just add the status
+        state.data = {...state.data, ...update}
+      }
+    }
+
+    const editorState  = cm.EditorState.create({
+      doc: state.text,
+      extensions: [cm.basicSetup, 
+        cm.EditorView.updateListener.of(update => {
+            if (update.docChanged) {
+              parseData(update.state.doc.toString());
+            }
+          })
+      ]
+    });
+
+    const view = new cm.EditorView({ 
+      state: editorState, 
+      parent: editorEl
+    });
+  </script>
+</body>
+</html>
