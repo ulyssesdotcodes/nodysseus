@@ -9,7 +9,14 @@
   <div id="render"></div>
   <script type='module'>
     import * as cm from 'https://cdn.skypack.dev/@codemirror/basic-setup';
+    import * as cmstate from 'https://cdn.skypack.dev/@codemirror/state';
+    import {json} from "https://cdn.skypack.dev/@codemirror/lang-json";
+    import {javascript} from "https://cdn.skypack.dev/@codemirror/lang-javascript";
     import { html, render } from 'https://unpkg.com/htm/preact/standalone.module.js'
+
+    const lang = {};
+    lang.json = json;
+    lang.javascript = javascript;
 
 
     function isFunction(functionToCheck) {
@@ -24,7 +31,6 @@
         return { status: "error", message: err.message };
       }
     }
-
 
     const editorEl = document.getElementById("editor");
     const renderEl = document.getElementById("render");
@@ -43,7 +49,8 @@
       const update = {status: "ok", ...attemptUpdate(json)};
       if(update.status != "error") {
         try {
-          new Function('state', 'html', 'render', 'editorState', update.run)({...state, text: json, data: update}, html, renderNode, editorState)
+          // Pass in both json and data so it can store it
+          new Function('data', 'text', 'html', 'render', 'editorState', 'cm', 'lang', 'cmstate', 'parseData', update.run)({...state.data, ...update}, json, html, renderNode, editorState, cm, lang, cmstate, parseData)
 
           // If it runs, add everything to state
           state.text = json;
@@ -51,7 +58,7 @@
         } catch(err) {
           // If it doesn't run, only add the error message to the state, and rerun the old function
           state.data = {...state.data, status: "error", message: err.message };
-          new Function('state', 'html', 'render', 'editorState', state.data.run)(state, html, renderNode, editorState)
+          new Function('data', 'text', 'html', 'render', 'editorState', 'cm', 'lang', 'cmstate', 'parseData', state.data.run)(state.data, state.text, html, renderNode, editorState, cm, lang, cmstate, parseData)
         }
       } else {
         // If it doesn't parse, just add the status
@@ -62,6 +69,7 @@
     const editorState  = cm.EditorState.create({
       doc: state.text,
       extensions: [cm.basicSetup, 
+        json(),
         cm.EditorView.updateListener.of(update => {
             if (update.docChanged) {
               parseData(update.state.doc.toString());
