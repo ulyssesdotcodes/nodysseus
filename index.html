@@ -14,57 +14,48 @@
     import {javascript} from "https://cdn.skypack.dev/@codemirror/lang-javascript";
     import { html, render } from 'https://unpkg.com/htm/preact/standalone.module.js'
 
-    const lang = {};
-    lang.json = json;
-    lang.javascript = javascript;
+    const cmlang = {};
+    cmlang.json = json;
+    cmlang.javascript = javascript;
 
-
-    function isFunction(functionToCheck) {
-      return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]';
-    }
-
-    // Attempts to update, returns a message if it doesn't
-    const attemptUpdate = (pending) => {
-      try {
-        return JSON.parse(pending.replace(/[\n\r]+/gm, ""));
-      } catch(err) {
-        return { status: "error", message: err.message };
-      }
-    }
+    const lib = { cm, cmlang, cmstate, html }
 
     const editorEl = document.getElementById("editor");
     const renderEl = document.getElementById("render");
 
     const renderNode = (fn) => render(fn, renderEl);
+
+    // Attempts to update, returns a message if it doesn't
+    const parseJson = (pending) => {
+      try {
+        return {
+          text: pending,
+          data: JSON.parse(pending.replace(/[\n\r]+/gm, ""))
+        }
+      } catch(err) {
+        return { status: {
+          state: "error", 
+          phase: "parse", 
+          message: err.message 
+        }};
+      }
+    }
+
+    const debounce = (fn, timeout) => {
+      let timer;
+      return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), timeout)
+      }
+    }
+
     const state = {
-      text: localStorage.getItem('data') ? localStorage.getItem('data') : JSON.stringify({
-        run: ""
+      text: localStorage.getItem('state') ? localStorage.getItem('state') : JSON.stringify({
+        type: "evaljs",
+        run: "console.log(state.status);"
       })
     };
 
-    state.data = attemptUpdate(state.text);
-
-    const parseData = (json) => {
-      // Updates, adding "status: 'ok'" if it parses
-      const update = {status: "ok", ...attemptUpdate(json)};
-      if(update.status != "error") {
-        try {
-          // Pass in both json and data so it can store it
-          new Function('data', 'text', 'html', 'render', 'editorState', 'cm', 'lang', 'cmstate', 'parseData', update.run)({...state.data, ...update}, json, html, renderNode, editorState, cm, lang, cmstate, parseData)
-
-          // If it runs, add everything to state
-          state.text = json;
-          state.data = update;
-        } catch(err) {
-          // If it doesn't run, only add the error message to the state, and rerun the old function
-          state.data = {...state.data, status: "error", message: err.message };
-          new Function('data', 'text', 'html', 'render', 'editorState', 'cm', 'lang', 'cmstate', 'parseData', state.data.run)(state.data, state.text, html, renderNode, editorState, cm, lang, cmstate, parseData)
-        }
-      } else {
-        // If it doesn't parse, just add the status
-        state.data = {...state.data, ...update}
-      }
-    }
 
     const editorState  = cm.EditorState.create({
       doc: state.text,
@@ -72,16 +63,59 @@
         json(),
         cm.EditorView.updateListener.of(update => {
             if (update.docChanged) {
-              parseData(update.state.doc.toString());
+              editorUpdate(update.state.doc.toString());
             }
           })
       ]
     });
 
+
+    // Parse the new run function and update state
+    const updateState = (json) => {
+      // Updates, adding "status: 'ok'" if it parses
+      const update = parseJson(json);
+
+      if(update.data?.run) {
+        try {
+          // Pass in both json and data so it can store it
+          runState(state, update);
+
+          // If it runs, add everything to state
+          state.text = update.text;
+          state.data = update.data;
+          state.status = {status: "ok"};
+          
+          // And save to local storage
+          localStorage.setItem('state', state.text)
+        } catch(err) {
+          // If it doesn't run, only add the error message to the state, and rerun the old function (without storing the resulting state)
+          state.status = {status: "error", phase: "run", message: err.message, position: err.position };
+          runState(state);
+        }
+      } else {
+        // If it doesn't parse, just add the status and run the old version
+        state.status = update.status;
+        runState(state);
+      }
+    }
+
+    const editorUpdate = debounce(updateState, 100);
+
+    const editor = {
+      state: editorState,
+      render: renderNode,
+      updateState,
+    };
+
+    const runState = (state, update) => new Function('state', 'next', 'editor', 'lib', update?.data.run || state.data?.run)(state, update, editor, lib);
+
     const view = new cm.EditorView({ 
       state: editorState, 
       parent: editorEl
     });
+
+    updateState(state.text);
+
   </script>
 </body>
 </html>
