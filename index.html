@@ -8,23 +8,168 @@
   <div id="editor"></div>
   <div id="render"></div>
   <script type='module'>
-    import * as cm from 'https://cdn.skypack.dev/@codemirror/basic-setup';
+    import * as cmbasic from 'https://cdn.skypack.dev/@codemirror/basic-setup';
     import * as cmstate from 'https://cdn.skypack.dev/@codemirror/state';
     import {json} from "https://cdn.skypack.dev/@codemirror/lang-json";
     import {javascript} from "https://cdn.skypack.dev/@codemirror/lang-javascript";
     import { html, render } from 'https://unpkg.com/htm/preact/standalone.module.js'
 
-    const cmlang = {};
-    cmlang.json = json;
-    cmlang.javascript = javascript;
+    // helpers
+    const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+    function isFunction(functionToCheck) {
+      return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]';
+    }
 
-    const lib = { cm, cmlang, cmstate, html }
+    class CopaneError extends Error {
+      constructor(tag, message) {
+        super(`${tag}: ${message}`);
+      }
+    }
+
+    const rethrow = (tag) => (error) => {
+      if (error instanceof CopaneError) {
+        throw error;
+      } else {
+        throw new CopaneError(tag, error.message);
+      }
+    }
+
+    /////
+    // This is a plugin that takes a graph and runs it in js. The logic should be in the nodes, but the scaffolding here should work like all plugins - handle errors, etc.
+    /////
+
+    // TODO: Names are unique, just use them for ids?
+
+    // Plugins should have a default graph
+    const DEFAULT_GRAPH = {
+      // List of all nodes
+      // fn :: async (node, state, input) => output
+      "nodes": {
+        "graph_change_listen" : {
+          "type" : "event",
+          "event_type": "graph_change"
+        },
+        "compile" : {
+          "type": "execjs",
+          "fn": "return JSON.parse(input);"
+        },
+        "run" : {
+          "type": "run"
+        }
+      },
+      "flags": ['log'],
+      // Connections between the nodes - directional
+      "connections": [["graph_change_listen", "compile"], ["compile", "run"]],
+      "events" : [
+        {
+          "name": "graph_change",
+          "setup": "editor.dispatch({ effects: lib.cm.StateEffect.appendConfig.of(lib.cm.EditorView.updateListener.of(update => update.docChanged ? callback(update.state.doc.toString()) : undefined))})"
+        }, {
+          "name":"load",
+          "setup":"if(window.hasSetup) { return; }; window.hasSetup = true; const data = localStorage.getItem('data'); editor.dispatch({ changes: {from: 0, to: editor.state.doc.length, insert: data }});"
+        }
+      ]
+    }
+
+    const graph = DEFAULT_GRAPH;
+
+    // HTML setup
+
+    const cm = {...cmbasic, ...cmstate, lang: {javascript, json}}
+
+    const lib = { cm, html }
 
     const editorEl = document.getElementById("editor");
     const renderEl = document.getElementById("render");
 
     const renderNode = (fn) => render(fn, renderEl);
 
+    const editorState  = cm.EditorState.create({
+      doc: JSON.stringify(graph, null, 2),
+      extensions: [cm.basicSetup, 
+        json()
+      ]
+    });
+
+    const editorView = new cm.EditorView({ 
+      state: editorState, 
+      parent: editorEl
+    });
+
+    // Actual plugin
+
+    const createConnection = (graph, log) => (source, dest) => {
+      const node = {...graph.nodes[dest], id: dest};
+      const fn = 
+        node.type === 'execjs'
+        ? new AsyncFunction('node', 'graph', 'render', 'input', 'lib', node.fn)
+        : node.type === 'run'
+        ? async (node, graph, render, input, lib) => { runGraph(input); return input; }
+        : () => { throw new Error("Unknown node type") }
+
+      return [source, { fn: (input) => fn(node, graph, renderNode, input, lib), name: dest }];
+    }
+
+    // connectionMap :: {id : [{fn: fn<input>, name}]}
+    const createEventChain = (graph, connectionMap, log) => (source, eventChain) => {
+      const destfns = connectionMap[source] || [];
+      return (input) => input ? Promise.all(
+        destfns.map(fnnode => 
+          fnnode.fn(input)
+            .catch(rethrow(fnnode.name))
+            .then(log('output' + fnnode.name))
+            .then(eventChain(fnnode.name, eventChain))
+        ) 
+      ) : Promise.reject("Undefined");
+    };
+
+    const runGraph = (graph) => {
+
+
+      const logReplacer = (key, val) => isFunction(val) ? "fn" : val;
+      const log = graph.flags.includes('log') 
+        ? (tag='log') => (input) => (console.log(`${tag}: ${JSON.stringify(input, logReplacer, 2)}`), input) 
+        : graph.flags.includes('log_result')
+        ? tag => input => tag === "result" ? (console.log(`${tag}: ${JSON.stringify(input, logReplacer, 2)}`), input) : input
+        : tag => input => input;
+
+      log(JSON.stringify(graph, null, 2))
+
+      const createGraphConnection = createConnection(graph, log);
+      // Create a connection map of source by id to destination node function
+      const connectionMap = graph.connections
+        // create the connection functions
+        .map(connection => createGraphConnection(...connection))
+        .map(log('map connection'))
+        // group the connections by source node
+        .reduce((acc, [source, fn]) => (acc[source] = (acc[source] || []).concat([fn]), {}, acc), {});
+
+      log('final connection map')(connectionMap);
+
+      const eventChain = createEventChain(graph, connectionMap, log);
+
+      // Set up the base events
+      const setupFunctions = graph.events.map(event => {
+        const eventTypeNodes = Object.entries(graph.nodes)
+          .filter(([id, node]) => node.event_type === event.name);
+
+        log('e type nodes')(eventTypeNodes);
+
+        const callback = (input) => Promise.all(eventTypeNodes.map(([id, node]) => eventChain(id, eventChain)).map(fn => fn(input))).then(log('result')).catch(err => console.log(err instanceof CopaneError ? err.message : `unknown error: ${err.message}`));
+        return () => new Function('lib', 'editor', 'render', 'callback', event.setup)(lib, editorView, renderNode, callback);
+      });
+
+      // Do this afterwards so if run fails it won't reconfigure editor
+      editorView.dispatch({effects: cm.StateEffect.reconfigure.of([cm.basicSetup, 
+        json()
+      ])});
+
+      setupFunctions.forEach(fn => fn());
+    }
+
+    runGraph(graph);
+
+    /*
     // Attempts to update, returns a message if it doesn't
     const parseJson = (pending) => {
       try {
@@ -115,6 +260,7 @@
     });
 
     updateState(state.text);
+    */
 
   </script>
 </body>
