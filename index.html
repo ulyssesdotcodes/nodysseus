@@ -3,16 +3,25 @@
 <head>
   <title>Copane</title>
   <!-- <link rel="stylesheet" href="https://cdn.skypack.dev/codemirror/lib/codemirror.css"> -->
+  <style>
+    #content {
+      display: flex;
+      flex-direction: row;
+    }
+  </style>
 </head>
 <body>
-  <div id="editor"></div>
-  <div id="render"></div>
+  <div id="content">
+    <div id="render"></div>
+    <div id="editor"></div>
+  </div>
   <script type='module'>
     import * as cmbasic from 'https://cdn.skypack.dev/@codemirror/basic-setup';
     import * as cmstate from 'https://cdn.skypack.dev/@codemirror/state';
     import {json} from "https://cdn.skypack.dev/@codemirror/lang-json";
     import {javascript} from "https://cdn.skypack.dev/@codemirror/lang-javascript";
     import { html, render } from 'https://unpkg.com/htm/preact/standalone.module.js'
+    import { SVG } from "https://cdn.skypack.dev/@svgdotjs/svg.js";
 
     // helpers
     window.AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
@@ -58,45 +67,31 @@
       }
     `;
 
-    const loadScript = `
-      const next = state.graph.connections.filter(c => c[0] === 'load'); 
-      state.temp.results['load'] = next.map(c => c[1]); 
-      next.forEach(c => { 
-        const node = state.graph.nodes[c[1]]; 
-        new AsyncFunction(
-          'state', 
-          'name', 
-          'inputs', 
-          state.graph.types[node.type].script
-        )(
-          state, 
-          c[1], 
-          state.graph.connections
-            .filter(c => c[0] === 'load')
-            .map(c => c[1])
-       )
-    })
-    `
+    // const loadScript = `
+    //   state.graph.types['run'].script
+    //   const next = state.graph.connections.filter(c => c[0] === 'load'); 
+    //   state.temp.results['load'] = next.map(c => c[1]); 
+    //   next.forEach(c => { 
+    //     const node = state.graph.nodes[c[1]]; 
+    //     new AsyncFunction(
+    //       'state', 
+    //       'name', 
+    //       'inputs', 
+    //       state.graph.types[node.type].script
+    //     )(
+    //       state, 
+    //       c[1], 
+    //       state.graph.connections
+    //         .filter(c => c[0] === 'load')
+    //         .map(c => c[1])
+    //    )
+    // })
+    // `
 
     const mouseEventScript = `
-      document.onmousemove = () => {
-        const next = state.graph.connections.filter(c => c[0] === name); 
-        state.temp.results[name] = next.map(c => c[1]); 
-        next.forEach(c => { 
-          const node = state.graph.nodes[c[1]]; 
-          new AsyncFunction(
-            'state', 
-            'name', 
-            'inputs', 
-            state.graph.types[node.type].script
-          )(
-            state, 
-            c[1], 
-            state.graph.connections
-              .filter(c => c[0] === name)
-              .map(c => c[1])
-          )
-        })
+      document.getElementById('render').onmousemove = (e) => {
+        state.temp.results[name] = {x: e.x, y: e.y, target: document.elementFromPoint(e.x, e.y).parentElement.id, button: e.button};
+        new AsyncFunction('state', 'name', 'inputs', state.graph.types.run.script)(state, name, inputs);
       }
     `
 
@@ -137,35 +132,73 @@
         "mouse_stringify": {
           "type": "stringify"
         },
-        "mouse_run": {
-          "type": "run"
-        },
         "mouse_log": {
           "type": "log",
-          "children": {
-            "value": "mouse"
-          }
         },
         "extra_log": {
           "type": "log",
-          "children": {
-            "value": "extra?"
-          }
-        },
-        // TODO: update this to use circular graph instead of while
-        "load_run" : {
-          "type": "run",
         },
         "load": {
-          "type": "script",
+          "type": "run",
+        },
+        "old_editor_style": {
+          "type": "tag",
           "children": {
-            "script": loadScript
+            "attrs": {"rel": "stylesheet", "href": "#"},
+            "content": "",
+            "tag": "link"
+          }
+        },
+        "editor_style": {
+          "type": "tag",
+          "children": {
+            "attrs": [],
+            "content": "`#editor { display: flex; flex-grow: 1; max-width: 50%; } #editor .cm-content { white-space: pre-wrap }`",
+            "tag": "style"
+          }
+        },
+        "render_style": {
+          "type": "tag",
+          "children": {
+            "attrs": [],
+            "content": "`#render { display:flex; flex-grow: 2; justify-content: flex-start; }`",
+            "tag": "style"
+          }
+        },
+        "render_head": {
+          "type": "render",
+          "children": {
+            "target": "document.head.querySelector('style')"
           }
         },
         "log_test": {
           "type": "log",
           "children": {
             "value": "test"
+          }
+        },
+        "render_graph": {
+          "type": "render",
+          "children": {
+            "target": "document.querySelector('#render')"
+          }
+        },
+        "create_svg_base": {
+          "type": "script",
+          "children": {
+            "script": "return state.lib.SVG().addTo('#render')"
+          }
+        },
+        "create_nodes": {
+          "type": "script",
+          "children": {
+            "script": "const base = inputs[0]; return Object.entries(state.graph.nodes).map(([id, n], idx) => base.text(id).build(true).attr({id}).move(20, 40 * idx));"
+          }
+        },
+        "drag_node": {
+          "type": "script",
+          "children": {
+            "script": "const target = state.lib.SVG(`#${inputs[0].target}`); if(target && inputs[0].button === 0){ target.move(inputs[0].x, inputs[0].y); }"
           }
         }
       },
@@ -174,17 +207,39 @@
           "script": runScript
         },
         "log": {
-          "script": "console.log(state.graph.nodes[name].children.value)"
+          "script": "console.log(JSON.stringify(inputs))"
+        },
+        "script": {
+          "script": "return new AsyncFunction('state', 'name', 'inputs', state.graph.nodes[name].children['script'])(state, name, inputs)"
         },
         "stringify": {
           "script": "return JSON.stringify(inputs)"
         },
         "mouse_event": {
           "script": mouseEventScript
+        },
+        "tag": {
+          "script": "return () => state.lib.html`<${state.graph.nodes[name].children.tag} ...${state.graph.nodes[name].children.attrs}>${new Function(`return ${state.graph.nodes[name].children.content}`)()}</${state.graph.nodes[name].children.tag}>`"
+        },
+        "render": {
+          "script": "target = new Function(`return ${state.graph.nodes[name].children.target}`)(); state.lib.render(state.lib.html`${target.innerHTML} ${inputs.map(fn => state.lib.html`<${fn} />`)}`, target)"
         }
       },
       // Connections between the nodes - directional
-      "connections": [["load", "load_run"], ["load_run", "log_test"], ["load_run", "mouse_listener"], ["mouse_listener", "mouse_run"], ["mouse_run", "mouse_stringify"], ["mouse_stringify", "mouse_log"]]
+      "connections": [
+        ["load", "log_test"], 
+        ["load", "mouse_listener"], 
+        ["mouse_listener", "mouse_stringify"], 
+        // ["mouse_stringify", "mouse_log"], 
+        ["load", "editor_style"], 
+        ["load", "render_style"], 
+        ["editor_style", "render_head"], 
+        ["render_style", "render_head"], 
+        ["load", "create_svg_base"],
+        ["create_svg_base", "create_nodes"],
+        ["mouse_listener", "drag_node"],
+        // ["render_nodes", "render_graph"]
+      ]
     }
 
     // old fns: state.temp.fns = new Map(Object.entries(state.graph.nodes).filter(([id, n]) => n.children?.script).map(([id, node]) => [id, new Function('state', 'name', 'inputs', node.children.script)])); 
@@ -208,12 +263,10 @@
 
     const cm = {...cmbasic, ...cmstate, lang: {javascript, json}}
 
-    const lib = { cm, html }
+    const lib = { cm, html, render, SVG }
 
     const editorEl = document.getElementById("editor");
     const renderEl = document.getElementById("render");
-
-    const renderNode = (fn) => render(fn, renderEl);
 
     const editorState  = cm.EditorState.create({
       doc: JSON.stringify(graph, null, 2),
@@ -237,7 +290,7 @@
       temp: { results: {} }
     }
 
-    Object.entries(state.graph.nodes).filter(([id, node]) => id === "load").forEach(([id, n]) => new Function('state', n.children.script)(state))
+    Object.entries(state.graph.nodes).filter(([id, node]) => id === "load").forEach(([id, n]) => new AsyncFunction('state', 'name', 'inputs', state.graph.types[n.type].script)(state, 'load', []))
 
     // const createConnection = (graph, log) => (source, dest) => {
     //   const node = {...graph.nodes[dest], id: dest};
