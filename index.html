@@ -15,7 +15,7 @@
     import { html, render } from 'https://unpkg.com/htm/preact/standalone.module.js'
 
     // helpers
-    const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+    window.AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
     function isFunction(functionToCheck) {
       return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]';
     }
@@ -40,10 +40,70 @@
 
     // TODO: Names are unique, just use them for ids?
 
+    const runScript = `
+      const node = state.graph.nodes[name];
+      const stack = state.graph.connections.filter(c => c[0] === name).map(c => c[1]); 
+
+      while(stack.length > 0) { 
+        const run = stack.pop(); 
+        const run_node = state.graph.nodes[run];
+        const inputs = state.graph.connections.filter(c => c[1] === run).map(c => state.temp.results[c[0]]); 
+        await new AsyncFunction('state', 'name', 'inputs', state.graph.types[run_node.type].script)(state, run, inputs)
+          .then(result => {
+            if(result) {  
+              state.temp.results[run] = result; 
+              state.graph.connections.filter(c => c[0] === run).forEach(c => stack.unshift(c[1])); 
+            }
+          });
+      }
+    `;
+
+    const loadScript = `
+      const next = state.graph.connections.filter(c => c[0] === 'load'); 
+      state.temp.results['load'] = next.map(c => c[1]); 
+      next.forEach(c => { 
+        const node = state.graph.nodes[c[1]]; 
+        new AsyncFunction(
+          'state', 
+          'name', 
+          'inputs', 
+          state.graph.types[node.type].script
+        )(
+          state, 
+          c[1], 
+          state.graph.connections
+            .filter(c => c[0] === 'load')
+            .map(c => c[1])
+       )
+    })
+    `
+
+    const mouseEventScript = `
+      document.onmousemove = () => {
+        const next = state.graph.connections.filter(c => c[0] === name); 
+        state.temp.results[name] = next.map(c => c[1]); 
+        next.forEach(c => { 
+          const node = state.graph.nodes[c[1]]; 
+          new AsyncFunction(
+            'state', 
+            'name', 
+            'inputs', 
+            state.graph.types[node.type].script
+          )(
+            state, 
+            c[1], 
+            state.graph.connections
+              .filter(c => c[0] === name)
+              .map(c => c[1])
+          )
+        })
+      }
+    `
+
     // Plugins should have a default graph
     const DEFAULT_GRAPH = {
       // List of all nodes
-      // fn :: async (node, state, input) => output
+      // fn :: async (state, name, inputs) => output
       "nodes": {
         "graph_change_listen" : {
           "type" : "event",
@@ -53,25 +113,96 @@
           "type": "execjs",
           "fn": "return JSON.parse(input);"
         },
-        "run" : {
+        "log" : {
+          "type": "execjs",
+          "children": {
+            "script": "console.log(JSON.stringify(inputs))"
+          }
+        },
+        "save_graph" : {
+          "type": "execjs",
+          "children": {
+            "script": "localStorage.setItem('data', JSON.stringify(state.graph, null, 2));"
+          }
+        },
+        "register_listeners": {
+          "type": "register_listeners",
+          "children":{
+            "nodes": ["mouse_listener"]
+          }
+        },
+        "mouse_listener":{
+          "type": "mouse_event"
+        },
+        "mouse_stringify": {
+          "type": "stringify"
+        },
+        "mouse_run": {
           "type": "run"
+        },
+        "mouse_log": {
+          "type": "log",
+          "children": {
+            "value": "mouse"
+          }
+        },
+        "extra_log": {
+          "type": "log",
+          "children": {
+            "value": "extra?"
+          }
+        },
+        // TODO: update this to use circular graph instead of while
+        "load_run" : {
+          "type": "run",
+        },
+        "load": {
+          "type": "script",
+          "children": {
+            "script": loadScript
+          }
+        },
+        "log_test": {
+          "type": "log",
+          "children": {
+            "value": "test"
+          }
         }
       },
-      "flags": ['log'],
+      "types": {
+        "run": {
+          "script": runScript
+        },
+        "log": {
+          "script": "console.log(state.graph.nodes[name].children.value)"
+        },
+        "stringify": {
+          "script": "return JSON.stringify(inputs)"
+        },
+        "mouse_event": {
+          "script": mouseEventScript
+        }
+      },
       // Connections between the nodes - directional
-      "connections": [["graph_change_listen", "compile"], ["compile", "run"]],
+      "connections": [["load", "load_run"], ["load_run", "log_test"], ["load_run", "mouse_listener"], ["mouse_listener", "mouse_run"], ["mouse_run", "mouse_stringify"], ["mouse_stringify", "mouse_log"]]
+    }
+
+    // old fns: state.temp.fns = new Map(Object.entries(state.graph.nodes).filter(([id, n]) => n.children?.script).map(([id, node]) => [id, new Function('state', 'name', 'inputs', node.children.script)])); 
+
+    const old = {
       "events" : [
         {
           "name": "graph_change",
           "setup": "editor.dispatch({ effects: lib.cm.StateEffect.appendConfig.of(lib.cm.EditorView.updateListener.of(update => update.docChanged ? callback(update.state.doc.toString()) : undefined))})"
         }, {
           "name":"load",
-          "setup":"if(window.hasSetup) { return; }; window.hasSetup = true; const data = localStorage.getItem('data'); editor.dispatch({ changes: {from: 0, to: editor.state.doc.length, insert: data }});"
+          "setup":"if(window.hasSetup || !localStorage.getItem('data')) { return; }; window.hasSetup = true; const data = JSON.parse(localStorage.getItem('data')); editor.dispatch({ changes: {from: 0, to: editor.state.doc.length, insert: data }});"
         }
       ]
     }
 
     const graph = DEFAULT_GRAPH;
+
 
     // HTML setup
 
@@ -98,76 +229,84 @@
 
     // Actual plugin
 
-    const createConnection = (graph, log) => (source, dest) => {
-      const node = {...graph.nodes[dest], id: dest};
-      const fn = 
-        node.type === 'execjs'
-        ? new AsyncFunction('node', 'graph', 'render', 'input', 'lib', node.fn)
-        : node.type === 'run'
-        ? async (node, graph, render, input, lib) => { runGraph(input); return input; }
-        : () => { throw new Error("Unknown node type") }
-
-      return [source, { fn: (input) => fn(node, graph, renderNode, input, lib), name: dest }];
+    // state is passed between nodes
+    const state = {
+      lib,
+      el: {editor: editorEl, render: renderEl },
+      graph,
+      temp: { results: {} }
     }
 
-    // connectionMap :: {id : [{fn: fn<input>, name}]}
-    const createEventChain = (graph, connectionMap, log) => (source, eventChain) => {
-      const destfns = connectionMap[source] || [];
-      return (input) => input ? Promise.all(
-        destfns.map(fnnode => 
-          fnnode.fn(input)
-            .catch(rethrow(fnnode.name))
-            .then(log('output' + fnnode.name))
-            .then(eventChain(fnnode.name, eventChain))
-        ) 
-      ) : Promise.reject("Undefined");
-    };
+    Object.entries(state.graph.nodes).filter(([id, node]) => id === "load").forEach(([id, n]) => new Function('state', n.children.script)(state))
 
-    const runGraph = (graph) => {
+    // const createConnection = (graph, log) => (source, dest) => {
+    //   const node = {...graph.nodes[dest], id: dest};
+    //   const fn = 
+    //     node.type === 'execjs'
+    //     ? new AsyncFunction('node', 'graph', 'render', 'input', 'lib', node.fn)
+    //     : node.type === 'run'
+    //     ? async (node, graph, render, input, lib) => { runGraph(input); return input; }
+    //     : () => { throw new Error("Unknown node type") }
 
+    //   return [source, { fn: (input) => fn(node, graph, renderNode, input, lib), name: dest }];
+    // }
 
-      const logReplacer = (key, val) => isFunction(val) ? "fn" : val;
-      const log = graph.flags.includes('log') 
-        ? (tag='log') => (input) => (console.log(`${tag}: ${JSON.stringify(input, logReplacer, 2)}`), input) 
-        : graph.flags.includes('log_result')
-        ? tag => input => tag === "result" ? (console.log(`${tag}: ${JSON.stringify(input, logReplacer, 2)}`), input) : input
-        : tag => input => input;
+    // // connectionMap :: {id : [{fn: fn<input>, name}]}
+    // const createEventChain = (graph, connectionMap, log) => (source, eventChain) => {
+    //   const destfns = connectionMap[source] || [];
+    //   return (input) => input ? Promise.all(
+    //     destfns.map(fnnode => 
+    //       fnnode.fn(input)
+    //         .catch(rethrow(fnnode.name))
+    //         .then(log('output' + fnnode.name))
+    //         .then(eventChain(fnnode.name, eventChain))
+    //     ) 
+    //   ) : Promise.reject("Undefined");
+    // };
 
-      log(JSON.stringify(graph, null, 2))
+    // const runGraph = (graph) => {
+    //   const logReplacer = (key, val) => isFunction(val) ? "fn" : val;
+    //   const log = graph.flags.includes('log') 
+    //     ? (tag='log') => (input) => (console.log(`${tag}: ${JSON.stringify(input, logReplacer, 2)}`), input) 
+    //     : graph.flags.includes('log_result')
+    //     ? tag => input => tag === "result" ? (console.log(`${tag}: ${JSON.stringify(input, logReplacer, 2)}`), input) : input
+    //     : tag => input => input;
 
-      const createGraphConnection = createConnection(graph, log);
-      // Create a connection map of source by id to destination node function
-      const connectionMap = graph.connections
-        // create the connection functions
-        .map(connection => createGraphConnection(...connection))
-        .map(log('map connection'))
-        // group the connections by source node
-        .reduce((acc, [source, fn]) => (acc[source] = (acc[source] || []).concat([fn]), {}, acc), {});
+    //   log(JSON.stringify(graph, null, 2))
 
-      log('final connection map')(connectionMap);
+    //   const createGraphConnection = createConnection(graph, log);
+    //   // Create a connection map of source by id to destination node function
+    //   const connectionMap = graph.connections
+    //     // create the connection functions
+    //     .map(connection => createGraphConnection(...connection))
+    //     .map(log('map connection'))
+    //     // group the connections by source node
+    //     .reduce((acc, [source, fn]) => (acc[source] = (acc[source] || []).concat([fn]), {}, acc), {});
 
-      const eventChain = createEventChain(graph, connectionMap, log);
+    //   log('final connection map')(connectionMap);
 
-      // Set up the base events
-      const setupFunctions = graph.events.map(event => {
-        const eventTypeNodes = Object.entries(graph.nodes)
-          .filter(([id, node]) => node.event_type === event.name);
+    //   const eventChain = createEventChain(graph, connectionMap, log);
 
-        log('e type nodes')(eventTypeNodes);
+    //   // Set up the base events
+    //   const setupFunctions = graph.events.map(event => {
+    //     const eventTypeNodes = Object.entries(graph.nodes)
+    //       .filter(([id, node]) => node.event_type === event.name);
 
-        const callback = (input) => Promise.all(eventTypeNodes.map(([id, node]) => eventChain(id, eventChain)).map(fn => fn(input))).then(log('result')).catch(err => console.log(err instanceof CopaneError ? err.message : `unknown error: ${err.message}`));
-        return () => new Function('lib', 'editor', 'render', 'callback', event.setup)(lib, editorView, renderNode, callback);
-      });
+    //     log('e type nodes')(eventTypeNodes);
 
-      // Do this afterwards so if run fails it won't reconfigure editor
-      editorView.dispatch({effects: cm.StateEffect.reconfigure.of([cm.basicSetup, 
-        json()
-      ])});
+    //     const callback = async (input) => Promise.all(eventTypeNodes.map(([id, node]) => eventChain(id, eventChain)).map(fn => fn(input))).then(log('result')).catch(err => console.log(err instanceof CopaneError ? err.message : `unknown error: ${err.message}`));
+    //     return () => new Function('lib', 'editor', 'render', 'callback', event.setup)(lib, editorView, renderNode, callback);
+    //   });
 
-      setupFunctions.forEach(fn => fn());
-    }
+    //   // Do this afterwards so if run fails it won't reconfigure editor
+    //   editorView.dispatch({effects: cm.StateEffect.reconfigure.of([cm.basicSetup, 
+    //     json()
+    //   ])});
 
-    runGraph(graph);
+    //   setupFunctions.forEach(fn => fn());
+    // }
+
+    // runGraph(graph);
 
     /*
     // Attempts to update, returns a message if it doesn't
