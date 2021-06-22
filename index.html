@@ -12,8 +12,12 @@
 </head>
 <body>
   <div id="content">
-    <div id="render"></div>
-    <div id="editor"></div>
+    <div id="render">
+      <div class="tooltip"></div>
+    </div>
+    <div id="editor_wrapper">
+      <div id="editor"></div>
+    </div>
   </div>
   <script type='module'>
     import * as cmbasic from 'https://cdn.skypack.dev/@codemirror/basic-setup';
@@ -51,54 +55,63 @@
 
     const runScript = `
       const node = state.graph.nodes[name];
-      const stack = state.graph.connections.filter(c => c[0] === name).map(c => c[1]); 
+      const stack = state.graph.edges.filter(c => c[0] === name).map(c => c[1]); 
 
       while(stack.length > 0) { 
         const run = stack.pop(); 
         const run_node = state.graph.nodes[run];
-        const inputs = state.graph.connections.filter(c => c[1] === run).map(c => state.temp.results[c[0]]); 
-        await new AsyncFunction('state', 'name', 'inputs', state.graph.types[run_node.type].script)(state, run, inputs)
+        const inputs = state.graph.edges.filter(c => c[1] === run).map(c => state.temp.results.get(c[0])); 
+        await Promise.resolve(run_node)
+          .then(node => new AsyncFunction('state', 'name', 'inputs', state.graph.types[node.type].script)(state, run, inputs))
           .then(result => {
             if(result) {  
-              state.temp.results[run] = result; 
-              state.graph.connections.filter(c => c[0] === run).forEach(c => stack.unshift(c[1])); 
+              state.temp.results.set(run, result); 
+              state.temp.errors.delete(run);
+              state.graph.edges.filter(c => c[0] === run).forEach(c => stack.unshift(c[1])); 
             }
-          });
+          })
+          .catch(err => state.temp.errors.set(run, err));
       }
     `;
 
-    // const loadScript = `
-    //   state.graph.types['run'].script
-    //   const next = state.graph.connections.filter(c => c[0] === 'load'); 
-    //   state.temp.results['load'] = next.map(c => c[1]); 
-    //   next.forEach(c => { 
-    //     const node = state.graph.nodes[c[1]]; 
-    //     new AsyncFunction(
-    //       'state', 
-    //       'name', 
-    //       'inputs', 
-    //       state.graph.types[node.type].script
-    //     )(
-    //       state, 
-    //       c[1], 
-    //       state.graph.connections
-    //         .filter(c => c[0] === 'load')
-    //         .map(c => c[1])
-    //    )
-    // })
-    // `
-
     const mouseEventScript = `
-      document.getElementById('render').onmousemove = (e) => {
-        state.temp.results[name] = {x: e.x, y: e.y, target: document.elementFromPoint(e.x, e.y).parentElement.id, button: e.button};
+      const mouseEvent = (ty) => (e) => {
+        state.temp.results.set(name, {x: e.x, y: e.y, target: document.elementFromPoint(e.x, e.y).parentElement.id, buttons: e.buttons, button: e.button, ty });
+        new AsyncFunction('state', 'name', 'inputs', state.graph.types.run.script)(state, name, inputs);
+      };
+
+      document.getElementById('render').onmousemove = mouseEvent('mousemove');
+      document.getElementById('render').onmousedown = mouseEvent('mousedown');
+      document.getElementById('render').onmouseup = mouseEvent('mouseup');
+    `;
+
+    const keyboardEventScript = `
+      const keyboardEvent = (ty) => (e) => {
+        state.temp.results.set(name, {event: ty, code: e.code, altKey: e.altKey, ctrlKey: e.ctrlKey, key: e.key, metaKey: e.metaKey})
         new AsyncFunction('state', 'name', 'inputs', state.graph.types.run.script)(state, name, inputs);
       }
+
+      document.getElementById('render').addEventListener('keyup', keyboardEvent('keyup'));
+    `
+
+    const editorChangeScript = `
+      state.editor.dispatch({ 
+        effects: state.lib.cm.StateEffect.appendConfig.of(
+          state.lib.cm.EditorView.updateListener.of(
+            update => {
+              if(update.docChanged) {
+                state.temp.results.set(name, update.state.doc.toString());
+                state.temp.errors.delete(name);
+                new AsyncFunction('state', 'name', 'inputs', state.graph.types.run.script)(state, name, inputs)
+              }
+            }))
+      }); 
     `
 
     // Plugins should have a default graph
     const DEFAULT_GRAPH = {
+      "type": "editor",
       // List of all nodes
-      // fn :: async (state, name, inputs) => output
       "nodes": {
         "graph_change_listen" : {
           "type" : "event",
@@ -110,20 +123,14 @@
         },
         "log" : {
           "type": "execjs",
-          "children": {
+          "nodes": {
             "script": "console.log(JSON.stringify(inputs))"
           }
         },
         "save_graph" : {
           "type": "execjs",
-          "children": {
+          "nodes": {
             "script": "localStorage.setItem('data', JSON.stringify(state.graph, null, 2));"
-          }
-        },
-        "register_listeners": {
-          "type": "register_listeners",
-          "children":{
-            "nodes": ["mouse_listener"]
           }
         },
         "mouse_listener":{
@@ -141,65 +148,121 @@
         "load": {
           "type": "run",
         },
-        "old_editor_style": {
-          "type": "tag",
-          "children": {
-            "attrs": {"rel": "stylesheet", "href": "#"},
-            "content": "",
-            "tag": "link"
-          }
-        },
         "editor_style": {
           "type": "tag",
-          "children": {
+          "nodes": {
             "attrs": [],
-            "content": "`#editor { display: flex; flex-grow: 1; max-width: 50%; } #editor .cm-content { white-space: pre-wrap }`",
+            "content": "`#editor_wrapper { display: flex; flex-grow: 1; height: 100vh; } .cm-scroller { max-height: 100vh; width: 50vw; }`",
             "tag": "style"
           }
         },
         "render_style": {
           "type": "tag",
-          "children": {
+          "nodes": {
             "attrs": [],
-            "content": "`#render { display:flex; flex-grow: 2; justify-content: flex-start; }`",
+            "content": "`#render { display:flex; flex-grow: 2; justify-content: flex-start; } #render .node { user-select: none } .tooltip { position: absolute; visibility: hidden; max-width: 120px; pointer-events: none; } `",
             "tag": "style"
           }
         },
         "render_head": {
           "type": "render",
-          "children": {
+          "nodes": {
             "target": "document.head.querySelector('style')"
           }
         },
         "log_test": {
           "type": "log",
-          "children": {
+          "nodes": {
             "value": "test"
           }
         },
         "render_graph": {
           "type": "render",
-          "children": {
+          "nodes": {
             "target": "document.querySelector('#render')"
           }
         },
         "create_svg_base": {
           "type": "script",
-          "children": {
+          "nodes": {
             "script": "return state.lib.SVG().addTo('#render')"
           }
         },
         "create_nodes": {
           "type": "script",
-          "children": {
-            "script": "const base = inputs[0]; return Object.entries(state.graph.nodes).map(([id, n], idx) => base.text(id).build(true).attr({id}).move(20, 40 * idx));"
+          "nodes": {
+            "script": "const base = inputs[0]; return Object.entries(state.graph.nodes).map(([id, n], idx) => base.text(id).build(true).attr({id, class: 'node'}).move(20, 40 * idx));"
+          }
+        },
+        "create_lines": {
+          "type": "script",
+          "nodes": {
+            "script": "const base = inputs[0]; const nodes = inputs[1]; return state.graph.edges.map(c => base.line(state.lib.SVG(`#${c[0]}`)?.cx(), state.lib.SVG(`#${c[0]}`)?.cy(), state.lib.SVG(`#${c[1]}`)?.cx(), state.lib.SVG(`#${c[1]}`)?.cy()).stroke({width: 3, color: '#000'}))"
+          }
+        },
+        "down_trigger": {
+          "type": "script",
+          "nodes": {
+            "script": "if(inputs[0].ty === 'mousedown'){ state.temp.dragging = inputs[0].target; state.temp.selected = inputs[0].target; return inputs[0].target; }"
+          }
+        },
+        "show_in_editor": {
+          "type": "script",
+          "nodes": {
+            "script": "state.editor.dispatch({changes: {from: 0, to: state.editor.state.doc.length, insert: JSON.stringify(state.graph.nodes[inputs[0]] ?? state.graph, null, 2) }})"
+          }
+        },
+        "up_trigger": {
+          "type": "script",
+          "nodes": {
+            "script": "if(inputs[0].ty === 'mouseup'){ state.temp.dragging = undefined}"
           }
         },
         "drag_node": {
           "type": "script",
-          "children": {
-            "script": "const target = state.lib.SVG(`#${inputs[0].target}`); if(target && inputs[0].button === 0){ target.move(inputs[0].x, inputs[0].y); }"
+          "nodes": {
+            "script": "if(!state.temp.dragging) return; const target = state.lib.SVG(`#${state.temp.dragging}`); if(target?.center){ target.center(inputs[0].x, inputs[0].y); }"
           }
+        },
+        "editor_change_listener": {
+          "type": "editor_change_event",
+        },
+        "parse_graph": {
+          "type": "script",
+          "nodes": {
+            "script": "return state.temp.selected === 'render' ? JSON.parse(inputs[0]) : undefined"
+          }
+        },
+        "show_errors": {
+          "type": "script",
+          "nodes": {
+            "script": "for(e of Object.keys(state.graph.nodes)){ state.lib.SVG(`#${e}`)?.css({fill: state.temp.errors.has(e) ? 'red' : 'black'})}"
+          }
+        },
+        "log_errors": {
+          "type": "script",
+          "nodes": {
+            "script": "state.temp.errors.forEach(([id, e]) => {console.log(id); console.error(e);})"
+          }
+        },
+        "mouse_target": {
+          "type": "script",
+          "nodes": {
+            "script": "return inputs[0].target"
+          }
+        },
+        "mouse_target_changed": {
+          "type": "filter_changed"
+        },
+        "hover_state": {
+          "type": "script",
+          "nodes": {
+            "script": "const tt = document.querySelector('.tooltip'); const content = (state.temp.errors.get(inputs[0])?.message ?? state.temp.results.get(inputs[0])); tt.innerText = typeof content === 'string' ? content : JSON.stringify(content, null, 2); tt.style = `left: ${state.lib.SVG(`#${inputs[0]}`)?.x() ?? '0'}px; top: ${state.lib.SVG(`#${inputs[0]}`)?.y() ?? '0'}px; visibility: ${content ? 'visible' : 'hidden'};`;"
+          }
+        },
+        "save_on_ctrl_s": {
+          "type": "save_content",
+          "nodes"
         }
       },
       "types": {
@@ -210,7 +273,7 @@
           "script": "console.log(JSON.stringify(inputs))"
         },
         "script": {
-          "script": "return new AsyncFunction('state', 'name', 'inputs', state.graph.nodes[name].children['script'])(state, name, inputs)"
+          "script": "return new AsyncFunction('state', 'name', 'inputs', state.graph.nodes[name].nodes['script'])(state, name, inputs)"
         },
         "stringify": {
           "script": "return JSON.stringify(inputs)"
@@ -219,40 +282,50 @@
           "script": mouseEventScript
         },
         "tag": {
-          "script": "return () => state.lib.html`<${state.graph.nodes[name].children.tag} ...${state.graph.nodes[name].children.attrs}>${new Function(`return ${state.graph.nodes[name].children.content}`)()}</${state.graph.nodes[name].children.tag}>`"
+          "script": "return () => state.lib.html`<${state.graph.nodes[name].nodes.tag} ...${state.graph.nodes[name].nodes.attrs}>${new Function(`return ${state.graph.nodes[name].nodes.content}`)()}</${state.graph.nodes[name].nodes.tag}>`"
         },
         "render": {
-          "script": "target = new Function(`return ${state.graph.nodes[name].children.target}`)(); state.lib.render(state.lib.html`${target.innerHTML} ${inputs.map(fn => state.lib.html`<${fn} />`)}`, target)"
+          "script": "target = new Function(`return ${state.graph.nodes[name].nodes.target}`)(); state.lib.render(state.lib.html`${target.innerHTML} ${inputs.map(fn => state.lib.html`<${fn} />`)}`, target)"
+        },
+        "filter_changed": {
+          "script": "return state.temp.results.get(name) === inputs[0] ? undefined : inputs[0]"
+        },
+        "editor_change_event": {
+          "script": editorChangeScript
+        },
+        "save_content": {
+          "script": "localStorage.setItem(inputs[0].key, inputs[1].value);"
+        },
+        "keyboard_event": {
+          "script": keyboardEventScript
         }
       },
       // Connections between the nodes - directional
-      "connections": [
+      "edges": [
         ["load", "log_test"], 
         ["load", "mouse_listener"], 
-        ["mouse_listener", "mouse_stringify"], 
-        // ["mouse_stringify", "mouse_log"], 
         ["load", "editor_style"], 
         ["load", "render_style"], 
+        ["load", "create_svg_base"],
+        ["load", "editor_change_listener"],
+        ["create_svg_base", "create_nodes"],
+        ["create_svg_base", "create_lines"],
+        ["create_svg_base", "show_errors"],
+        ["editor_change_listener", "parse_graph"],
+        ["mouse_listener", "mouse_stringify"], 
+        ["mouse_listener", "mouse_target"], 
+        ["mouse_target", "mouse_target_changed"],
+        ["mouse_listener", "show_errors"], 
+        ["mouse_target_changed", "hover_state"], 
         ["editor_style", "render_head"], 
         ["render_style", "render_head"], 
-        ["load", "create_svg_base"],
-        ["create_svg_base", "create_nodes"],
+        ["parse_graph", "show_errors"],
+        ["create_nodes", "create_lines"],
         ["mouse_listener", "drag_node"],
-        // ["render_nodes", "render_graph"]
-      ]
-    }
-
-    // old fns: state.temp.fns = new Map(Object.entries(state.graph.nodes).filter(([id, n]) => n.children?.script).map(([id, node]) => [id, new Function('state', 'name', 'inputs', node.children.script)])); 
-
-    const old = {
-      "events" : [
-        {
-          "name": "graph_change",
-          "setup": "editor.dispatch({ effects: lib.cm.StateEffect.appendConfig.of(lib.cm.EditorView.updateListener.of(update => update.docChanged ? callback(update.state.doc.toString()) : undefined))})"
-        }, {
-          "name":"load",
-          "setup":"if(window.hasSetup || !localStorage.getItem('data')) { return; }; window.hasSetup = true; const data = JSON.parse(localStorage.getItem('data')); editor.dispatch({ changes: {from: 0, to: editor.state.doc.length, insert: data }});"
-        }
+        ["mouse_listener", "down_trigger"],
+        ["down_trigger", "show_in_editor"],
+        ["mouse_listener", "up_trigger"],
+        ["mouse_listener", "drag_node"],
       ]
     }
 
@@ -286,8 +359,9 @@
     const state = {
       lib,
       el: {editor: editorEl, render: renderEl },
+      editor: editorView,
       graph,
-      temp: { results: {} }
+      temp: { results: new Map(), errors: new Map() }
     }
 
     Object.entries(state.graph.nodes).filter(([id, node]) => id === "load").forEach(([id, n]) => new AsyncFunction('state', 'name', 'inputs', state.graph.types[n.type].script)(state, 'load', []))
@@ -304,9 +378,9 @@
     //   return [source, { fn: (input) => fn(node, graph, renderNode, input, lib), name: dest }];
     // }
 
-    // // connectionMap :: {id : [{fn: fn<input>, name}]}
-    // const createEventChain = (graph, connectionMap, log) => (source, eventChain) => {
-    //   const destfns = connectionMap[source] || [];
+    // // edgesMap :: {id : [{fn: fn<input>, name}]}
+    // const createEventChain = (graph, edgesMap, log) => (source, eventChain) => {
+    //   const destfns = edgesMap[source] || [];
     //   return (input) => input ? Promise.all(
     //     destfns.map(fnnode => 
     //       fnnode.fn(input)
@@ -328,17 +402,17 @@
     //   log(JSON.stringify(graph, null, 2))
 
     //   const createGraphConnection = createConnection(graph, log);
-    //   // Create a connection map of source by id to destination node function
-    //   const connectionMap = graph.connections
-    //     // create the connection functions
-    //     .map(connection => createGraphConnection(...connection))
-    //     .map(log('map connection'))
-    //     // group the connections by source node
+    //   // Create a edges map of source by id to destination node function
+    //   const edgesMap = graph.connections
+    //     // create the edges functions
+    //     .map(edges => createGraphConnection(...connection))
+    //     .map(log('map edges'))
+    //     // group the edges by source node
     //     .reduce((acc, [source, fn]) => (acc[source] = (acc[source] || []).concat([fn]), {}, acc), {});
 
-    //   log('final connection map')(connectionMap);
+    //   log('final edges map')(connectionMap);
 
-    //   const eventChain = createEventChain(graph, connectionMap, log);
+    //   const eventChain = createEventChain(graph, edgesMap, log);
 
     //   // Set up the base events
     //   const setupFunctions = graph.events.map(event => {
