@@ -1,0 +1,787 @@
+{
+  "nodes": {
+    "onload": {
+      "type": "run",
+      "x": 682.2000122070312,
+      "y": 56.33332824707031
+    },
+    "onload_empty_state": {
+      "type": "value",
+      "nodes": {
+        "value": {}
+      },
+      "x": 48.55833435058594,
+      "y": 0.2083335518836975
+    },
+    "onload_diff_empty": {
+      "type": "diff_changes",
+      "x": 137.81666564941406,
+      "y": 13.208333969116211
+    },
+    "graph_stringify": {
+      "type": "stringify",
+      "x": 514.6583251953125,
+      "y": 685.2083129882812
+    },
+    "load_graph": {
+      "type": "load_content",
+      "nodes": {
+        "key": "graph"
+      },
+      "x": 673.00830078125,
+      "y": 196.2083282470703
+    },
+    "queue_apply_diff": {
+      "type": "last_updated"
+    },
+    "pop_apply_diff": {
+      "type": "filter_last_updated"
+    },
+    "apply_diff_to_graph": {
+      "type": "script",
+      "nodes": {
+        "script": "if(inputs[0]) { const newGraph = state.lib.clone(state.graph); state.lib.diffApply(newGraph, inputs[0]); state.graph = newGraph; return state.graph; }"
+      },
+      "x": 158.375,
+      "y": 994.2083740234375
+    },
+    "graph_style_tag": {
+      "type": "script",
+      "nodes": {
+        "script": "return () => state.lib.html`#graph { display:flex; flex-direction: row; flex-grow: 2; justify-content: flex-start; align-content: stretch; } #graph .node { user-select: none } .tooltip { position: absolute; visibility: hidden; max-width: 120px; pointer-events: none; }`"
+      },
+      "x": 864.8916625976562,
+      "y": 151.2083282470703
+    },
+    "render_graph_style": {
+      "type": "render_html",
+      "nodes": {
+        "target": "document.getElementById('graph_style')"
+      },
+      "x": 993.2333374023438,
+      "y": 116.20832824707031
+    },
+    "render_head": {
+      "type": "render",
+      "nodes": {
+        "target": "document.head"
+      }
+    },
+    "render_graph": {
+      "type": "render",
+      "nodes": {
+        "target": "document.querySelector('#graph')"
+      },
+      "x": 182.35000610351562,
+      "y": 73.20833587646484
+    },
+    "create_svg_base": {
+      "type": "script",
+      "nodes": {
+        "script": "return state.lib.SVG('.root') ?? state.lib.SVG().addTo('#graph').addClass('root')"
+      },
+      "x": 752.5750122070312,
+      "y": 725.2083129882812
+    },
+    "create_nodes": {
+      "type": "script",
+      "nodes": {
+        "script": "const base = inputs[0]; Object.entries(state.graph.nodes).map(([id, n], idx) => (base.findOne(`#${id}`) ??  base.text(id).attr({id, class: 'node'})).move(n.x ?? 100 * (idx % 4), n.y ?? 40 * (idx / 4))); return base;"
+      },
+      "x": 670.2416381835938,
+      "y": 480.20831298828125
+    },
+    "create_lines": {
+      "type": "script",
+      "nodes": {
+        "script": "const base = inputs[0]; return state.graph.edges.map(c => (base.findOne(`#${c[0]}-${c[1]}`) ?? base.line().marker('end', 12, 12, (add) => add.circle(8,8).fill('#000')).attr({id: `${c[0]}-${c[1]}`})).plot(state.lib.SVG(`#${c[0]}`)?.cx(), state.lib.SVG(`#${c[0]}`)?.cy(), state.lib.SVG(`#${c[1]}`)?.cx(), state.lib.SVG(`#${c[1]}`)?.cy()).stroke({width: 1, color: '#000'}))"
+      },
+      "x": 857.7916259765625,
+      "y": 824.2083129882812
+    },
+    "show_errors": {
+      "type": "script",
+      "nodes": {
+        "script": "for(e of Object.keys(state.graph.nodes)){ state.lib.SVG(`#${e}`)?.css({fill: state.temp.errors.has(e) ? 'red' : 'black'})}"
+      },
+      "x": 861.441650390625,
+      "y": 400.20831298828125
+    },
+    "run_changes": {
+      "type": "run"
+    },
+    "register_mouse_listener": {
+      "type": "mouse_event",
+      "nodes": {
+        "trigger": "mouse_trigger"
+      },
+      "x": 288.5,
+      "y": 26.208332061767578
+    },
+    "mouse_trigger": {
+      "type": "run",
+      "x": 1064.7249755859375,
+      "y": 280.2083435058594
+    },
+    "mouse_stringify": {
+      "type": "stringify",
+      "x": 31.983333587646484,
+      "y": 42.20833206176758
+    },
+    "mouse_log": {
+      "type": "log",
+      "x": 129.88333129882812,
+      "y": 50.208335876464844
+    },
+    "mouse_target_changed": {
+      "type": "value_changed",
+      "nodes": {
+        "value": "target"
+      },
+      "x": 950.3666381835938,
+      "y": 430.2083435058594
+    },
+    "mouse_button_changed": {
+      "type": "value_changed",
+      "nodes": {
+        "value": "button"
+      },
+      "x": 1068.9833984375,
+      "y": 220.2083282470703
+    },
+    "mouse_event_type_changed": {
+      "type": "value_changed",
+      "nodes": {
+        "value": "ty"
+      },
+      "x": 992.3333129882812,
+      "y": 784.2083129882812
+    },
+    "mouse_dragging": {
+      "type": "script",
+      "nodes": {
+        "script": "return inputs[1] === 'mousemove' ? undefined : (inputs[0].button === 0 && inputs[1] === 'mousedown')"
+      }
+    },
+    "mouse_select_target": {
+      "type": "script",
+      "nodes": {
+        "script": "return inputs[0] === 'mousedown' ? inputs[1] : undefined"
+      },
+      "x": 869.808349609375,
+      "y": 546.2083129882812
+    },
+    "hover_state": {
+      "type": "script",
+      "nodes": {
+        "script": "if(!inputs[1]) {return; } const tt = document.querySelector('.tooltip'); if(inputs[0] !== 'mousemove' || inputs[1] === 'graph'){ tt.style = `visibility: hidden`;return; } const content = (state.temp.errors.get(inputs[1])?.message ?? state.temp.results.get(inputs[1])); tt.innerText = typeof content === 'string' ? content : JSON.stringify(content, null, 2); tt.style = `left: ${state.lib.SVG(`#${inputs[1]}`)?.x() ?? '0'}px; top: ${state.lib.SVG(`#${inputs[1]}`)?.y() ?? '0'}px; visibility: ${content ? 'visible' : 'hidden'};`;"
+      },
+      "x": 950.1166381835938,
+      "y": 909.2083740234375
+    },
+    "drag_node": {
+      "type": "script",
+      "nodes": {
+        "script": "if(!inputs[0]) { return; } const target = state.lib.SVG(`#${inputs[1]}`); if(target?.center){ target.center(inputs[2].x, inputs[2].y); return inputs[2]; }"
+      },
+      "x": 1165.2332763671875,
+      "y": 516.2083740234375
+    },
+    "editor_change_trigger": {
+      "type": "run"
+    },
+    "parse_editor_content": {
+      "type": "script",
+      "nodes": {
+        "script": "return JSON.parse(inputs[0])"
+      }
+    },
+    "parse_editor_content_trigger": {
+      "type": "trigger"
+    },
+    "parse_load_graph": {
+      "type": "script",
+      "nodes": {
+        "script": "if(inputs[0]){ return JSON.parse(inputs[0]) }"
+      },
+      "x": 454.1000061035156,
+      "y": 218.20834350585938
+    },
+    "editor_content_changes": {
+      "type": "last_updated"
+    },
+    "last_editor_content_change": {
+      "type": "filter_last_updated",
+      "x": 460.01666259765625,
+      "y": 1110.2083740234375
+    },
+    "set_pending_graph": {
+      "type": "last_updated",
+      "x": 113.11666870117188,
+      "y": 724.2083740234375
+    },
+    "pending_graph": {
+      "type": "filter_last_updated",
+      "x": 79.98333740234375,
+      "y": 808.2083740234375
+    },
+    "set_state_graph": {
+      "type": "last_updated",
+      "x": 266.2249755859375,
+      "y": 1047.208251953125
+    },
+    "state_graph": {
+      "type": "filter_last_updated",
+      "x": 714.11669921875,
+      "y": 760.2083129882812
+    },
+    "last_state_graph": {
+      "type": "filter_changed"
+    },
+    "register_key_listener": {
+      "type": "keyboard_event",
+      "nodes": {
+        "trigger": "key_trigger",
+        "prevent_default_keys": [
+          {
+            "ctrlKey": true,
+            "key": "s"
+          },
+          {
+            "ctrlKey": true,
+            "key": "e"
+          }
+        ]
+      },
+      "x": 294.8416442871094,
+      "y": 66.20833587646484
+    },
+    "key_trigger": {
+      "type": "run",
+      "x": 186.06666564941406,
+      "y": 360.20831298828125
+    },
+    "save_on_ctrl_s": {
+      "type": "save_content",
+      "nodes": {
+        "key": "graph"
+      },
+      "x": 419,
+      "y": 694.2083740234375
+    },
+    "filter_ctrl_s": {
+      "type": "script",
+      "nodes": {
+        "script": "return inputs[0].ctrlKey && inputs[0].key === 's'"
+      },
+      "x": 49.65833282470703,
+      "y": 706.2083129882812
+    },
+    "filter_ctrl_e": {
+      "type": "script",
+      "nodes": {
+        "script": "return inputs[0].ctrlKey && inputs[0].key === 'e'"
+      },
+      "x": 221.22499084472656,
+      "y": 732.2083740234375
+    },
+    "trigger_graph_update": {
+      "type": "trigger"
+    },
+    "map_save_value": {
+      "type": "trigger",
+      "x": 423.683349609375,
+      "y": 486.2083435058594
+    },
+    "get_edges_changes": {
+      "type": "filter_input",
+      "nodes": {
+        "filter": "return val.path[0] === 'edges';"
+      }
+    },
+    "replace_edges": {
+      "type": "script",
+      "nodes": {
+        "script": "inputs[0].reduce((acc, change) => acc.concat(change.path.length === 1 ? ), [])"
+      }
+    },
+    "diff_graph_changes": {
+      "type": "diff_changes",
+      "x": 187.60833740234375,
+      "y": 935.2083129882812
+    },
+    "set_editor_content": {
+      "type": "last_updated",
+      "x": 703.875,
+      "y": 814.2083129882812
+    },
+    "editor_content": {
+      "type": "filter_last_updated",
+      "x": 746.7666625976562,
+      "y": 870.2083740234375
+    },
+    "update_editor_content": {
+      "type": "script",
+      "nodes": {
+        "script": "state.editor.dispatch({changes: {from: 0, to: state.editor.state.doc.length, insert: typeof inputs[0] === 'string' ? inputs[0] : JSON.stringify(inputs[0], null, 2) }})"
+      },
+      "x": 787.4417114257812,
+      "y": 950.2083740234375
+    },
+    "log_errors": {
+      "type": "script",
+      "nodes": {
+        "script": "state.temp.errors.forEach((id, e) => {console.log(id); console.error(e);})"
+      },
+      "x": 3.1083335876464844,
+      "y": 607.2083129882812
+    },
+    "log_results": {
+      "type": "script",
+      "nodes": {
+        "script": "console.log(state.temp.results.forEach((v, k) => console.log(`${k}: ${JSON.stringify(v, null, 2)}`)))"
+      },
+      "x": 27.875,
+      "y": 765.2083129882812
+    },
+    "log_test": {
+      "type": "log"
+    },
+    "set_initial_graph": {
+      "type": "last_updated",
+      "x": 457.2166748046875,
+      "y": 100.20832824707031
+    },
+    "initial_graph": {
+      "type": "script",
+      "nodes": {
+        "script": "return inputs[0].idx === 0 ? inputs[0].inputs[0] : undefined;"
+      },
+      "x": 578.1083374023438,
+      "y": 312.2083435058594
+    },
+    "configure_editor": {
+      "type": "script",
+      "nodes": {
+        "trigger": "editor_change_trigger",
+        "script": "\n      const trigger = state.graph.nodes[name].nodes.trigger;\n      const run_node = {...state.graph.nodes[trigger]};\n      while(run_node.type && run_node.type !== 'script'){\n        run_node.nodes = {...state.graph.defaults[run_node.type].nodes, ...(run_node.nodes ?? [])};\n        run_node.type = state.graph.defaults[run_node.type].type;\n      }\n\n      state.editor.dispatch({ \n        effects: state.lib.cm.StateEffect.appendConfig.of([\n          state.lib.cm.EditorView.theme({'&': {width: '50vw', height: '95vh'}, '.cm-scroller': { overflow: 'auto' }}),\n          state.lib.cm.EditorView.updateListener.of(\n            update => {\n              if(update.docChanged) {\n                const updated_state = update.state.doc.toString();\n                state.temp.errors.delete(trigger);\n                new AsyncFunction('state', 'name', 'inputs', run_node.nodes.script)(state, trigger, [updated_state]);\n              }\n            }),\n        ])\n      }); \n    "
+      },
+      "x": 843.625,
+      "y": 236.2083282470703
+    },
+    "drop_node": {
+      "type": "script",
+      "nodes": {
+        "script": "if(inputs[0].idx !== 0 || inputs[0].inputs[0] || !inputs[0].inputs[1] || !state.graph.nodes.hasOwnProperty(inputs[0].inputs[1])) { return; } const target = state.lib.SVG(`#${inputs[0].inputs[1]}`); return [{op: 'replace', path: ['nodes', inputs[0].inputs[1], 'x'], value: target.x()}, {op: 'replace', path: ['nodes', inputs[0].inputs[1], 'y'], value: target.y()}];"
+      },
+      "x": 581.7833251953125,
+      "y": 924.2083129882812
+    },
+    "drop_node_input": {
+      "type": "last_updated",
+      "x": 631.3167114257812,
+      "y": 645.2083740234375
+    },
+    "backup_save_content": {
+      "type": "save_content",
+      "nodes": {
+        "key": "backup"
+      },
+      "x": 56.099998474121094,
+      "y": 950.2083129882812
+    },
+    "backup_save": {
+      "type": "trigger",
+      "x": 353.6666564941406,
+      "y": 770.2083129882812
+    },
+    "selected_node_script": {
+      "type": "script",
+      "nodes": {
+        "script": "return state.graph.nodes[inputs[0]]?.nodes?.script ?? state.graph"
+      }
+    },
+    "update_selected_content": {
+      "type": "script",
+      "nodes": {
+        "script": "return JSON.parse(inputs[0])"
+      }
+    },
+    "map_save_trigger": {
+      "type": "trigger"
+    }
+  },
+  "defaults": {
+    "run": {
+      "type": "script",
+      "nodes": {
+        "script": "\n      const node = state.graph.nodes[name];\n      const stack = state.graph.edges.filter(c => c[0] === name).map(c => c[1]); \n\n      state.temp.results.set(name, inputs[0]);\n\n\t\t\tconst log_node = \"key_trigger\";\n\n      while(stack.length > 0) { \n        const run = stack.pop(); \n        if(!state.graph.nodes.hasOwnProperty(run)) {\n          throw new Error(\"Unknown node \" + run)\n        }\n        const run_node = {...state.graph.nodes[run]};\n        while(run_node.type && run_node.type !== 'script'){\n          if(!state.graph.defaults.hasOwnProperty(run_node.type)) {\n            throw new Error(\"Unknown node type \" + run_node.type + \" on node \" + run);\n          }\n          run_node.nodes = {...state.graph.defaults[run_node.type].nodes, ...run_node.nodes};\n          run_node.type = state.graph.defaults[run_node.type].type;\n        }\n\n        const inputs = state.graph.edges.filter(c => c[1] === run).map(c => state.temp.results.get(c[0])); \n\t\t\t\tif(log_node === run){\n\t\t\t\t\tconsole.log(\"start \" + run);\n\t\t\t\t}\n        await Promise.resolve(run_node)\n          .then(node => new AsyncFunction('state', 'name', 'inputs', run_node.nodes.script)(state, run, inputs))\n          .then(result => {\n            state.temp.errors.delete(run);\n            if(result !== undefined) {  \n              state.temp.results.set(run, result); \n              state.graph.edges.filter(c => c[0] === run).forEach(c => stack.unshift(c[1])); \n            }\n\t\t\t\t\t\tif(log_node === run){\n\t\t\t\t\t\t\tconsole.log(\"end \" + run + \" with \");\n\t\t\t\t\t\t\tconsole.log(result);\n\t\t\t\t\t\t}\n          })\n          .catch(err => { console.log(`error running ${run}`); console.error(err); state.temp.errors.set(run, err); });\n      }\n    "
+      }
+    },
+    "log": {
+      "type": "script",
+      "nodes": {
+        "script": "console.log(inputs)"
+      }
+    },
+    "stringify": {
+      "type": "script",
+      "nodes": {
+        "script": "return JSON.stringify(inputs[0])"
+      }
+    },
+    "mouse_event": {
+      "type": "script",
+      "nodes": {
+        "script": "\n      const trigger = state.graph.nodes[name].nodes.trigger;\n      const run_node = {...state.graph.nodes[trigger]};\n      while(run_node.type && run_node.type !== 'script'){\n        run_node.nodes = {...state.graph.defaults[run_node.type].nodes, ...run_node.nodes};\n        run_node.type = state.graph.defaults[run_node.type].type;\n      }\n\n      const mouseEvent = (ty) => (e) => {\n        const mouse_event = {x: e.x, y: e.y, target: document.elementFromPoint(e.x, e.y).parentElement.id, buttons: e.buttons, button: e.button, ty };\n        new AsyncFunction('state', 'name', 'inputs', run_node.nodes.script)(state, trigger, [mouse_event]);\n      };\n\n      document.getElementById('graph').onmousemove = mouseEvent('mousemove');\n      document.getElementById('graph').onmousedown = mouseEvent('mousedown');\n      document.getElementById('graph').onmouseup = mouseEvent('mouseup');\n    "
+      }
+    },
+    "tag": {
+      "type": "script",
+      "nodes": {
+        "script": "return () => state.lib.html`<${state.graph.nodes[name].nodes.tag} ...${state.graph.nodes[name].nodes.attrs}>${new Function(`return ${state.graph.nodes[name].nodes.content}`)()}</${state.graph.nodes[name].nodes.tag}>`"
+      }
+    },
+    "render_html": {
+      "type": "script",
+      "nodes": {
+        "script": "target = new Function(`return ${state.graph.nodes[name].nodes.target}`)(); state.lib.render(state.lib.html`${inputs.map(fn => state.lib.html`<${fn} />`)}`, target)"
+      }
+    },
+    "filter_changed": {
+      "type": "script",
+      "nodes": {
+        "script": "return state.temp.results.get(name) === inputs[0] ? undefined : inputs[0]"
+      }
+    },
+    "save_content": {
+      "type": "script",
+      "nodes": {
+        "script": "return localStorage.setItem(state.graph.nodes[name].nodes.key, inputs[0])"
+      }
+    },
+    "load_content": {
+      "type": "script",
+      "nodes": {
+        "script": "return localStorage.getItem(state.graph.nodes[name].nodes.key)"
+      }
+    },
+    "diff_changes": {
+      "type": "script",
+      "nodes": {
+        "script": "if(inputs[0] === undefined || inputs[1] === undefined){return;} const diff = state.lib.diff(inputs[0], inputs[1]); return diff.length > 0 ? diff : undefined;"
+      }
+    },
+    "filter_input": {
+      "type": "script",
+      "nodes": {
+        "script": "return inputs[0].filter(val => new Function('state', 'name', 'inputs', 'val', state.graph.nodes[name].nodes.filter)(state, name, inputs, val))"
+      }
+    },
+    "get_value": {
+      "type": "script",
+      "nodes": {
+        "script": "return inputs[0][state.graph.nodes[name].nodes.value]"
+      }
+    },
+    "value_changed": {
+      "type": "script",
+      "nodes": {
+        "script": "const value = inputs[0][state.graph.nodes[name].nodes.value]; return state.temp.results.get(name) === value ? undefined : value"
+      }
+    },
+    "last_updated": {
+      "type": "script",
+      "nodes": {
+        "script": "const prev_inputs = state.temp.results.get(name)?.inputs; const idx = prev_inputs ? prev_inputs.findIndex((v, i) => v !== inputs[i]) : inputs.findIndex(v => v !== undefined); return {idx: idx >= 0 ? idx : state.temp.results.get(name)?.idx, inputs};"
+      }
+    },
+    "filter_last_updated": {
+      "type": "script",
+      "nodes": {
+        "script": "return inputs[0].inputs[inputs[0].idx]"
+      }
+    },
+    "value": {
+      "type": "script",
+      "nodes": {
+        "script": "return state.graph.nodes[name].nodes.value"
+      }
+    },
+    "keyboard_event": {
+      "type": "script",
+      "nodes": {
+        "script": "\n      const trigger = state.graph.nodes[name].nodes.trigger;\n      const run_node = {...state.graph.nodes[trigger]};\n      while(run_node.type && run_node.type !== 'script'){\n        run_node.nodes = {...state.graph.defaults[run_node.type].nodes, ...run_node.nodes};\n        run_node.type = state.graph.defaults[run_node.type].type;\n      }\n      const isPrevented = (key_e) =>\n        state.graph.nodes[name].nodes.prevent_default_keys && state.graph.nodes[name].nodes.prevent_default_keys.reduce(\n          (acc, key) => acc || Object.keys(key).reduce((acc, k) => acc && key_e[k] === key[k] , true)\n            , false);\n\n      const keyboardEvent = (ty) => (e) => {\n        const key_e = {event: ty, code: e.code, altKey: e.altKey, ctrlKey: e.ctrlKey, key: e.key, metaKey: e.metaKey};\n        state.temp.errors.delete(trigger);\n        if(isPrevented(key_e)) {\n          e.preventDefault();\n        }\n\n        new AsyncFunction('state', 'name', 'inputs', run_node.nodes.script)(state, trigger, [key_e]);\n      }\n\n  window.addEventListener('keyup', keyboardEvent('keyup')); window.addEventListener('keydown', keyboardEvent('keydown'));\n    "
+      }
+    },
+    "trigger": {
+      "type": "script",
+      "description": "watches for a true on the trigger input to pass the value input through",
+      "nodes": {
+        "script": "if(inputs[0]){ return inputs[1]; }"
+      }
+    }
+  },
+  "edges": [
+    [
+      "state_graph",
+      "create_svg_base"
+    ],
+    [
+      "create_svg_base",
+      "create_nodes"
+    ],
+    [
+      "create_svg_base",
+      "create_lines"
+    ],
+    [
+      "mouse_dragging",
+      "drag_node"
+    ],
+    [
+      "mouse_select_target",
+      "drag_node"
+    ],
+    [
+      "mouse_trigger",
+      "drag_node"
+    ],
+    [
+      "mouse_dragging",
+      "drop_node_input"
+    ],
+    [
+      "mouse_select_target",
+      "drop_node_input"
+    ],
+    [
+      "mouse_trigger",
+      "drop_node_input"
+    ],
+    [
+      "drop_node_input",
+      "drop_node"
+    ],
+    [
+      "state_graph",
+      "diff_graph_changes"
+    ],
+    [
+      "pending_graph",
+      "diff_graph_changes"
+    ],
+    [
+      "editor_change_trigger",
+      "editor_content_changes"
+    ],
+    [
+      "key_trigger",
+      "filter_ctrl_s"
+    ],
+    [
+      "key_trigger",
+      "filter_ctrl_e"
+    ],
+    [
+      "mouse_target_changed",
+      "hover_state"
+    ],
+    [
+      "editor_content_changes",
+      "last_editor_content_change"
+    ],
+    [
+      "initial_graph",
+      "load_graph"
+    ],
+    [
+      "filter_ctrl_s",
+      "map_save_value"
+    ],
+    [
+      "state_graph",
+      "graph_stringify"
+    ],
+    [
+      "graph_stringify",
+      "map_save_value"
+    ],
+    [
+      "map_save_value",
+      "save_on_ctrl_s"
+    ],
+    [
+      "filter_ctrl_s",
+      "backup_save"
+    ],
+    [
+      "map_save_value",
+      "backup_save"
+    ],
+    [
+      "backup_save",
+      "backup_save_content"
+    ],
+    [
+      "mouse_trigger",
+      "mouse_button_changed"
+    ],
+    [
+      "mouse_trigger",
+      "mouse_event_type_changed"
+    ],
+    [
+      "mouse_trigger",
+      "mouse_dragging"
+    ],
+    [
+      "mouse_event_type_changed",
+      "mouse_dragging"
+    ],
+    [
+      "mouse_event_type_changed",
+      "mouse_select_target"
+    ],
+    [
+      "mouse_target_changed",
+      "mouse_select_target"
+    ],
+    [
+      "mouse_trigger",
+      "mouse_target_changed"
+    ],
+    [
+      "filter_ctrl_e",
+      "parse_editor_content_trigger"
+    ],
+    [
+      "last_editor_content_change",
+      "parse_editor_content_trigger"
+    ],
+    [
+      "parse_editor_content_trigger",
+      "parse_editor_content"
+    ],
+    [
+      "load_graph",
+      "parse_load_graph"
+    ],
+    [
+      "drop_node",
+      "queue_apply_diff"
+    ],
+    [
+      "set_pending_graph",
+      "pending_graph"
+    ],
+    [
+      "diff_graph_changes",
+      "queue_apply_diff"
+    ],
+    [
+      "onload",
+      "register_key_listener"
+    ],
+    [
+      "onload",
+      "register_mouse_listener"
+    ],
+    [
+      "onload",
+      "configure_editor"
+    ],
+    [
+      "onload",
+      "graph_style_tag"
+    ],
+    [
+      "graph_style_tag",
+      "render_graph_style"
+    ],
+    [
+      "create_svg_base",
+      "show_errors"
+    ],
+    [
+      "mouse_trigger",
+      "show_errors"
+    ],
+    [
+      "run_changes",
+      "show_errors"
+    ],
+    [
+      "parse_editor_content",
+      "show_errors"
+    ],
+    [
+      "parse_load_graph",
+      "set_pending_graph"
+    ],
+    [
+      "parse_editor_content",
+      "set_pending_graph"
+    ],
+    [
+      "state_graph",
+      "set_editor_content"
+    ],
+    [
+      "set_editor_content",
+      "editor_content"
+    ],
+    [
+      "editor_content",
+      "update_editor_content"
+    ],
+    [
+      "onload",
+      "set_initial_graph"
+    ],
+    [
+      "parse_load_graph",
+      "set_initial_graph"
+    ],
+    [
+      "set_initial_graph",
+      "initial_graph"
+    ],
+    [
+      "initial_graph",
+      "set_state_graph"
+    ],
+    [
+      "queue_apply_diff",
+      "pop_apply_diff"
+    ],
+    [
+      "pop_apply_diff",
+      "apply_diff_to_graph"
+    ],
+    [
+      "apply_diff_to_graph",
+      "set_state_graph"
+    ],
+    [
+      "apply_diff_to_graph",
+      "set_pending_graph"
+    ],
+    [
+      "set_state_graph",
+      "state_graph"
+    ],
+    [
+      "editor_content",
+      "update_editor_content"
+    ],
+    [
+      "mouse_select_target",
+      "selected_node_script"
+    ],
+    [
+      "key_trigger",
+      "log_test"
+    ]
+  ]
+}
