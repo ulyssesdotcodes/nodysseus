@@ -1,9 +1,19 @@
 {
-  "nodes": {
-    "onload": {
+  "type": "graph_processor",
+  "nodes": [
+    {
+      "id": "root",
+      "nodes": {
+        "init": "new asyncfunction('lib', 'input', 'node', nodes.root.nodes.apply)(lib, { ops: lib.diff({}, graph) }, graph.nodes.root)",
+        "apply": ""
+      },
+      "edges": [["init", "apply", "*"], ["in", "apply", "*"], ["apply", "output", ["ops", "graph"]]]
+    },
+    {
+      "id": "onload",
       "type": "run",
-      "x": 682.2000122070312,
-      "y": 56.33332824707031
+      "x": 655.2000122070312,
+      "y": 18.333332061767578
     },
     "onload_empty_state": {
       "type": "value",
@@ -20,8 +30,11 @@
     },
     "graph_stringify": {
       "type": "stringify",
-      "x": 514.6583251953125,
-      "y": 685.2083129882812
+      "nodes": {
+        "key": "state_graph"
+      },
+      "x": 512.6583251953125,
+      "y": 700.2083129882812
     },
     "load_graph": {
       "type": "load_content",
@@ -40,7 +53,7 @@
     "apply_diff_to_graph": {
       "type": "script",
       "nodes": {
-        "script": "if(inputs[0]) { const newGraph = state.lib.clone(state.graph); state.lib.diffApply(newGraph, inputs[0]); state.graph = newGraph; return state.graph; }"
+        "script": "if(input.new_diff) { const newgraph = state.lib.clone(state.graph); state.lib.diffapply(newgraph, input.new_diff); state.graph = newgraph; return state.graph; }"
       },
       "x": 158.375,
       "y": 994.2083740234375
@@ -50,16 +63,16 @@
       "nodes": {
         "script": "return () => state.lib.html`#graph { display:flex; flex-direction: row; flex-grow: 2; justify-content: flex-start; align-content: stretch; } #graph .node { user-select: none } .tooltip { position: absolute; visibility: hidden; max-width: 120px; pointer-events: none; }`"
       },
-      "x": 864.8916625976562,
-      "y": 151.2083282470703
+      "x": 845.8916625976562,
+      "y": 96.20833587646484
     },
     "render_graph_style": {
       "type": "render_html",
       "nodes": {
-        "target": "document.getElementById('graph_style')"
+        "target": "document.getelementbyid('graph_style')"
       },
-      "x": 993.2333374023438,
-      "y": 116.20832824707031
+      "x": 1018.2333374023438,
+      "y": 38.20833206176758
     },
     "render_head": {
       "type": "render",
@@ -70,7 +83,7 @@
     "render_graph": {
       "type": "render",
       "nodes": {
-        "target": "document.querySelector('#graph')"
+        "target": "document.queryselector('#graph')"
       },
       "x": 182.35000610351562,
       "y": 73.20833587646484
@@ -78,7 +91,7 @@
     "create_svg_base": {
       "type": "script",
       "nodes": {
-        "script": "return state.lib.SVG('.root') ?? state.lib.SVG().addTo('#graph').addClass('root')"
+        "script": "return state.lib.svg('.root') ?? state.lib.svg().addto('#graph').addclass('root')"
       },
       "x": 752.5750122070312,
       "y": 725.2083129882812
@@ -86,29 +99,26 @@
     "create_nodes": {
       "type": "script",
       "nodes": {
-        "script": "const base = inputs[0]; Object.entries(state.graph.nodes).map(([id, n], idx) => (base.findOne(`#${id}`) ??  base.text(id).attr({id, class: 'node'})).move(n.x ?? 100 * (idx % 4), n.y ?? 40 * (idx / 4))); return base;"
+        "script": "const base = input.create_svg_base; object.entries(state.graph.nodes).map(([id, n], idx) => (base.findone(`#${id}`) ??  base.text(id).attr({id, class: 'node'})).move(n.x ?? 100 * (idx % 4), n.y ?? 40 * (idx / 4))); return base;"
       },
-      "x": 670.2416381835938,
-      "y": 480.20831298828125
+      "x": 669.24169921875,
+      "y": 486.2083435058594
     },
     "create_lines": {
       "type": "script",
       "nodes": {
-        "script": "const base = inputs[0]; return state.graph.edges.map(c => (base.findOne(`#${c[0]}-${c[1]}`) ?? base.line().marker('end', 12, 12, (add) => add.circle(8,8).fill('#000')).attr({id: `${c[0]}-${c[1]}`})).plot(state.lib.SVG(`#${c[0]}`)?.cx(), state.lib.SVG(`#${c[0]}`)?.cy(), state.lib.SVG(`#${c[1]}`)?.cx(), state.lib.SVG(`#${c[1]}`)?.cy()).stroke({width: 1, color: '#000'}))"
+        "script": "const base = input.create_svg_base; return state.graph.edges.map(c => (base.findone(`#${c[0]}-${c[1]}`) ?? base.line().stroke({width: 1, color: '#000'}).attr({id: `${c[0]}-${c[1]}`}) ).plot(state.lib.svg(`#${c[0]}`)?.cx(), state.lib.svg(`#${c[0]}`)?.cy(), state.lib.svg(`#${c[1]}`)?.cx(), state.lib.svg(`#${c[1]}`)?.cy()))"
       },
-      "x": 857.7916259765625,
-      "y": 824.2083129882812
+      "x": 880.7916870117188,
+      "y": 834.2083129882812
     },
     "show_errors": {
       "type": "script",
       "nodes": {
-        "script": "for(e of Object.keys(state.graph.nodes)){ state.lib.SVG(`#${e}`)?.css({fill: state.temp.errors.has(e) ? 'red' : 'black'})}"
+        "script": "for(e of object.keys(state.graph.nodes)){ state.lib.svg(`#${e}`)?.css({fill: state.temp.errors.has(e) ? 'red' : 'black'})}"
       },
       "x": 861.441650390625,
       "y": 400.20831298828125
-    },
-    "run_changes": {
-      "type": "run"
     },
     "register_mouse_listener": {
       "type": "mouse_event",
@@ -120,8 +130,11 @@
     },
     "mouse_trigger": {
       "type": "run",
-      "x": 1064.7249755859375,
-      "y": 280.2083435058594
+      "nodes": {
+        "log_node": "mouse_select_target"
+      },
+      "x": 946.7249755859375,
+      "y": 274.20831298828125
     },
     "mouse_stringify": {
       "type": "stringify",
@@ -136,45 +149,54 @@
     "mouse_target_changed": {
       "type": "value_changed",
       "nodes": {
-        "value": "target"
+        "value": [
+          "mouse_trigger",
+          "target"
+        ]
       },
-      "x": 950.3666381835938,
-      "y": 430.2083435058594
+      "x": 899.36669921875,
+      "y": 432.2083435058594
     },
     "mouse_button_changed": {
       "type": "value_changed",
       "nodes": {
-        "value": "button"
+        "value": [
+          "mouse_trigger",
+          "button"
+        ]
       },
-      "x": 1068.9833984375,
-      "y": 220.2083282470703
+      "x": 976.9833374023438,
+      "y": 187.20834350585938
     },
     "mouse_event_type_changed": {
       "type": "value_changed",
       "nodes": {
-        "value": "ty"
+        "value": [
+          "mouse_trigger",
+          "ty"
+        ]
       },
-      "x": 992.3333129882812,
-      "y": 784.2083129882812
+      "x": 898.3333740234375,
+      "y": 801.2083740234375
     },
     "mouse_dragging": {
       "type": "script",
       "nodes": {
-        "script": "return inputs[1] === 'mousemove' ? undefined : (inputs[0].button === 0 && inputs[1] === 'mousedown')"
+        "script": "return input.mouse_event_type_changed === 'mousemove' ? undefined : (input.mouse_trigger.button === 0 && input.mouse_event_type_changed === 'mousedown')"
       }
     },
     "mouse_select_target": {
       "type": "script",
       "nodes": {
-        "script": "return inputs[0] === 'mousedown' ? inputs[1] : undefined"
+        "script": "return input.mouse_event_type_changed === 'mousedown' ? input.mouse_target_changed : undefined"
       },
-      "x": 869.808349609375,
-      "y": 546.2083129882812
+      "x": 1031.8082275390625,
+      "y": 344.2083435058594
     },
     "hover_state": {
       "type": "script",
       "nodes": {
-        "script": "if(!inputs[1]) {return; } const tt = document.querySelector('.tooltip'); if(inputs[0] !== 'mousemove' || inputs[1] === 'graph'){ tt.style = `visibility: hidden`;return; } const content = (state.temp.errors.get(inputs[1])?.message ?? state.temp.results.get(inputs[1])); tt.innerText = typeof content === 'string' ? content : JSON.stringify(content, null, 2); tt.style = `left: ${state.lib.SVG(`#${inputs[1]}`)?.x() ?? '0'}px; top: ${state.lib.SVG(`#${inputs[1]}`)?.y() ?? '0'}px; visibility: ${content ? 'visible' : 'hidden'};`;"
+        "script": "if(!input.mouse_target_changed) {return; } const tt = document.queryselector('.tooltip'); if(input.mouse_event_type_changed !== 'mousemove' || input.mouse_target_changed === 'graph'){ tt.style = `visibility: hidden`;return; } const content = (state.temp.errors.get(input.mouse_target_changed)?.message ?? state.temp.results.get(input.mouse_target_changed)); tt.innertext = typeof content === 'string' ? content : json.stringify(content, null, 2); tt.style = `left: ${state.lib.svg(`#${input.mouse_target_changed}`)?.x() ?? '0'}px; top: ${state.lib.svg(`#${input.mouse_target_changed}`)?.y() ?? '0'}px; visibility: ${content ? 'visible' : 'hidden'};`;"
       },
       "x": 950.1166381835938,
       "y": 909.2083740234375
@@ -182,27 +204,34 @@
     "drag_node": {
       "type": "script",
       "nodes": {
-        "script": "if(!inputs[0]) { return; } const target = state.lib.SVG(`#${inputs[1]}`); if(target?.center){ target.center(inputs[2].x, inputs[2].y); return inputs[2]; }"
+        "script": "if(!input.mouse_dragging || !input.mouse_select_target) { return; } const target = state.lib.svg(`#${input.mouse_select_target}`); if(target?.center){ target.center(input.mouse_trigger.x, input.mouse_trigger.y); return input.mouse_trigger; }"
       },
-      "x": 1165.2332763671875,
-      "y": 516.2083740234375
+      "x": 787.2333374023438,
+      "y": 492.2083435058594
     },
     "editor_change_trigger": {
       "type": "run"
     },
-    "parse_editor_content": {
+    "parse_editor_state_graph": {
       "type": "script",
       "nodes": {
-        "script": "return JSON.parse(inputs[0])"
-      }
+        "script": "const mouse_target = input.parse_editor_content_trigger.parse_editor_content_change.mouse_select_target; return !mouse_target || mouse_target === 'graph' ? json.parse(input.parse_editor_content_trigger.parse_editor_content_change.last_editor_content_change) : undefined"
+      },
+      "x": 1055.8582763671875,
+      "y": 708.2083129882812
     },
-    "parse_editor_content_trigger": {
-      "type": "trigger"
+    "parse_editor_node_script": {
+      "type": "script",
+      "nodes": {
+        "script": "const mouse_target = input.parse_editor_content_trigger.parse_editor_content_change.mouse_select_target; return mouse_target && mouse_target !== 'graph' && state.graph.nodes[mouse_target]?.nodes?.script ? [{op: 'replace', path: ['nodes', mouse_target, 'nodes', 'script'], value: input.parse_editor_content_trigger.parse_editor_content_change.last_editor_content_change}] : undefined"
+      },
+      "x": 1055.8582763671875,
+      "y": 708.2083129882812
     },
     "parse_load_graph": {
       "type": "script",
       "nodes": {
-        "script": "if(inputs[0]){ return JSON.parse(inputs[0]) }"
+        "script": "if(input.load_graph){ return json.parse(input.load_graph) }"
       },
       "x": 454.1000061035156,
       "y": 218.20834350585938
@@ -212,13 +241,13 @@
     },
     "last_editor_content_change": {
       "type": "filter_last_updated",
-      "x": 460.01666259765625,
-      "y": 1110.2083740234375
+      "x": 1033.0167236328125,
+      "y": 571.2083740234375
     },
     "set_pending_graph": {
       "type": "last_updated",
-      "x": 113.11666870117188,
-      "y": 724.2083740234375
+      "x": 1070.11669921875,
+      "y": 810.2083129882812
     },
     "pending_graph": {
       "type": "filter_last_updated",
@@ -232,11 +261,8 @@
     },
     "state_graph": {
       "type": "filter_last_updated",
-      "x": 714.11669921875,
-      "y": 760.2083129882812
-    },
-    "last_state_graph": {
-      "type": "filter_changed"
+      "x": 760.1166381835938,
+      "y": 769.2083740234375
     },
     "register_key_listener": {
       "type": "keyboard_event",
@@ -244,11 +270,11 @@
         "trigger": "key_trigger",
         "prevent_default_keys": [
           {
-            "ctrlKey": true,
+            "ctrlkey": true,
             "key": "s"
           },
           {
-            "ctrlKey": true,
+            "ctrlkey": true,
             "key": "e"
           }
         ]
@@ -258,38 +284,63 @@
     },
     "key_trigger": {
       "type": "run",
+      "nodes": {
+        "log_node": "mouse_select_target"
+      },
       "x": 186.06666564941406,
       "y": 360.20831298828125
     },
     "save_on_ctrl_s": {
       "type": "save_content",
       "nodes": {
-        "key": "graph"
+        "save_key": "graph"
       },
       "x": 419,
       "y": 694.2083740234375
     },
-    "filter_ctrl_s": {
+    "ctrl_s": {
       "type": "script",
       "nodes": {
-        "script": "return inputs[0].ctrlKey && inputs[0].key === 's'"
+        "script": "return input.key_trigger.ctrlkey && input.key_trigger.key === 's'"
       },
       "x": 49.65833282470703,
       "y": 706.2083129882812
     },
-    "filter_ctrl_e": {
+    "ctrl_e": {
       "type": "script",
       "nodes": {
-        "script": "return inputs[0].ctrlKey && inputs[0].key === 'e'"
+        "script": "return input.key_trigger.ctrlkey && input.key_trigger.key === 'e'"
       },
-      "x": 221.22499084472656,
-      "y": 732.2083740234375
+      "x": 1147.22509765625,
+      "y": 544.2083129882812
     },
-    "trigger_graph_update": {
-      "type": "trigger"
+    "get_save_content": {
+      "type": "get_value",
+      "nodes": {
+        "value": [
+          "map_save_value_trigger",
+          "map_save_value_change",
+          "content"
+        ]
+      }
     },
-    "map_save_value": {
+    "map_save_value_change": {
+      "type": "last_updated",
+      "x": 423.683349609375,
+      "y": 486.2083435058594
+    },
+    "map_save_value_trigger": {
       "type": "trigger",
+      "nodes": {
+        "key": [
+          "map_save_value_change",
+          "key"
+        ],
+        "trigger": [
+          "map_save_value_change",
+          "trigger"
+        ]
+      },
       "x": 423.683349609375,
       "y": 486.2083435058594
     },
@@ -299,39 +350,60 @@
         "filter": "return val.path[0] === 'edges';"
       }
     },
-    "replace_edges": {
-      "type": "script",
-      "nodes": {
-        "script": "inputs[0].reduce((acc, change) => acc.concat(change.path.length === 1 ? ), [])"
-      }
-    },
     "diff_graph_changes": {
       "type": "diff_changes",
       "x": 187.60833740234375,
       "y": 935.2083129882812
     },
+    "diff_graph_changes_last_updated": {
+      "type": "last_updated"
+    },
+    "diff_graph_changes_filter_pending_changed": {
+      "type": "script",
+      "nodes": {
+        "script": "if(input.diff_graph_changes_last_updated.key === 'pending_graph') { return input.diff_graph_changes_last_updated }"
+      }
+    },
+    "get_diff_graph_changes_next": {
+      "type": "get_value",
+      "nodes": {
+        "value": [
+          "diff_graph_changes_filter_pending_changed",
+          "pending_graph"
+        ]
+      }
+    },
+    "get_diff_graph_changes_current": {
+      "type": "get_value",
+      "nodes": {
+        "value": [
+          "diff_graph_changes_filter_pending_changed",
+          "state_graph"
+        ]
+      }
+    },
     "set_editor_content": {
       "type": "last_updated",
-      "x": 703.875,
-      "y": 814.2083129882812
+      "x": 795.875,
+      "y": 942.2083129882812
     },
     "editor_content": {
       "type": "filter_last_updated",
-      "x": 746.7666625976562,
-      "y": 870.2083740234375
+      "x": 715.7666625976562,
+      "y": 999.2083129882812
     },
     "update_editor_content": {
       "type": "script",
       "nodes": {
-        "script": "state.editor.dispatch({changes: {from: 0, to: state.editor.state.doc.length, insert: typeof inputs[0] === 'string' ? inputs[0] : JSON.stringify(inputs[0], null, 2) }})"
+        "script": "const newcontent = typeof input.editor_content === 'string' ? input.editor_content : json.stringify(input.editor_content, null, 2); if(state.editor.state.doc.tostring() !== newcontent) { state.editor.dispatch({changes: {from: 0, to: state.editor.state.doc.length, insert: newcontent }}) }"
       },
-      "x": 787.4417114257812,
-      "y": 950.2083740234375
+      "x": 675.441650390625,
+      "y": 1055.2083740234375
     },
     "log_errors": {
       "type": "script",
       "nodes": {
-        "script": "state.temp.errors.forEach((id, e) => {console.log(id); console.error(e);})"
+        "script": "state.temp.errors.foreach((id, e) => {console.log(id); console.error(e);})"
       },
       "x": 3.1083335876464844,
       "y": 607.2083129882812
@@ -339,7 +411,7 @@
     "log_results": {
       "type": "script",
       "nodes": {
-        "script": "console.log(state.temp.results.forEach((v, k) => console.log(`${k}: ${JSON.stringify(v, null, 2)}`)))"
+        "script": "console.log(state.temp.results.foreach((v, k) => console.log(`${k}: ${json.stringify(v, null, 2)}`)))"
       },
       "x": 27.875,
       "y": 765.2083129882812
@@ -353,153 +425,157 @@
       "y": 100.20832824707031
     },
     "initial_graph": {
-      "type": "script",
-      "nodes": {
-        "script": "return inputs[0].idx === 0 ? inputs[0].inputs[0] : undefined;"
-      },
-      "x": 578.1083374023438,
-      "y": 312.2083435058594
+      "type": "filter_last_updated",
+      "x": 761.1083374023438,
+      "y": 296.2083435058594
     },
     "configure_editor": {
       "type": "script",
       "nodes": {
         "trigger": "editor_change_trigger",
-        "script": "\n      const trigger = state.graph.nodes[name].nodes.trigger;\n      const run_node = {...state.graph.nodes[trigger]};\n      while(run_node.type && run_node.type !== 'script'){\n        run_node.nodes = {...state.graph.defaults[run_node.type].nodes, ...(run_node.nodes ?? [])};\n        run_node.type = state.graph.defaults[run_node.type].type;\n      }\n\n      state.editor.dispatch({ \n        effects: state.lib.cm.StateEffect.appendConfig.of([\n          state.lib.cm.EditorView.theme({'&': {width: '50vw', height: '95vh'}, '.cm-scroller': { overflow: 'auto' }}),\n          state.lib.cm.EditorView.updateListener.of(\n            update => {\n              if(update.docChanged) {\n                const updated_state = update.state.doc.toString();\n                state.temp.errors.delete(trigger);\n                new AsyncFunction('state', 'name', 'inputs', run_node.nodes.script)(state, trigger, [updated_state]);\n              }\n            }),\n        ])\n      }); \n    "
+        "script": "\n      const trigger = state.graph.nodes[name].nodes.trigger;\n      state.editor.dispatch({ \n        effects: state.lib.cm.stateeffect.appendconfig.of([\n          state.lib.cm.editorview.theme({'&': {width: '50vw', height: '95vh'}, '.cm-scroller': { overflow: 'auto' }}),\n          state.lib.cm.editorview.updatelistener.of(\n            update => {\n              if(update.docchanged) {\n                const updated_state = update.state.doc.tostring();\n                new asyncfunction('state', 'name', 'input', state.graph.defaults.run.nodes.script)(state, trigger, updated_state);\n              }\n            }),\n        ])\n      }); \n    "
       },
-      "x": 843.625,
-      "y": 236.2083282470703
+      "x": 852.625,
+      "y": 244.20834350585938
     },
     "drop_node": {
       "type": "script",
       "nodes": {
-        "script": "if(inputs[0].idx !== 0 || inputs[0].inputs[0] || !inputs[0].inputs[1] || !state.graph.nodes.hasOwnProperty(inputs[0].inputs[1])) { return; } const target = state.lib.SVG(`#${inputs[0].inputs[1]}`); return [{op: 'replace', path: ['nodes', inputs[0].inputs[1], 'x'], value: target.x()}, {op: 'replace', path: ['nodes', inputs[0].inputs[1], 'y'], value: target.y()}];"
+        "script": "if(input.drop_node_input.key !== 'mouse_dragging' || input.drop_node_input.mouse_dragging || !input.drop_node_input.mouse_select_target || !state.graph.nodes.hasownproperty(input.drop_node_input.mouse_select_target)) { return; } const target = state.lib.svg(`#${input.drop_node_input.mouse_select_target}`); return [{op: (state.graph.nodes[input.drop_node_input.mouse_select_target].x ? 'replace' : 'add'), path: ['nodes', input.drop_node_input.mouse_select_target, 'x'], value: target.x()}, {op: (state.graph.nodes[input.drop_node_input.mouse_select_target].y ? 'replace' : 'add'), path: ['nodes', input.drop_node_input.mouse_select_target, 'y'], value: target.y()}];"
       },
       "x": 581.7833251953125,
       "y": 924.2083129882812
     },
     "drop_node_input": {
       "type": "last_updated",
-      "x": 631.3167114257812,
-      "y": 645.2083740234375
-    },
-    "backup_save_content": {
-      "type": "save_content",
-      "nodes": {
-        "key": "backup"
-      },
-      "x": 56.099998474121094,
-      "y": 950.2083129882812
-    },
-    "backup_save": {
-      "type": "trigger",
-      "x": 353.6666564941406,
-      "y": 770.2083129882812
+      "x": 638.316650390625,
+      "y": 660.2083129882812
     },
     "selected_node_script": {
       "type": "script",
       "nodes": {
-        "script": "return state.graph.nodes[inputs[0]]?.nodes?.script ?? state.graph"
-      }
+        "script": "return input.state_graph?.nodes[input.mouse_select_target]?.nodes?.script ? input.state_graph.nodes[input.mouse_select_target].nodes?.script : input.state_graph"
+      },
+      "x": 1099.88330078125,
+      "y": 474.2083435058594
     },
     "update_selected_content": {
       "type": "script",
       "nodes": {
-        "script": "return JSON.parse(inputs[0])"
+        "script": "return json.parse(input.selected_node_script)"
       }
     },
-    "map_save_trigger": {
-      "type": "trigger"
+    "parse_editor_content_change": {
+      "type": "last_updated",
+      "x": 1080.49169921875,
+      "y": 637.2083129882812
+    },
+    "parse_editor_content_trigger": {
+      "type": "trigger",
+      "nodes": {
+        "key": [
+          "parse_editor_content_change",
+          "key"
+        ],
+        "trigger": [
+          "parse_editor_content_change",
+          "trigger"
+        ]
+      },
+      "x": 1080.49169921875,
+      "y": 637.2083129882812
     }
   },
   "defaults": {
     "run": {
       "type": "script",
       "nodes": {
-        "script": "\n      const node = state.graph.nodes[name];\n      const stack = state.graph.edges.filter(c => c[0] === name).map(c => c[1]); \n\n      state.temp.results.set(name, inputs[0]);\n\n\t\t\tconst log_node = \"key_trigger\";\n\n      while(stack.length > 0) { \n        const run = stack.pop(); \n        if(!state.graph.nodes.hasOwnProperty(run)) {\n          throw new Error(\"Unknown node \" + run)\n        }\n        const run_node = {...state.graph.nodes[run]};\n        while(run_node.type && run_node.type !== 'script'){\n          if(!state.graph.defaults.hasOwnProperty(run_node.type)) {\n            throw new Error(\"Unknown node type \" + run_node.type + \" on node \" + run);\n          }\n          run_node.nodes = {...state.graph.defaults[run_node.type].nodes, ...run_node.nodes};\n          run_node.type = state.graph.defaults[run_node.type].type;\n        }\n\n        const inputs = state.graph.edges.filter(c => c[1] === run).map(c => state.temp.results.get(c[0])); \n\t\t\t\tif(log_node === run){\n\t\t\t\t\tconsole.log(\"start \" + run);\n\t\t\t\t}\n        await Promise.resolve(run_node)\n          .then(node => new AsyncFunction('state', 'name', 'inputs', run_node.nodes.script)(state, run, inputs))\n          .then(result => {\n            state.temp.errors.delete(run);\n            if(result !== undefined) {  \n              state.temp.results.set(run, result); \n              state.graph.edges.filter(c => c[0] === run).forEach(c => stack.unshift(c[1])); \n            }\n\t\t\t\t\t\tif(log_node === run){\n\t\t\t\t\t\t\tconsole.log(\"end \" + run + \" with \");\n\t\t\t\t\t\t\tconsole.log(result);\n\t\t\t\t\t\t}\n          })\n          .catch(err => { console.log(`error running ${run}`); console.error(err); state.temp.errors.set(run, err); });\n      }\n    "
+        "script": "\n      const node = state.graph.nodes[name];\n      const stack = state.graph.edges.filter(c => c[0] === name).map(c => c[1]); \n\n      state.temp.results.set(name, input);\n\n\t\t\tconst log_node = node.nodes?.log_node;\n\n      while(stack.length > 0) { \n        const run = stack.pop(); \n        if(!state.graph.nodes.hasownproperty(run)) {\n          throw new error(\"unknown node \" + run)\n        }\n        const run_node = {...state.graph.nodes[run]};\n        while(run_node.type && run_node.type !== 'script'){\n          if(!state.graph.defaults.hasownproperty(run_node.type)) {\n            throw new error(\"unknown node type \" + run_node.type + \" on node \" + run);\n          }\n          run_node.nodes = {...state.graph.defaults[run_node.type].nodes, ...run_node.nodes};\n          run_node.type = state.graph.defaults[run_node.type].type;\n        }\n\n        const input = object.fromentries(\n\t\t\t\t\tstate.graph.edges\n\t\t\t\t\t\t.filter(c => c[1] === run)\n\t\t\t\t\t\t.map(c => [c[2] ?? c[0], state.temp.results.get(c[0])])\n\t\t\t\t);\n\n\t\t\t\tif(log_node === run){\n\t\t\t\t\tconsole.log(\"start \" + run + \" with input \");\n\t\t\t\t\tconsole.dir(input);\n\t\t\t\t}\n\n        await promise.resolve(run_node)\n          .then(node => new asyncfunction('state', 'name', 'input', node.nodes.script)(state, run, input))\n          .then(result => {\n            state.temp.errors.delete(run);\n            if(result !== undefined) {  \n              state.temp.results.set(run, result); \n              state.graph.edges.filter(c => c[0] === run).foreach(c => stack.unshift(c[1])); \n            }\n\n\t\t\t\t\t\tif(log_node === run){\n\t\t\t\t\t\t\tconsole.log(\"end\" + run + \" with \");\n\t\t\t\t\t\t\tconsole.dir(result);\n\t\t\t\t\t\t}\n\n          })\n          .catch(err => { console.log(\"error running\" + run); console.error(err); state.temp.errors.set(run, err); });\n      }\n\t\t"
       }
     },
     "log": {
       "type": "script",
       "nodes": {
-        "script": "console.log(inputs)"
+        "script": "console.dir(input)"
       }
     },
     "stringify": {
       "type": "script",
       "nodes": {
-        "script": "return JSON.stringify(inputs[0])"
+        "script": "return json.stringify(input[state.graph.nodes[name].nodes.key])"
       }
     },
     "mouse_event": {
       "type": "script",
       "nodes": {
-        "script": "\n      const trigger = state.graph.nodes[name].nodes.trigger;\n      const run_node = {...state.graph.nodes[trigger]};\n      while(run_node.type && run_node.type !== 'script'){\n        run_node.nodes = {...state.graph.defaults[run_node.type].nodes, ...run_node.nodes};\n        run_node.type = state.graph.defaults[run_node.type].type;\n      }\n\n      const mouseEvent = (ty) => (e) => {\n        const mouse_event = {x: e.x, y: e.y, target: document.elementFromPoint(e.x, e.y).parentElement.id, buttons: e.buttons, button: e.button, ty };\n        new AsyncFunction('state', 'name', 'inputs', run_node.nodes.script)(state, trigger, [mouse_event]);\n      };\n\n      document.getElementById('graph').onmousemove = mouseEvent('mousemove');\n      document.getElementById('graph').onmousedown = mouseEvent('mousedown');\n      document.getElementById('graph').onmouseup = mouseEvent('mouseup');\n    "
+        "script": "\n      const trigger = state.graph.nodes[name].nodes.trigger;\n      const mouseevent = (ty) => (e) => {\n     const mouse_event = {x: e.x, y: e.y, target: document.elementfrompoint(e.x, e.y).parentelement.id, buttons: e.buttons, button: e.button, ty };\n        new asyncfunction('state', 'name', 'input', state.graph.defaults.run.nodes.script)(state, trigger, {...mouse_event});\n      };\n\n      document.getelementbyid('graph').onmousemove = mouseevent('mousemove');\n      document.getelementbyid('graph').onmousedown = mouseevent('mousedown');\n      document.getelementbyid('graph').onmouseup = mouseevent('mouseup');\n    "
       }
     },
     "tag": {
       "type": "script",
       "nodes": {
-        "script": "return () => state.lib.html`<${state.graph.nodes[name].nodes.tag} ...${state.graph.nodes[name].nodes.attrs}>${new Function(`return ${state.graph.nodes[name].nodes.content}`)()}</${state.graph.nodes[name].nodes.tag}>`"
+        "script": "return () => state.lib.html`<${state.graph.nodes[name].nodes.tag} ...${state.graph.nodes[name].nodes.attrs}>${new function(`return ${state.graph.nodes[name].nodes.content}`)()}</${state.graph.nodes[name].nodes.tag}>`"
       }
     },
     "render_html": {
       "type": "script",
       "nodes": {
-        "script": "target = new Function(`return ${state.graph.nodes[name].nodes.target}`)(); state.lib.render(state.lib.html`${inputs.map(fn => state.lib.html`<${fn} />`)}`, target)"
+        "script": "target = new function(`return ${state.graph.nodes[name].nodes.target}`)(); state.lib.render(state.lib.html`${object.values(input).map(fn => state.lib.html`<${fn} />`)}`, target)"
       }
     },
     "filter_changed": {
       "type": "script",
       "nodes": {
-        "script": "return state.temp.results.get(name) === inputs[0] ? undefined : inputs[0]"
+        "script": "return state.temp.results.get(name) === input.value ? undefined : input.value"
       }
     },
     "save_content": {
       "type": "script",
       "nodes": {
-        "script": "return localStorage.setItem(state.graph.nodes[name].nodes.key, inputs[0])"
+        "script": "return localstorage.setitem(state.graph.nodes[name].nodes.save_key, input.content)"
       }
     },
     "load_content": {
       "type": "script",
       "nodes": {
-        "script": "return localStorage.getItem(state.graph.nodes[name].nodes.key)"
+        "script": "return localstorage.getitem(state.graph.nodes[name].nodes.key)"
       }
     },
     "diff_changes": {
       "type": "script",
       "nodes": {
-        "script": "if(inputs[0] === undefined || inputs[1] === undefined){return;} const diff = state.lib.diff(inputs[0], inputs[1]); return diff.length > 0 ? diff : undefined;"
+        "script": "if(input.current === undefined || input.next === undefined){return;} const diff = state.lib.diff(input.current, input.next); return diff.length > 0 ? diff : undefined;"
       }
     },
     "filter_input": {
       "type": "script",
       "nodes": {
-        "script": "return inputs[0].filter(val => new Function('state', 'name', 'inputs', 'val', state.graph.nodes[name].nodes.filter)(state, name, inputs, val))"
+        "script": "return object.fromentries(object.entries(input).filter(val => new function('state', 'name', 'input', 'val', state.graph.nodes[name].nodes.filter)(state, name, input, val)))"
       }
     },
     "get_value": {
       "type": "script",
       "nodes": {
-        "script": "return inputs[0][state.graph.nodes[name].nodes.value]"
+        "script": "return state.lib.get(input, state.graph.nodes[name].nodes.value)"
       }
     },
     "value_changed": {
       "type": "script",
       "nodes": {
-        "script": "const value = inputs[0][state.graph.nodes[name].nodes.value]; return state.temp.results.get(name) === value ? undefined : value"
+        "script": "const value = state.lib.get(input, state.graph.nodes[name].nodes.value); return state.temp.results.get(name) === value ? undefined : value"
       }
     },
     "last_updated": {
       "type": "script",
+      "description": "returns the key of the input value that was last updated",
       "nodes": {
-        "script": "const prev_inputs = state.temp.results.get(name)?.inputs; const idx = prev_inputs ? prev_inputs.findIndex((v, i) => v !== inputs[i]) : inputs.findIndex(v => v !== undefined); return {idx: idx >= 0 ? idx : state.temp.results.get(name)?.idx, inputs};"
+        "script": "const previous = state.temp.results.get(name) ?? {}; const key = object.keys(input).find(k => previous[k] !== input[k]) ?? previous.key; return {key, ...input};"
       }
     },
     "filter_last_updated": {
       "type": "script",
       "nodes": {
-        "script": "return inputs[0].inputs[inputs[0].idx]"
+        "script": "return input.last_updated[input.last_updated.key]"
       }
     },
     "value": {
@@ -511,14 +587,14 @@
     "keyboard_event": {
       "type": "script",
       "nodes": {
-        "script": "\n      const trigger = state.graph.nodes[name].nodes.trigger;\n      const run_node = {...state.graph.nodes[trigger]};\n      while(run_node.type && run_node.type !== 'script'){\n        run_node.nodes = {...state.graph.defaults[run_node.type].nodes, ...run_node.nodes};\n        run_node.type = state.graph.defaults[run_node.type].type;\n      }\n      const isPrevented = (key_e) =>\n        state.graph.nodes[name].nodes.prevent_default_keys && state.graph.nodes[name].nodes.prevent_default_keys.reduce(\n          (acc, key) => acc || Object.keys(key).reduce((acc, k) => acc && key_e[k] === key[k] , true)\n            , false);\n\n      const keyboardEvent = (ty) => (e) => {\n        const key_e = {event: ty, code: e.code, altKey: e.altKey, ctrlKey: e.ctrlKey, key: e.key, metaKey: e.metaKey};\n        state.temp.errors.delete(trigger);\n        if(isPrevented(key_e)) {\n          e.preventDefault();\n        }\n\n        new AsyncFunction('state', 'name', 'inputs', run_node.nodes.script)(state, trigger, [key_e]);\n      }\n\n  window.addEventListener('keyup', keyboardEvent('keyup')); window.addEventListener('keydown', keyboardEvent('keydown'));\n    "
+        "script": "\n      const trigger = state.graph.nodes[name].nodes.trigger;\n      const isprevented = (key_e) =>\n        state.graph.nodes[name].nodes.prevent_default_keys && state.graph.nodes[name].nodes.prevent_default_keys.reduce(\n          (acc, key) => acc || object.keys(key).reduce((acc, k) => acc && key_e[k] === key[k] , true)\n            , false);\n\n      const keyboardevent = (ty) => (e) => {\n        const key_e = {event: ty, code: e.code, altkey: e.altkey, ctrlkey: e.ctrlkey, key: e.key, metakey: e.metakey};\n        if(isprevented(key_e)) {\n          e.preventdefault();\n        }\n\n        new asyncfunction('state', 'name', 'input', state.graph.defaults.run.nodes.script)(state, trigger, key_e);\n      }\n\n  window.addeventlistener('keydown', keyboardevent('keydown'));\n    "
       }
     },
     "trigger": {
       "type": "script",
-      "description": "watches for a true on the trigger input to pass the value input through",
+      "description": "watches for a true on the trigger input to pass the full input through",
       "nodes": {
-        "script": "if(inputs[0]){ return inputs[1]; }"
+        "script": "const key = state.graph.nodes[name].nodes.key ?? 'key'; const trigger = state.graph.nodes[name].nodes.trigger ?? 'trigger'; if(state.lib.get(input, key) === 'trigger' && state.lib.get(input, trigger)){ return input }"
       }
     }
   },
@@ -565,11 +641,33 @@
     ],
     [
       "state_graph",
-      "diff_graph_changes"
+      "diff_graph_changes_last_updated"
     ],
     [
       "pending_graph",
-      "diff_graph_changes"
+      "diff_graph_changes_last_updated"
+    ],
+    [
+      "diff_graph_changes_last_updated",
+      "diff_graph_changes_filter_pending_changed"
+    ],
+    [
+      "diff_graph_changes_filter_pending_changed",
+      "get_diff_graph_changes_next"
+    ],
+    [
+      "diff_graph_changes_filter_pending_changed",
+      "get_diff_graph_changes_current"
+    ],
+    [
+      "get_diff_graph_changes_next",
+      "diff_graph_changes",
+      "next"
+    ],
+    [
+      "get_diff_graph_changes_current",
+      "diff_graph_changes",
+      "current"
     ],
     [
       "editor_change_trigger",
@@ -577,11 +675,15 @@
     ],
     [
       "key_trigger",
-      "filter_ctrl_s"
+      "ctrl_s"
     ],
     [
       "key_trigger",
-      "filter_ctrl_e"
+      "ctrl_e"
+    ],
+    [
+      "mouse_event_type_changed",
+      "hover_state"
     ],
     [
       "mouse_target_changed",
@@ -589,15 +691,17 @@
     ],
     [
       "editor_content_changes",
-      "last_editor_content_change"
+      "last_editor_content_change",
+      "last_updated"
     ],
     [
       "initial_graph",
       "load_graph"
     ],
     [
-      "filter_ctrl_s",
-      "map_save_value"
+      "ctrl_s",
+      "map_save_value_change",
+      "trigger"
     ],
     [
       "state_graph",
@@ -605,23 +709,21 @@
     ],
     [
       "graph_stringify",
-      "map_save_value"
+      "map_save_value_change",
+      "content"
     ],
     [
-      "map_save_value",
-      "save_on_ctrl_s"
+      "map_save_value_change",
+      "map_save_value_trigger"
     ],
     [
-      "filter_ctrl_s",
-      "backup_save"
+      "map_save_value_trigger",
+      "get_save_content"
     ],
     [
-      "map_save_value",
-      "backup_save"
-    ],
-    [
-      "backup_save",
-      "backup_save_content"
+      "get_save_content",
+      "save_on_ctrl_s",
+      "content"
     ],
     [
       "mouse_trigger",
@@ -652,16 +754,33 @@
       "mouse_target_changed"
     ],
     [
-      "filter_ctrl_e",
-      "parse_editor_content_trigger"
+      "ctrl_e",
+      "parse_editor_content_change",
+      "trigger"
     ],
     [
       "last_editor_content_change",
+      "parse_editor_content_change"
+    ],
+    [
+      "mouse_select_target",
+      "parse_editor_content_change"
+    ],
+    [
+      "parse_editor_content_change",
       "parse_editor_content_trigger"
     ],
     [
       "parse_editor_content_trigger",
-      "parse_editor_content"
+      "parse_editor_state_graph"
+    ],
+    [
+      "parse_editor_content_trigger",
+      "parse_editor_node_script"
+    ],
+    [
+      "parse_editor_node_script",
+      "queue_apply_diff"
     ],
     [
       "load_graph",
@@ -673,7 +792,8 @@
     ],
     [
       "set_pending_graph",
-      "pending_graph"
+      "pending_graph",
+      "last_updated"
     ],
     [
       "diff_graph_changes",
@@ -708,11 +828,7 @@
       "show_errors"
     ],
     [
-      "run_changes",
-      "show_errors"
-    ],
-    [
-      "parse_editor_content",
+      "parse_editor_state_graph",
       "show_errors"
     ],
     [
@@ -720,16 +836,13 @@
       "set_pending_graph"
     ],
     [
-      "parse_editor_content",
+      "parse_editor_state_graph",
       "set_pending_graph"
     ],
     [
-      "state_graph",
-      "set_editor_content"
-    ],
-    [
       "set_editor_content",
-      "editor_content"
+      "editor_content",
+      "last_updated"
     ],
     [
       "editor_content",
@@ -740,12 +853,9 @@
       "set_initial_graph"
     ],
     [
-      "parse_load_graph",
-      "set_initial_graph"
-    ],
-    [
       "set_initial_graph",
-      "initial_graph"
+      "initial_graph",
+      "last_updated"
     ],
     [
       "initial_graph",
@@ -753,35 +863,34 @@
     ],
     [
       "queue_apply_diff",
-      "pop_apply_diff"
+      "pop_apply_diff",
+      "last_updated"
     ],
     [
       "pop_apply_diff",
-      "apply_diff_to_graph"
+      "apply_diff_to_graph",
+      "new_diff"
     ],
     [
       "apply_diff_to_graph",
       "set_state_graph"
     ],
     [
-      "apply_diff_to_graph",
-      "set_pending_graph"
-    ],
-    [
       "set_state_graph",
-      "state_graph"
-    ],
-    [
-      "editor_content",
-      "update_editor_content"
+      "state_graph",
+      "last_updated"
     ],
     [
       "mouse_select_target",
       "selected_node_script"
     ],
     [
-      "key_trigger",
-      "log_test"
+      "state_graph",
+      "selected_node_script"
+    ],
+    [
+      "selected_node_script",
+      "set_editor_content"
     ]
   ]
 }
