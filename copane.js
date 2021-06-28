@@ -20,16 +20,10 @@ import {lintKeymap, linter} from "@codemirror/lint";
 import { html } from 'htm/preact'
 import { render } from 'preact'
 import { SVG } from "@svgdotjs/svg.js";
-
-// import clone from "just-clone";
-import { diff } from "just-diff";
-// import { diffApply } from "just-diff-apply";
-// import extend from "just-extend";
-// import get from "just-safe-get";
-
 import * as R from 'ramda';
 
 import DEFAULT_GRAPH from "./default.copane.json"
+import { abort } from "process";
 
 const cm = {javascript, json, searchKeymap, keymap, highlightSpecialChars, 
 	drawSelection, highlightActiveLine, EditorState, EditorView, StateEffect, jsonParseLinter,
@@ -55,184 +49,60 @@ const rethrow = (tag) => (error) => {
 	}
 }
 
-/////
-// This is a plugin that takes a graph and runs it in js. The logic should be in the nodes, but the scaffolding here should work like all plugins - handle errors, etc.
-/////
-
-// TODO: Names are unique, just use them for ids?
-
-
-const oldScript = `
-	const stack = state.graph.edges.filter(c => c[0] === name).map(c => c[1]); 
-
-	state.temp.results.set(name, inputs[0]);
-
-	const log_node = "key_trigger";
-
-	while(stack.length > 0) { 
-		const run = stack.pop(); 
-		if(!state.graph.nodes.hasOwnProperty(run)) {
-			throw new Error("Unknown node " + running.node)
-		}
-		const run_node = {...state.graph.nodes[run]};
-		while(run_node.type && run_node.type !== 'script'){
-			if(!state.graph.defaults.hasOwnProperty(run_node.type)) {
-				throw new Error("Unknown node type " + run_node.type + " on node " + run);
-			}
-			run_node.nodes = {...state.graph.defaults[run_node.type].nodes, ...run_node.nodes};
-			run_node.type = state.graph.defaults[run_node.type].type;
-		}
-
-		const inputs = state.graph.edges.filter(c => c[1] === run).map(c => state.temp.results.get(c[0])); 
-		if(log_node === run){
-			console.log("start " + run);
-		}
-		await Promise.resolve(run_node)
-			.then(node => new AsyncFunction('state', 'name', 'inputs', run_node.nodes.script)(state, run, inputs))
-			.then(result => {
-				state.temp.errors.delete(run);
-				if(result !== undefined) {  
-					state.temp.results.set(run, result); 
-					state.graph.edges.filter(c => c[0] === run).forEach(c => stack.unshift(c[1])); 
-				}
-				if(log_node === run){
-					console.log("end " + run + " with ");
-					console.log(result);
-				}
-			})
-			.catch(err => { console.error(err); state.temp.errors.set(run, err); });
-	}
-`;
-
-const mouseEventScript = `
-	const trigger = state.graph.nodes[name].nodes.trigger;
-	const run_node = {...state.graph.nodes[trigger]};
-	while(run_node.type && run_node.type !== 'script'){
-		run_node.nodes = {...state.graph.defaults[run_node.type].nodes, ...run_node.nodes};
-		run_node.type = state.graph.defaults[run_node.type].type;
-	}
-
-	const mouseEvent = (ty) => (e) => {
-		const mouse_event = {x: e.x, y: e.y, target: document.elementFromPoint(e.x, e.y).parentElement.id, buttons: e.buttons, button: e.button, ty };
-		new AsyncFunction('state', 'name', 'inputs', run_node.nodes.script)(state, trigger, [mouse_event]);
-	};
-
-	document.getElementById('graph').onmousemove = mouseEvent('mousemove');
-	document.getElementById('graph').onmousedown = mouseEvent('mousedown');
-	document.getElementById('graph').onmouseup = mouseEvent('mouseup');
-`;
-
-const keyboardEventScript = `
-	const trigger = state.graph.nodes[name].nodes.trigger;
-	const run_node = {...state.graph.nodes[trigger]};
-	while(run_node.type && run_node.type !== 'script'){
-		run_node.nodes = {...state.graph.defaults[run_node.type].nodes, ...run_node.nodes};
-		run_node.type = state.graph.defaults[run_node.type].type;
-	}
-	const isPrevented = (key_e) =>
-		state.graph.nodes[name].nodes.prevent_default_keys && state.graph.nodes[name].nodes.prevent_default_keys.reduce(
-			(acc, key) => acc || Object.keys(key).reduce((acc, k) => acc && key_e[k] === key[k] , true)
-				, false);
-
-	const keyboardEvent = (ty) => (e) => {
-		const key_e = {event: ty, code: e.code, altKey: e.altKey, ctrlKey: e.ctrlKey, key: e.key, metaKey: e.metaKey};
-		state.temp.errors.delete(trigger);
-		if(isPrevented(key_e)) {
-			e.preventDefault();
-		}
-
-		new AsyncFunction('state', 'name', 'inputs', run_node.nodes.script)(state, trigger, [key_e]);
-	}
-
-	const keyup = keyboardEvent('keyup');
-
-	window.addEventListener('keydown', keyup);
-`
-
-const configEditorScript = `
-	const trigger = state.graph.nodes[name].nodes.trigger;
-	const run_node = {...state.graph.nodes[trigger]};
-	while(run_node.type && run_node.type !== 'script'){
-		run_node.nodes = {...state.graph.defaults[run_node.type].nodes, ...(run_node.nodes ?? [])};
-		run_node.type = state.graph.defaults[run_node.type].type;
-	}
-
-	state.editor.dispatch({ 
-		effects: state.lib.cm.StateEffect.appendConfig.of([
-			state.lib.cm.EditorView.theme({'&': {width: '50vw', height: '95vh'}, '.cm-scroller': { overflow: 'auto' }}),
-			state.lib.cm.EditorView.updateListener.of(
-				update => {
-					if(update.docChanged) {
-						const updated_state = update.state.doc.toString();
-						state.temp.errors.delete(trigger);
-						new AsyncFunction('state', 'name', 'inputs', run_node.nodes.script)(state, trigger, [updated_state]);
-					}
-				}),
-		])
-	}); 
-`
-
-// type Node = string | number | boolean | { type: string, nodes: {[key: string]: Node}, edges: [[string, string]]}
-
-// Plugins should have a default graph
-
-// This is just an easy way to edit the run script for now
-
-// lib :: lib, node :: this node, input :: {ops: [], graph: graph}
-// initialize stack with input
-// never mutate input
-		// while(running.node.type && run_node.type !== 'script'){
-		//   if(!state.graph.defaults.hasOwnProperty(run_node.type)) {
-		//     throw new Error("Unknown node type " + run_node.type + " on node " + run);
-		//   }
-		//   run_node.nodes = {...state.graph.defaults[run_node.type].nodes, ...run_node.nodes};
-		//   run_node.type = state.graph.defaults[run_node.type].type;
-		// }
-
-const old_script = `
-	input.nodes_by_id = lib.R.compose(lib.R.fromPairs, lib.R.traverse(lib.R.lensIndex(1)))(input.graph.nodes)
-
-	const log_node = new input.nodes_by_id[self_id].log_node;
-
-	const stack = input.graph.edges.filter(c => c.from === node).map(c => {
-		if (!input.nodes_by_id[c.to]) {
-			throw new Error("Unknown node");
-		}
-
-		return {node: input.nodes_by_id[c.to], input}
-	}); 
-
-
-	while(stack.length > 0) { 
-		const running = stack.pop(); 
-
-		if(log_node === running.){
-			console.log("start " + run + " with input ");
-			console.dir(input);
-		}
-
-		await Promise.resolve(run_node)
-			.then(node => new AsyncFunction('state', 'name', 'input', node.nodes.script)(state, run, input))
-			.then(result => {
-				state.temp.errors.delete(run);
-				if(result !== undefined) {  
-					state.temp.results.set(run, result); 
-					state.graph.edges.filter(c => c[0] === run).forEach(c => stack.unshift(c[1])); 
-				}
-
-				if(log_node === run){
-					console.log("end" + run + " with ");
-					console.dir(result);
-				}
-
-			})
-			.catch(err => { console.log("error running" + run); console.error(err); state.temp.errors.set(run, err); });
-	}
-`
-
 // HTML setup
 
-const lib = { cm, html, render, SVG, R, diff }
+const queue = () => ({
+	list: [],
+	callback: undefined,
+	abortController: new AbortController(),
+	pop() {
+		if(this.list.length > 0) {
+			return Promise.resolve(this.list.pop());
+		}
+
+		return new Promise((resolve, reject) => {
+			this.abortController.signal.addEventListener('abort', reject);
+
+			const current_cb = this.callback;
+			this.callback = current_cb ? (v) => {resolve(v); current_cb(v) } : resolve;
+		});
+	},
+	push(v, isArr){
+		if(isArr) {
+			if (this.callback) {
+				const cb = this.callback;
+				this.callback = undefined;
+				cb(v.pop());
+			}
+
+			this.list.unshift(...v)
+		} else {
+			if(this.callback) {
+				const cb = this.callback;
+				this.callback = undefined;
+				this.last = performance.now();
+				cb(v);
+			} else {
+				this.list.unshift(v);
+			}
+		}
+
+		this.last = performance.now();
+
+		return this;
+	}
+});
+
+const queueIterator = (queue) => ({[Symbol.asyncIterator](){
+		return {
+			queue,
+			next(){
+				return this.queue.pop().then(value => ({done: this.queue.abortController.signal.aborted, value}));
+			}
+		}
+	}})
+
+const lib = { cm, html, render, SVG, R, queue, queueIterator }
 
 const editorEl = document.getElementById("editor");
 const graphEl = document.getElementById("graph");
@@ -282,31 +152,103 @@ const state = {
 	editor: editorView,
 };
 
-const runNode = async (node, input) => node.script 
-	? new AsyncFunction('lib', 'state', 'input', node.script)(lib, state, input)
-	: await runGraph(node, {}, [['in', input]]);
+let log_node = "";
+let debug_node = "";
 
-const runGraph = async (graph, outputs, stack) => {
-	const current = lib.R.head(stack);
-	const current_id = current[0];
-	const current_input = current[1];
-	console.log(current);
-	const current_output = await runNode(graph.nodes[current_id], current_input);
-	const next_outputs = lib.R.assoc(current_id, current_output, outputs);
+const runNode = (node, input) => node.script 
+		? new AsyncFunction('lib', 'state', 'input', 'node', node.script)(lib, state, input, node)
+		: runGraph(node, input);
 
-	const nexts = lib.R.compose(lib.R.map(e => e[1]), lib.R.filter(edge => edge[0] === current_id))(graph.edges);
-	const next_inputs = lib.R.map(next_edge => {
-		const next_input_edges = lib.R.filter(e => e[1] === next_edge, graph.edges);
-		const next_input_values = lib.R.map(next_input_edge => next_outputs[next_input_edge[0]], next_input_edges);
-		const next_input = lib.R.mergeAll(next_input_values);
-		return next_input;
-	}, nexts);
 
-	const new_stack = lib.R.zip(nexts, next_inputs);
+const runGraph = async (graph, input) => ({
+	outputs: {},
+	queue: lib.queue().push({id: "in", node: graph.nodes.in, input: {...input, ...graph}}),
+	count: 0,
+	async* [Symbol.asyncIterator](){
+		const runOutput = (run_cmd, output) => {
 
-	if(current_output !== undefined) {
-		return runGraph(graph, next_outputs, lib.R.concat(lib.R.tail(stack), new_stack));
+			if(run_cmd.id === debug_node) {
+				debugger;
+			}
+
+			if(run_cmd.id === log_node) {
+				console.log(output);
+			}
+
+			// const changed = this.outputs[run_cmd[0]] === undefined || lib.R.equals(this.outputs[run_cmd[0]], output);
+
+			this.outputs = lib.R.assoc(run_cmd.id, output, this.outputs);
+
+			const next_edges = lib.R.compose(lib.R.filter(edge => edge.from === run_cmd.id))(graph.edges);
+			const new_stack = lib.R.map(next_edge => ({
+				id: next_edge.to, 
+				node: graph.nodes[next_edge.to].type && !graph.nodes[next_edge.to].script 
+					? lib.R.mergeRight(graph.nodes[next_edge.to], graph.defaults[graph.nodes[next_edge.to].type]) 
+					: graph.nodes[next_edge.to],
+				input: lib.R.compose(
+					lib.R.mergeLeft({last_updated: next_edge.as ? next_edge.as : Object.keys(output)}),
+					lib.R.mergeLeft(next_edge.as ? lib.R.objOf(next_edge.as, output) : output),
+					lib.R.reduce((acc, input_edge) => 
+						lib.R.mergeLeft(
+							input_edge.as 
+							? lib.R.objOf(input_edge.as, this.outputs[input_edge.from]) 
+							: this.outputs[input_edge.from],
+							acc
+						)
+					, {}),
+					lib.R.filter(edge => edge.to === next_edge.to && edge.from !== run_cmd.id)
+				)(graph.edges)
+			}), next_edges);
+
+			this.queue.push(new_stack, true);
+
+			return output;
+		}
+
+		for await (const run_cmd of lib.queueIterator(this.queue)) {
+			if(run_cmd.id === log_node) {
+				console.log(run_cmd);
+			}
+
+			if(run_cmd.id === debug_node) {
+				debugger;
+			}
+
+
+			const output_generator = await runNode(lib.R.mergeLeft({id: run_cmd.id}, run_cmd.node), run_cmd.input);
+			if(output_generator && output_generator[Symbol.asyncIterator]) {
+				// fork
+				(async function(){
+					for await (const output of output_generator) {
+						if(output !== undefined && output !== null) {
+							runOutput(run_cmd, lib.R.has('last_updated', output) ? lib.R.omit(['last_updated'], output) : output);
+						}
+					}
+				})()
+			} else if(output_generator !== undefined && output_generator !== null) {
+				const value = runOutput(run_cmd, lib.R.has('last_updated', output_generator) ? lib.R.omit(['last_updated'], output_generator) : output_generator);
+				if(run_cmd.id === "out") {
+					yield value;
+				}
+			}
+		}
 	}
-}
+});
 
-runNode(DEFAULT_GRAPH, DEFAULT_GRAPH)
+const run = async (graph) => {
+	console.log(graph);
+	const default_run = await runNode(graph, graph);
+	const output = await default_run;
+	let next_graph;
+	for await(const value of output) {
+		console.log('out happened');
+		next_graph = value;
+		if(next_graph) {
+			break;
+		}
+	}
+
+	run(next_graph);
+};
+
+run(DEFAULT_GRAPH);

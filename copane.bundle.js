@@ -28029,159 +28029,6 @@
 
     makeMorphable();
 
-    var justDiff = {
-      diff: diff,
-      jsonPatchPathConverter: jsonPatchPathConverter,
-    };
-
-    /*
-      const obj1 = {a: 4, b: 5};
-      const obj2 = {a: 3, b: 5};
-      const obj3 = {a: 4, c: 5};
-
-      diff(obj1, obj2);
-      [
-        { "op": "replace", "path": ['a'], "value": 3 }
-      ]
-
-      diff(obj2, obj3);
-      [
-        { "op": "remove", "path": ['b'] },
-        { "op": "replace", "path": ['a'], "value": 4 }
-        { "op": "add", "path": ['c'], "value": 5 }
-      ]
-
-      // using converter to generate jsPatch standard paths
-      // see http://jsonpatch.com
-      import {diff, jsonPatchPathConverter} from 'just-diff'
-      diff(obj1, obj2, jsonPatchPathConverter);
-      [
-        { "op": "replace", "path": '/a', "value": 3 }
-      ]
-
-      diff(obj2, obj3, jsonPatchPathConverter);
-      [
-        { "op": "remove", "path": '/b' },
-        { "op": "replace", "path": '/a', "value": 4 }
-        { "op": "add", "path": '/c', "value": 5 }
-      ]
-
-      // arrays
-      const obj4 = {a: 4, b: [1, 2, 3]};
-      const obj5 = {a: 3, b: [1, 2, 4]};
-      const obj6 = {a: 3, b: [1, 2, 4, 5]};
-
-      diff(obj4, obj5);
-      [
-        { "op": "replace", "path": ['a'], "value": 3 }
-        { "op": "replace", "path": ['b', 2], "value": 4 }
-      ]
-
-      diff(obj5, obj6);
-      [
-        { "op": "add", "path": ['b', 3], "value": 5 }
-      ]
-
-      // nested paths
-      const obj7 = {a: 4, b: {c: 3}};
-      const obj8 = {a: 4, b: {c: 4}};
-      const obj9 = {a: 5, b: {d: 4}};
-
-      diff(obj7, obj8);
-      [
-        { "op": "replace", "path": ['b', 'c'], "value": 4 }
-      ]
-
-      diff(obj8, obj9);
-      [
-        { "op": "replace", "path": ['a'], "value": 5 }
-        { "op": "remove", "path": ['b', 'c']}
-        { "op": "add", "path": ['b', 'd'], "value": 4 }
-      ]
-    */
-
-    function diff(obj1, obj2, pathConverter) {
-      if (!obj1 || typeof obj1 != 'object' || !obj2 || typeof obj2 != 'object') {
-        throw new Error('both arguments must be objects or arrays');
-      }
-
-      pathConverter ||
-        (pathConverter = function(arr) {
-          return arr;
-        });
-
-      function getDiff(obj1, obj2, basePath, diffs) {
-        var obj1Keys = Object.keys(obj1);
-        var obj1KeysLength = obj1Keys.length;
-        var obj2Keys = Object.keys(obj2);
-        var obj2KeysLength = obj2Keys.length;
-        var path;
-
-        for (var i = 0; i < obj1KeysLength; i++) {
-          var key = Array.isArray(obj1) ? Number(obj1Keys[i]) : obj1Keys[i];
-          if (!(key in obj2)) {
-            path = basePath.concat(key);
-            diffs.remove.push({
-              op: 'remove',
-              path: pathConverter(path),
-            });
-          }
-        }
-
-        for (var i = 0; i < obj2KeysLength; i++) {
-          var key = Array.isArray(obj2) ? Number(obj2Keys[i]) : obj2Keys[i];
-          var obj1AtKey = obj1[key];
-          var obj2AtKey = obj2[key];
-          if (!(key in obj1)) {
-            path = basePath.concat(key);
-            var obj2Value = obj2[key];
-            diffs.add.push({
-              op: 'add',
-              path: pathConverter(path),
-              value: obj2Value,
-            });
-          } else if (obj1AtKey !== obj2AtKey) {
-            if (
-              Object(obj1AtKey) !== obj1AtKey ||
-              Object(obj2AtKey) !== obj2AtKey
-            ) {
-              path = pushReplace(path, basePath, key, diffs, pathConverter, obj2);
-            } else {
-              if (
-                !Object.keys(obj1AtKey).length &&
-                !Object.keys(obj2AtKey).length &&
-                String(obj1AtKey) != String(obj2AtKey)
-              ) {
-                path = pushReplace(path, basePath, key, diffs, pathConverter, obj2);
-              } else {
-                getDiff(obj1[key], obj2[key], basePath.concat(key), diffs);
-              }
-            }
-          }
-        }
-
-        return diffs.remove
-          .reverse()
-          .concat(diffs.replace)
-          .concat(diffs.add);
-      }
-      return getDiff(obj1, obj2, [], {remove: [], replace: [], add: []});
-    }
-
-    function pushReplace(path, basePath, key, diffs, pathConverter, obj2) {
-      path = basePath.concat(key);
-      diffs.replace.push({
-        op: 'replace',
-        path: pathConverter(path),
-        value: obj2[key],
-      });
-      return path;
-    }
-
-    function jsonPatchPathConverter(arrayPath) {
-      return [''].concat(arrayPath).join('/');
-    }
-
     /**
      * A function that always returns `false`. Any passed in parameters are ignored.
      *
@@ -39378,7 +39225,7 @@
 
     var nodes = {
     	"in": {
-    		script: "return {graph: input}"
+    		script: "return input"
     	},
     	onload_diff_empty: {
     		type: "diff_changes",
@@ -39394,10 +39241,7 @@
     		y: 700.2083129882812
     	},
     	load_graph: {
-    		type: "load_content",
-    		nodes: {
-    			key: "graph"
-    		},
+    		script: "const loaded = localStorage.getItem('graph'); if(!loaded){ return input.graph } try { return JSON.parse(loaded); } catch(err){ return input.graph; }",
     		x: 673.00830078125,
     		y: 196.2083282470703
     	},
@@ -39409,24 +39253,20 @@
     	},
     	apply_diff_to_graph: {
     		type: "script",
-    		nodes: {
-    			script: "if(input.new_diff) { const newgraph = state.lib.clone(state.graph); state.lib.diffapply(newgraph, input.new_diff); state.graph = newgraph; return state.graph; }"
-    		},
+    		script: "if(input.new_diff) { const newgraph = lib.clone(state.graph); lib.diffapply(newgraph, input.new_diff); state.graph = newgraph; return state.graph; }",
     		x: 158.375,
     		y: 994.2083740234375
     	},
     	graph_style_tag: {
     		type: "script",
-    		nodes: {
-    			script: "return () => state.lib.html`#graph { display:flex; flex-direction: row; flex-grow: 2; justify-content: flex-start; align-content: stretch; } #graph .node { user-select: none } .tooltip { position: absolute; visibility: hidden; max-width: 120px; pointer-events: none; }`"
-    		},
+    		script: "return {create: () => lib.html`#graph { display:flex; flex-direction: row; flex-grow: 2; justify-content: flex-start; align-content: stretch; } #graph .node { user-select: none } .tooltip { position: absolute; visibility: hidden; max-width: 120px; pointer-events: none; }`}",
     		x: 845.8916625976562,
     		y: 96.20833587646484
     	},
     	render_graph_style: {
     		type: "render_html",
     		nodes: {
-    			target: "document.getelementbyid('graph_style')"
+    			target: "document.getElementById('graph_style')"
     		},
     		x: 1018.2333374023438,
     		y: 38.20833206176758
@@ -39440,58 +39280,39 @@
     	render_graph: {
     		type: "render",
     		nodes: {
-    			target: "document.queryselector('#graph')"
+    			target: "document.querySelector('#graph')"
     		},
     		x: 182.35000610351562,
     		y: 73.20833587646484
     	},
     	create_svg_base: {
     		type: "script",
-    		nodes: {
-    			script: "return state.lib.svg('.root') ?? state.lib.svg().addto('#graph').addclass('root')"
-    		},
+    		script: "return lib.SVG('.root') ?? lib.SVG().addTo('#graph').addClass('root')",
     		x: 752.5750122070312,
     		y: 725.2083129882812
     	},
     	create_nodes: {
     		type: "script",
-    		nodes: {
-    			script: "const base = input.create_svg_base; object.entries(state.graph.nodes).map(([id, n], idx) => (base.findone(`#${id}`) ??  base.text(id).attr({id, class: 'node'})).move(n.x ?? 100 * (idx % 4), n.y ?? 40 * (idx / 4))); return base;"
-    		},
+    		script: "const base = lib.SVG('.root'); if(!base){ return; } Object.entries(input.nodes).map(([id, n], idx) => (base.findOne(`#${id}`) ??  base.text(id).attr({id, class: 'node'})).move(n.x ?? 100 * (idx % 4), n.y ?? 40 * (idx / 4))); return base;",
     		x: 669.24169921875,
     		y: 486.2083435058594
     	},
     	create_lines: {
     		type: "script",
-    		nodes: {
-    			script: "const base = input.create_svg_base; return state.graph.edges.map(c => (base.findone(`#${c[0]}-${c[1]}`) ?? base.line().stroke({width: 1, color: '#000'}).attr({id: `${c[0]}-${c[1]}`}) ).plot(state.lib.svg(`#${c[0]}`)?.cx(), state.lib.svg(`#${c[0]}`)?.cy(), state.lib.svg(`#${c[1]}`)?.cx(), state.lib.svg(`#${c[1]}`)?.cy()))"
-    		},
+    		script: "const base = lib.SVG('.root'); if(!base){ return; } return input.edges.map(edge => (base.findOne(`#${edge.from}-${edge.to}`) ?? base.line().stroke({width: 1, color: '#000'}).attr({id: `${edge.from}-${edge.to}`}) ).plot(input.nodes[edge.from].x, input.nodes[edge.from].y, input.nodes[edge.to].x, input.nodes[edge.to].y))",
     		x: 880.7916870117188,
     		y: 834.2083129882812
     	},
     	show_errors: {
     		type: "script",
-    		nodes: {
-    			script: "for(e of object.keys(state.graph.nodes)){ state.lib.svg(`#${e}`)?.css({fill: state.temp.errors.has(e) ? 'red' : 'black'})}"
-    		},
+    		script: "for(e of Object.keys(input.graph.nodes)){ lib.SVG(`#${e}`)?.css({fill: state.temp.errors.has(e) ? 'red' : 'black'})}",
     		x: 861.441650390625,
     		y: 400.20831298828125
     	},
     	register_mouse_listener: {
     		type: "mouse_event",
-    		nodes: {
-    			trigger: "mouse_trigger"
-    		},
     		x: 288.5,
     		y: 26.208332061767578
-    	},
-    	mouse_trigger: {
-    		type: "run",
-    		nodes: {
-    			log_node: "mouse_select_target"
-    		},
-    		x: 946.7249755859375,
-    		y: 274.20831298828125
     	},
     	mouse_stringify: {
     		type: "stringify",
@@ -39507,7 +39328,7 @@
     		type: "value_changed",
     		nodes: {
     			value: [
-    				"mouse_trigger",
+    				"register_mouse_listener",
     				"target"
     			]
     		},
@@ -39518,7 +39339,7 @@
     		type: "value_changed",
     		nodes: {
     			value: [
-    				"mouse_trigger",
+    				"register_mouse_listener",
     				"button"
     			]
     		},
@@ -39529,7 +39350,7 @@
     		type: "value_changed",
     		nodes: {
     			value: [
-    				"mouse_trigger",
+    				"register_mouse_listener",
     				"ty"
     			]
     		},
@@ -39538,60 +39359,32 @@
     	},
     	mouse_dragging: {
     		type: "script",
-    		nodes: {
-    			script: "return input.mouse_event_type_changed === 'mousemove' ? undefined : (input.mouse_trigger.button === 0 && input.mouse_event_type_changed === 'mousedown')"
-    		}
+    		script: "return input.mouse_event_type_changed === 'mousemove' ? undefined : (input.register_mouse_listener.button === 0 && input.mouse_event_type_changed === 'mousedown')"
     	},
     	mouse_select_target: {
-    		type: "script",
-    		nodes: {
-    			script: "return input.mouse_event_type_changed === 'mousedown' ? input.mouse_target_changed : undefined"
-    		},
+    		script: "return input.last_updated === 'mouse_event_type_changed' && input.mouse_event_type_changed === 'mousedown' ? input.mouse_target_changed : undefined",
     		x: 1031.8082275390625,
     		y: 344.2083435058594
     	},
     	hover_state: {
-    		type: "script",
-    		nodes: {
-    			script: "if(!input.mouse_target_changed) {return; } const tt = document.queryselector('.tooltip'); if(input.mouse_event_type_changed !== 'mousemove' || input.mouse_target_changed === 'graph'){ tt.style = `visibility: hidden`;return; } const content = (state.temp.errors.get(input.mouse_target_changed)?.message ?? state.temp.results.get(input.mouse_target_changed)); tt.innertext = typeof content === 'string' ? content : json.stringify(content, null, 2); tt.style = `left: ${state.lib.svg(`#${input.mouse_target_changed}`)?.x() ?? '0'}px; top: ${state.lib.svg(`#${input.mouse_target_changed}`)?.y() ?? '0'}px; visibility: ${content ? 'visible' : 'hidden'};`;"
-    		},
+    		script: "if(!input.mouse_target_changed) {return; } const tt = document.queryselector('.tooltip'); if(input.mouse_event_type_changed !== 'mousemove' || input.mouse_target_changed === 'graph'){ tt.style = `visibility: hidden`;return; } const content = (state.temp.errors.get(input.mouse_target_changed)?.message ?? state.temp.results.get(input.mouse_target_changed)); tt.innertext = typeof content === 'string' ? content : JSON.stringify(content, null, 2); tt.style = `left: ${lib.SVG(`#${input.mouse_target_changed}`)?.x() ?? '0'}px; top: ${lib.SVG(`#${input.mouse_target_changed}`)?.y() ?? '0'}px; visibility: ${content ? 'visible' : 'hidden'};`;",
     		x: 950.1166381835938,
     		y: 909.2083740234375
     	},
     	drag_node: {
-    		type: "script",
-    		nodes: {
-    			script: "if(!input.mouse_dragging || !input.mouse_select_target) { return; } const target = state.lib.svg(`#${input.mouse_select_target}`); if(target?.center){ target.center(input.mouse_trigger.x, input.mouse_trigger.y); return input.mouse_trigger; }"
-    		},
+    		script: "if(!(input.mouse_dragging && input.mouse_select_target)) { return; } const target = lib.SVG(`#${input.mouse_select_target}`); if(target?.center && (Math.abs(lib.R.path(['nodes', input.mouse_select_target, 'x'], input.graph) - input.register_mouse_listener.x) > 1 || Math.abs(lib.R.path(['nodes', input.mouse_select_target, 'y'], input.graph) - input.register_mouse_listener.y) > 1)){ target.center(input.register_mouse_listener.x, input.register_mouse_listener.y); return lib.R.over(lib.R.lensPath(['nodes', input.mouse_select_target]), lib.R.evolve({x: () => input.register_mouse_listener.x, y: () => input.register_mouse_listener.y}), input.graph)}",
     		x: 787.2333374023438,
     		y: 492.2083435058594
     	},
-    	editor_change_trigger: {
-    		type: "run"
-    	},
     	parse_editor_state_graph: {
-    		type: "script",
-    		nodes: {
-    			script: "const mouse_target = input.parse_editor_content_trigger.parse_editor_content_change.mouse_select_target; return !mouse_target || mouse_target === 'graph' ? json.parse(input.parse_editor_content_trigger.parse_editor_content_change.last_editor_content_change) : undefined"
-    		},
+    		script: "const mouse_target = input.mouse_select_target; return !mouse_target || mouse_target === 'graph' ? JSON.parse(input.content) : undefined",
     		x: 1055.8582763671875,
     		y: 708.2083129882812
     	},
     	parse_editor_node_script: {
-    		type: "script",
-    		nodes: {
-    			script: "const mouse_target = input.parse_editor_content_trigger.parse_editor_content_change.mouse_select_target; return mouse_target && mouse_target !== 'graph' && state.graph.nodes[mouse_target]?.nodes?.script ? [{op: 'replace', path: ['nodes', mouse_target, 'nodes', 'script'], value: input.parse_editor_content_trigger.parse_editor_content_change.last_editor_content_change}] : undefined"
-    		},
+    		script: "const mouse_target = input.mouse_select_target; return mouse_target && mouse_target !== 'graph' && input.graph.nodes[mouse_target]?.nodes?.script ? [{op: 'replace', path: ['nodes', mouse_target, 'nodes', 'script'], value: input.parse_editor_content_trigger.parse_editor_content_change.last_editor_content_change}] : undefined",
     		x: 1055.8582763671875,
     		y: 708.2083129882812
-    	},
-    	parse_load_graph: {
-    		type: "script",
-    		nodes: {
-    			script: "if(input.load_graph){ return json.parse(input.load_graph) }"
-    		},
-    		x: 454.1000061035156,
-    		y: 218.20834350585938
     	},
     	editor_content_changes: {
     		type: "last_updated"
@@ -39601,21 +39394,6 @@
     		x: 1033.0167236328125,
     		y: 571.2083740234375
     	},
-    	set_pending_graph: {
-    		type: "last_updated",
-    		x: 1070.11669921875,
-    		y: 810.2083129882812
-    	},
-    	pending_graph: {
-    		type: "filter_last_updated",
-    		x: 79.98333740234375,
-    		y: 808.2083740234375
-    	},
-    	set_state_graph: {
-    		type: "last_updated",
-    		x: 266.2249755859375,
-    		y: 1047.208251953125
-    	},
     	state_graph: {
     		type: "filter_last_updated",
     		x: 760.1166381835938,
@@ -39623,29 +39401,19 @@
     	},
     	register_key_listener: {
     		type: "keyboard_event",
-    		nodes: {
-    			trigger: "key_trigger",
-    			prevent_default_keys: [
-    				{
-    					ctrlkey: true,
-    					key: "s"
-    				},
-    				{
-    					ctrlkey: true,
-    					key: "e"
-    				}
-    			]
-    		},
+    		script: "const isPrevented = (key_e) => node.prevent_default_keys && node.prevent_default_keys.reduce( (acc, key) => acc || Object.keys(key).reduce((acc, k) => acc && key_e[k] === key[k] , true) , false); const key_queue = lib.queue(); const keyboardEvent = (ty) => (e) => { const key_e = {event: ty, code: e.code, altKey: e.altKey, ctrlKey: e.ctrlKey, key: e.key, metaKey: e.metaKey}; if(isPrevented(key_e)) { e.preventDefault(); } key_queue.push(key_e); }; window.addEventListener('keyup', keyboardEvent('keyup')); window.addEventListener('keydown', keyboardEvent('keydown')); return {[Symbol.asyncIterator](){ return { queue: key_queue, next(){ return this.queue.pop().then(value => ({done: false, value})); } } }} ",
+    		prevent_default_keys: [
+    			{
+    				ctrlKey: true,
+    				key: "s"
+    			},
+    			{
+    				ctrlKey: true,
+    				key: "e"
+    			}
+    		],
     		x: 294.8416442871094,
     		y: 66.20833587646484
-    	},
-    	key_trigger: {
-    		type: "run",
-    		nodes: {
-    			log_node: "mouse_select_target"
-    		},
-    		x: 186.06666564941406,
-    		y: 360.20831298828125
     	},
     	save_on_ctrl_s: {
     		type: "save_content",
@@ -39656,18 +39424,12 @@
     		y: 694.2083740234375
     	},
     	ctrl_s: {
-    		type: "script",
-    		nodes: {
-    			script: "return input.key_trigger.ctrlkey && input.key_trigger.key === 's'"
-    		},
+    		script: "return input.ctrlKey && input.key === 's' && input.event === 'keydown'",
     		x: 49.65833282470703,
     		y: 706.2083129882812
     	},
     	ctrl_e: {
-    		type: "script",
-    		nodes: {
-    			script: "return input.key_trigger.ctrlkey && input.key_trigger.key === 'e'"
-    		},
+    		script: "return input.ctrlKey && input.key === 'e' && input.event === 'keydown'",
     		x: 1147.22509765625,
     		y: 544.2083129882812
     	},
@@ -39675,26 +39437,17 @@
     		type: "get_value",
     		nodes: {
     			value: [
-    				"map_save_value_trigger",
-    				"map_save_value_change",
     				"content"
     			]
     		}
     	},
-    	map_save_value_change: {
-    		type: "last_updated",
-    		x: 423.683349609375,
-    		y: 486.2083435058594
-    	},
-    	map_save_value_trigger: {
+    	map_save_value: {
     		type: "trigger",
     		nodes: {
     			key: [
-    				"map_save_value_change",
     				"key"
     			],
     			trigger: [
-    				"map_save_value_change",
     				"trigger"
     			]
     		},
@@ -39707,99 +39460,38 @@
     			filter: "return val.path[0] === 'edges';"
     		}
     	},
-    	diff_graph_changes: {
-    		type: "diff_changes",
-    		x: 187.60833740234375,
-    		y: 935.2083129882812
-    	},
-    	diff_graph_changes_last_updated: {
-    		type: "last_updated"
-    	},
-    	diff_graph_changes_filter_pending_changed: {
-    		type: "script",
-    		nodes: {
-    			script: "if(input.diff_graph_changes_last_updated.key === 'pending_graph') { return input.diff_graph_changes_last_updated }"
-    		}
-    	},
-    	get_diff_graph_changes_next: {
-    		type: "get_value",
-    		nodes: {
-    			value: [
-    				"diff_graph_changes_filter_pending_changed",
-    				"pending_graph"
-    			]
-    		}
-    	},
-    	get_diff_graph_changes_current: {
-    		type: "get_value",
-    		nodes: {
-    			value: [
-    				"diff_graph_changes_filter_pending_changed",
-    				"state_graph"
-    			]
-    		}
-    	},
-    	set_editor_content: {
-    		type: "last_updated",
-    		x: 795.875,
-    		y: 942.2083129882812
-    	},
     	editor_content: {
-    		type: "filter_last_updated",
     		x: 715.7666625976562,
-    		y: 999.2083129882812
+    		y: 999.2083129882812,
+    		script: "return typeof input.last_updated === 'string' ? input[input.last_updated] : lib.R.pick(input.last_updated, input)"
     	},
     	update_editor_content: {
-    		type: "script",
-    		nodes: {
-    			script: "const newcontent = typeof input.editor_content === 'string' ? input.editor_content : json.stringify(input.editor_content, null, 2); if(state.editor.state.doc.tostring() !== newcontent) { state.editor.dispatch({changes: {from: 0, to: state.editor.state.doc.length, insert: newcontent }}) }"
-    		},
     		x: 675.441650390625,
-    		y: 1055.2083740234375
+    		y: 1055.2083740234375,
+    		edges: [
+    		],
+    		script: "const newcontent = typeof input.editor_content === 'string' ? input.editor_content : JSON.stringify(input.editor_content, null, 2); if(state.editor.state.doc.toString() !== newcontent) { state.editor.dispatch({changes: {from: 0, to: state.editor.state.doc.length, insert: newcontent }}) }"
     	},
     	log_errors: {
-    		type: "script",
-    		nodes: {
-    			script: "state.temp.errors.foreach((id, e) => {console.log(id); console.error(e);})"
-    		},
+    		script: "state.temp.errors.foreach((id, e) => {console.log(id); console.error(e);})",
     		x: 3.1083335876464844,
     		y: 607.2083129882812
     	},
     	log_results: {
-    		type: "script",
-    		nodes: {
-    			script: "console.log(state.temp.results.foreach((v, k) => console.log(`${k}: ${json.stringify(v, null, 2)}`)))"
-    		},
+    		script: "console.log(state.temp.results.foreach((v, k) => console.log(`${k}: ${JSON.stringify(v, null, 2)}`)))",
     		x: 27.875,
     		y: 765.2083129882812
     	},
     	log_test: {
     		type: "log"
     	},
-    	set_initial_graph: {
-    		type: "last_updated",
-    		x: 457.2166748046875,
-    		y: 100.20832824707031
-    	},
-    	initial_graph: {
-    		type: "filter_last_updated",
-    		x: 761.1083374023438,
-    		y: 296.2083435058594
-    	},
     	configure_editor: {
-    		type: "script",
-    		nodes: {
-    			trigger: "editor_change_trigger",
-    			script: "\n      const trigger = state.graph.nodes[name].nodes.trigger;\n      state.editor.dispatch({ \n        effects: state.lib.cm.stateeffect.appendconfig.of([\n          state.lib.cm.editorview.theme({'&': {width: '50vw', height: '95vh'}, '.cm-scroller': { overflow: 'auto' }}),\n          state.lib.cm.editorview.updatelistener.of(\n            update => {\n              if(update.docchanged) {\n                const updated_state = update.state.doc.tostring();\n                new asyncfunction('state', 'name', 'input', state.graph.defaults.run.nodes.script)(state, trigger, updated_state);\n              }\n            }),\n        ])\n      }); \n    "
-    		},
+    		script: " const editor_update_queue = lib.queue(); state.editor.dispatch({ effects: lib.cm.StateEffect.appendConfig.of([ lib.cm.EditorView.theme({'&': {width: '50vw', height: '95vh'}, '.cm-scroller': { overflow: 'auto' }}), lib.cm.EditorView.updateListener.of( update => { if(update.docChanged) { editor_update_queue.push(update.state.doc.toString()) } }), ]) }); return lib.queueIterator(editor_update_queue); ",
     		x: 852.625,
     		y: 244.20834350585938
     	},
     	drop_node: {
-    		type: "script",
-    		nodes: {
-    			script: "if(input.drop_node_input.key !== 'mouse_dragging' || input.drop_node_input.mouse_dragging || !input.drop_node_input.mouse_select_target || !state.graph.nodes.hasownproperty(input.drop_node_input.mouse_select_target)) { return; } const target = state.lib.svg(`#${input.drop_node_input.mouse_select_target}`); return [{op: (state.graph.nodes[input.drop_node_input.mouse_select_target].x ? 'replace' : 'add'), path: ['nodes', input.drop_node_input.mouse_select_target, 'x'], value: target.x()}, {op: (state.graph.nodes[input.drop_node_input.mouse_select_target].y ? 'replace' : 'add'), path: ['nodes', input.drop_node_input.mouse_select_target, 'y'], value: target.y()}];"
-    		},
+    		script: "if(!input.drop_node_input || input.drop_node_input.key !== 'mouse_dragging' || input.drop_node_input.mouse_dragging || !input.drop_node_input.mouse_select_target || !input.nodes.hasOwnProperty(input.drop_node_input.mouse_select_target)) { return; } const target = lib.SVG(`#${input.drop_node_input.mouse_select_target}`);",
     		x: 581.7833251953125,
     		y: 924.2083129882812
     	},
@@ -39809,446 +39501,320 @@
     		y: 660.2083129882812
     	},
     	selected_node_script: {
-    		type: "script",
-    		nodes: {
-    			script: "return input.state_graph?.nodes[input.mouse_select_target]?.nodes?.script ? input.state_graph.nodes[input.mouse_select_target].nodes?.script : input.state_graph"
-    		},
+    		script: "const selected_content = input.graph?.nodes[input.mouse_select_target]?.script; if(selected_content && input.last_updated === 'graph'){ return; } return input.graph?.nodes[input.mouse_select_target]?.script ? input.graph.nodes[input.mouse_select_target].script : input.graph",
     		x: 1099.88330078125,
     		y: 474.2083435058594
     	},
     	update_selected_content: {
-    		type: "script",
-    		nodes: {
-    			script: "return json.parse(input.selected_node_script)"
-    		}
+    		script: "return JSON.parse(input.selected_node_script)"
     	},
-    	parse_editor_content_change: {
-    		type: "last_updated",
-    		x: 1080.49169921875,
-    		y: 637.2083129882812
-    	},
-    	parse_editor_content_trigger: {
+    	push_editor_content_change: {
     		type: "trigger",
     		nodes: {
     			key: [
-    				"parse_editor_content_change",
     				"key"
     			],
     			trigger: [
-    				"parse_editor_content_change",
     				"trigger"
     			]
     		},
     		x: 1080.49169921875,
     		y: 637.2083129882812
+    	},
+    	out: {
+    		script: "return input"
     	}
     };
     var defaults = {
-    	run: {
-    		type: "script",
-    		nodes: {
-    			script: "\n      const node = state.graph.nodes[name];\n      const stack = state.graph.edges.filter(c => c[0] === name).map(c => c[1]); \n\n      state.temp.results.set(name, input);\n\n\t\t\tconst log_node = node.nodes?.log_node;\n\n      while(stack.length > 0) { \n        const run = stack.pop(); \n        if(!state.graph.nodes.hasownproperty(run)) {\n          throw new error(\"unknown node \" + run)\n        }\n        const run_node = {...state.graph.nodes[run]};\n        while(run_node.type && run_node.type !== 'script'){\n          if(!state.graph.defaults.hasownproperty(run_node.type)) {\n            throw new error(\"unknown node type \" + run_node.type + \" on node \" + run);\n          }\n          run_node.nodes = {...state.graph.defaults[run_node.type].nodes, ...run_node.nodes};\n          run_node.type = state.graph.defaults[run_node.type].type;\n        }\n\n        const input = object.fromentries(\n\t\t\t\t\tstate.graph.edges\n\t\t\t\t\t\t.filter(c => c[1] === run)\n\t\t\t\t\t\t.map(c => [c[2] ?? c[0], state.temp.results.get(c[0])])\n\t\t\t\t);\n\n\t\t\t\tif(log_node === run){\n\t\t\t\t\tconsole.log(\"start \" + run + \" with input \");\n\t\t\t\t\tconsole.dir(input);\n\t\t\t\t}\n\n        await promise.resolve(run_node)\n          .then(node => new asyncfunction('state', 'name', 'input', node.nodes.script)(state, run, input))\n          .then(result => {\n            state.temp.errors.delete(run);\n            if(result !== undefined) {  \n              state.temp.results.set(run, result); \n              state.graph.edges.filter(c => c[0] === run).foreach(c => stack.unshift(c[1])); \n            }\n\n\t\t\t\t\t\tif(log_node === run){\n\t\t\t\t\t\t\tconsole.log(\"end\" + run + \" with \");\n\t\t\t\t\t\t\tconsole.dir(result);\n\t\t\t\t\t\t}\n\n          })\n          .catch(err => { console.log(\"error running\" + run); console.error(err); state.temp.errors.set(run, err); });\n      }\n\t\t"
-    		}
-    	},
     	log: {
-    		type: "script",
-    		nodes: {
-    			script: "console.dir(input)"
-    		}
+    		script: "console.dir(input)"
     	},
     	stringify: {
-    		type: "script",
-    		nodes: {
-    			script: "return json.stringify(input[state.graph.nodes[name].nodes.key])"
-    		}
+    		script: "return JSON.stringify(input[node.nodes.key])"
     	},
     	mouse_event: {
-    		type: "script",
-    		nodes: {
-    			script: "\n      const trigger = state.graph.nodes[name].nodes.trigger;\n      const mouseevent = (ty) => (e) => {\n     const mouse_event = {x: e.x, y: e.y, target: document.elementfrompoint(e.x, e.y).parentelement.id, buttons: e.buttons, button: e.button, ty };\n        new asyncfunction('state', 'name', 'input', state.graph.defaults.run.nodes.script)(state, trigger, {...mouse_event});\n      };\n\n      document.getelementbyid('graph').onmousemove = mouseevent('mousemove');\n      document.getelementbyid('graph').onmousedown = mouseevent('mousedown');\n      document.getelementbyid('graph').onmouseup = mouseevent('mouseup');\n    "
-    		}
+    		script: " const mouse_queue = lib.queue(); const last_update = {time: 0}; const mouseEvent = (ty) => (e) => { if(performance.now() - last_update.time > 32){ last_update.time = performance.now(); mouse_queue.push({x: e.x, y: e.y, target: document.elementFromPoint(e.x, e.y).parentElement.id, buttons: e.buttons, button: e.button, ty })}}; document.getElementById('graph').onmousemove = mouseEvent('mousemove'); document.getElementById('graph').onmousedown = mouseEvent('mousedown'); document.getElementById('graph').onmouseup = mouseEvent('mouseup'); return lib.queueIterator(mouse_queue);"
     	},
     	tag: {
-    		type: "script",
-    		nodes: {
-    			script: "return () => state.lib.html`<${state.graph.nodes[name].nodes.tag} ...${state.graph.nodes[name].nodes.attrs}>${new function(`return ${state.graph.nodes[name].nodes.content}`)()}</${state.graph.nodes[name].nodes.tag}>`"
-    		}
+    		script: "return () => lib.html`<${node.nodes.tag} ...${node.nodes.attrs}>${new function(`return ${node.nodes.content}`)()}</${node.nodes.tag}>`"
     	},
     	render_html: {
-    		type: "script",
-    		nodes: {
-    			script: "target = new function(`return ${state.graph.nodes[name].nodes.target}`)(); state.lib.render(state.lib.html`${object.values(input).map(fn => state.lib.html`<${fn} />`)}`, target)"
-    		}
+    		script: "target = new Function(`return ${node.nodes.target}`)(); lib.render(lib.html`${Object.values(input).map(fn => lib.html`<${fn} />`)}`, target)"
     	},
     	filter_changed: {
-    		type: "script",
-    		nodes: {
-    			script: "return state.temp.results.get(name) === input.value ? undefined : input.value"
-    		}
+    		script: "return state.temp.results.get(name) === input.value ? undefined : input.value"
     	},
     	save_content: {
-    		type: "script",
-    		nodes: {
-    			script: "return localstorage.setitem(state.graph.nodes[name].nodes.save_key, input.content)"
-    		}
+    		script: "return localStorage.setItem(node.nodes.save_key, input.content)"
     	},
     	load_content: {
-    		type: "script",
-    		nodes: {
-    			script: "return localstorage.getitem(state.graph.nodes[name].nodes.key)"
-    		}
+    		script: "return localStorage.getItem(node.nodes.key)"
     	},
     	diff_changes: {
-    		type: "script",
-    		nodes: {
-    			script: "if(input.current === undefined || input.next === undefined){return;} const diff = state.lib.diff(input.current, input.next); return diff.length > 0 ? diff : undefined;"
-    		}
+    		script: "if(input.current === undefined || input.next === undefined){return;} const diff = lib.diff(input.current, input.next); return diff.length > 0 ? diff : undefined;"
     	},
     	filter_input: {
-    		type: "script",
-    		nodes: {
-    			script: "return object.fromentries(object.entries(input).filter(val => new function('state', 'name', 'input', 'val', state.graph.nodes[name].nodes.filter)(state, name, input, val)))"
-    		}
+    		script: "return Object.fromentries(Object.entries(input).filter(val => new function('state', 'name', 'input', 'val', node.nodes.filter)(state, name, input, val)))"
     	},
     	get_value: {
-    		type: "script",
-    		nodes: {
-    			script: "return state.lib.get(input, state.graph.nodes[name].nodes.value)"
-    		}
+    		script: "return lib.R.path(node.nodes.value, input)"
     	},
     	value_changed: {
-    		type: "script",
-    		nodes: {
-    			script: "const value = state.lib.get(input, state.graph.nodes[name].nodes.value); return state.temp.results.get(name) === value ? undefined : value"
-    		}
+    		script: "if(input.last_updated === node.id){ return; }  const value = lib.R.path(node.nodes.value, input); return input[node.id] === value ? undefined : value"
     	},
     	last_updated: {
-    		type: "script",
     		description: "returns the key of the input value that was last updated",
-    		nodes: {
-    			script: "const previous = state.temp.results.get(name) ?? {}; const key = object.keys(input).find(k => previous[k] !== input[k]) ?? previous.key; return {key, ...input};"
-    		}
+    		script: "return input"
     	},
     	filter_last_updated: {
-    		type: "script",
-    		nodes: {
-    			script: "return input.last_updated[input.last_updated.key]"
-    		}
+    		script: "return typeof input.last_updated === 'string' ? input[input.last_updated] : lib.R.pick(input.last_updated, input)"
     	},
     	value: {
-    		type: "script",
-    		nodes: {
-    			script: "return state.graph.nodes[name].nodes.value"
-    		}
+    		script: "return node.nodes.value"
     	},
     	keyboard_event: {
-    		type: "script",
-    		nodes: {
-    			script: "\n      const trigger = state.graph.nodes[name].nodes.trigger;\n      const isprevented = (key_e) =>\n        state.graph.nodes[name].nodes.prevent_default_keys && state.graph.nodes[name].nodes.prevent_default_keys.reduce(\n          (acc, key) => acc || object.keys(key).reduce((acc, k) => acc && key_e[k] === key[k] , true)\n            , false);\n\n      const keyboardevent = (ty) => (e) => {\n        const key_e = {event: ty, code: e.code, altkey: e.altkey, ctrlkey: e.ctrlkey, key: e.key, metakey: e.metakey};\n        if(isprevented(key_e)) {\n          e.preventdefault();\n        }\n\n        new asyncfunction('state', 'name', 'input', state.graph.defaults.run.nodes.script)(state, trigger, key_e);\n      }\n\n  window.addeventlistener('keydown', keyboardevent('keydown'));\n    "
-    		}
+    		script: "\n      const trigger = node.nodes.trigger;\n      const isprevented = (key_e) =>\n        node.nodes.prevent_default_keys && node.nodes.prevent_default_keys.reduce(\n          (acc, key) => acc || Object.keys(key).reduce((acc, k) => acc && key_e[k] === key[k] , true)\n            , false);\n\n      const keyboardevent = (ty) => (e) => {\n        const key_e = {event: ty, code: e.code, altkey: e.altkey, ctrlkey: e.ctrlkey, key: e.key, metakey: e.metakey};\n        if(isprevented(key_e)) {\n          e.preventdefault();\n        }\n\n        new asyncfunction('state', 'name', 'input', state.graph.defaults.run.nodes.script)(state, trigger, key_e);\n      }\n\n  window.addeventlistener('keydown', keyboardevent('keydown'));\n    "
     	},
     	trigger: {
-    		type: "script",
     		description: "watches for a true on the trigger input to pass the full input through",
-    		nodes: {
-    			script: "const key = state.graph.nodes[name].nodes.key ?? 'key'; const trigger = state.graph.nodes[name].nodes.trigger ?? 'trigger'; if(state.lib.get(input, key) === 'trigger' && state.lib.get(input, trigger)){ return input }"
-    		}
+    		script: "const key = ['last_updated']; const trigger = ['trigger']; if(lib.R.path(key, input) === 'trigger' && lib.R.path(trigger, input)){ return input }"
     	}
     };
     var edges = [
-    	[
-    		"state_graph",
-    		"create_svg_base"
-    	],
-    	[
-    		"create_svg_base",
-    		"create_nodes"
-    	],
-    	[
-    		"create_svg_base",
-    		"create_lines"
-    	],
-    	[
-    		"mouse_dragging",
-    		"drag_node"
-    	],
-    	[
-    		"mouse_select_target",
-    		"drag_node"
-    	],
-    	[
-    		"mouse_trigger",
-    		"drag_node"
-    	],
-    	[
-    		"mouse_dragging",
-    		"drop_node_input"
-    	],
-    	[
-    		"mouse_select_target",
-    		"drop_node_input"
-    	],
-    	[
-    		"mouse_trigger",
-    		"drop_node_input"
-    	],
-    	[
-    		"drop_node_input",
-    		"drop_node"
-    	],
-    	[
-    		"state_graph",
-    		"diff_graph_changes_last_updated"
-    	],
-    	[
-    		"pending_graph",
-    		"diff_graph_changes_last_updated"
-    	],
-    	[
-    		"diff_graph_changes_last_updated",
-    		"diff_graph_changes_filter_pending_changed"
-    	],
-    	[
-    		"diff_graph_changes_filter_pending_changed",
-    		"get_diff_graph_changes_next"
-    	],
-    	[
-    		"diff_graph_changes_filter_pending_changed",
-    		"get_diff_graph_changes_current"
-    	],
-    	[
-    		"get_diff_graph_changes_next",
-    		"diff_graph_changes",
-    		"next"
-    	],
-    	[
-    		"get_diff_graph_changes_current",
-    		"diff_graph_changes",
-    		"current"
-    	],
-    	[
-    		"editor_change_trigger",
-    		"editor_content_changes"
-    	],
-    	[
-    		"key_trigger",
-    		"ctrl_s"
-    	],
-    	[
-    		"key_trigger",
-    		"ctrl_e"
-    	],
-    	[
-    		"mouse_event_type_changed",
-    		"hover_state"
-    	],
-    	[
-    		"mouse_target_changed",
-    		"hover_state"
-    	],
-    	[
-    		"editor_content_changes",
-    		"last_editor_content_change",
-    		"last_updated"
-    	],
-    	[
-    		"initial_graph",
-    		"load_graph"
-    	],
-    	[
-    		"ctrl_s",
-    		"map_save_value_change",
-    		"trigger"
-    	],
-    	[
-    		"state_graph",
-    		"graph_stringify"
-    	],
-    	[
-    		"graph_stringify",
-    		"map_save_value_change",
-    		"content"
-    	],
-    	[
-    		"map_save_value_change",
-    		"map_save_value_trigger"
-    	],
-    	[
-    		"map_save_value_trigger",
-    		"get_save_content"
-    	],
-    	[
-    		"get_save_content",
-    		"save_on_ctrl_s",
-    		"content"
-    	],
-    	[
-    		"mouse_trigger",
-    		"mouse_button_changed"
-    	],
-    	[
-    		"mouse_trigger",
-    		"mouse_event_type_changed"
-    	],
-    	[
-    		"mouse_trigger",
-    		"mouse_dragging"
-    	],
-    	[
-    		"mouse_event_type_changed",
-    		"mouse_dragging"
-    	],
-    	[
-    		"mouse_event_type_changed",
-    		"mouse_select_target"
-    	],
-    	[
-    		"mouse_target_changed",
-    		"mouse_select_target"
-    	],
-    	[
-    		"mouse_trigger",
-    		"mouse_target_changed"
-    	],
-    	[
-    		"ctrl_e",
-    		"parse_editor_content_change",
-    		"trigger"
-    	],
-    	[
-    		"last_editor_content_change",
-    		"parse_editor_content_change"
-    	],
-    	[
-    		"mouse_select_target",
-    		"parse_editor_content_change"
-    	],
-    	[
-    		"parse_editor_content_change",
-    		"parse_editor_content_trigger"
-    	],
-    	[
-    		"parse_editor_content_trigger",
-    		"parse_editor_state_graph"
-    	],
-    	[
-    		"parse_editor_content_trigger",
-    		"parse_editor_node_script"
-    	],
-    	[
-    		"parse_editor_node_script",
-    		"queue_apply_diff"
-    	],
-    	[
-    		"load_graph",
-    		"parse_load_graph"
-    	],
-    	[
-    		"drop_node",
-    		"queue_apply_diff"
-    	],
-    	[
-    		"set_pending_graph",
-    		"pending_graph",
-    		"last_updated"
-    	],
-    	[
-    		"diff_graph_changes",
-    		"queue_apply_diff"
-    	],
-    	[
-    		"in",
-    		"register_key_listener"
-    	],
-    	[
-    		"in",
-    		"register_mouse_listener"
-    	],
-    	[
-    		"in",
-    		"configure_editor"
-    	],
-    	[
-    		"in",
-    		"graph_style_tag"
-    	],
-    	[
-    		"graph_style_tag",
-    		"render_graph_style"
-    	],
-    	[
-    		"create_svg_base",
-    		"show_errors"
-    	],
-    	[
-    		"mouse_trigger",
-    		"show_errors"
-    	],
-    	[
-    		"parse_editor_state_graph",
-    		"show_errors"
-    	],
-    	[
-    		"parse_load_graph",
-    		"set_pending_graph"
-    	],
-    	[
-    		"parse_editor_state_graph",
-    		"set_pending_graph"
-    	],
-    	[
-    		"set_editor_content",
-    		"editor_content",
-    		"last_updated"
-    	],
-    	[
-    		"editor_content",
-    		"update_editor_content"
-    	],
-    	[
-    		"in",
-    		"set_initial_graph"
-    	],
-    	[
-    		"set_initial_graph",
-    		"initial_graph",
-    		"last_updated"
-    	],
-    	[
-    		"initial_graph",
-    		"set_state_graph"
-    	],
-    	[
-    		"queue_apply_diff",
-    		"pop_apply_diff",
-    		"last_updated"
-    	],
-    	[
-    		"pop_apply_diff",
-    		"apply_diff_to_graph",
-    		"new_diff"
-    	],
-    	[
-    		"apply_diff_to_graph",
-    		"set_state_graph"
-    	],
-    	[
-    		"set_state_graph",
-    		"state_graph",
-    		"last_updated"
-    	],
-    	[
-    		"mouse_select_target",
-    		"selected_node_script"
-    	],
-    	[
-    		"state_graph",
-    		"selected_node_script"
-    	],
-    	[
-    		"selected_node_script",
-    		"set_editor_content"
-    	]
+    	{
+    		from: "in",
+    		to: "load_graph",
+    		as: "graph"
+    	},
+    	{
+    		from: "load_graph",
+    		to: "register_key_listener"
+    	},
+    	{
+    		from: "load_graph",
+    		to: "register_mouse_listener"
+    	},
+    	{
+    		from: "load_graph",
+    		to: "configure_editor"
+    	},
+    	{
+    		from: "load_graph",
+    		to: "state_graph"
+    	},
+    	{
+    		from: "state_graph",
+    		to: "create_svg_base"
+    	},
+    	{
+    		from: "state_graph",
+    		to: "create_nodes"
+    	},
+    	{
+    		from: "create_svg_base",
+    		to: "create_nodes",
+    		as: "create_svg_base"
+    	},
+    	{
+    		from: "state_graph",
+    		to: "create_lines"
+    	},
+    	{
+    		from: "create_svg_base",
+    		to: "create_lines",
+    		as: "create_svg_base"
+    	},
+    	{
+    		from: "mouse_dragging",
+    		to: "drag_node",
+    		as: "mouse_dragging"
+    	},
+    	{
+    		from: "mouse_select_target",
+    		to: "drag_node",
+    		as: "mouse_select_target"
+    	},
+    	{
+    		from: "register_mouse_listener",
+    		to: "drag_node",
+    		as: "register_mouse_listener"
+    	},
+    	{
+    		from: "state_graph",
+    		to: "drag_node",
+    		as: "graph"
+    	},
+    	{
+    		from: "drag_node",
+    		to: "state_graph",
+    		as: "drag_node"
+    	},
+    	{
+    		from: "mouse_dragging",
+    		to: "drop_node_input",
+    		as: "mouse_dragging"
+    	},
+    	{
+    		from: "mouse_select_target",
+    		to: "drop_node_input",
+    		as: "mouse_select_target"
+    	},
+    	{
+    		from: "register_mouse_listener",
+    		to: "drop_node_input",
+    		as: "register_mouse_listener"
+    	},
+    	{
+    		from: "state_graph",
+    		to: "drop_node",
+    		as: "graph"
+    	},
+    	{
+    		from: "drop_node_input",
+    		to: "drop_node",
+    		as: "drop_node_input"
+    	},
+    	{
+    		from: "configure_editor",
+    		to: "editor_content_changes",
+    		as: "content"
+    	},
+    	{
+    		from: "register_key_listener",
+    		to: "ctrl_s"
+    	},
+    	{
+    		from: "register_key_listener",
+    		to: "ctrl_e"
+    	},
+    	{
+    		from: "editor_content_changes",
+    		to: "last_editor_content_change"
+    	},
+    	{
+    		from: "ctrl_s",
+    		to: "map_save_value",
+    		as: "trigger"
+    	},
+    	{
+    		from: "state_graph",
+    		to: "graph_stringify",
+    		as: "state_graph"
+    	},
+    	{
+    		from: "graph_stringify",
+    		to: "map_save_value",
+    		as: "content"
+    	},
+    	{
+    		from: "map_save_value",
+    		to: "save_on_ctrl_s"
+    	},
+    	{
+    		from: "register_mouse_listener",
+    		to: "mouse_button_changed",
+    		as: "register_mouse_listener"
+    	},
+    	{
+    		from: "mouse_button_changed",
+    		to: "mouse_button_changed",
+    		as: "mouse_button_changed"
+    	},
+    	{
+    		from: "register_mouse_listener",
+    		to: "mouse_event_type_changed",
+    		as: "register_mouse_listener"
+    	},
+    	{
+    		from: "register_mouse_listener",
+    		to: "mouse_dragging",
+    		as: "register_mouse_listener"
+    	},
+    	{
+    		from: "mouse_event_type_changed",
+    		to: "mouse_dragging",
+    		as: "mouse_event_type_changed"
+    	},
+    	{
+    		from: "mouse_event_type_changed",
+    		to: "mouse_select_target",
+    		as: "mouse_event_type_changed"
+    	},
+    	{
+    		from: "mouse_event_type_changed",
+    		to: "mouse_event_type_changed",
+    		as: "mouse_event_type_changed"
+    	},
+    	{
+    		from: "mouse_target_changed",
+    		to: "mouse_select_target",
+    		as: "mouse_target_changed"
+    	},
+    	{
+    		from: "mouse_target_changed",
+    		to: "mouse_target_changed",
+    		as: "mouse_target_changed"
+    	},
+    	{
+    		from: "register_mouse_listener",
+    		to: "mouse_target_changed",
+    		as: "register_mouse_listener"
+    	},
+    	{
+    		from: "ctrl_e",
+    		to: "push_editor_content_change",
+    		as: "trigger"
+    	},
+    	{
+    		from: "configure_editor",
+    		to: "push_editor_content_change",
+    		as: "content"
+    	},
+    	{
+    		from: "mouse_select_target",
+    		to: "push_editor_content_change",
+    		as: "mouse_select_target"
+    	},
+    	{
+    		from: "push_editor_content_change",
+    		to: "parse_editor_state_graph"
+    	},
+    	{
+    		from: "push_editor_content_change",
+    		to: "parse_editor_node_script"
+    	},
+    	{
+    		from: "graph_style_tag",
+    		to: "render_graph_style"
+    	},
+    	{
+    		from: "state_graph",
+    		to: "graph_style_tag"
+    	},
+    	{
+    		from: "parse_editor_state_graph",
+    		to: "out"
+    	},
+    	{
+    		from: "editor_content",
+    		to: "update_editor_content",
+    		as: "editor_content"
+    	},
+    	{
+    		from: "mouse_select_target",
+    		to: "selected_node_script",
+    		as: "mouse_select_target"
+    	},
+    	{
+    		from: "state_graph",
+    		to: "selected_node_script",
+    		as: "graph"
+    	},
+    	{
+    		from: "selected_node_script",
+    		to: "editor_content",
+    		as: "content"
+    	}
     ];
     var DEFAULT_GRAPH = {
     	nodes: nodes,
@@ -40268,7 +39834,58 @@
 
     // HTML setup
 
-    const lib = { cm, html: m, render: N, SVG, R, diff: justDiff.diff };
+    const queue = () => ({
+    	list: [],
+    	callback: undefined,
+    	abortController: new AbortController(),
+    	pop() {
+    		if(this.list.length > 0) {
+    			return Promise.resolve(this.list.pop());
+    		}
+
+    		return new Promise((resolve, reject) => {
+    			this.abortController.signal.addEventListener('abort', reject);
+
+    			const current_cb = this.callback;
+    			this.callback = current_cb ? (v) => {resolve(v); current_cb(v); } : resolve;
+    		});
+    	},
+    	push(v, isArr){
+    		if(isArr) {
+    			if (this.callback) {
+    				const cb = this.callback;
+    				this.callback = undefined;
+    				cb(v.pop());
+    			}
+
+    			this.list.unshift(...v);
+    		} else {
+    			if(this.callback) {
+    				const cb = this.callback;
+    				this.callback = undefined;
+    				this.last = performance.now();
+    				cb(v);
+    			} else {
+    				this.list.unshift(v);
+    			}
+    		}
+
+    		this.last = performance.now();
+
+    		return this;
+    	}
+    });
+
+    const queueIterator = (queue) => ({[Symbol.asyncIterator](){
+    		return {
+    			queue,
+    			next(){
+    				return this.queue.pop().then(value => ({done: this.queue.abortController.signal.aborted, value}));
+    			}
+    		}
+    	}});
+
+    const lib = { cm, html: m, render: N, SVG, R, queue, queueIterator };
 
     const editorEl = document.getElementById("editor");
     const graphEl = document.getElementById("graph");
@@ -40318,33 +39935,105 @@
     	editor: editorView,
     };
 
-    const runNode = async (node, input) => node.script 
-    	? new AsyncFunction('lib', 'state', 'input', node.script)(lib, state, input)
-    	: await runGraph(node, {}, [['in', input]]);
+    let log_node = "";
+    let debug_node = "";
 
-    const runGraph = async (graph, outputs, stack) => {
-    	const current = lib.R.head(stack);
-    	const current_id = current[0];
-    	const current_input = current[1];
-    	console.log(current);
-    	const current_output = await runNode(graph.nodes[current_id], current_input);
-    	const next_outputs = lib.R.assoc(current_id, current_output, outputs);
+    const runNode = (node, input) => node.script 
+    		? new AsyncFunction('lib', 'state', 'input', 'node', node.script)(lib, state, input, node)
+    		: runGraph(node, input);
 
-    	const nexts = lib.R.compose(lib.R.map(e => e[1]), lib.R.filter(edge => edge[0] === current_id))(graph.edges);
-    	const next_inputs = lib.R.map(next_edge => {
-    		const next_input_edges = lib.R.filter(e => e[1] === next_edge, graph.edges);
-    		const next_input_values = lib.R.map(next_input_edge => next_outputs[next_input_edge[0]], next_input_edges);
-    		const next_input = lib.R.mergeAll(next_input_values);
-    		return next_input;
-    	}, nexts);
 
-    	const new_stack = lib.R.zip(nexts, next_inputs);
+    const runGraph = async (graph, input) => ({
+    	outputs: {},
+    	queue: lib.queue().push({id: "in", node: graph.nodes.in, input: {...input, ...graph}}),
+    	count: 0,
+    	async* [Symbol.asyncIterator](){
+    		const runOutput = (run_cmd, output) => {
 
-    	if(current_output !== undefined) {
-    		return runGraph(graph, next_outputs, lib.R.concat(lib.R.tail(stack), new_stack));
+    			if(run_cmd.id === debug_node) {
+    				debugger;
+    			}
+
+    			if(run_cmd.id === log_node) {
+    				console.log(output);
+    			}
+
+    			// const changed = this.outputs[run_cmd[0]] === undefined || lib.R.equals(this.outputs[run_cmd[0]], output);
+
+    			this.outputs = lib.R.assoc(run_cmd.id, output, this.outputs);
+
+    			const next_edges = lib.R.compose(lib.R.filter(edge => edge.from === run_cmd.id))(graph.edges);
+    			const new_stack = lib.R.map(next_edge => ({
+    				id: next_edge.to, 
+    				node: graph.nodes[next_edge.to].type && !graph.nodes[next_edge.to].script 
+    					? lib.R.mergeRight(graph.nodes[next_edge.to], graph.defaults[graph.nodes[next_edge.to].type]) 
+    					: graph.nodes[next_edge.to],
+    				input: lib.R.compose(
+    					lib.R.mergeLeft({last_updated: next_edge.as ? next_edge.as : Object.keys(output)}),
+    					lib.R.mergeLeft(next_edge.as ? lib.R.objOf(next_edge.as, output) : output),
+    					lib.R.reduce((acc, input_edge) => 
+    						lib.R.mergeLeft(
+    							input_edge.as 
+    							? lib.R.objOf(input_edge.as, this.outputs[input_edge.from]) 
+    							: this.outputs[input_edge.from],
+    							acc
+    						)
+    					, {}),
+    					lib.R.filter(edge => edge.to === next_edge.to && edge.from !== run_cmd.id)
+    				)(graph.edges)
+    			}), next_edges);
+
+    			this.queue.push(new_stack, true);
+
+    			return output;
+    		};
+
+    		for await (const run_cmd of lib.queueIterator(this.queue)) {
+    			if(run_cmd.id === log_node) {
+    				console.log(run_cmd);
+    			}
+
+    			if(run_cmd.id === debug_node) {
+    				debugger;
+    			}
+
+
+    			const output_generator = await runNode(lib.R.mergeLeft({id: run_cmd.id}, run_cmd.node), run_cmd.input);
+    			if(output_generator && output_generator[Symbol.asyncIterator]) {
+    				// fork
+    				(async function(){
+    					for await (const output of output_generator) {
+    						if(output !== undefined && output !== null) {
+    							runOutput(run_cmd, lib.R.has('last_updated', output) ? lib.R.omit(['last_updated'], output) : output);
+    						}
+    					}
+    				})();
+    			} else if(output_generator !== undefined && output_generator !== null) {
+    				const value = runOutput(run_cmd, lib.R.has('last_updated', output_generator) ? lib.R.omit(['last_updated'], output_generator) : output_generator);
+    				if(run_cmd.id === "out") {
+    					yield value;
+    				}
+    			}
+    		}
     	}
+    });
+
+    const run = async (graph) => {
+    	console.log(graph);
+    	const default_run = await runNode(graph, graph);
+    	const output = await default_run;
+    	let next_graph;
+    	for await(const value of output) {
+    		console.log('out happened');
+    		next_graph = value;
+    		if(next_graph) {
+    			break;
+    		}
+    	}
+
+    	run(next_graph);
     };
 
-    runNode(DEFAULT_GRAPH, DEFAULT_GRAPH);
+    run(DEFAULT_GRAPH);
 
 }());
