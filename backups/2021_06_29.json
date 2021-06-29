@@ -1,0 +1,665 @@
+{
+  "nodes": {
+    "in": {
+      "script": "console.log('hi');\nconsole.log(input);\nreturn input"
+    },
+    "onload_diff_empty": {
+      "type": "diff_changes",
+      "x": 144,
+      "y": 200
+    },
+    "graph_stringify": {
+      "type": "stringify",
+      "script": "return JSON.stringify(lib.R.omit(['_saveignore'], input.state_graph))",
+      "x": 512.6583251953125,
+      "y": 700.2083129882812
+    },
+    "load_graph": {
+      "script": "if(input.graph._saveignore?.rerun){ console.log('rerunning'); return input.graph; } const loaded = localStorage.getItem('graph'); if(!loaded){ console.log('not loaded'); return input.graph } try { console.log('parsing'); return JSON.parse(loaded); } catch(err){ console.error(err); return input.graph; }",
+      "x": 673.00830078125,
+      "y": 196.2083282470703
+    },
+    "queue_apply_diff": {
+      "type": "last_updated"
+    },
+    "pop_apply_diff": {
+      "type": "filter_last_updated"
+    },
+    "apply_diff_to_graph": {
+      "type": "script",
+      "script": "if(input.new_diff) { const newgraph = lib.clone(state.graph); lib.diffapply(newgraph, input.new_diff); state.graph = newgraph; return state.graph; }",
+      "x": 553,
+      "y": 1148
+    },
+    "graph_style_tag": {
+      "type": "script",
+      "script": "return {create: () => lib.html`#graph { display:flex; flex-direction: row; flex-grow: 2; justify-content: flex-start; align-content: stretch; } #graph .node { user-select: none } .tooltip { position: absolute; visibility: hidden; max-width: 120px; pointer-events: none; }`}",
+      "x": 845.8916625976562,
+      "y": 96.20833587646484
+    },
+    "render_graph_style": {
+      "type": "render_html",
+      "nodes": {
+        "target": "document.getElementById('graph_style')"
+      },
+      "x": 1018.2333374023438,
+      "y": 38.20833206176758
+    },
+    "render_head": {
+      "type": "render",
+      "nodes": {
+        "target": "document.head"
+      }
+    },
+    "render_graph": {
+      "type": "render",
+      "nodes": {
+        "target": "document.querySelector('#graph')"
+      },
+      "x": 182.35000610351562,
+      "y": 73.20833587646484
+    },
+    "create_svg_base": {
+      "type": "script",
+      "script": "let svg = lib.SVG('.root');\n\nif(!svg){\n  svg = lib.SVG().addTo('#graph')\n    .addClass('root')\n    .viewbox(\n      -window.screen.width / 4, \n      -window.screen.width / 2, \n      -window.screen.height / 2, \n      window.screen.height / 2\n    ).panZoom({})\n}\n\nreturn svg; ",
+      "x": 739,
+      "y": 737
+    },
+    "create_node": {
+      "type": "script",
+      "script": "if(input.last_updated == \"create_node\" || (input.create_node && input.create_node[input.id]?.x === input.x && input.create_node[input.id]?.y === input.y)) {\n  return;\n}\nconst base = lib.SVG('.root'); \n\nif(!base){ return; }\n\nconst svg = base.findOne(`#${input.id}`) ??  base.text(input.id).attr({id: input.id, class: 'node'})\n\nconst x = input.x ?? Math.random() * 400; const y = input.y ?? Math.random() * 400; svg.cx(x).cy(y); \n\nreturn lib.R.assoc(input.id, {x, y}, input.create_node);",
+      "x": 276.3936909030522,
+      "y": 771.5225095402386
+    },
+    "create_nodes": {
+      "type": "script",
+      "script": "const base = lib.SVG('.root'); if(!base){ return; } Object.entries(input.nodes).map(([id, n], idx) => (base.findOne(`#${id}`) ??  base.text(id).attr({id, class: 'node'})).move(n.x ?? 100 * (idx % 4), n.y ?? 40 * (idx / 4))); return base;",
+      "x": 215,
+      "y": 1034
+    },
+    "hover_node": {
+      "type": "script",
+      "script": "const base = lib.SVG('.root');\nif(input.last_updated !== 'target' || !base) {return;} \n\nif(input.graph.nodes[input.hover_node?.target]){ lib.SVG(`#${input.hover_node.target}`).fill('#000');}\n\nif(input.graph.nodes[input.target]){\n  lib.SVG(`#${input.target}`).fill('#6EB4D1');\n}\n\nreturn {target: input.target}",
+      "x": 471,
+      "y": 950
+    },
+    "create_lines": {
+      "type": "script",
+      "script": "const base = lib.SVG('.root');\n\nif(!base){ \n  return; \n}\n\nreturn input.edges.map(edge => {\n  // handle self-loops later\n  if(edge.from === edge.to) {\n    return;\n  }\n  \n  let line = base.findOne(`#${edge.from}-${edge.to}`) ;\n  if (!line){\n    line = base.line().attr({id: `${edge.from}-${edge.to}`});\n  }\n  let marker = line.reference('marker-start');\n\n  if(!marker) {\n    marker = line.marker('end', 10, 10, function(add) {\n     add.polygon('0,0 8,4 0,8').fill('#00f');\n    });\n  }\n  const origin = [input.nodes[edge.from].x, input.nodes[edge.from].y];\n  const dest = [input.nodes[edge.to].x, input.nodes[edge.to].y];\n  const dir = [input.nodes[edge.to].x - input.nodes[edge.from].x, input.nodes[edge.to].y - input.nodes[edge.from].y];\n\n  \n  if(Math.abs(dir[0]) + Math.abs(dir[1]) > 0) {\n    const sum = dir[0] + dir[1];\n    dir[0] = dir[0] / (Math.abs(dir[0]) + Math.abs(dir[1]));\n    dir[1] = dir[1] / (Math.abs(dir[0]) + Math.abs(dir[1]));\n    origin[0] += dir[0] * 10;\n    origin[1] += dir[1] * 10;\n    dest[0] -= dir[0] * 10;\n    dest[1] -= dir[1] * 10;\n  }\n  \n  line.stroke({width: 1, color: '#000'}).plot([origin, dest]);\n});",
+      "x": 488.6872821673795,
+      "y": 1034.319481065253
+    },
+    "show_errors": {
+      "type": "script",
+      "script": "for(e of Object.keys(input.graph.nodes)){ lib.SVG(`#${e}`)?.css({fill: state.temp.errors.has(e) ? 'red' : 'black'})}",
+      "x": 861.441650390625,
+      "y": 400.20831298828125
+    },
+    "register_mouse_listener": {
+      "script": "const mouse_queue = lib.queue();\nconst mouseEvent = (ty) => (e) => { \n  mouse_queue.push({\n    ty, \n    x: e.x, \n    y: e.y, \n    target: e.target.parentNode.id, \n    button: e.button, \n    buttons: e.buttons\n  })\n}; \ndocument.getElementById('graph').onmousemove = mouseEvent('mousemove'); \ndocument.getElementById('graph').onmousedown = mouseEvent('mousedown'); \ndocument.getElementById('graph').onmouseup = mouseEvent('mouseup'); \ndocument.getElementById('graph').onwheel = mouseEvent('wheel'); \n\nreturn lib.queueIterator(mouse_queue); ",
+      "x": 561,
+      "y": 113
+    },
+    "mouse_stringify": {
+      "type": "stringify",
+      "x": 405,
+      "y": 515
+    },
+    "mouse_log": {
+      "type": "log",
+      "x": 129.88333129882812,
+      "y": 50.208335876464844
+    },
+    "mouse_target_changed": {
+      "type": "value_changed",
+      "nodes": {
+        "value": [
+          "register_mouse_listener",
+          "target"
+        ]
+      },
+      "x": 899.36669921875,
+      "y": 432.2083435058594
+    },
+    "mouse_button_changed": {
+      "type": "value_changed",
+      "nodes": {
+        "value": [
+          "register_mouse_listener",
+          "button"
+        ]
+      },
+      "x": 976.9833374023438,
+      "y": 187.20834350585938
+    },
+    "mouse_event_type_changed": {
+      "type": "value_changed",
+      "nodes": {
+        "value": [
+          "register_mouse_listener",
+          "ty"
+        ]
+      },
+      "x": 898.3333740234375,
+      "y": 801.2083740234375
+    },
+    "mouse_wheel_events": {
+      "script": "if(input.ty !== 'wheel'){ return; } return input;",
+      "x": 559,
+      "y": 713
+    },
+    "mouse_dragging": {
+      "type": "script",
+      "script": "return ((input.register_mouse_listener.ty === 'mousedown' || input.register_mouse_listener.ty === 'mouseup') && input.register_mouse_listener.button === 0) || (input.register_mouse_listener.ty === 'mouseleave') ? input.register_mouse_listener.ty === 'mousedown' && input.register_mouse_listener.ty !== 'mouseout' : undefined"
+    },
+    "mouse_select_target": {
+      "script": "return input.last_updated === 'mouse_event_type_changed' && input.mouse_event_type_changed === 'mousedown' ? input.mouse_target_changed : undefined",
+      "x": 1031.8082275390625,
+      "y": 344.2083435058594
+    },
+    "svg_pan_zoom_events": {
+      "script": "if(input.previous !== undefined){ return; } const q = lib.queue(); lib.SVG('.root').on('panning', e => { q.push(e)}); return lib.queueIterator(q);"
+    },
+    "prevent_pan_while_dragging": {
+      "script": "lib.SVG('.root').panZoom(input.target === 'graph' ? undefined : false); return input;"
+    },
+    "hover_state": {
+      "script": "if(!input.mouse_target_changed) {return; } const tt = document.queryselector('.tooltip'); if(input.mouse_event_type_changed !== 'mousemove' || input.mouse_target_changed === 'graph'){ tt.style = `visibility: hidden`;return; } const content = (state.temp.errors.get(input.mouse_target_changed)?.message ?? state.temp.results.get(input.mouse_target_changed)); tt.innertext = typeof content === 'string' ? content : JSON.stringify(content, null, 2); tt.style = `left: ${lib.SVG(`#${input.mouse_target_changed}`)?.x() ?? '0'}px; top: ${lib.SVG(`#${input.mouse_target_changed}`)?.y() ?? '0'}px; visibility: ${content ? 'visible' : 'hidden'};`;",
+      "x": 647,
+      "y": 777
+    },
+    "drag_node": {
+      "script": "\nif(!(input.mouse_dragging && input.mouse_select_target && input.graph?.nodes[input.mouse_select_target] && input.register_mouse_listener.ty === 'mousemove')) { \n  return; \n}\n\nconst target = lib.SVG(`#${input.mouse_select_target}`);\n\nconst current = {\n  x: lib.R.path(['nodes', input.mouse_select_target, 'x'], input.graph),\n  y: lib.R.path(['nodes', input.mouse_select_target, 'y'], input.graph)\n};\n\nconst next = lib.SVG('.root').point(\n  input.register_mouse_listener.x,\n  input.register_mouse_listener.y\n);\n\n\nif(target?.center && \n   Math.abs(current.x - next.x) > 1 ||  \n   Math.abs(current.y - next.y) > 1){ \n  target.center(next); \n  \n  return lib.R.over(\n    lib.R.lensPath(['nodes', input.mouse_select_target]), \n    lib.R.evolve({x: () => next.x, y: () => next.y}), \n    input.graph\n  );\n}",
+      "x": 398,
+      "y": 697
+    },
+    "parse_editor_state_graph": {
+      "script": "const mouse_target = input.mouse_select_target; return !mouse_target || mouse_target === 'graph' ? JSON.parse(input.content) : undefined",
+      "x": 1055.8582763671875,
+      "y": 708.2083129882812
+    },
+    "parse_editor_node_script": {
+      "script": "const mouse_target = input.mouse_select_target; return mouse_target && mouse_target !== 'graph' && input.graph.nodes[mouse_target]?.script ? lib.R.set(lib.R.lensPath(['nodes', mouse_target, 'script']), input.content, input.graph) : undefined",
+      "x": 1055.8582763671875,
+      "y": 708.2083129882812
+    },
+    "editor_content_changes": {
+      "type": "last_updated"
+    },
+    "last_editor_content_change": {
+      "type": "filter_last_updated",
+      "x": 1033.0167236328125,
+      "y": 571.2083740234375
+    },
+    "state_graph": {
+      "type": "filter_last_updated",
+      "x": 760.1166381835938,
+      "y": 769.2083740234375
+    },
+    "register_key_listener": {
+      "type": "keyboard_event",
+      "script": "const isPrevented = (key_e) => node.prevent_default_keys && node.prevent_default_keys.reduce( (acc, key) => acc || Object.keys(key).reduce((acc, k) => acc && key_e[k] === key[k] , true) , false); const key_queue = lib.queue(); const keyboardEvent = (ty) => (e) => { const key_e = {event: ty, code: e.code, altKey: e.altKey, ctrlKey: e.ctrlKey, key: e.key, metaKey: e.metaKey}; if(isPrevented(key_e)) { e.preventDefault(); } key_queue.push(key_e); }; window.addEventListener('keyup', keyboardEvent('keyup')); window.addEventListener('keydown', keyboardEvent('keydown')); return {[Symbol.asyncIterator](){ return { queue: key_queue, next(){ return this.queue.pop().then(value => ({done: false, value})); } } }} ",
+      "prevent_default_keys": [
+        {
+          "ctrlKey": true,
+          "key": "s"
+        },
+        {
+          "ctrlKey": true,
+          "key": "e"
+        }
+      ],
+      "x": 289,
+      "y": 336
+    },
+    "save_on_ctrl_s": {
+      "type": "save_content",
+      "nodes": {
+        "save_key": "graph"
+      },
+      "x": 167.07347230372397,
+      "y": 741.3874223364032
+    },
+    "ctrl_s": {
+      "script": "return input.ctrlKey && input.key === 's' && input.event === 'keydown'",
+      "x": 49.65833282470703,
+      "y": 706.2083129882812
+    },
+    "ctrl_e": {
+      "script": "return input.ctrlKey && input.key === 'e' && input.event === 'keydown'",
+      "x": 1147.22509765625,
+      "y": 544.2083129882812
+    },
+    "get_save_content": {
+      "type": "get_value",
+      "nodes": {
+        "value": [
+          "content"
+        ]
+      }
+    },
+    "map_save_value": {
+      "type": "trigger",
+      "nodes": {
+        "key": [
+          "key"
+        ],
+        "trigger": [
+          "trigger"
+        ]
+      },
+      "x": 109,
+      "y": 955
+    },
+    "get_edges_changes": {
+      "type": "filter_input",
+      "nodes": {
+        "filter": "return val.path[0] === 'edges';"
+      }
+    },
+    "editor_content": {
+      "x": 701,
+      "y": 1005,
+      "script": "return typeof input.last_updated === 'string' ? input[input.last_updated] : lib.R.pick(input.last_updated, input)"
+    },
+    "update_editor_content": {
+      "x": 655,
+      "y": 1111,
+      "edges": [],
+      "script": "const newcontent = typeof input.editor_content === 'string' ? input.editor_content : JSON.stringify(input.editor_content, null, 2); if(state.editor.state.doc.toString() !== newcontent) { state.editor.dispatch({changes: {from: 0, to: state.editor.state.doc.length, insert: newcontent }}) }"
+    },
+    "log_errors": {
+      "script": "state.temp.errors.foreach((id, e) => {console.log(id); console.error(e);})",
+      "x": 50.87143893230666,
+      "y": 602.1895792805677
+    },
+    "log_results": {
+      "script": "console.log(state.temp.results.foreach((v, k) => console.log(`${k}: ${JSON.stringify(v, null, 2)}`)))",
+      "x": 27.875,
+      "y": 765.2083129882812
+    },
+    "log_test": {
+      "type": "log"
+    },
+    "configure_editor": {
+      "script": " const editor_update_queue = lib.queue(); state.editor.dispatch({ effects: lib.cm.StateEffect.appendConfig.of([ lib.cm.EditorView.theme({'&': {width: '50vw', height: '95vh'}, '.cm-scroller': { overflow: 'auto' }}), lib.cm.EditorView.updateListener.of( update => { if(update.docChanged) { editor_update_queue.push(update.state.doc.toString()) } }), ]) }); return lib.queueIterator(editor_update_queue); ",
+      "x": 852.625,
+      "y": 244.20834350585938
+    },
+    "drop_node": {
+      "script": "if(!input.drop_node_input || input.drop_node_input.key !== 'mouse_dragging' || input.drop_node_input.mouse_dragging || !input.drop_node_input.mouse_select_target || !input.nodes.hasOwnProperty(input.drop_node_input.mouse_select_target)) { return; } const target = lib.SVG(`#${input.drop_node_input.mouse_select_target}`);",
+      "x": 543,
+      "y": 897
+    },
+    "drop_node_input": {
+      "type": "last_updated",
+      "x": 638.316650390625,
+      "y": 660.2083129882812
+    },
+    "selected_node_script": {
+      "script": "const selected_content = input.graph?.nodes[input.mouse_select_target]?.script; if(selected_content && input.last_updated === 'graph'){ return; } return input.graph?.nodes[input.mouse_select_target]?.script ? input.graph.nodes[input.mouse_select_target].script : input.graph",
+      "x": 1099.88330078125,
+      "y": 474.2083435058594
+    },
+    "update_selected_content": {
+      "script": "return JSON.parse(input.selected_node_script)"
+    },
+    "push_editor_content_change": {
+      "type": "trigger",
+      "nodes": {
+        "key": [
+          "key"
+        ],
+        "trigger": [
+          "trigger"
+        ]
+      },
+      "x": 743,
+      "y": 759
+    },
+    "node_stream": {
+      "script": "if(input.last_updated === 'node_stream'){\n  return;\n}\n\nreturn lib.queueIterator(lib.queue().push(lib.R.compose(lib.R.map(([k, v]) => lib.R.assoc('id', k, v)), lib.R.toPairs)(input.graph?.nodes), true));"
+    },
+    "out": {
+      "script": "return {...input, _saveignore: { rerun: true} }"
+    }
+  },
+  "defaults": {
+    "log": {
+      "script": "console.dir(input)"
+    },
+    "stringify": {
+      "script": "return JSON.stringify(input[node.nodes.key])"
+    },
+    "tag": {
+      "script": "return () => lib.html`<${node.nodes.tag} ...${node.nodes.attrs}>${new function(`return ${node.nodes.content}`)()}</${node.nodes.tag}>`"
+    },
+    "render_html": {
+      "script": "target = new Function(`return ${node.nodes.target}`)(); lib.render(lib.html`${Object.values(input).map(fn => lib.html`<${fn} />`)}`, target)"
+    },
+    "filter_changed": {
+      "script": "return state.temp.results.get(name) === input.value ? undefined : input.value"
+    },
+    "save_content": {
+      "script": "return localStorage.setItem(node.nodes.save_key, input.content)"
+    },
+    "load_content": {
+      "script": "return localStorage.getItem(node.nodes.key)"
+    },
+    "diff_changes": {
+      "script": "if(input.current === undefined || input.next === undefined){return;} const diff = lib.diff(input.current, input.next); return diff.length > 0 ? diff : undefined;"
+    },
+    "filter_input": {
+      "script": "return Object.fromentries(Object.entries(input).filter(val => new function('state', 'name', 'input', 'val', node.nodes.filter)(state, name, input, val)))"
+    },
+    "get_value": {
+      "script": "return lib.R.path(node.nodes.value, input)"
+    },
+    "value_changed": {
+      "script": "if(input.last_updated === node.id){ return; }  const value = lib.R.path(node.nodes.value, input); return input[node.id] === value ? undefined : value"
+    },
+    "last_updated": {
+      "description": "returns the key of the input value that was last updated",
+      "script": "return input"
+    },
+    "filter_last_updated": {
+      "script": "return typeof input.last_updated === 'string' ? input[input.last_updated] : lib.R.pick(input.last_updated, input)"
+    },
+    "value": {
+      "script": "return node.nodes.value"
+    },
+    "keyboard_event": {
+      "script": "\n      const trigger = node.nodes.trigger;\n      const isprevented = (key_e) =>\n        node.nodes.prevent_default_keys && node.nodes.prevent_default_keys.reduce(\n          (acc, key) => acc || Object.keys(key).reduce((acc, k) => acc && key_e[k] === key[k] , true)\n            , false);\n\n      const keyboardevent = (ty) => (e) => {\n        const key_e = {event: ty, code: e.code, altkey: e.altkey, ctrlkey: e.ctrlkey, key: e.key, metakey: e.metakey};\n        if(isprevented(key_e)) {\n          e.preventdefault();\n        }\n\n        new asyncfunction('state', 'name', 'input', state.graph.defaults.run.nodes.script)(state, trigger, key_e);\n      }\n\n  window.addeventlistener('keydown', keyboardevent('keydown'));\n    "
+    },
+    "trigger": {
+      "description": "watches for a true on the trigger input to pass the full input through",
+      "script": "const key = ['last_updated']; const trigger = ['trigger']; if(lib.R.path(key, input) === 'trigger' && lib.R.path(trigger, input)){ return input }"
+    }
+  },
+  "edges": [
+    {
+      "from": "in",
+      "to": "load_graph",
+      "as": "graph"
+    },
+    {
+      "from": "load_graph",
+      "to": "register_key_listener"
+    },
+    {
+      "from": "load_graph",
+      "to": "register_mouse_listener"
+    },
+    {
+      "from": "load_graph",
+      "to": "configure_editor"
+    },
+    {
+      "from": "load_graph",
+      "to": "state_graph"
+    },
+    {
+      "from": "state_graph",
+      "to": "node_stream",
+      "as": "graph"
+    },
+    {
+      "from": "node_stream",
+      "to": "create_node"
+    },
+    {
+      "from": "create_node",
+      "to": "create_node",
+      "as": "create_node"
+    },
+    {
+      "from": "state_graph",
+      "to": "create_svg_base"
+    },
+    {
+      "from": "state_graph",
+      "to": "hover_node",
+      "as": "graph"
+    },
+    {
+      "from": "hover_node",
+      "to": "hover_node",
+      "as": "hover_node"
+    },
+    {
+      "from": "mouse_target_changed",
+      "to": "hover_node",
+      "as": "target"
+    },
+    {
+      "from": "create_svg_base",
+      "to": "svg_pan_zoom_events",
+      "as": "base"
+    },
+    {
+      "from": "svg_pan_zoom_events",
+      "to": "svg_pan_zoom_events",
+      "as": "previous"
+    },
+    {
+      "from": "hover_node",
+      "to": "prevent_pan_while_dragging"
+    },
+    {
+      "from": "prevent_pan_while_dragging",
+      "to": "log_test",
+      "as": "prev_pan"
+    },
+    {
+      "from": "create_svg_base",
+      "to": "hover_node",
+      "as": "base"
+    },
+    {
+      "from": "state_graph",
+      "to": "create_lines"
+    },
+    {
+      "from": "create_svg_base",
+      "to": "create_lines",
+      "as": "create_svg_base"
+    },
+    {
+      "from": "mouse_dragging",
+      "to": "drag_node",
+      "as": "mouse_dragging"
+    },
+    {
+      "from": "mouse_select_target",
+      "to": "drag_node",
+      "as": "mouse_select_target"
+    },
+    {
+      "from": "register_mouse_listener",
+      "to": "drag_node",
+      "as": "register_mouse_listener"
+    },
+    {
+      "from": "state_graph",
+      "to": "drag_node",
+      "as": "graph"
+    },
+    {
+      "from": "drag_node",
+      "to": "state_graph"
+    },
+    {
+      "from": "mouse_dragging",
+      "to": "drop_node_input",
+      "as": "mouse_dragging"
+    },
+    {
+      "from": "mouse_select_target",
+      "to": "drop_node_input",
+      "as": "mouse_select_target"
+    },
+    {
+      "from": "register_mouse_listener",
+      "to": "drop_node_input",
+      "as": "register_mouse_listener"
+    },
+    {
+      "from": "state_graph",
+      "to": "drop_node",
+      "as": "graph"
+    },
+    {
+      "from": "drop_node_input",
+      "to": "drop_node",
+      "as": "drop_node_input"
+    },
+    {
+      "from": "configure_editor",
+      "to": "editor_content_changes",
+      "as": "content"
+    },
+    {
+      "from": "register_key_listener",
+      "to": "ctrl_s"
+    },
+    {
+      "from": "register_key_listener",
+      "to": "ctrl_e"
+    },
+    {
+      "from": "editor_content_changes",
+      "to": "last_editor_content_change"
+    },
+    {
+      "from": "ctrl_s",
+      "to": "map_save_value",
+      "as": "trigger"
+    },
+    {
+      "from": "state_graph",
+      "to": "graph_stringify",
+      "as": "state_graph"
+    },
+    {
+      "from": "graph_stringify",
+      "to": "map_save_value",
+      "as": "content"
+    },
+    {
+      "from": "map_save_value",
+      "to": "save_on_ctrl_s"
+    },
+    {
+      "from": "register_mouse_listener",
+      "to": "mouse_button_changed",
+      "as": "register_mouse_listener"
+    },
+    {
+      "from": "mouse_button_changed",
+      "to": "mouse_button_changed",
+      "as": "mouse_button_changed"
+    },
+    {
+      "from": "register_mouse_listener",
+      "to": "mouse_event_type_changed",
+      "as": "register_mouse_listener"
+    },
+    {
+      "from": "register_mouse_listener",
+      "to": "mouse_dragging",
+      "as": "register_mouse_listener"
+    },
+    {
+      "from": "mouse_event_type_changed",
+      "to": "mouse_select_target",
+      "as": "mouse_event_type_changed"
+    },
+    {
+      "from": "mouse_event_type_changed",
+      "to": "mouse_event_type_changed",
+      "as": "mouse_event_type_changed"
+    },
+    {
+      "from": "mouse_target_changed",
+      "to": "mouse_select_target",
+      "as": "mouse_target_changed"
+    },
+    {
+      "from": "mouse_target_changed",
+      "to": "mouse_target_changed",
+      "as": "mouse_target_changed"
+    },
+    {
+      "from": "register_mouse_listener",
+      "to": "mouse_target_changed",
+      "as": "register_mouse_listener"
+    },
+    {
+      "from": "ctrl_e",
+      "to": "push_editor_content_change",
+      "as": "trigger"
+    },
+    {
+      "from": "configure_editor",
+      "to": "push_editor_content_change",
+      "as": "content"
+    },
+    {
+      "from": "mouse_select_target",
+      "to": "push_editor_content_change",
+      "as": "mouse_select_target"
+    },
+    {
+      "from": "push_editor_content_change",
+      "to": "parse_editor_state_graph"
+    },
+    {
+      "from": "state_graph",
+      "to": "parse_editor_node_script",
+      "as": "graph"
+    },
+    {
+      "from": "push_editor_content_change",
+      "to": "parse_editor_node_script"
+    },
+    {
+      "from": "graph_style_tag",
+      "to": "render_graph_style"
+    },
+    {
+      "from": "state_graph",
+      "to": "graph_style_tag"
+    },
+    {
+      "from": "parse_editor_node_script",
+      "to": "out"
+    },
+    {
+      "from": "parse_editor_state_graph",
+      "to": "out"
+    },
+    {
+      "from": "editor_content",
+      "to": "update_editor_content",
+      "as": "editor_content"
+    },
+    {
+      "from": "mouse_select_target",
+      "to": "selected_node_script",
+      "as": "mouse_select_target"
+    },
+    {
+      "from": "state_graph",
+      "to": "selected_node_script",
+      "as": "graph"
+    },
+    {
+      "from": "selected_node_script",
+      "to": "editor_content",
+      "as": "content"
+    }
+  ],
+  "_saveignore": {
+    "rerun": true
+  }
+}

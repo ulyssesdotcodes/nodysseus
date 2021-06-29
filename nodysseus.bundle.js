@@ -5456,17 +5456,15 @@
             this.maxPoint = maxPoint;
         }
         get length() { return this.to[this.to.length - 1]; }
-        // With side == -1, return the first index where to >= pos. When
-        // side == 1, the first index where from > pos.
-        findIndex(pos, end, side = end * 1000000000 /* Far */, startAt = 0) {
-            if (pos <= 0)
-                return startAt;
-            let arr = end < 0 ? this.to : this.from;
+        // Find the index of the given position and side. Use the ranges'
+        // `from` pos when `end == false`, `to` when `end == true`.
+        findIndex(pos, side, end, startAt = 0) {
+            let arr = end ? this.to : this.from;
             for (let lo = startAt, hi = arr.length;;) {
                 if (lo == hi)
                     return lo;
                 let mid = (lo + hi) >> 1;
-                let diff = arr[mid] - pos || (end < 0 ? this.value[mid].startSide : this.value[mid].endSide) - side;
+                let diff = arr[mid] - pos || (end ? this.value[mid].endSide : this.value[mid].startSide) - side;
                 if (mid == lo)
                     return diff >= 0 ? lo : hi;
                 if (diff >= 0)
@@ -5476,7 +5474,7 @@
             }
         }
         between(offset, from, to, f) {
-            for (let i = this.findIndex(from, -1), e = this.findIndex(to, 1, undefined, i); i < e; i++)
+            for (let i = this.findIndex(from, -1000000000 /* Far */, true), e = this.findIndex(to, 1000000000 /* Far */, false, i); i < e; i++)
                 if (f(this.from[i] + offset, this.to[i] + offset, this.value[i]) === false)
                     return false;
         }
@@ -5764,7 +5762,7 @@
         */
         static of(ranges, sort = false) {
             let build = new RangeSetBuilder();
-            for (let range of ranges instanceof Range ? [ranges] : sort ? ranges.slice().sort(cmpRange) : ranges)
+            for (let range of ranges instanceof Range ? [ranges] : sort ? lazySort(ranges) : ranges)
                 build.add(range.from, range.to, range.value);
             return build.finish();
         }
@@ -5773,6 +5771,16 @@
     The empty set of ranges.
     */
     RangeSet.empty = /*@__PURE__*/new RangeSet([], [], null, -1);
+    function lazySort(ranges) {
+        if (ranges.length > 1)
+            for (let prev = ranges[0], i = 1; i < ranges.length; i++) {
+                let cur = ranges[i];
+                if (cmpRange(prev, cur) > 0)
+                    return ranges.slice().sort(cmpRange);
+                prev = cur;
+            }
+        return ranges;
+    }
     RangeSet.empty.nextLayer = RangeSet.empty;
     /**
     A range set builder is a data structure that helps build up a
@@ -5913,7 +5921,7 @@
                 forward = false;
             }
             let rangeIndex = this.chunkIndex == this.layer.chunk.length ? 0
-                : this.layer.chunk[this.chunkIndex].findIndex(pos - this.layer.chunkPos[this.chunkIndex], -1, side);
+                : this.layer.chunk[this.chunkIndex].findIndex(pos - this.layer.chunkPos[this.chunkIndex], side, true);
             if (!forward || this.rangeIndex < rangeIndex)
                 this.rangeIndex = rangeIndex;
             this.next();
@@ -24965,7 +24973,7 @@
 
         if (!isNaN(x) && !isNaN(y)) {
           // move every point
-          for (var l, i = this.length - 1; i >= 0; i--) {
+          for (let l, i = this.length - 1; i >= 0; i--) {
             l = this[i][0];
 
             if (l === 'M' || l === 'L' || l === 'T') {
@@ -28028,6 +28036,306 @@
     ]);
 
     makeMorphable();
+
+    const normalizeEvent = ev =>
+      ev.touches || [{ clientX: ev.clientX, clientY: ev.clientY }];
+
+    extend(Svg, {
+      panZoom (options) {
+        this.off('.panZoom');
+
+        // when called with false, disable panZoom
+        if (options === false) return this
+
+        options = options ?? {};
+        const zoomFactor = options.zoomFactor ?? 2;
+        const zoomMin = options.zoomMin ?? Number.MIN_VALUE;
+        const zoomMax = options.zoomMax ?? Number.MAX_VALUE;
+        const doWheelZoom = options.wheelZoom ?? true;
+        const doPinchZoom = options.pinchZoom ?? true;
+        const doPanning = options.panning ?? true;
+        const panButton = options.panButton ?? 0;
+        const oneFingerPan = options.oneFingerPan ?? false;
+        const margins = options.margins ?? false;
+        const wheelZoomDeltaModeLinePixels = options.wheelZoomDeltaModeLinePixels ?? 17;
+        const wheelZoomDeltaModeScreenPixels = options.wheelZoomDeltaModeScreenPixels ?? 53;
+
+        let lastP;
+        let lastTouches;
+        let zoomInProgress = false;
+
+        const restrictToMargins = box => {
+          if (!margins) return box
+          const { top, left, bottom, right } = margins;
+          const zoom = this.width() / box.width;
+
+          const { width, height } = this.attr(['width', 'height']);
+
+          const leftLimit = width - left / zoom;
+          const rightLimit = (right - width) / zoom;
+          const topLimit = height - top / zoom;
+          const bottomLimit = (bottom - height) / zoom;
+
+          box.x = Math.min(leftLimit, Math.max(rightLimit, box.x));
+          box.y = Math.min(topLimit, Math.max(bottomLimit, box.y));
+          return box
+        };
+
+        const wheelZoom = function (ev) {
+          ev.preventDefault();
+
+          // When wheeling on a mouse,
+          // - chrome by default uses deltaY = 53, deltaMode = 0 (pixel)
+          // - firefox by default uses deltaY = 3, deltaMode = 1 (line)
+          // - chrome and firefox on windows after configuring "One screen at a time"
+          //   use deltaY = 1, deltaMode = 2 (screen)
+          //
+          // Note that when when wheeling on a touchpad, deltaY depends on how fast
+          // you swipe, but the deltaMode is still different between the browsers.
+          //
+          // Normalize everything so that zooming speed is approximately the same in all cases
+          let normalizedPixelDeltaY;
+          switch (ev.deltaMode) {
+          case 1:
+            normalizedPixelDeltaY = ev.deltaY * wheelZoomDeltaModeLinePixels;
+            break
+          case 2:
+            normalizedPixelDeltaY = ev.deltaY * wheelZoomDeltaModeScreenPixels;
+            break
+          default:
+            // 0 (already pixels) or new mode (avoid crashing)
+            normalizedPixelDeltaY = ev.deltaY;
+            break
+          }
+
+          let lvl = Math.pow(1 + zoomFactor, (-1 * normalizedPixelDeltaY) / 100) * this.zoom();
+          const p = this.point(ev.clientX, ev.clientY);
+
+          if (lvl > zoomMax) {
+            lvl = zoomMax;
+          }
+
+          if (lvl < zoomMin) {
+            lvl = zoomMin;
+          }
+
+          if (this.dispatch('zoom', { level: lvl, focus: p }).defaultPrevented) {
+            return this
+          }
+
+          this.zoom(lvl, p);
+
+          if (margins) {
+            const box = restrictToMargins(this.viewbox());
+            this.viewbox(box);
+          }
+        };
+
+        const pinchZoomStart = function (ev) {
+          lastTouches = normalizeEvent(ev);
+
+          // Start panning in case only one touch is found
+          if (lastTouches.length < 2) {
+            if (doPanning && oneFingerPan) {
+              panStart.call(this, ev);
+            }
+            return
+          }
+
+          // Stop panning for more than one touch
+          if (doPanning && oneFingerPan) {
+            panStop.call(this, ev);
+          }
+
+          // We call it so late, so the user is still able to scroll / reload the page via gesture
+          // In case oneFingerPan is not active
+          ev.preventDefault();
+
+          if (this.dispatch('pinchZoomStart', { event: ev }).defaultPrevented) {
+            return
+          }
+
+          this.off('touchstart.panZoom', pinchZoomStart);
+
+          zoomInProgress = true;
+          on(document, 'touchmove.panZoom', pinchZoom, this, { passive: false });
+          on(document, 'touchend.panZoom', pinchZoomStop, this, { passive: false });
+        };
+
+        const pinchZoomStop = function (ev) {
+          ev.preventDefault();
+
+          const currentTouches = normalizeEvent(ev);
+          if (currentTouches.length > 1) {
+            return
+          }
+
+          zoomInProgress = false;
+
+          this.dispatch('pinchZoomEnd', { event: ev });
+
+          off(document, 'touchmove.panZoom', pinchZoom);
+          off(document, 'touchend.panZoom', pinchZoomStop);
+          this.on('touchstart.panZoom', pinchZoomStart);
+
+          if (currentTouches.length && doPanning && oneFingerPan) {
+            panStart.call(this, ev);
+          }
+        };
+
+        const pinchZoom = function (ev) {
+          ev.preventDefault();
+
+          const currentTouches = normalizeEvent(ev);
+          const zoom = this.zoom();
+
+          // Distance Formula
+          const lastDelta = Math.sqrt(
+            Math.pow(lastTouches[0].clientX - lastTouches[1].clientX, 2) +
+              Math.pow(lastTouches[0].clientY - lastTouches[1].clientY, 2)
+          );
+
+          const currentDelta = Math.sqrt(
+            Math.pow(currentTouches[0].clientX - currentTouches[1].clientX, 2) +
+              Math.pow(currentTouches[0].clientY - currentTouches[1].clientY, 2)
+          );
+
+          let zoomAmount = lastDelta / currentDelta;
+
+          if (
+            (zoom < zoomMin && zoomAmount > 1) ||
+            (zoom > zoomMax && zoomAmount < 1)
+          ) {
+            zoomAmount = 1;
+          }
+
+          const currentFocus = {
+            x:
+              currentTouches[0].clientX +
+              0.5 * (currentTouches[1].clientX - currentTouches[0].clientX),
+            y:
+              currentTouches[0].clientY +
+              0.5 * (currentTouches[1].clientY - currentTouches[0].clientY)
+          };
+
+          const lastFocus = {
+            x:
+              lastTouches[0].clientX +
+              0.5 * (lastTouches[1].clientX - lastTouches[0].clientX),
+            y:
+              lastTouches[0].clientY +
+              0.5 * (lastTouches[1].clientY - lastTouches[0].clientY)
+          };
+
+          const p = this.point(currentFocus.x, currentFocus.y);
+          const focusP = this.point(
+            2 * currentFocus.x - lastFocus.x,
+            2 * currentFocus.y - lastFocus.y
+          );
+          const box = new Box(this.viewbox()).transform(
+            new Matrix()
+              .translate(-focusP.x, -focusP.y)
+              .scale(zoomAmount, 0, 0)
+              .translate(p.x, p.y)
+          );
+
+          restrictToMargins(box);
+          this.viewbox(box);
+
+          lastTouches = currentTouches;
+
+          this.dispatch('zoom', { box: box, focus: focusP });
+        };
+
+        const panStart = function (ev) {
+          const isMouse = ev.type.indexOf('mouse') > -1;
+
+          // In case panStart is called with touch, ev.button is undefined
+          if (isMouse && ev.button !== panButton && ev.which !== panButton + 1) {
+            return
+          }
+
+          ev.preventDefault();
+
+          this.off('mousedown.panZoom', panStart);
+
+          lastTouches = normalizeEvent(ev);
+
+          if (zoomInProgress) return
+
+          this.dispatch('panStart', { event: ev });
+
+          lastP = { x: lastTouches[0].clientX, y: lastTouches[0].clientY };
+
+          on(document, 'touchmove.panZoom mousemove.panZoom', panning, this, {
+            passive: false
+          });
+
+          on(document, 'touchend.panZoom mouseup.panZoom', panStop, this, {
+            passive: false
+          });
+        };
+
+        const panStop = function (ev) {
+          ev.preventDefault();
+
+          off(document, 'touchmove.panZoom mousemove.panZoom', panning);
+          off(document, 'touchend.panZoom mouseup.panZoom', panStop);
+          this.on('mousedown.panZoom', panStart);
+
+          this.dispatch('panEnd', { event: ev });
+        };
+
+        const panning = function (ev) {
+          ev.preventDefault();
+
+          const currentTouches = normalizeEvent(ev);
+
+          const currentP = {
+            x: currentTouches[0].clientX,
+            y: currentTouches[0].clientY
+          };
+
+          const p1 = this.point(currentP.x, currentP.y);
+
+          const p2 = this.point(lastP.x, lastP.y);
+
+          const deltaP = [p2.x - p1.x, p2.y - p1.y];
+
+          if (!deltaP[0] && !deltaP[1]) {
+            return
+          }
+
+          const box = new Box(this.viewbox()).transform(
+            new Matrix().translate(deltaP[0], deltaP[1])
+          );
+
+          lastP = currentP;
+
+          restrictToMargins(box);
+
+          if (this.dispatch('panning', { box, event: ev }).defaultPrevented) {
+            return
+          }
+
+          this.viewbox(box);
+        };
+
+        if (doWheelZoom) {
+          this.on('wheel.panZoom', wheelZoom, this, { passive: false });
+        }
+
+        if (doPinchZoom) {
+          this.on('touchstart.panZoom', pinchZoomStart, this, { passive: false });
+        }
+
+        if (doPanning) {
+          this.on('mousedown.panZoom', panStart, this, { passive: false });
+        }
+
+        return this
+      }
+    });
 
     /**
      * A function that always returns `false`. Any passed in parameters are ignored.
@@ -39225,25 +39533,23 @@
 
     var nodes = {
     	"in": {
-    		script: "return input"
+    		script: "console.log('hi');\nconsole.log(input);\nreturn input"
     	},
     	onload_diff_empty: {
     		type: "diff_changes",
-    		x: 137.81666564941406,
-    		y: 13.208333969116211
+    		x: 144,
+    		y: 200
     	},
     	graph_stringify: {
     		type: "stringify",
-    		nodes: {
-    			key: "state_graph"
-    		},
+    		script: "return JSON.stringify(lib.R.omit(['_saveignore'], input.state_graph))",
     		x: 512.6583251953125,
     		y: 700.2083129882812
     	},
     	load_graph: {
-    		script: "const loaded = localStorage.getItem('graph'); if(!loaded){ return input.graph } try { return JSON.parse(loaded); } catch(err){ return input.graph; }",
-    		x: 673.00830078125,
-    		y: 196.2083282470703
+    		script: "if(input.graph._saveignore?.rerun){ console.log('rerunning'); return input.graph; } const loaded = localStorage.getItem('graph'); if(!loaded){ console.log('not loaded'); return input.graph } try { console.log('parsing'); return JSON.parse(loaded); } catch(err){ console.error(err); return input.graph; }",
+    		x: 369.78317919785036,
+    		y: -66.34489380468398
     	},
     	queue_apply_diff: {
     		type: "last_updated"
@@ -39254,8 +39560,8 @@
     	apply_diff_to_graph: {
     		type: "script",
     		script: "if(input.new_diff) { const newgraph = lib.clone(state.graph); lib.diffapply(newgraph, input.new_diff); state.graph = newgraph; return state.graph; }",
-    		x: 158.375,
-    		y: 994.2083740234375
+    		x: 250.17311885732238,
+    		y: 1334.2732893213474
     	},
     	graph_style_tag: {
     		type: "script",
@@ -39282,26 +39588,32 @@
     		nodes: {
     			target: "document.querySelector('#graph')"
     		},
-    		x: 182.35000610351562,
-    		y: 73.20833587646484
+    		x: -512.0702758027019,
+    		y: -246.90110551537612
     	},
     	create_svg_base: {
     		type: "script",
-    		script: "return lib.SVG('.root') ?? lib.SVG().addTo('#graph').addClass('root')",
-    		x: 752.5750122070312,
-    		y: 725.2083129882812
+    		script: "let svg = lib.SVG('.root');\n\nif(!svg){\n  svg = lib.SVG().addTo('#graph')\n    .addClass('root')\n    .viewbox(\n      -window.screen.width / 4, \n      -window.screen.height / 2, \n      window.screen.width / 4, \n      window.screen.height / 2\n    ).panZoom({oneFingerPan: true})\n}\n\nreturn svg; ",
+    		x: 739,
+    		y: 737
     	},
-    	create_nodes: {
+    	create_node: {
     		type: "script",
-    		script: "const base = lib.SVG('.root'); if(!base){ return; } Object.entries(input.nodes).map(([id, n], idx) => (base.findOne(`#${id}`) ??  base.text(id).attr({id, class: 'node'})).move(n.x ?? 100 * (idx % 4), n.y ?? 40 * (idx / 4))); return base;",
-    		x: 669.24169921875,
-    		y: 486.2083435058594
+    		script: "if(input.last_updated == \"create_node\" || (input.create_node && input.create_node[input.id]?.x === input.x && input.create_node[input.id]?.y === input.y)) {\n  return;\n}\nconst base = lib.SVG('.root'); \n\nif(!(base && input.x && input.y)){ return; }\n\nconst svg = base.findOne(`#${input.id}`) ??  base.text(input.id).attr({id: input.id, class: 'node'})\n\nsvg.cx(input.x).cy(input.y); \n\nreturn lib.R.assoc(input.id, {x: input.x, y: input.y}, input.create_node);",
+    		x: 320.9526275477351,
+    		y: 939.0803467698752
     	},
-    	create_lines: {
+    	hover_node: {
     		type: "script",
-    		script: "const base = lib.SVG('.root'); if(!base){ return; } return input.edges.map(edge => (base.findOne(`#${edge.from}-${edge.to}`) ?? base.line().stroke({width: 1, color: '#000'}).attr({id: `${edge.from}-${edge.to}`}) ).plot(input.nodes[edge.from].x, input.nodes[edge.from].y, input.nodes[edge.to].x, input.nodes[edge.to].y))",
-    		x: 880.7916870117188,
-    		y: 834.2083129882812
+    		script: "const base = lib.SVG('.root');\nif(input.last_updated !== 'target' || !base) {return;} \n\nif(input.graph.nodes[input.hover_node?.target]){ lib.SVG(`#${input.hover_node.target}`).fill('#000');}\n\nif(input.graph.nodes[input.target]){\n  lib.SVG(`#${input.target}`).fill('#6EB4D1');\n}\n\nreturn {target: input.target}",
+    		x: 445.1993791219591,
+    		y: 941.4096208983752
+    	},
+    	create_line: {
+    		type: "script",
+    		script: "if(input.last_updated == \"create_line\" || !input.edge) {\n  return;\n}\n\nconst base = lib.SVG('.root'); \n\nif(!(base && input.graph.nodes[input.edge.from].x \n     && input.graph.nodes[input.edge.from].y \n     && input.graph.nodes[input.edge.to].x  \n     && input.graph.nodes[input.edge.to].y )){ \n  return; \n}\n\n\nconst origin = {x: input.graph.nodes[input.edge.from].x, y: input.graph.nodes[input.edge.from].y};\nconst dest = {x: input.graph.nodes[input.edge.to].x, y: input.graph.nodes[input.edge.to].y };\nconst dir = {x: dest.x - origin.x, y: dest.y - origin.y};\n\nif(input.create_line && lib.R.equals(input.create_line.from, origin) && lib.R.equals(input.create_line.to, origin)){ return; }\n\nlet line = base.findOne(`#${input.edge.from}-${input.edge.to}`) ?? base.line().attr({id: `${input.edge.from}-${input.edge.to}`});\n\nlet marker = line.reference('marker-start'); \n\nif(!marker) {\n  marker = line.marker('end', 10, 10, function(add) {\n    add.polygon('0,0 8,4 0,8').fill('#00f');\n  });\n}\n\nif(Math.abs(dir.x) + Math.abs(dir.y) > 0) {    \n  const sum = dir.x + dir.y;\n  dir.x = dir.x / (Math.abs(dir.x) + Math.abs(dir.y));\n  dir.y = dir.y / (Math.abs(dir.x) + Math.abs(dir.y));\n  origin.x += dir.x * 10;    origin.y += dir.y * 10;\n  dest.x -= dir.x * 10;    dest.y -= dir.y * 10;\n  line.stroke({width: 1, color: '#000'}).plot(origin.x, origin.y, dest.x, dest.y);\n}\n\n\nreturn lib.R.assoc(input.edge.to, dest, lib.R.assoc(input.edge.from, origin, input.create_line));",
+    		x: 394.5203433070714,
+    		y: 1072.815807514839
     	},
     	show_errors: {
     		type: "script",
@@ -39310,19 +39622,19 @@
     		y: 400.20831298828125
     	},
     	register_mouse_listener: {
-    		type: "mouse_event",
-    		x: 288.5,
-    		y: 26.208332061767578
+    		script: "const mouse_queue = lib.queue();\nconst mouseEvent = (ty) => (e) => { \n  mouse_queue.push({\n    ty, \n touch_count: e.touches?.length ?? 0,   x: e.x ?? e.touches[0]?.clientX, \n    y: e.y?? e.touches[0]?.clientY, \n    target: e.target?.parentNode.id ?? e.touches[0]?.target?.parentNode.id, \n    button: e.button, \n    buttons: e.buttons\n  })\n}; \ndocument.getElementById('graph').onmousemove = mouseEvent('mousemove'); \ndocument.getElementById('graph').onmousedown = mouseEvent('mousedown'); \ndocument.getElementById('graph').onmouseup = mouseEvent('mouseup'); \ndocument.getElementById('graph').onwheel = mouseEvent('wheel'); \ndocument.getElementById('graph').addEventListener(\"touchstart\", mouseEvent('touchstart'), false);\ndocument.getElementById('graph').addEventListener(\"touchend\", mouseEvent('touchend'), false);\ndocument.getElementById('graph').addEventListener(\"touchcancel\", mouseEvent('touchcancel'), false);\ndocument.getElementById('graph').addEventListener(\"touchmove\", mouseEvent('touchmove'), false);\n\nreturn lib.queueIterator(mouse_queue); ",
+    		x: 561,
+    		y: 113
     	},
     	mouse_stringify: {
     		type: "stringify",
-    		x: 31.983333587646484,
-    		y: 42.20833206176758
+    		x: -299.2649564212277,
+    		y: 937.5443639053171
     	},
     	mouse_log: {
     		type: "log",
-    		x: 129.88333129882812,
-    		y: 50.208335876464844
+    		x: -229.74359447450615,
+    		y: -166.3445757938149
     	},
     	mouse_target_changed: {
     		type: "value_changed",
@@ -39357,32 +39669,43 @@
     		x: 898.3333740234375,
     		y: 801.2083740234375
     	},
+    	mouse_wheel_events: {
+    		script: "if(input.ty !== 'wheel'){ return; } return input;",
+    		x: 559,
+    		y: 713
+    	},
     	mouse_dragging: {
     		type: "script",
-    		script: "return input.mouse_event_type_changed === 'mousemove' ? undefined : (input.register_mouse_listener.button === 0 && input.mouse_event_type_changed === 'mousedown')"
+    		script: "return ((input.register_mouse_listener.ty === 'mousedown' || input.register_mouse_listener.ty === 'touchstart' || input.register_mouse_listener.ty === 'mouseup' || input.register_mouse_listener.ty === 'touchend') && (input.register_mouse_listener.button === 0 || input.register_mouse_listener.touch_count > 0) || (input.register_mouse_listener.ty === 'mouseleave')) ? (input.register_mouse_listener.ty === 'touchstart' || input.register_mouse_listener.ty === 'mousedown') && input.register_mouse_listener.ty !== 'mouseout' : undefined"
     	},
     	mouse_select_target: {
-    		script: "return input.last_updated === 'mouse_event_type_changed' && input.mouse_event_type_changed === 'mousedown' ? input.mouse_target_changed : undefined",
+    		script: "return (input.event.ty === 'mousedown' || input.event.ty === 'touchstart') ? input.event.target : undefined",
     		x: 1031.8082275390625,
     		y: 344.2083435058594
     	},
+    	svg_pan_zoom_events: {
+    		script: "if(input.previous !== undefined){ return; } const q = lib.queue(); lib.SVG('.root').on('panning', e => { q.push(e)}); return lib.queueIterator(q);"
+    	},
+    	prevent_pan_while_dragging: {
+    		script: "lib.SVG('.root').panZoom(input.target === 'graph' ? {oneFingerPan: true} : false); return input;"
+    	},
     	hover_state: {
     		script: "if(!input.mouse_target_changed) {return; } const tt = document.queryselector('.tooltip'); if(input.mouse_event_type_changed !== 'mousemove' || input.mouse_target_changed === 'graph'){ tt.style = `visibility: hidden`;return; } const content = (state.temp.errors.get(input.mouse_target_changed)?.message ?? state.temp.results.get(input.mouse_target_changed)); tt.innertext = typeof content === 'string' ? content : JSON.stringify(content, null, 2); tt.style = `left: ${lib.SVG(`#${input.mouse_target_changed}`)?.x() ?? '0'}px; top: ${lib.SVG(`#${input.mouse_target_changed}`)?.y() ?? '0'}px; visibility: ${content ? 'visible' : 'hidden'};`;",
-    		x: 950.1166381835938,
-    		y: 909.2083740234375
+    		x: 647,
+    		y: 777
     	},
     	drag_node: {
-    		script: "if(!(input.mouse_dragging && input.mouse_select_target)) { return; } const target = lib.SVG(`#${input.mouse_select_target}`); if(target?.center && (Math.abs(lib.R.path(['nodes', input.mouse_select_target, 'x'], input.graph) - input.register_mouse_listener.x) > 1 || Math.abs(lib.R.path(['nodes', input.mouse_select_target, 'y'], input.graph) - input.register_mouse_listener.y) > 1)){ target.center(input.register_mouse_listener.x, input.register_mouse_listener.y); return lib.R.over(lib.R.lensPath(['nodes', input.mouse_select_target]), lib.R.evolve({x: () => input.register_mouse_listener.x, y: () => input.register_mouse_listener.y}), input.graph)}",
-    		x: 787.2333374023438,
-    		y: 492.2083435058594
+    		script: "\nif(!(input.mouse_dragging && input.mouse_select_target && input.graph?.nodes[input.mouse_select_target] && (input.register_mouse_listener.ty === 'mousemove' || input.register_mouse_listener.ty === 'touchmove'))) { \n  return; \n}\n\nconst target = lib.SVG(`#${input.mouse_select_target}`);\n\nconst current = {\n  x: lib.R.path(['nodes', input.mouse_select_target, 'x'], input.graph) ?? input.register_mouse_listener.x + 1,\n  y: lib.R.path(['nodes', input.mouse_select_target, 'y'], input.graph) ?? input.register_mouse_listener.y + 1\n};\n\nconst next = lib.SVG('.root').point(\n  input.register_mouse_listener.x,\n  input.register_mouse_listener.y\n);\n\n\nif(target?.center && \n   Math.abs(current.x - next.x) > 1 ||  \n   Math.abs(current.y - next.y) > 1){ \n  target.center(next); \n  \n  return lib.R.over(\n    lib.R.lensPath(['nodes', input.mouse_select_target]), \n    lib.R.evolve({x: () => next.x, y: () => next.y}), \n    input.graph\n  );\n}",
+    		x: 398,
+    		y: 697
     	},
     	parse_editor_state_graph: {
     		script: "const mouse_target = input.mouse_select_target; return !mouse_target || mouse_target === 'graph' ? JSON.parse(input.content) : undefined",
-    		x: 1055.8582763671875,
-    		y: 708.2083129882812
+    		x: 1053.4767561210704,
+    		y: 802.580756696675
     	},
     	parse_editor_node_script: {
-    		script: "const mouse_target = input.mouse_select_target; return mouse_target && mouse_target !== 'graph' && input.graph.nodes[mouse_target]?.nodes?.script ? [{op: 'replace', path: ['nodes', mouse_target, 'nodes', 'script'], value: input.parse_editor_content_trigger.parse_editor_content_change.last_editor_content_change}] : undefined",
+    		script: "const mouse_target = input.mouse_select_target; return mouse_target && mouse_target !== 'graph' && input.graph.nodes[mouse_target]?.script ? lib.R.set(lib.R.lensPath(['nodes', mouse_target, 'script']), input.content, input.graph) : undefined",
     		x: 1055.8582763671875,
     		y: 708.2083129882812
     	},
@@ -39412,21 +39735,21 @@
     				key: "e"
     			}
     		],
-    		x: 294.8416442871094,
-    		y: 66.20833587646484
+    		x: 169.8717131306064,
+    		y: 433.03744183478904
     	},
     	save_on_ctrl_s: {
     		type: "save_content",
     		nodes: {
     			save_key: "graph"
     		},
-    		x: 419,
-    		y: 694.2083740234375
+    		x: 298.97707396802457,
+    		y: 1110.7196884916796
     	},
     	ctrl_s: {
     		script: "return input.ctrlKey && input.key === 's' && input.event === 'keydown'",
-    		x: 49.65833282470703,
-    		y: 706.2083129882812
+    		x: -627.2101509492792,
+    		y: -37.94355432343946
     	},
     	ctrl_e: {
     		script: "return input.ctrlKey && input.key === 'e' && input.event === 'keydown'",
@@ -39451,8 +39774,8 @@
     				"trigger"
     			]
     		},
-    		x: 423.683349609375,
-    		y: 486.2083435058594
+    		x: 109,
+    		y: 955
     	},
     	get_edges_changes: {
     		type: "filter_input",
@@ -39461,21 +39784,21 @@
     		}
     	},
     	editor_content: {
-    		x: 715.7666625976562,
-    		y: 999.2083129882812,
+    		x: 701,
+    		y: 1005,
     		script: "return typeof input.last_updated === 'string' ? input[input.last_updated] : lib.R.pick(input.last_updated, input)"
     	},
     	update_editor_content: {
-    		x: 675.441650390625,
-    		y: 1055.2083740234375,
+    		x: 655,
+    		y: 1111,
     		edges: [
     		],
     		script: "const newcontent = typeof input.editor_content === 'string' ? input.editor_content : JSON.stringify(input.editor_content, null, 2); if(state.editor.state.doc.toString() !== newcontent) { state.editor.dispatch({changes: {from: 0, to: state.editor.state.doc.length, insert: newcontent }}) }"
     	},
     	log_errors: {
     		script: "state.temp.errors.foreach((id, e) => {console.log(id); console.error(e);})",
-    		x: 3.1083335876464844,
-    		y: 607.2083129882812
+    		x: -570.3509533460311,
+    		y: -190.04190791212807
     	},
     	log_results: {
     		script: "console.log(state.temp.results.foreach((v, k) => console.log(`${k}: ${JSON.stringify(v, null, 2)}`)))",
@@ -39492,8 +39815,8 @@
     	},
     	drop_node: {
     		script: "if(!input.drop_node_input || input.drop_node_input.key !== 'mouse_dragging' || input.drop_node_input.mouse_dragging || !input.drop_node_input.mouse_select_target || !input.nodes.hasOwnProperty(input.drop_node_input.mouse_select_target)) { return; } const target = lib.SVG(`#${input.drop_node_input.mouse_select_target}`);",
-    		x: 581.7833251953125,
-    		y: 924.2083129882812
+    		x: 543,
+    		y: 897
     	},
     	drop_node_input: {
     		type: "last_updated",
@@ -39518,11 +39841,17 @@
     				"trigger"
     			]
     		},
-    		x: 1080.49169921875,
-    		y: 637.2083129882812
+    		x: 743,
+    		y: 759
+    	},
+    	edge_stream: {
+    		script: "if(input.last_updated === 'edge_stream'){\n  return;\n}\n\nreturn lib.queueIterator(lib.queue().push(input.graph?.edges, true));"
+    	},
+    	node_stream: {
+    		script: "if(input.last_updated === 'node_stream'){\n  return;\n}\n\nreturn lib.queueIterator(lib.queue().push(lib.R.compose(lib.R.map(([k, v]) => lib.R.assoc('id', k, v)), lib.R.toPairs)(input.graph?.nodes), true));"
     	},
     	out: {
-    		script: "return input"
+    		script: "return {...input, _saveignore: { rerun: true} }"
     	}
     };
     var defaults = {
@@ -39531,9 +39860,6 @@
     	},
     	stringify: {
     		script: "return JSON.stringify(input[node.nodes.key])"
-    	},
-    	mouse_event: {
-    		script: " const mouse_queue = lib.queue(); const last_update = {time: 0}; const mouseEvent = (ty) => (e) => { if(performance.now() - last_update.time > 32){ last_update.time = performance.now(); mouse_queue.push({x: e.x, y: e.y, target: document.elementFromPoint(e.x, e.y).parentElement.id, buttons: e.buttons, button: e.button, ty })}}; document.getElementById('graph').onmousemove = mouseEvent('mousemove'); document.getElementById('graph').onmousedown = mouseEvent('mousedown'); document.getElementById('graph').onmouseup = mouseEvent('mouseup'); return lib.queueIterator(mouse_queue);"
     	},
     	tag: {
     		script: "return () => lib.html`<${node.nodes.tag} ...${node.nodes.attrs}>${new function(`return ${node.nodes.content}`)()}</${node.nodes.tag}>`"
@@ -39545,7 +39871,7 @@
     		script: "return state.temp.results.get(name) === input.value ? undefined : input.value"
     	},
     	save_content: {
-    		script: "return localStorage.setItem(node.nodes.save_key, input.content)"
+    		script: "console.log(`saving ${node.nodes.save_key}`); return localStorage.setItem(node.nodes.save_key, input.content)"
     	},
     	load_content: {
     		script: "return localStorage.getItem(node.nodes.key)"
@@ -39604,25 +39930,75 @@
     	},
     	{
     		from: "state_graph",
+    		to: "node_stream",
+    		as: "graph"
+    	},
+    	{
+    		from: "state_graph",
+    		to: "edge_stream",
+    		as: "graph"
+    	},
+    	{
+    		from: "state_graph",
+    		to: "create_line",
+    		as: "graph"
+    	},
+    	{
+    		from: "edge_stream",
+    		to: "create_line",
+    		as: "edge"
+    	},
+    	{
+    		from: "node_stream",
+    		to: "create_node"
+    	},
+    	{
+    		from: "create_node",
+    		to: "create_node",
+    		as: "create_node"
+    	},
+    	{
+    		from: "state_graph",
     		to: "create_svg_base"
     	},
     	{
     		from: "state_graph",
-    		to: "create_nodes"
+    		to: "hover_node",
+    		as: "graph"
+    	},
+    	{
+    		from: "hover_node",
+    		to: "hover_node",
+    		as: "hover_node"
+    	},
+    	{
+    		from: "mouse_target_changed",
+    		to: "hover_node",
+    		as: "target"
     	},
     	{
     		from: "create_svg_base",
-    		to: "create_nodes",
-    		as: "create_svg_base"
+    		to: "svg_pan_zoom_events",
+    		as: "base"
     	},
     	{
-    		from: "state_graph",
-    		to: "create_lines"
+    		from: "svg_pan_zoom_events",
+    		to: "svg_pan_zoom_events",
+    		as: "previous"
+    	},
+    	{
+    		from: "hover_node",
+    		to: "prevent_pan_while_dragging"
+    	},
+    	{
+    		from: "mouse_select_target",
+    		to: "prevent_pan_while_dragging",
+    		as: "target"
     	},
     	{
     		from: "create_svg_base",
-    		to: "create_lines",
-    		as: "create_svg_base"
+    		to: "hover_node",
+    		as: "base"
     	},
     	{
     		from: "mouse_dragging",
@@ -39646,8 +40022,7 @@
     	},
     	{
     		from: "drag_node",
-    		to: "state_graph",
-    		as: "drag_node"
+    		to: "state_graph"
     	},
     	{
     		from: "mouse_dragging",
@@ -39732,23 +40107,13 @@
     	},
     	{
     		from: "mouse_event_type_changed",
-    		to: "mouse_dragging",
-    		as: "mouse_event_type_changed"
-    	},
-    	{
-    		from: "mouse_event_type_changed",
-    		to: "mouse_select_target",
-    		as: "mouse_event_type_changed"
-    	},
-    	{
-    		from: "mouse_event_type_changed",
     		to: "mouse_event_type_changed",
     		as: "mouse_event_type_changed"
     	},
     	{
-    		from: "mouse_target_changed",
+    		from: "register_mouse_listener",
     		to: "mouse_select_target",
-    		as: "mouse_target_changed"
+    		as: "event"
     	},
     	{
     		from: "mouse_target_changed",
@@ -39780,6 +40145,11 @@
     		to: "parse_editor_state_graph"
     	},
     	{
+    		from: "state_graph",
+    		to: "parse_editor_node_script",
+    		as: "graph"
+    	},
+    	{
     		from: "push_editor_content_change",
     		to: "parse_editor_node_script"
     	},
@@ -39790,6 +40160,10 @@
     	{
     		from: "state_graph",
     		to: "graph_style_tag"
+    	},
+    	{
+    		from: "parse_editor_node_script",
+    		to: "out"
     	},
     	{
     		from: "parse_editor_state_graph",
@@ -39814,6 +40188,11 @@
     		from: "selected_node_script",
     		to: "editor_content",
     		as: "content"
+    	},
+    	{
+    		from: "mouse_dragging",
+    		to: "log_test",
+    		as: "dragging"
     	}
     ];
     var DEFAULT_GRAPH = {
@@ -39880,7 +40259,7 @@
     		return {
     			queue,
     			next(){
-    				return this.queue.pop().then(value => ({done: this.queue.abortController.signal.aborted, value}));
+    				return this.queue.pop().then(value => value?.done ? value : {done: this.queue.abortController.signal.aborted, value}).catch(err => console.error(err));
     			}
     		}
     	}});
@@ -39890,11 +40269,29 @@
     const editorEl = document.getElementById("editor");
     const graphEl = document.getElementById("graph");
 
+    const languageConf = new Compartment();
+
+    const autoLanguage = EditorState.transactionExtender.of(tr => {
+      if (!tr.docChanged) return null
+      let docIsJSON = true;
+
+    	try{
+    		JSON.parse(tr.newDoc.toString());
+    	} catch (err){
+    		docIsJSON = false;
+    	}
+
+      let stateIsJSON = tr.startState.facet(language) == jsonLanguage;
+      if (docIsJSON == stateIsJSON) return null
+      return {
+        effects: languageConf.reconfigure(docIsJSON ? [cm.linter(cm.jsonParseLinter()), json()] : javascript())
+      }
+    });
+
     const editorState  = cm.EditorState.create({
     	extensions: [
-    		cm.json(),
-    		cm.javascript(),
-    		cm.linter(cm.jsonParseLinter()),
+    		languageConf.of([cm.linter(cm.jsonParseLinter()), json()]),
+    		autoLanguage,
     		cm.lineNumbers(),
     		cm.highlightActiveLineGutter(),
     		cm.highlightSpecialChars(),
@@ -39939,7 +40336,10 @@
     let debug_node = "";
 
     const runNode = (node, input) => node.script 
-    		? new AsyncFunction('lib', 'state', 'input', 'node', node.script)(lib, state, input, node)
+    		? (new AsyncFunction('lib', 'state', 'input', 'node', node.script)(lib, state, input, node)).catch(err => {
+    			console.log(err);
+    			return input;
+    		})
     		: runGraph(node, input);
 
 
@@ -39989,6 +40389,10 @@
     		};
 
     		for await (const run_cmd of lib.queueIterator(this.queue)) {
+    			if(!run_cmd) {
+    				continue;
+    			}
+
     			if(run_cmd.id === log_node) {
     				console.log(run_cmd);
     			}
@@ -40018,15 +40422,14 @@
     	}
     });
 
-    const run = async (graph) => {
-    	console.log(graph);
+    const run = async (graph, previous_graph=null) => {
     	const default_run = await runNode(graph, graph);
-    	const output = await default_run;
     	let next_graph;
-    	for await(const value of output) {
+    	for await(const value of default_run) {
     		console.log('out happened');
     		next_graph = value;
     		if(next_graph) {
+    			default_run.queue.abortController.abort();
     			break;
     		}
     	}

@@ -1,7 +1,7 @@
-import { json, jsonParseLinter } from "@codemirror/lang-json";
-import { javascript } from "@codemirror/lang-javascript";
+import { json, jsonParseLinter, jsonLanguage } from "@codemirror/lang-json";
+import { javascript, javascriptLanguage } from "@codemirror/lang-javascript";
 import {keymap, highlightSpecialChars, drawSelection, highlightActiveLine, EditorView} from "@codemirror/view";
-import {EditorState, StateEffect} from "@codemirror/state";
+import {EditorState, StateEffect, Compartment} from "@codemirror/state";
 import {history, historyKeymap} from "@codemirror/history";
 import {foldGutter, foldKeymap} from "@codemirror/fold";
 import {indentOnInput} from "@codemirror/language";
@@ -15,15 +15,16 @@ import {commentKeymap} from "@codemirror/comment";
 import {rectangularSelection} from "@codemirror/rectangular-selection";
 import {defaultHighlightStyle} from "@codemirror/highlight";
 import {lintKeymap, linter} from "@codemirror/lint";
+import {language} from "@codemirror/language";
 
 
 import { html } from 'htm/preact'
 import { render } from 'preact'
 import { SVG } from "@svgdotjs/svg.js";
+import "@svgdotjs/svg.panzoom.js";
 import * as R from 'ramda';
 
-import DEFAULT_GRAPH from "./default.copane.json"
-import { abort } from "process";
+import DEFAULT_GRAPH from "./default.nodysseus.json"
 
 const cm = {javascript, json, searchKeymap, keymap, highlightSpecialChars, 
 	drawSelection, highlightActiveLine, EditorState, EditorView, StateEffect, jsonParseLinter,
@@ -97,7 +98,7 @@ const queueIterator = (queue) => ({[Symbol.asyncIterator](){
 		return {
 			queue,
 			next(){
-				return this.queue.pop().then(value => ({done: this.queue.abortController.signal.aborted, value}));
+				return this.queue.pop().then(value => value?.done ? value : {done: this.queue.abortController.signal.aborted, value}).catch(err => console.error(err));
 			}
 		}
 	}})
@@ -107,11 +108,29 @@ const lib = { cm, html, render, SVG, R, queue, queueIterator }
 const editorEl = document.getElementById("editor");
 const graphEl = document.getElementById("graph");
 
+const languageConf = new Compartment();
+
+const autoLanguage = EditorState.transactionExtender.of(tr => {
+  if (!tr.docChanged) return null
+  let docIsJSON = true;
+
+	try{
+		JSON.parse(tr.newDoc.toString());
+	} catch (err){
+		docIsJSON = false;
+	}
+
+  let stateIsJSON = tr.startState.facet(language) == jsonLanguage;
+  if (docIsJSON == stateIsJSON) return null
+  return {
+    effects: languageConf.reconfigure(docIsJSON ? [cm.linter(cm.jsonParseLinter()), json()] : javascript())
+  }
+})
+
 const editorState  = cm.EditorState.create({
 	extensions: [
-		cm.json(),
-		cm.javascript(),
-		cm.linter(cm.jsonParseLinter()),
+		languageConf.of([cm.linter(cm.jsonParseLinter()), json()]),
+		autoLanguage,
 		cm.lineNumbers(),
 		cm.highlightActiveLineGutter(),
 		cm.highlightSpecialChars(),
@@ -156,7 +175,10 @@ let log_node = "";
 let debug_node = "";
 
 const runNode = (node, input) => node.script 
-		? new AsyncFunction('lib', 'state', 'input', 'node', node.script)(lib, state, input, node)
+		? (new AsyncFunction('lib', 'state', 'input', 'node', node.script)(lib, state, input, node)).catch(err => {
+			console.log(err);
+			return input;
+		})
 		: runGraph(node, input);
 
 
@@ -206,6 +228,10 @@ const runGraph = async (graph, input) => ({
 		}
 
 		for await (const run_cmd of lib.queueIterator(this.queue)) {
+			if(!run_cmd) {
+				continue;
+			}
+
 			if(run_cmd.id === log_node) {
 				console.log(run_cmd);
 			}
@@ -235,15 +261,14 @@ const runGraph = async (graph, input) => ({
 	}
 });
 
-const run = async (graph) => {
-	console.log(graph);
+const run = async (graph, previous_graph=null) => {
 	const default_run = await runNode(graph, graph);
-	const output = await default_run;
 	let next_graph;
-	for await(const value of output) {
+	for await(const value of default_run) {
 		console.log('out happened');
 		next_graph = value;
 		if(next_graph) {
+			default_run.queue.abortController.abort();
 			break;
 		}
 	}
