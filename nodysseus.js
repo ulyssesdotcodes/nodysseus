@@ -105,8 +105,8 @@ const queueIterator = (queue) => ({[Symbol.asyncIterator](){
 
 const lib = { cm, html, render, SVG, R, queue, queueIterator }
 
-const editorEl = document.getElementById("editor");
-const graphEl = document.getElementById("graph");
+const editorEl = document.getElementById("text_editor");
+const graphEl = document.getElementById("node_editor");
 
 const languageConf = new Compartment();
 
@@ -176,7 +176,7 @@ let debug_node = "";
 
 const runNode = (node, input) => node.script 
 		? (new AsyncFunction('lib', 'state', 'input', 'node', node.script)(lib, state, input, node)).catch(err => {
-			console.log(err);
+			console.error(err);
 			return input;
 		})
 		: runGraph(node, input);
@@ -194,7 +194,7 @@ const runGraph = async (graph, input) => ({
 			}
 
 			if(run_cmd.id === log_node) {
-				console.log(output);
+				console.log(JSON.stringify(output));
 			}
 
 			// const changed = this.outputs[run_cmd[0]] === undefined || lib.R.equals(this.outputs[run_cmd[0]], output);
@@ -208,7 +208,7 @@ const runGraph = async (graph, input) => ({
 					? lib.R.mergeRight(graph.nodes[next_edge.to], graph.defaults[graph.nodes[next_edge.to].type]) 
 					: graph.nodes[next_edge.to],
 				input: lib.R.compose(
-					lib.R.mergeLeft({last_updated: next_edge.as ? next_edge.as : Object.keys(output)}),
+					lib.R.mergeLeft({last_updated: next_edge.as ? [next_edge.as] : Object.keys(output)}),
 					lib.R.mergeLeft(next_edge.as ? lib.R.objOf(next_edge.as, output) : output),
 					lib.R.reduce((acc, input_edge) => 
 						lib.R.mergeLeft(
@@ -239,7 +239,6 @@ const runGraph = async (graph, input) => ({
 			if(run_cmd.id === debug_node) {
 				debugger;
 			}
-
 
 			const output_generator = await runNode(lib.R.mergeLeft({id: run_cmd.id}, run_cmd.node), run_cmd.input);
 			if(output_generator && output_generator[Symbol.asyncIterator]) {

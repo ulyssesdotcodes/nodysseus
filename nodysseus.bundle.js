@@ -39533,108 +39533,111 @@
 
     var nodes = {
     	"in": {
-    		script: "console.log('hi');\nconsole.log(input);\nreturn input"
+    		script: "return input",
+    		x: 524.0759770715283,
+    		y: -1052.2298725113762
     	},
     	onload_diff_empty: {
     		type: "diff_changes",
-    		x: 144,
-    		y: 200
+    		x: -584.2461002811915,
+    		y: -69.85353381138827
     	},
     	graph_stringify: {
     		type: "stringify",
     		script: "return JSON.stringify(lib.R.omit(['_saveignore'], input.state_graph))",
-    		x: 512.6583251953125,
-    		y: 700.2083129882812
+    		x: 127.34705165549786,
+    		y: 574.0438574678276
     	},
     	load_graph: {
-    		script: "if(input.graph._saveignore?.rerun){ console.log('rerunning'); return input.graph; } const loaded = localStorage.getItem('graph'); if(!loaded){ console.log('not loaded'); return input.graph } try { console.log('parsing'); return JSON.parse(loaded); } catch(err){ console.error(err); return input.graph; }",
-    		x: 369.78317919785036,
-    		y: -66.34489380468398
+    		description: "If there's a graph in localstorage, load it and pass the result through to out. If this has already passed through 'out' then just run it",
+    		script: "if(input.graph._saveignore?.rerun){ \n  console.log('rerunning'); \n  return {run: input.graph}; \n} \nconst loaded = localStorage.getItem('graph'); \nif(!loaded){ console.log('not loaded'); return {run: input.graph}; } \ntry { \n  console.log('parsing');\n  return {out: JSON.parse(loaded)}; \n} catch(err){ console.error(err); return input.graph; }",
+    		x: 555.5623997235942,
+    		y: -830.2505928143116
     	},
-    	queue_apply_diff: {
-    		type: "last_updated"
+    	load_graph_run: {
+    		script: "if(input.last_updated[0] === 'run'){ return input.run }",
+    		x: 49.295289675375045,
+    		y: -612.7682379212958
     	},
-    	pop_apply_diff: {
-    		type: "filter_last_updated"
-    	},
-    	apply_diff_to_graph: {
-    		type: "script",
-    		script: "if(input.new_diff) { const newgraph = lib.clone(state.graph); lib.diffapply(newgraph, input.new_diff); state.graph = newgraph; return state.graph; }",
-    		x: 250.17311885732238,
-    		y: 1334.2732893213474
+    	load_graph_out: {
+    		script: "if(input.last_updated[0] === 'out'){ return input.out }",
+    		x: 2068.4850081553604,
+    		y: -287.1098020661749
     	},
     	graph_style_tag: {
     		type: "script",
-    		script: "return {create: () => lib.html`#graph { display:flex; flex-direction: row; flex-grow: 2; justify-content: flex-start; align-content: stretch; } #graph .node { user-select: none } .tooltip { position: absolute; visibility: hidden; max-width: 120px; pointer-events: none; }`}",
-    		x: 845.8916625976562,
-    		y: 96.20833587646484
+    		script: "return {create: () => lib.html`#graph { display:flex; flex-direction: row; flex-grow: 2; justify-content: flex-start; align-content: stretch; background-color: #080804 } #graph .node { user-select: none } .tooltip { position: absolute; visibility: hidden; max-width: 120px; pointer-events: none;  }`}",
+    		x: 1402.547169064167,
+    		y: 144.25409217819163
     	},
     	render_graph_style: {
     		type: "render_html",
     		nodes: {
     			target: "document.getElementById('graph_style')"
     		},
-    		x: 1018.2333374023438,
-    		y: 38.20833206176758
+    		x: 1333.2770392296218,
+    		y: 411.8886847207518
     	},
     	render_head: {
     		type: "render",
     		nodes: {
     			target: "document.head"
-    		}
+    		},
+    		x: -581.097458015985,
+    		y: 144.25418826712803
     	},
     	render_graph: {
     		type: "render",
     		nodes: {
     			target: "document.querySelector('#graph')"
     		},
-    		x: -512.0702758027019,
-    		y: -246.90110551537612
+    		x: -562.2056044247454,
+    		y: 830.6581540376965
     	},
     	create_svg_base: {
     		type: "script",
     		script: "let svg = lib.SVG('.root');\n\nif(!svg){\n  svg = lib.SVG().addTo('#graph')\n    .addClass('root')\n    .viewbox(\n      -window.screen.width / 4, \n      -window.screen.height / 2, \n      window.screen.width / 4, \n      window.screen.height / 2\n    ).panZoom({oneFingerPan: true})\n}\n\nreturn svg; ",
-    		x: 739,
-    		y: 737
+    		x: 772.3429435633877,
+    		y: 739.2783888472244
     	},
     	create_node: {
     		type: "script",
-    		script: "if(input.last_updated == \"create_node\" || (input.create_node && input.create_node[input.id]?.x === input.x && input.create_node[input.id]?.y === input.y)) {\n  return;\n}\nconst base = lib.SVG('.root'); \n\nif(!(base && input.x && input.y)){ return; }\n\nconst svg = base.findOne(`#${input.id}`) ??  base.text(input.id).attr({id: input.id, class: 'node'})\n\nsvg.cx(input.x).cy(input.y); \n\nreturn lib.R.assoc(input.id, {x: input.x, y: input.y}, input.create_node);",
-    		x: 320.9526275477351,
-    		y: 939.0803467698752
+    		script: "if(input.last_updated[0] == \"create_node\") {\n  return;\n}\n\nconst base = lib.SVG('.root'); \n\nif(!(base && input.x && input.y)){ return; }\n\nconst settings = Object.assign({\n  selected: input.selected_node === input.id,\n  dragging: input.dragging && input.selected_node === input.id\n}, lib.R.omit(['create_node', 'dragging', 'selected_node'], input));\n\nif(lib.R.equals(settings, input.create_node[input.id])){\n  return;\n}\nconst rsmall=16;\nconst rbig = 20;\nconst r = settings.dragging? rbig : rsmall;\n\nconst svg = (base.findOne(`#${input.id}`) ??  base.nested().attr({id: input.id, class: 'node'})).size(256, 48);\nconst text = (svg.findOne(`.name`) ?? svg.text(input.id).addClass('name'))\n  .x(r*2+8)\n  .cy(rbig+2)\n  .font({'family': 'Victor Mono, monospace', 'weight': 'bold'})\n  .fill('#D9EBFF');\nconst circle = (svg.findOne(`.circle`) ?? svg.circle(30).move(1,1).addClass('circle').fill({'opacity': 0}))\n  .radius(r)\n  .stroke({'width': 2, 'color': settings.selected ? '#CE9162' : '#D9EBFF'});\n\nsvg.move(input.x - rbig, input.y - rbig); \n\nreturn lib.R.assoc(input.id, settings, input.create_node??{});",
+    		x: 585.3527929231135,
+    		y: -508.3904234118438
     	},
     	hover_node: {
     		type: "script",
-    		script: "const base = lib.SVG('.root');\nif(input.last_updated !== 'target' || !base) {return;} \n\nif(input.graph.nodes[input.hover_node?.target]){ lib.SVG(`#${input.hover_node.target}`).fill('#000');}\n\nif(input.graph.nodes[input.target]){\n  lib.SVG(`#${input.target}`).fill('#6EB4D1');\n}\n\nreturn {target: input.target}",
-    		x: 445.1993791219591,
-    		y: 941.4096208983752
+    		script: "const base = lib.SVG('.root');\nif(input.last_updated[0] !== 'target' || !base) {return;} \n\nif(input.graph.nodes[input.hover_node?.target]){ lib.SVG(`#${input.hover_node.target}`).fill('#000');}\n\nif(input.graph.nodes[input.target]){\n  lib.SVG(`#${input.target}`).fill('#6EB4D1');\n}\n\nreturn {target: input.target}",
+    		x: 596.4947731935139,
+    		y: 657.4828774958021
     	},
     	create_line: {
     		type: "script",
-    		script: "if(input.last_updated == \"create_line\" || !input.edge) {\n  return;\n}\n\nconst base = lib.SVG('.root'); \n\nif(!(base && input.graph.nodes[input.edge.from].x \n     && input.graph.nodes[input.edge.from].y \n     && input.graph.nodes[input.edge.to].x  \n     && input.graph.nodes[input.edge.to].y )){ \n  return; \n}\n\n\nconst origin = {x: input.graph.nodes[input.edge.from].x, y: input.graph.nodes[input.edge.from].y};\nconst dest = {x: input.graph.nodes[input.edge.to].x, y: input.graph.nodes[input.edge.to].y };\nconst dir = {x: dest.x - origin.x, y: dest.y - origin.y};\n\nif(input.create_line && lib.R.equals(input.create_line.from, origin) && lib.R.equals(input.create_line.to, origin)){ return; }\n\nlet line = base.findOne(`#${input.edge.from}-${input.edge.to}`) ?? base.line().attr({id: `${input.edge.from}-${input.edge.to}`});\n\nlet marker = line.reference('marker-start'); \n\nif(!marker) {\n  marker = line.marker('end', 10, 10, function(add) {\n    add.polygon('0,0 8,4 0,8').fill('#00f');\n  });\n}\n\nif(Math.abs(dir.x) + Math.abs(dir.y) > 0) {    \n  const sum = dir.x + dir.y;\n  dir.x = dir.x / (Math.abs(dir.x) + Math.abs(dir.y));\n  dir.y = dir.y / (Math.abs(dir.x) + Math.abs(dir.y));\n  origin.x += dir.x * 10;    origin.y += dir.y * 10;\n  dest.x -= dir.x * 10;    dest.y -= dir.y * 10;\n  line.stroke({width: 1, color: '#000'}).plot(origin.x, origin.y, dest.x, dest.y);\n}\n\n\nreturn lib.R.assoc(input.edge.to, dest, lib.R.assoc(input.edge.from, origin, input.create_line));",
-    		x: 394.5203433070714,
-    		y: 1072.815807514839
+    		script: "if(input.last_updated[0] == \"create_line\" || !input.edge) {\n  return;\n}\n\nconst base = lib.SVG('.root'); \n\nif(!(base && input.graph.nodes[input.edge.from].x \n     && input.graph.nodes[input.edge.from].y \n     && input.graph.nodes[input.edge.to].x  \n     && input.graph.nodes[input.edge.to].y )){ \n  return; \n}\n\n\nconst origin = {x: input.graph.nodes[input.edge.from].x, y: input.graph.nodes[input.edge.from].y};\nconst dest = {x: input.graph.nodes[input.edge.to].x, y: input.graph.nodes[input.edge.to].y };\nconst dir = {x: dest.x - origin.x, y: dest.y - origin.y};\n\nif(input.create_line && lib.R.equals(input.create_line[input.edge.from+'-'+input.edge.to], {origin, dest})){ return; }\n\nlet line = base.findOne(`#${input.edge.from}-${input.edge.to}`) ?? base.line().attr({id: `${input.edge.from}-${input.edge.to}`}).stroke({width: 1, color: '#A46DB5'});\n\nlet marker = line.reference('marker-start'); \n\nif(!marker) {\n  marker = line.marker('end', 10, 10, function(add) {\n    add.polygon('0,0 8,4 0,8').fill('#CA3AF7');\n  });\n}\n\nif(Math.abs(dir.x) + Math.abs(dir.y) > 0) {    \n  const sum = dir.x + dir.y;\n  const pow = Math.pow(dir.x, 2) + Math.pow(dir.y,2 );\n  const sqr = Math.pow(pow, 0.5);\n  dir.x = dir.x / sqr;\n  dir.y = dir.y / sqr;\n  origin.x += dir.x * 18;    origin.y += dir.y * 18;\n  dest.x -= dir.x * 20;    dest.y -= dir.y * 20;\n  \n  line.stroke({width: 2, color: '#604763'}).plot(origin.x, origin.y, dest.x, dest.y);\n}\n\n\nreturn lib.R.assoc(input.edge.to + '-' + input.edge.from, {origin, dest});",
+    		x: 769.0400504681925,
+    		y: -508.3904234118438
     	},
     	show_errors: {
     		type: "script",
     		script: "for(e of Object.keys(input.graph.nodes)){ lib.SVG(`#${e}`)?.css({fill: state.temp.errors.has(e) ? 'red' : 'black'})}",
-    		x: 861.441650390625,
-    		y: 400.20831298828125
+    		x: -587.3947425463981,
+    		y: -214.69102996642334
     	},
     	register_mouse_listener: {
     		script: "const mouse_queue = lib.queue();\nconst mouseEvent = (ty) => (e) => { \n  mouse_queue.push({\n    ty, \n touch_count: e.touches?.length ?? 0,   x: e.x ?? e.touches[0]?.clientX, \n    y: e.y?? e.touches[0]?.clientY, \n    target: e.target?.parentNode.id ?? e.touches[0]?.target?.parentNode.id, \n    button: e.button, \n    buttons: e.buttons\n  })\n}; \ndocument.getElementById('graph').onmousemove = mouseEvent('mousemove'); \ndocument.getElementById('graph').onmousedown = mouseEvent('mousedown'); \ndocument.getElementById('graph').onmouseup = mouseEvent('mouseup'); \ndocument.getElementById('graph').onwheel = mouseEvent('wheel'); \ndocument.getElementById('graph').addEventListener(\"touchstart\", mouseEvent('touchstart'), false);\ndocument.getElementById('graph').addEventListener(\"touchend\", mouseEvent('touchend'), false);\ndocument.getElementById('graph').addEventListener(\"touchcancel\", mouseEvent('touchcancel'), false);\ndocument.getElementById('graph').addEventListener(\"touchmove\", mouseEvent('touchmove'), false);\n\nreturn lib.queueIterator(mouse_queue); ",
-    		x: 561,
-    		y: 113
+    		x: 906.6360122941289,
+    		y: -323.31928420498696
     	},
     	mouse_stringify: {
     		type: "stringify",
-    		x: -299.2649564212277,
-    		y: 937.5443639053171
+    		x: -577.9488157507783,
+    		y: 597.658674456877
     	},
     	mouse_log: {
     		type: "log",
-    		x: -229.74359447450615,
-    		y: -166.3445757938149
+    		x: -571.6515312203652,
+    		y: 57.66652597394682
     	},
     	mouse_target_changed: {
     		type: "value_changed",
@@ -39644,8 +39647,8 @@
     				"target"
     			]
     		},
-    		x: 899.36669921875,
-    		y: 432.2083435058594
+    		x: 847.6796634131492,
+    		y: 294.59922365701345
     	},
     	mouse_button_changed: {
     		type: "value_changed",
@@ -39655,8 +39658,8 @@
     				"button"
     			]
     		},
-    		x: 976.9833374023438,
-    		y: 187.20834350585938
+    		x: 818.4740288683445,
+    		y: 128.51097694109512
     	},
     	mouse_event_type_changed: {
     		type: "value_changed",
@@ -39671,56 +39674,62 @@
     	},
     	mouse_wheel_events: {
     		script: "if(input.ty !== 'wheel'){ return; } return input;",
-    		x: 559,
-    		y: 713
+    		x: -579.5231368833815,
+    		y: 1063.657681662984
     	},
     	mouse_dragging: {
     		type: "script",
-    		script: "return ((input.register_mouse_listener.ty === 'mousedown' || input.register_mouse_listener.ty === 'touchstart' || input.register_mouse_listener.ty === 'mouseup' || input.register_mouse_listener.ty === 'touchend') && (input.register_mouse_listener.button === 0 || input.register_mouse_listener.touch_count > 0) || (input.register_mouse_listener.ty === 'mouseleave')) ? (input.register_mouse_listener.ty === 'touchstart' || input.register_mouse_listener.ty === 'mousedown') && input.register_mouse_listener.ty !== 'mouseout' : undefined"
+    		script: "return ((input.register_mouse_listener.ty === 'mousedown' || input.register_mouse_listener.ty === 'touchstart' || input.register_mouse_listener.ty === 'mouseup' || input.register_mouse_listener.ty === 'touchend') && (input.register_mouse_listener.button === 0 || input.register_mouse_listener.touch_count > 0) || (input.register_mouse_listener.ty === 'mouseleave')) ? (input.register_mouse_listener.ty === 'touchstart' || input.register_mouse_listener.ty === 'mousedown') && input.register_mouse_listener.ty !== 'mouseout' : undefined",
+    		x: 672.062163536238,
+    		y: 268.6255096983201
     	},
     	mouse_select_target: {
     		script: "return (input.event.ty === 'mousedown' || input.event.ty === 'touchstart') ? input.event.target : undefined",
-    		x: 1031.8082275390625,
-    		y: 344.2083435058594
+    		x: 829.8821455033221,
+    		y: 241.4140698937171
     	},
     	svg_pan_zoom_events: {
-    		script: "if(input.previous !== undefined){ return; } const q = lib.queue(); lib.SVG('.root').on('panning', e => { q.push(e)}); return lib.queueIterator(q);"
+    		script: "if(input.previous !== undefined){ return; } const q = lib.queue(); lib.SVG('.root').on('panning', e => { q.push(e)}); return lib.queueIterator(q);",
+    		x: 679.9337722020338,
+    		y: 929.8404334361721
     	},
     	prevent_pan_while_dragging: {
-    		script: "lib.SVG('.root').panZoom(input.target === 'graph' ? {oneFingerPan: true} : false); return input;"
+    		script: "lib.SVG('.root').panZoom(input.target === 'graph' ? {oneFingerPan: true} : false); return input;",
+    		x: 606.9102670954001,
+    		y: 960.4530296169991
     	},
     	hover_state: {
     		script: "if(!input.mouse_target_changed) {return; } const tt = document.queryselector('.tooltip'); if(input.mouse_event_type_changed !== 'mousemove' || input.mouse_target_changed === 'graph'){ tt.style = `visibility: hidden`;return; } const content = (state.temp.errors.get(input.mouse_target_changed)?.message ?? state.temp.results.get(input.mouse_target_changed)); tt.innertext = typeof content === 'string' ? content : JSON.stringify(content, null, 2); tt.style = `left: ${lib.SVG(`#${input.mouse_target_changed}`)?.x() ?? '0'}px; top: ${lib.SVG(`#${input.mouse_target_changed}`)?.y() ?? '0'}px; visibility: ${content ? 'visible' : 'hidden'};`;",
-    		x: 647,
-    		y: 777
+    		x: -464.59764615887286,
+    		y: 1159.6912707517852
     	},
     	drag_node: {
-    		script: "\nif(!(input.mouse_dragging && input.mouse_select_target && input.graph?.nodes[input.mouse_select_target] && (input.register_mouse_listener.ty === 'mousemove' || input.register_mouse_listener.ty === 'touchmove'))) { \n  return; \n}\n\nconst target = lib.SVG(`#${input.mouse_select_target}`);\n\nconst current = {\n  x: lib.R.path(['nodes', input.mouse_select_target, 'x'], input.graph) ?? input.register_mouse_listener.x + 1,\n  y: lib.R.path(['nodes', input.mouse_select_target, 'y'], input.graph) ?? input.register_mouse_listener.y + 1\n};\n\nconst next = lib.SVG('.root').point(\n  input.register_mouse_listener.x,\n  input.register_mouse_listener.y\n);\n\n\nif(target?.center && \n   Math.abs(current.x - next.x) > 1 ||  \n   Math.abs(current.y - next.y) > 1){ \n  target.center(next); \n  \n  return lib.R.over(\n    lib.R.lensPath(['nodes', input.mouse_select_target]), \n    lib.R.evolve({x: () => next.x, y: () => next.y}), \n    input.graph\n  );\n}",
-    		x: 398,
-    		y: 697
+    		script: "\nif(!(input.mouse_dragging && input.mouse_select_target && input.graph?.nodes[input.mouse_select_target] && (input.register_mouse_listener.ty === 'mousemove' || input.register_mouse_listener.ty === 'touchmove'))) { \n  return; \n}\n\nconst target = lib.SVG(`#${input.mouse_select_target}`);\n\nconst current = {\n  x: lib.R.path(['nodes', input.mouse_select_target, 'x'], input.graph) ?? 100,\n  y: lib.R.path(['nodes', input.mouse_select_target, 'y'], input.graph) ?? 100\n};\n\nconst next = lib.SVG('.root').point(\n  input.register_mouse_listener.x,\n  input.register_mouse_listener.y\n);\n\n\nif(target?.center && \n   Math.abs(current.x - next.x) > 1 ||  \n   Math.abs(current.y - next.y) > 1){ \n  target.center(next); \n  \n  return lib.R.over(\n    lib.R.lensPath(['nodes', input.mouse_select_target]), \n    lib.R.evolve({x: () => next.x, y: () => next.y}), \n    input.graph\n  );\n}",
+    		x: 960.2427620889582,
+    		y: 79.41637924134307
     	},
     	parse_editor_state_graph: {
     		script: "const mouse_target = input.mouse_select_target; return !mouse_target || mouse_target === 'graph' ? JSON.parse(input.content) : undefined",
-    		x: 1053.4767561210704,
-    		y: 802.580756696675
+    		x: 1396.2498845337539,
+    		y: 945.5836447622052
     	},
     	parse_editor_node_script: {
     		script: "const mouse_target = input.mouse_select_target; return mouse_target && mouse_target !== 'graph' && input.graph.nodes[mouse_target]?.script ? lib.R.set(lib.R.lensPath(['nodes', mouse_target, 'script']), input.content, input.graph) : undefined",
-    		x: 1055.8582763671875,
-    		y: 708.2083129882812
+    		x: 1514.323993501235,
+    		y: 728.3273284629504
     	},
     	editor_content_changes: {
     		type: "last_updated"
     	},
     	last_editor_content_change: {
     		type: "filter_last_updated",
-    		x: 1033.0167236328125,
-    		y: 571.2083740234375
+    		x: -581.0974580159849,
+    		y: 983.3673519446843
     	},
     	state_graph: {
     		type: "filter_last_updated",
-    		x: 760.1166381835938,
-    		y: 769.2083740234375
+    		x: 1443.4795185118526,
+    		y: -912.115291709683
     	},
     	register_key_listener: {
     		type: "keyboard_event",
@@ -39735,26 +39744,26 @@
     				key: "e"
     			}
     		],
-    		x: 169.8717131306064,
-    		y: 433.03744183478904
+    		x: -31.65938273743484,
+    		y: 54.5178837087401
     	},
     	save_on_ctrl_s: {
     		type: "save_content",
     		nodes: {
     			save_key: "graph"
     		},
-    		x: 298.97707396802457,
-    		y: 1110.7196884916796
+    		x: 61.225564086159466,
+    		y: 948.7322389829436
     	},
     	ctrl_s: {
     		script: "return input.ctrlKey && input.key === 's' && input.event === 'keydown'",
-    		x: -627.2101509492792,
-    		y: -37.94355432343946
+    		x: -69.52092420674526,
+    		y: 578.2112118201599
     	},
     	ctrl_e: {
     		script: "return input.ctrlKey && input.key === 'e' && input.event === 'keydown'",
-    		x: 1147.22509765625,
-    		y: 544.2083129882812
+    		x: 1186.991063933835,
+    		y: 488.0316072990038
     	},
     	get_save_content: {
     		type: "get_value",
@@ -39774,62 +39783,66 @@
     				"trigger"
     			]
     		},
-    		x: 109,
-    		y: 955
+    		x: 61.225564086159466,
+    		y: 775.5569624410493
     	},
     	get_edges_changes: {
     		type: "filter_input",
     		nodes: {
     			filter: "return val.path[0] === 'edges';"
-    		}
+    		},
+    		x: -565.3542466899519,
+    		y: 887.3337148114151
     	},
     	editor_content: {
-    		x: 701,
-    		y: 1005,
-    		script: "return typeof input.last_updated === 'string' ? input[input.last_updated] : lib.R.pick(input.last_updated, input)"
+    		x: 1226.223202212598,
+    		y: 709.4354268272427,
+    		script: "return typeof input.last_updated[0] === 'string' ? input[input.last_updated[0]] : lib.R.pick(input.last_updated[0], input)"
     	},
     	update_editor_content: {
-    		x: 655,
-    		y: 1111,
+    		x: 1243.540734671234,
+    		y: 920.3944585960843,
     		edges: [
     		],
-    		script: "const newcontent = typeof input.editor_content === 'string' ? input.editor_content : JSON.stringify(input.editor_content, null, 2); if(state.editor.state.doc.toString() !== newcontent) { state.editor.dispatch({changes: {from: 0, to: state.editor.state.doc.length, insert: newcontent }}) }"
+    		script: "const newcontent = typeof input.editor_content === 'string' ? input.editor_content : JSON.stringify(input.editor_content, null, 2);\nif(state.editor.state.doc.toString() !== newcontent) { \n  state.editor.dispatch({changes: {from: 0, to: state.editor.state.doc.length, insert: newcontent }}) \n}"
     	},
     	log_errors: {
     		script: "state.temp.errors.foreach((id, e) => {console.log(id); console.error(e);})",
-    		x: -570.3509533460311,
-    		y: -190.04190791212807
+    		x: -573.068467828783,
+    		y: 536.3084963655695
     	},
     	log_results: {
     		script: "console.log(state.temp.results.foreach((v, k) => console.log(`${k}: ${JSON.stringify(v, null, 2)}`)))",
-    		x: 27.875,
-    		y: 765.2083129882812
+    		x: -573.068467828783,
+    		y: 437.05914793717534
     	},
     	log_test: {
     		type: "log"
     	},
     	configure_editor: {
     		script: " const editor_update_queue = lib.queue(); state.editor.dispatch({ effects: lib.cm.StateEffect.appendConfig.of([ lib.cm.EditorView.theme({'&': {width: '50vw', height: '95vh'}, '.cm-scroller': { overflow: 'auto' }}), lib.cm.EditorView.updateListener.of( update => { if(update.docChanged) { editor_update_queue.push(update.state.doc.toString()) } }), ]) }); return lib.queueIterator(editor_update_queue); ",
-    		x: 852.625,
-    		y: 244.20834350585938
+    		x: 1652.8642291480908,
+    		y: 123.78791745434887
     	},
     	drop_node: {
     		script: "if(!input.drop_node_input || input.drop_node_input.key !== 'mouse_dragging' || input.drop_node_input.mouse_dragging || !input.drop_node_input.mouse_select_target || !input.nodes.hasOwnProperty(input.drop_node_input.mouse_select_target)) { return; } const target = lib.SVG(`#${input.drop_node_input.mouse_select_target}`);",
-    		x: 543,
-    		y: 897
+    		x: 508.33277775661236,
+    		y: 585.0641053960505
     	},
     	drop_node_input: {
     		type: "last_updated",
-    		x: 638.316650390625,
-    		y: 660.2083129882812
+    		x: 519.3530256848354,
+    		y: 444.9495245943574
     	},
     	selected_node_script: {
-    		script: "const selected_content = input.graph?.nodes[input.mouse_select_target]?.script; if(selected_content && input.last_updated === 'graph'){ return; } return input.graph?.nodes[input.mouse_select_target]?.script ? input.graph.nodes[input.mouse_select_target].script : input.graph",
-    		x: 1099.88330078125,
-    		y: 474.2083435058594
+    		script: "const selected_content = input.graph?.nodes[input.mouse_select_target]?.script; if(selected_content && input.last_updated[0] === 'graph'){ return; } return input.graph?.nodes[input.mouse_select_target]?.script ? input.graph.nodes[input.mouse_select_target].script : input.graph",
+    		x: 1029.433060637186,
+    		y: 544.1317079038969
     	},
     	update_selected_content: {
-    		script: "return JSON.parse(input.selected_node_script)"
+    		script: "return JSON.parse(input.selected_node_script)",
+    		x: -578.5823205192493,
+    		y: 321.26807316795225
     	},
     	push_editor_content_change: {
     		type: "trigger",
@@ -39841,17 +39854,28 @@
     				"trigger"
     			]
     		},
-    		x: 743,
-    		y: 759
+    		x: 1703.2425053913962,
+    		y: 526.8141274007924
     	},
     	edge_stream: {
-    		script: "if(input.last_updated === 'edge_stream'){\n  return;\n}\n\nreturn lib.queueIterator(lib.queue().push(input.graph?.edges, true));"
+    		script: "if(input.last_updated[0] === 'edge_stream'){\n  return;\n}\n\nreturn lib.queueIterator(lib.queue().push(input.graph?.edges, true));",
+    		x: 782.7736772005348,
+    		y: -649.160097418353
     	},
     	node_stream: {
-    		script: "if(input.last_updated === 'node_stream'){\n  return;\n}\n\nreturn lib.queueIterator(lib.queue().push(lib.R.compose(lib.R.map(([k, v]) => lib.R.assoc('id', k, v)), lib.R.toPairs)(input.graph?.nodes), true));"
+    		script: "return lib.queueIterator(lib.queue().push(lib.R.compose(lib.R.map(([k, v]) => lib.R.assoc('id', k, v)), lib.R.toPairs)(input.graph?.nodes), true));",
+    		x: 621.9778401644417,
+    		y: -635.0038572518639
     	},
     	out: {
-    		script: "return {...input, _saveignore: { rerun: true} }"
+    		script: "return {...input, _saveignore: { rerun: true} }",
+    		x: 1901.6069921216456,
+    		y: 1232.1100908960047
+    	},
+    	selected_node_changed: {
+    		script: "if(input.last_updated[0]!=='selected_node_changed' && input.selected_node !== input.selected_node_changed) return input.selected_node",
+    		x: 0,
+    		y: 50
     	}
     };
     var defaults = {
@@ -39886,14 +39910,14 @@
     		script: "return lib.R.path(node.nodes.value, input)"
     	},
     	value_changed: {
-    		script: "if(input.last_updated === node.id){ return; }  const value = lib.R.path(node.nodes.value, input); return input[node.id] === value ? undefined : value"
+    		script: "if(input.last_updated[0] === node.id){ return; }  const value = lib.R.path(node.nodes.value, input); return input[node.id] === value ? undefined : value"
     	},
     	last_updated: {
     		description: "returns the key of the input value that was last updated",
     		script: "return input"
     	},
     	filter_last_updated: {
-    		script: "return typeof input.last_updated === 'string' ? input[input.last_updated] : lib.R.pick(input.last_updated, input)"
+    		script: "return lib.R.pick(input.last_updated, input)"
     	},
     	value: {
     		script: "return node.nodes.value"
@@ -39903,7 +39927,7 @@
     	},
     	trigger: {
     		description: "watches for a true on the trigger input to pass the full input through",
-    		script: "const key = ['last_updated']; const trigger = ['trigger']; if(lib.R.path(key, input) === 'trigger' && lib.R.path(trigger, input)){ return input }"
+    		script: "const key = ['last_updated', 0]; const trigger = ['trigger']; if(lib.R.path(key, input) === 'trigger' && lib.R.path(trigger, input)){ return input }"
     	}
     };
     var edges = [
@@ -39914,18 +39938,30 @@
     	},
     	{
     		from: "load_graph",
+    		to: "load_graph_run"
+    	},
+    	{
+    		from: "load_graph",
+    		to: "load_graph_out"
+    	},
+    	{
+    		from: "load_graph_out",
+    		to: "out"
+    	},
+    	{
+    		from: "load_graph_run",
     		to: "register_key_listener"
     	},
     	{
-    		from: "load_graph",
+    		from: "load_graph_run",
     		to: "register_mouse_listener"
     	},
     	{
-    		from: "load_graph",
+    		from: "load_graph_run",
     		to: "configure_editor"
     	},
     	{
-    		from: "load_graph",
+    		from: "load_graph_run",
     		to: "state_graph"
     	},
     	{
@@ -40190,8 +40226,23 @@
     		as: "content"
     	},
     	{
+    		from: "mouse_select_target",
+    		to: "selected_node_changed",
+    		as: "selected_node"
+    	},
+    	{
+    		from: "selected_node_changed",
+    		to: "selected_node_changed",
+    		as: "selected_node_changed"
+    	},
+    	{
+    		from: "selected_node_changed",
+    		to: "create_node",
+    		as: "selected_node"
+    	},
+    	{
     		from: "mouse_dragging",
-    		to: "log_test",
+    		to: "create_node",
     		as: "dragging"
     	}
     ];
@@ -40337,7 +40388,7 @@
 
     const runNode = (node, input) => node.script 
     		? (new AsyncFunction('lib', 'state', 'input', 'node', node.script)(lib, state, input, node)).catch(err => {
-    			console.log(err);
+    			console.error(err);
     			return input;
     		})
     		: runGraph(node, input);
@@ -40355,7 +40406,7 @@
     			}
 
     			if(run_cmd.id === log_node) {
-    				console.log(output);
+    				console.log(JSON.stringify(output));
     			}
 
     			// const changed = this.outputs[run_cmd[0]] === undefined || lib.R.equals(this.outputs[run_cmd[0]], output);
@@ -40369,7 +40420,7 @@
     					? lib.R.mergeRight(graph.nodes[next_edge.to], graph.defaults[graph.nodes[next_edge.to].type]) 
     					: graph.nodes[next_edge.to],
     				input: lib.R.compose(
-    					lib.R.mergeLeft({last_updated: next_edge.as ? next_edge.as : Object.keys(output)}),
+    					lib.R.mergeLeft({last_updated: next_edge.as ? [next_edge.as] : Object.keys(output)}),
     					lib.R.mergeLeft(next_edge.as ? lib.R.objOf(next_edge.as, output) : output),
     					lib.R.reduce((acc, input_edge) => 
     						lib.R.mergeLeft(

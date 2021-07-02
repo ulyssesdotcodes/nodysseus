@@ -24,8 +24,8 @@
     },
     "load_graph_run": {
       "script": "if(input.last_updated[0] === 'run'){ return input.run }",
-      "x": 49.295289675375045,
-      "y": -612.7682379212958
+      "x": -23.787777074418443,
+      "y": -568.9132848021646
     },
     "load_graph_out": {
       "script": "if(input.last_updated[0] === 'out'){ return input.out }",
@@ -65,14 +65,14 @@
     "create_svg_base": {
       "type": "script",
       "script": "let svg = lib.SVG('.root');\n\nif(!svg){\n  svg = lib.SVG().addTo('#graph')\n    .addClass('root')\n    .viewbox(\n      -window.screen.width / 4, \n      -window.screen.height / 2, \n      window.screen.width / 4, \n      window.screen.height / 2\n    ).panZoom({oneFingerPan: true})\n}\n\nreturn svg; ",
-      "x": 772.3429435633877,
-      "y": 739.2783888472244
+      "x": 771.2444069013627,
+      "y": 747.2191340097218
     },
     "create_node": {
       "type": "script",
-      "script": "if(input.last_updated[0] == \"create_node\") {\n  return;\n}\n\nconst base = lib.SVG('.root'); \n\nif(!(base && input.x && input.y)){ return; }\n\nconst settings = Object.assign({\n  selected: input.selected_node === input.id,\n  dragging: input.dragging && input.selected_node === input.id\n}, lib.R.omit(['create_node', 'dragging', 'selected_node'], input));\n\nif(lib.R.equals(settings, input.create_node[input.id])){\n  return;\n}\nconst rsmall=16;\nconst rbig = 20;\nconst r = settings.dragging? rbig : rsmall;\n\nconst svg = (base.findOne(`#${input.id}`) ??  base.nested().attr({id: input.id, class: 'node'})).size(256, 48);\nconst text = (svg.findOne(`.name`) ?? svg.text(input.id).addClass('name'))\n  .x(r*2+8)\n  .cy(r+4)\n  .font({'family': 'Victor Mono, monospace', 'weight': 'bold'})\n  .fill('#D9EBFF');\nconst circle = (svg.findOne(`.circle`) ?? svg.circle(30).move(2,2).addClass('circle').fill({'opacity': 0}))\n  .radius(r)\n  .stroke({'width': 2, 'color': settings.selected ? '#CE9162' : '#D9EBFF'});\n\nsvg.move(input.x - r, input.y - r); \n\nreturn lib.R.assoc(input.id, settings, input.create_node??{});",
-      "x": 588.2139573856657,
-      "y": -524.4129810375111
+      "script": "if(input.last_updated[0] == \"create_node\" || (input.create_node && input.create_node[input.id]?.x === input.x && input.create_node[input.id]?.y === input.y)) {\n  return;\n}\nconst base = lib.SVG('.root'); \n\nif(!(base && input.x && input.y)){ return; }\n\nconst svg = base.findOne(`#${input.id}`) ??  base.nested().attr({id: input.id, class: 'node'});\nconst text = svg.findOne(`.name`) ?? svg.text(input.id).addClass('name').x(36).cy(16).font({'family': 'Victor Mono, monospace'}).fill('#D9EBFF');\nconst circle = svg.findOne(`.circle`) ?? svg.circle(30).move(1,1).addClass('circle').fill('#4378B0').stroke('#D9EBFF');\n\nsvg.move(input.x - 16, input.y - 16); \n\nreturn lib.R.assoc(input.id, {x: input.x, y: input.y}, input.create_node);",
+      "x": 623.2582084255359,
+      "y": -482.3256705534516
     },
     "hover_node": {
       "type": "script",
@@ -82,9 +82,9 @@
     },
     "create_line": {
       "type": "script",
-      "script": "if(input.last_updated[0] == \"create_line\" || !input.edge) {\n  return;\n}\n\nconst base = lib.SVG('.root'); \n\nif(!(base && input.graph.nodes[input.edge.from].x \n     && input.graph.nodes[input.edge.from].y \n     && input.graph.nodes[input.edge.to].x  \n     && input.graph.nodes[input.edge.to].y )){ \n  return; \n}\n\n\nconst origin = {x: input.graph.nodes[input.edge.from].x, y: input.graph.nodes[input.edge.from].y};\nconst dest = {x: input.graph.nodes[input.edge.to].x, y: input.graph.nodes[input.edge.to].y };\nconst dir = {x: dest.x - origin.x, y: dest.y - origin.y};\n\nif(input.create_line && lib.R.equals(input.create_line[input.edge.from+'-'+input.edge.to], {origin, dest})){ return; }\n\nlet line = base.findOne(`#${input.edge.from}-${input.edge.to}`) ?? base.line().attr({id: `${input.edge.from}-${input.edge.to}`}).stroke({width: 1, color: '#A46DB5'});\n\nlet marker = line.reference('marker-start'); \n\nif(!marker) {\n  marker = line.marker('end', 10, 10, function(add) {\n    add.polygon('0,0 8,4 0,8').fill('#CA3AF7');\n  });\n}\n\nif(Math.abs(dir.x) + Math.abs(dir.y) > 0) {    \n  const sum = dir.x + dir.y;\n  const pow = Math.pow(dir.x, 2) + Math.pow(dir.y,2 );\n  const sqr = Math.pow(pow, 0.5);\n  dir.x = dir.x / sqr;\n  dir.y = dir.y / sqr;\n  origin.x += dir.x * 18;    origin.y += dir.y * 18;\n  dest.x -= dir.x * 20;    dest.y -= dir.y * 20;\n  \n  line.stroke({width: 2, color: '#604763'}).plot(origin.x, origin.y, dest.x, dest.y);\n}\n\n\nreturn lib.R.assoc(input.edge.to + '-' + input.edge.from, {origin, dest});",
-      "x": 790.7849516877154,
-      "y": -526.129684379054
+      "script": "if(input.last_updated[0] == \"create_line\" || !input.edge) {\n  return;\n}\n\nconst base = lib.SVG('.root'); \n\nif(!(base && input.graph.nodes[input.edge.from].x \n     && input.graph.nodes[input.edge.from].y \n     && input.graph.nodes[input.edge.to].x  \n     && input.graph.nodes[input.edge.to].y )){ \n  return; \n}\n\n\nconst origin = {x: input.graph.nodes[input.edge.from].x, y: input.graph.nodes[input.edge.from].y};\nconst dest = {x: input.graph.nodes[input.edge.to].x, y: input.graph.nodes[input.edge.to].y };\nconst dir = {x: dest.x - origin.x, y: dest.y - origin.y};\n\nif(input.create_line && lib.R.equals(input.create_line.from, origin) && lib.R.equals(input.create_line.to, origin)){ return; }\n\nlet line = base.findOne(`#${input.edge.from}-${input.edge.to}`) ?? base.line().attr({id: `${input.edge.from}-${input.edge.to}`}).stroke({width: 1, color: '#A46DB5'});\n\nlet marker = line.reference('marker-start'); \n\nif(!marker) {\n  marker = line.marker('end', 10, 10, function(add) {\n    add.polygon('0,0 8,4 0,8').fill('#CA3AF7');\n  });\n}\n\nif(Math.abs(dir.x) + Math.abs(dir.y) > 0) {    \n  const sum = dir.x + dir.y;\n  const pow = Math.pow(dir.x, 2) + Math.pow(dir.y,2 );\n  const sqr = Math.pow(pow, 0.5);\n  dir.x = dir.x / sqr;\n  dir.y = dir.y / sqr;\n  origin.x += dir.x * 18;    origin.y += dir.y * 18;\n  dest.x -= dir.x * 20;    dest.y -= dir.y * 20;\n  \n  line.stroke({width: 2, color: '#604763'}).plot(origin.x, origin.y, dest.x, dest.y);\n}\n\n\nreturn lib.R.assoc(input.edge.to, dest, lib.R.assoc(input.edge.from, origin, input.create_line));",
+      "x": 766.521434495215,
+      "y": -476.0283379785702
     },
     "show_errors": {
       "type": "script",
@@ -115,8 +115,8 @@
           "target"
         ]
       },
-      "x": 847.6796634131492,
-      "y": 294.59922365701345
+      "x": 848.386130387807,
+      "y": 306.40921688079925
     },
     "mouse_button_changed": {
       "type": "value_changed",
@@ -153,8 +153,8 @@
     },
     "mouse_select_target": {
       "script": "return (input.event.ty === 'mousedown' || input.event.ty === 'touchstart') ? input.event.target : undefined",
-      "x": 829.8821455033221,
-      "y": 241.4140698937171
+      "x": 812.1767443379313,
+      "y": 230.84185056030924
     },
     "svg_pan_zoom_events": {
       "script": "if(input.previous !== undefined){ return; } const q = lib.queue(); lib.SVG('.root').on('panning', e => { q.push(e)}); return lib.queueIterator(q);",
@@ -163,8 +163,8 @@
     },
     "prevent_pan_while_dragging": {
       "script": "lib.SVG('.root').panZoom(input.target === 'graph' ? {oneFingerPan: true} : false); return input;",
-      "x": 606.9102670954001,
-      "y": 960.4530296169991
+      "x": 596.4947731935139,
+      "y": 964.4754983534447
     },
     "hover_state": {
       "script": "if(!input.mouse_target_changed) {return; } const tt = document.queryselector('.tooltip'); if(input.mouse_event_type_changed !== 'mousemove' || input.mouse_target_changed === 'graph'){ tt.style = `visibility: hidden`;return; } const content = (state.temp.errors.get(input.mouse_target_changed)?.message ?? state.temp.results.get(input.mouse_target_changed)); tt.innertext = typeof content === 'string' ? content : JSON.stringify(content, null, 2); tt.style = `left: ${lib.SVG(`#${input.mouse_target_changed}`)?.x() ?? '0'}px; top: ${lib.SVG(`#${input.mouse_target_changed}`)?.y() ?? '0'}px; visibility: ${content ? 'visible' : 'hidden'};`;",
@@ -173,8 +173,8 @@
     },
     "drag_node": {
       "script": "\nif(!(input.mouse_dragging && input.mouse_select_target && input.graph?.nodes[input.mouse_select_target] && (input.register_mouse_listener.ty === 'mousemove' || input.register_mouse_listener.ty === 'touchmove'))) { \n  return; \n}\n\nconst target = lib.SVG(`#${input.mouse_select_target}`);\n\nconst current = {\n  x: lib.R.path(['nodes', input.mouse_select_target, 'x'], input.graph) ?? 100,\n  y: lib.R.path(['nodes', input.mouse_select_target, 'y'], input.graph) ?? 100\n};\n\nconst next = lib.SVG('.root').point(\n  input.register_mouse_listener.x,\n  input.register_mouse_listener.y\n);\n\n\nif(target?.center && \n   Math.abs(current.x - next.x) > 1 ||  \n   Math.abs(current.y - next.y) > 1){ \n  target.center(next); \n  \n  return lib.R.over(\n    lib.R.lensPath(['nodes', input.mouse_select_target]), \n    lib.R.evolve({x: () => next.x, y: () => next.y}), \n    input.graph\n  );\n}",
-      "x": 960.2427620889582,
-      "y": 79.41637924134307
+      "x": 679.9337691992545,
+      "y": 372.5307044501376
     },
     "parse_editor_state_graph": {
       "script": "const mouse_target = input.mouse_select_target; return !mouse_target || mouse_target === 'graph' ? JSON.parse(input.content) : undefined",
@@ -225,13 +225,13 @@
     },
     "ctrl_s": {
       "script": "return input.ctrlKey && input.key === 's' && input.event === 'keydown'",
-      "x": -69.52092420674526,
-      "y": 578.2112118201599
+      "x": 10.84728784285403,
+      "y": 586.638426528654
     },
     "ctrl_e": {
       "script": "return input.ctrlKey && input.key === 'e' && input.event === 'keydown'",
-      "x": 1186.991063933835,
-      "y": 488.0316072990038
+      "x": 1174.2706078394683,
+      "y": 501.6250373236078
     },
     "get_save_content": {
       "type": "get_value",
@@ -271,7 +271,7 @@
       "x": 1243.540734671234,
       "y": 920.3944585960843,
       "edges": [],
-      "script": "const newcontent = typeof input.editor_content === 'string' ? input.editor_content : JSON.stringify(input.editor_content, null, 2);\nif(state.editor.state.doc.toString() !== newcontent) { \n  state.editor.dispatch({changes: {from: 0, to: state.editor.state.doc.length, insert: newcontent }}) \n}"
+      "script": "const newcontent = typeof input.editor_content === 'string' ? input.editor_content : JSON.stringify(input.editor_content, null, 2); if(state.editor.state.doc.toString() !== newcontent) { state.editor.dispatch({changes: {from: 0, to: state.editor.state.doc.length, insert: newcontent }}) }"
     },
     "log_errors": {
       "script": "state.temp.errors.foreach((id, e) => {console.log(id); console.error(e);})",
@@ -326,23 +326,18 @@
     },
     "edge_stream": {
       "script": "if(input.last_updated[0] === 'edge_stream'){\n  return;\n}\n\nreturn lib.queueIterator(lib.queue().push(input.graph?.edges, true));",
-      "x": 787.3515410431842,
-      "y": -664.6104139944298
+      "x": 791.7105726168677,
+      "y": -652.3523048301392
     },
     "node_stream": {
-      "script": "return lib.queueIterator(lib.queue().push(lib.R.compose(lib.R.map(([k, v]) => lib.R.assoc('id', k, v)), lib.R.toPairs)(input.graph?.nodes), true));",
-      "x": 621.9778401644417,
-      "y": -635.0038572518639
+      "script": "if(input.last_updated[0] === 'node_stream'){\n  return;\n}\n\nreturn lib.queueIterator(lib.queue().push(lib.R.compose(lib.R.map(([k, v]) => lib.R.assoc('id', k, v)), lib.R.toPairs)(input.graph?.nodes), true));",
+      "x": 634.2784593565382,
+      "y": -644.4806991671229
     },
     "out": {
       "script": "return {...input, _saveignore: { rerun: true} }",
       "x": 1901.6069921216456,
       "y": 1232.1100908960047
-    },
-    "selected_node_changed": {
-      "script": "if(input.last_updated[0]!=='selected_node_changed' && input.selected_node !== input.selected_node_changed) return input.selected_node",
-      "x": 0,
-      "y": 50
     }
   },
   "defaults": {
@@ -691,26 +686,9 @@
       "from": "selected_node_script",
       "to": "editor_content",
       "as": "content"
-    },
-    {
-      "from": "mouse_select_target",
-      "to": "selected_node_changed",
-      "as": "selected_node"
-    },
-    {
-      "from": "selected_node_changed",
-      "to": "selected_node_changed",
-      "as": "selected_node_changed"
-    },
-    {
-      "from": "selected_node_changed",
-      "to": "create_node",
-      "as": "selected_node"
-    },
-    {
-      "from": "mouse_dragging",
-      "to": "create_node",
-      "as": "dragging"
     }
-  ]
+  ],
+  "_saveignore": {
+    "rerun": true
+  }
 }

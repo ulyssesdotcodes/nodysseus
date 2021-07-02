@@ -656,8 +656,5 @@
       "to": "editor_content",
       "as": "content"
     }
-  ],
-  "_saveignore": {
-    "rerun": true
-  }
+  ]
 }

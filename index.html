@@ -15,14 +15,21 @@
     }
   </style>
   <title>Nodysseus</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/victormono@latest/dist/index.min.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
 
   <div id="content">
-    <div id="graph">
+    <div id="node_editor">
       <div class="tooltip"></div>
+      <div id="modes">
+        <div class="mode navigation"><span class="material-icons">pan_tool</span></div>
+        <div class="mode operation"><span class="material-icons">build</span></div>
+      </div>
+      <div id="graph"></div>
     </div>
-    <div id="editor"></div>
+    <div id="text_editor"></div>
   </div>
   <script src="nodysseus/nodysseus.bundle.js"></script>
 </body>
