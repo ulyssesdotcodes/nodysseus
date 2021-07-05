@@ -33,10 +33,31 @@
       "y": -287.1098020661749
     },
     "graph_style_tag": {
-      "type": "script",
-      "script": "return {create: () => lib.html`#graph { display:flex; flex-direction: row; flex-grow: 2; justify-content: flex-start; align-content: stretch; background-color: #080804 } #graph .node { user-select: none } .tooltip { position: absolute; visibility: hidden; max-width: 120px; pointer-events: none;  }`}",
+      "type": "data",
+      "nodes": {
+        "#graph": {
+          "display": " flex",
+          "flex-direction": " row",
+          "flex-grow": " 2",
+          "justify-content": " flex-start",
+          "align-content": " stretch",
+          "background-color": "#080804"
+        },
+        "#graph .node" : {
+            "user-select": "none"
+        },
+        ".tooltip": {
+            "position": " absolute",
+            "visibility": " hidden",
+            "max-width": " 120px",
+            "pointer-events": " none"
+        }
+      },
       "x": 1402.547169064167,
       "y": 144.25409217819163
+    },
+    "stringify_graph_style": {
+      "type": "stringify_css"
     },
     "render_graph_style": {
       "type": "render_html",
@@ -70,7 +91,7 @@
     },
     "create_node": {
       "type": "script",
-      "script": "if(input.last_updated[0] == \"create_node\") {\n  return;\n}\n\nconst base = lib.SVG('.root'); \n\nif(!(base && input.x && input.y)){ return; }\n\nconst settings = Object.assign({\n  selected: input.selected_node === input.id,\n  dragging: input.dragging && input.selected_node === input.id\n}, lib.R.omit(['create_node', 'dragging', 'selected_node'], input));\n\nif(lib.R.equals(settings, input.create_node[input.id])){\n  return;\n}\nconst rsmall=16;\nconst rbig = 20;\nconst r = settings.dragging? rbig : rsmall;\n\nconst svg = (base.findOne(`#${input.id}`) ??  base.nested().attr({id: input.id, class: 'node'})).size(256, 48);\nconst text = (svg.findOne(`.name`) ?? svg.text(input.id).addClass('name'))\n  .x(r*2+8)\n  .cy(r+4)\n  .font({'family': 'Victor Mono, monospace', 'weight': 'bold'})\n  .fill('#D9EBFF');\nconst circle = (svg.findOne(`.circle`) ?? svg.circle(30).move(2,2).addClass('circle').fill({'opacity': 0}))\n  .radius(r)\n  .stroke({'width': 2, 'color': settings.selected ? '#CE9162' : '#D9EBFF'});\n\nsvg.move(input.x - r, input.y - r); \n\nreturn lib.R.assoc(input.id, settings, input.create_node??{});",
+      "script": "if(input.last_updated[0] == \"create_node\") {\n  return;\n}\n\nconst base = lib.SVG('.root'); \n\nif(!(base && input.x && input.y)){ return; }\n\nconst settings = Object.assign({\n  selected: input.selected_node === input.id,\n  dragging: input.dragging && input.selected_node === input.id\n}, lib.R.omit(['create_node', 'dragging', 'selected_node'], input));\n\nif(input.create_node && lib.R.equals(settings, input.create_node[input.id])){\n  return;\n}\nconst rsmall=16;\nconst rbig = 20;\nconst r = settings.dragging? rbig : rsmall;\n\nconst svg = (base.findOne(`#${input.id}`) ??  base.nested().attr({id: input.id, class: 'node'})).size(256, 48);\nconst text = (svg.findOne(`.name`) ?? svg.text(input.id).addClass('name'))\n  .x(r*2+8)\n  .cy(r+4)\n  .font({'family': 'Victor Mono, monospace', 'weight': 'bold'})\n  .fill('#D9EBFF');\nconst circle = (svg.findOne(`.circle`) ?? svg.circle(30).move(2,2).addClass('circle').fill({'opacity': 0}))\n  .radius(r)\n  .stroke({'width': 2, 'color': settings.selected ? '#CE9162' : '#D9EBFF'});\n\nsvg.move(input.x - r, input.y - r); \n\nreturn lib.R.assoc(input.id, settings, input.create_node??{});",
       "x": 588.2139573856657,
       "y": -524.4129810375111
     },
@@ -346,11 +367,17 @@
     }
   },
   "defaults": {
+    "data": {
+      "script": "return node.nodes"
+    },
     "log": {
       "script": "console.dir(input)"
     },
     "stringify": {
-      "script": "return JSON.stringify(input[node.nodes.key])"
+      "script": "return JSON.stringify(node.nodes.key ? input[node.nodes.key] : input)"
+    },
+    "stringify_css": {
+      "script": "return JSON.stringify(input)"
     },
     "tag": {
       "script": "return () => lib.html`<${node.nodes.tag} ...${node.nodes.attrs}>${new function(`return ${node.nodes.content}`)()}</${node.nodes.tag}>`"
@@ -659,6 +686,18 @@
     {
       "from": "graph_style_tag",
       "to": "render_graph_style"
+    },
+    {
+      "from": "graph_style_tag",
+      "to": "stringify_graph_style"
+    },
+    {
+      "from": "stringify_graph_style",
+      "to": "render_graph_style"
+    },
+    {
+      "from": "stringify_graph_style",
+      "to": "log_test"
     },
     {
       "from": "state_graph",

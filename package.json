@@ -27,6 +27,7 @@
     "@svgdotjs/svg.js": "^3.1.0",
     "@svgdotjs/svg.panzoom.js": "^2.1.1",
     "htm": "^3.0.4",
+    "hyperapp": "^2.0.18",
     "is-reference": "^1.2.1",
     "preact": "^10.5.13",
     "ramda": "^0.27.1",

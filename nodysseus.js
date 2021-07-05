@@ -176,6 +176,7 @@ let debug_node = "";
 
 const runNode = (node, input) => node.script 
 		? (new AsyncFunction('lib', 'state', 'input', 'node', node.script)(lib, state, input, node)).catch(err => {
+			console.log(`Error running ${JSON.stringify(node)} with input ${JSON.stringify(input)}`);
 			console.error(err);
 			return input;
 		})

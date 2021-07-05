@@ -15976,16 +15976,22 @@
             (option.type ? 1 : 0);
     }
     function sortOptions(active, state) {
-        let options = [];
+        let options = [], i = 0;
         for (let a of active)
             if (a.hasResult()) {
-                let matcher = new FuzzyMatcher(state.sliceDoc(a.from, a.to)), match;
-                for (let option of a.result.options)
-                    if (match = matcher.match(option.label)) {
-                        if (option.boost != null)
-                            match[0] += option.boost;
-                        options.push(new Option(option, a, match));
-                    }
+                if (a.result.filter === false) {
+                    for (let option of a.result.options)
+                        options.push(new Option(option, a, [1e9 - i++]));
+                }
+                else {
+                    let matcher = new FuzzyMatcher(state.sliceDoc(a.from, a.to)), match;
+                    for (let option of a.result.options)
+                        if (match = matcher.match(option.label)) {
+                            if (option.boost != null)
+                                match[0] += option.boost;
+                            options.push(new Option(option, a, match));
+                        }
+                }
             }
         options.sort(cmpOption);
         let result = [], prev = null;
@@ -16048,7 +16054,7 @@
                 state.languageDataAt("autocomplete", cur(state)).map(asSource);
             let active = sources.map(source => {
                 let value = this.active.find(s => s.source == source) ||
-                    new ActiveSource(source, this.active.some(a => a.state != 0 /* Inactive */) ? 1 /* Pending */ : 0 /* Inactive */, false);
+                    new ActiveSource(source, this.active.some(a => a.state != 0 /* Inactive */) ? 1 /* Pending */ : 0 /* Inactive */);
                 return value.update(tr, conf);
             });
             if (active.length == this.active.length && active.every((a, i) => a == this.active[i]))
@@ -16057,7 +16063,7 @@
                 !sameResults(active, this.active) ? CompletionDialog.build(active, state, this.id, this.open)
                 : this.open && tr.docChanged ? this.open.map(tr.changes) : this.open;
             if (!open && active.every(a => a.state != 1 /* Pending */) && active.some(a => a.hasResult()))
-                active = active.map(a => a.hasResult() ? new ActiveSource(a.source, 0 /* Inactive */, false) : a);
+                active = active.map(a => a.hasResult() ? new ActiveSource(a.source, 0 /* Inactive */) : a);
             for (let effect of tr.effects)
                 if (effect.is(setSelectedEffect))
                     open = open && open.setSelected(effect.value, this.id);
@@ -16097,13 +16103,12 @@
         return lA < lB ? -1 : lA == lB ? 0 : 1;
     }
     class ActiveSource {
-        constructor(source, state, explicit) {
+        constructor(source, state, explicitPos = -1) {
             this.source = source;
             this.state = state;
-            this.explicit = explicit;
+            this.explicitPos = explicitPos;
         }
         hasResult() { return false; }
-        explicitAt(_pos) { return this.explicit; }
         update(tr, conf) {
             let event = tr.annotation(Transaction.userEvent), value = this;
             if (event == "input" || event == "delete")
@@ -16111,12 +16116,12 @@
             else if (tr.docChanged)
                 value = value.handleChange(tr);
             else if (tr.selection && value.state != 0 /* Inactive */)
-                value = new ActiveSource(value.source, 0 /* Inactive */, false);
+                value = new ActiveSource(value.source, 0 /* Inactive */);
             for (let effect of tr.effects) {
                 if (effect.is(startCompletionEffect))
-                    value = new ActiveSource(value.source, 1 /* Pending */, effect.value);
+                    value = new ActiveSource(value.source, 1 /* Pending */, effect.value ? cur(tr.state) : -1);
                 else if (effect.is(closeCompletionEffect))
-                    value = new ActiveSource(value.source, 0 /* Inactive */, false);
+                    value = new ActiveSource(value.source, 0 /* Inactive */);
                 else if (effect.is(setActiveEffect))
                     for (let active of effect.value)
                         if (active.source == value.source)
@@ -16124,47 +16129,47 @@
             }
             return value;
         }
-        handleUserEvent(_tr, type, conf) {
-            return type == "delete" || !conf.activateOnTyping ? this : new ActiveSource(this.source, 1 /* Pending */, false);
+        handleUserEvent(tr, type, conf) {
+            return type == "delete" || !conf.activateOnTyping ? this.map(tr.changes) : new ActiveSource(this.source, 1 /* Pending */);
         }
         handleChange(tr) {
-            return tr.changes.touchesRange(cur(tr.startState)) ? new ActiveSource(this.source, 0 /* Inactive */, false) : this;
+            return tr.changes.touchesRange(cur(tr.startState)) ? new ActiveSource(this.source, 0 /* Inactive */) : this.map(tr.changes);
+        }
+        map(changes) {
+            return changes.empty || this.explicitPos < 0 ? this : new ActiveSource(this.source, this.state, changes.mapPos(this.explicitPos));
         }
     }
     class ActiveResult extends ActiveSource {
         constructor(source, explicitPos, result, from, to, span) {
-            super(source, 2 /* Result */, explicitPos > -1);
-            this.explicitPos = explicitPos;
+            super(source, 2 /* Result */, explicitPos);
             this.result = result;
             this.from = from;
             this.to = to;
             this.span = span;
         }
         hasResult() { return true; }
-        explicitAt(pos) { return this.explicitPos == pos; }
-        mapExplicit(mapping) {
-            return this.explicitPos < 0 ? -1 : mapping.mapPos(this.explicitPos);
-        }
         handleUserEvent(tr, type, conf) {
             let from = tr.changes.mapPos(this.from), to = tr.changes.mapPos(this.to, 1);
             let pos = cur(tr.state);
-            if ((this.explicit ? pos < from : pos <= from) || pos > to)
-                return new ActiveSource(this.source, type == "input" && conf.activateOnTyping ? 1 /* Pending */ : 0 /* Inactive */, false);
+            if ((this.explicitPos > -1 ? pos < from : pos <= from) || pos > to)
+                return new ActiveSource(this.source, type == "input" && conf.activateOnTyping ? 1 /* Pending */ : 0 /* Inactive */);
+            let explicitPos = this.explicitPos < 0 ? -1 : tr.changes.mapPos(this.explicitPos);
             if (this.span && (from == to || this.span.test(tr.state.sliceDoc(from, to))))
-                return new ActiveResult(this.source, this.mapExplicit(tr.changes), this.result, from, to, this.span);
-            return new ActiveSource(this.source, 1 /* Pending */, false);
+                return new ActiveResult(this.source, explicitPos, this.result, from, to, this.span);
+            return new ActiveSource(this.source, 1 /* Pending */, explicitPos);
         }
         handleChange(tr) {
-            return tr.changes.touchesRange(this.from, this.to) ? new ActiveSource(this.source, 0 /* Inactive */, false) : this.map(tr.changes);
+            return tr.changes.touchesRange(this.from, this.to) ? new ActiveSource(this.source, 0 /* Inactive */) : this.map(tr.changes);
         }
         map(mapping) {
-            return new ActiveResult(this.source, this.mapExplicit(mapping), this.result, mapping.mapPos(this.from), mapping.mapPos(this.to, 1), this.span);
+            return mapping.empty ? this :
+                new ActiveResult(this.source, this.explicitPos < 0 ? -1 : mapping.mapPos(this.explicitPos), this.result, mapping.mapPos(this.from), mapping.mapPos(this.to, 1), this.span);
         }
     }
     const startCompletionEffect = /*@__PURE__*/StateEffect.define();
     const closeCompletionEffect = /*@__PURE__*/StateEffect.define();
     const setActiveEffect = /*@__PURE__*/StateEffect.define({
-        map(sources, mapping) { return sources.map(s => s.hasResult() && !mapping.empty ? s.map(mapping) : s); }
+        map(sources, mapping) { return sources.map(s => s.map(mapping)); }
     });
     const setSelectedEffect = /*@__PURE__*/StateEffect.define();
     const completionState = /*@__PURE__*/StateField.define({
@@ -16229,8 +16234,8 @@
         return true;
     };
     class RunningQuery {
-        constructor(source, context) {
-            this.source = source;
+        constructor(active, context) {
+            this.active = active;
             this.context = context;
             this.time = Date.now();
             this.updates = [];
@@ -16280,7 +16285,7 @@
             }
             if (this.debounceUpdate > -1)
                 clearTimeout(this.debounceUpdate);
-            this.debounceUpdate = cState.active.some(a => a.state == 1 /* Pending */ && !this.running.some(q => q.source == a.source))
+            this.debounceUpdate = cState.active.some(a => a.state == 1 /* Pending */ && !this.running.some(q => q.active.source == a.source))
                 ? setTimeout(() => this.startUpdate(), DebounceTime) : -1;
             if (this.composing != 0 /* None */)
                 for (let tr of update.transactions) {
@@ -16294,14 +16299,14 @@
             this.debounceUpdate = -1;
             let { state } = this.view, cState = state.field(completionState);
             for (let active of cState.active) {
-                if (active.state == 1 /* Pending */ && !this.running.some(r => r.source == active.source))
+                if (active.state == 1 /* Pending */ && !this.running.some(r => r.active.source == active.source))
                     this.startQuery(active);
             }
         }
         startQuery(active) {
             let { state } = this.view, pos = cur(state);
-            let context = new CompletionContext(state, pos, active.explicitAt(pos));
-            let pending = new RunningQuery(active.source, context);
+            let context = new CompletionContext(state, pos, active.explicitPos == pos);
+            let pending = new RunningQuery(active, context);
             this.running.push(pending);
             Promise.resolve(active.source(context)).then(result => {
                 if (!pending.context.aborted) {
@@ -16334,7 +16339,7 @@
                     continue;
                 this.running.splice(i--, 1);
                 if (query.done) {
-                    let active = new ActiveResult(query.source, query.context.explicit ? query.context.pos : -1, query.done, query.done.from, (_a = query.done.to) !== null && _a !== void 0 ? _a : cur(query.updates.length ? query.updates[0].startState : this.view.state), query.done.span ? ensureAnchor(query.done.span, true) : null);
+                    let active = new ActiveResult(query.active.source, query.active.explicitPos, query.done, query.done.from, (_a = query.done.to) !== null && _a !== void 0 ? _a : cur(query.updates.length ? query.updates[0].startState : this.view.state), query.done.span && query.done.filter !== false ? ensureAnchor(query.done.span, true) : null);
                     // Replay the transactions that happened since the start of
                     // the request and see if that preserves the result
                     for (let tr of query.updates)
@@ -16344,12 +16349,12 @@
                         continue;
                     }
                 }
-                let current = this.view.state.field(completionState).active.find(a => a.source == query.source);
+                let current = this.view.state.field(completionState).active.find(a => a.source == query.active.source);
                 if (current && current.state == 1 /* Pending */) {
                     if (query.done == null) {
                         // Explicitly failed. Should clear the pending status if it
                         // hasn't been re-set in the meantime.
-                        let active = new ActiveSource(query.source, 0 /* Inactive */, false);
+                        let active = new ActiveSource(query.active.source, 0 /* Inactive */);
                         for (let tr of query.updates)
                             active = active.update(tr, conf);
                         if (active.state != 1 /* Pending */)
@@ -39565,10 +39570,31 @@
     		y: -287.1098020661749
     	},
     	graph_style_tag: {
-    		type: "script",
-    		script: "return {create: () => lib.html`#graph { display:flex; flex-direction: row; flex-grow: 2; justify-content: flex-start; align-content: stretch; background-color: #080804 } #graph .node { user-select: none } .tooltip { position: absolute; visibility: hidden; max-width: 120px; pointer-events: none;  }`}",
+    		type: "data",
+    		nodes: {
+    			"#graph": {
+    				display: " flex",
+    				"flex-direction": " row",
+    				"flex-grow": " 2",
+    				"justify-content": " flex-start",
+    				"align-content": " stretch",
+    				"background-color": "#080804"
+    			},
+    			"#graph .node": {
+    				"user-select": "none"
+    			},
+    			".tooltip": {
+    				position: " absolute",
+    				visibility: " hidden",
+    				"max-width": " 120px",
+    				"pointer-events": " none"
+    			}
+    		},
     		x: 1402.547169064167,
     		y: 144.25409217819163
+    	},
+    	stringify_graph_style: {
+    		type: "stringify_css"
     	},
     	render_graph_style: {
     		type: "render_html",
@@ -39602,9 +39628,9 @@
     	},
     	create_node: {
     		type: "script",
-    		script: "if(input.last_updated[0] == \"create_node\") {\n  return;\n}\n\nconst base = lib.SVG('.root'); \n\nif(!(base && input.x && input.y)){ return; }\n\nconst settings = Object.assign({\n  selected: input.selected_node === input.id,\n  dragging: input.dragging && input.selected_node === input.id\n}, lib.R.omit(['create_node', 'dragging', 'selected_node'], input));\n\nif(lib.R.equals(settings, input.create_node[input.id])){\n  return;\n}\nconst rsmall=16;\nconst rbig = 20;\nconst r = settings.dragging? rbig : rsmall;\n\nconst svg = (base.findOne(`#${input.id}`) ??  base.nested().attr({id: input.id, class: 'node'})).size(256, 48);\nconst text = (svg.findOne(`.name`) ?? svg.text(input.id).addClass('name'))\n  .x(r*2+8)\n  .cy(rbig+2)\n  .font({'family': 'Victor Mono, monospace', 'weight': 'bold'})\n  .fill('#D9EBFF');\nconst circle = (svg.findOne(`.circle`) ?? svg.circle(30).move(1,1).addClass('circle').fill({'opacity': 0}))\n  .radius(r)\n  .stroke({'width': 2, 'color': settings.selected ? '#CE9162' : '#D9EBFF'});\n\nsvg.move(input.x - rbig, input.y - rbig); \n\nreturn lib.R.assoc(input.id, settings, input.create_node??{});",
-    		x: 585.3527929231135,
-    		y: -508.3904234118438
+    		script: "if(input.last_updated[0] == \"create_node\") {\n  return;\n}\n\nconst base = lib.SVG('.root'); \n\nif(!(base && input.x && input.y)){ return; }\n\nconst settings = Object.assign({\n  selected: input.selected_node === input.id,\n  dragging: input.dragging && input.selected_node === input.id\n}, lib.R.omit(['create_node', 'dragging', 'selected_node'], input));\n\nif(input.create_node && lib.R.equals(settings, input.create_node[input.id])){\n  return;\n}\nconst rsmall=16;\nconst rbig = 20;\nconst r = settings.dragging? rbig : rsmall;\n\nconst svg = (base.findOne(`#${input.id}`) ??  base.nested().attr({id: input.id, class: 'node'})).size(256, 48);\nconst text = (svg.findOne(`.name`) ?? svg.text(input.id).addClass('name'))\n  .x(r*2+8)\n  .cy(r+4)\n  .font({'family': 'Victor Mono, monospace', 'weight': 'bold'})\n  .fill('#D9EBFF');\nconst circle = (svg.findOne(`.circle`) ?? svg.circle(30).move(2,2).addClass('circle').fill({'opacity': 0}))\n  .radius(r)\n  .stroke({'width': 2, 'color': settings.selected ? '#CE9162' : '#D9EBFF'});\n\nsvg.move(input.x - r, input.y - r); \n\nreturn lib.R.assoc(input.id, settings, input.create_node??{});",
+    		x: 588.2139573856657,
+    		y: -524.4129810375111
     	},
     	hover_node: {
     		type: "script",
@@ -39615,8 +39641,8 @@
     	create_line: {
     		type: "script",
     		script: "if(input.last_updated[0] == \"create_line\" || !input.edge) {\n  return;\n}\n\nconst base = lib.SVG('.root'); \n\nif(!(base && input.graph.nodes[input.edge.from].x \n     && input.graph.nodes[input.edge.from].y \n     && input.graph.nodes[input.edge.to].x  \n     && input.graph.nodes[input.edge.to].y )){ \n  return; \n}\n\n\nconst origin = {x: input.graph.nodes[input.edge.from].x, y: input.graph.nodes[input.edge.from].y};\nconst dest = {x: input.graph.nodes[input.edge.to].x, y: input.graph.nodes[input.edge.to].y };\nconst dir = {x: dest.x - origin.x, y: dest.y - origin.y};\n\nif(input.create_line && lib.R.equals(input.create_line[input.edge.from+'-'+input.edge.to], {origin, dest})){ return; }\n\nlet line = base.findOne(`#${input.edge.from}-${input.edge.to}`) ?? base.line().attr({id: `${input.edge.from}-${input.edge.to}`}).stroke({width: 1, color: '#A46DB5'});\n\nlet marker = line.reference('marker-start'); \n\nif(!marker) {\n  marker = line.marker('end', 10, 10, function(add) {\n    add.polygon('0,0 8,4 0,8').fill('#CA3AF7');\n  });\n}\n\nif(Math.abs(dir.x) + Math.abs(dir.y) > 0) {    \n  const sum = dir.x + dir.y;\n  const pow = Math.pow(dir.x, 2) + Math.pow(dir.y,2 );\n  const sqr = Math.pow(pow, 0.5);\n  dir.x = dir.x / sqr;\n  dir.y = dir.y / sqr;\n  origin.x += dir.x * 18;    origin.y += dir.y * 18;\n  dest.x -= dir.x * 20;    dest.y -= dir.y * 20;\n  \n  line.stroke({width: 2, color: '#604763'}).plot(origin.x, origin.y, dest.x, dest.y);\n}\n\n\nreturn lib.R.assoc(input.edge.to + '-' + input.edge.from, {origin, dest});",
-    		x: 769.0400504681925,
-    		y: -508.3904234118438
+    		x: 790.7849516877154,
+    		y: -526.129684379054
     	},
     	show_errors: {
     		type: "script",
@@ -39859,8 +39885,8 @@
     	},
     	edge_stream: {
     		script: "if(input.last_updated[0] === 'edge_stream'){\n  return;\n}\n\nreturn lib.queueIterator(lib.queue().push(input.graph?.edges, true));",
-    		x: 782.7736772005348,
-    		y: -649.160097418353
+    		x: 787.3515410431842,
+    		y: -664.6104139944298
     	},
     	node_stream: {
     		script: "return lib.queueIterator(lib.queue().push(lib.R.compose(lib.R.map(([k, v]) => lib.R.assoc('id', k, v)), lib.R.toPairs)(input.graph?.nodes), true));",
@@ -39879,11 +39905,17 @@
     	}
     };
     var defaults = {
+    	data: {
+    		script: "return node.nodes"
+    	},
     	log: {
     		script: "console.dir(input)"
     	},
     	stringify: {
-    		script: "return JSON.stringify(input[node.nodes.key])"
+    		script: "return JSON.stringify(node.nodes.key ? input[node.nodes.key] : input)"
+    	},
+    	stringify_css: {
+    		script: "return JSON.stringify(input)"
     	},
     	tag: {
     		script: "return () => lib.html`<${node.nodes.tag} ...${node.nodes.attrs}>${new function(`return ${node.nodes.content}`)()}</${node.nodes.tag}>`"
@@ -40194,6 +40226,18 @@
     		to: "render_graph_style"
     	},
     	{
+    		from: "graph_style_tag",
+    		to: "stringify_graph_style"
+    	},
+    	{
+    		from: "stringify_graph_style",
+    		to: "render_graph_style"
+    	},
+    	{
+    		from: "stringify_graph_style",
+    		to: "log_test"
+    	},
+    	{
     		from: "state_graph",
     		to: "graph_style_tag"
     	},
@@ -40317,8 +40361,8 @@
 
     const lib = { cm, html: m, render: N, SVG, R, queue, queueIterator };
 
-    const editorEl = document.getElementById("editor");
-    const graphEl = document.getElementById("graph");
+    const editorEl = document.getElementById("text_editor");
+    const graphEl = document.getElementById("node_editor");
 
     const languageConf = new Compartment();
 
@@ -40388,6 +40432,7 @@
 
     const runNode = (node, input) => node.script 
     		? (new AsyncFunction('lib', 'state', 'input', 'node', node.script)(lib, state, input, node)).catch(err => {
+    			console.log(`Error running ${JSON.stringify(node)} with input ${JSON.stringify(input)}`);
     			console.error(err);
     			return input;
     		})
@@ -40451,7 +40496,6 @@
     			if(run_cmd.id === debug_node) {
     				debugger;
     			}
-
 
     			const output_generator = await runNode(lib.R.mergeLeft({id: run_cmd.id}, run_cmd.node), run_cmd.input);
     			if(output_generator && output_generator[Symbol.asyncIterator]) {
