@@ -18,11 +18,8 @@ import {lintKeymap, linter} from "@codemirror/lint";
 import {language} from "@codemirror/language";
 
 
-import { html } from 'htm/preact'
-import { render } from 'preact'
-import { SVG } from "@svgdotjs/svg.js";
-import "@svgdotjs/svg.panzoom.js";
 import * as R from 'ramda';
+import { h, app } from "hyperapp"
 
 import DEFAULT_GRAPH from "./default.nodysseus.json"
 
@@ -103,7 +100,7 @@ const queueIterator = (queue) => ({[Symbol.asyncIterator](){
 		}
 	}})
 
-const lib = { cm, html, render, SVG, R, queue, queueIterator }
+const lib = { h, app, cm, R, queue, queueIterator }
 
 const editorEl = document.getElementById("text_editor");
 const graphEl = document.getElementById("node_editor");
@@ -165,31 +162,45 @@ const editorView = new cm.EditorView({
 	parent: editorEl
 });
 
-// state is passed between nodes
-const state = {
-	el: {editor: editorEl, graph: graphEl },
-	editor: editorView,
-};
-
-let log_node = "";
+let log_node = "hyperapp";
 let debug_node = "";
 
-const runNode = (node, input) => node.script 
-		? (new AsyncFunction('lib', 'state', 'input', 'node', node.script)(lib, state, input, node)).catch(err => {
-			console.log(`Error running ${JSON.stringify(node)} with input ${JSON.stringify(input)}`);
+
+// if(!state.has('dispatch') && input.state && input.dom){ 
+// 	state.set('dispatch', lib.app({ 
+// 		init: input.state, 
+// 		view: haState => {
+// 			console.log('ugh'); 
+// 			return input.view(haState).children[0]
+// 		}, 
+// 		node: input.dom 
+// 	})); 
+// } 
+
+// return state.get('dispatch');
+
+const runNode = (state, node, input) => node.script
+		? (new AsyncFunction('lib', 'state', 'node', 'input', node.script)(lib, state, node, input)).catch(err => {
+			console.log(`Error running ${node.id}`);
+			console.log("state")
+			console.dir(state);
+			console.log("node")
+			console.dir(node);
+			console.log("input")
+			console.dir(input);
 			console.error(err);
 			return input;
 		})
-		: runGraph(node, input);
+		: runGraph(state, node, input);
 
 
-const runGraph = async (graph, input) => ({
+const runGraph = async (state, graph, input) => ({
 	outputs: {},
-	queue: lib.queue().push({id: "in", node: graph.nodes.in, input: {...input, ...graph}}),
+	state,
+	queue: lib.queue().push({id: "in", node: lib.R.mergeRight(graph.node_types[graph.nodes.in.type], graph.nodes.in), input: {...input, ...graph}}),
 	count: 0,
 	async* [Symbol.asyncIterator](){
 		const runOutput = (run_cmd, output) => {
-
 			if(run_cmd.id === debug_node) {
 				debugger;
 			}
@@ -198,30 +209,34 @@ const runGraph = async (graph, input) => ({
 				console.log(JSON.stringify(output));
 			}
 
-			// const changed = this.outputs[run_cmd[0]] === undefined || lib.R.equals(this.outputs[run_cmd[0]], output);
-
 			this.outputs = lib.R.assoc(run_cmd.id, output, this.outputs);
 
 			const next_edges = lib.R.compose(lib.R.filter(edge => edge.from === run_cmd.id))(graph.edges);
-			const new_stack = lib.R.map(next_edge => ({
-				id: next_edge.to, 
-				node: graph.nodes[next_edge.to].type && !graph.nodes[next_edge.to].script 
-					? lib.R.mergeRight(graph.nodes[next_edge.to], graph.defaults[graph.nodes[next_edge.to].type]) 
-					: graph.nodes[next_edge.to],
-				input: lib.R.compose(
-					lib.R.mergeLeft({last_updated: next_edge.as ? [next_edge.as] : Object.keys(output)}),
-					lib.R.mergeLeft(next_edge.as ? lib.R.objOf(next_edge.as, output) : output),
-					lib.R.reduce((acc, input_edge) => 
-						lib.R.mergeLeft(
-							input_edge.as 
-							? lib.R.objOf(input_edge.as, this.outputs[input_edge.from]) 
-							: this.outputs[input_edge.from],
-							acc
-						)
-					, {}),
-					lib.R.filter(edge => edge.to === next_edge.to && edge.from !== run_cmd.id)
-				)(graph.edges)
-			}), next_edges);
+			const new_stack = lib.R.map(
+				lib.R.compose(
+					next_edge => ({
+						id: next_edge.to, 
+						node: lib.R.compose(
+							lib.R.mergeRight(graph.nodes && graph.nodes[next_edge.to].type ? graph.node_types[graph.nodes[next_edge.to].type] : {}),
+							lib.R.mergeDeepRight({
+								node_types: graph.node_types
+							}))(graph.nodes[next_edge.to])
+						,
+						input: lib.R.compose(
+							lib.R.mergeLeft(next_edge.as ? lib.R.objOf(next_edge.as, output) : output),
+							lib.R.reduce((acc, input_edge) => 
+								lib.R.mergeLeft(
+									input_edge.as 
+									? lib.R.objOf(input_edge.as, this.outputs[input_edge.from]) 
+									: this.outputs[input_edge.from],
+									acc
+								)
+							, {}),
+							lib.R.filter(edge => edge.to === next_edge.to && edge.from !== run_cmd.id)
+						)(graph.edges)
+					}),
+					next_edge => Array.isArray(next_edge) ? {from: next_edge[0], to: next_edge[1]} : next_edge
+				), next_edges);
 
 			this.queue.push(new_stack, true);
 
@@ -241,19 +256,24 @@ const runGraph = async (graph, input) => ({
 				debugger;
 			}
 
-			const output_generator = await runNode(lib.R.mergeLeft({id: run_cmd.id}, run_cmd.node), run_cmd.input);
+			if(!this.state.has(run_cmd.id)) {
+				this.state.set(run_cmd.id, new Map());
+			}
+
+			const output_generator = await runNode(this.state.get(run_cmd.id), lib.R.mergeLeft({id: run_cmd.id}, run_cmd.node), run_cmd.input);
 			if(output_generator && output_generator[Symbol.asyncIterator]) {
 				// fork
 				(async function(){
 					for await (const output of output_generator) {
 						if(output !== undefined && output !== null) {
-							runOutput(run_cmd, lib.R.has('last_updated', output) ? lib.R.omit(['last_updated'], output) : output);
+							runOutput(run_cmd, output);
 						}
 					}
 				})()
 			} else if(output_generator !== undefined && output_generator !== null) {
-				const value = runOutput(run_cmd, lib.R.has('last_updated', output_generator) ? lib.R.omit(['last_updated'], output_generator) : output_generator);
-				if(run_cmd.id === "out") {
+				const value = runOutput(run_cmd, output_generator);
+				// Special case "out" nodes
+				if(run_cmd.node.type === "out") {
 					yield value;
 				}
 			}
@@ -261,11 +281,12 @@ const runGraph = async (graph, input) => ({
 	}
 });
 
-const run = async (graph, previous_graph=null) => {
-	const default_run = await runNode(graph, graph);
+lib.runNode = runNode; lib.runGraph = runGraph;
+
+const run = async (state, graph) => {
+	const default_run = await runNode(state, graph, graph);
 	let next_graph;
 	for await(const value of default_run) {
-		console.log('out happened');
 		next_graph = value;
 		if(next_graph) {
 			default_run.queue.abortController.abort();
@@ -273,7 +294,7 @@ const run = async (graph, previous_graph=null) => {
 		}
 	}
 
-	run(next_graph);
+	run(state, next_graph);
 };
 
-run(DEFAULT_GRAPH);
+run(new Map(), DEFAULT_GRAPH);
