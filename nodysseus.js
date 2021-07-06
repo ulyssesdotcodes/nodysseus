@@ -166,6 +166,11 @@ let log_node = "hyperapp";
 let debug_node = "";
 
 
+const output = await (node.nodes 
+	? lib.runGraph(state, node, input) 
+	: Promise.resolve(() => ({children: [], attributes: {}}))); 
+return props => ({ children: (input.children ?? []).concat(lib.h(node.dom_type, output.attributes ?? {}, output.children)) })
+
 // if(!state.has('dispatch') && input.state && input.dom){ 
 // 	state.set('dispatch', lib.app({ 
 // 		init: input.state, 
@@ -298,3 +303,4 @@ const run = async (state, graph) => {
 };
 
 run(new Map(), DEFAULT_GRAPH);
+

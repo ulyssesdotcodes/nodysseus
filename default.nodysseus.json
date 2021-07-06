@@ -37,7 +37,7 @@
             ]
         },
         "hyperapp": {
-            "script": "if(!state.has('dispatch') && input.view && input.dom){ state.set('dispatch', lib.app({ init: {}, view: haState => input.view(haState).then(v => v.children[0]), node: input.dom }) } return state.get('dispatch');"
+            "script": "if(!state.has('dispatch') && input.view && input.dom){ state.set('dispatch', lib.app({ init: {}, view: haState => input.view(haState).children[0], node: input.dom })); } return state.get('dispatch');"
         },
         "out": {
             "type": "out"
@@ -60,7 +60,7 @@
             "script": "return node.value"
         },
         "dom": {
-            "script": "return async props => { const output = await node.nodes ? lib.runGraph(state, node, props ?? {}) : Promise.resolve({children: [], attributes: {}}); return { children: (input.children ?? []).concat(lib.h(node.dom_type, output.attributes ?? {}, output.children)) }}"
+            "script": "const output = await (node.nodes ? lib.runGraph(state, node, input) : Promise.resolve(() => ({children: [], attributes: {}}))); console.log(output); return props => ({ children: (input.children ?? []).concat(lib.h(node.dom_type, output.attributes ?? {}, output.children)) })"
         }
     },
     "edges": [
