@@ -1,8 +1,7 @@
 {
+    "description": "function composition",
+    "script": "return lib.no.default_fn(lib, self)",
     "nodes": {
-        "in": {
-            "type": "in"
-        },
         "content_el_selector": {
             "type": "el_selector",
             "selector": "#content"
@@ -11,13 +10,12 @@
             "type": "get",
             "index": 0
         },
+        "test": {"script": "return (state, input) => console.log('hi');"},
         "base_editor": {
+            "description": "sibling aggregation",
             "type": "dom",
             "dom_type": "div",
             "nodes": {
-                "in": {
-                    "type": "in"
-                },
                 "node_editor": {
                     "type": "dom",
                     "dom_type": "div"
@@ -25,42 +23,38 @@
                 "text_editor": {
                     "type": "dom",
                     "dom_type": "div"
-                },
-                "out": {
-                    "type": "out"
                 }
             },
             "edges": [
-                ["in", "node_editor"],
-                ["node_editor", "text_editor"],
-                ["text_editor", "out"]
+                {"from": "in", "to": "node_editor"},
+                {"from": "node_editor", "to": "text_editor"}
             ]
         },
-        "hyperapp": {
-            "script": "if(!state.has('dispatch') && input.view && input.dom){ state.set('dispatch', lib.app({ init: {}, view: haState => input.view(haState).children[0], node: input.dom })); } return state.get('dispatch');"
+        "hyperapp_input": {
+            "type": "merge"
         },
-        "out": {
-            "type": "out"
+        "hyperapp": {
+            "script": "return (state, input) => { if(!state.has('dispatch') && input.view && input.dom){ state.set('dispatch', lib.ha.app({ init: {}, view: haState => input.view, node: input.dom })); } return state.get('dispatch'); }"
         }
     },
     "node_types": {
-        "in": {
-            "script": "return input"
-        },
-        "out": {
-            "script": "return input"
-        },
         "el_selector": {
-            "script": "return document.querySelector(node.selector);"
+            "script": "return () => document.querySelector(self.selector);"
         },
         "get": {
-            "script": "return input.target[input.index ?? node.index]"
+            "script": "return () => input.target[input.index ?? self.index]"
         },
         "constant": {
-            "script": "return node.value"
+            "script": "return () => self.value"
+        },
+        "merge": {
+            "script": "return (state, input) => state.set('input', Object.assign({}, state.get('input') ?? {}, input)).get('input')"
+        },
+        "log": {
+            "script": "return (_, input) => console.log(input)"
         },
         "dom": {
-            "script": "const output = await (node.nodes ? lib.runGraph(state, node, input) : Promise.resolve(() => ({children: [], attributes: {}}))); console.log(output); return props => ({ children: (input.children ?? []).concat(lib.h(node.dom_type, output.attributes ?? {}, output.children)) })"
+            "script": "const aggregated = lib.no.aggregate_fn(lib, self); console.log(aggregated({}, {})); return (state, input) => lib.ha.h(self.dom_type, {}, aggregated(state, input))"
         }
     },
     "edges": [
@@ -69,8 +63,12 @@
             "to": "content_el_selector"
         },
         {
+            "from": "in",
+            "to": "test"
+        },
+        {
             "from": "content_el_selector",
-            "to": "hyperapp",
+            "to": "hyperapp_input",
             "as": "dom"
         },
         {
@@ -79,8 +77,12 @@
         },
         {
             "from": "base_editor",
-            "to": "hyperapp",
+            "to": "hyperapp_input",
             "as": "view"
+        },
+        {
+            "from": "hyperapp_input",
+            "to": "hyperapp"
         }
     ]
 }

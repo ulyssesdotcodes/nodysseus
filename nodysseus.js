@@ -19,7 +19,7 @@ import {language} from "@codemirror/language";
 
 
 import * as R from 'ramda';
-import { h, app } from "hyperapp"
+import { h, app, text, memo } from "hyperapp"
 
 import DEFAULT_GRAPH from "./default.nodysseus.json"
 
@@ -31,6 +31,28 @@ const cm = {javascript, json, searchKeymap, keymap, highlightSpecialChars,
 };
 
 // helpers
+
+const queue = (init) => ({
+	arr: Array.isArray(init) ? init : [init],
+	push: function(v){ this.arr.unshift(v) },
+	[Symbol.iterator]: function(){
+		return {
+			next: () => ({ done: this.arr.length === 0, value: this.arr.length === 0 ? undefined : this.arr.pop() })
+		}
+	}
+})
+
+const reduce = (fn, acc, it) => {
+	for(const n of it) {
+		acc = fn(acc, n);
+	}
+
+	return acc;
+}
+
+// in place `over` of an array index
+const overIdx = i => fn => arr => (arr[i] = fn(arr[i]), arr);
+
 window.AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
 
 class CopaneError extends Error {
@@ -46,61 +68,6 @@ const rethrow = (tag) => (error) => {
 		throw new CopaneError(tag, error.message);
 	}
 }
-
-// HTML setup
-
-const queue = () => ({
-	list: [],
-	callback: undefined,
-	abortController: new AbortController(),
-	pop() {
-		if(this.list.length > 0) {
-			return Promise.resolve(this.list.pop());
-		}
-
-		return new Promise((resolve, reject) => {
-			this.abortController.signal.addEventListener('abort', reject);
-
-			const current_cb = this.callback;
-			this.callback = current_cb ? (v) => {resolve(v); current_cb(v) } : resolve;
-		});
-	},
-	push(v, isArr){
-		if(isArr) {
-			if (this.callback) {
-				const cb = this.callback;
-				this.callback = undefined;
-				cb(v.pop());
-			}
-
-			this.list.unshift(...v)
-		} else {
-			if(this.callback) {
-				const cb = this.callback;
-				this.callback = undefined;
-				this.last = performance.now();
-				cb(v);
-			} else {
-				this.list.unshift(v);
-			}
-		}
-
-		this.last = performance.now();
-
-		return this;
-	}
-});
-
-const queueIterator = (queue) => ({[Symbol.asyncIterator](){
-		return {
-			queue,
-			next(){
-				return this.queue.pop().then(value => value?.done ? value : {done: this.queue.abortController.signal.aborted, value}).catch(err => console.error(err));
-			}
-		}
-	}})
-
-const lib = { h, app, cm, R, queue, queueIterator }
 
 const editorEl = document.getElementById("text_editor");
 const graphEl = document.getElementById("node_editor");
@@ -162,145 +129,86 @@ const editorView = new cm.EditorView({
 	parent: editorEl
 });
 
-let log_node = "hyperapp";
-let debug_node = "";
+const compile = (node) => node.script ? new Function('lib', 'self', node.script)(lib, node) : default_fn(lib, node);
 
+// Note: heavy use of comma operator https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Comma_Operator
+const compileNodes = (node_types, nodes) => Object.fromEntries(
+	Object.entries(nodes ?? {})
+		.map(overIdx(1)(n => Object.assign({}, {node_types}, node_types[n.type], n)))
+		.map(overIdx(1)(compile))
+);
 
-const output = await (node.nodes 
-	? lib.runGraph(state, node, input) 
-	: Promise.resolve(() => ({children: [], attributes: {}}))); 
-return props => ({ children: (input.children ?? []).concat(lib.h(node.dom_type, output.attributes ?? {}, output.children)) })
+const createEdgeFns = (edges, from, fns) => (edges ?? [])
+	.filter(e => e.from === from)
+	.map(edge => Object.assign({}, edge, {fn: fns[edge.to]}))
 
-// if(!state.has('dispatch') && input.state && input.dom){ 
-// 	state.set('dispatch', lib.app({ 
-// 		init: input.state, 
-// 		view: haState => {
-// 			console.log('ugh'); 
-// 			return input.view(haState).children[0]
-// 		}, 
-// 		node: input.dom 
-// 	})); 
-// } 
+const default_fn = (lib, self) => {
+	const node_fns = compileNodes(self.node_types, self.nodes);
 
-// return state.get('dispatch');
+	return (state, input) => { 
+		const edge_queue = queue(createEdgeFns(self.edges, 'in', node_fns));
 
-const runNode = (state, node, input) => node.script
-		? (new AsyncFunction('lib', 'state', 'node', 'input', node.script)(lib, state, node, input)).catch(err => {
-			console.log(`Error running ${node.id}`);
-			console.log("state")
-			console.dir(state);
-			console.log("node")
-			console.dir(node);
-			console.log("input")
-			console.dir(input);
-			console.error(err);
-			return input;
-		})
-		: runGraph(state, node, input);
+		state.set('in', input);
 
+		return reduce((outputs, run_edge) => {
+			const next = lib.R.over(
+				lib.R.lensProp(run_edge.to),
+				prev_out => run_edge.fn(
+					state.get(run_edge.to) ?? state.set(run_edge.to, new Map()).get(run_edge.to),
+					run_edge.as ? Object.fromEntries([[run_edge.as, outputs[run_edge.from]]]) : outputs[run_edge.from]
+				) ?? prev_out,
+				outputs
+			);
 
-const runGraph = async (state, graph, input) => ({
-	outputs: {},
-	state,
-	queue: lib.queue().push({id: "in", node: lib.R.mergeRight(graph.node_types[graph.nodes.in.type], graph.nodes.in), input: {...input, ...graph}}),
-	count: 0,
-	async* [Symbol.asyncIterator](){
-		const runOutput = (run_cmd, output) => {
-			if(run_cmd.id === debug_node) {
-				debugger;
+			if(next[run_edge.to] !== undefined) {
+				// side effect add to queue
+				createEdgeFns(self.edges, run_edge.to, node_fns)
+					.forEach(e => edge_queue.push(e))
+
+				console.log('output');
+				console.log(run_edge);
+				console.log(state.get(run_edge.to));
+				console.log(next[run_edge.to]);
+				return next;
 			}
 
-			if(run_cmd.id === log_node) {
-				console.log(JSON.stringify(output));
-			}
-
-			this.outputs = lib.R.assoc(run_cmd.id, output, this.outputs);
-
-			const next_edges = lib.R.compose(lib.R.filter(edge => edge.from === run_cmd.id))(graph.edges);
-			const new_stack = lib.R.map(
-				lib.R.compose(
-					next_edge => ({
-						id: next_edge.to, 
-						node: lib.R.compose(
-							lib.R.mergeRight(graph.nodes && graph.nodes[next_edge.to].type ? graph.node_types[graph.nodes[next_edge.to].type] : {}),
-							lib.R.mergeDeepRight({
-								node_types: graph.node_types
-							}))(graph.nodes[next_edge.to])
-						,
-						input: lib.R.compose(
-							lib.R.mergeLeft(next_edge.as ? lib.R.objOf(next_edge.as, output) : output),
-							lib.R.reduce((acc, input_edge) => 
-								lib.R.mergeLeft(
-									input_edge.as 
-									? lib.R.objOf(input_edge.as, this.outputs[input_edge.from]) 
-									: this.outputs[input_edge.from],
-									acc
-								)
-							, {}),
-							lib.R.filter(edge => edge.to === next_edge.to && edge.from !== run_cmd.id)
-						)(graph.edges)
-					}),
-					next_edge => Array.isArray(next_edge) ? {from: next_edge[0], to: next_edge[1]} : next_edge
-				), next_edges);
-
-			this.queue.push(new_stack, true);
-
-			return output;
-		}
-
-		for await (const run_cmd of lib.queueIterator(this.queue)) {
-			if(!run_cmd) {
-				continue;
-			}
-
-			if(run_cmd.id === log_node) {
-				console.log(run_cmd);
-			}
-
-			if(run_cmd.id === debug_node) {
-				debugger;
-			}
-
-			if(!this.state.has(run_cmd.id)) {
-				this.state.set(run_cmd.id, new Map());
-			}
-
-			const output_generator = await runNode(this.state.get(run_cmd.id), lib.R.mergeLeft({id: run_cmd.id}, run_cmd.node), run_cmd.input);
-			if(output_generator && output_generator[Symbol.asyncIterator]) {
-				// fork
-				(async function(){
-					for await (const output of output_generator) {
-						if(output !== undefined && output !== null) {
-							runOutput(run_cmd, output);
-						}
-					}
-				})()
-			} else if(output_generator !== undefined && output_generator !== null) {
-				const value = runOutput(run_cmd, output_generator);
-				// Special case "out" nodes
-				if(run_cmd.node.type === "out") {
-					yield value;
-				}
-			}
-		}
+			// don't update if the new value is undefined
+			return outputs;
+		}, state, edge_queue).out;
 	}
-});
+} 
 
-lib.runNode = runNode; lib.runGraph = runGraph;
+const aggregate_fn = (lib, self) => {
+	const node_fns = lib.no.compileNodes(self.node_types, self.nodes); 
+	const edge_queue = queue(createEdgeFns(self.edges, 'in', node_fns));
+	const output_order = reduce((order, edge) => {
+		const has_edge = order.find(e => lib.R.equals(edge, e));
 
-const run = async (state, graph) => {
-	const default_run = await runNode(state, graph, graph);
-	let next_graph;
-	for await(const value of default_run) {
-		next_graph = value;
-		if(next_graph) {
-			default_run.queue.abortController.abort();
-			break;
+		if (!has_edge) {
+			createEdgeFns(self.edges, edge.to, node_fns)
+				.forEach(e => edge_queue.push(e));
+			return order.concat(edge);
 		}
-	}
 
-	run(state, next_graph);
-};
+		return order
+	}, [], edge_queue);
+	
+	console.log('here');
+	console.dir(lib.R.clone(output_order));
 
-run(new Map(), DEFAULT_GRAPH);
 
+	return (state, input) => output_order.map(run_edge => run_edge.fn(lib.R.prop(run_edge.to, state), input));
+	// return (state, input) => input;
+}
+
+// returns a state, input => output
+
+const lib = { ha: { h, app, text, memo},  cm, no: { compileNodes, default_fn, aggregate_fn }, R };
+
+// sort edges by distance from in
+// const edges = [];
+// R.reduce((acc, edge) => edge.from === 'in' ? 0 : , {}, edges);
+
+// expecting null
+
+compile(DEFAULT_GRAPH)(new Map());

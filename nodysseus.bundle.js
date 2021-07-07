@@ -21865,7 +21865,7 @@
      * @symb R.reduce(f, a, [b, c, d]) = f(f(f(a, b), c), d)
      */
 
-    var reduce =
+    var reduce$1 =
     /*#__PURE__*/
     _curry3(_reduce);
 
@@ -21898,7 +21898,7 @@
     var allPass =
     /*#__PURE__*/
     _curry1(function allPass(preds) {
-      return curryN(reduce(max, 0, pluck('length', preds)), function () {
+      return curryN(reduce$1(max, 0, pluck('length', preds)), function () {
         var idx = 0;
         var len = preds.length;
 
@@ -22079,7 +22079,7 @@
     var anyPass =
     /*#__PURE__*/
     _curry1(function anyPass(preds) {
-      return curryN(reduce(max, 0, pluck('length', preds)), function () {
+      return curryN(reduce$1(max, 0, pluck('length', preds)), function () {
         var idx = 0;
         var len = preds.length;
 
@@ -22347,7 +22347,7 @@
       spec = mapValues(function (v) {
         return typeof v == 'function' ? v : applySpec(v);
       }, spec);
-      return curryN(reduce(max, 0, pluck('length', values(spec))), function () {
+      return curryN(reduce$1(max, 0, pluck('length', values(spec))), function () {
         var args = arguments;
         return mapValues(function (f) {
           return apply(f, args);
@@ -23314,7 +23314,7 @@
         throw new Error('pipe requires at least one argument');
       }
 
-      return _arity(arguments[0].length, reduce(_pipe, arguments[0], tail(arguments)));
+      return _arity(arguments[0].length, reduce$1(_pipe, arguments[0], tail(arguments)));
     }
 
     /**
@@ -23457,7 +23457,7 @@
         throw new Error('pipeP requires at least one argument');
       }
 
-      return _arity(arguments[0].length, reduce(_pipeP, arguments[0], tail(arguments)));
+      return _arity(arguments[0].length, reduce$1(_pipeP, arguments[0], tail(arguments)));
     }
 
     /**
@@ -24268,7 +24268,7 @@
     var cond =
     /*#__PURE__*/
     _curry1(function cond(pairs) {
-      var arity = reduce(max, 0, map$1(function (pair) {
+      var arity = reduce$1(max, 0, map$1(function (pair) {
         return pair[0].length;
       }, pairs));
       return _arity(arity, function () {
@@ -24467,7 +24467,7 @@
     var converge =
     /*#__PURE__*/
     _curry2(function converge(after, fns) {
-      return curryN(reduce(max, 0, pluck('length', fns)), function () {
+      return curryN(reduce$1(max, 0, pluck('length', fns)), function () {
         var args = arguments;
         var context = this;
         return after.apply(context, _map(function (fn) {
@@ -28019,7 +28019,7 @@
 
     var sum =
     /*#__PURE__*/
-    reduce(add, 0);
+    reduce$1(add, 0);
 
     /**
      * Returns the mean of the given list of numbers.
@@ -29302,7 +29302,7 @@
 
     var product =
     /*#__PURE__*/
-    reduce(multiply, 1);
+    reduce$1(multiply, 1);
 
     /**
      * Accepts a function `fn` and a list of transformer functions and returns a
@@ -31726,7 +31726,7 @@
         propSatisfies: propSatisfies,
         props: props,
         range: range,
-        reduce: reduce,
+        reduce: reduce$1,
         reduceBy: reduceBy,
         reduceRight: reduceRight,
         reduceWhile: reduceWhile,
@@ -32158,6 +32158,8 @@
       node,
     });
 
+    var memo = (tag, memo) => ({ tag, memo });
+
     var text = (value, node) =>
       createVNode(value, EMPTY_OBJ, EMPTY_ARR, TEXT_NODE, node);
 
@@ -32217,10 +32219,9 @@
       )
     };
 
+    var description = "function composition";
+    var script = "return lib.no.default_fn(lib, self)";
     var nodes = {
-    	"in": {
-    		type: "in"
-    	},
     	content_el_selector: {
     		type: "el_selector",
     		selector: "#content"
@@ -32229,13 +32230,14 @@
     		type: "get",
     		index: 0
     	},
+    	test: {
+    		script: "return (state, input) => console.log('hi');"
+    	},
     	base_editor: {
+    		description: "sibling aggregation",
     		type: "dom",
     		dom_type: "div",
     		nodes: {
-    			"in": {
-    				type: "in"
-    			},
     			node_editor: {
     				type: "dom",
     				dom_type: "div"
@@ -32243,51 +32245,44 @@
     			text_editor: {
     				type: "dom",
     				dom_type: "div"
-    			},
-    			out: {
-    				type: "out"
     			}
     		},
     		edges: [
-    			[
-    				"in",
-    				"node_editor"
-    			],
-    			[
-    				"node_editor",
-    				"text_editor"
-    			],
-    			[
-    				"text_editor",
-    				"out"
-    			]
+    			{
+    				from: "in",
+    				to: "node_editor"
+    			},
+    			{
+    				from: "node_editor",
+    				to: "text_editor"
+    			}
     		]
     	},
-    	hyperapp: {
-    		script: "if(!state.has('dispatch') && input.view && input.dom){ state.set('dispatch', lib.app({ init: {}, view: haState => input.view(haState).children[0], node: input.dom })); } return state.get('dispatch');"
+    	hyperapp_input: {
+    		type: "merge"
     	},
-    	out: {
-    		type: "out"
+    	hyperapp: {
+    		script: "return (state, input) => { if(!state.has('dispatch') && input.view && input.dom){ state.set('dispatch', lib.ha.app({ init: {}, view: haState => input.view, node: input.dom })); } return state.get('dispatch'); }"
     	}
     };
     var node_types = {
-    	"in": {
-    		script: "return input"
-    	},
-    	out: {
-    		script: "return input"
-    	},
     	el_selector: {
-    		script: "return document.querySelector(node.selector);"
+    		script: "return () => document.querySelector(self.selector);"
     	},
     	get: {
-    		script: "return input.target[input.index ?? node.index]"
+    		script: "return () => input.target[input.index ?? self.index]"
     	},
     	constant: {
-    		script: "return node.value"
+    		script: "return () => self.value"
+    	},
+    	merge: {
+    		script: "return (state, input) => state.set('input', Object.assign({}, state.get('input') ?? {}, input)).get('input')"
+    	},
+    	log: {
+    		script: "return (_, input) => console.log(input)"
     	},
     	dom: {
-    		script: "const output = await (node.nodes ? lib.runGraph(state, node, input) : Promise.resolve(() => ({children: [], attributes: {}}))); console.log(output); return props => ({ children: (input.children ?? []).concat(lib.h(node.dom_type, output.attributes ?? {}, output.children)) })"
+    		script: "const aggregated = lib.no.aggregate_fn(lib, self); console.log(aggregated({}, {})); return (state, input) => lib.ha.h(self.dom_type, {}, aggregated(state, input))"
     	}
     };
     var edges = [
@@ -32296,8 +32291,12 @@
     		to: "content_el_selector"
     	},
     	{
+    		from: "in",
+    		to: "test"
+    	},
+    	{
     		from: "content_el_selector",
-    		to: "hyperapp",
+    		to: "hyperapp_input",
     		as: "dom"
     	},
     	{
@@ -32306,11 +32305,17 @@
     	},
     	{
     		from: "base_editor",
-    		to: "hyperapp",
+    		to: "hyperapp_input",
     		as: "view"
+    	},
+    	{
+    		from: "hyperapp_input",
+    		to: "hyperapp"
     	}
     ];
     var DEFAULT_GRAPH = {
+    	description: description,
+    	script: script,
     	nodes: nodes,
     	node_types: node_types,
     	edges: edges
@@ -32324,62 +32329,29 @@
     };
 
     // helpers
-    window.AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
 
-    // HTML setup
-
-    const queue = () => ({
-    	list: [],
-    	callback: undefined,
-    	abortController: new AbortController(),
-    	pop() {
-    		if(this.list.length > 0) {
-    			return Promise.resolve(this.list.pop());
+    const queue = (init) => ({
+    	arr: Array.isArray(init) ? init : [init],
+    	push: function(v){ this.arr.unshift(v); },
+    	[Symbol.iterator]: function(){
+    		return {
+    			next: () => ({ done: this.arr.length === 0, value: this.arr.length === 0 ? undefined : this.arr.pop() })
     		}
-
-    		return new Promise((resolve, reject) => {
-    			this.abortController.signal.addEventListener('abort', reject);
-
-    			const current_cb = this.callback;
-    			this.callback = current_cb ? (v) => {resolve(v); current_cb(v); } : resolve;
-    		});
-    	},
-    	push(v, isArr){
-    		if(isArr) {
-    			if (this.callback) {
-    				const cb = this.callback;
-    				this.callback = undefined;
-    				cb(v.pop());
-    			}
-
-    			this.list.unshift(...v);
-    		} else {
-    			if(this.callback) {
-    				const cb = this.callback;
-    				this.callback = undefined;
-    				this.last = performance.now();
-    				cb(v);
-    			} else {
-    				this.list.unshift(v);
-    			}
-    		}
-
-    		this.last = performance.now();
-
-    		return this;
     	}
     });
 
-    const queueIterator = (queue) => ({[Symbol.asyncIterator](){
-    		return {
-    			queue,
-    			next(){
-    				return this.queue.pop().then(value => value?.done ? value : {done: this.queue.abortController.signal.aborted, value}).catch(err => console.error(err));
-    			}
-    		}
-    	}});
+    const reduce = (fn, acc, it) => {
+    	for(const n of it) {
+    		acc = fn(acc, n);
+    	}
 
-    const lib = { h, app, cm, R, queue, queueIterator };
+    	return acc;
+    };
+
+    // in place `over` of an array index
+    const overIdx = i => fn => arr => (arr[i] = fn(arr[i]), arr);
+
+    window.AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
 
     const editorEl = document.getElementById("text_editor");
     document.getElementById("node_editor");
@@ -32441,141 +32413,88 @@
     	parent: editorEl
     });
 
-    let log_node = "hyperapp";
-    let debug_node = "";
+    const compile = (node) => node.script ? new Function('lib', 'self', node.script)(lib, node) : default_fn(lib, node);
 
+    // Note: heavy use of comma operator https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Comma_Operator
+    const compileNodes = (node_types, nodes) => Object.fromEntries(
+    	Object.entries(nodes ?? {})
+    		.map(overIdx(1)(n => Object.assign({}, {node_types}, node_types[n.type], n)))
+    		.map(overIdx(1)(compile))
+    );
 
-    // if(!state.has('dispatch') && input.state && input.dom){ 
-    // 	state.set('dispatch', lib.app({ 
-    // 		init: input.state, 
-    // 		view: haState => {
-    // 			console.log('ugh'); 
-    // 			return input.view(haState).children[0]
-    // 		}, 
-    // 		node: input.dom 
-    // 	})); 
-    // } 
+    const createEdgeFns = (edges, from, fns) => (edges ?? [])
+    	.filter(e => e.from === from)
+    	.map(edge => Object.assign({}, edge, {fn: fns[edge.to]}));
 
-    // return state.get('dispatch');
+    const default_fn = (lib, self) => {
+    	const node_fns = compileNodes(self.node_types, self.nodes);
 
-    const runNode = (state, node, input) => node.script
-    		? (new AsyncFunction('lib', 'state', 'node', 'input', node.script)(lib, state, node, input)).catch(err => {
-    			console.log(`Error running ${node.id}`);
-    			console.log("state");
-    			console.dir(state);
-    			console.log("node");
-    			console.dir(node);
-    			console.log("input");
-    			console.dir(input);
-    			console.error(err);
-    			return input;
-    		})
-    		: runGraph(state, node, input);
+    	return (state, input) => { 
+    		const edge_queue = queue(createEdgeFns(self.edges, 'in', node_fns));
 
+    		state.set('in', input);
 
-    const runGraph = async (state, graph, input) => ({
-    	outputs: {},
-    	state,
-    	queue: lib.queue().push({id: "in", node: lib.R.mergeRight(graph.node_types[graph.nodes.in.type], graph.nodes.in), input: {...input, ...graph}}),
-    	count: 0,
-    	async* [Symbol.asyncIterator](){
-    		const runOutput = (run_cmd, output) => {
-    			if(run_cmd.id === debug_node) {
-    				debugger;
+    		return reduce((outputs, run_edge) => {
+    			const next = lib.R.over(
+    				lib.R.lensProp(run_edge.to),
+    				prev_out => run_edge.fn(
+    					state.get(run_edge.to) ?? state.set(run_edge.to, new Map()).get(run_edge.to),
+    					run_edge.as ? Object.fromEntries([[run_edge.as, outputs[run_edge.from]]]) : outputs[run_edge.from]
+    				) ?? prev_out,
+    				outputs
+    			);
+
+    			if(next[run_edge.to] !== undefined) {
+    				// side effect add to queue
+    				createEdgeFns(self.edges, run_edge.to, node_fns)
+    					.forEach(e => edge_queue.push(e));
+
+    				console.log('output');
+    				console.log(run_edge);
+    				console.log(state.get(run_edge.to));
+    				console.log(next[run_edge.to]);
+    				return next;
     			}
 
-    			if(run_cmd.id === log_node) {
-    				console.log(JSON.stringify(output));
-    			}
-
-    			this.outputs = lib.R.assoc(run_cmd.id, output, this.outputs);
-
-    			const next_edges = lib.R.compose(lib.R.filter(edge => edge.from === run_cmd.id))(graph.edges);
-    			const new_stack = lib.R.map(
-    				lib.R.compose(
-    					next_edge => ({
-    						id: next_edge.to, 
-    						node: lib.R.compose(
-    							lib.R.mergeRight(graph.nodes && graph.nodes[next_edge.to].type ? graph.node_types[graph.nodes[next_edge.to].type] : {}),
-    							lib.R.mergeDeepRight({
-    								node_types: graph.node_types
-    							}))(graph.nodes[next_edge.to])
-    						,
-    						input: lib.R.compose(
-    							lib.R.mergeLeft(next_edge.as ? lib.R.objOf(next_edge.as, output) : output),
-    							lib.R.reduce((acc, input_edge) => 
-    								lib.R.mergeLeft(
-    									input_edge.as 
-    									? lib.R.objOf(input_edge.as, this.outputs[input_edge.from]) 
-    									: this.outputs[input_edge.from],
-    									acc
-    								)
-    							, {}),
-    							lib.R.filter(edge => edge.to === next_edge.to && edge.from !== run_cmd.id)
-    						)(graph.edges)
-    					}),
-    					next_edge => Array.isArray(next_edge) ? {from: next_edge[0], to: next_edge[1]} : next_edge
-    				), next_edges);
-
-    			this.queue.push(new_stack, true);
-
-    			return output;
-    		};
-
-    		for await (const run_cmd of lib.queueIterator(this.queue)) {
-    			if(!run_cmd) {
-    				continue;
-    			}
-
-    			if(run_cmd.id === log_node) {
-    				console.log(run_cmd);
-    			}
-
-    			if(run_cmd.id === debug_node) {
-    				debugger;
-    			}
-
-    			if(!this.state.has(run_cmd.id)) {
-    				this.state.set(run_cmd.id, new Map());
-    			}
-
-    			const output_generator = await runNode(this.state.get(run_cmd.id), lib.R.mergeLeft({id: run_cmd.id}, run_cmd.node), run_cmd.input);
-    			if(output_generator && output_generator[Symbol.asyncIterator]) {
-    				// fork
-    				(async function(){
-    					for await (const output of output_generator) {
-    						if(output !== undefined && output !== null) {
-    							runOutput(run_cmd, output);
-    						}
-    					}
-    				})();
-    			} else if(output_generator !== undefined && output_generator !== null) {
-    				const value = runOutput(run_cmd, output_generator);
-    				// Special case "out" nodes
-    				if(run_cmd.node.type === "out") {
-    					yield value;
-    				}
-    			}
-    		}
+    			// don't update if the new value is undefined
+    			return outputs;
+    		}, state, edge_queue).out;
     	}
-    });
+    }; 
 
-    lib.runNode = runNode; lib.runGraph = runGraph;
+    const aggregate_fn = (lib, self) => {
+    	const node_fns = lib.no.compileNodes(self.node_types, self.nodes); 
+    	const edge_queue = queue(createEdgeFns(self.edges, 'in', node_fns));
+    	const output_order = reduce((order, edge) => {
+    		const has_edge = order.find(e => lib.R.equals(edge, e));
 
-    const run = async (state, graph) => {
-    	const default_run = await runNode(state, graph, graph);
-    	let next_graph;
-    	for await(const value of default_run) {
-    		next_graph = value;
-    		if(next_graph) {
-    			default_run.queue.abortController.abort();
-    			break;
+    		if (!has_edge) {
+    			createEdgeFns(self.edges, edge.to, node_fns)
+    				.forEach(e => edge_queue.push(e));
+    			return order.concat(edge);
     		}
-    	}
 
-    	run(state, next_graph);
+    		return order
+    	}, [], edge_queue);
+    	
+    	console.log('here');
+    	console.dir(lib.R.clone(output_order));
+
+
+    	return (state, input) => output_order.map(run_edge => run_edge.fn(lib.R.prop(run_edge.to, state), input));
+    	// return (state, input) => input;
     };
 
-    run(new Map(), DEFAULT_GRAPH);
+    // returns a state, input => output
+
+    const lib = { ha: { h, app, text, memo},  cm, no: { compileNodes, default_fn, aggregate_fn }, R };
+
+    // sort edges by distance from in
+    // const edges = [];
+    // R.reduce((acc, edge) => edge.from === 'in' ? 0 : , {}, edges);
+
+    // expecting null
+
+    compile(DEFAULT_GRAPH)(new Map());
 
 }());
