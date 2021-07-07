@@ -22,6 +22,7 @@ import * as R from 'ramda';
 import { h, app, text, memo } from "hyperapp"
 
 import DEFAULT_GRAPH from "./default.nodysseus.json"
+import { times } from "lodash";
 
 const cm = {javascript, json, searchKeymap, keymap, highlightSpecialChars, 
 	drawSelection, highlightActiveLine, EditorState, EditorView, StateEffect, jsonParseLinter,
@@ -50,8 +51,23 @@ const reduce = (fn, acc, it) => {
 	return acc;
 }
 
+const map = function* (it, fn) {
+	for(const n of it) {
+		yield fn(n);
+	}
+}
+
 // in place `over` of an array index
 const overIdx = i => fn => arr => (arr[i] = fn(arr[i]), arr);
+
+const nestedPropertyIterator = (val, prop) => ({
+	level: val,
+	[Symbol.iterator]: function(){
+		return {
+			next: () => ({ done: this.level.hasOwnProperty(prop), value: (this.level = this.level[prop], this.level) })
+		}
+	}
+})
 
 window.AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
 
@@ -132,9 +148,19 @@ const editorView = new cm.EditorView({
 const compile = (node) => node.script ? new Function('lib', 'self', node.script)(lib, node) : default_fn(lib, node);
 
 // Note: heavy use of comma operator https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Comma_Operator
+const unpackTypes = (node_types, node) => {
+	let ty = node.type;
+	const result = Object.assign({}, node);
+	while(node_types[ty]) {
+		Object.assign(result, node_types[ty], result);
+		ty = node_types[ty].type;
+	}
+	return result;
+}
+
 const compileNodes = (node_types, nodes) => Object.fromEntries(
 	Object.entries(nodes ?? {})
-		.map(overIdx(1)(n => Object.assign({}, {node_types}, node_types[n.type], n)))
+		.map(overIdx(1)(n => Object.assign({}, {node_types}, unpackTypes(node_types, n), n)))
 		.map(overIdx(1)(compile))
 );
 
@@ -151,30 +177,39 @@ const default_fn = (lib, self) => {
 		state.set('in', input);
 
 		return reduce((outputs, run_edge) => {
-			const next = lib.R.over(
-				lib.R.lensProp(run_edge.to),
-				prev_out => run_edge.fn(
+			const next = Object.assign({}, outputs);
+
+			if(run_edge.to === "out") {
+				outputs['out'] = outputs[run_edge.from];
+				return outputs;
+			}
+
+			try {
+				const result = run_edge.fn(
 					state.get(run_edge.to) ?? state.set(run_edge.to, new Map()).get(run_edge.to),
 					run_edge.as ? Object.fromEntries([[run_edge.as, outputs[run_edge.from]]]) : outputs[run_edge.from]
-				) ?? prev_out,
-				outputs
-			);
+				);
 
-			if(next[run_edge.to] !== undefined) {
-				// side effect add to queue
-				createEdgeFns(self.edges, run_edge.to, node_fns)
-					.forEach(e => edge_queue.push(e))
+				next[run_edge.to] = result ?? next[run_edge.to];
 
-				console.log('output');
+				if(next[run_edge.to] !== undefined) {
+					// side effect add to queue
+					createEdgeFns(self.edges, run_edge.to, node_fns)
+						.forEach(e => edge_queue.push(e))
+
+					return next;
+				}
+			} catch(err) {
+				console.log("error in " + run_edge.to);
 				console.log(run_edge);
+				console.log(outputs[run_edge.from]);
 				console.log(state.get(run_edge.to));
-				console.log(next[run_edge.to]);
-				return next;
+				console.error(err);
 			}
 
 			// don't update if the new value is undefined
 			return outputs;
-		}, state, edge_queue).out;
+		}, {in: input}, edge_queue).out;
 	}
 } 
 
@@ -182,28 +217,32 @@ const aggregate_fn = (lib, self) => {
 	const node_fns = lib.no.compileNodes(self.node_types, self.nodes); 
 	const edge_queue = queue(createEdgeFns(self.edges, 'in', node_fns));
 	const output_order = reduce((order, edge) => {
-		const has_edge = order.find(e => lib.R.equals(edge, e));
+		const has_edge = order.has(edge.to);
 
 		if (!has_edge) {
 			createEdgeFns(self.edges, edge.to, node_fns)
 				.forEach(e => edge_queue.push(e));
-			return order.concat(edge);
+			return order.set(edge.to, edge);
 		}
 
 		return order
-	}, [], edge_queue);
-	
-	console.log('here');
-	console.dir(lib.R.clone(output_order));
+	}, new Map(), edge_queue);
 
-
-	return (state, input) => output_order.map(run_edge => run_edge.fn(lib.R.prop(run_edge.to, state), input));
-	// return (state, input) => input;
+	return (state, input) => new Map([...map(output_order.entries(), ([k, run_edge]) => [k, run_edge.fn(state.has(k) ? state.get(k) : state.set(k, new Map()).get(k), input)])]);
 }
+
+const h_fn = (lib, self) => (state, input) => haState => (console.log(input), lib.ha.h(
+		self.dom_type, // change to input
+		input.attrs ? input.attrs(haState) : {}, 
+		input.children 
+			?  [...lib.iter.map(
+				input.children.entries(), 
+				([k, v]) => v(haState[k]))]
+			: []));
 
 // returns a state, input => output
 
-const lib = { ha: { h, app, text, memo},  cm, no: { compileNodes, default_fn, aggregate_fn }, R };
+const lib = { ha: { h, app, text, memo},  cm, iter: {reduce, map}, no: { compileNodes, default_fn, aggregate_fn, h_fn }, R };
 
 // sort edges by distance from in
 // const edges = [];
@@ -211,4 +250,4 @@ const lib = { ha: { h, app, text, memo},  cm, no: { compileNodes, default_fn, ag
 
 // expecting null
 
-compile(DEFAULT_GRAPH)(new Map());
+compile(DEFAULT_GRAPH)(new Map(), DEFAULT_GRAPH);
