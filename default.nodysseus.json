@@ -10,18 +10,37 @@
             "type": "get",
             "index": 0
         },
+        "base_editor_content_merge": "merge",
         "base_editor_content": {
-            "description": "sibling aggregation",
             "type": "aggregate",
             "nodes": {
                 "node_editor": {
-                    "type": "h",
-                    "dom_type": "div"
+                    "nodes": {
+                        "parent": {
+                            "type": "h",
+                            "dom_type": "svg"
+                        },
+                        "parent_input": "merge",
+                        "node_svgs": {
+                            "script": "return (state, input) => (haState) => (console.log(haState), Object.entries(haState.node_editor.nodes).map(([k, v]) => Object.assign({id: k}, typeof v === 'string' ? {type: v} : v)) ?? []).map(input.node_template)"
+                        },
+                        "attrs": {
+                            "script": "return (state, input) => (haState) => ({id: 'node_parent', width: screen.availWidth, height: screen.availHeight})"
+                        }
+                    },
+                    "edges": [
+                        {"from": "in", "to": "node_svgs"},
+                        {"from": "in", "to": "attrs"},
+                        {"from": "attrs", "to": "parent_input", "as": "attrs"},
+                        {"from": "node_svgs", "to": "parent_input", "as": "children"},
+                        {"from": "parent_input", "to": "parent"},
+                        {"from": "parent", "to": "out"}
+                    ]
                 },
                 "text_editor": {
                     "nodes": {
                         "h_merge": {
-                            "script": "return () => ({attrs: () => ({class: {editor: true}}) })"
+                            "script": "return () => ({})"
                         },
                         "h": {
                             "type": "h",
@@ -40,6 +59,60 @@
                 {"from": "node_editor", "to": "text_editor"}
             ]
         },
+        "node_html": {
+            "nodes": {
+                "parent":  {
+                    "type": "h",
+                    "dom_type": "svg",
+                    "attrs": {
+                        "width": 128,
+                        "height": 64
+                    }
+                },
+                "parent_input": "merge",
+                "parent_attrs": {
+                    "script": "return (state, input) => (haState) => (console.log(state), console.log(input), console.log(haState), { x: haState.x, y: haState.y, id: haState.id })"
+                },
+                "children": {
+                    "type": "aggregate",
+                    "nodes":{
+                        "circle": {
+                            "type": "h",
+                            "dom_type": "circle",
+                            "attrs": {
+                                "r": 20,
+                                "cx": 20,
+                                "cy": 20,
+                                "fill": "blue"
+                            }
+                        },
+                        "text": {
+                            "type": "h",
+                            "dom_type": "text",
+                            "attrs": {
+                                "x": 64,
+                                "cy": 20
+                            }
+                        }
+                    },
+                    "edges": [
+                        {"from": "in", "to": "circle"},
+                        {"from": "circle", "to": "text"}
+                    ]
+                }
+            },
+            "edges": [
+                {"from": "in", "to": "circle"},
+                {"from": "in", "to": "parent_attrs"},
+                {"from": "parent_attrs", "to": "parent_input", "as": "attrs"},
+                {"from": "circle", "to": "parent_input", "as": "children"},
+                {"from": "parent_input", "to": "parent"},
+                {"from": "parent", "to": "out"}
+            ]
+        },
+        "simulate_layout": {
+            "script": "return (state, input) => lib.no.d3simulation(state, input)"
+        },
         "base_editor": {
             "type": "h",
             "dom_type": "div"
@@ -47,8 +120,11 @@
         "hyperapp_input": {
             "type": "merge"
         },
+        "hyperapp_state": {
+            "script": "return (state, input) => { state.set('input', Object.assign({}, state.get('input') ?? {}, input)); return { node_editor: state.get('input') } }"
+        },
         "hyperapp": {
-            "script": "return (state, input) => { if(!state.has('dispatch') && input.view && input.dom){ state.set('dispatch', lib.ha.app({ init: {}, view: input.view, node: input.dom })); } return state.get('dispatch'); }"
+            "script": "return (state, input) => { if(!state.has('dispatch') && input.view && input.dom){ state.set('dispatch', lib.ha.app({ init: input.init ?? {}, view: input.view, node: input.dom })); } return state.get('dispatch'); }"
         }
     },
     "node_types": {
@@ -81,12 +157,44 @@
             "to": "content_el_selector"
         },
         {
+            "from": "in",
+            "to": "hyperapp_state"
+        },
+        {
+            "from": "in",
+            "to": "simulate_layout"
+        },
+        {
+            "from": "simulate_layout",
+            "to": "hyperapp_state",
+            "as": "nodes"
+        },
+        {
+            "from": "hyperapp_state",
+            "to": "hyperapp_input",
+            "as": "init"
+        },
+        {
+            "from": "in",
+            "to": "base_editor_content_merge",
+            "as": "graph"
+        },
+        {
             "from": "content_el_selector",
             "to": "hyperapp_input",
             "as": "dom"
         },
         {
             "from": "in",
+            "to": "node_html"
+        },
+        {
+            "from": "node_html",
+            "to": "base_editor_content_merge",
+            "as": "node_template"
+        },
+        {
+            "from": "base_editor_content_merge",
             "to": "base_editor_content"
         },
         {

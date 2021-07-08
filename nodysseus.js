@@ -20,6 +20,7 @@ import {language} from "@codemirror/language";
 
 import * as R from 'ramda';
 import { h, app, text, memo } from "hyperapp"
+import { forceSimulation, forceManyBody,forceCenter, forceLink } from "d3-force";
 
 import DEFAULT_GRAPH from "./default.nodysseus.json"
 import { times } from "lodash";
@@ -149,8 +150,8 @@ const compile = (node) => node.script ? new Function('lib', 'self', node.script)
 
 // Note: heavy use of comma operator https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Comma_Operator
 const unpackTypes = (node_types, node) => {
-	let ty = node.type;
-	const result = Object.assign({}, node);
+	let ty = typeof node === 'string' ? node : node.type;
+	const result = Object.assign({}, typeof node === 'string' ? {} : node);
 	while(node_types[ty]) {
 		Object.assign(result, node_types[ty], result);
 		ty = node_types[ty].type;
@@ -160,7 +161,7 @@ const unpackTypes = (node_types, node) => {
 
 const compileNodes = (node_types, nodes) => Object.fromEntries(
 	Object.entries(nodes ?? {})
-		.map(overIdx(1)(n => Object.assign({}, {node_types}, unpackTypes(node_types, n), n)))
+		.map(overIdx(1)(n => Object.assign({}, {node_types}, unpackTypes(node_types, n), typeof n === 'string' ? {} : n)))
 		.map(overIdx(1)(compile))
 );
 
@@ -231,18 +232,61 @@ const aggregate_fn = (lib, self) => {
 	return (state, input) => new Map([...map(output_order.entries(), ([k, run_edge]) => [k, run_edge.fn(state.has(k) ? state.get(k) : state.set(k, new Map()).get(k), input)])]);
 }
 
-const h_fn = (lib, self) => (state, input) => haState => (console.log(input), lib.ha.h(
+
+const h_fn = (lib, self) => (state, input) => haState => lib.ha.h(
 		self.dom_type, // change to input
-		input.attrs ? input.attrs(haState) : {}, 
-		input.children 
+		Object.assign({}, self.attrs ?? {}, input.attrs ? input.attrs(haState) : {}), 
+		input.children instanceof Map
 			?  [...lib.iter.map(
-				input.children.entries(), 
-				([k, v]) => v(haState[k]))]
-			: []));
+				input.children.values(), 
+				v => v ? v(haState) : undefined)]
+			: input.children
+			? input.children(haState)
+			: []);
 
 // returns a state, input => output
 
-const lib = { ha: { h, app, text, memo},  cm, iter: {reduce, map}, no: { compileNodes, default_fn, aggregate_fn, h_fn }, R };
+const d3simulation = (state, input) => {
+	console.log(Object.entries(input.nodes)
+				.map(([k, n], index) => Object.assign({}, typeof n === 'string' ? {type: n} : n, {
+					id: k,
+					x: screen.availWidth * 0.5, 
+					y: screen.availHeight * 0.5, 
+					index
+				})));
+	const simulation = 
+		lib.d3.forceSimulation(
+			Object.entries(input.nodes)
+				.map(([k, n], index) => Object.assign({}, typeof n === 'string' ? {type: n} : n, {
+					id: k,
+					x: screen.availWidth * 0.5, 
+					y: screen.availHeight * 0.5, 
+					index
+				})))
+			.force('charge', lib.d3.forceManyBody().strength(-16))
+			.force('center', lib.d3
+				.forceCenter(screen.availWidth * 0.5, screen.availHeight * 0.5)
+				.strength(0.05))
+			.force('links', lib.d3
+				.forceLink(input.edges.filter(e => e.from !== 'in' && e.to !== 'out')
+					.map((e, index) => ({source: e.from, target: e.to, index})))
+				.id(n => n.id))
+			.tick(16)
+			.stop(); 
+
+	console.log('edges');
+
+	console.log(input.edges.filter(e => e.from !== 'in' && e.to !== 'out').map((e, index) => ({source: e.from, target: e.to, index})));
+
+	return simulation.nodes();
+}
+
+const lib = { cm, 
+	ha: { h, app, text, memo},  
+	iter: {reduce, map}, 
+	no: { compileNodes, default_fn, aggregate_fn, h_fn, d3simulation },
+	d3: {forceSimulation, forceManyBody, forceCenter, forceLink}
+};
 
 // sort edges by distance from in
 // const edges = [];
