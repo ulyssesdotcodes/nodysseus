@@ -18,12 +18,12 @@ import {lintKeymap, linter} from "@codemirror/lint";
 import {language} from "@codemirror/language";
 
 
-import * as R from 'ramda';
+import _ from "lodash";
 import { h, app, text, memo } from "hyperapp"
 import { forceSimulation, forceManyBody,forceCenter, forceLink } from "d3-force";
 
 import DEFAULT_GRAPH from "./default.nodysseus.json"
-import { times } from "lodash";
+import { A } from "@svgdotjs/svg.js";
 
 const cm = {javascript, json, searchKeymap, keymap, highlightSpecialChars, 
 	drawSelection, highlightActiveLine, EditorState, EditorView, StateEffect, jsonParseLinter,
@@ -58,8 +58,25 @@ const map = function* (it, fn) {
 	}
 }
 
+const filter = function* (it, fn) {
+	for(const n of it) {
+		if(fn(n)){
+			yield n;
+		}
+	}
+}
+
 // in place `over` of an array index
-const overIdx = i => fn => arr => (arr[i] = fn(arr[i]), arr);
+const overIdx = (i, def) => fn => arr => (arr[i] = fn(arr[i] ?? def), arr);
+const overKey = (k, def) => fn => om => 
+	om instanceof Map 
+	? om.set(k, fn(om.get(k) ?? def))
+	: overIdx(k, def)(fn)(om);
+const overPath = (p, def) => fn => om =>
+	overKey(p[0], def)(p.length === 1 
+		? fn 
+		: overPath(p.slice(1), def)(fn)
+	)(om)
 
 const nestedPropertyIterator = (val, prop) => ({
 	level: val,
@@ -146,14 +163,14 @@ const editorView = new cm.EditorView({
 	parent: editorEl
 });
 
-const compile = (node) => node.script ? new Function('lib', 'self', node.script)(lib, node) : default_fn(lib, node);
+const compile = (node) => node.script ? new Function('lib', 'self', node.script)(lib, node) : () => node;
 
 // Note: heavy use of comma operator https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Comma_Operator
 const unpackTypes = (node_types, node) => {
 	let ty = typeof node === 'string' ? node : node.type;
-	const result = Object.assign({}, typeof node === 'string' ? {} : node);
+	const result = _.merge({}, typeof node === 'string' ? {} : node)
 	while(node_types[ty]) {
-		Object.assign(result, node_types[ty], result);
+		_.merge(result, node_types[ty]);
 		ty = node_types[ty].type;
 	}
 	return result;
@@ -161,7 +178,7 @@ const unpackTypes = (node_types, node) => {
 
 const compileNodes = (node_types, nodes) => Object.fromEntries(
 	Object.entries(nodes ?? {})
-		.map(overIdx(1)(n => Object.assign({}, {node_types}, unpackTypes(node_types, n), typeof n === 'string' ? {} : n)))
+		.map(kv => overIdx(1)(n => Object.assign({node_types, id: kv[0]}, unpackTypes(node_types, n), typeof n === 'string' ? {} : n))(kv))
 		.map(overIdx(1)(compile))
 );
 
@@ -171,6 +188,14 @@ const createEdgeFns = (edges, from, fns) => (edges ?? [])
 
 const default_fn = (lib, self) => {
 	const node_fns = compileNodes(self.node_types, self.nodes);
+
+	// expand default in => node => out if there's only one node
+	if(Object.keys(self.nodes).length === 1 && (!self.edges	|| self.edges.length === 0)) {
+		self.edges = [
+			{"from": "in", "to": Object.keys(self.nodes)[0]}, 
+			{"from": Object.keys(self.nodes)[0], "to": "out"}
+		]
+	}
 
 	return (state, input) => { 
 		const edge_queue = queue(createEdgeFns(self.edges, 'in', node_fns));
@@ -210,12 +235,23 @@ const default_fn = (lib, self) => {
 
 			// don't update if the new value is undefined
 			return outputs;
-		}, {in: input}, edge_queue).out;
+		}, {in: Object.assign({}, input, {parent: self.id})}, edge_queue).out;
 	}
 } 
 
 const aggregate_fn = (lib, self) => {
 	const node_fns = lib.no.compileNodes(self.node_types, self.nodes); 
+
+	if(!self.edges) {
+		self.edges = Object.keys(self.nodes).reduce((arr, val) => 
+			arr.concat([{
+				from: arr[arr.length - 1]?.to ?? 'in',
+				to: val
+			}]), 
+			[]
+		);
+	}
+
 	const edge_queue = queue(createEdgeFns(self.edges, 'in', node_fns));
 	const output_order = reduce((order, edge) => {
 		const has_edge = order.has(edge.to);
@@ -229,36 +265,49 @@ const aggregate_fn = (lib, self) => {
 		return order
 	}, new Map(), edge_queue);
 
-	return (state, input) => new Map([...map(output_order.entries(), ([k, run_edge]) => [k, run_edge.fn(state.has(k) ? state.get(k) : state.set(k, new Map()).get(k), input)])]);
+	return (state, input) => {
+		const result_map = map(
+			output_order.entries(), 
+			([k, run_edge]) => [
+				k, 
+				run_edge.fn(
+					state.has(k) 
+					? state.get(k) 
+					: state.set(k, new Map()).get(k), 
+					Object.assign({parent: self.id}, input)
+				)
+			])
+
+		return new Map(filter(result_map, kv => kv[1] !== undefined))
+	}
 }
 
 
-const h_fn = (lib, self) => (state, input) => haState => lib.ha.h(
+const h_fn = (lib, self) => (state, input) => lib.ha.h(
 		self.dom_type, // change to input
-		Object.assign({}, self.attrs ?? {}, input.attrs ? input.attrs(haState) : {}), 
+		Object.assign({}, self.attrs ?? {}, 
+			// lib._.isFunction(input.attrs)
+			// ? input.attrs(haState)
+			// : 
+			input.attrs 
+			? input.attrs
+			: {}), 
 		input.children instanceof Map
 			?  [...lib.iter.map(
 				input.children.values(), 
-				v => v ? v(haState) : undefined)]
+				v => v ? v : undefined)]
 			: input.children
-			? input.children(haState)
+			? input.children
 			: []);
 
 // returns a state, input => output
 
 const d3simulation = (state, input) => {
-	console.log(Object.entries(input.nodes)
-				.map(([k, n], index) => Object.assign({}, typeof n === 'string' ? {type: n} : n, {
-					id: k,
-					x: screen.availWidth * 0.5, 
-					y: screen.availHeight * 0.5, 
-					index
-				})));
 	const simulation = 
 		lib.d3.forceSimulation(
 			Object.entries(input.nodes)
 				.map(([k, n], index) => Object.assign({}, typeof n === 'string' ? {type: n} : n, {
-					id: k,
+					node_id: k,
 					x: screen.availWidth * 0.5, 
 					y: screen.availHeight * 0.5, 
 					index
@@ -270,28 +319,31 @@ const d3simulation = (state, input) => {
 			.force('links', lib.d3
 				.forceLink(input.edges.filter(e => e.from !== 'in' && e.to !== 'out')
 					.map((e, index) => ({source: e.from, target: e.to, index})))
-				.id(n => n.id))
+				.id(n => n.node_id))
 			.tick(16)
 			.stop(); 
-
-	console.log('edges');
-
-	console.log(input.edges.filter(e => e.from !== 'in' && e.to !== 'out').map((e, index) => ({source: e.from, target: e.to, index})));
 
 	return simulation.nodes();
 }
 
-const lib = { cm, 
+const apply_template = (lib, self) => (state, input) => { 
+	if(input.target && input.source){ 
+		return lib.util.overPath
+			(self.path, {})
+			(nodes => Object.fromEntries(
+				Object.entries(input.source.node_editor.nodes)
+				.map(([k, n]) => [k, self.template])
+				.filter(kv => kv[1] !== undefined))) 
+			(input.target) 
+	} 
+}
+
+const lib = { cm, _,
 	ha: { h, app, text, memo},  
 	iter: {reduce, map}, 
-	no: { compileNodes, default_fn, aggregate_fn, h_fn, d3simulation },
-	d3: {forceSimulation, forceManyBody, forceCenter, forceLink}
+	no: { compileNodes, default_fn, aggregate_fn, h_fn, d3simulation, apply_template},
+	d3: {forceSimulation, forceManyBody, forceCenter, forceLink},
+	util: {overIdx, overKey, overPath}
 };
-
-// sort edges by distance from in
-// const edges = [];
-// R.reduce((acc, edge) => edge.from === 'in' ? 0 : , {}, edges);
-
-// expecting null
 
 compile(DEFAULT_GRAPH)(new Map(), DEFAULT_GRAPH);
