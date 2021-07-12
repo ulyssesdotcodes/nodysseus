@@ -32,7 +32,7 @@
                                     "nodes": {}
                                 },
                                 "attrs": {
-                                    "script": "return (state, input) => ({id: 'node_parent', width: screen.availWidth, height: screen.availHeight})"
+                                    "script": "return (state, input) => ({id: 'node_parent', width: window.innerWidth, height: window.innerHeight})"
                                 }
                             },
                             "edges": [
@@ -167,9 +167,9 @@
                                                 "type": "h",
                                                 "dom_type": "text",
                                                 "attrs": {
-                                                    "x": 64,
-                                                    "cy": 20,
-                                                    "font-size": 12
+                                                    "x": 42,
+                                                    "y": 22,
+                                                    "font-size": 18
                                                 }
                                             }
                                         },
@@ -181,7 +181,7 @@
                                             {
                                                 "from": "get_id",
                                                 "to": "display_name",
-                                                "as": "node_name"
+                                                "as": "text"
                                             },
                                             {
                                                 "from": "display_name",
@@ -283,10 +283,6 @@
                 },
                 {
                     "from": "apply_node_template_run",
-                    "to": "log_nt"
-                },
-                {
-                    "from": "apply_node_template_run",
                     "to": "base_editor",
                     "as": "children"
                 },
@@ -297,7 +293,24 @@
             ]
         },
         "simulate_layout": {
-            "script": "return (state, input) => Object.fromEntries(lib.no.d3simulation(state, input).map(n => [n.node_id, n]))"
+            "script": "return (state, input) => (state.has('simulation') ? state : state.set('simulation', lib.no.d3simulation(state, input))).get('simulation')"
+        },
+        "simulation_dispatch": {
+            "type": "compiled_fn",
+            "nodes": {
+                "get_nodes": {
+                    "script": "return (state, input) => requestAnimationFrame(() => {if(!(input.dispatch && input.simulation && input.action)){ return } input.dispatch(input.action, Object.fromEntries(input.simulation.nodes().map(n => [n.node_id, n]))) })"
+                }
+            }
+        },
+        "simulation_subscription_in": "merge",
+        "simulation_subscription": {
+            "type": "execute",
+            "nodes": {
+                "subscription": {
+                    "script": "return (state, input) => (dispatch, props) => { input.simulation.on('tick.ha', function(v){ input.fn({simulation: this, dispatch: dispatch, action: props.action})}); return () => input.simulation.on('.ha', null); }"
+                }
+            }
         },
         "hyperapp_input": {
             "type": "merge"
@@ -306,7 +319,7 @@
             "script": "return (state, input) => { state.set('input', Object.assign({}, state.get('input') ?? {}, input)); return { node_editor: state.get('input') } }"
         },
         "hyperapp": {
-            "script": "return (state, input) => { if(!state.has('dispatch') && input.view && input.dom){ state.set('dispatch', lib.ha.app({ init: input.init ?? {}, view: (s) => input.view(s), node: input.dom })); } return state.get('dispatch'); }"
+            "script": "return (state, input) => { if(!state.has('dispatch') && input.view && input.dom && input.simulation_subscription){ state.set('dispatch', lib.ha.app({ init: input.init ?? {}, view: (s) => input.view(s), subscriptions:() => [[input.simulation_subscription, { action: (state, payload) => Object.assign({}, state, {node_editor: {nodes: payload}}) }]] , node: input.dom })); } return state.get('dispatch'); }"
         }
     },
     "node_types": {
@@ -320,7 +333,7 @@
             "script": "return () => document.querySelector(self.selector);"
         },
         "get": {
-            "script": "return (state, input) => input[input.index ?? self.index]"
+            "script": "return (state, input) => input[input.get_index ?? self.index]"
         },
         "constant": {
             "script": "return () => self.value"
@@ -344,7 +357,7 @@
             "script": "return (state, input) => lib.ha.text(input.text ?? self.text)"
         },
         "compiled_fn": {
-            "script": "return (state) => (input) => lib.no.default_fn(lib, self)(state, input)"
+            "script": "const compiled_fn = lib.no.default_fn(lib, self); return (state, fn_input) => (input) => { const result = compiled_fn(state, lib._.merge(fn_input, input)); return (result === undefined ? state : state.set('output', result)).get('output') }"
         },
         "apply_fn": {
             "script": "return (state, input) => lib.util.overPath(self.path)(n => n.map(input.fn))(input.target)"
@@ -353,7 +366,7 @@
             "script": "return (state, input) => lib.util.overPath(self.path, {})(v => lib._.merge(v, input.values))"
         },
         "run_fn": {
-            "script": "return (state, input) => {if(!input.fn || !input.data) { return; } const res = (self.run_type === 'aggregate' ? lib.no.aggregate_fn : lib.no.default_fn)(lib, input.fn)(state, input.data); return res; }"
+            "script": "return (state, input) => { if(!input.fn || !input.data) { return; } if(!lib._.isEqual(state.get('fn'), input.fn)) { state.set('compiled_fn', (self.run_type === 'aggregate' ? lib.no.aggregate_fn : lib.no.default_fn)(lib, input.fn))} state.set('fn', input.fn); return state.get('compiled_fn')(state, input.data); }"
         }
     },
     "edges": [
@@ -371,8 +384,26 @@
         },
         {
             "from": "simulate_layout",
-            "to": "hyperapp_state",
-            "as": "nodes"
+            "to": "simulation_subscription_in",
+            "as": "simulation"
+        },
+        {
+            "from": "in",
+            "to": "simulation_dispatch"
+        },
+        {
+            "from": "simulation_dispatch",
+            "to": "simulation_subscription_in",
+            "as": "fn"
+        },
+        {
+            "from": "simulation_subscription_in",
+            "to": "simulation_subscription"
+        },
+        {
+            "from": "simulation_subscription",
+            "to": "hyperapp_input",
+            "as": "simulation_subscription"
         },
         {
             "from": "hyperapp_state",

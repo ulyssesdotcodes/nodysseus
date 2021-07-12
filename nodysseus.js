@@ -20,7 +20,7 @@ import {language} from "@codemirror/language";
 
 import _ from "lodash";
 import { h, app, text, memo } from "hyperapp"
-import { forceSimulation, forceManyBody,forceCenter, forceLink } from "d3-force";
+import { forceSimulation, forceManyBody,forceCenter, forceLink, forceRadial } from "d3-force";
 
 import DEFAULT_GRAPH from "./default.nodysseus.json"
 import { A } from "@svgdotjs/svg.js";
@@ -168,9 +168,9 @@ const compile = (node) => node.script ? new Function('lib', 'self', node.script)
 // Note: heavy use of comma operator https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Comma_Operator
 const unpackTypes = (node_types, node) => {
 	let ty = typeof node === 'string' ? node : node.type;
-	const result = _.merge({}, typeof node === 'string' ? {} : node)
+	const result = typeof node === 'string' ? {} : Object.assign({}, node)
 	while(node_types[ty]) {
-		_.merge(result, node_types[ty]);
+		Object.assign(result, node_types[ty]);
 		ty = node_types[ty].type;
 	}
 	return result;
@@ -179,12 +179,22 @@ const unpackTypes = (node_types, node) => {
 const compileNodes = (node_types, nodes) => Object.fromEntries(
 	Object.entries(nodes ?? {})
 		.map(kv => overIdx(1)(n => Object.assign({node_types, id: kv[0]}, unpackTypes(node_types, n), typeof n === 'string' ? {} : n))(kv))
-		.map(overIdx(1)(compile))
+		.map(kv => kv[1].fn ? kv : overIdx(1)(compile)(kv))
 );
 
-const createEdgeFns = (edges, from, fns) => (edges ?? [])
-	.filter(e => e.from === from)
-	.map(edge => Object.assign({}, edge, {fn: fns[edge.to]}))
+// mutable for performance
+const createEdgeFns = (edges, from, fns) => {
+	if(!edges){ return []}
+
+	const edge_arr = [];
+	for(const e of edges){
+		if(e.from === from) {
+			edge_arr.push(e.fn ? e : Object.assign({}, e, {fn: fns[e.to]}))
+		}
+	}
+
+	return edge_arr;
+}
 
 const default_fn = (lib, self) => {
 	const node_fns = compileNodes(self.node_types, self.nodes);
@@ -197,8 +207,10 @@ const default_fn = (lib, self) => {
 		]
 	}
 
+	const startFns = createEdgeFns(self.edges, 'in', node_fns);
+
 	return (state, input) => { 
-		const edge_queue = queue(createEdgeFns(self.edges, 'in', node_fns));
+		const edge_queue = queue(lib._.cloneDeep(startFns));
 
 		state.set('in', input);
 
@@ -302,38 +314,38 @@ const h_fn = (lib, self) => (state, input) => lib.ha.h(
 
 // returns a state, input => output
 
+
 const d3simulation = (state, input) => {
 	const simulation = 
 		lib.d3.forceSimulation(
 			Object.entries(input.nodes)
 				.map(([k, n], index) => Object.assign({}, typeof n === 'string' ? {type: n} : n, {
 					node_id: k,
-					x: screen.availWidth * 0.5, 
-					y: screen.availHeight * 0.5, 
+					x: window.innerWidth * Math.random(), 
+					y: window.innerHeight * Math.random(), 
 					index
 				})))
-			.force('charge', lib.d3.forceManyBody().strength(-16))
+			.force('charge', lib.d3.forceManyBody().strength(-8))
 			.force('center', lib.d3
-				.forceCenter(screen.availWidth * 0.5, screen.availHeight * 0.5)
-				.strength(0.05))
+				.forceCenter(window.innerWidth * 0.5, window.innerHeight * 0.5)
+				.strength(.01))
 			.force('links', lib.d3
 				.forceLink(input.edges.filter(e => e.from !== 'in' && e.to !== 'out')
 					.map((e, index) => ({source: e.from, target: e.to, index})))
-				.id(n => n.node_id))
-			.tick(16)
-			.stop(); 
+				.distance(128)
+				.id(n => n.node_id));
+//			.alphaMin(.1); // changes how long the simulation will run. dfault is 0.001 
 
-	return simulation.nodes();
+	return simulation;
 }
 
 const apply_template = (lib, self) => (state, input) => { 
-	if(input.target && input.source){ 
+	if(input.target && input.source && self.template){ 
 		return lib.util.overPath
 			(self.path, {})
 			(nodes => Object.fromEntries(
-				Object.entries(input.source.node_editor.nodes)
-				.map(([k, n]) => [k, self.template])
-				.filter(kv => kv[1] !== undefined))) 
+				Object.keys(input.source.node_editor.nodes)
+				.map(k => [k, self.template]))) 
 			(input.target) 
 	} 
 }
@@ -342,7 +354,7 @@ const lib = { cm, _,
 	ha: { h, app, text, memo},  
 	iter: {reduce, map}, 
 	no: { compileNodes, default_fn, aggregate_fn, h_fn, d3simulation, apply_template},
-	d3: {forceSimulation, forceManyBody, forceCenter, forceLink},
+	d3: {forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial},
 	util: {overIdx, overKey, overPath}
 };
 
