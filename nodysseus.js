@@ -18,11 +18,12 @@ import {lintKeymap, linter} from "@codemirror/lint";
 import {language} from "@codemirror/language";
 
 
-import _ from "lodash";
+import _, { merge } from "lodash";
 import { h, app, text, memo } from "hyperapp"
-import { forceSimulation, forceManyBody,forceCenter, forceLink, forceRadial } from "d3-force";
+import { forceSimulation, forceManyBody,forceCenter, forceLink, forceRadial, forceY, forceCollide } from "d3-force";
 
-import DEFAULT_GRAPH from "./default.nodysseus.json"
+// import DEFAULT_GRAPH from "./default.nodysseus.json"
+import DEFAULT_GRAPH from "./flatten.json"
 import { A } from "@svgdotjs/svg.js";
 
 const cm = {javascript, json, searchKeymap, keymap, highlightSpecialChars, 
@@ -163,7 +164,7 @@ const editorView = new cm.EditorView({
 	parent: editorEl
 });
 
-const compile = (node) => node.script ? new Function('lib', 'self', node.script)(lib, node) : () => node;
+const compileNode = (node) => node.script ? new Function('lib', node.script)(lib) : args => Object.assign({}, args.data, lib._.omit(node, 'id', 'fn'));
 
 // Note: heavy use of comma operator https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Comma_Operator
 const unpackTypes = (node_types, node) => {
@@ -207,7 +208,7 @@ const default_fn = (lib, self) => {
 		]
 	}
 
-	const startFns = createEdgeFns(self.edges, 'in', node_fns);
+	const startFns = createEdgeFns(self.edges, 'in', node_fns, 0);
 
 	return (state, input) => { 
 		const edge_queue = queue(lib._.cloneDeep(startFns));
@@ -295,67 +296,176 @@ const aggregate_fn = (lib, self) => {
 }
 
 
-const h_fn = (lib, self) => (state, input) => lib.ha.h(
-		self.dom_type, // change to input
-		Object.assign({}, self.attrs ?? {}, 
-			// lib._.isFunction(input.attrs)
-			// ? input.attrs(haState)
-			// : 
-			input.attrs 
-			? input.attrs
-			: {}), 
-		input.children instanceof Map
+const hFn = ({data}) => lib.ha.h(
+		data.dom_type, // change to input
+		data.attrs ?? {}, 
+		data.children instanceof Map
 			?  [...lib.iter.map(
 				input.children.values(), 
 				v => v ? v : undefined)]
-			: input.children
-			? input.children
+			: data.children
+			? data.children
 			: []);
 
 // returns a state, input => output
 
 
 const d3simulation = (state, input) => {
+	const node_levels = [];
+
+	const bfs = (level) => (edge) => 
+		[[edge.to, level]].concat(input.edges.filter(e => e.from === edge.to).map(bfs(level + 1)).flat());
+
+	const levels = Object.fromEntries(input.edges.filter(e => e.from === 'in').map(bfs(0)).flat());
+	levels.min = Math.min(...Object.values(levels));
+	levels.max = Math.max(...Object.values(levels));
+
+	console.log(levels);
+
 	const simulation = 
 		lib.d3.forceSimulation(
 			Object.entries(input.nodes)
 				.map(([k, n], index) => Object.assign({}, typeof n === 'string' ? {type: n} : n, {
 					node_id: k,
-					x: window.innerWidth * Math.random(), 
-					y: window.innerHeight * Math.random(), 
+					x: window.innerWidth * (Math.random() *.5 + .25), 
+					y: window.innerHeight * (Math.random() * .5 + .25), 
 					index
 				})))
 			.force('charge', lib.d3.forceManyBody().strength(-8))
-			.force('center', lib.d3
-				.forceCenter(window.innerWidth * 0.5, window.innerHeight * 0.5)
-				.strength(.01))
+			// .force('center', lib.d3
+			// 	.forceCenter(window.innerWidth * 0.5, window.innerHeight * 0.5)
+			// 	.strength(.01))
 			.force('links', lib.d3
 				.forceLink(input.edges.filter(e => e.from !== 'in' && e.to !== 'out')
 					.map((e, index) => ({source: e.from, target: e.to, index})))
 				.distance(128)
-				.id(n => n.node_id));
+				.id(n => n.node_id))
+			.force('link_direction', lib.d3
+				.forceY()
+				.y((n) => window.innerHeight * (0.15 + (Math.random() * 0.2) + 0.5 * (levels[n.node_id] ?? 0) / (levels.max - levels.min)))
+				.strength(0.5))
+			.force('collide', lib.d3.forceCollide(64));
 //			.alphaMin(.1); // changes how long the simulation will run. dfault is 0.001 
 
 	return simulation;
 }
 
 const apply_template = (lib, self) => (state, input) => { 
-	if(input.target && input.source && self.template){ 
+	if(input.target && input.source && self.template && lib._.has(input.source, self.source_path)){ 
+
+		const source = lib._.get(input.source, self.source_path);
+
 		return lib.util.overPath
 			(self.path, {})
 			(nodes => Object.fromEntries(
-				Object.keys(input.source.node_editor.nodes)
+				(Array.isArray(source) ? [...Array(source.length).keys()] : Object.keys(source))
 				.map(k => [k, self.template]))) 
 			(input.target) 
 	} 
 }
 
+const run_fn = (lib, self) => (state, input) => { 
+	if(!input.fn || !input.data) { return; } 
+	if(!lib._.isEqual(state.get('fn'), input.fn)) { 
+		state.set('compiled_fn', (self.run_type === 'aggregate' ? lib.no.aggregate_fn : lib.no.default_fn)(lib, input.fn))
+	} 
+
+	state.set('fn', input.fn); return state.get('compiled_fn')(state, input.data); 
+}
+
+//compile(DEFAULT_GRAPH)(new Map(), DEFAULT_GRAPH);
+
+// this is a context
+const execute = args => {
+	const {id, state, data} = args;
+	const self = data?.graph?.nodes?.find(v => v.id === id);
+
+	if(!self) {
+		throw new Error("No graph or can't find node");
+	}
+
+	const node_state = state.get(id) ?? state.set(id, new Map()).get(id);
+
+	// store and merge args across calls
+	const merged_data = node_state.set('data',
+		node_state.has('data')
+			? Object.assign({}, node_state.get('data'), self, data)
+			: Object.assign({}, self, data)
+	).get('data');
+
+	// call the function with node_state
+	try {
+
+		if(node_state.get('self') !== self){
+			self.fn = compileNode(self);
+			node_state.set('self', self);
+		}
+
+		const result = self.fn(Object.assign({}, args, {state: node_state, data: merged_data }));
+		if(result === undefined) { return; }
+
+		const path_return = runNextNodes(Object.assign({}, args), result);
+
+		if(path_return.length > 0){
+			return Object.assign({}, ...path_return);
+		} else {
+			return result;
+		}
+
+	} catch(e) {
+		console.log(`error running ${id}`);
+		console.log(args);
+		console.error(e);
+	}
+}
+
+const referenceExecute = (args) => input => 
+	runNextNodes(lib._.set(Object.assign({}, args), 'id', args.data.fn_in), input);
+
+const runNextNodes = (args, result) => Object.assign({}, ...args.data.graph.edges
+	.filter(e => e.from === args.id)
+	.map(e => execute(Object.assign({}, args, {
+		id: e.to, 
+		data: e.as 
+			? lib._.set(Object.assign({}, args.data), e.as, result) 
+			: Object.assign({}, args.data, result)
+	})))
+	.filter(v => v !== undefined));
+
+const map_path = ({lib, data}) => data.target && data.target_path && data.map_fn ?
+	lib._.update(
+		data.target,
+		data.target_path,
+		a => lib._.map(a, data.map_fn)
+	) : undefined;
+
+const flatten = ({data}) => {
+	const flatten_node = (graph) => {
+		if(graph.nodes === undefined) {
+			return graph;
+		} 
+
+		const prefix = graph.id ? `${graph.id}/` : '';
+
+		const prefixed_nodes = graph.nodes.map(n => Object.assign({}, n, {id: `${prefix}${n.id}`}));
+
+		const flattened = prefixed_nodes.map(flatten_node);
+
+		return {
+			nodes: prefixed_nodes.concat(flattened.map(g => g.nodes).flat()).filter(n => n !== undefined),
+			edges: graph.edges.map(e => ({from: `${prefix}${e.from}`, to: `${prefix}${e.to}`, as: e.as})).concat(flattened.map(g => g.edges).flat()).filter(e => e !== undefined)
+		}
+	}
+
+	return {graph: flatten_node(data.graph)};
+}
+
 const lib = { cm, _,
 	ha: { h, app, text, memo},  
 	iter: {reduce, map}, 
-	no: { compileNodes, default_fn, aggregate_fn, h_fn, d3simulation, apply_template},
-	d3: {forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial},
+	no: {map_path, flatten, unpackTypes, referenceExecute, hFn},
+	d3: {forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide},
 	util: {overIdx, overKey, overPath}
 };
 
-compile(DEFAULT_GRAPH)(new Map(), DEFAULT_GRAPH);
+execute({id: "in", state: new Map(), lib, data: { graph: DEFAULT_GRAPH }});

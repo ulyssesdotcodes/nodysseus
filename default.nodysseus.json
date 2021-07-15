@@ -1,40 +1,123 @@
 {
     "description": "function composition",
     "script": "return lib.no.default_fn(lib, self)",
-    "nodes": {
-        "content_el_selector": {
+    "nodes": [
+        {
+            "id": "in",
+            "script": "return (args) => args.data"
+        },
+        {
+            "id": "flatten",
+            "script": "return lib.no.flatten"
+        },
+        {
+            "id": "replace_node_types_args",
+            "target_path": ["graph", "nodes"]
+        },
+        {
+            "id": "replace_node_types_fn",
+            "script": "return ({data}) => node => lib.no.unpackTypes(data.node_types, node)"
+        },
+        {
+            "id": "replace_node_types",
+            "script": "return lib.no.map_path"
+        },
+        {
+            "id": "initial_graph",
+            "script": "return ({data}) => {graph: data.target.graph}"
+        },
+        {
+            "id": "hyperapp_view",
+            "script": "return lib.no.referenceExecute",
+            "fn_in": "hyperapp_view/in",
+            "nodes": [
+                {"id": "in", "script": "return (args) => args.data"},
+                {"id": "helloworld", "text": "Hello, world!", 
+                    "script": "return ({lib, data}) => lib.ha.text(data.text ?? '')"}
+            ],
+            "edges": [
+                {"from": "in", "to": "helloworld" }
+            ]
+        },
+        {
+            "id": "hyperapp",
+            "script": "return ({lib, state, data}) => { if(!state.has('dispatch') && data.view && data.dom){ state.set('dispatch', lib.ha.app({ init: data.init ?? {}, view: (s) => data.view(s) ?? lib.ha.text('loading...'), node: data.dom })) }}"
+        },
+        {
+            "id": "content_el_selector",
             "type": "el_selector",
             "selector": "#content"
         },
-        "content_el": {
+        {
+            "id": "content_el",
             "type": "get",
-            "index": 0
+            "get_index": 0
         },
-        "base_editor_content_merge": "merge",
-        "base_editor_view": {
+
+
+
+
+        {
+            "id": "base_editor_view",
             "type": "compiled_fn",
-            "nodes": {
-                "base_editor_content": {
-                    "nodes": {
-                        "node_editor": {
+            "nodes": [
+                {
+                    "id": "base_editor_content",
+                    "nodes": [
+                        {
+                            "id": "node_editor",
                             "type": "execute",
-                            "nodes": {
-                                "parent": {
+                            "nodes": [
+                                {
+                                    "id": "parent",
                                     "type": "h",
                                     "dom_type": "svg"
                                 },
-                                "parent_input": "merge",
-                                "get_input": {
-                                    "script": "return (state, input) =>  input.node_editor.nodes"
+                                {
+                                    "id": "get_input",
+                                    "script": "return (state, input) =>  input.node_editor"
                                 },
-                                "node_svgs": {
+                                {
+                                    "id": "svgs",
                                     "type": "aggregate",
-                                    "nodes": {}
+                                    "nodes": [
+                                        {
+                                            "id": "node_svgs",
+                                            "type": "aggregate",
+                                            "nodes": [],
+                                            "edges": []
+                                        },
+                                        {
+                                            "id": "link_svgs",
+                                            "type": "aggregate",
+                                            "nodes": [],
+                                            "edges": []
+                                        }
+                                    ],
+                                    "edges": [
+                                        {
+                                            "from": "in",
+                                            "to": "node_svgs"
+                                        },
+                                        {
+                                            "from": "node_svgs",
+                                            "to": "link_svgs"
+                                        },
+                                        {
+                                            "from": "link_svgs",
+                                            "to": "out"
+                                        }
+                                    ]
                                 },
-                                "attrs": {
+                                {
+                                    "id": "svgs_flatten",
+                                    "script": "return (state, input) => input.target instanceof Map ? new Map([...lib.iter.map(input.target.values(), v => [...v])].flat()) : input.array.flat()"
+                                },
+                                {
+                                    "id": "attrs",
                                     "script": "return (state, input) => ({id: 'node_parent', width: window.innerWidth, height: window.innerHeight})"
                                 }
-                            },
+                            ],
                             "edges": [
                                 {
                                     "from": "in",
@@ -42,7 +125,7 @@
                                 },
                                 {
                                     "from": "get_input",
-                                    "to": "node_svgs"
+                                    "to": "svgs"
                                 },
                                 {
                                     "from": "in",
@@ -54,7 +137,12 @@
                                     "as": "attrs"
                                 },
                                 {
-                                    "from": "node_svgs",
+                                    "from": "svgs",
+                                    "to": "svgs_flatten",
+                                    "as": "target"
+                                },
+                                {
+                                    "from": "svgs_flatten",
                                     "to": "parent_input",
                                     "as": "children"
                                 },
@@ -68,18 +156,23 @@
                                 }
                             ]
                         },
-                        "text_editor": {
+                        {
+                            "id": "text_editor",
                             "type": "execute",
-                            "nodes": {
-                                "h_merge": {
+                            "nodes": [
+                                {
+                                    "id": "h_merge",
                                     "script": "return () => ({})"
                                 },
-                                "h": {
+                                {
+                                    "id": "h",
                                     "type": "h",
-                                    "attrs": {"id": "text-editor"},
+                                    "attrs": {
+                                        "id": "text-editor"
+                                    },
                                     "dom_type": "div"
                                 }
-                            },
+                            ],
                             "edges": [
                                 {
                                     "from": "in",
@@ -95,7 +188,7 @@
                                 }
                             ]
                         }
-                    },
+                    ],
                     "edges": [
                         {
                             "from": "in",
@@ -107,17 +200,24 @@
                         }
                     ]
                 },
-                "base_editor": {
+                {
+                    "id": "base_editor",
                     "type": "h",
                     "dom_type": "div"
                 },
-                "apply_fn_in": "merge",
-                "apply_node_template": {
+                {
+                    "id": "apply_node_template",
                     "path": [
                         "nodes",
                         "node_editor",
                         "nodes",
+                        "svgs",
+                        "nodes",
                         "node_svgs",
+                        "nodes"
+                    ],
+                    "source_path": [
+                        "node_editor",
                         "nodes"
                     ],
                     "script": "return lib.no.apply_template(lib, self)",
@@ -133,11 +233,11 @@
                                 }
                             },
                             "get_input": {
-                                "script": "return (state, input) => input[input.parent]"
+                                "script": "return (state, input) => input.nodes[input.parent]"
                             },
                             "parent_input": "merge",
                             "parent_attrs": {
-                                "script": "return (state, input) => ({ x: input.x, y: input.y, id: input.node_id })"
+                                "script": "return (state, input) => ({ x: input.x - 20, y: input.y - 20, id: input.node_id })"
                             },
                             "children": {
                                 "type": "aggregate",
@@ -241,13 +341,63 @@
                         ]
                     }
                 },
-                "run_in": "merge",
-                "apply_node_template_run": {
+                {
+                    "id": "apply_link_template",
+                    "script": "return lib.no.apply_template(lib, self)",
+                    "path": [
+                        "nodes",
+                        "node_editor",
+                        "nodes",
+                        "svgs",
+                        "nodes",
+                        "link_svgs",
+                        "nodes"
+                    ],
+                    "source_path": [
+                        "node_editor",
+                        "links"
+                    ],
+                    "template": {
+                        "type": "execute",
+                        "nodes": {
+                            "get_input": {
+                                "script": "return (state, input) => input.links[input.parent]"
+                            },
+                            "attrs": {
+                                "script": "return (state, input) => ({x1: input.source.x, y1: input.source.y, x2: input.target.x, y2: input.target.y, stroke: 'black'})"
+                            },
+                            "line": {
+                                "type": "h",
+                                "dom_type": "line"
+                            }
+                        },
+                        "edges": [
+                            {
+                                "from": "in",
+                                "to": "get_input"
+                            },
+                            {
+                                "from": "get_input",
+                                "to": "attrs"
+                            },
+                            {
+                                "from": "attrs",
+                                "to": "line",
+                                "as": "attrs"
+                            },
+                            {
+                                "from": "line",
+                                "to": "out"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": "apply_node_template_run",
                     "type": "run_fn",
                     "run_type": "aggregate"
-                },
-                "log_nt": "log"
-            },
+                }
+            ],
             "edges": [
                 {
                     "from": "in",
@@ -259,16 +409,35 @@
                     "as": "source"
                 },
                 {
-                    "from": "base_editor_content",
+                    "from": "in",
                     "to": "apply_fn_in",
-                    "as": "target"
+                    "as": "source"
                 },
                 {
                     "from": "apply_fn_in",
                     "to": "apply_node_template"
                 },
                 {
+                    "from": "in",
+                    "to": "apply_link_template_in",
+                    "as": "source"
+                },
+                {
+                    "from": "base_editor_content",
+                    "to": "apply_fn_in",
+                    "as": "target"
+                },
+                {
                     "from": "apply_node_template",
+                    "to": "apply_link_template_in",
+                    "as": "target"
+                },
+                {
+                    "from": "apply_link_template_in",
+                    "to": "apply_link_template"
+                },
+                {
+                    "from": "apply_link_template",
                     "to": "run_in",
                     "as": "fn"
                 },
@@ -292,146 +461,168 @@
                 }
             ]
         },
-        "simulate_layout": {
+        {
+            "id": "simulate_layout",
             "script": "return (state, input) => (state.has('simulation') ? state : state.set('simulation', lib.no.d3simulation(state, input))).get('simulation')"
         },
-        "simulation_dispatch": {
+        {
+            "id": "simulation_dispatch",
             "type": "compiled_fn",
-            "nodes": {
-                "get_nodes": {
-                    "script": "return (state, input) => requestAnimationFrame(() => {if(!(input.dispatch && input.simulation && input.action)){ return } input.dispatch(input.action, Object.fromEntries(input.simulation.nodes().map(n => [n.node_id, n]))) })"
+            "nodes": [
+                {
+                    "id": "get_nodes",
+                    "script": "return (state, input) => requestAnimationFrame(() => {if(!(input.dispatch && input.simulation && input.action)){ return } input.dispatch(input.action, { nodes: Object.fromEntries(input.simulation.nodes().map(n => [n.node_id, n])), links: input.simulation.force('links').links()  } ) })"
                 }
-            }
+            ],
+            "edges": [
+                {
+                    "from": "in",
+                    "to": "get_nodes"
+                },
+                {
+                    "from": "get_nodes",
+                    "to": "out"
+                }
+            ]
         },
-        "simulation_subscription_in": "merge",
-        "simulation_subscription": {
+        {
+            "id": "simulation_subscription",
             "type": "execute",
-            "nodes": {
-                "subscription": {
+            "nodes": [
+                {
+                    "id": "subscription",
                     "script": "return (state, input) => (dispatch, props) => { input.simulation.on('tick.ha', function(v){ input.fn({simulation: this, dispatch: dispatch, action: props.action})}); return () => input.simulation.on('.ha', null); }"
                 }
-            }
+            ],
+            "edges": [
+                {
+                    "from": "in",
+                    "to": "subscription"
+                },
+                {
+                    "from": "subscription",
+                    "to": "out"
+                }
+            ]
         },
-        "hyperapp_input": {
+        {
+            "id": "hyperapp_input",
             "type": "merge"
         },
-        "hyperapp_state": {
+        {
+            "id": "hyperapp_state",
             "script": "return (state, input) => { state.set('input', Object.assign({}, state.get('input') ?? {}, input)); return { node_editor: state.get('input') } }"
         },
-        "hyperapp": {
-            "script": "return (state, input) => { if(!state.has('dispatch') && input.view && input.dom && input.simulation_subscription){ state.set('dispatch', lib.ha.app({ init: input.init ?? {}, view: (s) => input.view(s), subscriptions:() => [[input.simulation_subscription, { action: (state, payload) => Object.assign({}, state, {node_editor: {nodes: payload}}) }]] , node: input.dom })); } return state.get('dispatch'); }"
+        {
+            "id": "_hyperapp",
+            "script": "return (state, input) => { if(!state.has('dispatch') && input.view && input.dom && input.simulation_subscription){ state.set('dispatch', lib.ha.app({ init: input.init ?? {}, view: (s) => input.view(s) ?? lib.ha.text('loading...'), subscriptions:() => [[input.simulation_subscription, { action: (state, payload) => Object.assign({}, state, {node_editor: payload}) }]] , node: input.dom })); } return state.get('dispatch'); }"
+        },
+        {
+            "id": "node_types",
+            "execute": {
+                "script": "return lib.no.default_fn(lib, self)"
+            },
+            "data": {
+                "script": "return () => self"
+            },
+            "el_selector": {
+                "script": "return ({data}) => document.querySelector(data.selector);"
+            },
+            "get": {
+                "script": "return ({data}) => data[data.get_index]"
+            },
+            "constant": {
+                "script": "return () => self.value"
+            },
+            "merge": {
+                "script": "return (state, input) => state.set('input', Object.assign({}, state.get('input') ?? {}, input)).get('input')"
+            },
+            "log": {
+                "script": "return (_, input) => console.log(input)"
+            },
+            "aggregate": {
+                "script": "return lib.no.aggregate_fn(lib, self)"
+            },
+            "fold": {
+                "script": "return (state, input) => (val) => lib._.reduce(lib.no.aggregate_fn(lib, self)(state, input), (v, fn) => fn(v), val)"
+            },
+            "h": {
+                "script": "return lib.no.h_fn(lib, self)"
+            },
+            "h_text": {
+                "script": "return (state, input) => lib.ha.text(input.text ?? self.text)"
+            },
+            "compiled_fn": {
+                "script": "const compiled_fn = lib.no.default_fn(lib, self); return (state, fn_input) => (input) => { const result = compiled_fn(state, lib._.merge(fn_input, input)); return (result === undefined ? state : state.set('output', result)).get('output') }"
+            },
+            "apply_fn": {
+                "script": "return (state, input) => lib.util.overPath(self.path)(n => n.map(input.fn))(input.target)"
+            },
+            "merge_values": {
+                "script": "return (state, input) => lib.util.overPath(self.path, {})(v => lib._.merge(v, input.values))"
+            },
+            "run_fn": {
+                "script": "return lib.no.run_fn(lib, self)"
+            }
         }
-    },
-    "node_types": {
-        "execute": {
-            "script": "return lib.no.default_fn(lib, self)"
-        },
-        "data": {
-            "script": "return () => self"
-        },
-        "el_selector": {
-            "script": "return () => document.querySelector(self.selector);"
-        },
-        "get": {
-            "script": "return (state, input) => input[input.get_index ?? self.index]"
-        },
-        "constant": {
-            "script": "return () => self.value"
-        },
-        "merge": {
-            "script": "return (state, input) => state.set('input', Object.assign({}, state.get('input') ?? {}, input)).get('input')"
-        },
-        "log": {
-            "script": "return (_, input) => console.log(input)"
-        },
-        "aggregate": {
-            "script": "return lib.no.aggregate_fn(lib, self)"
-        },
-        "fold": {
-            "script": "return (state, input) => (val) => lib._.reduce(lib.no.aggregate_fn(lib, self)(state, input), (v, fn) => fn(v), val)"
-        },
-        "h": {
-            "script": "return lib.no.h_fn(lib, self)"
-        },
-        "h_text": {
-            "script": "return (state, input) => lib.ha.text(input.text ?? self.text)"
-        },
-        "compiled_fn": {
-            "script": "const compiled_fn = lib.no.default_fn(lib, self); return (state, fn_input) => (input) => { const result = compiled_fn(state, lib._.merge(fn_input, input)); return (result === undefined ? state : state.set('output', result)).get('output') }"
-        },
-        "apply_fn": {
-            "script": "return (state, input) => lib.util.overPath(self.path)(n => n.map(input.fn))(input.target)"
-        },
-        "merge_values": {
-            "script": "return (state, input) => lib.util.overPath(self.path, {})(v => lib._.merge(v, input.values))"
-        },
-        "run_fn": {
-            "script": "return (state, input) => { if(!input.fn || !input.data) { return; } if(!lib._.isEqual(state.get('fn'), input.fn)) { state.set('compiled_fn', (self.run_type === 'aggregate' ? lib.no.aggregate_fn : lib.no.default_fn)(lib, input.fn))} state.set('fn', input.fn); return state.get('compiled_fn')(state, input.data); }"
-        }
-    },
+    ],
     "edges": [
         {
             "from": "in",
+            "to": "flatten"
+        },
+        {
+            "from": "flatten",
+            "to": "node_types"
+        },
+        {
+            "from": "node_types",
+            "to": "replace_node_types_fn",
+            "as": "node_types"
+        },
+        {
+            "from": "replace_node_types_fn",
+            "to": "replace_node_types",
+            "as": "map_fn"
+        },
+        {
+            "from": "flatten",
+            "to": "replace_node_types_args"
+        },
+        {
+            "from": "replace_node_types_args",
+            "to": "replace_node_types"
+        },
+        {
+            "from": "flatten",
+            "to": "replace_node_types",
+            "as": "target"
+        },
+        {
+            "from": "flatten",
+            "to": "replace_node_types_fn"
+        },
+        {
+            "from": "replace_node_types",
             "to": "content_el_selector"
         },
         {
-            "from": "in",
-            "to": "hyperapp_state"
+            "from": "replace_node_types",
+            "to": "hyperapp_view"
         },
         {
-            "from": "in",
-            "to": "simulate_layout"
-        },
-        {
-            "from": "simulate_layout",
-            "to": "simulation_subscription_in",
-            "as": "simulation"
-        },
-        {
-            "from": "in",
-            "to": "simulation_dispatch"
-        },
-        {
-            "from": "simulation_dispatch",
-            "to": "simulation_subscription_in",
-            "as": "fn"
-        },
-        {
-            "from": "simulation_subscription_in",
-            "to": "simulation_subscription"
-        },
-        {
-            "from": "simulation_subscription",
-            "to": "hyperapp_input",
-            "as": "simulation_subscription"
-        },
-        {
-            "from": "hyperapp_state",
-            "to": "hyperapp_input",
-            "as": "init"
-        },
-        {
-            "from": "in",
-            "to": "base_editor_content_merge",
-            "as": "graph"
+            "from": "replace_node_types",
+            "to": "hyperapp"
         },
         {
             "from": "content_el_selector",
-            "to": "hyperapp_input",
+            "to": "hyperapp",
             "as": "dom"
         },
         {
-            "from": "base_editor_content_merge",
-            "to": "base_editor_view"
-        },
-        {
-            "from": "base_editor_view",
-            "to": "hyperapp_input",
+            "from": "hyperapp_view",
+            "to": "hyperapp",
             "as": "view"
-        },
-        {
-            "from": "hyperapp_input",
-            "to": "hyperapp"
         }
     ]
 }

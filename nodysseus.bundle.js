@@ -4245,7 +4245,7 @@
             let fields = [];
             let facets = Object.create(null);
             let newCompartments = new Map();
-            for (let ext of flatten(base, compartments, newCompartments)) {
+            for (let ext of flatten$1(base, compartments, newCompartments)) {
                 if (ext instanceof StateField)
                     fields.push(ext);
                 else
@@ -4289,7 +4289,7 @@
             return new Configuration(base, newCompartments, dynamicSlots.map(f => f(address)), address, staticValues);
         }
     }
-    function flatten(extension, compartments, newCompartments) {
+    function flatten$1(extension, compartments, newCompartments) {
         let result = [[], [], [], []];
         let seen = new Map();
         function inner(ext, prec) {
@@ -38688,6 +38688,103 @@
       return (random() - 0.5) * 1e-6;
     }
 
+    function x$5(d) {
+      return d.x + d.vx;
+    }
+
+    function y$5(d) {
+      return d.y + d.vy;
+    }
+
+    function forceCollide(radius) {
+      var nodes,
+          radii,
+          random,
+          strength = 1,
+          iterations = 1;
+
+      if (typeof radius !== "function") radius = constant(radius == null ? 1 : +radius);
+
+      function force() {
+        var i, n = nodes.length,
+            tree,
+            node,
+            xi,
+            yi,
+            ri,
+            ri2;
+
+        for (var k = 0; k < iterations; ++k) {
+          tree = quadtree(nodes, x$5, y$5).visitAfter(prepare);
+          for (i = 0; i < n; ++i) {
+            node = nodes[i];
+            ri = radii[node.index], ri2 = ri * ri;
+            xi = node.x + node.vx;
+            yi = node.y + node.vy;
+            tree.visit(apply);
+          }
+        }
+
+        function apply(quad, x0, y0, x1, y1) {
+          var data = quad.data, rj = quad.r, r = ri + rj;
+          if (data) {
+            if (data.index > node.index) {
+              var x = xi - data.x - data.vx,
+                  y = yi - data.y - data.vy,
+                  l = x * x + y * y;
+              if (l < r * r) {
+                if (x === 0) x = jiggle(random), l += x * x;
+                if (y === 0) y = jiggle(random), l += y * y;
+                l = (r - (l = Math.sqrt(l))) / l * strength;
+                node.vx += (x *= l) * (r = (rj *= rj) / (ri2 + rj));
+                node.vy += (y *= l) * r;
+                data.vx -= x * (r = 1 - r);
+                data.vy -= y * r;
+              }
+            }
+            return;
+          }
+          return x0 > xi + r || x1 < xi - r || y0 > yi + r || y1 < yi - r;
+        }
+      }
+
+      function prepare(quad) {
+        if (quad.data) return quad.r = radii[quad.data.index];
+        for (var i = quad.r = 0; i < 4; ++i) {
+          if (quad[i] && quad[i].r > quad.r) {
+            quad.r = quad[i].r;
+          }
+        }
+      }
+
+      function initialize() {
+        if (!nodes) return;
+        var i, n = nodes.length, node;
+        radii = new Array(n);
+        for (i = 0; i < n; ++i) node = nodes[i], radii[node.index] = +radius(node, i, nodes);
+      }
+
+      force.initialize = function(_nodes, _random) {
+        nodes = _nodes;
+        random = _random;
+        initialize();
+      };
+
+      force.iterations = function(_) {
+        return arguments.length ? (iterations = +_, force) : iterations;
+      };
+
+      force.strength = function(_) {
+        return arguments.length ? (strength = +_, force) : strength;
+      };
+
+      force.radius = function(_) {
+        return arguments.length ? (radius = typeof _ === "function" ? _ : constant(+_), initialize(), force) : radius;
+      };
+
+      return force;
+    }
+
     function index(d) {
       return d.index;
     }
@@ -39328,43 +39425,177 @@
       return force;
     }
 
+    function forceY(y) {
+      var strength = constant(0.1),
+          nodes,
+          strengths,
+          yz;
+
+      if (typeof y !== "function") y = constant(y == null ? 0 : +y);
+
+      function force(alpha) {
+        for (var i = 0, n = nodes.length, node; i < n; ++i) {
+          node = nodes[i], node.vy += (yz[i] - node.y) * strengths[i] * alpha;
+        }
+      }
+
+      function initialize() {
+        if (!nodes) return;
+        var i, n = nodes.length;
+        strengths = new Array(n);
+        yz = new Array(n);
+        for (i = 0; i < n; ++i) {
+          strengths[i] = isNaN(yz[i] = +y(nodes[i], i, nodes)) ? 0 : +strength(nodes[i], i, nodes);
+        }
+      }
+
+      force.initialize = function(_) {
+        nodes = _;
+        initialize();
+      };
+
+      force.strength = function(_) {
+        return arguments.length ? (strength = typeof _ === "function" ? _ : constant(+_), initialize(), force) : strength;
+      };
+
+      force.y = function(_) {
+        return arguments.length ? (y = typeof _ === "function" ? _ : constant(+_), initialize(), force) : y;
+      };
+
+      return force;
+    }
+
     var description = "function composition";
     var script = "return lib.no.default_fn(lib, self)";
-    var nodes = {
-    	content_el_selector: {
+    var nodes = [
+    	{
+    		id: "in",
+    		script: "return (args) => args.data"
+    	},
+    	{
+    		id: "flatten",
+    		script: "return lib.no.flatten"
+    	},
+    	{
+    		id: "replace_node_types_args",
+    		target_path: [
+    			"graph",
+    			"nodes"
+    		]
+    	},
+    	{
+    		id: "replace_node_types_fn",
+    		script: "return ({data}) => node => lib.no.unpackTypes(data.node_types, node)"
+    	},
+    	{
+    		id: "replace_node_types",
+    		script: "return lib.no.map_path"
+    	},
+    	{
+    		id: "initial_graph",
+    		script: "return ({data}) => {graph: data.target.graph}"
+    	},
+    	{
+    		id: "hyperapp_view",
+    		script: "return lib.no.referenceExecute",
+    		fn_in: "hyperapp_view/in",
+    		nodes: [
+    			{
+    				id: "in",
+    				script: "return (args) => args.data"
+    			},
+    			{
+    				id: "helloworld",
+    				text: "Hello, world!",
+    				script: "return ({lib, data}) => lib.ha.text(data.text ?? '')"
+    			}
+    		],
+    		edges: [
+    			{
+    				from: "in",
+    				to: "helloworld"
+    			}
+    		]
+    	},
+    	{
+    		id: "hyperapp",
+    		script: "return ({lib, state, data}) => { if(!state.has('dispatch') && data.view && data.dom){ state.set('dispatch', lib.ha.app({ init: data.init ?? {}, view: (s) => data.view(s) ?? lib.ha.text('loading...'), node: data.dom })) }}"
+    	},
+    	{
+    		id: "content_el_selector",
     		type: "el_selector",
     		selector: "#content"
     	},
-    	content_el: {
+    	{
+    		id: "content_el",
     		type: "get",
-    		index: 0
+    		get_index: 0
     	},
-    	base_editor_content_merge: "merge",
-    	base_editor_view: {
+    	{
+    		id: "base_editor_view",
     		type: "compiled_fn",
-    		nodes: {
-    			base_editor_content: {
-    				nodes: {
-    					node_editor: {
+    		nodes: [
+    			{
+    				id: "base_editor_content",
+    				nodes: [
+    					{
+    						id: "node_editor",
     						type: "execute",
-    						nodes: {
-    							parent: {
+    						nodes: [
+    							{
+    								id: "parent",
     								type: "h",
     								dom_type: "svg"
     							},
-    							parent_input: "merge",
-    							get_input: {
-    								script: "return (state, input) =>  input.node_editor.nodes"
+    							{
+    								id: "get_input",
+    								script: "return (state, input) =>  input.node_editor"
     							},
-    							node_svgs: {
+    							{
+    								id: "svgs",
     								type: "aggregate",
-    								nodes: {
-    								}
+    								nodes: [
+    									{
+    										id: "node_svgs",
+    										type: "aggregate",
+    										nodes: [
+    										],
+    										edges: [
+    										]
+    									},
+    									{
+    										id: "link_svgs",
+    										type: "aggregate",
+    										nodes: [
+    										],
+    										edges: [
+    										]
+    									}
+    								],
+    								edges: [
+    									{
+    										from: "in",
+    										to: "node_svgs"
+    									},
+    									{
+    										from: "node_svgs",
+    										to: "link_svgs"
+    									},
+    									{
+    										from: "link_svgs",
+    										to: "out"
+    									}
+    								]
     							},
-    							attrs: {
+    							{
+    								id: "svgs_flatten",
+    								script: "return (state, input) => input.target instanceof Map ? new Map([...lib.iter.map(input.target.values(), v => [...v])].flat()) : input.array.flat()"
+    							},
+    							{
+    								id: "attrs",
     								script: "return (state, input) => ({id: 'node_parent', width: window.innerWidth, height: window.innerHeight})"
     							}
-    						},
+    						],
     						edges: [
     							{
     								from: "in",
@@ -39372,7 +39603,7 @@
     							},
     							{
     								from: "get_input",
-    								to: "node_svgs"
+    								to: "svgs"
     							},
     							{
     								from: "in",
@@ -39384,7 +39615,12 @@
     								as: "attrs"
     							},
     							{
-    								from: "node_svgs",
+    								from: "svgs",
+    								to: "svgs_flatten",
+    								as: "target"
+    							},
+    							{
+    								from: "svgs_flatten",
     								to: "parent_input",
     								as: "children"
     							},
@@ -39398,20 +39634,23 @@
     							}
     						]
     					},
-    					text_editor: {
+    					{
+    						id: "text_editor",
     						type: "execute",
-    						nodes: {
-    							h_merge: {
+    						nodes: [
+    							{
+    								id: "h_merge",
     								script: "return () => ({})"
     							},
-    							h: {
+    							{
+    								id: "h",
     								type: "h",
     								attrs: {
     									id: "text-editor"
     								},
     								dom_type: "div"
     							}
-    						},
+    						],
     						edges: [
     							{
     								from: "in",
@@ -39427,7 +39666,7 @@
     							}
     						]
     					}
-    				},
+    				],
     				edges: [
     					{
     						from: "in",
@@ -39439,17 +39678,24 @@
     					}
     				]
     			},
-    			base_editor: {
+    			{
+    				id: "base_editor",
     				type: "h",
     				dom_type: "div"
     			},
-    			apply_fn_in: "merge",
-    			apply_node_template: {
+    			{
+    				id: "apply_node_template",
     				path: [
     					"nodes",
     					"node_editor",
     					"nodes",
+    					"svgs",
+    					"nodes",
     					"node_svgs",
+    					"nodes"
+    				],
+    				source_path: [
+    					"node_editor",
     					"nodes"
     				],
     				script: "return lib.no.apply_template(lib, self)",
@@ -39465,11 +39711,11 @@
     							}
     						},
     						get_input: {
-    							script: "return (state, input) => input[input.parent]"
+    							script: "return (state, input) => input.nodes[input.parent]"
     						},
     						parent_input: "merge",
     						parent_attrs: {
-    							script: "return (state, input) => ({ x: input.x, y: input.y, id: input.node_id })"
+    							script: "return (state, input) => ({ x: input.x - 20, y: input.y - 20, id: input.node_id })"
     						},
     						children: {
     							type: "aggregate",
@@ -39573,13 +39819,63 @@
     					]
     				}
     			},
-    			run_in: "merge",
-    			apply_node_template_run: {
+    			{
+    				id: "apply_link_template",
+    				script: "return lib.no.apply_template(lib, self)",
+    				path: [
+    					"nodes",
+    					"node_editor",
+    					"nodes",
+    					"svgs",
+    					"nodes",
+    					"link_svgs",
+    					"nodes"
+    				],
+    				source_path: [
+    					"node_editor",
+    					"links"
+    				],
+    				template: {
+    					type: "execute",
+    					nodes: {
+    						get_input: {
+    							script: "return (state, input) => input.links[input.parent]"
+    						},
+    						attrs: {
+    							script: "return (state, input) => ({x1: input.source.x, y1: input.source.y, x2: input.target.x, y2: input.target.y, stroke: 'black'})"
+    						},
+    						line: {
+    							type: "h",
+    							dom_type: "line"
+    						}
+    					},
+    					edges: [
+    						{
+    							from: "in",
+    							to: "get_input"
+    						},
+    						{
+    							from: "get_input",
+    							to: "attrs"
+    						},
+    						{
+    							from: "attrs",
+    							to: "line",
+    							as: "attrs"
+    						},
+    						{
+    							from: "line",
+    							to: "out"
+    						}
+    					]
+    				}
+    			},
+    			{
+    				id: "apply_node_template_run",
     				type: "run_fn",
     				run_type: "aggregate"
-    			},
-    			log_nt: "log"
-    		},
+    			}
+    		],
     		edges: [
     			{
     				from: "in",
@@ -39591,16 +39887,35 @@
     				as: "source"
     			},
     			{
-    				from: "base_editor_content",
+    				from: "in",
     				to: "apply_fn_in",
-    				as: "target"
+    				as: "source"
     			},
     			{
     				from: "apply_fn_in",
     				to: "apply_node_template"
     			},
     			{
+    				from: "in",
+    				to: "apply_link_template_in",
+    				as: "source"
+    			},
+    			{
+    				from: "base_editor_content",
+    				to: "apply_fn_in",
+    				as: "target"
+    			},
+    			{
     				from: "apply_node_template",
+    				to: "apply_link_template_in",
+    				as: "target"
+    			},
+    			{
+    				from: "apply_link_template_in",
+    				to: "apply_link_template"
+    			},
+    			{
+    				from: "apply_link_template",
     				to: "run_in",
     				as: "fn"
     			},
@@ -39624,153 +39939,174 @@
     			}
     		]
     	},
-    	simulate_layout: {
+    	{
+    		id: "simulate_layout",
     		script: "return (state, input) => (state.has('simulation') ? state : state.set('simulation', lib.no.d3simulation(state, input))).get('simulation')"
     	},
-    	simulation_dispatch: {
+    	{
+    		id: "simulation_dispatch",
     		type: "compiled_fn",
-    		nodes: {
-    			get_nodes: {
-    				script: "return (state, input) => requestAnimationFrame(() => {if(!(input.dispatch && input.simulation && input.action)){ return } input.dispatch(input.action, Object.fromEntries(input.simulation.nodes().map(n => [n.node_id, n]))) })"
+    		nodes: [
+    			{
+    				id: "get_nodes",
+    				script: "return (state, input) => requestAnimationFrame(() => {if(!(input.dispatch && input.simulation && input.action)){ return } input.dispatch(input.action, { nodes: Object.fromEntries(input.simulation.nodes().map(n => [n.node_id, n])), links: input.simulation.force('links').links()  } ) })"
     			}
-    		}
+    		],
+    		edges: [
+    			{
+    				from: "in",
+    				to: "get_nodes"
+    			},
+    			{
+    				from: "get_nodes",
+    				to: "out"
+    			}
+    		]
     	},
-    	simulation_subscription_in: "merge",
-    	simulation_subscription: {
+    	{
+    		id: "simulation_subscription",
     		type: "execute",
-    		nodes: {
-    			subscription: {
+    		nodes: [
+    			{
+    				id: "subscription",
     				script: "return (state, input) => (dispatch, props) => { input.simulation.on('tick.ha', function(v){ input.fn({simulation: this, dispatch: dispatch, action: props.action})}); return () => input.simulation.on('.ha', null); }"
     			}
-    		}
+    		],
+    		edges: [
+    			{
+    				from: "in",
+    				to: "subscription"
+    			},
+    			{
+    				from: "subscription",
+    				to: "out"
+    			}
+    		]
     	},
-    	hyperapp_input: {
+    	{
+    		id: "hyperapp_input",
     		type: "merge"
     	},
-    	hyperapp_state: {
+    	{
+    		id: "hyperapp_state",
     		script: "return (state, input) => { state.set('input', Object.assign({}, state.get('input') ?? {}, input)); return { node_editor: state.get('input') } }"
     	},
-    	hyperapp: {
-    		script: "return (state, input) => { if(!state.has('dispatch') && input.view && input.dom && input.simulation_subscription){ state.set('dispatch', lib.ha.app({ init: input.init ?? {}, view: (s) => input.view(s), subscriptions:() => [[input.simulation_subscription, { action: (state, payload) => Object.assign({}, state, {node_editor: {nodes: payload}}) }]] , node: input.dom })); } return state.get('dispatch'); }"
+    	{
+    		id: "_hyperapp",
+    		script: "return (state, input) => { if(!state.has('dispatch') && input.view && input.dom && input.simulation_subscription){ state.set('dispatch', lib.ha.app({ init: input.init ?? {}, view: (s) => input.view(s) ?? lib.ha.text('loading...'), subscriptions:() => [[input.simulation_subscription, { action: (state, payload) => Object.assign({}, state, {node_editor: payload}) }]] , node: input.dom })); } return state.get('dispatch'); }"
+    	},
+    	{
+    		id: "node_types",
+    		execute: {
+    			script: "return lib.no.default_fn(lib, self)"
+    		},
+    		data: {
+    			script: "return () => self"
+    		},
+    		el_selector: {
+    			script: "return ({data}) => document.querySelector(data.selector);"
+    		},
+    		get: {
+    			script: "return ({data}) => data[data.get_index]"
+    		},
+    		constant: {
+    			script: "return () => self.value"
+    		},
+    		merge: {
+    			script: "return (state, input) => state.set('input', Object.assign({}, state.get('input') ?? {}, input)).get('input')"
+    		},
+    		log: {
+    			script: "return (_, input) => console.log(input)"
+    		},
+    		aggregate: {
+    			script: "return lib.no.aggregate_fn(lib, self)"
+    		},
+    		fold: {
+    			script: "return (state, input) => (val) => lib._.reduce(lib.no.aggregate_fn(lib, self)(state, input), (v, fn) => fn(v), val)"
+    		},
+    		h: {
+    			script: "return lib.no.h_fn(lib, self)"
+    		},
+    		h_text: {
+    			script: "return (state, input) => lib.ha.text(input.text ?? self.text)"
+    		},
+    		compiled_fn: {
+    			script: "const compiled_fn = lib.no.default_fn(lib, self); return (state, fn_input) => (input) => { const result = compiled_fn(state, lib._.merge(fn_input, input)); return (result === undefined ? state : state.set('output', result)).get('output') }"
+    		},
+    		apply_fn: {
+    			script: "return (state, input) => lib.util.overPath(self.path)(n => n.map(input.fn))(input.target)"
+    		},
+    		merge_values: {
+    			script: "return (state, input) => lib.util.overPath(self.path, {})(v => lib._.merge(v, input.values))"
+    		},
+    		run_fn: {
+    			script: "return lib.no.run_fn(lib, self)"
+    		}
     	}
-    };
-    var node_types = {
-    	execute: {
-    		script: "return lib.no.default_fn(lib, self)"
-    	},
-    	data: {
-    		script: "return () => self"
-    	},
-    	el_selector: {
-    		script: "return () => document.querySelector(self.selector);"
-    	},
-    	get: {
-    		script: "return (state, input) => input[input.get_index ?? self.index]"
-    	},
-    	constant: {
-    		script: "return () => self.value"
-    	},
-    	merge: {
-    		script: "return (state, input) => state.set('input', Object.assign({}, state.get('input') ?? {}, input)).get('input')"
-    	},
-    	log: {
-    		script: "return (_, input) => console.log(input)"
-    	},
-    	aggregate: {
-    		script: "return lib.no.aggregate_fn(lib, self)"
-    	},
-    	fold: {
-    		script: "return (state, input) => (val) => lib._.reduce(lib.no.aggregate_fn(lib, self)(state, input), (v, fn) => fn(v), val)"
-    	},
-    	h: {
-    		script: "return lib.no.h_fn(lib, self)"
-    	},
-    	h_text: {
-    		script: "return (state, input) => lib.ha.text(input.text ?? self.text)"
-    	},
-    	compiled_fn: {
-    		script: "const compiled_fn = lib.no.default_fn(lib, self); return (state, fn_input) => (input) => { const result = compiled_fn(state, lib._.merge(fn_input, input)); return (result === undefined ? state : state.set('output', result)).get('output') }"
-    	},
-    	apply_fn: {
-    		script: "return (state, input) => lib.util.overPath(self.path)(n => n.map(input.fn))(input.target)"
-    	},
-    	merge_values: {
-    		script: "return (state, input) => lib.util.overPath(self.path, {})(v => lib._.merge(v, input.values))"
-    	},
-    	run_fn: {
-    		script: "return (state, input) => { if(!input.fn || !input.data) { return; } if(!lib._.isEqual(state.get('fn'), input.fn)) { state.set('compiled_fn', (self.run_type === 'aggregate' ? lib.no.aggregate_fn : lib.no.default_fn)(lib, input.fn))} state.set('fn', input.fn); return state.get('compiled_fn')(state, input.data); }"
-    	}
-    };
+    ];
     var edges = [
     	{
     		from: "in",
+    		to: "flatten"
+    	},
+    	{
+    		from: "flatten",
+    		to: "node_types"
+    	},
+    	{
+    		from: "node_types",
+    		to: "replace_node_types_fn",
+    		as: "node_types"
+    	},
+    	{
+    		from: "replace_node_types_fn",
+    		to: "replace_node_types",
+    		as: "map_fn"
+    	},
+    	{
+    		from: "flatten",
+    		to: "replace_node_types_args"
+    	},
+    	{
+    		from: "replace_node_types_args",
+    		to: "replace_node_types"
+    	},
+    	{
+    		from: "flatten",
+    		to: "replace_node_types",
+    		as: "target"
+    	},
+    	{
+    		from: "flatten",
+    		to: "replace_node_types_fn"
+    	},
+    	{
+    		from: "replace_node_types",
     		to: "content_el_selector"
     	},
     	{
-    		from: "in",
-    		to: "hyperapp_state"
+    		from: "replace_node_types",
+    		to: "hyperapp_view"
     	},
     	{
-    		from: "in",
-    		to: "simulate_layout"
-    	},
-    	{
-    		from: "simulate_layout",
-    		to: "simulation_subscription_in",
-    		as: "simulation"
-    	},
-    	{
-    		from: "in",
-    		to: "simulation_dispatch"
-    	},
-    	{
-    		from: "simulation_dispatch",
-    		to: "simulation_subscription_in",
-    		as: "fn"
-    	},
-    	{
-    		from: "simulation_subscription_in",
-    		to: "simulation_subscription"
-    	},
-    	{
-    		from: "simulation_subscription",
-    		to: "hyperapp_input",
-    		as: "simulation_subscription"
-    	},
-    	{
-    		from: "hyperapp_state",
-    		to: "hyperapp_input",
-    		as: "init"
-    	},
-    	{
-    		from: "in",
-    		to: "base_editor_content_merge",
-    		as: "graph"
+    		from: "replace_node_types",
+    		to: "hyperapp"
     	},
     	{
     		from: "content_el_selector",
-    		to: "hyperapp_input",
+    		to: "hyperapp",
     		as: "dom"
     	},
     	{
-    		from: "base_editor_content_merge",
-    		to: "base_editor_view"
-    	},
-    	{
-    		from: "base_editor_view",
-    		to: "hyperapp_input",
+    		from: "hyperapp_view",
+    		to: "hyperapp",
     		as: "view"
-    	},
-    	{
-    		from: "hyperapp_input",
-    		to: "hyperapp"
     	}
     ];
     var DEFAULT_GRAPH = {
     	description: description,
     	script: script,
     	nodes: nodes,
-    	node_types: node_types,
     	edges: edges
     };
 
@@ -39822,7 +40158,7 @@
     }
 
     // Filter function
-    function filter$1 (array, block) {
+    function filter (array, block) {
       let i;
       const il = array.length;
       const result = [];
@@ -40354,7 +40690,7 @@
     function data (a, v, r) {
       if (a == null) {
         // get an object of attributes
-        return this.data(map$1(filter$1(this.node.attributes, (el) => el.nodeName.indexOf('data-') === 0), (el) => el.nodeName.slice(5)))
+        return this.data(map$1(filter(this.node.attributes, (el) => el.nodeName.indexOf('data-') === 0), (el) => el.nodeName.slice(5)))
       } else if (a instanceof Array) {
         const data = {};
         for (const key of a) {
@@ -47204,18 +47540,6 @@
     	autocompletion, completionKeymap, commentKeymap, rectangularSelection, defaultHighlightStyle, lintKeymap, linter
     };
 
-    // helpers
-
-    const queue = (init) => ({
-    	arr: Array.isArray(init) ? init : [init],
-    	push: function(v){ this.arr.unshift(v); },
-    	[Symbol.iterator]: function(){
-    		return {
-    			next: () => ({ done: this.arr.length === 0, value: this.arr.length === 0 ? undefined : this.arr.pop() })
-    		}
-    	}
-    });
-
     const reduce = (fn, acc, it) => {
     	for(const n of it) {
     		acc = fn(acc, n);
@@ -47227,14 +47551,6 @@
     const map = function* (it, fn) {
     	for(const n of it) {
     		yield fn(n);
-    	}
-    };
-
-    const filter = function* (it, fn) {
-    	for(const n of it) {
-    		if(fn(n)){
-    			yield n;
-    		}
     	}
     };
 
@@ -47312,7 +47628,7 @@
     	parent: editorEl
     });
 
-    const compile = (node) => node.script ? new Function('lib', 'self', node.script)(lib, node) : () => node;
+    const compileNode = (node) => node.script ? new Function('lib', node.script)(lib) : args => Object.assign({}, args.data, lib._.omit(node, 'id', 'fn'));
 
     // Note: heavy use of comma operator https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Comma_Operator
     const unpackTypes = (node_types, node) => {
@@ -47325,188 +47641,113 @@
     	return result;
     };
 
-    const compileNodes = (node_types, nodes) => Object.fromEntries(
-    	Object.entries(nodes ?? {})
-    		.map(kv => overIdx(1)(n => Object.assign({node_types, id: kv[0]}, unpackTypes(node_types, n), typeof n === 'string' ? {} : n))(kv))
-    		.map(kv => kv[1].fn ? kv : overIdx(1)(compile)(kv))
-    );
 
-    // mutable for performance
-    const createEdgeFns = (edges, from, fns) => {
-    	if(!edges){ return []}
-
-    	const edge_arr = [];
-    	for(const e of edges){
-    		if(e.from === from) {
-    			edge_arr.push(e.fn ? e : Object.assign({}, e, {fn: fns[e.to]}));
-    		}
-    	}
-
-    	return edge_arr;
-    };
-
-    const default_fn = (lib, self) => {
-    	const node_fns = compileNodes(self.node_types, self.nodes);
-
-    	// expand default in => node => out if there's only one node
-    	if(Object.keys(self.nodes).length === 1 && (!self.edges	|| self.edges.length === 0)) {
-    		self.edges = [
-    			{"from": "in", "to": Object.keys(self.nodes)[0]}, 
-    			{"from": Object.keys(self.nodes)[0], "to": "out"}
-    		];
-    	}
-
-    	const startFns = createEdgeFns(self.edges, 'in', node_fns);
-
-    	return (state, input) => { 
-    		const edge_queue = queue(lib._.cloneDeep(startFns));
-
-    		state.set('in', input);
-
-    		return reduce((outputs, run_edge) => {
-    			const next = Object.assign({}, outputs);
-
-    			if(run_edge.to === "out") {
-    				outputs['out'] = outputs[run_edge.from];
-    				return outputs;
-    			}
-
-    			try {
-    				const result = run_edge.fn(
-    					state.get(run_edge.to) ?? state.set(run_edge.to, new Map()).get(run_edge.to),
-    					run_edge.as ? Object.fromEntries([[run_edge.as, outputs[run_edge.from]]]) : outputs[run_edge.from]
-    				);
-
-    				next[run_edge.to] = result ?? next[run_edge.to];
-
-    				if(next[run_edge.to] !== undefined) {
-    					// side effect add to queue
-    					createEdgeFns(self.edges, run_edge.to, node_fns)
-    						.forEach(e => edge_queue.push(e));
-
-    					return next;
-    				}
-    			} catch(err) {
-    				console.log("error in " + run_edge.to);
-    				console.log(run_edge);
-    				console.log(outputs[run_edge.from]);
-    				console.log(state.get(run_edge.to));
-    				console.error(err);
-    			}
-
-    			// don't update if the new value is undefined
-    			return outputs;
-    		}, {in: Object.assign({}, input, {parent: self.id})}, edge_queue).out;
-    	}
-    }; 
-
-    const aggregate_fn = (lib, self) => {
-    	const node_fns = lib.no.compileNodes(self.node_types, self.nodes); 
-
-    	if(!self.edges) {
-    		self.edges = Object.keys(self.nodes).reduce((arr, val) => 
-    			arr.concat([{
-    				from: arr[arr.length - 1]?.to ?? 'in',
-    				to: val
-    			}]), 
-    			[]
-    		);
-    	}
-
-    	const edge_queue = queue(createEdgeFns(self.edges, 'in', node_fns));
-    	const output_order = reduce((order, edge) => {
-    		const has_edge = order.has(edge.to);
-
-    		if (!has_edge) {
-    			createEdgeFns(self.edges, edge.to, node_fns)
-    				.forEach(e => edge_queue.push(e));
-    			return order.set(edge.to, edge);
-    		}
-
-    		return order
-    	}, new Map(), edge_queue);
-
-    	return (state, input) => {
-    		const result_map = map(
-    			output_order.entries(), 
-    			([k, run_edge]) => [
-    				k, 
-    				run_edge.fn(
-    					state.has(k) 
-    					? state.get(k) 
-    					: state.set(k, new Map()).get(k), 
-    					Object.assign({parent: self.id}, input)
-    				)
-    			]);
-
-    		return new Map(filter(result_map, kv => kv[1] !== undefined))
-    	}
-    };
-
-
-    const h_fn = (lib, self) => (state, input) => lib.ha.h(
-    		self.dom_type, // change to input
-    		Object.assign({}, self.attrs ?? {}, 
-    			// lib._.isFunction(input.attrs)
-    			// ? input.attrs(haState)
-    			// : 
-    			input.attrs 
-    			? input.attrs
-    			: {}), 
-    		input.children instanceof Map
+    const hFn = ({data}) => lib.ha.h(
+    		data.dom_type, // change to input
+    		data.attrs ?? {}, 
+    		data.children instanceof Map
     			?  [...lib.iter.map(
     				input.children.values(), 
     				v => v ? v : undefined)]
-    			: input.children
-    			? input.children
+    			: data.children
+    			? data.children
     			: []);
 
-    // returns a state, input => output
+    //compile(DEFAULT_GRAPH)(new Map(), DEFAULT_GRAPH);
 
+    // this is a context
+    const execute = args => {
+    	const {id, state, data} = args;
+    	const self = data?.graph?.nodes?.find(v => v.id === id);
 
-    const d3simulation = (state, input) => {
-    	const simulation = 
-    		lib.d3.forceSimulation(
-    			Object.entries(input.nodes)
-    				.map(([k, n], index) => Object.assign({}, typeof n === 'string' ? {type: n} : n, {
-    					node_id: k,
-    					x: window.innerWidth * Math.random(), 
-    					y: window.innerHeight * Math.random(), 
-    					index
-    				})))
-    			.force('charge', lib.d3.forceManyBody().strength(-8))
-    			.force('center', lib.d3
-    				.forceCenter(window.innerWidth * 0.5, window.innerHeight * 0.5)
-    				.strength(.01))
-    			.force('links', lib.d3
-    				.forceLink(input.edges.filter(e => e.from !== 'in' && e.to !== 'out')
-    					.map((e, index) => ({source: e.from, target: e.to, index})))
-    				.distance(128)
-    				.id(n => n.node_id));
-    //			.alphaMin(.1); // changes how long the simulation will run. dfault is 0.001 
+    	if(!self) {
+    		throw new Error("No graph or can't find node");
+    	}
 
-    	return simulation;
+    	const node_state = state.get(id) ?? state.set(id, new Map()).get(id);
+
+    	// store and merge args across calls
+    	const merged_data = node_state.set('data',
+    		node_state.has('data')
+    			? Object.assign({}, node_state.get('data'), self, data)
+    			: Object.assign({}, self, data)
+    	).get('data');
+
+    	// call the function with node_state
+    	try {
+
+    		if(node_state.get('self') !== self){
+    			self.fn = compileNode(self);
+    			node_state.set('self', self);
+    		}
+
+    		const result = self.fn(Object.assign({}, args, {state: node_state, data: merged_data }));
+    		if(result === undefined) { return; }
+
+    		const path_return = runNextNodes(Object.assign({}, args), result);
+
+    		if(path_return.length > 0){
+    			return Object.assign({}, ...path_return);
+    		} else {
+    			return result;
+    		}
+
+    	} catch(e) {
+    		console.log(`error running ${id}`);
+    		console.log(args);
+    		console.error(e);
+    	}
     };
 
-    const apply_template = (lib, self) => (state, input) => { 
-    	if(input.target && input.source && self.template){ 
-    		return lib.util.overPath
-    			(self.path, {})
-    			(nodes => Object.fromEntries(
-    				Object.keys(input.source.node_editor.nodes)
-    				.map(k => [k, self.template]))) 
-    			(input.target) 
-    	} 
+    const referenceExecute = (args) => input => 
+    	runNextNodes(lib._.set(Object.assign({}, args), 'id', args.data.fn_in), input);
+
+    const runNextNodes = (args, result) => Object.assign({}, ...args.data.graph.edges
+    	.filter(e => e.from === args.id)
+    	.map(e => execute(Object.assign({}, args, {
+    		id: e.to, 
+    		data: e.as 
+    			? lib._.set(Object.assign({}, args.data), e.as, result) 
+    			: Object.assign({}, args.data, result)
+    	})))
+    	.filter(v => v !== undefined));
+
+    const map_path = ({lib, data}) => data.target && data.target_path && data.map_fn ?
+    	lib._.update(
+    		data.target,
+    		data.target_path,
+    		a => lib._.map(a, data.map_fn)
+    	) : undefined;
+
+    const flatten = ({data}) => {
+    	const flatten_node = (graph) => {
+    		if(graph.nodes === undefined) {
+    			return graph;
+    		} 
+
+    		const prefix = graph.id ? `${graph.id}/` : '';
+
+    		const prefixed_nodes = graph.nodes.map(n => Object.assign({}, n, {id: `${prefix}${n.id}`}));
+
+    		const flattened = prefixed_nodes.map(flatten_node);
+
+    		return {
+    			nodes: prefixed_nodes.concat(flattened.map(g => g.nodes).flat()).filter(n => n !== undefined),
+    			edges: graph.edges.map(e => ({from: `${prefix}${e.from}`, to: `${prefix}${e.to}`, as: e.as})).concat(flattened.map(g => g.edges).flat()).filter(e => e !== undefined)
+    		}
+    	};
+
+    	return {graph: flatten_node(data.graph)};
     };
 
     const lib = { cm, _,
     	ha: { h, app, text, memo},  
     	iter: {reduce, map}, 
-    	no: { compileNodes, default_fn, aggregate_fn, h_fn, d3simulation, apply_template},
-    	d3: {forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial},
+    	no: {map_path, flatten, unpackTypes, referenceExecute, hFn},
+    	d3: {forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide},
     	util: {overIdx, overKey, overPath}
     };
 
-    compile(DEFAULT_GRAPH)(new Map(), DEFAULT_GRAPH);
+    execute({id: "in", state: new Map(), lib, data: { graph: DEFAULT_GRAPH }});
 
 }());
