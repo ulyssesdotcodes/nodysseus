@@ -197,104 +197,6 @@ const createEdgeFns = (edges, from, fns) => {
 	return edge_arr;
 }
 
-const default_fn = (lib, self) => {
-	const node_fns = compileNodes(self.node_types, self.nodes);
-
-	// expand default in => node => out if there's only one node
-	if(Object.keys(self.nodes).length === 1 && (!self.edges	|| self.edges.length === 0)) {
-		self.edges = [
-			{"from": "in", "to": Object.keys(self.nodes)[0]}, 
-			{"from": Object.keys(self.nodes)[0], "to": "out"}
-		]
-	}
-
-	const startFns = createEdgeFns(self.edges, 'in', node_fns, 0);
-
-	return (state, input) => { 
-		const edge_queue = queue(lib._.cloneDeep(startFns));
-
-		state.set('in', input);
-
-		return reduce((outputs, run_edge) => {
-			const next = Object.assign({}, outputs);
-
-			if(run_edge.to === "out") {
-				outputs['out'] = outputs[run_edge.from];
-				return outputs;
-			}
-
-			try {
-				const result = run_edge.fn(
-					state.get(run_edge.to) ?? state.set(run_edge.to, new Map()).get(run_edge.to),
-					run_edge.as ? Object.fromEntries([[run_edge.as, outputs[run_edge.from]]]) : outputs[run_edge.from]
-				);
-
-				next[run_edge.to] = result ?? next[run_edge.to];
-
-				if(next[run_edge.to] !== undefined) {
-					// side effect add to queue
-					createEdgeFns(self.edges, run_edge.to, node_fns)
-						.forEach(e => edge_queue.push(e))
-
-					return next;
-				}
-			} catch(err) {
-				console.log("error in " + run_edge.to);
-				console.log(run_edge);
-				console.log(outputs[run_edge.from]);
-				console.log(state.get(run_edge.to));
-				console.error(err);
-			}
-
-			// don't update if the new value is undefined
-			return outputs;
-		}, {in: Object.assign({}, input, {parent: self.id})}, edge_queue).out;
-	}
-} 
-
-const aggregate_fn = (lib, self) => {
-	const node_fns = lib.no.compileNodes(self.node_types, self.nodes); 
-
-	if(!self.edges) {
-		self.edges = Object.keys(self.nodes).reduce((arr, val) => 
-			arr.concat([{
-				from: arr[arr.length - 1]?.to ?? 'in',
-				to: val
-			}]), 
-			[]
-		);
-	}
-
-	const edge_queue = queue(createEdgeFns(self.edges, 'in', node_fns));
-	const output_order = reduce((order, edge) => {
-		const has_edge = order.has(edge.to);
-
-		if (!has_edge) {
-			createEdgeFns(self.edges, edge.to, node_fns)
-				.forEach(e => edge_queue.push(e));
-			return order.set(edge.to, edge);
-		}
-
-		return order
-	}, new Map(), edge_queue);
-
-	return (state, input) => {
-		const result_map = map(
-			output_order.entries(), 
-			([k, run_edge]) => [
-				k, 
-				run_edge.fn(
-					state.has(k) 
-					? state.get(k) 
-					: state.set(k, new Map()).get(k), 
-					Object.assign({parent: self.id}, input)
-				)
-			])
-
-		return new Map(filter(result_map, kv => kv[1] !== undefined))
-	}
-}
-
 
 const hFn = ({data}) => lib.ha.h(
 		data.dom_type, // change to input
@@ -306,74 +208,6 @@ const hFn = ({data}) => lib.ha.h(
 			: data.children
 			? data.children
 			: []);
-
-// returns a state, input => output
-
-
-const d3simulation = (state, input) => {
-	const node_levels = [];
-
-	const bfs = (level) => (edge) => 
-		[[edge.to, level]].concat(input.edges.filter(e => e.from === edge.to).map(bfs(level + 1)).flat());
-
-	const levels = Object.fromEntries(input.edges.filter(e => e.from === 'in').map(bfs(0)).flat());
-	levels.min = Math.min(...Object.values(levels));
-	levels.max = Math.max(...Object.values(levels));
-
-	console.log(levels);
-
-	const simulation = 
-		lib.d3.forceSimulation(
-			Object.entries(input.nodes)
-				.map(([k, n], index) => Object.assign({}, typeof n === 'string' ? {type: n} : n, {
-					node_id: k,
-					x: window.innerWidth * (Math.random() *.5 + .25), 
-					y: window.innerHeight * (Math.random() * .5 + .25), 
-					index
-				})))
-			.force('charge', lib.d3.forceManyBody().strength(-8))
-			// .force('center', lib.d3
-			// 	.forceCenter(window.innerWidth * 0.5, window.innerHeight * 0.5)
-			// 	.strength(.01))
-			.force('links', lib.d3
-				.forceLink(input.edges.filter(e => e.from !== 'in' && e.to !== 'out')
-					.map((e, index) => ({source: e.from, target: e.to, index})))
-				.distance(128)
-				.id(n => n.node_id))
-			.force('link_direction', lib.d3
-				.forceY()
-				.y((n) => window.innerHeight * (0.15 + (Math.random() * 0.2) + 0.5 * (levels[n.node_id] ?? 0) / (levels.max - levels.min)))
-				.strength(0.5))
-			.force('collide', lib.d3.forceCollide(64));
-//			.alphaMin(.1); // changes how long the simulation will run. dfault is 0.001 
-
-	return simulation;
-}
-
-const apply_template = (lib, self) => (state, input) => { 
-	if(input.target && input.source && self.template && lib._.has(input.source, self.source_path)){ 
-
-		const source = lib._.get(input.source, self.source_path);
-
-		return lib.util.overPath
-			(self.path, {})
-			(nodes => Object.fromEntries(
-				(Array.isArray(source) ? [...Array(source.length).keys()] : Object.keys(source))
-				.map(k => [k, self.template]))) 
-			(input.target) 
-	} 
-}
-
-const run_fn = (lib, self) => (state, input) => { 
-	if(!input.fn || !input.data) { return; } 
-	if(!lib._.isEqual(state.get('fn'), input.fn)) { 
-		state.set('compiled_fn', (self.run_type === 'aggregate' ? lib.no.aggregate_fn : lib.no.default_fn)(lib, input.fn))
-	} 
-
-	state.set('fn', input.fn); return state.get('compiled_fn')(state, input.data); 
-}
-
-//compile(DEFAULT_GRAPH)(new Map(), DEFAULT_GRAPH);
 
 // this is a context
 const execute = args => {
@@ -404,14 +238,7 @@ const execute = args => {
 		const result = self.fn(Object.assign({}, args, {state: node_state, data: merged_data }));
 		if(result === undefined) { return; }
 
-		const path_return = runNextNodes(Object.assign({}, args), result);
-
-		if(path_return.length > 0){
-			return Object.assign({}, ...path_return);
-		} else {
-			return result;
-		}
-
+		runNextNodes(Object.assign({}, args), result);
 	} catch(e) {
 		console.log(`error running ${id}`);
 		console.log(args);
@@ -419,10 +246,106 @@ const execute = args => {
 	}
 }
 
-const referenceExecute = (args) => input => 
-	runNextNodes(lib._.set(Object.assign({}, args), 'id', args.data.fn_in), input);
+const referenceExecute = ({id, data}) => {
+	// replace next node with referenceExecute by changing id in e.to to id#ref
+	//   and add referenceExecute with id
+	// add [e.from#ref ?? in, e.to#ref] to data.reference_graph edges
+	// if the next node is end_fn then return execute(id: in, state: ??, data: graph: reference_graph)
 
-const runNextNodes = (args, result) => Object.assign({}, ...args.data.graph.edges
+	const fn_reference = input => {
+		runNextNodes(lib._.set(Object.assign({}, args), 'id', args.data.fn_in), input)
+	};
+
+	const next_edges = args.data.graph.edges.filter(e => e.from === id);
+	const next_node_ids = new Set(next_edges.map(e => e.to));
+
+	const new_graph = {
+		edges: args.data.graph.edges,
+		nodes: args.data.graph.nodes.map(n => {
+			if(!next_node_ids.has(n.id) && n.type !== "end_fn") {
+				return n;
+			}
+
+			const removed_node = Object.assign({}, n, {id: `${n.id}#ref`});
+			const new_next_node = { id: n.id, script: "return lib.no.referenceExecute"}
+
+			return [removed_node, new_next_node]
+		}).flat()
+	}
+
+	return Object.assign({}, data, {
+		graph: new_graph,
+		reference_graph: (data.reference_graph ?? [])
+			.concat(next_edges.map(e => ({from: data.reference_graph ? `${id}#ref` : "in", to: `${e.to}#ref`, as: e.as })))
+	})
+}
+
+
+
+
+
+
+
+
+// 	const edge_replacements = args.data.graph.edges
+// 		.filter(e => e.from === id)
+// 		.filter(e => e.type === "end_fn")
+// 		.map(e => {
+// 			// new edge from in/last ref graph node to this node
+// 			const new_graph_edge = {
+// 				from: data[`referenceExecute#${id}`] ?? "in",
+// 				to: `${e.to}#ref`,
+// 				as: e.as
+// 			}
+
+// 			// next node seen will be a referenceExecute node with id e.to#ref
+
+// 			const new_node = {
+// 				id: `${e.to}`,
+// 				script: "return lib.no.referenceExecute"
+// 			}
+
+// 			return {main_graph_edge, new_graph_edge, new_node};
+// 		})
+// 		.reduce((acc, v) => {
+// 			acc.edges.push(v.new_graph_edge);
+// 			acc.nodes.push(v.new_node);
+// 			acc.main_graph_edges.push(v.main_graph_edge);
+// 		}, {edges:[], nodes: [], main_graph_edges: []});
+
+// 	const new_data = Object.assign({}, data, {
+// 		graph: {
+// 			edges: data.graph.edges.filter(e => e.from === id)
+// 		}
+// 	})
+
+
+// 	// set the next ref to the current e.to
+// 	new_data[`referenceExecute#${new_node.id}`] = e.to;
+
+// 	const new_main_graph_edges = from_edges.map(e => {
+
+// 	})
+
+
+// 	if(data.reference_execute_start) {
+
+// 	} else {
+// 		new_data.reference_execute_start = id;
+// 		const reference_graph = {
+// 			nodes: data.graph,
+// 			edges: []
+// 		}
+
+// 		lib._.set(new_data, ``, reference_graph);
+// 	}
+
+
+// 	runNextNodes
+// }
+
+const runNextNodes = (args, result) => Object.assign({}, 
+	...(result.graph ?? args.data.graph).edges
 	.filter(e => e.from === args.id)
 	.map(e => execute(Object.assign({}, args, {
 		id: e.to, 
@@ -458,6 +381,44 @@ const flatten = ({data}) => {
 	}
 
 	return {graph: flatten_node(data.graph)};
+}
+
+const d3simulation = ({data}) => {
+	const node_levels = [];
+
+	const bfs = (level) => (edge) => 
+		[[edge.to, level]].concat(input.edges.filter(e => e.from === edge.to).map(bfs(level + 1)).flat());
+
+	const levels = Object.fromEntries(input.edges.filter(e => e.from === 'in').map(bfs(0)).flat());
+	levels.min = Math.min(...Object.values(levels));
+	levels.max = Math.max(...Object.values(levels));
+
+	const simulation = 
+		lib.d3.forceSimulation(
+			data.graph.nodes
+				.map(([k, n], index) => Object.assign({}, typeof n === 'string' ? {type: n} : n, {
+					node_id: k,
+					x: window.innerWidth * (Math.random() *.5 + .25), 
+					y: window.innerHeight * (Math.random() * .5 + .25), 
+					index
+				})))
+			.force('charge', lib.d3.forceManyBody().strength(-8))
+			// .force('center', lib.d3
+			// 	.forceCenter(window.innerWidth * 0.5, window.innerHeight * 0.5)
+			// 	.strength(.01))
+			.force('links', lib.d3
+				.forceLink(input.edges.filter(e => e.from !== 'in' && e.to !== 'out')
+					.map((e, index) => ({source: e.from, target: e.to, index})))
+				.distance(128)
+				.id(n => n.node_id))
+			.force('link_direction', lib.d3
+				.forceY()
+				.y((n) => window.innerHeight * (0.15 + (Math.random() * 0.2) + 0.5 * (levels[n.node_id] ?? 0) / (levels.max - levels.min)))
+				.strength(0.5))
+			.force('collide', lib.d3.forceCollide(64));
+//			.alphaMin(.1); // changes how long the simulation will run. dfault is 0.001 
+
+	return simulation;
 }
 
 const lib = { cm, _,

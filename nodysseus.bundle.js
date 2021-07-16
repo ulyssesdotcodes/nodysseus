@@ -39498,7 +39498,6 @@
     	{
     		id: "hyperapp_view",
     		script: "return lib.no.referenceExecute",
-    		fn_in: "hyperapp_view/in",
     		nodes: [
     			{
     				id: "in",
@@ -39508,12 +39507,25 @@
     				id: "helloworld",
     				text: "Hello, world!",
     				script: "return ({lib, data}) => lib.ha.text(data.text ?? '')"
+    			},
+    			{
+    				id: "out",
+    				type: "end_fn",
+    				script: "return ({data}) => { if(data.end_fn){ state.set('end_fn', data.end_fn); } if(state.has('end_fn')) { state.get('end_fn')(data); }}"
     			}
     		],
     		edges: [
     			{
     				from: "in",
+    				to: "out"
+    			},
+    			{
+    				from: "in",
     				to: "helloworld"
+    			},
+    			{
+    				from: "helloworld",
+    				to: "out"
     			}
     		]
     	},
@@ -40096,6 +40108,11 @@
     		from: "content_el_selector",
     		to: "hyperapp",
     		as: "dom"
+    	},
+    	{
+    		from: "hyperapp_view",
+    		to: "hyperapp_view_in",
+    		as: "??"
     	},
     	{
     		from: "hyperapp_view",
@@ -47653,8 +47670,6 @@
     			? data.children
     			: []);
 
-    //compile(DEFAULT_GRAPH)(new Map(), DEFAULT_GRAPH);
-
     // this is a context
     const execute = args => {
     	const {id, state, data} = args;
@@ -47684,14 +47699,7 @@
     		const result = self.fn(Object.assign({}, args, {state: node_state, data: merged_data }));
     		if(result === undefined) { return; }
 
-    		const path_return = runNextNodes(Object.assign({}, args), result);
-
-    		if(path_return.length > 0){
-    			return Object.assign({}, ...path_return);
-    		} else {
-    			return result;
-    		}
-
+    		runNextNodes(Object.assign({}, args), result);
     	} catch(e) {
     		console.log(`error running ${id}`);
     		console.log(args);
@@ -47699,10 +47707,98 @@
     	}
     };
 
-    const referenceExecute = (args) => input => 
-    	runNextNodes(lib._.set(Object.assign({}, args), 'id', args.data.fn_in), input);
+    const referenceExecute = ({id, data}) => {
 
-    const runNextNodes = (args, result) => Object.assign({}, ...args.data.graph.edges
+    	const next_edges = args.data.graph.edges.filter(e => e.from === id);
+    	const next_node_ids = new Set(next_edges.map(e => e.to));
+
+    	const new_graph = {
+    		edges: args.data.graph.edges,
+    		nodes: args.data.graph.nodes.map(n => {
+    			if(!next_node_ids.has(n.id) && n.type !== "end_fn") {
+    				return n;
+    			}
+
+    			const removed_node = Object.assign({}, n, {id: `${n.id}#ref`});
+    			const new_next_node = { id: n.id, script: "return lib.no.referenceExecute"};
+
+    			return [removed_node, new_next_node]
+    		}).flat()
+    	};
+
+    	return Object.assign({}, data, {
+    		graph: new_graph,
+    		reference_graph: (data.reference_graph ?? [])
+    			.concat(next_edges.map(e => ({from: data.reference_graph ? `${id}#ref` : "in", to: `${e.to}#ref`, as: e.as })))
+    	})
+    };
+
+
+
+
+
+
+
+
+    // 	const edge_replacements = args.data.graph.edges
+    // 		.filter(e => e.from === id)
+    // 		.filter(e => e.type === "end_fn")
+    // 		.map(e => {
+    // 			// new edge from in/last ref graph node to this node
+    // 			const new_graph_edge = {
+    // 				from: data[`referenceExecute#${id}`] ?? "in",
+    // 				to: `${e.to}#ref`,
+    // 				as: e.as
+    // 			}
+
+    // 			// next node seen will be a referenceExecute node with id e.to#ref
+
+    // 			const new_node = {
+    // 				id: `${e.to}`,
+    // 				script: "return lib.no.referenceExecute"
+    // 			}
+
+    // 			return {main_graph_edge, new_graph_edge, new_node};
+    // 		})
+    // 		.reduce((acc, v) => {
+    // 			acc.edges.push(v.new_graph_edge);
+    // 			acc.nodes.push(v.new_node);
+    // 			acc.main_graph_edges.push(v.main_graph_edge);
+    // 		}, {edges:[], nodes: [], main_graph_edges: []});
+
+    // 	const new_data = Object.assign({}, data, {
+    // 		graph: {
+    // 			edges: data.graph.edges.filter(e => e.from === id)
+    // 		}
+    // 	})
+
+
+    // 	// set the next ref to the current e.to
+    // 	new_data[`referenceExecute#${new_node.id}`] = e.to;
+
+    // 	const new_main_graph_edges = from_edges.map(e => {
+
+    // 	})
+
+
+    // 	if(data.reference_execute_start) {
+
+    // 	} else {
+    // 		new_data.reference_execute_start = id;
+    // 		const reference_graph = {
+    // 			nodes: data.graph,
+    // 			edges: []
+    // 		}
+
+    // 		lib._.set(new_data, ``, reference_graph);
+    // 	}
+
+
+    // 	runNextNodes
+    // }
+
+    const runNextNodes = (args, result) => Object.assign({}, 
+    	...(result.graph ?? args.data.graph).edges
     	.filter(e => e.from === args.id)
     	.map(e => execute(Object.assign({}, args, {
     		id: e.to, 
