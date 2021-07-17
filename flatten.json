@@ -28,14 +28,12 @@
         },
         {
             "id": "hyperapp_view",
-            "script": "return lib.no.referenceExecute",
             "nodes": [
-                {"id": "in", "script": "return (args) => args.data"},
+                {"id": "in", "type": "fn_def"},
                 {"id": "helloworld", "text": "Hello, world!", "script": "return ({lib, data}) => lib.ha.text(data.text ?? '')"},
-                {"id": "out", "type": "end_fn", "script": "return ({data}) => { if(data.end_fn){ state.set('end_fn', data.end_fn); } if(state.has('end_fn')) { state.get('end_fn')(data); }}"}
+                {"id": "out", "type": "fn_return"}
             ],
             "edges": [
-                {"from": "in", "to": "out"},
                 {"from": "in", "to": "helloworld" },
                 {"from": "helloworld", "to": "out" }
             ]
@@ -561,8 +559,11 @@
             "merge_values": {
                 "script": "return (state, input) => lib.util.overPath(self.path, {})(v => lib._.merge(v, input.values))"
             },
-            "run_fn": {
-                "script": "return lib.no.run_fn(lib, self)"
+            "fn_def": {
+                "script": "return lib.no.fnDef"
+            },
+            "fn_return": {
+                "script": "return lib.no.fnReturn"
             }
         }
     ],
@@ -618,11 +619,6 @@
             "from": "content_el_selector",
             "to": "hyperapp",
             "as": "dom"
-        },
-        {
-            "from": "hyperapp_view",
-            "to": "hyperapp_view_in",
-            "as": "??"
         },
         {
             "from": "hyperapp_view",

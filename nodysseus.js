@@ -241,46 +241,68 @@ const execute = args => {
 		runNextNodes(Object.assign({}, args), result);
 	} catch(e) {
 		console.log(`error running ${id}`);
+		console.log(self);
 		console.log(args);
 		console.error(e);
 	}
 }
 
-const referenceExecute = ({id, data}) => {
-	// replace next node with referenceExecute by changing id in e.to to id#ref
-	//   and add referenceExecute with id
-	// add [e.from#ref ?? in, e.to#ref] to data.reference_graph edges
-	// if the next node is end_fn then return execute(id: in, state: ??, data: graph: reference_graph)
-
-	const fn_reference = input => {
-		runNextNodes(lib._.set(Object.assign({}, args), 'id', args.data.fn_in), input)
-	};
-
-	const next_edges = args.data.graph.edges.filter(e => e.from === id);
+const fnDef = ({id, data}) => {
+	const next_edges = data.graph.edges.filter(e => e.from === id);
 	const next_node_ids = new Set(next_edges.map(e => e.to));
 
 	const new_graph = {
-		edges: args.data.graph.edges,
-		nodes: args.data.graph.nodes.map(n => {
-			if(!next_node_ids.has(n.id) && n.type !== "end_fn") {
+		edges: data.graph.edges,
+		nodes: data.graph.nodes.map(n => {
+			if(!next_node_ids.has(n.id) || n.type === "fn_return") {
 				return n;
 			}
 
 			const removed_node = Object.assign({}, n, {id: `${n.id}#ref`});
-			const new_next_node = { id: n.id, script: "return lib.no.referenceExecute"}
+			const new_next_node = { id: n.id, script: "return lib.no.fnDef"}
 
 			return [removed_node, new_next_node]
 		}).flat()
 	}
 
+
+
 	return Object.assign({}, data, {
 		graph: new_graph,
 		reference_graph: (data.reference_graph ?? [])
-			.concat(next_edges.map(e => ({from: data.reference_graph ? `${id}#ref` : "in", to: `${e.to}#ref`, as: e.as })))
+			.concat(next_edges.map(e => ({
+				from: data.reference_graph ? `${id}#ref` : "in", 
+				to: `${e.to}#ref`, 
+				as: e.as 
+			})))
 	})
 }
 
+const fnReturn = ({id, data, lib}) => {
+	const fnOut = {
+		id: `${id}#ref`,
+		script: "return ({data}) => data.fn_result.value = data"
+	};
 
+	return (args) => { 
+		const fn_result = {};
+
+		runNextNodes({
+			id: "in", 
+			data: {
+				graph: {
+					nodes: data.graph.nodes.concat([fnOut]),
+					edges: data.reference_graph
+				},
+				fn_result
+			},
+			lib,
+			state: new Map()
+		}, args);
+
+		return fn_result.value;
+	}
+}
 
 
 
@@ -368,16 +390,39 @@ const flatten = ({data}) => {
 			return graph;
 		} 
 
+		// needs to not prefix base node because then flatten node can't run  next
 		const prefix = graph.id ? `${graph.id}/` : '';
 
-		const prefixed_nodes = graph.nodes.map(n => Object.assign({}, n, {id: `${prefix}${n.id}`}));
-
-		const flattened = prefixed_nodes.map(flatten_node);
-
-		return {
-			nodes: prefixed_nodes.concat(flattened.map(g => g.nodes).flat()).filter(n => n !== undefined),
-			edges: graph.edges.map(e => ({from: `${prefix}${e.from}`, to: `${prefix}${e.to}`, as: e.as})).concat(flattened.map(g => g.edges).flat()).filter(e => e !== undefined)
-		}
+		return graph.nodes
+			.map(n => Object.assign({}, n, {id: `${prefix}${n.id}`}))
+			.map(flatten_node)
+			.reduce((acc, n) => Object.assign({}, acc, {
+				nodes: acc.nodes.concat(n.nodes?.flat() ?? []), 
+				edges: acc.edges.map(e => n.nodes 
+					? e.to === n.id 
+						? Object.assign(e, { to: `${e.to}/in`})
+						: e.from === n.id
+						? Object.assign(e, {from: `${e.from}/out`})
+						: e
+					: e).flat().concat(n.edges).filter(e => e !== undefined)
+			}), Object.assign({}, graph, {
+				nodes: graph.nodes
+					.map(n => Object.assign({}, n, {id: `${prefix}${n.id}`})),
+				edges: graph.edges
+					.map(e => ({from: `${prefix}${e.from}`, to: `${prefix}${e.to}`, as: e.as}))
+			}));
+		// {
+		// 	nodes: prefixed_nodes
+		// 		.concat(flattened.map(g => g.nodes).flat())
+		// 		.filter(n => n !== undefined),
+		// 	edges: graph.edges
+		// 		.map(e => ({from: `${prefix}${e.from}`, to: `${prefix}${e.to}`, as: e.as}))
+		// 		.map(e => {
+		// 			if(nodes.find(n => n.id === e.from))
+		// 		})
+		// 		.concat(flattened.map(g => g.edges).flat())
+		// 		.filter(e => e !== undefined)
+		// }
 	}
 
 	return {graph: flatten_node(data.graph)};
@@ -424,7 +469,7 @@ const d3simulation = ({data}) => {
 const lib = { cm, _,
 	ha: { h, app, text, memo},  
 	iter: {reduce, map}, 
-	no: {map_path, flatten, unpackTypes, referenceExecute, hFn},
+	no: {map_path, flatten, unpackTypes, hFn, fnDef, fnReturn},
 	d3: {forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide},
 	util: {overIdx, overKey, overPath}
 };
