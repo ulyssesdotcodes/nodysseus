@@ -495,17 +495,17 @@ const d3simulation = ({data}) => {
 	const node_levels = [];
 
 	const bfs = (level) => (edge) => 
-		[[edge.to, level]].concat(input.edges.filter(e => e.from === edge.to).map(bfs(level + 1)).flat());
+		[[edge.to, level]].concat(data.graph.edges.filter(e => e.from === edge.to).map(bfs(level + 1)).flat());
 
-	const levels = Object.fromEntries(input.edges.filter(e => e.from === 'in').map(bfs(0)).flat());
+	const levels = Object.fromEntries(data.graph.edges.filter(e => e.from === 'in').map(bfs(0)).flat());
 	levels.min = Math.min(...Object.values(levels));
 	levels.max = Math.max(...Object.values(levels));
 
 	const simulation = 
 		lib.d3.forceSimulation(
 			data.graph.nodes
-				.map(([k, n], index) => Object.assign({}, typeof n === 'string' ? {type: n} : n, {
-					node_id: k,
+				.map((n, index) => Object.assign({}, typeof n === 'string' ? {type: n} : n, {
+					node_id: n.id,
 					x: window.innerWidth * (Math.random() *.5 + .25), 
 					y: window.innerHeight * (Math.random() * .5 + .25), 
 					index
@@ -515,7 +515,7 @@ const d3simulation = ({data}) => {
 			// 	.forceCenter(window.innerWidth * 0.5, window.innerHeight * 0.5)
 			// 	.strength(.01))
 			.force('links', lib.d3
-				.forceLink(input.edges.filter(e => e.from !== 'in' && e.to !== 'out')
+				.forceLink(data.graph.edges.filter(e => e.from !== 'in' && e.to !== 'out')
 					.map((e, index) => ({source: e.from, target: e.to, index})))
 				.distance(128)
 				.id(n => n.node_id))
@@ -532,7 +532,7 @@ const d3simulation = ({data}) => {
 const lib = { cm, _,
 	ha: { h, app, text, memo},  
 	iter: {reduce, map}, 
-	no: {map_path_fn, flatten, unpackTypes, hFn, fnDef, fnReturn, concatValues, iterate, verify},
+	no: {map_path_fn, flatten, unpackTypes, hFn, fnDef, fnReturn, concatValues, iterate, verify, d3simulation},
 	d3: {forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide},
 	util: {overIdx, overKey, overPath}
 };

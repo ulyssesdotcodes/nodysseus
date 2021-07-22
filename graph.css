@@ -1,0 +1,19 @@
+#graph {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 2;
+    justify-content: flex-start;
+    align-content: stretch;
+    background-color: #080804
+}
+
+#graph .node {
+    user-select: none
+}
+
+.tooltip {
+    position: absolute;
+    visibility: hidden;
+    max-width: 120px;
+    pointer-events: none;
+}

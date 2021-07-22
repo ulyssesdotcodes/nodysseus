@@ -39564,16 +39564,14 @@
     										id: "get_nodes",
     										type: "get",
     										get_index: [
-    											"graph",
     											"nodes"
     										]
     									},
     									{
-    										id: "get_edges",
+    										id: "get_links",
     										type: "get",
     										get_index: [
-    											"graph",
-    											"edges"
+    											"links"
     										]
     									},
     									{
@@ -39632,7 +39630,7 @@
     															{
     																id: "get_id",
     																type: "get",
-    																index: "node_id"
+    																get_index: "node_id"
     															},
     															{
     																id: "display_name",
@@ -39749,8 +39747,40 @@
     									},
     									{
     										id: "link_template",
-    										type: "h",
-    										dom_type: "line"
+    										nodes: [
+    											{
+    												id: "attrs",
+    												script: "return ({data}) => ({x1: data.source.x, y1: data.source.y, x2: input.target.x, y2: data.target.y, stroke: 'black'})"
+    											},
+    											{
+    												id: "line",
+    												type: "h",
+    												dom_type: "line"
+    											},
+    											{
+    												id: "in",
+    												type: "identity"
+    											},
+    											{
+    												id: "out",
+    												type: "identity"
+    											}
+    										],
+    										edges: [
+    											{
+    												from: "in",
+    												to: "attrs"
+    											},
+    											{
+    												from: "attrs",
+    												to: "line",
+    												as: "attrs"
+    											},
+    											{
+    												from: "line",
+    												to: "out"
+    											}
+    										]
     									},
     									{
     										id: "concat_links",
@@ -39762,7 +39792,7 @@
     									},
     									{
     										id: "concat_all",
-    										script: "return ({data}) => data.nodes && [].concat(data.links ?? [], data.nodes)"
+    										script: "return ({data}) => data.links && data.nodes && [].concat(data.links ?? [], data.nodes)"
     									},
     									{
     										id: "children_els",
@@ -39780,7 +39810,7 @@
     									},
     									{
     										from: "in",
-    										to: "get_edges"
+    										to: "get_links"
     									},
     									{
     										from: "get_nodes",
@@ -39788,7 +39818,7 @@
     										as: "target"
     									},
     									{
-    										from: "get_edges",
+    										from: "get_links",
     										to: "link_svgs",
     										as: "target"
     									},
@@ -39934,66 +39964,6 @@
     				}
     			},
     			{
-    				id: "apply_link_template",
-    				script: "return lib.no.apply_template(lib, self)",
-    				path: [
-    					"nodes",
-    					"node_editor",
-    					"nodes",
-    					"svgs",
-    					"nodes",
-    					"link_svgs",
-    					"nodes"
-    				],
-    				source_path: [
-    					"node_editor",
-    					"links"
-    				],
-    				template: {
-    					type: "execute",
-    					nodes: {
-    						get_input: {
-    							script: "return (state, input) => input.links[input.parent]"
-    						},
-    						attrs: {
-    							script: "return (state, input) => ({x1: input.source.x, y1: input.source.y, x2: input.target.x, y2: input.target.y, stroke: 'black'})"
-    						},
-    						line: {
-    							type: "h",
-    							dom_type: "line"
-    						}
-    					},
-    					edges: [
-    						{
-    							from: "in",
-    							to: "get_input"
-    						},
-    						{
-    							from: "get_input",
-    							to: "attrs"
-    						},
-    						{
-    							from: "attrs",
-    							to: "line",
-    							as: "attrs"
-    						},
-    						{
-    							from: "line",
-    							to: "out"
-    						}
-    					]
-    				}
-    			},
-    			{
-    				id: "apply_node_template_run",
-    				type: "run_fn",
-    				run_type: "aggregate"
-    			},
-    			{
-    				id: "simulate_layout",
-    				script: "return (state, input) => (state.has('simulation') ? state : state.set('simulation', lib.no.d3simulation(state, input))).get('simulation')"
-    			},
-    			{
     				id: "simulation_dispatch",
     				type: "compiled_fn",
     				nodes: [
@@ -40007,7 +39977,7 @@
     					},
     					{
     						id: "get_nodes",
-    						script: "return (state, input) => requestAnimationFrame(() => {if(!(input.dispatch && input.simulation && input.action)){ return } input.dispatch(input.action, { nodes: Object.fromEntries(input.simulation.nodes().map(n => [n.node_id, n])), links: input.simulation.force('links').links()  } ) })"
+    						script: "return (state, input) => requestAnimationFrame(() => {if(!(input.dispatch && input.simulation && input.action)){ return }  })"
     					}
     				],
     				edges: [
@@ -40017,34 +39987,6 @@
     					},
     					{
     						from: "get_nodes",
-    						to: "out"
-    					}
-    				]
-    			},
-    			{
-    				id: "simulation_subscription",
-    				type: "execute",
-    				nodes: [
-    					{
-    						id: "in",
-    						type: "identity"
-    					},
-    					{
-    						id: "out",
-    						type: "identity"
-    					},
-    					{
-    						id: "subscription",
-    						script: "return (state, input) => (dispatch, props) => { input.simulation.on('tick.ha', function(v){ input.fn({simulation: this, dispatch: dispatch, action: props.action})}); return () => input.simulation.on('.ha', null); }"
-    					}
-    				],
-    				edges: [
-    					{
-    						from: "in",
-    						to: "subscription"
-    					},
-    					{
-    						from: "subscription",
     						to: "out"
     					}
     				]
@@ -40070,8 +40012,40 @@
     		]
     	},
     	{
+    		id: "simulation_subscription",
+    		nodes: [
+    			{
+    				id: "in",
+    				type: "identity"
+    			},
+    			{
+    				id: "out",
+    				type: "identity"
+    			},
+    			{
+    				id: "subscription",
+    				script: "return ({data}) => (dispatch, props) => { data.simulation.on('tick.ha', function(v){ dispatch(s => s, { nodes: Object.fromEntries(data.simulation.nodes().map(n => [n.node_id, n])), links: data.simulation.force('links').links()  } ) }); return () => input.simulation.on('.ha', null); }"
+    			}
+    		],
+    		edges: [
+    			{
+    				from: "in",
+    				to: "subscription"
+    			},
+    			{
+    				from: "subscription",
+    				to: "out",
+    				as: "subscription"
+    			}
+    		]
+    	},
+    	{
+    		id: "simulate_layout",
+    		script: "return ({state, data}) => (state.has('simulation') ? state : state.set('simulation', lib.no.d3simulation({data, state}))).get('simulation')"
+    	},
+    	{
     		id: "hyperapp",
-    		script: "return ({lib, state, data}) => { if(!state.has('dispatch') && data.view && data.dom){ state.set('dispatch', lib.ha.app({ init: data.init ?? {}, view: (s) => data.view(s).el ?? lib.ha.text('loading...'), node: data.dom })) }}"
+    		script: "return ({lib, state, data}) => { if(!state.has('dispatch') && data.view && data.dom && data.subscription){ state.set('dispatch', lib.ha.app({ init: data.init ?? {nodes: [], links: []}, view: (s) => data.view(s).el ?? lib.ha.text('loading...'), node: data.dom, subscriptions: () => [[data.subscription]] })) }}"
     	},
     	{
     		id: "content_el_selector",
@@ -40104,9 +40078,6 @@
     		constant: {
     			script: "return () => self.value"
     		},
-    		merge: {
-    			script: "return (state, input) => state.set('input', Object.assign({}, state.get('input') ?? {}, input)).get('input')"
-    		},
     		log: {
     			script: "return ({data}) => console.log(data)"
     		},
@@ -40116,23 +40087,11 @@
     		concat: {
     			script: "return lib.no.concatValues"
     		},
-    		fold: {
-    			script: "return (state, input) => (val) => lib._.reduce(lib.no.aggregate_fn(lib, self)(state, input), (v, fn) => fn(v), val)"
-    		},
     		h: {
     			script: "return lib.no.hFn"
     		},
     		h_text: {
     			script: "return ({data}) => lib.ha.text(data.text)"
-    		},
-    		compiled_fn: {
-    			script: "const compiled_fn = lib.no.default_fn(lib, self); return (state, fn_input) => (input) => { const result = compiled_fn(state, lib._.merge(fn_input, input)); return (result === undefined ? state : state.set('output', result)).get('output') }"
-    		},
-    		apply_fn: {
-    			script: "return (state, input) => lib.util.overPath(self.path)(n => n.map(input.fn))(input.target)"
-    		},
-    		merge_values: {
-    			script: "return (state, input) => lib.util.overPath(self.path, {})(v => lib._.merge(v, input.values))"
     		},
     		fn_def: {
     			script: "return lib.no.fnDef"
@@ -40206,6 +40165,19 @@
     	{
     		from: "replace_node_types",
     		to: "hyperapp_view"
+    	},
+    	{
+    		from: "replace_node_types",
+    		to: "simulate_layout"
+    	},
+    	{
+    		from: "simulate_layout",
+    		to: "simulation_subscription",
+    		as: "simulation"
+    	},
+    	{
+    		from: "simulation_subscription",
+    		to: "hyperapp"
     	},
     	{
     		from: "replace_node_types",
@@ -48053,10 +48025,47 @@
     	return {graph: flatten_node(data.graph)};
     };
 
+    const d3simulation = ({data}) => {
+
+    	const bfs = (level) => (edge) => 
+    		[[edge.to, level]].concat(data.graph.edges.filter(e => e.from === edge.to).map(bfs(level + 1)).flat());
+
+    	const levels = Object.fromEntries(data.graph.edges.filter(e => e.from === 'in').map(bfs(0)).flat());
+    	levels.min = Math.min(...Object.values(levels));
+    	levels.max = Math.max(...Object.values(levels));
+
+    	const simulation = 
+    		lib.d3.forceSimulation(
+    			data.graph.nodes
+    				.map((n, index) => Object.assign({}, typeof n === 'string' ? {type: n} : n, {
+    					node_id: n.id,
+    					x: window.innerWidth * (Math.random() *.5 + .25), 
+    					y: window.innerHeight * (Math.random() * .5 + .25), 
+    					index
+    				})))
+    			.force('charge', lib.d3.forceManyBody().strength(-8))
+    			// .force('center', lib.d3
+    			// 	.forceCenter(window.innerWidth * 0.5, window.innerHeight * 0.5)
+    			// 	.strength(.01))
+    			.force('links', lib.d3
+    				.forceLink(data.graph.edges.filter(e => e.from !== 'in' && e.to !== 'out')
+    					.map((e, index) => ({source: e.from, target: e.to, index})))
+    				.distance(128)
+    				.id(n => n.node_id))
+    			.force('link_direction', lib.d3
+    				.forceY()
+    				.y((n) => window.innerHeight * (0.15 + (Math.random() * 0.2) + 0.5 * (levels[n.node_id] ?? 0) / (levels.max - levels.min)))
+    				.strength(0.5))
+    			.force('collide', lib.d3.forceCollide(64));
+    //			.alphaMin(.1); // changes how long the simulation will run. dfault is 0.001 
+
+    	return simulation;
+    };
+
     const lib = { cm, _,
     	ha: { h, app, text, memo},  
     	iter: {reduce, map}, 
-    	no: {map_path_fn, flatten, unpackTypes, hFn, fnDef, fnReturn, concatValues, iterate, verify},
+    	no: {map_path_fn, flatten, unpackTypes, hFn, fnDef, fnReturn, concatValues, iterate, verify, d3simulation},
     	d3: {forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide},
     	util: {overIdx, overKey, overPath}
     };
