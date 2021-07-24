@@ -2506,7 +2506,7 @@
     // Each pair of elements represents a range, as an offet from the
     // previous range and a length. Numbers are in base-36, with the empty
     // string being a shorthand for 1.
-    let extend$1 = "lc,34,7n,7,7b,19,,,,2,,2,,,20,b,1c,l,g,,2t,7,2,6,2,2,,4,z,,u,r,2j,b,1m,9,9,,o,4,,9,,3,,5,17,3,3b,f,,w,1j,,,,4,8,4,,3,7,a,2,t,,1m,,,,2,4,8,,9,,a,2,q,,2,2,1l,,4,2,4,2,2,3,3,,u,2,3,,b,2,1l,,4,5,,2,4,,k,2,m,6,,,1m,,,2,,4,8,,7,3,a,2,u,,1n,,,,c,,9,,14,,3,,1l,3,5,3,,4,7,2,b,2,t,,1m,,2,,2,,3,,5,2,7,2,b,2,s,2,1l,2,,,2,4,8,,9,,a,2,t,,20,,4,,2,3,,,8,,29,,2,7,c,8,2q,,2,9,b,6,22,2,r,,,,,,1j,e,,5,,2,5,b,,10,9,,2u,4,,6,,2,2,2,p,2,4,3,g,4,d,,2,2,6,,f,,jj,3,qa,3,t,3,t,2,u,2,1s,2,,7,8,,2,b,9,,19,3,3b,2,y,,3a,3,4,2,9,,6,3,63,2,2,,1m,,,7,,,,,2,8,6,a,2,,1c,h,1r,4,1c,7,,,5,,14,9,c,2,w,4,2,2,,3,1k,,,2,3,,,3,1m,8,2,2,48,3,,d,,7,4,,6,,3,2,5i,1m,,5,ek,,5f,x,2da,3,3x,,2o,w,fe,6,2x,2,n9w,4,,a,w,2,28,2,7k,,3,,4,,p,2,5,,47,2,q,i,d,,12,8,p,b,1a,3,1c,,2,4,2,2,13,,1v,6,2,2,2,2,c,,8,,1b,,1f,,,3,2,2,5,2,,,16,2,8,,6m,,2,,4,,fn4,,kh,g,g,g,a6,2,gt,,6a,,45,5,1ae,3,,2,5,4,14,3,4,,4l,2,fx,4,ar,2,49,b,4w,,1i,f,1k,3,1d,4,2,2,1x,3,10,5,,8,1q,,c,2,1g,9,a,4,2,,2n,3,2,,,2,6,,4g,,3,8,l,2,1l,2,,,,,m,,e,7,3,5,5f,8,2,3,,,n,,29,,2,6,,,2,,,2,,2,6j,,2,4,6,2,,2,r,2,2d,8,2,,,2,2y,,,,2,6,,,2t,3,2,4,,5,77,9,,2,6t,,a,2,,,4,,40,4,2,2,4,,w,a,14,6,2,4,8,,9,6,2,3,1a,d,,2,ba,7,,6,,,2a,m,2,7,,2,,2,3e,6,3,,,2,,7,,,20,2,3,,,,9n,2,f0b,5,1n,7,t4,,1r,4,29,,f5k,2,43q,,,3,4,5,8,8,2,7,u,4,44,3,1iz,1j,4,1e,8,,e,,m,5,,f,11s,7,,h,2,7,,2,,5,79,7,c5,4,15s,7,31,7,240,5,gx7k,2o,3k,6o".split(",").map(s => s ? parseInt(s, 36) : 1);
+    let extend$1 = /*@__PURE__*/"lc,34,7n,7,7b,19,,,,2,,2,,,20,b,1c,l,g,,2t,7,2,6,2,2,,4,z,,u,r,2j,b,1m,9,9,,o,4,,9,,3,,5,17,3,3b,f,,w,1j,,,,4,8,4,,3,7,a,2,t,,1m,,,,2,4,8,,9,,a,2,q,,2,2,1l,,4,2,4,2,2,3,3,,u,2,3,,b,2,1l,,4,5,,2,4,,k,2,m,6,,,1m,,,2,,4,8,,7,3,a,2,u,,1n,,,,c,,9,,14,,3,,1l,3,5,3,,4,7,2,b,2,t,,1m,,2,,2,,3,,5,2,7,2,b,2,s,2,1l,2,,,2,4,8,,9,,a,2,t,,20,,4,,2,3,,,8,,29,,2,7,c,8,2q,,2,9,b,6,22,2,r,,,,,,1j,e,,5,,2,5,b,,10,9,,2u,4,,6,,2,2,2,p,2,4,3,g,4,d,,2,2,6,,f,,jj,3,qa,3,t,3,t,2,u,2,1s,2,,7,8,,2,b,9,,19,3,3b,2,y,,3a,3,4,2,9,,6,3,63,2,2,,1m,,,7,,,,,2,8,6,a,2,,1c,h,1r,4,1c,7,,,5,,14,9,c,2,w,4,2,2,,3,1k,,,2,3,,,3,1m,8,2,2,48,3,,d,,7,4,,6,,3,2,5i,1m,,5,ek,,5f,x,2da,3,3x,,2o,w,fe,6,2x,2,n9w,4,,a,w,2,28,2,7k,,3,,4,,p,2,5,,47,2,q,i,d,,12,8,p,b,1a,3,1c,,2,4,2,2,13,,1v,6,2,2,2,2,c,,8,,1b,,1f,,,3,2,2,5,2,,,16,2,8,,6m,,2,,4,,fn4,,kh,g,g,g,a6,2,gt,,6a,,45,5,1ae,3,,2,5,4,14,3,4,,4l,2,fx,4,ar,2,49,b,4w,,1i,f,1k,3,1d,4,2,2,1x,3,10,5,,8,1q,,c,2,1g,9,a,4,2,,2n,3,2,,,2,6,,4g,,3,8,l,2,1l,2,,,,,m,,e,7,3,5,5f,8,2,3,,,n,,29,,2,6,,,2,,,2,,2,6j,,2,4,6,2,,2,r,2,2d,8,2,,,2,2y,,,,2,6,,,2t,3,2,4,,5,77,9,,2,6t,,a,2,,,4,,40,4,2,2,4,,w,a,14,6,2,4,8,,9,6,2,3,1a,d,,2,ba,7,,6,,,2a,m,2,7,,2,,2,3e,6,3,,,2,,7,,,20,2,3,,,,9n,2,f0b,5,1n,7,t4,,1r,4,29,,f5k,2,43q,,,3,4,5,8,8,2,7,u,4,44,3,1iz,1j,4,1e,8,,e,,m,5,,f,11s,7,,h,2,7,,2,,5,79,7,c5,4,15s,7,31,7,240,5,gx7k,2o,3k,6o".split(",").map(s => s ? parseInt(s, 36) : 1);
     // Convert offsets into absolute values
     for (let i = 1; i < extend$1.length; i++)
         extend$1[i] += extend$1[i - 1];
@@ -2520,11 +2520,13 @@
         return code >= 0x1F1E6 && code <= 0x1F1FF;
     }
     const ZWJ = 0x200d;
-    /// Returns a next grapheme cluster break _after_ (not equal to)
-    /// `pos`, if `forward` is true, or before otherwise. Returns `pos`
-    /// itself if no further cluster break is available in the string.
-    /// Moves across surrogate pairs, extending characters, characters
-    /// joined with zero-width joiners, and flag emoji.
+    /**
+    Returns a next grapheme cluster break _after_ (not equal to)
+    `pos`, if `forward` is true, or before otherwise. Returns `pos`
+    itself if no further cluster break is available in the string.
+    Moves across surrogate pairs, extending characters, characters
+    joined with zero-width joiners, and flag emoji.
+    */
     function findClusterBreak(str, pos, forward = true) {
         return (forward ? nextClusterBreak : prevClusterBreak)(str, pos);
     }
@@ -2570,9 +2572,11 @@
     }
     function surrogateLow(ch) { return ch >= 0xDC00 && ch < 0xE000; }
     function surrogateHigh(ch) { return ch >= 0xD800 && ch < 0xDC00; }
-    /// Find the code point at the given position in a string (like the
-    /// [`codePointAt`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/codePointAt)
-    /// string method).
+    /**
+    Find the code point at the given position in a string (like the
+    [`codePointAt`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/codePointAt)
+    string method).
+    */
     function codePointAt(str, pos) {
         let code0 = str.charCodeAt(pos);
         if (!surrogateHigh(code0) || pos + 1 == str.length)
@@ -2582,23 +2586,29 @@
             return code0;
         return ((code0 - 0xd800) << 10) + (code1 - 0xdc00) + 0x10000;
     }
-    /// Given a Unicode codepoint, return the JavaScript string that
-    /// respresents it (like
-    /// [`String.fromCodePoint`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/fromCodePoint)).
+    /**
+    Given a Unicode codepoint, return the JavaScript string that
+    respresents it (like
+    [`String.fromCodePoint`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/fromCodePoint)).
+    */
     function fromCodePoint(code) {
         if (code <= 0xffff)
             return String.fromCharCode(code);
         code -= 0x10000;
         return String.fromCharCode((code >> 10) + 0xd800, (code & 1023) + 0xdc00);
     }
-    /// The first character that takes up two positions in a JavaScript
-    /// string. It is often useful to compare with this after calling
-    /// `codePointAt`, to figure out whether your character takes up 1 or
-    /// 2 index positions.
+    /**
+    The first character that takes up two positions in a JavaScript
+    string. It is often useful to compare with this after calling
+    `codePointAt`, to figure out whether your character takes up 1 or
+    2 index positions.
+    */
     function codePointSize(code) { return code < 0x10000 ? 1 : 2; }
 
-    /// Count the column position at the given offset into the string,
-    /// taking extending characters and tab size into account.
+    /**
+    Count the column position at the given offset into the string,
+    taking extending characters and tab size into account.
+    */
     function countColumn(string, n, tabSize) {
         for (let i = 0; i < string.length;) {
             if (string.charCodeAt(i) == 9) {
@@ -2612,35 +2622,52 @@
         }
         return n;
     }
-    /// Find the offset that corresponds to the given column position in a
-    /// string, taking extending characters and tab size into account.
-    function findColumn(string, n, col, tabSize) {
-        for (let i = 0; i < string.length;) {
+    /**
+    Find the offset that corresponds to the given column position in a
+    string, taking extending characters and tab size into account.
+    */
+    function findColumn(string, col, tabSize) {
+        let _compat = arguments[3];
+        if (_compat != null) {
+            col = tabSize;
+            tabSize = _compat;
+        } // FIXME remove at next major version
+        for (let i = 0, n = 0; i < string.length;) {
             if (n >= col)
-                return { offset: i, leftOver: 0 };
+                return i;
             n += string.charCodeAt(i) == 9 ? tabSize - (n % tabSize) : 1;
             i = findClusterBreak(string, i);
         }
-        return { offset: string.length, leftOver: col - n };
+        return string.length;
     }
 
-    /// The data structure for documents.
+    /**
+    The data structure for documents.
+    */
     class Text$1 {
-        /// @internal
+        /**
+        @internal
+        */
         constructor() { }
-        /// Get the line description around the given position.
+        /**
+        Get the line description around the given position.
+        */
         lineAt(pos) {
             if (pos < 0 || pos > this.length)
                 throw new RangeError(`Invalid position ${pos} in document of length ${this.length}`);
             return this.lineInner(pos, false, 1, 0);
         }
-        /// Get the description for the given (1-based) line number.
+        /**
+        Get the description for the given (1-based) line number.
+        */
         line(n) {
             if (n < 1 || n > this.lines)
                 throw new RangeError(`Invalid line number ${n} in ${this.lines}-line document`);
             return this.lineInner(n, true, 1, 0);
         }
-        /// Replace a range of the text with the given content.
+        /**
+        Replace a range of the text with the given content.
+        */
         replace(from, to, text) {
             let parts = [];
             this.decompose(0, from, parts, 2 /* To */);
@@ -2649,17 +2676,23 @@
             this.decompose(to, this.length, parts, 1 /* From */);
             return TextNode.from(parts, this.length - (to - from) + text.length);
         }
-        /// Append another document to this one.
+        /**
+        Append another document to this one.
+        */
         append(other) {
             return this.replace(this.length, this.length, other);
         }
-        /// Retrieve the text between the given points.
+        /**
+        Retrieve the text between the given points.
+        */
         slice(from, to = this.length) {
             let parts = [];
             this.decompose(from, to, parts, 0);
             return TextNode.from(parts, to - from);
         }
-        /// Test whether this text is equal to another instance.
+        /**
+        Test whether this text is equal to another instance.
+        */
         eq(other) {
             if (other == this)
                 return true;
@@ -2675,24 +2708,34 @@
                     return true;
             }
         }
-        /// Iterate over the text. When `dir` is `-1`, iteration happens
-        /// from end to start. This will return lines and the breaks between
-        /// them as separate strings, and for long lines, might split lines
-        /// themselves into multiple chunks as well.
+        /**
+        Iterate over the text. When `dir` is `-1`, iteration happens
+        from end to start. This will return lines and the breaks between
+        them as separate strings, and for long lines, might split lines
+        themselves into multiple chunks as well.
+        */
         iter(dir = 1) { return new RawTextCursor(this, dir); }
-        /// Iterate over a range of the text. When `from` > `to`, the
-        /// iterator will run in reverse.
+        /**
+        Iterate over a range of the text. When `from` > `to`, the
+        iterator will run in reverse.
+        */
         iterRange(from, to = this.length) { return new PartialTextCursor(this, from, to); }
-        /// @internal
+        /**
+        @internal
+        */
         toString() { return this.sliceString(0); }
-        /// Convert the document to an array of lines (which can be
-        /// deserialized again via [`Text.of`](#text.Text^of)).
+        /**
+        Convert the document to an array of lines (which can be
+        deserialized again via [`Text.of`](https://codemirror.net/6/docs/ref/#text.Text^of)).
+        */
         toJSON() {
             let lines = [];
             this.flatten(lines);
             return lines;
         }
-        /// Create a `Text` instance for the given array of lines.
+        /**
+        Create a `Text` instance for the given array of lines.
+        */
         static of(text) {
             if (text.length == 0)
                 throw new RangeError("A document must have at least one line");
@@ -2905,7 +2948,7 @@
             return chunked.length == 1 ? chunked[0] : new TextNode(chunked, length);
         }
     }
-    Text$1.empty = new TextLeaf([""], 0);
+    Text$1.empty = /*@__PURE__*/new TextLeaf([""], 0);
     function textLength(text) {
         let length = -1;
         for (let line of text)
@@ -2941,28 +2984,29 @@
             this.lineBreak = false;
             this.value = "";
             this.nodes = [text];
-            this.offsets = [dir > 0 ? 0 : text instanceof TextLeaf ? text.text.length : text.children.length];
+            this.offsets = [dir > 0 ? 1 : (text instanceof TextLeaf ? text.text.length : text.children.length) << 1];
         }
-        next(skip = 0) {
+        nextInner(skip, dir) {
+            this.done = this.lineBreak = false;
             for (;;) {
                 let last = this.nodes.length - 1;
-                if (last < 0) {
-                    this.done = true;
-                    this.value = "";
-                    this.lineBreak = false;
-                    return this;
-                }
-                let top = this.nodes[last], offset = this.offsets[last];
+                let top = this.nodes[last], offsetValue = this.offsets[last], offset = offsetValue >> 1;
                 let size = top instanceof TextLeaf ? top.text.length : top.children.length;
-                if (offset == (this.dir > 0 ? size : 0)) {
+                if (offset == (dir > 0 ? size : 0)) {
+                    if (last == 0) {
+                        this.done = true;
+                        this.value = "";
+                        return this;
+                    }
+                    if (dir > 0)
+                        this.offsets[last - 1]++;
                     this.nodes.pop();
                     this.offsets.pop();
                 }
-                else if (!this.lineBreak && offset != (this.dir > 0 ? 0 : size)) {
-                    // Internal offset with lineBreak == false means we have to
-                    // count the line break at this position
-                    this.lineBreak = true;
+                else if ((offsetValue & 1) == (dir > 0 ? 0 : 1)) {
+                    this.offsets[last] += dir;
                     if (skip == 0) {
+                        this.lineBreak = true;
                         this.value = "\n";
                         return this;
                     }
@@ -2970,84 +3014,106 @@
                 }
                 else if (top instanceof TextLeaf) {
                     // Move to the next string
-                    let next = top.text[offset - (this.dir < 0 ? 1 : 0)];
-                    this.offsets[last] = (offset += this.dir);
-                    this.lineBreak = false;
+                    let next = top.text[offset + (dir < 0 ? -1 : 0)];
+                    this.offsets[last] += dir;
                     if (next.length > Math.max(0, skip)) {
-                        this.value = skip == 0 ? next : this.dir > 0 ? next.slice(skip) : next.slice(0, next.length - skip);
+                        this.value = skip == 0 ? next : dir > 0 ? next.slice(skip) : next.slice(0, next.length - skip);
                         return this;
                     }
                     skip -= next.length;
                 }
                 else {
-                    let next = top.children[this.dir > 0 ? offset : offset - 1];
-                    this.offsets[last] = offset + this.dir;
-                    this.lineBreak = false;
+                    let next = top.children[offset + (dir < 0 ? -1 : 0)];
                     if (skip > next.length) {
                         skip -= next.length;
+                        this.offsets[last] += dir;
                     }
                     else {
+                        if (dir < 0)
+                            this.offsets[last]--;
                         this.nodes.push(next);
-                        this.offsets.push(this.dir > 0 ? 0 : next instanceof TextLeaf ? next.text.length : next.children.length);
+                        this.offsets.push(dir > 0 ? 1 : (next instanceof TextLeaf ? next.text.length : next.children.length) << 1);
                     }
                 }
             }
+        }
+        next(skip = 0) {
+            if (skip < 0) {
+                this.nextInner(-skip, (-this.dir));
+                skip = this.value.length;
+            }
+            return this.nextInner(skip, this.dir);
         }
     }
     class PartialTextCursor {
         constructor(text, start, end) {
             this.value = "";
+            this.done = false;
             this.cursor = new RawTextCursor(text, start > end ? -1 : 1);
-            if (start > end) {
-                this.skip = text.length - start;
-                this.limit = start - end;
-            }
-            else {
-                this.skip = start;
-                this.limit = end - start;
-            }
+            this.pos = start > end ? text.length : 0;
+            this.from = Math.min(start, end);
+            this.to = Math.max(start, end);
         }
-        next(skip = 0) {
-            if (this.limit <= 0) {
-                this.limit = -1;
+        nextInner(skip, dir) {
+            if (dir < 0 ? this.pos <= this.from : this.pos >= this.to) {
+                this.value = "";
+                this.done = true;
+                return this;
             }
-            else {
-                let { value, lineBreak, done } = this.cursor.next(this.skip + skip);
-                this.skip = 0;
-                this.value = value;
-                let len = lineBreak ? 1 : value.length;
-                if (len > this.limit)
-                    this.value = this.cursor.dir > 0 ? value.slice(0, this.limit) : value.slice(len - this.limit);
-                if (done || this.value.length == 0)
-                    this.limit = -1;
-                else
-                    this.limit -= this.value.length;
-            }
+            this.done = false;
+            skip += Math.max(0, dir < 0 ? this.pos - this.to : this.from - this.pos);
+            let limit = dir < 0 ? this.pos - this.from : this.to - this.pos;
+            if (skip > limit)
+                skip = limit;
+            limit -= skip;
+            let { value } = this.cursor.next(skip);
+            this.pos += (value.length + skip) * dir;
+            this.value = value.length <= limit ? value : dir < 0 ? value.slice(value.length - limit) : value.slice(0, limit);
             return this;
         }
-        get lineBreak() { return this.cursor.lineBreak; }
-        get done() { return this.limit < 0; }
+        next(skip = 0) {
+            if (skip < 0)
+                skip = Math.max(skip, this.from - this.pos);
+            else if (skip > 0)
+                skip = Math.min(skip, this.to - this.pos);
+            return this.nextInner(skip, this.cursor.dir);
+        }
+        get lineBreak() { return this.cursor.lineBreak && this.value != ""; }
     }
-    /// This type describes a line in the document. It is created
-    /// on-demand when lines are [queried](#text.Text.lineAt).
+    /**
+    This type describes a line in the document. It is created
+    on-demand when lines are [queried](https://codemirror.net/6/docs/ref/#text.Text.lineAt).
+    */
     class Line$1 {
-        /// @internal
+        /**
+        @internal
+        */
         constructor(
-        /// The position of the start of the line.
+        /**
+        The position of the start of the line.
+        */
         from, 
-        /// The position at the end of the line (_before_ the line break,
-        /// or at the end of document for the last line).
+        /**
+        The position at the end of the line (_before_ the line break,
+        or at the end of document for the last line).
+        */
         to, 
-        /// This line's line number (1-based).
+        /**
+        This line's line number (1-based).
+        */
         number, 
-        /// The line's content.
+        /**
+        The line's content.
+        */
         text) {
             this.from = from;
             this.to = to;
             this.number = number;
             this.text = text;
         }
-        /// The length of the line (not including any line break after it).
+        /**
+        The length of the line (not including any line break after it).
+        */
         get length() { return this.to - this.from; }
     }
 
@@ -6543,6 +6609,19 @@
         elt.dispatchEvent(up);
         return down.defaultPrevented || up.defaultPrevented;
     }
+    let _plainTextSupported = null;
+    function contentEditablePlainTextSupported() {
+        if (_plainTextSupported == null) {
+            _plainTextSupported = false;
+            let dummy = document.createElement("div");
+            try {
+                dummy.contentEditable = "plaintext-only";
+                _plainTextSupported = dummy.contentEditable == "plaintext-only";
+            }
+            catch (_) { }
+        }
+        return _plainTextSupported;
+    }
 
     class DOMPos {
         constructor(node, offset, precise = true) {
@@ -9048,7 +9127,7 @@
         }
         return { node, offset: closestOffset > -1 ? closestOffset : generalSide > 0 ? node.nodeValue.length : 0 };
     }
-    function posAtCoords(view, { x, y }, bias = -1) {
+    function posAtCoords(view, { x, y }, precise, bias = -1) {
         let content = view.contentDOM.getBoundingClientRect(), block;
         let halfLine = view.defaultLineHeight / 2;
         for (let bounced = false;;) {
@@ -9057,7 +9136,7 @@
                 bias = block.top > y ? -1 : 1;
                 y = Math.min(block.bottom - halfLine, Math.max(block.top + halfLine, y));
                 if (bounced)
-                    return null;
+                    return precise ? null : 0;
                 else
                     bounced = true;
             }
@@ -9066,13 +9145,13 @@
             y = bias > 0 ? block.bottom + halfLine : block.top - halfLine;
         }
         let lineStart = block.from;
+        x = Math.max(content.left + 1, Math.min(content.right - 1, x));
         // If this is outside of the rendered viewport, we can't determine a position
         if (lineStart < view.viewport.from)
-            return view.viewport.from == 0 ? 0 : null;
+            return view.viewport.from == 0 ? 0 : posAtCoordsImprecise(view, content, block, x, y);
         if (lineStart > view.viewport.to)
-            return view.viewport.to == view.state.doc.length ? view.state.doc.length : null;
+            return view.viewport.to == view.state.doc.length ? view.state.doc.length : posAtCoordsImprecise(view, content, block, x, y);
         // Clip x to the viewport sides
-        x = Math.max(content.left + 1, Math.min(content.right - 1, x));
         let root = view.root, element = root.elementFromPoint(x, y);
         // There's visible editor content under the point, so we can try
         // using caret(Position|Range)FromPoint as a shortcut
@@ -9098,6 +9177,15 @@
             ({ node, offset } = domPosAtCoords(line.dom, x, y));
         }
         return view.docView.posFromDOM(node, offset);
+    }
+    function posAtCoordsImprecise(view, contentRect, block, x, y) {
+        let into = Math.round((x - contentRect.left) * view.defaultCharacterWidth);
+        if (view.lineWrapping && block.height > view.defaultLineHeight * 1.5) {
+            let line = Math.floor((y - block.top) / view.defaultLineHeight);
+            into += line * view.viewState.heightOracle.lineLength;
+        }
+        let content = view.state.sliceDoc(block.from, block.to);
+        return block.from + findColumn(content, into, view.state.tabSize);
     }
     // In case of a high line height, Safari's caretRangeFromPoint treats
     // the space between lines as belonging to the last character of the
@@ -9161,48 +9249,31 @@
         };
     }
     function moveVertically(view, start, forward, distance) {
-        var _a;
         let startPos = start.head, dir = forward ? 1 : -1;
         if (startPos == (forward ? view.state.doc.length : 0))
             return EditorSelection.cursor(startPos);
+        let goal = start.goalColumn, startY;
+        let rect = view.contentDOM.getBoundingClientRect();
         let startCoords = view.coordsAtPos(startPos);
         if (startCoords) {
-            let rect = view.dom.getBoundingClientRect();
-            let goal = (_a = start.goalColumn) !== null && _a !== void 0 ? _a : startCoords.left - rect.left;
-            let resolvedGoal = rect.left + goal;
-            let dist = distance !== null && distance !== void 0 ? distance : (view.defaultLineHeight >> 1);
-            for (let startY = dir < 0 ? startCoords.top : startCoords.bottom, extra = 0; extra < 50; extra += 10) {
-                let pos = posAtCoords(view, { x: resolvedGoal, y: startY + (dist + extra) * dir }, dir);
-                if (pos == null)
-                    break;
-                if (pos != startPos)
-                    return EditorSelection.cursor(pos, undefined, undefined, goal);
-            }
-        }
-        // Outside of the drawn viewport, use a crude column-based approach
-        let { doc } = view.state, line = doc.lineAt(startPos), tabSize = view.state.tabSize;
-        let goal = start.goalColumn, goalCol = 0;
-        if (goal == null) {
-            for (const iter = doc.iterRange(line.from, startPos); !iter.next().done;)
-                goalCol = countColumn(iter.value, goalCol, tabSize);
-            goal = goalCol * view.defaultCharacterWidth;
+            if (goal == null)
+                goal = startCoords.left - rect.left;
+            startY = dir < 0 ? startCoords.top : startCoords.bottom;
         }
         else {
-            goalCol = Math.round(goal / view.defaultCharacterWidth);
+            let line = view.viewState.lineAt(startPos, view.dom.getBoundingClientRect().top);
+            if (goal == null)
+                goal = Math.min(rect.right - rect.left, view.defaultCharacterWidth * (startPos - line.from));
+            startY = dir < 0 ? line.top : line.bottom;
         }
-        if (dir < 0 && line.from == 0)
-            return EditorSelection.cursor(0);
-        else if (dir > 0 && line.to == doc.length)
-            return EditorSelection.cursor(line.to);
-        let otherLine = doc.line(line.number + dir);
-        let result = otherLine.from;
-        let seen = 0;
-        for (const iter = doc.iterRange(otherLine.from, otherLine.to); seen >= goalCol && !iter.next().done;) {
-            const { offset, leftOver } = findColumn(iter.value, seen, goalCol, tabSize);
-            seen = goalCol - leftOver;
-            result += offset;
+        let resolvedGoal = rect.left + goal;
+        let dist = distance !== null && distance !== void 0 ? distance : (view.defaultLineHeight >> 1);
+        for (let extra = 0;; extra += 10) {
+            let curY = startY + (dist + extra) * dir;
+            let pos = posAtCoords(view, { x: resolvedGoal, y: curY }, false, dir);
+            if (curY < rect.top || curY > rect.bottom || (dir < 0 ? pos < startPos : pos > startPos))
+                return EditorSelection.cursor(pos, undefined, undefined, goal);
         }
-        return EditorSelection.cursor(result, undefined, undefined, goal);
     }
     function skipAtoms(view, oldPos, pos) {
         let atoms = view.pluginField(PluginField.atomicRanges);
@@ -9605,9 +9676,7 @@
         return before && insideY(y, before) ? -1 : 1;
     }
     function queryPos(view, event) {
-        let pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-        if (pos == null)
-            return null;
+        let pos = view.posAtCoords({ x: event.clientX, y: event.clientY }, false);
         return { pos, bias: findPositionSide(view, pos, event.clientX, event.clientY) };
     }
     const BadMouseDetail = browser.ie && browser.ie_version <= 11;
@@ -11007,6 +11076,7 @@
         },
         ".cm-lineWrapping": {
             whiteSpace: "pre-wrap",
+            wordBreak: "break-word",
             overflowWrap: "anywhere"
         },
         "&light .cm-content": { caretColor: "black" },
@@ -11339,7 +11409,8 @@
                     this.ignore(() => this.view.docView.sync());
                     this.view.docView.dirty = 0 /* Not */;
                 }
-                this.view.docView.updateSelection();
+                if (newSel)
+                    this.view.docView.updateSelection();
             }
             this.clearSelection();
         }
@@ -11844,10 +11915,12 @@
         /**
         @internal
         */
-        measure() {
+        measure(flush = true) {
             if (this.measureScheduled > -1)
                 cancelAnimationFrame(this.measureScheduled);
             this.measureScheduled = -1; // Prevent requestMeasure calls from scheduling another animation frame
+            if (flush)
+                this.observer.flush();
             let updated = null;
             try {
                 for (let i = 0;; i++) {
@@ -11928,7 +12001,7 @@
                 spellcheck: "false",
                 autocorrect: "off",
                 autocapitalize: "off",
-                contenteditable: String(this.state.facet(editable)),
+                contenteditable: !this.state.facet(editable) ? "false" : contentEditablePlainTextSupported() ? "plaintext-only" : "true",
                 class: "cm-content",
                 style: `${browser.tabSize}: ${this.state.tabSize}`,
                 role: "textbox",
@@ -11957,7 +12030,7 @@
             if (this.updateState == 2 /* Updating */)
                 throw new Error("Reading the editor layout isn't allowed during an update");
             if (this.updateState == 0 /* Idle */ && this.measureScheduled > -1)
-                this.measure();
+                this.measure(false);
         }
         /**
         Schedule a layout measurement, optionally providing callbacks to
@@ -12138,13 +12211,9 @@
         posAtDOM(node, offset = 0) {
             return this.docView.posFromDOM(node, offset);
         }
-        /**
-        Get the document position at the given screen coordinates.
-        Returns null if no valid position could be found.
-        */
-        posAtCoords(coords) {
+        posAtCoords(coords, precise = true) {
             this.readMeasured();
-            return posAtCoords(this, coords);
+            return posAtCoords(this, coords, precise);
         }
         /**
         Get the screen coordinates at the given document position.
@@ -15976,16 +16045,22 @@
             (option.type ? 1 : 0);
     }
     function sortOptions(active, state) {
-        let options = [];
+        let options = [], i = 0;
         for (let a of active)
             if (a.hasResult()) {
-                let matcher = new FuzzyMatcher(state.sliceDoc(a.from, a.to)), match;
-                for (let option of a.result.options)
-                    if (match = matcher.match(option.label)) {
-                        if (option.boost != null)
-                            match[0] += option.boost;
-                        options.push(new Option(option, a, match));
-                    }
+                if (a.result.filter === false) {
+                    for (let option of a.result.options)
+                        options.push(new Option(option, a, [1e9 - i++]));
+                }
+                else {
+                    let matcher = new FuzzyMatcher(state.sliceDoc(a.from, a.to)), match;
+                    for (let option of a.result.options)
+                        if (match = matcher.match(option.label)) {
+                            if (option.boost != null)
+                                match[0] += option.boost;
+                            options.push(new Option(option, a, match));
+                        }
+                }
             }
         options.sort(cmpOption);
         let result = [], prev = null;
@@ -16048,7 +16123,7 @@
                 state.languageDataAt("autocomplete", cur(state)).map(asSource);
             let active = sources.map(source => {
                 let value = this.active.find(s => s.source == source) ||
-                    new ActiveSource(source, this.active.some(a => a.state != 0 /* Inactive */) ? 1 /* Pending */ : 0 /* Inactive */, false);
+                    new ActiveSource(source, this.active.some(a => a.state != 0 /* Inactive */) ? 1 /* Pending */ : 0 /* Inactive */);
                 return value.update(tr, conf);
             });
             if (active.length == this.active.length && active.every((a, i) => a == this.active[i]))
@@ -16057,7 +16132,7 @@
                 !sameResults(active, this.active) ? CompletionDialog.build(active, state, this.id, this.open)
                 : this.open && tr.docChanged ? this.open.map(tr.changes) : this.open;
             if (!open && active.every(a => a.state != 1 /* Pending */) && active.some(a => a.hasResult()))
-                active = active.map(a => a.hasResult() ? new ActiveSource(a.source, 0 /* Inactive */, false) : a);
+                active = active.map(a => a.hasResult() ? new ActiveSource(a.source, 0 /* Inactive */) : a);
             for (let effect of tr.effects)
                 if (effect.is(setSelectedEffect))
                     open = open && open.setSelected(effect.value, this.id);
@@ -16097,13 +16172,12 @@
         return lA < lB ? -1 : lA == lB ? 0 : 1;
     }
     class ActiveSource {
-        constructor(source, state, explicit) {
+        constructor(source, state, explicitPos = -1) {
             this.source = source;
             this.state = state;
-            this.explicit = explicit;
+            this.explicitPos = explicitPos;
         }
         hasResult() { return false; }
-        explicitAt(_pos) { return this.explicit; }
         update(tr, conf) {
             let event = tr.annotation(Transaction.userEvent), value = this;
             if (event == "input" || event == "delete")
@@ -16111,12 +16185,12 @@
             else if (tr.docChanged)
                 value = value.handleChange(tr);
             else if (tr.selection && value.state != 0 /* Inactive */)
-                value = new ActiveSource(value.source, 0 /* Inactive */, false);
+                value = new ActiveSource(value.source, 0 /* Inactive */);
             for (let effect of tr.effects) {
                 if (effect.is(startCompletionEffect))
-                    value = new ActiveSource(value.source, 1 /* Pending */, effect.value);
+                    value = new ActiveSource(value.source, 1 /* Pending */, effect.value ? cur(tr.state) : -1);
                 else if (effect.is(closeCompletionEffect))
-                    value = new ActiveSource(value.source, 0 /* Inactive */, false);
+                    value = new ActiveSource(value.source, 0 /* Inactive */);
                 else if (effect.is(setActiveEffect))
                     for (let active of effect.value)
                         if (active.source == value.source)
@@ -16124,47 +16198,47 @@
             }
             return value;
         }
-        handleUserEvent(_tr, type, conf) {
-            return type == "delete" || !conf.activateOnTyping ? this : new ActiveSource(this.source, 1 /* Pending */, false);
+        handleUserEvent(tr, type, conf) {
+            return type == "delete" || !conf.activateOnTyping ? this.map(tr.changes) : new ActiveSource(this.source, 1 /* Pending */);
         }
         handleChange(tr) {
-            return tr.changes.touchesRange(cur(tr.startState)) ? new ActiveSource(this.source, 0 /* Inactive */, false) : this;
+            return tr.changes.touchesRange(cur(tr.startState)) ? new ActiveSource(this.source, 0 /* Inactive */) : this.map(tr.changes);
+        }
+        map(changes) {
+            return changes.empty || this.explicitPos < 0 ? this : new ActiveSource(this.source, this.state, changes.mapPos(this.explicitPos));
         }
     }
     class ActiveResult extends ActiveSource {
         constructor(source, explicitPos, result, from, to, span) {
-            super(source, 2 /* Result */, explicitPos > -1);
-            this.explicitPos = explicitPos;
+            super(source, 2 /* Result */, explicitPos);
             this.result = result;
             this.from = from;
             this.to = to;
             this.span = span;
         }
         hasResult() { return true; }
-        explicitAt(pos) { return this.explicitPos == pos; }
-        mapExplicit(mapping) {
-            return this.explicitPos < 0 ? -1 : mapping.mapPos(this.explicitPos);
-        }
         handleUserEvent(tr, type, conf) {
             let from = tr.changes.mapPos(this.from), to = tr.changes.mapPos(this.to, 1);
             let pos = cur(tr.state);
-            if ((this.explicit ? pos < from : pos <= from) || pos > to)
-                return new ActiveSource(this.source, type == "input" && conf.activateOnTyping ? 1 /* Pending */ : 0 /* Inactive */, false);
+            if ((this.explicitPos > -1 ? pos < from : pos <= from) || pos > to)
+                return new ActiveSource(this.source, type == "input" && conf.activateOnTyping ? 1 /* Pending */ : 0 /* Inactive */);
+            let explicitPos = this.explicitPos < 0 ? -1 : tr.changes.mapPos(this.explicitPos);
             if (this.span && (from == to || this.span.test(tr.state.sliceDoc(from, to))))
-                return new ActiveResult(this.source, this.mapExplicit(tr.changes), this.result, from, to, this.span);
-            return new ActiveSource(this.source, 1 /* Pending */, false);
+                return new ActiveResult(this.source, explicitPos, this.result, from, to, this.span);
+            return new ActiveSource(this.source, 1 /* Pending */, explicitPos);
         }
         handleChange(tr) {
-            return tr.changes.touchesRange(this.from, this.to) ? new ActiveSource(this.source, 0 /* Inactive */, false) : this.map(tr.changes);
+            return tr.changes.touchesRange(this.from, this.to) ? new ActiveSource(this.source, 0 /* Inactive */) : this.map(tr.changes);
         }
         map(mapping) {
-            return new ActiveResult(this.source, this.mapExplicit(mapping), this.result, mapping.mapPos(this.from), mapping.mapPos(this.to, 1), this.span);
+            return mapping.empty ? this :
+                new ActiveResult(this.source, this.explicitPos < 0 ? -1 : mapping.mapPos(this.explicitPos), this.result, mapping.mapPos(this.from), mapping.mapPos(this.to, 1), this.span);
         }
     }
     const startCompletionEffect = /*@__PURE__*/StateEffect.define();
     const closeCompletionEffect = /*@__PURE__*/StateEffect.define();
     const setActiveEffect = /*@__PURE__*/StateEffect.define({
-        map(sources, mapping) { return sources.map(s => s.hasResult() && !mapping.empty ? s.map(mapping) : s); }
+        map(sources, mapping) { return sources.map(s => s.map(mapping)); }
     });
     const setSelectedEffect = /*@__PURE__*/StateEffect.define();
     const completionState = /*@__PURE__*/StateField.define({
@@ -16229,8 +16303,8 @@
         return true;
     };
     class RunningQuery {
-        constructor(source, context) {
-            this.source = source;
+        constructor(active, context) {
+            this.active = active;
             this.context = context;
             this.time = Date.now();
             this.updates = [];
@@ -16280,7 +16354,7 @@
             }
             if (this.debounceUpdate > -1)
                 clearTimeout(this.debounceUpdate);
-            this.debounceUpdate = cState.active.some(a => a.state == 1 /* Pending */ && !this.running.some(q => q.source == a.source))
+            this.debounceUpdate = cState.active.some(a => a.state == 1 /* Pending */ && !this.running.some(q => q.active.source == a.source))
                 ? setTimeout(() => this.startUpdate(), DebounceTime) : -1;
             if (this.composing != 0 /* None */)
                 for (let tr of update.transactions) {
@@ -16294,14 +16368,14 @@
             this.debounceUpdate = -1;
             let { state } = this.view, cState = state.field(completionState);
             for (let active of cState.active) {
-                if (active.state == 1 /* Pending */ && !this.running.some(r => r.source == active.source))
+                if (active.state == 1 /* Pending */ && !this.running.some(r => r.active.source == active.source))
                     this.startQuery(active);
             }
         }
         startQuery(active) {
             let { state } = this.view, pos = cur(state);
-            let context = new CompletionContext(state, pos, active.explicitAt(pos));
-            let pending = new RunningQuery(active.source, context);
+            let context = new CompletionContext(state, pos, active.explicitPos == pos);
+            let pending = new RunningQuery(active, context);
             this.running.push(pending);
             Promise.resolve(active.source(context)).then(result => {
                 if (!pending.context.aborted) {
@@ -16334,7 +16408,7 @@
                     continue;
                 this.running.splice(i--, 1);
                 if (query.done) {
-                    let active = new ActiveResult(query.source, query.context.explicit ? query.context.pos : -1, query.done, query.done.from, (_a = query.done.to) !== null && _a !== void 0 ? _a : cur(query.updates.length ? query.updates[0].startState : this.view.state), query.done.span ? ensureAnchor(query.done.span, true) : null);
+                    let active = new ActiveResult(query.active.source, query.active.explicitPos, query.done, query.done.from, (_a = query.done.to) !== null && _a !== void 0 ? _a : cur(query.updates.length ? query.updates[0].startState : this.view.state), query.done.span && query.done.filter !== false ? ensureAnchor(query.done.span, true) : null);
                     // Replay the transactions that happened since the start of
                     // the request and see if that preserves the result
                     for (let tr of query.updates)
@@ -16344,12 +16418,12 @@
                         continue;
                     }
                 }
-                let current = this.view.state.field(completionState).active.find(a => a.source == query.source);
+                let current = this.view.state.field(completionState).active.find(a => a.source == query.active.source);
                 if (current && current.state == 1 /* Pending */) {
                     if (query.done == null) {
                         // Explicitly failed. Should clear the pending status if it
                         // hasn't been re-set in the meantime.
-                        let active = new ActiveSource(query.source, 0 /* Inactive */, false);
+                        let active = new ActiveSource(query.active.source, 0 /* Inactive */);
                         for (let tr of query.updates)
                             active = active.update(tr, conf);
                         if (active.state != 1 /* Pending */)
@@ -39484,7 +39558,7 @@
     	},
     	{
     		id: "replace_node_types_fn",
-    		script: "return ({data}) => node => lib.no.unpackTypes(data.node_types, node)"
+    		script: "return ({data}) => ({ value: node => lib.no.unpackTypes(data.node_types, node), delete:['node_types']})"
     	},
     	{
     		id: "replace_node_types",
@@ -39492,7 +39566,7 @@
     	},
     	{
     		id: "initial_graph",
-    		script: "return ({data}) => {graph: data.target.graph}"
+    		script: "return ({data}) => ({graph: data.target.graph})"
     	},
     	{
     		id: "hyperapp_view",
@@ -39523,6 +39597,10 @@
     						order: [
     							"node_editor",
     							"text_editor"
+    						],
+    						required_data: [
+    							"node_editor",
+    							"text_editor"
     						]
     					},
     					{
@@ -39547,7 +39625,11 @@
     							{
     								id: "parent",
     								type: "h",
-    								dom_type: "svg"
+    								dom_type: "svg",
+    								required_data: [
+    									"attrs",
+    									"children"
+    								]
     							},
     							{
     								id: "get_input",
@@ -39565,6 +39647,16 @@
     										type: "get",
     										get_index: [
     											"nodes"
+    										],
+    										required_data: [
+    											"nodes"
+    										]
+    									},
+    									{
+    										id: "delete_nodes",
+    										type: "delete",
+    										paths: [
+    											"nodes"
     										]
     									},
     									{
@@ -39575,8 +39667,20 @@
     										]
     									},
     									{
+    										id: "delete_links",
+    										type: "delete",
+    										paths: [
+    											"links"
+    										]
+    									},
+    									{
     										id: "node_svgs",
-    										script: "return lib.no.iterate"
+    										script: "return lib.no.iterate",
+    										pick: [
+    											"x",
+    											"y",
+    											"node_id"
+    										]
     									},
     									{
     										id: "node_template",
@@ -39591,6 +39695,10 @@
     											},
     											{
     												id: "parent",
+    												required_data: [
+    													"attrs",
+    													"children"
+    												],
     												type: "h",
     												dom_type: "svg",
     												attrs: {
@@ -39634,8 +39742,7 @@
     															},
     															{
     																id: "display_name",
-    																type: "h_text",
-    																text: "hi"
+    																type: "h_text"
     															},
     															{
     																id: "text",
@@ -39654,8 +39761,9 @@
     																to: "get_id"
     															},
     															{
-    																from: "in",
-    																to: "display_name"
+    																from: "get_id",
+    																to: "display_name",
+    																as: "text"
     															},
     															{
     																from: "display_name",
@@ -39675,6 +39783,10 @@
     													{
     														id: "order",
     														type: "order_inputs",
+    														required_data: [
+    															"circle",
+    															"text"
+    														],
     														order: [
     															"circle",
     															"text"
@@ -39723,13 +39835,17 @@
     										],
     										edges: [
     											{
-    												from: "parent_attrs",
-    												to: "parent",
-    												as: "attrs"
+    												from: "in",
+    												to: "children"
     											},
     											{
     												from: "in",
-    												to: "children"
+    												to: "parent_attrs"
+    											},
+    											{
+    												from: "parent_attrs",
+    												to: "parent",
+    												as: "attrs"
     											},
     											{
     												from: "children",
@@ -39743,14 +39859,18 @@
     									},
     									{
     										id: "link_svgs",
-    										script: "return lib.no.iterate"
+    										script: "return lib.no.iterate",
+    										pick: [
+    											"source",
+    											"target"
+    										]
     									},
     									{
     										id: "link_template",
     										nodes: [
     											{
     												id: "attrs",
-    												script: "return ({data}) => ({x1: data.source.x, y1: data.source.y, x2: input.target.x, y2: data.target.y, stroke: 'black'})"
+    												script: "return ({data}) => ({x1: data.source.x, y1: data.source.y, x2: data.target.x, y2: data.target.y, stroke: 'black'})"
     											},
     											{
     												id: "line",
@@ -39792,15 +39912,23 @@
     									},
     									{
     										id: "concat_all",
-    										script: "return ({data}) => data.links && data.nodes && [].concat(data.links ?? [], data.nodes)"
+    										script: "return ({data}) => data.link_els && data.node_els && [].concat(data.link_els, data.node_els)"
     									},
     									{
     										id: "children_els",
-    										script: "return ({data}) => data.children.reduce((acc, c) => (acc.push(c.el), acc), [])"
+    										script: "return ({data}) => ({ value: data.children.reduce((acc, c) => (acc.push(c.el), acc), []), delete: ['children']})"
     									},
     									{
     										id: "out",
     										type: "identity"
+    									},
+    									{
+    										id: "skip_when_empty_nodes",
+    										script: "return ({data}) => data.target?.length > 0 ? undefined : []"
+    									},
+    									{
+    										id: "skip_when_empty_links",
+    										script: "return ({data}) => data.target?.length > 0 ? undefined : []"
     									}
     								],
     								edges: [
@@ -39818,8 +39946,18 @@
     										as: "target"
     									},
     									{
+    										from: "get_nodes",
+    										to: "skip_when_empty_nodes",
+    										as: "target"
+    									},
+    									{
     										from: "get_links",
     										to: "link_svgs",
+    										as: "target"
+    									},
+    									{
+    										from: "get_links",
+    										to: "skip_when_empty_links",
     										as: "target"
     									},
     									{
@@ -39841,14 +39979,24 @@
     										as: "value"
     									},
     									{
+    										from: "skip_when_empty_nodes",
+    										to: "concat_all",
+    										as: "node_els"
+    									},
+    									{
+    										from: "skip_when_empty_links",
+    										to: "concat_all",
+    										as: "link_els"
+    									},
+    									{
     										from: "concat_nodes",
     										to: "concat_all",
-    										as: "nodes"
+    										as: "node_els"
     									},
     									{
     										from: "concat_links",
     										to: "concat_all",
-    										as: "links"
+    										as: "link_els"
     									},
     									{
     										from: "concat_all",
@@ -39877,7 +40025,7 @@
     								to: "get_input"
     							},
     							{
-    								from: "get_input",
+    								from: "in",
     								to: "svgs"
     							},
     							{
@@ -39964,34 +40112,6 @@
     				}
     			},
     			{
-    				id: "simulation_dispatch",
-    				type: "compiled_fn",
-    				nodes: [
-    					{
-    						id: "in",
-    						type: "identity"
-    					},
-    					{
-    						id: "out",
-    						type: "identity"
-    					},
-    					{
-    						id: "get_nodes",
-    						script: "return (state, input) => requestAnimationFrame(() => {if(!(input.dispatch && input.simulation && input.action)){ return }  })"
-    					}
-    				],
-    				edges: [
-    					{
-    						from: "in",
-    						to: "get_nodes"
-    					},
-    					{
-    						from: "get_nodes",
-    						to: "out"
-    					}
-    				]
-    			},
-    			{
     				id: "concat_children",
     				type: "children_els"
     			}
@@ -40024,7 +40144,7 @@
     			},
     			{
     				id: "subscription",
-    				script: "return ({data}) => (dispatch, props) => { data.simulation.on('tick.ha', function(v){ dispatch(s => s, { nodes: Object.fromEntries(data.simulation.nodes().map(n => [n.node_id, n])), links: data.simulation.force('links').links()  } ) }); return () => input.simulation.on('.ha', null); }"
+    				script: "return ({data}) => dispatch => { data.simulation.on('tick.ha', () => { requestAnimationFrame(() => dispatch(s => ({ nodes: data.simulation.nodes(), links: data.simulation.force('links').links()  }) ) ) }); return () => data.simulation.on('.ha', null); }"
     			}
     		],
     		edges: [
@@ -40073,7 +40193,7 @@
     			script: "return ({data}) => document.querySelector(data.selector);"
     		},
     		get: {
-    			script: "return ({data}) => lib._.get(data, data.get_index)"
+    			script: "return ({data}) => ({ value: lib._.get(data, data.get_index), delete: data.delete ? [data.get_index, 'get_index'] : ['get_index']})"
     		},
     		constant: {
     			script: "return () => self.value"
@@ -40081,17 +40201,21 @@
     		log: {
     			script: "return ({data}) => console.log(data)"
     		},
+    		debug: {
+    			script: "return lib.no.debug"
+    		},
     		aggregate_chain: {
     			script: "return lib.no.aggregateChain"
     		},
     		concat: {
+    			merge_data: false,
     			script: "return lib.no.concatValues"
     		},
     		h: {
     			script: "return lib.no.hFn"
     		},
     		h_text: {
-    			script: "return ({data}) => lib.ha.text(data.text)"
+    			script: "return ({data}) => ({ value: lib.ha.text(data.text), delete: ['text'] })"
     		},
     		fn_def: {
     			script: "return lib.no.fnDef"
@@ -40103,21 +40227,29 @@
     			script: "return ({data}) => data"
     		},
     		order_inputs: {
-    			script: "return ({data}) => ({value: data.order.map(o => data[o]).reduce((acc, v) => v === undefined || acc.ordered === undefined ? {} : {ordered: acc.ordered.concat([v])}, {ordered: []}).ordered, delete: ['order'] })"
+    			script: "return ({data}) => ({ value: data.order.map(o => data[o]).reduce((acc, v) => v === undefined || acc.ordered === undefined ? {} : {ordered: acc.ordered.concat([v])}, {ordered: []}).ordered, delete: ['order'].concat(data.order) })"
     		},
     		children_els: {
-    			script: "return ({data}) => ({value: data.children.reduce((acc, c) => (acc.push(c.el), acc), []).filter(v => v), delete: ['children'] })"
+    			script: "return ({data}) => ({value: data.children.reduce((acc, c) => (acc.push(c.el), acc), []).filter(v => v), delete: ['children'].concat(data.order) })"
+    		},
+    		"delete": {
+    			script: "return ({data}) => ({ value: data, delete: ['paths'].concat(data.paths) })"
     		}
     	},
     	{
     		id: "log",
     		type: "log"
+    	},
+    	{
+    		id: "debug",
+    		type: "debug"
     	}
     ];
     var edges = [
     	{
-    		from: "hyperapp_view/base_editor_content/children",
-    		to: "log"
+    		from: "log",
+    		to: "log",
+    		as: "log_value"
     	},
     	{
     		from: "in",
@@ -47724,12 +47856,32 @@
     const unpackTypes = (node_types, node) => {
     	let ty = typeof node === 'string' ? node : node.type;
     	const result = typeof node === 'string' ? {} : Object.assign({}, node);
-    	while(node_types[ty]) {
+    	while(ty && node_types[ty]) {
     		Object.assign(result, node_types[ty]);
     		ty = node_types[ty].type;
     	}
     	return result;
     };
+
+    // const compileNodes = (node_types, nodes) => Object.fromEntries(
+    // 	Object.entries(nodes ?? {})
+    // 		.map(kv => overIdx(1)(n => Object.assign({node_types, id: kv[0]}, unpackTypes(node_types, n), typeof n === 'string' ? {} : n))(kv))
+    // 		.map(kv => kv[1].fn ? kv : overIdx(1)(compile)(kv))
+    // );
+
+    // mutable for performance
+    // const createEdgeFns = (edges, from, fns) => {
+    // 	if(!edges){ return []}
+
+    // 	const edge_arr = [];
+    // 	for(const e of edges){
+    // 		if(e.from === from) {
+    // 			edge_arr.push(e.fn ? e : Object.assign({}, e, {fn: fns[e.to]}))
+    // 		}
+    // 	}
+
+    // 	return edge_arr;
+    // }
 
 
     const hFn = ({data}) => ({
@@ -47739,10 +47891,12 @@
     		data.attrs ?? {}, 
     		data.children instanceof Map
     			?  [...lib.iter.map(
-    				input.children.values(), 
+    				data.children.values(), 
     				v => v ? v : undefined)]
-    			: data.children
+    			: Array.isArray(data.children)
     			? data.children
+    			: data.children
+    			? [data.children]
     			: [])
     	},
     	delete:	["attrs", "children", "dom_type"]
@@ -47761,12 +47915,20 @@
 
     	const node_state = state.get(id) ?? state.set(id, new Map()).get(id);
 
+    	const incoming_edges = data.graph.edges.filter(e => e.to === id);
+
     	// store and merge args across calls
-    	const merged_data = node_state.set('data',
-    		node_state.has('data')
-    			? Object.assign({}, node_state.get('data'), data)
-    			: Object.assign({}, self, data)
-    	).get('data');
+    	const merged_data = self.merge_data ?? incoming_edges.length > 1
+    		? node_state.has('data')
+    				? Object.assign(lib._.omit(self, ['merge_data', 'required_data']), node_state.get('data'), data)
+    				: Object.assign(lib._.omit(self, ['merge_data', 'required_data']), data)
+    		:  Object.assign(lib._.omit(self, ['merge_data', 'required_data']), data);
+
+    	node_state.set('data', merged_data);
+
+    	if(self.required_data && !lib._.every(self.required_data, p => lib._.has(merged_data, p))) {
+    		return;
+    	}
 
     	// call the function with node_state
     	try {
@@ -47913,8 +48075,8 @@
     		data.aggregate ?? (state.has('aggregate') ? state.get('aggregate') : [])
     		).concat([data.value])).get('aggregate');
 
-    	if (!data.length || data.length < new_aggregate.length) {
-    		return { value: new_aggregate, delete: ["value"] };
+    	if (!data.length || data.length <= new_aggregate.length) {
+    		return { value: new_aggregate, delete: ["value", "length"] };
     	}
     };
 
@@ -47927,31 +48089,43 @@
 
     	const result_value = raw_result ? result : result.value;
 
+
     	if (result_value === undefined) {
     		return;
     	}
+
 
     	const transferred_data = lib._.omit(args.data, 
     		!raw_result && result.hasOwnProperty('delete') 
     			? result.delete
     			: []);
 
+    	if (!raw_result && result.hasOwnProperty('delete')) {
+    		args.state.get(args.id).set('data', lib._.omit(args.state.get(args.id).get('data'), result.delete));
+    	}
+
     	(result.graph ?? args.data.graph).edges
     		.filter(e => e.from === args.id)
-    		.forEach(e => execute(Object.assign({}, args, {
+    		.forEach(e => execute({
     			id: e.to, 
     			data: e.as 
-    				? lib._.set(transferred_data, e.as, result_value) 
-    				: Object.assign(transferred_data, result_value)
-    		})));
+    				? lib._.set(Object.assign({}, transferred_data), e.as, result_value) 
+    				: typeof result_value === 'object' && !Array.isArray(result_value)
+    					? Object.assign(transferred_data, result_value)
+    					: new Error(`Returned an unwrapped array in ${args.id}`),
+    			state: args.state,
+    			lib: args.lib
+    		}));
     };
 
-    const map_path_fn = ({lib, data}) => data.target && data.target_path && data.map_fn ?
-    	lib._.update(
-    		data.target,
-    		data.target_path,
-    		a => lib._.map(a, data.map_fn)
-    	) : undefined;
+    const map_path_fn = ({lib, data}) => data.target && data.target_path && data.map_fn ?  ({ 
+    	value: lib._.update(
+    			data.target,
+    			data.target_path,
+    			a => lib._.map(a, data.map_fn)
+    		),
+    	delete: ['target_path', 'map_fn']
+    }) : undefined;
 
     const iterate = ({id, data}) => {
     	new Map(data.graph.nodes.map(n => [n.id, n]));
@@ -47959,11 +48133,9 @@
     		.filter(e => e.from === id);
     	new Set(next_edges.map(e => e.to));
 
-    	["graph", "target"].concat(next_edges.map(e => e.keep).flat());
-
     	const get_input_nodes = data.target.map((d, i) => ({
     		"id": `${id}#get_input#${i}`,
-    		"script": `return ({data}) => data.target[${i}]`
+    		"script": `return ({data}) => ({ value: lib._.pick(data.target[${i}], ${JSON.stringify(data.pick)}), delete: ['target'] })`
     	}));
 
     	const get_input_edges = data.target.map((d, i) => ({
@@ -47973,14 +48145,15 @@
 
     	const identity_node = {
     		id: `${id}#identity`,
-    		"script": "return ({data}) => data"
+    		merge_data: false,
+    		script: "return ({data}) => (data)",
     	};
 
     	const identity_edges = data.target.map((d, i) => ({
     		from: `${id}#get_input#${i}`,
     		to: `${id}#identity`
     	}));
-
+    	
     	return {
     		graph: {
     			edges: data.graph.edges.map(e => e.from === id 
@@ -48048,8 +48221,7 @@
     			// 	.forceCenter(window.innerWidth * 0.5, window.innerHeight * 0.5)
     			// 	.strength(.01))
     			.force('links', lib.d3
-    				.forceLink(data.graph.edges.filter(e => e.from !== 'in' && e.to !== 'out')
-    					.map((e, index) => ({source: e.from, target: e.to, index})))
+    				.forceLink(data.graph.edges.map((e, index) => ({source: e.from, target: e.to, index})))
     				.distance(128)
     				.id(n => n.node_id))
     			.force('link_direction', lib.d3
@@ -48057,15 +48229,19 @@
     				.y((n) => window.innerHeight * (0.15 + (Math.random() * 0.2) + 0.5 * (levels[n.node_id] ?? 0) / (levels.max - levels.min)))
     				.strength(0.5))
     			.force('collide', lib.d3.forceCollide(64));
-    //			.alphaMin(.1); // changes how long the simulation will run. dfault is 0.001 
+    			// .alphaMin(.8); // changes how long the simulation will run. dfault is 0.001 
 
     	return simulation;
+    };
+
+    const debug  = () => {
+    	debugger;
     };
 
     const lib = { cm, _,
     	ha: { h, app, text, memo},  
     	iter: {reduce, map}, 
-    	no: {map_path_fn, flatten, unpackTypes, hFn, fnDef, fnReturn, concatValues, iterate, verify, d3simulation},
+    	no: {map_path_fn, flatten, unpackTypes, hFn, fnDef, fnReturn, concatValues, iterate, verify, d3simulation, debug},
     	d3: {forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide},
     	util: {overIdx, overKey, overPath}
     };

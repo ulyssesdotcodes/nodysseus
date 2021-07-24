@@ -18,7 +18,7 @@
         },
         {
             "id": "replace_node_types_fn",
-            "script": "return ({data}) => node => lib.no.unpackTypes(data.node_types, node)"
+            "script": "return ({data}) => ({ value: node => lib.no.unpackTypes(data.node_types, node), delete:['node_types']})"
         },
         {
             "id": "replace_node_types",
@@ -26,7 +26,7 @@
         },
         {
             "id": "initial_graph",
-            "script": "return ({data}) => {graph: data.target.graph}"
+            "script": "return ({data}) => ({graph: data.target.graph})"
         },
         {
             "id": "hyperapp_view",
@@ -57,7 +57,8 @@
                             "order": [
                                 "node_editor",
                                 "text_editor"
-                            ]
+                            ],
+                            "required_data": ["node_editor", "text_editor"]
                         },
                         {
                             "id": "concat_children",
@@ -81,7 +82,8 @@
                                 {
                                     "id": "parent",
                                     "type": "h",
-                                    "dom_type": "svg"
+                                    "dom_type": "svg",
+                                    "required_data": ["attrs", "children"]
                                 },
                                 {
                                     "id": "get_input",
@@ -99,7 +101,13 @@
                                             "type": "get",
                                             "get_index": [
                                                 "nodes"
-                                            ]
+                                            ],
+                                            "required_data": ["nodes"]
+                                        },
+                                        {
+                                            "id": "delete_nodes",
+                                            "type": "delete",
+                                            "paths": ["nodes"]
                                         },
                                         {
                                             "id": "get_links",
@@ -109,8 +117,14 @@
                                             ]
                                         },
                                         {
+                                            "id": "delete_links",
+                                            "type": "delete",
+                                            "paths": ["links"]
+                                        },
+                                        {
                                             "id": "node_svgs",
-                                            "script": "return lib.no.iterate"
+                                            "script": "return lib.no.iterate",
+                                            "pick": ["x", "y", "node_id"]
                                         },
                                         {
                                             "id": "node_template",
@@ -125,6 +139,7 @@
                                                 },
                                                 {
                                                     "id": "parent",
+                                                    "required_data": ["attrs", "children"],
                                                     "type": "h",
                                                     "dom_type": "svg",
                                                     "attrs": {
@@ -168,8 +183,7 @@
                                                                 },
                                                                 {
                                                                     "id": "display_name",
-                                                                    "type": "h_text",
-                                                                    "text": "hi"
+                                                                    "type": "h_text"
                                                                 },
                                                                 {
                                                                     "id": "text",
@@ -188,8 +202,9 @@
                                                                     "to": "get_id"
                                                                 },
                                                                 {
-                                                                    "from": "in",
-                                                                    "to": "display_name"
+                                                                    "from": "get_id",
+                                                                    "to": "display_name",
+                                                                    "as": "text"
                                                                 },
                                                                 {
                                                                     "from": "display_name",
@@ -209,6 +224,7 @@
                                                         {
                                                             "id": "order",
                                                             "type": "order_inputs",
+                                                            "required_data": ["circle", "text"],
                                                             "order": [
                                                                 "circle",
                                                                 "text"
@@ -257,13 +273,17 @@
                                             ],
                                             "edges": [
                                                 {
-                                                    "from": "parent_attrs",
-                                                    "to": "parent",
-                                                    "as": "attrs"
+                                                    "from": "in",
+                                                    "to": "children"
                                                 },
                                                 {
                                                     "from": "in",
-                                                    "to": "children"
+                                                    "to": "parent_attrs"
+                                                },
+                                                {
+                                                    "from": "parent_attrs",
+                                                    "to": "parent",
+                                                    "as": "attrs"
                                                 },
                                                 {
                                                     "from": "children",
@@ -277,13 +297,14 @@
                                         },
                                         {
                                             "id": "link_svgs",
-                                            "script": "return lib.no.iterate"
+                                            "script": "return lib.no.iterate",
+                                            "pick": ["source", "target"]
                                         },
                                         {
                                             "id": "link_template",
                                             "nodes": [
                                                 {"id": "attrs",
-                                                    "script": "return ({data}) => ({x1: data.source.x, y1: data.source.y, x2: input.target.x, y2: data.target.y, stroke: 'black'})"
+                                                    "script": "return ({data}) => ({x1: data.source.x, y1: data.source.y, x2: data.target.x, y2: data.target.y, stroke: 'black'})"
                                                 },
                                                 {"id": "line",
                                                     "type": "h",
@@ -324,15 +345,23 @@
                                         },
                                         {
                                             "id": "concat_all",
-                                            "script": "return ({data}) => data.links && data.nodes && [].concat(data.links ?? [], data.nodes)"
+                                            "script": "return ({data}) => data.link_els && data.node_els && [].concat(data.link_els, data.node_els)"
                                         },
                                         {
                                             "id": "children_els",
-                                            "script": "return ({data}) => data.children.reduce((acc, c) => (acc.push(c.el), acc), [])"
+                                            "script": "return ({data}) => ({ value: data.children.reduce((acc, c) => (acc.push(c.el), acc), []), delete: ['children']})"
                                         },
                                         {
                                             "id": "out",
                                             "type": "identity"
+                                        },
+                                        {
+                                            "id": "skip_when_empty_nodes",
+                                            "script": "return ({data}) => data.target?.length > 0 ? undefined : []"
+                                        },
+                                        {
+                                            "id": "skip_when_empty_links",
+                                            "script": "return ({data}) => data.target?.length > 0 ? undefined : []"
                                         }
                                     ],
                                     "edges": [
@@ -350,8 +379,18 @@
                                             "as": "target"
                                         },
                                         {
+                                            "from": "get_nodes",
+                                            "to": "skip_when_empty_nodes",
+                                            "as": "target"
+                                        },
+                                        {
                                             "from": "get_links",
                                             "to": "link_svgs",
+                                            "as": "target"
+                                        },
+                                        {
+                                            "from": "get_links",
+                                            "to": "skip_when_empty_links",
                                             "as": "target"
                                         },
                                         {
@@ -373,14 +412,24 @@
                                             "as": "value"
                                         },
                                         {
+                                            "from": "skip_when_empty_nodes",
+                                            "to": "concat_all",
+                                            "as": "node_els"
+                                        },
+                                        {
+                                            "from": "skip_when_empty_links",
+                                            "to": "concat_all",
+                                            "as": "link_els"
+                                        },
+                                        {
                                             "from": "concat_nodes",
                                             "to": "concat_all",
-                                            "as": "nodes"
+                                            "as": "node_els"
                                         },
                                         {
                                             "from": "concat_links",
                                             "to": "concat_all",
-                                            "as": "links"
+                                            "as": "link_els"
                                         },
                                         {
                                             "from": "concat_all",
@@ -409,7 +458,7 @@
                                     "to": "get_input"
                                 },
                                 {
-                                    "from": "get_input",
+                                    "from": "in",
                                     "to": "svgs"
                                 },
                                 {
@@ -495,34 +544,6 @@
                     "template": {}
                 },
                 {
-                    "id": "simulation_dispatch",
-                    "type": "compiled_fn",
-                    "nodes": [
-                        {
-                            "id": "in",
-                            "type": "identity"
-                        },
-                        {
-                            "id": "out",
-                            "type": "identity"
-                        },
-                        {
-                            "id": "get_nodes",
-                            "script": "return (state, input) => requestAnimationFrame(() => {if(!(input.dispatch && input.simulation && input.action)){ return }  })"
-                        }
-                    ],
-                    "edges": [
-                        {
-                            "from": "in",
-                            "to": "get_nodes"
-                        },
-                        {
-                            "from": "get_nodes",
-                            "to": "out"
-                        }
-                    ]
-                },
-                {
                     "id": "concat_children",
                     "type": "children_els"
                 }
@@ -555,7 +576,7 @@
                         },
                         {
                             "id": "subscription",
-                            "script": "return ({data}) => (dispatch, props) => { data.simulation.on('tick.ha', function(v){ dispatch(s => s, { nodes: Object.fromEntries(data.simulation.nodes().map(n => [n.node_id, n])), links: data.simulation.force('links').links()  } ) }); return () => input.simulation.on('.ha', null); }"
+                            "script": "return ({data}) => dispatch => { data.simulation.on('tick.ha', () => { requestAnimationFrame(() => dispatch(s => ({ nodes: data.simulation.nodes(), links: data.simulation.force('links').links()  }) ) ) }); return () => data.simulation.on('.ha', null); }"
                         }
                     ],
                     "edges": [
@@ -604,7 +625,7 @@
                 "script": "return ({data}) => document.querySelector(data.selector);"
             },
             "get": {
-                "script": "return ({data}) => lib._.get(data, data.get_index)"
+                "script": "return ({data}) => ({ value: lib._.get(data, data.get_index), delete: data.delete ? [data.get_index, 'get_index'] : ['get_index']})"
             },
             "constant": {
                 "script": "return () => self.value"
@@ -612,17 +633,21 @@
             "log": {
                 "script": "return ({data}) => console.log(data)"
             },
+            "debug": {
+                "script": "return lib.no.debug"
+            },
             "aggregate_chain": {
                 "script": "return lib.no.aggregateChain"
             },
             "concat": {
+                "merge_data": false,
                 "script": "return lib.no.concatValues"
             },
             "h": {
                 "script": "return lib.no.hFn"
             },
             "h_text": {
-                "script": "return ({data}) => lib.ha.text(data.text)"
+                "script": "return ({data}) => ({ value: lib.ha.text(data.text), delete: ['text'] })"
             },
             "fn_def": {
                 "script": "return lib.no.fnDef"
@@ -634,19 +659,26 @@
                 "script": "return ({data}) => data"
             },
             "order_inputs": {
-                "script": "return ({data}) => ({value: data.order.map(o => data[o]).reduce((acc, v) => v === undefined || acc.ordered === undefined ? {} : {ordered: acc.ordered.concat([v])}, {ordered: []}).ordered, delete: ['order'] })"
+                "script": "return ({data}) => ({ value: data.order.map(o => data[o]).reduce((acc, v) => v === undefined || acc.ordered === undefined ? {} : {ordered: acc.ordered.concat([v])}, {ordered: []}).ordered, delete: ['order'].concat(data.order) })"
             },
             "children_els": {
-                "script": "return ({data}) => ({value: data.children.reduce((acc, c) => (acc.push(c.el), acc), []).filter(v => v), delete: ['children'] })"
+                "script": "return ({data}) => ({value: data.children.reduce((acc, c) => (acc.push(c.el), acc), []).filter(v => v), delete: ['children'].concat(data.order) })"
+            },
+            "delete": {
+                "script": "return ({data}) => ({ value: data, delete: ['paths'].concat(data.paths) })"
             }
         },
         {
             "id": "log",
             "type": "log"
+        },
+        {
+            "id": "debug",
+            "type": "debug"
         }
     ],
     "edges": [
-        {"from": "hyperapp_view/base_editor_content/children", "to": "log"},
+        {"from": "log", "to": "log", "as": "log_value"},
         {
             "from": "in",
             "to": "flatten"
