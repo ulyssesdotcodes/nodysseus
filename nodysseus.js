@@ -449,7 +449,7 @@ const iterate = ({id, data}) => {
 
 	const get_input_nodes = data.target.map((d, i) => ({
 		"id": `${id}#get_input#${i}`,
-		"script": `return ({data}) => ({ value: lib._.pick(data.target[${i}], ${JSON.stringify(data.pick)}), delete: ['target'] })`
+		"script": `return ({data}) => ({ value: data.target[${i}], delete: ['target'] })`
 	}));
 
 	const get_input_edges = data.target.map((d, i) => ({
@@ -515,17 +515,19 @@ const flatten = ({data}) => {
 const d3simulation = ({data}) => {
 	const node_levels = [];
 
-	const bfs = (level) => (edge) => 
-		[[edge.to, level]].concat(data.graph.edges.filter(e => e.from === edge.to).map(bfs(level + 1)).flat());
+	console.log(data);
 
-	const levels = Object.fromEntries(data.graph.edges.filter(e => e.from === 'in').map(bfs(0)).flat());
+	const bfs = (level) => (edge) => 
+		[[edge.to, level]].concat(data.display_graph.edges.filter(e => e.from === edge.to).map(bfs(level + 1)).flat());
+
+	const levels = Object.fromEntries(data.display_graph.edges.filter(e => e.from === 'in').map(bfs(0)).flat());
 	levels.min = Math.min(...Object.values(levels));
 	levels.max = Math.max(...Object.values(levels));
 
 	const simulation = 
 		lib.d3.forceSimulation(
-			data.graph.nodes
-				.map((n, index) => Object.assign({}, typeof n === 'string' ? {type: n} : n, {
+			data.display_graph.nodes
+				.map((n, index) => ({
 					node_id: n.id,
 					x: window.innerWidth * (Math.random() *.5 + .25), 
 					y: window.innerHeight * (Math.random() * .5 + .25), 
@@ -536,7 +538,7 @@ const d3simulation = ({data}) => {
 			// 	.forceCenter(window.innerWidth * 0.5, window.innerHeight * 0.5)
 			// 	.strength(.01))
 			.force('links', lib.d3
-				.forceLink(data.graph.edges.map((e, index) => ({source: e.from, target: e.to, index})))
+				.forceLink(data.display_graph.edges.map((e, index) => ({source: e.from, target: e.to, index})))
 				.distance(128)
 				.id(n => n.node_id))
 			.force('link_direction', lib.d3

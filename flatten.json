@@ -593,6 +593,7 @@
                 },
                 {
                     "id": "simulate_layout",
+                    "required_data": ["display_graph", "graph"],
                     "script": "return ({state, data}) => (state.has('simulation') ? state : state.set('simulation', lib.no.d3simulation({data, state}))).get('simulation')"
                 },
         {
@@ -675,13 +676,22 @@
         {
             "id": "debug",
             "type": "debug"
+        },
+        {
+            "id": "get_graph",
+            "script": "return ({data}) => data.graph"
         }
     ],
     "edges": [
         {"from": "log", "to": "log", "as": "log_value"},
         {
             "from": "in",
-            "to": "flatten"
+            "to": "get_graph"
+        },
+        {
+            "from": "get_graph",
+            "to": "flatten",
+            "as": "display_graph"
         },
         {
             "from": "flatten",
