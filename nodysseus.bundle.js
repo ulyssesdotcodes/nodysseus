@@ -39573,11 +39573,19 @@
     		nodes: [
     			{
     				id: "in",
-    				type: "fn_def"
+    				type: "fn_def",
+    				required_data: [
+    					"simulation",
+    					"display_graph"
+    				]
     			},
     			{
     				id: "out",
-    				type: "fn_return"
+    				type: "fn_return",
+    				inherited_data: [
+    					"simulation",
+    					"display_graph"
+    				]
     			},
     			{
     				id: "get_aggregate",
@@ -39675,6 +39683,12 @@
     									},
     									{
     										id: "node_svgs",
+    										run_over_all: true,
+    										path: "nodes",
+    										script: "return ({data}) => data[0][data[0].path].map(n => Object.assign({}, n, data[0]))"
+    									},
+    									{
+    										id: "node_svgs_old",
     										script: "return lib.no.iterate",
     										pick: [
     											"x",
@@ -39708,7 +39722,7 @@
     											},
     											{
     												id: "parent_attrs",
-    												script: "return ({data}) => ({ x: (data.x ?? 400) - 20, y: (data.y ?? 400) - 20, id: data.node_id })"
+    												script: "return ({data}) => ({ x: (data.x ?? 400) - 20, y: (data.y ?? 400) - 20, id: data.node_id, onclick: lib.no.node_click({data})})"
     											},
     											{
     												id: "children",
@@ -39859,6 +39873,12 @@
     									},
     									{
     										id: "link_svgs",
+    										run_over_all: true,
+    										path: "links",
+    										script: "return ({data}) => data[0][data[0].path].map(n => Object.assign({}, n, data[0]))"
+    									},
+    									{
+    										id: "link_svgs_old",
     										script: "return lib.no.iterate",
     										pick: [
     											"source",
@@ -39904,11 +39924,11 @@
     									},
     									{
     										id: "concat_links",
-    										type: "concat"
+    										type: "concat_data"
     									},
     									{
     										id: "concat_nodes",
-    										type: "concat"
+    										type: "concat_data"
     									},
     									{
     										id: "concat_all",
@@ -39932,6 +39952,14 @@
     									}
     								],
     								edges: [
+    									{
+    										from: "in",
+    										to: "node_svgs"
+    									},
+    									{
+    										from: "in",
+    										to: "link_svgs"
+    									},
     									{
     										from: "in",
     										to: "get_nodes"
@@ -39971,12 +39999,12 @@
     									{
     										from: "node_template",
     										to: "concat_nodes",
-    										as: "value"
+    										as: "concat_value"
     									},
     									{
     										from: "link_template",
     										to: "concat_links",
-    										as: "value"
+    										as: "concat_value"
     									},
     									{
     										from: "skip_when_empty_nodes",
@@ -40144,7 +40172,7 @@
     			},
     			{
     				id: "subscription",
-    				script: "return ({data}) => dispatch => { data.simulation.on('tick.ha', () => { requestAnimationFrame(() => dispatch(s => ({ nodes: data.simulation.nodes(), links: data.simulation.force('links').links()  }) ) ) }); return () => data.simulation.on('.ha', null); }"
+    				script: "return ({data}) => dispatch => { data.simulation.on('tick.ha', () => { requestAnimationFrame(() => dispatch(s => ({ nodes: data.simulation.nodes().map(n => ({node_id: n.node_id, x: Math.floor(n.x), y: Math.floor(n.y)})), links: data.simulation.force('links').links().map(l => ({source: ({node_id: l.source.node_id, x: Math.floor(l.source.x), y: Math.floor(l.source.y)}), target: ({node_id: l.target.node_id, x: Math.floor(l.target.x), y: Math.floor(l.target.y)})}))  }) ) ) }); return () => data.simulation.on('.ha', null); }"
     			}
     		],
     		edges: [
@@ -40214,6 +40242,11 @@
     		concat: {
     			merge_data: false,
     			script: "return lib.no.concatValues"
+    		},
+    		concat_data: {
+    			run_over_all: true,
+    			merge_data: false,
+    			script: "return ({data}) => [{value: data}]"
     		},
     		h: {
     			script: "return lib.no.hFn"
@@ -40318,6 +40351,11 @@
     	{
     		from: "simulate_layout",
     		to: "simulation_subscription",
+    		as: "simulation"
+    	},
+    	{
+    		from: "simulate_layout",
+    		to: "hyperapp_view",
     		as: "simulation"
     	},
     	{
@@ -47768,7 +47806,8 @@
 
     makeMorphable();
 
-    const cm = {javascript, json, searchKeymap, keymap, highlightSpecialChars, 
+    const cm = {
+    	javascript, json, searchKeymap, keymap, highlightSpecialChars,
     	drawSelection, highlightActiveLine, EditorState, EditorView, StateEffect, jsonParseLinter,
     	history, historyKeymap, foldGutter, foldKeymap, indentOnInput, lineNumbers, highlightActiveLineGutter,
     	standardKeymap, bracketMatching, closeBrackets, closeBracketsKeymap, searchKeymap, highlightSelectionMatches,
@@ -47776,7 +47815,7 @@
     };
 
     const reduce = (fn, acc, it) => {
-    	for(const n of it) {
+    	for (const n of it) {
     		acc = fn(acc, n);
     	}
 
@@ -47784,24 +47823,24 @@
     };
 
     const map = function* (it, fn) {
-    	for(const n of it) {
+    	for (const n of it) {
     		yield fn(n);
     	}
     };
 
     // in place `over` of an array index
     const overIdx = (i, def) => fn => arr => (arr[i] = fn(arr[i] ?? def), arr);
-    const overKey = (k, def) => fn => om => 
-    	om instanceof Map 
-    	? om.set(k, fn(om.get(k) ?? def))
-    	: overIdx(k, def)(fn)(om);
+    const overKey = (k, def) => fn => om =>
+    	om instanceof Map
+    		? om.set(k, fn(om.get(k) ?? def))
+    		: overIdx(k, def)(fn)(om);
     const overPath = (p, def) => fn => om =>
-    	overKey(p[0], def)(p.length === 1 
-    		? fn 
+    	overKey(p[0], def)(p.length === 1
+    		? fn
     		: overPath(p.slice(1), def)(fn)
     	)(om);
 
-    window.AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+    window.AsyncFunction = Object.getPrototypeOf(async function () { }).constructor;
 
     const editorEl = document.getElementById("text_editor");
     document.getElementById("node_editor");
@@ -47809,23 +47848,23 @@
     const languageConf = new Compartment();
 
     const autoLanguage = EditorState.transactionExtender.of(tr => {
-      if (!tr.docChanged) return null
-      let docIsJSON = true;
+    	if (!tr.docChanged) return null
+    	let docIsJSON = true;
 
-    	try{
+    	try {
     		JSON.parse(tr.newDoc.toString());
-    	} catch (err){
+    	} catch (err) {
     		docIsJSON = false;
     	}
 
-      let stateIsJSON = tr.startState.facet(language) == jsonLanguage;
-      if (docIsJSON == stateIsJSON) return null
-      return {
-        effects: languageConf.reconfigure(docIsJSON ? [cm.linter(cm.jsonParseLinter()), json()] : javascript())
-      }
+    	let stateIsJSON = tr.startState.facet(language) == jsonLanguage;
+    	if (docIsJSON == stateIsJSON) return null
+    	return {
+    		effects: languageConf.reconfigure(docIsJSON ? [cm.linter(cm.jsonParseLinter()), json()] : javascript())
+    	}
     });
 
-    const editorState  = cm.EditorState.create({
+    const editorState = cm.EditorState.create({
     	extensions: [
     		languageConf.of([cm.linter(cm.jsonParseLinter()), json()]),
     		autoLanguage,
@@ -47856,20 +47895,20 @@
     		])
     	]
     });
-    			
 
-    new cm.EditorView({ 
-    	state: editorState, 
+
+    new cm.EditorView({
+    	state: editorState,
     	parent: editorEl
     });
 
-    const compileNode = (node) => node.script ? new Function('lib', node.script)(lib) : args => Object.assign({}, args.data, lib._.omit(node, 'id', 'fn'));
+    const compileNode = (node) => node.script ? new Function('lib', node.script)(lib) : args => Object.assign({}, args.data, Object.assign({}, node, { fn: undefined, id: undefined }));
 
     // Note: heavy use of comma operator https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Comma_Operator
     const unpackTypes = (node_types, node) => {
     	let ty = typeof node === 'string' ? node : node.type;
     	const result = typeof node === 'string' ? {} : Object.assign({}, node);
-    	while(ty && node_types[ty]) {
+    	while (ty && node_types[ty]) {
     		Object.assign(result, node_types[ty]);
     		ty = node_types[ty].type;
     	}
@@ -47897,30 +47936,30 @@
     // }
 
 
-    const hFn = ({data}) => ({
+    const hFn = ({ data }) => ({
     	value: {
     		el: lib.ha.h(
-    		data.dom_type, // change to input
-    		data.attrs ?? {}, 
-    		data.children instanceof Map
-    			?  [...lib.iter.map(
-    				data.children.values(), 
-    				v => v ? v : undefined)]
-    			: Array.isArray(data.children)
-    			? data.children
-    			: data.children
-    			? [data.children]
-    			: [])
+    			data.dom_type, // change to input
+    			data.attrs ?? {},
+    			data.children instanceof Map
+    				? [...lib.iter.map(
+    					data.children.values(),
+    					v => v ? v : undefined)]
+    				: Array.isArray(data.children)
+    					? data.children
+    					: data.children
+    						? [data.children]
+    						: [])
     	},
-    	delete:	["attrs", "children", "dom_type"]
+    	delete: ["attrs", "children", "dom_type"]
     });
 
     // this is a context
     const execute = args => {
-    	const {id, state, data} = args;
-    	const self = data?.graph?.nodes?.find(v => v.id === id);
+    	const { id, state, data } = args;
+    	const self = data?.[0]?.graph?.nodes?.find(v => v.id === id);
 
-    	if(!self) {
+    	if (!self) {
     		console.log(args);
     		debugger;
     		throw new Error("No graph or can't find node");
@@ -47928,31 +47967,46 @@
 
     	const node_state = state.get(id) ?? state.set(id, new Map()).get(id);
 
-    	const incoming_edges = data.graph.edges.filter(e => e.to === id);
+    	const incoming_edges = data[0].graph.edges.filter(e => e.to === id);
 
     	// store and merge args across calls
-    	const merged_data = self.merge_data ?? incoming_edges.length > 1
-    		? node_state.has('data')
-    				? Object.assign(lib._.omit(self, ['merge_data', 'required_data']), node_state.get('data'), data)
-    				: Object.assign(lib._.omit(self, ['merge_data', 'required_data']), data)
-    		:  Object.assign(lib._.omit(self, ['merge_data', 'required_data']), data);
+    	const mergeable_self = Object.assign({}, self);
+    	delete mergeable_self['merge_data'];
+    	delete mergeable_self['required_data'];
 
-    	node_state.set('data', merged_data);
+    	const merged_datas = lib._.zipWith(data, node_state.get('data') ?? [], (d, sd) =>
+    		self.merge_data ?? incoming_edges.length > 1
+    			? sd
+    				? Object.assign({}, mergeable_self, sd, d)
+    				: Object.assign({}, mergeable_self, d)
+    			: Object.assign({}, mergeable_self, d)
+    	);
 
-    	if(self.required_data && !lib._.every(self.required_data, p => lib._.has(merged_data, p))) {
-    		return;
+    	node_state.set('data', merged_datas);
+
+    	if (node_state.get('self') !== self) {
+    		self.fn = compileNode(self);
+    		node_state.set('self', self);
     	}
 
     	// call the function with node_state
     	try {
-    		if(node_state.get('self') !== self){
-    			self.fn = compileNode(self);
-    			node_state.set('self', self);
+    		let result;
+
+    		if (self.run_over_all) {
+    			result = self.fn(Object.assign({}, args, { state: node_state, data: merged_datas }));
+    		} else {
+    			result = merged_datas.map(merged_data => {
+    				if (self.required_data && !lib._.every(self.required_data, p => lib._.has(merged_data, p))) {
+    					return;
+    				}
+
+    				return self.fn(Object.assign({}, args, { state: node_state, data: merged_data }));
+    			});
     		}
 
-    		const result = self.fn(Object.assign({}, args, {state: node_state, data: merged_data }));
     		runNextNodes(Object.assign({}, args), result);
-    	} catch(e) {
+    	} catch (e) {
     		console.log(`error running ${id}`);
     		console.log(self);
     		console.log(args);
@@ -47960,10 +48014,10 @@
     	}
     };
 
-    const verify = ({data}) => {
+    const verify = ({ data }) => {
     	const node_map = new Map(data.graph.nodes.map(n => [n.id, n]));
     	data.graph.edges.forEach(e => {
-    		if(!(node_map.has(e.from) && node_map.has(e.to))) {
+    		if (!(node_map.has(e.from) && node_map.has(e.to))) {
     			throw new Error(`invalid edge ${JSON.stringify(e)}`)
     		}
     	});
@@ -47971,15 +48025,15 @@
     	return data;
     };
 
-    const fnDef = ({id, data, state}) => {
+    const fnDef = ({ id, data, state }) => {
     	const node_map = new Map(data.graph.nodes.map(n => [n.id, n]));
     	const next_edges = data.graph.edges
     		.filter(e => e.from === id);
     	const next_node_ids = new Set(next_edges.map(e => e.to));
 
-    	const ref_nodes = next_edges.map(e => node_map.get(e.to).type === "fn_return" 
-    	 ? node_map.get(e.to)
-    	 :  Object.assign({}, node_map.get(e.to), {id: `${node_map.get(e.to).id}#ref_fnDef`})
+    	const ref_nodes = next_edges.map(e => node_map.get(e.to).type === "fn_return"
+    		? node_map.get(e.to)
+    		: Object.assign({}, node_map.get(e.to), { id: `${node_map.get(e.to).id}#ref_fnDef` })
     	);
 
     	const ref_edges = next_edges.map(e => ({
@@ -47990,15 +48044,15 @@
 
     	const fnDef_nodes = next_edges
     		.filter(e => node_map.get(e.to).type !== "fn_return")
-    		.map(e => ({ 
-    			id: e.to, 
+    		.map(e => ({
+    			id: e.to,
     			script: "return lib.no.fnDef"
     		}));
 
     	// get rid of "as"
-    	const fn_def_edges = next_edges.map(e => ({to: e.to, from: e.from}));
+    	const fn_def_edges = next_edges.map(e => ({ to: e.to, from: e.from }));
 
-    	const acc_nodes = 
+    	const acc_nodes =
     		[...(data.graph.nodes
     			.filter(n => !next_node_ids.has(n.id))
     			.concat(state.get('acc_nodes') ?? [], ref_nodes, fnDef_nodes)
@@ -48007,8 +48061,8 @@
 
     	state.set('acc_nodes', acc_nodes);
 
-    	const acc_edges = 
-    	    [...(data.graph.edges
+    	const acc_edges =
+    		[...(data.graph.edges
     			.filter(e => !next_node_ids.has(e.to))
     			.concat(state.get('acc_edges') ?? [], fn_def_edges)
     			.reduce((m, e) => m.set(`${e.from}##${e.to}`, e), new Map())
@@ -48016,11 +48070,11 @@
 
     	state.set('acc_edges', acc_edges);
 
-    	const reference_graph = 
+    	const reference_graph =
     		[...((data.reference_graph ?? [])
-    		.concat(state.get('reference_graph') ?? [], ref_edges)
-    		.reduce((m, e) => m.set(`${e.from}##${e.to}`, e), new Map())
-    		.values())];
+    			.concat(state.get('reference_graph') ?? [], ref_edges)
+    			.reduce((m, e) => m.set(`${e.from}##${e.to}`, e), new Map())
+    			.values())];
 
 
     	state.set('reference_graph', reference_graph);
@@ -48034,113 +48088,124 @@
     	}
     };
 
-    const fnReturn = ({id, data, lib, state}) => {
+    const fnReturn = ({ id, data, lib, state }) => {
     	const fnOut = {
     		id: `${id}#ref_fnDef`,
     		script: "return ({data}) => data.fn_result.fn_value = data"
     	};
 
-    	const reference_graph = 
+    	const reference_graph =
     		[...((data.reference_graph ?? [])
-    		.concat(state.get('reference_graph') ?? [])
-    		.reduce((m, e) => {
-    			const hash = `${e.from}##${e.to}`;
-    			if(!m.has(hash)) {
-    				m.set(hash, e);
-    			}
-    			return m;
-    		}, new Map())
-    		.values())];
+    			.concat(state.get('reference_graph') ?? [])
+    			.reduce((m, e) => {
+    				const hash = `${e.from}##${e.to}`;
+    				if (!m.has(hash)) {
+    					m.set(hash, e);
+    				}
+    				return m;
+    			}, new Map())
+    			.values())];
 
     	state.set('reference_graph', reference_graph);
 
-    	const graph_nodes = 
+    	const graph_nodes =
     		[...(data.graph.nodes
-    		.concat(state.get('graph_nodes') ?? [])
-    		.reduce((m, n) => m.set(n.id, n), new Map())
-    		.values())];
+    			.concat(state.get('graph_nodes') ?? [])
+    			.reduce((m, n) => m.set(n.id, n), new Map())
+    			.values())];
 
     	state.set('graph_nodes', graph_nodes);
-    	
 
-    	return (args) => { 
+
+    	return (args) => {
     		const fn_result = {};
 
     		runNextNodes({
-    			id: "in", 
-    			data: {
+    			id: "in",
+    			data: [Object.assign({
     				graph: {
     					nodes: state.get('graph_nodes').concat([fnOut]),
     					edges: state.get('reference_graph')
     				},
     				fn_result
-    			},
+    			}, lib._.pick(data, data.inherited_data ?? []))],
     			lib,
     			state: new Map()
-    		}, args);
+    		}, [args]);
 
     		return fn_result.fn_value;
     	}
     };
 
-    const concatValues = ({data, state}) => {
+    const concatValues = ({ data, state }) => {
     	const new_aggregate = state.set('aggregate', (
     		data.aggregate ?? (state.has('aggregate') ? state.get('aggregate') : [])
-    		).concat([data.value])).get('aggregate');
+    	).concat([data.concat_value])).get('aggregate');
 
     	if (!data.length || data.length <= new_aggregate.length) {
-    		return { value: new_aggregate, delete: ["value", "length"] };
+    		return { value: new_aggregate, delete: ["concat_value", "length"] };
     	}
     };
 
-    const runNextNodes = (args, result) => {
-    	const raw_result = !(
-    		result !== undefined
-    		&& typeof result === "object" 
-    		&& result.hasOwnProperty('value') 
-    	);
+    const runNextNodes = (args, returned_results) => {
 
-    	const result_value = raw_result ? result : result.value;
+    	const stored_data = Object.assign({}, (args.state.get(args.id) ?? new Map()).get('data'));
+    	const results = returned_results
+    		.map((result, i) => ({
+    			result,
+    			previous_data: Object.assign({}, args.data[i]),
+    			stored_data: stored_data[i],
+    			raw: !(
+    				result !== undefined
+    				&& typeof result === "object"
+    				&& result.hasOwnProperty('value')
+    			),
+    			value: !(
+    				result !== undefined
+    				&& typeof result === "object"
+    				&& result.hasOwnProperty('value')
+    			) ? result : result.value
+    		}))
+    		.filter(r => r.result !== undefined && (r.raw || r.result.value !== undefined));
 
+    	results.forEach(result => {
+    		if (result.raw && result.value.hasOwnProperty('delete')) {
+    			// lib._.omit is super slow so we do it this way
+    			result.delete?.forEach(p => {
+    				delete result.previous_data[p];
+    				delete result.stored_data[p];
+    			});
+    		}
+    	});
 
-    	if (result_value === undefined) {
+    	if (results.length === 0) {
     		return;
     	}
 
-
-    	const transferred_data = lib._.omit(args.data, 
-    		!raw_result && result.hasOwnProperty('delete') 
-    			? result.delete
-    			: []);
-
-    	if (!raw_result && result.hasOwnProperty('delete')) {
-    		args.state.get(args.id).set('data', lib._.omit(args.state.get(args.id).get('data'), result.delete));
-    	}
-
-    	(result.graph ?? args.data.graph).edges
+    	(results[0].value.graph ?? args.data[0].graph).edges
     		.filter(e => e.from === args.id)
     		.forEach(e => execute({
-    			id: e.to, 
-    			data: e.as 
-    				? lib._.set(Object.assign({}, transferred_data), e.as, result_value) 
-    				: typeof result_value === 'object' && !Array.isArray(result_value)
-    					? Object.assign(transferred_data, result_value)
-    					: new Error(`Returned an unwrapped array in ${args.id}`),
+    			id: e.to,
+    			data: results.map(({ previous_data, value }) => e.as
+    				? lib._.set(Object.assign({}, previous_data), e.as, value)
+    				: typeof value === 'object' && !Array.isArray(value)
+    					? Object.assign(previous_data, value)
+    					: new Error(`Returned an unwrapped array in ${args.id}`)),
     			state: args.state,
     			lib: args.lib
     		}));
     };
 
-    const map_path_fn = ({lib, data}) => data.target && data.target_path && data.map_fn ?  ({ 
+    const map_path_fn = ({ lib, data }) => data.target && data.target_path && data.map_fn ? ({
     	value: lib._.update(
-    			data.target,
-    			data.target_path,
-    			a => lib._.map(a, data.map_fn)
-    		),
+    		data.target,
+    		data.target_path,
+    		a => lib._.map(a, data.map_fn)
+    	),
     	delete: ['target_path', 'map_fn']
     }) : undefined;
 
-    const iterate = ({id, data}) => {
+    const iterate = ({ id, data }) => {
     	new Map(data.graph.nodes.map(n => [n.id, n]));
     	const next_edges = data.graph.edges
     		.filter(e => e.from === id);
@@ -48166,11 +48231,11 @@
     		from: `${id}#get_input#${i}`,
     		to: `${id}#identity`
     	}));
-    	
+
     	return {
     		graph: {
-    			edges: data.graph.edges.map(e => e.from === id 
-    				? Object.assign({}, e, { from: `${id}#identity` }) 
+    			edges: data.graph.edges.map(e => e.from === id
+    				? Object.assign({}, e, { from: `${id}#identity` })
     				: e).concat(get_input_edges, identity_edges),
     			nodes: data.graph.nodes.concat(get_input_nodes, [identity_node])
     		},
@@ -48179,56 +48244,56 @@
     	}
     };
 
-    const flatten = ({data}) => {
-    	const flatten_node = (graph) => {
-    		if(graph.nodes === undefined) {
-    			return graph;
-    		} 
+    const flatten_node = (graph, levels = -1) => {
+    	if (graph.nodes === undefined || levels === 0) {
+    		return graph;
+    	}
 
-    		// needs to not prefix base node because then flatten node can't run  next
-    		const prefix = graph.id ? `${graph.id}/` : '';
+    	// needs to not prefix base node because then flatten node can't run  next
+    	const prefix = graph.id ? `${graph.id}/` : '';
 
-    		return graph.nodes
-    			.map(n => Object.assign({}, n, {id: `${prefix}${n.id}`}))
-    			.map(flatten_node)
-    			.reduce((acc, n) => Object.assign({}, acc, {
-    				nodes: acc.nodes.concat(n.nodes?.flat() ?? []), 
-    				edges: acc.edges.map(e => n.nodes 
-    					? e.to === n.id 
-    						? Object.assign(e, { to: `${e.to}/in`})
-    						: e.from === n.id
-    						? Object.assign(e, {from: `${e.from}/out`})
+    	return graph.nodes
+    		.map(n => Object.assign({}, n, { id: `${prefix}${n.id}` }))
+    		.map(g => flatten_node(g, levels - 1))
+    		.reduce((acc, n) => Object.assign({}, acc, {
+    			flat_nodes: acc.flat_nodes.concat(n.flat_nodes?.flat() ?? []),
+    			flat_edges: acc.flat_edges.map(e => n.flat_nodes
+    				? e.to === n.id
+    					? Object.assign(e, { to: `${e.to}/in` })
+    					: e.from === n.id
+    						? Object.assign(e, { from: `${e.from}/out` })
     						: e
-    					: e).flat().concat(n.edges).filter(e => e !== undefined)
-    			}), Object.assign({}, graph, {
-    				nodes: graph.nodes
-    					.map(n => Object.assign({}, n, {id: `${prefix}${n.id}`})),
-    				edges: graph.edges
-    					.map(e => ({from: `${prefix}${e.from}`, to: `${prefix}${e.to}`, as: e.as}))
-    			}));
-    	};
-
-    	return {graph: flatten_node(data.graph)};
+    				: e).flat().concat(n.flat_edges).filter(e => e !== undefined)
+    		}), Object.assign({}, graph, {
+    			flat_nodes: graph.nodes
+    				.map(n => Object.assign({}, n, { id: `${prefix}${n.id}` })),
+    			flat_edges: graph.edges
+    				.map(e => ({ from: `${prefix}${e.from}`, to: `${prefix}${e.to}`, as: e.as }))
+    		}));
     };
 
-    const d3simulation = ({data}) => {
+    const flatten = ({ data }) => {
+    	const flattened = flatten_node(data.graph);
 
-    	console.log(data);
+    	return { graph: { nodes: flattened.flat_nodes, edges: flattened.flat_edges } };
+    };
 
-    	const bfs = (level) => (edge) => 
+    const d3simulation = ({ data }) => {
+
+    	const bfs = (level) => (edge) =>
     		[[edge.to, level]].concat(data.display_graph.edges.filter(e => e.from === edge.to).map(bfs(level + 1)).flat());
 
     	const levels = Object.fromEntries(data.display_graph.edges.filter(e => e.from === 'in').map(bfs(0)).flat());
     	levels.min = Math.min(...Object.values(levels));
     	levels.max = Math.max(...Object.values(levels));
 
-    	const simulation = 
+    	const simulation =
     		lib.d3.forceSimulation(
     			data.display_graph.nodes
     				.map((n, index) => ({
     					node_id: n.id,
-    					x: window.innerWidth * (Math.random() *.5 + .25), 
-    					y: window.innerHeight * (Math.random() * .5 + .25), 
+    					x: window.innerWidth * (Math.random() * .5 + .25),
+    					y: window.innerHeight * (Math.random() * .5 + .25),
     					index
     				})))
     			.force('charge', lib.d3.forceManyBody().strength(-8))
@@ -48236,32 +48301,122 @@
     			// 	.forceCenter(window.innerWidth * 0.5, window.innerHeight * 0.5)
     			// 	.strength(.01))
     			.force('links', lib.d3
-    				.forceLink(data.display_graph.edges.map((e, index) => ({source: e.from, target: e.to, index})))
+    				.forceLink(data.display_graph.edges.map((e, index) => ({ source: e.from, target: e.to, index })))
     				.distance(128)
     				.id(n => n.node_id))
     			.force('link_direction', lib.d3
     				.forceY()
     				.y((n) => window.innerHeight * (0.15 + (Math.random() * 0.2) + 0.5 * (levels[n.node_id] ?? 0) / (levels.max - levels.min)))
     				.strength(0.5))
-    			.force('collide', lib.d3.forceCollide(64));
-    			// .alphaMin(.8); // changes how long the simulation will run. dfault is 0.001 
+    			.force('center', lib.d3.forceCenter(window.innerWidth * 0.5, window.innerHeight * 0.5))
+    			.force('collide', lib.d3.forceCollide(64))
+    			.velocityDecay(.6)
+    			.alphaMin(.04); // changes how long the simulation will run. dfault is 0.001 
 
     	return simulation;
     };
 
-    const debug  = () => {
+    const node_click = ({ data }) => {
+    	if (data.node_id.endsWith('in') || data.node_id.endsWith('out')) {
+    		return lib.no.contract_node({ data });
+    	} else {
+    		return lib.no.expand_node({ data })
+    	}
+    };
+
+    const contract_node = ({ data }) => (s, payload) => [
+    	s,
+    	[() => {
+    		const node_id = data.node_id.endsWith('in')
+    			? data.node_id.substring(0, data.node_id.length - 3)
+    			: data.node_id.substring(0, data.node_id.length - 4);
+
+
+    		const without_nodes =  
+    			data.nodes
+    				.filter(n => !n.node_id.startsWith(node_id));
+
+    		console.log(payload.x);
+    		console.log(payload.y);
+    		without_nodes.push({
+    					node_id,
+    					x: payload.x,
+    					y: payload.y,
+    					index: without_nodes.length
+    				});
+
+    		data.simulation.nodes(without_nodes);
+
+    		data.simulation.force('links').links(data.links
+    			.map((l, i) => ({
+    				index: i,
+    				source: l.source.node_id === `${node_id}/out` ? node_id : l.source.node_id,
+    				target: l.target.node_id === `${node_id}/in` ? node_id : l.target.node_id
+    			}))
+    			.filter(l => !(l.source.startsWith(`${node_id}/`) || l.target.startsWith(`${node_id}/`)))
+    		);
+
+    		data.simulation.force(`parent_${node_id}`, null).alpha(0.6).alphaMin(0.25).restart();
+    	}]
+    ];
+
+    const expand_node = ({ data }) => (s, payload) => [
+    	s,
+    	[() => {
+    		const node = data.display_graph.nodes.find(n => n.id === data.node_id);
+
+
+    		if (!node.nodes) {
+    			console.log('no nodes?');
+    			return;
+    		}
+
+    		const flattened = lib.no.flatten_node(node, 1);
+
+    		console.log(data.x);
+    		console.log(data.y);
+
+    		data.simulation.nodes(
+    			data.nodes
+    				.filter(n => n.node_id !== data.node_id)
+    				.concat(flattened.flat_nodes.map((n, index) => ({
+    					node_id: n.id,
+    					x: data.x,
+    					y: data.y,
+    					parent: data.node_id,
+    					index
+    				})))
+    		);
+
+
+    		data.simulation.force('links').links(
+    			data.links
+    				.map((l, i) => ({
+    					index: i,
+    					source: l.source.node_id === data.node_id ? `${l.source.node_id}/out` : l.source.node_id,
+    					target: l.target.node_id === data.node_id ? `${l.target.node_id}/in` : l.target.node_id
+    				}))
+    				.concat(flattened.flat_edges.map((e, index) => ({ source: e.from, target: e.to, index: index + data.links.length })))
+    		);
+
+    		data.simulation.force(`parent_${data.node_id}`, lib.d3.forceRadial(10, data.x, data.y).strength(n => n.parent === data.node_id ? 0.3 : -0.01)).alpha(0.6).alphaMin(0.25).restart();
+    	}]
+    ];
+
+    const debug = () => {
     	debugger;
     };
 
-    const lib = { cm, _,
-    	ha: { h, app, text, memo},  
-    	iter: {reduce, map}, 
-    	no: {map_path_fn, flatten, unpackTypes, hFn, fnDef, fnReturn, concatValues, iterate, verify, d3simulation, debug},
-    	d3: {forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide},
-    	util: {overIdx, overKey, overPath}
+    const lib = {
+    	cm, _,
+    	ha: { h, app, text, memo },
+    	iter: { reduce, map },
+    	no: { map_path_fn, flatten, unpackTypes, hFn, fnDef, fnReturn, concatValues, iterate, verify, d3simulation, debug, flatten_node, expand_node, node_click, contract_node },
+    	d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide },
+    	util: { overIdx, overKey, overPath }
     };
 
-    execute({id: "in", state: new Map(), lib, data: { graph: DEFAULT_GRAPH }});
+    execute({ id: "in", state: new Map(), lib, data: [{ graph: DEFAULT_GRAPH }] });
 
     // const aggregateChain = ({id, data, lib}) => {
     // 	const next_edges = data.graph.edges.filter(e => e.from === id);

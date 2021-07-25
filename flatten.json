@@ -33,11 +33,13 @@
             "nodes": [
                 {
                     "id": "in",
-                    "type": "fn_def"
+                    "type": "fn_def",
+                    "required_data": ["simulation", "display_graph"]
                 },
                 {
                     "id": "out",
-                    "type": "fn_return"
+                    "type": "fn_return",
+                    "inherited_data": ["simulation", "display_graph"]
                 },
                 {
                     "id": "get_aggregate",
@@ -123,6 +125,12 @@
                                         },
                                         {
                                             "id": "node_svgs",
+                                            "run_over_all": true,
+                                            "path": "nodes",
+                                            "script": "return ({data}) => data[0][data[0].path].map(n => Object.assign({}, n, data[0]))"
+                                        },
+                                        {
+                                            "id": "node_svgs_old",
                                             "script": "return lib.no.iterate",
                                             "pick": ["x", "y", "node_id"]
                                         },
@@ -149,7 +157,7 @@
                                                 },
                                                 {
                                                     "id": "parent_attrs",
-                                                    "script": "return ({data}) => ({ x: (data.x ?? 400) - 20, y: (data.y ?? 400) - 20, id: data.node_id })"
+                                                    "script": "return ({data}) => ({ x: (data.x ?? 400) - 20, y: (data.y ?? 400) - 20, id: data.node_id, onclick: lib.no.node_click({data})})"
                                                 },
                                                 {
                                                     "id": "children",
@@ -297,6 +305,12 @@
                                         },
                                         {
                                             "id": "link_svgs",
+                                            "run_over_all": true,
+                                            "path": "links",
+                                            "script": "return ({data}) => data[0][data[0].path].map(n => Object.assign({}, n, data[0]))"
+                                        },
+                                        {
+                                            "id": "link_svgs_old",
                                             "script": "return lib.no.iterate",
                                             "pick": ["source", "target"]
                                         },
@@ -337,11 +351,11 @@
                                         },
                                         {
                                             "id": "concat_links",
-                                            "type": "concat"
+                                            "type": "concat_data"
                                         },
                                         {
                                             "id": "concat_nodes",
-                                            "type": "concat"
+                                            "type": "concat_data"
                                         },
                                         {
                                             "id": "concat_all",
@@ -365,6 +379,14 @@
                                         }
                                     ],
                                     "edges": [
+                                        {
+                                            "from": "in",
+                                            "to": "node_svgs"
+                                        },
+                                        {
+                                            "from": "in",
+                                            "to": "link_svgs"
+                                        },
                                         {
                                             "from": "in",
                                             "to": "get_nodes"
@@ -404,12 +426,12 @@
                                         {
                                             "from": "node_template",
                                             "to": "concat_nodes",
-                                            "as": "value"
+                                            "as": "concat_value"
                                         },
                                         {
                                             "from": "link_template",
                                             "to": "concat_links",
-                                            "as": "value"
+                                            "as": "concat_value"
                                         },
                                         {
                                             "from": "skip_when_empty_nodes",
@@ -576,7 +598,7 @@
                         },
                         {
                             "id": "subscription",
-                            "script": "return ({data}) => dispatch => { data.simulation.on('tick.ha', () => { requestAnimationFrame(() => dispatch(s => ({ nodes: data.simulation.nodes(), links: data.simulation.force('links').links()  }) ) ) }); return () => data.simulation.on('.ha', null); }"
+                            "script": "return ({data}) => dispatch => { data.simulation.on('tick.ha', () => { requestAnimationFrame(() => dispatch(s => ({ nodes: data.simulation.nodes().map(n => ({node_id: n.node_id, x: Math.floor(n.x), y: Math.floor(n.y)})), links: data.simulation.force('links').links().map(l => ({source: ({node_id: l.source.node_id, x: Math.floor(l.source.x), y: Math.floor(l.source.y)}), target: ({node_id: l.target.node_id, x: Math.floor(l.target.x), y: Math.floor(l.target.y)})}))  }) ) ) }); return () => data.simulation.on('.ha', null); }"
                         }
                     ],
                     "edges": [
@@ -643,6 +665,11 @@
             "concat": {
                 "merge_data": false,
                 "script": "return lib.no.concatValues"
+            },
+            "concat_data": {
+                "run_over_all": true,
+                "merge_data": false,
+                "script": "return ({data}) => [{value: data}]"
             },
             "h": {
                 "script": "return lib.no.hFn"
@@ -743,6 +770,11 @@
         {
             "from": "simulate_layout",
             "to": "simulation_subscription",
+            "as": "simulation"
+        },
+        {
+            "from": "simulate_layout",
+            "to": "hyperapp_view",
             "as": "simulation"
         },
         {
