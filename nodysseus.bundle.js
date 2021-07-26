@@ -48277,20 +48277,8 @@
     };
 
     const d3simulation = ({ data }) => {
-        const bfs = (level) => (edge) => [
-            [edge.to, level]
-        ].concat(data.display_graph.edges.filter(e => e.from === edge.to).map(bfs(level + 1)).flat());
 
-        const levels = data.display_graph.edges.filter(e => e.from === 'in').map(bfs(1)).flat()
-            .reduce(
-                (acc, v) => acc.set(v[0], Math.max(v[1], acc.get(v[0]) ?? 0)),
-                new Map()
-            );
-        levels.set('in', 0);
-        levels.min = Math.min(...levels.values());
-        levels.max = Math.max(...levels.values());
-
-        const nodes_by_level = [...levels.entries()].reduce((acc, [n, l]) => (acc[l] ? acc[l].push(n) : acc[l] = [n], acc), {});
+        const levels = calculate_levels(data.display_graph);
 
         const simulation =
             lib.d3.forceSimulation(
@@ -48313,16 +48301,16 @@
                 .id(n => n.node_id))
             .force('link_direction', lib.d3
                 .forceY()
-                .y((n) => window.innerHeight * (0.075 + 0.85 * (levels.get(n.node_id) ?? 0) / (levels.max - levels.min)) +
-                    (levels.has(n.node_id) && levels.get(n.node_id) !== undefined ?
-                        64 * nodes_by_level[levels.get(n.node_id)].indexOf(n.node_id) - (nodes_by_level[levels.get(n.node_id)].length - 1) * 64 * 0.5 :
+                .y((n) => window.innerHeight * (0.075 + 0.85 * (levels.levels.get(n.node_id) ?? 0) / (levels.max - levels.min)) +
+                    (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
+                        64 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - (levels.nodes_by_level[levels.levels.get(n.node_id)].length - 1) * 64 * 0.5 :
                         0))
                 .strength(1))
             .force('link_siblings', lib.d3
                 .forceX()
                 .x((n) => window.innerWidth * 0.5 + (window.innerWidth * Math.random() * 0.05) +
-                    (levels.has(n.node_id) && levels.get(n.node_id) !== undefined ?
-                        (256 * nodes_by_level[levels.get(n.node_id)].indexOf(n.node_id) - nodes_by_level[levels.get(n.node_id)].length * 256 * 0.5) :
+                    (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
+                        (256 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - levels.nodes_by_level[levels.levels.get(n.node_id)].length * 256 * 0.5) :
                         window.innerWidth * 0.25))
                 .strength(1));
 
@@ -48344,42 +48332,101 @@
         }
     };
 
-    const contract_node = ({ data }) => (s, payload) => [
-        s, [() => {
-            const node_id = data.node_id.endsWith('in') ?
-                data.node_id.substring(0, data.node_id.length - 3) :
-                data.node_id.substring(0, data.node_id.length - 4);
+    const contract_node = ({ data }) => (s, payload) => {
+        const node_id = data.node_id.endsWith('in') ?
+            data.node_id.substring(0, data.node_id.length - 3) :
+            data.node_id.substring(0, data.node_id.length - 4);
 
-            const without_nodes =
-                data.nodes
-                .filter(n => !n.node_id.startsWith(node_id));
+        const new_display_graph = {
+            nodes: s.display_graph.nodes
+                .filter(n => !n.id.startsWith(node_id))
+                .concat([{
+                    id: node_id,
+                    nodes: s.display_graph.nodes
+                        .filter(n => n.id.startsWith(node_id))
+                        .map(n => ({...n, id: n.id.substring(node_id.length + 1)})),
+                    edges: s.display_graph.edges
+                        .filter(e => e.from.startsWith(node_id) && e.to.startsWith(node_id))
+                        .map(e =>({
+                            as: e.as,
+                            from: e.from.substring(node_id.length + 1),
+                            to: e.to.substring(node_id.length + 1),
+                        }))
+                }]),
+            edges: s.display_graph.edges
+                .map(e => ({
+                    from: e.from === `${node_id}/out` ? node_id : e.from,
+                    to: e.to === `${node_id}/in` ? node_id : e.to
+                }))
+                .filter(e => !(e.from.startsWith(`${node_id}/`) || e.to.startsWith(`${node_id}/`)))
+        };
 
-            without_nodes.push({
+        const levels = calculate_levels(new_display_graph);
+
+        const new_nodes = s.nodes
+            .filter(n => !n.node_id.startsWith(node_id))
+            .concat([{
                 node_id,
                 x: payload.x,
                 y: payload.y,
-                index: without_nodes.length
-            });
+                index: s.nodes.length - 1
+            }]);
 
-            data.simulation.nodes(without_nodes);
+        const new_links = new_display_graph.edges.map(e => ({source: e.from, target: e.to}));
 
-            data.simulation.force('links').links(data.links
-                .map((l, i) => ({
-                    index: i,
-                    source: l.source.node_id === `${node_id}/out` ? node_id : l.source.node_id,
-                    target: l.target.node_id === `${node_id}/in` ? node_id : l.target.node_id
-                }))
-                .filter(l => !(l.source.startsWith(`${node_id}/`) || l.target.startsWith(`${node_id}/`)))
-            );
+        return [{
+            ...s,
+            nodes: new_nodes,
+            links: new_links,
+            display_graph: new_display_graph,
+            levels
+        }, [() => {
+                data.simulation.nodes(new_nodes);
 
-            data.simulation
-                .force(`parent_${node_id}`, null)
-                .force(`not_parent_${node_id}`, null)
-                .alpha(0.1)
-                .restart();
+                data.simulation.force('links').links(new_links);
+                data.simulation.force('link_direction')
+                    .y((n) => window.innerHeight * (0.075 + 0.85 * (levels.levels.get(n.node_id) ?? 0) / (levels.max - levels.min)) +
+                        (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
+                            64 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - (levels.nodes_by_level[levels.levels.get(n.node_id)].length - 1) * 64 * 0.5 :
+                            0));
 
-        }]
-    ];
+                data.simulation.force('link_siblings')
+                    .x((n) => window.innerWidth * 0.5 + (window.innerWidth * Math.random() * 0.05) +
+                        (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
+                            (256 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - levels.nodes_by_level[levels.levels.get(n.node_id)].length * 256 * 0.5) :
+                            window.innerWidth * 0.25));
+
+                data.simulation
+                    // .force(`parent_${data.node_id}`, lib.d3.forceRadial(0, data.x, data.y).strength(n => n.parent === data.node_id ? 0.2 : 0))
+                    // .force(`not_parent_${data.node_id}`, lib.d3.forceRadial(512, data.x, data.y).strength(n => n.parent === data.node_id ? 0 : 0.2))
+                    // .force(`center`, null)
+                    // .velocityDecay(.2)
+                    .alpha(0.2).restart();
+
+            }]
+        ]
+    };
+
+
+    const bfs = (graph, level) => (edge) => [
+        [edge.to, level]
+    ].concat(graph.edges.filter(e => e.from === edge.to).map(bfs(graph, level + 1)).flat());
+
+    const calculate_levels = graph => {
+        const levels = graph.edges.filter(e => e.from === 'in').map(bfs(graph, 1)).flat()
+            .reduce(
+                (acc, v) => acc.set(v[0], Math.max(v[1], acc.get(v[0]) ?? 0)),
+                new Map()
+            ).set('in', 0);
+
+        return {
+            levels,
+            min: Math.min(...levels.values()),
+            max: Math.max(...levels.values()),
+            nodes_by_level: [...levels.entries()].reduce((acc, [n, l]) => (acc[l] ? acc[l].push(n) : acc[l] = [n], acc), {})
+        }
+    };
+
 
     const expand_node = ({ data }) => (s, payload) => {
         const node = s.display_graph.nodes.find(n => n.id === data.node_id);
@@ -48403,6 +48450,7 @@
                 .concat(flattened.flat_edges)
         };
 
+        const levels = calculate_levels(new_display_graph);
 
         // TODO: remove duplicate code with d3simulation above
         const new_nodes = s.nodes.filter(n => n.node_id !== data.node_id)
@@ -48415,26 +48463,11 @@
 
         const new_links = new_display_graph.edges.map(e => ({ source: e.from, target: e.to }));
 
-        const bfs = (level) => (edge) => [
-            [edge.to, level]
-        ].concat(new_display_graph.edges.filter(e => e.from === edge.to).map(bfs(level + 1)).flat());
-
-        const levels = new_display_graph.edges.filter(e => e.from === 'in').map(bfs(1)).flat()
-            .reduce(
-                (acc, v) => acc.set(v[0], Math.max(v[1], acc.get(v[0]) ?? 0)),
-                new Map()
-            );
-        levels.set('in', 0);
-        levels.min = Math.min(...levels.values());
-        levels.max = Math.max(...levels.values());
-
-        const nodes_by_level = [...levels.entries()].reduce((acc, [n, l]) => (acc[l] ? acc[l].push(n) : acc[l] = [n], acc), {});
 
         return [{
                 ...s,
                 display_graph: new_display_graph,
                 levels,
-                nodes_by_level,
                 nodes: new_nodes,
                 links: new_links
             },
@@ -48443,15 +48476,15 @@
 
                 data.simulation.force('links').links(new_links);
                 data.simulation.force('link_direction')
-                    .y((n) => window.innerHeight * (0.075 + 0.85 * (levels.get(n.node_id) ?? 0) / (levels.max - levels.min)) +
-                        (levels.has(n.node_id) && levels.get(n.node_id) !== undefined ?
-                            64 * nodes_by_level[levels.get(n.node_id)].indexOf(n.node_id) - (nodes_by_level[levels.get(n.node_id)].length - 1) * 64 * 0.5 :
+                    .y((n) => window.innerHeight * (0.075 + 0.85 * (levels.levels.get(n.node_id) ?? 0) / (levels.max - levels.min)) +
+                        (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
+                            64 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - (levels.nodes_by_level[levels.levels.get(n.node_id)].length - 1) * 64 * 0.5 :
                             0));
 
                 data.simulation.force('link_siblings')
                     .x((n) => window.innerWidth * 0.5 + (window.innerWidth * Math.random() * 0.05) +
-                        (levels.has(n.node_id) && levels.get(n.node_id) !== undefined ?
-                            (256 * nodes_by_level[levels.get(n.node_id)].indexOf(n.node_id) - nodes_by_level[levels.get(n.node_id)].length * 256 * 0.5) :
+                        (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
+                            (256 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - levels.nodes_by_level[levels.levels.get(n.node_id)].length * 256 * 0.5) :
                             window.innerWidth * 0.25));
 
                 data.simulation
@@ -48459,7 +48492,7 @@
                     // .force(`not_parent_${data.node_id}`, lib.d3.forceRadial(512, data.x, data.y).strength(n => n.parent === data.node_id ? 0 : 0.2))
                     // .force(`center`, null)
                     // .velocityDecay(.2)
-                    .alpha(1).restart();
+                    .alpha(0.2).restart();
             }]
         ];
     };
@@ -48473,7 +48506,7 @@
         _,
         ha: { h, app, text, memo },
         iter: { reduce, map },
-        no: { map_path_fn, flatten, unpackTypes, hFn, fnDef, fnReturn, concatValues, iterate, verify, d3simulation, debug, flatten_node, expand_node, node_click, contract_node },
+        no: { map_path_fn, flatten, unpackTypes, hFn, fnDef, fnReturn, concatValues, verify, d3simulation, debug, flatten_node, expand_node, node_click, contract_node },
         d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
         util: { overIdx, overKey, overPath }
     };
