@@ -1,7 +1,6 @@
 {
     "description": "function composition",
-    "nodes": [
-        {
+    "nodes": [{
             "id": "in",
             "script": "return (args) => args.data"
         },
@@ -25,13 +24,12 @@
             "script": "return lib.no.map_path_fn"
         },
         {
-            "id": "initial_graph",
-            "script": "return ({data}) => ({graph: data.target.graph})"
+            "id": "initial_state",
+            "script": "return ({data}) => ({display_graph: data.display_graph, nodes: [], links: [] })"
         },
         {
             "id": "hyperapp_view",
-            "nodes": [
-                {
+            "nodes": [{
                     "id": "in",
                     "type": "fn_def",
                     "required_data": ["simulation", "display_graph"]
@@ -48,8 +46,7 @@
                 },
                 {
                     "id": "base_editor_content",
-                    "nodes": [
-                        {
+                    "nodes": [{
                             "id": "in",
                             "type": "identity"
                         },
@@ -72,8 +69,7 @@
                         },
                         {
                             "id": "node_editor",
-                            "nodes": [
-                                {
+                            "nodes": [{
                                     "id": "in",
                                     "type": "identity"
                                 },
@@ -93,8 +89,7 @@
                                 },
                                 {
                                     "id": "svgs",
-                                    "nodes": [
-                                        {
+                                    "nodes": [{
                                             "id": "in",
                                             "type": "identity"
                                         },
@@ -136,8 +131,7 @@
                                         },
                                         {
                                             "id": "node_template",
-                                            "nodes": [
-                                                {
+                                            "nodes": [{
                                                     "id": "in",
                                                     "type": "identity"
                                                 },
@@ -161,8 +155,7 @@
                                                 },
                                                 {
                                                     "id": "children",
-                                                    "nodes": [
-                                                        {
+                                                    "nodes": [{
                                                             "id": "circle",
                                                             "type": "h",
                                                             "dom_type": "circle",
@@ -175,8 +168,7 @@
                                                         },
                                                         {
                                                             "id": "text",
-                                                            "nodes": [
-                                                                {
+                                                            "nodes": [{
                                                                     "id": "in",
                                                                     "type": "identity"
                                                                 },
@@ -204,8 +196,7 @@
                                                                     }
                                                                 }
                                                             ],
-                                                            "edges": [
-                                                                {
+                                                            "edges": [{
                                                                     "from": "in",
                                                                     "to": "get_id"
                                                                 },
@@ -247,8 +238,7 @@
                                                             "type": "identity"
                                                         }
                                                     ],
-                                                    "edges": [
-                                                        {
+                                                    "edges": [{
                                                             "from": "in",
                                                             "to": "circle"
                                                         },
@@ -279,8 +269,7 @@
                                                     ]
                                                 }
                                             ],
-                                            "edges": [
-                                                {
+                                            "edges": [{
                                                     "from": "in",
                                                     "to": "children"
                                                 },
@@ -316,11 +305,12 @@
                                         },
                                         {
                                             "id": "link_template",
-                                            "nodes": [
-                                                {"id": "attrs",
+                                            "nodes": [{
+                                                    "id": "attrs",
                                                     "script": "return ({data}) => ({x1: data.source.x, y1: data.source.y, x2: data.target.x, y2: data.target.y, stroke: 'black'})"
                                                 },
-                                                {"id": "line",
+                                                {
+                                                    "id": "line",
                                                     "type": "h",
                                                     "dom_type": "line"
                                                 },
@@ -333,8 +323,7 @@
                                                     "type": "identity"
                                                 }
                                             ],
-                                            "edges": [
-                                                {
+                                            "edges": [{
                                                     "from": "in",
                                                     "to": "attrs"
                                                 },
@@ -378,8 +367,7 @@
                                             "script": "return ({data}) => data.target?.length > 0 ? undefined : []"
                                         }
                                     ],
-                                    "edges": [
-                                        {
+                                    "edges": [{
                                             "from": "in",
                                             "to": "node_svgs"
                                         },
@@ -474,8 +462,7 @@
                                     "script": "return () => ({id: 'node_parent', width: window.innerWidth, height: window.innerHeight})"
                                 }
                             ],
-                            "edges": [
-                                {
+                            "edges": [{
                                     "from": "in",
                                     "to": "get_input"
                                 },
@@ -511,8 +498,7 @@
                             "dom_type": "div"
                         }
                     ],
-                    "edges": [
-                        {
+                    "edges": [{
                             "from": "in",
                             "to": "node_editor"
                         },
@@ -570,8 +556,7 @@
                     "type": "children_els"
                 }
             ],
-            "edges": [
-                {
+            "edges": [{
                     "from": "in",
                     "to": "base_editor_content"
                 },
@@ -585,42 +570,41 @@
                 }
             ]
         },
-                {
-                    "id": "simulation_subscription",
-                    "nodes": [
-                        {
-                            "id": "in",
-                            "type": "identity"
-                        },
-                        {
-                            "id": "out",
-                            "type": "identity"
-                        },
-                        {
-                            "id": "subscription",
-                            "script": "return ({data}) => dispatch => { data.simulation.on('tick.ha', () => { requestAnimationFrame(() => dispatch(s => ({ nodes: data.simulation.nodes().map(n => ({node_id: n.node_id, x: Math.floor(n.x), y: Math.floor(n.y)})), links: data.simulation.force('links').links().map(l => ({source: ({node_id: l.source.node_id, x: Math.floor(l.source.x), y: Math.floor(l.source.y)}), target: ({node_id: l.target.node_id, x: Math.floor(l.target.x), y: Math.floor(l.target.y)})}))  }) ) ) }); return () => data.simulation.on('.ha', null); }"
-                        }
-                    ],
-                    "edges": [
-                        {
-                            "from": "in",
-                            "to": "subscription"
-                        },
-                        {
-                            "from": "subscription",
-                            "to": "out",
-                            "as": "subscription"
-                        }
-                    ]
+        {
+            "id": "simulation_subscription",
+            "nodes": [{
+                    "id": "in",
+                    "type": "identity"
                 },
                 {
-                    "id": "simulate_layout",
-                    "required_data": ["display_graph", "graph"],
-                    "script": "return ({state, data}) => (state.has('simulation') ? state : state.set('simulation', lib.no.d3simulation({data, state}))).get('simulation')"
+                    "id": "out",
+                    "type": "identity"
                 },
+                {
+                    "id": "subscription",
+                    "script": "return ({data}) => dispatch => { data.simulation.on('tick.ha', () => { requestAnimationFrame(() => dispatch(s => ({ ...s, nodes: data.simulation.nodes().map(n => ({node_id: n.node_id, x: Math.floor(n.x), y: Math.floor(n.y)})), links: data.simulation.force('links').links().map(l => ({source: ({node_id: l.source.node_id, x: Math.floor(l.source.x), y: Math.floor(l.source.y)}), target: ({node_id: l.target.node_id, x: Math.floor(l.target.x), y: Math.floor(l.target.y)})}))  }) ) ) }); return () => data.simulation.on('.ha', null); }"
+                }
+            ],
+            "edges": [{
+                    "from": "in",
+                    "to": "subscription"
+                },
+                {
+                    "from": "subscription",
+                    "to": "out",
+                    "as": "subscription"
+                }
+            ]
+        },
+        {
+            "id": "simulate_layout",
+            "required_data": ["display_graph", "graph"],
+            "script": "return ({state, data}) => (state.has('simulation') ? state : state.set('simulation', lib.no.d3simulation({data, state}))).get('simulation')"
+        },
         {
             "id": "hyperapp",
-            "script": "return ({lib, state, data}) => { if(!state.has('dispatch') && data.view && data.dom && data.subscription){ state.set('dispatch', lib.ha.app({ init: data.init ?? {nodes: [], links: []}, view: (s) => data.view(s).el ?? lib.ha.text('loading...'), node: data.dom, subscriptions: () => [[data.subscription]] })) }}"
+            "required_data": ["dom", "view", "subscription", "init"],
+            "script": "return ({lib, state, data}) => { if(!state.has('dispatch') && data.view && data.dom && data.subscription){ state.set('dispatch', lib.ha.app({ init: data.init, view: (s) => data.view(s).el ?? lib.ha.text('loading...'), node: data.dom, subscriptions: () => [[data.subscription]] })) }}"
         },
         {
             "id": "content_el_selector",
@@ -710,7 +694,7 @@
         }
     ],
     "edges": [
-        {"from": "log", "to": "log", "as": "log_value"},
+        { "from": "log", "to": "log", "as": "log_value" },
         {
             "from": "in",
             "to": "get_graph"
@@ -765,12 +749,21 @@
         },
         {
             "from": "replace_node_types",
+            "to": "initial_state"
+        },
+        {
+            "from": "replace_node_types",
             "to": "simulate_layout"
         },
         {
             "from": "simulate_layout",
             "to": "simulation_subscription",
             "as": "simulation"
+        },
+        {
+            "from": "initial_state",
+            "to": "hyperapp",
+            "as": "init"
         },
         {
             "from": "simulate_layout",
