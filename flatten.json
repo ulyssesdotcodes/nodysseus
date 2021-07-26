@@ -125,11 +125,6 @@
                                             "script": "return ({data}) => data[0][data[0].path].map(n => Object.assign({}, n, data[0]))"
                                         },
                                         {
-                                            "id": "node_svgs_old",
-                                            "script": "return lib.no.iterate",
-                                            "pick": ["x", "y", "node_id"]
-                                        },
-                                        {
                                             "id": "node_template",
                                             "nodes": [{
                                                     "id": "in",
@@ -297,11 +292,6 @@
                                             "run_over_all": true,
                                             "path": "links",
                                             "script": "return ({data}) => data[0][data[0].path].map(n => Object.assign({}, n, data[0]))"
-                                        },
-                                        {
-                                            "id": "link_svgs_old",
-                                            "script": "return lib.no.iterate",
-                                            "pick": ["source", "target"]
                                         },
                                         {
                                             "id": "link_template",
