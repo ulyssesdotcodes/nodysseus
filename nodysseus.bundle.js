@@ -39598,7 +39598,7 @@
     	},
     	{
     		id: "replace_node_types_fn",
-    		script: "return ({data}) => ({ value: node => lib.no.unpackTypes(data.node_types, node), delete:['node_types']})"
+    		script: "return ({data}) => ({ value: node => lib.no.unpackTypes(data.node_types, node)})"
     	},
     	{
     		id: "replace_node_types",
@@ -39640,20 +39640,8 @@
     						type: "identity"
     					},
     					{
-    						id: "children",
-    						type: "order_inputs",
-    						order: [
-    							"node_editor",
-    							"text_editor"
-    						],
-    						required_data: [
-    							"node_editor",
-    							"text_editor"
-    						]
-    					},
-    					{
-    						id: "concat_children",
-    						type: "children_els"
+    						id: "get_node_editor_el",
+    						script: "return ({data}) => [data.el]"
     					},
     					{
     						id: "out",
@@ -39694,15 +39682,14 @@
     										id: "get_nodes",
     										type: "get",
     										get_index: [
-    											"nodes"
-    										],
-    										required_data: [
+    											"fn_args",
+    											"0",
     											"nodes"
     										]
     									},
     									{
     										id: "delete_nodes",
-    										type: "delete",
+    										type: "delete_data",
     										paths: [
     											"nodes"
     										]
@@ -39711,12 +39698,14 @@
     										id: "get_links",
     										type: "get",
     										get_index: [
+    											"fn_args",
+    											"0",
     											"links"
     										]
     									},
     									{
     										id: "delete_links",
-    										type: "delete",
+    										type: "delete_data",
     										paths: [
     											"links"
     										]
@@ -39724,8 +39713,12 @@
     									{
     										id: "node_svgs",
     										run_over_all: true,
-    										path: "nodes",
-    										script: "return ({data}) => data[0][data[0].path].map(n => Object.assign({}, n, data[0]))"
+    										path: [
+    											"fn_args",
+    											"0",
+    											"nodes"
+    										],
+    										script: "return ({data}) => lib._.get(data[0], data[0].path).map(n => Object.assign({}, data[0], n))"
     									},
     									{
     										id: "node_template",
@@ -39745,15 +39738,101 @@
     													"children"
     												],
     												type: "h",
-    												dom_type: "svg",
-    												attrs: {
-    													width: 128,
-    													height: 64
-    												}
+    												dom_type: "svg"
+    											},
+    											{
+    												id: "onclick_fn",
+    												nodes: [
+    													{
+    														id: "in",
+    														type: "fn_def"
+    													},
+    													{
+    														id: "map_fn_args",
+    														script: "return ({data}) => ({...data, ...data.fn_args[0], payload: data.fn_args[1] })"
+    													},
+    													{
+    														id: "update_simulation_nodes",
+    														script: "return ({data}) => () => lib.no.update_simulation_nodes({data})"
+    													},
+    													{
+    														id: "onclick_node_fn",
+    														script: "return lib.no.node_click"
+    													},
+    													{
+    														id: "out",
+    														type: "fn_return",
+    														inherited_data: [
+    															"simulation",
+    															"node_id"
+    														]
+    													},
+    													{
+    														id: "prep_ha_action",
+    														required_data: [
+    															"hastate",
+    															"effect"
+    														],
+    														script: "return ({data}) => { const hastate = {...data.hastate}; delete hastate['fn_result']; return [hastate, [data.effect]]}"
+    													},
+    													{
+    														id: "cleanup",
+    														type: "delete_data",
+    														paths: [
+    															"node_id",
+    															"payload",
+    															"fn_args",
+    															"fn",
+    															"script"
+    														]
+    													}
+    												],
+    												edges: [
+    													{
+    														from: "in",
+    														to: "map_fn_args"
+    													},
+    													{
+    														from: "map_fn_args",
+    														to: "onclick_node_fn"
+    													},
+    													{
+    														from: "onclick_node_fn",
+    														to: "update_simulation_nodes"
+    													},
+    													{
+    														from: "onclick_node_fn",
+    														to: "cleanup"
+    													},
+    													{
+    														from: "cleanup",
+    														to: "prep_ha_action",
+    														as: "hastate"
+    													},
+    													{
+    														from: "update_simulation_nodes",
+    														to: "prep_ha_action",
+    														as: "effect"
+    													},
+    													{
+    														from: "prep_ha_action",
+    														to: "out",
+    														as: "return_value"
+    													}
+    												]
+    											},
+    											{
+    												id: "log",
+    												type: "log"
     											},
     											{
     												id: "parent_attrs",
-    												script: "return ({data}) => ({ x: (data.x ?? 400) - 20, y: (data.y ?? 400) - 20, id: data.node_id, onclick: lib.no.node_click({data})})"
+    												required_data: [
+    													"node_id",
+    													"x",
+    													"y"
+    												],
+    												script: "return ({data}) => ({ x: (data.x ?? 400) - 20, y: (data.y ?? 400) - 20, id: data.node_id, onclick: data.onclick_fn, width: 256, height: 64})"
     											},
     											{
     												id: "children",
@@ -39885,7 +39964,21 @@
     											},
     											{
     												from: "in",
+    												to: "onclick_fn"
+    											},
+    											{
+    												from: "log",
+    												to: "log",
+    												as: "log_value"
+    											},
+    											{
+    												from: "in",
     												to: "parent_attrs"
+    											},
+    											{
+    												from: "onclick_fn",
+    												to: "parent_attrs",
+    												as: "onclick_fn"
     											},
     											{
     												from: "parent_attrs",
@@ -39905,8 +39998,12 @@
     									{
     										id: "link_svgs",
     										run_over_all: true,
-    										path: "links",
-    										script: "return ({data}) => data[0][data[0].path].map(n => Object.assign({}, n, data[0]))"
+    										path: [
+    											"fn_args",
+    											"0",
+    											"links"
+    										],
+    										script: "return ({data}) => lib._.get(data[0], data[0].path).map(n => Object.assign({}, data[0], n))"
     									},
     									{
     										id: "link_template",
@@ -40097,14 +40194,6 @@
     								to: "out"
     							}
     						]
-    					},
-    					{
-    						id: "text_editor",
-    						type: "h",
-    						attrs: {
-    							id: "text-editor"
-    						},
-    						dom_type: "div"
     					}
     				],
     				edges: [
@@ -40113,26 +40202,11 @@
     						to: "node_editor"
     					},
     					{
-    						from: "in",
-    						to: "text_editor"
-    					},
-    					{
     						from: "node_editor",
-    						to: "children",
-    						as: "node_editor"
+    						to: "get_node_editor_el"
     					},
     					{
-    						from: "text_editor",
-    						to: "children",
-    						as: "text_editor"
-    					},
-    					{
-    						from: "children",
-    						to: "concat_children",
-    						as: "children"
-    					},
-    					{
-    						from: "concat_children",
+    						from: "get_node_editor_el",
     						to: "out",
     						as: "children"
     					}
@@ -40178,7 +40252,8 @@
     			},
     			{
     				from: "base_editor",
-    				to: "out"
+    				to: "out",
+    				as: "return_value"
     			}
     		]
     	},
@@ -40229,12 +40304,12 @@
     		script: "return ({lib, state, data}) => { if(!state.has('dispatch') && data.view && data.dom && data.subscription){ state.set('dispatch', lib.ha.app({ init: data.init, view: (s) => data.view(s).el ?? lib.ha.text('loading...'), node: data.dom, subscriptions: () => [[data.subscription]] })) }}"
     	},
     	{
-    		id: "content_el_selector",
+    		id: "node_editor_el_selector",
     		type: "el_selector",
-    		selector: "#content"
+    		selector: "#node-editor"
     	},
     	{
-    		id: "content_el",
+    		id: "node_editor_el",
     		type: "get",
     		get_index: 0
     	},
@@ -40298,8 +40373,8 @@
     		children_els: {
     			script: "return ({data}) => ({value: data.children.reduce((acc, c) => (acc.push(c.el), acc), []).filter(v => v), delete: ['children'].concat(data.order) })"
     		},
-    		"delete": {
-    			script: "return ({data}) => ({ value: data, delete: ['paths'].concat(data.paths) })"
+    		delete_data: {
+    			script: "return ({data}) => ({ value: {...data}, delete: ['paths'].concat(data.paths) })"
     		}
     	},
     	{
@@ -40317,7 +40392,7 @@
     ];
     var edges = [
     	{
-    		from: "log",
+    		from: "hyperapp_view/base_editor_content/node_editor/svgs/node_template/log",
     		to: "log",
     		as: "log_value"
     	},
@@ -40367,7 +40442,7 @@
     	},
     	{
     		from: "replace_node_types",
-    		to: "content_el_selector"
+    		to: "node_editor_el_selector"
     	},
     	{
     		from: "replace_node_types",
@@ -40405,7 +40480,7 @@
     		to: "hyperapp"
     	},
     	{
-    		from: "content_el_selector",
+    		from: "node_editor_el_selector",
     		to: "hyperapp",
     		as: "dom"
     	},
@@ -48019,9 +48094,9 @@
         const merged_datas = lib._.zipWith(data, node_state.get('data') ?? [], (d, sd) =>
             self.merge_data ?? incoming_edges.length > 1 ?
             sd ?
-            Object.assign({}, mergeable_self, sd, d) :
-            Object.assign({}, mergeable_self, d) :
-            Object.assign({}, mergeable_self, d)
+            Object.assign({}, sd, d, mergeable_self) :
+            Object.assign({}, d, mergeable_self) :
+            Object.assign({}, d, mergeable_self)
         );
 
         node_state.set('data', merged_datas);
@@ -48053,6 +48128,7 @@
             console.log(self);
             console.log(args);
             console.error(e);
+            debugger;
         }
     };
 
@@ -48071,9 +48147,10 @@
         const node_map = new Map(data.graph.nodes.map(n => [n.id, n]));
         const next_edges = data.graph.edges
             .filter(e => e.from === id);
+
         const next_node_ids = new Set(next_edges.map(e => e.to));
 
-        const ref_nodes = next_edges.map(e => node_map.get(e.to).type === "fn_return" ?
+        const ref_nodes = next_edges.map(e => node_map.get(e.to).type === "fn_return" && !data.fn_level  ?
             node_map.get(e.to) :
             Object.assign({}, node_map.get(e.to), { id: `${node_map.get(e.to).id}#ref_fnDef` })
         );
@@ -48085,38 +48162,57 @@
         }));
 
         const fnDef_nodes = next_edges
-            .filter(e => node_map.get(e.to).type !== "fn_return")
+            .filter(e => node_map.get(e.to).type !== "fn_return" || !!data.fn_level)
             .map(e => ({
                 id: e.to,
+                fn_level: (data.fn_level ?? 0) + (node_map.get(e.to).type === "fn_def" ? 1 : node_map.get(e.to).type === "fn_return" ? -1 : 0),
                 script: "return lib.no.fnDef"
             }));
 
         // get rid of "as"
         const fn_def_edges = next_edges.map(e => ({ to: e.to, from: e.from }));
 
-        const acc_nodes = [...(data.graph.nodes
+        const seen_nodes = new Set();
+        const acc_nodes = data.graph.nodes
             .filter(n => !next_node_ids.has(n.id))
             .concat(state.get('acc_nodes') ?? [], ref_nodes, fnDef_nodes)
-            .reduce((m, n) => m.set(n.id, n), new Map())
-            .values())];
+            .reduce((acc, n) => {
+                if(!seen_nodes.has(n.id)) {
+                    acc.push(n);
+                    seen_nodes.add(n.id);
+                }
+                return acc;
+            }, []);
 
         state.set('acc_nodes', acc_nodes);
 
-        const acc_edges = [...(data.graph.edges
-            .filter(e => !next_node_ids.has(e.to))
+        const seen_edges = new Set();
+        const acc_edges = data.graph.edges
+            .filter(e => !(next_node_ids.has(e.to) && e.from === id))
             .concat(state.get('acc_edges') ?? [], fn_def_edges)
-            .reduce((m, e) => m.set(`${e.from}##${e.to}`, e), new Map())
-            .values())];
+            .reduce((acc, e) => {
+                if(!seen_edges.has(`${e.from}##${e.to}`)){
+                    acc.push(e);
+                    seen_edges.add(`${e.from}##${e.to}`);
+                }
+                return acc;
+            }, []);
 
         state.set('acc_edges', acc_edges);
 
-        const reference_graph = [...((data.reference_graph ?? [])
+        const ref_graph_edges = new Set();
+        const reference_graph = (data.reference_graph ?? [])
             .concat(state.get('reference_graph') ?? [], ref_edges)
-            .reduce((m, e) => m.set(`${e.from}##${e.to}`, e), new Map())
-            .values())];
-
+            .reduce((acc, e) => {
+                if(!ref_graph_edges.has(`${e.from}##${e.to}`)) {
+                    acc.push(e);
+                    ref_graph_edges.add(`${e.from}##${e.to}`);
+                }
+                return acc;
+            }, []);
 
         state.set('reference_graph', reference_graph);
+
 
         return {
             graph: {
@@ -48130,47 +48226,56 @@
     const fnReturn = ({ id, data, lib, state }) => {
         const fnOut = {
             id: `${id}#ref_fnDef`,
-            script: "return ({data}) => data.fn_result.fn_value = data"
+            script: "return ({data}) => (data.fn_result.fn_value = data.return_value)"
         };
 
-        const reference_graph = [...((data.reference_graph ?? [])
+        const ref_graph_set = new Set();
+        const reference_graph = (data.reference_graph ?? [])
             .concat(state.get('reference_graph') ?? [])
-            .reduce((m, e) => {
+            .reduce((acc, e) => {
                 const hash = `${e.from}##${e.to}`;
-                if (!m.has(hash)) {
-                    m.set(hash, e);
+                if (!ref_graph_set.has(hash)) {
+                    acc.push(e);
+                    ref_graph_set.add(hash);
                 }
-                return m;
-            }, new Map())
-            .values())];
+                return acc;
+            }, []);
 
         state.set('reference_graph', reference_graph);
 
-        const graph_nodes = [...(data.graph.nodes
+        const graph_nodes_set = new Set();
+        const graph_nodes = data.graph.nodes
             .concat(state.get('graph_nodes') ?? [])
-            .reduce((m, n) => m.set(n.id, n), new Map())
-            .values())];
+            .reduce((acc, n) => {
+                if(!graph_nodes_set.has(n.id)) {
+                    acc.push(n);
+                    graph_nodes_set.add(n.id);
+                }
+                return acc;
+            }, []);
 
         state.set('graph_nodes', graph_nodes);
 
+        return {
+            value: (...args) => {
+                const fn_result = {};
 
-        return (args) => {
-            const fn_result = {};
+                runNextNodes({
+                    id: "in",
+                    data: [{
+                        graph: {
+                            nodes: state.get('graph_nodes').concat([fnOut]),
+                            edges: state.get('reference_graph')
+                        },
+                        fn_args: args,
+                        fn_result
+                    }],
+                    lib,
+                    state: new Map()
+                }, [lib._.pick(data, data.inherited_data ?? [])]);
 
-            runNextNodes({
-                id: "in",
-                data: [Object.assign({
-                    graph: {
-                        nodes: state.get('graph_nodes').concat([fnOut]),
-                        edges: state.get('reference_graph')
-                    },
-                    fn_result
-                }, lib._.pick(data, data.inherited_data ?? []))],
-                lib,
-                state: new Map()
-            }, [args]);
-
-            return fn_result.fn_value;
+                return fn_result.fn_value;
+            }
         }
     };
 
@@ -48188,8 +48293,8 @@
 
         const stored_data = Object.assign({}, (args.state.get(args.id) ?? new Map()).get('data'));
         const results = returned_results
+            .filter(r => r !== undefined)
             .map((result, i) => ({
-                result,
                 previous_data: Object.assign({}, args.data[i]),
                 stored_data: stored_data[i],
                 raw: !(
@@ -48201,18 +48306,23 @@
                     result !== undefined &&
                     typeof result === "object" &&
                     result.hasOwnProperty('value')
-                ) ? result : result.value
+                ) ? result : result.value,
+                delete: result.delete
             }))
-            .filter(r => r.result !== undefined && (r.raw || r.result.value !== undefined));
+            .filter(r => r.value !== undefined);
 
         results.forEach(result => {
-            if (result.raw && result.value.hasOwnProperty('delete')) {
+            if (!result.raw && result.hasOwnProperty('delete')) {
                 // lib._.omit is super slow so we do it this way
                 result.delete?.forEach(p => {
+                    delete result.value[p];
                     delete result.previous_data[p];
                     delete result.stored_data[p];
                 });
             }
+
+            // get rid of this by default
+            delete result.value["id"];
         });
 
         if (results.length === 0) {
@@ -48223,11 +48333,11 @@
             .filter(e => e.from === args.id)
             .forEach(e => execute({
                 id: e.to,
-                data: results.map(({ previous_data, value }) => e.as ?
-                    lib._.set(Object.assign({}, previous_data), e.as, value) :
-                    typeof value === 'object' && !Array.isArray(value) ?
-                    Object.assign(previous_data, value) :
-                    new Error(`Returned an unwrapped array in ${args.id}`)),
+                data: results.map(({ previous_data, value }) => e.as 
+                    ? lib._.set(Object.assign({}, previous_data), e.as, value) 
+                    : typeof value === 'object' && !Array.isArray(value) 
+                    ? Object.assign({}, previous_data, value) 
+                    : new Error(`Returned an unwrapped array in ${args.id}`)),
                 state: args.state,
                 lib: args.lib
             }));
@@ -48295,7 +48405,7 @@
             // 	.forceCenter(window.innerWidth * 0.5, window.innerHeight * 0.5)
             // 	.strength(.01))
             .force('links', lib.d3
-                .forceLink(data.display_graph.edges.map((e, index) => ({ source: e.from, target: e.to, index })))
+                .forceLink(data.display_graph.edges.filter(e => e.to !== "log" && e.to !=="debug").map((e, index) => ({ source: e.from, target: e.to, index })))
                 .distance(64)
                 .strength(0.1)
                 .id(n => n.node_id))
@@ -48313,6 +48423,7 @@
                         (256 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - levels.nodes_by_level[levels.levels.get(n.node_id)].length * 256 * 0.5) :
                         window.innerWidth * 0.25))
                 .strength(1));
+            // .alphaMin(.8);
 
 
             // .force('x', lib.d3.forceX(window.innerWidth * 0.5))
@@ -48332,20 +48443,20 @@
         }
     };
 
-    const contract_node = ({ data }) => (s, payload) => {
+    const contract_node = ({ data }) => {
         const node_id = data.node_id.endsWith('in') ?
             data.node_id.substring(0, data.node_id.length - 3) :
             data.node_id.substring(0, data.node_id.length - 4);
 
         const new_display_graph = {
-            nodes: s.display_graph.nodes
+            nodes: data.display_graph.nodes
                 .filter(n => !n.id.startsWith(node_id))
                 .concat([{
                     id: node_id,
-                    nodes: s.display_graph.nodes
+                    nodes: data.display_graph.nodes
                         .filter(n => n.id.startsWith(node_id))
                         .map(n => ({...n, id: n.id.substring(node_id.length + 1)})),
-                    edges: s.display_graph.edges
+                    edges: data.display_graph.edges
                         .filter(e => e.from.startsWith(node_id) && e.to.startsWith(node_id))
                         .map(e =>({
                             as: e.as,
@@ -48353,7 +48464,7 @@
                             to: e.to.substring(node_id.length + 1),
                         }))
                 }]),
-            edges: s.display_graph.edges
+            edges: data.display_graph.edges
                 .map(e => ({
                     from: e.from === `${node_id}/out` ? node_id : e.from,
                     to: e.to === `${node_id}/in` ? node_id : e.to
@@ -48363,48 +48474,50 @@
 
         const levels = calculate_levels(new_display_graph);
 
-        const new_nodes = s.nodes
+        const new_nodes = data.nodes
             .filter(n => !n.node_id.startsWith(node_id))
             .concat([{
                 node_id,
-                x: payload.x,
-                y: payload.y,
-                index: s.nodes.length - 1
+                x: data.payload.x,
+                y: data.payload.y,
+                index: data.nodes.length - 1
             }]);
 
-        const new_links = new_display_graph.edges.map(e => ({source: e.from, target: e.to}));
+        const new_links = new_display_graph.edges.filter(e => e.to !== "log" && e.to !=="debug").map(e => ({source: e.from, target: e.to}));
 
-        return [{
-            ...s,
+        return {
+            ...data,
             nodes: new_nodes,
             links: new_links,
             display_graph: new_display_graph,
             levels
-        }, [() => {
-                data.simulation.nodes(new_nodes);
+        }
+    };
 
-                data.simulation.force('links').links(new_links);
-                data.simulation.force('link_direction')
-                    .y((n) => window.innerHeight * (0.075 + 0.85 * (levels.levels.get(n.node_id) ?? 0) / (levels.max - levels.min)) +
-                        (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
-                            64 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - (levels.nodes_by_level[levels.levels.get(n.node_id)].length - 1) * 64 * 0.5 :
-                            0));
+    const update_simulation_nodes = ({data}) => {
+        const levels = data.levels;
 
-                data.simulation.force('link_siblings')
-                    .x((n) => window.innerWidth * 0.5 + (window.innerWidth * Math.random() * 0.05) +
-                        (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
-                            (256 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - levels.nodes_by_level[levels.levels.get(n.node_id)].length * 256 * 0.5) :
-                            window.innerWidth * 0.25));
+        data.simulation.nodes(data.nodes);
 
-                data.simulation
-                    // .force(`parent_${data.node_id}`, lib.d3.forceRadial(0, data.x, data.y).strength(n => n.parent === data.node_id ? 0.2 : 0))
-                    // .force(`not_parent_${data.node_id}`, lib.d3.forceRadial(512, data.x, data.y).strength(n => n.parent === data.node_id ? 0 : 0.2))
-                    // .force(`center`, null)
-                    // .velocityDecay(.2)
-                    .alpha(0.2).restart();
+        data.simulation.force('links').links(data.links);
+        data.simulation.force('link_direction')
+            .y((n) => window.innerHeight * (0.075 + 0.85 * (levels.levels.get(n.node_id) ?? 0) / (levels.max - levels.min)) +
+                (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
+                    64 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - (levels.nodes_by_level[levels.levels.get(n.node_id)].length - 1) * 64 * 0.5 :
+                    0));
 
-            }]
-        ]
+        data.simulation.force('link_siblings')
+            .x((n) => window.innerWidth * 0.5 + (window.innerWidth * Math.random() * 0.05) +
+                (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
+                    (256 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - levels.nodes_by_level[levels.levels.get(n.node_id)].length * 256 * 0.5) :
+                    window.innerWidth * 0.25));
+
+        data.simulation
+            // .force(`parent_${data.node_id}`, lib.d3.forceRadial(0, data.x, data.y).strength(n => n.parent === data.node_id ? 0.2 : 0))
+            // .force(`not_parent_${data.node_id}`, lib.d3.forceRadial(512, data.x, data.y).strength(n => n.parent === data.node_id ? 0 : 0.2))
+            // .force(`center`, null)
+            // .velocityDecay(.2)
+            .alpha(0.2).restart();
     };
 
 
@@ -48428,8 +48541,8 @@
     };
 
 
-    const expand_node = ({ data }) => (s, payload) => {
-        const node = s.display_graph.nodes.find(n => n.id === data.node_id);
+    const expand_node = ({ data }) => {
+        const node = data.display_graph.nodes.find(n => n.id === data.node_id);
 
         if (!node.nodes) {
             console.log('no nodes?');
@@ -48439,10 +48552,10 @@
         const flattened = lib.no.flatten_node(node, 1);
 
         const new_display_graph = {
-            nodes: s.display_graph.nodes
+            nodes: data.display_graph.nodes
                 .filter(n => n.node_id !== data.node_id)
                 .concat(flattened.flat_nodes),
-            edges: s.display_graph.edges
+            edges: data.display_graph.edges
                 .map(e => ({
                     from: e.from === data.node_id ? `${data.node_id}/out` : e.from,
                     to: e.to === data.node_id ? `${data.node_id}/in` : e.to
@@ -48453,48 +48566,23 @@
         const levels = calculate_levels(new_display_graph);
 
         // TODO: remove duplicate code with d3simulation above
-        const new_nodes = s.nodes.filter(n => n.node_id !== data.node_id)
+        const new_nodes = data.nodes.filter(n => n.node_id !== data.node_id)
             .concat(flattened.flat_nodes.map((n, i) => ({
                 node_id: n.id,
                 x: data.x + (Math.random() - 0.5) * 64,
                 y: data.y + (Math.random() - 0.5) * 64,
-                index: i + s.nodes.length - 1
+                index: i + data.nodes.length - 1
             })));
 
-        const new_links = new_display_graph.edges.map(e => ({ source: e.from, target: e.to }));
+        const new_links = new_display_graph.edges.filter(e => e.to !== "log" && e.to !=="debug").map(e => ({ source: e.from, target: e.to }));
 
-
-        return [{
-                ...s,
-                display_graph: new_display_graph,
-                levels,
-                nodes: new_nodes,
-                links: new_links
-            },
-            [() => {
-                data.simulation.nodes(new_nodes);
-
-                data.simulation.force('links').links(new_links);
-                data.simulation.force('link_direction')
-                    .y((n) => window.innerHeight * (0.075 + 0.85 * (levels.levels.get(n.node_id) ?? 0) / (levels.max - levels.min)) +
-                        (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
-                            64 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - (levels.nodes_by_level[levels.levels.get(n.node_id)].length - 1) * 64 * 0.5 :
-                            0));
-
-                data.simulation.force('link_siblings')
-                    .x((n) => window.innerWidth * 0.5 + (window.innerWidth * Math.random() * 0.05) +
-                        (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
-                            (256 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - levels.nodes_by_level[levels.levels.get(n.node_id)].length * 256 * 0.5) :
-                            window.innerWidth * 0.25));
-
-                data.simulation
-                    // .force(`parent_${data.node_id}`, lib.d3.forceRadial(0, data.x, data.y).strength(n => n.parent === data.node_id ? 0.2 : 0))
-                    // .force(`not_parent_${data.node_id}`, lib.d3.forceRadial(512, data.x, data.y).strength(n => n.parent === data.node_id ? 0 : 0.2))
-                    // .force(`center`, null)
-                    // .velocityDecay(.2)
-                    .alpha(0.2).restart();
-            }]
-        ];
+        return {
+            ...data,
+            display_graph: new_display_graph,
+            levels,
+            nodes: new_nodes,
+            links: new_links
+        }
     };
 
     const debug = () => {
@@ -48506,7 +48594,7 @@
         _,
         ha: { h, app, text, memo },
         iter: { reduce, map },
-        no: { map_path_fn, flatten, unpackTypes, hFn, fnDef, fnReturn, concatValues, verify, d3simulation, debug, flatten_node, expand_node, node_click, contract_node },
+        no: { map_path_fn, flatten, unpackTypes, hFn, fnDef, fnReturn, concatValues, verify, d3simulation, debug, flatten_node, expand_node, node_click, contract_node, update_simulation_nodes },
         d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
         util: { overIdx, overKey, overPath }
     };

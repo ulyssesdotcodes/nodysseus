@@ -17,7 +17,7 @@
         },
         {
             "id": "replace_node_types_fn",
-            "script": "return ({data}) => ({ value: node => lib.no.unpackTypes(data.node_types, node), delete:['node_types']})"
+            "script": "return ({data}) => ({ value: node => lib.no.unpackTypes(data.node_types, node)})"
         },
         {
             "id": "replace_node_types",
@@ -51,17 +51,8 @@
                             "type": "identity"
                         },
                         {
-                            "id": "children",
-                            "type": "order_inputs",
-                            "order": [
-                                "node_editor",
-                                "text_editor"
-                            ],
-                            "required_data": ["node_editor", "text_editor"]
-                        },
-                        {
-                            "id": "concat_children",
-                            "type": "children_els"
+                            "id": "get_node_editor_el",
+                            "script": "return ({data}) => [data.el]"
                         },
                         {
                             "id": "out",
@@ -97,32 +88,31 @@
                                             "id": "get_nodes",
                                             "type": "get",
                                             "get_index": [
-                                                "nodes"
-                                            ],
-                                            "required_data": ["nodes"]
+                                                "fn_args", "0", "nodes"
+                                            ]
                                         },
                                         {
                                             "id": "delete_nodes",
-                                            "type": "delete",
+                                            "type": "delete_data",
                                             "paths": ["nodes"]
                                         },
                                         {
                                             "id": "get_links",
                                             "type": "get",
                                             "get_index": [
-                                                "links"
+                                                "fn_args", "0", "links"
                                             ]
                                         },
                                         {
                                             "id": "delete_links",
-                                            "type": "delete",
+                                            "type": "delete_data",
                                             "paths": ["links"]
                                         },
                                         {
                                             "id": "node_svgs",
                                             "run_over_all": true,
-                                            "path": "nodes",
-                                            "script": "return ({data}) => data[0][data[0].path].map(n => Object.assign({}, n, data[0]))"
+                                            "path": ["fn_args", "0", "nodes"],
+                                            "script": "return ({data}) => lib._.get(data[0], data[0].path).map(n => Object.assign({}, data[0], n))"
                                         },
                                         {
                                             "id": "node_template",
@@ -138,15 +128,60 @@
                                                     "id": "parent",
                                                     "required_data": ["attrs", "children"],
                                                     "type": "h",
-                                                    "dom_type": "svg",
-                                                    "attrs": {
-                                                        "width": 128,
-                                                        "height": 64
-                                                    }
+                                                    "dom_type": "svg"
+                                                },
+                                                {
+                                                    "id": "onclick_fn",
+                                                    "nodes": [
+                                                        { 
+                                                            "id": "in",
+                                                            "type": "fn_def"
+                                                        },
+                                                        {
+                                                            "id": "map_fn_args",
+                                                            "script": "return ({data}) => ({...data, ...data.fn_args[0], payload: data.fn_args[1] })"
+                                                        },
+                                                        {
+                                                            "id": "update_simulation_nodes",
+                                                            "script": "return ({data}) => () => lib.no.update_simulation_nodes({data})"
+                                                        },
+                                                        {
+                                                            "id": "onclick_node_fn",
+                                                            "script": "return lib.no.node_click"
+                                                        },
+                                                        {
+                                                            "id": "out",
+                                                            "type": "fn_return",
+                                                            "inherited_data": ["simulation", "node_id"]
+                                                        },
+                                                        {
+                                                            "id": "prep_ha_action",
+                                                            "required_data": ["hastate", "effect"],
+                                                            "script": "return ({data}) => { const hastate = {...data.hastate}; delete hastate['fn_result']; return [hastate, [data.effect]]}"
+                                                        },
+                                                        {
+                                                            "id": "cleanup",
+                                                            "type": "delete_data",
+                                                            "paths": ["node_id", "payload", "fn_args", "fn", "script"]
+                                                        }
+                                                    ],
+                                                    "edges": [
+                                                        {"from": "in", "to": "map_fn_args"},
+                                                        {"from": "map_fn_args", "to": "onclick_node_fn"},
+                                                        {"from": "onclick_node_fn", "to": "update_simulation_nodes"},
+                                                        {"from": "onclick_node_fn", "to": "cleanup"},
+                                                        {"from": "cleanup", "to": "prep_ha_action", "as": "hastate"},
+                                                        {"from": "update_simulation_nodes", "to": "prep_ha_action", "as": "effect"},
+                                                        {"from": "prep_ha_action", "to": "out", "as": "return_value"}
+                                                    ]
+                                                },
+                                                {
+                                                    "id": "log", "type": "log"
                                                 },
                                                 {
                                                     "id": "parent_attrs",
-                                                    "script": "return ({data}) => ({ x: (data.x ?? 400) - 20, y: (data.y ?? 400) - 20, id: data.node_id, onclick: lib.no.node_click({data})})"
+                                                    "required_data": ["node_id", "x", "y"],
+                                                    "script": "return ({data}) => ({ x: (data.x ?? 400) - 20, y: (data.y ?? 400) - 20, id: data.node_id, onclick: data.onclick_fn, width: 256, height: 64})"
                                                 },
                                                 {
                                                     "id": "children",
@@ -270,7 +305,17 @@
                                                 },
                                                 {
                                                     "from": "in",
+                                                    "to": "onclick_fn"
+                                                },
+                                                {"from": "log", "to": "log", "as": "log_value"},
+                                                {
+                                                    "from": "in",
                                                     "to": "parent_attrs"
+                                                },
+                                                {
+                                                    "from": "onclick_fn",
+                                                    "to": "parent_attrs",
+                                                    "as": "onclick_fn"
                                                 },
                                                 {
                                                     "from": "parent_attrs",
@@ -290,8 +335,8 @@
                                         {
                                             "id": "link_svgs",
                                             "run_over_all": true,
-                                            "path": "links",
-                                            "script": "return ({data}) => data[0][data[0].path].map(n => Object.assign({}, n, data[0]))"
+                                            "path": ["fn_args", "0", "links"],
+                                            "script": "return ({data}) => lib._.get(data[0], data[0].path).map(n => Object.assign({}, data[0], n))"
                                         },
                                         {
                                             "id": "link_template",
@@ -478,14 +523,6 @@
                                     "to": "out"
                                 }
                             ]
-                        },
-                        {
-                            "id": "text_editor",
-                            "type": "h",
-                            "attrs": {
-                                "id": "text-editor"
-                            },
-                            "dom_type": "div"
                         }
                     ],
                     "edges": [{
@@ -493,26 +530,11 @@
                             "to": "node_editor"
                         },
                         {
-                            "from": "in",
-                            "to": "text_editor"
-                        },
-                        {
                             "from": "node_editor",
-                            "to": "children",
-                            "as": "node_editor"
+                            "to": "get_node_editor_el"
                         },
                         {
-                            "from": "text_editor",
-                            "to": "children",
-                            "as": "text_editor"
-                        },
-                        {
-                            "from": "children",
-                            "to": "concat_children",
-                            "as": "children"
-                        },
-                        {
-                            "from": "concat_children",
+                            "from": "get_node_editor_el",
                             "to": "out",
                             "as": "children"
                         }
@@ -556,7 +578,8 @@
                 },
                 {
                     "from": "base_editor",
-                    "to": "out"
+                    "to": "out",
+                    "as": "return_value"
                 }
             ]
         },
@@ -597,12 +620,12 @@
             "script": "return ({lib, state, data}) => { if(!state.has('dispatch') && data.view && data.dom && data.subscription){ state.set('dispatch', lib.ha.app({ init: data.init, view: (s) => data.view(s).el ?? lib.ha.text('loading...'), node: data.dom, subscriptions: () => [[data.subscription]] })) }}"
         },
         {
-            "id": "content_el_selector",
+            "id": "node_editor_el_selector",
             "type": "el_selector",
-            "selector": "#content"
+            "selector": "#node-editor"
         },
         {
-            "id": "content_el",
+            "id": "node_editor_el",
             "type": "get",
             "get_index": 0
         },
@@ -666,8 +689,8 @@
             "children_els": {
                 "script": "return ({data}) => ({value: data.children.reduce((acc, c) => (acc.push(c.el), acc), []).filter(v => v), delete: ['children'].concat(data.order) })"
             },
-            "delete": {
-                "script": "return ({data}) => ({ value: data, delete: ['paths'].concat(data.paths) })"
+            "delete_data": {
+                "script": "return ({data}) => ({ value: {...data}, delete: ['paths'].concat(data.paths) })"
             }
         },
         {
@@ -684,7 +707,7 @@
         }
     ],
     "edges": [
-        { "from": "log", "to": "log", "as": "log_value" },
+        { "from": "hyperapp_view/base_editor_content/node_editor/svgs/node_template/log", "to": "log", "as": "log_value" },
         {
             "from": "in",
             "to": "get_graph"
@@ -731,7 +754,7 @@
         },
         {
             "from": "replace_node_types",
-            "to": "content_el_selector"
+            "to": "node_editor_el_selector"
         },
         {
             "from": "replace_node_types",
@@ -769,7 +792,7 @@
             "to": "hyperapp"
         },
         {
-            "from": "content_el_selector",
+            "from": "node_editor_el_selector",
             "to": "hyperapp",
             "as": "dom"
         },

@@ -226,9 +226,9 @@ const execute = args => {
     const merged_datas = lib._.zipWith(data, node_state.get('data') ?? [], (d, sd) =>
         self.merge_data ?? incoming_edges.length > 1 ?
         sd ?
-        Object.assign({}, mergeable_self, sd, d) :
-        Object.assign({}, mergeable_self, d) :
-        Object.assign({}, mergeable_self, d)
+        Object.assign({}, sd, d, mergeable_self) :
+        Object.assign({}, d, mergeable_self) :
+        Object.assign({}, d, mergeable_self)
     );
 
     node_state.set('data', merged_datas);
@@ -260,6 +260,7 @@ const execute = args => {
         console.log(self);
         console.log(args);
         console.error(e);
+        debugger;
     }
 }
 
@@ -278,9 +279,10 @@ const fnDef = ({ id, data, state }) => {
     const node_map = new Map(data.graph.nodes.map(n => [n.id, n]));
     const next_edges = data.graph.edges
         .filter(e => e.from === id);
+
     const next_node_ids = new Set(next_edges.map(e => e.to));
 
-    const ref_nodes = next_edges.map(e => node_map.get(e.to).type === "fn_return" ?
+    const ref_nodes = next_edges.map(e => node_map.get(e.to).type === "fn_return" && !data.fn_level  ?
         node_map.get(e.to) :
         Object.assign({}, node_map.get(e.to), { id: `${node_map.get(e.to).id}#ref_fnDef` })
     );
@@ -292,38 +294,57 @@ const fnDef = ({ id, data, state }) => {
     }));
 
     const fnDef_nodes = next_edges
-        .filter(e => node_map.get(e.to).type !== "fn_return")
+        .filter(e => node_map.get(e.to).type !== "fn_return" || !!data.fn_level)
         .map(e => ({
             id: e.to,
+            fn_level: (data.fn_level ?? 0) + (node_map.get(e.to).type === "fn_def" ? 1 : node_map.get(e.to).type === "fn_return" ? -1 : 0),
             script: "return lib.no.fnDef"
         }));
 
     // get rid of "as"
     const fn_def_edges = next_edges.map(e => ({ to: e.to, from: e.from }));
 
-    const acc_nodes = [...(data.graph.nodes
+    const seen_nodes = new Set();
+    const acc_nodes = data.graph.nodes
         .filter(n => !next_node_ids.has(n.id))
         .concat(state.get('acc_nodes') ?? [], ref_nodes, fnDef_nodes)
-        .reduce((m, n) => m.set(n.id, n), new Map())
-        .values())];
+        .reduce((acc, n) => {
+            if(!seen_nodes.has(n.id)) {
+                acc.push(n);
+                seen_nodes.add(n.id);
+            }
+            return acc;
+        }, []);
 
     state.set('acc_nodes', acc_nodes);
 
-    const acc_edges = [...(data.graph.edges
-        .filter(e => !next_node_ids.has(e.to))
+    const seen_edges = new Set();
+    const acc_edges = data.graph.edges
+        .filter(e => !(next_node_ids.has(e.to) && e.from === id))
         .concat(state.get('acc_edges') ?? [], fn_def_edges)
-        .reduce((m, e) => m.set(`${e.from}##${e.to}`, e), new Map())
-        .values())];
+        .reduce((acc, e) => {
+            if(!seen_edges.has(`${e.from}##${e.to}`)){
+                acc.push(e);
+                seen_edges.add(`${e.from}##${e.to}`);
+            }
+            return acc;
+        }, []);
 
     state.set('acc_edges', acc_edges);
 
-    const reference_graph = [...((data.reference_graph ?? [])
+    const ref_graph_edges = new Set();
+    const reference_graph = (data.reference_graph ?? [])
         .concat(state.get('reference_graph') ?? [], ref_edges)
-        .reduce((m, e) => m.set(`${e.from}##${e.to}`, e), new Map())
-        .values())];
-
+        .reduce((acc, e) => {
+            if(!ref_graph_edges.has(`${e.from}##${e.to}`)) {
+                acc.push(e);
+                ref_graph_edges.add(`${e.from}##${e.to}`);
+            }
+            return acc;
+        }, []);
 
     state.set('reference_graph', reference_graph);
+
 
     return {
         graph: {
@@ -337,47 +358,56 @@ const fnDef = ({ id, data, state }) => {
 const fnReturn = ({ id, data, lib, state }) => {
     const fnOut = {
         id: `${id}#ref_fnDef`,
-        script: "return ({data}) => data.fn_result.fn_value = data"
+        script: "return ({data}) => (data.fn_result.fn_value = data.return_value)"
     };
 
-    const reference_graph = [...((data.reference_graph ?? [])
+    const ref_graph_set = new Set();
+    const reference_graph = (data.reference_graph ?? [])
         .concat(state.get('reference_graph') ?? [])
-        .reduce((m, e) => {
+        .reduce((acc, e) => {
             const hash = `${e.from}##${e.to}`;
-            if (!m.has(hash)) {
-                m.set(hash, e)
+            if (!ref_graph_set.has(hash)) {
+                acc.push(e);
+                ref_graph_set.add(hash);
             }
-            return m;
-        }, new Map())
-        .values())];
+            return acc;
+        }, []);
 
     state.set('reference_graph', reference_graph);
 
-    const graph_nodes = [...(data.graph.nodes
+    const graph_nodes_set = new Set();
+    const graph_nodes = data.graph.nodes
         .concat(state.get('graph_nodes') ?? [])
-        .reduce((m, n) => m.set(n.id, n), new Map())
-        .values())]
+        .reduce((acc, n) => {
+            if(!graph_nodes_set.has(n.id)) {
+                acc.push(n);
+                graph_nodes_set.add(n.id);
+            }
+            return acc;
+        }, []);
 
     state.set('graph_nodes', graph_nodes)
 
+    return {
+        value: (...args) => {
+            const fn_result = {};
 
-    return (args) => {
-        const fn_result = {};
+            runNextNodes({
+                id: "in",
+                data: [{
+                    graph: {
+                        nodes: state.get('graph_nodes').concat([fnOut]),
+                        edges: state.get('reference_graph')
+                    },
+                    fn_args: args,
+                    fn_result
+                }],
+                lib,
+                state: new Map()
+            }, [lib._.pick(data, data.inherited_data ?? [])]);
 
-        runNextNodes({
-            id: "in",
-            data: [Object.assign({
-                graph: {
-                    nodes: state.get('graph_nodes').concat([fnOut]),
-                    edges: state.get('reference_graph')
-                },
-                fn_result
-            }, lib._.pick(data, data.inherited_data ?? []))],
-            lib,
-            state: new Map()
-        }, [args]);
-
-        return fn_result.fn_value;
+            return fn_result.fn_value;
+        }
     }
 }
 
@@ -395,8 +425,8 @@ const runNextNodes = (args, returned_results) => {
 
     const stored_data = Object.assign({}, (args.state.get(args.id) ?? new Map()).get('data'));
     const results = returned_results
+        .filter(r => r !== undefined)
         .map((result, i) => ({
-            result,
             previous_data: Object.assign({}, args.data[i]),
             stored_data: stored_data[i],
             raw: !(
@@ -408,18 +438,23 @@ const runNextNodes = (args, returned_results) => {
                 result !== undefined &&
                 typeof result === "object" &&
                 result.hasOwnProperty('value')
-            ) ? result : result.value
+            ) ? result : result.value,
+            delete: result.delete
         }))
-        .filter(r => r.result !== undefined && (r.raw || r.result.value !== undefined));
+        .filter(r => r.value !== undefined);
 
     results.forEach(result => {
-        if (result.raw && result.value.hasOwnProperty('delete')) {
+        if (!result.raw && result.hasOwnProperty('delete')) {
             // lib._.omit is super slow so we do it this way
             result.delete?.forEach(p => {
+                delete result.value[p];
                 delete result.previous_data[p];
                 delete result.stored_data[p];
             })
         }
+
+        // get rid of this by default
+        delete result.value["id"];
     });
 
     if (results.length === 0) {
@@ -430,11 +465,11 @@ const runNextNodes = (args, returned_results) => {
         .filter(e => e.from === args.id)
         .forEach(e => execute({
             id: e.to,
-            data: results.map(({ previous_data, value }) => e.as ?
-                lib._.set(Object.assign({}, previous_data), e.as, value) :
-                typeof value === 'object' && !Array.isArray(value) ?
-                Object.assign(previous_data, value) :
-                new Error(`Returned an unwrapped array in ${args.id}`)),
+            data: results.map(({ previous_data, value }) => e.as 
+                ? lib._.set(Object.assign({}, previous_data), e.as, value) 
+                : typeof value === 'object' && !Array.isArray(value) 
+                ? Object.assign({}, previous_data, value) 
+                : new Error(`Returned an unwrapped array in ${args.id}`)),
             state: args.state,
             lib: args.lib
         }));
@@ -505,7 +540,7 @@ const d3simulation = ({ data }) => {
         // 	.forceCenter(window.innerWidth * 0.5, window.innerHeight * 0.5)
         // 	.strength(.01))
         .force('links', lib.d3
-            .forceLink(data.display_graph.edges.map((e, index) => ({ source: e.from, target: e.to, index })))
+            .forceLink(data.display_graph.edges.filter(e => e.to !== "log" && e.to !=="debug").map((e, index) => ({ source: e.from, target: e.to, index })))
             .distance(64)
             .strength(0.1)
             .id(n => n.node_id))
@@ -523,6 +558,7 @@ const d3simulation = ({ data }) => {
                     (256 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - levels.nodes_by_level[levels.levels.get(n.node_id)].length * 256 * 0.5) :
                     window.innerWidth * 0.25))
             .strength(1))
+        // .alphaMin(.8);
 
 
         // .force('x', lib.d3.forceX(window.innerWidth * 0.5))
@@ -542,20 +578,20 @@ const node_click = ({ data }) => {
     }
 }
 
-const contract_node = ({ data }) => (s, payload) => {
+const contract_node = ({ data }) => {
     const node_id = data.node_id.endsWith('in') ?
         data.node_id.substring(0, data.node_id.length - 3) :
         data.node_id.substring(0, data.node_id.length - 4);
 
     const new_display_graph = {
-        nodes: s.display_graph.nodes
+        nodes: data.display_graph.nodes
             .filter(n => !n.id.startsWith(node_id))
             .concat([{
                 id: node_id,
-                nodes: s.display_graph.nodes
+                nodes: data.display_graph.nodes
                     .filter(n => n.id.startsWith(node_id))
                     .map(n => ({...n, id: n.id.substring(node_id.length + 1)})),
-                edges: s.display_graph.edges
+                edges: data.display_graph.edges
                     .filter(e => e.from.startsWith(node_id) && e.to.startsWith(node_id))
                     .map(e =>({
                         as: e.as,
@@ -563,7 +599,7 @@ const contract_node = ({ data }) => (s, payload) => {
                         to: e.to.substring(node_id.length + 1),
                     }))
             }]),
-        edges: s.display_graph.edges
+        edges: data.display_graph.edges
             .map(e => ({
                 from: e.from === `${node_id}/out` ? node_id : e.from,
                 to: e.to === `${node_id}/in` ? node_id : e.to
@@ -573,48 +609,50 @@ const contract_node = ({ data }) => (s, payload) => {
 
     const levels = calculate_levels(new_display_graph);
 
-    const new_nodes = s.nodes
+    const new_nodes = data.nodes
         .filter(n => !n.node_id.startsWith(node_id))
         .concat([{
             node_id,
-            x: payload.x,
-            y: payload.y,
-            index: s.nodes.length - 1
+            x: data.payload.x,
+            y: data.payload.y,
+            index: data.nodes.length - 1
         }])
 
-    const new_links = new_display_graph.edges.map(e => ({source: e.from, target: e.to}));
+    const new_links = new_display_graph.edges.filter(e => e.to !== "log" && e.to !=="debug").map(e => ({source: e.from, target: e.to}));
 
-    return [{
-        ...s,
+    return {
+        ...data,
         nodes: new_nodes,
         links: new_links,
         display_graph: new_display_graph,
         levels
-    }, [() => {
-            data.simulation.nodes(new_nodes);
+    }
+}
 
-            data.simulation.force('links').links(new_links);
-            data.simulation.force('link_direction')
-                .y((n) => window.innerHeight * (0.075 + 0.85 * (levels.levels.get(n.node_id) ?? 0) / (levels.max - levels.min)) +
-                    (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
-                        64 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - (levels.nodes_by_level[levels.levels.get(n.node_id)].length - 1) * 64 * 0.5 :
-                        0));
+const update_simulation_nodes = ({data}) => {
+    const levels = data.levels;
 
-            data.simulation.force('link_siblings')
-                .x((n) => window.innerWidth * 0.5 + (window.innerWidth * Math.random() * 0.05) +
-                    (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
-                        (256 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - levels.nodes_by_level[levels.levels.get(n.node_id)].length * 256 * 0.5) :
-                        window.innerWidth * 0.25));
+    data.simulation.nodes(data.nodes);
 
-            data.simulation
-                // .force(`parent_${data.node_id}`, lib.d3.forceRadial(0, data.x, data.y).strength(n => n.parent === data.node_id ? 0.2 : 0))
-                // .force(`not_parent_${data.node_id}`, lib.d3.forceRadial(512, data.x, data.y).strength(n => n.parent === data.node_id ? 0 : 0.2))
-                // .force(`center`, null)
-                // .velocityDecay(.2)
-                .alpha(0.2).restart();
+    data.simulation.force('links').links(data.links);
+    data.simulation.force('link_direction')
+        .y((n) => window.innerHeight * (0.075 + 0.85 * (levels.levels.get(n.node_id) ?? 0) / (levels.max - levels.min)) +
+            (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
+                64 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - (levels.nodes_by_level[levels.levels.get(n.node_id)].length - 1) * 64 * 0.5 :
+                0));
 
-        }]
-    ]
+    data.simulation.force('link_siblings')
+        .x((n) => window.innerWidth * 0.5 + (window.innerWidth * Math.random() * 0.05) +
+            (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
+                (256 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - levels.nodes_by_level[levels.levels.get(n.node_id)].length * 256 * 0.5) :
+                window.innerWidth * 0.25));
+
+    data.simulation
+        // .force(`parent_${data.node_id}`, lib.d3.forceRadial(0, data.x, data.y).strength(n => n.parent === data.node_id ? 0.2 : 0))
+        // .force(`not_parent_${data.node_id}`, lib.d3.forceRadial(512, data.x, data.y).strength(n => n.parent === data.node_id ? 0 : 0.2))
+        // .force(`center`, null)
+        // .velocityDecay(.2)
+        .alpha(0.2).restart();
 }
 
 
@@ -638,8 +676,8 @@ const calculate_levels = graph => {
 }
 
 
-const expand_node = ({ data }) => (s, payload) => {
-    const node = s.display_graph.nodes.find(n => n.id === data.node_id)
+const expand_node = ({ data }) => {
+    const node = data.display_graph.nodes.find(n => n.id === data.node_id)
 
     if (!node.nodes) {
         console.log('no nodes?');
@@ -649,10 +687,10 @@ const expand_node = ({ data }) => (s, payload) => {
     const flattened = lib.no.flatten_node(node, 1);
 
     const new_display_graph = {
-        nodes: s.display_graph.nodes
+        nodes: data.display_graph.nodes
             .filter(n => n.node_id !== data.node_id)
             .concat(flattened.flat_nodes),
-        edges: s.display_graph.edges
+        edges: data.display_graph.edges
             .map(e => ({
                 from: e.from === data.node_id ? `${data.node_id}/out` : e.from,
                 to: e.to === data.node_id ? `${data.node_id}/in` : e.to
@@ -663,48 +701,23 @@ const expand_node = ({ data }) => (s, payload) => {
     const levels = calculate_levels(new_display_graph);
 
     // TODO: remove duplicate code with d3simulation above
-    const new_nodes = s.nodes.filter(n => n.node_id !== data.node_id)
+    const new_nodes = data.nodes.filter(n => n.node_id !== data.node_id)
         .concat(flattened.flat_nodes.map((n, i) => ({
             node_id: n.id,
             x: data.x + (Math.random() - 0.5) * 64,
             y: data.y + (Math.random() - 0.5) * 64,
-            index: i + s.nodes.length - 1
+            index: i + data.nodes.length - 1
         })))
 
-    const new_links = new_display_graph.edges.map(e => ({ source: e.from, target: e.to }));
+    const new_links = new_display_graph.edges.filter(e => e.to !== "log" && e.to !=="debug").map(e => ({ source: e.from, target: e.to }));
 
-
-    return [{
-            ...s,
-            display_graph: new_display_graph,
-            levels,
-            nodes: new_nodes,
-            links: new_links
-        },
-        [() => {
-            data.simulation.nodes(new_nodes);
-
-            data.simulation.force('links').links(new_links);
-            data.simulation.force('link_direction')
-                .y((n) => window.innerHeight * (0.075 + 0.85 * (levels.levels.get(n.node_id) ?? 0) / (levels.max - levels.min)) +
-                    (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
-                        64 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - (levels.nodes_by_level[levels.levels.get(n.node_id)].length - 1) * 64 * 0.5 :
-                        0));
-
-            data.simulation.force('link_siblings')
-                .x((n) => window.innerWidth * 0.5 + (window.innerWidth * Math.random() * 0.05) +
-                    (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
-                        (256 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - levels.nodes_by_level[levels.levels.get(n.node_id)].length * 256 * 0.5) :
-                        window.innerWidth * 0.25));
-
-            data.simulation
-                // .force(`parent_${data.node_id}`, lib.d3.forceRadial(0, data.x, data.y).strength(n => n.parent === data.node_id ? 0.2 : 0))
-                // .force(`not_parent_${data.node_id}`, lib.d3.forceRadial(512, data.x, data.y).strength(n => n.parent === data.node_id ? 0 : 0.2))
-                // .force(`center`, null)
-                // .velocityDecay(.2)
-                .alpha(0.2).restart();
-        }]
-    ];
+    return {
+        ...data,
+        display_graph: new_display_graph,
+        levels,
+        nodes: new_nodes,
+        links: new_links
+    }
 }
 
 const debug = () => {
@@ -716,7 +729,7 @@ const lib = {
     _,
     ha: { h, app, text, memo },
     iter: { reduce, map },
-    no: { map_path_fn, flatten, unpackTypes, hFn, fnDef, fnReturn, concatValues, verify, d3simulation, debug, flatten_node, expand_node, node_click, contract_node },
+    no: { map_path_fn, flatten, unpackTypes, hFn, fnDef, fnReturn, concatValues, verify, d3simulation, debug, flatten_node, expand_node, node_click, contract_node, update_simulation_nodes },
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
     util: { overIdx, overKey, overPath }
 };
