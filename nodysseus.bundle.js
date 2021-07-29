@@ -39679,6 +39679,86 @@
     										type: "identity"
     									},
     									{
+    										id: "onclick_fn",
+    										nodes: [
+    											{
+    												id: "in",
+    												type: "fn_def"
+    											},
+    											{
+    												id: "map_fn_args",
+    												script: "return ({data}) => ({...data, ...data.fn_args[0], payload: data.fn_args[1] })"
+    											},
+    											{
+    												id: "update_simulation_nodes",
+    												script: "return ({data}) => () => lib.no.update_simulation_nodes({data})"
+    											},
+    											{
+    												id: "onclick_node_fn",
+    												script: "return lib.no.node_click"
+    											},
+    											{
+    												id: "out",
+    												type: "fn_return",
+    												inherited_data: [
+    													"simulation"
+    												]
+    											},
+    											{
+    												id: "prep_ha_action",
+    												required_data: [
+    													"hastate",
+    													"effect"
+    												],
+    												script: "return ({data}) => { const hastate = {...data.hastate}; delete hastate['fn_result']; return [hastate, [data.effect]]}"
+    											},
+    											{
+    												id: "cleanup",
+    												type: "delete_data",
+    												paths: [
+    													"node_id",
+    													"payload",
+    													"fn_args",
+    													"fn",
+    													"script"
+    												]
+    											}
+    										],
+    										edges: [
+    											{
+    												from: "in",
+    												to: "map_fn_args"
+    											},
+    											{
+    												from: "map_fn_args",
+    												to: "onclick_node_fn"
+    											},
+    											{
+    												from: "onclick_node_fn",
+    												to: "update_simulation_nodes"
+    											},
+    											{
+    												from: "onclick_node_fn",
+    												to: "cleanup"
+    											},
+    											{
+    												from: "cleanup",
+    												to: "prep_ha_action",
+    												as: "hastate"
+    											},
+    											{
+    												from: "update_simulation_nodes",
+    												to: "prep_ha_action",
+    												as: "effect"
+    											},
+    											{
+    												from: "prep_ha_action",
+    												to: "out",
+    												as: "return_value"
+    											}
+    										]
+    									},
+    									{
     										id: "get_nodes",
     										type: "get",
     										get_index: [
@@ -39741,87 +39821,6 @@
     												dom_type: "svg"
     											},
     											{
-    												id: "onclick_fn",
-    												nodes: [
-    													{
-    														id: "in",
-    														type: "fn_def"
-    													},
-    													{
-    														id: "map_fn_args",
-    														script: "return ({data}) => ({...data, ...data.fn_args[0], payload: data.fn_args[1] })"
-    													},
-    													{
-    														id: "update_simulation_nodes",
-    														script: "return ({data}) => () => lib.no.update_simulation_nodes({data})"
-    													},
-    													{
-    														id: "onclick_node_fn",
-    														script: "return lib.no.node_click"
-    													},
-    													{
-    														id: "out",
-    														type: "fn_return",
-    														inherited_data: [
-    															"simulation",
-    															"node_id"
-    														]
-    													},
-    													{
-    														id: "prep_ha_action",
-    														required_data: [
-    															"hastate",
-    															"effect"
-    														],
-    														script: "return ({data}) => { const hastate = {...data.hastate}; delete hastate['fn_result']; return [hastate, [data.effect]]}"
-    													},
-    													{
-    														id: "cleanup",
-    														type: "delete_data",
-    														paths: [
-    															"node_id",
-    															"payload",
-    															"fn_args",
-    															"fn",
-    															"script"
-    														]
-    													}
-    												],
-    												edges: [
-    													{
-    														from: "in",
-    														to: "map_fn_args"
-    													},
-    													{
-    														from: "map_fn_args",
-    														to: "onclick_node_fn"
-    													},
-    													{
-    														from: "onclick_node_fn",
-    														to: "update_simulation_nodes"
-    													},
-    													{
-    														from: "onclick_node_fn",
-    														to: "cleanup"
-    													},
-    													{
-    														from: "cleanup",
-    														to: "prep_ha_action",
-    														as: "hastate"
-    													},
-    													{
-    														from: "update_simulation_nodes",
-    														to: "prep_ha_action",
-    														as: "effect"
-    													},
-    													{
-    														from: "prep_ha_action",
-    														to: "out",
-    														as: "return_value"
-    													}
-    												]
-    											},
-    											{
     												id: "log",
     												type: "log"
     											},
@@ -39832,7 +39831,7 @@
     													"x",
     													"y"
     												],
-    												script: "return ({data}) => ({ x: (data.x ?? 400) - 20, y: (data.y ?? 400) - 20, id: data.node_id, onclick: data.onclick_fn, width: 256, height: 64})"
+    												script: "return ({data}) => ({ x: (data.x ?? 400) - 20, y: (data.y ?? 400) - 20, id: data.node_id, onclick: (_, payload) => [data.onclick_fn, {...payload, node_id: data.node_id}], width: 256, height: 64})"
     											},
     											{
     												id: "children",
@@ -39963,10 +39962,6 @@
     												to: "children"
     											},
     											{
-    												from: "in",
-    												to: "onclick_fn"
-    											},
-    											{
     												from: "log",
     												to: "log",
     												as: "log_value"
@@ -39974,11 +39969,6 @@
     											{
     												from: "in",
     												to: "parent_attrs"
-    											},
-    											{
-    												from: "onclick_fn",
-    												to: "parent_attrs",
-    												as: "onclick_fn"
     											},
     											{
     												from: "parent_attrs",
@@ -40052,6 +40042,10 @@
     									},
     									{
     										id: "concat_all",
+    										required_data: [
+    											"link_els",
+    											"node_els"
+    										],
     										script: "return ({data}) => data.link_els && data.node_els && [].concat(data.link_els, data.node_els)"
     									},
     									{
@@ -40079,6 +40073,15 @@
     									{
     										from: "in",
     										to: "link_svgs"
+    									},
+    									{
+    										from: "in",
+    										to: "onclick_fn"
+    									},
+    									{
+    										from: "onclick_fn",
+    										to: "node_template",
+    										as: "onclick_fn"
     									},
     									{
     										from: "in",
@@ -40392,7 +40395,7 @@
     ];
     var edges = [
     	{
-    		from: "hyperapp_view/base_editor_content/node_editor/svgs/node_template/log",
+    		from: "log",
     		to: "log",
     		as: "log_value"
     	},
@@ -47981,6 +47984,15 @@
             overPath(p.slice(1), def)(fn)
         )(om);
 
+    const addUnique = (array, set, id) => data => {
+        if(!set.has(id ? id(data) : data.id)) {
+            array.push(data);
+            set.add(id ? id(data) : data.id);
+        }
+    };
+
+    const edgeId = e => `${e.from}##${e.to}`;
+
     window.AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
 
     const editorEl = document.getElementById("text_editor");
@@ -48144,128 +48156,160 @@
     };
 
     const fnDef = ({ id, data, state }) => {
-        const node_map = new Map(data.graph.nodes.map(n => [n.id, n]));
-        const next_edges = data.graph.edges
-            .filter(e => e.from === id);
+        if(
+            state.has('reference_edges') 
+            && state.has('reference_nodes')
+            && state.has('fnDef_edges')
+            && state.has('fnDef_nodes')
+        ) {
+            const ref_nodes_set = new Set();
+            const reference_nodes = [];
+            const addNode = addUnique(reference_nodes, ref_nodes_set);
 
-        const next_node_ids = new Set(next_edges.map(e => e.to));
+            state.get('reference_nodes').forEach(addNode);
+            data.reference_nodes.forEach(addNode);
+            state.set('reference_nodes', reference_nodes);
 
-        const ref_nodes = next_edges.map(e => node_map.get(e.to).type === "fn_return" && !data.fn_level  ?
-            node_map.get(e.to) :
-            Object.assign({}, node_map.get(e.to), { id: `${node_map.get(e.to).id}#ref_fnDef` })
+            const ref_edges_set = new Set();
+            const reference_edges = [];
+            const addEdge = addUnique(reference_edges, ref_edges_set, edgeId);
+
+            state.get('reference_edges').forEach(addEdge);
+            data.reference_edges.forEach(addEdge);
+            state.set('reference_edges', reference_edges);
+
+            const graph_edges_set = new Set();
+            const graph_edges = [];
+            const addGraphEdge = addUnique(graph_edges, graph_edges_set, edgeId);
+
+            state.get('fnDef_edges').forEach(addGraphEdge);
+            data.graph.edges.forEach(addGraphEdge);
+
+            const graph_nodes_set = new Set();
+            const graph_nodes = [];
+            const addGraphNode = addUnique(graph_nodes, graph_nodes_set);
+
+            state.get('fnDef_nodes').forEach(addGraphNode);
+            data.graph.nodes.forEach(addGraphNode);
+
+            return {
+                graph:{
+                    nodes: graph_nodes,
+                    edges: graph_edges
+                },
+                reference_nodes,
+                reference_edges
+            }
+        }
+
+
+        const next_edges = data.graph.edges.filter(e => e.from === id);
+        const next_node_ids = new Set();
+        next_edges.forEach(e => next_node_ids.add(e.to));
+        const next_nodes = Object.fromEntries(next_edges.map(e => [e.to, data.graph.nodes.find(gn => gn.id === e.to)]));
+
+
+        const next_ref_nodes = next_edges.map(e => next_nodes[e.to].type === "fn_return" && !data.fn_level  ?
+            next_nodes[e.to] :
+            Object.assign({}, next_nodes[e.to], { id: `${e.to}#ref_fnDef` })
         );
 
-        const ref_edges = next_edges.map(e => ({
-            from: data.reference_graph ? `${id}#ref_fnDef` : "in",
+        const reference_nodes_set = new Set();
+        const reference_nodes = [];
+        const addRefNode = addUnique(reference_nodes, reference_nodes_set);
+
+        next_ref_nodes.forEach(addRefNode);
+        if (data.reference_nodes){
+            data.reference_nodes.forEach(addRefNode);
+        }
+
+        state.set('reference_nodes', reference_nodes);
+
+        const next_ref_edges = next_edges.map(e => ({
+            from: data.reference_edges ? `${id}#ref_fnDef` : "in",
             to: `${e.to}#ref_fnDef`,
             as: e.as
         }));
 
-        const fnDef_nodes = next_edges
-            .filter(e => node_map.get(e.to).type !== "fn_return" || !!data.fn_level)
+        const reference_edges_set = new Set();
+        const reference_edges = [];
+        const addRefEdge = addUnique(reference_edges, reference_edges_set, edgeId);
+
+        next_ref_edges.forEach(addRefEdge);
+        if (data.reference_edges) {
+            data.reference_edges.forEach(addRefEdge);
+        }
+
+        state.set('reference_edges', reference_edges);
+
+
+        const fnDef_nodes = (!!data.fn_level
+            ?  next_edges
+            : next_edges.filter(e => next_nodes[e.to].type !== "fn_return"))
             .map(e => ({
                 id: e.to,
-                fn_level: (data.fn_level ?? 0) + (node_map.get(e.to).type === "fn_def" ? 1 : node_map.get(e.to).type === "fn_return" ? -1 : 0),
+                fn_level: (data.fn_level ?? 0) + (
+                    next_nodes[e.to].type === "fn_def" ? 1 
+                    : next_nodes[e.to].type === "fn_return" ? -1 : 0),
                 script: "return lib.no.fnDef"
             }));
+        state.set('fnDef_nodes', fnDef_nodes);
 
         // get rid of "as"
-        const fn_def_edges = next_edges.map(e => ({ to: e.to, from: e.from }));
+        const fnDef_edges = next_edges.map(e => ({ from: e.from, to: e.to }));
+        state.set('fnDef_edges', fnDef_edges);
 
-        const seen_nodes = new Set();
-        const acc_nodes = data.graph.nodes
-            .filter(n => !next_node_ids.has(n.id))
-            .concat(state.get('acc_nodes') ?? [], ref_nodes, fnDef_nodes)
-            .reduce((acc, n) => {
-                if(!seen_nodes.has(n.id)) {
-                    acc.push(n);
-                    seen_nodes.add(n.id);
-                }
-                return acc;
-            }, []);
+        const graph_seen_nodes = new Set();
+        const graph_nodes = [];
+        const addGraphNode = addUnique(graph_nodes, graph_seen_nodes);
 
-        state.set('acc_nodes', acc_nodes);
+        fnDef_nodes.forEach(addGraphNode);
+        data.graph.nodes.forEach(addGraphNode);
 
-        const seen_edges = new Set();
-        const acc_edges = data.graph.edges
-            .filter(e => !(next_node_ids.has(e.to) && e.from === id))
-            .concat(state.get('acc_edges') ?? [], fn_def_edges)
-            .reduce((acc, e) => {
-                if(!seen_edges.has(`${e.from}##${e.to}`)){
-                    acc.push(e);
-                    seen_edges.add(`${e.from}##${e.to}`);
-                }
-                return acc;
-            }, []);
+        const graph_edges_set = new Set();
+        const graph_edges = new Array();
+        const addGraphEdge = addUnique(graph_edges, graph_edges_set, edgeId);
 
-        state.set('acc_edges', acc_edges);
-
-        const ref_graph_edges = new Set();
-        const reference_graph = (data.reference_graph ?? [])
-            .concat(state.get('reference_graph') ?? [], ref_edges)
-            .reduce((acc, e) => {
-                if(!ref_graph_edges.has(`${e.from}##${e.to}`)) {
-                    acc.push(e);
-                    ref_graph_edges.add(`${e.from}##${e.to}`);
-                }
-                return acc;
-            }, []);
-
-        state.set('reference_graph', reference_graph);
-
+        fnDef_edges.forEach(addGraphEdge);
+        data.graph.edges.forEach(addGraphEdge);
 
         return {
             graph: {
-                edges: acc_edges,
-                nodes: acc_nodes
+                nodes: graph_nodes,
+                edges: graph_edges
             },
-            reference_graph
+            reference_nodes,
+            reference_edges
         }
     };
 
     const fnReturn = ({ id, data, lib, state }) => {
         const fnOut = {
             id: `${id}#ref_fnDef`,
-            script: "return ({data}) => (data.fn_result.fn_value = data.return_value)"
+            script: "return ({data}) => data.fn_result.fn_value = data.return_value"
         };
 
-        const ref_graph_set = new Set();
-        const reference_graph = (data.reference_graph ?? [])
-            .concat(state.get('reference_graph') ?? [])
-            .reduce((acc, e) => {
-                const hash = `${e.from}##${e.to}`;
-                if (!ref_graph_set.has(hash)) {
-                    acc.push(e);
-                    ref_graph_set.add(hash);
-                }
-                return acc;
-            }, []);
-
-        state.set('reference_graph', reference_graph);
-
-        const graph_nodes_set = new Set();
-        const graph_nodes = data.graph.nodes
-            .concat(state.get('graph_nodes') ?? [])
-            .reduce((acc, n) => {
-                if(!graph_nodes_set.has(n.id)) {
-                    acc.push(n);
-                    graph_nodes_set.add(n.id);
-                }
-                return acc;
-            }, []);
-
-        state.set('graph_nodes', graph_nodes);
+        // needed because of the way fnDef outputs values
+        state.set('reference_nodes', data.reference_nodes);
+        state.set('reference_edges', data.reference_edges);
 
         return {
             value: (...args) => {
                 const fn_result = {};
+                const graph_nodes_set = new Set();
+                const graph_nodes = [fnOut];
+
+                const addNode = addUnique(graph_nodes, graph_nodes_set);
+
+                data.graph.nodes.forEach(addNode);
+                state.get('reference_nodes').forEach(addNode);
 
                 runNextNodes({
                     id: "in",
                     data: [{
                         graph: {
-                            nodes: state.get('graph_nodes').concat([fnOut]),
-                            edges: state.get('reference_graph')
+                            nodes: graph_nodes,
+                            edges: state.get('reference_edges')
                         },
                         fn_args: args,
                         fn_result
@@ -48328,6 +48372,7 @@
         if (results.length === 0) {
             return;
         }
+
 
         (results[0].value.graph ?? args.data[0].graph).edges
             .filter(e => e.from === args.id)
@@ -48422,8 +48467,8 @@
                     (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
                         (256 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - levels.nodes_by_level[levels.levels.get(n.node_id)].length * 256 * 0.5) :
                         window.innerWidth * 0.25))
-                .strength(1));
-            // .alphaMin(.8);
+                .strength(1))
+                .alphaMin(.2);
 
 
             // .force('x', lib.d3.forceX(window.innerWidth * 0.5))
@@ -48444,9 +48489,9 @@
     };
 
     const contract_node = ({ data }) => {
-        const node_id = data.node_id.endsWith('in') ?
-            data.node_id.substring(0, data.node_id.length - 3) :
-            data.node_id.substring(0, data.node_id.length - 4);
+        const node_id = data.payload.node_id.endsWith('in') ?
+            data.payload.node_id.substring(0, data.payload.node_id.length - 3) :
+            data.payload.node_id.substring(0, data.payload.node_id.length - 4);
 
         const new_display_graph = {
             nodes: data.display_graph.nodes
@@ -48517,7 +48562,7 @@
             // .force(`not_parent_${data.node_id}`, lib.d3.forceRadial(512, data.x, data.y).strength(n => n.parent === data.node_id ? 0 : 0.2))
             // .force(`center`, null)
             // .velocityDecay(.2)
-            .alpha(0.2).restart();
+            .alpha(0.4).restart();
     };
 
 

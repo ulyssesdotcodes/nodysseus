@@ -85,6 +85,51 @@
                                             "type": "identity"
                                         },
                                         {
+                                            "id": "onclick_fn",
+                                            "nodes": [
+                                                { 
+                                                    "id": "in",
+                                                    "type": "fn_def"
+                                                },
+                                                {
+                                                    "id": "map_fn_args",
+                                                    "script": "return ({data}) => ({...data, ...data.fn_args[0], payload: data.fn_args[1] })"
+                                                },
+                                                {
+                                                    "id": "update_simulation_nodes",
+                                                    "script": "return ({data}) => () => lib.no.update_simulation_nodes({data})"
+                                                },
+                                                {
+                                                    "id": "onclick_node_fn",
+                                                    "script": "return lib.no.node_click"
+                                                },
+                                                {
+                                                    "id": "out",
+                                                    "type": "fn_return",
+                                                    "inherited_data": ["simulation"]
+                                                },
+                                                {
+                                                    "id": "prep_ha_action",
+                                                    "required_data": ["hastate", "effect"],
+                                                    "script": "return ({data}) => { const hastate = {...data.hastate}; delete hastate['fn_result']; return [hastate, [data.effect]]}"
+                                                },
+                                                {
+                                                    "id": "cleanup",
+                                                    "type": "delete_data",
+                                                    "paths": ["node_id", "payload", "fn_args", "fn", "script"]
+                                                }
+                                            ],
+                                            "edges": [
+                                                {"from": "in", "to": "map_fn_args"},
+                                                {"from": "map_fn_args", "to": "onclick_node_fn"},
+                                                {"from": "onclick_node_fn", "to": "update_simulation_nodes"},
+                                                {"from": "onclick_node_fn", "to": "cleanup"},
+                                                {"from": "cleanup", "to": "prep_ha_action", "as": "hastate"},
+                                                {"from": "update_simulation_nodes", "to": "prep_ha_action", "as": "effect"},
+                                                {"from": "prep_ha_action", "to": "out", "as": "return_value"}
+                                            ]
+                                        },
+                                        {
                                             "id": "get_nodes",
                                             "type": "get",
                                             "get_index": [
@@ -131,57 +176,12 @@
                                                     "dom_type": "svg"
                                                 },
                                                 {
-                                                    "id": "onclick_fn",
-                                                    "nodes": [
-                                                        { 
-                                                            "id": "in",
-                                                            "type": "fn_def"
-                                                        },
-                                                        {
-                                                            "id": "map_fn_args",
-                                                            "script": "return ({data}) => ({...data, ...data.fn_args[0], payload: data.fn_args[1] })"
-                                                        },
-                                                        {
-                                                            "id": "update_simulation_nodes",
-                                                            "script": "return ({data}) => () => lib.no.update_simulation_nodes({data})"
-                                                        },
-                                                        {
-                                                            "id": "onclick_node_fn",
-                                                            "script": "return lib.no.node_click"
-                                                        },
-                                                        {
-                                                            "id": "out",
-                                                            "type": "fn_return",
-                                                            "inherited_data": ["simulation", "node_id"]
-                                                        },
-                                                        {
-                                                            "id": "prep_ha_action",
-                                                            "required_data": ["hastate", "effect"],
-                                                            "script": "return ({data}) => { const hastate = {...data.hastate}; delete hastate['fn_result']; return [hastate, [data.effect]]}"
-                                                        },
-                                                        {
-                                                            "id": "cleanup",
-                                                            "type": "delete_data",
-                                                            "paths": ["node_id", "payload", "fn_args", "fn", "script"]
-                                                        }
-                                                    ],
-                                                    "edges": [
-                                                        {"from": "in", "to": "map_fn_args"},
-                                                        {"from": "map_fn_args", "to": "onclick_node_fn"},
-                                                        {"from": "onclick_node_fn", "to": "update_simulation_nodes"},
-                                                        {"from": "onclick_node_fn", "to": "cleanup"},
-                                                        {"from": "cleanup", "to": "prep_ha_action", "as": "hastate"},
-                                                        {"from": "update_simulation_nodes", "to": "prep_ha_action", "as": "effect"},
-                                                        {"from": "prep_ha_action", "to": "out", "as": "return_value"}
-                                                    ]
-                                                },
-                                                {
                                                     "id": "log", "type": "log"
                                                 },
                                                 {
                                                     "id": "parent_attrs",
                                                     "required_data": ["node_id", "x", "y"],
-                                                    "script": "return ({data}) => ({ x: (data.x ?? 400) - 20, y: (data.y ?? 400) - 20, id: data.node_id, onclick: data.onclick_fn, width: 256, height: 64})"
+                                                    "script": "return ({data}) => ({ x: (data.x ?? 400) - 20, y: (data.y ?? 400) - 20, id: data.node_id, onclick: (_, payload) => [data.onclick_fn, {...payload, node_id: data.node_id}], width: 256, height: 64})"
                                                 },
                                                 {
                                                     "id": "children",
@@ -303,19 +303,10 @@
                                                     "from": "in",
                                                     "to": "children"
                                                 },
-                                                {
-                                                    "from": "in",
-                                                    "to": "onclick_fn"
-                                                },
                                                 {"from": "log", "to": "log", "as": "log_value"},
                                                 {
                                                     "from": "in",
                                                     "to": "parent_attrs"
-                                                },
-                                                {
-                                                    "from": "onclick_fn",
-                                                    "to": "parent_attrs",
-                                                    "as": "onclick_fn"
                                                 },
                                                 {
                                                     "from": "parent_attrs",
@@ -383,6 +374,7 @@
                                         },
                                         {
                                             "id": "concat_all",
+                                            "required_data": ["link_els", "node_els"],
                                             "script": "return ({data}) => data.link_els && data.node_els && [].concat(data.link_els, data.node_els)"
                                         },
                                         {
@@ -409,6 +401,15 @@
                                         {
                                             "from": "in",
                                             "to": "link_svgs"
+                                        },
+                                        {
+                                            "from": "in",
+                                            "to": "onclick_fn"
+                                        },
+                                        {
+                                            "from": "onclick_fn",
+                                            "to": "node_template",
+                                            "as": "onclick_fn"
                                         },
                                         {
                                             "from": "in",
@@ -707,7 +708,7 @@
         }
     ],
     "edges": [
-        { "from": "hyperapp_view/base_editor_content/node_editor/svgs/node_template/log", "to": "log", "as": "log_value" },
+        { "from": "log", "to": "log", "as": "log_value" },
         {
             "from": "in",
             "to": "get_graph"
