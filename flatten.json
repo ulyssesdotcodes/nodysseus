@@ -25,7 +25,7 @@
         },
         {
             "id": "initial_state",
-            "script": "return ({data}) => ({display_graph: data.display_graph, nodes: [], links: [] })"
+            "script": "return ({data}) => ({display_graph: data.display_graph, nodes: [], links: [], levels: data.levels })"
         },
         {
             "id": "hyperapp_view",
@@ -213,6 +213,10 @@
                                                                     "get_index": "node_id"
                                                                 },
                                                                 {
+                                                                    "id": "shorten",
+                                                                    "script": "return ({data}) => data.node_id.substring(data.node_id.lastIndexOf('/') + 1)"
+                                                                },
+                                                                {
                                                                     "id": "display_name",
                                                                     "type": "h_text"
                                                                 },
@@ -233,6 +237,11 @@
                                                                 },
                                                                 {
                                                                     "from": "get_id",
+                                                                    "to": "shorten",
+                                                                    "as": "node_id"
+                                                                },
+                                                                {
+                                                                    "from": "shorten",
                                                                     "to": "display_name",
                                                                     "as": "text"
                                                                 },
@@ -686,18 +695,18 @@
             "type": "debug"
         },
         {
-            "id": "get_graph",
-            "script": "return ({data}) => data.graph"
+            "id": "get_display_graph",
+            "script": "return ({data}) => ({...data.graph.nodes.find(n => n.id === 'hyperapp_view')})"
         }
     ],
     "edges": [
         { "from": "log", "to": "log", "as": "log_value" },
         {
             "from": "in",
-            "to": "get_graph"
+            "to": "get_display_graph"
         },
         {
-            "from": "get_graph",
+            "from": "get_display_graph",
             "to": "flatten",
             "as": "display_graph"
         },
@@ -754,8 +763,7 @@
         },
         {
             "from": "simulate_layout",
-            "to": "simulation_subscription",
-            "as": "simulation"
+            "to": "simulation_subscription"
         },
         {
             "from": "initial_state",
@@ -764,8 +772,11 @@
         },
         {
             "from": "simulate_layout",
-            "to": "hyperapp_view",
-            "as": "simulation"
+            "to": "initial_state"
+        },
+        {
+            "from": "simulate_layout",
+            "to": "hyperapp_view"
         },
         {
             "from": "simulation_subscription",

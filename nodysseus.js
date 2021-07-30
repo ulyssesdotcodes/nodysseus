@@ -227,17 +227,12 @@ const execute = args => {
 
     const incoming_edges = data[0].graph.edges.filter(e => e.to === id);
 
-    // store and merge args across calls
-    const mergeable_self = Object.assign({}, self);
-    delete mergeable_self['merge_data'];
-    delete mergeable_self['required_data'];
-
     const merged_datas = lib._.zipWith(data, node_state.get('data') ?? [], (d, sd) =>
         self.merge_data ?? incoming_edges.length > 1 ?
         sd ?
-        Object.assign({}, sd, d, mergeable_self) :
-        Object.assign({}, d, mergeable_self) :
-        Object.assign({}, d, mergeable_self)
+        Object.assign({}, sd, d, self) :
+        Object.assign({}, d, self) :
+        Object.assign({}, d, self)
     );
 
     node_state.set('data', merged_datas);
@@ -465,24 +460,31 @@ const concatValues = ({ data, state }) => {
 const runNextNodes = (args, returned_results) => {
 
     const stored_data = Object.assign({}, (args.state.get(args.id) ?? new Map()).get('data'));
-    const results = returned_results
-        .filter(r => r !== undefined)
-        .map((result, i) => ({
+    const results = [];
+
+    returned_results.forEach((result, i) => {
+        if(result === undefined) {
+            return;
+        }
+
+        const raw = !(
+                result !== undefined &&
+                typeof result === "object" &&
+                result.hasOwnProperty('value')
+            );
+
+        if(!raw && result.value === undefined) {
+            return;
+        }
+
+        results.push({
             previous_data: Object.assign({}, args.data[i]),
             stored_data: stored_data[i],
-            raw: !(
-                result !== undefined &&
-                typeof result === "object" &&
-                result.hasOwnProperty('value')
-            ),
-            value: !(
-                result !== undefined &&
-                typeof result === "object" &&
-                result.hasOwnProperty('value')
-            ) ? result : result.value,
+            raw,
+            value: raw ? result : result.value,
             delete: result.delete
-        }))
-        .filter(r => r.value !== undefined);
+        });
+    });
 
     results.forEach(result => {
         if (!result.raw && result.hasOwnProperty('delete')) {
@@ -609,7 +611,7 @@ const d3simulation = ({ data }) => {
         // .force('collide', lib.d3.forceCollide(32));
         // .alphaMin(.001); // changes how long the simulation will run. dfault is 0.001 
 
-    return simulation;
+    return { simulation, levels };
 }
 
 const node_click = ({ data }) => {
@@ -684,7 +686,7 @@ const update_simulation_nodes = ({data}) => {
                 0));
 
     data.simulation.force('link_siblings')
-        .x((n) => window.innerWidth * 0.5 + (window.innerWidth * Math.random() * 0.05) +
+        .x((n) => window.innerWidth * 0.5 +
             (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
                 (256 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - levels.nodes_by_level[levels.levels.get(n.node_id)].length * 256 * 0.5) :
                 window.innerWidth * 0.25));
@@ -724,7 +726,7 @@ const expand_node = ({ data }) => {
 
     if (!node.nodes) {
         console.log('no nodes?');
-        return;
+        return data;
     }
 
     const flattened = lib.no.flatten_node(node, 1);
@@ -747,8 +749,8 @@ const expand_node = ({ data }) => {
     const new_nodes = data.nodes.filter(n => n.node_id !== node_id)
         .concat(flattened.flat_nodes.map((n, i) => ({
             node_id: n.id,
-            x: data.x + (Math.random() - 0.5) * 64,
-            y: data.y + (Math.random() - 0.5) * 64,
+            x: data.payload.x + (Math.random() - 0.5) * 64,
+            y: data.payload.y + (Math.random() - 0.5) * 64,
             index: i + data.nodes.length - 1
         })))
 
