@@ -163,7 +163,8 @@
                                             "id": "node_template",
                                             "nodes": [{
                                                     "id": "in",
-                                                    "type": "identity"
+                                                    "type": "identity",
+                                                    "required_data": ["onclick_fn"]
                                                 },
                                                 {
                                                     "id": "out",
@@ -180,8 +181,8 @@
                                                 },
                                                 {
                                                     "id": "parent_attrs",
-                                                    "required_data": ["node_id", "x", "y"],
-                                                    "script": "return ({data}) => ({ x: (data.x ?? 400) - 20, y: (data.y ?? 400) - 20, id: data.node_id, onclick: (_, payload) => [data.onclick_fn, {...payload, node_id: data.node_id}], width: 256, height: 64})"
+                                                    "required_data": ["node_id", "x", "y", "onclick_fn"],
+                                                    "script": "return ({data}) => ({ x: (data.x ?? 400) - 20, y: (data.y ?? 400) - 20, id: data.node_id, onclick: (_, payload) => [data.onclick_fn, {x: payload.x, y: payload.y, node_id: data.node_id}], width: 256, height: 64})"
                                                 },
                                                 {
                                                     "id": "children",
@@ -408,7 +409,7 @@
                                         },
                                         {
                                             "from": "onclick_fn",
-                                            "to": "node_template",
+                                            "to": "node_svgs",
                                             "as": "onclick_fn"
                                         },
                                         {
@@ -545,24 +546,6 @@
                     "id": "base_editor",
                     "type": "h",
                     "dom_type": "div"
-                },
-                {
-                    "id": "apply_node_template",
-                    "path": [
-                        "nodes",
-                        "node_editor",
-                        "nodes",
-                        "svgs",
-                        "nodes",
-                        "node_svgs",
-                        "nodes"
-                    ],
-                    "source_path": [
-                        "node_editor",
-                        "nodes"
-                    ],
-                    "script": "return lib.no.apply_template(lib, self)",
-                    "template": {}
                 },
                 {
                     "id": "concat_children",

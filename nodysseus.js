@@ -613,7 +613,7 @@ const d3simulation = ({ data }) => {
 }
 
 const node_click = ({ data }) => {
-    if (data.node_id.endsWith('in') || data.node_id.endsWith('out')) {
+    if (data.payload.node_id.endsWith('in') || data.payload.node_id.endsWith('out')) {
         return lib.no.contract_node({ data });
     } else {
         return lib.no.expand_node({ data })
@@ -719,7 +719,8 @@ const calculate_levels = graph => {
 
 
 const expand_node = ({ data }) => {
-    const node = data.display_graph.nodes.find(n => n.id === data.node_id)
+    const node_id = data.payload.node_id;
+    const node = data.display_graph.nodes.find(n => n.id === node_id)
 
     if (!node.nodes) {
         console.log('no nodes?');
@@ -730,12 +731,12 @@ const expand_node = ({ data }) => {
 
     const new_display_graph = {
         nodes: data.display_graph.nodes
-            .filter(n => n.node_id !== data.node_id)
+            .filter(n => n.node_id !== node_id)
             .concat(flattened.flat_nodes),
         edges: data.display_graph.edges
             .map(e => ({
-                from: e.from === data.node_id ? `${data.node_id}/out` : e.from,
-                to: e.to === data.node_id ? `${data.node_id}/in` : e.to
+                from: e.from === node_id ? `${node_id}/out` : e.from,
+                to: e.to === node_id ? `${node_id}/in` : e.to
             }))
             .concat(flattened.flat_edges)
     };
@@ -743,7 +744,7 @@ const expand_node = ({ data }) => {
     const levels = calculate_levels(new_display_graph);
 
     // TODO: remove duplicate code with d3simulation above
-    const new_nodes = data.nodes.filter(n => n.node_id !== data.node_id)
+    const new_nodes = data.nodes.filter(n => n.node_id !== node_id)
         .concat(flattened.flat_nodes.map((n, i) => ({
             node_id: n.id,
             x: data.x + (Math.random() - 0.5) * 64,

@@ -39805,7 +39805,10 @@
     										nodes: [
     											{
     												id: "in",
-    												type: "identity"
+    												type: "identity",
+    												required_data: [
+    													"onclick_fn"
+    												]
     											},
     											{
     												id: "out",
@@ -39829,9 +39832,10 @@
     												required_data: [
     													"node_id",
     													"x",
-    													"y"
+    													"y",
+    													"onclick_fn"
     												],
-    												script: "return ({data}) => ({ x: (data.x ?? 400) - 20, y: (data.y ?? 400) - 20, id: data.node_id, onclick: (_, payload) => [data.onclick_fn, {...payload, node_id: data.node_id}], width: 256, height: 64})"
+    												script: "return ({data}) => ({ x: (data.x ?? 400) - 20, y: (data.y ?? 400) - 20, id: data.node_id, onclick: (_, payload) => [data.onclick_fn, {x: payload.x, y: payload.y, node_id: data.node_id}], width: 256, height: 64})"
     											},
     											{
     												id: "children",
@@ -40080,7 +40084,7 @@
     									},
     									{
     										from: "onclick_fn",
-    										to: "node_template",
+    										to: "node_svgs",
     										as: "onclick_fn"
     									},
     									{
@@ -40219,25 +40223,6 @@
     				id: "base_editor",
     				type: "h",
     				dom_type: "div"
-    			},
-    			{
-    				id: "apply_node_template",
-    				path: [
-    					"nodes",
-    					"node_editor",
-    					"nodes",
-    					"svgs",
-    					"nodes",
-    					"node_svgs",
-    					"nodes"
-    				],
-    				source_path: [
-    					"node_editor",
-    					"nodes"
-    				],
-    				script: "return lib.no.apply_template(lib, self)",
-    				template: {
-    				}
     			},
     			{
     				id: "concat_children",
@@ -48481,7 +48466,7 @@
     };
 
     const node_click = ({ data }) => {
-        if (data.node_id.endsWith('in') || data.node_id.endsWith('out')) {
+        if (data.payload.node_id.endsWith('in') || data.payload.node_id.endsWith('out')) {
             return lib.no.contract_node({ data });
         } else {
             return lib.no.expand_node({ data })
@@ -48587,7 +48572,8 @@
 
 
     const expand_node = ({ data }) => {
-        const node = data.display_graph.nodes.find(n => n.id === data.node_id);
+        const node_id = data.payload.node_id;
+        const node = data.display_graph.nodes.find(n => n.id === node_id);
 
         if (!node.nodes) {
             console.log('no nodes?');
@@ -48598,12 +48584,12 @@
 
         const new_display_graph = {
             nodes: data.display_graph.nodes
-                .filter(n => n.node_id !== data.node_id)
+                .filter(n => n.node_id !== node_id)
                 .concat(flattened.flat_nodes),
             edges: data.display_graph.edges
                 .map(e => ({
-                    from: e.from === data.node_id ? `${data.node_id}/out` : e.from,
-                    to: e.to === data.node_id ? `${data.node_id}/in` : e.to
+                    from: e.from === node_id ? `${node_id}/out` : e.from,
+                    to: e.to === node_id ? `${node_id}/in` : e.to
                 }))
                 .concat(flattened.flat_edges)
         };
@@ -48611,7 +48597,7 @@
         const levels = calculate_levels(new_display_graph);
 
         // TODO: remove duplicate code with d3simulation above
-        const new_nodes = data.nodes.filter(n => n.node_id !== data.node_id)
+        const new_nodes = data.nodes.filter(n => n.node_id !== node_id)
             .concat(flattened.flat_nodes.map((n, i) => ({
                 node_id: n.id,
                 x: data.x + (Math.random() - 0.5) * 64,
