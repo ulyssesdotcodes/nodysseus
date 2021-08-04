@@ -1,6 +1,7 @@
 {
     "description": "function composition",
-    "nodes": [{
+    "nodes": [
+        {
             "id": "in",
             "script": "return (args) => args.data"
         },
@@ -9,35 +10,67 @@
             "script": "return lib.no.flatten"
         },
         {
-            "id": "replace_node_types_args",
-            "target_path": [
-                "graph",
-                "nodes"
-            ]
-        },
-        {
             "id": "replace_node_types_fn",
+            "required_data": ["node_types"],
             "script": "return ({data}) => ({ value: node => lib.no.unpackTypes(data.node_types, node)})"
         },
         {
             "id": "replace_node_types",
+            "target_path": [
+                "graph",
+                "nodes"
+            ],
+            "required_data": ["map_fn", "target_path"],
             "script": "return lib.no.map_path_fn"
         },
         {
             "id": "initial_state",
-            "script": "return ({data}) => ({display_graph: data.display_graph, nodes: [], links: [], levels: data.levels })"
+            "script": "return ({data}) => ({display_graph: data.display_graph, nodes: [], links: [], levels: {} })"
         },
         {
             "id": "hyperapp_view",
-            "nodes": [{
+            "nodes": [
+                {
                     "id": "in",
                     "type": "fn_def",
-                    "required_data": ["simulation", "display_graph"]
+                    "required_data": [
+                        "simulation",
+                        "node_types"
+                    ]
                 },
                 {
                     "id": "out",
                     "type": "fn_return",
-                    "inherited_data": ["simulation", "display_graph"]
+                    "inherited_data": [
+                        "simulation",
+                        "node_types"
+                    ]
+                },
+                {
+                    "id": "get_arg",
+                    "script": "return ({data}) => ({...data, ...data.fn_args[0]})"
+                },
+                {
+                    "id": "flatten_displaygraph",
+                    "required_data": ["display_graph"],
+                    "script": "return lib.no.view_flatten_nodes"
+                },
+                {
+                    "id": "replace_node_types_fn",
+                    "script": "return ({data}) => ({ value: node => lib.no.unpackTypes(data.node_types, node)})"
+                },
+                {
+                    "id": "replace_node_types",
+                    "required_data": ["node_types", "graph", "map_fn"],
+                    "target_path": [
+                        "graph",
+                        "nodes"
+                    ],
+                    "script": "return ({data}) => (lib.no.map_path_fn({data}))"
+                },
+                {
+                    "id": "verify",
+                    "script": "return lib.no.verify"
                 },
                 {
                     "id": "get_aggregate",
@@ -45,8 +78,13 @@
                     "get_index": "aggregate"
                 },
                 {
+                    "id": "save",
+                    "script": "return ({data}) => {localStorage.setItem('graph', data.display_graph); localStorage.setItem('graph' + Date.now(), data.display_graph)}"
+                },
+                {
                     "id": "base_editor_content",
-                    "nodes": [{
+                    "nodes": [
+                        {
                             "id": "in",
                             "type": "identity"
                         },
@@ -60,7 +98,8 @@
                         },
                         {
                             "id": "node_editor",
-                            "nodes": [{
+                            "nodes": [
+                                {
                                     "id": "in",
                                     "type": "identity"
                                 },
@@ -72,7 +111,10 @@
                                     "id": "parent",
                                     "type": "h",
                                     "dom_type": "svg",
-                                    "required_data": ["attrs", "children"]
+                                    "required_data": [
+                                        "attrs",
+                                        "children"
+                                    ]
                                 },
                                 {
                                     "id": "get_input",
@@ -80,14 +122,15 @@
                                 },
                                 {
                                     "id": "svgs",
-                                    "nodes": [{
+                                    "nodes": [
+                                        {
                                             "id": "in",
                                             "type": "identity"
                                         },
                                         {
                                             "id": "onclick_fn",
                                             "nodes": [
-                                                { 
+                                                {
                                                     "id": "in",
                                                     "type": "fn_def"
                                                 },
@@ -97,6 +140,10 @@
                                                 },
                                                 {
                                                     "id": "update_simulation_nodes",
+                                                    "script": "return lib.no.map_displaygraph_to_simulation_graph"
+                                                },
+                                                {
+                                                    "id": "update_simulation_forces",
                                                     "script": "return ({data}) => () => lib.no.update_simulation_nodes({data})"
                                                 },
                                                 {
@@ -106,65 +153,119 @@
                                                 {
                                                     "id": "out",
                                                     "type": "fn_return",
-                                                    "inherited_data": ["simulation"]
+                                                    "inherited_data": [
+                                                        "simulation"
+                                                    ]
                                                 },
                                                 {
                                                     "id": "prep_ha_action",
-                                                    "required_data": ["hastate", "effect"],
-                                                    "script": "return ({data}) => { const hastate = {...data.hastate}; delete hastate['fn_result']; return [hastate, [data.effect]]}"
+                                                    "required_data": [
+                                                        "hastate",
+                                                        "effect"
+                                                    ],
+                                                    "script": "return ({data}) => { const hastate = {...data.hastate}; delete hastate['fn_result']; delete hastate['graph']; return [hastate, [data.effect]]}"
                                                 },
                                                 {
                                                     "id": "cleanup",
                                                     "type": "delete_data",
-                                                    "paths": ["node_id", "payload", "fn_args", "fn", "script"]
+                                                    "paths": [
+                                                        "node_id",
+                                                        "payload",
+                                                        "fn_args",
+                                                        "fn",
+                                                        "script"
+                                                    ]
                                                 }
                                             ],
                                             "edges": [
-                                                {"from": "in", "to": "map_fn_args"},
-                                                {"from": "map_fn_args", "to": "onclick_node_fn"},
-                                                {"from": "onclick_node_fn", "to": "update_simulation_nodes"},
-                                                {"from": "onclick_node_fn", "to": "cleanup"},
-                                                {"from": "cleanup", "to": "prep_ha_action", "as": "hastate"},
-                                                {"from": "update_simulation_nodes", "to": "prep_ha_action", "as": "effect"},
-                                                {"from": "prep_ha_action", "to": "out", "as": "return_value"}
+                                                {
+                                                    "from": "in",
+                                                    "to": "map_fn_args"
+                                                },
+                                                {
+                                                    "from": "map_fn_args",
+                                                    "to": "onclick_node_fn"
+                                                },
+                                                {
+                                                    "from": "onclick_node_fn",
+                                                    "to": "update_simulation_nodes"
+                                                },
+                                                {
+                                                    "from": "update_simulation_nodes",
+                                                    "to": "cleanup"
+                                                },
+                                                {
+                                                    "from": "cleanup",
+                                                    "to": "prep_ha_action",
+                                                    "as": "hastate"
+                                                },
+                                                {
+                                                    "from": "update_simulation_nodes",
+                                                    "to": "update_simulation_forces"
+                                                },
+                                                {
+                                                    "from": "update_simulation_forces",
+                                                    "to": "prep_ha_action",
+                                                    "as": "effect"
+                                                },
+                                                {
+                                                    "from": "prep_ha_action",
+                                                    "to": "out",
+                                                    "as": "return_value"
+                                                }
                                             ]
                                         },
                                         {
                                             "id": "get_nodes",
                                             "type": "get",
                                             "get_index": [
-                                                "fn_args", "0", "nodes"
+                                                "fn_args",
+                                                "0",
+                                                "nodes"
                                             ]
                                         },
                                         {
                                             "id": "delete_nodes",
                                             "type": "delete_data",
-                                            "paths": ["nodes"]
+                                            "paths": [
+                                                "nodes"
+                                            ]
                                         },
                                         {
                                             "id": "get_links",
                                             "type": "get",
                                             "get_index": [
-                                                "fn_args", "0", "links"
+                                                "fn_args",
+                                                "0",
+                                                "links"
                                             ]
                                         },
                                         {
                                             "id": "delete_links",
                                             "type": "delete_data",
-                                            "paths": ["links"]
+                                            "paths": [
+                                                "links"
+                                            ]
                                         },
                                         {
                                             "id": "node_svgs",
                                             "run_over_all": true,
-                                            "path": ["fn_args", "0", "nodes"],
+                                            "path": [
+                                                "fn_args",
+                                                "0",
+                                                "nodes"
+                                            ],
                                             "script": "return ({data}) => lib._.get(data[0], data[0].path).map(n => Object.assign({}, data[0], n))"
                                         },
                                         {
                                             "id": "node_template",
-                                            "nodes": [{
+                                            "nodes": [
+                                                {
                                                     "id": "in",
                                                     "type": "identity",
-                                                    "required_data": ["onclick_fn"]
+                                                    "required_data": [
+                                                        "onclick_fn"
+                                                    ]
                                                 },
                                                 {
                                                     "id": "out",
@@ -172,34 +273,43 @@
                                                 },
                                                 {
                                                     "id": "parent",
-                                                    "required_data": ["attrs", "children"],
+                                                    "required_data": [
+                                                        "attrs",
+                                                        "children"
+                                                    ],
                                                     "type": "h",
                                                     "dom_type": "svg"
                                                 },
                                                 {
-                                                    "id": "log", "type": "log"
+                                                    "id": "log",
+                                                    "type": "log"
                                                 },
                                                 {
                                                     "id": "parent_attrs",
-                                                    "required_data": ["node_id", "x", "y", "onclick_fn"],
+                                                    "required_data": [
+                                                        "node_id",
+                                                        "x",
+                                                        "y",
+                                                        "onclick_fn"
+                                                    ],
                                                     "script": "return ({data}) => ({ x: (data.x ?? 400) - 20, y: (data.y ?? 400) - 20, id: data.node_id, onclick: (_, payload) => [data.onclick_fn, {x: payload.x, y: payload.y, node_id: data.node_id}], width: 256, height: 64})"
                                                 },
                                                 {
                                                     "id": "children",
-                                                    "nodes": [{
+                                                    "nodes": [
+                                                        {
+                                                            "id": "circle_attrs",
+                                                            "script": "return ({data}) => ({r: 16, cx: 20, cy: 20, fill: data?.color ?? 'blue'})"
+                                                        },
+                                                        {
                                                             "id": "circle",
                                                             "type": "h",
-                                                            "dom_type": "circle",
-                                                            "attrs": {
-                                                                "r": 16,
-                                                                "cx": 20,
-                                                                "cy": 20,
-                                                                "fill": "blue"
-                                                            }
+                                                            "dom_type": "circle"
                                                         },
                                                         {
                                                             "id": "text",
-                                                            "nodes": [{
+                                                            "nodes": [
+                                                                {
                                                                     "id": "in",
                                                                     "type": "identity"
                                                                 },
@@ -231,7 +341,8 @@
                                                                     }
                                                                 }
                                                             ],
-                                                            "edges": [{
+                                                            "edges": [
+                                                                {
                                                                     "from": "in",
                                                                     "to": "get_id"
                                                                 },
@@ -263,7 +374,10 @@
                                                         {
                                                             "id": "order",
                                                             "type": "order_inputs",
-                                                            "required_data": ["circle", "text"],
+                                                            "required_data": [
+                                                                "circle",
+                                                                "text"
+                                                            ],
                                                             "order": [
                                                                 "circle",
                                                                 "text"
@@ -278,13 +392,19 @@
                                                             "type": "identity"
                                                         }
                                                     ],
-                                                    "edges": [{
+                                                    "edges": [
+                                                        {
                                                             "from": "in",
-                                                            "to": "circle"
+                                                            "to": "circle_attrs"
                                                         },
                                                         {
                                                             "from": "in",
                                                             "to": "text"
+                                                        },
+                                                        {
+                                                            "from": "circle_attrs",
+                                                            "to": "circle",
+                                                            "as": "attrs"
                                                         },
                                                         {
                                                             "from": "circle",
@@ -309,11 +429,16 @@
                                                     ]
                                                 }
                                             ],
-                                            "edges": [{
+                                            "edges": [
+                                                {
                                                     "from": "in",
                                                     "to": "children"
                                                 },
-                                                {"from": "log", "to": "log", "as": "log_value"},
+                                                {
+                                                    "from": "log",
+                                                    "to": "log",
+                                                    "as": "log_value"
+                                                },
                                                 {
                                                     "from": "in",
                                                     "to": "parent_attrs"
@@ -336,12 +461,17 @@
                                         {
                                             "id": "link_svgs",
                                             "run_over_all": true,
-                                            "path": ["fn_args", "0", "links"],
+                                            "path": [
+                                                "fn_args",
+                                                "0",
+                                                "links"
+                                            ],
                                             "script": "return ({data}) => lib._.get(data[0], data[0].path).map(n => Object.assign({}, data[0], n))"
                                         },
                                         {
                                             "id": "link_template",
-                                            "nodes": [{
+                                            "nodes": [
+                                                {
                                                     "id": "attrs",
                                                     "script": "return ({data}) => ({x1: data.source.x, y1: data.source.y, x2: data.target.x, y2: data.target.y, stroke: 'black'})"
                                                 },
@@ -359,7 +489,8 @@
                                                     "type": "identity"
                                                 }
                                             ],
-                                            "edges": [{
+                                            "edges": [
+                                                {
                                                     "from": "in",
                                                     "to": "attrs"
                                                 },
@@ -384,7 +515,10 @@
                                         },
                                         {
                                             "id": "concat_all",
-                                            "required_data": ["link_els", "node_els"],
+                                            "required_data": [
+                                                "link_els",
+                                                "node_els"
+                                            ],
                                             "script": "return ({data}) => data.link_els && data.node_els && [].concat(data.link_els, data.node_els)"
                                         },
                                         {
@@ -404,7 +538,8 @@
                                             "script": "return ({data}) => data.target?.length > 0 ? undefined : []"
                                         }
                                     ],
-                                    "edges": [{
+                                    "edges": [
+                                        {
                                             "from": "in",
                                             "to": "node_svgs"
                                         },
@@ -508,7 +643,8 @@
                                     "script": "return () => ({id: 'node_parent', width: window.innerWidth, height: window.innerHeight})"
                                 }
                             ],
-                            "edges": [{
+                            "edges": [
+                                {
                                     "from": "in",
                                     "to": "get_input"
                                 },
@@ -536,7 +672,8 @@
                             ]
                         }
                     ],
-                    "edges": [{
+                    "edges": [
+                        {
                             "from": "in",
                             "to": "node_editor"
                         },
@@ -561,8 +698,30 @@
                     "type": "children_els"
                 }
             ],
-            "edges": [{
+            "edges": [
+                {
                     "from": "in",
+                    "to": "get_arg"
+                },
+                {
+                    "from": "get_arg",
+                    "to": "flatten_displaygraph"
+                },
+                {
+                    "from": "flatten_displaygraph",
+                    "to": "replace_node_types_fn"
+                },
+                {
+                    "from": "replace_node_types_fn",
+                    "to": "replace_node_types",
+                    "as": "map_fn"
+                },
+                {
+                    "from": "replace_node_types",
+                    "to": "verify"
+                },
+                {
+                    "from": "verify",
                     "to": "base_editor_content"
                 },
                 {
@@ -578,7 +737,8 @@
         },
         {
             "id": "simulation_subscription",
-            "nodes": [{
+            "nodes": [
+                {
                     "id": "in",
                     "type": "identity"
                 },
@@ -591,7 +751,8 @@
                     "script": "return ({data}) => dispatch => { data.simulation.on('tick.ha', () => { requestAnimationFrame(() => dispatch(s => ({ ...s, nodes: data.simulation.nodes().map(n => ({node_id: n.node_id, x: Math.floor(n.x), y: Math.floor(n.y)})), links: data.simulation.force('links').links().map(l => ({source: ({node_id: l.source.node_id, x: Math.floor(l.source.x), y: Math.floor(l.source.y)}), target: ({node_id: l.target.node_id, x: Math.floor(l.target.x), y: Math.floor(l.target.y)})}))  }) ) ) }); return () => data.simulation.on('.ha', null); }"
                 }
             ],
-            "edges": [{
+            "edges": [
+                {
                     "from": "in",
                     "to": "subscription"
                 },
@@ -604,13 +765,29 @@
         },
         {
             "id": "simulate_layout",
-            "required_data": ["display_graph", "graph"],
+            "required_data": [
+                "display_graph",
+                "graph"
+            ],
             "script": "return ({state, data}) => (state.has('simulation') ? state : state.set('simulation', lib.no.d3simulation({data, state}))).get('simulation')"
         },
         {
+            "id": "update_simulation_nodes",
+            "script": "return ({data}) => lib.no.update_simulation_nodes({data})"
+        },
+        {
+            "id": "create_simulation_nodes",
+            "script": "return lib.no.map_displaygraph_to_simulation_graph"
+        },
+        {
             "id": "hyperapp",
-            "required_data": ["dom", "view", "subscription", "init"],
-            "script": "return ({lib, state, data}) => { if(!state.has('dispatch') && data.view && data.dom && data.subscription){ state.set('dispatch', lib.ha.app({ init: data.init, view: (s) => data.view(s).el ?? lib.ha.text('loading...'), node: data.dom, subscriptions: () => [[data.subscription]] })) }}"
+            "required_data": [
+                "dom",
+                "view",
+                "subscription",
+                "init"
+            ],
+            "script": "return ({lib, state, data}) => { if(!state.has('dispatch')){ state.set('dispatch', lib.ha.app({ init: data.init, view: (s) => { const el = data.view(s)?.el ?? state.get('el') ?? lib.ha.text('loading...'); state.set('el', el); return el;}, node: data.dom, subscriptions: () => [[data.subscription]] })) }}"
         },
         {
             "id": "node_editor_el_selector",
@@ -628,62 +805,64 @@
         },
         {
             "id": "node_types",
-            "execute": {
-                "script": "return lib.no.default_fn(lib, self)"
-            },
-            "data": {
-                "script": "return () => self"
-            },
-            "el_selector": {
-                "script": "return ({data}) => document.querySelector(data.selector);"
-            },
-            "get": {
-                "script": "return ({data}) => ({ value: lib._.get(data, data.get_index), delete: data.delete ? [data.get_index, 'get_index'] : ['get_index']})"
-            },
-            "constant": {
-                "script": "return () => self.value"
-            },
-            "log": {
-                "script": "return ({data}) => console.log(data)"
-            },
-            "debug": {
-                "script": "return lib.no.debug"
-            },
-            "aggregate_chain": {
-                "script": "return lib.no.aggregateChain"
-            },
-            "concat": {
-                "merge_data": false,
-                "script": "return lib.no.concatValues"
-            },
-            "concat_data": {
-                "run_over_all": true,
-                "merge_data": false,
-                "script": "return ({data}) => [{value: data}]"
-            },
-            "h": {
-                "script": "return lib.no.hFn"
-            },
-            "h_text": {
-                "script": "return ({data}) => ({ value: lib.ha.text(data.text), delete: ['text'] })"
-            },
-            "fn_def": {
-                "script": "return lib.no.fnDef"
-            },
-            "fn_return": {
-                "script": "return lib.no.fnReturn"
-            },
-            "identity": {
-                "script": "return ({data}) => data"
-            },
-            "order_inputs": {
-                "script": "return ({data}) => ({ value: data.order.map(o => data[o]).reduce((acc, v) => v === undefined || acc.ordered === undefined ? {} : {ordered: acc.ordered.concat([v])}, {ordered: []}).ordered, delete: ['order'].concat(data.order) })"
-            },
-            "children_els": {
-                "script": "return ({data}) => ({value: data.children.reduce((acc, c) => (acc.push(c.el), acc), []).filter(v => v), delete: ['children'].concat(data.order) })"
-            },
-            "delete_data": {
-                "script": "return ({data}) => ({ value: {...data}, delete: ['paths'].concat(data.paths) })"
+            "node_types": {
+                "execute": {
+                    "script": "return lib.no.default_fn(lib, self)"
+                },
+                "data": {
+                    "script": "return () => self"
+                },
+                "el_selector": {
+                    "script": "return ({data}) => document.querySelector(data.selector);"
+                },
+                "get": {
+                    "script": "return ({data}) => ({ value: lib._.get(data, data.get_index), delete: data.delete ? [data.get_index, 'get_index'] : ['get_index']})"
+                },
+                "constant": {
+                    "script": "return () => self.value"
+                },
+                "log": {
+                    "script": "return ({data}) => console.log(data)"
+                },
+                "debug": {
+                    "script": "return lib.no.debug"
+                },
+                "aggregate_chain": {
+                    "script": "return lib.no.aggregateChain"
+                },
+                "concat": {
+                    "merge_data": false,
+                    "script": "return lib.no.concatValues"
+                },
+                "concat_data": {
+                    "run_over_all": true,
+                    "merge_data": false,
+                    "script": "return ({data}) => [{value: data}]"
+                },
+                "h": {
+                    "script": "return lib.no.hFn"
+                },
+                "h_text": {
+                    "script": "return ({data}) => ({ value: lib.ha.text(data.text), delete: ['text'] })"
+                },
+                "fn_def": {
+                    "script": "return lib.no.fnDef"
+                },
+                "fn_return": {
+                    "script": "return lib.no.fnReturn"
+                },
+                "identity": {
+                    "script": "return ({data}) => data"
+                },
+                "order_inputs": {
+                    "script": "return ({data}) => ({ value: data.order.map(o => data[o]).reduce((acc, v) => v === undefined || acc.ordered === undefined ? {} : {ordered: acc.ordered.concat([v])}, {ordered: []}).ordered, delete: ['order'].concat(data.order) })"
+                },
+                "children_els": {
+                    "script": "return ({data}) => ({value: data.children.reduce((acc, c) => (acc.push(c.el), acc), []).filter(v => v), delete: ['children'].concat(data.order) })"
+                },
+                "delete_data": {
+                    "script": "return ({data}) => ({ value: {...data}, delete: ['paths'].concat(data.paths) })"
+                }
             }
         },
         {
@@ -696,11 +875,15 @@
         },
         {
             "id": "get_display_graph",
-            "script": "return ({data}) => ({...data.graph.nodes.find(n => n.id === 'hyperapp_view')})"
+            "script": "return ({data}) => data.graph"
         }
     ],
     "edges": [
-        { "from": "log", "to": "log", "as": "log_value" },
+        {
+            "from": "hyperapp",
+            "to": "log",
+            "as": "log_value"
+        },
         {
             "from": "in",
             "to": "get_display_graph"
@@ -712,16 +895,11 @@
         },
         {
             "from": "flatten",
-            "to": "verify"
-        },
-        {
-            "from": "verify",
             "to": "node_types"
         },
         {
             "from": "node_types",
-            "to": "replace_node_types_fn",
-            "as": "node_types"
+            "to": "replace_node_types_fn"
         },
         {
             "from": "replace_node_types_fn",
@@ -729,36 +907,19 @@
             "as": "map_fn"
         },
         {
-            "from": "verify",
-            "to": "replace_node_types_args"
-        },
-        {
-            "from": "replace_node_types_args",
-            "to": "replace_node_types"
-        },
-        {
-            "from": "verify",
-            "to": "replace_node_types",
-            "as": "target"
-        },
-        {
-            "from": "verify",
-            "to": "replace_node_types_fn"
-        },
-        {
             "from": "replace_node_types",
             "to": "node_editor_el_selector"
         },
         {
             "from": "replace_node_types",
-            "to": "hyperapp_view"
+            "to": "verify"
         },
         {
-            "from": "replace_node_types",
+            "from": "verify",
             "to": "initial_state"
         },
         {
-            "from": "replace_node_types",
+            "from": "initial_state",
             "to": "simulate_layout"
         },
         {
@@ -766,13 +927,17 @@
             "to": "simulation_subscription"
         },
         {
-            "from": "initial_state",
+            "from": "create_simulation_nodes",
             "to": "hyperapp",
             "as": "init"
         },
         {
             "from": "simulate_layout",
-            "to": "initial_state"
+            "to": "create_simulation_nodes"
+        },
+        {
+            "from": "create_simulation_nodes",
+            "to": "update_simulation_nodes"
         },
         {
             "from": "simulate_layout",
