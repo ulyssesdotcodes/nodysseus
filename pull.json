@@ -1,0 +1,396 @@
+{
+    "description": "function composition",
+    "nodes": [
+        {
+            "id": "data",
+            "inputs": [
+            "data_script"
+            ]
+        },
+        {
+            "id": "data_script",
+            "value": "return () => self"
+        },
+        {
+            "id": "el_selector",
+            "inputs": [
+            "el_selector_script"
+            ]
+        },
+        {
+            "id": "el_selector_script",
+            "value": "return ({data}) => document.querySelector(data.selector);"
+        },
+        {
+            "id": "get",
+            "inputs": [
+                "get_script",
+                "get_inputs"
+            ]
+        },
+        {
+            "id": "get_script",
+            "value": "return lib._.get(target, path)"
+        },
+        {
+            "id": "get_inputs",
+            "value": [["target", "path"]]
+        },
+        {
+            "id": "constant",
+            "inputs": [
+            "constant_script"
+            ]
+        },
+        {
+            "id": "constant_script",
+            "value": "return () => self.value"
+        },
+        {
+            "id": "log",
+            "inputs": [
+            "log_script"
+            ]
+        },
+        {
+            "id": "log_script",
+            "value": "return ({data}) => console.log(data)"
+        },
+        {
+            "id": "debug",
+            "inputs": [
+            "debug_script"
+            ]
+        },
+        {
+            "id": "debug_script",
+            "value": "return lib.no.debug"
+        },
+        {
+            "id": "aggregate_chain",
+            "inputs": [
+            "aggregate_chain_script"
+            ]
+        },
+        {
+            "id": "aggregate_chain_script",
+            "value": "return lib.no.aggregateChain"
+        },
+        {
+            "id": "concat",
+            "inputs": [
+            "concat_script"
+            ]
+        },
+        {
+            "id": "concat_script",
+            "value": "return lib.no.concatValues"
+        },
+        {
+            "id": "concat_data",
+            "inputs": [
+            "concat_data_script"
+            ]
+        },
+        {
+            "id": "concat_data_script",
+            "value": "return ({data}) => [{value: data}]"
+        },
+        {
+            "id": "h",
+            "inputs": [
+                "h_script",
+                "h_inputs"
+            ]
+        },
+        {
+            "id": "h_script",
+            "value": "return (console.log(props), console.log(children), lib.ha.h(dom_type, props, children))"
+        },
+        {
+            "id": "h_inputs",
+            "value": [["props", "children", "dom_type"]]
+        },
+        {
+            "id": "h_text",
+            "inputs": [
+                "h_text_script"
+            ]
+        },
+        {
+            "id": "h_text_script",
+            "value": "return ({data}) => ({ value: lib.ha.text(data.text), delete: ['text'] })"
+        },
+        {
+            "id": "fn_def",
+            "inputs": [
+                "fn_def_script"
+            ]
+        },
+        {
+            "id": "fn_def_script",
+            "value": "return lib.no.fnDef"
+        },
+        {
+            "id": "fn_return",
+            "inputs": [
+            "fn_return_script"
+            ]
+        },
+        {
+            "id": "fn_return_script",
+            "value": "return lib.no.fnReturn"
+        },
+        {
+            "id": "identity",
+            "inputs": [
+            "identity_script"
+            ]
+        },
+        {
+            "id": "identity_script",
+            "value": "return ({data}) => data"
+        },
+        {
+            "id": "order_inputs",
+            "inputs": [
+            "order_inputs_script"
+            ]
+        },
+        {
+            "id": "order_inputs_script",
+            "value": "return ({data}) => ({ value: data.order.map(o => data[o]).reduce((acc, v) => v === undefined || acc.ordered === undefined ? {} : {ordered: acc.ordered.concat([v])}, {ordered: []}).ordered, delete: ['order'].concat(data.order) })"
+        },
+        {
+            "id": "children_els",
+            "inputs": [
+            "children_els_script"
+            ]
+        },
+        {
+            "id": "children_els_script",
+            "value": "return ({data}) => ({value: data.children.reduce((acc, c) => (acc.push(c.el), acc), []).filter(v => v), delete: ['children'].concat(data.order) })"
+        },
+        {
+            "id": "delete_data",
+            "inputs": [
+            "delete_data_script"
+            ]
+        },
+        {
+            "id": "delete_data_script",
+            "value": "return ({data}) => ({ value: {...data}, delete: ['paths'].concat(data.paths) })"
+        },
+        {
+            "id": "node_ref",
+            "inputs": ["node_ref_script", "node_ref_inputs"]
+        },
+        {
+            "id": "node_ref_inputs",
+            "value": [["ref"]]
+        },
+        {
+            "id": "node_ref_script",
+            "value": "return "
+        },
+        {
+            "id": "execute_graph",
+            "inputs": ["execute_script", "execute_inputs"]
+        },
+        {
+            "id": "execute_inputs",
+            "value": [["in_node", "out_node", "graph"]]
+        },
+        {
+            "id": "execute_script",
+            "value": "return data => (lib.no.executeGraph(new Map([[in_node, [data]]]), graph, out_node))"
+        },
+
+        {
+            "id": "log",
+            "type": "log"
+        },
+        {
+            "id": "debug",
+            "type": "debug"
+        },
+
+        {
+            "id": "data",
+            "value": "data"
+        },
+        {
+            "id": "graph",
+            "value": "graph"
+        },
+        {
+            "id": "nodes",
+            "value": "nodes"
+        },
+        {
+            "id": "graph_nodes",
+            "value": [["graph", "nodes"]]
+        },
+
+        {
+            "id": "get_display_graph",
+            "type": "get"
+        },
+        {
+            "id": "initial_state",
+            "type": "get"
+        },
+
+        {
+            "id": "hyperapp_view",
+            "type": "execute_graph"
+        },
+        {
+            "id": "hyperapp",
+            "inputs": ["init", "view"],
+            "script": "return lib.ha.app({init, view: s => view(s)[0], node: document.getElementById('node-editor')})"
+        },
+
+        {
+            "id": "hyperapp_view_in",
+            "value": "hyperapp_view_in"
+        },
+        {
+            "id": "get_nodes",
+            "inputs": ["graph"],
+            "script": "return graph.nodes"
+        },
+        {
+            "id": "node_editor",
+            "type": "h"
+        },
+        {
+            "id": "node_editor_props",
+            "inputs": [],
+            "script": "return {width: window.innerWidth, height: window.innerHeight}"
+        },
+        {
+            "id": "node_editor_dom_type",
+            "value": "svg"
+        },
+        {
+            "id": "node_editor_children",
+            "inputs": ["children"],
+            "script": "return children.map()"
+        },
+        {
+            "id": "node_circle",
+            "inputs": ["node"],
+            "script": "return lib.ha.h('circle', {r: 16, cx: Math.random() * 500, cy: Math.random() * 500}, [])"
+        }
+    ],
+    "edges": [
+        {
+            "from": "in",
+            "to": "initial_state",
+            "as": "target"
+        },
+        {
+            "from": "graph",
+            "to": "initial_state",
+            "as": "path"
+        },
+        {
+            "from": "hyperapp_view_in",
+            "to": "hyperapp_view",
+            "as": "in_node"
+        },
+        {
+            "from": "node_editor",
+            "to": "hyperapp_view",
+            "type": "ref",
+            "as": "out_node"
+        },
+        {
+            "from": "hyperapp_view",
+            "to": "hyperapp",
+            "as": "view"
+        },
+        {
+            "from": "initial_state",
+            "to": "hyperapp",
+            "as": "init"
+        },
+        {
+            "from": "initial_state",
+            "to": "hyperapp_view",
+            "as": "graph"
+        },
+
+
+        {
+            "from": "node_editor_props",
+            "to": "node_editor",
+            "as": "props"
+        },
+        {
+            "from": "node_editor_dom_type",
+            "to": "node_editor",
+            "as": "dom_type"
+        },
+        {
+            "from": "node_circle",
+            "to": "node_editor",
+            "as": "children",
+            "type": "concat"
+        },
+
+        {
+            "from": "hyperapp_view_in",
+            "to": "get_nodes",
+            "as": "graph"
+        },
+        {
+            "from": "get_nodes",
+            "to": "node_circle",
+            "as": "node"
+        },
+
+
+        {
+            "from": "h_script",
+            "to": "h",
+            "as": "script"
+        },
+        {
+            "from": "h_inputs",
+            "to": "h",
+            "as": "inputs"
+        },
+        {
+            "from": "get_inputs",
+            "to": "get",
+            "as": "inputs"
+        },
+        {
+            "from": "get_script",
+            "to": "get",
+            "as": "script"
+        },
+        {
+            "from": "out_fn_inputs",
+            "to": "out_fn",
+            "as": "inputs"
+        },
+        {
+            "from": "out_fn_script",
+            "to": "out_fn",
+            "as": "script"
+        },
+        {
+            "from": "execute_inputs",
+            "to": "execute_graph",
+            "as": "inputs"
+        },
+        {
+            "from": "execute_script",
+            "to": "execute_graph",
+            "as": "script"
+        }
+    ]
+}

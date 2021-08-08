@@ -1,4 +1,4 @@
-import DEFAULT_GRAPH from "./flatten.json"
+import DEFAULT_GRAPH from "./pull.json"
 import _ from "lodash";
 import { h, app, text, memo } from "hyperapp"
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
@@ -23,8 +23,12 @@ const executeGraph = (state, graph, out) => {
 
         for(const node of active_nodes.values()) {
             let run = true;
+            // edge types
+            //   ref
+            //   data (default)
+
             for(const edge of node.edges) {
-                if(!state.has(edge.from)){
+                if(edge?.type !== "ref" && !state.has(edge.from)){
                     if(!active_nodes.has(edge.from)) {
                         active_nodes.set(edge.from, Object.assign({}, graph.nodes.find(n => n.id === edge.from), {
                             edges: graph.edges.filter(e => e.to === edge.from),
@@ -36,19 +40,59 @@ const executeGraph = (state, graph, out) => {
                 }
             }
 
-            if (run) {
-                const unpacked_node = unpackTypes(state.get('node_types')[0], node);
-                const fn = new Function('lib', 'node', ...unpacked_node.inputs, unpacked_node.script);
-                let datas = [{fn}];
-                for(const edge of node.edges) {
-                    datas = datas.flatMap(current_data =>
-                        state.get(edge.from).map(d => edge.as 
-                            ? Object.assign({}, current_data, {[edge.as]: d})
-                            : Object.assign({}, current_data, d))
-                    );
+            if(node.type && !state.has(node.type)) {
+                if(!active_nodes.has(node.type)) {
+                    active_nodes.set(node.type, Object.assign({}, graph.nodes.find(n => n.id === node.type), {
+                        edges: graph.edges.filter(e => e.to === node.type),
+                        _nodeflag: true
+                    }))
                 }
 
-                state.set(node.id, datas.map(d => d.fn(lib, node, ...unpacked_node.inputs.map(i => d[i]))));
+                run = false;
+            }
+
+            if (run) {
+                let datas = [{}];
+                if (node.value) {
+                    state.set(node.id, [node.value].flat());
+                    active_nodes.delete(node.id);
+                } else {
+
+                    if(node.type) {
+                        Object.assign(node, state.get(node.type)[0])
+                    }
+
+                    for(const edge of node.edges) {
+                        datas = datas.flatMap(current_data =>
+                            edge?.type === "ref" 
+                            ? Object.assign({}, current_data, {[edge.as]: edge.from})
+                            : edge?.type === "concat" 
+                            ? Object.assign({}, current_data, {[edge.as]: state.get(edge.from)})
+                            : state.get(edge.from).map(d => edge.as 
+                                ? Object.assign({}, current_data, {[edge.as]: d})
+                                : Object.assign({}, current_data, d))
+                        );
+                    }
+
+                    if(datas.length > 1) {
+                        debugger;
+                    }
+
+                    if(node.script) {
+                        const fn = new Function(
+                            'lib', 
+                            'node', 
+                            ...node.inputs, 
+                            node.script
+                            );
+                        state.set(node.id, datas.map(d => fn(lib, node, ...node.inputs.map(i => d[i] ?? new Error(`${i} not found`)))).flat());
+                        active_nodes.delete(node.id);
+                    } else {
+                        state.set(node.id, datas);
+                        active_nodes.delete(node.id);
+                    }
+
+                }
             }
         }
     }
@@ -60,8 +104,7 @@ const test_graph = {
     nodes: [
         {
             "id": "out",
-            "inputs": ["value"],
-            "script": "return value" 
+            "inputs": ["value"]
         },
         {
             "id": "get_test_path",
@@ -69,9 +112,20 @@ const test_graph = {
         },
         {
             "id": "test_path",
-            "type": "constant",
             "value": "test_path"
-        }
+        },
+        {
+            "id": "get", 
+            "inputs": ["inputs", "script"]
+        },
+        {
+            "id": "get_inputs",
+            "value": ["target", "path"]
+        },
+        {
+            "id": "get_script",
+            "value": "return target[path]"
+        },
     ],
     edges: [
         {
@@ -88,6 +142,16 @@ const test_graph = {
             "from": "test_path",
             "to": "get_test_path",
             "as": "path"
+        },
+        {
+            "from": "get_inputs",
+            "to":  "get",
+            "as": "inputs"
+        },
+        {
+            "from": "get_script",
+            "to":  "get",
+            "as": "script"
         }
     ]
 }
@@ -108,24 +172,14 @@ const unpackTypes = (node_types, node) => {
 const lib = {
     _,
     ha: { h, app, text, memo },
-    no: {},
+    no: {executeGraph},
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
 };
 
-const state = new Map([['in', [{test_path: 'test value'}]], ["node_types", [{
-    "get": {
-        "inputs": ["target", "path"],
-        "script": "return target[path]"
-    },
-    "constant": {
-        "inputs": [],
-        "script": "return node.value"
-    }
-
-}]]])
+const state = new Map([['in', [{graph: DEFAULT_GRAPH}]]])
 
 console.log(state);
 
-console.log(executeGraph(state, test_graph, "out"));
+console.log(executeGraph(state, DEFAULT_GRAPH, "hyperapp")[0]);
 
 //    no: { map_path_fn, flatten, unpackTypes, hFn, fnDef, fnReturn, concatValues, verify, d3simulation, debug, flatten_node, expand_node, node_click, contract_node, update_simulation_nodes, map_displaygraph_to_simulation_graph, run_displaygraph, view_flatten_nodes},
