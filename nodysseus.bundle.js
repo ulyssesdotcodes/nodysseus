@@ -4,235 +4,108 @@
     var description = "function composition";
     var nodes = [
     	{
-    		id: "data",
-    		inputs: [
-    			"data_script"
+    		id: "in",
+    		value: null
+    	},
+    	{
+    		id: "execute_graph",
+    		nodes: [
+    			{
+    				id: "in",
+    				value: null
+    			},
+    			{
+    				id: "out",
+    				args: [
+    					"in_node",
+    					"out_node",
+    					"graph"
+    				],
+    				script: "return (...args) => (lib.no.executeGraph(new Map([[in_node, args]]), {nodes: graph.nodes.concat([]), edges: graph.edges.concat([])}, out_node))"
+    			}
+    		],
+    		edges: [
+    			{
+    				from: "in",
+    				to: "out"
+    			}
     		]
-    	},
-    	{
-    		id: "data_script",
-    		value: "return () => self"
-    	},
-    	{
-    		id: "el_selector",
-    		inputs: [
-    			"el_selector_script"
-    		]
-    	},
-    	{
-    		id: "el_selector_script",
-    		value: "return ({data}) => document.querySelector(data.selector);"
     	},
     	{
     		id: "get",
-    		inputs: [
-    			"get_script",
-    			"get_inputs"
+    		nodes: [
+    			{
+    				id: "in",
+    				value: null
+    			},
+    			{
+    				id: "out",
+    				args: [
+    					"target",
+    					"path"
+    				],
+    				script: "return lib._.get(target, path)"
+    			}
+    		],
+    		edges: [
+    			{
+    				from: "in",
+    				to: "out"
+    			}
     		]
-    	},
-    	{
-    		id: "get_script",
-    		value: "return lib._.get(target, path)"
-    	},
-    	{
-    		id: "get_inputs",
-    		value: [
-    			[
-    				"target",
-    				"path"
-    			]
-    		]
-    	},
-    	{
-    		id: "constant",
-    		inputs: [
-    			"constant_script"
-    		]
-    	},
-    	{
-    		id: "constant_script",
-    		value: "return () => self.value"
-    	},
-    	{
-    		id: "log",
-    		inputs: [
-    			"log_script"
-    		]
-    	},
-    	{
-    		id: "log_script",
-    		value: "return ({data}) => console.log(data)"
-    	},
-    	{
-    		id: "debug",
-    		inputs: [
-    			"debug_script"
-    		]
-    	},
-    	{
-    		id: "debug_script",
-    		value: "return lib.no.debug"
-    	},
-    	{
-    		id: "aggregate_chain",
-    		inputs: [
-    			"aggregate_chain_script"
-    		]
-    	},
-    	{
-    		id: "aggregate_chain_script",
-    		value: "return lib.no.aggregateChain"
-    	},
-    	{
-    		id: "concat",
-    		inputs: [
-    			"concat_script"
-    		]
-    	},
-    	{
-    		id: "concat_script",
-    		value: "return lib.no.concatValues"
-    	},
-    	{
-    		id: "concat_data",
-    		inputs: [
-    			"concat_data_script"
-    		]
-    	},
-    	{
-    		id: "concat_data_script",
-    		value: "return ({data}) => [{value: data}]"
     	},
     	{
     		id: "h",
-    		inputs: [
-    			"h_script",
-    			"h_inputs"
-    		]
-    	},
-    	{
-    		id: "h_script",
-    		value: "return (console.log(props), console.log(children), lib.ha.h(dom_type, props, children))"
-    	},
-    	{
-    		id: "h_inputs",
-    		value: [
-    			[
-    				"props",
-    				"children",
-    				"dom_type"
-    			]
+    		nodes: [
+    			{
+    				id: "in",
+    				value: null
+    			},
+    			{
+    				id: "out",
+    				args: [
+    					"props",
+    					"children",
+    					"dom_type"
+    				],
+    				script: "return {el: lib.ha.h(dom_type, props, children)}"
+    			}
+    		],
+    		edges: [
+    			{
+    				from: "in",
+    				to: "out"
+    			}
     		]
     	},
     	{
     		id: "h_text",
-    		inputs: [
-    			"h_text_script"
+    		nodes: [
+    			{
+    				id: "in",
+    				value: null
+    			},
+    			{
+    				id: "out",
+    				args: [
+    					"text"
+    				],
+    				script: "return {el: lib.ha.text(text)}"
+    			}
+    		],
+    		edges: [
+    			{
+    				from: "in",
+    				to: "out"
+    			}
     		]
     	},
     	{
-    		id: "h_text_script",
-    		value: "return ({data}) => ({ value: lib.ha.text(data.text), delete: ['text'] })"
-    	},
-    	{
-    		id: "fn_def",
-    		inputs: [
-    			"fn_def_script"
-    		]
-    	},
-    	{
-    		id: "fn_def_script",
-    		value: "return lib.no.fnDef"
-    	},
-    	{
-    		id: "fn_return",
-    		inputs: [
-    			"fn_return_script"
-    		]
-    	},
-    	{
-    		id: "fn_return_script",
-    		value: "return lib.no.fnReturn"
-    	},
-    	{
-    		id: "identity",
-    		inputs: [
-    			"identity_script"
-    		]
-    	},
-    	{
-    		id: "identity_script",
-    		value: "return ({data}) => data"
-    	},
-    	{
-    		id: "order_inputs",
-    		inputs: [
-    			"order_inputs_script"
-    		]
-    	},
-    	{
-    		id: "order_inputs_script",
-    		value: "return ({data}) => ({ value: data.order.map(o => data[o]).reduce((acc, v) => v === undefined || acc.ordered === undefined ? {} : {ordered: acc.ordered.concat([v])}, {ordered: []}).ordered, delete: ['order'].concat(data.order) })"
-    	},
-    	{
-    		id: "children_els",
-    		inputs: [
-    			"children_els_script"
-    		]
-    	},
-    	{
-    		id: "children_els_script",
-    		value: "return ({data}) => ({value: data.children.reduce((acc, c) => (acc.push(c.el), acc), []).filter(v => v), delete: ['children'].concat(data.order) })"
-    	},
-    	{
-    		id: "delete_data",
-    		inputs: [
-    			"delete_data_script"
-    		]
-    	},
-    	{
-    		id: "delete_data_script",
-    		value: "return ({data}) => ({ value: {...data}, delete: ['paths'].concat(data.paths) })"
-    	},
-    	{
-    		id: "node_ref",
-    		inputs: [
-    			"node_ref_script",
-    			"node_ref_inputs"
-    		]
-    	},
-    	{
-    		id: "node_ref_inputs",
-    		value: [
-    			[
-    				"ref"
-    			]
-    		]
-    	},
-    	{
-    		id: "node_ref_script",
-    		value: "return "
-    	},
-    	{
-    		id: "execute_graph",
-    		inputs: [
-    			"execute_script",
-    			"execute_inputs"
-    		]
-    	},
-    	{
-    		id: "execute_inputs",
-    		value: [
-    			[
-    				"in_node",
-    				"out_node",
-    				"graph"
-    			]
-    		]
-    	},
-    	{
-    		id: "execute_script",
-    		value: "return data => (lib.no.executeGraph(new Map([[in_node, [data]]]), graph, out_node))"
+    		id: "not",
+    		args: [
+    			"target"
+    		],
+    		script: "return !target"
     	},
     	{
     		id: "log",
@@ -269,6 +142,17 @@
     	},
     	{
     		id: "initial_state",
+    		value: {
+    			nodes: [
+    			],
+    			links: [
+    			],
+    			selected: [
+    			]
+    		}
+    	},
+    	{
+    		id: "get_graph",
     		type: "get"
     	},
     	{
@@ -277,61 +161,627 @@
     	},
     	{
     		id: "hyperapp",
-    		inputs: [
+    		args: [
     			"init",
-    			"view"
+    			"view",
+    			"subscriptions"
     		],
-    		script: "return lib.ha.app({init, view: s => view(s)[0], node: document.getElementById('node-editor')})"
+    		script: "return lib.ha.app({init, view: s => view(s)[0].el, node: document.getElementById('node-editor'), subscriptions: () => subscriptions})"
     	},
     	{
     		id: "hyperapp_view_in",
     		value: "hyperapp_view_in"
     	},
     	{
-    		id: "get_nodes",
-    		inputs: [
-    			"graph"
+    		id: "hyperapp_subscriptions",
+    		args: [
+    			"simulation"
     		],
-    		script: "return graph.nodes"
+    		script: "return [[[lib.scripts.d3subscription(simulation)]]]"
+    	},
+    	{
+    		id: "graph_to_simulation",
+    		args: [
+    			"nodes",
+    			"graph",
+    			"links",
+    			"selected"
+    		],
+    		script: "return lib.scripts.graphToSimulationNodes({graph, nodes, links, selected})"
+    	},
+    	{
+    		id: "update_nodes",
+    		args: [
+    			"simulation",
+    			"nodes",
+    			"graph",
+    			"links"
+    		],
+    		script: "return lib.scripts.updateSimulationNodes({graph, simulation, nodes, links})"
+    	},
+    	{
+    		id: "d3simulation",
+    		args: [
+    		],
+    		script: "return lib.scripts.d3simulation()"
+    	},
+    	{
+    		id: "onclick_fn_in",
+    		value: null
+    	},
+    	{
+    		id: "onclick_fn_body",
+    		nodes: [
+    			{
+    				id: "in",
+    				value: null
+    			},
+    			{
+    				id: "get_first",
+    				args: [
+    					"args"
+    				],
+    				script: "return args[0]"
+    			},
+    			{
+    				id: "merge_args",
+    				args: [
+    					"args"
+    				],
+    				script: "return Object.assign({}, args[0], {x: args[1].x, y: args[1].y, node_id: args[1].node_id})"
+    			},
+    			{
+    				id: "select",
+    				args: [
+    					"selected",
+    					"node_id"
+    				],
+    				script: "return [selected.includes(node_id) ? selected.filter(n => n !== node_id) : selected.concat([node_id])]"
+    			},
+    			{
+    				id: "out",
+    				args: [
+    					"input",
+    					"selected"
+    				],
+    				script: "return {...input, selected}"
+    			}
+    		],
+    		edges: [
+    			{
+    				from: "in",
+    				to: "merge_args",
+    				as: "args",
+    				type: "concat"
+    			},
+    			{
+    				from: "merge_args",
+    				to: "select"
+    			},
+    			{
+    				from: "in",
+    				to: "get_first",
+    				as: "args",
+    				type: "concat"
+    			},
+    			{
+    				from: "get_first",
+    				to: "out",
+    				as: "input"
+    			},
+    			{
+    				from: "select",
+    				to: "out",
+    				as: "selected"
+    			}
+    		]
+    	},
+    	{
+    		id: "onclick_fn",
+    		type: "execute_graph"
     	},
     	{
     		id: "node_editor",
-    		type: "h"
-    	},
-    	{
-    		id: "node_editor_props",
-    		inputs: [
+    		nodes: [
+    			{
+    				id: "in",
+    				value: null
+    			},
+    			{
+    				id: "out",
+    				type: "h"
+    			},
+    			{
+    				id: "get_nodes",
+    				args: [
+    					"nodes"
+    				],
+    				script: "return nodes"
+    			},
+    			{
+    				id: "get_links",
+    				args: [
+    					"links"
+    				],
+    				script: "return links"
+    			},
+    			{
+    				id: "get_selected",
+    				args: [
+    					"selected"
+    				],
+    				script: "return selected"
+    			},
+    			{
+    				id: "get_onclick_fn",
+    				args: [
+    					"onclick_fn"
+    				],
+    				script: "return onclick_fn"
+    			},
+    			{
+    				id: "node_editor_props",
+    				args: [
+    				],
+    				script: "return {width: window.innerWidth, height: window.innerHeight}"
+    			},
+    			{
+    				id: "node_editor_dom_type",
+    				value: "svg"
+    			},
+    			{
+    				id: "node_editor_children",
+    				args: [
+    					"nodes",
+    					"links"
+    				],
+    				script: "return [nodes.map(c => c.el).concat(links.map(l => l.el))]"
+    			},
+    			{
+    				id: "node_layout",
+    				nodes: [
+    					{
+    						id: "in",
+    						value: null
+    					},
+    					{
+    						id: "get_node",
+    						args: [
+    							"node"
+    						],
+    						script: "return node"
+    					},
+    					{
+    						id: "is_selected",
+    						args: [
+    							"selected",
+    							"node_id"
+    						],
+    						script: "return selected.includes(node_id)"
+    					},
+    					{
+    						id: "out"
+    					},
+    					{
+    						id: "parent",
+    						type: "h"
+    					},
+    					{
+    						id: "parent_dom_type",
+    						value: "svg"
+    					},
+    					{
+    						id: "parent_attrs",
+    						args: [
+    							"node_id",
+    							"x",
+    							"y",
+    							"onclick_fn"
+    						],
+    						script: "return ({ x: x - 20, y: y - 20, id: node_id, onclick: (_, payload) => [onclick_fn, {x: payload.x, y: payload.y, node_id, selected: []}], width: 256, height: 64})"
+    					},
+    					{
+    						id: "children",
+    						nodes: [
+    							{
+    								id: "in",
+    								value: null
+    							},
+    							{
+    								id: "circle_attrs",
+    								args: [
+    									"selected"
+    								],
+    								script: "return ({r: 16, cx: 20, cy: 20, fill: selected ? 'red' : 'blue'})"
+    							},
+    							{
+    								id: "default_color",
+    								value: "blue"
+    							},
+    							{
+    								id: "empty_array",
+    								value: [
+    									[
+    									]
+    								]
+    							},
+    							{
+    								id: "circle",
+    								value: "circle"
+    							},
+    							{
+    								id: "node_circle",
+    								type: "h"
+    							},
+    							{
+    								id: "text",
+    								nodes: [
+    									{
+    										id: "in",
+    										value: null
+    									},
+    									{
+    										id: "out"
+    									},
+    									{
+    										id: "node_id",
+    										value: "node_id"
+    									},
+    									{
+    										id: "get_id",
+    										type: "get"
+    									},
+    									{
+    										id: "shorten",
+    										args: [
+    											"text"
+    										],
+    										script: "return text.substring(text.lastIndexOf('/') + 1)"
+    									},
+    									{
+    										id: "display_name",
+    										type: "h_text"
+    									},
+    									{
+    										id: "children_els",
+    										args: [
+    											"el"
+    										],
+    										script: "return [el]"
+    									},
+    									{
+    										id: "node_text",
+    										type: "h"
+    									},
+    									{
+    										id: "node_text_props",
+    										value: {
+    											x: 42,
+    											y: 22,
+    											"font-size": 18
+    										}
+    									},
+    									{
+    										id: "text",
+    										value: "text"
+    									}
+    								],
+    								edges: [
+    									{
+    										from: "in",
+    										to: "get_id",
+    										as: "target"
+    									},
+    									{
+    										from: "node_id",
+    										to: "get_id",
+    										as: "path"
+    									},
+    									{
+    										from: "get_id",
+    										to: "shorten",
+    										as: "text"
+    									},
+    									{
+    										from: "text",
+    										to: "node_text",
+    										as: "dom_type"
+    									},
+    									{
+    										from: "node_text_props",
+    										to: "node_text",
+    										as: "props"
+    									},
+    									{
+    										from: "shorten",
+    										to: "display_name",
+    										as: "text"
+    									},
+    									{
+    										from: "display_name",
+    										to: "children_els"
+    									},
+    									{
+    										from: "children_els",
+    										to: "node_text",
+    										as: "children"
+    									},
+    									{
+    										from: "node_text",
+    										to: "out"
+    									}
+    								]
+    							},
+    							{
+    								id: "order",
+    								args: [
+    									"circle",
+    									"text"
+    								],
+    								script: "return [[circle, text]]"
+    							},
+    							{
+    								id: "children_els",
+    								args: [
+    									"children"
+    								],
+    								script: "return [children.map(c => c.el)]"
+    							},
+    							{
+    								id: "out"
+    							}
+    						],
+    						edges: [
+    							{
+    								from: "in",
+    								to: "circle_attrs"
+    							},
+    							{
+    								from: "default_color",
+    								to: "circle_attrs",
+    								as: "color"
+    							},
+    							{
+    								from: "empty_array",
+    								to: "node_circle",
+    								as: "children"
+    							},
+    							{
+    								from: "circle",
+    								to: "node_circle",
+    								as: "dom_type"
+    							},
+    							{
+    								from: "in",
+    								to: "text"
+    							},
+    							{
+    								from: "circle_attrs",
+    								to: "node_circle",
+    								as: "props"
+    							},
+    							{
+    								from: "node_circle",
+    								to: "order",
+    								as: "circle"
+    							},
+    							{
+    								from: "text",
+    								to: "order",
+    								as: "text"
+    							},
+    							{
+    								from: "order",
+    								to: "children_els",
+    								as: "children"
+    							},
+    							{
+    								from: "children_els",
+    								to: "out",
+    								as: "children"
+    							}
+    						]
+    					}
+    				],
+    				edges: [
+    					{
+    						from: "in",
+    						to: "get_node"
+    					},
+    					{
+    						from: "in",
+    						to: "is_selected"
+    					},
+    					{
+    						from: "in",
+    						to: "parent_attrs"
+    					},
+    					{
+    						from: "get_node",
+    						to: "children"
+    					},
+    					{
+    						from: "get_node",
+    						to: "is_selected"
+    					},
+    					{
+    						from: "is_selected",
+    						to: "children",
+    						as: "selected"
+    					},
+    					{
+    						from: "children",
+    						to: "parent"
+    					},
+    					{
+    						from: "parent_attrs",
+    						to: "parent",
+    						as: "props"
+    					},
+    					{
+    						from: "parent_dom_type",
+    						to: "parent",
+    						as: "dom_type"
+    					},
+    					{
+    						from: "get_node",
+    						to: "parent_attrs"
+    					},
+    					{
+    						from: "parent",
+    						to: "out"
+    					}
+    				]
+    			},
+    			{
+    				id: "link_layout",
+    				nodes: [
+    					{
+    						id: "in",
+    						value: null
+    					},
+    					{
+    						id: "get_link",
+    						args: [
+    							"link"
+    						],
+    						script: "return link"
+    					},
+    					{
+    						id: "attrs",
+    						args: [
+    							"source",
+    							"target"
+    						],
+    						script: "return ({x1: source.x, y1: source.y, x2: target.x, y2: target.y, stroke: 'black'})"
+    					},
+    					{
+    						id: "line_dom_type",
+    						value: "line"
+    					},
+    					{
+    						id: "empty_array",
+    						value: [
+    							[
+    							]
+    						]
+    					},
+    					{
+    						id: "line",
+    						type: "h"
+    					},
+    					{
+    						id: "out"
+    					}
+    				],
+    				edges: [
+    					{
+    						from: "in",
+    						to: "get_link"
+    					},
+    					{
+    						from: "get_link",
+    						to: "attrs"
+    					},
+    					{
+    						from: "attrs",
+    						to: "line",
+    						as: "props"
+    					},
+    					{
+    						from: "line_dom_type",
+    						to: "line",
+    						as: "dom_type"
+    					},
+    					{
+    						from: "empty_array",
+    						to: "line",
+    						as: "children"
+    					},
+    					{
+    						from: "line",
+    						to: "out"
+    					}
+    				]
+    			}
     		],
-    		script: "return {width: window.innerWidth, height: window.innerHeight}"
-    	},
-    	{
-    		id: "node_editor_dom_type",
-    		value: "svg"
-    	},
-    	{
-    		id: "node_editor_children",
-    		inputs: [
-    			"children"
-    		],
-    		script: "return children.map()"
-    	},
-    	{
-    		id: "node_circle",
-    		inputs: [
-    			"node"
-    		],
-    		script: "return lib.ha.h('circle', {r: 16, cx: Math.random() * 500, cy: Math.random() * 500}, [])"
+    		edges: [
+    			{
+    				from: "in",
+    				to: "get_nodes"
+    			},
+    			{
+    				from: "in",
+    				to: "get_links"
+    			},
+    			{
+    				from: "in",
+    				to: "get_selected"
+    			},
+    			{
+    				from: "in",
+    				to: "get_onclick_fn"
+    			},
+    			{
+    				from: "get_nodes",
+    				to: "node_layout",
+    				as: "node"
+    			},
+    			{
+    				from: "get_onclick_fn",
+    				to: "node_layout",
+    				as: "onclick_fn"
+    			},
+    			{
+    				from: "get_selected",
+    				to: "node_layout",
+    				as: "selected",
+    				type: "concat"
+    			},
+    			{
+    				from: "get_links",
+    				to: "link_layout",
+    				as: "link"
+    			},
+    			{
+    				from: "node_editor_props",
+    				to: "out",
+    				as: "props"
+    			},
+    			{
+    				from: "node_editor_dom_type",
+    				to: "out",
+    				as: "dom_type"
+    			},
+    			{
+    				from: "node_layout",
+    				to: "node_editor_children",
+    				as: "nodes",
+    				type: "concat"
+    			},
+    			{
+    				from: "link_layout",
+    				to: "node_editor_children",
+    				as: "links",
+    				type: "concat"
+    			},
+    			{
+    				from: "node_editor_children",
+    				to: "out",
+    				as: "children"
+    			}
+    		]
     	}
     ];
     var edges = [
     	{
     		from: "in",
-    		to: "initial_state",
+    		to: "get_graph",
     		as: "target"
     	},
     	{
     		from: "graph",
-    		to: "initial_state",
+    		to: "get_graph",
     		as: "path"
     	},
     	{
@@ -346,85 +796,83 @@
     		as: "out_node"
     	},
     	{
+    		from: "hyperapp_view_in",
+    		to: "onclick_fn"
+    	},
+    	{
+    		from: "onclick_fn",
+    		to: "node_editor",
+    		as: "onclick_fn"
+    	},
+    	{
+    		from: "onclick_fn_body",
+    		to: "onclick_fn",
+    		as: "out_node",
+    		type: "ref"
+    	},
+    	{
+    		from: "onclick_fn_in",
+    		to: "onclick_fn_body"
+    	},
+    	{
+    		from: "onclick_fn_in",
+    		to: "onclick_fn",
+    		as: "in_node",
+    		type: "ref"
+    	},
+    	{
     		from: "hyperapp_view",
     		to: "hyperapp",
     		as: "view"
     	},
     	{
-    		from: "initial_state",
+    		from: "graph_to_simulation",
     		to: "hyperapp",
     		as: "init"
     	},
     	{
-    		from: "initial_state",
+    		from: "get_graph",
     		to: "hyperapp_view",
     		as: "graph"
     	},
     	{
-    		from: "node_editor_props",
-    		to: "node_editor",
-    		as: "props"
-    	},
-    	{
-    		from: "node_editor_dom_type",
-    		to: "node_editor",
-    		as: "dom_type"
-    	},
-    	{
-    		from: "node_circle",
-    		to: "node_editor",
-    		as: "children",
-    		type: "concat"
-    	},
-    	{
     		from: "hyperapp_view_in",
-    		to: "get_nodes",
+    		to: "node_editor"
+    	},
+    	{
+    		from: "get_graph",
+    		to: "update_nodes",
     		as: "graph"
     	},
     	{
-    		from: "get_nodes",
-    		to: "node_circle",
-    		as: "node"
+    		from: "get_graph",
+    		to: "graph_to_simulation",
+    		as: "graph"
     	},
     	{
-    		from: "h_script",
-    		to: "h",
-    		as: "script"
+    		from: "initial_state",
+    		to: "graph_to_simulation"
     	},
     	{
-    		from: "h_inputs",
-    		to: "h",
-    		as: "inputs"
+    		from: "d3simulation",
+    		to: "update_nodes"
     	},
     	{
-    		from: "get_inputs",
-    		to: "get",
-    		as: "inputs"
+    		from: "graph_to_simulation",
+    		to: "update_nodes"
     	},
     	{
-    		from: "get_script",
-    		to: "get",
-    		as: "script"
+    		from: "update_nodes",
+    		to: "hyperapp"
     	},
     	{
-    		from: "out_fn_inputs",
-    		to: "out_fn",
-    		as: "inputs"
+    		from: "d3simulation",
+    		to: "hyperapp_subscriptions"
     	},
     	{
-    		from: "out_fn_script",
-    		to: "out_fn",
-    		as: "script"
-    	},
-    	{
-    		from: "execute_inputs",
-    		to: "execute_graph",
-    		as: "inputs"
-    	},
-    	{
-    		from: "execute_script",
-    		to: "execute_graph",
-    		as: "script"
+    		from: "hyperapp_subscriptions",
+    		to: "hyperapp",
+    		as: "subscriptions"
     	}
     ];
     var DEFAULT_GRAPH = {
@@ -19332,33 +19780,43 @@
     }
 
     const executeGraph = (state, graph, out) => {
-        let state_size = 1;
-        let active_nodes_size = 0;
+        let state_hash = "";
+        let active_nodes_hash = "";
 
         const active_nodes = new Map([[ "out", Object.assign({}, graph.nodes.find(n => n.id === out), {
-            edges: graph.edges.filter(e => e.to === out),
+            inputs: graph.edges.filter(e => e.to === out),
             _nodeflag: true
         })]]);
 
         while(!state.has(out)) {
-            if(state.size === state_size && active_nodes_size === active_nodes.size) {
+            let new_state_hash = "";
+            for(const k of state.keys()) {
+                new_state_hash += k;
+            }
+            let new_active_hash = "";
+            for(const k of active_nodes.keys()) {
+                new_active_hash += k;
+            }
+
+            if(state_hash === new_state_hash && active_nodes_hash === new_active_hash) {
                 throw new Error("stuck");
             }
 
-            state_size = state.size;
-            active_nodes_size = active_nodes.size;
+            state_hash = new_state_hash;
+            active_nodes_hash = new_active_hash;
 
             for(const node of active_nodes.values()) {
                 let run = true;
                 // edge types
-                //   ref
+                //   ref gets the node id
+                //   concat puts all the data as the "as" attribute
                 //   data (default)
 
-                for(const edge of node.edges) {
-                    if(edge?.type !== "ref" && !state.has(edge.from)){
-                        if(!active_nodes.has(edge.from)) {
-                            active_nodes.set(edge.from, Object.assign({}, graph.nodes.find(n => n.id === edge.from), {
-                                edges: graph.edges.filter(e => e.to === edge.from),
+                for(const input of node.inputs) {
+                    if(input?.type !== "ref" && !state.has(input.from)){
+                        if(!active_nodes.has(input.from)) {
+                            active_nodes.set(input.from, Object.assign({}, graph.nodes.find(n => n.id === input.from), {
+                                inputs: graph.edges.filter(e => e.to === input.from),
                                 _nodeflag: true
                             }));
                         }
@@ -19370,7 +19828,8 @@
                 if(node.type && !state.has(node.type)) {
                     if(!active_nodes.has(node.type)) {
                         active_nodes.set(node.type, Object.assign({}, graph.nodes.find(n => n.id === node.type), {
-                            edges: graph.edges.filter(e => e.to === node.type),
+                            inputs: graph.edges.filter(e => e.to === node.type),
+                            _nodetypeflag: true,
                             _nodeflag: true
                         }));
                     }
@@ -19384,41 +19843,68 @@
                         state.set(node.id, [node.value].flat());
                         active_nodes.delete(node.id);
                     } else {
-
-                        if(node.type) {
-                            Object.assign(node, state.get(node.type)[0]);
+                        for(const input of node.inputs) {
+                            if(input?.type === "concat") {
+                                datas = datas.map(d => Object.assign({}, d, {[input.as]: state.get(input.from)}));
+                            } else if (input?.type === "ref") {
+                                datas = datas.map(d => Object.assign({}, d, {[input.as]: input.from}));
+                            } else if (state.get(input.from).length > 1 && datas.length > 1) {
+                                state.get(input.from).forEach((d, i) =>{
+                                    datas[i] = Object.assign({}, datas.length > i ? datas[i] : {}, input.as ? {[input.as]: d} : d);
+                                });
+                            } else {
+                                datas = datas.flatMap(current_data =>
+                                    state.get(input.from).map(d => input.as 
+                                        ? Object.assign({}, current_data, {[input.as]: d})
+                                        : Object.assign({}, current_data, d))
+                                );
+                            }
                         }
 
-                        for(const edge of node.edges) {
-                            datas = datas.flatMap(current_data =>
-                                edge?.type === "ref" 
-                                ? Object.assign({}, current_data, {[edge.as]: edge.from})
-                                : edge?.type === "concat" 
-                                ? Object.assign({}, current_data, {[edge.as]: state.get(edge.from)})
-                                : state.get(edge.from).map(d => edge.as 
-                                    ? Object.assign({}, current_data, {[edge.as]: d})
-                                    : Object.assign({}, current_data, d))
-                            );
-                        }
+                        const node_type = node.type 
+                            ? Object.assign({}, state.get(node.type)[0], node, {_nodetypeflag: false})
+                            : node;
 
-                        if(datas.length > 1) {
-                            debugger;
-                        }
+                        if (!node._nodetypeflag && node_type.nodes && node_type.edges){
+                            state.set(node.id + "/in", datas);
+                            active_nodes.set(node.id, {
+                                id: node.id, 
+                                args: ["value"],
+                                inputs:[{from: `${node.id}/out`, to: node.id, as: "value"}], 
+                                _nodeflag: true, 
+                                script: "return value"
+                            });
 
-                        if(node.script) {
+                            for(const child of node_type.nodes){
+                                graph.nodes.push(Object.assign({}, child, {id: `${node.id}/${child.id}`}));
+                            }
+
+                            for(const edge of node_type.edges){
+                                graph.edges.push(Object.assign({}, edge, {from: `${node.id}/${edge.from}`, to: `${node.id}/${edge.to}`}));
+                            }
+                        } else if(node.script) {
                             const fn = new Function(
                                 'lib', 
                                 'node', 
-                                ...node.inputs, 
+                                ...node.args, 
                                 node.script
                                 );
-                            state.set(node.id, datas.map(d => fn(lib, node, ...node.inputs.map(i => d[i] ?? new Error(`${i} not found`)))).flat());
+                            state.set(node.id, datas.map(d => fn(lib, node, ...node.args.map(i => {
+                                if(d[i] === undefined){
+                                    console.log(node);
+                                    console.log(d);
+                                    throw new Error(`${i} not found`);
+                                }
+                                return d[i];
+                            }))).flat());
+                            active_nodes.delete(node.id);
+                        } else if(node._nodetypeflag) {
+                            state.set(node.id, [{nodes: node.nodes, edges: node.edges}]);
                             active_nodes.delete(node.id);
                         } else {
                             state.set(node.id, datas);
                             active_nodes.delete(node.id);
                         }
-
                     }
                 }
             }
@@ -19427,19 +19913,145 @@
         return state.get(out);
     };
 
+
+    const state = new Map([['in', [{graph: DEFAULT_GRAPH}]]]);
+
+
+    //    no: { map_path_fn, flatten, unpackTypes, hFn, fnDef, fnReturn, concatValues, verify, d3simulation, debug, flatten_node, expand_node, node_click, contract_node, update_simulation_nodes, map_displaygraph_to_simulation_graph, run_displaygraph, view_flatten_nodes},
+
+
+    //////////
+    // TODO: convert these to nodes
+
+    const calculateLevels = (graph, out) => {
+        const levels = graph.edges.filter(e => e.to === out).map(bfs(graph, 1)).flat()
+            .reduce(
+                (acc, v) => acc.set(v[0], Math.max(v[1], acc.get(v[0]) ?? 0)),
+                new Map()
+            ).set(out, 0);
+
+        return {
+            levels,
+            min: Math.min(...levels.values()),
+            max: Math.max(...levels.values()),
+            nodes_by_level: [...levels.entries()].reduce((acc, [n, l]) => (acc[l] ? acc[l].push(n) : acc[l] = [n], acc), {})
+        }
+    };
+
+    const bfs = (graph, level) => (edge) => [
+        [edge.from, level]
+    ].concat(graph.edges.filter(e => e.to === edge.from).map(bfs(graph, level + 1)).flat());
+
+    const d3simulation = () => {
+        const simulation =
+            lib.d3.forceSimulation()
+            .force('charge', lib.d3.forceManyBody().strength(-50).distanceMax(128))
+            .force('collide', lib.d3.forceCollide(32))
+            // .force('center', lib.d3
+            // 	.forceCenter(window.innerWidth * 0.5, window.innerHeight * 0.5)
+            // 	.strength(.01))
+            .force('links', lib.d3
+                .forceLink([])
+                .distance(64)
+                .strength(0.1)
+                .id(n => n.node_id))
+            .force('link_direction', lib.d3.forceY().strength(1))
+            .force('link_siblings', lib.d3.forceX().strength(1))
+            .velocityDecay(0.7)
+            .alphaMin(.2);
+
+        return { simulation };
+    };
+
+    const updateSimulationNodes = (data) => {
+
+        const levels = calculateLevels(data.graph, 'hyperapp');
+
+        data.simulation.nodes(data.nodes);
+
+        data.simulation.force('links').links(data.links);
+        data.simulation.force('link_direction')
+            .y((n) => window.innerHeight * (0.075 + 0.85 * (levels.levels.get(n.node_id) ?? 0) / (levels.max - levels.min)) +
+                (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
+                    64 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - (levels.nodes_by_level[levels.levels.get(n.node_id)].length - 1) * 64 * 0.5 :
+                    0));
+
+        data.simulation.force('link_siblings')
+            .x((n) => window.innerWidth * 0.5 +
+                (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
+                    (256 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - levels.nodes_by_level[levels.levels.get(n.node_id)].length * 256 * 0.5) :
+                    window.innerWidth * 0.25));
+
+        data.simulation
+            // .force(`parent_${data.node_id}`, lib.d3.forceRadial(0, data.x, data.y).strength(n => n.parent === data.node_id ? 0.2 : 0))
+            // .force(`not_parent_${data.node_id}`, lib.d3.forceRadial(512, data.x, data.y).strength(n => n.parent === data.node_id ? 0 : 0.2))
+            // .force(`center`, null)
+            // .velocityDecay(.2)
+            .alpha(0.4).restart();
+
+        return {};
+    };
+
+    const graphToSimulationNodes = (data) => {
+        const simulation_node_data = new Map();
+        data.nodes.forEach(n => {
+            simulation_node_data.set(n.node_id, n);
+        });
+
+        const nodes = data.graph.nodes.map(n => {
+            const current_data = simulation_node_data.get(n.id);
+            return {
+                node_id: n.id,
+                x: current_data?.x ?? data.x ?? window.innerWidth * (Math.random() * .5 + .25),
+                y: current_data?.y ?? data.y ?? window.innerHeight * (Math.random() * .5 + .25)
+            };
+        });
+
+        const links = data.graph.edges
+            .filter(e => e.to !== "log" && e.to !=="debug")
+            .map(e => ({source: e.from, target: e.to}));
+
+        return {
+            ...data,
+            nodes,
+            links
+        }
+    };
+
+    const d3subscription = simulation => dispatch => { 
+        simulation.on('tick.ha', () => { 
+            requestAnimationFrame(() => dispatch(s => ({ 
+                ...s, 
+                nodes: simulation.nodes().map(n => ({node_id: n.node_id, x: Math.floor(n.x), y: Math.floor(n.y)})), 
+                links: simulation.force('links').links().map(l => ({
+                    source: ({
+                        node_id: l.source.node_id, 
+                        x: Math.floor(l.source.x), 
+                        y: Math.floor(l.source.y)
+                    }), 
+                    target: ({
+                        node_id: l.target.node_id, 
+                        x: Math.floor(l.target.x), 
+                        y: Math.floor(l.target.y)
+                    })
+                }))  
+            }))); 
+        }); 
+
+        return () => simulation.on('.ha', null); 
+    };
+
+
+    /////////////////////////////////
+
     const lib = {
         _,
         ha: { h, app, text, memo },
         no: {executeGraph},
+        scripts: {d3simulation, d3subscription, updateSimulationNodes, graphToSimulationNodes},
         d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
     };
 
-    const state = new Map([['in', [{graph: DEFAULT_GRAPH}]]]);
-
-    console.log(state);
-
     console.log(executeGraph(state, DEFAULT_GRAPH, "hyperapp")[0]);
-
-    //    no: { map_path_fn, flatten, unpackTypes, hFn, fnDef, fnReturn, concatValues, verify, d3simulation, debug, flatten_node, expand_node, node_click, contract_node, update_simulation_nodes, map_displaygraph_to_simulation_graph, run_displaygraph, view_flatten_nodes},
 
 }());

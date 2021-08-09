@@ -756,7 +756,7 @@ const bfs = (graph, level) => (edge) => [
     [edge.to, level]
 ].concat(graph.edges.filter(e => e.from === edge.to).map(bfs(graph, level + 1)).flat());
 
-const calculate_levels = graph => {
+const calculateLevels = graph => {
     const levels = graph.edges.filter(e => e.from === 'in').map(bfs(graph, 1)).flat()
         .reduce(
             (acc, v) => acc.set(v[0], Math.max(v[1], acc.get(v[0]) ?? 0)),
