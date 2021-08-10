@@ -21,7 +21,7 @@
     					"out_node",
     					"graph"
     				],
-    				script: "return (...args) => (lib.no.executeGraph(new Map([[in_node, args]]), {nodes: graph.nodes.concat([]), edges: graph.edges.concat([])}, out_node))"
+    				script: "return (...args) => (lib.no.executeGraph(new Map([[in_node, args]]), {nodes: (args[0].graph ?? graph).nodes.concat([]), edges: (args[0].graph ?? graph).edges.concat([])}, out_node))"
     			}
     		],
     		edges: [
@@ -184,20 +184,22 @@
     		args: [
     			"nodes",
     			"graph",
+    			"display_graph",
     			"links",
-    			"selected"
+    			"selected",
+    			"simulation"
     		],
-    		script: "return lib.scripts.graphToSimulationNodes({graph, nodes, links, selected})"
+    		script: "return lib.scripts.graphToSimulationNodes({graph, display_graph, nodes, links, selected, simulation})"
     	},
     	{
     		id: "update_nodes",
     		args: [
     			"simulation",
     			"nodes",
-    			"graph",
+    			"display_graph",
     			"links"
     		],
-    		script: "return lib.scripts.updateSimulationNodes({graph, simulation, nodes, links})"
+    		script: "return lib.scripts.updateSimulationNodes({display_graph, simulation, nodes, links})"
     	},
     	{
     		id: "d3simulation",
@@ -231,20 +233,62 @@
     				script: "return Object.assign({}, args[0], {x: args[1].x, y: args[1].y, node_id: args[1].node_id})"
     			},
     			{
-    				id: "select",
+    				id: "is_selected",
     				args: [
     					"selected",
     					"node_id"
     				],
-    				script: "return [selected.includes(node_id) ? selected.filter(n => n !== node_id) : selected.concat([node_id])]"
+    				script: "return selected.includes(node_id)"
     			},
     			{
-    				id: "out",
+    				id: "select",
     				args: [
-    					"input",
-    					"selected"
+    					"isselected",
+    					"selected",
+    					"node_id"
     				],
-    				script: "return {...input, selected}"
+    				script: "return [isselected ? selected : [node_id]]"
+    			},
+    			{
+    				id: "expand",
+    				args: [
+    					"isselected",
+    					"node_id",
+    					"display_graph"
+    				],
+    				script: "return isselected ? lib.scripts.expand_node({display_graph, node_id}) : []"
+    			},
+    			{
+    				id: "contract",
+    				args: [
+    					"isselected",
+    					"node_id",
+    					"display_graph"
+    				],
+    				script: "return isselected && (node_id.endsWith('/in') || node_id.endsWith('/out')) ? lib.scripts.contract_node({display_graph, node_id}) : []"
+    			},
+    			{
+    				id: "graph_to_sim",
+    				args: [
+    					"display_graph",
+    					"nodes",
+    					"links",
+    					"simulation"
+    				],
+    				script: "return lib.scripts.graphToSimulationNodes({display_graph, nodes, links, simulation})"
+    			},
+    			{
+    				id: "update_sim",
+    				args: [
+    					"display_graph",
+    					"nodes",
+    					"links",
+    					"simulation"
+    				],
+    				script: "return lib.scripts.updateSimulationNodes({display_graph, nodes, links, simulation})"
+    			},
+    			{
+    				id: "out"
     			}
     		],
     		edges: [
@@ -259,15 +303,70 @@
     				to: "select"
     			},
     			{
+    				from: "merge_args",
+    				to: "expand"
+    			},
+    			{
+    				from: "merge_args",
+    				to: "contract"
+    			},
+    			{
+    				from: "merge_args",
+    				to: "is_selected"
+    			},
+    			{
+    				from: "get_first",
+    				to: "out",
+    				order: 1
+    			},
+    			{
+    				from: "graph_to_sim",
+    				to: "update_sim",
+    				order: 1
+    			},
+    			{
+    				from: "is_selected",
+    				to: "select",
+    				as: "isselected"
+    			},
+    			{
+    				from: "is_selected",
+    				to: "expand",
+    				as: "isselected"
+    			},
+    			{
+    				from: "is_selected",
+    				to: "contract",
+    				as: "isselected"
+    			},
+    			{
     				from: "in",
     				to: "get_first",
     				as: "args",
     				type: "concat"
     			},
     			{
-    				from: "get_first",
+    				from: "merge_args",
+    				to: "graph_to_sim"
+    			},
+    			{
+    				from: "expand",
+    				to: "graph_to_sim",
+    				as: "display_graph"
+    			},
+    			{
+    				from: "contract",
+    				to: "graph_to_sim",
+    				as: "display_graph"
+    			},
+    			{
+    				from: "update_sim",
+    				to: "out"
+    			},
+    			{
+    				from: "graph_to_sim",
     				to: "out",
-    				as: "input"
+    				order: 2
     			},
     			{
     				from: "select",
@@ -842,7 +941,12 @@
     	{
     		from: "get_graph",
     		to: "update_nodes",
-    		as: "graph"
+    		as: "display_graph"
+    	},
+    	{
+    		from: "get_graph",
+    		to: "graph_to_simulation",
+    		as: "display_graph"
     	},
     	{
     		from: "get_graph",
@@ -855,7 +959,7 @@
     	},
     	{
     		from: "d3simulation",
-    		to: "update_nodes"
+    		to: "graph_to_simulation"
     	},
     	{
     		from: "graph_to_simulation",
@@ -19843,16 +19947,33 @@
                         state.set(node.id, [node.value].flat());
                         active_nodes.delete(node.id);
                     } else {
-                        for(const input of node.inputs) {
+                        const inputs = node.inputs.concat([]);
+
+                        inputs.sort((a, b) => 
+                            a.order !== undefined && b.order !== undefined
+                            ? a.order - b.order 
+                            : a.order !== undefined && b.order === undefined
+                            ? 0
+                            : b.order !== undefined && a.order === undefined
+                            ? 1
+                            : a.as && !b.as 
+                            ? 1 : 0
+                        );
+
+                        for(const input of inputs) {
                             if(input?.type === "concat") {
-                                datas = datas.map(d => Object.assign({}, d, {[input.as]: state.get(input.from)}));
+                                if(state.get(input.from).length > 0 || datas[0][input.as] === undefined) {
+                                    datas = datas.map(d => Object.assign({}, d, {[input.as]: state.get(input.from)}));
+                                } else {
+                                    debugger;
+                                }
                             } else if (input?.type === "ref") {
                                 datas = datas.map(d => Object.assign({}, d, {[input.as]: input.from}));
                             } else if (state.get(input.from).length > 1 && datas.length > 1) {
                                 state.get(input.from).forEach((d, i) =>{
                                     datas[i] = Object.assign({}, datas.length > i ? datas[i] : {}, input.as ? {[input.as]: d} : d);
                                 });
-                            } else {
+                            } else if(state.get(input.from).length > 0) {
                                 datas = datas.flatMap(current_data =>
                                     state.get(input.from).map(d => input.as 
                                         ? Object.assign({}, current_data, {[input.as]: d})
@@ -19965,7 +20086,7 @@
 
     const updateSimulationNodes = (data) => {
 
-        const levels = calculateLevels(data.graph, 'hyperapp');
+        const levels = calculateLevels(data.display_graph, 'hyperapp');
 
         data.simulation.nodes(data.nodes);
 
@@ -19998,7 +20119,7 @@
             simulation_node_data.set(n.node_id, n);
         });
 
-        const nodes = data.graph.nodes.map(n => {
+        const nodes = data.display_graph.nodes.map(n => {
             const current_data = simulation_node_data.get(n.id);
             return {
                 node_id: n.id,
@@ -20007,7 +20128,7 @@
             };
         });
 
-        const links = data.graph.edges
+        const links = data.display_graph.edges
             .filter(e => e.to !== "log" && e.to !=="debug")
             .map(e => ({source: e.from, target: e.to}));
 
@@ -20041,6 +20162,95 @@
         return () => simulation.on('.ha', null); 
     };
 
+    const expand_node = (data) => {
+        const node_id = data.node_id;
+        const node = data.display_graph.nodes.find(n => n.id === node_id);
+        console.log('expand');
+
+        if (!(node && node.nodes)) {
+            console.log('no nodes?');
+            return data.display_graph;
+        }
+
+        const flattened = lib.scripts.flattenNode(node, 1);
+
+        const new_display_graph = {
+            nodes: data.display_graph.nodes
+                .filter(n => n.node_id !== node_id)
+                .concat(flattened.flat_nodes),
+            edges: data.display_graph.edges
+                .map(e => ({
+                    from: e.from === node_id ? `${node_id}/out` : e.from,
+                    to: e.to === node_id ? `${node_id}/in` : e.to
+                }))
+                .concat(flattened.flat_edges)
+        };
+
+        return new_display_graph;
+    };
+
+    const contract_node = (data) => {
+        const node_id = data.node_id.endsWith('in') ?
+            data.node_id.substring(0, data.node_id.length - 3) :
+            data.node_id.substring(0, data.node_id.length - 4);
+
+        console.log('contract');
+
+        const new_display_graph = {
+            nodes: data.display_graph.nodes
+                .filter(n => !n.id.startsWith(node_id))
+                .concat([{
+                    id: node_id,
+                    nodes: data.display_graph.nodes
+                        .filter(n => n.id.startsWith(node_id))
+                        .map(n => ({...n, id: n.id.substring(node_id.length + 1)})),
+                    edges: data.display_graph.edges
+                        .filter(e => e.from.startsWith(node_id) && e.to.startsWith(node_id))
+                        .map(e =>({
+                            as: e.as,
+                            from: e.from.substring(node_id.length + 1),
+                            to: e.to.substring(node_id.length + 1),
+                        }))
+                }]),
+            edges: data.display_graph.edges
+                .map(e => ({
+                    from: e.from === `${node_id}/out` ? node_id : e.from,
+                    to: e.to === `${node_id}/in` ? node_id : e.to
+                }))
+                .filter(e => !(e.from.startsWith(`${node_id}/`) || e.to.startsWith(`${node_id}/`)))
+        };
+
+        return new_display_graph;
+    };
+
+    const flattenNode = (graph, levels = -1) => {
+        if (graph.nodes === undefined || levels === 0) {
+            return graph;
+        }
+
+        // needs to not prefix base node because then flatten node can't run  next
+        const prefix = graph.id ? `${graph.id}/` : '';
+
+        return graph.nodes
+            .map(n => Object.assign({}, n, { id: `${prefix}${n.id}` }))
+            .map(g => flattenNode(g, levels - 1))
+            .reduce((acc, n) => Object.assign({}, acc, {
+                flat_nodes: acc.flat_nodes.concat(n.flat_nodes?.flat() ?? []),
+                flat_edges: acc.flat_edges.map(e => n.flat_nodes ?
+                    e.to === n.id ?
+                    Object.assign(e, { to: `${e.to}/in` }) :
+                    e.from === n.id ?
+                    Object.assign(e, { from: `${e.from}/out` }) :
+                    e :
+                    e).flat().concat(n.flat_edges).filter(e => e !== undefined)
+            }), Object.assign({}, graph, {
+                flat_nodes: graph.nodes
+                    .map(n => Object.assign({}, n, { id: `${prefix}${n.id}` })),
+                flat_edges: graph.edges
+                    .map(e => ({ from: `${prefix}${e.from}`, to: `${prefix}${e.to}`, as: e.as }))
+            }));
+    };
+
 
     /////////////////////////////////
 
@@ -20048,7 +20258,7 @@
         _,
         ha: { h, app, text, memo },
         no: {executeGraph},
-        scripts: {d3simulation, d3subscription, updateSimulationNodes, graphToSimulationNodes},
+        scripts: {d3simulation, d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node},
         d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
     };
 

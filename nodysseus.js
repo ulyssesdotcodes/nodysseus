@@ -68,16 +68,33 @@ const executeGraph = (state, graph, out) => {
                     state.set(node.id, [node.value].flat());
                     active_nodes.delete(node.id);
                 } else {
-                    for(const input of node.inputs) {
+                    const inputs = node.inputs.concat([]);
+
+                    inputs.sort((a, b) => 
+                        a.order !== undefined && b.order !== undefined
+                        ? a.order - b.order 
+                        : a.order !== undefined && b.order === undefined
+                        ? 0
+                        : b.order !== undefined && a.order === undefined
+                        ? 1
+                        : a.as && !b.as 
+                        ? 1 : 0
+                    );
+
+                    for(const input of inputs) {
                         if(input?.type === "concat") {
-                            datas = datas.map(d => Object.assign({}, d, {[input.as]: state.get(input.from)}))
+                            if(state.get(input.from).length > 0 || datas[0][input.as] === undefined) {
+                                datas = datas.map(d => Object.assign({}, d, {[input.as]: state.get(input.from)}))
+                            } else {
+                                debugger;
+                            }
                         } else if (input?.type === "ref") {
                             datas = datas.map(d => Object.assign({}, d, {[input.as]: input.from}))
                         } else if (state.get(input.from).length > 1 && datas.length > 1) {
                             state.get(input.from).forEach((d, i) =>{
                                 datas[i] = Object.assign({}, datas.length > i ? datas[i] : {}, input.as ? {[input.as]: d} : d);
                             });
-                        } else {
+                        } else if(state.get(input.from).length > 0) {
                             datas = datas.flatMap(current_data =>
                                 state.get(input.from).map(d => input.as 
                                     ? Object.assign({}, current_data, {[input.as]: d})
@@ -260,9 +277,9 @@ const d3simulation = () => {
 const updateSimulationNodes = (data) => {
     const bfs = (level) => (edge) => [
         [edge.to, level]
-    ].concat(data.graph.edges.filter(e => e.from === edge.to).map(bfs(level + 1)).flat());
+    ].concat(data.display_graph.edges.filter(e => e.from === edge.to).map(bfs(level + 1)).flat());
 
-    const levels = calculateLevels(data.graph, 'hyperapp');
+    const levels = calculateLevels(data.display_graph, 'hyperapp');
 
     data.simulation.nodes(data.nodes);
 
@@ -295,7 +312,7 @@ const graphToSimulationNodes = (data) => {
         simulation_node_data.set(n.node_id, n)
     });
 
-    const nodes = data.graph.nodes.map(n => {
+    const nodes = data.display_graph.nodes.map(n => {
         const current_data = simulation_node_data.get(n.id);
         return {
             node_id: n.id,
@@ -304,7 +321,7 @@ const graphToSimulationNodes = (data) => {
         };
     })
 
-    const links = data.graph.edges
+    const links = data.display_graph.edges
         .filter(e => e.to !== "log" && e.to !=="debug")
         .map(e => ({source: e.from, target: e.to}));
 
@@ -338,6 +355,95 @@ const d3subscription = simulation => dispatch => {
     return () => simulation.on('.ha', null); 
 }
 
+const expand_node = (data) => {
+    const node_id = data.node_id;
+    const node = data.display_graph.nodes.find(n => n.id === node_id)
+    console.log('expand');
+
+    if (!(node && node.nodes)) {
+        console.log('no nodes?');
+        return data.display_graph;
+    }
+
+    const flattened = lib.scripts.flattenNode(node, 1);
+
+    const new_display_graph = {
+        nodes: data.display_graph.nodes
+            .filter(n => n.node_id !== node_id)
+            .concat(flattened.flat_nodes),
+        edges: data.display_graph.edges
+            .map(e => ({
+                from: e.from === node_id ? `${node_id}/out` : e.from,
+                to: e.to === node_id ? `${node_id}/in` : e.to
+            }))
+            .concat(flattened.flat_edges)
+    };
+
+    return new_display_graph;
+}
+
+const contract_node = (data) => {
+    const node_id = data.node_id.endsWith('in') ?
+        data.node_id.substring(0, data.node_id.length - 3) :
+        data.node_id.substring(0, data.node_id.length - 4);
+
+    console.log('contract');
+
+    const new_display_graph = {
+        nodes: data.display_graph.nodes
+            .filter(n => !n.id.startsWith(node_id))
+            .concat([{
+                id: node_id,
+                nodes: data.display_graph.nodes
+                    .filter(n => n.id.startsWith(node_id))
+                    .map(n => ({...n, id: n.id.substring(node_id.length + 1)})),
+                edges: data.display_graph.edges
+                    .filter(e => e.from.startsWith(node_id) && e.to.startsWith(node_id))
+                    .map(e =>({
+                        as: e.as,
+                        from: e.from.substring(node_id.length + 1),
+                        to: e.to.substring(node_id.length + 1),
+                    }))
+            }]),
+        edges: data.display_graph.edges
+            .map(e => ({
+                from: e.from === `${node_id}/out` ? node_id : e.from,
+                to: e.to === `${node_id}/in` ? node_id : e.to
+            }))
+            .filter(e => !(e.from.startsWith(`${node_id}/`) || e.to.startsWith(`${node_id}/`)))
+    };
+
+    return new_display_graph;
+}
+
+const flattenNode = (graph, levels = -1) => {
+    if (graph.nodes === undefined || levels === 0) {
+        return graph;
+    }
+
+    // needs to not prefix base node because then flatten node can't run  next
+    const prefix = graph.id ? `${graph.id}/` : '';
+
+    return graph.nodes
+        .map(n => Object.assign({}, n, { id: `${prefix}${n.id}` }))
+        .map(g => flattenNode(g, levels - 1))
+        .reduce((acc, n) => Object.assign({}, acc, {
+            flat_nodes: acc.flat_nodes.concat(n.flat_nodes?.flat() ?? []),
+            flat_edges: acc.flat_edges.map(e => n.flat_nodes ?
+                e.to === n.id ?
+                Object.assign(e, { to: `${e.to}/in` }) :
+                e.from === n.id ?
+                Object.assign(e, { from: `${e.from}/out` }) :
+                e :
+                e).flat().concat(n.flat_edges).filter(e => e !== undefined)
+        }), Object.assign({}, graph, {
+            flat_nodes: graph.nodes
+                .map(n => Object.assign({}, n, { id: `${prefix}${n.id}` })),
+            flat_edges: graph.edges
+                .map(e => ({ from: `${prefix}${e.from}`, to: `${prefix}${e.to}`, as: e.as }))
+        }));
+}
+
 
 /////////////////////////////////
 
@@ -345,7 +451,7 @@ const lib = {
     _,
     ha: { h, app, text, memo },
     no: {executeGraph},
-    scripts: {d3simulation, d3subscription, updateSimulationNodes, graphToSimulationNodes},
+    scripts: {d3simulation, d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node},
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
 };
 
