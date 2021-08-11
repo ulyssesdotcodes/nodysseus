@@ -40,7 +40,13 @@ const executeGraph = (state, graph, out) => {
             for(const input of node.inputs) {
                 if(input?.type !== "ref" && !state.has(input.from)){
                     if(!active_nodes.has(input.from)) {
-                        active_nodes.set(input.from, Object.assign({}, graph.nodes.find(n => n.id === input.from), {
+                        const input_node = graph.nodes.find(n => n.id === input.from);
+
+                        if(input_node === undefined) {
+                            throw new Error(`Can't find input ${input.from} for node ${node.id}`);
+                        }
+
+                        active_nodes.set(input.from, Object.assign({}, input_node, {
                             inputs: graph.edges.filter(e => e.to === input.from),
                             _nodeflag: true
                         }));
@@ -279,7 +285,7 @@ const updateSimulationNodes = (data) => {
         [edge.to, level]
     ].concat(data.display_graph.edges.filter(e => e.from === edge.to).map(bfs(level + 1)).flat());
 
-    const levels = calculateLevels(data.display_graph, 'hyperapp');
+    const levels = calculateLevels(data.display_graph, 'hyperapp_app');
 
     data.simulation.nodes(data.nodes);
 
@@ -316,6 +322,11 @@ const graphToSimulationNodes = (data) => {
         const current_data = simulation_node_data.get(n.id);
         return {
             node_id: n.id,
+            type: n.type,
+            nodes: n.nodes,
+            edges: n.edges,
+            script: n.script,
+            value: n.value,
             x: current_data?.x ?? data.x ?? window.innerWidth * (Math.random() * .5 + .25),
             y: current_data?.y ?? data.y ?? window.innerHeight * (Math.random() * .5 + .25)
         };
@@ -323,7 +334,7 @@ const graphToSimulationNodes = (data) => {
 
     const links = data.display_graph.edges
         .filter(e => e.to !== "log" && e.to !=="debug")
-        .map(e => ({source: e.from, target: e.to}));
+        .map(e => ({source: e.from, target: e.to, as: e.as, type: e.type}));
 
     return {
         ...data,
@@ -336,8 +347,10 @@ const d3subscription = simulation => dispatch => {
     simulation.on('tick.ha', () => { 
         requestAnimationFrame(() => dispatch(s => ({ 
             ...s, 
-            nodes: simulation.nodes().map(n => ({node_id: n.node_id, x: Math.floor(n.x), y: Math.floor(n.y)})), 
+            nodes: simulation.nodes().map(n => ({node_id: n.node_id, x: Math.floor(n.x), y: Math.floor(n.y), type: n.type, value: n.value, nodes: n.nodes, edges: n.edges, script: n.script})), 
             links: simulation.force('links').links().map(l => ({
+                as: l.as,
+                type: l.type,
                 source: ({
                     node_id: l.source.node_id, 
                     x: Math.floor(l.source.x), 
@@ -373,6 +386,7 @@ const expand_node = (data) => {
             .concat(flattened.flat_nodes),
         edges: data.display_graph.edges
             .map(e => ({
+                ...e,
                 from: e.from === node_id ? `${node_id}/out` : e.from,
                 to: e.to === node_id ? `${node_id}/in` : e.to
             }))
@@ -386,8 +400,6 @@ const contract_node = (data) => {
     const node_id = data.node_id.endsWith('in') ?
         data.node_id.substring(0, data.node_id.length - 3) :
         data.node_id.substring(0, data.node_id.length - 4);
-
-    console.log('contract');
 
     const new_display_graph = {
         nodes: data.display_graph.nodes
@@ -407,6 +419,7 @@ const contract_node = (data) => {
             }]),
         edges: data.display_graph.edges
             .map(e => ({
+                ...e,
                 from: e.from === `${node_id}/out` ? node_id : e.from,
                 to: e.to === `${node_id}/in` ? node_id : e.to
             }))
@@ -455,4 +468,4 @@ const lib = {
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
 };
 
-console.log(executeGraph(state, DEFAULT_GRAPH, "hyperapp")[0]);
+console.log(executeGraph(state, DEFAULT_GRAPH, "hyperapp_app")[0]);

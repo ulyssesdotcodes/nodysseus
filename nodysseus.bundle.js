@@ -8,6 +8,109 @@
     		value: null
     	},
     	{
+    		id: "hyperapp",
+    		nodes: [
+    			{
+    				id: "in"
+    			},
+    			{
+    				id: "out",
+    				args: [
+    					"init",
+    					"view",
+    					"subscriptions"
+    				],
+    				script: "return lib.ha.app({init, view: s => view(s)[0].el, node: document.getElementById('node-editor'), subscriptions: () => subscriptions})"
+    			}
+    		],
+    		edges: [
+    			{
+    				from: "in",
+    				to: "out"
+    			}
+    		]
+    	},
+    	{
+    		id: "children_els",
+    		nodes: [
+    			{
+    				id: "in"
+    			},
+    			{
+    				id: "out",
+    				args: [
+    					"children"
+    				],
+    				script: "return [children.map(c => c.el)]"
+    			}
+    		],
+    		edges: [
+    			{
+    				from: "in",
+    				to: "out"
+    			}
+    		]
+    	},
+    	{
+    		id: "svg_text",
+    		nodes: [
+    			{
+    				id: "in"
+    			},
+    			{
+    				id: "el",
+    				type: "h"
+    			},
+    			{
+    				id: "dom_type",
+    				value: "text"
+    			},
+    			{
+    				id: "text_el",
+    				type: "h_text"
+    			},
+    			{
+    				id: "children",
+    				args: [
+    					"text"
+    				],
+    				script: "return [[text.el]]"
+    			},
+    			{
+    				id: "out"
+    			}
+    		],
+    		edges: [
+    			{
+    				from: "in",
+    				to: "text_el"
+    			},
+    			{
+    				from: "in",
+    				to: "el"
+    			},
+    			{
+    				from: "dom_type",
+    				to: "el",
+    				as: "dom_type"
+    			},
+    			{
+    				from: "text_el",
+    				to: "children",
+    				as: "text"
+    			},
+    			{
+    				from: "children",
+    				to: "el",
+    				as: "children"
+    			},
+    			{
+    				from: "el",
+    				to: "out"
+    			}
+    		]
+    	},
+    	{
     		id: "execute_graph",
     		nodes: [
     			{
@@ -39,18 +142,36 @@
     				value: null
     			},
     			{
+    				id: "fill_default",
+    				args: [
+    					"input"
+    				],
+    				script: "return input.default ?? null"
+    			},
+    			{
     				id: "out",
     				args: [
     					"target",
-    					"path"
+    					"path",
+    					"def"
     				],
-    				script: "return lib._.get(target, path)"
+    				script: "return lib._.get(target, path) ?? def"
     			}
     		],
     		edges: [
     			{
     				from: "in",
     				to: "out"
+    			},
+    			{
+    				from: "in",
+    				to: "fill_default",
+    				as: "input"
+    			},
+    			{
+    				from: "fill_default",
+    				to: "out",
+    				as: "def"
     			}
     		]
     	},
@@ -60,6 +181,20 @@
     			{
     				id: "in",
     				value: null
+    			},
+    			{
+    				id: "fill_children",
+    				args: [
+    					"input"
+    				],
+    				script: "return [ input.children === undefined ? [] : Array.isArray(input.children) ? input.children[0]?.el ? input.children.map(c => c.el) : input.children : [input.children]]"
+    			},
+    			{
+    				id: "fill_props",
+    				args: [
+    					"input"
+    				],
+    				script: "return input.props ?? {}"
     			},
     			{
     				id: "out",
@@ -72,6 +207,26 @@
     			}
     		],
     		edges: [
+    			{
+    				from: "in",
+    				to: "fill_children",
+    				as: "input"
+    			},
+    			{
+    				from: "in",
+    				to: "fill_props",
+    				as: "input"
+    			},
+    			{
+    				from: "fill_children",
+    				to: "out",
+    				as: "children"
+    			},
+    			{
+    				from: "fill_props",
+    				to: "out",
+    				as: "props"
+    			},
     			{
     				from: "in",
     				to: "out"
@@ -160,13 +315,8 @@
     		type: "execute_graph"
     	},
     	{
-    		id: "hyperapp",
-    		args: [
-    			"init",
-    			"view",
-    			"subscriptions"
-    		],
-    		script: "return lib.ha.app({init, view: s => view(s)[0].el, node: document.getElementById('node-editor'), subscriptions: () => subscriptions})"
+    		id: "hyperapp_app",
+    		type: "hyperapp"
     	},
     	{
     		id: "hyperapp_view_in",
@@ -527,8 +677,19 @@
     										value: "node_id"
     									},
     									{
+    										id: "node_type",
+    										value: "type"
+    									},
+    									{
     										id: "get_id",
     										type: "get"
+    									},
+    									{
+    										id: "get_type",
+    										args: [
+    											"target"
+    										],
+    										script: "return target.type ?? target.value ?? (target.value === null ? target.node_id : target.script ? 'script' : target.nodes ? `graph (${target.nodes.length}, ${target.edges.length})` : target.script ? 'script' : 'unknown')"
     									},
     									{
     										id: "shorten",
@@ -538,19 +699,12 @@
     										script: "return text.substring(text.lastIndexOf('/') + 1)"
     									},
     									{
-    										id: "display_name",
-    										type: "h_text"
-    									},
-    									{
-    										id: "children_els",
-    										args: [
-    											"el"
-    										],
-    										script: "return [el]"
-    									},
-    									{
     										id: "node_text",
-    										type: "h"
+    										type: "svg_text"
+    									},
+    									{
+    										id: "script",
+    										value: "script"
     									},
     									{
     										id: "node_text_props",
@@ -572,38 +726,34 @@
     										as: "target"
     									},
     									{
+    										from: "in",
+    										to: "get_type",
+    										as: "target"
+    									},
+    									{
     										from: "node_id",
     										to: "get_id",
     										as: "path"
     									},
     									{
-    										from: "get_id",
-    										to: "shorten",
-    										as: "text"
+    										from: "node_type",
+    										to: "get_type",
+    										as: "path"
     									},
     									{
-    										from: "text",
+    										from: "script",
+    										to: "get_type",
+    										as: "default"
+    									},
+    									{
+    										from: "get_type",
     										to: "node_text",
-    										as: "dom_type"
+    										as: "text"
     									},
     									{
     										from: "node_text_props",
     										to: "node_text",
     										as: "props"
-    									},
-    									{
-    										from: "shorten",
-    										to: "display_name",
-    										as: "text"
-    									},
-    									{
-    										from: "display_name",
-    										to: "children_els"
-    									},
-    									{
-    										from: "children_els",
-    										to: "node_text",
-    										as: "children"
     									},
     									{
     										from: "node_text",
@@ -617,14 +767,7 @@
     									"circle",
     									"text"
     								],
-    								script: "return [[circle, text]]"
-    							},
-    							{
-    								id: "children_els",
-    								args: [
-    									"children"
-    								],
-    								script: "return [children.map(c => c.el)]"
+    								script: "return [[circle.el, text.el]]"
     							},
     							{
     								id: "out"
@@ -671,11 +814,6 @@
     							},
     							{
     								from: "order",
-    								to: "children_els",
-    								as: "children"
-    							},
-    							{
-    								from: "children_els",
     								to: "out",
     								as: "children"
     							}
@@ -747,7 +885,75 @@
     						script: "return link"
     					},
     					{
-    						id: "attrs",
+    						id: "edge_info_el",
+    						type: "h"
+    					},
+    					{
+    						id: "edge_info_el_children",
+    						args: [
+    							"edge_as",
+    							"edge_type"
+    						],
+    						script: "return [[edge_as.el, edge_type.el]]"
+    					},
+    					{
+    						id: "edge_info_dom_type",
+    						value: "svg"
+    					},
+    					{
+    						id: "edge_info_props",
+    						args: [
+    							"source",
+    							"target",
+    							"line_position"
+    						],
+    						script: "return ({x: line_position * (target.x - source.x) + source.x + 32, y: line_position * (target.y - source.y) + source.y })"
+    					},
+    					{
+    						id: "edge_info_line_position",
+    						value: 0.5,
+    						min: 0,
+    						max: 1,
+    						step: 0.01
+    					},
+    					{
+    						id: "edge_info_type_props",
+    						value: {
+    							"font-size": 14,
+    							y: 32
+    						}
+    					},
+    					{
+    						id: "edge_info_type_el",
+    						type: "svg_text"
+    					},
+    					{
+    						id: "edge_info_type_text",
+    						args: [
+    							"link"
+    						],
+    						script: "return link.type ?? ''"
+    					},
+    					{
+    						id: "edge_info_as_props",
+    						value: {
+    							"font-size": 14,
+    							y: 16
+    						}
+    					},
+    					{
+    						id: "edge_info_as_el",
+    						type: "svg_text"
+    					},
+    					{
+    						id: "edge_info_as_text",
+    						args: [
+    							"link"
+    						],
+    						script: "return link.as ?? '*'"
+    					},
+    					{
+    						id: "line_props",
     						args: [
     							"source",
     							"target"
@@ -770,7 +976,12 @@
     						type: "h"
     					},
     					{
-    						id: "out"
+    						id: "out",
+    						args: [
+    							"line",
+    							"edge_info"
+    						],
+    						script: "return [line, edge_info]"
     					}
     				],
     				edges: [
@@ -780,10 +991,77 @@
     					},
     					{
     						from: "get_link",
-    						to: "attrs"
+    						to: "line_props"
     					},
     					{
-    						from: "attrs",
+    						from: "get_link",
+    						to: "edge_info_props"
+    					},
+    					{
+    						from: "in",
+    						to: "edge_info_as_text"
+    					},
+    					{
+    						from: "in",
+    						to: "edge_info_type_text"
+    					},
+    					{
+    						from: "edge_info_dom_type",
+    						to: "edge_info_el",
+    						as: "dom_type"
+    					},
+    					{
+    						from: "edge_info_props",
+    						to: "edge_info_el",
+    						as: "props"
+    					},
+    					{
+    						from: "edge_info_line_position",
+    						to: "edge_info_props",
+    						as: "line_position"
+    					},
+    					{
+    						from: "edge_info_el_children",
+    						to: "edge_info_el",
+    						as: "children"
+    					},
+    					{
+    						from: "edge_info_el",
+    						to: "out",
+    						as: "edge_info"
+    					},
+    					{
+    						from: "edge_info_type_props",
+    						to: "edge_info_type_el",
+    						as: "props"
+    					},
+    					{
+    						from: "edge_info_type_text",
+    						to: "edge_info_type_el",
+    						as: "text"
+    					},
+    					{
+    						from: "edge_info_type_el",
+    						to: "edge_info_el_children",
+    						as: "edge_type"
+    					},
+    					{
+    						from: "edge_info_as_props",
+    						to: "edge_info_as_el",
+    						as: "props"
+    					},
+    					{
+    						from: "edge_info_as_text",
+    						to: "edge_info_as_el",
+    						as: "text"
+    					},
+    					{
+    						from: "edge_info_as_el",
+    						to: "edge_info_el_children",
+    						as: "edge_as"
+    					},
+    					{
+    						from: "line_props",
     						to: "line",
     						as: "props"
     					},
@@ -798,8 +1076,14 @@
     						as: "children"
     					},
     					{
+    						from: "empty_array",
+    						to: "line",
+    						as: "children"
+    					},
+    					{
     						from: "line",
-    						to: "out"
+    						to: "out",
+    						as: "line"
     					}
     				]
     			}
@@ -921,12 +1205,12 @@
     	},
     	{
     		from: "hyperapp_view",
-    		to: "hyperapp",
+    		to: "hyperapp_app",
     		as: "view"
     	},
     	{
     		from: "graph_to_simulation",
-    		to: "hyperapp",
+    		to: "hyperapp_app",
     		as: "init"
     	},
     	{
@@ -967,7 +1251,7 @@
     	},
     	{
     		from: "update_nodes",
-    		to: "hyperapp"
+    		to: "hyperapp_app"
     	},
     	{
     		from: "d3simulation",
@@ -975,7 +1259,7 @@
     	},
     	{
     		from: "hyperapp_subscriptions",
-    		to: "hyperapp",
+    		to: "hyperapp_app",
     		as: "subscriptions"
     	}
     ];
@@ -19919,7 +20203,13 @@
                 for(const input of node.inputs) {
                     if(input?.type !== "ref" && !state.has(input.from)){
                         if(!active_nodes.has(input.from)) {
-                            active_nodes.set(input.from, Object.assign({}, graph.nodes.find(n => n.id === input.from), {
+                            const input_node = graph.nodes.find(n => n.id === input.from);
+
+                            if(input_node === undefined) {
+                                throw new Error(`Can't find input ${input.from} for node ${node.id}`);
+                            }
+
+                            active_nodes.set(input.from, Object.assign({}, input_node, {
                                 inputs: graph.edges.filter(e => e.to === input.from),
                                 _nodeflag: true
                             }));
@@ -20086,7 +20376,7 @@
 
     const updateSimulationNodes = (data) => {
 
-        const levels = calculateLevels(data.display_graph, 'hyperapp');
+        const levels = calculateLevels(data.display_graph, 'hyperapp_app');
 
         data.simulation.nodes(data.nodes);
 
@@ -20123,6 +20413,11 @@
             const current_data = simulation_node_data.get(n.id);
             return {
                 node_id: n.id,
+                type: n.type,
+                nodes: n.nodes,
+                edges: n.edges,
+                script: n.script,
+                value: n.value,
                 x: current_data?.x ?? data.x ?? window.innerWidth * (Math.random() * .5 + .25),
                 y: current_data?.y ?? data.y ?? window.innerHeight * (Math.random() * .5 + .25)
             };
@@ -20130,7 +20425,7 @@
 
         const links = data.display_graph.edges
             .filter(e => e.to !== "log" && e.to !=="debug")
-            .map(e => ({source: e.from, target: e.to}));
+            .map(e => ({source: e.from, target: e.to, as: e.as, type: e.type}));
 
         return {
             ...data,
@@ -20143,8 +20438,10 @@
         simulation.on('tick.ha', () => { 
             requestAnimationFrame(() => dispatch(s => ({ 
                 ...s, 
-                nodes: simulation.nodes().map(n => ({node_id: n.node_id, x: Math.floor(n.x), y: Math.floor(n.y)})), 
+                nodes: simulation.nodes().map(n => ({node_id: n.node_id, x: Math.floor(n.x), y: Math.floor(n.y), type: n.type, value: n.value, nodes: n.nodes, edges: n.edges, script: n.script})), 
                 links: simulation.force('links').links().map(l => ({
+                    as: l.as,
+                    type: l.type,
                     source: ({
                         node_id: l.source.node_id, 
                         x: Math.floor(l.source.x), 
@@ -20180,6 +20477,7 @@
                 .concat(flattened.flat_nodes),
             edges: data.display_graph.edges
                 .map(e => ({
+                    ...e,
                     from: e.from === node_id ? `${node_id}/out` : e.from,
                     to: e.to === node_id ? `${node_id}/in` : e.to
                 }))
@@ -20193,8 +20491,6 @@
         const node_id = data.node_id.endsWith('in') ?
             data.node_id.substring(0, data.node_id.length - 3) :
             data.node_id.substring(0, data.node_id.length - 4);
-
-        console.log('contract');
 
         const new_display_graph = {
             nodes: data.display_graph.nodes
@@ -20214,6 +20510,7 @@
                 }]),
             edges: data.display_graph.edges
                 .map(e => ({
+                    ...e,
                     from: e.from === `${node_id}/out` ? node_id : e.from,
                     to: e.to === `${node_id}/in` ? node_id : e.to
                 }))
@@ -20262,6 +20559,6 @@
         d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
     };
 
-    console.log(executeGraph(state, DEFAULT_GRAPH, "hyperapp")[0]);
+    console.log(executeGraph(state, DEFAULT_GRAPH, "hyperapp_app")[0]);
 
 }());
