@@ -325,9 +325,10 @@
     	{
     		id: "hyperapp_subscriptions",
     		args: [
-    			"simulation"
+    			"simulation",
+    			"onkey_fn"
     		],
-    		script: "return [[[lib.scripts.d3subscription(simulation)]]]"
+    		script: "console.log(onkey_fn); return [[[lib.scripts.d3subscription(simulation)], [lib.scripts.keydownSubscription, {action: onkey_fn}]]]"
     	},
     	{
     		id: "graph_to_simulation",
@@ -356,6 +357,53 @@
     		args: [
     		],
     		script: "return lib.scripts.d3simulation()"
+    	},
+    	{
+    		id: "onkey_fn_in",
+    		value: null
+    	},
+    	{
+    		id: "onkey_fn",
+    		type: "execute_graph"
+    	},
+    	{
+    		id: "onkey_fn_body",
+    		nodes: [
+    			{
+    				id: "merge_args",
+    				args: [
+    					"args"
+    				],
+    				script: "return Object.assign({}, args[0], {key: args[1].key, code: args[1].code})"
+    			},
+    			{
+    				id: "find_selected",
+    				args: [
+    					"data"
+    				],
+    				script: "console.log(data); return data"
+    			},
+    			{
+    				id: "out"
+    			}
+    		],
+    		edges: [
+    			{
+    				from: "in",
+    				to: "merge_args",
+    				as: "args",
+    				type: "concat"
+    			},
+    			{
+    				from: "merge_args",
+    				to: "find_selected",
+    				as: "data"
+    			},
+    			{
+    				from: "find_selected",
+    				to: "out"
+    			}
+    		]
     	},
     	{
     		id: "onclick_fn_in",
@@ -1200,6 +1248,32 @@
     	{
     		from: "onclick_fn_in",
     		to: "onclick_fn",
+    		as: "in_node",
+    		type: "ref"
+    	},
+    	{
+    		from: "get_graph",
+    		to: "onkey_fn",
+    		as: "graph"
+    	},
+    	{
+    		from: "onkey_fn",
+    		to: "hyperapp_subscriptions",
+    		as: "onkey_fn"
+    	},
+    	{
+    		from: "onkey_fn_in",
+    		to: "onkey_fn_body"
+    	},
+    	{
+    		from: "onkey_fn_body",
+    		to: "onkey_fn",
+    		as: "out_node",
+    		type: "ref"
+    	},
+    	{
+    		from: "onkey_fn_in",
+    		to: "onkey_fn",
     		as: "in_node",
     		type: "ref"
     	},
@@ -20459,6 +20533,12 @@
         return () => simulation.on('.ha', null); 
     };
 
+    const keydownSubscription = (dispatch, options) => { 
+        const handler = ev => { requestAnimationFrame(() => dispatch(options.action, {key: ev.key, code: ev.code}));};
+        addEventListener('keydown', handler); 
+        return () => removeEventListener('keydown', handler);
+    };
+
     const expand_node = (data) => {
         const node_id = data.node_id;
         const node = data.display_graph.nodes.find(n => n.id === node_id);
@@ -20555,7 +20635,7 @@
         _,
         ha: { h, app, text, memo },
         no: {executeGraph},
-        scripts: {d3simulation, d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node},
+        scripts: {d3simulation, d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription},
         d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
     };
 

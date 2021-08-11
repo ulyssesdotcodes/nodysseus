@@ -8,39 +8,53 @@
         {
             "id": "hyperapp",
             "nodes": [
-                {"id": "in"},
-                {"id": "out",
-                "args": [
-                    "init",
-                    "view",
-                    "subscriptions"
-                ],
-                "script": "return lib.ha.app({init, view: s => view(s)[0].el, node: document.getElementById('node-editor'), subscriptions: () => subscriptions})"
-            }
+                {
+                    "id": "in"
+                },
+                {
+                    "id": "out",
+                    "args": [
+                        "init",
+                        "view",
+                        "subscriptions"
+                    ],
+                    "script": "return lib.ha.app({init, view: s => view(s)[0].el, node: document.getElementById('node-editor'), subscriptions: () => subscriptions})"
+                }
             ],
             "edges": [
-                {"from": "in", "to": "out"}
+                {
+                    "from": "in",
+                    "to": "out"
+                }
             ]
         },
         {
             "id": "children_els",
             "nodes": [
-                {"id": "in"},
+                {
+                    "id": "in"
+                },
                 {
                     "id": "out",
-                    "args": ["children"],
+                    "args": [
+                        "children"
+                    ],
                     "script": "return [children.map(c => c.el)]"
                 }
             ],
-            "edges": [{
-                "from": "in",
-                "to": "out"
-            }]
+            "edges": [
+                {
+                    "from": "in",
+                    "to": "out"
+                }
+            ]
         },
         {
             "id": "svg_text",
             "nodes": [
-                {"id": "in"},
+                {
+                    "id": "in"
+                },
                 {
                     "id": "el",
                     "type": "h"
@@ -55,10 +69,14 @@
                 },
                 {
                     "id": "children",
-                    "args": ["text"],
+                    "args": [
+                        "text"
+                    ],
                     "script": "return [[text.el]]"
                 },
-                {"id": "out"}
+                {
+                    "id": "out"
+                }
             ],
             "edges": [
                 {
@@ -123,7 +141,9 @@
                 },
                 {
                     "id": "fill_default",
-                    "args": ["input"],
+                    "args": [
+                        "input"
+                    ],
                     "script": "return input.default ?? null"
                 },
                 {
@@ -162,12 +182,16 @@
                 },
                 {
                     "id": "fill_children",
-                    "args": ["input"],
+                    "args": [
+                        "input"
+                    ],
                     "script": "return [ input.children === undefined ? [] : Array.isArray(input.children) ? input.children[0]?.el ? input.children.map(c => c.el) : input.children : [input.children]]"
                 },
                 {
                     "id": "fill_props",
-                    "args": ["input"],
+                    "args": [
+                        "input"
+                    ],
                     "script": "return input.props ?? {}"
                 },
                 {
@@ -231,7 +255,9 @@
         },
         {
             "id": "not",
-            "args": ["target"],
+            "args": [
+                "target"
+            ],
             "script": "return !target"
         },
         {
@@ -294,9 +320,10 @@
         {
             "id": "hyperapp_subscriptions",
             "args": [
-                "simulation"
+                "simulation",
+                "onkey_fn"
             ],
-            "script": "return [[[lib.scripts.d3subscription(simulation)]]]"
+            "script": "console.log(onkey_fn); return [[[lib.scripts.d3subscription(simulation)], [lib.scripts.keydownSubscription, {action: onkey_fn}]]]"
         },
         {
             "id": "graph_to_simulation",
@@ -326,41 +353,216 @@
             "script": "return lib.scripts.d3simulation()"
         },
         {
+            "id": "onkey_fn_in",
+            "value": null
+        },
+        {
+            "id": "onkey_fn",
+            "type": "execute_graph"
+        },
+        {
+            "id": "onkey_fn_body",
+            "nodes": [
+                {
+                    "id": "merge_args",
+                    "args": [
+                        "args"
+                    ],
+                    "script": "return Object.assign({}, args[0], {key: args[1].key, code: args[1].code})"
+                },
+                {
+                    "id": "find_selected",
+                    "args": ["data"],
+                    "script": "console.log(data); return data"
+                },
+                {
+                    "id": "out"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "in",
+                    "to": "merge_args",
+                    "as": "args",
+                    "type": "concat"
+                },
+                {
+                    "from": "merge_args",
+                    "to": "find_selected",
+                    "as": "data"
+                },
+                {
+                    "from": "find_selected",
+                    "to": "out"
+                }
+            ]
+        },
+        {
             "id": "onclick_fn_in",
             "value": null
         },
         {
             "id": "onclick_fn_body",
             "nodes": [
-                {"id": "in", "value": null},
-                {"id": "get_first", "args": ["args"], "script": "return args[0]"},
-                {"id": "merge_args", "args": ["args"], "script": "return Object.assign({}, args[0], {x: args[1].x, y: args[1].y, node_id: args[1].node_id})"},
-                {"id": "is_selected", "args": ["selected", "node_id"], "script": "return selected.includes(node_id)"},
-                {"id": "select","args": ["isselected", "selected", "node_id"], "script": "return [isselected ? selected : [node_id]]"},
-                {"id": "expand","args": ["isselected", "node_id", "display_graph"], "script": "return isselected ? lib.scripts.expand_node({display_graph, node_id}) : []"},
-                {"id": "contract","args": ["isselected", "node_id", "display_graph"], "script": "return isselected && (node_id.endsWith('/in') || node_id.endsWith('/out')) ? lib.scripts.contract_node({display_graph, node_id}) : []"},
-                {"id": "graph_to_sim","args": ["display_graph", "nodes", "links", "simulation"], "script": "return lib.scripts.graphToSimulationNodes({display_graph, nodes, links, simulation})"},
-                {"id": "update_sim","args": ["display_graph", "nodes", "links", "simulation"], "script": "return lib.scripts.updateSimulationNodes({display_graph, nodes, links, simulation})"},
-                {"id": "out"}
+                {
+                    "id": "in",
+                    "value": null
+                },
+                {
+                    "id": "get_first",
+                    "args": [
+                        "args"
+                    ],
+                    "script": "return args[0]"
+                },
+                {
+                    "id": "merge_args",
+                    "args": [
+                        "args"
+                    ],
+                    "script": "return Object.assign({}, args[0], {x: args[1].x, y: args[1].y, node_id: args[1].node_id})"
+                },
+                {
+                    "id": "is_selected",
+                    "args": [
+                        "selected",
+                        "node_id"
+                    ],
+                    "script": "return selected.includes(node_id)"
+                },
+                {
+                    "id": "select",
+                    "args": [
+                        "isselected",
+                        "selected",
+                        "node_id"
+                    ],
+                    "script": "return [isselected ? selected : [node_id]]"
+                },
+                {
+                    "id": "expand",
+                    "args": [
+                        "isselected",
+                        "node_id",
+                        "display_graph"
+                    ],
+                    "script": "return isselected ? lib.scripts.expand_node({display_graph, node_id}) : []"
+                },
+                {
+                    "id": "contract",
+                    "args": [
+                        "isselected",
+                        "node_id",
+                        "display_graph"
+                    ],
+                    "script": "return isselected && (node_id.endsWith('/in') || node_id.endsWith('/out')) ? lib.scripts.contract_node({display_graph, node_id}) : []"
+                },
+                {
+                    "id": "graph_to_sim",
+                    "args": [
+                        "display_graph",
+                        "nodes",
+                        "links",
+                        "simulation"
+                    ],
+                    "script": "return lib.scripts.graphToSimulationNodes({display_graph, nodes, links, simulation})"
+                },
+                {
+                    "id": "update_sim",
+                    "args": [
+                        "display_graph",
+                        "nodes",
+                        "links",
+                        "simulation"
+                    ],
+                    "script": "return lib.scripts.updateSimulationNodes({display_graph, nodes, links, simulation})"
+                },
+                {
+                    "id": "out"
+                }
             ],
             "edges": [
-                {"from": "in", "to": "merge_args", "as": "args", "type": "concat"},
-                {"from": "merge_args", "to": "select"},
-                {"from": "merge_args", "to": "expand"},
-                {"from": "merge_args", "to": "contract"},
-                {"from": "merge_args", "to": "is_selected"},
-                {"from": "get_first", "to": "out", "order": 1},
-                {"from": "graph_to_sim", "to": "update_sim", "order": 1},
-                {"from": "is_selected", "to": "select", "as": "isselected"},
-                {"from": "is_selected", "to": "expand", "as": "isselected"},
-                {"from": "is_selected", "to": "contract", "as": "isselected"},
-                {"from": "in", "to": "get_first", "as": "args", "type": "concat"},
-                {"from": "merge_args", "to": "graph_to_sim"},
-                {"from": "expand", "to": "graph_to_sim", "as": "display_graph"},
-                {"from": "contract", "to": "graph_to_sim", "as": "display_graph"},
-                {"from": "update_sim", "to": "out"},
-                {"from": "graph_to_sim", "to": "out", "order": 2},
-                {"from": "select", "to": "out", "as": "selected"}
+                {
+                    "from": "in",
+                    "to": "merge_args",
+                    "as": "args",
+                    "type": "concat"
+                },
+                {
+                    "from": "merge_args",
+                    "to": "select"
+                },
+                {
+                    "from": "merge_args",
+                    "to": "expand"
+                },
+                {
+                    "from": "merge_args",
+                    "to": "contract"
+                },
+                {
+                    "from": "merge_args",
+                    "to": "is_selected"
+                },
+                {
+                    "from": "get_first",
+                    "to": "out",
+                    "order": 1
+                },
+                {
+                    "from": "graph_to_sim",
+                    "to": "update_sim",
+                    "order": 1
+                },
+                {
+                    "from": "is_selected",
+                    "to": "select",
+                    "as": "isselected"
+                },
+                {
+                    "from": "is_selected",
+                    "to": "expand",
+                    "as": "isselected"
+                },
+                {
+                    "from": "is_selected",
+                    "to": "contract",
+                    "as": "isselected"
+                },
+                {
+                    "from": "in",
+                    "to": "get_first",
+                    "as": "args",
+                    "type": "concat"
+                },
+                {
+                    "from": "merge_args",
+                    "to": "graph_to_sim"
+                },
+                {
+                    "from": "expand",
+                    "to": "graph_to_sim",
+                    "as": "display_graph"
+                },
+                {
+                    "from": "contract",
+                    "to": "graph_to_sim",
+                    "as": "display_graph"
+                },
+                {
+                    "from": "update_sim",
+                    "to": "out"
+                },
+                {
+                    "from": "graph_to_sim",
+                    "to": "out",
+                    "order": 2
+                },
+                {
+                    "from": "select",
+                    "to": "out",
+                    "as": "selected"
+                }
             ]
         },
         {
@@ -432,12 +634,17 @@
                         },
                         {
                             "id": "get_node",
-                            "args": ["node"],
+                            "args": [
+                                "node"
+                            ],
                             "script": "return node"
                         },
                         {
                             "id": "is_selected",
-                            "args": ["selected", "node_id"],
+                            "args": [
+                                "selected",
+                                "node_id"
+                            ],
                             "script": "return selected.includes(node_id)"
                         },
                         {
@@ -470,7 +677,9 @@
                                 },
                                 {
                                     "id": "circle_attrs",
-                                    "args": ["selected"],
+                                    "args": [
+                                        "selected"
+                                    ],
                                     "script": "return ({r: 16, cx: 20, cy: 20, fill: selected ? 'red' : 'blue'})"
                                 },
                                 {
@@ -479,7 +688,9 @@
                                 },
                                 {
                                     "id": "empty_array",
-                                    "value": [[]]
+                                    "value": [
+                                        []
+                                    ]
                                 },
                                 {
                                     "id": "circle",
@@ -513,12 +724,16 @@
                                         },
                                         {
                                             "id": "get_type",
-                                            "args": ["target"],
+                                            "args": [
+                                                "target"
+                                            ],
                                             "script": "return target.type ?? target.value ?? (target.value === null ? target.node_id : target.script ? 'script' : target.nodes ? `graph (${target.nodes.length}, ${target.edges.length})` : target.script ? 'script' : 'unknown')"
                                         },
                                         {
                                             "id": "shorten",
-                                            "args": ["text"],
+                                            "args": [
+                                                "text"
+                                            ],
                                             "script": "return text.substring(text.lastIndexOf('/') + 1)"
                                         },
                                         {
@@ -644,17 +859,53 @@
                         }
                     ],
                     "edges": [
-                        {"from": "in", "to": "get_node"},
-                        {"from": "in", "to": "is_selected"},
-                        {"from": "in", "to": "parent_attrs"},
-                        {"from": "get_node", "to": "children"},
-                        {"from": "get_node", "to": "is_selected"},
-                        {"from": "is_selected", "to": "children", "as": "selected"},
-                        {"from": "children", "to": "parent"},
-                        {"from": "parent_attrs", "to": "parent", "as": "props"},
-                        {"from": "parent_dom_type", "to": "parent", "as": "dom_type"},
-                        {"from": "get_node", "to": "parent_attrs"},
-                        {"from": "parent", "to": "out"}
+                        {
+                            "from": "in",
+                            "to": "get_node"
+                        },
+                        {
+                            "from": "in",
+                            "to": "is_selected"
+                        },
+                        {
+                            "from": "in",
+                            "to": "parent_attrs"
+                        },
+                        {
+                            "from": "get_node",
+                            "to": "children"
+                        },
+                        {
+                            "from": "get_node",
+                            "to": "is_selected"
+                        },
+                        {
+                            "from": "is_selected",
+                            "to": "children",
+                            "as": "selected"
+                        },
+                        {
+                            "from": "children",
+                            "to": "parent"
+                        },
+                        {
+                            "from": "parent_attrs",
+                            "to": "parent",
+                            "as": "props"
+                        },
+                        {
+                            "from": "parent_dom_type",
+                            "to": "parent",
+                            "as": "dom_type"
+                        },
+                        {
+                            "from": "get_node",
+                            "to": "parent_attrs"
+                        },
+                        {
+                            "from": "parent",
+                            "to": "out"
+                        }
                     ]
                 },
                 {
@@ -666,17 +917,21 @@
                         },
                         {
                             "id": "get_link",
-                            "args": ["link"],
+                            "args": [
+                                "link"
+                            ],
                             "script": "return link"
                         },
-
                         {
                             "id": "edge_info_el",
                             "type": "h"
                         },
                         {
                             "id": "edge_info_el_children",
-                            "args": ["edge_as", "edge_type"],
+                            "args": [
+                                "edge_as",
+                                "edge_type"
+                            ],
                             "script": "return [[edge_as.el, edge_type.el]]"
                         },
                         {
@@ -685,7 +940,11 @@
                         },
                         {
                             "id": "edge_info_props",
-                            "args": ["source", "target", "line_position"],
+                            "args": [
+                                "source",
+                                "target",
+                                "line_position"
+                            ],
                             "script": "return ({x: line_position * (target.x - source.x) + source.x + 32, y: line_position * (target.y - source.y) + source.y })"
                         },
                         {
@@ -695,11 +954,12 @@
                             "max": 1,
                             "step": 0.01
                         },
-
-
                         {
                             "id": "edge_info_type_props",
-                            "value": {"font-size": 14, "y": 32}
+                            "value": {
+                                "font-size": 14,
+                                "y": 32
+                            }
                         },
                         {
                             "id": "edge_info_type_el",
@@ -707,13 +967,17 @@
                         },
                         {
                             "id": "edge_info_type_text",
-                            "args": ["link"],
+                            "args": [
+                                "link"
+                            ],
                             "script": "return link.type ?? ''"
                         },
-
                         {
                             "id": "edge_info_as_props",
-                            "value": {"font-size": 14, "y": 16}
+                            "value": {
+                                "font-size": 14,
+                                "y": 16
+                            }
                         },
                         {
                             "id": "edge_info_as_el",
@@ -721,13 +985,17 @@
                         },
                         {
                             "id": "edge_info_as_text",
-                            "args": ["link"],
+                            "args": [
+                                "link"
+                            ],
                             "script": "return link.as ?? '*'"
                         },
-
                         {
                             "id": "line_props",
-                            "args": ["source", "target"],
+                            "args": [
+                                "source",
+                                "target"
+                            ],
                             "script": "return ({x1: source.x, y1: source.y, x2: target.x, y2: target.y, stroke: 'black'})"
                         },
                         {
@@ -736,7 +1004,9 @@
                         },
                         {
                             "id": "empty_array",
-                            "value": [[]]
+                            "value": [
+                                []
+                            ]
                         },
                         {
                             "id": "line",
@@ -744,7 +1014,10 @@
                         },
                         {
                             "id": "out",
-                            "args": ["line", "edge_info"],
+                            "args": [
+                                "line",
+                                "edge_info"
+                            ],
                             "script": "return [line, edge_info]"
                         }
                     ],
@@ -761,7 +1034,6 @@
                             "from": "get_link",
                             "to": "edge_info_props"
                         },
-
                         {
                             "from": "in",
                             "to": "edge_info_as_text"
@@ -770,8 +1042,6 @@
                             "from": "in",
                             "to": "edge_info_type_text"
                         },
-
-
                         {
                             "from": "edge_info_dom_type",
                             "to": "edge_info_el",
@@ -797,8 +1067,6 @@
                             "to": "out",
                             "as": "edge_info"
                         },
-
-
                         {
                             "from": "edge_info_type_props",
                             "to": "edge_info_type_el",
@@ -814,7 +1082,6 @@
                             "to": "edge_info_el_children",
                             "as": "edge_type"
                         },
-
                         {
                             "from": "edge_info_as_props",
                             "to": "edge_info_as_el",
@@ -830,8 +1097,6 @@
                             "to": "edge_info_el_children",
                             "as": "edge_as"
                         },
-
-
                         {
                             "from": "line_props",
                             "to": "line",
@@ -972,6 +1237,32 @@
         {
             "from": "onclick_fn_in",
             "to": "onclick_fn",
+            "as": "in_node",
+            "type": "ref"
+        },
+        {
+            "from": "get_graph",
+            "to": "onkey_fn",
+            "as": "graph"
+        },
+        {
+            "from": "onkey_fn",
+            "to": "hyperapp_subscriptions",
+            "as": "onkey_fn"
+        },
+        {
+            "from": "onkey_fn_in",
+            "to": "onkey_fn_body"
+        },
+        {
+            "from": "onkey_fn_body",
+            "to": "onkey_fn",
+            "as": "out_node",
+            "type": "ref"
+        },
+        {
+            "from": "onkey_fn_in",
+            "to": "onkey_fn",
             "as": "in_node",
             "type": "ref"
         },

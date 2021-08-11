@@ -368,6 +368,12 @@ const d3subscription = simulation => dispatch => {
     return () => simulation.on('.ha', null); 
 }
 
+const keydownSubscription = (dispatch, options) => { 
+    const handler = ev => { requestAnimationFrame(() => dispatch(options.action, {key: ev.key, code: ev.code}))};
+    addEventListener('keydown', handler); 
+    return () => removeEventListener('keydown', handler);
+}
+
 const expand_node = (data) => {
     const node_id = data.node_id;
     const node = data.display_graph.nodes.find(n => n.id === node_id)
@@ -464,7 +470,7 @@ const lib = {
     _,
     ha: { h, app, text, memo },
     no: {executeGraph},
-    scripts: {d3simulation, d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node},
+    scripts: {d3simulation, d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription},
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
 };
 
