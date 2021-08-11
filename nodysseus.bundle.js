@@ -124,7 +124,7 @@
     					"out_node",
     					"graph"
     				],
-    				script: "return (...args) => (lib.no.executeGraph(new Map([[in_node, args]]), {nodes: (args[0].graph ?? graph).nodes.concat([]), edges: (args[0].graph ?? graph).edges.concat([])}, out_node))"
+    				script: "return (...args) => (lib.no.executeGraph({state: new Map([[in_node, args]]), graph: {nodes: (args[0].graph ?? graph).nodes.concat([]), edges: (args[0].graph ?? graph).edges.concat([])}, out: out_node }))"
     			}
     		],
     		edges: [
@@ -279,6 +279,10 @@
     		value: "graph"
     	},
     	{
+    		id: "display_graph",
+    		value: "display_graph"
+    	},
+    	{
     		id: "nodes",
     		value: "nodes"
     	},
@@ -290,10 +294,6 @@
     				"nodes"
     			]
     		]
-    	},
-    	{
-    		id: "get_display_graph",
-    		type: "get"
     	},
     	{
     		id: "initial_state",
@@ -308,6 +308,10 @@
     	},
     	{
     		id: "get_graph",
+    		type: "get"
+    	},
+    	{
+    		id: "get_display_graph",
     		type: "get"
     	},
     	{
@@ -328,7 +332,7 @@
     			"simulation",
     			"onkey_fn"
     		],
-    		script: "console.log(onkey_fn); return [[[lib.scripts.d3subscription(simulation)], [lib.scripts.keydownSubscription, {action: onkey_fn}]]]"
+    		script: "return [[[lib.scripts.d3subscription(simulation)], [lib.scripts.keydownSubscription, {action: onkey_fn}]]]"
     	},
     	{
     		id: "graph_to_simulation",
@@ -338,9 +342,10 @@
     			"display_graph",
     			"links",
     			"selected",
-    			"simulation"
+    			"simulation",
+    			"display_graph_out"
     		],
-    		script: "return lib.scripts.graphToSimulationNodes({graph, display_graph, nodes, links, selected, simulation})"
+    		script: "return lib.scripts.graphToSimulationNodes({graph, display_graph, nodes, links, selected, simulation, display_graph_out})"
     	},
     	{
     		id: "update_nodes",
@@ -348,9 +353,10 @@
     			"simulation",
     			"nodes",
     			"display_graph",
-    			"links"
+    			"links",
+    			"display_graph_out"
     		],
-    		script: "return lib.scripts.updateSimulationNodes({display_graph, simulation, nodes, links})"
+    		script: "return lib.scripts.updateSimulationNodes({display_graph, simulation, nodes, links, display_graph_out})"
     	},
     	{
     		id: "d3simulation",
@@ -377,14 +383,14 @@
     				script: "return Object.assign({}, args[0], {key: args[1].key, code: args[1].code})"
     			},
     			{
-    				id: "find_selected",
+    				id: "find_selected"
+    			},
+    			{
+    				id: "out",
     				args: [
     					"data"
     				],
-    				script: "console.log(data); return data"
-    			},
-    			{
-    				id: "out"
+    				script: "return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: data.display_graph, out: data.display_graph_out}]]]"
     			}
     		],
     		edges: [
@@ -471,9 +477,10 @@
     					"display_graph",
     					"nodes",
     					"links",
-    					"simulation"
+    					"simulation",
+    					"display_graph_out"
     				],
-    				script: "return lib.scripts.graphToSimulationNodes({display_graph, nodes, links, simulation})"
+    				script: "return lib.scripts.graphToSimulationNodes({display_graph, nodes, links, simulation, display_graph_out})"
     			},
     			{
     				id: "update_sim",
@@ -481,9 +488,10 @@
     					"display_graph",
     					"nodes",
     					"links",
-    					"simulation"
+    					"simulation",
+    					"display_graph_out"
     				],
-    				script: "return lib.scripts.updateSimulationNodes({display_graph, nodes, links, simulation})"
+    				script: "return lib.scripts.updateSimulationNodes({display_graph, nodes, links, simulation, display_graph_out})"
     			},
     			{
     				id: "out"
@@ -737,7 +745,7 @@
     										args: [
     											"target"
     										],
-    										script: "return target.type ?? target.value ?? (target.value === null ? target.node_id : target.script ? 'script' : target.nodes ? `graph (${target.nodes.length}, ${target.edges.length})` : target.script ? 'script' : 'unknown')"
+    										script: "return target.type ?? (Array.isArray(target.value) ? [target.value] : target.value) ?? (target.value === null ? target.node_id : target.script ? 'script' : target.nodes ? `graph (${target.nodes.length}, ${target.edges.length})` : target.script ? 'script' : 'unknown')"
     									},
     									{
     										id: "shorten",
@@ -1211,8 +1219,18 @@
     		as: "target"
     	},
     	{
+    		from: "in",
+    		to: "get_display_graph",
+    		as: "target"
+    	},
+    	{
     		from: "graph",
     		to: "get_graph",
+    		as: "path"
+    	},
+    	{
+    		from: "display_graph",
+    		to: "get_display_graph",
     		as: "path"
     	},
     	{
@@ -1297,12 +1315,12 @@
     		to: "node_editor"
     	},
     	{
-    		from: "get_graph",
+    		from: "get_display_graph",
     		to: "update_nodes",
     		as: "display_graph"
     	},
     	{
-    		from: "get_graph",
+    		from: "get_display_graph",
     		to: "graph_to_simulation",
     		as: "display_graph"
     	},
@@ -1310,6 +1328,10 @@
     		from: "get_graph",
     		to: "graph_to_simulation",
     		as: "graph"
+    	},
+    	{
+    		from: "in",
+    		to: "graph_to_simulation"
     	},
     	{
     		from: "initial_state",
@@ -20241,7 +20263,7 @@
       return force;
     }
 
-    const executeGraph = (state, graph, out) => {
+    const executeGraph = ({state, graph, out}) => {
         let state_hash = "";
         let active_nodes_hash = "";
 
@@ -20376,6 +20398,7 @@
                                 );
                             state.set(node.id, datas.map(d => fn(lib, node, ...node.args.map(i => {
                                 if(d[i] === undefined){
+                                    console.log(state);
                                     console.log(node);
                                     console.log(d);
                                     throw new Error(`${i} not found`);
@@ -20398,12 +20421,74 @@
         return state.get(out);
     };
 
-
-    const state = new Map([['in', [{graph: DEFAULT_GRAPH}]]]);
-
-
-    //    no: { map_path_fn, flatten, unpackTypes, hFn, fnDef, fnReturn, concatValues, verify, d3simulation, debug, flatten_node, expand_node, node_click, contract_node, update_simulation_nodes, map_displaygraph_to_simulation_graph, run_displaygraph, view_flatten_nodes},
-
+    const test_graph = {
+        nodes: [
+            {
+                "id": "in",
+                "value": null
+            },
+            {
+                "id": "out",
+                "args": ["value"]
+            },
+            {
+                "id": "something",
+                "value": "something"
+            },
+            {
+                "id": "get_test_path",
+                "nodes": [
+                    {"id": "in", "value": null},
+                    {"id": "out", "args": []}
+                ],
+                "edges": [{"from": "in", "to": "out"}]
+            },
+            {
+                "id": "log",
+                "args": ["input"],
+                "script": "console.log(input); return 'an output I guess';"
+            },
+            {
+                "id": "test_path",
+                "value": "test_path"
+            },
+            {
+                "id": "get_inputs",
+                "value": ["target", "path"]
+            },
+            {
+                "id": "get_script",
+                "value": "return target[path]"
+            },
+        ],
+        edges: [
+            {
+                "from": "in",
+                "to": "get_test_path",
+                "as": "target"
+            },
+            {
+                "from": "something",
+                "to": "log",
+                "as": "input"
+            },
+            {
+                "from": "get_test_path",
+                "to": "out",
+                "as": "value"
+            },
+            {
+                "from": "log",
+                "to": "out",
+                "as": "value"
+            },
+            {
+                "from": "test_path",
+                "to": "get_test_path",
+                "as": "path"
+            }
+        ]
+    };
 
     //////////
     // TODO: convert these to nodes
@@ -20450,7 +20535,7 @@
 
     const updateSimulationNodes = (data) => {
 
-        const levels = calculateLevels(data.display_graph, 'hyperapp_app');
+        const levels = calculateLevels(data.display_graph, data.display_graph_out);
 
         data.simulation.nodes(data.nodes);
 
@@ -20639,6 +20724,9 @@
         d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
     };
 
-    console.log(executeGraph(state, DEFAULT_GRAPH, "hyperapp_app")[0]);
+
+    const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: test_graph, display_graph_out: "out"}]]]);
+
+    console.log(executeGraph({state, graph: DEFAULT_GRAPH, out: "hyperapp_app"})[0]);
 
 }());

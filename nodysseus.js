@@ -4,7 +4,7 @@ import { h, app, text, memo } from "hyperapp"
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 import { selectSyntaxLeft } from "@codemirror/commands";
 
-const executeGraph = (state, graph, out) => {
+const executeGraph = ({state, graph, out}) => {
     let state_hash = "";
     let active_nodes_hash = "";
 
@@ -139,6 +139,7 @@ const executeGraph = (state, graph, out) => {
                             );
                         state.set(node.id, datas.map(d => fn(lib, node, ...node.args.map(i => {
                             if(d[i] === undefined){
+                                console.log(state);
                                 console.log(node);
                                 console.log(d);
                                 throw new Error(`${i} not found`);
@@ -164,20 +165,33 @@ const executeGraph = (state, graph, out) => {
 const test_graph = {
     nodes: [
         {
+            "id": "in",
+            "value": null
+        },
+        {
             "id": "out",
-            "inputs": ["value"]
+            "args": ["value"]
+        },
+        {
+            "id": "something",
+            "value": "something"
         },
         {
             "id": "get_test_path",
-            "type": "get"
+            "nodes": [
+                {"id": "in", "value": null},
+                {"id": "out", "args": []}
+            ],
+            "edges": [{"from": "in", "to": "out"}]
+        },
+        {
+            "id": "log",
+            "args": ["input"],
+            "script": "console.log(input); return 'an output I guess';"
         },
         {
             "id": "test_path",
             "value": "test_path"
-        },
-        {
-            "id": "get", 
-            "inputs": ["inputs", "script"]
         },
         {
             "id": "get_inputs",
@@ -195,7 +209,17 @@ const test_graph = {
             "as": "target"
         },
         {
+            "from": "something",
+            "to": "log",
+            "as": "input"
+        },
+        {
             "from": "get_test_path",
+            "to": "out",
+            "as": "value"
+        },
+        {
+            "from": "log",
             "to": "out",
             "as": "value"
         },
@@ -203,39 +227,9 @@ const test_graph = {
             "from": "test_path",
             "to": "get_test_path",
             "as": "path"
-        },
-        {
-            "from": "get_inputs",
-            "to":  "get",
-            "as": "inputs"
-        },
-        {
-            "from": "get_script",
-            "to":  "get",
-            "as": "script"
         }
     ]
 }
-
-
-
-// Note: heavy use of comma operator https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Comma_Operator
-const unpackTypes = (node_types, node) => {
-    let ty = typeof node === 'string' ? node : node.type;
-    const result = typeof node === 'string' ? {} : Object.assign({}, node)
-    while (ty && node_types[ty]) {
-        Object.assign(result, node_types[ty]);
-        ty = node_types[ty].type;
-    }
-    return result;
-}
-
-
-const state = new Map([['in', [{graph: DEFAULT_GRAPH}]]])
-
-
-//    no: { map_path_fn, flatten, unpackTypes, hFn, fnDef, fnReturn, concatValues, verify, d3simulation, debug, flatten_node, expand_node, node_click, contract_node, update_simulation_nodes, map_displaygraph_to_simulation_graph, run_displaygraph, view_flatten_nodes},
-
 
 //////////
 // TODO: convert these to nodes
@@ -285,7 +279,7 @@ const updateSimulationNodes = (data) => {
         [edge.to, level]
     ].concat(data.display_graph.edges.filter(e => e.from === edge.to).map(bfs(level + 1)).flat());
 
-    const levels = calculateLevels(data.display_graph, 'hyperapp_app');
+    const levels = calculateLevels(data.display_graph, data.display_graph_out);
 
     data.simulation.nodes(data.nodes);
 
@@ -474,4 +468,7 @@ const lib = {
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
 };
 
-console.log(executeGraph(state, DEFAULT_GRAPH, "hyperapp_app")[0]);
+
+const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: test_graph, display_graph_out: "out"}]]])
+
+console.log(executeGraph({state, graph: DEFAULT_GRAPH, out: "hyperapp_app"})[0]);
