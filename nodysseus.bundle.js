@@ -611,6 +611,11 @@
     				value: false
     			},
     			{
+    				id: "empty_array",
+    				value: [
+    				]
+    			},
+    			{
     				id: "select_node",
     				args: [
     					"clicked",
@@ -898,7 +903,7 @@
     				type: "concat"
     			},
     			{
-    				from: "get_selected",
+    				from: "empty_array",
     				to: "select",
     				as: "array",
     				type: "concat"
@@ -20804,6 +20809,75 @@
         return state.get(out);
     };
 
+    const test_graph = {
+        nodes: [
+            {
+                "id": "in",
+                "value": null
+            },
+            {
+                "id": "out",
+                "args": ["value"]
+            },
+            {
+                "id": "something",
+                "value": "something"
+            },
+            {
+                "id": "get_test_path",
+                "nodes": [
+                    {"id": "in", "value": null},
+                    {"id": "out", "args": []}
+                ],
+                "edges": [{"from": "in", "to": "out"}]
+            },
+            {
+                "id": "log",
+                "args": ["input"],
+                "script": "console.log(input); return 'an output I guess';"
+            },
+            {
+                "id": "test_path",
+                "value": "test_path"
+            },
+            {
+                "id": "get_inputs",
+                "value": ["target", "path"]
+            },
+            {
+                "id": "get_script",
+                "value": "return target[path]"
+            },
+        ],
+        edges: [
+            {
+                "from": "in",
+                "to": "get_test_path",
+                "as": "target"
+            },
+            {
+                "from": "something",
+                "to": "log",
+                "as": "input"
+            },
+            {
+                "from": "get_test_path",
+                "to": "out",
+                "as": "value"
+            },
+            {
+                "from": "log",
+                "to": "out",
+                "as": "value"
+            },
+            {
+                "from": "test_path",
+                "to": "get_test_path",
+                "as": "path"
+            }
+        ]
+    };
+
     //////////
     // TODO: convert these to nodes
 
@@ -21036,7 +21110,8 @@
     };
 
 
-    const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: {nodes: DEFAULT_GRAPH.nodes.concat([]), edges: DEFAULT_GRAPH.edges.concat([])}, display_graph_out: "hyperapp_app"}]]]);
+    const display_graph = test_graph;
+    const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: {nodes: display_graph.nodes.concat([]), edges: display_graph.edges.concat([])}, display_graph_out: "out"}]]]);
 
     console.log(executeGraph({state, graph: DEFAULT_GRAPH, out: "hyperapp_app"})[0]);
 

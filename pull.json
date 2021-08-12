@@ -594,6 +594,10 @@
                     "value": false
                 },
                 {
+                    "id": "empty_array",
+                    "value": []
+                },
+                {
                     "id": "select_node",
                     "args": ["clicked", "node_id"],
                     "script": "return clicked.length > 0 ? [] : node_id"
@@ -857,7 +861,7 @@
                     "type": "concat"
                 },
                 {
-                    "from": "get_selected",
+                    "from": "empty_array",
                     "to": "select",
                     "as": "array",
                     "type": "concat"

@@ -464,6 +464,7 @@ const lib = {
 };
 
 
-const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: {nodes: DEFAULT_GRAPH.nodes.concat([]), edges: DEFAULT_GRAPH.edges.concat([])}, display_graph_out: "hyperapp_app"}]]])
+const display_graph = test_graph;
+const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: {nodes: display_graph.nodes.concat([]), edges: display_graph.edges.concat([])}, display_graph_out: "out"}]]])
 
 console.log(executeGraph({state, graph: DEFAULT_GRAPH, out: "hyperapp_app"})[0]);
