@@ -52,6 +52,112 @@
     		]
     	},
     	{
+    		id: "append",
+    		nodes: [
+    			{
+    				id: "in"
+    			},
+    			{
+    				id: "out",
+    				args: [
+    					"item",
+    					"array"
+    				],
+    				script: "return [array.concat(Array.isArray(item) ? item : [item])]"
+    			}
+    		],
+    		edges: [
+    			{
+    				from: "in",
+    				to: "out"
+    			}
+    		]
+    	},
+    	{
+    		id: "filter",
+    		nodes: [
+    			{
+    				id: "in"
+    			},
+    			{
+    				id: "out",
+    				args: [
+    					"keep",
+    					"data"
+    				],
+    				script: "return keep ? [data] : []"
+    			}
+    		],
+    		edges: [
+    			{
+    				from: "in",
+    				to: "out",
+    				order: 1
+    			},
+    			{
+    				from: "in",
+    				to: "out",
+    				as: "data",
+    				order: 0
+    			}
+    		]
+    	},
+    	{
+    		id: "delete",
+    		nodes: [
+    			{
+    				id: "in"
+    			},
+    			{
+    				id: "out",
+    				args: [
+    					"data",
+    					"path"
+    				],
+    				script: "const new_data = Object.assign({}, data); delete new_data[path]; return new_data;"
+    			}
+    		],
+    		edges: [
+    			{
+    				from: "in",
+    				to: "out",
+    				order: 1
+    			},
+    			{
+    				from: "in",
+    				to: "out",
+    				as: "data",
+    				order: 0
+    			}
+    		]
+    	},
+    	{
+    		id: "default",
+    		nodes: [
+    			{
+    				id: "in"
+    			},
+    			{
+    				id: "out",
+    				args: [
+    					"data",
+    					"default_value"
+    				],
+    				script: "console.log(default_value); return data.length > 0 ? data : default_value"
+    			}
+    		],
+    		edges: [
+    			{
+    				from: "in",
+    				to: "out"
+    			},
+    			{
+    				from: "in",
+    				to: "out"
+    			}
+    		]
+    	},
+    	{
     		id: "svg_text",
     		nodes: [
     			{
@@ -135,6 +241,28 @@
     		]
     	},
     	{
+    		id: "wrap_effect_fn",
+    		nodes: [
+    			{
+    				id: "in",
+    				value: null
+    			},
+    			{
+    				id: "out",
+    				args: [
+    					"fn"
+    				],
+    				script: "return [[(_, payload) => fn(payload)]]"
+    			}
+    		],
+    		edges: [
+    			{
+    				from: "in",
+    				to: "out"
+    			}
+    		]
+    	},
+    	{
     		id: "get",
     		nodes: [
     			{
@@ -155,7 +283,7 @@
     					"path",
     					"def"
     				],
-    				script: "return lib._.get(target, path) ?? def"
+    				script: "return [lib._.get(target, path)] ?? [def]"
     			}
     		],
     		edges: [
@@ -343,9 +471,13 @@
     			"links",
     			"selected",
     			"simulation",
-    			"display_graph_out"
+    			"display_graph_out",
+    			"update_sim_effect"
     		],
-    		script: "return lib.scripts.graphToSimulationNodes({graph, display_graph, nodes, links, selected, simulation, display_graph_out})"
+    		script: "return lib.scripts.graphToSimulationNodes({graph, display_graph, nodes, links, selected, simulation, display_graph_out, update_sim_effect})"
+    	},
+    	{
+    		id: "update_nodes_in"
     	},
     	{
     		id: "update_nodes",
@@ -357,6 +489,10 @@
     			"display_graph_out"
     		],
     		script: "return lib.scripts.updateSimulationNodes({display_graph, simulation, nodes, links, display_graph_out})"
+    	},
+    	{
+    		id: "update_nodes_fn",
+    		type: "execute_graph"
     	},
     	{
     		id: "d3simulation",
@@ -412,6 +548,28 @@
     		]
     	},
     	{
+    		id: "update_sim",
+    		args: [
+    			"display_graph",
+    			"nodes",
+    			"links",
+    			"simulation",
+    			"display_graph_out"
+    		],
+    		script: "return lib.scripts.updateSimulationNodes({display_graph, nodes, links, simulation, display_graph_out})"
+    	},
+    	{
+    		id: "update_sim_in"
+    	},
+    	{
+    		id: "update_sim_fn",
+    		type: "execute_graph"
+    	},
+    	{
+    		id: "update_sim_effect",
+    		type: "wrap_effect_fn"
+    	},
+    	{
     		id: "onclick_fn_in",
     		value: null
     	},
@@ -437,39 +595,111 @@
     				script: "return Object.assign({}, args[0], {x: args[1].x, y: args[1].y, node_id: args[1].node_id})"
     			},
     			{
-    				id: "is_selected",
-    				args: [
-    					"selected",
-    					"node_id"
-    				],
-    				script: "return selected.includes(node_id)"
+    				id: "merge_args_no_display_graph",
+    				type: "delete"
     			},
     			{
     				id: "select",
+    				type: "append"
+    			},
+    			{
+    				id: "display_graph",
+    				value: "display_graph"
+    			},
+    			{
+    				id: "false",
+    				value: false
+    			},
+    			{
+    				id: "select_node",
     				args: [
-    					"isselected",
-    					"selected",
+    					"clicked",
     					"node_id"
     				],
-    				script: "return [isselected ? selected : [node_id]]"
+    				script: "return clicked.length > 0 ? [] : node_id"
+    			},
+    			{
+    				id: "selected",
+    				value: "selected"
+    			},
+    			{
+    				id: "get_selected",
+    				type: "get"
+    			},
+    			{
+    				id: "node_id",
+    				value: "node_id"
+    			},
+    			{
+    				id: "get_node_id",
+    				type: "get"
+    			},
+    			{
+    				id: "is_not_clicked",
+    				args: [
+    					"node_id",
+    					"selected_id"
+    				],
+    				script: "return selected_id !== node_id"
+    			},
+    			{
+    				id: "is_clicked",
+    				args: [
+    					"node_id",
+    					"selected_id"
+    				],
+    				script: "return selected_id === node_id"
+    			},
+    			{
+    				id: "not_clicked",
+    				type: "filter"
+    			},
+    			{
+    				id: "clicked",
+    				type: "filter"
+    			},
+    			{
+    				id: "select_clicked",
+    				type: "default"
+    			},
+    			{
+    				id: "has_nodes",
+    				args: [
+    					"node_id",
+    					"display_graph"
+    				],
+    				script: "return !!display_graph.nodes.find(n => n.id === node_id).nodes"
+    			},
+    			{
+    				id: "is_in_or_out",
+    				args: [
+    					"node_id"
+    				],
+    				script: "return node_id.endsWith('/in') || node_id.endsWith('/out')"
+    			},
+    			{
+    				id: "expandable",
+    				type: "filter"
+    			},
+    			{
+    				id: "contractable",
+    				type: "filter"
     			},
     			{
     				id: "expand",
     				args: [
-    					"isselected",
     					"node_id",
     					"display_graph"
     				],
-    				script: "return isselected ? lib.scripts.expand_node({display_graph, node_id}) : []"
+    				script: "return lib.scripts.expand_node({display_graph, node_id})"
     			},
     			{
     				id: "contract",
     				args: [
-    					"isselected",
     					"node_id",
     					"display_graph"
     				],
-    				script: "return isselected && (node_id.endsWith('/in') || node_id.endsWith('/out')) ? lib.scripts.contract_node({display_graph, node_id}) : []"
+    				script: "return lib.scripts.contract_node({display_graph, node_id})"
     			},
     			{
     				id: "graph_to_sim",
@@ -478,23 +708,33 @@
     					"nodes",
     					"links",
     					"simulation",
-    					"display_graph_out"
+    					"display_graph_out",
+    					"graph",
+    					"update_sim_effect"
     				],
-    				script: "return lib.scripts.graphToSimulationNodes({display_graph, nodes, links, simulation, display_graph_out})"
+    				script: "return display_graph.nodes.length === nodes.length ? [] : lib.scripts.graphToSimulationNodes({display_graph, nodes, links, simulation, display_graph_out, graph, update_sim_effect, update: true})"
     			},
     			{
-    				id: "update_sim",
+    				id: "unmodified_graph"
+    			},
+    			{
+    				id: "final_graph",
+    				type: "default"
+    			},
+    			{
+    				id: "out",
     				args: [
+    					"update_sim_effect",
     					"display_graph",
+    					"graph",
     					"nodes",
     					"links",
+    					"selected",
     					"simulation",
-    					"display_graph_out"
+    					"display_graph_out",
+    					"update"
     				],
-    				script: "return lib.scripts.updateSimulationNodes({display_graph, nodes, links, simulation, display_graph_out})"
-    			},
-    			{
-    				id: "out"
+    				script: "const new_state = {display_graph, graph, nodes, links, selected, simulation, display_graph_out, update_sim_effect}; return [[new_state, ...(update ? [[update_sim_effect, new_state]] : [])]]"
     			}
     		],
     		edges: [
@@ -506,10 +746,6 @@
     			},
     			{
     				from: "merge_args",
-    				to: "select"
-    			},
-    			{
-    				from: "merge_args",
     				to: "expand"
     			},
     			{
@@ -518,32 +754,108 @@
     			},
     			{
     				from: "merge_args",
-    				to: "is_selected"
+    				to: "get_selected",
+    				as: "target"
     			},
     			{
-    				from: "get_first",
-    				to: "out",
-    				order: 1
+    				from: "selected",
+    				to: "get_selected",
+    				as: "path"
     			},
     			{
-    				from: "graph_to_sim",
-    				to: "update_sim",
-    				order: 1
+    				from: "get_selected",
+    				to: "not_clicked"
     			},
     			{
-    				from: "is_selected",
-    				to: "select",
-    				as: "isselected"
+    				from: "get_selected",
+    				to: "clicked",
+    				as: "data"
     			},
     			{
-    				from: "is_selected",
-    				to: "expand",
-    				as: "isselected"
+    				from: "merge_args",
+    				to: "get_node_id",
+    				as: "target"
     			},
     			{
-    				from: "is_selected",
-    				to: "contract",
-    				as: "isselected"
+    				from: "get_node_id",
+    				to: "is_clicked",
+    				as: "node_id"
+    			},
+    			{
+    				from: "get_selected",
+    				to: "is_clicked",
+    				as: "selected_id"
+    			},
+    			{
+    				from: "get_node_id",
+    				to: "is_not_clicked",
+    				as: "node_id"
+    			},
+    			{
+    				from: "get_selected",
+    				to: "is_not_clicked",
+    				as: "selected_id"
+    			},
+    			{
+    				from: "node_id",
+    				to: "get_node_id",
+    				as: "path"
+    			},
+    			{
+    				from: "get_node_id",
+    				to: "not_clicked",
+    				as: "node_id"
+    			},
+    			{
+    				from: "is_not_clicked",
+    				to: "not_clicked",
+    				as: "keep"
+    			},
+    			{
+    				from: "is_clicked",
+    				to: "clicked",
+    				as: "keep"
+    			},
+    			{
+    				from: "clicked",
+    				to: "has_nodes",
+    				as: "node"
+    			},
+    			{
+    				from: "clicked",
+    				to: "is_in_or_out",
+    				as: "node_id"
+    			},
+    			{
+    				from: "clicked",
+    				to: "expandable",
+    				as: "node_id"
+    			},
+    			{
+    				from: "clicked",
+    				to: "contractable"
+    			},
+    			{
+    				from: "merge_args",
+    				to: "has_nodes"
+    			},
+    			{
+    				from: "has_nodes",
+    				to: "expandable",
+    				as: "keep"
+    			},
+    			{
+    				from: "is_in_or_out",
+    				to: "contractable",
+    				as: "keep"
+    			},
+    			{
+    				from: "expandable",
+    				to: "expand"
+    			},
+    			{
+    				from: "contractable",
+    				to: "contract"
     			},
     			{
     				from: "in",
@@ -566,18 +878,56 @@
     				as: "display_graph"
     			},
     			{
-    				from: "update_sim",
-    				to: "out"
+    				from: "get_first",
+    				to: "unmodified_graph"
+    			},
+    			{
+    				from: "false",
+    				to: "unmodified_graph",
+    				as: "update"
+    			},
+    			{
+    				from: "unmodified_graph",
+    				to: "final_graph",
+    				as: "default_value"
     			},
     			{
     				from: "graph_to_sim",
-    				to: "out",
-    				order: 2
+    				to: "final_graph",
+    				as: "data",
+    				type: "concat"
+    			},
+    			{
+    				from: "get_selected",
+    				to: "select",
+    				as: "array",
+    				type: "concat"
+    			},
+    			{
+    				from: "clicked",
+    				to: "select_node",
+    				as: "clicked",
+    				type: "concat"
+    			},
+    			{
+    				from: "get_node_id",
+    				to: "select_node",
+    				as: "node_id"
+    			},
+    			{
+    				from: "select_node",
+    				to: "select",
+    				as: "item"
     			},
     			{
     				from: "select",
     				to: "out",
-    				as: "selected"
+    				as: "selected",
+    				type: "concat"
+    			},
+    			{
+    				from: "final_graph",
+    				to: "out"
     			}
     		]
     	},
@@ -1245,6 +1595,16 @@
     		as: "out_node"
     	},
     	{
+    		from: "get_graph",
+    		to: "update_sim_fn",
+    		as: "graph"
+    	},
+    	{
+    		from: "update_sim_effect",
+    		to: "graph_to_simulation",
+    		as: "update_sim_effect"
+    	},
+    	{
     		from: "hyperapp_view_in",
     		to: "onclick_fn"
     	},
@@ -1346,6 +1706,10 @@
     		to: "update_nodes"
     	},
     	{
+    		from: "graph_to_simulation",
+    		to: "hyperapp_app"
+    	},
+    	{
     		from: "update_nodes",
     		to: "hyperapp_app"
     	},
@@ -1357,6 +1721,27 @@
     		from: "hyperapp_subscriptions",
     		to: "hyperapp_app",
     		as: "subscriptions"
+    	},
+    	{
+    		from: "update_sim_in",
+    		to: "update_sim"
+    	},
+    	{
+    		from: "update_sim_in",
+    		to: "update_sim_fn",
+    		as: "in_node",
+    		type: "ref"
+    	},
+    	{
+    		from: "update_sim",
+    		to: "update_sim_fn",
+    		as: "out_node",
+    		type: "ref"
+    	},
+    	{
+    		from: "update_sim_fn",
+    		to: "update_sim_effect",
+    		as: "fn"
     	}
     ];
     var DEFAULT_GRAPH = {
@@ -20329,7 +20714,7 @@
 
                 if (run) {
                     let datas = [{}];
-                    if (node.value) {
+                    if (node.value !== undefined) {
                         state.set(node.id, [node.value].flat());
                         active_nodes.delete(node.id);
                     } else {
@@ -20348,10 +20733,8 @@
 
                         for(const input of inputs) {
                             if(input?.type === "concat") {
-                                if(state.get(input.from).length > 0 || datas[0][input.as] === undefined) {
+                                if(state.get(input.from).length > 0 || datas.length === 0 || datas[0][input.as] === undefined) {
                                     datas = datas.map(d => Object.assign({}, d, {[input.as]: state.get(input.from)}));
-                                } else {
-                                    debugger;
                                 }
                             } else if (input?.type === "ref") {
                                 datas = datas.map(d => Object.assign({}, d, {[input.as]: input.from}));
@@ -20359,7 +20742,7 @@
                                 state.get(input.from).forEach((d, i) =>{
                                     datas[i] = Object.assign({}, datas.length > i ? datas[i] : {}, input.as ? {[input.as]: d} : d);
                                 });
-                            } else if(state.get(input.from).length > 0) {
+                            } else if (state.get(input.from).length > 0 || datas.length === 0 || datas[0][input.as] === undefined){
                                 datas = datas.flatMap(current_data =>
                                     state.get(input.from).map(d => input.as 
                                         ? Object.assign({}, current_data, {[input.as]: d})
@@ -20419,75 +20802,6 @@
         }
 
         return state.get(out);
-    };
-
-    const test_graph = {
-        nodes: [
-            {
-                "id": "in",
-                "value": null
-            },
-            {
-                "id": "out",
-                "args": ["value"]
-            },
-            {
-                "id": "something",
-                "value": "something"
-            },
-            {
-                "id": "get_test_path",
-                "nodes": [
-                    {"id": "in", "value": null},
-                    {"id": "out", "args": []}
-                ],
-                "edges": [{"from": "in", "to": "out"}]
-            },
-            {
-                "id": "log",
-                "args": ["input"],
-                "script": "console.log(input); return 'an output I guess';"
-            },
-            {
-                "id": "test_path",
-                "value": "test_path"
-            },
-            {
-                "id": "get_inputs",
-                "value": ["target", "path"]
-            },
-            {
-                "id": "get_script",
-                "value": "return target[path]"
-            },
-        ],
-        edges: [
-            {
-                "from": "in",
-                "to": "get_test_path",
-                "as": "target"
-            },
-            {
-                "from": "something",
-                "to": "log",
-                "as": "input"
-            },
-            {
-                "from": "get_test_path",
-                "to": "out",
-                "as": "value"
-            },
-            {
-                "from": "log",
-                "to": "out",
-                "as": "value"
-            },
-            {
-                "from": "test_path",
-                "to": "get_test_path",
-                "as": "path"
-            }
-        ]
     };
 
     //////////
@@ -20558,8 +20872,6 @@
             // .force(`center`, null)
             // .velocityDecay(.2)
             .alpha(0.4).restart();
-
-        return {};
     };
 
     const graphToSimulationNodes = (data) => {
@@ -20627,7 +20939,6 @@
     const expand_node = (data) => {
         const node_id = data.node_id;
         const node = data.display_graph.nodes.find(n => n.id === node_id);
-        console.log('expand');
 
         if (!(node && node.nodes)) {
             console.log('no nodes?');
@@ -20725,7 +21036,7 @@
     };
 
 
-    const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: test_graph, display_graph_out: "out"}]]]);
+    const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: {nodes: DEFAULT_GRAPH.nodes.concat([]), edges: DEFAULT_GRAPH.edges.concat([])}, display_graph_out: "hyperapp_app"}]]]);
 
     console.log(executeGraph({state, graph: DEFAULT_GRAPH, out: "hyperapp_app"})[0]);
 

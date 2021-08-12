@@ -70,7 +70,7 @@ const executeGraph = ({state, graph, out}) => {
 
             if (run) {
                 let datas = [{}];
-                if (node.value) {
+                if (node.value !== undefined) {
                     state.set(node.id, [node.value].flat());
                     active_nodes.delete(node.id);
                 } else {
@@ -89,10 +89,8 @@ const executeGraph = ({state, graph, out}) => {
 
                     for(const input of inputs) {
                         if(input?.type === "concat") {
-                            if(state.get(input.from).length > 0 || datas[0][input.as] === undefined) {
+                            if(state.get(input.from).length > 0 || datas.length === 0 || datas[0][input.as] === undefined) {
                                 datas = datas.map(d => Object.assign({}, d, {[input.as]: state.get(input.from)}))
-                            } else {
-                                debugger;
                             }
                         } else if (input?.type === "ref") {
                             datas = datas.map(d => Object.assign({}, d, {[input.as]: input.from}))
@@ -100,7 +98,7 @@ const executeGraph = ({state, graph, out}) => {
                             state.get(input.from).forEach((d, i) =>{
                                 datas[i] = Object.assign({}, datas.length > i ? datas[i] : {}, input.as ? {[input.as]: d} : d);
                             });
-                        } else if(state.get(input.from).length > 0) {
+                        } else if (state.get(input.from).length > 0 || datas.length === 0 || datas[0][input.as] === undefined){
                             datas = datas.flatMap(current_data =>
                                 state.get(input.from).map(d => input.as 
                                     ? Object.assign({}, current_data, {[input.as]: d})
@@ -302,8 +300,6 @@ const updateSimulationNodes = (data) => {
         // .force(`center`, null)
         // .velocityDecay(.2)
         .alpha(0.4).restart();
-
-    return {};
 }
 
 const graphToSimulationNodes = (data) => {
@@ -371,7 +367,6 @@ const keydownSubscription = (dispatch, options) => {
 const expand_node = (data) => {
     const node_id = data.node_id;
     const node = data.display_graph.nodes.find(n => n.id === node_id)
-    console.log('expand');
 
     if (!(node && node.nodes)) {
         console.log('no nodes?');
@@ -469,6 +464,6 @@ const lib = {
 };
 
 
-const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: test_graph, display_graph_out: "out"}]]])
+const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: {nodes: DEFAULT_GRAPH.nodes.concat([]), edges: DEFAULT_GRAPH.edges.concat([])}, display_graph_out: "hyperapp_app"}]]])
 
 console.log(executeGraph({state, graph: DEFAULT_GRAPH, out: "hyperapp_app"})[0]);
