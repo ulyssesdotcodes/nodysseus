@@ -254,7 +254,7 @@ const bfs = (graph, level) => (edge) => [
 const d3simulation = () => {
     const simulation =
         lib.d3.forceSimulation()
-        .force('charge', lib.d3.forceManyBody().strength(-50).distanceMax(128))
+        .force('charge', lib.d3.forceManyBody().strength(-8).distanceMax(128))
         .force('collide', lib.d3.forceCollide(32))
         // .force('center', lib.d3
         // 	.forceCenter(window.innerWidth * 0.5, window.innerHeight * 0.5)
@@ -264,8 +264,9 @@ const d3simulation = () => {
             .distance(64)
             .strength(0.1)
             .id(n => n.node_id))
-        .force('link_direction', lib.d3.forceY().strength(1))
-        .force('link_siblings', lib.d3.forceX().strength(1))
+        .force('link_direction', lib.d3.forceY().strength(0.5))
+        // .force('link_siblings', lib.d3.forceX().strength(1))
+        .force('selected', lib.d3.forceRadial(0, window.innerWidth * 0.5, window.innerHeight * 0.5).strength(2))
         .velocityDecay(0.7)
         .alphaMin(.2);
 
@@ -277,29 +278,53 @@ const updateSimulationNodes = (data) => {
         [edge.to, level]
     ].concat(data.display_graph.edges.filter(e => e.from === edge.to).map(bfs(level + 1)).flat());
 
+    console.log('sleected')
+    console.log(data.selected[0]);
+
     const levels = calculateLevels(data.display_graph, data.display_graph_out);
+
+    // const selected_level = levels.levels.get(data.display_graph_out);
 
     data.simulation.nodes(data.nodes);
 
     data.simulation.force('links').links(data.links);
-    data.simulation.force('link_direction')
-        .y((n) => window.innerHeight * (0.075 + 0.85 * (levels.levels.get(n.node_id) ?? 0) / (levels.max - levels.min)) +
-            (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
-                64 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - (levels.nodes_by_level[levels.levels.get(n.node_id)].length - 1) * 64 * 0.5 :
-                0));
 
-    data.simulation.force('link_siblings')
-        .x((n) => window.innerWidth * 0.5 +
-            (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
-                (256 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - levels.nodes_by_level[levels.levels.get(n.node_id)].length * 256 * 0.5) :
-                window.innerWidth * 0.25));
+    // data.simulation.force('link_siblings')
+    //     .x((n) => window.innerWidth * 0.5 +
+    //         (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
+    //             (256 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - levels.nodes_by_level[levels.levels.get(n.node_id)].length * 256 * 0.5) :
+    //             window.innerWidth * 0.25));
+
+    const parents = new Map(data.nodes.map(n => [n.node_id, data.display_graph.edges.filter(e => e.to === n.node_id).map(e => e.from)]));
+    const children = new Map(data.nodes.map(n => [n.node_id, data.display_graph.edges.filter(e => e.from === n.node_id).map(e => e.to)]));
+
+    const selected = data.selected[0];
+    const selected_level = levels.levels.get(selected);
+
+    console.log(parents);
+
+    data.simulation.force('selected').radius(n => 
+        n.node_id === selected
+        ? 0 
+        : parents.get(n.node_id).includes(selected) || children.get(n.node_id).includes(selected)
+        ? window.innerHeight * 0.125
+        : window.innerHeight * 0.333
+    ).strength(n => n.node_id === selected || parents.get(n.node_id).includes(selected) || children.get(n.node_id).includes(selected) ? 10 : 2);
+
+    data.simulation.force('link_direction')
+        .y((n) => window.innerHeight * (
+            selected === n.node_id
+            ? 0.5 
+            : .5 + .125 * (levels.levels.get(n.node_id) - levels.levels.get(selected))
+        ));
+
 
     data.simulation
         // .force(`parent_${data.node_id}`, lib.d3.forceRadial(0, data.x, data.y).strength(n => n.parent === data.node_id ? 0.2 : 0))
         // .force(`not_parent_${data.node_id}`, lib.d3.forceRadial(512, data.x, data.y).strength(n => n.parent === data.node_id ? 0 : 0.2))
         // .force(`center`, null)
         // .velocityDecay(.2)
-        .alpha(0.4).restart();
+        .alpha(0.8).restart();
 }
 
 const graphToSimulationNodes = (data) => {
@@ -464,7 +489,7 @@ const lib = {
 };
 
 
-const display_graph = test_graph;
-const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: {nodes: display_graph.nodes.concat([]), edges: display_graph.edges.concat([])}, display_graph_out: "out"}]]])
+const display_graph = DEFAULT_GRAPH;
+const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: {nodes: display_graph.nodes.concat([]), edges: display_graph.edges.concat([])}, display_graph_out: "hyperapp_app"}]]])
 
 console.log(executeGraph({state, graph: DEFAULT_GRAPH, out: "hyperapp_app"})[0]);

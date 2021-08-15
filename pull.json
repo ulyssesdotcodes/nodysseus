@@ -460,7 +460,7 @@
                 "display_graph_out",
                 "update_sim_effect"
             ],
-            "script": "return lib.scripts.graphToSimulationNodes({graph, display_graph, nodes, links, selected, simulation, display_graph_out, update_sim_effect})"
+            "script": "return lib.scripts.graphToSimulationNodes({graph, display_graph, nodes, links, selected: [display_graph_out], simulation, display_graph_out, update_sim_effect})"
         },
         {
             "id": "update_nodes_in"
@@ -472,9 +472,10 @@
                 "nodes",
                 "display_graph",
                 "links",
-                "display_graph_out"
+                "display_graph_out",
+                "selected"
             ],
-            "script": "return lib.scripts.updateSimulationNodes({display_graph, simulation, nodes, links, display_graph_out})"
+            "script": "return lib.scripts.updateSimulationNodes({display_graph, simulation, nodes, links, display_graph_out, selected})"
         },
         {
             "id": "update_nodes_fn",
@@ -537,9 +538,10 @@
                 "nodes",
                 "links",
                 "simulation",
-                "display_graph_out"
+                "display_graph_out",
+                "selected"
             ],
-            "script": "return lib.scripts.updateSimulationNodes({display_graph, nodes, links, simulation, display_graph_out})"
+            "script": "return lib.scripts.updateSimulationNodes({display_graph, nodes, links, simulation, display_graph_out, selected})"
         },
         {
             "id": "update_sim_in"
@@ -683,9 +685,10 @@
                         "simulation",
                         "display_graph_out",
                         "graph",
-                        "update_sim_effect"
+                        "update_sim_effect",
+                        "selected"
                     ],
-                    "script": "return display_graph.nodes.length === nodes.length ? [] : lib.scripts.graphToSimulationNodes({display_graph, nodes, links, simulation, display_graph_out, graph, update_sim_effect, update: true})"
+                    "script": "return lib.scripts.graphToSimulationNodes({display_graph, nodes, links, simulation, display_graph_out, graph, update_sim_effect, selected})"
                 },
                 {
                     "id": "unmodified_graph"
@@ -696,8 +699,8 @@
                 },
                 {
                     "id": "out",
-                    "args": ["update_sim_effect", "display_graph", "graph", "nodes", "links", "selected", "simulation", "display_graph_out", "update"],
-                    "script": "const new_state = {display_graph, graph, nodes, links, selected, simulation, display_graph_out, update_sim_effect}; return [[new_state, ...(update ? [[update_sim_effect, new_state]] : [])]]"
+                    "args": ["update_sim_effect", "display_graph", "graph", "nodes", "links", "selected", "simulation", "display_graph_out"],
+                    "script": "const new_state = {display_graph, graph, nodes, links, selected, simulation, display_graph_out, update_sim_effect}; return [[new_state, ...([[update_sim_effect, new_state]])]]"
                 }
             ],
             "edges": [
@@ -881,6 +884,12 @@
                     "from": "select_node",
                     "to": "select",
                     "as": "item"
+                },
+                {
+                    "from": "select",
+                    "to": "graph_sim",
+                    "as": "selected",
+                    "type": "concat"
                 },
                 {
                     "from": "select",
