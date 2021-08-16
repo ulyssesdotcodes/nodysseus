@@ -928,7 +928,7 @@
     			},
     			{
     				from: "select",
-    				to: "graph_sim",
+    				to: "graph_to_sim",
     				as: "selected",
     				type: "concat"
     			},
@@ -1001,9 +1001,10 @@
     				id: "node_editor_children",
     				args: [
     					"nodes",
-    					"links"
+    					"links",
+    					"defs"
     				],
-    				script: "return [nodes.map(c => c.el).concat(links.map(l => l.el))]"
+    				script: "return [[defs.el].concat(nodes.map(c => c.el)).concat(links.map(l => l.el))]"
     			},
     			{
     				id: "node_layout",
@@ -1165,7 +1166,7 @@
     										as: "default"
     									},
     									{
-    										from: "get_type",
+    										from: "get_id",
     										to: "node_text",
     										as: "text"
     									},
@@ -1372,12 +1373,25 @@
     						script: "return link.as ?? '*'"
     					},
     					{
+    						id: "lerp_length",
+    						value: 24
+    					},
+    					{
+    						id: "line_lerp",
+    						args: [
+    							"source",
+    							"target",
+    							"lerp_length"
+    						],
+    						script: "const length_x = Math.abs(source.x - target.x); const length_y = Math.abs(source.y - target.y); const length = Math.sqrt(length_x * length_x + length_y * length_y); return {source: {x: source.x + (target.x - source.x) * lerp_length / length, y: source.y + (target.y - source.y) * lerp_length / length}, target: {x: source.x + (target.x - source.x) * (1 - (lerp_length / length)), y: source.y + (target.y - source.y) * (1 - (lerp_length / length))}}"
+    					},
+    					{
     						id: "line_props",
     						args: [
     							"source",
     							"target"
     						],
-    						script: "return ({x1: source.x, y1: source.y, x2: target.x, y2: target.y, stroke: 'black'})"
+    						script: "return ({x1: Math.floor(source.x), y1: Math.floor(source.y), x2: Math.floor(target.x), y2: Math.floor(target.y), stroke: 'black', 'marker-end': 'url(#arrow)'})"
     					},
     					{
     						id: "line_dom_type",
@@ -1410,7 +1424,16 @@
     					},
     					{
     						from: "get_link",
+    						to: "line_lerp"
+    					},
+    					{
+    						from: "line_lerp",
     						to: "line_props"
+    					},
+    					{
+    						from: "lerp_length",
+    						to: "line_lerp",
+    						as: "lerp_length"
     					},
     					{
     						from: "get_link",
@@ -1505,6 +1528,63 @@
     						as: "line"
     					}
     				]
+    			},
+    			{
+    				id: "line_end",
+    				type: "h"
+    			},
+    			{
+    				id: "line_end_props",
+    				value: {
+    					id: "arrow",
+    					refX: 8,
+    					refY: 4,
+    					markerWidth: 8,
+    					markerHeight: 8,
+    					markerUnits: "userSpaceOnUse",
+    					orient: "auto"
+    				}
+    			},
+    			{
+    				id: "arrow_path",
+    				type: "h"
+    			},
+    			{
+    				id: "arrow_path_props",
+    				value: {
+    					points: "1 1, 8 4, 1 8",
+    					stroke: "#000",
+    					strokeWidth: 2,
+    					fill: "none"
+    				}
+    			},
+    			{
+    				id: "arrow_path_dom_type",
+    				value: "polyline"
+    			},
+    			{
+    				id: "marker",
+    				value: "marker"
+    			},
+    			{
+    				id: "defs_children",
+    				args: [
+    					"arrow"
+    				],
+    				script: "return [[arrow]]"
+    			},
+    			{
+    				id: "defs",
+    				type: "h"
+    			},
+    			{
+    				id: "defs_dom_type",
+    				value: "defs"
+    			},
+    			{
+    				id: "defs_props",
+    				value: {
+    				}
     			}
     		],
     		edges: [
@@ -1566,6 +1646,57 @@
     				to: "node_editor_children",
     				as: "links",
     				type: "concat"
+    			},
+    			{
+    				from: "defs",
+    				to: "node_editor_children",
+    				as: "defs"
+    			},
+    			{
+    				from: "marker",
+    				to: "line_end",
+    				as: "dom_type"
+    			},
+    			{
+    				from: "arrow_path_props",
+    				to: "arrow_path",
+    				as: "props"
+    			},
+    			{
+    				from: "arrow_path_dom_type",
+    				to: "arrow_path",
+    				as: "dom_type"
+    			},
+    			{
+    				from: "arrow_path",
+    				to: "line_end",
+    				as: "children",
+    				type: "concat"
+    			},
+    			{
+    				from: "line_end_props",
+    				to: "line_end",
+    				as: "props"
+    			},
+    			{
+    				from: "line_end",
+    				to: "defs_children",
+    				as: "arrow"
+    			},
+    			{
+    				from: "defs_dom_type",
+    				to: "defs",
+    				as: "dom_type"
+    			},
+    			{
+    				from: "defs_props",
+    				to: "defs",
+    				as: "props"
+    			},
+    			{
+    				from: "defs_children",
+    				to: "defs",
+    				as: "children"
     			},
     			{
     				from: "node_editor_children",
@@ -20670,6 +20801,8 @@
             _nodeflag: true
         })]]);
 
+        const node_map = new Map(graph.nodes.map(n => [n.id, n]));
+
         while(!state.has(out)) {
             let new_state_hash = "";
             for(const k of state.keys()) {
@@ -20697,7 +20830,7 @@
                 for(const input of node.inputs) {
                     if(input?.type !== "ref" && !state.has(input.from)){
                         if(!active_nodes.has(input.from)) {
-                            const input_node = graph.nodes.find(n => n.id === input.from);
+                            const input_node = node_map.get(input.from);
 
                             if(input_node === undefined) {
                                 throw new Error(`Can't find input ${input.from} for node ${node.id}`);
@@ -20715,7 +20848,7 @@
 
                 if(node.type && !state.has(node.type)) {
                     if(!active_nodes.has(node.type)) {
-                        active_nodes.set(node.type, Object.assign({}, graph.nodes.find(n => n.id === node.type), {
+                        active_nodes.set(node.type, Object.assign({}, node_map.get(node.type), {
                             inputs: graph.edges.filter(e => e.to === node.type),
                             _nodetypeflag: true,
                             _nodeflag: true
@@ -20779,7 +20912,9 @@
                             });
 
                             for(const child of node_type.nodes){
-                                graph.nodes.push(Object.assign({}, child, {id: `${node.id}/${child.id}`}));
+                                const new_node = Object.assign({}, child, {id: `${node.id}/${child.id}`});
+                                graph.nodes.push(new_node);
+                                node_map.set(new_node.id, new_node);
                             }
 
                             for(const edge of node_type.edges){
@@ -20835,9 +20970,22 @@
         }
     };
 
-    const bfs = (graph, level) => (edge) => [
-        [edge.from, level]
-    ].concat(graph.edges.filter(e => e.to === edge.from).map(bfs(graph, level + 1)).flat());
+    const bfs = (graph, level) => (edge) => {
+        const output = [[edge.from, level]];
+
+        const next = bfs(graph, level + 1);
+
+        for(const e of graph.edges) {
+            if(e.to === edge.from) {
+                const next_results = next(e);
+                for(const next_result of next_results) {
+                    output.push(next_result);
+                }
+            }
+        }
+
+        return output;
+    };
 
     const d3simulation = () => {
         const simulation =
@@ -20886,8 +21034,6 @@
         const selected = data.selected[0];
         levels.levels.get(selected);
 
-        console.log(parents);
-
         data.simulation.force('selected').radius(n => 
             n.node_id === selected
             ? 0 
@@ -20909,7 +21055,7 @@
             // .force(`not_parent_${data.node_id}`, lib.d3.forceRadial(512, data.x, data.y).strength(n => n.parent === data.node_id ? 0 : 0.2))
             // .force(`center`, null)
             // .velocityDecay(.2)
-            .alpha(0.8).restart();
+            .alpha(0.4).restart();
     };
 
     const graphToSimulationNodes = (data) => {
@@ -20933,7 +21079,7 @@
         });
 
         const links = data.display_graph.edges
-            .filter(e => e.to !== "log" && e.to !=="debug")
+            .filter(e => e.to !== "log" && e.to !=="debug" && (data.selected.includes(e.to) || data.selected.includes(e.from)))
             .map(e => ({source: e.from, target: e.to, as: e.as, type: e.type}));
 
         return {

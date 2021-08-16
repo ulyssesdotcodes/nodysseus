@@ -79,7 +79,10 @@
                 },
                 {
                     "id": "out",
-                    "args": ["keep", "data"],
+                    "args": [
+                        "keep",
+                        "data"
+                    ],
                     "script": "return keep ? [data] : []"
                 }
             ],
@@ -105,7 +108,10 @@
                 },
                 {
                     "id": "out",
-                    "args": ["data", "path"],
+                    "args": [
+                        "data",
+                        "path"
+                    ],
                     "script": "const new_data = Object.assign({}, data); delete new_data[path]; return new_data;"
                 }
             ],
@@ -131,7 +137,10 @@
                 },
                 {
                     "id": "out",
-                    "args": ["data", "default_value"],
+                    "args": [
+                        "data",
+                        "default_value"
+                    ],
                     "script": "console.log(default_value); return data.length > 0 ? data : default_value"
                 }
             ],
@@ -509,7 +518,9 @@
                 },
                 {
                     "id": "out",
-                    "args": ["data"],
+                    "args": [
+                        "data"
+                    ],
                     "script": "return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: data.display_graph, out: data.display_graph_out}]]]"
                 }
             ],
@@ -601,7 +612,10 @@
                 },
                 {
                     "id": "select_node",
-                    "args": ["clicked", "node_id"],
+                    "args": [
+                        "clicked",
+                        "node_id"
+                    ],
                     "script": "return clicked.length > 0 ? [] : node_id"
                 },
                 {
@@ -622,12 +636,18 @@
                 },
                 {
                     "id": "is_not_clicked",
-                    "args": ["node_id", "selected_id"],
+                    "args": [
+                        "node_id",
+                        "selected_id"
+                    ],
                     "script": "return selected_id !== node_id"
                 },
                 {
                     "id": "is_clicked",
-                    "args": ["node_id", "selected_id"],
+                    "args": [
+                        "node_id",
+                        "selected_id"
+                    ],
                     "script": "return selected_id === node_id"
                 },
                 {
@@ -644,12 +664,17 @@
                 },
                 {
                     "id": "has_nodes",
-                    "args": ["node_id", "display_graph"],
+                    "args": [
+                        "node_id",
+                        "display_graph"
+                    ],
                     "script": "return !!display_graph.nodes.find(n => n.id === node_id).nodes"
                 },
                 {
                     "id": "is_in_or_out",
-                    "args": ["node_id"],
+                    "args": [
+                        "node_id"
+                    ],
                     "script": "return node_id.endsWith('/in') || node_id.endsWith('/out')"
                 },
                 {
@@ -699,7 +724,16 @@
                 },
                 {
                     "id": "out",
-                    "args": ["update_sim_effect", "display_graph", "graph", "nodes", "links", "selected", "simulation", "display_graph_out"],
+                    "args": [
+                        "update_sim_effect",
+                        "display_graph",
+                        "graph",
+                        "nodes",
+                        "links",
+                        "selected",
+                        "simulation",
+                        "display_graph_out"
+                    ],
                     "script": "const new_state = {display_graph, graph, nodes, links, selected, simulation, display_graph_out, update_sim_effect}; return [[new_state, ...([[update_sim_effect, new_state]])]]"
                 }
             ],
@@ -887,7 +921,7 @@
                 },
                 {
                     "from": "select",
-                    "to": "graph_sim",
+                    "to": "graph_to_sim",
                     "as": "selected",
                     "type": "concat"
                 },
@@ -959,9 +993,10 @@
                     "id": "node_editor_children",
                     "args": [
                         "nodes",
-                        "links"
+                        "links",
+                        "defs"
                     ],
-                    "script": "return [nodes.map(c => c.el).concat(links.map(l => l.el))]"
+                    "script": "return [[defs.el].concat(nodes.map(c => c.el)).concat(links.map(l => l.el))]"
                 },
                 {
                     "id": "node_layout",
@@ -1122,7 +1157,7 @@
                                             "as": "default"
                                         },
                                         {
-                                            "from": "get_type",
+                                            "from": "get_id",
                                             "to": "node_text",
                                             "as": "text"
                                         },
@@ -1329,12 +1364,21 @@
                             "script": "return link.as ?? '*'"
                         },
                         {
+                            "id": "lerp_length",
+                            "value": 24
+                        },
+                        {
+                            "id": "line_lerp",
+                            "args": ["source", "target", "lerp_length"],
+                            "script": "const length_x = Math.abs(source.x - target.x); const length_y = Math.abs(source.y - target.y); const length = Math.sqrt(length_x * length_x + length_y * length_y); return {source: {x: source.x + (target.x - source.x) * lerp_length / length, y: source.y + (target.y - source.y) * lerp_length / length}, target: {x: source.x + (target.x - source.x) * (1 - (lerp_length / length)), y: source.y + (target.y - source.y) * (1 - (lerp_length / length))}}"
+                        },
+                        {
                             "id": "line_props",
                             "args": [
                                 "source",
                                 "target"
                             ],
-                            "script": "return ({x1: source.x, y1: source.y, x2: target.x, y2: target.y, stroke: 'black'})"
+                            "script": "return ({x1: Math.floor(source.x), y1: Math.floor(source.y), x2: Math.floor(target.x), y2: Math.floor(target.y), stroke: 'black', 'marker-end': 'url(#arrow)'})"
                         },
                         {
                             "id": "line_dom_type",
@@ -1366,7 +1410,16 @@
                         },
                         {
                             "from": "get_link",
+                            "to": "line_lerp"
+                        },
+                        {
+                            "from": "line_lerp",
                             "to": "line_props"
+                        },
+                        {
+                            "from": "lerp_length",
+                            "to": "line_lerp",
+                            "as": "lerp_length"
                         },
                         {
                             "from": "get_link",
@@ -1461,6 +1514,62 @@
                             "as": "line"
                         }
                     ]
+                },
+                {
+                    "id": "line_end",
+                    "type": "h"
+                },
+                {
+                    "id": "line_end_props",
+                    "value": {
+                        "id": "arrow",
+                        "refX": 8,
+                        "refY": 4,
+                        "markerWidth": 8,
+                        "markerHeight": 8,
+                        "markerUnits": "userSpaceOnUse",
+                        "orient": "auto"
+                    }
+                },
+                {
+                    "id": "arrow_path",
+                    "type": "h"
+                },
+                {
+                    "id": "arrow_path_props",
+                    "value": {
+                        "points": "1 1, 8 4, 1 8",
+                        "stroke": "#000",
+                        "strokeWidth": 2,
+                        "fill": "none"
+                    }
+                },
+                {
+                    "id": "arrow_path_dom_type",
+                    "value": "polyline"
+                },
+                {
+                    "id": "marker",
+                    "value": "marker"
+                },
+                {
+                    "id": "defs_children",
+                    "args": [
+                        "arrow"
+                    ],
+                    "script": "return [[arrow]]"
+                },
+                {
+                    "id": "defs",
+                    "type": "h"
+                },
+                {
+                    "id": "defs_dom_type",
+                    "value": "defs"
+                },
+                {
+                    "id": "defs_props",
+                    "value": {}
                 }
             ],
             "edges": [
@@ -1522,6 +1631,57 @@
                     "to": "node_editor_children",
                     "as": "links",
                     "type": "concat"
+                },
+                {
+                    "from": "defs",
+                    "to": "node_editor_children",
+                    "as": "defs"
+                },
+                {
+                    "from": "marker",
+                    "to": "line_end",
+                    "as": "dom_type"
+                },
+                {
+                    "from": "arrow_path_props",
+                    "to": "arrow_path",
+                    "as": "props"
+                },
+                {
+                    "from": "arrow_path_dom_type",
+                    "to": "arrow_path",
+                    "as": "dom_type"
+                },
+                {
+                    "from": "arrow_path",
+                    "to": "line_end",
+                    "as": "children",
+                    "type": "concat"
+                },
+                {
+                    "from": "line_end_props",
+                    "to": "line_end",
+                    "as": "props"
+                },
+                {
+                    "from": "line_end",
+                    "to": "defs_children",
+                    "as": "arrow"
+                },
+                {
+                    "from": "defs_dom_type",
+                    "to": "defs",
+                    "as": "dom_type"
+                },
+                {
+                    "from": "defs_props",
+                    "to": "defs",
+                    "as": "props"
+                },
+                {
+                    "from": "defs_children",
+                    "to": "defs",
+                    "as": "children"
                 },
                 {
                     "from": "node_editor_children",

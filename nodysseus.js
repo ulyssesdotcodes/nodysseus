@@ -13,6 +13,8 @@ const executeGraph = ({state, graph, out}) => {
         _nodeflag: true
     })]]);
 
+    const node_map = new Map(graph.nodes.map(n => [n.id, n]));
+
     while(!state.has(out)) {
         let new_state_hash = "";
         for(const k of state.keys()) {
@@ -40,7 +42,7 @@ const executeGraph = ({state, graph, out}) => {
             for(const input of node.inputs) {
                 if(input?.type !== "ref" && !state.has(input.from)){
                     if(!active_nodes.has(input.from)) {
-                        const input_node = graph.nodes.find(n => n.id === input.from);
+                        const input_node = node_map.get(input.from);
 
                         if(input_node === undefined) {
                             throw new Error(`Can't find input ${input.from} for node ${node.id}`);
@@ -58,7 +60,7 @@ const executeGraph = ({state, graph, out}) => {
 
             if(node.type && !state.has(node.type)) {
                 if(!active_nodes.has(node.type)) {
-                    active_nodes.set(node.type, Object.assign({}, graph.nodes.find(n => n.id === node.type), {
+                    active_nodes.set(node.type, Object.assign({}, node_map.get(node.type), {
                         inputs: graph.edges.filter(e => e.to === node.type),
                         _nodetypeflag: true,
                         _nodeflag: true
@@ -122,7 +124,9 @@ const executeGraph = ({state, graph, out}) => {
                         })
 
                         for(const child of node_type.nodes){
-                            graph.nodes.push(Object.assign({}, child, {id: `${node.id}/${child.id}`}))
+                            const new_node = Object.assign({}, child, {id: `${node.id}/${child.id}`});
+                            graph.nodes.push(new_node)
+                            node_map.set(new_node.id, new_node);
                         }
 
                         for(const edge of node_type.edges){
@@ -247,9 +251,22 @@ const calculateLevels = (graph, out) => {
     }
 }
 
-const bfs = (graph, level) => (edge) => [
-    [edge.from, level]
-].concat(graph.edges.filter(e => e.to === edge.from).map(bfs(graph, level + 1)).flat());
+const bfs = (graph, level) => (edge) => {
+    const output = [[edge.from, level]];
+
+    const next = bfs(graph, level + 1);
+
+    for(const e of graph.edges) {
+        if(e.to === edge.from) {
+            const next_results = next(e);
+            for(const next_result of next_results) {
+                output.push(next_result);
+            }
+        }
+    }
+
+    return output;
+};
 
 const d3simulation = () => {
     const simulation =
@@ -301,8 +318,6 @@ const updateSimulationNodes = (data) => {
     const selected = data.selected[0];
     const selected_level = levels.levels.get(selected);
 
-    console.log(parents);
-
     data.simulation.force('selected').radius(n => 
         n.node_id === selected
         ? 0 
@@ -324,7 +339,7 @@ const updateSimulationNodes = (data) => {
         // .force(`not_parent_${data.node_id}`, lib.d3.forceRadial(512, data.x, data.y).strength(n => n.parent === data.node_id ? 0 : 0.2))
         // .force(`center`, null)
         // .velocityDecay(.2)
-        .alpha(0.8).restart();
+        .alpha(0.4).restart();
 }
 
 const graphToSimulationNodes = (data) => {
@@ -348,7 +363,7 @@ const graphToSimulationNodes = (data) => {
     })
 
     const links = data.display_graph.edges
-        .filter(e => e.to !== "log" && e.to !=="debug")
+        .filter(e => e.to !== "log" && e.to !=="debug" && (data.selected.includes(e.to) || data.selected.includes(e.from)))
         .map(e => ({source: e.from, target: e.to, as: e.as, type: e.type}));
 
     return {
