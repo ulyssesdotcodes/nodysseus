@@ -141,7 +141,7 @@
                         "data",
                         "default_value"
                     ],
-                    "script": "console.log(default_value); return data.length > 0 ? data : default_value"
+                    "script": "return data.length > 0 ? data : default_value"
                 }
             ],
             "edges": [
@@ -507,38 +507,73 @@
             "id": "onkey_fn_body",
             "nodes": [
                 {
-                    "id": "merge_args",
+                    "id": "in"
+                },
+                {
+                    "id": "key_event",
                     "args": [
                         "args"
                     ],
-                    "script": "return Object.assign({}, args[0], {key: args[1].key, code: args[1].code})"
+                    "script": "return args[1]"
+                },
+                {
+                    "id": "state",
+                    "args": [
+                        "args"
+                    ],
+                    "script": "return args[0]"
                 },
                 {
                     "id": "find_selected"
                 },
                 {
+                    "id": "save",
+                    "args": ["key", "ctrlKey", "preventDefault", "display_graph"],
+                    "script": "return key === 's' && ctrlKey === true ? (preventDefault(), () => { localStorage.setItem('display_graph', JSON.stringify(display_graph)); localStorage.setItem('display_graph_' + performance.now(), JSON.stringify(display_graph));}) : () => {}"
+                },
+                {
                     "id": "out",
                     "args": [
-                        "data"
+                        "data",
+                        "save"
                     ],
-                    "script": "return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: data.display_graph, out: data.display_graph_out}]]]"
+                    "script": "return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: data.display_graph, out: data.display_graph_out}], [() => save(), {}]]]"
                 }
             ],
             "edges": [
                 {
                     "from": "in",
-                    "to": "merge_args",
+                    "to": "key_event",
                     "as": "args",
                     "type": "concat"
                 },
                 {
-                    "from": "merge_args",
-                    "to": "find_selected",
+                    "from": "in",
+                    "to": "state",
+                    "as": "args",
+                    "type": "concat"
+                },
+                {
+                    "from": "key_event",
+                    "to": "ctrl_s"
+                },
+                {
+                    "from": "state",
+                    "to": "save"
+                },
+                {
+                    "from": "key_event",
+                    "to": "save"
+                },
+                {
+                    "from": "state",
+                    "to": "out",
                     "as": "data"
                 },
                 {
-                    "from": "find_selected",
-                    "to": "out"
+                    "from": "save",
+                    "to": "out",
+                    "as": "save"
                 }
             ]
         },
@@ -684,6 +719,16 @@
                 {
                     "id": "contractable",
                     "type": "filter"
+                },
+                {
+                    "id": "expandable_id",
+                    "args": ["node_id"],
+                    "script": "return node_id + '/out'"
+                },
+                {
+                    "id": "contractable_id",
+                    "args": ["node_id"],
+                    "script": "return node_id.substring(0, node_id.lastIndexOf('/'))"
                 },
                 {
                     "id": "expand",
@@ -833,7 +878,8 @@
                 },
                 {
                     "from": "clicked",
-                    "to": "contractable"
+                    "to": "contractable",
+                    "as": "data"
                 },
                 {
                     "from": "merge_args",
@@ -852,6 +898,27 @@
                 {
                     "from": "expandable",
                     "to": "expand"
+                },
+                {
+                    "from": "expandable",
+                    "to": "expandable_id"
+                },
+                {
+                    "from": "contractable",
+                    "to": "contractable_id",
+                    "as": "node_id"
+                },
+                {
+                    "from": "expandable_id",
+                    "to": "graph_to_sim",
+                    "as": "selected",
+                    "type": "concat"
+                },
+                {
+                    "from": "contractable_id",
+                    "to": "graph_to_sim",
+                    "as": "selected",
+                    "type": "concat"
                 },
                 {
                     "from": "contractable",
@@ -1318,7 +1385,7 @@
                                 "target",
                                 "line_position"
                             ],
-                            "script": "return ({x: line_position * (target.x - source.x) + source.x + 32, y: line_position * (target.y - source.y) + source.y })"
+                            "script": "return ({x: line_position * (target.x - source.x) + source.x + 16, y: line_position * (target.y - source.y) + source.y })"
                         },
                         {
                             "id": "edge_info_line_position",

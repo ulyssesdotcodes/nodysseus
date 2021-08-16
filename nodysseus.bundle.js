@@ -143,7 +143,7 @@
     					"data",
     					"default_value"
     				],
-    				script: "console.log(default_value); return data.length > 0 ? data : default_value"
+    				script: "return data.length > 0 ? data : default_value"
     			}
     		],
     		edges: [
@@ -513,38 +513,78 @@
     		id: "onkey_fn_body",
     		nodes: [
     			{
-    				id: "merge_args",
+    				id: "in"
+    			},
+    			{
+    				id: "key_event",
     				args: [
     					"args"
     				],
-    				script: "return Object.assign({}, args[0], {key: args[1].key, code: args[1].code})"
+    				script: "return args[1]"
+    			},
+    			{
+    				id: "state",
+    				args: [
+    					"args"
+    				],
+    				script: "return args[0]"
     			},
     			{
     				id: "find_selected"
     			},
     			{
+    				id: "save",
+    				args: [
+    					"key",
+    					"ctrlKey",
+    					"preventDefault",
+    					"display_graph"
+    				],
+    				script: "return key === 's' && ctrlKey === true ? (preventDefault(), () => { localStorage.setItem('display_graph', JSON.stringify(display_graph)); localStorage.setItem('display_graph_' + performance.now(), JSON.stringify(display_graph));}) : () => {}"
+    			},
+    			{
     				id: "out",
     				args: [
-    					"data"
+    					"data",
+    					"save"
     				],
-    				script: "return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: data.display_graph, out: data.display_graph_out}]]]"
+    				script: "return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: data.display_graph, out: data.display_graph_out}], [() => save(), {}]]]"
     			}
     		],
     		edges: [
     			{
     				from: "in",
-    				to: "merge_args",
+    				to: "key_event",
     				as: "args",
     				type: "concat"
     			},
     			{
-    				from: "merge_args",
-    				to: "find_selected",
+    				from: "in",
+    				to: "state",
+    				as: "args",
+    				type: "concat"
+    			},
+    			{
+    				from: "key_event",
+    				to: "ctrl_s"
+    			},
+    			{
+    				from: "state",
+    				to: "save"
+    			},
+    			{
+    				from: "key_event",
+    				to: "save"
+    			},
+    			{
+    				from: "state",
+    				to: "out",
     				as: "data"
     			},
     			{
-    				from: "find_selected",
-    				to: "out"
+    				from: "save",
+    				to: "out",
+    				as: "save"
     			}
     		]
     	},
@@ -691,6 +731,20 @@
     			{
     				id: "contractable",
     				type: "filter"
+    			},
+    			{
+    				id: "expandable_id",
+    				args: [
+    					"node_id"
+    				],
+    				script: "return node_id + '/out'"
+    			},
+    			{
+    				id: "contractable_id",
+    				args: [
+    					"node_id"
+    				],
+    				script: "return node_id.substring(0, node_id.lastIndexOf('/'))"
     			},
     			{
     				id: "expand",
@@ -840,7 +894,8 @@
     			},
     			{
     				from: "clicked",
-    				to: "contractable"
+    				to: "contractable",
+    				as: "data"
     			},
     			{
     				from: "merge_args",
@@ -859,6 +914,27 @@
     			{
     				from: "expandable",
     				to: "expand"
+    			},
+    			{
+    				from: "expandable",
+    				to: "expandable_id"
+    			},
+    			{
+    				from: "contractable",
+    				to: "contractable_id",
+    				as: "node_id"
+    			},
+    			{
+    				from: "expandable_id",
+    				to: "graph_to_sim",
+    				as: "selected",
+    				type: "concat"
+    			},
+    			{
+    				from: "contractable_id",
+    				to: "graph_to_sim",
+    				as: "selected",
+    				type: "concat"
     			},
     			{
     				from: "contractable",
@@ -1327,7 +1403,7 @@
     							"target",
     							"line_position"
     						],
-    						script: "return ({x: line_position * (target.x - source.x) + source.x + 32, y: line_position * (target.y - source.y) + source.y })"
+    						script: "return ({x: line_position * (target.x - source.x) + source.x + 16, y: line_position * (target.y - source.y) + source.y })"
     					},
     					{
     						id: "edge_info_line_position",
@@ -21001,7 +21077,7 @@
                 .strength(0.1)
                 .id(n => n.node_id))
             .force('link_direction', lib.d3.forceY().strength(0.5))
-            // .force('link_siblings', lib.d3.forceX().strength(1))
+            .force('link_siblings', lib.d3.forceX().strength(1))
             .force('selected', lib.d3.forceRadial(0, window.innerWidth * 0.5, window.innerHeight * 0.5).strength(2))
             .velocityDecay(0.7)
             .alphaMin(.2);
@@ -21011,9 +21087,6 @@
 
     const updateSimulationNodes = (data) => {
 
-        console.log('sleected');
-        console.log(data.selected[0]);
-
         const levels = calculateLevels(data.display_graph, data.display_graph_out);
 
         // const selected_level = levels.levels.get(data.display_graph_out);
@@ -21022,11 +21095,11 @@
 
         data.simulation.force('links').links(data.links);
 
-        // data.simulation.force('link_siblings')
-        //     .x((n) => window.innerWidth * 0.5 +
-        //         (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
-        //             (256 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - levels.nodes_by_level[levels.levels.get(n.node_id)].length * 256 * 0.5) :
-        //             window.innerWidth * 0.25));
+        data.simulation.force('link_siblings')
+            .x((n) => window.innerWidth * 0.5 +
+                (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
+                    (256 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - levels.nodes_by_level[levels.levels.get(n.node_id)].length * 256 * 0.5) :
+                    window.innerWidth * 0.25));
 
         const parents = new Map(data.nodes.map(n => [n.node_id, data.display_graph.edges.filter(e => e.to === n.node_id).map(e => e.from)]));
         const children = new Map(data.nodes.map(n => [n.node_id, data.display_graph.edges.filter(e => e.from === n.node_id).map(e => e.to)]));
@@ -21037,10 +21110,10 @@
         data.simulation.force('selected').radius(n => 
             n.node_id === selected
             ? 0 
-            : parents.get(n.node_id).includes(selected) || children.get(n.node_id).includes(selected)
+            : parents.get(n.node_id)?.includes(selected) || children.get(n.node_id)?.includes(selected)
             ? window.innerHeight * 0.125
             : window.innerHeight * 0.333
-        ).strength(n => n.node_id === selected || parents.get(n.node_id).includes(selected) || children.get(n.node_id).includes(selected) ? 10 : 2);
+        ).strength(n => n.node_id === selected ? 10 : 0);
 
         data.simulation.force('link_direction')
             .y((n) => window.innerHeight * (
@@ -21048,6 +21121,9 @@
                 ? 0.5 
                 : .5 + .125 * (levels.levels.get(n.node_id) - levels.levels.get(selected))
             ));
+
+
+        data.simulation.force('collide').radius(n => n.node_id === selected ? 64 : 32);
 
 
         data.simulation
@@ -21079,7 +21155,7 @@
         });
 
         const links = data.display_graph.edges
-            .filter(e => e.to !== "log" && e.to !=="debug" && (data.selected.includes(e.to) || data.selected.includes(e.from)))
+            .filter(e => e.to !== "log" && e.to !=="debug")
             .map(e => ({source: e.from, target: e.to, as: e.as, type: e.type}));
 
         return {
@@ -21115,7 +21191,13 @@
     };
 
     const keydownSubscription = (dispatch, options) => { 
-        const handler = ev => { requestAnimationFrame(() => dispatch(options.action, {key: ev.key, code: ev.code}));};
+        const handler = ev => { 
+            if(ev.key === "s" && ev.ctrlKey) {
+                ev.preventDefault();
+            }
+
+            requestAnimationFrame(() => dispatch(options.action, {key: ev.key, code: ev.code, preventDefault: () => ev.preventDefault(), ctrlKey: ev.ctrlKey, shiftKey: ev.shiftKey, metaKey: ev.metaKey}));
+        };
         addEventListener('keydown', handler); 
         return () => removeEventListener('keydown', handler);
     };
@@ -21220,8 +21302,8 @@
     };
 
 
-    const display_graph = DEFAULT_GRAPH;
-    const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: {nodes: display_graph.nodes.concat([]), edges: display_graph.edges.concat([])}, display_graph_out: "hyperapp_app"}]]]);
+    const display_graph = JSON.parse(localStorage.getItem("display_graph"));
+    const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: {nodes: display_graph.nodes.concat([]), edges: display_graph.edges.concat([])}, display_graph_out: "out"}]]]);
 
     console.log(executeGraph({state, graph: DEFAULT_GRAPH, out: "hyperapp_app"})[0]);
 
