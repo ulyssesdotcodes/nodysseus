@@ -175,18 +175,22 @@ const executeGraph = ({state, graph, out}) => {
                             node.script
                             );
                         const state_datas = []
-                        let args;
+                        const args = [lib, node];
+                        let fn_args = [];
                         for(let i = 0; i < datas.length; i++) {
-                            args = node.args.map(arg => {
+                            fn_args = args.concat([]);
+                            node.args.forEach(arg => {
                                 if(datas[i][arg] === undefined){
                                     console.log(state);
                                     console.log(node);
                                     console.log(d);
                                     throw new Error(`${arg} not found`);
                                 }
-                                return datas[i][arg]
+
+                                fn_args.push(datas[i][arg]);
                             });
-                            const results = fn(lib, node, ...args);
+
+                            const results = fn.apply(null, fn_args);
                             Array.isArray(results) ? results.forEach(res => state_datas.push(res)) : state_datas.push(results);
                         }
                         state.set(node.id, state_datas);
@@ -421,7 +425,7 @@ const d3subscription = simulation => dispatch => {
     const abort_signal = {stop: false};
     simulation.stop();
     const tick = () => {
-        if(simulation.alpha() > simulation.alphaTarget()) {
+        if(simulation.alpha() > simulation.alphaMin()) {
             simulation.tick();
             dispatch(s => ({ 
                 ...s, 
