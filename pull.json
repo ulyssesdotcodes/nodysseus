@@ -228,7 +228,7 @@
                         "out_node",
                         "graph"
                     ],
-                    "script": "return (...args) => (lib.no.executeGraph({state: new Map([[in_node, args]]), graph: {nodes: (args[0].graph ?? graph).nodes.concat([]), edges: (args[0].graph ?? graph).edges.concat([])}, out: out_node }))"
+                    "script": "return (...args) => (lib.no.executeGraph({state: new Map([[in_node, args]]), graph, out: out_node }))"
                 }
             ],
             "edges": [
@@ -531,10 +531,55 @@
                     "args": [
                         "key",
                         "ctrlKey",
-                        "preventDefault",
                         "display_graph"
                     ],
-                    "script": "return key === 's' && ctrlKey === true ? (preventDefault(), () => { localStorage.setItem('display_graph', JSON.stringify(display_graph)); localStorage.setItem('display_graph_' + performance.now(), JSON.stringify(display_graph));}) : () => {}"
+                    "script": "return key === 's' && ctrlKey === true ? () => { localStorage.setItem('display_graph', JSON.stringify(display_graph)); localStorage.setItem('display_graph_' + performance.now(), JSON.stringify(display_graph));} : () => {}"
+                },
+                {
+                    "id": "down",
+                    "args": [
+                        "key",
+                        "selected",
+                        "display_graph"
+                    ],
+                    "script": "const next_node_edge = display_graph.edges.find(e => e.from === selected[0]); return (key === 'j' || key === 'ArrowDown') && next_node_edge ? next_node_edge.to : []"
+                },
+                {
+                    "id": "up",
+                    "args": [
+                        "key",
+                        "selected",
+                        "display_graph"
+                    ],
+                    "script": "const next_node_edge = display_graph.edges.find(e => e.to === selected[0]); return (key === 'k' || key === 'ArrowUp') && next_node_edge ? next_node_edge.from : []"
+                },
+                {
+                    "id": "left",
+                    "args": [
+                        "key",
+                        "selected",
+                        "display_graph",
+                        "nodes"
+                    ],
+                    "script": "if(!(key === 'h' || key === 'ArrowLeft')){ return [] } const current_node = nodes.find(n => n.node_id === selected[0]); const parent_id = display_graph.edges.find(e => e.to === selected[0])?.from; const child_id = display_graph.edges.find(e => e.from === selected[0])?.to; const siblings = display_graph.edges.filter(e => e.from === parent_id && e.to !== selected[0]).map(e => e.to).concat(display_graph.edges.filter(e => e.to === child_id && e.from !== selected[0]).map(e => e.from)); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = sibling_node.x - current_node.x; dist[1] = xdist < 0 && xdist < dist[0] ? sibling_node : dist[1]; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+                },
+                {
+                    "id": "right",
+                    "args": [
+                        "key",
+                        "selected",
+                        "display_graph",
+                        "nodes"
+                    ],
+                    "script": "if(!(key === 'l' || key === 'ArrowRight')){ return [] } const current_node = nodes.find(n => n.node_id === selected[0]); const parent_id = display_graph.edges.find(e => e.to === selected[0])?.from; const child_id = display_graph.edges.find(e => e.from === selected[0])?.to; const siblings = display_graph.edges.filter(e => e.from === parent_id && e.to !== selected[0]).map(e => e.to).concat(display_graph.edges.filter(e => e.to === child_id && e.from !== selected[0]).map(e => e.from)); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = sibling_node.x - current_node.x; dist[1] = xdist > 0 && xdist < dist[0] ? sibling_node : dist[1]; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+                },
+                {
+                    "id": "new_state"
+                },
+                {
+                    "id": "graph_sim",
+                    "args": ["data"],
+                    "script": "return lib.scripts.graphToSimulationNodes(data);"
                 },
                 {
                     "id": "out",
@@ -542,7 +587,7 @@
                         "data",
                         "save"
                     ],
-                    "script": "return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: data.display_graph, out: data.display_graph_out}], [() => save(), {}]]]"
+                    "script": "return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: data.display_graph, out: data.display_graph_out}], [() => save(), {}], [data.update_sim_effect, data]]]"
                 }
             ],
             "edges": [
@@ -567,11 +612,76 @@
                     "to": "save"
                 },
                 {
+                    "from": "state",
+                    "to": "down"
+                },
+                {
+                    "from": "key_event",
+                    "to": "down"
+                },
+                {
+                    "from": "state",
+                    "to": "up"
+                },
+                {
+                    "from": "key_event",
+                    "to": "up"
+                },
+                {
+                    "from": "state",
+                    "to": "left"
+                },
+                {
+                    "from": "key_event",
+                    "to": "left"
+                },
+                {
+                    "from": "state",
+                    "to": "right"
+                },
+                {
+                    "from": "key_event",
+                    "to": "right"
+                },
+                {
+                    "from": "state",
+                    "to": "new_state"
+                },
+                {
                     "from": "key_event",
                     "to": "save"
                 },
                 {
-                    "from": "state",
+                    "from": "down",
+                    "to": "new_state",
+                    "as": "selected",
+                    "type": "concat"
+                },
+                {
+                    "from": "up",
+                    "to": "new_state",
+                    "as": "selected",
+                    "type": "concat"
+                },
+                {
+                    "from": "left",
+                    "to": "new_state",
+                    "as": "selected",
+                    "type": "concat"
+                },
+                {
+                    "from": "right",
+                    "to": "new_state",
+                    "as": "selected",
+                    "type": "concat"
+                },
+                {
+                    "from": "new_state",
+                    "to": "graph_sim",
+                    "as": "data"
+                },
+                {
+                    "from": "graph_sim",
                     "to": "out",
                     "as": "data"
                 },
@@ -1227,7 +1337,7 @@
                                 "y",
                                 "onclick_node_fn"
                             ],
-                            "script": "return ({ x: x - 20, y: y - 20, id: node_id, onmousedown: (_, payload) => [onclick_node_fn, {x: payload.x, y: payload.y, node_id, selected: []}], width: 256, height: 64})"
+                            "script": "return ({ x: x - 20, y: y - 20, id: node_id, onmousedown: (_, payload) => [onclick_node_fn, {x: payload.x, y: payload.y, node_id, selected: [], ty: 'down'}], width: 256, height: 64})"
                         },
                         {
                             "id": "children",

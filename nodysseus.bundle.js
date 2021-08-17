@@ -230,7 +230,7 @@
     					"out_node",
     					"graph"
     				],
-    				script: "return (...args) => (lib.no.executeGraph({state: new Map([[in_node, args]]), graph: {nodes: (args[0].graph ?? graph).nodes.concat([]), edges: (args[0].graph ?? graph).edges.concat([])}, out: out_node }))"
+    				script: "return (...args) => (lib.no.executeGraph({state: new Map([[in_node, args]]), graph, out: out_node }))"
     			}
     		],
     		edges: [
@@ -537,10 +537,57 @@
     				args: [
     					"key",
     					"ctrlKey",
-    					"preventDefault",
     					"display_graph"
     				],
-    				script: "return key === 's' && ctrlKey === true ? (preventDefault(), () => { localStorage.setItem('display_graph', JSON.stringify(display_graph)); localStorage.setItem('display_graph_' + performance.now(), JSON.stringify(display_graph));}) : () => {}"
+    				script: "return key === 's' && ctrlKey === true ? () => { localStorage.setItem('display_graph', JSON.stringify(display_graph)); localStorage.setItem('display_graph_' + performance.now(), JSON.stringify(display_graph));} : () => {}"
+    			},
+    			{
+    				id: "down",
+    				args: [
+    					"key",
+    					"selected",
+    					"display_graph"
+    				],
+    				script: "const next_node_edge = display_graph.edges.find(e => e.from === selected[0]); return (key === 'j' || key === 'ArrowDown') && next_node_edge ? next_node_edge.to : []"
+    			},
+    			{
+    				id: "up",
+    				args: [
+    					"key",
+    					"selected",
+    					"display_graph"
+    				],
+    				script: "const next_node_edge = display_graph.edges.find(e => e.to === selected[0]); return (key === 'k' || key === 'ArrowUp') && next_node_edge ? next_node_edge.from : []"
+    			},
+    			{
+    				id: "left",
+    				args: [
+    					"key",
+    					"selected",
+    					"display_graph",
+    					"nodes"
+    				],
+    				script: "if(!(key === 'h' || key === 'ArrowLeft')){ return [] } const current_node = nodes.find(n => n.node_id === selected[0]); const parent_id = display_graph.edges.find(e => e.to === selected[0])?.from; const child_id = display_graph.edges.find(e => e.from === selected[0])?.to; const siblings = display_graph.edges.filter(e => e.from === parent_id && e.to !== selected[0]).map(e => e.to).concat(display_graph.edges.filter(e => e.to === child_id && e.from !== selected[0]).map(e => e.from)); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = sibling_node.x - current_node.x; dist[1] = xdist < 0 && xdist < dist[0] ? sibling_node : dist[1]; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+    			},
+    			{
+    				id: "right",
+    				args: [
+    					"key",
+    					"selected",
+    					"display_graph",
+    					"nodes"
+    				],
+    				script: "if(!(key === 'l' || key === 'ArrowRight')){ return [] } const current_node = nodes.find(n => n.node_id === selected[0]); const parent_id = display_graph.edges.find(e => e.to === selected[0])?.from; const child_id = display_graph.edges.find(e => e.from === selected[0])?.to; const siblings = display_graph.edges.filter(e => e.from === parent_id && e.to !== selected[0]).map(e => e.to).concat(display_graph.edges.filter(e => e.to === child_id && e.from !== selected[0]).map(e => e.from)); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = sibling_node.x - current_node.x; dist[1] = xdist > 0 && xdist < dist[0] ? sibling_node : dist[1]; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+    			},
+    			{
+    				id: "new_state"
+    			},
+    			{
+    				id: "graph_sim",
+    				args: [
+    					"data"
+    				],
+    				script: "return lib.scripts.graphToSimulationNodes(data);"
     			},
     			{
     				id: "out",
@@ -548,7 +595,7 @@
     					"data",
     					"save"
     				],
-    				script: "return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: data.display_graph, out: data.display_graph_out}], [() => save(), {}]]]"
+    				script: "return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: data.display_graph, out: data.display_graph_out}], [() => save(), {}], [data.update_sim_effect, data]]]"
     			}
     		],
     		edges: [
@@ -573,11 +620,76 @@
     				to: "save"
     			},
     			{
+    				from: "state",
+    				to: "down"
+    			},
+    			{
+    				from: "key_event",
+    				to: "down"
+    			},
+    			{
+    				from: "state",
+    				to: "up"
+    			},
+    			{
+    				from: "key_event",
+    				to: "up"
+    			},
+    			{
+    				from: "state",
+    				to: "left"
+    			},
+    			{
+    				from: "key_event",
+    				to: "left"
+    			},
+    			{
+    				from: "state",
+    				to: "right"
+    			},
+    			{
+    				from: "key_event",
+    				to: "right"
+    			},
+    			{
+    				from: "state",
+    				to: "new_state"
+    			},
+    			{
     				from: "key_event",
     				to: "save"
     			},
     			{
-    				from: "state",
+    				from: "down",
+    				to: "new_state",
+    				as: "selected",
+    				type: "concat"
+    			},
+    			{
+    				from: "up",
+    				to: "new_state",
+    				as: "selected",
+    				type: "concat"
+    			},
+    			{
+    				from: "left",
+    				to: "new_state",
+    				as: "selected",
+    				type: "concat"
+    			},
+    			{
+    				from: "right",
+    				to: "new_state",
+    				as: "selected",
+    				type: "concat"
+    			},
+    			{
+    				from: "new_state",
+    				to: "graph_sim",
+    				as: "data"
+    			},
+    			{
+    				from: "graph_sim",
     				to: "out",
     				as: "data"
     			},
@@ -1234,7 +1346,7 @@
     							"y",
     							"onclick_node_fn"
     						],
-    						script: "return ({ x: x - 20, y: y - 20, id: node_id, onmousedown: (_, payload) => [onclick_node_fn, {x: payload.x, y: payload.y, node_id, selected: []}], width: 256, height: 64})"
+    						script: "return ({ x: x - 20, y: y - 20, id: node_id, onmousedown: (_, payload) => [onclick_node_fn, {x: payload.x, y: payload.y, node_id, selected: [], ty: 'down'}], width: 256, height: 64})"
     					},
     					{
     						id: "children",
@@ -71106,8 +71218,9 @@
     });
 
     const executeGraph = ({state, graph, out}) => {
-        let state_hash = "";
-        let active_nodes_hash = "";
+
+        let state_length = 0;
+        let active_nodes_length = 0;
 
         const active_nodes = new Map([[ "out", Object.assign({}, graph.nodes.find(n => n.id === out), {
             inputs: graph.edges.filter(e => e.to === out),
@@ -71119,25 +71232,31 @@
         graph.node_map = node_map;
 
         while(!state.has(out)) {
-            let new_state_hash = "";
-            for(const k of state.keys()) {
-                new_state_hash += k;
-            }
-            let new_active_hash = "";
-            for(const k of active_nodes.keys()) {
-                new_active_hash += k;
-            }
+            // let new_state_hash = "";
+            // for(const k of state.keys()) {
+            //     new_state_hash += k;
+            // }
+            // let new_active_hash = "";
+            // for(const k of active_nodes.keys()) {
+            //     new_active_hash += k;
+            // }
 
-            if(state_hash === new_state_hash && active_nodes_hash === new_active_hash) {
+            if(state_length === state.size && active_nodes_length === active_nodes.size) {
                 throw new Error("stuck");
             }
 
-            state_hash = new_state_hash;
-            active_nodes_hash = new_active_hash;
+            // state_hash = new_state_hash;
+            // active_nodes_hash = new_active_hash;
+            state_length = state.size;
+            active_nodes_length = active_nodes.size;
 
+
+            const active_node_values = [...active_nodes.values()];
             let input;
+            let node;
 
-            for(const node of active_nodes.values()) {
+            for(let i = 0; i < active_node_values.length; i++) {
+                node = active_node_values[i];
                 let run = true;
                 // edge types
                 //   ref gets the node id
@@ -71195,7 +71314,9 @@
                             ? 1 : 0
                         );
 
-                        for(const input of inputs) {
+                        let input;
+                        for(let i = 0; i < inputs.length; i++) {
+                            input = inputs[i];
                             if(input?.type === "concat") {
                                 if(state.get(input.from).length > 0 || datas.length === 0 || datas[0][input.as] === undefined) {
                                     datas = datas.map(d => Object.assign(d, {[input.as]: state.get(input.from)}));
@@ -71207,11 +71328,23 @@
                                     datas[i] = Object.assign(datas.length > i ? datas[i] : {}, input.as ? {[input.as]: d} : d);
                                 });
                             } else if (state.get(input.from).length > 0 || datas.length === 0 || datas[0][input.as] === undefined){
-                                datas = datas.flatMap(current_data =>
-                                    state.get(input.from).map(d => input.as 
-                                        ? Object.assign({}, current_data, {[input.as]: d})
-                                        : Object.assign({}, current_data, d))
-                                );
+                                // datas = datas.flatMap(current_data =>
+                                //     state.get(input.from).map(d => input.as 
+                                //         ? Object.assign({}, current_data, {[input.as]: d})
+                                //         : Object.assign({}, current_data, d))
+                                // );
+
+                                const new_datas = [];
+                                const state_datas = state.get(input.from);
+                                for(let i = 0; i < datas.length; i++) {
+                                    for(let j = 0; j < state_datas.length; j++) {
+                                        new_datas.push(input.as 
+                                            ? Object.assign({}, datas[i], {[input.as]: state_datas[j]})
+                                            : Object.assign({}, datas[i], state_datas[j]));
+                                    }
+                                }
+
+                                datas = new_datas;
                             }
                         }
 
@@ -71229,18 +71362,20 @@
                                 script: "return value"
                             });
 
-                            for(const child of node_type.nodes){
-                                const new_node = Object.assign({}, child);
-                                new_node.id = `${node.id}/${child.id}`;
-                                graph.nodes.push(new_node);
-                                node_map.set(new_node.id, new_node);
-                            }
+                            if(!node_map.has(`${node.id}/out`)) {
+                                for(const child of node_type.nodes){
+                                    const new_node = Object.assign({}, child);
+                                    new_node.id = `${node.id}/${child.id}`;
+                                    graph.nodes.push(new_node);
+                                    node_map.set(new_node.id, new_node);
+                                }
 
-                            for(const edge of node_type.edges){
-                                const new_edge = Object.assign({}, edge);
-                                new_edge.from =  `${node.id}/${edge.from}`;
-                                new_edge.to =  `${node.id}/${edge.to}`;
-                                graph.edges.push(new_edge);
+                                for(let i = 0; i < node_type.edges.length; i++){
+                                    const new_edge = Object.assign({}, node_type.edges[i]);
+                                    new_edge.from =  `${node.id}/${new_edge.from}`;
+                                    new_edge.to =  `${node.id}/${new_edge.to}`;
+                                    graph.edges.push(new_edge);
+                                }
                             }
                         } else if(node.script) {
                             const fn = new Function(
@@ -71249,15 +71384,22 @@
                                 ...node.args, 
                                 node.script
                                 );
-                            state.set(node.id, datas.map(d => fn(lib, node, ...node.args.map(i => {
-                                if(d[i] === undefined){
-                                    console.log(state);
-                                    console.log(node);
-                                    console.log(d);
-                                    throw new Error(`${i} not found`);
-                                }
-                                return d[i];
-                            }))).flat());
+                            const state_datas = [];
+                            let args;
+                            for(let i = 0; i < datas.length; i++) {
+                                args = node.args.map(arg => {
+                                    if(datas[i][arg] === undefined){
+                                        console.log(state);
+                                        console.log(node);
+                                        console.log(d);
+                                        throw new Error(`${arg} not found`);
+                                    }
+                                    return datas[i][arg]
+                                });
+                                const results = fn(lib, node, ...args);
+                                Array.isArray(results) ? results.forEach(res => state_datas.push(res)) : state_datas.push(results);
+                            }
+                            state.set(node.id, state_datas);
                             active_nodes.delete(node.id);
                         } else if(node._nodetypeflag) {
                             state.set(node.id, [{nodes: node.nodes, edges: node.edges}]);
@@ -71366,7 +71508,7 @@
                 selected === n.node_id
                 ? 0.5 
                 : levels.levels.has(n.node_id)
-                ? .5 + .125 * (levels.levels.get(n.node_id) - levels.levels.get(selected))
+                ? .5 + .125 * (levels.levels.get(selected) - levels.levels.get(n.node_id))
                 : .1
             ));
 
@@ -71379,7 +71521,7 @@
             // .force(`not_parent_${data.node_id}`, lib.d3.forceRadial(512, data.x, data.y).strength(n => n.parent === data.node_id ? 0 : 0.2))
             // .force(`center`, null)
             // .velocityDecay(.2)
-            .alpha(0.4).restart();
+            .alpha(0.4);
     };
 
     const graphToSimulationNodes = (data) => {
