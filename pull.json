@@ -528,7 +528,12 @@
                 },
                 {
                     "id": "save",
-                    "args": ["key", "ctrlKey", "preventDefault", "display_graph"],
+                    "args": [
+                        "key",
+                        "ctrlKey",
+                        "preventDefault",
+                        "display_graph"
+                    ],
                     "script": "return key === 's' && ctrlKey === true ? (preventDefault(), () => { localStorage.setItem('display_graph', JSON.stringify(display_graph)); localStorage.setItem('display_graph_' + performance.now(), JSON.stringify(display_graph));}) : () => {}"
                 },
                 {
@@ -601,11 +606,121 @@
             "type": "wrap_effect_fn"
         },
         {
-            "id": "onclick_fn_in",
+            "id": "onclick_graph_fn_in",
             "value": null
         },
         {
-            "id": "onclick_fn_body",
+            "id": "onclick_graph_fn_body",
+            "nodes": [
+                {
+                    "id": "in"
+                },
+                {
+                    "id": "state",
+                    "args": [
+                        "args"
+                    ],
+                    "script": "return args[0]"
+                },
+                {
+                    "id": "mouse_event",
+                    "args": [
+                        "args"
+                    ],
+                    "script": "return args[1]"
+                },
+                {
+                    "id": "set_down_xy",
+                    "args": [
+                        "ev"
+                    ],
+                    "script": "return ev.ty === 'down' ? {x: ev.x, y: ev.y} : {}"
+                },
+                {
+                    "id": "create_node",
+                    "args": [
+                        "ev",
+                        "state"
+                    ],
+                    "script": "return ev.ty === 'move' && state.downx !== undefined && state.downy !== undefined && (Math.abs(ev.x - state.downx) > 32 || Math.abs(ev.y - state.downy) > 32)  ? {x: ev.x, y: ev.y, name: 'new_node', id: Date.now().toString() } : {}"
+                },
+                {
+                    "id": "log",
+                    "args": [
+                        "ev"
+                    ],
+                    "script": "console.log(ev);"
+                },
+                {
+                    "id": "out",
+                    "args": [
+                        "data",
+                        "down",
+                        "new_node"
+                    ],
+                    "script": "return {...data, downx: down?.x ?? data.downx, downy: down?.y ?? data.downy}"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "in",
+                    "to": "mouse_event",
+                    "as": "args",
+                    "type": "concat"
+                },
+                {
+                    "from": "in",
+                    "to": "state",
+                    "as": "args",
+                    "type": "concat"
+                },
+                {
+                    "from": "mouse_event",
+                    "to": "log",
+                    "as": "ev"
+                },
+                {
+                    "from": "mouse_event",
+                    "to": "set_down_xy",
+                    "as": "ev"
+                },
+                {
+                    "from": "mouse_event",
+                    "to": "create_node",
+                    "as": "ev"
+                },
+                {
+                    "from": "state",
+                    "to": "create_node",
+                    "as": "state"
+                },
+                {
+                    "from": "set_down_xy",
+                    "to": "out",
+                    "as": "down"
+                },
+                {
+                    "from": "create_node",
+                    "to": "out",
+                    "as": "new_node"
+                },
+                {
+                    "from": "state",
+                    "to": "out",
+                    "as": "data"
+                }
+            ]
+        },
+        {
+            "id": "onclick_graph_fn",
+            "type": "execute_graph"
+        },
+        {
+            "id": "onclick_node_fn_in",
+            "value": null
+        },
+        {
+            "id": "onclick_node_fn_body",
             "nodes": [
                 {
                     "id": "in",
@@ -722,12 +837,16 @@
                 },
                 {
                     "id": "expandable_id",
-                    "args": ["node_id"],
+                    "args": [
+                        "node_id"
+                    ],
                     "script": "return node_id + '/out'"
                 },
                 {
                     "id": "contractable_id",
-                    "args": ["node_id"],
+                    "args": [
+                        "node_id"
+                    ],
                     "script": "return node_id.substring(0, node_id.lastIndexOf('/'))"
                 },
                 {
@@ -1005,7 +1124,7 @@
             ]
         },
         {
-            "id": "onclick_fn",
+            "id": "onclick_node_fn",
             "type": "execute_graph"
         },
         {
@@ -1041,16 +1160,18 @@
                     "script": "return selected"
                 },
                 {
-                    "id": "get_onclick_fn",
+                    "id": "get_onclick_node_fn",
                     "args": [
-                        "onclick_fn"
+                        "onclick_node_fn"
                     ],
-                    "script": "return onclick_fn"
+                    "script": "return onclick_node_fn"
                 },
                 {
                     "id": "node_editor_props",
-                    "args": [],
-                    "script": "return {width: window.innerWidth, height: window.innerHeight}"
+                    "args": [
+                        "onclick_graph_fn"
+                    ],
+                    "script": "return {width: window.innerWidth, height: window.innerHeight, onmousedown: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'down'}], onmouseup: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'up'}], onmousemove: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'move'}]}"
                 },
                 {
                     "id": "node_editor_dom_type",
@@ -1104,9 +1225,9 @@
                                 "node_id",
                                 "x",
                                 "y",
-                                "onclick_fn"
+                                "onclick_node_fn"
                             ],
-                            "script": "return ({ x: x - 20, y: y - 20, id: node_id, onclick: (_, payload) => [onclick_fn, {x: payload.x, y: payload.y, node_id, selected: []}], width: 256, height: 64})"
+                            "script": "return ({ x: x - 20, y: y - 20, id: node_id, onmousedown: (_, payload) => [onclick_node_fn, {x: payload.x, y: payload.y, node_id, selected: []}], width: 256, height: 64})"
                         },
                         {
                             "id": "children",
@@ -1159,7 +1280,15 @@
                                             "value": "type"
                                         },
                                         {
+                                            "id": "node_type",
+                                            "value": "name"
+                                        },
+                                        {
                                             "id": "get_id",
+                                            "type": "get"
+                                        },
+                                        {
+                                            "id": "get_name",
                                             "type": "get"
                                         },
                                         {
@@ -1209,6 +1338,16 @@
                                             "as": "target"
                                         },
                                         {
+                                            "from": "in",
+                                            "to": "get_name",
+                                            "as": "target"
+                                        },
+                                        {
+                                            "from": "get_id",
+                                            "to": "get_name",
+                                            "as": "default"
+                                        },
+                                        {
                                             "from": "node_id",
                                             "to": "get_id",
                                             "as": "path"
@@ -1216,6 +1355,11 @@
                                         {
                                             "from": "node_type",
                                             "to": "get_type",
+                                            "as": "path"
+                                        },
+                                        {
+                                            "from": "node_name",
+                                            "to": "get_name",
                                             "as": "path"
                                         },
                                         {
@@ -1436,7 +1580,11 @@
                         },
                         {
                             "id": "line_lerp",
-                            "args": ["source", "target", "lerp_length"],
+                            "args": [
+                                "source",
+                                "target",
+                                "lerp_length"
+                            ],
                             "script": "const length_x = Math.abs(source.x - target.x); const length_y = Math.abs(source.y - target.y); const length = Math.sqrt(length_x * length_x + length_y * length_y); return {source: {x: source.x + (target.x - source.x) * lerp_length / length, y: source.y + (target.y - source.y) * lerp_length / length}, target: {x: source.x + (target.x - source.x) * (1 - (lerp_length / length)), y: source.y + (target.y - source.y) * (1 - (lerp_length / length))}}"
                         },
                         {
@@ -1654,7 +1802,7 @@
                 },
                 {
                     "from": "in",
-                    "to": "get_onclick_fn"
+                    "to": "get_onclick_node_fn"
                 },
                 {
                     "from": "get_nodes",
@@ -1662,9 +1810,9 @@
                     "as": "node"
                 },
                 {
-                    "from": "get_onclick_fn",
+                    "from": "get_onclick_node_fn",
                     "to": "node_layout",
-                    "as": "onclick_fn"
+                    "as": "onclick_node_fn"
                 },
                 {
                     "from": "get_selected",
@@ -1676,6 +1824,10 @@
                     "from": "get_links",
                     "to": "link_layout",
                     "as": "link"
+                },
+                {
+                    "from": "in",
+                    "to": "node_editor_props"
                 },
                 {
                     "from": "node_editor_props",
@@ -1802,26 +1954,51 @@
         },
         {
             "from": "hyperapp_view_in",
-            "to": "onclick_fn"
+            "to": "onclick_node_fn"
         },
         {
-            "from": "onclick_fn",
+            "from": "onclick_node_fn",
             "to": "node_editor",
-            "as": "onclick_fn"
+            "as": "onclick_node_fn"
         },
         {
-            "from": "onclick_fn_body",
-            "to": "onclick_fn",
+            "from": "onclick_node_fn_body",
+            "to": "onclick_node_fn",
             "as": "out_node",
             "type": "ref"
         },
         {
-            "from": "onclick_fn_in",
-            "to": "onclick_fn_body"
+            "from": "onclick_node_fn_in",
+            "to": "onclick_node_fn_body"
         },
         {
-            "from": "onclick_fn_in",
-            "to": "onclick_fn",
+            "from": "onclick_node_fn_in",
+            "to": "onclick_node_fn",
+            "as": "in_node",
+            "type": "ref"
+        },
+        {
+            "from": "hyperapp_view_in",
+            "to": "onclick_graph_fn"
+        },
+        {
+            "from": "onclick_graph_fn",
+            "to": "node_editor",
+            "as": "onclick_graph_fn"
+        },
+        {
+            "from": "onclick_graph_fn_body",
+            "to": "onclick_graph_fn",
+            "as": "out_node",
+            "type": "ref"
+        },
+        {
+            "from": "onclick_graph_fn_in",
+            "to": "onclick_graph_fn_body"
+        },
+        {
+            "from": "onclick_graph_fn_in",
+            "to": "onclick_graph_fn",
             "as": "in_node",
             "type": "ref"
         },

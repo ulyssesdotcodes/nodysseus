@@ -3,6 +3,7 @@ import _ from "lodash";
 import { h, app, text, memo } from "hyperapp"
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 import { selectSyntaxLeft } from "@codemirror/commands";
+import * as THREE from 'three';
 
 const executeGraph = ({state, graph, out}) => {
     let state_hash = "";
@@ -13,7 +14,9 @@ const executeGraph = ({state, graph, out}) => {
         _nodeflag: true
     })]]);
 
-    const node_map = new Map(graph.nodes.map(n => [n.id, n]));
+
+    const node_map = graph.node_map ?? new Map(graph.nodes.map(n => [n.id, n]));
+    graph.node_map = node_map;
 
     while(!state.has(out)) {
         let new_state_hash = "";
@@ -32,6 +35,8 @@ const executeGraph = ({state, graph, out}) => {
         state_hash = new_state_hash;
         active_nodes_hash = new_active_hash;
 
+        let input;
+
         for(const node of active_nodes.values()) {
             let run = true;
             // edge types
@@ -39,7 +44,8 @@ const executeGraph = ({state, graph, out}) => {
             //   concat puts all the data as the "as" attribute
             //   data (default)
 
-            for(const input of node.inputs) {
+            for(let i = 0; i < node.inputs.length; i++) {
+                input = node.inputs[i];
                 if(input?.type !== "ref" && !state.has(input.from)){
                     if(!active_nodes.has(input.from)) {
                         const input_node = node_map.get(input.from);
@@ -92,13 +98,13 @@ const executeGraph = ({state, graph, out}) => {
                     for(const input of inputs) {
                         if(input?.type === "concat") {
                             if(state.get(input.from).length > 0 || datas.length === 0 || datas[0][input.as] === undefined) {
-                                datas = datas.map(d => Object.assign({}, d, {[input.as]: state.get(input.from)}))
+                                datas = datas.map(d => Object.assign(d, {[input.as]: state.get(input.from)}))
                             }
                         } else if (input?.type === "ref") {
                             datas = datas.map(d => Object.assign({}, d, {[input.as]: input.from}))
                         } else if (state.get(input.from).length > 1 && datas.length > 1) {
                             state.get(input.from).forEach((d, i) =>{
-                                datas[i] = Object.assign({}, datas.length > i ? datas[i] : {}, input.as ? {[input.as]: d} : d);
+                                datas[i] = Object.assign(datas.length > i ? datas[i] : {}, input.as ? {[input.as]: d} : d);
                             });
                         } else if (state.get(input.from).length > 0 || datas.length === 0 || datas[0][input.as] === undefined){
                             datas = datas.flatMap(current_data =>
@@ -124,13 +130,17 @@ const executeGraph = ({state, graph, out}) => {
                         })
 
                         for(const child of node_type.nodes){
-                            const new_node = Object.assign({}, child, {id: `${node.id}/${child.id}`});
+                            const new_node = Object.assign({}, child);
+                            new_node.id = `${node.id}/${child.id}`;
                             graph.nodes.push(new_node)
                             node_map.set(new_node.id, new_node);
                         }
 
                         for(const edge of node_type.edges){
-                            graph.edges.push(Object.assign({}, edge, {from: `${node.id}/${edge.from}`, to: `${node.id}/${edge.to}`}));
+                            const new_edge = Object.assign({}, edge);
+                            new_edge.from =  `${node.id}/${edge.from}`;
+                            new_edge.to =  `${node.id}/${edge.to}`;
+                            graph.edges.push(new_edge);
                         }
                     } else if(node.script) {
                         const fn = new Function(
@@ -327,7 +337,9 @@ const updateSimulationNodes = (data) => {
         .y((n) => window.innerHeight * (
             selected === n.node_id
             ? 0.5 
-            : .5 + .125 * (levels.levels.get(n.node_id) - levels.levels.get(selected))
+            : levels.levels.has(n.node_id)
+            ? .5 + .125 * (levels.levels.get(n.node_id) - levels.levels.get(selected))
+            : .1
         ));
 
 
@@ -374,28 +386,39 @@ const graphToSimulationNodes = (data) => {
 }
 
 const d3subscription = simulation => dispatch => { 
-    simulation.on('tick.ha', () => { 
-        requestAnimationFrame(() => dispatch(s => ({ 
-            ...s, 
-            nodes: simulation.nodes().map(n => ({node_id: n.node_id, x: Math.floor(n.x), y: Math.floor(n.y), type: n.type, value: n.value, nodes: n.nodes, edges: n.edges, script: n.script})), 
-            links: simulation.force('links').links().map(l => ({
-                as: l.as,
-                type: l.type,
-                source: ({
-                    node_id: l.source.node_id, 
-                    x: Math.floor(l.source.x), 
-                    y: Math.floor(l.source.y)
-                }), 
-                target: ({
-                    node_id: l.target.node_id, 
-                    x: Math.floor(l.target.x), 
-                    y: Math.floor(l.target.y)
-                })
-            }))  
-        }))) 
-    }); 
+    const abort_signal = {stop: false};
+    simulation.stop();
+    const tick = () => {
+        if(simulation.alpha() > simulation.alphaTarget()) {
+            simulation.tick();
+            dispatch(s => ({ 
+                ...s, 
+                nodes: simulation.nodes().map(n => ({node_id: n.node_id, x: Math.floor(n.x), y: Math.floor(n.y), type: n.type, value: n.value, nodes: n.nodes, edges: n.edges, script: n.script})), 
+                links: simulation.force('links').links().map(l => ({
+                    as: l.as,
+                    type: l.type,
+                    source: ({
+                        node_id: l.source.node_id, 
+                        x: Math.floor(l.source.x), 
+                        y: Math.floor(l.source.y)
+                    }), 
+                    target: ({
+                        node_id: l.target.node_id, 
+                        x: Math.floor(l.target.x), 
+                        y: Math.floor(l.target.y)
+                    })
+                }))  
+            }));
+        }
 
-    return () => simulation.on('.ha', null); 
+        if(!abort_signal.stop) {
+            requestAnimationFrame(tick);
+        }
+    };
+    
+    requestAnimationFrame(tick);
+
+    return () => { abort_signal.stop = true; }
 }
 
 const keydownSubscription = (dispatch, options) => { 
@@ -507,6 +530,7 @@ const lib = {
     no: {executeGraph},
     scripts: {d3simulation, d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription},
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
+    THREE
 };
 
 

@@ -33,6 +33,7 @@
     "lodash": "^4.17.21",
     "ramda": "^0.27.1",
     "rollup": "^2.52.2",
-    "sourcemap-codec": "^1.4.8"
+    "sourcemap-codec": "^1.4.8",
+    "three": "^0.131.3"
   }
 }
