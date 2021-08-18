@@ -283,7 +283,7 @@
     					"path",
     					"def"
     				],
-    				script: "return [lib._.get(target, path)] ?? [def]"
+    				script: "console.log(target); console.log(path); return [lib._.get(target, path) ?? def]"
     			}
     		],
     		edges: [
@@ -537,6 +537,13 @@
     				id: "find_selected"
     			},
     			{
+    				id: "filter_editing",
+    				args: [
+    					"editing"
+    				],
+    				script: "return editing ? [] : {}"
+    			},
+    			{
     				id: "save",
     				args: [
     					"key",
@@ -592,7 +599,40 @@
     					"editing",
     					"nodes"
     				],
-    				script: "if(!(key === 'v' && editing === false)){ return [] } document.getElementById('edit_value').focus(); return selected[0];"
+    				script: "if(!(key === 'v' && editing === false)){ return [] } document.getElementById('edit_value').focus(); return 'value';"
+    			},
+    			{
+    				id: "t",
+    				args: [
+    					"key",
+    					"selected",
+    					"display_graph",
+    					"editing",
+    					"nodes"
+    				],
+    				script: "if(!(key === 't' && editing === false)){ return [] } document.getElementById('edit_value').focus(); return 'type';"
+    			},
+    			{
+    				id: "s",
+    				args: [
+    					"key",
+    					"selected",
+    					"display_graph",
+    					"editing",
+    					"nodes"
+    				],
+    				script: "if(!(key === 's' && editing === false)){ return [] } document.getElementById('edit_value').focus(); return 'script';"
+    			},
+    			{
+    				id: "n",
+    				args: [
+    					"key",
+    					"selected",
+    					"display_graph",
+    					"editing",
+    					"nodes"
+    				],
+    				script: "if(!(key === 'n' && editing === false)){ return [] } document.getElementById('edit_value').focus(); return 'name';"
     			},
     			{
     				id: "esc",
@@ -634,6 +674,10 @@
     				type: "concat"
     			},
     			{
+    				from: "state",
+    				to: "filter_editing"
+    			},
+    			{
     				from: "key_event",
     				to: "ctrl_s"
     			},
@@ -642,6 +686,10 @@
     				to: "save"
     			},
     			{
+    				from: "filter_editing",
+    				to: "down"
+    			},
+    			{
     				from: "state",
     				to: "down"
     			},
@@ -655,6 +703,10 @@
     			},
     			{
     				from: "key_event",
+    				to: "up"
+    			},
+    			{
+    				from: "filter_editing",
     				to: "up"
     			},
     			{
@@ -663,6 +715,10 @@
     			},
     			{
     				from: "key_event",
+    				to: "left"
+    			},
+    			{
+    				from: "filter_editing",
     				to: "left"
     			},
     			{
@@ -671,11 +727,27 @@
     			},
     			{
     				from: "key_event",
+    				to: "right"
+    			},
+    			{
+    				from: "filter_editing",
     				to: "right"
     			},
     			{
     				from: "key_event",
     				to: "v"
+    			},
+    			{
+    				from: "key_event",
+    				to: "t"
+    			},
+    			{
+    				from: "key_event",
+    				to: "s"
+    			},
+    			{
+    				from: "key_event",
+    				to: "n"
     			},
     			{
     				from: "key_event",
@@ -684,6 +756,18 @@
     			{
     				from: "state",
     				to: "v"
+    			},
+    			{
+    				from: "state",
+    				to: "t"
+    			},
+    			{
+    				from: "state",
+    				to: "s"
+    			},
+    			{
+    				from: "state",
+    				to: "n"
     			},
     			{
     				from: "state",
@@ -720,6 +804,21 @@
     			},
     			{
     				from: "v",
+    				to: "new_state",
+    				as: "editing"
+    			},
+    			{
+    				from: "t",
+    				to: "new_state",
+    				as: "editing"
+    			},
+    			{
+    				from: "s",
+    				to: "new_state",
+    				as: "editing"
+    			},
+    			{
+    				from: "n",
     				to: "new_state",
     				as: "editing"
     			},
@@ -1344,9 +1443,10 @@
     						id: "edit_text_props",
     						args: [
     							"selected",
-    							"display_graph"
+    							"display_graph",
+    							"editing"
     						],
-    						script: "return {type: 'text', id: 'edit_value', value: display_graph.nodes.find(n => n.id === selected[0]).value, oninput: (state, payload) => { state.display_graph.nodes.find(n => n.id === selected[0]).value = payload.target.value; return state; }}"
+    						script: "return {type: 'text', id: 'edit_value', value: editing ? display_graph.nodes.find(n => n.id === selected[0])[editing] : '', oninput: (state, payload) => { if(editing){ state.display_graph.nodes.find(n => n.id === selected[0])[editing] = payload.target.value;} return state; }}"
     					},
     					{
     						id: "out"
@@ -1527,7 +1627,7 @@
     												value: "type"
     											},
     											{
-    												id: "node_type",
+    												id: "node_name",
     												value: "name"
     											},
     											{
@@ -1615,7 +1715,7 @@
     												as: "default"
     											},
     											{
-    												from: "get_id",
+    												from: "get_name",
     												to: "node_text",
     												as: "text"
     											},
@@ -71580,7 +71680,7 @@
                             active_nodes.set(node.id, {
                                 id: node.id, 
                                 args: ["value"],
-                                inputs:[{from: `${node.id}/out`, to: node.id, as: "value"}], 
+                                inputs:[{from: `${node.id}/out`, to: node.id, as: 'value'}], 
                                 _nodeflag: true, 
                                 script: "return value"
                             });
@@ -71836,6 +71936,7 @@
                 edges: n.edges,
                 script: n.script,
                 value: n.value,
+                name: n.name,
                 x: current_data?.x ?? data.x ?? Math.floor(window.innerWidth * (Math.random() * .5 + .25)),
                 y: current_data?.y ?? data.y ?? Math.floor(window.innerHeight * (Math.random() * .5 + .25))
             };
@@ -71859,7 +71960,7 @@
                 simulation.tick();
                 dispatch(s => ({ 
                     ...s, 
-                    nodes: simulation.nodes().map(n => ({node_id: n.node_id, x: Math.floor(n.x), y: Math.floor(n.y), type: n.type, value: n.value, nodes: n.nodes, edges: n.edges, script: n.script})), 
+                    nodes: simulation.nodes().map(n => ({node_id: n.node_id, x: Math.floor(n.x), y: Math.floor(n.y), type: n.type, value: n.value, nodes: n.nodes, edges: n.edges, script: n.script, name: n.name})), 
                     links: simulation.force('links').links().map(l => ({
                         as: l.as,
                         type: l.type,

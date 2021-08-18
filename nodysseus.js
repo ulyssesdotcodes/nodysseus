@@ -147,7 +147,7 @@ const executeGraph = ({state, graph, out}) => {
                         active_nodes.set(node.id, {
                             id: node.id, 
                             args: ["value"],
-                            inputs:[{from: `${node.id}/out`, to: node.id, as: "value"}], 
+                            inputs:[{from: `${node.id}/out`, to: node.id, as: 'value'}], 
                             _nodeflag: true, 
                             script: "return value"
                         })
@@ -406,6 +406,7 @@ const graphToSimulationNodes = (data) => {
             edges: n.edges,
             script: n.script,
             value: n.value,
+            name: n.name,
             x: current_data?.x ?? data.x ?? Math.floor(window.innerWidth * (Math.random() * .5 + .25)),
             y: current_data?.y ?? data.y ?? Math.floor(window.innerHeight * (Math.random() * .5 + .25))
         };
@@ -429,7 +430,7 @@ const d3subscription = simulation => dispatch => {
             simulation.tick();
             dispatch(s => ({ 
                 ...s, 
-                nodes: simulation.nodes().map(n => ({node_id: n.node_id, x: Math.floor(n.x), y: Math.floor(n.y), type: n.type, value: n.value, nodes: n.nodes, edges: n.edges, script: n.script})), 
+                nodes: simulation.nodes().map(n => ({node_id: n.node_id, x: Math.floor(n.x), y: Math.floor(n.y), type: n.type, value: n.value, nodes: n.nodes, edges: n.edges, script: n.script, name: n.name})), 
                 links: simulation.force('links').links().map(l => ({
                     as: l.as,
                     type: l.type,
