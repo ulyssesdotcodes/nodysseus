@@ -91,7 +91,7 @@ const executeGraph = ({state, graph, out}) => {
                     state.set(node.id, [node.value].flat());
                     active_nodes.delete(node.id);
                 } else {
-                    const inputs = node.inputs.concat([]);
+                    const inputs = node.inputs;
 
                     inputs.sort((a, b) => 
                         a.order !== undefined && b.order !== undefined
@@ -178,12 +178,12 @@ const executeGraph = ({state, graph, out}) => {
                         const args = [lib, node];
                         let fn_args = [];
                         for(let i = 0; i < datas.length; i++) {
-                            fn_args = args.concat([]);
+                            fn_args = args.slice();
                             node.args.forEach(arg => {
                                 if(datas[i][arg] === undefined){
                                     console.log(state);
                                     console.log(node);
-                                    console.log(d);
+                                    console.log(datas[i]);
                                     throw new Error(`${arg} not found`);
                                 }
 
@@ -361,6 +361,7 @@ const updateSimulationNodes = (data) => {
     const selected = data.selected[0];
     const selected_level = levels.levels.get(selected);
 
+
     data.simulation.force('selected').radius(n => 
         n.node_id === selected
         ? 0 
@@ -373,8 +374,8 @@ const updateSimulationNodes = (data) => {
         .y((n) => window.innerHeight * (
             selected === n.node_id
             ? 0.5 
-            : levels.levels.has(n.node_id)
-            ? .5 + .125 * (levels.levels.get(selected) - levels.levels.get(n.node_id))
+            : levels.levels.has(n.node_id) && selected_level !== undefined
+            ? .5 + .125 * (selected_level - levels.levels.get(n.node_id))
             : .1
         ));
 
@@ -405,8 +406,8 @@ const graphToSimulationNodes = (data) => {
             edges: n.edges,
             script: n.script,
             value: n.value,
-            x: current_data?.x ?? data.x ?? window.innerWidth * (Math.random() * .5 + .25),
-            y: current_data?.y ?? data.y ?? window.innerHeight * (Math.random() * .5 + .25)
+            x: current_data?.x ?? data.x ?? Math.floor(window.innerWidth * (Math.random() * .5 + .25)),
+            y: current_data?.y ?? data.y ?? Math.floor(window.innerHeight * (Math.random() * .5 + .25))
         };
     })
 
@@ -415,7 +416,6 @@ const graphToSimulationNodes = (data) => {
         .map(e => ({source: e.from, target: e.to, as: e.as, type: e.type}));
 
     return {
-        ...data,
         nodes,
         links
     }
