@@ -570,7 +570,8 @@ const lib = {
 };
 
 
-const display_graph = JSON.parse(localStorage.getItem("display_graph"));
+const stored = localStorage.getItem("display_graph");
+const display_graph = stored ? JSON.parse(stored) : test_graph;
 const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: {nodes: display_graph.nodes.concat([]), edges: display_graph.edges.concat([])}, display_graph_out: "out"}]]])
 
 console.log(executeGraph({state, graph: DEFAULT_GRAPH, out: "hyperapp_app"})[0]);

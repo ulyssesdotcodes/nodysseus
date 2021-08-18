@@ -313,7 +313,7 @@
                     "args": [
                         "input"
                     ],
-                    "script": "return [ input.children === undefined ? [] : Array.isArray(input.children) ? input.children[0]?.el ? input.children.map(c => c.el) : input.children : [input.children]]"
+                    "script": "return [ input.children === undefined ? [] : (Array.isArray(input.children) ? input.children.map(c => c.el) : [input.children.el ?? input.children])]"
                 },
                 {
                     "id": "fill_props",
@@ -584,7 +584,14 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 'v' && editing === false)){ return [] } const current_node = nodes.find(n => n.node_id === selected[0]); return true;"
+                    "script": "if(!(key === 'v' && editing === false)){ return [] } document.getElementById('edit_value').focus(); return selected[0];"
+                },
+                {
+                    "id": "esc",
+                    "args": [
+                        "key"
+                    ],
+                    "script": "if(!(key === 'Escape')){ return {}; } document.querySelector('#edit_value').blur(); return {editing: false};"
                 },
                 {
                     "id": "new_state"
@@ -663,6 +670,10 @@
                     "to": "v"
                 },
                 {
+                    "from": "key_event",
+                    "to": "esc"
+                },
+                {
                     "from": "state",
                     "to": "v"
                 },
@@ -703,6 +714,10 @@
                     "from": "v",
                     "to": "new_state",
                     "as": "editing"
+                },
+                {
+                    "from": "esc",
+                    "to": "new_state"
                 },
                 {
                     "from": "graph_sim",
@@ -1030,16 +1045,9 @@
                 {
                     "id": "out",
                     "args": [
-                        "update_sim_effect",
-                        "display_graph",
-                        "graph",
-                        "nodes",
-                        "links",
-                        "selected",
-                        "simulation",
-                        "display_graph_out"
+                        "data"
                     ],
-                    "script": "const new_state = {display_graph, graph, nodes, links, selected, simulation, display_graph_out, update_sim_effect}; return [[new_state, ...([[update_sim_effect, new_state]])]]"
+                    "script": "return [[data, ...([[data.update_sim_effect, data]])]]"
                 }
             ],
             "edges": [
@@ -1263,14 +1271,9 @@
                     "type": "concat"
                 },
                 {
-                    "from": "select",
-                    "to": "out",
-                    "as": "selected",
-                    "type": "concat"
-                },
-                {
                     "from": "final_graph",
-                    "to": "out"
+                    "to": "out",
+                    "as": "data"
                 }
             ]
         },
@@ -1328,14 +1331,18 @@
                         },
                         {
                             "id": "edit_text_props",
-                            "args": [],
-                            "script": "return {oninput: (state, payload) => { state.display_graph.nodes.find(n => n.id === selected[0]).value = payload.target.value; return state; }}"
+                            "args": ["selected", "display_graph"],
+                            "script": "return {type: 'text', id: 'edit_value', value: display_graph.nodes.find(n => n.id === selected[0]).value, oninput: (state, payload) => { state.display_graph.nodes.find(n => n.id === selected[0]).value = payload.target.value; return state; }}"
                         },
                         {
                             "id": "out"
                         }
                     ],
                     "edges": [
+                        {
+                            "from": "in",
+                            "to": "edit_text_props"
+                        },
                         {
                             "from": "edit_text",
                             "to": "out"
@@ -1956,10 +1963,6 @@
                             ]
                         },
                         {
-                            "id": "edit_text",
-                            "type": "h"
-                        },
-                        {
                             "id": "line_end",
                             "type": "h"
                         },
@@ -1974,6 +1977,11 @@
                                 "markerUnits": "userSpaceOnUse",
                                 "orient": "auto"
                             }
+                        },
+                        {
+                            "id": "line_end_children",
+                            "args": ["children"],
+                            "script": "return [[children.el]]"
                         },
                         {
                             "id": "arrow_path",
@@ -2001,7 +2009,7 @@
                             "args": [
                                 "arrow"
                             ],
-                            "script": "return [[arrow]]"
+                            "script": "return [[arrow.el]]"
                         },
                         {
                             "id": "defs",
@@ -2102,9 +2110,8 @@
                         },
                         {
                             "from": "arrow_path",
-                            "to": "line_end",
-                            "as": "children",
-                            "type": "concat"
+                            "to": "line_end_children",
+                            "as": "children"
                         },
                         {
                             "from": "line_end_props",

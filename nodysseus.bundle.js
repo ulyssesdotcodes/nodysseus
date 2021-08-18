@@ -315,7 +315,7 @@
     				args: [
     					"input"
     				],
-    				script: "return [ input.children === undefined ? [] : Array.isArray(input.children) ? input.children[0]?.el ? input.children.map(c => c.el) : input.children : [input.children]]"
+    				script: "return [ input.children === undefined ? [] : (Array.isArray(input.children) ? input.children.map(c => c.el) : [input.children.el ?? input.children])]"
     			},
     			{
     				id: "fill_props",
@@ -592,7 +592,14 @@
     					"editing",
     					"nodes"
     				],
-    				script: "if(!(key === 'v' && editing === false)){ return [] } const current_node = nodes.find(n => n.node_id === selected[0]); return true;"
+    				script: "if(!(key === 'v' && editing === false)){ return [] } document.getElementById('edit_value').focus(); return selected[0];"
+    			},
+    			{
+    				id: "esc",
+    				args: [
+    					"key"
+    				],
+    				script: "if(!(key === 'Escape')){ return {}; } document.querySelector('#edit_value').blur(); return {editing: false};"
     			},
     			{
     				id: "new_state"
@@ -671,6 +678,10 @@
     				to: "v"
     			},
     			{
+    				from: "key_event",
+    				to: "esc"
+    			},
+    			{
     				from: "state",
     				to: "v"
     			},
@@ -711,6 +722,10 @@
     				from: "v",
     				to: "new_state",
     				as: "editing"
+    			},
+    			{
+    				from: "esc",
+    				to: "new_state"
     			},
     			{
     				from: "graph_sim",
@@ -1039,16 +1054,9 @@
     			{
     				id: "out",
     				args: [
-    					"update_sim_effect",
-    					"display_graph",
-    					"graph",
-    					"nodes",
-    					"links",
-    					"selected",
-    					"simulation",
-    					"display_graph_out"
+    					"data"
     				],
-    				script: "const new_state = {display_graph, graph, nodes, links, selected, simulation, display_graph_out, update_sim_effect}; return [[new_state, ...([[update_sim_effect, new_state]])]]"
+    				script: "return [[data, ...([[data.update_sim_effect, data]])]]"
     			}
     		],
     		edges: [
@@ -1272,14 +1280,9 @@
     				type: "concat"
     			},
     			{
-    				from: "select",
-    				to: "out",
-    				as: "selected",
-    				type: "concat"
-    			},
-    			{
     				from: "final_graph",
-    				to: "out"
+    				to: "out",
+    				as: "data"
     			}
     		]
     	},
@@ -1340,14 +1343,20 @@
     					{
     						id: "edit_text_props",
     						args: [
+    							"selected",
+    							"display_graph"
     						],
-    						script: "return {oninput: (state, payload) => { state.display_graph.nodes.find(n => n.id === selected[0]).value = payload.target.value; return state; }}"
+    						script: "return {type: 'text', id: 'edit_value', value: display_graph.nodes.find(n => n.id === selected[0]).value, oninput: (state, payload) => { state.display_graph.nodes.find(n => n.id === selected[0]).value = payload.target.value; return state; }}"
     					},
     					{
     						id: "out"
     					}
     				],
     				edges: [
+    					{
+    						from: "in",
+    						to: "edit_text_props"
+    					},
     					{
     						from: "edit_text",
     						to: "out"
@@ -1970,10 +1979,6 @@
     						]
     					},
     					{
-    						id: "edit_text",
-    						type: "h"
-    					},
-    					{
     						id: "line_end",
     						type: "h"
     					},
@@ -1988,6 +1993,13 @@
     							markerUnits: "userSpaceOnUse",
     							orient: "auto"
     						}
+    					},
+    					{
+    						id: "line_end_children",
+    						args: [
+    							"children"
+    						],
+    						script: "return [[children.el]]"
     					},
     					{
     						id: "arrow_path",
@@ -2015,7 +2027,7 @@
     						args: [
     							"arrow"
     						],
-    						script: "return [[arrow]]"
+    						script: "return [[arrow.el]]"
     					},
     					{
     						id: "defs",
@@ -2117,9 +2129,8 @@
     					},
     					{
     						from: "arrow_path",
-    						to: "line_end",
-    						as: "children",
-    						type: "concat"
+    						to: "line_end_children",
+    						as: "children"
     					},
     					{
     						from: "line_end_props",
@@ -71632,6 +71643,75 @@
         return state.get(out);
     };
 
+    const test_graph = {
+        nodes: [
+            {
+                "id": "in",
+                "value": null
+            },
+            {
+                "id": "out",
+                "args": ["value"]
+            },
+            {
+                "id": "something",
+                "value": "something"
+            },
+            {
+                "id": "get_test_path",
+                "nodes": [
+                    {"id": "in", "value": null},
+                    {"id": "out", "args": []}
+                ],
+                "edges": [{"from": "in", "to": "out"}]
+            },
+            {
+                "id": "log",
+                "args": ["input"],
+                "script": "console.log(input); return 'an output I guess';"
+            },
+            {
+                "id": "test_path",
+                "value": "test_path"
+            },
+            {
+                "id": "get_inputs",
+                "value": ["target", "path"]
+            },
+            {
+                "id": "get_script",
+                "value": "return target[path]"
+            },
+        ],
+        edges: [
+            {
+                "from": "in",
+                "to": "get_test_path",
+                "as": "target"
+            },
+            {
+                "from": "something",
+                "to": "log",
+                "as": "input"
+            },
+            {
+                "from": "get_test_path",
+                "to": "out",
+                "as": "value"
+            },
+            {
+                "from": "log",
+                "to": "out",
+                "as": "value"
+            },
+            {
+                "from": "test_path",
+                "to": "get_test_path",
+                "as": "path"
+            }
+        ]
+    };
+
     //////////
     // TODO: convert these to nodes
 
@@ -71920,7 +72000,8 @@
     };
 
 
-    const display_graph = JSON.parse(localStorage.getItem("display_graph"));
+    const stored = localStorage.getItem("display_graph");
+    const display_graph = stored ? JSON.parse(stored) : test_graph;
     const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: {nodes: display_graph.nodes.concat([]), edges: display_graph.edges.concat([])}, display_graph_out: "out"}]]]);
 
     console.log(executeGraph({state, graph: DEFAULT_GRAPH, out: "hyperapp_app"})[0]);
