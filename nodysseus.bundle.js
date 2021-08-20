@@ -8,6 +8,28 @@
     		value: null
     	},
     	{
+    		id: "log",
+    		nodes: [
+    			{
+    				id: "in"
+    			},
+    			{
+    				id: "out",
+    				args: [
+    					"input"
+    				],
+    				script: "console.log(node.id); console.log(input); return {}"
+    			}
+    		],
+    		edges: [
+    			{
+    				from: "in",
+    				to: "out",
+    				as: "input"
+    			}
+    		]
+    	},
+    	{
     		id: "hyperapp",
     		nodes: [
     			{
@@ -20,7 +42,7 @@
     					"view",
     					"subscriptions"
     				],
-    				script: "return lib.ha.app({init, view: s => view(s)[0].el, node: document.getElementById('node-editor'), subscriptions: () => subscriptions})"
+    				script: "return lib.ha.app({init: () => [init, [() => { init.update_sim_effect(null, init) }]], view: s => view(s)[0].el, node: document.getElementById('node-editor'), subscriptions: () => subscriptions})"
     			}
     		],
     		edges: [
@@ -147,10 +169,6 @@
     			}
     		],
     		edges: [
-    			{
-    				from: "in",
-    				to: "out"
-    			},
     			{
     				from: "in",
     				to: "out"
@@ -386,19 +404,155 @@
     		]
     	},
     	{
+    		id: "expand_contract",
+    		nodes: [
+    			{
+    				id: "in"
+    			},
+    			{
+    				id: "out"
+    			},
+    			{
+    				id: "expandable",
+    				type: "filter"
+    			},
+    			{
+    				id: "log",
+    				type: "log"
+    			},
+    			{
+    				id: "contractable",
+    				type: "filter"
+    			},
+    			{
+    				id: "expandable_id",
+    				args: [
+    					"node_id"
+    				],
+    				script: "return [[node_id + '/out']]"
+    			},
+    			{
+    				id: "contractable_id",
+    				args: [
+    					"node_id"
+    				],
+    				script: "return [[node_id.substring(0, node_id.lastIndexOf('/'))]]"
+    			},
+    			{
+    				id: "expand",
+    				args: [
+    					"node_id",
+    					"display_graph"
+    				],
+    				script: "return lib.scripts.expand_node({display_graph, node_id})"
+    			},
+    			{
+    				id: "contract",
+    				args: [
+    					"node_id",
+    					"display_graph"
+    				],
+    				script: "return lib.scripts.contract_node({display_graph, node_id})"
+    			},
+    			{
+    				id: "has_nodes",
+    				args: [
+    					"node_id",
+    					"display_graph"
+    				],
+    				script: "return !!display_graph.nodes.find(n => n.id === node_id).nodes"
+    			},
+    			{
+    				id: "is_in_or_out",
+    				args: [
+    					"node_id"
+    				],
+    				script: "return node_id.endsWith('/in') || node_id.endsWith('/out')"
+    			}
+    		],
+    		edges: [
+    			{
+    				from: "in",
+    				to: "expandable"
+    			},
+    			{
+    				from: "in",
+    				to: "contractable"
+    			},
+    			{
+    				from: "in",
+    				to: "has_nodes"
+    			},
+    			{
+    				from: "has_nodes",
+    				to: "expandable",
+    				as: "keep"
+    			},
+    			{
+    				from: "in",
+    				to: "is_in_or_out"
+    			},
+    			{
+    				from: "is_in_or_out",
+    				to: "contractable",
+    				as: "keep"
+    			},
+    			{
+    				from: "in",
+    				to: "has_nodes"
+    			},
+    			{
+    				from: "in",
+    				to: "is_in_or_out"
+    			},
+    			{
+    				from: "expandable",
+    				to: "expand"
+    			},
+    			{
+    				from: "expandable",
+    				to: "expandable_id"
+    			},
+    			{
+    				from: "contractable",
+    				to: "contractable_id"
+    			},
+    			{
+    				from: "contractable",
+    				to: "contract"
+    			},
+    			{
+    				from: "expand",
+    				to: "log"
+    			},
+    			{
+    				from: "contractable_id",
+    				to: "out",
+    				as: "selected"
+    			},
+    			{
+    				from: "expandable_id",
+    				to: "out",
+    				as: "selected"
+    			},
+    			{
+    				from: "expand",
+    				to: "out",
+    				as: "display_graph"
+    			},
+    			{
+    				from: "contract",
+    				to: "out",
+    				as: "display_graph"
+    			}
+    		]
+    	},
+    	{
     		id: "not",
     		args: [
     			"target"
     		],
     		script: "return !target"
-    	},
-    	{
-    		id: "log",
-    		type: "log"
-    	},
-    	{
-    		id: "debug",
-    		type: "debug"
     	},
     	{
     		id: "data",
@@ -529,6 +683,10 @@
     				script: "return args[1]"
     			},
     			{
+    				id: "key_log",
+    				type: "log"
+    			},
+    			{
     				id: "state",
     				args: [
     					"args"
@@ -537,6 +695,21 @@
     			},
     			{
     				id: "find_selected"
+    			},
+    			{
+    				id: "selected",
+    				args: [
+    					"selected"
+    				],
+    				script: "return selected[0]"
+    			},
+    			{
+    				id: "display_graph_and_selected",
+    				args: [
+    					"display_graph",
+    					"selected"
+    				],
+    				script: "return {display_graph, selected}"
     			},
     			{
     				id: "filter_editing",
@@ -624,7 +797,7 @@
     					"editing",
     					"nodes"
     				],
-    				script: "console.log(ctrlKey); if(!(key === 's' && ctrlKey === false && editing === false)){ return [] } document.querySelector('#edit_value input').focus(); return 'script';"
+    				script: "if(!(key === 's' && ctrlKey === false && editing === false)){ return [] } document.querySelector('#edit_value input').focus(); return 'script';"
     			},
     			{
     				id: "n",
@@ -636,6 +809,25 @@
     					"nodes"
     				],
     				script: "if(!(key === 'n' && editing === false)){ return [] } document.querySelector('#edit_value').focus(); return 'name';"
+    			},
+    			{
+    				id: "enter",
+    				args: [
+    					"key",
+    					"selected"
+    				],
+    				script: "if(!(key === 'Enter')){ return []; } return {node_id: selected[0]};"
+    			},
+    			{
+    				id: "expand_contract",
+    				type: "expand_contract"
+    			},
+    			{
+    				id: "modified_display_graph",
+    				args: [
+    					"data"
+    				],
+    				script: "return data"
     			},
     			{
     				id: "esc",
@@ -650,9 +842,10 @@
     			{
     				id: "graph_sim",
     				args: [
-    					"data"
+    					"display_graph",
+    					"nodes"
     				],
-    				script: "return lib.scripts.graphToSimulationNodes(data);"
+    				script: "return lib.scripts.graphToSimulationNodes({display_graph, nodes});"
     			},
     			{
     				id: "out",
@@ -678,7 +871,28 @@
     			},
     			{
     				from: "state",
+    				to: "selected"
+    			},
+    			{
+    				from: "selected",
+    				to: "expand_contract",
+    				as: "node_id"
+    			},
+    			{
+    				from: "state",
+    				to: "display_graph_and_selected"
+    			},
+    			{
+    				from: "state",
     				to: "filter_editing"
+    			},
+    			{
+    				from: "state",
+    				to: "expand_contract"
+    			},
+    			{
+    				from: "state",
+    				to: "enter"
     			},
     			{
     				from: "key_event",
@@ -757,6 +971,10 @@
     				to: "esc"
     			},
     			{
+    				from: "key_event",
+    				to: "enter"
+    			},
+    			{
     				from: "state",
     				to: "v"
     			},
@@ -830,19 +1048,51 @@
     				to: "new_state"
     			},
     			{
+    				from: "enter",
+    				to: "expand_contract"
+    			},
+    			{
+    				from: "display_graph_and_selected",
+    				to: "modified_display_graph",
+    				as: "data",
+    				order: 1
+    			},
+    			{
+    				from: "expand_contract",
+    				to: "modified_display_graph",
+    				as: "data",
+    				order: 2
+    			},
+    			{
+    				from: "modified_display_graph",
+    				to: "graph_sim"
+    			},
+    			{
+    				from: "modified_display_graph",
+    				to: "new_state"
+    			},
+    			{
     				from: "graph_sim",
     				to: "new_state",
-    				order: 1
+    				order: 2
     			},
     			{
     				from: "state",
     				to: "graph_sim",
-    				as: "data"
+    				order: 1
     			},
     			{
     				from: "new_state",
     				to: "out",
     				as: "data"
+    			},
+    			{
+    				from: "expand_contract",
+    				to: "key_log"
+    			},
+    			{
+    				from: "display_graph_and_selected",
+    				to: "key_log"
     			},
     			{
     				from: "save",
@@ -914,13 +1164,6 @@
     				script: "return ev.ty === 'move' && state.downx !== undefined && state.downy !== undefined && (Math.abs(ev.x - state.downx) > 32 || Math.abs(ev.y - state.downy) > 32)  ? {x: ev.x, y: ev.y, name: 'new_node', id: Date.now().toString() } : {}"
     			},
     			{
-    				id: "log",
-    				args: [
-    					"ev"
-    				],
-    				script: "console.log(ev);"
-    			},
-    			{
     				id: "out",
     				args: [
     					"data",
@@ -942,11 +1185,6 @@
     				to: "state",
     				as: "args",
     				type: "concat"
-    			},
-    			{
-    				from: "mouse_event",
-    				to: "log",
-    				as: "ev"
     			},
     			{
     				from: "mouse_event",
@@ -1083,57 +1321,8 @@
     				type: "default"
     			},
     			{
-    				id: "has_nodes",
-    				args: [
-    					"node_id",
-    					"display_graph"
-    				],
-    				script: "return !!display_graph.nodes.find(n => n.id === node_id).nodes"
-    			},
-    			{
-    				id: "is_in_or_out",
-    				args: [
-    					"node_id"
-    				],
-    				script: "return node_id.endsWith('/in') || node_id.endsWith('/out')"
-    			},
-    			{
-    				id: "expandable",
-    				type: "filter"
-    			},
-    			{
-    				id: "contractable",
-    				type: "filter"
-    			},
-    			{
-    				id: "expandable_id",
-    				args: [
-    					"node_id"
-    				],
-    				script: "return node_id + '/out'"
-    			},
-    			{
-    				id: "contractable_id",
-    				args: [
-    					"node_id"
-    				],
-    				script: "return node_id.substring(0, node_id.lastIndexOf('/'))"
-    			},
-    			{
-    				id: "expand",
-    				args: [
-    					"node_id",
-    					"display_graph"
-    				],
-    				script: "return lib.scripts.expand_node({display_graph, node_id})"
-    			},
-    			{
-    				id: "contract",
-    				args: [
-    					"node_id",
-    					"display_graph"
-    				],
-    				script: "return lib.scripts.contract_node({display_graph, node_id})"
+    				id: "expand_contract",
+    				type: "expand_contract"
     			},
     			{
     				id: "graph_to_sim",
@@ -1242,66 +1431,18 @@
     			},
     			{
     				from: "clicked",
-    				to: "has_nodes",
-    				as: "node"
-    			},
-    			{
-    				from: "clicked",
-    				to: "is_in_or_out",
+    				to: "expand_contract",
     				as: "node_id"
     			},
     			{
     				from: "clicked",
-    				to: "expandable",
-    				as: "node_id"
-    			},
-    			{
-    				from: "clicked",
-    				to: "contractable",
+    				to: "expand_contract",
     				as: "data"
     			},
     			{
-    				from: "merge_args",
-    				to: "has_nodes"
-    			},
-    			{
-    				from: "has_nodes",
-    				to: "expandable",
-    				as: "keep"
-    			},
-    			{
-    				from: "is_in_or_out",
-    				to: "contractable",
-    				as: "keep"
-    			},
-    			{
-    				from: "expandable",
-    				to: "expand"
-    			},
-    			{
-    				from: "expandable",
-    				to: "expandable_id"
-    			},
-    			{
-    				from: "contractable",
-    				to: "contractable_id",
-    				as: "node_id"
-    			},
-    			{
-    				from: "expandable_id",
-    				to: "new_state",
-    				as: "selected",
-    				type: "concat"
-    			},
-    			{
-    				from: "contractable_id",
-    				to: "new_state",
-    				as: "selected",
-    				type: "concat"
-    			},
-    			{
-    				from: "contractable",
-    				to: "contract"
+    				from: "expand_contract",
+    				to: "graph_to_sim",
+    				as: "display_graph"
     			},
     			{
     				from: "in",
@@ -1317,16 +1458,6 @@
     				from: "get_first",
     				to: "new_state",
     				order: -1
-    			},
-    			{
-    				from: "expand",
-    				to: "graph_to_sim",
-    				as: "display_graph"
-    			},
-    			{
-    				from: "contract",
-    				to: "graph_to_sim",
-    				as: "display_graph"
     			},
     			{
     				from: "graph_to_sim",
@@ -1579,6 +1710,10 @@
     					{
     						id: "in",
     						value: null
+    					},
+    					{
+    						id: "log",
+    						type: "log"
     					},
     					{
     						id: "out",
@@ -2247,6 +2382,11 @@
     					{
     						from: "in",
     						to: "get_nodes"
+    					},
+    					{
+    						from: "in",
+    						to: "log",
+    						as: "input"
     					},
     					{
     						from: "in",
@@ -71674,12 +71814,9 @@
             active_nodes_length = active_nodes.size;
 
 
-            const active_node_values = [...active_nodes.values()];
             let input;
-            let node;
 
-            for(let i = 0; i < active_node_values.length; i++) {
-                node = active_node_values[i];
+            for(let node of active_nodes.values()) {
                 let run = true;
                 // edge types
                 //   ref gets the node id
@@ -71726,37 +71863,36 @@
                     } else {
                         const inputs = node.inputs;
 
-                        inputs.sort((a, b) => 
-                            a.order !== undefined && b.order !== undefined
-                            ? a.order - b.order 
-                            : a.order !== undefined && b.order === undefined
-                            ? 0
-                            : b.order !== undefined && a.order === undefined
+                        inputs.sort((a, b) =>
+                            a.as && !b.as
                             ? 1
-                            : a.as && !b.as 
-                            ? 1 : 0
+                            : !a.as && b.as
+                            ? -1
+                            : a.order !== undefined && b.order !== undefined
+                            ? a.order - b.order 
+                            : a.order !== undefined
+                            ? a.order
+                            : b.order !== undefined
+                            ? b.order
+                            : 0
                         );
 
                         let input;
                         for(let i = 0; i < inputs.length; i++) {
                             input = inputs[i];
-                            if(input?.type === "concat") {
-                                if(state.get(input.from).length > 0 || datas.length === 0 || datas[0][input.as] === undefined) {
-                                    datas = datas.map(d => Object.assign(d, {[input.as]: state.get(input.from)}));
+                            if(datas.length === 0) {
+                                break;
+                            } else if(input?.type === "concat") {
+                                if(state.get(input.from).length > 0 || datas[0][input.as] === undefined) {
+                                    datas.forEach(d => Object.assign(d, {[input.as]: state.get(input.from)}));
                                 }
                             } else if (input?.type === "ref") {
-                                datas = datas.map(d => Object.assign({}, d, {[input.as]: input.from}));
+                                datas.forEach(d => Object.assign(d, {[input.as]: input.from}));
                             } else if (state.get(input.from).length > 1 && datas.length > 1) {
                                 state.get(input.from).forEach((d, i) =>{
                                     datas[i] = Object.assign(datas.length > i ? datas[i] : {}, input.as ? {[input.as]: d} : d);
                                 });
-                            } else if (state.get(input.from).length > 0 || datas.length === 0 || datas[0][input.as] === undefined){
-                                // datas = datas.flatMap(current_data =>
-                                //     state.get(input.from).map(d => input.as 
-                                //         ? Object.assign({}, current_data, {[input.as]: d})
-                                //         : Object.assign({}, current_data, d))
-                                // );
-
+                            } else if (state.get(input.from).length > 0 || (datas[0][input.as] === undefined && node.args?.includes(input.as)) || input.as === undefined) {
                                 const new_datas = [];
                                 const state_datas = state.get(input.from);
                                 for(let i = 0; i < datas.length; i++) {

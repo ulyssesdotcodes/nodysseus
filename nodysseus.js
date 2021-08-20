@@ -41,12 +41,9 @@ const executeGraph = ({state, graph, out}) => {
         active_nodes_length = active_nodes.size;
 
 
-        const active_node_values = [...active_nodes.values()];
         let input;
-        let node;
 
-        for(let i = 0; i < active_node_values.length; i++) {
-            node = active_node_values[i];
+        for(let node of active_nodes.values()) {
             let run = true;
             // edge types
             //   ref gets the node id
@@ -93,37 +90,36 @@ const executeGraph = ({state, graph, out}) => {
                 } else {
                     const inputs = node.inputs;
 
-                    inputs.sort((a, b) => 
-                        a.order !== undefined && b.order !== undefined
-                        ? a.order - b.order 
-                        : a.order !== undefined && b.order === undefined
-                        ? 0
-                        : b.order !== undefined && a.order === undefined
+                    inputs.sort((a, b) =>
+                        a.as && !b.as
                         ? 1
-                        : a.as && !b.as 
-                        ? 1 : 0
+                        : !a.as && b.as
+                        ? -1
+                        : a.order !== undefined && b.order !== undefined
+                        ? a.order - b.order 
+                        : a.order !== undefined
+                        ? a.order
+                        : b.order !== undefined
+                        ? b.order
+                        : 0
                     );
 
                     let input;
                     for(let i = 0; i < inputs.length; i++) {
                         input = inputs[i];
-                        if(input?.type === "concat") {
-                            if(state.get(input.from).length > 0 || datas.length === 0 || datas[0][input.as] === undefined) {
-                                datas = datas.map(d => Object.assign(d, {[input.as]: state.get(input.from)}))
+                        if(datas.length === 0) {
+                            break;
+                        } else if(input?.type === "concat") {
+                            if(state.get(input.from).length > 0 || datas[0][input.as] === undefined) {
+                                datas.forEach(d => Object.assign(d, {[input.as]: state.get(input.from)}))
                             }
                         } else if (input?.type === "ref") {
-                            datas = datas.map(d => Object.assign({}, d, {[input.as]: input.from}))
+                            datas.forEach(d => Object.assign(d, {[input.as]: input.from}))
                         } else if (state.get(input.from).length > 1 && datas.length > 1) {
                             state.get(input.from).forEach((d, i) =>{
                                 datas[i] = Object.assign(datas.length > i ? datas[i] : {}, input.as ? {[input.as]: d} : d);
                             });
-                        } else if (state.get(input.from).length > 0 || datas.length === 0 || datas[0][input.as] === undefined){
-                            // datas = datas.flatMap(current_data =>
-                            //     state.get(input.from).map(d => input.as 
-                            //         ? Object.assign({}, current_data, {[input.as]: d})
-                            //         : Object.assign({}, current_data, d))
-                            // );
-
+                        } else if (state.get(input.from).length > 0 || (datas[0][input.as] === undefined && node.args?.includes(input.as)) || input.as === undefined) {
                             const new_datas = []
                             const state_datas = state.get(input.from);
                             for(let i = 0; i < datas.length; i++) {
