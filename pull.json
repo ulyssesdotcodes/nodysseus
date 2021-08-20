@@ -281,7 +281,7 @@
                         "path",
                         "def"
                     ],
-                    "script": "console.log(target); console.log(path); return [lib._.get(target, path) ?? def]"
+                    "script": "return [lib._.get(target, path) ?? def]"
                 }
             ],
             "edges": [
@@ -313,7 +313,7 @@
                     "args": [
                         "input"
                     ],
-                    "script": "return [ input.children === undefined ? [] : (Array.isArray(input.children) ? input.children.map(c => c.el) : [input.children.el ?? input.children])]"
+                    "script": "return [ input.children === undefined ? [] : (Array.isArray(input.children) ? input.children.map(c => c.el ?? c) : [input.children.el])]"
                 },
                 {
                     "id": "fill_props",
@@ -327,9 +327,9 @@
                     "args": [
                         "props",
                         "children",
-                        "dom_type"
+                        "input"
                     ],
-                    "script": "return {el: lib.ha.h(dom_type, props, children)}"
+                    "script": "return {el: lib.ha.h(input.dom_type, props, children)}"
                 }
             ],
             "edges": [
@@ -346,7 +346,8 @@
                 {
                     "from": "fill_children",
                     "to": "out",
-                    "as": "children"
+                    "as": "children",
+                    "order": 1
                 },
                 {
                     "from": "fill_props",
@@ -355,7 +356,8 @@
                 },
                 {
                     "from": "in",
-                    "to": "out"
+                    "to": "out",
+                    "as": "input"
                 }
             ]
         },
@@ -589,7 +591,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 'v' && editing === false)){ return [] } document.getElementById('edit_value').focus(); return 'value';"
+                    "script": "if(!(key === 'v' && editing === false)){ return [] } document.querySelector('#edit_value input').focus(); return 'value';"
                 },
                 {
                     "id": "t",
@@ -600,18 +602,19 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 't' && editing === false)){ return [] } document.getElementById('edit_value').focus(); return 'type';"
+                    "script": "if(!(key === 't' && editing === false)){ return [] } document.querySelector('#edit_value input').focus(); return 'type';"
                 },
                 {
                     "id": "s",
                     "args": [
                         "key",
+                        "ctrlKey",
                         "selected",
                         "display_graph",
                         "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 's' && editing === false)){ return [] } document.getElementById('edit_value').focus(); return 'script';"
+                    "script": "if(!(key === 's' && ctrlKey === false && editing === false)){ return [] } document.querySelector('#edit_value input').focus(); return 'script';"
                 },
                 {
                     "id": "n",
@@ -622,14 +625,14 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 'n' && editing === false)){ return [] } document.getElementById('edit_value').focus(); return 'name';"
+                    "script": "if(!(key === 'n' && editing === false)){ return [] } document.querySelector('#edit_value').focus(); return 'name';"
                 },
                 {
                     "id": "esc",
                     "args": [
                         "key"
                     ],
-                    "script": "if(!(key === 'Escape')){ return {}; } document.querySelector('#edit_value').blur(); return {editing: false};"
+                    "script": "if(!(key === 'Escape')){ return {}; } document.querySelector('#edit_value input').blur(); return {editing: false};"
                 },
                 {
                     "id": "new_state"
@@ -1421,12 +1424,49 @@
                         },
                         {
                             "id": "edit_text_dom_type",
+                            "value": "div"
+                        },
+                        {
+                            "id": "edit_text_input",
+                            "type": "h"
+                        },
+                        {
+                            "id": "edit_text_base_props",
+                            "value": {"id": "edit_value"}
+                        },
+                        {
+                            "id": "edit_text_props"
+                        },
+                        {
+                            "id": "edit_text_children",
+                            "args": ["label", "input"],
+                            "script": "return [[label.el, input.el]]"
+                        },
+                        {
+                            "id": "edit_text_input_dom_type",
                             "value": "input"
                         },
                         {
-                            "id": "edit_text_props",
+                            "id": "edit_text_input_props",
                             "args": ["selected", "display_graph", "editing"],
-                            "script": "return {type: 'text', id: 'edit_value', value: editing ? display_graph.nodes.find(n => n.id === selected[0])[editing] : '', oninput: (state, payload) => { if(editing){ state.display_graph.nodes.find(n => n.id === selected[0])[editing] = payload.target.value;} return state; }}"
+                            "script": "return {type: 'text', value: editing ? display_graph.nodes.find(n => n.id === selected[0])[editing] : '', oninput: (state, payload) => { if(editing){ state.display_graph.nodes.find(n => n.id === selected[0])[editing] = payload.target.value;} return state; }}"
+                        },
+                        {
+                            "id": "edit_text_label",
+                            "type": "h"
+                        },
+                        {
+                            "id": "edit_text_label_dom_type",
+                            "value": "p"
+                        },
+                        {
+                            "id": "edit_text_label_text",
+                            "type": "h_text"
+                        },
+                        {
+                            "id": "editing",
+                            "args": ["editing"],
+                            "script": "return editing || 'none'"
                         },
                         {
                             "id": "out"
@@ -1435,7 +1475,7 @@
                     "edges": [
                         {
                             "from": "in",
-                            "to": "edit_text_props"
+                            "to": "edit_text_input_props"
                         },
                         {
                             "from": "edit_text",
@@ -1447,9 +1487,62 @@
                             "as": "dom_type"
                         },
                         {
+                            "from": "edit_text_base_props",
+                            "to": "edit_text_props"
+                        },
+                        {
                             "from": "edit_text_props",
                             "to": "edit_text",
                             "as": "props"
+                        },
+                        {
+                            "from" :"edit_text_children",
+                            "to": "edit_text",
+                            "as": "children"
+                        },
+                        {
+                            "from": "edit_text_input",
+                            "to": "edit_text_children",
+                            "as": "input"
+                        },
+                        {
+                            "from": "edit_text_input_props",
+                            "to": "edit_text_input",
+                            "as": "props"
+                        },
+                        {
+                            "from": "edit_text_input_dom_type",
+                            "to": "edit_text_input",
+                            "as": "dom_type"
+                        },
+                        {
+                            "from": "edit_text_label",
+                            "to": "edit_text_children",
+                            "as": "label"
+                        },
+                        {
+                            "from": "edit_text_label_dom_type",
+                            "to": "edit_text_label",
+                            "as": "dom_type"
+                        },
+                        {
+                            "from": "edit_text_label_text",
+                            "to": "edit_text_label",
+                            "as": "children"
+                        },
+                        {
+                            "from": "in",
+                            "to": "editing"
+                        },
+                        {
+                            "from": "editing",
+                            "to": "edit_text_label_text",
+                            "as": "text"
+                        },
+                        {
+                            "from": "editing",
+                            "to": "edit_text_props",
+                            "as": "class"
                         }
                     ]
                 },
