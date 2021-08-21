@@ -72249,7 +72249,7 @@
 
         const new_display_graph = {
             nodes: data.display_graph.nodes
-                .filter(n => n.node_id !== node_id)
+                .filter(n => n.id !== node_id)
                 .concat(flattened.flat_nodes),
             edges: data.display_graph.edges
                 .map(e => ({
@@ -72274,7 +72274,7 @@
                 .concat([{
                     id: node_id,
                     nodes: data.display_graph.nodes
-                        .filter(n => n.id.startsWith(node_id))
+                        .filter(n => n.id.startsWith(node_id) && n.id.length > node_id.length + 1)
                         .map(n => ({...n, id: n.id.substring(node_id.length + 1)})),
                     edges: data.display_graph.edges
                         .filter(e => e.from.startsWith(node_id) && e.to.startsWith(node_id))
