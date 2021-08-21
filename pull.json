@@ -804,6 +804,17 @@
                     "script": "if(!(key === 'n' && editing === false)){ return [] } document.querySelector('#edit_value').focus(); return 'name';"
                 },
                 {
+                    "id": "o",
+                    "args": [
+                        "key",
+                        "shiftKey",
+                        "selected",
+                        "display_graph",
+                        "nodes"
+                    ],
+                    "script": "if(!(key === 'o')){ return [] } const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({id, name: 'new node', value: 'node_value'}); display_graph.edges.push({from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id}); return display_graph;"
+                },
+                {
                     "id": "enter",
                     "args": [
                         "key",
@@ -887,6 +898,10 @@
                 },
                 {
                     "from": "key_event",
+                    "to": "enter"
+                },
+                {
+                    "from": "key_event",
                     "to": "ctrl_s"
                 },
                 {
@@ -946,40 +961,40 @@
                     "to": "v"
                 },
                 {
-                    "from": "key_event",
-                    "to": "t"
-                },
-                {
-                    "from": "key_event",
-                    "to": "s"
-                },
-                {
-                    "from": "key_event",
-                    "to": "n"
-                },
-                {
-                    "from": "key_event",
-                    "to": "esc"
-                },
-                {
-                    "from": "key_event",
-                    "to": "enter"
-                },
-                {
                     "from": "state",
                     "to": "v"
                 },
                 {
+                    "from": "key_event",
+                    "to": "t"
+                },
+                {
                     "from": "state",
                     "to": "t"
+                },
+                {
+                    "from": "key_event",
+                    "to": "s"
                 },
                 {
                     "from": "state",
                     "to": "s"
                 },
                 {
+                    "from": "key_event",
+                    "to": "n"
+                },
+                {
                     "from": "state",
                     "to": "n"
+                },
+                {
+                    "from": "key_event",
+                    "to": "o"
+                },
+                {
+                    "from": "state",
+                    "to": "o"
                 },
                 {
                     "from": "state",
@@ -1035,12 +1050,22 @@
                     "as": "editing"
                 },
                 {
+                    "from": "key_event",
+                    "to": "esc"
+                },
+                {
                     "from": "esc",
                     "to": "new_state"
                 },
                 {
                     "from": "enter",
                     "to": "expand_contract"
+                },
+                {
+                    "from": "o",
+                    "to": "modified_display_graph",
+                    "as": "data",
+                    "order": 2
                 },
                 {
                     "from": "display_graph_and_selected",
@@ -2454,7 +2479,7 @@
                         },
                         {
                             "from": "arrow_path",
-                            "to": "line_end_children",
+                            "to": "line_end",
                             "as": "children"
                         },
                         {
