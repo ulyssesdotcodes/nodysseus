@@ -111,6 +111,7 @@ const executeGraph = ({state, graph, out}) => {
                             break;
                         } else if(input?.type === "concat") {
                             if(state.get(input.from).length > 0 || datas[0][input.as] === undefined) {
+
                                 datas.forEach(d => Object.assign(d, {[input.as]: state.get(input.from)}))
                             }
                         } else if (input?.type === "ref") {

@@ -410,7 +410,12 @@
     				id: "in"
     			},
     			{
-    				id: "out"
+    				id: "out",
+    				args: [
+    					"display_graph",
+    					"selected"
+    				],
+    				script: "return {display_graph, selected}"
     			},
     			{
     				id: "expandable",
@@ -709,7 +714,7 @@
     					"display_graph",
     					"selected"
     				],
-    				script: "return {display_graph, selected}"
+    				script: "return {display_graph, selected, dgs: true}"
     			},
     			{
     				id: "filter_editing",
@@ -816,10 +821,19 @@
     					"key",
     					"shiftKey",
     					"selected",
-    					"display_graph",
-    					"nodes"
+    					"display_graph"
     				],
-    				script: "if(!(key === 'o')){ return [] } const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({id, name: 'new node', value: 'node_value'}); display_graph.edges.push({from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id}); return display_graph;"
+    				script: "if(!(key.toLowerCase() === 'o')){ return [] } const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({id, name: 'new node', value: 'node_value'}); display_graph.edges.push({from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id}); return {display_graph, selected: [id]};"
+    			},
+    			{
+    				id: "x",
+    				args: [
+    					"key",
+    					"selected",
+    					"display_graph",
+    					"display_graph_out"
+    				],
+    				script: "if(!(key.toLowerCase() === 'x')){ return [] } display_graph.nodes = display_graph.nodes.filter(n => n.id !== selected[0]); const new_edges = []; const to = display_graph.edges.filter(e => e.to === selected[0]); const from = display_graph.edges.filter(e => e.from === selected[0]); for(let i = 0; i < to.length; i++){for(let j = 0; j < from.length; j++){ new_edges.push({from: to[i].from, to: from[j].to}); }}; display_graph.edges = display_graph.edges.filter(e => e.to !== selected[0] && e.from !== selected[0]); display_graph.edges.push(...new_edges); return {display_graph, selected: [to[0]?.from ?? from[0]?.to ?? display_graph_out] };"
     			},
     			{
     				id: "enter",
@@ -854,7 +868,8 @@
     				id: "graph_sim",
     				args: [
     					"display_graph",
-    					"nodes"
+    					"nodes",
+    					"selected"
     				],
     				script: "return lib.scripts.graphToSimulationNodes({display_graph, nodes});"
     			},
@@ -1006,6 +1021,14 @@
     				to: "o"
     			},
     			{
+    				from: "key_event",
+    				to: "x"
+    			},
+    			{
+    				from: "state",
+    				to: "x"
+    			},
+    			{
     				from: "state",
     				to: "new_state",
     				order: -1
@@ -1077,6 +1100,12 @@
     				order: 2
     			},
     			{
+    				from: "x",
+    				to: "modified_display_graph",
+    				as: "data",
+    				order: 2
+    			},
+    			{
     				from: "display_graph_and_selected",
     				to: "modified_display_graph",
     				as: "data",
@@ -1090,7 +1119,8 @@
     			},
     			{
     				from: "modified_display_graph",
-    				to: "graph_sim"
+    				to: "graph_sim",
+    				order: 2
     			},
     			{
     				from: "modified_display_graph",
@@ -1113,10 +1143,6 @@
     			},
     			{
     				from: "expand_contract",
-    				to: "key_log"
-    			},
-    			{
-    				from: "display_graph_and_selected",
     				to: "key_log"
     			},
     			{
@@ -71909,6 +71935,7 @@
                                 break;
                             } else if(input?.type === "concat") {
                                 if(state.get(input.from).length > 0 || datas[0][input.as] === undefined) {
+
                                     datas.forEach(d => Object.assign(d, {[input.as]: state.get(input.from)}));
                                 }
                             } else if (input?.type === "ref") {
