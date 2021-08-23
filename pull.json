@@ -174,6 +174,62 @@
             ]
         },
         {
+            "id": "switch",
+            "nodes": [
+                {
+                    "id": "in"
+                },
+                {
+                    "id": "out",
+                    "args": ["data", "input"],
+                    "script": "return data[Object.getOwnPropertyNames(data)[0]];"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "in",
+                    "to": "out",
+                    "as": "data"
+                }
+            ]
+        },
+        {
+            "id": "trigger",
+            "nodes": [
+                {
+                    "id": "in"
+                },
+                {
+                    "id": "trigger",
+                    "args": ["trigger"],
+                    "script": "return trigger ? ['in'] : []"
+                },
+                {
+                    "id": "out",
+                    "args": [
+                        "data"
+                    ],
+                    "script": "return data?.data ?? []"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "in",
+                    "to": "out",
+                    "as": "data"
+                },
+                {
+                    "from": "in",
+                    "to": "trigger"
+                },
+                {
+                    "from": "trigger",
+                    "to": "out",
+                    "type": "inputs"
+                }
+            ]
+        },
+        {
             "id": "svg_text",
             "nodes": [
                 {
@@ -410,7 +466,7 @@
                 {
                     "id": "out",
                     "args": ["display_graph", "selected"],
-                    "script": "return {display_graph, selected}"
+                    "script": "return display_graph && selected ? {display_graph, selected} : []"
                 },
                 {
                     "id": "expandable",
@@ -429,14 +485,14 @@
                     "args": [
                         "node_id"
                     ],
-                    "script": "return [[node_id + '/out']]"
+                    "script": "return node_id ? [[node_id + '/out']] : []"
                 },
                 {
                     "id": "contractable_id",
                     "args": [
                         "node_id"
                     ],
-                    "script": "return [[node_id.substring(0, node_id.lastIndexOf('/'))]]"
+                    "script": "return node_id ? [[node_id.substring(0, node_id.lastIndexOf('/'))]] : []"
                 },
                 {
                     "id": "expand",
@@ -444,7 +500,7 @@
                         "node_id",
                         "display_graph"
                     ],
-                    "script": "return lib.scripts.expand_node({display_graph, node_id})"
+                    "script": "return display_graph && node_id ? lib.scripts.expand_node({display_graph, node_id}) : []"
                 },
                 {
                     "id": "contract",
@@ -452,7 +508,7 @@
                         "node_id",
                         "display_graph"
                     ],
-                    "script": "return lib.scripts.contract_node({display_graph, node_id})"
+                    "script": "return display_graph && node_id ? lib.scripts.contract_node({display_graph, node_id}) : []"
                 },
                 {
                     "id": "has_nodes",
@@ -680,6 +736,11 @@
                     "script": "return args[1]"
                 },
                 {
+                    "id": "key",
+                    "args": ["key"],
+                    "script": "return key"
+                },
+                {
                     "id": "key_log",
                     "type": "log"
                 },
@@ -689,6 +750,13 @@
                         "args"
                     ],
                     "script": "return args[0]"
+                },
+                {
+                    "id": "get_selected",
+                    "args": [
+                        "selected"
+                    ],
+                    "script": "return selected[0]"
                 },
                 {
                     "id": "find_selected"
@@ -727,18 +795,20 @@
                     "args": [
                         "key",
                         "selected",
+                        "editing",
                         "display_graph"
                     ],
-                    "script": "const next_node_edge = display_graph.edges.find(e => e.from === selected[0]); return (key === 'j' || key === 'ArrowDown') && next_node_edge ? next_node_edge.to : []"
+                    "script": "if(!(key === 'j' || key === 'ArrowDown') || editing) { return []; } const next_node_edge = display_graph.edges.find(e => e.from === selected[0]); return next_node_edge ? next_node_edge.to : []"
                 },
                 {
                     "id": "up",
                     "args": [
                         "key",
                         "selected",
+                        "editing",
                         "display_graph"
                     ],
-                    "script": "const next_node_edge = display_graph.edges.find(e => e.to === selected[0]); return (key === 'k' || key === 'ArrowUp') && next_node_edge ? next_node_edge.from : []"
+                    "script": "if(!(key === 'k' || key === 'ArrowUp') || editing){ return []; } const next_node_edge = display_graph.edges.find(e => e.to === selected[0]); return next_node_edge ? next_node_edge.from : []"
                 },
                 {
                     "id": "left",
@@ -746,9 +816,10 @@
                         "key",
                         "selected",
                         "display_graph",
+                        "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 'h' || key === 'ArrowLeft')){ return [] } const current_node = nodes.find(n => n.node_id === selected[0]); const parent_id = display_graph.edges.find(e => e.to === selected[0])?.from; const child_id = display_graph.edges.find(e => e.from === selected[0])?.to; const siblings = display_graph.edges.filter(e => e.from === parent_id && e.to !== selected[0]).map(e => e.to).concat(display_graph.edges.filter(e => e.to === child_id && e.from !== selected[0]).map(e => e.from)); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = sibling_node.x - current_node.x; dist[1] = xdist < 0 && xdist < dist[0] ? sibling_node : dist[1]; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+                    "script": "if(!(key === 'h' || key === 'ArrowLeft') || editing){ return [] } const current_node = nodes.find(n => n.node_id === selected[0]); const parent_id = display_graph.edges.find(e => e.to === selected[0])?.from; const child_id = display_graph.edges.find(e => e.from === selected[0])?.to; const siblings = display_graph.edges.filter(e => e.from === parent_id && e.to !== selected[0]).map(e => e.to).concat(display_graph.edges.filter(e => e.to === child_id && e.from !== selected[0]).map(e => e.from)); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = sibling_node.x - current_node.x; dist[1] = xdist < 0 && xdist < dist[0] ? sibling_node : dist[1]; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
                 },
                 {
                     "id": "right",
@@ -756,9 +827,10 @@
                         "key",
                         "selected",
                         "display_graph",
+                        "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 'l' || key === 'ArrowRight')){ return [] } const current_node = nodes.find(n => n.node_id === selected[0]); const parent_id = display_graph.edges.find(e => e.to === selected[0])?.from; const child_id = display_graph.edges.find(e => e.from === selected[0])?.to; const siblings = display_graph.edges.filter(e => e.from === parent_id && e.to !== selected[0]).map(e => e.to).concat(display_graph.edges.filter(e => e.to === child_id && e.from !== selected[0]).map(e => e.from)); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = sibling_node.x - current_node.x; dist[1] = xdist > 0 && xdist < dist[0] ? sibling_node : dist[1]; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+                    "script": "if(!(key === 'l' || key === 'ArrowRight') || editing){ return [] } const current_node = nodes.find(n => n.node_id === selected[0]); const parent_id = display_graph.edges.find(e => e.to === selected[0])?.from; const child_id = display_graph.edges.find(e => e.from === selected[0])?.to; const siblings = display_graph.edges.filter(e => e.from === parent_id && e.to !== selected[0]).map(e => e.to).concat(display_graph.edges.filter(e => e.to === child_id && e.from !== selected[0]).map(e => e.from)); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = sibling_node.x - current_node.x; dist[1] = xdist > 0 && xdist < dist[0] ? sibling_node : dist[1]; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
                 },
                 {
                     "id": "v",
@@ -795,6 +867,17 @@
                     "script": "if(!(key === 's' && ctrlKey === false && editing === false)){ return [] } document.querySelector('#edit_value input').focus(); return 'script';"
                 },
                 {
+                    "id": "a",
+                    "args": [
+                        "key",
+                        "selected",
+                        "display_graph",
+                        "editing",
+                        "nodes"
+                    ],
+                    "script": "if(!(key === 'a' && editing === false)){ return [] } document.querySelector('#edit_value input').focus(); return 'args';"
+                },
+                {
                     "id": "n",
                     "args": [
                         "key",
@@ -803,7 +886,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 'n' && editing === false)){ return [] } document.querySelector('#edit_value').focus(); return 'name';"
+                    "script": "if(!(key === 'n' && editing === false)){ return [] } document.querySelector('#edit_value input').focus(); return 'name';"
                 },
                 {
                     "id": "o",
@@ -811,9 +894,30 @@
                         "key",
                         "shiftKey",
                         "selected",
-                        "display_graph"
+                        "display_graph",
+                        "editing"
                     ],
-                    "script": "if(!(key.toLowerCase() === 'o')){ return [] } const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({id, name: 'new node', value: 'node_value'}); display_graph.edges.push({from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id}); return {display_graph, selected: [id]};"
+                    "script": "if(!(key.toLowerCase() === 'o' && editing === false)){ return [] } const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({id, name: 'new node'}); display_graph.edges.push({from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id}); return {display_graph, selected: [id]};"
+                },
+                {
+                    "id": "c",
+                    "args": [
+                        "key",
+                        "selected",
+                        "editing",
+                        "shiftKey"
+                    ],
+                    "script": "if(!(key.toLowerCase() === 'c' && editing === false && !shiftKey)){ return [] } return selected[0];"
+                },
+                {
+                    "id": "shift_c",
+                    "args": [
+                        "key",
+                        "shiftKey",
+                        "editing",
+                        "selected"
+                    ],
+                    "script": "if(!(key.toLowerCase() === 'c' && editing === false && shiftKey)){ return [] } return selected[0];"
                 },
                 {
                     "id": "x",
@@ -831,33 +935,100 @@
                         "key",
                         "selected"
                     ],
-                    "script": "if(!(key === 'Enter')){ return []; } return {node_id: selected[0]};"
+                    "script": "if(!(key === 'Enter')){ return []; } return true;"
+                },
+                {
+                    "id": "make_edge",
+                    "args": ["edge_to", "edge_from", "display_graph"],
+                    "script": "if(edge_from && edge_to){ display_graph.edges.push({from: state.edge_from, to: state.edge_to}); edge_to = null; edge_from = null } return {display_graph, edge_from, edge_to};"
+                },
+                {
+                    "id": "trigger_expand_contract",
+                    "type": "trigger"
                 },
                 {
                     "id": "expand_contract",
                     "type": "expand_contract"
                 },
                 {
+                    "id": "expand_contract_selected",
+                    "args": ["selected"],
+                    "script": "return selected"
+                },
+                {
+                    "id": "expand_contract_display_graph",
+                    "args": ["display_graph"],
+                    "script": "return display_graph"
+                },
+                {
+                    "id": "modified_display_graph_inputs",
+                    "args": ["key"],
+                    "script": "return [key.toLowerCase()]"
+                },
+                {
                     "id": "modified_display_graph",
-                    "args": ["data"],
-                    "script": "return data"
+                    "type": "switch"
                 },
                 {
                     "id": "esc",
                     "args": [
-                        "key"
+                        "key",
+                        "target",
+                        "selected",
+                        "display_graph",
+                        "editing"
                     ],
-                    "script": "if(!(key === 'Escape')){ return {}; } document.querySelector('#edit_value input').blur(); return {editing: false};"
+                    "script": "if(!(key === 'Escape' && editing)){ return []; } target.blur(); let value; try { value = JSON.parse(target.value);} catch(e){ value = target.value; } display_graph.nodes.find(n => n.id === selected[0])[editing] = value; return {editing: false, edit_value: null};"
                 },
                 {
-                    "id": "new_state"
+                    "id": "esc_editing",
+                    "args": [
+                        "editing"
+                    ],
+                    "script": "return editing;"
+                },
+                {
+                    "id": "selected",
+                    "type": "switch"
+                },
+                {
+                    "id": "set_selected",
+                    "args": ["selected", "state"],
+                    "script": "state.selected = selected ?? state.selected; return state"
+                },
+                {
+                    "id": "editing",
+                    "type": "switch"
+                },
+                {
+                    "id": "set_editing",
+                    "args": ["editing", "state"],
+                    "script": "state.editing = editing ?? state.editing; return state"
+                },
+                {
+                    "id": "display_graph",
+                    "type": "switch"
+                },
+                {
+                    "id": "set_display_graph",
+                    "args": ["display_graph", "state"],
+                    "script": "state.display_graph = display_graph ?? state.display_graph; return state"
+                },
+                {
+                    "id": "new_state_cases",
+                    "args": ["key"],
+                    "script": "const graph_sim = key === 'Enter'; return [graph_sim && 'graph_sim', 'state']"
+                },
+                {
+                    "id": "new_state",
+                    "args": ["graph_sim", "state"],
+                    "script": "return Object.assign({}, state, {nodes: graph_sim?.nodes ?? state.nodes, links: graph_sim?.links ?? state.links});"
                 },
                 {
                     "id": "graph_sim",
                     "args": [
                         "display_graph",
-                        "nodes",
-                        "selected"
+                        "nodes"
                     ],
                     "script": "return lib.scripts.graphToSimulationNodes({display_graph, nodes});"
                 },
@@ -865,7 +1036,8 @@
                     "id": "out",
                     "args": [
                         "data",
-                        "save"
+                        "save",
+                        "update"
                     ],
                     "script": "return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: {nodes: data.display_graph.nodes.concat([]), edges: data.display_graph.edges.concat([])}, out: data.display_graph_out}], [() => save(), {}], [data.update_sim_effect, data]]]"
                 }
@@ -884,13 +1056,22 @@
                     "type": "concat"
                 },
                 {
-                    "from": "state",
-                    "to": "selected"
+                    "from": "key_event",
+                    "to": "key"
                 },
                 {
-                    "from": "selected",
-                    "to": "expand_contract",
-                    "as": "node_id"
+                    "from": "state",
+                    "to": "get_selected"
+                },
+                {
+                    "from": "key",
+                    "to": "selected",
+                    "type": "inputs"
+                },
+                {
+                    "from": "key",
+                    "to": "display_graph",
+                    "type": "inputs"
                 },
                 {
                     "from": "state",
@@ -903,6 +1084,11 @@
                 {
                     "from": "state",
                     "to": "expand_contract"
+                },
+                {
+                    "from": "get_selected",
+                    "to": "expand_contract",
+                    "as": "node_id"
                 },
                 {
                     "from": "state",
@@ -1002,6 +1188,14 @@
                 },
                 {
                     "from": "key_event",
+                    "to": "a"
+                },
+                {
+                    "from": "state",
+                    "to": "a"
+                },
+                {
+                    "from": "key_event",
                     "to": "o"
                 },
                 {
@@ -1017,9 +1211,20 @@
                     "to": "x"
                 },
                 {
+                    "from": "key_event",
+                    "to": "c"
+                },
+                {
                     "from": "state",
-                    "to": "new_state",
-                    "order": -1
+                    "to": "c"
+                },
+                {
+                    "from": "key_event",
+                    "to": "shift_c"
+                },
+                {
+                    "from": "state",
+                    "to": "shift_c"
                 },
                 {
                     "from": "key_event",
@@ -1027,97 +1232,181 @@
                 },
                 {
                     "from": "down",
-                    "to": "new_state",
-                    "as": "selected",
+                    "to": "selected",
+                    "as": "ArrowDown",
                     "type": "concat"
                 },
                 {
                     "from": "up",
-                    "to": "new_state",
-                    "as": "selected",
+                    "to": "selected",
+                    "as": "ArrowUp",
                     "type": "concat"
                 },
                 {
                     "from": "left",
-                    "to": "new_state",
-                    "as": "selected",
+                    "to": "selected",
+                    "as": "ArrowLeft",
                     "type": "concat"
                 },
                 {
                     "from": "right",
-                    "to": "new_state",
-                    "as": "selected",
+                    "to": "selected",
+                    "as": "ArrowRight",
                     "type": "concat"
                 },
                 {
                     "from": "v",
-                    "to": "new_state",
-                    "as": "editing"
+                    "to": "editing",
+                    "as": "v"
                 },
                 {
                     "from": "t",
-                    "to": "new_state",
-                    "as": "editing"
+                    "to": "editing",
+                    "as": "t"
                 },
                 {
                     "from": "s",
-                    "to": "new_state",
-                    "as": "editing"
+                    "to": "editing",
+                    "as": "s"
                 },
                 {
                     "from": "n",
-                    "to": "new_state",
-                    "as": "editing"
+                    "to": "editing",
+                    "as": "n"
+                },
+                {
+                    "from": "a",
+                    "to": "editing",
+                    "as": "a"
+                },
+                {
+                    "from": "state",
+                    "to": "make_edge"
+                },
+                {
+                    "from": "c",
+                    "to": "make_edge",
+                    "as": "edge_from"
+                },
+                {
+                    "from": "shift_c",
+                    "to": "make_edge",
+                    "as": "edge_to"
+                },
+                {
+                    "from": "state",
+                    "to": "esc"
                 },
                 {
                     "from": "key_event",
                     "to": "esc"
                 },
                 {
-                    "from": "esc",
-                    "to": "new_state"
+                    "from": "state",
+                    "to": "esc_state",
+                    "order": 0
                 },
                 {
-                    "from": "enter",
-                    "to": "expand_contract"
+                    "from": "esc",
+                    "to": "esc_editing"
+                },
+                {
+                    "from": "esc_editing",
+                    "to": "set_editing",
+                    "as": "Escape"
+                },
+                {
+                    "from": "expand_contract",
+                    "to": "expand_contract_display_graph"
+                },
+                {
+                    "from": "expand_contract_display_graph",
+                    "to": "display_graph",
+                    "as": "Enter"
+                },
+                {
+                    "from": "expand_contract",
+                    "to": "expand_contract_selected"
+                },
+                {
+                    "from": "expand_contract_selected",
+                    "to": "selected",
+                    "as": "Enter"
                 },
                 {
                     "from": "o",
                     "to": "modified_display_graph",
-                    "as": "data",
-                    "order": 2
+                    "as": "o"
                 },
                 {
                     "from": "x",
                     "to": "modified_display_graph",
-                    "as": "data",
                     "order": 2
                 },
                 {
                     "from": "display_graph_and_selected",
                     "to": "modified_display_graph",
-                    "as": "data",
                     "order": 1
                 },
                 {
-                    "from": "expand_contract",
-                    "to": "modified_display_graph",
-                    "as": "data",
-                    "order": 2
+                    "from": "make_edge",
+                    "to": "display_graph",
+                    "as": "c"
                 },
                 {
-                    "from": "modified_display_graph",
+                    "from": "display_graph",
                     "to": "graph_sim",
-                    "order": 2
+                    "as": "display_graph"
                 },
                 {
-                    "from": "modified_display_graph",
-                    "to": "new_state"
+                    "from": "state",
+                    "to": "set_selected",
+                    "as": "state"
+                },
+                {
+                    "from": "selected",
+                    "to": "set_selected",
+                    "as": "selected",
+                    "type": "concat"
+                },
+                {
+                    "from": "editing",
+                    "to": "set_editing",
+                    "as": "editing"
+                },
+                {
+                    "from": "set_selected",
+                    "to": "set_editing",
+                    "as": "state"
+                },
+                {
+                    "from": "display_graph",
+                    "to": "set_display_graph",
+                    "as": "display_graph"
+                },
+                {
+                    "from": "set_editing",
+                    "to": "set_display_graph",
+                    "as": "state"
+                },
+                {
+                    "from": "set_display_graph",
+                    "to": "new_state",
+                    "as": "state"
+                },
+                {
+                    "from": "key_event",
+                    "to": "new_state_cases"
+                },
+                {
+                    "from": "new_state_cases",
+                    "to": "new_state",
+                    "type": "inputs"
                 },
                 {
                     "from": "graph_sim",
                     "to": "new_state",
-                    "order": 2
+                    "as": "graph_sim"
                 },
                 {
                     "from": "state",
@@ -1128,10 +1417,6 @@
                     "from": "new_state",
                     "to": "out",
                     "as": "data"
-                },
-                {
-                    "from": "expand_contract",
-                    "to": "key_log"
                 },
                 {
                     "from": "save",
@@ -1495,12 +1780,12 @@
                 {
                     "from": "get_first",
                     "to": "new_state",
-                    "order": -1
+                    "as": "input_state"
                 },
                 {
                     "from": "graph_to_sim",
                     "to": "new_state",
-                    "order": 1
+                    "as": "graph_sim"
                 },
                 {
                     "from": "get_first",
@@ -1639,9 +1924,10 @@
                             "args": [
                                 "selected",
                                 "display_graph",
-                                "editing"
+                                "editing",
+                                "edit_value"
                             ],
-                            "script": "return {type: 'text', value: editing ? display_graph.nodes.find(n => n.id === selected[0])[editing] : '', oninput: (state, payload) => { if(editing){ state.display_graph.nodes.find(n => n.id === selected[0])[editing] = payload.target.value;} return state; }}"
+                            "script": "const start_value = edit_value ?? (editing ? display_graph.nodes.find(n => n.id === selected[0])[editing] : ''); return {type: 'text', value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), oninput: (s, payload) => ({...s, edit_value: payload.target.value})}"
                         },
                         {
                             "id": "edit_text_label",

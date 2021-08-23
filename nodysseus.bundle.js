@@ -176,6 +176,67 @@
     		]
     	},
     	{
+    		id: "switch",
+    		nodes: [
+    			{
+    				id: "in"
+    			},
+    			{
+    				id: "out",
+    				args: [
+    					"data",
+    					"input"
+    				],
+    				script: "return data[Object.getOwnPropertyNames(data)[0]];"
+    			}
+    		],
+    		edges: [
+    			{
+    				from: "in",
+    				to: "out",
+    				as: "data"
+    			}
+    		]
+    	},
+    	{
+    		id: "trigger",
+    		nodes: [
+    			{
+    				id: "in"
+    			},
+    			{
+    				id: "trigger",
+    				args: [
+    					"trigger"
+    				],
+    				script: "return trigger ? ['in'] : []"
+    			},
+    			{
+    				id: "out",
+    				args: [
+    					"data"
+    				],
+    				script: "return data?.data ?? []"
+    			}
+    		],
+    		edges: [
+    			{
+    				from: "in",
+    				to: "out",
+    				as: "data"
+    			},
+    			{
+    				from: "in",
+    				to: "trigger"
+    			},
+    			{
+    				from: "trigger",
+    				to: "out",
+    				type: "inputs"
+    			}
+    		]
+    	},
+    	{
     		id: "svg_text",
     		nodes: [
     			{
@@ -415,7 +476,7 @@
     					"display_graph",
     					"selected"
     				],
-    				script: "return {display_graph, selected}"
+    				script: "return display_graph && selected ? {display_graph, selected} : []"
     			},
     			{
     				id: "expandable",
@@ -434,14 +495,14 @@
     				args: [
     					"node_id"
     				],
-    				script: "return [[node_id + '/out']]"
+    				script: "return node_id ? [[node_id + '/out']] : []"
     			},
     			{
     				id: "contractable_id",
     				args: [
     					"node_id"
     				],
-    				script: "return [[node_id.substring(0, node_id.lastIndexOf('/'))]]"
+    				script: "return node_id ? [[node_id.substring(0, node_id.lastIndexOf('/'))]] : []"
     			},
     			{
     				id: "expand",
@@ -449,7 +510,7 @@
     					"node_id",
     					"display_graph"
     				],
-    				script: "return lib.scripts.expand_node({display_graph, node_id})"
+    				script: "return display_graph && node_id ? lib.scripts.expand_node({display_graph, node_id}) : []"
     			},
     			{
     				id: "contract",
@@ -457,7 +518,7 @@
     					"node_id",
     					"display_graph"
     				],
-    				script: "return lib.scripts.contract_node({display_graph, node_id})"
+    				script: "return display_graph && node_id ? lib.scripts.contract_node({display_graph, node_id}) : []"
     			},
     			{
     				id: "has_nodes",
@@ -688,6 +749,13 @@
     				script: "return args[1]"
     			},
     			{
+    				id: "key",
+    				args: [
+    					"key"
+    				],
+    				script: "return key"
+    			},
+    			{
     				id: "key_log",
     				type: "log"
     			},
@@ -697,6 +765,13 @@
     					"args"
     				],
     				script: "return args[0]"
+    			},
+    			{
+    				id: "get_selected",
+    				args: [
+    					"selected"
+    				],
+    				script: "return selected[0]"
     			},
     			{
     				id: "find_selected"
@@ -737,18 +812,20 @@
     				args: [
     					"key",
     					"selected",
+    					"editing",
     					"display_graph"
     				],
-    				script: "const next_node_edge = display_graph.edges.find(e => e.from === selected[0]); return (key === 'j' || key === 'ArrowDown') && next_node_edge ? next_node_edge.to : []"
+    				script: "if(!(key === 'j' || key === 'ArrowDown') || editing) { return []; } const next_node_edge = display_graph.edges.find(e => e.from === selected[0]); return next_node_edge ? next_node_edge.to : []"
     			},
     			{
     				id: "up",
     				args: [
     					"key",
     					"selected",
+    					"editing",
     					"display_graph"
     				],
-    				script: "const next_node_edge = display_graph.edges.find(e => e.to === selected[0]); return (key === 'k' || key === 'ArrowUp') && next_node_edge ? next_node_edge.from : []"
+    				script: "if(!(key === 'k' || key === 'ArrowUp') || editing){ return []; } const next_node_edge = display_graph.edges.find(e => e.to === selected[0]); return next_node_edge ? next_node_edge.from : []"
     			},
     			{
     				id: "left",
@@ -756,9 +833,10 @@
     					"key",
     					"selected",
     					"display_graph",
+    					"editing",
     					"nodes"
     				],
-    				script: "if(!(key === 'h' || key === 'ArrowLeft')){ return [] } const current_node = nodes.find(n => n.node_id === selected[0]); const parent_id = display_graph.edges.find(e => e.to === selected[0])?.from; const child_id = display_graph.edges.find(e => e.from === selected[0])?.to; const siblings = display_graph.edges.filter(e => e.from === parent_id && e.to !== selected[0]).map(e => e.to).concat(display_graph.edges.filter(e => e.to === child_id && e.from !== selected[0]).map(e => e.from)); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = sibling_node.x - current_node.x; dist[1] = xdist < 0 && xdist < dist[0] ? sibling_node : dist[1]; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+    				script: "if(!(key === 'h' || key === 'ArrowLeft') || editing){ return [] } const current_node = nodes.find(n => n.node_id === selected[0]); const parent_id = display_graph.edges.find(e => e.to === selected[0])?.from; const child_id = display_graph.edges.find(e => e.from === selected[0])?.to; const siblings = display_graph.edges.filter(e => e.from === parent_id && e.to !== selected[0]).map(e => e.to).concat(display_graph.edges.filter(e => e.to === child_id && e.from !== selected[0]).map(e => e.from)); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = sibling_node.x - current_node.x; dist[1] = xdist < 0 && xdist < dist[0] ? sibling_node : dist[1]; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
     			},
     			{
     				id: "right",
@@ -766,9 +844,10 @@
     					"key",
     					"selected",
     					"display_graph",
+    					"editing",
     					"nodes"
     				],
-    				script: "if(!(key === 'l' || key === 'ArrowRight')){ return [] } const current_node = nodes.find(n => n.node_id === selected[0]); const parent_id = display_graph.edges.find(e => e.to === selected[0])?.from; const child_id = display_graph.edges.find(e => e.from === selected[0])?.to; const siblings = display_graph.edges.filter(e => e.from === parent_id && e.to !== selected[0]).map(e => e.to).concat(display_graph.edges.filter(e => e.to === child_id && e.from !== selected[0]).map(e => e.from)); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = sibling_node.x - current_node.x; dist[1] = xdist > 0 && xdist < dist[0] ? sibling_node : dist[1]; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+    				script: "if(!(key === 'l' || key === 'ArrowRight') || editing){ return [] } const current_node = nodes.find(n => n.node_id === selected[0]); const parent_id = display_graph.edges.find(e => e.to === selected[0])?.from; const child_id = display_graph.edges.find(e => e.from === selected[0])?.to; const siblings = display_graph.edges.filter(e => e.from === parent_id && e.to !== selected[0]).map(e => e.to).concat(display_graph.edges.filter(e => e.to === child_id && e.from !== selected[0]).map(e => e.from)); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = sibling_node.x - current_node.x; dist[1] = xdist > 0 && xdist < dist[0] ? sibling_node : dist[1]; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
     			},
     			{
     				id: "v",
@@ -805,6 +884,17 @@
     				script: "if(!(key === 's' && ctrlKey === false && editing === false)){ return [] } document.querySelector('#edit_value input').focus(); return 'script';"
     			},
     			{
+    				id: "a",
+    				args: [
+    					"key",
+    					"selected",
+    					"display_graph",
+    					"editing",
+    					"nodes"
+    				],
+    				script: "if(!(key === 'a' && editing === false)){ return [] } document.querySelector('#edit_value input').focus(); return 'args';"
+    			},
+    			{
     				id: "n",
     				args: [
     					"key",
@@ -813,7 +903,7 @@
     					"editing",
     					"nodes"
     				],
-    				script: "if(!(key === 'n' && editing === false)){ return [] } document.querySelector('#edit_value').focus(); return 'name';"
+    				script: "if(!(key === 'n' && editing === false)){ return [] } document.querySelector('#edit_value input').focus(); return 'name';"
     			},
     			{
     				id: "o",
@@ -821,9 +911,30 @@
     					"key",
     					"shiftKey",
     					"selected",
-    					"display_graph"
+    					"display_graph",
+    					"editing"
     				],
-    				script: "if(!(key.toLowerCase() === 'o')){ return [] } const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({id, name: 'new node', value: 'node_value'}); display_graph.edges.push({from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id}); return {display_graph, selected: [id]};"
+    				script: "if(!(key.toLowerCase() === 'o' && editing === false)){ return [] } const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({id, name: 'new node'}); display_graph.edges.push({from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id}); return {display_graph, selected: [id]};"
+    			},
+    			{
+    				id: "c",
+    				args: [
+    					"key",
+    					"selected",
+    					"editing",
+    					"shiftKey"
+    				],
+    				script: "if(!(key.toLowerCase() === 'c' && editing === false && !shiftKey)){ return [] } return selected[0];"
+    			},
+    			{
+    				id: "shift_c",
+    				args: [
+    					"key",
+    					"shiftKey",
+    					"editing",
+    					"selected"
+    				],
+    				script: "if(!(key.toLowerCase() === 'c' && editing === false && shiftKey)){ return [] } return selected[0];"
     			},
     			{
     				id: "x",
@@ -841,35 +952,124 @@
     					"key",
     					"selected"
     				],
-    				script: "if(!(key === 'Enter')){ return []; } return {node_id: selected[0]};"
+    				script: "if(!(key === 'Enter')){ return []; } return true;"
+    			},
+    			{
+    				id: "make_edge",
+    				args: [
+    					"edge_to",
+    					"edge_from",
+    					"display_graph"
+    				],
+    				script: "if(edge_from && edge_to){ display_graph.edges.push({from: state.edge_from, to: state.edge_to}); edge_to = null; edge_from = null } return {display_graph, edge_from, edge_to};"
+    			},
+    			{
+    				id: "trigger_expand_contract",
+    				type: "trigger"
     			},
     			{
     				id: "expand_contract",
     				type: "expand_contract"
     			},
     			{
-    				id: "modified_display_graph",
+    				id: "expand_contract_selected",
     				args: [
-    					"data"
+    					"selected"
     				],
-    				script: "return data"
+    				script: "return selected"
+    			},
+    			{
+    				id: "expand_contract_display_graph",
+    				args: [
+    					"display_graph"
+    				],
+    				script: "return display_graph"
+    			},
+    			{
+    				id: "modified_display_graph_inputs",
+    				args: [
+    					"key"
+    				],
+    				script: "return [key.toLowerCase()]"
+    			},
+    			{
+    				id: "modified_display_graph",
+    				type: "switch"
     			},
     			{
     				id: "esc",
     				args: [
-    					"key"
+    					"key",
+    					"target",
+    					"selected",
+    					"display_graph",
+    					"editing"
     				],
-    				script: "if(!(key === 'Escape')){ return {}; } document.querySelector('#edit_value input').blur(); return {editing: false};"
+    				script: "if(!(key === 'Escape' && editing)){ return []; } target.blur(); let value; try { value = JSON.parse(target.value);} catch(e){ value = target.value; } display_graph.nodes.find(n => n.id === selected[0])[editing] = value; return {editing: false, edit_value: null};"
     			},
     			{
-    				id: "new_state"
+    				id: "esc_editing",
+    				args: [
+    					"editing"
+    				],
+    				script: "return editing;"
+    			},
+    			{
+    				id: "selected",
+    				type: "switch"
+    			},
+    			{
+    				id: "set_selected",
+    				args: [
+    					"selected",
+    					"state"
+    				],
+    				script: "state.selected = selected ?? state.selected; return state"
+    			},
+    			{
+    				id: "editing",
+    				type: "switch"
+    			},
+    			{
+    				id: "set_editing",
+    				args: [
+    					"editing",
+    					"state"
+    				],
+    				script: "state.editing = editing ?? state.editing; return state"
+    			},
+    			{
+    				id: "display_graph",
+    				type: "switch"
+    			},
+    			{
+    				id: "set_display_graph",
+    				args: [
+    					"display_graph",
+    					"state"
+    				],
+    				script: "state.display_graph = display_graph ?? state.display_graph; return state"
+    			},
+    			{
+    				id: "new_state_cases",
+    				args: [
+    					"key"
+    				],
+    				script: "const graph_sim = key === 'Enter'; return [graph_sim && 'graph_sim', 'state']"
+    			},
+    			{
+    				id: "new_state",
+    				args: [
+    					"graph_sim",
+    					"state"
+    				],
+    				script: "return Object.assign({}, state, {nodes: graph_sim?.nodes ?? state.nodes, links: graph_sim?.links ?? state.links});"
     			},
     			{
     				id: "graph_sim",
     				args: [
     					"display_graph",
-    					"nodes",
-    					"selected"
+    					"nodes"
     				],
     				script: "return lib.scripts.graphToSimulationNodes({display_graph, nodes});"
     			},
@@ -877,7 +1077,8 @@
     				id: "out",
     				args: [
     					"data",
-    					"save"
+    					"save",
+    					"update"
     				],
     				script: "return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: {nodes: data.display_graph.nodes.concat([]), edges: data.display_graph.edges.concat([])}, out: data.display_graph_out}], [() => save(), {}], [data.update_sim_effect, data]]]"
     			}
@@ -896,13 +1097,22 @@
     				type: "concat"
     			},
     			{
-    				from: "state",
-    				to: "selected"
+    				from: "key_event",
+    				to: "key"
     			},
     			{
-    				from: "selected",
-    				to: "expand_contract",
-    				as: "node_id"
+    				from: "state",
+    				to: "get_selected"
+    			},
+    			{
+    				from: "key",
+    				to: "selected",
+    				type: "inputs"
+    			},
+    			{
+    				from: "key",
+    				to: "display_graph",
+    				type: "inputs"
     			},
     			{
     				from: "state",
@@ -915,6 +1125,11 @@
     			{
     				from: "state",
     				to: "expand_contract"
+    			},
+    			{
+    				from: "get_selected",
+    				to: "expand_contract",
+    				as: "node_id"
     			},
     			{
     				from: "state",
@@ -1014,6 +1229,14 @@
     			},
     			{
     				from: "key_event",
+    				to: "a"
+    			},
+    			{
+    				from: "state",
+    				to: "a"
+    			},
+    			{
+    				from: "key_event",
     				to: "o"
     			},
     			{
@@ -1029,9 +1252,20 @@
     				to: "x"
     			},
     			{
+    				from: "key_event",
+    				to: "c"
+    			},
+    			{
     				from: "state",
-    				to: "new_state",
-    				order: -1
+    				to: "c"
+    			},
+    			{
+    				from: "key_event",
+    				to: "shift_c"
+    			},
+    			{
+    				from: "state",
+    				to: "shift_c"
     			},
     			{
     				from: "key_event",
@@ -1039,97 +1273,181 @@
     			},
     			{
     				from: "down",
-    				to: "new_state",
-    				as: "selected",
+    				to: "selected",
+    				as: "ArrowDown",
     				type: "concat"
     			},
     			{
     				from: "up",
-    				to: "new_state",
-    				as: "selected",
+    				to: "selected",
+    				as: "ArrowUp",
     				type: "concat"
     			},
     			{
     				from: "left",
-    				to: "new_state",
-    				as: "selected",
+    				to: "selected",
+    				as: "ArrowLeft",
     				type: "concat"
     			},
     			{
     				from: "right",
-    				to: "new_state",
-    				as: "selected",
+    				to: "selected",
+    				as: "ArrowRight",
     				type: "concat"
     			},
     			{
     				from: "v",
-    				to: "new_state",
-    				as: "editing"
+    				to: "editing",
+    				as: "v"
     			},
     			{
     				from: "t",
-    				to: "new_state",
-    				as: "editing"
+    				to: "editing",
+    				as: "t"
     			},
     			{
     				from: "s",
-    				to: "new_state",
-    				as: "editing"
+    				to: "editing",
+    				as: "s"
     			},
     			{
     				from: "n",
-    				to: "new_state",
-    				as: "editing"
+    				to: "editing",
+    				as: "n"
+    			},
+    			{
+    				from: "a",
+    				to: "editing",
+    				as: "a"
+    			},
+    			{
+    				from: "state",
+    				to: "make_edge"
+    			},
+    			{
+    				from: "c",
+    				to: "make_edge",
+    				as: "edge_from"
+    			},
+    			{
+    				from: "shift_c",
+    				to: "make_edge",
+    				as: "edge_to"
+    			},
+    			{
+    				from: "state",
+    				to: "esc"
     			},
     			{
     				from: "key_event",
     				to: "esc"
     			},
     			{
-    				from: "esc",
-    				to: "new_state"
+    				from: "state",
+    				to: "esc_state",
+    				order: 0
     			},
     			{
-    				from: "enter",
-    				to: "expand_contract"
+    				from: "esc",
+    				to: "esc_editing"
+    			},
+    			{
+    				from: "esc_editing",
+    				to: "set_editing",
+    				as: "Escape"
+    			},
+    			{
+    				from: "expand_contract",
+    				to: "expand_contract_display_graph"
+    			},
+    			{
+    				from: "expand_contract_display_graph",
+    				to: "display_graph",
+    				as: "Enter"
+    			},
+    			{
+    				from: "expand_contract",
+    				to: "expand_contract_selected"
+    			},
+    			{
+    				from: "expand_contract_selected",
+    				to: "selected",
+    				as: "Enter"
     			},
     			{
     				from: "o",
     				to: "modified_display_graph",
-    				as: "data",
-    				order: 2
+    				as: "o"
     			},
     			{
     				from: "x",
     				to: "modified_display_graph",
-    				as: "data",
     				order: 2
     			},
     			{
     				from: "display_graph_and_selected",
     				to: "modified_display_graph",
-    				as: "data",
     				order: 1
     			},
     			{
-    				from: "expand_contract",
-    				to: "modified_display_graph",
-    				as: "data",
-    				order: 2
+    				from: "make_edge",
+    				to: "display_graph",
+    				as: "c"
     			},
     			{
-    				from: "modified_display_graph",
+    				from: "display_graph",
     				to: "graph_sim",
-    				order: 2
+    				as: "display_graph"
     			},
     			{
-    				from: "modified_display_graph",
-    				to: "new_state"
+    				from: "state",
+    				to: "set_selected",
+    				as: "state"
+    			},
+    			{
+    				from: "selected",
+    				to: "set_selected",
+    				as: "selected",
+    				type: "concat"
+    			},
+    			{
+    				from: "editing",
+    				to: "set_editing",
+    				as: "editing"
+    			},
+    			{
+    				from: "set_selected",
+    				to: "set_editing",
+    				as: "state"
+    			},
+    			{
+    				from: "display_graph",
+    				to: "set_display_graph",
+    				as: "display_graph"
+    			},
+    			{
+    				from: "set_editing",
+    				to: "set_display_graph",
+    				as: "state"
+    			},
+    			{
+    				from: "set_display_graph",
+    				to: "new_state",
+    				as: "state"
+    			},
+    			{
+    				from: "key_event",
+    				to: "new_state_cases"
+    			},
+    			{
+    				from: "new_state_cases",
+    				to: "new_state",
+    				type: "inputs"
     			},
     			{
     				from: "graph_sim",
     				to: "new_state",
-    				order: 2
+    				as: "graph_sim"
     			},
     			{
     				from: "state",
@@ -1140,10 +1458,6 @@
     				from: "new_state",
     				to: "out",
     				as: "data"
-    			},
-    			{
-    				from: "expand_contract",
-    				to: "key_log"
     			},
     			{
     				from: "save",
@@ -1508,12 +1822,12 @@
     			{
     				from: "get_first",
     				to: "new_state",
-    				order: -1
+    				as: "input_state"
     			},
     			{
     				from: "graph_to_sim",
     				to: "new_state",
-    				order: 1
+    				as: "graph_sim"
     			},
     			{
     				from: "get_first",
@@ -1654,9 +1968,10 @@
     						args: [
     							"selected",
     							"display_graph",
-    							"editing"
+    							"editing",
+    							"edit_value"
     						],
-    						script: "return {type: 'text', value: editing ? display_graph.nodes.find(n => n.id === selected[0])[editing] : '', oninput: (state, payload) => { if(editing){ state.display_graph.nodes.find(n => n.id === selected[0])[editing] = payload.target.value;} return state; }}"
+    						script: "const start_value = edit_value ?? (editing ? display_graph.nodes.find(n => n.id === selected[0])[editing] : ''); return {type: 'text', value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), oninput: (s, payload) => ({...s, edit_value: payload.target.value})}"
     					},
     					{
     						id: "edit_text_label",
@@ -71846,36 +72161,46 @@
         graph.node_map = node_map;
 
         while(!state.has(out)) {
-            // let new_state_hash = "";
-            // for(const k of state.keys()) {
-            //     new_state_hash += k;
-            // }
-            // let new_active_hash = "";
-            // for(const k of active_nodes.keys()) {
-            //     new_active_hash += k;
-            // }
 
             if(state_length === state.size && active_nodes_length === active_nodes.size) {
                 throw new Error("stuck");
             }
 
-            // state_hash = new_state_hash;
-            // active_nodes_hash = new_active_hash;
             state_length = state.size;
             active_nodes_length = active_nodes.size;
 
 
             let input;
+            let node;
 
-            for(let node of active_nodes.values()) {
+            for(node of active_nodes.values()) {
                 let run = true;
+                let has_inputs = true;
+
+                let inputs = node.inputs;
+
                 // edge types
                 //   ref gets the node id
                 //   concat puts all the data as the "as" attribute
+                //   inputs defines the expected inputs
                 //   data (default)
 
                 for(let i = 0; i < node.inputs.length; i++) {
                     input = node.inputs[i];
+
+                    if (input.type === "inputs") {
+                        has_inputs = state.has(input.from);
+                        if(has_inputs) {
+                            const def_inputs = state.get(input.from);
+                            inputs = node.inputs.filter(node_input => def_inputs.includes(node_input.as));
+                        } else {
+                            inputs = [input];
+                        }
+                    }
+                }
+
+                for(let i = 0; i < inputs.length; i++) {
+                    input = inputs[i];
                     if(input?.type !== "ref" && !state.has(input.from)){
                         if(!active_nodes.has(input.from)) {
                             const input_node = node_map.get(input.from);
@@ -71893,6 +72218,7 @@
                         run = false;
                     }
                 }
+
 
                 if(node.type && !state.has(node.type)) {
                     if(!active_nodes.has(node.type)) {
@@ -71912,8 +72238,6 @@
                         state.set(node.id, [node.value].flat());
                         active_nodes.delete(node.id);
                     } else {
-                        const inputs = node.inputs;
-
                         inputs.sort((a, b) =>
                             a.as && !b.as
                             ? 1
@@ -71925,8 +72249,11 @@
                             ? a.order
                             : b.order !== undefined
                             ? b.order
+                            : a.type === undefined && b.type === undefined
+                            ? state.get(a.from).length - state.get(b.from).length // order the ones with less up front
                             : 0
                         );
+
 
                         let input;
                         for(let i = 0; i < inputs.length; i++) {
@@ -71935,7 +72262,6 @@
                                 break;
                             } else if(input?.type === "concat") {
                                 if(state.get(input.from).length > 0 || datas[0][input.as] === undefined) {
-
                                     datas.forEach(d => Object.assign(d, {[input.as]: state.get(input.from)}));
                                 }
                             } else if (input?.type === "ref") {
@@ -71944,7 +72270,7 @@
                                 state.get(input.from).forEach((d, i) =>{
                                     datas[i] = Object.assign(datas.length > i ? datas[i] : {}, input.as ? {[input.as]: d} : d);
                                 });
-                            } else if (state.get(input.from).length > 0 || (datas[0][input.as] === undefined && node.args?.includes(input.as)) || input.as === undefined) {
+                            } else if (state.get(input.from).length > 0) {
                                 const new_datas = [];
                                 const state_datas = state.get(input.from);
                                 for(let i = 0; i < datas.length; i++) {
@@ -72001,13 +72327,6 @@
                             for(let i = 0; i < datas.length; i++) {
                                 fn_args = args.slice();
                                 node.args.forEach(arg => {
-                                    if(datas[i][arg] === undefined){
-                                        console.log(state);
-                                        console.log(node);
-                                        console.log(datas[i]);
-                                        throw new Error(`${arg} not found`);
-                                    }
-
                                     fn_args.push(datas[i][arg]);
                                 });
 
@@ -72163,9 +72482,11 @@
 
         // const selected_level = levels.levels.get(data.display_graph_out);
 
-        data.simulation.nodes(data.nodes);
 
-        data.simulation.force('links').links(data.links);
+        if(typeof(data.links?.[0]?.source) === "string") {
+            data.simulation.nodes(data.nodes);
+            data.simulation.force('links').links(data.links);
+        }
 
         data.simulation.force('link_siblings')
             .x((n) => window.innerWidth * 0.5 +
@@ -72178,7 +72499,6 @@
 
         const selected = data.selected[0];
         const selected_level = levels.levels.get(selected);
-
 
         data.simulation.force('selected').radius(n => 
             n.node_id === selected
@@ -72282,7 +72602,7 @@
                 ev.preventDefault();
             }
 
-            requestAnimationFrame(() => dispatch(options.action, {key: ev.key, code: ev.code, preventDefault: () => ev.preventDefault(), ctrlKey: ev.ctrlKey, shiftKey: ev.shiftKey, metaKey: ev.metaKey}));
+            requestAnimationFrame(() => dispatch(options.action, {key: ev.key, code: ev.code, ctrlKey: ev.ctrlKey, shiftKey: ev.shiftKey, metaKey: ev.metaKey, target: ev.target}));
         };
         addEventListener('keydown', handler); 
         return () => removeEventListener('keydown', handler);

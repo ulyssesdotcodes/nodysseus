@@ -22,36 +22,46 @@ const executeGraph = ({state, graph, out}) => {
     graph.node_map = node_map;
 
     while(!state.has(out)) {
-        // let new_state_hash = "";
-        // for(const k of state.keys()) {
-        //     new_state_hash += k;
-        // }
-        // let new_active_hash = "";
-        // for(const k of active_nodes.keys()) {
-        //     new_active_hash += k;
-        // }
 
         if(state_length === state.size && active_nodes_length === active_nodes.size) {
             throw new Error("stuck");
         }
 
-        // state_hash = new_state_hash;
-        // active_nodes_hash = new_active_hash;
         state_length = state.size;
         active_nodes_length = active_nodes.size;
 
 
         let input;
+        let node;
 
-        for(let node of active_nodes.values()) {
+        for(node of active_nodes.values()) {
             let run = true;
+            let has_inputs = true;
+
+            let inputs = node.inputs;
+
             // edge types
             //   ref gets the node id
             //   concat puts all the data as the "as" attribute
+            //   inputs defines the expected inputs
             //   data (default)
 
             for(let i = 0; i < node.inputs.length; i++) {
                 input = node.inputs[i];
+
+                if (input.type === "inputs") {
+                    has_inputs = state.has(input.from);
+                    if(has_inputs) {
+                        const def_inputs = state.get(input.from);
+                        inputs = node.inputs.filter(node_input => def_inputs.includes(node_input.as));
+                    } else {
+                        inputs = [input];
+                    }
+                }
+            }
+
+            for(let i = 0; i < inputs.length; i++) {
+                input = inputs[i];
                 if(input?.type !== "ref" && !state.has(input.from)){
                     if(!active_nodes.has(input.from)) {
                         const input_node = node_map.get(input.from);
@@ -69,6 +79,7 @@ const executeGraph = ({state, graph, out}) => {
                     run = false;
                 }
             }
+
 
             if(node.type && !state.has(node.type)) {
                 if(!active_nodes.has(node.type)) {
@@ -88,8 +99,6 @@ const executeGraph = ({state, graph, out}) => {
                     state.set(node.id, [node.value].flat());
                     active_nodes.delete(node.id);
                 } else {
-                    const inputs = node.inputs;
-
                     inputs.sort((a, b) =>
                         a.as && !b.as
                         ? 1
@@ -101,8 +110,11 @@ const executeGraph = ({state, graph, out}) => {
                         ? a.order
                         : b.order !== undefined
                         ? b.order
+                        : a.type === undefined && b.type === undefined
+                        ? state.get(a.from).length - state.get(b.from).length // order the ones with less up front
                         : 0
                     );
+
 
                     let input;
                     for(let i = 0; i < inputs.length; i++) {
@@ -111,7 +123,6 @@ const executeGraph = ({state, graph, out}) => {
                             break;
                         } else if(input?.type === "concat") {
                             if(state.get(input.from).length > 0 || datas[0][input.as] === undefined) {
-
                                 datas.forEach(d => Object.assign(d, {[input.as]: state.get(input.from)}))
                             }
                         } else if (input?.type === "ref") {
@@ -120,7 +131,7 @@ const executeGraph = ({state, graph, out}) => {
                             state.get(input.from).forEach((d, i) =>{
                                 datas[i] = Object.assign(datas.length > i ? datas[i] : {}, input.as ? {[input.as]: d} : d);
                             });
-                        } else if (state.get(input.from).length > 0 || (datas[0][input.as] === undefined && node.args?.includes(input.as)) || input.as === undefined) {
+                        } else if (state.get(input.from).length > 0) {
                             const new_datas = []
                             const state_datas = state.get(input.from);
                             for(let i = 0; i < datas.length; i++) {
@@ -177,13 +188,6 @@ const executeGraph = ({state, graph, out}) => {
                         for(let i = 0; i < datas.length; i++) {
                             fn_args = args.slice();
                             node.args.forEach(arg => {
-                                if(datas[i][arg] === undefined){
-                                    console.log(state);
-                                    console.log(node);
-                                    console.log(datas[i]);
-                                    throw new Error(`${arg} not found`);
-                                }
-
                                 fn_args.push(datas[i][arg]);
                             });
 
@@ -342,9 +346,11 @@ const updateSimulationNodes = (data) => {
 
     // const selected_level = levels.levels.get(data.display_graph_out);
 
-    data.simulation.nodes(data.nodes);
 
-    data.simulation.force('links').links(data.links);
+    if(typeof(data.links?.[0]?.source) === "string") {
+        data.simulation.nodes(data.nodes);
+        data.simulation.force('links').links(data.links);
+    }
 
     data.simulation.force('link_siblings')
         .x((n) => window.innerWidth * 0.5 +
@@ -357,7 +363,6 @@ const updateSimulationNodes = (data) => {
 
     const selected = data.selected[0];
     const selected_level = levels.levels.get(selected);
-
 
     data.simulation.force('selected').radius(n => 
         n.node_id === selected
@@ -461,7 +466,7 @@ const keydownSubscription = (dispatch, options) => {
             ev.preventDefault();
         }
 
-        requestAnimationFrame(() => dispatch(options.action, {key: ev.key, code: ev.code, preventDefault: () => ev.preventDefault(), ctrlKey: ev.ctrlKey, shiftKey: ev.shiftKey, metaKey: ev.metaKey}))
+        requestAnimationFrame(() => dispatch(options.action, {key: ev.key, code: ev.code, ctrlKey: ev.ctrlKey, shiftKey: ev.shiftKey, metaKey: ev.metaKey, target: ev.target}))
     };
     addEventListener('keydown', handler); 
     return () => removeEventListener('keydown', handler);
