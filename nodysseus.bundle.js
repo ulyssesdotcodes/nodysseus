@@ -756,6 +756,14 @@
     				script: "return key"
     			},
     			{
+    				id: "key_inputs",
+    				args: [
+    					"key",
+    					"state"
+    				],
+    				script: "return state.editing ? key === 'Escape' ? ['Escape'] : [] : [key]"
+    			},
+    			{
     				id: "key_log",
     				type: "log"
     			},
@@ -914,27 +922,21 @@
     					"display_graph",
     					"editing"
     				],
-    				script: "if(!(key.toLowerCase() === 'o' && editing === false)){ return [] } const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({id, name: 'new node'}); display_graph.edges.push({from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id}); return {display_graph, selected: [id]};"
+    				script: "const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({id, name: 'new node'}); display_graph.edges.push({from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id}); return {display_graph, selected: [id]};"
     			},
     			{
-    				id: "c",
+    				id: "o_display_graph",
     				args: [
-    					"key",
-    					"selected",
-    					"editing",
-    					"shiftKey"
+    					"display_graph"
     				],
-    				script: "if(!(key.toLowerCase() === 'c' && editing === false && !shiftKey)){ return [] } return selected[0];"
+    				script: "return display_graph"
     			},
     			{
-    				id: "shift_c",
+    				id: "o_selected",
     				args: [
-    					"key",
-    					"shiftKey",
-    					"editing",
     					"selected"
     				],
-    				script: "if(!(key.toLowerCase() === 'c' && editing === false && shiftKey)){ return [] } return selected[0];"
+    				script: "return selected"
     			},
     			{
     				id: "x",
@@ -947,6 +949,20 @@
     				script: "if(!(key.toLowerCase() === 'x')){ return [] } display_graph.nodes = display_graph.nodes.filter(n => n.id !== selected[0]); const new_edges = []; const to = display_graph.edges.filter(e => e.to === selected[0]); const from = display_graph.edges.filter(e => e.from === selected[0]); for(let i = 0; i < to.length; i++){for(let j = 0; j < from.length; j++){ new_edges.push({from: to[i].from, to: from[j].to}); }}; display_graph.edges = display_graph.edges.filter(e => e.to !== selected[0] && e.from !== selected[0]); display_graph.edges.push(...new_edges); return {display_graph, selected: [to[0]?.from ?? from[0]?.to ?? display_graph_out] };"
     			},
     			{
+    				id: "x_display_graph",
+    				args: [
+    					"display_graph"
+    				],
+    				script: "return display_graph"
+    			},
+    			{
+    				id: "x_selected",
+    				args: [
+    					"selected"
+    				],
+    				script: "return selected"
+    			},
+    			{
     				id: "enter",
     				args: [
     					"key",
@@ -955,13 +971,29 @@
     				script: "if(!(key === 'Enter')){ return []; } return true;"
     			},
     			{
+    				id: "pending_edges",
+    				args: [
+    					"key",
+    					"shiftKey",
+    					"state"
+    				],
+    				script: "return {edge_from: key === 'c' ? state.selected[0] : state.edge_from, edge_to: key.toLowerCase() === 'c' && shiftKey ? state.selected[0] : state.edge_to}"
+    			},
+    			{
+    				id: "set_pending_edges",
+    				args: [
+    					"pending_edges",
+    					"state"
+    				],
+    				script: "const has_both = pending_edges.edge_to && pending_edges.edge_from; state.edge_to = has_both ? undefined : pending_edges.edge_to; state.edge_from = has_both ? undefined : pending_edges.edge_from; return state;"
+    			},
+    			{
     				id: "make_edge",
     				args: [
-    					"edge_to",
-    					"edge_from",
-    					"display_graph"
+    					"pending_edges",
+    					"state"
     				],
-    				script: "if(edge_from && edge_to){ display_graph.edges.push({from: state.edge_from, to: state.edge_to}); edge_to = null; edge_from = null } return {display_graph, edge_from, edge_to};"
+    				script: "if(pending_edges.edge_from && pending_edges.edge_to){ const start_len = state.display_graph.edges.length;  state.display_graph.edges = state.display_graph.edges.filter(e => !(e.from === pending_edges.edge_from && e.to === pending_edges.edge_to)); if(state.display_graph.edges.length === start_len){ state.display_graph.edges.push({from: pending_edges.edge_from, to: pending_edges.edge_to});}} return state.display_graph;"
     			},
     			{
     				id: "trigger_expand_contract",
@@ -1005,7 +1037,7 @@
     					"display_graph",
     					"editing"
     				],
-    				script: "if(!(key === 'Escape' && editing)){ return []; } target.blur(); let value; try { value = JSON.parse(target.value);} catch(e){ value = target.value; } display_graph.nodes.find(n => n.id === selected[0])[editing] = value; return {editing: false, edit_value: null};"
+    				script: "target.blur(); let value; try { value = JSON.parse(target.value);} catch(e){ value = target.value; } display_graph.nodes.find(n => n.id === selected[0])[editing] = value; return {editing: false, edit_value: null, display_graph};"
     			},
     			{
     				id: "esc_editing",
@@ -1013,6 +1045,20 @@
     					"editing"
     				],
     				script: "return editing;"
+    			},
+    			{
+    				id: "esc_edit_value",
+    				args: [
+    					"edit_value"
+    				],
+    				script: "return edit_value;"
+    			},
+    			{
+    				id: "esc_display_graph",
+    				args: [
+    					"display_graph"
+    				],
+    				script: "return display_graph;"
     			},
     			{
     				id: "selected",
@@ -1024,7 +1070,7 @@
     					"selected",
     					"state"
     				],
-    				script: "state.selected = selected ?? state.selected; return state"
+    				script: "state.selected = selected ? [selected] : state.selected; return state"
     			},
     			{
     				id: "editing",
@@ -1032,6 +1078,21 @@
     			},
     			{
     				id: "set_editing",
+    				args: [
+    					"editing",
+    					"state"
+    				],
+    				script: "state.editing = editing ?? state.editing; return state"
+    			},
+    			{
+    				id: "editing_esc",
+    				args: [
+    					"key"
+    				],
+    				script: "return key !== 'Escape'"
+    			},
+    			{
+    				id: "set_editing_esc",
     				args: [
     					"editing",
     					"state"
@@ -1051,11 +1112,25 @@
     				script: "state.display_graph = display_graph ?? state.display_graph; return state"
     			},
     			{
+    				id: "edit_value",
+    				type: "switch"
+    			},
+    			{
+    				id: "set_edit_value",
+    				args: [
+    					"edit_value",
+    					"state"
+    				],
+    				script: "state.edit_value = edit_value !== undefined ? edit_value : state.edit_value; return state"
+    			},
+    			{
     				id: "new_state_cases",
     				args: [
-    					"key"
+    					"key",
+    					"pending_edges",
+    					"state"
     				],
-    				script: "const graph_sim = key === 'Enter'; return [graph_sim && 'graph_sim', 'state']"
+    				script: "const graph_sim = (!state.editing && (key === 'Enter' || key.toLowerCase() === 'o' || key === 'x' || (!!pending_edges.edge_to && !!pending_edges.edge_from))) || key === 'Escape'; return [graph_sim && 'graph_sim', 'state']"
     			},
     			{
     				id: "new_state",
@@ -1074,13 +1149,39 @@
     				script: "return lib.scripts.graphToSimulationNodes({display_graph, nodes});"
     			},
     			{
+    				id: "update",
+    				args: [
+    					"state",
+    					"key"
+    				],
+    				script: "return state.editing ? key === 'Escape' : true"
+    			},
+    			{
+    				id: "editing_esc_switch",
+    				type: "switch"
+    			},
+    			{
+    				id: "editing_esc_switch_display_graph",
+    				args: [
+    					"display_graph"
+    				],
+    				script: "return display_graph"
+    			},
+    			{
+    				id: "editing_esc_switch_cases",
+    				args: [
+    					"state"
+    				],
+    				script: "return state.editing ? ['editing'] : ['normal']"
+    			},
+    			{
     				id: "out",
     				args: [
     					"data",
     					"save",
     					"update"
     				],
-    				script: "return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: {nodes: data.display_graph.nodes.concat([]), edges: data.display_graph.edges.concat([])}, out: data.display_graph_out}], [() => save(), {}], [data.update_sim_effect, data]]]"
+    				script: "console.log('out'); console.log(data); return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: {nodes: data.display_graph.nodes.concat([]), edges: data.display_graph.edges.concat([])}, out: data.display_graph_out}], [() => save(), {}], update && [data.update_sim_effect, data]]]"
     			}
     		],
     		edges: [
@@ -1101,16 +1202,35 @@
     				to: "key"
     			},
     			{
+    				from: "key_event",
+    				to: "key_inputs"
+    			},
+    			{
+    				from: "state",
+    				to: "key_inputs",
+    				as: "state"
+    			},
+    			{
     				from: "state",
     				to: "get_selected"
     			},
     			{
-    				from: "key",
+    				from: "key_inputs",
     				to: "selected",
     				type: "inputs"
     			},
     			{
-    				from: "key",
+    				from: "key_inputs",
+    				to: "edit_value",
+    				type: "inputs"
+    			},
+    			{
+    				from: "key_inputs",
+    				to: "editing",
+    				type: "inputs"
+    			},
+    			{
+    				from: "key_inputs",
     				to: "display_graph",
     				type: "inputs"
     			},
@@ -1322,17 +1442,47 @@
     			},
     			{
     				from: "state",
-    				to: "make_edge"
+    				to: "pending_edges",
+    				as: "state"
     			},
     			{
-    				from: "c",
-    				to: "make_edge",
-    				as: "edge_from"
+    				from: "key_event",
+    				to: "pending_edges"
     			},
     			{
-    				from: "shift_c",
+    				from: "pending_edges",
     				to: "make_edge",
-    				as: "edge_to"
+    				as: "pending_edges"
+    			},
+    			{
+    				from: "pending_edges",
+    				to: "set_pending_edges",
+    				as: "pending_edges"
+    			},
+    			{
+    				from: "pending_edges",
+    				to: "new_state_cases",
+    				as: "pending_edges"
+    			},
+    			{
+    				from: "state",
+    				to: "new_state_cases",
+    				as: "state"
+    			},
+    			{
+    				from: "state",
+    				to: "make_edge",
+    				as: "state"
+    			},
+    			{
+    				from: "make_edge",
+    				to: "display_graph",
+    				as: "c"
+    			},
+    			{
+    				from: "make_edge",
+    				to: "display_graph",
+    				as: "C"
     			},
     			{
     				from: "state",
@@ -1343,17 +1493,30 @@
     				to: "esc"
     			},
     			{
-    				from: "state",
-    				to: "esc_state",
-    				order: 0
-    			},
-    			{
     				from: "esc",
     				to: "esc_editing"
     			},
     			{
+    				from: "esc",
+    				to: "esc_edit_value"
+    			},
+    			{
+    				from: "esc",
+    				to: "esc_display_graph"
+    			},
+    			{
     				from: "esc_editing",
-    				to: "set_editing",
+    				to: "editing",
+    				as: "Escape"
+    			},
+    			{
+    				from: "esc_edit_value",
+    				to: "edit_value",
+    				as: "Escape"
+    			},
+    			{
+    				from: "esc_display_graph",
+    				to: "display_graph",
     				as: "Escape"
     			},
     			{
@@ -1376,13 +1539,49 @@
     			},
     			{
     				from: "o",
-    				to: "modified_display_graph",
+    				to: "o_display_graph"
+    			},
+    			{
+    				from: "o",
+    				to: "o_selected"
+    			},
+    			{
+    				from: "o_display_graph",
+    				to: "display_graph",
     				as: "o"
     			},
     			{
+    				from: "o_display_graph",
+    				to: "display_graph",
+    				as: "O"
+    			},
+    			{
+    				from: "o_selected",
+    				to: "selected",
+    				as: "o"
+    			},
+    			{
+    				from: "o_selected",
+    				to: "selected",
+    				as: "O"
+    			},
+    			{
     				from: "x",
-    				to: "modified_display_graph",
-    				order: 2
+    				to: "x_display_graph"
+    			},
+    			{
+    				from: "x",
+    				to: "x_selected"
+    			},
+    			{
+    				from: "x_display_graph",
+    				to: "display_graph",
+    				as: "x"
+    			},
+    			{
+    				from: "x_selected",
+    				to: "selected",
+    				as: "x"
     			},
     			{
     				from: "display_graph_and_selected",
@@ -1393,6 +1592,16 @@
     				from: "make_edge",
     				to: "display_graph",
     				as: "c"
+    			},
+    			{
+    				from: "state",
+    				to: "graph_sim_inputs",
+    				as: "state"
+    			},
+    			{
+    				from: "graph_sim_inputs",
+    				to: "graph_sim_",
+    				type: "inputs"
     			},
     			{
     				from: "display_graph",
@@ -1407,8 +1616,22 @@
     			{
     				from: "selected",
     				to: "set_selected",
-    				as: "selected",
-    				type: "concat"
+    				as: "selected"
+    			},
+    			{
+    				from: "set_selected",
+    				to: "set_edit_value",
+    				as: "state"
+    			},
+    			{
+    				from: "edit_value",
+    				to: "set_edit_value",
+    				as: "edit_value"
+    			},
+    			{
+    				from: "set_edit_value",
+    				to: "set_editing",
+    				as: "state"
     			},
     			{
     				from: "editing",
@@ -1416,19 +1639,19 @@
     				as: "editing"
     			},
     			{
-    				from: "set_selected",
-    				to: "set_editing",
+    				from: "set_editing",
+    				to: "set_pending_edges",
+    				as: "state"
+    			},
+    			{
+    				from: "set_pending_edges",
+    				to: "set_display_graph",
     				as: "state"
     			},
     			{
     				from: "display_graph",
     				to: "set_display_graph",
     				as: "display_graph"
-    			},
-    			{
-    				from: "set_editing",
-    				to: "set_display_graph",
-    				as: "state"
     			},
     			{
     				from: "set_display_graph",
@@ -1451,8 +1674,51 @@
     			},
     			{
     				from: "state",
+    				to: "set_editing_esc",
+    				as: "state"
+    			},
+    			{
+    				from: "key_event",
+    				to: "editing_esc"
+    			},
+    			{
+    				from: "editing_esc",
+    				to: "set_editing_esc",
+    				as: "editing"
+    			},
+    			{
+    				from: "set_editing_esc",
+    				to: "editing_esc_switch",
+    				as: "editing"
+    			},
+    			{
+    				from: "state",
     				to: "graph_sim",
     				order: 1
+    			},
+    			{
+    				from: "state",
+    				to: "editing_esc_switch_cases",
+    				as: "state"
+    			},
+    			{
+    				from: "editing_esc_switch_cases",
+    				to: "editing_esc_switch",
+    				type: "inputs"
+    			},
+    			{
+    				from: "key_event",
+    				to: "update"
+    			},
+    			{
+    				from: "state",
+    				to: "update",
+    				as: "state"
+    			},
+    			{
+    				from: "update",
+    				to: "out",
+    				as: "update"
     			},
     			{
     				from: "new_state",
@@ -72566,6 +72832,7 @@
         const tick = () => {
             if(simulation.alpha() > simulation.alphaMin()) {
                 simulation.tick();
+                console.log('updating');
                 dispatch(s => ({ 
                     ...s, 
                     nodes: simulation.nodes().map(n => ({node_id: n.node_id, x: Math.floor(n.x), y: Math.floor(n.y), type: n.type, value: n.value, nodes: n.nodes, edges: n.edges, script: n.script, name: n.name})), 

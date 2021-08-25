@@ -430,6 +430,7 @@ const d3subscription = simulation => dispatch => {
     const tick = () => {
         if(simulation.alpha() > simulation.alphaMin()) {
             simulation.tick();
+            console.log('updating');
             dispatch(s => ({ 
                 ...s, 
                 nodes: simulation.nodes().map(n => ({node_id: n.node_id, x: Math.floor(n.x), y: Math.floor(n.y), type: n.type, value: n.value, nodes: n.nodes, edges: n.edges, script: n.script, name: n.name})), 
