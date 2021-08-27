@@ -792,14 +792,6 @@
     				script: "return selected[0]"
     			},
     			{
-    				id: "display_graph_and_selected",
-    				args: [
-    					"display_graph",
-    					"selected"
-    				],
-    				script: "return {display_graph, selected, dgs: true}"
-    			},
-    			{
     				id: "filter_editing",
     				args: [
     					"editing"
@@ -971,6 +963,16 @@
     				script: "if(!(key === 'Enter')){ return []; } return true;"
     			},
     			{
+    				id: "e",
+    				args: [
+    					"key",
+    					"selected",
+    					"display_graph",
+    					"selected_edge"
+    				],
+    				script: "return selected_edge ? null : display_graph.edges.find(e => e.to === selected[0]);"
+    			},
+    			{
     				id: "pending_edges",
     				args: [
     					"key",
@@ -1016,17 +1018,6 @@
     					"display_graph"
     				],
     				script: "return display_graph"
-    			},
-    			{
-    				id: "modified_display_graph_inputs",
-    				args: [
-    					"key"
-    				],
-    				script: "return [key.toLowerCase()]"
-    			},
-    			{
-    				id: "modified_display_graph",
-    				type: "switch"
     			},
     			{
     				id: "esc",
@@ -1085,21 +1076,6 @@
     				script: "state.editing = editing ?? state.editing; return state"
     			},
     			{
-    				id: "editing_esc",
-    				args: [
-    					"key"
-    				],
-    				script: "return key !== 'Escape'"
-    			},
-    			{
-    				id: "set_editing_esc",
-    				args: [
-    					"editing",
-    					"state"
-    				],
-    				script: "state.editing = editing ?? state.editing; return state"
-    			},
-    			{
     				id: "display_graph",
     				type: "switch"
     			},
@@ -1122,6 +1098,18 @@
     					"state"
     				],
     				script: "state.edit_value = edit_value !== undefined ? edit_value : state.edit_value; return state"
+    			},
+    			{
+    				id: "selected_edge",
+    				type: "switch"
+    			},
+    			{
+    				id: "set_selected_edge",
+    				args: [
+    					"selected_edge",
+    					"state"
+    				],
+    				script: "state.selected_edge = selected_edge === null ? undefined : selected_edge !== undefined ? selected_edge : state.selected_edge; return state"
     			},
     			{
     				id: "new_state_cases",
@@ -1152,27 +1140,11 @@
     				id: "update",
     				args: [
     					"state",
-    					"key"
+    					"key",
+    					"display_graph",
+    					"selected"
     				],
-    				script: "return state.editing ? key === 'Escape' : true"
-    			},
-    			{
-    				id: "editing_esc_switch",
-    				type: "switch"
-    			},
-    			{
-    				id: "editing_esc_switch_display_graph",
-    				args: [
-    					"display_graph"
-    				],
-    				script: "return display_graph"
-    			},
-    			{
-    				id: "editing_esc_switch_cases",
-    				args: [
-    					"state"
-    				],
-    				script: "return state.editing ? ['editing'] : ['normal']"
+    				script: "return state.editing ? key === 'Escape' : !!display_graph || !!selected"
     			},
     			{
     				id: "out",
@@ -1181,7 +1153,7 @@
     					"save",
     					"update"
     				],
-    				script: "console.log('out'); console.log(data); return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: {nodes: data.display_graph.nodes.concat([]), edges: data.display_graph.edges.concat([])}, out: data.display_graph_out}], [() => save(), {}], update && [data.update_sim_effect, data]]]"
+    				script: "console.log(data); return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: {nodes: data.display_graph.nodes.concat([]), edges: data.display_graph.edges.concat([])}, out: data.display_graph_out}], [() => save(), {}], update && [data.update_sim_effect, data]]]"
     			}
     		],
     		edges: [
@@ -1221,6 +1193,11 @@
     			},
     			{
     				from: "key_inputs",
+    				to: "selected_edge",
+    				type: "inputs"
+    			},
+    			{
+    				from: "key_inputs",
     				to: "edit_value",
     				type: "inputs"
     			},
@@ -1233,10 +1210,6 @@
     				from: "key_inputs",
     				to: "display_graph",
     				type: "inputs"
-    			},
-    			{
-    				from: "state",
-    				to: "display_graph_and_selected"
     			},
     			{
     				from: "state",
@@ -1308,6 +1281,10 @@
     				to: "right"
     			},
     			{
+    				from: "state",
+    				to: "save"
+    			},
+    			{
     				from: "key_event",
     				to: "right"
     			},
@@ -1392,6 +1369,10 @@
     				to: "save"
     			},
     			{
+    				from: "state",
+    				to: "e"
+    			},
+    			{
     				from: "down",
     				to: "selected",
     				as: "ArrowDown",
@@ -1414,6 +1395,17 @@
     				to: "selected",
     				as: "ArrowRight",
     				type: "concat"
+    			},
+    			{
+    				from: "e",
+    				to: "selected_edge",
+    				as: "e",
+    				type: "concat"
+    			},
+    			{
+    				from: "selected_edge",
+    				to: "set_selected_edge",
+    				as: "selected_edge"
     			},
     			{
     				from: "v",
@@ -1584,11 +1576,6 @@
     				as: "x"
     			},
     			{
-    				from: "display_graph_and_selected",
-    				to: "modified_display_graph",
-    				order: 1
-    			},
-    			{
     				from: "make_edge",
     				to: "display_graph",
     				as: "c"
@@ -1620,6 +1607,11 @@
     			},
     			{
     				from: "set_selected",
+    				to: "set_selected_edge",
+    				as: "state"
+    			},
+    			{
+    				from: "set_selected_edge",
     				to: "set_edit_value",
     				as: "state"
     			},
@@ -1674,41 +1666,22 @@
     			},
     			{
     				from: "state",
-    				to: "set_editing_esc",
-    				as: "state"
-    			},
-    			{
-    				from: "key_event",
-    				to: "editing_esc"
-    			},
-    			{
-    				from: "editing_esc",
-    				to: "set_editing_esc",
-    				as: "editing"
-    			},
-    			{
-    				from: "set_editing_esc",
-    				to: "editing_esc_switch",
-    				as: "editing"
-    			},
-    			{
-    				from: "state",
     				to: "graph_sim",
     				order: 1
     			},
     			{
-    				from: "state",
-    				to: "editing_esc_switch_cases",
-    				as: "state"
-    			},
-    			{
-    				from: "editing_esc_switch_cases",
-    				to: "editing_esc_switch",
-    				type: "inputs"
-    			},
-    			{
     				from: "key_event",
     				to: "update"
+    			},
+    			{
+    				from: "display_graph",
+    				to: "update",
+    				as: "display_graph"
+    			},
+    			{
+    				from: "selected",
+    				to: "update",
+    				as: "selected"
     			},
     			{
     				from: "state",
@@ -2373,6 +2346,13 @@
     						script: "return selected"
     					},
     					{
+    						id: "get_selected_edge",
+    						args: [
+    							"selected_edge"
+    						],
+    						script: "return selected_edge"
+    					},
+    					{
     						id: "get_onclick_node_fn",
     						args: [
     							"onclick_node_fn"
@@ -2799,15 +2779,16 @@
     									"target",
     									"lerp_length"
     								],
-    								script: "const length_x = Math.abs(source.x - target.x); const length_y = Math.abs(source.y - target.y); const length = Math.sqrt(length_x * length_x + length_y * length_y); return {source: {x: source.x + (target.x - source.x) * lerp_length / length, y: source.y + (target.y - source.y) * lerp_length / length}, target: {x: source.x + (target.x - source.x) * (1 - (lerp_length / length)), y: source.y + (target.y - source.y) * (1 - (lerp_length / length))}}"
+    								script: "const length_x = Math.abs(source.x - target.x); const length_y = Math.abs(source.y - target.y); const length = Math.sqrt(length_x * length_x + length_y * length_y); return {source: {...source, x: source.x + (target.x - source.x) * lerp_length / length, y: source.y + (target.y - source.y) * lerp_length / length}, target: {...target, x: source.x + (target.x - source.x) * (1 - (lerp_length / length)), y: source.y + (target.y - source.y) * (1 - (lerp_length / length))}}"
     							},
     							{
     								id: "line_props",
     								args: [
     									"source",
-    									"target"
+    									"target",
+    									"selected_edge"
     								],
-    								script: "return ({x1: Math.floor(source.x), y1: Math.floor(source.y), x2: Math.floor(target.x), y2: Math.floor(target.y), stroke: 'black', 'marker-end': 'url(#arrow)'})"
+    								script: "return ({x1: Math.floor(source.x), y1: Math.floor(source.y), x2: Math.floor(target.x), y2: Math.floor(target.y), stroke: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to ? 'red' : 'black', 'marker-end': 'url(#arrow)'})"
     							},
     							{
     								id: "line_dom_type",
@@ -2837,6 +2818,10 @@
     							{
     								from: "in",
     								to: "get_link"
+    							},
+    							{
+    								from: "in",
+    								to: "line_props"
     							},
     							{
     								from: "get_link",
@@ -3030,6 +3015,10 @@
     					},
     					{
     						from: "in",
+    						to: "get_selected_edge"
+    					},
+    					{
+    						from: "in",
     						to: "get_onclick_node_fn"
     					},
     					{
@@ -3047,6 +3036,11 @@
     						to: "node_layout",
     						as: "selected",
     						type: "concat"
+    					},
+    					{
+    						from: "get_selected_edge",
+    						to: "link_layout",
+    						as: "selected_edge"
     					},
     					{
     						from: "get_links",
