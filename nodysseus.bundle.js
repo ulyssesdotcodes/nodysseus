@@ -836,7 +836,19 @@
     					"editing",
     					"nodes"
     				],
-    				script: "if(!(key === 'h' || key === 'ArrowLeft') || editing){ return [] } const current_node = nodes.find(n => n.node_id === selected[0]); const parent_id = display_graph.edges.find(e => e.to === selected[0])?.from; const child_id = display_graph.edges.find(e => e.from === selected[0])?.to; const siblings = display_graph.edges.filter(e => e.from === parent_id && e.to !== selected[0]).map(e => e.to).concat(display_graph.edges.filter(e => e.to === child_id && e.from !== selected[0]).map(e => e.from)); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = sibling_node.x - current_node.x; dist[1] = xdist < 0 && xdist < dist[0] ? sibling_node : dist[1]; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+    				script: "const current_node = nodes.find(n => n.node_id === selected[0]); const parent_id = display_graph.edges.find(e => e.to === selected[0])?.from; const child_id = display_graph.edges.find(e => e.from === selected[0])?.to; const siblings = display_graph.edges.filter(e => e.from === parent_id && e.to !== selected[0]).map(e => e.to).concat(display_graph.edges.filter(e => e.to === child_id && e.from !== selected[0]).map(e => e.from)); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = sibling_node.x - current_node.x; dist[1] = xdist < 0 && xdist < dist[0] ? sibling_node : dist[1]; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+    			},
+    			{
+    				id: "left_edge",
+    				args: [
+    					"key",
+    					"selected",
+    					"selected_edge",
+    					"display_graph",
+    					"editing",
+    					"links"
+    				],
+    				script: "const link = links.find(l => l.target.node_id === selected_edge.to &&  l.source.node_id === selected_edge.from); return links.filter(l => l.target.node_id === selected[0]).reduce(([current, dist], l) => l.source.x < link.source.x && Math.abs(l.source.x - link.source.x) < dist ? [{from: l.source.node_id, to: l.target.node_id} , Math.abs(l.source.x - link.source.x)] : [current, dist], [{to: link.target.node_id, from: link.source.node_id}, 10000])[0]"
     			},
     			{
     				id: "right",
@@ -847,7 +859,19 @@
     					"editing",
     					"nodes"
     				],
-    				script: "if(!(key === 'l' || key === 'ArrowRight') || editing){ return [] } const current_node = nodes.find(n => n.node_id === selected[0]); const parent_id = display_graph.edges.find(e => e.to === selected[0])?.from; const child_id = display_graph.edges.find(e => e.from === selected[0])?.to; const siblings = display_graph.edges.filter(e => e.from === parent_id && e.to !== selected[0]).map(e => e.to).concat(display_graph.edges.filter(e => e.to === child_id && e.from !== selected[0]).map(e => e.from)); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = sibling_node.x - current_node.x; dist[1] = xdist > 0 && xdist < dist[0] ? sibling_node : dist[1]; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+    				script: "const current_node = nodes.find(n => n.node_id === selected[0]); const parent_id = display_graph.edges.find(e => e.to === selected[0])?.from; const child_id = display_graph.edges.find(e => e.from === selected[0])?.to; const siblings = display_graph.edges.filter(e => e.from === parent_id && e.to !== selected[0]).map(e => e.to).concat(display_graph.edges.filter(e => e.to === child_id && e.from !== selected[0]).map(e => e.from)); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = sibling_node.x - current_node.x; dist[1] = xdist > 0 && xdist < dist[0] ? sibling_node : dist[1]; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+    			},
+    			{
+    				id: "right_edge",
+    				args: [
+    					"key",
+    					"selected",
+    					"selected_edge",
+    					"display_graph",
+    					"editing",
+    					"links"
+    				],
+    				script: "const link = links.find(l => l.target.node_id === selected_edge.to &&  l.source.node_id === selected_edge.from); return links.filter(l => l.target.node_id === selected[0]).reduce(([current, dist], l) => l.source.x > link.source.x && Math.abs(l.source.x - link.source.x) < dist ? [{from: l.source.node_id, to: l.target.node_id} , Math.abs(l.source.x - link.source.x)] : [current, dist], [{to: link.target.node_id, from: link.source.node_id}, 10000])[0]"
     			},
     			{
     				id: "v",
@@ -865,11 +889,12 @@
     				args: [
     					"key",
     					"selected",
+    					"selected_edge",
     					"display_graph",
     					"editing",
     					"nodes"
     				],
-    				script: "if(!(key === 't' && editing === false)){ return [] } document.querySelector('#edit_value input').focus(); return 'type';"
+    				script: "document.querySelector('#edit_value input').focus(); return 'type';"
     			},
     			{
     				id: "s",
@@ -888,11 +913,12 @@
     				args: [
     					"key",
     					"selected",
+    					"selected_edge",
     					"display_graph",
     					"editing",
     					"nodes"
     				],
-    				script: "if(!(key === 'a' && editing === false)){ return [] } document.querySelector('#edit_value input').focus(); return 'args';"
+    				script: "if(!(key === 'a' && editing === false)){ return [] } document.querySelector('#edit_value input').focus(); return selected_edge ? 'as' : 'args';"
     			},
     			{
     				id: "n",
@@ -1025,10 +1051,11 @@
     					"key",
     					"target",
     					"selected",
+    					"selected_edge",
     					"display_graph",
     					"editing"
     				],
-    				script: "target.blur(); let value; try { value = JSON.parse(target.value);} catch(e){ value = target.value; } display_graph.nodes.find(n => n.id === selected[0])[editing] = value; return {editing: false, edit_value: null, display_graph};"
+    				script: "target.blur(); let value; try { value = JSON.parse(target.value);} catch(e){ value = target.value; } if(selected_edge){ display_graph.edges.find(e => e.to === selected_edge.to && e.from === selected_edge.from)[editing] = value === '' ? undefined : value; } else { display_graph.nodes.find(n => n.id === selected[0])[editing] = value === '' ? undefined : value; } return {editing: false, edit_value: null, display_graph};"
     			},
     			{
     				id: "esc_editing",
@@ -1100,6 +1127,14 @@
     				script: "state.edit_value = edit_value !== undefined ? edit_value : state.edit_value; return state"
     			},
     			{
+    				id: "selected_edge_inputs",
+    				args: [
+    					"key",
+    					"selected_edge"
+    				],
+    				script: "return selected_edge || key === 'e' ? [key] : []"
+    			},
+    			{
     				id: "selected_edge",
     				type: "switch"
     			},
@@ -1153,7 +1188,7 @@
     					"save",
     					"update"
     				],
-    				script: "console.log(data); return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: {nodes: data.display_graph.nodes.concat([]), edges: data.display_graph.edges.concat([])}, out: data.display_graph_out}], [() => save(), {}], update && [data.update_sim_effect, data]]]"
+    				script: "return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: {nodes: data.display_graph.nodes.concat([]), edges: data.display_graph.edges.concat([])}, out: data.display_graph_out}], [() => save(), {}], update && [data.update_sim_effect, data]]]"
     			}
     		],
     		edges: [
@@ -1192,9 +1227,12 @@
     				type: "inputs"
     			},
     			{
-    				from: "key_inputs",
-    				to: "selected_edge",
-    				type: "inputs"
+    				from: "key_event",
+    				to: "selected_edge_inputs"
+    			},
+    			{
+    				from: "state",
+    				to: "selected_edge_inputs"
     			},
     			{
     				from: "key_inputs",
@@ -1278,11 +1316,27 @@
     			},
     			{
     				from: "state",
-    				to: "right"
+    				to: "left_edge"
+    			},
+    			{
+    				from: "key_event",
+    				to: "left_edge"
+    			},
+    			{
+    				from: "state",
+    				to: "right_edge"
+    			},
+    			{
+    				from: "key_event",
+    				to: "right_edge"
     			},
     			{
     				from: "state",
     				to: "save"
+    			},
+    			{
+    				from: "state",
+    				to: "right"
     			},
     			{
     				from: "key_event",
@@ -1400,6 +1454,23 @@
     				from: "e",
     				to: "selected_edge",
     				as: "e",
+    				type: "concat"
+    			},
+    			{
+    				from: "selected_edge_inputs",
+    				to: "selected_edge",
+    				type: "inputs"
+    			},
+    			{
+    				from: "left_edge",
+    				to: "selected_edge",
+    				as: "ArrowLeft",
+    				type: "concat"
+    			},
+    			{
+    				from: "right_edge",
+    				to: "selected_edge",
+    				as: "ArrowRight",
     				type: "concat"
     			},
     			{
@@ -2206,11 +2277,12 @@
     						id: "edit_text_input_props",
     						args: [
     							"selected",
+    							"selected_edge",
     							"display_graph",
     							"editing",
     							"edit_value"
     						],
-    						script: "const start_value = edit_value ?? (editing ? display_graph.nodes.find(n => n.id === selected[0])[editing] : ''); return {type: 'text', value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), oninput: (s, payload) => ({...s, edit_value: payload.target.value})}"
+    						script: "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); return {type: 'text', value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), oninput: (s, payload) => ({...s, edit_value: payload.target.value})}"
     					},
     					{
     						id: "edit_text_label",
