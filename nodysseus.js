@@ -318,17 +318,14 @@ const bfs = (graph, level) => (edge) => {
 const d3simulation = () => {
     const simulation =
         lib.d3.forceSimulation()
-        .force('charge', lib.d3.forceManyBody().strength(-8).distanceMax(128))
+        .force('charge', lib.d3.forceManyBody().strength(-8).distanceMax(256))
         .force('collide', lib.d3.forceCollide(32))
-        // .force('center', lib.d3
-        // 	.forceCenter(window.innerWidth * 0.5, window.innerHeight * 0.5)
-        // 	.strength(.01))
         .force('links', lib.d3
             .forceLink([])
             .distance(64)
             .strength(0.1)
             .id(n => n.node_id))
-        .force('link_direction', lib.d3.forceY().strength(0.5))
+        .force('link_direction', lib.d3.forceY().strength(1))
         .force('link_siblings', lib.d3.forceX().strength(1))
         .force('selected', lib.d3.forceRadial(0, window.innerWidth * 0.5, window.innerHeight * 0.5).strength(2))
         .velocityDecay(0.7)
@@ -352,25 +349,53 @@ const updateSimulationNodes = (data) => {
         data.simulation.force('links').links(data.links);
     }
 
-    data.simulation.force('link_siblings')
-        .x((n) => window.innerWidth * 0.5 +
-            (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
-                (256 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) - levels.nodes_by_level[levels.levels.get(n.node_id)].length * 256 * 0.5) :
-                window.innerWidth * 0.25));
-
     const parents = new Map(data.nodes.map(n => [n.node_id, data.display_graph.edges.filter(e => e.to === n.node_id).map(e => e.from)]));
     const children = new Map(data.nodes.map(n => [n.node_id, data.display_graph.edges.filter(e => e.from === n.node_id).map(e => e.to)]));
-
+    const siblings = new Map(data.nodes.map(n => [n.node_id, parents.get(n.node_id)?.flatMap(p => children.get(p).filter(c => c !== n.node_id) ?? []).concat(children.get(n.node_id).flatMap(c => parents.get(c) ?? []))]))
     const selected = data.selected[0];
+    console.log(siblings.get(selected));
     const selected_level = levels.levels.get(selected);
+    const selected_branch = new Set([selected]);
+    const calculate_parent_branch = (s) => parents.get(s)?.forEach(p => { selected_branch.add(p), calculate_parent_branch(p) });
+    calculate_parent_branch(selected);
+    const calculate_child_branch = (s) => children.get(s)?.forEach(c => { selected_branch.add(c), calculate_child_branch(c) });
+    calculate_child_branch(selected);
+
+    // data.simulation.force('link_siblings')
+    //     .x((n) => (parents.has(n.node_id) && parents.get(n.node_id).x ? parents.get(n.node_id).x : window.innerWidth * 0.5) +
+    //         (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
+    //             (256 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) 
+    //             - levels.nodes_by_level[levels.levels.get(n.node_id)].length * 256 * 0.5) :
+    //             window.innerWidth * 0.25));
+
+    console.log(children);
+
+    data.simulation.force('link_siblings')
+        .x((n) => 
+            selected_branch.has(n.node_id) 
+            ? window.innerWidth * 0.5
+                + (256 * siblings.get(n.node_id).filter(s => selected_branch.has(s)).indexOf(n.node_id) 
+                    - siblings.get(n.node_id).filter(s => selected_branch.has(s)).length * 256 * 0.5) 
+            : siblings.has(n.node_id) && siblings.get(n.node_id)?.find(s => selected_branch.has(s))
+            ? ((siblings.get(n.node_id).indexOf(n.node_id) - siblings.get(n.node_id).findIndex(s => selected_branch.has(s))) * 0.25 + 0.5) * window.innerWidth
+            : children.has(n.node_id)
+            ? (data.nodes.find(c => c.node_id === children.get(n.node_id)[0])?.x ?? window.innerWidth * 0.75)
+            : window.innerWidth * 0.75
+        );
+
+    data.simulation.force('charge')
+        .strength(n => selected_branch.has(n.node_id) ? -1024 : -8)
+
 
     data.simulation.force('selected').radius(n => 
         n.node_id === selected
         ? 0 
         : parents.get(n.node_id)?.includes(selected) || children.get(n.node_id)?.includes(selected)
         ? window.innerHeight * 0.125
-        : window.innerHeight * 0.333
-    ).strength(n => n.node_id === selected ? 10 : 0);
+        : levels.levels.has(n.node_id) 
+        ? window.innerHeight * 0.125 * (1 + Math.abs(levels.levels.get(n.node_id) - selected_level))
+        : window.innerHeight * 0.4
+    ).strength(n => n.node_id === selected ? 10 : 2);
 
     data.simulation.force('link_direction')
         .y((n) => window.innerHeight * (
@@ -573,9 +598,10 @@ const lib = {
     THREE
 };
 
+const generic_nodes = new Set(["switch", "filter", "delete", "default", "trigger", "execute_graph", "get"])
 
 const stored = localStorage.getItem("display_graph");
 const display_graph = stored ? JSON.parse(stored) : test_graph;
-const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: {nodes: display_graph.nodes.concat([]), edges: display_graph.edges.concat([])}, display_graph_out: "out"}]]])
+const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: {nodes: display_graph.nodes.concat(DEFAULT_GRAPH.nodes.filter(n => generic_nodes.has(n.id))), edges: display_graph.edges.concat([])}, display_graph_out: "out"}]]])
 
 console.log(executeGraph({state, graph: DEFAULT_GRAPH, out: "hyperapp_app"})[0]);

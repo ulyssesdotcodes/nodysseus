@@ -816,7 +816,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const parent_id = display_graph.edges.find(e => e.to === selected[0])?.from; const child_id = display_graph.edges.find(e => e.from === selected[0])?.to; const siblings = display_graph.edges.filter(e => e.from === parent_id && e.to !== selected[0]).map(e => e.to).concat(display_graph.edges.filter(e => e.to === child_id && e.from !== selected[0]).map(e => e.from)); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = sibling_node.x - current_node.x; dist[1] = xdist < 0 && xdist < dist[0] ? sibling_node : dist[1]; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const parent_id = display_graph.edges.find(e => e.to === selected[0])?.from; const child_id = display_graph.edges.find(e => e.from === selected[0])?.to; const siblings = display_graph.edges.filter(e => e.from === parent_id && e.to !== selected[0]).map(e => e.to).concat(display_graph.edges.filter(e => e.to === child_id && e.from !== selected[0]).map(e => e.from)); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x < current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
                 },
                 {
                     "id": "left_edge",
@@ -839,7 +839,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const parent_id = display_graph.edges.find(e => e.to === selected[0])?.from; const child_id = display_graph.edges.find(e => e.from === selected[0])?.to; const siblings = display_graph.edges.filter(e => e.from === parent_id && e.to !== selected[0]).map(e => e.to).concat(display_graph.edges.filter(e => e.to === child_id && e.from !== selected[0]).map(e => e.from)); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = sibling_node.x - current_node.x; dist[1] = xdist > 0 && xdist < dist[0] ? sibling_node : dist[1]; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const parent_id = display_graph.edges.find(e => e.to === selected[0])?.from; const child_id = display_graph.edges.find(e => e.from === selected[0])?.to; const siblings = display_graph.edges.filter(e => e.from === parent_id && e.to !== selected[0]).map(e => e.to).concat(display_graph.edges.filter(e => e.to === child_id && e.from !== selected[0]).map(e => e.from)); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
                 },
                 {
                     "id": "right_edge",
@@ -1074,8 +1074,8 @@
                 },
                 {
                     "id": "selected_edge_inputs",
-                    "args": ["key", "selected_edge"],
-                    "script": "return selected_edge || key === 'e' ? [key] : []"
+                    "args": ["key", "selected_edge", "editing"],
+                    "script": "console.log('sei'); console.log(editing); return (!!selected_edge && key !== 'e') || (key === 'e' && editing === false) ? [key] : []"
                 },
                 {
                     "id": "selected_edge",
@@ -1084,7 +1084,7 @@
                 {
                     "id": "set_selected_edge",
                     "args": ["selected_edge", "state"],
-                    "script": "state.selected_edge = selected_edge === null ? undefined : selected_edge !== undefined ? selected_edge : state.selected_edge; return state"
+                    "script": "console.log('sse'); console.log(selected_edge); state.selected_edge = selected_edge === null ? undefined : selected_edge !== undefined ? selected_edge : state.selected_edge; return state"
                 },
                 {
                     "id": "new_state_cases",
