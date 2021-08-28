@@ -353,7 +353,6 @@ const updateSimulationNodes = (data) => {
     const children = new Map(data.nodes.map(n => [n.node_id, data.display_graph.edges.filter(e => e.from === n.node_id).map(e => e.to)]));
     const siblings = new Map(data.nodes.map(n => [n.node_id, parents.get(n.node_id)?.flatMap(p => children.get(p).filter(c => c !== n.node_id) ?? []).concat(children.get(n.node_id).flatMap(c => parents.get(c) ?? []))]))
     const selected = data.selected[0];
-    console.log(siblings.get(selected));
     const selected_level = levels.levels.get(selected);
     const selected_branch = new Set([selected]);
     const calculate_parent_branch = (s) => parents.get(s)?.forEach(p => { selected_branch.add(p), calculate_parent_branch(p) });
@@ -368,20 +367,29 @@ const updateSimulationNodes = (data) => {
     //             - levels.nodes_by_level[levels.levels.get(n.node_id)].length * 256 * 0.5) :
     //             window.innerWidth * 0.25));
 
-    console.log(children);
+    const sibling_x = new Map();
+    data.nodes.forEach(n => {
+        if(selected_branch.has(n.node_id)) {
+            sibling_x.set(n.node_id, window.innerWidth * 0.5
+                    + (128 * levels.nodes_by_level[levels.levels.get(n.node_id)].filter(s => selected_branch.has(s)).indexOf(n.node_id) 
+                        - levels.nodes_by_level[levels.levels.get(n.node_id)].filter(s => selected_branch.has(s)).length * 128 * 0.5))
+        } else if(siblings.has(n.node_id) && siblings.get(n.node_id).find(s => selected_branch.has(s))) {
+            sibling_x.set(n.node_id, ((siblings.get(n.node_id).indexOf(n.node_id) - siblings.get(n.node_id).findIndex(s => selected_branch.has(s))) * 0.25 + 0.5) * window.innerWidth)
+        } else if(children.get(n.node_id).length === 0) {
+            sibling_x.set(n.node_id, window.innerWidth * 0.75);
+        }
+    }); 
 
-    data.simulation.force('link_siblings')
-        .x((n) => 
-            selected_branch.has(n.node_id) 
-            ? window.innerWidth * 0.5
-                + (256 * siblings.get(n.node_id).filter(s => selected_branch.has(s)).indexOf(n.node_id) 
-                    - siblings.get(n.node_id).filter(s => selected_branch.has(s)).length * 256 * 0.5) 
-            : siblings.has(n.node_id) && siblings.get(n.node_id)?.find(s => selected_branch.has(s))
-            ? ((siblings.get(n.node_id).indexOf(n.node_id) - siblings.get(n.node_id).findIndex(s => selected_branch.has(s))) * 0.25 + 0.5) * window.innerWidth
-            : children.has(n.node_id)
-            ? (data.nodes.find(c => c.node_id === children.get(n.node_id)[0])?.x ?? window.innerWidth * 0.75)
-            : window.innerWidth * 0.75
-        );
+
+    while(sibling_x.size < data.nodes.length) {
+        data.nodes.forEach(n => {
+            if(!sibling_x.has(n.node_id) && sibling_x.has(children.get(n.node_id)[0])) {
+                sibling_x.set(n.node_id, sibling_x.get(children.get(n.node_id)[0]))
+            }
+        })
+    }
+
+    data.simulation.force('link_siblings').x((n) => sibling_x.get(n.node_id));
 
     data.simulation.force('charge')
         .strength(n => selected_branch.has(n.node_id) ? -1024 : -8)
@@ -403,7 +411,7 @@ const updateSimulationNodes = (data) => {
             ? 0.5 
             : levels.levels.has(n.node_id) && selected_level !== undefined
             ? .5 + .125 * (selected_level - levels.levels.get(n.node_id))
-            : .1
+            : .9
         ));
 
 
@@ -602,6 +610,6 @@ const generic_nodes = new Set(["switch", "filter", "delete", "default", "trigger
 
 const stored = localStorage.getItem("display_graph");
 const display_graph = stored ? JSON.parse(stored) : test_graph;
-const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: {nodes: display_graph.nodes.concat(DEFAULT_GRAPH.nodes.filter(n => generic_nodes.has(n.id))), edges: display_graph.edges.concat([])}, display_graph_out: "out"}]]])
+const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: {nodes: display_graph.nodes.concat(DEFAULT_GRAPH.nodes.filter(n => generic_nodes.has(n.id) && display_graph.nodes.findIndex(dn => dn.id === n.id) === -1)), edges: display_graph.edges.concat([])}, display_graph_out: "out"}]]])
 
 console.log(executeGraph({state, graph: DEFAULT_GRAPH, out: "hyperapp_app"})[0]);
