@@ -940,7 +940,7 @@
     					"display_graph",
     					"editing"
     				],
-    				script: "const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({id, name: 'new node'}); display_graph.edges.push({from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id}); return {display_graph, selected: [id]};"
+    				script: "const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({id, args: []}); display_graph.edges.push({from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id}); return {display_graph, selected: [id]};"
     			},
     			{
     				id: "o_display_graph",
@@ -1837,7 +1837,7 @@
     					"ev",
     					"state"
     				],
-    				script: "return ev.ty === 'move' && state.downx !== undefined && state.downy !== undefined && (Math.abs(ev.x - state.downx) > 32 || Math.abs(ev.y - state.downy) > 32)  ? {x: ev.x, y: ev.y, name: 'new_node', id: Date.now().toString() } : {}"
+    				script: "return ev.ty === 'move' && state.downx !== undefined && state.downy !== undefined && (Math.abs(ev.x - state.downx) > 32 || Math.abs(ev.y - state.downy) > 32)  ? {x: ev.x, y: ev.y, args: [], id: Date.now().toString() } : {}"
     			},
     			{
     				id: "out",
@@ -2551,12 +2551,24 @@
     												value: "name"
     											},
     											{
+    												id: "node_value",
+    												value: "value"
+    											},
+    											{
     												id: "get_id",
     												type: "get"
     											},
     											{
     												id: "get_name",
     												type: "get"
+    											},
+    											{
+    												id: "get_value",
+    												args: [
+    													"target",
+    													"def"
+    												],
+    												script: "return target.value ? (typeof target.value === 'object' ? JSON.stringify(target.value) : target.value.toString()) : def"
     											},
     											{
     												id: "get_type",
@@ -2609,7 +2621,17 @@
     												as: "target"
     											},
     											{
+    												from: "in",
+    												to: "get_value",
+    												as: "target"
+    											},
+    											{
     												from: "get_id",
+    												to: "get_value",
+    												as: "def"
+    											},
+    											{
+    												from: "get_value",
     												to: "get_name",
     												as: "default"
     											},
