@@ -2418,7 +2418,7 @@
                                         "onclick_node_fn",
                                         "selected"
                                     ],
-                                    "script": "return ({ x: x - 20, y: y - 20, id: node_id, onclick: (_, payload) => [onclick_node_fn, {x: payload.x, y: payload.y, node_id, selected: [], ty: 'down'}], width: 256, height: 64, class: `node ${selected ? 'selected': ''}`})"
+                                    "script": "return ({ x: x - 20, y: y - 20, id: node_id, onclick: (_, payload) => [onclick_node_fn, {x: payload.x, y: payload.y, node_id, selected: [], ty: 'down'}], width: 256, height: 64, class: `node ${selected[0] === node_id ? 'selected': ''}`})"
                                 },
                                 {
                                     "id": "children",
