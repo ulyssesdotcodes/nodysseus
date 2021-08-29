@@ -52,7 +52,6 @@ A graph is executed by pulling in data to the output node. The edges determine t
 - **v** change value
 - **s** change script
 - **n** change name
-
 - **esc** exit edit mode and save
 
 ### edge edit mode
