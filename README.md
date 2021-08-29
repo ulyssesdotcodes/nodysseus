@@ -10,8 +10,8 @@ Each node does something or passes its data to its children. Edges define the re
 
 Graph nodes are labeled with either their name, value, or id, in that order. A node has one of the following to determine what it does:
 
-**value**: passes this value to its children
-**script**: a function body that runs when evaluated with **args** available as variables
+- **value**: passes this value to its children
+- **script**: a function body that runs when evaluated with **args** available as variables
 
 If a node has no value or script, it passes all of the data it receives as an object.
 
@@ -22,9 +22,9 @@ An edge connects two nodes, possibly with an `as` value or an edge `type`. If no
 
 Types are
 
-**ref**: the parent's id is passed to the child as a string
-**inputs**: determines which parent nodes to evaluate by passing an array of "as" values
-**concat**: all the values from the parent are passed as an array to the child
+- **ref**: the parent's id is passed to the child as a string
+- **inputs**: determines which parent nodes to evaluate by passing an array of "as" values
+- **concat**: all the values from the parent are passed as an array to the child
 
 If no type is defined, it will pass the returned value as data.
 
@@ -37,28 +37,28 @@ A graph is executed by pulling in data to the output node. The edges determine t
 
 ### navigation
 
-**up** move to left most parent node
-**down** move to child node
-**left** move to sibling node to the left
-**right** move to sibling node to the right
-**enter** open subgraph
+- **up** move to left most parent node
+- **down** move to child node
+- **left** move to sibling node to the left
+- **right** move to sibling node to the right
+- **enter** open subgraph
 
 #### pending
-**/** search
+- **/** search
 
 ### node edit mode
 
-**a** change args
-**v** change value
-**s** change script
-**n** change name
+- **a** change args
+- **v** change value
+- **s** change script
+- **n** change name
 
-**esc** exit edit mode and save
+- **esc** exit edit mode and save
 
 ### edge edit mode
 
-**e** edit edge edit mode
-**left** move left to sibling edge
-**right** move right to sibling edge
-**a** change "as"
-**t** change type
+- **e** edit edge edit mode
+- **left** move left to sibling edge
+- **right** move right to sibling edge
+- **a** change "as"
+- **t** change type
