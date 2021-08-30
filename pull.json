@@ -163,7 +163,7 @@
                         "data",
                         "default_value"
                     ],
-                    "script": "return data.length > 0 ? data : default_value"
+                    "script": "return data ?? default_value"
                 }
             ],
             "edges": [
@@ -464,9 +464,14 @@
                     "id": "in"
                 },
                 {
-                    "id": "out",
+                    "id": "expand_contract_result",
                     "args": ["display_graph", "selected"],
-                    "script": "return display_graph && selected ? {display_graph, selected} : []"
+                    "script": "console.log('res'); console.log(selected); return display_graph && selected ? {display_graph, selected} : []"
+                },
+                {
+                    "id": "get_name",
+                    "args": ["node_id", "display_graph"],
+                    "script": "return display_graph.nodes.find(n => n.id === node_id).name"
                 },
                 {
                     "id": "expandable",
@@ -490,9 +495,10 @@
                 {
                     "id": "contractable_id",
                     "args": [
-                        "node_id"
+                        "node_id",
+                        "name"
                     ],
-                    "script": "return node_id ? [[node_id.substring(0, node_id.lastIndexOf('/'))]] : []"
+                    "script": "return !node_id ? [] : node_id.endsWith('/out') || node_id.endsWith('/in') ? [[node_id.substring(0, node_id.lastIndexOf('/'))]] : name?.endsWith('/out') ? [[node_id]] : []"
                 },
                 {
                     "id": "expand",
@@ -506,9 +512,10 @@
                     "id": "contract",
                     "args": [
                         "node_id",
-                        "display_graph"
+                        "display_graph",
+                        "name"
                     ],
-                    "script": "return display_graph && node_id ? lib.scripts.contract_node({display_graph, node_id}) : []"
+                    "script": "return display_graph && node_id ? lib.scripts.contract_node({display_graph, node_id, name}) : []"
                 },
                 {
                     "id": "has_nodes",
@@ -521,9 +528,14 @@
                 {
                     "id": "is_in_or_out",
                     "args": [
-                        "node_id"
+                        "node_id",
+                        "name"
                     ],
-                    "script": "return node_id.endsWith('/in') || node_id.endsWith('/out')"
+                    "script": "return node_id.endsWith('/in') || node_id.endsWith('/out') || name?.endsWith('/out')"
+                },
+                {
+                    "id": "out",
+                    "type": "default"
                 }
             ],
             "edges": [
@@ -534,6 +546,15 @@
                 {
                     "from": "in",
                     "to": "contractable"
+                },
+                {
+                    "from": "in",
+                    "to": "get_name"
+                },
+                {
+                    "from":  "get_name",
+                    "to": "contract",
+                    "as": "name"
                 },
                 {
                     "from": "in",
@@ -549,6 +570,11 @@
                     "to": "is_in_or_out"
                 },
                 {
+                    "from": "get_name",
+                    "to": "is_in_or_out",
+                    "as": "name"
+                },
+                {
                     "from": "is_in_or_out",
                     "to": "contractable",
                     "as": "keep"
@@ -556,10 +582,6 @@
                 {
                     "from": "in",
                     "to": "has_nodes"
-                },
-                {
-                    "from": "in",
-                    "to": "is_in_or_out"
                 },
                 {
                     "from": "expandable",
@@ -574,6 +596,11 @@
                     "to": "contractable_id"
                 },
                 {
+                    "from": "get_name",
+                    "to": "contractable_id",
+                    "as": "name"
+                },
+                {
                     "from": "contractable",
                     "to": "contract"
                 },
@@ -583,23 +610,33 @@
                 },
                 {
                     "from": "contractable_id",
-                    "to": "out",
+                    "to": "expand_contract_result",
                     "as": "selected"
                 },
                 {
                     "from": "expandable_id",
-                    "to": "out",
+                    "to": "expand_contract_result",
                     "as": "selected"
                 },
                 {
                     "from": "expand",
-                    "to": "out",
+                    "to": "expand_contract_result",
                     "as": "display_graph"
                 },
                 {
                     "from": "contract",
-                    "to": "out",
+                    "to": "expand_contract_result",
                     "as": "display_graph"
+                },
+                {
+                    "from": "expand_contract_result",
+                    "to": "out",
+                    "as": "data"
+                },
+                {
+                    "from": "in",
+                    "to": "out",
+                    "as": "default_value"
                 }
             ]
         },
@@ -1075,7 +1112,7 @@
                 {
                     "id": "selected_edge_inputs",
                     "args": ["key", "selected_edge", "editing"],
-                    "script": "console.log('sei'); console.log(editing); return (!!selected_edge && key !== 'e') || (key === 'e' && editing === false) ? [key] : []"
+                    "script": "return (!!selected_edge && key !== 'e') || (key === 'e' && editing === false) ? [key] : []"
                 },
                 {
                     "id": "selected_edge",
@@ -1084,7 +1121,7 @@
                 {
                     "id": "set_selected_edge",
                     "args": ["selected_edge", "state"],
-                    "script": "console.log('sse'); console.log(selected_edge); state.selected_edge = selected_edge === null ? undefined : selected_edge !== undefined ? selected_edge : state.selected_edge; return state"
+                    "script": "state.selected_edge = selected_edge === null ? undefined : selected_edge !== undefined ? selected_edge : state.selected_edge; return state"
                 },
                 {
                     "id": "new_state_cases",

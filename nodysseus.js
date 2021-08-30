@@ -449,6 +449,8 @@ const expand_node = (data) => {
     }
 
     const flattened = lib.scripts.flattenNode(node, 1);
+    console.log('expand')
+    console.log(flattened);
 
     const new_display_graph = {
         nodes: data.display_graph.nodes
@@ -463,40 +465,108 @@ const expand_node = (data) => {
             .concat(flattened.flat_edges)
     };
 
+    console.log(new_display_graph)
+
     return new_display_graph;
 }
 
 const contract_node = (data) => {
-    const node_id = data.node_id.endsWith('in') ?
-        data.node_id.substring(0, data.node_id.length - 3) :
-        data.node_id.substring(0, data.node_id.length - 4);
+    // if(data.node_id.endsWith('in') || data.node_id.endsWith('out')) {
+    //     const node_id = data.node_id.endsWith('in') ?
+    //         data.node_id.substring(0, data.node_id.length - 3) :
+    //         data.node_id.substring(0, data.node_id.length - 4);
 
-    const new_display_graph = {
-        nodes: data.display_graph.nodes
-            .filter(n => !n.id.startsWith(node_id))
-            .concat([{
-                id: node_id,
+
+    //     const new_display_graph = {
+    //         nodes: data.display_graph.nodes
+    //             .filter(n => !n.id.startsWith(node_id))
+    //             .concat([{
+    //                 id: node_id,
+    //                 nodes: data.display_graph.nodes
+    //                     .filter(n => n.id.startsWith(node_id) && n.id.length > node_id.length + 1)
+    //                     .map(n => ({...n, id: n.id.substring(node_id.length + 1)})),
+    //                 edges: data.display_graph.edges
+    //                     .filter(e => e.from.startsWith(node_id) && e.to.startsWith(node_id))
+    //                     .map(e =>({
+    //                         as: e.as,
+    //                         from: e.from.substring(node_id.length + 1),
+    //                         to: e.to.substring(node_id.length + 1),
+    //                     }))
+    //             }]),
+    //         edges: data.display_graph.edges
+    //             .map(e => ({
+    //                 ...e,
+    //                 from: e.from === `${node_id}/out` ? node_id : e.from,
+    //                 to: e.to === `${node_id}/in` ? node_id : e.to
+    //             }))
+    //             .filter(e => !(e.from.startsWith(`${node_id}/`) || e.to.startsWith(`${node_id}/`)))
+    //     };
+
+    //     return new_display_graph;
+
+    // } else if(data.name.endsWith("/out")) {
+    if(data.node_id.endsWith('/out') || data.name.endsWith("/out")) {
+        const node_id = data.node_id.endsWith('/out') ? data.node_id.substring(0, data.node_id.indexOf("/out")) : data.node_id;
+        const name = data.node_id.endsWith('/out') ? node_id : data.name.substring(0, data.name.indexOf("/out"))
+
+        const inside_nodes = [data.display_graph.nodes.find(n => n.id === data.node_id)];
+        if(!inside_nodes[0].id.endsWith('/out')) {
+            inside_nodes[0].id += "/out"
+        }
+        const inside_edges = [];
+
+        const bfs_parents = n => data.display_graph.edges.filter(e => e.to === n).forEach(e => {
+            const inside_node = data.display_graph.nodes.find(p => p.id === e.from);
+
+            inside_edges.push(e);
+            inside_nodes.push(inside_node);
+
+            if(!(e.from === (node_id + "/in") || inside_node.name === (name + "/in"))) {
+                bfs_parents(e.from);
+            }
+            if (inside_node.name === (name + "/in") && !inside_node.id.endsWith('/in')) {
+                e.from = "in";
+            }
+
+            if(e.to === data.node_id) {
+                e.to = 'out';
+            }
+        });
+
+        console.log('contract');
+        console.log(inside_nodes);
+
+        bfs_parents(data.node_id);
+        const in_node = inside_nodes.find(n => n.id === node_id + '/in' || n.name === name + "/in");
+        const in_node_id = in_node.id;
+        in_node.id = node_id + "/in";
+
+        const new_display_graph = {
                 nodes: data.display_graph.nodes
-                    .filter(n => n.id.startsWith(node_id) && n.id.length > node_id.length + 1)
-                    .map(n => ({...n, id: n.id.substring(node_id.length + 1)})),
+                    .filter(n => !inside_nodes.includes(n))
+                    .concat([{
+                        id: node_id,
+                        nodes: inside_nodes.map(n => {
+                            n.id = n.id.startsWith(node_id) ? n.id.substring(node_id.length + 1) : n.id;
+                            return n;
+                        }),
+                        edges: inside_edges.map(e => ({...e, 
+                            from: e.from.startsWith(node_id) ? e.from.substring(node_id.length + 1) : e.from, 
+                            to: e.to.startsWith(node_id) ? e.to.substring(node_id.length + 1) : e.to
+                        }))
+                    }]),
                 edges: data.display_graph.edges
-                    .filter(e => e.from.startsWith(node_id) && e.to.startsWith(node_id))
-                    .map(e =>({
-                        as: e.as,
-                        from: e.from.substring(node_id.length + 1),
-                        to: e.to.substring(node_id.length + 1),
-                    }))
-            }]),
-        edges: data.display_graph.edges
-            .map(e => ({
-                ...e,
-                from: e.from === `${node_id}/out` ? node_id : e.from,
-                to: e.to === `${node_id}/in` ? node_id : e.to
-            }))
-            .filter(e => !(e.from.startsWith(`${node_id}/`) || e.to.startsWith(`${node_id}/`)))
-    };
+                    .filter(e => !inside_edges.includes(e))
+                    .map(e => 
+                        e.from === data.node_id ? {...e, from: node_id} 
+                        : e.to === in_node_id ? {...e, to: node_id} 
+                        : e)
+            };
 
-    return new_display_graph;
+        console.log(in_node_id);
+        console.log(new_display_graph)
+        return new_display_graph;
+    }
 }
 
 const flattenNode = (graph, levels = -1) => {
