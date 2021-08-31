@@ -793,15 +793,17 @@
     				args: [
     					"key"
     				],
-    				script: "return key"
+    				script: "return key.toLowerCase()"
     			},
     			{
     				id: "key_inputs",
     				args: [
     					"key",
-    					"state"
+    					"state",
+    					"ctrlKey",
+    					"shiftKey"
     				],
-    				script: "return state.editing ? key === 'Escape' ? ['Escape'] : [] : [key]"
+    				script: "console.log((ctrlKey ? 'ctrl_' : '') + (shiftKey ? 'shift_' : '') + key.toLowerCase()); return state.editing ? key === 'escape' ? ['escape'] : [] : [(ctrlKey ? 'ctrl_' : '') + (shiftKey ? 'shift_' : '') + key.toLowerCase()]"
     			},
     			{
     				id: "key_log",
@@ -855,7 +857,7 @@
     					"editing",
     					"display_graph"
     				],
-    				script: "if(!(key === 'j' || key === 'ArrowDown') || editing) { return []; } const next_node_edge = display_graph.edges.find(e => e.from === selected[0]); return next_node_edge ? next_node_edge.to : []"
+    				script: "const next_node_edge = display_graph.edges.find(e => e.from === selected[0]); return next_node_edge ? next_node_edge.to : []"
     			},
     			{
     				id: "up",
@@ -865,7 +867,7 @@
     					"editing",
     					"display_graph"
     				],
-    				script: "if(!(key === 'k' || key === 'ArrowUp') || editing){ return []; } const next_node_edge = display_graph.edges.find(e => e.to === selected[0]); return next_node_edge ? next_node_edge.from : []"
+    				script: "const next_node_edge = display_graph.edges.find(e => e.to === selected[0]); return next_node_edge ? next_node_edge.from : []"
     			},
     			{
     				id: "left",
@@ -937,6 +939,18 @@
     				script: "document.querySelector('#edit_value input').focus(); return 'type';"
     			},
     			{
+    				id: "shift_t",
+    				args: [
+    					"key",
+    					"selected",
+    					"selected_edge",
+    					"display_graph",
+    					"editing",
+    					"nodes"
+    				],
+    				script: "const new_node = Object.assign({}, display_graph.nodes.find(n => n.id === selected[0])); new_node.id = new_node.name; return {nodes: display_graph.nodes.map(n => n.id === selected[0] ? {id: n.id, type: n.name, name: n.name} : n).concat([new_node]), edges: display_graph.edges}"
+    			},
+    			{
     				id: "s",
     				args: [
     					"key",
@@ -1004,7 +1018,7 @@
     					"display_graph",
     					"display_graph_out"
     				],
-    				script: "if(!(key.toLowerCase() === 'x')){ return [] } display_graph.nodes = display_graph.nodes.filter(n => n.id !== selected[0]); const new_edges = []; const to = display_graph.edges.filter(e => e.to === selected[0]); const from = display_graph.edges.filter(e => e.from === selected[0]); for(let i = 0; i < to.length; i++){for(let j = 0; j < from.length; j++){ new_edges.push({from: to[i].from, to: from[j].to}); }}; display_graph.edges = display_graph.edges.filter(e => e.to !== selected[0] && e.from !== selected[0]); display_graph.edges.push(...new_edges); return {display_graph, selected: [to[0]?.from ?? from[0]?.to ?? display_graph_out] };"
+    				script: "display_graph.nodes = display_graph.nodes.filter(n => n.id !== selected[0]); const new_edges = []; const to = display_graph.edges.filter(e => e.to === selected[0]); const from = display_graph.edges.filter(e => e.from === selected[0]); for(let i = 0; i < to.length; i++){for(let j = 0; j < from.length; j++){ new_edges.push({from: to[i].from, to: from[j].to}); }}; display_graph.edges = display_graph.edges.filter(e => e.to !== selected[0] && e.from !== selected[0]); display_graph.edges.push(...new_edges); return {display_graph, selected: [to[0]?.from ?? from[0]?.to ?? display_graph_out] };"
     			},
     			{
     				id: "x_display_graph",
@@ -1026,7 +1040,7 @@
     					"key",
     					"selected"
     				],
-    				script: "if(!(key === 'Enter')){ return []; } return true;"
+    				script: "if(!(key === 'enter')){ return []; } return true;"
     			},
     			{
     				id: "e",
@@ -1045,7 +1059,7 @@
     					"shiftKey",
     					"state"
     				],
-    				script: "return {edge_from: key === 'c' ? state.selected[0] : state.edge_from, edge_to: key.toLowerCase() === 'c' && shiftKey ? state.selected[0] : state.edge_to}"
+    				script: "return {edge_from: key === 'c' && !shiftKey ? state.selected[0] : state.edge_from, edge_to: key === 'c' && shiftKey ? state.selected[0] : state.edge_to}"
     			},
     			{
     				id: "set_pending_edges",
@@ -1095,7 +1109,7 @@
     					"display_graph",
     					"editing"
     				],
-    				script: "target.blur(); let value; try { value = JSON.parse(target.value);} catch(e){ value = target.value; } if(selected_edge){ display_graph.edges.find(e => e.to === selected_edge.to && e.from === selected_edge.from)[editing] = value === '' ? undefined : value; } else { display_graph.nodes.find(n => n.id === selected[0])[editing] = value === '' ? undefined : value; } return {editing: false, edit_value: null, display_graph};"
+    				script: "target.blur(); let value; try { value = JSON.parse(target.value);} catch(e){ value = target.value; } if(selected_edge){ display_graph.edges.find(e => e.to === selected_edge.to && e.from === selected_edge.from)[editing] = value === '' ? undefined : value; } else { const node = display_graph.nodes.find(n => n.id === selected[0]); if(node[editing] !== undefined || value !== ''){ node[editing] = value === '' ? undefined : value;} } return {editing: false, edit_value: null, display_graph};"
     			},
     			{
     				id: "esc_editing",
@@ -1192,9 +1206,10 @@
     				args: [
     					"key",
     					"pending_edges",
-    					"state"
+    					"state",
+    					"shiftKey"
     				],
-    				script: "const graph_sim = (!state.editing && (key === 'Enter' || key.toLowerCase() === 'o' || key === 'x' || (!!pending_edges.edge_to && !!pending_edges.edge_from))) || key === 'Escape'; return [graph_sim && 'graph_sim', 'state']"
+    				script: "console.log(shiftKey); const graph_sim = (!state.editing && (key === 'enter' || key.toLowerCase() === 'o' || key === 'x' || (key === 't' && shiftKey) || (!!pending_edges.edge_to && !!pending_edges.edge_from))) || key === 'escape'; return [graph_sim && 'graph_sim', 'state']"
     			},
     			{
     				id: "new_state",
@@ -1220,7 +1235,7 @@
     					"display_graph",
     					"selected"
     				],
-    				script: "return state.editing ? key === 'Escape' : !!display_graph || !!selected"
+    				script: "return state.editing ? key === 'escape' : !!display_graph || !!selected"
     			},
     			{
     				id: "out",
@@ -1229,7 +1244,7 @@
     					"save",
     					"update"
     				],
-    				script: "return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: {nodes: data.display_graph.nodes.concat([]), edges: data.display_graph.edges.concat([])}, out: data.display_graph_out}], [() => save(), {}], update && [data.update_sim_effect, data]]]"
+    				script: "console.log(data); return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: {nodes: data.display_graph.nodes.concat([]), edges: data.display_graph.edges.concat([])}, out: data.display_graph_out}], [() => save(), {}], update && [data.update_sim_effect, data]]]"
     			}
     		],
     		edges: [
@@ -1405,6 +1420,14 @@
     			},
     			{
     				from: "key_event",
+    				to: "shift_t"
+    			},
+    			{
+    				from: "state",
+    				to: "shift_t"
+    			},
+    			{
+    				from: "key_event",
     				to: "s"
     			},
     			{
@@ -1450,14 +1473,6 @@
     			{
     				from: "state",
     				to: "c"
-    			},
-    			{
-    				from: "key_event",
-    				to: "shift_c"
-    			},
-    			{
-    				from: "state",
-    				to: "shift_c"
     			},
     			{
     				from: "key_event",
@@ -1470,25 +1485,25 @@
     			{
     				from: "down",
     				to: "selected",
-    				as: "ArrowDown",
+    				as: "arrowdown",
     				type: "concat"
     			},
     			{
     				from: "up",
     				to: "selected",
-    				as: "ArrowUp",
+    				as: "arrowup",
     				type: "concat"
     			},
     			{
     				from: "left",
     				to: "selected",
-    				as: "ArrowLeft",
+    				as: "arrowleft",
     				type: "concat"
     			},
     			{
     				from: "right",
     				to: "selected",
-    				as: "ArrowRight",
+    				as: "arrowright",
     				type: "concat"
     			},
     			{
@@ -1505,13 +1520,13 @@
     			{
     				from: "left_edge",
     				to: "selected_edge",
-    				as: "ArrowLeft",
+    				as: "arrowleft",
     				type: "concat"
     			},
     			{
     				from: "right_edge",
     				to: "selected_edge",
-    				as: "ArrowRight",
+    				as: "arrowright",
     				type: "concat"
     			},
     			{
@@ -1579,14 +1594,9 @@
     				as: "state"
     			},
     			{
-    				from: "make_edge",
+    				from: "shift_t",
     				to: "display_graph",
-    				as: "c"
-    			},
-    			{
-    				from: "make_edge",
-    				to: "display_graph",
-    				as: "C"
+    				as: "shift_t"
     			},
     			{
     				from: "state",
@@ -1611,17 +1621,17 @@
     			{
     				from: "esc_editing",
     				to: "editing",
-    				as: "Escape"
+    				as: "escape"
     			},
     			{
     				from: "esc_edit_value",
     				to: "edit_value",
-    				as: "Escape"
+    				as: "escape"
     			},
     			{
     				from: "esc_display_graph",
     				to: "display_graph",
-    				as: "Escape"
+    				as: "escape"
     			},
     			{
     				from: "expand_contract",
@@ -1630,7 +1640,7 @@
     			{
     				from: "expand_contract_display_graph",
     				to: "display_graph",
-    				as: "Enter"
+    				as: "enter"
     			},
     			{
     				from: "expand_contract",
@@ -1639,7 +1649,7 @@
     			{
     				from: "expand_contract_selected",
     				to: "selected",
-    				as: "Enter"
+    				as: "enter"
     			},
     			{
     				from: "o",
@@ -1657,7 +1667,7 @@
     			{
     				from: "o_display_graph",
     				to: "display_graph",
-    				as: "O"
+    				as: "shift_o"
     			},
     			{
     				from: "o_selected",
@@ -1667,7 +1677,7 @@
     			{
     				from: "o_selected",
     				to: "selected",
-    				as: "O"
+    				as: "shift_o"
     			},
     			{
     				from: "x",
@@ -1691,6 +1701,11 @@
     				from: "make_edge",
     				to: "display_graph",
     				as: "c"
+    			},
+    			{
+    				from: "make_edge",
+    				to: "display_graph",
+    				as: "shift_c"
     			},
     			{
     				from: "state",
@@ -72623,6 +72638,11 @@
                     run = false;
                 }
 
+                if(node.type === 'attrs') {
+                    console.log('attrs');
+                    console.log(state.get(node.type));
+                }
+
                 if (run) {
                     let datas = [{}];
                     if (node.value !== undefined) {
@@ -72680,7 +72700,10 @@
                             ? Object.assign({}, state.get(node.type)[0], node, {_nodetypeflag: false})
                             : node;
 
-                        if (!node._nodetypeflag && node_type.nodes && node_type.edges){
+                        if(node._nodetypeflag) {
+                            state.set(node.id, node.nodes ? [{nodes: node.nodes, edges: node.edges}] : [{args: node.args, script: node.script, value: node.value}]);
+                            active_nodes.delete(node.id);
+                        } else if (node_type.nodes && node_type.edges){
                             state.set(node.id + "/in", datas);
                             active_nodes.set(node.id, {
                                 id: node.id, 
@@ -72705,19 +72728,19 @@
                                     graph.edges.push(new_edge);
                                 }
                             }
-                        } else if(node.script) {
+                        } else if(node_type.script) {
                             const fn = new Function(
                                 'lib', 
                                 'node', 
-                                ...node.args, 
-                                node.script
+                                ...node_type.args, 
+                                node_type.script
                                 );
                             const state_datas = [];
                             const args = [lib, node];
                             let fn_args = [];
                             for(let i = 0; i < datas.length; i++) {
                                 fn_args = args.slice();
-                                node.args.forEach(arg => {
+                                node_type.args.forEach(arg => {
                                     fn_args.push(datas[i][arg]);
                                 });
 
@@ -72725,9 +72748,6 @@
                                 Array.isArray(results) ? results.forEach(res => state_datas.push(res)) : state_datas.push(results);
                             }
                             state.set(node.id, state_datas);
-                            active_nodes.delete(node.id);
-                        } else if(node._nodetypeflag) {
-                            state.set(node.id, [{nodes: node.nodes, edges: node.edges}]);
                             active_nodes.delete(node.id);
                         } else {
                             state.set(node.id, datas);
@@ -72960,7 +72980,7 @@
                 ev.preventDefault();
             }
 
-            requestAnimationFrame(() => dispatch(options.action, {key: ev.key, code: ev.code, ctrlKey: ev.ctrlKey, shiftKey: ev.shiftKey, metaKey: ev.metaKey, target: ev.target}));
+            requestAnimationFrame(() => dispatch(options.action, {key: ev.key.toLowerCase(), code: ev.code, ctrlKey: ev.ctrlKey, shiftKey: ev.shiftKey, metaKey: ev.metaKey, target: ev.target}));
         };
         addEventListener('keydown', handler); 
         return () => removeEventListener('keydown', handler);
@@ -72991,8 +73011,6 @@
                 }))
                 .concat(flattened.flat_edges)
         };
-
-        console.log(new_display_graph);
 
         return new_display_graph;
     };
@@ -73060,9 +73078,6 @@
                 }
             });
 
-            console.log('contract');
-            console.log(inside_nodes);
-
             bfs_parents(data.node_id);
             const in_node = inside_nodes.find(n => n.id === node_id + '/in' || n.name === name + "/in");
             const in_node_id = in_node.id;
@@ -73090,8 +73105,6 @@
                             : e)
                 };
 
-            console.log(in_node_id);
-            console.log(new_display_graph);
             return new_display_graph;
         }
     };

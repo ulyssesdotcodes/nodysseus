@@ -93,6 +93,11 @@ const executeGraph = ({state, graph, out}) => {
                 run = false;
             }
 
+            if(node.type === 'attrs') {
+                console.log('attrs')
+                console.log(state.get(node.type));
+            }
+
             if (run) {
                 let datas = [{}];
                 if (node.value !== undefined) {
@@ -150,7 +155,10 @@ const executeGraph = ({state, graph, out}) => {
                         ? Object.assign({}, state.get(node.type)[0], node, {_nodetypeflag: false})
                         : node;
 
-                    if (!node._nodetypeflag && node_type.nodes && node_type.edges){
+                    if(node._nodetypeflag) {
+                        state.set(node.id, node.nodes ? [{nodes: node.nodes, edges: node.edges}] : [{args: node.args, script: node.script, value: node.value}])
+                        active_nodes.delete(node.id);
+                    } else if (node_type.nodes && node_type.edges){
                         state.set(node.id + "/in", datas);
                         active_nodes.set(node.id, {
                             id: node.id, 
@@ -175,19 +183,19 @@ const executeGraph = ({state, graph, out}) => {
                                 graph.edges.push(new_edge);
                             }
                         }
-                    } else if(node.script) {
+                    } else if(node_type.script) {
                         const fn = new Function(
                             'lib', 
                             'node', 
-                            ...node.args, 
-                            node.script
+                            ...node_type.args, 
+                            node_type.script
                             );
                         const state_datas = []
                         const args = [lib, node];
                         let fn_args = [];
                         for(let i = 0; i < datas.length; i++) {
                             fn_args = args.slice();
-                            node.args.forEach(arg => {
+                            node_type.args.forEach(arg => {
                                 fn_args.push(datas[i][arg]);
                             });
 
@@ -195,9 +203,6 @@ const executeGraph = ({state, graph, out}) => {
                             Array.isArray(results) ? results.forEach(res => state_datas.push(res)) : state_datas.push(results);
                         }
                         state.set(node.id, state_datas);
-                        active_nodes.delete(node.id);
-                    } else if(node._nodetypeflag) {
-                        state.set(node.id, [{nodes: node.nodes, edges: node.edges}])
                         active_nodes.delete(node.id);
                     } else {
                         state.set(node.id, datas);
@@ -433,7 +438,7 @@ const keydownSubscription = (dispatch, options) => {
             ev.preventDefault();
         }
 
-        requestAnimationFrame(() => dispatch(options.action, {key: ev.key, code: ev.code, ctrlKey: ev.ctrlKey, shiftKey: ev.shiftKey, metaKey: ev.metaKey, target: ev.target}))
+        requestAnimationFrame(() => dispatch(options.action, {key: ev.key.toLowerCase(), code: ev.code, ctrlKey: ev.ctrlKey, shiftKey: ev.shiftKey, metaKey: ev.metaKey, target: ev.target}))
     };
     addEventListener('keydown', handler); 
     return () => removeEventListener('keydown', handler);
@@ -464,8 +469,6 @@ const expand_node = (data) => {
             }))
             .concat(flattened.flat_edges)
     };
-
-    console.log(new_display_graph)
 
     return new_display_graph;
 }
@@ -533,9 +536,6 @@ const contract_node = (data) => {
             }
         });
 
-        console.log('contract');
-        console.log(inside_nodes);
-
         bfs_parents(data.node_id);
         const in_node = inside_nodes.find(n => n.id === node_id + '/in' || n.name === name + "/in");
         const in_node_id = in_node.id;
@@ -563,8 +563,6 @@ const contract_node = (data) => {
                         : e)
             };
 
-        console.log(in_node_id);
-        console.log(new_display_graph)
         return new_display_graph;
     }
 }
