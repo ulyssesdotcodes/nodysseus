@@ -4,6 +4,7 @@ import { h, app, text, memo } from "hyperapp"
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 import { selectSyntaxLeft } from "@codemirror/commands";
 import * as THREE from 'three';
+import Fuse from "fuse.js";
 
 const executeGraph = ({state, graph, out}) => {
     let state_hash = "";
@@ -91,11 +92,6 @@ const executeGraph = ({state, graph, out}) => {
                 }
 
                 run = false;
-            }
-
-            if(node.type === 'attrs') {
-                console.log('attrs')
-                console.log(state.get(node.type));
             }
 
             if (run) {
@@ -222,11 +218,9 @@ const test_graph = {"nodes":[{"id":"out","args":["value"]},{"id":"get_inputs","v
 // TODO: convert these to nodes
 
 const calculateLevels = (graph, out) => {
-    const levels = graph.edges.filter(e => e.to === out).map(bfs(graph, 1)).flat()
-        .reduce(
-            (acc, v) => acc.set(v[0], Math.max(v[1], acc.get(v[0]) ?? 0)),
-            new Map()
-        ).set(out, 0);
+    const visited = new Set();
+
+    const levels = new Map(bfs(graph, visited)(out, 0));
 
     return {
         levels,
@@ -236,14 +230,20 @@ const calculateLevels = (graph, out) => {
     }
 }
 
-const bfs = (graph, level) => (edge) => {
-    const output = [[edge.from, level]];
+const bfs = (graph, visited) => (id, level) => {
+    const output = [[id, level]];
+    visited.add(id);
 
-    const next = bfs(graph, level + 1);
+    const next = bfs(graph, visited);
 
     for(const e of graph.edges) {
-        if(e.to === edge.from) {
-            const next_results = next(e);
+        if(e.to === id && !visited.has(e.from)) {
+            const next_results = next(e.from, level + 1);
+            for(const next_result of next_results) {
+                output.push(next_result);
+            }
+        } else if(e.from === id && !visited.has(e.to)) {
+            const next_results = next(e.to, level - 1);
             for(const next_result of next_results) {
                 output.push(next_result);
             }
@@ -251,7 +251,7 @@ const bfs = (graph, level) => (edge) => {
     }
 
     return output;
-};
+}
 
 const d3simulation = () => {
     const simulation =
@@ -277,7 +277,7 @@ const updateSimulationNodes = (data) => {
         [edge.to, level]
     ].concat(data.display_graph.edges.filter(e => e.from === edge.to).map(bfs(level + 1)).flat());
 
-    const levels = calculateLevels(data.display_graph, data.display_graph_out);
+    const levels = calculateLevels(data.display_graph, data.selected[0]);
 
     // const selected_level = levels.levels.get(data.display_graph_out);
 
@@ -454,8 +454,6 @@ const expand_node = (data) => {
     }
 
     const flattened = lib.scripts.flattenNode(node, 1);
-    console.log('expand')
-    console.log(flattened);
 
     const new_display_graph = {
         nodes: data.display_graph.nodes
@@ -604,6 +602,7 @@ const lib = {
     no: {executeGraph},
     scripts: {d3simulation, d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription},
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
+    Fuse,
     THREE
 };
 

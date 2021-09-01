@@ -466,7 +466,7 @@
                 {
                     "id": "expand_contract_result",
                     "args": ["display_graph", "selected"],
-                    "script": "console.log('res'); console.log(selected); return display_graph && selected ? {display_graph, selected} : []"
+                    "script": "return display_graph && selected ? {display_graph, selected} : []"
                 },
                 {
                     "id": "get_name",
@@ -780,7 +780,7 @@
                 {
                     "id": "key_inputs",
                     "args": ["key", "state", "ctrlKey", "shiftKey"],
-                    "script": "console.log((ctrlKey ? 'ctrl_' : '') + (shiftKey ? 'shift_' : '') + key.toLowerCase()); return state.editing ? key === 'escape' ? ['escape'] : [] : [(ctrlKey ? 'ctrl_' : '') + (shiftKey ? 'shift_' : '') + key.toLowerCase()]"
+                    "script": "return (!!state.editing || !!state.search) ? key === 'escape' ? ['escape'] : [] : [(ctrlKey ? 'ctrl_' : '') + (shiftKey ? 'shift_' : '') + key.toLowerCase()]"
                 },
                 {
                     "id": "key_log",
@@ -1020,6 +1020,11 @@
                     "script": "return selected_edge ? null : display_graph.edges.find(e => e.to === selected[0]);"
                 },
                 {
+                    "id": "f",
+                    "args": [],
+                    "script": "document.querySelector('#search-input').focus(); return ''"
+                },
+                {
                     "id": "pending_edges",
                     "args": ["key", "shiftKey", "state"],
                     "script": "return {edge_from: key === 'c' && !shiftKey ? state.selected[0] : state.edge_from, edge_to: key === 'c' && shiftKey ? state.selected[0] : state.edge_to}"
@@ -1060,9 +1065,10 @@
                         "selected",
                         "selected_edge",
                         "display_graph",
-                        "editing"
+                        "editing",
+                        "search"
                     ],
-                    "script": "target.blur(); let value; try { value = JSON.parse(target.value);} catch(e){ value = target.value; } if(selected_edge){ display_graph.edges.find(e => e.to === selected_edge.to && e.from === selected_edge.from)[editing] = value === '' ? undefined : value; } else { const node = display_graph.nodes.find(n => n.id === selected[0]); if(node[editing] !== undefined || value !== ''){ node[editing] = value === '' ? undefined : value;} } return {editing: false, edit_value: null, display_graph};"
+                    "script": "target.blur(); if(search !== false){ target.value = ''; return {search: false} } let value; try { value = JSON.parse(target.value);} catch(e){ value = target.value; } if(selected_edge){ display_graph.edges.find(e => e.to === selected_edge.to && e.from === selected_edge.from)[editing] = value === '' ? undefined : value; } else { const node = display_graph.nodes.find(n => n.id === selected[0]); if(node[editing] !== undefined || value !== ''){ node[editing] = value === '' ? undefined : value;} } return {editing: false, edit_value: null, display_graph};"
                 },
                 {
                     "id": "esc_editing",
@@ -1084,6 +1090,13 @@
                         "display_graph"
                     ],
                     "script": "return display_graph;"
+                },
+                {
+                    "id": "esc_search",
+                    "args": [
+                        "search"
+                    ],
+                    "script": "return search;"
                 },
                 {
                     "id": "selected",
@@ -1123,8 +1136,8 @@
                 },
                 {
                     "id": "selected_edge_inputs",
-                    "args": ["key", "selected_edge", "editing"],
-                    "script": "return (!!selected_edge && key !== 'e') || (key === 'e' && editing === false) ? [key] : []"
+                    "args": ["key", "selected_edge", "editing", "search"],
+                    "script": "return (!!selected_edge && key !== 'e') || (key === 'e' && editing === false && search === false) ? [key] : []"
                 },
                 {
                     "id": "selected_edge",
@@ -1136,9 +1149,18 @@
                     "script": "state.selected_edge = selected_edge === null ? undefined : selected_edge !== undefined ? selected_edge : state.selected_edge; return state"
                 },
                 {
+                    "id": "search",
+                    "type": "switch"
+                },
+                {
+                    "id": "set_search",
+                    "args": ["search", "state"],
+                    "script": "state.search = search ?? state.search; return state;"
+                },
+                {
                     "id": "new_state_cases",
                     "args": ["key", "pending_edges", "state", "shiftKey"],
-                    "script": "console.log(shiftKey); const graph_sim = (!state.editing && (key === 'enter' || key.toLowerCase() === 'o' || key === 'x' || (key === 't' && shiftKey) || (!!pending_edges.edge_to && !!pending_edges.edge_from))) || key === 'escape'; return [graph_sim && 'graph_sim', 'state']"
+                    "script": "const graph_sim = (!state.editing && state.search === false && (key === 'enter' || key.toLowerCase() === 'o' || key === 'x' || (key === 't' && shiftKey) || (!!pending_edges.edge_to && !!pending_edges.edge_from))) || key === 'escape'; return [graph_sim && 'graph_sim', 'state']"
                 },
                 {
                     "id": "new_state",
@@ -1156,7 +1178,7 @@
                 {
                     "id": "update",
                     "args": ["state", "key", "display_graph", "selected"],
-                    "script": "return state.editing ? key === 'escape' : !!display_graph || !!selected"
+                    "script": "return state.editing || !!state.search ? key === 'escape' : !!display_graph || !!selected"
                 },
                 {
                     "id": "out",
@@ -1165,7 +1187,7 @@
                         "save",
                         "update"
                     ],
-                    "script": "console.log(data); return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: {nodes: data.display_graph.nodes.concat([]), edges: data.display_graph.edges.concat([])}, out: data.display_graph_out}], [() => save(), {}], update && [data.update_sim_effect, data]]]"
+                    "script": "return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: {nodes: data.display_graph.nodes.concat([]), edges: data.display_graph.edges.concat([])}, out: data.display_graph_out}], [() => save(), {}], update && [data.update_sim_effect, data]]]"
                 }
             ],
             "edges": [
@@ -1224,6 +1246,11 @@
                 {
                     "from": "key_inputs",
                     "to": "display_graph",
+                    "type": "inputs"
+                },
+                {
+                    "from": "key_inputs",
+                    "to": "search",
                     "type": "inputs"
                 },
                 {
@@ -1540,6 +1567,10 @@
                     "to": "esc_display_graph"
                 },
                 {
+                    "from": "esc",
+                    "to": "esc_search"
+                },
+                {
                     "from": "esc_editing",
                     "to": "editing",
                     "as": "escape"
@@ -1552,6 +1583,11 @@
                 {
                     "from": "esc_display_graph",
                     "to": "display_graph",
+                    "as": "escape"
+                },
+                {
+                    "from": "esc_search",
+                    "to": "search",
                     "as": "escape"
                 },
                 {
@@ -1571,6 +1607,11 @@
                     "from": "expand_contract_selected",
                     "to": "selected",
                     "as": "enter"
+                },
+                {
+                    "from": "f",
+                    "to": "search",
+                    "as": "f"
                 },
                 {
                     "from": "o",
@@ -1639,9 +1680,8 @@
                     "type": "inputs"
                 },
                 {
-                    "from": "display_graph",
-                    "to": "graph_sim",
-                    "as": "display_graph"
+                    "from": "set_display_graph",
+                    "to": "graph_sim"
                 },
                 {
                     "from": "state",
@@ -1660,6 +1700,16 @@
                 },
                 {
                     "from": "set_selected_edge",
+                    "to": "set_search",
+                    "as": "state"
+                },
+                {
+                    "from": "search",
+                    "to": "set_search",
+                    "as": "search"
+                },
+                {
+                    "from": "set_search",
                     "to": "set_edit_value",
                     "as": "state"
                 },
@@ -2204,9 +2254,10 @@
                     "id": "wrapper_children",
                     "args": [
                         "node_editor",
-                        "edit_text"
+                        "edit_text",
+                        "search_input"
                     ],
-                    "script": "return [[node_editor.el, edit_text.el]]"
+                    "script": "return [[node_editor.el, edit_text.el, search_input.el]]"
                 },
                 {
                     "id": "edit_text",
@@ -2353,6 +2404,32 @@
                             "to": "edit_text_props",
                             "as": "class"
                         }
+                    ]
+                },
+                {
+                    "id": "search_input",
+                    "nodes": [
+                        {
+                            "id": "in"
+                        },
+                        {
+                            "id": "search_input_dom_type",
+                            "value": "input"
+                        },
+                        {
+                            "id": "search_input_props",
+                            "args": ["search", "display_graph"],
+                            "script": "return {id: `search-input`, class:`${search ? '' : 'hidden'}`, type: 'text', oninput: (s, payload) => ({...s, search: payload.target.value, selected: new lib.Fuse(display_graph.nodes, {keys: ['name', 'id']}).search(payload.target.value).map(n => n.item.id)})}"
+                        },
+                        {
+                            "id": "out",
+                            "type": "h"
+                        }
+                    ],
+                    "edges": [
+                        {"from": "in", "to": "search_input_props"},
+                        {"from": "search_input_dom_type", "to": "out", "as": "dom_type"},
+                        {"from": "search_input_props", "to": "out", "as": "props"}
                     ]
                 },
                 {
@@ -3201,6 +3278,10 @@
                     "to": "edit_text"
                 },
                 {
+                    "from": "in",
+                    "to": "search_input"
+                },
+                {
                     "from": "node_editor",
                     "to": "wrapper_children",
                     "as": "node_editor"
@@ -3209,6 +3290,11 @@
                     "from": "edit_text",
                     "to": "wrapper_children",
                     "as": "edit_text"
+                },
+                {
+                    "from": "search_input",
+                    "to": "wrapper_children",
+                    "as": "search_input"
                 },
                 {
                     "from": "wrapper_children",

@@ -28,6 +28,7 @@
     "@svgdotjs/svg.panzoom.js": "^2.1.1",
     "brace-expansion": "^2.0.1",
     "d3-force": "^3.0.0",
+    "fuse.js": "^6.4.6",
     "hyperapp": "^2.0.18",
     "is-reference": "^1.2.1",
     "lodash": "^4.17.21",
