@@ -692,7 +692,8 @@
     			],
     			links: [
     			],
-    			editing: false
+    			editing: false,
+    			search: false
     		}
     	},
     	{
@@ -738,9 +739,10 @@
     		id: "graph_to_simulation",
     		args: [
     			"nodes",
-    			"display_graph"
+    			"display_graph",
+    			"selected"
     		],
-    		script: "return lib.scripts.graphToSimulationNodes({display_graph, nodes})"
+    		script: "return lib.scripts.graphToSimulationNodes({display_graph, nodes, selected})"
     	},
     	{
     		id: "update_nodes_in"
@@ -753,9 +755,10 @@
     			"display_graph",
     			"links",
     			"display_graph_out",
-    			"selected"
+    			"selected",
+    			"levels"
     		],
-    		script: "return lib.scripts.updateSimulationNodes({display_graph, simulation, nodes, links, display_graph_out, selected})"
+    		script: "return lib.scripts.updateSimulationNodes({display_graph, simulation, nodes, links, display_graph_out, selected, levels})"
     	},
     	{
     		id: "update_nodes_fn",
@@ -803,7 +806,7 @@
     					"ctrlKey",
     					"shiftKey"
     				],
-    				script: "return (!!state.editing || !!state.search) ? key === 'escape' ? ['escape'] : [] : [(ctrlKey ? 'ctrl_' : '') + (shiftKey ? 'shift_' : '') + key.toLowerCase()]"
+    				script: "return (state.editing !== false || state.search !== false) ? key === 'escape' ? ['escape'] : [] : [(ctrlKey ? 'ctrl_' : '') + (shiftKey ? 'shift_' : '') + key.toLowerCase()]"
     			},
     			{
     				id: "key_log",
@@ -876,9 +879,10 @@
     					"selected",
     					"display_graph",
     					"editing",
-    					"nodes"
+    					"nodes",
+    					"levels"
     				],
-    				script: "const current_node = nodes.find(n => n.node_id === selected[0]); const parent_id = display_graph.edges.find(e => e.to === selected[0])?.from; const siblings = display_graph.edges.filter(e => e.from === selected[0])?.flatMap(ne => display_graph.edges.filter(e => e.from === parent_id && e.to !== selected[0]).map(e => e.to).concat(display_graph.edges.filter(e => e.to === ne.to && e.from !== selected[0]).map(e => e.from))); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x < current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+    				script: "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.nodes_by_level[levels.level_by_node.get(selected[0])]; const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x < current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
     			},
     			{
     				id: "left_edge",
@@ -899,9 +903,10 @@
     					"selected",
     					"display_graph",
     					"editing",
-    					"nodes"
+    					"nodes",
+    					"levels"
     				],
-    				script: "const current_node = nodes.find(n => n.node_id === selected[0]); const parent_id = display_graph.edges.find(e => e.to === selected[0])?.from; const siblings = display_graph.edges.filter(e => e.from === selected[0])?.flatMap(ne => display_graph.edges.filter(e => e.from === parent_id && e.to !== selected[0]).map(e => e.to).concat(display_graph.edges.filter(e => e.to === ne.to && e.from !== selected[0]).map(e => e.from))); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+    				script: "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.nodes_by_level[levels.level_by_node.get(selected[0])]; const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
     			},
     			{
     				id: "right_edge",
@@ -1229,6 +1234,33 @@
     				script: "state.search = search ?? state.search; return state;"
     			},
     			{
+    				id: "calculate_levels",
+    				args: [
+    					"selected",
+    					"display_graph"
+    				],
+    				script: "return lib.scripts.calculateLevels(display_graph, selected[0])"
+    			},
+    			{
+    				id: "levels",
+    				type: "switch"
+    			},
+    			{
+    				id: "levels_inputs",
+    				args: [
+    					"selected"
+    				],
+    				script: "return selected ? ['levels'] : []"
+    			},
+    			{
+    				id: "set_levels",
+    				args: [
+    					"state",
+    					"levels"
+    				],
+    				script: "state.levels = levels ?? state.levels; return state"
+    			},
+    			{
     				id: "new_state_cases",
     				args: [
     					"key",
@@ -1244,15 +1276,16 @@
     					"graph_sim",
     					"state"
     				],
-    				script: "return Object.assign({}, state, {nodes: graph_sim?.nodes ?? state.nodes, links: graph_sim?.links ?? state.links});"
+    				script: "return Object.assign({}, state, {nodes: graph_sim?.nodes ?? state.nodes, links: graph_sim?.links ?? state.links, levels: graph_sim?.levels ?? state.levels});"
     			},
     			{
     				id: "graph_sim",
     				args: [
     					"display_graph",
-    					"nodes"
+    					"nodes",
+    					"selected"
     				],
-    				script: "return lib.scripts.graphToSimulationNodes({display_graph, nodes});"
+    				script: "return lib.scripts.graphToSimulationNodes({display_graph, nodes, selected});"
     			},
     			{
     				id: "update",
@@ -1262,7 +1295,7 @@
     					"display_graph",
     					"selected"
     				],
-    				script: "return state.editing || !!state.search ? key === 'escape' : !!display_graph || !!selected"
+    				script: "return state.editing !== false || state.search !== false ? key === 'escape' : !!display_graph || !!selected"
     			},
     			{
     				id: "out",
@@ -1316,6 +1349,10 @@
     			{
     				from: "state",
     				to: "selected_edge_inputs"
+    			},
+    			{
+    				from: "state",
+    				to: "calculate_levels"
     			},
     			{
     				from: "key_inputs",
@@ -1521,9 +1558,21 @@
     				type: "concat"
     			},
     			{
+    				from: "down",
+    				to: "selected",
+    				as: "j",
+    				type: "concat"
+    			},
+    			{
     				from: "up",
     				to: "selected",
     				as: "arrowup",
+    				type: "concat"
+    			},
+    			{
+    				from: "up",
+    				to: "selected",
+    				as: "k",
     				type: "concat"
     			},
     			{
@@ -1533,9 +1582,21 @@
     				type: "concat"
     			},
     			{
+    				from: "left",
+    				to: "selected",
+    				as: "h",
+    				type: "concat"
+    			},
+    			{
     				from: "right",
     				to: "selected",
     				as: "arrowright",
+    				type: "concat"
+    			},
+    			{
+    				from: "right",
+    				to: "selected",
+    				as: "l",
     				type: "concat"
     			},
     			{
@@ -1754,6 +1815,26 @@
     				as: "shift_c"
     			},
     			{
+    				from: "calculate_levels",
+    				to: "levels",
+    				as: "levels"
+    			},
+    			{
+    				from: "levels",
+    				to: "set_levels",
+    				as: "levels"
+    			},
+    			{
+    				from: "selected",
+    				to: "levels_inputs",
+    				as: "selected"
+    			},
+    			{
+    				from: "levels_inputs",
+    				to: "levels",
+    				type: "inputs"
+    			},
+    			{
     				from: "state",
     				to: "graph_sim_inputs",
     				as: "state"
@@ -1814,6 +1895,11 @@
     			},
     			{
     				from: "set_editing",
+    				to: "set_levels",
+    				as: "state"
+    			},
+    			{
+    				from: "set_levels",
     				to: "set_pending_edges",
     				as: "state"
     			},
@@ -1895,9 +1981,10 @@
     			"links",
     			"simulation",
     			"display_graph_out",
-    			"selected"
+    			"selected",
+    			"levels"
     		],
-    		script: "return lib.scripts.updateSimulationNodes({display_graph, nodes, links, simulation, display_graph_out, selected})"
+    		script: "return lib.scripts.updateSimulationNodes({display_graph, nodes, links, simulation, display_graph_out, selected, levels})"
     	},
     	{
     		id: "update_sim_in"
@@ -2114,9 +2201,10 @@
     				id: "graph_to_sim",
     				args: [
     					"display_graph",
-    					"nodes"
+    					"nodes",
+    					"selected"
     				],
-    				script: "return lib.scripts.graphToSimulationNodes({display_graph, nodes})"
+    				script: "return lib.scripts.graphToSimulationNodes({display_graph, nodes, selected})"
     			},
     			{
     				id: "unmodified_graph"
@@ -2509,7 +2597,7 @@
     							"search",
     							"display_graph"
     						],
-    						script: "return {id: `search-input`, class:`${search ? '' : 'hidden'}`, type: 'text', oninput: (s, payload) => ({...s, search: payload.target.value, selected: new lib.Fuse(display_graph.nodes, {keys: ['name', 'id']}).search(payload.target.value).map(n => n.item.id)})}"
+    						script: "return {id: `search-input`, class:`${search === false ? 'hidden' : ''}`, type: 'text', oninput: (s, payload) => { const search_results = new lib.Fuse(display_graph.nodes, {keys: ['name', 'id']}).search(payload.target.value); return {...s, search: payload.target.value, selected: search_results.length > 0 ? search_results.map(n => n.item.id) : s.selected}}}"
     					},
     					{
     						id: "out",
@@ -3613,6 +3701,11 @@
     		from: "initial_state",
     		to: "graph_to_simulation",
     		order: -1
+    	},
+    	{
+    		from: "get_display_graph_out",
+    		to: "graph_to_simulation",
+    		as: "selected"
     	},
     	{
     		from: "get_display_graph",
@@ -74653,7 +74746,7 @@
         const levels = new Map(bfs(graph, visited)(out, 0));
 
         return {
-            levels,
+            level_by_node: levels,
             min: Math.min(...levels.values()),
             max: Math.max(...levels.values()),
             nodes_by_level: [...levels.entries()].reduce((acc, [n, l]) => (acc[l] ? acc[l].push(n) : acc[l] = [n], acc), {})
@@ -74703,11 +74796,9 @@
     };
 
     const updateSimulationNodes = (data) => {
-
-        const levels = calculateLevels(data.display_graph, data.selected[0]);
-
-        // const selected_level = levels.levels.get(data.display_graph_out);
-
+        console.log('update');
+        console.log(data);
+        const levels = data.levels ?? calculateLevels(data.display_graph, data.display_graph_out);
 
         if(typeof(data.links?.[0]?.source) === "string") {
             data.simulation.nodes(data.nodes);
@@ -74718,7 +74809,7 @@
         const children = new Map(data.nodes.map(n => [n.node_id, data.display_graph.edges.filter(e => e.from === n.node_id).map(e => e.to)]));
         const siblings = new Map(data.nodes.map(n => [n.node_id, parents.get(n.node_id)?.flatMap(p => children.get(p).filter(c => c !== n.node_id) ?? []).concat(children.get(n.node_id).flatMap(c => parents.get(c) ?? []))]));
         const selected = data.selected[0];
-        const selected_level = levels.levels.get(selected);
+        const selected_level = levels.level_by_node.get(selected);
         const selected_branch = new Set([selected]);
         const calculate_parent_branch = (s) => parents.get(s)?.forEach(p => { selected_branch.add(p), calculate_parent_branch(p); });
         calculate_parent_branch(selected);
@@ -74736,8 +74827,8 @@
         data.nodes.forEach(n => {
             if(selected_branch.has(n.node_id)) {
                 sibling_x.set(n.node_id, window.innerWidth * 0.5
-                        + (128 * levels.nodes_by_level[levels.levels.get(n.node_id)].filter(s => selected_branch.has(s)).indexOf(n.node_id) 
-                            - levels.nodes_by_level[levels.levels.get(n.node_id)].filter(s => selected_branch.has(s)).length * 128 * 0.5));
+                        + (128 * levels.nodes_by_level[levels.level_by_node.get(n.node_id)].filter(s => selected_branch.has(s)).indexOf(n.node_id) 
+                            - levels.nodes_by_level[levels.level_by_node.get(n.node_id)].filter(s => selected_branch.has(s)).length * 128 * 0.5));
             } else if(siblings.has(n.node_id) && siblings.get(n.node_id).find(s => selected_branch.has(s))) {
                 sibling_x.set(n.node_id, ((siblings.get(n.node_id).indexOf(n.node_id) - siblings.get(n.node_id).findIndex(s => selected_branch.has(s))) * 0.25 + 0.5) * window.innerWidth);
             } else if(children.get(n.node_id).length === 0) {
@@ -74765,8 +74856,8 @@
             ? 0 
             : parents.get(n.node_id)?.includes(selected) || children.get(n.node_id)?.includes(selected)
             ? window.innerHeight * 0.125
-            : levels.levels.has(n.node_id) 
-            ? window.innerHeight * 0.125 * (1 + Math.abs(levels.levels.get(n.node_id) - selected_level))
+            : levels.level_by_node.has(n.node_id) 
+            ? window.innerHeight * 0.125 * (1 + Math.abs(levels.level_by_node.get(n.node_id) - selected_level))
             : window.innerHeight * 0.4
         ).strength(n => n.node_id === selected ? 10 : 2);
 
@@ -74774,8 +74865,8 @@
             .y((n) => window.innerHeight * (
                 selected === n.node_id
                 ? 0.5 
-                : levels.levels.has(n.node_id) && selected_level !== undefined
-                ? .5 + .125 * (selected_level - levels.levels.get(n.node_id))
+                : levels.level_by_node.has(n.node_id) && selected_level !== undefined
+                ? .5 + .125 * (selected_level - levels.level_by_node.get(n.node_id))
                 : .9
             ));
 
@@ -75027,7 +75118,7 @@
         _,
         ha: { h, app, text, memo },
         no: {executeGraph},
-        scripts: {d3simulation, d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription},
+        scripts: {d3simulation, d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels},
         d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
         Fuse,
         THREE
