@@ -845,7 +845,7 @@
                         "editing",
                         "display_graph"
                     ],
-                    "script": "const next_node_edge = display_graph.edges.find(e => e.to === selected[0]); return next_node_edge ? next_node_edge.from : []"
+                    "script": "const next_edges = display_graph.edges.filter(e => e.to === selected[0]); const next_node_edge = next_edges[Math.ceil(next_edges.length / 2) - 1]; return next_node_edge ? next_node_edge.from : []"
                 },
                 {
                     "id": "left",

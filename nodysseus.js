@@ -273,8 +273,6 @@ const d3simulation = () => {
 }
 
 const updateSimulationNodes = (data) => {
-    console.log('update')
-    console.log(data);
     const levels = data.levels ?? calculateLevels(data.display_graph, data.display_graph_out);
 
     if(typeof(data.links?.[0]?.source) === "string") {
@@ -284,7 +282,7 @@ const updateSimulationNodes = (data) => {
 
     const parents = new Map(data.nodes.map(n => [n.node_id, data.display_graph.edges.filter(e => e.to === n.node_id).map(e => e.from)]));
     const children = new Map(data.nodes.map(n => [n.node_id, data.display_graph.edges.filter(e => e.from === n.node_id).map(e => e.to)]));
-    const siblings = new Map(data.nodes.map(n => [n.node_id, parents.get(n.node_id)?.flatMap(p => children.get(p).filter(c => c !== n.node_id) ?? []).concat(children.get(n.node_id).flatMap(c => parents.get(c) ?? []))]))
+    const siblings = new Map(data.nodes.map(n => [n.node_id, [...(new Set(parents.get(n.node_id)?.flatMap(p => children.get(p).filter(c => c !== n.node_id) ?? []).concat(children.get(n.node_id).flatMap(c => parents.get(c) ?? []))).values())]]))
     const selected = data.selected[0];
     const selected_level = levels.level_by_node.get(selected);
     const selected_branch = new Set([selected]);
@@ -317,7 +315,14 @@ const updateSimulationNodes = (data) => {
     while(sibling_x.size < data.nodes.length) {
         data.nodes.forEach(n => {
             if(!sibling_x.has(n.node_id) && sibling_x.has(children.get(n.node_id)[0])) {
-                sibling_x.set(n.node_id, sibling_x.get(children.get(n.node_id)[0]))
+                console.log(`finding for ${n.name}`)
+                sibling_x.set(
+                    n.node_id, 
+                    sibling_x.get(children.get(n.node_id)[0]) + 
+                        (siblings.has(n.node_id) && siblings.get(n.node_id).length > 1
+                        ? ((siblings.get(n.node_id).indexOf(n.node_id) - Math.floor(siblings.get(n.node_id).length / 2)) / siblings.get(n.node_id).length) * 512
+                        : 0)
+                );
             }
         })
     }
@@ -396,7 +401,6 @@ const d3subscription = simulation => dispatch => {
     const tick = () => {
         if(simulation.alpha() > simulation.alphaMin()) {
             simulation.tick();
-            console.log('updating');
             dispatch(s => ({ 
                 ...s, 
                 nodes: simulation.nodes().map(n => ({node_id: n.node_id, x: Math.floor(n.x), y: Math.floor(n.y), type: n.type, value: n.value, nodes: n.nodes, edges: n.edges, script: n.script, name: n.name})), 
