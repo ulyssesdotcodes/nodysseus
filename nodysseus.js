@@ -3,10 +3,11 @@ import _ from "lodash";
 import { h, app, text, memo } from "hyperapp"
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 import { selectSyntaxLeft } from "@codemirror/commands";
-import * as THREE from 'three';
 import Fuse from "fuse.js";
 
 const executeGraph = ({state, graph, out}) => {
+    graph = contract_all(graph);
+
     let state_hash = "";
     let active_nodes_hash = "";
 
@@ -25,12 +26,14 @@ const executeGraph = ({state, graph, out}) => {
     while(!state.has(out)) {
 
         if(state_length === state.size && active_nodes_length === active_nodes.size) {
+            console.log(graph);
+            console.log(state);
+            console.log(active_nodes);
             throw new Error("stuck");
         }
 
         state_length = state.size;
         active_nodes_length = active_nodes.size;
-
 
         let input;
         let node;
@@ -212,7 +215,7 @@ const executeGraph = ({state, graph, out}) => {
     return state.get(out);
 };
 
-const test_graph = {"nodes":[{"id":"out","args":["value"]},{"id":"get_inputs","value":["target","path"]},{"id":"get_script","value":"return target[path]"},{"id":"lvfabiz9b","name":"css","args":["el","styles"],"script":"console.log(el); el.innerHTML = styles;"},{"id":"2jiztgmvr","name":"css_el","args":["get_el","create_el"],"type":"switch"},{"id":"vpq73g9qg","name":"get_el","script":"return document.querySelector('.css-styles')","args":[]},{"id":"zruw6k6l9","name":"el classname","args":["el"],"script":"el.className = \"css-styles\"; document.body.appendChild(el); return el;"},{"id":"x8tdpkazf","name":"css el inputs","script":"return document.querySelector(\".css-styles\") ? [\"get_el\"] : [\"create_el\"];","args":[]},{"id":"dfbmreaek","name":"create el","script":"return document.createElement(\"style\");","args":[]},{"id":"bacr589n7","name":"styles","script":"return rules.join(\"\\n\");","args":["rules"]},{"id":"filter","nodes":[{"id":"in"},{"id":"out","args":["keep","data"],"script":"return keep ? [data] : []"}],"edges":[{"from":"in","to":"out","order":1},{"from":"in","to":"out","as":"data","order":0}]},{"id":"delete","nodes":[{"id":"in"},{"id":"out","args":["data","path"],"script":"const new_data = Object.assign({}, data); delete new_data[path]; return new_data;"}],"edges":[{"from":"in","to":"out","order":1},{"from":"in","to":"out","as":"data","order":0}]},{"id":"default","nodes":[{"id":"in"},{"id":"out","args":["data","default_value"],"script":"return data.length > 0 ? data : default_value"}],"edges":[{"from":"in","to":"out"}]},{"id":"switch","nodes":[{"id":"in"},{"id":"out","args":["data","input"],"script":"return data[Object.getOwnPropertyNames(data)[0]];"}],"edges":[{"from":"in","to":"out","as":"data"}]},{"id":"trigger","nodes":[{"id":"in"},{"id":"trigger","args":["trigger"],"script":"return trigger ? ['in'] : []"},{"id":"out","args":["data"],"script":"return data?.data ?? []"}],"edges":[{"from":"in","to":"out","as":"data"},{"from":"in","to":"trigger"},{"from":"trigger","to":"out","type":"inputs"}]},{"id":"execute_graph","nodes":[{"id":"in","value":null},{"id":"out","args":["in_node","out_node","graph"],"script":"return (...args) => (lib.no.executeGraph({state: new Map([[in_node, args]]), graph, out: out_node }))"}],"edges":[{"from":"in","to":"out"}]},{"id":"get","nodes":[{"id":"in","value":null},{"id":"fill_default","args":["input"],"script":"return input.default ?? null"},{"id":"out","args":["target","path","def"],"script":"return [lib._.get(target, path) ?? def]"}],"edges":[{"from":"in","to":"out"},{"from":"in","to":"fill_default","as":"input"},{"from":"fill_default","to":"out","as":"def"}]},{"id":"1a2qt246c","name":"css obj"},{"id":"ie18qgd52","name":"entries","script":"return Object.entries(input)","args":["input"]},{"id":"2ll8r3sx5","name":"init","args":["entry"],"script":"return entry[0] + \"{\""},{"id":"mec78sn2n","name":"compile","args":["init","attrs","end"],"script":"return [init].concat(attrs).concat([end])"},{"id":"mrs40dwx8","name":"end","value":"}"},{"id":"h28e9j2fo","name":"attrs","args":["entry"],"script":"return [Object.entries(entry[1]).map(([k, v]) => `${k}: ${v};`)];"},{"id":"vr865hcv0","name":"body"},{"id":"kvq1q0k30","name":"light grey","value":"#fff"},{"id":"qpao2izqz","name":"circle"},{"id":"u7sy8fwro","name":"black","value":"black"},{"id":"56j09nio2","name":"stroke width","value":1},{"id":"1t96plqko","name":"text"},{"id":"p5b9np03o","name":"font family","value":"consolas"}],"edges":[{"from":"lvfabiz9b","to":"out"},{"from":"2jiztgmvr","to":"lvfabiz9b","as":"el"},{"from":"vpq73g9qg","to":"2jiztgmvr","as":"get_el"},{"from":"zruw6k6l9","to":"2jiztgmvr","as":"create_el"},{"from":"x8tdpkazf","to":"2jiztgmvr","type":"inputs"},{"from":"dfbmreaek","to":"zruw6k6l9","as":"el"},{"from":"bacr589n7","to":"lvfabiz9b","as":"styles"},{"from":"1a2qt246c","to":"ie18qgd52","as":"input"},{"from":"ie18qgd52","to":"2ll8r3sx5","as":"entry"},{"from":"2ll8r3sx5","to":"mec78sn2n","as":"init","name":"end"},{"from":"mrs40dwx8","to":"mec78sn2n","as":"end"},{"from":"mec78sn2n","to":"bacr589n7","type":"concat","as":"rules"},{"from":"h28e9j2fo","to":"mec78sn2n","as":"attrs"},{"from":"ie18qgd52","to":"h28e9j2fo","as":"entry"},{"from":"vr865hcv0","to":"1a2qt246c","as":"body","name":"light-grey","value":"#ccc"},{"from":"kvq1q0k30","to":"vr865hcv0","as":"background-color"},{"from":"qpao2izqz","to":"1a2qt246c","as":"circle"},{"from":"u7sy8fwro","to":"qpao2izqz","as":"stroke"},{"from":"56j09nio2","to":"qpao2izqz","as":"stroke-width"},{"from":"1t96plqko","to":"1a2qt246c","as":"text"},{"from":"p5b9np03o","to":"1t96plqko","as":"font-family"}]}
+const test_graph = {"nodes":[{"id":"out","args":["value"]},{"id":"get_inputs","value":["target","path"]},{"id":"get_script","value":"return target[path]"},{"id":"lvfabiz9b","name":"css","args":["el","styles"],"script":"console.log(el); el.innerHTML = styles;"},{"id":"2jiztgmvr","name":"css_el","args":["get_el","create_el"],"type":"switch"},{"id":"vpq73g9qg","name":"get_el","script":"return document.querySelector('.css-styles')","args":[]},{"id":"zruw6k6l9","name":"el classname","args":["el"],"script":"el.className = \"css-styles\"; document.body.appendChild(el); return el;"},{"id":"x8tdpkazf","name":"css el inputs","script":"return document.querySelector(\".css-styles\") ? [\"get_el\"] : [\"create_el\"];","args":[]},{"id":"dfbmreaek","name":"create el","script":"return document.createElement(\"style\");","args":[]},{"id":"bacr589n7","name":"styles","script":"return rules?.join(\"\\n\");","args":["rules"]},{"id":"filter","nodes":[{"id":"in"},{"id":"out","args":["keep","data"],"script":"return keep ? [data] : []"}],"edges":[{"from":"in","to":"out","order":1},{"from":"in","to":"out","as":"data","order":0}]},{"id":"delete","nodes":[{"id":"in"},{"id":"out","args":["data","path"],"script":"const new_data = Object.assign({}, data); delete new_data[path]; return new_data;"}],"edges":[{"from":"in","to":"out","order":1},{"from":"in","to":"out","as":"data","order":0}]},{"id":"default","nodes":[{"id":"in"},{"id":"out","args":["data","default_value"],"script":"return data.length > 0 ? data : default_value"}],"edges":[{"from":"in","to":"out"}]},{"id":"switch","nodes":[{"id":"in"},{"id":"out","args":["data","input"],"script":"return data[Object.getOwnPropertyNames(data)[0]];"}],"edges":[{"from":"in","to":"out","as":"data"}]},{"id":"trigger","nodes":[{"id":"in"},{"id":"trigger","args":["trigger"],"script":"return trigger ? ['in'] : []"},{"id":"out","args":["data"],"script":"return data?.data ?? []"}],"edges":[{"from":"in","to":"out","as":"data"},{"from":"in","to":"trigger"},{"from":"trigger","to":"out","type":"inputs"}]},{"id":"execute_graph","nodes":[{"id":"in","value":null},{"id":"out","args":["in_node","out_node","graph"],"script":"return (...args) => (lib.no.executeGraph({state: new Map([[in_node, args]]), graph, out: out_node }))"}],"edges":[{"from":"in","to":"out"}]},{"id":"get","nodes":[{"id":"in","value":null},{"id":"fill_default","args":["input"],"script":"return input.default ?? null"},{"id":"out","args":["target","path","def"],"script":"return [lib._.get(target, path) ?? def]"}],"edges":[{"from":"in","to":"out"},{"from":"in","to":"fill_default","as":"input"},{"from":"fill_default","to":"out","as":"def"}]},{"id":"1a2qt246c","name":"css obj"},{"id":"ie18qgd52","name":"entries","script":"return Object.entries(input)","args":["input"]},{"id":"2ll8r3sx5","name":"init","args":["entry"],"script":"return entry[0] + \"{\""},{"id":"mec78sn2n","name":"compile","args":["init","attrs","end"],"script":"return [init].concat(attrs).concat([end])"},{"id":"mrs40dwx8","name":"end","value":"}"},{"id":"h28e9j2fo","name":"attrs","args":["entry"],"script":"return [Object.entries(entry[1]).map(([k, v]) => `${k}: ${v};`)];"},{"id":"vr865hcv0","name":"body"},{"id":"kvq1q0k30","name":"light grey","value":"#fff"},{"id":"qpao2izqz","name":"circle"},{"id":"u7sy8fwro","name":"black","value":"black"},{"id":"56j09nio2","name":"stroke width","value":1},{"id":"1t96plqko","name":"text"},{"id":"p5b9np03o","name":"font family","value":"consolas"}],"edges":[{"from":"lvfabiz9b","to":"out"},{"from":"2jiztgmvr","to":"lvfabiz9b","as":"el"},{"from":"vpq73g9qg","to":"2jiztgmvr","as":"get_el"},{"from":"zruw6k6l9","to":"2jiztgmvr","as":"create_el"},{"from":"x8tdpkazf","to":"2jiztgmvr","type":"inputs"},{"from":"dfbmreaek","to":"zruw6k6l9","as":"el"},{"from":"bacr589n7","to":"lvfabiz9b","as":"styles"},{"from":"1a2qt246c","to":"ie18qgd52","as":"input"},{"from":"ie18qgd52","to":"2ll8r3sx5","as":"entry"},{"from":"2ll8r3sx5","to":"mec78sn2n","as":"init","name":"end"},{"from":"mrs40dwx8","to":"mec78sn2n","as":"end"},{"from":"mec78sn2n","to":"bacr589n7","type":"concat","as":"rules"},{"from":"h28e9j2fo","to":"mec78sn2n","as":"attrs"},{"from":"ie18qgd52","to":"h28e9j2fo","as":"entry"},{"from":"vr865hcv0","to":"1a2qt246c","as":"body","name":"light-grey","value":"#ccc"},{"from":"kvq1q0k30","to":"vr865hcv0","as":"background-color"},{"from":"qpao2izqz","to":"1a2qt246c","as":"circle"},{"from":"u7sy8fwro","to":"qpao2izqz","as":"stroke"},{"from":"56j09nio2","to":"qpao2izqz","as":"stroke-width"},{"from":"1t96plqko","to":"1a2qt246c","as":"text"},{"from":"p5b9np03o","to":"1t96plqko","as":"font-family"}]}
 
 //////////
 // TODO: convert these to nodes
@@ -220,7 +223,17 @@ const test_graph = {"nodes":[{"id":"out","args":["value"]},{"id":"get_inputs","v
 const calculateLevels = (graph, out) => {
     const visited = new Set();
 
-    const levels = new Map(bfs(graph, visited)(out, 0));
+    const find_childest = n => {
+        const e = graph.edges.find(e => e.from === n);
+        if(e) {
+            return find_childest(e.to);
+        } else {
+            return n;
+        }
+    }
+    const top = find_childest(out);
+
+    const levels = new Map(bfs(graph, visited)(top, 0));
 
     return {
         level_by_node: levels,
@@ -256,16 +269,16 @@ const bfs = (graph, visited) => (id, level) => {
 const d3simulation = () => {
     const simulation =
         lib.d3.forceSimulation()
-        .force('charge', lib.d3.forceManyBody().strength(-8).distanceMax(256))
+        .force('charge', lib.d3.forceManyBody().strength(-8).distanceMax(1024))
         .force('collide', lib.d3.forceCollide(32))
         .force('links', lib.d3
             .forceLink([])
-            .distance(64)
-            .strength(0.1)
+            .distance(128)
+            .strength(1)
             .id(n => n.node_id))
         .force('link_direction', lib.d3.forceY().strength(1))
         .force('link_siblings', lib.d3.forceX().strength(1))
-        .force('selected', lib.d3.forceRadial(0, window.innerWidth * 0.5, window.innerHeight * 0.5).strength(2))
+        // .force('selected', lib.d3.forceRadial(0, window.innerWidth * 0.5, window.innerHeight * 0.5).strength(2))
         .velocityDecay(0.7)
         .alphaMin(.2);
 
@@ -283,13 +296,21 @@ const updateSimulationNodes = (data) => {
     const parents = new Map(data.nodes.map(n => [n.node_id, data.display_graph.edges.filter(e => e.to === n.node_id).map(e => e.from)]));
     const children = new Map(data.nodes.map(n => [n.node_id, data.display_graph.edges.filter(e => e.from === n.node_id).map(e => e.to)]));
     const siblings = new Map(data.nodes.map(n => [n.node_id, [...(new Set(parents.get(n.node_id)?.flatMap(p => children.get(p).filter(c => c !== n.node_id) ?? []).concat(children.get(n.node_id).flatMap(c => parents.get(c) ?? []))).values())]]))
+    const distance_from_selected = new Map();
     const selected = data.selected[0];
     const selected_level = levels.level_by_node.get(selected);
-    const selected_branch = new Set([selected]);
-    const calculate_parent_branch = (s) => parents.get(s)?.forEach(p => { selected_branch.add(p), calculate_parent_branch(p) });
-    calculate_parent_branch(selected);
-    const calculate_child_branch = (s) => children.get(s)?.forEach(c => { selected_branch.add(c), calculate_child_branch(c) });
-    calculate_child_branch(selected);
+    const selected_graph = new Set([]);
+    const calculate_selected_graph = (s, i) => {
+        if(distance_from_selected.has(s)) {
+            return;
+        }
+
+        distance_from_selected.set(s, i);
+        parents.get(s)?.forEach(p => { calculate_selected_graph(p, i + 1); });
+        children.get(s)?.forEach(c => { calculate_selected_graph(c, i + 1); });
+    }
+
+    calculate_selected_graph(selected, 0);
 
     // data.simulation.force('link_siblings')
     //     .x((n) => (parents.has(n.node_id) && parents.get(n.node_id).x ? parents.get(n.node_id).x : window.innerWidth * 0.5) +
@@ -299,49 +320,67 @@ const updateSimulationNodes = (data) => {
     //             window.innerWidth * 0.25));
 
     const sibling_x = new Map();
+    // sibling_x.set(selected, window.innerWidth * 0.5);
+
     data.nodes.forEach(n => {
-        if(selected_branch.has(n.node_id)) {
-            sibling_x.set(n.node_id, window.innerWidth * 0.5
-                    + (128 * levels.nodes_by_level[levels.level_by_node.get(n.node_id)].filter(s => selected_branch.has(s)).indexOf(n.node_id) 
-                        - levels.nodes_by_level[levels.level_by_node.get(n.node_id)].filter(s => selected_branch.has(s)).length * 128 * 0.5))
-        } else if(siblings.has(n.node_id) && siblings.get(n.node_id).find(s => selected_branch.has(s))) {
-            sibling_x.set(n.node_id, ((siblings.get(n.node_id).indexOf(n.node_id) - siblings.get(n.node_id).findIndex(s => selected_branch.has(s))) * 0.25 + 0.5) * window.innerWidth)
-        } else if(children.get(n.node_id).length === 0) {
-            sibling_x.set(n.node_id, window.innerWidth * 0.75);
-        }
-    }); 
+        sibling_x.set(n.node_id, 
+            (levels.level_by_node.has(n.node_id)
+            ?  ((levels.nodes_by_level[levels.level_by_node.get(n.node_id)].findIndex(l => l === n.node_id) + 1) 
+                / (levels.nodes_by_level[levels.level_by_node.get(n.node_id)].length + 1))
+            : 0.75)
+                * window.innerWidth
+        );
+    })
+
+    // data.nodes.forEach(n => {
+    //     if(selected === n.node_id) {
+    //         sibling_x.set(n.node_id, window.innerWidth * 0.5);
+    //     } else if(siblings.has(n.node_id) && siblings.get(n.node_id).find(s => selected === s)) {
+    //         sibling_x.set(n.node_id, ((siblings.get(n.node_id).indexOf(n.node_id) - siblings.get(n.node_id).findIndex(s => selected_graph === s)) * 0.25 + 0.5) * window.innerWidth)
+    //     } else if(!selected_graph.has(n.node_id)) {
+    //         sibling_x.set(n.node_id, window.innerWidth * 0.75);
+    //     }
+    // }); 
+                    // + (128 * levels.nodes_by_level[levels.level_by_node.get(n.node_id)].filter(s => selected_graph.has(s)).indexOf(n.node_id) 
+                    //     - levels.nodes_by_level[levels.level_by_node.get(n.node_id)].filter(s => selected_graph.has(s)).length * 128 * 0.5))
 
 
-    while(sibling_x.size < data.nodes.length) {
-        data.nodes.forEach(n => {
-            if(!sibling_x.has(n.node_id) && sibling_x.has(children.get(n.node_id)[0])) {
-                console.log(`finding for ${n.name}`)
-                sibling_x.set(
-                    n.node_id, 
-                    sibling_x.get(children.get(n.node_id)[0]) + 
-                        (siblings.has(n.node_id) && siblings.get(n.node_id).length > 1
-                        ? ((siblings.get(n.node_id).indexOf(n.node_id) - Math.floor(siblings.get(n.node_id).length / 2)) / siblings.get(n.node_id).length) * 512
-                        : 0)
-                );
-            }
-        })
-    }
+    // while(sibling_x.size < data.nodes.length) {
+    //     data.nodes.forEach(n => {
+    //         if(!sibling_x.has(n.node_id) && sibling_x.has(children.get(n.node_id)[0])) {
+    //             sibling_x.set(
+    //                 n.node_id, 
+    //                 sibling_x.get(children.get(n.node_id)[0]) + 
+    //                     (siblings.has(n.node_id) && siblings.get(n.node_id).length > 1
+    //                     ? ((siblings.get(n.node_id).indexOf(n.node_id) - Math.floor(siblings.get(n.node_id).length / 2)) / siblings.get(n.node_id).length) * 128
+    //                     : 0)
+    //             );
+    //         } else if(!sibling_x.has(n.node_id) && sibling_x.has(parents.get(n.node_id)[0])) {
+    //             sibling_x.set(
+    //                 n.node_id, 
+    //                 sibling_x.get(parents.get(n.node_id)[0]) + 
+    //                     (siblings.has(n.node_id) && siblings.get(n.node_id).length > 1
+    //                     ? ((siblings.get(n.node_id).indexOf(n.node_id) - Math.floor(siblings.get(n.node_id).length / 2)) / siblings.get(n.node_id).length) * 128
+    //                     : 0)
+    //             );
+    //         }
+    //     })
+    // }
 
     data.simulation.force('link_siblings').x((n) => sibling_x.get(n.node_id));
 
     data.simulation.force('charge')
-        .strength(n => selected_branch.has(n.node_id) ? -1024 : -8)
+        .strength(n => selected_graph.has(n.node_id) ? -1024 : -8)
 
-
-    data.simulation.force('selected').radius(n => 
-        n.node_id === selected
-        ? 0 
-        : parents.get(n.node_id)?.includes(selected) || children.get(n.node_id)?.includes(selected)
-        ? window.innerHeight * 0.125
-        : levels.level_by_node.has(n.node_id) 
-        ? window.innerHeight * 0.125 * (1 + Math.abs(levels.level_by_node.get(n.node_id) - selected_level))
-        : window.innerHeight * 0.4
-    ).strength(n => n.node_id === selected ? 10 : 2);
+    // data.simulation.force('selected').radius(n => 
+    //     n.node_id === selected
+    //     ? 0 
+    //     : parents.get(n.node_id)?.includes(selected) || children.get(n.node_id)?.includes(selected)
+    //     ? window.innerHeight * 0.125
+    //     : distance_from_selected.has(n.node_id)
+    //     ? window.innerHeight * 0.125 * Math.max(1, Math.min(distance_from_selected.get(n.node_id) - 1, 3))
+    //     : window.innerHeight * 0.4
+    // ).strength(n => n.node_id === selected ? 2 : .5);
 
     data.simulation.force('link_direction')
         .y((n) => window.innerHeight * (
@@ -352,7 +391,6 @@ const updateSimulationNodes = (data) => {
             : .9
         ));
 
-
     data.simulation.force('collide').radius(n => n.node_id === selected ? 64 : 32);
 
 
@@ -361,7 +399,7 @@ const updateSimulationNodes = (data) => {
         // .force(`not_parent_${data.node_id}`, lib.d3.forceRadial(512, data.x, data.y).strength(n => n.parent === data.node_id ? 0 : 0.2))
         // .force(`center`, null)
         // .velocityDecay(.2)
-        .alpha(0.4);
+        .alpha(0.6);
 }
 
 const graphToSimulationNodes = (data) => {
@@ -470,90 +508,83 @@ const expand_node = (data) => {
     return new_display_graph;
 }
 
-const contract_node = (data) => {
-    // if(data.node_id.endsWith('in') || data.node_id.endsWith('out')) {
-    //     const node_id = data.node_id.endsWith('in') ?
-    //         data.node_id.substring(0, data.node_id.length - 3) :
-    //         data.node_id.substring(0, data.node_id.length - 4);
+const contract_all = (graph) => {
+    const node_ids = new Set(graph.nodes.map(n => n.id));
+    let display_graph = graph;
+    graph.nodes.forEach(g => {
+        if(g.id.endsWith("/out") && !node_ids.has(g.id.substring(0, g.id.length - 4))) {
+            display_graph = contract_node({node_id: g.id, display_graph}, true);
+        }
+    })
 
+    return display_graph;
+}
 
-    //     const new_display_graph = {
-    //         nodes: data.display_graph.nodes
-    //             .filter(n => !n.id.startsWith(node_id))
-    //             .concat([{
-    //                 id: node_id,
-    //                 nodes: data.display_graph.nodes
-    //                     .filter(n => n.id.startsWith(node_id) && n.id.length > node_id.length + 1)
-    //                     .map(n => ({...n, id: n.id.substring(node_id.length + 1)})),
-    //                 edges: data.display_graph.edges
-    //                     .filter(e => e.from.startsWith(node_id) && e.to.startsWith(node_id))
-    //                     .map(e =>({
-    //                         as: e.as,
-    //                         from: e.from.substring(node_id.length + 1),
-    //                         to: e.to.substring(node_id.length + 1),
-    //                     }))
-    //             }]),
-    //         edges: data.display_graph.edges
-    //             .map(e => ({
-    //                 ...e,
-    //                 from: e.from === `${node_id}/out` ? node_id : e.from,
-    //                 to: e.to === `${node_id}/in` ? node_id : e.to
-    //             }))
-    //             .filter(e => !(e.from.startsWith(`${node_id}/`) || e.to.startsWith(`${node_id}/`)))
-    //     };
-
-    //     return new_display_graph;
-
-    // } else if(data.name.endsWith("/out")) {
+const contract_node = (data, keep_expanded=false) => {
     if(data.node_id.endsWith('/out') || data.name.endsWith("/out")) {
         const node_id = data.node_id.endsWith('/out') ? data.node_id.substring(0, data.node_id.indexOf("/out")) : data.node_id;
         const name = data.node_id.endsWith('/out') ? node_id : data.name.substring(0, data.name.indexOf("/out"))
 
-        const inside_nodes = [data.display_graph.nodes.find(n => n.id === data.node_id)];
+        const inside_nodes = [Object.assign({}, data.display_graph.nodes.find(n => n.id === data.node_id))];
         if(!inside_nodes[0].id.endsWith('/out')) {
             inside_nodes[0].id += "/out"
         }
         const inside_edges = [];
 
         const bfs_parents = n => data.display_graph.edges.filter(e => e.to === n).forEach(e => {
-            const inside_node = data.display_graph.nodes.find(p => p.id === e.from);
+            const old_node = inside_nodes.find(n => n.id === e.from);
+            const inside_node = old_node ?? data.display_graph.nodes.find(p => p.id === e.from);
 
-            inside_edges.push(e);
-            inside_nodes.push(inside_node);
+            if(!inside_node) {
+                return;
+            }
+
+            const new_edge = Object.assign({}, e);
+            inside_edges.push(new_edge);
+            if(!old_node) {
+                inside_nodes.push(inside_node);
+            }
 
             if(!(e.from === (node_id + "/in") || inside_node.name === (name + "/in"))) {
                 bfs_parents(e.from);
             }
+
             if (inside_node.name === (name + "/in") && !inside_node.id.endsWith('/in')) {
-                e.from = "in";
+                new_edge.from = "in";
             }
 
-            if(e.to === data.node_id) {
-                e.to = 'out';
+            if(e.to === data.node_id && !e.from.startsWith(name)) {
+                new_edge.to = 'out';
             }
         });
 
         bfs_parents(data.node_id);
         const in_node = inside_nodes.find(n => n.id === node_id + '/in' || n.name === name + "/in");
-        const in_node_id = in_node.id;
-        in_node.id = node_id + "/in";
+        const in_node_id = in_node?.id;
+
+        if(in_node) {
+            in_node.id = node_id + "/in";
+        }
+
 
         const new_display_graph = {
                 nodes: data.display_graph.nodes
-                    .filter(n => !inside_nodes.includes(n))
+                    .filter(n => n.id !== node_id)
+                    .filter(n => keep_expanded || !inside_nodes.find(inn => inn.id === n.id))
                     .concat([{
                         id: node_id,
-                        nodes: inside_nodes.map(n => {
-                            n.id = n.id.startsWith(node_id) ? n.id.substring(node_id.length + 1) : n.id;
-                            return n;
-                        }),
+                        name,
+                        nodes: inside_nodes.map(n => ({
+                            ...n,
+                            id: n.id.startsWith(node_id + "/") ? n.id.substring(node_id.length + 1) : n.id
+                        })),
                         edges: inside_edges.map(e => ({...e, 
-                            from: e.from.startsWith(node_id) ? e.from.substring(node_id.length + 1) : e.from, 
-                            to: e.to.startsWith(node_id) ? e.to.substring(node_id.length + 1) : e.to
+                            from: e.from.startsWith(node_id + "/") ? e.from.substring(node_id.length + 1) : e.from, 
+                            to: e.to.startsWith(node_id + "/") ? e.to.substring(node_id.length + 1) : e.to
                         }))
                     }]),
                 edges: data.display_graph.edges
-                    .filter(e => !inside_edges.includes(e))
+                    .filter(e => keep_expanded || !inside_edges.find(ie => ie.from === e.from && ie.to === e.to))
                     .map(e => 
                         e.from === data.node_id ? {...e, from: node_id} 
                         : e.to === in_node_id ? {...e, to: node_id} 
@@ -579,16 +610,16 @@ const flattenNode = (graph, levels = -1) => {
             flat_nodes: acc.flat_nodes.concat(n.flat_nodes?.flat() ?? []),
             flat_edges: acc.flat_edges.map(e => n.flat_nodes ?
                 e.to === n.id ?
-                Object.assign(e, { to: `${e.to}/in` }) :
+                Object.assign({}, e, { to: `${e.to}/in` }) :
                 e.from === n.id ?
-                Object.assign(e, { from: `${e.from}/out` }) :
+                Object.assign({}, e, { from: `${e.from}/out` }) :
                 e :
                 e).flat().concat(n.flat_edges).filter(e => e !== undefined)
         }), Object.assign({}, graph, {
             flat_nodes: graph.nodes
                 .map(n => Object.assign({}, n, { id: `${prefix}${n.id}` })),
             flat_edges: graph.edges
-                .map(e => ({ from: `${prefix}${e.from}`, to: `${prefix}${e.to}`, as: e.as }))
+                .map(e => ({ ...e, from: `${prefix}${e.from}`, to: `${prefix}${e.to}` }))
         }));
 }
 
@@ -599,10 +630,10 @@ const lib = {
     _,
     ha: { h, app, text, memo },
     no: {executeGraph},
-    scripts: {d3simulation, d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels},
+    scripts: {d3simulation, d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all},
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
     Fuse,
-    THREE
+    // THREE
 };
 
 const generic_nodes = new Set(["switch", "filter", "delete", "default", "trigger", "execute_graph", "get"])

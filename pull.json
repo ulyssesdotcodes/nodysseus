@@ -464,9 +464,19 @@
                     "id": "in"
                 },
                 {
+                    "id": "expand_contract_result_inputs",
+                    "args": ["expandable", "contractable"],
+                    "script": "return expandable ? ['expand', 'selected'] : contractable ? ['contract', 'selected'] : []"
+                },
+                {
+                    "id": "selected",
+                    "args": ["expand", "contract"],
+                    "script": "return expand ?? contract ?? []"
+                },
+                {
                     "id": "expand_contract_result",
-                    "args": ["display_graph", "selected"],
-                    "script": "return display_graph && selected ? {display_graph, selected} : []"
+                    "args": ["expand", "contract", "selected"],
+                    "script": "return (expand || contract) && selected ? {display_graph: expand ?? contract, selected} : []"
                 },
                 {
                     "id": "get_name",
@@ -474,16 +484,8 @@
                     "script": "return display_graph.nodes.find(n => n.id === node_id).name"
                 },
                 {
-                    "id": "expandable",
-                    "type": "filter"
-                },
-                {
                     "id": "log",
                     "type": "log"
-                },
-                {
-                    "id": "contractable",
-                    "type": "filter"
                 },
                 {
                     "id": "expandable_id",
@@ -498,7 +500,7 @@
                         "node_id",
                         "name"
                     ],
-                    "script": "return !node_id ? [] : node_id.endsWith('/out') || node_id.endsWith('/in') ? [[node_id.substring(0, node_id.lastIndexOf('/'))]] : name?.endsWith('/out') ? [[node_id]] : []"
+                    "script": "return !node_id ? [] : node_id.endsWith('/out') ? [[node_id.substring(0, node_id.lastIndexOf('/'))]] : name?.endsWith('/out') ? [[node_id]] : []"
                 },
                 {
                     "id": "expand",
@@ -526,12 +528,12 @@
                     "script": "return !!display_graph.nodes.find(n => n.id === node_id).nodes"
                 },
                 {
-                    "id": "is_in_or_out",
+                    "id": "is_out",
                     "args": [
                         "node_id",
                         "name"
                     ],
-                    "script": "return node_id.endsWith('/in') || node_id.endsWith('/out') || name?.endsWith('/out')"
+                    "script": "return node_id.endsWith('/out') || name?.endsWith('/out')"
                 },
                 {
                     "id": "out",
@@ -541,15 +543,31 @@
             "edges": [
                 {
                     "from": "in",
-                    "to": "expandable"
+                    "to": "expandable_id"
                 },
                 {
                     "from": "in",
-                    "to": "contractable"
+                    "to": "contractable_id"
                 },
                 {
                     "from": "in",
                     "to": "get_name"
+                },
+                {
+                    "from": "in",
+                    "to": "has_nodes"
+                },
+                {
+                    "from": "in",
+                    "to": "is_out"
+                },
+                {
+                    "from": "in",
+                    "to": "expand"
+                },
+                {
+                    "from": "in",
+                    "to": "contract"
                 },
                 {
                     "from":  "get_name",
@@ -557,43 +575,9 @@
                     "as": "name"
                 },
                 {
-                    "from": "in",
-                    "to": "has_nodes"
-                },
-                {
-                    "from": "has_nodes",
-                    "to": "expandable",
-                    "as": "keep"
-                },
-                {
-                    "from": "in",
-                    "to": "is_in_or_out"
-                },
-                {
                     "from": "get_name",
-                    "to": "is_in_or_out",
+                    "to": "is_out",
                     "as": "name"
-                },
-                {
-                    "from": "is_in_or_out",
-                    "to": "contractable",
-                    "as": "keep"
-                },
-                {
-                    "from": "in",
-                    "to": "has_nodes"
-                },
-                {
-                    "from": "expandable",
-                    "to": "expand"
-                },
-                {
-                    "from": "expandable",
-                    "to": "expandable_id"
-                },
-                {
-                    "from": "contractable",
-                    "to": "contractable_id"
                 },
                 {
                     "from": "get_name",
@@ -601,32 +585,49 @@
                     "as": "name"
                 },
                 {
-                    "from": "contractable",
-                    "to": "contract"
-                },
-                {
-                    "from": "expand",
-                    "to": "log"
-                },
-                {
                     "from": "contractable_id",
-                    "to": "expand_contract_result",
-                    "as": "selected"
+                    "to": "selected",
+                    "as": "contract"
                 },
                 {
                     "from": "expandable_id",
+                    "to": "selected",
+                    "as": "expand"
+                },
+                {
+                    "from": "has_nodes",
+                    "to": "expand_contract_result_inputs",
+                    "as": "expandable"
+                },
+                {
+                    "from": "is_out",
+                    "to": "expand_contract_result_inputs",
+                    "as": "contractable"
+                },
+                {
+                    "from": "expand_contract_result_inputs",
+                    "to": "selected",
+                    "type": "inputs"
+                },
+                {
+                    "from": "expand_contract_result_inputs",
+                    "to": "expand_contract_result",
+                    "type": "inputs"
+                },
+                {
+                    "from": "selected",
                     "to": "expand_contract_result",
                     "as": "selected"
                 },
                 {
                     "from": "expand",
                     "to": "expand_contract_result",
-                    "as": "display_graph"
+                    "as": "expand"
                 },
                 {
                     "from": "contract",
                     "to": "expand_contract_result",
-                    "as": "display_graph"
+                    "as": "contract"
                 },
                 {
                     "from": "expand_contract_result",
@@ -707,6 +708,9 @@
         {
             "id": "hyperapp_app",
             "type": "hyperapp"
+        },
+        {
+            "id": "out"
         },
         {
             "id": "hyperapp_view_in",
@@ -825,7 +829,7 @@
                         "ctrlKey",
                         "display_graph"
                     ],
-                    "script": "return key === 's' && ctrlKey === true ? () => { localStorage.setItem('display_graph', JSON.stringify(display_graph)); localStorage.setItem('display_graph_' + performance.now(), JSON.stringify(display_graph));} : () => {}"
+                    "script": "return key === 's' && ctrlKey === true ? () => { localStorage.setItem('display_graph', JSON.stringify(display_graph)); localStorage.setItem('display_graph_' + Date.now(), JSON.stringify(display_graph));} : () => {}"
                 },
                 {
                     "id": "down",
@@ -1164,8 +1168,8 @@
                 },
                 {
                     "id": "calculate_levels",
-                    "args": ["selected", "display_graph"],
-                    "script": "return lib.scripts.calculateLevels(display_graph, selected[0])"
+                    "args": ["state", "selected", "display_graph"],
+                    "script": "return lib.scripts.calculateLevels(display_graph ?? state.display_graph, selected ?? state.selected[0])"
                 },
                 {
                     "id": "levels",
@@ -1174,7 +1178,7 @@
                 {
                     "id": "levels_inputs",
                     "args": ["selected"],
-                    "script": "return selected ? ['levels'] : []"
+                    "script": "return ['levels']"
                 },
                 {
                     "id": "set_levels",
@@ -1260,7 +1264,18 @@
                 },
                 {
                     "from": "state",
-                    "to": "calculate_levels"
+                    "to": "calculate_levels",
+                    "as": "state"
+                },
+                {
+                    "from": "selected",
+                    "to": "calculate_levels",
+                    "as": "selected"
+                },
+                {
+                    "from": "display_graph",
+                    "to": "calculate_levels",
+                    "as": "display_graph"
                 },
                 {
                     "from": "key_inputs",
@@ -3654,6 +3669,10 @@
             "from": "update_sim_fn",
             "to": "update_sim_effect",
             "as": "fn"
+        }, 
+        {
+            "from": "hyperapp_app",
+            "to": "out"
         }
     ]
 }
