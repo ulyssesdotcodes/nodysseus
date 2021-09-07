@@ -111,8 +111,7 @@
             "edges": [
                 {
                     "from": "in",
-                    "to": "out",
-                    "order": 1
+                    "to": "out"
                 },
                 {
                     "from": "in",
@@ -729,9 +728,10 @@
             "args": [
                 "nodes",
                 "display_graph",
-                "selected"
+                "selected",
+                "levels"
             ],
-            "script": "return lib.scripts.graphToSimulationNodes({display_graph, nodes, selected})"
+            "script": "return lib.scripts.graphToSimulationNodes({display_graph, nodes, selected, levels})"
         },
         {
             "id": "update_nodes_in"
@@ -1188,7 +1188,7 @@
                 {
                     "id": "new_state_cases",
                     "args": ["key", "pending_edges", "state", "shiftKey"],
-                    "script": "const graph_sim = (!state.editing && state.search === false && (key === 'enter' || key.toLowerCase() === 'o' || key === 'x' || (key === 't' && shiftKey) || (!!pending_edges.edge_to && !!pending_edges.edge_from))) || key === 'escape'; return [graph_sim && 'graph_sim', 'state']"
+                    "script": "const graph_sim = true; /*(!state.editing && state.search === false && (key === 'enter' || key.toLowerCase() === 'o' || key === 'x' || (key === 't' && shiftKey) || (!!pending_edges.edge_to && !!pending_edges.edge_from))) || key === 'escape'*/; return [graph_sim && 'graph_sim', 'state']"
                 },
                 {
                     "id": "new_state",
@@ -1200,9 +1200,10 @@
                     "args": [
                         "display_graph",
                         "nodes",
-                        "selected"
+                        "selected",
+                        "levels"
                     ],
-                    "script": "return lib.scripts.graphToSimulationNodes({display_graph, nodes, selected});"
+                    "script": "return lib.scripts.graphToSimulationNodes({display_graph, nodes, selected, levels});"
                 },
                 {
                     "id": "update",
@@ -2177,8 +2178,7 @@
                 },
                 {
                     "from": "get_selected",
-                    "to": "clicked",
-                    "as": "data"
+                    "to": "clicked"
                 },
                 {
                     "from": "merge_args",
@@ -2261,6 +2261,11 @@
                     "as": "graph_sim"
                 },
                 {
+                    "from": "levels",
+                    "to": "graph_sim",
+                    "as": "levels"
+                },
+                {
                     "from": "get_first",
                     "to": "unmodified_graph"
                 },
@@ -2326,6 +2331,11 @@
         {
             "id": "editor_props",
             "value": {}
+        },
+        {
+            "id": "calculate_levels",
+            "args": ["display_graph", "selected"],
+            "script": "return lib.scripts.calculateLevels(display_graph, selected)"
         },
         {
             "id": "editor",
@@ -2650,8 +2660,8 @@
                                         },
                                         {
                                             "id": "circle_attrs",
-                                            "args": [],
-                                            "script": "return ({r: 16, cx: 20, cy: 20})"
+                                            "args": ["selected_distance"],
+                                            "script": "return ({r: 16 / ((Math.min(10, selected_distance ?? 10) * 0.5) + 1) , cx: 20, cy: 20})"
                                         },
                                         {
                                             "id": "default_color",
@@ -2698,6 +2708,10 @@
                                                     "value": "value"
                                                 },
                                                 {
+                                                    "id": "node_selected_distance",
+                                                    "value": "selected_distance"
+                                                },
+                                                {
                                                     "id": "get_id",
                                                     "type": "get"
                                                 },
@@ -2718,6 +2732,10 @@
                                                     "script": "return target.type ?? (Array.isArray(target.value) ? [target.value] : target.value) ?? (target.value === null ? target.node_id : target.script ? 'script' : target.nodes ? `graph (${target.nodes.length}, ${target.edges.length})` : target.script ? 'script' : 'unknown')"
                                                 },
                                                 {
+                                                    "id": "get_selected_distance",
+                                                    "type": "get"
+                                                },
+                                                {
                                                     "id": "shorten",
                                                     "args": [
                                                         "text"
@@ -2734,10 +2752,8 @@
                                                 },
                                                 {
                                                     "id": "node_text_props",
-                                                    "value": {
-                                                        "x": 42,
-                                                        "y": 22
-                                                    }
+                                                    "args": ["selected_distance"],
+                                                    "script": "return { x: 42, y: 22 }"
                                                 },
                                                 {
                                                     "id": "text",
@@ -2766,6 +2782,11 @@
                                                     "as": "target"
                                                 },
                                                 {
+                                                    "from": "in",
+                                                    "to": "get_selected_distance",
+                                                    "as": "target"
+                                                },
+                                                {
                                                     "from": "get_id",
                                                     "to": "get_value",
                                                     "as": "def"
@@ -2791,6 +2812,11 @@
                                                     "as": "path"
                                                 },
                                                 {
+                                                    "from": "node_selected_distance",
+                                                    "to": "get_selected_distance",
+                                                    "as": "path"
+                                                },
+                                                {
                                                     "from": "script",
                                                     "to": "get_type",
                                                     "as": "default"
@@ -2799,6 +2825,11 @@
                                                     "from": "get_name",
                                                     "to": "node_text",
                                                     "as": "text"
+                                                },
+                                                {
+                                                    "from": "get_selected_distance",
+                                                    "to": "node_text_props",
+                                                    "as": "selected_distance"
                                                 },
                                                 {
                                                     "from": "node_text_props",
@@ -3222,6 +3253,15 @@
                         {
                             "id": "defs_props",
                             "value": {}
+                        },
+                        {
+                            "id": "link_selected_distance",
+                            "args": ["link"],
+                            "script": "return link.selected_distance < 2"
+                        },
+                        {
+                            "id": "filter_links",
+                            "type": "filter"
                         }
                     ],
                     "edges": [
@@ -3267,12 +3307,21 @@
                             "type": "concat"
                         },
                         {
-                            "from": "get_selected_edge",
-                            "to": "link_layout",
-                            "as": "selected_edge"
+                            "from": "get_links",
+                            "to": "link_selected_distance",
+                            "as": "link"
+                        },
+                        {
+                            "from": "link_selected_distance",
+                            "to": "filter_links",
+                            "as": "keep"
                         },
                         {
                             "from": "get_links",
+                            "to": "filter_links"
+                        },
+                        {
+                            "from": "filter_links",
                             "to": "link_layout",
                             "as": "link"
                         },
@@ -3610,6 +3659,21 @@
             "from": "get_display_graph",
             "to": "graph_to_simulation",
             "as": "display_graph"
+        },
+        {
+            "from": "get_display_graph_out",
+            "to": "calculate_levels",
+            "as": "selected"
+        },
+        {
+            "from": "get_display_graph",
+            "to": "calculate_levels",
+            "as": "display_graph"
+        },
+        {
+            "from": "calculate_levels",
+            "to": "graph_to_simulation",
+            "as": "levels"
         },
         {
             "from": "d3simulation",

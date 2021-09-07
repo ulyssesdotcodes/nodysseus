@@ -220,7 +220,7 @@ const test_graph = {"nodes":[{"id":"out","args":["value"]},{"id":"get_inputs","v
 //////////
 // TODO: convert these to nodes
 
-const calculateLevels = (graph, out) => {
+const calculateLevels = (graph, selected) => {
     const visited = new Set();
 
     const find_childest = n => {
@@ -231,12 +231,33 @@ const calculateLevels = (graph, out) => {
             return n;
         }
     }
-    const top = find_childest(out);
+    const top = find_childest(selected);
 
     const levels = new Map(bfs(graph, visited)(top, 0));
 
+    const parents = new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.to === n.id).map(e => e.from)]));
+    const children = new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.from === n.id).map(e => e.to)]));
+    const siblings = new Map(graph.nodes.map(n => [n.id, [...(new Set(parents.get(n.id)?.flatMap(p => children.get(p).filter(c => c !== n.id) ?? []).concat(children.get(n.id).flatMap(c => parents.get(c) ?? []))).values())]]))
+    const distance_from_selected = new Map();
+
+    const calculate_selected_graph = (s, i) => {
+        if(distance_from_selected.get(s) <= i) {
+            return;
+        }
+
+        distance_from_selected.set(s, i);
+        parents.get(s)?.forEach(p => { calculate_selected_graph(p, i + 1); });
+        children.get(s)?.forEach(c => { calculate_selected_graph(c, i + 1); });
+    }
+
+    calculate_selected_graph(selected, 0);
+
     return {
         level_by_node: levels,
+        parents,
+        children,
+        siblings,
+        distance_from_selected,
         min: Math.min(...levels.values()),
         max: Math.max(...levels.values()),
         nodes_by_level: [...levels.entries()].reduce((acc, [n, l]) => (acc[l] ? acc[l].push(n) : acc[l] = [n], acc), {})
@@ -286,31 +307,14 @@ const d3simulation = () => {
 }
 
 const updateSimulationNodes = (data) => {
+    const selected = data.selected[0];
     const levels = data.levels ?? calculateLevels(data.display_graph, data.display_graph_out);
+    const selected_level = levels.level_by_node.get(selected);
 
     if(typeof(data.links?.[0]?.source) === "string") {
         data.simulation.nodes(data.nodes);
         data.simulation.force('links').links(data.links);
     }
-
-    const parents = new Map(data.nodes.map(n => [n.node_id, data.display_graph.edges.filter(e => e.to === n.node_id).map(e => e.from)]));
-    const children = new Map(data.nodes.map(n => [n.node_id, data.display_graph.edges.filter(e => e.from === n.node_id).map(e => e.to)]));
-    const siblings = new Map(data.nodes.map(n => [n.node_id, [...(new Set(parents.get(n.node_id)?.flatMap(p => children.get(p).filter(c => c !== n.node_id) ?? []).concat(children.get(n.node_id).flatMap(c => parents.get(c) ?? []))).values())]]))
-    const distance_from_selected = new Map();
-    const selected = data.selected[0];
-    const selected_level = levels.level_by_node.get(selected);
-    const selected_graph = new Set([]);
-    const calculate_selected_graph = (s, i) => {
-        if(distance_from_selected.has(s)) {
-            return;
-        }
-
-        distance_from_selected.set(s, i);
-        parents.get(s)?.forEach(p => { calculate_selected_graph(p, i + 1); });
-        children.get(s)?.forEach(c => { calculate_selected_graph(c, i + 1); });
-    }
-
-    calculate_selected_graph(selected, 0);
 
     // data.simulation.force('link_siblings')
     //     .x((n) => (parents.has(n.node_id) && parents.get(n.node_id).x ? parents.get(n.node_id).x : window.innerWidth * 0.5) +
@@ -321,12 +325,15 @@ const updateSimulationNodes = (data) => {
 
     const sibling_x = new Map();
     // sibling_x.set(selected, window.innerWidth * 0.5);
+    const selected_x =  ((levels.nodes_by_level[selected_level].findIndex(l => l === selected) + 1) 
+                / (levels.nodes_by_level[selected_level].length + 1));
 
     data.nodes.forEach(n => {
         sibling_x.set(n.node_id, 
             (levels.level_by_node.has(n.node_id)
-            ?  ((levels.nodes_by_level[levels.level_by_node.get(n.node_id)].findIndex(l => l === n.node_id) + 1) 
-                / (levels.nodes_by_level[levels.level_by_node.get(n.node_id)].length + 1))
+            ?  (((levels.nodes_by_level[levels.level_by_node.get(n.node_id)].findIndex(l => l === n.node_id) + 1) 
+                / (levels.nodes_by_level[levels.level_by_node.get(n.node_id)].length + 1)) - selected_x) 
+                / (Math.min(3, levels.distance_from_selected.get(n.node_id)) * 0.25 + 1) + 0.5
             : 0.75)
                 * window.innerWidth
         );
@@ -370,7 +377,7 @@ const updateSimulationNodes = (data) => {
     data.simulation.force('link_siblings').x((n) => sibling_x.get(n.node_id));
 
     data.simulation.force('charge')
-        .strength(n => selected_graph.has(n.node_id) ? -1024 : -8)
+        .strength(n => levels.distance_from_selected.has(n.node_id) ? -1024 : -8)
 
     // data.simulation.force('selected').radius(n => 
     //     n.node_id === selected
@@ -387,7 +394,10 @@ const updateSimulationNodes = (data) => {
             selected === n.node_id
             ? 0.5 
             : levels.level_by_node.has(n.node_id) && selected_level !== undefined
-            ? .5 + .125 * (selected_level - levels.level_by_node.get(n.node_id))
+            ?  .5 + (selected_level === levels.level_by_node.get(n.node_id) 
+                ? 0 
+                : 0.25 * ((1 - Math.pow(0.5, Math.abs(selected_level - levels.level_by_node.get(n.node_id))))/(1 - 0.5)) // sum geometric series
+                ) * Math.sign(selected_level - levels.level_by_node.get(n.node_id))
             : .9
         ));
 
@@ -418,6 +428,8 @@ const graphToSimulationNodes = (data) => {
             script: n.script,
             value: n.value,
             name: n.name,
+            level: data.levels.level_by_node.get(n.id),
+            selected_distance: data.levels.distance_from_selected.get(n.id),
             x: current_data?.x ?? data.x ?? Math.floor(window.innerWidth * (Math.random() * .5 + .25)),
             y: current_data?.y ?? data.y ?? Math.floor(window.innerHeight * (Math.random() * .5 + .25))
         };
@@ -425,7 +437,13 @@ const graphToSimulationNodes = (data) => {
 
     const links = data.display_graph.edges
         .filter(e => e.to !== "log" && e.to !=="debug")
-        .map(e => ({source: e.from, target: e.to, as: e.as, type: e.type}));
+        .map(e => ({
+            source: e.from, 
+            target: e.to, 
+            as: e.as, 
+            type: e.type, 
+            selected_distance: Math.min(data.levels.distance_from_selected.get(e.to), data.levels.distance_from_selected.get(e.from))
+        }));
 
     return {
         nodes,
@@ -441,8 +459,9 @@ const d3subscription = simulation => dispatch => {
             simulation.tick();
             dispatch(s => ({ 
                 ...s, 
-                nodes: simulation.nodes().map(n => ({node_id: n.node_id, x: Math.floor(n.x), y: Math.floor(n.y), type: n.type, value: n.value, nodes: n.nodes, edges: n.edges, script: n.script, name: n.name})), 
+                nodes: simulation.nodes().map(n => ({...n, x: Math.floor(n.x), y: Math.floor(n.y)})), 
                 links: simulation.force('links').links().map(l => ({
+                    ...l,
                     as: l.as,
                     type: l.type,
                     source: ({
