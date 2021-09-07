@@ -908,7 +908,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 'v' && editing === false)){ return [] } document.querySelector('#edit_value input').focus(); return 'value';"
+                    "script": "if(!(key === 'v' && editing === false)){ return [] } document.querySelector('#edit_value .input').focus(); return 'value';"
                 },
                 {
                     "id": "t",
@@ -920,7 +920,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "document.querySelector('#edit_value input').focus(); return 'type';"
+                    "script": "document.querySelector('#edit_value .input').focus(); return 'type';"
                 },
                 {
                     "id": "shift_t",
@@ -944,7 +944,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 's' && ctrlKey === false && editing === false)){ return [] } document.querySelector('#edit_value input').focus(); return 'script';"
+                    "script": "if(!(key === 's' && ctrlKey === false && editing === false)){ return [] } document.querySelector('#edit_value .input').focus(); return 'script';"
                 },
                 {
                     "id": "a",
@@ -956,7 +956,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 'a' && editing === false)){ return [] } document.querySelector('#edit_value input').focus(); return selected_edge ? 'as' : 'args';"
+                    "script": "if(!(key === 'a' && editing === false)){ return [] } document.querySelector('#edit_value .input').focus(); return selected_edge ? 'as' : 'args';"
                 },
                 {
                     "id": "n",
@@ -967,7 +967,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 'n' && editing === false)){ return [] } document.querySelector('#edit_value input').focus(); return 'name';"
+                    "script": "if(!(key === 'n' && editing === false)){ return [] } document.querySelector('#edit_value .input').focus(); return 'name';"
                 },
                 {
                     "id": "o",
@@ -1187,8 +1187,8 @@
                 },
                 {
                     "id": "new_state_cases",
-                    "args": ["key", "pending_edges", "state", "shiftKey"],
-                    "script": "const graph_sim = true; /*(!state.editing && state.search === false && (key === 'enter' || key.toLowerCase() === 'o' || key === 'x' || (key === 't' && shiftKey) || (!!pending_edges.edge_to && !!pending_edges.edge_from))) || key === 'escape'*/; return [graph_sim && 'graph_sim', 'state']"
+                    "args": ["key", "pending_edges", "state", "shiftKey", "selected"],
+                    "script": "const graph_sim = (!state.editing && state.search === false && (key === 'enter' || key.toLowerCase() === 'o' || key === 'x' || (key === 't' && shiftKey) || (!!pending_edges.edge_to && !!pending_edges.edge_from))) || key === 'escape'; return [graph_sim && 'graph_sim', 'state']"
                 },
                 {
                     "id": "new_state",
@@ -1217,7 +1217,7 @@
                         "save",
                         "update"
                     ],
-                    "script": "return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: {nodes: data.display_graph.nodes.concat([]), edges: data.display_graph.edges.concat([])}, out: data.display_graph_out}], [() => save(), {}], update && [data.update_sim_effect, data]]]"
+                    "script": "return [[data, [(_, payload) => { try { lib.no.executeGraph(payload); } catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: {nodes: data.display_graph.nodes.concat([]), edges: data.display_graph.edges.concat([])}, out: data.display_graph_out}], [() => save(), {}], update && [data.update_sim_effect, data]]]"
                 }
             ],
             "edges": [
@@ -1599,6 +1599,11 @@
                     "from": "pending_edges",
                     "to": "new_state_cases",
                     "as": "pending_edges"
+                },
+                {
+                    "from": "selected",
+                    "to": "new_state_cases",
+                    "as": "selected"
                 },
                 {
                     "from": "state",
@@ -2401,7 +2406,7 @@
                         },
                         {
                             "id": "edit_text_input_dom_type",
-                            "value": "input"
+                            "value": "textarea"
                         },
                         {
                             "id": "edit_text_input_props",
@@ -2412,7 +2417,7 @@
                                 "editing",
                                 "edit_value"
                             ],
-                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); return {type: 'text', value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), oninput: (s, payload) => ({...s, edit_value: payload.target.value})}"
+                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); return {class: 'input', value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), oninput: (s, payload) => ({...s, edit_value: payload.target.value})}"
                         },
                         {
                             "id": "edit_text_label",
@@ -3044,9 +3049,10 @@
                                         "source",
                                         "target",
                                         "lerp_length",
-                                        "selected_distance"
+                                        "selected_distance",
+                                        "selected_edge"
                                     ],
-                                    "script": "const length_x = Math.abs(source.x - target.x); const length_y = Math.abs(source.y - target.y); const length = Math.sqrt(length_x * length_x + length_y * length_y); return {selected_distance, source: {...source, x: source.x + (target.x - source.x) * lerp_length / length, y: source.y + (target.y - source.y) * lerp_length / length}, target: {...target, x: source.x + (target.x - source.x) * (1 - (lerp_length / length)), y: source.y + (target.y - source.y) * (1 - (lerp_length / length))}}"
+                                    "script": "const length_x = Math.abs(source.x - target.x); const length_y = Math.abs(source.y - target.y); const length = Math.sqrt(length_x * length_x + length_y * length_y); return {selected_distance, selected_edge, source: {...source, x: source.x + (target.x - source.x) * lerp_length / length, y: source.y + (target.y - source.y) * lerp_length / length}, target: {...target, x: source.x + (target.x - source.x) * (1 - (lerp_length / length)), y: source.y + (target.y - source.y) * (1 - (lerp_length / length))}}"
                                 },
                                 {
                                     "id": "line_props",
@@ -3260,7 +3266,7 @@
                         {
                             "id": "link_selected_distance",
                             "args": ["link"],
-                            "script": "return true"
+                            "script": "return link.selected_distance ? link.selected_distance < 5 : 10"
                         },
                         {
                             "id": "filter_links",
@@ -3313,6 +3319,11 @@
                             "from": "get_links",
                             "to": "link_selected_distance",
                             "as": "link"
+                        },
+                        {
+                            "from": "get_selected_edge",
+                            "to": "filter_links",
+                            "as": "selected_edge"
                         },
                         {
                             "from": "link_selected_distance",

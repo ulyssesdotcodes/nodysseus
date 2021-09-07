@@ -940,7 +940,7 @@
     					"editing",
     					"nodes"
     				],
-    				script: "if(!(key === 'v' && editing === false)){ return [] } document.querySelector('#edit_value input').focus(); return 'value';"
+    				script: "if(!(key === 'v' && editing === false)){ return [] } document.querySelector('#edit_value .input').focus(); return 'value';"
     			},
     			{
     				id: "t",
@@ -952,7 +952,7 @@
     					"editing",
     					"nodes"
     				],
-    				script: "document.querySelector('#edit_value input').focus(); return 'type';"
+    				script: "document.querySelector('#edit_value .input').focus(); return 'type';"
     			},
     			{
     				id: "shift_t",
@@ -976,7 +976,7 @@
     					"editing",
     					"nodes"
     				],
-    				script: "if(!(key === 's' && ctrlKey === false && editing === false)){ return [] } document.querySelector('#edit_value input').focus(); return 'script';"
+    				script: "if(!(key === 's' && ctrlKey === false && editing === false)){ return [] } document.querySelector('#edit_value .input').focus(); return 'script';"
     			},
     			{
     				id: "a",
@@ -988,7 +988,7 @@
     					"editing",
     					"nodes"
     				],
-    				script: "if(!(key === 'a' && editing === false)){ return [] } document.querySelector('#edit_value input').focus(); return selected_edge ? 'as' : 'args';"
+    				script: "if(!(key === 'a' && editing === false)){ return [] } document.querySelector('#edit_value .input').focus(); return selected_edge ? 'as' : 'args';"
     			},
     			{
     				id: "n",
@@ -999,7 +999,7 @@
     					"editing",
     					"nodes"
     				],
-    				script: "if(!(key === 'n' && editing === false)){ return [] } document.querySelector('#edit_value input').focus(); return 'name';"
+    				script: "if(!(key === 'n' && editing === false)){ return [] } document.querySelector('#edit_value .input').focus(); return 'name';"
     			},
     			{
     				id: "o",
@@ -1278,9 +1278,10 @@
     					"key",
     					"pending_edges",
     					"state",
-    					"shiftKey"
+    					"shiftKey",
+    					"selected"
     				],
-    				script: "const graph_sim = true; /*(!state.editing && state.search === false && (key === 'enter' || key.toLowerCase() === 'o' || key === 'x' || (key === 't' && shiftKey) || (!!pending_edges.edge_to && !!pending_edges.edge_from))) || key === 'escape'*/; return [graph_sim && 'graph_sim', 'state']"
+    				script: "const graph_sim = (!state.editing && state.search === false && (key === 'enter' || key.toLowerCase() === 'o' || key === 'x' || (key === 't' && shiftKey) || (!!pending_edges.edge_to && !!pending_edges.edge_from))) || key === 'escape'; return [graph_sim && 'graph_sim', 'state']"
     			},
     			{
     				id: "new_state",
@@ -1317,7 +1318,7 @@
     					"save",
     					"update"
     				],
-    				script: "return [[data, [(_, payload) => { try { lib.no.executeGraph(payload)} catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: {nodes: data.display_graph.nodes.concat([]), edges: data.display_graph.edges.concat([])}, out: data.display_graph_out}], [() => save(), {}], update && [data.update_sim_effect, data]]]"
+    				script: "return [[data, [(_, payload) => { try { lib.no.executeGraph(payload); } catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: {nodes: data.display_graph.nodes.concat([]), edges: data.display_graph.edges.concat([])}, out: data.display_graph_out}], [() => save(), {}], update && [data.update_sim_effect, data]]]"
     			}
     		],
     		edges: [
@@ -1699,6 +1700,11 @@
     				from: "pending_edges",
     				to: "new_state_cases",
     				as: "pending_edges"
+    			},
+    			{
+    				from: "selected",
+    				to: "new_state_cases",
+    				as: "selected"
     			},
     			{
     				from: "state",
@@ -2507,7 +2513,7 @@
     					},
     					{
     						id: "edit_text_input_dom_type",
-    						value: "input"
+    						value: "textarea"
     					},
     					{
     						id: "edit_text_input_props",
@@ -2518,7 +2524,7 @@
     							"editing",
     							"edit_value"
     						],
-    						script: "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); return {type: 'text', value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), oninput: (s, payload) => ({...s, edit_value: payload.target.value})}"
+    						script: "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); return {class: 'input', value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), oninput: (s, payload) => ({...s, edit_value: payload.target.value})}"
     					},
     					{
     						id: "edit_text_label",
@@ -3172,9 +3178,10 @@
     									"source",
     									"target",
     									"lerp_length",
-    									"selected_distance"
+    									"selected_distance",
+    									"selected_edge"
     								],
-    								script: "const length_x = Math.abs(source.x - target.x); const length_y = Math.abs(source.y - target.y); const length = Math.sqrt(length_x * length_x + length_y * length_y); return {selected_distance, source: {...source, x: source.x + (target.x - source.x) * lerp_length / length, y: source.y + (target.y - source.y) * lerp_length / length}, target: {...target, x: source.x + (target.x - source.x) * (1 - (lerp_length / length)), y: source.y + (target.y - source.y) * (1 - (lerp_length / length))}}"
+    								script: "const length_x = Math.abs(source.x - target.x); const length_y = Math.abs(source.y - target.y); const length = Math.sqrt(length_x * length_x + length_y * length_y); return {selected_distance, selected_edge, source: {...source, x: source.x + (target.x - source.x) * lerp_length / length, y: source.y + (target.y - source.y) * lerp_length / length}, target: {...target, x: source.x + (target.x - source.x) * (1 - (lerp_length / length)), y: source.y + (target.y - source.y) * (1 - (lerp_length / length))}}"
     							},
     							{
     								id: "line_props",
@@ -3392,7 +3399,7 @@
     						args: [
     							"link"
     						],
-    						script: "return true"
+    						script: "return link.selected_distance ? link.selected_distance < 5 : 10"
     					},
     					{
     						id: "filter_links",
@@ -3445,6 +3452,11 @@
     						from: "get_links",
     						to: "link_selected_distance",
     						as: "link"
+    					},
+    					{
+    						from: "get_selected_edge",
+    						to: "filter_links",
+    						as: "selected_edge"
     					},
     					{
     						from: "link_selected_distance",
@@ -24560,7 +24572,6 @@
     }
 
     const executeGraph = ({state, graph, out}) => {
-        graph = contract_all(graph);
 
         let state_length = 0;
         let active_nodes_length = 0;
@@ -24772,7 +24783,6 @@
     // TODO: convert these to nodes
 
     const calculateLevels = (graph, selected) => {
-        const visited = new Set();
 
         const find_childest = n => {
             const e = graph.edges.find(e => e.from === n);
@@ -24784,11 +24794,12 @@
         };
         const top = find_childest(selected);
 
-        const levels = new Map(bfs(graph, visited)(top, 0));
+        const levels = new Map();
+        bfs(graph, levels)(top, 0);
 
         const parents = new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.to === n.id).map(e => e.from)]));
         const children = new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.from === n.id).map(e => e.to)]));
-        const siblings = new Map(graph.nodes.map(n => [n.id, [...(new Set(parents.get(n.id)?.flatMap(p => children.get(p).filter(c => c !== n.id) ?? []).concat(children.get(n.id).flatMap(c => parents.get(c) ?? []))).values())]]));
+        const siblings = new Map(graph.nodes.map(n => [n.id, [...(new Set(parents.get(n.id)?.flatMap(p => children.get(p)?.filter(c => c !== n.id) ?? []).concat(children.get(n.id)?.flatMap(c => parents.get(c) ?? []) ?? [])).values())]]));
         const distance_from_selected = new Map();
 
         const calculate_selected_graph = (s, i) => {
@@ -24816,26 +24827,19 @@
     };
 
     const bfs = (graph, visited) => (id, level) => {
-        const output = [[id, level]];
-        visited.add(id);
+        if (visited.has(id) && visited.get(id) >= level) {
+            return;
+        }
+
+        visited.set(id, level);
 
         const next = bfs(graph, visited);
 
         for(const e of graph.edges) {
-            if(e.to === id && !visited.has(e.from)) {
-                const next_results = next(e.from, level + 1);
-                for(const next_result of next_results) {
-                    output.push(next_result);
-                }
-            } else if(e.from === id && !visited.has(e.to)) {
-                const next_results = next(e.to, level - 1);
-                for(const next_result of next_results) {
-                    output.push(next_result);
-                }
+            if(e.to === id) {
+                next(e.from, level + 1);
             }
         }
-
-        return output;
     };
 
     const d3simulation = () => {
@@ -25093,12 +25097,15 @@
     const contract_node = (data, keep_expanded=false) => {
         if(data.node_id.endsWith('/out') || data.name.endsWith("/out")) {
             const node_id = data.node_id.endsWith('/out') ? data.node_id.substring(0, data.node_id.indexOf("/out")) : data.node_id;
-            const name = data.node_id.endsWith('/out') ? node_id : data.name.substring(0, data.name.indexOf("/out"));
+            const name = data.name?.substring(0, data.name.indexOf("/out")) ?? node_id;
 
             const inside_nodes = [Object.assign({}, data.display_graph.nodes.find(n => n.id === data.node_id))];
+            const inside_node_map = new Map();
+            inside_node_map.set(inside_nodes[0].id, inside_nodes[0]);
             if(!inside_nodes[0].id.endsWith('/out')) {
                 inside_nodes[0].id += "/out";
             }
+            inside_node_map.set(inside_nodes[0].id, inside_nodes[0]);
             const inside_edges = [];
 
             const bfs_parents = n => data.display_graph.edges.filter(e => e.to === n).forEach(e => {
@@ -25109,22 +25116,15 @@
                     return;
                 }
 
-                const new_edge = Object.assign({}, e);
-                inside_edges.push(new_edge);
+                inside_node_map.set(inside_node.id, inside_node);
+
+                inside_edges.push(e);
                 if(!old_node) {
                     inside_nodes.push(inside_node);
                 }
 
                 if(!(e.from === (node_id + "/in") || inside_node.name === (name + "/in"))) {
                     bfs_parents(e.from);
-                }
-
-                if (inside_node.name === (name + "/in") && !inside_node.id.endsWith('/in')) {
-                    new_edge.from = "in";
-                }
-
-                if(e.to === data.node_id && !e.from.startsWith(name)) {
-                    new_edge.to = 'out';
                 }
             });
 
@@ -25134,13 +25134,14 @@
 
             if(in_node) {
                 in_node.id = node_id + "/in";
+                inside_node_map.set(in_node.id, in_node);
             }
 
 
             const new_display_graph = {
                     nodes: data.display_graph.nodes
                         .filter(n => n.id !== node_id)
-                        .filter(n => keep_expanded || !inside_nodes.find(inn => inn.id === n.id))
+                        .filter(n => keep_expanded || !inside_node_map.has(n.id))
                         .concat([{
                             id: node_id,
                             name,
@@ -25149,12 +25150,20 @@
                                 id: n.id.startsWith(node_id + "/") ? n.id.substring(node_id.length + 1) : n.id
                             })),
                             edges: inside_edges.map(e => ({...e, 
-                                from: e.from.startsWith(node_id + "/") ? e.from.substring(node_id.length + 1) : e.from, 
-                                to: e.to.startsWith(node_id + "/") ? e.to.substring(node_id.length + 1) : e.to
+                                from: e.from.startsWith(node_id + "/") 
+                                ? e.from.substring(node_id.length + 1) 
+                                : e.from === in_node_id
+                                ? "in"
+                                : e.from, 
+                                to: e.to.startsWith(node_id + "/") 
+                                    ? e.to.substring(node_id.length + 1) 
+                                    : e.to === node_id
+                                    ? "out"
+                                    : e.to
                             }))
                         }]),
                     edges: data.display_graph.edges
-                        .filter(e => keep_expanded || !inside_edges.find(ie => ie.from === e.from && ie.to === e.to))
+                        .filter(e => keep_expanded || !(inside_node_map.has(e.from) && inside_node_map.has(e.to)))
                         .map(e => 
                             e.from === data.node_id ? {...e, from: node_id} 
                             : e.to === in_node_id ? {...e, to: node_id} 

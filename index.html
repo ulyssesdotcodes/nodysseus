@@ -50,6 +50,16 @@
       fill: red;
     }
 
+    #result {
+      position: fixed;
+      bottom: 100px;
+      left: 100px;
+    }
+
+    #result.error {
+      color: red;
+    }
+
   </style>
   <style id="content_style">
     #content {
@@ -62,17 +72,8 @@
   <!-- <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> -->
 </head>
 <body>
-  <!-- <div id="content"> -->
-    <div id="node-editor">
-      <!-- <div class="tooltip"></div> -->
-      <!-- <div id="modes">
-        <div class="mode navigation"><span class="material-icons">pan_tool</span></div>
-        <div class="mode operation"><span class="material-icons">build</span></div>
-      </div>
-      <div id="graph"></div>
-    </div> -->
-    <div id="text-editor"></div>
-  </div>
+    <div id="node-editor"></div>
+    <div id="result"></div>
   <script src="./nodysseus.bundle.js"></script>
 </body>
 </html>

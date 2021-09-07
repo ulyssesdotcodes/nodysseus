@@ -6,7 +6,7 @@ import { selectSyntaxLeft } from "@codemirror/commands";
 import Fuse from "fuse.js";
 
 const executeGraph = ({state, graph, out}) => {
-    graph = contract_all(graph);
+    // graph = contract_all(graph);
 
     let state_hash = "";
     let active_nodes_hash = "";
@@ -221,7 +221,6 @@ const test_graph = {"nodes":[{"id":"out","args":["value"]},{"id":"get_inputs","v
 // TODO: convert these to nodes
 
 const calculateLevels = (graph, selected) => {
-    const visited = new Set();
 
     const find_childest = n => {
         const e = graph.edges.find(e => e.from === n);
@@ -233,11 +232,12 @@ const calculateLevels = (graph, selected) => {
     }
     const top = find_childest(selected);
 
-    const levels = new Map(bfs(graph, visited)(top, 0));
+    const levels = new Map();
+    bfs(graph, levels)(top, 0);
 
     const parents = new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.to === n.id).map(e => e.from)]));
     const children = new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.from === n.id).map(e => e.to)]));
-    const siblings = new Map(graph.nodes.map(n => [n.id, [...(new Set(parents.get(n.id)?.flatMap(p => children.get(p).filter(c => c !== n.id) ?? []).concat(children.get(n.id).flatMap(c => parents.get(c) ?? []))).values())]]))
+    const siblings = new Map(graph.nodes.map(n => [n.id, [...(new Set(parents.get(n.id)?.flatMap(p => children.get(p)?.filter(c => c !== n.id) ?? []).concat(children.get(n.id)?.flatMap(c => parents.get(c) ?? []) ?? [])).values())]]))
     const distance_from_selected = new Map();
 
     const calculate_selected_graph = (s, i) => {
@@ -265,26 +265,19 @@ const calculateLevels = (graph, selected) => {
 }
 
 const bfs = (graph, visited) => (id, level) => {
-    const output = [[id, level]];
-    visited.add(id);
+    if (visited.has(id) && visited.get(id) >= level) {
+        return;
+    }
+
+    visited.set(id, level);
 
     const next = bfs(graph, visited);
 
     for(const e of graph.edges) {
-        if(e.to === id && !visited.has(e.from)) {
-            const next_results = next(e.from, level + 1);
-            for(const next_result of next_results) {
-                output.push(next_result);
-            }
-        } else if(e.from === id && !visited.has(e.to)) {
-            const next_results = next(e.to, level - 1);
-            for(const next_result of next_results) {
-                output.push(next_result);
-            }
+        if(e.to === id) {
+            next(e.from, level + 1);
         }
     }
-
-    return output;
 }
 
 const d3simulation = () => {
@@ -542,12 +535,15 @@ const contract_all = (graph) => {
 const contract_node = (data, keep_expanded=false) => {
     if(data.node_id.endsWith('/out') || data.name.endsWith("/out")) {
         const node_id = data.node_id.endsWith('/out') ? data.node_id.substring(0, data.node_id.indexOf("/out")) : data.node_id;
-        const name = data.node_id.endsWith('/out') ? node_id : data.name.substring(0, data.name.indexOf("/out"))
+        const name = data.name?.substring(0, data.name.indexOf("/out")) ?? node_id;
 
         const inside_nodes = [Object.assign({}, data.display_graph.nodes.find(n => n.id === data.node_id))];
+        const inside_node_map = new Map();
+        inside_node_map.set(inside_nodes[0].id, inside_nodes[0]);
         if(!inside_nodes[0].id.endsWith('/out')) {
             inside_nodes[0].id += "/out"
         }
+        inside_node_map.set(inside_nodes[0].id, inside_nodes[0]);
         const inside_edges = [];
 
         const bfs_parents = n => data.display_graph.edges.filter(e => e.to === n).forEach(e => {
@@ -558,22 +554,15 @@ const contract_node = (data, keep_expanded=false) => {
                 return;
             }
 
-            const new_edge = Object.assign({}, e);
-            inside_edges.push(new_edge);
+            inside_node_map.set(inside_node.id, inside_node);
+
+            inside_edges.push(e);
             if(!old_node) {
                 inside_nodes.push(inside_node);
             }
 
             if(!(e.from === (node_id + "/in") || inside_node.name === (name + "/in"))) {
                 bfs_parents(e.from);
-            }
-
-            if (inside_node.name === (name + "/in") && !inside_node.id.endsWith('/in')) {
-                new_edge.from = "in";
-            }
-
-            if(e.to === data.node_id && !e.from.startsWith(name)) {
-                new_edge.to = 'out';
             }
         });
 
@@ -583,13 +572,14 @@ const contract_node = (data, keep_expanded=false) => {
 
         if(in_node) {
             in_node.id = node_id + "/in";
+            inside_node_map.set(in_node.id, in_node);
         }
 
 
         const new_display_graph = {
                 nodes: data.display_graph.nodes
                     .filter(n => n.id !== node_id)
-                    .filter(n => keep_expanded || !inside_nodes.find(inn => inn.id === n.id))
+                    .filter(n => keep_expanded || !inside_node_map.has(n.id))
                     .concat([{
                         id: node_id,
                         name,
@@ -598,12 +588,20 @@ const contract_node = (data, keep_expanded=false) => {
                             id: n.id.startsWith(node_id + "/") ? n.id.substring(node_id.length + 1) : n.id
                         })),
                         edges: inside_edges.map(e => ({...e, 
-                            from: e.from.startsWith(node_id + "/") ? e.from.substring(node_id.length + 1) : e.from, 
-                            to: e.to.startsWith(node_id + "/") ? e.to.substring(node_id.length + 1) : e.to
+                            from: e.from.startsWith(node_id + "/") 
+                            ? e.from.substring(node_id.length + 1) 
+                            : e.from === in_node_id
+                            ? "in"
+                            : e.from, 
+                            to: e.to.startsWith(node_id + "/") 
+                                ? e.to.substring(node_id.length + 1) 
+                                : e.to === node_id
+                                ? "out"
+                                : e.to
                         }))
                     }]),
                 edges: data.display_graph.edges
-                    .filter(e => keep_expanded || !inside_edges.find(ie => ie.from === e.from && ie.to === e.to))
+                    .filter(e => keep_expanded || !(inside_node_map.has(e.from) && inside_node_map.has(e.to)))
                     .map(e => 
                         e.from === data.node_id ? {...e, from: node_id} 
                         : e.to === in_node_id ? {...e, to: node_id} 
