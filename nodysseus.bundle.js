@@ -3114,9 +3114,10 @@
     								args: [
     									"source",
     									"target",
-    									"line_position"
+    									"line_position",
+    									"selected_distance"
     								],
-    								script: "return ({x: line_position * (target.x - source.x) + source.x + 16, y: line_position * (target.y - source.y) + source.y })"
+    								script: "return ({x: line_position * (target.x - source.x) + source.x + 16, y: line_position * (target.y - source.y) + source.y, opacity: (1 - Math.min(selected_distance, 3) * 0.25) })"
     							},
     							{
     								id: "edge_info_line_position",
@@ -3170,18 +3171,20 @@
     								args: [
     									"source",
     									"target",
-    									"lerp_length"
+    									"lerp_length",
+    									"selected_distance"
     								],
-    								script: "const length_x = Math.abs(source.x - target.x); const length_y = Math.abs(source.y - target.y); const length = Math.sqrt(length_x * length_x + length_y * length_y); return {source: {...source, x: source.x + (target.x - source.x) * lerp_length / length, y: source.y + (target.y - source.y) * lerp_length / length}, target: {...target, x: source.x + (target.x - source.x) * (1 - (lerp_length / length)), y: source.y + (target.y - source.y) * (1 - (lerp_length / length))}}"
+    								script: "const length_x = Math.abs(source.x - target.x); const length_y = Math.abs(source.y - target.y); const length = Math.sqrt(length_x * length_x + length_y * length_y); return {selected_distance, source: {...source, x: source.x + (target.x - source.x) * lerp_length / length, y: source.y + (target.y - source.y) * lerp_length / length}, target: {...target, x: source.x + (target.x - source.x) * (1 - (lerp_length / length)), y: source.y + (target.y - source.y) * (1 - (lerp_length / length))}}"
     							},
     							{
     								id: "line_props",
     								args: [
     									"source",
     									"target",
-    									"selected_edge"
+    									"selected_edge",
+    									"selected_distance"
     								],
-    								script: "return ({x1: Math.floor(source.x), y1: Math.floor(source.y), x2: Math.floor(target.x), y2: Math.floor(target.y), stroke: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to ? 'red' : 'black', 'marker-end': 'url(#arrow)'})"
+    								script: "return ({x1: Math.floor(source.x), y1: Math.floor(source.y), x2: Math.floor(target.x), y2: Math.floor(target.y), stroke: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to ? 'red' : 'black', 'marker-end': 'url(#arrow)', opacity: .1 + .9 * (1 - Math.min(selected_distance, 3) * 0.333)})"
     							},
     							{
     								id: "line_dom_type",
@@ -3389,7 +3392,7 @@
     						args: [
     							"link"
     						],
-    						script: "return link.selected_distance < 2"
+    						script: "return true"
     					},
     					{
     						id: "filter_links",
