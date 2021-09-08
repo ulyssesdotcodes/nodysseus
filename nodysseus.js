@@ -6,7 +6,7 @@ import { selectSyntaxLeft } from "@codemirror/commands";
 import Fuse from "fuse.js";
 
 const executeGraph = ({state, graph, out}) => {
-    // graph = contract_all(graph);
+    graph = contract_all(graph);
 
     let state_hash = "";
     let active_nodes_hash = "";
@@ -183,26 +183,30 @@ const executeGraph = ({state, graph, out}) => {
                             }
                         }
                     } else if(node_type.script) {
-                        const fn = new Function(
-                            'lib', 
-                            'node', 
-                            ...node_type.args, 
-                            node_type.script
-                            );
-                        const state_datas = []
-                        const args = [lib, node];
-                        let fn_args = [];
-                        for(let i = 0; i < datas.length; i++) {
-                            fn_args = args.slice();
-                            node_type.args.forEach(arg => {
-                                fn_args.push(datas[i][arg]);
-                            });
+                        try {
+                            const fn = new Function(
+                                'lib', 
+                                'node', 
+                                ...node_type.args, 
+                                node_type.script
+                                );
+                            const state_datas = []
+                            const args = [lib, node];
+                            let fn_args = [];
+                            for(let i = 0; i < datas.length; i++) {
+                                fn_args = args.slice();
+                                node_type.args.forEach(arg => {
+                                    fn_args.push(datas[i][arg]);
+                                });
 
-                            const results = fn.apply(null, fn_args);
-                            Array.isArray(results) ? results.forEach(res => state_datas.push(res)) : state_datas.push(results);
+                                const results = fn.apply(null, fn_args);
+                                Array.isArray(results) ? results.forEach(res => state_datas.push(res)) : state_datas.push(results);
+                            }
+                            state.set(node.id, state_datas);
+                            active_nodes.delete(node.id);
+                        } catch (e) {
+                            throw new AggregateError([Error(`Error in node ${node_type.name ?? node_type.id}`), e]);
                         }
-                        state.set(node.id, state_datas);
-                        active_nodes.delete(node.id);
                     } else {
                         state.set(node.id, datas);
                         active_nodes.delete(node.id);
@@ -215,7 +219,544 @@ const executeGraph = ({state, graph, out}) => {
     return state.get(out);
 };
 
-const test_graph = {"nodes":[{"id":"out","args":["value"]},{"id":"get_inputs","value":["target","path"]},{"id":"get_script","value":"return target[path]"},{"id":"lvfabiz9b","name":"css","args":["el","styles"],"script":"console.log(el); el.innerHTML = styles;"},{"id":"2jiztgmvr","name":"css_el","args":["get_el","create_el"],"type":"switch"},{"id":"vpq73g9qg","name":"get_el","script":"return document.querySelector('.css-styles')","args":[]},{"id":"zruw6k6l9","name":"el classname","args":["el"],"script":"el.className = \"css-styles\"; document.body.appendChild(el); return el;"},{"id":"x8tdpkazf","name":"css el inputs","script":"return document.querySelector(\".css-styles\") ? [\"get_el\"] : [\"create_el\"];","args":[]},{"id":"dfbmreaek","name":"create el","script":"return document.createElement(\"style\");","args":[]},{"id":"bacr589n7","name":"styles","script":"return rules?.join(\"\\n\");","args":["rules"]},{"id":"filter","nodes":[{"id":"in"},{"id":"out","args":["keep","data"],"script":"return keep ? [data] : []"}],"edges":[{"from":"in","to":"out","order":1},{"from":"in","to":"out","as":"data","order":0}]},{"id":"delete","nodes":[{"id":"in"},{"id":"out","args":["data","path"],"script":"const new_data = Object.assign({}, data); delete new_data[path]; return new_data;"}],"edges":[{"from":"in","to":"out","order":1},{"from":"in","to":"out","as":"data","order":0}]},{"id":"default","nodes":[{"id":"in"},{"id":"out","args":["data","default_value"],"script":"return data.length > 0 ? data : default_value"}],"edges":[{"from":"in","to":"out"}]},{"id":"switch","nodes":[{"id":"in"},{"id":"out","args":["data","input"],"script":"return data[Object.getOwnPropertyNames(data)[0]];"}],"edges":[{"from":"in","to":"out","as":"data"}]},{"id":"trigger","nodes":[{"id":"in"},{"id":"trigger","args":["trigger"],"script":"return trigger ? ['in'] : []"},{"id":"out","args":["data"],"script":"return data?.data ?? []"}],"edges":[{"from":"in","to":"out","as":"data"},{"from":"in","to":"trigger"},{"from":"trigger","to":"out","type":"inputs"}]},{"id":"execute_graph","nodes":[{"id":"in","value":null},{"id":"out","args":["in_node","out_node","graph"],"script":"return (...args) => (lib.no.executeGraph({state: new Map([[in_node, args]]), graph, out: out_node }))"}],"edges":[{"from":"in","to":"out"}]},{"id":"get","nodes":[{"id":"in","value":null},{"id":"fill_default","args":["input"],"script":"return input.default ?? null"},{"id":"out","args":["target","path","def"],"script":"return [lib._.get(target, path) ?? def]"}],"edges":[{"from":"in","to":"out"},{"from":"in","to":"fill_default","as":"input"},{"from":"fill_default","to":"out","as":"def"}]},{"id":"1a2qt246c","name":"css obj"},{"id":"ie18qgd52","name":"entries","script":"return Object.entries(input)","args":["input"]},{"id":"2ll8r3sx5","name":"init","args":["entry"],"script":"return entry[0] + \"{\""},{"id":"mec78sn2n","name":"compile","args":["init","attrs","end"],"script":"return [init].concat(attrs).concat([end])"},{"id":"mrs40dwx8","name":"end","value":"}"},{"id":"h28e9j2fo","name":"attrs","args":["entry"],"script":"return [Object.entries(entry[1]).map(([k, v]) => `${k}: ${v};`)];"},{"id":"vr865hcv0","name":"body"},{"id":"kvq1q0k30","name":"light grey","value":"#fff"},{"id":"qpao2izqz","name":"circle"},{"id":"u7sy8fwro","name":"black","value":"black"},{"id":"56j09nio2","name":"stroke width","value":1},{"id":"1t96plqko","name":"text"},{"id":"p5b9np03o","name":"font family","value":"consolas"}],"edges":[{"from":"lvfabiz9b","to":"out"},{"from":"2jiztgmvr","to":"lvfabiz9b","as":"el"},{"from":"vpq73g9qg","to":"2jiztgmvr","as":"get_el"},{"from":"zruw6k6l9","to":"2jiztgmvr","as":"create_el"},{"from":"x8tdpkazf","to":"2jiztgmvr","type":"inputs"},{"from":"dfbmreaek","to":"zruw6k6l9","as":"el"},{"from":"bacr589n7","to":"lvfabiz9b","as":"styles"},{"from":"1a2qt246c","to":"ie18qgd52","as":"input"},{"from":"ie18qgd52","to":"2ll8r3sx5","as":"entry"},{"from":"2ll8r3sx5","to":"mec78sn2n","as":"init","name":"end"},{"from":"mrs40dwx8","to":"mec78sn2n","as":"end"},{"from":"mec78sn2n","to":"bacr589n7","type":"concat","as":"rules"},{"from":"h28e9j2fo","to":"mec78sn2n","as":"attrs"},{"from":"ie18qgd52","to":"h28e9j2fo","as":"entry"},{"from":"vr865hcv0","to":"1a2qt246c","as":"body","name":"light-grey","value":"#ccc"},{"from":"kvq1q0k30","to":"vr865hcv0","as":"background-color"},{"from":"qpao2izqz","to":"1a2qt246c","as":"circle"},{"from":"u7sy8fwro","to":"qpao2izqz","as":"stroke"},{"from":"56j09nio2","to":"qpao2izqz","as":"stroke-width"},{"from":"1t96plqko","to":"1a2qt246c","as":"text"},{"from":"p5b9np03o","to":"1t96plqko","as":"font-family"}]}
+
+const test_graph = {
+    "nodes": [
+        {
+            "id": "out",
+            "args": [
+                "value"
+            ]
+        },
+        {
+            "id": "get_inputs",
+            "value": [
+                "target",
+                "path"
+            ]
+        },
+        {
+            "id": "get_script",
+            "value": "return target[path]"
+        },
+        {
+            "id": "lvfabiz9b",
+            "name": "css",
+            "args": [
+                "el",
+                "styles"
+            ],
+            "script": "console.log(el); \nel.innerHTML = styles;"
+        },
+        {
+            "id": "2jiztgmvr",
+            "name": "css_el",
+            "args": [
+                "get_el",
+                "create_el"
+            ],
+            "type": "switch"
+        },
+        {
+            "id": "vpq73g9qg",
+            "name": "get_el",
+            "script": "return document.querySelector('.css-styles')",
+            "args": []
+        },
+        {
+            "id": "zruw6k6l9",
+            "name": "el classname",
+            "args": [
+                "el"
+            ],
+            "script": "el.className = \"css-styles\"; document.body.appendChild(el); return el;"
+        },
+        {
+            "id": "x8tdpkazf",
+            "name": "css el inputs",
+            "script": "return document.querySelector(\".css-styles\") ? [\"get_el\"] : [\"create_el\"];",
+            "args": []
+        },
+        {
+            "id": "dfbmreaek",
+            "name": "create el",
+            "script": "return document.createElement(\"style\");",
+            "args": []
+        },
+        {
+            "id": "filter",
+            "nodes": [
+                {
+                    "id": "in"
+                },
+                {
+                    "id": "out",
+                    "args": [
+                        "keep",
+                        "data"
+                    ],
+                    "script": "return keep ? [data] : []"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "in",
+                    "to": "out",
+                    "order": 1
+                },
+                {
+                    "from": "in",
+                    "to": "out",
+                    "as": "data",
+                    "order": 0
+                }
+            ]
+        },
+        {
+            "id": "delete",
+            "nodes": [
+                {
+                    "id": "in"
+                },
+                {
+                    "id": "out",
+                    "args": [
+                        "data",
+                        "path"
+                    ],
+                    "script": "const new_data = Object.assign({}, data); delete new_data[path]; return new_data;"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "in",
+                    "to": "out",
+                    "order": 1
+                },
+                {
+                    "from": "in",
+                    "to": "out",
+                    "as": "data",
+                    "order": 0
+                }
+            ]
+        },
+        {
+            "id": "default",
+            "nodes": [
+                {
+                    "id": "in"
+                },
+                {
+                    "id": "out",
+                    "args": [
+                        "data",
+                        "default_value"
+                    ],
+                    "script": "return data.length > 0 ? data : default_value"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "in",
+                    "to": "out"
+                }
+            ]
+        },
+        {
+            "id": "switch",
+            "nodes": [
+                {
+                    "id": "in"
+                },
+                {
+                    "id": "out",
+                    "args": [
+                        "data",
+                        "input"
+                    ],
+                    "script": "return data[Object.getOwnPropertyNames(data)[0]];"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "in",
+                    "to": "out",
+                    "as": "data"
+                }
+            ]
+        },
+        {
+            "id": "trigger",
+            "nodes": [
+                {
+                    "id": "in"
+                },
+                {
+                    "id": "trigger",
+                    "args": [
+                        "trigger"
+                    ],
+                    "script": "return trigger ? ['in'] : []"
+                },
+                {
+                    "id": "out",
+                    "args": [
+                        "data"
+                    ],
+                    "script": "return data?.data ?? []"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "in",
+                    "to": "out",
+                    "as": "data"
+                },
+                {
+                    "from": "in",
+                    "to": "trigger"
+                },
+                {
+                    "from": "trigger",
+                    "to": "out",
+                    "type": "inputs"
+                }
+            ]
+        },
+        {
+            "id": "execute_graph",
+            "nodes": [
+                {
+                    "id": "in",
+                    "value": null
+                },
+                {
+                    "id": "out",
+                    "args": [
+                        "in_node",
+                        "out_node",
+                        "graph"
+                    ],
+                    "script": "return (...args) => (lib.no.executeGraph({state: new Map([[in_node, args]]), graph, out: out_node }))"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "in",
+                    "to": "out"
+                }
+            ]
+        },
+        {
+            "id": "get",
+            "nodes": [
+                {
+                    "id": "in",
+                    "value": null
+                },
+                {
+                    "id": "fill_default",
+                    "args": [
+                        "input"
+                    ],
+                    "script": "return input.default ?? null"
+                },
+                {
+                    "id": "out",
+                    "args": [
+                        "target",
+                        "path",
+                        "def"
+                    ],
+                    "script": "return [lib._.get(target, path) ?? def]"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "in",
+                    "to": "out"
+                },
+                {
+                    "from": "in",
+                    "to": "fill_default",
+                    "as": "input"
+                },
+                {
+                    "from": "fill_default",
+                    "to": "out",
+                    "as": "def"
+                }
+            ]
+        },
+        {
+            "id": "vr865hcv0",
+            "name": "body"
+        },
+        {
+            "id": "kvq1q0k30",
+            "value": "#ccc"
+        },
+        {
+            "id": "qpao2izqz",
+            "name": "circle"
+        },
+        {
+            "id": "u7sy8fwro",
+            "value": "black"
+        },
+        {
+            "id": "56j09nio2",
+            "value": 1
+        },
+        {
+            "id": "1t96plqko",
+            "name": "text"
+        },
+        {
+            "id": "p5b9np03o",
+            "value": "consolas"
+        },
+        {
+            "id": "bacr589n7",
+            "type": "c",
+            "name": "stringify_css"
+        },
+        {
+            "id": "css",
+            "name": "css",
+            "nodes": [
+                {
+                    "id": "out",
+                    "name": "css/out",
+                    "script": "return rules?.join(\"\\n\");",
+                    "args": [
+                        "rules"
+                    ]
+                },
+                {
+                    "id": "mec78sn2n",
+                    "name": "compile",
+                    "args": [
+                        "init",
+                        "attrs",
+                        "end"
+                    ],
+                    "script": "return [init].concat(attrs).concat([end])"
+                },
+                {
+                    "id": "2ll8r3sx5",
+                    "name": "init",
+                    "args": [
+                        "entry"
+                    ],
+                    "script": "return entry[0] + \"{\""
+                },
+                {
+                    "id": "ie18qgd52",
+                    "name": "entries",
+                    "script": "return Object.entries(input)",
+                    "args": [
+                        "input"
+                    ]
+                },
+                {
+                    "id": "in",
+                    "name": "css/in"
+                },
+                {
+                    "id": "mrs40dwx8",
+                    "name": "end",
+                    "value": "}"
+                },
+                {
+                    "id": "h28e9j2fo",
+                    "name": "attrs",
+                    "args": [
+                        "entry"
+                    ],
+                    "script": "return [Object.entries(entry[1]).map(([k, v]) => `${k}: ${v};`)];"
+                },
+                {
+                    "id": "0g05impwi",
+                    "args": [
+                        "entry"
+                    ],
+                    "name": "filter_non_keyframes",
+                    "script": "return entry[0].startsWith(\"@keyframes\") ? [] : entry;"
+                },
+                {
+                    "id": "i6kzydhrf",
+                    "args": [
+                        "entry"
+                    ],
+                    "name": "attrs_keyframes",
+                    "script": "return [Object.entries(entry[1]).map(([k, v]) => `${k}: ${v};`)];"
+                },
+                {
+                    "id": "g4ymjm7zf",
+                    "args": [
+                        "entry"
+                    ],
+                    "name": "keyframes"
+                },
+                {
+                    "id": "1axxnkooa",
+                    "args": [
+                        "entry"
+                    ],
+                    "name": "filter_keyframes",
+                    "script": "return entry[0].startsWith(\"@keyframes\") ? [] : entry;"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "mec78sn2n",
+                    "to": "out",
+                    "type": "concat",
+                    "as": "rules"
+                },
+                {
+                    "from": "2ll8r3sx5",
+                    "to": "mec78sn2n",
+                    "as": "init",
+                    "name": "end"
+                },
+                {
+                    "from": "ie18qgd52",
+                    "to": "2ll8r3sx5",
+                    "as": "entry"
+                },
+                {
+                    "from": "in",
+                    "to": "ie18qgd52",
+                    "as": "input"
+                },
+                {
+                    "from": "in",
+                    "to": "ie18qgd52",
+                    "as": "input"
+                },
+                {
+                    "from": "mrs40dwx8",
+                    "to": "mec78sn2n",
+                    "as": "end"
+                },
+                {
+                    "from": "h28e9j2fo",
+                    "to": "mec78sn2n",
+                    "as": "attrs"
+                },
+                {
+                    "from": "0g05impwi",
+                    "to": "h28e9j2fo",
+                    "as": "entry"
+                },
+                {
+                    "from": "ie18qgd52",
+                    "to": "0g05impwi",
+                    "as": "entry"
+                },
+                {
+                    "from": "in",
+                    "to": "ie18qgd52",
+                    "as": "input"
+                },
+                {
+                    "from": "in",
+                    "to": "ie18qgd52",
+                    "as": "input"
+                },
+                {
+                    "from": "i6kzydhrf",
+                    "to": "mec78sn2n"
+                },
+                {
+                    "from": "g4ymjm7zf",
+                    "to": "i6kzydhrf",
+                    "as": "entry"
+                },
+                {
+                    "from": "1axxnkooa",
+                    "to": "g4ymjm7zf"
+                }
+            ]
+        }
+    ],
+    "edges": [
+        {
+            "from": "lvfabiz9b",
+            "to": "out"
+        },
+        {
+            "from": "2jiztgmvr",
+            "to": "lvfabiz9b",
+            "as": "el"
+        },
+        {
+            "from": "vpq73g9qg",
+            "to": "2jiztgmvr",
+            "as": "get_el"
+        },
+        {
+            "from": "zruw6k6l9",
+            "to": "2jiztgmvr",
+            "as": "create_el"
+        },
+        {
+            "from": "x8tdpkazf",
+            "to": "2jiztgmvr",
+            "type": "inputs"
+        },
+        {
+            "from": "dfbmreaek",
+            "to": "zruw6k6l9",
+            "as": "el"
+        },
+        {
+            "from": "bacr589n7",
+            "to": "lvfabiz9b",
+            "as": "styles"
+        },
+        {
+            "from": "vr865hcv0",
+            "to": "bacr589n7",
+            "as": "body",
+            "name": "light-grey",
+            "value": "#ccc"
+        },
+        {
+            "from": "kvq1q0k30",
+            "to": "vr865hcv0",
+            "as": "background-color"
+        },
+        {
+            "from": "qpao2izqz",
+            "to": "bacr589n7",
+            "as": "circle"
+        },
+        {
+            "from": "u7sy8fwro",
+            "to": "qpao2izqz",
+            "as": "stroke"
+        },
+        {
+            "from": "56j09nio2",
+            "to": "qpao2izqz",
+            "as": "stroke-width"
+        },
+        {
+            "from": "1t96plqko",
+            "to": "bacr589n7",
+            "as": "text"
+        },
+        {
+            "from": "p5b9np03o",
+            "to": "1t96plqko",
+            "as": "font-family"
+        }
+    ]
+}
 
 //////////
 // TODO: convert these to nodes
@@ -537,36 +1078,62 @@ const contract_node = (data, keep_expanded=false) => {
         const node_id = data.node_id.endsWith('/out') ? data.node_id.substring(0, data.node_id.indexOf("/out")) : data.node_id;
         const name = data.name?.substring(0, data.name.indexOf("/out")) ?? node_id;
 
+
         const inside_nodes = [Object.assign({}, data.display_graph.nodes.find(n => n.id === data.node_id))];
         const inside_node_map = new Map();
+        const dangling = new Set();
         inside_node_map.set(inside_nodes[0].id, inside_nodes[0]);
         if(!inside_nodes[0].id.endsWith('/out')) {
             inside_nodes[0].id += "/out"
         }
         inside_node_map.set(inside_nodes[0].id, inside_nodes[0]);
         const inside_edges = [];
+        let cancel = false;
 
-        const bfs_parents = n => data.display_graph.edges.filter(e => e.to === n).forEach(e => {
-            const old_node = inside_nodes.find(n => n.id === e.from);
-            const inside_node = old_node ?? data.display_graph.nodes.find(p => p.id === e.from);
+        const q = [inside_nodes[0].id];
 
-            if(!inside_node) {
-                return;
+        while(q.length > 0) {
+            const n = q.shift();
+            dangling.delete(n);
+
+            if(n !== node_id) {
+                data.display_graph.edges.filter(ie => ie.from === n).forEach(ie => {
+                    if(!inside_node_map.has(ie.to)) {
+                        dangling.add(ie.to)
+                    }
+                });
             }
 
-            inside_node_map.set(inside_node.id, inside_node);
+            data.display_graph.edges.filter(e => e.to === n).forEach(e => {
+                const old_node = inside_nodes.find(n => n.id === e.from);
+                let inside_node = old_node ?? data.display_graph.nodes.find(p => p.id === e.from);
 
-            inside_edges.push(e);
-            if(!old_node) {
-                inside_nodes.push(inside_node);
-            }
 
-            if(!(e.from === (node_id + "/in") || inside_node.name === (name + "/in"))) {
-                bfs_parents(e.from);
-            }
-        });
+                if(!inside_node || cancel) {
+                    console.log('canceling loop');
+                    return;
+                }
 
-        bfs_parents(data.node_id);
+                inside_node_map.set(inside_node.id, inside_node);
+
+                inside_edges.push(e);
+                if(!old_node) {
+                    inside_nodes.push(inside_node);
+                }
+
+
+                if(!(e.from === (node_id + "/in") || inside_node.name === (name + "/in"))) {
+                    q.push(e.from);
+                }
+            });
+        }
+
+        if(dangling.size > 0) {
+            console.log('dangling')
+            console.log(dangling);
+            return undefined;
+        }
+
         const in_node = inside_nodes.find(n => n.id === node_id + '/in' || n.name === name + "/in");
         const in_node_id = in_node?.id;
 

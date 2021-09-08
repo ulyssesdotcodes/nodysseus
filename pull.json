@@ -474,8 +474,8 @@
                 },
                 {
                     "id": "expand_contract_result",
-                    "args": ["expand", "contract", "selected"],
-                    "script": "return (expand || contract) && selected ? {display_graph: expand ?? contract, selected} : []"
+                    "args": ["expand", "contract", "selected", "display_graph", "node_id"],
+                    "script": "return (expand || contract) && selected ? {display_graph: expand ?? contract, selected} : {display_graph, selected: node_id}"
                 },
                 {
                     "id": "get_name",
@@ -567,6 +567,10 @@
                 {
                     "from": "in",
                     "to": "contract"
+                },
+                {
+                    "from": "in",
+                    "to": "expand_contract_result"
                 },
                 {
                     "from":  "get_name",
@@ -1188,7 +1192,7 @@
                 {
                     "id": "new_state_cases",
                     "args": ["key", "pending_edges", "state", "shiftKey", "selected"],
-                    "script": "const graph_sim = (!state.editing && state.search === false && (key === 'enter' || key.toLowerCase() === 'o' || key === 'x' || (key === 't' && shiftKey) || (!!pending_edges.edge_to && !!pending_edges.edge_from))) || key === 'escape'; return [graph_sim && 'graph_sim', 'state']"
+                    "script": "const graph_sim = (!state.editing && state.search === false && (key === 'enter' || key.toLowerCase() === 'o' || key === 'x' || (key === 't' && shiftKey) || (!!pending_edges.edge_to && !!pending_edges.edge_from))) || key === 'escape' || selected; return [graph_sim && 'graph_sim', 'state']"
                 },
                 {
                     "id": "new_state",
@@ -1211,13 +1215,20 @@
                     "script": "return state.editing !== false || state.search !== false ? key === 'escape' : !!display_graph || !!selected"
                 },
                 {
+                    "id": "run",
+                    "args": ["state"],
+                    "script": "try { return {result: JSON.stringify(lib.no.executeGraph({state: new Map([['in', {}]]), graph: {nodes: state.display_graph.nodes.concat([]), edges: state.display_graph.edges.concat([])}, out: state.display_graph_out})[0], null, 2)}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
+                },
+                {
                     "id": "out",
                     "args": [
                         "data",
                         "save",
-                        "update"
+                        "update",
+                        "result",
+                        "error"
                     ],
-                    "script": "return [[data, [(_, payload) => { try { lib.no.executeGraph(payload); } catch(e) { console.error(e) }}, {state: new Map([['in', {}]]), graph: {nodes: data.display_graph.nodes.concat([]), edges: data.display_graph.edges.concat([])}, out: data.display_graph_out}], [() => save(), {}], update && [data.update_sim_effect, data]]]"
+                    "script": "return [[{...data, result, error}, [() => save(), {}], update && [data.update_sim_effect, data]]]"
                 }
             ],
             "edges": [
@@ -1603,7 +1614,8 @@
                 {
                     "from": "selected",
                     "to": "new_state_cases",
-                    "as": "selected"
+                    "as": "selected",
+                    "type": "concat"
                 },
                 {
                     "from": "state",
@@ -1756,7 +1768,8 @@
                 {
                     "from": "selected",
                     "to": "levels_inputs",
-                    "as": "selected"
+                    "as": "selected",
+                    "type": "concat"
                 },
                 {
                     "from": "levels_inputs",
@@ -1767,11 +1780,6 @@
                     "from": "state",
                     "to": "graph_sim_inputs",
                     "as": "state"
-                },
-                {
-                    "from": "graph_sim_inputs",
-                    "to": "graph_sim_",
-                    "type": "inputs"
                 },
                 {
                     "from": "set_display_graph",
@@ -1878,12 +1886,22 @@
                 {
                     "from": "selected",
                     "to": "update",
-                    "as": "selected"
+                    "as": "selected",
+                    "type": "concat"
                 },
                 {
                     "from": "state",
                     "to": "update",
                     "as": "state"
+                },
+                {
+                    "from": "new_state",
+                    "to": "run",
+                    "as": "state"
+                },
+                {
+                    "from": "run",
+                    "to": "out"
                 },
                 {
                     "from": "update",
@@ -2365,9 +2383,10 @@
                     "args": [
                         "node_editor",
                         "edit_text",
-                        "search_input"
+                        "search_input",
+                        "result"
                     ],
-                    "script": "return [[node_editor.el, edit_text.el, search_input.el]]"
+                    "script": "return [[node_editor.el, edit_text.el, search_input.el, result.el]]"
                 },
                 {
                     "id": "edit_text",
@@ -2514,6 +2533,46 @@
                             "to": "edit_text_props",
                             "as": "class"
                         }
+                    ]
+                },
+                {
+                    "id": "result",
+                    "nodes": [
+                        {"id": "in"},
+                        {
+                            "id": "container_dom_type",
+                            "value": "div"
+                        },
+                        {
+                            "id": "container_props",
+                            "args": ["error"],
+                            "script": "return {className: error ? 'error' : '', id: 'result'}"
+                        },
+                        {
+                            "id": "container",
+                            "type": "h"
+                        },
+                        {
+                            "id": "text_value",
+                            "args": ["result", "error"],
+                            "script": "return error ?? result ?? ''"
+                        },
+                        {
+                            "id": "text",
+                            "type": "h_text"
+                        },
+                        {
+                            "id": "out"
+                        }
+                    ],
+                    "edges": [
+                        {"from": "in", "to": "container_props"},
+                        {"from": "in", "to": "text_value"},
+                        {"from": "text_value", "to": "text", "as": "text"},
+                        {"from": "text", "to": "container", "as": "children", "type": "concat"},
+                        {"from": "container_props", "to": "container", "as": "props"},
+                        {"from": "container_dom_type", "to": "container", "as": "dom_type"},
+                        {"from": "container", "to": "out"}
                     ]
                 },
                 {
@@ -3440,6 +3499,10 @@
                     "to": "search_input"
                 },
                 {
+                    "from": "in",
+                    "to": "result"
+                },
+                {
                     "from": "node_editor",
                     "to": "wrapper_children",
                     "as": "node_editor"
@@ -3453,6 +3516,11 @@
                     "from": "search_input",
                     "to": "wrapper_children",
                     "as": "search_input"
+                },
+                {
+                    "from": "result",
+                    "to": "wrapper_children",
+                    "as": "result"
                 },
                 {
                     "from": "wrapper_children",
