@@ -1169,6 +1169,14 @@
     				script: "return search;"
     			},
     			{
+    				id: "selected_inputs",
+    				args: [
+    					"key",
+    					"selected_edge"
+    				],
+    				script: "return selected_edge ? [] : [key]"
+    			},
+    			{
     				id: "selected",
     				type: "switch"
     			},
@@ -1322,7 +1330,7 @@
     				args: [
     					"state"
     				],
-    				script: "try { return {result: JSON.stringify(lib.no.executeGraph({state: new Map([['in', {}]]), graph: {nodes: state.display_graph.nodes.concat([]), edges: state.display_graph.edges.concat([])}, out: state.display_graph_out})[0], null, 2)}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
+    				script: "try { const result = lib.no.executeGraph({state: new Map([['in', {}]]), graph: {nodes: state.display_graph.nodes.concat([]), edges: state.display_graph.edges.concat([])}, out: state.display_graph_out})[0]; return {result: typeof result === 'object' ? JSON.stringify(result) : result}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
     			},
     			{
     				id: "out",
@@ -1367,7 +1375,17 @@
     				to: "get_selected"
     			},
     			{
+    				from: "selected_edge",
+    				to: "selected_inputs",
+    				as: "selected_edge"
+    			},
+    			{
     				from: "key_inputs",
+    				to: "selected_inputs",
+    				as: "key"
+    			},
+    			{
+    				from: "selected_inputs",
     				to: "selected",
     				type: "inputs"
     			},
