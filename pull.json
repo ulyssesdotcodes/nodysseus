@@ -2565,7 +2565,7 @@
                         {
                             "id": "container_props",
                             "args": ["error"],
-                            "script": "return {className: error ? 'error' : '', id: 'result'}"
+                            "script": "return {class: error ? 'error' : '', id: 'result'}"
                         },
                         {
                             "id": "container",
@@ -2733,7 +2733,7 @@
                                         "selected",
                                         "selected_distance"
                                     ],
-                                    "script": "return ({ x: x - 20, y: y - 20, id: node_id, onclick: (_, payload) => [onclick_node_fn, {x: payload.x, y: payload.y, node_id, selected: [], ty: 'down'}], width: 256, height: 64, class: `node ${selected[0] === node_id ? 'selected': ''}`, opacity: Math.max(0.1, 1 - selected_distance * selected_distance / 16)})"
+                                "script": "return ({ x: x - 20, y: y - 20, id: node_id, onclick: (_, payload) => [onclick_node_fn, {x: payload.x, y: payload.y, node_id, selected: [], ty: 'down'}], width: 256, height: 64, id: node_id, class: `node ${selected[0] === node_id ? 'selected': ''}`, opacity: Math.max(0.1, 1 - selected_distance * selected_distance / 16)})"
                                 },
                                 {
                                     "id": "children",
@@ -3141,7 +3141,7 @@
                                         "selected_edge",
                                         "selected_distance"
                                     ],
-                                    "script": "return ({x1: Math.floor(source.x), y1: Math.floor(source.y), x2: Math.floor(target.x), y2: Math.floor(target.y), stroke: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to ? 'red' : 'black', 'marker-end': 'url(#arrow)', opacity: .1 + .9 * (1 - Math.min(selected_distance, 3) * 0.333)})"
+                                    "script": "return ({x1: Math.floor(source.x), y1: Math.floor(source.y), x2: Math.floor(target.x), y2: Math.floor(target.y), class: `link ${selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to ? 'selected' : 'unselected'}`, 'marker-end': 'url(#arrow)', opacity: .1 + .9 * (1 - Math.min(selected_distance, 3) * 0.333)})"
                                 },
                                 {
                                     "id": "line_dom_type",
