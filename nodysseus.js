@@ -5,6 +5,8 @@ import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, fo
 import { selectSyntaxLeft } from "@codemirror/commands";
 import Fuse from "fuse.js";
 
+const keywords = new Set(["break", "case", "catch", "continue", "debugger", "default", "delete", "do", "else", "finally", "for", "function", "if", "in", "instanceof", "new", "return", "switch", "this", "throw", "try", "typeof", "var", "void", "while", "with"])
+
 const executeGraph = ({state, graph, out}) => {
     graph = contract_all(graph);
 
@@ -184,10 +186,17 @@ const executeGraph = ({state, graph, out}) => {
                         }
                     } else if(node_type.script) {
                         try {
+                            const arg_names = new Set(node_type.args);
+                            node.inputs.forEach(i => {
+                                if(i.as && !keywords.has(i.as)) {
+                                    arg_names.add(i.as);
+                                }
+                            })
+                            const arg_name_values = [...arg_names];
                             const fn = new Function(
                                 'lib', 
                                 'node', 
-                                ...node_type.args, 
+                                ...arg_names,
                                 node_type.script
                                 );
                             const state_datas = []
@@ -195,9 +204,9 @@ const executeGraph = ({state, graph, out}) => {
                             let fn_args = [];
                             for(let i = 0; i < datas.length; i++) {
                                 fn_args = args.slice();
-                                node_type.args.forEach(arg => {
-                                    fn_args.push(datas[i][arg]);
-                                });
+                                for(let j = 0; j < arg_name_values.length; j++) {
+                                    fn_args.push(datas[i][arg_name_values[j]]);
+                                }
 
                                 const results = fn.apply(null, fn_args);
                                 Array.isArray(results) ? results.forEach(res => state_datas.push(res)) : state_datas.push(results);
@@ -205,7 +214,10 @@ const executeGraph = ({state, graph, out}) => {
                             state.set(node.id, state_datas);
                             active_nodes.delete(node.id);
                         } catch (e) {
-                            throw new AggregateError([Error(`Error in node ${node_type.name ?? node_type.id}`), e]);
+                            console.log(`error in node`);
+                            console.dir(node_type);
+                            console.error(e);
+                            throw new AggregateError([Error(`Error in node ${node_type.name ?? node_type.id}`)].concat(e instanceof AggregateError ? e.errors : [e]));
                         }
                     } else {
                         state.set(node.id, datas);
@@ -219,544 +231,7 @@ const executeGraph = ({state, graph, out}) => {
     return state.get(out);
 };
 
-
-const test_graph = {
-    "nodes": [
-        {
-            "id": "out",
-            "args": [
-                "value"
-            ]
-        },
-        {
-            "id": "get_inputs",
-            "value": [
-                "target",
-                "path"
-            ]
-        },
-        {
-            "id": "get_script",
-            "value": "return target[path]"
-        },
-        {
-            "id": "lvfabiz9b",
-            "name": "css",
-            "args": [
-                "el",
-                "styles"
-            ],
-            "script": "console.log(el); \nel.innerHTML = styles;"
-        },
-        {
-            "id": "2jiztgmvr",
-            "name": "css_el",
-            "args": [
-                "get_el",
-                "create_el"
-            ],
-            "type": "switch"
-        },
-        {
-            "id": "vpq73g9qg",
-            "name": "get_el",
-            "script": "return document.querySelector('.css-styles')",
-            "args": []
-        },
-        {
-            "id": "zruw6k6l9",
-            "name": "el classname",
-            "args": [
-                "el"
-            ],
-            "script": "el.className = \"css-styles\"; document.body.appendChild(el); return el;"
-        },
-        {
-            "id": "x8tdpkazf",
-            "name": "css el inputs",
-            "script": "return document.querySelector(\".css-styles\") ? [\"get_el\"] : [\"create_el\"];",
-            "args": []
-        },
-        {
-            "id": "dfbmreaek",
-            "name": "create el",
-            "script": "return document.createElement(\"style\");",
-            "args": []
-        },
-        {
-            "id": "filter",
-            "nodes": [
-                {
-                    "id": "in"
-                },
-                {
-                    "id": "out",
-                    "args": [
-                        "keep",
-                        "data"
-                    ],
-                    "script": "return keep ? [data] : []"
-                }
-            ],
-            "edges": [
-                {
-                    "from": "in",
-                    "to": "out",
-                    "order": 1
-                },
-                {
-                    "from": "in",
-                    "to": "out",
-                    "as": "data",
-                    "order": 0
-                }
-            ]
-        },
-        {
-            "id": "delete",
-            "nodes": [
-                {
-                    "id": "in"
-                },
-                {
-                    "id": "out",
-                    "args": [
-                        "data",
-                        "path"
-                    ],
-                    "script": "const new_data = Object.assign({}, data); delete new_data[path]; return new_data;"
-                }
-            ],
-            "edges": [
-                {
-                    "from": "in",
-                    "to": "out",
-                    "order": 1
-                },
-                {
-                    "from": "in",
-                    "to": "out",
-                    "as": "data",
-                    "order": 0
-                }
-            ]
-        },
-        {
-            "id": "default",
-            "nodes": [
-                {
-                    "id": "in"
-                },
-                {
-                    "id": "out",
-                    "args": [
-                        "data",
-                        "default_value"
-                    ],
-                    "script": "return data.length > 0 ? data : default_value"
-                }
-            ],
-            "edges": [
-                {
-                    "from": "in",
-                    "to": "out"
-                }
-            ]
-        },
-        {
-            "id": "switch",
-            "nodes": [
-                {
-                    "id": "in"
-                },
-                {
-                    "id": "out",
-                    "args": [
-                        "data",
-                        "input"
-                    ],
-                    "script": "return data[Object.getOwnPropertyNames(data)[0]];"
-                }
-            ],
-            "edges": [
-                {
-                    "from": "in",
-                    "to": "out",
-                    "as": "data"
-                }
-            ]
-        },
-        {
-            "id": "trigger",
-            "nodes": [
-                {
-                    "id": "in"
-                },
-                {
-                    "id": "trigger",
-                    "args": [
-                        "trigger"
-                    ],
-                    "script": "return trigger ? ['in'] : []"
-                },
-                {
-                    "id": "out",
-                    "args": [
-                        "data"
-                    ],
-                    "script": "return data?.data ?? []"
-                }
-            ],
-            "edges": [
-                {
-                    "from": "in",
-                    "to": "out",
-                    "as": "data"
-                },
-                {
-                    "from": "in",
-                    "to": "trigger"
-                },
-                {
-                    "from": "trigger",
-                    "to": "out",
-                    "type": "inputs"
-                }
-            ]
-        },
-        {
-            "id": "execute_graph",
-            "nodes": [
-                {
-                    "id": "in",
-                    "value": null
-                },
-                {
-                    "id": "out",
-                    "args": [
-                        "in_node",
-                        "out_node",
-                        "graph"
-                    ],
-                    "script": "return (...args) => (lib.no.executeGraph({state: new Map([[in_node, args]]), graph, out: out_node }))"
-                }
-            ],
-            "edges": [
-                {
-                    "from": "in",
-                    "to": "out"
-                }
-            ]
-        },
-        {
-            "id": "get",
-            "nodes": [
-                {
-                    "id": "in",
-                    "value": null
-                },
-                {
-                    "id": "fill_default",
-                    "args": [
-                        "input"
-                    ],
-                    "script": "return input.default ?? null"
-                },
-                {
-                    "id": "out",
-                    "args": [
-                        "target",
-                        "path",
-                        "def"
-                    ],
-                    "script": "return [lib._.get(target, path) ?? def]"
-                }
-            ],
-            "edges": [
-                {
-                    "from": "in",
-                    "to": "out"
-                },
-                {
-                    "from": "in",
-                    "to": "fill_default",
-                    "as": "input"
-                },
-                {
-                    "from": "fill_default",
-                    "to": "out",
-                    "as": "def"
-                }
-            ]
-        },
-        {
-            "id": "vr865hcv0",
-            "name": "body"
-        },
-        {
-            "id": "kvq1q0k30",
-            "value": "#ccc"
-        },
-        {
-            "id": "qpao2izqz",
-            "name": "circle"
-        },
-        {
-            "id": "u7sy8fwro",
-            "value": "black"
-        },
-        {
-            "id": "56j09nio2",
-            "value": 1
-        },
-        {
-            "id": "1t96plqko",
-            "name": "text"
-        },
-        {
-            "id": "p5b9np03o",
-            "value": "consolas"
-        },
-        {
-            "id": "bacr589n7",
-            "type": "c",
-            "name": "stringify_css"
-        },
-        {
-            "id": "css",
-            "name": "css",
-            "nodes": [
-                {
-                    "id": "out",
-                    "name": "css/out",
-                    "script": "return rules?.join(\"\\n\");",
-                    "args": [
-                        "rules"
-                    ]
-                },
-                {
-                    "id": "mec78sn2n",
-                    "name": "compile",
-                    "args": [
-                        "init",
-                        "attrs",
-                        "end"
-                    ],
-                    "script": "return [init].concat(attrs).concat([end])"
-                },
-                {
-                    "id": "2ll8r3sx5",
-                    "name": "init",
-                    "args": [
-                        "entry"
-                    ],
-                    "script": "return entry[0] + \"{\""
-                },
-                {
-                    "id": "ie18qgd52",
-                    "name": "entries",
-                    "script": "return Object.entries(input)",
-                    "args": [
-                        "input"
-                    ]
-                },
-                {
-                    "id": "in",
-                    "name": "css/in"
-                },
-                {
-                    "id": "mrs40dwx8",
-                    "name": "end",
-                    "value": "}"
-                },
-                {
-                    "id": "h28e9j2fo",
-                    "name": "attrs",
-                    "args": [
-                        "entry"
-                    ],
-                    "script": "return [Object.entries(entry[1]).map(([k, v]) => `${k}: ${v};`)];"
-                },
-                {
-                    "id": "0g05impwi",
-                    "args": [
-                        "entry"
-                    ],
-                    "name": "filter_non_keyframes",
-                    "script": "return entry[0].startsWith(\"@keyframes\") ? [] : entry;"
-                },
-                {
-                    "id": "i6kzydhrf",
-                    "args": [
-                        "entry"
-                    ],
-                    "name": "attrs_keyframes",
-                    "script": "return [Object.entries(entry[1]).map(([k, v]) => `${k}: ${v};`)];"
-                },
-                {
-                    "id": "g4ymjm7zf",
-                    "args": [
-                        "entry"
-                    ],
-                    "name": "keyframes"
-                },
-                {
-                    "id": "1axxnkooa",
-                    "args": [
-                        "entry"
-                    ],
-                    "name": "filter_keyframes",
-                    "script": "return entry[0].startsWith(\"@keyframes\") ? [] : entry;"
-                }
-            ],
-            "edges": [
-                {
-                    "from": "mec78sn2n",
-                    "to": "out",
-                    "type": "concat",
-                    "as": "rules"
-                },
-                {
-                    "from": "2ll8r3sx5",
-                    "to": "mec78sn2n",
-                    "as": "init",
-                    "name": "end"
-                },
-                {
-                    "from": "ie18qgd52",
-                    "to": "2ll8r3sx5",
-                    "as": "entry"
-                },
-                {
-                    "from": "in",
-                    "to": "ie18qgd52",
-                    "as": "input"
-                },
-                {
-                    "from": "in",
-                    "to": "ie18qgd52",
-                    "as": "input"
-                },
-                {
-                    "from": "mrs40dwx8",
-                    "to": "mec78sn2n",
-                    "as": "end"
-                },
-                {
-                    "from": "h28e9j2fo",
-                    "to": "mec78sn2n",
-                    "as": "attrs"
-                },
-                {
-                    "from": "0g05impwi",
-                    "to": "h28e9j2fo",
-                    "as": "entry"
-                },
-                {
-                    "from": "ie18qgd52",
-                    "to": "0g05impwi",
-                    "as": "entry"
-                },
-                {
-                    "from": "in",
-                    "to": "ie18qgd52",
-                    "as": "input"
-                },
-                {
-                    "from": "in",
-                    "to": "ie18qgd52",
-                    "as": "input"
-                },
-                {
-                    "from": "i6kzydhrf",
-                    "to": "mec78sn2n"
-                },
-                {
-                    "from": "g4ymjm7zf",
-                    "to": "i6kzydhrf",
-                    "as": "entry"
-                },
-                {
-                    "from": "1axxnkooa",
-                    "to": "g4ymjm7zf"
-                }
-            ]
-        }
-    ],
-    "edges": [
-        {
-            "from": "lvfabiz9b",
-            "to": "out"
-        },
-        {
-            "from": "2jiztgmvr",
-            "to": "lvfabiz9b",
-            "as": "el"
-        },
-        {
-            "from": "vpq73g9qg",
-            "to": "2jiztgmvr",
-            "as": "get_el"
-        },
-        {
-            "from": "zruw6k6l9",
-            "to": "2jiztgmvr",
-            "as": "create_el"
-        },
-        {
-            "from": "x8tdpkazf",
-            "to": "2jiztgmvr",
-            "type": "inputs"
-        },
-        {
-            "from": "dfbmreaek",
-            "to": "zruw6k6l9",
-            "as": "el"
-        },
-        {
-            "from": "bacr589n7",
-            "to": "lvfabiz9b",
-            "as": "styles"
-        },
-        {
-            "from": "vr865hcv0",
-            "to": "bacr589n7",
-            "as": "body",
-            "name": "light-grey",
-            "value": "#ccc"
-        },
-        {
-            "from": "kvq1q0k30",
-            "to": "vr865hcv0",
-            "as": "background-color"
-        },
-        {
-            "from": "qpao2izqz",
-            "to": "bacr589n7",
-            "as": "circle"
-        },
-        {
-            "from": "u7sy8fwro",
-            "to": "qpao2izqz",
-            "as": "stroke"
-        },
-        {
-            "from": "56j09nio2",
-            "to": "qpao2izqz",
-            "as": "stroke-width"
-        },
-        {
-            "from": "1t96plqko",
-            "to": "bacr589n7",
-            "as": "text"
-        },
-        {
-            "from": "p5b9np03o",
-            "to": "1t96plqko",
-            "as": "font-family"
-        }
-    ]
-}
+const test_graph = {"nodes":[{"id":"out","args":["value"],"script":"return value;"},{"id":"get_inputs","value":"value"},{"id":"get_script","value":"value"},{"id":"lvfabiz9b","name":"css","args":["el","styles"],"script":"el.innerHTML = styles;\n\nreturn styles;"},{"id":"2jiztgmvr","name":"css_el","args":["get_el","create_el"],"type":"switch"},{"id":"vpq73g9qg","name":"get_el","script":"return document.querySelector('.css-styles')","args":[]},{"id":"zruw6k6l9","name":"el classname","args":["el"],"script":"el.className = \"css-styles\"; document.body.appendChild(el); return el;"},{"id":"x8tdpkazf","name":"css el inputs","script":"return document.querySelector(\".css-styles\") ? [\"get_el\"] : [\"create_el\"];","args":[]},{"id":"dfbmreaek","name":"create el","script":"return document.createElement(\"style\");","args":[]},{"id":"filter","nodes":[{"id":"in"},{"id":"out","args":["keep","data"],"script":"return keep ? [data] : []"}],"edges":[{"from":"in","to":"out","order":1},{"from":"in","to":"out","as":"data","order":0}],"value":null},{"id":"delete","nodes":[{"id":"in"},{"id":"out","args":["data","path"],"script":"const new_data = Object.assign({}, data); delete new_data[path]; return new_data;"}],"edges":[{"from":"in","to":"out","order":1},{"from":"in","to":"out","as":"data","order":0}],"value":"value"},{"id":"switch","nodes":[{"id":"in"},{"id":"out","args":["data","input"],"script":"return data[Object.getOwnPropertyNames(data)[0]];"}],"edges":[{"from":"in","to":"out","as":"data"}]},{"id":"trigger","nodes":[{"id":"in"},{"id":"trigger","args":["trigger"],"script":"return trigger ? ['in'] : []"},{"id":"out","args":["data"],"script":"return data?.data ?? []"}],"edges":[{"from":"in","to":"out","as":"data"},{"from":"in","to":"trigger"},{"from":"trigger","to":"out","type":"inputs"}],"value":null},{"id":"execute_graph","nodes":[{"id":"in","value":null},{"id":"out","args":["in_node","out_node","graph"],"script":"return (...args) => (lib.no.executeGraph({state: new Map([[in_node, args]]), graph, out: out_node }))"}],"edges":[{"from":"in","to":"out"}],"value":null},{"id":"vr865hcv0","name":"body"},{"id":"kvq1q0k30","value":"#ccc"},{"id":"qpao2izqz","name":"circle"},{"id":"u7sy8fwro","value":"black"},{"id":"56j09nio2","value":1},{"id":"1t96plqko","name":"text"},{"id":"bacr589n7","type":"css","name":"stringify_css"},{"id":"3xppcpetm","args":[],"value":1},{"id":"6ffivp2aw","args":[],"value":0},{"id":"4ol7uqdfr","args":[],"value":"2s blink infinite"},{"id":"29hvv137x","args":[],"value":"opacity"},{"id":"w62vgl3ln","args":[],"value":"consolas"},{"id":"7xg2ng5r0","type":"two_value_anim","name":"blink anim"},{"id":"in","args":[],"name":"in"},{"id":"c6h6qfqbw","args":["increase_decrease"],"name":"key_listener","script":"return increase_decrease ?? 'no key listener events';"},{"id":"ajj5t166a","type":"set","name":"set_value_increase_decrease"},{"id":"set","args":[],"name":"set","script":"return lib._.set(target, path, value);","value":null},{"id":"r8cqojmo1","args":[],"script":"return typeof start_value !== 'number' ? start_value : key === 'i' ? start_value + 1 : key === 'd' ? start_value - 1 : start_value;","name":"modify_value"},{"id":"fj2x64arr","args":[],"name":"key_listener_inputs","script":"return typeof value === 'number' ? ['increase_decrease'] : []"},{"id":"qtb69pl8t","args":[],"type":"get","name":"get_value"},{"id":"mdwg7wfgu","args":[],"value":"value"},{"id":"jtbamz3os","type":"get_selected_node","name":"in_selected_node"},{"id":"two_value_anim","name":"two_value_anim","nodes":[{"id":"out","args":["attr","to","from"],"name":"two_value_anim/out","script":"return {to: {[attr]: to}, from: {[attr]: from}};"},{"id":"in","args":[],"name":"two_value_anim/in"}],"edges":[{"from":"in","to":"out"}]},{"id":"css","name":"css","nodes":[{"id":"out","name":"css/out","script":"return rules?.join(\"\\n\");","args":["rules"]},{"id":"mec78sn2n","name":"compile","args":["init","attrs","end","keyframes"],"script":"return [init].concat(attrs ?? []).concat(keyframes ?? []).concat([end])"},{"id":"2ll8r3sx5","name":"init","args":["entry"],"script":"return entry[0] + \" {\""},{"id":"mrs40dwx8","value":"}"},{"id":"h28e9j2fo","name":"attrs","args":["entry"],"script":"return entry && entry.length > 0 ? [Object.entries(entry[1]).map(([k, v]) => `${k}: ${v};`)] : [];\n\n//return JSON.stringify(entry[1]);\n"},{"id":"i6kzydhrf","args":["entry"],"name":"attrs_keyframes","script":"return entry ? Object.entries(entry).map(([k,v]) => k + \" {\" + Object.entries(v).map(([k,v]) => `${k}: ${v}`) + \"}\" ).join(\"\\n\") + \"}\" : undefined"},{"id":"ie18qgd52","name":"entries","script":"return Object.entries(input)","args":["input"]},{"id":"0g05impwi","args":["entry"],"name":"filter_non_keyframes","script":"return !entry ? [] : entry[0].startsWith(\"@keyframes\") ? [] : [entry];"},{"id":"1axxnkooa","args":["entry"],"name":"filter_keyframes","script":"return entry &&  entry[0].startsWith(\"@keyframes\") ? entry[1] : undefined;"},{"id":"in","name":"css/in"}],"edges":[{"from":"mec78sn2n","to":"out","type":"concat","as":"rules"},{"from":"2ll8r3sx5","to":"mec78sn2n","as":"init","name":"end"},{"from":"mrs40dwx8","to":"mec78sn2n","as":"end"},{"from":"h28e9j2fo","to":"mec78sn2n","as":"attrs"},{"from":"i6kzydhrf","to":"mec78sn2n","as":"keyframes"},{"from":"ie18qgd52","to":"2ll8r3sx5","as":"entry"},{"from":"0g05impwi","to":"h28e9j2fo","as":"entry"},{"from":"1axxnkooa","to":"i6kzydhrf","as":"entry"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"ie18qgd52","to":"0g05impwi","as":"entry"},{"from":"ie18qgd52","to":"1axxnkooa","as":"entry"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"}]},{"id":"default","name":"default","nodes":[{"id":"out","args":["data","default_value"],"script":"return data.length > 0 ? data : default_value"},{"id":"in"}],"edges":[{"from":"in","to":"out"}]},{"id":"get_selected_node","name":"get_selected_node","nodes":[{"id":"out","args":["graph","selected"],"name":"get_selected_node/out","script":"return graph?.nodes?.find(n => n.id === selected) ?? [];"},{"id":"dh64fe0yi","args":["target"],"name":"get_selected","script":"return target.selected[0]"},{"id":"7y938lss2","args":[],"type":"get","name":"get_display_graph"},{"id":"scbdvvauy","args":["in_value"],"script":"return in_value;","name":"in_value"},{"id":"1xlhcil2e","args":[],"value":"display_graph"},{"id":"in","args":[],"name":"get_selected_node/in"}],"edges":[{"from":"dh64fe0yi","to":"out","as":"selected"},{"from":"7y938lss2","to":"out","as":"graph"},{"from":"scbdvvauy","to":"dh64fe0yi","as":"target"},{"from":"1xlhcil2e","to":"7y938lss2","as":"path"},{"from":"scbdvvauy","to":"7y938lss2","as":"target"},{"from":"in","to":"scbdvvauy","as":"in_value"},{"from":"in","to":"scbdvvauy","as":"in_value"},{"from":"in","to":"scbdvvauy","as":"in_value"},{"from":"in","to":"scbdvvauy","as":"in_value"},{"from":"in","to":"scbdvvauy","as":"in_value"},{"from":"in","to":"scbdvvauy","as":"in_value"},{"from":"in","to":"scbdvvauy","as":"in_value"},{"from":"in","to":"scbdvvauy","as":"in_value"}]},{"id":"cv9akpm4i","args":[],"value":4},{"id":"get","name":"get","nodes":[{"id":"out","args":["target","path","def"],"script":"return [lib._.get(target, path) ?? def]"},{"id":"in"},{"id":"fill_default","args":["input"],"script":"return input.default ?? null"}],"edges":[{"from":"in","to":"out"},{"from":"fill_default","to":"out","as":"def"},{"from":"in","to":"out"},{"from":"fill_default","to":"out","as":"def"},{"from":"in","to":"fill_default","as":"input"},{"from":"in","to":"fill_default","as":"input"},{"from":"in","to":"fill_default","as":"input"},{"from":"in","to":"fill_default","as":"input"}]},{"id":"8521eyel9","type":"get_key","name":"in_key"},{"id":"get_key","name":"get_key","nodes":[{"id":"out","args":[],"name":"get_key/out","type":"get"},{"id":"icfpfcgc2","args":[],"value":"key"},{"id":"in","args":[],"name":"get_key/in"}],"edges":[{"from":"icfpfcgc2","to":"out","as":"path"},{"from":"in","to":"out","as":"target"}]}],"edges":[{"from":"lvfabiz9b","to":"out","as":"value_"},{"from":"2jiztgmvr","to":"lvfabiz9b","as":"el"},{"from":"vpq73g9qg","to":"2jiztgmvr","as":"get_el"},{"from":"zruw6k6l9","to":"2jiztgmvr","as":"create_el"},{"from":"x8tdpkazf","to":"2jiztgmvr","type":"inputs"},{"from":"dfbmreaek","to":"zruw6k6l9","as":"el"},{"from":"bacr589n7","to":"lvfabiz9b","as":"styles"},{"from":"vr865hcv0","to":"bacr589n7","as":"body","name":"light-grey","value":"#ccc"},{"from":"kvq1q0k30","to":"vr865hcv0","as":"background-color"},{"from":"qpao2izqz","to":"bacr589n7","as":"circle"},{"from":"u7sy8fwro","to":"qpao2izqz","as":"stroke"},{"from":"56j09nio2","to":"qpao2izqz","as":"stroke-width"},{"from":"1t96plqko","to":"bacr589n7","as":"text"},{"from":"4ol7uqdfr","to":"qpao2izqz","as":"animation_"},{"from":"6ffivp2aw","to":"7xg2ng5r0","as":"from"},{"from":"3xppcpetm","to":"7xg2ng5r0","as":"to"},{"from":"29hvv137x","to":"7xg2ng5r0","as":"attr"},{"from":"w62vgl3ln","to":"1t96plqko","as":"font-family"},{"from":"7xg2ng5r0","to":"bacr589n7","as":"@keyframes blink"},{"from":"jtbamz3os","to":"ajj5t166a","as":"target"},{"from":"fj2x64arr","to":"c6h6qfqbw","type":"inputs"},{"from":"jtbamz3os","to":"qtb69pl8t","as":"target"},{"from":"mdwg7wfgu","to":"qtb69pl8t","as":"path"},{"from":"qtb69pl8t","to":"r8cqojmo1","as":"start_value"},{"from":"8521eyel9","to":"r8cqojmo1","as":"key"},{"from":"mdwg7wfgu","to":"ajj5t166a","as":"path"},{"from":"qtb69pl8t","to":"fj2x64arr","as":"value"},{"from":"c6h6qfqbw","to":"out","as":"value_"},{"from":"ajj5t166a","to":"c6h6qfqbw","as":"increase_decrease"},{"from":"r8cqojmo1","to":"ajj5t166a","as":"value"},{"from":"in","to":"jtbamz3os"},{"from":"cv9akpm4i","to":"out"},{"from":"in","to":"8521eyel9"}]}
 
 //////////
 // TODO: convert these to nodes
@@ -850,17 +325,10 @@ const updateSimulationNodes = (data) => {
         data.simulation.force('links').links(data.links);
     }
 
-    // data.simulation.force('link_siblings')
-    //     .x((n) => (parents.has(n.node_id) && parents.get(n.node_id).x ? parents.get(n.node_id).x : window.innerWidth * 0.5) +
-    //         (levels.levels.has(n.node_id) && levels.levels.get(n.node_id) !== undefined ?
-    //             (256 * levels.nodes_by_level[levels.levels.get(n.node_id)].indexOf(n.node_id) 
-    //             - levels.nodes_by_level[levels.levels.get(n.node_id)].length * 256 * 0.5) :
-    //             window.innerWidth * 0.25));
-
     const sibling_x = new Map();
-    // sibling_x.set(selected, window.innerWidth * 0.5);
     const selected_x =  ((levels.nodes_by_level[selected_level].findIndex(l => l === selected) + 1) 
                 / (levels.nodes_by_level[selected_level].length + 1));
+
 
     data.nodes.forEach(n => {
         sibling_x.set(n.node_id, 
@@ -873,55 +341,10 @@ const updateSimulationNodes = (data) => {
         );
     })
 
-    // data.nodes.forEach(n => {
-    //     if(selected === n.node_id) {
-    //         sibling_x.set(n.node_id, window.innerWidth * 0.5);
-    //     } else if(siblings.has(n.node_id) && siblings.get(n.node_id).find(s => selected === s)) {
-    //         sibling_x.set(n.node_id, ((siblings.get(n.node_id).indexOf(n.node_id) - siblings.get(n.node_id).findIndex(s => selected_graph === s)) * 0.25 + 0.5) * window.innerWidth)
-    //     } else if(!selected_graph.has(n.node_id)) {
-    //         sibling_x.set(n.node_id, window.innerWidth * 0.75);
-    //     }
-    // }); 
-                    // + (128 * levels.nodes_by_level[levels.level_by_node.get(n.node_id)].filter(s => selected_graph.has(s)).indexOf(n.node_id) 
-                    //     - levels.nodes_by_level[levels.level_by_node.get(n.node_id)].filter(s => selected_graph.has(s)).length * 128 * 0.5))
-
-
-    // while(sibling_x.size < data.nodes.length) {
-    //     data.nodes.forEach(n => {
-    //         if(!sibling_x.has(n.node_id) && sibling_x.has(children.get(n.node_id)[0])) {
-    //             sibling_x.set(
-    //                 n.node_id, 
-    //                 sibling_x.get(children.get(n.node_id)[0]) + 
-    //                     (siblings.has(n.node_id) && siblings.get(n.node_id).length > 1
-    //                     ? ((siblings.get(n.node_id).indexOf(n.node_id) - Math.floor(siblings.get(n.node_id).length / 2)) / siblings.get(n.node_id).length) * 128
-    //                     : 0)
-    //             );
-    //         } else if(!sibling_x.has(n.node_id) && sibling_x.has(parents.get(n.node_id)[0])) {
-    //             sibling_x.set(
-    //                 n.node_id, 
-    //                 sibling_x.get(parents.get(n.node_id)[0]) + 
-    //                     (siblings.has(n.node_id) && siblings.get(n.node_id).length > 1
-    //                     ? ((siblings.get(n.node_id).indexOf(n.node_id) - Math.floor(siblings.get(n.node_id).length / 2)) / siblings.get(n.node_id).length) * 128
-    //                     : 0)
-    //             );
-    //         }
-    //     })
-    // }
-
     data.simulation.force('link_siblings').x((n) => sibling_x.get(n.node_id));
 
     data.simulation.force('charge')
         .strength(n => levels.distance_from_selected.has(n.node_id) ? -1024 : -8)
-
-    // data.simulation.force('selected').radius(n => 
-    //     n.node_id === selected
-    //     ? 0 
-    //     : parents.get(n.node_id)?.includes(selected) || children.get(n.node_id)?.includes(selected)
-    //     ? window.innerHeight * 0.125
-    //     : distance_from_selected.has(n.node_id)
-    //     ? window.innerHeight * 0.125 * Math.max(1, Math.min(distance_from_selected.get(n.node_id) - 1, 3))
-    //     : window.innerHeight * 0.4
-    // ).strength(n => n.node_id === selected ? 2 : .5);
 
     data.simulation.force('link_direction')
         .y((n) => window.innerHeight * (
@@ -939,10 +362,6 @@ const updateSimulationNodes = (data) => {
 
 
     data.simulation
-        // .force(`parent_${data.node_id}`, lib.d3.forceRadial(0, data.x, data.y).strength(n => n.parent === data.node_id ? 0.2 : 0))
-        // .force(`not_parent_${data.node_id}`, lib.d3.forceRadial(512, data.x, data.y).strength(n => n.parent === data.node_id ? 0 : 0.2))
-        // .force(`center`, null)
-        // .velocityDecay(.2)
         .alpha(0.6);
 }
 
@@ -1045,6 +464,8 @@ const expand_node = (data) => {
 
     const flattened = lib.scripts.flattenNode(node, 1);
 
+    const seen_set = new Set();
+
     const new_display_graph = {
         nodes: data.display_graph.nodes
             .filter(n => n.id !== node_id)
@@ -1078,17 +499,11 @@ const contract_node = (data, keep_expanded=false) => {
         const node_id = data.node_id.endsWith('/out') ? data.node_id.substring(0, data.node_id.indexOf("/out")) : data.node_id;
         const name = data.name?.substring(0, data.name.indexOf("/out")) ?? node_id;
 
-
         const inside_nodes = [Object.assign({}, data.display_graph.nodes.find(n => n.id === data.node_id))];
         const inside_node_map = new Map();
         const dangling = new Set();
         inside_node_map.set(inside_nodes[0].id, inside_nodes[0]);
-        if(!inside_nodes[0].id.endsWith('/out')) {
-            inside_nodes[0].id += "/out"
-        }
-        inside_node_map.set(inside_nodes[0].id, inside_nodes[0]);
         const inside_edges = [];
-        let cancel = false;
 
         const q = [inside_nodes[0].id];
 
@@ -1096,7 +511,8 @@ const contract_node = (data, keep_expanded=false) => {
             const n = q.shift();
             dangling.delete(n);
 
-            if(n !== node_id) {
+            if(n !== node_id && n !== node_id + "/out") {
+                console.log(n);
                 data.display_graph.edges.filter(ie => ie.from === n).forEach(ie => {
                     if(!inside_node_map.has(ie.to)) {
                         dangling.add(ie.to)
@@ -1108,8 +524,7 @@ const contract_node = (data, keep_expanded=false) => {
                 const old_node = inside_nodes.find(n => n.id === e.from);
                 let inside_node = old_node ?? data.display_graph.nodes.find(p => p.id === e.from);
 
-
-                if(!inside_node || cancel) {
+                if(!inside_node) {
                     console.log('canceling loop');
                     return;
                 }
@@ -1121,7 +536,6 @@ const contract_node = (data, keep_expanded=false) => {
                     inside_nodes.push(inside_node);
                 }
 
-
                 if(!(e.from === (node_id + "/in") || inside_node.name === (name + "/in"))) {
                     q.push(e.from);
                 }
@@ -1129,8 +543,6 @@ const contract_node = (data, keep_expanded=false) => {
         }
 
         if(dangling.size > 0) {
-            console.log('dangling')
-            console.log(dangling);
             return undefined;
         }
 
@@ -1140,6 +552,14 @@ const contract_node = (data, keep_expanded=false) => {
         if(in_node) {
             in_node.id = node_id + "/in";
             inside_node_map.set(in_node.id, in_node);
+        }
+
+        const out_node = inside_nodes.find(n => n.id === node_id || n.name === name + "/out" || n.id === node_id + "/out");
+        const out_node_id = out_node.id;
+
+        if(out_node) {
+            out_node.id = node_id + "/out";
+            inside_node_map.set(out_node.id, out_node);
         }
 
 
@@ -1162,7 +582,7 @@ const contract_node = (data, keep_expanded=false) => {
                             : e.from, 
                             to: e.to.startsWith(node_id + "/") 
                                 ? e.to.substring(node_id.length + 1) 
-                                : e.to === node_id
+                                : e.to === out_node_id
                                 ? "out"
                                 : e.to
                         }))

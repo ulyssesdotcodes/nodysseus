@@ -15,8 +15,6 @@ Graph nodes are labeled with either their name, value, or id, in that order. A n
 
 If a node has no value or script, it passes all of the data it receives as an object.
 
-
-
 ### Edge content
 An edge connects two nodes, possibly with an `as` value or an edge `type`. If no "as" value is defined, the data is passed by object key/value pairs. Passing a non-object value with no "as" will result in an error.
 
@@ -33,6 +31,11 @@ If no type is defined, it will pass the returned value as data.
 
 A graph is executed by pulling in data to the output node. The edges determine the name of the data coming into each node.
 
+If a node has `nodes` and `edges` property, these are expanded before execution.
+
+If a node has a `type`, then the node with the `id` matching `type` is merged into the node.
+
+
 ## Shortcuts
 
 ### navigation
@@ -42,9 +45,8 @@ A graph is executed by pulling in data to the output node. The edges determine t
 - **left** move to sibling node to the left
 - **right** move to sibling node to the right
 - **enter** open subgraph
-
-#### pending
-- **/** search
+- **f** search
+- **esc** exit search
 
 ### node edit mode
 
@@ -52,7 +54,22 @@ A graph is executed by pulling in data to the output node. The edges determine t
 - **v** change value
 - **s** change script
 - **n** change name
+- **t** change type
+- **shift-t** create type (node name is used as type `id`)
 - **esc** exit edit mode and save
+
+### node creation/deletion
+- **o** create node below
+- **shift-o** create node above
+- **x** delete node (edges are adjusted automatically)
+
+### edge creation
+
+When `to` and `from` are both present, an edge will be created if there isn't one, or destroyed if there is.
+
+- **c** set pending edge `from` value
+- **shift-c** set pending edge `to` value
+
 
 ### edge edit mode
 

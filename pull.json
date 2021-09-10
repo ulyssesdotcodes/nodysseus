@@ -865,7 +865,7 @@
                         "nodes",
                         "levels"
                     ],
-                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.nodes_by_level[levels.level_by_node.get(selected[0])]; const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x < current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.nodes_by_level[levels.level_by_node.get(selected[0])]; const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling && n.selected_distance < 3); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x < current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
                 },
                 {
                     "id": "left_edge",
@@ -889,7 +889,7 @@
                         "nodes",
                         "levels"
                     ],
-                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.nodes_by_level[levels.level_by_node.get(selected[0])]; const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.nodes_by_level[levels.level_by_node.get(selected[0])]; const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling && n.selected_distance < 3); if(!sibling_node){ return dist }  const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
                 },
                 {
                     "id": "right_edge",
@@ -1002,7 +1002,7 @@
                         "display_graph",
                         "display_graph_out"
                     ],
-                    "script": "display_graph.nodes = display_graph.nodes.filter(n => n.id !== selected[0]); const new_edges = []; const to = display_graph.edges.filter(e => e.to === selected[0]); const from = display_graph.edges.filter(e => e.from === selected[0]); for(let i = 0; i < to.length; i++){for(let j = 0; j < from.length; j++){ new_edges.push({from: to[i].from, to: from[j].to}); }}; display_graph.edges = display_graph.edges.filter(e => e.to !== selected[0] && e.from !== selected[0]); display_graph.edges.push(...new_edges); return {display_graph, selected: [to[0]?.from ?? from[0]?.to ?? display_graph_out] };"
+                    "script": "display_graph.nodes = display_graph.nodes.filter(n => n.id !== selected[0]); const new_edges = []; const to = display_graph.edges.filter(e => e.to === selected[0]); const from = display_graph.edges.filter(e => e.from === selected[0]); for(let i = 0; i < to.length; i++){for(let j = 0; j < from.length; j++){ if(!display_graph.edges.find(e => e.from === to[i].from && e.to === from[j].to)){ display_graph.edges.push({from: to[i].from, to: from[j].to});}}}; display_graph.edges = display_graph.edges.filter(e => e.to !== selected[0] && e.from !== selected[0]); display_graph.edges.push(...new_edges); return {display_graph, selected: [to[0]?.from ?? from[0]?.to ?? display_graph_out] };"
                 },
                 {
                     "id": "x_display_graph",
@@ -1221,8 +1221,8 @@
                 },
                 {
                     "id": "run",
-                    "args": ["state"],
-                    "script": "try { const result = lib.no.executeGraph({state: new Map([['in', {}]]), graph: {nodes: state.display_graph.nodes.concat([]), edges: state.display_graph.edges.concat([])}, out: state.display_graph_out})[0]; return {result: typeof result === 'object' ? JSON.stringify(result) : result}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
+                    "args": ["state", "key"],
+                    "script": "try { const result = lib.no.executeGraph({state: new Map([['in', [{...state, key}]]]), graph: {nodes: state.display_graph.nodes.concat([]), edges: state.display_graph.edges.concat([])}, out: state.display_graph_out})[0]; return {result: typeof result === 'object' ? JSON.stringify(result) : result}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
                 },
                 {
                     "id": "out",
@@ -1276,6 +1276,10 @@
                     "to": "selected_inputs",
                     "as": "key"
                 }, 
+                {
+                    "from": "key_event",
+                    "to": "run"
+                },
                 {
                     "from": "selected_inputs",
                     "to": "selected",
@@ -2726,9 +2730,10 @@
                                         "x",
                                         "y",
                                         "onclick_node_fn",
-                                        "selected"
+                                        "selected",
+                                        "selected_distance"
                                     ],
-                                    "script": "return ({ x: x - 20, y: y - 20, id: node_id, onclick: (_, payload) => [onclick_node_fn, {x: payload.x, y: payload.y, node_id, selected: [], ty: 'down'}], width: 256, height: 64, class: `node ${selected[0] === node_id ? 'selected': ''}`})"
+                                    "script": "return ({ x: x - 20, y: y - 20, id: node_id, onclick: (_, payload) => [onclick_node_fn, {x: payload.x, y: payload.y, node_id, selected: [], ty: 'down'}], width: 256, height: 64, class: `node ${selected[0] === node_id ? 'selected': ''}`, opacity: Math.max(0.1, 1 - selected_distance * selected_distance / 16)})"
                                 },
                                 {
                                     "id": "children",
@@ -2801,7 +2806,7 @@
                                                 {
                                                     "id": "get_value",
                                                     "args": ["target", "def"],
-                                                    "script": "return target.value ? (typeof target.value === 'object' ? JSON.stringify(target.value) : target.value.toString()) : def"
+                                                    "script": "return target.value !== undefined ? (typeof target.value === 'object' ? JSON.stringify(target.value) : target.value.toString()) : def"
                                                 },
                                                 {
                                                     "id": "get_type",
