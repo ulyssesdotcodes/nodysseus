@@ -3,6 +3,7 @@ image: node:latest
 pages:
   stage: deploy
   script:
+  - npm install
   - npm run package
   - mkdir public
   - cp index.html nodysseus.bundle.js public/
