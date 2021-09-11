@@ -1,4 +1,4 @@
-image: node:16.9.1
+image: node:latest
 
 pages:
   stage: deploy
