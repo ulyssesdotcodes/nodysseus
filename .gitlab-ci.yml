@@ -1,0 +1,13 @@
+image: node:16.9.1
+
+pages:
+  stage: deploy
+  script:
+  - npm run package
+  - mkdir public
+  - cp index.html nodysseus.bundle.js public/
+  artifacts:
+    paths:
+    - public
+  only:
+  - main
