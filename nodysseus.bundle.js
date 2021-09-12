@@ -2895,7 +2895,7 @@
     									"selected",
     									"selected_distance"
     								],
-    								script: "return ({ x: x - 20, y: y - 20, id: node_id, onclick: (_, payload) => [onclick_node_fn, {x: payload.x, y: payload.y, node_id, selected: [], ty: 'down'}], width: 256, height: 64, id: node_id, class: `node ${selected[0] === node_id ? 'selected': ''}`, opacity: Math.max(0.1, 1 - selected_distance * selected_distance / 16)})"
+    								script: "return ({ x: x - 20, y: y - 20, id: node_id, onclick: (_, payload) => [onclick_node_fn, {x: payload.x, y: payload.y, node_id, selected: [], ty: 'down'}], width: 256, height: 64, id: node_id, class: `node ${selected[0] === node_id ? 'selected': ''}`, opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1})"
     							},
     							{
     								id: "children",
@@ -3240,10 +3240,11 @@
     								args: [
     									"source",
     									"target",
-    									"line_position",
-    									"selected_distance"
+    									"selected_distance",
+    									"sibling_index_normalized",
+    									"selected_edge"
     								],
-    								script: "return ({x: line_position * (target.x - source.x) + source.x + 16, y: line_position * (target.y - source.y) + source.y, opacity: (1 - Math.min(selected_distance, 3) * 0.25) })"
+    								script: "return ({x: sibling_index_normalized * (target.x - source.x) + source.x + 16, y: sibling_index_normalized * (target.y - source.y) + source.y, opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1, class: {selected: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to, edge: true} })"
     							},
     							{
     								id: "edge_info_line_position",
@@ -3311,7 +3312,7 @@
     									"selected_edge",
     									"selected_distance"
     								],
-    								script: "return ({x1: Math.floor(source.x), y1: Math.floor(source.y), x2: Math.floor(target.x), y2: Math.floor(target.y), class: `link ${selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to ? 'selected' : 'unselected'}`, 'marker-end': 'url(#arrow)', opacity: .1 + .9 * (1 - Math.min(selected_distance, 3) * 0.333)})"
+    								script: "return ({x1: Math.floor(source.x), y1: Math.floor(source.y), x2: Math.floor(target.x), y2: Math.floor(target.y), class: `link ${selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to ? 'selected' : 'unselected'}`, 'marker-end': 'url(#arrow)', opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1})"
     							},
     							{
     								id: "line_dom_type",
@@ -25087,7 +25088,8 @@
                 target: e.to, 
                 as: e.as, 
                 type: e.type, 
-                selected_distance: Math.min(data.levels.distance_from_selected.get(e.to), data.levels.distance_from_selected.get(e.from))
+                selected_distance: Math.min(data.levels.distance_from_selected.get(e.to), data.levels.distance_from_selected.get(e.from)),
+                sibling_index_normalized: (data.levels.siblings.get(e.from).findIndex(n => n === e.from) + 1) / (data.levels.siblings.get(e.from).length + 1),
             }));
 
         return {

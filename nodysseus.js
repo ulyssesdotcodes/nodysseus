@@ -395,7 +395,8 @@ const graphToSimulationNodes = (data) => {
             target: e.to, 
             as: e.as, 
             type: e.type, 
-            selected_distance: Math.min(data.levels.distance_from_selected.get(e.to), data.levels.distance_from_selected.get(e.from))
+            selected_distance: Math.min(data.levels.distance_from_selected.get(e.to), data.levels.distance_from_selected.get(e.from)),
+            sibling_index_normalized: (data.levels.siblings.get(e.from).findIndex(n => n === e.from) + 1) / (data.levels.siblings.get(e.from).length + 1),
         }));
 
     return {
