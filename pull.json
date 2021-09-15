@@ -1221,8 +1221,8 @@
                 },
                 {
                     "id": "run",
-                    "args": ["state", "key"],
-                    "script": "try { const result = lib.no.executeGraph({state: new Map([['in', [{...state, key}]]]), graph: {nodes: state.display_graph.nodes.concat([]), edges: state.display_graph.edges.concat([])}, out: state.display_graph_out})[0]; return {result: typeof result === 'object' ? JSON.stringify(result) : result}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
+                    "args": ["state", "key", "ctrlKey"],
+                    "script": "if(!(ctrlKey && key === 'Enter')) { return state; } try { const result = lib.no.executeGraph({state: new Map([['in', [{...state, key}]]]), graph: {nodes: state.display_graph.nodes.concat([]), edges: state.display_graph.edges.concat([])}, out: state.display_graph_out})[0]; return {result: typeof result === 'object' ? JSON.stringify(result) : result}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
                 },
                 {
                     "id": "out",
@@ -1912,6 +1912,10 @@
                     "from": "state",
                     "to": "update",
                     "as": "state"
+                },
+                {
+                    "from": "key_event",
+                    "to": "run"
                 },
                 {
                     "from": "new_state",
@@ -2682,13 +2686,21 @@
                             "value": "svg"
                         },
                         {
+                            "id": "node_editor_children_inputs",
+                            "args": [
+                                "nodes",
+                                "links"
+                            ],
+                            "script": "return ['defs', links.length > 0 && 'links', nodes.length > 0 && 'nodes'].filter(i => i)"
+                        },
+                        {
                             "id": "node_editor_children",
                             "args": [
                                 "nodes",
                                 "links",
                                 "defs"
                             ],
-                            "script": "return [[defs.el].concat(nodes.map(c => c.el)).concat(links.map(l => l.el))]"
+                            "script": "return [[defs.el].concat(nodes?.map(c => c.el) ?? []).concat(links?.map(l => l.el) ?? [])]"
                         },
                         {
                             "id": "node_layout",
@@ -3047,7 +3059,7 @@
                                     "args": [
                                         "link"
                                     ],
-                                    "script": "return link"
+                                    "script": "return link ?? []"
                                 },
                                 {
                                     "id": "edge_info_el",
@@ -3346,7 +3358,7 @@
                         {
                             "id": "link_selected_distance",
                             "args": ["link"],
-                            "script": "return link.selected_distance ? link.selected_distance < 5 : 10"
+                            "script": "return !link ? [] : link.selected_distance ? link.selected_distance : 10"
                         },
                         {
                             "id": "filter_links",
@@ -3440,8 +3452,20 @@
                             "type": "concat"
                         },
                         {
+                            "from": "get_nodes",
+                            "to": "node_editor_children_inputs",
+                            "as": "nodes",
+                            "type": "concat"
+                        },
+                        {
                             "from": "link_layout",
                             "to": "node_editor_children",
+                            "as": "links",
+                            "type": "concat"
+                        },
+                        {
+                            "from": "get_links",
+                            "to": "node_editor_children_inputs",
                             "as": "links",
                             "type": "concat"
                         },
@@ -3494,6 +3518,11 @@
                             "from": "defs_children",
                             "to": "defs",
                             "as": "children"
+                        },
+                        {
+                            "from": "node_editor_children_inputs",
+                            "to": "node_editor_children",
+                            "type": "inputs"
                         },
                         {
                             "from": "node_editor_children",
