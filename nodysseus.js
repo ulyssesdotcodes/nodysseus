@@ -644,7 +644,8 @@ const lib = {
 const generic_nodes = new Set(["switch", "filter", "delete", "default", "trigger", "execute_graph", "get"])
 
 const stored = localStorage.getItem("display_graph");
-const display_graph = stored ? JSON.parse(stored) : test_graph;
+const display_graph = DEFAULT_GRAPH;
+// const display_graph = stored ? JSON.parse(stored) : test_graph;
 const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: {nodes: display_graph.nodes.concat(DEFAULT_GRAPH.nodes.filter(n => generic_nodes.has(n.id) && display_graph.nodes.findIndex(dn => dn.id === n.id) === -1)), edges: display_graph.edges.concat([])}, display_graph_out: "out"}]]])
 
 console.log(executeGraph({state, graph: DEFAULT_GRAPH, out: "hyperapp_app"})[0]);
