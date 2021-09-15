@@ -1155,7 +1155,7 @@
                 {
                     "id": "selected_edge_inputs",
                     "args": ["key", "selected_edge", "editing", "search"],
-                    "script": "return (!!selected_edge && key !== 'e') || (key === 'e' && editing === false && search === false) ? [key] : []"
+                    "script": "return (!!selected_edge && key !== 'e' && editing === false) || (key === 'e' && editing === false && search === false) ? [key] : []"
                 },
                 {
                     "id": "selected_edge",
@@ -3057,9 +3057,10 @@
                                     "id": "edge_info_el_children",
                                     "args": [
                                         "edge_as",
-                                        "edge_type"
+                                        "edge_type",
+                                        "rect"
                                     ],
-                                    "script": "return [[edge_as.el, edge_type.el]]"
+                                    "script": "return [[rect.el, edge_as.el, edge_type.el]]"
                                 },
                                 {
                                     "id": "edge_info_dom_type",
@@ -3118,6 +3119,14 @@
                                         "link"
                                     ],
                                     "script": "return link.as ?? '*'"
+                                },
+                                {
+                                    "id": "edge_info_rect_dom_type",
+                                    "value": "rect"
+                                },
+                                {
+                                    "id": "edge_info_rect",
+                                    "type": "h"
                                 },
                                 {
                                     "id": "lerp_length",
@@ -3215,6 +3224,16 @@
                                     "from": "edge_info_line_position",
                                     "to": "edge_info_props",
                                     "as": "line_position"
+                                },
+                                {
+                                    "from": "edge_info_rect",
+                                    "to": "edge_info_el_children",
+                                    "as": "rect"
+                                },
+                                {
+                                    "from": "edge_info_rect_dom_type",
+                                    "to": "edge_info_rect",
+                                    "as": "dom_type"
                                 },
                                 {
                                     "from": "edge_info_el_children",
@@ -3321,6 +3340,28 @@
                             "value": "polyline"
                         },
                         {
+                            "id": "fill_filter_flood_dom_type",
+                            "value": "feFlood"
+                        },
+                        {
+                            "id": "fill_filter_flood_props",
+                            "value": {"flood-color": "black"}
+                        },
+                        {"id": "fill_filter_flood","type": "h"},
+                        {"id": "fill_filter_props", "value": {"id": "flood-background","width": 1, "height": 1, "x": 0, "y": 0}},
+                        {"id": "fill_filter_composite_props","value": {"in": "SourceGraphic"}},
+                        {"id": "fill_filter_composite_dom_type","value": "feComposite"},
+                        {"id": "fill_filter_composite","type": "h"},
+                        {"id": "fill_filter_children", "args": ["comp", "flood"], "script": "return [[flood.el, comp.el]]"},
+                        {
+                            "id": "fill_filter_dom_type",
+                            "value": "filter"
+                        },
+                        {
+                            "id": "fill_filter",
+                            "type": "h"
+                        },
+                        {
                             "id": "marker",
                             "value": "marker"
                         },
@@ -3329,7 +3370,7 @@
                             "args": [
                                 "arrow"
                             ],
-                            "script": "return [[arrow.el]]"
+                            "script": "return [[bg_color.el, arrow.el]]"
                         },
                         {
                             "id": "defs",
@@ -3479,6 +3520,56 @@
                             "from": "line_end",
                             "to": "defs_children",
                             "as": "arrow"
+                        },
+                        {
+                            "from": "fill_filter_flood_props",
+                            "to": "fill_filter_flood",
+                            "as": "props"
+                        },
+                        {
+                            "from": "fill_filter_flood_dom_type",
+                            "to": "fill_filter_flood",
+                            "as": "dom_type"
+                        },
+                        {
+                            "from": "fill_filter_flood",
+                            "to": "fill_filter_children",
+                            "as": "flood"
+                        },
+                        {
+                            "from": "fill_filter_composite_props",
+                            "to": "fill_filter_composite",
+                            "as": "props"
+                        },
+                        {
+                            "from": "fill_filter_composite_dom_type",
+                            "to": "fill_filter_composite",
+                            "as": "dom_type"
+                        },
+                        {
+                            "from": "fill_filter_composite",
+                            "to": "fill_filter_children",
+                            "as": "comp"
+                        },
+                        {
+                            "from": "fill_filter_children",
+                            "to": "fill_filter",
+                            "as": "children"
+                        },
+                        {
+                            "from": "fill_filter_props",
+                            "to": "fill_filter",
+                            "as": "props"
+                        },
+                        {
+                            "from": "fill_filter_dom_type",
+                            "to": "fill_filter",
+                            "as": "dom_type"
+                        },
+                        {
+                            "from": "fill_filter",
+                            "to": "defs_children",
+                            "as": "bg_color"
                         },
                         {
                             "from": "defs_dom_type",
