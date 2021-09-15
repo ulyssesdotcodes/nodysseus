@@ -1350,10 +1350,6 @@
                     "to": "enter"
                 },
                 {
-                    "from": "key_event",
-                    "to": "ctrl_s"
-                },
-                {
                     "from": "state",
                     "to": "save"
                 },
@@ -1488,14 +1484,6 @@
                 {
                     "from": "state",
                     "to": "x"
-                },
-                {
-                    "from": "key_event",
-                    "to": "c"
-                },
-                {
-                    "from": "state",
-                    "to": "c"
                 },
                 {
                     "from": "key_event",
@@ -1794,11 +1782,6 @@
                     "from": "levels_inputs",
                     "to": "levels",
                     "type": "inputs"
-                },
-                {
-                    "from": "state",
-                    "to": "graph_sim_inputs",
-                    "as": "state"
                 },
                 {
                     "from": "set_display_graph",
@@ -2745,7 +2728,7 @@
                                         "selected",
                                         "selected_distance"
                                     ],
-                                    "script": "return ({ x: x - 20, y: y - 20, id: node_id, onclick: (_, payload) => [onclick_node_fn, {x: payload.x, y: payload.y, node_id, selected: [], ty: 'down'}], width: 256, height: 64, id: node_id, class: `node ${selected[0] === node_id ? 'selected': ''}`, opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1})"
+                                    "script": "return ({ key: node_id, x: x - 20, y: y - 20, id: node_id, onclick: (_, payload) => [onclick_node_fn, {x: payload.x, y: payload.y, node_id, selected: [], ty: 'down'}], width: 256, height: 64, id: node_id, class: `node ${selected[0] === node_id ? 'selected': ''}`, opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1})"
                                 },
                                 {
                                     "id": "children",
@@ -2755,9 +2738,9 @@
                                             "value": null
                                         },
                                         {
-                                            "id": "circle_attrs",
-                                            "args": ["selected_distance"],
-                                            "script": "return ({r: 16 / ((Math.min(10, selected_distance ?? 10) * 0.5) + 1) , cx: 20, cy: 20})"
+                                            "id": "node_shape_attrs",
+                                            "args": ["value", "script", "type", "selected_distance"],
+                                            "script": "return value ? {class: 'shape', points: '4,20 20,20 10,4'} : script ? {class: 'shape', r: 16 / ((Math.min(10, selected_distance ?? 10) * 0.5) + 1) , cx: 20, cy: 20} : type ? {class: 'shape', width: 16 / ((Math.min(10, selected_distance ?? 10) * 0.5) + 1), height: 16 / ((Math.min(10, selected_distance ?? 10) * 0.5) + 1), x: 10, y: 10} : {}"
                                         },
                                         {
                                             "id": "default_color",
@@ -2770,11 +2753,12 @@
                                             ]
                                         },
                                         {
-                                            "id": "circle",
-                                            "value": "circle"
+                                            "id": "node_shape_dom_type",
+                                            "args": ["value", "script", "type"],
+                                            "script": "return value ? 'polygon' : script ? 'circle' : type ? 'rect' : 'circle'"
                                         },
                                         {
-                                            "id": "node_circle",
+                                            "id": "node_shape",
                                             "type": "h"
                                         },
                                         {
@@ -2941,10 +2925,10 @@
                                         {
                                             "id": "order",
                                             "args": [
-                                                "circle",
+                                                "shape",
                                                 "text"
                                             ],
-                                            "script": "return [[circle.el, text.el]]"
+                                            "script": "return [[shape.el, text.el]]"
                                         },
                                         {
                                             "id": "out"
@@ -2953,21 +2937,25 @@
                                     "edges": [
                                         {
                                             "from": "in",
-                                            "to": "circle_attrs"
+                                            "to": "node_shape_attrs"
+                                        },
+                                        {
+                                            "from": "in",
+                                            "to": "node_shape_dom_type"
                                         },
                                         {
                                             "from": "default_color",
-                                            "to": "circle_attrs",
+                                            "to": "node_shape_attrs",
                                             "as": "color"
                                         },
                                         {
                                             "from": "empty_array",
-                                            "to": "node_circle",
+                                            "to": "node_shape",
                                             "as": "children"
                                         },
                                         {
-                                            "from": "circle",
-                                            "to": "node_circle",
+                                            "from": "node_shape_dom_type",
+                                            "to": "node_shape",
                                             "as": "dom_type"
                                         },
                                         {
@@ -2975,14 +2963,14 @@
                                             "to": "text"
                                         },
                                         {
-                                            "from": "circle_attrs",
-                                            "to": "node_circle",
+                                            "from": "node_shape_attrs",
+                                            "to": "node_shape",
                                             "as": "props"
                                         },
                                         {
-                                            "from": "node_circle",
+                                            "from": "node_shape",
                                             "to": "order",
-                                            "as": "circle"
+                                            "as": "shape"
                                         },
                                         {
                                             "from": "text",
