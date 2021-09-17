@@ -2755,7 +2755,7 @@
                                         {
                                             "id": "node_shape_attrs",
                                             "args": ["value", "script", "type", "selected_distance", "nodes"],
-                                            "script": "const r = 24 / ((Math.min(10, selected_distance ?? 10) * 0.5) + 1); return value ? {class: 'shape value', points: `4,${4 + r} ${4 + r},${4 + r} ${4 + r * 0.5},4`} : script ? {class: 'shape script', width: r, height: r, x: 10, y: 10} : type ? {class: 'shape type', width: r, height: r, x: 10, y: 10} : nodes ? {class: 'shape graph', r: r * 0.5, cx: r * 0.5 + 4, cy: r * 0.5 + 4}  : {class: 'shape none', r: r * 0.5 , cx: r * 0.5 + 4, cy: r * 0.5 + 4}"
+                                            "script": "const r = 24 / ((Math.min(10, selected_distance ?? 10) * 0.5) + 1); return value !== undefined ? {class: 'shape value', points: `4,${4 + r} ${4 + r},${4 + r} ${4 + r * 0.5},4`} : script ? {class: 'shape script', width: r, height: r, x: 10, y: 10} : type ? {class: 'shape type', width: r, height: r, x: 10, y: 10} : nodes ? {class: 'shape graph', r: r * 0.5, cx: r * 0.5 + 4, cy: r * 0.5 + 4}  : {class: 'shape none', r: r * 0.5 , cx: r * 0.5 + 4, cy: r * 0.5 + 4}"
                                         },
                                         {
                                             "id": "default_color",
@@ -2770,7 +2770,7 @@
                                         {
                                             "id": "node_shape_dom_type",
                                             "args": ["value", "script", "type", "nodes"],
-                                            "script": "return value ? 'polygon' : script ? 'rect' : type ? 'rect' : nodes ? 'circle' : 'circle'"
+                                            "script": "return value !== undefined ? 'polygon' : script ? 'rect' : type ? 'rect' : nodes ? 'circle' : 'circle'"
                                         },
                                         {
                                             "id": "node_shape",
@@ -2824,7 +2824,7 @@
                                                     "args": [
                                                         "target"
                                                     ],
-                                                    "script": "return target.type ?? (Array.isArray(target.value) ? [target.value] : target.value) ?? (target.value === null ? target.node_id : target.script ? 'script' : target.nodes ? `graph (${target.nodes.length}, ${target.edges.length})` : target.script ? 'script' : 'unknown')"
+                                                    "script": "return `type: ` + (target.type ? target.type : target.value !== undefined ? 'value' : target.script ? 'script' : target.nodes ? `graph (${target.nodes.length}, ${target.edges.length})` : 'passthrough')"
                                                 },
                                                 {
                                                     "id": "get_selected_distance",
@@ -2838,8 +2838,40 @@
                                                     "script": "return text.substring(text.lastIndexOf('/') + 1)"
                                                 },
                                                 {
+                                                    "id": "node_primary_text_attrs",
+                                                    "value": {"class": "primary", "dy": ".6em", "x": "48"}
+                                                },
+                                                {
+                                                    "id": "tspan_dom_type",
+                                                    "value": "tspan"
+                                                },
+                                                {
+                                                    "id": "node_primary_text_text",
+                                                    "type": "h_text"
+                                                },
+                                                {
+                                                    "id": "node_primary_text",
+                                                    "type": "h"
+                                                },
+                                                {
+                                                    "id": "node_secondary_text_attrs",
+                                                    "value": {"class": "secondary", "dy": "1.2em", "x": "48"}
+                                                },
+                                                {
+                                                    "id": "node_secondary_text_text",
+                                                    "type": "h_text"
+                                                },
+                                                {
+                                                    "id": "node_secondary_text",
+                                                    "type": "h"
+                                                },
+                                                {
+                                                    "id": "node_text_dom_type",
+                                                    "value": "text"
+                                                },
+                                                {
                                                     "id": "node_text",
-                                                    "type": "svg_text"
+                                                    "type": "h"
                                                 },
                                                 {
                                                     "id": "script",
@@ -2848,7 +2880,12 @@
                                                 {
                                                     "id": "node_text_props",
                                                     "args": ["selected_distance"],
-                                                    "script": "return { x: 42, y: 22 }"
+                                                    "script": "return { x: 48, y: 12 }"
+                                                },
+                                                {
+                                                    "id": "node_text_children",
+                                                    "args": ["primary", "secondary"],
+                                                    "script": "return [[primary.el, secondary.el]]"
                                                 },
                                                 {
                                                     "id": "text",
@@ -2918,7 +2955,12 @@
                                                 },
                                                 {
                                                     "from": "get_name",
-                                                    "to": "node_text",
+                                                    "to": "node_primary_text_text",
+                                                    "as": "text"
+                                                },
+                                                {
+                                                    "from": "get_type",
+                                                    "to": "node_secondary_text_text",
                                                     "as": "text"
                                                 },
                                                 {
@@ -2930,6 +2972,56 @@
                                                     "from": "node_text_props",
                                                     "to": "node_text",
                                                     "as": "props"
+                                                },
+                                                {
+                                                    "from": "node_primary_text_text",
+                                                    "to": "node_primary_text",
+                                                    "as": "children"
+                                                },
+                                                {
+                                                    "from": "node_primary_text_attrs",
+                                                    "to": "node_primary_text",
+                                                    "as": "props"
+                                                },
+                                                {
+                                                    "from": "node_primary_text",
+                                                    "to": "node_text_children",
+                                                    "as": "primary"
+                                                },
+                                                {
+                                                    "from": "node_secondary_text_text",
+                                                    "to": "node_secondary_text",
+                                                    "as": "children"
+                                                },
+                                                {
+                                                    "from": "node_secondary_text_attrs",
+                                                    "to": "node_secondary_text",
+                                                    "as": "props"
+                                                },
+                                                {
+                                                    "from": "tspan_dom_type",
+                                                    "to": "node_primary_text",
+                                                    "as": "dom_type"
+                                                },
+                                                {
+                                                    "from": "node_secondary_text",
+                                                    "to": "node_text_children",
+                                                    "as": "secondary"
+                                                },
+                                                {
+                                                    "from": "tspan_dom_type",
+                                                    "to": "node_secondary_text",
+                                                    "as": "dom_type"
+                                                },
+                                                {
+                                                    "from": "node_text_children",
+                                                    "to": "node_text",
+                                                    "as": "children"
+                                                },
+                                                {
+                                                    "from": "node_text_dom_type",
+                                                    "to": "node_text",
+                                                    "as": "dom_type"
                                                 },
                                                 {
                                                     "from": "node_text",

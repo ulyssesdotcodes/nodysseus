@@ -496,11 +496,12 @@ const contract_all = (graph) => {
 }
 
 const contract_node = (data, keep_expanded=false) => {
-    if(data.node_id.endsWith('/out') || data.name.endsWith("/out")) {
+    const node = data.display_graph.nodes.find(n => n.id === data.node_id);
+    if(!node.nodes) {
         const node_id = data.node_id.endsWith('/out') ? data.node_id.substring(0, data.node_id.indexOf("/out")) : data.node_id;
         const name = data.name?.substring(0, data.name.indexOf("/out")) ?? node_id;
 
-        const inside_nodes = [Object.assign({}, data.display_graph.nodes.find(n => n.id === data.node_id))];
+        const inside_nodes = [Object.assign({}, node)];
         const inside_node_map = new Map();
         const dangling = new Set();
         inside_node_map.set(inside_nodes[0].id, inside_nodes[0]);
@@ -513,7 +514,6 @@ const contract_node = (data, keep_expanded=false) => {
             dangling.delete(n);
 
             if(n !== node_id && n !== node_id + "/out") {
-                console.log(n);
                 data.display_graph.edges.filter(ie => ie.from === n).forEach(ie => {
                     if(!inside_node_map.has(ie.to)) {
                         dangling.add(ie.to)

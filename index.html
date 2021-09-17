@@ -49,8 +49,6 @@
     }
 
     .node .shape {
-      stroke: white;
-      stroke-width: 0;
       animation_: 2s blink infinite;
       fill: purple;
     }
@@ -64,6 +62,23 @@
       transform-box: fill-box;
       transform-origin: 50% 50%;
       transform: rotate(45deg);
+      fill: none;
+      stroke-width: 2px;
+      stroke: purple
+    }
+
+    .node.selected .shape.script {
+      stroke: #fcc;
+    }
+
+    .node .shape.none {
+      stroke-width: 2px;
+      stroke: purple;
+      fill: none;
+    }
+
+    .node.selected .shape.none {
+      stroke: #fcc;
     }
 
     #result {
@@ -87,6 +102,14 @@
       stroke: #ccc;
     }
 
+    .node text .primary {
+      font-weight: bold;
+    }
+
+    .node text .secondary {
+      font-style: italic;
+    }
+
     .show-key {
       position: fixed;
       right: 100px;
@@ -94,7 +117,6 @@
       font-size: 2em;;
       font-family: consolas;
     }
-
 
     .edge {
       filter: url("#flood-background");
