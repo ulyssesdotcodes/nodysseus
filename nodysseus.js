@@ -14,7 +14,7 @@ const executeGraph = ({state, graph}) => {
     let state_length = 0;
     let active_nodes_length = 0;
 
-    const active_nodes = new Map([[ "out", Object.assign({}, graph.nodes.find(n => n.id === out), {
+    const active_nodes = new Map([[ out, Object.assign({}, graph.nodes.find(n => n.id === out), {
         inputs: graph.edges.filter(e => e.to === out),
         _nodeflag: true
     })]]);
@@ -154,19 +154,19 @@ const executeGraph = ({state, graph}) => {
                         : node;
 
                     if(node._nodetypeflag) {
-                        state.set(node.id, node.nodes ? [{nodes: node.nodes, edges: node.edges}] : [{args: node.args, script: node.script, value: node.value}])
+                        state.set(node.id, node.nodes ? [{nodes: node.nodes, edges: node.edges, in: node.in, out: node.out}] : [{args: node.args, script: node.script, value: node.value}])
                         active_nodes.delete(node.id);
                     } else if (node_type.nodes && node_type.edges){
-                        state.set(node.id + "/" + (node.in ?? 'in'), datas);
+                        state.set(node.id + "/" + (node_type.in ?? 'in'), datas);
                         active_nodes.set(node.id, {
                             id: node.id, 
                             args: ["value"],
-                            inputs:[{from: `${node.id}/${node.out ?? 'out'}`, to: node.id, as: 'value'}], 
+                            inputs:[{from: `${node.id}/${node_type.out ?? 'out'}`, to: node.id, as: 'value'}], 
                             _nodeflag: true, 
                             script: "return value"
                         })
 
-                        if(!node_map.has(`${node.id}/${node.out ?? 'out'}`)) {
+                        if(!node_map.has(`${node.id}/${node_type.out ?? 'out'}`)) {
                             for(const child of node_type.nodes){
                                 const new_node = Object.assign({}, child);
                                 new_node.id = `${node.id}/${child.id}`;
@@ -498,7 +498,7 @@ const contract_node = (data, keep_expanded=false) => {
     if(!node.nodes) {
         const slash_index = data.node_id.lastIndexOf('/');
         const node_id = slash_index >= 0 ? data.node_id.substring(0, slash_index) : data.node_id;
-        const name = data.name?.substring(0, data.name.indexOf("/out")) ?? node_id;
+        const name = data.name ?? node_id;
 
         const inside_nodes = [Object.assign({}, node)];
         const inside_node_map = new Map();
@@ -549,14 +549,23 @@ const contract_node = (data, keep_expanded=false) => {
             }
         }
 
-        const in_node_id = in_edge[0]?.to;
+        let in_node_id = in_edge[0]?.to;
 
-        if(in_edge.find(ie => ie.to !== in_node_id)) {
+        if(in_edge.find(ie => ie.to !== in_node_id) || inside_nodes.length < 2) {
             return {display_graph: data.display_graph, selected: data.node_id};
         }
 
         const out_node = inside_nodes.find(n => n.id === data.node_id || n.name === name + "/out" || n.id === node_id + "/out");
         const out_node_id = out_node.id;
+
+        const in_node = inside_node_map.get(in_node_id);
+
+        // have to create a dummy in node if the in node does something
+        if (in_node?.value || in_node?.type || in_node?.script) {
+            in_node_id = "in";
+            inside_nodes.push({id: in_node_id});
+            inside_edges.push({from: in_node_id, to: in_node.id});
+        }
 
         const new_display_graph = {
                 nodes: data.display_graph.nodes
@@ -584,7 +593,7 @@ const contract_node = (data, keep_expanded=false) => {
                     .filter(e => keep_expanded || !(inside_node_map.has(e.from) && inside_node_map.has(e.to)))
                     .map(e => 
                         e.from === data.node_id ? {...e, from: node_id} 
-                        : e.to === in_node_id ? {...e, to: node_id} 
+                        : e.to === in_node?.id ? {...e, to: node_id} 
                         : inside_node_map.has(e.to) 
                         ? {...e, to: node_id}
                         : e

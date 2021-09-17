@@ -953,7 +953,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "const new_node = Object.assign({}, display_graph.nodes.find(n => n.id === selected[0])); new_node.id = new_node.name; return {nodes: display_graph.nodes.map(n => n.id === selected[0] ? {id: n.id, type: n.name, name: n.name} : n).concat([new_node]), edges: display_graph.edges}"
+                    "script": "const new_node = Object.assign({}, display_graph.nodes.find(n => n.id === selected[0])); new_node.id = new_node.name; return {...display_graph, nodes: display_graph.nodes.map(n => n.id === selected[0] ? {id: n.id, type: n.name, name: n.name} : n).concat([new_node]), edges: display_graph.edges}"
                 },
                 {
                     "id": "s",
