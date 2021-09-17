@@ -7,11 +7,9 @@ import Fuse from "fuse.js";
 
 const keywords = new Set(["break", "case", "catch", "continue", "debugger", "default", "delete", "do", "else", "finally", "for", "function", "if", "in", "instanceof", "new", "return", "switch", "this", "throw", "try", "typeof", "var", "void", "while", "with"])
 
-const executeGraph = ({state, graph, out}) => {
-    graph = contract_all(graph);
-
-    let state_hash = "";
-    let active_nodes_hash = "";
+const executeGraph = ({state, graph}) => {
+    // graph = contract_all(graph);
+    const out = graph.out;
 
     let state_length = 0;
     let active_nodes_length = 0;
@@ -26,7 +24,6 @@ const executeGraph = ({state, graph, out}) => {
     graph.node_map = node_map;
 
     while(!state.has(out)) {
-
         if(state_length === state.size && active_nodes_length === active_nodes.size) {
             console.log(graph);
             console.log(state);
@@ -87,7 +84,7 @@ const executeGraph = ({state, graph, out}) => {
             }
 
 
-            if(node.type && !state.has(node.type)) {
+            if(node.value === undefined && node.type && !state.has(node.type)) {
                 if(!active_nodes.has(node.type)) {
                     active_nodes.set(node.type, Object.assign({}, node_map.get(node.type), {
                         inputs: graph.edges.filter(e => e.to === node.type),
@@ -160,16 +157,16 @@ const executeGraph = ({state, graph, out}) => {
                         state.set(node.id, node.nodes ? [{nodes: node.nodes, edges: node.edges}] : [{args: node.args, script: node.script, value: node.value}])
                         active_nodes.delete(node.id);
                     } else if (node_type.nodes && node_type.edges){
-                        state.set(node.id + "/in", datas);
+                        state.set(node.id + "/" + (node.in ?? 'in'), datas);
                         active_nodes.set(node.id, {
                             id: node.id, 
                             args: ["value"],
-                            inputs:[{from: `${node.id}/out`, to: node.id, as: 'value'}], 
+                            inputs:[{from: `${node.id}/${node.out ?? 'out'}`, to: node.id, as: 'value'}], 
                             _nodeflag: true, 
                             script: "return value"
                         })
 
-                        if(!node_map.has(`${node.id}/out`)) {
+                        if(!node_map.has(`${node.id}/${node.out ?? 'out'}`)) {
                             for(const child of node_type.nodes){
                                 const new_node = Object.assign({}, child);
                                 new_node.id = `${node.id}/${child.id}`;
@@ -193,12 +190,12 @@ const executeGraph = ({state, graph, out}) => {
                                 }
                             })
                             const arg_name_values = [...arg_names];
-                            const fn = new Function(
-                                'lib', 
-                                'node', 
-                                ...arg_names,
-                                node_type.script
-                                );
+                            const fn = {
+                                [node.name ?? node.id]: new Function('lib', 'node', ...arg_names, node_type.script)
+                            }
+                            // const fn = new Function(
+                            //     `return function ${node.name ?? node.id}(${['lib', 'node', ...arg_names].join(', ')}){ ${node_type.script} }`
+                            //     )();
                             const state_datas = []
                             const args = [lib, node];
                             let fn_args = [];
@@ -208,15 +205,16 @@ const executeGraph = ({state, graph, out}) => {
                                     fn_args.push(datas[i][arg_name_values[j]]);
                                 }
 
-                                const results = fn.apply(null, fn_args);
+                                const results = fn[node.name ?? node.id].apply(null, fn_args);
                                 Array.isArray(results) ? results.forEach(res => state_datas.push(res)) : state_datas.push(results);
                             }
                             state.set(node.id, state_datas);
                             active_nodes.delete(node.id);
                         } catch (e) {
                             console.log(`error in node`);
-                            console.dir(node_type);
                             console.error(e);
+                            console.dir(node_type);
+                            console.log(state);
                             throw new AggregateError([Error(`Error in node ${node_type.name ?? node_type.id}`)].concat(e instanceof AggregateError ? e.errors : [e]));
                         }
                     } else {
@@ -231,7 +229,7 @@ const executeGraph = ({state, graph, out}) => {
     return state.get(out);
 };
 
-const test_graph = {"nodes":[{"id":"out","args":["value"],"script":"return value;"},{"id":"get_inputs","value":"value"},{"id":"get_script","value":"value"},{"id":"lvfabiz9b","name":"css","args":["el","styles"],"script":"el.innerHTML = styles;\n\nreturn styles;"},{"id":"filter","nodes":[{"id":"in"},{"id":"out","args":["keep","data"],"script":"return keep ? [data] : []"}],"edges":[{"from":"in","to":"out","order":1},{"from":"in","to":"out","as":"data","order":0}]},{"id":"delete","nodes":[{"id":"in"},{"id":"out","args":["data","path"],"script":"const new_data = Object.assign({}, data); delete new_data[path]; return new_data;"}],"edges":[{"from":"in","to":"out","order":1},{"from":"in","to":"out","as":"data","order":0}],"value":"value"},{"id":"switch","nodes":[{"id":"in"},{"id":"out","args":["data","input"],"script":"return data[Object.getOwnPropertyNames(data)[0]];"}],"edges":[{"from":"in","to":"out","as":"data"}]},{"id":"trigger","nodes":[{"id":"in"},{"id":"trigger","args":["trigger"],"script":"return trigger ? ['in'] : []"},{"id":"out","args":["data"],"script":"return data?.data ?? []"}],"edges":[{"from":"in","to":"out","as":"data"},{"from":"in","to":"trigger"},{"from":"trigger","to":"out","type":"inputs"}]},{"id":"execute_graph","nodes":[{"id":"in","value":null},{"id":"out","args":["in_node","out_node","graph"],"script":"return (...args) => (lib.no.executeGraph({state: new Map([[in_node, args]]), graph, out: out_node }))"}],"edges":[{"from":"in","to":"out"}]},{"id":"vr865hcv0","name":"body"},{"id":"kvq1q0k30","value":"#112"},{"id":"qpao2izqz","name":".node"},{"id":"u7sy8fwro","value":"white"},{"id":"56j09nio2","value":0},{"id":"1t96plqko","name":"text"},{"id":"bacr589n7","type":"css","name":"stringify_css"},{"id":"3xppcpetm","args":[],"value":1},{"id":"6ffivp2aw","args":[],"value":0},{"id":"4ol7uqdfr","args":[],"value":"2s blink infinite"},{"id":"29hvv137x","args":[],"value":"opacity"},{"id":"w62vgl3ln","args":[],"value":"consolas"},{"id":"7xg2ng5r0","type":"two_value_anim","name":"blink anim"},{"id":"in","args":[],"name":"in"},{"id":"c6h6qfqbw","args":["increase_decrease"],"name":"key_listener","script":"return increase_decrease ?? 'no key listener events';"},{"id":"ajj5t166a","type":"set","name":"set_value_increase_decrease"},{"id":"set","args":[],"name":"set","script":"return lib._.set(target, path, value);"},{"id":"r8cqojmo1","args":[],"script":"return typeof start_value !== 'number' ? start_value : key === 'i' ? start_value + 1 : key === 'd' ? start_value - 1 : start_value;","name":"modify_value"},{"id":"fj2x64arr","args":[],"name":"key_listener_inputs","script":"return typeof value === 'number' ? ['increase_decrease'] : []"},{"id":"qtb69pl8t","args":[],"type":"get","name":"get_value"},{"id":"mdwg7wfgu","args":[],"value":"value"},{"id":"jtbamz3os","type":"get_selected_node","name":"in_selected_node"},{"id":"two_value_anim","name":"two_value_anim","nodes":[{"id":"out","args":["attr","to","from"],"name":"two_value_anim/out","script":"return {to: {[attr]: to}, from: {[attr]: from}};"},{"id":"in","args":[],"name":"two_value_anim/in"}],"edges":[{"from":"in","to":"out"}]},{"id":"default","name":"default","nodes":[{"id":"out","args":["data","default_value"],"script":"return data.length > 0 ? data : default_value"},{"id":"in"}],"edges":[{"from":"in","to":"out"}]},{"id":"get_selected_node","name":"get_selected_node","nodes":[{"id":"out","args":["graph","selected"],"name":"get_selected_node/out","script":"return graph?.nodes?.find(n => n.id === selected) ?? [];"},{"id":"dh64fe0yi","args":["target"],"name":"get_selected","script":"return target.selected[0]"},{"id":"7y938lss2","args":[],"type":"get","name":"get_display_graph"},{"id":"scbdvvauy","args":["in_value"],"script":"return in_value;","name":"in_value"},{"id":"1xlhcil2e","args":[],"value":"display_graph"},{"id":"in","args":[],"name":"get_selected_node/in"}],"edges":[{"from":"dh64fe0yi","to":"out","as":"selected"},{"from":"7y938lss2","to":"out","as":"graph"},{"from":"scbdvvauy","to":"dh64fe0yi","as":"target"},{"from":"1xlhcil2e","to":"7y938lss2","as":"path"},{"from":"scbdvvauy","to":"7y938lss2","as":"target"},{"from":"in","to":"scbdvvauy","as":"in_value"},{"from":"in","to":"scbdvvauy","as":"in_value"},{"from":"in","to":"scbdvvauy","as":"in_value"},{"from":"in","to":"scbdvvauy","as":"in_value"},{"from":"in","to":"scbdvvauy","as":"in_value"},{"from":"in","to":"scbdvvauy","as":"in_value"},{"from":"in","to":"scbdvvauy","as":"in_value"},{"from":"in","to":"scbdvvauy","as":"in_value"}]},{"id":"get","name":"get","nodes":[{"id":"out","args":["target","path","def"],"script":"return [lib._.get(target, path) ?? def]"},{"id":"in"},{"id":"fill_default","args":["input"],"script":"return input.default ?? null"}],"edges":[{"from":"in","to":"out"},{"from":"fill_default","to":"out","as":"def"},{"from":"in","to":"out"},{"from":"fill_default","to":"out","as":"def"},{"from":"in","to":"fill_default","as":"input"},{"from":"in","to":"fill_default","as":"input"},{"from":"in","to":"fill_default","as":"input"},{"from":"in","to":"fill_default","as":"input"}]},{"id":"8521eyel9","type":"get_key","name":"in_key"},{"id":"get_key","name":"get_key","nodes":[{"id":"out","args":[],"name":"get_key/out","type":"get"},{"id":"icfpfcgc2","args":[],"value":"key"},{"id":"in","args":[],"name":"get_key/in"}],"edges":[{"from":"icfpfcgc2","to":"out","as":"path"},{"from":"in","to":"out","as":"target"}]},{"id":"6bq0uyi21","args":[],"value":"purple"},{"id":"nwzqn5kuj","args":[],"name":"selected circle"},{"id":"eme0j4p3c","args":[],"value":0},{"id":"owk17bwlk","args":[],"value":"#fcc"},{"id":"css","name":"css","nodes":[{"id":"out","name":"css/out","script":"return rules?.join(\"\\n\");","args":["rules"]},{"id":"mec78sn2n","name":"compile","args":["init","attrs","end","keyframes"],"script":"return [init].concat(attrs ?? []).concat(keyframes ?? []).concat([end])"},{"id":"2ll8r3sx5","name":"init","args":["entry"],"script":"return entry[0] + \" {\""},{"id":"mrs40dwx8","value":"}"},{"id":"h28e9j2fo","name":"attrs","args":["entry"],"script":"return entry && entry.length > 0 ? [Object.entries(entry[1]).map(([k, v]) => `${k}: ${v};`)] : undefined;\n\n//return JSON.stringify(entry[1]);\n"},{"id":"i6kzydhrf","args":["entry"],"name":"attrs_keyframes","script":"return entry ? Object.entries(entry).map(([k,v]) => k + \" {\" + Object.entries(v).map(([k,v]) => `${k}: ${v}`) + \"}\" ).join(\"\\n\") + \"}\" : undefined"},{"id":"ie18qgd52","name":"entries","script":"return Object.entries(input)","args":["input"]},{"id":"0g05impwi","args":["entry"],"name":"filter_non_keyframes","script":"return !entry ? undefined : entry[0].startsWith(\"@keyframes\") ? undefined : [entry];"},{"id":"1axxnkooa","args":["entry"],"name":"filter_keyframes","script":"return entry &&  entry[0].startsWith(\"@keyframes\") ? entry[1] : undefined;"},{"id":"in","name":"css/in"}],"edges":[{"from":"mec78sn2n","to":"out","type":"concat","as":"rules"},{"from":"2ll8r3sx5","to":"mec78sn2n","as":"init","name":"end"},{"from":"mrs40dwx8","to":"mec78sn2n","as":"end"},{"from":"h28e9j2fo","to":"mec78sn2n","as":"attrs"},{"from":"i6kzydhrf","to":"mec78sn2n","as":"keyframes"},{"from":"ie18qgd52","to":"2ll8r3sx5","as":"entry"},{"from":"0g05impwi","to":"h28e9j2fo","as":"entry"},{"from":"1axxnkooa","to":"i6kzydhrf","as":"entry"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"ie18qgd52","to":"0g05impwi","as":"entry"},{"from":"ie18qgd52","to":"1axxnkooa"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"}]},{"id":"pdg94ffkr","args":[],"name":"concat_out"},{"id":"a2t5q6yuj","args":[],"value":{"className":"css-styles","dom_type":"style"}},{"id":"2jiztgmvr","type":"el","name":"css-el"},{"id":"pt0vvsrev","args":[],"name":"key_el_content","script":"el.innerText = text;\n\nreturn text;"},{"id":"j6wxsx1vi","args":[],"value":{"className":"show-key","dom_type":"div"}},{"id":"56xxl00f0","args":[],"script":"return key;","name":"key_el_text"},{"id":"a9zgxu97f","args":[],"name":"link selected"},{"id":"p7pe5fy8m","args":[],"value":"white"},{"id":"9j360e0q1","args":[],"value":"white"},{"id":"j1ebjfua9","args":[],"name":"unselected link"},{"id":"7w4was0oj","args":[],"value":"#ccc"},{"id":"u302wy8sk","args":[],"value":"red"},{"id":"ychx08efc","args":[],"type":"get_key"},{"id":"urr29nkv4","args":[],"value":"selected.0"},{"id":"7fvrti4wv","args":[],"name":"show-key"},{"id":"o6nkn8sss","args":[],"value":"fixed"},{"id":"6f7dpt0ta","args":[],"value":"100px"},{"id":"wd52he3g4","args":[],"value":"100px"},{"id":"k3yyyekee","args":[]},{"id":"s78ig2uob","args":[],"name":"key_el","type":"el"},{"id":"el","name":"el","nodes":[{"id":"out","name":"el/out","args":["get_el","create_el"],"type":"switch"},{"id":"vpq73g9qg","name":"get_el","script":"return document.querySelector(`.${className}`)","args":["className"]},{"id":"zruw6k6l9","name":"el classname","args":["el","className"],"script":"el.className = className; document.body.appendChild(el); return el;"},{"id":"x8tdpkazf","name":"css el inputs","script":"return document.querySelector(`.${className}`) ? [\"get_el\"] : [\"create_el\"];","args":["className"]},{"id":"in","args":[],"name":"el/in"},{"id":"dfbmreaek","name":"create el","script":"return document.createElement(dom_type);","args":["dom_type"]}],"edges":[{"from":"vpq73g9qg","to":"out","as":"get_el"},{"from":"zruw6k6l9","to":"out","as":"create_el"},{"from":"x8tdpkazf","to":"out","type":"inputs"},{"from":"in","to":"vpq73g9qg"},{"from":"dfbmreaek","to":"zruw6k6l9","as":"el"},{"from":"in","to":"zruw6k6l9"},{"from":"in","to":"x8tdpkazf"},{"from":"in","to":"dfbmreaek"}]},{"id":"9465rwni5","args":[],"value":"2em;"},{"id":"inuzw83a7","args":[],"value":"consolas"}],"edges":[{"from":"2jiztgmvr","to":"lvfabiz9b","as":"el"},{"from":"bacr589n7","to":"lvfabiz9b","as":"styles"},{"from":"vr865hcv0","to":"bacr589n7","as":"body","name":"light-grey","value":"#ccc"},{"from":"kvq1q0k30","to":"vr865hcv0","as":"background-color"},{"from":"qpao2izqz","to":"bacr589n7","as":".node circle"},{"from":"u7sy8fwro","to":"qpao2izqz","as":"stroke"},{"from":"56j09nio2","to":"qpao2izqz","as":"stroke-width"},{"from":"1t96plqko","to":"bacr589n7","as":"text"},{"from":"4ol7uqdfr","to":"qpao2izqz","as":"animation_"},{"from":"6ffivp2aw","to":"7xg2ng5r0","as":"from"},{"from":"3xppcpetm","to":"7xg2ng5r0","as":"to"},{"from":"29hvv137x","to":"7xg2ng5r0","as":"attr"},{"from":"w62vgl3ln","to":"1t96plqko","as":"font-family"},{"from":"7xg2ng5r0","to":"bacr589n7","as":"@keyframes blink"},{"from":"jtbamz3os","to":"ajj5t166a","as":"target"},{"from":"fj2x64arr","to":"c6h6qfqbw","type":"inputs"},{"from":"jtbamz3os","to":"qtb69pl8t","as":"target"},{"from":"mdwg7wfgu","to":"qtb69pl8t","as":"path"},{"from":"qtb69pl8t","to":"r8cqojmo1","as":"start_value"},{"from":"8521eyel9","to":"r8cqojmo1","as":"key"},{"from":"mdwg7wfgu","to":"ajj5t166a","as":"path"},{"from":"qtb69pl8t","to":"fj2x64arr","as":"value"},{"from":"ajj5t166a","to":"c6h6qfqbw","as":"increase_decrease"},{"from":"r8cqojmo1","to":"ajj5t166a","as":"value"},{"from":"in","to":"jtbamz3os"},{"from":"in","to":"8521eyel9"},{"from":"6bq0uyi21","to":"qpao2izqz","as":"fill"},{"from":"nwzqn5kuj","to":"bacr589n7","as":".node.selected circle"},{"from":"eme0j4p3c","to":"nwzqn5kuj","as":"stroke-width"},{"from":"owk17bwlk","to":"nwzqn5kuj","as":"fill"},{"from":"pdg94ffkr","to":"out","as":"value"},{"from":"a2t5q6yuj","to":"2jiztgmvr"},{"from":"56xxl00f0","to":"pt0vvsrev","as":"text"},{"from":"a9zgxu97f","to":"bacr589n7","as":".link.selected"},{"from":"p7pe5fy8m","to":"vr865hcv0","as":"color"},{"from":"9j360e0q1","to":"1t96plqko","as":"fill"},{"from":"j1ebjfua9","to":"bacr589n7","as":".link"},{"from":"7w4was0oj","to":"j1ebjfua9","as":"stroke"},{"from":"u302wy8sk","to":"a9zgxu97f","as":"stroke","value":"red"},{"from":"in","to":"ychx08efc"},{"from":"urr29nkv4","to":"ychx08efc","as":"path"},{"from":"ychx08efc","to":"56xxl00f0","as":"key"},{"from":"7fvrti4wv","to":"bacr589n7","as":".show-key"},{"from":"o6nkn8sss","to":"7fvrti4wv","as":"position"},{"from":"6f7dpt0ta","to":"7fvrti4wv","as":"right"},{"from":"wd52he3g4","to":"7fvrti4wv","as":"top"},{"from":"k3yyyekee","to":"7fvrti4wv"},{"from":"j6wxsx1vi","to":"s78ig2uob"},{"from":"s78ig2uob","to":"pt0vvsrev","as":"el"},{"from":"9465rwni5","to":"7fvrti4wv","as":"font-size"},{"from":"inuzw83a7","to":"7fvrti4wv","as":"font-family"},{"from":"c6h6qfqbw","to":"out"},{"from":"lvfabiz9b","to":"out"},{"from":"pt0vvsrev","to":"out"}]}
+const test_graph = {"in": "in", "out": "out", "nodes":[{"id":"out","args":["value"],"script":"return value;"},{"id":"get_inputs","value":"value"},{"id":"get_script","value":"value"},{"id":"lvfabiz9b","name":"css","args":["el","styles"],"script":"el.innerHTML = styles;\n\nreturn styles;"},{"id":"filter","nodes":[{"id":"in"},{"id":"out","args":["keep","data"],"script":"return keep ? [data] : []"}],"edges":[{"from":"in","to":"out","order":1},{"from":"in","to":"out","as":"data","order":0}]},{"id":"delete","nodes":[{"id":"in"},{"id":"out","args":["data","path"],"script":"const new_data = Object.assign({}, data); delete new_data[path]; return new_data;"}],"edges":[{"from":"in","to":"out","order":1},{"from":"in","to":"out","as":"data","order":0}],"value":"value"},{"id":"switch","nodes":[{"id":"in"},{"id":"out","args":["data","input"],"script":"return data[Object.getOwnPropertyNames(data)[0]];"}],"edges":[{"from":"in","to":"out","as":"data"}]},{"id":"trigger","nodes":[{"id":"in"},{"id":"trigger","args":["trigger"],"script":"return trigger ? ['in'] : []"},{"id":"out","args":["data"],"script":"return data?.data ?? []"}],"edges":[{"from":"in","to":"out","as":"data"},{"from":"in","to":"trigger"},{"from":"trigger","to":"out","type":"inputs"}]},{"id":"execute_graph","nodes":[{"id":"in","value":null},{"id":"out","args":["in_node","out_node","graph"],"script":"return (...args) => (lib.no.executeGraph({state: new Map([[in_node, args]]), graph, out: out_node }))"}],"edges":[{"from":"in","to":"out"}]},{"id":"vr865hcv0","name":"body"},{"id":"kvq1q0k30","value":"#112"},{"id":"qpao2izqz","name":".node"},{"id":"u7sy8fwro","value":"white"},{"id":"56j09nio2","value":0},{"id":"1t96plqko","name":"text"},{"id":"bacr589n7","type":"css","name":"stringify_css"},{"id":"3xppcpetm","args":[],"value":1},{"id":"6ffivp2aw","args":[],"value":0},{"id":"4ol7uqdfr","args":[],"value":"2s blink infinite"},{"id":"29hvv137x","args":[],"value":"opacity"},{"id":"w62vgl3ln","args":[],"value":"consolas"},{"id":"7xg2ng5r0","type":"two_value_anim","name":"blink anim"},{"id":"in","args":[],"name":"in"},{"id":"c6h6qfqbw","args":["increase_decrease"],"name":"key_listener","script":"return increase_decrease ?? 'no key listener events';"},{"id":"ajj5t166a","type":"set","name":"set_value_increase_decrease"},{"id":"set","args":[],"name":"set","script":"return lib._.set(target, path, value);"},{"id":"r8cqojmo1","args":[],"script":"return typeof start_value !== 'number' ? start_value : key === 'i' ? start_value + 1 : key === 'd' ? start_value - 1 : start_value;","name":"modify_value"},{"id":"fj2x64arr","args":[],"name":"key_listener_inputs","script":"return typeof value === 'number' ? ['increase_decrease'] : []"},{"id":"qtb69pl8t","args":[],"type":"get","name":"get_value"},{"id":"mdwg7wfgu","args":[],"value":"value"},{"id":"jtbamz3os","type":"get_selected_node","name":"in_selected_node"},{"id":"two_value_anim","name":"two_value_anim","nodes":[{"id":"out","args":["attr","to","from"],"name":"two_value_anim/out","script":"return {to: {[attr]: to}, from: {[attr]: from}};"},{"id":"in","args":[],"name":"two_value_anim/in"}],"edges":[{"from":"in","to":"out"}]},{"id":"default","name":"default","nodes":[{"id":"out","args":["data","default_value"],"script":"return data.length > 0 ? data : default_value"},{"id":"in"}],"edges":[{"from":"in","to":"out"}]},{"id":"get_selected_node","name":"get_selected_node","nodes":[{"id":"out","args":["graph","selected"],"name":"get_selected_node/out","script":"return graph?.nodes?.find(n => n.id === selected) ?? [];"},{"id":"dh64fe0yi","args":["target"],"name":"get_selected","script":"return target.selected[0]"},{"id":"7y938lss2","args":[],"type":"get","name":"get_display_graph"},{"id":"scbdvvauy","args":["in_value"],"script":"return in_value;","name":"in_value"},{"id":"1xlhcil2e","args":[],"value":"display_graph"},{"id":"in","args":[],"name":"get_selected_node/in"}],"edges":[{"from":"dh64fe0yi","to":"out","as":"selected"},{"from":"7y938lss2","to":"out","as":"graph"},{"from":"scbdvvauy","to":"dh64fe0yi","as":"target"},{"from":"1xlhcil2e","to":"7y938lss2","as":"path"},{"from":"scbdvvauy","to":"7y938lss2","as":"target"},{"from":"in","to":"scbdvvauy","as":"in_value"},{"from":"in","to":"scbdvvauy","as":"in_value"},{"from":"in","to":"scbdvvauy","as":"in_value"},{"from":"in","to":"scbdvvauy","as":"in_value"},{"from":"in","to":"scbdvvauy","as":"in_value"},{"from":"in","to":"scbdvvauy","as":"in_value"},{"from":"in","to":"scbdvvauy","as":"in_value"},{"from":"in","to":"scbdvvauy","as":"in_value"}]},{"id":"get","name":"get","nodes":[{"id":"out","args":["target","path","def"],"script":"return [lib._.get(target, path) ?? def]"},{"id":"in"},{"id":"fill_default","args":["input"],"script":"return input.default ?? null"}],"edges":[{"from":"in","to":"out"},{"from":"fill_default","to":"out","as":"def"},{"from":"in","to":"out"},{"from":"fill_default","to":"out","as":"def"},{"from":"in","to":"fill_default","as":"input"},{"from":"in","to":"fill_default","as":"input"},{"from":"in","to":"fill_default","as":"input"},{"from":"in","to":"fill_default","as":"input"}]},{"id":"8521eyel9","type":"get_key","name":"in_key"},{"id":"get_key","name":"get_key","nodes":[{"id":"out","args":[],"name":"get_key/out","type":"get"},{"id":"icfpfcgc2","args":[],"value":"key"},{"id":"in","args":[],"name":"get_key/in"}],"edges":[{"from":"icfpfcgc2","to":"out","as":"path"},{"from":"in","to":"out","as":"target"}]},{"id":"6bq0uyi21","args":[],"value":"purple"},{"id":"nwzqn5kuj","args":[],"name":"selected circle"},{"id":"eme0j4p3c","args":[],"value":0},{"id":"owk17bwlk","args":[],"value":"#fcc"},{"id":"css","name":"css","nodes":[{"id":"out","name":"css/out","script":"return rules?.join(\"\\n\");","args":["rules"]},{"id":"mec78sn2n","name":"compile","args":["init","attrs","end","keyframes"],"script":"return [init].concat(attrs ?? []).concat(keyframes ?? []).concat([end])"},{"id":"2ll8r3sx5","name":"init","args":["entry"],"script":"return entry[0] + \" {\""},{"id":"mrs40dwx8","value":"}"},{"id":"h28e9j2fo","name":"attrs","args":["entry"],"script":"return entry && entry.length > 0 ? [Object.entries(entry[1]).map(([k, v]) => `${k}: ${v};`)] : undefined;\n\n//return JSON.stringify(entry[1]);\n"},{"id":"i6kzydhrf","args":["entry"],"name":"attrs_keyframes","script":"return entry ? Object.entries(entry).map(([k,v]) => k + \" {\" + Object.entries(v).map(([k,v]) => `${k}: ${v}`) + \"}\" ).join(\"\\n\") + \"}\" : undefined"},{"id":"ie18qgd52","name":"entries","script":"return Object.entries(input)","args":["input"]},{"id":"0g05impwi","args":["entry"],"name":"filter_non_keyframes","script":"return !entry ? undefined : entry[0].startsWith(\"@keyframes\") ? undefined : [entry];"},{"id":"1axxnkooa","args":["entry"],"name":"filter_keyframes","script":"return entry &&  entry[0].startsWith(\"@keyframes\") ? entry[1] : undefined;"},{"id":"in","name":"css/in"}],"edges":[{"from":"mec78sn2n","to":"out","type":"concat","as":"rules"},{"from":"2ll8r3sx5","to":"mec78sn2n","as":"init","name":"end"},{"from":"mrs40dwx8","to":"mec78sn2n","as":"end"},{"from":"h28e9j2fo","to":"mec78sn2n","as":"attrs"},{"from":"i6kzydhrf","to":"mec78sn2n","as":"keyframes"},{"from":"ie18qgd52","to":"2ll8r3sx5","as":"entry"},{"from":"0g05impwi","to":"h28e9j2fo","as":"entry"},{"from":"1axxnkooa","to":"i6kzydhrf","as":"entry"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"ie18qgd52","to":"0g05impwi","as":"entry"},{"from":"ie18qgd52","to":"1axxnkooa"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"},{"from":"in","to":"ie18qgd52","as":"input"}]},{"id":"pdg94ffkr","args":[],"name":"concat_out"},{"id":"a2t5q6yuj","args":[],"value":{"className":"css-styles","dom_type":"style"}},{"id":"2jiztgmvr","type":"el","name":"css-el"},{"id":"pt0vvsrev","args":[],"name":"key_el_content","script":"el.innerText = text;\n\nreturn text;"},{"id":"j6wxsx1vi","args":[],"value":{"className":"show-key","dom_type":"div"}},{"id":"56xxl00f0","args":[],"script":"return key;","name":"key_el_text"},{"id":"a9zgxu97f","args":[],"name":"link selected"},{"id":"p7pe5fy8m","args":[],"value":"white"},{"id":"9j360e0q1","args":[],"value":"white"},{"id":"j1ebjfua9","args":[],"name":"unselected link"},{"id":"7w4was0oj","args":[],"value":"#ccc"},{"id":"u302wy8sk","args":[],"value":"red"},{"id":"ychx08efc","args":[],"type":"get_key"},{"id":"urr29nkv4","args":[],"value":"selected.0"},{"id":"7fvrti4wv","args":[],"name":"show-key"},{"id":"o6nkn8sss","args":[],"value":"fixed"},{"id":"6f7dpt0ta","args":[],"value":"100px"},{"id":"wd52he3g4","args":[],"value":"100px"},{"id":"k3yyyekee","args":[]},{"id":"s78ig2uob","args":[],"name":"key_el","type":"el"},{"id":"el","name":"el","nodes":[{"id":"out","name":"el/out","args":["get_el","create_el"],"type":"switch"},{"id":"vpq73g9qg","name":"get_el","script":"return document.querySelector(`.${className}`)","args":["className"]},{"id":"zruw6k6l9","name":"el classname","args":["el","className"],"script":"el.className = className; document.body.appendChild(el); return el;"},{"id":"x8tdpkazf","name":"css el inputs","script":"return document.querySelector(`.${className}`) ? [\"get_el\"] : [\"create_el\"];","args":["className"]},{"id":"in","args":[],"name":"el/in"},{"id":"dfbmreaek","name":"create el","script":"return document.createElement(dom_type);","args":["dom_type"]}],"edges":[{"from":"vpq73g9qg","to":"out","as":"get_el"},{"from":"zruw6k6l9","to":"out","as":"create_el"},{"from":"x8tdpkazf","to":"out","type":"inputs"},{"from":"in","to":"vpq73g9qg"},{"from":"dfbmreaek","to":"zruw6k6l9","as":"el"},{"from":"in","to":"zruw6k6l9"},{"from":"in","to":"x8tdpkazf"},{"from":"in","to":"dfbmreaek"}]},{"id":"9465rwni5","args":[],"value":"2em;"},{"id":"inuzw83a7","args":[],"value":"consolas"}],"edges":[{"from":"2jiztgmvr","to":"lvfabiz9b","as":"el"},{"from":"bacr589n7","to":"lvfabiz9b","as":"styles"},{"from":"vr865hcv0","to":"bacr589n7","as":"body","name":"light-grey","value":"#ccc"},{"from":"kvq1q0k30","to":"vr865hcv0","as":"background-color"},{"from":"qpao2izqz","to":"bacr589n7","as":".node circle"},{"from":"u7sy8fwro","to":"qpao2izqz","as":"stroke"},{"from":"56j09nio2","to":"qpao2izqz","as":"stroke-width"},{"from":"1t96plqko","to":"bacr589n7","as":"text"},{"from":"4ol7uqdfr","to":"qpao2izqz","as":"animation_"},{"from":"6ffivp2aw","to":"7xg2ng5r0","as":"from"},{"from":"3xppcpetm","to":"7xg2ng5r0","as":"to"},{"from":"29hvv137x","to":"7xg2ng5r0","as":"attr"},{"from":"w62vgl3ln","to":"1t96plqko","as":"font-family"},{"from":"7xg2ng5r0","to":"bacr589n7","as":"@keyframes blink"},{"from":"jtbamz3os","to":"ajj5t166a","as":"target"},{"from":"fj2x64arr","to":"c6h6qfqbw","type":"inputs"},{"from":"jtbamz3os","to":"qtb69pl8t","as":"target"},{"from":"mdwg7wfgu","to":"qtb69pl8t","as":"path"},{"from":"qtb69pl8t","to":"r8cqojmo1","as":"start_value"},{"from":"8521eyel9","to":"r8cqojmo1","as":"key"},{"from":"mdwg7wfgu","to":"ajj5t166a","as":"path"},{"from":"qtb69pl8t","to":"fj2x64arr","as":"value"},{"from":"ajj5t166a","to":"c6h6qfqbw","as":"increase_decrease"},{"from":"r8cqojmo1","to":"ajj5t166a","as":"value"},{"from":"in","to":"jtbamz3os"},{"from":"in","to":"8521eyel9"},{"from":"6bq0uyi21","to":"qpao2izqz","as":"fill"},{"from":"nwzqn5kuj","to":"bacr589n7","as":".node.selected circle"},{"from":"eme0j4p3c","to":"nwzqn5kuj","as":"stroke-width"},{"from":"owk17bwlk","to":"nwzqn5kuj","as":"fill"},{"from":"pdg94ffkr","to":"out","as":"value"},{"from":"a2t5q6yuj","to":"2jiztgmvr"},{"from":"56xxl00f0","to":"pt0vvsrev","as":"text"},{"from":"a9zgxu97f","to":"bacr589n7","as":".link.selected"},{"from":"p7pe5fy8m","to":"vr865hcv0","as":"color"},{"from":"9j360e0q1","to":"1t96plqko","as":"fill"},{"from":"j1ebjfua9","to":"bacr589n7","as":".link"},{"from":"7w4was0oj","to":"j1ebjfua9","as":"stroke"},{"from":"u302wy8sk","to":"a9zgxu97f","as":"stroke","value":"red"},{"from":"in","to":"ychx08efc"},{"from":"urr29nkv4","to":"ychx08efc","as":"path"},{"from":"ychx08efc","to":"56xxl00f0","as":"key"},{"from":"7fvrti4wv","to":"bacr589n7","as":".show-key"},{"from":"o6nkn8sss","to":"7fvrti4wv","as":"position"},{"from":"6f7dpt0ta","to":"7fvrti4wv","as":"right"},{"from":"wd52he3g4","to":"7fvrti4wv","as":"top"},{"from":"k3yyyekee","to":"7fvrti4wv"},{"from":"j6wxsx1vi","to":"s78ig2uob"},{"from":"s78ig2uob","to":"pt0vvsrev","as":"el"},{"from":"9465rwni5","to":"7fvrti4wv","as":"font-size"},{"from":"inuzw83a7","to":"7fvrti4wv","as":"font-family"},{"from":"c6h6qfqbw","to":"out"},{"from":"lvfabiz9b","to":"out"},{"from":"pt0vvsrev","to":"out"}]}
 
 //////////
 // TODO: convert these to nodes
@@ -317,7 +315,7 @@ const d3simulation = () => {
 
 const updateSimulationNodes = (data) => {
     const selected = data.selected[0];
-    const levels = data.levels ?? calculateLevels(data.display_graph, data.display_graph_out);
+    const levels = data.levels ?? calculateLevels(data.display_graph, data.display_graph.out);
     const selected_level = levels.level_by_node.get(selected);
 
     if(typeof(data.links?.[0]?.source) === "string") {
@@ -358,7 +356,7 @@ const updateSimulationNodes = (data) => {
             : .9
         ));
 
-    data.simulation.force('collide').radius(n => n.node_id === selected ? 64 : 32);
+    data.simulation.force('collide').radius(n => n.node_id === selected ? 64 : 0);
 
 
     data.simulation
@@ -381,6 +379,8 @@ const graphToSimulationNodes = (data) => {
             script: n.script,
             value: n.value,
             name: n.name,
+            in: n.in,
+            out: n.out,
             level: data.levels.level_by_node.get(n.id),
             selected_distance: data.levels.distance_from_selected.get(n.id),
             x: current_data?.x ?? data.x ?? Math.floor(window.innerWidth * (Math.random() * .5 + .25)),
@@ -395,7 +395,7 @@ const graphToSimulationNodes = (data) => {
             target: e.to, 
             as: e.as, 
             type: e.type, 
-            selected_distance: Math.min(data.levels.distance_from_selected.get(e.to), data.levels.distance_from_selected.get(e.from)),
+            selected_distance: data.levels.distance_from_selected.get(e.to) !== undefined ? Math.min(data.levels.distance_from_selected.get(e.to), data.levels.distance_from_selected.get(e.from)) : undefined,
             sibling_index_normalized: (data.levels.siblings.get(e.from).findIndex(n => n === e.from) + 1) / (data.levels.siblings.get(e.from).length + 1),
         }));
 
@@ -465,8 +465,6 @@ const expand_node = (data) => {
 
     const flattened = lib.scripts.flattenNode(node, 1);
 
-    const seen_set = new Set();
-
     const new_display_graph = {
         nodes: data.display_graph.nodes
             .filter(n => n.id !== node_id)
@@ -474,13 +472,13 @@ const expand_node = (data) => {
         edges: data.display_graph.edges
             .map(e => ({
                 ...e,
-                from: e.from === node_id ? `${node_id}/out` : e.from,
-                to: e.to === node_id ? `${node_id}/in` : e.to
+                from: e.from === node_id ? node.id + "/" + (node.out ?? 'out') : e.from,
+                to: e.to === node_id ? node.id + "/" + (node.in ?? 'in') : e.to
             }))
             .concat(flattened.flat_edges)
     };
 
-    return new_display_graph;
+    return {display_graph: {...display_graph, ...new_display_graph}, selected: node_id + '/' + (node.out ?? 'out')};
 }
 
 const contract_all = (graph) => {
@@ -498,7 +496,8 @@ const contract_all = (graph) => {
 const contract_node = (data, keep_expanded=false) => {
     const node = data.display_graph.nodes.find(n => n.id === data.node_id);
     if(!node.nodes) {
-        const node_id = data.node_id.endsWith('/out') ? data.node_id.substring(0, data.node_id.indexOf("/out")) : data.node_id;
+        const slash_index = data.node_id.lastIndexOf('/');
+        const node_id = slash_index >= 0 ? data.node_id.substring(0, slash_index) : data.node_id;
         const name = data.name?.substring(0, data.name.indexOf("/out")) ?? node_id;
 
         const inside_nodes = [Object.assign({}, node)];
@@ -507,70 +506,67 @@ const contract_node = (data, keep_expanded=false) => {
         inside_node_map.set(inside_nodes[0].id, inside_nodes[0]);
         const inside_edges = [];
 
-        const q = [inside_nodes[0].id];
+        const q = data.display_graph.edges.filter(e => e.to === inside_nodes[0].id);
+
+        let in_edge = [];
 
         while(q.length > 0) {
-            const n = q.shift();
-            dangling.delete(n);
+            const e = q.shift();
+            dangling.delete(e.from);
 
-            if(n !== node_id && n !== node_id + "/out") {
-                data.display_graph.edges.filter(ie => ie.from === n).forEach(ie => {
+            let this_dangling = 0;
+
+            if(e.from !== data.node_id) {
+                data.display_graph.edges.filter(ie => ie.from === e.from).forEach(ie => {
                     if(!inside_node_map.has(ie.to)) {
+                        this_dangling += 1;
                         dangling.add(ie.to)
                     }
                 });
             }
 
-            data.display_graph.edges.filter(e => e.to === n).forEach(e => {
-                const old_node = inside_nodes.find(n => n.id === e.from);
+            if(this_dangling === 0) {
+                in_edge.filter(ie => ie.from === e.from).forEach(ie => {
+                    inside_edges.push(ie)
+                });
+
+                in_edge = in_edge.filter(ie => ie.from !== e.from);
+
+                const old_node = inside_nodes.find(i => e.from === i.id);
                 let inside_node = old_node ?? data.display_graph.nodes.find(p => p.id === e.from);
 
-                if(!inside_node) {
-                    console.log('canceling loop');
-                    return;
-                }
-
                 inside_node_map.set(inside_node.id, inside_node);
-
                 inside_edges.push(e);
                 if(!old_node) {
                     inside_nodes.push(inside_node);
                 }
 
-                if(!(e.from === (node_id + "/in") || inside_node.name === (name + "/in"))) {
-                    q.push(e.from);
-                }
-            });
+                data.display_graph.edges.filter(de => de.to === e.from).forEach(de => {
+                    q.push(de);
+                });
+            } else {
+                in_edge.push(e);
+            }
         }
 
-        if(dangling.size > 0) {
-            return undefined;
+        const in_node_id = in_edge[0]?.to;
+
+        if(in_edge.find(ie => ie.to !== in_node_id)) {
+            return {display_graph: data.display_graph, selected: data.node_id};
         }
 
-        const in_node = inside_nodes.find(n => n.id === node_id + '/in' || n.name === name + "/in");
-        const in_node_id = in_node?.id;
-
-        if(in_node) {
-            in_node.id = node_id + "/in";
-            inside_node_map.set(in_node.id, in_node);
-        }
-
-        const out_node = inside_nodes.find(n => n.id === node_id || n.name === name + "/out" || n.id === node_id + "/out");
+        const out_node = inside_nodes.find(n => n.id === data.node_id || n.name === name + "/out" || n.id === node_id + "/out");
         const out_node_id = out_node.id;
-
-        if(out_node) {
-            out_node.id = node_id + "/out";
-            inside_node_map.set(out_node.id, out_node);
-        }
-
 
         const new_display_graph = {
                 nodes: data.display_graph.nodes
-                    .filter(n => n.id !== node_id)
+                    .filter(n => n.id !== data.node_id)
                     .filter(n => keep_expanded || !inside_node_map.has(n.id))
                     .concat([{
                         id: node_id,
                         name,
+                        in: in_node_id?.startsWith(node_id + '/') ? in_node_id.substring(node_id.length + 1) : in_node_id,
+                        out: out_node_id.startsWith(node_id + '/') ? out_node_id.substring(node_id.length + 1) : out_node_id,
                         nodes: inside_nodes.map(n => ({
                             ...n,
                             id: n.id.startsWith(node_id + "/") ? n.id.substring(node_id.length + 1) : n.id
@@ -578,13 +574,9 @@ const contract_node = (data, keep_expanded=false) => {
                         edges: inside_edges.map(e => ({...e, 
                             from: e.from.startsWith(node_id + "/") 
                             ? e.from.substring(node_id.length + 1) 
-                            : e.from === in_node_id
-                            ? "in"
                             : e.from, 
                             to: e.to.startsWith(node_id + "/") 
                                 ? e.to.substring(node_id.length + 1) 
-                                : e.to === out_node_id
-                                ? "out"
                                 : e.to
                         }))
                     }]),
@@ -593,10 +585,13 @@ const contract_node = (data, keep_expanded=false) => {
                     .map(e => 
                         e.from === data.node_id ? {...e, from: node_id} 
                         : e.to === in_node_id ? {...e, to: node_id} 
-                        : e)
+                        : inside_node_map.has(e.to) 
+                        ? {...e, to: node_id}
+                        : e
+                    )
             };
 
-        return new_display_graph;
+        return {display_graph: {...display_graph, ...new_display_graph}, selected: node_id};
     }
 }
 
@@ -615,9 +610,9 @@ const flattenNode = (graph, levels = -1) => {
             flat_nodes: acc.flat_nodes.concat(n.flat_nodes?.flat() ?? []),
             flat_edges: acc.flat_edges.map(e => n.flat_nodes ?
                 e.to === n.id ?
-                Object.assign({}, e, { to: `${e.to}/in` }) :
+                Object.assign({}, e, { to: `${e.to}/${n.in ?? 'in'}` }) :
                 e.from === n.id ?
-                Object.assign({}, e, { from: `${e.from}/out` }) :
+                Object.assign({}, e, { from: `${e.from}/${n.out ?? 'out'}` }) :
                 e :
                 e).flat().concat(n.flat_edges).filter(e => e !== undefined)
         }), Object.assign({}, graph, {
@@ -646,6 +641,6 @@ const generic_nodes = new Set(["switch", "filter", "delete", "default", "trigger
 const stored = localStorage.getItem("display_graph");
 // const display_graph = DEFAULT_GRAPH;
 const display_graph = stored ? JSON.parse(stored) : test_graph;
-const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: {nodes: display_graph.nodes.concat(DEFAULT_GRAPH.nodes.filter(n => generic_nodes.has(n.id) && display_graph.nodes.findIndex(dn => dn.id === n.id) === -1)), edges: display_graph.edges.concat([])}, display_graph_out: "out"}]]])
+const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: {...display_graph, nodes: display_graph.nodes.concat(DEFAULT_GRAPH.nodes.filter(n => generic_nodes.has(n.id) && display_graph.nodes.findIndex(dn => dn.id === n.id) === -1)), edges: display_graph.edges.concat([])}}]]])
 
 console.log(executeGraph({state, graph: DEFAULT_GRAPH, out: "hyperapp_app"})[0]);

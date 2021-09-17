@@ -1,5 +1,7 @@
 {
     "description": "function composition",
+    "in": "in",
+    "out": "out",
     "nodes": [
         {
             "id": "in",
@@ -301,7 +303,7 @@
                         "out_node",
                         "graph"
                     ],
-                    "script": "return (...args) => (lib.no.executeGraph({state: new Map([[in_node, args]]), graph, out: out_node }))"
+                    "script": "return (...args) => (lib.no.executeGraph({state: new Map([[in_node, args]]), graph: {...graph, in: in_node, out: out_node}}))"
                 }
             ],
             "edges": [
@@ -463,6 +465,11 @@
                     "id": "in"
                 },
                 {
+                    "id": "selected_node",
+                    "args": ["node_id", "display_graph"],
+                    "script": "return display_graph.nodes.find(n => n.id === node_id)"
+                },
+                {
                     "id": "expand_contract_result_inputs",
                     "args": ["expandable", "contractable"],
                     "script": "return expandable ? ['expand', 'selected'] : contractable ? ['contract', 'selected'] : []"
@@ -475,12 +482,12 @@
                 {
                     "id": "expand_contract_result",
                     "args": ["expand", "contract", "selected", "display_graph", "node_id"],
-                    "script": "return (expand || contract) && selected ? {display_graph: expand ?? contract, selected} : {display_graph, selected: node_id}"
+                    "script": "return expand ?? contract ?? {display_graph, selected: node_id}"
                 },
                 {
                     "id": "get_name",
-                    "args": ["node_id", "display_graph"],
-                    "script": "return display_graph.nodes.find(n => n.id === node_id).name"
+                    "args": ["node"],
+                    "script": "return node.name"
                 },
                 {
                     "id": "log",
@@ -489,9 +496,10 @@
                 {
                     "id": "expandable_id",
                     "args": [
-                        "node_id"
+                        "id",
+                        "out"
                     ],
-                    "script": "return node_id ? [[node_id + '/out']] : []"
+                    "script": "return id ? [[id + '/' + out]] : []"
                 },
                 {
                     "id": "contractable_id",
@@ -499,15 +507,16 @@
                         "node_id",
                         "name"
                     ],
-                    "script": "return !node_id ? [] : node_id.endsWith('/out') ? [[node_id.substring(0, node_id.lastIndexOf('/'))]] : name?.endsWith('/out') ? [[node_id]] : []"
+                    "script": "return !node_id ? [] : node_id.endsWith('/out') ? [[node_id.substring(0, node_id.lastIndexOf('/'))]] : node_id.lastIndexOf('/') >= 0 ? [[node_id.substring(0, node_id.lastIndexOf('/'))]] : [[node_id]]"
                 },
                 {
                     "id": "expand",
                     "args": [
                         "node_id",
-                        "display_graph"
+                        "display_graph",
+                        "out"
                     ],
-                    "script": "return display_graph && node_id ? lib.scripts.expand_node({display_graph, node_id}) : []"
+                    "script": "return display_graph && node_id ? lib.scripts.expand_node({display_graph, node_id, out}) : []"
                 },
                 {
                     "id": "contract",
@@ -527,12 +536,11 @@
                     "script": "return !!display_graph.nodes.find(n => n.id === node_id).nodes"
                 },
                 {
-                    "id": "is_out",
+                    "id": "is_contractable",
                     "args": [
-                        "node_id",
-                        "name"
+                        "has_nodes"
                     ],
-                    "script": "return node_id.endsWith('/out') || name?.endsWith('/out')"
+                    "script": "return !has_nodes"
                 },
                 {
                     "id": "out",
@@ -542,23 +550,11 @@
             "edges": [
                 {
                     "from": "in",
-                    "to": "expandable_id"
-                },
-                {
-                    "from": "in",
                     "to": "contractable_id"
                 },
                 {
                     "from": "in",
-                    "to": "get_name"
-                },
-                {
-                    "from": "in",
                     "to": "has_nodes"
-                },
-                {
-                    "from": "in",
-                    "to": "is_out"
                 },
                 {
                     "from": "in",
@@ -573,13 +569,35 @@
                     "to": "expand_contract_result"
                 },
                 {
+                    "from": "in",
+                    "to": "selected_node"
+                },
+                {
+                    "from": "has_nodes",
+                    "to": "is_contractable",
+                    "as": "has_nodes"
+                },
+                {
+                    "from": "selected_node",
+                    "to": "get_name",
+                    "as": "node"
+                },
+                {
+                    "from": "selected_node",
+                    "to": "expandable_id"
+                },
+                {
+                    "from": "selected_node",
+                    "to": "contract"
+                },
+                {
                     "from":  "get_name",
                     "to": "contract",
                     "as": "name"
                 },
                 {
                     "from": "get_name",
-                    "to": "is_out",
+                    "to": "is_contractable",
                     "as": "name"
                 },
                 {
@@ -603,7 +621,7 @@
                     "as": "expandable"
                 },
                 {
-                    "from": "is_out",
+                    "from": "is_contractable",
                     "to": "expand_contract_result_inputs",
                     "as": "contractable"
                 },
@@ -698,7 +716,7 @@
         },
         {
             "id": "display_graph_out",
-            "value": "display_graph_out"
+            "value": "out"
         },
         {
             "id": "get_display_graph_out",
@@ -747,11 +765,10 @@
                 "nodes",
                 "display_graph",
                 "links",
-                "display_graph_out",
                 "selected",
                 "levels"
             ],
-            "script": "return lib.scripts.updateSimulationNodes({display_graph, simulation, nodes, links, display_graph_out, selected, levels})"
+            "script": "return lib.scripts.updateSimulationNodes({display_graph, simulation, nodes, links, selected, levels})"
         },
         {
             "id": "update_nodes_fn",
@@ -865,7 +882,7 @@
                         "nodes",
                         "levels"
                     ],
-                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.nodes_by_level[levels.level_by_node.get(selected[0])]; const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling && n.selected_distance < 3); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x < current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.siblings.get(selected[0]); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling && n.selected_distance < 3); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x < current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
                 },
                 {
                     "id": "left_edge",
@@ -889,7 +906,7 @@
                         "nodes",
                         "levels"
                     ],
-                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.nodes_by_level[levels.level_by_node.get(selected[0])]; const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling && n.selected_distance < 3); if(!sibling_node){ return dist }  const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.siblings.get(selected[0]); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling && n.selected_distance < 3); if(!sibling_node){ return dist }  const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
                 },
                 {
                     "id": "right_edge",
@@ -1008,7 +1025,7 @@
                         "display_graph",
                         "display_graph_out"
                     ],
-                    "script": "display_graph.nodes = display_graph.nodes.filter(n => n.id !== selected[0]); const new_edges = []; const to = display_graph.edges.filter(e => e.to === selected[0]); const from = display_graph.edges.filter(e => e.from === selected[0]); for(let i = 0; i < to.length; i++){for(let j = 0; j < from.length; j++){ if(!display_graph.edges.find(e => e.from === to[i].from && e.to === from[j].to)){ display_graph.edges.push({from: to[i].from, to: from[j].to});}}}; display_graph.edges = display_graph.edges.filter(e => e.to !== selected[0] && e.from !== selected[0]); display_graph.edges.push(...new_edges); return {display_graph, selected: [to[0]?.from ?? from[0]?.to ?? display_graph_out] };"
+                    "script": "display_graph.nodes = display_graph.nodes.filter(n => n.id !== selected[0]); const new_edges = []; const to = display_graph.edges.filter(e => e.to === selected[0]); const from = display_graph.edges.filter(e => e.from === selected[0]); for(let i = 0; i < to.length; i++){for(let j = 0; j < from.length; j++){ if(!display_graph.edges.find(e => e.from === to[i].from && e.to === from[j].to)){ display_graph.edges.push({from: to[i].from, to: from[j].to});}}}; display_graph.edges = display_graph.edges.filter(e => e.to !== selected[0] && e.from !== selected[0]); display_graph.edges.push(...new_edges); return {display_graph, selected: [to[0]?.from ?? from[0]?.to] };"
                 },
                 {
                     "id": "x_display_graph",
@@ -1228,7 +1245,7 @@
                 {
                     "id": "run",
                     "args": ["state", "key", "ctrlKey"],
-                    "script": "try { const result = lib.no.executeGraph({state: new Map([['in', [{...state, key}]]]), graph: {nodes: state.display_graph.nodes.concat([]), edges: state.display_graph.edges.concat([])}, out: state.display_graph_out})[0]; return {result: typeof result === 'object' ? JSON.stringify(result) : result}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
+                    "script": "try { const result = lib.no.executeGraph({state: new Map([['in', [{...state, key}]]]), graph: {...state.display_graph, nodes: state.display_graph.nodes.concat([]), edges: state.display_graph.edges.concat([])}})[0]; return {result: typeof result === 'object' ? JSON.stringify(result) : result}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
                 },
                 {
                     "id": "out",
@@ -2824,7 +2841,7 @@
                                                     "args": [
                                                         "target"
                                                     ],
-                                                    "script": "return `type: ` + (target.type ? target.type : target.value !== undefined ? 'value' : target.script ? 'script' : target.nodes ? `graph (${target.nodes.length}, ${target.edges.length})` : 'passthrough')"
+                                                    "script": "return `type: ` + (target.value !== undefined ? 'value' : target.type ? target.type : target.script ? 'script' : target.nodes ? `graph (${target.nodes.length}, ${target.edges.length})` : 'passthrough')"
                                                 },
                                                 {
                                                     "id": "get_selected_distance",
@@ -3182,7 +3199,7 @@
                                         "sibling_index_normalized",
                                         "selected_edge"
                                     ],
-                                    "script": "return ({x: sibling_index_normalized * (target.x - source.x) + source.x + 16, y: sibling_index_normalized * (target.y - source.y) + source.y, opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1, class: {selected: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to, edge: true} })"
+                                    "script": "return ({x: Math.floor(sibling_index_normalized * (target.x - source.x) + source.x) + 16, y: Math.floor(sibling_index_normalized * (target.y - source.y) + source.y), opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1, class: {selected: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to, edge: true} })"
                                 },
                                 {
                                     "id": "edge_info_line_position",
@@ -3792,7 +3809,7 @@
             "as": "target"
         },
         {
-            "from": "in",
+            "from": "get_display_graph",
             "to": "get_display_graph_out",
             "as": "target"
         },
