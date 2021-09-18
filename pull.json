@@ -182,7 +182,10 @@
                 },
                 {
                     "id": "out",
-                    "args": ["data", "input"],
+                    "args": [
+                        "data",
+                        "input"
+                    ],
                     "script": "return data[Object.getOwnPropertyNames(data)[0]];"
                 }
             ],
@@ -202,7 +205,9 @@
                 },
                 {
                     "id": "trigger",
-                    "args": ["trigger"],
+                    "args": [
+                        "trigger"
+                    ],
                     "script": "return trigger ? ['in'] : []"
                 },
                 {
@@ -303,7 +308,7 @@
                         "out_node",
                         "graph"
                     ],
-                    "script": "return (...args) => (lib.no.executeGraph({state: new Map([[in_node, args]]), graph: {...graph, in: in_node, out: out_node}}))"
+                    "script": "return (...args) => (lib.no.executeGraph({state: new Map([[in_node, args]]), graph: {...graph, in: in_node, out: out_node}}).get(out_node))"
                 }
             ],
             "edges": [
@@ -466,27 +471,44 @@
                 },
                 {
                     "id": "selected_node",
-                    "args": ["node_id", "display_graph"],
+                    "args": [
+                        "node_id",
+                        "display_graph"
+                    ],
                     "script": "return display_graph.nodes.find(n => n.id === node_id)"
                 },
                 {
                     "id": "expand_contract_result_inputs",
-                    "args": ["expandable", "contractable"],
+                    "args": [
+                        "expandable",
+                        "contractable"
+                    ],
                     "script": "return expandable ? ['expand', 'selected'] : contractable ? ['contract', 'selected'] : []"
                 },
                 {
                     "id": "selected",
-                    "args": ["expand", "contract"],
+                    "args": [
+                        "expand",
+                        "contract"
+                    ],
                     "script": "return expand ?? contract ?? []"
                 },
                 {
                     "id": "expand_contract_result",
-                    "args": ["expand", "contract", "selected", "display_graph", "node_id"],
+                    "args": [
+                        "expand",
+                        "contract",
+                        "selected",
+                        "display_graph",
+                        "node_id"
+                    ],
                     "script": "return expand ?? contract ?? {display_graph, selected: node_id}"
                 },
                 {
                     "id": "get_name",
-                    "args": ["node"],
+                    "args": [
+                        "node"
+                    ],
                     "script": "return node.name"
                 },
                 {
@@ -591,7 +613,7 @@
                     "to": "contract"
                 },
                 {
-                    "from":  "get_name",
+                    "from": "get_name",
                     "to": "contract",
                     "as": "name"
                 },
@@ -659,6 +681,39 @@
                     "from": "in",
                     "to": "out",
                     "as": "default_value"
+                }
+            ]
+        },
+        {
+            "id": "default_node_display",
+            "in": "in",
+            "out": "out",
+            "nodes": [
+                {
+                    "id": "in"
+                },
+                {
+                    "id": "stringify",
+                    "args": [
+                        "data"
+                    ],
+                    "script": "return JSON.stringify(data, null, 2)"
+                },
+                {
+                    "id": "out",
+                    "type": "h_text"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "in",
+                    "to": "stringify",
+                    "as": "data"
+                },
+                {
+                    "from": "stringify",
+                    "to": "out",
+                    "as": "text"
                 }
             ]
         },
@@ -802,12 +857,19 @@
                 },
                 {
                     "id": "key",
-                    "args": ["key"],
+                    "args": [
+                        "key"
+                    ],
                     "script": "return key.toLowerCase()"
                 },
                 {
                     "id": "key_inputs",
-                    "args": ["key", "state", "ctrlKey", "shiftKey"],
+                    "args": [
+                        "key",
+                        "state",
+                        "ctrlKey",
+                        "shiftKey"
+                    ],
                     "script": "return (state.editing !== false || state.search !== false) ? key === 'escape' ? ['escape'] : [] : [(ctrlKey ? 'ctrl_' : '') + (shiftKey ? 'shift_' : '') + key.toLowerCase()]"
                 },
                 {
@@ -840,7 +902,10 @@
                 },
                 {
                     "id": "selected_node",
-                    "args": ["node_id", "display_graph"],
+                    "args": [
+                        "node_id",
+                        "display_graph"
+                    ],
                     "script": "return display_graph.nodes.find(n => n.id === node_id)"
                 },
                 {
@@ -1004,17 +1069,23 @@
                 },
                 {
                     "id": "o_display_graph",
-                    "args": [ "display_graph"],
+                    "args": [
+                        "display_graph"
+                    ],
                     "script": "return display_graph"
                 },
                 {
                     "id": "o_selected",
-                    "args": [ "selected"],
+                    "args": [
+                        "selected"
+                    ],
                     "script": "return selected"
                 },
                 {
                     "id": "o_selected_edge",
-                    "args": [ "selected_edge"],
+                    "args": [
+                        "selected_edge"
+                    ],
                     "script": "return selected_edge"
                 },
                 {
@@ -1029,12 +1100,16 @@
                 },
                 {
                     "id": "x_display_graph",
-                    "args": [ "display_graph"],
+                    "args": [
+                        "display_graph"
+                    ],
                     "script": "return display_graph"
                 },
                 {
                     "id": "x_selected",
-                    "args": [ "selected"],
+                    "args": [
+                        "selected"
+                    ],
                     "script": "return selected"
                 },
                 {
@@ -1062,37 +1137,57 @@
                 },
                 {
                     "id": "y",
-                    "args": ["node"],
+                    "args": [
+                        "node"
+                    ],
                     "script": "return node"
                 },
                 {
                     "id": "p",
-                    "args": ["clipboard", "display_graph", "selected"],
+                    "args": [
+                        "clipboard",
+                        "display_graph",
+                        "selected"
+                    ],
                     "script": "const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({...clipboard[0], id, name: clipboard.name?.concat('_copy')}); return {display_graph, selected: id};"
                 },
                 {
                     "id": "p_selected",
-                    "args": ["selected"],
+                    "args": [
+                        "selected"
+                    ],
                     "script": "return selected"
                 },
                 {
                     "id": "p_display_graph",
-                    "args": ["display_graph"],
+                    "args": [
+                        "display_graph"
+                    ],
                     "script": "return display_graph"
                 },
                 {
                     "id": "pending_edges",
-                    "args": ["key", "shiftKey", "state"],
+                    "args": [
+                        "key",
+                        "shiftKey",
+                        "state"
+                    ],
                     "script": "return {edge_from: key === 'c' && !shiftKey ? state.selected[0] : state.edge_from, edge_to: key === 'c' && shiftKey ? state.selected[0] : state.edge_to}"
                 },
                 {
                     "id": "set_pending_edges",
-                    "args": ["pending_edges", "state"],
+                    "args": [
+                        "pending_edges",
+                        "state"
+                    ],
                     "script": "const has_both = pending_edges.edge_to && pending_edges.edge_from; state.edge_to = has_both ? undefined : pending_edges.edge_to; state.edge_from = has_both ? undefined : pending_edges.edge_from; return state;"
                 },
                 {
                     "id": "make_edge",
-                    "args": ["pending_edges", "state"],
+                    "args": [
+                        "pending_edges",
+                        "state"
+                    ],
                     "script": "if(pending_edges.edge_from && pending_edges.edge_to){ const start_len = state.display_graph.edges.length;  state.display_graph.edges = state.display_graph.edges.filter(e => !(e.from === pending_edges.edge_from && e.to === pending_edges.edge_to)); if(state.display_graph.edges.length === start_len){ state.display_graph.edges.push({from: pending_edges.edge_from, to: pending_edges.edge_to});}} return state.display_graph;"
                 },
                 {
@@ -1105,12 +1200,16 @@
                 },
                 {
                     "id": "expand_contract_selected",
-                    "args": ["selected"],
+                    "args": [
+                        "selected"
+                    ],
                     "script": "return selected"
                 },
                 {
                     "id": "expand_contract_display_graph",
-                    "args": ["display_graph"],
+                    "args": [
+                        "display_graph"
+                    ],
                     "script": "return display_graph"
                 },
                 {
@@ -1156,7 +1255,10 @@
                 },
                 {
                     "id": "selected_inputs",
-                    "args": ["key", "selected_edge"],
+                    "args": [
+                        "key",
+                        "selected_edge"
+                    ],
                     "script": "return selected_edge ? [] : [key]"
                 },
                 {
@@ -1165,7 +1267,10 @@
                 },
                 {
                     "id": "set_selected",
-                    "args": ["selected", "state"],
+                    "args": [
+                        "selected",
+                        "state"
+                    ],
                     "script": "state.selected = selected ? [selected] : state.selected; return state"
                 },
                 {
@@ -1174,7 +1279,10 @@
                 },
                 {
                     "id": "set_editing",
-                    "args": ["editing", "state"],
+                    "args": [
+                        "editing",
+                        "state"
+                    ],
                     "script": "state.editing = editing ?? state.editing; return state"
                 },
                 {
@@ -1183,7 +1291,10 @@
                 },
                 {
                     "id": "set_display_graph",
-                    "args": ["display_graph", "state"],
+                    "args": [
+                        "display_graph",
+                        "state"
+                    ],
                     "script": "state.display_graph = display_graph ?? state.display_graph; return state"
                 },
                 {
@@ -1192,12 +1303,20 @@
                 },
                 {
                     "id": "set_edit_value",
-                    "args": ["edit_value", "state"],
+                    "args": [
+                        "edit_value",
+                        "state"
+                    ],
                     "script": "state.edit_value = edit_value !== undefined ? edit_value : state.edit_value; return state"
                 },
                 {
                     "id": "selected_edge_inputs",
-                    "args": ["key", "selected_edge", "editing", "search"],
+                    "args": [
+                        "key",
+                        "selected_edge",
+                        "editing",
+                        "search"
+                    ],
                     "script": "return (!!selected_edge && key !== 'e' && editing === false) || (key === 'e' && editing === false && search === false) ? [key] : []"
                 },
                 {
@@ -1206,7 +1325,10 @@
                 },
                 {
                     "id": "set_selected_edge",
-                    "args": ["selected_edge", "state"],
+                    "args": [
+                        "selected_edge",
+                        "state"
+                    ],
                     "script": "state.selected_edge = selected_edge === null ? undefined : selected_edge !== undefined ? selected_edge : state.selected_edge; return state"
                 },
                 {
@@ -1215,8 +1337,11 @@
                 },
                 {
                     "id": "set_clipboard",
-                    "args": ["clipboard", "state"],
-                    "script": "console.log(clipboard); state.clipboard = clipboard ? [clipboard] : state.clipboard; return state"
+                    "args": [
+                        "clipboard",
+                        "state"
+                    ],
+                    "script": "state.clipboard = clipboard ? [clipboard] : state.clipboard; return state"
                 },
                 {
                     "id": "search",
@@ -1224,12 +1349,19 @@
                 },
                 {
                     "id": "set_search",
-                    "args": ["search", "state"],
+                    "args": [
+                        "search",
+                        "state"
+                    ],
                     "script": "state.search = search ?? state.search; return state;"
                 },
                 {
                     "id": "calculate_levels",
-                    "args": ["state", "selected", "display_graph"],
+                    "args": [
+                        "state",
+                        "selected",
+                        "display_graph"
+                    ],
                     "script": "return lib.scripts.calculateLevels(display_graph ?? state.display_graph, selected ?? state.selected[0])"
                 },
                 {
@@ -1238,22 +1370,36 @@
                 },
                 {
                     "id": "levels_inputs",
-                    "args": ["selected"],
+                    "args": [
+                        "selected"
+                    ],
                     "script": "return ['levels']"
                 },
                 {
                     "id": "set_levels",
-                    "args": ["state", "levels"],
+                    "args": [
+                        "state",
+                        "levels"
+                    ],
                     "script": "state.levels = levels ?? state.levels; return state"
                 },
                 {
                     "id": "new_state_cases",
-                    "args": ["key", "pending_edges", "state", "shiftKey", "selected"],
+                    "args": [
+                        "key",
+                        "pending_edges",
+                        "state",
+                        "shiftKey",
+                        "selected"
+                    ],
                     "script": "const graph_sim = (!state.editing && state.search === false && (key === 'enter' || key.toLowerCase() === 'o' || key === 'x' || (key === 't' && shiftKey) || (!!pending_edges.edge_to && !!pending_edges.edge_from))) || key === 'escape' || selected; return [graph_sim && 'graph_sim', 'state']"
                 },
                 {
                     "id": "new_state",
-                    "args": ["graph_sim", "state"],
+                    "args": [
+                        "graph_sim",
+                        "state"
+                    ],
                     "script": "return Object.assign({}, state, {nodes: graph_sim?.nodes ?? state.nodes, links: graph_sim?.links ?? state.links, levels: graph_sim?.levels ?? state.levels});"
                 },
                 {
@@ -1268,13 +1414,22 @@
                 },
                 {
                     "id": "update",
-                    "args": ["state", "key", "display_graph", "selected"],
+                    "args": [
+                        "state",
+                        "key",
+                        "display_graph",
+                        "selected"
+                    ],
                     "script": "return state.editing !== false || state.search !== false ? key === 'escape' : !!display_graph || !!selected"
                 },
                 {
                     "id": "run",
-                    "args": ["state", "key", "ctrlKey"],
-                    "script": "try { const result = lib.no.executeGraph({state: new Map([['in', [{...state, key}]]]), graph: {...state.display_graph, nodes: state.display_graph.nodes.concat([]), edges: state.display_graph.edges.concat([])}})[0]; return {result: typeof result === 'object' ? JSON.stringify(result) : result}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
+                    "args": [
+                        "state",
+                        "key",
+                        "ctrlKey"
+                    ],
+                    "script": "try { const result = lib.no.executeGraph({state: new Map([['in', [{...state, key}]]]), graph: {...state.display_graph, nodes: state.display_graph.nodes.concat([]), edges: state.display_graph.edges.concat([])}}); return {result}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
                 },
                 {
                     "id": "out",
@@ -1331,12 +1486,12 @@
                     "from": "selected_edge",
                     "to": "selected_inputs",
                     "as": "selected_edge"
-                }, 
+                },
                 {
                     "from": "key_inputs",
                     "to": "selected_inputs",
                     "as": "key"
-                }, 
+                },
                 {
                     "from": "key_event",
                     "to": "run"
@@ -1617,13 +1772,13 @@
                     "type": "concat"
                 },
                 {
-                    "from" :"e",
+                    "from": "e",
                     "to": "selected_edge",
                     "as": "e",
                     "type": "concat"
                 },
                 {
-                    "from" :"selected_edge_inputs",
+                    "from": "selected_edge_inputs",
                     "to": "selected_edge",
                     "type": "inputs"
                 },
@@ -2485,7 +2640,10 @@
         },
         {
             "id": "calculate_levels",
-            "args": ["display_graph", "selected"],
+            "args": [
+                "display_graph",
+                "selected"
+            ],
             "script": "return lib.scripts.calculateLevels(display_graph, selected)"
         },
         {
@@ -2666,14 +2824,53 @@
                 {
                     "id": "result",
                     "nodes": [
-                        {"id": "in"},
+                        {
+                            "id": "in"
+                        },
+                        {
+                            "id": "get_node",
+                            "args": [
+                                "display_graph",
+                                "selected"
+                            ],
+                            "script": "return display_graph.nodes.find(n => n.id === selected[0])"
+                        },
+                        {
+                            "id": "get_type",
+                            "args": [
+                                "type",
+                                "script",
+                                "value"
+                            ],
+                            "script": "return typeof value !== 'undefined' && typeof value !== 'object' ? typeof value : type ? type : script ? 'script' : 'passthrough'"
+                        },
+                        {
+                            "id": "get_node_display",
+                            "args": [
+                                "display_graph",
+                                "type"
+                            ],
+                            "script": "return display_graph.nodes.find(n => n.id === type + '_display') ?? display_graph.nodes.find(n => n.id === 'default_node_display')"
+                        },
+                        {
+                            "id": "run_node_display",
+                            "args": [
+                                "node",
+                                "display",
+                                "result",
+                                "display_graph"
+                            ],
+                            "script": "const res = lib.no.executeGraph({state: new Map([[display.id + '/' +  display.in, [{node, result: result?.get(node.id)}]]]), graph: {...display_graph, out: display.id}}); return res.get(display.id)[0];"
+                        },
                         {
                             "id": "container_dom_type",
                             "value": "div"
                         },
                         {
                             "id": "container_props",
-                            "args": ["error"],
+                            "args": [
+                                "error"
+                            ],
                             "script": "return {class: error ? 'error' : '', id: 'result'}"
                         },
                         {
@@ -2682,25 +2879,71 @@
                         },
                         {
                             "id": "text_value",
-                            "args": ["result", "error"],
+                            "args": [
+                                "result",
+                                "error"
+                            ],
                             "script": "return error ?? result ?? ''"
-                        },
-                        {
-                            "id": "text",
-                            "type": "h_text"
                         },
                         {
                             "id": "out"
                         }
                     ],
                     "edges": [
-                        {"from": "in", "to": "container_props"},
-                        {"from": "in", "to": "text_value"},
-                        {"from": "text_value", "to": "text", "as": "text"},
-                        {"from": "text", "to": "container", "as": "children", "type": "concat"},
-                        {"from": "container_props", "to": "container", "as": "props"},
-                        {"from": "container_dom_type", "to": "container", "as": "dom_type"},
-                        {"from": "container", "to": "out"}
+                        {
+                            "from": "in",
+                            "to": "container_props"
+                        },
+                        {
+                            "from": "in",
+                            "to": "get_node"
+                        },
+                        {
+                            "from": "in",
+                            "to": "get_node_display"
+                        },
+                        {
+                            "from": "in",
+                            "to": "run_node_display"
+                        },
+                        {
+                            "from": "get_node",
+                            "to": "get_type"
+                        },
+                        {
+                            "from": "get_type",
+                            "to": "get_node_display",
+                            "as": "type"
+                        },
+                        {
+                            "from": "get_node",
+                            "to": "run_node_display",
+                            "as": "node"
+                        },
+                        {
+                            "from": "get_node_display",
+                            "to": "run_node_display",
+                            "as": "display"
+                        },
+                        {
+                            "from": "run_node_display",
+                            "to": "container",
+                            "as": "children"
+                        },
+                        {
+                            "from": "container_props",
+                            "to": "container",
+                            "as": "props"
+                        },
+                        {
+                            "from": "container_dom_type",
+                            "to": "container",
+                            "as": "dom_type"
+                        },
+                        {
+                            "from": "container",
+                            "to": "out"
+                        }
                     ]
                 },
                 {
@@ -2715,7 +2958,10 @@
                         },
                         {
                             "id": "search_input_props",
-                            "args": ["search", "display_graph"],
+                            "args": [
+                                "search",
+                                "display_graph"
+                            ],
                             "script": "return {id: `search-input`, class:`${search === false ? 'hidden' : ''}`, type: 'text', oninput: (s, payload) => { const search_results = new lib.Fuse(display_graph.nodes, {keys: ['name', 'id']}).search(payload.target.value); return {...s, search: payload.target.value, selected: search_results.length > 0 ? search_results.map(n => n.item.id) : s.selected}}}"
                         },
                         {
@@ -2724,9 +2970,20 @@
                         }
                     ],
                     "edges": [
-                        {"from": "in", "to": "search_input_props"},
-                        {"from": "search_input_dom_type", "to": "out", "as": "dom_type"},
-                        {"from": "search_input_props", "to": "out", "as": "props"}
+                        {
+                            "from": "in",
+                            "to": "search_input_props"
+                        },
+                        {
+                            "from": "search_input_dom_type",
+                            "to": "out",
+                            "as": "dom_type"
+                        },
+                        {
+                            "from": "search_input_props",
+                            "to": "out",
+                            "as": "props"
+                        }
                     ]
                 },
                 {
@@ -2861,7 +3118,13 @@
                                         },
                                         {
                                             "id": "node_shape_attrs",
-                                            "args": ["value", "script", "type", "selected_distance", "nodes"],
+                                            "args": [
+                                                "value",
+                                                "script",
+                                                "type",
+                                                "selected_distance",
+                                                "nodes"
+                                            ],
                                             "script": "const r = 24 / ((Math.min(10, selected_distance ?? 10) * 0.5) + 1); return value !== undefined ? {class: 'shape value', points: `4,${4 + r} ${4 + r},${4 + r} ${4 + r * 0.5},4`} : script ? {class: 'shape script', width: r, height: r, x: 10, y: 10} : type ? {class: 'shape type', width: r, height: r, x: 10, y: 10} : nodes ? {class: 'shape graph', r: r * 0.5, cx: r * 0.5 + 4, cy: r * 0.5 + 4}  : {class: 'shape none', r: r * 0.5 , cx: r * 0.5 + 4, cy: r * 0.5 + 4}"
                                         },
                                         {
@@ -2876,7 +3139,12 @@
                                         },
                                         {
                                             "id": "node_shape_dom_type",
-                                            "args": ["value", "script", "type", "nodes"],
+                                            "args": [
+                                                "value",
+                                                "script",
+                                                "type",
+                                                "nodes"
+                                            ],
                                             "script": "return value !== undefined ? 'polygon' : script ? 'rect' : type ? 'rect' : nodes ? 'circle' : 'circle'"
                                         },
                                         {
@@ -2923,7 +3191,10 @@
                                                 },
                                                 {
                                                     "id": "get_value",
-                                                    "args": ["target", "def"],
+                                                    "args": [
+                                                        "target",
+                                                        "def"
+                                                    ],
                                                     "script": "return target.value !== undefined ? (typeof target.value === 'object' ? JSON.stringify(target.value) : target.value.toString()) : def"
                                                 },
                                                 {
@@ -2946,7 +3217,11 @@
                                                 },
                                                 {
                                                     "id": "node_primary_text_attrs",
-                                                    "value": {"class": "primary", "dy": ".6em", "x": "48"}
+                                                    "value": {
+                                                        "class": "primary",
+                                                        "dy": ".6em",
+                                                        "x": "48"
+                                                    }
                                                 },
                                                 {
                                                     "id": "tspan_dom_type",
@@ -2962,7 +3237,11 @@
                                                 },
                                                 {
                                                     "id": "node_secondary_text_attrs",
-                                                    "value": {"class": "secondary", "dy": "1.2em", "x": "48"}
+                                                    "value": {
+                                                        "class": "secondary",
+                                                        "dy": "1.2em",
+                                                        "x": "48"
+                                                    }
                                                 },
                                                 {
                                                     "id": "node_secondary_text_text",
@@ -2986,12 +3265,17 @@
                                                 },
                                                 {
                                                     "id": "node_text_props",
-                                                    "args": ["selected_distance"],
+                                                    "args": [
+                                                        "selected_distance"
+                                                    ],
                                                     "script": "return { x: 48, y: 12 }"
                                                 },
                                                 {
                                                     "id": "node_text_children",
-                                                    "args": ["primary", "secondary"],
+                                                    "args": [
+                                                        "primary",
+                                                        "secondary"
+                                                    ],
                                                     "script": "return [[primary.el, secondary.el]]"
                                                 },
                                                 {
@@ -3211,6 +3495,14 @@
                                 {
                                     "from": "in",
                                     "to": "parent_attrs"
+                                },
+                                {
+                                    "from": "in",
+                                    "to": "get_node_display"
+                                },
+                                {
+                                    "from": "get_node",
+                                    "to": "get_type"
                                 },
                                 {
                                     "from": "get_node",
@@ -3559,14 +3851,46 @@
                         },
                         {
                             "id": "fill_filter_flood_props",
-                            "value": {"flood-color": "black"}
+                            "value": {
+                                "flood-color": "black"
+                            }
                         },
-                        {"id": "fill_filter_flood","type": "h"},
-                        {"id": "fill_filter_props", "value": {"id": "flood-background","width": 1, "height": 1, "x": 0, "y": 0}},
-                        {"id": "fill_filter_composite_props","value": {"in": "SourceGraphic"}},
-                        {"id": "fill_filter_composite_dom_type","value": "feComposite"},
-                        {"id": "fill_filter_composite","type": "h"},
-                        {"id": "fill_filter_children", "args": ["comp", "flood"], "script": "return [[flood.el, comp.el]]"},
+                        {
+                            "id": "fill_filter_flood",
+                            "type": "h"
+                        },
+                        {
+                            "id": "fill_filter_props",
+                            "value": {
+                                "id": "flood-background",
+                                "width": 1,
+                                "height": 1,
+                                "x": 0,
+                                "y": 0
+                            }
+                        },
+                        {
+                            "id": "fill_filter_composite_props",
+                            "value": {
+                                "in": "SourceGraphic"
+                            }
+                        },
+                        {
+                            "id": "fill_filter_composite_dom_type",
+                            "value": "feComposite"
+                        },
+                        {
+                            "id": "fill_filter_composite",
+                            "type": "h"
+                        },
+                        {
+                            "id": "fill_filter_children",
+                            "args": [
+                                "comp",
+                                "flood"
+                            ],
+                            "script": "return [[flood.el, comp.el]]"
+                        },
                         {
                             "id": "fill_filter_dom_type",
                             "value": "filter"
@@ -3600,7 +3924,9 @@
                         },
                         {
                             "id": "link_selected_distance",
-                            "args": ["link"],
+                            "args": [
+                                "link"
+                            ],
                             "script": "return !link ? [] : link.selected_distance ? link.selected_distance : 10"
                         },
                         {
@@ -3613,11 +3939,11 @@
                             "from": "in",
                             "to": "get_nodes"
                         },
-                                {
-                                    "from": "in",
-                                    "to": "log",
-                                    "as": "input"
-                                },
+                        {
+                            "from": "in",
+                            "to": "log",
+                            "as": "input"
+                        },
                         {
                             "from": "in",
                             "to": "get_links"
@@ -3638,6 +3964,11 @@
                             "from": "get_nodes",
                             "to": "node_layout",
                             "as": "node"
+                        },
+                        {
+                            "from": "in",
+                            "to": "node_layout",
+                            "as": "graph"
                         },
                         {
                             "from": "get_onclick_node_fn",
@@ -4158,7 +4489,7 @@
             "from": "update_sim_fn",
             "to": "update_sim_effect",
             "as": "fn"
-        }, 
+        },
         {
             "from": "hyperapp_app",
             "to": "out"
