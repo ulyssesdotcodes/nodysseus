@@ -832,16 +832,16 @@
                     "id": "find_selected"
                 },
                 {
-                    "id": "selected",
-                    "args": ["selected"],
-                    "script": "return selected[0]"
-                },
-                {
                     "id": "filter_editing",
                     "args": [
                         "editing"
                     ],
                     "script": "return editing ? [] : {}"
+                },
+                {
+                    "id": "selected_node",
+                    "args": ["node_id", "display_graph"],
+                    "script": "return display_graph.nodes.find(n => n.id === node_id)"
                 },
                 {
                     "id": "save",
@@ -1061,6 +1061,26 @@
                     "script": "document.querySelector('#search-input').focus(); return ''"
                 },
                 {
+                    "id": "y",
+                    "args": ["node"],
+                    "script": "return node"
+                },
+                {
+                    "id": "p",
+                    "args": ["clipboard", "display_graph", "selected"],
+                    "script": "const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({...clipboard[0], id, name: clipboard.name?.concat('_copy')}); return {display_graph, selected: id};"
+                },
+                {
+                    "id": "p_selected",
+                    "args": ["selected"],
+                    "script": "return selected"
+                },
+                {
+                    "id": "p_display_graph",
+                    "args": ["display_graph"],
+                    "script": "return display_graph"
+                },
+                {
                     "id": "pending_edges",
                     "args": ["key", "shiftKey", "state"],
                     "script": "return {edge_from: key === 'c' && !shiftKey ? state.selected[0] : state.edge_from, edge_to: key === 'c' && shiftKey ? state.selected[0] : state.edge_to}"
@@ -1190,6 +1210,15 @@
                     "script": "state.selected_edge = selected_edge === null ? undefined : selected_edge !== undefined ? selected_edge : state.selected_edge; return state"
                 },
                 {
+                    "id": "clipboard",
+                    "type": "switch"
+                },
+                {
+                    "id": "set_clipboard",
+                    "args": ["clipboard", "state"],
+                    "script": "console.log(clipboard); state.clipboard = clipboard ? [clipboard] : state.clipboard; return state"
+                },
+                {
                     "id": "search",
                     "type": "switch"
                 },
@@ -1290,6 +1319,15 @@
                     "to": "get_selected"
                 },
                 {
+                    "from": "state",
+                    "to": "selected_node"
+                },
+                {
+                    "from": "get_selected",
+                    "to": "selected_node",
+                    "as": "node_id"
+                },
+                {
                     "from": "selected_edge",
                     "to": "selected_inputs",
                     "as": "selected_edge"
@@ -1349,6 +1387,11 @@
                 {
                     "from": "key_inputs",
                     "to": "search",
+                    "type": "inputs"
+                },
+                {
+                    "from": "key_inputs",
+                    "to": "clipboard",
                     "type": "inputs"
                 },
                 {
@@ -1477,6 +1520,10 @@
                     "to": "s"
                 },
                 {
+                    "from": "state",
+                    "to": "p"
+                },
+                {
                     "from": "key_event",
                     "to": "n"
                 },
@@ -1515,6 +1562,11 @@
                 {
                     "from": "state",
                     "to": "e"
+                },
+                {
+                    "from": "selected_node",
+                    "to": "y",
+                    "as": "node"
                 },
                 {
                     "from": "down",
@@ -1663,6 +1715,24 @@
                     "as": "shift_t"
                 },
                 {
+                    "from": "p",
+                    "to": "p_display_graph"
+                },
+                {
+                    "from": "p_display_graph",
+                    "to": "display_graph",
+                    "as": "p"
+                },
+                {
+                    "from": "p",
+                    "to": "p_selected"
+                },
+                {
+                    "from": "p_selected",
+                    "to": "selected",
+                    "as": "p"
+                },
+                {
                     "from": "state",
                     "to": "esc"
                 },
@@ -1785,6 +1855,11 @@
                     "as": "x"
                 },
                 {
+                    "from": "y",
+                    "to": "clipboard",
+                    "as": "y"
+                },
+                {
                     "from": "make_edge",
                     "to": "display_graph",
                     "as": "c"
@@ -1831,6 +1906,21 @@
                 },
                 {
                     "from": "set_selected",
+                    "to": "set_clipboard",
+                    "as": "state"
+                },
+                {
+                    "from": "state",
+                    "to": "set_clipboard",
+                    "as": "state"
+                },
+                {
+                    "from": "clipboard",
+                    "to": "set_clipboard",
+                    "as": "clipboard"
+                },
+                {
+                    "from": "set_clipboard",
                     "to": "set_selected_edge",
                     "as": "state"
                 },

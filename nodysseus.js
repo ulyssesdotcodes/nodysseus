@@ -561,10 +561,14 @@ const contract_node = (data, keep_expanded=false) => {
         const in_node = inside_node_map.get(in_node_id);
 
         // have to create a dummy in node if the in node does something
-        if (in_node?.value || in_node?.type || in_node?.script) {
+        if (in_node_id && !in_node_id.endsWith('in')) {
             in_node_id = "in";
             inside_nodes.push({id: in_node_id});
             inside_edges.push({from: in_node_id, to: in_node.id});
+        }
+
+        if(!in_node_id) {
+            in_node_id = inside_nodes.find(n => n.id === node_id + "/in")?.id;
         }
 
         const new_display_graph = {
