@@ -686,34 +686,117 @@
         },
         {
             "id": "default_node_display",
+            "name": "default_node_display",
+            "in": "6pqqchhnk",
+            "out": "tsxlng4gd",
+            "nodes": [
+                {
+                    "id": "tsxlng4gd",
+                    "args": [],
+                    "type": "h",
+                    "name": "default_node_display"
+                },
+                {
+                    "id": "osgrk7ddu",
+                    "args": [],
+                    "type": "h_text"
+                },
+                {
+                    "id": "hghirvcml",
+                    "args": [],
+                    "value": "pre"
+                },
+                {
+                    "id": "ha6b5qttf",
+                    "args": [],
+                    "script": "return JSON.stringify(data, null, 2)"
+                },
+                {
+                    "id": "6pqqchhnk",
+                    "args": [],
+                    "name": "default_node_display/in"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "osgrk7ddu",
+                    "to": "tsxlng4gd",
+                    "as": "children"
+                },
+                {
+                    "from": "hghirvcml",
+                    "to": "tsxlng4gd",
+                    "as": "dom_type"
+                },
+                {
+                    "from": "ha6b5qttf",
+                    "to": "osgrk7ddu",
+                    "as": "text"
+                },
+                {
+                    "from": "6pqqchhnk",
+                    "to": "ha6b5qttf",
+                    "as": "data"
+                }
+            ]
+        },
+        {
+            "id": "graph_display",
+            "name": "graph_display",
             "in": "in",
             "out": "out",
             "nodes": [
                 {
-                    "id": "in"
+                    "id": "out",
+                    "type": "h",
+                    "name": "graph_display"
+                },
+                {
+                    "id": "ml655hs73",
+                    "args": [],
+                    "value": "pre"
+                },
+                {
+                    "id": "thsez3hy1",
+                    "args": [],
+                    "type": "h_text"
                 },
                 {
                     "id": "stringify",
                     "args": [
                         "data"
                     ],
-                    "script": "return JSON.stringify(data, null, 2)"
+                    "script": "return JSON.stringify({...data.node, nodes: data.node.nodes.length, edges:data.node.edges.length, result: data.result}, null, 2)"
                 },
                 {
-                    "id": "out",
-                    "type": "h_text"
+                    "id": "in"
                 }
             ],
             "edges": [
+                {
+                    "from": "ml655hs73",
+                    "to": "out",
+                    "as": "dom_type"
+                },
+                {
+                    "from": "thsez3hy1",
+                    "to": "out",
+                    "as": "children"
+                },
+                {
+                    "from": "stringify",
+                    "to": "thsez3hy1",
+                    "as": "text"
+                },
                 {
                     "from": "in",
                     "to": "stringify",
                     "as": "data"
                 },
                 {
-                    "from": "stringify",
-                    "to": "out",
-                    "as": "text"
+                    "from": "in",
+                    "to": "stringify",
+                    "as": "data"
                 }
             ]
         },
@@ -2903,7 +2986,7 @@
                                 "result",
                                 "display_graph"
                             ],
-                            "script": "try { const res = lib.no.executeGraph({state: new Map([[display.id + '/' +  display.in, [{node, result: result?.get(node.id)}]]]), graph: {...display_graph, out: display.id}}); return res.get(display.id)[0]; } catch(e){ return lib.no.executeGraph({state: new Map([[error.id + '/' +  error.in, [{node, error: e.toString()}]]]), graph: {...display_graph, out: error.id}}).get(error.id)[0];}"
+                            "script": "try { const res = lib.no.executeGraph({state: new Map([[display.id + '/' +  display.in, [{node, result: result?.get(node.id)}]]]), graph: {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: display.id}}); return res.get(display.id)[0]; } catch(e){ return lib.no.executeGraph({state: new Map([[error.id + '/' +  error.in, [{node, error: e.toString()}]]]), graph: {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: error.id}}).get(error.id)[0];}"
                         },
                         {
                             "id": "container_dom_type",

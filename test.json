@@ -1,4 +1,6 @@
 {
+    "in": "in",
+    "out": "out",
     "nodes": [
         {
             "id": "out",
@@ -14,50 +16,6 @@
         {
             "id": "get_script",
             "value": "value"
-        },
-        {
-            "id": "lvfabiz9b",
-            "name": "css",
-            "args": [
-                "el",
-                "styles"
-            ],
-            "script": "el.innerHTML = styles;\n\nreturn styles;"
-        },
-        {
-            "id": "2jiztgmvr",
-            "name": "css_el",
-            "args": [
-                "get_el",
-                "create_el"
-            ],
-            "type": "switch"
-        },
-        {
-            "id": "vpq73g9qg",
-            "name": "get_el",
-            "script": "return document.querySelector('.css-styles')",
-            "args": []
-        },
-        {
-            "id": "zruw6k6l9",
-            "name": "el classname",
-            "args": [
-                "el"
-            ],
-            "script": "el.className = \"css-styles\"; document.body.appendChild(el); return el;"
-        },
-        {
-            "id": "x8tdpkazf",
-            "name": "css el inputs",
-            "script": "return document.querySelector(\".css-styles\") ? [\"get_el\"] : [\"create_el\"];",
-            "args": []
-        },
-        {
-            "id": "dfbmreaek",
-            "name": "create el",
-            "script": "return document.createElement(\"style\");",
-            "args": []
         },
         {
             "id": "filter",
@@ -204,65 +162,6 @@
             ]
         },
         {
-            "id": "vr865hcv0",
-            "name": "body"
-        },
-        {
-            "id": "kvq1q0k30",
-            "value": "#ccc"
-        },
-        {
-            "id": "qpao2izqz",
-            "name": "circle"
-        },
-        {
-            "id": "u7sy8fwro",
-            "value": "black"
-        },
-        {
-            "id": "56j09nio2",
-            "value": 1
-        },
-        {
-            "id": "1t96plqko",
-            "name": "text"
-        },
-        {
-            "id": "bacr589n7",
-            "type": "css",
-            "name": "stringify_css"
-        },
-        {
-            "id": "3xppcpetm",
-            "args": [],
-            "value": 1
-        },
-        {
-            "id": "6ffivp2aw",
-            "args": [],
-            "value": 0
-        },
-        {
-            "id": "4ol7uqdfr",
-            "args": [],
-            "value": "2s blink infinite"
-        },
-        {
-            "id": "29hvv137x",
-            "args": [],
-            "value": "opacity"
-        },
-        {
-            "id": "w62vgl3ln",
-            "args": [],
-            "value": "consolas"
-        },
-        {
-            "id": "7xg2ng5r0",
-            "type": "two_value_anim",
-            "name": "blink anim"
-        },
-        {
             "id": "in",
             "args": [],
             "name": "in"
@@ -338,156 +237,6 @@
                 {
                     "from": "in",
                     "to": "out"
-                }
-            ]
-        },
-        {
-            "id": "css",
-            "name": "css",
-            "nodes": [
-                {
-                    "id": "out",
-                    "name": "css/out",
-                    "script": "return rules?.join(\"\\n\");",
-                    "args": [
-                        "rules"
-                    ]
-                },
-                {
-                    "id": "mec78sn2n",
-                    "name": "compile",
-                    "args": [
-                        "init",
-                        "attrs",
-                        "end",
-                        "keyframes"
-                    ],
-                    "script": "return [init].concat(attrs ?? []).concat(keyframes ?? []).concat([end])"
-                },
-                {
-                    "id": "2ll8r3sx5",
-                    "name": "init",
-                    "args": [
-                        "entry"
-                    ],
-                    "script": "return entry[0] + \" {\""
-                },
-                {
-                    "id": "mrs40dwx8",
-                    "value": "}"
-                },
-                {
-                    "id": "h28e9j2fo",
-                    "name": "attrs",
-                    "args": [
-                        "entry"
-                    ],
-                    "script": "return entry && entry.length > 0 ? [Object.entries(entry[1]).map(([k, v]) => `${k}: ${v};`)] : [];\n\n//return JSON.stringify(entry[1]);\n"
-                },
-                {
-                    "id": "i6kzydhrf",
-                    "args": [
-                        "entry"
-                    ],
-                    "name": "attrs_keyframes",
-                    "script": "return entry ? Object.entries(entry).map(([k,v]) => k + \" {\" + Object.entries(v).map(([k,v]) => `${k}: ${v}`) + \"}\" ).join(\"\\n\") + \"}\" : undefined"
-                },
-                {
-                    "id": "ie18qgd52",
-                    "name": "entries",
-                    "script": "return Object.entries(input)",
-                    "args": [
-                        "input"
-                    ]
-                },
-                {
-                    "id": "0g05impwi",
-                    "args": [
-                        "entry"
-                    ],
-                    "name": "filter_non_keyframes",
-                    "script": "return !entry ? [] : entry[0].startsWith(\"@keyframes\") ? [] : [entry];"
-                },
-                {
-                    "id": "1axxnkooa",
-                    "args": [
-                        "entry"
-                    ],
-                    "name": "filter_keyframes",
-                    "script": "return entry &&  entry[0].startsWith(\"@keyframes\") ? entry[1] : undefined;"
-                },
-                {
-                    "id": "in",
-                    "name": "css/in"
-                }
-            ],
-            "edges": [
-                {
-                    "from": "mec78sn2n",
-                    "to": "out",
-                    "type": "concat",
-                    "as": "rules"
-                },
-                {
-                    "from": "2ll8r3sx5",
-                    "to": "mec78sn2n",
-                    "as": "init",
-                    "name": "end"
-                },
-                {
-                    "from": "mrs40dwx8",
-                    "to": "mec78sn2n",
-                    "as": "end"
-                },
-                {
-                    "from": "h28e9j2fo",
-                    "to": "mec78sn2n",
-                    "as": "attrs"
-                },
-                {
-                    "from": "i6kzydhrf",
-                    "to": "mec78sn2n",
-                    "as": "keyframes"
-                },
-                {
-                    "from": "ie18qgd52",
-                    "to": "2ll8r3sx5",
-                    "as": "entry"
-                },
-                {
-                    "from": "0g05impwi",
-                    "to": "h28e9j2fo",
-                    "as": "entry"
-                },
-                {
-                    "from": "1axxnkooa",
-                    "to": "i6kzydhrf",
-                    "as": "entry"
-                },
-                {
-                    "from": "in",
-                    "to": "ie18qgd52",
-                    "as": "input"
-                },
-                {
-                    "from": "ie18qgd52",
-                    "to": "0g05impwi",
-                    "as": "entry"
-                },
-                {
-                    "from": "ie18qgd52",
-                    "to": "1axxnkooa",
-                    "as": "entry"
-                },
-                {
-                    "from": "in",
-                    "to": "ie18qgd52",
-                    "as": "input"
-                },
-                {
-                    "from": "in",
-                    "to": "ie18qgd52",
-                    "as": "input"
                 }
             ]
         },
@@ -629,11 +378,6 @@
             ]
         },
         {
-            "id": "cv9akpm4i",
-            "args": [],
-            "value": 4
-        },
-        {
             "id": "get",
             "name": "get",
             "nodes": [
@@ -736,106 +480,830 @@
                     "as": "target"
                 }
             ]
-        }
+        },
+        {
+            "id": "css",
+            "name": "css",
+            "nodes": [
+                {
+                    "id": "out",
+                    "name": "css/out",
+                    "script": "return rules?.join(\"\\n\");",
+                    "args": [
+                        "rules"
+                    ]
+                },
+                {
+                    "id": "mec78sn2n",
+                    "name": "compile",
+                    "args": [
+                        "init",
+                        "attrs",
+                        "end",
+                        "keyframes"
+                    ],
+                    "script": "return [init].concat(attrs ?? []).concat(keyframes ?? []).concat([end])"
+                },
+                {
+                    "id": "2ll8r3sx5",
+                    "name": "init",
+                    "args": [
+                        "entry"
+                    ],
+                    "script": "return entry[0] + \" {\""
+                },
+                {
+                    "id": "mrs40dwx8",
+                    "value": "}"
+                },
+                {
+                    "id": "h28e9j2fo",
+                    "name": "attrs",
+                    "args": [
+                        "entry"
+                    ],
+                    "script": "return entry && entry.length > 0 ? [Object.entries(entry[1]).map(([k, v]) => `${k}: ${v};`)] : undefined;\n\n//return JSON.stringify(entry[1]);\n"
+                },
+                {
+                    "id": "i6kzydhrf",
+                    "args": [
+                        "entry"
+                    ],
+                    "name": "attrs_keyframes",
+                    "script": "return entry ? Object.entries(entry).map(([k,v]) => k + \" {\" + Object.entries(v).map(([k,v]) => `${k}: ${v}`) + \"}\" ).join(\"\\n\") + \"}\" : undefined"
+                },
+                {
+                    "id": "ie18qgd52",
+                    "name": "entries",
+                    "script": "return Object.entries(input)",
+                    "args": [
+                        "input"
+                    ]
+                },
+                {
+                    "id": "0g05impwi",
+                    "args": [
+                        "entry"
+                    ],
+                    "name": "filter_non_keyframes",
+                    "script": "return !entry ? undefined : entry[0].startsWith(\"@keyframes\") ? undefined : [entry];"
+                },
+                {
+                    "id": "1axxnkooa",
+                    "args": [
+                        "entry"
+                    ],
+                    "name": "filter_keyframes",
+                    "script": "return entry &&  entry[0].startsWith(\"@keyframes\") ? entry[1] : undefined;"
+                },
+                {
+                    "id": "in",
+                    "name": "css/in"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "mec78sn2n",
+                    "to": "out",
+                    "type": "concat",
+                    "as": "rules"
+                },
+                {
+                    "from": "2ll8r3sx5",
+                    "to": "mec78sn2n",
+                    "as": "init",
+                    "name": "end"
+                },
+                {
+                    "from": "mrs40dwx8",
+                    "to": "mec78sn2n",
+                    "as": "end"
+                },
+                {
+                    "from": "h28e9j2fo",
+                    "to": "mec78sn2n",
+                    "as": "attrs"
+                },
+                {
+                    "from": "i6kzydhrf",
+                    "to": "mec78sn2n",
+                    "as": "keyframes"
+                },
+                {
+                    "from": "ie18qgd52",
+                    "to": "2ll8r3sx5",
+                    "as": "entry"
+                },
+                {
+                    "from": "0g05impwi",
+                    "to": "h28e9j2fo",
+                    "as": "entry"
+                },
+                {
+                    "from": "1axxnkooa",
+                    "to": "i6kzydhrf",
+                    "as": "entry"
+                },
+                {
+                    "from": "in",
+                    "to": "ie18qgd52",
+                    "as": "input"
+                },
+                {
+                    "from": "in",
+                    "to": "ie18qgd52",
+                    "as": "input"
+                },
+                {
+                    "from": "in",
+                    "to": "ie18qgd52",
+                    "as": "input"
+                },
+                {
+                    "from": "in",
+                    "to": "ie18qgd52",
+                    "as": "input"
+                },
+                {
+                    "from": "in",
+                    "to": "ie18qgd52",
+                    "as": "input"
+                },
+                {
+                    "from": "in",
+                    "to": "ie18qgd52",
+                    "as": "input"
+                },
+                {
+                    "from": "ie18qgd52",
+                    "to": "0g05impwi",
+                    "as": "entry"
+                },
+                {
+                    "from": "ie18qgd52",
+                    "to": "1axxnkooa"
+                },
+                {
+                    "from": "in",
+                    "to": "ie18qgd52",
+                    "as": "input"
+                },
+                {
+                    "from": "in",
+                    "to": "ie18qgd52",
+                    "as": "input"
+                },
+                {
+                    "from": "in",
+                    "to": "ie18qgd52",
+                    "as": "input"
+                },
+                {
+                    "from": "in",
+                    "to": "ie18qgd52",
+                    "as": "input"
+                },
+                {
+                    "from": "in",
+                    "to": "ie18qgd52",
+                    "as": "input"
+                },
+                {
+                    "from": "in",
+                    "to": "ie18qgd52",
+                    "as": "input"
+                },
+                {
+                    "from": "in",
+                    "to": "ie18qgd52",
+                    "as": "input"
+                },
+                {
+                    "from": "in",
+                    "to": "ie18qgd52",
+                    "as": "input"
+                },
+                {
+                    "from": "in",
+                    "to": "ie18qgd52",
+                    "as": "input"
+                },
+                {
+                    "from": "in",
+                    "to": "ie18qgd52",
+                    "as": "input"
+                },
+                {
+                    "from": "in",
+                    "to": "ie18qgd52",
+                    "as": "input"
+                },
+                {
+                    "from": "in",
+                    "to": "ie18qgd52",
+                    "as": "input"
+                }
+            ]
+        },
+        {
+            "id": "pdg94ffkr",
+            "args": [],
+            "name": "concat_out"
+        },
+        {
+            "id": "pt0vvsrev",
+            "args": [],
+            "name": "key_el_content",
+            "script": "el.innerText = text;\n\nreturn text;"
+        },
+        {
+            "id": "j6wxsx1vi",
+            "args": [],
+            "value": {
+                "className": "show-key",
+                "dom_type": "div"
+            }
+        },
+        {
+            "id": "56xxl00f0",
+            "args": [],
+            "script": "return key;",
+            "name": "key_el_text"
+        },
+        {
+            "id": "ychx08efc",
+            "args": [],
+            "type": "get_key"
+        },
+        {
+            "id": "urr29nkv4",
+            "args": [],
+            "value": "selected.0"
+        },
+        {
+            "id": "s78ig2uob",
+            "args": [],
+            "name": "key_el",
+            "type": "el"
+        },
+        {
+            "id": "el",
+            "name": "el",
+            "nodes": [
+                {
+                    "id": "out",
+                    "name": "el/out",
+                    "args": [
+                        "get_el",
+                        "create_el"
+                    ],
+                    "type": "switch"
+                },
+                {
+                    "id": "vpq73g9qg",
+                    "name": "get_el",
+                    "script": "return document.querySelector(`.${className}`)",
+                    "args": [
+                        "className"
+                    ]
+                },
+                {
+                    "id": "zruw6k6l9",
+                    "name": "el classname",
+                    "args": [
+                        "el",
+                        "className"
+                    ],
+                    "script": "el.className = className; document.body.appendChild(el); return el;"
+                },
+                {
+                    "id": "x8tdpkazf",
+                    "name": "css el inputs",
+                    "script": "return document.querySelector(`.${className}`) ? [\"get_el\"] : [\"create_el\"];",
+                    "args": [
+                        "className"
+                    ]
+                },
+                {
+                    "id": "in",
+                    "args": [],
+                    "name": "el/in"
+                },
+                {
+                    "id": "dfbmreaek",
+                    "name": "create el",
+                    "script": "return document.createElement(dom_type);",
+                    "args": [
+                        "dom_type"
+                    ]
+                }
+            ],
+            "edges": [
+                {
+                    "from": "vpq73g9qg",
+                    "to": "out",
+                    "as": "get_el"
+                },
+                {
+                    "from": "zruw6k6l9",
+                    "to": "out",
+                    "as": "create_el"
+                },
+                {
+                    "from": "x8tdpkazf",
+                    "to": "out",
+                    "type": "inputs"
+                },
+                {
+                    "from": "in",
+                    "to": "vpq73g9qg"
+                },
+                {
+                    "from": "dfbmreaek",
+                    "to": "zruw6k6l9",
+                    "as": "el"
+                },
+                {
+                    "from": "in",
+                    "to": "zruw6k6l9"
+                },
+                {
+                    "from": "in",
+                    "to": "x8tdpkazf"
+                },
+                {
+                    "from": "in",
+                    "to": "dfbmreaek"
+                }
+            ]
+        },
+        {
+            "id": "h",
+            "nodes": [
+                {
+                    "id": "in",
+                    "value": null
+                },
+                {
+                    "id": "fill_children",
+                    "args": [
+                        "input"
+                    ],
+                    "script": "return [ input.children === undefined ? [] : (Array.isArray(input.children) ? input.children.map(c => c.el ?? c) : [input.children.el])]"
+                },
+                {
+                    "id": "fill_props",
+                    "args": [
+                        "input"
+                    ],
+                    "script": "return input.props ?? {}"
+                },
+                {
+                    "id": "out",
+                    "args": [
+                        "props",
+                        "children",
+                        "input"
+                    ],
+                    "script": "return {el: lib.ha.h(input.dom_type, props, children)}"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "in",
+                    "to": "fill_children",
+                    "as": "input"
+                },
+                {
+                    "from": "in",
+                    "to": "fill_props",
+                    "as": "input"
+                },
+                {
+                    "from": "fill_children",
+                    "to": "out",
+                    "as": "children",
+                    "order": 1
+                },
+                {
+                    "from": "fill_props",
+                    "to": "out",
+                    "as": "props"
+                },
+                {
+                    "from": "in",
+                    "to": "out",
+                    "as": "input"
+                }
+            ]
+        },
+        {
+            "id": "h_text",
+            "nodes": [
+                {
+                    "id": "in",
+                    "value": null
+                },
+                {
+                    "id": "out",
+                    "args": [
+                        "text"
+                    ],
+                    "script": "return {el: lib.ha.text(text)}"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "in",
+                    "to": "out"
+                }
+            ]
+        },
+        {
+            "id": "default_error_display",
+            "in": "in",
+            "out": "out",
+            "nodes": [
+                {
+                    "id": "in"
+                },
+                {
+                    "id": "stringify",
+                    "args": [
+                        "data"
+                    ],
+                    "script": "return data.error"
+                },
+                {
+                    "id": "out",
+                    "type": "h_text"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "in",
+                    "to": "stringify",
+                    "as": "data"
+                },
+                {
+                    "from": "stringify",
+                    "to": "out",
+                    "as": "text"
+                }
+            ]
+        },
+        {
+            "id": "default_node_display/out/in",
+            "value": null
+        },
+        {
+            "id": "default_node_display/out/out",
+            "args": [
+                "text"
+            ],
+            "script": "return {el: lib.ha.text(text)}"
+        },
+        {
+            "id": "lvfabiz9b",
+            "name": "css",
+            "out": "lvfabiz9b",
+            "nodes": [
+                {
+                    "id": "lvfabiz9b",
+                    "name": "css",
+                    "args": [
+                        "el",
+                        "styles"
+                    ],
+                    "script": "el.innerHTML = styles;\n\nreturn styles;"
+                },
+                {
+                    "id": "2jiztgmvr",
+                    "type": "el",
+                    "name": "css-el"
+                },
+                {
+                    "id": "bacr589n7",
+                    "type": "css",
+                    "name": "stringify_css"
+                },
+                {
+                    "id": "a2t5q6yuj",
+                    "args": [],
+                    "value": {
+                        "className": "css-styles",
+                        "dom_type": "style"
+                    }
+                },
+                {
+                    "id": "vr865hcv0",
+                    "name": "body"
+                },
+                {
+                    "id": "qpao2izqz",
+                    "name": ".node"
+                },
+                {
+                    "id": "1t96plqko",
+                    "name": "text"
+                },
+                {
+                    "id": "7xg2ng5r0",
+                    "type": "two_value_anim",
+                    "name": "blink anim"
+                },
+                {
+                    "id": "nwzqn5kuj",
+                    "args": [],
+                    "name": "selected circle"
+                },
+                {
+                    "id": "a9zgxu97f",
+                    "args": [],
+                    "name": "link selected"
+                },
+                {
+                    "id": "j1ebjfua9",
+                    "args": [],
+                    "name": "unselected link"
+                },
+                {
+                    "id": "7fvrti4wv",
+                    "args": [],
+                    "name": "show-key"
+                },
+                {
+                    "id": "kvq1q0k30",
+                    "value": "#112"
+                },
+                {
+                    "id": "p7pe5fy8m",
+                    "args": [],
+                    "value": "white"
+                },
+                {
+                    "id": "u7sy8fwro",
+                    "value": "white"
+                },
+                {
+                    "id": "56j09nio2",
+                    "value": 0
+                },
+                {
+                    "id": "4ol7uqdfr",
+                    "args": [],
+                    "value": "2s blink infinite"
+                },
+                {
+                    "id": "6bq0uyi21",
+                    "args": [],
+                    "value": "purple"
+                },
+                {
+                    "id": "w62vgl3ln",
+                    "args": [],
+                    "value": "consolas"
+                },
+                {
+                    "id": "9j360e0q1",
+                    "args": [],
+                    "value": "white"
+                },
+                {
+                    "id": "6ffivp2aw",
+                    "args": [],
+                    "value": 0
+                },
+                {
+                    "id": "3xppcpetm",
+                    "args": [],
+                    "value": 1
+                },
+                {
+                    "id": "29hvv137x",
+                    "args": [],
+                    "value": "opacity"
+                },
+                {
+                    "id": "eme0j4p3c",
+                    "args": [],
+                    "value": 0
+                },
+                {
+                    "id": "owk17bwlk",
+                    "args": [],
+                    "value": "#fcc"
+                },
+                {
+                    "id": "u302wy8sk",
+                    "args": [],
+                    "value": "red"
+                },
+                {
+                    "id": "7w4was0oj",
+                    "args": [],
+                    "value": "#ccc"
+                },
+                {
+                    "id": "o6nkn8sss",
+                    "args": [],
+                    "value": "fixed"
+                },
+                {
+                    "id": "6f7dpt0ta",
+                    "args": [],
+                    "value": "100px"
+                },
+                {
+                    "id": "wd52he3g4",
+                    "args": [],
+                    "value": "100px"
+                },
+                {
+                    "id": "k3yyyekee",
+                    "args": []
+                },
+                {
+                    "id": "9465rwni5",
+                    "args": [],
+                    "value": "2em;"
+                },
+                {
+                    "id": "inuzw83a7",
+                    "args": [],
+                    "value": "consolas"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "2jiztgmvr",
+                    "to": "lvfabiz9b",
+                    "as": "el"
+                },
+                {
+                    "from": "bacr589n7",
+                    "to": "lvfabiz9b",
+                    "as": "styles"
+                },
+                {
+                    "from": "a2t5q6yuj",
+                    "to": "2jiztgmvr"
+                },
+                {
+                    "from": "vr865hcv0",
+                    "to": "bacr589n7",
+                    "as": "body",
+                    "name": "light-grey",
+                    "value": "#ccc"
+                },
+                {
+                    "from": "qpao2izqz",
+                    "to": "bacr589n7",
+                    "as": ".node circle"
+                },
+                {
+                    "from": "1t96plqko",
+                    "to": "bacr589n7",
+                    "as": "text"
+                },
+                {
+                    "from": "7xg2ng5r0",
+                    "to": "bacr589n7",
+                    "as": "@keyframes blink"
+                },
+                {
+                    "from": "nwzqn5kuj",
+                    "to": "bacr589n7",
+                    "as": ".node.selected circle"
+                },
+                {
+                    "from": "a9zgxu97f",
+                    "to": "bacr589n7",
+                    "as": ".link.selected"
+                },
+                {
+                    "from": "j1ebjfua9",
+                    "to": "bacr589n7",
+                    "as": ".link"
+                },
+                {
+                    "from": "7fvrti4wv",
+                    "to": "bacr589n7",
+                    "as": ".show-key"
+                },
+                {
+                    "from": "kvq1q0k30",
+                    "to": "vr865hcv0",
+                    "as": "background-color"
+                },
+                {
+                    "from": "p7pe5fy8m",
+                    "to": "vr865hcv0",
+                    "as": "color"
+                },
+                {
+                    "from": "u7sy8fwro",
+                    "to": "qpao2izqz",
+                    "as": "stroke"
+                },
+                {
+                    "from": "56j09nio2",
+                    "to": "qpao2izqz",
+                    "as": "stroke-width"
+                },
+                {
+                    "from": "4ol7uqdfr",
+                    "to": "qpao2izqz",
+                    "as": "animation_"
+                },
+                {
+                    "from": "6bq0uyi21",
+                    "to": "qpao2izqz",
+                    "as": "fill"
+                },
+                {
+                    "from": "w62vgl3ln",
+                    "to": "1t96plqko",
+                    "as": "font-family"
+                },
+                {
+                    "from": "9j360e0q1",
+                    "to": "1t96plqko",
+                    "as": "fill"
+                },
+                {
+                    "from": "6ffivp2aw",
+                    "to": "7xg2ng5r0",
+                    "as": "from"
+                },
+                {
+                    "from": "3xppcpetm",
+                    "to": "7xg2ng5r0",
+                    "as": "to"
+                },
+                {
+                    "from": "29hvv137x",
+                    "to": "7xg2ng5r0",
+                    "as": "attr"
+                },
+                {
+                    "from": "eme0j4p3c",
+                    "to": "nwzqn5kuj",
+                    "as": "stroke-width"
+                },
+                {
+                    "from": "owk17bwlk",
+                    "to": "nwzqn5kuj",
+                    "as": "fill"
+                },
+                {
+                    "from": "u302wy8sk",
+                    "to": "a9zgxu97f",
+                    "as": "stroke",
+                    "value": "red"
+                },
+                {
+                    "from": "7w4was0oj",
+                    "to": "j1ebjfua9",
+                    "as": "stroke"
+                },
+                {
+                    "from": "o6nkn8sss",
+                    "to": "7fvrti4wv",
+                    "as": "position"
+                },
+                {
+                    "from": "6f7dpt0ta",
+                    "to": "7fvrti4wv",
+                    "as": "right"
+                },
+                {
+                    "from": "wd52he3g4",
+                    "to": "7fvrti4wv",
+                    "as": "top"
+                },
+                {
+                    "from": "k3yyyekee",
+                    "to": "7fvrti4wv"
+                },
+                {
+                    "from": "9465rwni5",
+                    "to": "7fvrti4wv",
+                    "as": "font-size"
+                },
+                {
+                    "from": "inuzw83a7",
+                    "to": "7fvrti4wv",
+                    "as": "font-family"
+                }
+            ]
+        },
+        {
+            "id": "77xpr22ya",
+            "args": []
+        },
     ],
     "edges": [
-        {
-            "from": "lvfabiz9b",
-            "to": "out",
-            "as": "value_"
-        },
-        {
-            "from": "2jiztgmvr",
-            "to": "lvfabiz9b",
-            "as": "el"
-        },
-        {
-            "from": "vpq73g9qg",
-            "to": "2jiztgmvr",
-            "as": "get_el"
-        },
-        {
-            "from": "zruw6k6l9",
-            "to": "2jiztgmvr",
-            "as": "create_el"
-        },
-        {
-            "from": "x8tdpkazf",
-            "to": "2jiztgmvr",
-            "type": "inputs"
-        },
-        {
-            "from": "dfbmreaek",
-            "to": "zruw6k6l9",
-            "as": "el"
-        },
-        {
-            "from": "bacr589n7",
-            "to": "lvfabiz9b",
-            "as": "styles"
-        },
-        {
-            "from": "vr865hcv0",
-            "to": "bacr589n7",
-            "as": "body",
-            "name": "light-grey",
-            "value": "#ccc"
-        },
-        {
-            "from": "kvq1q0k30",
-            "to": "vr865hcv0",
-            "as": "background-color"
-        },
-        {
-            "from": "qpao2izqz",
-            "to": "bacr589n7",
-            "as": "circle"
-        },
-        {
-            "from": "u7sy8fwro",
-            "to": "qpao2izqz",
-            "as": "stroke"
-        },
-        {
-            "from": "56j09nio2",
-            "to": "qpao2izqz",
-            "as": "stroke-width"
-        },
-        {
-            "from": "1t96plqko",
-            "to": "bacr589n7",
-            "as": "text"
-        },
-        {
-            "from": "4ol7uqdfr",
-            "to": "qpao2izqz",
-            "as": "animation_"
-        },
-        {
-            "from": "6ffivp2aw",
-            "to": "7xg2ng5r0",
-            "as": "from"
-        },
-        {
-            "from": "3xppcpetm",
-            "to": "7xg2ng5r0",
-            "as": "to"
-        },
-        {
-            "from": "29hvv137x",
-            "to": "7xg2ng5r0",
-            "as": "attr"
-        },
-        {
-            "from": "w62vgl3ln",
-            "to": "1t96plqko",
-            "as": "font-family"
-        },
-        {
-            "from": "7xg2ng5r0",
-            "to": "bacr589n7",
-            "as": "@keyframes blink"
-        },
         {
             "from": "jtbamz3os",
             "to": "ajj5t166a",
@@ -877,11 +1345,6 @@
             "as": "value"
         },
         {
-            "from": "c6h6qfqbw",
-            "to": "out",
-            "as": "value_"
-        },
-        {
             "from": "ajj5t166a",
             "to": "c6h6qfqbw",
             "as": "increase_decrease"
@@ -892,15 +1355,64 @@
             "as": "value"
         },
         {
-            "from": "in",
-            "to": "jtbamz3os"
+            "from": "pdg94ffkr",
+            "to": "out",
+            "as": "value"
         },
         {
-            "from": "cv9akpm4i",
+            "from": "56xxl00f0",
+            "to": "pt0vvsrev",
+            "as": "text"
+        },
+        {
+            "from": "in",
+            "to": "ychx08efc"
+        },
+        {
+            "from": "urr29nkv4",
+            "to": "ychx08efc",
+            "as": "path"
+        },
+        {
+            "from": "ychx08efc",
+            "to": "56xxl00f0",
+            "as": "key"
+        },
+        {
+            "from": "j6wxsx1vi",
+            "to": "s78ig2uob"
+        },
+        {
+            "from": "s78ig2uob",
+            "to": "pt0vvsrev",
+            "as": "el"
+        },
+        {
+            "from": "c6h6qfqbw",
             "to": "out"
         },
         {
+            "from": "lvfabiz9b",
+            "to": "out"
+        },
+        {
+            "from": "pt0vvsrev",
+            "to": "out"
+        },
+        {
+            "from": "default_node_display/out/in",
+            "to": "default_node_display/out/out"
+        },
+        {
             "from": "in",
+            "to": "77xpr22ya"
+        },
+        {
+            "from": "77xpr22ya",
+            "to": "jtbamz3os"
+        },
+        {
+            "from": "77xpr22ya",
             "to": "8521eyel9"
         }
     ]
