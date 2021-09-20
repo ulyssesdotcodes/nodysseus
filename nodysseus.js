@@ -370,7 +370,7 @@ const updateSimulationNodes = (data) => {
 
 
     data.simulation
-        .alpha(0.6);
+        .alpha(0.4);
 }
 
 const graphToSimulationNodes = (data) => {
@@ -514,7 +514,7 @@ const contract_node = (data, keep_expanded=false) => {
         const inside_node_map = new Map();
         const dangling = new Set();
         inside_node_map.set(inside_nodes[0].id, inside_nodes[0]);
-        const inside_edges = [];
+        const inside_edges = new Set();
 
         const q = data.display_graph.edges.filter(e => e.to === inside_nodes[0].id);
 
@@ -537,7 +537,7 @@ const contract_node = (data, keep_expanded=false) => {
 
             if(this_dangling === 0) {
                 in_edge.filter(ie => ie.from === e.from).forEach(ie => {
-                    inside_edges.push(ie)
+                    inside_edges.add(ie)
                 });
 
                 in_edge = in_edge.filter(ie => ie.from !== e.from);
@@ -546,7 +546,7 @@ const contract_node = (data, keep_expanded=false) => {
                 let inside_node = old_node ?? data.display_graph.nodes.find(p => p.id === e.from);
 
                 inside_node_map.set(inside_node.id, inside_node);
-                inside_edges.push(e);
+                inside_edges.add(e);
                 if(!old_node) {
                     inside_nodes.push(inside_node);
                 }
@@ -569,16 +569,29 @@ const contract_node = (data, keep_expanded=false) => {
         const out_node_id = out_node.id;
 
         const in_node = inside_node_map.get(in_node_id);
+        console.log(in_node_id);
 
         // have to create a dummy in node if the in node does something
         if (in_node_id && !in_node_id.endsWith('in')) {
-            in_node_id = "in";
+            in_node_id = node_id + "/in";
             inside_nodes.push({id: in_node_id});
-            inside_edges.push({from: in_node_id, to: in_node.id});
+            inside_edges.add({from: in_node_id, to: in_node.id});
         }
 
         if(!in_node_id) {
-            in_node_id = inside_nodes.find(n => n.id === node_id + "/in")?.id;
+            in_node_id = inside_nodes.find(n => n.id === node_id + "/in" || n.name === name + "/in")?.id;
+        }
+
+        const edges = [];
+        for(const e of inside_edges){
+            edges.push({...e, 
+                from: e.from.startsWith(node_id + "/") 
+                ? e.from.substring(node_id.length + 1) 
+                : e.from, 
+                to: e.to.startsWith(node_id + "/") 
+                    ? e.to.substring(node_id.length + 1) 
+                    : e.to
+            })
         }
 
         const new_display_graph = {
@@ -594,14 +607,7 @@ const contract_node = (data, keep_expanded=false) => {
                             ...n,
                             id: n.id.startsWith(node_id + "/") ? n.id.substring(node_id.length + 1) : n.id
                         })),
-                        edges: inside_edges.map(e => ({...e, 
-                            from: e.from.startsWith(node_id + "/") 
-                            ? e.from.substring(node_id.length + 1) 
-                            : e.from, 
-                            to: e.to.startsWith(node_id + "/") 
-                                ? e.to.substring(node_id.length + 1) 
-                                : e.to
-                        }))
+                        edges
                     }]),
                 edges: data.display_graph.edges
                     .filter(e => keep_expanded || !(inside_node_map.has(e.from) && inside_node_map.has(e.to)))
@@ -659,7 +665,7 @@ const lib = {
     // THREE
 };
 
-const generic_nodes = new Set(["switch", "filter", "delete", "default", "trigger", "execute_graph", "get", "default_node_display", "h", "h_text"])
+const generic_nodes = new Set(["switch", "filter", "delete", "default", "trigger", "execute_graph", "get", "default_node_display", "h", "h_text", "default_error_display"])
 
 const stored = localStorage.getItem("display_graph");
 // const display_graph = DEFAULT_GRAPH;

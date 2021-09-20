@@ -718,6 +718,39 @@
             ]
         },
         {
+            "id": "default_error_display",
+            "in": "in",
+            "out": "out",
+            "nodes": [
+                {
+                    "id": "in"
+                },
+                {
+                    "id": "stringify",
+                    "args": [
+                        "data"
+                    ],
+                    "script": "return data.error"
+                },
+                {
+                    "id": "out",
+                    "type": "h_text"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "in",
+                    "to": "stringify",
+                    "as": "data"
+                },
+                {
+                    "from": "stringify",
+                    "to": "out",
+                    "as": "text"
+                }
+            ]
+        },
+        {
             "id": "not",
             "args": [
                 "target"
@@ -947,7 +980,7 @@
                         "nodes",
                         "levels"
                     ],
-                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.siblings.get(selected[0]); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling && n.selected_distance < 3); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x < current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.nodes_by_level[levels.level_by_node.get(selected[0])]; const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling && n.selected_distance < 3); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x < current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
                 },
                 {
                     "id": "left_edge",
@@ -971,7 +1004,7 @@
                         "nodes",
                         "levels"
                     ],
-                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.siblings.get(selected[0]); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling && n.selected_distance < 3); if(!sibling_node){ return dist }  const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.nodes_by_level[levels.level_by_node.get(selected[0])]; const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling && n.selected_distance < 3); if(!sibling_node){ return dist }  const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
                 },
                 {
                     "id": "right_edge",
@@ -2840,9 +2873,10 @@
                             "args": [
                                 "type",
                                 "script",
-                                "value"
+                                "value",
+                                "nodes"
                             ],
-                            "script": "return typeof value !== 'undefined' && typeof value !== 'object' ? typeof value : type ? type : script ? 'script' : 'passthrough'"
+                            "script": "return typeof value !== 'undefined' && typeof value !== 'object' ? typeof value : type ? type : nodes ? 'graph' : script ? 'script' : 'passthrough'"
                         },
                         {
                             "id": "get_node_display",
@@ -2853,14 +2887,23 @@
                             "script": "return display_graph.nodes.find(n => n.id === type + '_display') ?? display_graph.nodes.find(n => n.id === 'default_node_display')"
                         },
                         {
+                            "id": "get_error_display",
+                            "args": [
+                                "display_graph",
+                                "type"
+                            ],
+                            "script": "return display_graph.nodes.find(n => n.id === 'default_error_display')"
+                        },
+                        {
                             "id": "run_node_display",
                             "args": [
                                 "node",
                                 "display",
+                                "error",
                                 "result",
                                 "display_graph"
                             ],
-                            "script": "const res = lib.no.executeGraph({state: new Map([[display.id + '/' +  display.in, [{node, result: result?.get(node.id)}]]]), graph: {...display_graph, out: display.id}}); return res.get(display.id)[0];"
+                            "script": "try { const res = lib.no.executeGraph({state: new Map([[display.id + '/' +  display.in, [{node, result: result?.get(node.id)}]]]), graph: {...display_graph, out: display.id}}); return res.get(display.id)[0]; } catch(e){ return lib.no.executeGraph({state: new Map([[error.id + '/' +  error.in, [{node, error: e.toString()}]]]), graph: {...display_graph, out: error.id}}).get(error.id)[0];}"
                         },
                         {
                             "id": "container_dom_type",
@@ -2904,6 +2947,10 @@
                         },
                         {
                             "from": "in",
+                            "to": "get_error_display"
+                        },
+                        {
+                            "from": "in",
                             "to": "run_node_display"
                         },
                         {
@@ -2916,6 +2963,11 @@
                             "as": "type"
                         },
                         {
+                            "from": "get_type",
+                            "to": "get_error_display",
+                            "as": "type"
+                        },
+                        {
                             "from": "get_node",
                             "to": "run_node_display",
                             "as": "node"
@@ -2924,6 +2976,11 @@
                             "from": "get_node_display",
                             "to": "run_node_display",
                             "as": "display"
+                        },
+                        {
+                            "from": "get_error_display",
+                            "to": "run_node_display",
+                            "as": "error"
                         },
                         {
                             "from": "run_node_display",
