@@ -569,7 +569,6 @@ const contract_node = (data, keep_expanded=false) => {
         const out_node_id = out_node.id;
 
         const in_node = inside_node_map.get(in_node_id);
-        console.log(in_node_id);
 
         // have to create a dummy in node if the in node does something
         if (in_node_id && !in_node_id.endsWith('in')) {
