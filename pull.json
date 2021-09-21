@@ -401,7 +401,6 @@
                 {
                     "id": "calculate_levels",
                     "args": [
-                        "state",
                         "selected",
                         "display_graph"
                     ],
@@ -2519,8 +2518,8 @@
                 },
                 {
                     "id": "selected_inputs",
-                    "args": "event",
-                    "script": "return event.ty === 'down' ? ['node_id'] : []"
+                    "args": ["event", "selected", "node_id"],
+                    "script": "return event.ty === 'down' ? node_id === selected[0] ? ['expand_contract'] : ['node_id'] : []"
                 },
                 {
                     "id": "selected",
@@ -2533,6 +2532,41 @@
                         "state"
                     ],
                     "script": "state.selected = selected ? [selected] : state.selected; return state"
+                },
+                {
+                    "id": "display_graph_inputs",
+                    "args": ["event", "selected", "node_id"],
+                    "script": "return event.ty === 'down' && node_id === selected[0] ? ['expand_contract'] : []"
+                },
+                {
+                    "id": "display_graph",
+                    "type": "switch"
+                },
+                {
+                    "id": "set_display_graph",
+                    "args": [
+                        "display_graph",
+                        "state"
+                    ],
+                    "script": "state.display_graph = display_graph ?? state.display_graph; return state"
+                },
+                {
+                    "id": "expand_contract",
+                    "type": "expand_contract"
+                },
+                {
+                    "id": "expand_contract_selected",
+                    "args": [
+                        "selected"
+                    ],
+                    "script": "return selected"
+                },
+                {
+                    "id": "expand_contract_display_graph",
+                    "args": [
+                        "display_graph"
+                    ],
+                    "script": "return display_graph"
                 },
                 {
                     "id": "out",
@@ -2562,6 +2596,10 @@
                     "as": "node_id"
                 },
                 {
+                    "from": "state",
+                    "to": "selected_inputs"
+                },
+                {
                     "from": "event",
                     "to": "selected_inputs",
                     "as": "event"
@@ -2587,12 +2625,68 @@
                     "as": "selected"
                 },
                 {
+                    "from": "set_selected",
+                    "to": "set_display_graph",
+                    "as": "state"
+                },
+                {
+                    "from": "display_graph",
+                    "to": "set_display_graph",
+                    "as": "display_graph"
+                },
+                {
+                    "from": "node_id",
+                    "to": "display_graph_inputs",
+                    "as": "node_id"
+                },
+                {
+                    "from": "state",
+                    "to": "display_graph_inputs"
+                },
+                {
+                    "from": "event",
+                    "to": "display_graph_inputs",
+                    "as": "event"
+                },
+                {
+                    "from": "display_graph_inputs",
+                    "to": "display_graph",
+                    "type": "inputs"
+                },
+                {
+                    "from":  "state",
+                    "to": "expand_contract" 
+                },
+                {
+                    "from":  "node_id",
+                    "to": "expand_contract",
+                    "as": "node_id"
+                },
+                {
+                    "from": "expand_contract",
+                    "to": "expand_contract_selected"
+                },
+                {
+                    "from": "expand_contract",
+                    "to": "expand_contract_display_graph"
+                },
+                {
+                    "from": "expand_contract_selected",
+                    "to": "selected",
+                    "as": "expand_contract"
+                },
+                {
+                    "from": "expand_contract_display_graph",
+                    "to": "display_graph",
+                    "as": "expand_contract"
+                },
+                {
                     "from": "event",
                     "to": "out",
                     "as": "payload"
                 },
                 {
-                    "from": "set_selected",     
+                    "from": "set_display_graph",     
                     "to": "out"
                 }
             ]
