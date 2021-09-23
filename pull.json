@@ -2518,13 +2518,13 @@
                 },
                 {
                     "id": "get_selected_node",
-                    "args": ["node_id", "display_graph"],
-                    "script": "return display_graph.nodes.find(n => n.id === node_id)" 
+                    "args": ["node_id", "nodes"],
+                    "script": "return nodes.find(n => n.node_id === node_id)" 
                 },
                 {
                     "id": "selected_inputs",
                     "args": ["event", "selected", "node"],
-                    "script": "return event.ty === 'down' ? node.id === selected[0] ? ['expand_contract'] : ['node_id'] : []"
+                    "script": "return event.ty !== 'down' || node.selected_distance >= 3 ? [] : node.node_id === selected[0] ? ['expand_contract'] : ['node_id']"
                 },
                 {
                     "id": "selected",
@@ -2541,7 +2541,7 @@
                 {
                     "id": "display_graph_inputs",
                     "args": ["event", "selected", "node"],
-                    "script": "return event.ty === 'down' && node_id === selected[0] ? ['expand_contract'] : []"
+                    "script": "return event.ty === 'down' && node.node_id === selected[0] ? ['expand_contract'] : []"
                 },
                 {
                     "id": "display_graph",
@@ -3215,7 +3215,7 @@
                                         "selected",
                                         "selected_distance"
                                     ],
-                                    "script": "const mouseevent = (_, payload) => [onclick_node_fn, {x: payload.x, y: payload.y, node_id, selected: [], ty: 'down'}]; return ({ key: node_id, x: x - 20, y: y - 20, id: node_id, onmousedown: mouseevent, width: 256, height: 64, id: node_id, class: `node ${selected[0] === node_id ? 'selected': ''}`, opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1})"
+                                    "script": "const mouseevent = (_, payload) => [onclick_node_fn, {x: payload.x, y: payload.y, node_id, selected: [], ty: 'down'}]; return ({ key: node_id, x: x - 20, y: y - 20, id: node_id, onmousedown: mouseevent, width: 256, height: 64, id: node_id, class: `node ${selected[0] === node_id ? 'selected': ''}`, opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 6) : 0.1})"
                                 },
                                 {
                                     "id": "children",
@@ -3689,7 +3689,7 @@
                                         "sibling_index_normalized",
                                         "selected_edge"
                                     ],
-                                    "script": "return ({x: Math.floor(sibling_index_normalized * (target.x - source.x) + source.x) + 16, y: Math.floor(sibling_index_normalized * (target.y - source.y) + source.y), opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1, class: {selected: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to, edge: true} })"
+                                    "script": "return ({x: Math.floor((sibling_index_normalized * 0.8 + 0.05) * (target.x - source.x) + source.x) + 16, y: Math.floor((sibling_index_normalized * 0.8 + 0.05) * (target.y - source.y) + source.y), opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1, class: {selected: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to, edge: true} })"
                                 },
                                 {
                                     "id": "edge_info_line_position",
