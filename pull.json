@@ -2517,9 +2517,14 @@
                     "script": "return node_id" 
                 },
                 {
+                    "id": "get_selected_node",
+                    "args": ["node_id", "display_graph"],
+                    "script": "return display_graph.nodes.find(n => n.id === node_id)" 
+                },
+                {
                     "id": "selected_inputs",
-                    "args": ["event", "selected", "node_id"],
-                    "script": "return event.ty === 'down' ? node_id === selected[0] ? ['expand_contract'] : ['node_id'] : []"
+                    "args": ["event", "selected", "node"],
+                    "script": "return event.ty === 'down' ? node.id === selected[0] ? ['expand_contract'] : ['node_id'] : []"
                 },
                 {
                     "id": "selected",
@@ -2535,7 +2540,7 @@
                 },
                 {
                     "id": "display_graph_inputs",
-                    "args": ["event", "selected", "node_id"],
+                    "args": ["event", "selected", "node"],
                     "script": "return event.ty === 'down' && node_id === selected[0] ? ['expand_contract'] : []"
                 },
                 {
@@ -2596,8 +2601,22 @@
                     "as": "node_id"
                 },
                 {
+                    "from": "node_id",
+                    "to": "get_selected_node",
+                    "as": "node_id"
+                },
+                {
                     "from": "state",
                     "to": "selected_inputs"
+                },
+                {
+                    "from": "state",
+                    "to": "get_selected_node"
+                },
+                {
+                    "from": "get_selected_node",
+                    "to": "selected_inputs",
+                    "as": "node"
                 },
                 {
                     "from": "event",
@@ -2635,9 +2654,9 @@
                     "as": "display_graph"
                 },
                 {
-                    "from": "node_id",
+                    "from": "get_selected_node",
                     "to": "display_graph_inputs",
-                    "as": "node_id"
+                    "as": "node"
                 },
                 {
                     "from": "state",
