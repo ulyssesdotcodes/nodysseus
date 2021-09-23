@@ -3214,7 +3214,7 @@
                                 "value",
                                 "nodes"
                             ],
-                            "script": "return typeof value !== 'undefined' && typeof value !== 'object' ? typeof value : type ? type : nodes ? 'graph' : script ? 'script' : 'passthrough'"
+                            "script": "return type?.display_type ? type.display_type : typeof value !== 'undefined' && typeof value !== 'object' ? typeof value : type ? type : nodes ? 'graph' : script ? 'script' : 'passthrough'"
                         },
                         {
                             "id": "get_node_display",
