@@ -42,7 +42,7 @@
                         "view",
                         "subscriptions"
                     ],
-                    "script": "return lib.ha.app({init: () => [init, [() => { init.update_sim_effect(null, init) }]], view: s => view(s)[0].el, node: document.getElementById('node-editor'), subscriptions: () => subscriptions})"
+                "script": "return lib.ha.app({init: () => [init, [() => { init.update_sim_effect(null, init) }]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById('node-editor'), subscriptions: () => subscriptions})"
                 }
             ],
             "edges": [
@@ -238,10 +238,10 @@
         {
             "id": "selected_node",
             "args": [
-                "node_id",
+                "selected",
                 "display_graph"
             ],
-            "script": "return display_graph.nodes.find(n => n.id === node_id)"
+            "script": "return display_graph.nodes.find(n => n.id === selected[0])"
         },
         {
             "id": "svg_text",
@@ -316,7 +316,7 @@
                         "out_node",
                         "graph"
                     ],
-                    "script": "return (...args) => (lib.no.executeGraph({state: new Map([[in_node, args]]), graph: {...graph, in: in_node, out: out_node}}).get(out_node))"
+                    "script": "return (...args) => { res = lib.no.executeGraph({state: new Map([[in_node, args.length > 1 ? [args] : args]]), graph: {...graph, in: in_node, out: out_node}}).get(out_node); return res.length > 1 ? res : res[0]}"
                 }
             ],
             "edges": [
@@ -338,7 +338,7 @@
                     "args": [
                         "fn"
                     ],
-                    "script": "return [[(_, payload) => fn(payload)]]"
+                    "script": "return [(_, payload) => fn(payload)]"
                 }
             ],
             "edges": [
@@ -390,13 +390,29 @@
             ]
         },
         {
+            "id": "set",
+            "args": [
+                "target",
+                "path",
+                "value"
+            ],
+            "script": "return [lib._.set(target, path, value)]"
+        },
+        {
             "id": "update_and_run",
             "in": "in",
             "out": "out",
-            "args": ["display_graph", "nodes", "selected", "update_graph_sim", "update", "payload"],
+            "args": [
+                "display_graph",
+                "nodes",
+                "selected",
+                "update_graph_sim",
+                "update",
+                "payload"
+            ],
             "nodes": [
-                { 
-                    "id" : "in"
+                {
+                    "id": "in"
                 },
                 {
                     "id": "calculate_levels",
@@ -467,7 +483,7 @@
                         "state",
                         "payload"
                     ],
-                    "script": "try { const result = lib.no.executeGraph({state: new Map([['in', [{...state, payload}]]]), graph: {...state.display_graph, nodes: state.display_graph.nodes.concat([]), edges: state.display_graph.edges.concat([])}}); return {result}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
+                    "script": "try { const result = lib.no.executeGraph({state: new Map([[state.display_graph.in, [{...state, payload}]]]), graph: {...state.display_graph, nodes: state.display_graph.nodes.concat([]), edges: state.display_graph.edges.concat([])}}); return {result}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
                 },
                 {
                     "id": "out",
@@ -478,7 +494,7 @@
                         "result",
                         "error"
                     ],
-                    "script": "return [[{...state, result, error}, update && [[state.update_sim_effect, state]]], ...(fx ?? [])]"
+                    "script": "return [[{...state, result, error}, update && [state.update_sim_effect, state]].concat(fx ?? [])]"
                 }
             ],
             "edges": [
@@ -541,7 +557,7 @@
                     "to": "run",
                     "as": "state"
                 },
-                {   
+                {
                     "from": "update",
                     "to": "out",
                     "as": "update"
@@ -881,7 +897,7 @@
                 {
                     "id": "ha6b5qttf",
                     "args": [],
-                    "script": "return JSON.stringify(data, null, 2)"
+                    "script": "return JSON.stringify({node: data.node, result: data.result}, null, 2)"
                 },
                 {
                     "id": "6pqqchhnk",
@@ -973,6 +989,263 @@
             ]
         },
         {
+            "id": "number_display",
+            "name": "number_display",
+            "in": "6pqqchhnk",
+            "out": "tsxlng4gd",
+            "nodes": [
+                {
+                    "id": "tsxlng4gd",
+                    "args": [],
+                    "type": "h",
+                    "name": "number_display"
+                },
+                {
+                    "id": "hghirvcml",
+                    "args": [],
+                    "value": "input"
+                },
+                {
+                    "id": "cd571vftv"
+                },
+                {
+                    "id": "h5xzkeoql",
+                    "args": [],
+                    "value": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "id": "ltncqmqe9",
+                    "args": [],
+                    "type": "get"
+                },
+                {
+                    "id": "9kkegcpi2",
+                    "args": [],
+                    "type": "execute_graph"
+                },
+                {
+                    "id": "e96vv0gpq",
+                    "args": [],
+                    "value": "node.value"
+                },
+                {
+                    "id": "tw41k3wzg",
+                    "args": [],
+                    "type": "get"
+                },
+                {
+                    "id": "u9feks2l9",
+                    "args": [],
+                    "type": "update_and_run"
+                },
+                {
+                    "id": "6pqqchhnk",
+                    "args": [],
+                    "name": "number_display/in"
+                },
+                {
+                    "id": "yxaspmy5c",
+                    "args": [],
+                    "value": "graph"
+                },
+                {
+                    "id": "rhzddw3c6",
+                    "args": [],
+                    "type": "set"
+                },
+                {
+                    "id": "8jmaa71ct",
+                    "args": [],
+                    "script": "return arg0 !== arg1;"
+                },
+                {
+                    "id": "w5lqhh9qr",
+                    "args": [],
+                    "value": "value"
+                },
+                {
+                    "id": "es0e6as0j",
+                    "args": [],
+                    "type": "get",
+                    "name": "get target value"
+                },
+                {
+                    "id": "vnta2m4py",
+                    "args": [],
+                    "type": "get"
+                },
+                {
+                    "id": "gh99zvhy2",
+                    "args": [],
+                    "value": "1.target.valueAsNumber",
+                    "name": "target valueasnum"
+                },
+                {
+                    "id": "88f3s3qrq",
+                    "args": [],
+                    "value": "value"
+                },
+                {
+                    "id": "fxbdw1jrr",
+                    "args": [],
+                    "type": "selected_node"
+                },
+                {
+                    "id": "pkih97fsa",
+                    "args": [],
+                    "type": "get",
+                    "name": "state"
+                },
+                {
+                    "id": "mbbx3d26q",
+                    "args": []
+                },
+                {
+                    "id": "vbwsmt7jt",
+                    "args": [],
+                    "value": 0
+                }
+            ],
+            "edges": [
+                {
+                    "from": "hghirvcml",
+                    "to": "tsxlng4gd",
+                    "as": "dom_type"
+                },
+                {
+                    "from": "cd571vftv",
+                    "to": "tsxlng4gd",
+                    "as": "props"
+                },
+                {
+                    "from": "h5xzkeoql",
+                    "to": "cd571vftv"
+                },
+                {
+                    "from": "ltncqmqe9",
+                    "to": "cd571vftv",
+                    "as": "value"
+                },
+                {
+                    "from": "9kkegcpi2",
+                    "to": "cd571vftv",
+                    "as": "oninput"
+                },
+                {
+                    "from": "e96vv0gpq",
+                    "to": "ltncqmqe9",
+                    "as": "path"
+                },
+                {
+                    "from": "tw41k3wzg",
+                    "to": "9kkegcpi2",
+                    "as": "graph"
+                },
+                {
+                    "from": "u9feks2l9",
+                    "to": "9kkegcpi2",
+                    "as": "out_node",
+                    "type": "ref"
+                },
+                {
+                    "from": "6pqqchhnk",
+                    "to": "ltncqmqe9",
+                    "as": "target"
+                },
+                {
+                    "from": "6pqqchhnk",
+                    "to": "tw41k3wzg",
+                    "as": "target"
+                },
+                {
+                    "from": "yxaspmy5c",
+                    "to": "tw41k3wzg",
+                    "as": "path"
+                },
+                {
+                    "from": "rhzddw3c6",
+                    "to": "u9feks2l9",
+                    "as": "node"
+                },
+                {
+                    "from": "8jmaa71ct",
+                    "to": "u9feks2l9",
+                    "as": "update"
+                },
+                {
+                    "from": "w5lqhh9qr",
+                    "to": "rhzddw3c6",
+                    "as": "path"
+                },
+                {
+                    "from": "es0e6as0j",
+                    "to": "rhzddw3c6",
+                    "as": "value"
+                },
+                {
+                    "from": "vnta2m4py",
+                    "to": "8jmaa71ct",
+                    "as": "arg0"
+                },
+                {
+                    "from": "es0e6as0j",
+                    "to": "8jmaa71ct",
+                    "as": "arg1"
+                },
+                {
+                    "from": "gh99zvhy2",
+                    "to": "es0e6as0j",
+                    "as": "path"
+                },
+                {
+                    "from": "88f3s3qrq",
+                    "to": "vnta2m4py",
+                    "as": "path"
+                },
+                {
+                    "from": "fxbdw1jrr",
+                    "to": "rhzddw3c6",
+                    "as": "target"
+                },
+                {
+                    "from": "fxbdw1jrr",
+                    "to": "vnta2m4py",
+                    "as": "target"
+                },
+                {
+                    "from": "mbbx3d26q",
+                    "to": "pkih97fsa",
+                    "as": "target"
+                },
+                {
+                    "from": "mbbx3d26q",
+                    "to": "9kkegcpi2",
+                    "as": "in_node",
+                    "type": "ref"
+                },
+                {
+                    "from": "mbbx3d26q",
+                    "to": "es0e6as0j",
+                    "as": "target"
+                },
+                {
+                    "from": "pkih97fsa",
+                    "to": "u9feks2l9"
+                },
+                {
+                    "from": "pkih97fsa",
+                    "to": "fxbdw1jrr"
+                },
+                {
+                    "from": "vbwsmt7jt",
+                    "to": "pkih97fsa",
+                    "as": "path"
+                }
+            ]
+        },
+        {
             "id": "default_error_display",
             "in": "in",
             "out": "out",
@@ -985,7 +1258,7 @@
                     "args": [
                         "data"
                     ],
-                    "script": "return data.error"
+                    "script": "console.log(data); return data.error"
                 },
                 {
                     "id": "out",
@@ -1199,7 +1472,7 @@
                         "ctrlKey",
                         "display_graph"
                     ],
-                    "script": "return [[key === 's' && ctrlKey === true && [(display_graph) => { localStorage.setItem('display_graph', JSON.stringify(display_graph)); localStorage.setItem('display_graph_' + Date.now(), JSON.stringify(display_graph));}, display_graph]]]"
+                    "script": "return [[key === 's' && ctrlKey === true && [(_, display_graph) => { localStorage.setItem('display_graph', JSON.stringify(display_graph)); localStorage.setItem('display_graph_' + Date.now(), JSON.stringify(display_graph));}, display_graph]]]"
                 },
                 {
                     "id": "down",
@@ -1231,7 +1504,7 @@
                         "nodes",
                         "levels"
                     ],
-                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.nodes_by_level[levels.level_by_node.get(selected[0])]; const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling && n.selected_distance < 3); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x < current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.nodes_by_level[levels.level_by_node.get(selected[0])].concat(levels.siblings.get(selected[0])); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling && n.selected_distance < 3); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x < current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
                 },
                 {
                     "id": "left_edge",
@@ -1255,7 +1528,7 @@
                         "nodes",
                         "levels"
                     ],
-                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.nodes_by_level[levels.level_by_node.get(selected[0])]; const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling && n.selected_distance < 3); if(!sibling_node){ return dist }  const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
+                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.nodes_by_level[levels.level_by_node.get(selected[0])].concat(levels.siblings.get(selected[0])); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling && n.selected_distance < 3); if(!sibling_node){ return dist }  const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? next_node[1].node_id : []"
                 },
                 {
                     "id": "right_edge",
@@ -1641,12 +1914,19 @@
                 },
                 {
                     "id": "update_graph_sim",
-                    "args": ["state", "key", "selected", "pending_edges"],
+                    "args": [
+                        "state",
+                        "key",
+                        "selected",
+                        "pending_edges"
+                    ],
                     "script": "return (!state.editing && state.search === false && (key === 'enter' || key.toLowerCase() === 'o' || key === 'x' || (key === 't' && shiftKey) || (!!pending_edges.edge_to && !!pending_edges.edge_from))) || key === 'escape' || selected"
                 },
                 {
                     "id": "update",
-                    "args": [ "key"],
+                    "args": [
+                        "key"
+                    ],
                     "script": "return key === 'escape'"
                 },
                 {
@@ -1658,14 +1938,12 @@
                 {
                     "from": "in",
                     "to": "key_event",
-                    "as": "args",
-                    "type": "concat"
+                    "as": "args"
                 },
                 {
                     "from": "in",
                     "to": "state",
-                    "as": "args",
-                    "type": "concat"
+                    "as": "args"
                 },
                 {
                     "from": "key_event",
@@ -2441,14 +2719,12 @@
                 {
                     "from": "in",
                     "to": "mouse_event",
-                    "as": "args",
-                    "type": "concat"
+                    "as": "args"
                 },
                 {
                     "from": "in",
                     "to": "state",
-                    "as": "args",
-                    "type": "concat"
+                    "as": "args"
                 },
                 {
                     "from": "mouse_event",
@@ -2513,17 +2789,26 @@
                 },
                 {
                     "id": "node_id",
-                    "args": ["node_id"],
-                    "script": "return node_id" 
+                    "args": [
+                        "node_id"
+                    ],
+                    "script": "return node_id"
                 },
                 {
                     "id": "get_selected_node",
-                    "args": ["node_id", "nodes"],
-                    "script": "return nodes.find(n => n.node_id === node_id)" 
+                    "args": [
+                        "node_id",
+                        "nodes"
+                    ],
+                    "script": "return nodes.find(n => n.node_id === node_id)"
                 },
                 {
                     "id": "selected_inputs",
-                    "args": ["event", "selected", "node"],
+                    "args": [
+                        "event",
+                        "selected",
+                        "node"
+                    ],
                     "script": "return event.ty !== 'down' || node.selected_distance >= 3 ? [] : node.node_id === selected[0] ? ['expand_contract'] : ['node_id']"
                 },
                 {
@@ -2540,7 +2825,11 @@
                 },
                 {
                     "id": "display_graph_inputs",
-                    "args": ["event", "selected", "node"],
+                    "args": [
+                        "event",
+                        "selected",
+                        "node"
+                    ],
                     "script": "return event.ty === 'down' && node.node_id === selected[0] ? ['expand_contract'] : []"
                 },
                 {
@@ -2582,18 +2871,16 @@
                 {
                     "from": "in",
                     "to": "event",
-                    "as": "args",
-                    "type": "concat"
+                    "as": "args"
                 },
                 {
-                   "from": "in",
-                   "to": "state",
-                   "as": "args",
-                   "type": "concat"
+                    "from": "in",
+                    "to": "state",
+                    "as": "args"
                 },
                 {
-                   "from": "event",
-                   "to": "node_id"
+                    "from": "event",
+                    "to": "node_id"
                 },
                 {
                     "from": "node_id",
@@ -2673,11 +2960,11 @@
                     "type": "inputs"
                 },
                 {
-                    "from":  "state",
-                    "to": "expand_contract" 
+                    "from": "state",
+                    "to": "expand_contract"
                 },
                 {
-                    "from":  "node_id",
+                    "from": "node_id",
                     "to": "expand_contract",
                     "as": "node_id"
                 },
@@ -2705,7 +2992,7 @@
                     "as": "payload"
                 },
                 {
-                    "from": "set_display_graph",     
+                    "from": "set_display_graph",
                     "to": "out"
                 }
             ]
@@ -2935,7 +3222,7 @@
                                 "display_graph",
                                 "type"
                             ],
-                            "script": "return display_graph.nodes.find(n => n.id === type + '_display') ?? display_graph.nodes.find(n => n.id === 'default_node_display')"
+                            "script": "return display_graph.nodes.find(n => n.id === (typeof type === 'string' || !type.display_type ? (type.node_type ?? type) + '_display' : type.display_type)) ?? display_graph.nodes.find(n => n.id === 'default_node_display')"
                         },
                         {
                             "id": "get_error_display",
@@ -2954,7 +3241,7 @@
                                 "result",
                                 "display_graph"
                             ],
-                            "script": "try { const res = lib.no.executeGraph({state: new Map([[display.id + '/' +  display.in, [{node, result: result?.get(node.id)}]]]), graph: {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: display.id}}); return res.get(display.id)[0]; } catch(e){ return lib.no.executeGraph({state: new Map([[error.id + '/' +  error.in, [{node, error: e.toString()}]]]), graph: {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: error.id}}).get(error.id)[0];}"
+                            "script": "try { const graph = {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: display.id, in: display.id + '/' + display.in}; const res = lib.no.executeGraph({state: new Map([[display.id + '/' +  display.in, [{graph, node, result: result?.get(node.id)}]]]), graph}); return res.get(display.id)[0]; } catch(e){ return lib.no.executeGraph({state: new Map([[error.id + '/' +  error.in, [{node, error: e.toString()}]]]), graph: {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: error.id}}).get(error.id)[0];}"
                         },
                         {
                             "id": "container_dom_type",
@@ -3149,7 +3436,7 @@
                             "args": [
                                 "onclick_graph_fn"
                             ],
-                            "script": "return {width: window.innerWidth, height: window.innerHeight, onmousedown: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'down'}], onmouseup: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'up'}], onmousemove: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'move'}]}"
+                            "script": "return {width: window.innerWidth, height: window.innerHeight, /*onmousedown: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'down'}], onmouseup: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'up'}], onmousemove: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'move'}]*/}"
                         },
                         {
                             "id": "node_editor_dom_type",
@@ -3310,7 +3597,7 @@
                                                     "args": [
                                                         "target"
                                                     ],
-                                                    "script": "return `type: ` + (target.value !== undefined ? 'value' : target.type ? target.type : target.script ? 'script' : target.nodes ? `graph (${target.nodes.length}, ${target.edges.length})` : 'passthrough')"
+                                                    "script": "return `type: ` + (target.value !== undefined ? 'value' : target.type ? JSON.stringify(target.type) : target.script ? 'script' : target.nodes ? `graph (${target.nodes.length}, ${target.edges.length})` : 'passthrough')"
                                                 },
                                                 {
                                                     "id": "get_selected_distance",
