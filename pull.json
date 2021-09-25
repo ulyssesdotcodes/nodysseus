@@ -327,6 +327,12 @@
             ]
         },
         {
+            "id": "array",
+            "args": [],
+            "script": "return [inputs.flat()]",
+            "name": "array"
+        },
+        {
             "id": "wrap_effect_fn",
             "nodes": [
                 {
@@ -483,7 +489,7 @@
                         "state",
                         "payload"
                     ],
-                    "script": "try { const result = lib.no.executeGraph({state: new Map([[state.display_graph.in, [{...state, payload}]]]), graph: {...state.display_graph, nodes: state.display_graph.nodes.concat([]), edges: state.display_graph.edges.concat([])}}); return {result}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
+                    "script": "try { const result = lib.no.executeGraph({state: new Map([[state.display_graph.in, [{...state, payload}]]]), graph: {...state.display_graph, nodes: state.display_graph.nodes.concat([]), edges: state.display_graph.edges.concat([])}}); return {result, error: undefined}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
                 },
                 {
                     "id": "out",
@@ -1258,11 +1264,19 @@
                     "args": [
                         "data"
                     ],
-                    "script": "console.log(data); return data.error"
+                    "script": "const e = data.error; return JSON.stringify({error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString(), data}, null, 2)"
+                },
+                {
+                    "id": "text",
+                    "type": "h_text"
+                },
+                {
+                    "id": "out_dom_type",
+                    "value": "pre" 
                 },
                 {
                     "id": "out",
-                    "type": "h_text"
+                    "type": "h"
                 }
             ],
             "edges": [
@@ -1273,8 +1287,18 @@
                 },
                 {
                     "from": "stringify",
-                    "to": "out",
+                    "to": "text",
                     "as": "text"
+                },
+                {
+                    "from": "text",
+                    "to": "out",
+                    "as": "children"
+                },
+                {
+                    "from": "out_dom_type",
+                    "to": "out",
+                    "as": "dom_type"
                 }
             ]
         },
@@ -1620,9 +1644,10 @@
                         "selected",
                         "display_graph",
                         "editing",
-                        "selected_edge"
+                        "selected_edge",
+                        "levels"
                     ],
-                    "script": "const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({id, args: []}); display_graph.edges = display_graph.edges.concat(selected_edge ? [{from: selected_edge.from, to: id}, {from: id, to: selected_edge.to}] : [{from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id}]).filter(e => !(selected_edge?.to === e.to && selected_edge?.from === e.from)); return {display_graph, selected: [id], selected_edge: false};"
+                    "script": "const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({id, args: []}); display_graph.edges = display_graph.edges.concat(selected_edge ? [{from: selected_edge.from, to: id}, {from: id, to: selected_edge.to}] : [{from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id, as: `arg${levels.parents.get(selected[0]).length}`}]).filter(e => !(selected_edge?.to === e.to && selected_edge?.from === e.from)); return {display_graph, selected: [id], selected_edge: false};"
                 },
                 {
                     "id": "o_display_graph",
@@ -3214,7 +3239,7 @@
                                 "value",
                                 "nodes"
                             ],
-                            "script": "return type?.display_type ? type.display_type : typeof value !== 'undefined' && typeof value !== 'object' ? typeof value : type ? type : nodes ? 'graph' : script ? 'script' : 'passthrough'"
+                            "script": "return type?.display_type ? type.display_type : typeof value !== 'undefined' && typeof value !== 'object' ? typeof value : type ? (type.node_type ?? type) : nodes ? 'graph' : script ? 'script' : 'passthrough'"
                         },
                         {
                             "id": "get_node_display",
@@ -3222,7 +3247,7 @@
                                 "display_graph",
                                 "type"
                             ],
-                            "script": "return display_graph.nodes.find(n => n.id === (typeof type === 'string' || !type.display_type ? (type.node_type ?? type) + '_display' : type.display_type)) ?? display_graph.nodes.find(n => n.id === 'default_node_display')"
+                            "script": "return display_graph.nodes.find(n => n.id === type + '_display') ?? display_graph.nodes.find(n => n.id === 'default_node_display')"
                         },
                         {
                             "id": "get_error_display",
@@ -3241,7 +3266,17 @@
                                 "result",
                                 "display_graph"
                             ],
-                            "script": "try { const graph = {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: display.id, in: display.id + '/' + display.in}; const res = lib.no.executeGraph({state: new Map([[display.id + '/' +  display.in, [{graph, node, result: result?.get(node.id)}]]]), graph}); return res.get(display.id)[0]; } catch(e){ return lib.no.executeGraph({state: new Map([[error.id + '/' +  error.in, [{node, error: e.toString()}]]]), graph: {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: error.id}}).get(error.id)[0];}"
+                            "script": "try { const graph = {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: display.id, in: display.id + '/' + display.in}; const res = lib.no.executeGraph({state: new Map([[display.id + '/' +  display.in, [{graph, node, result: result?.get(node.id)}]]]), graph}); return res.get(display.id)[0]; } catch(e){ return {error: e} }"
+                        },
+                        {
+                            "id": "run_error_display",
+                            "args": [
+                                "node",
+                                "error",
+                                "error_display",
+                                "display_graph"
+                            ],
+                            "script": "return !error ? [] : lib.no.executeGraph({state: new Map([[error_display.id + '/' +  error_display.in, [{node, error: error.toString()}]]]), graph: {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: error_display.id}}).get(error_display.id)[0]"
                         },
                         {
                             "id": "container_dom_type",
@@ -3253,6 +3288,10 @@
                                 "error"
                             ],
                             "script": "return {class: error ? 'error' : '', id: 'result'}"
+                        },
+                        {
+                            "id": "container_children",
+                            "script": "return error_display ?? display"
                         },
                         {
                             "id": "container",
@@ -3292,6 +3331,10 @@
                             "to": "run_node_display"
                         },
                         {
+                            "from": "in",
+                            "to": "run_error_display"
+                        },
+                        {
                             "from": "get_node",
                             "to": "get_type"
                         },
@@ -3311,24 +3354,43 @@
                             "as": "node"
                         },
                         {
+                            "from": "get_node",
+                            "to": "run_error_display",
+                            "as": "node"
+                        },
+                        {
                             "from": "get_node_display",
                             "to": "run_node_display",
                             "as": "display"
                         },
                         {
                             "from": "get_error_display",
-                            "to": "run_node_display",
-                            "as": "error"
+                            "to": "run_error_display",
+                            "as": "error_display"
                         },
                         {
                             "from": "run_node_display",
-                            "to": "container",
-                            "as": "children"
+                            "to": "container_children",
+                            "as": "display"
+                        },
+                        {
+                            "from": "run_error_display",
+                            "to": "container_children",
+                            "as": "error_display"
+                        },
+                        {
+                            "from": "run_node_display",
+                            "to": "run_error_display"
                         },
                         {
                             "from": "container_props",
                             "to": "container",
                             "as": "props"
+                        },
+                        {
+                            "from": "container_children",
+                            "to": "container",
+                            "as": "children"
                         },
                         {
                             "from": "container_dom_type",
@@ -3737,7 +3799,7 @@
                                                 {
                                                     "from": "script",
                                                     "to": "get_type",
-                                                    "as": "default"
+                                                    "as": "default_value"
                                                 },
                                                 {
                                                     "from": "get_name",

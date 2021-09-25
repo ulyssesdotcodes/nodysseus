@@ -2,7 +2,6 @@ import DEFAULT_GRAPH from "./pull.json"
 import _ from "lodash";
 import { h, app, text, memo } from "hyperapp"
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
-import { selectSyntaxLeft } from "@codemirror/commands";
 import Fuse from "fuse.js";
 
 const keywords = new Set(["break", "case", "catch", "continue", "debugger", "default", "delete", "do", "else", "finally", "for", "function", "if", "in", "instanceof", "new", "return", "switch", "this", "throw", "try", "typeof", "var", "void", "while", "with"])
@@ -31,7 +30,7 @@ const executeGraph = ({state, graph}) => {
             console.log(graph);
             console.log(state);
             console.log(active_nodes);
-            throw new Error("stuck");
+            throw new Error(`stuck with active: ${[...active_nodes.keys()].join(', ')} and state: ${[...state.keys()].join(', ')}`);
         }
 
         skip_stuck_test = false;
@@ -88,11 +87,12 @@ const executeGraph = ({state, graph}) => {
                 }
             }
 
+            const type = node.type?.node_type ?? typeof node.type === 'string' ? node.type : undefined;
 
-            if(node.value === undefined && node.type && !state.has(node.type.node_type ?? node.type)) {
-                if(!active_nodes.has(node.type.node_type ?? node.type)) {
-                    active_nodes.set(node.type.node_type ?? node.type, Object.assign({}, node_map.get(node.type.node_type ?? node.type), {
-                        inputs: graph.edges.filter(e => e.to === (node.type.node_type ?? node.type)),
+            if(node.value === undefined && type && !state.has(type)) {
+                if(!active_nodes.has(type)) {
+                    active_nodes.set(type, Object.assign({}, node_map.get(type), {
+                        inputs: graph.edges.filter(e => e.to === type),
                         _nodetypeflag: true,
                         _nodeflag: true
                     }))
@@ -125,23 +125,28 @@ const executeGraph = ({state, graph}) => {
 
 
                     let input;
+                    const input_results = [];
                     for(let i = 0; i < inputs.length; i++) {
                         input = inputs[i];
                         if(datas.length === 0) {
                             break;
                         } else if(input?.type === "concat") {
+                            input_results.push(state.get(input.from));
                             if(state.get(input.from).length > 0 || datas[0][input.as] === undefined) {
                                 datas.forEach(d => Object.assign(d, {[input.as]: state.get(input.from)}))
                             }
                         } else if (input?.type === "ref") {
+                            input_results.push(input.from);
                             datas.forEach(d => Object.assign(d, {[input.as]: input.from}))
                         } else if (state.get(input.from).length > 1 && datas.length > 1) {
+                            input_results.push(state.get(input.from));
                             state.get(input.from).forEach((d, i) =>{
                                 datas[i] = Object.assign(datas.length > i ? datas[i] : {}, input.as ? {[input.as]: d} : d);
                             });
                         } else if (state.get(input.from).length > 0) {
                             const new_datas = []
                             const state_datas = state.get(input.from);
+                            input_results.push(state_datas);
                             for(let i = 0; i < datas.length; i++) {
                                 for(let j = 0; j < state_datas.length; j++) {
                                     new_datas.push(input.as 
@@ -154,8 +159,8 @@ const executeGraph = ({state, graph}) => {
                         }
                     }
 
-                    const node_type = node.type
-                        ? Object.assign({}, state.get(node.type.node_type ?? node.type)[0], node,{args: (node.args ?? []).concat(state.get(node.type.node_type ?? node.type)[0].args ?? [])}, {_nodetypeflag: false})
+                    const node_type = type
+                        ? Object.assign({}, state.get(type)[0], node,{args: (node.args ?? []).concat(state.get(type)[0].args ?? [])}, {_nodetypeflag: false})
                         : node;
 
                     if(node._nodetypeflag) {
@@ -193,29 +198,41 @@ const executeGraph = ({state, graph}) => {
                         }
                     } else if(node_type.script) {
                         try {
-                            const arg_names = new Set(node_type.args);
+                            const args = new Map([['lib', lib], ['node', node], ['inputs', input_results]]);
                             node.inputs.forEach(i => {
-                                if(i.as && !keywords.has(i.as)) {
-                                    arg_names.add(i.as);
+                                if(i.as && !keywords.has(i.as) && !args.has(i.as)) {
+                                    args.set(i.as, null)
                                 }
-                            })
-                            const arg_name_values = [...arg_names];
-                            const fn = {
-                                [node.name ?? node.id]: new Function('lib', 'node', ...arg_names, node_type.script)
+                            });
+                            if (node_type.args){
+                                node_type.args.forEach(a => {
+                                    if(a && !keywords.has(a) && !args.has(a)) {
+                                        args.set(a, null)
+                                    }
+                                });
                             }
-                            // const fn = new Function(
-                            //     `return function ${node.name ?? node.id}(${['lib', 'node', ...arg_names].join(', ')}){ ${node_type.script} }`
-                            //     )();
+
+                            // order matters
+                            // the function bs is for debugging purposes
+                            const fn = new Function(`return function _${(node.name ?? node.id).replace(/(\s|\/)/g, '_')}(${[...args.keys()].join(',')}){${node_type.script}}`)()
                             const state_datas = []
-                            const args = [lib, node];
-                            let fn_args = [];
                             for(let i = 0; i < datas.length; i++) {
-                                fn_args = args.slice();
-                                for(let j = 0; j < arg_name_values.length; j++) {
-                                    fn_args.push(datas[i][arg_name_values[j]]);
+                                // order matters because of the above
+                                node.inputs.forEach(input => {
+                                    if(input.as && !keywords.has(input.as)) {
+                                        args.set(input.as, datas[i][input.as]);
+                                    }
+                                });
+
+                                if (node_type.args){
+                                    node_type.args.forEach(arg => {
+                                        if(!keywords.has(arg)) {
+                                            args.set(arg, datas[i][arg]);
+                                        }
+                                    })
                                 }
 
-                                const results = fn[node.name ?? node.id].apply(null, fn_args);
+                                const results = fn.apply(null, [...args.values()]);
                                 Array.isArray(results) ? results.forEach(res => state_datas.push(res)) : state_datas.push(results);
                             }
                             state.set(node.id, state_datas);
@@ -649,7 +666,15 @@ const flattenNode = (graph, levels = -1) => {
         .map(n => Object.assign({}, n, { id: `${prefix}${n.id}` }))
         .map(g => flattenNode(g, levels - 1))
         .reduce((acc, n) => Object.assign({}, acc, {
-            flat_nodes: acc.flat_nodes.concat(n.flat_nodes?.flat() ?? []),
+            flat_nodes: acc.flat_nodes.concat(n.flat_nodes?.flat() ?? []).map(fn => {
+                // adjust for easy graph renaming
+                if((fn.id === prefix + (graph.out ?? "out")) && graph.name) {
+                    fn.name = graph.name;
+                } else if (graph.in && (fn.id === prefix + (graph.in ?? "in")) && graph.name) {
+                    fn.name = graph.name + "/in"
+                }
+                return fn
+            }),
             flat_edges: acc.flat_edges.map(e => n.flat_nodes ?
                 e.to === n.id ?
                 Object.assign({}, e, { to: `${e.to}/${n.in ?? 'in'}` }) :
