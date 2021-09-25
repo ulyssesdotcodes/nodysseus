@@ -3266,7 +3266,7 @@
                                 "result",
                                 "display_graph"
                             ],
-                        "script": "try { const graph = {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: display.id, in: display.id + '/' + display.in}; return {el: lib.ha.memo((i) => {const input = {state: new Map([[display.id + '/' +  display.in, [i]]]), graph}; lib.no.executeGraph({...i, graph}).get(display.id)[0].el}, {node, result: result?.get(node.id)})}; } catch(e){ return {error: e} }"
+                        "script": "try { const graph = {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: display.id, in: display.id + '/' + display.in}; return {el: lib.ha.memo((i) => {const input = {state: new Map([[display.id + '/' +  display.in, [i]]]), graph}; return lib.no.executeGraph(input).get(display.id)[0].el}, {node, result: result?.get(node.id)})}; } catch(e){ return {error: e} }"
                         },
                         {
                             "id": "run_error_display",
