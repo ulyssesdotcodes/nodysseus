@@ -719,7 +719,8 @@ const generic_nodes = new Set([
     "graph_display",
     "number_display",
     "update_and_run",
-    "selected_node"
+    "selected_node",
+    "array"
 ]);
 
 const stored = localStorage.getItem("display_graph");
