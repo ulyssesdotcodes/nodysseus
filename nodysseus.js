@@ -292,7 +292,7 @@ const calculateLevels = (graph, selected) => {
 
     const parents = new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.to === n.id).map(e => e.from)]));
     const children = new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.from === n.id).map(e => e.to)]));
-    const siblings = new Map(graph.nodes.map(n => [n.id, [...(new Set(parents.get(n.id)?.flatMap(p => children.get(p)?.filter(c => c !== n.id) ?? []).concat(children.get(n.id)?.flatMap(c => parents.get(c) ?? []) ?? [])).values())]]))
+    const siblings = new Map(graph.nodes.map(n => [n.id, [...(new Set(/*parents.get(n.id)?.flatMap(p => children.get(p)?.filter(c => c !== n.id) ?? []).concat(*/children.get(n.id)?.flatMap(c => parents.get(c) ?? []) ?? [])).values()/*)*/]]))
     const distance_from_selected = new Map();
 
     const calculate_selected_graph = (s, i) => {
@@ -383,7 +383,7 @@ const updateSimulationNodes = (data) => {
     data.simulation.force('link_siblings').x((n) => sibling_x.get(n.node_id));
 
     data.simulation.force('charge')
-        .strength(n => levels.distance_from_selected.has(n.node_id) ? -1024 : -8)
+        .strength(n => levels.distance_from_selected.has(n.node_id) ? -64 : -8)
 
     data.simulation.force('link_direction')
         .y((n) => window.innerHeight * (
@@ -397,7 +397,7 @@ const updateSimulationNodes = (data) => {
             : .9
         ));
 
-    data.simulation.force('collide').radius(n => n.node_id === selected ? 64 : 0);
+    data.simulation.force('collide').radius(n => n.node_id === selected ? 128 : 0);
 
 
     data.simulation

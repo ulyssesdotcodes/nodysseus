@@ -498,9 +498,10 @@
                         "fx",
                         "update",
                         "result",
-                        "error"
+                        "error",
+                        "update_graph_sim"
                     ],
-                    "script": "return [[{...state, result, error}, update && [state.update_sim_effect, state]].concat(fx ?? [])]"
+                    "script": "return [[{...state, result, error}, (update || update_graph_sim) && [state.update_sim_effect, state]].concat(fx ?? [])]"
                 }
             ],
             "edges": [
@@ -903,7 +904,7 @@
                 {
                     "id": "ha6b5qttf",
                     "args": [],
-                    "script": "return JSON.stringify({node: data.node, result: data.result}, null, 2)"
+                    "script": "return JSON.stringify({node: data.node, result: data.result, input_results: data.input_results}, null, 2)"
                 },
                 {
                     "id": "6pqqchhnk",
@@ -1514,9 +1515,10 @@
                         "key",
                         "selected",
                         "editing",
-                        "display_graph"
+                        "display_graph",
+                        "selected_edge"
                     ],
-                    "script": "const next_edges = display_graph.edges.filter(e => e.to === selected[0]); const next_node_edge = next_edges[Math.ceil(next_edges.length / 2) - 1]; return next_node_edge ? next_node_edge.from : []"
+                    "script": "const next_edges = selected_edge ? [selected_edge] : display_graph.edges.filter(e => e.to === selected[0]); const next_node_edge = next_edges[Math.ceil(next_edges.length / 2) - 1]; return next_node_edge ? next_node_edge.from : []"
                 },
                 {
                     "id": "left",
@@ -1647,7 +1649,7 @@
                         "selected_edge",
                         "levels"
                     ],
-                    "script": "const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({id, args: []}); display_graph.edges = display_graph.edges.concat(selected_edge ? [{from: selected_edge.from, to: id}, {from: id, to: selected_edge.to}] : [{from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id, as: `arg${levels.parents.get(selected[0]).length}`}]).filter(e => !(selected_edge?.to === e.to && selected_edge?.from === e.from)); return {display_graph, selected: [id], selected_edge: false};"
+                    "script": "const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({id, args: []}); const edgeIdx = display_graph.edges.findIndex(e => selected_edge?.to === e.to && selected_edge?.from === e.from); display_graph.edges.splice(selected_edge ? edgeIdx : display_graph.edges.length, selected_edge ? 1 : 0, ...(selected_edge ? [{from: selected_edge.from, to: id}, {from: id, to: selected_edge.to, as: display_graph.edges[edgeIdx].as}] : [{from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id, as: `arg${levels.parents.get(selected[0]).length}`}])); return {display_graph, selected: [id], selected_edge: false};"
                 },
                 {
                     "id": "o_display_graph",
@@ -1675,10 +1677,11 @@
                     "args": [
                         "key",
                         "selected",
+                        "selected_edge",
                         "display_graph",
                         "display_graph_out"
                     ],
-                    "script": "display_graph.nodes = display_graph.nodes.filter(n => n.id !== selected[0]); const new_edges = []; const to = display_graph.edges.filter(e => e.to === selected[0]); const from = display_graph.edges.filter(e => e.from === selected[0]); for(let i = 0; i < to.length; i++){for(let j = 0; j < from.length; j++){ if(!display_graph.edges.find(e => e.from === to[i].from && e.to === from[j].to)){ display_graph.edges.push({from: to[i].from, to: from[j].to});}}}; display_graph.edges = display_graph.edges.filter(e => e.to !== selected[0] && e.from !== selected[0]); display_graph.edges.push(...new_edges); return {display_graph, selected: [to[0]?.from ?? from[0]?.to] };"
+                    "script": "if(selected_edge){display_graph.edges.splice(display_graph.edges.findIndex(e => selected_edge.from === e.from && selected_edge.to === e.to), 1); return {display_graph, selected, selected_edge: false}; } display_graph.nodes = display_graph.nodes.filter(n => n.id !== selected[0]); const new_edges = []; const to = display_graph.edges.filter(e => e.to === selected[0]); const from = display_graph.edges.filter(e => e.from === selected[0]); for(let i = 0; i < to.length; i++){for(let j = 0; j < from.length; j++){ if(!display_graph.edges.find(e => e.from === to[i].from && e.to === from[j].to)){ display_graph.edges.push({from: to[i].from, to: from[j].to});}}}; display_graph.edges = display_graph.edges.filter(e => e.to !== selected[0] && e.from !== selected[0]); display_graph.edges.push(...new_edges); return {display_graph, selected: [to[0]?.from ?? from[0]?.to] };"
                 },
                 {
                     "id": "x_display_graph",
@@ -2514,6 +2517,10 @@
                     "to": "x_selected"
                 },
                 {
+                    "from": "x",
+                    "to": "x_selected_edge"
+                },
+                {
                     "from": "x_display_graph",
                     "to": "display_graph",
                     "as": "x"
@@ -2521,6 +2528,11 @@
                 {
                     "from": "x_selected",
                     "to": "selected",
+                    "as": "x"
+                },
+                {
+                    "from": "x_selected_edge",
+                    "to": "selected_edge",
                     "as": "x"
                 },
                 {
@@ -3266,7 +3278,7 @@
                                 "result",
                                 "display_graph"
                             ],
-                        "script": "try { const graph = {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: display.id, in: display.id + '/' + display.in}; return {el: lib.ha.memo((i) => {const input = {state: new Map([[display.id + '/' +  display.in, [i]]]), graph}; return lib.no.executeGraph(input).get(display.id)[0].el}, {node, result: result?.get(node.id)})}; } catch(e){ return {error: e} }"
+                        "script": "try { const graph = {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: display.id, in: display.id + '/' + display.in}; return {el: lib.ha.memo((i) => {const input = {state: new Map([[display.id + '/' +  display.in, [i]]]), graph}; return lib.no.executeGraph(input).get(display.id)[0].el}, {graph, node, result: result?.get(node.id), input_results: Object.fromEntries(graph.edges.filter(e => e.to === node.id).map(e => [e.as ?? e.from, result?.get(e.from)]))})}; } catch(e){ return {error: e} }"
                         },
                         {
                             "id": "run_error_display",
