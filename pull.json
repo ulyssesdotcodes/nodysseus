@@ -3113,13 +3113,15 @@
                             "id": "edit_text_children",
                             "args": [
                                 "label",
-                                "input"
+                                "input",
+                                "types"
                             ],
-                            "script": "return [[label.el, input.el]]"
+                            "script": "return [[label.el, input.el, types.el]]"
                         },
                         {
                             "id": "edit_text_input_dom_type",
-                            "value": "textarea"
+                            "args": ["editing"],
+                            "script": "return editing === 'type' ? 'input' : 'textarea';"
                         },
                         {
                             "id": "edit_text_input_props",
@@ -3130,7 +3132,7 @@
                                 "editing",
                                 "edit_value"
                             ],
-                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); return {class: 'input', value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), oninput: (s, payload) => ({...s, edit_value: payload.target.value})}"
+                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); return Object.assign({class: 'input', value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), oninput: (s, payload) => ({...s, edit_value: payload.target.value})}, editing === 'type' ? {list: 'type-options', type: 'text'} : {})"
                         },
                         {
                             "id": "edit_text_label",
@@ -3152,6 +3154,40 @@
                             "script": "return editing || 'none'"
                         },
                         {
+                            "id": "types",
+                            "type": "h"
+                        },
+                        {
+                            "id": "types_dom_type",
+                            "value": "datalist"
+                        },
+                        {
+                            "id": "types_props",
+                            "value": {"id": "type-options"}
+                        },
+                        {
+                            "id": "get_nodes",
+                            "args": ["display_graph"],
+                            "script": "return display_graph.nodes"
+                        },
+                        {
+                            "id": "get_id",
+                            "args": ["node"],
+                            "script": "return node.id"
+                        },
+                        {
+                            "id": "id_text",
+                            "type": "h_text"
+                        },
+                        {
+                            "id": "wrap_dom_type",
+                            "value": "option"
+                        },
+                        {
+                            "id": "wrap_option",
+                            "type": "h"
+                        },
+                        {
                             "id": "out"
                         }
                     ],
@@ -3159,6 +3195,10 @@
                         {
                             "from": "in",
                             "to": "edit_text_input_props"
+                        },
+                        {
+                            "from": "in",
+                            "to": "edit_text_input_dom_type"
                         },
                         {
                             "from": "edit_text",
@@ -3212,6 +3252,51 @@
                             "from": "edit_text_label_text",
                             "to": "edit_text_label",
                             "as": "children"
+                        },
+                        {
+                            "from": "types_dom_type",
+                            "to": "types",
+                            "as": "dom_type" 
+                        },
+                        {
+                            "from": "types_props",
+                            "to": "types",
+                            "as": "props" 
+                        },
+                        {
+                            "from": "types",
+                            "to": "edit_text_children",
+                            "as": "types" 
+                        },
+                        {
+                            "from": "wrap_dom_type",
+                            "to": "wrap_option",
+                            "as": "dom_type"
+                        },
+                        {
+                            "from": "id_text",
+                            "to": "wrap_option",
+                            "as": "children"
+                        },
+                        {
+                            "from": "wrap_option",
+                            "to": "types",
+                            "as": "children",
+                            "type": "concat"
+                        },
+                        {
+                            "from": "in",
+                            "to": "get_nodes"
+                        },
+                        {
+                            "from": "get_nodes",
+                            "to": "get_id",
+                            "as": "node"
+                        },
+                        {
+                            "from": "get_id",
+                            "to": "id_text",
+                            "as": "text"
                         },
                         {
                             "from": "in",

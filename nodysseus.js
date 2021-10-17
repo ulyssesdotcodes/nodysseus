@@ -487,6 +487,8 @@ const keydownSubscription = (dispatch, options) => {
     const handler = ev => { 
         if(ev.key === "s" && ev.ctrlKey) {
             ev.preventDefault();
+        } else if(!ev.key) {
+            return;
         }
 
         requestAnimationFrame(() => dispatch((state, payload) => options.action(state, payload), {key: ev.key.toLowerCase(), code: ev.code, ctrlKey: ev.ctrlKey, shiftKey: ev.shiftKey, metaKey: ev.metaKey, target: ev.target}))
