@@ -1341,7 +1341,8 @@
                 "nodes": [],
                 "links": [],
                 "editing": false,
-                "search": false
+                "search": false,
+                "show_all": false
             }
         },
         {
@@ -1407,9 +1408,10 @@
                 "display_graph",
                 "links",
                 "selected",
-                "levels"
+                "levels",
+                "show_all"
             ],
-            "script": "return lib.scripts.updateSimulationNodes({display_graph, simulation, nodes, links, selected, levels})"
+            "script": "return lib.scripts.updateSimulationNodes({display_graph, simulation, nodes, links, selected, levels, show_all})"
         },
         {
             "id": "update_nodes_fn",
@@ -1751,6 +1753,11 @@
                     "script": "return display_graph"
                 },
                 {
+                    "id": "q",
+                    "args": ["show_all"],
+                    "script": "return !show_all"
+                },
+                {
                     "id": "pending_edges",
                     "args": [
                         "key",
@@ -1857,6 +1864,15 @@
                         "state"
                     ],
                     "script": "state.selected = selected ? [selected] : state.selected; return state"
+                },
+                {
+                    "id": "show_all",
+                    "type": "switch"
+                },
+                {
+                    "id": "set_show_all",
+                    "args": ["show_all"],
+                    "script": "state.show_all = show_all ?? state.show_all; return state;"
                 },
                 {
                     "id": "editing",
@@ -2067,6 +2083,11 @@
                     "type": "inputs"
                 },
                 {
+                    "from": "key_inputs",
+                    "to": "show_all",
+                    "type": "inputs"
+                },
+                {
                     "from": "state",
                     "to": "filter_editing"
                 },
@@ -2194,6 +2215,10 @@
                 {
                     "from": "state",
                     "to": "p"
+                },
+                {
+                    "from": "state",
+                    "to": "q"
                 },
                 {
                     "from": "key_event",
@@ -2405,6 +2430,11 @@
                     "as": "p"
                 },
                 {
+                    "from": "q",
+                    "to": "show_all",
+                    "as": "q"
+                },
+                {
                     "from": "state",
                     "to": "esc"
                 },
@@ -2566,11 +2596,16 @@
                 },
                 {
                     "from": "set_selected",
-                    "to": "set_clipboard",
+                    "to": "set_show_all",
                     "as": "state"
                 },
                 {
-                    "from": "state",
+                    "from": "show_all",
+                    "to": "set_show_all",
+                    "as": "show_all"
+                },
+                {
+                    "from": "set_show_all",
                     "to": "set_clipboard",
                     "as": "state"
                 },
@@ -2688,9 +2723,10 @@
                 "simulation",
                 "display_graph_out",
                 "selected",
-                "levels"
+                "levels",
+                "show_all"
             ],
-            "script": "return lib.scripts.updateSimulationNodes({display_graph, nodes, links, simulation, display_graph_out, selected, levels})"
+            "script": "return lib.scripts.updateSimulationNodes({display_graph, nodes, links, simulation, display_graph_out, selected, levels, show_all})"
         },
         {
             "id": "update_sim_in"

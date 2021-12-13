@@ -371,11 +371,12 @@ const updateSimulationNodes = (data) => {
 
     data.nodes.forEach(n => {
         sibling_x.set(n.node_id, 
-            (levels.level_by_node.has(n.node_id)
+            (data.show_all ? 0.5 
+                :levels.level_by_node.has(n.node_id)
             ?  (((levels.nodes_by_level[levels.level_by_node.get(n.node_id)].findIndex(l => l === n.node_id) + 1) 
                 / (levels.nodes_by_level[levels.level_by_node.get(n.node_id)].length + 1)) - selected_x) 
                 / (Math.min(3, levels.distance_from_selected.get(n.node_id)) * 0.25 + 1) + 0.5
-            : 0.75)
+            : .75)
                 * window.innerWidth
         );
     })
@@ -383,11 +384,12 @@ const updateSimulationNodes = (data) => {
     data.simulation.force('link_siblings').x((n) => sibling_x.get(n.node_id));
 
     data.simulation.force('charge')
-        .strength(n => levels.distance_from_selected.has(n.node_id) ? -64 : -8)
+        .strength(n => data.show_all ? -128 : levels.distance_from_selected.has(n.node_id) ? -64 : -8)
 
     data.simulation.force('link_direction')
         .y((n) => window.innerHeight * (
-            selected === n.node_id
+            data.show_all ? 0.5 
+            : selected === n.node_id
             ? 0.5 
             : levels.level_by_node.has(n.node_id) && selected_level !== undefined
             ?  .5 + (selected_level === levels.level_by_node.get(n.node_id) 
@@ -397,8 +399,7 @@ const updateSimulationNodes = (data) => {
             : .9
         ));
 
-    data.simulation.force('collide').radius(n => n.node_id === selected ? 128 : 0);
-
+    data.simulation.force('collide').radius(n => data.show_all ? 64 : n.node_id === selected ? 128 : 0);
 
     data.simulation
         .alpha(0.4);
