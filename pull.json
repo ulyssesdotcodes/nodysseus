@@ -405,6 +405,407 @@
             "script": "return [lib._.set(target, path, value)]"
         },
         {
+            "id": "fuse vertices",
+            "name": "fuse vertices",
+            "in": "g8mx5sn1u",
+            "out": "vnw7d8iaw",
+            "nodes": [
+                {
+                    "id": "vnw7d8iaw",
+                    "args": [],
+                    "name": "fuse vertices",
+                    "type": "switch"
+                },
+                {
+                    "id": "6uzm3ifn3",
+                    "args": [],
+                    "script": "return graph.edges.length > 0 ? [\"fuse\"] : [\"graph\"]"
+                },
+                {
+                    "id": "p229wzcj5",
+                    "args": [],
+                    "type": "fuse vertices"
+                },
+                {
+                    "id": "idjoql4db",
+                    "args": []
+                },
+                {
+                    "id": "wfld638dn",
+                    "args": [],
+                    "script": "return [remaining_edges.map(e => ({...e, to: e.to === chosen_edge.to || e.to === chosen_edge.from ? new_id : e.to, from: e.from === chosen_edge.from || e.from === chosen_edge.to ? new_id : e.from}))]"
+                },
+                {
+                    "id": "ungdjbio6",
+                    "args": [],
+                    "script": "const remaining = graph.nodes\n.filter(n => n.id !== chosen_edge.to && n.id !== chosen_edge.from);\n\nconst from = [...(graph.nodes\n.find(n => n.id === chosen_edge.to).nodes ?? [chosen_edge.to])]\n\nconst to = [...(graph.nodes.find(n => n.id === chosen_edge.from).nodes ?? [chosen_edge.from])];\n\nreturn [remaining\n.concat([{\nid: new_id, \nnodes: [...(new Set(from.concat(to))).keys()],\n}])\n\n];"
+                },
+                {
+                    "id": "mh8lknkfv",
+                    "args": [],
+                    "script": "return [graph.edges.slice(1)]"
+                },
+                {
+                    "id": "h8bhlzbph",
+                    "args": [],
+                    "script": "return chosen_edge.to + \"_\" + chosen_edge.from;",
+                    "name": "new_id"
+                },
+                {
+                    "id": "1m739wxv9",
+                    "args": [],
+                    "script": "return graph.edges[0]",
+                    "name": "edge"
+                },
+                {
+                    "id": "nznzj5bfn",
+                    "args": [],
+                    "name": "get graph",
+                    "type": "get"
+                },
+                {
+                    "id": "g8mx5sn1u",
+                    "args": [],
+                    "name": "fuse vertices/in"
+                },
+                {
+                    "id": "tta1nggm4",
+                    "args": [],
+                    "value": "graph"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "6uzm3ifn3",
+                    "to": "vnw7d8iaw",
+                    "as": "arg0",
+                    "type": "inputs"
+                },
+                {
+                    "from": "p229wzcj5",
+                    "to": "vnw7d8iaw",
+                    "as": "fuse"
+                },
+                {
+                    "from": "idjoql4db",
+                    "to": "p229wzcj5",
+                    "as": "graph"
+                },
+                {
+                    "from": "wfld638dn",
+                    "to": "idjoql4db",
+                    "as": "edges"
+                },
+                {
+                    "from": "ungdjbio6",
+                    "to": "idjoql4db",
+                    "as": "nodes"
+                },
+                {
+                    "from": "mh8lknkfv",
+                    "to": "wfld638dn",
+                    "as": "remaining_edges"
+                },
+                {
+                    "from": "h8bhlzbph",
+                    "to": "wfld638dn",
+                    "as": "new_id"
+                },
+                {
+                    "from": "1m739wxv9",
+                    "to": "wfld638dn",
+                    "as": "chosen_edge"
+                },
+                {
+                    "from": "h8bhlzbph",
+                    "to": "ungdjbio6",
+                    "as": "new_id"
+                },
+                {
+                    "from": "1m739wxv9",
+                    "to": "ungdjbio6",
+                    "as": "chosen_edge"
+                },
+                {
+                    "from": "nznzj5bfn",
+                    "to": "vnw7d8iaw",
+                    "as": "graph"
+                },
+                {
+                    "from": "nznzj5bfn",
+                    "to": "6uzm3ifn3",
+                    "as": "graph"
+                },
+                {
+                    "from": "nznzj5bfn",
+                    "to": "ungdjbio6",
+                    "as": "graph"
+                },
+                {
+                    "from": "nznzj5bfn",
+                    "to": "mh8lknkfv",
+                    "as": "graph"
+                },
+                {
+                    "from": "1m739wxv9",
+                    "to": "h8bhlzbph",
+                    "as": "chosen_edge"
+                },
+                {
+                    "from": "nznzj5bfn",
+                    "to": "1m739wxv9",
+                    "as": "graph"
+                },
+                {
+                    "from": "g8mx5sn1u",
+                    "to": "nznzj5bfn",
+                    "as": "target"
+                },
+                {
+                    "from": "tta1nggm4",
+                    "to": "nznzj5bfn",
+                    "as": "path"
+                }
+            ]
+        },
+        {
+            "id": "remove pendant",
+            "name": "remove pendant",
+            "in": "jhykipayt",
+            "out": "ay4hfrqw1",
+            "nodes": [
+                {
+                    "id": "ay4hfrqw1",
+                    "args": [],
+                    "name": "remove pendant",
+                    "type": "switch"
+                },
+                {
+                    "id": "r5lka2sj5",
+                    "args": [],
+                    "script": "return pendants.length > 0 ? [\"remove\"] : [\"graph\"]"
+                },
+                {
+                    "id": "7elx5ekij",
+                    "args": [],
+                    "type": "remove pendant"
+                },
+                {
+                    "id": "cz08pewa3",
+                    "args": []
+                },
+                {
+                    "id": "7n24u6kpt",
+                    "args": [
+                        "nodes"
+                    ],
+                    "script": "return [nodes.filter(n => !pendant_edges.includes(n.id))]",
+                    "name": "filter out pendants"
+                },
+                {
+                    "id": "cuiccwvbv",
+                    "args": [],
+                    "script": "return [edges.filter(e => !pendant_edges.includes(e.to) && !pendant_edges.includes(e.from))]",
+                    "name": "filter penant"
+                },
+                {
+                    "id": "lgzenfpvl",
+                    "args": [],
+                    "script": "let accfrom = edges.flatMap(e => [e.from]).reduce((acc, v) => { acc[v] = (acc[v] ?? 0) + 1; return acc}, {});\nlet accto = edges.flatMap(e => [e.to]).reduce((acc, v) => { acc[v] = (acc[v] ?? 0) + 1; return acc}, {});\n\nreturn nodes.map(n => n.id).filter(n => (!isNaN(accfrom[n]) && accfrom[n] <= 1) && !accto[n] );",
+                    "name": "pendant edges"
+                },
+                {
+                    "id": "7g81ijcqb",
+                    "name": "nodes",
+                    "in": "in",
+                    "out": "7g81ijcqb",
+                    "nodes": [
+                        {
+                            "id": "7g81ijcqb",
+                            "args": [],
+                            "type": "get",
+                            "name": "nodes"
+                        },
+                        {
+                            "id": "2yshp7jvu",
+                            "args": [],
+                            "value": "nodes"
+                        },
+                        {
+                            "id": "in"
+                        }
+                    ],
+                    "edges": [
+                        {
+                            "from": "2yshp7jvu",
+                            "to": "7g81ijcqb",
+                            "as": "path"
+                        },
+                        {
+                            "from": "in",
+                            "to": "7g81ijcqb"
+                        }
+                    ]
+                },
+                {
+                    "id": "zkg9zpu3e",
+                    "name": "edges",
+                    "in": "in",
+                    "out": "zkg9zpu3e",
+                    "nodes": [
+                        {
+                            "id": "zkg9zpu3e",
+                            "args": [],
+                            "type": "get",
+                            "name": "edges"
+                        },
+                        {
+                            "id": "g18jj6zvq",
+                            "args": [],
+                            "value": "edges"
+                        },
+                        {
+                            "id": "in"
+                        }
+                    ],
+                    "edges": [
+                        {
+                            "from": "g18jj6zvq",
+                            "to": "zkg9zpu3e",
+                            "as": "path"
+                        },
+                        {
+                            "from": "in",
+                            "to": "zkg9zpu3e"
+                        }
+                    ]
+                },
+                {
+                    "id": "bp1cy89hk",
+                    "args": [],
+                    "type": "get",
+                    "name": "graph"
+                },
+                {
+                    "id": "jhykipayt",
+                    "args": [],
+                    "name": "remove pendant/in"
+                },
+                {
+                    "id": "iqkdwjpuz",
+                    "args": [],
+                    "value": "graph"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "r5lka2sj5",
+                    "to": "ay4hfrqw1",
+                    "as": "arg0",
+                    "type": "inputs"
+                },
+                {
+                    "from": "7elx5ekij",
+                    "to": "ay4hfrqw1",
+                    "as": "remove"
+                },
+                {
+                    "from": "cz08pewa3",
+                    "to": "7elx5ekij",
+                    "as": "graph"
+                },
+                {
+                    "from": "7n24u6kpt",
+                    "to": "cz08pewa3",
+                    "as": "nodes"
+                },
+                {
+                    "from": "cuiccwvbv",
+                    "to": "cz08pewa3",
+                    "as": "edges"
+                },
+                {
+                    "from": "lgzenfpvl",
+                    "to": "r5lka2sj5",
+                    "as": "pendants",
+                    "type": "concat"
+                },
+                {
+                    "from": "lgzenfpvl",
+                    "to": "cz08pewa3",
+                    "as": "pendants",
+                    "type": "concat"
+                },
+                {
+                    "from": "7g81ijcqb",
+                    "to": "7n24u6kpt",
+                    "as": "nodes"
+                },
+                {
+                    "from": "lgzenfpvl",
+                    "to": "7n24u6kpt",
+                    "as": "pendant_edges",
+                    "type": "concat"
+                },
+                {
+                    "from": "zkg9zpu3e",
+                    "to": "7n24u6kpt",
+                    "as": "edges",
+                    "type": "concat"
+                },
+                {
+                    "from": "lgzenfpvl",
+                    "to": "cuiccwvbv",
+                    "as": "pendant_edges",
+                    "type": "concat"
+                },
+                {
+                    "from": "zkg9zpu3e",
+                    "to": "cuiccwvbv",
+                    "as": "edges"
+                },
+                {
+                    "from": "zkg9zpu3e",
+                    "to": "lgzenfpvl",
+                    "as": "edges"
+                },
+                {
+                    "from": "7g81ijcqb",
+                    "to": "lgzenfpvl",
+                    "as": "nodes"
+                },
+                {
+                    "from": "bp1cy89hk",
+                    "to": "ay4hfrqw1",
+                    "as": "graph"
+                },
+                {
+                    "from": "bp1cy89hk",
+                    "to": "cz08pewa3"
+                },
+                {
+                    "from": "bp1cy89hk",
+                    "to": "7g81ijcqb",
+                    "as": "target"
+                },
+                {
+                    "from": "bp1cy89hk",
+                    "to": "zkg9zpu3e",
+                    "as": "target"
+                },
+                {
+                    "from": "jhykipayt",
+                    "to": "bp1cy89hk",
+                    "as": "target"
+                },
+                {
+                    "from": "iqkdwjpuz",
+                    "to": "bp1cy89hk",
+                    "as": "path"
+                }
+            ]
+        },
+        {
             "id": "update_and_run",
             "in": "in",
             "out": "out",
@@ -424,9 +825,19 @@
                     "id": "calculate_levels",
                     "args": [
                         "selected",
-                        "display_graph"
+                        "display_graph",
+                        "fixed_vertices"
                     ],
-                    "script": "return lib.scripts.calculateLevels(display_graph, selected[0])"
+                    "script": "return lib.scripts.calculateLevels(display_graph, selected[0], fixed_vertices)"
+                },
+                {
+                    "id": "reduce_graph",
+                    "type": "fuse vertices"
+                },
+                {
+                    "id": "graph",
+                    "args": ["display_graph"],
+                    "script": "return {...display_graph, nodes: display_graph.nodes.map(n => ({id: n.id}))}"
                 },
                 {
                     "id": "levels",
@@ -534,6 +945,20 @@
                 {
                     "from": "in",
                     "to": "levels_inputs"
+                },
+                {
+                    "from": "in",
+                    "to": "graph"
+                },
+                {
+                    "from": "graph",
+                    "to": "reduce_graph",
+                    "as": "graph" 
+                },
+                {
+                    "from": "reduce_graph",
+                    "to": "calculate_levels",
+                    "as": "fixed_vertices" 
                 },
                 {
                     "from": "calculate_levels",
@@ -1407,11 +1832,12 @@
                 "nodes",
                 "display_graph",
                 "links",
+                "fuse_links",
                 "selected",
                 "levels",
                 "show_all"
             ],
-            "script": "return lib.scripts.updateSimulationNodes({display_graph, simulation, nodes, links, selected, levels, show_all})"
+            "script": "return lib.scripts.updateSimulationNodes({display_graph, simulation, nodes, fuse_links, links, selected, levels, show_all})"
         },
         {
             "id": "update_nodes_fn",
@@ -1579,7 +2005,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 'v' && editing === false)){ return [] } document.querySelector('#edit_value .input').focus(); return 'value';"
+                    "script": "document.querySelector('#edit_value textarea').focus(); return 'value';"
                 },
                 {
                     "id": "t",
@@ -1591,7 +2017,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "document.querySelector('#edit_value .input').focus(); return 'type';"
+                    "script": "document.querySelector('#edit_value input').focus(); return 'type';"
                 },
                 {
                     "id": "shift_t",
@@ -1615,7 +2041,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 's' && ctrlKey === false && editing === false)){ return [] } document.querySelector('#edit_value .input').focus(); return 'script';"
+                    "script": "if(!(key === 's' && ctrlKey === false && editing === false)){ return [] } document.querySelector('#edit_value textarea').focus(); return 'script';"
                 },
                 {
                     "id": "a",
@@ -1627,7 +2053,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 'a' && editing === false)){ return [] } document.querySelector('#edit_value .input').focus(); return selected_edge ? 'as' : 'args';"
+                    "script": "if(!(key === 'a' && editing === false)){ return [] } document.querySelector('#edit_value textarea').focus(); return selected_edge ? 'as' : 'args';"
                 },
                 {
                     "id": "n",
@@ -1638,7 +2064,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 'n' && editing === false)){ return [] } document.querySelector('#edit_value .input').focus(); return 'name';"
+                    "script": "if(!(key === 'n' && editing === false)){ return [] } document.querySelector('#edit_value textarea').focus(); return 'name';"
                 },
                 {
                     "id": "o",
@@ -2720,13 +3146,14 @@
                 "display_graph",
                 "nodes",
                 "links",
+                "fuse_links",
                 "simulation",
                 "display_graph_out",
                 "selected",
                 "levels",
                 "show_all"
             ],
-            "script": "return lib.scripts.updateSimulationNodes({display_graph, nodes, links, simulation, display_graph_out, selected, levels, show_all})"
+            "script": "return lib.scripts.updateSimulationNodes({display_graph, nodes, links, fuse_links, simulation, display_graph_out, selected, levels, show_all})"
         },
         {
             "id": "update_sim_in"
@@ -3137,6 +3564,10 @@
                             "type": "h"
                         },
                         {
+                            "id": "edit_text_textarea",
+                            "type": "h"
+                        },
+                        {
                             "id": "edit_text_base_props",
                             "value": {
                                 "id": "edit_value"
@@ -3150,14 +3581,31 @@
                             "args": [
                                 "label",
                                 "input",
+                                "textarea",
                                 "types"
                             ],
-                            "script": "return [[label.el, input.el, types.el]]"
+                            "script": "return [[label.el, input.el, textarea.el, types.el]]"
+                        },
+                        {
+                            "id": "edit_text_textarea_dom_type",
+                            "args": ["editing"],
+                            "script": "return 'textarea'"
+                        },
+                        {
+                            "id": "edit_text_textarea_props",
+                            "args": [
+                                "selected",
+                                "selected_edge",
+                                "display_graph",
+                                "editing",
+                                "edit_value"
+                            ],
+                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); return Object.assign({class: 'textarea', value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), oninput: (s, payload) => ({...s, edit_value: payload.target.value})})"
                         },
                         {
                             "id": "edit_text_input_dom_type",
                             "args": ["editing"],
-                            "script": "return editing === 'type' ? 'input' : 'textarea';"
+                            "script": "return 'input'"
                         },
                         {
                             "id": "edit_text_input_props",
@@ -3237,6 +3685,14 @@
                             "to": "edit_text_input_dom_type"
                         },
                         {
+                            "from": "in",
+                            "to": "edit_text_textarea_props"
+                        },
+                        {
+                            "from": "in",
+                            "to": "edit_text_textarea_dom_type"
+                        },
+                        {
                             "from": "edit_text",
                             "to": "out"
                         },
@@ -3272,6 +3728,21 @@
                         {
                             "from": "edit_text_input_dom_type",
                             "to": "edit_text_input",
+                            "as": "dom_type"
+                        },
+                        {
+                            "from": "edit_text_textarea",
+                            "to": "edit_text_children",
+                            "as": "textarea"
+                        },
+                        {
+                            "from": "edit_text_textarea_props",
+                            "to": "edit_text_textarea",
+                            "as": "props"
+                        },
+                        {
+                            "from": "edit_text_textarea_dom_type",
+                            "to": "edit_text_textarea",
                             "as": "dom_type"
                         },
                         {
@@ -3613,6 +4084,11 @@
                             "script": "return selected"
                         },
                         {
+                            "id": "get_selected_node",
+                            "args":["selected", "nodes"],
+                            "script": "return nodes.find(n => n.node_id === selected)"
+                        },
+                        {
                             "id": "get_selected_edge",
                             "args": [
                                 "selected_edge"
@@ -3629,9 +4105,10 @@
                         {
                             "id": "node_editor_props",
                             "args": [
-                                "onclick_graph_fn"
+                                "onclick_graph_fn",
+                                "selected"
                             ],
-                            "script": "return {width: window.innerWidth, height: window.innerHeight, /*onmousedown: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'down'}], onmouseup: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'up'}], onmousemove: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'move'}]*/}"
+                            "script": "return {width: window.innerWidth, height: window.innerHeight, viewBox: `${selected.x - (window.innerWidth * 0.5)} ${selected.y - (window.innerHeight * 0.5)} ${window.innerWidth} ${window.innerHeight}` , /*onmousedown: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'down'}], onmouseup: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'up'}], onmousemove: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'move'}]*/}"
                         },
                         {
                             "id": "node_editor_dom_type",
@@ -4598,6 +5075,22 @@
                         {
                             "from": "in",
                             "to": "node_editor_props"
+                        },
+                        {
+                            "from": "get_selected",
+                            "to": "get_selected_node",
+                            "as": "selected"
+                        },
+                        {
+                            "from": "get_nodes",
+                            "to": "get_selected_node",
+                            "as": "nodes",
+                            "type":"concat"
+                        },
+                        {
+                            "from": "get_selected_node",
+                            "to": "node_editor_props",
+                            "as": "selected"
                         },
                         {
                             "from": "node_editor_props",

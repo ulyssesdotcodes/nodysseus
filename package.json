@@ -8,6 +8,7 @@
     "@rollup/plugin-json": "^4.1.0",
     "@rollup/plugin-node-resolve": "^13.0.0",
     "brace-expansion": "^2.0.1",
+    "cytoscape-fcose": "^2.1.0",
     "d3-force": "^3.0.0",
     "fuse.js": "^6.4.6",
     "hyperapp": "^2.0.18",

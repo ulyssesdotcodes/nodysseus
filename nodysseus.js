@@ -7,7 +7,6 @@ import Fuse from "fuse.js";
 const keywords = new Set(["break", "case", "catch", "continue", "debugger", "default", "delete", "do", "else", "finally", "for", "function", "if", "in", "instanceof", "new", "return", "switch", "this", "throw", "try", "typeof", "var", "void", "while", "with"])
 
 const executeGraph = ({state, graph}) => {
-    // graph = contract_all(graph);
     const out = graph.out;
 
     let state_length = 0;
@@ -275,8 +274,7 @@ const test_graph = {
 //////////
 // TODO: convert these to nodes
 
-const calculateLevels = (graph, selected) => {
-
+const calculateLevels = (graph, selected, fixed_vertices) => {
     const find_childest = n => {
         const e = graph.edges.find(e => e.from === n);
         if(e) {
@@ -294,6 +292,8 @@ const calculateLevels = (graph, selected) => {
     const children = new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.from === n.id).map(e => e.to)]));
     const siblings = new Map(graph.nodes.map(n => [n.id, [...(new Set(/*parents.get(n.id)?.flatMap(p => children.get(p)?.filter(c => c !== n.id) ?? []).concat(*/children.get(n.id)?.flatMap(c => parents.get(c) ?? []) ?? [])).values()/*)*/]]))
     const distance_from_selected = new Map();
+
+    const connected_vertices = new Map(!fixed_vertices ? [] : fixed_vertices.nodes.flatMap(v => (v.nodes ?? []).map(n => [n, v.nodes])));
 
     const calculate_selected_graph = (s, i) => {
         if(distance_from_selected.get(s) <= i) {
@@ -315,7 +315,8 @@ const calculateLevels = (graph, selected) => {
         distance_from_selected,
         min: Math.min(...levels.values()),
         max: Math.max(...levels.values()),
-        nodes_by_level: [...levels.entries()].reduce((acc, [n, l]) => (acc[l] ? acc[l].push(n) : acc[l] = [n], acc), {})
+        nodes_by_level: [...levels.entries()].reduce((acc, [n, l]) => (acc[l] ? acc[l].push(n) : acc[l] = [n], acc), {}),
+        connected_vertices
     }
 }
 
@@ -338,18 +339,19 @@ const bfs = (graph, visited) => (id, level) => {
 const d3simulation = () => {
     const simulation =
         lib.d3.forceSimulation()
-        .force('charge', lib.d3.forceManyBody().strength(-8).distanceMax(1024))
-        .force('collide', lib.d3.forceCollide(32))
+        .force('charge', lib.d3.forceManyBody().strength(-64).distanceMax(256).distanceMin(128))
+        .force('collide', lib.d3.forceCollide(64))
         .force('links', lib.d3
             .forceLink([])
             .distance(128)
-            .strength(1)
+            .strength(l => l.strength)
             .id(n => n.node_id))
-        .force('link_direction', lib.d3.forceY().strength(1))
-        .force('link_siblings', lib.d3.forceX().strength(1))
+        .force('link_direction', lib.d3.forceY().strength(.1))
+        .force('center', lib.d3.forceCenter())
+        // .force('link_siblings', lib.d3.forceX().strength(1))
         // .force('selected', lib.d3.forceRadial(0, window.innerWidth * 0.5, window.innerHeight * 0.5).strength(2))
-        .velocityDecay(0.7)
-        .alphaMin(.2);
+        // .velocityDecay(0.7)
+        .alphaMin(.1);
 
     return { simulation };
 }
@@ -360,49 +362,65 @@ const updateSimulationNodes = (data) => {
     const selected_level = levels.level_by_node.get(selected);
 
     if(typeof(data.links?.[0]?.source) === "string") {
+        if(
+            data.simulation.nodes()?.length !== data.nodes.length || 
+            data.simulation.force('links')?.links().length !== data.links.length) {
+            data.simulation.alpha(0.4);
+        }
+
+
         data.simulation.nodes(data.nodes);
         data.simulation.force('links').links(data.links);
+        // data.simulation.force('fuse_links').links(data.fuse_links);
     }
+
 
     const sibling_x = new Map();
     const selected_x =  ((levels.nodes_by_level[selected_level].findIndex(l => l === selected) + 1) 
                 / (levels.nodes_by_level[selected_level].length + 1));
 
 
-    data.nodes.forEach(n => {
-        sibling_x.set(n.node_id, 
-            (data.show_all ? 0.5 
-                :levels.level_by_node.has(n.node_id)
-            ?  (((levels.nodes_by_level[levels.level_by_node.get(n.node_id)].findIndex(l => l === n.node_id) + 1) 
-                / (levels.nodes_by_level[levels.level_by_node.get(n.node_id)].length + 1)) - selected_x) 
-                / (Math.min(3, levels.distance_from_selected.get(n.node_id)) * 0.25 + 1) + 0.5
-            : .75)
-                * window.innerWidth
-        );
-    })
+    // data.nodes.forEach(n => {
+    //     sibling_x.set(n.node_id, 
+    //         (data.show_all ? 0.5 
+    //             :levels.level_by_node.has(n.node_id)
+    //         ?  (((levels.nodes_by_level[levels.level_by_node.get(n.node_id)].findIndex(l => l === n.node_id) + 1) 
+    //             / (levels.nodes_by_level[levels.level_by_node.get(n.node_id)].length + 1)) - selected_x) 
+    //             / (Math.min(3, levels.distance_from_selected.get(n.node_id)) * 0.25 + 1) + 0.5
+    //         : .75)
+    //             * window.innerWidth
+    //     );
+    // })
 
-    data.simulation.force('link_siblings').x((n) => sibling_x.get(n.node_id));
+    // data.simulation.force('link_siblings').x((n) => sibling_x.get(n.node_id));
 
-    data.simulation.force('charge')
-        .strength(n => data.show_all ? -128 : levels.distance_from_selected.has(n.node_id) ? -64 : -8)
+    // data.simulation.force('charge')
+    //     // .strength(n => data.show_all ? -128 : levels.distance_from_selected.has(n.node_id) ? -64 : -8)
+    //     .strength(n => -128);
 
+    // data.simulation.force('link_direction')
+    //     .y((n) => window.innerHeight * (
+    //         data.show_all ? 0.5 
+    //         : selected === n.node_id
+    //         ? 0.5 
+    //         : levels.level_by_node.has(n.node_id) && selected_level !== undefined
+    //         ?  .5 + (selected_level === levels.level_by_node.get(n.node_id) 
+    //             ? 0 
+    //             : 0.25 * ((1 - Math.pow(0.5, Math.abs(selected_level - levels.level_by_node.get(n.node_id))))/(1 - 0.5)) // sum geometric series
+    //             ) * Math.sign(selected_level - levels.level_by_node.get(n.node_id))
+    //         : .9
+    //     ));
     data.simulation.force('link_direction')
-        .y((n) => window.innerHeight * (
-            data.show_all ? 0.5 
-            : selected === n.node_id
-            ? 0.5 
-            : levels.level_by_node.has(n.node_id) && selected_level !== undefined
-            ?  .5 + (selected_level === levels.level_by_node.get(n.node_id) 
-                ? 0 
-                : 0.25 * ((1 - Math.pow(0.5, Math.abs(selected_level - levels.level_by_node.get(n.node_id))))/(1 - 0.5)) // sum geometric series
-                ) * Math.sign(selected_level - levels.level_by_node.get(n.node_id))
-            : .9
-        ));
+        .y(n => 
+        (((levels.parents.get(n.node_id)?.length > 0 ? 1 : 0) + (levels.children.get(n.node_id)?.length > 0 ? -1 : 0)) * 2 + .5) * window.innerHeight)
+        .strength(n => (!!levels.parents.get(n.node_id)?.length === !levels.children.get(n.node_id)?.length) ? .1 : 0);
 
-    data.simulation.force('collide').radius(n => data.show_all ? 64 : n.node_id === selected ? 128 : 0);
 
-    data.simulation
-        .alpha(0.4);
+    data.simulation.force('collide').radius(64);
+    // data.simulation.force('center').strength(n => (levels.parents.get(n.node_id)?.length ?? 0) * 0.25 + (levels.children.get(n.node_id)?.length ?? 0) * 0.25)
+
+    // console.log(data.links)
+
 }
 
 const graphToSimulationNodes = (data) => {
@@ -430,6 +448,7 @@ const graphToSimulationNodes = (data) => {
         };
     })
 
+
     const links = data.display_graph.edges
         .filter(e => e.to !== "log" && e.to !=="debug")
         .map(e => ({
@@ -437,13 +456,23 @@ const graphToSimulationNodes = (data) => {
             target: e.to, 
             as: e.as, 
             type: e.type, 
+            strength:  Math.abs(data.levels.level_by_node.get(e.to) - data.levels.level_by_node.get(e.from)) === 1 ? 4 : 1,
             selected_distance: data.levels.distance_from_selected.get(e.to) !== undefined ? Math.min(data.levels.distance_from_selected.get(e.to), data.levels.distance_from_selected.get(e.from)) : undefined,
             sibling_index_normalized: (data.levels.siblings.get(e.from).findIndex(n => n === e.from) + 1) / (data.levels.siblings.get(e.from).length + 1),
         }));
 
+    const fuse_links =  !data.levels.connected_vertices ? [] : data.display_graph.nodes.flatMap(n1 => 
+            data.display_graph.nodes
+                .filter(n2 => n2.id != n1.id && !data.levels.connected_vertices.get(n1.id)?.includes(n2.id))
+                .map(n2 => ({
+                    source: n1.id,
+                    target: n2.id,
+                })));
+            
     return {
         nodes,
-        links
+        links,
+        fuse_links
     }
 }
 
@@ -470,7 +499,20 @@ const d3subscription = simulation => dispatch => {
                         x: Math.floor(l.target.x), 
                         y: Math.floor(l.target.y)
                     })
-                }))  
+                })),
+                fuse_links: [] /*simulation.force('fuse_links').links().map(l => ({
+                    ...l,
+                    source: ({
+                        node_id: l.source.node_id, 
+                        x: Math.floor(l.source.x), 
+                        y: Math.floor(l.source.y)
+                    }), 
+                    target: ({
+                        node_id: l.target.node_id, 
+                        x: Math.floor(l.target.x), 
+                        y: Math.floor(l.target.y)
+                    })
+                }))*/
             }));
         }
 
@@ -653,7 +695,7 @@ const contract_node = (data, keep_expanded=false) => {
                     )
             };
 
-        return {display_graph: {...display_graph, ...new_display_graph}, selected: node_id};
+        return {display_graph: {...display_graph, ...new_display_graph, in: "testin"}, selected: node_id};
     }
 }
 
