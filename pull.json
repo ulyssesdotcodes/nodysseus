@@ -366,7 +366,7 @@
                     "args": [
                         "input"
                     ],
-                    "script": "return input.default ?? null"
+                    "script": "return input.default ??  null"
                 },
                 {
                     "id": "out",

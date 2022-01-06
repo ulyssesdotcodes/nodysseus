@@ -621,6 +621,10 @@ const contract_node = (data, keep_expanded=false) => {
                 const old_node = inside_nodes.find(i => e.from === i.id);
                 let inside_node = old_node ?? data.display_graph.nodes.find(p => p.id === e.from);
 
+                if(inside_node.name?.includes('in') && inside_node.name !== name + '/in') {
+                    continue;
+                }
+
                 inside_node_map.set(inside_node.id, inside_node);
                 inside_edges.add(e);
                 if(!old_node) {
@@ -695,7 +699,7 @@ const contract_node = (data, keep_expanded=false) => {
                     )
             };
 
-        return {display_graph: {...display_graph, ...new_display_graph, in: "testin"}, selected: node_id};
+        return {display_graph: {...display_graph, ...new_display_graph, in: in_node_id}, selected: node_id};
     }
 }
 
@@ -771,6 +775,7 @@ const generic_nodes = new Set([
 const stored = localStorage.getItem("display_graph");
 // const display_graph = DEFAULT_GRAPH;
 const display_graph = stored ? JSON.parse(stored) : test_graph;
+console.log(display_graph);
 const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: {...display_graph, nodes: display_graph.nodes.concat(DEFAULT_GRAPH.nodes.filter(n => generic_nodes.has(n.id) && display_graph.nodes.findIndex(dn => dn.id === n.id) === -1)), edges: display_graph.edges.concat([])}}]]])
 
 console.log(executeGraph({state, graph: DEFAULT_GRAPH, out: "hyperapp_app"})[0]);
