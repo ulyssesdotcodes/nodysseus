@@ -1149,7 +1149,7 @@
                         "node_id",
                         "name"
                     ],
-                    "script": "return !node_id ? [] : node_id.endsWith('/out') ? [[node_id.substring(0, node_id.lastIndexOf('/'))]] : node_id.lastIndexOf('/') >= 0 ? [[node_id.substring(0, node_id.lastIndexOf('/'))]] : [[node_id]]"
+                    "script": "node_id = name?.endsWith('/out') ? name : node_id; return !node_id ? [] : node_id.endsWith('/out') ? [[node_id.substring(0, node_id.lastIndexOf('/'))]] : node_id.lastIndexOf('/') >= 0 ? [[node_id.substring(0, node_id.lastIndexOf('/'))]] : [[node_id]]"
                 },
                 {
                     "id": "expand",
@@ -1233,7 +1233,7 @@
                     "to": "contract"
                 },
                 {
-                    "from": "get_name",
+                    "from": "contractable_id",
                     "to": "contract",
                     "as": "name"
                 },

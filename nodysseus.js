@@ -256,18 +256,18 @@ const executeGraph = ({state, graph}) => {
 };
 
 const test_graph = { 
-    "in": "in", 
-    "out": "out", 
+    "in": "/in", 
+    "out": "/out", 
     "nodes": [
         { 
-            "id": "out", 
+            "id": "/out", 
             "args": ["value"], 
             "script": "return value;" 
         }, 
-        { "id": "in"}
+        { "id": "/in"}
     ], 
     "edges": [
-        {"from": "in", "to": "out"}
+        {"from": "/in", "to": "/out"}
     ]
 }
 
@@ -584,7 +584,7 @@ const contract_node = (data, keep_expanded=false) => {
     if(!node.nodes) {
         const slash_index = data.node_id.lastIndexOf('/');
         const node_id = slash_index >= 0 ? data.node_id.substring(0, slash_index) : data.node_id;
-        const name = data.name ?? node_id;
+        const name = data.name[0] ?? node_id;
 
         const inside_nodes = [Object.assign({}, node)];
         const inside_node_map = new Map();
@@ -612,16 +612,18 @@ const contract_node = (data, keep_expanded=false) => {
             }
 
             if(this_dangling === 0) {
+
+
                 in_edge.filter(ie => ie.from === e.from).forEach(ie => {
                     inside_edges.add(ie)
                 });
-
                 in_edge = in_edge.filter(ie => ie.from !== e.from);
 
                 const old_node = inside_nodes.find(i => e.from === i.id);
                 let inside_node = old_node ?? data.display_graph.nodes.find(p => p.id === e.from);
 
-                if(inside_node.name?.includes('in') && inside_node.name !== name + '/in') {
+                if((inside_node.name ?? inside_node.id)?.endsWith('/in') && !(inside_node.name ?? inside_node.id).endsWith(name + '/in')) {
+                    in_edge.push(e);
                     continue;
                 }
 
@@ -631,9 +633,12 @@ const contract_node = (data, keep_expanded=false) => {
                     inside_nodes.push(inside_node);
                 }
 
-                data.display_graph.edges.filter(de => de.to === e.from).forEach(de => {
-                    q.push(de);
-                });
+                if(!inside_node.name?.endsWith(name + '/in')){
+                    data.display_graph.edges.filter(de => de.to === e.from).forEach(de => {
+                        q.push(de);
+                    });
+                }
+
             } else {
                 in_edge.push(e);
             }
@@ -673,6 +678,7 @@ const contract_node = (data, keep_expanded=false) => {
             })
         }
 
+
         const new_display_graph = {
                 nodes: data.display_graph.nodes
                     .filter(n => n.id !== data.node_id)
@@ -698,8 +704,8 @@ const contract_node = (data, keep_expanded=false) => {
                         : e
                     )
             };
-
-        return {display_graph: {...display_graph, ...new_display_graph, in: in_node_id}, selected: node_id};
+            
+        return {display_graph: {...display_graph, ...new_display_graph}, selected: node_id};
     }
 }
 
@@ -718,8 +724,8 @@ const flattenNode = (graph, levels = -1) => {
             flat_nodes: acc.flat_nodes.concat(n.flat_nodes?.flat() ?? []).map(fn => {
                 // adjust for easy graph renaming
                 if((fn.id === prefix + (graph.out ?? "out")) && graph.name) {
-                    fn.name = graph.name;
-                } else if (graph.in && (fn.id === prefix + (graph.in ?? "in")) && graph.name) {
+                    fn.name = graph.name + "/out";
+                } else if (graph.in && (fn.id === prefix + (graph.in ?? "/in")) && graph.name) {
                     fn.name = graph.name + "/in"
                 }
                 return fn
@@ -775,7 +781,6 @@ const generic_nodes = new Set([
 const stored = localStorage.getItem("display_graph");
 // const display_graph = DEFAULT_GRAPH;
 const display_graph = stored ? JSON.parse(stored) : test_graph;
-console.log(display_graph);
 const state = new Map([['in', [{graph: DEFAULT_GRAPH, display_graph: {...display_graph, nodes: display_graph.nodes.concat(DEFAULT_GRAPH.nodes.filter(n => generic_nodes.has(n.id) && display_graph.nodes.findIndex(dn => dn.id === n.id) === -1)), edges: display_graph.edges.concat([])}}]]])
 
 console.log(executeGraph({state, graph: DEFAULT_GRAPH, out: "hyperapp_app"})[0]);
