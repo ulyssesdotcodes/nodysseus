@@ -1,5 +1,7 @@
 import DEFAULT_GRAPH from "./pull.json"
-import _ from "lodash";
+import get from "just-safe-get";
+import set from "just-safe-set";
+import {diff} from "just-diff";
 import { h, app, text, memo } from "hyperapp"
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 import Fuse from "fuse.js";
@@ -374,7 +376,6 @@ const updateSimulationNodes = (data) => {
         // data.simulation.force('fuse_links').links(data.fuse_links);
     }
 
-
     const sibling_x = new Map();
     const selected_x =  ((levels.nodes_by_level[selected_level].findIndex(l => l === selected) + 1) 
                 / (levels.nodes_by_level[selected_level].length + 1));
@@ -447,7 +448,6 @@ const graphToSimulationNodes = (data) => {
             y: current_data?.y ?? data.y ?? Math.floor(window.innerHeight * (Math.random() * .5 + .25))
         };
     })
-
 
     const links = data.display_graph.edges
         .filter(e => e.to !== "log" && e.to !=="debug")
@@ -749,7 +749,7 @@ const flattenNode = (graph, levels = -1) => {
 /////////////////////////////////
 
 const lib = {
-    _,
+    just: {get, set, diff},
     ha: { h, app, text, memo },
     no: {executeGraph},
     scripts: {d3simulation, d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all},
@@ -757,6 +757,8 @@ const lib = {
     Fuse,
     // THREE
 };
+
+console.log(lib.just);
 
 const generic_nodes = new Set([
     "switch",

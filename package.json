@@ -12,7 +12,9 @@
     "d3-force": "^3.0.0",
     "fuse.js": "^6.4.6",
     "hyperapp": "^2.0.18",
-    "lodash": "^4.17.21",
+    "just-diff": "^5.0.1",
+    "just-safe-get": "^4.0.1",
+    "just-safe-set": "^4.0.1",
     "rollup": "^2.52.2",
     "sourcemap-codec": "^1.4.8"
   }

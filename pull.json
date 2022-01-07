@@ -375,7 +375,7 @@
                         "path",
                         "def"
                     ],
-                    "script": "return [lib._.get(target, path) ?? def]"
+                    "script": "return [lib.just.get(target, path) ?? def]"
                 }
             ],
             "edges": [
@@ -402,7 +402,7 @@
                 "path",
                 "value"
             ],
-            "script": "return [lib._.set(target, path, value)]"
+            "script": "return [lib.just.set(target, path, value)]"
         },
         {
             "id": "fuse vertices",
@@ -892,7 +892,7 @@
                         "selected",
                         "search"
                     ],
-                    "script": "return editing !== false || search !== false ? update : !!display_graph || !!selected"
+                    "script": "return update || !!display_graph || !!selected"
                 },
                 {
                     "id": "run",
