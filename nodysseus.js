@@ -2,6 +2,7 @@ import DEFAULT_GRAPH from "./pull.json"
 import get from "just-safe-get";
 import set from "just-safe-set";
 import {diff} from "just-diff";
+import diffApply from "just-diff-apply";
 import { h, app, text, memo } from "hyperapp"
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 import Fuse from "fuse.js";
@@ -347,13 +348,14 @@ const d3simulation = () => {
             .forceLink([])
             .distance(128)
             .strength(l => l.strength)
-            .id(n => n.node_id))
-        .force('link_direction', lib.d3.forceY().strength(.1))
+            .id(n => n.node_child_id))
+        .force('link_direction', lib.d3.forceY().strength(.05))
         .force('center', lib.d3.forceCenter())
+        // .force('fuse_links', lib.d3.forceLink([]).distance(128).strength(.1).id(n => n.node_child_id))
         // .force('link_siblings', lib.d3.forceX().strength(1))
         // .force('selected', lib.d3.forceRadial(0, window.innerWidth * 0.5, window.innerHeight * 0.5).strength(2))
-        // .velocityDecay(0.7)
-        .alphaMin(.1);
+        // .velocityDecay(0.6)
+        .alphaMin(.125);
 
     return { simulation };
 }
@@ -369,7 +371,6 @@ const updateSimulationNodes = (data) => {
             data.simulation.force('links')?.links().length !== data.links.length) {
             data.simulation.alpha(0.4);
         }
-
 
         data.simulation.nodes(data.nodes);
         data.simulation.force('links').links(data.links);
@@ -413,8 +414,12 @@ const updateSimulationNodes = (data) => {
     //     ));
     data.simulation.force('link_direction')
         .y(n => 
-        (((levels.parents.get(n.node_id)?.length > 0 ? 1 : 0) + (levels.children.get(n.node_id)?.length > 0 ? -1 : 0)) * 2 + .5) * window.innerHeight)
-        .strength(n => (!!levels.parents.get(n.node_id)?.length === !levels.children.get(n.node_id)?.length) ? .1 : 0);
+        (((levels.parents.get(n.node_id)?.length > 0 ? 1 : 0) 
+            + (levels.children.get(n.node_id)?.length > 0 ? -1 : 0)
+            + (levels.children.get(n.node_id)?.length > 0 && n.node_child_id !== n.node_id + "_" + levels.children.get(n.node_id)[0] ? -1 : 0))
+        * 8 + .5) * window.innerHeight)
+        .strength(n => (!!levels.parents.get(n.node_id)?.length === !levels.children.get(n.node_id)?.length) 
+            || levels.children.get(n.node_id)?.length > 0 && n.node_child_id !== n.node_id + "_" + levels.children.get(n.node_id)[0] ? .025 : 0);
 
 
     data.simulation.force('collide').radius(64);
@@ -427,13 +432,20 @@ const updateSimulationNodes = (data) => {
 const graphToSimulationNodes = (data) => {
     const simulation_node_data = new Map();
     data.nodes.forEach(n => {
-        simulation_node_data.set(n.node_id, n)
+        simulation_node_data.set(n.node_child_id, n)
     });
 
-    const nodes = data.display_graph.nodes.map(n => {
-        const current_data = simulation_node_data.get(n.id);
-        return {
+    const main_node_map = new Map();
+
+    const fuse_links = [];
+
+    const nodes = data.display_graph.nodes.flatMap(n => {
+        const children = data.levels.children.get(n.id);
+        main_node_map.set(n.id, children.length > 0 ? n.id + "_" + children[0] : n.id);
+
+        return children.length === 0 ? [{
             node_id: n.id,
+            node_child_id: n.id,
             type: n.type,
             nodes: n.nodes,
             edges: n.edges,
@@ -444,31 +456,38 @@ const graphToSimulationNodes = (data) => {
             out: n.out,
             level: data.levels.level_by_node.get(n.id),
             selected_distance: data.levels.distance_from_selected.get(n.id),
-            x: current_data?.x ?? data.x ?? Math.floor(window.innerWidth * (Math.random() * .5 + .25)),
-            y: current_data?.y ?? data.y ?? Math.floor(window.innerHeight * (Math.random() * .5 + .25))
-        };
+            x: simulation_node_data.get(n.id)?.x ?? data.x ?? Math.floor(window.innerWidth * (Math.random() * .5 + .25)),
+            y: simulation_node_data.get(n.id)?.y ?? data.y ?? Math.floor(window.innerHeight * (Math.random() * .5 + .25))
+        }] : children.map(c => ({
+            node_id: n.id,
+            node_child_id: n.id + "_" + c,
+            type: n.type,
+            nodes: n.nodes,
+            edges: n.edges,
+            script: n.script,
+            value: n.value,
+            name: n.name,
+            in: n.in,
+            out: n.out,
+            level: data.levels.level_by_node.get(n.id),
+            selected_distance: data.levels.distance_from_selected.get(n.id),
+            x: simulation_node_data.get(n.id + "_" + c)?.x ?? data.x ?? Math.floor(window.innerWidth * (Math.random() * .5 + .25)),
+            y: simulation_node_data.get(n.id + "_" + c)?.y ?? data.y ?? Math.floor(window.innerHeight * (Math.random() * .5 + .25))
+        }));
     })
 
     const links = data.display_graph.edges
         .filter(e => e.to !== "log" && e.to !=="debug")
         .map(e => ({
-            source: e.from, 
-            target: e.to, 
+            source: e.from + "_" + e.to, 
+            target: main_node_map.get(e.to), 
             as: e.as, 
             type: e.type, 
-            strength:  Math.abs(data.levels.level_by_node.get(e.to) - data.levels.level_by_node.get(e.from)) === 1 ? 4 : 1,
+            strength:  4,
             selected_distance: data.levels.distance_from_selected.get(e.to) !== undefined ? Math.min(data.levels.distance_from_selected.get(e.to), data.levels.distance_from_selected.get(e.from)) : undefined,
             sibling_index_normalized: (data.levels.siblings.get(e.from).findIndex(n => n === e.from) + 1) / (data.levels.siblings.get(e.from).length + 1),
         }));
 
-    const fuse_links =  !data.levels.connected_vertices ? [] : data.display_graph.nodes.flatMap(n1 => 
-            data.display_graph.nodes
-                .filter(n2 => n2.id != n1.id && !data.levels.connected_vertices.get(n1.id)?.includes(n2.id))
-                .map(n2 => ({
-                    source: n1.id,
-                    target: n2.id,
-                })));
-            
     return {
         nodes,
         links,
@@ -490,12 +509,12 @@ const d3subscription = simulation => dispatch => {
                     as: l.as,
                     type: l.type,
                     source: ({
-                        node_id: l.source.node_id, 
+                        node_id: l.source.node_child_id, 
                         x: Math.floor(l.source.x), 
                         y: Math.floor(l.source.y)
                     }), 
                     target: ({
-                        node_id: l.target.node_id, 
+                        node_id: l.target.node_child_id, 
                         x: Math.floor(l.target.x), 
                         y: Math.floor(l.target.y)
                     })
@@ -749,7 +768,7 @@ const flattenNode = (graph, levels = -1) => {
 /////////////////////////////////
 
 const lib = {
-    just: {get, set, diff},
+    just: {get, set, diff, diffApply},
     ha: { h, app, text, memo },
     no: {executeGraph},
     scripts: {d3simulation, d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all},
@@ -757,8 +776,6 @@ const lib = {
     Fuse,
     // THREE
 };
-
-console.log(lib.just);
 
 const generic_nodes = new Set([
     "switch",

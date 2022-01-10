@@ -1767,7 +1767,8 @@
                 "links": [],
                 "editing": false,
                 "search": false,
-                "show_all": false
+                "show_all": false,
+                "app_state": {}
             }
         },
         {
@@ -2109,7 +2110,7 @@
                         "display_graph",
                         "display_graph_out"
                     ],
-                    "script": "if(selected_edge){display_graph.edges.splice(display_graph.edges.findIndex(e => selected_edge.from === e.from && selected_edge.to === e.to), 1); return {display_graph, selected, selected_edge: false}; } display_graph.nodes = display_graph.nodes.filter(n => n.id !== selected[0]); const new_edges = []; const to = display_graph.edges.filter(e => e.to === selected[0]); const from = display_graph.edges.filter(e => e.from === selected[0]); for(let i = 0; i < to.length; i++){for(let j = 0; j < from.length; j++){ if(!display_graph.edges.find(e => e.from === to[i].from && e.to === from[j].to)){ display_graph.edges.push({from: to[i].from, to: from[j].to, as: from[j].as});}}}; display_graph.edges = display_graph.edges.filter(e => e.to !== selected[0] && e.from !== selected[0]); display_graph.edges.push(...new_edges); return {display_graph, selected: [to[0]?.from ?? from[0]?.to] };"
+                    "script": "if(selected_edge){display_graph.edges.splice(display_graph.edges.findIndex(e => selected_edge.from === e.from && selected_edge.to === e.to), 1); return {display_graph, selected, selected_edge: false}; } display_graph.nodes = display_graph.nodes.filter(n => n.id !== selected[0]); const new_edges = []; const to = display_graph.edges.filter(e => e.to === selected[0]); const from = display_graph.edges.filter(e => e.from === selected[0]); for(let i = 0; i < to.length; i++){for(let j = 0; j < from.length; j++){ if(!display_graph.edges.find(e => e.from === to[i].from && e.to === from[j].to)){ display_graph.edges.push({from: to[i].from, to: from[j].to, as: from[j].as});}}}; display_graph.edges = display_graph.edges.filter(e => e.to !== selected[0] && e.from !== selected[0]); display_graph.edges.push(...new_edges); return {display_graph, selected: [to[0]?.from ?? from[0]?.to ?? display_graph.nodes[0].id] };"
                 },
                 {
                     "id": "x_display_graph",
@@ -4103,6 +4104,11 @@
                             "script": "return onclick_node_fn"
                         },
                         {
+                            "id": "get_levels",
+                            "args": ["levels"],
+                            "script": "return levels"
+                        },
+                        {
                             "id": "node_editor_props",
                             "args": [
                                 "onclick_graph_fn",
@@ -4168,13 +4174,14 @@
                                     "id": "parent_attrs",
                                     "args": [
                                         "node_id",
+                                        "node_child_id",
                                         "x",
                                         "y",
                                         "onclick_node_fn",
                                         "selected",
                                         "selected_distance"
                                     ],
-                                    "script": "const mouseevent = (_, payload) => [onclick_node_fn, {x: payload.x, y: payload.y, node_id, selected: [], ty: 'down'}]; return ({ key: node_id, x: x - 20, y: y - 20, id: node_id, onmousedown: mouseevent, width: 256, height: 64, id: node_id, class: `node ${selected[0] === node_id ? 'selected': ''}`, opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 6) : 0.1})"
+                                    "script": "const mouseevent = (_, payload) => [onclick_node_fn, {x: payload.x, y: payload.y, node_id, selected: [], ty: 'down'}]; return ({ key: node_child_id, x: x - 20, y: y - 20, id: node_id, onmousedown: mouseevent, width: 256, height: 64, id: node_child_id, class: `node ${selected[0] === node_id ? 'selected': ''}`, opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 6) : 0.1})"
                                 },
                                 {
                                     "id": "children",
@@ -5028,9 +5035,24 @@
                             "to": "get_onclick_node_fn"
                         },
                         {
+                            "from": "in",
+                            "to": "get_levels"
+                        },
+                        {
                             "from": "get_nodes",
                             "to": "node_layout",
                             "as": "node"
+                        },
+                        {
+                            "from": "get_links",
+                            "to": "duplicate_nodes",
+                            "as": "links",
+                            "type": "concat"
+                        },
+                        {
+                            "from": "get_levels",
+                            "to": "duplicate_nodes",
+                            "as": "levels"
                         },
                         {
                             "from": "in",
@@ -5512,6 +5534,11 @@
         {
             "from": "calculate_levels",
             "to": "graph_to_simulation",
+            "as": "levels"
+        },
+        {
+            "from": "calculate_levels",
+            "to": "hyperapp_init_state",
             "as": "levels"
         },
         {
