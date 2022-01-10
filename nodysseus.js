@@ -298,13 +298,14 @@ const calculateLevels = (graph, selected, fixed_vertices) => {
 
     const connected_vertices = new Map(!fixed_vertices ? [] : fixed_vertices.nodes.flatMap(v => (v.nodes ?? []).map(n => [n, v.nodes])));
 
-    const calculate_selected_graph = (s, i) => {
-        if(distance_from_selected.get(s) <= i) {
+    const calculate_selected_graph = (s, i, c) => {
+        const id = c || children.get(s)?.length > 0 ? (s + "_" + (c ?? children.get(s)[0])) : s;
+        if(distance_from_selected.get(id) <= i) {
             return;
         }
 
-        distance_from_selected.set(s, i);
-        parents.get(s)?.forEach(p => { calculate_selected_graph(p, i + 1); });
+        distance_from_selected.set(id, i);
+        parents.get(s)?.forEach(p => { calculate_selected_graph(p, i + 1, s); });
         children.get(s)?.forEach(c => { calculate_selected_graph(c, i + 1); });
     }
 
@@ -470,7 +471,7 @@ const graphToSimulationNodes = (data) => {
             in: n.in,
             out: n.out,
             level: data.levels.level_by_node.get(n.id),
-            selected_distance: data.levels.distance_from_selected.get(n.id),
+            selected_distance: data.levels.distance_from_selected.get(n.id + "_" + c),
             x: simulation_node_data.get(n.id + "_" + c)?.x ?? data.x ?? Math.floor(window.innerWidth * (Math.random() * .5 + .25)),
             y: simulation_node_data.get(n.id + "_" + c)?.y ?? data.y ?? Math.floor(window.innerHeight * (Math.random() * .5 + .25))
         }));
@@ -484,7 +485,7 @@ const graphToSimulationNodes = (data) => {
             as: e.as, 
             type: e.type, 
             strength:  4,
-            selected_distance: data.levels.distance_from_selected.get(e.to) !== undefined ? Math.min(data.levels.distance_from_selected.get(e.to), data.levels.distance_from_selected.get(e.from)) : undefined,
+            selected_distance: data.levels.distance_from_selected.get(main_node_map.get(e.to)) !== undefined ? Math.min(data.levels.distance_from_selected.get(main_node_map.get(e.to)), data.levels.distance_from_selected.get(e.from + "_" + e.to)) : undefined,
             sibling_index_normalized: (data.levels.siblings.get(e.from).findIndex(n => n === e.from) + 1) / (data.levels.siblings.get(e.from).length + 1),
         }));
 

@@ -3310,7 +3310,7 @@
                         "selected",
                         "node"
                     ],
-                    "script": "return event.ty !== 'down' || node.selected_distance >= 3 ? [] : node.node_id === selected[0] ? ['expand_contract'] : ['node_id']"
+                    "script": "return event.ty !== 'down' ? [] : node.node_id === selected[0] ? ['expand_contract'] : ['node_id']"
                 },
                 {
                     "id": "selected",
@@ -4179,9 +4179,10 @@
                                         "y",
                                         "onclick_node_fn",
                                         "selected",
-                                        "selected_distance"
+                                        "selected_distance",
+                                        "selected_edge"
                                     ],
-                                    "script": "const mouseevent = (_, payload) => [onclick_node_fn, {x: payload.x, y: payload.y, node_id, selected: [], ty: 'down'}]; return ({ key: node_child_id, x: x - 20, y: y - 20, id: node_id, onmousedown: mouseevent, width: 256, height: 64, id: node_child_id, class: `node ${selected[0] === node_id ? 'selected': ''}`, opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 6) : 0.1})"
+                                    "script": "const mouseevent = (_, payload) => [onclick_node_fn, {x: payload.x, y: payload.y, node_id, selected: [], ty: 'down'}]; return ({ key: node_child_id, x: x - 20, y: y - 20, id: node_id, onmousedown: mouseevent, width: 256, height: 64, id: node_child_id, class: `node ${selected[0] === node_id ? 'selected': ''}`, opacity: selected_edge?.from === node_id ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - (selected_distance * selected_distance + 2) / 6) : 0.1})"
                                 },
                                 {
                                     "id": "children",
@@ -4655,7 +4656,7 @@
                                         "sibling_index_normalized",
                                         "selected_edge"
                                     ],
-                                    "script": "return ({x: Math.floor((sibling_index_normalized * 0.8 + 0.05) * (target.x - source.x) + source.x) + 16, y: Math.floor((sibling_index_normalized * 0.8 + 0.05) * (target.y - source.y) + source.y), opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1, class: {selected: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to, edge: true} })"
+                                    "script": "return ({x: Math.floor((sibling_index_normalized * 0.8 + 0.05) * (target.x - source.x) + source.x) + 16, y: Math.floor((sibling_index_normalized * 0.8 + 0.05) * (target.y - source.y) + source.y), z: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to ? 100 : 200, opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1, class: {selected: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to, edge: true} })"
                                 },
                                 {
                                     "id": "edge_info_line_position",
@@ -4944,6 +4945,30 @@
                             }
                         },
                         {
+                            "id": "fill_filter_flood_selected_dom_type",
+                            "value": "feFlood"
+                        },
+                        {
+                            "id": "fill_filter_flood_selected_props",
+                            "value": {
+                                "flood-color": "red"
+                            }
+                        },
+                        {
+                            "id": "fill_filter_flood_selected",
+                            "type": "h"
+                        },
+                        {
+                            "id": "fill_filter_selected_props",
+                            "value": {
+                                "id": "selected-flood-background",
+                                "width": 1.2,
+                                "height": 1.5,
+                                "x": -0.1,
+                                "y": -0.25
+                            }
+                        },
+                        {
                             "id": "fill_filter_composite_props",
                             "value": {
                                 "in": "SourceGraphic"
@@ -4966,11 +4991,23 @@
                             "script": "return [[flood.el, comp.el]]"
                         },
                         {
+                            "id": "fill_filter_selected_children",
+                            "args": [
+                                "comp",
+                                "flood"
+                            ],
+                            "script": "return [[flood.el, comp.el]]"
+                        },
+                        {
                             "id": "fill_filter_dom_type",
                             "value": "filter"
                         },
                         {
                             "id": "fill_filter",
+                            "type": "h"
+                        },
+                        {
+                            "id": "fill_filter_selected",
                             "type": "h"
                         },
                         {
@@ -4982,7 +5019,7 @@
                             "args": [
                                 "arrow"
                             ],
-                            "script": "return [[bg_color.el, arrow.el]]"
+                            "script": "return [[bg_color.el, bg_color_selected.el, arrow.el]]"
                         },
                         {
                             "id": "defs",
@@ -5078,6 +5115,11 @@
                         {
                             "from": "get_selected_edge",
                             "to": "filter_links",
+                            "as": "selected_edge"
+                        },
+                        {
+                            "from": "get_selected_edge",
+                            "to": "node_layout",
                             "as": "selected_edge"
                         },
                         {
@@ -5199,6 +5241,21 @@
                             "as": "flood"
                         },
                         {
+                            "from": "fill_filter_flood_selected_props",
+                            "to": "fill_filter_flood_selected",
+                            "as": "props"
+                        },
+                        {
+                            "from": "fill_filter_flood_selected_dom_type",
+                            "to": "fill_filter_flood_selected",
+                            "as": "dom_type"
+                        },
+                        {
+                            "from": "fill_filter_flood_selected",
+                            "to": "fill_filter_selected_children",
+                            "as": "flood"
+                        },
+                        {
                             "from": "fill_filter_composite_props",
                             "to": "fill_filter_composite",
                             "as": "props"
@@ -5224,14 +5281,39 @@
                             "as": "props"
                         },
                         {
+                            "from": "fill_filter_composite",
+                            "to": "fill_filter_selected_children",
+                            "as": "comp"
+                        },
+                        {
+                            "from": "fill_filter_selected_children",
+                            "to": "fill_filter_selected",
+                            "as": "children"
+                        },
+                        {
+                            "from": "fill_filter_selected_props",
+                            "to": "fill_filter_selected",
+                            "as": "props"
+                        },
+                        {
                             "from": "fill_filter_dom_type",
                             "to": "fill_filter",
+                            "as": "dom_type"
+                        },
+                        {
+                            "from": "fill_filter_dom_type",
+                            "to": "fill_filter_selected",
                             "as": "dom_type"
                         },
                         {
                             "from": "fill_filter",
                             "to": "defs_children",
                             "as": "bg_color"
+                        },
+                        {
+                            "from": "fill_filter_selected",
+                            "to": "defs_children",
+                            "as": "bg_color_selected"
                         },
                         {
                             "from": "defs_dom_type",

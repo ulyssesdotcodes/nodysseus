@@ -126,6 +126,9 @@
     .link {
       stroke: #ccc;
     }
+    svg.edge.selected rect {
+      fill: red;
+    }
 
     .node text .primary {
       font-weight: bold;
@@ -145,7 +148,11 @@
 
     .edge {
       filter: url("#flood-background");
-      z: 100;
+      padding: 4px;
+    }
+
+    .edge.selected {
+      filter: url("#selected-flood-background");
     }
   </style>
   <style id="content_style">
