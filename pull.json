@@ -2025,7 +2025,7 @@
                         "editing",
                         "display_graph"
                     ],
-                    "script": "const next_node_edge = display_graph.edges.find(e => e.from === selected[0]); return next_node_edge ? [next_node_edge.to] : []"
+                    "script": "const next_node_edge = display_graph.edges.find(e => e.from === selected[0]); return next_node_edge ? [next_node_edge.to] : selected"
                 },
                 {
                     "id": "up",
@@ -2036,7 +2036,7 @@
                         "display_graph",
                         "selected_edge"
                     ],
-                    "script": "const next_edges = selected_edge ? selected_edge : display_graph.edges.filter(e => e.to === selected[0]); const next_node_edge = next_edges[Math.ceil(next_edges.length / 2) - 1]; return next_node_edge ? [next_node_edge.from] : []"
+                    "script": "const next_edges = selected_edge ? selected_edge : display_graph.edges.filter(e => e.to === selected[0]); const next_node_edge = next_edges[Math.ceil(next_edges.length / 2) - 1]; return next_node_edge ? [next_node_edge.from] : selected"
                 },
                 {
                     "id": "left",
@@ -2048,7 +2048,7 @@
                         "nodes",
                         "levels"
                     ],
-                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.nodes_by_level[levels.level_by_node.get(selected[0])].concat(levels.siblings.get(selected[0])); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling && n.selected_distance < 3); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x < current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? [next_node[1].node_id] : []"
+                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.nodes_by_level[levels.level_by_node.get(selected[0])].concat(levels.siblings.get(selected[0])); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling && n.selected_distance < 3); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x < current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? [next_node[1].node_id] : selected"
                 },
                 {
                     "id": "left_edge",
@@ -2072,7 +2072,7 @@
                         "nodes",
                         "levels"
                     ],
-                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.nodes_by_level[levels.level_by_node.get(selected[0])].concat(levels.siblings.get(selected[0])); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling && n.selected_distance < 3); if(!sibling_node){ return dist }  const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? [next_node[1].node_id] : []"
+                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.nodes_by_level[levels.level_by_node.get(selected[0])].concat(levels.siblings.get(selected[0])); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling && n.selected_distance < 3); if(!sibling_node){ return dist }  const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? [next_node[1].node_id] : selected"
                 },
                 {
                     "id": "right_edge",
@@ -4122,7 +4122,7 @@
                                 "search",
                                 "display_graph"
                             ],
-                            "script": "return {id: `search-input`, type: 'text', onkeydown: (s, payload) => { if(payload.key === 'Enter'){ const direction = payload.shiftKey ? -1 : 1; const idx = (s.search_results.length + s.search_index + direction) % s.search_results.length; return {...s, selected: s.search_results.slice(idx, idx + 1), search_index: idx} } else { return s;} }, oninput: (s, payload) => { const search_results = new lib.Fuse(display_graph.nodes, {keys: ['name', 'id']}).search(payload.target.value).map(r => r.item.id); return {...s, search: payload.target.value, selected: search_results.length > 0 ? search_results.slice(0, 1) : s.selected, search_results, search_index: 0}}}"
+                            "script": "return {id: `search-input`, type: 'text', onkeydown: (s, payload) => { if(payload.key === 'Enter'){ const direction = payload.shiftKey ? -1 : 1; const idx = (s.search_results.length + s.search_index + direction) % s.search_results.length; return {...s, selected: s.search_results.slice(idx, idx + 1), search_index: idx} } else { return s;} }, oninput: (s, payload) => { const search_results = new lib.Fuse(display_graph.nodes, {keys: ['name', 'id']}).search(payload.target.value).map(r => r.item.id); return {...s, search: payload.target.value, selected: search_results.length > 0 ? search_results.slice(0, 1) : s.selected, search_results, search_index: 0, levels: lib.scripts.calculateLevels(display_graph, search_results.length > 0 ? search_results.slice(0, 1) : s.selected)}}}"
                         },
                         {
                             "id": "out",
@@ -4736,6 +4736,13 @@
                                     "script": "return link ?? []"
                                 },
                                 {
+                                    "id": "get_selected_edge",
+                                    "args": [
+                                        "input"
+                                    ],
+                                    "script": "return input.selected_edge"
+                                },
+                                {
                                     "id": "edge_info_el",
                                     "type": "h"
                                 },
@@ -4761,7 +4768,7 @@
                                         "sibling_index_normalized",
                                         "selected_edge"
                                     ],
-                                    "script": "return ({x: Math.floor((sibling_index_normalized * 0.8 + 0.05) * (target.x - source.x) + source.x) + 16, y: Math.floor((sibling_index_normalized * 0.8 + 0.05) * (target.y - source.y) + source.y), z: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to ? 100 : 200, opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1, class: {selected: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to, edge: true} })"
+                                    "script": "return ({x: Math.floor((sibling_index_normalized * 0.8 + 0.05) * (target.x - source.x) + source.x) + 16, y: Math.floor((sibling_index_normalized * 0.8 + 0.05) * (target.y - source.y) + source.y), z: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to ? 100 : 200, opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1, class: {selected: selected_edge && (source.node_id === selected_edge.from + '_' + selected_edge.to || (source.node_id === selected_edge.from && target.node_id === selected_edge.to)), edge: true} })"
                                 },
                                 {
                                     "id": "edge_info_line_position",
@@ -4837,7 +4844,7 @@
                                         "selected_edge",
                                         "selected_distance"
                                     ],
-                                    "script": "return ({x1: Math.floor(source.x), y1: Math.floor(source.y), x2: Math.floor(target.x), y2: Math.floor(target.y), class: `link ${selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to ? 'selected' : 'unselected'}`, 'marker-end': 'url(#arrow)', opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1})"
+                                    "script": "return ({x1: Math.floor(source.x), y1: Math.floor(source.y), x2: Math.floor(target.x), y2: Math.floor(target.y), class: `link ${selected_edge && (source.node_id === selected_edge.from + '_' + selected_edge.to || (source.node_id === selected_edge.from && target.node_id === selected_edge.to)) ? 'selected' : 'unselected'}`, 'marker-end': 'url(#arrow)', opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1})"
                                 },
                                 {
                                     "id": "line_dom_type",
@@ -4871,8 +4878,28 @@
                                     "to": "line_props"
                                 },
                                 {
+                                    "from": "in",
+                                    "to": "get_selected_edge",
+                                    "as": "input"
+                                },
+                                {
                                     "from": "get_link",
                                     "to": "line_lerp"
+                                },
+                                {
+                                    "from": "get_selected_edge",
+                                    "to": "line_props",
+                                    "as": "selected_edge"
+                                },
+                                {
+                                    "from": "get_selected_edge",
+                                    "to": "line_lerp",
+                                    "as": "selected_edge"
+                                },
+                                {
+                                    "from": "get_selected_edge",
+                                    "to": "edge_info_props",
+                                    "as": "selected_edge"
                                 },
                                 {
                                     "from": "line_lerp",
@@ -5233,6 +5260,11 @@
                         {
                             "from": "get_selected_edge",
                             "to": "node_layout",
+                            "as": "selected_edge"
+                        },
+                        {
+                            "from": "get_selected_edge",
+                            "to": "link_layout",
                             "as": "selected_edge"
                         },
                         {

@@ -3,10 +3,89 @@ import get from "just-safe-get";
 import set from "just-safe-set";
 import {diff} from "just-diff";
 import diffApply from "just-diff-apply";
-import compare from "just-compare";
 import { h, app, text, memo } from "hyperapp"
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 import Fuse from "fuse.js";
+
+function compare(value1, value2) {
+  if (value1 === value2) {
+    return true;
+  }
+  /* eslint-disable no-self-compare */
+  // if both values are NaNs return true
+  if (value1 !== value1 && value2 !== value2) {
+    return true;
+  }
+  if ({}.toString.call(value1) != {}.toString.call(value2)) {
+    return false;
+  }
+  if (value1 !== Object(value1)) {
+    // non equal primitives
+    return false;
+  }
+  if (!value1) {
+    return false;
+  }
+  if (Array.isArray(value1)) {
+    return compareArrays(value1, value2);
+  }
+  if ({}.toString.call(value1) == '[object Set]') {
+    return compareArrays(Array.from(value1), Array.from(value2));
+  }
+  if ({}.toString.call(value1) == '[object Map]') {
+    return compareArrays([...value1.entries()], [...value2.entries()]);
+  }
+  if ({}.toString.call(value1) == '[object Object]') {
+    return compareObjects(value1, value2);
+  } else {
+    return compareNativeSubtypes(value1, value2);
+  }
+}
+
+function compareNativeSubtypes(value1, value2) {
+  // e.g. Function, RegExp, Date
+  return value1.toString() === value2.toString();
+}
+
+function compareArrays(value1, value2) {
+  var len = value1.length;
+  if (len != value2.length) {
+    return false;
+  }
+  var alike = true;
+  for (var i = 0; i < len; i++) {
+    if (!compare(value1[i], value2[i])) {
+      alike = false;
+      break;
+    }
+  }
+  return alike;
+}
+
+function compareObjects(value1, value2) {
+  var keys1 = Object.keys(value1).sort();
+  var keys2 = Object.keys(value2).sort();
+  var len = keys1.length;
+  if (len != keys2.length) {
+    return false;
+  }
+  for (var i = 0; i < len; i++) {
+    var key1 = keys1[i];
+    var key2 = keys2[i];
+    if (!(key1 == key2 && compare(value1[key1], value2[key2]))) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function compareMaps(value1, value2) {
+    if(value1.size !== value2.size) {
+        return false;
+    }
+
+
+}
 
 const keywords = new Set(["break", "case", "catch", "continue", "debugger", "default", "delete", "do", "else", "finally", "for", "function", "if", "in", "instanceof", "new", "return", "switch", "this", "throw", "try", "typeof", "var", "void", "while", "with"])
 
@@ -132,7 +211,7 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id}) => {
 
             if (run) {
                 let data = {};
-                if (node.value !== undefined) {
+                if (node.value !== undefined && !node.script) {
                     if(cache.get(cache_id).has(node.id)) {
                         state.set(node.id, cache.get(cache_id).get(node.id))
                     } else {
@@ -313,7 +392,7 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id}) => {
                                     const val = cache.get(cache_id).get(node.id);
                                     let hit = true;
                                     input_results.forEach((v, i) => hit = hit && compare(val[1][i][1], v[1]));
-                                    args.forEach((v, k) => hit = hit && (k === 'inputs' || k === 'lib' || k === 'node' || compare(val[2].get(k), v)));
+                                    args.forEach((v, k) => hit = hit && (k === 'node_inputs' || k === 'lib' || k === 'node' || compare(val[2].get(k), v)));
                                     if(hit){
                                         // console.log(input_results);
                                         // console.log("hit for " + node.id)
