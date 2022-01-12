@@ -4244,7 +4244,7 @@
                         {
                             "id": "node_layout",
                             "args": ["node_inputs", "node_layout_map", "nodes", "graph", "onclick_node_fn", "selected", "selected_edge"],
-                            "script": "return nodes.map(n => lib.no.executeGraph({state: new Map([['_' + n.node_id, Object.assign({node: n}, node_inputs)]]), graph: {...graph, in: '_' + n.node_id, out: node_layout_map}}).get(node_layout_map))"
+                            "script": "return nodes.map(n => lib.no.executeGraph({state: new Map([['_' + n.node_id, Object.assign({node: n}, node_inputs)]]), graph: {...graph, in: '_' + n.node_id, out: node_layout_map}, cache_id: '_' + n.node_id}).get(node_layout_map))"
                         },
                         {
                             "id": "node_layout_map",
@@ -4720,7 +4720,7 @@
                         {
                             "id": "link_layout",
                             "args": ["node_inputs", "link_layout_map", "links", "graph", "selected_edge"],
-                            "script": "return links.map(link => lib.no.executeGraph({state: new Map([['_' + link.source + link.target, Object.assign({link}, node_inputs)]]), graph: {...graph, in: '_' + link.source + link.target, out: link_layout_map}}).get(link_layout_map))"
+                            "script": "return links.map(link => lib.no.executeGraph({state: new Map([['_' + link.source + link.target, Object.assign({link}, node_inputs)]]), graph: {...graph, in: '_' + link.source + link.target, out: link_layout_map}, cache_id: '_' + link.source + link.target}).get(link_layout_map))"
                         },
                         {
                             "id": "link_layout_map",

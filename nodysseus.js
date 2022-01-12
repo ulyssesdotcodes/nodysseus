@@ -10,9 +10,13 @@ import Fuse from "fuse.js";
 
 const keywords = new Set(["break", "case", "catch", "continue", "debugger", "default", "delete", "do", "else", "finally", "for", "function", "if", "in", "instanceof", "new", "return", "switch", "this", "throw", "try", "typeof", "var", "void", "while", "with"])
 
-const executeGraph = ({cache, state, graph, globalstate}) => {
+const executeGraph = ({cache, state, graph, globalstate, cache_id}) => {
     const out = graph.out;
     const graph_in = graph.in;
+
+    if(!cache.has(cache_id)) {
+        cache.set(cache_id, new Map());
+    }
 
     let state_length = 0;
     let active_nodes_length = 0;
@@ -129,11 +133,11 @@ const executeGraph = ({cache, state, graph, globalstate}) => {
             if (run) {
                 let data = {};
                 if (node.value !== undefined) {
-                    if(cache.has(node.id)) {
-                        state.set(node.id, cache.get(node.id))
+                    if(cache.get(cache_id).has(node.id)) {
+                        state.set(node.id, cache.get(cache_id).get(node.id))
                     } else {
                         state.set(node.id, node.value);
-                        cache.set(node.id, node.value)
+                        cache.get(cache_id).set(node.id, node.value)
                     }
                     active_nodes.delete(node.id);
                 } else {
@@ -209,7 +213,7 @@ const executeGraph = ({cache, state, graph, globalstate}) => {
                             const inid = node.id + "/" + (node_type.in ?? 'in');
                             let hit = false;
                             if(cache.has(inid)) {
-                                const val = cache.get(inid);
+                                const val = cache.get(cache_id).get(inid);
                                 hit = compare(val, data);
                                 if(hit){
                                     state.set(inid, val);
@@ -218,7 +222,7 @@ const executeGraph = ({cache, state, graph, globalstate}) => {
 
                             if(!hit) {
                                 state.set(inid, data);
-                                cache.set(inid, data);
+                                cache.get(cache_id).set(inid, data);
                             }
                         }
 
@@ -305,14 +309,15 @@ const executeGraph = ({cache, state, graph, globalstate}) => {
                                     })
                                 }
 
-                                if(cache.has(node.id)) {
-                                    const val = cache.get(node.id);
+                                if(cache.get(cache_id).has(node.id)) {
+                                    const val = cache.get(cache_id).get(node.id);
                                     let hit = true;
                                     input_results.forEach((v, i) => hit = hit && compare(val[1][i][1], v[1]));
                                     args.forEach((v, k) => hit = hit && (k === 'inputs' || k === 'lib' || k === 'node' || compare(val[2].get(k), v)));
                                     if(hit){
                                         // console.log(input_results);
                                         // console.log("hit for " + node.id)
+                                        // console.log("hit");
                                         state.set(node.id, val[0]);
                                         active_nodes.delete(node.id);
                                         continue;
@@ -325,7 +330,7 @@ const executeGraph = ({cache, state, graph, globalstate}) => {
                                 const results = fn.apply(null, [...args.values()]);
                                 // Array.isArray(results) ? results.forEach(res => state_datas.push(res)) : state_datas.push(results);
                                 state.set(node.id, results);
-                                cache.set(node.id, [results, input_results, args]);
+                                cache.get(cache_id).set(node.id, [results, input_results, args]);
                                 active_nodes.delete(node.id);
                             }
                         } catch (e) {
@@ -336,8 +341,8 @@ const executeGraph = ({cache, state, graph, globalstate}) => {
                             throw new AggregateError([Error(`Error in node ${node_type.name ?? node_type.id}`)].concat(e instanceof AggregateError ? e.errors : [e]));
                         }
                     } else {
-                        if(cache.has(node.id)) {
-                            const val = cache.get(node.id);
+                        if(cache.get(cache_id).has(node.id)) {
+                            const val = cache.get(cache_id).get(node.id);
                             let hit = compare(val, data);
                             if(hit){
                                 // console.log("hit for " + node.id)
@@ -348,7 +353,7 @@ const executeGraph = ({cache, state, graph, globalstate}) => {
                         }
 
                         state.set(node.id, data);
-                        cache.set(node.id, data);
+                        cache.get(cache_id).set(node.id, data);
                         active_nodes.delete(node.id);
                     }
                 }
@@ -876,7 +881,7 @@ const cache = new Map();
 const lib = {
     just: {get, set, diff, diffApply},
     ha: { h, app, text, memo },
-    no: {executeGraph: ({state, graph}) => {/*globalstate.forEach((v, k) => state.has(k) ? undefined : state.set(k, v));*/ return executeGraph({cache, state, graph, globalstate})}},
+    no: {executeGraph: ({state, graph, cache_id}) => {/*globalstate.forEach((v, k) => state.has(k) ? undefined : state.set(k, v));*/ return executeGraph({cache, state, graph, globalstate, cache_id: cache_id ?? "main"})}},
     scripts: {d3simulation, d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all},
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
     Fuse,
@@ -910,5 +915,5 @@ const state = new Map([['in', {graph: DEFAULT_GRAPH, display_graph: {...display_
 
 state.forEach((v,k) => globalstate.set(k, v));
 
-console.log(executeGraph({cache, state: globalstate, graph: DEFAULT_GRAPH, out: "hyperapp_app"}));
+console.log(executeGraph({cache, state: globalstate, graph: DEFAULT_GRAPH, out: "hyperapp_app", cache_id: "main"}));
 
