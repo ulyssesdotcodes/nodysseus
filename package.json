@@ -12,6 +12,7 @@
     "d3-force": "^3.0.0",
     "fuse.js": "^6.4.6",
     "hyperapp": "^2.0.18",
+    "just-compare": "^2.0.1",
     "just-diff": "^5.0.1",
     "just-diff-apply": "^5.0.0",
     "just-safe-get": "^4.0.1",
