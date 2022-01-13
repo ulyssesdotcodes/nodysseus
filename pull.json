@@ -8,6 +8,7 @@
         },
         {
             "id": "log",
+            "args": ["input"],
             "nodes": [
                 {
                     "id": "in"
@@ -48,9 +49,9 @@
                     "value": "init"
                 },
                 {
-                    "id": "resolve_init",
-                    "args": ["init", "update_sim_effect"],
-                    "script": "return {...init, update_sim_effect: update_sim_effect[0]}"
+                    "id": "update_sim_effect",
+                    "type": "arg",
+                    "value": "update_sim_effect"
                 },
                 {
                     "id": "other_args",
@@ -62,9 +63,10 @@
                     "args": [
                         "init",
                         "view",
-                        "subscriptions"
+                        "subscriptions",
+                        "update_sim_effect"
                     ],
-                    "script": "return {dispatch: lib.ha.app({init: () => [init, [() => { init.update_sim_effect(null, init) }]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById('node-editor'), subscriptions: () => subscriptions})}"
+                    "script": "return {dispatch: lib.ha.app({init: () => [init, [() => { update_sim_effect(null, init) }]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById('node-editor'), subscriptions: () => subscriptions})}"
                 }
             ],
             "edges": [
@@ -89,14 +91,19 @@
                 },
                 {
                     "from": "init",
-                    "to": "resolve_init"
+                    "to": "update_sim_effect"
                 },
                 {
                     "from": "in",
                     "to": "other_args"
                 },
                 {
-                    "from": "resolve_init",
+                    "from": "update_sim_effect",
+                    "to": "out",
+                    "as": "update_sim_effect"
+                },
+                {
+                    "from": "init",
                     "to": "out",
                     "as": "init"
                 },
@@ -442,7 +449,7 @@
                     "args": [
                         "fn"
                     ],
-                    "script": "return [(_, payload) => fn(payload)]"
+                    "script": "return (_, payload) => fn(payload)"
                 }
             ],
             "edges": [
@@ -494,6 +501,11 @@
             ]
         },
         {
+            "id": "arg",
+            "args": ["node_inputs"],
+            "script": "console.log('getting key'); console.log(node.value); console.log(node_inputs); return node_inputs[node.value]"
+        },
+        {
             "id": "set",
             "args": [
                 "target",
@@ -512,7 +524,8 @@
                 {
                     "id": "vnw7d8iaw",
                     "name": "fuse vertices",
-                    "type": "switch"
+                    "type": "switch",
+                    "args": ["fuse", "graph"]
                 },
                 {
                     "id": "6uzm3ifn3",
@@ -930,7 +943,8 @@
                 },
                 {
                     "id": "levels",
-                    "type": "switch"
+                    "type": "switch",
+                    "args": ["levels"]
                 },
                 {
                     "id": "levels_inputs",
@@ -4658,6 +4672,10 @@
                                 }
                             ],
                             "edges": [
+                                {
+                                    "from": "args_in",
+                                    "to": "in"
+                                },
                                 {
                                     "from": "in",
                                     "to": "get_node"
