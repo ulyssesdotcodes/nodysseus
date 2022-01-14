@@ -30,6 +30,94 @@
             ]
         },
         {
+            "id": "text",
+            "name": "text",
+            "in": "l54tju5vx",
+            "out": "text",
+            "nodes": [
+                {
+                    "id": "text",
+                    "args": [],
+                    "name": "text/out",
+                    "script": "return input"
+                },
+                {
+                    "id": "l54tju5vx",
+                    "args": [],
+                    "name": "text/in"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "l54tju5vx",
+                    "to": "text",
+                    "as": "input"
+                }
+            ]
+        },
+        {
+        "id": "text_display",
+        "name": "text_display",
+        "in": "6pqqchhnk",
+        "out": "tsxlng4gd",
+        "nodes": [
+            {
+                "id": "tsxlng4gd",
+                "type": "h",
+                "name": "text_display/out"
+            },
+            {
+                "id": "osgrk7ddu",
+                "type": "h_text"
+            },
+            {
+                "id": "wrap_array",
+                "args": ["value"],
+                "script": "return [value]"
+            },
+            {
+                "id": "hghirvcml",
+                "value": "pre"
+            },
+            {
+                "id": "ha6b5qttf",
+                "args": ["data"],
+                "script": "return JSON.stringify(data.result, null, 2);"
+            },
+            {
+                "id": "6pqqchhnk",
+                "name": "text_display/in"
+            }
+        ],
+        "edges": [
+            {
+                "from": "wrap_array",
+                "to": "tsxlng4gd",
+                "as": "children"
+            },
+            {
+                "from": "hghirvcml",
+                "to": "tsxlng4gd",
+                "as": "dom_type"
+            },
+            {
+                "from": "osgrk7ddu",
+                "to": "wrap_array",
+                "as": "value"
+            },
+            {
+                "from": "ha6b5qttf",
+                "to": "osgrk7ddu",
+                "as": "text"
+            },
+            {
+                "from": "6pqqchhnk",
+                "to": "ha6b5qttf",
+                "as": "data"
+            }
+        ]
+    },
+        {
             "id": "hyperapp",
             "args": [
                 "init",
@@ -387,7 +475,7 @@
                         "out_node",
                         "graph"
                     ],
-                    "script": "return (...args) => {res = lib.no.executeGraph({state: new Map([[in_node, args.length === 1 ? args[0] : args]]), graph: {...graph, in: in_node, out: out_node}}).get(out_node); return res;}"
+                    "script": "return (...args) => {res = lib.no.executeGraph({state: new Map([[in_node, args.length === 1 ? args[0] : args]]), graph: {...graph, in: in_node, out: out_node}, cache_id: 'view'}).get(out_node); return res;}"
                 }
             ],
             "edges": [
@@ -1015,9 +1103,10 @@
                     "args": [
                         "state",
                         "payload",
-                        "display_graph"
+                        "display_graph",
+                        "selected"
                     ],
-                    "script": "try { const result = lib.no.executeGraph({state: new Map([[display_graph.in, {...state, payload}]]), graph: {...display_graph, nodes: display_graph.nodes.concat([]), edges: display_graph.edges.concat([])}}); return {result, error: undefined}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
+                    "script": "try { const result = lib.no.executeGraph({state: new Map([[display_graph.in, {...state, payload}]]), graph: {...display_graph, nodes: display_graph.nodes.concat([]), edges: display_graph.edges.concat([]), out: selected[0]}, cache_id: performance.now()+'_uar'}); return {result, error: undefined}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
                 },
                 {
                     "id": "out",
@@ -1229,7 +1318,7 @@
                         "expandable",
                         "contractable"
                     ],
-                    "script": "return expandable ? ['expand', 'selected'] : contractable ? ['contract', 'selected'] : []"
+                    "script": "return expandable ? 'expand' : contractable ? 'contract' : undefined"
                 },
                 {
                     "id": "selected",
@@ -1241,14 +1330,7 @@
                 },
                 {
                     "id": "expand_contract_result",
-                    "args": [
-                        "expand",
-                        "contract",
-                        "selected",
-                        "display_graph",
-                        "node_id"
-                    ],
-                    "script": "return expand ?? contract ?? {display_graph, selected: node_id}"
+                    "type": "switch"
                 },
                 {
                     "id": "get_name",
@@ -1331,10 +1413,6 @@
                 {
                     "from": "in",
                     "to": "contract"
-                },
-                {
-                    "from": "in",
-                    "to": "expand_contract_result"
                 },
                 {
                     "from": "in",
@@ -2258,7 +2336,7 @@
                         "key",
                         "selected"
                     ],
-                    "script": "if(!(key === 'enter')){ return []; } return true;"
+                    "script": "return key === 'enter'"
                 },
                 {
                     "id": "e",
@@ -2355,7 +2433,7 @@
                     "args": [
                         "display_graph"
                     ],
-                    "script": "return display_graph"
+                    "script": "console.log('ecd'); console.log(display_graph); return display_graph"
                 },
                 {
                     "id": "esc",
@@ -3824,7 +3902,8 @@
                         },
                         {
                             "from": "edit_text_base_props",
-                            "to": "edit_text_props"
+                            "to": "edit_text_props",
+                            "type": "resolve"
                         },
                         {
                             "from": "edit_text_props",
@@ -3937,7 +4016,8 @@
                         {
                             "from": "editing",
                             "to": "edit_text_props",
-                            "as": "class"
+                            "as": "class",
+                            "type": "resolve"
                         }
                     ]
                 },
@@ -3982,15 +4062,26 @@
                             "script": "return display_graph.nodes.find(n => n.id === 'default_error_display')"
                         },
                         {
+                            "id": "result",
+                            "type": "arg",
+                            "value": "result"
+                        },
+                        {
+                            "id": "display_graph",
+                            "type": "arg",
+                            "value": "display_graph"
+                        },
+                        {
                             "id": "run_node_display",
                             "args": [
                                 "node",
                                 "display",
                                 "error",
                                 "result",
-                                "display_graph"
+                                "display_graph",
+                                "node_inputs"
                             ],
-                        "script": "try { const graph = {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: display.id, in: display.id + '/' + display.in}; const input = {state: new Map([[display.id + '/' +  display.in, {node, result: result?.get(node.id), input_results: Object.fromEntries(graph.edges.filter(e => e.to === node.id).map(e => [e.as ?? e.from, result?.get(e.from)]))}]]), graph}; return lib.no.executeGraph(input).get(display.id).el } catch(e){ return {error: e} }"
+                        "script": "try { const graph = {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: display.id, in: display.id + '/' + display.in}; const input = {state: new Map([[display.id + '/' +  display.in, {node, result: result?.get(node.id), input_results: Object.fromEntries(graph.edges.filter(e => e.to === node.id).map(e => [e.as ?? e.from, result?.get(e.from)]))}]]), graph, cache_id: 'rnd'}; return lib.no.executeGraph(input).get(display.id).el } catch(e){ return {error: e} }"
                         },
                         {
                             "id": "run_error_display",
@@ -4000,7 +4091,7 @@
                                 "error_display",
                                 "display_graph"
                             ],
-                            "script": "console.log(error); return !error ? [] : lib.no.executeGraph({state: new Map([[error_display.id + '/' +  error_display.in, {node, error: error.toString()}]]), graph: {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: error_display.id, in: error_display.id + '/' + error_display.in}}).get(error_display.id)"
+                            "script": "return !error ? undefined : lib.no.executeGraph({state: new Map([[error_display.id + '/' +  error_display.in, {node, error: error.toString()}]]), graph: {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: error_display.id, in: error_display.id + '/' + error_display.in}}).get(error_display.id)"
                         },
                         {
                             "id": "container_dom_type",
@@ -4021,7 +4112,7 @@
                         {
                             "id": "container_children",
                             "args": ["error_display", "display"],
-                            "script": "return error_display ?? display"
+                            "script": "return [error_display ?? display]"
                         },
                         {
                             "id": "container",
@@ -4055,10 +4146,6 @@
                         {
                             "from": "in",
                             "to": "get_error_display"
-                        },
-                        {
-                            "from": "in",
-                            "to": "run_node_display"
                         },
                         {
                             "from": "in",
@@ -4096,6 +4183,16 @@
                             "from": "get_node_display",
                             "to": "run_node_display",
                             "as": "display"
+                        },
+                        {
+                            "from": "display_graph",
+                            "to": "run_node_display",
+                            "as": "display_graph"
+                        },
+                        {
+                            "from": "result",
+                            "to": "run_node_display",
+                            "as": "result"
                         },
                         {
                             "from": "get_error_display",
@@ -4760,7 +4857,7 @@
                         {
                             "id": "link_layout",
                             "args": ["node_inputs", "link_layout_map", "links", "graph", "selected_edge"],
-                            "script": "return links.map(link => lib.no.executeGraph({state: new Map([['_' + link.source + link.target, Object.assign({link}, node_inputs)]]), graph: {...graph, in: '_' + link.source + link.target, out: link_layout_map}, cache_id: '_' + link.source + link.target}).get(link_layout_map))"
+                            "script": "return links.map(link => lib.no.executeGraph({state: new Map([['_' + (link.source?.node_id ?? link.source) + (link.target?.node_id ?? link.target), Object.assign({link}, node_inputs)]]), graph: {...graph, in: '_' + (link.source?.node_id ?? link.source) + (link.target?.node_id ?? link.target), out: link_layout_map}, cache_id: '_' + link.source + link.target}).get(link_layout_map))"
                         },
                         {
                             "id": "link_layout_map",
