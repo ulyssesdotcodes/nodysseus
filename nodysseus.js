@@ -63,16 +63,16 @@ function compareArrays(value1, value2) {
 }
 
 function compareObjects(value1, value2) {
-  var keys1 = Object.keys(value1).sort();
-  var keys2 = Object.keys(value2).sort();
+  var keys1 = Object.keys(value1);
+  var keys2 = Object.keys(value2);
   var len = keys1.length;
   if (len != keys2.length) {
     return false;
   }
   for (var i = 0; i < len; i++) {
     var key1 = keys1[i];
-    var key2 = keys2[i];
-    if (!(key1 == key2 && compare(value1[key1], value2[key2]))) {
+    // var key2 = keys2[i];
+    if (!(compare(value1[key1], value2[key1]))) {
       return false;
     }
   }
@@ -99,31 +99,38 @@ const resolve = (o, state, active_nodes, node_map, in_edge_map) => {
         });
         return [o, resolved];
     } else if(typeof o === 'object') {
-        if(o.type === "ref" && o.node) {
+        if(o.type === "ref" && o.hasOwnProperty("node")) {
             if(state.has(o.node.id)) {
                 const key_resolve = resolve(state.get(o.node.id), state, active_nodes, node_map, in_edge_map);
                 o = key_resolve[0];
                 resolved = resolved && key_resolve[1];
             } else {
                 resolved = false;
-                active_nodes.set(o.node.id, Object.assign({}, node_map.get(o.node.id), {
-                    inputs: in_edge_map.get(o.node.id),
-                    _nodeflag: true
+                const cached_node = node_map.get(o.node.id);
+                if(cached_node?.id === undefined) {
+                    throw new Error("Error adding " + o.node.id);
+                }
+                active_nodes.set(o.node.id, Object.assign({}, cached_node, {
+                    inputs: in_edge_map.get(o.node.id)
                 }));
             }
         } else {
             const keys = Object.keys(o);
             keys.forEach(k => {
-                if(o[k]?.type === "ref" && o[k].node) {
+                if(o[k]?.type === "ref" && o[k].hasOwnProperty("node")) {
                     resolved = false;
                     if(state.has(o[k].node.id)) {
                         const key_resolve = resolve(state.get(o[k].node.id), state, active_nodes, node_map, in_edge_map);
                         o[k] = key_resolve[0];
                         resolved = resolved && key_resolve[1];
                     } else {
-                        active_nodes.set(o[k].node.id, Object.assign({}, node_map.get(o[k].node.id), {
-                            inputs: in_edge_map.get(o[k].node.id),
-                            _nodeflag: true
+                        const cached_node = node_map.get(o[k].node.id)
+                        if(cached_node.id === undefined) {
+                            throw new Error("Error adding " + o[k].node.id);
+                        }
+
+                        active_nodes.set(o[k].node.id, Object.assign({}, cached_node, {
+                            inputs: in_edge_map.get(o[k].node.id)
                         }));
                     }
                 } else {
@@ -143,12 +150,9 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id, node_cache}) 
     const graph_in = graph.in;
 
     if(!cache.has(cache_id)) {
-        cache.set(cache_id, new Map());
-    }
-    
-    const node_cache_id = graph.nodes.map(n => n.id).join(",") + graph.edges.map(e => e.as).join(",") + graph.out + graph.in;
-    if(!node_cache.has(node_cache_id)) {
-        node_cache.set(cache_id, new Map());
+        cache.set(cache_id, new Map([["__handles", 1]]));
+    } else {
+        cache.get(cache_id).set("__handles", cache.get(cache_id).get("__handles") + 1);
     }
 
     let state_length = 0;
@@ -157,15 +161,21 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id, node_cache}) 
     let skip_stuck_test = false;
 
 
+    let node_vals = "";
     const node_map = graph.node_map ?? new Map(graph.nodes.map(n => [n.id, n]));
     graph.node_map = node_map;
 
+    let edge_ids = "";
     const in_edge_map = graph.in_edge_map ?? new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.to === n.id)]));
     graph.in_edge_map = in_edge_map;
+    
+    // const node_cache_id = node_vals + edge_ids + graph.out + graph.in;
+    // if(!node_cache.has(node_cache_id)) {
+    //     node_cache.set(cache_id, new Map());
+    // }
 
     const active_nodes = new Map([[ out, Object.assign({}, graph.nodes.find(n => n.id === out), {
-        inputs: in_edge_map.get(out),
-        _nodeflag: true
+        inputs: in_edge_map.get(out)
     })]]);
 
     while(!state.has(out)) {
@@ -194,7 +204,7 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id, node_cache}) 
         for(let i = 0; i < l; i++){
             node = active_node_vals[i];
             if(!node.id) {
-                debugger;
+                throw new Error("undefined node.id");
             }
 
             if(state.get(node.id)?.type === "ref" && state.get(state.get(node.id).node.id)) {
@@ -204,21 +214,22 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id, node_cache}) 
                 continue;
             }
 
-            if(node._nodetypeflag) {
-                node_cache.set(node.id, node.nodes ? {nodes: node.nodes, edges: node.edges, in: node.in, out: node.out, args: node.args} : {args: node.args, script: node.script, value: node.value})
-                active_nodes.delete(node.id);
-                continue;
-            }
+            // if(node._nodetypeflag) {
+            //     node_cache.set(node.id, node.nodes ? {nodes: node.nodes, edges: node.edges, in: node.in, out: node.out, args: node.args} : {args: node.args, script: node.script, value: node.value})
+            //     active_nodes.delete(node.id);
+            //     continue;
+            // }
 
             let run = true;
             let has_inputs = true;
 
             let node_from_cache = false;
-            let cached_node = node_cache.get(node.id)
-            if (cached_node && compare(cached_node[0], node)){
+            let cached_node = node.script ? node_cache.get(node.script) : {};
+            if (cached_node /*&& compare(cached_node[0], node)*/){
                 node_from_cache = true;
                 // debugger;
-                node = node_cache.get(node.id)[1];
+                node = cached_node;
+                //node_cache.get(node.id)[1];
             }
 
             let inputs = node.inputs && node.inputs.length > 0 ? node.inputs : ([{from: graph_in, to: node.id}]);
@@ -254,20 +265,23 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id, node_cache}) 
             const type = node.type?.node_type ?? typeof node.type === 'string' ? node.type : undefined;
             const resolved_type = type ? "type" : node.script ? "script" : node.value ? "value" : undefined;
 
-            if(type && !node_cache.has(type)) {
-                if(!active_nodes.has(type)) {
-                    active_nodes.set(type, Object.assign({
-                        inputs: in_edge_map.get(type),
-                        _nodetypeflag: true,
-                        _nodeflag: true
-                    }, node_map.get(type)))
-                }
+            /*if(type) {
+                // if(!active_nodes.has(type)) {
+                //     const cached_type = node_map.get(type);
+                //     if(cached_type === undefined) {
+                //         throw new Error(`Type not found ${type} for node ${node.id}`)
+                //     }
+                //     active_nodes.set(type, Object.assign({
+                //         _nodetypeflag: true
+                //     }, node_map.get(type)))
+                // }
 
-                run = false;
-            } else if(!type || node_cache.has(type)) {
-                // const node_type = type
-                //     ? Object.assign({}, state.get(type), node,{args: (node.args ?? []).concat(state.get(type).args ?? [])}, {_nodetypeflag: false})
-                //     : node;
+                // run = false;
+
+            } else if(!type || node_map.has(type)) {*/
+                const node_type = type
+                    ? Object.assign({}, node_map.get(type), node, {args: (node.args ?? []).concat(state.get(type).args ?? [])}, {_nodetypeflag: false})
+                    : node;
 
                 for(let i = 0; i < inputs.length; i++) {
                     input = inputs[i];
@@ -284,8 +298,7 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id, node_cache}) 
                             }
 
                             active_nodes.set(input.from, Object.assign({
-                                inputs: in_edge_map.get(input.from),
-                                _nodeflag: true
+                                inputs: in_edge_map.get(input.from)
                             }, input_node));
                         } else if(state.has(input.from)) {
                             let [res, resolved] = resolve(state.get(input.from), state, active_nodes, node_map, in_edge_map);
@@ -302,8 +315,7 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id, node_cache}) 
                             }
 
                             active_nodes.set(input.from, Object.assign({
-                                inputs: in_edge_map.get(input.from),
-                                _nodeflag: true
+                                inputs: in_edge_map.get(input.from)
                             }, input_node));
                         }
 
@@ -320,8 +332,7 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id, node_cache}) 
                         if(!run && !active_nodes.has(noderef.node.id)) {
 
                             active_nodes.set(noderef.node.id, Object.assign({}, node_map.get(noderef.node.id), {
-                                inputs: in_edge_map.get(noderef.node.id),
-                                _nodeflag: true
+                                inputs: in_edge_map.get(noderef.node.id)
                             }));
                         }
                     }
@@ -331,9 +342,15 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id, node_cache}) 
             if (run) {
                 let data = {};
 
+                const cached_type = node_cache.get(type);
                 const node_type = type && !node_from_cache
-                    ? Object.assign({}, node_cache.get(type), node, {args: (node.args ?? []).concat(node_cache.get(type).args ?? []), _nodetypeflag: false})
+                    ? Object.assign({}, cached_type, node)
                     : node;
+
+                node_type._nodetypeflag = !!node._nodetypeflag;
+                if(type && !node_from_cache && cached_type && node.args && cached_type.args){
+                    node_type.args = node.args.concat(cached_type.args);
+                }
 
                 if (node_type.value !== undefined && !node_type.script) {
                     if(cache.get(cache_id).has(node.id)) {
@@ -382,8 +399,10 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id, node_cache}) 
                                 throw new Error("can only interpolate objects with other inputs: " + node.id);
                             }
 
-                            const state_data = input.type === "resolve" ? resolve(state.get(input.from), state)[0] : 
-                            input.as ?  {type: "ref", node: node_map.get(input.from)} : state.get(input.from);
+                            const state_data = input.type === "resolve" ? resolve(stateget(input.from), state)[0] : 
+                            input.as ?  {type: "ref", node: node_map.get(input.from)} : stateget(input.from);
+
+                            // state.delete(input.from);
 
                             if(input.as) {
                                 data[input.as] = state_data;
@@ -399,6 +418,8 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id, node_cache}) 
                             while(state_data?.type === "ref"){
                                 state_data = stateget(state_data.node.id);
                             }
+
+                            // state.delete(input.from);
 
                             if(!(input.as || (typeof state_data === 'object' && !Array.isArray(state_data)))) {
                                 throw new Error("can only interpolate objects with other inputs: " + node.id);
@@ -432,9 +453,9 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id, node_cache}) 
                             }
                         }
 
-                        skip_stuck_test = true; // active_nodes[node_id] changed but the size didn't
 
                         if(state.has(`${node.id}/${node_type.out ?? 'out'}`)) {
+                            // state.delete(state.get(`${node.id}/${node_type.out ?? 'out'}`));
                             state.set(node.id, state.get(`${node.id}/${node_type.out ?? 'out'}`))
                             active_nodes.delete(node.id);
                         } else {
@@ -459,12 +480,12 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id, node_cache}) 
                                     }
                                 }
                             }
+                                skip_stuck_test = true; // active_nodes[node_id] changed but the size didn't
 
                             if(!active_nodes.has(`${node.id}/${node_type.out ?? 'out'}`)) {
                                 active_nodes.set(`${node.id}/${node_type.out ?? 'out'}`, Object.assign(
                                     node_map.get(`${node.id}/${node_type.out ?? 'out'}`), {
-                                        inputs: in_edge_map.get(`${node.id}/${node_type.out ?? 'out'}`), 
-                                        _nodeflag: true
+                                        inputs: in_edge_map.get(`${node.id}/${node_type.out ?? 'out'}`)
                                     }
                                 ));
                             }
@@ -506,12 +527,8 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id, node_cache}) 
                                         }
 
                                         if(!active_nodes.has(data[arg].node.id)) {
-
-                                            skip_stuck_test = true; // active_nodes[node_id] changed but the size didn't
-
                                             active_nodes.set(data[arg].node.id, Object.assign({}, input_node, {
-                                                inputs: in_edge_map.get(data[arg].node.id),
-                                                _nodeflag: true
+                                                inputs: in_edge_map.get(data[arg].node.id)
                                             }));
                                         }
                                     }
@@ -539,9 +556,6 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id, node_cache}) 
                                     input_results.forEach((v, i) => hit = hit && compare(val[1]?.[i]?.[1], v[1]));
                                     args.forEach((v, k) => hit = hit && (k === 'node_inputs' || k === 'lib' || k === 'node' || compare(val[2].get(k), v)));
                                     if(hit){
-                                        if(node.id.endsWith("update_sim_effect")) {
-                                            debugger;
-                                        }
                                         // console.log(input_results);
                                         // console.log("hit for " + node.id)
                                         // console.log("hit");
@@ -593,6 +607,15 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id, node_cache}) 
             }
         }
     }
+
+    const handles = cache.get(cache_id).get("__handles");
+    if(handles === 1 && cache_id === "temp") {
+        cache.delete(cache_id);
+    } else {
+        cache.get(cache_id).set("__handles", handles - 1);
+    }
+
+
 
     return state;
 };
@@ -1114,7 +1137,7 @@ const node_cache = new Map();
 const lib = {
     just: {get, set, diff, diffApply},
     ha: { h, app, text, memo },
-    no: {executeGraph: ({state, graph, cache_id}) => {/*globalstate.forEach((v, k) => state.has(k) ? undefined : state.set(k, v));*/ return executeGraph({cache, state, graph, globalstate, node_cache, cache_id: cache_id ?? Math.random() + ''})}},
+    no: {executeGraph: ({state, graph, cache_id}) => {/*globalstate.forEach((v, k) => state.has(k) ? undefined : state.set(k, v));*/ return executeGraph({cache, state, graph, globalstate, node_cache, cache_id: cache_id ?? "temp"})}},
     scripts: {d3simulation, d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all},
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
     Fuse,

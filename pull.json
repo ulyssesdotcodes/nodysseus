@@ -1040,7 +1040,7 @@
                 {
                     "id": "graph",
                     "args": ["display_graph"],
-                    "script": "return {...display_graph, nodes: display_graph.nodes.map(n => ({id: n.id}))}"
+                    "script": "return display_graph"
                 },
                 {
                     "id": "levels",
@@ -1106,7 +1106,7 @@
                         "display_graph",
                         "selected"
                     ],
-                    "script": "try { const result = lib.no.executeGraph({state: new Map([[display_graph.in, {...state, payload}]]), graph: {...display_graph, nodes: display_graph.nodes.concat([]), edges: display_graph.edges.concat([]), out: selected[0]}, cache_id: performance.now()+'_uar'}); return {result, error: undefined}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
+                    "script": "try { const result = lib.no.executeGraph({state: new Map([[display_graph.in, {...state, payload}]]), graph: {...display_graph, nodes: display_graph.nodes.concat([]), edges: display_graph.edges.concat([]), out: selected[0]}}); return {result, error: undefined}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
                 },
                 {
                     "id": "out",
@@ -1632,7 +1632,7 @@
                 {
                     "id": "ha6b5qttf",
                     "args": ["data"],
-                    "script": "return JSON.stringify({node: data.node, result: data.result, input_results: data.input_results}, null, 2)"
+                    "script": "return JSON.stringify({node: data.node, result: data.result}, null, 2)"
                 },
                 {
                     "id": "6pqqchhnk",
@@ -2179,7 +2179,7 @@
                     "args": [
                         "ev"
                     ],
-                    "script": "return ev.key.toLowerCase()"
+                    "script": "return ev.key?.toLowerCase()"
                 },
                 {
                     "id": "key_inputs",
@@ -2546,7 +2546,7 @@
                         "editing",
                         "search"
                     ],
-                    "script": "target.blur(); if(search !== false){ target.value = ''; return {search: false} } let value; try { value = JSON.parse(target.value);} catch(e){ value = target.value; } if(selected_edge){ display_graph.edges.find(e => e.to === selected_edge.to && e.from === selected_edge.from)[editing] = value === '' ? undefined : value; } else { const node = display_graph.nodes.find(n => n.id === selected[0]); if(node[editing] !== undefined || value !== ''){ node[editing] = value === '' ? undefined : value;} } return {editing: false, edit_value: null, display_graph};" },
+                    "script": "target.blur(); if(search !== false){ target.value = ''; return {search: false} } let value; try { value = JSON.parse(target.value);} catch(e){ value = target.value; } if(selected_edge){ display_graph.edges.find(e => e.to === selected_edge.to && e.from === selected_edge.from)[editing] = value === '' ? undefined : value; } else { const node = display_graph.nodes.find(n => n.id === selected[0]); if(node[editing] !== undefined || value !== ''){ node[editing] = value === '' ? undefined : value; if(editing === 'name' || (editing === 'value' && node.type === 'arg')){ console.log(value); display_graph.edges.filter(e => e.from === node.id).forEach(e => e.as = value) }} } return {editing: false, edit_value: null, display_graph};" },
                 {
                     "id": "esc_editing",
                     "args": [
