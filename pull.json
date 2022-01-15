@@ -1235,7 +1235,7 @@
                     "args": [
                         "children"
                     ],
-                    "script": "return children === undefined ? [] : (Array.isArray(children) ? children.map(c => c.el ?? c) : [children.el])"
+                    "script": "return children === undefined ? [] : (Array.isArray(children) ? children.map(c => c.el ?? c) : [children.el ?? children])"
                 },
                 {
                     "id": "fill_props",
@@ -1251,7 +1251,7 @@
                         "children",
                         "dom_type"
                     ],
-                    "script": "return {el: lib.ha.h(dom_type, props, children)}"
+                    "script": "return {el: {dom_type, props, children}}"
                 }
             ],
             "edges": [
@@ -1273,12 +1273,89 @@
                 {
                     "from": "fill_props",
                     "to": "out",
-                    "as": "props"
+                    "as": "props",
+                    "type": "resolve"
                 },
                 {
                     "from": "in",
                     "to": "out"
                 }
+            ]
+        },
+        {
+            "id": "run_h",
+            "in": "in",
+            "out": "out",
+            "nodes": [
+                {
+                    "id": "in"
+                },
+                {
+                    "id": "dom_type",
+                    "type": "arg",
+                    "value": "dom_type"
+                },
+                {
+                    "id": "props",
+                    "type": "arg",
+                    "value": "props"
+                },
+                {
+                    "id": "children",
+                    "type": "arg",
+                    "value": "children"
+                },
+                {
+                    "id": "graph",
+                    "type": "arg",
+                    "value": "graph"
+                },
+                {
+                    "id": "text",
+                    "type": "arg",
+                    "value": "text"
+                },
+                {
+                    "id": "out_h",
+                    "args": ["dom_type", "children", "props", "graph"],
+                    "script_": "return {el: lib.ha.h('div', {}, [])}",
+                    "script": "const mapped_children = (children ?? []).map(c => lib.no.executeGraph({state: new Map([['run_h/in', {...c, graph}]]), graph: {...graph, in: 'run_h/in', out: 'run_h'}, cache_id: performance.now() + ''}).get('run_h').el); return {el: lib.ha.h(dom_type, props, mapped_children)};"
+                },
+                {
+                    "id": "out_text",
+                    "args": ["text"],
+                    "script": "return {el: lib.ha.text(text)}"
+                },
+                {
+                    "id": "els"
+                },
+                {
+                    "id": "out_input",
+                    "args": ["dom_type"],
+                    "script": "return dom_type === 'text_value' ? 'h_text' : 'h'"
+                },
+                {
+                    "id": "out_el",
+                    "type": "switch"
+                },
+                {
+                    "id": "out",
+                    "args": ["el"],
+                    "script": "return el"
+                }
+            ],
+            "edges": [
+                {"from": "dom_type", "to": "out_input", "as": "dom_type"},
+                {"from": "dom_type", "to": "out_h", "as": "dom_type"},
+                {"from": "children", "to": "out_h", "as": "children"},
+                {"from": "props", "to": "out_h", "as": "props"},
+                {"from": "graph", "to": "out_h", "as": "graph"},
+                {"from": "text", "to": "out_text", "as": "text"},
+                {"from": "out_text", "to": "els", "as": "h_text"},
+                {"from": "out_h", "to": "els", "as": "h"},
+                {"from": "els", "to": "out_el"},
+                {"from": "out_el", "to": "out", "as": "el"},
+                {"from": "out_input", "to": "out_el", "as": "input"}
             ]
         },
         {
@@ -1292,7 +1369,7 @@
                     "args": [
                         "text"
                     ],
-                    "script": "return {el: lib.ha.text(text)}"
+                    "script": "return {el: {dom_type: 'text_value', text}}"
                 }
             ],
             "edges": [
@@ -2433,7 +2510,7 @@
                     "args": [
                         "display_graph"
                     ],
-                    "script": "console.log('ecd'); console.log(display_graph); return display_graph"
+                    "script": "return display_graph"
                 },
                 {
                     "id": "esc",
@@ -3508,7 +3585,7 @@
                         "selected",
                         "node"
                     ],
-                    "script": "return event.ty !== 'down' ? [] : node.node_id === selected[0] ? ['expand_contract'] : ['node_id']"
+                    "script": "return event.ty !== 'down' ? [] : node.node_id === selected[0] ? 'expand_contract' : 'node_id'"
                 },
                 {
                     "id": "selected",
@@ -3706,7 +3783,7 @@
         },
         {
             "id": "editor_props",
-            "value": {}
+            "value": {"key": "editor"}
         },
         {
             "id": "calculate_levels",
@@ -3724,7 +3801,12 @@
                 },
                 {
                     "id": "wrapper",
-                    "type": "h"
+                    "type": "run_h"
+                },
+                {
+                    "id": "graph",
+                    "type": "arg",
+                    "value": "graph"
                 },
                 {
                     "id": "wrapper_dom_type",
@@ -3902,8 +3984,7 @@
                         },
                         {
                             "from": "edit_text_base_props",
-                            "to": "edit_text_props",
-                            "type": "resolve"
+                            "to": "edit_text_props"
                         },
                         {
                             "from": "edit_text_props",
@@ -4016,8 +4097,7 @@
                         {
                             "from": "editing",
                             "to": "edit_text_props",
-                            "as": "class",
-                            "type": "resolve"
+                            "as": "class"
                         }
                     ]
                 },
@@ -4358,14 +4438,6 @@
                             "value": "svg"
                         },
                         {
-                            "id": "node_editor_children_inputs",
-                            "args": [
-                                "nodes",
-                                "links"
-                            ],
-                            "script": "return ['defs', links.length > 0 && 'links', nodes.length > 0 && 'nodes'].filter(i => i)"
-                        },
-                        {
                             "id": "node_editor_children",
                             "args": [
                                 "nodes",
@@ -4417,7 +4489,7 @@
                                         "node",
                                         "meta"
                                     ],
-                                    "script": "const mouseevent = (_, payload) => [meta.onclick_node_fn, {x: meta.payload.x, y: meta.payload.y, node_id: node.node_id, selected: [], ty: 'down'}]; return ({ key: node.node_child_id, x: node.x - 20, y: node.y - 20, id: node.node_id, onmousedown: meta.mouseevent, width: 256, height: 64, id: node.node_child_id, class: `node ${meta.selected[0] === node.node_id ? 'selected': ''}`, opacity: meta.selected_edge?.from === node.node_id ? 1 : node.selected_distance !== undefined ? Math.max(0.05, 1 - (node.selected_distance * node.selected_distance + (!!node.selected_distance ? 2 : 0)) / 6) : 0.1})"
+                                    "script": "const mouseevent = (_, payload) => [meta.onclick_node_fn, {x: payload.x, y: payload.y, node_id: node.node_id, selected: [], ty: 'down'}]; return ({ x: node.x - 20, y: node.y - 20, id: node.node_id, onmousedown: mouseevent, width: 256, height: 64, id: node.node_child_id, class: `node ${meta.selected[0] === node.node_id ? 'selected': ''}`, opacity: meta.selected_edge?.from === node.node_id ? 1 : node.selected_distance !== undefined ? Math.max(0.05, 1 - (node.selected_distance * node.selected_distance + (!!node.selected_distance ? 2 : 0)) / 6) : 0.1})"
 
                                 },
                                 {
@@ -5627,8 +5699,11 @@
                     ]
                 },
                 {
-                    "id": "out"
+                    "id": "out",
+                    "args": ["hel"],
+                    "script": "return hel;"
                 }
+            
             ],
             "edges": [
                 {
@@ -5646,6 +5721,11 @@
                 {
                     "from": "in",
                     "to": "result"
+                },
+                {
+                    "from": "graph",
+                    "to": "wrapper",
+                    "as": "graph"
                 },
                 {
                     "from": "node_editor",
@@ -5680,11 +5760,13 @@
                 {
                     "from": "wrapper_props",
                     "to": "wrapper",
-                    "as": "props"
+                    "as": "props",
+                    "type": "resolve"
                 },
                 {
                     "from": "wrapper",
-                    "to": "out"
+                    "to": "out",
+                    "as": "hel"
                 }
             ]
         }

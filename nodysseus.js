@@ -89,35 +89,50 @@ function compareMaps(value1, value2) {
 
 const keywords = new Set(["break", "case", "catch", "continue", "debugger", "default", "delete", "do", "else", "finally", "for", "function", "if", "in", "instanceof", "new", "return", "switch", "this", "throw", "try", "typeof", "var", "void", "while", "with"])
 
-const resolve = (o, active_nodes) => {
+const resolve = (o, state, active_nodes, node_map, in_edge_map) => {
     let resolved = true;
     if(Array.isArray(o)) {
-        return o.map(i => {
-            const key_resolve = resolve(i, active_nodes);
+        o.forEach(i => {
+            const key_resolve = resolve(i, active_nodes, state, node_map, in_edge_map);
             resolved = resolved && key_resolve[1];
             return key_resolve[0];
         });
+        return [o, resolved];
     } else if(typeof o === 'object') {
-        const keys = Object.keys(o);
-        keys.forEach(k => {
-            if(o[k]?.type === "ref" && o[k].node) {
+        if(o.type === "ref" && o.node) {
+            if(state.has(o.node.id)) {
+                const key_resolve = resolve(state.get(o.node.id), state, active_nodes, node_map, in_edge_map);
+                o = key_resolve[0];
+                resolved = resolved && key_resolve[1];
+            } else {
                 resolved = false;
-                if(state.has(o[k].node.id)) {
-                    const key_resolve = resolve(state.get(o[k].node.id), active_nodes);
+                active_nodes.set(o.node.id, Object.assign({}, node_map.get(o.node.id), {
+                    inputs: in_edge_map.get(o.node.id),
+                    _nodeflag: true
+                }));
+            }
+        } else {
+            const keys = Object.keys(o);
+            keys.forEach(k => {
+                if(o[k]?.type === "ref" && o[k].node) {
+                    resolved = false;
+                    if(state.has(o[k].node.id)) {
+                        const key_resolve = resolve(state.get(o[k].node.id), state, active_nodes, node_map, in_edge_map);
+                        o[k] = key_resolve[0];
+                        resolved = resolved && key_resolve[1];
+                    } else {
+                        active_nodes.set(o[k].node.id, Object.assign({}, node_map.get(o[k].node.id), {
+                            inputs: in_edge_map.get(o[k].node.id),
+                            _nodeflag: true
+                        }));
+                    }
+                } else {
+                    const key_resolve = resolve(o[k], state, active_nodes, node_map, in_edge_map);
                     o[k] = key_resolve[0];
                     resolved = resolved && key_resolve[1];
-                } else {
-                    active_nodes.set(o.node.id, Object.assign({}, node_map.get(o.node.id), {
-                        inputs: in_edge_map.get(o.node.id),
-                        _nodeflag: true
-                    }));
                 }
-            } else {
-                const key_resolve = resolve(o[k], active_nodes);
-                o[k] = key_resolve[0];
-                resolved = resolved && key_resolve[1];
-            }
-        });
+            });
+        }
     }
 
     return [o, resolved];
@@ -259,8 +274,6 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id, node_cache}) 
                     if(input.type === "ref"){
 
                     } else if(input.type === "resolve") {
-                        console.log("resolving");
-                        console.log(input);
                         if(!state.has(input.from) && !active_nodes.has(input.from)){
                             run = false;
                             const input_node = node_map.get(input.from);
@@ -274,7 +287,7 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id, node_cache}) 
                                 _nodeflag: true
                             }, input_node));
                         } else if(state.has(input.from)) {
-                            let [_, resolved] = resolve(state.get(input.from), active_nodes);
+                            let [res, resolved] = resolve(state.get(input.from), state, active_nodes, node_map, in_edge_map);
                             run = run && resolved;
                         } else {
                             run = false;
@@ -368,7 +381,7 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id, node_cache}) 
                                 throw new Error("can only interpolate objects with other inputs: " + node.id);
                             }
 
-                            const state_data = input.type === "resolve" ? resolve(state.get(input.from))[0] : 
+                            const state_data = input.type === "resolve" ? resolve(state.get(input.from), state)[0] : 
                             input.as ?  {type: "ref", node: node_map.get(input.from)} : state.get(input.from);
 
                             if(input.as) {
@@ -380,7 +393,7 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id, node_cache}) 
                             input_results.push([input.as, input.as ? data[input.as] : data]);
                         } else if (state.has(input.from)) {
 
-                            let state_data = input.type === "resolve" ? resolve(state.get(input.from))[0] : state.get(input.from);
+                            let state_data = input.type === "resolve" ? resolve(state.get(input.from), state)[0] : state.get(input.from);
 
                             while(state_data?.type === "ref"){
                                 state_data = stateget(state_data.node.id);
