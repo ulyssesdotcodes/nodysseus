@@ -1245,6 +1245,11 @@
                     "script": "return input.props ?? {}"
                 },
                 {
+                    "id": "dom_type",
+                    "type": "arg",
+                    "value": "dom_type"
+                },
+                {
                     "id": "out",
                     "args": [
                         "props",
@@ -1258,6 +1263,10 @@
                 {
                     "from": "in",
                     "to": "fill_children"
+                },
+                {
+                    "from": "in",
+                    "to": "dom_type"
                 },
                 {
                     "from": "in",
@@ -1276,10 +1285,7 @@
                     "as": "props",
                     "type": "resolve"
                 },
-                {
-                    "from": "in",
-                    "to": "out"
-                }
+                {"from": "dom_type", "to": "out", "as": "dom_type"}
             ]
         },
         {
@@ -2273,9 +2279,10 @@
                         "selected_edge",
                         "display_graph",
                         "editing",
+                        "nodes",
                         "links"
                     ],
-                    "script": "const link = links.find(l => l.target.node_id === selected_edge.to &&  l.source.node_id === selected_edge.from); return links.filter(l => l.target.node_id === selected[0]).reduce(([current, dist], l) => l.source.x < link.source.x && Math.abs(l.source.x - link.source.x) < dist ? [{from: l.source.node_id, to: l.target.node_id} , Math.abs(l.source.x - link.source.x)] : [current, dist], [{to: link.target.node_id, from: link.source.node_id}, 10000])[0]"
+                    "script": "const link = links.find(l => l.source.node_child_id === selected_edge.from + '_' + selected_edge.to); return links.filter(l => l.target.node_id === link.target.node_id).reduce(([current, dist], l) => l.source.x < link.source.x && Math.abs(l.source.x - link.source.x) < dist ? [{from: l.source.node_id, to: l.target.node_id} , Math.abs(l.source.x - link.source.x)] : [current, dist], [selected_edge, 10000])[0]"
                 },
                 {
                     "id": "right",
@@ -2299,7 +2306,7 @@
                         "editing",
                         "links"
                     ],
-                    "script": "const link = links.find(l => l.target.node_id === selected_edge.to &&  l.source.node_id === selected_edge.from); return links.filter(l => l.target.node_id === selected[0]).reduce(([current, dist], l) => l.source.x > link.source.x && Math.abs(l.source.x - link.source.x) < dist ? [{from: l.source.node_id, to: l.target.node_id} , Math.abs(l.source.x - link.source.x)] : [current, dist], [{to: link.target.node_id, from: link.source.node_id}, 10000])[0]"
+                    "script": "const link = links.find(l => l.source.node_child_id === selected_edge.from + '_' + selected_edge.to); return links.filter(l => l.target.node_id === link.target.node_id).reduce(([current, dist], l) => l.source.x > link.source.x && Math.abs(l.source.x - link.source.x) < dist ? [{from: l.source.node_id, to: l.target.node_id} , Math.abs(l.source.x - link.source.x)] : [current, dist], [{to: link.target.node_id, from: link.source.node_id}, 10000])[0]"
                 },
                 {
                     "id": "v",
@@ -2546,7 +2553,7 @@
                         "editing",
                         "search"
                     ],
-                    "script": "target.blur(); if(search !== false){ target.value = ''; return {search: false} } let value; try { value = JSON.parse(target.value);} catch(e){ value = target.value; } if(selected_edge){ display_graph.edges.find(e => e.to === selected_edge.to && e.from === selected_edge.from)[editing] = value === '' ? undefined : value; } else { const node = display_graph.nodes.find(n => n.id === selected[0]); if(node[editing] !== undefined || value !== ''){ node[editing] = value === '' ? undefined : value; if(editing === 'name' || (editing === 'value' && node.type === 'arg')){ console.log(value); display_graph.edges.filter(e => e.from === node.id).forEach(e => e.as = value) }} } return {editing: false, edit_value: null, display_graph};" },
+                    "script": "target.blur(); if(search !== false){ target.value = ''; return {search: false} } let value; try { value = JSON.parse(target.value);} catch(e){ value = target.value; } if(selected_edge){ display_graph.edges.find(e => e.to === selected_edge.to && e.from === selected_edge.from)[editing] = value === '' ? undefined : value; } else { const node = display_graph.nodes.find(n => n.id === selected[0]); if(node[editing] !== undefined || value !== ''){ node[editing] = value === '' ? undefined : value; if(editing === 'name' || (editing === 'value' && node.type === 'arg')){ display_graph.edges.filter(e => e.from === node.id).forEach(e => e.as = value) }} } return {editing: false, edit_value: null, display_graph};" },
                 {
                     "id": "esc_editing",
                     "args": [
@@ -3395,7 +3402,8 @@
                 },
                 {
                     "from": "set_display_graph",
-                    "to": "out"
+                    "to": "out",
+                    "type": "resolve"
                 },
                 {
                     "from": "key_event",
@@ -3428,17 +3436,20 @@
                 {
                     "from": "key_event",
                     "to": "out",
-                    "as": "payload"
+                    "as": "payload",
+                    "type": "resolve"
                 },
                 {
                     "from": "update",
                     "to": "out",
-                    "as": "update"
+                    "as": "update",
+                    "type": "resolve"
                 },
                 {
                     "from": "save",
                     "to": "out",
-                    "as": "fx"
+                    "as": "fx",
+                    "type": "resolve"
                 }
             ]
         },
@@ -4454,7 +4465,7 @@
                                 "onclick_graph_fn",
                                 "selected"
                             ],
-                            "script": "return {width: window.innerWidth, height: window.innerHeight, viewBox: `${selected.x - (window.innerWidth * 0.5)} ${selected.y - (window.innerHeight * 0.5)} ${window.innerWidth} ${window.innerHeight}` , /*onmousedown: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'down'}], onmouseup: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'up'}], onmousemove: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'move'}]*/}"
+                            "script": "return {width: window.innerWidth, height: window.innerHeight, viewBox: `${selected.x - (window.innerWidth * 0.5)} ${selected.y - (window.innerHeight * 0.5)} ${window.innerWidth} ${window.innerHeight}` /*, onmousedown: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'down'}], onmouseup: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'up'}], onmousemove: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'move'}]*/}"
                         },
                         {
                             "id": "node_editor_dom_type",
@@ -4472,7 +4483,7 @@
                         {
                             "id": "node_layout",
                             "args": ["node_inputs", "node_layout_map", "nodes", "graph", "onclick_node_fn", "selected", "selected_edge"],
-                            "script": "return nodes.map(n => lib.no.executeGraph({state: new Map([['_' + n.node_id, Object.assign({node: n}, node_inputs)]]), graph: {...graph, in: '_' + n.node_id, out: node_layout_map}, cache_id: '_' + n.node_id}).get(node_layout_map))"
+                            "script": "return nodes.map(n => lib.no.executeGraph({state: new Map([[node_layout_map + '/in', Object.assign({node: n}, node_inputs)]]), graph: {...graph, in: '_' + n.node_id, out: node_layout_map}, cache_id: '_' + n.node_id}).get(node_layout_map))"
                         },
                         {
                             "id": "node_layout_map",
@@ -4952,7 +4963,7 @@
                         {
                             "id": "link_layout",
                             "args": ["node_inputs", "link_layout_map", "links", "graph", "selected_edge"],
-                            "script": "return links.map(link => lib.no.executeGraph({state: new Map([['_' + (link.source?.node_id ?? link.source) + (link.target?.node_id ?? link.target), Object.assign({link}, node_inputs)]]), graph: {...graph, in: '_' + (link.source?.node_id ?? link.source) + (link.target?.node_id ?? link.target), out: link_layout_map}, cache_id: '_' + link.source + link.target}).get(link_layout_map))"
+                            "script": "return links.map(link => lib.no.executeGraph({state: new Map([[link_layout_map + '/in', Object.assign({link}, node_inputs)]]), graph: {...graph, edges: graph.edges.concat([{from: '_' + link.source.node_child_id, to: link_layout_map}]), in: '_' + link.source.node_child_id, out: link_layout_map}, cache_id: '_' + link.source.node_child_id + link.target.node_child_id}).get(link_layout_map))"
                         },
                         {
                             "id": "link_layout_map",
