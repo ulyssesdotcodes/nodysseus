@@ -146,7 +146,8 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id, node_cache}) 
         cache.set(cache_id, new Map());
     }
     
-    if(!node_cache.has(cache_id)) {
+    const node_cache_id = graph.nodes.map(n => n.id).join(",") + graph.edges.map(e => e.as).join(",") + graph.out + graph.in;
+    if(!node_cache.has(node_cache_id)) {
         node_cache.set(cache_id, new Map());
     }
 
@@ -597,7 +598,6 @@ const executeGraph = ({cache, state, graph, globalstate, cache_id, node_cache}) 
 };
 
 const test_graph = { 
-    "in": "/in", 
     "out": "/out", 
     "nodes": [
         { 

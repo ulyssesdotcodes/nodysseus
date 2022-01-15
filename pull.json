@@ -1283,6 +1283,29 @@
             ]
         },
         {
+            "id": "map",
+            "in": "in",
+            "out": "out",
+            "nodes": [
+                {
+                    "id": "in"
+                },
+                {
+                    "id": "run_fn"
+                },
+                {
+                    "id": "iterate",
+                    "type": "map"
+                },
+                {
+                    "id": "out"
+                }
+            ],
+            "edges": [
+
+            ]
+        },
+        {
             "id": "run_h",
             "in": "in",
             "out": "out",
@@ -1319,7 +1342,7 @@
                     "id": "out_h",
                     "args": ["dom_type", "children", "props", "graph"],
                     "script_": "return {el: lib.ha.h('div', {}, [])}",
-                    "script": "const mapped_children = (children ?? []).map(c => lib.no.executeGraph({state: new Map([['run_h/in', {...c, graph}]]), graph: {...graph, in: 'run_h/in', out: 'run_h'}, cache_id: performance.now() + ''}).get('run_h').el); return {el: lib.ha.h(dom_type, props, mapped_children)};"
+                    "script": "const mapped_children = (children ?? []).map(c => lib.no.executeGraph({state: new Map([['run_h/in', {...c, graph}]]), graph: {...graph, in: 'run_h/in', out: 'run_h'}}).get('run_h').el); return {el: lib.ha.h(dom_type, props, mapped_children)};"
                 },
                 {
                     "id": "out_text",
