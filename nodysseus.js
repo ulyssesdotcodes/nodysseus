@@ -223,70 +223,18 @@ const executeGraph = ({ cache, state, graph, globalstate, cache_id, node_cache }
                 continue;
             }
 
-            // if(node._nodetypeflag) {
-            //     node_cache.set(node.id, node.nodes ? {nodes: node.nodes, edges: node.edges, in: node.in, out: node.out, args: node.args} : {args: node.args, script: node.script, value: node.value})
-            //     active_nodes.delete(node.id);
-            //     continue;
-            // }
-
             let run = true;
             let has_inputs = true;
 
             let node_from_cache = false;
             let cached_node = node.script ? node_cache.get(node.id + node.script) : false
-            if (cached_node /*&& compare(cached_node[0], node)*/) {
+            if (cached_node) {
                 node_from_cache = true;
-                // debugger;
                 node = cached_node;
-                //node_cache.get(node.id)[1];
             }
-
-            // if(node.id === "default_error_display"){
-            //     debugger;
-            // }
-
-            // edge types
-            //   ref gets the node id
-            //   concat puts all the data as the "as" attribute
-            //   inputs defines the expected inputs
-            //   data (default)
-
-            let def_inputs;
-
-            // for(let i = 0; i < inputs.length; i++) {
-            //     input = inputs[i];
-
-            //     if (input.type === "inputs") {
-            //         def_inputs = [];
-            //         has_inputs = state.has(input.from);
-            //         if(has_inputs) {
-
-            //             def_inputs = state.get(input.from);
-            //             inputs = inputs.filter(node_input => def_inputs.includes(node_input.as));
-            //             node.args = (node.args ?? []).concat(def_inputs);
-            //         } else {
-            //             inputs = [input];
-            //         }
-            //     }
-            // }
 
             const type = node.type?.node_type ?? typeof node.type === 'string' ? node.type : undefined;
             const resolved_type = type ? "type" : node.script ? "script" : node.value ? "value" : undefined;
-
-            /*if(type) {
-                // if(!active_nodes.has(type)) {
-                //     const cached_type = node_map.get(type);
-                //     if(cached_type === undefined) {
-                //         throw new Error(`Type not found ${type} for node ${node.id}`)
-                //     }
-                //     active_nodes.set(type, Object.assign({
-                //         _nodetypeflag: true
-                //     }, node_map.get(type)))
-                // }
-
-                // run = false;
-
-            } else if(!type || node_map.has(type)) {*/
 
             const node_map_type = type ? node_map.get(type) : {};
             const node_type = type && !node_from_cache
@@ -300,10 +248,6 @@ const executeGraph = ({ cache, state, graph, globalstate, cache_id, node_cache }
             }
 
             let inputs = node.hasOwnProperty("inputs") ? (node.inputs ?? []) : [{from: graph.in, to: node.id}];
-
-            // const node_type = type
-            //     ? Object.assign({}, node_map.get(type), node, {args: (node.args ?? []).concat(state.get(type).args ?? [])}, {_nodetypeflag: false})
-            //     : node;
 
             for (let i = 0; i < inputs.length; i++) {
                 input = inputs[i];
@@ -325,10 +269,6 @@ const executeGraph = ({ cache, state, graph, globalstate, cache_id, node_cache }
                     } else if (state.has(input.from)) {
                         let [res, resolved] = resolve(state.get(input.from), state, active_nodes, node_map, in_edge_map);
                         run = run && resolved;
-                        // if(res.hasOwnProperty("props")){
-                            // console.log(res);
-                            // console.log(run);
-                        // }
                     } else {
                         run = false;
                     }
@@ -499,7 +439,6 @@ const executeGraph = ({ cache, state, graph, globalstate, cache_id, node_cache }
                                         graph.edges.forEach(e => e.to = e.to === node.id ?  `${node.id}/${node_type.in ?? 'in'}` : e.to);
                                         in_edge_map.set(new_node.id, graph.edges.filter(e => e.to === `${node.id}/${node_type.in ?? 'in'}` ));
                                     } else if (!has_inputs 
-                                        // && new_node.id !== `${node.id}/${node_type.out ?? 'in'}` 
                                         && (
                                             new_node.type === "arg" 
                                             || new_node.nodes 
