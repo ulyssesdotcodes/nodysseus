@@ -117,6 +117,9 @@ const resolve = (o, state, active_nodes, node_map, in_edge_map) => {
         } else {
             const keys = Object.keys(o);
             keys.forEach(k => {
+                if(k === "props") {
+                    console.log(o);
+                }
                 if (o[k]?.type === "ref" && o[k].hasOwnProperty("node")) {
                     resolved = false;
                     if (state.has(o[k].node.id)) {
@@ -150,7 +153,7 @@ const resolve = (o, state, active_nodes, node_map, in_edge_map) => {
 }
 
 const executeGraph = ({ cache, state, graph, globalstate, cache_id, node_cache }) => {
-    let usecache = false;
+    let usecache = true;
     const out = graph.out;
     const graph_in = graph.in;
 
@@ -211,11 +214,6 @@ const executeGraph = ({ cache, state, graph, globalstate, cache_id, node_cache }
             if (!node.id) {
                 throw new Error("undefined node.id");
             }
-
-
-    // if(node.id === "run_h/out_h") {
-    //     debugger;
-    // }
 
 
             if (state.get(node.id)?.type === "ref" && state.get(state.get(node.id).node.id)) {
@@ -327,9 +325,14 @@ const executeGraph = ({ cache, state, graph, globalstate, cache_id, node_cache }
                     } else if (state.has(input.from)) {
                         let [res, resolved] = resolve(state.get(input.from), state, active_nodes, node_map, in_edge_map);
                         run = run && resolved;
+                        // if(res.hasOwnProperty("props")){
+                            // console.log(res);
+                            // console.log(run);
+                        // }
                     } else {
                         run = false;
                     }
+
                 } else if (!state.has(input.from) && (!input.as || resolved_type === "script")) {
                     if (!active_nodes.has(input.from)) {
                         const input_node = node_map.get(input.from);
@@ -425,7 +428,7 @@ const executeGraph = ({ cache, state, graph, globalstate, cache_id, node_cache }
                                 data._needsresolve = data._needsresolve || state_data?._needsresolve;
                                 data[input.as] = state_data;
                             } else {
-                                Object.assign(data, state_data);
+                                Object.assign(data, state_data, {_needsresolve: data._needsresolve || state_data._needsresolve});
                             }
 
                             input_results.push([input.as, input.as ? data[input.as] : data]);
@@ -448,11 +451,10 @@ const executeGraph = ({ cache, state, graph, globalstate, cache_id, node_cache }
                                 data._needsresolve = data._needsresolve || state_data?._needsresolve;
                                 data[input.as] = state_data;
                             } else {
-                                Object.assign(data, state_data);
+                                Object.assign(data, state_data, {_needsresolve: data._needsresolve || state_data._needsresolve});
                             }
                         }
                     }
-
 
                     if (node_type.nodes && node_type.edges) {
                         if (!state.has(node.id + "/" + (node_type.in ?? 'in'))) {
@@ -606,7 +608,9 @@ const executeGraph = ({ cache, state, graph, globalstate, cache_id, node_cache }
                                 const results = fn.apply(null, [...args.values()]);
                                 // Array.isArray(results) ? results.forEach(res => state_datas.push(res)) : state_datas.push(results);
                                 state.set(node.id, results);
-                                cache.get(cache_id).set(node.id, [results, input_results, args]);
+                                if (node_type.args?.length > 0){
+                                        cache.get(cache_id).set(node.id, [results, input_results, args]);
+                                }
                                 active_nodes.delete(node.id);
                             }
                         } catch (e) {
@@ -629,7 +633,9 @@ const executeGraph = ({ cache, state, graph, globalstate, cache_id, node_cache }
                         }
 
                         state.set(node.id, data);
-                        cache.get(cache_id).set(node.id, data);
+                        if (node.args?.length > 0){
+                            cache.get(cache_id).set(node.id, data);
+                        }
                         active_nodes.delete(node.id);
                     }
                 }
