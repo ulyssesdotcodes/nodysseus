@@ -4465,7 +4465,7 @@
                                 "onclick_graph_fn",
                                 "selected"
                             ],
-                            "script": "return {width: window.innerWidth, height: window.innerHeight, viewBox: `${selected.x - (window.innerWidth * 0.5)} ${selected.y - (window.innerHeight * 0.5)} ${window.innerWidth} ${window.innerHeight}` /*, onmousedown: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'down'}], onmouseup: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'up'}], onmousemove: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'move'}]*/}"
+                            "script": "return {width: window.innerWidth, height: window.innerHeight, viewBox: `${(selected?.x ?? (window.innerWidth * 0.5)) - (window.innerWidth * 0.5)} ${(selected?.y ?? (window.innerHeight * 0.5)) - (window.innerHeight * 0.5)} ${window.innerWidth} ${window.innerHeight}` /*, onmousedown: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'down'}], onmouseup: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'up'}], onmousemove: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'move'}]*/}"
                         },
                         {
                             "id": "node_editor_dom_type",
