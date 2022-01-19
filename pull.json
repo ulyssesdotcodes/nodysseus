@@ -1452,7 +1452,7 @@
                         "expand",
                         "contract"
                     ],
-                    "script": "return expand ?? contract ?? []"
+                    "script": "return [contract] ?? [expand]"
                 },
                 {
                     "id": "expand_contract_result",
@@ -2611,7 +2611,7 @@
                         "key",
                         "selected_edge"
                     ],
-                    "script": "return selected_edge ? [] : key"
+                    "script": "return selected_edge ? undefined : key"
                 },
                 {
                     "id": "selected",
@@ -2623,7 +2623,7 @@
                         "selected",
                         "state"
                     ],
-                    "script": "return {...state, selected: selected ?? state.selected}"
+                    "script": "if(selected && !Array.isArray(selected)){ throw new Error('lala');  } return {...state, selected: selected ?? state.selected}"
                 },
                 {
                     "id": "show_all",
@@ -4227,7 +4227,7 @@
                                 "display_graph",
                                 "node_inputs"
                             ],
-                        "script": "try { const graph = {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: display.id, in: display.id + '/' + display.in}; const input = {state: new Map([[display.id + '/' +  display.in, {node, result}]]), graph, cache_id: 'rnd'}; return lib.no.executeGraph(input).el } catch(e){ return {error: e} }"
+                        "script": "try { const graph = {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: display.id, in: display.id + '/' + display.in}; const input = {state: new Map([[display.id + '/' +  display.in, {node, result}]]), graph, cache_id: 'rnd'}; return lib.no.executeGraph(input)?.el } catch(e){ return {error: e} }"
                         },
                         {
                             "id": "run_error_display",

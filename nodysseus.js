@@ -410,6 +410,7 @@ const executeGraph = ({ cache, state, graph, globalstate, cache_id, node_cache }
                             //     }
                             // }
 
+
                             try {
                                     const fn = node_type.fn ?? new Function(`return function _${(node.name ?? node.id).replace(/(\s|\/)/g, '_')}(${[...args.keys()].join(',')}){${node_type.script}}`)()
                                     node_type.fn = fn;
@@ -1186,7 +1187,7 @@ const expand_node = (data) => {
 
     if (!(node && node.nodes)) {
         console.log('no nodes?');
-        return data.display_graph;
+        return {display_graph: data.display_graph, selected: [data.node_id]};
     }
 
     const flattened = lib.scripts.flattenNode(node, 1);
@@ -1287,7 +1288,7 @@ const contract_node = (data, keep_expanded = false) => {
         let in_node_id = in_edge[0]?.to;
 
         if (in_edge.find(ie => ie.to !== in_node_id) || inside_nodes.length < 2) {
-            return { display_graph: data.display_graph, selected: data.node_id };
+            return { display_graph: data.display_graph, selected: [data.node_id] };
         }
 
         const out_node = inside_nodes.find(n => n.id === data.node_id || n.name === name + "/out" || n.id === node_id + "/out");
