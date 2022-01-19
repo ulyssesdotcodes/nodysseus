@@ -71,9 +71,8 @@
                 "type": "h_text"
             },
             {
-                "id": "wrap_array",
-                "args": ["value"],
-                "script": "return [value]"
+                "id": "wrap_array_text",
+                "type": "wrap_array"
             },
             {
                 "id": "hghirvcml",
@@ -102,7 +101,7 @@
             },
             {
                 "from": "osgrk7ddu",
-                "to": "wrap_array",
+                "to": "wrap_array_text",
                 "as": "value"
             },
             {
@@ -116,6 +115,11 @@
                 "as": "data"
             }
         ]
+    },
+    {
+        "id": "wrap_array",
+        "args": ["value"],
+        "script": "return [value]"
     },
         {
             "id": "hyperapp",
@@ -2406,7 +2410,8 @@
                         "selected_edge",
                         "levels"
                     ],
-                    "script": "const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({id, args: []}); const edgeIdx = display_graph.edges.findIndex(e => selected_edge?.to === e.to && selected_edge?.from === e.from); display_graph.edges.splice(selected_edge ? edgeIdx : display_graph.edges.length, selected_edge ? 1 : 0, ...(selected_edge ? [{from: selected_edge.from, to: id}, {from: id, to: selected_edge.to, as: display_graph.edges[edgeIdx].as}] : [{from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id, as: `arg${levels.parents.get(selected[0]).length}`}])); return {display_graph, selected: [id], selected_edge: false};"
+                    "script": "const id = Math.random().toString(36).substring(2, 9); const new_nodes = display_graph.nodes.concat([{id, args: []}]); const new_edges = display_graph.edges.filter(e => selected_edge?.to !== e.to && selected_edge?.from !== e.from).concat(selected_edge ? [{from: selected_edge.from, to: id}, {from: id, to: selected_edge.to, as: display_graph.edges[edgeIdx].as}] : [{from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id, as: `arg${levels.parents.get(selected[0]).length}`}]); return {display_graph: {...display_graph, edges: new_edges, nodes: new_nodes}, selected: [id], selected_edge: false};",
+                    "script_": "const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({id, args: []}); const edgeIdx = display_graph.edges.findIndex(e => selected_edge?.to === e.to && selected_edge?.from === e.from); display_graph.edges.splice(selected_edge ? edgeIdx : display_graph.edges.length, selected_edge ? 1 : 0, ...(selected_edge ? [{from: selected_edge.from, to: id}, {from: id, to: selected_edge.to, as: display_graph.edges[edgeIdx].as}] : [{from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id, as: `arg${levels.parents.get(selected[0]).length}`}])); return {display_graph, selected: [id], selected_edge: false};"
                 },
                 {
                     "id": "o_display_graph",
@@ -2438,7 +2443,8 @@
                         "display_graph",
                         "display_graph_out"
                     ],
-                    "script": "if(selected_edge){display_graph.edges.splice(display_graph.edges.findIndex(e => selected_edge.from === e.from && selected_edge.to === e.to), 1); return {display_graph, selected, selected_edge: false}; } display_graph.nodes = display_graph.nodes.filter(n => n.id !== selected[0]); const new_edges = []; const to = display_graph.edges.filter(e => e.to === selected[0]); const from = display_graph.edges.filter(e => e.from === selected[0]); for(let i = 0; i < to.length; i++){for(let j = 0; j < from.length; j++){ if(!display_graph.edges.find(e => e.from === to[i].from && e.to === from[j].to)){ display_graph.edges.push({from: to[i].from, to: from[j].to, as: from[j].as});}}}; display_graph.edges = display_graph.edges.filter(e => e.to !== selected[0] && e.from !== selected[0]); display_graph.edges.push(...new_edges); return {display_graph, selected: [to[0]?.from ?? from[0]?.to ?? display_graph.nodes[0].id] };"
+                    "script": "if(selected_edge){const new_edges = display_graph.edges.filter(e => selected_edge.from === e.from && selected_edge.to === e.to); return {display_graph: {...display_graph, edges: new_edges}, selected, selected_edge: false}; } const new_nodes = display_graph.nodes.filter(n => n.id !== selected[0]); const new_edges = display_graph.edges.filter(e => e.to !== selected[0] && e.from !== selected[0]); const to = display_graph.edges.filter(e => e.to === selected[0]); const from = display_graph.edges.filter(e => e.from === selected[0]); for(let i = 0; i < to.length; i++){for(let j = 0; j < from.length; j++){ if(!display_graph.edges.find(e => e.from === to[i].from && e.to === from[j].to)){ new_edges.push({from: to[i].from, to: from[j].to, as: from[j].as});}}}; return {display_graph: {...display_graph, edges: new_edges, nodes: new_nodes}, selected: [to[0]?.from ?? from[0]?.to ?? display_graph.nodes[0].id] };",
+                    "script_": "if(selected_edge){display_graph.edges.splice(display_graph.edges.findIndex(e => selected_edge.from === e.from && selected_edge.to === e.to), 1); return {display_graph, selected, selected_edge: false}; } display_graph.nodes = display_graph.nodes.filter(n => n.id !== selected[0]); const new_edges = []; const to = display_graph.edges.filter(e => e.to === selected[0]); const from = display_graph.edges.filter(e => e.from === selected[0]); for(let i = 0; i < to.length; i++){for(let j = 0; j < from.length; j++){ if(!display_graph.edges.find(e => e.from === to[i].from && e.to === from[j].to)){ display_graph.edges.push({from: to[i].from, to: from[j].to, as: from[j].as});}}}; display_graph.edges = display_graph.edges.filter(e => e.to !== selected[0] && e.from !== selected[0]); display_graph.edges.push(...new_edges); return {display_graph, selected: [to[0]?.from ?? from[0]?.to ?? display_graph.nodes[0].id] };"
                 },
                 {
                     "id": "x_display_graph",
@@ -2617,7 +2623,7 @@
                         "selected",
                         "state"
                     ],
-                    "script": "state.selected = selected ? selected : state.selected; return state"
+                    "script": "return {...state, selected: selected ?? state.selected}"
                 },
                 {
                     "id": "show_all",
@@ -3419,8 +3425,7 @@
                 },
                 {
                     "from": "set_display_graph",
-                    "to": "out",
-                    "type": "resolve"
+                    "to": "out"
                 },
                 {
                     "from": "key_event",
@@ -3622,6 +3627,10 @@
                     "script": "return node_id"
                 },
                 {
+                    "id": "wrapped_node_id",
+                    "type": "wrap_array"
+                },
+                {
                     "id": "get_selected_node",
                     "args": [
                         "node_id",
@@ -3648,7 +3657,7 @@
                         "selected",
                         "state"
                     ],
-                    "script": "state.selected = selected ? [selected] : state.selected; return state"
+                    "script": "return {...state, selected: selected ? selected : state.selected}"
                 },
                 {
                     "id": "display_graph_inputs",
@@ -3657,7 +3666,7 @@
                         "selected",
                         "node"
                     ],
-                    "script": "return event.ty === 'down' && node.node_id === selected[0] ? ['expand_contract'] : []"
+                    "script": "return event.ty === 'down' && node.node_id === selected[0] ? 'expand_contract' : undefined"
                 },
                 {
                     "id": "display_graph",
@@ -3744,6 +3753,11 @@
                 },
                 {
                     "from": "node_id",
+                    "to": "wrapped_node_id",
+                    "as": "value"
+                },
+                {
+                    "from": "wrapped_node_id",
                     "to": "selected",
                     "as": "node_id"
                 },
@@ -4040,7 +4054,8 @@
                         {
                             "from": "edit_text_props",
                             "to": "edit_text",
-                            "as": "props"
+                            "as": "props",
+                            "type": "resolve"
                         },
                         {
                             "from": "edit_text_children",
@@ -4500,7 +4515,7 @@
                         {
                             "id": "node_layout",
                             "args": ["node_inputs", "node_layout_map", "nodes", "graph", "onclick_node_fn", "selected", "selected_edge"],
-                            "script": "return nodes.map(n => lib.no.executeGraph({state: new Map([['_' + n.node_id, Object.assign({node: n}, node_inputs)]]), graph: {...graph, in: '_' + n.node_id, out: node_layout_map}, cache_id: '_' + n.node_id}))"
+                            "script": "return nodes.map(n => lib.no.executeGraphValue({state: new Map(), graph: {...graph, in: '_' + n.node_id, out: node_layout_map}, cache_id: '_' + n.node_id})(Object.assign({node: n}, node_inputs)))"
                         },
                         {
                             "id": "node_layout_map",
