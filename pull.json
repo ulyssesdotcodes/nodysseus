@@ -4227,7 +4227,7 @@
                                 "display_graph",
                                 "node_inputs"
                             ],
-                        "script": "try { const graph = {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: display.id, in: display.id + '/' + display.in}; const input = {state: new Map([[display.id + '/' +  display.in, {node, result: result?.get(node.id), input_results: Object.fromEntries(graph.edges.filter(e => e.to === node.id).map(e => [e.as ?? e.from, result?.get(e.from)]))}]]), graph, cache_id: 'rnd'}; return lib.no.executeGraph(input).el } catch(e){ return {error: e} }"
+                        "script": "try { const graph = {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: display.id, in: display.id + '/' + display.in}; const input = {state: new Map([[display.id + '/' +  display.in, {node, result}]]), graph, cache_id: 'rnd'}; return lib.no.executeGraph(input).el } catch(e){ return {error: e} }"
                         },
                         {
                             "id": "run_error_display",
