@@ -146,9 +146,14 @@
                     "value": "update_sim_effect"
                 },
                 {
-                    "id": "other_args",
-                    "args": ["view", "subscriptions"],
-                    "script": "return {view, subscriptions}"
+                    "id": "view",
+                    "type": "arg",
+                    "value": "view"
+                },
+                {
+                    "id": "subscriptions",
+                    "type": "arg",
+                    "value": "subscriptions"
                 },
                 {
                     "id": "out",
@@ -186,22 +191,25 @@
                     "to": "update_sim_effect"
                 },
                 {
-                    "from": "in",
-                    "to": "other_args"
-                },
-                {
                     "from": "update_sim_effect",
                     "to": "out",
                     "as": "update_sim_effect"
                 },
                 {
+                    "from": "view",
+                    "to": "out",
+                    "as": "view"
+                },
+                {
+                    "from": "subscriptions",
+                    "to": "out",
+                    "as": "subscriptions",
+                    "type": "resolve"
+                },
+                {
                     "from": "init",
                     "to": "out",
                     "as": "init"
-                },
-                {
-                    "from": "other_args",
-                    "to": "out"
                 }
             ]
         },
@@ -547,6 +555,11 @@
                     "id": "in"
                 },
                 {
+                    "id": "fn",
+                    "type": "arg",
+                    "value": "fn"
+                },
+                {
                     "id": "out",
                     "args": [
                         "fn"
@@ -557,7 +570,13 @@
             "edges": [
                 {
                     "from": "in",
-                    "to": "out"
+                    "to": "out",
+                    "as": "arg0"
+                },
+                {
+                    "from": "fn",
+                    "to": "out",
+                    "as": "fn"
                 }
             ]
         },
@@ -1251,7 +1270,7 @@
                     "args": [
                         "children"
                     ],
-                    "script": "return children === undefined ? [] : (Array.isArray(children) ? children.map(c => c.el ?? c) : [children.el ?? children])"
+                    "script": "return children === undefined ? [] : children.length !== undefined ? children.map(c => c.el ?? c) : [children.el ?? children]"
                 },
                 {
                     "id": "fill_props",
@@ -1410,6 +1429,11 @@
                     "id": "in"
                 },
                 {
+                    "id": "text",
+                    "type": "arg",
+                    "value": "text"
+                },
+                {
                     "id": "out",
                     "args": [
                         "text"
@@ -1420,7 +1444,14 @@
             "edges": [
                 {
                     "from": "in",
-                    "to": "out"
+                    "to": "out",
+                    "as": "input"
+                },
+                {
+                    "from": "text",
+                    "to": "out",
+                    "as": "text",
+                    "type": "resolve"
                 }
             ]
         },
@@ -1429,6 +1460,20 @@
             "nodes": [
                 {
                     "id": "in"
+                },
+                {
+                    "id": "dg_selected",
+                    "type": "arg",
+                    "value": "selected"
+                },
+                {
+                    "id": "display_graph",
+                    "type": "arg",
+                    "value": "display_graph"
+                },
+                {
+                    "id": "node_id",
+                    "script": "return selected[0]"
                 },
                 {
                     "id": "selected_node",
@@ -1526,10 +1571,6 @@
                 },
                 {
                     "from": "in",
-                    "to": "has_nodes"
-                },
-                {
-                    "from": "in",
                     "to": "expand"
                 },
                 {
@@ -1539,6 +1580,31 @@
                 {
                     "from": "in",
                     "to": "selected_node"
+                },
+                {
+                    "from": "display_graph",
+                    "to": "has_nodes",
+                    "as": "display_graph"
+                },
+                {
+                    "from": "dg_selected",
+                    "to": "node_id",
+                    "as": "selected"
+                },
+                {
+                    "from": "node_id",
+                    "to": "has_nodes",
+                    "as": "node_id"
+                },
+                {
+                    "from": "node_id",
+                    "to": "contract",
+                    "as": "node_id"
+                },
+                {
+                    "from": "node_id",
+                    "to": "expand",
+                    "as": "node_id"
                 },
                 {
                     "from": "has_nodes",
@@ -4050,8 +4116,7 @@
                         {
                             "from": "edit_text_props",
                             "to": "edit_text",
-                            "as": "props",
-                            "type": "resolve"
+                            "as": "props"
                         },
                         {
                             "from": "edit_text_children",
@@ -5801,7 +5866,8 @@
                 {
                     "from": "wrapper_children",
                     "to": "wrapper",
-                    "as": "children"
+                    "as": "children",
+                    "type": "resolve"
                 },
                 {
                     "from": "wrapper_dom_type",
