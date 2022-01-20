@@ -1028,7 +1028,7 @@
             ]
         },
         {
-            "id": "update_and_run",
+            "id": "update_graph_display",
             "in": "in",
             "out": "out",
             "args": [
@@ -1236,10 +1236,6 @@
                     "from": "new_state",
                     "to": "out",
                     "as": "state"
-                },
-                {
-                    "from": "run",
-                    "to": "out"
                 }
             ]
         },
@@ -1798,7 +1794,7 @@
                 {
                     "id": "u9feks2l9",
                     "args": [],
-                    "type": "update_and_run"
+                    "type": "update_graph_display"
                 },
                 {
                     "id": "6pqqchhnk",
@@ -1932,7 +1928,7 @@
                 {
                     "from": "8jmaa71ct",
                     "to": "u9feks2l9",
-                    "as": "update"
+                    "as": "update_graph_display"
                 },
                 {
                     "from": "w5lqhh9qr",
@@ -2735,7 +2731,7 @@
                 },
                 {
                     "id": "out",
-                    "type": "update_and_run"
+                    "type": "update_graph_display"
                 }
             ],
             "edges": [
@@ -3700,7 +3696,7 @@
                 },
                 {
                     "id": "out",
-                    "type": "update_and_run"
+                    "type": "update_graph_display"
                 }
             ],
             "edges": [
@@ -3889,7 +3885,7 @@
                         "search_input",
                         "result"
                     ],
-                    "script": "return [node_editor.el, edit_text.el, search_input.el, result.el]"
+                    "script": "return [node_editor.el, edit_text.el, search_input.el]"
                 },
                 {
                     "id": "edit_text",
@@ -5801,11 +5797,6 @@
                     "from": "search_input",
                     "to": "wrapper_children",
                     "as": "search_input"
-                },
-                {
-                    "from": "result",
-                    "to": "wrapper_children",
-                    "as": "result"
                 },
                 {
                     "from": "wrapper_children",
