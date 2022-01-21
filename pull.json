@@ -21,7 +21,7 @@
                 {
                     "id": "out",
                     "args": [],
-                    "script": "console.log(node.id); console.log(value); return {}"
+                    "script": "console.log(_node.id); console.log(value); return {}"
                 }
             ],
             "edges": [
@@ -266,29 +266,60 @@
         },
         {
             "id": "filter",
+            "name": "filter",
+            "in": "74n1jfm",
+            "out": "lahq5z4",
             "nodes": [
                 {
-                    "id": "in"
+                "id": "lahq5z4",
+                "args": [],
+                "name": "filter/out",
+                "script": "return arr.filter(v => v[key] === value)"
                 },
                 {
-                    "id": "out",
-                    "args": [
-                        "keep",
-                        "data"
-                    ],
-                    "script": "return keep ? [data] : []"
+                "id": "pfoypo5",
+                "args": [],
+                "type": "arg",
+                "value": "key"
+                },
+                {
+                "id": "zinx621",
+                "args": [],
+                "type": "arg",
+                "value": "value"
+                },
+                {
+                "id": "x2sz5kb",
+                "args": [],
+                "type": "arg",
+                "value": "arr"
+                },
+                {
+                "id": "74n1jfm",
+                "args": [],
+                "name": "filter/in"
                 }
             ],
             "edges": [
                 {
-                    "from": "in",
-                    "to": "out"
+                "from": "pfoypo5",
+                "to": "lahq5z4",
+                "as": "key"
                 },
                 {
-                    "from": "in",
-                    "to": "out",
-                    "as": "data",
-                    "order": 0
+                "from": "zinx621",
+                "to": "lahq5z4",
+                "as": "value"
+                },
+                {
+                "from": "x2sz5kb",
+                "to": "lahq5z4",
+                "as": "arr"
+                },
+                {
+                "from": "74n1jfm",
+                "to": "lahq5z4",
+                "as": "input"
                 }
             ]
         },
@@ -549,8 +580,7 @@
         },
         {
             "id": "array",
-            "args": [],
-            "script": "return [inputs.flat()]",
+            "script": "return Object.values(_node_inputs)",
             "name": "array"
         },
         {
@@ -1158,7 +1188,7 @@
                         "display_graph",
                         "selected"
                     ],
-                    "script": "try { const result = _lib.no.executeGraph({state: new Map([[display_graph.in, {...state, payload}]]), graph: {...display_graph, nodes: display_graph.nodes.concat([]), edges: display_graph.edges.concat([]), out: selected[0]}}); return {result, error: undefined}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
+                    "script": "try { const result = _lib.no.executeGraph({state: new Map([[display_graph.in, {...state, payload}]]), graph: {...display_graph, nodes: display_graph.nodes.map(n => ({...n})), edges: display_graph.edges.map(e => ({...e})), out: selected[0]}}); return {result, error: undefined}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
                 },
                 {
                     "id": "out",
@@ -2651,7 +2681,7 @@
                         "editing",
                         "search"
                     ],
-                    "script": "target.blur(); if(search !== false){ target.value = ''; return {search: false} } let value; try { value = JSON.parse(target.value);} catch(e){ value = target.value; } if(selected_edge){ display_graph.edges.find(e => e.to === selected_edge.to && e.from === selected_edge.from)[editing] = value === '' ? undefined : value; } else { const node = display_graph.nodes.find(n => n.id === selected[0]); if(node[editing] !== undefined || value !== ''){ node[editing] = value === '' ? undefined : value; if(editing === 'name' || (editing === 'value' && node.type === 'arg')){ display_graph.edges.filter(e => e.from === node.id && e.as.startsWith('arg')).forEach(e => e.as = value) }} } return {editing: false, edit_value: null, display_graph};" },
+                    "script": "target.blur(); if(search !== false){ target.value = ''; return {search: false} } let value; try { value = JSON.parse(target.value);} catch(e){ value = target.value; } if(selected_edge){ display_graph.edges.find(e => e.to === selected_edge.to && e.from === selected_edge.from)[editing] = value === '' ? undefined : value; } else { const node = display_graph.nodes.find(n => n.id === selected[0]); if(node[editing] !== undefined || value !== ''){ node[editing] = value === '' ? undefined : value; if(editing === 'name' || (editing === 'value' && node.type === 'arg')){ display_graph.edges.filter(e => e.from === node.id && e.as?.startsWith('arg')).forEach(e => e.as = value) }} } return {editing: false, edit_value: null, display_graph};" },
                 {
                     "id": "esc_editing",
                     "args": [
@@ -3964,7 +3994,7 @@
                         "search_input",
                         "result"
                     ],
-                    "script": "return [node_editor.el, edit_text.el, search_input.el]"
+                    "script": "return [node_editor.el, edit_text.el, search_input.el, result.el]"
                 },
                 {
                     "id": "edit_text",
@@ -4719,7 +4749,7 @@
                                                     "args": [
                                                         "target"
                                                     ],
-                                                    "script": "return `type: ` + (target.value !== undefined ? 'value' : target.type ? JSON.stringify(target.type) : target.script ? 'script' : target.nodes ? `graph (${target.nodes.length}, ${target.edges.length})` : 'passthrough')"
+                                                    "script": "return `type: ` + (target.type ? target.type : target.value !== undefined ? 'value' : target.script ? 'script' : target.nodes ? `graph (${target.nodes.length}, ${target.edges.length})` : 'passthrough')"
                                                 },
                                                 {
                                                     "id": "get_selected_distance",
@@ -5875,6 +5905,11 @@
                     "from": "search_input",
                     "to": "wrapper_children",
                     "as": "search_input"
+                },
+                {
+                    "from": "result",
+                    "to": "wrapper_children",
+                    "as": "result"
                 },
                 {
                     "from": "wrapper_children",

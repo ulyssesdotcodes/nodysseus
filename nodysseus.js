@@ -119,8 +119,11 @@ const createProxy = (run_with_val, input, graph_input_value) => {
             resolved = true;
         }
 
+
         if (prop === "_value") {
             return res
+        } else if (prop === 'toJSON') {
+            return () => res;
         } else {
             if(typeof res[prop] === 'function'){
                 return res[prop].bind(res);
@@ -153,7 +156,7 @@ const resolve = (o) => {
         return resolve(o._value)
     } else if (Array.isArray(o)) {
         const new_arr = [];
-        let same = true;
+        let same = false;
         let i = o.length;
         while(i > 0) {
             i--;
@@ -164,7 +167,7 @@ const resolve = (o) => {
     } else if (typeof o === 'object' && o) {
         const entries = Object.entries(o);
         let i = entries.length;
-        let same = true;
+        let same = false;
         let new_obj_entries = [];
         while(i > 0) {
             i--;
@@ -204,7 +207,6 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
         let node = node_map.get(node_id);
 
         if(node === undefined) {
-            debugger;
             throw new Error(`Undefined node_id ${node_id}`)
         }
 
@@ -217,6 +219,27 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
         }
 
         if (node.value && !node.script && !node.type) {
+            const int = parseInt(node.value);
+            if(!isNaN(int)){
+                return int;
+            }
+
+            const float = parseFloat(node.value);
+            if(!isNaN(float)) {
+                return float;
+            }
+
+            if(typeof node.value !== 'string') {
+                return node.value;
+            }
+
+            
+            if(node.value.startsWith('{') || node.value.startsWith('[')) {
+                try {
+                    return  JSON.parse(node.value.replaceAll("'", "\""));
+                } catch(e) { }
+            }
+
             return node.value;
         }
 
@@ -242,6 +265,9 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
             } else if (input.from === "_graph_input_value" || input.from === graph.in) {
                 return graph_input_value;
             } else if (input.type === "resolve") {
+                if(input.from.includes("filter") && input.from.includes("arr")) {
+                    console.log(input.from);
+                }
                 if(!node_map.has(input.from)) {
                     throw new Error(`Input not found ${input.from} for node ${node_id}`)
                 }
@@ -430,7 +456,6 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
                 console.error(e);
                 console.dir(node_type);
                 console.log(data);
-                debugger;
                 throw new AggregateError([Error(`Error in node ${node_type.name ?? node_type.id}`)].concat(e instanceof AggregateError ? e.errors : [e]));
             }
         }
@@ -538,7 +563,7 @@ const d3simulation = () => {
                     .strength(l => l.strength)
                     .id(n => n.node_child_id))
                 .force('link_direction', lib.d3.forceY().strength(.05))
-                .force('center', lib.d3.forceCenter())
+                .force('center', lib.d3.forceCenter().strength(0.01))
                 // .force('fuse_links', lib.d3.forceLink([]).distance(128).strength(.1).id(n => n.node_child_id))
                 // .force('link_siblings', lib.d3.forceX().strength(1))
                 // .force('selected', lib.d3.forceRadial(0, window.innerWidth * 0.5, window.innerHeight * 0.5).strength(2))
