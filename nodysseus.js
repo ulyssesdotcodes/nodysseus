@@ -963,12 +963,15 @@ const generic_nodes = new Set([
     "array",
     "text",
     "text_display",
-    "arg"
+    "arg",
+    "log"
 ]);
 
 const stored = localStorage.getItem("display_graph");
 // const display_graph = {...DEFAULT_GRAPH, nodes: DEFAULT_GRAPH.nodes.map(n => ({...n})), edges: DEFAULT_GRAPH.edges.map(e => ({...e}))};
 const display_graph = stored ? JSON.parse(stored) : test_graph;
-const state = new Map([['in', { graph: DEFAULT_GRAPH, display_graph: { ...display_graph, nodes: display_graph.nodes.concat(DEFAULT_GRAPH.nodes.filter(n => generic_nodes.has(n.id) && display_graph.nodes.findIndex(dn => dn.id === n.id) === -1)), edges: display_graph.edges.concat([]) } }]])
+const original_graph = {...DEFAULT_GRAPH, nodes: [...DEFAULT_GRAPH.nodes], edges: [...DEFAULT_GRAPH.edges]};
+const state = new Map([['in', { graph: DEFAULT_GRAPH, original_graph, display_graph: { ...display_graph, nodes: display_graph.nodes.concat(DEFAULT_GRAPH.nodes.filter(n => generic_nodes.has(n.id) && display_graph.nodes.findIndex(dn => dn.id === n.id) === -1)), edges: display_graph.edges.concat([]) } }]])
 
-console.log(executeGraph({ cache, state, graph: DEFAULT_GRAPH, out: "hyperapp_app", cache_id: "main", node_cache })(DEFAULT_GRAPH.out)(state.get("in")));
+
+console.log(executeGraph({ cache, state, graph: DEFAULT_GRAPH, original_graph, out: "hyperapp_app", cache_id: "main", node_cache })(DEFAULT_GRAPH.out)(state.get("in")));
