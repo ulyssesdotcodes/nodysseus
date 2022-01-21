@@ -19,30 +19,31 @@ function compare(value1, value2) {
     if (value1?._Proxy && value2?._Proxy) {
         return value1._nodeid === value2._nodeid;
     }
-    if ({}.toString.call(value1) != {}.toString.call(value2)) {
+    if(typeof value1 !== typeof value2) {
         return false;
     }
-    if (value1 !== Object(value1)) {
-        // non equal primitives
-        return false;
-    }
-    if (!value1) {
-        return false;
-    }
+    // if (value1 !== Object(value1)) {
+    //     // non equal primitives
+    //     return false;
+    // }
+    // if (!value1) {
+    //     return false;
+    // }
     if (Array.isArray(value1)) {
         return compareArrays(value1, value2);
     }
-    if ({}.toString.call(value1) == '[object Set]') {
-        return compareArrays(Array.from(value1), Array.from(value2));
-    }
-    if ({}.toString.call(value1) == '[object Map]') {
-        return compareArrays([...value1.entries()], [...value2.entries()]);
-    }
-    if ({}.toString.call(value1) == '[object Object]') {
+    if(typeof value1 === 'object' && typeof value2 === 'object') {
+        if ((value1 instanceof Map) && (value2 instanceof Map)) {
+            return compareArrays([...value1.entries()], [...value2.entries()]);
+        }
+        if ((value1 instanceof Set) && (value2 instanceof Set)) {
+            return compareArrays(Array.from(value1), Array.from(value2));
+        }
+
         return compareObjects(value1, value2);
-    } else {
-        return compareNativeSubtypes(value1, value2);
     }
+
+    return compareNativeSubtypes(value1, value2);
 }
 
 function compareNativeSubtypes(value1, value2) {
@@ -151,13 +152,25 @@ const resolve = (o) => {
     if (o?._Proxy) {
         return resolve(o._value)
     } else if (Array.isArray(o)) {
-        const new_arr = o.map(v => resolve(v));
-        const same = o.reduce((acc, ov, i) => acc && ov === new_arr[i], true);
+        const new_arr = [];
+        let same = true;
+        let i = o.length;
+        while(i > 0) {
+            i--;
+            new_arr[i] = resolve(o[i]);
+            same = same && o[i] === new_arr[i];
+        }
         return same ? o : new_arr;
     } else if (typeof o === 'object' && o) {
         const entries = Object.entries(o);
-        const new_obj_entries = entries.map(([k, v]) => [k, resolve(v)]);
-        const same = entries.reduce((acc, [k, v], i) => acc && v === new_obj_entries[i][1], true);
+        let i = entries.length;
+        let same = true;
+        let new_obj_entries = [];
+        while(i > 0) {
+            i--;
+            new_obj_entries[i] = [entries[i][0], resolve(entries[i][1])];
+            same = same && entries[i][1] === new_obj_entries[i][1]
+        }
         return same ? o : Object.fromEntries(new_obj_entries);
 
     } else {
@@ -188,7 +201,16 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
 
     const run_with_val = (node_id) => (graph_input_value) => {
 
-        let node = Object.assign({}, node_map.get(node_id), { inputs: in_edge_map.get(node_id) });
+        let node = node_map.get(node_id);
+
+        if(node === undefined) {
+            debugger;
+            throw new Error(`Undefined node_id ${node_id}`)
+        }
+
+        if(!node.inputs) {
+            Object.assign(node, { inputs: in_edge_map.get(node_id) });
+        }
 
         if (node.type === "arg" && (!node.inputs || node.inputs.length === 0)) {
             node.inputs.push({ from: "_graph_input_value", to: node.id });
@@ -199,16 +221,9 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
         }
 
         let node_type;
-        let node_from_cache = false;
-        let cached_node = node.script ? node_cache.get(hashcode(node.id + node.script.substring(node.script.length * 0.5 - 16, node.script.length * 0.5 + 16))) : false
-
-        if (cached_node) {
-            node_from_cache = true;
-            node = cached_node;
-        }
 
         const type = node.type?.node_type ?? typeof node.type === 'string' ? node.type : undefined;
-        if (!node_from_cache && type) {
+        if (type) {
             const node_map_type = node_map.get(type);
             if (node_map_type) {
                 node_type = Object.assign({}, node_map_type, node)
@@ -249,7 +264,12 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
             }
         }
 
-        const input_data_map = new Map(node.inputs.map(i => [i.from, tryrun(i)]));
+        const input_data_map = new Map();
+        let i = node.inputs.length;
+        while(i > 0) {
+            i--;
+            input_data_map.set(node.inputs[i].from, tryrun(node.inputs[i]));
+        }
         const inputs = node.inputs;
         const data = {};
         let input;
@@ -328,54 +348,72 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
             cache.get(cache_id).set(inid, [res, data, graph_input_value]);
             return res;
         } else if (node_type.script) {
-            const args = new Map([['lib', lib],
-            ['node', node],
-            node_type.script.includes('node_inputs') && ['node_inputs', data]
-            ].filter(v => v))
-            inputs.forEach(input => {
-                if (input.as && !keywords.has(input.as) && args.has(input.as)) {
-                    args.set(input.as, data[input.as]);
-                }
-            });
+            // const args = new Map([['lib', lib],
+            // ['node', node],
+            // node_type.script.includes('node_inputs') && ['node_inputs', data]
+            // ].filter(v => v))
+            // inputs.forEach(input => {
+            //     if (input.as && !keywords.has(input.as) && args.has(input.as)) {
+            //         args.set(input.as, data[input.as]);
+            //     }
+            // });
 
-            if (node_type.args) {
-                node_type.args.forEach(arg => {
-                    if (!keywords.has(arg) && arg !== 'node_inputs') {
-                        // while (data[arg]?._Proxy) {
-                        //     data[arg] = data[arg]._value;
-                        // }
-                        args.set(arg, data[arg]);
-                    }
-                })
-            }
+            // if (node_type.args) {
+            //     node_type.args.forEach(arg => {
+            //         if (!keywords.has(arg) && arg !== 'node_inputs') {
+            //             // while (data[arg]?._Proxy) {
+            //             //     data[arg] = data[arg]._value;
+            //             // }
+            //             args.set(arg, data[arg]);
+            //         }
+            //     })
+            // }
 
+            // NOTE: very important for side-effects like Math.random
             if (usecache && cache.get(cache_id).has(node.id)) {
                 const val = cache.get(cache_id).get(node.id);
                 let hit = usecache && compare(data, val[1]);
                 hit = hit && compare(graph_input_value, val[2]);
                 if (hit) {
-                    // console.log(input_results);
-                    // console.log("hit");
                     return val[0]
                 }
             }
 
 
             try {
-                const passed_inputs = (inputs ?? []).map(i => i.as).filter(i => i && !args.has(i));
-                const fn = node_type.fn ?? new Function(`return function _${(node.name ?? node.id).replace(/(\s|\/)/g, '_')}(${[...args.keys()].concat(passed_inputs).join(',')}){${node_type.script}}`)();
-
-                if(typeof fn !== 'function') {
-                    debugger;
+                const argset = new Set();
+                argset.add('_lib');
+                argset.add('_node');
+                argset.add('_node_inputs');
+                if(node_type.args) {
+                    node_type.args.forEach(a => argset.add(a));
                 }
+                (inputs ?? []).map(i => i.as).forEach(i => i && argset.add(i));
+                let orderedargs = "";
+                const input_values = [];
+                for(let a of argset) {
+                    input_values.push(
+                        a === '_node' 
+                        ? node 
+                        : a === '_lib'
+                        ? lib
+                        : a === '_node_inputs'
+                        ? data
+                        : data[a]);
+                    orderedargs += `${a},`;
+                }
+                const node_hash = hashcode(orderedargs + node_type.script.substring(node_type.script.length * 0.5 - 16, node_type.script.length * 0.5 + 16))
+
+                const fn = node_cache.get(node_hash) ?? new Function(`return function _${(node.name ?? node.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_type.script}}`)();
 
                 if(!node_type.fn) {
-                    node_cache.set(hashcode(node.id + node_type.script.substring(node_type.script.length * 0.5 - 16, node_type.script.length * 0.5 + 16)), node_type);
+                    node_cache.set(node_hash, fn);
                 }
 
                 node_type.fn = fn;
 
-                const results = fn.apply(null, [...args.values()].concat(passed_inputs.map(i => data[i])));
+
+                const results = fn.apply(null, input_values);
 
                 // Array.isArray(results) ? results.forEach(res => state_datas.push(res)) : state_datas.push(results);
                 // state.set(node.id, results);
@@ -391,7 +429,8 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
                 console.log(`error in node`);
                 console.error(e);
                 console.dir(node_type);
-                console.log(state);
+                console.log(data);
+                debugger;
                 throw new AggregateError([Error(`Error in node ${node_type.name ?? node_type.id}`)].concat(e instanceof AggregateError ? e.errors : [e]));
             }
         }
@@ -659,7 +698,12 @@ const d3subscription = simulation => dispatch => {
             simulation.tick();
             dispatch(s => ({
                 ...s,
-                nodes: simulation.nodes().map(n => ({ ...n, x: Math.floor(n.x), y: Math.floor(n.y) })),
+                nodes: simulation.nodes().map(n => {
+                    if(isNaN(n.x)) {
+                        debugger;
+                    }
+                    return ({ ...n, x: ( Math.floor(n.x)), y: Math.floor(n.y) })
+                }),
                 links: simulation.force('links').links().map(l => ({
                     ...l,
                     as: l.as,

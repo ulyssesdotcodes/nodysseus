@@ -171,7 +171,7 @@
                         "subscriptions",
                         "update_sim_effect"
                     ],
-                    "script": "return {dispatch: lib.ha.app({init: () => [init, [() => { update_sim_effect(null, init) }]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById('node-editor'), subscriptions: () => subscriptions})}"
+                    "script": "return {dispatch: _lib.ha.app({init: () => [init, [() => { update_sim_effect(null, init) }]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById('node-editor'), subscriptions: () => subscriptions})}"
                 }
             ],
             "edges": [
@@ -495,7 +495,7 @@
                         "out_node",
                         "graph"
                     ],
-                    "script": "return (...args) => {res = lib.no.executeGraph({state: new Map([[in_node, args.length === 1 ? args[0] : args]]), graph: {...graph, in: in_node, out: out_node}, cache_id: 'view'}); return res;}"
+                    "script": "return (...args) => {res = _lib.no.executeGraph({state: new Map([[in_node, args.length === 1 ? args[0] : args]]), graph: {...graph, in: in_node, out: out_node}, cache_id: 'view'}); return res;}"
                 }
             ],
             "edges": [
@@ -624,7 +624,7 @@
                         "path",
                         "def"
                     ],
-                    "script": "return lib.just.get(target, path, def)"
+                    "script": "return _lib.just.get(target, path, def)"
                 }
             ],
             "edges": [
@@ -653,7 +653,7 @@
         {
             "id": "arg",
             "args": ["node_inputs"],
-            "script": "return node_inputs[node.value]"
+            "script": "return _node_inputs[_node.value]"
         },
         {
             "id": "set",
@@ -662,7 +662,7 @@
                 "path",
                 "value"
             ],
-            "script": "return [lib.just.set(target, path, value)]"
+            "script": "return [_lib.just.set(target, path, value)]"
         },
         {
             "id": "fuse vertices",
@@ -1083,7 +1083,7 @@
                         "display_graph",
                         "fixed_vertices"
                     ],
-                    "script": "return lib.scripts.calculateLevels(display_graph, selected, fixed_vertices)"
+                    "script": "return _lib.scripts.calculateLevels(display_graph, selected, fixed_vertices)"
                 },
                 {
                     "id": "reduce_graph",
@@ -1122,7 +1122,7 @@
                         "selected",
                         "levels"
                     ],
-                    "script": "return lib.scripts.graphToSimulationNodes({display_graph, nodes, selected, levels});"
+                    "script": "return _lib.scripts.graphToSimulationNodes({display_graph, nodes, selected, levels});"
                 },
                 {
                     "id": "new_state_cases",
@@ -1158,7 +1158,7 @@
                         "display_graph",
                         "selected"
                     ],
-                    "script": "try { const result = lib.no.executeGraph({state: new Map([[display_graph.in, {...state, payload}]]), graph: {...display_graph, nodes: display_graph.nodes.concat([]), edges: display_graph.edges.concat([]), out: selected[0]}}); return {result, error: undefined}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
+                    "script": "try { const result = _lib.no.executeGraph({state: new Map([[display_graph.in, {...state, payload}]]), graph: {...display_graph, nodes: display_graph.nodes.concat([]), edges: display_graph.edges.concat([]), out: selected[0]}}); return {result, error: undefined}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
                 },
                 {
                     "id": "out",
@@ -1395,13 +1395,13 @@
                 {
                     "id": "out_h",
                     "args": ["dom_type", "children", "props", "graph"],
-                    "script_": "const mapped_children = (children ?? []).map(c => lib.no.executeGraph({state: new Map([['run_h/in', {...c, graph}]]), graph: {...graph, in: 'run_h/in', out: 'run_h'}})).map(c => c.el); return {el: lib.ha.h(dom_type, props, mapped_children)};",
-                    "script": "let run_graph = {...graph, in: 'run_h/in', out: 'run_h'}; const fn = lib.no.executeGraphValue({graph: run_graph}); const mapped_children = (children ?? []).map(c => ({...c, graph: run_graph})).map(fn).map(c => c.el); return {el: lib.ha.h(dom_type, props, mapped_children)};"
+                    "script_": "const mapped_children = (children ?? []).map(c => _lib.no.executeGraph({state: new Map([['run_h/in', {...c, graph}]]), graph: {...graph, in: 'run_h/in', out: 'run_h'}})).map(c => c.el); return {el: _lib.ha.h(dom_type, props, mapped_children)};",
+                    "script": "let run_graph = {...graph, in: 'run_h/in', out: 'run_h'}; const fn = _lib.no.executeGraphValue({graph: run_graph}); const mapped_children = (children ?? []).map(c => ({...c, graph: run_graph})).map(fn).map(c => c.el); return {el: _lib.ha.h(dom_type, props, mapped_children)};"
                 },
                 {
                     "id": "out_text",
                     "args": ["text"],
-                    "script": "return {el: lib.ha.text(text)}"
+                    "script": "return {el: _lib.ha.text(text)}"
                 },
                 {
                     "id": "els"
@@ -1546,7 +1546,7 @@
                         "display_graph",
                         "out"
                     ],
-                    "script": "return display_graph && node_id ? lib.scripts.expand_node({display_graph, node_id, out}) : []"
+                    "script": "return display_graph && node_id ? _lib.scripts.expand_node({display_graph, node_id, out}) : []"
                 },
                 {
                     "id": "contract",
@@ -1555,7 +1555,7 @@
                         "display_graph",
                         "name"
                     ],
-                    "script": "return display_graph && node_id ? lib.scripts.contract_node({display_graph, node_id, name}) : []"
+                    "script": "return display_graph && node_id ? _lib.scripts.contract_node({display_graph, node_id, name}) : []"
                 },
                 {
                     "id": "has_nodes",
@@ -2193,7 +2193,7 @@
         {
             "id": "get_display_graph_out",
             "args": ["target", "path"],
-            "script": "return [lib.just.get(target, path)]"
+            "script": "return [_lib.just.get(target, path)]"
         },
         {
             "id": "hyperapp_view",
@@ -2215,7 +2215,7 @@
                 "simulation",
                 "onkey_fn"
             ],
-            "script": "return [[lib.scripts.d3subscription(simulation)], [lib.scripts.keydownSubscription, {action: onkey_fn}]]"
+            "script": "return [[_lib.scripts.d3subscription(simulation)], [_lib.scripts.keydownSubscription, {action: onkey_fn}]]"
         },
         {
             "id": "graph_to_simulation",
@@ -2225,7 +2225,7 @@
                 "selected",
                 "levels"
             ],
-            "script": "return lib.scripts.graphToSimulationNodes({display_graph, nodes, selected, levels})"
+            "script": "return _lib.scripts.graphToSimulationNodes({display_graph, nodes, selected, levels})"
         },
         {
             "id": "update_nodes_in"
@@ -2242,7 +2242,7 @@
                 "levels",
                 "show_all"
             ],
-            "script": "return lib.scripts.updateSimulationNodes({display_graph, simulation, nodes, fuse_links, links, selected, levels, show_all})"
+            "script": "return _lib.scripts.updateSimulationNodes({display_graph, simulation, nodes, fuse_links, links, selected, levels, show_all})"
         },
         {
             "id": "update_nodes_fn",
@@ -2251,7 +2251,7 @@
         {
             "id": "d3simulation",
             "args": [],
-            "script": "return lib.scripts.d3simulation()"
+            "script": "return _lib.scripts.d3simulation()"
         },
         {
             "id": "onkey_fn_in"
@@ -2485,7 +2485,7 @@
                         "selected_edge",
                         "levels"
                     ],
-                    "script": "const id = Math.random().toString(36).substring(2, 9); const new_nodes = display_graph.nodes.concat([{id, args: []}]); const new_edges = display_graph.edges.flatMap(e => selected_edge?.to === e.to && selected_edge?.from === e.from ? [{from: selected_edge.from, to: id}, {from: id, to: selected_edge.to, as: e.as}] : e).concat(selected_edge ? [] : [{from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id, as: `arg${levels.parents.get(selected[0]).length}`}]); return {display_graph: {...display_graph, edges: new_edges, nodes: new_nodes}, selected: [id], selected_edge: false};",
+                    "script": "const id = Math.random().toString(36).substring(2, 9); console.log(id); const new_nodes = display_graph.nodes.concat([{id, args: []}]); const new_edges = display_graph.edges.flatMap(e => selected_edge?.to === e.to && selected_edge?.from === e.from ? [{from: selected_edge.from, to: id}, {from: id, to: selected_edge.to, as: e.as}] : e).concat(selected_edge ? [] : [{from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id, as: `arg${levels.parents.get(selected[0]).length}`}]); return {display_graph: {...display_graph, edges: new_edges, nodes: new_nodes}, selected: [id], selected_edge: false};",
                     "script_": "const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({id, args: []}); const edgeIdx = display_graph.edges.findIndex(e => selected_edge?.to === e.to && selected_edge?.from === e.from); display_graph.edges.splice(selected_edge ? edgeIdx : display_graph.edges.length, selected_edge ? 1 : 0, ...(selected_edge ? [{from: selected_edge.from, to: id}, {from: id, to: selected_edge.to, as: display_graph.edges[edgeIdx].as}] : [{from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id, as: `arg${levels.parents.get(selected[0]).length}`}])); return {display_graph, selected: [id], selected_edge: false};"
                 },
                 {
@@ -2698,7 +2698,7 @@
                         "selected",
                         "state"
                     ],
-                    "script": "if(selected && !Array.isArray(selected)){ throw new Error('lala');  } return {...state, selected: selected ?? state.selected}"
+                    "script": "return {...state, selected: selected ?? state.selected}"
                 },
                 {
                     "id": "show_all",
@@ -3563,7 +3563,7 @@
                 "levels",
                 "show_all"
             ],
-            "script": "return lib.scripts.updateSimulationNodes({display_graph, nodes, links, fuse_links, simulation, display_graph_out, selected, levels, show_all})"
+            "script": "return _lib.scripts.updateSimulationNodes({display_graph, nodes, links, fuse_links, simulation, display_graph_out, selected, levels, show_all})"
         },
         {
             "id": "update_sim_in"
@@ -3931,7 +3931,7 @@
                 "display_graph",
                 "selected"
             ],
-            "script": "return lib.scripts.calculateLevels(display_graph, selected)"
+            "script": "return _lib.scripts.calculateLevels(display_graph, selected)"
         },
         {
             "id": "editor",
@@ -4301,7 +4301,7 @@
                                 "display_graph",
                                 "node_inputs"
                             ],
-                        "script": "try { const graph = {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: display.id, in: display.id + '/' + display.in}; const input = {state: new Map([[display.id + '/' +  display.in, {node, result}]]), graph, cache_id: 'rnd'}; return lib.no.executeGraph(input)?.el } catch(e){ return {error: e} }"
+                        "script": "try { const graph = {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: display.id, in: display.id + '/' + display.in}; const input = {state: new Map([[display.id + '/' +  display.in, {node, result}]]), graph, cache_id: 'rnd'}; return _lib.no.executeGraph(input)?.el } catch(e){ return {error: e} }"
                         },
                         {
                             "id": "run_error_display",
@@ -4311,7 +4311,7 @@
                                 "error_display",
                                 "display_graph"
                             ],
-                            "script": "return !error ? undefined : lib.no.executeGraph({state: new Map([[error_display.id + '/' +  error_display.in, {node, error: error.toString()}]]), graph: {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: error_display.id, in: error_display.id + '/' + error_display.in}})"
+                            "script": "return !error ? undefined : _lib.no.executeGraph({state: new Map([[error_display.id + '/' +  error_display.in, {node, error: error.toString()}]]), graph: {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: error_display.id, in: error_display.id + '/' + error_display.in}})"
                         },
                         {
                             "id": "container_dom_type",
@@ -4475,7 +4475,7 @@
                                 "search",
                                 "display_graph"
                             ],
-                            "script": "return {id: `search-input`, type: 'text', onkeydown: (s, payload) => { if(payload.key === 'Enter'){ const direction = payload.shiftKey ? -1 : 1; const idx = (s.search_results.length + s.search_index + direction) % s.search_results.length; return {...s, selected: s.search_results.slice(idx, idx + 1), search_index: idx} } else { return s;} }, oninput: (s, payload) => { const search_results = new lib.Fuse(display_graph.nodes, {keys: ['name', 'id']}).search(payload.target.value).map(r => r.item.id); return {...s, search: payload.target.value, selected: search_results.length > 0 ? search_results.slice(0, 1) : s.selected, search_results, search_index: 0, levels: lib.scripts.calculateLevels(display_graph, search_results.length > 0 ? search_results.slice(0, 1) : s.selected)}}}"
+                            "script": "return {id: `search-input`, type: 'text', onkeydown: (s, payload) => { if(payload.key === 'Enter'){ const direction = payload.shiftKey ? -1 : 1; const idx = (s.search_results.length + s.search_index + direction) % s.search_results.length; return {...s, selected: s.search_results.slice(idx, idx + 1), search_index: idx} } else { return s;} }, oninput: (s, payload) => { const search_results = new _lib.Fuse(display_graph.nodes, {keys: ['name', 'id']}).search(payload.target.value).map(r => r.item.id); return {...s, search: payload.target.value, selected: search_results.length > 0 ? search_results.slice(0, 1) : s.selected, search_results, search_index: 0, levels: _lib.scripts.calculateLevels(display_graph, search_results.length > 0 ? search_results.slice(0, 1) : s.selected)}}}"
                         },
                         {
                             "id": "out",
@@ -4589,7 +4589,7 @@
                         {
                             "id": "node_layout",
                             "args": ["node_inputs", "node_layout_map", "nodes", "graph", "onclick_node_fn", "selected", "selected_edge"],
-                            "script": "return nodes.map(n => lib.no.executeGraphValue({state: new Map(), graph: {...graph, in: '_' + n.node_id, out: node_layout_map}, cache_id: '_' + n.node_id})(Object.assign({node: n}, node_inputs)))"
+                            "script": "return nodes.map(n => _lib.no.executeGraphValue({state: new Map(), graph: {...graph, in: '_' + n.node_id, out: node_layout_map}, cache_id: '_' + n.node_id})(Object.assign({node: n}, _node_inputs)))"
                         },
                         {
                             "id": "node_layout_map",
@@ -5063,7 +5063,7 @@
                         {
                             "id": "link_layout",
                             "args": ["node_inputs", "link_layout_map", "links", "graph", "selected_edge"],
-                            "script": "return links.map(link => lib.no.executeGraph({state: new Map([['_' + link.source.node_child_id, Object.assign({link}, node_inputs)]]), graph: {...graph, in: '_' + link.source.node_child_id, out: link_layout_map}, cache_id: '_' + link.source.node_child_id + link.target.node_child_id}))"
+                            "script": "return links.map(link => _lib.no.executeGraph({state: new Map([['_' + link.source.node_child_id, Object.assign({link}, node_inputs)]]), graph: {...graph, in: '_' + link.source.node_child_id, out: link_layout_map}, cache_id: '_' + link.source.node_child_id + link.target.node_child_id}))"
                         },
                         {
                             "id": "link_layout_map",
