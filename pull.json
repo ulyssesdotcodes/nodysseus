@@ -21,7 +21,7 @@
                 {
                     "id": "out",
                     "args": [],
-                    "script": "console.log(_node.id); console.log(value); return {}"
+                    "script": "console.log(_node.id); console.log(value); return value"
                 }
             ],
             "edges": [
@@ -1107,6 +1107,11 @@
                     "value": "update_sim_effect"
                 },
                 {
+                    "id": "show_result",
+                    "type": "arg",
+                    "value": "show_result"
+                },
+                {
                     "id": "calculate_levels",
                     "args": [
                         "selected",
@@ -1191,6 +1196,9 @@
                     "script": "try { const result = _lib.no.executeGraph({state: new Map([[display_graph.in, {...state, payload}]]), graph: {...display_graph, nodes: display_graph.nodes.map(n => ({...n})), edges: display_graph.edges.map(e => ({...e})), out: selected[0]}}); return {result, error: undefined}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
                 },
                 {
+                    "id": "result"
+                },
+                {
                     "id": "out",
                     "args": [
                         "state",
@@ -1202,7 +1210,7 @@
                         "payload",
                         "update_sim_effect"
                     ],
-                    "script": "return [{...state, result, error}, (update || update_graph_sim) && [update_sim_effect, state]].concat(fx ?? [])"
+                    "script": "return [{...state, result: show_result && result.run, error}, (update || update_graph_sim) && [update_sim_effect, state]].concat(fx ?? [])"
                 }
             ],
             "edges": [
@@ -1281,6 +1289,16 @@
                 },
                 {
                     "from": "run",
+                    "to": "result",
+                    "as": "run"
+                },
+                {
+                    "from": "show_result",
+                    "to": "out",
+                    "as": "show_result"
+                },
+                {
+                    "from": "result",
                     "to": "out",
                     "as": "result"
                 },
@@ -2201,7 +2219,8 @@
                 "editing": false,
                 "search": false,
                 "show_all": false,
-                "app_state": {}
+                "app_state": {},
+                "show_result": true
             }
         },
         {
@@ -2383,7 +2402,7 @@
                         "display_graph",
                         "selected_edge"
                     ],
-                    "script": "const next_edges = selected_edge ? selected_edge : display_graph.edges.filter(e => e.to === selected[0]); const next_node_edge = next_edges[Math.ceil(next_edges.length / 2) - 1]; return next_node_edge ? [next_node_edge.from] : selected"
+                    "script": "const next_edges = selected_edge ? selected_edge : display_graph.edges.filter(e => e.to === selected[0]); const next_node_edge = selected_edge ? selected_edge : next_edges[Math.ceil(next_edges.length / 2) - 1]; return next_node_edge ? [next_node_edge.from] : selected"
                 },
                 {
                     "id": "left",
@@ -2589,6 +2608,10 @@
                     "script": "document.querySelector('#search-input').focus(); return ''"
                 },
                 {
+                    "id": "i",
+                    "script": "console.log('i pressed'); return !state.show_result"
+                },
+                {
                     "id": "y",
                     "args": [
                         "node"
@@ -2738,6 +2761,18 @@
                     "id": "set_show_all",
                     "args": ["show_all", "state"],
                     "script": "state.show_all = show_all ?? state.show_all; return state;"
+                },
+                {
+                    "id": "show_result",
+                    "type": "switch"
+                },
+                {
+                    "id": "set_show_result",
+                    "args": [
+                        "show_result",
+                        "state"
+                    ],
+                    "script": "return {...state, show_result: show_result ?? state.show_result}"
                 },
                 {
                     "id": "editing",
@@ -2954,6 +2989,11 @@
                     "as": "input"
                 },
                 {
+                    "from": "key_inputs",
+                    "to": "show_result",
+                    "as": "input"
+                },
+                {
                     "from": "state",
                     "to": "filter_editing"
                 },
@@ -3117,6 +3157,11 @@
                 {
                     "from": "state",
                     "to": "x"
+                },
+                {
+                    "from": "state",
+                    "to": "i",
+                    "as": "state"
                 },
                 {
                     "from": "key_event",
@@ -3297,6 +3342,11 @@
                     "from": "q",
                     "to": "show_all",
                     "as": "q"
+                },
+                {
+                    "from": "i",
+                    "to": "show_result",
+                    "as": "i"
                 },
                 {
                     "from": "state",
@@ -3515,6 +3565,16 @@
                 },
                 {
                     "from": "set_editing",
+                    "to": "set_show_result",
+                    "as": "state"
+                },
+                {
+                    "from": "show_result",
+                    "to": "set_show_result",
+                    "as": "show_result"
+                },
+                {
+                    "from": "set_show_result",
                     "to": "set_pending_edges",
                     "as": "state"
                 },
@@ -3979,6 +4039,11 @@
                     "value": "graph"
                 },
                 {
+                    "id": "show_result",
+                    "type": "arg",
+                    "value": "show_result"
+                },
+                {
                     "id": "wrapper_dom_type",
                     "value": "div"
                 },
@@ -3992,9 +4057,9 @@
                         "node_editor",
                         "edit_text",
                         "search_input",
-                        "result"
+                        "show_result"
                     ],
-                    "script": "return [node_editor.el, edit_text.el, search_input.el, result.el]"
+                    "script": "return [node_editor.el, edit_text.el, search_input.el, show_result && result.el ].filter(e => e)"
                 },
                 {
                     "id": "edit_text",
@@ -5093,7 +5158,7 @@
                         {
                             "id": "link_layout",
                             "args": ["node_inputs", "link_layout_map", "links", "graph", "selected_edge"],
-                            "script": "return links.map(link => _lib.no.executeGraph({state: new Map([['_' + link.source.node_child_id, Object.assign({link}, node_inputs)]]), graph: {...graph, in: '_' + link.source.node_child_id, out: link_layout_map}, cache_id: '_' + link.source.node_child_id + link.target.node_child_id}))"
+                            "script": "return links.map(link => _lib.no.executeGraph({state: new Map([['_' + link.source.node_child_id, Object.assign({link}, _node_inputs)]]), graph: {...graph, in: '_' + link.source.node_child_id, out: link_layout_map}, cache_id: '_' + link.source.node_child_id + link.target.node_child_id}))"
                         },
                         {
                             "id": "link_layout_map",
@@ -5110,10 +5175,8 @@
                                 },
                                 {
                                     "id": "get_selected_edge",
-                                    "args": [
-                                        "input"
-                                    ],
-                                    "script": "return input.selected_edge"
+                                    "type": "arg",
+                                    "value": "selected_edge"
                                 },
                                 {
                                     "id": "edge_info_el",
@@ -5249,11 +5312,6 @@
                                 {
                                     "from": "in",
                                     "to": "line_props"
-                                },
-                                {
-                                    "from": "in",
-                                    "to": "get_selected_edge",
-                                    "as": "input"
                                 },
                                 {
                                     "from": "get_link",
@@ -5890,6 +5948,11 @@
                     "from": "graph",
                     "to": "wrapper",
                     "as": "graph"
+                },
+                {
+                    "from": "show_result",
+                    "to": "wrapper_children",
+                    "as": "show_result"
                 },
                 {
                     "from": "node_editor",

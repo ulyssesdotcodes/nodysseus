@@ -280,8 +280,8 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
 
                 let res = run_with_val(input.from)(graph_input_value);
 
-                if (res?._Proxy) {
-                    return res._value;
+                while (res?._Proxy) {
+                    res = res._value;
                 }
 
                 return res;
@@ -1039,7 +1039,7 @@ const generic_nodes = new Set([
 const stored = localStorage.getItem("display_graph");
 // const display_graph = {...DEFAULT_GRAPH, nodes: DEFAULT_GRAPH.nodes.map(n => ({...n})), edges: DEFAULT_GRAPH.edges.map(e => ({...e}))};
 const display_graph = stored ? JSON.parse(stored) : test_graph;
-const original_graph = {...DEFAULT_GRAPH, nodes: [...DEFAULT_GRAPH.nodes], edges: [...DEFAULT_GRAPH.edges]};
+const original_graph = {...DEFAULT_GRAPH, nodes: [...DEFAULT_GRAPH.nodes].map(n => ({...n})), edges: [...DEFAULT_GRAPH.edges].map(e => ({...e}))};
 const state = new Map([['in', { graph: DEFAULT_GRAPH, original_graph, display_graph: { ...display_graph, nodes: display_graph.nodes.concat(DEFAULT_GRAPH.nodes.filter(n => generic_nodes.has(n.id) && display_graph.nodes.findIndex(dn => dn.id === n.id) === -1)), edges: display_graph.edges.concat([]) } }]])
 
 
