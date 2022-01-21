@@ -112,6 +112,8 @@ const createProxy = (run_with_val, input, graph_input_value) => {
             return true;
         } else if (prop === "_nodeid") {
             return input.from;
+        } if (prop === 'toJSON') {
+            return resolved ? (() => res) : ("Proxy: " + input.from)
         }
 
         if (!resolved) {
@@ -122,8 +124,6 @@ const createProxy = (run_with_val, input, graph_input_value) => {
 
         if (prop === "_value") {
             return res
-        } else if (prop === 'toJSON') {
-            return () => res;
         } else {
             if(typeof res[prop] === 'function'){
                 return res[prop].bind(res);
@@ -866,7 +866,7 @@ const contract_node = (data, keep_expanded = false) => {
                 in_edge = in_edge.filter(ie => ie.from !== e.from);
 
                 const old_node = inside_nodes.find(i => e.from === i.id);
-                let inside_node = old_node ?? data.display_graph.nodes.find(p => p.id === e.from);
+                let inside_node = old_node ?? Object.assign({}, data.display_graph.nodes.find(p => p.id === e.from));
 
                 if ((inside_node.name ?? inside_node.id)?.endsWith('/in') && !(inside_node.name ?? inside_node.id).endsWith(name + '/in')) {
                     in_edge.push(e);
@@ -876,6 +876,7 @@ const contract_node = (data, keep_expanded = false) => {
                 inside_node_map.set(inside_node.id, inside_node);
                 inside_edges.add(e);
                 if (!old_node) {
+                    delete inside_node.inputs;
                     inside_nodes.push(inside_node);
                 }
 

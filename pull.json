@@ -1210,7 +1210,7 @@
                         "payload",
                         "update_sim_effect"
                     ],
-                    "script": "return [{...state, result: show_result && result.run, error}, (update || update_graph_sim) && [update_sim_effect, state]].concat(fx ?? [])"
+                    "script": "return [{...state, result: show_result && result.run.result, error: show_result && result.run.error}, (update || update_graph_sim) && [update_sim_effect, state]].concat(fx ?? [])"
                 }
             ],
             "edges": [
@@ -1347,12 +1347,10 @@
                 },
                 {
                     "id": "out",
-                    "args": [
-                        "props",
-                        "children",
-                        "dom_type"
-                    ],
                     "script": "return {el: {dom_type, props, children}}"
+                },
+                {
+                    "id": "_out"
                 }
             ],
             "edges": [
@@ -2170,7 +2168,8 @@
                 {
                     "from": "text",
                     "to": "out",
-                    "as": "children"
+                    "as": "children",
+                    "type": "resolve"
                 },
                 {
                     "from": "out_dom_type",
@@ -2534,7 +2533,7 @@
                         "selected_edge",
                         "levels"
                     ],
-                    "script": "const id = Math.random().toString(36).substring(2, 9); console.log(id); const new_nodes = display_graph.nodes.concat([{id, args: []}]); const new_edges = display_graph.edges.flatMap(e => selected_edge?.to === e.to && selected_edge?.from === e.from ? [{from: selected_edge.from, to: id}, {from: id, to: selected_edge.to, as: e.as}] : e).concat(selected_edge ? [] : [{from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id, as: `arg${levels.parents.get(selected[0]).length}`}]); return {display_graph: {...display_graph, edges: new_edges, nodes: new_nodes}, selected: [id], selected_edge: false};",
+                    "script": "const id = Math.random().toString(36).substring(2, 9); const new_nodes = display_graph.nodes.concat([{id, args: []}]); const new_edges = display_graph.edges.flatMap(e => selected_edge?.to === e.to && selected_edge?.from === e.from ? [{from: selected_edge.from, to: id}, {from: id, to: selected_edge.to, as: e.as}] : e).concat(selected_edge ? [] : [{from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id, as: `arg${levels.parents.get(selected[0]).length}`}]); return {display_graph: {...display_graph, edges: new_edges, nodes: new_nodes}, selected: [id], selected_edge: false};",
                     "script_": "const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({id, args: []}); const edgeIdx = display_graph.edges.findIndex(e => selected_edge?.to === e.to && selected_edge?.from === e.from); display_graph.edges.splice(selected_edge ? edgeIdx : display_graph.edges.length, selected_edge ? 1 : 0, ...(selected_edge ? [{from: selected_edge.from, to: id}, {from: id, to: selected_edge.to, as: display_graph.edges[edgeIdx].as}] : [{from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id, as: `arg${levels.parents.get(selected[0]).length}`}])); return {display_graph, selected: [id], selected_edge: false};"
                 },
                 {
@@ -2609,7 +2608,7 @@
                 },
                 {
                     "id": "i",
-                    "script": "console.log('i pressed'); return !state.show_result"
+                    "script": "return !state.show_result"
                 },
                 {
                     "id": "y",
@@ -2625,7 +2624,7 @@
                         "display_graph",
                         "selected"
                     ],
-                    "script": "const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({...clipboard[0], id, name: clipboard.name?.concat('_copy')}); return {display_graph, selected: id};"
+                    "script": "const id = Math.random().toString(36).substr(2, 9); const new_node = {...clipboard, id, name: clipboard.name?.concat('_copy')}; const new_edges = display_graph.edges.filter(e => e.to === clipboard.id || e.from === clipboard.id).map(e => ({...e, to: e.to === clipboard.id ? id : e.to, from: e.from === clipboard.id ? id : e.from})); return {display_graph: {...display_graph, edges: display_graph.edges.concat(new_edges), nodes: display_graph.nodes.concat([new_node])}, selected: [id]};"
                 },
                 {
                     "id": "p_selected",
@@ -2842,7 +2841,7 @@
                         "clipboard",
                         "state"
                     ],
-                    "script": "state.clipboard = clipboard ? [clipboard] : state.clipboard; return state"
+                    "script": "state.clipboard = clipboard ? clipboard : state.clipboard; return state"
                 },
                 {
                     "id": "search",
@@ -4044,6 +4043,9 @@
                     "value": "show_result"
                 },
                 {
+                    "id": "result_wrapper"
+                },
+                {
                     "id": "wrapper_dom_type",
                     "value": "div"
                 },
@@ -4059,7 +4061,7 @@
                         "search_input",
                         "show_result"
                     ],
-                    "script": "return [node_editor.el, edit_text.el, search_input.el, show_result && result.el ].filter(e => e)"
+                    "script": "return [node_editor.el, edit_text.el, search_input.el, show_result && result.run.el ].filter(e => e)"
                 },
                 {
                     "id": "edit_text",
@@ -4343,6 +4345,11 @@
                             "id": "in"
                         },
                         {
+                            "id": "error",
+                            "type": "arg",
+                            "value": "error"
+                        },
+                        {
                             "id": "get_node",
                             "args": [
                                 "display_graph",
@@ -4406,7 +4413,7 @@
                                 "error_display",
                                 "display_graph"
                             ],
-                            "script": "return !error ? undefined : _lib.no.executeGraph({state: new Map([[error_display.id + '/' +  error_display.in, {node, error: error.toString()}]]), graph: {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: error_display.id, in: error_display.id + '/' + error_display.in}})"
+                            "script": "return !error ? undefined : _lib.no.executeGraph({state: new Map([[error_display.id + '/' +  error_display.in, {node, error: error.toString()}]]), graph: {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: error_display.id, in: error_display.id + '/' + error_display.in}})?.el"
                         },
                         {
                             "id": "container_dom_type",
@@ -4421,13 +4428,11 @@
                         },
                         {
                             "id": "container_children_inputs",
-                            "args": ["error"],
                             "script": "return error? ['error_display'] : ['display']"
                         },
                         {
                             "id": "container_children",
-                            "args": ["error_display", "display"],
-                            "script": "return [error_display ?? display]"
+                            "type": "switch"
                         },
                         {
                             "id": "container",
@@ -4467,8 +4472,9 @@
                             "to": "run_error_display"
                         },
                         {
-                            "from": "in",
-                            "to": "container_children_inputs"
+                            "from": "error",
+                            "to": "container_children_inputs",
+                            "as": "error"
                         },
                         {
                             "from": "get_node",
@@ -5971,6 +5977,11 @@
                 },
                 {
                     "from": "result",
+                    "to": "result_wrapper",
+                    "as": "run"
+                },
+                {
+                    "from": "result_wrapper",
                     "to": "wrapper_children",
                     "as": "result"
                 },
