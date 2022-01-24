@@ -104,16 +104,16 @@ const hashcode = function(str, seed = 0) {
 };
 
 const createProxy = (run_with_val, input, graph_input_value) => { 
-    let res;
+    let res = Object.create(null);
     let resolved = false;
-    return new Proxy({}, {
+    return new Proxy(res, {
     get: (_, prop) => {
         if (prop === "_Proxy") {
             return true;
         } else if (prop === "_nodeid") {
             return input.from;
         } if (prop === 'toJSON') {
-            return resolved ? (() => res) : ("Proxy: " + input.from)
+            return () => resolved ? res : {Proxy: input.from}
         }
 
         if (!resolved) {
@@ -138,15 +138,15 @@ const createProxy = (run_with_val, input, graph_input_value) => {
             resolved = true;
         }
 
-        return Reflect.ownKeys(res);
+        return typeof res === 'object' ? Reflect.ownKeys(res) : undefined;
     },
-    getOwnPropertyDescriptor: (_, prop) => {
+    getOwnPropertyDescriptor: (target, prop) => {
         if (!resolved) {
             res = run_with_val(input.from)(graph_input_value);
             resolved = true;
         }
 
-        return Reflect.getOwnPropertyDescriptor(res, prop);
+        return typeof res === 'object' && !!res ? (Reflect.getOwnPropertyDescriptor(res, prop) || {value: get(target, prop)}) : undefined;
     }
 })
 }
@@ -164,7 +164,7 @@ const resolve = (o) => {
             same = same && o[i] === new_arr[i];
         }
         return same ? o : new_arr;
-    } else if (typeof o === 'object' && o) {
+    } else if (typeof o === 'object' && o && o._needsresolve) {
         const entries = Object.entries(o);
         let i = entries.length;
         let same = false;
@@ -196,6 +196,10 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
         throw new Error(`Graph has no nodes! in: ${graph.in} out: ${graph.out}`)
     }
 
+    if(graph._Proxy) {
+        graph = graph._value;
+    }
+
     const node_map = graph.node_map ?? new Map(graph.nodes.map(n => [n.id, n]));
     graph.node_map = node_map;
 
@@ -210,9 +214,9 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
             throw new Error(`Undefined node_id ${node_id}`)
         }
 
-        if(!node.inputs) {
-            Object.assign(node, { inputs: in_edge_map.get(node_id) });
-        }
+        // if(!node.inputs) {
+        Object.assign(node, { inputs: in_edge_map.get(node_id) });
+        // }
 
         if (node.type === "arg" && (!node.inputs || node.inputs.length === 0)) {
             node.inputs.push({ from: "_graph_input_value", to: node.id });
@@ -259,11 +263,14 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
             node_type = node;
         }
 
+        let _needsresolve = false;
+
         const tryrun = (input) => {
             if (input.type === "ref") {
                 return input.from;
             } else if (input.from === "_graph_input_value" || input.from === graph.in) {
-                return graph_input_value;
+                _needsresolve = _needsresolve || graph_input_value._needsresolve
+                return {...graph_input_value};
             } else if (input.type === "resolve") {
                 if(input.from.includes("filter") && input.from.includes("arr")) {
                     console.log(input.from);
@@ -272,21 +279,26 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
                     throw new Error(`Input not found ${input.from} for node ${node_id}`)
                 }
 
-                return resolve(run_with_val(input.from)(graph_input_value));
+                _needsresolve = _needsresolve || graph_input_value._needsresolve
+
+                return resolve(run_with_val(input.from)({...graph_input_value}));
             } else if (!input.as || node_type.script) {
                 if(!node_map.has(input.from)) {
                     throw new Error(`Input not found ${input.from} for node ${node_id}`)
                 }
 
-                let res = run_with_val(input.from)(graph_input_value);
+                let res = run_with_val(input.from)({...graph_input_value});
 
                 while (res?._Proxy) {
                     res = res._value;
                 }
+                
+                _needsresolve = _needsresolve || (typeof res === 'object' && res._needsresolve)
 
                 return res;
             } else {
-                return createProxy(run_with_val, input, graph_input_value);
+                _needsresolve = true;
+                return createProxy(run_with_val, input, {...graph_input_value});
             }
         }
 
@@ -371,6 +383,9 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
             }
 
             const res = run_with_val(`${node.id}/${node_type.out ?? 'out'}`)(graph_input_value)
+            if(typeof res === 'object' && !!res && !res._Proxy) {
+                res._needsresolve = _needsresolve;
+            }
             cache.get(cache_id).set(inid, [res, data, graph_input_value]);
             return res;
         } else if (node_type.script) {
@@ -411,6 +426,7 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
                 argset.add('_lib');
                 argset.add('_node');
                 argset.add('_node_inputs');
+                argset.add('_graph');
                 if(node_type.args) {
                     node_type.args.forEach(a => argset.add(a));
                 }
@@ -425,6 +441,8 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
                         ? lib
                         : a === '_node_inputs'
                         ? data
+                        : a === '_graph'
+                        ? graph
                         : data[a]);
                     orderedargs += `${a},`;
                 }
@@ -448,6 +466,9 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
                     cache.get(cache_id).set(node.id, [results, data, graph_input_value]);
                 }
 
+                if(typeof results === 'object' && !!results && !results._Proxy) {
+                    results._needsresolve = true;
+                }
 
                 return results;
                 // active_nodes.delete(node.id);
@@ -460,10 +481,14 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
             }
         }
 
+        if(typeof data === 'object' && !!data && !data._Proxy) {
+            data._needsresolve = true;
+        }
+
         return data;
     }
 
-    return run_with_val;
+    return (node_id) => (graph_input_value) => resolve(run_with_val(node_id)(graph_input_value));
 }
 
 const test_graph = {
@@ -559,7 +584,7 @@ const d3simulation = () => {
                 .force('collide', lib.d3.forceCollide(64))
                 .force('links', lib.d3
                     .forceLink([])
-                    .distance(128)
+                    .distance(l => l.distance ?? 128)
                     .strength(l => l.strength)
                     .id(n => n.node_child_id))
                 .force('link_direction', lib.d3.forceY().strength(.05))
@@ -702,7 +727,7 @@ const graphToSimulationNodes = (data) => {
                 target: main_node_map.get(e.to),
                 as: e.as,
                 type: e.type,
-                strength: 4,
+                strength: 4 / (1 + 4 * (data.levels.children.get(main_node_map.get(e.from))?.length ?? 0)),
                 selected_distance: data.levels.distance_from_selected.get(main_node_map.get(e.to)) !== undefined ? Math.min(data.levels.distance_from_selected.get(main_node_map.get(e.to)), data.levels.distance_from_selected.get(e.from + "_" + e.to)) : undefined,
                 sibling_index_normalized: (data.levels.siblings.get(e.from).findIndex(n => n === e.from) + 1) / (data.levels.siblings.get(e.from).length + 1),
             }
