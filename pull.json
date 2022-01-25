@@ -144,7 +144,7 @@
             },
             {
                 "id": "action",
-                "script": "console.log('inaction'); console.log(state); console.log(payload); return _lib.scripts.graphToSimulationNodes(state, payload)"
+                "script": "return _lib.scripts.graphToSimulationNodes(state, payload)"
             }
         ],
         "edges": [
@@ -168,7 +168,7 @@
             },
             {
                 "id": "action",
-                "script": "console.log(state); console.log(payload); return {...state, nodes: payload.nodes, links: payload.links}"
+                "script": "return {...state, nodes: payload.nodes, links: payload.links}"
             }
         ],
         "edges": [
@@ -1183,7 +1183,7 @@
                         "state",
                         "levels"
                     ],
-                    "script": "state.levels = levels ?? state.levels; return state"
+                    "script": "return {...state, levels: levels ?? state.levels}"
                 },
                 {
                     "id": "graph_sim",
@@ -1193,7 +1193,7 @@
                         "selected",
                         "levels"
                     ],
-                    "script": "return undefined;//_lib.scripts.graphToSimulationNodes({display_graph, nodes, selected, levels});"
+                    "script": "return undefined;"
                 },
                 {
                     "id": "new_state_cases",
@@ -1257,10 +1257,6 @@
                 },
                 {
                     "from": "in",
-                    "to": "out"
-                },
-                {
-                    "from": "in",
                     "to": "run"
                 },
                 {
@@ -1306,7 +1302,8 @@
                 },
                 {
                     "from": "set_levels",
-                    "to": "graph_sim"
+                    "to": "new_state",
+                    "as": "state"
                 },
                 {
                     "from": "levels_inputs",
@@ -2356,9 +2353,6 @@
         {
             "id": "update_nodes_fn",
             "type": "execute_graph"
-        },
-        {
-            "id": "onkey_fn_in"
         },
         {
             "id": "onkey_fn",
@@ -3836,9 +3830,6 @@
             "type": "execute_graph"
         },
         {
-            "id": "onclick_node_fn_in"
-        },
-        {
             "id": "onclick_node_fn_body",
             "nodes": [
                 {
@@ -4773,7 +4764,7 @@
                         {
                             "id": "node_layout",
                             "args": ["node_inputs", "node_layout_map", "nodes", "graph", "onclick_node_fn", "selected", "selected_edge"],
-                            "script": "return nodes.map(n => _lib.no.executeGraphValue({state: new Map(), graph: {...graph, in: '_' + n.node_id, out: node_layout_map}, cache_id: '_' + n.node_id})(Object.assign({node: n}, _node_inputs)))"
+                            "script": "return nodes.map(n => _lib.no.executeGraphValue({state: new Map(), graph: {...graph, in: '_' + n.node_id, out: node_layout_map}, cache_id: '_' + n.node_id})(Object.assign({node: n, selected_distance: levels.distance_from_selected.get(n.node_child_id), level: levels.level_by_node.get(n.node_id)}, _node_inputs)))"
                         },
                         {
                             "id": "node_layout_map",
@@ -4795,6 +4786,16 @@
                                     "script": "return selected.includes(node_id)"
                                 },
                                 {
+                                    "id": "selected_distance",
+                                    "type": "arg",
+                                    "value": "selected_distance"
+                                },
+                                {
+                                    "id": "level",
+                                    "type": "arg",
+                                    "value": "level"
+                                },
+                                {
                                     "id": "out"
                                 },
                                 {
@@ -4811,7 +4812,7 @@
                                         "node",
                                         "meta"
                                     ],
-                                    "script": "const mouseevent = (_, payload) => [meta.onclick_node_fn, {x: payload.x, y: payload.y, node_id: node.node_id, selected: [], ty: 'down'}]; return ({ x: node.x - 20, y: node.y - 20, id: node.node_id, onmousedown: mouseevent, width: 256, height: 64, id: node.node_child_id, class: `node ${meta.selected[0] === node.node_id ? 'selected': ''}`, opacity: meta.selected_edge?.from === node.node_id ? 1 : node.selected_distance !== undefined ? Math.max(0.05, 1 - (node.selected_distance * node.selected_distance + (!!node.selected_distance ? 2 : 0)) / 6) : 0.1})"
+                                    "script": "const mouseevent = (_, payload) => [meta.onclick_node_fn, {x: payload.x, y: payload.y, node_id: node.node_id, selected: [], ty: 'down'}]; return ({ x: node.x - 20, y: node.y - 20, id: node.node_id, onmousedown: mouseevent, width: 256, height: 64, id: node.node_child_id, class: `node ${meta.selected[0] === node.node_id ? 'selected': ''}`, opacity: meta.selected_edge?.from === node.node_id ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - (selected_distance * selected_distance + (!!selected_distance ? 2 : 0)) / 6) : 0.1})"
 
                                 },
                                 {
@@ -5222,6 +5223,11 @@
                                 {
                                     "from": "children",
                                     "to": "parent"
+                                },
+                                {
+                                    "from": "selected_distance",
+                                    "to": "parent_attrs",
+                                    "as": "selected_distance"
                                 },
                                 {
                                     "from": "parent_attrs",
@@ -5744,6 +5750,11 @@
                             "as": "levels"
                         },
                         {
+                            "from": "get_levels",
+                            "to": "node_layout",
+                            "as": "levels"
+                        },
+                        {
                             "from": "in",
                             "to": "get_graph"
                         },
@@ -6209,16 +6220,6 @@
             "type": "ref"
         },
         {
-            "from": "onclick_node_fn_in",
-            "to": "onclick_node_fn_body"
-        },
-        {
-            "from": "onclick_node_fn_in",
-            "to": "onclick_node_fn",
-            "as": "in_node",
-            "type": "ref"
-        },
-        {
             "from": "hyperapp_view_in",
             "to": "onclick_graph_fn"
         },
@@ -6254,19 +6255,9 @@
             "as": "onkey_fn"
         },
         {
-            "from": "onkey_fn_in",
-            "to": "onkey_fn_body"
-        },
-        {
             "from": "onkey_fn_body",
             "to": "onkey_fn",
             "as": "fn",
-            "type": "ref"
-        },
-        {
-            "from": "onkey_fn_in",
-            "to": "onkey_fn",
-            "as": "in_node",
             "type": "ref"
         },
         {

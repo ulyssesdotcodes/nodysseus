@@ -269,7 +269,7 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
                 return input.from;
             } else if (input.from === "_graph_input_value" || input.from === graph.in) {
                 _needsresolve = _needsresolve || graph_input_value._needsresolve
-                return {...graph_input_value};
+                return graph_input_value;
             } else if (input.type === "resolve") {
                 if(!node_map.has(input.from)) {
                     throw new Error(`Input not found ${input.from} for node ${node_id}`)
@@ -277,13 +277,13 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
 
                 _needsresolve = _needsresolve || graph_input_value._needsresolve
 
-                return resolve(run_with_val(input.from)({...graph_input_value}));
+                return resolve(run_with_val(input.from)(graph_input_value));
             } else if (!input.as || node_type.script) {
                 if(!node_map.has(input.from)) {
                     throw new Error(`Input not found ${input.from} for node ${node_id}`)
                 }
 
-                let res = run_with_val(input.from)({...graph_input_value});
+                let res = run_with_val(input.from)(graph_input_value);
 
                 while (res?._Proxy) {
                     res = res._value;
@@ -294,7 +294,7 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
                 return res;
             } else {
                 _needsresolve = true;
-                return createProxy(run_with_val, input, {...graph_input_value});
+                return createProxy(run_with_val, input, graph_input_value);
             }
         }
 
@@ -363,9 +363,14 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
                 }
             }
 
+            const combined_data_input = typeof graph_input_value === 'object' && !Array.isArray(graph_input_value) && data
+                    ? Object.assign({}, graph_input_value, data) 
+                    : inputs.length > 0 
+                    ? data
+                    : graph_input_value;
+
             if (node_map.has(`${node.id}/${node_type.in ?? 'in'}`)) {
-                node_map.get(`${node.id}/${node_type.in ?? 'in'}`).value =
-                    typeof graph_input_value === 'object' && !Array.isArray(graph_input_value) ? Object.assign({}, graph_input_value, data) : data;
+                node_map.get(`${node.id}/${node_type.in ?? 'in'}`).value = combined_data_input
             }
 
 
@@ -378,8 +383,8 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
                 }
             }
 
-            const res = run_with_val(outid)(Object.assign({}, graph_input_value, data))
-            if(typeof res === 'object' && !!res && !res._Proxy && !Array.isArray(res)) {
+            const res = run_with_val(outid)(combined_data_input)
+            if(typeof res === 'object' && !!res && !res._Proxy && !Array.isArray(res) && _needsresolve) {
                 res._needsresolve = _needsresolve;
             }
             cache.get(cache_id).set(outid, [res, data, graph_input_value]);
@@ -571,8 +576,6 @@ const bfs = (graph, visited) => (id, level) => {
 }
 
 const updateSimulationNodes = (data) => {
-    console.log('update');
-    console.log(data.display_graph);
     const simulation_node_data = new Map();
     data.simulation.nodes().forEach(n => {
         simulation_node_data.set(n.node_child_id, n)
@@ -769,7 +772,6 @@ const d3subscription = (dispatch, props) => {
                         y: Math.floor(l.target.y)
                     })
                 }))};
-            console.log(data);
             dispatch([props.action, data]);
         }
 
