@@ -128,14 +128,56 @@
         "id": "wrap_array",
         "args": ["value"],
         "script": "return [value]"
+    },{
+        "id": "graph_to_sim_fn",
+        "out": "action",
+        "nodes": [
+            {
+                "id": "state",
+                "type": "arg",
+                "value": 0
+            },
+            {
+                "id": "payload",
+                "type": "arg",
+                "value": 1
+            },
+            {
+                "id": "action",
+                "script": "console.log('inaction'); console.log(state); console.log(payload); return _lib.scripts.graphToSimulationNodes(state, payload)"
+            }
+        ],
+        "edges": [
+            {"from": "state", "to": "action", "as": "state"},
+            {"from": "payload", "to": "action", "as": "payload"}
+        ]
+    },
+    {
+        "id": "sim_to_hyperapp_action",
+        "out": "action",
+        "nodes": [
+            {
+                "id": "state",
+                "type": "arg",
+                "value": 0
+            },
+            {
+                "id": "payload",
+                "type": "arg",
+                "value": 1
+            },
+            {
+                "id": "action",
+                "script": "console.log(state); console.log(payload); return {...state, nodes: payload.nodes, links: payload.links}"
+            }
+        ],
+        "edges": [
+            {"from": "state", "to": "action", "as": "state"},
+            {"from": "payload", "to": "action", "as": "payload"}
+        ]
     },
         {
             "id": "hyperapp",
-            "args": [
-                "init",
-                "view",
-                "subscriptions"
-            ],
             "nodes": [
                 {
                     "id": "in"
@@ -147,11 +189,6 @@
                 {
                     "id": "init_key",
                     "value": "init"
-                },
-                {
-                    "id": "update_sim_effect",
-                    "type": "arg",
-                    "value": "update_sim_effect"
                 },
                 {
                     "id": "view",
@@ -168,10 +205,9 @@
                     "args": [
                         "init",
                         "view",
-                        "subscriptions",
-                        "update_sim_effect"
+                        "subscriptions"
                     ],
-                    "script": "return {dispatch: _lib.ha.app({init: () => [init, [() => { update_sim_effect(null, init) }]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById('node-editor'), subscriptions: () => subscriptions})}"
+                    "script": "return {dispatch: _lib.ha.app({init, view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById('node-editor'), subscriptions: () => subscriptions})}"
                 }
             ],
             "edges": [
@@ -193,15 +229,6 @@
                     "from": "init",
                     "to": "resolve_init",
                     "as": "init"
-                },
-                {
-                    "from": "init",
-                    "to": "update_sim_effect"
-                },
-                {
-                    "from": "update_sim_effect",
-                    "to": "out",
-                    "as": "update_sim_effect"
                 },
                 {
                     "from": "view",
@@ -522,11 +549,10 @@
                 {
                     "id": "out",
                     "args": [
-                        "in_node",
-                        "out_node",
+                        "fn",
                         "graph"
                     ],
-                    "script": "return (...args) => {res = _lib.no.executeGraph({state: new Map([[in_node, args.length === 1 ? args[0] : args]]), graph: {...graph, in: in_node, out: out_node}, cache_id: 'view'}); return res;}"
+                    "script": "return (...args) => {res = _lib.no.executeGraphNode({state: new Map(), graph, cache_id: 'view'})(fn)(args.length === 1 ? args[0] : args); return res;}"
                 }
             ],
             "edges": [
@@ -598,6 +624,11 @@
                     "value": "fn"
                 },
                 {
+                    "id": "payload",
+                    "type": "arg",
+                    "value": "payload"
+                },
+                {
                     "id": "out",
                     "args": [
                         "fn"
@@ -610,6 +641,11 @@
                     "from": "in",
                     "to": "out",
                     "as": "arg0"
+                },
+                {
+                    "from": "payload",
+                    "to": "out",
+                    "as": "payload"
                 },
                 {
                     "from": "fn",
@@ -1157,7 +1193,7 @@
                         "selected",
                         "levels"
                     ],
-                    "script": "return _lib.scripts.graphToSimulationNodes({display_graph, nodes, selected, levels});"
+                    "script": "return undefined;//_lib.scripts.graphToSimulationNodes({display_graph, nodes, selected, levels});"
                 },
                 {
                     "id": "new_state_cases",
@@ -1210,7 +1246,7 @@
                         "payload",
                         "update_sim_effect"
                     ],
-                    "script": "return [{...state, result: show_result && result.run.result, error: show_result && result.run.error}, (update || update_graph_sim) && [update_sim_effect, state]].concat(fx ?? [])"
+                    "script": "return [{...state, result: show_result && result.run.result, error: show_result && result.run.error}, false && (update || update_graph_sim) && [update_sim_effect, state]].concat(fx ?? [])"
                 }
             ],
             "edges": [
@@ -2027,7 +2063,7 @@
                 {
                     "from": "u9feks2l9",
                     "to": "9kkegcpi2",
-                    "as": "out_node",
+                    "as": "fn",
                     "type": "ref"
                 },
                 {
@@ -2219,7 +2255,7 @@
                 "search": false,
                 "show_all": false,
                 "app_state": {},
-                "show_result": true
+                "show_result": false
             }
         },
         {
@@ -2261,19 +2297,44 @@
             "id": "hyperapp_subscriptions",
             "args": [
                 "simulation",
-                "onkey_fn"
+                "onkey_fn",
+                "sim_to_hyperapp_action"
             ],
-            "script": "return [[_lib.scripts.d3subscription(simulation)], [_lib.scripts.keydownSubscription, {action: onkey_fn}]]"
+            "script": "return [[_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}], [_lib.scripts.keydownSubscription, {action: onkey_fn}]]"
+        },
+        {
+            "id": "nodes",
+            "type": "arg",
+            "value": "nodes"
+        },
+        {
+            "id": "links",
+            "type": "arg",
+            "value": "links"
         },
         {
             "id": "graph_to_simulation",
             "args": [
                 "nodes",
+                "links",
                 "display_graph",
                 "selected",
                 "levels"
             ],
-            "script": "return _lib.scripts.graphToSimulationNodes({display_graph, nodes, selected, levels})"
+            "type": "graph_to_sim_fn",
+            "_script": "return _lib.scripts.graphToSimulationNodes({display_graph, nodes, links, selected, levels})"
+        },
+        {
+            "id": "sim_to_hyperapp",
+            "type": "sim_to_hyperapp_action"
+        },
+        {
+            "id": "sim_to_hyperapp_fn",
+            "type": "execute_graph"
+        },
+        {
+            "id": "graph_to_sim_action",
+            "type": "execute_graph"
         },
         {
             "id": "update_nodes_in"
@@ -2290,16 +2351,11 @@
                 "levels",
                 "show_all"
             ],
-            "script": "return _lib.scripts.updateSimulationNodes({display_graph, simulation, nodes, fuse_links, links, selected, levels, show_all})"
+            "script": "return simulation ? _lib.scripts.updateSimulationNodes({display_graph, simulation, nodes, fuse_links, links, selected, levels, show_all}) : undefined"
         },
         {
             "id": "update_nodes_fn",
             "type": "execute_graph"
-        },
-        {
-            "id": "d3simulation",
-            "args": [],
-            "script": "return _lib.scripts.d3simulation()"
         },
         {
             "id": "onkey_fn_in"
@@ -3640,19 +3696,38 @@
             ]
         },
         {
+            "id": "simulation",
+            "type": "arg",
+            "value": "simulation"
+        },
+        {
+            "id": "arg_display_graph",
+            "type": "arg",
+            "value": "display_graph"
+        },
+        {
+            "id": "arg_nodes",
+            "type": "arg",
+            "value": "nodes"
+        },
+        {
+            "id": "arg_links",
+            "type": "arg",
+            "value": "links"
+        },
+        {
+            "id": "arg_selected",
+            "type": "arg",
+            "value": "selected"
+        },
+        {
+            "id": "arg_levels",
+            "type": "arg",
+            "value": "levels"
+        },
+        {
             "id": "update_sim",
-            "args": [
-                "display_graph",
-                "nodes",
-                "links",
-                "fuse_links",
-                "simulation",
-                "display_graph_out",
-                "selected",
-                "levels",
-                "show_all"
-            ],
-            "script": "return _lib.scripts.updateSimulationNodes({display_graph, nodes, links, fuse_links, simulation, display_graph_out, selected, levels, show_all})"
+            "script": "return !simulation ? undefined : _lib.scripts.updateSimulationNodes({display_graph, nodes, links, simulation, selected, levels})"
         },
         {
             "id": "update_sim_in"
@@ -4038,6 +4113,11 @@
                     "value": "graph"
                 },
                 {
+                    "id": "display_graph",
+                    "type": "arg",
+                    "value": "display_graph"
+                },
+                {
                     "id": "show_result",
                     "type": "arg",
                     "value": "show_result"
@@ -4337,6 +4417,9 @@
                             "as": "class"
                         }
                     ]
+                },
+                {
+                    "id": "popover_graph"
                 },
                 {
                     "id": "result",
@@ -5927,9 +6010,16 @@
                     ]
                 },
                 {
+                    "id": "noop",
+                    "script": "return {el: _lib.ha.h('div', {}, _lib.ha.text('loading...'))}"
+                },
+                {
+                    "id": "out_input",
+                    "script": "return display_graph && graph ? 'hel' : 'noop'"
+                },
+                {
                     "id": "out",
-                    "args": ["hel"],
-                    "script": "return hel;"
+                    "type": "switch"
                 }
             
             ],
@@ -5954,6 +6044,16 @@
                     "from": "graph",
                     "to": "wrapper",
                     "as": "graph"
+                },
+                {
+                    "from": "graph",
+                    "to": "out_input",
+                    "as": "graph"
+                },
+                {
+                    "from": "display_graph",
+                    "to": "out_input",
+                    "as": "display_graph"
                 },
                 {
                     "from": "show_result",
@@ -6003,6 +6103,17 @@
                     "type": "resolve"
                 },
                 {
+                    "from": "out_input",
+                    "to": "out",
+                    "as": "input"
+                },
+                {
+                    "from": "noop",
+                    "to": "out",
+                    "as": "noop",
+                    "type": "resolve"
+                },
+                {
                     "from": "wrapper",
                     "to": "out",
                     "as": "hel"
@@ -6032,21 +6143,45 @@
             "as": "path"
         },
         {
-            "from": "hyperapp_view_in",
-            "to": "hyperapp_view",
-            "as": "in_node",
-            "type": "ref"
-        },
-        {
             "from": "editor",
             "to": "hyperapp_view",
             "type": "ref",
-            "as": "out_node"
+            "as": "fn"
         },
         {
             "from": "get_graph",
             "to": "update_sim_fn",
             "as": "graph"
+        },
+        {
+            "from": "simulation",
+            "to": "update_sim",
+            "as": "simulation"
+        },
+        {
+            "from": "arg_nodes",
+            "to": "update_sim",
+            "as": "nodes"
+        },
+        {
+            "from": "arg_links",
+            "to": "update_sim",
+            "as": "links"
+        },
+        {
+            "from": "arg_selected",
+            "to": "update_sim",
+            "as": "selected"
+        },
+        {
+            "from": "arg_levels",
+            "to": "update_sim",
+            "as": "levels"
+        },
+        {
+            "from": "arg_display_graph",
+            "to": "update_sim",
+            "as": "display_graph"
         },
         {
             "from": "get_display_graph_out",
@@ -6070,7 +6205,7 @@
         {
             "from": "onclick_node_fn_body",
             "to": "onclick_node_fn",
-            "as": "out_node",
+            "as": "fn",
             "type": "ref"
         },
         {
@@ -6095,7 +6230,7 @@
         {
             "from": "onclick_graph_fn_body",
             "to": "onclick_graph_fn",
-            "as": "out_node",
+            "as": "fn",
             "type": "ref"
         },
         {
@@ -6125,7 +6260,7 @@
         {
             "from": "onkey_fn_body",
             "to": "onkey_fn",
-            "as": "out_node",
+            "as": "fn",
             "type": "ref"
         },
         {
@@ -6155,10 +6290,6 @@
             "as": "graph"
         },
         {
-            "from": "hyperapp_view_in",
-            "to": "editor"
-        },
-        {
             "from": "get_graph",
             "to": "update_nodes",
             "as": "graph"
@@ -6174,31 +6305,6 @@
             "as": "display_graph"
         },
         {
-            "from": "in",
-            "to": "update_nodes",
-            "order": -1
-        },
-        {
-            "from": "initial_state",
-            "to": "update_nodes",
-            "order": -1
-        },
-        {
-            "from": "initial_state",
-            "to": "graph_to_simulation",
-            "order": -1
-        },
-        {
-            "from": "get_display_graph_out",
-            "to": "graph_to_simulation",
-            "as": "selected"
-        },
-        {
-            "from": "get_display_graph",
-            "to": "graph_to_simulation",
-            "as": "display_graph"
-        },
-        {
             "from": "get_display_graph_out",
             "to": "calculate_levels",
             "as": "selected"
@@ -6210,23 +6316,8 @@
         },
         {
             "from": "calculate_levels",
-            "to": "graph_to_simulation",
-            "as": "levels"
-        },
-        {
-            "from": "calculate_levels",
             "to": "hyperapp_init_state",
             "as": "levels"
-        },
-        {
-            "from": "d3simulation",
-            "to": "hyperapp_init_state",
-            "as": "simulation"
-        },
-        {
-            "from": "d3simulation",
-            "to": "update_nodes",
-            "as": "simulation"
         },
         {
             "from": "initial_state",
@@ -6236,32 +6327,43 @@
             "from": "in",
             "to": "hyperapp_init_state",
             "order": -1
+        },
+        {
+            "from": "nodes",
+            "to": "graph_to_simulation",
+            "as": "nodes"
+        },
+        {
+            "from": "links",
+            "to": "graph_to_simulation",
+            "as": "links"
         },
         {
             "from": "graph_to_simulation",
-            "to": "hyperapp_init_state"
+            "to": "graph_to_sim_action",
+            "as": "fn",
+            "type": "ref"
         },
         {
-            "from": "hyperapp_init_state",
-            "to": "update_nodes"
+            "from": "sim_to_hyperapp",
+            "to": "sim_to_hyperapp_fn",
+            "as": "fn",
+            "type": "ref"
         },
         {
-            "from": "update_nodes",
-            "to": "hyperapp_app"
-        },
-        {
-            "from": "d3simulation",
+            "from": "sim_to_hyperapp_fn",
             "to": "hyperapp_subscriptions",
-            "as": "simulation"
+            "as": "sim_to_hyperapp_action"
+        },
+        {
+            "from": "graph_to_sim_action",
+            "to": "hyperapp_subscriptions",
+            "as": "graph_to_sim_action"
         },
         {
             "from": "hyperapp_subscriptions",
             "to": "hyperapp_app",
             "as": "subscriptions"
-        },
-        {
-            "from": "update_sim_in",
-            "to": "update_sim"
         },
         {
             "from": "update_sim_in",
@@ -6272,13 +6374,18 @@
         {
             "from": "update_sim",
             "to": "update_sim_fn",
-            "as": "out_node",
+            "as": "fn",
             "type": "ref"
         },
         {
             "from": "update_sim_fn",
             "to": "update_sim_effect",
             "as": "fn"
+        },
+        {
+            "from": "update_sim_effect",
+            "to": "hyperapp_subscriptions",
+            "as": "update_sim"
         },
         {
             "from": "hyperapp_app",
