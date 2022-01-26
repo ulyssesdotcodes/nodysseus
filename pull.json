@@ -162,18 +162,83 @@
                 "value": 0
             },
             {
+                "id": "old_nodes",
+                "type": "arg",
+                "value": "0.nodes"
+            },
+            {
+                "id": "old_links",
+                "type": "arg",
+                "value": "0.links"
+            },
+            {
+                "id": "new_nodes",
+                "type": "arg",
+                "value": "1.nodes"
+            },
+            {
+                "id": "new_links",
+                "type": "arg",
+                "value": "1.links"
+            },
+            {
+                "id": "selected",
+                "type": "arg",
+                "value": "0.selected"
+            },
+            {
+                "id": "display_graph",
+                "type": "arg",
+                "value": "0.display_graph"
+            },
+            {
                 "id": "payload",
                 "type": "arg",
                 "value": 1
             },
             {
+                "id": "calculate_levels",
+                "args": [
+                    "selected",
+                    "display_graph",
+                    "fixed_vertices"
+                ],
+                "script": "return _lib.scripts.calculateLevels(nodes, links, display_graph, selected)"
+            },
+            {
+                "id": "with_levels",
+                "script": "return {...state, levels}"
+            },
+            {
+                "id": "graph_topology_change",
+                "script": "return !old_nodes || !old_links || old_nodes.length !== new_nodes.length || old_links.length !== new_links.length"
+            },
+            {
+                "id": "if_levels",
+                "type": "if"
+            },
+            {
                 "id": "action",
-                "script": "return {...state, nodes: payload.nodes, links: payload.links}"
+                "script": "return {...state, nodes: new_nodes, links: new_links, randid: Math.random().toString(36).substring(2, 9)}"
             }
         ],
         "edges": [
-            {"from": "state", "to": "action", "as": "state"},
-            {"from": "payload", "to": "action", "as": "payload"}
+            {"from": "old_nodes", "to": "graph_topology_change", "as": "old_nodes"},
+            {"from": "new_nodes", "to": "graph_topology_change", "as": "new_nodes"},
+            {"from": "new_links", "to": "graph_topology_change", "as": "new_links"},
+            {"from": "old_links", "to": "graph_topology_change", "as": "old_links"},
+            {"from": "new_nodes", "to": "calculate_levels", "as": "nodes"},
+            {"from": "new_links", "to": "calculate_levels", "as": "links"},
+            {"from": "selected", "to": "calculate_levels", "as": "selected"},
+            {"from": "display_graph", "to": "calculate_levels", "as": "display_graph"},
+            {"from": "calculate_levels", "to": "with_levels", "as": "levels"},
+            {"from": "state", "to": "with_levels", "as": "state"},
+            {"from": "graph_topology_change", "to": "if_levels", "as": "pred"},
+            {"from": "with_levels", "to": "if_levels", "as": "true"},
+            {"from": "state", "to": "if_levels", "as": "false"},
+            {"from": "new_nodes", "to": "action", "as": "new_nodes"},
+            {"from": "new_links", "to": "action", "as": "new_links"},
+            {"from": "if_levels", "to": "action", "as": "state"}
         ]
     },
         {
@@ -196,6 +261,11 @@
                     "value": "view"
                 },
                 {
+                    "id": "update_hyperapp",
+                    "type": "arg",
+                    "value": "update_hyperapp"
+                },
+                {
                     "id": "subscriptions",
                     "type": "arg",
                     "value": "subscriptions"
@@ -207,7 +277,7 @@
                         "view",
                         "subscriptions"
                     ],
-                    "script": "return {dispatch: _lib.ha.app({init, view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById('node-editor'), subscriptions: () => subscriptions})}"
+                    "script": "return {dispatch: _lib.ha.app({init: () => [init, [d => d(update_hyperapp)]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById('node-editor'), subscriptions: () => subscriptions})}"
                 }
             ],
             "edges": [
@@ -240,6 +310,11 @@
                     "to": "out",
                     "as": "subscriptions",
                     "type": "resolve"
+                },
+                {
+                    "from": "update_hyperapp",
+                    "to": "out",
+                    "as": "update_hyperapp"
                 },
                 {
                     "from": "init",
@@ -436,24 +511,19 @@
             ]
         },
         {
-            "id": "trigger",
+            "id": "if",
             "nodes": [
                 {
                     "id": "in"
                 },
                 {
-                    "id": "trigger",
-                    "args": [
-                        "trigger"
-                    ],
-                    "script": "return trigger ? ['in'] : []"
+                    "id": "pred",
+                    "type": "arg",
+                    "value": "pred"
                 },
                 {
                     "id": "out",
-                    "args": [
-                        "data"
-                    ],
-                    "script": "return data?.data ?? []"
+                    "script": "return pred ? data['true'] : data['false']"
                 }
             ],
             "edges": [
@@ -463,13 +533,9 @@
                     "as": "data"
                 },
                 {
-                    "from": "in",
-                    "to": "trigger"
-                },
-                {
-                    "from": "trigger",
+                    "from": "pred",
                     "to": "out",
-                    "as": "input"
+                    "as": "pred"
                 }
             ]
         },
@@ -552,7 +618,7 @@
                         "fn",
                         "graph"
                     ],
-                    "script": "return (...args) => {res = _lib.no.executeGraphNode({state: new Map(), graph, cache_id: 'view'})(fn)(args.length === 1 ? args[0] : args); return res;}"
+                    "script": "return (...args) => {res = _lib.no.executeGraphNode({state: new Map(), graph})(fn)(args.length === 1 ? args[0] : args); return res;}"
                 }
             ],
             "edges": [
@@ -719,7 +785,7 @@
         {
             "id": "arg",
             "args": ["node_inputs"],
-            "script": "return _node_inputs[_node.value]"
+            "script": "return typeof _node.value === 'string' ? _lib.just.get(_node_inputs, _node.value) : _node_inputs[_node.value]"
         },
         {
             "id": "set",
@@ -1121,6 +1187,10 @@
             ]
         },
         {
+            "id": "hyperapp_state_action",
+            "script": "return (state, _) => _lib.no.executeGraphNode({graph: _graph})(fn)(state)" 
+        },
+        {
             "id": "update_graph_display",
             "in": "in",
             "out": "out",
@@ -1148,13 +1218,23 @@
                     "value": "show_result"
                 },
                 {
+                    "id": "nodes",
+                    "type": "arg",
+                    "value": "nodes"
+                },
+                {
+                    "id": "links",
+                    "type": "arg",
+                    "value": "links"
+                },
+                {
                     "id": "calculate_levels",
                     "args": [
                         "selected",
                         "display_graph",
                         "fixed_vertices"
                     ],
-                    "script": "return _lib.scripts.calculateLevels(display_graph, selected, fixed_vertices)"
+                    "script": "return _lib.scripts.calculateLevels(nodes, links, display_graph, selected, fixed_vertices)"
                 },
                 {
                     "id": "reduce_graph",
@@ -1246,7 +1326,7 @@
                         "payload",
                         "update_sim_effect"
                     ],
-                    "script": "return [{...state, result: show_result && result.run.result, error: show_result && result.run.error}, false && (update || update_graph_sim) && [update_sim_effect, state]].concat(fx ?? [])"
+                    "script": "return [{...state, result: show_result && result.run.result, error: show_result && result.run.error}, (update || update_graph_sim) && [update_sim_effect, state]].concat(fx ?? [])"
                 }
             ],
             "edges": [
@@ -1290,6 +1370,8 @@
                     "to": "run",
                     "as": "display_graph" 
                 },
+                {"from": "nodes", "to": "calculate_levels", "as": "nodes"},
+                {"from": "links", "to": "calculate_levels", "as": "links"},
                 {
                     "from": "calculate_levels",
                     "to": "levels",
@@ -2259,6 +2341,10 @@
             "id": "hyperapp_init_state"
         },
         {
+            "id": "calculate_levels",
+            "script": "return _lib.scripts.calculateLevels([], [], display_graph, selected)"
+        },
+        {
             "id": "get_graph",
             "type": "get"
         },
@@ -2279,6 +2365,14 @@
         {
             "id": "hyperapp_view",
             "type": "execute_graph"
+        },
+        {
+            "id": "update_hyperapp",
+            "type": "update_graph_display"
+        },
+        {
+            "id": "update_hyperapp_action",
+            "type": "hyperapp_state_action"
         },
         {
             "id": "hyperapp_app",
@@ -2463,7 +2557,7 @@
                         "nodes",
                         "levels"
                     ],
-                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.nodes_by_level[levels.level_by_node.get(selected[0])].concat(levels.siblings.get(selected[0])); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling && n.selected_distance < 3); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x < current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? [next_node[1].node_id] : selected"
+                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.siblings.get(selected[0]); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = (sibling_node.x < current_node.x) && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? [next_node[1].node_id] : selected"
                 },
                 {
                     "id": "left_edge",
@@ -2488,7 +2582,7 @@
                         "nodes",
                         "levels"
                     ],
-                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.nodes_by_level[levels.level_by_node.get(selected[0])].concat(levels.siblings.get(selected[0])); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling && n.selected_distance < 3); if(!sibling_node){ return dist }  const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? [next_node[1].node_id] : selected"
+                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.siblings.get(selected[0]); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [window.innerWidth]); return next_node[1] ? [next_node[1].node_id] : selected"
                 },
                 {
                     "id": "right_edge",
@@ -2581,9 +2675,10 @@
                         "display_graph",
                         "editing",
                         "selected_edge",
-                        "levels"
+                        "levels",
+                        "randid"
                     ],
-                    "script": "const id = Math.random().toString(36).substring(2, 9); const new_nodes = display_graph.nodes.concat([{id, args: []}]); const new_edges = display_graph.edges.flatMap(e => selected_edge?.to === e.to && selected_edge?.from === e.from ? [{from: selected_edge.from, to: id}, {from: id, to: selected_edge.to, as: e.as}] : e).concat(selected_edge ? [] : [{from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id, as: `arg${levels.parents.get(selected[0]).length}`}]); return {display_graph: {...display_graph, edges: new_edges, nodes: new_nodes}, selected: [id], selected_edge: false};",
+                    "script": "const id = randid; const new_nodes = display_graph.nodes.concat([{id, args: []}]); const new_edges = display_graph.edges.flatMap(e => selected_edge?.to === e.to && selected_edge?.from === e.from ? [{from: selected_edge.from, to: id}, {from: id, to: selected_edge.to, as: e.as}] : e).concat(selected_edge ? [] : [{from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id, as: `arg${levels.parents.get(selected[0]).length}`}]); return {display_graph: {...display_graph, edges: new_edges, nodes: new_nodes}, selected: [id], selected_edge: false};",
                     "script_": "const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({id, args: []}); const edgeIdx = display_graph.edges.findIndex(e => selected_edge?.to === e.to && selected_edge?.from === e.from); display_graph.edges.splice(selected_edge ? edgeIdx : display_graph.edges.length, selected_edge ? 1 : 0, ...(selected_edge ? [{from: selected_edge.from, to: id}, {from: id, to: selected_edge.to, as: display_graph.edges[edgeIdx].as}] : [{from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id, as: `arg${levels.parents.get(selected[0]).length}`}])); return {display_graph, selected: [id], selected_edge: false};"
                 },
                 {
@@ -2721,10 +2816,6 @@
                     "script": "if(pending_edges.edge_from && pending_edges.edge_to){ const start_len = state.display_graph.edges.length;  state.display_graph.edges = state.display_graph.edges.filter(e => !(e.from === pending_edges.edge_from && e.to === pending_edges.edge_to)); if(state.display_graph.edges.length === start_len){ state.display_graph.edges.push({from: pending_edges.edge_from, to: pending_edges.edge_to});}} return state.display_graph;"
                 },
                 {
-                    "id": "trigger_expand_contract",
-                    "type": "trigger"
-                },
-                {
                     "id": "expand_contract",
                     "type": "expand_contract"
                 },
@@ -2753,7 +2844,7 @@
                         "editing",
                         "search"
                     ],
-                    "script": "target.blur(); if(search !== false){ target.value = ''; return {search: false} } let value; try { value = JSON.parse(target.value);} catch(e){ value = target.value; } if(selected_edge){ display_graph.edges.find(e => e.to === selected_edge.to && e.from === selected_edge.from)[editing] = value === '' ? undefined : value; } else { const node = display_graph.nodes.find(n => n.id === selected[0]); if(node[editing] !== undefined || value !== ''){ node[editing] = value === '' ? undefined : value; if(editing === 'name' || (editing === 'value' && node.type === 'arg')){ display_graph.edges.filter(e => e.from === node.id && e.as?.startsWith('arg')).forEach(e => e.as = value) }} } return {editing: false, edit_value: null, display_graph};" },
+                    "script": "target.blur(); if(search !== false){ target.value = ''; return {search: false} } let new_nodes; let value = target.value === '' ? undefined : target.value; if(selected_edge){ display_graph.edges.find(e => e.to === selected_edge.to && e.from === selected_edge.from)[editing] = value === '' ? undefined : value; } else { let ty; new_nodes = display_graph.nodes.map(n => n.id !== selected[0] ? n : (ty = n.type, {...n, [editing]: value})); if(editing === 'name' || (editing === 'value' && ty === 'arg' && value)){ display_graph.edges.filter(e => e.from === selected[0] && e.as?.startsWith('arg')).forEach(e => e.as = value) }} return {editing: false, edit_value: null, display_graph: {...display_graph, nodes: new_nodes ?? display_graph.nodes}};" },
                 {
                     "id": "esc_editing",
                     "args": [
@@ -4081,14 +4172,6 @@
             "value": {"key": "editor"}
         },
         {
-            "id": "calculate_levels",
-            "args": [
-                "display_graph",
-                "selected"
-            ],
-            "script": "return _lib.scripts.calculateLevels(display_graph, selected)"
-        },
-        {
             "id": "editor",
             "nodes": [
                 {
@@ -4650,7 +4733,7 @@
                                 "search",
                                 "display_graph"
                             ],
-                            "script": "return {id: `search-input`, type: 'text', onkeydown: (s, payload) => { if(payload.key === 'Enter'){ const direction = payload.shiftKey ? -1 : 1; const idx = (s.search_results.length + s.search_index + direction) % s.search_results.length; return {...s, selected: s.search_results.slice(idx, idx + 1), search_index: idx} } else { return s;} }, oninput: (s, payload) => { const search_results = new _lib.Fuse(display_graph.nodes, {keys: ['name', 'id']}).search(payload.target.value).map(r => r.item.id); return {...s, search: payload.target.value, selected: search_results.length > 0 ? search_results.slice(0, 1) : s.selected, search_results, search_index: 0, levels: _lib.scripts.calculateLevels(display_graph, search_results.length > 0 ? search_results.slice(0, 1) : s.selected)}}}"
+                            "script": "return {id: `search-input`, type: 'text', onkeydown: (s, payload) => { if(payload.key === 'Enter'){ const direction = payload.shiftKey ? -1 : 1; const idx = (s.search_results.length + s.search_index + direction) % s.search_results.length; return {...s, selected: s.search_results.slice(idx, idx + 1), search_index: idx} } else { return s;} }, oninput: (s, payload) => { const search_results = new _lib.Fuse(display_graph.nodes, {keys: ['name', 'id']}).search(payload.target.value).map(r => r.item.id); return {...s, search: payload.target.value, selected: search_results.length > 0 ? search_results.slice(0, 1) : s.selected, search_results, search_index: 0, levels: _lib.scripts.calculateLevels(s.nodes, s.links, display_graph, search_results.length > 0 ? search_results.slice(0, 1) : s.selected)}}}"
                         },
                         {
                             "id": "out",
@@ -4822,6 +4905,11 @@
                                             "id": "in"
                                         },
                                         {
+                                            "id": "selected_distance",
+                                            "type": "arg",
+                                            "value": "selected_distance"
+                                        },
+                                        {
                                             "id": "node_shape_attrs",
                                             "args": [
                                                 "value",
@@ -4880,10 +4968,6 @@
                                                     "value": "value"
                                                 },
                                                 {
-                                                    "id": "node_selected_distance",
-                                                    "value": "selected_distance"
-                                                },
-                                                {
                                                     "id": "get_id",
                                                     "type": "get"
                                                 },
@@ -4907,8 +4991,9 @@
                                                     "script": "return `type: ` + (target.type ? target.type : target.value !== undefined ? 'value' : target.script ? 'script' : target.nodes ? `graph (${target.nodes.length}, ${target.edges.length})` : 'passthrough')"
                                                 },
                                                 {
-                                                    "id": "get_selected_distance",
-                                                    "type": "get"
+                                                    "id": "selected_distance",
+                                                    "type": "arg",
+                                                    "value": "selected_distance"
                                                 },
                                                 {
                                                     "id": "shorten",
@@ -5007,11 +5092,6 @@
                                                     "as": "target"
                                                 },
                                                 {
-                                                    "from": "in",
-                                                    "to": "get_selected_distance",
-                                                    "as": "target"
-                                                },
-                                                {
                                                     "from": "get_id",
                                                     "to": "get_value",
                                                     "as": "def"
@@ -5037,11 +5117,6 @@
                                                     "as": "path"
                                                 },
                                                 {
-                                                    "from": "node_selected_distance",
-                                                    "to": "get_selected_distance",
-                                                    "as": "path"
-                                                },
-                                                {
                                                     "from": "script",
                                                     "to": "get_type",
                                                     "as": "default_value"
@@ -5055,11 +5130,6 @@
                                                     "from": "get_type",
                                                     "to": "node_secondary_text_text",
                                                     "as": "text"
-                                                },
-                                                {
-                                                    "from": "get_selected_distance",
-                                                    "to": "node_text_props",
-                                                    "as": "selected_distance"
                                                 },
                                                 {
                                                     "from": "node_text_props",
@@ -5142,6 +5212,11 @@
                                         {
                                             "from": "in",
                                             "to": "node_shape_dom_type"
+                                        },
+                                        {
+                                            "from": "selected_distance",
+                                            "to": "node_shape_attrs",
+                                            "as": "selected_distance"
                                         },
                                         {
                                             "from": "default_color",
@@ -5230,6 +5305,11 @@
                                     "as": "selected_distance"
                                 },
                                 {
+                                    "from": "selected_distance",
+                                    "to": "children",
+                                    "as": "selected_distance"
+                                },
+                                {
                                     "from": "parent_attrs",
                                     "to": "parent",
                                     "as": "props"
@@ -5253,7 +5333,7 @@
                         {
                             "id": "link_layout",
                             "args": ["node_inputs", "link_layout_map", "links", "graph", "selected_edge"],
-                            "script": "return links.map(link => _lib.no.executeGraph({state: new Map([['_' + link.source.node_child_id, Object.assign({link}, _node_inputs)]]), graph: {...graph, in: '_' + link.source.node_child_id, out: link_layout_map}, cache_id: '_' + link.source.node_child_id + link.target.node_child_id}))"
+                            "script": "return links.map(link => _lib.no.executeGraph({state: new Map([['_' + link.source.node_child_id, Object.assign({link, selected_distance: levels.distance_from_selected.get(link.target.node_child_id) !== undefined ? Math.min(levels.distance_from_selected.get(link.target.node_child_id), levels.distance_from_selected.get(link.source.node_child_id)) : undefined, sibling_index_normalized: (levels.siblings.get(link.source.node_id).findIndex(n => n === link.source.node_id) + 1) / (levels.siblings.get(link.source.node_id).length + 1),}, _node_inputs)]]), graph: {...graph, in: '_' + link.source.node_child_id, out: link_layout_map}, cache_id: '_' + link.source.node_child_id + link.target.node_child_id}))"
                         },
                         {
                             "id": "link_layout_map",
@@ -5272,6 +5352,16 @@
                                     "id": "get_selected_edge",
                                     "type": "arg",
                                     "value": "selected_edge"
+                                },
+                                {
+                                    "id": "selected_distance",
+                                    "type": "arg",
+                                    "value": "selected_distance"
+                                },
+                                {
+                                    "id": "sibling_index_normalized",
+                                    "type": "arg",
+                                    "value": "sibling_index_normalized"
                                 },
                                 {
                                     "id": "edge_info_el",
@@ -5423,9 +5513,29 @@
                                     "as": "selected_edge"
                                 },
                                 {
-                                    "from": "get_selected_edge",
+                                    "from": "sibling_index_normalized",
                                     "to": "edge_info_props",
-                                    "as": "selected_edge"
+                                    "as": "sibling_index_normalized"
+                                },
+                                {
+                                    "from": "selected_distance",
+                                    "to": "edge_info_props",
+                                    "as": "selected_distance"
+                                },
+                                {
+                                    "from": "sibling_index_normalized",
+                                    "to": "edge_info_props",
+                                    "as": "sibling_index_normalized"
+                                },
+                                {
+                                    "from": "selected_distance",
+                                    "to": "line_props",
+                                    "as": "selected_distance"
+                                },
+                                {
+                                    "from": "selected_distance",
+                                    "to": "line_lerp",
+                                    "as": "selected_distance"
                                 },
                                 {
                                     "from": "line_lerp",
@@ -5811,6 +5921,11 @@
                             "from": "get_links",
                             "to": "link_layout",
                             "as": "links"
+                        },
+                        {
+                            "from": "get_levels",
+                            "to": "link_layout",
+                            "as": "levels"
                         },
                         {
                             "from": "link_layout_map",
@@ -6264,6 +6379,17 @@
             "from": "hyperapp_view",
             "to": "hyperapp_app",
             "as": "view"
+        },
+        {
+            "from": "update_hyperapp",
+            "to": "update_hyperapp_action",
+            "as": "fn",
+            "type": "ref"
+        },
+        {
+            "from": "update_hyperapp_action",
+            "to": "hyperapp_app",
+            "as": "update_hyperapp"
         },
         {
             "from": "hyperapp_init_state",

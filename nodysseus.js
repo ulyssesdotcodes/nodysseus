@@ -222,14 +222,19 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
         }
 
         if (node.value && !node.script && !node.type) {
-            const int = parseInt(node.value);
-            if(!isNaN(int)){
-                return int;
+            if(typeof node.value === 'string' && node.value.match(/[0-9]*/).length === node.value.length) {
+                const int = parseInt(node.value);
+                if(!isNaN(int)){
+                    return int;
+                }
             }
 
-            const float = parseFloat(node.value);
-            if(!isNaN(float)) {
-                return float;
+            if(typeof node.value === 'string' && node.value.match(/[0-9.]*/).length === node.value.length) {
+                const int = parseInt(node.value);
+                const float = parseFloat(node.value);
+                if(!isNaN(float)) {
+                    return float;
+                }
             }
 
             if(typeof node.value !== 'string') {
@@ -376,8 +381,7 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
 
             if (usecache && cache.get(cache_id).has(outid)) {
                 const val = cache.get(cache_id).get(outid);
-                hit = compare(val[1], data);
-                hit = hit && compare(val[2], graph_input_value);
+                hit = compare(val[1], combined_data_input);
                 if (hit) {
                     return val[0];
                 }
@@ -387,7 +391,7 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
             if(typeof res === 'object' && !!res && !res._Proxy && !Array.isArray(res) && _needsresolve) {
                 res._needsresolve = _needsresolve;
             }
-            cache.get(cache_id).set(outid, [res, data, graph_input_value]);
+            cache.get(cache_id).set(outid, [res, combined_data_input]);
             return res;
         } else if (node_type.script) {
             // const args = new Map([['lib', lib],
@@ -411,11 +415,37 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
             //     })
             // }
 
+
+            const argset = new Set();
+            argset.add('_lib');
+            argset.add('_node');
+            argset.add('_node_inputs');
+            argset.add('_graph');
+            if(node_type.args) {
+                node_type.args.forEach(a => argset.add(a));
+            }
+            (inputs ?? []).map(i => i.as).forEach(i => i && argset.add(i));
+            let orderedargs = "";
+            const input_values = [];
+            for(let a of argset) {
+                input_values.push(
+                    a === '_node' 
+                    ? node 
+                    : a === '_lib'
+                    ? lib
+                    : a === '_node_inputs'
+                    ? data
+                    : a === '_graph'
+                    ? graph
+                    : data[a]);
+                orderedargs += `${a},`;
+            }
+
             // NOTE: very important for side-effects like Math.random
             if (usecache && cache.get(cache_id).has(node.id)) {
                 const val = cache.get(cache_id).get(node.id);
-                let hit = usecache && compare(data, val[1]);
-                hit = hit && compare(graph_input_value, val[2]);
+                let hit = usecache && compare(input_values, val[1]);
+                // hit = hit && compare(graph_input_value, val[2]);
                 if (hit) {
                     return val[0]
                 }
@@ -423,30 +453,6 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
 
 
             try {
-                const argset = new Set();
-                argset.add('_lib');
-                argset.add('_node');
-                argset.add('_node_inputs');
-                argset.add('_graph');
-                if(node_type.args) {
-                    node_type.args.forEach(a => argset.add(a));
-                }
-                (inputs ?? []).map(i => i.as).forEach(i => i && argset.add(i));
-                let orderedargs = "";
-                const input_values = [];
-                for(let a of argset) {
-                    input_values.push(
-                        a === '_node' 
-                        ? node 
-                        : a === '_lib'
-                        ? lib
-                        : a === '_node_inputs'
-                        ? data
-                        : a === '_graph'
-                        ? graph
-                        : data[a]);
-                    orderedargs += `${a},`;
-                }
                 const node_hash = hashcode(orderedargs + node_type.script.substring(node_type.script.length * 0.5 - 16, node_type.script.length * 0.5 + 16))
 
                 const fn = node_cache.get(node_hash) ?? new Function(`return function _${(node.name ?? node.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_type.script}}`)();
@@ -464,7 +470,7 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
                 // state.set(node.id, results);
                 // don't cache things without arguments
                 if (node_type.args?.length > 0) {
-                    cache.get(cache_id).set(node.id, [results, data, graph_input_value]);
+                    cache.get(cache_id).set(node.id, [results, input_values]);
                 }
 
                 if(typeof results === 'object' && !!results && !results._Proxy && !Array.isArray(results)) {
@@ -511,7 +517,7 @@ const test_graph = {
 //////////
 // TODO: convert these to nodes
 
-const calculateLevels = (graph, selected, fixed_vertices) => {
+const calculateLevels = (nodes, links, graph, selected) => {
     const find_childest = n => {
         const e = graph.edges.find(e => e.from === n);
         if (e) {
@@ -526,9 +532,9 @@ const calculateLevels = (graph, selected, fixed_vertices) => {
     const levels = new Map();
     bfs(graph, levels)(top, 0);
 
-    const parents = new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.to === n.id).map(e => e.from)]));
-    const children = new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.from === n.id).map(e => e.to)]));
-    const siblings = new Map(graph.nodes.map(n => [n.id, [...(new Set(/*parents.get(n.id)?.flatMap(p => children.get(p)?.filter(c => c !== n.id) ?? []).concat(*/children.get(n.id)?.flatMap(c => parents.get(c) ?? []) ?? [])).values()/*)*/]]))
+    const parents = new Map(nodes.map(n => [n.node_id, links.filter(l => l.target.node_id === n.node_id).map(l => l.source.node_id)]));
+    const children = new Map(nodes.map(n => [n.node_id, links.filter(l => l.source.node_id === n.node_id).map(l => l.target.node_id)]));
+    const siblings = new Map(nodes.map(n => [n.node_id, [...(new Set(/*parents.get(n.id)?.flatMap(p => children.get(p)?.filter(c => c !== n.id) ?? []).concat(*/children.get(n.node_id)?.flatMap(c => parents.get(c) ?? []) ?? [])).values()/*)*/]]))
     const distance_from_selected = new Map();
 
     const connected_vertices = new Map(); //new Map(!fixed_vertices ? [] : fixed_vertices.nodes.flatMap(v => (v.nodes ?? []).map(n => [n, v.nodes])));
@@ -590,9 +596,21 @@ const updateSimulationNodes = (data) => {
 
     const fuse_links = [];
 
+    const parents_map = new Map(data.display_graph.nodes.map(n => [n.id, data.display_graph.edges.filter(e => e.to === n.id).map(e => e.from)]));
+    const children_map = new Map(data.display_graph.nodes.map(n => [n.id, data.display_graph.edges.filter(e => e.from === n.id).map(e => e.to)]));
+    data.display_graph.nodes.forEach(n => {
+        const children = children_map.get(n.id);
+        const node_child_id = children.length > 0 ? n.id + "_" + children[0] : n.id;
+        main_node_map.set(n.id, node_child_id);
+    })
+
     const nodes = data.display_graph.nodes.flatMap(n => {
-        const children = data.levels.children.get(n.id);
-        main_node_map.set(n.id, children.length > 0 ? n.id + "_" + children[0] : n.id);
+        const children = children_map.get(n.id);
+        const node_child_id = main_node_map.get(n.id);
+
+        const addorundefined = (a, b) => {
+            return a === undefined || b === undefined ? undefined : a + b
+        }
 
         return children.length === 0 ? [{
             node_id: n.id,
@@ -605,10 +623,12 @@ const updateSimulationNodes = (data) => {
             name: n.name,
             in: n.in,
             out: n.out,
-            level: data.levels.level_by_node.get(n.id),
-            selected_distance: data.levels.distance_from_selected.get(n.id),
-            x: Math.floor(simulation_node_data.get(n.id)?.x ?? data.x ?? Math.floor(window.innerWidth * (Math.random() * .5 + .25))),
-            y: Math.floor(simulation_node_data.get(n.id)?.y ?? data.y ?? Math.floor(window.innerHeight * (Math.random() * .5 + .25)))
+            x: Math.floor(simulation_node_data.get(node_child_id)?.x 
+                ?? simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.x
+                ?? Math.floor(window.innerWidth * (Math.random() * .5 + .25))),
+            y: Math.floor(simulation_node_data.get(node_child_id)?.y 
+                ?? addorundefined(simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.y, 128)
+                ?? Math.floor(window.innerHeight * (Math.random() * .5 + .25)))
         }] : children.map(c => ({
             node_id: n.id,
             node_child_id: n.id + "_" + c,
@@ -620,10 +640,14 @@ const updateSimulationNodes = (data) => {
             name: n.name,
             in: n.in,
             out: n.out,
-            level: data.levels.level_by_node.get(n.id),
-            selected_distance: data.levels.distance_from_selected.get(n.id + "_" + c),
-            x: Math.floor(simulation_node_data.get(n.id + "_" + c)?.x ?? data.x ?? Math.floor(window.innerWidth * (Math.random() * .5 + .25))),
-            y: Math.floor(simulation_node_data.get(n.id + "_" + c)?.y ?? data.y ?? Math.floor(window.innerHeight * (Math.random() * .5 + .25)))
+            x: Math.floor(simulation_node_data.get(node_child_id)?.x 
+                ?? simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.x
+                ?? simulation_node_data.get(main_node_map.get(children_map.get(n.id)?.[0]))?.x
+                ?? Math.floor(window.innerWidth * (Math.random() * .5 + .25))),
+            y: Math.floor(simulation_node_data.get(node_child_id)?.y 
+                ?? addorundefined(128, simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.y)
+                ?? addorundefined(-128, simulation_node_data.get(main_node_map.get(children_map.get(n.id)?.[0]))?.y)
+                ?? Math.floor(window.innerHeight * (Math.random() * .5 + .25)))
         }));
     })
 
@@ -638,15 +662,10 @@ const updateSimulationNodes = (data) => {
                 target: main_node_map.get(e.to),
                 as: e.as,
                 type: e.type,
-                strength: 4 / (1 + 4 * (data.levels.children.get(main_node_map.get(e.from))?.length ?? 0)),
-                selected_distance: data.levels.distance_from_selected.get(main_node_map.get(e.to)) !== undefined ? Math.min(data.levels.distance_from_selected.get(main_node_map.get(e.to)), data.levels.distance_from_selected.get(e.from + "_" + e.to)) : undefined,
-                sibling_index_normalized: (data.levels.siblings.get(e.from).findIndex(n => n === e.from) + 1) / (data.levels.siblings.get(e.from).length + 1),
+                strength: 4 / (1 + 4 * (children_map.get(main_node_map.get(e.from))?.length ?? 0)),
             };
         }).filter(l => !!l);
 
-    const selected = data.selected[0];
-    const levels = data.levels ?? calculateLevels(data.display_graph, data.display_graph.out);
-    const selected_level = levels.level_by_node.get(selected);
 
     if (typeof (links?.[0]?.source) === "string") {
         if (
@@ -660,10 +679,6 @@ const updateSimulationNodes = (data) => {
         // data.simulation.force('fuse_links').links(data.fuse_links);
         // console.log(data.simulation);
     }
-
-    const sibling_x = new Map();
-    const selected_x = ((levels.nodes_by_level[selected_level].findIndex(l => l === selected) + 1)
-        / (levels.nodes_by_level[selected_level].length + 1));
 
 
     // data.nodes.forEach(n => {
@@ -698,16 +713,16 @@ const updateSimulationNodes = (data) => {
     //     ));
     data.simulation.force('link_direction')
         .y(n =>
-            (((levels.parents.get(n.node_id)?.length > 0 ? 1 : 0)
-                + (levels.children.get(n.node_id)?.length > 0 ? -1 : 0)
-                + (levels.children.get(n.node_id)?.length > 0 && n.node_child_id !== n.node_id + "_" + levels.children.get(n.node_id)[0] ? -1 : 0))
+            (((parents_map.get(n.node_id)?.length > 0 ? 1 : 0)
+                + (children_map.get(n.node_id)?.length > 0 ? -1 : 0)
+                + (children_map.get(n.node_id)?.length > 0 && n.node_child_id !== n.node_id + "_" + children_map.get(n.node_id)[0] ? -1 : 0))
                 * 8 + .5) * window.innerHeight)
-        .strength(n => (!!levels.parents.get(n.node_id)?.length === !levels.children.get(n.node_id)?.length)
-            || levels.children.get(n.node_id)?.length > 0 && n.node_child_id !== n.node_id + "_" + levels.children.get(n.node_id)[0] ? .025 : 0);
+        .strength(n => (!!parents_map.get(n.node_id)?.length === !children_map.get(n.node_id)?.length)
+            || children_map.get(n.node_id)?.length > 0 && n.node_child_id !== n.node_id + "_" + children_map.get(n.node_id)[0] ? .025 : 0);
 
 
     data.simulation.force('collide').radius(64);
-    // data.simulation.force('center').strength(n => (levels.parents.get(n.node_id)?.length ?? 0) * 0.25 + (levels.children.get(n.node_id)?.length ?? 0) * 0.25)
+    // data.simulation.force('center').strength(n => (levels.parents_map.get(n.node_id)?.length ?? 0) * 0.25 + (levels.children_map.get(n.node_id)?.length ?? 0) * 0.25)
 
     // console.log(data.links)
 
@@ -739,7 +754,7 @@ const d3subscription = (dispatch, props) => {
         // .force('fuse_links', lib.d3.forceLink([]).distance(128).strength(.1).id(n => n.node_child_id))
         // .force('link_siblings', lib.d3.forceX().strength(1))
         // .force('selected', lib.d3.forceRadial(0, window.innerWidth * 0.5, window.innerHeight * 0.5).strength(2))
-        // .velocityDecay(0.6)
+        .velocityDecay(0.6)
         .alphaMin(.125);
 
     const abort_signal = { stop: false };
@@ -1016,9 +1031,9 @@ const lib = {
     just: { get, set, diff, diffApply },
     ha: { h, app, text, memo },
     no: {
-        executeGraph: ({ state, graph, cache_id }) => executeGraph({ cache, state, graph, node_cache, cache_id: cache_id ?? "temp" })(graph.out)(state.get(graph.in)),
-        executeGraphValue: ({ graph, cache_id }) => executeGraph({ cache, graph, node_cache, cache_id: cache_id ?? "temp" })(graph.out),
-        executeGraphNode: ({ graph, cache_id }) => executeGraph({ cache, graph, node_cache, cache_id: cache_id ?? "temp" })
+        executeGraph: ({ state, graph, cache_id }) => executeGraph({ cache, state, graph, node_cache, cache_id: cache_id ?? "main" })(graph.out)(state.get(graph.in)),
+        executeGraphValue: ({ graph, cache_id }) => executeGraph({ cache, graph, node_cache, cache_id: cache_id ?? "main" })(graph.out),
+        executeGraphNode: ({ graph, cache_id }) => executeGraph({ cache, graph, node_cache, cache_id: cache_id ?? "main" })
     },
     scripts: { d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all },
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
