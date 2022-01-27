@@ -174,7 +174,7 @@ const resolve = (o) => {
             new_obj_entries[i] = [entries[i][0], resolve(entries[i][1])];
             same = same && entries[i][1] === new_obj_entries[i][1]
         }
-        return same ? o : Object.fromEntries(new_obj_entries);
+        return same ? (delete o._needsresolve, o) : Object.fromEntries(new_obj_entries);
     } else {
         return o;
     }
@@ -279,8 +279,6 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
                 if(!node_map.has(input.from)) {
                     throw new Error(`Input not found ${input.from} for node ${node_id}`)
                 }
-
-                _needsresolve = _needsresolve || graph_input_value._needsresolve
 
                 return resolve(run_with_val(input.from)(graph_input_value));
             } else if (!input.as || node_type.script) {
@@ -474,7 +472,7 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
                 }
 
                 if(typeof results === 'object' && !!results && !results._Proxy && !Array.isArray(results)) {
-                    results._needsresolve = true;
+                    results._needsresolve = _needsresolve;
                 }
 
                 return results;

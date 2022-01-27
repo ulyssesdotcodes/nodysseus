@@ -271,23 +271,32 @@
                     "value": "update_hyperapp"
                 },
                 {
+                    "id": "update_sim",
+                    "type": "arg",
+                    "value": "update_sim"
+                },
+                {
+                    "id": "sim_to_hyperapp_action",
+                    "type": "arg",
+                    "value": "sim_to_hyperapp_action"
+                },
+                {
                     "id": "render_graph_effect",
                     "type": "arg",
                     "value": "render_graph_effect"
                 },
                 {
-                    "id": "subscriptions",
+                    "id": "onkey_fn",
                     "type": "arg",
-                    "value": "subscriptions"
+                    "value": "onkey_fn"
                 },
                 {
                     "id": "out",
                     "args": [
                         "init",
-                        "view",
-                        "subscriptions"
+                        "view"
                     ],
-                    "script": "return {dispatch: _lib.ha.app({init: () => [init, [d => d(update_hyperapp)], html_id === 'node-editor' && [render_graph_effect]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: () => subscriptions})}"
+                    "script": "return {dispatch: _lib.ha.app({init: () => [init, [d => d(update_hyperapp)], html_id === 'node-editor' && [render_graph_effect]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [[_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}],  s.focused && [_lib.scripts.keydownSubscription, {action: onkey_fn}]]})}"
                 }
             ],
             "edges": [
@@ -321,15 +330,24 @@
                     "as": "html_id"
                 },
                 {
-                    "from": "subscriptions",
+                    "from": "update_sim",
                     "to": "out",
-                    "as": "subscriptions",
-                    "type": "resolve"
+                    "as": "update_sim"
                 },
                 {
                     "from": "update_hyperapp",
                     "to": "out",
                     "as": "update_hyperapp"
+                },
+                {
+                    "from": "sim_to_hyperapp_action",
+                    "to": "out",
+                    "as": "sim_to_hyperapp_action"
+                },
+                {
+                    "from": "onkey_fn",
+                    "to": "out",
+                    "as": "onkey_fn"
                 },
                 {
                     "from": "render_graph_effect",
@@ -2354,7 +2372,8 @@
                 "search": false,
                 "show_all": false,
                 "app_state": {},
-                "show_result": false
+                "show_result": false,
+                "focused": true
             }
         },
         {
@@ -2380,7 +2399,7 @@
         {
             "id": "get_display_graph_out",
             "args": ["target", "path"],
-            "script": "return [_lib.just.get(target, path)]"
+            "script": "console.log(target); return [_lib.just.get(target, path)]"
         },
         {
             "id": "hyperapp_view",
@@ -2408,15 +2427,6 @@
         },
         {
             "id": "hyperapp_view_in"
-        },
-        {
-            "id": "hyperapp_subscriptions",
-            "args": [
-                "simulation",
-                "onkey_fn",
-                "sim_to_hyperapp_action"
-            ],
-            "script": "return [[_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}], [_lib.scripts.keydownSubscription, {action: onkey_fn}]]"
         },
         {
             "id": "nodes",
@@ -2520,6 +2530,11 @@
                         "args"
                     ],
                     "script": "return args[0]"
+                },
+                {
+                    "id": "html_id",
+                    "type": "arg",
+                    "value": "html_id"
                 },
                 {
                     "id": "get_selected",
@@ -2632,7 +2647,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "document.querySelector('#edit_value textarea').focus(); return 'value';"
+                    "script": "document.querySelector(`#${html_id}-edit_value textarea`).focus(); return 'value';"
                 },
                 {
                     "id": "t",
@@ -2644,7 +2659,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "document.querySelector('#edit_value input').focus(); return 'type';"
+                    "script": "document.querySelector(`#${html_id}-edit_value input`).focus(); return 'type';"
                 },
                 {
                     "id": "shift_t",
@@ -2668,7 +2683,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 's' && ctrlKey === false && editing === false)){ return [] } document.querySelector('#edit_value textarea').focus(); return 'script';"
+                    "script": "if(!(key === 's' && ctrlKey === false && editing === false)){ return [] } document.querySelector(`#${html_id}-edit_value textarea`).focus(); return 'script';"
                 },
                 {
                     "id": "a",
@@ -2680,7 +2695,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 'a' && editing === false)){ return [] } document.querySelector('#edit_value textarea').focus(); return selected_edge ? 'as' : 'args';"
+                    "script": "if(!(key === 'a' && editing === false)){ return [] } document.querySelector('#${html_id}-edit_value textarea').focus(); return selected_edge ? 'as' : 'args';"
                 },
                 {
                     "id": "n",
@@ -2691,7 +2706,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 'n' && editing === false)){ return [] } document.querySelector('#edit_value textarea').focus(); return 'name';"
+                    "script": "if(!(key === 'n' && editing === false)){ return [] } document.querySelector('#${html_id}-edit_value textarea').focus(); return 'name';"
                 },
                 {
                     "id": "o",
@@ -2776,7 +2791,7 @@
                 {
                     "id": "f",
                     "args": [],
-                    "script": "document.querySelector('#search-input').focus(); return ''"
+                    "script": "document.querySelector(`#${html_id}-search-input`).focus(); return ''"
                 },
                 {
                     "id": "i",
@@ -3051,6 +3066,7 @@
                     "to": "key_event",
                     "as": "args"
                 },
+                {"from" :"state", "to": "html_id"},
                 {
                     "from": "in",
                     "to": "state",
@@ -3276,6 +3292,26 @@
                 {
                     "from": "state",
                     "to": "shift_t"
+                },
+                {
+                    "from": "html_id",
+                    "to": "s",
+                    "as": "html_id"
+                },
+                {
+                    "from": "html_id",
+                    "to": "f",
+                    "as": "html_id"
+                },
+                {
+                    "from": "html_id",
+                    "to": "a",
+                    "as": "html_id"
+                },
+                {
+                    "from": "html_id",
+                    "to": "t",
+                    "as": "html_id"
                 },
                 {
                     "from": "key_event",
@@ -4203,13 +4239,18 @@
             "value": {"x": 400, "y": 400}
         },
         {
+            "id": "html_id",
+            "type": "arg",
+            "value": "html_id"
+        },
+        {
             "id": "render_graph_effect",
-            "script": "return (dispatch, payload) => requestAnimationFrame(() => _lib.no.executeGraphNode({graph})('hyperapp_app')({graph, display_graph, html_id: 'popover', dimensions}))"
+            "script": "return (dispatch, payload) => requestAnimationFrame(() => {_lib.no.executeGraphNode({graph})('hyperapp_app')({graph, display_graph, html_id: `${html_id}-popover`, dimensions}); dispatch(s => [{...s, focused: false}])})"
         },
         {
             "id": "dummy_graph",
-            "out": "out",
             "value": {
+                "out": "out",
                 "nodes": [
                     {"id": "in"},
                     {"id": "out"}
@@ -4273,6 +4314,11 @@
                             "id": "in"
                         },
                         {
+                            "id": "html_id",
+                            "type": "arg",
+                            "value": "html_id"
+                        },
+                        {
                             "id": "edit_text",
                             "type": "h"
                         },
@@ -4290,9 +4336,7 @@
                         },
                         {
                             "id": "edit_text_base_props",
-                            "value": {
-                                "id": "edit_value"
-                            }
+                            "script": "return {id: `${html_id}-edit_value`}"
                         },
                         {
                             "id": "edit_text_props"
@@ -4423,6 +4467,11 @@
                             "as": "dom_type"
                         },
                         {
+                            "from": "html_id",
+                            "to": "edit_text_base_props",
+                            "as": "html_id"
+                        },
+                        {
                             "from": "edit_text_base_props",
                             "to": "edit_text_props"
                         },
@@ -4545,8 +4594,13 @@
                     "id": "popover_graph",
                     "nodes": [
                         {
+                            "id": "html_id",
+                            "type": "arg",
+                            "value": "html_id"
+                        },
+                        {
                             "id": "props",
-                            "value": {"id": "popover"}
+                            "script": "return {id: `${html_id}-popover`}"
                         },
                         {
                             "id": "dom_type",
@@ -4556,6 +4610,7 @@
                     ],
                     "edges": [
                         {"from": "props", "to": "out", "as": "props"},
+                        {"from": "html_id", "to": "props", "as": "html_id"},
                         {"from": "dom_type", "to": "out", "as": "dom_type"}
                     ]
                 },
@@ -4569,6 +4624,11 @@
                             "id": "error",
                             "type": "arg",
                             "value": "error"
+                        },
+                        {
+                            "id": "html_id",
+                            "type": "arg",
+                            "value": "html_id"
                         },
                         {
                             "id": "get_node",
@@ -4645,7 +4705,7 @@
                             "args": [
                                 "error"
                             ],
-                            "script": "return {class: error ? 'error' : '', id: 'result'}"
+                            "script": "return {class: error ? 'error' : '', id: `${html_id}-result`}"
                         },
                         {
                             "id": "container_children_inputs",
@@ -4792,12 +4852,17 @@
                             "value": "input"
                         },
                         {
+                            "id": "html_id",
+                            "type": "arg",
+                            "value": "html_id"
+                        },
+                        {
                             "id": "search_input_props",
                             "args": [
                                 "search",
                                 "display_graph"
                             ],
-                            "script": "return {id: `search-input`, type: 'text', onkeydown: (s, payload) => { if(payload.key === 'Enter'){ const direction = payload.shiftKey ? -1 : 1; const idx = (s.search_results.length + s.search_index + direction) % s.search_results.length; return {...s, selected: s.search_results.slice(idx, idx + 1), search_index: idx} } else { return s;} }, oninput: (s, payload) => { const search_results = new _lib.Fuse(display_graph.nodes, {keys: ['name', 'id']}).search(payload.target.value).map(r => r.item.id); return {...s, search: payload.target.value, selected: search_results.length > 0 ? search_results.slice(0, 1) : s.selected, search_results, search_index: 0, levels: _lib.scripts.calculateLevels(s.nodes, s.links, display_graph, search_results.length > 0 ? search_results.slice(0, 1) : s.selected)}}}"
+                            "script": "return {id: `${html_id}-search-input`, type: 'text', onkeydown: (s, payload) => { if(payload.key === 'Enter'){ const direction = payload.shiftKey ? -1 : 1; const idx = (s.search_results.length + s.search_index + direction) % s.search_results.length; return {...s, selected: s.search_results.slice(idx, idx + 1), search_index: idx} } else { return s;} }, oninput: (s, payload) => { const search_results = new _lib.Fuse(display_graph.nodes, {keys: ['name', 'id']}).search(payload.target.value).map(r => r.item.id); return {...s, search: payload.target.value, selected: search_results.length > 0 ? search_results.slice(0, 1) : s.selected, search_results, search_index: 0, levels: _lib.scripts.calculateLevels(s.nodes, s.links, display_graph, search_results.length > 0 ? search_results.slice(0, 1) : s.selected)}}}"
                         },
                         {
                             "id": "out",
@@ -4808,6 +4873,11 @@
                         {
                             "from": "in",
                             "to": "search_input_props"
+                        },
+                        {
+                            "from": "html_id",
+                            "to": "search_input_props",
+                            "as": "html_id"
                         },
                         {
                             "from": "search_input_dom_type",
@@ -4834,6 +4904,11 @@
                         {
                             "id": "out",
                             "type": "h"
+                        },
+                        {
+                            "id": "html_id",
+                            "type": "arg",
+                            "value": "html_id"
                         },
                         {
                             "id": "get_nodes",
@@ -4916,7 +4991,7 @@
                         {
                             "id": "node_layout",
                             "args": ["node_inputs", "node_layout_map", "nodes", "graph", "onclick_node_fn", "selected", "selected_edge"],
-                            "script": "return nodes.map(n => _lib.no.executeGraphValue({state: new Map(), graph: {...graph, in: '_' + n.node_id, out: node_layout_map}, cache_id: '_' + n.node_id})(Object.assign({node: n, selected_distance: levels.distance_from_selected.get(n.node_child_id), level: levels.level_by_node.get(n.node_id)}, _node_inputs)))"
+                            "script": "return nodes.map(n => _lib.no.executeGraphValue({state: new Map(), graph: {...graph, in: '_' + n.node_id, out: node_layout_map, html_id: html_id}, cache_id: '_' + n.node_id})(Object.assign({node: n, selected_distance: levels.distance_from_selected.get(n.node_child_id), level: levels.level_by_node.get(n.node_id)}, _node_inputs)))"
                         },
                         {
                             "id": "node_layout_map",
@@ -4928,6 +5003,11 @@
                                     "id": "get_node",
                                     "type": "arg",
                                     "value": "node"
+                                },
+                                {
+                                    "id": "html_id",
+                                    "type": "arg",
+                                    "value": "html_id"
                                 },
                                 {
                                     "id": "is_selected",
@@ -4964,7 +5044,7 @@
                                         "node",
                                         "meta"
                                     ],
-                                    "script": "const mouseevent = (_, payload) => [meta.onclick_node_fn, {x: payload.x, y: payload.y, node_id: node.node_id, selected: [], ty: 'down'}]; return ({ x: node.x - 20, y: node.y - 20, id: node.node_id, onmousedown: mouseevent, width: 256, height: 64, id: node.node_child_id, class: `node ${meta.selected[0] === node.node_id ? 'selected': ''}`, opacity: meta.selected_edge?.from === node.node_id ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - (selected_distance * selected_distance + (!!selected_distance ? 2 : 0)) / 6) : 0.1})"
+                                    "script": "const mouseevent = (_, payload) => [meta.onclick_node_fn, {x: payload.x, y: payload.y, node_id: node.node_id, selected: [], ty: 'down'}]; return ({ x: node.x - 20, y: node.y - 20, onmousedown: mouseevent, width: 256, height: 64, id: html_id + '-' + node.node_child_id, class: `node ${meta.selected[0] === node.node_id ? 'selected': ''}`, opacity: meta.selected_edge?.from === node.node_id ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - (selected_distance * selected_distance + (!!selected_distance ? 2 : 0)) / 6) : 0.1})"
 
                                 },
                                 {
@@ -5367,6 +5447,11 @@
                                 {
                                     "from": "children",
                                     "to": "parent"
+                                },
+                                {
+                                    "from": "html_id",
+                                    "to": "parent_attrs",
+                                    "as": "html_id"
                                 },
                                 {
                                     "from": "selected_distance",
@@ -5914,6 +5999,11 @@
                             "to": "get_levels"
                         },
                         {
+                            "from": "html_id",
+                            "to": "node_layout",
+                            "as": "html_id"
+                        },
+                        {
                             "from": "get_nodes",
                             "to": "node_layout",
                             "as": "nodes"
@@ -6445,7 +6535,7 @@
         },
         {
             "from": "onkey_fn",
-            "to": "hyperapp_subscriptions",
+            "to": "hyperapp_app",
             "as": "onkey_fn"
         },
         {
@@ -6453,6 +6543,11 @@
             "to": "onkey_fn",
             "as": "fn",
             "type": "ref"
+        },
+        {
+            "from": "html_id",
+            "to": "render_graph_effect",
+            "as": "html_id"
         },
         {
             "from": "dummy_graph",
@@ -6573,18 +6668,13 @@
         },
         {
             "from": "sim_to_hyperapp_fn",
-            "to": "hyperapp_subscriptions",
+            "to": "hyperapp_app",
             "as": "sim_to_hyperapp_action"
         },
         {
             "from": "graph_to_sim_action",
-            "to": "hyperapp_subscriptions",
-            "as": "graph_to_sim_action"
-        },
-        {
-            "from": "hyperapp_subscriptions",
             "to": "hyperapp_app",
-            "as": "subscriptions"
+            "as": "graph_to_sim_action"
         },
         {
             "from": "update_sim_in",
@@ -6605,7 +6695,7 @@
         },
         {
             "from": "update_sim_effect",
-            "to": "hyperapp_subscriptions",
+            "to": "hyperapp_app",
             "as": "update_sim"
         },
         {
