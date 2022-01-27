@@ -580,6 +580,7 @@ const bfs = (graph, visited) => (id, level) => {
 }
 
 const updateSimulationNodes = (data) => {
+    console.log(data);
     const simulation_node_data = new Map();
     data.simulation.nodes().forEach(n => {
         simulation_node_data.set(n.node_child_id, n)
@@ -661,6 +662,7 @@ const updateSimulationNodes = (data) => {
                 as: e.as,
                 type: e.type,
                 strength: 4 / (1 + 4 * (children_map.get(main_node_map.get(e.from))?.length ?? 0)),
+                distance: 64 +  32 * (parents_map.get(main_node_map.get(e.to))?.length ?? 0)
             };
         }).filter(l => !!l);
 
@@ -740,7 +742,7 @@ const graphToSimulationNodes = (data, payload) => {
 
 const d3subscription = (dispatch, props) => {
     const simulation = lib.d3.forceSimulation()
-        .force('charge', lib.d3.forceManyBody().strength(-64).distanceMax(256).distanceMin(128))
+        .force('charge', lib.d3.forceManyBody().strength(-64).distanceMax(256).distanceMin(64))
         .force('collide', lib.d3.forceCollide(64))
         .force('links', lib.d3
             .forceLink([])

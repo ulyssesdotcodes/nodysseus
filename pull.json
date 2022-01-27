@@ -2373,7 +2373,8 @@
                 "show_all": false,
                 "app_state": {},
                 "show_result": false,
-                "focused": true
+                "focused": true,
+                "show_popover": true
             }
         },
         {
@@ -2933,7 +2934,7 @@
                         "selected",
                         "state"
                     ],
-                    "script": "return {...state, selected: selected ?? state.selected}"
+                    "script": "if(selected) { document.querySelector(`#${html_id}`).dispatchEvent(new CustomEvent(`selectnode`, {detail: {node: selected[0]}}))} return {...state, selected: selected ?? state.selected}"
                 },
                 {
                     "id": "show_all",
@@ -3311,6 +3312,11 @@
                 {
                     "from": "html_id",
                     "to": "t",
+                    "as": "html_id"
+                },
+                {
+                    "from": "html_id",
+                    "to": "set_selected",
                     "as": "html_id"
                 },
                 {
@@ -3997,6 +4003,11 @@
                     "script": "return args[0]"
                 },
                 {
+                    "id": "html_id",
+                    "type": "arg",
+                    "value": "html_id"
+                },
+                {
                     "id": "event",
                     "args": [
                         "args"
@@ -4041,7 +4052,7 @@
                         "selected",
                         "state"
                     ],
-                    "script": "return {...state, selected: selected ? selected : state.selected}"
+                    "script": "if(selected) { document.querySelector(`#${html_id}`).dispatchEvent(new CustomEvent(`selectnode`, {detail: {node: selected[0]}}))} return {...state, selected: selected ? selected : state.selected}"
                 },
                 {
                     "id": "display_graph_inputs",
@@ -4099,6 +4110,10 @@
                     "as": "args"
                 },
                 {
+                    "from": "state",
+                    "to": "html_id"
+                },
+                {
                     "from": "event",
                     "to": "node_id"
                 },
@@ -4154,6 +4169,11 @@
                     "from": "selected",
                     "to": "set_selected",
                     "as": "selected"
+                },
+                {
+                    "from": "html_id",
+                    "to": "set_selected",
+                    "as": "html_id"
                 },
                 {
                     "from": "set_selected",
@@ -4236,7 +4256,7 @@
         },
         {
             "id": "popover_dimensions",
-            "value": {"x": 400, "y": 400}
+            "value": {"x": 400, "y": 800}
         },
         {
             "id": "html_id",
@@ -4244,21 +4264,23 @@
             "value": "html_id"
         },
         {
-            "id": "render_graph_effect",
-            "script": "return (dispatch, payload) => requestAnimationFrame(() => {_lib.no.executeGraphNode({graph})('hyperapp_app')({graph, display_graph, html_id: `${html_id}-popover`, dimensions}); dispatch(s => [{...s, focused: false}])})"
-        },
-        {
             "id": "dummy_graph",
             "value": {
                 "out": "out",
                 "nodes": [
-                    {"id": "in"},
+                    {"id": "create_parent"},
+                    {"id": "delete"},
                     {"id": "out"}
                 ],
                 "edges": [
-                    {"from": "in", "to": "out"}
+                    {"from": "create_parent", "to": "out"},
+                    {"from": "delete", "to": "out"}
                 ]
             }
+        },
+        {
+            "id": "render_graph_effect",
+            "script": "return (dispatch, payload) => requestAnimationFrame(() => {_lib.no.executeGraphNode({graph})('hyperapp_app')({graph, display_graph, html_id: `${html_id}-popover`, dimensions}); dispatch(s => [{...s, focused: false}])})"
         },
         {
             "id": "editor",
@@ -4286,6 +4308,11 @@
                     "value": "show_result"
                 },
                 {
+                    "id": "update_sim",
+                    "type": "arg",
+                    "value": "update_sim"
+                },
+                {
                     "id": "result_wrapper"
                 },
                 {
@@ -4303,6 +4330,7 @@
                         "edit_text",
                         "search_input",
                         "show_result",
+                        "show_popover",
                         "popover_graph"
                     ],
                     "script": "return [node_editor.el, edit_text.el, search_input.el, popover_graph.el, show_result && result.run.el ].filter(e => e)"
@@ -4599,8 +4627,18 @@
                             "value": "html_id"
                         },
                         {
+                            "id": "update_sim",
+                            "type": "arg",
+                            "value": "update_sim"
+                        },
+                        {
+                            "id": "randid",
+                            "type": "arg",
+                            "value": "randid"
+                        },
+                        {
                             "id": "props",
-                            "script": "return {id: `${html_id}-popover`}"
+                            "script": "return {id: `${html_id}-popover`, onselectnode: (s, p) => p.detail.node === 'create_parent' ? [{...s, display_graph: {...s.display_graph, nodes: s.display_graph.nodes.concat([{id: 'created_node'}]), edges: s.display_graph.edges.concat([{to: s.selected[0], from: 'created_node'}]), selected: ['created_node']}}, [dispatch => dispatch(new_state => [new_state, [update_sim, new_state]])]] : s }"
                         },
                         {
                             "id": "dom_type",
@@ -4609,6 +4647,7 @@
                         {"id": "out", "type": "h"}
                     ],
                     "edges": [
+                        {"from": "update_sim", "to": "props", "as": "update_sim"},
                         {"from": "props", "to": "out", "as": "props"},
                         {"from": "html_id", "to": "props", "as": "html_id"},
                         {"from": "dom_type", "to": "out", "as": "dom_type"}
@@ -4973,7 +5012,7 @@
                                 "onclick_graph_fn",
                                 "selected"
                             ],
-                            "script": "return {width: dimensions.x, height: dimensions.x, viewBox: `${(selected?.x ?? (dimensions.x * 0.5)) - (dimensions.x * 0.5)} ${(selected?.y ?? (dimensions.y * 0.5)) - (dimensions.x * 0.5)} ${dimensions.y} ${dimensions.y}` /*, onmousedown: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'down'}], onmouseup: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'up'}], onmousemove: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'move'}]*/}"
+                            "script": "return {width: dimensions.x, height: dimensions.y, viewBox: `${(selected?.x ?? (dimensions.x * 0.5)) - (dimensions.x * 0.5)} ${(selected?.y ?? (dimensions.y * 0.5)) - (dimensions.y * 0.5)} ${dimensions.x} ${dimensions.y}` /*, onmousedown: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'down'}], onmouseup: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'up'}], onmousemove: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'move'}]*/}"
                         },
                         {
                             "id": "node_editor_dom_type",
@@ -6376,6 +6415,11 @@
                     "as": "result"
                 },
                 {
+                    "from": "update_sim",
+                    "to": "popover_graph",
+                    "as": "update_sim"
+                },
+                {
                     "from": "popover_graph",
                     "to": "wrapper_children",
                     "as": "popover_graph"
@@ -6550,6 +6594,11 @@
             "as": "html_id"
         },
         {
+            "from": "update_sim_effect",
+            "to": "render_graph_effect",
+            "as": "update_sim"
+        },
+        {
             "from": "dummy_graph",
             "to": "render_graph_effect",
             "as": "display_graph"
@@ -6692,6 +6741,11 @@
             "from": "update_sim_fn",
             "to": "update_sim_effect",
             "as": "fn"
+        },
+        {
+            "from": "update_sim_effect",
+            "to": "editor",
+            "as": "update_sim"
         },
         {
             "from": "update_sim_effect",
