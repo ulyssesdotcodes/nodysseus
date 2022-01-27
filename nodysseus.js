@@ -593,8 +593,6 @@ const updateSimulationNodes = (data) => {
 
     const main_node_map = new Map();
 
-    const fuse_links = [];
-
     const parents_map = new Map(data.display_graph.nodes.map(n => [n.id, data.display_graph.edges.filter(e => e.to === n.id).map(e => e.from)]));
     const children_map = new Map(data.display_graph.nodes.map(n => [n.id, data.display_graph.edges.filter(e => e.from === n.id).map(e => e.to)]));
     data.display_graph.nodes.forEach(n => {

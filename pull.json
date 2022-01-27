@@ -1225,8 +1225,12 @@
             ]
         },
         {
+            "id": "hyperapp_action",
+            "script": "return (state, payload) => {const result = _lib.no.executeGraphNode({graph: _graph})(fn)({state, payload}); return result.state ? [result.state, ...result.effects] : [result.action, result.payload]}" 
+        },
+        {
             "id": "hyperapp_state_action",
-            "script": "return (state, _) => _lib.no.executeGraphNode({graph: _graph})(fn)(state)" 
+            "script": "return (state, _) => {const result = _lib.no.executeGraphNode({graph: _graph})(fn)(state); return result.state ? [result.state, ...result.effects] : result.action ? [result.action, result.payload] : result}" 
         },
         {
             "id": "update_graph_display",
@@ -1364,7 +1368,7 @@
                         "payload",
                         "update_sim_effect"
                     ],
-                    "script": "return [{...state, result: show_result && result.run.result, error: show_result && result.run.error}, (update || update_graph_sim) && [update_sim_effect, state]].concat(fx ?? [])"
+                    "script": "return {state: {...state, result: show_result && result.run.result, error: show_result && result.run.error}, effects: [(update || update_graph_sim) && [update_sim_effect, state], ...(fx ?? [])]}"
                 }
             ],
             "edges": [
@@ -2486,7 +2490,7 @@
         },
         {
             "id": "onkey_fn",
-            "type": "execute_graph"
+            "type": "hyperapp_action"
         },
         {
             "id": "onkey_fn_body",
@@ -2499,10 +2503,8 @@
                 },
                 {
                     "id": "key_event",
-                    "args": [
-                        "args"
-                    ],
-                    "script": "return args[1]"
+                    "type": "arg",
+                    "value": "payload"
                 },
                 {
                     "id": "key",
@@ -2513,13 +2515,7 @@
                 },
                 {
                     "id": "key_inputs",
-                    "args": [
-                        "key",
-                        "state",
-                        "ctrlKey",
-                        "shiftKey"
-                    ],
-                    "script": "return (state.editing !== false || state.search !== false) ? key === 'escape' ? ['escape'] : [] : [((ctrlKey ? 'ctrl_' : '') + (shiftKey ? 'shift_' : '') + key.toLowerCase())]"
+                    "script": "return (state.editing !== false || state.search !== false) ? ev.key === 'escape' ? ['escape'] : [] : [((ev.ctrlKey ? 'ctrl_' : '') + (ev.shiftKey ? 'shift_' : '') + ev.key.toLowerCase())]"
                 },
                 {
                     "id": "key_log",
@@ -2527,10 +2523,8 @@
                 },
                 {
                     "id": "state",
-                    "args": [
-                        "args"
-                    ],
-                    "script": "return args[0]"
+                    "type": "arg",
+                    "value": "state"
                 },
                 {
                     "id": "html_id",
@@ -3062,16 +3056,11 @@
                 }
             ],
             "edges": [
-                {
-                    "from": "in",
-                    "to": "key_event",
-                    "as": "args"
-                },
                 {"from" :"state", "to": "html_id"},
                 {
-                    "from": "in",
-                    "to": "state",
-                    "as": "args"
+                    "from": "state",
+                    "to": "key_inputs",
+                    "as": "state"
                 },
                 {
                     "from": "key_event",
@@ -3079,13 +3068,14 @@
                     "as": "ev"
                 },
                 {
-                    "from": "key_event",
-                    "to": "key_inputs"
-                },
-                {
                     "from": "state",
                     "to": "key_inputs",
                     "as": "state"
+                },
+                {
+                    "from": "key_event",
+                    "to": "key_inputs",
+                    "as": "ev"
                 },
                 {
                     "from": "state",
@@ -3905,17 +3895,13 @@
                 },
                 {
                     "id": "state",
-                    "args": [
-                        "args"
-                    ],
-                    "script": "return args[0]"
+                    "type": "arg",
+                    "value": "state"
                 },
                 {
                     "id": "mouse_event",
-                    "args": [
-                        "args"
-                    ],
-                    "script": "return args[1]"
+                    "type": "arg",
+                    "value": "payload"
                 },
                 {
                     "id": "set_down_xy",
@@ -3939,18 +3925,13 @@
                         "down",
                         "new_node"
                     ],
-                    "script": "return {...data, downx: down?.x ?? data.downx, downy: down?.y ?? data.downy}"
+                    "script": "return {state: {...data, downx: down?.x ?? data.downx, downy: down?.y ?? data.downy}}"
                 }
             ],
             "edges": [
                 {
                     "from": "in",
-                    "to": "mouse_event",
-                    "as": "args"
-                },
-                {
-                    "from": "in",
-                    "to": "state",
+                    "to": "out",
                     "as": "args"
                 },
                 {
@@ -3987,7 +3968,7 @@
         },
         {
             "id": "onclick_graph_fn",
-            "type": "execute_graph"
+            "type": "hyperapp_action"
         },
         {
             "id": "onclick_node_fn_body",
@@ -3997,10 +3978,8 @@
                 },
                 {
                     "id": "state",
-                    "args": [
-                        "args"
-                    ],
-                    "script": "return args[0]"
+                    "type": "arg",
+                    "value": "state"
                 },
                 {
                     "id": "html_id",
@@ -4009,10 +3988,8 @@
                 },
                 {
                     "id": "event",
-                    "args": [
-                        "args"
-                    ],
-                    "script": "return args[1]"
+                    "type": "arg",
+                    "value": "payload"
                 },
                 {
                     "id": "node_id",
@@ -4101,12 +4078,7 @@
             "edges": [
                 {
                     "from": "in",
-                    "to": "event",
-                    "as": "args"
-                },
-                {
-                    "from": "in",
-                    "to": "state",
+                    "to": "out",
                     "as": "args"
                 },
                 {
@@ -4244,7 +4216,7 @@
         },
         {
             "id": "onclick_node_fn",
-            "type": "execute_graph"
+            "type": "hyperapp_action"
         },
         {
             "id": "editor_dom_type",
@@ -4270,6 +4242,7 @@
                 "nodes": [
                     {"id": "create_parent"},
                     {"id": "delete"},
+                    {"id": "close"},
                     {"id": "out"}
                 ],
                 "edges": [
@@ -4616,6 +4589,15 @@
                             "to": "edit_text_props",
                             "as": "class"
                         }
+                    ]
+                },
+                {
+                    "id": "popover_onselectnode",
+                    "nodes": [
+
+                    ],
+                    "edges": [
+
                     ]
                 },
                 {
