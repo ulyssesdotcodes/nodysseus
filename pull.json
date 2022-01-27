@@ -15,7 +15,7 @@
                 },
                 {
                     "id": "value",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "value"
                 },
                 {
@@ -71,16 +71,16 @@
         "nodes": [
             {
                 "id": "tsxlng4gd",
-                "type": "h",
+                "ref": "h",
                 "name": "text_display/out"
             },
             {
                 "id": "osgrk7ddu",
-                "type": "h_text"
+                "ref": "h_text"
             },
             {
                 "id": "wrap_array_text",
-                "type": "wrap_array"
+                "ref": "wrap_array"
             },
             {
                 "id": "hghirvcml",
@@ -134,12 +134,12 @@
         "nodes": [
             {
                 "id": "state",
-                "type": "arg",
+                "ref": "arg",
                 "value": 0
             },
             {
                 "id": "payload",
-                "type": "arg",
+                "ref": "arg",
                 "value": 1
             },
             {
@@ -158,42 +158,42 @@
         "nodes": [
             {
                 "id": "state",
-                "type": "arg",
+                "ref": "arg",
                 "value": 0
             },
             {
                 "id": "old_nodes",
-                "type": "arg",
+                "ref": "arg",
                 "value": "0.nodes"
             },
             {
                 "id": "old_links",
-                "type": "arg",
+                "ref": "arg",
                 "value": "0.links"
             },
             {
                 "id": "new_nodes",
-                "type": "arg",
+                "ref": "arg",
                 "value": "1.nodes"
             },
             {
                 "id": "new_links",
-                "type": "arg",
+                "ref": "arg",
                 "value": "1.links"
             },
             {
                 "id": "selected",
-                "type": "arg",
+                "ref": "arg",
                 "value": "0.selected"
             },
             {
                 "id": "display_graph",
-                "type": "arg",
+                "ref": "arg",
                 "value": "0.display_graph"
             },
             {
                 "id": "payload",
-                "type": "arg",
+                "ref": "arg",
                 "value": 1
             },
             {
@@ -215,7 +215,7 @@
             },
             {
                 "id": "if_levels",
-                "type": "if"
+                "ref": "if"
             },
             {
                 "id": "action",
@@ -249,7 +249,7 @@
                 },
                 {
                     "id": "init",
-                    "type": "get"
+                    "ref": "get"
                 },
                 {
                     "id": "init_key",
@@ -257,37 +257,37 @@
                 },
                 {
                     "id": "view",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "view"
                 },
                 {
                     "id": "html_id",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "html_id"
                 },
                 {
                     "id": "update_hyperapp",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "update_hyperapp"
                 },
                 {
                     "id": "update_sim",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "update_sim"
                 },
                 {
                     "id": "sim_to_hyperapp_action",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "sim_to_hyperapp_action"
                 },
                 {
                     "id": "render_graph_effect",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "render_graph_effect"
                 },
                 {
                     "id": "onkey_fn",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "onkey_fn"
                 },
                 {
@@ -296,7 +296,7 @@
                         "init",
                         "view"
                     ],
-                    "script": "return {dispatch: _lib.ha.app({init: () => [init, [d => d(update_hyperapp)], html_id === 'node-editor' && [render_graph_effect]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [[_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}],  s.focused && [_lib.scripts.keydownSubscription, {action: onkey_fn}]]})}"
+                    "script": "return {dispatch: _lib.ha.app({init: () => [init, [d => d(update_hyperapp)], init.show_popover && html_id === 'node-editor' && [render_graph_effect]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [[_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}],  s.focused && [_lib.scripts.keydownSubscription, {action: onkey_fn}]]})}"
                 }
             ],
             "edges": [
@@ -419,19 +419,19 @@
                 {
                 "id": "pfoypo5",
                 "args": [],
-                "type": "arg",
+                "ref": "arg",
                 "value": "key"
                 },
                 {
                 "id": "zinx621",
                 "args": [],
-                "type": "arg",
+                "ref": "arg",
                 "value": "value"
                 },
                 {
                 "id": "x2sz5kb",
                 "args": [],
-                "type": "arg",
+                "ref": "arg",
                 "value": "arr"
                 },
                 {
@@ -531,7 +531,7 @@
                 },
                 {
                     "id": "input",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "input"
                 }
             ],
@@ -556,7 +556,7 @@
                 },
                 {
                     "id": "pred",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "pred"
                 },
                 {
@@ -593,7 +593,7 @@
                 },
                 {
                     "id": "el",
-                    "type": "h"
+                    "ref": "h"
                 },
                 {
                     "id": "dom_type",
@@ -601,7 +601,7 @@
                 },
                 {
                     "id": "text_el",
-                    "type": "h_text"
+                    "ref": "h_text"
                 },
                 {
                     "id": "children",
@@ -724,12 +724,12 @@
                 },
                 {
                     "id": "fn",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "fn"
                 },
                 {
                     "id": "payload",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "payload"
                 },
                 {
@@ -767,17 +767,17 @@
                 },
                 {
                     "id": "def",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "def"
                 },
                 {
                     "id": "target",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "target"
                 },
                 {
                     "id": "path",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "path"
                 },
                 {
@@ -844,7 +844,7 @@
                 {
                     "id": "vnw7d8iaw",
                     "name": "fuse vertices",
-                    "type": "switch",
+                    "ref": "switch",
                     "args": ["fuse", "graph"]
                 },
                 {
@@ -854,7 +854,7 @@
                 },
                 {
                     "id": "p229wzcj5",
-                    "type": "fuse vertices"
+                    "ref": "fuse vertices"
                 },
                 {
                     "id": "idjoql4db"
@@ -889,7 +889,7 @@
                 {
                     "id": "nznzj5bfn",
                     "name": "get graph",
-                    "type": "get"
+                    "ref": "get"
                 },
                 {
                     "id": "g8mx5sn1u",
@@ -1003,7 +1003,7 @@
                     "id": "ay4hfrqw1",
                     "args": [],
                     "name": "remove pendant",
-                    "type": "switch"
+                    "ref": "switch"
                 },
                 {
                     "id": "r5lka2sj5",
@@ -1013,7 +1013,7 @@
                 {
                     "id": "7elx5ekij",
                     "args": [],
-                    "type": "remove pendant"
+                    "ref": "remove pendant"
                 },
                 {
                     "id": "cz08pewa3",
@@ -1048,7 +1048,7 @@
                         {
                             "id": "7g81ijcqb",
                             "args": [],
-                            "type": "get",
+                            "ref": "get",
                             "name": "nodes"
                         },
                         {
@@ -1081,7 +1081,7 @@
                         {
                             "id": "zkg9zpu3e",
                             "args": [],
-                            "type": "get",
+                            "ref": "get",
                             "name": "edges"
                         },
                         {
@@ -1108,7 +1108,7 @@
                 {
                     "id": "bp1cy89hk",
                     "args": [],
-                    "type": "get",
+                    "ref": "get",
                     "name": "graph"
                 },
                 {
@@ -1233,6 +1233,11 @@
             "script": "return (state, _) => {const result = _lib.no.executeGraphNode({graph: _graph})(fn)(state); return result.state ? [result.state, ...result.effects] : result.action ? [result.action, result.payload] : result}" 
         },
         {
+            "id": "hyperapp_action_effect",
+            "description": "Creates an effect that dispatches the passed-in action",
+            "script": "return dispatch => dispatch(action, payload)"
+        },
+        {
             "id": "update_graph_display",
             "in": "in",
             "out": "out",
@@ -1251,22 +1256,22 @@
                 },
                 {
                     "id": "update_sim_effect",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "update_sim_effect"
                 },
                 {
                     "id": "show_result",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "show_result"
                 },
                 {
                     "id": "nodes",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "nodes"
                 },
                 {
                     "id": "links",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "links"
                 },
                 {
@@ -1280,7 +1285,7 @@
                 },
                 {
                     "id": "reduce_graph",
-                    "type": "fuse vertices"
+                    "ref": "fuse vertices"
                 },
                 {
                     "id": "graph",
@@ -1289,7 +1294,7 @@
                 },
                 {
                     "id": "levels",
-                    "type": "switch",
+                    "ref": "switch",
                     "args": ["levels"]
                 },
                 {
@@ -1499,7 +1504,7 @@
                 },
                 {
                     "id": "dom_type",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "dom_type"
                 },
                 {
@@ -1534,7 +1539,7 @@
                     "from": "fill_props",
                     "to": "out",
                     "as": "props",
-                    "type": "resolve"
+                    "ref": "resolve"
                 },
                 {"from": "dom_type", "to": "out", "as": "dom_type"}
             ]
@@ -1552,7 +1557,7 @@
                 },
                 {
                     "id": "iterate",
-                    "type": "map"
+                    "ref": "map"
                 },
                 {
                     "id": "out"
@@ -1572,27 +1577,27 @@
                 },
                 {
                     "id": "dom_type",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "dom_type"
                 },
                 {
                     "id": "props",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "props"
                 },
                 {
                     "id": "children",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "children"
                 },
                 {
                     "id": "graph",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "graph"
                 },
                 {
                     "id": "text",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "text"
                 },
                 {
@@ -1616,7 +1621,7 @@
                 },
                 {
                     "id": "out_el",
-                    "type": "switch"
+                    "ref": "switch"
                 },
                 {
                     "id": "out",
@@ -1634,7 +1639,7 @@
                 {"from": "out_text", "to": "els", "as": "h_text"},
                 {"from": "out_h", "to": "els", "as": "h"},
                 {"from": "els", "to": "out_el"},
-                {"from": "out_el", "to": "out", "as": "el", "type": "resolve"},
+                {"from": "out_el", "to": "out", "as": "el", "ref": "resolve"},
                 {"from": "out_input", "to": "out_el", "as": "input"}
             ]
         },
@@ -1646,7 +1651,7 @@
                 },
                 {
                     "id": "text",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "text"
                 },
                 {
@@ -1667,7 +1672,7 @@
                     "from": "text",
                     "to": "out",
                     "as": "text",
-                    "type": "resolve"
+                    "ref": "resolve"
                 }
             ]
         },
@@ -1679,12 +1684,12 @@
                 },
                 {
                     "id": "dg_selected",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "selected"
                 },
                 {
                     "id": "display_graph",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "display_graph"
                 },
                 {
@@ -1693,7 +1698,7 @@
                 },
                 {
                     "id": "selected_node",
-                    "type": "selected_node"
+                    "ref": "selected_node"
                 },
                 {
                     "id": "expand_contract_result_inputs",
@@ -1713,7 +1718,7 @@
                 },
                 {
                     "id": "expand_contract_result",
-                    "type": "switch"
+                    "ref": "switch"
                 },
                 {
                     "id": "get_name",
@@ -1724,7 +1729,7 @@
                 },
                 {
                     "id": "log",
-                    "type": "log"
+                    "ref": "log"
                 },
                 {
                     "id": "expandable_id",
@@ -1777,7 +1782,7 @@
                 },
                 {
                     "id": "out",
-                    "type": "default"
+                    "ref": "default"
                 }
             ],
             "edges": [
@@ -1920,13 +1925,13 @@
             "nodes": [
                 {
                     "id": "tsxlng4gd",
-                    "type": "h",
+                    "ref": "h",
                     "name": "default_node_display"
                 },
                 {
                     "id": "osgrk7ddu",
                     "args": [],
-                    "type": "h_text"
+                    "ref": "h_text"
                 },
                 {
                     "id": "hghirvcml",
@@ -1974,7 +1979,7 @@
             "nodes": [
                 {
                     "id": "out",
-                    "type": "h",
+                    "ref": "h",
                     "name": "graph_display"
                 },
                 {
@@ -1985,7 +1990,7 @@
                 {
                     "id": "thsez3hy1",
                     "args": [],
-                    "type": "h_text"
+                    "ref": "h_text"
                 },
                 {
                     "id": "stringify",
@@ -2035,7 +2040,7 @@
                 {
                     "id": "tsxlng4gd",
                     "args": [],
-                    "type": "h",
+                    "ref": "h",
                     "name": "number_display"
                 },
                 {
@@ -2050,18 +2055,18 @@
                     "id": "h5xzkeoql",
                     "args": [],
                     "value": {
-                        "type": "number"
+                        "ref": "number"
                     }
                 },
                 {
                     "id": "ltncqmqe9",
                     "args": [],
-                    "type": "get"
+                    "ref": "get"
                 },
                 {
                     "id": "9kkegcpi2",
                     "args": [],
-                    "type": "execute_graph"
+                    "ref": "execute_graph"
                 },
                 {
                     "id": "e96vv0gpq",
@@ -2071,12 +2076,12 @@
                 {
                     "id": "tw41k3wzg",
                     "args": [],
-                    "type": "get"
+                    "ref": "get"
                 },
                 {
                     "id": "u9feks2l9",
                     "args": [],
-                    "type": "update_graph_display"
+                    "ref": "update_graph_display"
                 },
                 {
                     "id": "6pqqchhnk",
@@ -2091,7 +2096,7 @@
                 {
                     "id": "rhzddw3c6",
                     "args": [],
-                    "type": "set"
+                    "ref": "set"
                 },
                 {
                     "id": "8jmaa71ct",
@@ -2106,13 +2111,13 @@
                 {
                     "id": "es0e6as0j",
                     "args": [],
-                    "type": "get",
+                    "ref": "get",
                     "name": "get target value"
                 },
                 {
                     "id": "vnta2m4py",
                     "args": [],
-                    "type": "get"
+                    "ref": "get"
                 },
                 {
                     "id": "gh99zvhy2",
@@ -2128,12 +2133,12 @@
                 {
                     "id": "fxbdw1jrr",
                     "args": [],
-                    "type": "selected_node"
+                    "ref": "selected_node"
                 },
                 {
                     "id": "pkih97fsa",
                     "args": [],
-                    "type": "get",
+                    "ref": "get",
                     "name": "state"
                 },
                 {
@@ -2185,7 +2190,7 @@
                     "from": "u9feks2l9",
                     "to": "9kkegcpi2",
                     "as": "fn",
-                    "type": "ref"
+                    "ref": "ref"
                 },
                 {
                     "from": "6pqqchhnk",
@@ -2261,7 +2266,7 @@
                     "from": "mbbx3d26q",
                     "to": "9kkegcpi2",
                     "as": "in_node",
-                    "type": "ref"
+                    "ref": "ref"
                 },
                 {
                     "from": "mbbx3d26q",
@@ -2300,7 +2305,7 @@
                 },
                 {
                     "id": "text",
-                    "type": "h_text"
+                    "ref": "h_text"
                 },
                 {
                     "id": "out_dom_type",
@@ -2308,7 +2313,7 @@
                 },
                 {
                     "id": "out",
-                    "type": "h"
+                    "ref": "h"
                 }
             ],
             "edges": [
@@ -2326,7 +2331,7 @@
                     "from": "text",
                     "to": "out",
                     "as": "children",
-                    "type": "resolve"
+                    "ref": "resolve"
                 },
                 {
                     "from": "out_dom_type",
@@ -2378,7 +2383,7 @@
                 "app_state": {},
                 "show_result": false,
                 "focused": true,
-                "show_popover": true
+                "show_popover": false
             }
         },
         {
@@ -2390,11 +2395,11 @@
         },
         {
             "id": "get_graph",
-            "type": "get"
+            "ref": "get"
         },
         {
             "id": "get_display_graph",
-            "type": "arg",
+            "ref": "arg",
             "value": "display_graph"
         },
         {
@@ -2408,24 +2413,24 @@
         },
         {
             "id": "hyperapp_view",
-            "type": "execute_graph"
+            "ref": "execute_graph"
         },
         {
             "id": "update_hyperapp",
-            "type": "update_graph_display"
+            "ref": "update_graph_display"
         },
         {
             "id": "update_hyperapp_action",
-            "type": "hyperapp_state_action"
+            "ref": "hyperapp_state_action"
         },
         {
             "id": "html_id",
-            "type": "arg",
+            "ref": "arg",
             "value": "html_id"
         },
         {
             "id": "hyperapp_app",
-            "type": "hyperapp"
+            "ref": "hyperapp"
         },
         {
             "id": "out"
@@ -2435,12 +2440,12 @@
         },
         {
             "id": "nodes",
-            "type": "arg",
+            "ref": "arg",
             "value": "nodes"
         },
         {
             "id": "links",
-            "type": "arg",
+            "ref": "arg",
             "value": "links"
         },
         {
@@ -2452,20 +2457,20 @@
                 "selected",
                 "levels"
             ],
-            "type": "graph_to_sim_fn",
+            "ref": "graph_to_sim_fn",
             "_script": "return _lib.scripts.graphToSimulationNodes({display_graph, nodes, links, selected, levels})"
         },
         {
             "id": "sim_to_hyperapp",
-            "type": "sim_to_hyperapp_action"
+            "ref": "sim_to_hyperapp_action"
         },
         {
             "id": "sim_to_hyperapp_fn",
-            "type": "execute_graph"
+            "ref": "execute_graph"
         },
         {
             "id": "graph_to_sim_action",
-            "type": "execute_graph"
+            "ref": "execute_graph"
         },
         {
             "id": "update_nodes_in"
@@ -2486,11 +2491,11 @@
         },
         {
             "id": "update_nodes_fn",
-            "type": "execute_graph"
+            "ref": "execute_graph"
         },
         {
             "id": "onkey_fn",
-            "type": "hyperapp_action"
+            "ref": "hyperapp_action"
         },
         {
             "id": "onkey_fn_body",
@@ -2503,7 +2508,7 @@
                 },
                 {
                     "id": "key_event",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "payload"
                 },
                 {
@@ -2519,16 +2524,16 @@
                 },
                 {
                     "id": "key_log",
-                    "type": "log"
+                    "ref": "log"
                 },
                 {
                     "id": "state",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "state"
                 },
                 {
                     "id": "html_id",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "html_id"
                 },
                 {
@@ -2550,7 +2555,7 @@
                 },
                 {
                     "id": "selected_node",
-                    "type": "selected_node"
+                    "ref": "selected_node"
                 },
                 {
                     "id": "save",
@@ -2654,7 +2659,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "document.querySelector(`#${html_id}-edit_value input`).focus(); return 'type';"
+                    "script": "document.querySelector(`#${html_id}-edit_value input`).focus(); return 'ref';"
                 },
                 {
                     "id": "shift_t",
@@ -2666,7 +2671,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "const new_node = Object.assign({}, display_graph.nodes.find(n => n.id === selected[0])); new_node.id = new_node.name; return {...display_graph, nodes: display_graph.nodes.map(n => n.id === selected[0] ? {id: n.id, type: n.name, name: n.name} : n).concat([new_node]), edges: display_graph.edges}"
+                    "script": "const new_node = Object.assign({}, display_graph.nodes.find(n => n.id === selected[0])); new_node.id = new_node.name; return {...display_graph, nodes: display_graph.nodes.map(n => n.id === selected[0] ? {id: n.id, ref: n.name, name: n.name} : n).concat([new_node]), edges: display_graph.edges}"
                 },
                 {
                     "id": "s",
@@ -2690,7 +2695,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 'a' && editing === false)){ return [] } document.querySelector('#${html_id}-edit_value textarea').focus(); return selected_edge ? 'as' : 'args';"
+                    "script": "if(!(key === 'a' && editing === false)){ return [] } document.querySelector(`#${html_id}-edit_value textarea`).focus(); return selected_edge ? 'as' : 'args';"
                 },
                 {
                     "id": "n",
@@ -2701,7 +2706,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 'n' && editing === false)){ return [] } document.querySelector('#${html_id}-edit_value textarea').focus(); return 'name';"
+                    "script": "if(!(key === 'n' && editing === false)){ return [] } document.querySelector(`#${html_id}-edit_value textarea`).focus(); return 'name';"
                 },
                 {
                     "id": "o",
@@ -2715,6 +2720,7 @@
                         "levels",
                         "randid"
                     ],
+                    "script__": "return {effects: [[add_node]]",
                     "script": "const id = randid; const new_nodes = display_graph.nodes.concat([{id, args: []}]); const new_edges = display_graph.edges.flatMap(e => selected_edge?.to === e.to && selected_edge?.from === e.from ? [{from: selected_edge.from, to: id}, {from: id, to: selected_edge.to, as: e.as}] : e).concat(selected_edge ? [] : [{from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id, as: `arg${levels.parents.get(selected[0]).length}`}]); return {display_graph: {...display_graph, edges: new_edges, nodes: new_nodes}, selected: [id], selected_edge: false};",
                     "script_": "const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({id, args: []}); const edgeIdx = display_graph.edges.findIndex(e => selected_edge?.to === e.to && selected_edge?.from === e.from); display_graph.edges.splice(selected_edge ? edgeIdx : display_graph.edges.length, selected_edge ? 1 : 0, ...(selected_edge ? [{from: selected_edge.from, to: id}, {from: id, to: selected_edge.to, as: display_graph.edges[edgeIdx].as}] : [{from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id, as: `arg${levels.parents.get(selected[0]).length}`}])); return {display_graph, selected: [id], selected_edge: false};"
                 },
@@ -2854,7 +2860,7 @@
                 },
                 {
                     "id": "expand_contract",
-                    "type": "expand_contract"
+                    "ref": "expand_contract"
                 },
                 {
                     "id": "expand_contract_selected",
@@ -2881,7 +2887,7 @@
                         "editing",
                         "search"
                     ],
-                    "script": "target.blur(); if(search !== false){ target.value = ''; return {search: false} } let new_nodes; let value = target.value === '' ? undefined : target.value; if(selected_edge){ display_graph.edges.find(e => e.to === selected_edge.to && e.from === selected_edge.from)[editing] = value === '' ? undefined : value; } else { let ty; new_nodes = display_graph.nodes.map(n => n.id !== selected[0] ? n : (ty = n.type, {...n, [editing]: value})); if(editing === 'name' || (editing === 'value' && ty === 'arg' && value)){ display_graph.edges.filter(e => e.from === selected[0] && e.as?.startsWith('arg')).forEach(e => e.as = value) }} return {editing: false, edit_value: null, display_graph: {...display_graph, nodes: new_nodes ?? display_graph.nodes}};" },
+                    "script": "target.blur(); if(search !== false){ target.value = ''; return {search: false} } let new_nodes; let value = target.value === '' ? undefined : target.value; if(selected_edge){ display_graph.edges.find(e => e.to === selected_edge.to && e.from === selected_edge.from)[editing] = value === '' ? undefined : value; } else { let ty; new_nodes = display_graph.nodes.map(n => n.id !== selected[0] ? n : (ty = n.ref, {...n, [editing]: value})); if(editing === 'name' || (editing === 'value' && ty === 'arg' && value)){ display_graph.edges.filter(e => e.from === selected[0] && e.as?.startsWith('arg')).forEach(e => e.as = value) }} return {editing: false, edit_value: null, display_graph: {...display_graph, nodes: new_nodes ?? display_graph.nodes}};" },
                 {
                     "id": "esc_editing",
                     "args": [
@@ -2920,7 +2926,7 @@
                 },
                 {
                     "id": "selected",
-                    "type": "switch"
+                    "ref": "switch"
                 },
                 {
                     "id": "set_selected",
@@ -2932,7 +2938,7 @@
                 },
                 {
                     "id": "show_all",
-                    "type": "switch"
+                    "ref": "switch"
                 },
                 {
                     "id": "set_show_all",
@@ -2941,7 +2947,7 @@
                 },
                 {
                     "id": "show_result",
-                    "type": "switch"
+                    "ref": "switch"
                 },
                 {
                     "id": "set_show_result",
@@ -2953,7 +2959,7 @@
                 },
                 {
                     "id": "editing",
-                    "type": "switch"
+                    "ref": "switch"
                 },
                 {
                     "id": "set_editing",
@@ -2965,7 +2971,7 @@
                 },
                 {
                     "id": "display_graph",
-                    "type": "switch"
+                    "ref": "switch"
                 },
                 {
                     "id": "set_display_graph",
@@ -2977,7 +2983,7 @@
                 },
                 {
                     "id": "edit_value",
-                    "type": "switch"
+                    "ref": "switch"
                 },
                 {
                     "id": "set_edit_value",
@@ -2999,7 +3005,7 @@
                 },
                 {
                     "id": "selected_edge",
-                    "type": "switch"
+                    "ref": "switch"
                 },
                 {
                     "id": "set_selected_edge",
@@ -3011,7 +3017,7 @@
                 },
                 {
                     "id": "clipboard",
-                    "type": "switch"
+                    "ref": "switch"
                 },
                 {
                     "id": "set_clipboard",
@@ -3023,7 +3029,7 @@
                 },
                 {
                     "id": "search",
-                    "type": "switch"
+                    "ref": "switch"
                 },
                 {
                     "id": "set_search",
@@ -3052,7 +3058,7 @@
                 },
                 {
                     "id": "out",
-                    "type": "update_graph_display"
+                    "ref": "update_graph_display"
                 }
             ],
             "edges": [
@@ -3823,50 +3829,50 @@
                     "from": "key_event",
                     "to": "out",
                     "as": "payload",
-                    "type": "resolve"
+                    "ref": "resolve"
                 },
                 {
                     "from": "update",
                     "to": "out",
                     "as": "update",
-                    "type": "resolve"
+                    "ref": "resolve"
                 },
                 {
                     "from": "save",
                     "to": "out",
                     "as": "fx",
-                    "type": "resolve"
+                    "ref": "resolve"
                 }
             ]
         },
         {
             "id": "simulation",
-            "type": "arg",
+            "ref": "arg",
             "value": "simulation"
         },
         {
             "id": "arg_display_graph",
-            "type": "arg",
+            "ref": "arg",
             "value": "display_graph"
         },
         {
             "id": "arg_nodes",
-            "type": "arg",
+            "ref": "arg",
             "value": "nodes"
         },
         {
             "id": "arg_links",
-            "type": "arg",
+            "ref": "arg",
             "value": "links"
         },
         {
             "id": "arg_selected",
-            "type": "arg",
+            "ref": "arg",
             "value": "selected"
         },
         {
             "id": "arg_levels",
-            "type": "arg",
+            "ref": "arg",
             "value": "levels"
         },
         {
@@ -3878,11 +3884,11 @@
         },
         {
             "id": "update_sim_fn",
-            "type": "execute_graph"
+            "ref": "execute_graph"
         },
         {
             "id": "update_sim_effect",
-            "type": "wrap_effect_fn"
+            "ref": "wrap_effect_fn"
         },
         {
             "id": "onclick_graph_fn_in"
@@ -3895,12 +3901,12 @@
                 },
                 {
                     "id": "state",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "state"
                 },
                 {
                     "id": "mouse_event",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "payload"
                 },
                 {
@@ -3968,7 +3974,7 @@
         },
         {
             "id": "onclick_graph_fn",
-            "type": "hyperapp_action"
+            "ref": "hyperapp_action"
         },
         {
             "id": "onclick_node_fn_body",
@@ -3978,17 +3984,17 @@
                 },
                 {
                     "id": "state",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "state"
                 },
                 {
                     "id": "html_id",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "html_id"
                 },
                 {
                     "id": "event",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "payload"
                 },
                 {
@@ -4000,7 +4006,7 @@
                 },
                 {
                     "id": "wrapped_node_id",
-                    "type": "wrap_array"
+                    "ref": "wrap_array"
                 },
                 {
                     "id": "get_selected_node",
@@ -4021,7 +4027,7 @@
                 },
                 {
                     "id": "selected",
-                    "type": "switch"
+                    "ref": "switch"
                 },
                 {
                     "id": "set_selected",
@@ -4042,7 +4048,7 @@
                 },
                 {
                     "id": "display_graph",
-                    "type": "switch"
+                    "ref": "switch"
                 },
                 {
                     "id": "set_display_graph",
@@ -4054,7 +4060,7 @@
                 },
                 {
                     "id": "expand_contract",
-                    "type": "expand_contract"
+                    "ref": "expand_contract"
                 },
                 {
                     "id": "expand_contract_selected",
@@ -4072,7 +4078,7 @@
                 },
                 {
                     "id": "out",
-                    "type": "update_graph_display"
+                    "ref": "update_graph_display"
                 }
             ],
             "edges": [
@@ -4216,7 +4222,7 @@
         },
         {
             "id": "onclick_node_fn",
-            "type": "hyperapp_action"
+            "ref": "hyperapp_action"
         },
         {
             "id": "editor_dom_type",
@@ -4232,7 +4238,7 @@
         },
         {
             "id": "html_id",
-            "type": "arg",
+            "ref": "arg",
             "value": "html_id"
         },
         {
@@ -4263,26 +4269,26 @@
                 },
                 {
                     "id": "wrapper",
-                    "type": "run_h"
+                    "ref": "run_h"
                 },
                 {
                     "id": "graph",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "graph"
                 },
                 {
                     "id": "display_graph",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "display_graph"
                 },
                 {
                     "id": "show_result",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "show_result"
                 },
                 {
                     "id": "update_sim",
-                    "type": "arg",
+                    "ref": "arg",
                     "value": "update_sim"
                 },
                 {
@@ -4306,7 +4312,7 @@
                         "show_popover",
                         "popover_graph"
                     ],
-                    "script": "return [node_editor.el, edit_text.el, search_input.el, popover_graph.el, show_result && result.run.el ].filter(e => e)"
+                    "script": "return [node_editor.el, edit_text.el, search_input.el, show_popover && popover_graph.el, show_result && result.run.el ].filter(e => e)"
                 },
                 {
                     "id": "edit_text",
@@ -4316,12 +4322,12 @@
                         },
                         {
                             "id": "html_id",
-                            "type": "arg",
+                            "ref": "arg",
                             "value": "html_id"
                         },
                         {
                             "id": "edit_text",
-                            "type": "h"
+                            "ref": "h"
                         },
                         {
                             "id": "edit_text_dom_type",
@@ -4329,15 +4335,15 @@
                         },
                         {
                             "id": "edit_text_input",
-                            "type": "h"
+                            "ref": "h"
                         },
                         {
                             "id": "edit_text_textarea",
-                            "type": "h"
+                            "ref": "h"
                         },
                         {
                             "id": "edit_text_base_props",
-                            "script": "return {id: `${html_id}-edit_value`}"
+                            "script": "return {id: `${html_id}-edit_value`, class: {'edit-value': true, [editing]: true}}"
                         },
                         {
                             "id": "edit_text_props"
@@ -4350,7 +4356,7 @@
                                 "textarea",
                                 "types"
                             ],
-                            "script": "return [label.el, input.el, textarea.el, types.el]"
+                            "script": "return [label.el, input.el, textarea.el, refs.el]"
                         },
                         {
                             "id": "edit_text_textarea_dom_type",
@@ -4382,11 +4388,11 @@
                                 "editing",
                                 "edit_value"
                             ],
-                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); return Object.assign({class: 'input', value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), oninput: (s, payload) => ({...s, edit_value: payload.target.value})}, editing === 'type' ? {list: 'type-options', type: 'text'} : {})"
+                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); return Object.assign({class: 'input', value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), oninput: (s, payload) => ({...s, edit_value: payload.target.value})}, editing === 'ref' ? {list: 'ref-options', type: 'text'} : {})"
                         },
                         {
                             "id": "edit_text_label",
-                            "type": "h"
+                            "ref": "h"
                         },
                         {
                             "id": "edit_text_label_dom_type",
@@ -4394,7 +4400,7 @@
                         },
                         {
                             "id": "edit_text_label_text",
-                            "type": "h_text"
+                            "ref": "h_text"
                         },
                         {
                             "id": "editing",
@@ -4404,16 +4410,16 @@
                             "script": "return editing || 'none'"
                         },
                         {
-                            "id": "types",
-                            "type": "h"
+                            "id": "refs",
+                            "ref": "h"
                         },
                         {
-                            "id": "types_dom_type",
+                            "id": "refs_dom_type",
                             "value": "datalist"
                         },
                         {
-                            "id": "types_props",
-                            "value": {"id": "type-options"}
+                            "id": "refs_props",
+                            "value": {"id": "ref-options"}
                         },
                         {
                             "id": "get_nodes",
@@ -4427,7 +4433,7 @@
                         },
                         {
                             "id": "id_text",
-                            "type": "h_text"
+                            "ref": "h_text"
                         },
                         {
                             "id": "wrap_dom_type",
@@ -4435,7 +4441,7 @@
                         },
                         {
                             "id": "wrap_option",
-                            "type": "h"
+                            "ref": "h"
                         },
                         {
                             "id": "out"
@@ -4532,19 +4538,19 @@
                             "as": "children"
                         },
                         {
-                            "from": "types_dom_type",
-                            "to": "types",
+                            "from": "refs_dom_type",
+                            "to": "refs",
                             "as": "dom_type" 
                         },
                         {
-                            "from": "types_props",
-                            "to": "types",
+                            "from": "refs_props",
+                            "to": "refs",
                             "as": "props" 
                         },
                         {
-                            "from": "types",
+                            "from": "refs",
                             "to": "edit_text_children",
-                            "as": "types" 
+                            "as": "refs" 
                         },
                         {
                             "from": "wrap_dom_type",
@@ -4558,7 +4564,7 @@
                         },
                         {
                             "from": "wrap_option",
-                            "to": "types",
+                            "to": "refs",
                             "as": "children"
                         },
                         {
@@ -4586,8 +4592,8 @@
                         },
                         {
                             "from": "editing",
-                            "to": "edit_text_props",
-                            "as": "class"
+                            "to": "edit_text_base_props",
+                            "as": "editing"
                         }
                     ]
                 },
@@ -4605,17 +4611,17 @@
                     "nodes": [
                         {
                             "id": "html_id",
-                            "type": "arg",
+                            "ref": "arg",
                             "value": "html_id"
                         },
                         {
                             "id": "update_sim",
-                            "type": "arg",
+                            "ref": "arg",
                             "value": "update_sim"
                         },
                         {
                             "id": "randid",
-                            "type": "arg",
+                            "ref": "arg",
                             "value": "randid"
                         },
                         {
@@ -4626,7 +4632,7 @@
                             "id": "dom_type",
                             "value": "div"
                         },
-                        {"id": "out", "type": "h"}
+                        {"id": "out", "ref": "h"}
                     ],
                     "edges": [
                         {"from": "update_sim", "to": "props", "as": "update_sim"},
@@ -4643,12 +4649,12 @@
                         },
                         {
                             "id": "error",
-                            "type": "arg",
+                            "ref": "arg",
                             "value": "error"
                         },
                         {
                             "id": "html_id",
-                            "type": "arg",
+                            "ref": "arg",
                             "value": "html_id"
                         },
                         {
@@ -4662,12 +4668,12 @@
                         {
                             "id": "get_type",
                             "args": [
-                                "type",
+                                "ref",
                                 "script",
                                 "value",
                                 "nodes"
                             ],
-                            "script": "return type?.display_type ? type.display_type : typeof value !== 'undefined' && typeof value !== 'object' ? typeof value : type ? (type.node_type ?? type) : nodes ? 'graph' : script ? 'script' : 'passthrough'"
+                            "script": "return ref?.display_type ? ref.display_type : typeof value !== 'undefined' && typeof value !== 'object' ? typeof value : ref ? (ref.node_type ?? ref) : nodes ? 'graph' : script ? 'script' : 'passthrough'"
                         },
                         {
                             "id": "get_node_display",
@@ -4687,12 +4693,12 @@
                         },
                         {
                             "id": "result",
-                            "type": "arg",
+                            "ref": "arg",
                             "value": "result"
                         },
                         {
                             "id": "display_graph",
-                            "type": "arg",
+                            "ref": "arg",
                             "value": "display_graph"
                         },
                         {
@@ -4726,7 +4732,7 @@
                             "args": [
                                 "error"
                             ],
-                            "script": "return {class: error ? 'error' : '', id: `${html_id}-result`}"
+                            "script": "return {class: {error: error ? 'error' : '', result: true}, id: `${html_id}-result`}"
                         },
                         {
                             "id": "container_children_inputs",
@@ -4734,11 +4740,11 @@
                         },
                         {
                             "id": "container_children",
-                            "type": "switch"
+                            "ref": "switch"
                         },
                         {
                             "id": "container",
-                            "type": "h"
+                            "ref": "h"
                         },
                         {
                             "id": "text_value",
@@ -4874,7 +4880,7 @@
                         },
                         {
                             "id": "html_id",
-                            "type": "arg",
+                            "ref": "arg",
                             "value": "html_id"
                         },
                         {
@@ -4883,11 +4889,11 @@
                                 "search",
                                 "display_graph"
                             ],
-                            "script": "return {id: `${html_id}-search-input`, type: 'text', onkeydown: (s, payload) => { if(payload.key === 'Enter'){ const direction = payload.shiftKey ? -1 : 1; const idx = (s.search_results.length + s.search_index + direction) % s.search_results.length; return {...s, selected: s.search_results.slice(idx, idx + 1), search_index: idx} } else { return s;} }, oninput: (s, payload) => { const search_results = new _lib.Fuse(display_graph.nodes, {keys: ['name', 'id']}).search(payload.target.value).map(r => r.item.id); return {...s, search: payload.target.value, selected: search_results.length > 0 ? search_results.slice(0, 1) : s.selected, search_results, search_index: 0, levels: _lib.scripts.calculateLevels(s.nodes, s.links, display_graph, search_results.length > 0 ? search_results.slice(0, 1) : s.selected)}}}"
+                            "script": "return {id: `${html_id}-search-input`, class: 'search-input', type: 'text', onkeydown: (s, payload) => { if(payload.key === 'Enter'){ const direction = payload.shiftKey ? -1 : 1; const idx = (s.search_results.length + s.search_index + direction) % s.search_results.length; return {...s, selected: s.search_results.slice(idx, idx + 1), search_index: idx} } else { return s;} }, oninput: (s, payload) => { const search_results = new _lib.Fuse(display_graph.nodes, {keys: ['name', 'id']}).search(payload.target.value).map(r => r.item.id); return {...s, search: payload.target.value, selected: search_results.length > 0 ? search_results.slice(0, 1) : s.selected, search_results, search_index: 0, levels: _lib.scripts.calculateLevels(s.nodes, s.links, display_graph, search_results.length > 0 ? search_results.slice(0, 1) : s.selected)}}}"
                         },
                         {
                             "id": "out",
-                            "type": "h"
+                            "ref": "h"
                         }
                     ],
                     "edges": [
@@ -4920,15 +4926,15 @@
                         },
                         {
                             "id": "log",
-                            "type": "log"
+                            "ref": "log"
                         },
                         {
                             "id": "out",
-                            "type": "h"
+                            "ref": "h"
                         },
                         {
                             "id": "html_id",
-                            "type": "arg",
+                            "ref": "arg",
                             "value": "html_id"
                         },
                         {
@@ -4985,7 +4991,7 @@
                         },
                         {
                             "id": "dimensions",
-                            "type": "arg",
+                            "ref": "arg",
                             "value": "dimensions"
                         },
                         {
@@ -5022,12 +5028,12 @@
                                 },
                                 {
                                     "id": "get_node",
-                                    "type": "arg",
+                                    "ref": "arg",
                                     "value": "node"
                                 },
                                 {
                                     "id": "html_id",
-                                    "type": "arg",
+                                    "ref": "arg",
                                     "value": "html_id"
                                 },
                                 {
@@ -5040,12 +5046,12 @@
                                 },
                                 {
                                     "id": "selected_distance",
-                                    "type": "arg",
+                                    "ref": "arg",
                                     "value": "selected_distance"
                                 },
                                 {
                                     "id": "level",
-                                    "type": "arg",
+                                    "ref": "arg",
                                     "value": "level"
                                 },
                                 {
@@ -5053,7 +5059,7 @@
                                 },
                                 {
                                     "id": "parent",
-                                    "type": "h"
+                                    "ref": "h"
                                 },
                                 {
                                     "id": "parent_dom_type",
@@ -5076,7 +5082,7 @@
                                         },
                                         {
                                             "id": "selected_distance",
-                                            "type": "arg",
+                                            "ref": "arg",
                                             "value": "selected_distance"
                                         },
                                         {
@@ -5084,11 +5090,11 @@
                                             "args": [
                                                 "value",
                                                 "script",
-                                                "type",
+                                                "ref",
                                                 "selected_distance",
                                                 "nodes"
                                             ],
-                                            "script": "const r = 24 / ((Math.min(10, selected_distance ?? 10) * 0.5) + 1); return value !== undefined ? {class: 'shape value', points: `4,${4 + r} ${4 + r},${4 + r} ${4 + r * 0.5},4`} : script ? {class: 'shape script', width: r, height: r, x: 10, y: 10} : type ? {class: 'shape type', width: r, height: r, x: 10, y: 10} : nodes ? {class: 'shape graph', r: r * 0.5, cx: r * 0.5 + 4, cy: r * 0.5 + 4}  : {class: 'shape none', r: r * 0.5 , cx: r * 0.5 + 4, cy: r * 0.5 + 4}"
+                                            "script": "const r = 24 / ((Math.min(10, selected_distance ?? 10) * 0.5) + 1); return value !== undefined ? {class: 'shape value', points: `4,${4 + r} ${4 + r},${4 + r} ${4 + r * 0.5},4`} : script ? {class: 'shape script', width: r, height: r, x: 10, y: 10} : ref ? {class: 'shape ref', width: r, height: r, x: 10, y: 10} : nodes ? {class: 'shape graph', r: r * 0.5, cx: r * 0.5 + 4, cy: r * 0.5 + 4}  : {class: 'shape none', r: r * 0.5 , cx: r * 0.5 + 4, cy: r * 0.5 + 4}"
                                         },
                                         {
                                             "id": "default_color",
@@ -5103,14 +5109,14 @@
                                             "args": [
                                                 "value",
                                                 "script",
-                                                "type",
+                                                "ref",
                                                 "nodes"
                                             ],
-                                            "script": "return value !== undefined ? 'polygon' : script ? 'rect' : type ? 'rect' : nodes ? 'circle' : 'circle'"
+                                            "script": "return value !== undefined ? 'polygon' : script ? 'rect' : ref ? 'rect' : nodes ? 'circle' : 'circle'"
                                         },
                                         {
                                             "id": "node_shape",
-                                            "type": "h"
+                                            "ref": "h"
                                         },
                                         {
                                             "id": "text",
@@ -5126,8 +5132,8 @@
                                                     "value": "node_id"
                                                 },
                                                 {
-                                                    "id": "node_type",
-                                                    "value": "type"
+                                                    "id": "node_ref",
+                                                    "value": "ref"
                                                 },
                                                 {
                                                     "id": "node_name",
@@ -5139,11 +5145,11 @@
                                                 },
                                                 {
                                                     "id": "get_id",
-                                                    "type": "get"
+                                                    "ref": "get"
                                                 },
                                                 {
                                                     "id": "get_name",
-                                                    "type": "get"
+                                                    "ref": "get"
                                                 },
                                                 {
                                                     "id": "get_value",
@@ -5158,11 +5164,11 @@
                                                     "args": [
                                                         "target"
                                                     ],
-                                                    "script": "return `type: ` + (target.type ? target.type : target.value !== undefined ? 'value' : target.script ? 'script' : target.nodes ? `graph (${target.nodes.length}, ${target.edges.length})` : 'passthrough')"
+                                                    "script": "return `type: ` + (target.ref ? target.ref : target.value !== undefined ? 'value' : target.script ? 'script' : target.nodes ? `graph (${target.nodes.length}, ${target.edges.length})` : 'passthrough')"
                                                 },
                                                 {
                                                     "id": "selected_distance",
-                                                    "type": "arg",
+                                                    "ref": "arg",
                                                     "value": "selected_distance"
                                                 },
                                                 {
@@ -5186,11 +5192,11 @@
                                                 },
                                                 {
                                                     "id": "node_primary_text_text",
-                                                    "type": "h_text"
+                                                    "ref": "h_text"
                                                 },
                                                 {
                                                     "id": "node_primary_text",
-                                                    "type": "h"
+                                                    "ref": "h"
                                                 },
                                                 {
                                                     "id": "node_secondary_text_attrs",
@@ -5202,11 +5208,11 @@
                                                 },
                                                 {
                                                     "id": "node_secondary_text_text",
-                                                    "type": "h_text"
+                                                    "ref": "h_text"
                                                 },
                                                 {
                                                     "id": "node_secondary_text",
-                                                    "type": "h"
+                                                    "ref": "h"
                                                 },
                                                 {
                                                     "id": "node_text_dom_type",
@@ -5214,7 +5220,7 @@
                                                 },
                                                 {
                                                     "id": "node_text",
-                                                    "type": "h"
+                                                    "ref": "h"
                                                 },
                                                 {
                                                     "id": "script",
@@ -5277,7 +5283,7 @@
                                                     "as": "path"
                                                 },
                                                 {
-                                                    "from": "node_type",
+                                                    "from": "node_ref",
                                                     "to": "get_type",
                                                     "as": "path"
                                                 },
@@ -5450,7 +5456,7 @@
                                 },
                                 {
                                     "from": "get_node",
-                                    "to": "get_type"
+                                    "to": "get_ref"
                                 },
                                 {
                                     "from": "get_node",
@@ -5525,22 +5531,22 @@
                                 },
                                 {
                                     "id": "get_selected_edge",
-                                    "type": "arg",
+                                    "ref": "arg",
                                     "value": "selected_edge"
                                 },
                                 {
                                     "id": "selected_distance",
-                                    "type": "arg",
+                                    "ref": "arg",
                                     "value": "selected_distance"
                                 },
                                 {
                                     "id": "sibling_index_normalized",
-                                    "type": "arg",
+                                    "ref": "arg",
                                     "value": "sibling_index_normalized"
                                 },
                                 {
                                     "id": "edge_info_el",
-                                    "type": "h"
+                                    "ref": "h"
                                 },
                                 {
                                     "id": "edge_info_el_children",
@@ -5582,7 +5588,7 @@
                                 },
                                 {
                                     "id": "edge_info_type_el",
-                                    "type": "svg_text"
+                                    "ref": "svg_text"
                                 },
                                 {
                                     "id": "edge_info_type_text",
@@ -5600,7 +5606,7 @@
                                 },
                                 {
                                     "id": "edge_info_as_el",
-                                    "type": "svg_text"
+                                    "ref": "svg_text"
                                 },
                                 {
                                     "id": "edge_info_as_text",
@@ -5615,7 +5621,7 @@
                                 },
                                 {
                                     "id": "edge_info_rect",
-                                    "type": "h"
+                                    "ref": "h"
                                 },
                                 {
                                     "id": "lerp_length",
@@ -5653,7 +5659,7 @@
                                 },
                                 {
                                     "id": "line",
-                                    "type": "h"
+                                    "ref": "h"
                                 },
                                 {
                                     "id": "out",
@@ -5827,7 +5833,7 @@
                         },
                         {
                             "id": "line_end",
-                            "type": "h"
+                            "ref": "h"
                         },
                         {
                             "id": "line_end_props",
@@ -5850,7 +5856,7 @@
                         },
                         {
                             "id": "arrow_path",
-                            "type": "h"
+                            "ref": "h"
                         },
                         {
                             "id": "arrow_path_props",
@@ -5874,7 +5880,7 @@
                         },
                         {
                             "id": "fill_filter_flood",
-                            "type": "h"
+                            "ref": "h"
                         },
                         {
                             "id": "fill_filter_props",
@@ -5898,7 +5904,7 @@
                         },
                         {
                             "id": "fill_filter_flood_selected",
-                            "type": "h"
+                            "ref": "h"
                         },
                         {
                             "id": "fill_filter_selected_props",
@@ -5922,7 +5928,7 @@
                         },
                         {
                             "id": "fill_filter_composite",
-                            "type": "h"
+                            "ref": "h"
                         },
                         {
                             "id": "fill_filter_children",
@@ -5946,11 +5952,11 @@
                         },
                         {
                             "id": "fill_filter",
-                            "type": "h"
+                            "ref": "h"
                         },
                         {
                             "id": "fill_filter_selected",
-                            "type": "h"
+                            "ref": "h"
                         },
                         {
                             "id": "marker",
@@ -5967,7 +5973,7 @@
                         },
                         {
                             "id": "defs",
-                            "type": "h"
+                            "ref": "h"
                         },
                         {
                             "id": "defs_dom_type",
@@ -5986,7 +5992,7 @@
                         },
                         {
                             "id": "filter_links",
-                            "type": "filter"
+                            "ref": "filter"
                         }
                     ],
                     "edges": [
@@ -6111,7 +6117,7 @@
                             "from": "link_layout_map",
                             "to": "link_layout",
                             "as": "link_layout_map",
-                            "type": "ref"
+                            "ref": "ref"
                         },
                         {
                             "from": "in",
@@ -6151,7 +6157,7 @@
                             "from": "node_layout_map",
                             "to": "node_layout",
                             "as": "node_layout_map",
-                            "type": "ref"
+                            "ref": "ref"
                         },
                         {
                             "from": "node_layout",
@@ -6330,7 +6336,7 @@
                 },
                 {
                     "id": "out",
-                    "type": "switch"
+                    "ref": "switch"
                 }
             
             ],
@@ -6410,7 +6416,7 @@
                     "from": "wrapper_children",
                     "to": "wrapper",
                     "as": "children",
-                    "type": "resolve"
+                    "ref": "resolve"
                 },
                 {
                     "from": "wrapper_dom_type",
@@ -6421,7 +6427,7 @@
                     "from": "wrapper_props",
                     "to": "wrapper",
                     "as": "props",
-                    "type": "resolve"
+                    "ref": "resolve"
                 },
                 {
                     "from": "out_input",
@@ -6432,7 +6438,7 @@
                     "from": "noop",
                     "to": "out",
                     "as": "noop",
-                    "type": "resolve"
+                    "ref": "resolve"
                 },
                 {
                     "from": "wrapper",
@@ -6466,7 +6472,7 @@
         {
             "from": "editor",
             "to": "hyperapp_view",
-            "type": "ref",
+            "ref": "ref",
             "as": "fn"
         },
         {
@@ -6527,7 +6533,7 @@
             "from": "onclick_node_fn_body",
             "to": "onclick_node_fn",
             "as": "fn",
-            "type": "ref"
+            "ref": "ref"
         },
         {
             "from": "hyperapp_view_in",
@@ -6542,7 +6548,7 @@
             "from": "onclick_graph_fn_body",
             "to": "onclick_graph_fn",
             "as": "fn",
-            "type": "ref"
+            "ref": "ref"
         },
         {
             "from": "onclick_graph_fn_in",
@@ -6552,7 +6558,7 @@
             "from": "onclick_graph_fn_in",
             "to": "onclick_graph_fn",
             "as": "in_node",
-            "type": "ref"
+            "ref": "ref"
         },
         {
             "from": "get_graph",
@@ -6568,7 +6574,7 @@
             "from": "onkey_fn_body",
             "to": "onkey_fn",
             "as": "fn",
-            "type": "ref"
+            "ref": "ref"
         },
         {
             "from": "html_id",
@@ -6614,7 +6620,7 @@
             "from": "update_hyperapp",
             "to": "update_hyperapp_action",
             "as": "fn",
-            "type": "ref"
+            "ref": "ref"
         },
         {
             "from": "update_hyperapp_action",
@@ -6689,13 +6695,13 @@
             "from": "graph_to_simulation",
             "to": "graph_to_sim_action",
             "as": "fn",
-            "type": "ref"
+            "ref": "ref"
         },
         {
             "from": "sim_to_hyperapp",
             "to": "sim_to_hyperapp_fn",
             "as": "fn",
-            "type": "ref"
+            "ref": "ref"
         },
         {
             "from": "sim_to_hyperapp_fn",
@@ -6711,13 +6717,13 @@
             "from": "update_sim_in",
             "to": "update_sim_fn",
             "as": "in_node",
-            "type": "ref"
+            "ref": "ref"
         },
         {
             "from": "update_sim",
             "to": "update_sim_fn",
             "as": "fn",
-            "type": "ref"
+            "ref": "ref"
         },
         {
             "from": "update_sim_fn",
