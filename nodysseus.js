@@ -270,12 +270,12 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
         let _needsresolve = false;
 
         const tryrun = (input) => {
-            if (input.ref === "ref") {
+            if (input.type === "ref") {
                 return input.from;
             } else if (input.from === "_graph_input_value" || input.from === graph.in) {
                 _needsresolve = _needsresolve || graph_input_value._needsresolve
                 return graph_input_value;
-            } else if (input.ref === "resolve") {
+            } else if (input.type === "resolve") {
                 if(!node_map.has(input.from)) {
                     throw new Error(`Input not found ${input.from} for node ${node_id}`)
                 }
@@ -315,7 +315,7 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
         for (let i = 0; i < inputs.length; i++) {
             input = inputs[i];
 
-            if (input.ref === "ref") {
+            if (input.type === "ref") {
                 if (!input.as) {
                     throw new Error("references have to be named: " + node.id);
                 }
@@ -806,7 +806,14 @@ const keydownSubscription = (dispatch, options) => {
             return;
         }
 
-        requestAnimationFrame(() => dispatch((state, payload) => options.action(state, payload), { key: ev.key.toLowerCase(), code: ev.code, ctrlKey: ev.ctrlKey, shiftKey: ev.shiftKey, metaKey: ev.metaKey, target: ev.target }))
+        requestAnimationFrame(() => dispatch(options.action, { 
+            key: ev.key.toLowerCase(), 
+            code: ev.code, 
+            ctrlKey: ev.ctrlKey, 
+            shiftKey: ev.shiftKey, 
+            metaKey: ev.metaKey, 
+            target: ev.target 
+        }))
     };
     addEventListener('keydown', handler);
     return () => removeEventListener('keydown', handler);
@@ -1019,6 +1026,33 @@ const flattenNode = (graph, levels = -1) => {
         }));
 }
 
+const middleware = dispatch => (ha_action, ha_payload) => {
+    const is_action_payload = Array.isArray(ha_action) 
+        && ha_action.length === 2
+        && (typeof ha_action[0] === 'function' 
+            || (ha_action[0].hasOwnProperty('fn') 
+                && ha_action[0].hasOwnProperty('graph')));
+    const action = is_action_payload ? ha_action[0] : ha_action;
+    const payload = is_action_payload ? ha_action[1] : ha_payload;
+
+    return typeof action === 'object' && action.hasOwnProperty('fn') && action.hasOwnProperty('graph')
+        ? dispatch(action.stateonly 
+            ?  lib.no.executeGraphNode({graph: action.graph})(action.fn) 
+            : (state, payload) => {
+                const result = lib.no.executeGraphNode({graph: action.graph})(action.fn)({state, payload});
+                return result.hasOwnProperty("state")
+                    ? [result.state, ...result.effects.filter(e => e).map(e => 
+                        typeof e === 'object' 
+                        && e.hasOwnProperty('fn') 
+                        && e.hasOwnProperty('graph')
+                        ? lib.no.executeGraphNode({graph: e.graph})(e.fn)
+                        : e)]
+                    : [result.action, result.payload];
+            }, payload)
+        : dispatch(action, payload)
+
+}
+
 
 /////////////////////////////////
 
@@ -1029,6 +1063,7 @@ const lib = {
     just: { get, set, diff, diffApply },
     ha: { h, app, text, memo },
     no: {
+        middleware,
         executeGraph: ({ state, graph, cache_id }) => executeGraph({ cache, state, graph, node_cache, cache_id: cache_id ?? "main" })(graph.out)(state.get(graph.in)),
         executeGraphValue: ({ graph, cache_id }) => executeGraph({ cache, graph, node_cache, cache_id: cache_id ?? "main" })(graph.out),
         executeGraphNode: ({ graph, cache_id }) => executeGraph({ cache, graph, node_cache, cache_id: cache_id ?? "main" })

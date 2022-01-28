@@ -296,7 +296,7 @@
                         "init",
                         "view"
                     ],
-                    "script": "return {dispatch: _lib.ha.app({init: () => [init, [d => d(update_hyperapp)], init.show_popover && html_id === 'node-editor' && [render_graph_effect]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [[_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}],  s.focused && [_lib.scripts.keydownSubscription, {action: onkey_fn}]]})}"
+                    "script": "return {dispatch: _lib.ha.app({dispatch: _lib.no.middleware, init: () => [init, [d => d(update_hyperapp)], init.show_popover && html_id === 'node-editor' && [render_graph_effect]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [[_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}],  s.focused && [_lib.scripts.keydownSubscription, {action: onkey_fn}]]})}"
                 }
             ],
             "edges": [
@@ -656,7 +656,7 @@
                         "fn",
                         "graph"
                     ],
-                    "script": "return (...args) => {res = _lib.no.executeGraphNode({state: new Map(), graph})(fn)(args.length === 1 ? args[0] : args); return res;}"
+                    "script": "return (...args) => {res = _lib.no.executeGraphNode({graph})(fn)(args.length === 1 ? args[0] : args); return res;}"
                 }
             ],
             "edges": [
@@ -1226,7 +1226,7 @@
         },
         {
             "id": "hyperapp_action",
-            "script": "return (state, payload) => {const result = _lib.no.executeGraphNode({graph: _graph})(fn)({state, payload}); return result.state ? [result.state, ...result.effects] : [result.action, result.payload]}" 
+            "script": "return {fn, graph: _graph}" 
         },
         {
             "id": "hyperapp_state_action",
@@ -2190,7 +2190,7 @@
                     "from": "u9feks2l9",
                     "to": "9kkegcpi2",
                     "as": "fn",
-                    "ref": "ref"
+                    "type": "ref"
                 },
                 {
                     "from": "6pqqchhnk",
@@ -2266,7 +2266,7 @@
                     "from": "mbbx3d26q",
                     "to": "9kkegcpi2",
                     "as": "in_node",
-                    "ref": "ref"
+                    "type": "ref"
                 },
                 {
                     "from": "mbbx3d26q",
@@ -6117,7 +6117,7 @@
                             "from": "link_layout_map",
                             "to": "link_layout",
                             "as": "link_layout_map",
-                            "ref": "ref"
+                            "type": "ref"
                         },
                         {
                             "from": "in",
@@ -6157,7 +6157,7 @@
                             "from": "node_layout_map",
                             "to": "node_layout",
                             "as": "node_layout_map",
-                            "ref": "ref"
+                            "type": "ref"
                         },
                         {
                             "from": "node_layout",
@@ -6472,7 +6472,7 @@
         {
             "from": "editor",
             "to": "hyperapp_view",
-            "ref": "ref",
+            "type": "ref",
             "as": "fn"
         },
         {
@@ -6533,7 +6533,7 @@
             "from": "onclick_node_fn_body",
             "to": "onclick_node_fn",
             "as": "fn",
-            "ref": "ref"
+            "type": "ref"
         },
         {
             "from": "hyperapp_view_in",
@@ -6548,7 +6548,7 @@
             "from": "onclick_graph_fn_body",
             "to": "onclick_graph_fn",
             "as": "fn",
-            "ref": "ref"
+            "type": "ref"
         },
         {
             "from": "onclick_graph_fn_in",
@@ -6558,7 +6558,7 @@
             "from": "onclick_graph_fn_in",
             "to": "onclick_graph_fn",
             "as": "in_node",
-            "ref": "ref"
+            "type": "ref"
         },
         {
             "from": "get_graph",
@@ -6574,7 +6574,7 @@
             "from": "onkey_fn_body",
             "to": "onkey_fn",
             "as": "fn",
-            "ref": "ref"
+            "type": "ref"
         },
         {
             "from": "html_id",
@@ -6620,7 +6620,7 @@
             "from": "update_hyperapp",
             "to": "update_hyperapp_action",
             "as": "fn",
-            "ref": "ref"
+            "type": "ref"
         },
         {
             "from": "update_hyperapp_action",
@@ -6695,13 +6695,13 @@
             "from": "graph_to_simulation",
             "to": "graph_to_sim_action",
             "as": "fn",
-            "ref": "ref"
+            "type": "ref"
         },
         {
             "from": "sim_to_hyperapp",
             "to": "sim_to_hyperapp_fn",
             "as": "fn",
-            "ref": "ref"
+            "type": "ref"
         },
         {
             "from": "sim_to_hyperapp_fn",
@@ -6717,13 +6717,13 @@
             "from": "update_sim_in",
             "to": "update_sim_fn",
             "as": "in_node",
-            "ref": "ref"
+            "type": "ref"
         },
         {
             "from": "update_sim",
             "to": "update_sim_fn",
             "as": "fn",
-            "ref": "ref"
+            "type": "ref"
         },
         {
             "from": "update_sim_fn",
