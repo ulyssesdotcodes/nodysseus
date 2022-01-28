@@ -273,7 +273,7 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
             if (input.type === "ref") {
                 return input.from;
             } else if (input.from === "_graph_input_value" || input.from === graph.in) {
-                _needsresolve = _needsresolve || graph_input_value._needsresolve
+                _needsresolve = _needsresolve || !!graph_input_value._needsresolve
                 return graph_input_value;
             } else if (input.type === "resolve") {
                 if(!node_map.has(input.from)) {
@@ -292,7 +292,7 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
                     res = res._value;
                 }
                 
-                _needsresolve = _needsresolve || (!!res && typeof res === 'object' && res._needsresolve)
+                _needsresolve = _needsresolve || (!!res && typeof res === 'object' && !!res._needsresolve)
 
                 return res;
             } else {
@@ -387,7 +387,7 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
 
             const res = run_with_val(outid)(combined_data_input)
             if(typeof res === 'object' && !!res && !res._Proxy && !Array.isArray(res) && _needsresolve) {
-                res._needsresolve = _needsresolve;
+                res._needsresolve = !!res._needsresolve || _needsresolve;
             }
             cache.get(cache_id).set(outid, [res, combined_data_input]);
             return res;
@@ -472,7 +472,7 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
                 }
 
                 if(typeof results === 'object' && !!results && !results._Proxy && !Array.isArray(results)) {
-                    results._needsresolve = _needsresolve;
+                    results._needsresolve = !!results._needsresolve || _needsresolve;
                 }
 
                 return results;
@@ -580,6 +580,7 @@ const bfs = (graph, visited) => (id, level) => {
 }
 
 const updateSimulationNodes = (data) => {
+    console.log('update sim');
     console.log(data);
     const simulation_node_data = new Map();
     data.simulation.nodes().forEach(n => {
@@ -658,7 +659,7 @@ const updateSimulationNodes = (data) => {
                 source: e.from + "_" + e.to,
                 target: main_node_map.get(e.to),
                 as: e.as,
-                ref: e.ref,
+                type: e.type,
                 strength: 4 / (1 + 4 * (children_map.get(main_node_map.get(e.from))?.length ?? 0)),
                 distance: 64 +  32 * (parents_map.get(main_node_map.get(e.to))?.length ?? 0)
             };
@@ -771,7 +772,7 @@ const d3subscription = (dispatch, props) => {
                 links: simulation.force('links').links().map(l => ({
                     ...l,
                     as: l.as,
-                    ref: l.ref,
+                    type: l.type,
                     source: ({
                         node_child_id: l.source.node_child_id,
                         node_id: l.source.node_id,
@@ -1036,23 +1037,23 @@ const middleware = dispatch => (ha_action, ha_payload) => {
     const payload = is_action_payload ? ha_action[1] : ha_payload;
 
     return typeof action === 'object' && action.hasOwnProperty('fn') && action.hasOwnProperty('graph')
-        ? dispatch(action.stateonly 
-            ?  lib.no.executeGraphNode({graph: action.graph})(action.fn) 
-            : (state, payload) => {
-                const result = lib.no.executeGraphNode({graph: action.graph})(action.fn)({state, payload});
-                return result.hasOwnProperty("state")
-                    ? [result.state, ...result.effects.filter(e => e).map(e => 
+        ? dispatch((state, payload) => {
+                const result = action.stateonly 
+                    ? lib.no.executeGraphNode({graph: action.graph})(action.fn)(state)
+                    : lib.no.executeGraphNode({graph: action.graph})(action.fn)({state, payload});
+                console.log(result);
+                const effects = (result.effects ?? []).filter(e => e).map(e => 
                         typeof e === 'object' 
                         && e.hasOwnProperty('fn') 
                         && e.hasOwnProperty('graph')
                         ? lib.no.executeGraphNode({graph: e.graph})(e.fn)
-                        : e)]
+                        : e);
+                return result.hasOwnProperty("state")
+                    ? effects.length > 0 ? [result.state, ...effects] : result.state
                     : [result.action, result.payload];
             }, payload)
         : dispatch(action, payload)
-
 }
-
 
 /////////////////////////////////
 
