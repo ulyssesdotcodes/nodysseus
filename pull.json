@@ -406,6 +406,75 @@
             ]
         },
         {
+            "id": "filter",
+            "name": "filter",
+            "in": "74n1jfm",
+            "out": "lahq5z4",
+            "nodes": [
+                {
+                "id": "lahq5z4",
+                "args": [],
+                "name": "filter/out",
+                "script": "const filter_fn = _lib.no.executeGraphNode({graph: _graph})(fn); return arr.filter(filter_fn)"
+                },
+                {
+                "id": "pfoypo5",
+                "args": [],
+                "ref": "arg",
+                "value": "key"
+                },
+                {
+                "id": "zinx621",
+                "args": [],
+                "ref": "arg",
+                "value": "value"
+                },
+                {
+                "id": "x2sz5kb",
+                "args": [],
+                "ref": "arg",
+                "value": "arr"
+                },
+                {
+                "id": "fn",
+                "ref": "arg",
+                "value": "fn"
+                },
+                {
+                "id": "74n1jfm",
+                "args": [],
+                "name": "filter/in"
+                }
+            ],
+            "edges": [
+                {
+                "from": "pfoypo5",
+                "to": "lahq5z4",
+                "as": "key"
+                },
+                {
+                "from": "zinx621",
+                "to": "lahq5z4",
+                "as": "value"
+                },
+                {
+                "from": "x2sz5kb",
+                "to": "lahq5z4",
+                "as": "arr"
+                },
+                {
+                "from": "74n1jfm",
+                "to": "lahq5z4",
+                "as": "input"
+                },
+                {
+                "from": "fn",
+                "to": "lahq5z4",
+                "as": "fn"
+                }
+            ]
+        },
+        {
             "id": "filter_eq",
             "name": "filter_eq",
             "in": "74n1jfm",
@@ -2522,6 +2591,290 @@
             "ref": "hyperapp_action"
         },
         {
+            "id": "eq",
+            "script": "return a === b;"
+        },
+        {
+            "id": "neq",
+            "script": "return a !== b;"
+        },
+        {
+            "id": "delete_node",
+            "out": "out",
+            "nodes": [
+                {"id": "in"},
+                {
+                    "id": "nodes",
+                    "ref": "arg",
+                    "value": "state.display_graph.nodes"
+                },
+                {
+                    "id": "edges",
+                    "ref": "arg",
+                    "value": "state.display_graph.edges"
+                },
+                {
+                    "id": "update_sim_effect",
+                    "ref": "arg",
+                    "value": "state.update_sim_effect"
+                },
+                {
+                    "id": "edges_path",
+                    "value": "state.display_graph.edges"
+                },
+                {
+                    "id": "a_id",
+                    "ref": "arg",
+                    "value": "a.id"
+                },
+                {
+                    "id": "b_id",
+                    "ref": "arg",
+                    "value": "b.id"
+                },
+                {
+                    "id": "node_id",
+                    "ref": "arg",
+                    "value": "payload.id"
+                },
+                {
+                    "id": "edge",
+                    "ref": "arg",
+                    "value": "edge"
+                },
+                {
+                    "id": "node",
+                    "ref": "arg",
+                    "value": "node"
+                },
+                {
+                    "id": "id_key",
+                    "value": "id"
+                },
+                {
+                    "id": "new_nodes",
+                    "ref": "filter"
+                },
+                {
+                    "id": "edge_filter_fn",
+                    "script": "return !(edge.to === node || edge.from === node)"
+                },
+                {
+                    "id": "filterable_edges",
+                    "script": "console.log(edges); console.log(node_id); console.log(_node_inputs); return edges.map(e => ({edge: e, node: node_id}))"
+                },
+                {
+                    "id": "new_filtered_edges",
+                    "ref": "filter"
+                },
+                {
+                    "id": "new_edges",
+                    "script": "return edges.map(e => e.edge)"
+                },
+                {
+                    "id": "set_nodes",
+                    "ref": "set"
+                },
+                {
+                    "id": "set_edges",
+                    "ref": "set"
+                },
+                {
+                    "id": "new_state"
+                },
+                {
+                    "id": "effects",
+                    "script": "return [[update_sim_effect, new_state.state]]"
+                },
+                {"id": "out", "ref": "hyperapp_action_effect"}
+            ],
+            "edges": [
+                {"from": "in", "to": "out", "as": "args"},
+                {"from": "id_key", "to": "new_nodes", "as": "key"},
+                {"from": "node_id", "to": "new_nodes", "as": "value"},
+                {"from": "nodes", "to": "new_nodes", "as": "array"},
+                {"from": "a_to", "to": "node_filter_fn", "as": "a"},
+                {"from": "b_to", "to": "node_filter_fn", "as": "b"},
+                {"from": "node_id", "to": "filterable_edges", "as": "node_id"},
+                {"from": "edges", "to": "filterable_edges", "as": "edges"},
+                {"from": "filterable_edges", "to": "new_filtered_edges", "as": "arr"},
+                {"from": "node", "to": "edge_filter_fn", "as": "node"},
+                {"from": "edge", "to": "edge_filter_fn", "as": "edge"},
+                {"from": "edge_filter_fn", "to": "new_filtered_edges", "as": "fn", "type": "ref"},
+                {"from": "edges", "to": "set_edges", "as": "value"},
+                {"from": "new_filtered_edges", "to": "new_edges", "as": "edges"},
+                {"from": "new_edges", "to": "set_edges", "as": "value"},
+                {"from": "edges_path", "to": "set_edges", "as": "path"},
+                {"from": "in", "to": "set_edges", "as": "target"},
+                {"from": "set_edges", "to": "new_state"},
+                {"from": "set_edges", "to": "effects", "as": "new_state"},
+                {
+                    "from": "update_sim_effect",
+                    "to": "effects",
+                    "as": "update_sim_effect"
+                },
+                {
+                    "from": "effects",
+                    "to": "new_state",
+                    "as": "effects"
+                },
+                {"from": "new_state", "to": "out", "as": "fn", "type": "ref"}
+            ]
+        },
+        {
+            "id": "add_edge",
+            "out": "out",
+            "nodes": [
+                {
+                    "id": "in"
+                },
+                {
+                    "id": "add_edge_fn",
+                    "out": "out",
+                    "nodes":[
+                        {
+                            "id": "in"
+                        },
+                        {
+                            "id": "payload_edge",
+                            "ref": "arg",
+                            "value": "payload"
+                        },
+                        {
+                            "id": "state",
+                            "ref": "arg",
+                            "value": "state"
+                        },
+                        {
+                            "id": "new_edge",
+                            "script": "return {...payload_edge, as: `arg${sibling_count}`}"
+                        },
+                        {
+                            "id": "update_sim_effect",
+                            "ref": "arg",
+                            "value": "state.update_sim_effect"
+                        },
+                        {
+                            "id": "effects",
+                            "script": "return [[update_sim_effect, new_state]]"
+                        },
+                        {
+                            "id": "edges",
+                            "ref": "arg",
+                            "value": "state.display_graph.edges"
+                        },
+                        {
+                            "id": "calculate_sibling_count",
+                            "script": "return edges.filter(e => e.to === new_edge.to).length"
+                        },
+                        {
+                            "id": "edges_path",
+                            "value": "display_graph.edges"
+                        },
+                        {
+                            "id": "new_edges",
+                            "ref": "append"
+                        },
+                        {
+                            "id": "set_new_edges",
+                            "ref": "set"
+                        },
+                        {
+                            "id": "out"
+                        }
+                    ],
+                    "edges": [
+                        {
+                            "from": "in",
+                            "to": "out",
+                            "as": "args"
+                        },
+                        {
+                            "from": "edges",
+                            "to": "new_edges",
+                            "as": "array"
+                        },
+                        {
+                            "from": "edges",
+                            "to": "calculate_sibling_count",
+                            "as": "edges"
+                        },
+                        {
+                            "from": "payload_edge",
+                            "to": "calculate_sibling_count",
+                            "as": "new_edge"
+                        },
+                        {
+                            "from": "payload_edge",
+                            "to": "new_edge",
+                            "as": "payload_edge"
+                        },
+                        {
+                            "from": "calculate_sibling_count",
+                            "to": "new_edge",
+                            "as": "sibling_count"
+                        },
+                        {
+                            "from": "new_edge",
+                            "to": "new_edges",
+                            "as": "item"
+                        },
+                        {
+                            "from": "state",
+                            "to": "set_new_edges",
+                            "as": "target"
+                        },
+                        {
+                            "from" :"edges_path",
+                            "to": "set_new_edges",
+                            "as": "path"
+                        },
+                        {
+                            "from": "new_edges",
+                            "to": "set_new_edges",
+                            "as": "value"
+                        },
+                        {
+                            "from": "update_sim_effect",
+                            "to": "effects",
+                            "as": "update_sim_effect"
+                        },
+                        {
+                            "from": "set_new_edges",
+                            "to": "effects",
+                            "as": "new_state"
+                        },
+                        {
+                            "from": "set_new_edges",
+                            "to": "out",
+                            "as": "state"
+                        },
+                        {
+                            "from": "effects",
+                            "to": "out",
+                            "as": "effects"
+                        }
+                    ]
+                },
+                {
+                    "id": "out",
+                    "ref": "hyperapp_action_effect"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "in",
+                    "to": "out"
+                },
+                {
+                    "from": "add_edge_fn",
+                    "to": "out",
+                    "as": "fn",
+                    "type": "ref"
+                }
+            ]
+        },
+        {
             "id": "add_node",
             "out": "out",
             "nodes": [
@@ -2541,6 +2894,10 @@
                             "value": "payload.id"
                         },
                         {
+                            "id": "id_array",
+                            "ref": "array"
+                        },
+                        {
                             "id": "state",
                             "ref": "arg",
                             "value": "state"
@@ -2551,17 +2908,21 @@
                             "value": "state.update_sim_effect"
                         },
                         {
-                            "id": "effects",
-                            "script": "return [[update_sim_effect, new_state]]"
-                        },
-                        {
                             "id": "nodes",
                             "ref": "arg",
                             "value": "state.display_graph.nodes"
                         },
                         {
+                            "id": "effects",
+                            "script": "return [[update_sim_effect, new_state]]"
+                        },
+                        {
                             "id": "nodes_path",
                             "value": "display_graph.nodes"
+                        },
+                        {
+                            "id": "selected_path",
+                            "value": "selected"
                         },
                         {
                             "id": "new_node"
@@ -2573,6 +2934,13 @@
                         {
                             "id": "set_new_nodes",
                             "ref": "set"
+                        },
+                        {
+                            "id": "set_selected",
+                            "ref": "set"
+                        },
+                        {
+                            "id": "new_state"
                         },
                         {
                             "id": "out"
@@ -2588,6 +2956,11 @@
                             "from": "id",
                             "to": "new_node",
                             "as": "id"
+                        },
+                        {
+                            "from": "id",
+                            "to": "id_array",
+                            "as": "arg0"
                         },
                         {
                             "from": "nodes",
@@ -2621,11 +2994,30 @@
                         },
                         {
                             "from": "set_new_nodes",
+                            "to": "set_selected",
+                            "as": "target"
+                        },
+                        {
+                            "from": "selected_path",
+                            "to": "set_selected",
+                            "as": "path"
+                        },
+                        {
+                            "from": "id_array",
+                            "to": "set_selected",
+                            "as": "value"
+                        },
+                        {
+                            "from": "set_selected",
+                            "to": "new_state"
+                        },
+                        {
+                            "from": "new_state",
                             "to": "effects",
                             "as": "new_state"
                         },
                         {
-                            "from": "set_new_nodes",
+                            "from": "new_state",
                             "to": "out",
                             "as": "state"
                         },
@@ -2669,6 +3061,14 @@
                     "ref": "add_node"
                 },
                 {
+                    "id": "add_edge_effect",
+                    "ref": "add_edge"
+                },
+                {
+                    "id": "delete_node_effect",
+                    "ref": "delete_node"
+                },
+                {
                     "id": "key_event",
                     "ref": "arg",
                     "value": "payload"
@@ -2692,6 +3092,11 @@
                     "id": "state",
                     "ref": "arg",
                     "value": "state"
+                },
+                {
+                    "id": "randid",
+                    "ref": "arg",
+                    "value": "state.randid"
                 },
                 {
                     "id": "html_id",
@@ -2871,20 +3276,12 @@
                     "script": "if(!(key === 'n' && editing === false)){ return [] } document.querySelector(`#${html_id}-edit_value textarea`).focus(); return 'name';"
                 },
                 {
+                    "id": "shift_o",
+                    "script": "return [[add_node, {id: randid}], [add_edge, {from: randid, to: selected}]]"
+                },
+                {
                     "id": "o",
-                    "args": [
-                        "key",
-                        "shiftKey",
-                        "selected",
-                        "display_graph",
-                        "editing",
-                        "selected_edge",
-                        "levels",
-                        "randid"
-                    ],
-                    "script": "return {effects: [[add_node, {id: randid}]]}",
-                    "script__": "const id = randid; const new_nodes = display_graph.nodes.concat([{id, args: []}]); const new_edges = display_graph.edges.flatMap(e => selected_edge?.to === e.to && selected_edge?.from === e.from ? [{from: selected_edge.from, to: id}, {from: id, to: selected_edge.to, as: e.as}] : e).concat(selected_edge ? [] : [{from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id, as: `arg${levels.parents.get(selected[0]).length}`}]); return {display_graph: {...display_graph, edges: new_edges, nodes: new_nodes}, selected: [id], selected_edge: false};",
-                    "script_": "const id = Math.random().toString(36).substr(2, 9); display_graph.nodes.push({id, args: []}); const edgeIdx = display_graph.edges.findIndex(e => selected_edge?.to === e.to && selected_edge?.from === e.from); display_graph.edges.splice(selected_edge ? edgeIdx : display_graph.edges.length, selected_edge ? 1 : 0, ...(selected_edge ? [{from: selected_edge.from, to: id}, {from: id, to: selected_edge.to, as: display_graph.edges[edgeIdx].as}] : [{from: shiftKey ? id : selected[0], to: shiftKey ? selected[0] : id, as: `arg${levels.parents.get(selected[0]).length}`}])); return {display_graph, selected: [id], selected_edge: false};"
+                    "script": "return [[add_node, {id: randid}], [add_edge, {from: selected, to: randid}]]"
                 },
                 {
                     "id": "o_display_graph",
@@ -2920,7 +3317,8 @@
                         "display_graph",
                         "display_graph_out"
                     ],
-                    "script": "if(selected_edge){const new_edges = display_graph.edges.filter(e => selected_edge.from === e.from && selected_edge.to === e.to); return {display_graph: {...display_graph, edges: new_edges}, selected, selected_edge: false}; } const new_nodes = display_graph.nodes.filter(n => n.id !== selected[0]); const new_edges = display_graph.edges.filter(e => e.to !== selected[0] && e.from !== selected[0]); const to = display_graph.edges.filter(e => e.to === selected[0]); const from = display_graph.edges.filter(e => e.from === selected[0]); for(let i = 0; i < to.length; i++){for(let j = 0; j < from.length; j++){ if(!display_graph.edges.find(e => e.from === to[i].from && e.to === from[j].to)){ new_edges.push({from: to[i].from, to: from[j].to, as: from[j].as});}}}; return {display_graph: {...display_graph, edges: new_edges, nodes: new_nodes}, selected: [to[0]?.from ?? from[0]?.to ?? display_graph.nodes[0].id] };",
+                    "script": "console.log(selected); return [[delete_node, {id: selected}]]",
+                    "script__": "if(selected_edge){const new_edges = display_graph.edges.filter(e => selected_edge.from === e.from && selected_edge.to === e.to); return {display_graph: {...display_graph, edges: new_edges}, selected, selected_edge: false}; } const new_nodes = display_graph.nodes.filter(n => n.id !== selected[0]); const new_edges = display_graph.edges.filter(e => e.to !== selected[0] && e.from !== selected[0]); const to = display_graph.edges.filter(e => e.to === selected[0]); const from = display_graph.edges.filter(e => e.from === selected[0]); for(let i = 0; i < to.length; i++){for(let j = 0; j < from.length; j++){ if(!display_graph.edges.find(e => e.from === to[i].from && e.to === from[j].to)){ new_edges.push({from: to[i].from, to: from[j].to, as: from[j].as});}}}; return {display_graph: {...display_graph, edges: new_edges, nodes: new_nodes}, selected: [to[0]?.from ?? from[0]?.to ?? display_graph.nodes[0].id] };",
                     "script_": "if(selected_edge){display_graph.edges.splice(display_graph.edges.findIndex(e => selected_edge.from === e.from && selected_edge.to === e.to), 1); return {display_graph, selected, selected_edge: false}; } display_graph.nodes = display_graph.nodes.filter(n => n.id !== selected[0]); const new_edges = []; const to = display_graph.edges.filter(e => e.to === selected[0]); const from = display_graph.edges.filter(e => e.from === selected[0]); for(let i = 0; i < to.length; i++){for(let j = 0; j < from.length; j++){ if(!display_graph.edges.find(e => e.from === to[i].from && e.to === from[j].to)){ display_graph.edges.push({from: to[i].from, to: from[j].to, as: from[j].as});}}}; display_graph.edges = display_graph.edges.filter(e => e.to !== selected[0] && e.from !== selected[0]); display_graph.edges.push(...new_edges); return {display_graph, selected: [to[0]?.from ?? from[0]?.to ?? display_graph.nodes[0].id] };"
                 },
                 {
@@ -3523,25 +3921,54 @@
                     "to": "a"
                 },
                 {
+                    "from": "get_selected",
+                    "to": "x",
+                    "as": "selected"
+                },
+                {
+                    "from": "delete_node_effect",
+                    "to": "x",
+                    "as": "delete_node"
+                },
+                {
+                    "from": "randid",
+                    "to": "o",
+                    "as": "randid"
+                },
+                {
+                    "from": "randid",
+                    "to": "shift_o",
+                    "as": "randid"
+                },
+                {
+                    "from": "get_selected",
+                    "to": "o",
+                    "as": "selected"
+                },
+                {
+                    "from": "get_selected",
+                    "to": "shift_o",
+                    "as": "selected"
+                },
+                {
+                    "from": "add_edge_effect",
+                    "to": "o",
+                    "as": "add_edge"
+                },
+                {
+                    "from": "add_edge_effect",
+                    "to": "shift_o",
+                    "as": "add_edge"
+                },
+                {
                     "from": "add_node_effect",
                     "to": "o",
                     "as": "add_node"
                 },
                 {
-                    "from": "key_event",
-                    "to": "o"
-                },
-                {
-                    "from": "state",
-                    "to": "o"
-                },
-                {
-                    "from": "key_event",
-                    "to": "x"
-                },
-                {
-                    "from": "state",
-                    "to": "x"
+                    "from": "add_node_effect",
+                    "to": "shift_o",
+                    "as": "add_node"
                 },
                 {
                     "from": "state",
@@ -3801,78 +4228,19 @@
                     "as": "f"
                 },
                 {
-                    "from": "o",
-                    "to": "o_display_graph"
+                    "from": "x",
+                    "to": "effects",
+                    "as": "x"
                 },
                 {
-                    "from": "o",
-                    "to": "o_selected"
-                },
-                {
-                    "from": "o",
-                    "to": "o_selected_edge"
-                },
-                {
-                    "from": "o_display_graph",
-                    "to": "_display_graph",
-                    "as": "o"
-                },
-                {
-                    "from": "o_display_graph",
-                    "to": "display_graph",
+                    "from": "shift_o",
+                    "to": "effects",
                     "as": "shift_o"
                 },
                 {
-                    "from": "o_selected",
-                    "to": "_selected",
-                    "as": "o"
-                },
-                {
-                    "from": "o_selected",
-                    "to": "selected",
-                    "as": "shift_o"
-                },
-                {
-                    "from": "o_selected_edge",
-                    "to": "_selected_edge",
-                    "as": "o"
-                },
-                {
                     "from": "o",
-                    "to": "o_effects",
-                    "as": "o"
-                },
-                {
-                    "from": "o_effects",
                     "to": "effects",
                     "as": "o"
-                },
-                {
-                    "from": "x",
-                    "to": "x_display_graph"
-                },
-                {
-                    "from": "x",
-                    "to": "x_selected"
-                },
-                {
-                    "from": "x",
-                    "to": "x_selected_edge"
-                },
-                {
-                    "from": "x_display_graph",
-                    "to": "display_graph",
-                    "as": "x"
-                },
-                {
-                    "from": "x_selected",
-                    "to": "selected",
-                    "as": "x"
-                },
-                {
-                    "from": "x_selected_edge",
-                    "to": "selected_edge",
-                    "as": "x"
                 },
                 {
                     "from": "y",
