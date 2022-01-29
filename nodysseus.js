@@ -164,8 +164,12 @@ const resolve = (o) => {
             same = same && o[i] === new_arr[i];
         }
         return same ? o : new_arr;
-    } else if (typeof o === 'object' && o && o._needsresolve) {
+    } else if (typeof o === 'object' && o !== undefined && o._needsresolve) {
         const entries = Object.entries(o);
+        if(entries.length === 0) {
+            return o;
+        }
+
         let i = entries.length;
         let same = false;
         let new_obj_entries = [];
@@ -221,7 +225,7 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
             node.inputs.push({ from: "_graph_input_value", to: node.id });
         }
 
-        if (node.value && !node.script && !node.ref) {
+        if (node.value !== undefined && !node.script && !node.ref) {
             if(typeof node.value === 'string' && node.value.match(/[0-9]*/).length === node.value.length) {
                 const int = parseInt(node.value);
                 if(!isNaN(int)){
@@ -386,7 +390,7 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
             }
 
             const res = run_with_val(outid)(combined_data_input)
-            if(typeof res === 'object' && !!res && !res._Proxy && !Array.isArray(res) && _needsresolve) {
+            if(typeof res === 'object' && !!res && !res._Proxy && !Array.isArray(res) && _needsresolve && Object.keys(res).length > 0) {
                 res._needsresolve = !!res._needsresolve || _needsresolve;
             }
             cache.get(cache_id).set(outid, [res, combined_data_input]);
@@ -471,7 +475,7 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
                     cache.get(cache_id).set(node.id, [results, input_values]);
                 }
 
-                if(typeof results === 'object' && !!results && !results._Proxy && !Array.isArray(results)) {
+                if(typeof results === 'object' && !!results && !results._Proxy && !Array.isArray(results) && Object.keys(results).length > 0) {
                     results._needsresolve = !!results._needsresolve || _needsresolve;
                 }
 
@@ -486,7 +490,7 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
             }
         }
 
-        if(typeof data === 'object' && !!data && !data._Proxy && !Array.isArray(data)) {
+        if(typeof data === 'object' && !!data && !data._Proxy && !Array.isArray(data) && Object.keys(data).length > 0) {
             data._needsresolve = true;
         }
 
@@ -580,8 +584,6 @@ const bfs = (graph, visited) => (id, level) => {
 }
 
 const updateSimulationNodes = (data) => {
-    console.log('update sim');
-    console.log(data);
     const simulation_node_data = new Map();
     data.simulation.nodes().forEach(n => {
         simulation_node_data.set(n.node_child_id, n)
@@ -1041,6 +1043,9 @@ const middleware = dispatch => (ha_action, ha_payload) => {
                 const result = action.stateonly 
                     ? lib.no.executeGraphNode({graph: action.graph})(action.fn)(state)
                     : lib.no.executeGraphNode({graph: action.graph})(action.fn)({state, payload});
+                console.log('result');
+                console.log(ha_action);
+                console.log(ha_payload);
                 console.log(result);
                 const effects = (result.effects ?? []).filter(e => e).map(e => 
                         typeof e === 'object' 
