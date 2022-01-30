@@ -296,7 +296,7 @@
                         "init",
                         "view"
                     ],
-                    "script": "return {dispatch: _lib.ha.app({dispatch: _lib.no.middleware, init: () => [init, [d => d(update_hyperapp)]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [[_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}],  s.focused && [_lib.scripts.keydownSubscription, {action: onkey_fn}]]})}"
+                    "script": "return {dispatch: _lib.ha.app({dispatch: _lib.no.middleware, init: () => [init, [d => d(update_hyperapp)]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [[_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}],  !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}]]})}"
                 }
             ],
             "edges": [
@@ -2464,6 +2464,11 @@
             "value": "nodes"
         },
         {
+            "id": "readonly",
+            "ref": "arg",
+            "value": "readonly"
+        },
+        {
             "id": "graph_nodes",
             "value": [
                 [
@@ -2481,8 +2486,7 @@
                 "search": false,
                 "show_all": false,
                 "app_state": {},
-                "show_result": false,
-                "focused": true
+                "show_result": false
             }
         },
         {
@@ -2614,14 +2618,26 @@
                 {"id": "false", "value": false},
                 {"id": "clear_popover", "ref": "set"},
                 {"id": "new_state"},
+                {
+                    "id": "popover_dispatch",
+                    "ref": "arg",
+                    "value": "state.popover_dispatch"
+                },
+                {
+                    "id": "clear_popover_hyperapp_effect",
+                    "script": "return [[(dispatch, payload) => { payload.dispatch(s => undefined); dispatch(s => ({...s, popover_dispatch: undefined}))}, {dispatch: popover_dispatch}]]"
+                },
                 {"id": "out", "ref": "hyperapp_action_effect"}
             ],
             "edges": [
                 {"from": "in", "to": "new_state", "as": "args"},
                 {"from": "state", "to": "clear_popover", "as": "target"},
+                {"from": "state", "to": "clear_popover_hyperapp_effect", "as": "state"},
                 {"from": "popover_path", "to": "clear_popover", "as": "path"},
                 {"from": "false", "to": "clear_popover", "as": "value"},
                 {"from": "clear_popover", "to": "new_state", "as": "state"},
+                {"from": "popover_dispatch", "to": "clear_popover_hyperapp_effect", "as": "popover_dispatch"},
+                {"from": "clear_popover_hyperapp_effect", "to": "new_state", "as": "effects"},
                 {"from": "new_state", "to": "out", "as": "fn", "type": "ref"}
             ]
         },
@@ -2663,7 +2679,7 @@
                 {"id": "delete_node_effect", "ref": "delete_node"},
                 {
                     "id": "popover_graph_value",
-                    "script": "return { 'out': 'out', 'nodes': [ {'id': 'create_parent', 'name': 'create_parent', value: [[add_node, {id: randid}], [add_edge, {from: randid, to: selected }]]}, {'id': 'delete', 'name': 'delete', value: [[delete_node, {id: selected}]]}, {'id': 'close'}, {'id': 'out'} ], 'edges': [ {'from': 'create_parent', 'to': 'out'}, {'from': 'delete', 'to': 'out'} ] }"
+                    "script": "return { 'out': 'out', 'nodes': [ {'id': 'create_parent', 'name': 'create_parent', value: [[add_node, {id: randid}], [add_edge, {from: randid, to: selected }]]}, {'id': 'delete', 'name': 'delete', value: [[delete_node, {id: selected}]]}, {'id': 'out', name: selected, value: []} ], 'edges': [ {'from': 'create_parent', 'to': 'out'}, {'from': 'delete', 'to': 'out'} ] }"
                 },
                 {"id": "set_popover_graph", "ref": "set"},
                 {"id": "render_popover_graph_effector", "ref": "render_popover_graph_effect"},
@@ -2703,6 +2719,11 @@
             "nodes": [
                 {"id": "in"},
                 {
+                    "id": "state",
+                    "ref": "arg",
+                    "value": "state"
+                },
+                {
                     "id": "nodes",
                     "ref": "arg",
                     "value": "state.display_graph.nodes"
@@ -2724,11 +2745,15 @@
                 },
                 {
                     "id": "edges_path",
-                    "value": "state.display_graph.edges"
+                    "value": "display_graph.edges"
                 },
                 {
                     "id": "nodes_path",
-                    "value": "state.display_graph.nodes"
+                    "value": "display_graph.nodes"
+                },
+                {
+                    "id": "selected_path",
+                    "value": "selected"
                 },
                 {
                     "id": "node_id",
@@ -2766,10 +2791,6 @@
                     "script": "return edges.map(e => e.edge)"
                 },
                 {
-                    "id": "selected_path",
-                    "value": "state.selected"
-                },
-                {
                     "id": "new_selected",
                     "script": "return [edges.find(e => e.from === node_id)?.to ?? out]"
                 },
@@ -2795,6 +2816,7 @@
                 {"id": "out", "ref": "hyperapp_action_effect"}
             ],
             "edges": [
+                {"from": "state", "to": "set_edges", "as": "target"},
                 {"from": "node_id", "to": "new_nodes", "as": "node_id"},
                 {"from": "nodes", "to": "new_nodes", "as": "nodes"},
                 {"from": "node_id", "to": "filterable_edges", "as": "node_id"},
@@ -2810,14 +2832,14 @@
                 {"from": "new_filtered_edges", "to": "new_edges", "as": "edges"},
                 {"from": "new_edges", "to": "set_edges", "as": "value"},
                 {"from": "edges_path", "to": "set_edges", "as": "path"},
-                {"from": "in", "to": "set_edges", "as": "target"},
+                {"from": "in", "to": "out", "as": "args"},
                 {"from": "set_edges", "to": "set_nodes", "as": "target"},
                 {"from": "edges", "to": "new_selected", "as": "edges"},
                 {"from": "node_id", "to": "new_selected", "as": "node_id"},
                 {"from": "display_graph_out", "to": "new_selected", "as": "out"},
                 {"from": "new_selected", "to": "set_selected", "as": "value"},
                 {"from": "selected_path", "to": "set_selected", "as": "path"},
-                {"from": "set_selected", "to": "new_state"},
+                {"from": "set_selected", "to": "new_state", "as": "state"},
                 {"from": "new_state", "to": "effects", "as": "new_state"},
                 {
                     "from": "update_sim_effect",
@@ -4684,6 +4706,11 @@
                     "value": "state.selected"
                 },
                 {
+                    "id": "readonly",
+                    "ref": "arg",
+                    "value": "state.readonly"
+                },
+                {
                     "id": "wrapped_node_id",
                     "ref": "wrap_array"
                 },
@@ -4760,8 +4787,8 @@
                     "value": false
                 },
                 {
-                    "id": "is_selected",
-                    "script": "return node_id === selected[0]"
+                    "id": "should_show_popover",
+                    "script": "return !readonly && node_id === selected[0]"
                 },
                 {
                     "id": "show_popover_payload",
@@ -4939,16 +4966,21 @@
                 },
                 {
                     "from": "node_id",
-                    "to": "is_selected",
+                    "to": "should_show_popover",
                     "as": "node_id"
                 },
                 {
+                    "from": "readonly",
+                    "to": "should_show_popover",
+                    "as": "readonly"
+                },
+                {
                     "from": "selected_arg",
-                    "to": "is_selected",
+                    "to": "should_show_popover",
                     "as": "selected"
                 },
                 {
-                    "from": "is_selected",
+                    "from": "should_show_popover",
                     "to": "if_show_popover",
                     "as": "pred"
                 },
@@ -4998,7 +5030,7 @@
         },
         {
             "id": "render_popover_graph_effect",
-            "script": "return (dispatch, payload) => requestAnimationFrame(() => {_lib.no.executeGraphNode({graph: payload.graph})('hyperapp_app')({graph: payload.graph, display_graph: payload.display_graph, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions}); dispatch(s => ({...s, focused: false}))})"
+            "script": "return (dispatch, payload) => requestAnimationFrame(() => {const popover_dispatch = _lib.no.executeGraphNode({graph: payload.graph})('hyperapp_app')({graph: payload.graph, display_graph: payload.display_graph, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions, readonly: true}).dispatch; dispatch(s => ({...s, popover_dispatch}));})"
         },
         {
             "id": "handle_popover_event",
@@ -5063,6 +5095,11 @@
                     "value": "popover_graph"
                 },
                 {
+                    "id": "readonly",
+                    "ref": "arg",
+                    "value": "readonly"
+                },
+                {
                     "id": "result_wrapper"
                 },
                 {
@@ -5083,7 +5120,7 @@
                         "popover_graph",
                         "popover_graph_h"
                     ],
-                    "script": "return [node_editor.el, edit_text.el, search_input.el, popover_graph && popover_graph_h.el.el, show_result && result.run.el ].filter(e => e)"
+                    "script": "return [node_editor.el, !readonly && edit_text.el, search_input.el, !readonly && popover_graph && popover_graph_h.el.el, show_result && result.run.el ].filter(e => e)"
                 },
                 {
                     "id": "edit_text",
@@ -7143,6 +7180,11 @@
                     "as": "display_graph"
                 },
                 {
+                    "from": "readonly",
+                    "to": "wrapper_children",
+                    "as": "readonly"
+                },
+                {
                     "from": "show_result",
                     "to": "wrapper_children",
                     "as": "show_result"
@@ -7284,6 +7326,11 @@
             "from": "arg_display_graph",
             "to": "update_sim",
             "as": "display_graph"
+        },
+        {
+            "from": "readonly",
+            "to": "hyperapp_init_state",
+            "as": "readonly"
         },
         {
             "from": "get_display_graph_out",

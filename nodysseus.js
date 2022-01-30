@@ -164,7 +164,7 @@ const resolve = (o) => {
             same = same && o[i] === new_arr[i];
         }
         return same ? o : new_arr;
-    } else if (typeof o === 'object' && o !== undefined && o._needsresolve) {
+    } else if (typeof o === 'object' && !!o && o._needsresolve) {
         const entries = Object.entries(o);
         if(entries.length === 0) {
             return o;
