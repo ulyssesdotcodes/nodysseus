@@ -1043,10 +1043,6 @@ const middleware = dispatch => (ha_action, ha_payload) => {
                 const result = action.stateonly 
                     ? lib.no.executeGraphNode({graph: action.graph})(action.fn)(state)
                     : lib.no.executeGraphNode({graph: action.graph})(action.fn)({state, payload});
-                console.log('result');
-                console.log(ha_action);
-                console.log(ha_payload);
-                console.log(result);
                 const effects = (result.effects ?? []).filter(e => e).map(e => 
                         typeof e === 'object' 
                         && e.hasOwnProperty('fn') 
