@@ -535,8 +535,12 @@ const calculateLevels = (nodes, links, graph, selected) => {
     bfs(graph, levels)(top, 0);
 
     const parents = new Map(nodes.map(n => [n.node_id, links.filter(l => l.target.node_id === n.node_id).map(l => l.source.node_id)]));
-    const children = new Map(nodes.map(n => [n.node_id, links.filter(l => l.source.node_id === n.node_id).map(l => l.target.node_id)]));
-    const siblings = new Map(nodes.map(n => [n.node_id, [...(new Set(/*parents.get(n.id)?.flatMap(p => children.get(p)?.filter(c => c !== n.id) ?? []).concat(*/children.get(n.node_id)?.flatMap(c => parents.get(c) ?? []) ?? [])).values()/*)*/]]))
+    const children = new Map(nodes
+        .map(n => [n.node_id, 
+            links.filter(l => l.source.node_id === n.node_id)
+            .map(l => l.target.node_id)
+        ]));
+    const siblings = new Map(nodes.map(n => [n.node_id, [...(new Set(children.get(n.node_id)?.flatMap(c => parents.get(c) ?? []) ?? [])).values()]]))
     const distance_from_selected = new Map();
 
     const connected_vertices = new Map(); //new Map(!fixed_vertices ? [] : fixed_vertices.nodes.flatMap(v => (v.nodes ?? []).map(n => [n, v.nodes])));
@@ -596,23 +600,58 @@ const updateSimulationNodes = (data) => {
 
     const main_node_map = new Map();
 
-    const parents_map = new Map(data.display_graph.nodes.map(n => [n.id, data.display_graph.edges.filter(e => e.to === n.id).map(e => e.from)]));
-    const children_map = new Map(data.display_graph.nodes.map(n => [n.id, data.display_graph.edges.filter(e => e.from === n.id).map(e => e.to)]));
+    const node_map = new Map(data.display_graph.nodes.map(n => [n.id, n]));
+    const children_map = new Map(data.display_graph.nodes.map(n => [n.id, 
+        data.display_graph.edges
+            .filter(e => e.from === n.id)
+            .map(e => e.to)
+    ]));
+
+    const parents_map = new Map(data.display_graph.nodes.map(n => [n.id, 
+        data.display_graph.edges
+            .filter(e => e.to === n.id)
+            .map(e => e.from)
+        ]));
+
+    for(let ps of parents_map.values()) {
+        let i = 0;
+        ps.sort((a, b) => parents_map.get(a).length === parents_map.get(b).length 
+            ? hashcode(a) - hashcode(b)
+            : ((i++ % 2) * 2 - 1) * (parents_map.get(b).length - parents_map.get(a).length))
+    }
+
+    const order = [];
+    const queue = [];
+
     data.display_graph.nodes.forEach(n => {
         const children = children_map.get(n.id);
         const node_child_id = children.length > 0 ? n.id + "_" + children[0] : n.id;
         main_node_map.set(n.id, node_child_id);
-    })
+        if(children_map.get(n.id).length === 0) {
+            queue.push(n.id);
+        }
+    });
 
-    const nodes = data.display_graph.nodes.flatMap(n => {
+    while(queue.length > 0) {
+        const node = queue.shift();
+        order.push(node);
+        parents_map.get(node).forEach(p => {queue.push(p)})
+    }
+    
+
+    const nodes = order.flatMap(nid => {
+        let n = node_map.get(nid);
         const children = children_map.get(n.id);
         const node_child_id = main_node_map.get(n.id);
+
+        const node_hash = hashcode(nid);
+        const randpos = {x: (((node_hash * 0.254) % 256.0) / 256.0), y: ((node_hash * 0.874) % 256.0) / 256.0};
 
         const addorundefined = (a, b) => {
             return a === undefined || b === undefined ? undefined : a + b
         }
 
-        return children.length === 0 ? [{
+        const calculated_nodes = children.length === 0 ? [{
             node_id: n.id,
             node_child_id: n.id,
             ref: n.ref,
@@ -625,11 +664,11 @@ const updateSimulationNodes = (data) => {
             out: n.out,
             x: Math.floor(simulation_node_data.get(node_child_id)?.x 
                 ?? simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.x
-                ?? Math.floor(window.innerWidth * (Math.random() * .5 + .25))),
+                ?? Math.floor(window.innerWidth * (randpos.x * .5 + .25))),
             y: Math.floor(simulation_node_data.get(node_child_id)?.y 
                 ?? addorundefined(simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.y, 128)
-                ?? Math.floor(window.innerHeight * (Math.random() * .5 + .25)))
-        }] : children.map(c => ({
+                ?? Math.floor(window.innerHeight * (randpos.y * .5 + .25)))
+        }] : children.map((c, i) => ({
             node_id: n.id,
             node_child_id: n.id + "_" + c,
             ref: n.ref,
@@ -642,13 +681,23 @@ const updateSimulationNodes = (data) => {
             out: n.out,
             x: Math.floor(simulation_node_data.get(node_child_id)?.x 
                 ?? simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.x
-                ?? simulation_node_data.get(main_node_map.get(children_map.get(n.id)?.[0]))?.x
-                ?? Math.floor(window.innerWidth * (Math.random() * .5 + .25))),
+                ?? addorundefined(
+                    simulation_node_data.get(main_node_map.get(children_map.get(n.id)?.[0]))?.x, 
+                    (parents_map.get(children_map.get(n.id)[0]).findIndex(v => v === n.id) - (parents_map.get(children_map.get(n.id)[0]).length - 1) * 0.5) * 96
+                )
+                ?? Math.floor(window.innerWidth * (randpos.x * .5 + .25))),
             y: Math.floor(simulation_node_data.get(node_child_id)?.y 
-                ?? addorundefined(128, simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.y)
-                ?? addorundefined(-128, simulation_node_data.get(main_node_map.get(children_map.get(n.id)?.[0]))?.y)
-                ?? Math.floor(window.innerHeight * (Math.random() * .5 + .25)))
+                ?? addorundefined(256, simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.y)
+                ?? addorundefined(
+                    -(196 + 32 * (parents_map.get(n.id).length ?? 0)),
+                    simulation_node_data.get(main_node_map.get(children_map.get(n.id)?.[0]))?.y
+                )
+                ?? Math.floor(window.innerHeight * (randpos.y * .5 + .25)))
         }));
+
+        calculated_nodes.map(n => simulation_node_data.set(n.node_child_id, n));
+
+        return calculated_nodes;
     })
 
     const links = data.display_graph.edges
@@ -743,7 +792,7 @@ const graphToSimulationNodes = (data, payload) => {
 
 const d3subscription = (dispatch, props) => {
     const simulation = lib.d3.forceSimulation()
-        .force('charge', lib.d3.forceManyBody().strength(-64).distanceMax(256).distanceMin(64))
+        .force('charge', lib.d3.forceManyBody().strength(-64).distanceMax(256).distanceMin(64).strength(0))
         .force('collide', lib.d3.forceCollide(64))
         .force('links', lib.d3
             .forceLink([])
@@ -755,8 +804,8 @@ const d3subscription = (dispatch, props) => {
         // .force('fuse_links', lib.d3.forceLink([]).distance(128).strength(.1).id(n => n.node_child_id))
         // .force('link_siblings', lib.d3.forceX().strength(1))
         // .force('selected', lib.d3.forceRadial(0, window.innerWidth * 0.5, window.innerHeight * 0.5).strength(2))
-        .velocityDecay(0.6)
-        .alphaMin(.125);
+        .velocityDecay(0.7)
+        .alphaMin(.25);
 
     const abort_signal = { stop: false };
     simulation.stop();

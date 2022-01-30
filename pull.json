@@ -3008,6 +3008,10 @@
             ]
         },
         {
+            "id": "save_effect",
+            "script": "return (dispatch, payload) => { localStorage.setItem('display_graph', JSON.stringify(payload.display_graph)); localStorage.setItem('display_graph_' + Date.now(), JSON.stringify(payload.display_graph));}"
+        },
+        {
             "id": "add_node",
             "out": "out",
             "nodes": [
@@ -3237,6 +3241,11 @@
                     "value": "html_id"
                 },
                 {
+                    "id": "arg_display_graph",
+                    "ref": "arg",
+                    "value": "state.display_graph"
+                },
+                {
                     "id": "get_selected",
                     "args": [
                         "selected"
@@ -3258,13 +3267,13 @@
                     "ref": "selected_node"
                 },
                 {
+                    "id": "save_effect",
+                    "ref": "save_effect"
+                },
+                {
                     "id": "save",
-                    "args": [
-                        "key",
-                        "ctrlKey",
-                        "display_graph"
-                    ],
-                    "script": "return [key === 's' && ctrlKey === true && [(_, display_graph) => { localStorage.setItem('display_graph', JSON.stringify(display_graph)); localStorage.setItem('display_graph_' + Date.now(), JSON.stringify(display_graph));}, display_graph]]"
+                    "script": "return [[save_effect, {display_graph}]]",
+                    "script_": "return [key === 's' && ctrlKey === true && [(_, display_graph) => { localStorage.setItem('display_graph', JSON.stringify(display_graph)); localStorage.setItem('display_graph_' + Date.now(), JSON.stringify(display_graph));}, display_graph]]"
                 },
                 {
                     "id": "down",
@@ -3901,8 +3910,14 @@
                     "to": "enter"
                 },
                 {
-                    "from": "state",
-                    "to": "save"
+                    "from": "arg_display_graph",
+                    "to": "save",
+                    "as": "display_graph"
+                },
+                {
+                    "from": "save_effect",
+                    "to": "save",
+                    "as": "save_effect"
                 },
                 {
                     "from": "filter_editing",
@@ -3955,10 +3970,6 @@
                 {
                     "from": "key_event",
                     "to": "right_edge"
-                },
-                {
-                    "from": "state",
-                    "to": "save"
                 },
                 {
                     "from": "state",
@@ -4107,10 +4118,6 @@
                     "from": "state",
                     "to": "i",
                     "as": "state"
-                },
-                {
-                    "from": "key_event",
-                    "to": "save"
                 },
                 {
                     "from": "state",
@@ -4376,6 +4383,11 @@
                     "as": "o"
                 },
                 {
+                    "from": "save",
+                    "to": "effects",
+                    "as": "ctrl_s"
+                },
+                {
                     "from": "y",
                     "to": "clipboard",
                     "as": "y"
@@ -4527,12 +4539,6 @@
                     "from": "update",
                     "to": "out",
                     "as": "update",
-                    "type": "resolve"
-                },
-                {
-                    "from": "save",
-                    "to": "out",
-                    "as": "fx",
                     "type": "resolve"
                 },
                 {
