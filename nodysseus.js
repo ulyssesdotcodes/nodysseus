@@ -396,28 +396,6 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
             cache.get(cache_id).set(outid, [res, combined_data_input]);
             return res;
         } else if (node_ref.script) {
-            // const args = new Map([['lib', lib],
-            // ['node', node],
-            // node_ref.script.includes('node_inputs') && ['node_inputs', data]
-            // ].filter(v => v))
-            // inputs.forEach(input => {
-            //     if (input.as && !keywords.has(input.as) && args.has(input.as)) {
-            //         args.set(input.as, data[input.as]);
-            //     }
-            // });
-
-            // if (node_ref.args) {
-            //     node_ref.args.forEach(arg => {
-            //         if (!keywords.has(arg) && arg !== 'node_inputs') {
-            //             // while (data[arg]?._Proxy) {
-            //             //     data[arg] = data[arg]._value;
-            //             // }
-            //             args.set(arg, data[arg]);
-            //         }
-            //     })
-            // }
-
-
             const argset = new Set();
             argset.add('_lib');
             argset.add('_node');
@@ -443,7 +421,6 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
                 orderedargs += `${a},`;
             }
 
-            // NOTE: very important for side-effects like Math.random
             if (usecache && cache.get(cache_id).has(node.id)) {
                 const val = cache.get(cache_id).get(node.id);
                 let hit = usecache && compare(input_values, val[1]);
@@ -468,8 +445,6 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
 
                 const results = fn.apply(null, input_values);
 
-                // Array.isArray(results) ? results.forEach(res => state_datas.push(res)) : state_datas.push(results);
-                // state.set(node.id, results);
                 // don't cache things without arguments
                 if (node_ref.args?.length > 0) {
                     cache.get(cache_id).set(node.id, [results, input_values]);
@@ -480,7 +455,6 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
                 }
 
                 return results;
-                // active_nodes.delete(node.id);
             } catch (e) {
                 console.log(`error in node`);
                 console.error(e);
@@ -621,15 +595,17 @@ const updateSimulationNodes = (data) => {
     }
 
     const order = [];
-    const queue = [];
+    const queue = [data.display_graph.out];
 
     data.display_graph.nodes.forEach(n => {
         const children = children_map.get(n.id);
         const node_child_id = children.length > 0 ? n.id + "_" + children[0] : n.id;
         main_node_map.set(n.id, node_child_id);
-        if(children_map.get(n.id).length === 0) {
-            queue.push(n.id);
-        }
+
+        //// pushes all root nodes, not just display_graph.out
+        // if(children_map.get(n.id).length === 0) {
+        //     queue.push(n.id);
+        // }
     });
 
     while(queue.length > 0) {
@@ -705,14 +681,15 @@ const updateSimulationNodes = (data) => {
             if (!(main_node_map.has(e.from) && main_node_map.has(e.to))) {
                 throw new Error(`edge node undefined ${main_node_map.has(e.from) ? '' : '>'}${e.from} ${main_node_map.has(e.to) ? '' : '>'}${e.to} `);
             }
+
             const l = simulation_link_data.get(e.from + "_" + e.to);
             return {
                 source: e.from + "_" + e.to,
                 target: main_node_map.get(e.to),
                 as: e.as,
                 type: e.type,
-                strength: 4 / (1 + 4 * (children_map.get(main_node_map.get(e.from))?.length ?? 0)),
-                distance: 64 +  32 * (parents_map.get(main_node_map.get(e.to))?.length ?? 0)
+                strength: 2 / (1 + 2 * (children_map.get(main_node_map.get(e.from))?.length ?? 0)),
+                distance: 96 +  16 * (parents_map.get(main_node_map.get(e.to))?.length ?? 0)
             };
         }).filter(l => !!l);
 
@@ -721,46 +698,14 @@ const updateSimulationNodes = (data) => {
         if (
             data.simulation.nodes()?.length !== nodes.length ||
             data.simulation.force('links')?.links().length !== links.length) {
-            data.simulation.alpha(0.4);
+            data.simulation.alpha(data.sim_update_alpha);
         }
 
         data.simulation.nodes(nodes);
         data.simulation.force('links').links(links);
         // data.simulation.force('fuse_links').links(data.fuse_links);
-        // console.log(data.simulation);
     }
 
-
-    // data.nodes.forEach(n => {
-    //     sibling_x.set(n.node_id, 
-    //         (data.show_all ? 0.5 
-    //             :levels.level_by_node.has(n.node_id)
-    //         ?  (((levels.nodes_by_level[levels.level_by_node.get(n.node_id)].findIndex(l => l === n.node_id) + 1) 
-    //             / (levels.nodes_by_level[levels.level_by_node.get(n.node_id)].length + 1)) - selected_x) 
-    //             / (Math.min(3, levels.distance_from_selected.get(n.node_id)) * 0.25 + 1) + 0.5
-    //         : .75)
-    //             * window.innerWidth
-    //     );
-    // })
-
-    // data.simulation.force('link_siblings').x((n) => sibling_x.get(n.node_id));
-
-    // data.simulation.force('charge')
-    //     // .strength(n => data.show_all ? -128 : levels.distance_from_selected.has(n.node_id) ? -64 : -8)
-    //     .strength(n => -128);
-
-    // data.simulation.force('link_direction')
-    //     .y((n) => window.innerHeight * (
-    //         data.show_all ? 0.5 
-    //         : selected === n.node_id
-    //         ? 0.5 
-    //         : levels.level_by_node.has(n.node_id) && selected_level !== undefined
-    //         ?  .5 + (selected_level === levels.level_by_node.get(n.node_id) 
-    //             ? 0 
-    //             : 0.25 * ((1 - Math.pow(0.5, Math.abs(selected_level - levels.level_by_node.get(n.node_id))))/(1 - 0.5)) // sum geometric series
-    //             ) * Math.sign(selected_level - levels.level_by_node.get(n.node_id))
-    //         : .9
-    //     ));
     data.simulation.force('link_direction')
         .y(n =>
             (((parents_map.get(n.node_id)?.length > 0 ? 1 : 0)
@@ -771,13 +716,8 @@ const updateSimulationNodes = (data) => {
             || children_map.get(n.node_id)?.length > 0 && n.node_child_id !== n.node_id + "_" + children_map.get(n.node_id)[0] ? .025 : 0);
 
 
-    data.simulation.force('collide').radius(64);
+    data.simulation.force('collide').radius(96);
     // data.simulation.force('center').strength(n => (levels.parents_map.get(n.node_id)?.length ?? 0) * 0.25 + (levels.children_map.get(n.node_id)?.length ?? 0) * 0.25)
-
-    // console.log(data.links)
-
-
-
 }
 
 const graphToSimulationNodes = (data, payload) => {
@@ -799,7 +739,7 @@ const d3subscription = (dispatch, props) => {
             .distance(l => l.distance ?? 128)
             .strength(l => l.strength)
             .id(n => n.node_child_id))
-        .force('link_direction', lib.d3.forceY().strength(.05))
+        .force('link_direction', lib.d3.forceY().strength(.01))
         .force('center', lib.d3.forceCenter().strength(0.01))
         // .force('fuse_links', lib.d3.forceLink([]).distance(128).strength(.1).id(n => n.node_child_id))
         // .force('link_siblings', lib.d3.forceX().strength(1))

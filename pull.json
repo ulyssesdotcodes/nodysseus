@@ -2486,7 +2486,9 @@
                 "search": false,
                 "show_all": false,
                 "app_state": {},
-                "show_result": false
+                "show_result": false,
+                "node_el_width": 256,
+                "sim_update_alpha": 0.4
             }
         },
         {
@@ -2590,7 +2592,7 @@
                 "levels",
                 "show_all"
             ],
-            "script": "return simulation ? _lib.scripts.updateSimulationNodes({display_graph, simulation, nodes, fuse_links, links, selected, levels, show_all}) : undefined"
+            "script": "return simulation ? _lib.scripts.updateSimulationNodes({display_graph, simulation, nodes, fuse_links, links, selected, levels, show_all, sim_update_alpha}) : undefined"
         },
         {
             "id": "update_nodes_fn",
@@ -2672,7 +2674,8 @@
                 },
                 {
                     "id": "dimensions",
-                    "value": {"x": 400, "y": 800}
+                    "ref": "arg",
+                    "value": "state.dimensions"
                 },
                 {"id": "add_node_effect", "ref": "add_node"},
                 {"id": "add_edge_effect", "ref": "add_edge"},
@@ -4560,6 +4563,11 @@
             "value": "display_graph"
         },
         {
+            "id": "arg_sim_update_alpha",
+            "ref": "arg",
+            "value": "sim_update_alpha"
+        },
+        {
             "id": "arg_nodes",
             "ref": "arg",
             "value": "nodes"
@@ -4581,7 +4589,7 @@
         },
         {
             "id": "update_sim",
-            "script": "return !simulation ? undefined : _lib.scripts.updateSimulationNodes({display_graph, nodes, links, simulation, selected, levels})"
+            "script": "return !simulation ? undefined : _lib.scripts.updateSimulationNodes({display_graph, nodes, links, simulation, selected, levels, sim_update_alpha})"
         },
         {
             "id": "update_sim_in"
@@ -5036,7 +5044,7 @@
         },
         {
             "id": "render_popover_graph_effect",
-            "script": "return (dispatch, payload) => requestAnimationFrame(() => {const popover_dispatch = _lib.no.executeGraphNode({graph: payload.graph})('hyperapp_app')({graph: payload.graph, display_graph: payload.display_graph, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions, readonly: true}).dispatch; dispatch(s => ({...s, popover_dispatch}));})"
+            "script": "return (dispatch, payload) => requestAnimationFrame(() => {const popover_dispatch = _lib.no.executeGraphNode({graph: payload.graph})('hyperapp_app')({graph: payload.graph, display_graph: payload.display_graph, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions, readonly: true, sim_update_alpha: 0.3}).dispatch; dispatch(s => ({...s, popover_dispatch}));})"
         },
         {
             "id": "handle_popover_event",
@@ -5751,18 +5759,23 @@
                             "value": "html_id"
                         },
                         {
+                            "id": "node_el_width",
+                            "ref": "arg",
+                            "value": "node_el_width"
+                        },
+                        {
                             "id": "get_nodes",
                             "args": [
                                 "nodes"
                             ],
-                            "script": "return nodes ?? []"
+                            "script": "return nodes?.map(n => ({...n, x: (n.x - node_el_width * 0.5)})) ?? []"
                         },
                         {
                             "id": "get_links",
                             "args": [
                                 "links"
                             ],
-                            "script": "return links ?? []"
+                            "script": "return links?.map(l => ({...l, source: {...l.source, x: (l.source.x - node_el_width * 0.5)}, target: {...l.target, x: (l.target.x - node_el_width * 0.5)}})) ?? []"
                         },
                         {
                             "id": "get_selected",
@@ -5784,6 +5797,11 @@
                             "script": "return nodes.find(n => n.node_id === selected[0])"
                         },
                         {
+                            "id": "nodes_box",
+                            "args":["nodes"],
+                            "script": "const visible_nodes = !selected ? [] : [selected.node_id].concat(levels.children.get(selected.node_id)).concat(levels.parents.get(selected.node_id)); return nodes.filter(n => !selected || visible_nodes.includes(n.node_id)).reduce((acc, n) => ({min: {x: Math.min(acc.min.x, n.x - 24), y: Math.min(acc.min.y, n.y - 24)}, max: {x: Math.max(acc.max.x, n.x + node_el_width * 0.5 - 24), y: Math.max(acc.max.y, n.y + 24)}}), {min: {x: Number.MAX_VALUE, y: Number.MAX_VALUE}, max: {x: Number.MIN_SAFE_INTEGER, y: Number.MIN_SAFE_INTEGER}})"
+                        },
+                        {
                             "id": "get_selected_edge",
                             "args": [
                                 "selected_edge"
@@ -5799,8 +5817,8 @@
                         },
                         {
                             "id": "get_levels",
-                            "args": ["levels"],
-                            "script": "return levels"
+                            "ref": "arg",
+                            "value": "levels"
                         },
                         {
                             "id": "dimensions",
@@ -5808,12 +5826,12 @@
                             "value": "dimensions"
                         },
                         {
+                            "id": "center",
+                            "script": "const nodes_box_center = {x: (nodes_box.max.x + nodes_box.min.x) * 0.5, y: (nodes_box.max.y + nodes_box.min.y) * 0.5}; return !selected ? nodes_box_center : {x: (selected.x + nodes_box_center.x * 3) * 0.25, y: (selected.y + nodes_box_center.y * 3) * 0.25}"
+                        },
+                        {
                             "id": "node_editor_props",
-                            "args": [
-                                "onclick_graph_fn",
-                                "selected"
-                            ],
-                            "script": "return {width: dimensions.x, height: dimensions.y, viewBox: `${(selected?.x ?? (dimensions.x * 0.5)) - (dimensions.x * 0.5)} ${(selected?.y ?? (dimensions.y * 0.5)) - (dimensions.y * 0.5)} ${dimensions.x} ${dimensions.y}` /*, onmousedown: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'down'}], onmouseup: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'up'}], onmousemove: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'move'}]*/}"
+                            "script": "return {width: dimensions.x, height: dimensions.y, viewBox: `${center.x - (nodes_box.max.x - nodes_box.min.x) * 0.5 - dimensions.x * 0.1}  ${center.y - (nodes_box.max.y - nodes_box.min.y) * 0.5 - dimensions.y * 0.05} ${nodes_box.max.x - nodes_box.min.x + dimensions.x * 0.2} ${nodes_box.max.y - nodes_box.min.y + dimensions.y * 0.1}` /*, onmousedown: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'down'}], onmouseup: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'up'}], onmousemove: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'move'}]*/}"
                         },
                         {
                             "id": "node_editor_dom_type",
@@ -5848,6 +5866,11 @@
                                     "id": "html_id",
                                     "ref": "arg",
                                     "value": "html_id"
+                                },
+                                {
+                                    "id": "node_el_width",
+                                    "ref": "arg",
+                                    "value": "node_el_width"
                                 },
                                 {
                                     "id": "is_selected",
@@ -6839,14 +6862,29 @@
                             "to": "get_levels"
                         },
                         {
+                            "from": "node_el_width",
+                            "to": "get_nodes",
+                            "as": "node_el_width"
+                        },
+                        {
                             "from": "html_id",
                             "to": "node_layout",
                             "as": "html_id"
                         },
                         {
+                            "from": "node_el_width",
+                            "to": "node_layout",
+                            "as": "node_el_width"
+                        },
+                        {
                             "from": "get_nodes",
                             "to": "node_layout",
                             "as": "nodes"
+                        },
+                        {
+                            "from": "node_el_width",
+                            "to": "get_links",
+                            "as": "node_el_width"
                         },
                         {
                             "from": "get_links",
@@ -6955,6 +6993,46 @@
                             "from": "get_selected_node",
                             "to": "node_editor_props",
                             "as": "selected"
+                        },
+                        {
+                            "from": "node_el_width",
+                            "to": "nodes_box",
+                            "as": "node_el_width"
+                        },
+                        {
+                            "from": "get_nodes",
+                            "to": "nodes_box",
+                            "as": "nodes"
+                        },
+                        {
+                            "from": "get_selected_node",
+                            "to": "nodes_box",
+                            "as": "selected"
+                        },
+                        {
+                            "from": "get_levels",
+                            "to": "nodes_box",
+                            "as": "levels"
+                        },
+                        {
+                            "from": "get_selected_node",
+                            "to": "center",
+                            "as": "selected"
+                        },
+                        {
+                            "from": "nodes_box",
+                            "to": "center",
+                            "as": "nodes_box"
+                        },
+                        {
+                            "from": "center",
+                            "to": "node_editor_props",
+                            "as": "center"
+                        },
+                        {
+                            "from": "nodes_box",
+                            "to": "node_editor_props",
+                            "as": "nodes_box"
                         },
                         {
                             "from": "node_editor_props",
@@ -7327,6 +7405,11 @@
             "from": "arg_levels",
             "to": "update_sim",
             "as": "levels"
+        },
+        {
+            "from": "arg_sim_update_alpha",
+            "to": "update_sim",
+            "as": "sim_update_alpha"
         },
         {
             "from": "arg_display_graph",
