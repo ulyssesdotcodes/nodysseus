@@ -581,38 +581,43 @@ const updateSimulationNodes = (data) => {
             .map(e => e.to)
     ]));
 
+    const order = [];
+    const queue = [data.display_graph.out];
+
     const parents_map = new Map(data.display_graph.nodes.map(n => [n.id, 
         data.display_graph.edges
             .filter(e => e.to === n.id)
             .map(e => e.from)
         ]));
 
-    for(let ps of parents_map.values()) {
-        let i = 0;
-        ps.sort((a, b) => parents_map.get(a).length === parents_map.get(b).length 
-            ? hashcode(a) - hashcode(b)
-            : ((i++ % 2) * 2 - 1) * (parents_map.get(b).length - parents_map.get(a).length))
-    }
-
-    const order = [];
-    const queue = [data.display_graph.out];
-
-    data.display_graph.nodes.forEach(n => {
-        const children = children_map.get(n.id);
-        const node_child_id = children.length > 0 ? n.id + "_" + children[0] : n.id;
-        main_node_map.set(n.id, node_child_id);
-
-        //// pushes all root nodes, not just display_graph.out
-        // if(children_map.get(n.id).length === 0) {
-        //     queue.push(n.id);
-        // }
-    });
-
     while(queue.length > 0) {
         const node = queue.shift();
         order.push(node);
+
+        const children = children_map.get(node);
+        const node_child_id = children.length > 0 ? node + "_" + children[0] : node;
+        main_node_map.set(node, node_child_id);
+
         parents_map.get(node).forEach(p => {queue.push(p)})
     }
+
+
+    for(let ps of parents_map.values()) {
+        let i = 0;
+        ps.sort((a, b) => parents_map.get(a).length === parents_map.get(b).length 
+            ? (simulation_node_data.get(main_node_map.get(a))?.hash ?? hashcode(a)) - (simulation_node_data.get(main_node_map.get(b)) ?? hashcode(b))
+            : ((i++ % 2) * 2 - 1) * (parents_map.get(b).length - parents_map.get(a).length))
+    }
+    //// pushes all root nodes, not just display_graph.out
+    // data.display_graph.nodes.forEach(n => {
+    //     const children = children_map.get(n.id);
+    //     const node_child_id = children.length > 0 ? n.id + "_" + children[0] : n.id;
+    //     main_node_map.set(n.id, node_child_id);
+
+        // if(children_map.get(n.id).length === 0) {
+        //     queue.push(n.id);
+        // }
+    // });
     
 
     const nodes = order.flatMap(nid => {
@@ -638,6 +643,7 @@ const updateSimulationNodes = (data) => {
             name: n.name,
             in: n.in,
             out: n.out,
+            hash: hashcode(n.id),
             x: Math.floor(simulation_node_data.get(node_child_id)?.x 
                 ?? simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.x
                 ?? Math.floor(window.innerWidth * (randpos.x * .5 + .25))),
@@ -647,6 +653,7 @@ const updateSimulationNodes = (data) => {
         }] : children.map((c, i) => ({
             node_id: n.id,
             node_child_id: n.id + "_" + c,
+            hash: hashcode(n.id),
             ref: n.ref,
             nodes: n.nodes,
             edges: n.edges,
@@ -659,7 +666,7 @@ const updateSimulationNodes = (data) => {
                 ?? simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.x
                 ?? addorundefined(
                     simulation_node_data.get(main_node_map.get(children_map.get(n.id)?.[0]))?.x, 
-                    (parents_map.get(children_map.get(n.id)[0]).findIndex(v => v === n.id) - (parents_map.get(children_map.get(n.id)[0]).length - 1) * 0.5) * 96
+                    (parents_map.get(children_map.get(n.id)?.[0])?.findIndex(v => v === n.id) - (parents_map.get(children_map.get(n.id)?.[0])?.length - 1) * 0.5) * 96
                 )
                 ?? Math.floor(window.innerWidth * (randpos.x * .5 + .25))),
             y: Math.floor(simulation_node_data.get(node_child_id)?.y 
@@ -677,8 +684,10 @@ const updateSimulationNodes = (data) => {
     })
 
     const links = data.display_graph.edges
+        .filter(e => main_node_map.has(e.from) && main_node_map.has(e.to))
         .map(e => {
             if (!(main_node_map.has(e.from) && main_node_map.has(e.to))) {
+                // won't throw - just doesn't display non main-graph nodes
                 throw new Error(`edge node undefined ${main_node_map.has(e.from) ? '' : '>'}${e.from} ${main_node_map.has(e.to) ? '' : '>'}${e.to} `);
             }
 

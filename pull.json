@@ -5799,7 +5799,7 @@
                         {
                             "id": "nodes_box",
                             "args":["nodes"],
-                            "script": "const visible_nodes = !selected ? [] : [selected.node_id].concat(levels.children.get(selected.node_id)).concat(levels.parents.get(selected.node_id)); return nodes.filter(n => !selected || visible_nodes.includes(n.node_id)).reduce((acc, n) => ({min: {x: Math.min(acc.min.x, n.x - 24), y: Math.min(acc.min.y, n.y - 24)}, max: {x: Math.max(acc.max.x, n.x + node_el_width * 0.5 - 24), y: Math.max(acc.max.y, n.y + 24)}}), {min: {x: Number.MAX_VALUE, y: Number.MAX_VALUE}, max: {x: Number.MIN_SAFE_INTEGER, y: Number.MIN_SAFE_INTEGER}})"
+                            "script": "const visible_nodes = !selected ? [] : [selected.node_id].concat(levels.children.get(selected.node_id)).concat(levels.parents.get(selected.node_id)).concat(levels.parents.get(selected.node_id).flatMap(p => levels.parents.get(p))); return nodes.filter(n => !selected || visible_nodes.includes(n.node_id)).reduce((acc, n) => ({min: {x: Math.min(acc.min.x, n.x - 24), y: Math.min(acc.min.y, n.y - 24)}, max: {x: Math.max(acc.max.x, n.x + node_el_width * 0.5 - 24), y: Math.max(acc.max.y, n.y + 24)}}), {min: {x: Number.MAX_VALUE, y: Number.MAX_VALUE}, max: {x: Number.MIN_SAFE_INTEGER, y: Number.MIN_SAFE_INTEGER}})"
                         },
                         {
                             "id": "get_selected_edge",
@@ -5831,7 +5831,7 @@
                         },
                         {
                             "id": "node_editor_props",
-                            "script": "return {width: dimensions.x, height: dimensions.y, viewBox: `${center.x - (nodes_box.max.x - nodes_box.min.x) * 0.5 - dimensions.x * 0.1}  ${center.y - (nodes_box.max.y - nodes_box.min.y) * 0.5 - dimensions.y * 0.05} ${nodes_box.max.x - nodes_box.min.x + dimensions.x * 0.2} ${nodes_box.max.y - nodes_box.min.y + dimensions.y * 0.1}` /*, onmousedown: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'down'}], onmouseup: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'up'}], onmousemove: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'move'}]*/}"
+                            "script": "return {width: dimensions.x, height: dimensions.y, viewBox: `${center.x - Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x)) * 0.5 - dimensions.x * 0.1}  ${center.y - Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y)) * 0.5 - dimensions.y * 0.05} ${Math.min(dimensions.x, nodes_box.max.x - nodes_box.min.x) + dimensions.x * 0.2} ${Math.min(dimensions.y, nodes_box.max.y - nodes_box.min.y) + dimensions.y * 0.1}` /*, onmousedown: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'down'}], onmouseup: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'up'}], onmousemove: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'move'}]*/}"
                         },
                         {
                             "id": "node_editor_dom_type",
