@@ -1096,7 +1096,6 @@ const middleware = dispatch => (ha_action, ha_payload) => {
                         && e.hasOwnProperty('graph')
                         ? lib.no.executeGraphNode({graph: e.graph})(e.fn)
                         : e);
-                        console.log(result);
                 return result.hasOwnProperty("state")
                     ? effects.length > 0 ? [result.state, ...effects] : result.state
                     : [result.action, result.payload];

@@ -6078,7 +6078,7 @@
                                         {
                                             "id": "node",
                                             "ref": "arg",
-                                            "value": "node.node.node"
+                                            "value": "node.node"
                                         },
                                         {
                                             "id": "node_shape_attrs",
@@ -6165,7 +6165,7 @@
                                                     "args": [
                                                         "target"
                                                     ],
-                                                    "script": "return (target.ref ? target.ref : target.value !== undefined ? 'value' : target.script ? 'script' : target.nodes ? `graph (${(console.log(target), target.node.nested_node_count)}, ${target.node.nested_edge_count})` : 'passthrough')"
+                                                    "script": "return (target.ref ? target.ref : target.value !== undefined ? 'value' : target.script ? 'script' : target.nodes ? `graph (${target.nested_node_count}, ${target.nested_edge_count})` : 'passthrough')"
                                                 },
                                                 {
                                                     "id": "selected_distance",
