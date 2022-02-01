@@ -747,34 +747,94 @@ const d3subscription = (dispatch, props) => {
 
     const abort_signal = { stop: false };
     simulation.stop();
+    let htmlid;
+    let stopped = false;
+    let selected;
+    let dimensions;
+    const node_el_width = 256;
     const tick = () => {
         if(simulation.nodes().length === 0) {
-            dispatch(s => [{...s, simulation}, [props.update, s]]);
+            dispatch(s => [(htmlid = s.html_id, {...s, simulation}), [props.update, s]]);
         }
 
-        if (simulation.alpha() > simulation.alphaMin()) {
-            simulation.tick();
-            const data = {
-                nodes: simulation.nodes().map(n => {
-                    return ({ ...n, x: ( Math.floor(n.x)), y: Math.floor(n.y) })
+        const data = {
+            nodes: simulation.nodes().map(n => {
+                return ({ ...n, x: ( Math.floor(n.x)), y: Math.floor(n.y) })
+            }),
+            links: simulation.force('links').links().map(l => ({
+                ...l,
+                as: l.as,
+                type: l.type,
+                source: ({
+                    node_child_id: l.source.node_child_id,
+                    node_id: l.source.node_id,
+                    x: Math.floor(l.source.x),
+                    y: Math.floor(l.source.y)
                 }),
-                links: simulation.force('links').links().map(l => ({
-                    ...l,
-                    as: l.as,
-                    type: l.type,
-                    source: ({
-                        node_child_id: l.source.node_child_id,
-                        node_id: l.source.node_id,
-                        x: Math.floor(l.source.x),
-                        y: Math.floor(l.source.y)
-                    }),
-                    target: ({
-                        node_child_id: l.target.node_child_id,
-                        node_id: l.target.node_id,
-                        x: Math.floor(l.target.x),
-                        y: Math.floor(l.target.y)
-                    })
-                }))};
+                target: ({
+                    node_child_id: l.target.node_child_id,
+                    node_id: l.target.node_id,
+                    x: Math.floor(l.target.x),
+                    y: Math.floor(l.target.y)
+                })
+            }))};
+
+        if (simulation.alpha() > simulation.alphaMin()) {
+            stopped = false;
+            dispatch([s => (selected = s.selected[0], dimensions = s.dimensions, s.nodes.length !== simulation.nodes().length ? [props.action, data] : s)]);
+            simulation.tick();
+            const visible_nodes = [];
+            let selected_pos;
+
+            simulation.nodes().map(n => {
+                const el = document.getElementById(`${htmlid}-${n.node_child_id}`);
+                if(el) {
+                    el.setAttribute('x', Math.floor(n.x - 20));
+                    el.setAttribute('y', Math.floor(n.y - 20));
+
+                    if(n.node_id === selected) {
+                        visible_nodes.push({x: n.x, y: n.y})
+                        selected_pos = {x: n.x, y: n.y};
+                    }
+                }
+            });
+
+
+            simulation.force('links').links().map(l => {
+                const el = document.getElementById(`link-${l.source.node_child_id}`);
+                if(el) {
+                    const length_x = Math.abs(l.source.x - l.target.x); 
+                    const length_y = Math.abs(l.source.y - l.target.y); 
+                    const length = Math.sqrt(length_x * length_x + length_y * length_y); 
+                    const lerp_length = 24;
+                    // return {selected_distance, selected_edge, source: {...source, x: source.x + (target.x - source.x) * lerp_length / length, y: source.y + (target.y - source.y) * lerp_length / length}, target: {...target, x: source.x + (target.x - source.x) * (1 - (lerp_length / length)), y: source.y + (target.y - source.y) * (1 - (lerp_length / length))}}"
+                    el.setAttribute('x1', Math.floor(Math.floor(l.source.x + (l.target.x - l.source.x) * lerp_length / length)));
+                    el.setAttribute('y1', Math.floor(Math.floor(l.source.y + (l.target.y - l.source.y) * lerp_length / length)));
+                    el.setAttribute('x2', Math.floor(Math.floor(l.source.x + (l.target.x - l.source.x) * (1 - lerp_length / length))));
+                    el.setAttribute('y2', Math.floor(Math.floor(l.source.y + (l.target.y - l.source.y) * (1 - lerp_length / length))));
+
+                    if (l.source.node_id === selected) {
+                        visible_nodes.push({x: l.target.x, y: l.target.y});
+                    } else if (l.target.node_id === selected) {
+                        visible_nodes.push({x: l.source.x, y: l.source.y});
+                    }
+                }
+            })
+
+            // // center the viewbox
+            // const visible_nodes = !selected ? [] : [selected.node_id].concat(levels.children.get(selected.node_id)).concat(levels.parents.get(selected.node_id)).concat(levels.parents.get(selected.node_id).flatMap(p => levels.parents.get(p))); return 
+            const nodes_box = visible_nodes.reduce((acc, n) => ({min: {x: Math.min(acc.min.x, n.x - 24), y: Math.min(acc.min.y, n.y - 24)}, max: {x: Math.max(acc.max.x, n.x + node_el_width * 0.5 - 24), y: Math.max(acc.max.y, n.y + 24)}}), {min: {x: selected_pos ? (selected_pos.x - 96) : Number.MAX_VALUE , y: selected_pos ? (selected_pos.y - 256) : Number.MAX_VALUE}, max: {x: selected_pos ? (selected_pos.x + 96) : Number.MIN_SAFE_INTEGER, y: selected_pos ? (selected_pos.y + 128) : Number.MIN_SAFE_INTEGER}})
+            const nodes_box_center = {x: (nodes_box.max.x + nodes_box.min.x) * 0.5, y: (nodes_box.max.y + nodes_box.min.y) * 0.5}; 
+            const center = !selected_pos ? nodes_box_center : {x: (selected_pos.x + nodes_box_center.x * 3) * 0.25, y: (selected_pos.y + nodes_box_center.y * 3) * 0.25}
+
+            const editor = document.getElementById(`${htmlid}-editor`);
+            if(editor) {
+                editor.setAttribute('viewBox', `${center.x - Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))) * 0.5 - node_el_width * 0.5}  ${center.y - Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y))) * 0.5 - node_el_width * 0.5} ${Math.max(dimensions.x * 0.5, Math.min(dimensions.x, nodes_box.max.x - nodes_box.min.x)) + node_el_width} ${Math.max(dimensions.y * 0.5, Math.min(dimensions.y, nodes_box.max.y - nodes_box.min.y)) + node_el_width}`);
+            }
+
+            //     return {width: dimensions.x, height: dimensions.y, viewBox: `${center.x - Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))) * 0.5 - node_el_width * 0.5}  ${center.y - Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y))) * 0.5 - node_el_width * 0.5} ${Math.max(dimensions.x * 0.5, Math.min(dimensions.x, nodes_box.max.x - nodes_box.min.x)) + node_el_width} ${Math.max(dimensions.y * 0.5, Math.min(dimensions.y, nodes_box.max.y - nodes_box.min.y)) + node_el_width}` /*, onmousedown: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'down'}], onmouseup: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'up'}], onmousemove: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'move'}]*/}"
+        } else if(!stopped) {
+            stopped = true; 
             dispatch([props.action, data]);
         }
 
