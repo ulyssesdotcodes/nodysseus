@@ -635,15 +635,9 @@ const updateSimulationNodes = (data) => {
         const calculated_nodes = children.length === 0 ? [{
             node_id: n.id,
             node_child_id: n.id,
-            ref: n.ref,
-            nodes: n.nodes,
-            edges: n.edges,
-            script: n.script,
-            value: n.value,
-            name: n.name,
-            in: n.in,
-            out: n.out,
             hash: hashcode(n.id),
+            nested_node_count: n.nodes?.length,
+            nested_edge_count: n.edges?.length,
             x: Math.floor(simulation_node_data.get(node_child_id)?.x 
                 ?? simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.x
                 ?? Math.floor(window.innerWidth * (randpos.x * .5 + .25))),
@@ -654,14 +648,8 @@ const updateSimulationNodes = (data) => {
             node_id: n.id,
             node_child_id: n.id + "_" + c,
             hash: hashcode(n.id),
-            ref: n.ref,
-            nodes: n.nodes,
-            edges: n.edges,
-            script: n.script,
-            value: n.value,
-            name: n.name,
-            in: n.in,
-            out: n.out,
+            nested_node_count: n.nodes?.length,
+            nested_edge_count: n.edges?.length,
             x: Math.floor(simulation_node_data.get(node_child_id)?.x 
                 ?? simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.x
                 ?? addorundefined(
@@ -698,7 +686,8 @@ const updateSimulationNodes = (data) => {
                 as: e.as,
                 type: e.type,
                 strength: 2 / (1 + 2 * (children_map.get(main_node_map.get(e.from))?.length ?? 0)),
-                distance: 96 +  16 * (parents_map.get(main_node_map.get(e.to))?.length ?? 0)
+                distance: 64 
+                    + 16 * (parents_map.get(main_node_map.get(e.to))?.length ?? 0) 
             };
         }).filter(l => !!l);
 
@@ -725,7 +714,7 @@ const updateSimulationNodes = (data) => {
             || children_map.get(n.node_id)?.length > 0 && n.node_child_id !== n.node_id + "_" + children_map.get(n.node_id)[0] ? .025 : 0);
 
 
-    data.simulation.force('collide').radius(96);
+    data.simulation.force('collide').radius(128);
     // data.simulation.force('center').strength(n => (levels.parents_map.get(n.node_id)?.length ?? 0) * 0.25 + (levels.children_map.get(n.node_id)?.length ?? 0) * 0.25)
 }
 
@@ -1047,6 +1036,7 @@ const middleware = dispatch => (ha_action, ha_payload) => {
                         && e.hasOwnProperty('graph')
                         ? lib.no.executeGraphNode({graph: e.graph})(e.fn)
                         : e);
+                        console.log(result);
                 return result.hasOwnProperty("state")
                     ? effects.length > 0 ? [result.state, ...effects] : result.state
                     : [result.action, result.payload];
