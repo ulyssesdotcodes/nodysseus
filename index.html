@@ -10,18 +10,13 @@
       overflow: hidden;
       background-color: #112;
       color: white;
+      font-family: consolas;
     }
+
     #node-editor-graph {
       width: '50vw';
       height: '100vh';
     }
-
-    .edit_value {
-      position: absolute;
-      left: 100px;
-      top: 100px;
-      display: block;
-    } 
 
     .search-input {
       display: block;
@@ -30,37 +25,64 @@
       top: 100px;
     }
 
-    .edit_value.none {
-      left: -1000px;
-    }
 
-
-    .edit_value textarea {
-      position:relative;
+    .edit-value {
+      position: absolute;
+      top: 0;
       left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000000EE;
+
+      display:flex;
+      flex-direction: row;
+      justify-content: center;
+    }
+    
+    .edit-value .centering {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 2.5vw;
+      width: 50vw;
     }
 
-    .edit_value input {
+    .edit-value.none {
+      left: -100%;
+    }
+
+    .edit-value textarea {
+      width: 50vmin;
+      height: 50vmin;
+    }
+
+    .edit-value label {
+      align-self: stretch;
+      font-size: calc(14px + 2vw)
+    }
+
+    .edit-value input {
       position: absolute;
       left: -1000px;
     }
 
-    .edit_value.ref textarea {
+    .edit-value.ref textarea {
       position: absolute;
       left: -1000px;
     }
 
-    .edit_value.ref input {
+    .edit-value.ref input {
       position:relative;
       left: 0;
     }
 
-    .edit_value .input {
+    .edit-value .input {
       width: 256px;
     }
 
-    .edit_value textarea {
-      height: 512px;
+    .edit-value textarea {
+      height: 128px;
     }
 
     .search-input.hidden {
@@ -83,7 +105,7 @@
 
     .node .shape {
       animation_: 2s blink infinite;
-      fill: #44ccff;
+      fill: #66ccff;
     }
 
     .node.selected .shape {
@@ -97,7 +119,7 @@
       transform: rotate(45deg);
       fill: none;
       stroke-width: 2px;
-      stroke: #44ccff;
+      stroke: #66ccff;
     }
 
     .node.selected .shape.script {
@@ -106,9 +128,7 @@
 
     .node .shape.none {
       stroke-width: 2px;
-      stroke: #44ccff;
-    }
-      fill: none;
+      stroke: #66ccff;
     }
 
     .node.selected .shape.none {
@@ -125,10 +145,11 @@
     .result.error {
       color: red;
     }
+
     text {
-      font-family: consolas;
       fill: white;
     }
+
     .link.selected {
       stroke: red;
     }

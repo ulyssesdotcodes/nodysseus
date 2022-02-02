@@ -3057,6 +3057,14 @@
             "script": "return (dispatch, payload) => { localStorage.setItem('display_graph', JSON.stringify(payload.display_graph)); localStorage.setItem('display_graph_' + Date.now(), JSON.stringify(payload.display_graph));}"
         },
         {
+            "id": "focus_effect",
+            "script": "return (dispatch, payload) => requestAnimationFrame(() => document.querySelector(payload.selector).focus())"
+        },
+        {
+            "id": "blur_effect",
+            "script": "return (dispatch, payload) => requestAnimationFrame(() => document.querySelector(payload.selector).blur())"
+        },
+        {
             "id": "update_node",
             "out": "out",
             "nodes": [
@@ -3081,6 +3089,102 @@
                 {"from": "display_graph_nodes_path", "to": "set_display_graph_nodes", "as": "path"},
                 {"from": "replace_node", "to": "set_display_graph_nodes", "as": "value"},
                 {"from": "set_display_graph_nodes", "to": "result", "as": "state"},
+                {"from": "result", "to": "out", "as": "fn", "type": "ref"}
+            ]
+        },
+        {
+            "id": "show_edit_text",
+            "nodes": [
+                {"id": "in"},
+                {"id": "state", "ref": "arg", "value": "state"},
+                {"id": "display_graph", "ref": "arg", "value": "state.display_graph"},
+                {"id": "html_id", "ref": "arg", "value": "state.html_id"},
+                {"id": "editing_path", "value": "editing"},
+                {"id": "edit_value_path", "value": "edit_value"},
+                {"id": "node_id", "ref": "arg", "value": "payload.id"},
+                {"id": "selected_node", "ref": "selected_node"},
+                {"id": "current_node_value", "ref": "get"},
+                {"id": "property", "ref": "arg", "value": "payload.property"},
+                {"id": "set_editing", "ref": "set"},
+                {"id": "set_edit_value", "ref": "set"},
+                {"id": "focus_props", "script": "return {'selector': `#${html_id}-edit-value textarea`, focus: true}"},
+                {"id": "focus_effector", "ref": "focus_effect"},
+                {"id": "focus_effect", "ref": "array"},
+                {"id": "effects", "ref": "array"},
+                {"id": "result"},
+                {"id": "out", "ref": "hyperapp_action_effect"}
+            ],
+            "edges": [
+                {"from": "in", "to": "out", "as": "args"},
+                {"from": "editing_path", "to": "set_editing", "as": "path"},
+                {"from": "property", "to": "set_editing", "as": "value"},
+                {"from": "state", "to": "set_editing", "as": "target"},
+                {"from": "display_graph", "to": "selected_node", "as": "display_graph"},
+                {"from": "node_id", "to": "selected_node", "as": "selected"},
+                {"from": "property", "to": "current_node_value", "as": "path"},
+                {"from": "selected_node", "to": "current_node_value", "as": "target"},
+                {"from": "set_editing", "to": "set_edit_value", "as": "target"},
+                {"from": "edit_value_path", "to": "set_edit_value", "as": "path"},
+                {"from": "current_node_value", "to": "set_edit_value", "as": "value"},
+                {"from": "focus_effector", "to": "focus_effect", "as": "a0"},
+                {"from": "html_id", "to": "focus_props", "as": "html_id"},
+                {"from": "focus_props", "to": "focus_effect", "as": "a1"},
+                {"from": "focus_effect", "to": "effects", "as": "a0"},
+                {"from": "set_edit_value", "to": "result", "as": "state"},
+                {"from": "effects", "to": "result", "as": "effects"},
+                {"from": "result", "to": "out", "as": "fn", "type": "ref"}
+            ]
+        },
+        {
+            "id": "confirm_edit_text",
+            "nodes": [
+                {"id": "in"},
+                {"id": "state", "ref": "arg", "value": "state"},
+                {"id": "property", "ref": "arg", "value": "state.editing"},
+                {"id": "node_id", "ref": "arg", "value": "state.selected.0"},
+                {"id": "payload_value", "ref": "arg", "value": "state.edit_value"},
+                {"id": "html_id", "ref": "arg", "value": "state.html_id"},
+                {"id": "false", "value": false},
+                {"id": "empty_string", "value": ""},
+                {"id": "editing_path", "value": "editing"},
+                {"id": "edit_value_path", "value": "edit_value"},
+                {"id": "set_editing", "ref": "set"},
+                {"id": "set_edit_value", "ref": "set"},
+                {"id": "update_node_effector", "ref": "update_node"},
+                {"id": "update_node_payload"},
+                {"id": "update_node_effect", "ref": "array"},
+                {"id": "blur_payload", "script": "return {selector: `#${html_id}-edit-value textarea`}"},
+                {"id": "blur_effector", "ref": "blur_effect"},
+                {"id": "blur_effect", "ref": "array"},
+                {"id": "empty", "value": {}},
+                {"id": "new_node_props", "ref": "set"},
+                {"id": "effects", "ref": "array"},
+                {"id": "result"},
+                {"id": "out", "ref": "hyperapp_action_effect"}
+            ],
+            "edges": [
+                {"from": "in", "to": "out", "as": "args"},
+                {"from": "editing_path", "to": "set_editing", "as": "path"},
+                {"from": "false", "to": "set_editing", "as": "value"},
+                {"from": "state", "to": "set_editing", "as": "target"},
+                {"from": "false", "to": "set_editing", "as": "value"},
+                {"from": "empty_string", "to": "set_edit_value", "as": "value"},
+                {"from": "set_editing", "to": "set_edit_value", "as": "target"},
+                {"from": "edit_value_path", "to": "set_edit_value", "as": "path"},
+                {"from": "set_edit_value", "to": "result", "as": "state"},
+                {"from": "empty", "to": "new_node_props", "as": "target"},
+                {"from": "property", "to": "new_node_props", "as": "path"},
+                {"from": "payload_value", "to": "new_node_props", "as": "value"},
+                {"from": "new_node_props", "to": "update_node_payload", "as": "properties"},
+                {"from": "node_id", "to": "update_node_payload", "as": "id"},
+                {"from": "update_node_effector", "to": "update_node_effect", "as": "a0"},
+                {"from": "update_node_payload", "to": "update_node_effect", "as": "a1"},
+                {"from": "update_node_effect", "to": "effects", "as": "a0"},
+                {"from": "html_id", "to": "blur_payload", "as": "html_id"},
+                {"from": "blur_payload", "to": "blur_effect", "as": "a1"},
+                {"from": "blur_effector", "to": "blur_effect", "as": "a0"},
+                {"from": "blur_effect", "to": "effects", "as": "a1"},
+                {"from": "effects", "to": "result", "as": "effects"},
                 {"from": "result", "to": "out", "as": "fn", "type": "ref"}
             ]
         },
@@ -3478,7 +3582,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "document.querySelector(`#${html_id}-edit_value textarea`).focus(); return 'value';"
+                    "script": "document.querySelector(`#${html_id}-edit-value textarea`).focus(); return 'value';"
                 },
                 {
                     "id": "t",
@@ -3490,7 +3594,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "document.querySelector(`#${html_id}-edit_value input`).focus(); return 'ref';"
+                    "script": "document.querySelector(`#${html_id}-edit-value input`).focus(); return 'ref';"
                 },
                 {
                     "id": "shift_t",
@@ -3514,7 +3618,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 's' && ctrlKey === false && editing === false)){ return [] } document.querySelector(`#${html_id}-edit_value textarea`).focus(); return 'script';"
+                    "script": "if(!(key === 's' && ctrlKey === false && editing === false)){ return [] } document.querySelector(`#${html_id}-edit-value textarea`).focus(); return 'script';"
                 },
                 {
                     "id": "a",
@@ -3526,7 +3630,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 'a' && editing === false)){ return [] } document.querySelector(`#${html_id}-edit_value textarea`).focus(); return selected_edge ? 'as' : 'args';"
+                    "script": "if(!(key === 'a' && editing === false)){ return [] } document.querySelector(`#${html_id}-edit-value textarea`).focus(); return selected_edge ? 'as' : 'args';"
                 },
                 {
                     "id": "n",
@@ -3537,7 +3641,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 'n' && editing === false)){ return [] } document.querySelector(`#${html_id}-edit_value textarea`).focus(); return 'name';"
+                    "script": "if(!(key === 'n' && editing === false)){ return [] } document.querySelector(`#${html_id}-edit-value textarea`).focus(); return 'name';"
                 },
                 {
                     "id": "shift_o",
@@ -4933,10 +5037,11 @@
                 {"id": "delete_node_effect", "ref": "delete_node"},
                 {"id": "expand_contract_effect", "ref": "expand_contract_effect"},
                 {"id": "open_reference_popover", "ref": "open_reference_popover"},
+                {"id": "show_edit_text", "ref": "show_edit_text"},
                 {"id": "clear_popover", "ref": "clear_popover_graph"},
                 {
                     "id": "popover_graph_value",
-                    "script": "return { 'out': 'out', 'nodes': [ {'id': 'create_input', 'name': 'create input', value: [[add_node, {id: randid}], [add_edge, {from: randid, to: selected.node_id }], [clear_popover]]}, {'id': 'delete', 'name': 'delete', value: [[delete_node, {id: selected.node_id}], [clear_popover]]},{id: 'expand_contract', name: 'expand / contract', value: [[expand_contract, {id: selected.node_id}], [clear_popover]]}, {'id': 'out', name: selected.node_id, value: [[clear_popover]]}, {'id': 'change_reference', name: 'change reference', value: [[open_reference_popover, {id: selected.node_id}]]} ], 'edges': [ {'from': 'create_input', 'to': 'out'}, {'from': 'delete', 'to': 'out'}, {'from': 'expand_contract', 'to': 'out'}, {from: 'change_reference', to: 'out'} ] }"
+                    "script": "return { 'out': 'out', 'nodes': [ {'id': 'create_input', 'name': 'create input', value: [[add_node, {id: randid}], [add_edge, {from: randid, to: selected.node_id }], [clear_popover]]}, {'id': 'delete', 'name': 'delete', value: [[delete_node, {id: selected.node_id}], [clear_popover]]},{id: 'expand_contract', name: 'expand / contract', value: [[expand_contract, {id: selected.node_id}], [clear_popover]]}, {'id': 'out', name: selected.node_id, value: [[clear_popover]]}, {'id': 'change_reference', name: 'change reference', value: [[open_reference_popover, {id: selected.node_id}]]}, {'id': 'change_value', name: 'change value', value: [[show_edit_text, {id: selected.node_id, property:'value'}], [clear_popover]]} ], 'edges': [ {'from': 'create_input', 'to': 'out'}, {'from': 'delete', 'to': 'out'}, {'from': 'expand_contract', 'to': 'out'}, {from: 'change_reference', to: 'out'}, {'from': 'change_value', to: 'out'} ] }"
                 },
                 {
                     "id": "show_popover_payload"
@@ -5107,6 +5212,7 @@
                 {"from": "delete_node_effect", "to": "popover_graph_value", "as": "delete_node"},
                 {"from": "expand_contract_effect", "to": "popover_graph_value", "as": "expand_contract"},
                 {"from": "open_reference_popover", "to": "popover_graph_value", "as": "open_reference_popover"},
+                {"from": "show_edit_text", "to": "popover_graph_value", "as": "show_edit_text"},
                 {"from": "clear_popover", "to": "popover_graph_value", "as": "clear_popover"},
                 {
                     "from": "popover_graph_value",
@@ -5314,14 +5420,18 @@
                             "ref": "h"
                         },
                         {
+                            "id": "confirm_edit_text",
+                            "ref": "confirm_edit_text"
+                        },
+                        {
                             "id": "edit_text_base_props",
-                            "script": "return {id: `${html_id}-edit_value`, class: {'edit-value': true, [editing]: true}}"
+                            "script": "return {id: `${html_id}-edit-value`, class: {'edit-value': true, [editing]: true}, onclick: (s, payload) => [s, [confirm_edit_text, payload]]}"
                         },
                         {
                             "id": "edit_text_props"
                         },
                         {
-                            "id": "edit_text_children",
+                            "id": "centering_wrapper_children",
                             "args": [
                                 "label",
                                 "input",
@@ -5344,7 +5454,7 @@
                                 "editing",
                                 "edit_value"
                             ],
-                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); return Object.assign({class: 'textarea', value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), oninput: (s, payload) => ({...s, edit_value: payload.target.value})})"
+                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); return Object.assign({class: 'textarea', onclick: (s, payload) => (payload.stopPropagation(), s), value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), oninput: (s, payload) => ({...s, edit_value: payload.target.value})})"
                         },
                         {
                             "id": "edit_text_input_dom_type",
@@ -5360,7 +5470,7 @@
                                 "editing",
                                 "edit_value"
                             ],
-                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); return Object.assign({class: 'input', value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), oninput: (s, payload) => ({...s, edit_value: payload.target.value})}, editing === 'ref' ? {list: 'ref-options', type: 'text'} : {})"
+                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); return Object.assign({id: `${html_id}-edit-text`, class: 'input', value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), oninput: (s, payload) => ({...s, edit_value: payload.target.value})}, editing === 'ref' ? {list: 'ref-options', type: 'text'} : {})"
                         },
                         {
                             "id": "edit_text_label",
@@ -5368,8 +5478,9 @@
                         },
                         {
                             "id": "edit_text_label_dom_type",
-                            "value": "p"
+                            "value": "label"
                         },
+                        {"id":"edit_text_label_props", "script": "return {for: `${html_id}-edit-text`}"},
                         {
                             "id": "edit_text_label_text",
                             "ref": "h_text"
@@ -5412,6 +5523,12 @@
                         },
                         {
                             "id": "wrap_option",
+                            "ref": "h"
+                        },
+                        {"id": "centering_wrapper_dom_type", "value": "div"},
+                        {"id": "centering_wrapper_props", "value": {"class": {"centering": true}}},
+                        {
+                            "id": "centering_wrapper",
                             "ref": "h"
                         },
                         {
@@ -5459,14 +5576,19 @@
                             "as": "props"
                         },
                         {
-                            "from": "edit_text_children",
+                            "from": "centering_wrapper",
                             "to": "edit_text",
                             "as": "children"
                         },
                         {
                             "from": "edit_text_input",
-                            "to": "edit_text_children",
+                            "to": "centering_wrapper_children",
                             "as": "input"
+                        },
+                        {
+                            "from": "html_id",
+                            "to": "edit_text_input_props",
+                            "as": "html_id"
                         },
                         {
                             "from": "edit_text_input_props",
@@ -5480,7 +5602,7 @@
                         },
                         {
                             "from": "edit_text_textarea",
-                            "to": "edit_text_children",
+                            "to": "centering_wrapper_children",
                             "as": "textarea"
                         },
                         {
@@ -5494,9 +5616,19 @@
                             "as": "dom_type"
                         },
                         {
+                            "from": "html_id",
+                            "to": "edit_text_label_props",
+                            "as": "html_id"
+                        },
+                        {
                             "from": "edit_text_label",
-                            "to": "edit_text_children",
+                            "to": "centering_wrapper_children",
                             "as": "label"
+                        },
+                        {
+                            "from": "edit_text_label_props",
+                            "to": "edit_text_label",
+                            "as": "props"
                         },
                         {
                             "from": "edit_text_label_dom_type",
@@ -5517,11 +5649,6 @@
                             "from": "refs_props",
                             "to": "refs",
                             "as": "props" 
-                        },
-                        {
-                            "from": "refs",
-                            "to": "_edit_text_children",
-                            "as": "refs" 
                         },
                         {
                             "from": "wrap_dom_type",
@@ -5565,7 +5692,16 @@
                             "from": "editing",
                             "to": "edit_text_base_props",
                             "as": "editing"
-                        }
+                        },
+                        {
+                            "from": "confirm_edit_text",
+                            "to": "edit_text_base_props",
+                            "as": "confirm_edit_text"
+                        },
+                        {"from": "centering_wrapper_dom_type", "to": "centering_wrapper", "as": "dom_type"},
+                        {"from": "centering_wrapper_props", "to": "centering_wrapper", "as": "props"},
+                        {"from": "centering_wrapper_children", "to": "centering_wrapper", "as": "children"},
+                        {"from": "centering_wrapper", "to": "edit_text", "as": "children"}
                     ]
                 },
                 {
@@ -6061,7 +6197,7 @@
                                         "node",
                                         "meta"
                                     ],
-                                    "script": "const mouseevent = (_, payload) => [meta.onclick_node_fn, {x: payload.x, y: payload.y, node_id: node.node_id, selected: [], ty: 'down'}]; return ({onmousedown: mouseevent, width: 256, height: 64, id: html_id + '-' + node.node_child_id, class: `node ${meta.selected[0] === node.node_id ? 'selected': ''}`, opacity: meta.selected_edge?.from === node.node_id ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - (selected_distance * selected_distance + (!!selected_distance ? 2 : 0)) / 6) : 0.1})"
+                                    "script": "const mouseevent = (_, payload) => [meta.onclick_node_fn, {x: payload.x, y: payload.y, node_id: node.node_id, selected: [], ty: 'down'}]; return ({onmousedown: mouseevent, width: 256, height: 64, id: html_id + '-' + node.node_child_id, class: `node ${meta.selected[0] === node.node_id ? 'selected': ''}`, opacity: meta.selected_edge?.from === node.node_id ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - (selected_distance * selected_distance) / 6) : 0.1})"
 
                                 },
                                 {
@@ -6561,7 +6697,7 @@
                                         "sibling_index_normalized",
                                         "selected_edge"
                                     ],
-                                    "script": "return ({id: `edge-info-${source.node_child_id}`, z: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to ? 100 : 200, opacity: selected_distance !== undefined ? Math.max(0.05, 1 - (selected_distance - 1) * (selected_distance - 1) / 2) : 0.1, class: {selected: selected_edge && (source.node_id === selected_edge.from + '_' + selected_edge.to || (source.node_id === selected_edge.from && target.node_id === selected_edge.to)), edge: true} })"
+                                    "script": "return ({id: `edge-info-${source.node_child_id}`, z: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to ? 100 : 200, opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1, class: {selected: selected_edge && (source.node_id === selected_edge.from + '_' + selected_edge.to || (source.node_id === selected_edge.from && target.node_id === selected_edge.to)), edge: true} })"
                                 },
                                 {
                                     "id": "edge_info_line_position",

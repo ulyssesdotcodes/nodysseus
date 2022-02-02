@@ -822,8 +822,8 @@ const d3subscription = (dispatch, props) => {
                     el.setAttribute('x2', Math.floor(Math.floor(source.x + (target.x - source.x) * (1 - lerp_length / length))));
                     el.setAttribute('y2', Math.floor(Math.floor(source.y + (target.y - source.y) * (1 - lerp_length / length))));
 
-                    info_el.setAttribute('x', Math.floor((l.sibling_index_normalized * 0.2 + 0.25) * (target.x - source.x) + source.x) + 16)
-                    info_el.setAttribute('y', Math.floor((l.sibling_index_normalized * 0.2 + 0.25) * (target.y - source.y) + source.y));
+                    info_el.setAttribute('x', Math.floor((l.sibling_index_normalized * 0.2 + 0.2) * (target.x - source.x) + source.x) + 16)
+                    info_el.setAttribute('y', Math.floor((l.sibling_index_normalized * 0.2 + 0.2) * (target.y - source.y) + source.y));
 
                     if (l.source.node_id === selected) {
                         visible_nodes.push({x: target.x, y: target.y});
@@ -1110,6 +1110,8 @@ const middleware = dispatch => (ha_action, ha_payload) => {
                         && e.hasOwnProperty('graph')
                         ? lib.no.executeGraphNode({graph: e.graph})(e.fn)
                         : e);
+
+                console.log(result);
                 return result.hasOwnProperty("state")
                     ? effects.length > 0 ? [result.state, ...effects] : result.state
                     : [result.action, result.payload];
