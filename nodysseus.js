@@ -635,7 +635,7 @@ const updateSimulationNodes = (data) => {
         const calculated_nodes = children.length === 0 ? [{
             node_id: n.id,
             node_child_id: n.id,
-            hash: hashcode(n.id),
+            hash: simulation_node_data.get(node_child_id)?.hash ?? hashcode(n.id),
             nested_node_count: n.nodes?.length,
             nested_edge_count: n.edges?.length,
             x: Math.floor(simulation_node_data.get(node_child_id)?.x 
@@ -647,7 +647,8 @@ const updateSimulationNodes = (data) => {
         }] : children.map((c, i) => ({
             node_id: n.id,
             node_child_id: n.id + "_" + c,
-            hash: hashcode(n.id),
+            hash: simulation_node_data.get(node_child_id)?.hash ?? hashcode(n.id),
+            sibling_index_normalized: parents_map.get(c).findIndex(p => p === n.id) / parents_map.get(c).length,
             nested_node_count: n.nodes?.length,
             nested_edge_count: n.edges?.length,
             x: Math.floor(simulation_node_data.get(node_child_id)?.x 
@@ -685,6 +686,7 @@ const updateSimulationNodes = (data) => {
                 target: main_node_map.get(e.to),
                 as: e.as,
                 type: e.type,
+                sibling_index_normalized: simulation_node_data.get(e.from + "_" + e.to).sibling_index_normalized,
                 strength: 2 / (1 + 2 * (children_map.get(main_node_map.get(e.from))?.length ?? 0)),
                 distance: 64 
                     + 16 * (parents_map.get(main_node_map.get(e.to))?.length ?? 0) 
@@ -728,6 +730,8 @@ const graphToSimulationNodes = (data, payload) => {
     }
 }
 
+// Creates the simulation, updates the node elements when the simulation changes, and runs an action when the nodes have settled.
+// This is probably doing too much.
 const d3subscription = (dispatch, props) => {
     const simulation = lib.d3.forceSimulation()
         .force('charge', lib.d3.forceManyBody().strength(-64).distanceMax(256).distanceMin(64).strength(0))
@@ -789,12 +793,14 @@ const d3subscription = (dispatch, props) => {
             simulation.nodes().map(n => {
                 const el = document.getElementById(`${htmlid}-${n.node_child_id}`);
                 if(el) {
-                    el.setAttribute('x', Math.floor(n.x - 20));
-                    el.setAttribute('y', Math.floor(n.y - 20));
+                    const x = n.x - node_el_width * 0.5;
+                    const y = n.y ;
+                    el.setAttribute('x', Math.floor(x - 20));
+                    el.setAttribute('y', Math.floor(y - 20));
 
                     if(n.node_id === selected) {
-                        visible_nodes.push({x: n.x, y: n.y})
-                        selected_pos = {x: n.x, y: n.y};
+                        visible_nodes.push({x, y})
+                        selected_pos = {x, y};
                     }
                 }
             });
@@ -802,22 +808,29 @@ const d3subscription = (dispatch, props) => {
 
             simulation.force('links').links().map(l => {
                 const el = document.getElementById(`link-${l.source.node_child_id}`);
-                if(el) {
-                    const length_x = Math.abs(l.source.x - l.target.x); 
-                    const length_y = Math.abs(l.source.y - l.target.y); 
+                const info_el = document.getElementById(`edge-info-${l.source.node_child_id}`);
+                if(el && info_el) {
+                    const source = {x: l.source.x - node_el_width * 0.5, y: l.source.y};
+                    const target = {x: l.target.x - node_el_width * 0.5, y: l.target.y};
+                    const length_x = Math.abs(source.x - target.x); 
+                    const length_y = Math.abs(source.y - target.y); 
                     const length = Math.sqrt(length_x * length_x + length_y * length_y); 
                     const lerp_length = 24;
                     // return {selected_distance, selected_edge, source: {...source, x: source.x + (target.x - source.x) * lerp_length / length, y: source.y + (target.y - source.y) * lerp_length / length}, target: {...target, x: source.x + (target.x - source.x) * (1 - (lerp_length / length)), y: source.y + (target.y - source.y) * (1 - (lerp_length / length))}}"
-                    el.setAttribute('x1', Math.floor(Math.floor(l.source.x + (l.target.x - l.source.x) * lerp_length / length)));
-                    el.setAttribute('y1', Math.floor(Math.floor(l.source.y + (l.target.y - l.source.y) * lerp_length / length)));
-                    el.setAttribute('x2', Math.floor(Math.floor(l.source.x + (l.target.x - l.source.x) * (1 - lerp_length / length))));
-                    el.setAttribute('y2', Math.floor(Math.floor(l.source.y + (l.target.y - l.source.y) * (1 - lerp_length / length))));
+                    el.setAttribute('x1', Math.floor(Math.floor(source.x + (target.x - source.x) * lerp_length / length)));
+                    el.setAttribute('y1', Math.floor(Math.floor(source.y + (target.y - source.y) * lerp_length / length)));
+                    el.setAttribute('x2', Math.floor(Math.floor(source.x + (target.x - source.x) * (1 - lerp_length / length))));
+                    el.setAttribute('y2', Math.floor(Math.floor(source.y + (target.y - source.y) * (1 - lerp_length / length))));
+
+                    info_el.setAttribute('x', Math.floor((l.sibling_index_normalized * 0.2 + 0.25) * (target.x - source.x) + source.x) + 16)
+                    info_el.setAttribute('y', Math.floor((l.sibling_index_normalized * 0.2 + 0.25) * (target.y - source.y) + source.y));
 
                     if (l.source.node_id === selected) {
-                        visible_nodes.push({x: l.target.x, y: l.target.y});
+                        visible_nodes.push({x: target.x, y: target.y});
                     } else if (l.target.node_id === selected) {
-                        visible_nodes.push({x: l.source.x, y: l.source.y});
+                        visible_nodes.push({x: source.x, y: source.y});
                     }
+
                 }
             })
 
@@ -825,11 +838,12 @@ const d3subscription = (dispatch, props) => {
             // const visible_nodes = !selected ? [] : [selected.node_id].concat(levels.children.get(selected.node_id)).concat(levels.parents.get(selected.node_id)).concat(levels.parents.get(selected.node_id).flatMap(p => levels.parents.get(p))); return 
             const nodes_box = visible_nodes.reduce((acc, n) => ({min: {x: Math.min(acc.min.x, n.x - 24), y: Math.min(acc.min.y, n.y - 24)}, max: {x: Math.max(acc.max.x, n.x + node_el_width * 0.5 - 24), y: Math.max(acc.max.y, n.y + 24)}}), {min: {x: selected_pos ? (selected_pos.x - 96) : Number.MAX_VALUE , y: selected_pos ? (selected_pos.y - 256) : Number.MAX_VALUE}, max: {x: selected_pos ? (selected_pos.x + 96) : Number.MIN_SAFE_INTEGER, y: selected_pos ? (selected_pos.y + 128) : Number.MIN_SAFE_INTEGER}})
             const nodes_box_center = {x: (nodes_box.max.x + nodes_box.min.x) * 0.5, y: (nodes_box.max.y + nodes_box.min.y) * 0.5}; 
+            const nodes_box_dimensions = {x: Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))), y: Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y)))}
             const center = !selected_pos ? nodes_box_center : {x: (selected_pos.x + nodes_box_center.x * 3) * 0.25, y: (selected_pos.y + nodes_box_center.y * 3) * 0.25}
 
             const editor = document.getElementById(`${htmlid}-editor`);
             if(editor) {
-                editor.setAttribute('viewBox', `${center.x - Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))) * 0.5 - node_el_width * 0.5}  ${center.y - Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y))) * 0.5 - node_el_width * 0.5} ${Math.max(dimensions.x * 0.5, Math.min(dimensions.x, nodes_box.max.x - nodes_box.min.x)) + node_el_width} ${Math.max(dimensions.y * 0.5, Math.min(dimensions.y, nodes_box.max.y - nodes_box.min.y)) + node_el_width}`);
+                editor.setAttribute('viewBox', `${center.x - nodes_box_dimensions.x * 0.5 - node_el_width * 0.5}  ${center.y - nodes_box_dimensions.y * 0.5 - node_el_width * 0.5} ${nodes_box_dimensions.x + node_el_width} ${nodes_box_dimensions.y + node_el_width}`);
             }
 
             //     return {width: dimensions.x, height: dimensions.y, viewBox: `${center.x - Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))) * 0.5 - node_el_width * 0.5}  ${center.y - Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y))) * 0.5 - node_el_width * 0.5} ${Math.max(dimensions.x * 0.5, Math.min(dimensions.x, nodes_box.max.x - nodes_box.min.x)) + node_el_width} ${Math.max(dimensions.y * 0.5, Math.min(dimensions.y, nodes_box.max.y - nodes_box.min.y)) + node_el_width}` /*, onmousedown: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'down'}], onmouseup: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'up'}], onmousemove: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'move'}]*/}"

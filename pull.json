@@ -5953,7 +5953,7 @@
                         {
                             "id": "nodes_box",
                             "args":["nodes"],
-                            "script": "const visible_nodes = !selected ? [] : [selected.node_id].concat(levels.children.get(selected.node_id)).concat(levels.parents.get(selected.node_id)).concat(levels.parents.get(selected.node_id).flatMap(p => levels.parents.get(p))); return nodes.filter(n => !selected || visible_nodes.includes(n.node_id)).reduce((acc, n) => ({min: {x: Math.min(acc.min.x, n.x - 24), y: Math.min(acc.min.y, n.y - 24)}, max: {x: Math.max(acc.max.x, n.x + node_el_width * 0.5 - 24), y: Math.max(acc.max.y, n.y + 24)}}), {min: {x: selected ? (selected.x - 96) : Number.MAX_VALUE , y: selected ? (selected.y - 256) : Number.MAX_VALUE}, max: {x: selected ? (selected.x + 96) : Number.MIN_SAFE_INTEGER, y: selected ? (selected.y + 128) : Number.MIN_SAFE_INTEGER}})"
+                            "script": "const visible_nodes = !selected ? [] : [selected.node_id].concat(levels.children.get(selected.node_id)).concat(levels.parents.get(selected.node_id)); return nodes.filter(n => !selected || visible_nodes.includes(n.node_id)).reduce((acc, n) => ({min: {x: Math.min(acc.min.x, n.x - 24), y: Math.min(acc.min.y, n.y - 24)}, max: {x: Math.max(acc.max.x, n.x + node_el_width * 0.5 - 24), y: Math.max(acc.max.y, n.y + 24)}}), {min: {x: selected ? (selected.x - 96) : Number.MAX_VALUE , y: selected ? (selected.y - 256) : Number.MAX_VALUE}, max: {x: selected ? (selected.x + 96) : Number.MIN_SAFE_INTEGER, y: selected ? (selected.y + 128) : Number.MIN_SAFE_INTEGER}})"
                         },
                         {
                             "id": "get_selected_edge",
@@ -6061,7 +6061,7 @@
                                         "node",
                                         "meta"
                                     ],
-                                    "script": "const mouseevent = (_, payload) => [meta.onclick_node_fn, {x: payload.x, y: payload.y, node_id: node.node_id, selected: [], ty: 'down'}]; return ({ x: node.x - 20, y: node.y - 20, onmousedown: mouseevent, width: 256, height: 64, id: html_id + '-' + node.node_child_id, class: `node ${meta.selected[0] === node.node_id ? 'selected': ''}`, opacity: meta.selected_edge?.from === node.node_id ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - (selected_distance * selected_distance + (!!selected_distance ? 2 : 0)) / 6) : 0.1})"
+                                    "script": "const mouseevent = (_, payload) => [meta.onclick_node_fn, {x: payload.x, y: payload.y, node_id: node.node_id, selected: [], ty: 'down'}]; return ({onmousedown: mouseevent, width: 256, height: 64, id: html_id + '-' + node.node_child_id, class: `node ${meta.selected[0] === node.node_id ? 'selected': ''}`, opacity: meta.selected_edge?.from === node.node_id ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - (selected_distance * selected_distance + (!!selected_distance ? 2 : 0)) / 6) : 0.1})"
 
                                 },
                                 {
@@ -6089,7 +6089,7 @@
                                                 "selected_distance",
                                                 "nodes"
                                             ],
-                                            "script": "const r = 24 / ((Math.min(10, selected_distance ?? 10) * 0.5) + 1); return value !== undefined ? {class: 'shape value', points: `4,${4 + r} ${4 + r},${4 + r} ${4 + r * 0.5},4`} : script ? {class: 'shape script', width: r, height: r, x: 10, y: 10} : ref ? {class: 'shape ref', width: r, height: r, x: 10, y: 10} : nodes ? {class: 'shape graph', r: r * 0.5, cx: r * 0.5 + 4, cy: r * 0.5 + 4}  : {class: 'shape none', r: r * 0.5 , cx: r * 0.5 + 4, cy: r * 0.5 + 4}"
+                                            "script": "const r = 24; return value !== undefined ? {class: 'shape value', points: `4,${4 + r} ${4 + r},${4 + r} ${4 + r * 0.5},4`} : script ? {class: 'shape script', width: r, height: r, x: 10, y: 10} : ref ? {class: 'shape ref', width: r, height: r, x: 10, y: 10} : nodes ? {class: 'shape graph', r: r * 0.5, cx: r * 0.5 + 4, cy: r * 0.5 + 4}  : {class: 'shape none', r: r * 0.5 , cx: r * 0.5 + 4, cy: r * 0.5 + 4}"
                                         },
                                         {
                                             "id": "default_color",
@@ -6561,7 +6561,7 @@
                                         "sibling_index_normalized",
                                         "selected_edge"
                                     ],
-                                    "script": "return ({x: Math.floor((sibling_index_normalized * 0.8 + 0.05) * (target.x - source.x) + source.x) + 16, y: Math.floor((sibling_index_normalized * 0.8 + 0.05) * (target.y - source.y) + source.y), z: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to ? 100 : 200, opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1, class: {selected: selected_edge && (source.node_id === selected_edge.from + '_' + selected_edge.to || (source.node_id === selected_edge.from && target.node_id === selected_edge.to)), edge: true} })"
+                                    "script": "return ({id: `edge-info-${source.node_child_id}`, z: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to ? 100 : 200, opacity: selected_distance !== undefined ? Math.max(0.05, 1 - (selected_distance - 1) * (selected_distance - 1) / 2) : 0.1, class: {selected: selected_edge && (source.node_id === selected_edge.from + '_' + selected_edge.to || (source.node_id === selected_edge.from && target.node_id === selected_edge.to)), edge: true} })"
                                 },
                                 {
                                     "id": "edge_info_line_position",
@@ -6604,7 +6604,7 @@
                                     "args": [
                                         "link"
                                     ],
-                                    "script": "return link.as ?? '*'"
+                                    "script": "return link.as ?? ''"
                                 },
                                 {
                                     "id": "edge_info_rect_dom_type",
@@ -6637,7 +6637,7 @@
                                         "selected_edge",
                                         "selected_distance"
                                     ],
-                                    "script": "return ({id: `link-${source.node_child_id}`, x1: Math.floor(source.x), y1: Math.floor(source.y), x2: Math.floor(target.x), y2: Math.floor(target.y), class: `link ${selected_edge && (source.node_id === selected_edge.from + '_' + selected_edge.to || (source.node_id === selected_edge.from && target.node_id === selected_edge.to)) ? 'selected' : 'unselected'}`, 'marker-end': 'url(#arrow)', opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1})"
+                                    "script": "return ({id: `link-${source.node_child_id}`, class: `link ${selected_edge && (source.node_id === selected_edge.from + '_' + selected_edge.to || (source.node_id === selected_edge.from && target.node_id === selected_edge.to)) ? 'selected' : 'unselected'}`, 'marker-end': 'url(#arrow)', opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1})"
                                 },
                                 {
                                     "id": "line_dom_type",
