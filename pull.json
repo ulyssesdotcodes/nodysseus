@@ -296,7 +296,7 @@
                         "init",
                         "view"
                     ],
-                    "script": "return {dispatch: _lib.ha.app({dispatch: _lib.no.middleware, init: () => [init, [d => d(update_hyperapp)]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [[_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}],  !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}]]})}"
+                    "script": "return {dispatch: _lib.ha.app({dispatch: _lib.no.middleware, init: () => [init, [d => d(update_hyperapp)]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [[_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}],  !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: window.innerHeight, y: window.innerWidth}}, [update_sim, s]])]})}"
                 }
             ],
             "edges": [
@@ -6121,7 +6121,7 @@
                         },
                         {
                             "id": "node_editor_props",
-                            "script": "return {id: `${html_id}-editor`, width: dimensions.x, height: dimensions.y, viewBox: `${center.x - Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))) * 0.5 - node_el_width * 0.5}  ${center.y - Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y))) * 0.5 - node_el_width * 0.5} ${Math.max(dimensions.x * 0.5, Math.min(dimensions.x, nodes_box.max.x - nodes_box.min.x)) + node_el_width} ${Math.max(dimensions.y * 0.5, Math.min(dimensions.y, nodes_box.max.y - nodes_box.min.y)) + node_el_width}` /*, onmousedown: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'down'}], onmouseup: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'up'}], onmousemove: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'move'}]*/}"
+                            "script": "return {id: `${html_id}-editor`, width: dimensions.x, height: dimensions.y, viewBox: `${Math.floor(center.x - Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))) * 0.5 - node_el_width * 0.5)}  ${Math.floor(center.y - Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y))) * 0.5 - node_el_width * 0.5)} ${Math.floor(Math.max(dimensions.x * 0.5, Math.min(dimensions.x, nodes_box.max.x - nodes_box.min.x)) + node_el_width)} ${Math.floor(Math.max(dimensions.y * 0.5, Math.min(dimensions.y, nodes_box.max.y - nodes_box.min.y)) + node_el_width)}` /*, onmousedown: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'down'}], onmouseup: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'up'}], onmousemove: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'move'}]*/}"
                         },
                         {
                             "id": "node_editor_dom_type",

@@ -730,6 +730,15 @@ const graphToSimulationNodes = (data, payload) => {
     }
 }
 
+const listenToEvent = (dispatch, props) => {
+    const listener = (event) => requestAnimationFrame(() => dispatch(props.action, event.detail))
+
+    addEventListener(props.type, listener);
+    return () => removeEventListener(props.type, listener);
+}
+
+const listen = (type, action) => [listenToEvent, {type, action}]
+
 // Creates the simulation, updates the node elements when the simulation changes, and runs an action when the nodes have settled.
 // This is probably doing too much.
 const d3subscription = (dispatch, props) => {
@@ -843,7 +852,7 @@ const d3subscription = (dispatch, props) => {
 
             const editor = document.getElementById(`${htmlid}-editor`);
             if(editor) {
-                editor.setAttribute('viewBox', `${center.x - nodes_box_dimensions.x * 0.5 - node_el_width * 0.5}  ${center.y - nodes_box_dimensions.y * 0.5 - node_el_width * 0.5} ${nodes_box_dimensions.x + node_el_width} ${nodes_box_dimensions.y + node_el_width}`);
+                editor.setAttribute('viewBox', `${Math.floor(center.x - nodes_box_dimensions.x * 0.5 - node_el_width * 0.5)}  ${Math.floor(center.y - nodes_box_dimensions.y * 0.5 - node_el_width * 0.5)} ${Math.floor(nodes_box_dimensions.x + node_el_width)} ${Math.floor(nodes_box_dimensions.y + node_el_width)}`);
             }
 
             //     return {width: dimensions.x, height: dimensions.y, viewBox: `${center.x - Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))) * 0.5 - node_el_width * 0.5}  ${center.y - Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y))) * 0.5 - node_el_width * 0.5} ${Math.max(dimensions.x * 0.5, Math.min(dimensions.x, nodes_box.max.x - nodes_box.min.x)) + node_el_width} ${Math.max(dimensions.y * 0.5, Math.min(dimensions.y, nodes_box.max.y - nodes_box.min.y)) + node_el_width}` /*, onmousedown: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'down'}], onmouseup: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'up'}], onmousemove: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'move'}]*/}"
@@ -1133,7 +1142,7 @@ const lib = {
         executeGraphValue: ({ graph, cache_id }) => executeGraph({ cache, graph, node_cache, cache_id: cache_id ?? "main" })(graph.out),
         executeGraphNode: ({ graph, cache_id }) => executeGraph({ cache, graph, node_cache, cache_id: cache_id ?? "main" })
     },
-    scripts: { d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all },
+    scripts: { d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all, listen},
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
     Fuse,
     // THREE
