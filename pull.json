@@ -2628,7 +2628,7 @@
                 },
                 {
                     "id": "clear_popover_hyperapp_effect",
-                    "script": "return [[(dispatch, payload) => { console.log('clearing popover'); payload.dispatch(s => undefined); dispatch(s => ({...s, popover_dispatch: undefined}))}, {dispatch: popover_dispatch}]]"
+                    "script": "console.log('clear popover'); return [[(dispatch, payload) => { console.log('clear_dispatch'); payload.dispatch(s => undefined); dispatch(s => ({...s, popover_dispatch: undefined}))}, {dispatch: popover_dispatch}]]"
                 },
                 {"id": "out", "ref": "hyperapp_action_effect"}
             ],
@@ -2649,9 +2649,10 @@
             "out": "out",
             "nodes": [
                 {"id":"in"},
+                {"id": "state", "ref": "arg", "value": "state"},
                 {
                     "id": "popover_graph_path",
-                    "value": "state.popover_graph"
+                    "value": "popover_graph"
                 },
                 {
                     "id": "graph",
@@ -2688,10 +2689,11 @@
                 {"id": "out", "ref": "hyperapp_action_effect"}
             ],
             "edges": [
-                {"from": "in", "to": "set_popover_graph", "as": "target"},
+                {"from": "in", "to": "out", "as": "args"},
+                {"from": "state", "to": "set_popover_graph", "as": "target"},
                 {"from": "popover_graph_value", "to": "set_popover_graph", "as": "value"},
                 {"from": "popover_graph_path", "to": "set_popover_graph", "as": "path"},
-                {"from": "set_popover_graph", "to": "new_state"},
+                {"from": "set_popover_graph", "to": "new_state", "as": "state"},
                 {"from": "popover_graph_value", "to": "render_popover_graph_effect_payload", "as": "display_graph"},
                 {"from": "graph", "to": "render_popover_graph_effect_payload", "as": "graph"},
                 {"from": "html_id", "to": "render_popover_graph_effect_payload", "as": "html_id"},
@@ -5404,7 +5406,7 @@
         },
         {
             "id": "render_popover_graph_effect",
-            "script": "return (dispatch, payload) => requestAnimationFrame(() => {console.log(payload); if(payload.popover_dispatch) { payload.popover_dispatch(s => [{...s, display_graph: payload.display_graph, selected: [payload.display_graph.out]}, [s.update_sim_effect, {...s, display_graph: payload.display_graph}]]) } else { console.log('else render'); const popover_dispatch = _lib.no.executeGraphNode({graph: payload.graph})('hyperapp_app')({graph: payload.graph, display_graph: payload.display_graph, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions, readonly: true, sim_update_alpha: 0.3}).dispatch; dispatch(s => ({...s, popover_dispatch}));}})"
+            "script": "return (dispatch, payload) => requestAnimationFrame(() => {console.log(payload); if(payload.popover_dispatch) { payload.popover_dispatch(s => [{...s, display_graph: payload.display_graph, selected: [payload.display_graph.out]}, [s.update_sim_effect, {...s, display_graph: payload.display_graph}]]) } else { console.log('else render'); const popover_dispatch = _lib.no.executeGraphNode({graph: payload.graph})('hyperapp_app')({graph: payload.graph, display_graph: payload.display_graph, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions, readonly: true, sim_update_alpha: 0.3}).dispatch; console.log('render popover'); console.log(popover_dispatch); dispatch(s => ({...s, popover_dispatch}));}})"
         },
         {
             "id": "handle_popover_event",
