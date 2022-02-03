@@ -5425,7 +5425,7 @@
                         },
                         {
                             "id": "edit_text_base_props",
-                            "script": "return {id: `${html_id}-edit-value`, class: {'edit-value': true, [editing]: true}, onclick: (s, payload) => [s, [confirm_edit_text, payload]]}"
+                            "script": "return {id: `${html_id}-edit-value`, class: {'edit-value': true, [editing]: true}, onclick: (s, payload) => (payload.preventDefault(), [s, [confirm_edit_text, payload]])}"
                         },
                         {
                             "id": "edit_text_props"
@@ -5454,7 +5454,7 @@
                                 "editing",
                                 "edit_value"
                             ],
-                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); return Object.assign({class: 'textarea', onclick: (s, payload) => (payload.stopPropagation(), s), value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), oninput: (s, payload) => ({...s, edit_value: payload.target.value})})"
+                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); return Object.assign({id: `${html_id}-textarea`, class: 'textarea', onclick: (s, payload) => (payload.stopPropagation(), s), value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), oninput: (s, payload) => ({...s, edit_value: payload.target.value})})"
                         },
                         {
                             "id": "edit_text_input_dom_type",
@@ -5599,6 +5599,11 @@
                             "from": "edit_text_input_dom_type",
                             "to": "edit_text_input",
                             "as": "dom_type"
+                        },
+                        {
+                            "from": "html_id",
+                            "to": "edit_text_textarea_props",
+                            "as": "html_id"
                         },
                         {
                             "from": "edit_text_textarea",
