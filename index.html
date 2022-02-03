@@ -159,7 +159,7 @@
     .link {
       stroke: #ccc;
     }
-    svg.edge.selected rect {
+    svg.edge-info.selected rect {
       fill: red;
     }
 
@@ -179,12 +179,13 @@
       font-family: consolas;
     }
 
-    .edge {
+    .edge-info {
       filter: url("#flood-background");
       padding: 4px;
+      cursor: pointer;
     }
 
-    .edge.selected {
+    .edge-info.selected {
       filter: url("#selected-flood-background");
     }
 

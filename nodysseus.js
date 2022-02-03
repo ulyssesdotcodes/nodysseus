@@ -683,9 +683,9 @@ const updateSimulationNodes = (data) => {
             const l = simulation_link_data.get(e.from + "_" + e.to);
             return {
                 source: e.from + "_" + e.to,
+                from: e.from,
+                to: e.to,
                 target: main_node_map.get(e.to),
-                as: e.as,
-                type: e.type,
                 sibling_index_normalized: simulation_node_data.get(e.from + "_" + e.to).sibling_index_normalized,
                 strength: 2 / (1 + 2 * (children_map.get(main_node_map.get(e.from))?.length ?? 0)),
                 distance: 64 
@@ -1119,6 +1119,8 @@ const middleware = dispatch => (ha_action, ha_payload) => {
                         ? lib.no.executeGraphNode({graph: e.graph})(e.fn)
                         : e);
 
+                console.log(result);
+
                 return result.hasOwnProperty("state")
                     ? effects.length > 0 ? [result.state, ...effects] : result.state
                     : [result.action, result.payload];
@@ -1191,3 +1193,13 @@ const state = new Map([['in', {
 
 
 console.log(executeGraph({ cache, state, graph: DEFAULT_GRAPH, original_graph, out: "hyperapp_app", cache_id: "main", node_cache })(DEFAULT_GRAPH.out)(state.get("in")));
+
+
+
+//  return {out: 'out', 
+//  nodes: [
+//      {id: 'ref', name: 'ref', value: [[update_edge, {id: edge, properties: {type: 'ref'}}], [clear_popover]]}, 
+//      {id: 'none', name: 'none', value: [[update_edge, {id: edge, properties: {type: undefined}}], [clear_popover]]}, 
+//      {id: 'resolve', name: 'resolve', value: [[update_edge, {id: edge, properties: {type: 'resolve'}}], [clear_popover]]}, 
+//      {id: 'out', name: `edge from ${edge.from} to ${edge.to} type`, value: [[clear_popover]]}
+//     ], edges: [{'from': 'ref', to: 'out'}, {from: 'none', to: 'out'}, {from: 'resolve', to: 'out'}]}
