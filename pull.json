@@ -3101,9 +3101,8 @@
                 {"id": "html_id", "ref": "arg", "value": "state.html_id"},
                 {"id": "editing_path", "value": "editing"},
                 {"id": "edit_value_path", "value": "edit_value"},
-                {"id": "node_id", "ref": "arg", "value": "payload.id"},
-                {"id": "selected_node", "ref": "selected_node"},
-                {"id": "current_node_value", "ref": "get"},
+                {"id": "id", "ref": "arg", "value": "payload.id"},
+                {"id": "current_value", "ref": "arg", "value": "payload.value"},
                 {"id": "property", "ref": "arg", "value": "payload.property"},
                 {"id": "set_editing", "ref": "set"},
                 {"id": "set_edit_value", "ref": "set"},
@@ -3120,12 +3119,12 @@
                 {"from": "property", "to": "set_editing", "as": "value"},
                 {"from": "state", "to": "set_editing", "as": "target"},
                 {"from": "display_graph", "to": "selected_node", "as": "display_graph"},
-                {"from": "node_id", "to": "selected_node", "as": "selected"},
+                {"from": "id", "to": "selected_node", "as": "selected"},
                 {"from": "property", "to": "current_node_value", "as": "path"},
                 {"from": "selected_node", "to": "current_node_value", "as": "target"},
                 {"from": "set_editing", "to": "set_edit_value", "as": "target"},
                 {"from": "edit_value_path", "to": "set_edit_value", "as": "path"},
-                {"from": "current_node_value", "to": "set_edit_value", "as": "value"},
+                {"from": "current_value", "to": "set_edit_value", "as": "value"},
                 {"from": "focus_effector", "to": "focus_effect", "as": "a0"},
                 {"from": "html_id", "to": "focus_props", "as": "html_id"},
                 {"from": "focus_props", "to": "focus_effect", "as": "a1"},
@@ -5390,7 +5389,7 @@
                         "popover_graph",
                         "popover_graph_h"
                     ],
-                    "script": "return [node_editor.el, !readonly && edit_text.el, search_input.el, !readonly && popover_graph && popover_graph_h.el.el, show_result && result.run.el ].filter(e => e)"
+                    "script": "return [node_editor.el, !readonly && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, show_result && result.run.el ].filter(e => e)"
                 },
                 {
                     "id": "edit_text",
@@ -6094,7 +6093,7 @@
                         {
                             "id": "nodes_box",
                             "args":["nodes"],
-                            "script": "const visible_nodes = !selected ? [] : [selected.node_id].concat(levels.children.get(selected.node_id)).concat(levels.parents.get(selected.node_id)); return nodes.filter(n => !selected || visible_nodes.includes(n.node_id)).reduce((acc, n) => ({min: {x: Math.min(acc.min.x, n.x - 24), y: Math.min(acc.min.y, n.y - 24)}, max: {x: Math.max(acc.max.x, n.x + node_el_width * 0.5 - 24), y: Math.max(acc.max.y, n.y + 24)}}), {min: {x: selected ? (selected.x - 96) : Number.MAX_VALUE , y: selected ? (selected.y - 256) : Number.MAX_VALUE}, max: {x: selected ? (selected.x + 96) : Number.MIN_SAFE_INTEGER, y: selected ? (selected.y + 128) : Number.MIN_SAFE_INTEGER}})"
+                            "script": "const visible_nodes = !selected ? [] : [selected.node_id].concat(levels.children.get(selected.node_id)).concat(levels.parents.get(selected.node_id)); return nodes.filter(n => !selected || visible_nodes.includes(n.node_id)).reduce((acc, n) => ({min: {x: Math.min(acc.min.x, n.x - 24), y: Math.min(acc.min.y, n.y - 24)}, max: {x: Math.max(acc.max.x, n.x + node_el_width * 0.5 - 24), y: Math.max(acc.max.y, n.y + 24)}}), {min: {x: selected ? (selected.x - 96) : dimensions.x, y: selected ? (selected.y - 256) : dimensions.y}, max: {x: selected ? (selected.x + 96) : -dimensions.x, y: selected ? (selected.y + 128) : -dimensions.y}})"
                         },
                         {
                             "id": "get_selected_edge",
@@ -7304,6 +7303,11 @@
                             "from": "get_selected_node",
                             "to": "node_editor_props",
                             "as": "selected"
+                        },
+                        {
+                            "from": "dimensions",
+                            "to": "nodes_box",
+                            "as": "dimensions"
                         },
                         {
                             "from": "node_el_width",
