@@ -171,12 +171,16 @@ const resolve = (o) => {
         }
 
         let i = entries.length;
+        let j = 0;
         let same = false;
         let new_obj_entries = [];
         while(i > 0) {
             i--;
-            new_obj_entries[i] = [entries[i][0], resolve(entries[i][1])];
-            same = same && entries[i][1] === new_obj_entries[i][1]
+            if(entries[i][0] !== '_needsresolve') {
+                new_obj_entries[j] = [entries[i][0], resolve(entries[i][1])];
+                same = same && entries[i][1] === new_obj_entries[j][1]
+                j++;
+            }
         }
         return same ? (delete o._needsresolve, o) : Object.fromEntries(new_obj_entries);
     } else {
@@ -475,18 +479,19 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
 }
 
 const test_graph = {
-    "in": "/in",
-    "out": "/out",
+    "in": "main/in",
+    "out": "main/out",
+    "id": "untitled",
     "nodes": [
         {
-            "id": "/out",
+            "id": "main/out",
             "args": ["value"],
             "script": "return value;"
         },
-        { "id": "/in" }
+        { "id": "main/in" }
     ],
     "edges": [
-        { "from": "/in", "to": "/out" }
+        { "from": "main/in", "to": "main/out"}
     ]
 }
 
@@ -1031,19 +1036,19 @@ const contract_node = (data, keep_expanded = false) => {
             })
         }
 
-
         const new_display_graph = {
             nodes: data.display_graph.nodes
                 .filter(n => n.id !== data.node_id)
                 .filter(n => keep_expanded || !inside_node_map.has(n.id))
                 .concat([{
                     id: node_id,
-                    name,
+                    name: name === data.node_id ? data.node_name : name,
                     in: in_node_id?.startsWith(node_id + '/') ? in_node_id.substring(node_id.length + 1) : in_node_id,
                     out: out_node_id.startsWith(node_id + '/') ? out_node_id.substring(node_id.length + 1) : out_node_id,
                     nodes: inside_nodes.map(n => ({
                         ...n,
-                        id: n.id.startsWith(node_id + "/") ? n.id.substring(node_id.length + 1) : n.id
+                        id: n.id.startsWith(node_id + "/") ? n.id.substring(node_id.length + 1) : n.id,
+                        name: !n.name?.startsWith(name + "/") ? n.name : n.name.substring(name.length + 1)
                     })),
                     edges
                 }]),
@@ -1069,6 +1074,7 @@ const flattenNode = (graph, levels = -1) => {
 
     // needs to not prefix base node because then flatten node can't run  next
     const prefix = graph.id ? `${graph.id}/` : '';
+    const prefix_name = graph.id ? `${graph.name}/` : '';
 
     return graph.nodes
         .map(n => Object.assign({}, n, { id: `${prefix}${n.id}` }))
@@ -1092,7 +1098,7 @@ const flattenNode = (graph, levels = -1) => {
                 e).flat().concat(n.flat_edges).filter(e => e !== undefined)
         }), Object.assign({}, graph, {
             flat_nodes: graph.nodes
-                .map(n => Object.assign({}, n, { id: `${prefix}${n.id}` })),
+                .map(n => Object.assign({}, n, { id: `${prefix}${n.id}`, name: `${prefix_name}${n.name ?? n.id}` })),
             flat_edges: graph.edges
                 .map(e => ({ ...e, from: `${prefix}${e.from}`, to: `${prefix}${e.to}` }))
         }));
@@ -1109,21 +1115,27 @@ const middleware = dispatch => (ha_action, ha_payload) => {
 
     return typeof action === 'object' && action.hasOwnProperty('fn') && action.hasOwnProperty('graph')
         ? dispatch((state, payload) => {
-                const result = action.stateonly 
-                    ? lib.no.executeGraphNode({graph: action.graph})(action.fn)(state)
-                    : lib.no.executeGraphNode({graph: action.graph})(action.fn)({state, payload});
-                const effects = (result.effects ?? []).filter(e => e).map(e => 
-                        typeof e === 'object' 
-                        && e.hasOwnProperty('fn') 
-                        && e.hasOwnProperty('graph')
-                        ? lib.no.executeGraphNode({graph: e.graph})(e.fn)
-                        : e);
+            const execute_graph_fn = lib.no.executeGraphNode({graph: action.graph})(action.fn);
+            Object.defineProperty(execute_graph_fn, 'name', {value: action.fn, writable: false});
+            const result = action.stateonly 
+                ? execute_graph_fn(state)
+                : execute_graph_fn({state, payload});
+            const effects = (result.effects ?? []).filter(e => e).map(e => {
+                if(typeof e === 'object' 
+                && e.hasOwnProperty('fn') 
+                && e.hasOwnProperty('graph')) {
+                    const effect_fn = lib.no.executeGraphNode({graph: e.graph})(e.fn);
+                    Object.defineProperty(effect_fn, 'name', {value: e.fn, writable: false})
+                    return effect_fn;
+                }
+                return e
+            });
 
-                console.log(result);
+            console.log(result);
 
-                return result.hasOwnProperty("state")
-                    ? effects.length > 0 ? [result.state, ...effects] : result.state
-                    : [result.action, result.payload];
+            return result.hasOwnProperty("state")
+                ? effects.length > 0 ? [result.state, ...effects] : result.state
+                : [result.action, result.payload];
             }, payload)
         : dispatch(action, payload)
 }
@@ -1140,7 +1152,8 @@ const lib = {
         middleware,
         executeGraph: ({ state, graph, cache_id }) => executeGraph({ cache, state, graph, node_cache, cache_id: cache_id ?? "main" })(graph.out)(state.get(graph.in)),
         executeGraphValue: ({ graph, cache_id }) => executeGraph({ cache, graph, node_cache, cache_id: cache_id ?? "main" })(graph.out),
-        executeGraphNode: ({ graph, cache_id }) => executeGraph({ cache, graph, node_cache, cache_id: cache_id ?? "main" })
+        executeGraphNode: ({ graph, cache_id }) => executeGraph({ cache, graph, node_cache, cache_id: cache_id ?? "main" }),
+        resolve
     },
     scripts: { d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all, listen},
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },

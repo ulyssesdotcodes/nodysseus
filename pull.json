@@ -1,6 +1,4 @@
 {
-    "description": "function composition",
-    "in": "in",
     "out": "out",
     "nodes": [
         {
@@ -1858,7 +1856,7 @@
                         "display_graph",
                         "name"
                     ],
-                    "script": "return display_graph && node_id ? _lib.scripts.contract_node({display_graph, node_id, name}) : []"
+                    "script": "return display_graph && node_id ? _lib.scripts.contract_node({display_graph, node_id, name, node_name}) : []"
                 },
                 {
                     "id": "has_nodes",
@@ -1945,6 +1943,11 @@
                 {
                     "from": "selected_node",
                     "to": "contract"
+                },
+                {
+                    "from": "get_name",
+                    "to": "contract",
+                    "as": "node_name"
                 },
                 {
                     "from": "contractable_id",
@@ -2492,6 +2495,7 @@
                 "sim_update_alpha": 0.4
             }
         },
+        {"id": "dimensions", "ref": "arg", "value": "dimensions"},
         {
             "id": "hyperapp_init_state"
         },
@@ -2501,7 +2505,8 @@
         },
         {
             "id": "get_graph",
-            "ref": "get"
+            "ref": "arg",
+            "value": "graph"
         },
         {
             "id": "get_display_graph",
@@ -2510,12 +2515,12 @@
         },
         {
             "id": "display_graph_out",
-            "value": "out"
+            "ref": "arg",
+            "value": "display_graph.out"
         },
         {
-            "id": "get_display_graph_out",
-            "args": ["target", "path"],
-            "script": "return [_lib.just.get(target, path)]"
+            "id": "init_selected",
+            "ref": "array"
         },
         {
             "id": "hyperapp_view",
@@ -2628,7 +2633,7 @@
                 },
                 {
                     "id": "clear_popover_hyperapp_effect",
-                    "script": "console.log('clear popover'); return [[(dispatch, payload) => { console.log('clear_dispatch'); payload.dispatch(s => undefined); dispatch(s => ({...s, popover_dispatch: undefined}))}, {dispatch: popover_dispatch}]]"
+                    "script": "return [[(dispatch, payload) => { payload.dispatch(s => undefined); dispatch(s => ({...s, popover_dispatch: undefined}))}, {dispatch: popover_dispatch}]]"
                 },
                 {"id": "out", "ref": "hyperapp_action_effect"}
             ],
@@ -3048,7 +3053,7 @@
         },
         {
             "id": "save_effect",
-            "script": "return (dispatch, payload) => { localStorage.setItem('display_graph', JSON.stringify(payload.display_graph)); localStorage.setItem('display_graph_' + Date.now(), JSON.stringify(payload.display_graph));}"
+            "script": "return (dispatch, payload) => { console.log('save'); console.log(payload); localStorage.setItem('display_graph', JSON.stringify(payload.display_graph)); localStorage.setItem('display_graph_' + Date.now(), JSON.stringify(payload.display_graph));}"
         },
         {
             "id": "focus_effect",
@@ -4843,11 +4848,6 @@
             "value": "simulation"
         },
         {
-            "id": "arg_display_graph",
-            "ref": "arg",
-            "value": "display_graph"
-        },
-        {
             "id": "arg_sim_update_alpha",
             "ref": "arg",
             "value": "sim_update_alpha"
@@ -4888,93 +4888,113 @@
             "ref": "wrap_effect_fn"
         },
         {
-            "id": "onclick_graph_fn_in"
+            "id": "stop_propagation_effect",
+            "script": "return (_, payload) => {payload.stopPropagation(); payload.preventDefault();}"
         },
         {
-            "id": "onclick_graph_fn_body",
+            "id": "dispatch_custom_event_effect",
+            "script": "return (_, payload) => document.getElementById(`${payload.html_id}`).dispatchEvent(new CustomEvent(payload.name, {detail: payload.detail}))"
+        },
+        {
+            "id": "create_popover_graph",
+            "out": "out",
             "nodes": [
-                {
-                    "id": "in"
-                },
-                {
-                    "id": "state",
-                    "ref": "arg",
-                    "value": "state"
-                },
-                {
-                    "id": "mouse_event",
-                    "ref": "arg",
-                    "value": "payload"
-                },
-                {
-                    "id": "set_down_xy",
-                    "args": [
-                        "ev"
-                    ],
-                    "script": "return ev.ty === 'down' ? {x: ev.x, y: ev.y} : {}"
-                },
-                {
-                    "id": "create_node",
-                    "args": [
-                        "ev",
-                        "state"
-                    ],
-                    "script": "return ev.ty === 'move' && state.downx !== undefined && state.downy !== undefined && (Math.abs(ev.x - state.downx) > 32 || Math.abs(ev.y - state.downy) > 32)  ? {x: ev.x, y: ev.y, args: [], id: Date.now().toString() } : {}"
-                },
-                {
-                    "id": "out",
-                    "args": [
-                        "data",
-                        "down",
-                        "new_node"
-                    ],
-                    "script": "return {state: {...data, downx: down?.x ?? data.downx, downy: down?.y ?? data.downy}}"
-                }
+                {"id": "in"},
+                {"id": "in_nodes", "ref": "arg", "value": "nodes"},
+                {"id": "name", "ref": "arg", "value": "name"},
+                {"id": "clear_popover", "ref": "clear_popover_graph"},
+                {"id": "out_node", "script": "return {'id': 'out', name, value: [[clear_popover]]}"},
+                {"id": "out_node_id", "value": "out"},
+                {"id": "edges", "script": "return nodes.map(n => ({from: n.id, to: 'out', _needsresolve: true}))"},
+                {"id": "nodes", "ref": "append"},
+                {"id": "out"}
             ],
             "edges": [
-                {
-                    "from": "in",
-                    "to": "out",
-                    "as": "args"
-                },
-                {
-                    "from": "mouse_event",
-                    "to": "set_down_xy",
-                    "as": "ev"
-                },
-                {
-                    "from": "mouse_event",
-                    "to": "create_node",
-                    "as": "ev"
-                },
-                {
-                    "from": "state",
-                    "to": "create_node",
-                    "as": "state"
-                },
-                {
-                    "from": "set_down_xy",
-                    "to": "out",
-                    "as": "down"
-                },
-                {
-                    "from": "create_node",
-                    "to": "out",
-                    "as": "new_node"
-                },
-                {
-                    "from": "state",
-                    "to": "out",
-                    "as": "data"
-                }
+                {"from": "clear_popover", "to": "out_node", "as": "clear_popover"},
+                {"from": "name", "to": "out_node", "as": "name"},
+                {"from": "out_node", "to": "nodes", "as": "item"},
+                {"from": "in_nodes", "to": "nodes", "as": "array"},
+                {"from": "in_nodes", "to": "edges", "as": "nodes"},
+                {"from": "in", "to": "out", "as": "args", "type": "ref"},
+                {"from": "nodes", "to": "out", "as": "nodes"},
+                {"from": "edges", "to": "out", "as": "edges"},
+                {"from": "out_node_id", "to": "out", "as": "out"}
             ]
         },
         {
-            "id": "onclick_graph_fn",
-            "ref": "hyperapp_action"
+            "id": "onclick_graph_action",
+            "nodes": [
+                {"id": "in"},
+                {"id": "payload", "ref": "arg", "value": "payload"},
+                {"id": "state", "ref": "arg", "value": "state"},
+                {"id": "name", "ref": "arg", "value": "state.display_graph.id"},
+                {"id": "display_graph", "ref": "arg", "value": "state.display_graph"},
+                {"id": "readonly", "ref": "arg", "value": "state.readonly"},
+                {"id": "html_id", "ref": "arg", "value": "state.html_id"},
+                {"id": "event_name", "value": "graphclick"},
+                {"id": "clear_popover", "ref": "clear_popover_graph"},
+                {"id": "clear_popover_effect", "ref": "array"},
+                {"id": "save_effector", "ref": "save_effect"},
+                {"id": "save_payload"},
+                {"id": "log_save_payload", "ref": "log"},
+                {"id": "save_effect", "ref": "array"},
+                {"id": "save_node_effects", "ref": "array"},
+                {"id": "save_name", "value": "save"},
+                {"id": "save_id", "value": "save"},
+                {"id": "save_node"},
+                {"id": "popover_graph_actions", "ref": "array"},
+                {"id": "popover_graph", "ref": "create_popover_graph"},
+                {"id": "show_popover_effector", "ref": "show_popover_graph"},
+                {"id": "show_popover_effect", "ref": "array"},
+                {"id": "show_popover_payload"},
+                {"id": "stop_propagation_effector", "ref": "stop_propagation_effect"},
+                {"id": "stop_propagation_effect", "ref": "array"},
+                {"id": "dispatch_on_graph_click_effector", "ref": "dispatch_custom_event_effect"},
+                {"id": "dispatch_on_graph_click_payload"},
+                {"id": "dispatch_on_graph_click_effect", "ref": "array"},
+                {"id": "edit_effects", "ref": "array"},
+                {"id": "readonly_effects", "ref": "array"},
+                {"id": "effects", "ref": "if"},
+                {"id": "result"},
+                {"id": "out", "ref": "hyperapp_action"}
+            ],
+            "edges": [
+                {"from": "in", "to": "out", "as": "args"},
+                {"from": "payload", "to": "stop_propagation_effect", "as": "a1"},
+                {"from": "display_graph", "to": "save_payload", "as": "display_graph"},
+                {"from": "clear_popover", "to": "clear_popover_effect", "as": "a0"},
+                {"from": "clear_popover_effect", "to": "save_node_effects", "as": "a1"},
+                {"from": "save_effector", "to": "save_effect", "as": "a0"},
+                {"from": "save_payload", "to": "save_effect", "as": "a1"},
+                {"from": "save_effect", "to": "save_node_effects", "as": "a0"},
+                {"from": "save_node_effects", "to": "save_node", "as": "value"},
+                {"from": "save_name", "to": "save_node", "as": "name"},
+                {"from": "save_id", "to": "save_node", "as": "id"},
+                {"from": "save_node", "to": "popover_graph_actions", "as": "a"},
+                {"from": "name", "to": "popover_graph", "as": "name"},
+                {"from": "popover_graph_actions", "to": "popover_graph", "as": "nodes"},
+                {"from": "popover_graph", "to": "show_popover_payload", "as": "popover_graph"},
+                {"from": "show_popover_effector", "to": "show_popover_effect", "as": "a0"},
+                {"from": "show_popover_payload", "to": "show_popover_effect", "as": "a1"},
+                {"from": "show_popover_effect", "to": "edit_effects", "as": "a0"},
+                {"from": "stop_propagation_effector", "to": "stop_propagation_effect", "as": "a0"},
+                {"from": "payload", "to": "stop_propagation_effect", "as": "a1"},
+                {"from": "stop_propagation_effect", "to": "edit_effects", "as": "a1"},
+                {"from": "html_id", "to": "dispatch_on_graph_click_payload", "as": "html_id"},
+                {"from": "event_name", "to": "dispatch_on_graph_click_payload", "as": "name"},
+                {"from": "dispatch_on_graph_click_effector", "to": "dispatch_on_graph_click_effect", "as": "a0"},
+                {"from": "dispatch_on_graph_click_payload", "to": "dispatch_on_graph_click_effect", "as": "a1"},
+                {"from": "dispatch_on_graph_click_effect", "to": "readonly_effects", "as": "a0"},
+                {"from": "edit_effects", "to": "effects", "as": "false"},
+                {"from": "readonly_effects", "to": "effects", "as": "true"},
+                {"from": "readonly", "to": "effects", "as": "pred"},
+                {"from": "effects", "to": "result", "as": "effects"},
+                {"from": "state", "to": "result", "as": "state"},
+                {"from": "result", "to": "out", "as": "fn", "type": "ref"}
+            ]
         },
         {
-            "id": "onclick_node_fn_body",
+            "id": "onclick_node",
             "nodes": [
                 {
                     "id": "in"
@@ -4992,7 +5012,7 @@
                 {
                     "id": "event",
                     "ref": "arg",
-                    "value": "payload"
+                    "value": "payload.event"
                 },
                 {
                     "id": "node_id",
@@ -5027,25 +5047,12 @@
                     "script": "return Object.assign({}, nodes.find(n => n.node_id === node_id), display_graph.nodes.find(n => n.id === node_id))"
                 },
                 {
-                    "id": "selected_inputs",
-                    "args": [
-                        "event",
-                        "selected",
-                        "node"
-                    ],
-                    "script": "return event.ty !== 'down' ? [] : node.node_id === selected[0] ? 'node_id' : 'node_id'"
-                },
-                {
-                    "id": "selected",
-                    "ref": "switch"
-                },
-                {
                     "id": "set_selected",
                     "args": [
                         "selected",
                         "state"
                     ],
-                    "script": "if(selected) { document.querySelector(`#${html_id}`).dispatchEvent(new CustomEvent(`selectnode`, {detail: {node: selected[0]}}))} return {...state, selected: selected ? selected : state.selected}"
+                    "script": "document.querySelector(`#${html_id}`).dispatchEvent(new CustomEvent(`selectnode`, {detail: {node: node_id}})); return {...state, selected: [node_id]}"
                 },
                 {
                     "id": "display_graph_inputs",
@@ -5067,24 +5074,6 @@
                         "state"
                     ],
                     "script": "state.display_graph = display_graph ?? state.display_graph; return state"
-                },
-                {
-                    "id": "expand_contract",
-                    "ref": "expand_contract"
-                },
-                {
-                    "id": "expand_contract_selected",
-                    "args": [
-                        "selected"
-                    ],
-                    "script": "return selected"
-                },
-                {
-                    "id": "expand_contract_display_graph",
-                    "args": [
-                        "display_graph"
-                    ],
-                    "script": "return display_graph"
                 },
                 {
                     "id": "false",
@@ -5109,7 +5098,7 @@
                 {"id": "update_node", "ref": "update_node_action"},
                 {
                     "id": "popover_graph_value",
-                    "script": "console.log(selected); return { 'out': 'out', 'nodes': [ {'id': 'create_input', 'name': 'create input', value: [[add_node, {id: randid}], [add_edge, {from: randid, to: selected.node_id }], [clear_popover]]}, {'id': 'delete', 'name': 'delete', value: [[delete_node, {id: selected.node_id}], [clear_popover]]},{id: 'expand_contract', name: 'expand / contract', value: [[expand_contract, {id: selected.node_id}], [clear_popover]]}, {'id': 'out', name: selected.node_id, value: [[clear_popover]]}, {'id': 'change_reference', name: 'change reference', value: [[open_reference_popover, {id: selected.node_id}]]}, {'id': 'change_value', name: 'change value', value: [[show_edit_text, {id: selected.node_id, property:'value', oneditconfirm: update_node, value: selected.value}], [clear_popover]]}, {'id': 'change_name', name: 'change name', value: [[show_edit_text, {id: selected.node_id, property:'name', oneditconfirm: update_node, value: selected.name}], [clear_popover]]} ], 'edges': [ {'from': 'create_input', 'to': 'out'}, {'from': 'delete', 'to': 'out'}, {'from': 'expand_contract', 'to': 'out'}, {from: 'change_reference', to: 'out'}, {'from': 'change_value', to: 'out'}, {'from': 'change_name', to: 'out'} ] }"
+                    "script": "return { 'out': 'out', 'nodes': [ {'id': 'create_input', 'name': 'create input', value: [[add_node, {id: randid}], [add_edge, {from: randid, to: selected.node_id }], [clear_popover]]}, {'id': 'delete', 'name': 'delete', value: [[delete_node, {id: selected.node_id}], [clear_popover]]},{id: 'expand_contract', name: 'expand / contract', value: [[expand_contract, {id: selected.node_id}], [clear_popover]]}, {'id': 'out', name: selected.node_id, value: [[clear_popover]]}, {'id': 'change_reference', name: 'change reference', value: [[open_reference_popover, {id: selected.node_id}]]}, {'id': 'change_value', name: 'change value', value: [[show_edit_text, {id: selected.node_id, property:'value', oneditconfirm: update_node, value: selected.value}], [clear_popover]]}, {'id': 'change_name', name: 'change name', value: [[show_edit_text, {id: selected.node_id, property:'name', oneditconfirm: update_node, value: selected.name}], [clear_popover]]} ], 'edges': [ {'from': 'create_input', 'to': 'out'}, {'from': 'delete', 'to': 'out'}, {'from': 'expand_contract', 'to': 'out'}, {from: 'change_reference', to: 'out'}, {'from': 'change_value', to: 'out'}, {'from': 'change_name', to: 'out'} ] }"
                 },
                 {
                     "id": "show_popover_payload"
@@ -5120,6 +5109,19 @@
                 },
                 {
                     "id": "show_popover_effect",
+                    "ref": "array"
+                },
+                {
+                    "id": "stop_propagation_effector",
+                    "ref": "stop_propagation_effect"
+                },
+                {
+                    "id": "payload",
+                    "ref": "arg",
+                    "value": "payload"
+                },
+                {
+                    "id": "stop_propagation_effect",
                     "ref": "array"
                 },
                 {
@@ -5179,11 +5181,6 @@
                     "as": "event"
                 },
                 {
-                    "from": "selected_inputs",
-                    "to": "selected",
-                    "as": "input"
-                },
-                {
                     "from": "node_id",
                     "to": "wrapped_node_id",
                     "as": "value"
@@ -5199,9 +5196,9 @@
                     "as": "state"
                 },
                 {
-                    "from": "selected",
+                    "from": "node_id",
                     "to": "set_selected",
-                    "as": "selected"
+                    "as": "node_id"
                 },
                 {
                     "from": "html_id",
@@ -5274,6 +5271,16 @@
                     "to": "show_popover_effect",
                     "as": "arg0"
                 },
+                {
+                    "from": "event",
+                    "to": "stop_propagation_effect",
+                    "as": "a1"
+                },
+                {
+                    "from": "stop_propagation_effector",
+                    "to": "stop_propagation_effect",
+                    "as": "a0"
+                },
                 {"from": "randid", "to": "popover_graph_value", "as": "randid"},
                 {
                     "from": "get_selected_node",
@@ -5331,7 +5338,12 @@
                 {
                     "from": "if_show_popover",
                     "to": "effects",
-                    "as": "arg0"
+                    "as": "a1"
+                },
+                {
+                    "from": "stop_propagation_effect",
+                    "to": "effects",
+                    "as": "a0"
                 },
                 {
                     "from": "effects",
@@ -5352,8 +5364,16 @@
             ]
         },
         {
-            "id": "onclick_node_fn",
-            "ref": "hyperapp_action"
+            "id": "onclick_node_action",
+            "nodes": [
+                {"id": "in"},
+                {"id": "onclick_node", "ref": "onclick_node"},
+                {"id": "out", "ref": "hyperapp_action"}
+            ],
+            "edges": [
+                {"from": "in", "to": "out", "type": "ref", "as": "args"},
+                {"from": "onclick_node", "to": "out", "as": "fn", "type": "ref"}
+            ]
         },
         {
             "id": "onclick_edge",
@@ -5362,6 +5382,7 @@
                 {"id": "in"},
                 {"id": "edge", "ref": "arg", "value": "payload.edge"},
                 {"id": "state", "ref": "arg", "value": "state"},
+                {"id": "event", "ref": "arg", "value": "payload.event"},
                 {"id": "clear_popover", "ref": "clear_popover_graph"},
                 {"id": "clear_popover_type", "ref": "clear_popover_graph"},
                 {"id": "update_edge", "ref": "update_edge"},
@@ -5372,6 +5393,8 @@
                 {"id": "show_popover_graph_payload"},
                 {"id": "show_popover_graph_effector", "ref": "show_popover_graph"},
                 {"id": "show_popover_graph", "ref": "array"},
+                {"id": "stop_propagation_effector", "ref": "stop_propagation_effect"},
+                {"id": "stop_propagation", "ref": "array"},
                 {"id": "effects", "ref": "array"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action"}
@@ -5392,6 +5415,10 @@
                 {"from": "show_popover_graph_effector", "to": "show_popover_graph", "as": "a0"},
                 {"from": "show_popover_graph_payload", "to": "show_popover_graph", "as": "a1"},
                 {"from": "show_popover_graph", "to": "effects", "as": "a0"},
+                {"from": "event", "to": "stop_propagation_payalod", "as": "event"},
+                {"from": "stop_propagation_effector", "to": "stop_propagation", "as": "a0"},
+                {"from": "event", "to": "stop_propagation", "as": "a1"},
+                {"from": "stop_propagation", "to": "effects", "as": "a1"},
                 {"from": "state", "to": "result", "as": "state"},
                 {"from": "effects", "to": "result", "as": "effects"},
                 {"from": "result", "to": "out", "as": "fn", "type": "ref"}
@@ -5416,7 +5443,7 @@
         },
         {
             "id": "render_popover_graph_effect",
-            "script": "return (dispatch, payload) => requestAnimationFrame(() => {console.log(payload); if(payload.popover_dispatch) { payload.popover_dispatch(s => [{...s, display_graph: payload.display_graph, selected: [payload.display_graph.out]}, [s.update_sim_effect, {...s, display_graph: payload.display_graph}]]) } else { console.log('else render'); const popover_dispatch = _lib.no.executeGraphNode({graph: payload.graph})('hyperapp_app')({graph: payload.graph, display_graph: payload.display_graph, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions, readonly: true, sim_update_alpha: 0.3}).dispatch; console.log('render popover'); console.log(popover_dispatch); dispatch(s => ({...s, popover_dispatch}));}})"
+            "script": "return (dispatch, payload) => requestAnimationFrame(() => {payload = _lib.no.resolve(payload); if(payload.popover_dispatch) { payload.popover_dispatch(s => [{...s, display_graph: payload.display_graph, selected: [payload.display_graph.out]}, [s.update_sim_effect, {...s, display_graph: payload.display_graph}]]) } else { const popover_dispatch = _lib.no.executeGraphNode({graph: payload.graph})('hyperapp_app')({graph: payload.graph, display_graph: payload.display_graph, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions, readonly: true, sim_update_alpha: 0.3}).dispatch; dispatch(s => ({...s, popover_dispatch}));}})"
         },
         {
             "id": "handle_popover_event",
@@ -5429,7 +5456,7 @@
                 {"id": "popover_graph", "ref": "arg", "value": "state.popover_graph"},
                 {"id": "payload", "ref": "arg", "value": "payload"},
                 {"id": "clear_popover_effect", "ref": "clear_popover_graph"},
-                {"id": "effects", "script": "console.log('handle'); console.log(popover_graph.nodes.find(n => n.id === payload.detail.node).value); return popover_graph.nodes.find(n => n.id === payload.detail.node).value"},
+                {"id": "effects", "script": "return popover_graph.nodes.find(n => n.id === payload.detail.node).value"},
                 {"id": "new_state"},
                 {"id": "out", "ref": "hyperapp_action"}
             ],
@@ -5848,8 +5875,12 @@
                             "ref": "handle_popover_event"
                         },
                         {
+                            "id": "clear_popover",
+                            "ref": "clear_popover_graph"
+                        },
+                        {
                             "id": "props",
-                            "script": "return {id: `${html_id}-popover`, onselectnode: handle_popover_event}"
+                            "script": "return {id: `${html_id}-popover`, onselectnode: handle_popover_event, ongraphclick: (s, p) => [s, [clear_popover]]}"
                         },
                         {
                             "id": "dom_type",
@@ -5860,6 +5891,7 @@
                     "edges": [
                         {"from": "update_sim", "to": "props", "as": "update_sim"},
                         {"from": "handle_popover_event", "to": "props", "as": "handle_popover_event"},
+                        {"from": "clear_popover", "to": "props", "as": "clear_popover"},
                         {"from": "props", "to": "out", "as": "props"},
                         {"from": "html_id", "to": "props", "as": "html_id"},
                         {"from": "dom_type", "to": "out", "as": "dom_type"}
@@ -6220,13 +6252,6 @@
                             "script": "return selected_edge"
                         },
                         {
-                            "id": "get_onclick_node_fn",
-                            "args": [
-                                "onclick_node_fn"
-                            ],
-                            "script": "return onclick_node_fn"
-                        },
-                        {
                             "id": "get_levels",
                             "ref": "arg",
                             "value": "levels"
@@ -6240,9 +6265,10 @@
                             "id": "center",
                             "script": "const nodes_box_center = {x: (nodes_box.max.x + nodes_box.min.x) * 0.5, y: (nodes_box.max.y + nodes_box.min.y) * 0.5}; return !selected ? nodes_box_center : {x: (selected.x + nodes_box_center.x * 3) * 0.25, y: (selected.y + nodes_box_center.y * 3) * 0.25}"
                         },
+                        {"id": "onclick_graph", "ref": "onclick_graph_action"},
                         {
                             "id": "node_editor_props",
-                            "script": "return {id: `${html_id}-editor`, width: dimensions.x, height: dimensions.y, viewBox: `${Math.floor(center.x - Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))) * 0.5 - node_el_width * 0.5)}  ${Math.floor(center.y - Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y))) * 0.5 - node_el_width * 0.5)} ${Math.floor(Math.max(dimensions.x * 0.5, Math.min(dimensions.x, nodes_box.max.x - nodes_box.min.x)) + node_el_width)} ${Math.floor(Math.max(dimensions.y * 0.5, Math.min(dimensions.y, nodes_box.max.y - nodes_box.min.y)) + node_el_width)}` /*, onmousedown: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'down'}], onmouseup: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'up'}], onmousemove: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'move'}]*/}"
+                            "script": "return {id: `${html_id}-editor`, width: dimensions.x, height: dimensions.y, viewBox: `${Math.floor(center.x - Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))) * 0.5 - node_el_width * 0.5)}  ${Math.floor(center.y - Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y))) * 0.5 - node_el_width * 0.5)} ${Math.floor(Math.max(dimensions.x * 0.5, Math.min(dimensions.x, nodes_box.max.x - nodes_box.min.x)) + node_el_width)} ${Math.floor(Math.max(dimensions.y * 0.5, Math.min(dimensions.y, nodes_box.max.y - nodes_box.min.y)) + node_el_width)}`, onclick: onclick_graph}"
                         },
                         {
                             "id": "node_editor_dom_type",
@@ -6259,7 +6285,7 @@
                         },
                         {
                             "id": "node_layout",
-                            "args": ["node_inputs", "node_layout_map", "nodes", "graph", "onclick_node_fn", "selected", "selected_edge"],
+                            "args": ["node_inputs", "node_layout_map", "nodes", "graph", "selected", "selected_edge"],
                             "script": "return nodes.map(n => _lib.no.executeGraphValue({state: new Map(), graph: {...graph, in: '_' + n.node_id, out: node_layout_map, html_id: html_id}, cache_id: '_' + n.node_id})(Object.assign({node: Object.assign({}, n, display_graph.nodes.find(dgn => dgn.id === n.node_id)), selected_distance: levels.distance_from_selected.get(n.node_child_id), level: levels.level_by_node.get(n.node_id)}, _node_inputs)))"
                         },
                         {
@@ -6312,14 +6338,14 @@
                                     "id": "parent_dom_type",
                                     "value": "svg"
                                 },
+                                {"id": "onclick_node", "ref": "onclick_node_action"},
                                 {
                                     "id": "parent_attrs",
                                     "args": [
                                         "node",
                                         "meta"
                                     ],
-                                    "script": "const mouseevent = (_, payload) => [meta.onclick_node_fn, {x: payload.x, y: payload.y, node_id: node.node_id, selected: [], ty: 'down'}]; return ({onmousedown: mouseevent, width: 256, height: 64, id: html_id + '-' + node.node_child_id, class: `node ${meta.selected[0] === node.node_id ? 'selected': ''}`, opacity: meta.selected_edge?.from === node.node_id ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - (selected_distance * selected_distance) / 6) : 0.1})"
-
+                                    "script": "return ({onclick: (_, payload) => [onclick, {event: payload, node_id: node.node_id}], width: 256, height: 64, id: html_id + '-' + node.node_child_id, class: `node ${meta.selected[0] === node.node_id ? 'selected': ''}`, opacity: meta.selected_edge?.from === node.node_id ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - (selected_distance * selected_distance) / 6) : 0.1})"
                                 },
                                 {
                                     "id": "children",
@@ -6755,6 +6781,7 @@
                                     "to": "children",
                                     "as": "selected_distance"
                                 },
+                                {"from": "onclick_node", "to": "parent_attrs", "as": "onclick"},
                                 {
                                     "from": "parent_attrs",
                                     "to": "parent",
@@ -6836,7 +6863,7 @@
                                         "sibling_index_normalized",
                                         "selected_edge"
                                     ],
-                                    "script": "return ({id: `edge-info-${source.node_child_id}`, z: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to ? 100 : 200, opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1, class: {'edge-info': true, selected: selected_edge && (source.node_id === selected_edge.from + '_' + selected_edge.to || (source.node_id === selected_edge.from && target.node_id === selected_edge.to))}, onclick: (state, action) => [onclick_edge, {edge: {from: source.node_id, to: target.node_id}}] })"
+                                    "script": "return ({id: `edge-info-${source.node_child_id}`, z: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to ? 100 : 200, opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1, class: {'edge-info': true, selected: selected_edge && (source.node_id === selected_edge.from + '_' + selected_edge.to || (source.node_id === selected_edge.from && target.node_id === selected_edge.to))}, onclick: (state, payload) => [onclick_edge, {event: payload, edge: {from: source.node_id, to: target.node_id}}] })"
                                 },
                                 {
                                     "id": "edge_info_line_position",
@@ -7285,10 +7312,6 @@
                         },
                         {
                             "from": "in",
-                            "to": "get_onclick_node_fn"
-                        },
-                        {
-                            "from": "in",
                             "to": "get_levels"
                         },
                         {
@@ -7354,11 +7377,6 @@
                             "from": "get_graph",
                             "to": "link_layout",
                             "as": "graph"
-                        },
-                        {
-                            "from": "get_onclick_node_fn",
-                            "to": "node_layout",
-                            "as": "onclick_node_fn"
                         },
                         {
                             "from": "get_selected",
@@ -7488,6 +7506,11 @@
                             "from": "nodes_box",
                             "to": "node_editor_props",
                             "as": "nodes_box"
+                        },
+                        {
+                            "from": "onclick_graph",
+                            "to": "node_editor_props",
+                            "as": "onclick_graph"
                         },
                         {
                             "from": "node_editor_props",
@@ -7806,26 +7829,6 @@
     ],
     "edges": [
         {
-            "from": "in",
-            "to": "get_graph",
-            "as": "target"
-        },
-        {
-            "from": "get_display_graph",
-            "to": "get_display_graph_out",
-            "as": "target"
-        },
-        {
-            "from": "graph",
-            "to": "get_graph",
-            "as": "path"
-        },
-        {
-            "from": "display_graph_out",
-            "to": "get_display_graph_out",
-            "as": "path"
-        },
-        {
             "from": "editor",
             "to": "hyperapp_view",
             "type": "ref",
@@ -7867,7 +7870,7 @@
             "as": "sim_update_alpha"
         },
         {
-            "from": "arg_display_graph",
+            "from": "get_display_graph",
             "to": "update_sim",
             "as": "display_graph"
         },
@@ -7877,7 +7880,22 @@
             "as": "readonly"
         },
         {
-            "from": "get_display_graph_out",
+            "from": "dimensions",
+            "to": "hyperapp_init_state",
+            "as": "dimensions"
+        },
+        {
+            "from": "html_id",
+            "to": "hyperapp_init_state",
+            "as": "html_id"
+        },
+        {
+            "from": "display_graph_out",
+            "to": "init_selected",
+            "as": "a0"
+        },
+        {
+            "from": "init_selected",
             "to": "hyperapp_init_state",
             "as": "selected"
         },
@@ -7885,46 +7903,6 @@
             "from": "update_sim_effect",
             "to": "hyperapp_init_state",
             "as": "update_sim_effect"
-        },
-        {
-            "from": "hyperapp_view_in",
-            "to": "onclick_node_fn"
-        },
-        {
-            "from": "onclick_node_fn",
-            "to": "editor",
-            "as": "onclick_node_fn"
-        },
-        {
-            "from": "onclick_node_fn_body",
-            "to": "onclick_node_fn",
-            "as": "fn",
-            "type": "ref"
-        },
-        {
-            "from": "hyperapp_view_in",
-            "to": "onclick_graph_fn"
-        },
-        {
-            "from": "onclick_graph_fn",
-            "to": "editor",
-            "as": "onclick_graph_fn"
-        },
-        {
-            "from": "onclick_graph_fn_body",
-            "to": "onclick_graph_fn",
-            "as": "fn",
-            "type": "ref"
-        },
-        {
-            "from": "onclick_graph_fn_in",
-            "to": "onclick_graph_fn_body"
-        },
-        {
-            "from": "onclick_graph_fn_in",
-            "to": "onclick_graph_fn",
-            "as": "in_node",
-            "type": "ref"
         },
         {
             "from": "get_graph",
