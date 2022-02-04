@@ -1360,6 +1360,11 @@
                     "value": "state.selected"
                 },
                 {
+                    "id": "readonly",
+                    "ref": "arg",
+                    "value": "state.readonly"
+                },
+                {
                     "id": "effects",
                     "ref": "arg",
                     "value": "effects"
@@ -1446,7 +1451,7 @@
                         "display_graph",
                         "selected"
                     ],
-                    "script": "try { const result = _lib.no.executeGraph({state: new Map([[display_graph.in, {...state, payload}]]), graph: {...display_graph, nodes: display_graph.nodes.map(n => ({...n})), edges: display_graph.edges.map(e => ({...e})), out: selected[0]}}); return {result, error: undefined}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
+                    "script": "try { const result = _lib.no.executeGraph({state: new Map([[display_graph.in, {...state, payload}]]), graph: {...display_graph, nodes: display_graph.nodes.map(n => ({...n})), edges: display_graph.edges.map(e => ({...e}))}}); return {result, error: undefined}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
                 },
                 {
                     "id": "result"
@@ -1463,7 +1468,7 @@
                         "payload",
                         "update_sim_effect"
                     ],
-                    "script": "return {state: {...state, result: show_result && result.run.result, error: show_result && result.run.error}, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], ...(effects ?? [])]}"
+                    "script": "return {state: {...state, result: false && readonly && result.run.result?.state, error: show_result && result.run.error}, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], ...(effects ?? [])]}"
                 }
             ],
             "edges": [
@@ -1499,7 +1504,7 @@
                     "as": "graph" 
                 },
                 {
-                    "from": "graph",
+                    "from": "display_graph",
                     "to": "run",
                     "as": "display_graph" 
                 },
@@ -1551,6 +1556,11 @@
                     "from": "result",
                     "to": "out",
                     "as": "result"
+                },
+                {
+                    "from": "readonly",
+                    "to": "out",
+                    "as": "readonly"
                 },
                 {
                     "from": "update",
@@ -5098,7 +5108,7 @@
                 {"id": "update_node", "ref": "update_node_action"},
                 {
                     "id": "popover_graph_value",
-                    "script": "return { 'out': 'out', 'nodes': [ {'id': 'create_input', 'name': 'create input', value: [[add_node, {id: randid}], [add_edge, {from: randid, to: selected.node_id }], [clear_popover]]}, {'id': 'delete', 'name': 'delete', value: [[delete_node, {id: selected.node_id}], [clear_popover]]},{id: 'expand_contract', name: 'expand / contract', value: [[expand_contract, {id: selected.node_id}], [clear_popover]]}, {'id': 'out', name: selected.node_id, value: [[clear_popover]]}, {'id': 'change_reference', name: 'change reference', value: [[open_reference_popover, {id: selected.node_id}]]}, {'id': 'change_value', name: 'change value', value: [[show_edit_text, {id: selected.node_id, property:'value', oneditconfirm: update_node, value: selected.value}], [clear_popover]]}, {'id': 'change_name', name: 'change name', value: [[show_edit_text, {id: selected.node_id, property:'name', oneditconfirm: update_node, value: selected.name}], [clear_popover]]} ], 'edges': [ {'from': 'create_input', 'to': 'out'}, {'from': 'delete', 'to': 'out'}, {'from': 'expand_contract', 'to': 'out'}, {from: 'change_reference', to: 'out'}, {'from': 'change_value', to: 'out'}, {'from': 'change_name', to: 'out'} ] }"
+                    "script": "return { 'out': 'out', 'nodes': [ {'id': 'create_input', 'name': 'create input', value: [[add_node, {id: randid}], [add_edge, {from: randid, to: selected.node_id }], [clear_popover]]}, {'id': 'delete', 'name': 'delete', value: [[delete_node, {id: selected.node_id}], [clear_popover]]},{id: 'expand_contract', name: 'expand / contract', value: [[expand_contract, {id: selected.node_id}], [clear_popover]]}, {'id': 'out', name: selected.node_id, value: [[clear_popover]]}, {'id': 'change_reference', name: 'change reference', value: [[open_reference_popover, {id: selected.node_id}]]}, {'id': 'change_value', name: 'change value', value: [[show_edit_text, {id: selected.node_id, property:'value', oneditconfirm: update_node, value: selected.value}], [clear_popover]]}, {'id': 'change_name', name: 'change name', value: [[show_edit_text, {id: selected.node_id, property:'name', oneditconfirm: update_node, value: selected.name}], [clear_popover]]}, {'id': 'change_script', name: 'change script', value: [[show_edit_text, {id: selected.node_id, property:'script', oneditconfirm: update_node, value: selected.script}], [clear_popover]]} ], 'edges': [ {'from': 'create_input', 'to': 'out'}, {'from': 'delete', 'to': 'out'}, {'from': 'expand_contract', 'to': 'out'}, {from: 'change_reference', to: 'out'}, {'from': 'change_value', to: 'out'}, {'from': 'change_name', to: 'out'}, {'from': 'change_script', to: 'out'} ] }"
                 },
                 {
                     "id": "show_popover_payload"
