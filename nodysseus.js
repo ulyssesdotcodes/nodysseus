@@ -1113,6 +1113,16 @@ const flattenNode = (graph, levels = -1) => {
         }));
 }
 
+const objToGraph = (obj, path) => Object.entries(obj)
+    .map(e => [e[0], typeof e[1] === 'object' && !!e[1] && !Array.isArray(e[1])
+                ? objToGraph(e[1], path ? `${path}.${e[0]}` : e[0])
+                : {value: e[1]}]
+    ).reduce((acc, n) => ({
+        nodes: acc.nodes.concat(n[1].nodes ?? []).concat([Object.assign({id: path ? `${path}.${n[0]}` : n[0], name: n[0]}, n[1].hasOwnProperty('value') ? {value: n[1].value} : {})]),
+        edges: acc.edges.concat(n[1].edges ?? []).concat(path ? [{to: path, from: `${path}.${n[0]}`}] : [])
+    })
+    , {nodes: [], edges: []});
+
 const middleware = dispatch => (ha_action, ha_payload) => {
     const is_action_payload = Array.isArray(ha_action) 
         && ha_action.length === 2
@@ -1140,8 +1150,6 @@ const middleware = dispatch => (ha_action, ha_payload) => {
                 return e
             });
 
-            console.log(result);
-
             return result.hasOwnProperty("state")
                 ? effects.length > 0 ? [result.state, ...effects] : result.state
                 : [result.action, result.payload];
@@ -1162,7 +1170,8 @@ const lib = {
         executeGraph: ({ state, graph, cache_id }) => executeGraph({ cache, state, graph, node_cache, cache_id: cache_id ?? "main" })(graph.out)(state.get(graph.in)),
         executeGraphValue: ({ graph, cache_id }) => executeGraph({ cache, graph, node_cache, cache_id: cache_id ?? "main" })(graph.out),
         executeGraphNode: ({ graph, cache_id }) => executeGraph({ cache, graph, node_cache, cache_id: cache_id ?? "main" }),
-        resolve
+        resolve,
+        objToGraph
     },
     scripts: { d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all, listen},
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },

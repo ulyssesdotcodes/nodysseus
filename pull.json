@@ -1337,6 +1337,11 @@
                     "value": "state.show_result"
                 },
                 {
+                    "id": "state_result",
+                    "ref": "arg",
+                    "value": "state.result"
+                },
+                {
                     "id": "update_arg",
                     "ref": "arg",
                     "value": "state.update"
@@ -1448,7 +1453,7 @@
                         "display_graph",
                         "selected"
                     ],
-                    "script": "try { const result = _lib.no.executeGraph({state: new Map([[display_graph.in, {...state, payload}]]), graph: {...display_graph, nodes: display_graph.nodes.map(n => ({...n})), edges: display_graph.edges.map(e => ({...e}))}}); return {result, error: undefined}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
+                    "script": "try { const result = _lib.no.executeGraphValue({graph: {...display_graph, nodes: display_graph.nodes.map(n => ({...n})), edges: display_graph.edges.map(e => ({...e}))}})({state: prev_result, payload}); return {result, error: undefined}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
                 },
                 {
                     "id": "result"
@@ -1465,7 +1470,7 @@
                         "payload",
                         "update_sim_effect"
                     ],
-                    "script": "return {state: {...state, result: false && readonly && result.run.result?.state, error: show_result && result.run.error}, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], ...(effects ?? [])]}"
+                    "script": "return {state: {...state, result: !readonly && result.run.result?.state, error: !readonly && result.run.error}, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], ...(effects ?? [])]}"
                 }
             ],
             "edges": [
@@ -1535,9 +1540,9 @@
                     "as": "graph_sim"
                 },
                 {
-                    "from": "new_state",
+                    "from": "state_result",
                     "to": "run",
-                    "as": "state"
+                    "as": "prev_result"
                 },
                 {
                     "from": "run",
@@ -3069,7 +3074,7 @@
         },
         {
             "id": "save_effect",
-            "script": "return (dispatch, payload) => { console.log('save'); console.log(payload); localStorage.setItem('display_graph', JSON.stringify(payload.display_graph)); localStorage.setItem('display_graph_' + Date.now(), JSON.stringify(payload.display_graph));}"
+            "script": "return (dispatch, payload) => { localStorage.setItem('display_graph', JSON.stringify(payload.display_graph)); localStorage.setItem('display_graph_' + Date.now(), JSON.stringify(payload.display_graph));}"
         },
         {
             "id": "focus_effect",
@@ -3086,24 +3091,37 @@
                 {"id": "in"},
                 {"id": "state", "ref": "arg", "value": "state"},
                 {"id": "nodes", "ref": "arg", "value": "state.display_graph.nodes"},
+                {"id": "edges", "ref": "arg", "value": "state.display_graph.edges"},
                 {"id": "display_graph_nodes_path", "value": "display_graph.nodes"},
+                {"id": "display_graph_edges_path", "value": "display_graph.edges"},
                 {"id": "node_id", "ref": "arg", "value": "payload.id"},
                 {"id": "node_properties", "ref": "arg", "value": "payload.properties"},
                 {"id": "replace_node", "script": "return nodes.map(n => n.id === node_id ? Object.assign({}, n, update) : n)"},
+                {"id": "arg_value", "script": "const node = nodes.find(n => n.id === node_id); return node.ref === 'arg' ? node.value : udnefined"},
+                {"id": "replace_edges", "script": "return arg_value ? edges.map(e => e.from === node_id ? {...e, as: arg_value} : e) : edges"},
                 {"id": "display_graph_nodes_path", "value": "display_graph.nodes"},
                 {"id": "set_display_graph_nodes", "ref": "set"},
+                {"id": "set_display_graph_edges", "ref": "set"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action"}
             ],
             "edges": [
                 {"from": "in", "to": "out", "as": "args"},
                 {"from": "nodes", "to": "replace_node", "as": "nodes"},
+                {"from": "edges", "to": "replace_edges", "as": "edges"},
                 {"from": "node_id", "to": "replace_node", "as": "node_id"},
                 {"from": "node_properties", "to": "replace_node", "as": "update"},
                 {"from": "state", "to": "set_display_graph_nodes", "as": "target"},
                 {"from": "display_graph_nodes_path", "to": "set_display_graph_nodes", "as": "path"},
                 {"from": "replace_node", "to": "set_display_graph_nodes", "as": "value"},
-                {"from": "set_display_graph_nodes", "to": "result", "as": "state"},
+                {"from": "set_display_graph_nodes", "to": "set_display_graph_edges", "as": "target"},
+                {"from": "replace_node", "to": "arg_value", "as": "nodes"},
+                {"from": "node_id", "to": "arg_value", "as": "node_id"},
+                {"from": "arg_value", "to": "replace_edges", "as": "arg_value"},
+                {"from": "node_id", "to": "replace_edges", "as": "node_id"},
+                {"from": "replace_edges", "to": "set_display_graph_edges", "as": "value"},
+                {"from": "display_graph_edges_path", "to": "set_display_graph_edges", "as": "path"},
+                {"from": "set_display_graph_edges", "to": "result", "as": "state"},
                 {"from": "result", "to": "out", "as": "fn", "type": "ref"}
             ]
         },
@@ -3170,12 +3188,12 @@
                 {"id": "html_id", "ref": "arg", "value": "state.html_id"},
                 {"id": "oneditconfirm", "ref": "arg", "value": "payload.oneditconfirm"},
                 {"id": "id", "ref": "arg", "value": "payload.id"},
+                {"id": "current_value", "ref": "arg", "value": "payload.value"},
+                {"id": "property", "ref": "arg", "value": "payload.property"},
                 {"id": "editing_path", "value": "editing"},
                 {"id": "edit_value_path", "value": "edit_value"},
                 {"id": "edit_id_path", "value": "edit_id"},
                 {"id": "edit_onconfirm_path", "value": "oneditconfirm"},
-                {"id": "current_value", "ref": "arg", "value": "payload.value"},
-                {"id": "property", "ref": "arg", "value": "payload.property"},
                 {"id": "set_editing", "ref": "set"},
                 {"id": "set_edit_value", "ref": "set"},
                 {"id": "set_edit_onconfirm", "ref": "set"},
@@ -3339,6 +3357,7 @@
                             "ref": "arg",
                             "value": "payload.id"
                         },
+                        {"id": "payload", "ref": "arg", "value": "payload"},
                         {
                             "id": "id_array",
                             "ref": "array"
@@ -3399,9 +3418,8 @@
                             "as": "args"
                         },
                         {
-                            "from": "id",
-                            "to": "new_node",
-                            "as": "id"
+                            "from": "payload",
+                            "to": "new_node"
                         },
                         {
                             "from": "id",
@@ -4912,6 +4930,26 @@
             "script": "return (_, payload) => document.getElementById(`${payload.html_id}`).dispatchEvent(new CustomEvent(payload.name, {detail: payload.detail}))"
         },
         {
+            "id": "create_object_graph",
+            "out": "out",
+            "nodes": [
+                {"id": "in"},
+                {"id": "in_obj", "ref": "arg", "value": "obj"},
+                {"id": "name", "ref": "arg", "value": "name"},
+                {"id": "map_obj", "script": "return _lib.no.objToGraph(obj)"},
+                {"id": "out_node_id", "script": "return Object.keys(obj)[0]"},
+                {"id": "out"}
+            ],
+            "edges": [
+                {"from": "in_obj", "to": "map_obj", "as": "obj"},
+                {"from": "in_obj", "to": "out_node_id", "as": "obj"},
+                {"from": "name", "to": "out_node", "as": "name"},
+                {"from": "map_obj", "to": "out"},
+                {"from": "in", "to": "out", "as": "args", "type": "ref"},
+                {"from": "out_node_id", "to": "out", "as": "out"}
+            ]
+        },
+        {
             "id": "create_popover_graph",
             "out": "out",
             "nodes": [
@@ -5113,9 +5151,11 @@
                 {"id": "clear_popover", "ref": "clear_popover_graph"},
                 {"id": "update_node", "ref": "update_node_action"},
                 {
-                    "id": "popover_graph_value",
-                    "script": "return { 'out': 'out', 'nodes': [ {'id': 'create_input', 'name': 'create input', value: [[add_node, {id: randid}], [add_edge, {from: randid, to: selected.node_id }], [clear_popover]]}, {'id': 'delete', 'name': 'delete', value: [[delete_node, {id: selected.node_id}], [clear_popover]]},{id: 'expand_contract', name: 'expand / contract', value: [[expand_contract, {id: selected.node_id}], [clear_popover]]}, {'id': 'out', name: selected.node_id, value: [[clear_popover]]}, {'id': 'change_reference', name: 'change reference', value: [[open_reference_popover, {id: selected.node_id}]]}, {'id': 'change_value', name: 'change value', value: [[show_edit_text, {id: selected.node_id, property:'value', oneditconfirm: update_node, value: selected.value}], [clear_popover]]}, {'id': 'change_name', name: 'change name', value: [[show_edit_text, {id: selected.node_id, property:'name', oneditconfirm: update_node, value: selected.name}], [clear_popover]]}, {'id': 'change_script', name: 'change script', value: [[show_edit_text, {id: selected.node_id, property:'script', oneditconfirm: update_node, value: selected.script}], [clear_popover]]} ], 'edges': [ {'from': 'create_input', 'to': 'out'}, {'from': 'delete', 'to': 'out'}, {'from': 'expand_contract', 'to': 'out'}, {from: 'change_reference', to: 'out'}, {'from': 'change_value', to: 'out'}, {'from': 'change_name', to: 'out'}, {'from': 'change_script', to: 'out'} ] }"
+                    "id": "popover_graph_obj",
+                    "script": "return {[selected.node_id]: {inputs: {create_input: [[add_node, {id: randid}], [add_edge, {from: randid, to: selected.node_id }], [clear_popover]], arg: [[add_node, {id: randid, ref: 'arg'}], [add_edge, {from: randid, to: selected.node_id }], [show_edit_text, {id: randid, property:'value', oneditconfirm: update_node, value: ''}], [clear_popover]]}, structure: {delete: [[delete_node, {id: selected.node_id}], [clear_popover]], expand_contract: [[expand_contract, {id: selected.node_id}], [clear_popover]]}, change: {name: [[show_edit_text, {id: selected.node_id, property:'name', oneditconfirm: update_node, value: selected.name}], [clear_popover]], value: [[show_edit_text, {id: selected.node_id, property:'value', oneditconfirm: update_node, value: selected.value}], [clear_popover]], script: [[show_edit_text, {id: selected.node_id, property:'script', oneditconfirm: update_node, value: selected.script}], [clear_popover]], reference: [[open_reference_popover, {id: selected.node_id}]]}}}",
+                    "script_": "return { 'out': 'out', 'nodes': [ {'id': 'create_input', 'name': 'create input', value: [[add_node, {id: randid}], [add_edge, {from: randid, to: selected.node_id }], [clear_popover]]}, {'id': 'delete', 'name': 'delete', value: [[delete_node, {id: selected.node_id}], [clear_popover]]},{id: 'expand_contract', name: 'expand / contract', value: [[expand_contract, {id: selected.node_id}], [clear_popover]]}, {'id': 'out', name: selected.node_id, value: [[clear_popover]]}, {'id': 'change_reference', name: 'change reference', value: [[open_reference_popover, {id: selected.node_id}]]}, {'id': 'change_value', name: 'change value', value: [[show_edit_text, {id: selected.node_id, property:'value', oneditconfirm: update_node, value: selected.value}], [clear_popover]]}, {'id': 'change_name', name: 'change name', value: [[show_edit_text, {id: selected.node_id, property:'name', oneditconfirm: update_node, value: selected.name}], [clear_popover]]}, {'id': 'change_script', name: 'change script', value: [[show_edit_text, {id: selected.node_id, property:'script', oneditconfirm: update_node, value: selected.script}], [clear_popover]]} ], 'edges': [ {'from': 'create_input', 'to': 'out'}, {'from': 'delete', 'to': 'out'}, {'from': 'expand_contract', 'to': 'out'}, {from: 'change_reference', to: 'out'}, {'from': 'change_value', to: 'out'}, {'from': 'change_name', to: 'out'}, {'from': 'change_script', to: 'out'} ] }"
                 },
+                {"id": "popover_graph_value", "ref": "create_object_graph"},
                 {
                     "id": "show_popover_payload"
                 },
@@ -5297,20 +5337,21 @@
                     "to": "stop_propagation_effect",
                     "as": "a0"
                 },
-                {"from": "randid", "to": "popover_graph_value", "as": "randid"},
+                {"from": "randid", "to": "popover_graph_obj", "as": "randid"},
                 {
                     "from": "get_selected_node",
-                    "to": "popover_graph_value",
+                    "to": "popover_graph_obj",
                     "as": "selected"
                 },
-                {"from": "add_node_effect", "to": "popover_graph_value", "as": "add_node"},
-                {"from": "add_edge_effect", "to": "popover_graph_value", "as": "add_edge"},
-                {"from": "delete_node_effect", "to": "popover_graph_value", "as": "delete_node"},
-                {"from": "expand_contract_effect", "to": "popover_graph_value", "as": "expand_contract"},
-                {"from": "open_reference_popover", "to": "popover_graph_value", "as": "open_reference_popover"},
-                {"from": "show_edit_text", "to": "popover_graph_value", "as": "show_edit_text"},
-                {"from": "clear_popover", "to": "popover_graph_value", "as": "clear_popover"},
-                {"from": "update_node", "to": "popover_graph_value", "as": "update_node"},
+                {"from": "add_node_effect", "to": "popover_graph_obj", "as": "add_node"},
+                {"from": "add_edge_effect", "to": "popover_graph_obj", "as": "add_edge"},
+                {"from": "delete_node_effect", "to": "popover_graph_obj", "as": "delete_node"},
+                {"from": "expand_contract_effect", "to": "popover_graph_obj", "as": "expand_contract"},
+                {"from": "open_reference_popover", "to": "popover_graph_obj", "as": "open_reference_popover"},
+                {"from": "show_edit_text", "to": "popover_graph_obj", "as": "show_edit_text"},
+                {"from": "clear_popover", "to": "popover_graph_obj", "as": "clear_popover"},
+                {"from": "update_node", "to": "popover_graph_obj", "as": "update_node"},
+                {"from": "popover_graph_obj", "to": "popover_graph_value", "as": "obj"},
                 {
                     "from": "popover_graph_value",
                     "to": "show_popover_payload",
@@ -5398,6 +5439,7 @@
                 {"id": "in"},
                 {"id": "edge", "ref": "arg", "value": "payload.edge"},
                 {"id": "state", "ref": "arg", "value": "state"},
+                {"id": "readonly", "ref": "arg", "value": "state.readonly"},
                 {"id": "event", "ref": "arg", "value": "payload.event"},
                 {"id": "clear_popover", "ref": "clear_popover_graph"},
                 {"id": "clear_popover_type", "ref": "clear_popover_graph"},
@@ -5411,7 +5453,9 @@
                 {"id": "show_popover_graph", "ref": "array"},
                 {"id": "stop_propagation_effector", "ref": "stop_propagation_effect"},
                 {"id": "stop_propagation", "ref": "array"},
-                {"id": "effects", "ref": "array"},
+                {"id": "editable_effects", "ref": "array"},
+                {"id": "readonly_effects", "ref": "array"},
+                {"id": "effects", "ref": "if"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action"}
             ],
@@ -5430,11 +5474,14 @@
                 {"from": "popover_graph", "to": "show_popover_graph_payload", "as": "popover_graph"},
                 {"from": "show_popover_graph_effector", "to": "show_popover_graph", "as": "a0"},
                 {"from": "show_popover_graph_payload", "to": "show_popover_graph", "as": "a1"},
-                {"from": "show_popover_graph", "to": "effects", "as": "a0"},
-                {"from": "event", "to": "stop_propagation_payalod", "as": "event"},
+                {"from": "show_popover_graph", "to": "editable_effects", "as": "a0"},
+                {"from": "event", "to": "stop_propagation_payload", "as": "event"},
                 {"from": "stop_propagation_effector", "to": "stop_propagation", "as": "a0"},
                 {"from": "event", "to": "stop_propagation", "as": "a1"},
-                {"from": "stop_propagation", "to": "effects", "as": "a1"},
+                {"from": "stop_propagation", "to": "editable_effects", "as": "a1"},
+                {"from": "editable_effects", "to": "effects", "as": "false"},
+                {"from": "readonly_effects", "to": "effects", "as": "true"},
+                {"from": "readonly", "to": "effects", "as": "pred"},
                 {"from": "state", "to": "result", "as": "state"},
                 {"from": "effects", "to": "result", "as": "effects"},
                 {"from": "result", "to": "out", "as": "fn", "type": "ref"}
@@ -5584,7 +5631,7 @@
                         },
                         {
                             "id": "edit_text_base_props",
-                            "script": "return {id: `${html_id}-edit-value`, class: {'edit-value': true, [editing]: true}, onclick: (s, payload) => (console.log('click'), console.log(payload.prototype), payload.preventDefault(), [s, [confirm_edit_text, payload]])}"
+                            "script": "return {id: `${html_id}-edit-value`, class: {'edit-value': true, [editing]: true}, onclick: (s, payload) => (payload.preventDefault(), [s, [confirm_edit_text, payload]])}"
                         },
                         {
                             "id": "edit_text_props"
@@ -6822,7 +6869,7 @@
                         {
                             "id": "link_layout",
                             "args": ["node_inputs", "link_layout_map", "links", "graph", "selected_edge"],
-                            "script": "return links.map(link => _lib.no.executeGraph({state: new Map([['_' + link.source.node_child_id, Object.assign({link: Object.assign({}, link, display_graph.edges.find(e => link.from === e.from && link.to === e.to)), selected_distance: levels.distance_from_selected.get(link.target.node_child_id) !== undefined ? Math.min(levels.distance_from_selected.get(link.target.node_child_id), levels.distance_from_selected.get(link.source.node_child_id)) : undefined, sibling_index_normalized: (levels.siblings.get(link.source.node_id).findIndex(n => n === link.source.node_id) + 1) / (levels.siblings.get(link.source.node_id).length + 1),}, _node_inputs)]]), graph: {...graph, in: '_' + link.source.node_child_id, out: link_layout_map}, cache_id: '_' + link.source.node_child_id + link.target.node_child_id}))"
+                            "script": "return links.map(link => _lib.no.executeGraph({state: new Map([['_' + link.source.node_child_id, Object.assign({link: Object.assign({edge: display_graph.edges.find(e => link.from === e.from && link.to === e.to)}, link), selected_distance: levels.distance_from_selected.get(link.target.node_child_id) !== undefined ? Math.min(levels.distance_from_selected.get(link.target.node_child_id), levels.distance_from_selected.get(link.source.node_child_id)) : undefined, sibling_index_normalized: (levels.siblings.get(link.source.node_id).findIndex(n => n === link.source.node_id) + 1) / (levels.siblings.get(link.source.node_id).length + 1),}, _node_inputs)]]), graph: {...graph, in: '_' + link.source.node_child_id, out: link_layout_map}, cache_id: '_' + link.source.node_child_id + link.target.node_child_id}))"
                         },
                         {
                             "id": "link_layout_map",
@@ -6852,6 +6899,7 @@
                                     "ref": "arg",
                                     "value": "sibling_index_normalized"
                                 },
+                                {"id": "edge", "ref": "arg", "value": "link.edge"},
                                 {
                                     "id": "edge_info_el",
                                     "ref": "h"
@@ -6879,7 +6927,7 @@
                                         "sibling_index_normalized",
                                         "selected_edge"
                                     ],
-                                    "script": "return ({id: `edge-info-${source.node_child_id}`, z: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to ? 100 : 200, opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1, class: {'edge-info': true, selected: selected_edge && (source.node_id === selected_edge.from + '_' + selected_edge.to || (source.node_id === selected_edge.from && target.node_id === selected_edge.to))}, onclick: (state, payload) => [onclick_edge, {event: payload, edge: {from: source.node_id, to: target.node_id}}] })"
+                                    "script": "return ({id: `edge-info-${source.node_child_id}`, z: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to ? 100 : 200, opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1, class: {'edge-info': true, selected: selected_edge && (source.node_id === selected_edge.from + '_' + selected_edge.to || (source.node_id === selected_edge.from && target.node_id === selected_edge.to))}, onclick: (state, payload) => [onclick_edge, {event: payload, edge}] })"
                                 },
                                 {
                                     "id": "edge_info_line_position",
@@ -6904,7 +6952,7 @@
                                     "args": [
                                         "link"
                                     ],
-                                    "script": "return link.type ?? ''"
+                                    "script": "return link.edge?.type ?? ''"
                                 },
                                 {
                                     "id": "edge_info_as_props",
@@ -6922,7 +6970,7 @@
                                     "args": [
                                         "link"
                                     ],
-                                    "script": "return link.as ?? ''"
+                                    "script": "return link.edge?.as ?? '*'"
                                 },
                                 {
                                     "id": "edge_info_rect_dom_type",
@@ -6955,7 +7003,7 @@
                                         "selected_edge",
                                         "selected_distance"
                                     ],
-                                    "script": "return ({id: `link-${source.node_child_id}`, class: `link ${selected_edge && (source.node_id === selected_edge.from + '_' + selected_edge.to || (source.node_id === selected_edge.from && target.node_id === selected_edge.to)) ? 'selected' : 'unselected'}`, 'marker-end': 'url(#arrow)', opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1})"
+                                    "script": "return ({id: `link-${source.node_child_id}`, onclick: (state, payload) => [onclick_edge, {event: payload, edge}], class: `link ${selected_edge && (source.node_id === selected_edge.from + '_' + selected_edge.to || (source.node_id === selected_edge.from && target.node_id === selected_edge.to)) ? 'selected' : 'unselected'}`, 'marker-end': 'url(#arrow)', opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1})"
                                 },
                                 {
                                     "id": "line_dom_type",
@@ -7018,6 +7066,16 @@
                                     "as": "onclick_edge"
                                 },
                                 {
+                                    "from": "edge",
+                                    "to": "line_props",
+                                    "as": "edge"
+                                },
+                                {
+                                    "from": "onclick_edge",
+                                    "to": "line_props",
+                                    "as": "onclick_edge"
+                                },
+                                {
                                     "from": "selected_distance",
                                     "to": "line_props",
                                     "as": "selected_distance"
@@ -7039,6 +7097,11 @@
                                 {
                                     "from": "get_link",
                                     "to": "edge_info_props"
+                                },
+                                {
+                                    "from": "edge",
+                                    "to": "edge_info_props",
+                                    "as": "edge"
                                 },
                                 {
                                     "from": "in",
