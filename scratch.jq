@@ -1,1 +1,0 @@
-.[] | .nodes[] | select(.id == "node_types") | to_entries(.node_types) | [{id: .key, inputs:[.key + "_script]}, {id: .key + "_script, value: .value.script}]
