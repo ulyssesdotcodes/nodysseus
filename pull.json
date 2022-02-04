@@ -835,14 +835,10 @@
                     ],
                     "script": "return input?.default ??  null"
                 },
+                {"id": "get_args", "ref": "array"},
                 {
                     "id": "out",
-                    "args": [
-                        "target",
-                        "path",
-                        "def"
-                    ],
-                    "script": "return _lib.just.get(target, path, def)"
+                    "extern": "just.get"
                 }
             ],
             "edges": [
@@ -853,19 +849,20 @@
                 },
                 {
                     "from": "def",
-                    "to": "out",
-                    "as": "def"
+                    "to": "get_args",
+                    "as": "a2"
                 },
                 {
                     "from": "path",
-                    "to": "out",
-                    "as": "path"
+                    "to": "get_args",
+                    "as": "a1"
                 },
                 {
                     "from": "target",
-                    "to": "out",
-                    "as": "target"
-                }
+                    "to": "get_args",
+                    "as": "a0"
+                },
+                {"from": "get_args", "to": "out", "as": "args"}
             ]
         },
         {
@@ -1696,13 +1693,20 @@
                 {
                     "id": "out_h",
                     "args": ["dom_type", "children", "props", "graph"],
-                    "script_": "const mapped_children = (children ?? []).map(c => _lib.no.executeGraph({state: new Map([['run_h/in', {...c, graph}]]), graph: {...graph, in: 'run_h/in', out: 'run_h'}})).map(c => c.el); return {el: _lib.ha.h(dom_type, props, mapped_children)};",
                     "script": "let run_graph = {...graph, in: 'run_h/in', out: 'run_h'}; const fn = _lib.no.executeGraphValue({graph: run_graph}); const mapped_children = (children ?? []).map(c => ({...c, graph: run_graph})).map(fn).map(c => c.el); return {el: _lib.ha.h(dom_type, props, mapped_children)};"
+                },
+                {
+                    "id": "extern_h_text_args",
+                    "ref": "array"
+                },
+                {
+                    "id": "extern_h_text",
+                    "extern": "ha.text"
                 },
                 {
                     "id": "out_text",
                     "args": ["text"],
-                    "script": "return {el: _lib.ha.text(text)}"
+                    "script": "return {el}"
                 },
                 {
                     "id": "els"
@@ -1728,7 +1732,9 @@
                 {"from": "children", "to": "out_h", "as": "children"},
                 {"from": "props", "to": "out_h", "as": "props"},
                 {"from": "graph", "to": "out_h", "as": "graph"},
-                {"from": "text", "to": "out_text", "as": "text"},
+                {"from": "text", "to": "extern_h_text_args", "as": "arg0"},
+                {"from": "extern_h_text_args", "to": "extern_h_text", "as": "args"},
+                {"from": "extern_h_text", "to": "out_text", "as": "el"},
                 {"from": "out_text", "to": "els", "as": "h_text"},
                 {"from": "out_h", "to": "els", "as": "h"},
                 {"from": "els", "to": "out_el"},
@@ -3268,8 +3274,8 @@
                 {"id": "update_node", "ref": "update_node"},
                 {"id": "clear_popover", "ref": "clear_popover_graph"},
                 {"id": "valid_nodes", "script": "return nodes.filter(n => !n.ref && !levels.parents.get(n.id))"},
-                {"id": "popover_graph_nodes", "script": "return nodes.map(n => ({id: n.id, name: n.name ?? n.id, value: [[update_node, {id: node_id, properties: {ref: n.id}}], [clear_popover]]})).concat([{id: 'out', name: 'reference nodes', value: [[clear_popover]]}])"},
-                {"id": "popover_graph_edges", "script": "return nodes.map(n => ({from: n.id, to: 'out'}))"},
+                {"id": "popover_graph_nodes", "script": "return nodes.map(n => ({id: `reference-popover${n.id}`, name: n.name ?? n.id, value: [[update_node, {id: node_id, properties: {ref: n.id}}], [clear_popover]]})).concat([{id: 'out', name: 'reference nodes', value: [[clear_popover]]}])"},
+                {"id": "popover_graph_edges", "script": "return nodes.map(n => ({from: `reference-popover${n.id}`, to: 'out'}))"},
                 {"id": "popover_graph_out", "value": "out"},
                 {"id": "popover_graph_value"},
                 {"id": "show_popover_graph_payload"},
@@ -5568,7 +5574,7 @@
                         },
                         {
                             "id": "edit_text_base_props",
-                            "script": "return {id: `${html_id}-edit-value`, class: {'edit-value': true, [editing]: true}, onclick: (s, payload) => (payload.preventDefault(), [s, [confirm_edit_text, payload]])}"
+                            "script": "return {id: `${html_id}-edit-value`, class: {'edit-value': true, [editing]: true}, onclick: (s, payload) => (console.log('click'), console.log(payload.prototype), payload.preventDefault(), [s, [confirm_edit_text, payload]])}"
                         },
                         {
                             "id": "edit_text_props"
