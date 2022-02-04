@@ -1223,7 +1223,7 @@ const state = new Map([['in', {
 }]])
 
 
-console.log(executeGraph({ cache, state, graph: DEFAULT_GRAPH, original_graph, out: "hyperapp_app", cache_id: "main", node_cache, readonly: false })(DEFAULT_GRAPH.out)(state.get("in")));
+console.log(executeGraph({ cache, state, graph: DEFAULT_GRAPH, original_graph, out: "hyperapp_app", cache_id: "main", node_cache, readonly: false, hide_types: false })(DEFAULT_GRAPH.out)(state.get("in")));
 
 
 

@@ -1708,7 +1708,7 @@
                 {
                     "id": "out_h",
                     "args": ["dom_type", "children", "props", "graph"],
-                    "script": "let run_graph = {...graph, in: 'run_h/in', out: 'run_h'}; const fn = _lib.no.executeGraphValue({graph: run_graph}); const mapped_children = (children ?? []).map(c => ({...c, graph: run_graph})).map(fn).map(c => c.el); return {el: _lib.ha.h(dom_type, props, mapped_children)};"
+                    "script": "let run_graph = {...graph, in: 'run_h/in', out: 'run_h'}; const fn = _lib.no.executeGraphValue({graph: run_graph}); const mapped_children = (children ?? []).filter(c => c).map(c => ({...c, graph: run_graph})).map(fn).filter(c => c).map(c => c.el); return {el: _lib.ha.h(dom_type, props, mapped_children)};"
                 },
                 {
                     "id": "extern_h_text_args",
@@ -2492,6 +2492,11 @@
             "id": "readonly",
             "ref": "arg",
             "value": "readonly"
+        },
+        {
+            "id": "hide_types",
+            "ref": "arg",
+            "value": "hide_types"
         },
         {
             "id": "graph_nodes",
@@ -5506,7 +5511,7 @@
         },
         {
             "id": "render_popover_graph_effect",
-            "script": "return (dispatch, payload) => requestAnimationFrame(() => {payload = _lib.no.resolve(payload); if(payload.popover_dispatch) { payload.popover_dispatch(s => [{...s, display_graph: payload.display_graph, selected: [payload.display_graph.out]}, [s.update_sim_effect, {...s, display_graph: payload.display_graph}]]) } else { const popover_dispatch = _lib.no.executeGraphNode({graph: payload.graph})('hyperapp_app')({graph: payload.graph, display_graph: payload.display_graph, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions, readonly: true, sim_update_alpha: 0.3}).dispatch; dispatch(s => ({...s, popover_dispatch}));}})"
+            "script": "return (dispatch, payload) => requestAnimationFrame(() => {payload = _lib.no.resolve(payload); if(payload.popover_dispatch) { payload.popover_dispatch(s => [{...s, display_graph: payload.display_graph, selected: [payload.display_graph.out]}, [s.update_sim_effect, {...s, display_graph: payload.display_graph}]]) } else { const popover_dispatch = _lib.no.executeGraphNode({graph: payload.graph})('hyperapp_app')({graph: payload.graph, display_graph: payload.display_graph, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions, readonly: true, hide_types: true, sim_update_alpha: 0.3}).dispatch; dispatch(s => ({...s, popover_dispatch}));}})"
         },
         {
             "id": "handle_popover_event",
@@ -5561,6 +5566,11 @@
                     "value": "show_result"
                 },
                 {
+                    "id": "result_display",
+                    "ref": "arg",
+                    "value": "result_display"
+                },
+                {
                     "id": "update_sim",
                     "ref": "arg",
                     "value": "update_sim"
@@ -5576,7 +5586,8 @@
                     "value": "readonly"
                 },
                 {
-                    "id": "result_wrapper"
+                    "id": "result_wrapper",
+                    "ref": "run_h"
                 },
                 {
                     "id": "wrapper_dom_type",
@@ -5596,7 +5607,7 @@
                         "popover_graph",
                         "popover_graph_h"
                     ],
-                    "script": "return [node_editor.el, !readonly && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, show_result && result.run.el ].filter(e => e)"
+                    "script": "return [node_editor.el, !readonly && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, !!result_display && result_display.el].filter(e => e)"
                 },
                 {
                     "id": "edit_text",
@@ -6275,6 +6286,11 @@
                             "value": "readonly"
                         },
                         {
+                            "id": "hide_types",
+                            "ref": "arg",
+                            "value": "hide_types"
+                        },
+                        {
                             "id": "get_nodes",
                             "args": [
                                 "nodes"
@@ -6354,7 +6370,7 @@
                         {
                             "id": "node_layout",
                             "args": ["node_inputs", "node_layout_map", "nodes", "graph", "selected", "selected_edge"],
-                            "script": "return nodes.map(n => _lib.no.executeGraphValue({state: new Map(), graph: {...graph, in: '_' + n.node_id, out: node_layout_map, html_id: html_id}, cache_id: '_' + n.node_id})(Object.assign({node: Object.assign({}, n, display_graph.nodes.find(dgn => dgn.id === n.node_id)), selected_distance: levels.distance_from_selected.get(n.node_child_id), level: levels.level_by_node.get(n.node_id)}, _node_inputs)))"
+                            "script": "console.log(hide_types); return nodes.map(n => _lib.no.executeGraphValue({state: new Map(), graph: {...graph, in: '_' + n.node_id, out: node_layout_map, html_id: html_id}, cache_id: '_' + n.node_id})(Object.assign({node: Object.assign({}, n, display_graph.nodes.find(dgn => dgn.id === n.node_id)), hide_types, selected_distance: levels.distance_from_selected.get(n.node_child_id), level: levels.level_by_node.get(n.node_id)}, _node_inputs)))"
                         },
                         {
                             "id": "node_layout_map",
@@ -6394,6 +6410,11 @@
                                     "id": "level",
                                     "ref": "arg",
                                     "value": "level"
+                                },
+                                {
+                                    "id": "hide_types",
+                                    "ref": "arg",
+                                    "value": "hide_types"
                                 },
                                 {
                                     "id": "out"
@@ -6504,6 +6525,11 @@
                                                     "value": "node"
                                                 },
                                                 {
+                                                    "id": "hide_types",
+                                                    "ref": "arg",
+                                                    "value": "hide_types"
+                                                },
+                                                {
                                                     "id": "get_value",
                                                     "args": [
                                                         "target",
@@ -6593,7 +6619,7 @@
                                                         "primary",
                                                         "secondary"
                                                     ],
-                                                    "script": "return [primary.el, secondary.el]"
+                                                    "script": "return [primary.el, !hide_types && secondary.el]"
                                                 },
                                                 {
                                                     "id": "text",
@@ -6685,6 +6711,11 @@
                                                     "from": "node_primary_text",
                                                     "to": "node_text_children",
                                                     "as": "primary"
+                                                },
+                                                {
+                                                    "from": "hide_types",
+                                                    "to": "node_text_children",
+                                                    "as": "hide_types"
                                                 },
                                                 {
                                                     "from": "node_secondary_text_text",
@@ -7464,6 +7495,11 @@
                             "as": "readonly"
                         },
                         {
+                            "from": "hide_types",
+                            "to": "node_layout",
+                            "as": "hide_types"
+                        },
+                        {
                             "from": "display_graph",
                             "to": "link_layout",
                             "as": "display_graph"
@@ -7872,14 +7908,14 @@
                     "as": "search_input"
                 },
                 {
-                    "from": "result",
+                    "from": "result_display",
                     "to": "result_wrapper",
                     "as": "run"
                 },
                 {
-                    "from": "result_wrapper",
+                    "from": "result_display",
                     "to": "wrapper_children",
-                    "as": "result"
+                    "as": "result_display"
                 },
                 {
                     "from": "popover_graph_h",
@@ -7978,6 +8014,11 @@
             "from": "readonly",
             "to": "hyperapp_init_state",
             "as": "readonly"
+        },
+        {
+            "from": "hide_types",
+            "to": "hyperapp_init_state",
+            "as": "hide_types"
         },
         {
             "from": "dimensions",
