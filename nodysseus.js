@@ -427,7 +427,7 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
 
             if (usecache && cache.get(cache_id).has(node.id)) {
                 const val = cache.get(cache_id).get(node.id);
-                let hit = usecache && compare(input_values, val[1]);
+                let hit = usecache && compare(data, val[1]);
                 // hit = hit && compare(graph_input_value, val[2]);
                 if (hit) {
                     return val[0]
@@ -451,7 +451,7 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
 
                 // don't cache things without arguments
                 if (node_ref.args?.length > 0) {
-                    cache.get(cache_id).set(node.id, [results, input_values]);
+                    cache.get(cache_id).set(node.id, [results, data]);
                 }
 
                 if(typeof results === 'object' && !!results && !results._Proxy && !Array.isArray(results) && Object.keys(results).length > 0) {
@@ -466,6 +466,15 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
                 console.log(data);
                 throw new AggregateError([Error(`Error in node ${node_ref.name ?? node_ref.id}`)].concat(e instanceof AggregateError ? e.errors : [e]));
             }
+        } else if(node_ref.extern) {
+            const args = data.hasOwnProperty('args') && data.args._Proxy ? resolve(data.args) : (data.args ?? []);
+            if(!Array.isArray(args)) {
+                throw new Error("args for extern functions must be arrays")
+            }
+
+            const self = data.hasOwnProperty('self') && data.self._Proxy ? resolve(data.self) : data.self;
+
+            return get(lib, node_ref.extern).apply(self, args);
         }
 
         if(typeof data === 'object' && !!data && !data._Proxy && !Array.isArray(data) && Object.keys(data).length > 0) {
