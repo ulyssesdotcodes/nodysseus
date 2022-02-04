@@ -1470,7 +1470,7 @@
                         "payload",
                         "update_sim_effect"
                     ],
-                    "script": "return {state: {...state, result: !readonly && result.run.result?.state, error: !readonly && result.run.error}, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], ...(effects ?? [])]}"
+                    "script": "return {state: {...state, result: !readonly && result.run.result?.state, result_display: !readonly && result.run.result?.display,error: !readonly && result.run.error}, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], ...(effects ?? [])]}"
                 }
             ],
             "edges": [
@@ -3097,7 +3097,7 @@
                 {"id": "node_id", "ref": "arg", "value": "payload.id"},
                 {"id": "node_properties", "ref": "arg", "value": "payload.properties"},
                 {"id": "replace_node", "script": "return nodes.map(n => n.id === node_id ? Object.assign({}, n, update) : n)"},
-                {"id": "arg_value", "script": "const node = nodes.find(n => n.id === node_id); return node.ref === 'arg' ? node.value : udnefined"},
+                {"id": "arg_value", "script": "const node = nodes.find(n => n.id === node_id); return node.ref === 'arg' ? node.value : undefined"},
                 {"id": "replace_edges", "script": "return arg_value ? edges.map(e => e.from === node_id ? {...e, as: arg_value} : e) : edges"},
                 {"id": "display_graph_nodes_path", "value": "display_graph.nodes"},
                 {"id": "set_display_graph_nodes", "ref": "set"},
@@ -3148,7 +3148,7 @@
                 {"id": "display_graph_edges_path", "value": "display_graph.edges"},
                 {"id": "edge", "ref": "arg", "value": "payload.id"},
                 {"id": "properties", "ref": "arg", "value": "payload.properties"},
-                {"id": "replace_edge", "script": "return edges.map(e => e.from === edge.from && e.to === edge.to ? Object.assign({}, e, update) : e)"},
+                {"id": "replace_edge", "script": "return edges.map(e => e.from === edge.from && e.to === edge.to ? Object.assign({}, e, Object.fromEntries(Object.entries(update).map(e => [e[0], e[1] === '' ? undefined : e[1]]))) : e)"},
                 {"id": "display_graph_edges_path", "value": "display_graph.edges"},
                 {"id": "set_display_graph_edges", "ref": "set"},
                 {"id": "result"},
@@ -6270,6 +6270,11 @@
                             "value": "display_graph"
                         },
                         {
+                            "id": "readonly",
+                            "ref": "arg",
+                            "value": "readonly"
+                        },
+                        {
                             "id": "get_nodes",
                             "args": [
                                 "nodes"
@@ -6869,7 +6874,7 @@
                         {
                             "id": "link_layout",
                             "args": ["node_inputs", "link_layout_map", "links", "graph", "selected_edge"],
-                            "script": "return links.map(link => _lib.no.executeGraph({state: new Map([['_' + link.source.node_child_id, Object.assign({link: Object.assign({edge: display_graph.edges.find(e => link.from === e.from && link.to === e.to)}, link), selected_distance: levels.distance_from_selected.get(link.target.node_child_id) !== undefined ? Math.min(levels.distance_from_selected.get(link.target.node_child_id), levels.distance_from_selected.get(link.source.node_child_id)) : undefined, sibling_index_normalized: (levels.siblings.get(link.source.node_id).findIndex(n => n === link.source.node_id) + 1) / (levels.siblings.get(link.source.node_id).length + 1),}, _node_inputs)]]), graph: {...graph, in: '_' + link.source.node_child_id, out: link_layout_map}, cache_id: '_' + link.source.node_child_id + link.target.node_child_id}))"
+                            "script": "return links.map(link => _lib.no.executeGraph({state: new Map([['_' + link.source.node_child_id, Object.assign({readonly, link: Object.assign({edge: display_graph.edges.find(e => link.from === e.from && link.to === e.to)}, link), selected_distance: levels.distance_from_selected.get(link.target.node_child_id) !== undefined ? Math.min(levels.distance_from_selected.get(link.target.node_child_id), levels.distance_from_selected.get(link.source.node_child_id)) : undefined, sibling_index_normalized: (levels.siblings.get(link.source.node_id).findIndex(n => n === link.source.node_id) + 1) / (levels.siblings.get(link.source.node_id).length + 1),}, _node_inputs)]]), graph: {...graph, in: '_' + link.source.node_child_id, out: link_layout_map}, cache_id: '_' + link.source.node_child_id + link.target.node_child_id}))"
                         },
                         {
                             "id": "link_layout_map",
@@ -6965,12 +6970,13 @@
                                     "id": "edge_info_as_el",
                                     "ref": "svg_text"
                                 },
+                                {"id": "readonly", "ref": "arg", "value": "readonly"},
                                 {
                                     "id": "edge_info_as_text",
                                     "args": [
                                         "link"
                                     ],
-                                    "script": "return link.edge?.as ?? '*'"
+                                    "script": "return link.edge?.as ?? (readonly ? '' : '*')"
                                 },
                                 {
                                     "id": "edge_info_rect_dom_type",
@@ -7165,6 +7171,11 @@
                                     "from": "edge_info_as_props",
                                     "to": "edge_info_as_el",
                                     "as": "props"
+                                },
+                                {
+                                    "from": "readonly",
+                                    "to": "edge_info_as_text",
+                                    "as": "readonly"
                                 },
                                 {
                                     "from": "edge_info_as_text",
@@ -7446,6 +7457,11 @@
                             "from": "get_graph",
                             "to": "node_layout",
                             "as": "graph"
+                        },
+                        {
+                            "from": "readonly",
+                            "to": "link_layout",
+                            "as": "readonly"
                         },
                         {
                             "from": "display_graph",
@@ -7834,6 +7850,11 @@
                     "from": "popover_graph",
                     "to": "wrapper_children",
                     "as": "popover_graph"
+                },
+                {
+                    "from": "readonly",
+                    "to": "node_editor",
+                    "as": "readonly"
                 },
                 {
                     "from": "node_editor",
