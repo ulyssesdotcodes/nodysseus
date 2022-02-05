@@ -512,12 +512,12 @@ const test_graph = {
         {
             "id": "main/out",
             "args": ["value"],
-            "script": "return value;"
+            "script": "return {state: {}};"
         },
         { "id": "main/in" }
     ],
     "edges": [
-        { "from": "main/in", "to": "main/out"}
+        { "from": "main/in", "to": "main/out", "as": "args", "type": "ref"}
     ]
 }
 
@@ -718,8 +718,8 @@ const updateSimulationNodes = (data) => {
                 to: e.to,
                 target: main_node_map.get(e.to),
                 sibling_index_normalized: simulation_node_data.get(e.from + "_" + e.to).sibling_index_normalized,
-                strength: 2 / (1 + 2 * (children_map.get(main_node_map.get(e.from))?.length ?? 0)),
-                distance: 64 
+                strength: 4 / (1 + 2 * (children_map.get(main_node_map.get(e.from))?.length ?? 0)),
+                distance: 128 
                     + 16 * (parents_map.get(main_node_map.get(e.to))?.length ?? 0) 
             };
         }).filter(l => !!l);
@@ -747,7 +747,7 @@ const updateSimulationNodes = (data) => {
             || children_map.get(n.node_id)?.length > 0 && n.node_child_id !== n.node_id + "_" + children_map.get(n.node_id)[0] ? .025 : 0);
 
 
-    data.simulation.force('collide').radius(128);
+    data.simulation.force('collide').radius(96);
     // data.simulation.force('center').strength(n => (levels.parents_map.get(n.node_id)?.length ?? 0) * 0.25 + (levels.children_map.get(n.node_id)?.length ?? 0) * 0.25)
 }
 
@@ -1167,6 +1167,7 @@ const middleware = dispatch => (ha_action, ha_payload) => {
                 return e
             });
 
+
             return result.hasOwnProperty("state")
                 ? effects.length > 0 ? [result.state, ...effects] : result.state
                 : [result.action, result.payload];
@@ -1178,6 +1179,30 @@ const middleware = dispatch => (ha_action, ha_payload) => {
 
 const cache = new Map();
 const node_cache = new Map();
+
+const generic_nodes = new Set([
+    "get",
+    "set",
+    "delete",
+    "object",
+
+    "switch",
+    "if",
+    "flow",
+
+    "hyperapp",
+    "h",
+    "h_text",
+
+    "array",
+    "new_array",
+    "filter",
+
+    "utility",
+    "log",
+    "execute_graph",
+    "arg",
+]);
 
 const lib = {
     just: { get, set, diff, diffApply },
@@ -1197,30 +1222,6 @@ const lib = {
     // THREE
 };
 
-const generic_nodes = new Set([
-    "switch",
-    "filter",
-    "delete",
-    "default",
-    "trigger",
-    "execute_graph",
-    "get",
-    "set",
-    "default_node_display",
-    "h",
-    "h_text",
-    "default_error_display",
-    "graph_display",
-    "number_display",
-    "update_and_run",
-    "selected_node",
-    "array",
-    "text",
-    "text_display",
-    "arg",
-    "log"
-]);
-
 const stored = localStorage.getItem("display_graph");
 // const display_graph = {...DEFAULT_GRAPH, nodes: DEFAULT_GRAPH.nodes.map(n => ({...n})), edges: DEFAULT_GRAPH.edges.map(e => ({...e}))};
 const display_graph = stored ? JSON.parse(stored) : test_graph;
@@ -1230,8 +1231,12 @@ const state = new Map([['in', {
     original_graph, 
     display_graph: { 
         ...display_graph, 
-        nodes: display_graph.nodes.filter(n => !generic_nodes.has(n.id)).concat(DEFAULT_GRAPH.nodes),//.filter(n => generic_nodes.has(n.id) && display_graph.nodes.findIndex(dn => dn.id === n.id) === -1)), 
-        edges: display_graph.edges.concat([]) 
+        nodes: display_graph.nodes
+            .filter(n => !generic_nodes.has(n.id))
+            .concat(DEFAULT_GRAPH.nodes.filter(n => generic_nodes.has(n.id))), 
+        edges: display_graph.edges
+            .filter(e => !generic_nodes.has(e.to))
+            .concat(DEFAULT_GRAPH.edges.filter(e => generic_nodes.has(e.to))) 
     },
     html_id: "node-editor",
     dimensions: {
@@ -1240,15 +1245,4 @@ const state = new Map([['in', {
     }
 }]])
 
-
-console.log(executeGraph({ cache, state, graph: DEFAULT_GRAPH, original_graph, out: "hyperapp_app", cache_id: "main", node_cache, readonly: false, hide_types: false })(DEFAULT_GRAPH.out)(state.get("in")));
-
-
-
-//  return {out: 'out', 
-//  nodes: [
-//      {id: 'ref', name: 'ref', value: [[update_edge, {id: edge, properties: {type: 'ref'}}], [clear_popover]]}, 
-//      {id: 'none', name: 'none', value: [[update_edge, {id: edge, properties: {type: undefined}}], [clear_popover]]}, 
-//      {id: 'resolve', name: 'resolve', value: [[update_edge, {id: edge, properties: {type: 'resolve'}}], [clear_popover]]}, 
-//      {id: 'out', name: `edge from ${edge.from} to ${edge.to} type`, value: [[clear_popover]]}
-//     ], edges: [{'from': 'ref', to: 'out'}, {from: 'none', to: 'out'}, {from: 'resolve', to: 'out'}]}
+console.log(executeGraph({ cache, state, graph: DEFAULT_GRAPH, original_graph, out: "initialize_hyperapp_app", cache_id: "main", node_cache, readonly: false, hide_types: false })(DEFAULT_GRAPH.out)(state.get("in")));

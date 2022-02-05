@@ -4,6 +4,11 @@
         {
             "id": "in"
         },
+        {"id": "array"},
+        {"id": "utility"},
+        {"id": "flow"},
+        {"id": "hyperapp"},
+        {"id": "object"},
         {
             "id": "log",
             "args": ["value"],
@@ -32,32 +37,6 @@
                     "from": "value",
                     "to": "out",
                     "as": "value"
-                }
-            ]
-        },
-        {
-            "id": "text",
-            "name": "text",
-            "in": "l54tju5vx",
-            "out": "text",
-            "nodes": [
-                {
-                    "id": "text",
-                    "args": [],
-                    "name": "text/out",
-                    "script": "return input"
-                },
-                {
-                    "id": "l54tju5vx",
-                    "args": [],
-                    "name": "text/in"
-                }
-            ],
-            "edges": [
-                {
-                    "from": "l54tju5vx",
-                    "to": "text",
-                    "as": "input"
                 }
             ]
         },
@@ -240,7 +219,7 @@
         ]
     },
         {
-            "id": "hyperapp",
+            "id": "hyperapp_app",
             "nodes": [
                 {
                     "id": "in"
@@ -757,9 +736,9 @@
             ]
         },
         {
-            "id": "array",
+            "id": "new_array",
             "script": "return Object.keys(_node_inputs).sort().map(k => _node_inputs[k])",
-            "name": "array"
+            "name": "new_array"
         },
         {
             "id": "wrap_effect_fn",
@@ -835,7 +814,7 @@
                     ],
                     "script": "return input?.default ??  null"
                 },
-                {"id": "get_args", "ref": "array"},
+                {"id": "get_args", "ref": "new_array"},
                 {
                     "id": "out",
                     "extern": "just.get"
@@ -1732,7 +1711,7 @@
                 },
                 {
                     "id": "extern_h_text_args",
-                    "ref": "array"
+                    "ref": "new_array"
                 },
                 {
                     "id": "extern_h_text",
@@ -2567,7 +2546,7 @@
         },
         {
             "id": "init_selected",
-            "ref": "array"
+            "ref": "new_array"
         },
         {
             "id": "hyperapp_view",
@@ -2587,8 +2566,8 @@
             "value": "html_id"
         },
         {
-            "id": "hyperapp_app",
-            "ref": "hyperapp"
+            "id": "initialize_hyperapp_app",
+            "ref": "hyperapp_app"
         },
         {
             "id": "out"
@@ -2735,8 +2714,8 @@
                 {"id": "popover_graph_value", "ref": "arg", "value": "payload.popover_graph" },
                 {"id": "render_popover_graph_effector", "ref": "render_popover_graph_effect"},
                 {"id": "render_popover_graph_effect_payload"},
-                {"id": "render_popover_graph_effect", "ref": "array"},
-                {"id": "effects", "ref": "array"},
+                {"id": "render_popover_graph_effect", "ref": "new_array"},
+                {"id": "effects", "ref": "new_array"},
                 {"id": "new_state"},
                 {"id": "out", "ref": "hyperapp_action_effect"}
             ],
@@ -2774,8 +2753,8 @@
                 {"id": "set_display_graph", "ref": "set"},
                 {"id": "set_selected", "ref": "set"},
                 {"id": "update_sim_effector", "ref": "arg", "value": "state.update_sim_effect"},
-                {"id": "update_sim_effect", "ref": "array"},
-                {"id": "effects", "ref": "array"},
+                {"id": "update_sim_effect", "ref": "new_array"},
+                {"id": "effects", "ref": "new_array"},
                 {"id": "new_state"},
                 {"id": "return_value"},
                 {"id": "out", "ref": "hyperapp_action_effect"}
@@ -3226,8 +3205,8 @@
                 {"id": "set_edit_id", "ref": "set"},
                 {"id": "focus_props", "script": "return {'selector': `#${html_id}-edit-value textarea`, focus: true}"},
                 {"id": "focus_effector", "ref": "focus_effect"},
-                {"id": "focus_effect", "ref": "array"},
-                {"id": "effects", "ref": "array"},
+                {"id": "focus_effect", "ref": "new_array"},
+                {"id": "effects", "ref": "new_array"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action_effect"}
             ],
@@ -3277,13 +3256,13 @@
                 {"id": "set_edit_id", "ref": "delete"},
                 {"id": "change_effector", "ref": "hyperapp_action_effect"},
                 {"id": "change_effect_payload"},
-                {"id": "change_effect", "ref": "array"},
+                {"id": "change_effect", "ref": "new_array"},
                 {"id": "blur_payload", "script": "return {selector: `#${html_id}-edit-value textarea`}"},
                 {"id": "blur_effector", "ref": "blur_effect"},
-                {"id": "blur_effect", "ref": "array"},
+                {"id": "blur_effect", "ref": "new_array"},
                 {"id": "empty", "value": {}},
                 {"id": "new_node_props", "ref": "set"},
-                {"id": "effects", "ref": "array"},
+                {"id": "effects", "ref": "new_array"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action_effect"}
             ],
@@ -3322,28 +3301,31 @@
                 {"id": "in"},
                 {"id": "state", "ref": "arg", "value": "state"},
                 {"id": "nodes", "ref": "arg", "value": "state.display_graph.nodes"},
+                {"id": "edges", "ref": "arg", "value": "state.display_graph.edges"},
                 {"id": "levels", "ref": "arg", "value": "state.levels"},
                 {"id": "node_id", "ref": "arg", "value": "payload.id"},
                 {"id": "set_popover_graph_path", "value": "popover_graph"},
                 {"id": "update_node", "ref": "update_node"},
                 {"id": "clear_popover", "ref": "clear_popover_graph"},
-                {"id": "valid_nodes", "script": "return nodes.filter(n => !n.ref && !levels.parents.get(n.id))"},
-                {"id": "popover_graph_nodes", "script": "return nodes.map(n => ({id: `reference-popover${n.id}`, name: n.name ?? n.id, value: [[update_node, {id: node_id, properties: {ref: n.id}}], [clear_popover]]})).concat([{id: 'out', name: 'reference nodes', value: [[clear_popover]]}])"},
-                {"id": "popover_graph_edges", "script": "return nodes.map(n => ({from: `reference-popover${n.id}`, to: 'out'}))"},
+                {"id": "valid_nodes", "script": "return nodes.filter(n => !n.ref && !levels.level_by_node.has(n.id))"},
+                {"id": "popover_graph_nodes", "script": "return nodes.map(n => ({id: `reference-popover${n.id}`, name: n.name ?? n.id, value: n.hasOwnProperty('script') || n.hasOwnProperty('nodes') ? [[update_node, {id: node_id, properties: {ref: n.id}}], [clear_popover]] : []})).concat([{id: 'out', name: 'reference nodes'}])"},
+                {"id": "popover_graph_edges", "script": "return edges.filter(e => !!nodes.find(n => e.to === n.id)).map(e => ({from: `reference-popover${e.from}`, to:  `reference-popover${e.to}`})).concat(nodes.filter(n => edges.filter(e => e.from === n.id).length === 0).map(n => ({from: `reference-popover${n.id}`, to: 'out'})))"},
                 {"id": "popover_graph_out", "value": "out"},
                 {"id": "popover_graph_value"},
                 {"id": "show_popover_graph_payload"},
                 {"id": "show_popover_graph", "ref": "show_popover_graph"},
-                {"id": "show_popover_graph_effect", "ref": "array"},
+                {"id": "show_popover_graph_effect", "ref": "new_array"},
                 {"id": "set_popover_graph", "ref": "set"},
-                {"id": "effects", "ref": "array"},
+                {"id": "effects", "ref": "new_array"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action_effect"}
             ],
             "edges": [
                 {"from": "in", "to": "out", "as": "args"},
                 {"from": "nodes", "to": "valid_nodes", "as": "nodes"},
+                {"from": "edges", "to": "popover_graph_edges", "as": "edges"},
                 {"from": "levels", "to": "valid_nodes", "as": "levels"},
+                {"from": "levels", "to": "popover_graph_edges", "as": "levels"},
                 {"from": "node_id", "to": "popover_graph_nodes", "as": "node_id"},
                 {"from": "clear_popover", "to": "popover_graph_nodes", "as": "clear_popover"},
                 {"from": "update_node", "to": "popover_graph_nodes", "as": "update_node"},
@@ -3386,7 +3368,7 @@
                         {"id": "payload", "ref": "arg", "value": "payload"},
                         {
                             "id": "id_array",
-                            "ref": "array"
+                            "ref": "new_array"
                         },
                         {
                             "id": "state",
@@ -5013,27 +4995,27 @@
                 {"id": "html_id", "ref": "arg", "value": "state.html_id"},
                 {"id": "event_name", "value": "graphclick"},
                 {"id": "clear_popover", "ref": "clear_popover_graph"},
-                {"id": "clear_popover_effect", "ref": "array"},
+                {"id": "clear_popover_effect", "ref": "new_array"},
                 {"id": "save_effector", "ref": "save_effect"},
                 {"id": "save_payload"},
                 {"id": "log_save_payload", "ref": "log"},
-                {"id": "save_effect", "ref": "array"},
-                {"id": "save_node_effects", "ref": "array"},
+                {"id": "save_effect", "ref": "new_array"},
+                {"id": "save_node_effects", "ref": "new_array"},
                 {"id": "save_name", "value": "save"},
                 {"id": "save_id", "value": "save"},
                 {"id": "save_node"},
-                {"id": "popover_graph_actions", "ref": "array"},
+                {"id": "popover_graph_actions", "ref": "new_array"},
                 {"id": "popover_graph", "ref": "create_popover_graph"},
                 {"id": "show_popover_effector", "ref": "show_popover_graph"},
-                {"id": "show_popover_effect", "ref": "array"},
+                {"id": "show_popover_effect", "ref": "new_array"},
                 {"id": "show_popover_payload"},
                 {"id": "stop_propagation_effector", "ref": "stop_propagation_effect"},
-                {"id": "stop_propagation_effect", "ref": "array"},
+                {"id": "stop_propagation_effect", "ref": "new_array"},
                 {"id": "dispatch_on_graph_click_effector", "ref": "dispatch_custom_event_effect"},
                 {"id": "dispatch_on_graph_click_payload"},
-                {"id": "dispatch_on_graph_click_effect", "ref": "array"},
-                {"id": "edit_effects", "ref": "array"},
-                {"id": "readonly_effects", "ref": "array"},
+                {"id": "dispatch_on_graph_click_effect", "ref": "new_array"},
+                {"id": "edit_effects", "ref": "new_array"},
+                {"id": "readonly_effects", "ref": "new_array"},
                 {"id": "effects", "ref": "if"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action"}
@@ -5191,7 +5173,7 @@
                 },
                 {
                     "id": "show_popover_effect",
-                    "ref": "array"
+                    "ref": "new_array"
                 },
                 {
                     "id": "stop_propagation_effector",
@@ -5204,7 +5186,7 @@
                 },
                 {
                     "id": "stop_propagation_effect",
-                    "ref": "array"
+                    "ref": "new_array"
                 },
                 {
                     "id": "if_show_popover",
@@ -5212,7 +5194,7 @@
                 },
                 {
                     "id": "effects",
-                    "ref": "array"
+                    "ref": "new_array"
                 },
                 {
                     "id": "out",
@@ -5476,11 +5458,11 @@
                 {"id": "popover_graph", "script": "return {out: 'out', nodes: [{id: 'change_type', name: 'change type', value: [[show_popover_graph, {popover_graph: type_popover}]]}, {id: 'change_as',  name: 'change as', value: [[show_edit_text, {id: edge, property: 'as', value: edge.as, oneditconfirm: update_edge}], [clear_popover]]}, {id: 'out', name: `edge from ${edge.from} to ${edge.to}`, value: [[clear_popover]]}], edges: [{from: 'change_type', to: 'out'}, {from: 'change_as', to: 'out'}]}"},
                 {"id": "show_popover_graph_payload"},
                 {"id": "show_popover_graph_effector", "ref": "show_popover_graph"},
-                {"id": "show_popover_graph", "ref": "array"},
+                {"id": "show_popover_graph", "ref": "new_array"},
                 {"id": "stop_propagation_effector", "ref": "stop_propagation_effect"},
-                {"id": "stop_propagation", "ref": "array"},
-                {"id": "editable_effects", "ref": "array"},
-                {"id": "readonly_effects", "ref": "array"},
+                {"id": "stop_propagation", "ref": "new_array"},
+                {"id": "editable_effects", "ref": "new_array"},
+                {"id": "readonly_effects", "ref": "new_array"},
                 {"id": "effects", "ref": "if"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action"}
@@ -5532,7 +5514,7 @@
         },
         {
             "id": "render_popover_graph_effect",
-            "script": "return (dispatch, payload) => requestAnimationFrame(() => {payload = _lib.no.resolve(payload); if(payload.popover_dispatch) { payload.popover_dispatch(s => [{...s, display_graph: payload.display_graph, selected: [payload.display_graph.out]}, [s.update_sim_effect, {...s, display_graph: payload.display_graph}]]) } else { const popover_dispatch = _lib.no.executeGraphNode({graph: payload.graph})('hyperapp_app')({graph: payload.graph, display_graph: payload.display_graph, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions, readonly: true, hide_types: true, sim_update_alpha: 0.3}).dispatch; dispatch(s => ({...s, popover_dispatch}));}})"
+            "script": "return (dispatch, payload) => requestAnimationFrame(() => {payload = _lib.no.resolve(payload); if(payload.popover_dispatch) { payload.popover_dispatch(s => [{...s, display_graph: payload.display_graph, selected: [payload.display_graph.out]}, [s.update_sim_effect, {...s, display_graph: payload.display_graph}]]) } else { const popover_dispatch = _lib.no.executeGraphNode({graph: payload.graph})('initialize_hyperapp_app')({graph: payload.graph, display_graph: payload.display_graph, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions, readonly: true, hide_types: true, sim_update_alpha: 0.3}).dispatch; dispatch(s => ({...s, popover_dispatch}));}})"
         },
         {
             "id": "handle_popover_event",
@@ -6475,7 +6457,7 @@
                                         "node",
                                         "meta"
                                     ],
-                                    "script": "return ({onclick: (_, payload) => [onclick, {event: payload, node_id: node.node_id}], width: 256, height: 64, id: html_id + '-' + node.node_child_id, class: `node ${meta.selected[0] === node.node_id ? 'selected': ''}`, opacity: meta.selected_edge?.from === node.node_id ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - (selected_distance * selected_distance) / 6) : 0.1})"
+                                    "script": "return ({onclick: (_, payload) => [onclick, {event: payload, node_id: node.node_id}], width: '256', height: '64', id: html_id + '-' + node.node_child_id, class: `node ${meta.selected[0] === node.node_id ? 'selected': ''}`, opacity: meta.selected_edge?.from === node.node_id ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - (selected_distance * selected_distance) / 6) : 0.1})"
                                 },
                                 {
                                     "id": "children",
@@ -6805,12 +6787,16 @@
                                             ]
                                         },
                                         {
+                                            "id": "fill_rect",
+                                            "script": "return {dom_type: 'rect', props:{class:{fill: true}, width: '10', 'height': '48'}, children: []}"
+                                        },
+                                        {
                                             "id": "order",
                                             "args": [
                                                 "shape",
                                                 "text"
                                             ],
-                                            "script": "return [shape.el, text.el]"
+                                            "script": "return [shape.el, text.el, rect]"
                                         },
                                         {
                                             "id": "out"
@@ -6868,6 +6854,11 @@
                                             "from": "text",
                                             "to": "order",
                                             "as": "text"
+                                        },
+                                        {
+                                            "from": "fill_rect",
+                                            "to": "order",
+                                            "as": "rect"
                                         },
                                         {
                                             "from": "order",
@@ -8137,7 +8128,7 @@
         },
         {
             "from": "onkey_fn",
-            "to": "hyperapp_app",
+            "to": "initialize_hyperapp_app",
             "as": "onkey_fn"
         },
         {
@@ -8173,17 +8164,17 @@
         },
         {
             "from": "html_id",
-            "to": "hyperapp_app",
+            "to": "initialize_hyperapp_app",
             "as": "html_id"
         },
         {
             "from": "render_graph_effect",
-            "to": "_hyperapp_app",
+            "to": "_initialize_hyperapp_app",
             "as": "render_graph_effect"
         },
         {
             "from": "hyperapp_view",
-            "to": "hyperapp_app",
+            "to": "initialize_hyperapp_app",
             "as": "view"
         },
         {
@@ -8194,12 +8185,12 @@
         },
         {
             "from": "update_hyperapp_action",
-            "to": "hyperapp_app",
+            "to": "initialize_hyperapp_app",
             "as": "update_hyperapp"
         },
         {
             "from": "hyperapp_init_state",
-            "to": "hyperapp_app",
+            "to": "initialize_hyperapp_app",
             "as": "init"
         },
         {
@@ -8228,7 +8219,7 @@
             "as": "display_graph"
         },
         {
-            "from": "get_display_graph_out",
+            "from": "display_graph_out",
             "to": "calculate_levels",
             "as": "selected"
         },
@@ -8275,12 +8266,12 @@
         },
         {
             "from": "sim_to_hyperapp_fn",
-            "to": "hyperapp_app",
+            "to": "initialize_hyperapp_app",
             "as": "sim_to_hyperapp_action"
         },
         {
             "from": "graph_to_sim_action",
-            "to": "hyperapp_app",
+            "to": "initialize_hyperapp_app",
             "as": "graph_to_sim_action"
         },
         {
@@ -8307,12 +8298,24 @@
         },
         {
             "from": "update_sim_effect",
-            "to": "hyperapp_app",
+            "to": "initialize_hyperapp_app",
             "as": "update_sim"
         },
         {
-            "from": "hyperapp_app",
+            "from": "initialize_hyperapp_app",
             "to": "out" 
-        }
+        },
+        {"from": "get", "to": "object"},
+        {"from": "set", "to": "object"},
+        {"from": "delete", "to": "object"},
+        {"from": "switch", "to": "flow"},
+        {"from": "if", "to": "flow"},
+        {"from": "h", "to": "hyperapp"},
+        {"from": "h_text", "to": "hyperapp"},
+        {"from": "new_array", "to": "array"},
+        {"from": "filter", "to": "array"},
+        {"from": "log", "to": "utility"},
+        {"from": "execute_graph", "to": "utility"},
+        {"from": "arg", "to": "utility"}
     ]
 }
