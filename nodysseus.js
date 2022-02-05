@@ -190,6 +190,18 @@ const resolve = (o) => {
 
 const keywords = new Set(["break", "case", "catch", "continue", "debugger", "default", "delete", "do", "else", "finally", "for", "function", "if", "in", "instanceof", "new", "return", "switch", "this", "throw", "try", "typeof", "var", "void", "while", "with"])
 
+class NodysseusError extends Error {
+    constructor(node_id, ...params) {
+        super(...params);
+
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, NodysseusError);
+        }
+
+        this.node_id = node_id;
+    }
+}
+
 const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
     let usecache = true;
 
@@ -464,7 +476,12 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
                 console.error(e);
                 console.dir(node_ref);
                 console.log(data);
-                throw new AggregateError([Error(`Error in node ${node_ref.name ?? node_ref.id}`)].concat(e instanceof AggregateError ? e.errors : [e]));
+                throw new AggregateError([
+                    new NodysseusError(
+                        node_ref.name ?? node_ref.id, 
+                        e instanceof AggregateError ? "Error in node chain" : e
+                    )]
+                    .concat(e instanceof AggregateError ? e.errors : []));
             }
         } else if(node_ref.extern) {
             const args = data.hasOwnProperty('args') && data.args._Proxy ? resolve(data.args) : (data.args ?? []);
@@ -1171,7 +1188,8 @@ const lib = {
         executeGraphValue: ({ graph, cache_id }) => executeGraph({ cache, graph, node_cache, cache_id: cache_id ?? "main" })(graph.out),
         executeGraphNode: ({ graph, cache_id }) => executeGraph({ cache, graph, node_cache, cache_id: cache_id ?? "main" }),
         resolve,
-        objToGraph
+        objToGraph,
+        NodysseusError
     },
     scripts: { d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all, listen},
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
@@ -1212,7 +1230,7 @@ const state = new Map([['in', {
     original_graph, 
     display_graph: { 
         ...display_graph, 
-        nodes: display_graph.nodes.concat(DEFAULT_GRAPH.nodes.filter(n => generic_nodes.has(n.id) && display_graph.nodes.findIndex(dn => dn.id === n.id) === -1)), 
+        nodes: display_graph.nodes.filter(n => !generic_nodes.has(n.id)).concat(DEFAULT_GRAPH.nodes),//.filter(n => generic_nodes.has(n.id) && display_graph.nodes.findIndex(dn => dn.id === n.id) === -1)), 
         edges: display_graph.edges.concat([]) 
     },
     html_id: "node-editor",

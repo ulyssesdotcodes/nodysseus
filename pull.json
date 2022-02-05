@@ -1342,6 +1342,11 @@
                     "value": "state.result"
                 },
                 {
+                    "id": "error_nodes",
+                    "ref": "arg",
+                    "value": "state.error_nodes"
+                },
+                {
                     "id": "update_arg",
                     "ref": "arg",
                     "value": "state.update"
@@ -1453,7 +1458,7 @@
                         "display_graph",
                         "selected"
                     ],
-                    "script": "try { const result = _lib.no.executeGraphValue({graph: {...display_graph, nodes: display_graph.nodes.map(n => ({...n})), edges: display_graph.edges.map(e => ({...e}))}})({state: prev_result, payload}); return {result, error: undefined}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString()} }"
+                    "script": "try { const result = _lib.no.executeGraphValue({graph: {...display_graph, nodes: display_graph.nodes.map(n => ({...n})), edges: display_graph.edges.map(e => ({...e}))}})({state: prev_result, payload}); error_nodes.clear(); return {result, error: undefined, error_nodes}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => (e instanceof _lib.no.NodysseusError ? e.node_id + ': ' : '') + e.toString()).join(\" \") : e.toString(), error_nodes: new Map(e instanceof AggregateError ? e.errors.map(e => e instanceof _lib.no.NodysseusError ? [e.node_id, e] : false).filter(n => n) : e instanceof _lib.no.NodysseusError ? [[e.node_id, e]] : [])}}"
                 },
                 {
                     "id": "result"
@@ -1470,7 +1475,7 @@
                         "payload",
                         "update_sim_effect"
                     ],
-                    "script": "return {state: {...state, result: !readonly && result.run.result?.state, result_display: !readonly && result.run.result?.display,error: !readonly && result.run.error}, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], ...(effects ?? [])]}"
+                    "script": "return {state: {...state, result: !readonly && result.run.result?.state, error: !readonly && result.run.error, error_nodes: !readonly && result.run.error_nodes, result_display: !readonly && result.run.result?.display,error: !readonly && result.run.error}, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], ...(effects ?? [])]}"
                 }
             ],
             "edges": [
@@ -1540,6 +1545,11 @@
                     "as": "graph_sim"
                 },
                 {
+                    "from": "error_nodes",
+                    "to": "run",
+                    "as": "error_nodes"
+                },
+                {
                     "from": "state_result",
                     "to": "run",
                     "as": "prev_result"
@@ -1598,7 +1608,7 @@
                     "args": [
                         "children"
                     ],
-                    "script": "return children === undefined ? [] : children.length !== undefined ? children.map(c => c.el ?? c) : [children.el ?? children]"
+                    "script": "return children === undefined ? [] : children.length !== undefined ? children.filter(c => !!c).map(c => c.el ?? c) : [children.el ?? children]"
                 },
                 {
                     "id": "fill_props",
@@ -1614,7 +1624,7 @@
                 },
                 {
                     "id": "out",
-                    "script": "return {el: {dom_type, props, children}}"
+                    "script": "(children ?? []).forEach(c => {if(!((c.hasOwnProperty('dom_type') && c.hasOwnProperty('props')) || c.hasOwnProperty('text'))){throw new Error('invalid child element');}}); return {el: {dom_type, props, children}}"
                 },
                 {
                     "id": "_out"
@@ -1708,7 +1718,7 @@
                 {
                     "id": "out_h",
                     "args": ["dom_type", "children", "props", "graph"],
-                    "script": "let run_graph = {...graph, in: 'run_h/in', out: 'run_h'}; const fn = _lib.no.executeGraphValue({graph: run_graph}); const mapped_children = (children ?? []).filter(c => c).map(c => ({...c, graph: run_graph})).map(fn).filter(c => c).map(c => c.el); return {el: _lib.ha.h(dom_type, props, mapped_children)};"
+                    "script": "let run_graph = {...graph, in: 'run_h/in', out: 'run_h'}; const fn = _lib.no.executeGraphValue({graph: run_graph}); const mapped_children = (children ?? []).map(c => ({...c, graph: run_graph})).map(fn).filter(c => c).map(c => c.el); return {el: _lib.ha.h(dom_type, props, mapped_children)};"
                 },
                 {
                     "id": "extern_h_text_args",
@@ -2522,6 +2532,7 @@
             }
         },
         {"id": "dimensions", "ref": "arg", "value": "dimensions"},
+        {"id": "error_nodes", "script": "return new Map()"},
         {
             "id": "hyperapp_init_state"
         },
@@ -5586,6 +5597,11 @@
                     "value": "readonly"
                 },
                 {
+                    "id": "error",
+                    "ref": "arg",
+                    "value": "error"
+                },
+                {
                     "id": "result_wrapper",
                     "ref": "run_h"
                 },
@@ -5607,7 +5623,7 @@
                         "popover_graph",
                         "popover_graph_h"
                     ],
-                    "script": "return [node_editor.el, !readonly && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, !!result_display && result_display.el].filter(e => e)"
+                    "script": "return [node_editor.el, !readonly && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, !!result_display && result_display.el, !!error && error_display.el].filter(e => e)"
                 },
                 {
                     "id": "edit_text",
@@ -6286,6 +6302,11 @@
                             "value": "readonly"
                         },
                         {
+                            "id": "error_nodes",
+                            "ref": "arg",
+                            "value": "error_nodes"
+                        },
+                        {
                             "id": "hide_types",
                             "ref": "arg",
                             "value": "hide_types"
@@ -6370,7 +6391,7 @@
                         {
                             "id": "node_layout",
                             "args": ["node_inputs", "node_layout_map", "nodes", "graph", "selected", "selected_edge"],
-                            "script": "console.log(hide_types); return nodes.map(n => _lib.no.executeGraphValue({state: new Map(), graph: {...graph, in: '_' + n.node_id, out: node_layout_map, html_id: html_id}, cache_id: '_' + n.node_id})(Object.assign({node: Object.assign({}, n, display_graph.nodes.find(dgn => dgn.id === n.node_id)), hide_types, selected_distance: levels.distance_from_selected.get(n.node_child_id), level: levels.level_by_node.get(n.node_id)}, _node_inputs)))"
+                            "script": "return nodes.map(n => _lib.no.executeGraphValue({state: new Map(), graph: {...graph, in: '_' + n.node_id, out: node_layout_map, html_id: html_id}, cache_id: '_' + n.node_id})(Object.assign({node: Object.assign({}, n, display_graph.nodes.find(dgn => dgn.id === n.node_id)), hide_types, selected_distance: levels.distance_from_selected.get(n.node_child_id), level: levels.level_by_node.get(n.node_id), error: !error_nodes ? false : [...error_nodes.keys()].filter(k => k.startsWith(n.node_id)).length > 0}, _node_inputs)))"
                         },
                         {
                             "id": "node_layout_map",
@@ -6417,6 +6438,11 @@
                                     "value": "hide_types"
                                 },
                                 {
+                                    "id": "error",
+                                    "ref": "arg",
+                                    "value": "error"
+                                },
+                                {
                                     "id": "out"
                                 },
                                 {
@@ -6453,6 +6479,11 @@
                                             "value": "node.node"
                                         },
                                         {
+                                            "id": "error",
+                                            "ref": "arg",
+                                            "value": "error"
+                                        },
+                                        {
                                             "id": "node_shape_attrs",
                                             "args": [
                                                 "value",
@@ -6461,7 +6492,7 @@
                                                 "selected_distance",
                                                 "nodes"
                                             ],
-                                            "script": "const r = 24; return value !== undefined ? {class: 'shape value', points: `4,${4 + r} ${4 + r},${4 + r} ${4 + r * 0.5},4`} : script ? {class: 'shape script', width: r, height: r, x: 10, y: 10} : ref ? {class: 'shape ref', width: r, height: r, x: 10, y: 10} : nodes ? {class: 'shape graph', r: r * 0.5, cx: r * 0.5 + 4, cy: r * 0.5 + 4}  : {class: 'shape none', r: r * 0.5 , cx: r * 0.5 + 4, cy: r * 0.5 + 4}"
+                                            "script": "const r = 24; return value !== undefined ? {class: {shape: true, value: true, error}, points: `4,${4 + r} ${4 + r},${4 + r} ${4 + r * 0.5},4`} : script ? {class:{shape: true, script: true, error}, width: r, height: r, x: 10, y: 10} : ref ? {class: {shape: true, ref: true, error}, width: r, height: r, x: 10, y: 10} : nodes ? {class: {shape: true, graph: true, error}, r: r * 0.5, cx: r * 0.5 + 4, cy: r * 0.5 + 4}  : {class: {shape: true, none: true, error}, r: r * 0.5 , cx: r * 0.5 + 4, cy: r * 0.5 + 4}"
                                         },
                                         {
                                             "id": "default_color",
@@ -6783,6 +6814,11 @@
                                             "from": "selected_distance",
                                             "to": "node_shape_attrs",
                                             "as": "selected_distance"
+                                        },
+                                        {
+                                            "from": "error",
+                                            "to": "node_shape_attrs",
+                                            "as": "error"
                                         },
                                         {
                                             "from": "default_color",
@@ -7446,6 +7482,11 @@
                             "as": "html_id"
                         },
                         {
+                            "from": "error_nodes",
+                            "to": "node_layout",
+                            "as": "error_nodes"
+                        },
+                        {
                             "from": "display_graph",
                             "to": "node_layout",
                             "as": "display_graph"
@@ -7827,6 +7868,10 @@
                     ]
                 },
                 {
+                    "id": "error_display",
+                    "script": "return {el: {dom_type: 'div', props: {class:{error: true, main: true}}, children: [{dom_type: 'text_value', text: error}]}}"
+                },
+                {
                     "id": "noop",
                     "script": "return {el: _lib.ha.h('div', {}, _lib.ha.text('loading...'))}"
                 },
@@ -7871,6 +7916,21 @@
                     "from": "display_graph",
                     "to": "out_input",
                     "as": "display_graph"
+                },
+                {
+                    "from": "error",
+                    "to": "error_display",
+                    "as": "error"
+                },
+                {
+                    "from": "error",
+                    "to": "wrapper_children",
+                    "as": "error"
+                },
+                {
+                    "from": "error_display",
+                    "to": "wrapper_children",
+                    "as": "error_display"
                 },
                 {
                     "from": "readonly",
@@ -8009,6 +8069,11 @@
             "from": "get_display_graph",
             "to": "update_sim",
             "as": "display_graph"
+        },
+        {
+            "from": "error_nodes",
+            "to": "hyperapp_init_state",
+            "as": "error_nodes"
         },
         {
             "from": "readonly",

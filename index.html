@@ -133,6 +133,10 @@
       stroke: #66ccff;
     }
 
+    .node .shape.error {
+      fill: #FF0000 !important;
+    }
+
     .node.selected .shape.none {
       stroke: #fcc;
     }
@@ -187,6 +191,15 @@
 
     .edge-info.selected {
       filter: url("#selected-flood-background");
+    }
+
+    .error.main {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 25vw;
+      color: red;
+      padding: 1em;
     }
 
     /* popover */
