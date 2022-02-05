@@ -1372,6 +1372,11 @@
                     "value": "state.readonly"
                 },
                 {
+                    "id": "html_id",
+                    "ref": "arg",
+                    "value": "state.html_id"
+                },
+                {
                     "id": "effects",
                     "ref": "arg",
                     "value": "effects"
@@ -1458,7 +1463,7 @@
                         "display_graph",
                         "selected"
                     ],
-                    "script": "try { const result = _lib.no.executeGraphValue({graph: {...display_graph, nodes: display_graph.nodes.map(n => ({...n})), edges: display_graph.edges.map(e => ({...e}))}})({state: prev_result, payload}); error_nodes.clear(); return {result, error: undefined, error_nodes}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => (e instanceof _lib.no.NodysseusError ? e.node_id + ': ' : '') + e.toString()).join(\" \") : e.toString(), error_nodes: new Map(e instanceof AggregateError ? e.errors.map(e => e instanceof _lib.no.NodysseusError ? [e.node_id, e] : false).filter(n => n) : e instanceof _lib.no.NodysseusError ? [[e.node_id, e]] : [])}}"
+                    "script": "try { const result = _lib.no.executeGraphValue({graph: {...display_graph, nodes: display_graph.nodes.map(n => ({...n})), edges: display_graph.edges.map(e => ({...e}))}})({state: prev_result, payload}); error_nodes.clear(); if(result.display && !result.display.el.props.key){ result.display.el.props.key = `${html_id}-result_display` } return {result, error: undefined, error_nodes}; } catch(e) { return {error: e instanceof AggregateError ? e.errors.map(e => (e instanceof _lib.no.NodysseusError ? e.node_id + ': ' : '') + e.toString()).join(\" \") : e.toString(), error_nodes: new Map(e instanceof AggregateError ? e.errors.map(e => e instanceof _lib.no.NodysseusError ? [e.node_id, e] : false).filter(n => n) : e instanceof _lib.no.NodysseusError ? [[e.node_id, e]] : [])}}"
                 },
                 {
                     "id": "result"
@@ -1514,6 +1519,11 @@
                     "from": "display_graph",
                     "to": "run",
                     "as": "display_graph" 
+                },
+                {
+                    "from": "html_id",
+                    "to": "run",
+                    "as": "html_id" 
                 },
                 {"from": "nodes", "to": "calculate_levels", "as": "nodes"},
                 {"from": "links", "to": "calculate_levels", "as": "links"},
@@ -5577,6 +5587,11 @@
                     "value": "show_result"
                 },
                 {
+                    "id": "html_id",
+                    "ref": "arg",
+                    "value": "html_id"
+                },
+                {
                     "id": "result_display",
                     "ref": "arg",
                     "value": "result_display"
@@ -5970,7 +5985,7 @@
                         },
                         {
                             "id": "props",
-                            "script": "return {id: `${html_id}-popover`, onselectnode: handle_popover_event, ongraphclick: (s, p) => [s, [clear_popover]]}"
+                            "script": "return {id: `${html_id}-popover`, key:  `${html_id}-popover`, onselectnode: handle_popover_event, ongraphclick: (s, p) => [s, [clear_popover]]}"
                         },
                         {
                             "id": "dom_type",
@@ -7869,7 +7884,7 @@
                 },
                 {
                     "id": "error_display",
-                    "script": "return {el: {dom_type: 'div', props: {class:{error: true, main: true}}, children: [{dom_type: 'text_value', text: error}]}}"
+                    "script": "return {el: {dom_type: 'div', props: {class:{error: true, main: true}, key: `${html_id}-error_display`}, children: [{dom_type: 'text_value', text: error}]}}"
                 },
                 {
                     "id": "noop",
@@ -7921,6 +7936,11 @@
                     "from": "error",
                     "to": "error_display",
                     "as": "error"
+                },
+                {
+                    "from": "html_id",
+                    "to": "error_display",
+                    "as": "html_id"
                 },
                 {
                     "from": "error",
