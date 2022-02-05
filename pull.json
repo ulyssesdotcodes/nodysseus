@@ -3082,6 +3082,10 @@
             "script": "return (dispatch, payload) => { localStorage.setItem('display_graph', JSON.stringify(payload.display_graph)); localStorage.setItem('display_graph_' + Date.now(), JSON.stringify(payload.display_graph));}"
         },
         {
+            "id": "new_graph_effect",
+            "script": "return (dispatch, payload) => { localStorage.removeItem('display_graph'); window.location.reload(); }"
+        },
+        {
             "id": "focus_effect",
             "script": "return (dispatch, payload) => requestAnimationFrame(() => document.querySelector(payload.selector).focus())"
         },
@@ -5004,6 +5008,12 @@
                 {"id": "save_name", "value": "save"},
                 {"id": "save_id", "value": "save"},
                 {"id": "save_node"},
+                {"id": "new_graph_effector", "ref": "new_graph_effect"},
+                {"id": "new_graph_effect", "ref": "new_array"},
+                {"id": "new_graph_name", "value": "new_graph"},
+                {"id": "new_graph_id", "value": "new_graph"},
+                {"id": "new_graph_node_effects", "ref": "new_array"},
+                {"id": "new_graph_node"},
                 {"id": "popover_graph_actions", "ref": "new_array"},
                 {"id": "popover_graph", "ref": "create_popover_graph"},
                 {"id": "show_popover_effector", "ref": "show_popover_graph"},
@@ -5033,6 +5043,12 @@
                 {"from": "save_name", "to": "save_node", "as": "name"},
                 {"from": "save_id", "to": "save_node", "as": "id"},
                 {"from": "save_node", "to": "popover_graph_actions", "as": "a"},
+                {"from": "new_graph_effector", "to": "new_graph_effect", "as": "a0"},
+                {"from": "new_graph_effect", "to": "new_graph_node_effects", "as": "a0"},
+                {"from": "new_graph_node_effects", "to": "new_graph_node", "as": "value"},
+                {"from": "new_graph_name", "to": "new_graph_node", "as": "name"},
+                {"from": "new_graph_id", "to": "new_graph_node", "as": "id"},
+                {"from": "new_graph_node", "to": "popover_graph_actions", "as": "b"},
                 {"from": "name", "to": "popover_graph", "as": "name"},
                 {"from": "popover_graph_actions", "to": "popover_graph", "as": "nodes"},
                 {"from": "popover_graph", "to": "show_popover_payload", "as": "popover_graph"},
