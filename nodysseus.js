@@ -406,8 +406,12 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
             }
 
             const res = run_with_val(outid)(combined_data_input)
-            if(typeof res === 'object' && !!res && !res._Proxy && !Array.isArray(res) && _needsresolve && Object.keys(res).length > 0) {
-                res._needsresolve = !!res._needsresolve || _needsresolve;
+            if(typeof res === 'object' && !!res && !res._Proxy && !Array.isArray(res) && Object.keys(res).length > 0) {
+                if(_needsresolve || !!res._needsresolve) {
+                    res._needsresolve = !!res._needsresolve || _needsresolve;
+                } else if(res.hasOwnProperty("_needsresolve")) {
+                    delete res._needsresolve;
+                }
             }
             cache.get(cache_id).set(outid, [res, combined_data_input]);
             return res;
@@ -467,7 +471,11 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
                 }
 
                 if(typeof results === 'object' && !!results && !results._Proxy && !Array.isArray(results) && Object.keys(results).length > 0) {
-                    results._needsresolve = !!results._needsresolve || _needsresolve;
+                    if(_needsresolve || !!results._needsresolve) {
+                        results._needsresolve = !!results._needsresolve || _needsresolve;
+                    } else if(results.hasOwnProperty("_needsresolve")) {
+                        delete results._needsresolve;
+                    }
                 }
 
                 return results;
@@ -511,15 +519,318 @@ const test_graph = {
     "nodes": [
         {
             "id": "main/out",
-            "args": ["value"],
-            "script": "return {state: {}};"
+            "args": [
+                "value"
+            ],
+            "script": "console.log(\"state\")\nconsole.log(state);\nconsole.log(\"prev\")\nconsole.log(prev);\nreturn {state, display};"
         },
-        { "id": "main/in" }
+        {
+            "id": "main/in"
+        },
+        {
+            "id": "63tva08",
+            "ref": "h",
+            "name": "main display"
+        },
+        {
+            "id": "l6vdvtn",
+            "ref": "new_array",
+            "name": "display elements"
+        },
+        {
+            "id": "q23fegi",
+            "value": "div"
+        },
+        {
+            "id": "l6mvkla",
+            "name": "props"
+        },
+        {
+            "id": "o1wn5x1",
+            "name": "class"
+        },
+        {
+            "id": "zz730do",
+            "value": "true"
+        },
+        {
+            "id": "c2sko9c",
+            "name": "hello world text",
+            "out": "c2sko9c",
+            "nodes": [
+                {
+                    "id": "c2sko9c",
+                    "ref": "h_text",
+                    "name": "hello world text"
+                },
+                {
+                    "id": "2lr3ihi",
+                    "value": "Hello, world!"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "2lr3ihi",
+                    "to": "c2sko9c",
+                    "as": "text"
+                }
+            ]
+        },
+        {
+            "id": "ukbdszl",
+            "ref": "h",
+            "name": "display text"
+        },
+        {
+            "id": "un5cq1q",
+            "value": "div"
+        },
+        {
+            "id": "0alhppw",
+            "ref": "new_array",
+            "name": "run count display"
+        },
+        {
+            "id": "g82nw07",
+            "ref": "h_text"
+        },
+        {
+            "id": "pgygs2p/pgygs2p",
+            "ref": "h",
+            "name": "styles/out"
+        },
+        {
+            "id": "pgygs2p/vdyskp6",
+            "value": "style",
+            "name": ""
+        },
+        {
+            "id": "pgygs2p/1tf3vvf",
+            "ref": "new_array",
+            "name": "styles/1tf3vvf"
+        },
+        {
+            "id": "pgygs2p/6yewnx1",
+            "ref": "h_text",
+            "name": "styles/6yewnx1"
+        },
+        {
+            "id": "pgygs2p/02951w8",
+            "value": ".result { position: absolute; bottom: 0; left: 0; font-size: 4em}\n.run-count { font-size: .5em; color: green}",
+            "name": "css styles"
+        },
+        {
+            "id": "tznmg79",
+            "ref": "set",
+            "name": "new state"
+        },
+        {
+            "ref": "arg",
+            "id": "lptd9k3",
+            "value": "state"
+        },
+        {
+            "id": "4ilqcxt",
+            "value": "runcount"
+        },
+        {
+            "ref": "arg",
+            "id": "xev2phu",
+            "value": "state"
+        },
+        {
+            "ref": "arg",
+            "id": "00ahbis",
+            "value": "state.runcount"
+        },
+        {
+            "id": "gbh28eu",
+            "script": "return (isNaN(runcount) ? 0 : runcount) + 1",
+            "name": "add 1"
+        },
+        {
+            "ref": "arg",
+            "id": "wegu4xm",
+            "value": "state.runcount"
+        },
+        {
+            "id": "wh4juqx",
+            "ref": "h_text"
+        },
+        {
+            "id": "edqfgkn",
+            "value": "run count: "
+        },
+        {
+            "id": "2t4s9uj",
+            "name": "run count props"
+        },
+        {
+            "id": "j630j9a",
+            "value": "run-count"
+        }
     ],
     "edges": [
-        { "from": "main/in", "to": "main/out", "as": "args", "type": "ref"}
+        {
+            "from": "main/in",
+            "to": "main/out",
+            "as": "args",
+            "type": "ref"
+        },
+        {
+            "from": "63tva08",
+            "to": "main/out",
+            "as": "display"
+        },
+        {
+            "from": "l6vdvtn",
+            "to": "63tva08",
+            "as": "children"
+        },
+        {
+            "from": "q23fegi",
+            "to": "63tva08",
+            "as": "dom_type"
+        },
+        {
+            "from": "c2sko9c",
+            "to": "l6vdvtn",
+            "as": "arg1"
+        },
+        {
+            "from": "pgygs2p/pgygs2p",
+            "to": "l6vdvtn",
+            "as": "arg0"
+        },
+        {
+            "from": "l6mvkla",
+            "to": "63tva08",
+            "as": "props"
+        },
+        {
+            "from": "o1wn5x1",
+            "to": "l6mvkla",
+            "as": "class"
+        },
+        {
+            "from": "zz730do",
+            "to": "o1wn5x1",
+            "as": "result"
+        },
+        {
+            "from": "ukbdszl",
+            "to": "l6vdvtn",
+            "as": "arg2"
+        },
+        {
+            "from": "un5cq1q",
+            "to": "ukbdszl",
+            "as": "dom_type"
+        },
+        {
+            "from": "0alhppw",
+            "to": "ukbdszl",
+            "as": "children"
+        },
+        {
+            "from": "g82nw07",
+            "to": "0alhppw",
+            "as": "arg1"
+        },
+        {
+            "from": "pgygs2p/vdyskp6",
+            "to": "pgygs2p/pgygs2p",
+            "as": "dom_type"
+        },
+        {
+            "from": "pgygs2p/1tf3vvf",
+            "to": "pgygs2p/pgygs2p",
+            "as": "children"
+        },
+        {
+            "from": "pgygs2p/6yewnx1",
+            "to": "pgygs2p/1tf3vvf",
+            "as": "arg0"
+        },
+        {
+            "from": "pgygs2p/02951w8",
+            "to": "pgygs2p/6yewnx1",
+            "as": "text"
+        },
+        {
+            "from": "tznmg79",
+            "to": "main/out",
+            "as": "state"
+        },
+        {
+            "from": "lptd9k3",
+            "to": "tznmg79",
+            "as": "target"
+        },
+        {
+            "from": "4ilqcxt",
+            "to": "tznmg79",
+            "as": "path"
+        },
+        {
+            "from": "xev2phu",
+            "to": "main/out",
+            "as": "prev"
+        },
+        {
+            "from": "00ahbis",
+            "to": "g82nw07",
+            "as": "text"
+        },
+        {
+            "from": "gbh28eu",
+            "to": "tznmg79",
+            "as": "value"
+        },
+        {
+            "from": "wegu4xm",
+            "to": "gbh28eu",
+            "as": "runcount"
+        },
+        {
+            "from": "wh4juqx",
+            "to": "0alhppw",
+            "as": "arg0"
+        },
+        {
+            "from": "edqfgkn",
+            "to": "wh4juqx",
+            "as": "text"
+        },
+        {
+            "from": "2t4s9uj",
+            "to": "ukbdszl",
+            "as": "props"
+        },
+        {
+            "from": "j630j9a",
+            "to": "2t4s9uj",
+            "as": "class"
+        }
     ]
 }
+
+// const test_graph = {
+//     "in": "main/in",
+//     "out": "main/out",
+//     "id": "untitled",
+//     "nodes": [
+//         {
+//             "id": "main/out",
+//             "args": ["value"],
+//             "script": "return {state: {}};"
+//         },
+//         { "id": "main/in" }
+//     ],
+//     "edges": [
+//         { "from": "main/in", "to": "main/out", "as": "args", "type": "ref"}
+//     ]
+// }
 
 //////////
 // TODO: convert these to nodes
@@ -718,7 +1029,7 @@ const updateSimulationNodes = (data) => {
                 to: e.to,
                 target: main_node_map.get(e.to),
                 sibling_index_normalized: simulation_node_data.get(e.from + "_" + e.to).sibling_index_normalized,
-                strength: 4 / (1 + 2 * (children_map.get(main_node_map.get(e.from))?.length ?? 0)),
+                strength: 3 / (1 + 2 * (children_map.get(main_node_map.get(e.from))?.length ?? 0)),
                 distance: 128 
                     + 16 * (parents_map.get(main_node_map.get(e.to))?.length ?? 0) 
             };
@@ -828,6 +1139,7 @@ const d3subscription = (dispatch, props) => {
             dispatch([s => (selected = s.selected[0], dimensions = s.dimensions, s.nodes.length !== simulation.nodes().length ? [props.action, data] : s)]);
             simulation.tick();
             const visible_nodes = [];
+            const visible_node_set = new Set();
             let selected_pos;
 
             simulation.nodes().map(n => {
@@ -867,10 +1179,19 @@ const d3subscription = (dispatch, props) => {
 
                     if (l.source.node_id === selected) {
                         visible_nodes.push({x: target.x, y: target.y});
+                        visible_node_set.add(l.target.node_id);
                     } else if (l.target.node_id === selected) {
                         visible_nodes.push({x: source.x, y: source.y});
+                        visible_node_set.add(l.source.node_id);
                     }
+                }
+            })
 
+            // iterate again to get grandparents
+            simulation.force('links').links().map(l => {
+                if(visible_node_set.has(l.target.node_id) && !visible_node_set.has(l.source.node_id)) {
+                    const source = {x: l.source.x - node_el_width * 0.5, y: l.source.y};
+                    visible_nodes.push({x: source.x, y: source.y});
                 }
             })
 
