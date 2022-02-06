@@ -909,10 +909,14 @@ const updateSimulationNodes = (data) => {
         simulation_node_data.set(n.node_child_id, n)
     });
 
+    const start_sim_node_size = simulation_node_data.size;
+    
     const simulation_link_data = new Map();
     data.simulation.force('links').links().forEach(l => {
         simulation_link_data.set(l.source.node_child_id, l);
     })
+
+    const start_sim_link_size = simulation_link_data.size;
 
     const main_node_map = new Map();
 
@@ -1038,8 +1042,8 @@ const updateSimulationNodes = (data) => {
 
     if (typeof (links?.[0]?.source) === "string") {
         if (
-            data.simulation.nodes()?.length !== nodes.length ||
-            data.simulation.force('links')?.links().length !== links.length) {
+            simulation_node_data.size !== start_sim_node_size ||
+            simulation_link_data.size !== start_sim_link_size) {
             data.simulation.alpha(data.sim_update_alpha);
         }
 
@@ -1134,9 +1138,13 @@ const d3subscription = (dispatch, props) => {
                 })
             }))};
 
+
         if (simulation.alpha() > simulation.alphaMin()) {
+            const ids = simulation.nodes().map(n => n.node_id).join(',');
             stopped = false;
-            dispatch([s => (selected = s.selected[0], dimensions = s.dimensions, s.nodes.length !== simulation.nodes().length ? [props.action, data] : s)]);
+            dispatch([s => (selected = s.selected[0], dimensions = s.dimensions, 
+                s.nodes.map(n => n.node_id).join(',') !== ids ? [props.action, data] : s
+                )]);
             simulation.tick();
             const visible_nodes = [];
             const visible_node_set = new Set();
@@ -1523,6 +1531,8 @@ const generic_nodes = new Set([
     "log",
     "execute_graph",
     "arg",
+    "apply",
+    "partial"
 ]);
 
 const lib = {
