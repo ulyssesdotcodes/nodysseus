@@ -273,7 +273,7 @@
                         "init",
                         "view"
                     ],
-                    "script": "return {dispatch: _lib.ha.app({dispatch: _lib.no.middleware, init: () => [init, [d => d(update_hyperapp)]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [[_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}],  !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: window.innerWidth, y: window.innerHeight}}, [update_sim, s]])]})}"
+                    "script": "return {dispatch: _lib.ha.app({dispatch: _lib.no.middleware, init: () => [init, [update_hyperapp]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [[_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}],  !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: window.innerWidth, y: window.innerHeight}}, [update_sim, s]])]})}"
                 }
             ],
             "edges": [
@@ -693,9 +693,24 @@
                 {"from": "graph", "to": "out", "as": "graph"}
             ]
         },
-        {"id": "apply", "script": "return _lib.no.executeGraphNode({graph: _graph})(fn)(Object.assign({_args: args}, args));"},
-        {"id": "apply_graph", "script": "return _lib.no.executeGraphNode({graph})(fn)(Object.assign({_args: args}, args));"},
-        {"id": "partial", "script": "return _lib.no.executeGraphNode({graph: _graph})(fn)(Object.assign({}, _args, args))"},
+        {"id": "apply", "script": "return _lib.no.executeGraphNode({graph: _graph})(fn)(args);"},
+        {"id": "apply_graph", "script": "return _lib.no.executeGraphNode({graph})(fn)(args);"},
+        {
+            "id": "partial", 
+            "nodes": [
+                {"id": "in"},
+                {"id": "input_value", "ref": "arg", "value": "_args"},
+                {"id": "fn", "ref": "arg", "value": "fn"},
+                {"id": "args", "ref": "arg", "value": "args"},
+                {"id": "out", "script": "return _lib.no.executeGraphNode({graph: _graph})(fn)(Object.assign({}, _args, args))"}
+            ],
+            "edges": [
+                {"from": "in", "to": "out", "as": "args", "type": "ref"},
+                {"from": "fn", "to": "out", "as": "fn"},
+                {"from": "args", "to": "out", "as": "args"},
+                {"from": "input_value", "to": "out", "as": "_args"}
+            ]
+        },
         {"id": "partial_graph", "script": "return _lib.no.executeGraphNode({graph})(fn)(Object.assign({}, _args, args))"},
         {
             "id": "resolve",
@@ -851,7 +866,7 @@
         {
             "id": "arg",
             "args": ["node_inputs"],
-            "script": "return typeof _node.value === 'string' ? _lib.just.get(_node_inputs, _node.value) : _node_inputs[_node.value]"
+            "script": "return typeof _node.value === 'string' ? _node.value === '_args' ? _node_inputs : _lib.just.get(_node_inputs, _node.value) : _node_inputs[_node.value]"
         },
         {
             "id": "set-mutable",
@@ -2565,6 +2580,10 @@
             "ref": "hyperapp_action"
         },
         {
+            "id": "update_hyperapp_effect",
+            "ref": "hyperapp_action_effect"
+        },
+        {
             "id": "html_id",
             "ref": "arg",
             "value": "html_id"
@@ -3066,7 +3085,11 @@
         },
         {
             "id": "save_effect",
-            "script": "return (dispatch, payload) => { localStorage.setItem('display_graph', JSON.stringify(payload.display_graph)); localStorage.setItem('display_graph_' + Date.now(), JSON.stringify(payload.display_graph));}"
+            "script": "return (dispatch, payload) => { localStorage.setItem(payload.display_graph.name, JSON.stringify(payload.display_graph)); localStorage.setItem(payload.display_graph.name + '_' + Date.now().toISOString(), JSON.stringify(payload.display_graph));}"
+        },
+        {
+            "id": "export_effect",
+            "script": "return (dispatch, payload) => { console.log(payload); const str = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(payload.display_graph))}`; const a = document.createElement('a'); a.setAttribute('href', str); a.setAttribute('download', payload.display_graph.id + '.json'); a.click(); a.remove();}"
         },
         {
             "id": "new_graph_effect",
@@ -3088,6 +3111,8 @@
                 {"id": "state", "ref": "arg", "value": "state"},
                 {"id": "nodes", "ref": "arg", "value": "state.display_graph.nodes"},
                 {"id": "edges", "ref": "arg", "value": "state.display_graph.edges"},
+                {"id": "update_hyperapp", "ref": "arg", "value": "state.update_hyperapp"},
+                {"id": "update_hyperapp_effect", "ref": "new_array"},
                 {"id": "display_graph_nodes_path", "value": "display_graph.nodes"},
                 {"id": "display_graph_edges_path", "value": "display_graph.edges"},
                 {"id": "node_id", "ref": "arg", "value": "payload.id"},
@@ -3098,6 +3123,7 @@
                 {"id": "display_graph_nodes_path", "value": "display_graph.nodes"},
                 {"id": "set_display_graph_nodes", "ref": "set"},
                 {"id": "set_display_graph_edges", "ref": "set"},
+                {"id": "effects", "ref": "new_array"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action"}
             ],
@@ -3118,6 +3144,9 @@
                 {"from": "replace_edges", "to": "set_display_graph_edges", "as": "value"},
                 {"from": "display_graph_edges_path", "to": "set_display_graph_edges", "as": "path"},
                 {"from": "set_display_graph_edges", "to": "result", "as": "state"},
+                {"from": "update_hyperapp", "to": "update_hyperapp_effect", "as": "a0"},
+                {"from": "update_hyperapp_effect", "to": "effects", "as": "a0"},
+                {"from": "effects", "to": "result", "as": "effects"},
                 {"from": "result", "to": "out", "as": "fn", "type": "ref"}
             ]
         },
@@ -3147,6 +3176,9 @@
                 {"id": "replace_edge", "script": "return edges.map(e => e.from === edge.from && e.to === edge.to ? Object.assign({}, e, Object.fromEntries(Object.entries(update).map(e => [e[0], e[1] === '' ? undefined : e[1]]))) : e)"},
                 {"id": "display_graph_edges_path", "value": "display_graph.edges"},
                 {"id": "set_display_graph_edges", "ref": "set"},
+                {"id": "update_hyperapp", "ref": "arg", "value": "state.update_hyperapp"},
+                {"id": "update_hyperapp_effect", "ref": "new_array"},
+                {"id": "effects", "ref": "new_array"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action"}
             ],
@@ -3159,6 +3191,9 @@
                 {"from": "display_graph_edges_path", "to": "set_display_graph_edges", "as": "path"},
                 {"from": "replace_edge", "to": "set_display_graph_edges", "as": "value"},
                 {"from": "set_display_graph_edges", "to": "result", "as": "state"},
+                {"from": "update_hyperapp", "to": "update_hyperapp_effect", "as": "a0"},
+                {"from": "update_hyperapp_effect", "to": "effects", "as": "a0"},
+                {"from": "effects", "to": "result", "as": "effects"},
                 {"from": "result", "to": "out", "as": "fn", "type": "ref"}
             ]
         },
@@ -3173,6 +3208,79 @@
             "edges": [
                 {"from": "in", "to": "out", "as": "args"},
                 {"from": "update_edge_action", "to": "out", "as": "fn"}
+            ]
+        },
+        {
+            "id": "copy_effect",
+            "out": "out",
+            "nodes": [
+                {"id": "in"},
+                {"id": "state", "ref": "arg", "value": "state"},
+                {"id": "clipboard_path", "value": "clipboard"},
+                {"id": "node", "ref": "arg", "value": "payload.id"},
+                {"id": "set_clipboard", "ref": "set"},
+                {"id": "effects", "ref": "new_array"},
+                {"id": "result"},
+                {"id": "out", "ref": "hyperapp_action_effect"}
+            ],
+            "edges": [
+                {"from": "in", "to": "out", "as": "args"},
+                {"from": "state", "to": "set_clipboard", "as": "target"},
+                {"from": "clipboard_path", "to": "set_clipboard", "as": "path"},
+                {"from": "node", "to": "set_clipboard", "as": "value"},
+                {"from": "set_clipboard", "to": "result", "as": "state"},
+                {"from": "result", "to": "out", "as": "fn", "type": "ref"}
+            ]
+        },
+        {
+            "id": "paste_node_effect",
+            "out": "out",
+            "nodes": [
+                {"id": "in"},
+                {"id": "state", "ref": "arg", "value": "state"},
+                {"id": "nodes", "ref": "arg", "value": "state.display_graph.nodes"},
+                {"id": "edges", "ref": "arg", "value": "state.display_graph.edges"},
+                {"id": "randid", "ref": "arg", "value": "payload.randid"},
+                {"id": "selected", "ref": "arg", "value": "state.selected.0"},
+                {"id": "id_path", "value": "id"},
+                {"id": "node_id", "ref": "arg", "value": "state.clipboard"},
+                {"id": "node", "script": "return nodes.find(n => n.id === node_id)"},
+                {"id": "clipboard_path", "value": "clipboard"},
+                {"id": "delete_clipboard", "ref": "delete"},
+                {"id": "add_node_effector", "ref": "add_node"},
+                {"id": "add_node_payload", "ref": "set"},
+                {"id": "add_node_effect", "ref": "new_array"},
+                {"id": "add_edge_effector", "ref": "add_edge"},
+                {"id": "add_edge_payload"},
+                {"id": "add_edge_effect", "ref": "new_array"},
+                {"id": "update_hyperapp", "ref": "arg", "value": "state.update_hyperapp"},
+                {"id": "update_hyperapp_effect", "ref": "new_array"},
+                {"id": "effects", "ref": "new_array"},
+                {"id": "result"},
+                {"id": "out", "ref": "hyperapp_action_effect"}
+            ],
+            "edges": [
+                {"from": "in", "to": "out", "as": "args"},
+                {"from": "state", "to": "delete_clipboard", "as": "target"},
+                {"from": "node_id", "to": "node", "as": "node_id"},
+                {"from": "nodes", "to": "node", "as": "nodes"},
+                {"from": "id_path", "to": "add_node_payload", "as": "path"},
+                {"from": "randid", "to": "add_node_payload", "as": "value"},
+                {"from": "node", "to": "add_node_payload", "as": "target"},
+                {"from": "clipboard_path", "to": "delete_clipboard", "as": "path"},
+                {"from": "delete_clipboard", "to": "result", "as": "state"},
+                {"from": "add_node_effector", "to": "add_node_effect", "as": "a0"},
+                {"from": "add_node_payload", "to": "add_node_effect", "as": "a1"},
+                {"from": "add_node_effect", "to": "effects", "as": "a0"},
+                {"from": "randid", "to": "add_edge_payload", "as": "from"},
+                {"from": "selected", "to": "add_edge_payload", "as": "to"},
+                {"from": "add_edge_effector", "to": "add_edge_effect", "as": "a0"},
+                {"from": "add_edge_payload", "to": "add_edge_effect", "as": "a1"},
+                {"from": "add_edge_effect", "to": "effects", "as": "a1"},
+                {"from": "update_hyperapp", "to": "update_hyperapp_effect", "as": "a0"},
+                {"from": "update_hyperapp_effect", "to": "effects", "as": "a2"},
+                {"from": "effects", "to": "result", "as": "effects"},
+                {"from": "result", "to": "out", "as": "fn", "type": "ref"}
             ]
         },
         {
@@ -5032,6 +5140,13 @@
                 {"id": "save_name", "value": "save"},
                 {"id": "save_id", "value": "save"},
                 {"id": "save_node"},
+                {"id": "export_effector", "ref": "export_effect"},
+                {"id": "export_payload"},
+                {"id": "export_effect", "ref": "new_array"},
+                {"id": "export_node_effects", "ref": "new_array"},
+                {"id": "export_name", "value": "export"},
+                {"id": "export_id", "value": "export"},
+                {"id": "export_node"},
                 {"id": "new_graph_effector", "ref": "new_graph_effect"},
                 {"id": "new_graph_effect", "ref": "new_array"},
                 {"id": "new_graph_name", "value": "new_graph"},
@@ -5063,10 +5178,23 @@
                 {"from": "save_effector", "to": "save_effect", "as": "a0"},
                 {"from": "save_payload", "to": "save_effect", "as": "a1"},
                 {"from": "save_effect", "to": "save_node_effects", "as": "a0"},
+                {"from": "save_effector", "to": "save_effect", "as": "a0"},
+                {"from": "save_payload", "to": "save_effect", "as": "a1"},
+                {"from": "save_effect", "to": "save_node_effects", "as": "a0"},
                 {"from": "save_node_effects", "to": "save_node", "as": "value"},
                 {"from": "save_name", "to": "save_node", "as": "name"},
                 {"from": "save_id", "to": "save_node", "as": "id"},
                 {"from": "save_node", "to": "popover_graph_actions", "as": "a"},
+                {"from": "clear_popover_effect", "to": "export_node_effects", "as": "a1"},
+                {"from": "display_graph", "to": "export_payload", "as": "display_graph"},
+                {"from": "export_effector", "to": "export_effect", "as": "a0"},
+                {"from": "export_payload", "to": "export_effect", "as": "a1"},
+                {"from": "export_effect", "to": "export_node_effects", "as": "a0"},
+                {"from": "export_effect", "to": "export_node_effects", "as": "a0"},
+                {"from": "export_node_effects", "to": "export_node", "as": "value"},
+                {"from": "export_name", "to": "export_node", "as": "name"},
+                {"from": "export_id", "to": "export_node", "as": "id"},
+                {"from": "export_node", "to": "popover_graph_actions", "as": "a"},
                 {"from": "new_graph_effector", "to": "new_graph_effect", "as": "a0"},
                 {"from": "new_graph_effect", "to": "new_graph_node_effects", "as": "a0"},
                 {"from": "new_graph_node_effects", "to": "new_graph_node", "as": "value"},
@@ -5192,6 +5320,8 @@
                 },
                 {"id": "add_node_effect", "ref": "add_node"},
                 {"id": "add_edge_effect", "ref": "add_edge"},
+                {"id": "paste_node_effect", "ref": "paste_node_effect"},
+                {"id": "copy_effect", "ref": "copy_effect"},
                 {"id": "delete_node_effect", "ref": "delete_node"},
                 {"id": "expand_contract_effect", "ref": "expand_contract_effect"},
                 {"id": "open_reference_popover", "ref": "open_reference_popover"},
@@ -5200,7 +5330,7 @@
                 {"id": "update_node", "ref": "update_node_action"},
                 {
                     "id": "popover_graph_obj",
-                    "script": "return {[selected.node_id]: {inputs: {create_input: [[add_node, {id: randid}], [add_edge, {from: randid, to: selected.node_id }], [clear_popover]], arg: [[add_node, {id: randid, ref: 'arg'}], [add_edge, {from: randid, to: selected.node_id }], [show_edit_text, {id: randid, property:'value', oneditconfirm: update_node, value: ''}], [clear_popover]]}, structure: {delete: [[delete_node, {id: selected.node_id}], [clear_popover]], expand_contract: [[expand_contract, {id: selected.node_id}], [clear_popover]]}, change: {name: [[show_edit_text, {id: selected.node_id, property:'name', oneditconfirm: update_node, value: selected.name}], [clear_popover]], value: [[show_edit_text, {id: selected.node_id, property:'value', oneditconfirm: update_node, value: selected.value}], [clear_popover]], script: [[show_edit_text, {id: selected.node_id, property:'script', oneditconfirm: update_node, value: selected.script}], [clear_popover]], reference: [[open_reference_popover, {id: selected.node_id}]]}}}",
+                    "script": "return {[selected.node_id]: {inputs: {create_input: [[add_node, {id: randid}], [add_edge, {from: randid, to: selected.node_id }], [clear_popover]], arg: [[add_node, {id: randid, ref: 'arg'}], [add_edge, {from: randid, to: selected.node_id }], [show_edit_text, {id: randid, property:'value', oneditconfirm: update_node, value: ''}], [clear_popover]]}, structure: {delete: [[delete_node, {id: selected.node_id}], [clear_popover]], expand_contract: [[expand_contract, {id: selected.node_id}], [clear_popover]]}, change: {name: [[show_edit_text, {id: selected.node_id, property:'name', oneditconfirm: update_node, value: selected.name}], [clear_popover]], value: [[show_edit_text, {id: selected.node_id, property:'value', oneditconfirm: update_node, value: selected.value}], [clear_popover]], script: [[show_edit_text, {id: selected.node_id, property:'script', oneditconfirm: update_node, value: selected.script}], [clear_popover]], reference: [[open_reference_popover, {id: selected.node_id}]]}, clipboard: {copy: [[copy_effect, {id: selected.node_id}], [clear_popover]], paste: [[paste_node_effect, {randid}], [clear_popover]]}}}",
                     "script_": "return { 'out': 'out', 'nodes': [ {'id': 'create_input', 'name': 'create input', value: [[add_node, {id: randid}], [add_edge, {from: randid, to: selected.node_id }], [clear_popover]]}, {'id': 'delete', 'name': 'delete', value: [[delete_node, {id: selected.node_id}], [clear_popover]]},{id: 'expand_contract', name: 'expand / contract', value: [[expand_contract, {id: selected.node_id}], [clear_popover]]}, {'id': 'out', name: selected.node_id, value: [[clear_popover]]}, {'id': 'change_reference', name: 'change reference', value: [[open_reference_popover, {id: selected.node_id}]]}, {'id': 'change_value', name: 'change value', value: [[show_edit_text, {id: selected.node_id, property:'value', oneditconfirm: update_node, value: selected.value}], [clear_popover]]}, {'id': 'change_name', name: 'change name', value: [[show_edit_text, {id: selected.node_id, property:'name', oneditconfirm: update_node, value: selected.name}], [clear_popover]]}, {'id': 'change_script', name: 'change script', value: [[show_edit_text, {id: selected.node_id, property:'script', oneditconfirm: update_node, value: selected.script}], [clear_popover]]} ], 'edges': [ {'from': 'create_input', 'to': 'out'}, {'from': 'delete', 'to': 'out'}, {'from': 'expand_contract', 'to': 'out'}, {from: 'change_reference', to: 'out'}, {'from': 'change_value', to: 'out'}, {'from': 'change_name', to: 'out'}, {'from': 'change_script', to: 'out'} ] }"
                 },
                 {"id": "popover_graph_value", "ref": "create_object_graph"},
@@ -5399,6 +5529,8 @@
                 {"from": "show_edit_text", "to": "popover_graph_obj", "as": "show_edit_text"},
                 {"from": "clear_popover", "to": "popover_graph_obj", "as": "clear_popover"},
                 {"from": "update_node", "to": "popover_graph_obj", "as": "update_node"},
+                {"from": "copy_effect", "to": "popover_graph_obj", "as": "copy_effect"},
+                {"from": "paste_node_effect", "to": "popover_graph_obj", "as": "paste_node_effect"},
                 {"from": "popover_graph_obj", "to": "popover_graph_value", "as": "obj"},
                 {
                     "from": "popover_graph_value",
@@ -5568,7 +5700,7 @@
         },
         {
             "id": "render_popover_graph_effect",
-            "script": "return (dispatch, payload) => requestAnimationFrame(() => {payload = _lib.no.resolve(payload); if(payload.popover_dispatch) { payload.popover_dispatch(s => [{...s, display_graph: payload.display_graph, selected: [payload.display_graph.out]}, [s.update_sim_effect, {...s, display_graph: payload.display_graph}], [d => d(s.update_hyperapp)] ]) } else { const popover_dispatch = _lib.no.executeGraphNode({graph: payload.graph})('initialize_hyperapp_app')({graph: payload.graph, display_graph: payload.display_graph, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions, readonly: true, hide_types: true, sim_update_alpha: 0.3}).dispatch; dispatch(s => ({...s, popover_dispatch}));}})"
+            "script": "return (dispatch, payload) => requestAnimationFrame(() => {payload = _lib.no.resolve(payload); if(payload.popover_dispatch) { payload.popover_dispatch(s => [{...s, display_graph: payload.display_graph, selected: [payload.display_graph.out]}, [s.update_sim_effect, {...s, display_graph: payload.display_graph}], [s.update_hyperapp] ]) } else { const popover_dispatch = _lib.no.executeGraphNode({graph: payload.graph})('initialize_hyperapp_app')({graph: payload.graph, display_graph: payload.display_graph, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions, readonly: true, hide_types: true, sim_update_alpha: 0.3}).dispatch; dispatch(s => ({...s, popover_dispatch}));}})"
         },
         {
             "id": "handle_popover_event",
@@ -8244,11 +8376,16 @@
         },
         {
             "from": "update_hyperapp_action",
+            "to": "update_hyperapp_effect",
+            "as": "fn"
+        },
+        {
+            "from": "update_hyperapp_effect",
             "to": "initialize_hyperapp_app",
             "as": "update_hyperapp"
         },
         {
-            "from": "update_hyperapp_action",
+            "from": "update_hyperapp_effect",
             "to": "hyperapp_init_state",
             "as": "update_hyperapp"
         },

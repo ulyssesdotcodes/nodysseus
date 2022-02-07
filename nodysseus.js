@@ -242,14 +242,14 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
         }
 
         if (node.value !== undefined && !node.script && !node.ref) {
-            if(typeof node.value === 'string' && node.value.match(/[0-9]*/).length === node.value.length) {
+            if(typeof node.value === 'string' && node.value.match(/[0-9]*/g)[0].length === node.value.length) {
                 const int = parseInt(node.value);
                 if(!isNaN(int)){
                     return int;
                 }
             }
 
-            if(typeof node.value === 'string' && node.value.match(/[0-9.]*/).length === node.value.length) {
+            if(typeof node.value === 'string' && node.value.match(/[0-9.]*/g)[0].length === node.value.length) {
                 const int = parseInt(node.value);
                 const float = parseFloat(node.value);
                 if(!isNaN(float)) {
@@ -1043,7 +1043,9 @@ const updateSimulationNodes = (data) => {
     if (typeof (links?.[0]?.source) === "string") {
         if (
             simulation_node_data.size !== start_sim_node_size ||
-            simulation_link_data.size !== start_sim_link_size) {
+            simulation_link_data.size !== start_sim_link_size || 
+            data.simulation.nodes()?.length !== nodes.length ||
+            data.simulation.force('links')?.links().length !== links.length) {
             data.simulation.alpha(data.sim_update_alpha);
         }
 
