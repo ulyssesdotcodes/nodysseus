@@ -124,6 +124,8 @@ const createProxy = (run_with_val, input, graph_input_value) => {
 
         if (prop === "_value") {
             return res
+        } else if(!res) {
+            return res;
         } else {
             if(typeof res[prop] === 'function'){
                 return res[prop].bind(res);
@@ -174,15 +176,20 @@ const resolve = (o) => {
         let j = 0;
         let same = false;
         let new_obj_entries = [];
+        let promise = false;
         while(i > 0) {
             i--;
             if(entries[i][0] !== '_needsresolve') {
                 new_obj_entries[j] = [entries[i][0], resolve(entries[i][1])];
                 same = same && entries[i][1] === new_obj_entries[j][1]
+                promise = promise || ispromise(new_obj_entries[j][1])
                 j++;
             }
         }
-        return same ? (delete o._needsresolve, o) : Object.fromEntries(new_obj_entries);
+        return same ? (delete o._needsresolve, o) : promise 
+            ? Promise.all(new_obj_entries.map(kv => Promise.resolve(kv[1]).then(v => [kv[0], v])))
+                .then(kvs => Object.fromEntries(kvs)) 
+            : Object.fromEntries(new_obj_entries);
     } else {
         return o;
     }
@@ -226,7 +233,6 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
     graph.in_edge_map = in_edge_map;
 
     const run_with_val = (node_id) => (graph_input_value) => {
-
         let node = node_map.get(node_id);
 
         if(node === undefined) {
@@ -492,19 +498,32 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
                     .concat(e instanceof AggregateError ? e.errors : []));
             }
         } else if(node_ref.extern) {
-            const args = data.hasOwnProperty('args') && data.args._Proxy ? resolve(data.args) : (data.args ?? []);
-            if(!Array.isArray(args)) {
-                throw new Error("args for extern functions must be arrays")
-            }
+            const extern = get(lib, node_ref.extern);
+            const args = extern.args.reduce((acc, arg) => {
+                    if(arg === '_node'){
+                        return [acc[0].concat([node]), acc[1]];
+                    } else if (arg === '_node_inputs') {
+                        return [acc[0].concat(data), acc[1]]
+                    } else if (arg === '_graph') {
+                        return [acc[0].concat(graph), acc[1]]
+                    }
+                    const value = resolve(data[arg]);
+                    return [acc[0].concat([value]), ispromise(value) || acc[1]];
+                }, [[], false]);
 
-            const self = data.hasOwnProperty('self') && data.self._Proxy ? resolve(data.self) : data.self;
-
-            return get(lib, node_ref.extern).apply(self, args);
+            return args[1] ? Promise.all(args[0]).then(as => extern.fn.apply(null, as)) : extern.fn.apply(null, args[0]);
         }
 
         if(typeof data === 'object' && !!data && !data._Proxy && !Array.isArray(data) && Object.keys(data).length > 0) {
             data._needsresolve = true;
         }
+
+        const promised_data = Object.entries(data).reduce((acc, kv) => [acc[0].concat([kv]), acc[1] || (!kv[1]._Proxy && ispromise(kv[1]))], [[], false]);
+        
+        if(promised_data[1]) {
+            return Promise.all(promised_data[0].map(kv => Promise.resolve(kv[1]).then(v => [kv[0], v]))).then(Object.fromEntries);
+        }
+
 
         return data;
     }
@@ -906,6 +925,7 @@ const bfs = (graph, visited) => (id, level) => {
 }
 
 const updateSimulationNodes = (data) => {
+    console.log(data);
     const simulation_node_data = new Map();
     data.simulation.nodes().forEach(n => {
         simulation_node_data.set(n.node_child_id, n)
@@ -1500,7 +1520,6 @@ const middleware = dispatch => (ha_action, ha_payload) => {
                 return e
             });
 
-
             return result.hasOwnProperty("state")
                 ? effects.length > 0 ? [result.state, ...effects] : result.state
                 : [result.action, result.payload];
@@ -1536,12 +1555,29 @@ const generic_nodes = new Set([
     "execute_graph",
     "arg",
     "apply",
-    "partial"
+    "partial",
+    "fetch"
 ]);
 
+const ispromise = a => typeof a?.then === 'function';
+
 const lib = {
-    just: { get, set, diff, diffApply },
-    ha: { h, app, text, memo },
+    just: { 
+        get: {
+            args: ['target', 'path', 'def'],
+            fn: get,
+            // _: (target, path, def) => ispromise(target) || ispromise(path) 
+            //     ? Promise.resolve(target).then(t => 
+            //         Promise.resolve(path).then(p => 
+            //             Promise.resolve(def).then(d => 
+            //                 get(t, p, d))))
+            //     : get(target, path, def),
+        },
+        set, 
+        diff, 
+        diffApply 
+    },
+    ha: { h: {args: ['dom_type', 'props', 'children'], fn: h}, app, text: {args: ['text'], fn: text}, memo },
     no: {
         middleware,
         executeGraph: ({ state, graph, cache_id }) => executeGraph({ cache, state, graph, node_cache, cache_id: cache_id ?? "main" })(graph.out)(state.get(graph.in)),
@@ -1550,6 +1586,33 @@ const lib = {
         resolve,
         objToGraph,
         NodysseusError
+    },
+    utility: {
+        eq: ({a, b}) => a === b,
+        arg: {
+            args: ['_node', '_node_inputs'],
+            fn: (node, node_inputs) => typeof node.value === 'string' 
+                ? node.value === '_args' 
+                    ? node_inputs
+                    : get(node_inputs, node.value) 
+                : node_inputs[node.value],
+        },
+        new_array: {
+            args: ['_node_inputs'],
+            fn: (args) => {
+                const arr = Object.keys(args)
+                    .sort()
+                    .reduce((acc, k) => [
+                            acc[0].concat([args[k]]), 
+                            acc[1] || ispromise(args[k])
+                        ], [[], false]);
+                return arr[1] ? Promise.all(arr[0]) : arr[0];
+            }
+        },
+        fetch: {
+            args: ['url'],
+            fn: fetch
+        }
     },
     scripts: { d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all, listen},
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },

@@ -40,6 +40,7 @@
                 }
             ]
         },
+        {"id": "fetch", "name": "fetch", "extern": "utility.fetch"},
         {
         "id": "text_display",
         "name": "text_display",
@@ -756,8 +757,8 @@
         },
         {
             "id": "new_array",
-            "script": "return Object.keys(_node_inputs).sort().map(k => _node_inputs[k])",
-            "name": "new_array"
+            "name": "new_array",
+            "extern": "utility.new_array"
         },
         {
             "id": "wrap_effect_fn",
@@ -847,26 +848,26 @@
                 },
                 {
                     "from": "def",
-                    "to": "get_args",
-                    "as": "a2"
+                    "to": "out",
+                    "as": "def"
                 },
                 {
                     "from": "path",
-                    "to": "get_args",
-                    "as": "a1"
+                    "to": "out",
+                    "as": "path"
                 },
                 {
                     "from": "target",
-                    "to": "get_args",
-                    "as": "a0"
+                    "to": "out",
+                    "as": "target"
                 },
-                {"from": "get_args", "to": "out", "as": "args"}
+                {"from": "get_args", "to": "_out", "as": "args"}
             ]
         },
         {
             "id": "arg",
             "args": ["node_inputs"],
-            "script": "return typeof _node.value === 'string' ? _node.value === '_args' ? _node_inputs : _lib.just.get(_node_inputs, _node.value) : _node_inputs[_node.value]"
+            "extern": "utility.arg"
         },
         {
             "id": "set-mutable",
@@ -1300,7 +1301,7 @@
         {
             "id": "hyperapp_action_effect",
             "description": "Creates an effect that dispatches the passed-in fn",
-            "script": "const action = typeof fn === 'string' ? {fn, graph: _graph} : (typeof fn === 'function' || (typeof fn === 'object' && fn.hasOwnProperty('fn'))) ? fn : undefined; return (dispatch, payload) => dispatch(action, payload)"
+            "script": "const action = typeof fn === 'string' ? {fn, graph: _graph} : (typeof fn === 'function' || (typeof fn === 'object' && fn.hasOwnProperty('fn'))) ? fn : undefined; console.log(action); return (dispatch, payload) => (console.log(payload), dispatch(action, payload))"
         },
         {
             "id": "update_graph_display",
@@ -1461,7 +1462,7 @@
                         "display_graph",
                         "selected"
                     ],
-                    "script": "return Promise.resolve({state: prev_result, payload}).then(promise_payload => _lib.no.executeGraphValue({graph: {...display_graph, nodes: display_graph.nodes.map(n => ({...n})), edges: display_graph.edges.map(e => ({...e}))}})(promise_payload)).then(result => {if(result.display && !result.display.el.props.key){ result.display.el.props.key = `${html_id}-result_display` } return {result, error: undefined, error_nodes}; }).catch(e => ({error: e instanceof AggregateError ? e.errors.map(e => (e instanceof _lib.no.NodysseusError ? e.node_id + ': ' : '') + e.toString()).join(\" \") : e.toString(), error_nodes: new Map(e instanceof AggregateError ? e.errors.map(e => e instanceof _lib.no.NodysseusError ? [e.node_id, e] : false).filter(n => n) : e instanceof _lib.no.NodysseusError ? [[e.node_id, e]] : [])}))"
+                    "script": "return Promise.resolve({state: prev_result, payload: _lib.no.resolve(payload)}).then(promise_payload => _lib.no.executeGraphValue({graph: {...display_graph, nodes: display_graph.nodes.map(n => ({...n})), edges: display_graph.edges.map(e => ({...e}))}})(promise_payload)).then(result => {if(result.display && !result.display.el.props.key){ result.display.el.props.key = `${html_id}-result_display` } return {result, error: undefined, error_nodes}; }).catch(e => ({error: e instanceof AggregateError ? e.errors.map(e => (e instanceof _lib.no.NodysseusError ? e.node_id + ': ' : '') + e.toString()).join(\" \") : e.toString(), error_nodes: new Map(e instanceof AggregateError ? e.errors.map(e => e instanceof _lib.no.NodysseusError ? [e.node_id, e] : false).filter(n => n) : e instanceof _lib.no.NodysseusError ? [[e.node_id, e]] : [])}))"
                 },
                 {
                     "id": "result"
@@ -1478,7 +1479,7 @@
                         "payload",
                         "update_sim_effect"
                     ],
-                    "script": "return {state, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && [(d, payload) => payload.run.then(res => res).then(res => d(s => (s.error_nodes.clear(), {...s, result: res.result?.state, error: res.error, error_nodes: res.error_nodes ?? s.error_nodes, result_display: res.result?.display, error: res.error}))), result], ...(effects ?? [])]}"
+                    "script": "return {state, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && [(d, payload) => (typeof payload?.then === 'function' ? payload.then(p => p.run) : payload.run).then(res => res).then(res => d(s => (s.error_nodes.clear(), {...s, result: res.result?.state, error: res.error, error_nodes: res.error_nodes ?? s.error_nodes, result_display: (console.log(res.result.display), res.result?.display), error: res.error}))), result], ...(effects ?? [])]}"
                 }
             ],
             "edges": [
@@ -1724,9 +1725,13 @@
                     "value": "text"
                 },
                 {
+                    "id": "mapped_children",
+                    "script": "let run_graph = {...graph, in: 'run_h/in', out: 'run_h'}; const fn = _lib.no.executeGraphValue({graph: run_graph}); return (children ?? []).map(c => ({...c, graph: run_graph})).map(fn).filter(c => c).map(c => c.el);"
+                },
+                {
                     "id": "out_h",
                     "args": ["dom_type", "children", "props", "graph"],
-                    "script": "let run_graph = {...graph, in: 'run_h/in', out: 'run_h'}; const fn = _lib.no.executeGraphValue({graph: run_graph}); const mapped_children = (children ?? []).map(c => ({...c, graph: run_graph})).map(fn).filter(c => c).map(c => c.el); return {el: _lib.ha.h(dom_type, props, mapped_children)};"
+                    "extern": "ha.h"
                 },
                 {
                     "id": "extern_h_text_args",
@@ -1738,8 +1743,7 @@
                 },
                 {
                     "id": "out_text",
-                    "args": ["text"],
-                    "script": "return {el}"
+                    "extern": "ha.text"
                 },
                 {
                     "id": "els"
@@ -1754,25 +1758,23 @@
                     "ref": "switch"
                 },
                 {
-                    "id": "out",
-                    "args": ["el"],
-                    "script": "return el"
+                    "id": "out"
                 }
             ],
             "edges": [
                 {"from": "dom_type", "to": "out_input", "as": "dom_type"},
                 {"from": "dom_type", "to": "out_h", "as": "dom_type"},
-                {"from": "children", "to": "out_h", "as": "children"},
+                {"from": "children", "to": "mapped_children", "as": "children"},
+                {"from": "mapped_children", "to": "out_h", "as": "children"},
                 {"from": "props", "to": "out_h", "as": "props"},
-                {"from": "graph", "to": "out_h", "as": "graph"},
-                {"from": "text", "to": "extern_h_text_args", "as": "arg0"},
-                {"from": "extern_h_text_args", "to": "extern_h_text", "as": "args"},
-                {"from": "extern_h_text", "to": "out_text", "as": "el"},
-                {"from": "out_text", "to": "els", "as": "h_text"},
-                {"from": "out_h", "to": "els", "as": "h"},
-                {"from": "els", "to": "out_el"},
-                {"from": "out_el", "to": "out", "as": "el", "type": "resolve"},
-                {"from": "out_input", "to": "out_el", "as": "input"}
+                {"from": "graph", "to": "mapped_children", "as": "graph"},
+                {"from": "text", "to": "out_text", "as": "text"},
+                {"from": "extern_h_text_args", "to": "_extern_h_text", "as": "args"},
+                {"from": "extern_h_text", "to": "_out_text", "as": "el"},
+                {"from": "out_text", "to": "out_el", "as": "h_text"},
+                {"from": "out_h", "to": "out_el", "as": "h"},
+                {"from": "out_input", "to": "out_el", "as": "input"},
+                {"from": "out_el", "to": "out", "as": "el", "type": "resolve"}
             ]
         },
         {
@@ -1786,12 +1788,13 @@
                     "ref": "arg",
                     "value": "text"
                 },
+                {"id": "dom_type", "value": "text_value"},
+                {"id": "el"},
                 {
                     "id": "out",
                     "args": [
                         "text"
-                    ],
-                    "script": "return {el: {dom_type: 'text_value', text}}"
+                    ]
                 }
             ],
             "edges": [
@@ -1800,10 +1803,12 @@
                     "to": "out",
                     "as": "input"
                 },
+                {"from": "dom_type", "to": "el", "as": "dom_type"},
+                {"from": "text", "to": "el", "as": "text"},
                 {
-                    "from": "text",
+                    "from": "el",
                     "to": "out",
-                    "as": "text",
+                    "as": "el",
                     "type": "resolve"
                 }
             ]
@@ -3089,7 +3094,7 @@
         },
         {
             "id": "export_effect",
-            "script": "return (dispatch, payload) => { console.log(payload); const str = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(payload.display_graph))}`; const a = document.createElement('a'); a.setAttribute('href', str); a.setAttribute('download', payload.display_graph.id + '.json'); a.click(); a.remove();}"
+            "script": "return (dispatch, payload) => { const str = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(payload.display_graph))}`; const a = document.createElement('a'); a.setAttribute('href', str); a.setAttribute('download', payload.display_graph.id + '.json'); a.click(); a.remove();}"
         },
         {
             "id": "graph_list_effect",
@@ -3435,7 +3440,7 @@
                 {"id": "update_node", "ref": "update_node"},
                 {"id": "clear_popover", "ref": "clear_popover_graph"},
                 {"id": "valid_nodes", "script": "return nodes.filter(n => !n.ref && !levels.level_by_node.has(n.id))"},
-                {"id": "popover_graph_nodes", "script": "return nodes.map(n => ({id: `reference-popover${n.id}`, name: n.name ?? n.id, value: n.hasOwnProperty('script') || n.hasOwnProperty('nodes') ? [[update_node, {id: node_id, properties: {ref: n.id}}], [clear_popover]] : []})).concat([{id: 'out', name: 'reference nodes'}])"},
+                {"id": "popover_graph_nodes", "script": "return nodes.map(n => ({id: `reference-popover${n.id}`, name: n.name ?? n.id, value: n.hasOwnProperty('script') || n.hasOwnProperty('nodes') || n.hasOwnProperty('extern') ? [[update_node, {id: node_id, properties: {ref: n.id}}], [clear_popover]] : []})).concat([{id: 'out', name: 'reference nodes'}])"},
                 {"id": "popover_graph_edges", "script": "return edges.filter(e => !!nodes.find(n => e.to === n.id)).map(e => ({from: `reference-popover${e.from}`, to:  `reference-popover${e.to}`})).concat(nodes.filter(n => edges.filter(e => e.from === n.id).length === 0).map(n => ({from: `reference-popover${n.id}`, to: 'out'})))"},
                 {"id": "popover_graph_out", "value": "out"},
                 {"id": "popover_graph_value"},
@@ -3550,7 +3555,7 @@
                         },
                         {
                             "id": "effects",
-                            "script": "return [[update_sim_effect, new_state]]"
+                            "script": "console.log('fx add node'); console.log(update_sim_effect); return [update_sim_effect]"
                         },
                         {
                             "id": "nodes_path",
@@ -5077,8 +5082,8 @@
             "value": "levels"
         },
         {
-            "id": "update_sim",
-            "script": "return !simulation ? undefined : _lib.scripts.updateSimulationNodes({display_graph, nodes, links, simulation, selected, levels, sim_update_alpha})"
+            "id": "update_sim_effect",
+            "script": "return dispatch => dispatch(state => [state, [() => !state.simulation ? undefined : _lib.scripts.updateSimulationNodes(state)]])"
         },
         {
             "id": "update_sim_in"
@@ -5088,7 +5093,7 @@
             "ref": "execute_graph"
         },
         {
-            "id": "update_sim_effect",
+            "id": "_update_sim_effect",
             "ref": "wrap_effect_fn"
         },
         {
@@ -8115,7 +8120,7 @@
                 },
                 {
                     "id": "noop",
-                    "script": "return {el: _lib.ha.h('div', {}, _lib.ha.text('loading...'))}"
+                    "script": "return {el: _lib.ha.h.fn('div', {}, _lib.ha.text.fn('loading...'))}"
                 },
                 {
                     "id": "out_input",
@@ -8569,6 +8574,7 @@
         {"from": "execute_graph", "to": "utility"},
         {"from": "arg", "to": "utility"},
         {"from": "partial", "to": "utility"},
-        {"from": "apply", "to": "utility"}
+        {"from": "apply", "to": "utility"},
+        {"from": "fetch", "to": "utility"}
     ]
 }
