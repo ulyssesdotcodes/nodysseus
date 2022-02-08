@@ -518,7 +518,7 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
             data._needsresolve = true;
         }
 
-        const promised_data = Object.entries(data).reduce((acc, kv) => [acc[0].concat([kv]), acc[1] || (!kv[1]._Proxy && ispromise(kv[1]))], [[], false]);
+        const promised_data = Object.entries(data).reduce((acc, kv) => [acc[0].concat([kv]), acc[1] || (!!kv[1] && !kv[1]?._Proxy && ispromise(kv[1]))], [[], false]);
         
         if(promised_data[1]) {
             return Promise.all(promised_data[0].map(kv => Promise.resolve(kv[1]).then(v => [kv[0], v]))).then(Object.fromEntries);
@@ -925,7 +925,6 @@ const bfs = (graph, visited) => (id, level) => {
 }
 
 const updateSimulationNodes = (data) => {
-    console.log(data);
     const simulation_node_data = new Map();
     data.simulation.nodes().forEach(n => {
         simulation_node_data.set(n.node_child_id, n)
@@ -1501,6 +1500,7 @@ const middleware = dispatch => (ha_action, ha_payload) => {
                 && ha_action[0].hasOwnProperty('graph')));
     const action = is_action_payload ? ha_action[0] : ha_action;
     const payload = is_action_payload ? ha_action[1] : ha_payload;
+
 
     return typeof action === 'object' && action.hasOwnProperty('fn') && action.hasOwnProperty('graph')
         ? dispatch((state, payload) => {
