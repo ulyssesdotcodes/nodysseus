@@ -1022,7 +1022,7 @@ const updateSimulationNodes = (data) => {
                 ?? simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.x
                 ?? addorundefined(
                     simulation_node_data.get(main_node_map.get(children_map.get(n.id)?.[0]))?.x, 
-                    (parents_map.get(children_map.get(n.id)?.[0])?.findIndex(v => v === n.id) - (parents_map.get(children_map.get(n.id)?.[0])?.length - 1) * 0.5) * 96
+                    (parents_map.get(children_map.get(n.id)?.[0])?.findIndex(v => v === n.id) - (parents_map.get(children_map.get(n.id)?.[0])?.length - 1) * 0.5) * 256
                 )
                 ?? Math.floor(window.innerWidth * (randpos.x * .5 + .25))),
             y: Math.floor(simulation_node_data.get(node_child_id)?.y 
@@ -1054,7 +1054,7 @@ const updateSimulationNodes = (data) => {
                 to: e.to,
                 target: main_node_map.get(e.to),
                 sibling_index_normalized: simulation_node_data.get(e.from + "_" + e.to).sibling_index_normalized,
-                strength: 3 / (1 + 2 * (children_map.get(main_node_map.get(e.from))?.length ?? 0)),
+                strength: 2 * (1.5 - Math.abs(simulation_node_data.get(e.from + "_" + e.to).sibling_index_normalized - 0.5)) / (1 + 2 * (parents_map.get(main_node_map.get(e.from))?.length ?? 0)),
                 distance: 128 
                     + 16 * (parents_map.get(main_node_map.get(e.to))?.length ?? 0) 
             };
