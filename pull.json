@@ -3085,11 +3085,15 @@
         },
         {
             "id": "save_effect",
-            "script": "return (dispatch, payload) => { localStorage.setItem(payload.display_graph.name, JSON.stringify(payload.display_graph)); localStorage.setItem(payload.display_graph.name + '_' + Date.now().toISOString(), JSON.stringify(payload.display_graph));}"
+            "script": "return (dispatch, payload) => { const graph_list = JSON.parse(localStorage.getItem('graph_list'))?.filter(l => l !== payload.display_graph.id) ?? []; graph_list.unshift(payload.display_graph.id); localStorage.setItem('graph_list', JSON.stringify(graph_list)); localStorage.setItem(payload.display_graph.id, JSON.stringify(payload.display_graph)); localStorage.setItem(payload.display_graph.id + '_' + new Date().toISOString(), JSON.stringify(payload.display_graph));}"
         },
         {
             "id": "export_effect",
             "script": "return (dispatch, payload) => { console.log(payload); const str = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(payload.display_graph))}`; const a = document.createElement('a'); a.setAttribute('href', str); a.setAttribute('download', payload.display_graph.id + '.json'); a.click(); a.remove();}"
+        },
+        {
+            "id": "graph_list_effect",
+            "script": "return (dispatch, payload)"
         },
         {
             "id": "new_graph_effect",
@@ -3229,6 +3233,28 @@
                 {"from": "clipboard_path", "to": "set_clipboard", "as": "path"},
                 {"from": "node", "to": "set_clipboard", "as": "value"},
                 {"from": "set_clipboard", "to": "result", "as": "state"},
+                {"from": "result", "to": "out", "as": "fn", "type": "ref"}
+            ]
+        },
+        {
+            "id": "change_display_graph_id",
+            "out": "out",
+            "nodes": [
+                {"id": "in"},
+                {"id": "state", "ref": "arg", "value": "state"},
+                {"id": "id_path", "value": "display_graph.id"},
+                {"id": "id", "ref": "arg", "value": "payload.properties.id"},
+                {"id": "set_display_graph_id", "ref": "set"},
+                {"id": "effects", "ref": "new_array"},
+                {"id": "result"},
+                {"id": "out", "ref": "hyperapp_action"}
+            ],
+            "edges": [
+                {"from": "in", "to": "out", "as": "args"},
+                {"from": "state", "to": "set_display_graph_id", "as": "target"},
+                {"from": "id_path", "to": "set_display_graph_id", "as": "path"},
+                {"from": "id", "to": "set_display_graph_id", "as": "value"},
+                {"from": "set_display_graph_id", "to": "result", "as": "state"},
                 {"from": "result", "to": "out", "as": "fn", "type": "ref"}
             ]
         },
@@ -5130,6 +5156,7 @@
                 {"id": "readonly", "ref": "arg", "value": "state.readonly"},
                 {"id": "html_id", "ref": "arg", "value": "state.html_id"},
                 {"id": "event_name", "value": "graphclick"},
+                {"id": "id_path", "value": "id"},
                 {"id": "clear_popover", "ref": "clear_popover_graph"},
                 {"id": "clear_popover_effect", "ref": "new_array"},
                 {"id": "save_effector", "ref": "save_effect"},
@@ -5158,6 +5185,16 @@
                 {"id": "show_popover_effector", "ref": "show_popover_graph"},
                 {"id": "show_popover_effect", "ref": "new_array"},
                 {"id": "show_popover_payload"},
+                {"id": "display_graph_path", "value": "display_graph"},
+                {"id": "change_display_graph_id_effector", "ref": "change_display_graph_id"},
+                {"id": "change_display_graph_id_effect", "ref": "new_array"},
+                {"id": "change_display_graph_id_node_name", "value": "change id"},
+                {"id": "change_display_graph_id_node_id", "value": "change_display_graph_id_node"},
+                {"id": "change_display_graph_id_node_value", "ref": "new_array"},
+                {"id": "change_display_graph_id_node"},
+                {"id": "show_edit_text_effector", "ref": "show_edit_text"},
+                {"id": "show_edit_text_payload"},
+                {"id": "show_edit_text_effect", "ref": "new_array"},
                 {"id": "stop_propagation_effector", "ref": "stop_propagation_effect"},
                 {"id": "stop_propagation_effect", "ref": "new_array"},
                 {"id": "dispatch_on_graph_click_effector", "ref": "dispatch_custom_event_effect"},
@@ -5194,19 +5231,31 @@
                 {"from": "export_node_effects", "to": "export_node", "as": "value"},
                 {"from": "export_name", "to": "export_node", "as": "name"},
                 {"from": "export_id", "to": "export_node", "as": "id"},
-                {"from": "export_node", "to": "popover_graph_actions", "as": "a"},
+                {"from": "export_node", "to": "popover_graph_actions", "as": "c"},
                 {"from": "new_graph_effector", "to": "new_graph_effect", "as": "a0"},
                 {"from": "new_graph_effect", "to": "new_graph_node_effects", "as": "a0"},
                 {"from": "new_graph_node_effects", "to": "new_graph_node", "as": "value"},
                 {"from": "new_graph_name", "to": "new_graph_node", "as": "name"},
                 {"from": "new_graph_id", "to": "new_graph_node", "as": "id"},
                 {"from": "new_graph_node", "to": "popover_graph_actions", "as": "b"},
+                {"from": "change_display_graph_id_effector", "to": "change_display_graph_id_effect", "as": "a0"},
+                {"from": "change_display_graph_id_effector", "to": "show_edit_text_payload", "as": "oneditconfirm"},
+                {"from": "display_graph_path", "to": "show_edit_text_payload", "as": "id"},
+                {"from": "name", "to": "show_edit_text_payload", "as": "value"},
+                {"from": "id_path", "to": "show_edit_text_payload", "as": "property"},
+                {"from": "show_edit_text_effector", "to": "show_edit_text_effect", "as": "a0"},
+                {"from": "show_edit_text_payload", "to": "show_edit_text_effect", "as": "a1"},
+                {"from": "show_edit_text_effect", "to": "change_display_graph_id_node_value", "as": "a"},
+                {"from": "clear_popover_effect", "to": "change_display_graph_id_node_value", "as": "b"},
+                {"from": "change_display_graph_id_node_value", "to": "change_display_graph_id_node", "as": "value"},
+                {"from": "change_display_graph_id_node_id", "to": "change_display_graph_id_node", "as": "id"},
+                {"from": "change_display_graph_id_node_name", "to": "change_display_graph_id_node", "as": "name"},
+                {"from": "change_display_graph_id_node", "to": "popover_graph_actions", "as": "d"},
                 {"from": "name", "to": "popover_graph", "as": "name"},
                 {"from": "popover_graph_actions", "to": "popover_graph", "as": "nodes"},
                 {"from": "popover_graph", "to": "show_popover_payload", "as": "popover_graph"},
                 {"from": "show_popover_effector", "to": "show_popover_effect", "as": "a0"},
                 {"from": "show_popover_payload", "to": "show_popover_effect", "as": "a1"},
-                {"from": "show_popover_effect", "to": "edit_effects", "as": "a0"},
                 {"from": "stop_propagation_effector", "to": "stop_propagation_effect", "as": "a0"},
                 {"from": "payload", "to": "stop_propagation_effect", "as": "a1"},
                 {"from": "stop_propagation_effect", "to": "edit_effects", "as": "a1"},
@@ -5215,6 +5264,7 @@
                 {"from": "dispatch_on_graph_click_effector", "to": "dispatch_on_graph_click_effect", "as": "a0"},
                 {"from": "dispatch_on_graph_click_payload", "to": "dispatch_on_graph_click_effect", "as": "a1"},
                 {"from": "dispatch_on_graph_click_effect", "to": "readonly_effects", "as": "a0"},
+                {"from": "show_popover_effect", "to": "edit_effects", "as": "a0"},
                 {"from": "edit_effects", "to": "effects", "as": "false"},
                 {"from": "readonly_effects", "to": "effects", "as": "true"},
                 {"from": "readonly", "to": "effects", "as": "pred"},
@@ -5841,7 +5891,7 @@
                         },
                         {
                             "id": "edit_text_base_props",
-                            "script": "return {id: `${html_id}-edit-value`, class: {'edit-value': true, [editing]: true}, onclick: (s, payload) => (payload.preventDefault(), [s, [confirm_edit_text, payload]])}"
+                            "script": "return {id: `${html_id}-edit-value`, class: {'edit-value': true, [editing]: true}, onclick: (s, payload) => (payload.preventDefault(), payload.stopPropagation(), [s, [confirm_edit_text, payload]])}"
                         },
                         {
                             "id": "edit_text_props"
