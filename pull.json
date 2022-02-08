@@ -1301,7 +1301,7 @@
         {
             "id": "hyperapp_action_effect",
             "description": "Creates an effect that dispatches the passed-in fn",
-            "script": "const action = typeof fn === 'string' ? {fn, graph: _graph} : (typeof fn === 'function' || (typeof fn === 'object' && fn.hasOwnProperty('fn'))) ? fn : undefined; return (dispatch, payload) => (console.log(action), console.log(payload), dispatch(action, payload))"
+            "script": "const action = typeof fn === 'string' ? {fn, graph: _graph} : (typeof fn === 'function' || (typeof fn === 'object' && fn.hasOwnProperty('fn'))) ? fn : undefined; return (dispatch, payload) => dispatch(action, payload)"
         },
         {
             "id": "update_graph_display",
@@ -1479,7 +1479,7 @@
                         "payload",
                         "update_sim_effect"
                     ],
-                    "script": "return {state, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && [(d, payload) => (typeof payload?.then === 'function' ? payload.then(p => p.run) : payload.run).then(res => res).then(res => d(s => (s.error_nodes.clear(), {...s, result: res.result?.state, error: res.error, error_nodes: res.error_nodes ?? s.error_nodes, result_display: (console.log(res.result.display), res.result?.display), error: res.error}))), result], ...(effects ?? [])]}"
+                    "script": "return {state, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && [(d, payload) => (typeof payload?.then === 'function' ? payload.then(p => p.run) : payload.run).then(res => res).then(res => d(s => (s.error_nodes.clear(), {...s, result: res.result?.state, error: res.error, error_nodes: res.error_nodes ?? s.error_nodes, result_display: res.result?.display, error: res.error}))), result], ...(effects ?? [])]}"
                 }
             ],
             "edges": [
@@ -3111,6 +3111,34 @@
         {
             "id": "blur_effect",
             "script": "return (dispatch, payload) => requestAnimationFrame(() => document.querySelector(payload.selector).blur())"
+        },
+        {
+            "id": "open_graph_effect",
+            "nodes": [
+                {"id": "in"},
+                {"id": "new_graph_id", "ref": "arg", "value": "payload.id"},
+                {"id": "state", "ref": "arg", "value": "state"},
+                {"id": "update_sim_effector", "ref": "arg", "value": "state.update_sim_effect"},
+                {"id": "display_graph_path", "value": "display_graph"},
+                {"id": "new_graph", "script": "return JSON.parse(localStorage.getItem(id))"},
+                {"id": "set_display_graph", "ref": "set"},
+                {"id": "update_sim_effect", "ref": "new_array"},
+                {"id": "effects", "ref": "new_array"},
+                {"id": "result"},
+                {"id": "out", "ref": "hyperapp_action_effect"}
+            ],
+            "edges": [
+                {"from": "in", "to": "out", "as": "args", "type": "ref"},
+                {"from": "new_graph_id", "to": "new_graph", "as": "id"},
+                {"from": "state", "to": "set_display_graph", "as": "target"},
+                {"from": "display_graph_path", "to": "set_display_graph", "as": "path"},
+                {"from": "new_graph", "to": "set_display_graph", "as": "value"},
+                {"from": "set_display_graph", "to": "result", "as": "state"},
+                {"from": "update_sim_effector", "to": "update_sim_effect", "as": "a0"},
+                {"from": "update_sim_effect", "to": "effects", "as": "a0"},
+                {"from": "effects", "to": "result", "as": "effects"},
+                {"from": "result", "to": "out", "as": "fn", "type": "ref"}
+            ]
         },
         {
             "id": "update_node_action",
@@ -5186,7 +5214,10 @@
                 {"id": "new_graph_node_effects", "ref": "new_array"},
                 {"id": "new_graph_node"},
                 {"id": "popover_graph_actions", "ref": "new_array"},
-                {"id": "popover_graph", "ref": "create_popover_graph"},
+                {"id": "empty", "value": {}},
+                {"id": "popover_graph_obj"},
+                {"id": "popover_graph_parent_obj", "ref": "set"},
+                {"id": "popover_graph", "ref": "create_object_graph"},
                 {"id": "show_popover_effector", "ref": "show_popover_graph"},
                 {"id": "show_popover_effect", "ref": "new_array"},
                 {"id": "show_popover_payload"},
@@ -5200,6 +5231,8 @@
                 {"id": "show_edit_text_effector", "ref": "show_edit_text"},
                 {"id": "show_edit_text_payload"},
                 {"id": "show_edit_text_effect", "ref": "new_array"},
+                {"id": "open_graph", "ref": "open_graph_effect"},
+                {"id": "open_obj", "script": "return Object.fromEntries(JSON.parse(localStorage.getItem('graph_list') ?? '[]').map(g => [g, [clear_popover, [open_graph, {id: g}]]]))"},
                 {"id": "stop_propagation_effector", "ref": "stop_propagation_effect"},
                 {"id": "stop_propagation_effect", "ref": "new_array"},
                 {"id": "dispatch_on_graph_click_effector", "ref": "dispatch_custom_event_effect"},
@@ -5223,7 +5256,7 @@
                 {"from": "save_effector", "to": "save_effect", "as": "a0"},
                 {"from": "save_payload", "to": "save_effect", "as": "a1"},
                 {"from": "save_effect", "to": "save_node_effects", "as": "a0"},
-                {"from": "save_node_effects", "to": "save_node", "as": "value"},
+                {"from": "save_node_effects", "to": "popover_graph_obj", "as": "save"},
                 {"from": "save_name", "to": "save_node", "as": "name"},
                 {"from": "save_id", "to": "save_node", "as": "id"},
                 {"from": "save_node", "to": "popover_graph_actions", "as": "a"},
@@ -5233,13 +5266,13 @@
                 {"from": "export_payload", "to": "export_effect", "as": "a1"},
                 {"from": "export_effect", "to": "export_node_effects", "as": "a0"},
                 {"from": "export_effect", "to": "export_node_effects", "as": "a0"},
-                {"from": "export_node_effects", "to": "export_node", "as": "value"},
+                {"from": "export_node_effects", "to": "popover_graph_obj", "as": "export"},
                 {"from": "export_name", "to": "export_node", "as": "name"},
                 {"from": "export_id", "to": "export_node", "as": "id"},
                 {"from": "export_node", "to": "popover_graph_actions", "as": "c"},
                 {"from": "new_graph_effector", "to": "new_graph_effect", "as": "a0"},
                 {"from": "new_graph_effect", "to": "new_graph_node_effects", "as": "a0"},
-                {"from": "new_graph_node_effects", "to": "new_graph_node", "as": "value"},
+                {"from": "new_graph_node_effects", "to": "popover_graph_obj", "as": "new"},
                 {"from": "new_graph_name", "to": "new_graph_node", "as": "name"},
                 {"from": "new_graph_id", "to": "new_graph_node", "as": "id"},
                 {"from": "new_graph_node", "to": "popover_graph_actions", "as": "b"},
@@ -5252,12 +5285,18 @@
                 {"from": "show_edit_text_payload", "to": "show_edit_text_effect", "as": "a1"},
                 {"from": "show_edit_text_effect", "to": "change_display_graph_id_node_value", "as": "a"},
                 {"from": "clear_popover_effect", "to": "change_display_graph_id_node_value", "as": "b"},
-                {"from": "change_display_graph_id_node_value", "to": "change_display_graph_id_node", "as": "value"},
+                {"from": "change_display_graph_id_node_value", "to": "popover_graph_obj", "as": "change_name"},
                 {"from": "change_display_graph_id_node_id", "to": "change_display_graph_id_node", "as": "id"},
                 {"from": "change_display_graph_id_node_name", "to": "change_display_graph_id_node", "as": "name"},
                 {"from": "change_display_graph_id_node", "to": "popover_graph_actions", "as": "d"},
+                {"from": "clear_popover_effect", "to": "open_obj", "as": "clear_popover"},
+                {"from": "open_graph", "to": "open_obj", "as": "open_graph"},
+                {"from": "open_obj", "to": "popover_graph_obj", "as": "open"},
                 {"from": "name", "to": "popover_graph", "as": "name"},
-                {"from": "popover_graph_actions", "to": "popover_graph", "as": "nodes"},
+                {"from": "empty", "to": "popover_graph_parent_obj", "as": "target"},
+                {"from": "name", "to": "popover_graph_parent_obj", "as": "path"},
+                {"from": "popover_graph_obj", "to": "popover_graph_parent_obj", "as": "value"},
+                {"from": "popover_graph_parent_obj", "to": "popover_graph", "as": "obj", "type": "resolve"},
                 {"from": "popover_graph", "to": "show_popover_payload", "as": "popover_graph"},
                 {"from": "show_popover_effector", "to": "show_popover_effect", "as": "a0"},
                 {"from": "show_popover_payload", "to": "show_popover_effect", "as": "a1"},
