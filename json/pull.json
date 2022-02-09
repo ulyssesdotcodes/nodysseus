@@ -3754,36 +3754,9 @@
                     "id": "in"
                 },
                 {
-                    "id": "add_node_effect",
-                    "ref": "add_node"
-                },
-                {
-                    "id": "add_edge_effect",
-                    "ref": "add_edge"
-                },
-                {
-                    "id": "delete_node_effect",
-                    "ref": "delete_node"
-                },
-                {
                     "id": "key_event",
                     "ref": "arg",
                     "value": "payload"
-                },
-                {
-                    "id": "key",
-                    "args": [
-                        "ev"
-                    ],
-                    "script": "return ev.key?.toLowerCase()"
-                },
-                {
-                    "id": "key_inputs",
-                    "script": "return (state.editing !== false || state.search !== false) ? ev.key === 'escape' ? ['escape'] : [] : [((ev.ctrlKey ? 'ctrl_' : '') + (ev.shiftKey ? 'shift_' : '') + ev.key.toLowerCase())]"
-                },
-                {
-                    "id": "key_log",
-                    "ref": "log"
                 },
                 {
                     "id": "state",
@@ -3806,6 +3779,63 @@
                     "value": "state.display_graph"
                 },
                 {
+                    "id": "display_graph_out",
+                    "ref": "arg",
+                    "value": "state.display_graph.out"
+                },
+                {
+                    "id": "editing",
+                    "ref": "arg",
+                    "value": "state.editing"
+                },
+                {
+                    "id": "add_node_effect",
+                    "ref": "add_node"
+                },
+                {
+                    "id": "add_edge_effect",
+                    "ref": "add_edge"
+                },
+                {
+                    "id": "delete_node_effect",
+                    "ref": "delete_node"
+                },
+                {
+                    "id": "save_effect",
+                    "ref": "save_effect"
+                },
+                {
+                    "id": "show_edit_text",
+                    "ref": "show_edit_text"
+                },
+                {
+                    "id": "update_node",
+                    "ref": "update_node_action"
+                },
+                {
+                    "id": "open_reference_popover",
+                    "ref": "open_reference_popover"
+                },
+                {
+                    "id": "confirm_edit_text",
+                    "ref": "confirm_edit_text"
+                },
+                {
+                    "id": "onselectnode",
+                    "ref": "onselectnode_effect"
+                },
+                {
+                    "id": "key",
+                    "args": [
+                        "ev"
+                    ],
+                    "script": "return ev.key?.toLowerCase()"
+                },
+                {
+                    "id": "key_inputs",
+                    "script": "return (ev.ctrlKey ? 'ctrl_' : '') + (ev.shiftKey ? 'shift_' : '') + ev.key.toLowerCase()"
+                },
+                {
                     "id": "get_selected",
                     "args": [
                         "selected"
@@ -3813,27 +3843,12 @@
                     "script": "return selected[0]"
                 },
                 {
-                    "id": "find_selected"
-                },
-                {
-                    "id": "filter_editing",
-                    "args": [
-                        "editing"
-                    ],
-                    "script": "return editing ? [] : {}"
-                },
-                {
                     "id": "selected_node",
                     "ref": "selected_node"
                 },
                 {
-                    "id": "save_effect",
-                    "ref": "save_effect"
-                },
-                {
                     "id": "save",
-                    "script": "return [[save_effect, {display_graph}]]",
-                    "script_": "return [key === 's' && ctrlKey === true && [(_, display_graph) => { localStorage.setItem('display_graph', JSON.stringify(display_graph)); localStorage.setItem('display_graph_' + Date.now(), JSON.stringify(display_graph));}, display_graph]]"
+                    "script": "return [[save_effect, {display_graph}]]"
                 },
                 {
                     "id": "down",
@@ -3916,10 +3931,10 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "document.querySelector(`#${html_id}-edit-value textarea`).focus(); return 'value';"
+                    "script": "return [[show_edit_text, {id: selected_node.id, property:'value', oneditconfirm: update_node, value: selected_node.value}]]"
                 },
                 {
-                    "id": "t",
+                    "id": "r",
                     "args": [
                         "key",
                         "selected",
@@ -3928,19 +3943,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "document.querySelector(`#${html_id}-edit-value input`).focus(); return 'ref';"
-                },
-                {
-                    "id": "shift_t",
-                    "args": [
-                        "key",
-                        "selected",
-                        "selected_edge",
-                        "display_graph",
-                        "editing",
-                        "nodes"
-                    ],
-                    "script": "const new_node = Object.assign({}, display_graph.nodes.find(n => n.id === selected[0])); new_node.id = new_node.name; return {...display_graph, nodes: display_graph.nodes.map(n => n.id === selected[0] ? {id: n.id, ref: n.name, name: n.name} : n).concat([new_node]), edges: display_graph.edges}"
+                    "script": "return [[open_reference_popover, {id}]]"
                 },
                 {
                     "id": "s",
@@ -3952,8 +3955,9 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "if(!(key === 's' && ctrlKey === false && editing === false)){ return [] } document.querySelector(`#${html_id}-edit-value textarea`).focus(); return 'script';"
+                    "script": "return [[show_edit_text, {id: selected_node.id, property:'script', oneditconfirm: update_node, value: selected_node.script}]]"
                 },
+                {"id": "enter", "script": "return [[onselectnode, {node_id, event}]]"},
                 {
                     "id": "a",
                     "args": [
@@ -3978,37 +3982,8 @@
                     "script": "if(!(key === 'n' && editing === false)){ return [] } document.querySelector(`#${html_id}-edit-value textarea`).focus(); return 'name';"
                 },
                 {
-                    "id": "shift_o",
-                    "script": "return [[add_node, {id: randid}], [add_edge, {from: randid, to: selected}]]"
-                },
-                {
                     "id": "o",
-                    "script": "return [[add_node, {id: randid}], [add_edge, {from: selected, to: randid}]]"
-                },
-                {
-                    "id": "o_display_graph",
-                    "args": [
-                        "display_graph"
-                    ],
-                    "script": "return display_graph"
-                },
-                {
-                    "id": "o_selected",
-                    "args": [
-                        "selected"
-                    ],
-                    "script": "return selected"
-                },
-                {
-                    "id": "o_selected_edge",
-                    "args": [
-                        "selected_edge"
-                    ],
-                    "script": "return selected_edge"
-                },
-                {
-                    "id": "o_effects",
-                    "script": "return o.effects"
+                    "script": "return [[add_node, {id: randid}], [add_edge, {from: randid, to: selected}]]"
                 },
                 {
                     "id": "x",
@@ -4036,14 +4011,6 @@
                         "selected"
                     ],
                     "script": "return selected"
-                },
-                {
-                    "id": "enter",
-                    "args": [
-                        "key",
-                        "selected"
-                    ],
-                    "script": "return key === 'enter'"
                 },
                 {
                     "id": "e",
@@ -4125,22 +4092,17 @@
                     "script": "if(pending_edges.edge_from && pending_edges.edge_to){ const start_len = state.display_graph.edges.length;  state.display_graph.edges = state.display_graph.edges.filter(e => !(e.from === pending_edges.edge_from && e.to === pending_edges.edge_to)); if(state.display_graph.edges.length === start_len){ state.display_graph.edges.push({from: pending_edges.edge_from, to: pending_edges.edge_to});}} return state.display_graph;"
                 },
                 {
-                    "id": "expand_contract",
-                    "ref": "expand_contract"
-                },
-                {
-                    "id": "expand_contract_selected",
+                    "id": "editing_esc",
                     "args": [
-                        "selected"
+                        "key",
+                        "target",
+                        "selected",
+                        "selected_edge",
+                        "display_graph",
+                        "editing",
+                        "search"
                     ],
-                    "script": "return selected"
-                },
-                {
-                    "id": "expand_contract_display_graph",
-                    "args": [
-                        "display_graph"
-                    ],
-                    "script": "return display_graph"
+                    "script": "return [[confirm_edit_text]]" 
                 },
                 {
                     "id": "esc",
@@ -4153,27 +4115,7 @@
                         "editing",
                         "search"
                     ],
-                    "script": "target.blur(); if(search !== false){ target.value = ''; return {search: false} } let new_nodes; let value = target.value === '' ? undefined : target.value; if(selected_edge){ display_graph.edges.find(e => e.to === selected_edge.to && e.from === selected_edge.from)[editing] = value === '' ? undefined : value; } else { let ty; new_nodes = display_graph.nodes.map(n => n.id !== selected[0] ? n : (ty = n.ref, {...n, [editing]: value})); if(editing === 'name' || (editing === 'value' && ty === 'arg' && value)){ display_graph.edges.filter(e => e.from === selected[0] && e.as?.startsWith('arg')).forEach(e => e.as = value) }} return {editing: false, edit_value: null, display_graph: {...display_graph, nodes: new_nodes ?? display_graph.nodes}};" },
-                {
-                    "id": "esc_editing",
-                    "args": [
-                        "editing"
-                    ],
-                    "script": "return editing;"
-                },
-                {
-                    "id": "esc_edit_value",
-                    "args": [
-                        "edit_value"
-                    ],
-                    "script": "return edit_value;"
-                },
-                {
-                    "id": "esc_display_graph",
-                    "args": [
-                        "display_graph"
-                    ],
-                    "script": "return display_graph;"
+                    "script": "return [[onselectnode, {node_id, event}]]" 
                 },
                 {
                     "id": "esc_search",
@@ -4200,7 +4142,7 @@
                         "selected",
                         "state"
                     ],
-                    "script": "if(selected) { document.querySelector(`#${html_id}`).dispatchEvent(new CustomEvent(`selectnode`, {detail: {node: selected[0]}}))} return {...state, selected: selected ?? state.selected}"
+                    "script": "return {...state, selected: selected ?? state.selected}"
                 },
                 {
                     "id": "show_all",
@@ -4222,10 +4164,6 @@
                         "state"
                     ],
                     "script": "return {...state, show_result: show_result ?? state.show_result}"
-                },
-                {
-                    "id": "editing",
-                    "ref": "switch"
                 },
                 {
                     "id": "set_editing",
@@ -4306,8 +4244,16 @@
                     "script": "state.search = search ?? state.search; return state;"
                 },
                 {
-                    "id": "effects",
+                    "id": "graph_effects",
                     "ref": "switch"
+                },
+                {
+                    "id": "editing_effects",
+                    "ref": "switch"
+                },
+                {
+                    "id": "effects",
+                    "ref": "if"
                 },
                 {
                     "id": "update_graph_sim",
@@ -4319,15 +4265,15 @@
                     ],
                     "script": "return (!state.editing && state.search === false && (key === 'enter' || key.toLowerCase() === 'o' || key === 'x' || (key === 't' && shiftKey) || (!!pending_edges.edge_to && !!pending_edges.edge_from))) || key === 'escape' || selected"
                 },
+                {"id": "graph_state"},
+                {"id": "no_update"},
                 {
                     "id": "update",
-                    "args": [
-                        "key"
-                    ],
-                    "script": "return key === 'escape'"
+                    "ref": "update_graph_display"
                 },
                 {
-                    "id": "out"
+                    "id": "out",
+                    "ref": "if"
                 }
             ],
             "edges": [
@@ -4357,13 +4303,14 @@
                     "to": "get_selected"
                 },
                 {
-                    "from": "state",
-                    "to": "selected_node"
+                    "from": "arg_display_graph",
+                    "to": "selected_node",
+                    "as": "display_graph"
                 },
                 {
                     "from": "get_selected",
                     "to": "selected_node",
-                    "as": "node_id"
+                    "as": "selected"
                 },
                 {
                     "from": "selected_edge",
@@ -4390,7 +4337,12 @@
                 },
                 {
                     "from": "key_inputs",
-                    "to": "effects",
+                    "to": "graph_effects",
+                    "as": "input"
+                },
+                {
+                    "from": "key_inputs",
+                    "to": "editing_effects",
                     "as": "input"
                 },
                 {
@@ -4419,11 +4371,6 @@
                 },
                 {
                     "from": "key_inputs",
-                    "to": "editing",
-                    "as": "input"
-                },
-                {
-                    "from": "key_inputs",
                     "to": "display_graph",
                     "as": "input"
                 },
@@ -4448,27 +4395,6 @@
                     "as": "input"
                 },
                 {
-                    "from": "state",
-                    "to": "filter_editing"
-                },
-                {
-                    "from": "state",
-                    "to": "expand_contract"
-                },
-                {
-                    "from": "get_selected",
-                    "to": "expand_contract",
-                    "as": "node_id"
-                },
-                {
-                    "from": "state",
-                    "to": "enter"
-                },
-                {
-                    "from": "key_event",
-                    "to": "enter"
-                },
-                {
                     "from": "arg_display_graph",
                     "to": "save",
                     "as": "display_graph"
@@ -4479,10 +4405,6 @@
                     "as": "save_effect"
                 },
                 {
-                    "from": "filter_editing",
-                    "to": "down"
-                },
-                {
                     "from": "state",
                     "to": "down"
                 },
@@ -4493,26 +4415,6 @@
                 {
                     "from": "state",
                     "to": "up"
-                },
-                {
-                    "from": "key_event",
-                    "to": "up"
-                },
-                {
-                    "from": "filter_editing",
-                    "to": "up"
-                },
-                {
-                    "from": "state",
-                    "to": "left"
-                },
-                {
-                    "from": "key_event",
-                    "to": "left"
-                },
-                {
-                    "from": "filter_editing",
-                    "to": "left"
                 },
                 {
                     "from": "state",
@@ -4539,16 +4441,79 @@
                     "to": "right"
                 },
                 {
-                    "from": "filter_editing",
-                    "to": "right"
+                    "from": "show_edit_text",
+                    "to": "v",
+                    "as": "show_edit_text"
+                },
+                {
+                    "from": "update_node",
+                    "to": "v",
+                    "as": "update_node"
+                },
+                {
+                    "from": "selected_node",
+                    "to": "v",
+                    "as": "selected_node"
+                },
+                {
+                    "from": "v",
+                    "to": "graph_effects",
+                    "as": "v"
+                },
+                {
+                    "from": "open_reference_popover",
+                    "to": "r",
+                    "as": "open_reference_popover"
+                },
+                {
+                    "from": "get_selected",
+                    "to": "r",
+                    "as": "id"
+                },
+                {
+                    "from": "r",
+                    "to": "graph_effects",
+                    "as": "r"
+                },
+                {
+                    "from": "show_edit_text",
+                    "to": "s",
+                    "as": "show_edit_text"
+                },
+                {
+                    "from": "update_node",
+                    "to": "s",
+                    "as": "update_node"
+                },
+                {
+                    "from": "selected_node",
+                    "to": "s",
+                    "as": "selected_node"
+                },
+                {
+                    "from": "s",
+                    "to": "graph_effects",
+                    "as": "s"
+                },
+                {
+                    "from": "get_selected",
+                    "to": "enter",
+                    "as": "node_id"
                 },
                 {
                     "from": "key_event",
-                    "to": "v"
+                    "to": "enter",
+                    "as": "event"
                 },
                 {
-                    "from": "state",
-                    "to": "v"
+                    "from": "onselectnode",
+                    "to": "enter",
+                    "as": "onselectnode"
+                },
+                {
+                    "from": "enter",
+                    "to": "graph_effects",
+                    "as": "enter"
                 },
                 {
                     "from": "key_event",
@@ -4639,18 +4604,8 @@
                     "as": "randid"
                 },
                 {
-                    "from": "randid",
-                    "to": "shift_o",
-                    "as": "randid"
-                },
-                {
                     "from": "get_selected",
                     "to": "o",
-                    "as": "selected"
-                },
-                {
-                    "from": "get_selected",
-                    "to": "shift_o",
                     "as": "selected"
                 },
                 {
@@ -4659,18 +4614,8 @@
                     "as": "add_edge"
                 },
                 {
-                    "from": "add_edge_effect",
-                    "to": "shift_o",
-                    "as": "add_edge"
-                },
-                {
                     "from": "add_node_effect",
                     "to": "o",
-                    "as": "add_node"
-                },
-                {
-                    "from": "add_node_effect",
-                    "to": "shift_o",
                     "as": "add_node"
                 },
                 {
@@ -4708,6 +4653,10 @@
                     "as": "k"
                 },
                 {
+                    "from": "state",
+                    "to": "left"
+                },
+                {
                     "from": "left",
                     "to": "selected",
                     "as": "arrowleft"
@@ -4716,6 +4665,10 @@
                     "from": "left",
                     "to": "selected",
                     "as": "h"
+                },
+                {
+                    "from": "state",
+                    "to": "right"
                 },
                 {
                     "from": "right",
@@ -4761,31 +4714,6 @@
                     "from": "selected_edge",
                     "to": "set_selected_edge",
                     "as": "selected_edge"
-                },
-                {
-                    "from": "v",
-                    "to": "editing",
-                    "as": "v"
-                },
-                {
-                    "from": "t",
-                    "to": "editing",
-                    "as": "t"
-                },
-                {
-                    "from": "s",
-                    "to": "editing",
-                    "as": "s"
-                },
-                {
-                    "from": "n",
-                    "to": "editing",
-                    "as": "n"
-                },
-                {
-                    "from": "a",
-                    "to": "editing",
-                    "as": "a"
                 },
                 {
                     "from": "state",
@@ -4860,67 +4788,19 @@
                     "as": "i"
                 },
                 {
-                    "from": "state",
-                    "to": "esc"
+                    "from": "confirm_edit_text",
+                    "to": "editing_esc",
+                    "as": "confirm_edit_text"
                 },
                 {
-                    "from": "key_event",
-                    "to": "esc"
-                },
-                {
-                    "from": "esc",
-                    "to": "esc_editing"
-                },
-                {
-                    "from": "esc",
-                    "to": "esc_edit_value"
-                },
-                {
-                    "from": "esc",
-                    "to": "esc_display_graph"
-                },
-                {
-                    "from": "esc",
-                    "to": "esc_search"
-                },
-                {
-                    "from": "esc_editing",
-                    "to": "editing",
+                    "from": "editing_esc",
+                    "to": "editing_effects",
                     "as": "escape"
                 },
-                {
-                    "from": "esc_edit_value",
-                    "to": "edit_value",
-                    "as": "escape"
-                },
-                {
-                    "from": "esc_display_graph",
-                    "to": "display_graph",
-                    "as": "escape"
-                },
-                {
-                    "from": "esc_search",
-                    "to": "search",
-                    "as": "escape"
-                },
-                {
-                    "from": "expand_contract",
-                    "to": "expand_contract_display_graph"
-                },
-                {
-                    "from": "expand_contract_display_graph",
-                    "to": "display_graph",
-                    "as": "enter"
-                },
-                {
-                    "from": "expand_contract",
-                    "to": "expand_contract_selected"
-                },
-                {
-                    "from": "expand_contract_selected",
-                    "to": "selected",
-                    "as": "enter"
-                },
+                {"from": "display_graph_out", "to": "esc", "as": "node_id"},
+                {"from": "onselectnode", "to": "esc", "as": "onselectnode"},
+                {"from": "key_event", "to": "esc", "as": "event"},
+                {"from": "esc", "to": "graph_effects", "as": "escape"},
                 {
                     "from": "f",
                     "to": "search",
@@ -4928,22 +4808,17 @@
                 },
                 {
                     "from": "x",
-                    "to": "effects",
+                    "to": "graph_effects",
                     "as": "x"
                 },
                 {
-                    "from": "shift_o",
-                    "to": "effects",
-                    "as": "shift_o"
-                },
-                {
                     "from": "o",
-                    "to": "effects",
+                    "to": "graph_effects",
                     "as": "o"
                 },
                 {
                     "from": "save",
-                    "to": "effects",
+                    "to": "graph_effects",
                     "as": "ctrl_s"
                 },
                 {
@@ -5026,11 +4901,6 @@
                     "as": "state"
                 },
                 {
-                    "from": "editing",
-                    "to": "set_editing",
-                    "as": "editing"
-                },
-                {
                     "from": "set_editing",
                     "to": "set_show_result",
                     "as": "state"
@@ -5055,9 +4925,11 @@
                     "to": "set_display_graph",
                     "as": "display_graph"
                 },
+                {"from": "set_display_graph", "to": "graph_state"},
+                {"from": "editing", "to": "new_state", "as": "pred"},
                 {
-                    "from": "set_display_graph",
-                    "to": "out",
+                    "from": "graph_state",
+                    "to": "update",
                     "as": "state"
                 },
                 {
@@ -5089,23 +4961,19 @@
                     "as": "key"
                 },
                 {
-                    "from": "key_event",
-                    "to": "out",
-                    "as": "payload",
-                    "type": "resolve"
-                },
-                {
-                    "from": "update",
-                    "to": "out",
-                    "as": "update",
-                    "type": "resolve"
-                },
-                {
-                    "from": "effects",
-                    "to": "out",
+                    "from": "graph_effects",
+                    "to": "update",
                     "as": "effects"
-                }
-
+                },
+                {"from": "state", "to": "no_update", "as": "state"},
+                {
+                    "from": "editing_effects",
+                    "to": "no_update",
+                    "as": "effects"
+                },
+                { "from": "editing", "to": "out", "as": "pred" },
+                { "from": "update", "to": "out", "as": "false" },
+                { "from": "no_update", "to": "out", "as": "true" }
             ]
         },
         {
@@ -5354,7 +5222,7 @@
             ]
         },
         {
-            "id": "onclick_node",
+            "id": "onselectnode",
             "nodes": [
                 {
                     "id": "in"
@@ -5412,7 +5280,7 @@
                         "selected",
                         "state"
                     ],
-                    "script": "document.querySelector(`#${html_id}`).dispatchEvent(new CustomEvent(`selectnode`, {detail: {node: node_id}})); return {...state, selected: [node_id]}"
+                    "script": "return {...state, selected: [node_id]}"
                 },
                 {
                     "id": "display_graph_inputs",
@@ -5460,10 +5328,10 @@
                 {"id": "update_node", "ref": "update_node_action"},
                 {
                     "id": "popover_graph_obj",
-                    "script": "return {[selected.node_id]: {inputs: {create_input: [[add_node, {id: randid}], [add_edge, {from: randid, to: selected.node_id }], [clear_popover]], arg: [[add_node, {id: randid, ref: 'arg'}], [add_edge, {from: randid, to: selected.node_id }], [show_edit_text, {id: randid, property:'value', oneditconfirm: update_node, value: ''}], [clear_popover]]}, structure: {delete: [[delete_node, {id: selected.node_id}], [clear_popover]], expand_contract: [[expand_contract, {id: selected.node_id}], [clear_popover]]}, change: {name: [[show_edit_text, {id: selected.node_id, property:'name', oneditconfirm: update_node, value: selected.name}], [clear_popover]], value: [[show_edit_text, {id: selected.node_id, property:'value', oneditconfirm: update_node, value: selected.value}], [clear_popover]], script: [[show_edit_text, {id: selected.node_id, property:'script', oneditconfirm: update_node, value: selected.script}], [clear_popover]], reference: [[open_reference_popover, {id: selected.node_id}]]}, clipboard: {copy: [[copy_effect, {id: selected.node_id}], [clear_popover]], paste: [[paste_node_effect, {randid}], [clear_popover]]}}}",
-                    "script_": "return { 'out': 'out', 'nodes': [ {'id': 'create_input', 'name': 'create input', value: [[add_node, {id: randid}], [add_edge, {from: randid, to: selected.node_id }], [clear_popover]]}, {'id': 'delete', 'name': 'delete', value: [[delete_node, {id: selected.node_id}], [clear_popover]]},{id: 'expand_contract', name: 'expand / contract', value: [[expand_contract, {id: selected.node_id}], [clear_popover]]}, {'id': 'out', name: selected.node_id, value: [[clear_popover]]}, {'id': 'change_reference', name: 'change reference', value: [[open_reference_popover, {id: selected.node_id}]]}, {'id': 'change_value', name: 'change value', value: [[show_edit_text, {id: selected.node_id, property:'value', oneditconfirm: update_node, value: selected.value}], [clear_popover]]}, {'id': 'change_name', name: 'change name', value: [[show_edit_text, {id: selected.node_id, property:'name', oneditconfirm: update_node, value: selected.name}], [clear_popover]]}, {'id': 'change_script', name: 'change script', value: [[show_edit_text, {id: selected.node_id, property:'script', oneditconfirm: update_node, value: selected.script}], [clear_popover]]} ], 'edges': [ {'from': 'create_input', 'to': 'out'}, {'from': 'delete', 'to': 'out'}, {'from': 'expand_contract', 'to': 'out'}, {from: 'change_reference', to: 'out'}, {'from': 'change_value', to: 'out'}, {'from': 'change_name', to: 'out'}, {'from': 'change_script', to: 'out'} ] }"
+                    "script": "return {[selected.node_id]: {value: [[clear_popover]], inputs: {create_input: [[add_node, {id: randid}], [add_edge, {from: randid, to: selected.node_id }], [clear_popover]], arg: [[add_node, {id: randid, ref: 'arg'}], [add_edge, {from: randid, to: selected.node_id }], [show_edit_text, {id: randid, property:'value', oneditconfirm: update_node, value: ''}], [clear_popover]]}, structure: {delete: [[delete_node, {id: selected.node_id}], [clear_popover]], expand_contract: [[expand_contract, {id: selected.node_id}], [clear_popover]]}, change: {name: [[show_edit_text, {id: selected.node_id, property:'name', oneditconfirm: update_node, value: selected.name}], [clear_popover]], value: [[show_edit_text, {id: selected.node_id, property:'value', oneditconfirm: update_node, value: selected.value}], [clear_popover]], script: [[show_edit_text, {id: selected.node_id, property:'script', oneditconfirm: update_node, value: selected.script}], [clear_popover]], reference: [[open_reference_popover, {id: selected.node_id}]]}, clipboard: {copy: [[copy_effect, {id: selected.node_id}], [clear_popover]], paste: [[paste_node_effect, {randid}], [clear_popover]]}}}"
                 },
                 {"id": "popover_graph_value", "ref": "create_object_graph"},
+                {"id": "dispatch_custom_event_effect", "script": "return [(_, payload) => document.getElementById(`${html_id}`).dispatchEvent(new CustomEvent(`selectnode`, {detail: {node: node_id}}))]"},
                 {
                     "id": "show_popover_payload"
                 },
@@ -5703,6 +5571,21 @@
                     "as": "pred"
                 },
                 {
+                    "from": "arg_selected",
+                    "to": "dispatch_custom_event_effect",
+                    "as": "selected"
+                },
+                {
+                    "from": "html_id",
+                    "to": "dispatch_custom_event_effect",
+                    "as": "html_id"
+                },
+                {
+                    "from": "node_id",
+                    "to": "dispatch_custom_event_effect",
+                    "as": "node_id"
+                },
+                {
                     "from": "if_show_popover",
                     "to": "effects",
                     "as": "a1"
@@ -5711,6 +5594,11 @@
                     "from": "stop_propagation_effect",
                     "to": "effects",
                     "as": "a0"
+                },
+                {
+                    "from": "dispatch_custom_event_effect",
+                    "to": "effects",
+                    "as": "a2"
                 },
                 {
                     "from": "effects",
@@ -5731,10 +5619,22 @@
             ]
         },
         {
+            "id": "onselectnode_effect",
+            "nodes": [
+                {"id": "in"},
+                {"id": "onselectnode", "ref": "onselectnode"},
+                {"id": "out", "ref": "hyperapp_action_effect"}
+            ],
+            "edges": [
+                {"from": "in", "to": "out", "type": "ref", "as": "args"},
+                {"from": "onselectnode", "to": "out", "as": "fn", "type": "ref"}
+            ]
+        },
+        {
             "id": "onclick_node_action",
             "nodes": [
                 {"id": "in"},
-                {"id": "onclick_node", "ref": "onclick_node"},
+                {"id": "onclick_node", "ref": "onselectnode"},
                 {"id": "out", "ref": "hyperapp_action"}
             ],
             "edges": [

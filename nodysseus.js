@@ -940,14 +940,7 @@ const keydownSubscription = (dispatch, options) => {
             return;
         }
 
-        requestAnimationFrame(() => dispatch(options.action, { 
-            key: ev.key.toLowerCase(), 
-            code: ev.code, 
-            ctrlKey: ev.ctrlKey, 
-            shiftKey: ev.shiftKey, 
-            metaKey: ev.metaKey, 
-            target: ev.target 
-        }))
+        requestAnimationFrame(() => dispatch(options.action, ev))
     };
     addEventListener('keydown', handler);
     return () => removeEventListener('keydown', handler);
@@ -1163,7 +1156,7 @@ const flattenNode = (graph, levels = -1) => {
 
 const objToGraph = (obj, path) => Object.entries(obj)
     .map(e => [e[0], typeof e[1] === 'object' && !!e[1] && !Array.isArray(e[1])
-                ? objToGraph(e[1], path ? `${path}.${e[0]}` : e[0])
+                ? Object.assign(e[1].hasOwnProperty('value') ? {value: e[1].value} : {}, objToGraph(e[1], path ? `${path}.${e[0]}` : e[0]))
                 : {value: e[1]}]
     ).reduce((acc, n) => ({
         nodes: acc.nodes.concat(n[1].nodes ?? []).concat([Object.assign({id: path ? `${path}.${n[0]}` : n[0], name: n[0]}, n[1].hasOwnProperty('value') ? {value: n[1].value} : {})]),
