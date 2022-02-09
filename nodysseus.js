@@ -1028,7 +1028,10 @@ const contract_node = (data, keep_expanded = false) => {
                 const old_node = inside_nodes.find(i => e.from === i.id);
                 let inside_node = old_node ?? Object.assign({}, data.display_graph.nodes.find(p => p.id === e.from));
 
-                if ((inside_node.name ?? inside_node.id)?.endsWith('/in') && !(inside_node.name ?? inside_node.id).endsWith(name + '/in')) {
+                if (((inside_node.name ?? inside_node.id)?.endsWith('/in') && 
+                    !(inside_node.name ?? inside_node.id).endsWith(name + '/in')) 
+                    || ((inside_node.name ?? inside_node.id)?.endsWith('/out') && 
+                        !(inside_node.name ?? inside_node.id).endsWith(name + '/out'))) {
                     in_edge.push(e);
                     continue;
                 }
@@ -1155,11 +1158,18 @@ const flattenNode = (graph, levels = -1) => {
 }
 
 const objToGraph = (obj, path) => Object.entries(obj)
+    .filter(e => e[0] !== '_value')
     .map(e => [e[0], typeof e[1] === 'object' && !!e[1] && !Array.isArray(e[1])
-                ? Object.assign(e[1].hasOwnProperty('value') ? {value: e[1].value} : {}, objToGraph(e[1], path ? `${path}.${e[0]}` : e[0]))
+                ? Object.assign(e[1].hasOwnProperty('_value') ? {value: e[1]._value} : {}, objToGraph(e[1], path ? `${path}.${e[0]}` : e[0]))
                 : {value: e[1]}]
     ).reduce((acc, n) => ({
-        nodes: acc.nodes.concat(n[1].nodes ?? []).concat([Object.assign({id: path ? `${path}.${n[0]}` : n[0], name: n[0]}, n[1].hasOwnProperty('value') ? {value: n[1].value} : {})]),
+        nodes: acc.nodes.concat(n[1].nodes ?? [])
+            .concat([Object.assign({id: path ? `${path}.${n[0]}` : n[0], name: n[0]}, 
+                n[1].hasOwnProperty('value') 
+                    ? {value: n[1].value} 
+                    : n[1].hasOwnProperty('_value') 
+                    ? {value: n[1]._value} 
+                    : {})]),
         edges: acc.edges.concat(n[1].edges ?? []).concat(path ? [{to: path, from: `${path}.${n[0]}`}] : [])
     })
     , {nodes: [], edges: []});
@@ -1191,8 +1201,6 @@ const middleware = dispatch => (ha_action, ha_payload) => {
                 }
                 return e
             });
-
-            console.log(result);
 
             return result.hasOwnProperty("state")
                 ? effects.length > 0 ? [result.state, ...effects] : result.state
@@ -1231,7 +1239,9 @@ const generic_nodes = new Set([
     "apply",
     "partial",
     "fetch",
-    "call"
+    "call",
+
+    "custom"
 ]);
 
 const ispromise = a => typeof a?.then === 'function';
@@ -1313,7 +1323,7 @@ const state = new Map([['in', {
             .filter(n => !generic_nodes.has(n.id))
             .concat(DEFAULT_GRAPH.nodes.filter(n => generic_nodes.has(n.id))), 
         edges: display_graph.edges
-            .filter(e => !generic_nodes.has(e.to))
+            .filter(e => !generic_nodes.has(e.from))
             .concat(DEFAULT_GRAPH.edges.filter(e => generic_nodes.has(e.to))) 
     },
     html_id: "node-editor",
