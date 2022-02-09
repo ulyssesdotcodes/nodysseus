@@ -8711,6 +8711,7 @@
         {"from": "h_text", "to": "hyperapp"},
         {"from": "new_array", "to": "array"},
         {"from": "filter", "to": "array"},
+        {"from": "append", "to": "array"},
         {"from": "map", "to": "array"},
         {"from": "log", "to": "utility"},
         {"from": "execute_graph", "to": "utility"},
