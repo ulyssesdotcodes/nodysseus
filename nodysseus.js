@@ -1230,7 +1230,8 @@ const generic_nodes = new Set([
     "arg",
     "apply",
     "partial",
-    "fetch"
+    "fetch",
+    "call"
 ]);
 
 const ispromise = a => typeof a?.then === 'function';
@@ -1284,8 +1285,12 @@ const lib = {
             }
         },
         fetch: {
-            args: ['url'],
+            args: ['url', 'params'],
             fn: fetch
+        },
+        call: {
+            args: ['fn', 'args', 'self'],
+            fn: (fn, args, self) => self[fn](...(args ?? []))
         }
     },
     scripts: { d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all, listen},

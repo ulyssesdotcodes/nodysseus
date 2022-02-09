@@ -41,6 +41,7 @@
             ]
         },
         {"id": "fetch", "name": "fetch", "extern": "utility.fetch"},
+        {"id": "call", "name": "call", "extern": "utility.call"},
         {
         "id": "text_display",
         "name": "text_display",
