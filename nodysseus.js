@@ -1231,6 +1231,7 @@ const generic_nodes = new Set([
     "array",
     "new_array",
     "filter",
+    "map",
 
     "utility",
     "log",

@@ -1481,7 +1481,7 @@
                         "payload",
                         "update_sim_effect"
                     ],
-                    "script": "return {state, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && [(d, payload) => (typeof payload?.then === 'function' ? payload.then(p => p.run) : payload.run).then(res => res).then(res => d(s => (s.error_nodes.clear(), {...s, result: res.result?.state, error: res.error, error_nodes: res.error_nodes ?? s.error_nodes, result_display: res.result?.display, error: res.error}))), result], ...(effects ?? [])]}"
+                    "script": "return {state, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && [(d, payload) => (typeof payload?.then === 'function' ? payload.then(p => p.run) : payload.run).then(res => res).then(res => d(s => (s.error_nodes.clear(), {...s, result: res.result?.state ?? s.result, error: res.error, error_nodes: res.error_nodes ?? s.error_nodes, result_display: res.result?.display, error: res.error}))), result], ...(effects ?? [])]}"
                 }
             ],
             "edges": [
@@ -1672,25 +1672,90 @@
         },
         {
             "id": "map",
-            "in": "in",
-            "out": "out",
+            "name": "map",
+            "in": "m3b5wg3",
+            "out": "tgurdpo",
             "nodes": [
                 {
-                    "id": "in"
+                    "id": "tgurdpo",
+                    "ref": "call",
+                    "name": "out"
                 },
                 {
-                    "id": "run_fn"
+                    "id": "m3b5wg3",
+                    "name": "in"
                 },
                 {
-                    "id": "iterate",
-                    "ref": "map"
+                    "id": "rielyq8",
+                    "value": "map",
+                    "name": "rielyq8"
                 },
                 {
-                    "id": "out"
+                    "ref": "arg",
+                    "id": "1rre4bx",
+                    "value": "array",
+                    "name": "1rre4bx"
+                },
+                {
+                    "id": "w0zzawl",
+                    "ref": "new_array",
+                    "name": "w0zzawl"
+                },
+                {
+                    "id": "pdljod1",
+                    "ref": "execute_graph",
+                    "name": "pdljod1"
+                },
+                {
+                    "id": "2lvs5dj",
+                    "script": "return _graph",
+                    "name": "2lvs5dj"
+                },
+                {
+                    "ref": "arg",
+                    "id": "6g75abk",
+                    "value": "fn",
+                    "name": "6g75abk"
                 }
             ],
             "edges": [
-
+                {
+                    "from": "m3b5wg3",
+                    "to": "tgurdpo",
+                    "as": "args",
+                    "type": "ref"
+                },
+                {
+                    "from": "rielyq8",
+                    "to": "tgurdpo",
+                    "as": "fn"
+                },
+                {
+                    "from": "1rre4bx",
+                    "to": "tgurdpo",
+                    "as": "self"
+                },
+                {
+                    "from": "w0zzawl",
+                    "to": "tgurdpo",
+                    "as": "args",
+                    "type": "resolve"
+                },
+                {
+                    "from": "pdljod1",
+                    "to": "w0zzawl",
+                    "as": "a0"
+                },
+                {
+                    "from": "2lvs5dj",
+                    "to": "pdljod1",
+                    "as": "graph"
+                },
+                {
+                    "from": "6g75abk",
+                    "to": "pdljod1",
+                    "as": "fn"
+                }
             ]
         },
         {
@@ -3995,6 +4060,17 @@
                     "script": "return [[show_edit_text, {id: selected_node.id, property:'value', oneditconfirm: update_node, value: selected_node.value}]]"
                 },
                 {
+                    "id": "n",
+                    "args": [
+                        "key",
+                        "selected",
+                        "display_graph",
+                        "editing",
+                        "nodes"
+                    ],
+                    "script": "return [[show_edit_text, {id: selected_node.id, property:'name', oneditconfirm: update_node, value: selected_node.name}]]"
+                },
+                {
                     "id": "r",
                     "args": [
                         "key",
@@ -4030,17 +4106,6 @@
                         "nodes"
                     ],
                     "script": "if(!(key === 'a' && editing === false)){ return [] } document.querySelector(`#${html_id}-edit-value textarea`).focus(); return selected_edge ? 'as' : 'args';"
-                },
-                {
-                    "id": "n",
-                    "args": [
-                        "key",
-                        "selected",
-                        "display_graph",
-                        "editing",
-                        "nodes"
-                    ],
-                    "script": "if(!(key === 'n' && editing === false)){ return [] } document.querySelector(`#${html_id}-edit-value textarea`).focus(); return 'name';"
                 },
                 {
                     "id": "o",
@@ -4520,6 +4585,26 @@
                     "from": "v",
                     "to": "graph_effects",
                     "as": "v"
+                },
+                {
+                    "from": "show_edit_text",
+                    "to": "n",
+                    "as": "show_edit_text"
+                },
+                {
+                    "from": "update_node",
+                    "to": "n",
+                    "as": "update_node"
+                },
+                {
+                    "from": "selected_node",
+                    "to": "n",
+                    "as": "selected_node"
+                },
+                {
+                    "from": "n",
+                    "to": "graph_effects",
+                    "as": "n"
                 },
                 {
                     "from": "open_reference_popover",
@@ -8626,6 +8711,7 @@
         {"from": "h_text", "to": "hyperapp"},
         {"from": "new_array", "to": "array"},
         {"from": "filter", "to": "array"},
+        {"from": "map", "to": "array"},
         {"from": "log", "to": "utility"},
         {"from": "execute_graph", "to": "utility"},
         {"from": "arg", "to": "utility"},
