@@ -159,7 +159,7 @@ const resolve = (o) => {
         return resolve(o._value)
     } else if (Array.isArray(o)) {
         const new_arr = [];
-        let same = false;
+        let same = true;
         let i = o.length;
         while(i > 0) {
             i--;
@@ -175,7 +175,7 @@ const resolve = (o) => {
 
         let i = entries.length;
         let j = 0;
-        let same = false;
+        let same = true;
         let new_obj_entries = [];
         let promise = false;
         while(i > 0) {
@@ -733,9 +733,9 @@ const updateSimulationNodes = (data) => {
                 to: e.to,
                 target: main_node_map.get(e.to),
                 sibling_index_normalized: simulation_node_data.get(e.from + "_" + e.to).sibling_index_normalized,
-                strength: 2 * (1.5 - Math.abs(simulation_node_data.get(e.from + "_" + e.to).sibling_index_normalized - 0.5)) / (1 + 2 * (parents_map.get(main_node_map.get(e.from))?.length ?? 0)),
+                strength: 2 * (1.5 - Math.abs(simulation_node_data.get(e.from + "_" + e.to).sibling_index_normalized - 0.5)) / (1 + 2 * Math.min(4, (parents_map.get(main_node_map.get(e.from))?.length ?? 0))),
                 distance: 128 
-                    + 16 * (parents_map.get(main_node_map.get(e.to))?.length ?? 0) 
+                    + 16 * (Math.min(4, parents_map.get(main_node_map.get(e.to))?.length ?? 0)) 
             };
         }).filter(l => !!l);
 
@@ -1302,7 +1302,7 @@ const lib = {
         },
         call: {
             args: ['fn', 'args', 'self'],
-            fn: (fn, args, self) => self[fn](...(args ?? []))
+            fn: (fn, args, self) => self[fn](...((args ?? []).reverse().reduce((acc, v) => [!acc[0] && v !== undefined, acc[0] || v !== undefined ? acc[1].concat(v) : acc[1]], [false, []])[1].reverse()))
         }
     },
     scripts: { d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all, listen},
