@@ -6179,6 +6179,17 @@
                             "value": "html_id"
                         },
                         {
+                            "id": "nodes",
+                            "ref": "arg",
+                            "value": "nodes"
+                        },
+                        {
+                            "id": "selected",
+                            "ref": "arg",
+                            "value": "selected.0"
+                        },
+                        {"id": "selected_node", "script": "return nodes.find(n => n.node_id === selected)"},
+                        {
                             "id": "edit_text",
                             "ref": "h"
                         },
@@ -6301,7 +6312,7 @@
                             "ref": "h"
                         },
                         {"id": "centering_wrapper_dom_type", "value": "div"},
-                        {"id": "centering_wrapper_props", "value": {"class": {"centering": true}}},
+                        {"id": "centering_wrapper_props", "script": "return {class: {centering: true}, style: {left: node.x + 'px', top: node.y + 'px'}}"},
                         {
                             "id": "centering_wrapper",
                             "ref": "h"
@@ -6327,6 +6338,9 @@
                             "from": "in",
                             "to": "edit_text_textarea_dom_type"
                         },
+                        {"from": "selected", "to": "selected_node", "as": "selected"},
+                        {"from": "nodes", "to": "selected_node", "as": "nodes"},
+                        {"from": "selected_node", "to": "centering_wrapper_props", "as": "node"},
                         {
                             "from": "edit_text",
                             "to": "out"

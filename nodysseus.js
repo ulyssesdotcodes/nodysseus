@@ -1345,5 +1345,6 @@ console.log(executeGraph({
     cache_id: "main", 
     node_cache, 
     readonly: false, 
-    hide_types: false 
+    hide_types: false,
+    offset: {x: 0, y: 0}
 })(DEFAULT_GRAPH.out)(state.get("in")));
