@@ -3231,11 +3231,11 @@
         },
         {
             "id": "focus_effect",
-            "script": "return (dispatch, payload) => requestAnimationFrame(() => document.querySelector(payload.selector).focus())"
+            "script": "return (dispatch, payload) => requestAnimationFrame(() => document.querySelector(payload.selector)?.focus())"
         },
         {
             "id": "blur_effect",
-            "script": "return (dispatch, payload) => requestAnimationFrame(() => document.querySelector(payload.selector).blur())"
+            "script": "return (dispatch, payload) => requestAnimationFrame(() => document.querySelector(payload.selector)?.blur())"
         },
         {
             "id": "open_graph_effect",
@@ -3566,7 +3566,7 @@
                 {"id": "node_arg_nodes", "script": "return nodes?.filter(n => n.ref ==='arg')"},
                 {"id": "should_show", "ref": "get"},
                 {"id": "nested_node_args", "script": "return 'args: ' + nodes.map(n => n.value + (n.type ? `: ${n.type}` : '')).join(', ')"},
-                {"id": "extern_node_args", "script": "return _lib.just.get.fn(_lib, node.extern).args.join(', ')"},
+                {"id": "extern_node_args", "script": "return 'args: ' + _lib.just.get.fn(_lib, node.extern).args.join(', ')"},
                 {"id": "node_args_input", "script": "return node.extern ? 'extern' : node.nodes ?  'nested' : undefined"},
                 {"id": "node_args", "ref": "switch"},
                 {"id": "args_h_text", "ref": "h_text"},
@@ -4034,6 +4034,11 @@
                     "value": "state.editing"
                 },
                 {
+                    "id": "search",
+                    "ref": "arg",
+                    "value": "state.search"
+                },
+                {
                     "id": "add_node_effect",
                     "ref": "add_node"
                 },
@@ -4069,6 +4074,9 @@
                     "id": "onselectnode",
                     "ref": "onselectnode_effect"
                 },
+                {"id": "search_effect", "ref": "search_effect"},
+                {"id": "focus_effect", "ref": "focus_effect"},
+                {"id": "blur_effect", "ref": "blur_effect"},
                 {
                     "id": "key",
                     "args": [
@@ -4239,9 +4247,7 @@
                         "display_graph",
                         "display_graph_out"
                     ],
-                    "script": "return [[delete_node, {id: selected}]]",
-                    "script__": "if(selected_edge){const new_edges = display_graph.edges.filter(e => selected_edge.from === e.from && selected_edge.to === e.to); return {display_graph: {...display_graph, edges: new_edges}, selected, selected_edge: false}; } const new_nodes = display_graph.nodes.filter(n => n.id !== selected[0]); const new_edges = display_graph.edges.filter(e => e.to !== selected[0] && e.from !== selected[0]); const to = display_graph.edges.filter(e => e.to === selected[0]); const from = display_graph.edges.filter(e => e.from === selected[0]); for(let i = 0; i < to.length; i++){for(let j = 0; j < from.length; j++){ if(!display_graph.edges.find(e => e.from === to[i].from && e.to === from[j].to)){ new_edges.push({from: to[i].from, to: from[j].to, as: from[j].as});}}}; return {display_graph: {...display_graph, edges: new_edges, nodes: new_nodes}, selected: [to[0]?.from ?? from[0]?.to ?? display_graph.nodes[0].id] };",
-                    "script_": "if(selected_edge){display_graph.edges.splice(display_graph.edges.findIndex(e => selected_edge.from === e.from && selected_edge.to === e.to), 1); return {display_graph, selected, selected_edge: false}; } display_graph.nodes = display_graph.nodes.filter(n => n.id !== selected[0]); const new_edges = []; const to = display_graph.edges.filter(e => e.to === selected[0]); const from = display_graph.edges.filter(e => e.from === selected[0]); for(let i = 0; i < to.length; i++){for(let j = 0; j < from.length; j++){ if(!display_graph.edges.find(e => e.from === to[i].from && e.to === from[j].to)){ display_graph.edges.push({from: to[i].from, to: from[j].to, as: from[j].as});}}}; display_graph.edges = display_graph.edges.filter(e => e.to !== selected[0] && e.from !== selected[0]); display_graph.edges.push(...new_edges); return {display_graph, selected: [to[0]?.from ?? from[0]?.to ?? display_graph.nodes[0].id] };"
+                    "script": "return [[delete_node, {id: selected}]]"
                 },
                 {
                     "id": "x_display_graph",
@@ -4270,7 +4276,7 @@
                 {
                     "id": "f",
                     "args": [],
-                    "script": "document.querySelector(`#${html_id}-search-input`).focus(); return ''"
+                    "script": "return [[search, {search: ''}], [focus_effect, {selector: `#${html_id}-search-input`}]]"
                 },
                 {
                     "id": "i",
@@ -4337,7 +4343,7 @@
                     "script": "if(pending_edges.edge_from && pending_edges.edge_to){ const start_len = state.display_graph.edges.length;  state.display_graph.edges = state.display_graph.edges.filter(e => !(e.from === pending_edges.edge_from && e.to === pending_edges.edge_to)); if(state.display_graph.edges.length === start_len){ state.display_graph.edges.push({from: pending_edges.edge_from, to: pending_edges.edge_to});}} return state.display_graph;"
                 },
                 {
-                    "id": "editing_esc",
+                    "id": "esc_editing",
                     "args": [
                         "key",
                         "target",
@@ -4367,7 +4373,7 @@
                     "args": [
                         "search"
                     ],
-                    "script": "return search;"
+                    "script": "return [[search, {search: false}], [blur, {selector: `#${html_id}-search-input`}]]"
                 },
                 {
                     "id": "selected_inputs",
@@ -4477,19 +4483,16 @@
                     "script": "state.clipboard = clipboard ? clipboard : state.clipboard; return state"
                 },
                 {
-                    "id": "search",
+                    "id": "graph_effects",
                     "ref": "switch"
                 },
                 {
-                    "id": "set_search",
-                    "args": [
-                        "search",
-                        "state"
-                    ],
-                    "script": "state.search = search ?? state.search; return state;"
+                    "id": "search_effects",
+                    "ref": "switch"
                 },
+                {"id": "update_effects_input", "script": "return typeof search === 'string' ? 'search' : 'graph'"},
                 {
-                    "id": "graph_effects",
+                    "id": "update_effects",
                     "ref": "switch"
                 },
                 {
@@ -4511,6 +4514,8 @@
                     "script": "return (!state.editing && state.search === false && (key === 'enter' || key.toLowerCase() === 'o' || key === 'x' || (key === 't' && shiftKey) || (!!pending_edges.edge_to && !!pending_edges.edge_from))) || key === 'escape' || selected"
                 },
                 {"id": "graph_state"},
+                {"id": "search_state"},
+                {"id": "update_state", "ref": "switch"},
                 {"id": "no_update"},
                 {
                     "id": "update",
@@ -4587,7 +4592,17 @@
                 },
                 {
                     "from": "key_inputs",
+                    "to": "search_effects",
+                    "as": "input"
+                },
+                {
+                    "from": "key_inputs",
                     "to": "editing_effects",
+                    "as": "input"
+                },
+                {
+                    "from": "key_inputs",
+                    "to": "search_effects",
                     "as": "input"
                 },
                 {
@@ -4617,11 +4632,6 @@
                 {
                     "from": "key_inputs",
                     "to": "display_graph",
-                    "as": "input"
-                },
-                {
-                    "from": "key_inputs",
-                    "to": "search",
                     "as": "input"
                 },
                 {
@@ -4806,6 +4816,8 @@
                     "to": "f",
                     "as": "html_id"
                 },
+                {"from": "search_effect", "to": "f", "as": "search"},
+                {"from": "focus_effect", "to": "f", "as": "focus_effect"},
                 {
                     "from": "html_id",
                     "to": "a",
@@ -4819,6 +4831,11 @@
                 {
                     "from": "html_id",
                     "to": "set_selected",
+                    "as": "html_id"
+                },
+                {
+                    "from": "html_id",
+                    "to": "esc_search",
                     "as": "html_id"
                 },
                 {
@@ -5025,24 +5042,6 @@
                     "as": "shift_t"
                 },
                 {
-                    "from": "p",
-                    "to": "p_display_graph"
-                },
-                {
-                    "from": "p_display_graph",
-                    "to": "display_graph",
-                    "as": "p"
-                },
-                {
-                    "from": "p",
-                    "to": "p_selected"
-                },
-                {
-                    "from": "p_selected",
-                    "to": "selected",
-                    "as": "p"
-                },
-                {
                     "from": "q",
                     "to": "show_all",
                     "as": "q"
@@ -5054,12 +5053,27 @@
                 },
                 {
                     "from": "confirm_edit_text",
-                    "to": "editing_esc",
+                    "to": "esc_editing",
                     "as": "confirm_edit_text"
                 },
                 {
-                    "from": "editing_esc",
+                    "from": "esc_editing",
                     "to": "editing_effects",
+                    "as": "escape"
+                },
+                {
+                    "from": "search_effect",
+                    "to": "esc_search",
+                    "as": "search"
+                },
+                {
+                    "from": "blur_effect",
+                    "to": "esc_search",
+                    "as": "blur"
+                },
+                {
+                    "from": "esc_search",
+                    "to": "search_effects",
                     "as": "escape"
                 },
                 {"from": "display_graph_out", "to": "esc", "as": "node_id"},
@@ -5068,7 +5082,7 @@
                 {"from": "esc", "to": "graph_effects", "as": "escape"},
                 {
                     "from": "f",
-                    "to": "search",
+                    "to": "graph_effects",
                     "as": "f"
                 },
                 {
@@ -5142,16 +5156,6 @@
                 },
                 {
                     "from": "set_selected_edge",
-                    "to": "set_search",
-                    "as": "state"
-                },
-                {
-                    "from": "search",
-                    "to": "set_search",
-                    "as": "search"
-                },
-                {
-                    "from": "set_search",
                     "to": "set_edit_value",
                     "as": "state"
                 },
@@ -5167,21 +5171,6 @@
                 },
                 {
                     "from": "set_editing",
-                    "to": "set_show_result",
-                    "as": "state"
-                },
-                {
-                    "from": "show_result",
-                    "to": "set_show_result",
-                    "as": "show_result"
-                },
-                {
-                    "from": "set_show_result",
-                    "to": "set_pending_edges",
-                    "as": "state"
-                },
-                {
-                    "from": "set_pending_edges",
                     "to": "set_display_graph",
                     "as": "state"
                 },
@@ -5192,41 +5181,70 @@
                 },
                 {"from": "set_display_graph", "to": "graph_state"},
                 {"from": "editing", "to": "new_state", "as": "pred"},
+                {"from": "state", "to": "search_state", "as": "search"},
+                {"from": "search_state", "to": "update_state", "as": "search"},
+                {"from": "update_effects_input", "to": "update_state", "as": "input"},
+                {
+                    "from": "search_state",
+                    "to": "update_state",
+                    "as": "search"
+                },
                 {
                     "from": "graph_state",
-                    "to": "update",
-                    "as": "state"
+                    "to": "update_state",
+                    "as": "graph"
                 },
+                {"from": "update_state", "to": "update"},
                 {
                     "from": "key_event",
                     "to": "update_graph_sim"
                 },
                 {
                     "from": "key_event",
-                    "to": "update"
+                    "to": "graph_state"
                 },
                 {
                     "from": "display_graph",
-                    "to": "update",
+                    "to": "graph_state",
                     "as": "display_graph"
                 },
                 {
                     "from": "selected",
-                    "to": "update",
+                    "to": "graph_state",
                     "as": "selected"
                 },
                 {
                     "from": "set_display_graph",
-                    "to": "update",
+                    "to": "graph_state",
                     "as": "state"
                 },
                 {
                     "from": "key_inputs",
-                    "to": "update",
+                    "to": "graph_state",
                     "as": "key"
                 },
                 {
+                    "from": "search",
+                    "to": "update_effects_input",
+                    "as": "search"
+                },
+                {
+                    "from": "update_effects_input",
+                    "to": "update_effects",
+                    "as": "input"
+                },
+                {
                     "from": "graph_effects",
+                    "to": "update_effects",
+                    "as": "graph"
+                },
+                {
+                    "from": "search_effects",
+                    "to": "update_effects",
+                    "as": "search"
+                },
+                {
+                    "from": "update_effects",
                     "to": "update",
                     "as": "effects"
                 },
@@ -5293,6 +5311,27 @@
         {
             "id": "dispatch_custom_event_effect",
             "script": "return (_, payload) => document.getElementById(`${payload.html_id}`).dispatchEvent(new CustomEvent(payload.name, {detail: payload.detail}))"
+        },
+        {
+            "id": "search_effect",
+            "out": "out",
+            "nodes": [
+                {"id": "in"},
+                {"id": "search", "ref": "arg", "value": "payload.search"},
+                {"id": "state", "ref": "arg", "value": "state"},
+                {"id": "search_path", "value": "search"},
+                {"id": "set_search", "ref": "set"},
+                {"id": "result"},
+                {"id": "out", "ref": "hyperapp_action_effect"}
+            ],
+            "edges": [
+                {"from": "in", "to": "out", "as": "args", "type": "ref"},
+                {"from": "state", "to": "set_search", "as": "target"},
+                {"from": "search_path", "to": "set_search", "as": "path"},
+                {"from": "search", "to": "set_search", "as": "value"},
+                {"from": "set_search", "to": "result", "as": "state"},
+                {"from": "result", "to": "out", "as": "fn", "type": "ref"}
+            ]
         },
         {
             "id": "create_object_graph",
@@ -6100,6 +6139,11 @@
                     "value": "error"
                 },
                 {
+                    "id": "search",
+                    "ref": "arg",
+                    "value": "search"
+                },
+                {
                     "id": "result_wrapper",
                     "ref": "run_h"
                 },
@@ -6121,7 +6165,7 @@
                         "popover_graph",
                         "popover_graph_h"
                     ],
-                    "script": "return [node_editor.el, !readonly && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, !!result_display && result_display.el, args_display && args_display.el, !!error && error_display.el].filter(e => e)"
+                    "script": "return [node_editor.el, !readonly && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, !!result_display && result_display.el, args_display && args_display.el, !!error && error_display.el, typeof search === 'string' && search_input.el].filter(e => e)"
                 },
                 {
                     "id": "edit_text",
@@ -6726,6 +6770,11 @@
                             "value": "input"
                         },
                         {
+                            "id": "nodes",
+                            "ref": "arg",
+                            "value": "nodes"
+                        },
+                        {
                             "id": "html_id",
                             "ref": "arg",
                             "value": "html_id"
@@ -6736,7 +6785,7 @@
                                 "search",
                                 "display_graph"
                             ],
-                            "script": "return {id: `${html_id}-search-input`, class: 'search-input', type: 'text', onkeydown: (s, payload) => { if(payload.key === 'Enter'){ const direction = payload.shiftKey ? -1 : 1; const idx = (s.search_results.length + s.search_index + direction) % s.search_results.length; return {...s, selected: s.search_results.slice(idx, idx + 1), search_index: idx} } else { return s;} }, oninput: (s, payload) => { const search_results = new _lib.Fuse(display_graph.nodes, {keys: ['name', 'id']}).search(payload.target.value).map(r => r.item.id); return {...s, search: payload.target.value, selected: search_results.length > 0 ? search_results.slice(0, 1) : s.selected, search_results, search_index: 0, levels: _lib.scripts.calculateLevels(s.nodes, s.links, display_graph, search_results.length > 0 ? search_results.slice(0, 1) : s.selected)}}}"
+                            "script": "return {id: `${html_id}-search-input`, key: `${html_id}-search-input`, class: 'search-input', type: 'text', onkeydown: (s, payload) => { if(payload.key === 'Enter'){ const direction = payload.shiftKey ? -1 : 1; const idx = (s.search_results.length + s.search_index + direction) % s.search_results.length; return {...s, selected: s.search_results.slice(idx, idx + 1), search_index: idx} } else { return s;} }, oninput: (s, payload) => {const search_results = new _lib.Fuse(nodes.map(n => Object.assign({}, n, display_graph.nodes.find(d => d.id === n.node_id))), {keys: ['name', 'node_id', 'ref', 'value']}).search(payload.target.value).map(r => r.item.node_id); return {...s, search: payload.target.value, selected: search_results.length > 0 ? search_results.slice(0, 1) : s.selected, search_results, search_index: 0}}}"
                         },
                         {
                             "id": "out",
@@ -6752,6 +6801,11 @@
                             "from": "html_id",
                             "to": "search_input_props",
                             "as": "html_id"
+                        },
+                        {
+                            "from": "nodes",
+                            "to": "search_input_props",
+                            "as": "nodes"
                         },
                         {
                             "from": "search_input_dom_type",
@@ -8438,6 +8492,11 @@
                     "from": "error",
                     "to": "wrapper_children",
                     "as": "error"
+                },
+                {
+                    "from": "search",
+                    "to": "wrapper_children",
+                    "as": "search"
                 },
                 {
                     "from": "error_display",
