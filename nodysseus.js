@@ -508,7 +508,7 @@ const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
                     } else if (arg === '_graph') {
                         return [acc[0].concat(graph), acc[1]]
                     }
-                    const value = resolve(data[arg]);
+                    const value = extern.resolve === false ? data[arg] : resolve(data[arg]);
                     return [acc[0].concat([value]), ispromise(value) || acc[1]];
                 }, [[], false]);
 
@@ -551,6 +551,19 @@ const calculateLevels = (nodes, links, graph, selected) => {
     bfs(graph, (id, level) => levels.set(id, Math.min(levels.get(id) ?? Number.MAX_SAFE_INTEGER, level)))(top, 0);
 
     const parents = new Map(nodes.map(n => [n.node_id, links.filter(l => l.target.node_id === n.node_id).map(l => l.source.node_id)]));
+
+    [...parents.values()].forEach(nps => {
+        nps.sort((a, b) => parents.get(b).length - parents.get(a).length);
+        for(let i = 0; i < nps.length * 0.5; i++) {
+            if(i % 2 === 1) {
+                const tmp = nps[i];
+                const endidx = nps.length - 1 - Math.floor(i / 2)
+                nps[i] = nps[endidx];
+                nps[endidx] = tmp;
+            }
+        }
+    })
+
     const children = new Map(nodes
         .map(n => [n.node_id, 
             links.filter(l => l.source.node_id === n.node_id)
@@ -608,8 +621,135 @@ const bfs = (graph, fn) => {
     return iter;
 }
 
-const updateSimulationNodes = (data) => {
+const updateSimulationNodes = (dispatch, data) => {
     if(data.static) {
+        const ids = data.display_graph.nodes.map(n => n.id).join(',');
+        const selected = data.display_graph.out;
+
+        const find_childest = n => {
+            const e = graph.edges.find(e => e.from === n);
+            if (e) {
+                return find_childest(e.to);
+            } else {
+                return n;
+            }
+        }
+        const top = data.display_graph.out;
+        const levels = new Map();
+        const nodes = new Map();
+        bfs(data.display_graph, (id, level) => {
+            levels.set(id, Math.min(levels.get(id) ?? Number.MAX_SAFE_INTEGER, level));
+            nodes.set(id, data.display_graph.nodes.find(n => n.id === id));
+        })(top, 0);
+
+        const parents = new Map([...nodes.values()].map(n => {
+            const nps = data.display_graph.edges.filter(e => e.to === n.id).map(e => e.from);
+            return [ n.id, nps]
+        }));
+
+        [...parents.values()].forEach(nps => {
+            nps.sort((a, b) => parents.get(b).length - parents.get(a).length);
+            for(let i = 0; i < nps.length * 0.5; i++) {
+                if(i % 2 === 1) {
+                    const tmp = nps[i];
+                    const endidx = nps.length - 1 - Math.floor(i / 2)
+                    nps[i] = nps[endidx];
+                    nps[endidx] = tmp;
+                }
+            }
+        })
+
+        const children = new Map([...nodes.values()]
+            .map(n => [n.id, data.display_graph.edges
+            .filter(e => e.from === n.id)
+            .map(e => e.to)]
+        ));
+
+        const nodes_by_level = [...levels.entries()].reduce((acc, [n, l]) => (acc[l] ? acc[l].push(n) : acc[l] = [n], acc), {});
+
+        const node_el_width = 196;
+        const node_positions = new Map();
+        [...nodes.values()].forEach(n => {
+            const child = children.get(n.id)?.length ? children.get(n.id)[0] : 0;
+            const siblings = children.get(n.id)?.length ? parents.get(children.get(n.id)[0]) : [n.id];
+            const sibling_count = Math.max(siblings.length, 4);
+            const increment = Math.PI * 2 / (Math.max(1, sibling_count - 1) * (Math.pow(Math.PI, 2 * (levels.get(n.id) - 1)) + 1));
+            const offset = child ? node_positions.get(child)[2] : 0;
+            const theta = ((siblings.findIndex(l => l == n.id) - (siblings.length === 1 ? 0 : 0.5)) * increment) + offset;
+
+            node_positions.set(n.id,
+                [
+                    n,
+                    n.id + (children.get(n.id)?.length ? '_' + children.get(n.id)[0] : ''),
+                    theta
+                ])
+        });
+
+        for(let np of node_positions.values()) {
+            const theta = np[2];
+            np[2] = levels.get(np[0].id) * -node_el_width * Math.cos(theta);
+            np[3] = levels.get(np[0].id) * -node_el_width * Math.sin(theta);
+        }
+
+        const node_data = {
+            nodes: [...node_positions.values()].map(([n, c, x, y]) => ({
+                node_id: n.id,
+                node_child_id: c,
+                nested_node_count: n.nodes?.length,
+                nested_edge_count: n.edges?.length,
+                x,
+                y
+            })),
+            links: data.display_graph.edges.filter(e => levels.has(e.to)).map(e => ({
+                source: {
+                    node_child_id: node_positions.get(e.from)[1],
+                    node_id: node_positions.get(e.from)[0].id,
+                    x: Math.floor(node_positions.get(e.from)[2]),
+                    y: Math.floor(node_positions.get(e.from)[3])
+                },
+                target: {
+                    node_child_id: node_positions.get(e.to)[1],
+                    node_id: node_positions.get(e.to)[0].id,
+                    x: Math.floor(node_positions.get(e.to)[2]),
+                    y: Math.floor(node_positions.get(e.to)[3])
+                },
+                sibling_index_normalized: 0
+            }))
+        }
+            dispatch([resolve(data.sim_to_hyperapp), node_data])
+            requestAnimationFrame(() => {
+                node_data.nodes.forEach(n => {
+                    const el = document.getElementById(`${data.html_id}-${n.node_child_id}`);
+                    if(el) {
+                        const x = n.x - node_el_width * 0.5;
+                        const y = n.y ;
+                        el.setAttribute('x', Math.floor(x - 20));
+                        el.setAttribute('y', Math.floor(y - 20));
+                    }
+                });
+
+                node_data.links.forEach(l => {
+                    const el = document.getElementById(`link-${l.source.node_child_id}`);
+                    const info_el = document.getElementById(`edge-info-${l.source.node_child_id}`);
+                    if(el && info_el) {
+                        const source = {x: l.source.x - node_el_width * 0.5, y: l.source.y};
+                        const target = {x: l.target.x - node_el_width * 0.5, y: l.target.y};
+                        const length_x = Math.abs(source.x - target.x); 
+                        const length_y = Math.abs(source.y - target.y); 
+                        const length = Math.sqrt(length_x * length_x + length_y * length_y); 
+                        const lerp_length = 24;
+                        // return {selected_distance, selected_edge, source: {...source, x: source.x + (target.x - source.x) * lerp_length / length, y: source.y + (target.y - source.y) * lerp_length / length}, target: {...target, x: source.x + (target.x - source.x) * (1 - (lerp_length / length)), y: source.y + (target.y - source.y) * (1 - (lerp_length / length))}}"
+                        el.setAttribute('x1', Math.floor(Math.floor(source.x + (target.x - source.x) * lerp_length / length)));
+                        el.setAttribute('y1', Math.floor(Math.floor(source.y + (target.y - source.y) * lerp_length / length)));
+                        el.setAttribute('x2', Math.floor(Math.floor(source.x + (target.x - source.x) * (1 - lerp_length / length))));
+                        el.setAttribute('y2', Math.floor(Math.floor(source.y + (target.y - source.y) * (1 - lerp_length / length))));
+
+                        info_el.setAttribute('x', Math.floor((l.sibling_index_normalized * 0.2 + 0.2) * (target.x - source.x) + source.x) + 16)
+                        info_el.setAttribute('y', Math.floor((l.sibling_index_normalized * 0.2 + 0.2) * (target.y - source.y) + source.y));
+                    }
+                });
+
+            })
         return;
     }
 
@@ -799,114 +939,6 @@ const listen = (type, action) => [listenToEvent, {type, action}]
 // Creates the simulation, updates the node elements when the simulation changes, and runs an action when the nodes have settled.
 // This is probably doing too much.
 const d3subscription = (dispatch, props) => {
-    if(props.static) {
-        const selected = props.display_graph.out;
-
-        const find_childest = n => {
-            const e = graph.edges.find(e => e.from === n);
-            if (e) {
-                return find_childest(e.to);
-            } else {
-                return n;
-            }
-        }
-        const top = props.display_graph.out;
-        const levels = new Map();
-        const nodes = new Map();
-        bfs(props.display_graph, (id, level) => {
-            levels.set(id, Math.min(levels.get(id) ?? Number.MAX_SAFE_INTEGER, level));
-            nodes.set(id, props.display_graph.nodes.find(n => n.id === id));
-        })(top, 0);
-        const parents = new Map([...nodes.values()].map(n => [n.id, props.display_graph.edges
-            .filter(e => e.to === n.node_id)
-            .map(e => e.from)
-        ]));
-        const children = new Map([...nodes.values()]
-            .map(n => [n.id, 
-                props.display_graph.edges.filter(e => e.from === n.id)
-                .map(e => e.to)
-            ]));
-        const nodes_by_level = [...levels.entries()].reduce((acc, [n, l]) => (acc[l] ? acc[l].push(n) : acc[l] = [n], acc), {});
-
-        const node_el_width = 128;
-        const node_positions = new Map(props.display_graph.nodes.filter(n => levels.has(n.id)).map(n => [
-            n.id,
-            [
-                n,
-                (
-                    nodes_by_level[levels.get(n.id)].findIndex(l => l == n.id)
-                        - nodes_by_level[levels.get(n.id)].length * 0.5
-                ) * node_el_width,
-                levels.get(n.id) * -node_el_width,
-                n.id + (children.get(n.id)?.length ? '_' + children.get(n.id)[0] : '')
-            ]
-        ]));
-
-        const data = {
-            nodes: [...node_positions.values()].map(([n, x, y, c]) => ({
-                node_id: n.id,
-                node_child_id: c,
-                nested_node_count: n.nodes?.length,
-                nested_edge_count: n.edges?.length,
-                x,
-                y
-            })),
-            links: props.display_graph.edges.filter(e => levels.has(e.to)).map(e => ({
-                source: {
-                    node_child_id: node_positions.get(e.from)[3],
-                    node_id: node_positions.get(e.from)[0].id,
-                    x: Math.floor(node_positions.get(e.from)[1]),
-                    y: Math.floor(node_positions.get(e.from)[2])
-                },
-                target: {
-                    node_child_id: node_positions.get(e.to)[3],
-                    node_id: node_positions.get(e.to)[0].id,
-                    x: Math.floor(node_positions.get(e.to)[1]),
-                    y: Math.floor(node_positions.get(e.to)[2])
-                },
-                sibling_index_normalized: 0
-            }))
-        }
-
-        requestAnimationFrame(() => {
-            dispatch([props.action, data])
-            requestAnimationFrame(() => {
-                data.nodes.forEach(n => {
-                    const el = document.getElementById(`${props.html_id}-${n.node_child_id}`);
-                    if(el) {
-                        const x = n.x - node_el_width * 0.5;
-                        const y = n.y ;
-                        el.setAttribute('x', Math.floor(x - 20));
-                        el.setAttribute('y', Math.floor(y - 20));
-                    }
-                });
-
-                data.links.forEach(l => {
-                    const el = document.getElementById(`link-${l.source.node_child_id}`);
-                    const info_el = document.getElementById(`edge-info-${l.source.node_child_id}`);
-                    if(el && info_el) {
-                        const source = {x: l.source.x - node_el_width * 0.5, y: l.source.y};
-                        const target = {x: l.target.x - node_el_width * 0.5, y: l.target.y};
-                        const length_x = Math.abs(source.x - target.x); 
-                        const length_y = Math.abs(source.y - target.y); 
-                        const length = Math.sqrt(length_x * length_x + length_y * length_y); 
-                        const lerp_length = 24;
-                        // return {selected_distance, selected_edge, source: {...source, x: source.x + (target.x - source.x) * lerp_length / length, y: source.y + (target.y - source.y) * lerp_length / length}, target: {...target, x: source.x + (target.x - source.x) * (1 - (lerp_length / length)), y: source.y + (target.y - source.y) * (1 - (lerp_length / length))}}"
-                        el.setAttribute('x1', Math.floor(Math.floor(source.x + (target.x - source.x) * lerp_length / length)));
-                        el.setAttribute('y1', Math.floor(Math.floor(source.y + (target.y - source.y) * lerp_length / length)));
-                        el.setAttribute('x2', Math.floor(Math.floor(source.x + (target.x - source.x) * (1 - lerp_length / length))));
-                        el.setAttribute('y2', Math.floor(Math.floor(source.y + (target.y - source.y) * (1 - lerp_length / length))));
-
-                        info_el.setAttribute('x', Math.floor((l.sibling_index_normalized * 0.2 + 0.2) * (target.x - source.x) + source.x) + 16)
-                        info_el.setAttribute('y', Math.floor((l.sibling_index_normalized * 0.2 + 0.2) * (target.y - source.y) + source.y));
-                    }
-                });
-
-            })
-        });
-        return () => {};
-    }
-
     const simulation = lib.d3.forceSimulation()
         .force('charge', lib.d3.forceManyBody().strength(-64).distanceMax(256).distanceMin(64).strength(0))
         .force('collide', lib.d3.forceCollide(64))
@@ -1395,6 +1427,7 @@ const lib = {
         eq: ({a, b}) => a === b,
         arg: {
             args: ['_node', '_node_inputs'],
+            resolve: false,
             fn: (node, node_inputs) => typeof node.value === 'string' 
                 ? node.value === '_args' 
                     ? node_inputs
@@ -1403,6 +1436,7 @@ const lib = {
         },
         new_array: {
             args: ['_node_inputs'],
+            resolve: false,
             fn: (args) => {
                 const arr = Object.keys(args)
                     .sort()

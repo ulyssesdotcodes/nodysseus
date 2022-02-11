@@ -286,7 +286,7 @@
                         "init",
                         "view"
                     ],
-                    "script": "return {dispatch: _lib.ha.app({dispatch: _lib.no.middleware, init: () => [init, [update_hyperapp]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [[_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim, static, display_graph, html_id}],  !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: window.innerWidth, y: window.innerHeight}}, [update_sim, s]])]})}"
+                    "script": "return {dispatch: _lib.ha.app({dispatch: _lib.no.middleware, init: () => [init, static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}],  !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: window.innerWidth, y: window.innerHeight}}, [update_sim, s]])]})}"
                 }
             ],
             "edges": [
@@ -1735,8 +1735,7 @@
                 {
                     "from": "fill_props",
                     "to": "out",
-                    "as": "props",
-                    "type": "resolve"
+                    "as": "props"
                 },
                 {"from": "dom_type", "to": "out", "as": "dom_type"},
                 {"from": "in", "to": "out", "as": "args", "type": "ref"}
@@ -1947,8 +1946,7 @@
                 {
                     "from": "el",
                     "to": "out",
-                    "as": "el",
-                    "type": "resolve"
+                    "as": "el"
                 }
             ]
         },
@@ -2656,6 +2654,11 @@
             "value": "readonly"
         },
         {
+            "id": "static",
+            "ref": "arg",
+            "value": "static"
+        },
+        {
             "id": "hide_types",
             "ref": "arg",
             "value": "hide_types"
@@ -2784,24 +2787,6 @@
         },
         {
             "id": "update_nodes_in"
-        },
-        {
-            "id": "update_nodes",
-            "args": [
-                "simulation",
-                "nodes",
-                "display_graph",
-                "links",
-                "fuse_links",
-                "selected",
-                "levels",
-                "show_all"
-            ],
-            "script": "return simulation ? _lib.scripts.updateSimulationNodes({display_graph, simulation, nodes, fuse_links, links, selected, levels, show_all, sim_update_alpha}) : undefined"
-        },
-        {
-            "id": "update_nodes_fn",
-            "ref": "execute_graph"
         },
         {
             "id": "onkey_fn",
@@ -4029,6 +4014,11 @@
                     "value": "state"
                 },
                 {
+                    "id": "static",
+                    "ref": "arg",
+                    "value": "state.static"
+                },
+                {
                     "id": "randid",
                     "ref": "arg",
                     "value": "state.randid"
@@ -4155,7 +4145,7 @@
                         "levels",
                         "dimensions"
                     ],
-                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.siblings.get(selected[0]); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = (sibling_node.x < current_node.x) && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [dimensions.x]); return next_node[1] ? [next_node[1].node_id] : selected"
+                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.siblings.get(selected[0]); const next_node = static ? nodes.find(n => n.node_id === siblings[(siblings.findIndex(s => s === selected[0]) - 1 + siblings.length) % siblings.length]): siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = (sibling_node.x < current_node.x) && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [dimensions.x])[1]; return next_node ? [next_node.node_id] : selected"
                 },
                 {
                     "id": "left_edge",
@@ -4181,7 +4171,7 @@
                         "levels",
                         "dimensions"
                     ],
-                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.siblings.get(selected[0]); const next_node = siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [dimensions.x]); return next_node[1] ? [next_node[1].node_id] : selected"
+                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.siblings.get(selected[0]); const next_node = static ? nodes.find(n => n.node_id === siblings[(siblings.findIndex(s => s === selected[0]) + 1) % siblings.length]) : siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [dimensions.x])[1]; return next_node ? [next_node.node_id] : selected"
                 },
                 {
                     "id": "right_edge",
@@ -4959,6 +4949,9 @@
                     "to": "left"
                 },
                 {
+                    "from": "static", "to": "left", "as": "static"
+                },
+                {
                     "from": "left",
                     "to": "selected",
                     "as": "arrowleft"
@@ -4971,6 +4964,9 @@
                 {
                     "from": "state",
                     "to": "right"
+                },
+                {
+                    "from": "static", "to": "right", "as": "static"
                 },
                 {
                     "from": "right",
@@ -5311,7 +5307,7 @@
         },
         {
             "id": "update_sim_effect",
-            "script": "return dispatch => dispatch(state => [state, [() => !state.simulation ? undefined : _lib.scripts.updateSimulationNodes(state)]])"
+            "script": "return (dispatch, payload) => payload ? !(payload.simulation || payload.static) ? undefined : _lib.scripts.updateSimulationNodes(dispatch, payload) : dispatch(state => [state, [() => !(state.simulation || state.static) ? undefined : _lib.scripts.updateSimulationNodes(dispatch, state)]])"
         },
         {
             "id": "update_sim_in"
@@ -5456,7 +5452,7 @@
                 {"id": "open_graph", "ref": "open_saved_graph_effect"},
                 {"id": "open_obj", "script": "return Object.fromEntries(JSON.parse(localStorage.getItem('graph_list') ?? '[]').map(g => [g, [clear_popover, [open_graph, {id: g}]]]))"},
                 {"id": "open_example_graph", "ref": "open_graph_effect"},
-                {"id": "examples_obj", "script": "return Object.fromEntries(examples.map(e => [e.id, [clear_popover, [open_graph, {graph: e}]]]))"},
+                {"id": "examples_obj", "script": "return Object.fromEntries(examples.map(e => ['example-' + e.id, [clear_popover, [open_graph, {graph: e}]]]))"},
                 {"id": "stop_propagation_effector", "ref": "stop_propagation_effect"},
                 {"id": "stop_propagation_effect", "ref": "new_array"},
                 {"id": "dispatch_on_graph_click_effector", "ref": "dispatch_custom_event_effect"},
@@ -6134,6 +6130,11 @@
                     "value": "result_display"
                 },
                 {
+                    "id": "editing",
+                    "ref": "arg",
+                    "value": "editing"
+                },
+                {
                     "id": "args_display",
                     "ref": "arg",
                     "value": "args_display"
@@ -6185,7 +6186,7 @@
                         "popover_graph",
                         "popover_graph_h"
                     ],
-                    "script": "return [node_editor.el, !readonly && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, !!result_display && result_display.el, args_display && args_display.el, !!error && error_display.el, search_input.el].filter(e => e)"
+                    "script": "return [node_editor.el, !readonly && editing !== false && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, !!result_display && result_display.el, args_display && args_display.el, !!error && error_display.el, search_input.el].filter(e => e)"
                 },
                 {
                     "id": "edit_text",
@@ -6338,6 +6339,11 @@
                             "ref": "h"
                         },
                         {
+                            "id": "edit_text_children",
+                            "ref": "new_array"
+                        },
+                        {"id": "edit_text_el_wrapper", "script": "return et.el"},
+                        {
                             "id": "out"
                         }
                     ],
@@ -6361,9 +6367,11 @@
                         {"from": "selected", "to": "selected_node", "as": "selected"},
                         {"from": "nodes", "to": "selected_node", "as": "nodes"},
                         {"from": "selected_node", "to": "centering_wrapper_props", "as": "node"},
+                        {"from": "edit_text", "to": "edit_text_el_wrapper", "as": "et"},
                         {
-                            "from": "edit_text",
-                            "to": "out"
+                            "from": "edit_text_el_wrapper",
+                            "to": "out",
+                            "as": "el"
                         },
                         {
                             "from": "edit_text_dom_type",
@@ -6515,7 +6523,8 @@
                         {"from": "centering_wrapper_dom_type", "to": "centering_wrapper", "as": "dom_type"},
                         {"from": "centering_wrapper_props", "to": "centering_wrapper", "as": "props"},
                         {"from": "centering_wrapper_children", "to": "centering_wrapper", "as": "children"},
-                        {"from": "centering_wrapper", "to": "edit_text", "as": "children"}
+                        {"from": "centering_wrapper", "to": "edit_text_children", "as": "a0"},
+                        {"from": "edit_text_children", "to": "edit_text", "as": "children"}
                     ]
                 },
                 {
@@ -8528,10 +8537,6 @@
                 },
                 {
                     "from": "in",
-                    "to": "edit_text"
-                },
-                {
-                    "from": "in",
                     "to": "search_input"
                 },
                 {
@@ -8587,6 +8592,11 @@
                     "from": "show_result",
                     "to": "wrapper_children",
                     "as": "show_result"
+                },
+                {
+                    "from": "editing",
+                    "to": "wrapper_children",
+                    "as": "editing"
                 },
                 {
                     "from": "popover_graph",
@@ -8725,6 +8735,11 @@
             "from": "error_nodes",
             "to": "hyperapp_init_state",
             "as": "error_nodes"
+        },
+        {
+            "from": "static",
+            "to": "hyperapp_init_state",
+            "as": "static"
         },
         {
             "from": "readonly",
