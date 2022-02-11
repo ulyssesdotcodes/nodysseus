@@ -17,6 +17,7 @@
     "just-diff-apply": "^5.0.0",
     "just-safe-get": "^4.0.1",
     "just-safe-set": "^4.0.1",
+    "panzoom": "^9.4.2",
     "rollup": "^2.52.2",
     "sourcemap-codec": "^1.4.8"
   }

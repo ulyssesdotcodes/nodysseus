@@ -7,6 +7,7 @@ import diffApply from "just-diff-apply";
 import { h, app, text, memo } from "hyperapp"
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 import Fuse from "fuse.js";
+import panzoom from "panzoom";
 
 function compare(value1, value2) {
     if (value1 === value2) {
@@ -1459,6 +1460,19 @@ const lib = {
     scripts: { d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all, listen},
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
     Fuse,
+    pz: {
+        panzoom: (dispatch, payload) => {
+            let instance 
+            requestAnimationFrame(() => {
+                instance = panzoom(document.getElementById(payload.id), {
+                    beforeMouseDown: e => !e.altKey,
+                    onTouch: e => false
+                });
+                instance.on('panstart', e => dispatch(payload.action, {event: 'panstart'}));
+            });
+            return () => instance.dispose();
+        }
+    }
     // THREE
 };
 
