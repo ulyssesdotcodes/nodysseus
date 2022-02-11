@@ -6333,7 +6333,7 @@
                             "ref": "h"
                         },
                         {"id": "centering_wrapper_dom_type", "value": "div"},
-                        {"id": "centering_wrapper_props", "script": "return {class: {centering: true}, style: {left: node.x + 'px', top: node.y + 'px'}}"},
+                        {"id": "centering_wrapper_props", "script": "return {class: {centering: true} }"},
                         {
                             "id": "centering_wrapper",
                             "ref": "h"

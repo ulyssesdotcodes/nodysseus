@@ -1119,7 +1119,7 @@ const expand_node = (data) => {
             .concat(flattened.flat_edges)
     };
 
-    return { display_graph: { ...display_graph, ...new_display_graph }, selected: [node_id + '/' + (node.out ?? 'out')] };
+    return { display_graph: { ...data.display_graph, ...new_display_graph }, selected: [node_id + '/' + (node.out ?? 'out')] };
 }
 
 const contract_all = (graph) => {
@@ -1265,7 +1265,7 @@ const contract_node = (data, keep_expanded = false) => {
                 )
         };
 
-        return { display_graph: { ...display_graph, ...new_display_graph }, selected: [node_id] };
+        return { display_graph: { ...data.display_graph, ...new_display_graph }, selected: [node_id] };
     }
 }
 
@@ -1300,7 +1300,7 @@ const flattenNode = (graph, levels = -1) => {
                 e).flat().concat(n.flat_edges).filter(e => e !== undefined)
         }), Object.assign({}, graph, {
             flat_nodes: graph.nodes
-                .map(n => Object.assign({}, n, { id: `${prefix}${n.id}`, name: `${prefix_name}${n.name ?? n.id}` })),
+                .map(n => Object.assign({}, n, { id: `${prefix}${n.id}` })),
             flat_edges: graph.edges
                 .map(e => ({ ...e, from: `${prefix}${e.from}`, to: `${prefix}${e.to}` }))
         }));
