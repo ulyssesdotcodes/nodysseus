@@ -246,6 +246,16 @@
                     "value": "html_id"
                 },
                 {
+                    "id": "static",
+                    "ref": "arg",
+                    "value": "static"
+                },
+                {
+                    "id": "display_graph",
+                    "ref": "arg",
+                    "value": "display_graph"
+                },
+                {
                     "id": "update_hyperapp",
                     "ref": "arg",
                     "value": "update_hyperapp"
@@ -276,7 +286,7 @@
                         "init",
                         "view"
                     ],
-                    "script": "return {dispatch: _lib.ha.app({dispatch: _lib.no.middleware, init: () => [init, [update_hyperapp]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [[_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}],  !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: window.innerWidth, y: window.innerHeight}}, [update_sim, s]])]})}"
+                    "script": "return {dispatch: _lib.ha.app({dispatch: _lib.no.middleware, init: () => [init, [update_hyperapp]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [[_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim, static, display_graph, html_id}],  !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: window.innerWidth, y: window.innerHeight}}, [update_sim, s]])]})}"
                 }
             ],
             "edges": [
@@ -308,6 +318,16 @@
                     "from": "html_id",
                     "to": "out",
                     "as": "html_id"
+                },
+                {
+                    "from": "display_graph",
+                    "to": "out",
+                    "as": "display_graph"
+                },
+                {
+                    "from": "static",
+                    "to": "out",
+                    "as": "static"
                 },
                 {
                     "from": "update_sim",
@@ -6049,7 +6069,7 @@
         },
         {
             "id": "render_popover_graph_effect",
-            "script": "return (dispatch, payload) => requestAnimationFrame(() => {payload = _lib.no.resolve(payload); if(payload.popover_dispatch) { payload.popover_dispatch(s => [{...s, display_graph: payload.display_graph, selected: [payload.display_graph.out]}, [s.update_sim_effect, {...s, display_graph: payload.display_graph}], [s.update_hyperapp] ]) } else { const popover_dispatch = _lib.no.executeGraphNode({graph: payload.graph})('initialize_hyperapp_app')({graph: payload.graph, display_graph: payload.display_graph, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions, readonly: true, hide_types: true, sim_update_alpha: 0.3}).dispatch; dispatch(s => ({...s, popover_dispatch}));}})"
+            "script": "return (dispatch, payload) => requestAnimationFrame(() => {payload = _lib.no.resolve(payload); if(payload.popover_dispatch) { payload.popover_dispatch(s => [{...s, display_graph: payload.display_graph, selected: [payload.display_graph.out]}, [s.update_sim_effect, {...s, display_graph: payload.display_graph}], [s.update_hyperapp] ]) } else { const popover_dispatch = _lib.no.executeGraphNode({graph: payload.graph})('initialize_hyperapp_app')({graph: payload.graph, display_graph: payload.display_graph, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions, readonly: true, hide_types: true, sim_update_alpha: 0.3, static: true}).dispatch; dispatch(s => ({...s, popover_dispatch}));}})"
         },
         {
             "id": "handle_popover_event",
@@ -6578,7 +6598,7 @@
                                 "value",
                                 "nodes"
                             ],
-                            "script": "return ref?.display_type ? ref.display_type : typeof value !== 'undefined' && typeof value !== 'object' ? typeof value : ref ? (ref.node_type ?? ref) : nodes ? 'graph' : script ? 'script' : 'passthrough'"
+                            "script": "return ref?.display_type ? ref.display_type : typeof value !== 'undefined' && typeof value !== 'object' ? typeof value : ref ? (ref.node_type ?? ref) : nodes ? 'graph' : script ? 'script' : 'object'"
                         },
                         {
                             "id": "get_node_display",
@@ -7180,7 +7200,7 @@
                                                     "args": [
                                                         "target"
                                                     ],
-                                                    "script": "return (target.ref ? target.ref : target.value !== undefined ? 'value' : target.script ? 'script' : target.nodes ? `graph (${target.nested_node_count}, ${target.nested_edge_count})` : 'passthrough')"
+                                                    "script": "return (target.ref ? target.ref : target.value !== undefined ? 'value' : target.script ? 'script' : target.nodes ? `graph (${target.nested_node_count}, ${target.nested_edge_count})` : 'object')"
                                                 },
                                                 {
                                                     "id": "selected_distance",

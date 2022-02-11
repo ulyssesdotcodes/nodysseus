@@ -548,7 +548,7 @@ const calculateLevels = (nodes, links, graph, selected) => {
     const top = find_childest(selected);
 
     const levels = new Map();
-    bfs(graph, levels)(top, 0);
+    bfs(graph, (id, level) => levels.set(id, Math.min(levels.get(id) ?? Number.MAX_SAFE_INTEGER, level)))(top, 0);
 
     const parents = new Map(nodes.map(n => [n.node_id, links.filter(l => l.target.node_id === n.node_id).map(l => l.source.node_id)]));
     const children = new Map(nodes
@@ -587,23 +587,32 @@ const calculateLevels = (nodes, links, graph, selected) => {
     }
 }
 
-const bfs = (graph, visited) => (id, level) => {
-    if (visited.has(id) && visited.get(id) >= level) {
-        return;
-    }
+const bfs = (graph, fn) => {
+    const visited = new Set();
+    const iter = (id, level) => {
+        if (visited.has(id)) {
+            return;
+        }
 
-    visited.set(id, level);
+        fn(id, level);
 
-    const next = bfs(graph, visited);
+        visited.add(id);
 
-    for (const e of graph.edges) {
-        if (e.to === id) {
-            next(e.from, level + 1);
+        for (const e of graph.edges) {
+            if (e.to === id) {
+                iter(e.from, level + 1);
+            }
         }
     }
+
+    return iter;
 }
 
 const updateSimulationNodes = (data) => {
+    if(data.static) {
+        return;
+    }
+
     const simulation_node_data = new Map();
     data.simulation.nodes().forEach(n => {
         simulation_node_data.set(n.node_child_id, n)
@@ -790,6 +799,114 @@ const listen = (type, action) => [listenToEvent, {type, action}]
 // Creates the simulation, updates the node elements when the simulation changes, and runs an action when the nodes have settled.
 // This is probably doing too much.
 const d3subscription = (dispatch, props) => {
+    if(props.static) {
+        const selected = props.display_graph.out;
+
+        const find_childest = n => {
+            const e = graph.edges.find(e => e.from === n);
+            if (e) {
+                return find_childest(e.to);
+            } else {
+                return n;
+            }
+        }
+        const top = props.display_graph.out;
+        const levels = new Map();
+        const nodes = new Map();
+        bfs(props.display_graph, (id, level) => {
+            levels.set(id, Math.min(levels.get(id) ?? Number.MAX_SAFE_INTEGER, level));
+            nodes.set(id, props.display_graph.nodes.find(n => n.id === id));
+        })(top, 0);
+        const parents = new Map([...nodes.values()].map(n => [n.id, props.display_graph.edges
+            .filter(e => e.to === n.node_id)
+            .map(e => e.from)
+        ]));
+        const children = new Map([...nodes.values()]
+            .map(n => [n.id, 
+                props.display_graph.edges.filter(e => e.from === n.id)
+                .map(e => e.to)
+            ]));
+        const nodes_by_level = [...levels.entries()].reduce((acc, [n, l]) => (acc[l] ? acc[l].push(n) : acc[l] = [n], acc), {});
+
+        const node_el_width = 128;
+        const node_positions = new Map(props.display_graph.nodes.filter(n => levels.has(n.id)).map(n => [
+            n.id,
+            [
+                n,
+                (
+                    nodes_by_level[levels.get(n.id)].findIndex(l => l == n.id)
+                        - nodes_by_level[levels.get(n.id)].length * 0.5
+                ) * node_el_width,
+                levels.get(n.id) * -node_el_width,
+                n.id + (children.get(n.id)?.length ? '_' + children.get(n.id)[0] : '')
+            ]
+        ]));
+
+        const data = {
+            nodes: [...node_positions.values()].map(([n, x, y, c]) => ({
+                node_id: n.id,
+                node_child_id: c,
+                nested_node_count: n.nodes?.length,
+                nested_edge_count: n.edges?.length,
+                x,
+                y
+            })),
+            links: props.display_graph.edges.filter(e => levels.has(e.to)).map(e => ({
+                source: {
+                    node_child_id: node_positions.get(e.from)[3],
+                    node_id: node_positions.get(e.from)[0].id,
+                    x: Math.floor(node_positions.get(e.from)[1]),
+                    y: Math.floor(node_positions.get(e.from)[2])
+                },
+                target: {
+                    node_child_id: node_positions.get(e.to)[3],
+                    node_id: node_positions.get(e.to)[0].id,
+                    x: Math.floor(node_positions.get(e.to)[1]),
+                    y: Math.floor(node_positions.get(e.to)[2])
+                },
+                sibling_index_normalized: 0
+            }))
+        }
+
+        requestAnimationFrame(() => {
+            dispatch([props.action, data])
+            requestAnimationFrame(() => {
+                data.nodes.forEach(n => {
+                    const el = document.getElementById(`${props.html_id}-${n.node_child_id}`);
+                    if(el) {
+                        const x = n.x - node_el_width * 0.5;
+                        const y = n.y ;
+                        el.setAttribute('x', Math.floor(x - 20));
+                        el.setAttribute('y', Math.floor(y - 20));
+                    }
+                });
+
+                data.links.forEach(l => {
+                    const el = document.getElementById(`link-${l.source.node_child_id}`);
+                    const info_el = document.getElementById(`edge-info-${l.source.node_child_id}`);
+                    if(el && info_el) {
+                        const source = {x: l.source.x - node_el_width * 0.5, y: l.source.y};
+                        const target = {x: l.target.x - node_el_width * 0.5, y: l.target.y};
+                        const length_x = Math.abs(source.x - target.x); 
+                        const length_y = Math.abs(source.y - target.y); 
+                        const length = Math.sqrt(length_x * length_x + length_y * length_y); 
+                        const lerp_length = 24;
+                        // return {selected_distance, selected_edge, source: {...source, x: source.x + (target.x - source.x) * lerp_length / length, y: source.y + (target.y - source.y) * lerp_length / length}, target: {...target, x: source.x + (target.x - source.x) * (1 - (lerp_length / length)), y: source.y + (target.y - source.y) * (1 - (lerp_length / length))}}"
+                        el.setAttribute('x1', Math.floor(Math.floor(source.x + (target.x - source.x) * lerp_length / length)));
+                        el.setAttribute('y1', Math.floor(Math.floor(source.y + (target.y - source.y) * lerp_length / length)));
+                        el.setAttribute('x2', Math.floor(Math.floor(source.x + (target.x - source.x) * (1 - lerp_length / length))));
+                        el.setAttribute('y2', Math.floor(Math.floor(source.y + (target.y - source.y) * (1 - lerp_length / length))));
+
+                        info_el.setAttribute('x', Math.floor((l.sibling_index_normalized * 0.2 + 0.2) * (target.x - source.x) + source.x) + 16)
+                        info_el.setAttribute('y', Math.floor((l.sibling_index_normalized * 0.2 + 0.2) * (target.y - source.y) + source.y));
+                    }
+                });
+
+            })
+        });
+        return () => {};
+    }
+
     const simulation = lib.d3.forceSimulation()
         .force('charge', lib.d3.forceManyBody().strength(-64).distanceMax(256).distanceMin(64).strength(0))
         .force('collide', lib.d3.forceCollide(64))
@@ -1314,17 +1431,17 @@ const lib = {
 const graph_list = JSON.parse(localStorage.getItem("graph_list"));
 // const display_graph = {...DEFAULT_GRAPH, nodes: DEFAULT_GRAPH.nodes.map(n => ({...n})), edges: DEFAULT_GRAPH.edges.map(e => ({...e}))};
 const stored = localStorage.getItem(graph_list?.[0]);
-const display_graph = stored ? JSON.parse(stored) : examples.find(g => g.id === 'simple_html_hyperapp');
+const init_display_graph = stored ? JSON.parse(stored) : examples.find(g => g.id === 'simple_html_hyperapp');
 const original_graph = {...DEFAULT_GRAPH, nodes: [...DEFAULT_GRAPH.nodes].map(n => ({...n})), edges: [...DEFAULT_GRAPH.edges].map(e => ({...e}))};
 const state = new Map([['in', { 
     graph: DEFAULT_GRAPH, 
     original_graph, 
     display_graph: { 
-        ...display_graph, 
-        nodes: display_graph.nodes
+        ...init_display_graph, 
+        nodes: init_display_graph.nodes
             .filter(n => !generic_nodes.has(n.id))
             .concat(DEFAULT_GRAPH.nodes.filter(n => generic_nodes.has(n.id))), 
-        edges: display_graph.edges
+        edges: init_display_graph.edges
             .filter(e => !generic_nodes.has(e.from))
             .concat(DEFAULT_GRAPH.edges.filter(e => generic_nodes.has(e.to))) 
     },
