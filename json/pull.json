@@ -7688,7 +7688,7 @@
                                     "args": [
                                         "link"
                                     ],
-                                    "script": "return link.edge?.as ?? (readonly ? '' : '*')"
+                                    "script": "return edge?.as ?? (readonly ? '' : '*')"
                                 },
                                 {
                                     "id": "edge_info_rect_dom_type",
@@ -7822,8 +7822,14 @@
                                     "as": "edge"
                                 },
                                 {
-                                    "from": "in",
-                                    "to": "edge_info_as_text"
+                                    "from": "readonly",
+                                    "to": "edge_info_props",
+                                    "as": "readonly"
+                                },
+                                {
+                                    "from": "edge",
+                                    "to": "edge_info_as_text",
+                                    "as": "edge"
                                 },
                                 {
                                     "from": "in",
