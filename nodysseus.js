@@ -1474,6 +1474,7 @@ const lib = {
         executeGraph: ({ state, graph, cache_id }) => executeGraph({ cache, state, graph, node_cache, cache_id: cache_id ?? "main" })(graph.out)(state.get(graph.in)),
         executeGraphValue: ({ graph, cache_id }) => executeGraph({ cache, graph, node_cache, cache_id: cache_id ?? "main" })(graph.out),
         executeGraphNode: ({ graph, cache_id }) => executeGraph({ cache, graph, node_cache, cache_id: cache_id ?? "main" }),
+        runGraph: (graph, node, value) => executeGraph({graph, cache_id: "main"})(node)(value),
         resolve,
         objToGraph,
         NodysseusError
@@ -1577,15 +1578,20 @@ const state = new Map([['in', {
     examples
 }]])
 
-console.log(executeGraph({ 
-    cache, 
-    state, 
-    graph: DEFAULT_GRAPH, 
-    original_graph, 
-    out: "initialize_hyperapp_app", 
-    cache_id: "main", 
-    node_cache, 
-    readonly: false, 
-    hide_types: false,
-    offset: {x: 0, y: 0}
-})(DEFAULT_GRAPH.out)(state.get("in")));
+const runGraph = lib.no.runGraph;
+const nodysseus = function(selector) {
+    executeGraph({ 
+        cache, 
+        state, 
+        graph: DEFAULT_GRAPH, 
+        original_graph, 
+        out: "initialize_hyperapp_app", 
+        cache_id: "main", 
+        node_cache, 
+        readonly: false, 
+        hide_types: false,
+        offset: {x: 0, y: 0}
+    })(DEFAULT_GRAPH.out)(state.get("in"))
+}
+
+export { runGraph, nodysseus };
