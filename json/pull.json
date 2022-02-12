@@ -197,9 +197,10 @@
                 "id": "if_levels",
                 "ref": "if"
             },
+            {"id": "panzoom_selected_effector", "ref": "arg", "value": "0.panzoom_selected_effect"},
             {
                 "id": "action",
-                "script": "return {...state, nodes: new_nodes, links: new_links, randid: Math.random().toString(36).substring(2, 9)}"
+                "script": "return [{...state, nodes: new_nodes, links: new_links, randid: Math.random().toString(36).substring(2, 9)}, panzoom_selected_effect && false && [panzoom_selected_effect, {...state, selected: state.selected[0], nodes: new_nodes, links: new_links}]]"
             }
         ],
         "edges": [
@@ -218,7 +219,8 @@
             {"from": "state", "to": "if_levels", "as": "false"},
             {"from": "new_nodes", "to": "action", "as": "new_nodes"},
             {"from": "new_links", "to": "action", "as": "new_links"},
-            {"from": "if_levels", "to": "action", "as": "state"}
+            {"from": "if_levels", "to": "action", "as": "state"},
+            {"from": "panzoom_selected_effector", "to": "action", "as": "panzoom_selected_effect"}
         ]
     },
         {
@@ -286,7 +288,7 @@
                         "init",
                         "view"
                     ],
-                    "script": "return {dispatch: _lib.ha.app({dispatch: _lib.no.middleware, init: () => [init, static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}],  !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: window.innerWidth, y: window.innerHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.pz.panzoom, {id: `${html_id}-editor-panzoom`, action: (s, p) => (console.log(p), s)}]]})}"
+                    "script": "return {dispatch: _lib.ha.app({dispatch: _lib.no.middleware, init: () => [init, static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}],  !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: window.innerWidth, y: window.innerHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.pz.panzoom, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: true}]}]]})}"
                 }
             ],
             "edges": [
@@ -4484,6 +4486,11 @@
                     "id": "clipboard",
                     "ref": "switch"
                 },
+                {"id": "panzoom_selected_id", "script": "return selected[0]"},
+                {"id": "panzoom_selected_effector", "ref": "arg", "value": "state.panzoom_selected_effect"},
+                {"id": "panzoom_selected_effect", "ref": "new_array"},
+                {"id": "panzoom_selected_effect_arr", "ref": "new_array"},
+                {"id": "panzoom_selected_payload"},
                 {
                     "id": "set_clipboard",
                     "args": [
@@ -5249,6 +5256,20 @@
                     "to": "update_effects",
                     "as": "input"
                 },
+                {"from": "state", "to": "panzoom_selected_payload"},
+                {"from": "selected", "to": "panzoom_selected_id", "as": "selected"},
+                {"from": "panzoom_selected_id", "to": "panzoom_selected_payload", "as": "selected"},
+                {"from": "panzoom_selected_effector", "to": "panzoom_selected_effect", "as": "a0"},
+                {"from": "panzoom_selected_payload", "to": "panzoom_selected_effect", "as": "a1"},
+                {"from": "panzoom_selected_effect", "to": "panzoom_selected_effect_arr", "as": "a0"},
+                {"from": "panzoom_selected_effect_arr", "to": "graph_effects", "as": "arrowleft"},
+                {"from": "panzoom_selected_effect_arr", "to": "graph_effects", "as": "h"},
+                {"from": "panzoom_selected_effect_arr", "to": "graph_effects", "as": "arrowright"},
+                {"from": "panzoom_selected_effect_arr", "to": "graph_effects", "as": "l"},
+                {"from": "panzoom_selected_effect_arr", "to": "graph_effects", "as": "arrowup"},
+                {"from": "panzoom_selected_effect_arr", "to": "graph_effects", "as": "k"},
+                {"from": "panzoom_selected_effect_arr", "to": "graph_effects", "as": "arrowdown"},
+                {"from": "panzoom_selected_effect_arr", "to": "graph_effects", "as": "j"},
                 {
                     "from": "graph_effects",
                     "to": "update_effects",
@@ -5588,6 +5609,18 @@
                     "value": "state.display_graph.nodes"
                 },
                 {
+                    "id": "node_el_width",
+                    "ref": "arg",
+                    "value": "state.node_el_width"
+                },
+                {
+                    "id": "dimensions",
+                    "ref": "arg",
+                    "value": "state.dimensions"
+                },
+                {"id": "nodes", "ref": "arg", "value": "state.nodes"},
+                {"id": "links", "ref": "arg", "value": "state.links"},
+                {
                     "id": "wrapped_node_id",
                     "ref": "wrap_array"
                 },
@@ -5599,13 +5632,15 @@
                     ],
                     "script": "return Object.assign({}, nodes.find(n => n.node_id === node_id), display_graph.nodes.find(n => n.id === node_id))"
                 },
+                {"id": "show_all_path", "value": "show_all"},
+                {"id": "set_show_all", "ref": "set"},
                 {
                     "id": "set_selected",
                     "args": [
                         "selected",
                         "state"
                     ],
-                    "script": "return {...state, selected: [node_id]}"
+                    "script": "console.log(state.show_all); return {...state, selected: [node_id]}"
                 },
                 {
                     "id": "display_graph_inputs",
@@ -5683,6 +5718,9 @@
                     "id": "stop_propagation_effect",
                     "ref": "new_array"
                 },
+                {"id": "panzoom_selected_effector", "ref": "arg", "value": "state.panzoom_selected_effect"},
+                {"id": "panzoom_selected_effect", "ref": "new_array"},
+                {"id": "panzoom_selected_payload"},
                 {
                     "id": "if_show_popover",
                     "ref": "if"
@@ -5931,13 +5969,29 @@
                     "as": "a2"
                 },
                 {
+                    "from": "node_id",
+                    "to": "panzoom_selected_payload",
+                    "as": "selected"
+                },
+                {"from": "html_id", "to": "panzoom_selected_payload", "as": "html_id"},
+                {"from": "dimensions", "to": "panzoom_selected_payload", "as": "dimensions"},
+                {"from": "node_el_width", "to": "panzoom_selected_payload", "as": "node_el_width"},
+                {"from": "links", "to": "panzoom_selected_payload", "as": "links"},
+                {"from": "nodes", "to": "panzoom_selected_payload", "as": "nodes"},
+                {"from": "panzoom_selected_payload", "to": "panzoom_selected_effect", "as": "a1"},
+                {"from": "panzoom_selected_effector", "to": "panzoom_selected_effect", "as": "a0"},
+                {"from": "panzoom_selected_effect", "to": "effects", "as": "a3" },
+                {
                     "from": "effects",
                     "to": "out",
                     "as": "effects",
                     "type": "resolve"
                 },
+                {"from": "show_all_path", "to": "set_show_all", "as": "path"},
+                {"from": "false", "to": "set_show_all", "as": "value"},
+                {"from": "set_selected", "to": "set_show_all", "as": "target"},
                 {
-                    "from": "set_selected",
+                    "from": "set_show_all",
                     "to": "out",
                     "as": "state"
                 },
@@ -6945,6 +6999,11 @@
                             "value": "readonly"
                         },
                         {
+                            "id": "show_all",
+                            "ref": "arg",
+                            "value": "show_all"
+                        },
+                        {
                             "id": "error_nodes",
                             "ref": "arg",
                             "value": "error_nodes"
@@ -7016,7 +7075,7 @@
                         {"id": "onclick_graph", "ref": "onclick_graph_action"},
                         {
                             "id": "node_editor_props",
-                            "script": "return {id: `${html_id}-editor`, width: dimensions.x, height: dimensions.y, viewBox: `${Math.floor(center.x - Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))) * 0.5 - node_el_width * 0.5)}  ${Math.floor(center.y - Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y))) * 0.5 - node_el_width * 0.5)} ${Math.floor(Math.max(dimensions.x * 0.5, Math.min(dimensions.x, nodes_box.max.x - nodes_box.min.x)) + node_el_width)} ${Math.floor(Math.max(dimensions.y * 0.5, Math.min(dimensions.y, nodes_box.max.y - nodes_box.min.y)) + node_el_width)}`, onclick: onclick_graph}"
+                            "script": "return {id: `${html_id}-editor`, width: dimensions.x, height: dimensions.y, _viewBox: `${Math.floor(center.x - Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))) * 0.5 - node_el_width * 0.5)}  ${Math.floor(center.y - Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y))) * 0.5 - node_el_width * 0.5)} ${Math.floor(Math.max(dimensions.x * 0.5, Math.min(dimensions.x, nodes_box.max.x - nodes_box.min.x)) + node_el_width)} ${Math.floor(Math.max(dimensions.y * 0.5, Math.min(dimensions.y, nodes_box.max.y - nodes_box.min.y)) + node_el_width)}`}"
                         },
                         {
                             "id": "node_editor_dom_type",
@@ -7034,7 +7093,7 @@
                         {
                             "id": "node_layout",
                             "args": ["node_inputs", "node_layout_map", "nodes", "graph", "selected", "selected_edge"],
-                            "script": "return nodes.map(n => _lib.no.executeGraphValue({state: new Map(), graph: {...graph, in: '_' + n.node_id, out: node_layout_map, html_id: html_id}, cache_id: '_' + n.node_id})(Object.assign({node: Object.assign({}, n, display_graph.nodes.find(dgn => dgn.id === n.node_id)), hide_types, selected_distance: levels.distance_from_selected.get(n.node_child_id), level: levels.level_by_node.get(n.node_id), error: !error_nodes ? false : [...error_nodes.keys()].filter(k => k.startsWith(n.node_id)).length > 0}, _node_inputs)))"
+                            "script": "return nodes.map(n => _lib.no.executeGraphValue({state: new Map(), graph: {...graph, in: '_' + n.node_id, out: node_layout_map, html_id: html_id}, cache_id: '_' + n.node_id})(Object.assign({node: Object.assign({}, n, display_graph.nodes.find(dgn => dgn.id === n.node_id)), hide_types, show_all, selected_distance: levels.distance_from_selected.get(n.node_child_id), level: levels.level_by_node.get(n.node_id), error: !error_nodes ? false : [...error_nodes.keys()].filter(k => k.startsWith(n.node_id)).length > 0}, _node_inputs)))"
                         },
                         {
                             "id": "node_layout_map",
@@ -7051,6 +7110,11 @@
                                     "id": "html_id",
                                     "ref": "arg",
                                     "value": "html_id"
+                                },
+                                {
+                                    "id": "show_all",
+                                    "ref": "arg",
+                                    "value": "show_all"
                                 },
                                 {
                                     "id": "node_el_width",
@@ -7103,7 +7167,7 @@
                                         "node",
                                         "meta"
                                     ],
-                                    "script": "return ({onclick: (_, payload) => [onclick, {event: payload, node_id: node.node_id}], width: '256', height: '64', id: html_id + '-' + node.node_child_id, class: `node ${meta.selected[0] === node.node_id ? 'selected': ''}`, opacity: meta.selected_edge?.from === node.node_id ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - (selected_distance * selected_distance) / 6) : 0.1})"
+                                    "script": "return ({onclick: (_, payload) => [onclick, {event: payload, node_id: node.node_id}], ontouchstart: (_, payload) => [onclick, {event: payload, node_id: node.node_id}], width: '256', height: '64', id: html_id + '-' + node.node_child_id, class: `node ${meta.selected[0] === node.node_id ? 'selected': ''}`, opacity: meta.selected_edge?.from === node.node_id || show_all ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - (selected_distance * selected_distance) / 6) : 0.1})"
                                 },
                                 {
                                     "id": "children",
@@ -7554,6 +7618,11 @@
                                     "to": "parent"
                                 },
                                 {
+                                    "from": "show_all",
+                                    "to": "parent_attrs",
+                                    "as": "show_all"
+                                },
+                                {
                                     "from": "html_id",
                                     "to": "parent_attrs",
                                     "as": "html_id"
@@ -7593,7 +7662,7 @@
                         {
                             "id": "link_layout",
                             "args": ["node_inputs", "link_layout_map", "links", "graph", "selected_edge"],
-                            "script": "return links.map(link => _lib.no.executeGraph({state: new Map([['_' + link.source.node_child_id, Object.assign({readonly, link: Object.assign({edge: display_graph.edges.find(e => link.from === e.from && link.to === e.to)}, link), selected_distance: levels.distance_from_selected.get(link.target.node_child_id) !== undefined ? Math.min(levels.distance_from_selected.get(link.target.node_child_id), levels.distance_from_selected.get(link.source.node_child_id)) : undefined, sibling_index_normalized: (levels.siblings.get(link.source.node_id).findIndex(n => n === link.source.node_id) + 1) / (levels.siblings.get(link.source.node_id).length + 1),}, _node_inputs)]]), graph: {...graph, in: '_' + link.source.node_child_id, out: link_layout_map}, cache_id: '_' + link.source.node_child_id + link.target.node_child_id}))"
+                            "script": "return links.map(link => _lib.no.executeGraph({state: new Map([['_' + link.source.node_child_id, Object.assign({readonly, show_all, link: Object.assign({edge: display_graph.edges.find(e => link.from === e.from && link.to === e.to)}, link), selected_distance: levels.distance_from_selected.get(link.target.node_child_id) !== undefined ? Math.min(levels.distance_from_selected.get(link.target.node_child_id), levels.distance_from_selected.get(link.source.node_child_id)) : undefined, sibling_index_normalized: (levels.siblings.get(link.source.node_id).findIndex(n => n === link.source.node_id) + 1) / (levels.siblings.get(link.source.node_id).length + 1),}, _node_inputs)]]), graph: {...graph, in: '_' + link.source.node_child_id, out: link_layout_map}, cache_id: '_' + link.source.node_child_id + link.target.node_child_id}))"
                         },
                         {
                             "id": "link_layout_map",
@@ -7623,6 +7692,11 @@
                                     "ref": "arg",
                                     "value": "sibling_index_normalized"
                                 },
+                                {
+                                    "id": "show_all",
+                                    "ref": "arg",
+                                    "value": "show_all"
+                                },
                                 {"id": "edge", "ref": "arg", "value": "link.edge"},
                                 {
                                     "id": "edge_info_el",
@@ -7651,7 +7725,7 @@
                                         "sibling_index_normalized",
                                         "selected_edge"
                                     ],
-                                    "script": "return ({id: `edge-info-${source.node_child_id}`, z: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to ? 100 : 200, opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1, class: {'edge-info': true, selected: selected_edge && (source.node_id === selected_edge.from + '_' + selected_edge.to || (source.node_id === selected_edge.from && target.node_id === selected_edge.to))}, onclick: (state, payload) => [onclick_edge, {event: payload, edge}] })"
+                                    "script": "return ({id: `edge-info-${source.node_child_id}`, z: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to ? 100 : 200, opacity: show_all ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1, class: {'edge-info': true, selected: selected_edge && (source.node_id === selected_edge.from + '_' + selected_edge.to || (source.node_id === selected_edge.from && target.node_id === selected_edge.to))}, onclick: (state, payload) => [onclick_edge, {event: payload, edge}] })"
                                 },
                                 {
                                     "id": "edge_info_line_position",
@@ -7728,7 +7802,7 @@
                                         "selected_edge",
                                         "selected_distance"
                                     ],
-                                    "script": "return ({id: `link-${source.node_child_id}`, onclick: (state, payload) => [onclick_edge, {event: payload, edge}], class: `link ${selected_edge && (source.node_id === selected_edge.from + '_' + selected_edge.to || (source.node_id === selected_edge.from && target.node_id === selected_edge.to)) ? 'selected' : 'unselected'}`, 'marker-end': 'url(#arrow)', opacity: selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1})"
+                                    "script": "return ({id: `link-${source.node_child_id}`, onclick: (state, payload) => [onclick_edge, {event: payload, edge}], class: `link ${selected_edge && (source.node_id === selected_edge.from + '_' + selected_edge.to || (source.node_id === selected_edge.from && target.node_id === selected_edge.to)) ? 'selected' : 'unselected'}`, 'marker-end': 'url(#arrow)', opacity: show_all ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1})"
                                 },
                                 {
                                     "id": "line_dom_type",
@@ -7766,6 +7840,11 @@
                                     "to": "line_lerp"
                                 },
                                 {
+                                    "from": "show_all",
+                                    "to": "line_props",
+                                    "as": "show_all"
+                                },
+                                {
                                     "from": "get_selected_edge",
                                     "to": "line_props",
                                     "as": "selected_edge"
@@ -7784,6 +7863,11 @@
                                     "from": "sibling_index_normalized",
                                     "to": "edge_info_props",
                                     "as": "sibling_index_normalized"
+                                },
+                                {
+                                    "from": "show_all",
+                                    "to": "edge_info_props",
+                                    "as": "show_all"
                                 },
                                 {
                                     "from": "onclick_edge",
@@ -8189,9 +8273,19 @@
                             "as": "graph"
                         },
                         {
+                            "from": "show_all",
+                            "to": "link_layout",
+                            "as": "show_all"
+                        },
+                        {
                             "from": "readonly",
                             "to": "link_layout",
                             "as": "readonly"
+                        },
+                        {
+                            "from": "show_all",
+                            "to": "node_layout",
+                            "as": "show_all"
                         },
                         {
                             "from": "hide_types",

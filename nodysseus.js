@@ -717,8 +717,10 @@ const updateSimulationNodes = (dispatch, data) => {
                 sibling_index_normalized: 0
             }))
         }
+        requestAnimationFrame(() => {
             dispatch([resolve(data.sim_to_hyperapp), node_data])
             requestAnimationFrame(() => {
+                dispatch(s => [s, [s.panzoom_selected_effect, {...s, ...node_data, selected: s[0]}]]);
                 node_data.nodes.forEach(n => {
                     const el = document.getElementById(`${data.html_id}-${n.node_child_id}`);
                     if(el) {
@@ -751,6 +753,7 @@ const updateSimulationNodes = (dispatch, data) => {
                 });
 
             })
+        })
         return;
     }
 
@@ -995,8 +998,8 @@ const d3subscription = (dispatch, props) => {
             const ids = simulation.nodes().map(n => n.node_id).join(',');
             stopped = false;
             dispatch([s => (selected = s.selected[0], dimensions = s.dimensions, 
-                s.nodes.map(n => n.node_id).join(',') !== ids ? [props.action, data] : s
-                )]);
+                s.nodes.map(n => n.node_id).join(',') !== ids ? [props.action, data] : [s
+                , s.panzoom_selected_effect && s.selected  && [s.panzoom_selected_effect, {selected: s.selected[0], nodes: data.nodes, links: data.links, html_id: s.html_id, dimensions: s.dimensions, node_el_width: s.node_el_width}]])]);
             simulation.tick();
             const visible_nodes = [];
             const visible_node_set = new Set();
@@ -1063,7 +1066,7 @@ const d3subscription = (dispatch, props) => {
 
             const editor = document.getElementById(`${htmlid}-editor`);
             if(editor) {
-                editor.setAttribute('viewBox', `${Math.floor(center.x - nodes_box_dimensions.x * 0.5 - node_el_width * 0.5)}  ${Math.floor(center.y - nodes_box_dimensions.y * 0.5 - node_el_width * 0.5)} ${Math.floor(nodes_box_dimensions.x + node_el_width)} ${Math.floor(nodes_box_dimensions.y + node_el_width)}`);
+                // editor.setAttribute('viewBox', `${Math.floor(center.x - nodes_box_dimensions.x * 0.5 - node_el_width * 0.5)}  ${Math.floor(center.y - nodes_box_dimensions.y * 0.5 - node_el_width * 0.5)} ${Math.floor(nodes_box_dimensions.x + node_el_width)} ${Math.floor(nodes_box_dimensions.y + node_el_width)}`);
             }
 
             //     return {width: dimensions.x, height: dimensions.y, viewBox: `${center.x - Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))) * 0.5 - node_el_width * 0.5}  ${center.y - Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y))) * 0.5 - node_el_width * 0.5} ${Math.max(dimensions.x * 0.5, Math.min(dimensions.x, nodes_box.max.x - nodes_box.min.x)) + node_el_width} ${Math.max(dimensions.y * 0.5, Math.min(dimensions.y, nodes_box.max.y - nodes_box.min.y)) + node_el_width}` /*, onmousedown: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'down'}], onmouseup: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'up'}], onmousemove: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'move'}]*/}"
@@ -1324,10 +1327,61 @@ const objToGraph = (obj, path) => Object.entries(obj)
     })
     , {nodes: [], edges: []});
 
+const findViewBox = (nodes, links, selected, node_el_width, htmlid, dimensions) => {
+    const visible_nodes = [];
+    const visible_node_set = new Set();
+    let selected_pos;
+    links.forEach(l => {
+        const el = document.getElementById(`link-${l.source.node_child_id}`);
+        const info_el = document.getElementById(`edge-info-${l.source.node_child_id}`);
+        if(el && info_el) {
+            const source = {x: l.source.x - node_el_width * 0.5, y: l.source.y};
+            const target = {x: l.target.x - node_el_width * 0.5, y: l.target.y};
+
+            if (l.source.node_id === selected) {
+                visible_nodes.push({x: target.x, y: target.y});
+                visible_node_set.add(l.target.node_id);
+            } else if (l.target.node_id === selected) {
+                visible_nodes.push({x: source.x, y: source.y});
+                visible_node_set.add(l.source.node_id);
+            }
+        }
+    });
+
+    links.forEach(l => {
+        if(visible_node_set.has(l.target.node_id) && !visible_node_set.has(l.source.node_id)) {
+            const source = {x: l.source.x - node_el_width * 0.5, y: l.source.y};
+            visible_nodes.push({x: source.x, y: source.y});
+        }
+    });
+
+    nodes.forEach(n => {
+        const el = document.getElementById(`${htmlid}-${n.node_child_id}`);
+        if(el) {
+            const x = n.x - node_el_width * 0.5;
+            const y = n.y ;
+            el.setAttribute('x', Math.floor(x - 20));
+            el.setAttribute('y', Math.floor(y - 20));
+
+            if(n.node_id === selected) {
+                visible_nodes.push({x, y})
+                selected_pos = {x, y};
+            }
+        }
+    });
+
+    const nodes_box = visible_nodes.reduce((acc, n) => ({min: {x: Math.min(acc.min.x, n.x - 24), y: Math.min(acc.min.y, n.y - 24)}, max: {x: Math.max(acc.max.x, n.x + node_el_width * 0.5 - 24), y: Math.max(acc.max.y, n.y + 24)}}), {min: {x: selected_pos ? (selected_pos.x - 96) : dimensions.x , y: selected_pos ? (selected_pos.y - 256) : dimensions.y}, max: {x: selected_pos ? (selected_pos.x + 96) : -dimensions.x, y: selected_pos ? (selected_pos.y + 128) : -dimensions.y}})
+    const nodes_box_center = {x: (nodes_box.max.x + nodes_box.min.x) * 0.5, y: (nodes_box.max.y + nodes_box.min.y) * 0.5}; 
+    const nodes_box_dimensions = {x: Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))), y: Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y)))}
+    const center = !selected_pos ? nodes_box_center : {x: (selected_pos.x + nodes_box_center.x * 3) * 0.25, y: (selected_pos.y + nodes_box_center.y * 3) * 0.25}
+
+    return {nodes_box_dimensions, center};
+}
+
 const middleware = dispatch => (ha_action, ha_payload) => {
-    const is_action_payload = Array.isArray(ha_action) 
-        && ha_action.length === 2
-        && (typeof ha_action[0] === 'function' 
+const is_action_payload = Array.isArray(ha_action) 
+    && ha_action.length === 2
+    && (typeof ha_action[0] === 'function' 
             || (ha_action[0].hasOwnProperty('fn') 
                 && ha_action[0].hasOwnProperty('graph')));
     const action = is_action_payload ? ha_action[0] : ha_action;
@@ -1463,14 +1517,36 @@ const lib = {
     pz: {
         panzoom: (dispatch, payload) => {
             let instance 
-            requestAnimationFrame(() => {
+            let lastpanzoom = 0;
+            const panzoom_selected_effect = (dispatch, payload) => {
+                console.log(payload);
+                if(!instance){ return; }
+                lastpanzoom = performance.now();
+                const viewbox = findViewBox(
+                    payload.nodes, 
+                    payload.links, 
+                    payload.selected, 
+                    payload.node_el_width, 
+                    payload.html_id,
+                    payload.dimensions
+                );
+                const x = payload.dimensions.x * 0.5 - viewbox.center.x;
+                const y = payload.dimensions.y * 0.5 - viewbox.center.y
+                instance.moveTo(x, y);
+                instance.zoomTo(x, y, 1 / instance.getTransform().scale)
+            }
+
+            let init = requestAnimationFrame(() => {
                 instance = panzoom(document.getElementById(payload.id), {
-                    beforeMouseDown: e => !e.altKey,
-                    onTouch: e => false
+                    // onTouch: e => false,
+                    filterKey: e => true
                 });
-                instance.on('panstart', e => dispatch(payload.action, {event: 'panstart'}));
+                instance.on('panstart', e => performance.now() - lastpanzoom > 1000 ? dispatch(payload.action, {event: 'panstart'}) : undefined);
+                instance.on('zoom', e => performance.now() - lastpanzoom > 1000 ? dispatch(payload.action, {event: 'zoom'}) : undefined);
+                instance.moveTo(window.innerWidth * 0, window.innerHeight * 0.5);
             });
-            return () => instance.dispose();
+            requestAnimationFrame(() => dispatch(s => [{...s, panzoom_selected_effect}]));
+            return () => { cancelAnimationFrame(init); instance?.dispose(); }
         }
     }
     // THREE
