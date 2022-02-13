@@ -3,7 +3,6 @@ import examples from "./json/examples.json"
 import get from "just-safe-get";
 import set from "just-safe-set";
 import { diff } from "just-diff";
-import diffApply from "just-diff-apply";
 import { h, app, text, memo } from "hyperapp"
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 import Fuse from "fuse.js";
@@ -211,7 +210,7 @@ class NodysseusError extends Error {
     }
 }
 
-const executeGraph = ({ cache, state, graph, cache_id, node_cache }) => {
+const executeGraph = ({ cache, graph, cache_id, node_cache }) => {
     let usecache = true;
 
     if (!cache.has(cache_id)) {
@@ -934,7 +933,7 @@ const graphToSimulationNodes = (data, payload) => {
 const listenToEvent = (dispatch, props) => {
     const listener = (event) => requestAnimationFrame(() => dispatch(props.action, event.detail))
 
-    addEventListener(props.type, listener);
+    requestAnimationFrame(() => addEventListener(props.type, listener));
     return () => removeEventListener(props.type, listener);
 }
 
@@ -1095,7 +1094,7 @@ const keydownSubscription = (dispatch, options) => {
 
         requestAnimationFrame(() => dispatch(options.action, ev))
     };
-    addEventListener('keydown', handler);
+    requestAnimationFrame(() => addEventListener('keydown', handler));
     return () => removeEventListener('keydown', handler);
 }
 
@@ -1465,8 +1464,7 @@ const lib = {
             //     : get(target, path, def),
         },
         set, 
-        diff, 
-        diffApply 
+        diff
     },
     ha: { h: {args: ['dom_type', 'props', 'children'], fn: h}, app, text: {args: ['text'], fn: text}, memo },
     no: {
@@ -1474,7 +1472,7 @@ const lib = {
         executeGraph: ({ state, graph, cache_id }) => executeGraph({ cache, state, graph, node_cache, cache_id: cache_id ?? "main" })(graph.out)(state.get(graph.in)),
         executeGraphValue: ({ graph, cache_id }) => executeGraph({ cache, graph, node_cache, cache_id: cache_id ?? "main" })(graph.out),
         executeGraphNode: ({ graph, cache_id }) => executeGraph({ cache, graph, node_cache, cache_id: cache_id ?? "main" }),
-        runGraph: (graph, node, value) => executeGraph({graph, cache_id: "main"})(node)(value),
+        runGraph: (graph, node, value) => executeGraph({graph, cache, node_cache, cache_id: "main"})(node)(value),
         resolve,
         objToGraph,
         NodysseusError
@@ -1520,13 +1518,11 @@ const lib = {
             let instance 
             let lastpanzoom = 0;
             const panzoom_selected_effect = (dispatch, payload) => {
-                console.log(payload);
                 if(!instance){ return; }
                 lastpanzoom = performance.now();
                 const viewbox = findViewBox(
                     payload.nodes, 
-                    payload.links, 
-                    payload.selected, 
+                    payload.links, payload.selected, 
                     payload.node_el_width, 
                     payload.html_id,
                     payload.dimensions
@@ -1542,8 +1538,7 @@ const lib = {
                     // onTouch: e => false,
                     filterKey: e => true
                 });
-                instance.on('panstart', e => performance.now() - lastpanzoom > 1000 ? dispatch(payload.action, {event: 'panstart'}) : undefined);
-                instance.on('zoom', e => performance.now() - lastpanzoom > 1000 ? dispatch(payload.action, {event: 'zoom'}) : undefined);
+                instance.on('transform', e => performance.now() - lastpanzoom > 100 ? dispatch(payload.action, {event: 'transform'}) : undefined);
                 instance.moveTo(window.innerWidth * 0, window.innerHeight * 0.5);
             });
             requestAnimationFrame(() => dispatch(s => [{...s, panzoom_selected_effect}]));
@@ -1558,40 +1553,34 @@ const graph_list = JSON.parse(localStorage.getItem("graph_list"));
 const stored = localStorage.getItem(graph_list?.[0]);
 const init_display_graph = stored ? JSON.parse(stored) : examples.find(g => g.id === 'simple_html_hyperapp');
 const original_graph = {...DEFAULT_GRAPH, nodes: [...DEFAULT_GRAPH.nodes].map(n => ({...n})), edges: [...DEFAULT_GRAPH.edges].map(e => ({...e}))};
-const state = new Map([['in', { 
-    graph: DEFAULT_GRAPH, 
-    original_graph, 
-    display_graph: { 
-        ...init_display_graph, 
-        nodes: init_display_graph.nodes
-            .filter(n => !generic_nodes.has(n.id))
-            .concat(DEFAULT_GRAPH.nodes.filter(n => generic_nodes.has(n.id))), 
-        edges: init_display_graph.edges
-            .filter(e => !generic_nodes.has(e.from))
-            .concat(DEFAULT_GRAPH.edges.filter(e => generic_nodes.has(e.to))) 
-    },
-    html_id: "node-editor",
-    dimensions: {
-        x: window.innerWidth,
-        y: window.innerHeight
-    },
-    examples
-}]])
 
 const runGraph = lib.no.runGraph;
-const nodysseus = function(selector) {
-    executeGraph({ 
-        cache, 
-        state, 
+
+const nodysseus = function(html_id, display_graph) {
+    const dispatch = runGraph(DEFAULT_GRAPH, "initialize_hyperapp_app", { 
         graph: DEFAULT_GRAPH, 
         original_graph, 
-        out: "initialize_hyperapp_app", 
-        cache_id: "main", 
-        node_cache, 
+        display_graph: { 
+            ...(display_graph ?? init_display_graph), 
+            nodes: (display_graph ?? init_display_graph).nodes
+                .filter(n => !generic_nodes.has(n.id))
+                .concat(DEFAULT_GRAPH.nodes.filter(n => generic_nodes.has(n.id))), 
+            edges: (display_graph ?? init_display_graph).edges
+                .filter(e => !generic_nodes.has(e.from))
+                .concat(DEFAULT_GRAPH.edges.filter(e => generic_nodes.has(e.to))) 
+        },
+        html_id,
+        dimensions: {
+            x: document.getElementById(html_id).clientWidth,
+            y: document.getElementById(html_id).clientHeight
+        },
+        examples,
         readonly: false, 
         hide_types: false,
         offset: {x: 0, y: 0}
-    })(DEFAULT_GRAPH.out)(state.get("in"))
+    });
+
+    return () => requestAnimationFrame(() => dispatch.dispatch(s => undefined));
 }
 
 export { runGraph, nodysseus };

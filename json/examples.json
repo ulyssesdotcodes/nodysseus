@@ -301,6 +301,1699 @@
             }
         ]
     },
-    {"edges":[{"from":"main/in","to":"main/out","as":"args","type":"ref"},{"from":"63tva08","to":"main/out","as":"display"},{"from":"l6vdvtn","to":"63tva08","as":"children"},{"from":"q23fegi","to":"63tva08","as":"dom_type"},{"from":"c2sko9c","to":"l6vdvtn","as":"arg1"},{"from":"pgygs2p/pgygs2p","to":"l6vdvtn","as":"arg0"},{"from":"l6mvkla","to":"63tva08","as":"props"},{"from":"o1wn5x1","to":"l6mvkla","as":"class"},{"from":"zz730do","to":"o1wn5x1","as":"result"},{"from":"pgygs2p/vdyskp6","to":"pgygs2p/pgygs2p","as":"dom_type"},{"from":"pgygs2p/1tf3vvf","to":"pgygs2p/pgygs2p","as":"children"},{"from":"pgygs2p/6yewnx1","to":"pgygs2p/1tf3vvf","as":"arg0"},{"from":"pgygs2p/02951w8","to":"pgygs2p/6yewnx1","as":"text"},{"from":"get","to":"object"},{"from":"set","to":"object"},{"from":"delete","to":"object"},{"from":"switch","to":"flow"},{"from":"if","to":"flow"},{"from":"h","to":"hyperapp"},{"from":"h_text","to":"hyperapp"},{"from":"new_array","to":"array"},{"from":"filter","to":"array"},{"from":"log","to":"utility"},{"from":"execute_graph","to":"utility"},{"from":"arg","to":"utility"},{"from":"partial","to":"utility"},{"from":"apply","to":"utility"},{"from":"fetch","to":"utility"}],"nodes":[{"id":"main/out","args":["value"]},{"id":"main/in"},{"id":"63tva08","ref":"h","name":"main display"},{"id":"l6vdvtn","ref":"new_array","name":"display elements"},{"id":"q23fegi","value":"div"},{"id":"l6mvkla","name":"props"},{"id":"o1wn5x1","name":"class"},{"id":"zz730do","value":"true"},{"id":"c2sko9c","name":"hello world text","out":"c2sko9c","nodes":[{"id":"c2sko9c","ref":"h_text","name":"hello world text"},{"id":"2lr3ihi","value":"Hello, world!"}],"edges":[{"from":"2lr3ihi","to":"c2sko9c","as":"text"}]},{"id":"pgygs2p/pgygs2p","ref":"h","name":"styles/out"},{"id":"pgygs2p/vdyskp6","value":"style","name":""},{"id":"pgygs2p/1tf3vvf","ref":"new_array","name":"styles/1tf3vvf"},{"id":"pgygs2p/6yewnx1","ref":"h_text","name":"styles/6yewnx1"},{"id":"pgygs2p/02951w8","value":".result { position: absolute; bottom: 0; left: 0; font-size: 4em}\n.run-count { font-size: .5em; color: green}","name":"css styles"},{"id":"array"},{"id":"utility"},{"id":"flow"},{"id":"hyperapp"},{"id":"object"},{"id":"log","args":["value"],"nodes":[{"id":"in"},{"id":"value","ref":"arg","value":"value"},{"id":"out","args":[],"script":"console.log(_node.id); console.log(value); return value"}],"edges":[{"from":"in","to":"out","as":"input"},{"from":"value","to":"out","as":"value"}]},{"id":"fetch","name":"fetch","extern":"utility.fetch"},{"id":"filter","name":"filter","in":"74n1jfm","out":"lahq5z4","nodes":[{"id":"lahq5z4","args":[],"name":"filter/out","script":"const filter_fn = _lib.no.executeGraphNode({graph: _graph})(fn); return arr.filter(filter_fn)"},{"id":"pfoypo5","args":[],"ref":"arg","value":"key"},{"id":"zinx621","args":[],"ref":"arg","value":"value"},{"id":"x2sz5kb","args":[],"ref":"arg","value":"arr"},{"id":"fn","ref":"arg","value":"fn"},{"id":"74n1jfm","args":[],"name":"filter/in"}],"edges":[{"from":"pfoypo5","to":"lahq5z4","as":"key"},{"from":"zinx621","to":"lahq5z4","as":"value"},{"from":"x2sz5kb","to":"lahq5z4","as":"arr"},{"from":"74n1jfm","to":"lahq5z4","as":"input"},{"from":"fn","to":"lahq5z4","as":"fn"}]},{"id":"switch","args":["data","input"],"nodes":[{"id":"in"},{"id":"out","args":["data","input"],"script":"return data[input];"},{"id":"input","ref":"arg","value":"input"}],"edges":[{"from":"in","to":"out","as":"data"},{"from":"input","to":"out","as":"input"}]},{"id":"if","nodes":[{"id":"in"},{"id":"pred","ref":"arg","value":"pred"},{"id":"out","script":"return pred ? data['true'] : data['false']"}],"edges":[{"from":"in","to":"out","as":"data"},{"from":"pred","to":"out","as":"pred"}]},{"id":"execute_graph","nodes":[{"id":"in"},{"id":"fn","ref":"arg","value":"fn"},{"id":"graph","ref":"arg","value":"graph"},{"id":"out","script":"return (...args) => {res = _lib.no.executeGraphNode({graph})(fn)(args.length === 1 ? args[0] : args); return res;}"}],"edges":[{"from":"in","to":"out","as":"args"},{"from":"fn","to":"out","as":"fn"},{"from":"graph","to":"out","as":"graph"}]},{"id":"apply","script":"return _lib.no.executeGraphNode({graph: _graph})(fn)(args);"},{"id":"partial","nodes":[{"id":"in"},{"id":"input_value","ref":"arg","value":"_args"},{"id":"fn","ref":"arg","value":"fn"},{"id":"args","ref":"arg","value":"args"},{"id":"out","script":"return _lib.no.executeGraphNode({graph: _graph})(fn)(Object.assign({}, _args, args))"}],"edges":[{"from":"in","to":"out","as":"args","type":"ref"},{"from":"fn","to":"out","as":"fn"},{"from":"args","to":"out","as":"args"},{"from":"input_value","to":"out","as":"_args"}]},{"id":"new_array","name":"new_array","extern":"utility.new_array"},{"id":"get","args":["target","path"],"nodes":[{"id":"in"},{"id":"def","ref":"arg","value":"def"},{"id":"target","ref":"arg","value":"target"},{"id":"path","ref":"arg","value":"path"},{"id":"fill_default","args":["input"],"script":"return input?.default ??  null"},{"id":"get_args","ref":"new_array"},{"id":"out","extern":"just.get"}],"edges":[{"from":"in","to":"out","as":"input"},{"from":"def","to":"out","as":"def"},{"from":"path","to":"out","as":"path"},{"from":"target","to":"out","as":"target"},{"from":"get_args","to":"_out","as":"args"}]},{"id":"arg","args":["node_inputs"],"extern":"utility.arg"},{"id":"set","type":"(target: any, value: any, path: string) => any","script":"const keys = path.split('.'); const check = (o, v, k) => k.length === 1 ? {...o, [k[0]]: v, _needsresolve: true} : o.hasOwnProperty(k[0]) ? {...o, [k[0]]: check(o[k[0]], v, k.slice(1)), _needsresolve: true} : o; return check(target, value, keys)"},{"id":"delete","out":"out","nodes":[{"id":"in"},{"id":"target","ref":"arg","value":"target"},{"id":"path","ref":"arg","value":"path"},{"id":"out","script":"const new_val = Object.assign({}, target); delete target[path]; return new_val"}],"edges":[{"from":"in","to":"out","as":"args"},{"from":"target","to":"out","as":"target"},{"from":"path","to":"out","as":"path"}]},{"id":"h","args":["children","props","dom_type"],"nodes":[{"id":"in"},{"id":"fill_children","args":["children"],"script":"return children === undefined ? [] : children.length !== undefined ? children.filter(c => !!c).map(c => c.el ?? c) : [children.el ?? children]"},{"id":"fill_props","args":["input"],"script":"return input.props ?? {}"},{"id":"dom_type","ref":"arg","value":"dom_type"},{"id":"out","script":"(children ?? []).forEach(c => {if(!((c.hasOwnProperty('dom_type') && c.hasOwnProperty('props')) || c.hasOwnProperty('text'))){throw new Error('invalid child element');}}); return {el: {dom_type, props, children}}"},{"id":"_out"}],"edges":[{"from":"in","to":"fill_children"},{"from":"in","to":"dom_type"},{"from":"in","to":"fill_props","as":"input"},{"from":"fill_children","to":"out","as":"children","order":1},{"from":"fill_props","to":"out","as":"props","type":"resolve"},{"from":"dom_type","to":"out","as":"dom_type"}]},{"id":"h_text","nodes":[{"id":"in"},{"id":"text","ref":"arg","value":"text"},{"id":"dom_type","value":"text_value"},{"id":"el"},{"id":"out","args":["text"]}],"edges":[{"from":"in","to":"out","as":"input"},{"from":"dom_type","to":"el","as":"dom_type"},{"from":"text","to":"el","as":"text"},{"from":"el","to":"out","as":"el","type":"resolve"}]}],"id":"simple_html_hyperapp","out":"main/out","in":"main/in"},
-    {"in":"main/in","out":"main/out","id":"promises","nodes":[{"id":"main/out","args":["value"]},{"id":"main/in"},{"id":"63tva08","ref":"h","name":"main display"},{"id":"q23fegi","value":"div"},{"id":"l6mvkla","name":"props"},{"id":"o1wn5x1","name":"class"},{"id":"zz730do","value":"true"},{"ref":"arg","id":"xev2phu","value":"state"},{"id":"el0app0","name":"state"},{"id":"2gcjbds","ref":"get"},{"id":"f6js4lo","script":"return res.then(r => r.json())"},{"id":"91dm5vd","value":"data.0.content"},{"id":"m9yeyqc","ref":"fetch"},{"id":"fphsciu","value":"https://fakerapi.it/api/v1/texts"},{"id":"0iscsvl","ref":"switch","name":"fetch if needed"},{"id":"gcg2ctk","script":"return runcount === undefined ? 'fetch' : 'state'"},{"ref":"arg","id":"sgnxbrn","value":"state.runcount"},{"ref":"arg","id":"b77sv21","value":"state.runcount"},{"id":"array"},{"id":"utility"},{"id":"flow"},{"id":"hyperapp"},{"id":"object"},{"id":"log","args":["value"],"nodes":[{"id":"in"},{"id":"value","ref":"arg","value":"value"},{"id":"out","args":[],"script":"console.log(_node.id); console.log(value); return value"}],"edges":[{"from":"in","to":"out","as":"input"},{"from":"value","to":"out","as":"value"}]},{"id":"fetch","name":"fetch","extern":"utility.fetch"},{"id":"filter","name":"filter","in":"74n1jfm","out":"lahq5z4","nodes":[{"id":"lahq5z4","args":[],"name":"filter/out","script":"const filter_fn = _lib.no.executeGraphNode({graph: _graph})(fn); return arr.filter(filter_fn)"},{"id":"pfoypo5","args":[],"ref":"arg","value":"key"},{"id":"zinx621","args":[],"ref":"arg","value":"value"},{"id":"x2sz5kb","args":[],"ref":"arg","value":"arr"},{"id":"fn","ref":"arg","value":"fn"},{"id":"74n1jfm","args":[],"name":"filter/in"}],"edges":[{"from":"pfoypo5","to":"lahq5z4","as":"key"},{"from":"zinx621","to":"lahq5z4","as":"value"},{"from":"x2sz5kb","to":"lahq5z4","as":"arr"},{"from":"74n1jfm","to":"lahq5z4","as":"input"},{"from":"fn","to":"lahq5z4","as":"fn"}]},{"id":"switch","args":["data","input"],"nodes":[{"id":"in"},{"id":"out","args":["data","input"],"script":"return data[input];"},{"id":"input","ref":"arg","value":"input"}],"edges":[{"from":"in","to":"out","as":"data"},{"from":"input","to":"out","as":"input"}]},{"id":"if","nodes":[{"id":"in"},{"id":"pred","ref":"arg","value":"pred"},{"id":"out","script":"return pred ? data['true'] : data['false']"}],"edges":[{"from":"in","to":"out","as":"data"},{"from":"pred","to":"out","as":"pred"}]},{"id":"execute_graph","nodes":[{"id":"in"},{"id":"fn","ref":"arg","value":"fn"},{"id":"graph","ref":"arg","value":"graph"},{"id":"out","script":"return (...args) => {res = _lib.no.executeGraphNode({graph})(fn)(args.length === 1 ? args[0] : args); return res;}"}],"edges":[{"from":"in","to":"out","as":"args"},{"from":"fn","to":"out","as":"fn"},{"from":"graph","to":"out","as":"graph"}]},{"id":"apply","script":"return _lib.no.executeGraphNode({graph: _graph})(fn)(args);"},{"id":"partial","nodes":[{"id":"in"},{"id":"input_value","ref":"arg","value":"_args"},{"id":"fn","ref":"arg","value":"fn"},{"id":"args","ref":"arg","value":"args"},{"id":"out","script":"return _lib.no.executeGraphNode({graph: _graph})(fn)(Object.assign({}, _args, args))"}],"edges":[{"from":"in","to":"out","as":"args","type":"ref"},{"from":"fn","to":"out","as":"fn"},{"from":"args","to":"out","as":"args"},{"from":"input_value","to":"out","as":"_args"}]},{"id":"new_array","name":"new_array","extern":"utility.new_array"},{"id":"get","args":["target","path"],"nodes":[{"id":"in"},{"id":"def","ref":"arg","value":"def"},{"id":"target","ref":"arg","value":"target"},{"id":"path","ref":"arg","value":"path"},{"id":"fill_default","args":["input"],"script":"return input?.default ??  null"},{"id":"get_args","ref":"new_array"},{"id":"out","extern":"just.get"}],"edges":[{"from":"in","to":"out","as":"input"},{"from":"def","to":"out","as":"def"},{"from":"path","to":"out","as":"path"},{"from":"target","to":"out","as":"target"},{"from":"get_args","to":"_out","as":"args"}]},{"id":"arg","args":["node_inputs"],"extern":"utility.arg"},{"id":"set","type":"(target: any, value: any, path: string) => any","script":"const keys = path.split('.'); const check = (o, v, k) => k.length === 1 ? {...o, [k[0]]: v, _needsresolve: true} : o.hasOwnProperty(k[0]) ? {...o, [k[0]]: check(o[k[0]], v, k.slice(1)), _needsresolve: true} : o; return check(target, value, keys)"},{"id":"delete","out":"out","nodes":[{"id":"in"},{"id":"target","ref":"arg","value":"target"},{"id":"path","ref":"arg","value":"path"},{"id":"out","script":"const new_val = Object.assign({}, target); delete target[path]; return new_val"}],"edges":[{"from":"in","to":"out","as":"args"},{"from":"target","to":"out","as":"target"},{"from":"path","to":"out","as":"path"}]},{"id":"h","args":["children","props","dom_type"],"nodes":[{"id":"in"},{"id":"fill_children","args":["children"],"script":"return children === undefined ? [] : children.length !== undefined ? children.filter(c => !!c).map(c => c.el ?? c) : [children.el ?? children]"},{"id":"fill_props","args":["input"],"script":"return input.props ?? {}"},{"id":"dom_type","ref":"arg","value":"dom_type"},{"id":"out","script":"(children ?? []).forEach(c => {if(!((c.hasOwnProperty('dom_type') && c.hasOwnProperty('props')) || c.hasOwnProperty('text'))){throw new Error('invalid child element');}}); return {el: {dom_type, props, children}}"},{"id":"_out"}],"edges":[{"from":"in","to":"fill_children"},{"from":"in","to":"dom_type"},{"from":"in","to":"fill_props","as":"input"},{"from":"fill_children","to":"out","as":"children","order":1},{"from":"fill_props","to":"out","as":"props","type":"resolve"},{"from":"dom_type","to":"out","as":"dom_type"}]},{"id":"h_text","nodes":[{"id":"in"},{"id":"text","ref":"arg","value":"text"},{"id":"dom_type","value":"text_value"},{"id":"el"},{"id":"out","args":["text"]}],"edges":[{"from":"in","to":"out","as":"input"},{"from":"dom_type","to":"el","as":"dom_type"},{"from":"text","to":"el","as":"text"},{"from":"el","to":"out","as":"el","type":"resolve"}]},{"id":"l6vdvtn","name":"display elements","out":"l6vdvtn","nodes":[{"id":"l6vdvtn","ref":"new_array","name":"display elements"},{"id":"c2sko9c","name":"hello world text","out":"c2sko9c","nodes":[{"id":"c2sko9c","ref":"h_text","name":"hello world text"},{"id":"2lr3ihi","value":"Hello, world!"}],"edges":[{"from":"2lr3ihi","to":"c2sko9c","as":"text"}]},{"id":"pgygs2p/pgygs2p","ref":"h","name":"styles/out"},{"id":"ukbdszl","ref":"h","name":"display text"},{"id":"pgygs2p/vdyskp6","value":"style","name":""},{"id":"pgygs2p/1tf3vvf","ref":"new_array","name":"styles/1tf3vvf"},{"id":"un5cq1q","value":"div"},{"id":"0alhppw","ref":"new_array","name":"run count display"},{"id":"2t4s9uj","name":"run count props"},{"id":"pgygs2p/6yewnx1","ref":"h_text","name":"styles/6yewnx1"},{"id":"g82nw07","ref":"h_text"},{"id":"wh4juqx","ref":"h_text"},{"id":"j630j9a","value":"run-count"},{"id":"pgygs2p/02951w8","value":".result { position: absolute; bottom: 0; left: 0; font-size: 4em}\n.run-count { font-size: .5em; color: green}","name":"css styles"},{"id":"gzr41q3","ref":"log"},{"id":"edqfgkn","value":"run count: "},{"ref":"arg","id":"00ahbis","value":"state.runcount"}],"edges":[{"from":"c2sko9c","to":"l6vdvtn","as":"arg1"},{"from":"pgygs2p/pgygs2p","to":"l6vdvtn","as":"arg0"},{"from":"ukbdszl","to":"l6vdvtn","as":"arg2"},{"from":"pgygs2p/vdyskp6","to":"pgygs2p/pgygs2p","as":"dom_type"},{"from":"pgygs2p/1tf3vvf","to":"pgygs2p/pgygs2p","as":"children"},{"from":"un5cq1q","to":"ukbdszl","as":"dom_type"},{"from":"0alhppw","to":"ukbdszl","as":"children"},{"from":"2t4s9uj","to":"ukbdszl","as":"props"},{"from":"pgygs2p/6yewnx1","to":"pgygs2p/1tf3vvf","as":"arg0"},{"from":"g82nw07","to":"0alhppw","as":"arg1"},{"from":"wh4juqx","to":"0alhppw","as":"arg0"},{"from":"j630j9a","to":"2t4s9uj","as":"class"},{"from":"pgygs2p/02951w8","to":"pgygs2p/6yewnx1","as":"text"},{"from":"gzr41q3","to":"g82nw07","as":"text"},{"from":"edqfgkn","to":"wh4juqx","as":"text"},{"from":"00ahbis","to":"gzr41q3","as":"value"}]}],"edges":[{"from":"main/in","to":"main/out","as":"args","type":"ref"},{"from":"63tva08","to":"main/out","as":"display"},{"from":"l6vdvtn","to":"63tva08","as":"children"},{"from":"q23fegi","to":"63tva08","as":"dom_type"},{"from":"l6mvkla","to":"63tva08","as":"props"},{"from":"o1wn5x1","to":"l6mvkla","as":"class"},{"from":"zz730do","to":"o1wn5x1","as":"result"},{"from":"xev2phu","to":"main/out","as":"prev"},{"from":"el0app0","to":"main/out","as":"state"},{"from":"91dm5vd","to":"2gcjbds","as":"path"},{"from":"m9yeyqc","to":"f6js4lo","as":"res"},{"from":"fphsciu","to":"m9yeyqc","as":"url"},{"from":"f6js4lo","to":"2gcjbds","as":"target"},{"from":"2gcjbds","to":"0iscsvl","as":"fetch"},{"from":"0iscsvl","to":"el0app0","as":"runcount"},{"from":"gcg2ctk","to":"0iscsvl","as":"input"},{"from":"sgnxbrn","to":"gcg2ctk","as":"runcount"},{"from":"b77sv21","to":"0iscsvl","as":"state"},{"from":"get","to":"object"},{"from":"set","to":"object"},{"from":"delete","to":"object"},{"from":"switch","to":"flow"},{"from":"if","to":"flow"},{"from":"h","to":"hyperapp"},{"from":"h_text","to":"hyperapp"},{"from":"new_array","to":"array"},{"from":"filter","to":"array"},{"from":"log","to":"utility"},{"from":"execute_graph","to":"utility"},{"from":"arg","to":"utility"},{"from":"partial","to":"utility"},{"from":"apply","to":"utility"},{"from":"fetch","to":"utility"}]}
+    {
+        "edges": [
+            {
+                "from": "main/in",
+                "to": "main/out",
+                "as": "args",
+                "type": "ref"
+            },
+            {
+                "from": "63tva08",
+                "to": "main/out",
+                "as": "display"
+            },
+            {
+                "from": "l6vdvtn",
+                "to": "63tva08",
+                "as": "children"
+            },
+            {
+                "from": "q23fegi",
+                "to": "63tva08",
+                "as": "dom_type"
+            },
+            {
+                "from": "c2sko9c",
+                "to": "l6vdvtn",
+                "as": "arg1"
+            },
+            {
+                "from": "pgygs2p/pgygs2p",
+                "to": "l6vdvtn",
+                "as": "arg0"
+            },
+            {
+                "from": "l6mvkla",
+                "to": "63tva08",
+                "as": "props"
+            },
+            {
+                "from": "o1wn5x1",
+                "to": "l6mvkla",
+                "as": "class"
+            },
+            {
+                "from": "zz730do",
+                "to": "o1wn5x1",
+                "as": "result"
+            },
+            {
+                "from": "pgygs2p/vdyskp6",
+                "to": "pgygs2p/pgygs2p",
+                "as": "dom_type"
+            },
+            {
+                "from": "pgygs2p/1tf3vvf",
+                "to": "pgygs2p/pgygs2p",
+                "as": "children"
+            },
+            {
+                "from": "pgygs2p/6yewnx1",
+                "to": "pgygs2p/1tf3vvf",
+                "as": "arg0"
+            },
+            {
+                "from": "pgygs2p/02951w8",
+                "to": "pgygs2p/6yewnx1",
+                "as": "text"
+            },
+            {
+                "from": "get",
+                "to": "object"
+            },
+            {
+                "from": "set",
+                "to": "object"
+            },
+            {
+                "from": "delete",
+                "to": "object"
+            },
+            {
+                "from": "switch",
+                "to": "flow"
+            },
+            {
+                "from": "if",
+                "to": "flow"
+            },
+            {
+                "from": "h",
+                "to": "hyperapp"
+            },
+            {
+                "from": "h_text",
+                "to": "hyperapp"
+            },
+            {
+                "from": "new_array",
+                "to": "array"
+            },
+            {
+                "from": "filter",
+                "to": "array"
+            },
+            {
+                "from": "log",
+                "to": "utility"
+            },
+            {
+                "from": "execute_graph",
+                "to": "utility"
+            },
+            {
+                "from": "arg",
+                "to": "utility"
+            },
+            {
+                "from": "partial",
+                "to": "utility"
+            },
+            {
+                "from": "apply",
+                "to": "utility"
+            },
+            {
+                "from": "fetch",
+                "to": "utility"
+            }
+        ],
+        "nodes": [
+            {
+                "id": "main/out",
+                "args": [
+                    "value"
+                ]
+            },
+            {
+                "id": "main/in"
+            },
+            {
+                "id": "63tva08",
+                "ref": "h",
+                "name": "main display"
+            },
+            {
+                "id": "l6vdvtn",
+                "ref": "new_array",
+                "name": "display elements"
+            },
+            {
+                "id": "q23fegi",
+                "value": "div"
+            },
+            {
+                "id": "l6mvkla",
+                "name": "props"
+            },
+            {
+                "id": "o1wn5x1",
+                "name": "class"
+            },
+            {
+                "id": "zz730do",
+                "value": "true"
+            },
+            {
+                "id": "c2sko9c",
+                "name": "hello world text",
+                "out": "c2sko9c",
+                "nodes": [
+                    {
+                        "id": "c2sko9c",
+                        "ref": "h_text",
+                        "name": "hello world text"
+                    },
+                    {
+                        "id": "2lr3ihi",
+                        "value": "Hello, world!"
+                    }
+                ],
+                "edges": [
+                    {
+                        "from": "2lr3ihi",
+                        "to": "c2sko9c",
+                        "as": "text"
+                    }
+                ]
+            },
+            {
+                "id": "pgygs2p/pgygs2p",
+                "ref": "h",
+                "name": "styles/out"
+            },
+            {
+                "id": "pgygs2p/vdyskp6",
+                "value": "style",
+                "name": ""
+            },
+            {
+                "id": "pgygs2p/1tf3vvf",
+                "ref": "new_array",
+                "name": "styles/1tf3vvf"
+            },
+            {
+                "id": "pgygs2p/6yewnx1",
+                "ref": "h_text",
+                "name": "styles/6yewnx1"
+            },
+            {
+                "id": "pgygs2p/02951w8",
+                "value": ".result { position: absolute; bottom: 0; left: 0; font-size: 4em}\n.run-count { font-size: .5em; color: green}",
+                "name": "css styles"
+            },
+            {
+                "id": "array"
+            },
+            {
+                "id": "utility"
+            },
+            {
+                "id": "flow"
+            },
+            {
+                "id": "hyperapp"
+            },
+            {
+                "id": "object"
+            },
+            {
+                "id": "log",
+                "args": [
+                    "value"
+                ],
+                "nodes": [
+                    {
+                        "id": "in"
+                    },
+                    {
+                        "id": "value",
+                        "ref": "arg",
+                        "value": "value"
+                    },
+                    {
+                        "id": "out",
+                        "args": [],
+                        "script": "console.log(_node.id); console.log(value); return value"
+                    }
+                ],
+                "edges": [
+                    {
+                        "from": "in",
+                        "to": "out",
+                        "as": "input"
+                    },
+                    {
+                        "from": "value",
+                        "to": "out",
+                        "as": "value"
+                    }
+                ]
+            },
+            {
+                "id": "fetch",
+                "name": "fetch",
+                "extern": "utility.fetch"
+            },
+            {
+                "id": "filter",
+                "name": "filter",
+                "in": "74n1jfm",
+                "out": "lahq5z4",
+                "nodes": [
+                    {
+                        "id": "lahq5z4",
+                        "args": [],
+                        "name": "filter/out",
+                        "script": "const filter_fn = _lib.no.executeGraphNode({graph: _graph})(fn); return arr.filter(filter_fn)"
+                    },
+                    {
+                        "id": "pfoypo5",
+                        "args": [],
+                        "ref": "arg",
+                        "value": "key"
+                    },
+                    {
+                        "id": "zinx621",
+                        "args": [],
+                        "ref": "arg",
+                        "value": "value"
+                    },
+                    {
+                        "id": "x2sz5kb",
+                        "args": [],
+                        "ref": "arg",
+                        "value": "arr"
+                    },
+                    {
+                        "id": "fn",
+                        "ref": "arg",
+                        "value": "fn"
+                    },
+                    {
+                        "id": "74n1jfm",
+                        "args": [],
+                        "name": "filter/in"
+                    }
+                ],
+                "edges": [
+                    {
+                        "from": "pfoypo5",
+                        "to": "lahq5z4",
+                        "as": "key"
+                    },
+                    {
+                        "from": "zinx621",
+                        "to": "lahq5z4",
+                        "as": "value"
+                    },
+                    {
+                        "from": "x2sz5kb",
+                        "to": "lahq5z4",
+                        "as": "arr"
+                    },
+                    {
+                        "from": "74n1jfm",
+                        "to": "lahq5z4",
+                        "as": "input"
+                    },
+                    {
+                        "from": "fn",
+                        "to": "lahq5z4",
+                        "as": "fn"
+                    }
+                ]
+            },
+            {
+                "id": "switch",
+                "args": [
+                    "data",
+                    "input"
+                ],
+                "nodes": [
+                    {
+                        "id": "in"
+                    },
+                    {
+                        "id": "out",
+                        "args": [
+                            "data",
+                            "input"
+                        ],
+                        "script": "return data[input];"
+                    },
+                    {
+                        "id": "input",
+                        "ref": "arg",
+                        "value": "input"
+                    }
+                ],
+                "edges": [
+                    {
+                        "from": "in",
+                        "to": "out",
+                        "as": "data"
+                    },
+                    {
+                        "from": "input",
+                        "to": "out",
+                        "as": "input"
+                    }
+                ]
+            },
+            {
+                "id": "if",
+                "nodes": [
+                    {
+                        "id": "in"
+                    },
+                    {
+                        "id": "pred",
+                        "ref": "arg",
+                        "value": "pred"
+                    },
+                    {
+                        "id": "out",
+                        "script": "return pred ? data['true'] : data['false']"
+                    }
+                ],
+                "edges": [
+                    {
+                        "from": "in",
+                        "to": "out",
+                        "as": "data"
+                    },
+                    {
+                        "from": "pred",
+                        "to": "out",
+                        "as": "pred"
+                    }
+                ]
+            },
+            {
+                "id": "execute_graph",
+                "nodes": [
+                    {
+                        "id": "in"
+                    },
+                    {
+                        "id": "fn",
+                        "ref": "arg",
+                        "value": "fn"
+                    },
+                    {
+                        "id": "graph",
+                        "ref": "arg",
+                        "value": "graph"
+                    },
+                    {
+                        "id": "out",
+                        "script": "return (...args) => {res = _lib.no.executeGraphNode({graph})(fn)(args.length === 1 ? args[0] : args); return res;}"
+                    }
+                ],
+                "edges": [
+                    {
+                        "from": "in",
+                        "to": "out",
+                        "as": "args"
+                    },
+                    {
+                        "from": "fn",
+                        "to": "out",
+                        "as": "fn"
+                    },
+                    {
+                        "from": "graph",
+                        "to": "out",
+                        "as": "graph"
+                    }
+                ]
+            },
+            {
+                "id": "apply",
+                "script": "return _lib.no.executeGraphNode({graph: _graph})(fn)(args);"
+            },
+            {
+                "id": "partial",
+                "nodes": [
+                    {
+                        "id": "in"
+                    },
+                    {
+                        "id": "input_value",
+                        "ref": "arg",
+                        "value": "_args"
+                    },
+                    {
+                        "id": "fn",
+                        "ref": "arg",
+                        "value": "fn"
+                    },
+                    {
+                        "id": "args",
+                        "ref": "arg",
+                        "value": "args"
+                    },
+                    {
+                        "id": "out",
+                        "script": "return _lib.no.executeGraphNode({graph: _graph})(fn)(Object.assign({}, _args, args))"
+                    }
+                ],
+                "edges": [
+                    {
+                        "from": "in",
+                        "to": "out",
+                        "as": "args",
+                        "type": "ref"
+                    },
+                    {
+                        "from": "fn",
+                        "to": "out",
+                        "as": "fn"
+                    },
+                    {
+                        "from": "args",
+                        "to": "out",
+                        "as": "args"
+                    },
+                    {
+                        "from": "input_value",
+                        "to": "out",
+                        "as": "_args"
+                    }
+                ]
+            },
+            {
+                "id": "new_array",
+                "name": "new_array",
+                "extern": "utility.new_array"
+            },
+            {
+                "id": "get",
+                "args": [
+                    "target",
+                    "path"
+                ],
+                "nodes": [
+                    {
+                        "id": "in"
+                    },
+                    {
+                        "id": "def",
+                        "ref": "arg",
+                        "value": "def"
+                    },
+                    {
+                        "id": "target",
+                        "ref": "arg",
+                        "value": "target"
+                    },
+                    {
+                        "id": "path",
+                        "ref": "arg",
+                        "value": "path"
+                    },
+                    {
+                        "id": "fill_default",
+                        "args": [
+                            "input"
+                        ],
+                        "script": "return input?.default ??  null"
+                    },
+                    {
+                        "id": "get_args",
+                        "ref": "new_array"
+                    },
+                    {
+                        "id": "out",
+                        "extern": "just.get"
+                    }
+                ],
+                "edges": [
+                    {
+                        "from": "in",
+                        "to": "out",
+                        "as": "input"
+                    },
+                    {
+                        "from": "def",
+                        "to": "out",
+                        "as": "def"
+                    },
+                    {
+                        "from": "path",
+                        "to": "out",
+                        "as": "path"
+                    },
+                    {
+                        "from": "target",
+                        "to": "out",
+                        "as": "target"
+                    },
+                    {
+                        "from": "get_args",
+                        "to": "_out",
+                        "as": "args"
+                    }
+                ]
+            },
+            {
+                "id": "arg",
+                "args": [
+                    "node_inputs"
+                ],
+                "extern": "utility.arg"
+            },
+            {
+                "id": "set",
+                "type": "(target: any, value: any, path: string) => any",
+                "script": "const keys = path.split('.'); const check = (o, v, k) => k.length === 1 ? {...o, [k[0]]: v, _needsresolve: true} : o.hasOwnProperty(k[0]) ? {...o, [k[0]]: check(o[k[0]], v, k.slice(1)), _needsresolve: true} : o; return check(target, value, keys)"
+            },
+            {
+                "id": "delete",
+                "out": "out",
+                "nodes": [
+                    {
+                        "id": "in"
+                    },
+                    {
+                        "id": "target",
+                        "ref": "arg",
+                        "value": "target"
+                    },
+                    {
+                        "id": "path",
+                        "ref": "arg",
+                        "value": "path"
+                    },
+                    {
+                        "id": "out",
+                        "script": "const new_val = Object.assign({}, target); delete target[path]; return new_val"
+                    }
+                ],
+                "edges": [
+                    {
+                        "from": "in",
+                        "to": "out",
+                        "as": "args"
+                    },
+                    {
+                        "from": "target",
+                        "to": "out",
+                        "as": "target"
+                    },
+                    {
+                        "from": "path",
+                        "to": "out",
+                        "as": "path"
+                    }
+                ]
+            },
+            {
+                "id": "h",
+                "args": [
+                    "children",
+                    "props",
+                    "dom_type"
+                ],
+                "nodes": [
+                    {
+                        "id": "in"
+                    },
+                    {
+                        "id": "fill_children",
+                        "args": [
+                            "children"
+                        ],
+                        "script": "return children === undefined ? [] : children.length !== undefined ? children.filter(c => !!c).map(c => c.el ?? c) : [children.el ?? children]"
+                    },
+                    {
+                        "id": "fill_props",
+                        "args": [
+                            "input"
+                        ],
+                        "script": "return input.props ?? {}"
+                    },
+                    {
+                        "id": "dom_type",
+                        "ref": "arg",
+                        "value": "dom_type"
+                    },
+                    {
+                        "id": "out",
+                        "script": "(children ?? []).forEach(c => {if(!((c.hasOwnProperty('dom_type') && c.hasOwnProperty('props')) || c.hasOwnProperty('text'))){throw new Error('invalid child element');}}); return {el: {dom_type, props, children}}"
+                    },
+                    {
+                        "id": "_out"
+                    }
+                ],
+                "edges": [
+                    {
+                        "from": "in",
+                        "to": "fill_children"
+                    },
+                    {
+                        "from": "in",
+                        "to": "dom_type"
+                    },
+                    {
+                        "from": "in",
+                        "to": "fill_props",
+                        "as": "input"
+                    },
+                    {
+                        "from": "fill_children",
+                        "to": "out",
+                        "as": "children",
+                        "order": 1
+                    },
+                    {
+                        "from": "fill_props",
+                        "to": "out",
+                        "as": "props",
+                        "type": "resolve"
+                    },
+                    {
+                        "from": "dom_type",
+                        "to": "out",
+                        "as": "dom_type"
+                    }
+                ]
+            },
+            {
+                "id": "h_text",
+                "nodes": [
+                    {
+                        "id": "in"
+                    },
+                    {
+                        "id": "text",
+                        "ref": "arg",
+                        "value": "text"
+                    },
+                    {
+                        "id": "dom_type",
+                        "value": "text_value"
+                    },
+                    {
+                        "id": "el"
+                    },
+                    {
+                        "id": "out",
+                        "args": [
+                            "text"
+                        ]
+                    }
+                ],
+                "edges": [
+                    {
+                        "from": "in",
+                        "to": "out",
+                        "as": "input"
+                    },
+                    {
+                        "from": "dom_type",
+                        "to": "el",
+                        "as": "dom_type"
+                    },
+                    {
+                        "from": "text",
+                        "to": "el",
+                        "as": "text"
+                    },
+                    {
+                        "from": "el",
+                        "to": "out",
+                        "as": "el",
+                        "type": "resolve"
+                    }
+                ]
+            }
+        ],
+        "id": "simple_html_hyperapp",
+        "out": "main/out",
+        "in": "main/in"
+    },
+    {
+        "in": "main/in",
+        "out": "main/out",
+        "id": "promises",
+        "nodes": [
+            {
+                "id": "main/out",
+                "args": [
+                    "value"
+                ]
+            },
+            {
+                "id": "main/in"
+            },
+            {
+                "id": "63tva08",
+                "ref": "h",
+                "name": "main display"
+            },
+            {
+                "id": "q23fegi",
+                "value": "div"
+            },
+            {
+                "id": "l6mvkla",
+                "name": "props"
+            },
+            {
+                "id": "o1wn5x1",
+                "name": "class"
+            },
+            {
+                "id": "zz730do",
+                "value": "true"
+            },
+            {
+                "ref": "arg",
+                "id": "xev2phu",
+                "value": "state"
+            },
+            {
+                "id": "el0app0",
+                "name": "state"
+            },
+            {
+                "id": "2gcjbds",
+                "ref": "get"
+            },
+            {
+                "id": "f6js4lo",
+                "script": "return res.then(r => r.json())"
+            },
+            {
+                "id": "91dm5vd",
+                "value": "data.0.content"
+            },
+            {
+                "id": "m9yeyqc",
+                "ref": "fetch"
+            },
+            {
+                "id": "fphsciu",
+                "value": "https://fakerapi.it/api/v1/texts"
+            },
+            {
+                "id": "0iscsvl",
+                "ref": "switch",
+                "name": "fetch if needed"
+            },
+            {
+                "id": "gcg2ctk",
+                "script": "return runcount === undefined ? 'fetch' : 'state'"
+            },
+            {
+                "ref": "arg",
+                "id": "sgnxbrn",
+                "value": "state.runcount"
+            },
+            {
+                "ref": "arg",
+                "id": "b77sv21",
+                "value": "state.runcount"
+            },
+            {
+                "id": "array"
+            },
+            {
+                "id": "utility"
+            },
+            {
+                "id": "flow"
+            },
+            {
+                "id": "hyperapp"
+            },
+            {
+                "id": "object"
+            },
+            {
+                "id": "log",
+                "args": [
+                    "value"
+                ],
+                "nodes": [
+                    {
+                        "id": "in"
+                    },
+                    {
+                        "id": "value",
+                        "ref": "arg",
+                        "value": "value"
+                    },
+                    {
+                        "id": "out",
+                        "args": [],
+                        "script": "console.log(_node.id); console.log(value); return value"
+                    }
+                ],
+                "edges": [
+                    {
+                        "from": "in",
+                        "to": "out",
+                        "as": "input"
+                    },
+                    {
+                        "from": "value",
+                        "to": "out",
+                        "as": "value"
+                    }
+                ]
+            },
+            {
+                "id": "fetch",
+                "name": "fetch",
+                "extern": "utility.fetch"
+            },
+            {
+                "id": "filter",
+                "name": "filter",
+                "in": "74n1jfm",
+                "out": "lahq5z4",
+                "nodes": [
+                    {
+                        "id": "lahq5z4",
+                        "args": [],
+                        "name": "filter/out",
+                        "script": "const filter_fn = _lib.no.executeGraphNode({graph: _graph})(fn); return arr.filter(filter_fn)"
+                    },
+                    {
+                        "id": "pfoypo5",
+                        "args": [],
+                        "ref": "arg",
+                        "value": "key"
+                    },
+                    {
+                        "id": "zinx621",
+                        "args": [],
+                        "ref": "arg",
+                        "value": "value"
+                    },
+                    {
+                        "id": "x2sz5kb",
+                        "args": [],
+                        "ref": "arg",
+                        "value": "arr"
+                    },
+                    {
+                        "id": "fn",
+                        "ref": "arg",
+                        "value": "fn"
+                    },
+                    {
+                        "id": "74n1jfm",
+                        "args": [],
+                        "name": "filter/in"
+                    }
+                ],
+                "edges": [
+                    {
+                        "from": "pfoypo5",
+                        "to": "lahq5z4",
+                        "as": "key"
+                    },
+                    {
+                        "from": "zinx621",
+                        "to": "lahq5z4",
+                        "as": "value"
+                    },
+                    {
+                        "from": "x2sz5kb",
+                        "to": "lahq5z4",
+                        "as": "arr"
+                    },
+                    {
+                        "from": "74n1jfm",
+                        "to": "lahq5z4",
+                        "as": "input"
+                    },
+                    {
+                        "from": "fn",
+                        "to": "lahq5z4",
+                        "as": "fn"
+                    }
+                ]
+            },
+            {
+                "id": "switch",
+                "args": [
+                    "data",
+                    "input"
+                ],
+                "nodes": [
+                    {
+                        "id": "in"
+                    },
+                    {
+                        "id": "out",
+                        "args": [
+                            "data",
+                            "input"
+                        ],
+                        "script": "return data[input];"
+                    },
+                    {
+                        "id": "input",
+                        "ref": "arg",
+                        "value": "input"
+                    }
+                ],
+                "edges": [
+                    {
+                        "from": "in",
+                        "to": "out",
+                        "as": "data"
+                    },
+                    {
+                        "from": "input",
+                        "to": "out",
+                        "as": "input"
+                    }
+                ]
+            },
+            {
+                "id": "if",
+                "nodes": [
+                    {
+                        "id": "in"
+                    },
+                    {
+                        "id": "pred",
+                        "ref": "arg",
+                        "value": "pred"
+                    },
+                    {
+                        "id": "out",
+                        "script": "return pred ? data['true'] : data['false']"
+                    }
+                ],
+                "edges": [
+                    {
+                        "from": "in",
+                        "to": "out",
+                        "as": "data"
+                    },
+                    {
+                        "from": "pred",
+                        "to": "out",
+                        "as": "pred"
+                    }
+                ]
+            },
+            {
+                "id": "execute_graph",
+                "nodes": [
+                    {
+                        "id": "in"
+                    },
+                    {
+                        "id": "fn",
+                        "ref": "arg",
+                        "value": "fn"
+                    },
+                    {
+                        "id": "graph",
+                        "ref": "arg",
+                        "value": "graph"
+                    },
+                    {
+                        "id": "out",
+                        "script": "return (...args) => {res = _lib.no.executeGraphNode({graph})(fn)(args.length === 1 ? args[0] : args); return res;}"
+                    }
+                ],
+                "edges": [
+                    {
+                        "from": "in",
+                        "to": "out",
+                        "as": "args"
+                    },
+                    {
+                        "from": "fn",
+                        "to": "out",
+                        "as": "fn"
+                    },
+                    {
+                        "from": "graph",
+                        "to": "out",
+                        "as": "graph"
+                    }
+                ]
+            },
+            {
+                "id": "apply",
+                "script": "return _lib.no.executeGraphNode({graph: _graph})(fn)(args);"
+            },
+            {
+                "id": "partial",
+                "nodes": [
+                    {
+                        "id": "in"
+                    },
+                    {
+                        "id": "input_value",
+                        "ref": "arg",
+                        "value": "_args"
+                    },
+                    {
+                        "id": "fn",
+                        "ref": "arg",
+                        "value": "fn"
+                    },
+                    {
+                        "id": "args",
+                        "ref": "arg",
+                        "value": "args"
+                    },
+                    {
+                        "id": "out",
+                        "script": "return _lib.no.executeGraphNode({graph: _graph})(fn)(Object.assign({}, _args, args))"
+                    }
+                ],
+                "edges": [
+                    {
+                        "from": "in",
+                        "to": "out",
+                        "as": "args",
+                        "type": "ref"
+                    },
+                    {
+                        "from": "fn",
+                        "to": "out",
+                        "as": "fn"
+                    },
+                    {
+                        "from": "args",
+                        "to": "out",
+                        "as": "args"
+                    },
+                    {
+                        "from": "input_value",
+                        "to": "out",
+                        "as": "_args"
+                    }
+                ]
+            },
+            {
+                "id": "new_array",
+                "name": "new_array",
+                "extern": "utility.new_array"
+            },
+            {
+                "id": "get",
+                "args": [
+                    "target",
+                    "path"
+                ],
+                "nodes": [
+                    {
+                        "id": "in"
+                    },
+                    {
+                        "id": "def",
+                        "ref": "arg",
+                        "value": "def"
+                    },
+                    {
+                        "id": "target",
+                        "ref": "arg",
+                        "value": "target"
+                    },
+                    {
+                        "id": "path",
+                        "ref": "arg",
+                        "value": "path"
+                    },
+                    {
+                        "id": "fill_default",
+                        "args": [
+                            "input"
+                        ],
+                        "script": "return input?.default ??  null"
+                    },
+                    {
+                        "id": "get_args",
+                        "ref": "new_array"
+                    },
+                    {
+                        "id": "out",
+                        "extern": "just.get"
+                    }
+                ],
+                "edges": [
+                    {
+                        "from": "in",
+                        "to": "out",
+                        "as": "input"
+                    },
+                    {
+                        "from": "def",
+                        "to": "out",
+                        "as": "def"
+                    },
+                    {
+                        "from": "path",
+                        "to": "out",
+                        "as": "path"
+                    },
+                    {
+                        "from": "target",
+                        "to": "out",
+                        "as": "target"
+                    },
+                    {
+                        "from": "get_args",
+                        "to": "_out",
+                        "as": "args"
+                    }
+                ]
+            },
+            {
+                "id": "arg",
+                "args": [
+                    "node_inputs"
+                ],
+                "extern": "utility.arg"
+            },
+            {
+                "id": "set",
+                "type": "(target: any, value: any, path: string) => any",
+                "script": "const keys = path.split('.'); const check = (o, v, k) => k.length === 1 ? {...o, [k[0]]: v, _needsresolve: true} : o.hasOwnProperty(k[0]) ? {...o, [k[0]]: check(o[k[0]], v, k.slice(1)), _needsresolve: true} : o; return check(target, value, keys)"
+            },
+            {
+                "id": "delete",
+                "out": "out",
+                "nodes": [
+                    {
+                        "id": "in"
+                    },
+                    {
+                        "id": "target",
+                        "ref": "arg",
+                        "value": "target"
+                    },
+                    {
+                        "id": "path",
+                        "ref": "arg",
+                        "value": "path"
+                    },
+                    {
+                        "id": "out",
+                        "script": "const new_val = Object.assign({}, target); delete target[path]; return new_val"
+                    }
+                ],
+                "edges": [
+                    {
+                        "from": "in",
+                        "to": "out",
+                        "as": "args"
+                    },
+                    {
+                        "from": "target",
+                        "to": "out",
+                        "as": "target"
+                    },
+                    {
+                        "from": "path",
+                        "to": "out",
+                        "as": "path"
+                    }
+                ]
+            },
+            {
+                "id": "h",
+                "args": [
+                    "children",
+                    "props",
+                    "dom_type"
+                ],
+                "nodes": [
+                    {
+                        "id": "in"
+                    },
+                    {
+                        "id": "fill_children",
+                        "args": [
+                            "children"
+                        ],
+                        "script": "return children === undefined ? [] : children.length !== undefined ? children.filter(c => !!c).map(c => c.el ?? c) : [children.el ?? children]"
+                    },
+                    {
+                        "id": "fill_props",
+                        "args": [
+                            "input"
+                        ],
+                        "script": "return input.props ?? {}"
+                    },
+                    {
+                        "id": "dom_type",
+                        "ref": "arg",
+                        "value": "dom_type"
+                    },
+                    {
+                        "id": "out",
+                        "script": "(children ?? []).forEach(c => {if(!((c.hasOwnProperty('dom_type') && c.hasOwnProperty('props')) || c.hasOwnProperty('text'))){throw new Error('invalid child element');}}); return {el: {dom_type, props, children}}"
+                    },
+                    {
+                        "id": "_out"
+                    }
+                ],
+                "edges": [
+                    {
+                        "from": "in",
+                        "to": "fill_children"
+                    },
+                    {
+                        "from": "in",
+                        "to": "dom_type"
+                    },
+                    {
+                        "from": "in",
+                        "to": "fill_props",
+                        "as": "input"
+                    },
+                    {
+                        "from": "fill_children",
+                        "to": "out",
+                        "as": "children",
+                        "order": 1
+                    },
+                    {
+                        "from": "fill_props",
+                        "to": "out",
+                        "as": "props",
+                        "type": "resolve"
+                    },
+                    {
+                        "from": "dom_type",
+                        "to": "out",
+                        "as": "dom_type"
+                    }
+                ]
+            },
+            {
+                "id": "h_text",
+                "nodes": [
+                    {
+                        "id": "in"
+                    },
+                    {
+                        "id": "text",
+                        "ref": "arg",
+                        "value": "text"
+                    },
+                    {
+                        "id": "dom_type",
+                        "value": "text_value"
+                    },
+                    {
+                        "id": "el"
+                    },
+                    {
+                        "id": "out",
+                        "args": [
+                            "text"
+                        ]
+                    }
+                ],
+                "edges": [
+                    {
+                        "from": "in",
+                        "to": "out",
+                        "as": "input"
+                    },
+                    {
+                        "from": "dom_type",
+                        "to": "el",
+                        "as": "dom_type"
+                    },
+                    {
+                        "from": "text",
+                        "to": "el",
+                        "as": "text"
+                    },
+                    {
+                        "from": "el",
+                        "to": "out",
+                        "as": "el",
+                        "type": "resolve"
+                    }
+                ]
+            },
+            {
+                "id": "l6vdvtn",
+                "name": "display elements",
+                "out": "l6vdvtn",
+                "nodes": [
+                    {
+                        "id": "l6vdvtn",
+                        "ref": "new_array",
+                        "name": "display elements"
+                    },
+                    {
+                        "id": "c2sko9c",
+                        "name": "hello world text",
+                        "out": "c2sko9c",
+                        "nodes": [
+                            {
+                                "id": "c2sko9c",
+                                "ref": "h_text",
+                                "name": "hello world text"
+                            },
+                            {
+                                "id": "2lr3ihi",
+                                "value": "Hello, world!"
+                            }
+                        ],
+                        "edges": [
+                            {
+                                "from": "2lr3ihi",
+                                "to": "c2sko9c",
+                                "as": "text"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "pgygs2p/pgygs2p",
+                        "ref": "h",
+                        "name": "styles/out"
+                    },
+                    {
+                        "id": "ukbdszl",
+                        "ref": "h",
+                        "name": "display text"
+                    },
+                    {
+                        "id": "pgygs2p/vdyskp6",
+                        "value": "style",
+                        "name": ""
+                    },
+                    {
+                        "id": "pgygs2p/1tf3vvf",
+                        "ref": "new_array",
+                        "name": "styles/1tf3vvf"
+                    },
+                    {
+                        "id": "un5cq1q",
+                        "value": "div"
+                    },
+                    {
+                        "id": "0alhppw",
+                        "ref": "new_array",
+                        "name": "run count display"
+                    },
+                    {
+                        "id": "2t4s9uj",
+                        "name": "run count props"
+                    },
+                    {
+                        "id": "pgygs2p/6yewnx1",
+                        "ref": "h_text",
+                        "name": "styles/6yewnx1"
+                    },
+                    {
+                        "id": "g82nw07",
+                        "ref": "h_text"
+                    },
+                    {
+                        "id": "wh4juqx",
+                        "ref": "h_text"
+                    },
+                    {
+                        "id": "j630j9a",
+                        "value": "run-count"
+                    },
+                    {
+                        "id": "pgygs2p/02951w8",
+                        "value": ".result { position: absolute; bottom: 0; left: 0; font-size: 4em}\n.run-count { font-size: .5em; color: green}",
+                        "name": "css styles"
+                    },
+                    {
+                        "id": "gzr41q3",
+                        "ref": "log"
+                    },
+                    {
+                        "id": "edqfgkn",
+                        "value": "run count: "
+                    },
+                    {
+                        "ref": "arg",
+                        "id": "00ahbis",
+                        "value": "state.runcount"
+                    }
+                ],
+                "edges": [
+                    {
+                        "from": "c2sko9c",
+                        "to": "l6vdvtn",
+                        "as": "arg1"
+                    },
+                    {
+                        "from": "pgygs2p/pgygs2p",
+                        "to": "l6vdvtn",
+                        "as": "arg0"
+                    },
+                    {
+                        "from": "ukbdszl",
+                        "to": "l6vdvtn",
+                        "as": "arg2"
+                    },
+                    {
+                        "from": "pgygs2p/vdyskp6",
+                        "to": "pgygs2p/pgygs2p",
+                        "as": "dom_type"
+                    },
+                    {
+                        "from": "pgygs2p/1tf3vvf",
+                        "to": "pgygs2p/pgygs2p",
+                        "as": "children"
+                    },
+                    {
+                        "from": "un5cq1q",
+                        "to": "ukbdszl",
+                        "as": "dom_type"
+                    },
+                    {
+                        "from": "0alhppw",
+                        "to": "ukbdszl",
+                        "as": "children"
+                    },
+                    {
+                        "from": "2t4s9uj",
+                        "to": "ukbdszl",
+                        "as": "props"
+                    },
+                    {
+                        "from": "pgygs2p/6yewnx1",
+                        "to": "pgygs2p/1tf3vvf",
+                        "as": "arg0"
+                    },
+                    {
+                        "from": "g82nw07",
+                        "to": "0alhppw",
+                        "as": "arg1"
+                    },
+                    {
+                        "from": "wh4juqx",
+                        "to": "0alhppw",
+                        "as": "arg0"
+                    },
+                    {
+                        "from": "j630j9a",
+                        "to": "2t4s9uj",
+                        "as": "class"
+                    },
+                    {
+                        "from": "pgygs2p/02951w8",
+                        "to": "pgygs2p/6yewnx1",
+                        "as": "text"
+                    },
+                    {
+                        "from": "gzr41q3",
+                        "to": "g82nw07",
+                        "as": "text"
+                    },
+                    {
+                        "from": "edqfgkn",
+                        "to": "wh4juqx",
+                        "as": "text"
+                    },
+                    {
+                        "from": "00ahbis",
+                        "to": "gzr41q3",
+                        "as": "value"
+                    }
+                ]
+            }
+        ],
+        "edges": [
+            {
+                "from": "main/in",
+                "to": "main/out",
+                "as": "args",
+                "type": "ref"
+            },
+            {
+                "from": "63tva08",
+                "to": "main/out",
+                "as": "display"
+            },
+            {
+                "from": "l6vdvtn",
+                "to": "63tva08",
+                "as": "children"
+            },
+            {
+                "from": "q23fegi",
+                "to": "63tva08",
+                "as": "dom_type"
+            },
+            {
+                "from": "l6mvkla",
+                "to": "63tva08",
+                "as": "props"
+            },
+            {
+                "from": "o1wn5x1",
+                "to": "l6mvkla",
+                "as": "class"
+            },
+            {
+                "from": "zz730do",
+                "to": "o1wn5x1",
+                "as": "result"
+            },
+            {
+                "from": "xev2phu",
+                "to": "main/out",
+                "as": "prev"
+            },
+            {
+                "from": "el0app0",
+                "to": "main/out",
+                "as": "state"
+            },
+            {
+                "from": "91dm5vd",
+                "to": "2gcjbds",
+                "as": "path"
+            },
+            {
+                "from": "m9yeyqc",
+                "to": "f6js4lo",
+                "as": "res"
+            },
+            {
+                "from": "fphsciu",
+                "to": "m9yeyqc",
+                "as": "url"
+            },
+            {
+                "from": "f6js4lo",
+                "to": "2gcjbds",
+                "as": "target"
+            },
+            {
+                "from": "2gcjbds",
+                "to": "0iscsvl",
+                "as": "fetch"
+            },
+            {
+                "from": "0iscsvl",
+                "to": "el0app0",
+                "as": "runcount"
+            },
+            {
+                "from": "gcg2ctk",
+                "to": "0iscsvl",
+                "as": "input"
+            },
+            {
+                "from": "sgnxbrn",
+                "to": "gcg2ctk",
+                "as": "runcount"
+            },
+            {
+                "from": "b77sv21",
+                "to": "0iscsvl",
+                "as": "state"
+            },
+            {
+                "from": "get",
+                "to": "object"
+            },
+            {
+                "from": "set",
+                "to": "object"
+            },
+            {
+                "from": "delete",
+                "to": "object"
+            },
+            {
+                "from": "switch",
+                "to": "flow"
+            },
+            {
+                "from": "if",
+                "to": "flow"
+            },
+            {
+                "from": "h",
+                "to": "hyperapp"
+            },
+            {
+                "from": "h_text",
+                "to": "hyperapp"
+            },
+            {
+                "from": "new_array",
+                "to": "array"
+            },
+            {
+                "from": "filter",
+                "to": "array"
+            },
+            {
+                "from": "log",
+                "to": "utility"
+            },
+            {
+                "from": "execute_graph",
+                "to": "utility"
+            },
+            {
+                "from": "arg",
+                "to": "utility"
+            },
+            {
+                "from": "partial",
+                "to": "utility"
+            },
+            {
+                "from": "apply",
+                "to": "utility"
+            },
+            {
+                "from": "fetch",
+                "to": "utility"
+            }
+        ]
+    }
 ]

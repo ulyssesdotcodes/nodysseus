@@ -6,7 +6,7 @@ let cache = null;
 const rucommonjs = commonjs();
 
 export default {
-  input: "./nodysseus.js",
+  input: "./index.js",
   cache,
   output: {
     file: "./nodysseus.bundle.js",

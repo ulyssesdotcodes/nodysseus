@@ -20,5 +20,26 @@
     "panzoom": "^9.4.2",
     "rollup": "^2.52.2",
     "sourcemap-codec": "^1.4.8"
-  }
+  },
+  "name": "nodysseus",
+  "description": "A generic node-based editor. Built with hyperapp.",
+  "version": "1.0.1",
+  "main": "nodysseus.js",
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@gitlab.com/ulysses.codes/nodysseus.git"
+  },
+  "keywords": [
+    "node-based-editor",
+    "vpl",
+    "hyperapp"
+  ],
+  "author": "Ulysses Popple",
+  "license": "BSD-3-Clause",
+  "types": "./nodysseus.d.ts",
+  "bugs": {
+    "url": "https://gitlab.com/ulysses.codes/nodysseus/issues"
+  },
+  "homepage": "https://gitlab.com/ulysses.codes/nodysseus#readme"
 }

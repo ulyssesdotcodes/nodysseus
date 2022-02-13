@@ -288,7 +288,7 @@
                         "init",
                         "view"
                     ],
-                    "script": "return {dispatch: _lib.ha.app({dispatch: _lib.no.middleware, init: () => [init, static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}],  !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: window.innerWidth, y: window.innerHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.pz.panzoom, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: true}]}]]})}"
+                    "script": "return {dispatch: _lib.ha.app({dispatch: _lib.no.middleware, init: () => [init, static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}],  !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.pz.panzoom, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: true}]}]]})}"
                 }
             ],
             "edges": [
@@ -1429,6 +1429,7 @@
                 },
                 {"id": "show_args_effector", "ref": "show_args_effect"},
                 {"id": "show_args_effect", "ref": "new_array"},
+                {"id": "dispatch_custom_event_effect", "ref": "dispatch_custom_event_effect"},
                 {
                     "id": "in_effects",
                     "ref": "arg",
@@ -1535,7 +1536,7 @@
                         "payload",
                         "update_sim_effect"
                     ],
-                    "script": "return {state, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && [(d, payload) => (typeof payload?.then === 'function' ? payload.then(p => p.run) : payload.run).then(res => res).then(res => d(s => (s.error_nodes.clear(), {...s, result: res.result?.state ?? s.result, error: res.error, error_nodes: res.error_nodes ?? s.error_nodes, result_display: res.result?.display, error: res.error}))), result], ...(effects ?? [])]}"
+                    "script": "return {state, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && [(d, payload) => (typeof payload?.then === 'function' ? payload.then(p => p.run) : payload.run).then(res => res).then(res => d(s => (s.error_nodes.clear(), {...s, result: res.result?.state ?? s.result, error: res.error, error_nodes: res.error_nodes ?? s.error_nodes, result_display: res.result?.display, error: res.error}))), result], !readonly && [dispatch_custom_event_effect, {html_id, event: 'updategraph', detail: {graph: state.display_graph}}], ...(effects.filter(e => e[0]) ?? [])]}"
                 }
             ],
             "edges": [
@@ -1665,9 +1666,24 @@
                     "as": "items"
                 },
                 {
+                    "from": "html_id",
+                    "to": "out",
+                    "as": "html_id" 
+                },
+                {
+                    "from": "display_graph",
+                    "to": "out",
+                    "as": "display_graph" 
+                },
+                {
                     "from": "effects",
                     "to": "out",
                     "as": "effects"
+                },
+                {
+                    "from": "dispatch_custom_event_effect",
+                    "to": "out",
+                    "as": "dispatch_custom_event_effect"
                 },
                 {
                     "from": "update_sim_effect",
@@ -5347,7 +5363,7 @@
         },
         {
             "id": "dispatch_custom_event_effect",
-            "script": "return (_, payload) => document.getElementById(`${payload.html_id}`).dispatchEvent(new CustomEvent(payload.name, {detail: payload.detail}))"
+            "script": "return (_, payload) => document.getElementById(`${payload.html_id}`).dispatchEvent(new CustomEvent(payload.event, {detail: payload.detail}))"
         },
         {
             "id": "search_effect",
@@ -5640,7 +5656,7 @@
                         "selected",
                         "state"
                     ],
-                    "script": "console.log(state.show_all); return {...state, selected: [node_id]}"
+                    "script": "return {...state, selected: [node_id]}"
                 },
                 {
                     "id": "display_graph_inputs",
@@ -6240,7 +6256,23 @@
                         "popover_graph",
                         "popover_graph_h"
                     ],
-                    "script": "return [node_editor.el, !readonly && editing !== false && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, !!result_display && result_display.el, args_display && args_display.el, !!error && error_display.el, search_input.el].filter(e => e)"
+                    "script": "return [styles.el, node_editor.el, !readonly && editing !== false && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, !!result_display && result_display.el, args_display && args_display.el, !!error && error_display.el, search_input.el].filter(e => e)"
+                },
+                {
+                    "id": "styles",
+                    "nodes": [
+                        {"id": "in"},
+                        {"id": "style_content", "value": " #node-editor { width: 100vw; height: 100vh; background-color: #112; color: white; font-family: consolas; } svg { user-select: none; } .search-input { display: block; position: absolute; right: 100px; top: 100px; } .search-input-icon { cursor: pointer; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; display:flex; flex-direction: row; justify-content: center; } .edit-value .centering { position: absolute; /* display: flex; flex-direction: column; justify-content: center; align-items: baseline; gap: 2.5vw; */ width: 32vw; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { align-self: stretch; font-size: calc(1em + 2vh) } .edit-value input { position: absolute; left: -1000px; } .edit-value.ref textarea { position: absolute; left: -1000px; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .edit-value textarea { height: 128px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.selected .shape { stroke-width: 0; fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .args { position: absolute; top: 0; left: 0; z-index: 10; border: 2px; background: black; } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"},
+                        {"id": "style_h_text", "ref": "h_text"},
+                        {"id": "style_dom_type", "value": "style"},
+                        {"id": "out", "ref": "h"}
+                    ],
+                    "edges": [
+                        {"from": "in", "to": "out", "as": "args", "type": "ref"},
+                        {"from": "style_h_text", "to": "out", "as": "children"},
+                        {"from": "style_content", "to": "style_h_text", "as": "text"},
+                        {"from": "style_dom_type", "to": "out", "as": "dom_type"}
+                    ]
                 },
                 {
                     "id": "edit_text",
@@ -6609,7 +6641,7 @@
                         },
                         {
                             "id": "props",
-                            "script": "return {id: `${html_id}-popover`, key:  `${html_id}-popover`, onselectnode: handle_popover_event, ongraphclick: (s, p) => [s, [clear_popover]]}"
+                            "script": "return {id: `${html_id}-popover`, class: {popover: true}, key:  `${html_id}-popover`, onselectnode: handle_popover_event, ongraphclick: (s, p) => [s, [clear_popover]]}"
                         },
                         {
                             "id": "dom_type",
@@ -8755,6 +8787,11 @@
                     "as": "result_display"
                 },
                 {
+                    "from": "styles",
+                    "to": "wrapper_children",
+                    "as": "styles"
+                },
+                {
                     "from": "popover_graph_h",
                     "to": "popover_graph_h_wrapper",
                     "as": "el"
@@ -9094,7 +9131,8 @@
         },
         {
             "from": "initialize_hyperapp_app",
-            "to": "out" 
+            "to": "out",
+            "type": "resolve"
         },
         {"from": "get", "to": "object"},
         {"from": "set", "to": "object"},
