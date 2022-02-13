@@ -671,24 +671,35 @@ const updateSimulationNodes = (dispatch, data) => {
         const node_positions = new Map();
         [...nodes.values()].forEach(n => {
             const child = children.get(n.id)?.length ? children.get(n.id)[0] : 0;
+            const parents_count = parents.get(n.id)?.length ?? 0;
             const siblings = children.get(n.id)?.length ? parents.get(children.get(n.id)[0]) : [n.id];
             const sibling_count = Math.max(siblings.length, 4);
             const increment = Math.PI * 2 / (Math.max(1, sibling_count - 1) * (Math.pow(Math.PI, 2 * (levels.get(n.id) - 1)) + 1));
             const offset = child ? node_positions.get(child)[2] : 0;
             const theta = ((siblings.findIndex(l => l == n.id) - (siblings.length === 1 ? 0 : 0.5)) * increment) + offset;
+            console.log(parents_count);
+            const dist = !child ? 0 : (node_el_width * 0.5
+                + node_positions.get(child)[3]
+                + node_el_width * 0.25 * parents_count
+            );
+                //+ (child ? node_positions.get(child)[3] : 0);
 
             node_positions.set(n.id,
                 [
                     n,
                     n.id + (children.get(n.id)?.length ? '_' + children.get(n.id)[0] : ''),
-                    theta
+                    theta,
+                    dist
                 ])
         });
 
         for(let np of node_positions.values()) {
             const theta = np[2];
-            np[2] = levels.get(np[0].id) * -node_el_width * Math.cos(theta);
-            np[3] = levels.get(np[0].id) * -node_el_width * Math.sin(theta);
+            const dist = np[3];
+            console.log(np[1].id);
+            console.log(dist);
+            np[2] = -dist * Math.cos(theta);
+            np[3] = -dist * Math.sin(theta);
         }
 
         const node_data = {
