@@ -677,7 +677,7 @@ const updateSimulationNodes = (dispatch, data) => {
             const increment = Math.PI * 2 / (Math.max(1, sibling_count - 1) * (Math.pow(Math.PI, 2 * (levels.get(n.id) - 1)) + 1));
             const offset = child ? node_positions.get(child)[2] : 0;
             const theta = ((siblings.findIndex(l => l == n.id) - (siblings.length === 1 ? 0 : 0.5)) * increment) + offset;
-            const dist = !child ? 0 : (node_el_width * 0.5
+            const dist = !child ? 0 : (node_el_width * 0.75
                 + node_positions.get(child)[3]
                 + node_el_width * 0.25 * parents_count
             );
