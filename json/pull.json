@@ -1895,6 +1895,54 @@
             ]
         },
         {
+            "id": "icon",
+            "name": "icon",
+            "out": "c2sko9c",
+            "nodes": [
+                {
+                    "id": "c2sko9c",
+                    "ref": "h",
+                    "name": "ionicon"
+                },
+                {
+                    "id": "2lr3ihi",
+                    "value": "ion-icon"
+                },
+                {"id": "empty_obj", "value": {}},
+                {"id": "props", "ref": "arg", "value": "props"},
+                {"id": "defined_props", "ref": "if"},
+                {"id": "name_path", "value": "name"},
+                {"id": "a0jb5es", "ref": "set"},
+                {
+                    "id": "s5x2r1f",
+                    "ref": "arg",
+                    "value": "icon"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "2lr3ihi",
+                    "to": "c2sko9c",
+                    "as": "dom_type"
+                },
+                {"from": "props", "to": "defined_props", "as": "true"},
+                {"from": "props", "to": "defined_props", "as": "pred"},
+                {"from": "empty_obj", "to": "defined_props", "as": "false"},
+                {"from": "defined_props", "to": "a0jb5es", "as": "target"},
+                {"from": "name_path", "to": "a0jb5es", "as": "path"},
+                {
+                    "from": "a0jb5es",
+                    "to": "c2sko9c",
+                    "as": "props"
+                },
+                {
+                    "from": "s5x2r1f",
+                    "to": "a0jb5es",
+                    "as": "value"
+                }
+            ]
+        },
+        {
             "id": "run_h",
             "in": "in",
             "out": "out",
@@ -6343,7 +6391,7 @@
                         "popover_graph",
                         "popover_graph_h"
                     ],
-                    "script": "return [styles.el, node_editor.el, !readonly && editing !== false && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, !!result_display && result_display.el, !show_all && args_display && args_display.el, !!error && error_display.el, search_input.el].filter(e => e)"
+                    "script": "return [styles.el, node_editor.el, !readonly && editing !== false && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, !!result_display && result_display.el, !editing && !show_all && args_display && args_display.el, !!error && error_display.el, search_input.el].filter(e => e)"
                 },
                 {
                     "id": "styles",
@@ -6405,7 +6453,7 @@
                         },
                         {"id": "edit_position", "ref": "arg", "value": "edit_position"},
                         {"id": "svg_offset", "ref": "arg", "value": "svg_offset"},
-                        {"id": "edit_html_position", "script": "return {x: position.x * svg_offset.scale + svg_offset?.x, y: position.y * svg_offset.scale + svg_offset.y}"},
+                        {"id": "edit_html_position", "script": "return {x: (position?.x ?? 0) * svg_offset.scale + (svg_offset?.x ?? 0), y: (position?.y ?? 0) * svg_offset.scale + svg_offset.y}"},
                         {
                             "id": "edit_text_base_props",
                             "script": "return {id: `${html_id}-edit-value`, class: {'edit-value': true, [editing]: true}, onclick: (s, payload) => (payload.preventDefault(), payload.stopPropagation(), [s, [confirm_edit_text, payload]])}"
@@ -7031,14 +7079,13 @@
                             ],
                             "script": "return {id: `${html_id}-search-input`, key: `${html_id}-search-input`, class: 'search-input', type: 'text', onkeydown: (s, payload) => { if(payload.key === 'Enter'){ const direction = payload.shiftKey ? -1 : 1; const idx = (s.search_results.length + s.search_index + direction) % s.search_results.length; return {...s, selected: s.search_results.slice(idx, idx + 1), search_index: idx} } else { return s;} }, oninput: (s, payload) => {const search_results = new _lib.Fuse(nodes.map(n => Object.assign({}, n, display_graph.nodes.find(d => d.id === n.node_id))), {keys: ['name', 'node_id', 'ref', 'value']}).search(payload.target.value).map(r => r.item.node_id); return {...s, search: payload.target.value, selected: search_results.length > 0 ? search_results.slice(0, 1) : s.selected, search_results, search_index: 0}}}"
                         },
-                        { "id": "search_field", "ref": "h"},
+                        {"id": "search_field", "ref": "h"},
                         {"id": "search_effect", "ref": "search_effect"},
                         {"id": "focus_effect", "ref": "focus_effect"},
                         {"id": "search_icon_props", "script": "return {id: `${html_id}-search-input`, key: `${html_id}-search-input-icon`, class: 'search-input search-input-icon', onclick: s => [s, [search, {search: ''}], [focus, {selector: `#${html_id}-search-input`}]]}"},
                         {"id": "search_icon_dom_type", "value": "div"},
-                        {"id": "search_icon_text", "value": "search"},
-                        {"id": "search_icon_h_text", "ref": "h_text"},
-                        {"id": "search_icon", "ref": "h"},
+                        {"id": "search_icon_name", "value": "search"},
+                        {"id": "search_icon", "ref": "icon"},
                         {
                             "id": "out",
                             "ref": "if"
@@ -7091,8 +7138,7 @@
                         },
                         {"from": "search_icon_props", "to": "search_icon", "as": "props"},
                         {"from": "search_icon_dom_type", "to": "search_icon", "as": "dom_type"},
-                        {"from": "search_icon_text", "to": "search_icon_h_text", "as": "text"},
-                        {"from": "search_icon_h_text", "to": "search_icon", "as": "children"},
+                        {"from": "search_icon_name", "to": "search_icon", "as": "icon"},
                         {"from": "search_icon", "to": "out", "as": "false"},
                         {
                             "from": "search_field",
@@ -7220,7 +7266,7 @@
                         {"id": "onclick_graph", "ref": "onclick_graph_action"},
                         {
                             "id": "node_editor_props",
-                            "script": "return {id: `${html_id}-editor`, width: dimensions.x, height: dimensions.y, _viewBox: `${Math.floor(center.x - Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))) * 0.5 - node_el_width * 0.5)}  ${Math.floor(center.y - Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y))) * 0.5 - node_el_width * 0.5)} ${Math.floor(Math.max(dimensions.x * 0.5, Math.min(dimensions.x, nodes_box.max.x - nodes_box.min.x)) + node_el_width)} ${Math.floor(Math.max(dimensions.y * 0.5, Math.min(dimensions.y, nodes_box.max.y - nodes_box.min.y)) + node_el_width)}`}"
+                            "script": "return {id: `${html_id}-editor`, width: dimensions.x, height: dimensions.y, _viewBox: `${Math.floor(center.x - Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))) * 0.5 - node_el_width * 0.5)}  ${Math.floor(center.y - Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y))) * 0.5 - node_el_width * 0.5)} ${Math.floor(Math.max(dimensions.x * 0.5, Math.min(dimensions.x, nodes_box.max.x - nodes_box.min.x)) + node_el_width)} ${Math.floor(Math.max(dimensions.y * 0.5, Math.min(dimensions.y, nodes_box.max.y - nodes_box.min.y)) + node_el_width)}`, onclick: readonly && onclick_graph}"
                         },
                         {
                             "id": "node_editor_dom_type",
@@ -8501,6 +8547,11 @@
                             "from": "html_id",
                             "to": "node_editor_props",
                             "as": "html_id"
+                        },
+                        {
+                            "from": "readonly",
+                            "to": "node_editor_props",
+                            "as": "readonly"
                         },
                         {
                             "from": "html_id",

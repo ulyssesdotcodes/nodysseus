@@ -1413,6 +1413,7 @@ const is_action_payload = Array.isArray(ha_action)
                 return e
             });
 
+
             return result.hasOwnProperty("state")
                 ? effects.length > 0 ? [result.state, ...effects] : result.state
                 : [result.action, result.payload];
@@ -1545,7 +1546,7 @@ const lib = {
             let init = requestAnimationFrame(() => {
                 instance = panzoom(document.getElementById(sub_payload.id), {
                     // onTouch: e => false,
-                    filterKey: e => true,
+                    // filterKey: e => true,
                     smoothScroll: false
                 });
                 instance.on('transform', e => performance.now() - lastpanzoom > 100 ? dispatch(sub_payload.action, {event: 'transform', transform: e.getTransform()}) : undefined);
