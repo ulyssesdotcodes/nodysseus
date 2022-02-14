@@ -240,12 +240,12 @@ const executeGraph = ({ cache, graph, cache_id, node_cache }) => {
             throw new Error(`Undefined node_id ${node_id}`)
         }
 
-        // if(!node.inputs) {
-        Object.assign(node, { inputs: in_edge_map.get(node_id) });
-        // }
+        if(!node.inputs || node.inputs.length !== in_edge_map.get(node_id).length) {
+            Object.assign(node, { inputs: in_edge_map.get(node_id) });
+        }
 
         if (node.ref === "arg" && (!node.inputs || node.inputs.length === 0)) {
-            node.inputs.push({ from: "_graph_input_value", to: node.id });
+            node.inputs.push({ from: "_graph_input_value", to: node.id, as: 'target' });
         }
 
         if (node.value !== undefined && !node.script && !node.ref) {
@@ -383,7 +383,7 @@ const executeGraph = ({ cache, graph, cache_id, node_cache }) => {
                     } else if (!has_inputs
                         && new_node.ref === "arg"
                         && node_ref.nodes.find(n => n.id ===  `${node.id}/${node_ref.in ?? 'in'}`) !== undefined) {
-                        const new_edge = { from: `${node.id}/${node_ref.in ?? 'in'}`, to: new_node.id };
+                        const new_edge = { from: `${node.id}/${node_ref.in ?? 'in'}`, to: new_node.id, as: "target"};
                         in_edge_map.set(new_node.id, [new_edge])
                         graph.edges.push(new_edge);
                     } else if (!has_inputs) {
@@ -671,13 +671,12 @@ const updateSimulationNodes = (dispatch, data) => {
         const node_positions = new Map();
         [...nodes.values()].forEach(n => {
             const child = children.get(n.id)?.length ? children.get(n.id)[0] : 0;
-            const parents_count = parents.get(n.id)?.length ?? 0;
+            const parents_count = Math.min(8, parents.get(n.id)?.length) ?? 0;
             const siblings = children.get(n.id)?.length ? parents.get(children.get(n.id)[0]) : [n.id];
             const sibling_count = Math.max(siblings.length, 4);
             const increment = Math.PI * 2 / (Math.max(1, sibling_count - 1) * (Math.pow(Math.PI, 2 * (levels.get(n.id) - 1)) + 1));
             const offset = child ? node_positions.get(child)[2] : 0;
             const theta = ((siblings.findIndex(l => l == n.id) - (siblings.length === 1 ? 0 : 0.5)) * increment) + offset;
-            console.log(parents_count);
             const dist = !child ? 0 : (node_el_width * 0.5
                 + node_positions.get(child)[3]
                 + node_el_width * 0.25 * parents_count
@@ -696,8 +695,6 @@ const updateSimulationNodes = (dispatch, data) => {
         for(let np of node_positions.values()) {
             const theta = np[2];
             const dist = np[3];
-            console.log(np[1].id);
-            console.log(dist);
             np[2] = -dist * Math.cos(theta);
             np[3] = -dist * Math.sin(theta);
         }
@@ -1491,13 +1488,13 @@ const lib = {
     utility: {
         eq: ({a, b}) => a === b,
         arg: {
-            args: ['_node', '_node_inputs'],
+            args: ['_node', 'target'],
             resolve: false,
-            fn: (node, node_inputs) => typeof node.value === 'string' 
+            fn: (node, target) => typeof node.value === 'string' 
                 ? node.value === '_args' 
-                    ? node_inputs
-                    : get(node_inputs, node.value) 
-                : node_inputs[node.value],
+                    ? target
+                    : get(target, node.value) 
+                : target[node.value],
         },
         new_array: {
             args: ['_node_inputs'],
@@ -1525,7 +1522,7 @@ const lib = {
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
     Fuse,
     pz: {
-        panzoom: (dispatch, payload) => {
+        panzoom: (dispatch, sub_payload) => {
             let instance 
             let lastpanzoom = 0;
             const panzoom_selected_effect = (dispatch, payload) => {
@@ -1542,14 +1539,16 @@ const lib = {
                 const y = payload.dimensions.y * 0.5 - viewbox.center.y
                 instance.moveTo(x, y);
                 instance.zoomTo(x, y, 1 / instance.getTransform().scale)
+                dispatch(sub_payload.action, {event: 'effect_transform', transform: instance.getTransform()})
             }
 
             let init = requestAnimationFrame(() => {
-                instance = panzoom(document.getElementById(payload.id), {
+                instance = panzoom(document.getElementById(sub_payload.id), {
                     // onTouch: e => false,
-                    filterKey: e => true
+                    filterKey: e => true,
+                    smoothScroll: false
                 });
-                instance.on('transform', e => performance.now() - lastpanzoom > 100 ? dispatch(payload.action, {event: 'transform'}) : undefined);
+                instance.on('transform', e => performance.now() - lastpanzoom > 100 ? dispatch(sub_payload.action, {event: 'transform', transform: e.getTransform()}) : undefined);
                 instance.moveTo(window.innerWidth * 0, window.innerHeight * 0.5);
             });
             requestAnimationFrame(() => dispatch(s => [{...s, panzoom_selected_effect}]));
@@ -1595,3 +1594,15 @@ const nodysseus = function(html_id, display_graph) {
 }
 
 export { runGraph, nodysseus };
+
+
+// const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); 
+// return {
+//     id: `${html_id}-textarea`, 
+//     class: {textarea: true, editing}, 
+//     onclick: (s, payload) => (payload.stopPropagation(), s), 
+//     value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), 
+//     oninput: (s, payload) => ({...s, edit_value: payload.target.value}), 
+//     onfocus: (s, payload) => [s, [() => payload.target.setSelectionRange(0, payload.target.value.length)]], 
+//     onkeydown: editing !== 'script' && (s, payload) => (payload.preventDefault(), [s, [confirm_edit_text, payload]])
+// }
