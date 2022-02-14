@@ -1356,6 +1356,11 @@
             "script": "const action = typeof fn === 'string' ? {fn, graph: _graph} : (typeof fn === 'function' || (typeof fn === 'object' && fn.hasOwnProperty('fn'))) ? fn : undefined; return (dispatch, payload) => dispatch(action, payload)"
         },
         {
+            "id": "hyperapp_action_effect_debounced",
+            "description": "Creates an effect that dispatches the passed-in fn",
+            "script": "const action = typeof fn === 'string' ? {fn, graph: _graph} : (typeof fn === 'function' || (typeof fn === 'object' && fn.hasOwnProperty('fn'))) ? fn : undefined; return (dispatch, payload) => requestAnimationFrame(() => dispatch(action, payload))"
+        },
+        {
             "id": "update_graph_display",
             "in": "in",
             "out": "out",
@@ -1429,6 +1434,7 @@
                 },
                 {"id": "show_args_effector", "ref": "show_args_effect"},
                 {"id": "show_args_effect", "ref": "new_array"},
+                {"id": "should_show_args", "ref": "switch"},
                 {"id": "dispatch_custom_event_effect", "ref": "dispatch_custom_event_effect"},
                 {
                     "id": "in_effects",
@@ -1645,6 +1651,7 @@
                     "to": "out",
                     "as": "update"
                 },
+                {"from": "readonly", "to": "should_show_args", "as": "input"},
                 {
                     "from": "show_args_effector",
                     "to": "show_args_effect",
@@ -1652,6 +1659,11 @@
                 },
                 {
                     "from": "show_args_effect",
+                    "to": "should_show_args",
+                    "as": "false"
+                },
+                {
+                    "from": "should_show_args",
                     "to": "new_effects",
                     "as": "a0"
                 },
@@ -1695,68 +1707,6 @@
                     "to": "out",
                     "as": "state"
                 }
-            ]
-        },
-        {
-            "id": "h",
-            "args": ["children", "props", "dom_type"],
-            "nodes": [
-                {
-                    "id": "in"
-                },
-                {"id": "children", "ref": "arg", "value": "children"},
-                {"id": "props", "ref": "arg", "value": "props"},
-                {
-                    "id": "fill_children",
-                    "args": [
-                        "children"
-                    ],
-                    "script": "return children === undefined ? [] : children.length !== undefined ? children.filter(c => !!c).map(c => c.el ?? c) : [children.el ?? children]"
-                },
-                {
-                    "id": "fill_props",
-                    "args": [
-                        "input"
-                    ],
-                    "script": "return props ?? {}"
-                },
-                {
-                    "id": "dom_type",
-                    "ref": "arg",
-                    "value": "dom_type"
-                },
-                {
-                    "id": "out",
-                    "script": "(children ?? []).forEach(c => {if(!((c.hasOwnProperty('dom_type') && c.hasOwnProperty('props')) || c.hasOwnProperty('text'))){throw new Error('invalid child element');}}); return {el: {dom_type, props, children}}"
-                },
-                {
-                    "id": "_out"
-                }
-            ],
-            "edges": [
-                {
-                    "from": "children",
-                    "to": "fill_children",
-                    "as": "children"
-                },
-                {
-                    "from": "props",
-                    "to": "fill_props",
-                    "as": "props"
-                },
-                {
-                    "from": "fill_children",
-                    "to": "out",
-                    "as": "children",
-                    "order": 1
-                },
-                {
-                    "from": "fill_props",
-                    "to": "out",
-                    "as": "props"
-                },
-                {"from": "dom_type", "to": "out", "as": "dom_type"},
-                {"from": "in", "to": "out", "as": "args", "type": "ref"}
             ]
         },
         {
@@ -1848,6 +1798,103 @@
             ]
         },
         {
+            "id": "h",
+            "args": ["children", "props", "dom_type"],
+            "nodes": [
+                {
+                    "id": "in"
+                },
+                {"id": "children", "ref": "arg", "value": "children"},
+                {"id": "props", "ref": "arg", "value": "props"},
+                {
+                    "id": "fill_children",
+                    "args": [
+                        "children"
+                    ],
+                    "script": "return children === undefined ? [] : children.length !== undefined ? children.filter(c => !!c).map(c => c.el ?? c) : [children.el ?? children]"
+                },
+                {
+                    "id": "fill_props",
+                    "args": [
+                        "input"
+                    ],
+                    "script": "return props ?? {}"
+                },
+                {
+                    "id": "dom_type",
+                    "ref": "arg",
+                    "value": "dom_type"
+                },
+                {
+                    "id": "out",
+                    "script": "(children ?? []).forEach(c => {if(!((c.hasOwnProperty('dom_type') && c.hasOwnProperty('props')) || c.hasOwnProperty('text'))){throw new Error('invalid child element');}}); return {el: {dom_type, props, children}}"
+                },
+                {
+                    "id": "_out"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "children",
+                    "to": "fill_children",
+                    "as": "children"
+                },
+                {
+                    "from": "props",
+                    "to": "fill_props",
+                    "as": "props"
+                },
+                {
+                    "from": "fill_children",
+                    "to": "out",
+                    "as": "children",
+                    "order": 1
+                },
+                {
+                    "from": "fill_props",
+                    "to": "out",
+                    "as": "props"
+                },
+                {"from": "dom_type", "to": "out", "as": "dom_type"},
+                {"from": "in", "to": "out", "as": "args", "type": "ref"}
+            ]
+        },
+        {
+            "id": "h_text",
+            "nodes": [
+                {
+                    "id": "in"
+                },
+                {
+                    "id": "text",
+                    "ref": "arg",
+                    "value": "text"
+                },
+                {"id": "dom_type", "value": "text_value"},
+                {"id": "el"},
+                {
+                    "id": "out",
+                    "args": [
+                        "text"
+                    ]
+                }
+            ],
+            "edges": [
+                {
+                    "from": "in",
+                    "to": "out",
+                    "as": "input"
+                },
+                {"from": "dom_type", "to": "el", "as": "dom_type"},
+                {"from": "text", "to": "el", "as": "text"},
+                {
+                    "from": "el",
+                    "to": "out",
+                    "as": "el"
+                }
+            ]
+        },
+        {
             "id": "run_h",
             "in": "in",
             "out": "out",
@@ -1931,41 +1978,6 @@
                 {"from": "out_h", "to": "out_el", "as": "h"},
                 {"from": "out_input", "to": "out_el", "as": "input"},
                 {"from": "out_el", "to": "out", "as": "el", "type": "resolve"}
-            ]
-        },
-        {
-            "id": "h_text",
-            "nodes": [
-                {
-                    "id": "in"
-                },
-                {
-                    "id": "text",
-                    "ref": "arg",
-                    "value": "text"
-                },
-                {"id": "dom_type", "value": "text_value"},
-                {"id": "el"},
-                {
-                    "id": "out",
-                    "args": [
-                        "text"
-                    ]
-                }
-            ],
-            "edges": [
-                {
-                    "from": "in",
-                    "to": "out",
-                    "as": "input"
-                },
-                {"from": "dom_type", "to": "el", "as": "dom_type"},
-                {"from": "text", "to": "el", "as": "text"},
-                {
-                    "from": "el",
-                    "to": "out",
-                    "as": "el"
-                }
             ]
         },
         {
@@ -3585,6 +3597,7 @@
                 {"id": "nodes", "ref": "arg", "value": "state.nodes"},
                 {"id": "selected", "ref": "arg", "value": "state.selected.0"},
                 {"id": "state", "ref": "arg", "value": "state"},
+                {"id": "svg_offset", "ref": "arg", "value": "state.svg_offset"},
                 {"id": "nodes_path", "value": "nodes"},
                 {"id": "length_path", "value": "length"},
                 {"id": "ref_path", "value": "ref"},
@@ -3601,18 +3614,18 @@
                 {"id": "node_nodes", "ref": "get"},
                 {"id": "node_arg_nodes", "script": "return nodes?.filter(n => n.ref ==='arg')"},
                 {"id": "should_show", "ref": "get"},
-                {"id": "nested_node_args", "script": "return 'args: ' + nodes.map(n => n.value + (n.type ? `: ${n.type}` : '')).join(', ')"},
-                {"id": "extern_node_args", "script": "return 'args: ' + _lib.just.get.fn(_lib, node.extern).args.join(', ')"},
-                {"id": "node_args_input", "script": "return node.extern ? 'extern' : node.nodes ?  'nested' : undefined"},
+                {"id": "nested_node_args", "script": "return 'inputs: ' + nodes.map(n => n.value + (n.type ? `: ${n.type}` : '')).join(', ')"},
+                {"id": "extern_node_args", "script": "return 'inputs: ' + _lib.just.get.fn(_lib, node.extern).args.join(', ')"},
+                {"id": "node_args_input", "script": "return node.id === 'arg' ? undefined : node.extern ? 'extern' : node.nodes ?  'nested' : undefined"},
                 {"id": "node_args", "ref": "switch"},
                 {"id": "args_h_text", "ref": "h_text"},
                 {"id": "args_h_dom_type", "value": "div"},
-                {"id": "args_h_props", "script": "return {class: {args: true}, style: {left: `${x}px`, top: `${y}px`}}"},
+                {"id": "args_h_props", "script": "return {class: {args: true}, style: {left: `${x * svg_offset.scale + svg_offset?.x - 64}px`, top: `${y * svg_offset.scale + svg_offset.y + 32}px`}}"},
                 {"id": "args_h", "ref": "h"},
                 {"id": "args_out", "ref": "if"},
                 {"id": "set_args_display", "ref": "set"},
                 {"id": "result"},
-                {"id": "out", "ref": "hyperapp_action_effect"}
+                {"id": "out", "ref": "hyperapp_action_effect_debounced"}
             ],
             "edges": [
                 {"from": "in", "to": "out", "as": "args", "type": "ref"},
@@ -3645,9 +3658,8 @@
                 {"from": "y_path", "to": "y", "as": "path"},
                 {"from": "x", "to": "args_h_props", "as": "x"},
                 {"from": "y", "to": "args_h_props", "as": "y"},
+                {"from": "svg_offset", "to": "args_h_props", "as": "svg_offset"},
                 {"from": "args_h_props", "to": "args_h", "as": "props"},
-                {"from": "node_arg_nodes", "to": "should_show", "as": "target"},
-                {"from": "length_path", "to": "should_show", "as": "path"},
                 {"from": "node_args_input", "to": "args_out", "as": "pred"},
                 {"from": "args_h", "to": "args_out", "as": "true"},
                 {"from": "state", "to": "set_args_display", "as": "target"},
@@ -3720,7 +3732,7 @@
                 {"from": "noop", "to": "out_result", "as": "false"},
                 {"from": "result", "to": "out_result", "as": "true"},
                 {"from": "property", "to": "out_result", "as": "pred"},
-                {"from": "out_result", "to": "out", "as": "fn", "type": "ref"}
+                {"from": "result", "to": "out", "as": "fn", "type": "ref"}
             ]
         },
         {
@@ -6260,6 +6272,11 @@
                     "value": "show_result"
                 },
                 {
+                    "id": "show_all",
+                    "ref": "arg",
+                    "value": "show_all"
+                },
+                {
                     "id": "html_id",
                     "ref": "arg",
                     "value": "html_id"
@@ -6326,13 +6343,13 @@
                         "popover_graph",
                         "popover_graph_h"
                     ],
-                    "script": "return [styles.el, node_editor.el, !readonly && editing !== false && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, !!result_display && result_display.el, args_display && args_display.el, !!error && error_display.el, search_input.el].filter(e => e)"
+                    "script": "return [styles.el, node_editor.el, !readonly && editing !== false && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, !!result_display && result_display.el, !show_all && args_display && args_display.el, !!error && error_display.el, search_input.el].filter(e => e)"
                 },
                 {
                     "id": "styles",
                     "nodes": [
                         {"id": "in"},
-                        {"id": "style_content", "value": " #node-editor { position: relative; width: 100%; height: 100vh; background-color: #112; color: white; font-family: consolas; } svg { user-select: none; } .search-input { display: block; position: absolute; right: 100px; top: 100px; } .search-input-icon { cursor: pointer; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .centering { position: absolute; width: 32vw; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { align-self: stretch; font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.selected .shape { stroke-width: 0; fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .args { position: absolute; top: 0; left: 0; z-index: 10; border: 2px; background: black; } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"},
+                        {"id": "style_content", "value": " #node-editor { position: relative; width: 100%; height: 100vh; background-color: #112; color: white; font-family: consolas; } svg { user-select: none; } .search-input { display: block; position: absolute; right: 100px; top: 100px; } .search-input-icon { cursor: pointer; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .centering { position: absolute; width: 32vw; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { align-self: stretch; font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.selected .shape { stroke-width: 0; fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .args { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"},
                         {"id": "style_h_text", "ref": "h_text"},
                         {"id": "style_dom_type", "value": "style"},
                         {"id": "out", "ref": "h"}
@@ -6436,7 +6453,7 @@
                                 "editing",
                                 "edit_value"
                             ],
-                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); return Object.assign({id: `${html_id}-edit-text`, class: {input: true, [editing]: true}, value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), oninput: (s, payload) => ({...s, edit_value: payload.target.value}), onfocus: (s, payload) => [s, [() => payload.target.setSelectionRange(0, payload.target.value.length)]], onkeydown: (s, payload) => {if(payload.key === 'Enter') {payload.stopPropagation()} return s}, onchange: (s, payload) => ([s, [confirm_edit_text, payload]])}, editing === 'ref' ? {list: 'ref-options', type: 'text'} : {})"
+                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); return Object.assign({id: `${html_id}-edit-text`, class: {input: true, [editing]: true}, value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), onclick: (s, payload) => (payload.stopPropagation(), s), onkeydown: (s, payload) => [s, (payload.key === 'Enter' ? (payload.stopPropagation(), [confirm_edit_text, payload]): false)], oninput: (s, payload) => ({...s, edit_value: payload.target.value}), onfocus: (s, payload) => [s, [() => payload.target.setSelectionRange(0, payload.target.value.length)]], onchange: (s, payload) => ([s, s.editing && [confirm_edit_text, payload]])}, editing === 'ref' ? {list: 'ref-options', type: 'text'} : {})"
                         },
                         {
                             "id": "edit_text_label",
@@ -8877,6 +8894,11 @@
                     "from": "result_display",
                     "to": "wrapper_children",
                     "as": "result_display"
+                },
+                {
+                    "from": "show_all",
+                    "to": "wrapper_children",
+                    "as": "show_all"
                 },
                 {
                     "from": "styles",

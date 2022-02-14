@@ -459,7 +459,7 @@ const executeGraph = ({ cache, graph, cache_id, node_cache }) => {
 
 
             try {
-                const node_hash = hashcode(orderedargs + node_ref.script.substring(node_ref.script.length * 0.5 - 16, node_ref.script.length * 0.5 + 16))
+                const node_hash = hashcode(orderedargs + node_ref.script);
 
                 const fn = node_cache.get(node_hash) ?? new Function(`return function _${(node.name ?? node.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script}}`)();
 
