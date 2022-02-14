@@ -5588,6 +5588,7 @@
                 {"id": "new_graph_node"},
                 {"id": "popover_graph_actions", "ref": "new_array"},
                 {"id": "empty", "value": {}},
+                {"id": "popover_graph_obj_actions", "ref": "new_array"},
                 {"id": "popover_graph_obj"},
                 {"id": "popover_graph_parent_obj", "ref": "set"},
                 {"id": "popover_graph", "ref": "create_object_graph"},
@@ -5671,6 +5672,8 @@
                 {"from": "clear_popover_effect", "to": "examples_obj", "as": "clear_popover"},
                 {"from": "open_example_graph", "to": "examples_obj", "as": "open_graph"},
                 {"from": "examples_obj", "to": "popover_graph_obj", "as": "examples"},
+                {"from": "clear_popover_effect", "to": "popover_graph_obj_actions", "as": "a0"},
+                {"from": "popover_graph_obj_actions", "to": "popover_graph_obj", "as": "_value"},
                 {"from": "name", "to": "popover_graph", "as": "name"},
                 {"from": "empty", "to": "popover_graph_parent_obj", "as": "target"},
                 {"from": "name", "to": "popover_graph_parent_obj", "as": "path"},
@@ -5683,7 +5686,7 @@
                 {"from": "payload", "to": "stop_propagation_effect", "as": "a1"},
                 {"from": "stop_propagation_effect", "to": "edit_effects", "as": "a1"},
                 {"from": "html_id", "to": "dispatch_on_graph_click_payload", "as": "html_id"},
-                {"from": "event_name", "to": "dispatch_on_graph_click_payload", "as": "name"},
+                {"from": "event_name", "to": "dispatch_on_graph_click_payload", "as": "event"},
                 {"from": "dispatch_on_graph_click_effector", "to": "dispatch_on_graph_click_effect", "as": "a0"},
                 {"from": "dispatch_on_graph_click_payload", "to": "dispatch_on_graph_click_effect", "as": "a1"},
                 {"from": "dispatch_on_graph_click_effect", "to": "readonly_effects", "as": "a0"},
@@ -6391,13 +6394,13 @@
                         "popover_graph",
                         "popover_graph_h"
                     ],
-                    "script": "return [styles.el, node_editor.el, !readonly && editing !== false && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, !!result_display && result_display.el, !editing && !show_all && args_display && args_display.el, !!error && error_display.el, search_input.el].filter(e => e)"
+                    "script": "return [styles.el, node_editor.el, !readonly && editing !== false && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, !!result_display && result_display.el, !editing && !show_all && args_display && args_display.el, !!error && error_display.el, menu.el].filter(e => e)"
                 },
                 {
                     "id": "styles",
                     "nodes": [
                         {"id": "in"},
-                        {"id": "style_content", "value": " #node-editor { position: relative; width: 100%; height: 100vh; background-color: #112; color: white; font-family: consolas; } svg { user-select: none; } .search-input { display: block; position: absolute; right: 100px; top: 100px; } .search-input-icon { cursor: pointer; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .centering { position: absolute; width: 32vw; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { align-self: stretch; font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .args { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"},
+                        {"id": "style_content", "value": " #node-editor { position: relative; width: 100%; height: 100vh; background-color: #112; color: white; font-family: consolas; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .centering { position: absolute; width: 32vw; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { align-self: stretch; font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .args { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"},
                         {"id": "style_h_text", "ref": "h_text"},
                         {"id": "style_dom_type", "value": "style"},
                         {"id": "out", "ref": "h"}
@@ -7050,102 +7053,134 @@
                     ]
                 },
                 {
-                    "id": "search_input",
+                    "id": "menu",
                     "nodes": [
                         {
-                            "id": "in"
-                        },
-                        {"id": "search", "ref": "arg", "value": "search"},
-                        {"id": "is_searching", "script": "return typeof search === 'string'"},
-                        {
-                            "id": "search_input_dom_type",
-                            "value": "input"
-                        },
-                        {
-                            "id": "nodes",
-                            "ref": "arg",
-                            "value": "nodes"
-                        },
-                        {
-                            "id": "html_id",
-                            "ref": "arg",
-                            "value": "html_id"
-                        },
-                        {
-                            "id": "search_input_props",
-                            "args": [
-                                "search",
-                                "display_graph"
+                            "id": "search_input",
+                            "nodes": [
+                                {
+                                    "id": "in"
+                                },
+                                {"id": "search", "ref": "arg", "value": "search"},
+                                {"id": "is_searching", "script": "return typeof search === 'string'"},
+                                {
+                                    "id": "search_input_dom_type",
+                                    "value": "input"
+                                },
+                                {
+                                    "id": "nodes",
+                                    "ref": "arg",
+                                    "value": "nodes"
+                                },
+                                {
+                                    "id": "html_id",
+                                    "ref": "arg",
+                                    "value": "html_id"
+                                },
+                                {
+                                    "id": "search_input_props",
+                                    "args": [
+                                        "search",
+                                        "display_graph"
+                                    ],
+                                    "script": "return {id: `${html_id}-search-input`, key: `${html_id}-search-input`, class: 'search-input', type: 'text', onkeydown: (s, payload) => { if(payload.key === 'Enter'){ const direction = payload.shiftKey ? -1 : 1; const idx = (s.search_results.length + s.search_index + direction) % s.search_results.length; return {...s, selected: s.search_results.slice(idx, idx + 1), search_index: idx} } else { return s;} }, oninput: (s, payload) => {const search_results = new _lib.Fuse(nodes.map(n => Object.assign({}, n, display_graph.nodes.find(d => d.id === n.node_id))), {keys: ['name', 'node_id', 'ref', 'value']}).search(payload.target.value).map(r => r.item.node_id); return {...s, search: payload.target.value, selected: search_results.length > 0 ? search_results.slice(0, 1) : s.selected, search_results, search_index: 0}}}"
+                                },
+                                {"id": "search_field", "ref": "h"},
+                                {"id": "search_effect", "ref": "search_effect"},
+                                {"id": "focus_effect", "ref": "focus_effect"},
+                                {"id": "search_icon_props", "script": "return {id: `${html_id}-search-input`, key: `${html_id}-search-input-icon`, class: 'search-input search-input-icon', onclick: s => [s, [search, {search: ''}], [focus, {selector: `#${html_id}-search-input`}]]}"},
+                                {"id": "search_icon_dom_type", "value": "div"},
+                                {"id": "search_icon_name", "value": "search"},
+                                {"id": "search_icon", "ref": "icon"},
+                                {
+                                    "id": "out",
+                                    "ref": "if"
+                                }
                             ],
-                            "script": "return {id: `${html_id}-search-input`, key: `${html_id}-search-input`, class: 'search-input', type: 'text', onkeydown: (s, payload) => { if(payload.key === 'Enter'){ const direction = payload.shiftKey ? -1 : 1; const idx = (s.search_results.length + s.search_index + direction) % s.search_results.length; return {...s, selected: s.search_results.slice(idx, idx + 1), search_index: idx} } else { return s;} }, oninput: (s, payload) => {const search_results = new _lib.Fuse(nodes.map(n => Object.assign({}, n, display_graph.nodes.find(d => d.id === n.node_id))), {keys: ['name', 'node_id', 'ref', 'value']}).search(payload.target.value).map(r => r.item.node_id); return {...s, search: payload.target.value, selected: search_results.length > 0 ? search_results.slice(0, 1) : s.selected, search_results, search_index: 0}}}"
+                            "edges": [
+                                {
+                                    "from": "in",
+                                    "to": "search_input_props"
+                                },
+                                {
+                                    "from": "html_id",
+                                    "to": "search_input_props",
+                                    "as": "html_id"
+                                },
+                                {
+                                    "from": "nodes",
+                                    "to": "search_input_props",
+                                    "as": "nodes"
+                                },
+                                {
+                                    "from": "search", 
+                                    "to": "is_searching",
+                                    "as": "search"
+                                },
+                                {
+                                    "from": "search_input_dom_type",
+                                    "to": "search_field",
+                                    "as": "dom_type"
+                                },
+                                {
+                                    "from": "search_input_props",
+                                    "to": "search_field",
+                                    "as": "props"
+                                },
+                                {
+                                    "from": "html_id",
+                                    "to": "search_icon_props",
+                                    "as": "html_id"
+                                },
+                                {
+                                    "from": "search_effect",
+                                    "to": "search_icon_props",
+                                    "as": "search"
+                                },
+                                {
+                                    "from": "focus_effect",
+                                    "to": "search_icon_props",
+                                    "as": "focus"
+                                },
+                                {"from": "search_icon_props", "to": "search_icon", "as": "props"},
+                                {"from": "search_icon_dom_type", "to": "search_icon", "as": "dom_type"},
+                                {"from": "search_icon_name", "to": "search_icon", "as": "icon"},
+                                {"from": "search_icon", "to": "out", "as": "false"},
+                                {
+                                    "from": "search_field",
+                                    "to": "out",
+                                    "as": "true"
+                                },
+                                {"from": "is_searching", "to": "out", "as": "pred"}
+                            ]
                         },
-                        {"id": "search_field", "ref": "h"},
-                        {"id": "search_effect", "ref": "search_effect"},
-                        {"id": "focus_effect", "ref": "focus_effect"},
-                        {"id": "search_icon_props", "script": "return {id: `${html_id}-search-input`, key: `${html_id}-search-input-icon`, class: 'search-input search-input-icon', onclick: s => [s, [search, {search: ''}], [focus, {selector: `#${html_id}-search-input`}]]}"},
-                        {"id": "search_icon_dom_type", "value": "div"},
-                        {"id": "search_icon_name", "value": "search"},
-                        {"id": "search_icon", "ref": "icon"},
                         {
-                            "id": "out",
-                            "ref": "if"
-                        }
+                            "id":"graph_ui",
+                            "nodes": [
+                                {"id": "icon", "value": "menu"},
+                                {"id": "onclick_graph", "ref": "onclick_graph_action"},
+                                {"id": "props", "script": "return {onclick: onclick_graph}"},
+                                {"id": "out", "ref": "icon"}
+                            ],
+                            "edges": [
+                                {"from": "props", "to": "out", "as": "props"},
+                                {"from": "icon", "to": "out", "as": "icon"},
+                                {"from": "onclick_graph", "to": "props", "as": "onclick_graph"}
+                            ]
+                        },
+                        {"id": "dom_type", "value": "div"},
+                        {"id": "children", "ref": "new_array"},
+                        {"id": "html_id", "ref": "arg", "value": "html_id"},
+                        {"id": "props", "script": "return {class: {'graph-ui': true}, key: `${html_id}-graph-ui`}"},
+                        {"id": "out", "ref": "h"}
                     ],
                     "edges": [
-                        {
-                            "from": "in",
-                            "to": "search_input_props"
-                        },
-                        {
-                            "from": "html_id",
-                            "to": "search_input_props",
-                            "as": "html_id"
-                        },
-                        {
-                            "from": "nodes",
-                            "to": "search_input_props",
-                            "as": "nodes"
-                        },
-                        {
-                            "from": "search", 
-                            "to": "is_searching",
-                            "as": "search"
-                        },
-                        {
-                            "from": "search_input_dom_type",
-                            "to": "search_field",
-                            "as": "dom_type"
-                        },
-                        {
-                            "from": "search_input_props",
-                            "to": "search_field",
-                            "as": "props"
-                        },
-                        {
-                            "from": "html_id",
-                            "to": "search_icon_props",
-                            "as": "html_id"
-                        },
-                        {
-                            "from": "search_effect",
-                            "to": "search_icon_props",
-                            "as": "search"
-                        },
-                        {
-                            "from": "focus_effect",
-                            "to": "search_icon_props",
-                            "as": "focus"
-                        },
-                        {"from": "search_icon_props", "to": "search_icon", "as": "props"},
-                        {"from": "search_icon_dom_type", "to": "search_icon", "as": "dom_type"},
-                        {"from": "search_icon_name", "to": "search_icon", "as": "icon"},
-                        {"from": "search_icon", "to": "out", "as": "false"},
-                        {
-                            "from": "search_field",
-                            "to": "out",
-                            "as": "true"
-                        },
-                        {"from": "is_searching", "to": "out", "as": "pred"}
+                        {"from": "graph_ui", "to": "children", "as": "a1"},
+                        {"from": "search_input", "to": "children", "as": "a0"},
+                        {"from": "html_id", "to": "props", "as": "html_id"},
+                        {"from": "children", "to": "out", "as": "children"},
+                        {"from": "props", "to": "out", "as": "props"},
+                        {"from": "dom_type", "to": "out", "as": "dom_type"}
                     ]
                 },
                 {
@@ -8855,7 +8890,7 @@
                 },
                 {
                     "from": "in",
-                    "to": "search_input"
+                    "to": "menu"
                 },
                 {
                     "from": "in",
@@ -8942,9 +8977,9 @@
                     "as": "edit_text"
                 },
                 {
-                    "from": "search_input",
+                    "from": "menu",
                     "to": "wrapper_children",
-                    "as": "search_input"
+                    "as": "menu"
                 },
                 {
                     "from": "result_display",

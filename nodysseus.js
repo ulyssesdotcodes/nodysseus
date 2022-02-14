@@ -1394,7 +1394,6 @@ const is_action_payload = Array.isArray(ha_action)
     const action = is_action_payload ? ha_action[0] : ha_action;
     const payload = is_action_payload ? ha_action[1] : ha_payload;
 
-
     return typeof action === 'object' && action.hasOwnProperty('fn') && action.hasOwnProperty('graph')
         ? dispatch((state, payload) => {
             const execute_graph_fn = lib.no.executeGraphNode({graph: action.graph})(action.fn);
@@ -1413,6 +1412,7 @@ const is_action_payload = Array.isArray(ha_action)
                 return e
             });
 
+            console.log(result);
 
             return result.hasOwnProperty("state")
                 ? effects.length > 0 ? [result.state, ...effects] : result.state
@@ -1595,15 +1595,3 @@ const nodysseus = function(html_id, display_graph) {
 }
 
 export { runGraph, nodysseus };
-
-
-// const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); 
-// return {
-//     id: `${html_id}-textarea`, 
-//     class: {textarea: true, editing}, 
-//     onclick: (s, payload) => (payload.stopPropagation(), s), 
-//     value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), 
-//     oninput: (s, payload) => ({...s, edit_value: payload.target.value}), 
-//     onfocus: (s, payload) => [s, [() => payload.target.setSelectionRange(0, payload.target.value.length)]], 
-//     onkeydown: editing !== 'script' && (s, payload) => (payload.preventDefault(), [s, [confirm_edit_text, payload]])
-// }
