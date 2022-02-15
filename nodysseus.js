@@ -741,6 +741,7 @@ const updateSimulationNodes = (dispatch, data) => {
                 node_data.links.forEach(l => {
                     const el = document.getElementById(`link-${l.source.node_child_id}`);
                     const info_el = document.getElementById(`edge-info-${l.source.node_child_id}`);
+                    const insert_el = document.getElementById(`insert-${l.source.node_child_id}`);
                     if(el && info_el) {
                         const source = {x: l.source.x - node_el_width * 0.5, y: l.source.y};
                         const target = {x: l.target.x - node_el_width * 0.5, y: l.target.y};
@@ -756,6 +757,11 @@ const updateSimulationNodes = (dispatch, data) => {
 
                         info_el.setAttribute('x', Math.floor((l.sibling_index_normalized * 0.2 + 0.2) * (target.x - source.x) + source.x) + 16)
                         info_el.setAttribute('y', Math.floor((l.sibling_index_normalized * 0.2 + 0.2) * (target.y - source.y) + source.y));
+
+                        if(insert_el) {
+                            insert_el.setAttribute('x', Math.floor(Math.floor((source.x + target.x) * 0.5)))
+                            insert_el.setAttribute('y', Math.floor(Math.floor((source.y + target.y) * 0.5)))
+                        }
                     }
                 });
 
@@ -1031,6 +1037,7 @@ const d3subscription = (dispatch, props) => {
             simulation.force('links').links().map(l => {
                 const el = document.getElementById(`link-${l.source.node_child_id}`);
                 const info_el = document.getElementById(`edge-info-${l.source.node_child_id}`);
+                const insert_el = document.getElementById(`insert-${l.source.node_child_id}`);
                 if(el && info_el) {
                     const source = {x: l.source.x - node_el_width * 0.5, y: l.source.y};
                     const target = {x: l.target.x - node_el_width * 0.5, y: l.target.y};
@@ -1046,6 +1053,11 @@ const d3subscription = (dispatch, props) => {
 
                     info_el.setAttribute('x', Math.floor((l.sibling_index_normalized * 0.2 + 0.2) * (target.x - source.x) + source.x) + 16)
                     info_el.setAttribute('y', Math.floor((l.sibling_index_normalized * 0.2 + 0.2) * (target.y - source.y) + source.y));
+
+                    if(insert_el) {
+                        insert_el.setAttribute('x', Math.floor((source.x + target.x) * 0.5 - 16))
+                        insert_el.setAttribute('y', Math.floor((source.y + target.y) * 0.5 - 16))
+                    }
 
                     if (l.source.node_id === selected) {
                         visible_nodes.push({x: target.x, y: target.y});
@@ -1515,6 +1527,18 @@ const lib = {
         call: {
             args: ['fn', 'args', 'self'],
             fn: (fn, args, self) => self[fn](...((args ?? []).reverse().reduce((acc, v) => [!acc[0] && v !== undefined, acc[0] || v !== undefined ? acc[1].concat(v) : acc[1]], [false, []])[1].reverse()))
+        },
+        merge_objects: {
+            args: ['_node_inputs'],
+            resolve: false,
+            fn: (args) => {
+                const keys = Object.keys(args).sort();
+                const promise = keys.reduce((acc, k) => acc || ispromise(args[k]), false);
+                return promise 
+                    ? Promise.all(keys.map(k => Promise.resolve(args[k])))
+                        .then(es => Object.fromEntries(es.flatMap(Object.entries))) 
+                    : Object.fromEntries(keys.flatMap(k => Object.entries(args[k])))
+            }
         }
     },
     scripts: { d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all, listen},

@@ -858,6 +858,10 @@
             ]
         },
         {
+            "id": "merge_objects",
+            "extern": "utility.merge_objects"
+        },
+        {
             "id": "get",
             "args": ["target", "path"],
             "nodes": [
@@ -6435,7 +6439,7 @@
                     "id": "styles",
                     "nodes": [
                         {"id": "in"},
-                        {"id": "style_content", "value": " #node-editor { position: relative; width: 100%; height: 100vh; background-color: #112; color: white; font-family: consolas; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .centering { position: absolute; width: 32vw; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { align-self: stretch; font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .args { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"},
+                        {"id": "style_content", "value": " #node-editor { position: relative; width: 100%; height: 100vh; background-color: #112; color: white; font-family: consolas; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .centering { position: absolute; width: 32vw; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { align-self: stretch; font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .args { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node { cursor: pointer } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"},
                         {"id": "style_h_text", "ref": "h_text"},
                         {"id": "style_dom_type", "value": "style"},
                         {"id": "out", "ref": "h"}
@@ -7279,6 +7283,11 @@
                             "value": "hover"
                         },
                         {
+                            "id": "randid",
+                            "ref": "arg",
+                            "value": "randid"
+                        },
+                        {
                             "id": "node_el_width",
                             "ref": "arg",
                             "value": "node_el_width"
@@ -7957,7 +7966,7 @@
                         {
                             "id": "link_layout",
                             "args": ["node_inputs", "link_layout_map", "links", "graph", "selected_edge"],
-                            "script": "return links.map(link => _lib.no.executeGraphNode({graph})(link_layout_map)(Object.assign({readonly, show_all, link: Object.assign({edge: display_graph.edges.find(e => link.source.node_id === e.from && link.target.node_id === e.to)}, link), selected_distance: levels.distance_from_selected.get(link.target.node_child_id) !== undefined ? Math.min(levels.distance_from_selected.get(link.target.node_child_id), levels.distance_from_selected.get(link.source.node_child_id)) : undefined, sibling_index_normalized: (levels.siblings.get(link.source.node_id).findIndex(n => n === link.source.node_id) + 1) / (levels.siblings.get(link.source.node_id).length + 1)}, _node_inputs)))"
+                            "script": "return links.map(link => _lib.no.executeGraphNode({graph})(link_layout_map)(Object.assign({readonly, show_all, randid, link: Object.assign({edge: display_graph.edges.find(e => link.source.node_id === e.from && link.target.node_id === e.to)}, link), selected_distance: levels.distance_from_selected.get(link.target.node_child_id) !== undefined ? Math.min(levels.distance_from_selected.get(link.target.node_child_id), levels.distance_from_selected.get(link.source.node_child_id)) : undefined, sibling_index_normalized: (levels.siblings.get(link.source.node_id).findIndex(n => n === link.source.node_id) + 1) / (levels.siblings.get(link.source.node_id).length + 1)}, _node_inputs)))"
                         },
                         {
                             "id": "link_layout_map",
@@ -8014,7 +8023,7 @@
                                         "sibling_index_normalized",
                                         "selected_edge"
                                     ],
-                                    "script": "return ({id: `edge-info-${source.node_child_id}`, z: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to ? 100 : 200, opacity: show_all ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1, class: {'edge-info': true, selected: selected_edge && (source.node_id === selected_edge.from + '_' + selected_edge.to || (source.node_id === selected_edge.from && target.node_id === selected_edge.to))}, onclick: (state, payload) => [onclick_edge, {event: payload, edge}], ontouchstart: (state, payload) => [onclick_edge, {event: payload, edge}]})"
+                                    "script": "return ({id: `edge-info-${source.node_child_id}`, key: `edge-info-${source.node_child_id}`, z: selected_edge && source.node_id === selected_edge.from && target.node_id === selected_edge.to ? 100 : 200, opacity: show_all ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1, class: {'edge-info': true, selected: selected_edge && (source.node_id === selected_edge.from + '_' + selected_edge.to || (source.node_id === selected_edge.from && target.node_id === selected_edge.to))}, onclick: (state, payload) => [onclick_edge, {event: payload, edge}], ontouchstart: (state, payload) => [onclick_edge, {event: payload, edge}]})"
                                 },
                                 {
                                     "id": "edge_info_line_position",
@@ -8091,7 +8100,7 @@
                                         "selected_edge",
                                         "selected_distance"
                                     ],
-                                    "script": "return ({id: `link-${source.node_child_id}`, onclick: (state, payload) => [onclick_edge, {event: payload, edge}], class: `link ${selected_edge && (source.node_id === selected_edge.from + '_' + selected_edge.to || (source.node_id === selected_edge.from && target.node_id === selected_edge.to)) ? 'selected' : 'unselected'}`, 'marker-end': 'url(#arrow)', opacity: show_all ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1})"
+                                    "script": "return ({id: `link-${source.node_child_id}`, key: `link-${source.node_child_id}`, onclick: (state, payload) => [onclick_edge, {event: payload, edge}], class: `link ${selected_edge && (source.node_id === selected_edge.from + '_' + selected_edge.to || (source.node_id === selected_edge.from && target.node_id === selected_edge.to)) ? 'selected' : 'unselected'}`, 'marker-end': 'url(#arrow)', opacity: show_all ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - selected_distance * selected_distance / 2) : 0.1})"
                                 },
                                 {
                                     "id": "line_dom_type",
@@ -8107,12 +8116,38 @@
                                     "ref": "h"
                                 },
                                 {
+                                    "id": "insert_node_el",
+                                    "out": "el",
+                                    "nodes": [
+                                        {"id": "link", "ref": "arg", "value": "link"},
+                                        {"id": "randid", "ref": "arg", "value": "randid"},
+                                        {"id": "use", "value": "use"},
+                                        {"id": "base_props", "value": {"href": "svg/add-circle-outline.svg#icon", "width": "32px", "height": "32px", "class": "insert-node" }},
+                                        {"id": "position", "script": "return {x: (link.source.x + link.target.x) * 0.5 - 16, y: (link.source.y + link.target.y) * 0.5 - 16, id: `insert-${link.source.node_child_id}`, key: `insert-${link.source.node_child_id}`}"},
+                                        {"id": "insert_node", "ref": "insert_node"},
+                                        {"id": "onclick_props", "script": "return {onclick: (s, p) => [s, [insert_node, {edge: link.edge, node: {id: randid}}]], ontouchstart: (s, p) => [s, [insert_node, {edge: link.edge, node: {id: randid}}]]}"},
+                                        {"id": "props", "ref": "merge_objects"},
+                                        {"id": "el", "ref": "h"}
+                                    ],
+                                    "edges": [
+                                        {"from": "randid", "to": "onclick_props", "as": "randid"},
+                                        {"from": "link", "to": "onclick_props", "as": "link"},
+                                        {"from": "insert_node", "to": "onclick_props", "as": "insert_node"},
+                                        {"from": "link", "to": "position", "as": "link"},
+                                        {"from": "base_props", "to": "props", "as": "o0"},
+                                        {"from": "position", "to": "props", "as": "o1"},
+                                        {"from": "onclick_props", "to": "props", "as": "o2"},
+                                        {"from": "use", "to": "el", "as": "dom_type"},
+                                        {"from": "props", "to": "el", "as": "props"}
+                                    ]
+                                },
+                                {
                                     "id": "out",
                                     "args": [
                                         "line",
                                         "edge_info"
                                     ],
-                                    "script": "return [line, edge_info]"
+                                    "script": "return [line, edge_info, !readonly && selected_distance < 1 && insert_node]"
                                 }
                             ],
                             "edges": [
@@ -8306,6 +8341,21 @@
                                     "from": "line",
                                     "to": "out",
                                     "as": "line"
+                                },
+                                {
+                                    "from": "selected_distance",
+                                    "to": "out",
+                                    "as": "selected_distance"
+                                },
+                                {
+                                    "from": "readonly",
+                                    "to": "out",
+                                    "as": "readonly"
+                                },
+                                {
+                                    "from": "insert_node_el",
+                                    "to": "out",
+                                    "as": "insert_node"
                                 }
                             ]
                         },
@@ -8563,6 +8613,11 @@
                             "from": "show_all",
                             "to": "link_layout",
                             "as": "show_all"
+                        },
+                        {
+                            "from": "randid",
+                            "to": "link_layout",
+                            "as": "randid"
                         },
                         {
                             "from": "readonly",
