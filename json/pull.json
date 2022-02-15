@@ -1947,6 +1947,48 @@
             ]
         },
         {
+            "id": "add_circle_icon",
+            "out": "out",
+            "nodes": [
+                {"id": "in_props", "ref": "arg", "value": "props"},
+                {"id": "viewbox_props", "value": {"viewBox": "0 0 512 512"}},
+                {"id": "props", "ref": "merge_objects"},
+                {"id": "svg", "value": "svg"},
+                {"id": "path", "value": "path"},
+                {
+                    "id": "add_props", 
+                    "value": {
+                        "d": "M256 176v160M336 256H176",
+                        "class": "add"
+                    }
+                },
+                {"id": "add", "ref": "h"},
+                {
+                    "id": "circle_props", 
+                    "value": {
+                        "d": "M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192z",
+                        "class": "circle"
+                    }
+                },
+                {"id": "circle", "ref": "h"},
+                {"id": "children", "ref": "new_array"},
+                {"id": "out", "ref": "h"}
+            ],
+            "edges": [
+                {"from": "add_props", "to": "add", "as": "props"},
+                {"from": "circle_props", "to": "circle", "as": "props"},
+                {"from": "add", "to": "children", "as": "a1"},
+                {"from": "circle", "to": "children", "as": "a0"},
+                {"from": "path", "to": "add", "as": "dom_type"},
+                {"from": "path", "to": "circle", "as": "dom_type"},
+                {"from": "svg", "to": "out", "as": "dom_type"},
+                {"from": "children", "to": "out", "as": "children"},
+                {"from": "in_props", "to": "props", "as": "o1"},
+                {"from": "viewbox_props", "to": "props", "as": "o2"},
+                {"from": "props", "to": "out", "as": "props"}
+            ]
+        },
+        {
             "id": "run_h",
             "in": "in",
             "out": "out",
@@ -6439,7 +6481,7 @@
                     "id": "styles",
                     "nodes": [
                         {"id": "in"},
-                        {"id": "style_content", "value": " #node-editor { position: relative; width: 100%; height: 100vh; background-color: #112; color: white; font-family: consolas; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .centering { position: absolute; width: 32vw; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { align-self: stretch; font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .args { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node { cursor: pointer } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"},
+                        {"id": "style_content", "value": " #node-editor { position: relative; width: 100%; height: 100vh; background-color: #112; color: white; font-family: consolas; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .centering { position: absolute; width: 32vw; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { align-self: stretch; font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .args { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node { cursor: pointer; stroke: #fff; stroke-width: 32; stroke-opacity: 1; } .insert-node .circle{ fill-opacity: 0.5; } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"},
                         {"id": "style_h_text", "ref": "h_text"},
                         {"id": "style_dom_type", "value": "style"},
                         {"id": "out", "ref": "h"}
@@ -8121,13 +8163,12 @@
                                     "nodes": [
                                         {"id": "link", "ref": "arg", "value": "link"},
                                         {"id": "randid", "ref": "arg", "value": "randid"},
-                                        {"id": "use", "value": "use"},
                                         {"id": "base_props", "value": {"href": "svg/add-circle-outline.svg#icon", "width": "32px", "height": "32px", "class": "insert-node" }},
                                         {"id": "position", "script": "return {x: (link.source.x + link.target.x) * 0.5 - 16, y: (link.source.y + link.target.y) * 0.5 - 16, id: `insert-${link.source.node_child_id}`, key: `insert-${link.source.node_child_id}`}"},
                                         {"id": "insert_node", "ref": "insert_node"},
                                         {"id": "onclick_props", "script": "return {onclick: (s, p) => [s, [insert_node, {edge: link.edge, node: {id: randid}}]], ontouchstart: (s, p) => [s, [insert_node, {edge: link.edge, node: {id: randid}}]]}"},
                                         {"id": "props", "ref": "merge_objects"},
-                                        {"id": "el", "ref": "h"}
+                                        {"id": "el", "ref": "add_circle_icon"}
                                     ],
                                     "edges": [
                                         {"from": "randid", "to": "onclick_props", "as": "randid"},
@@ -8137,7 +8178,6 @@
                                         {"from": "base_props", "to": "props", "as": "o0"},
                                         {"from": "position", "to": "props", "as": "o1"},
                                         {"from": "onclick_props", "to": "props", "as": "o2"},
-                                        {"from": "use", "to": "el", "as": "dom_type"},
                                         {"from": "props", "to": "el", "as": "props"}
                                     ]
                                 },
