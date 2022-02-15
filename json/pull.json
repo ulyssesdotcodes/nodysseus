@@ -1827,7 +1827,7 @@
                 },
                 {
                     "id": "out",
-                    "script": "(children ?? []).forEach(c => {if(!((c.hasOwnProperty('dom_type') && c.hasOwnProperty('props')) || c.hasOwnProperty('text'))){throw new Error('invalid child element');}}); return {el: {dom_type, props, children}}"
+                    "script": "(children.filter(c => !!c) ?? []).forEach(c => {if(!((c.hasOwnProperty('dom_type') && c.hasOwnProperty('props')) || c.hasOwnProperty('text'))){throw new Error('invalid child element');}}); return {el: {dom_type, props, children}}"
                 },
                 {
                     "id": "_out"
@@ -1977,7 +1977,7 @@
                 },
                 {
                     "id": "mapped_children",
-                    "script": "let run_graph = {...graph, in: 'run_h/in', out: 'run_h'}; const fn = _lib.no.executeGraphValue({graph: run_graph}); return (children ?? []).map(c => ({...c, graph: run_graph})).map(fn).filter(c => c).map(c => c.el);"
+                    "script": "let run_graph = {...graph, in: 'run_h/in', out: 'run_h'}; const fn = _lib.no.executeGraphValue({graph: run_graph}); return (children.filter(c => !!c) ?? []).map(c => ({...c, graph: run_graph})).map(fn).filter(c => c).map(c => c.el);"
                 },
                 {
                     "id": "out_h",
@@ -6848,7 +6848,7 @@
                         },
                         {
                             "id": "props",
-                            "script": "return {id: `${html_id}-popover`, class: {popover: true}, key:  `${html_id}-popover`, onselectnode: handle_popover_event, ongraphclick: (s, p) => [s, [clear_popover]]}"
+                            "script": "return {id: `${html_id}-popover`, class: {popover: true}, key:  `${html_id}-popover`, onselectnode: handle_popover_event, ongraphclick: (s, p) => [s]}"
                         },
                         {
                             "id": "dom_type",
@@ -7098,6 +7098,8 @@
                 {
                     "id": "menu",
                     "nodes": [
+                        {"id": "readonly", "ref": "arg", "value": "readonly"},
+                        {"id": "false", "value": false},
                         {
                             "id": "search_input",
                             "nodes": [
@@ -7198,7 +7200,22 @@
                             ]
                         },
                         {
-                            "id":"graph_ui",
+                            "id": "close",
+                            "nodes": [
+                                {"id": "icon", "value": "close"},
+                                {"id": "dispatch_custom_event_effect", "ref": "dispatch_custom_event_effect"},
+                                {"id": "props", "script": "return {onclick: (s, p) => (p.stopPropagation(), [s, [dispatch_custom, {event: 'selectnode', detail: {node: s.display_graph.out}, html_id: s.html_id}]])}"},
+                                {"id": "out", "ref": "icon"}
+                            ],
+                            "edges": [
+                                {"from": "dispatch_custom_event_effect", "to": "props", "as": "dispatch_custom"},
+                                {"from": "props", "to": "out", "as": "props"},
+                                {"from": "icon", "to": "out", "as": "icon"}
+                            ]
+                        },
+                        {"id": "close_readonly", "ref": "if"},
+                        {
+                            "id":"more",
                             "nodes": [
                                 {"id": "icon", "value": "ellipsis-vertical-outline"},
                                 {"id": "onclick_graph", "ref": "onclick_graph_action"},
@@ -7218,8 +7235,12 @@
                         {"id": "out", "ref": "h"}
                     ],
                     "edges": [
-                        {"from": "graph_ui", "to": "children", "as": "a1"},
+                        {"from": "more", "to": "children", "as": "a1"},
                         {"from": "search_input", "to": "children", "as": "a0"},
+                        {"from": "readonly", "to": "close_readonly", "as": "pred"},
+                        {"from": "close", "to": "close_readonly", "as": "true"},
+                        {"from": "false", "to": "close_readonly", "as": "false"},
+                        {"from": "close_readonly", "to": "children", "as": "a2", "type": "resolve"},
                         {"from": "html_id", "to": "props", "as": "html_id"},
                         {"from": "children", "to": "out", "as": "children"},
                         {"from": "props", "to": "out", "as": "props"},
