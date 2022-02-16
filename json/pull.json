@@ -2319,12 +2319,12 @@
                 {
                     "from": "expand_contract_result",
                     "to": "out",
-                    "as": "data"
+                    "as": "value"
                 },
                 {
                     "from": "in",
                     "to": "out",
-                    "as": "default_value"
+                    "as": "otherwise"
                 }
             ]
         },
@@ -5914,7 +5914,7 @@
                 {"id": "create_reference_effect", "ref": "create_reference_effect"},
                 {
                     "id": "popover_graph_obj",
-                    "script": "return {[selected.node_id]: {_value: [[clear_popover]], inputs: {create_input: [[add_node, {node: {id: randid}, select: true}], [add_edge, {from: randid, to: selected.node_id }], [clear_popover]], arg: [[add_node, {node: {id: randid, ref: 'arg'}, select: true}], [add_edge, {from: randid, to: selected.node_id }], [show_edit_text, {id: randid, property:'value', oneditconfirm: update_node, value: ''}], [clear_popover]]}, structure: {delete: [[delete_node, {id: selected.node_id}], [clear_popover]], expand_contract: [[expand_contract, {id: selected.node_id}], [clear_popover]]}, change: {name: [[show_edit_text, {id: selected.node_id, property:'name', position: {x: selected.x, y: selected.y}, oneditconfirm: update_node, value: selected.name}], [clear_popover]], value: [[show_edit_text, {id: selected.node_id, property:'value', position: {x: selected.x, y: selected.y}, oneditconfirm: update_node, value: selected.value}], [clear_popover]], script: [[show_edit_text, {id: selected.node_id, property:'script', position: {x: selected.x, y: selected.y},oneditconfirm: update_node, value: selected.script}], [clear_popover]]}, clipboard: {copy: [[copy_effect, {id: selected.node_id}], [clear_popover]], paste: [[paste_node_effect, {randid}], [clear_popover]]}, reference: {create: [[create_reference_effect, {id: selected.node_id}], [clear_popover]], clear: [[update_node_effect, {id: selected.node_id, properties: {ref: undefined}}], [clear_popover]], copy: [[update_node_effect, {id: selected.node_id, properties: {...nodes.find(n => n.id === selected.ref), id: selected.node_id, ref: undefined}}], [clear_popover]], change: [[open_reference_popover, {id: selected.node_id}]]}}}"
+                    "script": "return {[selected.node_id]: {_value: [[clear_popover]], inputs: {create_input: [[add_node, {node: {id: randid}, select: true}], [add_edge, {from: randid, to: selected.node_id }], [clear_popover]], arg: [[add_node, {node: {id: randid, ref: 'arg'}, select: true}], [add_edge, {from: randid, to: selected.node_id }], [show_edit_text, {id: randid, property:'value', oneditconfirm: update_node, value: ''}], [clear_popover]]}, structure: {delete: [[delete_node, {id: selected.node_id}], [clear_popover]], expand_contract: [[expand_contract, {id: selected.node_id}], [clear_popover]]}, change: {name: [[show_edit_text, {id: selected.node_id, property:'name', position: {x: selected.x, y: selected.y}, oneditconfirm: update_node, value: selected.name}], [clear_popover]], value: [[show_edit_text, {id: selected.node_id, property:'value', position: {x: selected.x, y: selected.y}, oneditconfirm: update_node, value: selected.value}], [clear_popover]], script: [[show_edit_text, {id: selected.node_id, property:'script', position: {x: selected.x, y: selected.y},oneditconfirm: update_node, value: selected.script}], [clear_popover]]}, clipboard: {copy: [[copy_effect, {id: selected.node_id}], [clear_popover]], paste: [[paste_node_effect, {randid}], [clear_popover]]}, reference: {create: [[create_reference_effect, {id: selected.node_id}], [clear_popover]], clear: [[update_node_effect, {id: selected.node_id, properties: {ref: undefined}}], [clear_popover]], copy: [[update_node_effect, {id: selected.node_id, properties: {...nodes.find(n => n.id === selected.ref), id: selected.node_id, ref: undefined}}], [clear_popover]], change: [[show_edit_text, {id: selected.node_id, property: 'ref', position: {x: selected.x, y: selected.y}, oneditconfirm: update_node, value: selected.ref}], [clear_popover]]}}}"
                 },
                 {"id": "popover_graph_value", "ref": "create_object_graph"},
                 {"id": "dispatch_custom_event_effect", "script": "return [(_, payload) => document.getElementById(`${html_id}`).dispatchEvent(new CustomEvent(`selectnode`, {detail: {node: node_id}}))]"},
