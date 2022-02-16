@@ -1158,6 +1158,7 @@ const contract_all = (graph) => {
 }
 
 const contract_node = (data, keep_expanded = false) => {
+    console.log(data);
     const node = data.display_graph.nodes.find(n => n.id === data.node_id);
     if (!node.nodes) {
         const slash_index = data.node_id.lastIndexOf('/');
@@ -1464,6 +1465,11 @@ const generic_nodes = new Set([
     "partial",
     "fetch",
     "call",
+    "default",
+
+    "JSON",
+    "stringify",
+    "parse",
 
     "custom"
 ]);
@@ -1539,6 +1545,18 @@ const lib = {
                         .then(es => Object.fromEntries(es.flatMap(Object.entries))) 
                     : Object.fromEntries(keys.flatMap(k => Object.entries(args[k])))
             }
+        }
+    },
+    JSON: {
+        stringify: {
+            args: ['object'],
+            resolve: true,
+            fn: (args) => JSON.stringify(args)
+        },
+        parse: {
+            args: ['string'],
+            resolve: true,
+            fn: (args) => JSON.parse(args)
         }
     },
     scripts: { d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all, listen},

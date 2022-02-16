@@ -10,6 +10,7 @@
         {"id": "hyperapp"},
         {"id": "object"},
         {"id": "custom"},
+        {"id": "JSON"},
         {
             "id": "log",
             "args": ["value"],
@@ -25,7 +26,7 @@
                 {
                     "id": "out",
                     "args": [],
-                    "script": "console.log(_node.id); console.log(value); return value"
+                    "script": "console.log(_node.name ?? _node.id); console.log(value); return value"
                 }
             ],
             "edges": [
@@ -43,6 +44,7 @@
         },
         {"id": "fetch", "name": "fetch", "extern": "utility.fetch"},
         {"id": "call", "name": "call", "extern": "utility.call"},
+        {"id": "stringify", "name": "stringify", "extern": "JSON.stringify"},
         {
         "id": "text_display",
         "name": "text_display",
@@ -566,23 +568,22 @@
         {
             "id": "default",
             "nodes": [
-                {
-                    "id": "in"
-                },
+                { "id": "in" },
+                {"id": "value", "ref": "arg", "value":"value"},
+                {"id": "otherwise", "ref": "arg", "value":"otherwise"},
                 {
                     "id": "out",
                     "args": [
                         "data",
                         "default_value"
                     ],
-                    "script": "return data ?? default_value"
+                    "script": "return value ?? otherwise"
                 }
             ],
             "edges": [
-                {
-                    "from": "in",
-                    "to": "out"
-                }
+                {"from": "in", "to": "out", "as": "args"},
+                {"from": "value", "to": "out", "as": "value"},
+                {"from": "otherwise", "to": "out", "as": "otherwise"}
             ]
         },
         {
@@ -1529,7 +1530,7 @@
                         "display_graph",
                         "selected"
                     ],
-                    "script": "return Promise.resolve({state: prev_result, payload: _lib.no.resolve(payload)}).then(promise_payload => _lib.no.executeGraphValue({graph: {...display_graph, nodes: display_graph.nodes.map(n => ({...n})), edges: display_graph.edges.map(e => ({...e}))}})(promise_payload)).then(result => {if(result.display && !result.display.el.props.key){ result.display.el.props.key = `${html_id}-result_display` } return {result, error: undefined, error_nodes}; }).catch(e => ({error: e instanceof AggregateError ? e.errors.map(e => (e instanceof _lib.no.NodysseusError ? e.node_id + ': ' : '') + e.toString()).join(\" \") : e.toString(), error_nodes: new Map(e instanceof AggregateError ? e.errors.map(e => e instanceof _lib.no.NodysseusError ? [e.node_id, e] : false).filter(n => n) : e instanceof _lib.no.NodysseusError ? [[e.node_id, e]] : [])}))"
+                    "script": "return Promise.resolve({state: prev_result, payload: _lib.no.resolve(payload), graph: display_graph}).then(promise_payload => _lib.no.executeGraphValue({graph: {...display_graph, nodes: display_graph.nodes.map(n => ({...n})), edges: display_graph.edges.map(e => ({...e}))}})(promise_payload)).then(result => {if(result.display && !result.display.el.props.key){ result.display.el.props.key = `${html_id}-result_display` } return {result, error: undefined, error_nodes}; }).catch(e => ({error: e instanceof AggregateError ? e.errors.map(e => (e instanceof _lib.no.NodysseusError ? e.node_id + ': ' : '') + e.toString()).join(\" \") : e.toString(), error_nodes: new Map(e instanceof AggregateError ? e.errors.map(e => e instanceof _lib.no.NodysseusError ? [e.node_id, e] : false).filter(n => n) : e instanceof _lib.no.NodysseusError ? [[e.node_id, e]] : [])}))"
                 },
                 {
                     "id": "result"
@@ -1746,8 +1747,8 @@
                 },
                 {
                     "id": "pdljod1",
-                    "ref": "execute_graph",
-                    "name": "pdljod1"
+                    "name": "pdljod1",
+                    "script": "return (element, index, array) => _lib.no.runGraph(_graph, fn, {element,index,array});"
                 },
                 {
                     "id": "2lvs5dj",
@@ -1831,7 +1832,7 @@
                 },
                 {
                     "id": "out",
-                    "script": "(children.filter(c => !!c) ?? []).forEach(c => {if(!((c.hasOwnProperty('dom_type') && c.hasOwnProperty('props')) || c.hasOwnProperty('text'))){throw new Error('invalid child element');}}); return {el: {dom_type, props, children}}"
+                    "script": "(children.filter(c => !!c) ?? []).forEach(c => {if(!(typeof c.dom_type === 'string' || typeof c.text === 'string')){throw new Error('invalid child element');}}); return {el: {dom_type, props, children}}"
                 },
                 {
                     "id": "_out"
@@ -1852,7 +1853,8 @@
                     "from": "fill_children",
                     "to": "out",
                     "as": "children",
-                    "order": 1
+                    "order": 1,
+                    "type": "resolve"
                 },
                 {
                     "from": "fill_props",
@@ -2104,7 +2106,7 @@
                         "expandable",
                         "contractable"
                     ],
-                    "script": "return expandable ? 'expand' : contractable ? 'contract' : undefined"
+                    "script": "console.log('inputs'); return expandable ? 'expand' : contractable ? 'contract' : undefined"
                 },
                 {
                     "id": "selected",
@@ -2176,7 +2178,7 @@
                     "args": [
                         "has_nodes"
                     ],
-                    "script": "return !has_nodes"
+                    "script": "console.log('contractable'); return !has_nodes"
                 },
                 {
                     "id": "out",
@@ -3037,12 +3039,11 @@
                 {"id": "update_sim_effector", "ref": "arg", "value": "state.update_sim_effect"},
                 {"id": "update_sim_effect", "ref": "new_array"},
                 {"id": "effects", "ref": "new_array"},
-                {"id": "new_state"},
                 {"id": "return_value"},
                 {"id": "out", "ref": "hyperapp_action_effect"}
             ],
             "edges": [
-                {"from": "in", "to": "out", "ref": "args"},
+                {"from": "in", "to": "out", "as": "args"},
                 {"from": "state", "to": "set_display_graph", "as": "target"},
                 {"from": "node_id", "to": "expand_contract", "as": "selected"},
                 {"from": "display_graph", "to": "expand_contract", "as": "display_graph"},
@@ -3055,10 +3056,8 @@
                 {"from": "expand_contract_selected", "to": "set_selected", "as": "value"},
                 {"from": "selected_path", "to": "set_selected", "as": "path"},
                 {"from": "set_display_graph", "to": "set_selected", "as": "target"},
-                {"from": "expand_contract", "to": "set_selected"},
-                {"from": "set_selected", "to": "new_state"},
                 {"from": "update_sim_effector", "to": "update_sim_effect", "as": "a0"},
-                {"from": "new_state", "to": "update_sim_effect", "as": "a1"},
+                {"from": "set_selected", "to": "update_sim_effect", "as": "a1"},
                 {"from": "update_sim_effect", "to": "effects", "as": "a0"},
                 {"from": "set_selected", "to": "return_value", "as": "state"},
                 {"from": "effects", "to": "return_value", "as": "effects"},
@@ -3128,7 +3127,7 @@
                 },
                 {
                     "id": "new_edges",
-                    "script": "const parent_edge = edges.find(e => e.from === node_id); return edges.filter(e => e !== parent_edge).map(e => e.to === node_id ? {...e, to: parent_edge.to, as: e.as.startsWith('arg') ? parent_edge.as : e.as} : e)"
+                    "script": "const parent_edge = edges.find(e => e.from === node_id); return edges.filter(e => e !== parent_edge).map(e => e.to === node_id ? {...e, to: parent_edge.to, as: parent_edge.as} : e)"
                 },
                 {
                     "id": "new_selected",
@@ -3432,9 +3431,10 @@
                 {"id": "display_graph_edges_path", "value": "display_graph.edges"},
                 {"id": "node_id", "ref": "arg", "value": "payload.id"},
                 {"id": "node_properties", "ref": "arg", "value": "payload.properties"},
+                {"id": "prev_node", "script": "return nodes.find(n => n.id === node_id)"},
                 {"id": "replace_node", "script": "return nodes.map(n => n.id === node_id ? Object.assign({}, n, update) : n)"},
                 {"id": "arg_value", "script": "const node = nodes.find(n => n.id === node_id); return node.ref === 'arg' ? node.value.substring(node.value.lastIndexOf('.') + 1) : undefined"},
-                {"id": "replace_edges", "script": "return arg_value ? edges.map(e => e.from === node_id ? {...e, as: arg_value} : e) : edges"},
+                {"id": "replace_edges", "script": "return arg_value ? edges.map(e => e.from === node_id && (e.as.startsWith('arg') || e.as === prev_node.value)? {...e, as: arg_value} : e) : edges"},
                 {"id": "display_graph_nodes_path", "value": "display_graph.nodes"},
                 {"id": "set_display_graph_nodes", "ref": "set"},
                 {"id": "set_display_graph_edges", "ref": "set"},
@@ -3445,8 +3445,10 @@
             "edges": [
                 {"from": "in", "to": "out", "as": "args"},
                 {"from": "nodes", "to": "replace_node", "as": "nodes"},
+                {"from": "nodes", "to": "prev_node", "as": "nodes"},
                 {"from": "edges", "to": "replace_edges", "as": "edges"},
                 {"from": "node_id", "to": "replace_node", "as": "node_id"},
+                {"from": "node_id", "to": "prev_node", "as": "node_id"},
                 {"from": "node_properties", "to": "replace_node", "as": "update"},
                 {"from": "state", "to": "set_display_graph_nodes", "as": "target"},
                 {"from": "display_graph_nodes_path", "to": "set_display_graph_nodes", "as": "path"},
@@ -3456,6 +3458,7 @@
                 {"from": "node_id", "to": "arg_value", "as": "node_id"},
                 {"from": "arg_value", "to": "replace_edges", "as": "arg_value"},
                 {"from": "node_id", "to": "replace_edges", "as": "node_id"},
+                {"from": "prev_node", "to": "replace_edges", "as": "prev_node"},
                 {"from": "replace_edges", "to": "set_display_graph_edges", "as": "value"},
                 {"from": "display_graph_edges_path", "to": "set_display_graph_edges", "as": "path"},
                 {"from": "set_display_graph_edges", "to": "result", "as": "state"},
@@ -3850,7 +3853,7 @@
                 {"id": "update_node", "ref": "update_node"},
                 {"id": "clear_popover", "ref": "clear_popover_graph"},
                 {"id": "valid_nodes", "script": "return nodes.filter(n => !n.ref && !levels.level_by_node.has(n.id))"},
-                {"id": "popover_graph_nodes", "script": "return nodes.map(n => ({id: `reference-popover${n.id}`, name: n.name ?? n.id, value: n.hasOwnProperty('script') || n.hasOwnProperty('nodes') || n.hasOwnProperty('extern') ? [[update_node, {id: node_id, properties: {ref: n.id}}], [clear_popover]] : []})).concat([{id: 'out', name: 'reference nodes'}])"},
+                {"id": "popover_graph_nodes", "script": "return nodes.map(n => ({id: `reference-popover${n.id}`, name: n.name ?? n.id, value: n.hasOwnProperty('script') || n.hasOwnProperty('nodes') || n.hasOwnProperty('extern') ? [[update_node, {id: node_id, properties: {ref: n.id}}], [clear_popover]] : []})).concat([{id: 'out', name: 'reference nodes', value: [[clear_popover]]}])"},
                 {"id": "popover_graph_edges", "script": "return edges.filter(e => !!nodes.find(n => e.to === n.id)).map(e => ({from: `reference-popover${e.from}`, to:  `reference-popover${e.to}`})).concat(nodes.filter(n => edges.filter(e => e.from === n.id).length === 0).map(n => ({from: `reference-popover${n.id}`, to: 'out'})))"},
                 {"id": "popover_graph_out", "value": "out"},
                 {"id": "popover_graph_value"},
@@ -4184,7 +4187,7 @@
                 {
                     "id": "html_id",
                     "ref": "arg",
-                    "value": "html_id"
+                    "value": "state.html_id"
                 },
                 {
                     "id": "arg_display_graph",
@@ -4381,7 +4384,7 @@
                         "editing",
                         "nodes"
                     ],
-                    "script": "return [[open_reference_popover, {id}]]"
+                    "script": "return [[show_edit_text, {id, property: 'ref', oneditconfirm: update_node, value: '', position: {x: node.x, y: node.y}}]]"
                 },
                 {
                     "id": "s",
@@ -4706,7 +4709,6 @@
                 }
             ],
             "edges": [
-                {"from" :"state", "to": "html_id"},
                 {
                     "from": "state",
                     "to": "key_inputs",
@@ -4935,9 +4937,19 @@
                     "as": "n"
                 },
                 {
-                    "from": "open_reference_popover",
+                    "from": "el_node",
                     "to": "r",
-                    "as": "open_reference_popover"
+                    "as": "node"
+                },
+                {
+                    "from": "show_edit_text",
+                    "to": "r",
+                    "as": "show_edit_text"
+                },
+                {
+                    "from": "update_node",
+                    "to": "r",
+                    "as": "update_node"
                 },
                 {
                     "from": "get_selected",
@@ -5604,7 +5616,7 @@
             ]
         },
         {
-            "id": "onclick_graph_action",
+            "id": "graph_ui_action",
             "nodes": [
                 {"id": "in"},
                 {"id": "payload", "ref": "arg", "value": "payload"},
@@ -5747,6 +5759,28 @@
                 {"from": "edit_effects", "to": "effects", "as": "false"},
                 {"from": "readonly_effects", "to": "effects", "as": "true"},
                 {"from": "readonly", "to": "effects", "as": "pred"},
+                {"from": "effects", "to": "result", "as": "effects"},
+                {"from": "state", "to": "result", "as": "state"},
+                {"from": "result", "to": "out", "as": "fn", "type": "ref"}
+            ]
+        },
+        {
+            "id": "onclick_graph_action",
+            "nodes": [
+                {"id": "state", "ref": "arg", "value": "state"},
+                {"id": "false", "value": false},
+                {"id": "search_payload"},
+                {"id": "search_effect", "ref": "search_effect"},
+                {"id": "clear_search", "ref": "new_array"},
+                {"id": "effects", "ref": "new_array"},
+                {"id": "result"},
+                {"id": "out", "ref": "hyperapp_action"}
+            ],
+            "edges": [
+                {"from": "false", "to": "search_payload", "as": "search"},
+                {"from": "search_payload", "to": "clear_search", "as": "a1"},
+                {"from": "search_effect", "to": "clear_search", "as": "a0"},
+                {"from": "clear_search", "to": "effects", "as": "a0"},
                 {"from": "effects", "to": "result", "as": "effects"},
                 {"from": "state", "to": "result", "as": "state"},
                 {"from": "result", "to": "out", "as": "fn", "type": "ref"}
@@ -5911,6 +5945,9 @@
                 {"id": "panzoom_selected_effector", "ref": "arg", "value": "state.panzoom_selected_effect"},
                 {"id": "panzoom_selected_effect", "ref": "new_array"},
                 {"id": "panzoom_selected_payload"},
+                {"id": "clear_search_payload", "value": {"search": false}},
+                {"id": "search_effect", "ref": "search_effect"},
+                {"id": "clear_search", "ref": "new_array"},
                 {
                     "id": "if_show_popover",
                     "ref": "if"
@@ -6167,6 +6204,9 @@
                 {"from": "panzoom_selected_payload", "to": "panzoom_selected_effect", "as": "a1"},
                 {"from": "panzoom_selected_effector", "to": "panzoom_selected_effect", "as": "a0"},
                 {"from": "panzoom_selected_effect", "to": "effects", "as": "a3" },
+                {"from": "search_effect", "to": "clear_search", "as": "a0" },
+                {"from": "clear_search_payload", "to": "clear_search", "as": "a1" },
+                {"from": "clear_search", "to": "effects", "as": "a4" },
                 {
                     "from": "effects",
                     "to": "out",
@@ -6505,6 +6545,11 @@
                             "value": "html_id"
                         },
                         {
+                            "id": "display_graph_nodes",
+                            "ref": "arg",
+                            "value": "display_graph.nodes"
+                        },
+                        {
                             "id": "nodes",
                             "ref": "arg",
                             "value": "nodes"
@@ -6514,8 +6559,10 @@
                             "ref": "arg",
                             "value": "selected.0"
                         },
+                        {"id": "levels", "ref": "arg", "value": "levels"},
                         {"id": "on_editmore_action", "ref": "arg", "value": "oneditmore"},
                         {"id": "selected_node", "script": "return nodes.find(n => n.node_id === selected)"},
+                        {"id": "ref_nodes", "script": "return nodes.filter(n => !(n.ref || levels.level_by_node.has(n.id)) && (n.script || n.nodes))"},
                         {
                             "id": "edit_text",
                             "ref": "h"
@@ -6554,7 +6601,7 @@
                                 "edit_box",
                                 "types"
                             ],
-                            "script": "return [label.el, more.el, edit_box?.el]"
+                            "script": "return [label.el, more.el, edit_box?.el, editing === 'ref' ? ref_datalist.el : false]"
                         },
                         {
                             "id": "edit_text_textarea_dom_type",
@@ -6586,7 +6633,7 @@
                                 "editing",
                                 "edit_value"
                             ],
-                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); return Object.assign({id: `${html_id}-edit-text`, class: {input: true, [editing]: true}, value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), onclick: (s, payload) => (payload.stopPropagation(), s), onkeydown: (s, payload) => [s, (payload.key === 'Enter' ? (payload.stopPropagation(), [confirm_edit_text, payload]): false)], oninput: (s, payload) => ({...s, edit_value: payload.target.value}), onfocus: (s, payload) => [s, [() => payload.target.setSelectionRange(0, payload.target.value.length)]], onchange: (s, payload) => ([s, s.editing && [confirm_edit_text, payload]])}, editing === 'ref' ? {list: 'ref-options', type: 'text'} : {})"
+                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); return Object.assign({id: `${html_id}-edit-text`, class: {input: true, [editing]: true}, value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), onclick: (s, payload) => (payload.stopPropagation(), s), onkeydown: (s, payload) => [s, (payload.key === 'Enter' ? (payload.stopPropagation(), [confirm_edit_text, payload]): false)], oninput: (s, payload) => ({...s, edit_value: payload.target.value}), onfocus: (s, payload) => [s, [() => payload.target.setSelectionRange(0, payload.target.value.length)]], onchange: (s, payload) => ([s, s.editing && [confirm_edit_text, payload]])}, editing === 'ref' ? {list: 'node-options', type: 'text'} : {})"
                         },
                         {
                             "id": "edit_text_label",
@@ -6607,22 +6654,142 @@
                         {"id": "editing_path", "value": "editing"},
                         {
                             "id": "editing",
-                            "args": [
-                                "editing"
+                            "ref": "arg",
+                            "value": "editing"
+                        },
+                        {
+                            "id": "ref_datalist",
+                            "name": "ref_datalist",
+                            "out": "xtr0qj6",
+                            "nodes": [
+                                {
+                                    "id": "xtr0qj6",
+                                    "ref": "h",
+                                    "name": "ref_datalist"
+                                },
+                                {
+                                    "id": "0msbgbm",
+                                    "ref": "map"
+                                },
+                                {
+                                    "id": "buav28h",
+                                    "value": "datalist"
+                                },
+                                {
+                                    "id": "ql1hqrf"
+                                },
+                                {
+                                    "id": "jppiihp/jppiihp",
+                                    "ref": "h"
+                                },
+                                {
+                                    "id": "h2altl0",
+                                    "ref": "arg",
+                                    "value": "ref_nodes"
+                                },
+                                {
+                                    "id": "jgaye79",
+                                    "value": "node-options"
+                                },
+                                {
+                                    "id": "tk685lj"
+                                },
+                                {
+                                    "id": "2xycz42",
+                                    "value": "option"
+                                },
+                                {
+                                    "id": "8v5dk5c",
+                                    "ref": "h_text"
+                                },
+                                {
+                                    "id": "jppiihp/ci554ww",
+                                    "ref": "arg",
+                                    "value": "element.id"
+                                },
+                                {
+                                    "id": "n5dpir5",
+                                    "ref": "default"
+                                },
+                                {
+                                    "id": "9q28w9y",
+                                    "ref": "arg",
+                                    "value": "element.name"
+                                },
+                                {
+                                    "id": "6s0wcu9",
+                                    "ref": "arg",
+                                    "value": "element.id"
+                                }
                             ],
-                            "ref": "get"
-                        },
-                        {
-                            "id": "refs",
-                            "ref": "h"
-                        },
-                        {
-                            "id": "refs_dom_type",
-                            "value": "datalist"
-                        },
-                        {
-                            "id": "refs_props",
-                            "value": {"id": "ref-options"}
+                            "edges": [
+                                {
+                                    "from": "0msbgbm",
+                                    "to": "xtr0qj6",
+                                    "as": "children"
+                                },
+                                {
+                                    "from": "buav28h",
+                                    "to": "xtr0qj6",
+                                    "as": "dom_type"
+                                },
+                                {
+                                    "from": "ql1hqrf",
+                                    "to": "xtr0qj6",
+                                    "as": "props"
+                                },
+                                {
+                                    "from": "jppiihp/jppiihp",
+                                    "to": "0msbgbm",
+                                    "as": "fn",
+                                    "type": "ref"
+                                },
+                                {
+                                    "from": "h2altl0",
+                                    "to": "0msbgbm",
+                                    "as": "array"
+                                },
+                                {
+                                    "from": "jgaye79",
+                                    "to": "ql1hqrf",
+                                    "as": "id"
+                                },
+                                {
+                                    "from": "tk685lj",
+                                    "to": "jppiihp/jppiihp",
+                                    "as": "props"
+                                },
+                                {
+                                    "from": "2xycz42",
+                                    "to": "jppiihp/jppiihp",
+                                    "as": "dom_type"
+                                },
+                                {
+                                    "from": "8v5dk5c",
+                                    "to": "jppiihp/jppiihp",
+                                    "as": "children"
+                                },
+                                {
+                                    "from": "jppiihp/ci554ww",
+                                    "to": "tk685lj",
+                                    "as": "value"
+                                },
+                                {
+                                    "from": "n5dpir5",
+                                    "to": "8v5dk5c",
+                                    "as": "text"
+                                },
+                                {
+                                    "from": "9q28w9y",
+                                    "to": "n5dpir5",
+                                    "as": "value"
+                                },
+                                {
+                                    "from": "6s0wcu9",
+                                    "to": "n5dpir5",
+                                    "as": "otherwise"
+                                }
+                            ]
                         },
                         {
                             "id": "get_nodes",
@@ -6632,18 +6799,6 @@
                         {
                             "id": "get_id",
                             "script": "return node.id"
-                        },
-                        {
-                            "id": "id_text",
-                            "ref": "h_text"
-                        },
-                        {
-                            "id": "wrap_dom_type",
-                            "value": "option"
-                        },
-                        {
-                            "id": "wrap_option",
-                            "ref": "h"
                         },
                         {"id": "centering_wrapper_dom_type", "value": "div"},
                         {"id": "centering_wrapper_props", "script": "return {class: {centering: true}, style: {left: `${position.x}px`, top: `${position.y}px`} }"},
@@ -6677,13 +6832,12 @@
                             "from": "in",
                             "to": "edit_text_textarea_dom_type"
                         },
-                        {"from": "in", "to": "editing", "as": "target"},
-                        {"from": "editing_path", "to": "editing", "as": "path"},
                         {"from": "selected", "to": "selected_node", "as": "selected"},
                         {"from": "nodes", "to": "selected_node", "as": "nodes"},
                         {"from": "selected_node", "to": "centering_wrapper_props", "as": "node"},
                         {"from": "edit_text", "to": "edit_text_el_wrapper", "as": "et"},
                         {"from": "editing", "to": "edit_text_edit_box", "as": "input"},
+                        {"from": "editing", "to": "centering_wrapper_children", "as": "editing"},
                         {
                             "from": "edit_text_el_wrapper",
                             "to": "out",
@@ -6739,6 +6893,11 @@
                         {
                             "from": "edit_text_input",
                             "to": "edit_text_edit_box",
+                            "as": "ref"
+                        },
+                        {
+                            "from": "edit_text_input",
+                            "to": "edit_text_edit_box",
                             "as": "as"
                         },
                         {
@@ -6760,6 +6919,15 @@
                             "from": "edit_text_edit_box",
                             "to": "centering_wrapper_children",
                             "as": "edit_box"
+                        },
+                        {"from": "levels", "to": "ref_nodes", "as": "levels"},
+                        {"from": "nodes", "to": "ref_nodes", "as": "nodes"},
+                        {"from": "display_graph_nodes", "to": "ref_nodes", "as": "nodes"},
+                        {"from": "ref_nodes", "to": "ref_datalist", "as": "ref_nodes"},
+                        {
+                            "from": "ref_datalist",
+                            "to": "centering_wrapper_children",
+                            "as": "ref_datalist"
                         },
                         {
                             "from": "html_id",
@@ -6805,31 +6973,6 @@
                         {"from": "edit_text_more_props", "to": "edit_text_more", "as": "props"},
                         {"from": "edit_text_more_icon", "to": "edit_text_more", "as": "icon"},
                         {"from": "edit_text_more", "to": "centering_wrapper_children", "as": "more"},
-                        {
-                            "from": "refs_dom_type",
-                            "to": "refs",
-                            "as": "dom_type" 
-                        },
-                        {
-                            "from": "refs_props",
-                            "to": "refs",
-                            "as": "props" 
-                        },
-                        {
-                            "from": "wrap_dom_type",
-                            "to": "wrap_option",
-                            "as": "dom_type"
-                        },
-                        {
-                            "from": "id_text",
-                            "to": "wrap_option",
-                            "as": "children"
-                        },
-                        {
-                            "from": "wrap_option",
-                            "to": "refs",
-                            "as": "children"
-                        },
                         {
                             "from": "in",
                             "to": "get_nodes"
@@ -7264,16 +7407,17 @@
                             "id":"more",
                             "nodes": [
                                 {"id": "icon", "value": "ellipsis-vertical-outline"},
-                                {"id": "onclick_graph", "ref": "onclick_graph_action"},
-                                {"id": "props", "script": "return {onclick: onclick_graph}"},
+                                {"id": "onclick", "ref": "graph_ui_action"},
+                                {"id": "props", "script": "return {onclick}"},
                                 {"id": "out", "ref": "icon"}
                             ],
                             "edges": [
                                 {"from": "props", "to": "out", "as": "props"},
                                 {"from": "icon", "to": "out", "as": "icon"},
-                                {"from": "onclick_graph", "to": "props", "as": "onclick_graph"}
+                                {"from": "onclick", "to": "props", "as": "onclick"}
                             ]
                         },
+                        {"id": "more_readonly", "ref": "if"},
                         {"id": "dom_type", "value": "div"},
                         {"id": "children", "ref": "new_array"},
                         {"id": "html_id", "ref": "arg", "value": "html_id"},
@@ -7281,7 +7425,10 @@
                         {"id": "out", "ref": "h"}
                     ],
                     "edges": [
-                        {"from": "more", "to": "children", "as": "a1"},
+                        {"from": "more", "to": "more_readonly", "as": "false"},
+                        {"from": "false", "to": "more_readonly", "as": "true"},
+                        {"from": "readonly", "to": "more_readonly", "as": "pred"},
+                        {"from": "more_readonly", "to": "children", "as": "a1"},
                         {"from": "search_input", "to": "children", "as": "a0"},
                         {"from": "readonly", "to": "close_readonly", "as": "pred"},
                         {"from": "close", "to": "close_readonly", "as": "true"},
@@ -7421,7 +7568,7 @@
                         {"id": "onclick_graph", "ref": "onclick_graph_action"},
                         {
                             "id": "node_editor_props",
-                            "script": "return {id: `${html_id}-editor`, width: dimensions.x, height: dimensions.y, _viewBox: `${Math.floor(center.x - Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))) * 0.5 - node_el_width * 0.5)}  ${Math.floor(center.y - Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y))) * 0.5 - node_el_width * 0.5)} ${Math.floor(Math.max(dimensions.x * 0.5, Math.min(dimensions.x, nodes_box.max.x - nodes_box.min.x)) + node_el_width)} ${Math.floor(Math.max(dimensions.y * 0.5, Math.min(dimensions.y, nodes_box.max.y - nodes_box.min.y)) + node_el_width)}`, onclick: readonly && onclick_graph}"
+                            "script": "return {id: `${html_id}-editor`, width: dimensions.x, height: dimensions.y, _viewBox: `${Math.floor(center.x - Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))) * 0.5 - node_el_width * 0.5)}  ${Math.floor(center.y - Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y))) * 0.5 - node_el_width * 0.5)} ${Math.floor(Math.max(dimensions.x * 0.5, Math.min(dimensions.x, nodes_box.max.x - nodes_box.min.x)) + node_el_width)} ${Math.floor(Math.max(dimensions.y * 0.5, Math.min(dimensions.y, nodes_box.max.y - nodes_box.min.y)) + node_el_width)}`, onclick: onclick_graph, ontouchstart: onclick_graph}"
                         },
                         {
                             "id": "node_editor_dom_type",
@@ -9510,6 +9657,7 @@
         {"from": "arg", "to": "utility"},
         {"from": "partial", "to": "utility"},
         {"from": "apply", "to": "utility"},
-        {"from": "fetch", "to": "utility"}
+        {"from": "fetch", "to": "utility"},
+        {"from": "stringify", "to": "JSON"}
     ]
 }
