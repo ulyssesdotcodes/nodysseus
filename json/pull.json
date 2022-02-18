@@ -2106,7 +2106,7 @@
                         "expandable",
                         "contractable"
                     ],
-                    "script": "console.log('inputs'); return expandable ? 'expand' : contractable ? 'contract' : undefined"
+                    "script": "return expandable ? 'expand' : contractable ? 'contract' : undefined"
                 },
                 {
                     "id": "selected",
@@ -2178,7 +2178,7 @@
                     "args": [
                         "has_nodes"
                     ],
-                    "script": "console.log('contractable'); return !has_nodes"
+                    "script": "return !has_nodes"
                 },
                 {
                     "id": "out",
@@ -3212,10 +3212,12 @@
                             "ref": "arg",
                             "value": "state"
                         },
+                        {"id": "nodes", "ref": "arg", "value": "state.display_graph.nodes"},
                         {
                             "id": "new_edge",
-                            "script": "return {...payload_edge, as: `arg${sibling_count}`}"
+                            "script": "return {...payload_edge, as: next_arg ?? `arg${sibling_count}`}"
                         },
+                        {"id": "child_node", "script": "return nodes.find(n => n.id === edge.to)"},
                         {
                             "id": "update_sim_effect",
                             "ref": "arg",
@@ -3230,9 +3232,12 @@
                             "ref": "arg",
                             "value": "state.display_graph.edges"
                         },
+                        {"id": "siblings", "script": "return edges.filter(e => e.to === new_edge.to)"},
+                        {"id": "node_args", "ref": "node_args"},
+                        {"id": "next_arg", "script": "return args?.filter(a => !siblings.find(e => e.as === a))[0]"},
                         {
                             "id": "calculate_sibling_count",
-                            "script": "return edges.filter(e => e.to === new_edge.to).length"
+                            "script": "return siblings.length"
                         },
                         {
                             "id": "edges_path",
@@ -3263,12 +3268,12 @@
                         },
                         {
                             "from": "edges",
-                            "to": "calculate_sibling_count",
+                            "to": "siblings",
                             "as": "edges"
                         },
                         {
                             "from": "payload_edge",
-                            "to": "calculate_sibling_count",
+                            "to": "siblings",
                             "as": "new_edge"
                         },
                         {
@@ -3276,6 +3281,14 @@
                             "to": "new_edge",
                             "as": "payload_edge"
                         },
+                        {"from": "siblings", "to": "calculate_sibling_count", "as": "siblings"},
+                        {"from": "nodes", "to": "child_node", "as": "nodes"},
+                        {"from": "payload_edge", "to": "child_node", "as": "edge"},
+                        {"from": "nodes", "to": "node_args", "as": "nodes"},
+                        {"from": "child_node", "to": "node_args", "as": "node"},
+                        {"from": "siblings", "to": "next_arg", "as": "siblings"},
+                        {"from": "node_args", "to": "next_arg", "as": "args"},
+                        {"from": "next_arg", "to": "new_edge", "as": "next_arg"},
                         {
                             "from": "calculate_sibling_count",
                             "to": "new_edge",
@@ -3694,6 +3707,44 @@
             ]
         },
         {
+            "id": "node_args",
+            "out": "node_args",
+            "nodes": [
+                {"id": "node", "ref": "arg", "value": "node"},
+                {"id": "nodes", "ref": "arg", "value": "nodes"},
+                {"id": "ref_path", "value": "ref"},
+                {"id": "ref", "ref": "get"},
+                {"id": "ref_node", "script": "return nodes.find(n => n.id === selected)"},
+                {"id": "source_node", "ref": "if"},
+                {"id": "nodes_path", "value": "nodes"},
+                {"id": "node_nodes", "ref": "get"},
+                {"id": "node_arg_nodes", "script": "return nodes?.filter(n => n.ref ==='arg')"},
+                {"id": "should_show", "ref": "get"},
+                {"id": "nested_node_args", "script": "return nodes.map(n => n.value)"},
+                {"id": "extern_node_args", "script": "return _lib.just.get.fn(_lib, node.extern).args"},
+                {"id": "node_args_input", "script": "return node.id === 'arg' ? undefined : node.extern ? 'extern' : node.nodes ?  'nested' : 'none'"},
+                {"id": "node_args", "ref": "switch"}
+            ],
+            "edges": [
+                {"from": "ref_path", "to": "ref", "as": "path"},
+                {"from": "ref", "to": "source_node", "as": "pred"},
+                {"from": "ref_node", "to": "source_node", "as": "true"},
+                {"from": "node", "to": "source_node", "as": "false"},
+                {"from": "node", "to": "ref", "as": "target"},
+                {"from": "nodes", "to": "ref_node", "as": "nodes"},
+                {"from": "ref", "to": "ref_node", "as": "selected"},
+                {"from": "source_node", "to": "node_nodes", "as": "target"},
+                {"from": "nodes_path", "to": "node_nodes", "as": "path"},
+                {"from": "node_nodes", "to": "node_arg_nodes", "as": "nodes"},
+                {"from": "node_arg_nodes", "to": "nested_node_args", "as": "nodes"},
+                {"from": "nested_node_args", "to": "node_args", "as": "nested"},
+                {"from": "source_node", "to": "extern_node_args", "as": "node"},
+                {"from": "extern_node_args", "to": "node_args", "as": "extern"},
+                {"from": "source_node", "to": "node_args_input", "as": "node"},
+                {"from": "node_args_input", "to": "node_args", "as": "input"}
+            ]
+        },
+        {
             "id": "show_args_effect",
             "nodes": [
                 {"id": "in"},
@@ -3702,9 +3753,10 @@
                 {"id": "selected", "ref": "arg", "value": "state.selected.0"},
                 {"id": "state", "ref": "arg", "value": "state"},
                 {"id": "svg_offset", "ref": "arg", "value": "state.svg_offset"},
-                {"id": "nodes_path", "value": "nodes"},
                 {"id": "length_path", "value": "length"},
-                {"id": "ref_path", "value": "ref"},
+                {"id": "node_args_arr", "ref": "node_args"},
+                {"id": "node_args", "script": "return 'inputs: ' + node_args.join(', ')"},
+                {"id": "node_args_count", "ref": "get"},
                 {"id": "args_display_path", "value": "args_display"},
                 {"id": "selected_node", "script": "return nodes.find(n => n.id === selected)"},
                 {"id": "selected_el_node", "script": "return nodes.find(n => n.node_id === selected)"},
@@ -3712,16 +3764,6 @@
                 {"id": "x", "ref": "get"},
                 {"id": "y_path", "value": "y"},
                 {"id": "y", "ref": "get"},
-                {"id": "ref", "ref": "get"},
-                {"id": "ref_node", "script": "return nodes.find(n => n.id === selected)"},
-                {"id": "source_node", "ref": "if"},
-                {"id": "node_nodes", "ref": "get"},
-                {"id": "node_arg_nodes", "script": "return nodes?.filter(n => n.ref ==='arg')"},
-                {"id": "should_show", "ref": "get"},
-                {"id": "nested_node_args", "script": "return 'inputs: ' + nodes.map(n => n.value + (n.type ? `: ${n.type}` : '')).join(', ')"},
-                {"id": "extern_node_args", "script": "return 'inputs: ' + _lib.just.get.fn(_lib, node.extern).args.join(', ')"},
-                {"id": "node_args_input", "script": "return node.id === 'arg' ? undefined : node.extern ? 'extern' : node.nodes ?  'nested' : undefined"},
-                {"id": "node_args", "ref": "switch"},
                 {"id": "args_h_text", "ref": "h_text"},
                 {"id": "args_h_dom_type", "value": "div"},
                 {"id": "args_h_props", "script": "return {class: {args: true}, style: {left: `${x * svg_offset.scale + svg_offset?.x - 64}px`, top: `${y * svg_offset.scale + svg_offset.y + 32}px`}}"},
@@ -3735,23 +3777,12 @@
                 {"from": "in", "to": "out", "as": "args", "type": "ref"},
                 {"from": "display_graph_nodes", "to": "selected_node", "as": "nodes"},
                 {"from": "selected", "to": "selected_node", "as": "selected"},
-                {"from": "selected_node", "to": "ref", "as": "target"},
-                {"from": "ref_path", "to": "ref", "as": "path"},
-                {"from": "ref", "to": "source_node", "as": "pred"},
-                {"from": "display_graph_nodes", "to": "ref_node", "as": "nodes"},
-                {"from": "ref", "to": "ref_node", "as": "selected"},
-                {"from": "ref_node", "to": "source_node", "as": "true"},
-                {"from": "selected_node", "to": "source_node", "as": "false"},
-                {"from": "source_node", "to": "node_nodes", "as": "target"},
-                {"from": "nodes_path", "to": "node_nodes", "as": "path"},
-                {"from": "node_nodes", "to": "node_arg_nodes", "as": "nodes"},
-                {"from": "node_arg_nodes", "to": "nested_node_args", "as": "nodes"},
-                {"from": "nested_node_args", "to": "node_args", "as": "nested"},
-                {"from": "source_node", "to": "extern_node_args", "as": "node"},
-                {"from": "extern_node_args", "to": "node_args", "as": "extern"},
-                {"from": "source_node", "to": "node_args_input", "as": "node"},
-                {"from": "node_args_input", "to": "node_args", "as": "input"},
+                {"from": "display_graph_nodes", "to": "node_args_arr", "as": "nodes"},
+                {"from": "selected_node", "to": "node_args_arr", "as": "node"},
                 {"from": "node_args", "to": "args_h_text", "as": "text"},
+                {"from": "node_args_arr", "to": "node_args_count", "as": "target"},
+                {"from": "length_path", "to": "node_args_count", "as": "path"},
+                {"from": "node_args_arr", "to": "node_args", "as": "node_args"},
                 {"from": "args_h_text", "to": "args_h", "as": "children"},
                 {"from": "args_h_dom_type", "to": "args_h", "as": "dom_type"},
                 {"from": "nodes", "to": "selected_el_node", "as": "nodes"},
@@ -3764,7 +3795,7 @@
                 {"from": "y", "to": "args_h_props", "as": "y"},
                 {"from": "svg_offset", "to": "args_h_props", "as": "svg_offset"},
                 {"from": "args_h_props", "to": "args_h", "as": "props"},
-                {"from": "node_args_input", "to": "args_out", "as": "pred"},
+                {"from": "node_args_count", "to": "args_out", "as": "pred"},
                 {"from": "args_h", "to": "args_out", "as": "true"},
                 {"from": "state", "to": "set_args_display", "as": "target"},
                 {"from": "args_display_path", "to": "set_args_display", "as": "path"},
