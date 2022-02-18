@@ -1011,8 +1011,7 @@ const d3subscription = (dispatch, props) => {
             const ids = simulation.nodes().map(n => n.node_id).join(',');
             stopped = false;
             dispatch([s => (selected = s.selected[0], dimensions = s.dimensions, 
-                s.nodes.map(n => n.node_id).join(',') !== ids ? [props.action, data] : [s
-                , s.panzoom_selected_effect && s.selected  && [s.panzoom_selected_effect, {selected: s.selected[0], nodes: data.nodes, links: data.links, html_id: s.html_id, dimensions: s.dimensions, node_el_width: s.node_el_width}]])]);
+                s.nodes.map(n => n.node_id).join(',') !== ids ? [props.action, data] : s)]);
             simulation.tick();
             const visible_nodes = [];
             const visible_node_set = new Set();
@@ -1589,7 +1588,7 @@ const lib = {
                     // filterKey: e => true,
                     smoothScroll: false
                 });
-                instance.on('transform', e => performance.now() - lastpanzoom > 100 ? dispatch(sub_payload.action, {event: 'transform', transform: e.getTransform()}) : undefined);
+                instance.on('panstart', e => performance.now() - lastpanzoom > 100 ? dispatch(sub_payload.action, {event: 'panstart', transform: e.getTransform()}) : undefined);
                 instance.moveTo(window.innerWidth * 0, window.innerHeight * 0.5);
             });
             requestAnimationFrame(() => dispatch(s => [{...s, panzoom_selected_effect}]));
