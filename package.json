@@ -23,7 +23,7 @@
   },
   "name": "nodysseus",
   "description": "A generic node-based editor. Built with hyperapp.",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "main": "nodysseus.js",
   "devDependencies": {},
   "repository": {
