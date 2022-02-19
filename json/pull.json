@@ -3234,7 +3234,7 @@
                         },
                         {"id": "siblings", "script": "return edges.filter(e => e.to === new_edge.to)"},
                         {"id": "node_args", "ref": "node_args"},
-                        {"id": "next_arg", "script": "return args?.filter(a => !siblings.find(e => e.as === a))[0]"},
+                        {"id": "next_arg", "script": "return args?.filter(a => !(a === '_node_inputs' || a === '_lib' || a === '_node') && !siblings.find(e => e.as === a))[0]"},
                         {
                             "id": "calculate_sibling_count",
                             "script": "return siblings.length"
