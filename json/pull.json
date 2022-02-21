@@ -3350,6 +3350,11 @@
             "value": "readonly"
         },
         {
+            "id": "hash",
+            "ref": "arg",
+            "value": "hash"
+        },
+        {
             "id": "static",
             "ref": "arg",
             "value": "static"
@@ -6995,7 +7000,7 @@
         },
         {
             "id": "render_popover_graph_effect",
-            "script": "return (dispatch, payload) => requestAnimationFrame(() => {payload = _lib.no.resolve(payload); if(payload.popover_dispatch) { payload.popover_dispatch(s => [{...s, display_graph: payload.display_graph, selected: [payload.display_graph.out]}, [s.update_sim_effect, {...s, display_graph: payload.display_graph}], [s.update_hyperapp] ]) } else { const popover_dispatch = _lib.no.executeGraphNode({graph: payload.graph})('initialize_hyperapp_app')({graph: payload.graph, display_graph: payload.display_graph, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions, readonly: true, hide_types: true, sim_update_alpha: 0.3, static: true}).dispatch; dispatch(s => ({...s, popover_dispatch}));}})"
+            "script": "return (dispatch, payload) => requestAnimationFrame(() => {payload = _lib.no.resolve(payload); if(payload.popover_dispatch) { payload.popover_dispatch(s => [{...s, display_graph: payload.display_graph, selected: [payload.display_graph.out]}, [s.update_sim_effect, {...s, display_graph: payload.display_graph}], [s.update_hyperapp] ]) } else { const popover_dispatch = _lib.no.executeGraphNode({graph: payload.graph})('initialize_hyperapp_app')({graph: payload.graph, display_graph: payload.display_graph, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions, readonly: true, hide_types: true, sim_update_alpha: 0.3, static: true, hash: ''}).dispatch; dispatch(s => ({...s, popover_dispatch}));}})"
         },
         {
             "id": "handle_popover_event",
@@ -10006,6 +10011,11 @@
             "from": "readonly",
             "to": "hyperapp_init_state",
             "as": "readonly"
+        },
+        {
+            "from": "hash",
+            "to": "hyperapp_init_state",
+            "as": "hash"
         },
         {
             "from": "hide_types",
