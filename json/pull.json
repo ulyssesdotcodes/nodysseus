@@ -7132,7 +7132,7 @@
                     "id": "styles",
                     "nodes": [
                         {"id": "in"},
-                        {"id": "style_content", "value": "#node-editor { position: relative; width: 100%; height: 100vh; color: white; font-family: consolas; } #node-editor-editor { background-color: #112; } #node-editor-editor.hash-view { background-color: unset; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .centering { position: absolute; width: 32vw; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { align-self: stretch; font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .args { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node { cursor: pointer; stroke: #fff; stroke-width: 32; stroke-opacity: 1; } .insert-node .circle{ fill-opacity: 0.5; } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"},
+                        {"id": "style_content", "value": "#node-editor { position: relative; width: 100%; height: 100vh; color: white; font-family: consolas; } #node-editor-editor { background-color: #112; } #node-editor-editor.hash-view { background-color: unset; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .more { cursor: pointer; } .edit-value .centering { position: absolute; width: 32vw; display: flex; flex-direction: column; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .args { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node { cursor: pointer; stroke: #fff; stroke-width: 32; stroke-opacity: 1; } .insert-node .circle{ fill-opacity: 0.5; } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"},
                         {"id": "style_h_text", "ref": "h_text"},
                         {"id": "style_dom_type", "value": "style"},
                         {"id": "out", "ref": "h"}
@@ -7170,6 +7170,11 @@
                             "ref": "arg",
                             "value": "selected.0"
                         },
+                        {
+                            "id": "dimensions",
+                            "ref": "arg",
+                            "value": "dimensions"
+                        },
                         {"id": "levels", "ref": "arg", "value": "levels"},
                         {"id": "on_editmore_action", "ref": "arg", "value": "oneditmore"},
                         {"id": "selected_node", "script": "return nodes.find(n => n.node_id === selected)"},
@@ -7182,6 +7187,8 @@
                             "id": "edit_text_dom_type",
                             "value": "div"
                         },
+                        {"id": "edit_text_label_wrapper_children", "ref": "new_array"},
+                        {"id": "edit_text_label_wrapper", "ref": "h"},
                         {
                             "id": "edit_text_input",
                             "ref": "h"
@@ -7196,7 +7203,7 @@
                         },
                         {"id": "edit_position", "ref": "arg", "value": "edit_position"},
                         {"id": "svg_offset", "ref": "arg", "value": "svg_offset"},
-                        {"id": "edit_html_position", "script": "return {x: (position?.x ?? 0) * svg_offset.scale + (svg_offset?.x ?? 0), y: (position?.y ?? 0) * svg_offset.scale + svg_offset.y}"},
+                        {"id": "edit_html_position", "script": "return {x: Math.min(dimensions.x - 256 * 1.25, (position?.x ?? 0) * svg_offset.scale + (svg_offset?.x ?? 0)), y: Math.min(dimensions.y - 64, (position?.y ?? 0) * svg_offset.scale + svg_offset.y)}"},
                         {
                             "id": "edit_text_base_props",
                             "script": "return {id: `${html_id}-edit-value`, class: {'edit-value': true, [editing]: true}, onclick: (s, payload) => (payload.preventDefault(), payload.stopPropagation(), [s, [confirm_edit_text, payload]])}"
@@ -7212,7 +7219,7 @@
                                 "edit_box",
                                 "types"
                             ],
-                            "script": "return [label.el, more.el, edit_box?.el, editing === 'ref' ? ref_datalist.el : false]"
+                            "script": "return [label.el, edit_box?.el, editing === 'ref' ? ref_datalist.el : false]"
                         },
                         {
                             "id": "edit_text_textarea_dom_type",
@@ -7259,7 +7266,7 @@
                             "id": "edit_text_label_text",
                             "ref": "h_text"
                         },
-                        {"id": "edit_text_more_props", "script": "return {onclick: on_editmore_action}"},
+                        {"id": "edit_text_more_props", "script": "return {onclick: on_editmore_action, class: {more: true, hydrated: true, md: true}}"},
                         {"id": "edit_text_more_icon", "value": "ellipsis-vertical-outline"},
                         {"id": "edit_text_more", "ref": "icon"},
                         {"id": "editing_path", "value": "editing"},
@@ -7478,6 +7485,7 @@
                             "to": "edit_text",
                             "as": "children"
                         },
+                        {"from": "dimensions", "to": "edit_html_position", "as": "dimensions"},
                         {"from": "edit_position", "to": "edit_html_position", "as": "position"},
                         {"from": "svg_offset", "to": "edit_html_position", "as": "svg_offset"},
                         {"from": "edit_html_position", "to": "centering_wrapper_props", "as": "position"},
@@ -7545,8 +7553,11 @@
                             "to": "edit_text_label_props",
                             "as": "html_id"
                         },
+                        {"from": "edit_text_more", "to": "edit_text_label_wrapper_children", "as": "a1"},
+                        {"from": "edit_text_label", "to": "edit_text_label_wrapper_children", "as": "a0"},
+                        {"from": "edit_text_label_wrapper_children", "to": "edit_text_label_wrapper", "as": "children"},
                         {
-                            "from": "edit_text_label",
+                            "from": "edit_text_label_wrapper",
                             "to": "centering_wrapper_children",
                             "as": "label"
                         },
@@ -7568,7 +7579,6 @@
                         {"from": "on_editmore_action", "to": "edit_text_more_props", "as": "on_editmore_action"},
                         {"from": "edit_text_more_props", "to": "edit_text_more", "as": "props"},
                         {"from": "edit_text_more_icon", "to": "edit_text_more", "as": "icon"},
-                        {"from": "edit_text_more", "to": "centering_wrapper_children", "as": "more"},
                         {
                             "from": "in",
                             "to": "get_nodes"
