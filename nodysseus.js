@@ -234,15 +234,34 @@ const executeGraph = ({ cache, graph, cache_id, node_cache }) => {
     graph.in_edge_map = in_edge_map;
 
     const run_with_val = (node_id) => (graph_input_value) => {
+        // while(node_id.indexOf("/") > 0 && !node_map.has(node_id)) {
+        //     const path = node_id.split('/');
+        //     let i = 1;
+        //     while(node_map.has(path.slice(0, i).join("/"))){
+        //         i++;
+        //     }
+
+        //     const nested_id = path.slice(0, i - 1).join("/");
+        //     const nested = node_map.get(nested_id);
+
+        //     node_map.delete(nested_id);
+        //     graph.nodes = graph.nodes.filter(n => n.id !== path.slice(0, i - 1).join("/"));
+        //     nested.nodes.forEach(n => graph.nodes.push({...n, id: nested_id + "/" + n.id}));
+        //     nested.nodes.forEach(n => node_map.set(nested_id + "/" + n.id, {...n, id: nested_id + "/" + n.id}));
+        //     nested.edges.forEach(e => graph.edges.push({...e, from: nested_id + "/" + e.from, to: nested_id + "/" + e.to}));
+        //     nested.nodes.forEach(n => in_edge_map.set(nested_id + "/" + n.id, nested.edges.filter(e => e.to === n.id).map(e => ({...e, from: nested_id + "/" + e.from, to: nested_id + "/" + e.to}))));
+        // }
+
         let node = node_map.get(node_id);
+        
 
         if(node === undefined) {
             throw new Error(`Undefined node_id ${node_id}`)
         }
 
-        if(!node.inputs || node.inputs.length !== in_edge_map.get(node_id).length) {
+        // if(!node.inputs || node.inputs.length !== in_edge_map.get(node_id).length) {
             Object.assign(node, { inputs: in_edge_map.get(node_id) });
-        }
+        // }
 
         if (node.ref === "arg" && (!node.inputs || node.inputs.length === 0)) {
             node.inputs.push({ from: "_graph_input_value", to: node.id, as: 'target' });
@@ -1010,9 +1029,11 @@ const d3subscription = (dispatch, props) => {
         if (simulation.alpha() > simulation.alphaMin()) {
             const ids = simulation.nodes().map(n => n.node_id).join(',');
             stopped = false;
-            dispatch([s => (selected = s.selected[0], dimensions = s.dimensions, 
-                s.nodes.map(n => n.node_id).join(',') !== ids ? [props.action, data] : s)]);
             simulation.tick();
+            dispatch([s => (selected = s.selected[0], dimensions = s.dimensions, 
+                s.nodes.map(n => n.node_id).join(',') !== ids ? [props.action, data] 
+                    : s.panzoom_selected_effect ? [s, [s.panzoom_selected_effect, {...s, nodes: simulation.nodes().map(n => ({...n, x: n.x - 8, y: n.y})), links: simulation.force('links').links(), prevent_dispatch: true, selected: s.selected[0]}]] : s)]);
+
             const visible_nodes = [];
             const visible_node_set = new Set();
             let selected_pos;
@@ -1075,22 +1096,12 @@ const d3subscription = (dispatch, props) => {
                     visible_nodes.push({x: source.x, y: source.y});
                 }
             })
-
-            // // center the viewbox
-            const nodes_box = visible_nodes.reduce((acc, n) => ({min: {x: Math.min(acc.min.x, n.x - 24), y: Math.min(acc.min.y, n.y - 24)}, max: {x: Math.max(acc.max.x, n.x + node_el_width * 0.5 - 24), y: Math.max(acc.max.y, n.y + 24)}}), {min: {x: selected_pos ? (selected_pos.x - 96) : dimensions.x , y: selected_pos ? (selected_pos.y - 256) : dimensions.y}, max: {x: selected_pos ? (selected_pos.x + 96) : -dimensions.x, y: selected_pos ? (selected_pos.y + 128) : -dimensions.y}})
-            const nodes_box_center = {x: (nodes_box.max.x + nodes_box.min.x) * 0.5, y: (nodes_box.max.y + nodes_box.min.y) * 0.5}; 
-            const nodes_box_dimensions = {x: Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))), y: Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y)))}
-            const center = !selected_pos ? nodes_box_center : {x: (selected_pos.x + nodes_box_center.x * 3) * 0.25, y: (selected_pos.y + nodes_box_center.y * 3) * 0.25}
-
-            const editor = document.getElementById(`${htmlid}-editor`);
-            if(editor) {
-                // editor.setAttribute('viewBox', `${Math.floor(center.x - nodes_box_dimensions.x * 0.5 - node_el_width * 0.5)}  ${Math.floor(center.y - nodes_box_dimensions.y * 0.5 - node_el_width * 0.5)} ${Math.floor(nodes_box_dimensions.x + node_el_width)} ${Math.floor(nodes_box_dimensions.y + node_el_width)}`);
-            }
-
-            //     return {width: dimensions.x, height: dimensions.y, viewBox: `${center.x - Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))) * 0.5 - node_el_width * 0.5}  ${center.y - Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y))) * 0.5 - node_el_width * 0.5} ${Math.max(dimensions.x * 0.5, Math.min(dimensions.x, nodes_box.max.x - nodes_box.min.x)) + node_el_width} ${Math.max(dimensions.y * 0.5, Math.min(dimensions.y, nodes_box.max.y - nodes_box.min.y)) + node_el_width}` /*, onmousedown: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'down'}], onmouseup: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'up'}], onmousemove: (_, payload) => [onclick_graph_fn, {x: payload.x, y: payload.y, ty: 'move'}]*/}"
         } else if(!stopped) {
             stopped = true; 
-            dispatch([props.action, data]);
+            dispatch([props.action, data])
+            requestAnimationFrame(() => {
+                dispatch(s => [s, [s.panzoom_selected_effect, {...s, selected: s.selected[0]}]])
+            });
         }
 
         if (!abort_signal.stop) {
@@ -1157,7 +1168,6 @@ const contract_all = (graph) => {
 }
 
 const contract_node = (data, keep_expanded = false) => {
-    console.log(data);
     const node = data.display_graph.nodes.find(n => n.id === data.node_id);
     if (!node.nodes) {
         const slash_index = data.node_id.lastIndexOf('/');
@@ -1473,7 +1483,7 @@ const generic_nodes = new Set([
     "custom"
 ]);
 
-const ispromise = a => typeof a?.then === 'function';
+const ispromise = a => a?._Proxy ? false : typeof a?.then === 'function';
 
 const lib = {
     just: { 
@@ -1563,14 +1573,15 @@ const lib = {
     Fuse,
     pz: {
         panzoom: (dispatch, sub_payload) => {
-            let instance 
+            let instance;
             let lastpanzoom = 0;
             const panzoom_selected_effect = (dispatch, payload) => {
                 if(!instance){ return; }
                 lastpanzoom = performance.now();
                 const viewbox = findViewBox(
                     payload.nodes, 
-                    payload.links, payload.selected, 
+                    payload.links, 
+                    payload.selected, 
                     payload.node_el_width, 
                     payload.html_id,
                     payload.dimensions
@@ -1579,7 +1590,10 @@ const lib = {
                 const y = payload.dimensions.y * 0.5 - viewbox.center.y
                 instance.moveTo(x, y);
                 instance.zoomTo(x, y, 1 / instance.getTransform().scale)
-                dispatch(sub_payload.action, {event: 'effect_transform', transform: instance.getTransform()})
+
+                if(!payload.prevent_dispatch) {
+                    dispatch(sub_payload.action, {event: 'effect_transform', transform: instance.getTransform()})
+                }
             }
 
             let init = requestAnimationFrame(() => {
