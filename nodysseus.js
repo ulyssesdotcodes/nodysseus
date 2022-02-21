@@ -1459,6 +1459,8 @@ const generic_nodes = new Set([
     "hyperapp",
     "h",
     "h_text",
+    "toggle",
+    "input",
 
     "array",
     "new_array",
@@ -1633,6 +1635,7 @@ const nodysseus = function(html_id, display_graph) {
                 .filter(e => !generic_nodes.has(e.from))
                 .concat(DEFAULT_GRAPH.edges.filter(e => generic_nodes.has(e.to))) 
         },
+        hash: window.location.hash,
         html_id,
         dimensions: {
             x: document.getElementById(html_id).clientWidth,
