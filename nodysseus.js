@@ -304,7 +304,6 @@ const executeGraph = ({ cache, graph, cache_id, node_cache }) => {
             const node_map_ref = node_map.get(ref);
             if (node_map_ref) {
                 node_ref = Object.assign({}, node_map_ref, node)
-                node_ref.args = (node.args ?? []).concat(node_map_ref.args);
                 node_ref._noderefflag = !!node._noderefflag;
             } else {
                 throw new Error(`Unable to find ref ${ref} for node ${node.name ?? node.id}`)
@@ -447,9 +446,6 @@ const executeGraph = ({ cache, graph, cache_id, node_cache }) => {
             argset.add('_node');
             argset.add('_node_inputs');
             argset.add('_graph');
-            if(node_ref.args) {
-                node_ref.args.forEach(a => argset.add(a));
-            }
             (inputs ?? []).map(i => i.as).forEach(i => i && argset.add(i));
             let orderedargs = "";
             const input_values = [];
