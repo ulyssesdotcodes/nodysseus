@@ -2329,7 +2329,6 @@
         },
         {
             "id": "h",
-            "args": ["children", "props", "dom_type"],
             "nodes": [
                 {
                     "id": "in"
@@ -2359,7 +2358,7 @@
                 {"id": "dom_type_def", "ref": "default"},
                 {
                     "id": "out",
-                    "script": "(children.filter(c => !!c) ?? []).forEach(c => {if(!(typeof c.dom_type === 'string' || typeof c.text === 'string')){throw new Error('invalid child element');}}); return {el: {dom_type, props, children}}"
+                    "script": "if(!(typeof dom_type === 'string' || typeof text === 'string')){ throw new Error('invalid element');} return {el: {dom_type, props, children}}"
                 },
                 {
                     "id": "_out"
@@ -6841,7 +6840,11 @@
                             "ref": "arg",
                             "value": "dimensions"
                         },
+                        {"id": "display_graph", "ref": "arg", "value": "display_graph"},
+                        {"id": "selected_edge", "ref": "arg", "value": "selected_edge"},
+                        {"id": "editing", "ref": "arg", "value": "editing"},
                         {"id": "levels", "ref": "arg", "value": "levels"},
+                        {"id": "edit_value", "ref": "arg", "value": "edit_value"},
                         {"id": "on_editmore_action", "ref": "arg", "value": "oneditmore"},
                         {"id": "selected_node", "script": "return nodes.find(n => n.node_id === selected)"},
                         {"id": "ref_nodes", "script": "return nodes.filter(n => !(n.ref || levels.level_by_node.has(n.id)) && (n.script || n.nodes))"},
@@ -6894,7 +6897,7 @@
                         },
                         {
                             "id": "edit_text_textarea_props",
-                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); return {id: `${html_id}-textarea`, class: {textarea: true, [editing]: true}, onclick: (s, payload) => (payload.stopPropagation(), s), value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), oninput: (s, payload) => ({...s, edit_value: payload.target.value}), onfocus: (s, payload) => [s, [() => payload.target.setSelectionRange(0, payload.target.value.length)]] }"
+                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected))[editing]); return {id: `${html_id}-textarea`, class: {textarea: true, [editing]: true}, onclick: (s, payload) => (payload.stopPropagation(), s), value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), oninput: (s, payload) => ({...s, edit_value: payload.target.value}), onfocus: (s, payload) => [s, [() => payload.target.setSelectionRange(0, payload.target.value.length)]] }"
                         },
                         {
                             "id": "edit_text_input_dom_type",
@@ -6903,14 +6906,7 @@
                         },
                         {
                             "id": "edit_text_input_props",
-                            "args": [
-                                "selected",
-                                "selected_edge",
-                                "display_graph",
-                                "editing",
-                                "edit_value"
-                            ],
-                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected[0]))[editing]); return Object.assign({id: `${html_id}-edit-text`, class: {input: true, [editing]: true}, value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), onclick: (s, payload) => (payload.stopPropagation(), s), onkeydown: (s, payload) => [s, (payload.key === 'Enter' ? (payload.stopPropagation(), [confirm_edit_text, payload]): false)], oninput: (s, payload) => ({...s, edit_value: payload.target.value}), onfocus: (s, payload) => [s, [() => payload.target.setSelectionRange(0, payload.target.value.length)]], onchange: (s, payload) => ([s, s.editing && [confirm_edit_text, payload]])}, editing === 'ref' ? {list: 'node-options', type: 'text'} : {})"
+                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected))[editing]); return Object.assign({id: `${html_id}-edit-text`, class: {input: true, [editing]: true}, value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), onclick: (s, payload) => (payload.stopPropagation(), s), onkeydown: (s, payload) => [s, (payload.key === 'Enter' ? (payload.stopPropagation(), [confirm_edit_text, payload]): false)], oninput: (s, payload) => (console.log(payload), {...s, edit_value: payload.target.value}), onfocus: (s, payload) => [s, [() => payload.target.setSelectionRange(0, (console.log(payload), payload.target.value.length))]], onchange: (s, payload) => ([s, s.editing && [confirm_edit_text, payload]])}, editing === 'ref' ? {list: 'node-options', type: 'text'} : {})"
                         },
                         {
                             "id": "edit_text_label",
@@ -7093,22 +7089,17 @@
                         }
                     ],
                     "edges": [
-                        {
-                            "from": "in",
-                            "to": "edit_text_input_props"
-                        },
-                        {
-                            "from": "in",
-                            "to": "edit_text_input_dom_type"
-                        },
-                        {
-                            "from": "in",
-                            "to": "edit_text_textarea_props"
-                        },
-                        {
-                            "from": "in",
-                            "to": "edit_text_textarea_dom_type"
-                        },
+                        {"from": "selected", "to": "edit_text_textarea_props", "as": "selected"},
+                        {"from": "selected_edge", "to": "edit_text_textarea_props", "as": "selected_edge"},
+                        {"from": "display_graph", "to": "edit_text_textarea_props", "as": "display_graph"},
+                        {"from": "edit_value", "to": "edit_text_textarea_props", "as": "edit_value"},
+                        {"from": "editing", "to": "edit_text_textarea_props", "as": "editing"},
+                        {"from": "selected", "to": "edit_text_textarea_props", "as": "selected"},
+                        {"from": "selected_edge", "to": "edit_text_input_props", "as": "selected_edge"},
+                        {"from": "display_graph", "to": "edit_text_input_props", "as": "display_graph"},
+                        {"from": "edit_value", "to": "edit_text_input_props", "as": "edit_value"},
+                        {"from": "editing", "to": "edit_text_input_props", "as": "editing"},
+                        {"from": "selected", "to": "edit_text_input_props", "as": "selected"},
                         {"from": "selected", "to": "selected_node", "as": "selected"},
                         {"from": "nodes", "to": "selected_node", "as": "nodes"},
                         {"from": "selected_node", "to": "centering_wrapper_props", "as": "node"},
