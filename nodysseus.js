@@ -480,7 +480,7 @@ const executeGraph = ({ cache, graph, cache_id, node_cache }) => {
             try {
                 const node_hash = hashcode(orderedargs + node_ref.script);
 
-                const fn = node_cache.get(node_hash) ?? new Function(`return function _${(node.name ?? node.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script}}`)();
+                const fn = node_cache.get(node_hash) ?? new Function(`return function _${(node.name?.replace(/\W/g, "_") ?? node.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script}}`)();
 
                 if(!node_ref.fn) {
                     node_cache.set(node_hash, fn);
@@ -1543,7 +1543,7 @@ const lib = {
         },
         call: {
             args: ['fn', 'args', 'self'],
-            fn: (fn, args, self) => self[fn](...((args ?? []).reverse().reduce((acc, v) => [!acc[0] && v !== undefined, acc[0] || v !== undefined ? acc[1].concat(v) : acc[1]], [false, []])[1].reverse()))
+            fn: (fn, args, self) => self[fn](...((args ?? []).reverse().reduce((acc, v) => [!acc[0] && v !== undefined, acc[0] || v !== undefined ? acc[1].concat([v]) : acc[1]], [false, []])[1].reverse()))
         },
         merge_objects: {
             args: ['_node_inputs'],
