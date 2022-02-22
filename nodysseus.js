@@ -638,9 +638,6 @@ const bfs = (graph, fn) => {
 
 const updateSimulationNodes = (dispatch, data) => {
     if(data.static) {
-        const ids = data.display_graph.nodes.map(n => n.id).join(',');
-        const selected = data.display_graph.out;
-
         const find_childest = n => {
             const e = graph.edges.find(e => e.from === n);
             if (e) {
@@ -740,9 +737,9 @@ const updateSimulationNodes = (dispatch, data) => {
             }))
         }
         requestAnimationFrame(() => {
-            dispatch([resolve(data.sim_to_hyperapp), node_data])
+            dispatch(s => s ? [resolve(data.sim_to_hyperapp), node_data] : s)
             requestAnimationFrame(() => {
-                dispatch(s => [s, [s.panzoom_selected_effect, {...s, ...node_data, selected: s[0]}]]);
+                dispatch(s => s ? [s, [s.panzoom_selected_effect, {...s, ...node_data, selected: s[0]}]] : s);
                 node_data.nodes.forEach(n => {
                     const el = document.getElementById(`${data.html_id}-${n.node_child_id}`);
                     if(el) {
@@ -1206,14 +1203,6 @@ const contract_node = (data, keep_expanded = false) => {
                 const old_node = inside_nodes.find(i => e.from === i.id);
                 let inside_node = old_node ?? Object.assign({}, data.display_graph.nodes.find(p => p.id === e.from));
 
-                if (((inside_node.name ?? inside_node.id)?.endsWith('/in') && 
-                    !(inside_node.name ?? inside_node.id).endsWith(name + '/in')) 
-                    || ((inside_node.name ?? inside_node.id)?.endsWith('/out') && 
-                        !(inside_node.name ?? inside_node.id).endsWith(name + '/out'))) {
-                    in_edge.push(e);
-                    continue;
-                }
-
                 inside_node_map.set(inside_node.id, inside_node);
                 inside_edges.add(e);
                 if (!old_node) {
@@ -1243,11 +1232,9 @@ const contract_node = (data, keep_expanded = false) => {
 
         const in_node = inside_node_map.get(in_node_id);
 
-        // have to create a dummy in node if the in node does something
+        // if there's no in node, just return
         if (in_node_id && !in_node_id.endsWith('in')) {
-            in_node_id = node_id + "/in";
-            inside_nodes.push({ id: in_node_id });
-            inside_edges.add({ from: in_node_id, to: in_node.id });
+            return {display_graph: data.display_graph, sleected: [data.node_id]};
         }
 
         if (!in_node_id) {
@@ -1488,12 +1475,6 @@ const lib = {
         get: {
             args: ['target', 'path', 'def'],
             fn: get,
-            // _: (target, path, def) => ispromise(target) || ispromise(path) 
-            //     ? Promise.resolve(target).then(t => 
-            //         Promise.resolve(path).then(p => 
-            //             Promise.resolve(def).then(d => 
-            //                 get(t, p, d))))
-            //     : get(target, path, def),
         },
         set, 
         diff

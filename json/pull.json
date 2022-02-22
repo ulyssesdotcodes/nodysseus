@@ -1519,10 +1519,6 @@
                     "as": "update"
                 },
                 {
-                    "from": "in",
-                    "to": "calculate_levels"
-                },
-                {
                     "from": "state",
                     "to": "set_levels",
                     "as": "state"
@@ -2635,18 +2631,10 @@
                 },
                 {
                     "id": "expand_contract_result_inputs",
-                    "args": [
-                        "expandable",
-                        "contractable"
-                    ],
                     "script": "return expandable ? 'expand' : contractable ? 'contract' : undefined"
                 },
                 {
                     "id": "selected",
-                    "args": [
-                        "expand",
-                        "contract"
-                    ],
                     "script": "return [contract] ?? [expand]"
                 },
                 {
@@ -2655,9 +2643,6 @@
                 },
                 {
                     "id": "get_name",
-                    "args": [
-                        "node"
-                    ],
                     "script": "return node.name"
                 },
                 {
@@ -2666,36 +2651,18 @@
                 },
                 {
                     "id": "expandable_id",
-                    "args": [
-                        "id",
-                        "out"
-                    ],
-                    "script": "return id ? [id + '/' + out] : []"
+                    "script": "return node.id ? [node.id + '/' + out] : []"
                 },
                 {
                     "id": "contractable_id",
-                    "args": [
-                        "node_id",
-                        "name"
-                    ],
                     "script": "node_id = name ?? node_id; return !node_id ? [] : node_id.endsWith('/out') ? [node_id.substring(0, node_id.lastIndexOf('/'))] : node_id.lastIndexOf('/') >= 0 ? [node_id.substring(0, node_id.lastIndexOf('/'))] : [node_id]"
                 },
                 {
                     "id": "expand",
-                    "args": [
-                        "node_id",
-                        "display_graph",
-                        "out"
-                    ],
-                    "script": "return display_graph && node_id ? _lib.scripts.expand_node({display_graph, node_id, out}) : []"
+                    "script": "return display_graph && node_id ? _lib.scripts.expand_node({display_graph, node_id}) : []"
                 },
                 {
                     "id": "contract",
-                    "args": [
-                        "node_id",
-                        "display_graph",
-                        "name"
-                    ],
                     "script": "return display_graph && node_id ? _lib.scripts.contract_node({display_graph, node_id, name, node_name}) : []"
                 },
                 {
@@ -2721,15 +2688,9 @@
             "edges": [
                 {
                     "from": "in",
-                    "to": "contractable_id"
-                },
-                {
-                    "from": "in",
-                    "to": "expand"
-                },
-                {
-                    "from": "in",
-                    "to": "contract"
+                    "to": "out",
+                    "as": "args",
+                    "type": "ref"
                 },
                 {
                     "from": "dg_selected",
@@ -2757,6 +2718,11 @@
                     "as": "node_id"
                 },
                 {
+                    "from": "display_graph",
+                    "to": "contract",
+                    "as": "display_graph"
+                },
+                {
                     "from": "node_id",
                     "to": "contract",
                     "as": "node_id"
@@ -2765,6 +2731,11 @@
                     "from": "node_id",
                     "to": "expand",
                     "as": "node_id"
+                },
+                {
+                    "from": "display_graph",
+                    "to": "expand",
+                    "as": "display_graph"
                 },
                 {
                     "from": "has_nodes",
@@ -2778,11 +2749,13 @@
                 },
                 {
                     "from": "selected_node",
-                    "to": "expandable_id"
+                    "to": "expandable_id",
+                    "as": "node"
                 },
                 {
                     "from": "selected_node",
-                    "to": "contract"
+                    "to": "contract",
+                    "as": "node"
                 },
                 {
                     "from": "get_name",
@@ -2798,6 +2771,11 @@
                     "from": "get_name",
                     "to": "is_contractable",
                     "as": "name"
+                },
+                {
+                    "from": "node_id",
+                    "to": "contractable_id",
+                    "as": "node_id"
                 },
                 {
                     "from": "get_name",
@@ -7599,11 +7577,12 @@
                                     "value": "html_id"
                                 },
                                 {
+                                    "id": "display_graph",
+                                    "ref": "arg",
+                                    "value": "display_graph"
+                                },
+                                {
                                     "id": "search_input_props",
-                                    "args": [
-                                        "search",
-                                        "display_graph"
-                                    ],
                                     "script": "return {id: `${html_id}-search-input`, key: `${html_id}-search-input`, class: 'search-input', type: 'text', onkeydown: (s, payload) => { if(payload.key === 'Enter'){ const direction = payload.shiftKey ? -1 : 1; const idx = (s.search_results.length + s.search_index + direction) % s.search_results.length; return {...s, selected: s.search_results.slice(idx, idx + 1), search_index: idx} } else { return s;} }, oninput: (s, payload) => {const search_results = new _lib.Fuse(nodes.map(n => Object.assign({}, n, display_graph.nodes.find(d => d.id === n.node_id))), {keys: ['name', 'node_id', 'ref', 'value']}).search(payload.target.value).map(r => r.item.node_id); return {...s, search: payload.target.value, selected: search_results.length > 0 ? search_results.slice(0, 1) : s.selected, search_results, search_index: 0}}}"
                                 },
                                 {"id": "search_field", "ref": "h"},
@@ -7620,10 +7599,6 @@
                             ],
                             "edges": [
                                 {
-                                    "from": "in",
-                                    "to": "search_input_props"
-                                },
-                                {
                                     "from": "html_id",
                                     "to": "search_input_props",
                                     "as": "html_id"
@@ -7632,6 +7607,11 @@
                                     "from": "nodes",
                                     "to": "search_input_props",
                                     "as": "nodes"
+                                },
+                                {
+                                    "from": "display_graph",
+                                    "to": "search_input_props",
+                                    "as": "display_graph"
                                 },
                                 {
                                     "from": "search", 
