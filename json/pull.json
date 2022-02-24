@@ -2896,9 +2896,9 @@
                     "id": "in"
                 },
                 {
-                    "id": "dg_selected",
+                    "id": "node_id",
                     "ref": "arg",
-                    "value": "selected"
+                    "value": "node_id"
                 },
                 {
                     "id": "display_graph",
@@ -2906,12 +2906,13 @@
                     "value": "display_graph"
                 },
                 {
-                    "id": "node_id",
-                    "script": "return selected"
+                    "id": "display_graph_out",
+                    "ref": "arg",
+                    "value": "display_graph_out"
                 },
                 {
                     "id": "selected_node",
-                    "ref": "selected_node"
+                    "script": "console.log(display_graph); console.log(selected); console.log(display_graph.nodes.find(n => n.id === selected)); return display_graph.nodes.find(n => n.id === selected)"
                 },
                 {
                     "id": "expand_contract_result_inputs",
@@ -2919,7 +2920,7 @@
                 },
                 {
                     "id": "selected",
-                    "script": "return [contract] ?? [expand]"
+                    "script": "console.log([contract] ?? [expand]); return [contract] ?? [expand]"
                 },
                 {
                     "id": "expand_contract_result",
@@ -2935,11 +2936,11 @@
                 },
                 {
                     "id": "expandable_id",
-                    "script": "return node.id ? [node.id + '/' + out] : []"
+                    "script": "return node.id ? node.id + '/' + out : undefined"
                 },
                 {
                     "id": "contractable_id",
-                    "script": "node_id = name ?? node_id; return !node_id ? [] : node_id.endsWith('/out') ? [node_id.substring(0, node_id.lastIndexOf('/'))] : node_id.lastIndexOf('/') >= 0 ? [node_id.substring(0, node_id.lastIndexOf('/'))] : [node_id]"
+                    "script": "node_id = name ?? node_id; return !node_id ? undefined : node_id.endsWith('/out') ? node_id.substring(0, node_id.lastIndexOf('/')) : node_id.lastIndexOf('/') >= 0 ? node_id.substring(0, node_id.lastIndexOf('/')) : node_id"
                 },
                 {
                     "id": "expand",
@@ -2951,17 +2952,10 @@
                 },
                 {
                     "id": "has_nodes",
-                    "args": [
-                        "node_id",
-                        "display_graph"
-                    ],
                     "script": "return !!display_graph.nodes.find(n => n.id === node_id).nodes"
                 },
                 {
                     "id": "is_contractable",
-                    "args": [
-                        "has_nodes"
-                    ],
                     "script": "return !has_nodes"
                 },
                 {
@@ -2990,11 +2984,6 @@
                     "from": "display_graph",
                     "to": "has_nodes",
                     "as": "display_graph"
-                },
-                {
-                    "from": "dg_selected",
-                    "to": "node_id",
-                    "as": "selected"
                 },
                 {
                     "from": "node_id",
@@ -3035,6 +3024,11 @@
                     "from": "selected_node",
                     "to": "expandable_id",
                     "as": "node"
+                },
+                {
+                    "from": "display_graph_out",
+                    "to": "expandable_id",
+                    "as": "out"
                 },
                 {
                     "from": "selected_node",
@@ -3842,7 +3836,7 @@
             "edges": [
                 {"from": "in", "to": "out", "as": "args"},
                 {"from": "state", "to": "set_display_graph", "as": "target"},
-                {"from": "node_id", "to": "expand_contract", "as": "selected"},
+                {"from": "node_id", "to": "expand_contract", "as": "node_id"},
                 {"from": "display_graph", "to": "expand_contract", "as": "display_graph"},
                 {"from": "expand_contract", "to": "expand_contract_display_graph", "as": "target"},
                 {"from": "display_graph_path", "to": "expand_contract_display_graph", "as": "path"},
@@ -8059,7 +8053,7 @@
                         },
                         {
                             "id": "node_layout",
-                            "script": "const error_nodes = error instanceof AggregateError ? error.errors.map(e => e instanceof _lib.no.NodysseusError ? e.node_id : false).filter(n => n) : error instanceof _lib.no.NodysseusError ? [error.node_id] : []; return nodes.map(n => _lib.no.executeGraphValue({state: new Map(), graph: {..._graph, in: '_' + n.node_id, out: node_layout_map, html_id: html_id}, cache_id: '_' + n.node_id})(Object.assign({node: Object.assign({}, n, display_graph.nodes.find(dgn => dgn.id === n.node_id)), hide_types, show_all, selected_distance: levels.distance_from_selected.get(n.node_child_id), level: levels.level_by_node.get(n.node_id), node_error: !error_nodes ? false : error_nodes.filter(k => k.startsWith(n.node_id)).length > 0}, _node_inputs)))"
+                            "script": "const error_nodes = error instanceof AggregateError ? error.errors.map(e => e instanceof _lib.no.NodysseusError ? e.node_id : false).filter(n => n) : error instanceof _lib.no.NodysseusError ? [error.node_id] : []; const fn = _lib.no.executeGraphNode({graph: {..._graph}})(node_layout_map); return nodes.map(n => fn(Object.assign({node: Object.assign({}, n, display_graph.nodes.find(dgn => dgn.id === n.node_id)), hide_types, show_all, selected_distance: levels.distance_from_selected.get(n.node_child_id), level: levels.level_by_node.get(n.node_id), node_error: !error_nodes ? false : error_nodes.filter(k => k.startsWith(n.node_id)).length > 0}, _node_inputs)))"
                         },
                         {
                             "id": "node_layout_map",
@@ -9155,18 +9149,10 @@
                         },
                         {
                             "id": "fill_filter_children",
-                            "args": [
-                                "comp",
-                                "flood"
-                            ],
-                            "script": "return [flood.el]"
+                            "script": "return [flood.el, comp.el]"
                         },
                         {
                             "id": "fill_filter_selected_children",
-                            "args": [
-                                "comp",
-                                "flood"
-                            ],
                             "script": "return [flood.el, comp.el]"
                         },
                         {
@@ -9551,7 +9537,7 @@
                         },
                         {
                             "from": "fill_filter_composite",
-                            "to": "_fill_filter_children",
+                            "to": "fill_filter_children",
                             "as": "comp"
                         },
                         {

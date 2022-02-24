@@ -1287,7 +1287,7 @@ const contract_node = (data, keep_expanded = false) => {
 
         // if there's no in node, just return
         if (in_node_id && !in_node_id.endsWith('in')) {
-            return {display_graph: data.display_graph, sleected: [data.node_id]};
+            return {display_graph: data.display_graph, selected: [data.node_id]};
         }
 
         if (!in_node_id) {
