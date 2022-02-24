@@ -1661,7 +1661,7 @@ const add_default_nodes_and_edges = g => ({
             ...g, 
             nodes: g.nodes
                 .filter(n => !generic_nodes.has(n.id))
-                .concat(DEFAULT_GRAPH.nodes.filter(n => generic_nodes.has(n.id)))
+                .concat(DEFAULT_GRAPH.nodes.filter(n => generic_nodes.has(n.id))),
             edges: g.edges
                 .filter(e => !generic_nodes.has(e.from))
                 .concat(DEFAULT_GRAPH.edges.filter(e => generic_nodes.has(e.to))) 
