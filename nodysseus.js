@@ -210,7 +210,7 @@ class NodysseusError extends Error {
     }
 }
 
-const executeGraph = ({ cache, graph, cache_id, node_cache }) => {
+const executeGraph = ({ cache, graph, parent_graph, cache_id, node_cache }) => {
     let usecache = true;
 
     if (!cache.has(cache_id)) {
@@ -227,321 +227,374 @@ const executeGraph = ({ cache, graph, cache_id, node_cache }) => {
         graph = graph._value;
     }
 
-    const node_map = graph.node_map ?? new Map(graph.nodes.map(n => [n.id, n]));
-    graph.node_map = node_map;
+    const graph_node_map = graph.node_map ?? new Map(graph.nodes.map(n => [n.id, n]));
+    graph.node_map = graph_node_map;
 
-    const in_edge_map = graph.in_edge_map ?? new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.to === n.id)]));
-    graph.in_edge_map = in_edge_map;
+    const graph_in_edge_map = graph.in_edge_map ?? new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.to === n.id)]));
+    graph.in_edge_map = graph_in_edge_map;
 
-    const run_with_val = (node_id) => (graph_input_value) => {
-        // while(node_id.indexOf("/") > 0 && !node_map.has(node_id)) {
-        //     const path = node_id.split('/');
-        //     let i = 1;
-        //     while(node_map.has(path.slice(0, i).join("/"))){
-        //         i++;
-        //     }
 
-        //     const nested_id = path.slice(0, i - 1).join("/");
-        //     const nested = node_map.get(nested_id);
+    const run_with_val = (node_id) => {
+        const queue = [node_id];
+        const visited = new Set();
+        const nodes = [];
+        const edges = [];
+        const node_map = new Map();
+        const in_edge_map = new Map()
+        while(queue.length > 0) {
+            const item = queue.pop();
+            if(visited.has(item)) {
+                continue;
+            }
 
-        //     node_map.delete(nested_id);
-        //     graph.nodes = graph.nodes.filter(n => n.id !== path.slice(0, i - 1).join("/"));
-        //     nested.nodes.forEach(n => graph.nodes.push({...n, id: nested_id + "/" + n.id}));
-        //     nested.nodes.forEach(n => node_map.set(nested_id + "/" + n.id, {...n, id: nested_id + "/" + n.id}));
-        //     nested.edges.forEach(e => graph.edges.push({...e, from: nested_id + "/" + e.from, to: nested_id + "/" + e.to}));
-        //     nested.nodes.forEach(n => in_edge_map.set(nested_id + "/" + n.id, nested.edges.filter(e => e.to === n.id).map(e => ({...e, from: nested_id + "/" + e.from, to: nested_id + "/" + e.to}))));
-        // }
+            const node_edges = graph_in_edge_map.get(item)// ?? parent_graph?.edges.filter(e => e.to === item);
+            node_edges?.forEach(e => {queue.push(e.from); edges.push(e)});
+            in_edge_map.set(item, node_edges)
+            const node = graph_node_map.get(item);// ?? parent_graph?.nodes.find(n => n.id === item);
+            nodes.push(node);
+            node_map.set(item, node);
+            if(node.ref) {
+                queue.push(node.ref);
+            }
 
-        let node = node_map.get(node_id);
+            if(node.nodes) {
+                node.nodes.forEach(c => {
+                    if(c.ref) {
+                        queue.push(c.ref);
+                    }
+                })
+            }
+
+            // graph.nodes.filter(n => n.id.startsWith(item + '/')).forEach(n => queue.push(n.id));
+            visited.add(item);
+        }
+
+        const working_graph = {in: graph.in, nodes, edges};
+
+        // working_graph.nodes.forEach(n => in_edge_map.set(n.id, working_graph.edges.filter(e => e.to === n.id)));
+
+
         
+        return (graph_input_value) => {
+            // while(node_id.indexOf("/") > 0 && !node_map.has(node_id)) {
+            //     const path = node_id.split('/');
+            //     let i = 1;
+            //     while(node_map.has(path.slice(0, i).join("/"))){
+            //         i++;
+            //     }
 
-        if(node === undefined) {
-            throw new Error(`Undefined node_id ${node_id}`)
-        }
+            //     const nested_id = path.slice(0, i - 1).join("/");
+            //     const nested = node_map.get(nested_id);
 
-        // if(!node.inputs || node.inputs.length !== in_edge_map.get(node_id).length) {
-            Object.assign(node, { inputs: in_edge_map.get(node_id) });
-        // }
+            //     node_map.delete(nested_id);
+            //     graph.nodes = graph.nodes.filter(n => n.id !== path.slice(0, i - 1).join("/"));
+            //     nested.nodes.forEach(n => graph.nodes.push({...n, id: nested_id + "/" + n.id}));
+            //     nested.nodes.forEach(n => node_map.set(nested_id + "/" + n.id, {...n, id: nested_id + "/" + n.id}));
+            //     nested.edges.forEach(e => graph.edges.push({...e, from: nested_id + "/" + e.from, to: nested_id + "/" + e.to}));
+            //     nested.nodes.forEach(n => in_edge_map.set(nested_id + "/" + n.id, nested.edges.filter(e => e.to === n.id).map(e => ({...e, from: nested_id + "/" + e.from, to: nested_id + "/" + e.to}))));
+            // }
 
-        if (node.ref === "arg" && (!node.inputs || node.inputs.length === 0)) {
-            node.inputs.push({ from: "_graph_input_value", to: node.id, as: 'target' });
-        }
+                // if(node_id === "editor/out") {
+                //     debugger;
+                // }
+            let node = node_map.get(node_id);
+            
 
-        if (node.value !== undefined && !node.script && !node.ref) {
-            if(typeof node.value === 'string' && node.value.match(/[0-9]*/g)[0].length === node.value.length) {
-                const int = parseInt(node.value);
-                if(!isNaN(int)){
-                    return int;
-                }
+            if(node === undefined) {
+                throw new Error(`Undefined node_id ${node_id}`)
             }
 
-            if(typeof node.value === 'string' && node.value.match(/[0-9.]*/g)[0].length === node.value.length) {
-                const int = parseInt(node.value);
-                const float = parseFloat(node.value);
-                if(!isNaN(float)) {
-                    return float;
-                }
+            const inputs = in_edge_map.get(node_id)
+
+            if (node.ref === "arg" && (!inputs || inputs.length === 0)) {
+                return lib.utility.arg.fn(node, graph_input_value);
             }
 
-            if(typeof node.value !== 'string') {
+            if (node.value !== undefined && !node.script && !node.ref) {
+                if(typeof node.value === 'string' && node.value.match(/[0-9]*/g)[0].length === node.value.length) {
+                    const int = parseInt(node.value);
+                    if(!isNaN(int)){
+                        return int;
+                    }
+                }
+
+                if(typeof node.value === 'string' && node.value.match(/[0-9.]*/g)[0].length === node.value.length) {
+                    const int = parseInt(node.value);
+                    const float = parseFloat(node.value);
+                    if(!isNaN(float)) {
+                        return float;
+                    }
+                }
+
+                if(typeof node.value !== 'string') {
+                    return node.value;
+                }
+
+                
+                if(node.value.startsWith('{') || node.value.startsWith('[')) {
+                    try {
+                        return  JSON.parse(node.value.replaceAll("'", "\""));
+                    } catch(e) { }
+                }
+
                 return node.value;
             }
 
-            
-            if(node.value.startsWith('{') || node.value.startsWith('[')) {
-                try {
-                    return  JSON.parse(node.value.replaceAll("'", "\""));
-                } catch(e) { }
-            }
+            let node_ref;
 
-            return node.value;
-        }
-
-        let node_ref;
-
-        const ref = node.ref?.node_ref ?? typeof node.ref === 'string' ? node.ref : undefined;
-        if (ref) {
-            const node_map_ref = node_map.get(ref);
-            if (node_map_ref) {
-                node_ref = Object.assign({}, node_map_ref, node)
-                node_ref._noderefflag = !!node._noderefflag;
+            const ref = node.ref?.node_ref ?? typeof node.ref === 'string' ? node.ref : undefined;
+            if (ref) {
+                const node_map_ref = node_map.get(ref);
+                if (node_map_ref) {
+                    node_ref = Object.assign({}, node_map_ref, node)
+                    node_ref._noderefflag = !!node._noderefflag;
+                } else {
+                    throw new Error(`Unable to find ref ${ref} for node ${node.name ?? node.id}`)
+                }
             } else {
-                throw new Error(`Unable to find ref ${ref} for node ${node.name ?? node.id}`)
+                node_ref = node;
             }
-        } else {
-            node_ref = node;
-        }
 
-        let _needsresolve = false;
+            let _needsresolve = false;
 
-        const tryrun = (input) => {
-            if (input.type === "ref") {
-                return input.from;
-            } else if (input.from === "_graph_input_value" || input.from === graph.in) {
-                _needsresolve = _needsresolve || !!graph_input_value._needsresolve
-                return graph_input_value;
-            } else if (input.type === "resolve") {
-                if(!node_map.has(input.from)) {
-                    throw new Error(`Input not found ${input.from} for node ${node_id}`)
+            const tryrun = (input) => {
+                if (input.type === "ref") {
+                    return input.from;
+                } else if (input.from === "_graph_input_value" || input.from === graph.in) {
+                    _needsresolve = _needsresolve || !!graph_input_value._needsresolve
+                    return graph_input_value;
+                } else if (input.type === "resolve") {
+                    if(!node_map.has(input.from)) {
+                        throw new Error(`Input not found ${input.from} for node ${node_id}`)
+                    }
+
+                    return resolve(run_with_val(input.from)(graph_input_value));
+                } else if (!input.as || node_ref.script) {
+                    if(!node_map.has(input.from)) {
+                        throw new Error(`Input not found ${input.from} for node ${node_id}`)
+                    }
+
+                    let res = run_with_val(input.from)(graph_input_value);
+
+                    while (res?._Proxy) {
+                        res = res._value;
+                    }
+                    
+                    _needsresolve = _needsresolve || (!!res && typeof res === 'object' && !!res._needsresolve)
+
+                    return res;
+                } else {
+                    _needsresolve = true;
+                    return createProxy(run_with_val, input, graph_input_value);
+                }
+            }
+
+            const input_data_map = new Map();
+            let i = inputs.length;
+            while(i > 0) {
+                i--;
+                input_data_map.set(inputs[i].from, tryrun(inputs[i]));
+            }
+            const data = {};
+            let input;
+
+            // grab inputs from state
+            for (let i = 0; i < inputs.length; i++) {
+                input = inputs[i];
+
+                if (input.type === "ref") {
+                    if (!input.as) {
+                        throw new Error("references have to be named: " + node.id);
+                    }
+                    data[input.as] = input.from;
+                } else {
+                    let state_data = input_data_map.get(input.from);
+
+                    if (input.as) {
+                        data[input.as] = state_data;
+                    } else if (state_data !== undefined) {
+                        Object.assign(data, state_data)//, {_needsresolve: !!data._needsresolve || !!state_data._needsresolve});
+                    }
+                }
+            }
+
+            if (node_ref.nodes) {
+
+                const outid = `${node.id}/${node_ref.out ?? 'out'}`;
+                let hit = false;
+                if (!node_map.has(outid)) {
+                    for (let i = 0; i < node_ref.edges.length; i++) {
+                        const new_edge = Object.assign({}, node_ref.edges[i]);
+                        new_edge.from = `${node.id}/${new_edge.from}`;
+                        new_edge.to = `${node.id}/${new_edge.to}`;
+                        working_graph.edges.push(new_edge);
+                        if(!graph_in_edge_map.get(new_edge.to)?.find(e => e.from === new_edge.from && e.as === new_edge.as)) {
+                            graph.edges.push(new_edge);
+                            graph_in_edge_map.set(new_edge.to, (graph_in_edge_map.get(new_edge.to) ?? []).concat([new_edge]))
+                        }
+                        in_edge_map.set(new_edge.to, (in_edge_map.get(new_edge.to) ?? []).concat([new_edge]))
+                    }
+
+                    for (const child of node_ref.nodes) {
+                        const new_node = Object.assign({}, child);
+                        new_node.id = `${node.id}/${child.id}`;
+                        working_graph.nodes.push(new_node)
+                        if(!graph_node_map.has(new_node.id)) {
+                            graph.nodes.push(new_node)
+                            graph_node_map.set(new_node.id, new_node);
+                        }
+                        node_map.set(new_node.id, new_node);
+                        const has_inputs = in_edge_map.has(new_node.id);
+                        if (new_node.id === `${node.id}/${node_ref.in ?? 'in'}`) {
+                            in_edge_map.get(node.id).map(e => ({ ...e, to: `${node.id}/${node_ref.in ?? 'in'}` }))
+                                .forEach(e => working_graph.edges.push(e));
+                            if(!graph_in_edge_map.has(new_node.id)) {
+                                graph_in_edge_map.get(node.id).forEach(e => {
+                                    graph.edges.push({ ...e, to: `${node.id}/${node_ref.in ?? 'in'}`})
+                                })
+                                graph_in_edge_map.set(new_node.id, graph.edges.filter(e => e.to === `${node.id}/${node_ref.in ?? 'in'}`))
+                            }
+                            in_edge_map.set(new_node.id, working_graph.edges.filter(e => e.to === `${node.id}/${node_ref.in ?? 'in'}`))
+                        } else if (!has_inputs) {
+                            in_edge_map.set(new_node.id, []);
+                            graph_in_edge_map.set(new_node.id, []);
+                        }
+                    }
                 }
 
-                return resolve(run_with_val(input.from)(graph_input_value));
-            } else if (!input.as || node_ref.script) {
-                if(!node_map.has(input.from)) {
-                    throw new Error(`Input not found ${input.from} for node ${node_id}`)
+
+                const combined_data_input = typeof graph_input_value === 'object' && !Array.isArray(graph_input_value) && data
+                        ? Object.assign({}, graph_input_value, data) 
+                        : inputs.length > 0 
+                        ? data
+                        : graph_input_value;
+
+                // if (node_map.has(`${node.id}/${node_ref.in ?? 'in'}`)) {
+                //     node_map.get(`${node.id}/${node_ref.in ?? 'in'}`).value = combined_data_input
+                // }
+
+
+                if (usecache && cache.get(cache_id).has(outid)) {
+                    const val = cache.get(cache_id).get(outid);
+                    hit = compare(val[1], combined_data_input);
+                    if (hit) {
+                        return val[0];
+                    }
                 }
 
-                let res = run_with_val(input.from)(graph_input_value);
-
-                while (res?._Proxy) {
-                    res = res._value;
+                const res = run_with_val(outid)(combined_data_input)
+                if(typeof res === 'object' && !!res && !res._Proxy && !Array.isArray(res) && Object.keys(res).length > 0) {
+                    if(_needsresolve || !!res._needsresolve) {
+                        res._needsresolve = !!res._needsresolve || _needsresolve;
+                    } else if(res.hasOwnProperty("_needsresolve")) {
+                        delete res._needsresolve;
+                    }
                 }
-                
-                _needsresolve = _needsresolve || (!!res && typeof res === 'object' && !!res._needsresolve)
-
+                cache.get(cache_id).set(outid, [res, combined_data_input]);
                 return res;
-            } else {
-                _needsresolve = true;
-                return createProxy(run_with_val, input, graph_input_value);
-            }
-        }
-
-        const input_data_map = new Map();
-        let i = node.inputs.length;
-        while(i > 0) {
-            i--;
-            input_data_map.set(node.inputs[i].from, tryrun(node.inputs[i]));
-        }
-        const inputs = node.inputs;
-        const data = {};
-        let input;
-
-        // grab inputs from state
-        for (let i = 0; i < inputs.length; i++) {
-            input = inputs[i];
-
-            if (input.type === "ref") {
-                if (!input.as) {
-                    throw new Error("references have to be named: " + node.id);
-                }
-                data[input.as] = input.from;
-            } else {
-                let state_data = input_data_map.get(input.from);
-
-                if (input.as) {
-                    data[input.as] = state_data;
-                } else if (state_data !== undefined) {
-                    Object.assign(data, state_data)//, {_needsresolve: !!data._needsresolve || !!state_data._needsresolve});
-                }
-            }
-        }
-
-        if (node_ref.nodes) {
-
-            const outid = `${node.id}/${node_ref.out ?? 'out'}`;
-            let hit = false;
-            if (!node_map.has(outid)) {
-                for (let i = 0; i < node_ref.edges.length; i++) {
-                    const new_edge = Object.assign({}, node_ref.edges[i]);
-                    new_edge.from = `${node.id}/${new_edge.from}`;
-                    new_edge.to = `${node.id}/${new_edge.to}`;
-                    graph.edges.push(new_edge);
-                    in_edge_map.set(new_edge.to, (in_edge_map.get(new_edge.to) ?? []).concat([new_edge]))
+            } else if (node_ref.script) {
+                const argset = new Set();
+                argset.add('_lib');
+                argset.add('_node');
+                argset.add('_node_inputs');
+                argset.add('_graph');
+                (inputs ?? []).map(i => i.as).forEach(i => i && argset.add(i));
+                let orderedargs = "";
+                const input_values = [];
+                for(let a of argset) {
+                    input_values.push(
+                        a === '_node' 
+                        ? node 
+                        : a === '_lib'
+                        ? lib
+                        : a === '_node_inputs'
+                        ? data
+                        : a === '_graph'
+                        ? graph
+                        : data[a]);
+                    orderedargs += `${a},`;
                 }
 
-                for (const child of node_ref.nodes) {
-                    const new_node = Object.assign({}, child);
-                    new_node.id = `${node.id}/${child.id}`;
-                    graph.nodes.push(new_node)
-                    node_map.set(new_node.id, new_node);
-                    const has_inputs = in_edge_map.has(new_node.id);
-                    if (new_node.id === `${node.id}/${node_ref.in ?? 'in'}`) {
-                        graph.edges = graph.edges.map(e => ({ ...e, to: e.to === node.id ? `${node.id}/${node_ref.in ?? 'in'}` : e.to }));
-                        in_edge_map.set(new_node.id, graph.edges.filter(e => e.to === `${node.id}/${node_ref.in ?? 'in'}`))
-                    } else if (!has_inputs
-                        && new_node.ref === "arg"
-                        && node_ref.nodes.find(n => n.id ===  `${node.id}/${node_ref.in ?? 'in'}`) !== undefined) {
-                        const new_edge = { from: `${node.id}/${node_ref.in ?? 'in'}`, to: new_node.id, as: "target"};
-                        in_edge_map.set(new_node.id, [new_edge])
-                        graph.edges.push(new_edge);
-                    } else if (!has_inputs) {
-                        in_edge_map.set(new_node.id, []);
-                        new_node.inputs = [];
-                    }
-                }
-            }
-
-            const combined_data_input = typeof graph_input_value === 'object' && !Array.isArray(graph_input_value) && data
-                    ? Object.assign({}, graph_input_value, data) 
-                    : inputs.length > 0 
-                    ? data
-                    : graph_input_value;
-
-            if (node_map.has(`${node.id}/${node_ref.in ?? 'in'}`)) {
-                node_map.get(`${node.id}/${node_ref.in ?? 'in'}`).value = combined_data_input
-            }
-
-
-            if (usecache && cache.get(cache_id).has(outid)) {
-                const val = cache.get(cache_id).get(outid);
-                hit = compare(val[1], combined_data_input);
-                if (hit) {
-                    return val[0];
-                }
-            }
-
-            const res = run_with_val(outid)(combined_data_input)
-            if(typeof res === 'object' && !!res && !res._Proxy && !Array.isArray(res) && Object.keys(res).length > 0) {
-                if(_needsresolve || !!res._needsresolve) {
-                    res._needsresolve = !!res._needsresolve || _needsresolve;
-                } else if(res.hasOwnProperty("_needsresolve")) {
-                    delete res._needsresolve;
-                }
-            }
-            cache.get(cache_id).set(outid, [res, combined_data_input]);
-            return res;
-        } else if (node_ref.script) {
-            const argset = new Set();
-            argset.add('_lib');
-            argset.add('_node');
-            argset.add('_node_inputs');
-            argset.add('_graph');
-            (inputs ?? []).map(i => i.as).forEach(i => i && argset.add(i));
-            let orderedargs = "";
-            const input_values = [];
-            for(let a of argset) {
-                input_values.push(
-                    a === '_node' 
-                    ? node 
-                    : a === '_lib'
-                    ? lib
-                    : a === '_node_inputs'
-                    ? data
-                    : a === '_graph'
-                    ? graph
-                    : data[a]);
-                orderedargs += `${a},`;
-            }
-
-            if (usecache && cache.get(cache_id).has(node.id)) {
-                const val = cache.get(cache_id).get(node.id);
-                let hit = usecache && compare(data, val[1]);
-                // hit = hit && compare(graph_input_value, val[2]);
-                if (hit) {
-                    return val[0]
-                }
-            }
-
-
-            try {
-                const node_hash = hashcode(orderedargs + node_ref.script);
-
-                const fn = node_cache.get(node_hash) ?? new Function(`return function _${(node.name?.replace(/\W/g, "_") ?? node.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script}}`)();
-
-                if(!node_ref.fn) {
-                    node_cache.set(node_hash, fn);
-                }
-
-                node_ref.fn = fn;
-
-
-                const results = fn.apply(null, input_values);
-
-                // don't cache things without arguments
-                if (node_ref.args?.length > 0) {
-                    cache.get(cache_id).set(node.id, [results, data]);
-                }
-
-                if(typeof results === 'object' && !!results && !results._Proxy && !Array.isArray(results) && Object.keys(results).length > 0) {
-                    if(_needsresolve || !!results._needsresolve) {
-                        results._needsresolve = !!results._needsresolve || _needsresolve;
-                    } else if(results.hasOwnProperty("_needsresolve")) {
-                        delete results._needsresolve;
+                if (usecache && cache.get(cache_id).has(node.id)) {
+                    const val = cache.get(cache_id).get(node.id);
+                    let hit = usecache && compare(data, val[1]);
+                    // hit = hit && compare(graph_input_value, val[2]);
+                    if (hit) {
+                        return val[0]
                     }
                 }
 
-                return results;
-            } catch (e) {
-                console.log(`error in node`);
-                console.error(e);
-                console.dir(node_ref);
-                console.log(data);
-                throw new AggregateError([
-                    new NodysseusError(
-                        node_ref.name ?? node_ref.id, 
-                        e instanceof AggregateError ? "Error in node chain" : e
-                    )]
-                    .concat(e instanceof AggregateError ? e.errors : []));
-            }
-        } else if(node_ref.extern) {
-            const extern = get(lib, node_ref.extern);
-            const args = extern.args.reduce((acc, arg) => {
-                    if(arg === '_node'){
-                        return [acc[0].concat([node]), acc[1]];
-                    } else if (arg === '_node_inputs') {
-                        return [acc[0].concat(data), acc[1]]
-                    } else if (arg === '_graph') {
-                        return [acc[0].concat(graph), acc[1]]
+
+                try {
+                    const node_hash = hashcode(orderedargs + node_ref.script);
+
+                    const fn = node_cache.get(node_hash) ?? new Function(`return function _${(node.name?.replace(/\W/g, "_") ?? node.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script}}`)();
+
+                    if(!node_ref.fn) {
+                        node_cache.set(node_hash, fn);
                     }
-                    const value = extern.resolve === false ? data[arg] : resolve(data[arg]);
-                    return [acc[0].concat([value]), ispromise(value) || acc[1]];
-                }, [[], false]);
 
-            return args[1] ? Promise.all(args[0]).then(as => extern.fn.apply(null, as)) : extern.fn.apply(null, args[0]);
+                    node_ref.fn = fn;
+
+
+                    const results = fn.apply(null, input_values);
+
+                    // don't cache things without arguments
+                    if (node_ref.args?.length > 0) {
+                        cache.get(cache_id).set(node.id, [results, data]);
+                    }
+
+                    if(typeof results === 'object' && !!results && !results._Proxy && !Array.isArray(results) && Object.keys(results).length > 0) {
+                        if(_needsresolve || !!results._needsresolve) {
+                            results._needsresolve = !!results._needsresolve || _needsresolve;
+                        } else if(results.hasOwnProperty("_needsresolve")) {
+                            delete results._needsresolve;
+                        }
+                    }
+
+                    return results;
+                } catch (e) {
+                    console.log(`error in node`);
+                    console.error(e);
+                    console.dir(node_ref);
+                    console.log(data);
+                    throw new AggregateError([
+                        new NodysseusError(
+                            node_ref.name ?? node_ref.id, 
+                            e instanceof AggregateError ? "Error in node chain" : e
+                        )]
+                        .concat(e instanceof AggregateError ? e.errors : []));
+                }
+            } else if(node_ref.extern) {
+                const extern = get(lib, node_ref.extern);
+                const args = extern.args.reduce((acc, arg) => {
+                        if(arg === '_node'){
+                            return [acc[0].concat([node]), acc[1]];
+                        } else if (arg === '_node_inputs') {
+                            return [acc[0].concat(data), acc[1]]
+                        } else if (arg === '_graph') {
+                            return [acc[0].concat(graph), acc[1]]
+                        }
+                        const value = extern.resolve === false ? data[arg] : resolve(data[arg]);
+                        return [acc[0].concat([value]), ispromise(value) || acc[1]];
+                    }, [[], false]);
+
+                return args[1] ? Promise.all(args[0]).then(as => extern.fn.apply(null, as)) : extern.fn.apply(null, args[0]);
+            }
+
+            if(typeof data === 'object' && !!data && !data._Proxy && !Array.isArray(data) && Object.keys(data).length > 0) {
+                data._needsresolve = true;
+            }
+
+            const promised_data = Object.entries(data).reduce((acc, kv) => [acc[0].concat([kv]), acc[1] || (!!kv[1] && !kv[1]?._Proxy && ispromise(kv[1]))], [[], false]);
+            
+            if(promised_data[1]) {
+                return Promise.all(promised_data[0].map(kv => Promise.resolve(kv[1]).then(v => [kv[0], v]))).then(Object.fromEntries);
+            }
+
+
+            return data;
         }
-
-        if(typeof data === 'object' && !!data && !data._Proxy && !Array.isArray(data) && Object.keys(data).length > 0) {
-            data._needsresolve = true;
-        }
-
-        const promised_data = Object.entries(data).reduce((acc, kv) => [acc[0].concat([kv]), acc[1] || (!!kv[1] && !kv[1]?._Proxy && ispromise(kv[1]))], [[], false]);
-        
-        if(promised_data[1]) {
-            return Promise.all(promised_data[0].map(kv => Promise.resolve(kv[1]).then(v => [kv[0], v]))).then(Object.fromEntries);
-        }
-
-
-        return data;
     }
 
     return (node_id) => (graph_input_value) => resolve(run_with_val(node_id)(graph_input_value));
@@ -1391,18 +1444,18 @@ const findViewBox = (nodes, links, selected, node_el_width, htmlid, dimensions) 
 }
 
 const middleware = dispatch => (ha_action, ha_payload) => {
-const is_action_payload = Array.isArray(ha_action) 
-    && ha_action.length === 2
-    && (typeof ha_action[0] === 'function' 
-            || (ha_action[0].hasOwnProperty('fn') 
-                && ha_action[0].hasOwnProperty('graph')));
-    const action = is_action_payload ? ha_action[0] : ha_action;
-    const payload = is_action_payload ? ha_action[1] : ha_payload;
+    const is_action_payload = Array.isArray(ha_action) 
+        && ha_action.length === 2
+        && (typeof ha_action[0] === 'function' 
+                || (ha_action[0].hasOwnProperty('fn') 
+                    && ha_action[0].hasOwnProperty('graph')));
+        const action = is_action_payload ? ha_action[0] : ha_action;
+        const payload = is_action_payload ? ha_action[1] : ha_payload;
 
     return typeof action === 'object' && action.hasOwnProperty('fn') && action.hasOwnProperty('graph')
         ? dispatch((state, payload) => {
             const execute_graph_fn = lib.no.executeGraphNode({graph: action.graph})(action.fn);
-            Object.defineProperty(execute_graph_fn, 'name', {value: action.fn, writable: false});
+           Object.defineProperty(execute_graph_fn, 'name', {value: action.fn, writable: false});
             const result = action.stateonly 
                 ? execute_graph_fn(state)
                 : execute_graph_fn({state, payload});
@@ -1444,6 +1497,8 @@ const generic_nodes = new Set([
     "h_text",
     "toggle",
     "input",
+    "modify_state_runnable",
+    "modify_state_value",
 
     "array",
     "new_array",
@@ -1454,6 +1509,7 @@ const generic_nodes = new Set([
     "utility",
     "log",
     "execute_graph",
+    "runnable",
     "arg",
     "apply",
     "partial",
@@ -1474,7 +1530,9 @@ const lib = {
     just: { 
         get: {
             args: ['target', 'path', 'def'],
-            fn: get,
+            fn: (target, path, def) => {
+                return get(target?._Proxy ? target._value : target, path?._Proxy ? path._value : path, def?._Proxy ? def._value : def);
+            },
         },
         set, 
         diff
@@ -1520,7 +1578,7 @@ const lib = {
         },
         call: {
             args: ['fn', 'args', 'self'],
-            fn: (fn, args, self) => self[fn](...((args ?? []).reverse().reduce((acc, v) => [!acc[0] && v !== undefined, acc[0] || v !== undefined ? acc[1].concat([v]) : acc[1]], [false, []])[1].reverse()))
+            fn: (fn, args, self) => typeof self === 'function' ? self(...((args ?? []).reverse().reduce((acc, v) => [!acc[0] && v !== undefined, acc[0] || v !== undefined ? acc[1].concat([v]) : acc[1]], [false, []])[1].reverse())) : self[fn](...((args ?? []).reverse().reduce((acc, v) => [!acc[0] && v !== undefined, acc[0] || v !== undefined ? acc[1].concat([v]) : acc[1]], [false, []])[1].reverse()))
         },
         merge_objects: {
             args: ['_node_inputs'],
@@ -1594,31 +1652,34 @@ const lib = {
 const graph_list = JSON.parse(localStorage.getItem("graph_list"));
 // const display_graph = {...DEFAULT_GRAPH, nodes: DEFAULT_GRAPH.nodes.map(n => ({...n})), edges: DEFAULT_GRAPH.edges.map(e => ({...e}))};
 const stored = localStorage.getItem(graph_list?.[0]);
-const init_display_graph = stored ? JSON.parse(stored) : examples.find(g => g.id === 'simple_html_hyperapp');
+const init_display_graph = stored ? JSON.parse(stored) : examples.find(g => g.id === 'simple');
 const original_graph = {...DEFAULT_GRAPH, nodes: [...DEFAULT_GRAPH.nodes].map(n => ({...n})), edges: [...DEFAULT_GRAPH.edges].map(e => ({...e}))};
 
 const runGraph = lib.no.runGraph;
+
+const add_default_nodes_and_edges = g => ({
+            ...g, 
+            nodes: g.nodes
+                .filter(n => !generic_nodes.has(n.id))
+                .concat(DEFAULT_GRAPH.nodes.filter(n => generic_nodes.has(n.id)))
+            edges: g.edges
+                .filter(e => !generic_nodes.has(e.from))
+                .concat(DEFAULT_GRAPH.edges.filter(e => generic_nodes.has(e.to))) 
+
+})
 
 const nodysseus = function(html_id, display_graph) {
     const dispatch = runGraph(DEFAULT_GRAPH, "initialize_hyperapp_app", { 
         graph: DEFAULT_GRAPH, 
         original_graph, 
-        display_graph: { 
-            ...(display_graph ?? init_display_graph), 
-            nodes: (display_graph ?? init_display_graph).nodes
-                .filter(n => !generic_nodes.has(n.id))
-                .concat(DEFAULT_GRAPH.nodes.filter(n => generic_nodes.has(n.id))), 
-            edges: (display_graph ?? init_display_graph).edges
-                .filter(e => !generic_nodes.has(e.from))
-                .concat(DEFAULT_GRAPH.edges.filter(e => generic_nodes.has(e.to))) 
-        },
+        display_graph: add_default_nodes_and_edges(display_graph ?? init_display_graph),
         hash: window.location.hash ?? "",
         html_id,
         dimensions: {
             x: document.getElementById(html_id).clientWidth,
             y: document.getElementById(html_id).clientHeight
         },
-        examples,
+        examples: examples.map(add_default_nodes_and_edges),
         readonly: false, 
         hide_types: false,
         offset: {x: 0, y: 0}
@@ -1636,3 +1697,18 @@ export { runGraph, nodysseus };
 //     link: Object.assign({edge: display_graph.edges.find(e => link.source.node_id === e.from && link.target.node_id === e.to)}, link),
 //     selected_distance: levels.distance_from_selected.get(link.target.node_child_id) !== undefined ? Math.min(levels.distance_from_selected.get(link.target.node_child_id), levels.distance_from_selected.get(link.source.node_child_id)) : undefined, 
 //     sibling_index_normalized: (levels.siblings.get(link.source.node_id).findIndex(n => n === link.source.node_id) + 1) / (levels.siblings.get(link.source.node_id).length + 1), _node_inputs})))
+// return (dispatch, payload) => dispatch(state => {Promise.resolve(_lib.no.executeGraphNode({graph: _graph})(fn)({state, payload})).then(res => dispatch(s => [{...s, main: res.state}, ...(res.effects ?? [])])).catch(e => dispatch(s => [{...s, errors: e}])); return state;}) 
+// return (dispatch, payload) => dispatch(state => {Promise.resolve(_lib.no.executeGraphNode({graph: _graph})(fn)({state, payload})).then(res => dispatch(s => [s, ...(res ?? [])])).catch(e => dispatch(s => [{...s, errors: e}])); return state;})
+// return (dispatch, payload) => dispatch(state => {Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: _graph})(fn)({s, payload})).then(res => Promise.all(res.map(r => [dispatch => {return _lib.no.executeGraphNode({graph: r.graph})(r.fn)({state, payload, dispatch})}])) ?? [])])).catch(e => dispatch(s => [{...s, errors: e}])); return state;})
+// return (dispatch, payload) => dispatch(state => {Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: _graph})(fn)({s, payload})).then(res => Promise.all(res?.map(r => [dispatch => {return _lib.no.executeGraphNode({graph: r.graph})(r.fn)({state, payload, dispatch})}]) ?? [])).catch(e => dispatch(s => [{...s, errors: e}])); return state;})
+// return (dispatch, payload) => dispatch(state => {
+//     Promise.resolve(state)
+//         .then(s => _lib.no.executeGraphNode({graph: _graph})(fn)({state: s, payload}))
+//         .then(res => res?.map(r => 
+//             [dispatch_ => Promise.resolve(state)
+//                 .then(s => _lib.no.executeGraphNode({graph: (console.log(r), r).graph})(r.fn)({state: s, payload, dispatch: dispatch_}))
+//                 .catch(e => dispatch(s => [{...s, errors: e}]))]) ?? [])
+//         .then(fx => dispatch(s => [s, ...fx]))
+//         .catch(e => dispatch(s => [{...s, errors: e}])); 
+//     return state;
+// })

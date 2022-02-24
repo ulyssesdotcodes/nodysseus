@@ -1,14 +1,26 @@
 [
     {
+        "out": "main/out",
+        "id": "simple",
+        "nodes": [
+            {"id": "state", "ref": "arg", "value": "state"},
+            {"id": "state_log", "ref": "log"},
+            {"id": "log_state", "ref": "runnable"},
+            {"id": "main/out", "ref": "new_array"}
+        ],
+        "edges": [
+            {"from": "state", "to": "state_log", "as": "value"},
+            {"from": "state_log", "to": "log_state", "as": "fn"},
+            {"from": "log_state", "to": "main/out", "as": "arg0"}
+        ]
+    },
+    {
         "in": "main/in",
         "out": "main/out",
         "id": "hyperapp_state",
         "nodes": [
             {
                 "id": "main/out",
-                "args": [
-                    "value"
-                ],
                 "script": "console.log(\"state\")\nconsole.log(state);\nconsole.log(\"prev\")\nconsole.log(prev);\nreturn {state, display};"
             },
             {

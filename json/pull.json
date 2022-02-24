@@ -228,10 +228,7 @@
                 },
                 {
                     "id": "init",
-                    "ref": "get"
-                },
-                {
-                    "id": "init_key",
+                    "ref": "arg",
                     "value": "init"
                 },
                 {
@@ -289,25 +286,6 @@
                 }
             ],
             "edges": [
-                {
-                    "from": "in",
-                    "to": "resolve_init"
-                },
-                {
-                    "from": "in",
-                    "to": "init",
-                    "as": "target"
-                },
-                {
-                    "from": "init_key",
-                    "to": "init",
-                    "as": "path"
-                },
-                {
-                    "from": "init",
-                    "to": "resolve_init",
-                    "as": "init"
-                },
                 {
                     "from": "view",
                     "to": "out",
@@ -639,8 +617,19 @@
                     "value": "pred"
                 },
                 {
+                    "id": "true",
+                    "ref": "arg",
+                    "value": "true"
+                },
+                {
+                    "id": "false",
+                    "ref": "arg",
+                    "value": "false"
+                },
+                {"id": "data"},
+                {
                     "id": "out",
-                    "script": "return pred ? data['true'] : data['false']"
+                    "script": "return !!pred ? data.true_val : data.false_val"
                 }
             ],
             "edges": [
@@ -649,6 +638,17 @@
                     "to": "out",
                     "as": "data"
                 },
+                {
+                    "from": "true",
+                    "to": "data",
+                    "as": "true_val"
+                },
+                {
+                    "from": "false",
+                    "to": "data",
+                    "as": "false_val"
+                },
+                {"from": "data", "to": "out", "as": "data"},
                 {
                     "from": "pred",
                     "to": "out",
@@ -724,6 +724,17 @@
             ]
         },
         {
+            "id": "runnable",
+            "out": "out",
+            "nodes": [
+                {"id": "fn", "ref": "arg", "value": "fn"},
+                {"id": "out", "script": "const parent_id = _node.id.substring(0, _node.id.lastIndexOf('/')); const input = _graph.edges.filter(e => e.to === parent_id).find(i => i.as === 'fn'); return input ? {fn: input.from, graph: _graph} : false"}
+            ],
+            "edges": [
+                {"from": "fn", "to": "out", "as": "fn", "type": "ref"}
+            ]
+        },
+        {
             "id": "execute_graph",
             "nodes": [
                 {
@@ -756,7 +767,7 @@
                 {"from": "fn_graph", "to": "out", "as": "fn_graph"}
             ]
         },
-        {"id": "apply", "script": "return _lib.no.executeGraphNode({graph: _graph})(fn)(args);"},
+        {"id": "apply", "script": "return _lib.no.executeGraphNode({graph: fn.graph ?? _graph})(fn.fn ?? fn)(args);"},
         {"id": "apply_graph", "script": "return _lib.no.executeGraphNode({graph})(fn)(args);"},
         {
             "id": "partial", 
@@ -894,14 +905,6 @@
                     "value": "path"
                 },
                 {
-                    "id": "fill_default",
-                    "args": [
-                        "input"
-                    ],
-                    "script": "return input?.default ??  null"
-                },
-                {"id": "get_args", "ref": "new_array"},
-                {
                     "id": "out",
                     "extern": "just.get"
                 }
@@ -926,13 +929,11 @@
                     "from": "target",
                     "to": "out",
                     "as": "target"
-                },
-                {"from": "get_args", "to": "_out", "as": "args"}
+                }
             ]
         },
         {
             "id": "arg",
-            "args": ["node_inputs"],
             "extern": "utility.arg"
         },
         {
@@ -1373,6 +1374,24 @@
             "script": "const action = typeof fn === 'string' ? {fn, graph: _graph} : (typeof fn === 'function' || (typeof fn === 'object' && fn.hasOwnProperty('fn'))) ? fn : undefined; return (dispatch, payload) => requestAnimationFrame(() => dispatch(action, payload))"
         },
         {
+            "id": "run_display_graph_effect",
+            "nodes": [
+                {"id": "state", "ref": "arg", "value": "state"},
+                {"id": "display_graph", "ref": "arg", "value": "state.display_graph"},
+                {"id": "payload", "ref": "arg", "value": "payload"},
+                {"id": "run_effect", "ref": "run_display_graph_effect"},
+                {"id": "result", "script": "return _lib.no.executeGraphNode({graph: {...fn_graph, nodes: [...fn_graph.nodes], edges: [...fn_graph.edges]}})('main/out')({state: state, payload: {event: payload, run: run_effect}});"},
+                {"id": "out", "script": "return (dispatch, payload) => dispatch(state => {const wrapped_dispatch = (a, p) => Promise.resolve([a, p]).then(([a, p]) => dispatch(a, p)).catch(e => dispatch(s => [{...(console.log('caught 1'), s), error: e}])); Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: _graph})(fn)({state: s, payload})).then(res => res?.flatMap(r => !r ? [] : !Array.isArray(r) ? [r] : r[0].fn ? [r] : r).filter(r => r._Proxy ? r._value : r).map(r => [dispatch_ => Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: r[0]?.graph ?? r.graph})(r[0]?.fn ?? r.fn)({state: s, payload: {event: payload, payload: r[1]}, dispatch: wrapped_dispatch})).catch(e => dispatch(s => [{...(console.log('caught 2'), s), error: e}]))]) ?? []).then(fx => wrapped_dispatch(s => [s.error ? {...s, error: undefined} : s, ...fx])).catch(e => dispatch(s => [{...s, error: e}])); return state.error ? {...state, error: undefined} : state;})"}
+            ],
+            "edges": [
+                {"from": "state", "to": "result", "as": "state"},
+                {"from": "payload", "to": "result", "as": "payload"},
+                {"from": "run_effect", "to": "result", "as": "run_effect"},
+                {"from": "display_graph", "to": "result", "as": "fn_graph"},
+                {"from": "result", "to": "out", "as": "fn", "type": "ref"}
+            ]
+        },
+        {
             "id": "update_graph_display",
             "in": "in",
             "out": "out",
@@ -1502,14 +1521,13 @@
                 },
                 {
                     "id": "run",
-                    "script": "return Promise.resolve({state: prev_result, payload: _lib.no.resolve(payload), graph: display_graph}).then(promise_payload => _lib.no.executeGraphValue({graph: {...display_graph, nodes: display_graph.nodes.map(n => ({...n})), edges: display_graph.edges.map(e => ({...e}))}})(promise_payload)).then(result => {if(result.display && !result.display.el.props.key){ result.display.el.props.key = `${html_id}-result_display` } return {result, error: undefined, error_nodes}; }).catch(e => ({error: e instanceof AggregateError ? e.errors.map(e => (e instanceof _lib.no.NodysseusError ? e.node_id + ': ' : '') + e.toString()).join(\" \") : e.toString(), error_nodes: new Map(e instanceof AggregateError ? e.errors.map(e => e instanceof _lib.no.NodysseusError ? [e.node_id, e] : false).filter(n => n) : e instanceof _lib.no.NodysseusError ? [[e.node_id, e]] : [])}))"
-                },
-                {
-                    "id": "result"
+                    "ref": "run_display_graph_effect",
+                    "script_": "return Promise.resolve({state: prev_result, payload: _lib.no.resolve(payload), graph: display_graph}).then(promise_payload => _lib.no.executeGraphValue({graph: {...display_graph, nodes: display_graph.nodes.map(n => ({...n})), edges: display_graph.edges.map(e => ({...e}))}})(promise_payload)).then(result => {if(result.display && !result.display.el.props.key){ result.display.el.props.key = `${html_id}-result_display` } return {result, error: undefined, error_nodes}; }).catch(e => ({error: e instanceof AggregateError ? e.errors.map(e => (e instanceof _lib.no.NodysseusError ? e.node_id + ': ' : '') + e.toString()).join(\" \") : e.toString(), error_nodes: new Map(e instanceof AggregateError ? e.errors.map(e => e instanceof _lib.no.NodysseusError ? [e.node_id, e] : false).filter(n => n) : e instanceof _lib.no.NodysseusError ? [[e.node_id, e]] : [])}))"
                 },
                 {
                     "id": "out",
-                    "script": "return {state, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && [(d, payload) => (typeof payload?.then === 'function' ? payload.then(p => p.run) : payload.run).then(res => res).then(res => d(s => (s.error_nodes.clear(), {...s, result: res.result?.state ?? s.result, error: res.error, error_nodes: res.error_nodes ?? s.error_nodes, result_display: res.result?.display, error: res.error}))), result], !readonly && [dispatch_custom_event_effect, {html_id, event: 'updategraph', detail: {graph: state.display_graph}}], ...(effects.filter(e => e[0]) ?? [])]}"
+                    "script": "return {state, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && [run, payload], !readonly && [dispatch_custom_event_effect, {html_id, event: 'updategraph', detail: {graph: state.display_graph}}], ...(effects?.filter(e => e?.[0]) ?? [])]}",
+                    "script_": "return {state, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && [(d, payload) => (typeof payload?.then === 'function' ? payload.then(p => p.run) : payload.run).then(res => res).then(res => d(s => (s.error_nodes.clear(), {...s, result: res.result?.state ?? s.result, error: res.error, error_nodes: res.error_nodes ?? s.error_nodes, result_display: res.result?.display, error: res.error}))), result], !readonly && [dispatch_custom_event_effect, {html_id, event: 'updategraph', detail: {graph: state.display_graph}}], ...(effects.filter(e => e?.[0]) ?? [])]}"
                 }
             ],
             "edges": [
@@ -1601,9 +1619,9 @@
                     "as": "show_result"
                 },
                 {
-                    "from": "result",
+                    "from": "run",
                     "to": "out",
-                    "as": "result"
+                    "as": "run"
                 },
                 {
                     "from": "readonly",
@@ -1652,6 +1670,11 @@
                     "as": "items"
                 },
                 {
+                    "from": "payload",
+                    "to": "out",
+                    "as": "payload" 
+                },
+                {
                     "from": "html_id",
                     "to": "out",
                     "as": "html_id" 
@@ -1664,7 +1687,8 @@
                 {
                     "from": "effects",
                     "to": "out",
-                    "as": "effects"
+                    "as": "effects",
+                    "type": "resolve"
                 },
                 {
                     "from": "dispatch_custom_event_effect",
@@ -2328,6 +2352,266 @@
             ]
         },
         {
+            "id": "modify_state_runnable",
+            "name": "modify_state_runnable",
+            "in": "sueor1k",
+            "out": "tpcqvm2",
+            "nodes": [
+                {
+                    "name": "modify_state_runnable",
+                    "id": "tpcqvm2",
+                    "inputs": [
+                        {
+                            "from": "bkm8hz8",
+                            "to": "tpcqvm2",
+                            "as": "arg0"
+                        },
+                        {
+                            "from": "sueor1k",
+                            "to": "tpcqvm2",
+                            "as": "arg1"
+                        }
+                    ],
+                    "ref": "new_array"
+                },
+                {
+                    "id": "bkm8hz8",
+                    "name": "create_hydra",
+                    "ref": "runnable"
+                },
+                {
+                    "id": "sueor1k",
+                    "name": "in"
+                },
+                {
+                    "id": "f5ybb5f",
+                    "ref": "call"
+                },
+                {
+                    "id": "qov8vrr",
+                    "ref": "arg",
+                    "value": "dispatch"
+                },
+                {
+                    "id": "eil1eq5",
+                    "ref": "new_array"
+                },
+                {
+                    "id": "r07vaaz",
+                    "ref": "runnable"
+                },
+                {
+                    "id": "cb92j91",
+                    "value": "payload",
+                    "ref": "arg"
+                },
+                {
+                    "id": "saonc89"
+                },
+                {
+                    "id": "0nyu2om",
+                    "name": "modify_state_value",
+                    "ref": "modify_state_value"
+                },
+                {
+                    "id": "mo6m3pd",
+                    "value": "payload.payload.fn",
+                    "ref": "arg"
+                },
+                {
+                    "id": "c18pwko",
+                    "ref": "arg",
+                    "value": "payload.payload.value"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "bkm8hz8",
+                    "to": "tpcqvm2",
+                    "as": "arg0"
+                },
+                {
+                    "from": "sueor1k",
+                    "to": "tpcqvm2",
+                    "as": "arg1"
+                },
+                {
+                    "from": "f5ybb5f",
+                    "to": "bkm8hz8",
+                    "as": "fn"
+                },
+                {
+                    "from": "qov8vrr",
+                    "to": "f5ybb5f",
+                    "as": "self"
+                },
+                {
+                    "from": "eil1eq5",
+                    "to": "f5ybb5f",
+                    "as": "args"
+                },
+                {
+                    "from": "r07vaaz",
+                    "to": "eil1eq5",
+                    "as": "arg0"
+                },
+                {
+                    "from": "cb92j91",
+                    "to": "eil1eq5",
+                    "as": "payload"
+                },
+                {
+                    "from": "saonc89",
+                    "to": "r07vaaz",
+                    "as": "fn"
+                },
+                {
+                    "from": "0nyu2om",
+                    "to": "saonc89",
+                    "as": "state"
+                },
+                {
+                    "from": "mo6m3pd",
+                    "to": "0nyu2om",
+                    "as": "fn"
+                },
+                {
+                    "from": "c18pwko",
+                    "to": "0nyu2om",
+                    "as": "value"
+                }
+            ],
+            "inputs": [
+                {
+                    "from": "ngkl1rp/ayf70m0/rrxfq4l",
+                    "to": "tpcqvm2",
+                    "as": "fn"
+                },
+                {
+                    "from": "ngkl1rp/lw849n7",
+                    "to": "tpcqvm2",
+                    "as": "value"
+                }
+            ]
+        },
+        {
+            "id": "modify_state_value",
+            "name": "modify_state_value",
+            "in": "9g39i2c",
+            "out": "0nyu2om",
+            "nodes": [
+                {
+                    "name": "out",
+                    "id": "0nyu2om",
+                    "ref": "set"
+                },
+                {
+                    "name": "in",
+                    "id": "9g39i2c"
+                },
+                {
+                    "id": "ehu0yf5",
+                    "value": "value",
+                    "ref": "arg"
+                },
+                {
+                    "id": "rcfwyh8",
+                    "ref": "arg",
+                    "value": "state"
+                },
+                {
+                    "id": "npwm1c5",
+                    "ref": "apply"
+                },
+                {
+                    "id": "5dkffft"
+                },
+                {
+                    "id": "1t54i2i",
+                    "ref": "arg",
+                    "value": "fn"
+                },
+                {
+                    "id": "2u2jmvs",
+                    "ref": "get"
+                },
+                {
+                    "id": "xur00me",
+                    "value": "value",
+                    "ref": "arg"
+                },
+                {
+                    "id": "a01lbb8",
+                    "ref": "arg",
+                    "value": "state"
+                }
+            ],
+            "edges": [
+                {
+                    "to": "0nyu2om",
+                    "from": "9g39i2c",
+                    "as": "fn"
+                },
+                {
+                    "from": "ehu0yf5",
+                    "to": "0nyu2om",
+                    "as": "path"
+                },
+                {
+                    "from": "rcfwyh8",
+                    "to": "0nyu2om",
+                    "as": "target"
+                },
+                {
+                    "from": "npwm1c5",
+                    "to": "0nyu2om",
+                    "as": "value"
+                },
+                {
+                    "from": "5dkffft",
+                    "to": "npwm1c5",
+                    "as": "args"
+                },
+                {
+                    "from": "1t54i2i",
+                    "to": "npwm1c5",
+                    "as": "fn"
+                },
+                {
+                    "from": "rcfwyh8",
+                    "to": "5dkffft",
+                    "as": "state"
+                },
+                {
+                    "from": "2u2jmvs",
+                    "to": "5dkffft",
+                    "as": "state_value"
+                },
+                {
+                    "from": "xur00me",
+                    "to": "2u2jmvs",
+                    "as": "path"
+                },
+                {
+                    "from": "a01lbb8",
+                    "to": "2u2jmvs",
+                    "as": "target"
+                }
+            ],
+            "inputs": [
+                {
+                    "from": "plnglbg/mo6m3pd",
+                    "to": "plnglbg/0nyu2om",
+                    "as": "fn"
+                },
+                {
+                    "from": "plnglbg/c18pwko",
+                    "to": "plnglbg/0nyu2om",
+                    "as": "value"
+                }
+            ]
+        },
+        {
             "id": "h",
             "nodes": [
                 {
@@ -2358,7 +2642,7 @@
                 {"id": "dom_type_def", "ref": "default"},
                 {
                     "id": "out",
-                    "script": "if(!(typeof dom_type === 'string' || typeof text === 'string')){ throw new Error('invalid element');} return {el: {dom_type, props, children}}"
+                    "script": "if(!(typeof dom_type === 'string' || typeof text === 'string')){ throw new Error('invalid element');} children.filter(c => c).forEach(c => {if(!(typeof c.dom_type === 'string' || typeof c.text === 'string')){throw new Error ('invalid child element');}}); return {el: {dom_type, props, children}}"
                 },
                 {
                     "id": "_out"
@@ -2553,7 +2837,7 @@
                 },
                 {
                     "id": "mapped_children",
-                    "script": "let run_graph = {...graph, in: 'run_h/in', out: 'run_h'}; const fn = _lib.no.executeGraphValue({graph: run_graph}); return (children.filter(c => !!c) ?? []).map(c => ({...c, graph: run_graph})).map(fn).filter(c => c).map(c => c.el);"
+                    "script": "let run_graph = {...graph, in: 'run_h/in', out: 'run_h'}; const fn = _lib.no.executeGraphValue({graph: run_graph}); return (children?.filter(c => !!c) ?? []).map(c => ({...c, graph: run_graph})).map(fn).filter(c => c).map(c => c.el);"
                 },
                 {
                     "id": "out_h",
@@ -2589,6 +2873,7 @@
                 }
             ],
             "edges": [
+                {"from": "in", "to": "out", "as": "_", "type": "ref"},
                 {"from": "dom_type", "to": "out_input", "as": "dom_type"},
                 {"from": "dom_type", "to": "out_h", "as": "dom_type"},
                 {"from": "children", "to": "mapped_children", "as": "children"},
@@ -3388,9 +3673,6 @@
         },
         {
             "id": "out"
-        },
-        {
-            "id": "hyperapp_view_in"
         },
         {
             "id": "nodes",
@@ -4229,7 +4511,7 @@
         },
         {
             "id": "node_args",
-            "out": "node_args",
+            "out": "out",
             "nodes": [
                 {"id": "node", "ref": "arg", "value": "node"},
                 {"id": "nodes", "ref": "arg", "value": "nodes"},
@@ -4244,7 +4526,9 @@
                 {"id": "nested_node_args", "script": "return nodes.map(n => n.value)"},
                 {"id": "extern_node_args", "script": "return _lib.just.get.fn(_lib, node.extern).args"},
                 {"id": "node_args_input", "script": "return node.id === 'arg' ? undefined : node.extern ? 'extern' : node.nodes ?  'nested' : 'none'"},
-                {"id": "node_args", "ref": "switch"}
+                {"id": "node_args", "ref": "switch"},
+                {"id": "empty", "value": []},
+                {"id": "out", "ref": "default"}
             ],
             "edges": [
                 {"from": "ref_path", "to": "ref", "as": "path"},
@@ -4252,6 +4536,7 @@
                 {"from": "ref_node", "to": "source_node", "as": "true"},
                 {"from": "node", "to": "source_node", "as": "false"},
                 {"from": "node", "to": "ref", "as": "target"},
+                {"from": "node", "to": "ref_node", "as": "node"},
                 {"from": "nodes", "to": "ref_node", "as": "nodes"},
                 {"from": "ref", "to": "ref_node", "as": "selected"},
                 {"from": "source_node", "to": "node_nodes", "as": "target"},
@@ -4262,7 +4547,9 @@
                 {"from": "source_node", "to": "extern_node_args", "as": "node"},
                 {"from": "extern_node_args", "to": "node_args", "as": "extern"},
                 {"from": "source_node", "to": "node_args_input", "as": "node"},
-                {"from": "node_args_input", "to": "node_args", "as": "input"}
+                {"from": "node_args_input", "to": "node_args", "as": "input"},
+                {"from": "empty", "to": "out", "as": "otherwise"},
+                {"from": "node_args", "to": "out", "as": "value"}
             ]
         },
         {
@@ -4287,7 +4574,7 @@
                 {"id": "y", "ref": "get"},
                 {"id": "args_h_text", "ref": "h_text"},
                 {"id": "args_h_dom_type", "value": "div"},
-                {"id": "args_h_props", "script": "return {class: {args: true}, style: {left: `${x * svg_offset.scale + svg_offset?.x - 64}px`, top: `${y * svg_offset.scale + svg_offset.y + 32}px`}}"},
+                {"id": "args_h_props", "script": "return {class: {args: true}, style: {left: `${x * (svg_offset?.scale ?? 1) + (svg_offset?.x ?? 0) - 64}px`, top: `${y * (svg_offset?.scale ?? 1) + (svg_offset?.y ?? 0) + 32}px`}}"},
                 {"id": "args_h", "ref": "h"},
                 {"id": "args_out", "ref": "if"},
                 {"id": "set_args_display", "ref": "set"},
@@ -6356,24 +6643,6 @@
                     "as": "node_id"
                 },
                 {
-                    "from": "expand_contract",
-                    "to": "expand_contract_selected"
-                },
-                {
-                    "from": "expand_contract",
-                    "to": "expand_contract_display_graph"
-                },
-                {
-                    "from": "expand_contract_selected",
-                    "to": "selected",
-                    "as": "expand_contract"
-                },
-                {
-                    "from": "expand_contract_display_graph",
-                    "to": "display_graph",
-                    "as": "expand_contract"
-                },
-                {
                     "from": "event",
                     "to": "out",
                     "as": "payload"
@@ -6506,7 +6775,7 @@
                     "type": "resolve"
                 },
                 {
-                    "from": "set_display_graph",
+                    "from": "set_selected",
                     "to": "out",
                     "as": "state"
                 }
@@ -6704,6 +6973,7 @@
         },
         {
             "id": "editor",
+            "out": "out",
             "nodes": [
                 {
                     "id": "in"
@@ -6797,7 +7067,7 @@
                     "id": "styles",
                     "nodes": [
                         {"id": "in"},
-                        {"id": "style_content", "value": "#node-editor { position: relative; width: 100%; height: 100vh; color: white; font-family: consolas; } #node-editor-editor { background-color: #112; } #node-editor-editor.hash-view { background-color: unset; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .more { cursor: pointer; } .edit-value .centering { position: absolute; width: 32vw; display: flex; flex-direction: column; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .args { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node { cursor: pointer; stroke: #fff; stroke-width: 32; stroke-opacity: 1; } .insert-node .circle{ fill-opacity: 0.5; } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"},
+                        {"id": "style_content", "value": "#node-editor { position: relative; width: 100%; height: 100vh; color: white; font-family: consolas; } #node-editor-editor.hash-view { background-color: unset; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .more { cursor: pointer; } .edit-value .centering { position: absolute; width: 32vw; display: flex; flex-direction: column; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .args { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node { cursor: pointer; stroke: #fff; stroke-width: 32; stroke-opacity: 1; } .insert-node .circle{ fill-opacity: 0.5; } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"},
                         {"id": "style_h_text", "ref": "h_text"},
                         {"id": "style_dom_type", "value": "style"},
                         {"id": "out", "ref": "h"}
@@ -6872,7 +7142,7 @@
                         },
                         {"id": "edit_position", "ref": "arg", "value": "edit_position"},
                         {"id": "svg_offset", "ref": "arg", "value": "svg_offset"},
-                        {"id": "edit_html_position", "script": "return {x: Math.min(dimensions.x - 256 * 1.25, (position?.x ?? 0) * svg_offset.scale + (svg_offset?.x ?? 0)), y: Math.min(dimensions.y - 64, (position?.y ?? 0) * svg_offset.scale + svg_offset.y)}"},
+                        {"id": "edit_html_position", "script": "return {x: Math.min(dimensions.x - 256 * 1.25, (position?.x ?? 0) * (svg_offset?.scale ?? 1) + (svg_offset?.x ?? 0)), y: Math.min(dimensions.y - 64, (position?.y ?? 0) * (svg_offset?.scale ?? 1) + (svg_offset?.y ?? 0))}"},
                         {
                             "id": "edit_text_base_props",
                             "script": "return {id: `${html_id}-edit-value`, class: {'edit-value': true, [editing]: true}, onclick: (s, payload) => (payload.preventDefault(), payload.stopPropagation(), [s, [confirm_edit_text, payload]])}"
@@ -6906,7 +7176,7 @@
                         },
                         {
                             "id": "edit_text_input_props",
-                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected))[editing]); return Object.assign({id: `${html_id}-edit-text`, class: {input: true, [editing]: true}, value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), onclick: (s, payload) => (payload.stopPropagation(), s), onkeydown: (s, payload) => [s, (payload.key === 'Enter' ? (payload.stopPropagation(), [confirm_edit_text, payload]): false)], oninput: (s, payload) => (console.log(payload), {...s, edit_value: payload.target.value}), onfocus: (s, payload) => [s, [() => payload.target.setSelectionRange(0, (console.log(payload), payload.target.value.length))]], onchange: (s, payload) => ([s, s.editing && [confirm_edit_text, payload]])}, editing === 'ref' ? {list: 'node-options', type: 'text'} : {})"
+                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected))[editing]); return Object.assign({id: `${html_id}-edit-text`, class: {input: true, [editing]: true}, value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), onclick: (s, payload) => (payload.stopPropagation(), s), onkeydown: (s, payload) => [s, (payload.key === 'Enter' ? (payload.stopPropagation(), [confirm_edit_text, payload]): false)], oninput: (s, payload) => ({...s, edit_value: payload.target.value}), onfocus: (s, payload) => [s, [() => payload.target.setSelectionRange(0, payload.target.value.length)]], onchange: (s, payload) => ([s, s.editing && [confirm_edit_text, payload]])}, editing === 'ref' ? {list: 'node-options', type: 'text'} : {})"
                         },
                         {
                             "id": "edit_text_label",
@@ -7348,22 +7618,6 @@
                             "script": "return ref?.display_type ? ref.display_type : typeof value !== 'undefined' && typeof value !== 'object' ? typeof value : ref ? (ref.node_type ?? ref) : nodes ? 'graph' : script ? 'script' : 'object'"
                         },
                         {
-                            "id": "get_node_display",
-                            "args": [
-                                "display_graph",
-                                "type"
-                            ],
-                            "script": "return display_graph.nodes.find(n => n.id === type + '_display') ?? display_graph.nodes.find(n => n.id === 'default_node_display')"
-                        },
-                        {
-                            "id": "get_error_display",
-                            "args": [
-                                "display_graph",
-                                "type"
-                            ],
-                            "script": "return display_graph.nodes.find(n => n.id === 'default_error_display')"
-                        },
-                        {
                             "id": "result",
                             "ref": "arg",
                             "value": "result"
@@ -7372,28 +7626,6 @@
                             "id": "display_graph",
                             "ref": "arg",
                             "value": "display_graph"
-                        },
-                        {
-                            "id": "run_node_display",
-                            "args": [
-                                "node",
-                                "display",
-                                "error",
-                                "result",
-                                "display_graph",
-                                "node_inputs"
-                            ],
-                        "script": "try { const graph = {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: display.id, in: display.id + '/' + display.in}; const input = {state: new Map([[display.id + '/' +  display.in, {node, result}]]), graph, cache_id: 'rnd'}; return _lib.no.executeGraph(input)?.el } catch(e){ return {error: e} }"
-                        },
-                        {
-                            "id": "run_error_display",
-                            "args": [
-                                "node",
-                                "error",
-                                "error_display",
-                                "display_graph"
-                            ],
-                            "script": "return !error ? undefined : _lib.no.executeGraph({state: new Map([[error_display.id + '/' +  error_display.in, {node, error: error.toString()}]]), graph: {...display_graph, nodes: display_graph.nodes.concat([]), edges:display_graph.edges.concat([]), out: error_display.id, in: error_display.id + '/' + error_display.in}})?.el"
                         },
                         {
                             "id": "container_dom_type",
@@ -7760,9 +7992,9 @@
                             "value": "show_all"
                         },
                         {
-                            "id": "error_nodes",
+                            "id": "error",
                             "ref": "arg",
-                            "value": "error_nodes"
+                            "value": "error"
                         },
                         {
                             "id": "hide_types",
@@ -7827,7 +8059,7 @@
                         },
                         {
                             "id": "node_layout",
-                            "script": "return nodes.map(n => _lib.no.executeGraphValue({state: new Map(), graph: {...graph, in: '_' + n.node_id, out: node_layout_map, html_id: html_id}, cache_id: '_' + n.node_id})(Object.assign({node: Object.assign({}, n, display_graph.nodes.find(dgn => dgn.id === n.node_id)), hide_types, show_all, selected_distance: levels.distance_from_selected.get(n.node_child_id), level: levels.level_by_node.get(n.node_id), error: !error_nodes ? false : [...error_nodes.keys()].filter(k => k.startsWith(n.node_id)).length > 0}, _node_inputs)))"
+                            "script": "const error_nodes = error instanceof AggregateError ? error.errors.map(e => e instanceof _lib.no.NodysseusError ? e.node_id : false).filter(n => n) : error instanceof _lib.no.NodysseusError ? [error.node_id] : []; return nodes.map(n => _lib.no.executeGraphValue({state: new Map(), graph: {..._graph, in: '_' + n.node_id, out: node_layout_map, html_id: html_id}, cache_id: '_' + n.node_id})(Object.assign({node: Object.assign({}, n, display_graph.nodes.find(dgn => dgn.id === n.node_id)), hide_types, show_all, selected_distance: levels.distance_from_selected.get(n.node_child_id), level: levels.level_by_node.get(n.node_id), node_error: !error_nodes ? false : error_nodes.filter(k => k.startsWith(n.node_id)).length > 0}, _node_inputs)))"
                         },
                         {
                             "id": "node_layout_map",
@@ -7841,6 +8073,16 @@
                                     "value": "node"
                                 },
                                 {
+                                    "id": "hover",
+                                    "ref": "arg",
+                                    "value": "hover"
+                                },
+                                {
+                                    "id": "selected_edge",
+                                    "ref": "arg",
+                                    "value": "selected_edge"
+                                },
+                                {
                                     "id": "html_id",
                                     "ref": "arg",
                                     "value": "html_id"
@@ -7851,17 +8093,18 @@
                                     "value": "show_all"
                                 },
                                 {
+                                    "id": "selected",
+                                    "ref": "arg",
+                                    "value": "selected"
+                                },
+                                {
                                     "id": "node_el_width",
                                     "ref": "arg",
                                     "value": "node_el_width"
                                 },
                                 {
                                     "id": "is_selected",
-                                    "args": [
-                                        "selected",
-                                        "node_id"
-                                    ],
-                                    "script": "return selected.includes(node_id)"
+                                    "script": "return selected === node.node_id"
                                 },
                                 {
                                     "id": "selected_distance",
@@ -7881,10 +8124,11 @@
                                 {
                                     "id": "error",
                                     "ref": "arg",
-                                    "value": "error"
+                                    "value": "node_error"
                                 },
                                 {
-                                    "id": "out"
+                                    "id": "out",
+                                    "ref": "h"
                                 },
                                 {
                                     "id": "parent",
@@ -7897,11 +8141,7 @@
                                 {"id": "onclick_node", "ref": "onclick_node_action"},
                                 {
                                     "id": "parent_attrs",
-                                    "args": [
-                                        "node",
-                                        "meta"
-                                    ],
-                                    "script": "return ({onclick: (_, payload) => [onclick, {event: payload, node_id: node.node_id}],  onmouseover: (state, payload) => [{...state, hover: node.node_id}], onmouseout: (state, payload) => [{...state, hover: undefined}],  ontouchstart: (_, payload) => [onclick, {event: payload, node_id: node.node_id}], width: '256', height: '64', id: html_id + '-' + node.node_child_id, class: {node: true,  selected: meta.selected[0] === node.node_id, hover: meta.hover === node.node_id }, opacity: meta.selected_edge?.from === node.node_id || show_all ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - (selected_distance * selected_distance) / 6) : 0.1})"
+                                    "script": "return ({onclick: (_, payload) => [onclick, {event: payload, node_id: node.node_id}],  onmouseover: (state, payload) => [{...state, hover: node.node_id}], onmouseout: (state, payload) => [{...state, hover: undefined}],  ontouchstart: (_, payload) => [onclick, {event: payload, node_id: node.node_id}], width: '256', height: '64', id: html_id + '-' + node.node_child_id, class: {node: true,  selected: selected[0] === node.node_id, hover: hover === node.node_id }, opacity: selected_edge?.from === node.node_id || show_all ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - (selected_distance * selected_distance) / 6) : 0.1})"
                                 },
                                 {
                                     "id": "children",
@@ -7927,7 +8167,7 @@
                                         {
                                             "id": "error",
                                             "ref": "arg",
-                                            "value": "error"
+                                            "value": "node_error"
                                         },
                                         {
                                             "id": "node_shape_attrs",
@@ -8115,7 +8355,7 @@
                                                 },
                                                 {
                                                     "from": "get_id",
-                                                    "to": "display_nam",
+                                                    "to": "display_name",
                                                     "as": "id"
                                                 },
                                                 {
@@ -8320,21 +8560,24 @@
                             ],
                             "edges": [
                                 {
-                                    "from": "args_in",
-                                    "to": "in"
+                                    "from": "selected",
+                                    "to": "is_selected",
+                                    "as": "selected"
                                 },
                                 {
-                                    "from": "in",
-                                    "to": "is_selected"
-                                },
-                                {
-                                    "from": "in",
+                                    "from": "selected",
                                     "to": "parent_attrs",
-                                    "as": "meta"
+                                    "as": "selected"
                                 },
                                 {
-                                    "from": "in",
-                                    "to": "get_node_display"
+                                    "from": "selected_edge",
+                                    "to": "parent_attrs",
+                                    "as": "selected_edge"
+                                },
+                                {
+                                    "from": "hover",
+                                    "to": "parent_attrs",
+                                    "as": "hover"
                                 },
                                 {
                                     "from": "get_node",
@@ -8346,7 +8589,8 @@
                                 },
                                 {
                                     "from": "get_node",
-                                    "to": "is_selected"
+                                    "to": "is_selected",
+                                    "as": "node"
                                 },
                                 {
                                     "from": "is_selected",
@@ -8355,7 +8599,7 @@
                                 },
                                 {
                                     "from": "children",
-                                    "to": "parent"
+                                    "to": "out"
                                 },
                                 {
                                     "from": "show_all",
@@ -8380,28 +8624,24 @@
                                 {"from": "onclick_node", "to": "parent_attrs", "as": "onclick"},
                                 {
                                     "from": "parent_attrs",
-                                    "to": "parent",
+                                    "to": "out",
                                     "as": "props"
                                 },
                                 {
                                     "from": "parent_dom_type",
-                                    "to": "parent",
+                                    "to": "out",
                                     "as": "dom_type"
                                 },
                                 {
                                     "from": "get_node",
                                     "to": "parent_attrs",
                                     "as": "node"
-                                },
-                                {
-                                    "from": "parent",
-                                    "to": "out"
                                 }
                             ]
                         },
                         {
                             "id": "link_layout",
-                            "script": "return links.map(link => _lib.no.executeGraphNode({graph})(link_layout_map)(Object.assign({readonly, show_all, randid, link: Object.assign({edge: display_graph.edges.find(e => link.source.node_id === e.from && link.target.node_id === e.to)}, link), selected_distance: levels.distance_from_selected.get(link.target.node_child_id) !== undefined ? Math.min(levels.distance_from_selected.get(link.target.node_child_id), levels.distance_from_selected.get(link.source.node_child_id)) : undefined, sibling_index_normalized: (levels.siblings.get(link.source.node_id).findIndex(n => n === link.source.node_id) + 1) / (levels.siblings.get(link.source.node_id).length + 1)}, _node_inputs)))"
+                            "script": "return links.map(link => _lib.no.executeGraphNode({graph: _graph})(link_layout_map)(Object.assign({readonly, show_all, randid, link: Object.assign({edge: display_graph.edges.find(e => link.source.node_id === e.from && link.target.node_id === e.to)}, link), selected_distance: levels.distance_from_selected.get(link.target.node_child_id) !== undefined ? Math.min(levels.distance_from_selected.get(link.target.node_child_id), levels.distance_from_selected.get(link.source.node_child_id)) : undefined, sibling_index_normalized: (levels.siblings.get(link.source.node_id).findIndex(n => n === link.source.node_id) + 1) / (levels.siblings.get(link.source.node_id).length + 1)}, _node_inputs)))"
                         },
                         {
                             "id": "link_layout_map",
@@ -8919,7 +9159,7 @@
                                 "comp",
                                 "flood"
                             ],
-                            "script": "return [flood.el, comp.el]"
+                            "script": "return [flood.el]"
                         },
                         {
                             "id": "fill_filter_selected_children",
@@ -9015,9 +9255,9 @@
                             "as": "hover"
                         },
                         {
-                            "from": "error_nodes",
+                            "from": "error",
                             "to": "node_layout",
-                            "as": "error_nodes"
+                            "as": "error"
                         },
                         {
                             "from": "display_graph",
@@ -9311,7 +9551,7 @@
                         },
                         {
                             "from": "fill_filter_composite",
-                            "to": "fill_filter_children",
+                            "to": "_fill_filter_children",
                             "as": "comp"
                         },
                         {
@@ -9387,7 +9627,7 @@
                 },
                 {
                     "id": "error_display",
-                    "script": "return {el: {dom_type: 'div', props: {class:{error: true, main: true}, key: `${html_id}-error_display`}, children: [{dom_type: 'text_value', text: error}]}}"
+                    "script": "return {el: {dom_type: 'div', props: {class:{error: true, main: true}, key: `${html_id}-error_display`}, children: [{dom_type: 'text_value', text: error instanceof AggregateError ? error.errors.map(e => e.toString()).join(\" \") : error?.toString()}]}}"
                 },
                 {
                     "id": "noop",
@@ -9401,17 +9641,8 @@
                     "id": "out",
                     "ref": "switch"
                 }
-            
             ],
             "edges": [
-                {
-                    "from": "in",
-                    "to": "menu"
-                },
-                {
-                    "from": "in",
-                    "to": "result"
-                },
                 {
                     "from": "graph",
                     "to": "wrapper",
@@ -9579,41 +9810,6 @@
             "from": "get_graph",
             "to": "update_sim_fn",
             "as": "graph"
-        },
-        {
-            "from": "simulation",
-            "to": "update_sim",
-            "as": "simulation"
-        },
-        {
-            "from": "arg_nodes",
-            "to": "update_sim",
-            "as": "nodes"
-        },
-        {
-            "from": "arg_links",
-            "to": "update_sim",
-            "as": "links"
-        },
-        {
-            "from": "arg_selected",
-            "to": "update_sim",
-            "as": "selected"
-        },
-        {
-            "from": "arg_levels",
-            "to": "update_sim",
-            "as": "levels"
-        },
-        {
-            "from": "arg_sim_update_alpha",
-            "to": "update_sim",
-            "as": "sim_update_alpha"
-        },
-        {
-            "from": "get_display_graph",
-            "to": "update_sim",
-            "as": "display_graph"
         },
         {
             "from": "error_nodes",
@@ -9802,11 +9998,6 @@
             "to": "hyperapp_init_state"
         },
         {
-            "from": "in",
-            "to": "hyperapp_init_state",
-            "order": -1
-        },
-        {
             "from": "nodes",
             "to": "graph_to_simulation",
             "as": "nodes"
@@ -9842,12 +10033,6 @@
             "from": "update_sim_in",
             "to": "update_sim_fn",
             "as": "in_node",
-            "type": "ref"
-        },
-        {
-            "from": "update_sim",
-            "to": "update_sim_fn",
-            "as": "fn",
             "type": "ref"
         },
         {
