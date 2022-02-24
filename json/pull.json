@@ -2971,7 +2971,7 @@
                     "type": "ref"
                 },
                 {
-                    "from": "dg_selected",
+                    "from": "node_id",
                     "to": "selected_node",
                     "as": "selected"
                 },

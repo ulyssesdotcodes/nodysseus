@@ -239,37 +239,39 @@ const executeGraph = ({ cache, graph, parent_graph, cache_id, node_cache }) => {
         const visited = new Set();
         const nodes = [];
         const edges = [];
-        const node_map = new Map();
-        const in_edge_map = new Map()
-        while(queue.length > 0) {
-            const item = queue.pop();
-            if(visited.has(item)) {
-                continue;
-            }
+        const node_map = graph_node_map;
+        const in_edge_map = graph_in_edge_map;
+        // while(queue.length > 0) {
+        //     const item = queue.pop();
+        //     if(visited.has(item)) {
+        //         continue;
+        //     }
 
-            const node_edges = graph_in_edge_map.get(item)// ?? parent_graph?.edges.filter(e => e.to === item);
-            node_edges?.forEach(e => {queue.push(e.from); edges.push(e)});
-            in_edge_map.set(item, node_edges)
-            const node = graph_node_map.get(item);// ?? parent_graph?.nodes.find(n => n.id === item);
-            nodes.push(node);
-            node_map.set(item, node);
-            if(node.ref) {
-                queue.push(node.ref);
-            }
+        //     const node_edges = graph_in_edge_map.get(item)// ?? parent_graph?.edges.filter(e => e.to === item);
+        //     node_edges?.forEach(e => {queue.push(e.from); edges.push(e)});
+        //     in_edge_map.set(item, node_edges)
+        //     const node = graph_node_map.get(item);// ?? parent_graph?.nodes.find(n => n.id === item);
+        //     nodes.push(node);
+        //     node_map.set(item, node);
+        //     if(node.ref) {
+        //         queue.push(node.ref);
+        //     }
 
-            if(node.nodes) {
-                node.nodes.forEach(c => {
-                    if(c.ref) {
-                        queue.push(c.ref);
-                    }
-                })
-            }
+        //     if(node.nodes) {
+        //         node.nodes.forEach(c => {
+        //             if(c.ref) {
+        //                 queue.push(c.ref);
+        //             }
+        //         })
+        //     }
 
-            // graph.nodes.filter(n => n.id.startsWith(item + '/')).forEach(n => queue.push(n.id));
-            visited.add(item);
-        }
+        //     // graph.nodes.filter(n => n.id.startsWith(item + '/')).forEach(n => queue.push(n.id));
+        //     visited.add(item);
+        // }
 
-        const working_graph = {in: graph.in, nodes, edges};
+        // const working_graph = {in: graph.in, nodes, edges};
+        const working_graph = graph;
+
 
         // working_graph.nodes.forEach(n => in_edge_map.set(n.id, working_graph.edges.filter(e => e.to === n.id)));
 
@@ -427,36 +429,36 @@ const executeGraph = ({ cache, graph, parent_graph, cache_id, node_cache }) => {
                         const new_edge = Object.assign({}, node_ref.edges[i]);
                         new_edge.from = `${node.id}/${new_edge.from}`;
                         new_edge.to = `${node.id}/${new_edge.to}`;
-                        working_graph.edges.push(new_edge);
+                        // working_graph.edges.push(new_edge);
                         if(!graph_in_edge_map.get(new_edge.to)?.find(e => e.from === new_edge.from && e.as === new_edge.as)) {
                             graph.edges.push(new_edge);
                             graph_in_edge_map.set(new_edge.to, (graph_in_edge_map.get(new_edge.to) ?? []).concat([new_edge]))
                         }
-                        in_edge_map.set(new_edge.to, (in_edge_map.get(new_edge.to) ?? []).concat([new_edge]))
+                        // in_edge_map.set(new_edge.to, (in_edge_map.get(new_edge.to) ?? []).concat([new_edge]))
                     }
 
                     for (const child of node_ref.nodes) {
                         const new_node = Object.assign({}, child);
                         new_node.id = `${node.id}/${child.id}`;
-                        working_graph.nodes.push(new_node)
+                        // working_graph.nodes.push(new_node)
                         if(!graph_node_map.has(new_node.id)) {
                             graph.nodes.push(new_node)
                             graph_node_map.set(new_node.id, new_node);
                         }
-                        node_map.set(new_node.id, new_node);
+                        // node_map.set(new_node.id, new_node);
                         const has_inputs = in_edge_map.has(new_node.id);
                         if (new_node.id === `${node.id}/${node_ref.in ?? 'in'}`) {
-                            in_edge_map.get(node.id).map(e => ({ ...e, to: `${node.id}/${node_ref.in ?? 'in'}` }))
-                                .forEach(e => working_graph.edges.push(e));
+                            // in_edge_map.get(node.id).map(e => ({ ...e, to: `${node.id}/${node_ref.in ?? 'in'}` }))
+                            //     .forEach(e => working_graph.edges.push(e));
                             if(!graph_in_edge_map.has(new_node.id)) {
                                 graph_in_edge_map.get(node.id).forEach(e => {
                                     graph.edges.push({ ...e, to: `${node.id}/${node_ref.in ?? 'in'}`})
                                 })
                                 graph_in_edge_map.set(new_node.id, graph.edges.filter(e => e.to === `${node.id}/${node_ref.in ?? 'in'}`))
                             }
-                            in_edge_map.set(new_node.id, working_graph.edges.filter(e => e.to === `${node.id}/${node_ref.in ?? 'in'}`))
+                            // in_edge_map.set(new_node.id, working_graph.edges.filter(e => e.to === `${node.id}/${node_ref.in ?? 'in'}`))
                         } else if (!has_inputs) {
-                            in_edge_map.set(new_node.id, []);
+                            // in_edge_map.set(new_node.id, []);
                             graph_in_edge_map.set(new_node.id, []);
                         }
                     }
@@ -1218,7 +1220,7 @@ const contract_node = (data, keep_expanded = false) => {
     if (!node.nodes) {
         const slash_index = data.node_id.lastIndexOf('/');
         const node_id = slash_index >= 0 ? data.node_id.substring(0, slash_index) : data.node_id;
-        const name = data.name[0] ?? node_id;
+        const name = data.name ?? node_id;
 
         const inside_nodes = [Object.assign({}, node)];
         const inside_node_map = new Map();
