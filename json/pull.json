@@ -1967,7 +1967,6 @@
                 },
                 {
                     "id": "bkm8hz8",
-                    "name": "create_hydra",
                     "ref": "runnable"
                 },
                 {
@@ -10241,7 +10240,6 @@
         {"from": "apply", "to": "utility"},
         {"from": "fetch", "to": "utility"},
         {"from": "merge_objects", "to": "utility"},
-        {"from": "stringify", "to": "JSON"},
-        {"from": "create_hydra", "to": "hydra"}
+        {"from": "stringify", "to": "JSON"}
     ]
 }
