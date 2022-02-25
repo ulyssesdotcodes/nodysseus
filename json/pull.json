@@ -2601,6 +2601,7 @@
         },
         {
             "id": "set_display",
+            "description": "use html_ nodes to add html elements to the document",
             "name": "set_display",
             "in": "fkp4pck/wb73q0h",
             "out": "a59hci8",
@@ -4476,7 +4477,7 @@
                         },
                         {"id": "siblings", "script": "return edges.filter(e => e.to === new_edge.to)"},
                         {"id": "node_args", "ref": "node_args"},
-                        {"id": "next_arg", "script": "return args?.filter(a => !(a === '_node_inputs' || a === '_lib' || a === '_node') && !siblings.find(e => e.as === a) && !a.includes('.'))[0]"},
+                        {"id": "next_arg", "script": "return args?.filter(a => !(a === '_node_inputs' || a === '_lib' || a === '_node') && !siblings.find(e => e.as === a))[0]"},
                         {
                             "id": "calculate_sibling_count",
                             "script": "return siblings.length"
@@ -4968,7 +4969,7 @@
                 {"id": "node_nodes", "ref": "get"},
                 {"id": "node_arg_nodes", "script": "return nodes?.filter(n => n.ref ==='arg')"},
                 {"id": "should_show", "ref": "get"},
-                {"id": "nested_node_args", "script": "return nodes.map(n => n.value)"},
+                {"id": "nested_node_args", "script": "return nodes.map(n => n.value).filter(a => !a.includes('.'))"},
                 {"id": "extern_node_args", "script": "return _lib.just.get.fn(_lib, node.extern).args"},
                 {"id": "node_args_input", "script": "return node.id === 'arg' ? undefined : node.extern ? 'extern' : node.nodes ?  'nested' : 'none'"},
                 {"id": "node_args", "ref": "switch"},
@@ -4998,6 +4999,37 @@
             ]
         },
         {
+            "id": "node_description",
+            "out": "out",
+            "nodes": [
+                {"id": "node_id", "ref": "arg", "value": "node_id"},
+                {"id": "nodes", "ref": "arg", "value": "nodes"},
+                {"id": "node", "script": "return nodes.find(n => n.id === node_id)"},
+                {"id": "ref_path", "value": "ref"},
+                {"id": "ref", "ref": "get"},
+                {"id": "ref_node", "script": "console.log('node des'); console.log(nodes.find(n => n.id === selected)); return nodes.find(n => n.id === selected)"},
+                {"id": "source_node", "ref": "if"},
+                {"id": "description_path", "value": "description"},
+                {"id": "node_description", "ref": "get"},
+                {"id": "out", "ref": "default"}
+            ],
+            "edges": [
+                {"from": "node_id", "to": "node", "as": "node_id"},
+                {"from": "nodes", "to": "node", "as": "nodes"},
+                {"from": "ref_path", "to": "ref", "as": "path"},
+                {"from": "ref", "to": "source_node", "as": "pred"},
+                {"from": "ref_node", "to": "source_node", "as": "true"},
+                {"from": "node", "to": "source_node", "as": "false"},
+                {"from": "node", "to": "ref", "as": "target"},
+                {"from": "node", "to": "ref_node", "as": "node"},
+                {"from": "nodes", "to": "ref_node", "as": "nodes"},
+                {"from": "ref", "to": "ref_node", "as": "selected"},
+                {"from": "source_node", "to": "node_description", "as": "target"},
+                {"from": "description_path", "to": "node_description", "as": "path"},
+                {"from": "node_description", "to": "out", "as": "value"}
+            ]
+        },
+        {
             "id": "show_args_effect",
             "nodes": [
                 {"id": "in"},
@@ -5006,23 +5038,31 @@
                 {"id": "selected", "ref": "arg", "value": "state.selected.0"},
                 {"id": "state", "ref": "arg", "value": "state"},
                 {"id": "svg_offset", "ref": "arg", "value": "state.svg_offset"},
+                {"id": "x_path", "value": "x"},
+                {"id": "y_path", "value": "y"},
                 {"id": "length_path", "value": "length"},
                 {"id": "node_args_arr", "ref": "node_args"},
                 {"id": "node_args", "script": "return 'inputs: ' + node_args.join(', ')"},
                 {"id": "node_args_count", "ref": "get"},
-                {"id": "args_display_path", "value": "args_display"},
+                {"id": "node_description", "ref": "node_description"},
+                {"id": "info_display_path", "value": "args_display"},
                 {"id": "selected_node", "script": "return nodes.find(n => n.id === selected)"},
                 {"id": "selected_el_node", "script": "return nodes.find(n => n.node_id === selected)"},
-                {"id": "x_path", "value": "x"},
                 {"id": "x", "ref": "get"},
-                {"id": "y_path", "value": "y"},
                 {"id": "y", "ref": "get"},
                 {"id": "args_h_text", "ref": "html_text"},
-                {"id": "args_h_dom_type", "value": "div"},
-                {"id": "args_h_props", "script": "return {class: {args: true}, style: {left: `${x * (svg_offset?.scale ?? 1) + (svg_offset?.x ?? 0) - 64}px`, top: `${y * (svg_offset?.scale ?? 1) + (svg_offset?.y ?? 0) + 32}px`}}"},
                 {"id": "args_h", "ref": "html_element"},
-                {"id": "args_out", "ref": "if"},
-                {"id": "set_args_display", "ref": "set"},
+                {"id": "args_h_out", "ref": "default"},
+                {"id": "description_h_text", "ref": "html_text"},
+                {"id": "description_h", "ref": "html_element"},
+                {"id": "description_h_out", "ref": "if"},
+                {"id": "info_h_children", "ref": "new_array"},
+                {"id": "info_h_dom_type", "value": "div"},
+                {"id": "info_h_props", "script": "return {class: {'node-info': true}, style: {left: `${x * (svg_offset?.scale ?? 1) + (svg_offset?.x ?? 0) - 64}px`, top: `${y * (svg_offset?.scale ?? 1) + (svg_offset?.y ?? 0) + 32}px`}}"},
+                {"id": "info_h", "ref": "html_element"},
+                {"id": "info_pred", "script": "return args_count > 0 || description"},
+                {"id": "info_out", "ref": "if"},
+                {"id": "set_info_display", "ref": "set"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action_effect_debounced"}
             ],
@@ -5037,23 +5077,34 @@
                 {"from": "length_path", "to": "node_args_count", "as": "path"},
                 {"from": "node_args_arr", "to": "node_args", "as": "node_args"},
                 {"from": "args_h_text", "to": "args_h", "as": "children"},
-                {"from": "args_h_dom_type", "to": "args_h", "as": "dom_type"},
+                {"from": "args_h", "to": "args_h_out", "as": "value"},
+                {"from": "selected", "to": "node_description", "as": "node_id"},
+                {"from": "display_graph_nodes", "to": "node_description", "as": "nodes"},
+                {"from": "node_description", "to": "description_h_text", "as": "text"},
+                {"from": "description_h_text", "to": "description_h", "as": "children"},
+                {"from": "description_h", "to": "description_h_out", "as": "true"},
+                {"from": "node_description", "to": "description_h_out", "as": "pred"},
                 {"from": "nodes", "to": "selected_el_node", "as": "nodes"},
                 {"from": "selected", "to": "selected_el_node", "as": "selected"},
                 {"from": "selected_el_node", "to": "x", "as": "target"},
                 {"from": "x_path", "to": "x", "as": "path"},
                 {"from": "selected_el_node", "to": "y", "as": "target"},
                 {"from": "y_path", "to": "y", "as": "path"},
-                {"from": "x", "to": "args_h_props", "as": "x"},
-                {"from": "y", "to": "args_h_props", "as": "y"},
-                {"from": "svg_offset", "to": "args_h_props", "as": "svg_offset"},
-                {"from": "args_h_props", "to": "args_h", "as": "props"},
-                {"from": "node_args_count", "to": "args_out", "as": "pred"},
-                {"from": "args_h", "to": "args_out", "as": "true"},
-                {"from": "state", "to": "set_args_display", "as": "target"},
-                {"from": "args_display_path", "to": "set_args_display", "as": "path"},
-                {"from": "args_out", "to": "set_args_display", "as": "value"},
-                {"from": "set_args_display", "to": "result", "as": "state"},
+                {"from": "x", "to": "info_h_props", "as": "x"},
+                {"from": "y", "to": "info_h_props", "as": "y"},
+                {"from": "svg_offset", "to": "info_h_props", "as": "svg_offset"},
+                {"from": "info_h_props", "to": "info_h", "as": "props"},
+                {"from": "args_h_out", "to": "info_h_children", "as": "a0"},
+                {"from": "description_h_out", "to": "info_h_children", "as": "a1"},
+                {"from": "info_h_children", "to": "info_h", "as": "children"},
+                {"from": "info_h", "to": "info_out", "as": "true"},
+                {"from": "node_args_count", "to": "info_pred", "as": "args_count"},
+                {"from": "node_description", "to": "info_pred", "as": "description"},
+                {"from": "info_pred", "to": "info_out", "as": "pred"},
+                {"from": "state", "to": "set_info_display", "as": "target"},
+                {"from": "info_display_path", "to": "set_info_display", "as": "path"},
+                {"from": "info_out", "to": "set_info_display", "as": "value"},
+                {"from": "set_info_display", "to": "result", "as": "state"},
                 {"from": "result", "to": "out", "as": "fn", "type": "ref"}
             ]
         },
@@ -7653,7 +7704,7 @@
                     "id": "styles",
                     "nodes": [
                         {"id": "in"},
-                        {"id": "style_content", "value": "#node-editor { position: relative; width: 100%; height: 100vh; color: white; font-family: consolas; overflow: hidden; } #node-editor-editor.hash-view { background-color: unset; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .more { cursor: pointer; } .edit-value .centering { position: absolute; width: 32vw; display: flex; flex-direction: column; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .args { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node { cursor: pointer; stroke: #fff; stroke-width: 32; stroke-opacity: 1; } .insert-node .circle{ fill-opacity: 0.5; } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"},
+                        {"id": "style_content", "value": "#node-editor { position: relative; width: 100%; height: 100vh; color: white; font-family: consolas; overflow: hidden; } #node-editor-editor.hash-view { background-color: unset; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .more { cursor: pointer; } .edit-value .centering { position: absolute; width: 32vw; display: flex; flex-direction: column; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .node-info { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; display: flex; gap: .4em; flex-direction: column; } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node { cursor: pointer; stroke: #fff; stroke-width: 32; stroke-opacity: 1; } .insert-node .circle{ fill-opacity: 0.5; } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"},
                         {"id": "style_h_text", "ref": "html_text"},
                         {"id": "style_dom_type", "value": "style"},
                         {"id": "out", "ref": "html_element"}
@@ -7744,7 +7795,7 @@
                                 "edit_box",
                                 "types"
                             ],
-                            "script": "return [label.el, edit_box?.el, editing === 'ref' ? ref_datalist.el : false]"
+                            "script": "return [label.el, editing === 'ref' ? ref_description?.el : false, edit_box?.el, editing === 'ref' ? ref_datalist.el : false]"
                         },
                         {
                             "id": "edit_text_textarea_dom_type",
@@ -7762,7 +7813,7 @@
                         },
                         {
                             "id": "edit_text_input_props",
-                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected))[editing]); return Object.assign({id: `${html_id}-edit-text`, class: {input: true, [editing]: true}, value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), onclick: (s, payload) => (payload.stopPropagation(), s), onkeydown: (s, payload) => [s, (payload.key === 'Enter' ? (payload.stopPropagation(), [confirm_edit_text, payload]): false)], oninput: (s, payload) => ({...s, edit_value: payload.target.value}), onfocus: (s, payload) => [s, [() => payload.target.setSelectionRange(0, payload.target.value.length)]], onchange: (s, payload) => ([s, s.editing && [confirm_edit_text, payload]])}, editing === 'ref' ? {list: 'node-options', type: 'text'} : {})"
+                            "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected))[editing]); return Object.assign({id: `${html_id}-edit-text`, class: {input: true, [editing]: true}, value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), onclick: (s, payload) => (payload.stopPropagation(), s), onkeydown: (s, payload) => [s, (payload.key === 'Enter' ? (payload.stopPropagation(), [confirm_edit_text, payload]): false)], oninput: (s, payload) => ({...s, edit_value: payload.target.value}), onfocus: (s, payload) => [s, [() => payload.target.setSelectionRange(0, payload.target.value.length)]]}, editing === 'ref' ? {list: 'node-options', type: 'text'} : {})"
                         },
                         {
                             "id": "edit_text_label",
@@ -7785,6 +7836,23 @@
                             "id": "editing",
                             "ref": "arg",
                             "value": "editing"
+                        },
+                        {
+                            "id": "ref_description",
+                            "out": "out",
+                            "nodes": [
+                                {"id": "node_id", "ref": "arg", "value": "node_id"},
+                                {"id": "nodes", "ref": "arg", "value": "nodes"},
+                                {"id": "node_description", "ref": "node_description"},
+                                {"id": "description_text", "ref": "html_text"},
+                                {"id": "out", "ref": "html_element"}
+                            ],
+                            "edges": [
+                                {"from": "node_id", "to": "node_description", "as": "node_id"},
+                                {"from": "nodes", "to": "node_description", "as": "nodes"},
+                                {"from": "node_description", "to": "description_text", "as": "text"},
+                                {"from": "description_text", "to": "out", "as": "children"}
+                            ]
                         },
                         {
                             "id": "ref_datalist",
@@ -8039,6 +8107,9 @@
                             "to": "centering_wrapper_children",
                             "as": "ref_datalist"
                         },
+                        {"from": "edit_value", "to": "ref_description", "as": "node_id"},
+                        {"from": "display_graph_nodes", "to": "ref_description", "as": "nodes"},
+                        {"from": "ref_description", "to": "centering_wrapper_children", "as": "ref_description"},
                         {
                             "from": "html_id",
                             "to": "edit_text_textarea_props",
