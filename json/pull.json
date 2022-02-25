@@ -1307,7 +1307,7 @@
                 {"id": "payload", "ref": "arg", "value": "payload"},
                 {"id": "run_effect", "ref": "run_display_graph_effect"},
                 {"id": "result", "script": "return _lib.no.executeGraphNode({graph: {...fn_graph, nodes: [...fn_graph.nodes], edges: [...fn_graph.edges]}})('main/out')({state: state, payload: {event: payload, run: run_effect}});"},
-                {"id": "out", "script": "return (dispatch, payload) => dispatch(state => {const wrapped_dispatch = (a, p) => Promise.resolve([a, p]).then(([a, p]) => dispatch(a, p)).catch(e => dispatch(s => [{...s, error: e}])); Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: _graph})(fn)({state: s, payload})).then(res => res?.flatMap(r => !r ? [] : !Array.isArray(r) ? [r] : r[0].fn ? [r] : r).filter(r => r._Proxy ? r._value : r).map(r => [dispatch_ => Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: r[0]?.graph ?? r.graph})(r[0]?.fn ?? r.fn)({state: s, payload: {event: payload, payload: r[1]}, dispatch: wrapped_dispatch})).catch(e => dispatch(s => [{...s, error: e}]))]) ?? []).then(fx => wrapped_dispatch(s => [s.error ? {...s, error: undefined} : s, ...fx])).catch(e => dispatch(s => [{...s, error: e}])); return state.error ? {...state, error: undefined} : state;})"}
+                {"id": "out", "script": "return (dispatch, payload) => {const wrapped_dispatch = (a, p) => Promise.resolve([a, p]).then(([a, p]) => dispatch(a, p)).catch(e => dispatch(s => [{...s, error: e}])); wrapped_dispatch(state => {Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: _graph})(fn)({state: s, payload})).then(res => _lib.no.executeGraphNode({graph: res[0]?.graph ?? res.graph})(res[0]?.fn ?? r.fn)({state, payload: {event: payload, payload: res[1]}, dispatch: wrapped_dispatch})); return state.error ? {...state, error: false} : state;})}"}
             ],
             "edges": [
                 {"from": "state", "to": "result", "as": "state"},
@@ -1664,10 +1664,11 @@
                     "ref": "new_array",
                     "name": "w0zzawl"
                 },
+                {"id": "args", "ref": "arg", "value": "_args"},
                 {
                     "id": "pdljod1",
                     "name": "pdljod1",
-                    "script": "return (element, index, array) => _lib.no.runGraph(_graph, fn, {element,index,array});"
+                    "script": "return (element, index, array) => _lib.no.runGraph(_graph, fn, Object.assign({}, {element, index, array}, args));"
                 },
                 {
                     "id": "2lvs5dj",
@@ -1713,6 +1714,11 @@
                     "from": "2lvs5dj",
                     "to": "pdljod1",
                     "as": "graph"
+                },
+                {
+                    "from": "args",
+                    "to": "pdljod1",
+                    "as": "args"
                 },
                 {
                     "from": "6g75abk",
@@ -1939,6 +1945,127 @@
                     "from": "8ji5lb6",
                     "to": "flcuh31",
                     "as": "path"
+                }
+            ]
+        },
+        {
+            "id": "sequence",
+            "name": "sequence",
+            "in": "9mhpj8k/23ynj8o",
+            "out": "2435ihf",
+            "nodes": [
+                {
+                    "name": "out",
+                    "id": "2435ihf",
+                    "ref": "new_array"
+                },
+                {
+                    "name": "seq_runnable",
+                    "id": "hz8lp96/hz8lp96",
+                    "ref": "runnable"
+                },
+                {
+                    "name": "in",
+                    "id": "9mhpj8k/23ynj8o"
+                },
+                {
+                    "id": "hz8lp96/2g7hpye",
+                    "script": "return Promise.all(promises);"
+                },
+                {
+                    "id": "hz8lp96/u36ltxo",
+                    "ref": "map"
+                },
+                {
+                    "id": "hz8lp96/lq3olmi",
+                    "script": "console.log(payload);\nreturn Object.entries(payload).filter(a => a[0] !== 'state' && a[0] !== 'payload' && a[0] !== 'dispatch' && (a[1]?.fn || a[1]?.[0]?.fn)).map(a => a[1]);"
+                },
+                {
+                    "id": "hz8lp96/j6iu3d3",
+                    "script": "return Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: runnable[0]?.graph ?? runnable.graph})(runnable[0]?.fn ?? runnable.fn)({state: s, payload: {event, payload: runnable[1]}, dispatch}));"
+                },
+                {
+                    "id": "hz8lp96/cja7ejh",
+                    "ref": "arg",
+                    "value": "payload.payload"
+                },
+                {
+                    "id": "hz8lp96/wucbgux",
+                    "ref": "arg",
+                    "value": "dispatch"
+                },
+                {
+                    "id": "hz8lp96/3d6efet",
+                    "ref": "arg",
+                    "value": "element"
+                },
+                {
+                    "id": "hz8lp96/obnvz4m",
+                    "ref": "arg",
+                    "value": "state"
+                },
+                {
+                    "id": "hz8lp96/j6kp3o9",
+                    "ref": "arg",
+                    "value": "payload.event"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "hz8lp96/hz8lp96",
+                    "to": "2435ihf",
+                    "as": "arg0"
+                },
+                {
+                    "to": "2435ihf",
+                    "from": "9mhpj8k/23ynj8o",
+                    "as": "arg1"
+                },
+                {
+                    "from": "hz8lp96/2g7hpye",
+                    "to": "hz8lp96/hz8lp96",
+                    "as": "fn"
+                },
+                {
+                    "from": "hz8lp96/u36ltxo",
+                    "to": "hz8lp96/2g7hpye",
+                    "as": "promises"
+                },
+                {
+                    "from": "hz8lp96/lq3olmi",
+                    "to": "hz8lp96/u36ltxo",
+                    "as": "array"
+                },
+                {
+                    "from": "hz8lp96/j6iu3d3",
+                    "to": "hz8lp96/u36ltxo",
+                    "as": "fn",
+                    "type": "ref"
+                },
+                {
+                    "from": "hz8lp96/cja7ejh",
+                    "to": "hz8lp96/lq3olmi",
+                    "as": "payload"
+                },
+                {
+                    "from": "hz8lp96/wucbgux",
+                    "to": "hz8lp96/j6iu3d3",
+                    "as": "dispatch"
+                },
+                {
+                    "from": "hz8lp96/3d6efet",
+                    "to": "hz8lp96/j6iu3d3",
+                    "as": "runnable"
+                },
+                {
+                    "from": "hz8lp96/obnvz4m",
+                    "to": "hz8lp96/j6iu3d3",
+                    "as": "state"
+                },
+                {
+                    "from": "hz8lp96/j6kp3o9",
+                    "to": "hz8lp96/j6iu3d3",
+                    "as": "event"
                 }
             ]
         },
