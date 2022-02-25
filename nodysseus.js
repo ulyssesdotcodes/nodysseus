@@ -211,7 +211,7 @@ class NodysseusError extends Error {
 }
 
 const executeGraph = ({ cache, graph, parent_graph, cache_id, node_cache }) => {
-    let usecache = true;
+    let usecache = false;
 
     if (!cache.has(cache_id)) {
         cache.set(cache_id, new Map([["__handles", 1]]));
@@ -794,7 +794,7 @@ const updateSimulationNodes = (dispatch, data) => {
         requestAnimationFrame(() => {
             dispatch(s => s ? [resolve(data.sim_to_hyperapp), node_data] : s)
             requestAnimationFrame(() => {
-                dispatch(s => s ? [s, [s.panzoom_selected_effect, {...s, ...node_data, selected: s[0]}]] : s);
+                dispatch(s => s?.panzoom_selected_effect ? [s, [s.panzoom_selected_effect, {...s, ...node_data, selected: s[0]}]] : s);
                 node_data.nodes.forEach(n => {
                     const el = document.getElementById(`${data.html_id}-${n.node_child_id}`);
                     if(el) {
@@ -1148,7 +1148,7 @@ const d3subscription = (dispatch, props) => {
             stopped = true; 
             dispatch([props.action, data])
             requestAnimationFrame(() => {
-                dispatch(s => [s, [s.panzoom_selected_effect, {...s, selected: s.selected[0]}]])
+                dispatch(s => s?.panzoom_selected_effect ? [s, [s.panzoom_selected_effect, {...s, selected: s.selected[0]}]] : s)
             });
         }
 
@@ -1494,11 +1494,12 @@ const generic_nodes = new Set([
     "if",
     "flow",
 
-    "hyperapp",
-    "h",
-    "h_text",
+    "html",
+    "html_element",
+    "html_text",
     "toggle",
     "input",
+    "css_styles",
     "modify_state_runnable",
     "modify_state_value",
 
@@ -1518,6 +1519,7 @@ const generic_nodes = new Set([
     "fetch",
     "call",
     "default",
+    "merge_objects",
 
     "JSON",
     "stringify",
