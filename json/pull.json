@@ -10,6 +10,7 @@
         {"id": "html"},
         {"id": "object"},
         {"id": "custom"},
+        {"id": "state"},
         {"id": "JSON"},
         {
             "id": "log",
@@ -2232,11 +2233,6 @@
                     "ref": "arg"
                 },
                 {
-                    "id": "rcfwyh8",
-                    "ref": "arg",
-                    "value": "state"
-                },
-                {
                     "id": "npwm1c5",
                     "ref": "apply"
                 },
@@ -2249,8 +2245,18 @@
                     "value": "fn"
                 },
                 {
+                    "id": "rcfwyh8",
+                    "ref": "arg",
+                    "value": "state"
+                },
+                {
                     "id": "2u2jmvs",
                     "ref": "get"
+                },
+                {
+                    "id": "iibsq38",
+                    "value": "payload",
+                    "ref": "arg"
                 },
                 {
                     "id": "xur00me",
@@ -2275,11 +2281,6 @@
                     "as": "path"
                 },
                 {
-                    "from": "rcfwyh8",
-                    "to": "0nyu2om",
-                    "as": "target"
-                },
-                {
                     "from": "npwm1c5",
                     "to": "0nyu2om",
                     "as": "value"
@@ -2296,6 +2297,11 @@
                 },
                 {
                     "from": "rcfwyh8",
+                    "to": "0nyu2om",
+                    "as": "target"
+                },
+                {
+                    "from": "rcfwyh8",
                     "to": "5dkffft",
                     "as": "state"
                 },
@@ -2303,6 +2309,11 @@
                     "from": "2u2jmvs",
                     "to": "5dkffft",
                     "as": "state_value"
+                },
+                {
+                    "from": "iibsq38",
+                    "to": "5dkffft",
+                    "as": "payload"
                 },
                 {
                     "from": "xur00me",
@@ -2313,18 +2324,6 @@
                     "from": "a01lbb8",
                     "to": "2u2jmvs",
                     "as": "target"
-                }
-            ],
-            "inputs": [
-                {
-                    "from": "plnglbg/mo6m3pd",
-                    "to": "plnglbg/0nyu2om",
-                    "as": "fn"
-                },
-                {
-                    "from": "plnglbg/c18pwko",
-                    "to": "plnglbg/0nyu2om",
-                    "as": "value"
                 }
             ]
         },
@@ -2597,6 +2596,136 @@
                     "from": "h7me3v8",
                     "to": "0d4yh8u",
                     "as": "value"
+                }
+            ]
+        },
+        {
+            "id": "set_display",
+            "name": "set_display",
+            "in": "fkp4pck/wb73q0h",
+            "out": "a59hci8",
+            "nodes": [
+                {
+                    "name": "out",
+                    "id": "a59hci8",
+                    "ref": "sequence"
+                },
+                {
+                    "id": "da71z9c/2435ihf/jd1mc84",
+                    "name": "modify_state_runnable",
+                    "ref": "modify_state_runnable"
+                },
+                {
+                    "id": "fkp4pck/wb73q0h",
+                    "name": "in"
+                },
+                {
+                    "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/y4qbl8k",
+                    "value": "result_display"
+                },
+                {
+                    "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/lol0vdh",
+                    "ref": "runnable"
+                },
+                {
+                    "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/eyrczw3/p35xuny",
+                    "name": "da71z9c/out"
+                },
+                {
+                    "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/w8vpdfx",
+                    "ref": "html_element"
+                },
+                {
+                    "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/eyrczw3/m7fcn6k",
+                    "ref": "arg",
+                    "value": "children"
+                },
+                {
+                    "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/eyrczw3/8ancque",
+                    "ref": "arg",
+                    "value": "dom_type"
+                },
+                {
+                    "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/eyrczw3/gf6y51n",
+                    "ref": "arg",
+                    "value": "props"
+                },
+                {
+                    "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/vofecaa",
+                    "ref": "arg",
+                    "value": "payload.props"
+                },
+                {
+                    "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/j8qudts",
+                    "ref": "arg",
+                    "value": "payload.children"
+                },
+                {
+                    "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/iead5y3",
+                    "ref": "arg",
+                    "value": "payload.dom_type"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "da71z9c/2435ihf/jd1mc84",
+                    "to": "a59hci8",
+                    "as": "arg0"
+                },
+                {
+                    "to": "a59hci8",
+                    "from": "fkp4pck/wb73q0h",
+                    "as": "dispatch"
+                },
+                {
+                    "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/y4qbl8k",
+                    "to": "da71z9c/2435ihf/jd1mc84",
+                    "as": "value"
+                },
+                {
+                    "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/lol0vdh",
+                    "to": "da71z9c/2435ihf/jd1mc84",
+                    "as": "fn"
+                },
+                {
+                    "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/eyrczw3/p35xuny",
+                    "to": "da71z9c/2435ihf/jd1mc84",
+                    "as": "payload"
+                },
+                {
+                    "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/w8vpdfx",
+                    "to": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/lol0vdh",
+                    "as": "fn"
+                },
+                {
+                    "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/eyrczw3/m7fcn6k",
+                    "to": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/eyrczw3/p35xuny",
+                    "as": "children"
+                },
+                {
+                    "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/eyrczw3/8ancque",
+                    "to": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/eyrczw3/p35xuny",
+                    "as": "dom_type"
+                },
+                {
+                    "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/eyrczw3/gf6y51n",
+                    "to": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/eyrczw3/p35xuny",
+                    "as": "props"
+                },
+                {
+                    "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/vofecaa",
+                    "to": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/w8vpdfx",
+                    "as": "props"
+                },
+                {
+                    "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/j8qudts",
+                    "to": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/w8vpdfx",
+                    "as": "children"
+                },
+                {
+                    "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/iead5y3",
+                    "to": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/w8vpdfx",
+                    "as": "dom_type"
                 }
             ]
         },
@@ -4347,7 +4476,7 @@
                         },
                         {"id": "siblings", "script": "return edges.filter(e => e.to === new_edge.to)"},
                         {"id": "node_args", "ref": "node_args"},
-                        {"id": "next_arg", "script": "return args?.filter(a => !(a === '_node_inputs' || a === '_lib' || a === '_node') && !siblings.find(e => e.as === a))[0]"},
+                        {"id": "next_arg", "script": "return args?.filter(a => !(a === '_node_inputs' || a === '_lib' || a === '_node') && !siblings.find(e => e.as === a) && !a.includes('.'))[0]"},
                         {
                             "id": "calculate_sibling_count",
                             "script": "return siblings.length"
@@ -5311,10 +5440,56 @@
             ]
         },
         {
-            "id": "onkey_fn_body",
-            "args": [
-                "args"
+            "id": "keybindings",
+            "out": "out",
+            "nodes": [
+                {"id": "editing"},
+                {"id": "searching"},
+                {"id": "graph"},
+                {"id": "save", "value": "save"},
+                {"id": "j", "value": "down"},
+                {"id": "k", "value": "up"},
+                {"value": "right", "id": "arrowright" },
+                {"value": "left", "id": "arrowleft" },
+                {"id": "arrowdown", "value": "down"},
+                {"id": "arrowup", "value": "up"},
+                {"value": "left", "id": "h" },
+                {"value": "right", "id": "l" },
+                {"value": "edit_value","id": "edit_value" },
+                {"value": "edit_name","id": "edit_name" },
+                {"value": "edit_ref","id": "edit_ref" },
+                {"value": "edit_script","id": "edit_script" },
+                {"value": "node_menu","id": "node_menu"},
+                {"value": "create_input", "id": "create_input"},
+                {"value": "delete","id": "delete" },
+                {"value": "find","id": "find" },
+                {"value": "esc_editing","id": "esc_editing" },
+                {"value": "clear_popover", "id": "esc"},
+                {"value": "esc_search","id": "esc_search" },
+                {"id": "out"}
             ],
+            "edges": [
+                {"from": "editing", "to": "out", "as": "editing"},
+                {"from": "searching", "to": "out", "as": "searching"},
+                {"from": "graph", "to": "out", "as": "graph"},
+                {"from": "save", "to": "graph", "as": "ctrl_s"},
+                {"from": "arrowdown", "to": "graph", "as": "arrowdown"},
+                {"from": "arrowup", "to": "graph", "as": "arrowup"},
+                {"from": "arrowleft", "to": "graph", "as": "arrowleft"},
+                {"from": "arrowright", "to": "graph", "as": "arrowright"},
+                {"from": "j", "to": "graph", "as": "j"},
+                {"from": "k", "to": "graph", "as": "k"},
+                {"from": "h", "to": "graph", "as": "h"},
+                {"from": "l", "to": "graph", "as": "l"},
+                {"from": "edit_value", "to": "graph", "as": "v"},
+                {"from": "edit_name", "to": "graph", "as": "n"},
+                {"from": "edit_script", "to": "graph", "as": "s"},
+                {"from": "edit_ref", "to": "graph", "as": "r"}
+            ]
+        },
+        {
+            "id": "onkey_fn_body",
+            "out": "out",
             "nodes": [
                 {
                     "id": "in"
@@ -5427,12 +5602,22 @@
                     "ref": "confirm_edit_text"
                 },
                 {
-                    "id": "onselectnode",
+                    "id": "onselectnode_effect",
                     "ref": "onselectnode_effect"
                 },
+                {"id": "onselectnode_action", "ref": "onselectnode_action"},
                 {"id": "search_effect", "ref": "search_effect"},
                 {"id": "focus_effect", "ref": "focus_effect"},
                 {"id": "blur_effect", "ref": "blur_effect"},
+                {"id": "stop_propagation", "ref": "stop_propagation_effect"},
+
+                {"id": "keybindings", "ref": "keybindings"},
+                {"id": "mode", "script": "return editing ? 'editing' : 'graph'"},
+                {"id": "mode_keybindings", "ref": "get"},
+                {"id": "key_action_effect", "ref": "get"},
+                {"id": "effects_map", "ref": "switch"},
+                {"id": "actions_map", "ref": "switch"},
+
                 {
                     "id": "key",
                     "args": [
@@ -5459,21 +5644,15 @@
                 },
                 {
                     "id": "down",
-                    "args": [
-                        "key",
-                        "selected",
-                        "editing",
-                        "display_graph"
-                    ],
-                    "script": "const next_node_edge = display_graph.edges.find(e => e.from === selected[0]); return next_node_edge ? [next_node_edge.to] : selected"
+                    "script": "const next_node_edge = display_graph.edges.find(e => e.from === selected[0]); return next_node_edge ? {action: onselectnode, payload: {node_id: next_node_edge.to, event}} : {state, effects: [[stop_propagation, event]]}"
                 },
                 {
                     "id": "up",
-                    "script": "const next_edges = selected_edge ? selected_edge : display_graph.edges.filter(e => e.to === selected[0]); const next_node_edge = selected_edge ? selected_edge : next_edges[Math.ceil(next_edges.length / 2) - 1]; return next_node_edge ? [next_node_edge.from] : selected"
+                    "script": "console.log('up'); console.log(onselectnode); const next_edges = selected_edge ? selected_edge : display_graph.edges.filter(e => e.to === selected[0]); const next_node_edge = selected_edge ? selected_edge : next_edges[Math.ceil(next_edges.length / 2) - 1]; return next_node_edge ? {action: onselectnode, payload: {node_id: next_node_edge.from, event}} : {state, effects: [[stop_propagation, event]]}"
                 },
                 {
                     "id": "left",
-                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.siblings.get(selected[0]); const next_node = static ? nodes.find(n => n.node_id === siblings[(siblings.findIndex(s => s === selected[0]) - 1 + siblings.length) % siblings.length]): siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = (sibling_node.x < current_node.x) && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [dimensions.x])[1]; return next_node ? [next_node.node_id] : selected"
+                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.siblings.get(selected[0]); const next_node = static ? nodes.find(n => n.node_id === siblings[(siblings.findIndex(s => s === selected[0]) - 1 + siblings.length) % siblings.length]): siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = (sibling_node.x < current_node.x) && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [dimensions.x])[1]; return next_node ? {action: onselectnode, payload: {node_id: next_node.node_id, event}} : {state, effects: [[stop_propagation, event]]}"
                 },
                 {
                     "id": "left_edge",
@@ -5481,26 +5660,26 @@
                 },
                 {
                     "id": "right",
-                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.siblings.get(selected[0]); const next_node = static ? nodes.find(n => n.node_id === siblings[(siblings.findIndex(s => s === selected[0]) + 1) % siblings.length]) : siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [dimensions.x])[1]; return next_node ? [next_node.node_id] : selected"
+                    "script": "const current_node = nodes.find(n => n.node_id === selected[0]); const siblings = levels.siblings.get(selected[0]); const next_node = static ? nodes.find(n => n.node_id === siblings[(siblings.findIndex(s => s === selected[0]) + 1) % siblings.length]) : siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [dimensions.x])[1]; return next_node ? {action: onselectnode, payload: {node_id: next_node.node_id, event}} : {state, effects: [[stop_propagation, event]]}"
                 },
                 {
                     "id": "right_edge",
                     "script": "const link = links.find(l => l.source.node_child_id === selected_edge.from + '_' + selected_edge.to); return links.filter(l => l.target.node_id === link.target.node_id).reduce(([current, dist], l) => l.source.x > link.source.x && Math.abs(l.source.x - link.source.x) < dist ? [{from: l.source.node_id, to: l.target.node_id} , Math.abs(l.source.x - link.source.x)] : [current, dist], [{to: link.target.node_id, from: link.source.node_id}, 10000])[0]"
                 },
                 {
-                    "id": "v",
+                    "id": "edit_value",
                     "script": "return [[show_edit_text, {id: selected_node.id, property:'value', oneditconfirm: update_node, value: selected_node.value, position: {x: node.x, y: node.y}}]]"
                 },
                 {
-                    "id": "n",
+                    "id": "edit_name",
                     "script": "return [[show_edit_text, {id: selected_node.id, property:'name', oneditconfirm: update_node, value: selected_node.name, position: {x: node.x, y: node.y}}]]"
                 },
                 {
-                    "id": "r",
+                    "id": "edit_ref",
                     "script": "return [[show_edit_text, {id, property: 'ref', oneditconfirm: update_node, value: '', position: {x: node.x, y: node.y}}]]"
                 },
                 {
-                    "id": "s",
+                    "id": "edit_script",
                     "script": "return [[show_edit_text, {id: selected_node.id, property:'script', oneditconfirm: update_node, value: selected_node.script, position: {x: node.x, y: node.y}}]]"
                 },
                 {"id": "enter", "script": "return [[onselectnode, {node_id, event}]]"},
@@ -5599,10 +5778,7 @@
                     "id": "editing_effects",
                     "ref": "switch"
                 },
-                {
-                    "id": "effects",
-                    "ref": "if"
-                },
+                {"id": "effects", "ref": "switch"},
                 {
                     "id": "update_graph_sim",
                     "script": "return (!state.editing && state.search === false && (key === 'enter' || key.toLowerCase() === 'o' || key === 'x' || (key === 't' && shiftKey) || (!!pending_edges.edge_to && !!pending_edges.edge_from))) || key === 'escape' || selected"
@@ -5611,16 +5787,36 @@
                 {"id": "search_state"},
                 {"id": "update_state", "ref": "switch"},
                 {"id": "no_update"},
-                {
-                    "id": "update",
-                    "ref": "update_graph_display"
-                },
-                {
-                    "id": "out",
-                    "ref": "if"
-                }
+                {"id": "update", "ref": "update_graph_display"},
+
+                {"id": "out_effects"},
+                {"id": "out_action_effect", "ref": "default"},
+                {"id": "log", "ref": "log"},
+                {"id": "out", "ref": "default"}
             ],
             "edges": [
+                {"from": "edit_value", "to": "effects_map", "as": "edit_value"},
+                {"from": "edit_name", "to": "effects_map", "as": "edit_name"},
+                {"from": "edit_ref", "to": "effects_map", "as": "edit_ref"},
+                {"from": "down", "to": "actions_map", "as": "down"},
+                {"from": "up", "to": "actions_map", "as": "up"},
+                {"from": "left", "to": "actions_map", "as": "left"},
+                {"from": "right", "to": "actions_map", "as": "right"},
+
+                {"from": "editing", "to": "mode", "as": "editing"},
+                {"from": "keybindings", "to": "mode_keybindings", "as": "target"},
+                {"from": "mode", "to": "mode_keybindings", "as": "path"},
+                {"from": "mode_keybindings", "to": "key_action_effect", "as": "target"},
+                {"from": "key_inputs", "to": "key_action_effect", "as": "path"},
+                {"from": "key_action_effect", "to": "effects_map", "as": "input"},
+                {"from": "effects_map", "to": "out_effects", "as": "effects"},
+                {"from": "state", "to": "out_effects", "as": "state"},
+                {"from": "out_effects", "to": "out_action_effect", "as": "otherwise"},
+                {"from": "key_action_effect", "to": "actions_map", "as": "input"},
+                {"from": "actions_map", "to": "out_action_effect", "as": "value"},
+                {"from": "out_action_effect", "to": "out", "as": "value"},
+                {"from": "state", "to": "out", "as": "otherwise"},
+
                 {
                     "from": "state",
                     "to": "key_inputs",
@@ -5742,6 +5938,16 @@
                     "as": "save_effect"
                 },
                 {
+                    "from": "onselectnode_action",
+                    "to": "up",
+                    "as": "onselectnode"
+                },
+                {
+                    "from": "state",
+                    "to": "up",
+                    "as": "state"
+                },
+                {
                     "from": "arg_selected_edge",
                     "to": "up",
                     "as": "selected_edge"
@@ -5757,6 +5963,36 @@
                     "as": "display_graph"
                 },
                 {
+                    "from": "key_event",
+                    "to": "up",
+                    "as": "event"
+                },
+                {
+                    "from": "stop_propagation",
+                    "to": "up",
+                    "as": "stop_propagation"
+                },
+                {
+                    "from": "key_event",
+                    "to": "down",
+                    "as": "event"
+                },
+                {
+                    "from": "stop_propagation",
+                    "to": "down",
+                    "as": "stop_propagation"
+                },
+                {
+                    "from": "onselectnode_action",
+                    "to": "down",
+                    "as": "onselectnode"
+                },
+                {
+                    "from": "state",
+                    "to": "down",
+                    "as": "state"
+                },
+                {
                     "from": "arg_selected",
                     "to": "down",
                     "as": "selected"
@@ -5768,78 +6004,78 @@
                 },
                 {
                     "from": "show_edit_text",
-                    "to": "v",
+                    "to": "edit_value",
                     "as": "show_edit_text"
                 },
                 {
                     "from": "update_node",
-                    "to": "v",
+                    "to": "edit_value",
                     "as": "update_node"
                 },
                 {
                     "from": "el_node",
-                    "to": "v",
+                    "to": "edit_value",
                     "as": "node"
                 },
                 {
                     "from": "selected_node",
-                    "to": "v",
+                    "to": "edit_value",
                     "as": "selected_node"
                 },
                 {
-                    "from": "v",
+                    "from": "edit_value",
                     "to": "graph_effects",
-                    "as": "v"
+                    "as": "edit_value"
                 },
                 {
                     "from": "show_edit_text",
-                    "to": "n",
+                    "to": "edit_name",
                     "as": "show_edit_text"
                 },
                 {
                     "from": "update_node",
-                    "to": "n",
+                    "to": "edit_name",
                     "as": "update_node"
                 },
                 {
                     "from": "el_node",
-                    "to": "n",
+                    "to": "edit_name",
                     "as": "node"
                 },
                 {
                     "from": "selected_node",
-                    "to": "n",
+                    "to": "edit_name",
                     "as": "selected_node"
                 },
                 {
-                    "from": "n",
+                    "from": "edit_name",
                     "to": "graph_effects",
-                    "as": "n"
+                    "as": "edit_name"
                 },
                 {
                     "from": "el_node",
-                    "to": "r",
+                    "to": "edit_ref",
                     "as": "node"
                 },
                 {
                     "from": "show_edit_text",
-                    "to": "r",
+                    "to": "edit_ref",
                     "as": "show_edit_text"
                 },
                 {
                     "from": "update_node",
-                    "to": "r",
+                    "to": "edit_ref",
                     "as": "update_node"
                 },
                 {
                     "from": "get_selected",
-                    "to": "r",
+                    "to": "edit_ref",
                     "as": "id"
                 },
                 {
-                    "from": "r",
+                    "from": "edit_ref",
                     "to": "graph_effects",
-                    "as": "r"
+                    "as": "edit_ref"
                 },
                 {
                     "from": "show_edit_text",
@@ -5877,7 +6113,7 @@
                     "as": "event"
                 },
                 {
-                    "from": "onselectnode",
+                    "from": "onselectnode_effect",
                     "to": "enter",
                     "as": "onselectnode"
                 },
@@ -6031,6 +6267,11 @@
                     "as": "k"
                 },
                 {
+                    "from": "key_event",
+                    "to": "left",
+                    "as": "event"
+                },
+                {
                     "from": "dimensions",
                     "to": "left",
                     "as": "dimensions"
@@ -6066,7 +6307,22 @@
                     "as": "nodes"
                 },
                 {
+                    "from": "onselectnode_action",
+                    "to": "left",
+                    "as": "onselectnode"
+                },
+                {
+                    "from": "state",
+                    "to": "left",
+                    "as": "state"
+                },
+                {
                     "from": "static", "to": "left", "as": "static"
+                },
+                {
+                    "from": "stop_propagation",
+                    "to": "left",
+                    "as": "stop_propagation"
                 },
                 {
                     "from": "left",
@@ -6082,6 +6338,16 @@
                     "from": "static", "to": "right", "as": "static"
                 },
                 {
+                    "from": "stop_propagation",
+                    "to": "right",
+                    "as": "stop_propagation"
+                },
+                {
+                    "from": "key_event",
+                    "to": "right",
+                    "as": "event"
+                },
+                {
                     "from": "dimensions",
                     "to": "right",
                     "as": "dimensions"
@@ -6115,6 +6381,16 @@
                     "from": "arg_display_graph",
                     "to": "right",
                     "as": "display_graph"
+                },
+                {
+                    "from": "onselectnode_action",
+                    "to": "right",
+                    "as": "onselectnode"
+                },
+                {
+                    "from": "state",
+                    "to": "right",
+                    "as": "state"
                 },
                 {
                     "from": "right",
@@ -6254,7 +6530,7 @@
                     "as": "escape"
                 },
                 {"from": "display_graph_out", "to": "esc", "as": "node_id"},
-                {"from": "onselectnode", "to": "esc", "as": "onselectnode"},
+                {"from": "onselectnode_effect", "to": "esc", "as": "onselectnode"},
                 {"from": "key_event", "to": "esc", "as": "event"},
                 {"from": "esc", "to": "graph_effects", "as": "escape"},
                 {
@@ -6390,9 +6666,9 @@
                     "to": "no_update",
                     "as": "effects"
                 },
-                { "from": "editing", "to": "out", "as": "pred" },
-                { "from": "update", "to": "out", "as": "false" },
-                { "from": "no_update", "to": "out", "as": "true" }
+                { "from": "editing", "to": "_out", "as": "pred" },
+                { "from": "update", "to": "_out", "as": "false" },
+                { "from": "no_update", "to": "_out", "as": "true" }
             ]
         },
         {
@@ -6765,11 +7041,6 @@
                 },
                 {
                     "id": "display_graph_inputs",
-                    "args": [
-                        "event",
-                        "selected",
-                        "node"
-                    ],
                     "script": "return event.ty === 'down' && node.node_id === selected[0] ? 'expand_contract' : undefined"
                 },
                 {
@@ -7109,15 +7380,15 @@
             ]
         },
         {
-            "id": "onclick_node_action",
+            "id": "onselectnode_action",
             "nodes": [
                 {"id": "in"},
-                {"id": "onclick_node", "ref": "onselectnode"},
+                {"id": "onselectnode", "ref": "onselectnode"},
                 {"id": "out", "ref": "hyperapp_action"}
             ],
             "edges": [
                 {"from": "in", "to": "out", "type": "ref", "as": "args"},
-                {"from": "onclick_node", "to": "out", "as": "fn", "type": "ref"}
+                {"from": "onselectnode", "to": "out", "as": "fn", "type": "ref"}
             ]
         },
         {
@@ -7382,7 +7653,7 @@
                     "id": "styles",
                     "nodes": [
                         {"id": "in"},
-                        {"id": "style_content", "value": "#node-editor { position: relative; width: 100%; height: 100vh; color: white; font-family: consolas; } #node-editor-editor.hash-view { background-color: unset; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .more { cursor: pointer; } .edit-value .centering { position: absolute; width: 32vw; display: flex; flex-direction: column; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .args { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node { cursor: pointer; stroke: #fff; stroke-width: 32; stroke-opacity: 1; } .insert-node .circle{ fill-opacity: 0.5; } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"},
+                        {"id": "style_content", "value": "#node-editor { position: relative; width: 100%; height: 100vh; color: white; font-family: consolas; overflow: hidden; } #node-editor-editor.hash-view { background-color: unset; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .more { cursor: pointer; } .edit-value .centering { position: absolute; width: 32vw; display: flex; flex-direction: column; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .args { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node { cursor: pointer; stroke: #fff; stroke-width: 32; stroke-opacity: 1; } .insert-node .circle{ fill-opacity: 0.5; } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"},
                         {"id": "style_h_text", "ref": "html_text"},
                         {"id": "style_dom_type", "value": "style"},
                         {"id": "out", "ref": "html_element"}
@@ -8449,7 +8720,7 @@
                                     "id": "parent_dom_type",
                                     "value": "svg"
                                 },
-                                {"id": "onclick_node", "ref": "onclick_node_action"},
+                                {"id": "onclick_node", "ref": "onselectnode_action"},
                                 {
                                     "id": "parent_attrs",
                                     "script": "return ({onclick: (_, payload) => [onclick, {event: payload, node_id: node.node_id}],  onmouseover: (state, payload) => [{...state, hover: node.node_id}], onmouseout: (state, payload) => [{...state, hover: undefined}],  ontouchstart: (_, payload) => [onclick, {event: payload, node_id: node.node_id}], width: '256', height: '64', id: html_id + '-' + node.node_child_id, class: {node: true,  selected: selected[0] === node.node_id, hover: hover === node.node_id }, opacity: selected_edge?.from === node.node_id || show_all ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - (selected_distance * selected_distance) / 6) : 0.1})"
@@ -10356,6 +10627,8 @@
         {"from": "toggle", "to": "html"},
         {"from": "input", "to": "html"},
         {"from": "css_styles", "to": "html"},
+        {"from": "modify_state_runnable", "to": "state"},
+        {"from": "set_display", "to": "state"},
         {"from": "new_array", "to": "array"},
         {"from": "filter", "to": "array"},
         {"from": "append", "to": "array"},

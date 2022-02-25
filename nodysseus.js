@@ -1500,8 +1500,6 @@ const generic_nodes = new Set([
     "toggle",
     "input",
     "css_styles",
-    "modify_state_runnable",
-    "modify_state_value",
 
     "array",
     "new_array",
@@ -1524,6 +1522,11 @@ const generic_nodes = new Set([
     "JSON",
     "stringify",
     "parse",
+
+    "state",
+    "modify_state_runnable",
+    "modify_state_value",
+    "set_display",
 
     "custom"
 ]);
@@ -1640,7 +1643,7 @@ const lib = {
             let init = requestAnimationFrame(() => {
                 instance = panzoom(document.getElementById(sub_payload.id), {
                     // onTouch: e => false,
-                    // filterKey: e => true,
+                    filterKey: e => true,
                     smoothScroll: false
                 });
                 instance.on('panstart', e => performance.now() - lastpanzoom > 100 ? dispatch(sub_payload.action, {event: 'panstart', transform: e.getTransform()}) : undefined);
