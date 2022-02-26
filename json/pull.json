@@ -1308,7 +1308,7 @@
                 {"id": "payload", "ref": "arg", "value": "payload"},
                 {"id": "run_effect", "ref": "run_display_graph_effect"},
                 {"id": "result", "script": "return _lib.no.executeGraphNode({graph: {...fn_graph, nodes: [...fn_graph.nodes], edges: [...fn_graph.edges]}})('main/out')({state: state, payload: {event: payload, run: run_effect}});"},
-                {"id": "out", "script": "return (dispatch, payload) => {const wrapped_dispatch = (a, p) => Promise.resolve(p).then(resp => [a, resp]).then(([a, p]) => (console.log('dispatch'), console.log(a), console.log(p), dispatch(a, p))).catch(e => dispatch(s => [{...s, error: e}])); wrapped_dispatch(state => {Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: _graph})(fn)({state: s, payload})).then(res => _lib.no.executeGraphNode({graph: res[0]?.graph ?? res.graph})(res[0]?.fn ?? r.fn)({state, payload: {event: payload, payload: res[1]}, dispatch: wrapped_dispatch})); return state.error ? {...state, error: false} : state;})}"}
+                {"id": "out", "script": "return (dispatch, payload) => {const wrapped_dispatch = (a, p) => Promise.resolve(p).then(resp => [a, resp]).then(([a, p]) => dispatch(a, p)).catch(e => dispatch(s => [{...s, error: e}])); wrapped_dispatch(state => {Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: _graph})(fn)({state: s, payload})).then(res => _lib.no.executeGraphNode({graph: res[0]?.graph ?? res.graph})(res[0]?.fn ?? r.fn)({state, payload: {event: payload, payload: res[1]}, dispatch: wrapped_dispatch})); return state.error ? {...state, error: false} : state;})}"}
             ],
             "edges": [
                 {"from": "state", "to": "result", "as": "state"},
@@ -1669,7 +1669,7 @@
                 {
                     "id": "pdljod1",
                     "name": "pdljod1",
-                    "script": "return (element, index, array) => _lib.no.runGraph(_graph, fn, Object.assign({}, {element, index, array}, args));"
+                    "script": "return (element, index, array) => _lib.no.runGraph(_graph, fn, Object.assign({}, args, {element, index, array}));"
                 },
                 {
                     "id": "2lvs5dj",
@@ -5345,7 +5345,7 @@
                         },
                         {
                             "id": "effects",
-                            "script": "console.log('add node?'); console.log(new_state); return [[update_sim_effect]]"
+                            "script": "return [[update_sim_effect]]"
                         },
                         {
                             "id": "nodes_path",
@@ -5668,6 +5668,8 @@
                 {"id": "copy_effect", "ref": "copy_effect"},
                 {"id": "paste_effect", "ref": "paste_node_effect"},
                 {"id": "expand_contract_effect", "ref": "expand_contract_effect"},
+                {"id": "run_display_graph_effector", "ref": "run_display_graph_effect"},
+                {"id": "run_display_graph_effect", "ref": "new_array"},
 
                 {"id": "keybindings", "ref": "keybindings"},
                 {"id": "mode", "script": "return editing ? 'editing' : 'graph'"},
@@ -5800,10 +5802,13 @@
                 {"id": "update_state", "ref": "switch"},
                 {"id": "no_update"},
                 {"id": "update", "ref": "update_graph_display"},
+                {"id": "default_fx", "ref": "new_array"},
+                {"id": "default_out"},
 
                 {"id": "out_effects"},
                 {"id": "out_action_effect", "ref": "default"},
-                {"id": "out", "ref": "default"}
+                {"id": "out_pred", "script": "return action || effect"},
+                {"id": "out", "ref": "if"}
             ],
             "edges": [
                 {"from": "randid", "to": "add_node", "as": "randid"},
@@ -5821,6 +5826,7 @@
                 {"from": "edit_value", "to": "effects_map", "as": "edit_value"},
                 {"from": "edit_name", "to": "effects_map", "as": "edit_name"},
                 {"from": "edit_ref", "to": "effects_map", "as": "edit_ref"},
+                {"from": "edit_script", "to": "effects_map", "as": "edit_script"},
                 {"from": "add_node", "to": "effects_map", "as": "add_node"},
                 {"from": "delete_node", "to": "effects_map", "as": "delete_node"},
                 {"from": "copy", "to": "effects_map", "as": "copy"},
@@ -5844,8 +5850,16 @@
                 {"from": "out_effects", "to": "out_action_effect", "as": "otherwise"},
                 {"from": "key_action_effect", "to": "actions_map", "as": "input"},
                 {"from": "actions_map", "to": "out_action_effect", "as": "value"},
-                {"from": "out_action_effect", "to": "out", "as": "value"},
-                {"from": "state", "to": "out", "as": "otherwise"},
+                {"from": "out_action_effect", "to": "out", "as": "true"},
+                {"from": "state", "to": "default_out", "as": "state"},
+                {"from": "actions_map", "to": "out_pred", "as": "action"},
+                {"from": "effects_map", "to": "out_pred", "as": "effect"},
+                {"from": "run_display_graph_effector", "to": "run_display_graph_effect", "as": "a0"},
+                {"from": "key_event", "to": "run_display_graph_effect", "as": "a1"},
+                {"from": "run_display_graph_effect", "to": "default_fx", "as": "a0"},
+                {"from": "default_fx", "to": "default_out", "as": "effects"},
+                {"from": "out_pred", "to": "out", "as": "pred"},
+                {"from": "default_out", "to": "out", "as": "false"},
 
                 {
                     "from": "state",
