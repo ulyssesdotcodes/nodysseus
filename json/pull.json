@@ -1661,6 +1661,12 @@
                     "name": "1rre4bx"
                 },
                 {
+                    "ref": "arg",
+                    "id": "6g75abk",
+                    "value": "fn",
+                    "name": "6g75abk"
+                },
+                {
                     "id": "w0zzawl",
                     "ref": "new_array",
                     "name": "w0zzawl"
@@ -1669,18 +1675,12 @@
                 {
                     "id": "pdljod1",
                     "name": "pdljod1",
-                    "script": "return (element, index, array) => _lib.no.runGraph(_graph, fn, Object.assign({}, args, {element, index, array}));"
+                    "script": "return (element, index, array) => _lib.no.runGraph(fn?.graph ?? _graph, fn?.fn ?? fn, Object.assign({}, args, {element, index, array}));"
                 },
                 {
                     "id": "2lvs5dj",
                     "script": "return _graph",
                     "name": "2lvs5dj"
-                },
-                {
-                    "ref": "arg",
-                    "id": "6g75abk",
-                    "value": "fn",
-                    "name": "6g75abk"
                 }
             ],
             "edges": [
@@ -4837,7 +4837,7 @@
                 {"id": "replace_node", "script": "return nodes.map(n => n.id === new_node.id ? new_node : n)"},
                 {"id": "node_args", "ref": "node_args"},
                 {"id": "arg_value", "script": "return node.ref === 'arg' ? node.value.substring(node.value.lastIndexOf('.') + 1) : undefined"},
-                {"id": "replace_edges", "script": "const parents = edges.filter(e => e.to === node_id).map(e => e.as); const needed_args = node_args.filter(a => !parents.includes(a)); return edges.map(e => e.from === node_id && arg_value && (e.as.startsWith('arg') || e.as === prev_node.value) ? {...e, as: arg_value} : e.to === node_id && !node_args.includes(e.as) && needed_args?.length > 0 ? {...e, as: needed_args.pop()} : e)"},
+                {"id": "replace_edges", "script": "const parents = edges.filter(e => e.to === node_id).map(e => e.as); const needed_args = node_args.filter(a => !parents.includes(a)); return edges.map(e => e.from === node_id && arg_value && (e.as.startsWith('arg') || e.as === prev_node?.value) ? {...e, as: arg_value} : e.to === node_id && !node_args.includes(e.as) && needed_args?.length > 0 ? {...e, as: needed_args.pop()} : e)"},
                 {"id": "display_graph_nodes_path", "value": "display_graph.nodes"},
                 {"id": "set_display_graph_nodes", "ref": "set"},
                 {"id": "set_display_graph_edges", "ref": "set"},
@@ -4862,6 +4862,7 @@
                 {"from": "new_node", "to": "node_args", "as": "node"},
                 {"from": "new_node", "to": "arg_value", "as": "node"},
                 {"from": "node_id", "to": "arg_value", "as": "node_id"},
+                {"from": "prev_node", "to": "replace_edges", "as": "prev_node"},
                 {"from": "arg_value", "to": "replace_edges", "as": "arg_value"},
                 {"from": "node_args", "to": "replace_edges", "as": "node_args"},
                 {"from": "node_id", "to": "replace_edges", "as": "node_id"},
@@ -5665,6 +5666,7 @@
                 {"value": "paste", "id": "p"},
                 {"value": "paste", "id": "ctrl_v"},
                 {"value": "add_node", "id": "o"},
+                {"value": "add_arg_node", "id": "a"},
                 {"value": "delete_node", "id": "x"},
                 {"value": "expand_contract", "id": "shift_enter"},
                 {"value": "save", "id": "ctrl_s"},
@@ -5691,6 +5693,7 @@
                 {"from": "y", "to": "graph", "as": "y"},
                 {"from": "p", "to": "graph", "as": "p"},
                 {"from": "x", "to": "graph", "as": "x"},
+                {"from": "a", "to": "graph", "as": "a"},
                 {"from": "ctrl_c", "to": "graph", "as": "ctrl_c"},
                 {"from": "ctrl_v", "to": "graph", "as": "ctrl_v"},
                 {"from": "ctrl_s", "to": "graph", "as": "ctrl_s"},
@@ -5909,6 +5912,7 @@
                 {"id": "copy", "script": "return [[copy_effect, {id}]]"},
                 {"id": "paste", "script": "return [[paste_effect, {node_id: id, randid}]]"},
                 {"id": "expand_contract", "script": "return [[expand_contract, {id}]]"},
+                {"id": "add_arg_node", "script": "return [[add_node, {node: {id: randid, ref: 'arg'}, select: true}], [add_edge, {from: randid, to: selected }], [show_edit_text, {id: randid, property:'value', oneditconfirm: update_node, value: ''}]]"},
 
                 {
                     "id": "e",
@@ -5982,12 +5986,19 @@
                 {"from": "paste_effect", "to": "paste", "as": "paste_effect"},
                 {"from": "selected", "to": "expand_contract", "as": "id"},
                 {"from": "expand_contract_effect", "to": "expand_contract", "as": "expand_contract"},
+                {"from": "randid", "to": "add_arg_node", "as": "randid"},
+                {"from": "selected", "to": "add_arg_node", "as": "selected"},
+                {"from": "add_edge_effect", "to": "add_arg_node", "as": "add_edge"},
+                {"from": "add_node_effect", "to": "add_arg_node", "as": "add_node"},
+                {"from": "show_edit_text", "to": "add_arg_node", "as": "show_edit_text"},
+                {"from": "update_node", "to": "add_arg_node", "as": "update_node"},
 
                 {"from": "edit_value", "to": "effects_map", "as": "edit_value"},
                 {"from": "edit_name", "to": "effects_map", "as": "edit_name"},
                 {"from": "edit_ref", "to": "effects_map", "as": "edit_ref"},
                 {"from": "edit_script", "to": "effects_map", "as": "edit_script"},
                 {"from": "add_node", "to": "effects_map", "as": "add_node"},
+                {"from": "add_arg_node", "to": "effects_map", "as": "add_arg_node"},
                 {"from": "delete_node", "to": "effects_map", "as": "delete_node"},
                 {"from": "copy", "to": "effects_map", "as": "copy"},
                 {"from": "paste", "to": "effects_map", "as": "paste"},

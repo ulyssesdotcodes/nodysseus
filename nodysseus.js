@@ -1168,7 +1168,6 @@ const d3subscription = (dispatch, props) => {
 
 const keydownSubscription = (dispatch, options) => {
     const handler = ev => {
-        console.log(ev);
         if (ev.key === "s" && ev.ctrlKey) {
             ev.preventDefault();
         } else if (!ev.key) {
