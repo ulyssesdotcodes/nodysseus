@@ -2074,13 +2074,149 @@
             ]
         },
         {
+            "id": "initial_state_runnable",
+            "name": "initial_state_runnable",
+            "in": "0tsqw11",
+            "out": "pd64cr8",
+            "nodes": [
+                {
+                    "name": "out",
+                    "id": "pd64cr8",
+                    "ref": "if"
+                },
+                {
+                    "id": "usd4433",
+                    "name": "modify_state_runnable",
+                    "ref": "modify_state_runnable"
+                },
+                {
+                    "id": "0tsqw11",
+                    "name": "in"
+                },
+                {
+                    "id": "6rdgk5r",
+                    "ref": "get"
+                },
+                {
+                    "id": "4g0xgt3",
+                    "value": "json_data"
+                },
+                {
+                    "id": "mor2dr6",
+                    "name": "fetch_fn",
+                    "out": "3v4qkje",
+                    "nodes": [
+                        {
+                            "id": "3v4qkje",
+                            "ref": "runnable",
+                            "name": "out"
+                        },
+                        {
+                            "id": "ivda0c1",
+                            "ref": "call"
+                        },
+                        {
+                            "id": "lr8rv2z",
+                            "value": "test"
+                        },
+                        {
+                            "id": "832g2ld/m9yeyqc",
+                            "ref": "fetch"
+                        },
+                        {
+                            "id": "40v3sm3",
+                            "value": "text"
+                        },
+                        {
+                            "id": "832g2ld/fphsciu",
+                            "value": "https://raw.githubusercontent.com/hydra-synth/hydra-synth/main/src/glsl/glsl-functions.js"
+                        }
+                    ],
+                    "edges": [
+                        {
+                            "from": "ivda0c1",
+                            "to": "3v4qkje",
+                            "as": "fn"
+                        },
+                        {
+                            "from": "lr8rv2z",
+                            "to": "3v4qkje",
+                            "as": "fn"
+                        },
+                        {
+                            "from": "832g2ld/m9yeyqc",
+                            "to": "ivda0c1",
+                            "as": "self"
+                        },
+                        {
+                            "from": "40v3sm3",
+                            "to": "ivda0c1",
+                            "as": "fn"
+                        },
+                        {
+                            "from": "832g2ld/fphsciu",
+                            "to": "832g2ld/m9yeyqc",
+                            "as": "url"
+                        }
+                    ]
+                },
+                {
+                    "id": "s5ns82c",
+                    "ref": "arg",
+                    "value": "state"
+                },
+                {
+                    "id": "eb0nj9q",
+                    "ref": "arg",
+                    "value": "value"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "usd4433",
+                    "to": "pd64cr8",
+                    "as": "false"
+                },
+                {
+                    "from": "0tsqw11",
+                    "to": "pd64cr8",
+                    "as": "_"
+                },
+                {
+                    "from": "6rdgk5r",
+                    "to": "pd64cr8",
+                    "as": "pred"
+                },
+                {
+                    "from": "4g0xgt3",
+                    "to": "usd4433",
+                    "as": "value"
+                },
+                {
+                    "to": "usd4433",
+                    "from": "mor2dr6",
+                    "as": "fn"
+                },
+                {
+                    "from": "s5ns82c",
+                    "to": "6rdgk5r",
+                    "as": "target"
+                },
+                {
+                    "from": "eb0nj9q",
+                    "to": "6rdgk5r",
+                    "as": "path"
+                }
+            ]
+        }
+        {
             "id": "modify_state_runnable",
             "name": "modify_state_runnable",
             "in": "sueor1k",
             "out": "tpcqvm2",
             "nodes": [
                 {
-                    "name": "modify_state_runnable",
+                    "name": "out",
                     "id": "tpcqvm2",
                     "ref": "new_array"
                 },
@@ -2110,25 +2246,64 @@
                     "ref": "runnable"
                 },
                 {
-                    "id": "cb92j91",
-                    "value": "payload",
-                    "ref": "arg"
+                    "id": "i6ydibj"
                 },
                 {
                     "id": "saonc89"
                 },
                 {
-                    "id": "0nyu2om",
-                    "name": "modify_state_value",
-                    "ref": "modify_state_value"
-                },
-                {
-                    "id": "mo6m3pd",
-                    "value": "payload.payload.fn",
+                    "id": "cb92j91",
+                    "value": "payload.payload.value",
                     "ref": "arg"
                 },
                 {
+                    "id": "jwj4il0",
+                    "ref": "apply"
+                },
+                {
+                    "id": "0nyu2om",
+                    "name": "modify_state_value",
+                    "ref": "set"
+                },
+                {
+                    "id": "gklagbh"
+                },
+                {
+                    "id": "c7iwrlj",
+                    "ref": "arg",
+                    "value": "payload.payload.fn"
+                },
+                {
                     "id": "c18pwko",
+                    "ref": "arg",
+                    "value": "payload.path"
+                },
+                {
+                    "id": "8th0n8q",
+                    "ref": "arg",
+                    "value": "state"
+                },
+                {
+                    "id": "p79j5ub",
+                    "ref": "arg",
+                    "value": "payload.value"
+                },
+                {
+                    "id": "xfxjlvp",
+                    "ref": "arg",
+                    "value": "state"
+                },
+                {
+                    "id": "i74hjbp",
+                    "ref": "get"
+                },
+                {
+                    "id": "sabrhol",
+                    "ref": "arg",
+                    "value": "state"
+                },
+                {
+                    "id": "15d1amt",
                     "ref": "arg",
                     "value": "payload.payload.value"
                 }
@@ -2165,9 +2340,9 @@
                     "as": "arg0"
                 },
                 {
-                    "from": "cb92j91",
+                    "from": "i6ydibj",
                     "to": "eil1eq5",
-                    "as": "payload"
+                    "as": "arg1"
                 },
                 {
                     "from": "saonc89",
@@ -2175,30 +2350,63 @@
                     "as": "fn"
                 },
                 {
+                    "from": "cb92j91",
+                    "to": "i6ydibj",
+                    "as": "path"
+                },
+                {
+                    "from": "jwj4il0",
+                    "to": "i6ydibj",
+                    "as": "value"
+                },
+                {
                     "from": "0nyu2om",
                     "to": "saonc89",
                     "as": "state"
                 },
                 {
-                    "from": "mo6m3pd",
-                    "to": "0nyu2om",
+                    "from": "gklagbh",
+                    "to": "jwj4il0",
+                    "as": "args"
+                },
+                {
+                    "from": "c7iwrlj",
+                    "to": "jwj4il0",
                     "as": "fn"
                 },
                 {
                     "from": "c18pwko",
                     "to": "0nyu2om",
-                    "as": "value"
-                }
-            ],
-            "inputs": [
-                {
-                    "from": "ngkl1rp/ayf70m0/rrxfq4l",
-                    "to": "tpcqvm2",
-                    "as": "fn"
+                    "as": "path"
                 },
                 {
-                    "from": "ngkl1rp/lw849n7",
-                    "to": "tpcqvm2",
+                    "from": "8th0n8q",
+                    "to": "0nyu2om",
+                    "as": "target"
+                },
+                {
+                    "from": "p79j5ub",
+                    "to": "0nyu2om",
+                    "as": "value"
+                },
+                {
+                    "from": "xfxjlvp",
+                    "to": "gklagbh",
+                    "as": "state"
+                },
+                {
+                    "from": "i74hjbp",
+                    "to": "gklagbh",
+                    "as": "state_value"
+                },
+                {
+                    "from": "sabrhol",
+                    "to": "i74hjbp",
+                    "as": "target"
+                },
+                {
+                    "from": "15d1amt",
+                    "to": "i74hjbp",
                     "as": "value"
                 }
             ]

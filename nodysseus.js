@@ -1536,7 +1536,7 @@ const generic_nodes = new Set([
 
     "state",
     "modify_state_runnable",
-    "modify_state_value",
+    "initial_state_runnable",
     "set_display",
 
     "custom"
