@@ -539,7 +539,10 @@ const executeGraph = ({ cache, graph, parent_graph, cache_id, node_cache }) => {
                     node_ref.fn = fn;
 
 
-                    const results = fn.apply(null, input_values);
+                    const is_iv_promised = input_values.reduce((acc, iv) => acc || ispromise(iv), false);
+                    const results = is_iv_promised 
+                        ? Promise.all(input_values.map(iv => Promise.resolve(iv))).then(iv => fn.apply(null, iv))
+                        : fn.apply(null, input_values);
 
                     // don't cache things without arguments
                     if (node_ref.args?.length > 0) {
@@ -591,6 +594,7 @@ const executeGraph = ({ cache, graph, parent_graph, cache_id, node_cache }) => {
             const promised_data = Object.entries(data).reduce((acc, kv) => [acc[0].concat([kv]), acc[1] || (!!kv[1] && !kv[1]?._Proxy && ispromise(kv[1]))], [[], false]);
             
             if(promised_data[1]) {
+                console.log(promised_data);
                 return Promise.all(promised_data[0].map(kv => Promise.resolve(kv[1]).then(v => [kv[0], v]))).then(Object.fromEntries);
             }
 
@@ -1164,6 +1168,7 @@ const d3subscription = (dispatch, props) => {
 
 const keydownSubscription = (dispatch, options) => {
     const handler = ev => {
+        console.log(ev);
         if (ev.key === "s" && ev.ctrlKey) {
             ev.preventDefault();
         } else if (!ev.key) {
@@ -1472,6 +1477,11 @@ const middleware = dispatch => (ha_action, ha_payload) => {
                 return e
             });
 
+            if (ispromise(result)) {
+                // TODO: handle promises properly
+                return state;
+            }
+
             return result.hasOwnProperty("state")
                 ? effects.length > 0 ? [result.state, ...effects] : result.state
                 : [result.action, result.payload];
@@ -1510,7 +1520,6 @@ const generic_nodes = new Set([
     "utility",
     "log",
     "execute_graph",
-    "runnable",
     "arg",
     "apply",
     "partial",
@@ -1518,6 +1527,8 @@ const generic_nodes = new Set([
     "call",
     "default",
     "merge_objects",
+    "sequence",
+    "runnable",
 
     "JSON",
     "stringify",
