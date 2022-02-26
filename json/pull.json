@@ -1308,7 +1308,7 @@
                 {"id": "payload", "ref": "arg", "value": "payload"},
                 {"id": "run_effect", "ref": "run_display_graph_effect"},
                 {"id": "result", "script": "return _lib.no.executeGraphNode({graph: {...fn_graph, nodes: [...fn_graph.nodes], edges: [...fn_graph.edges]}})('main/out')({state: state, payload: {event: payload, run: run_effect}});"},
-                {"id": "out", "script": "return (dispatch, payload) => {const wrapped_dispatch = (a, p) => Promise.resolve(p).then(resp => [a, resp]).then(([a, p]) => dispatch(a, p)).catch(e => dispatch(s => [{...s, error: e}])); wrapped_dispatch(state => {Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: _graph})(fn)({state: s, payload})).then(res => _lib.no.executeGraphNode({graph: res[0]?.graph ?? res.graph})(res[0]?.fn ?? r.fn)({state, payload: {event: payload, payload: res[1]}, dispatch: wrapped_dispatch})); return state.error ? {...state, error: false} : state;})}"}
+                {"id": "out", "script": "return (dispatch, payload) => {const wrapped_dispatch = (a, p) => Promise.resolve(a).then(_ => p).then(resp => [a, resp]).then(([a, p]) => dispatch(a, p)).catch(e => dispatch(s => [{...s, error: e}])); wrapped_dispatch(state => {Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: _graph})(fn)({state: s, payload})).then(res => _lib.no.executeGraphNode({graph: res[0]?.graph ?? res.graph})(res[0]?.fn ?? r.fn)({state, payload: {event: payload, payload: res[1]}, dispatch: wrapped_dispatch})); return state.error ? {...state, error: false} : state;})}"}
             ],
             "edges": [
                 {"from": "state", "to": "result", "as": "state"},
@@ -1983,7 +1983,7 @@
                 },
                 {
                     "id": "hz8lp96/j6iu3d3",
-                    "script": "return Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: runnable[0]?.graph ?? runnable.graph})(runnable[0]?.fn ?? runnable.fn)({state: s, payload: {event, payload: runnable[1]}, dispatch}));"
+                    "script": "return Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: runnable[0]?.graph ?? runnable.graph})(runnable[0]?.fn ?? runnable.fn)({state: s, payload: {event, payload: runnable[1]}, dispatch})).catch(e => dispatch(s => [{...s, error: e}]));"
                 },
                 {
                     "id": "hz8lp96/cja7ejh",
@@ -2099,66 +2099,13 @@
                 },
                 {
                     "id": "4g0xgt3",
-                    "value": "json_data"
+                    "value": "value",
+                    "ref": "arg"
                 },
                 {
-                    "id": "mor2dr6",
-                    "name": "fetch_fn",
-                    "out": "3v4qkje",
-                    "nodes": [
-                        {
-                            "id": "3v4qkje",
-                            "ref": "runnable",
-                            "name": "out"
-                        },
-                        {
-                            "id": "ivda0c1",
-                            "ref": "call"
-                        },
-                        {
-                            "id": "lr8rv2z",
-                            "value": "test"
-                        },
-                        {
-                            "id": "832g2ld/m9yeyqc",
-                            "ref": "fetch"
-                        },
-                        {
-                            "id": "40v3sm3",
-                            "value": "text"
-                        },
-                        {
-                            "id": "832g2ld/fphsciu",
-                            "value": "https://raw.githubusercontent.com/hydra-synth/hydra-synth/main/src/glsl/glsl-functions.js"
-                        }
-                    ],
-                    "edges": [
-                        {
-                            "from": "ivda0c1",
-                            "to": "3v4qkje",
-                            "as": "fn"
-                        },
-                        {
-                            "from": "lr8rv2z",
-                            "to": "3v4qkje",
-                            "as": "fn"
-                        },
-                        {
-                            "from": "832g2ld/m9yeyqc",
-                            "to": "ivda0c1",
-                            "as": "self"
-                        },
-                        {
-                            "from": "40v3sm3",
-                            "to": "ivda0c1",
-                            "as": "fn"
-                        },
-                        {
-                            "from": "832g2ld/fphsciu",
-                            "to": "832g2ld/m9yeyqc",
-                            "as": "url"
-                        }
-                    ]
+                    "id": "itmdest",
+                    "value": "fn",
+                    "ref": "arg"
                 },
                 {
                     "id": "s5ns82c",
@@ -2193,8 +2140,8 @@
                     "as": "value"
                 },
                 {
+                    "from": "itmdest",
                     "to": "usd4433",
-                    "from": "mor2dr6",
                     "as": "fn"
                 },
                 {
@@ -2208,7 +2155,7 @@
                     "as": "path"
                 }
             ]
-        }
+        },
         {
             "id": "modify_state_runnable",
             "name": "modify_state_runnable",
@@ -4885,10 +4832,12 @@
                 {"id": "display_graph_edges_path", "value": "display_graph.edges"},
                 {"id": "node_id", "ref": "arg", "value": "payload.id"},
                 {"id": "node_properties", "ref": "arg", "value": "payload.properties"},
-                {"id": "prev_node", "script": "return nodes.find(n => n.id === node_id)"},
-                {"id": "replace_node", "script": "return nodes.map(n => n.id === node_id ? Object.assign({}, n, update) : n)"},
-                {"id": "arg_value", "script": "const node = nodes.find(n => n.id === node_id); return node.ref === 'arg' ? node.value.substring(node.value.lastIndexOf('.') + 1) : undefined"},
-                {"id": "replace_edges", "script": "return arg_value ? edges.map(e => e.from === node_id && (e.as.startsWith('arg') || e.as === prev_node.value)? {...e, as: arg_value} : e) : edges"},
+                {"id": "prev_node", "ref": "find_node"},
+                {"id": "new_node", "ref": "merge_objects"},
+                {"id": "replace_node", "script": "return nodes.map(n => n.id === new_node.id ? new_node : n)"},
+                {"id": "node_args", "ref": "node_args"},
+                {"id": "arg_value", "script": "return node.ref === 'arg' ? node.value.substring(node.value.lastIndexOf('.') + 1) : undefined"},
+                {"id": "replace_edges", "script": "const parents = edges.filter(e => e.to === node_id).map(e => e.as); const needed_args = node_args.filter(a => !parents.includes(a)); return edges.map(e => e.from === node_id && arg_value && (e.as.startsWith('arg') || e.as === prev_node.value) ? {...e, as: arg_value} : e.to === node_id && !node_args.includes(e.as) && needed_args?.length > 0 ? {...e, as: needed_args.pop()} : e)"},
                 {"id": "display_graph_nodes_path", "value": "display_graph.nodes"},
                 {"id": "set_display_graph_nodes", "ref": "set"},
                 {"id": "set_display_graph_edges", "ref": "set"},
@@ -4901,18 +4850,21 @@
                 {"from": "nodes", "to": "replace_node", "as": "nodes"},
                 {"from": "nodes", "to": "prev_node", "as": "nodes"},
                 {"from": "edges", "to": "replace_edges", "as": "edges"},
-                {"from": "node_id", "to": "replace_node", "as": "node_id"},
                 {"from": "node_id", "to": "prev_node", "as": "node_id"},
-                {"from": "node_properties", "to": "replace_node", "as": "update"},
+                {"from": "node_properties", "to": "new_node", "as": "o1"},
+                {"from": "prev_node", "to": "new_node", "as": "o0"},
+                {"from": "new_node", "to": "replace_node", "as": "new_node"},
                 {"from": "state", "to": "set_display_graph_nodes", "as": "target"},
                 {"from": "display_graph_nodes_path", "to": "set_display_graph_nodes", "as": "path"},
                 {"from": "replace_node", "to": "set_display_graph_nodes", "as": "value"},
                 {"from": "set_display_graph_nodes", "to": "set_display_graph_edges", "as": "target"},
-                {"from": "replace_node", "to": "arg_value", "as": "nodes"},
+                {"from": "nodes", "to": "node_args", "as": "nodes"},
+                {"from": "new_node", "to": "node_args", "as": "node"},
+                {"from": "new_node", "to": "arg_value", "as": "node"},
                 {"from": "node_id", "to": "arg_value", "as": "node_id"},
                 {"from": "arg_value", "to": "replace_edges", "as": "arg_value"},
+                {"from": "node_args", "to": "replace_edges", "as": "node_args"},
                 {"from": "node_id", "to": "replace_edges", "as": "node_id"},
-                {"from": "prev_node", "to": "replace_edges", "as": "prev_node"},
                 {"from": "replace_edges", "to": "set_display_graph_edges", "as": "value"},
                 {"from": "display_graph_edges_path", "to": "set_display_graph_edges", "as": "path"},
                 {"from": "set_display_graph_edges", "to": "result", "as": "state"},
