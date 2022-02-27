@@ -142,7 +142,7 @@
             {"id": "panzoom_selected_effector", "ref": "arg", "value": "0.panzoom_selected_effect"},
             {
                 "id": "action",
-                "script": "return [{...state, nodes: new_nodes, links: new_links, randid: Math.random().toString(36).substring(2, 9)}, panzoom_selected_effect && false && [panzoom_selected_effect, {...state, selected: state.selected[0], nodes: new_nodes, links: new_links}]]"
+                "script": "return [{...state, nodes: new_nodes, links: new_links, randid: Math.random().toString(36).substring(2, 9)}, panzoom_selected_effect && false && [panzoom_selected_effect, {...state, selected: state.selected[0], nodes: new_nodes, links: new_links}], [state.update_hyperapp]]"
             }
         ],
         "edges": [
@@ -1312,7 +1312,7 @@
                 {"id": "payload", "ref": "arg", "value": "payload"},
                 {"id": "run_effect", "ref": "run_display_graph_effect"},
                 {"id": "result", "script": "return _lib.no.executeGraphNode({graph: {...fn_graph, nodes: [...fn_graph.nodes], edges: [...fn_graph.edges]}})('main/out')({state: state, payload: {event: payload, run: run_effect}});"},
-                {"id": "out", "script": "return (dispatch, payload) => {const wrapped_dispatch = (a, p) => Promise.resolve(a).then(_ => p).then(resp => [a, resp]).then(([a, p]) => dispatch(a, p)).catch(e => dispatch(s => [{...s, error: e}])); wrapped_dispatch(state => {Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: _graph})(fn)({state: s, payload})).then(res => _lib.no.executeGraphNode({graph: res[0]?.graph ?? res.graph})(res[0]?.fn ?? r.fn)({state, payload: {event: payload, payload: res[1]}, dispatch: wrapped_dispatch})); return state.error ? {...state, error: false} : state;})}"}
+                {"id": "out", "script": "return (dispatch, payload) => {const wrapped_dispatch = (a, p) => Promise.resolve(p).then(resp => [a, resp]).then(([a, p]) => dispatch(a, p)).catch(e => dispatch(s => [{...s, error: e}])); wrapped_dispatch(state => {Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: _graph})(fn)({state: s, payload})).then(res => _lib.no.executeGraphNode({graph: res[0]?.graph ?? res.graph})(res[0]?.fn ?? r.fn)({state, payload: {event: payload, payload: res[1]}, dispatch: wrapped_dispatch})).catch(e => dispatch(s => [{...s, error: e}])); return state.error ? {...state, error: false} : state;})}"}
             ],
             "edges": [
                 {"from": "state", "to": "result", "as": "state"},
@@ -1635,6 +1635,100 @@
                     "from": "new_state",
                     "to": "out",
                     "as": "state"
+                }
+            ]
+        },
+        {
+            "id": "reduce",
+            "name": "reduce",
+            "in": "m3b5wg3",
+            "out": "tgurdpo",
+            "nodes": [
+                {
+                    "id": "tgurdpo",
+                    "ref": "call",
+                    "name": "out"
+                },
+                {
+                    "id": "m3b5wg3",
+                    "name": "in"
+                },
+                {
+                    "id": "rielyq8",
+                    "value": "reduce",
+                    "name": "rielyq8"
+                },
+                {
+                    "ref": "arg",
+                    "id": "1rre4bx",
+                    "value": "array",
+                    "name": "1rre4bx"
+                },
+                {
+                    "ref": "arg",
+                    "id": "6g75abk",
+                    "value": "fn",
+                    "name": "6g75abk"
+                },
+                {
+                    "id": "w0zzawl",
+                    "ref": "new_array",
+                    "name": "w0zzawl"
+                },
+                {"id": "args", "ref": "arg", "value": "_args"},
+                {
+                    "id": "pdljod1",
+                    "name": "pdljod1",
+                    "script": "return (previous, current, index, array) => _lib.no.runGraph(fn?.graph ?? _graph, fn?.fn ?? fn, Object.assign({}, args, {previous, current, index, array}));"
+                },
+                {
+                    "id": "2lvs5dj",
+                    "script": "return _graph",
+                    "name": "2lvs5dj"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "m3b5wg3",
+                    "to": "tgurdpo",
+                    "as": "args",
+                    "type": "ref"
+                },
+                {
+                    "from": "rielyq8",
+                    "to": "tgurdpo",
+                    "as": "fn"
+                },
+                {
+                    "from": "1rre4bx",
+                    "to": "tgurdpo",
+                    "as": "self"
+                },
+                {
+                    "from": "w0zzawl",
+                    "to": "tgurdpo",
+                    "as": "args",
+                    "type": "resolve"
+                },
+                {
+                    "from": "pdljod1",
+                    "to": "w0zzawl",
+                    "as": "a0"
+                },
+                {
+                    "from": "2lvs5dj",
+                    "to": "pdljod1",
+                    "as": "graph"
+                },
+                {
+                    "from": "args",
+                    "to": "pdljod1",
+                    "as": "args"
+                },
+                {
+                    "from": "6g75abk",
+                    "to": "pdljod1",
+                    "as": "fn"
                 }
             ]
         },
@@ -1987,7 +2081,7 @@
                 },
                 {
                     "id": "hz8lp96/j6iu3d3",
-                    "script": "return Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: runnable[0]?.graph ?? runnable.graph})(runnable[0]?.fn ?? runnable.fn)({state: s, payload: {event, payload: runnable[1]}, dispatch})).catch(e => dispatch(s => [{...s, error: e}]));"
+                    "script": "return !runnable ? state : Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: runnable[0]?.graph ?? runnable.graph})(runnable[0]?.fn ?? runnable.fn)({state: s, payload: {event, payload: runnable[1]}, dispatch})).catch(e => dispatch(s => [{...s, error: e}]));"
                 },
                 {
                     "id": "hz8lp96/cja7ejh",
@@ -2378,122 +2472,70 @@
                 {
                     "from": "15d1amt",
                     "to": "i74hjbp",
-                    "as": "value"
+                    "as": "path"
                 }
             ]
         },
         {
-            "id": "modify_state_value",
-            "name": "modify_state_value",
-            "in": "9g39i2c",
-            "out": "0nyu2om",
+            "id": "object_entries",
+            "name": "object_entries",
+            "in": "tkd4tqn",
+            "out": "j8c79uf",
             "nodes": [
                 {
                     "name": "out",
-                    "id": "0nyu2om",
-                    "ref": "set"
+                    "id": "j8c79uf",
+                    "ref": "filter"
                 },
                 {
-                    "name": "in",
-                    "id": "9g39i2c"
+                    "id": "tkd4tqn",
+                    "name": "in"
                 },
                 {
-                    "id": "ehu0yf5",
-                    "value": "value",
-                    "ref": "arg"
+                    "id": "hfexsuu",
+                    "script": "return !key.startsWith('_');"
                 },
                 {
-                    "id": "npwm1c5",
-                    "ref": "apply"
+                    "id": "bgi2g37",
+                    "script": "return Object.entries(obj)"
                 },
                 {
-                    "id": "5dkffft"
-                },
-                {
-                    "id": "1t54i2i",
+                    "id": "7gqcw0o",
                     "ref": "arg",
-                    "value": "fn"
+                    "value": "0.0"
                 },
                 {
-                    "id": "rcfwyh8",
+                    "id": "kpakw50",
                     "ref": "arg",
-                    "value": "state"
-                },
-                {
-                    "id": "2u2jmvs",
-                    "ref": "get"
-                },
-                {
-                    "id": "iibsq38",
-                    "value": "payload",
-                    "ref": "arg"
-                },
-                {
-                    "id": "xur00me",
-                    "value": "value",
-                    "ref": "arg"
-                },
-                {
-                    "id": "a01lbb8",
-                    "ref": "arg",
-                    "value": "state"
+                    "value": "object"
                 }
             ],
             "edges": [
                 {
-                    "to": "0nyu2om",
-                    "from": "9g39i2c",
-                    "as": "fn"
+                    "from": "tkd4tqn",
+                    "to": "j8c79uf",
+                    "as": "arr"
                 },
                 {
-                    "from": "ehu0yf5",
-                    "to": "0nyu2om",
-                    "as": "path"
+                    "from": "hfexsuu",
+                    "to": "j8c79uf",
+                    "as": "fn",
+                    "type": "ref"
                 },
                 {
-                    "from": "npwm1c5",
-                    "to": "0nyu2om",
-                    "as": "value"
+                    "from": "bgi2g37",
+                    "to": "j8c79uf",
+                    "as": "arr"
                 },
                 {
-                    "from": "5dkffft",
-                    "to": "npwm1c5",
-                    "as": "args"
+                    "from": "7gqcw0o",
+                    "to": "hfexsuu",
+                    "as": "key"
                 },
                 {
-                    "from": "1t54i2i",
-                    "to": "npwm1c5",
-                    "as": "fn"
-                },
-                {
-                    "from": "rcfwyh8",
-                    "to": "0nyu2om",
-                    "as": "target"
-                },
-                {
-                    "from": "rcfwyh8",
-                    "to": "5dkffft",
-                    "as": "state"
-                },
-                {
-                    "from": "2u2jmvs",
-                    "to": "5dkffft",
-                    "as": "state_value"
-                },
-                {
-                    "from": "iibsq38",
-                    "to": "5dkffft",
-                    "as": "payload"
-                },
-                {
-                    "from": "xur00me",
-                    "to": "2u2jmvs",
-                    "as": "path"
-                },
-                {
-                    "from": "a01lbb8",
-                    "to": "2u2jmvs",
-                    "as": "target"
+                    "from": "kpakw50",
+                    "to": "bgi2g37",
+                    "as": "obj"
                 }
             ]
         },
@@ -4610,7 +4652,7 @@
                         {"id": "nodes", "ref": "arg", "value": "state.display_graph.nodes"},
                         {
                             "id": "new_edge",
-                            "script": "return {...payload_edge, as: next_arg ?? `arg${sibling_count}`}"
+                            "script": "return {...payload_edge, as: next_arg ?? (`arg${(siblings.map(s => s.as).filter(a => a.startsWith('arg')).sort().map(s => parseInt(s.substring(3))).filter(i => !isNaN(i)).reverse()[0] ?? -1) + 1}`)}"
                         },
                         {"id": "child_node", "script": "return nodes.find(n => n.id === edge.to)"},
                         {
@@ -4630,10 +4672,6 @@
                         {"id": "siblings", "script": "return edges.filter(e => e.to === new_edge.to)"},
                         {"id": "node_args", "ref": "node_args"},
                         {"id": "next_arg", "script": "return args?.filter(a => !(a === '_node_inputs' || a === '_lib' || a === '_node') && !siblings.find(e => e.as === a))[0]"},
-                        {
-                            "id": "calculate_sibling_count",
-                            "script": "return siblings.length"
-                        },
                         {
                             "id": "edges_path",
                             "value": "display_graph.edges"
@@ -4676,7 +4714,7 @@
                             "to": "new_edge",
                             "as": "payload_edge"
                         },
-                        {"from": "siblings", "to": "calculate_sibling_count", "as": "siblings"},
+                        {"from": "siblings", "to": "new_edge", "as": "siblings"},
                         {"from": "nodes", "to": "child_node", "as": "nodes"},
                         {"from": "payload_edge", "to": "child_node", "as": "edge"},
                         {"from": "nodes", "to": "node_args", "as": "nodes"},
@@ -4684,11 +4722,7 @@
                         {"from": "siblings", "to": "next_arg", "as": "siblings"},
                         {"from": "node_args", "to": "next_arg", "as": "args"},
                         {"from": "next_arg", "to": "new_edge", "as": "next_arg"},
-                        {
-                            "from": "calculate_sibling_count",
-                            "to": "new_edge",
-                            "as": "sibling_count"
-                        },
+                        { "from": "siblings", "to": "new_edge", "as": "sibling_count" },
                         {
                             "from": "new_edge",
                             "to": "new_edges",
@@ -10831,6 +10865,7 @@
         {"from": "merge_objects", "to": "utility"},
         {"from": "sequence", "to": "utility"},
         {"from": "runnable", "to": "utility"},
+        {"from": "object_entries", "to": "utility"},
         {"from": "add", "to": "math"},
         {"from": "divide", "to": "math"},
         {"from": "negate", "to": "math"},

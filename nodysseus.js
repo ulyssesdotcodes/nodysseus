@@ -1291,6 +1291,9 @@ const contract_node = (data, keep_expanded = false) => {
 
         const in_node = inside_node_map.get(in_node_id);
 
+        let node_id_count = data.display_graph.nodes.filter(n => n.id === node_id).length;
+        let final_node_id = node_id_count === 0 ? node_id : `${node_id}_${node_id_count}`
+
         // if there's no in node, just return
         if (in_node_id && !in_node_id.endsWith('in')) {
             return {display_graph: data.display_graph, selected: [data.node_id]};
@@ -1318,7 +1321,7 @@ const contract_node = (data, keep_expanded = false) => {
                 .filter(n => n.id !== data.node_id)
                 .filter(n => keep_expanded || !inside_node_map.has(n.id))
                 .concat([{
-                    id: node_id,
+                    id: final_node_id,
                     name: name === data.node_id ? data.node_name : name,
                     in: in_node_id?.startsWith(node_id + '/') ? in_node_id.substring(node_id.length + 1) : in_node_id,
                     out: out_node_id.startsWith(node_id + '/') ? out_node_id.substring(node_id.length + 1) : out_node_id,
@@ -1332,15 +1335,15 @@ const contract_node = (data, keep_expanded = false) => {
             edges: data.display_graph.edges
                 .filter(e => keep_expanded || !(inside_node_map.has(e.from) && inside_node_map.has(e.to)))
                 .map(e =>
-                    e.from === data.node_id ? { ...e, from: node_id }
-                        : e.to === in_node?.id ? { ...e, to: node_id }
+                    e.from === data.node_id ? { ...e, from: final_node_id }
+                        : e.to === in_node?.id ? { ...e, to: final_node_id }
                             : inside_node_map.has(e.to)
-                                ? { ...e, to: node_id }
+                                ? { ...e, to: final_node_id }
                                 : e
                 )
         };
 
-        return { display_graph: { ...data.display_graph, ...new_display_graph }, selected: [node_id] };
+        return { display_graph: { ...data.display_graph, ...new_display_graph }, selected: [final_node_id] };
     }
 }
 
@@ -1528,6 +1531,7 @@ const generic_nodes = new Set([
     "merge_objects",
     "sequence",
     "runnable",
+    "object_entries",
 
     "math",
     "add",
@@ -1668,8 +1672,9 @@ const lib = {
                 );
                 const x = payload.dimensions.x * 0.5 - viewbox.center.x;
                 const y = payload.dimensions.y * 0.5 - viewbox.center.y
+                const scale = instance.getTransform().scale;
                 instance.moveTo(x, y);
-                instance.zoomTo(x, y, 1 / instance.getTransform().scale)
+                instance.zoomTo(x, y, 1 / scale)
 
                 if(!payload.prevent_dispatch) {
                     dispatch(sub_payload.action, {event: 'effect_transform', transform: instance.getTransform()})
