@@ -576,7 +576,7 @@ const executeGraph = ({ cache, graph, parent_graph, cache_id, node_cache }) => {
                         if(arg === '_node'){
                             return [acc[0].concat([node]), acc[1]];
                         } else if (arg === '_node_inputs') {
-                            return [acc[0].concat(data), acc[1]]
+                            return [acc[0].concat(extern.resolve ? resolve({...data, _needsresolve: true}) : data), acc[1]]
                         } else if (arg === '_graph') {
                             return [acc[0].concat(graph), acc[1]]
                         }
@@ -1529,6 +1529,12 @@ const generic_nodes = new Set([
     "sequence",
     "runnable",
 
+    "math",
+    "add",
+    "divide",
+    "mult",
+    "negate",
+
     "JSON",
     "stringify",
     "parse",
@@ -1608,6 +1614,26 @@ const lib = {
                         .then(es => Object.fromEntries(es.flatMap(Object.entries))) 
                     : Object.fromEntries(keys.flatMap(k => Object.entries(args[k])))
             }
+        },
+        add: {
+            args: ["_node_inputs"],
+            resolve: true,
+            fn: (args) => Object.values(args).reduce((acc, v) => acc + v, 0)
+        },
+        mult: {
+            args: ["_node_inputs"],
+            resolve: true,
+            fn: (args) => Object.values(args).reduce((acc, v) => acc * v, 1)
+        },
+        negate: {
+            args: ["value"],
+            resolve: true,
+            fn: (value) => -value
+        },
+        divide: {
+            args: ["_node_inputs"],
+            resolve: true,
+            fn: (args) => Object.values(args).reduce((acc, v) => acc / v, 1)
         }
     },
     JSON: {
