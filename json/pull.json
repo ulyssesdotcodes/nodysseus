@@ -1310,13 +1310,15 @@
                 {"id": "state", "ref": "arg", "value": "state"},
                 {"id": "display_graph", "ref": "arg", "value": "state.display_graph"},
                 {"id": "payload", "ref": "arg", "value": "payload"},
+                {"id": "dispatch", "ref": "arg", "value": "dispatch"},
                 {"id": "run_effect", "ref": "run_display_graph_effect"},
-                {"id": "result", "script": "return _lib.no.executeGraphNode({graph: {...fn_graph, nodes: [...fn_graph.nodes], edges: [...fn_graph.edges]}})('main/out')({state: state, payload: {event: payload, run: run_effect}});"},
-                {"id": "out", "script": "return (dispatch, payload) => {const wrapped_dispatch = (a, p) => Promise.resolve(p).then(resp => [a, resp]).then(([a, p]) => dispatch(a, p)).catch(e => dispatch(s => [{...s, error: e}])); wrapped_dispatch(state => {Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: _graph})(fn)({state: s, payload})).then(res => _lib.no.executeGraphNode({graph: res[0]?.graph ?? res.graph})(res[0]?.fn ?? r.fn)({state, payload: {event: payload, payload: res[1]}, dispatch: wrapped_dispatch})).catch(e => dispatch(s => [{...s, error: e}])); return state.error ? {...state, error: false} : state;})}"}
+                {"id": "result", "script": "return _lib.no.executeGraphNode({graph: {...fn_graph, nodes: [...fn_graph.nodes], edges: [...fn_graph.edges]}})('main/out')({state: state, payload: {event: payload, run: run_effect}, dispatch});"},
+                {"id": "out", "script": "return (dispatch, payload) => {const wrapped_dispatch = (a, p) => Promise.resolve(p).then(resp => [a, resp]).then(([a, p]) => dispatch(a, p)).catch(e => dispatch(s => [{...s, error: e}])); wrapped_dispatch(state => {Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: _graph})(fn)({state: s, payload, dispatch: wrapped_dispatch})).then(res => _lib.no.executeGraphNode({graph: res[0]?.graph ?? res.graph})(res[0]?.fn ?? r.fn)({state, payload: {event: payload, payload: res[1]}, dispatch: wrapped_dispatch})).catch(e => dispatch(s => [{...s, error: e}])); return state.error ? {...state, error: false} : state;})}"}
             ],
             "edges": [
                 {"from": "state", "to": "result", "as": "state"},
                 {"from": "payload", "to": "result", "as": "payload"},
+                {"from": "dispatch", "to": "result", "as": "dispatch"},
                 {"from": "run_effect", "to": "result", "as": "run_effect"},
                 {"from": "display_graph", "to": "result", "as": "fn_graph"},
                 {"from": "result", "to": "out", "as": "fn", "type": "ref"}
@@ -2084,10 +2086,16 @@
                     "script": "return !runnable ? state : Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: runnable[0]?.graph ?? runnable.graph})(runnable[0]?.fn ?? runnable.fn)({state: s, payload: {event, payload: runnable[1]}, dispatch})).catch(e => dispatch(s => [{...s, error: e}]));"
                 },
                 {
+                    "id": "payload",
+                    "ref": "arg",
+                    "value": "payload"
+                },
+                {
                     "id": "hz8lp96/cja7ejh",
                     "ref": "arg",
                     "value": "payload.payload"
                 },
+                {"id": "merge_payloads", "ref": "merge_objects"},
                 {
                     "id": "hz8lp96/wucbgux",
                     "ref": "arg",
@@ -2146,6 +2154,16 @@
                 },
                 {
                     "from": "hz8lp96/cja7ejh",
+                    "to": "merge_payloads",
+                    "as": "a0"
+                },
+                {
+                    "from": "payload",
+                    "to": "merge_payloads",
+                    "as": "a1"
+                },
+                {
+                    "from": "merge_payloads",
                     "to": "hz8lp96/lq3olmi",
                     "as": "payload"
                 },
@@ -2285,7 +2303,8 @@
                 {
                     "id": "qov8vrr",
                     "ref": "arg",
-                    "value": "dispatch"
+                    "value": "dispatch",
+                    "type": "internal"
                 },
                 {
                     "id": "eil1eq5",
@@ -2331,7 +2350,8 @@
                 {
                     "id": "8th0n8q",
                     "ref": "arg",
-                    "value": "state"
+                    "value": "state",
+                    "type": "internal"
                 },
                 {
                     "id": "p79j5ub",
@@ -2341,7 +2361,8 @@
                 {
                     "id": "xfxjlvp",
                     "ref": "arg",
-                    "value": "state"
+                    "value": "state",
+                    "type": "internal"
                 },
                 {
                     "id": "i74hjbp",
@@ -2355,13 +2376,18 @@
                 {
                     "id": "sabrhol",
                     "ref": "arg",
-                    "value": "state"
+                    "value": "state",
+                    "type": "internal"
                 },
                 {
                     "id": "15d1amt",
                     "ref": "arg",
                     "value": "payload.payload.value"
-                }
+                },
+                {"id": "arg_value", "ref": "arg", "value": "value"},
+                {"id": "arg_fn", "ref": "arg", "value": "fn"},
+                {"id": "dispatch_payload"},
+                {"id": "payload", "ref": "merge_objects"}
             ],
             "edges": [
                 {
@@ -2376,9 +2402,11 @@
                 },
                 {
                     "from": "duyhvhw",
-                    "to": "tpcqvm2",
+                    "to": "payload",
                     "as": "arg1"
                 },
+                {"from": "dispatch_payload", "to": "payload", "as": "arg0"},
+                {"from": "payload", "to": "tpcqvm2", "as": "arg1"},
                 {
                     "from": "f5ybb5f",
                     "to": "bkm8hz8",
@@ -2418,6 +2446,11 @@
                     "from": "jwj4il0",
                     "to": "i6ydibj",
                     "as": "value"
+                },
+                {
+                    "from": "qov8vrr",
+                    "to": "dispatch_payload",
+                    "as": "dispatch"
                 },
                 {
                     "from": "0nyu2om",
@@ -2969,6 +3002,10 @@
                     "value": "input"
                 },
                 {
+                    "id": "ro8n2gc",
+                    "ref": "merge_objects"
+                },
+                {
                     "id": "wet0jdv",
                     "ref": "new_array"
                 },
@@ -2980,23 +3017,36 @@
                     "value": "label"
                 },
                 {
-                    "id": "ro8n2gc",
-                    "ref": "merge_objects"
+                    "id": "t6q6rvf"
+                },
+                {
+                    "id": "rjwtb3c",
+                    "ref": "default"
                 },
                 {
                     "id": "utkc9o6",
-                    "ref": "html_element"
+                    "ref": "html_text"
                 },
                 {
                     "id": "jxl9r29",
                     "script": "return \"input-\" + value;"
                 },
                 {
-                    "id": "t6q6rvf"
+                    "id": "2zxw9oo",
+                    "ref": "execute_graph",
+                    "name": "stop_propagation"
                 },
                 {
-                    "id": "rjwtb3c",
-                    "ref": "default"
+                    "id": "i7y9dyy",
+                    "script": "return (state, payload) => [{...state, [value]: payload.target.value}, onchange_fn && [_ => dispatch(onchange_fn)]]"
+                },
+                {
+                    "id": "vks4vul",
+                    "ref": "arg",
+                    "value": "props"
+                },
+                {
+                    "id": "ddfgy2s"
                 },
                 {
                     "id": "trd8ptp",
@@ -3009,52 +3059,27 @@
                     "value": "value"
                 },
                 {
-                    "id": "punpbfw",
-                    "ref": "execute_graph",
-                    "name": "onchange_fn"
-                },
-                {
-                    "id": "2zxw9oo",
-                    "ref": "execute_graph",
-                    "name": "stop_propagation"
-                },
-                {
-                    "id": "vks4vul",
-                    "ref": "arg",
-                    "value": "props"
-                },
-                {
-                    "id": "ddfgy2s"
-                },
-                {
-                    "id": "teuf938",
-                    "ref": "arg",
-                    "value": "value"
-                },
-                {
-                    "id": "1067z1h",
-                    "ref": "new_array"
-                },
-                {
-                    "id": "2obm63l",
-                    "ref": "arg",
-                    "value": "onchange_fn"
-                },
-                {
                     "id": "qseh2tb",
                     "ref": "new_array"
                 },
                 {
-                    "id": "b8q8y2q",
-                    "ref": "new_array"
+                    "id": "b0j8nyq",
+                    "ref": "arg",
+                    "value": "dispatch"
                 },
                 {
-                    "id": "pprukwn",
-                    "ref": "set"
+                    "id": "eotod0l",
+                    "ref": "sequence"
                 },
                 {
-                    "id": "ctuds7y",
-                    "ref": "new_array"
+                    "id": "qxwvdfe",
+                    "ref": "arg",
+                    "value": "value"
+                },
+                {
+                    "id": "0dnqo5l",
+                    "ref": "arg",
+                    "value": "onchange_fn"
                 },
                 {
                     "id": "1wps21n",
@@ -3115,33 +3140,22 @@
                     "value": "0"
                 },
                 {
-                    "id": "zu0hb6e",
-                    "ref": "arg",
-                    "value": "0.update_hyperapp"
+                    "id": "qjc0zt6",
+                    "ref": "modify_state_runnable"
                 },
                 {
-                    "id": "s6847dx",
-                    "ref": "arg",
-                    "value": "0"
+                    "id": "widk6u6",
+                    "ref": "runnable"
                 },
                 {
-                    "id": "o1aktwv",
-                    "ref": "arg",
-                    "value": "1.target.value"
-                },
-                {
-                    "id": "0eoq13n",
+                    "id": "506ntvb",
                     "ref": "arg",
                     "value": "value"
                 },
                 {
-                    "id": "bn9vsx1",
-                    "script": "return dispatch => dispatch(s => [s, [() => _lib.no.executeGraphNode({graph: runnable[0]?.graph ?? runnable.graph})(runnable[0]?.fn ?? runnable.fn)({state: s, payload: {}, dispatch})]])"
-                },
-                {
-                    "id": "31gq2bt",
+                    "id": "4ck1vaf",
                     "ref": "arg",
-                    "value": "onchange_fn"
+                    "value": "payload.target.value"
                 }
             ],
             "edges": [
@@ -3171,6 +3185,11 @@
                     "as": "dom_type"
                 },
                 {
+                    "from": "ro8n2gc",
+                    "to": "4972gx3",
+                    "as": "props"
+                },
+                {
                     "from": "wet0jdv",
                     "to": "1ldhfah",
                     "as": "children"
@@ -3186,8 +3205,13 @@
                     "as": "dom_type"
                 },
                 {
-                    "from": "ro8n2gc",
-                    "to": "4972gx3",
+                    "from": "t6q6rvf",
+                    "to": "ro8n2gc",
+                    "as": "arg0"
+                },
+                {
+                    "from": "rjwtb3c",
+                    "to": "ro8n2gc",
                     "as": "props"
                 },
                 {
@@ -3201,34 +3225,14 @@
                     "as": "for"
                 },
                 {
-                    "from": "t6q6rvf",
-                    "to": "ro8n2gc",
-                    "as": "arg0"
-                },
-                {
-                    "from": "rjwtb3c",
-                    "to": "ro8n2gc",
-                    "as": "props"
-                },
-                {
-                    "from": "trd8ptp",
-                    "to": "utkc9o6",
-                    "as": "text"
-                },
-                {
-                    "from": "zfrrk0z",
-                    "to": "jxl9r29",
-                    "as": "value"
-                },
-                {
-                    "from": "punpbfw",
-                    "to": "t6q6rvf",
-                    "as": "onchange"
-                },
-                {
                     "from": "2zxw9oo",
                     "to": "t6q6rvf",
                     "as": "onkeydown"
+                },
+                {
+                    "from": "i7y9dyy",
+                    "to": "t6q6rvf",
+                    "as": "onchange"
                 },
                 {
                     "from": "vks4vul",
@@ -3241,20 +3245,14 @@
                     "as": "otherwise"
                 },
                 {
-                    "from": "teuf938",
-                    "to": "punpbfw",
+                    "from": "trd8ptp",
+                    "to": "utkc9o6",
+                    "as": "text"
+                },
+                {
+                    "from": "zfrrk0z",
+                    "to": "jxl9r29",
                     "as": "value"
-                },
-                {
-                    "from": "1067z1h",
-                    "to": "punpbfw",
-                    "as": "fn",
-                    "type": "ref"
-                },
-                {
-                    "from": "2obm63l",
-                    "to": "punpbfw",
-                    "as": "onchange_fn"
                 },
                 {
                     "to": "2zxw9oo",
@@ -3263,19 +3261,24 @@
                     "type": "ref"
                 },
                 {
-                    "from": "b8q8y2q",
-                    "to": "1067z1h",
-                    "as": "arg1"
+                    "from": "b0j8nyq",
+                    "to": "i7y9dyy",
+                    "as": "dispatch"
                 },
                 {
-                    "from": "pprukwn",
-                    "to": "1067z1h",
-                    "as": "arg0"
+                    "from": "eotod0l",
+                    "to": "i7y9dyy",
+                    "as": "seq"
                 },
                 {
-                    "from": "ctuds7y",
-                    "to": "1067z1h",
-                    "as": "arg2"
+                    "from": "qxwvdfe",
+                    "to": "i7y9dyy",
+                    "as": "value"
+                },
+                {
+                    "from": "0dnqo5l",
+                    "to": "i7y9dyy",
+                    "as": "onchange_fn"
                 },
                 {
                     "from": "1wps21n",
@@ -3288,34 +3291,24 @@
                     "as": "a0"
                 },
                 {
-                    "from": "zu0hb6e",
-                    "to": "b8q8y2q",
-                    "as": "update_hyperapp"
+                    "from": "qjc0zt6",
+                    "to": "eotod0l",
+                    "as": "arg"
                 },
                 {
-                    "from": "s6847dx",
-                    "to": "pprukwn",
-                    "as": "target"
+                    "from": "widk6u6",
+                    "to": "qjc0zt6",
+                    "as": "fn"
                 },
                 {
-                    "from": "o1aktwv",
-                    "to": "pprukwn",
+                    "from": "506ntvb",
+                    "to": "qjc0zt6",
                     "as": "value"
                 },
                 {
-                    "from": "0eoq13n",
-                    "to": "pprukwn",
-                    "as": "path"
-                },
-                {
-                    "from": "bn9vsx1",
-                    "to": "ctuds7y",
-                    "as": "arg0"
-                },
-                {
-                    "from": "31gq2bt",
-                    "to": "bn9vsx1",
-                    "as": "runnable"
+                    "from": "4ck1vaf",
+                    "to": "widk6u6",
+                    "as": "fn"
                 }
             ]
         },
@@ -4671,7 +4664,7 @@
                         },
                         {"id": "siblings", "script": "return edges.filter(e => e.to === new_edge.to)"},
                         {"id": "node_args", "ref": "node_args"},
-                        {"id": "next_arg", "script": "return args?.filter(a => !(a === '_node_inputs' || a === '_lib' || a === '_node') && !siblings.find(e => e.as === a))[0]"},
+                        {"id": "next_arg", "script": "return args?.filter(a => !(a === '_node_inputs' || a === '_lib' || a === '_node' || a === '_args') && !siblings.find(e => e.as === a))[0]"},
                         {
                             "id": "edges_path",
                             "value": "display_graph.edges"
@@ -4878,7 +4871,7 @@
                 {"id": "replace_node", "script": "return nodes.map(n => n.id === new_node.id ? new_node : n)"},
                 {"id": "node_args", "ref": "node_args"},
                 {"id": "arg_value", "script": "return node.ref === 'arg' ? node.value.substring(node.value.lastIndexOf('.') + 1) : undefined"},
-                {"id": "replace_edges", "script": "const parents = edges.filter(e => e.to === node_id).map(e => e.as); const needed_args = node_args.filter(a => !parents.includes(a) && a !== '_node_inputs' && a !== '_graph' && a !== '_lib'); return edges.map(e => e.from === node_id && arg_value && (e.as.startsWith('arg') || e.as === prev_node?.value) ? {...e, as: arg_value} : e.to === node_id && !node_args.includes(e.as) && needed_args?.length > 0 ? {...e, as: needed_args.shift()} : e)"},
+                {"id": "replace_edges", "script": "const parents = edges.filter(e => e.to === node_id).map(e => e.as); const needed_args = node_args.filter(a => !parents.includes(a) && a !== '_node_inputs' && a !== '_graph' && a !== '_lib' && a !== '_args'); return edges.map(e => e.from === node_id && arg_value && (e.as.startsWith('arg') || e.as === prev_node?.value) ? {...e, as: arg_value} : e.to === node_id && !node_args.includes(e.as) && needed_args?.length > 0 ? {...e, as: needed_args.shift()} : e)"},
                 {"id": "display_graph_nodes_path", "value": "display_graph.nodes"},
                 {"id": "set_display_graph_nodes", "ref": "set"},
                 {"id": "set_display_graph_edges", "ref": "set"},
@@ -5163,7 +5156,7 @@
                 {"id": "node_nodes", "ref": "get"},
                 {"id": "node_arg_nodes", "script": "return nodes?.filter(n => n.ref ==='arg' && n.type !== 'internal')"},
                 {"id": "should_show", "ref": "get"},
-                {"id": "nested_node_args", "script": "return nodes.map(n => n.value).filter(a => !a.includes('.'))"},
+                {"id": "nested_node_args", "script": "return [...(new Set(nodes.map(n => n.value).filter(a => !a.includes('.'))))]"},
                 {"id": "extern_node_args", "script": "return _lib.just.get.fn(_lib, node.extern).args"},
                 {"id": "node_args_input", "script": "return node.id === 'arg' ? undefined : node.extern ? 'extern' : node.nodes ?  'nested' : 'none'"},
                 {"id": "node_args", "ref": "switch"},

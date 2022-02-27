@@ -1616,7 +1616,10 @@ const lib = {
                 return promise 
                     ? Promise.all(keys.map(k => Promise.resolve(args[k])))
                         .then(es => Object.fromEntries(es.flatMap(Object.entries))) 
-                    : Object.fromEntries(keys.flatMap(k => Object.entries(args[k])))
+                    : Object.fromEntries(keys
+                        .map(k => args[k]?._Proxy ? args[k]._value : args[k])
+                        .flatMap(o => typeof o === 'object' && o ? Object.entries(o) : [])
+                    )
             }
         },
         add: {
@@ -1737,26 +1740,3 @@ const nodysseus = function(html_id, display_graph) {
 }
 
 export { runGraph, nodysseus };
-
-
-// return links.map(link => _lib.no.executeGraph({...graph, in: '_' + link.source.node_child_id})(link_layout_map)(Object.assign({
-//     readonly, 
-//     show_all, 
-//     link: Object.assign({edge: display_graph.edges.find(e => link.source.node_id === e.from && link.target.node_id === e.to)}, link),
-//     selected_distance: levels.distance_from_selected.get(link.target.node_child_id) !== undefined ? Math.min(levels.distance_from_selected.get(link.target.node_child_id), levels.distance_from_selected.get(link.source.node_child_id)) : undefined, 
-//     sibling_index_normalized: (levels.siblings.get(link.source.node_id).findIndex(n => n === link.source.node_id) + 1) / (levels.siblings.get(link.source.node_id).length + 1), _node_inputs})))
-// return (dispatch, payload) => dispatch(state => {Promise.resolve(_lib.no.executeGraphNode({graph: _graph})(fn)({state, payload})).then(res => dispatch(s => [{...s, main: res.state}, ...(res.effects ?? [])])).catch(e => dispatch(s => [{...s, errors: e}])); return state;}) 
-// return (dispatch, payload) => dispatch(state => {Promise.resolve(_lib.no.executeGraphNode({graph: _graph})(fn)({state, payload})).then(res => dispatch(s => [s, ...(res ?? [])])).catch(e => dispatch(s => [{...s, errors: e}])); return state;})
-// return (dispatch, payload) => dispatch(state => {Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: _graph})(fn)({s, payload})).then(res => Promise.all(res.map(r => [dispatch => {return _lib.no.executeGraphNode({graph: r.graph})(r.fn)({state, payload, dispatch})}])) ?? [])])).catch(e => dispatch(s => [{...s, errors: e}])); return state;})
-// return (dispatch, payload) => dispatch(state => {Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: _graph})(fn)({s, payload})).then(res => Promise.all(res?.map(r => [dispatch => {return _lib.no.executeGraphNode({graph: r.graph})(r.fn)({state, payload, dispatch})}]) ?? [])).catch(e => dispatch(s => [{...s, errors: e}])); return state;})
-// return (dispatch, payload) => dispatch(state => {
-//     Promise.resolve(state)
-//         .then(s => _lib.no.executeGraphNode({graph: _graph})(fn)({state: s, payload}))
-//         .then(res => res?.map(r => 
-//             [dispatch_ => Promise.resolve(state)
-//                 .then(s => _lib.no.executeGraphNode({graph: (console.log(r), r).graph})(r.fn)({state: s, payload, dispatch: dispatch_}))
-//                 .catch(e => dispatch(s => [{...s, errors: e}]))]) ?? [])
-//         .then(fx => dispatch(s => [s, ...fx]))
-//         .catch(e => dispatch(s => [{...s, errors: e}])); 
-//     return state;
-// })
