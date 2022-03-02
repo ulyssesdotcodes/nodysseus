@@ -5021,6 +5021,7 @@
                 {"from": "id_path", "to": "set_display_graph_id", "as": "path"},
                 {"from": "id", "to": "set_display_graph_id", "as": "value"},
                 {"from": "set_display_graph_id", "to": "result", "as": "state"},
+                {"from": "effects", "to": "result", "as": "effects"},
                 {"from": "result", "to": "out", "as": "fn", "type": "ref"}
             ]
         },

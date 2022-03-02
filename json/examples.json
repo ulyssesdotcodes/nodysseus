@@ -6,7 +6,7 @@
             {"id": "state", "ref": "arg", "value": "state"},
             {"id": "state_log", "ref": "log"},
             {"id": "log_state", "ref": "runnable"},
-            {"id": "main/out", "ref": "new_array"}
+            {"id": "main/out", "ref": "sequence"}
         ],
         "edges": [
             {"from": "state", "to": "state_log", "as": "value"},
