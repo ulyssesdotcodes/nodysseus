@@ -4,7 +4,7 @@
         {
             "id": "in"
         },
-        {"id": "array"},
+        {"id": "arrays"},
         {"id": "utility"},
         {"id": "flow"},
         {"id": "html"},
@@ -760,8 +760,8 @@
             ]
         },
         {
-            "id": "new_array",
-            "name": "new_array",
+            "id": "array",
+            "name": "array",
             "extern": "utility.new_array"
         },
         {
@@ -1393,7 +1393,7 @@
                     "value": "state.html_id"
                 },
                 {"id": "show_args_effector", "ref": "show_args_effect"},
-                {"id": "show_args_effect", "ref": "new_array"},
+                {"id": "show_args_effect", "ref": "array"},
                 {"id": "should_show_args", "ref": "switch"},
                 {"id": "dispatch_custom_event_effect", "ref": "dispatch_custom_event_effect"},
                 {
@@ -1401,7 +1401,7 @@
                     "ref": "arg",
                     "value": "effects"
                 },
-                {"id": "new_effects", "ref": "new_array"},
+                {"id": "new_effects", "ref": "array"},
                 {"id": "effects", "ref": "concat"},
                 {
                     "id": "display_graph",
@@ -1674,7 +1674,7 @@
                 },
                 {
                     "id": "w0zzawl",
-                    "ref": "new_array",
+                    "ref": "array",
                     "name": "w0zzawl"
                 },
                 {"id": "args", "ref": "arg", "value": "_args"},
@@ -1768,7 +1768,7 @@
                 },
                 {
                     "id": "w0zzawl",
-                    "ref": "new_array",
+                    "ref": "array",
                     "name": "w0zzawl"
                 },
                 {"id": "args", "ref": "arg", "value": "_args"},
@@ -1858,7 +1858,7 @@
                 },
                 {
                     "id": "lvzwtzi",
-                    "ref": "new_array"
+                    "ref": "array"
                 },
                 {
                     "id": "t6q6rvf"
@@ -1897,11 +1897,11 @@
                 },
                 {
                     "id": "1067z1h",
-                    "ref": "new_array"
+                    "ref": "array"
                 },
                 {
                     "id": "b8q8y2q",
-                    "ref": "new_array"
+                    "ref": "array"
                 },
                 {
                     "id": "pprukwn",
@@ -2058,7 +2058,7 @@
                 {
                     "name": "out",
                     "id": "2435ihf",
-                    "ref": "new_array"
+                    "ref": "array"
                 },
                 {
                     "name": "seq_runnable",
@@ -2281,7 +2281,7 @@
                 {
                     "name": "out",
                     "id": "tpcqvm2",
-                    "ref": "new_array"
+                    "ref": "array"
                 },
                 {
                     "id": "bkm8hz8",
@@ -2308,7 +2308,7 @@
                 },
                 {
                     "id": "eil1eq5",
-                    "ref": "new_array"
+                    "ref": "array"
                 },
                 {
                     "id": "r07vaaz",
@@ -2616,7 +2616,7 @@
                 },
                 {
                     "id": "d6h3gdw",
-                    "ref": "new_array"
+                    "ref": "array"
                 },
                 {
                     "id": "j8c79uf",
@@ -2662,7 +2662,7 @@
                 },
                 {
                     "id": "uwq9u81",
-                    "ref": "new_array"
+                    "ref": "array"
                 },
                 {
                     "id": "i1ifamx",
@@ -2830,6 +2830,7 @@
         {
             "id": "set_display",
             "name": "set_display",
+            "description": "Use like an html_element to add html to the page.",
             "in": "fkp4pck/wb73q0h",
             "out": "a59hci8",
             "nodes": [
@@ -2982,7 +2983,7 @@
                 },
                 {
                     "id": "gvkhkfw",
-                    "ref": "new_array"
+                    "ref": "array"
                 },
                 {
                     "id": "7rhq0q5",
@@ -3007,7 +3008,7 @@
                 },
                 {
                     "id": "wet0jdv",
-                    "ref": "new_array"
+                    "ref": "array"
                 },
                 {
                     "id": "gcuxiw9"
@@ -3060,7 +3061,7 @@
                 },
                 {
                     "id": "qseh2tb",
-                    "ref": "new_array"
+                    "ref": "array"
                 },
                 {
                     "id": "b0j8nyq",
@@ -3088,7 +3089,7 @@
                     "nodes": [
                         {
                             "id": "hj2cig0",
-                            "ref": "new_array",
+                            "ref": "array",
                             "name": "stop propagation effect"
                         },
                         {
@@ -3314,6 +3315,7 @@
         },
         {
             "id": "html_text",
+            "description": "Some HTML plaintext. Usually used as a child of html_element.",
             "out": "out",
             "nodes": [
                 {"id": "in"},
@@ -3329,6 +3331,7 @@
         },
         {
             "id": "html_element",
+            "description" :"An HTML Element. `children` is an array of html_element or html_text, `props` are the attributes for the html element as an object.",
             "nodes": [
                 { "id": "in" },
                 {"id": "children", "ref": "arg", "value": "children"},
@@ -3439,7 +3442,7 @@
                     }
                 },
                 {"id": "circle", "ref": "html_element"},
-                {"id": "children", "ref": "new_array"},
+                {"id": "children", "ref": "array"},
                 {"id": "out", "ref": "html_element"}
             ],
             "edges": [
@@ -4272,7 +4275,7 @@
         },
         {
             "id": "init_selected",
-            "ref": "new_array"
+            "ref": "array"
         },
         {
             "id": "hyperapp_view",
@@ -4428,8 +4431,8 @@
                 {"id": "popover_graph_value", "ref": "arg", "value": "payload.popover_graph" },
                 {"id": "render_popover_graph_effector", "ref": "render_popover_graph_effect"},
                 {"id": "render_popover_graph_effect_payload"},
-                {"id": "render_popover_graph_effect", "ref": "new_array"},
-                {"id": "effects", "ref": "new_array"},
+                {"id": "render_popover_graph_effect", "ref": "array"},
+                {"id": "effects", "ref": "array"},
                 {"id": "new_state"},
                 {"id": "out", "ref": "hyperapp_action_effect"}
             ],
@@ -4467,8 +4470,8 @@
                 {"id": "set_display_graph", "ref": "set"},
                 {"id": "set_selected", "ref": "set"},
                 {"id": "update_sim_effector", "ref": "arg", "value": "state.update_sim_effect"},
-                {"id": "update_sim_effect", "ref": "new_array"},
-                {"id": "effects", "ref": "new_array"},
+                {"id": "update_sim_effect", "ref": "array"},
+                {"id": "effects", "ref": "array"},
                 {"id": "return_value"},
                 {"id": "out", "ref": "hyperapp_action_effect"}
             ],
@@ -4809,8 +4812,8 @@
                 {"id": "update_sim_effector", "ref": "arg", "value": "state.update_sim_effect"},
                 {"id": "display_graph_path", "value": "display_graph"},
                 {"id": "set_display_graph", "ref": "set"},
-                {"id": "update_sim_effect", "ref": "new_array"},
-                {"id": "effects", "ref": "new_array"},
+                {"id": "update_sim_effect", "ref": "array"},
+                {"id": "effects", "ref": "array"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action_effect"}
             ],
@@ -4835,8 +4838,8 @@
                 {"id": "state", "ref": "arg", "value": "state"},
                 {"id": "open_graph_effector", "ref": "open_graph_effect"},
                 {"id": "open_graph_payload"},
-                {"id": "open_graph_effect", "ref": "new_array"},
-                {"id": "effects", "ref": "new_array"},
+                {"id": "open_graph_effect", "ref": "array"},
+                {"id": "effects", "ref": "array"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action_effect"}
             ],
@@ -4861,7 +4864,7 @@
                 {"id": "nodes", "ref": "arg", "value": "state.display_graph.nodes"},
                 {"id": "edges", "ref": "arg", "value": "state.display_graph.edges"},
                 {"id": "update_hyperapp", "ref": "arg", "value": "state.update_hyperapp"},
-                {"id": "update_hyperapp_effect", "ref": "new_array"},
+                {"id": "update_hyperapp_effect", "ref": "array"},
                 {"id": "display_graph_nodes_path", "value": "display_graph.nodes"},
                 {"id": "display_graph_edges_path", "value": "display_graph.edges"},
                 {"id": "node_id", "ref": "arg", "value": "payload.id"},
@@ -4875,7 +4878,7 @@
                 {"id": "display_graph_nodes_path", "value": "display_graph.nodes"},
                 {"id": "set_display_graph_nodes", "ref": "set"},
                 {"id": "set_display_graph_edges", "ref": "set"},
-                {"id": "effects", "ref": "new_array"},
+                {"id": "effects", "ref": "array"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action"}
             ],
@@ -4936,8 +4939,8 @@
                 {"id": "display_graph_edges_path", "value": "display_graph.edges"},
                 {"id": "set_display_graph_edges", "ref": "set"},
                 {"id": "update_hyperapp", "ref": "arg", "value": "state.update_hyperapp"},
-                {"id": "update_hyperapp_effect", "ref": "new_array"},
-                {"id": "effects", "ref": "new_array"},
+                {"id": "update_hyperapp_effect", "ref": "array"},
+                {"id": "effects", "ref": "array"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action"}
             ],
@@ -4980,7 +4983,7 @@
                 {"id": "node_id", "ref": "arg", "value": "payload.id"},
                 {"id": "node", "ref": "find_node"},
                 {"id": "set_clipboard", "ref": "set"},
-                {"id": "effects", "ref": "new_array"},
+                {"id": "effects", "ref": "array"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action_effect"}
             ],
@@ -5004,7 +5007,7 @@
                 {"id": "id_path", "value": "display_graph.id"},
                 {"id": "id", "ref": "arg", "value": "payload.properties.id"},
                 {"id": "set_display_graph_id", "ref": "set"},
-                {"id": "effects", "ref": "new_array"},
+                {"id": "effects", "ref": "array"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action"}
             ],
@@ -5036,13 +5039,13 @@
                 {"id": "new_node", "ref": "set"},
                 {"id": "select", "value": "true"},
                 {"id": "add_node_payload"},
-                {"id": "add_node_effect", "ref": "new_array"},
+                {"id": "add_node_effect", "ref": "array"},
                 {"id": "add_edge_effector", "ref": "add_edge"},
                 {"id": "add_edge_payload"},
-                {"id": "add_edge_effect", "ref": "new_array"},
+                {"id": "add_edge_effect", "ref": "array"},
                 {"id": "update_hyperapp", "ref": "arg", "value": "state.update_hyperapp"},
-                {"id": "update_hyperapp_effect", "ref": "new_array"},
-                {"id": "effects", "ref": "new_array"},
+                {"id": "update_hyperapp_effect", "ref": "array"},
+                {"id": "effects", "ref": "array"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action_effect"}
             ],
@@ -5101,8 +5104,8 @@
                 {"id": "set_edit_position", "ref": "set"},
                 {"id": "focus_props", "script": "return {'selector': `#${html_id}-edit-value .${editing}`, focus: true}"},
                 {"id": "focus_effector", "ref": "focus_effect"},
-                {"id": "focus_effect", "ref": "new_array"},
-                {"id": "effects", "ref": "new_array"},
+                {"id": "focus_effect", "ref": "array"},
+                {"id": "effects", "ref": "array"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action_effect"}
             ],
@@ -5243,7 +5246,7 @@
                 {"id": "description_h_text", "ref": "html_text"},
                 {"id": "description_h", "ref": "html_element"},
                 {"id": "description_h_out", "ref": "if"},
-                {"id": "info_h_children", "ref": "new_array"},
+                {"id": "info_h_children", "ref": "array"},
                 {"id": "info_h_dom_type", "value": "div"},
                 {"id": "info_h_props", "script": "return {class: {'node-info': true}, style: {left: `${x * (svg_offset?.scale ?? 1) + (svg_offset?.x ?? 0) - 64}px`, top: `${y * (svg_offset?.scale ?? 1) + (svg_offset?.y ?? 0) + 32}px`}}"},
                 {"id": "info_h", "ref": "html_element"},
@@ -5316,13 +5319,13 @@
                 {"id": "set_edit_id", "ref": "delete"},
                 {"id": "change_effector", "ref": "hyperapp_action_effect"},
                 {"id": "change_effect_payload"},
-                {"id": "change_effect", "ref": "new_array"},
+                {"id": "change_effect", "ref": "array"},
                 {"id": "blur_payload", "script": "return {selector: `#${html_id}-edit-value textarea`}"},
                 {"id": "blur_effector", "ref": "blur_effect"},
-                {"id": "blur_effect", "ref": "new_array"},
+                {"id": "blur_effect", "ref": "array"},
                 {"id": "empty", "value": {}},
                 {"id": "new_node_props", "ref": "set"},
-                {"id": "effects", "ref": "new_array"},
+                {"id": "effects", "ref": "array"},
                 {"id": "result"},
                 {"id": "noop"},
                 {"id": "out_result", "ref": "if"},
@@ -5381,9 +5384,9 @@
                 {"id": "popover_graph_value"},
                 {"id": "show_popover_graph_payload"},
                 {"id": "show_popover_graph", "ref": "show_popover_graph"},
-                {"id": "show_popover_graph_effect", "ref": "new_array"},
+                {"id": "show_popover_graph_effect", "ref": "array"},
                 {"id": "set_popover_graph", "ref": "set"},
-                {"id": "effects", "ref": "new_array"},
+                {"id": "effects", "ref": "array"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action_effect"}
             ],
@@ -5431,8 +5434,8 @@
                 {"id": "add_node_effector", "ref": "add_node"},
                 {"id": "new_node"},
                 {"id": "add_node_payload"},
-                {"id": "add_node_effect", "ref": "new_array"},
-                {"id": "effects", "ref": "new_array"},
+                {"id": "add_node_effect", "ref": "array"},
+                {"id": "effects", "ref": "array"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action_effect"}
             ],
@@ -5522,7 +5525,7 @@
                         {"id": "selected", "ref": "arg", "value": "state.selected"},
                         {
                             "id": "id_array",
-                            "ref": "new_array"
+                            "ref": "array"
                         },
                         {
                             "id": "state",
@@ -5867,7 +5870,7 @@
                 {"id": "paste_effect", "ref": "paste_node_effect"},
                 {"id": "expand_contract_effect", "ref": "expand_contract_effect"},
                 {"id": "run_display_graph_effector", "ref": "run_display_graph_effect"},
-                {"id": "run_display_graph_effect", "ref": "new_array"},
+                {"id": "run_display_graph_effect", "ref": "array"},
 
                 {"id": "keybindings", "ref": "keybindings"},
                 {"id": "mode", "script": "return editing ? 'editing' : 'graph'"},
@@ -5967,8 +5970,8 @@
                 },
                 {"id": "panzoom_selected_id", "script": "return selected"},
                 {"id": "panzoom_selected_effector", "ref": "arg", "value": "state.panzoom_selected_effect"},
-                {"id": "panzoom_selected_effect", "ref": "new_array"},
-                {"id": "panzoom_selected_effect_arr", "ref": "new_array"},
+                {"id": "panzoom_selected_effect", "ref": "array"},
+                {"id": "panzoom_selected_effect_arr", "ref": "array"},
                 {"id": "panzoom_selected_payload"},
                 {
                     "id": "set_clipboard",
@@ -6001,7 +6004,7 @@
                 {"id": "update_state", "ref": "switch"},
                 {"id": "no_update"},
                 {"id": "update", "ref": "update_graph_display"},
-                {"id": "default_fx", "ref": "new_array"},
+                {"id": "default_fx", "ref": "array"},
                 {"id": "default_out"},
 
                 {"id": "out_effects"},
@@ -7002,56 +7005,56 @@
                 {"id": "event_name", "value": "graphclick"},
                 {"id": "id_path", "value": "id"},
                 {"id": "clear_popover", "ref": "clear_popover_graph"},
-                {"id": "clear_popover_effect", "ref": "new_array"},
+                {"id": "clear_popover_effect", "ref": "array"},
                 {"id": "save_effector", "ref": "save_effect"},
                 {"id": "save_payload"},
-                {"id": "save_effect", "ref": "new_array"},
-                {"id": "save_node_effects", "ref": "new_array"},
+                {"id": "save_effect", "ref": "array"},
+                {"id": "save_node_effects", "ref": "array"},
                 {"id": "save_name", "value": "save"},
                 {"id": "save_id", "value": "save"},
                 {"id": "save_node"},
                 {"id": "export_effector", "ref": "export_effect"},
                 {"id": "export_payload"},
-                {"id": "export_effect", "ref": "new_array"},
-                {"id": "export_node_effects", "ref": "new_array"},
+                {"id": "export_effect", "ref": "array"},
+                {"id": "export_node_effects", "ref": "array"},
                 {"id": "export_name", "value": "export"},
                 {"id": "export_id", "value": "export"},
                 {"id": "export_node"},
                 {"id": "new_graph_effector", "ref": "new_graph_effect"},
-                {"id": "new_graph_effect", "ref": "new_array"},
+                {"id": "new_graph_effect", "ref": "array"},
                 {"id": "new_graph_name", "value": "new_graph"},
                 {"id": "new_graph_id", "value": "new_graph"},
-                {"id": "new_graph_node_effects", "ref": "new_array"},
+                {"id": "new_graph_node_effects", "ref": "array"},
                 {"id": "new_graph_node"},
-                {"id": "popover_graph_actions", "ref": "new_array"},
+                {"id": "popover_graph_actions", "ref": "array"},
                 {"id": "empty", "value": {}},
-                {"id": "popover_graph_obj_actions", "ref": "new_array"},
+                {"id": "popover_graph_obj_actions", "ref": "array"},
                 {"id": "popover_graph_obj"},
                 {"id": "popover_graph_parent_obj", "ref": "set"},
                 {"id": "popover_graph", "ref": "create_object_graph"},
                 {"id": "show_popover_effector", "ref": "show_popover_graph"},
-                {"id": "show_popover_effect", "ref": "new_array"},
+                {"id": "show_popover_effect", "ref": "array"},
                 {"id": "show_popover_payload"},
                 {"id": "display_graph_path", "value": "display_graph"},
                 {"id": "change_display_graph_id", "ref": "change_display_graph_id"},
                 {"id": "change_display_graph_id_node_name", "value": "change id"},
                 {"id": "change_display_graph_id_node_id", "value": "change_display_graph_id_node"},
-                {"id": "change_display_graph_id_node_value", "ref": "new_array"},
+                {"id": "change_display_graph_id_node_value", "ref": "array"},
                 {"id": "change_display_graph_id_node"},
                 {"id": "show_edit_text_effector", "ref": "show_edit_text"},
                 {"id": "show_edit_text_payload"},
-                {"id": "show_edit_text_effect", "ref": "new_array"},
+                {"id": "show_edit_text_effect", "ref": "array"},
                 {"id": "open_graph", "ref": "open_saved_graph_effect"},
                 {"id": "open_obj", "script": "return Object.fromEntries(JSON.parse(localStorage.getItem('graph_list') ?? '[]').map(g => [g, [clear_popover, [open_graph, {id: g}]]]))"},
                 {"id": "open_example_graph", "ref": "open_graph_effect"},
                 {"id": "examples_obj", "script": "return Object.fromEntries(examples.map(e => ['example-' + e.id, [clear_popover, [open_graph, {graph: e}]]]))"},
                 {"id": "stop_propagation_effector", "ref": "stop_propagation_effect"},
-                {"id": "stop_propagation_effect", "ref": "new_array"},
+                {"id": "stop_propagation_effect", "ref": "array"},
                 {"id": "dispatch_on_graph_click_effector", "ref": "dispatch_custom_event_effect"},
                 {"id": "dispatch_on_graph_click_payload"},
-                {"id": "dispatch_on_graph_click_effect", "ref": "new_array"},
-                {"id": "edit_effects", "ref": "new_array"},
-                {"id": "readonly_effects", "ref": "new_array"},
+                {"id": "dispatch_on_graph_click_effect", "ref": "array"},
+                {"id": "edit_effects", "ref": "array"},
+                {"id": "readonly_effects", "ref": "array"},
                 {"id": "effects", "ref": "if"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action"}
@@ -7142,8 +7145,8 @@
                 {"id": "false", "value": false},
                 {"id": "search_payload"},
                 {"id": "search_effect", "ref": "search_effect"},
-                {"id": "clear_search", "ref": "new_array"},
-                {"id": "effects", "ref": "new_array"},
+                {"id": "clear_search", "ref": "array"},
+                {"id": "effects", "ref": "array"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action"}
             ],
@@ -7292,7 +7295,7 @@
                 },
                 {
                     "id": "show_popover_effect",
-                    "ref": "new_array"
+                    "ref": "array"
                 },
                 {
                     "id": "stop_propagation_effector",
@@ -7305,21 +7308,21 @@
                 },
                 {
                     "id": "stop_propagation_effect",
-                    "ref": "new_array"
+                    "ref": "array"
                 },
                 {"id": "panzoom_selected_effector", "ref": "arg", "value": "state.panzoom_selected_effect"},
-                {"id": "panzoom_selected_effect", "ref": "new_array"},
+                {"id": "panzoom_selected_effect", "ref": "array"},
                 {"id": "panzoom_selected_payload"},
                 {"id": "clear_search_payload", "value": {"search": false}},
                 {"id": "search_effect", "ref": "search_effect"},
-                {"id": "clear_search", "ref": "new_array"},
+                {"id": "clear_search", "ref": "array"},
                 {
                     "id": "if_show_popover",
                     "ref": "if"
                 },
                 {
                     "id": "effects",
-                    "ref": "new_array"
+                    "ref": "array"
                 },
                 {
                     "id": "out",
@@ -7617,8 +7620,8 @@
                 {"id": "popover_graph", "ref": "create_object_graph"},
                 {"id": "show_popover_graph_payload"},
                 {"id": "show_popover_graph_effector", "ref": "show_popover_graph"},
-                {"id": "show_popover_graph", "ref": "new_array"},
-                {"id": "effects", "ref": "new_array"},
+                {"id": "show_popover_graph", "ref": "array"},
+                {"id": "effects", "ref": "array"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action"}
             ],
@@ -7672,11 +7675,11 @@
                 {"id": "edit_text_position", "script": "return links.filter(l => l.source.node_id === edge.from && l.target.node_id === edge.to).map(l => ({x: (l.source.x + l.target.x) * 0.5, y: (l.source.y + l.target.y) * 0.5}))[0]"},
                 {"id": "open_edge_popover", "ref": "open_edge_popover"},
                 {"id": "edit_edge_as_payload"},
-                {"id": "edit_edge_as", "ref": "new_array"},
+                {"id": "edit_edge_as", "ref": "array"},
                 {"id": "stop_propagation_effector", "ref": "stop_propagation_effect"},
-                {"id": "stop_propagation", "ref": "new_array"},
-                {"id": "editable_effects", "ref": "new_array"},
-                {"id": "readonly_effects", "ref": "new_array"},
+                {"id": "stop_propagation", "ref": "array"},
+                {"id": "editable_effects", "ref": "array"},
+                {"id": "readonly_effects", "ref": "array"},
                 {"id": "effects", "ref": "if"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action"}
@@ -7850,7 +7853,7 @@
                     "id": "styles",
                     "nodes": [
                         {"id": "in"},
-                        {"id": "style_content", "value": "#node-editor { position: relative; width: 100%; height: 100vh; color: white; font-family: consolas; overflow: hidden; } #node-editor-editor.hash-view { background-color: unset; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .more { cursor: pointer; } .edit-value .centering { position: absolute; width: 32vw; display: flex; flex-direction: column; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .node-info { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; display: flex; gap: .4em; flex-direction: column; } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node { cursor: pointer; stroke: #fff; stroke-width: 32; stroke-opacity: 1; } .insert-node .circle{ fill-opacity: 0.5; } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"},
+                        {"id": "style_content", "value": "#node-editor { position: relative; width: 100%; height: 100vh; color: white; font-family: consolas; overflow: hidden; } #node-editor-editor.hash-view { background-color: unset; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .more { cursor: pointer; } .edit-value .centering { position: absolute; width: 32vw; display: flex; flex-direction: column; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .node-info { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; display: flex; gap: .4em; flex-direction: column; } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node { cursor: pointer; stroke: #fff; stroke-width: 32; stroke-opacity: 1; } .insert-node .circle{ fill-opacity: 0.5; } .node text { filter: url(#flood-background) } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"},
                         {"id": "style_h_text", "ref": "html_text"},
                         {"id": "style_dom_type", "value": "style"},
                         {"id": "out", "ref": "html_element"}
@@ -7909,7 +7912,7 @@
                             "id": "edit_text_dom_type",
                             "value": "div"
                         },
-                        {"id": "edit_text_label_wrapper_children", "ref": "new_array"},
+                        {"id": "edit_text_label_wrapper_children", "ref": "array"},
                         {"id": "edit_text_label_wrapper", "ref": "html_element"},
                         {
                             "id": "edit_text_input",
@@ -8151,7 +8154,7 @@
                         },
                         {
                             "id": "edit_text_children",
-                            "ref": "new_array"
+                            "ref": "array"
                         },
                         {"id": "edit_text_el_wrapper", "script": "return et.el"},
                         {
@@ -8712,7 +8715,7 @@
                         },
                         {"id": "more_readonly", "ref": "if"},
                         {"id": "dom_type", "value": "div"},
-                        {"id": "children", "ref": "new_array"},
+                        {"id": "children", "ref": "array"},
                         {"id": "html_id", "ref": "arg", "value": "html_id"},
                         {"id": "props", "script": "return {class: {'graph-ui': true}, key: `${html_id}-graph-ui`}"},
                         {"id": "out", "ref": "html_element"}
@@ -8749,7 +8752,7 @@
                             "id": "panzoom_box",
                             "ref": "html_element"
                         },
-                        {"id": "panzoom_box_arr", "ref": "new_array"},
+                        {"id": "panzoom_box_arr", "ref": "array"},
                         {
                             "id": "html_id",
                             "ref": "arg",
@@ -9891,7 +9894,7 @@
                         {
                             "id": "fill_filter_flood_props",
                             "value": {
-                                "flood-color": "black"
+                                "flood-color": "#000a"
                             }
                         },
                         {
@@ -9902,10 +9905,10 @@
                             "id": "fill_filter_props",
                             "value": {
                                 "id": "flood-background",
-                                "width": 1,
-                                "height": 1,
-                                "x": 0,
-                                "y": 0
+                                "width": 1.2,
+                                "height": 1.1,
+                                "x": -0.1,
+                                "y": -0.05
                             }
                         },
                         {
@@ -10846,10 +10849,10 @@
         {"from": "css_styles", "to": "html"},
         {"from": "modify_state_runnable", "to": "state"},
         {"from": "set_display", "to": "state"},
-        {"from": "new_array", "to": "array"},
-        {"from": "filter", "to": "array"},
-        {"from": "append", "to": "array"},
-        {"from": "map", "to": "array"},
+        {"from": "array", "to": "arrays"},
+        {"from": "filter", "to": "arrays"},
+        {"from": "append", "to": "arrays"},
+        {"from": "map", "to": "arrays"},
         {"from": "log", "to": "utility"},
         {"from": "execute_graph", "to": "utility"},
         {"from": "arg", "to": "utility"},
