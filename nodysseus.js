@@ -241,64 +241,9 @@ const executeGraph = ({ cache, graph, parent_graph, cache_id, node_cache }) => {
         const edges = [];
         const node_map = graph_node_map;
         const in_edge_map = graph_in_edge_map;
-        // while(queue.length > 0) {
-        //     const item = queue.pop();
-        //     if(visited.has(item)) {
-        //         continue;
-        //     }
-
-        //     const node_edges = graph_in_edge_map.get(item)// ?? parent_graph?.edges.filter(e => e.to === item);
-        //     node_edges?.forEach(e => {queue.push(e.from); edges.push(e)});
-        //     in_edge_map.set(item, node_edges)
-        //     const node = graph_node_map.get(item);// ?? parent_graph?.nodes.find(n => n.id === item);
-        //     nodes.push(node);
-        //     node_map.set(item, node);
-        //     if(node.ref) {
-        //         queue.push(node.ref);
-        //     }
-
-        //     if(node.nodes) {
-        //         node.nodes.forEach(c => {
-        //             if(c.ref) {
-        //                 queue.push(c.ref);
-        //             }
-        //         })
-        //     }
-
-        //     // graph.nodes.filter(n => n.id.startsWith(item + '/')).forEach(n => queue.push(n.id));
-        //     visited.add(item);
-        // }
-
-        // const working_graph = {in: graph.in, nodes, edges};
         const working_graph = graph;
-
-
-        // working_graph.nodes.forEach(n => in_edge_map.set(n.id, working_graph.edges.filter(e => e.to === n.id)));
-
-
         
         return (graph_input_value) => {
-            // while(node_id.indexOf("/") > 0 && !node_map.has(node_id)) {
-            //     const path = node_id.split('/');
-            //     let i = 1;
-            //     while(node_map.has(path.slice(0, i).join("/"))){
-            //         i++;
-            //     }
-
-            //     const nested_id = path.slice(0, i - 1).join("/");
-            //     const nested = node_map.get(nested_id);
-
-            //     node_map.delete(nested_id);
-            //     graph.nodes = graph.nodes.filter(n => n.id !== path.slice(0, i - 1).join("/"));
-            //     nested.nodes.forEach(n => graph.nodes.push({...n, id: nested_id + "/" + n.id}));
-            //     nested.nodes.forEach(n => node_map.set(nested_id + "/" + n.id, {...n, id: nested_id + "/" + n.id}));
-            //     nested.edges.forEach(e => graph.edges.push({...e, from: nested_id + "/" + e.from, to: nested_id + "/" + e.to}));
-            //     nested.nodes.forEach(n => in_edge_map.set(nested_id + "/" + n.id, nested.edges.filter(e => e.to === n.id).map(e => ({...e, from: nested_id + "/" + e.from, to: nested_id + "/" + e.to}))));
-            // }
-
-                // if(node_id === "editor/out") {
-                //     debugger;
-                // }
             let node = node_map.get(node_id);
             
 
