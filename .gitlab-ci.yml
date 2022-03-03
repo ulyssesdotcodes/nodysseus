@@ -7,6 +7,7 @@ pages:
   - npm run package
   - mkdir public
   - cp index.html nodysseus.bundle.js public/
+  - cp -R json/ public/
   artifacts:
     paths:
     - public
