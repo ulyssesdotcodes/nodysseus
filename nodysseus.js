@@ -235,13 +235,8 @@ const executeGraph = ({ cache, graph, parent_graph, cache_id, node_cache }) => {
 
 
     const run_with_val = (node_id) => {
-        const queue = [node_id];
-        const visited = new Set();
-        const nodes = [];
-        const edges = [];
         const node_map = graph_node_map;
         const in_edge_map = graph_in_edge_map;
-        const working_graph = graph;
         
         return (graph_input_value) => {
             let node = node_map.get(node_id);
@@ -266,7 +261,6 @@ const executeGraph = ({ cache, graph, parent_graph, cache_id, node_cache }) => {
                 }
 
                 if(typeof node.value === 'string' && node.value.match(/[0-9.]*/g)[0].length === node.value.length) {
-                    const int = parseInt(node.value);
                     const float = parseFloat(node.value);
                     if(!isNaN(float)) {
                         return float;

@@ -1517,14 +1517,12 @@
                 },
                 {
                     "id": "run",
-                    "ref": "run_display_graph_effect",
-                    "script_": "return Promise.resolve({state: prev_result, payload: _lib.no.resolve(payload), graph: display_graph}).then(promise_payload => _lib.no.executeGraphValue({graph: {...display_graph, nodes: display_graph.nodes.map(n => ({...n})), edges: display_graph.edges.map(e => ({...e}))}})(promise_payload)).then(result => {if(result.display && !result.display.el.props.key){ result.display.el.props.key = `${html_id}-result_display` } return {result, error: undefined, error_nodes}; }).catch(e => ({error: e instanceof AggregateError ? e.errors.map(e => (e instanceof _lib.no.NodysseusError ? e.node_id + ': ' : '') + e.toString()).join(\" \") : e.toString(), error_nodes: new Map(e instanceof AggregateError ? e.errors.map(e => e instanceof _lib.no.NodysseusError ? [e.node_id, e] : false).filter(n => n) : e instanceof _lib.no.NodysseusError ? [[e.node_id, e]] : [])}))"
+                    "ref": "run_display_graph_effect"
                 },
                 {"id": "run_wrapper"},
                 {
                     "id": "out",
-                    "script": "return {state, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && run.run && [run.run, payload], !readonly && [dispatch_custom_event_effect, {html_id, event: 'updategraph', detail: {graph: state.display_graph}}], ...(effects?.filter(e => e?.[0]) ?? [])]}",
-                    "script_": "return {state, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && [(d, payload) => (typeof payload?.then === 'function' ? payload.then(p => p.run) : payload.run).then(res => res).then(res => d(s => (s.error_nodes.clear(), {...s, result: res.result?.state ?? s.result, error: res.error, error_nodes: res.error_nodes ?? s.error_nodes, result_display: res.result?.display, error: res.error}))), result], !readonly && [dispatch_custom_event_effect, {html_id, event: 'updategraph', detail: {graph: state.display_graph}}], ...(effects.filter(e => e?.[0]) ?? [])]}"
+                    "script": "return {state, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && run.run && [run.run, payload], !readonly && [dispatch_custom_event_effect, {html_id, event: 'updategraph', detail: {graph: state.display_graph}}], ...(effects?.filter(e => e?.[0]) ?? [])]}"
                 }
             ],
             "edges": [
