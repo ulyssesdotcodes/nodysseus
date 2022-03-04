@@ -498,7 +498,7 @@
                 }
             ],
             "edges": [
-                {"from": "in", "to": "out", "as": "args"},
+                {"from": "in", "to": "out", "as": "_args", "type": "ref"},
                 {"from": "value", "to": "out", "as": "value"},
                 {"from": "otherwise", "to": "data", "as": "otherwise"},
                 {"from": "data", "to": "out", "as": "data"}
@@ -659,10 +659,37 @@
             "out": "out",
             "nodes": [
                 {"id": "fn", "ref": "arg", "value": "fn"},
-                {"id": "out", "script": "const parent_id = _node.id.substring(0, _node.id.lastIndexOf('/')); const input = _graph.edges.filter(e => e.to === parent_id).find(i => i.as === 'fn'); return input ? {fn: input.from, graph: _graph} : false"}
+                {"id": "value_args", "ref": "arg", "value": "args"},
+                {"id": "context_args", "ref": "arg", "value": "_args"},
+                {"id": "args_path", "value": "args"},
+                {"id": "delete_context_args_val", "ref": "delete"},
+                {"id": "args", "ref": "merge_objects"},
+                {"id": "out", "script": "const parent_id = _node.id.substring(0, _node.id.lastIndexOf('/')); const input = _graph.edges.filter(e => e.to === parent_id).find(i => i.as === 'fn'); return input ? {fn: input.from, graph: _graph, args: args ?? {}} : false"}
             ],
             "edges": [
+                {"from": "context_args", "to": "delete_context_args_val", "as": "target"},
+                {"from": "args_path", "to": "delete_context_args_val", "as": "path"},
+                {"from": "delete_context_args_val", "to": "_args", "as": "a1"},
+                {"from": "value_args", "to": "args", "as": "a0"},
+                {"from": "args", "to": "out", "as": "args", "type": "resolve"},
                 {"from": "fn", "to": "out", "as": "fn", "type": "ref"}
+            ]
+        },
+        {
+            "id": "dispatch_runnable",
+            "nodes": [
+                {"id": "dispatch", "ref": "arg", "value": "dispatch", "type": "internal"},
+                {"id": "fn", "ref": "arg", "value": "fn"},
+                {"id": "run", "ref": "run"},
+                {"id": "args", "ref": "arg", "value": "_args"},
+                {"id": "out", "script": "dispatch({...fn, args: {...args, ...fn.args}})"}
+            ],
+            "edges": [
+                {"from": "fn", "to": "run", "as": "runnable"},
+                {"from": "fn", "to": "out", "as": "fn"},
+                {"from": "run", "to": "_out", "as": "res"},
+                {"from": "dispatch", "to": "out", "as": "dispatch"},
+                {"from": "args", "to": "out", "as": "args"}
             ]
         },
         {
@@ -821,11 +848,6 @@
                     "id": "in"
                 },
                 {
-                    "id": "def",
-                    "ref": "arg",
-                    "value": "def"
-                },
-                {
                     "id": "target",
                     "ref": "arg",
                     "value": "target"
@@ -834,6 +856,11 @@
                     "id": "path",
                     "ref": "arg",
                     "value": "path"
+                },
+                {
+                    "id": "def",
+                    "ref": "arg",
+                    "value": "def"
                 },
                 {
                     "id": "out",
@@ -1305,23 +1332,59 @@
             "script": "const action = typeof fn === 'string' ? {fn, graph: _graph} : (typeof fn === 'function' || (typeof fn === 'object' && fn.hasOwnProperty('fn'))) ? fn : undefined; return (dispatch, payload) => requestAnimationFrame(() => dispatch(action, payload))"
         },
         {
+            "id": "run",
+            "out": "out",
+            "nodes": [
+                {"id": "runnable", "ref": "arg", "value": "runnable"},
+                {"id": "args", "ref": "arg", "value": "_args"},
+                {"id": "out", "script": "return _lib.no.runGraph(runnable.graph, runnable.fn, {...args, ...runnable.args})"}
+            ],
+            "edges": [
+                {"from": "args", "to": "out", "as": "args"},
+                {"from": "runnable", "to": "out", "as": "runnable"}
+            ]
+        },
+        {
+            "id": "runnable_hyperapp_effect",
+            "out": "out",
+            "nodes": [
+                {"id": "fn", "ref": "arg", "value": "fn"},
+                {"id": "out", "script": "return (dispatch, payload) => {const wrapped_dispatch = (a, p) => Promise.resolve(p).then(resp => Promise.resolve(a).then(aresp => [aresp, resp])).then(([a, p]) => dispatch(a, p)).catch(e => dispatch(s => [{...s, error: e}])); wrapped_dispatch(state => {Promise.resolve(state).then(s => _lib.no.runGraph(fn.graph, fn.fn, {state: s, ...payload, ...fn.args, dispatch: wrapped_dispatch})); return state.error ? {...state, error: false} : state;})}"}
+            ],
+            "edges": [
+                {"from": "fn", "to": "out", "as": "fn"}
+            ]
+        },
+        {
             "id": "run_display_graph_effect",
+            "out": "out",
             "nodes": [
                 {"id": "state", "ref": "arg", "value": "state"},
                 {"id": "display_graph", "ref": "arg", "value": "state.display_graph"},
                 {"id": "payload", "ref": "arg", "value": "payload"},
                 {"id": "dispatch", "ref": "arg", "value": "dispatch"},
-                {"id": "run_effect", "ref": "run_display_graph_effect"},
-                {"id": "result", "script": "return _lib.no.executeGraphNode({graph: {...fn_graph, nodes: [...fn_graph.nodes], edges: [...fn_graph.edges]}})('main/out')({state: state, payload: {event: payload, run: run_effect}, dispatch});"},
-                {"id": "out", "script": "return (dispatch, payload) => {const wrapped_dispatch = (a, p) => Promise.resolve(p).then(resp => [a, resp]).then(([a, p]) => dispatch(a, p)).catch(e => dispatch(s => [{...s, error: e}])); wrapped_dispatch(state => {Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: _graph})(fn)({state: s, payload, dispatch: wrapped_dispatch})).then(res => _lib.no.executeGraphNode({graph: res[0]?.graph ?? res.graph})(res[0]?.fn ?? r.fn)({state, payload: {event: payload, payload: res[1]}, dispatch: wrapped_dispatch})).catch(e => dispatch(s => [{...s, error: e}])); return state.error ? {...state, error: false} : state;})}"}
+                {"id": "display_graph_runnable", "script": "return {fn: 'main/out', graph: {...display_graph, nodes: [...display_graph.nodes], edges: [...display_graph.edges]}, args: {state, payload: {event: payload}}}"},
+                {"id": "_result_runnable", "ref": "run"},
+                {"id": "result_runnable", "script": "try { return _lib.no.runGraph(runnable) } catch(e) { dispatch(s => ({...s, error: e}));}"},
+                {"id": "run_result", "ref": "runnable_hyperapp_effect"},
+                {"id": "out", "script": "return (dispatch, payload) => {const wrapped_dispatch = (a, p) => Promise.resolve(p).then(resp => Promise.resolve(a).then(aresp => [aresp, resp])).then(([a, p]) => dispatch(a, p)).catch(e => dispatch(s => [{...s, error: e}])); wrapped_dispatch(state => {new Promise((resolve, reject) => resolve(_lib.no.runGraph({...runnable, args: {...runnable.args, dispatch: wrapped_dispatch}}))).then(res => _lib.no.runGraph(res)).catch(e => dispatch(s => [{...s, error: e}])); return state.error ? {...state, error: false} : state;})}"}
             ],
             "edges": [
                 {"from": "state", "to": "result", "as": "state"},
                 {"from": "payload", "to": "result", "as": "payload"},
                 {"from": "dispatch", "to": "result", "as": "dispatch"},
-                {"from": "run_effect", "to": "result", "as": "run_effect"},
                 {"from": "display_graph", "to": "result", "as": "fn_graph"},
-                {"from": "result", "to": "out", "as": "fn", "type": "ref"}
+                {"from": "result", "to": "_out", "as": "fn", "type": "ref"},
+                {"from": "result", "to": "_run_result", "as": "fn"},
+                {"from": "display_graph", "to": "display_graph_runnable", "as": "display_graph"},
+                {"from": "dispatch", "to": "display_graph_runnable", "as": "dispatch"},
+                {"from": "payload", "to": "display_graph_runnable", "as": "payload"},
+                {"from": "state", "to": "display_graph_runnable", "as": "state"},
+                {"from": "display_graph_runnable", "to": "result_runnable", "as": "runnable"},
+                {"from": "dispatch", "to": "result_runnable", "as": "dispatch"},
+                {"from": "result_runnable", "to": "result_wrapper", "as": "fn"},
+                {"from": "result_runnable", "to": "run_result", "as": "fn"},
+                {"from": "display_graph_runnable", "to": "out", "as": "runnable"}
             ]
         },
         {
@@ -1457,9 +1520,10 @@
                     "ref": "run_display_graph_effect",
                     "script_": "return Promise.resolve({state: prev_result, payload: _lib.no.resolve(payload), graph: display_graph}).then(promise_payload => _lib.no.executeGraphValue({graph: {...display_graph, nodes: display_graph.nodes.map(n => ({...n})), edges: display_graph.edges.map(e => ({...e}))}})(promise_payload)).then(result => {if(result.display && !result.display.el.props.key){ result.display.el.props.key = `${html_id}-result_display` } return {result, error: undefined, error_nodes}; }).catch(e => ({error: e instanceof AggregateError ? e.errors.map(e => (e instanceof _lib.no.NodysseusError ? e.node_id + ': ' : '') + e.toString()).join(\" \") : e.toString(), error_nodes: new Map(e instanceof AggregateError ? e.errors.map(e => e instanceof _lib.no.NodysseusError ? [e.node_id, e] : false).filter(n => n) : e instanceof _lib.no.NodysseusError ? [[e.node_id, e]] : [])}))"
                 },
+                {"id": "run_wrapper"},
                 {
                     "id": "out",
-                    "script": "return {state, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && [run, payload], !readonly && [dispatch_custom_event_effect, {html_id, event: 'updategraph', detail: {graph: state.display_graph}}], ...(effects?.filter(e => e?.[0]) ?? [])]}",
+                    "script": "return {state, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && run.run && [run.run, payload], !readonly && [dispatch_custom_event_effect, {html_id, event: 'updategraph', detail: {graph: state.display_graph}}], ...(effects?.filter(e => e?.[0]) ?? [])]}",
                     "script_": "return {state, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && [(d, payload) => (typeof payload?.then === 'function' ? payload.then(p => p.run) : payload.run).then(res => res).then(res => d(s => (s.error_nodes.clear(), {...s, result: res.result?.state ?? s.result, error: res.error, error_nodes: res.error_nodes ?? s.error_nodes, result_display: res.result?.display, error: res.error}))), result], !readonly && [dispatch_custom_event_effect, {html_id, event: 'updategraph', detail: {graph: state.display_graph}}], ...(effects.filter(e => e?.[0]) ?? [])]}"
                 }
             ],
@@ -1551,8 +1615,9 @@
                     "to": "out",
                     "as": "show_result"
                 },
+                {"from": "run", "to": "run_wrapper", "as": "run"},
                 {
-                    "from": "run",
+                    "from": "run_wrapper",
                     "to": "out",
                     "as": "run"
                 },
@@ -1771,11 +1836,11 @@
                     "ref": "array",
                     "name": "w0zzawl"
                 },
-                {"id": "args", "ref": "arg", "value": "_args"},
+                {"id": "args", "ref": "arg", "value": "args"},
                 {
                     "id": "pdljod1",
                     "name": "pdljod1",
-                    "script": "return (element, index, array) => _lib.no.runGraph(fn?.graph ?? _graph, fn?.fn ?? fn, Object.assign({}, args, {element, index, array}));"
+                    "script": "return (element, index, array) => _lib.no.runGraph(fn?.graph ?? _graph, fn?.fn ?? fn, Object.assign({}, fn.args, args, {element, index, array}));"
                 },
                 {
                     "id": "2lvs5dj",
@@ -2052,140 +2117,615 @@
         {
             "id": "sequence",
             "name": "sequence",
-            "in": "9mhpj8k/23ynj8o",
-            "out": "2435ihf",
+            "out": "out",
             "nodes": [
-                {
-                    "name": "out",
-                    "id": "2435ihf",
-                    "ref": "array"
-                },
-                {
-                    "name": "seq_runnable",
-                    "id": "hz8lp96/hz8lp96",
-                    "ref": "runnable"
-                },
+                {"id": "in"},
+                {"id": "args", "ref": "arg", "value": "_args"},
+                {"id": "runnable_args", "ref": "arg", "value": "_args"},
+                {"id": "value_args", "ref": "arg", "value": "args"},
+                {"id": "context_args", "ref": "arg", "value": "_args"},
+                {"id": "merged_args", "ref": "merge_objects"},
+                {"id": "args_path", "value": "args"},
+                {"id": "seq_runnable_args", "ref": "delete"},
                 {
                     "name": "in",
-                    "id": "9mhpj8k/23ynj8o"
+                    "id": "in"
                 },
                 {
-                    "id": "hz8lp96/2g7hpye",
+                    "id": "runnables_promise",
                     "script": "return Promise.all(promises);"
                 },
                 {
-                    "id": "hz8lp96/u36ltxo",
+                    "id": "map_runnables",
                     "ref": "map"
                 },
                 {
-                    "id": "hz8lp96/lq3olmi",
-                    "script": "return payload ? Object.entries(payload).filter(a => a[0] !== 'state' && a[0] !== 'payload' && a[0] !== 'dispatch' && (a[1]?.fn || a[1]?.[0]?.fn)).map(a => a[1]) : [];"
+                    "id": "runnables",
+                    "script": " const runnables = Object.entries(inputs).filter(e => e[0] !== 'args').map(e => [e[0], e[1] && e[1]._Proxy ? e[1]._value : e[1]]).filter(r => r[1] && r[1].hasOwnProperty('fn') && r[1].hasOwnProperty('graph')); const filtered_args = Object.fromEntries(Object.entries(args).filter(a => !runnables.find(r => r[0] === a[0]))); return runnables.map(r => r[1]).map(r => ({...r, args: {...r.args, ...filtered_args}}))"
+                },
+                {"id": "element", "ref": "arg", "value": "element", "type": "internal"},
+                {
+                    "id": "map_fn",
+                    "script": "return new Promise((resolve, reject) => resolve(_lib.no.runGraph(runnable.graph, runnable.fn, runnable.args)));"
+                },
+                {"id": "map_fn_runnable", "ref": "runnable"},
+                {"name": "seq_runnable", "id": "out", "ref": "runnable"}
+            ],
+            "edges": [
+                {"from": "in", "to": "runnables", "as": "inputs"},
+                {"from": "args", "to": "runnables", "as": "args"},
+                {"from": "element", "to": "map_fn", "as": "runnable"},
+                {"from": "map_fn", "to": "map_fn_runnable", "as": "fn"},
+                {"from": "runnable_args", "to": "map_runnables", "as": "args"},
+                {"from": "runnables", "to": "map_runnables", "as": "array"},
+                {"from": "map_fn_runnable", "to": "map_runnables", "as": "fn"},
+                {"from": "map_runnables", "to": "runnables_promise", "as": "promises"},
+                {"from": "runnables_promise", "to": "out", "as": "fn"},
+                {"from": "context_args", "to": "merged_args", "as": "a0"},
+                {"from": "value_args", "to": "merged_args", "as": "a1"},
+                {"from": "merged_args", "to": "seq_runnable_args", "as": "target"},
+                {"from": "args_path", "to": "seq_runnable_args", "as": "path"},
+                {"from": "seq_runnable_args", "to": "out", "as": "args"}
+            ]
+        },
+{
+            "id": "import_json",
+            "name": "import_json",
+            "in": "j5hwdot",
+            "out": "06osgt6",
+            "nodes": [
+                {
+                    "id": "06osgt6",
+                    "ref": "initial_state_runnable",
+                    "name": "out"
                 },
                 {
-                    "id": "hz8lp96/j6iu3d3",
-                    "script": "return !runnable ? state : Promise.resolve(state).then(s => _lib.no.executeGraphNode({graph: runnable[0]?.graph ?? runnable.graph})(runnable[0]?.fn ?? runnable.fn)({state: s, payload: {event, payload: runnable[1]}, dispatch})).catch(e => dispatch(s => [{...s, error: e}]));"
+                    "id": "lx2r71d",
+                    "ref": "runnable"
                 },
                 {
-                    "id": "payload",
+                    "id": "j5hwdot",
+                    "name": "in"
+                },
+                {
+                    "id": "upzmz7i",
+                    "script": "return 'imports.' + name"
+                },
+                {
+                    "id": "hfgitu2",
+                    "ref": "run"
+                },
+                {
+                    "id": "i68oe5k"
+                },
+                {
+                    "id": "qomntld",
+                    "ref": "arg",
+                    "value": "name"
+                },
+                {
+                    "id": "hgo86cn",
+                    "ref": "runnable"
+                },
+                {
+                    "id": "z9zvilt",
+                    "ref": "arg",
+                    "value": "url"
+                },
+                {
+                    "id": "7m3jfmy",
+                    "ref": "arg",
+                    "value": "name"
+                },
+                {
+                    "id": "f89a5u2"
+                },
+                {
+                    "id": "1v653xe",
+                    "ref": "get"
+                },
+                {
+                    "id": "my879k4",
+                    "ref": "call"
+                },
+                {
+                    "id": "gfpdf11",
+                    "ref": "arg",
+                    "value": "name"
+                },
+                {
+                    "id": "23kbk1n",
+                    "ref": "run"
+                },
+                {
+                    "id": "71ppowa",
+                    "script": "return \"1\";"
+                },
+                {
+                    "id": "mzijca2",
+                    "ref": "fetch"
+                },
+                {
+                    "id": "vdfrqzc",
+                    "value": "json"
+                },
+                {
+                    "id": "83xy8y2",
+                    "ref": "sequence"
+                },
+                {
+                    "id": "5hat6g2",
+                    "ref": "arg",
+                    "value": "url"
+                },
+                {
+                    "id": "olx0rqo",
+                    "ref": "runnable"
+                },
+                {
+                    "id": "fsmeakk"
+                },
+                {
+                    "id": "9swjqs2",
+                    "ref": "runnable"
+                },
+                {
+                    "id": "jpuj66z",
+                    "ref": "dispatch_runnable"
+                },
+                {
+                    "id": "wmwgocb"
+                },
+                {
+                    "id": "oe15th0",
+                    "ref": "arg",
+                    "value": "imported_graph"
+                },
+                {
+                    "id": "2xaqg9h",
+                    "ref": "arg",
+                    "value": "name"
+                },
+                {
+                    "id": "rfmgm5u",
+                    "ref": "arg",
+                    "value": "imported_graph"
+                },
+                {
+                    "id": "4qd7fl3",
+                    "ref": "runnable"
+                },
+                {
+                    "id": "9z82xvw",
+                    "ref": "arg",
+                    "value": "imported_graph"
+                },
+                {
+                    "id": "mhng1i6",
+                    "ref": "arg",
+                    "value": "name"
+                },
+                {
+                    "id": "sae69iz"
+                },
+                {
+                    "id": "7dsncg7",
+                    "ref": "log"
+                },
+                {
+                    "id": "um99k99",
+                    "ref": "arg",
+                    "value": "imported_graph"
+                },
+                {
+                    "id": "z2ccs2u",
+                    "ref": "arg",
+                    "value": "name"
+                },
+                {
+                    "id": "j6g4jd4"
+                },
+                {
+                    "id": "xl0tqsd",
+                    "ref": "set"
+                },
+                {
+                    "id": "sajmrbs",
+                    "value": "display_graph"
+                },
+                {
+                    "id": "i50d0rl",
+                    "ref": "set"
+                },
+                {
+                    "id": "1kzunei",
+                    "ref": "log"
+                },
+                {
+                    "id": "pfe7svb",
+                    "ref": "arg",
+                    "value": "state.display_graph"
+                },
+                {
+                    "id": "dsqrh2d",
+                    "value": "nodes"
+                },
+                {
+                    "id": "9zfxac6",
+                    "ref": "append"
+                },
+                {
+                    "id": "59iaxzp",
+                    "ref": "arg",
+                    "value": "state"
+                },
+                {
+                    "id": "2zvxan2",
+                    "ref": "map"
+                },
+                {
+                    "id": "hrzgjqm",
+                    "script": "return nodes.filter(n => !n.id.startsWith(imported_id)).concat([{id: imported_id}]);"
+                },
+                {
+                    "id": "a8x8a5c",
+                    "ref": "arg",
+                    "value": "payload.imported_graph.nodes"
+                },
+                {
+                    "id": "d4yl375",
+                    "ref": "runnable"
+                },
+                {
+                    "id": "2f1lyvz",
+                    "ref": "arg",
+                    "value": "state.display_graph.nodes"
+                },
+                {
+                    "id": "oco33oy",
+                    "ref": "arg",
+                    "value": "payload.name"
+                },
+                {
+                    "id": "smd6hdj",
+                    "ref": "log"
+                },
+                {
+                    "id": "55qulh4",
+                    "ref": "set"
+                },
+                {
+                    "id": "4az2m7o"
+                },
+                {
+                    "id": "umv9za5",
                     "ref": "arg",
                     "value": "payload"
                 },
                 {
-                    "id": "hz8lp96/cja7ejh",
+                    "id": "ugtx81k",
                     "ref": "arg",
-                    "value": "payload.payload"
-                },
-                {"id": "merge_payloads", "ref": "merge_objects"},
-                {
-                    "id": "hz8lp96/wucbgux",
-                    "ref": "arg",
-                    "value": "dispatch",
-                    "type": "internal"
+                    "value": "element"
                 },
                 {
-                    "id": "hz8lp96/3d6efet",
-                    "ref": "arg",
-                    "value": "element",
-                    "type": "internal"
+                    "id": "2eq7kuu",
+                    "value": "id"
                 },
                 {
-                    "id": "hz8lp96/obnvz4m",
-                    "ref": "arg",
-                    "value": "state",
-                    "type": "internal"
+                    "id": "2tekj7w",
+                    "script": "return imported_id + '.' + node_id;"
                 },
                 {
-                    "id": "hz8lp96/j6kp3o9",
+                    "id": "2xt8tpx",
                     "ref": "arg",
-                    "value": "payload.event"
+                    "value": "payload.name"
+                },
+                {
+                    "id": "og27c4d",
+                    "ref": "arg",
+                    "value": "imported_id"
+                },
+                {
+                    "id": "aodmtk1",
+                    "ref": "arg",
+                    "value": "element.id"
                 }
             ],
             "edges": [
                 {
-                    "from": "hz8lp96/hz8lp96",
-                    "to": "2435ihf",
-                    "as": "arg0"
-                },
-                {
-                    "to": "2435ihf",
-                    "from": "9mhpj8k/23ynj8o",
-                    "as": "arg1"
-                },
-                {
-                    "from": "hz8lp96/2g7hpye",
-                    "to": "hz8lp96/hz8lp96",
+                    "from": "lx2r71d",
+                    "to": "06osgt6",
                     "as": "fn"
                 },
                 {
-                    "from": "hz8lp96/u36ltxo",
-                    "to": "hz8lp96/2g7hpye",
-                    "as": "promises"
+                    "from": "j5hwdot",
+                    "to": "06osgt6",
+                    "as": "_"
                 },
                 {
-                    "from": "hz8lp96/lq3olmi",
-                    "to": "hz8lp96/u36ltxo",
-                    "as": "array"
+                    "from": "upzmz7i",
+                    "to": "06osgt6",
+                    "as": "value"
                 },
                 {
-                    "from": "hz8lp96/j6iu3d3",
-                    "to": "hz8lp96/u36ltxo",
-                    "as": "fn",
-                    "type": "ref"
+                    "from": "hfgitu2",
+                    "to": "lx2r71d",
+                    "as": "fn"
                 },
                 {
-                    "from": "hz8lp96/cja7ejh",
-                    "to": "merge_payloads",
-                    "as": "a0"
+                    "from": "i68oe5k",
+                    "to": "lx2r71d",
+                    "as": "args"
                 },
                 {
-                    "from": "payload",
-                    "to": "merge_payloads",
-                    "as": "a1"
+                    "from": "qomntld",
+                    "to": "upzmz7i",
+                    "as": "name"
                 },
                 {
-                    "from": "merge_payloads",
-                    "to": "hz8lp96/lq3olmi",
-                    "as": "payload"
-                },
-                {
-                    "from": "hz8lp96/wucbgux",
-                    "to": "hz8lp96/j6iu3d3",
-                    "as": "dispatch"
-                },
-                {
-                    "from": "hz8lp96/3d6efet",
-                    "to": "hz8lp96/j6iu3d3",
+                    "from": "hgo86cn",
+                    "to": "hfgitu2",
                     "as": "runnable"
                 },
                 {
-                    "from": "hz8lp96/obnvz4m",
-                    "to": "hz8lp96/j6iu3d3",
+                    "from": "z9zvilt",
+                    "to": "i68oe5k",
+                    "as": "url"
+                },
+                {
+                    "from": "7m3jfmy",
+                    "to": "i68oe5k",
+                    "as": "name"
+                },
+                {
+                    "from": "f89a5u2",
+                    "to": "hgo86cn",
+                    "as": "args"
+                },
+                {
+                    "from": "1v653xe",
+                    "to": "hgo86cn",
+                    "as": "fn"
+                },
+                {
+                    "from": "my879k4",
+                    "to": "f89a5u2",
+                    "as": "imported_graph"
+                },
+                {
+                    "from": "gfpdf11",
+                    "to": "f89a5u2",
+                    "as": "name"
+                },
+                {
+                    "from": "23kbk1n",
+                    "to": "1v653xe",
+                    "as": "target"
+                },
+                {
+                    "from": "71ppowa",
+                    "to": "1v653xe",
+                    "as": "path"
+                },
+                {
+                    "from": "mzijca2",
+                    "to": "my879k4",
+                    "as": "self"
+                },
+                {
+                    "from": "vdfrqzc",
+                    "to": "my879k4",
+                    "as": "fn"
+                },
+                {
+                    "from": "83xy8y2",
+                    "to": "23kbk1n",
+                    "as": "runnable"
+                },
+                {
+                    "from": "5hat6g2",
+                    "to": "mzijca2",
+                    "as": "url"
+                },
+                {
+                    "from": "olx0rqo",
+                    "to": "83xy8y2",
+                    "as": "arg0"
+                },
+                {
+                    "from": "fsmeakk",
+                    "to": "83xy8y2",
+                    "as": "args"
+                },
+                {
+                    "from": "9swjqs2",
+                    "to": "83xy8y2",
+                    "as": "arg1"
+                },
+                {
+                    "from": "jpuj66z",
+                    "to": "olx0rqo",
+                    "as": "fn"
+                },
+                {
+                    "from": "wmwgocb",
+                    "to": "olx0rqo",
+                    "as": "args"
+                },
+                {
+                    "from": "oe15th0",
+                    "to": "fsmeakk",
+                    "as": "imported_graph"
+                },
+                {
+                    "from": "2xaqg9h",
+                    "to": "fsmeakk",
+                    "as": "name"
+                },
+                {
+                    "from": "rfmgm5u",
+                    "to": "9swjqs2",
+                    "as": "fn"
+                },
+                {
+                    "from": "4qd7fl3",
+                    "to": "jpuj66z",
+                    "as": "fn"
+                },
+                {
+                    "from": "9z82xvw",
+                    "to": "wmwgocb",
+                    "as": "imported_graph"
+                },
+                {
+                    "from": "mhng1i6",
+                    "to": "wmwgocb",
+                    "as": "name"
+                },
+                {
+                    "from": "sae69iz",
+                    "to": "4qd7fl3",
+                    "as": "args"
+                },
+                {
+                    "from": "7dsncg7",
+                    "to": "4qd7fl3",
+                    "as": "fn"
+                },
+                {
+                    "from": "um99k99",
+                    "to": "sae69iz",
+                    "as": "imported_graph"
+                },
+                {
+                    "from": "z2ccs2u",
+                    "to": "sae69iz",
+                    "as": "name"
+                },
+                {
+                    "from": "j6g4jd4",
+                    "to": "7dsncg7",
+                    "as": "value"
+                },
+                {
+                    "from": "xl0tqsd",
+                    "to": "j6g4jd4",
                     "as": "state"
                 },
                 {
-                    "from": "hz8lp96/j6kp3o9",
-                    "to": "hz8lp96/j6iu3d3",
-                    "as": "event"
+                    "from": "sajmrbs",
+                    "to": "xl0tqsd",
+                    "as": "path"
+                },
+                {
+                    "from": "i50d0rl",
+                    "to": "xl0tqsd",
+                    "as": "value"
+                },
+                {
+                    "from": "1kzunei",
+                    "to": "xl0tqsd",
+                    "as": "target"
+                },
+                {
+                    "from": "pfe7svb",
+                    "to": "i50d0rl",
+                    "as": "target"
+                },
+                {
+                    "from": "dsqrh2d",
+                    "to": "i50d0rl",
+                    "as": "path"
+                },
+                {
+                    "from": "9zfxac6",
+                    "to": "i50d0rl",
+                    "as": "value"
+                },
+                {
+                    "from": "59iaxzp",
+                    "to": "1kzunei",
+                    "as": "value"
+                },
+                {
+                    "from": "2zvxan2",
+                    "to": "9zfxac6",
+                    "as": "item"
+                },
+                {
+                    "from": "hrzgjqm",
+                    "to": "9zfxac6",
+                    "as": "array"
+                },
+                {
+                    "from": "a8x8a5c",
+                    "to": "2zvxan2",
+                    "as": "array"
+                },
+                {
+                    "from": "d4yl375",
+                    "to": "2zvxan2",
+                    "as": "fn"
+                },
+                {
+                    "from": "2f1lyvz",
+                    "to": "hrzgjqm",
+                    "as": "nodes"
+                },
+                {
+                    "from": "oco33oy",
+                    "to": "hrzgjqm",
+                    "as": "imported_id"
+                },
+                {
+                    "from": "smd6hdj",
+                    "to": "hrzgjqm",
+                    "as": "payload"
+                },
+                {
+                    "from": "55qulh4",
+                    "to": "d4yl375",
+                    "as": "fn"
+                },
+                {
+                    "from": "4az2m7o",
+                    "to": "d4yl375",
+                    "as": "args"
+                },
+                {
+                    "from": "umv9za5",
+                    "to": "smd6hdj",
+                    "as": "value"
+                },
+                {
+                    "from": "ugtx81k",
+                    "to": "55qulh4",
+                    "as": "target"
+                },
+                {
+                    "from": "2eq7kuu",
+                    "to": "55qulh4",
+                    "as": "path"
+                },
+                {
+                    "from": "2tekj7w",
+                    "to": "55qulh4",
+                    "as": "value"
+                },
+                {
+                    "from": "2xt8tpx",
+                    "to": "4az2m7o",
+                    "as": "imported_id"
+                },
+                {
+                    "from": "og27c4d",
+                    "to": "2tekj7w",
+                    "as": "imported_id"
+                },
+                {
+                    "from": "aodmtk1",
+                    "to": "2tekj7w",
+                    "as": "node_id"
                 }
             ]
         },
@@ -2198,7 +2738,7 @@
                 {
                     "name": "out",
                     "id": "pd64cr8",
-                    "ref": "if"
+                    "ref": "default"
                 },
                 {
                     "id": "usd4433",
@@ -2238,7 +2778,7 @@
                 {
                     "from": "usd4433",
                     "to": "pd64cr8",
-                    "as": "false"
+                    "as": "otherwise"
                 },
                 {
                     "from": "0tsqw11",
@@ -2248,7 +2788,7 @@
                 {
                     "from": "6rdgk5r",
                     "to": "pd64cr8",
-                    "as": "pred"
+                    "as": "value"
                 },
                 {
                     "from": "4g0xgt3",
@@ -2275,236 +2815,267 @@
         {
             "id": "modify_state_runnable",
             "name": "modify_state_runnable",
-            "in": "sueor1k",
-            "out": "tpcqvm2",
+            "in": "0tke7mk",
+            "out": "4k16rxs",
             "nodes": [
                 {
-                    "name": "out",
-                    "id": "tpcqvm2",
-                    "ref": "array"
+                    "id": "4k16rxs",
+                    "ref": "runnable",
+                    "name": "out"
                 },
                 {
-                    "id": "bkm8hz8",
-                    "ref": "runnable"
+                    "id": "17hgmhe",
+                    "ref": "dispatch_runnable"
                 },
                 {
-                    "id": "sueor1k",
+                    "id": "0tke7mk",
                     "name": "in"
                 },
                 {
-                    "id": "duyhvhw",
-                    "ref": "arg",
-                    "value": "_args"
+                    "id": "qsm5fqf"
                 },
                 {
-                    "id": "f5ybb5f",
-                    "ref": "call"
-                },
-                {
-                    "id": "qov8vrr",
-                    "ref": "arg",
-                    "value": "dispatch",
-                    "type": "internal"
-                },
-                {
-                    "id": "eil1eq5",
-                    "ref": "array"
-                },
-                {
-                    "id": "r07vaaz",
+                    "id": "6i1lek8",
                     "ref": "runnable"
                 },
                 {
-                    "id": "i6ydibj"
+                    "id": "ecixhbu",
+                    "ref": "arg",
+                    "value": "value"
                 },
                 {
-                    "id": "saonc89"
+                    "id": "3d6xwzp",
+                    "ref": "arg",
+                    "value": "fn"
                 },
                 {
-                    "id": "cb92j91",
-                    "value": "payload.payload.value",
-                    "ref": "arg"
+                    "id": "ysv47a4",
+                    "ref": "arg",
+                    "value": "state"
                 },
                 {
-                    "id": "jwj4il0",
-                    "ref": "apply"
+                    "id": "yl8sikb"
                 },
                 {
-                    "id": "0nyu2om",
-                    "name": "modify_state_value",
+                    "id": "4hrg1ky"
+                },
+                {
+                    "id": "ywscm67",
                     "ref": "set"
                 },
                 {
-                    "id": "gklagbh"
-                },
-                {
-                    "id": "c7iwrlj",
+                    "id": "hsgqfec",
                     "ref": "arg",
-                    "value": "payload.payload.fn"
+                    "value": "value"
                 },
                 {
-                    "id": "c18pwko",
-                    "ref": "arg",
-                    "value": "payload.path"
+                    "id": "a5z6wdp",
+                    "ref": "run"
                 },
                 {
-                    "id": "8th0n8q",
-                    "ref": "arg",
-                    "value": "state",
-                    "type": "internal"
-                },
-                {
-                    "id": "p79j5ub",
+                    "id": "vjtdfop",
                     "ref": "arg",
                     "value": "payload.value"
                 },
                 {
-                    "id": "xfxjlvp",
+                    "id": "hej7g0o",
                     "ref": "arg",
-                    "value": "state",
-                    "type": "internal"
+                    "value": "payload.state_value"
                 },
                 {
-                    "id": "i74hjbp",
+                    "id": "bohly2o",
+                    "ref": "arg",
+                    "value": "state"
+                },
+                {
+                    "id": "y65mfa8",
+                    "ref": "set"
+                },
+                {
+                    "id": "tmsibf6",
+                    "ref": "merge_objects"
+                },
+                {
+                    "id": "dkoqs5x",
+                    "value": "args"
+                },
+                {
+                    "id": "zmexk3x",
+                    "ref": "arg",
+                    "value": "fn"
+                },
+                {
+                    "id": "nl97w9x"
+                },
+                {
+                    "id": "oz8h5rr",
+                    "ref": "arg",
+                    "value": "fn.args"
+                },
+                {
+                    "id": "5g3mq34",
+                    "ref": "arg",
+                    "value": "dispatch"
+                },
+                {
+                    "id": "jdxnymc",
+                    "ref": "arg",
+                    "value": "payload"
+                },
+                {
+                    "id": "69fs5ao",
                     "ref": "get"
                 },
                 {
-                    "id": "mep3s01",
-                    "value": "payload.payload",
-                    "ref": "arg"
+                    "id": "lsjg9ew",
+                    "ref": "arg",
+                    "value": "state"
                 },
                 {
-                    "id": "sabrhol",
+                    "id": "vc4ejyt",
                     "ref": "arg",
-                    "value": "state",
-                    "type": "internal"
+                    "value": "state"
                 },
                 {
-                    "id": "15d1amt",
+                    "id": "n3riawv",
                     "ref": "arg",
-                    "value": "payload.payload.value"
-                },
-                {"id": "arg_value", "ref": "arg", "value": "value"},
-                {"id": "arg_fn", "ref": "arg", "value": "fn"},
-                {"id": "dispatch_payload"},
-                {"id": "payload", "ref": "merge_objects"}
+                    "value": "value"
+                }
             ],
             "edges": [
                 {
-                    "from": "bkm8hz8",
-                    "to": "tpcqvm2",
+                    "from": "17hgmhe",
+                    "to": "4k16rxs",
+                    "as": "fn"
+                },
+                {
+                    "from": "0tke7mk",
+                    "to": "4k16rxs",
                     "as": "arg0"
                 },
                 {
-                    "from": "sueor1k",
-                    "to": "tpcqvm2",
-                    "as": "arg2"
-                },
-                {
-                    "from": "duyhvhw",
-                    "to": "payload",
-                    "as": "arg1"
-                },
-                {"from": "dispatch_payload", "to": "payload", "as": "arg0"},
-                {"from": "payload", "to": "tpcqvm2", "as": "arg1"},
-                {
-                    "from": "f5ybb5f",
-                    "to": "bkm8hz8",
-                    "as": "fn"
-                },
-                {
-                    "from": "qov8vrr",
-                    "to": "f5ybb5f",
-                    "as": "self"
-                },
-                {
-                    "from": "eil1eq5",
-                    "to": "f5ybb5f",
+                    "from": "qsm5fqf",
+                    "to": "4k16rxs",
                     "as": "args"
                 },
                 {
-                    "from": "r07vaaz",
-                    "to": "eil1eq5",
-                    "as": "arg0"
-                },
-                {
-                    "from": "i6ydibj",
-                    "to": "eil1eq5",
-                    "as": "arg1"
-                },
-                {
-                    "from": "saonc89",
-                    "to": "r07vaaz",
+                    "from": "6i1lek8",
+                    "to": "17hgmhe",
                     "as": "fn"
                 },
                 {
-                    "from": "cb92j91",
-                    "to": "i6ydibj",
-                    "as": "path"
-                },
-                {
-                    "from": "jwj4il0",
-                    "to": "i6ydibj",
+                    "from": "ecixhbu",
+                    "to": "qsm5fqf",
                     "as": "value"
                 },
                 {
-                    "from": "qov8vrr",
-                    "to": "dispatch_payload",
-                    "as": "dispatch"
+                    "from": "3d6xwzp",
+                    "to": "qsm5fqf",
+                    "as": "fn"
                 },
                 {
-                    "from": "0nyu2om",
-                    "to": "saonc89",
+                    "from": "ysv47a4",
+                    "to": "qsm5fqf",
                     "as": "state"
                 },
                 {
-                    "from": "gklagbh",
-                    "to": "jwj4il0",
+                    "from": "yl8sikb",
+                    "to": "6i1lek8",
+                    "as": "fn"
+                },
+                {
+                    "from": "4hrg1ky",
+                    "to": "6i1lek8",
                     "as": "args"
                 },
                 {
-                    "from": "c7iwrlj",
-                    "to": "jwj4il0",
-                    "as": "fn"
-                },
-                {
-                    "from": "c18pwko",
-                    "to": "0nyu2om",
-                    "as": "path"
-                },
-                {
-                    "from": "8th0n8q",
-                    "to": "0nyu2om",
-                    "as": "target"
-                },
-                {
-                    "from": "p79j5ub",
-                    "to": "0nyu2om",
-                    "as": "value"
-                },
-                {
-                    "from": "xfxjlvp",
-                    "to": "gklagbh",
+                    "from": "ywscm67",
+                    "to": "yl8sikb",
                     "as": "state"
                 },
                 {
-                    "from": "i74hjbp",
-                    "to": "gklagbh",
+                    "from": "hsgqfec",
+                    "to": "4hrg1ky",
+                    "as": "value"
+                },
+                {
+                    "from": "a5z6wdp",
+                    "to": "4hrg1ky",
                     "as": "state_value"
                 },
                 {
-                    "from": "mep3s01",
-                    "to": "gklagbh",
-                    "as": "payload"
+                    "from": "vjtdfop",
+                    "to": "ywscm67",
+                    "as": "path"
                 },
                 {
-                    "from": "sabrhol",
-                    "to": "i74hjbp",
+                    "from": "hej7g0o",
+                    "to": "ywscm67",
+                    "as": "value"
+                },
+                {
+                    "from": "bohly2o",
+                    "to": "ywscm67",
                     "as": "target"
                 },
                 {
-                    "from": "15d1amt",
-                    "to": "i74hjbp",
+                    "from": "y65mfa8",
+                    "to": "a5z6wdp",
+                    "as": "runnable"
+                },
+                {
+                    "from": "tmsibf6",
+                    "to": "y65mfa8",
+                    "as": "value"
+                },
+                {
+                    "from": "dkoqs5x",
+                    "to": "y65mfa8",
+                    "as": "path"
+                },
+                {
+                    "from": "zmexk3x",
+                    "to": "y65mfa8",
+                    "as": "target"
+                },
+                {
+                    "from": "nl97w9x",
+                    "to": "tmsibf6",
+                    "as": "arg0"
+                },
+                {
+                    "from": "oz8h5rr",
+                    "to": "tmsibf6",
+                    "as": "arg1"
+                },
+                {
+                    "from": "5g3mq34",
+                    "to": "nl97w9x",
+                    "as": "dispatch"
+                },
+                {
+                    "from": "jdxnymc",
+                    "to": "nl97w9x",
+                    "as": "payload"
+                },
+                {
+                    "from": "69fs5ao",
+                    "to": "nl97w9x",
+                    "as": "state_value"
+                },
+                {
+                    "from": "lsjg9ew",
+                    "to": "nl97w9x",
+                    "as": "state"
+                },
+                {
+                    "from": "vc4ejyt",
+                    "to": "69fs5ao",
+                    "as": "target"
+                },
+                {
+                    "from": "n3riawv",
+                    "to": "69fs5ao",
                     "as": "path"
                 }
             ]
@@ -4246,7 +4817,8 @@
                 "show_result": false,
                 "node_el_width": 256,
                 "sim_update_alpha": 0.4,
-                "args_display": false
+                "args_display": false,
+                "imports": {}
             }
         },
         {"id": "dimensions", "ref": "arg", "value": "dimensions"},
@@ -8889,7 +9461,7 @@
                         },
                         {
                             "id": "node_layout",
-                            "script": "const error_nodes = error instanceof AggregateError ? error.errors.map(e => e instanceof _lib.no.NodysseusError ? e.node_id : false).filter(n => n) : error instanceof _lib.no.NodysseusError ? [error.node_id] : []; const fn = _lib.no.executeGraphNode({graph: {..._graph}})(node_layout_map); return nodes.map(n => fn(Object.assign({node: Object.assign({}, n, display_graph.nodes.find(dgn => dgn.id === n.node_id)), hide_types, show_all, selected_distance: levels.distance_from_selected.get(n.node_child_id), level: levels.level_by_node.get(n.node_id), node_error: !error_nodes ? false : error_nodes.filter(k => k.startsWith(n.node_id)).length > 0}, _node_inputs)))"
+                            "script": "const error_nodes = error instanceof AggregateError ? error.errors.map(e => e instanceof _lib.no.NodysseusError ? e.node_id : false).filter(n => n) : error instanceof _lib.no.NodysseusError ? [error.node_id] : []; const fn = _lib.no.executeGraphNode({graph: {..._graph}})(node_layout_map); return nodes.sort((a, b) => levels.distance_from_selected.get(b.node_child_id) - levels.distance_from_selected.get(a.node_child_id)).map(n => fn(Object.assign({node: Object.assign({}, n, display_graph.nodes.find(dgn => dgn.id === n.node_id)), hide_types, show_all, selected_distance: levels.distance_from_selected.get(n.node_child_id), level: levels.level_by_node.get(n.node_id), node_error: !error_nodes ? false : error_nodes.filter(k => k.startsWith(n.node_id)).length > 0}, _node_inputs)))"
                         },
                         {
                             "id": "node_layout_map",
@@ -8971,7 +9543,7 @@
                                 {"id": "onclick_node", "ref": "onselectnode_action"},
                                 {
                                     "id": "parent_attrs",
-                                    "script": "return ({onclick: (_, payload) => [onclick, {event: payload, node_id: node.node_id}],  onmouseover: (state, payload) => [{...state, hover: node.node_id}], onmouseout: (state, payload) => [{...state, hover: undefined}],  ontouchstart: (_, payload) => [onclick, {event: payload, node_id: node.node_id}], width: '256', height: '64', id: html_id + '-' + node.node_child_id, class: {node: true,  selected: selected[0] === node.node_id, hover: hover === node.node_id }, opacity: selected_edge?.from === node.node_id || show_all ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - (selected_distance * selected_distance) / 6) : 0.1})"
+                                    "script": "return ({onclick: (_, payload) => [onclick, {event: payload, node_id: node.node_id}],  onmouseover: (state, payload) => [{...state, hover: node.node_id}], onmouseout: (state, payload) => [{...state, hover: undefined}],  ontouchstart: (_, payload) => [onclick, {event: payload, node_id: node.node_id}], width: '256', height: '64', key: html_id + '-' + node.node_child_id, id: html_id + '-' + node.node_child_id, class: {node: true,  selected: selected[0] === node.node_id, hover: hover === node.node_id }, opacity: selected_edge?.from === node.node_id || show_all ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - (selected_distance * selected_distance) / 6) : 0.1})"
                                 },
                                 {
                                     "id": "children",

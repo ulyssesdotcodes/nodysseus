@@ -1398,13 +1398,18 @@ const findViewBox = (nodes, links, selected, node_el_width, htmlid, dimensions) 
 }
 
 const middleware = dispatch => (ha_action, ha_payload) => {
-    const is_action_payload = Array.isArray(ha_action) 
+    const is_action_array_payload = Array.isArray(ha_action) 
         && ha_action.length === 2
         && (typeof ha_action[0] === 'function' 
                 || (ha_action[0].hasOwnProperty('fn') 
                     && ha_action[0].hasOwnProperty('graph')));
-        const action = is_action_payload ? ha_action[0] : ha_action;
-        const payload = is_action_payload ? ha_action[1] : ha_payload;
+
+    const is_action_obj_payload = typeof ha_action === 'object' 
+        && ha_action.hasOwnProperty('fn') 
+        && ha_action.hasOwnProperty('graph') 
+        && ha_action.hasOwnProperty('args');
+    const action = is_action_array_payload ? ha_action[0] : ha_action;
+    const payload = is_action_array_payload ? ha_action[1] : is_action_obj_payload ? ha_action.args : ha_payload;
 
     return typeof action === 'object' && action.hasOwnProperty('fn') && action.hasOwnProperty('graph')
         ? dispatch((state, payload) => {
@@ -1413,6 +1418,11 @@ const middleware = dispatch => (ha_action, ha_payload) => {
             const result = action.stateonly 
                 ? execute_graph_fn(state)
                 : execute_graph_fn({state, payload});
+            
+            if(!result) {
+                return state;
+            }
+
             const effects = (result.effects ?? []).filter(e => e).map(e => {
                 if(typeof e === 'object' 
                 && e.hasOwnProperty('fn') 
@@ -1422,7 +1432,7 @@ const middleware = dispatch => (ha_action, ha_payload) => {
                     return effect_fn;
                 }
                 return e
-            });
+            });//.map(fx => ispromise(fx) ? fx.catch(e => dispatch(s => [{...s, error: e}])) : fx);
 
             if (ispromise(result)) {
                 // TODO: handle promises properly
@@ -1431,7 +1441,9 @@ const middleware = dispatch => (ha_action, ha_payload) => {
 
             return result.hasOwnProperty("state")
                 ? effects.length > 0 ? [result.state, ...effects] : result.state
-                : [result.action, result.payload];
+                : result.hasOwnProperty("action") && result.hasOwnProperty("payload") 
+                ? [result.action, result.payload]
+                : state;
             }, payload)
         : dispatch(action, payload)
 }
@@ -1476,7 +1488,10 @@ const generic_nodes = new Set([
     "merge_objects",
     "sequence",
     "runnable",
+    "run",
+    "dispatch_runnable",
     "object_entries",
+    "import_json",
 
     "math",
     "add",
@@ -1515,7 +1530,9 @@ const lib = {
         executeGraph: ({ state, graph, cache_id }) => executeGraph({ cache, state, graph, node_cache, cache_id: cache_id ?? "main" })(graph.out)(state.get(graph.in)),
         executeGraphValue: ({ graph, cache_id }) => executeGraph({ cache, graph, node_cache, cache_id: cache_id ?? "main" })(graph.out),
         executeGraphNode: ({ graph, cache_id }) => executeGraph({ cache, graph, node_cache, cache_id: cache_id ?? "main" }),
-        runGraph: (graph, node, value) => executeGraph({graph, cache, node_cache, cache_id: "main"})(node)(value),
+        runGraph: (graph, node, args) => node !== undefined
+            ? executeGraph({graph, cache, node_cache, cache_id: "main"})(node)(args)
+            : executeGraph({graph: graph.graph, cache, node_cache, cache_id: "main"})(graph.fn)(graph.args),
         resolve,
         objToGraph,
         NodysseusError
@@ -1529,7 +1546,9 @@ const lib = {
                 ? node.value === '_args' 
                     ? target
                     : get(target, node.value) 
-                : target[node.value],
+                : node.value !== undefined && target !== undefined
+                ? target[node.value]
+                : undefined,
         },
         new_array: {
             args: ['_node_inputs'],
@@ -1661,7 +1680,6 @@ const add_default_nodes_and_edges = g => ({
             edges: g.edges
                 .filter(e => !generic_nodes.has(e.from))
                 .concat(DEFAULT_GRAPH.edges.filter(e => generic_nodes.has(e.to))) 
-
 })
 
 const nodysseus = function(html_id, display_graph) {
