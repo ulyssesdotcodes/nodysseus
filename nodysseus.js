@@ -1413,38 +1413,42 @@ const middleware = dispatch => (ha_action, ha_payload) => {
 
     return typeof action === 'object' && action.hasOwnProperty('fn') && action.hasOwnProperty('graph')
         ? dispatch((state, payload) => {
-            const execute_graph_fn = lib.no.executeGraphNode({graph: action.graph})(action.fn);
-           Object.defineProperty(execute_graph_fn, 'name', {value: action.fn, writable: false});
-            const result = action.stateonly 
-                ? execute_graph_fn(state)
-                : execute_graph_fn({state, payload});
-            
-            if(!result) {
-                return state;
-            }
-
-            const effects = (result.effects ?? []).filter(e => e).map(e => {
-                if(typeof e === 'object' 
-                && e.hasOwnProperty('fn') 
-                && e.hasOwnProperty('graph')) {
-                    const effect_fn = lib.no.executeGraphNode({graph: e.graph})(e.fn);
-                    Object.defineProperty(effect_fn, 'name', {value: e.fn, writable: false})
-                    return effect_fn;
+            try {
+                const execute_graph_fn = lib.no.executeGraphNode({graph: action.graph})(action.fn);
+                Object.defineProperty(execute_graph_fn, 'name', {value: action.fn, writable: false});
+                const result = action.stateonly 
+                    ? execute_graph_fn(state)
+                    : execute_graph_fn({state, payload});
+                
+                if(!result) {
+                    return state;
                 }
-                return e
-            });//.map(fx => ispromise(fx) ? fx.catch(e => dispatch(s => [{...s, error: e}])) : fx);
 
-            if (ispromise(result)) {
-                // TODO: handle promises properly
-                return state;
+                const effects = (result.effects ?? []).filter(e => e).map(e => {
+                    if(typeof e === 'object' 
+                    && e.hasOwnProperty('fn') 
+                    && e.hasOwnProperty('graph')) {
+                        const effect_fn = lib.no.executeGraphNode({graph: e.graph})(e.fn);
+                        Object.defineProperty(effect_fn, 'name', {value: e.fn, writable: false})
+                        return effect_fn;
+                    }
+                    return e
+                });//.map(fx => ispromise(fx) ? fx.catch(e => dispatch(s => [{...s, error: e}])) : fx);
+
+                if (ispromise(result)) {
+                    // TODO: handle promises properly
+                    return state;
+                }
+
+                return result.hasOwnProperty("state")
+                    ? effects.length > 0 ? [result.state, ...effects] : result.state
+                    : result.hasOwnProperty("action") && result.hasOwnProperty("payload") 
+                    ? [result.action, result.payload]
+                    : state;
+            } catch(e) {
+                return {...state, error: e}
             }
-
-            return result.hasOwnProperty("state")
-                ? effects.length > 0 ? [result.state, ...effects] : result.state
-                : result.hasOwnProperty("action") && result.hasOwnProperty("payload") 
-                ? [result.action, result.payload]
-                : state;
-            }, payload)
+        }, payload)
         : dispatch(action, payload)
 }
 

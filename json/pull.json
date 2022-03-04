@@ -2168,7 +2168,7 @@
                 {"from": "seq_runnable_args", "to": "out", "as": "args"}
             ]
         },
-{
+        {
             "id": "import_json",
             "name": "import_json",
             "in": "j5hwdot",
@@ -2208,14 +2208,14 @@
                     "ref": "runnable"
                 },
                 {
-                    "id": "z9zvilt",
-                    "ref": "arg",
-                    "value": "url"
-                },
-                {
                     "id": "7m3jfmy",
                     "ref": "arg",
                     "value": "name"
+                },
+                {
+                    "id": "z9zvilt",
+                    "ref": "arg",
+                    "value": "url"
                 },
                 {
                     "id": "f89a5u2"
@@ -2263,67 +2263,54 @@
                     "ref": "runnable"
                 },
                 {
-                    "id": "fsmeakk"
-                },
-                {
                     "id": "9swjqs2",
                     "ref": "runnable"
+                },
+                {
+                    "id": "cbahtxj"
                 },
                 {
                     "id": "jpuj66z",
                     "ref": "dispatch_runnable"
                 },
                 {
-                    "id": "wmwgocb"
-                },
-                {
-                    "id": "oe15th0",
-                    "ref": "arg",
-                    "value": "imported_graph"
-                },
-                {
-                    "id": "2xaqg9h",
-                    "ref": "arg",
-                    "value": "name"
-                },
-                {
                     "id": "rfmgm5u",
                     "ref": "arg",
-                    "value": "imported_graph"
+                    "value": "imported_graph",
+                    "type": "internal"
+                },
+                {
+                    "id": "jrt3ao3",
+                    "ref": "arg",
+                    "value": "name",
+                    "type": "internal"
+                },
+                {
+                    "id": "830e6rx",
+                    "ref": "arg",
+                    "value": "imported_graph",
+                    "type": "internal"
                 },
                 {
                     "id": "4qd7fl3",
                     "ref": "runnable"
                 },
                 {
-                    "id": "9z82xvw",
-                    "ref": "arg",
-                    "value": "imported_graph"
-                },
-                {
-                    "id": "mhng1i6",
-                    "ref": "arg",
-                    "value": "name"
-                },
-                {
                     "id": "sae69iz"
                 },
                 {
-                    "id": "7dsncg7",
-                    "ref": "log"
+                    "id": "j6g4jd4"
                 },
                 {
                     "id": "um99k99",
                     "ref": "arg",
-                    "value": "imported_graph"
+                    "value": "imported_graph",
+                    "type": "internal"
                 },
                 {
                     "id": "z2ccs2u",
                     "ref": "arg",
                     "value": "name"
-                },
-                {
-                    "id": "j6g4jd4"
                 },
                 {
                     "id": "xl0tqsd",
@@ -2338,13 +2325,16 @@
                     "ref": "set"
                 },
                 {
-                    "id": "1kzunei",
-                    "ref": "log"
+                    "id": "59iaxzp",
+                    "ref": "arg",
+                    "value": "state",
+                    "type": "internal"
                 },
                 {
                     "id": "pfe7svb",
                     "ref": "arg",
-                    "value": "state.display_graph"
+                    "value": "state.display_graph",
+                    "type": "internal"
                 },
                 {
                     "id": "dsqrh2d",
@@ -2353,11 +2343,6 @@
                 {
                     "id": "9zfxac6",
                     "ref": "append"
-                },
-                {
-                    "id": "59iaxzp",
-                    "ref": "arg",
-                    "value": "state"
                 },
                 {
                     "id": "2zvxan2",
@@ -2370,7 +2355,8 @@
                 {
                     "id": "a8x8a5c",
                     "ref": "arg",
-                    "value": "payload.imported_graph.nodes"
+                    "value": "payload.imported_graph.nodes",
+                    "type": "internal"
                 },
                 {
                     "id": "d4yl375",
@@ -2379,16 +2365,14 @@
                 {
                     "id": "2f1lyvz",
                     "ref": "arg",
-                    "value": "state.display_graph.nodes"
+                    "value": "state.display_graph.nodes",
+                    "type": "internal"
                 },
                 {
                     "id": "oco33oy",
                     "ref": "arg",
-                    "value": "payload.name"
-                },
-                {
-                    "id": "smd6hdj",
-                    "ref": "log"
+                    "value": "payload.name",
+                    "type": "internal"
                 },
                 {
                     "id": "55qulh4",
@@ -2398,14 +2382,10 @@
                     "id": "4az2m7o"
                 },
                 {
-                    "id": "umv9za5",
-                    "ref": "arg",
-                    "value": "payload"
-                },
-                {
                     "id": "ugtx81k",
                     "ref": "arg",
-                    "value": "element"
+                    "value": "element",
+                    "type": "internal"
                 },
                 {
                     "id": "2eq7kuu",
@@ -2418,17 +2398,20 @@
                 {
                     "id": "2xt8tpx",
                     "ref": "arg",
-                    "value": "payload.name"
+                    "value": "payload.name",
+                    "type": "internal"
                 },
                 {
                     "id": "og27c4d",
                     "ref": "arg",
-                    "value": "imported_id"
+                    "value": "imported_id",
+                    "type": "internal"
                 },
                 {
                     "id": "aodmtk1",
                     "ref": "arg",
-                    "value": "element.id"
+                    "value": "element.id",
+                    "type": "internal"
                 }
             ],
             "edges": [
@@ -2468,14 +2451,14 @@
                     "as": "runnable"
                 },
                 {
-                    "from": "z9zvilt",
-                    "to": "i68oe5k",
-                    "as": "url"
-                },
-                {
                     "from": "7m3jfmy",
                     "to": "i68oe5k",
                     "as": "name"
+                },
+                {
+                    "from": "z9zvilt",
+                    "to": "i68oe5k",
+                    "as": "url"
                 },
                 {
                     "from": "f89a5u2",
@@ -2533,14 +2516,14 @@
                     "as": "arg0"
                 },
                 {
-                    "from": "fsmeakk",
-                    "to": "83xy8y2",
-                    "as": "args"
-                },
-                {
                     "from": "9swjqs2",
                     "to": "83xy8y2",
                     "as": "arg1"
+                },
+                {
+                    "from": "cbahtxj",
+                    "to": "83xy8y2",
+                    "as": "args"
                 },
                 {
                     "from": "jpuj66z",
@@ -2548,24 +2531,19 @@
                     "as": "fn"
                 },
                 {
-                    "from": "wmwgocb",
-                    "to": "olx0rqo",
-                    "as": "args"
-                },
-                {
-                    "from": "oe15th0",
-                    "to": "fsmeakk",
-                    "as": "imported_graph"
-                },
-                {
-                    "from": "2xaqg9h",
-                    "to": "fsmeakk",
-                    "as": "name"
-                },
-                {
                     "from": "rfmgm5u",
                     "to": "9swjqs2",
                     "as": "fn"
+                },
+                {
+                    "from": "jrt3ao3",
+                    "to": "cbahtxj",
+                    "as": "name"
+                },
+                {
+                    "from": "830e6rx",
+                    "to": "cbahtxj",
+                    "as": "imported_graph"
                 },
                 {
                     "from": "4qd7fl3",
@@ -2573,22 +2551,12 @@
                     "as": "fn"
                 },
                 {
-                    "from": "9z82xvw",
-                    "to": "wmwgocb",
-                    "as": "imported_graph"
-                },
-                {
-                    "from": "mhng1i6",
-                    "to": "wmwgocb",
-                    "as": "name"
-                },
-                {
                     "from": "sae69iz",
                     "to": "4qd7fl3",
                     "as": "args"
                 },
                 {
-                    "from": "7dsncg7",
+                    "from": "j6g4jd4",
                     "to": "4qd7fl3",
                     "as": "fn"
                 },
@@ -2601,11 +2569,6 @@
                     "from": "z2ccs2u",
                     "to": "sae69iz",
                     "as": "name"
-                },
-                {
-                    "from": "j6g4jd4",
-                    "to": "7dsncg7",
-                    "as": "value"
                 },
                 {
                     "from": "xl0tqsd",
@@ -2623,7 +2586,7 @@
                     "as": "value"
                 },
                 {
-                    "from": "1kzunei",
+                    "from": "59iaxzp",
                     "to": "xl0tqsd",
                     "as": "target"
                 },
@@ -2640,11 +2603,6 @@
                 {
                     "from": "9zfxac6",
                     "to": "i50d0rl",
-                    "as": "value"
-                },
-                {
-                    "from": "59iaxzp",
-                    "to": "1kzunei",
                     "as": "value"
                 },
                 {
@@ -2678,11 +2636,6 @@
                     "as": "imported_id"
                 },
                 {
-                    "from": "smd6hdj",
-                    "to": "hrzgjqm",
-                    "as": "payload"
-                },
-                {
                     "from": "55qulh4",
                     "to": "d4yl375",
                     "as": "fn"
@@ -2691,11 +2644,6 @@
                     "from": "4az2m7o",
                     "to": "d4yl375",
                     "as": "args"
-                },
-                {
-                    "from": "umv9za5",
-                    "to": "smd6hdj",
-                    "as": "value"
                 },
                 {
                     "from": "ugtx81k",
@@ -3428,42 +3376,23 @@
                     "ref": "runnable"
                 },
                 {
-                    "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/eyrczw3/p35xuny",
-                    "name": "da71z9c/out"
-                },
-                {
                     "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/w8vpdfx",
                     "ref": "html_element"
                 },
                 {
-                    "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/eyrczw3/m7fcn6k",
-                    "ref": "arg",
-                    "value": "children"
-                },
-                {
-                    "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/eyrczw3/8ancque",
-                    "ref": "arg",
-                    "value": "dom_type"
-                },
-                {
-                    "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/eyrczw3/gf6y51n",
+                    "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/vofecaa",
                     "ref": "arg",
                     "value": "props"
                 },
                 {
-                    "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/vofecaa",
-                    "ref": "arg",
-                    "value": "payload.props"
-                },
-                {
                     "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/j8qudts",
                     "ref": "arg",
-                    "value": "payload.children"
+                    "value": "children"
                 },
                 {
                     "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/iead5y3",
                     "ref": "arg",
-                    "value": "payload.dom_type"
+                    "value": "dom_type"
                 }
             ],
             "edges": [
@@ -3488,29 +3417,9 @@
                     "as": "fn"
                 },
                 {
-                    "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/eyrczw3/p35xuny",
-                    "to": "da71z9c/2435ihf/jd1mc84",
-                    "as": "state"
-                },
-                {
                     "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/w8vpdfx",
                     "to": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/lol0vdh",
                     "as": "fn"
-                },
-                {
-                    "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/eyrczw3/m7fcn6k",
-                    "to": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/eyrczw3/p35xuny",
-                    "as": "children"
-                },
-                {
-                    "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/eyrczw3/8ancque",
-                    "to": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/eyrczw3/p35xuny",
-                    "as": "dom_type"
-                },
-                {
-                    "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/eyrczw3/gf6y51n",
-                    "to": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/eyrczw3/p35xuny",
-                    "as": "props"
                 },
                 {
                     "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/vofecaa",
@@ -5446,7 +5355,7 @@
                 {"id": "replace_node", "script": "return nodes.map(n => n.id === new_node.id ? new_node : n)"},
                 {"id": "node_args", "ref": "node_args"},
                 {"id": "arg_value", "script": "return node.ref === 'arg' ? node.value.substring(node.value.lastIndexOf('.') + 1) : undefined"},
-                {"id": "replace_edges", "script": "const parents = edges.filter(e => e.to === node_id).map(e => e.as); const needed_args = node_args.filter(a => !parents.includes(a) && a !== '_node_inputs' && a !== '_graph' && a !== '_lib' && a !== '_args'); return edges.map(e => e.from === node_id && arg_value && (e.as.startsWith('arg') || e.as === prev_node?.value) ? {...e, as: arg_value} : e.to === node_id && !node_args.includes(e.as) && needed_args?.length > 0 ? {...e, as: needed_args.shift()} : e)"},
+                {"id": "replace_edges", "script": "const parents = edges.filter(e => e.to === node_id).map(e => e.as); const needed_args = !update.hasOwnProperty('ref') ? [] : node_args.filter(a => !parents.includes(a) && a !== '_node_inputs' && a !== '_graph' && a !== '_lib' && a !== '_args'); return edges.map(e => e.from === node_id && arg_value && (e.as.startsWith('arg') || e.as === prev_node?.value) ? {...e, as: arg_value} : e.to === node_id && !node_args.includes(e.as) && needed_args?.length > 0 ? {...e, as: needed_args.shift()} : e)"},
                 {"id": "display_graph_nodes_path", "value": "display_graph.nodes"},
                 {"id": "set_display_graph_nodes", "ref": "set"},
                 {"id": "set_display_graph_edges", "ref": "set"},
@@ -5459,6 +5368,7 @@
                 {"from": "nodes", "to": "replace_node", "as": "nodes"},
                 {"from": "nodes", "to": "prev_node", "as": "nodes"},
                 {"from": "edges", "to": "replace_edges", "as": "edges"},
+                {"from": "node_properties", "to": "replace_edges", "as": "update"},
                 {"from": "node_id", "to": "prev_node", "as": "node_id"},
                 {"from": "node_properties", "to": "new_node", "as": "o1"},
                 {"from": "prev_node", "to": "new_node", "as": "o0"},
