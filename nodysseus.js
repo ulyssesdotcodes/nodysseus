@@ -7,7 +7,6 @@ import { h, app, text, memo } from "hyperapp"
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 import Fuse from "fuse.js";
 import panzoom from "panzoom";
-import * as jsondiff from "json-diff-ts";
 
 function compare(value1, value2) {
     if (value1 === value2) {
@@ -923,7 +922,7 @@ const updateSimulationNodes = (dispatch, data) => {
             simulation_link_data.size !== start_sim_link_size || 
             data.simulation.nodes()?.length !== nodes.length ||
             data.simulation.force('links')?.links().length !== links.length) {
-            data.simulation.alpha(data.sim_update_alpha);
+            data.simulation.alpha(0.4);
         }
 
         data.simulation.nodes(nodes);
@@ -1616,8 +1615,7 @@ const lib = {
             args: ['string'],
             resolve: true,
             fn: (args) => JSON.parse(args)
-        },
-        diff: jsondiff
+        }
     },
     scripts: { d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all, listen},
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
