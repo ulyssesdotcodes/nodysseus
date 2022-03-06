@@ -7,6 +7,7 @@ import { h, app, text, memo } from "hyperapp"
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 import Fuse from "fuse.js";
 import panzoom from "panzoom";
+import * as jsondiff from "json-diff-ts";
 
 function compare(value1, value2) {
     if (value1 === value2) {
@@ -1615,7 +1616,8 @@ const lib = {
             args: ['string'],
             resolve: true,
             fn: (args) => JSON.parse(args)
-        }
+        },
+        diff: jsondiff
     },
     scripts: { d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all, listen},
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
