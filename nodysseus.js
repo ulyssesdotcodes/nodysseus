@@ -533,7 +533,6 @@ const executeGraph = ({ cache, graph, parent_graph, cache_id, node_cache }) => {
             const promised_data = Object.entries(data).reduce((acc, kv) => [acc[0].concat([kv]), acc[1] || (!!kv[1] && !kv[1]?._Proxy && ispromise(kv[1]))], [[], false]);
             
             if(promised_data[1]) {
-                console.log(promised_data);
                 return Promise.all(promised_data[0].map(kv => Promise.resolve(kv[1]).then(v => [kv[0], v]))).then(Object.fromEntries);
             }
 
@@ -635,7 +634,6 @@ const bfs = (graph, fn) => {
 }
 
 const updateSimulationNodes = (dispatch, data) => {
-    console.log('update sim node');
     if(data.static) {
         const find_childest = n => {
             const e = graph.edges.find(e => e.from === n);
@@ -1626,13 +1624,12 @@ const lib = {
             let instance;
             let lastpanzoom = 0;
             const panzoom_selected_effect = (dispatch, payload) => {
-                console.log('trying panzoom');
-                if(!instance){ return; }
+                if(!instance || !payload.selected){ return; }
                 lastpanzoom = performance.now();
                 const viewbox = findViewBox(
                     payload.nodes, 
                     payload.links, 
-                    payload.selected, 
+                    typeof payload.selected === 'string' ? payload.selected : payload.selected[0], 
                     payload.node_el_width, 
                     payload.html_id,
                     payload.dimensions

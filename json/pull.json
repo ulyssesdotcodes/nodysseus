@@ -6412,7 +6412,6 @@
                 {"value": "find","id": "find" },
                 {"value": "esc_editing","id": "esc_editing" },
                 {"value": "clear_popover", "id": "esc"},
-                {"value": "esc_search","id": "esc_search" },
                 {"value": "copy", "id": "y"},
                 {"value": "copy", "id": "ctrl_c"},
                 {"value": "paste", "id": "p"},
@@ -6424,7 +6423,10 @@
                 {"value": "save", "id": "ctrl_s"},
                 {"value": "undo", "id": "ctrl_z"},
                 {"value": "redo", "id": "ctrl_y"},
+                {"value": "select", "id": "enter"},
                 {"value": "show_keybindings", "id": "?"},
+                {"value": "find", "id": "f"},
+                {"value": "cancel_search","id": "esc_search" },
                 {"id": "out"}
             ],
             "edges": [
@@ -6448,12 +6450,15 @@
                 {"from": "p", "to": "graph", "as": "p"},
                 {"from": "x", "to": "graph", "as": "x"},
                 {"from": "a", "to": "graph", "as": "a"},
+                {"from": "f", "to": "graph", "as": "f"},
+                {"from": "enter", "to": "graph", "as": "enter"},
                 {"from": "ctrl_c", "to": "graph", "as": "ctrl_c"},
                 {"from": "ctrl_v", "to": "graph", "as": "ctrl_v"},
                 {"from": "ctrl_s", "to": "graph", "as": "ctrl_s"},
                 {"from": "ctrl_z", "to": "graph", "as": "ctrl_z"},
                 {"from": "ctrl_y", "to": "graph", "as": "ctrl_y"},
-                {"from": "shift_enter", "to": "graph", "as": "shift_enter"}
+                {"from": "shift_enter", "to": "graph", "as": "shift_enter"},
+                {"from": "esc_search", "to": "searching", "as": "escape"}
             ]
         },
         {
@@ -6591,7 +6596,7 @@
                 {"id": "run_display_graph_effect", "ref": "array"},
 
                 {"id": "keybindings", "ref": "keybindings"},
-                {"id": "mode", "script": "return editing ? 'editing' : 'graph'"},
+                {"id": "mode", "script": "return editing !== false ? 'editing' : search !== false ? 'searching' : 'graph'"},
                 {"id": "mode_keybindings", "ref": "get"},
                 {"id": "key_action_effect", "ref": "get"},
                 {"id": "effects_map", "ref": "switch"},
@@ -6615,15 +6620,15 @@
                 {"id": "redo", "ref": "redo_action"},
                 {
                     "id": "down",
-                    "script": "const next_node_edge = display_graph.edges.find(e => e.from === selected); return next_node_edge ? {action: onselectnode, payload: {node_id: next_node_edge.to, event}} : {state, effects: [[stop_propagation, event]]}"
+                    "script": "const next_node_edge = display_graph.edges.find(e => e.from === selected); return next_node_edge ? {state: {...state, selected: [next_node_edge.to]}, effects: [[stop_propagation, event], [state.panzoom_selected_effect, {...state, selected: [next_node_edge.to]}], [state.update_hyperapp]]} : {state, effects: [[stop_propagation, event]]}"
                 },
                 {
                     "id": "up",
-                    "script": "const next_edges = display_graph.edges.filter(e => e.to === selected); const next_node_edge = next_edges[Math.ceil(next_edges.length / 2) - 1]; return next_node_edge ? {action: onselectnode, payload: {node_id: next_node_edge.from, event}} : {state, effects: [[stop_propagation, event]]}"
+                    "script": "const next_edges = display_graph.edges.filter(e => e.to === selected); const next_node_edge = next_edges[Math.ceil(next_edges.length / 2) - 1]; return next_node_edge ? {state: {...state, selected: [next_node_edge.from]}, effects: [[stop_propagation, event], [state.panzoom_selected_effect, {...state, selected: [next_node_edge.from]}], [state.update_hyperapp]]} : {state, effects: [[stop_propagation, event]]}"
                 },
                 {
                     "id": "left",
-                    "script": "const current_node = nodes.find(n => n.node_id === selected); const siblings = levels.siblings.get(selected); const next_node = static ? nodes.find(n => n.node_id === siblings[(siblings.findIndex(s => s === selected) - 1 + siblings.length) % siblings.length]): siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = (sibling_node.x < current_node.x) && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [dimensions.x])[1]; return next_node ? {action: onselectnode, payload: {node_id: next_node.node_id, event}} : {state, effects: [[stop_propagation, event]]}"
+                    "script": "const current_node = nodes.find(n => n.node_id === selected); const siblings = levels.siblings.get(selected); const next_node = static ? nodes.find(n => n.node_id === siblings[(siblings.findIndex(s => s === selected) - 1 + siblings.length) % siblings.length]): siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = (sibling_node.x < current_node.x) && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [dimensions.x])[1]; return next_node ? {state: {...state, selected: [next_node.node_id]}, effects: [[stop_propagation, event], [state.panzoom_selected_effect, {...state, selected: next_node.node_id}], [state.update_hyperapp]]} : {state, effects: [[stop_propagation, event]]}"
                 },
                 {
                     "id": "left_edge",
@@ -6631,7 +6636,7 @@
                 },
                 {
                     "id": "right",
-                    "script": "const current_node = nodes.find(n => n.node_id === selected); const siblings = levels.siblings.get(selected); const next_node = static ? nodes.find(n => n.node_id === siblings[(siblings.findIndex(s => s === selected) + 1) % siblings.length]) : siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [dimensions.x])[1]; return next_node ? {action: onselectnode, payload: {node_id: next_node.node_id, event}} : {state, effects: [[stop_propagation, event]]}"
+                    "script": "const current_node = nodes.find(n => n.node_id === selected); const siblings = levels.siblings.get(selected); const next_node = static ? nodes.find(n => n.node_id === siblings[(siblings.findIndex(s => s === selected) + 1) % siblings.length]) : siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [dimensions.x])[1]; return next_node ? {state: {...state, selected: [next_node.node_id]}, effects: [[stop_propagation, event], [state.panzoom_selected_effect, {...state, selected: next_node.node_id}], [state.update_hyperapp]]} : {state, effects: [[stop_propagation, event]]}"
                 },
                 {
                     "id": "right_edge",
@@ -6653,7 +6658,7 @@
                     "id": "edit_script",
                     "script": "return [[show_edit_text, {id, property:'script', oneditconfirm: update_node, value: selected_node.script, position: {x: node.x, y: node.y}}]]"
                 },
-                {"id": "enter", "script": "return [[onselectnode, {node_id, event}]]"},
+                {"id": "select", "script": "return [[onselectnode, {node_id, event}]]"},
                 {
                     "id": "add_node",
                     "script": "return [[add_node, {node: {id: randid}, select: true, child: selected}]]"
@@ -6662,15 +6667,19 @@
                     "id": "delete_node",
                     "script": "return [[delete_node, {id: selected}]]"
                 },
-                {
-                    "id": "find",
-                    "args": [],
-                    "script": "return [[search, {search: ''}], [focus_effect, {selector: `#${html_id}-search-input`}]]"
-                },
                 {"id": "copy", "script": "return [[copy_effect, {id}]]"},
                 {"id": "paste", "script": "return [[paste_effect, {node_id: id, randid}]]"},
                 {"id": "expand_contract", "script": "return [[expand_contract, {id}]]"},
                 {"id": "add_arg_node", "script": "return [[add_node, {node: {id: randid, ref: 'arg'}, select: true, child: selected}], [show_edit_text, {id: randid, property:'value', oneditconfirm: update_node, value: ''}]]"},
+                {
+                    "id": "find",
+                    "args": [],
+                    "script": "return [[search, {search: ''}], [focus, {selector: `#${html_id}-search-input`}]]"
+                },
+                {
+                    "id": "cancel_search",
+                    "script": "return [[search, {search: false}], [blur, {selector: `#${html_id}-search-input`}]]"
+                },
 
                 {
                     "id": "e",
@@ -6684,10 +6693,6 @@
                     "id": "esc",
                     "script": "return [[onselectnode, {node_id, event}]]" 
                 },
-                {
-                    "id": "esc_search",
-                    "script": "return [[search, {search: false}], [blur, {selector: `#${html_id}-search-input`}]]"
-                },
                 {"id": "panzoom_selected_id", "script": "return selected"},
                 {"id": "panzoom_selected_effector", "ref": "arg", "value": "state.panzoom_selected_effect"},
                 {"id": "panzoom_selected_effect", "ref": "array"},
@@ -6699,10 +6704,6 @@
                 },
                 {
                     "id": "graph_effects",
-                    "ref": "switch"
-                },
-                {
-                    "id": "search_effects",
                     "ref": "switch"
                 },
                 {"id": "update_effects_input", "script": "return typeof search === 'string' ? 'search' : 'graph'"},
@@ -6724,6 +6725,8 @@
                 {"id": "update_state", "ref": "switch"},
                 {"id": "no_update"},
                 {"id": "update", "ref": "update_graph_display"},
+                {"id": "update_effector", "ref": "hyperapp_action_effect"},
+                {"id": "update_effect", "ref": "array"},
                 {"id": "default_fx", "ref": "array"},
                 {"id": "default_out"},
 
@@ -6762,6 +6765,9 @@
                 {"from": "paste", "to": "effects_map", "as": "paste"},
                 {"from": "expand_contract", "to": "effects_map", "as": "expand_contract"},
                 {"from": "save", "to": "effects_map", "as": "save"},
+                {"from": "cancel_search", "to": "effects_map", "as": "cancel_search"},
+                {"from": "find", "to": "effects_map", "as": "find"},
+                {"from": "select", "to": "effects_map", "as": "select"},
 
                 {"from": "undo", "to": "actions_map", "as": "undo"},
                 {"from": "redo", "to": "actions_map", "as": "redo"},
@@ -6771,6 +6777,7 @@
                 {"from": "right", "to": "actions_map", "as": "right"},
 
                 {"from": "editing", "to": "mode", "as": "editing"},
+                {"from": "search", "to": "mode", "as": "search"},
                 {"from": "keybindings", "to": "mode_keybindings", "as": "target"},
                 {"from": "mode", "to": "mode_keybindings", "as": "path"},
                 {"from": "mode_keybindings", "to": "key_action_effect", "as": "target"},
@@ -6787,7 +6794,11 @@
                 {"from": "effects_map", "to": "out_pred", "as": "effect"},
                 {"from": "run_display_graph_effector", "to": "run_display_graph_effect", "as": "a0"},
                 {"from": "key_event", "to": "run_display_graph_effect", "as": "a1"},
-                {"from": "run_display_graph_effect", "to": "default_fx", "as": "a0"},
+                {"from": "run_display_graph_effect", "to": "_default_fx", "as": "a0"},
+                {"from": "update", "to": "update_effector", "as": "fn", "type": "ref"},
+                {"from": "update_effector", "to": "update_effect", "as": "a0"},
+                {"from": "key_event", "to": "update_effect", "as": "a1"},
+                {"from": "update_effect", "to": "default_fx", "as": "a0"},
                 {"from": "default_fx", "to": "default_out", "as": "effects"},
                 {"from": "out_pred", "to": "out", "as": "pred"},
                 {"from": "default_out", "to": "out", "as": "false"},
@@ -6843,17 +6854,7 @@
                 },
                 {
                     "from": "key_inputs",
-                    "to": "search_effects",
-                    "as": "input"
-                },
-                {
-                    "from": "key_inputs",
                     "to": "editing_effects",
-                    "as": "input"
-                },
-                {
-                    "from": "key_inputs",
-                    "to": "search_effects",
                     "as": "input"
                 },
                 {
@@ -6911,16 +6912,13 @@
                 {"from": "selected", "to": "up", "as": "selected"},
                 {"from": "arg_display_graph", "to": "up", "as": "display_graph"},
                 {"from": "key_event", "to": "up", "as": "event"},
+                { "from": "stop_propagation", "to": "up", "as": "stop_propagation" },
                 {
                     "from": "key_event",
                     "to": "down",
                     "as": "event"
                 },
-                {
-                    "from": "stop_propagation",
-                    "to": "down",
-                    "as": "stop_propagation"
-                },
+                { "from": "stop_propagation", "to": "down", "as": "stop_propagation" },
                 {
                     "from": "onselectnode_action",
                     "to": "down",
@@ -7083,23 +7081,18 @@
                 },
                 {
                     "from": "selected",
-                    "to": "enter",
+                    "to": "select",
                     "as": "node_id"
                 },
                 {
-                    "from": "key_event",
-                    "to": "enter",
-                    "as": "event"
-                },
-                {
                     "from": "onselectnode_effect",
-                    "to": "enter",
+                    "to": "select",
                     "as": "onselectnode"
                 },
                 {
-                    "from": "enter",
-                    "to": "graph_effects",
-                    "as": "enter"
+                    "from": "key_event",
+                    "to": "select",
+                    "as": "event"
                 },
                 {
                     "from": "key_event",
@@ -7127,7 +7120,6 @@
                     "to": "f",
                     "as": "html_id"
                 },
-                {"from": "search_effect", "to": "f", "as": "search"},
                 {"from": "focus_effect", "to": "f", "as": "focus_effect"},
                 {
                     "from": "html_id",
@@ -7397,21 +7389,6 @@
                     "as": "pending_edges"
                 },
                 {
-                    "from": "pending_edges",
-                    "to": "update_graph_sim",
-                    "as": "pending_edges"
-                },
-                {
-                    "from": "selected",
-                    "to": "update_graph_sim",
-                    "as": "selected"
-                },
-                {
-                    "from": "state",
-                    "to": "update_graph_sim",
-                    "as": "state"
-                },
-                {
                     "from": "state",
                     "to": "make_edge",
                     "as": "state"
@@ -7436,161 +7413,12 @@
                     "to": "editing_effects",
                     "as": "escape"
                 },
-                {
-                    "from": "search_effect",
-                    "to": "esc_search",
-                    "as": "search"
-                },
-                {
-                    "from": "blur_effect",
-                    "to": "esc_search",
-                    "as": "blur"
-                },
-                {
-                    "from": "esc_search",
-                    "to": "search_effects",
-                    "as": "escape"
-                },
-                {"from": "display_graph_out", "to": "esc", "as": "node_id"},
-                {"from": "onselectnode_effect", "to": "esc", "as": "onselectnode"},
-                {"from": "key_event", "to": "esc", "as": "event"},
-                {"from": "esc", "to": "graph_effects", "as": "escape"},
-                {
-                    "from": "f",
-                    "to": "graph_effects",
-                    "as": "f"
-                },
-                {
-                    "from": "x",
-                    "to": "graph_effects",
-                    "as": "x"
-                },
-                {
-                    "from": "o",
-                    "to": "graph_effects",
-                    "as": "o"
-                },
-                {
-                    "from": "save",
-                    "to": "graph_effects",
-                    "as": "ctrl_s"
-                },
-                {
-                    "from": "y",
-                    "to": "clipboard",
-                    "as": "y"
-                },
-                {
-                    "from": "state",
-                    "to": "set_selected",
-                    "as": "state"
-                },
-                {
-                    "from": "selected",
-                    "to": "set_selected",
-                    "as": "selected"
-                },
-                {
-                    "from": "clipboard",
-                    "to": "set_clipboard",
-                    "as": "clipboard"
-                },
-                {
-                    "from": "set_selected",
-                    "to": "set_selected_edge",
-                    "as": "state"
-                },
-                {"from": "editing", "to": "new_state", "as": "pred"},
-                {"from": "state", "to": "search_state", "as": "search"},
-                {"from": "search_state", "to": "update_state", "as": "search"},
-                {"from": "update_effects_input", "to": "update_state", "as": "input"},
-                {
-                    "from": "search_state",
-                    "to": "update_state",
-                    "as": "search"
-                },
-                {
-                    "from": "graph_state",
-                    "to": "update_state",
-                    "as": "graph"
-                },
-                {"from": "update_state", "to": "update"},
-                {
-                    "from": "key_event",
-                    "to": "update_graph_sim"
-                },
-                {
-                    "from": "key_event",
-                    "to": "graph_state"
-                },
-                {
-                    "from": "display_graph",
-                    "to": "graph_state",
-                    "as": "display_graph"
-                },
-                {
-                    "from": "selected",
-                    "to": "graph_state",
-                    "as": "selected"
-                },
-                {
-                    "from": "set_selected",
-                    "to": "graph_state",
-                    "as": "state"
-                },
-                {
-                    "from": "key_inputs",
-                    "to": "graph_state",
-                    "as": "key"
-                },
-                {
-                    "from": "search",
-                    "to": "update_effects_input",
-                    "as": "search"
-                },
-                {
-                    "from": "update_effects_input",
-                    "to": "update_effects",
-                    "as": "input"
-                },
-                {"from": "state", "to": "panzoom_selected_payload"},
-                {"from": "selected", "to": "panzoom_selected_id", "as": "selected"},
-                {"from": "panzoom_selected_id", "to": "panzoom_selected_payload", "as": "selected"},
-                {"from": "panzoom_selected_effector", "to": "panzoom_selected_effect", "as": "a0"},
-                {"from": "panzoom_selected_payload", "to": "panzoom_selected_effect", "as": "a1"},
-                {"from": "panzoom_selected_effect", "to": "panzoom_selected_effect_arr", "as": "a0"},
-                {"from": "panzoom_selected_effect_arr", "to": "graph_effects", "as": "arrowleft"},
-                {"from": "panzoom_selected_effect_arr", "to": "graph_effects", "as": "h"},
-                {"from": "panzoom_selected_effect_arr", "to": "graph_effects", "as": "arrowright"},
-                {"from": "panzoom_selected_effect_arr", "to": "graph_effects", "as": "l"},
-                {"from": "panzoom_selected_effect_arr", "to": "graph_effects", "as": "arrowup"},
-                {"from": "panzoom_selected_effect_arr", "to": "graph_effects", "as": "k"},
-                {"from": "panzoom_selected_effect_arr", "to": "graph_effects", "as": "arrowdown"},
-                {"from": "panzoom_selected_effect_arr", "to": "graph_effects", "as": "j"},
-                {
-                    "from": "graph_effects",
-                    "to": "update_effects",
-                    "as": "graph"
-                },
-                {
-                    "from": "search_effects",
-                    "to": "update_effects",
-                    "as": "search"
-                },
-                {
-                    "from": "update_effects",
-                    "to": "update",
-                    "as": "effects"
-                },
-                {"from": "state", "to": "no_update", "as": "state"},
-                {
-                    "from": "editing_effects",
-                    "to": "no_update",
-                    "as": "effects"
-                },
-                { "from": "editing", "to": "_out", "as": "pred" },
-                { "from": "update", "to": "_out", "as": "false" },
-                { "from": "no_update", "to": "_out", "as": "true" }
+                {"from": "html_id", "to": "cancel_search", "as": "html_id"},
+                {"from": "search_effect", "to": "cancel_search", "as": "search"},
+                {"from": "blur_effect", "to": "cancel_search", "as": "blur"},
+                {"from": "html_id", "to": "find", "as": "html_id"},
+                {"from": "focus_effect", "to": "find", "as": "focus"},
+                {"from": "search_effect", "to": "find", "as": "search"}
             ]
         },
         {
@@ -9357,7 +9185,7 @@
                                 },
                                 {
                                     "id": "search_input_props",
-                                    "script": "return {id: `${html_id}-search-input`, key: `${html_id}-search-input`, class: 'search-input', type: 'text', onkeydown: (s, payload) => { if(payload.key === 'Enter'){ const direction = payload.shiftKey ? -1 : 1; const idx = (s.search_results.length + s.search_index + direction) % s.search_results.length; return {...s, selected: s.search_results.slice(idx, idx + 1), search_index: idx} } else { return s;} }, oninput: (s, payload) => {const search_results = new _lib.Fuse(nodes.map(n => Object.assign({}, n, display_graph.nodes.find(d => d.id === n.node_id))), {keys: ['name', 'node_id', 'ref', 'value']}).search(payload.target.value).map(r => r.item.node_id); return {...s, search: payload.target.value, selected: search_results.length > 0 ? search_results.slice(0, 1) : s.selected, search_results, search_index: 0}}}"
+                                    "script": "return {id: `${html_id}-search-input`, key: `${html_id}-search-input`, class: 'search-input', type: 'text', onkeydown: (s, payload) => { if(payload.key === 'Enter'){ const direction = payload.shiftKey ? -1 : 1; const idx = (s.search_results.length + s.search_index + direction) % s.search_results.length; return [{...s, selected: s.search_results.slice(idx, idx + 1), search_index: idx}, [s.panzoom_selected_effect, {...s, selected: s.search_results[idx]}], [s.update_hyperapp]] } else { return s;} }, oninput: (s, payload) => {const search_results = new _lib.Fuse(nodes.map(n => Object.assign({}, n, display_graph.nodes.find(d => d.id === n.node_id))), {keys: ['name', 'node_id', 'ref', 'value']}).search(payload.target.value).map(r => r.item.node_id); return [{...s, search: payload.target.value, selected: search_results.length > 0 ? search_results.slice(0, 1) : s.selected, search_results, search_index: 0}, search_results.length > 0 && [s.panzoom_selected_effect, {...s, selected: search_results[0]}], [s.update_hyperapp]]}}"
                                 },
                                 {"id": "search_field", "ref": "html_element"},
                                 {"id": "search_effect", "ref": "search_effect"},
