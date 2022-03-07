@@ -635,6 +635,7 @@ const bfs = (graph, fn) => {
 }
 
 const updateSimulationNodes = (dispatch, data) => {
+    console.log('update sim node');
     if(data.static) {
         const find_childest = n => {
             const e = graph.edges.find(e => e.from === n);
@@ -1625,6 +1626,7 @@ const lib = {
             let instance;
             let lastpanzoom = 0;
             const panzoom_selected_effect = (dispatch, payload) => {
+                console.log('trying panzoom');
                 if(!instance){ return; }
                 lastpanzoom = performance.now();
                 const viewbox = findViewBox(

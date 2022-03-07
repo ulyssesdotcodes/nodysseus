@@ -1522,7 +1522,7 @@
                 {"id": "run_wrapper"},
                 {
                     "id": "out",
-                    "script": "return {state, effects: [(!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && run.run && [run.run, payload], !readonly && [dispatch_custom_event_effect, {html_id, event: 'updategraph', detail: {graph: state.display_graph}}], ...(effects?.filter(e => e?.[0]) ?? [])]}"
+                    "script": "return {state, effects: [!readonly && (!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && run.run && [run.run, payload], !readonly && [dispatch_custom_event_effect, {html_id, event: 'updategraph', detail: {graph: state.display_graph}}], ...(effects?.filter(e => e?.[0]) ?? [])]}"
                 }
             ],
             "edges": [
