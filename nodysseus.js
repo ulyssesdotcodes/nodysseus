@@ -3,6 +3,7 @@ import examples from "./json/examples.json"
 import get from "just-safe-get";
 import set from "just-safe-set";
 import { diff } from "just-diff";
+import { diffApply } from "just-diff-apply";
 import { h, app, text, memo } from "hyperapp"
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 import Fuse from "fuse.js";
@@ -211,7 +212,7 @@ class NodysseusError extends Error {
 }
 
 const executeGraph = ({ cache, graph, parent_graph, cache_id, node_cache }) => {
-    let usecache = false;
+    let usecache = true;
 
     if (!cache.has(cache_id)) {
         cache.set(cache_id, new Map([["__handles", 1]]));
@@ -467,7 +468,7 @@ const executeGraph = ({ cache, graph, parent_graph, cache_id, node_cache }) => {
 
 
                 try {
-                    const node_hash = hashcode(orderedargs + node_ref.script);
+                    const node_hash = orderedargs + node_ref.script;
 
                     const fn = node_cache.get(node_hash) ?? new Function(`return function _${(node.name?.replace(/\W/g, "_") ?? node.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script}}`)();
 
@@ -549,7 +550,7 @@ const executeGraph = ({ cache, graph, parent_graph, cache_id, node_cache }) => {
 
 const calculateLevels = (nodes, links, graph, selected) => {
     const find_childest = n => {
-        const e = graph.edges.find(e => e.from === n);
+        const e = graph.edges.find(ed => ed.from === n);
         if (e) {
             return find_childest(e.to);
         } else {
@@ -846,7 +847,7 @@ const updateSimulationNodes = (dispatch, data) => {
         const children = children_map.get(n.id);
         const node_child_id = main_node_map.get(n.id);
 
-        const node_hash = hashcode(nid);
+        const node_hash = simulation_node_data.get(node_child_id)?.hash ?? hashcode(nid);
         const randpos = {x: (((node_hash * 0.254) % 256.0) / 256.0), y: ((node_hash * 0.874) % 256.0) / 256.0};
 
         const addorundefined = (a, b) => {
@@ -1519,7 +1520,8 @@ const lib = {
             },
         },
         set, 
-        diff
+        diff,
+        diffApply
     },
     ha: { h: {args: ['dom_type', 'props', 'children'], fn: h}, app, text: {args: ['text'], fn: text}, memo },
     no: {
@@ -1661,12 +1663,6 @@ const lib = {
     // THREE
 };
 
-const graph_list = JSON.parse(localStorage.getItem("graph_list"));
-// const display_graph = {...DEFAULT_GRAPH, nodes: DEFAULT_GRAPH.nodes.map(n => ({...n})), edges: DEFAULT_GRAPH.edges.map(e => ({...e}))};
-const stored = localStorage.getItem(graph_list?.[0]);
-const init_display_graph = stored ? JSON.parse(stored) : examples.find(g => g.id === 'simple');
-const original_graph = {...DEFAULT_GRAPH, nodes: [...DEFAULT_GRAPH.nodes].map(n => ({...n})), edges: [...DEFAULT_GRAPH.edges].map(e => ({...e}))};
-
 const runGraph = lib.no.runGraph;
 
 const add_default_nodes_and_edges = g => ({
@@ -1678,12 +1674,10 @@ const add_default_nodes_and_edges = g => ({
                 .filter(e => !generic_nodes.has(e.from))
                 .concat(DEFAULT_GRAPH.edges.filter(e => generic_nodes.has(e.to))) 
 })
-
 const nodysseus = function(html_id, display_graph) {
     const dispatch = runGraph(DEFAULT_GRAPH, "initialize_hyperapp_app", { 
         graph: DEFAULT_GRAPH, 
-        original_graph, 
-        display_graph: add_default_nodes_and_edges(display_graph ?? init_display_graph),
+        display_graph: add_default_nodes_and_edges(display_graph),
         hash: window.location.hash ?? "",
         html_id,
         dimensions: {
@@ -1698,5 +1692,6 @@ const nodysseus = function(html_id, display_graph) {
 
     return () => requestAnimationFrame(() => dispatch.dispatch(s => undefined));
 }
+
 
 export { runGraph, nodysseus };
