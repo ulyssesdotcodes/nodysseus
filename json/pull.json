@@ -664,7 +664,7 @@
                 {"id": "args_path", "value": "args"},
                 {"id": "delete_context_args_val", "ref": "delete"},
                 {"id": "args", "ref": "merge_objects"},
-                {"id": "out", "script": "const parent_id = _node.id.substring(0, _node.id.lastIndexOf('/')); const input = _graph.edges.filter(e => e.to === parent_id).find(i => i.as === 'fn'); return input ? {fn: input.from, graph: _graph, args: args ?? {}} : false"}
+                {"id": "out", "script": "const parent_id = _node.id.substring(0, _node.id.lastIndexOf('/')); const input = _graph.in_edge_map.get(parent_id).find(i => i.as === 'fn'); return input ? {fn: input.from, graph: _graph, args: args ?? {}} : false"}
             ],
             "edges": [
                 {"from": "context_args", "to": "delete_context_args_val", "as": "target"},
@@ -5166,7 +5166,7 @@
                         {"id": "nodes", "ref": "arg", "value": "state.display_graph.nodes"},
                         {
                             "id": "new_edge",
-                            "script": "return {...payload_edge, as: next_arg ?? (`arg${(siblings.map(s => s.as).filter(a => a.startsWith('arg')).sort().map(s => parseInt(s.substring(3))).filter(i => !isNaN(i)).reverse()[0] ?? -1) + 1}`)}"
+                            "script": "return {...payload_edge, as: payload_edge.as ?? next_arg ??  (`arg${(siblings.map(s => s.as).filter(a => a.startsWith('arg')).sort().map(s => parseInt(s.substring(3))).filter(i => !isNaN(i)).reverse()[0] ?? -1) + 1}`)}"
                         },
                         {"id": "child_node", "script": "return nodes.find(n => n.id === edge.to)"},
                         {
@@ -5796,6 +5796,7 @@
             "nodes": [
                 {"id": "in"},
                 {"id": "display_graph_nodes", "ref": "arg", "value": "state.display_graph.nodes"},
+                {"id": "display_graph_edges", "ref": "arg", "value": "state.display_graph.edges"},
                 {"id": "nodes", "ref": "arg", "value": "state.nodes"},
                 {"id": "selected", "ref": "arg", "value": "state.selected.0"},
                 {"id": "state", "ref": "arg", "value": "state"},
@@ -5804,16 +5805,69 @@
                 {"id": "y_path", "value": "y"},
                 {"id": "length_path", "value": "length"},
                 {"id": "node_args_arr", "ref": "node_args"},
-                {"id": "node_args", "script": "return 'inputs: ' + node_args.join(', ')"},
+                {"id": "node_args_text", "value": "inputs: "},
                 {"id": "node_args_count", "ref": "get"},
                 {"id": "node_description", "ref": "node_description"},
                 {"id": "info_display_path", "value": "args_display"},
                 {"id": "selected_node", "script": "return nodes.find(n => n.id === selected)"},
+                {"id": "selected_inputs", "script": "return edges.filter(e => e.to === selected)"},
                 {"id": "selected_el_node", "script": "return nodes.find(n => n.node_id === selected)"},
                 {"id": "x", "ref": "get"},
                 {"id": "y", "ref": "get"},
+                {
+                    "id": "arg_el", 
+                    "out": "out",
+                    "nodes": [
+                        {"id": "in"},
+                        {"id": "selected", "ref": "arg", "value": "state.selected.0"},
+                        {"id": "randid", "ref": "arg", "value": "state.randid"},
+                        {"id": "text", "ref": "arg", "value": "element"},
+                        {"id": "inputs", "ref": "arg", "value": "inputs"},
+                        {"id": "add_node", "ref": "add_node_action"},
+                        {"id": "add_node_action", "ref": "runnable"},
+                        {"id": "new_node"},
+                        {"id": "payload"},
+                        {"id": "create_node"},
+                        {"id": "clickable_action", "ref": "runnable"},
+                        {"id": "action", "ref": "if"},
+                        {"id": "text_html", "ref": "html_text"},
+                        {"id": "clickable", "script": "return !(text === '_args' || text === '_node_inputs' || text === '_node' || text === '_graph') && !inputs.find(e => e.as === text)"},
+                        {"id": "class"},
+                        {"id": "props"},
+                        {"id": "dom_type", "value": "span"},
+                        {"id": "out", "ref": "html_element"}
+                    ],
+                    "edges": [
+                        {"from": "in", "to": "out", "as": "_"},
+                        {"from": "selected", "to": "payload", "as": "child"},
+                        {"from": "randid", "to": "new_node", "as": "id"},
+                        {"from": "new_node", "to": "payload", "as": "node"},
+                        {"from": "text", "to": "payload", "as": "child_as"},
+                        {"from": "add_node", "to": "add_node_action", "as": "fn"},
+                        {"from": "add_node_action", "to": "create_node", "as": "action"},
+                        {"from": "payload", "to": "create_node", "as": "payload"},
+                        {"from": "create_node", "to": "clickable_action", "as": "fn"},
+                        {"from": "clickable", "to": "action", "as": "pred"},
+                        {"from": "clickable_action", "to": "action", "as": "true"},
+                        {"from": "action", "to": "props", "as": "onclick"},
+                        {"from": "inputs", "to": "clickable", "as": "inputs"},
+                        {"from": "text", "to": "clickable", "as": "text"},
+                        {"from": "clickable", "to": "class", "as": "clickable"},
+                        {"from": "class", "to": "props", "as": "class"},
+                        {"from": "props", "to": "out", "as": "props"},
+                        {"from": "text", "to": "text_html", "as": "text"},
+                        {"from": "text_html", "to": "out", "as": "children"},
+                        {"from": "dom_type", "to": "out", "as": "dom_type"}
+                    ]
+                },
+                {"id": "arg_el_runnable_args"},
+                {"id": "arg_el_runnable", "ref": "runnable"},
+                {"id": "args_links", "ref": "map"},
                 {"id": "args_h_text", "ref": "html_text"},
+                {"id": "args_h_text_array", "ref": "array"},
+                {"id": "args_h_children", "ref": "append"},
                 {"id": "args_h", "ref": "html_element"},
+                {"id": "args_h_props", "value": {"class": "args"}},
                 {"id": "args_h_out", "ref": "default"},
                 {"id": "description_h_text", "ref": "html_text"},
                 {"id": "description_h", "ref": "html_element"},
@@ -5834,11 +5888,21 @@
                 {"from": "selected", "to": "selected_node", "as": "selected"},
                 {"from": "display_graph_nodes", "to": "node_args_arr", "as": "nodes"},
                 {"from": "selected_node", "to": "node_args_arr", "as": "node"},
-                {"from": "node_args", "to": "args_h_text", "as": "text"},
+                {"from": "node_args_text", "to": "args_h_text", "as": "text"},
+                {"from": "args_h_text", "to": "args_h_text_array", "as": "a0"},
                 {"from": "node_args_arr", "to": "node_args_count", "as": "target"},
                 {"from": "length_path", "to": "node_args_count", "as": "path"},
-                {"from": "node_args_arr", "to": "node_args", "as": "node_args"},
-                {"from": "args_h_text", "to": "args_h", "as": "children"},
+                {"from": "selected", "to": "selected_inputs", "as": "selected"},
+                {"from": "display_graph_edges", "to": "selected_inputs", "as": "edges"},
+                {"from": "selected_inputs", "to": "arg_el_runnable_args", "as": "inputs"},
+                {"from": "arg_el_runnable_args", "to": "arg_el_runnable", "as": "args"},
+                {"from": "arg_el","to": "arg_el_runnable", "as": "fn"},
+                {"from": "arg_el_runnable","to": "args_links", "as": "fn", "type": "resolve"},
+                {"from": "node_args_arr", "to": "args_links", "as": "array"},
+                {"from": "args_links", "to": "args_h_children", "as": "item"},
+                {"from": "args_h_text_array", "to": "args_h_children", "as": "array"},
+                {"from": "args_h_children", "to": "args_h", "as": "children"},
+                {"from": "args_h_props", "to": "args_h", "as": "props"},
                 {"from": "args_h", "to": "args_h_out", "as": "value"},
                 {"from": "selected", "to": "node_description", "as": "node_id"},
                 {"from": "display_graph_nodes", "to": "node_description", "as": "nodes"},
@@ -6197,6 +6261,7 @@
                         {"id": "node", "ref": "arg", "value": "payload.node"},
                         {"id": "select", "ref": "arg", "value": "payload.select"},
                         {"id": "child", "ref": "arg", "value": "payload.child"},
+                        {"id": "child_as", "ref": "arg", "value": "payload.child_as"},
                         {"id": "history", "ref": "arg", "value": "state.history"},
                         {"id": "selected", "ref": "arg", "value": "state.selected"},
                         {"id": "history_path", "value": "history"},
@@ -6223,7 +6288,7 @@
                         {"id": "new_history", "ref": "append"},
                         {
                             "id": "effects",
-                            "script": "return [[add_edge, {to: child, from: id}], [update_sim_effect]]"
+                            "script": "return [[add_edge, {to: child, from: id, as: child_as}], [update_sim_effect]]"
                         },
                         {
                             "id": "nodes_path",
@@ -6271,6 +6336,7 @@
                         {"from": "node", "to": "history_item", "as": "node"},
                         {"from": "payload", "to": "history_item", "as": "payload"},
                         {"from": "child", "to": "history_item", "as": "child"},
+                        {"from": "child_as", "to": "history_item", "as": "child_as"},
                         {"from": "history_item", "to": "new_history", "as": "item"},
                         {"from": "history", "to": "new_history", "as": "array"},
                         {
@@ -6305,6 +6371,7 @@
                         },
                         {"from": "id", "to": "effects", "as": "id"},
                         {"from": "child", "to": "effects", "as": "child"},
+                        {"from": "child_as", "to": "effects", "as": "child_as"},
                         {
                             "from": "add_edge_effector",
                             "to": "effects",
@@ -7848,7 +7915,7 @@
                 {"id": "open_reference_popover", "ref": "open_reference_popover"},
                 {"id": "show_edit_text", "ref": "show_edit_text"},
                 {"id": "clear_popover", "ref": "clear_popover_graph"},
-                {"id": "update_node", "ref": "update_node_action"},
+                {"id": "update_node", "ref": "arg", "value": "state.update_hyperapp"},
                 {"id": "update_node_effect", "ref": "update_node"},
                 {"id": "create_reference_effect", "ref": "create_reference_effect"},
                 {
@@ -8424,7 +8491,7 @@
                     "id": "styles",
                     "nodes": [
                         {"id": "in"},
-                        {"id": "style_content", "value": "#node-editor { position: relative; width: 100%; height: 100vh; color: white; font-family: consolas; overflow: hidden; } #node-editor-editor.hash-view { background-color: unset; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .more { cursor: pointer; } .edit-value .centering { position: absolute; width: 32vw; display: flex; flex-direction: column; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .node-info { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; display: flex; gap: .4em; flex-direction: column; } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node { cursor: pointer; stroke: #fff; stroke-width: 32; stroke-opacity: 1; } .insert-node .circle{ fill-opacity: 0.5; } .node text { filter: url(#flood-background) } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"},
+                        {"id": "style_content", "value": "#node-editor { position: relative; width: 100%; height: 100vh; color: white; font-family: consolas; overflow: hidden; } #node-editor-editor.hash-view { background-color: unset; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .more { cursor: pointer; } .edit-value .centering { position: absolute; width: 32vw; display: flex; flex-direction: column; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .node-info { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; display: flex; gap: .4em; flex-direction: column; } .node-info .args { display: flex; gap: 8px; } .node-info .args span.clickable { cursor: pointer; text-decoration: underline dotted;  } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node { cursor: pointer; stroke: #fff; stroke-width: 32; stroke-opacity: 1; } .insert-node .circle{ fill-opacity: 0.5; } .node text { filter: url(#flood-background) } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"},
                         {"id": "style_h_text", "ref": "html_text"},
                         {"id": "style_dom_type", "value": "style"},
                         {"id": "out", "ref": "html_element"}

@@ -211,7 +211,7 @@ class NodysseusError extends Error {
     }
 }
 
-const executeGraph = ({ cache, graph, parent_graph, cache_id, node_cache }) => {
+const executeGraph = ({ cache, graph, cache_id, node_cache }) => {
     let usecache = true;
 
     if (!cache.has(cache_id)) {
@@ -1413,7 +1413,7 @@ const middleware = dispatch => (ha_action, ha_payload) => {
                 const result = action.stateonly 
                     ? execute_graph_fn(state)
                     : execute_graph_fn({state, payload});
-                
+
                 if(!result) {
                     return state;
                 }
