@@ -662,16 +662,15 @@
                 {"id": "value_args", "ref": "arg", "value": "args"},
                 {"id": "context_args", "ref": "arg", "value": "_args"},
                 {"id": "args_path", "value": "args"},
-                {"id": "prune_vals", "value": {"args": false, "fn": false}},
-                {"id": "prune_args", "ref": "merge_objects"},
+                {"id": "delete_context_args_val", "ref": "delete"},
                 {"id": "args", "ref": "merge_objects"},
                 {"id": "out", "script": "const parent_id = _node.id.substring(0, _node.id.lastIndexOf('/')); const input = _graph.in_edge_map.get(parent_id).find(i => i.as === 'fn'); return input ? {fn: input.from, graph: _graph, args: args ?? {}} : false"}
             ],
             "edges": [
-                {"from": "context_args", "to": "prune_args", "as": "o0"},
-                {"from": "prune_vals", "to": "prune_args", "as": "o1"},
-                {"from": "prune_args", "to": "args", "as": "a0"},
-                {"from": "value_args", "to": "args", "as": "a1"},
+                {"from": "context_args", "to": "delete_context_args_val", "as": "target"},
+                {"from": "args_path", "to": "delete_context_args_val", "as": "path"},
+                {"from": "delete_context_args_val", "to": "_args", "as": "a1"},
+                {"from": "value_args", "to": "args", "as": "a0"},
                 {"from": "args", "to": "out", "as": "args", "type": "resolve"},
                 {"from": "fn", "to": "out", "as": "fn", "type": "ref"}
             ]
@@ -2160,7 +2159,7 @@
                 {"from": "map_fn_runnable", "to": "map_runnables", "as": "fn"},
                 {"from": "map_runnables", "to": "runnables_promise", "as": "promises"},
                 {"from": "runnables_promise", "to": "out", "as": "fn"},
-                {"from": "context_args", "to": "_merged_args", "as": "a0"},
+                {"from": "context_args", "to": "merged_args", "as": "a0"},
                 {"from": "value_args", "to": "merged_args", "as": "a1"},
                 {"from": "merged_args", "to": "seq_runnable_args", "as": "target"},
                 {"from": "args_path", "to": "seq_runnable_args", "as": "path"},
@@ -5300,7 +5299,7 @@
         },
         {
             "id": "save_effect",
-            "script": "return (dispatch, payload) => { const graph_list = JSON.parse(localStorage.getItem('graph_list'))?.filter(l => l !== payload.display_graph.id) ?? []; graph_list.unshift(payload.display_graph.id); localStorage.setItem('graph_list', JSON.stringify(graph_list)); const graphstr = JSON.stringify({...payload.display_graph, node_map: undefined, in_edge_map: undefined}); localStorage.setItem(payload.display_graph.id, graphstr); window.location.hash = '#' + payload.display_graph.id; }"
+            "script": "return (dispatch, payload) => { const graph_list = JSON.parse(localStorage.getItem('graph_list'))?.filter(l => l !== payload.display_graph.id) ?? []; graph_list.unshift(payload.display_graph.id); localStorage.setItem('graph_list', JSON.stringify(graph_list)); const graphstr = JSON.stringify({...payload.display_graph, node_map: undefined, in_edge_map: undefined}); localStorage.setItem(payload.display_graph.id, graphstr);}"
         },
         {
             "id": "export_effect",
