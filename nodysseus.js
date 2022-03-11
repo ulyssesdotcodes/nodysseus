@@ -1578,11 +1578,12 @@ const lib = {
                 const promise = keys.reduce((acc, k) => acc || ispromise(args[k]), false);
                 return promise 
                     ? Promise.all(keys.map(k => Promise.resolve(args[k])))
-                        .then(es => Object.fromEntries(es.flatMap(Object.entries))) 
-                    : Object.fromEntries(keys
-                        .map(k => args[k]?._Proxy ? args[k]._value : args[k])
-                        .flatMap(o => typeof o === 'object' && o ? Object.entries(o) : [])
-                    )
+                        .then(es => Object.assign({}, ...es.map(k => args[k]?._Proxy ? args[k]._value : args[k]).filter(a => a && typeof a === 'object'))) 
+                    : Object.assign({}, ...keys.map(k => args[k]?._Proxy ? args[k]._value : args[k]).filter(a => a && typeof a === 'object'))
+                    // Object.fromEntries(keys
+                    //     .map(k => args[k]?._Proxy ? args[k]._value : args[k])
+                    //     .flatMap(o => typeof o === 'object' && o ? Object.entries(o) : [])
+                    // )
             }
         },
         add: {

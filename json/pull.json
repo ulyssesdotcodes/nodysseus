@@ -661,16 +661,24 @@
                 {"id": "fn", "ref": "arg", "value": "fn"},
                 {"id": "value_args", "ref": "arg", "value": "args"},
                 {"id": "context_args", "ref": "arg", "value": "_args"},
+                {"id": "fn_path", "value": "fn"},
                 {"id": "args_path", "value": "args"},
-                {"id": "delete_context_args_val", "ref": "delete"},
+                {"id": "prune_vals", "value": {"args": false}},
+                {"id": "delete_fn", "ref": "delete"},
+                {"id": "delete_args", "ref": "delete"},
+                {"id": "args_log", "ref": "log"},
                 {"id": "args", "ref": "merge_objects"},
                 {"id": "out", "script": "const parent_id = _node.id.substring(0, _node.id.lastIndexOf('/')); const input = _graph.in_edge_map.get(parent_id).find(i => i.as === 'fn'); return input ? {fn: input.from, graph: _graph, args: args ?? {}} : false"}
             ],
             "edges": [
-                {"from": "context_args", "to": "delete_context_args_val", "as": "target"},
-                {"from": "args_path", "to": "delete_context_args_val", "as": "path"},
-                {"from": "delete_context_args_val", "to": "_args", "as": "a1"},
-                {"from": "value_args", "to": "args", "as": "a0"},
+                {"from": "context_args", "to": "delete_fn", "as": "target"},
+                {"from": "fn_path", "to": "delete_fn", "as": "path"},
+                {"from": "delete_fn", "to": "delete_args", "as": "target"},
+                {"from": "args_path", "to": "delete_args", "as": "path"},
+                {"from": "delete_args", "to": "args_log", "as": "value"},
+                {"from": "args_log", "to": "args", "as": "o0"},
+                {"from": "prune_vals", "to": "args", "as": "o1"},
+                {"from": "value_args", "to": "args", "as": "o2"},
                 {"from": "args", "to": "out", "as": "args", "type": "resolve"},
                 {"from": "fn", "to": "out", "as": "fn", "type": "ref"}
             ]
@@ -915,7 +923,7 @@
                 {"id": "in"},
                 {"id": "target", "ref": "arg", "value": "target"},
                 {"id": "path", "ref": "arg", "value": "path"},
-                {"id": "out", "script": "const new_val = Object.assign({}, target); delete target[path]; return new_val"}
+                {"id": "out", "script": "const new_val = Object.assign({}, target); delete new_val[path]; return new_val"}
             ],
             "edges": [
                 {"from": "in", "to": "out", "as": "args"},
