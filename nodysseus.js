@@ -485,9 +485,9 @@ const executeGraph = ({ cache, graph, cache_id, node_cache }) => {
                         : fn.apply(null, input_values);
 
                     // don't cache things without arguments
-                    if (node_ref.args?.length > 0) {
+                    // if (node_ref.args?.length > 0) {
                         cache.get(cache_id).set(node.id, [results, data]);
-                    }
+                    // }
 
                     if(typeof results === 'object' && !!results && !results._Proxy && !Array.isArray(results) && Object.keys(results).length > 0) {
                         if(_needsresolve || !!results._needsresolve) {
