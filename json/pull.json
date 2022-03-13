@@ -5657,6 +5657,7 @@
                 {"id": "display_graph", "ref": "arg", "value": "state.display_graph"},
                 {"id": "dimensions", "ref": "arg", "value": "state.dimensions"},
                 {"id": "html_id", "ref": "arg", "value": "state.html_id"},
+                {"id": "node_el_width", "ref": "arg", "value": "state.node_el_width"},
                 {"id": "oneditconfirm", "ref": "arg", "value": "payload.oneditconfirm"},
                 {"id": "oneditmore", "ref": "arg", "value": "payload.oneditmore"},
                 {"id": "id", "ref": "arg", "value": "payload.id"},
@@ -5671,6 +5672,7 @@
                 {"id": "edit_onmore_path", "value": "oneditmore"},
                 {"id": "edit_position_path", "value": "edit_position"},
                 {"id": "default_position", "script": "return {x: dimensions.x * 0.5, y: dimensions.y * 0.5}"},
+                {"id": "arg_position_offset", "script": "return {x: position.x + node_el_width * 0.25, y: position.y + 32}"},
                 {"id": "position", "ref": "default"},
                 {"id": "set_editing", "ref": "set"},
                 {"id": "set_edit_value", "ref": "set"},
@@ -5705,7 +5707,9 @@
                 {"from": "set_edit_onmore", "to": "set_edit_id", "as": "target"},
                 {"from": "edit_id_path", "to": "set_edit_id", "as": "path"},
                 {"from": "id", "to": "set_edit_id", "as": "value"},
-                {"from": "arg_position", "to": "position", "as": "value"},
+                {"from": "node_el_width", "to": "arg_position_offset", "as": "node_el_width"},
+                {"from": "arg_position", "to": "arg_position_offset", "as": "position"},
+                {"from": "arg_position_offset", "to": "position", "as": "value"},
                 {"from": "dimensions", "to": "default_position", "as": "dimensions"},
                 {"from": "default_position", "to": "position", "as": "otherwise"},
                 {"from": "position", "to": "set_edit_position", "as": "value"},
@@ -5779,6 +5783,7 @@
                 {"id": "source_node", "ref": "if"},
                 {"id": "description_path", "value": "description"},
                 {"id": "node_description", "ref": "get"},
+                {"id": "empty_text", "value": ""},
                 {"id": "out", "ref": "default"}
             ],
             "edges": [
@@ -5794,7 +5799,8 @@
                 {"from": "ref", "to": "ref_node", "as": "selected"},
                 {"from": "source_node", "to": "node_description", "as": "target"},
                 {"from": "description_path", "to": "node_description", "as": "path"},
-                {"from": "node_description", "to": "out", "as": "value"}
+                {"from": "node_description", "to": "out", "as": "value"},
+                {"from": "empty_text", "to": "out", "as": "otherwise"}
             ]
         },
         {
@@ -8509,7 +8515,7 @@
                     "id": "styles",
                     "nodes": [
                         {"id": "in"},
-                        {"id": "style_content", "value": "#node-editor { position: relative; width: 100%; height: 100vh; color: white; font-family: consolas; overflow: hidden; } #node-editor-editor.hash-view { background-color: unset; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .more { cursor: pointer; } .edit-value .centering { position: absolute; width: 32vw; display: flex; flex-direction: column; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .node-info { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; display: flex; gap: .4em; flex-direction: column; } .node-info .args { display: flex; gap: 8px; } .node-info .args span.clickable { cursor: pointer; text-decoration: underline dotted;  } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node, #dummy-add-node { cursor: pointer; stroke: #fff; stroke-width: 32; stroke-opacity: 1; } .insert-node .circle, #dummy-add-node .circle { fill-opacity: 0.5; } .node text { filter: url(#flood-background) } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"},
+                        {"id": "style_content", "value": "#node-editor { position: relative; width: 100%; height: 100vh; color: white; font-family: consolas; overflow: hidden; } #node-editor-editor.hash-view { background-color: unset; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .more { cursor: pointer; } .edit-value .centering { position: absolute; width: 32vw; display: flex; flex-direction: column; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .node-info { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; display: flex; gap: .4em; flex-direction: column; } .node-info .args { display: flex; gap: 8px; flex-wrap: wrap; } .node-info .args span.clickable { cursor: pointer; text-decoration: underline dotted;  } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node, #dummy-add-node { cursor: pointer; stroke: #fff; stroke-width: 32; stroke-opacity: 1; } .insert-node .circle, #dummy-add-node .circle { fill-opacity: 0.5; } .node text { filter: url(#flood-background) } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .node.selected text .secondary:hover { text-decoration: dashed underline; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"},
                         {"id": "style_h_text", "ref": "html_text"},
                         {"id": "style_dom_type", "value": "style"},
                         {"id": "out", "ref": "html_element"}
@@ -8589,18 +8595,11 @@
                             "id": "edit_text_base_props",
                             "script": "return {id: `${html_id}-edit-value`, class: {'edit-value': true, [editing]: true}, onclick: (s, payload) => (payload.preventDefault(), payload.stopPropagation(), [s, [confirm_edit_text, payload]])}"
                         },
-                        {
-                            "id": "edit_text_props"
-                        },
+                        { "id": "edit_text_props" },
                         {"id": "edit_text_edit_box", "ref": "switch"},
                         {
                             "id": "centering_wrapper_children",
-                            "args": [
-                                "label",
-                                "edit_box",
-                                "types"
-                            ],
-                            "script": "return [label.el, editing === 'ref' ? ref_description?.el : false, edit_box?.el, editing === 'ref' ? ref_datalist.el : false]"
+                            "script": "return [label.el, edit_box?.el, editing === 'ref' ? ref_description?.el : false, editing === 'ref' ? ref_datalist.el : false]"
                         },
                         {
                             "id": "edit_text_textarea_dom_type",
@@ -9596,7 +9595,7 @@
                                 },
                                 {
                                     "id": "is_selected",
-                                    "ref": "eq"
+                                    "script": "return node.node_id === selected[0]"
                                 },
                                 {
                                     "id": "selected_distance",
@@ -9663,7 +9662,7 @@
                                         },
                                         {
                                             "id": "node_shape_attrs",
-                                            "script": "const r = 24; return node.value !== undefined ? {class: {shape: true, value: true, error}, points: `4,${4 + r} ${4 + r},${4 + r} ${4 + r * 0.5},4`} : node.script ? {class:{shape: true, script: true, error}, width: r, height: r, x: 10, y: 10} : node.ref ? {class: {shape: true, ref: true, error}, width: r, height: r, x: 10, y: 10} : node.nodes ? {class: {shape: true, graph: true, error}, r: r * 0.5, cx: r * 0.5 + 4, cy: r * 0.5 + 4}  : {class: {shape: true, none: true, error}, r: r * 0.5 , cx: r * 0.5 + 4, cy: r * 0.5 + 4}"
+                                            "script": "const r = 24; return node.script ? {class:{shape: true, script: true, error}, width: r, height: r, x: 10, y: 10} : node.ref && node.ref !== 'arg' ? {class: {shape: true, ref: true, error}, width: r, height: r, x: 10, y: 10} : node.nodes ? {class: {shape: true, graph: true, error}, r: r * 0.5, cx: r * 0.5 + 4, cy: r * 0.5 + 4}  : node.value !== undefined ? {class: {shape: true, value: true, error}, points: `4,${4 + r} ${4 + r},${4 + r} ${4 + r * 0.5},4`} : {class: {shape: true, none: true, error}, r: r * 0.5 , cx: r * 0.5 + 4, cy: r * 0.5 + 4}"
                                         },
                                         {
                                             "id": "default_color",
@@ -9675,7 +9674,7 @@
                                         },
                                         {
                                             "id": "node_shape_dom_type",
-                                            "script": "return node.value !== undefined ? 'polygon' : node.script ? 'rect' : node.ref ? 'rect' : node.nodes ? 'circle' : 'circle'"
+                                            "script": "return node.script ? 'rect' : node.ref && node.ref !== 'arg' ? 'rect' : node.value !== undefined ? 'polygon' : 'circle'"
                                         },
                                         {
                                             "id": "node_shape",
@@ -9706,31 +9705,39 @@
                                                     "id": "node_value",
                                                     "value": "value"
                                                 },
+                                                {"id": "id_path"},
                                                 {
                                                     "id": "get_id",
-                                                    "ref": "arg",
-                                                    "value": "node.node_id"
+                                                    "ref": "get"
                                                 },
                                                 {
                                                     "id": "get_name",
                                                     "ref": "get"
                                                 },
                                                 {
-                                                    "id": "node",
+                                                    "id": "arg_node",
                                                     "ref": "arg",
                                                     "value": "node"
                                                 },
+                                                {"id": "payload_node", "ref": "arg", "value": "payload.node"},
+                                                {"id": "node", "ref": "default"},
+                                                {"id": "event", "ref": "arg", "value": "payload.event"},
                                                 {
                                                     "id": "hide_types",
                                                     "ref": "arg",
                                                     "value": "hide_types"
                                                 },
+                                                {"id": "update_node", "ref": "update_node_action"},
+                                                {"id": "show_edit_text", "ref": "show_edit_text"},
+                                                {"id": "stop_propagation_effector", "ref": "stop_propagation_effect"},
+                                                {"id": "stop_propagation_payload"},
+                                                {"id": "stop_propagation_effect", "ref": "array"},
                                                 {
                                                     "id": "get_value",
                                                     "script": "return target.value !== undefined ? (typeof target.value === 'object' ? JSON.stringify(target.value) : target.value.toString()) : def"
                                                 },
                                                 {
-                                                    "id": "get_type",
+                                                    "id": "get_ref",
                                                     "script": "return (target.ref ? target.ref : target.value !== undefined ? 'value' : target.script ? 'script' : target.nodes ? `graph (${target.nested_node_count}, ${target.nested_edge_count})` : 'object')"
                                                 },
                                                 {
@@ -9768,13 +9775,33 @@
                                                     "ref": "html_element"
                                                 },
                                                 {
-                                                    "id": "node_secondary_text_attrs",
+                                                    "id": "node_secondary_text_base_props",
                                                     "value": {
                                                         "class": "secondary",
                                                         "dy": "1.2em",
                                                         "x": "48"
                                                     }
                                                 },
+                                                {"id": "state", "ref": "arg", "value": "state"},
+                                                {"id": "state_nodes", "ref": "arg", "value": "state.display_graph.nodes"},
+                                                {"id": "arg_nodes", "ref": "arg", "value": "nodes"},
+                                                {"id": "nodes", "ref": "default"},
+                                                {"id": "dg_nodes", "ref": "default"},
+                                                {"id": "state_selected", "ref": "arg", "value": "state.selected.0"},
+                                                {"id": "arg_selected", "ref": "arg", "value": "selected"},
+                                                {"id": "selected", "ref": "default"},
+                                                {"id": "is_selected", "ref": "eq"},
+                                                {"id": "selected_node", "ref": "find_node"},
+                                                {"id": "selected_dg_node", "ref": "find_node"},
+                                                {"id": "selected_node_id", "ref": "get"},
+                                                {"id": "node_secondary_text_onclick_show_edit_text_payload"},
+                                                {"id": "node_secondary_text_onclick_show_edit_text", "ref": "array"},
+                                                {"id": "node_secondary_text_onclick_effects", "ref": "array"},
+                                                {"id": "node_secondary_text_onclick"},
+                                                {"id": "node_secondary_text_onclick_runnable", "ref": "runnable"},
+                                                {"id": "node_selected_secondary_text_onclick_runnable", "ref": "if"},
+                                                {"id": "node_secondary_text_onclick_props"},
+                                                {"id": "node_secondary_text_props", "ref": "merge_objects"},
                                                 {
                                                     "id": "node_secondary_text_text",
                                                     "ref": "html_text"
@@ -9816,9 +9843,21 @@
                                                 }
                                             ],
                                             "edges": [
+                                                {"from": "node", "to": "get_id", "as": "target"},
+                                                {"from": "node_id", "to": "get_id", "as": "path"},
+                                                {"from": "state_nodes", "to": "nodes", "as": "otherwise"},
+                                                {"from": "arg_nodes", "to": "nodes", "as": "value"},
+                                                {"from": "get_id", "to": "selected_node", "as": "node_id"},
+                                                {"from": "nodes", "to": "selected_node", "as": "nodes"},
+                                                {"from": "arg_node", "to": "node", "as": "value"},
+                                                {"from": "payload_node", "to": "node", "as": "otherwise"},
+                                                {"from": "state_selected", "to": "selected", "as": "otherwise"},
+                                                {"from": "arg_selected", "to": "selected", "as": "value"},
+                                                {"from": "get_id", "to": "is_selected", "as": "a"},
+                                                {"from": "selected", "to": "is_selected", "as": "b"},
                                                 {
                                                     "from": "node",
-                                                    "to": "get_type",
+                                                    "to": "get_ref",
                                                     "as": "target"
                                                 },
                                                 {
@@ -9843,7 +9882,7 @@
                                                 },
                                                 {
                                                     "from": "node_ref",
-                                                    "to": "get_type",
+                                                    "to": "get_ref",
                                                     "as": "path"
                                                 },
                                                 {
@@ -9853,7 +9892,7 @@
                                                 },
                                                 {
                                                     "from": "script",
-                                                    "to": "get_type",
+                                                    "to": "get_ref",
                                                     "as": "default_value"
                                                 },
                                                 {
@@ -9871,13 +9910,15 @@
                                                     "to": "display_name",
                                                     "as": "input"
                                                 },
+                                                {"from": "stop_propagation_effector", "to": "stop_propagation_effect", "as": "a0"},
+                                                {"from": "event", "to": "stop_propagation_effect", "as": "a1"},
                                                 {
                                                     "from": "display_name",
                                                     "to": "node_primary_text_text",
                                                     "as": "text"
                                                 },
                                                 {
-                                                    "from": "get_type",
+                                                    "from": "get_ref",
                                                     "to": "node_secondary_text_text",
                                                     "as": "text"
                                                 },
@@ -9911,8 +9952,27 @@
                                                     "to": "node_secondary_text",
                                                     "as": "children"
                                                 },
+                                                {"from": "node_secondary_text_base_props", "to": "node_secondary_text_props", "as": "a0"},
+                                                {"from": "node_secondary_text_onclick_props", "to": "node_secondary_text_props", "as": "a1"},
+                                                {"from": "node", "to": "node_secondary_text_onclick_runnable", "as": "node"},
+                                                {"from": "node_secondary_text_onclick_runnable", "to": "node_selected_secondary_text_onclick_runnable", "as": "true"},
+                                                {"from": "arg_selected", "to": "node_selected_secondary_text_onclick_runnable", "as": "pred"},
+                                                {"from": "node_selected_secondary_text_onclick_runnable", "to": "node_secondary_text_onclick_props", "as": "onclick"},
+                                                {"from": "node_secondary_text_onclick", "to": "node_secondary_text_onclick_runnable", "as": "fn"},
+                                                {"from": "show_edit_text", "to": "node_secondary_text_onclick_show_edit_text", "as": "a0"},
+                                                {"from": "update_node", "to": "node_secondary_text_onclick_show_edit_text_payload", "as": "oneditconfirm"},
+                                                {"from": "node", "to": "node_secondary_text_onclick_show_edit_text_payload", "as": "position"},
+                                                {"from": "get_id", "to": "node_secondary_text_onclick_show_edit_text_payload", "as": "id"},
+                                                {"from": "get_ref", "to": "node_secondary_text_onclick_show_edit_text_payload", "as": "value"},
+                                                {"from": "node_ref", "to": "node_secondary_text_onclick_show_edit_text_payload", "as": "property"},
+                                                {"from": "node", "to": "node_secondary_text_onclick_show_edit_text_payload", "as": "node"},
+                                                {"from": "node_secondary_text_onclick_show_edit_text_payload", "to": "node_secondary_text_onclick_show_edit_text", "as": "a1"},
+                                                {"from": "stop_propagation_effect", "to": "node_secondary_text_onclick_effects", "as": "a1"},
+                                                {"from": "node_secondary_text_onclick_show_edit_text", "to": "node_secondary_text_onclick_effects", "as": "a0"},
+                                                {"from": "node_secondary_text_onclick_effects", "to": "node_secondary_text_onclick", "as": "effects"},
+                                                {"from": "state", "to": "node_secondary_text_onclick", "as": "state"},
                                                 {
-                                                    "from": "node_secondary_text_attrs",
+                                                    "from": "node_secondary_text_props",
                                                     "to": "node_secondary_text",
                                                     "as": "props"
                                                 },
@@ -10040,7 +10100,7 @@
                                 {
                                     "from": "selected",
                                     "to": "is_selected",
-                                    "as": "a"
+                                    "as": "selected"
                                 },
                                 {
                                     "from": "selected",
@@ -10063,12 +10123,8 @@
                                 },
                                 {
                                     "from": "get_node",
-                                    "to": "children"
-                                },
-                                {
-                                    "from": "get_node",
                                     "to": "is_selected",
-                                    "as": "b"
+                                    "as": "node"
                                 },
                                 {
                                     "from": "is_selected",

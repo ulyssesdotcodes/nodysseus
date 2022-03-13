@@ -1403,7 +1403,7 @@ const middleware = dispatch => (ha_action, ha_payload) => {
         && ha_action.hasOwnProperty('graph') 
         && ha_action.hasOwnProperty('args');
     const action = is_action_array_payload ? ha_action[0] : ha_action;
-    const payload = is_action_array_payload ? ha_action[1] : is_action_obj_payload ? ha_action.args : ha_payload;
+    const payload = is_action_array_payload ? ha_action[1] : is_action_obj_payload ? {...ha_action.args, event: ha_payload} : ha_payload;
 
     return typeof action === 'object' && action.hasOwnProperty('fn') && action.hasOwnProperty('graph')
         ? dispatch((state, payload) => {
