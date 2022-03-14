@@ -9958,6 +9958,7 @@
                                                 {"from": "node_secondary_text_onclick_runnable", "to": "node_selected_secondary_text_onclick_runnable", "as": "true"},
                                                 {"from": "arg_selected", "to": "node_selected_secondary_text_onclick_runnable", "as": "pred"},
                                                 {"from": "node_selected_secondary_text_onclick_runnable", "to": "node_secondary_text_onclick_props", "as": "onclick"},
+                                                {"from": "node_selected_secondary_text_onclick_runnable", "to": "node_secondary_text_onclick_props", "as": "ontouchstart"},
                                                 {"from": "node_secondary_text_onclick", "to": "node_secondary_text_onclick_runnable", "as": "fn"},
                                                 {"from": "show_edit_text", "to": "node_secondary_text_onclick_show_edit_text", "as": "a0"},
                                                 {"from": "update_node", "to": "node_secondary_text_onclick_show_edit_text_payload", "as": "oneditconfirm"},
