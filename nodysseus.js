@@ -505,7 +505,7 @@ const executeGraph = ({ cache, graph, cache_id, node_cache }) => {
                     console.log(data);
                     throw new AggregateError([
                         new NodysseusError(
-                            node_ref.name ?? node_ref.id, 
+                            node_id, 
                             e instanceof AggregateError ? "Error in node chain" : e
                         )]
                         .concat(e instanceof AggregateError ? e.errors : []));
@@ -524,7 +524,22 @@ const executeGraph = ({ cache, graph, cache_id, node_cache }) => {
                         return [acc[0].concat([value]), ispromise(value) || acc[1]];
                     }, [[], false]);
 
-                return args[1] ? Promise.all(args[0]).then(as => extern.fn.apply(null, as)) : extern.fn.apply(null, args[0]);
+                try {
+                    return args[1] ? Promise.all(args[0]).then(as => extern.fn.apply(null, as)).catch(e => { throw new AggregateError([
+                        new NodysseusError(
+                            node_id, 
+                            e instanceof AggregateError ? "Error in node chain" : e
+                        )]
+                        .concat(e instanceof AggregateError ? e.errors : []));}) 
+                        : extern.fn.apply(null, args[0]);
+                } catch(e) {
+                    throw new AggregateError([
+                        new NodysseusError(
+                            node_ref.id, 
+                            e instanceof AggregateError ? "Error in node chain" : e
+                        )]
+                        .concat(e instanceof AggregateError ? e.errors : []));
+                }
             }
 
             if(typeof data === 'object' && !!data && !data._Proxy && !Array.isArray(data) && Object.keys(data).length > 0) {
@@ -1673,11 +1688,15 @@ const add_default_nodes_and_edges = g => ({
                 .filter(e => !generic_nodes.has(e.from))
                 .concat(DEFAULT_GRAPH.edges.filter(e => generic_nodes.has(e.to))) 
 })
+
+const url_params = new URLSearchParams(document.location.search);
+
 const nodysseus = function(html_id, display_graph) {
     const dispatch = runGraph(DEFAULT_GRAPH, "initialize_hyperapp_app", { 
         graph: DEFAULT_GRAPH, 
         display_graph: add_default_nodes_and_edges(display_graph),
         hash: window.location.hash ?? "",
+        url_params,
         html_id,
         dimensions: {
             x: document.getElementById(html_id).clientWidth,
@@ -1685,9 +1704,12 @@ const nodysseus = function(html_id, display_graph) {
         },
         examples: examples.map(add_default_nodes_and_edges),
         readonly: false, 
+        norun: url_params.get("norun") !== null,
         hide_types: false,
         offset: {x: 0, y: 0}
     });
+
+    console.log('norun: ' + url_params.get('norun'));
 
     return () => requestAnimationFrame(() => dispatch.dispatch(s => undefined));
 }

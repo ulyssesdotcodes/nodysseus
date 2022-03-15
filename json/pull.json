@@ -1461,6 +1461,11 @@
                     "ref": "arg",
                     "value": "state.html_id"
                 },
+                {
+                    "id": "norun",
+                    "ref": "arg",
+                    "value": "state.norun"
+                },
                 {"id": "show_args_effector", "ref": "show_args_effect"},
                 {"id": "show_args_effect", "ref": "array"},
                 {"id": "should_show_args", "ref": "switch"},
@@ -1528,7 +1533,7 @@
                 {"id": "run_wrapper"},
                 {
                     "id": "out",
-                    "script": "return {state, effects: [!readonly && (!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && run.run && [run.run, payload], !readonly && [dispatch_custom_event_effect, {html_id, event: 'updategraph', detail: {graph: state.display_graph}}], ...(effects?.filter(e => e?.[0]) ?? [])]}"
+                    "script": "return {state, effects: [!readonly && (!!update || !!update_graph_sim) && [update_sim_effect, state], !norun && !readonly && run.run && [run.run, payload], !readonly && [dispatch_custom_event_effect, {html_id, event: 'updategraph', detail: {graph: state.display_graph}}], ...(effects?.filter(e => e?.[0]) ?? [])]}"
                 }
             ],
             "edges": [
@@ -1613,6 +1618,11 @@
                     "from": "run",
                     "to": "result",
                     "as": "run"
+                },
+                {
+                    "from": "norun",
+                    "to": "out",
+                    "as": "norun"
                 },
                 {
                     "from": "show_result",
@@ -4693,6 +4703,11 @@
             "id": "readonly",
             "ref": "arg",
             "value": "readonly"
+        },
+        {
+            "id": "norun",
+            "ref": "arg",
+            "value": "norun"
         },
         {
             "id": "hash",
@@ -11369,6 +11384,11 @@
             "from": "readonly",
             "to": "hyperapp_init_state",
             "as": "readonly"
+        },
+        {
+            "from": "norun",
+            "to": "hyperapp_init_state",
+            "as": "norun"
         },
         {
             "from": "hash",
