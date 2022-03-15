@@ -5672,7 +5672,7 @@
                 {"id": "edit_onmore_path", "value": "oneditmore"},
                 {"id": "edit_position_path", "value": "edit_position"},
                 {"id": "default_position", "script": "return {x: dimensions.x * 0.5, y: dimensions.y * 0.5}"},
-                {"id": "arg_position_offset", "script": "return {x: position.x + node_el_width * 0.25, y: position.y + 32}"},
+                {"id": "arg_position_offset", "script": "return position && {x: position.x + node_el_width * 0.25, y: position.y + 32}"},
                 {"id": "position", "ref": "default"},
                 {"id": "set_editing", "ref": "set"},
                 {"id": "set_edit_value", "ref": "set"},
@@ -9632,7 +9632,7 @@
                                 {"id": "onclick_node", "ref": "onselectnode_action"},
                                 {
                                     "id": "parent_attrs",
-                                    "script": "return ({onclick: (_, payload) => [onclick, {event: payload, node_id: node.node_id}],  onmouseover: (state, payload) => [{...state, hover: node.node_id}], onmouseout: (state, payload) => [{...state, hover: undefined}],  ontouchstart: (_, payload) => [onclick, {event: payload, node_id: node.node_id}], x: Math.floor(node.x - 20), y: Math.floor(node.y - 20), width: '256', height: '64', key: html_id + '-' + node.node_child_id, id: html_id + '-' + node.node_child_id, class: {node: true,  selected: selected[0] === node.node_id, hover: hover === node.node_id }, opacity: selected_edge?.from === node.node_id || show_all ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - (selected_distance * selected_distance) / 6) : 0.1})"
+                                    "script": "return ({onclick: (_, payload) => [onclick, {event: payload, node_id: node.node_id}],  onmouseover: (state, payload) => [{...state, hover: node.node_id}], onmouseout: (state, payload) => [{...state, hover: undefined}],  ontouchstart: (_, payload) => [onclick, {event: payload, node_id: node.node_id}], width: '256', height: '64', key: html_id + '-' + node.node_child_id, id: html_id + '-' + node.node_child_id, class: {node: true,  selected: selected[0] === node.node_id, hover: hover === node.node_id }, opacity: selected_edge?.from === node.node_id || show_all ? 1 : selected_distance !== undefined ? Math.max(0.05, 1 - (selected_distance * selected_distance) / 6) : 0.1})"
                                 },
                                 {
                                     "id": "children",

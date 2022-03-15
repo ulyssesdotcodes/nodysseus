@@ -737,7 +737,6 @@ const updateSimulationNodes = (dispatch, data) => {
         requestAnimationFrame(() => {
             dispatch(s => s ? [resolve(data.sim_to_hyperapp), node_data] : s)
             requestAnimationFrame(() => {
-                dispatch(s => s?.panzoom_selected_effect ? [s, [s.panzoom_selected_effect, {...s, ...node_data, selected: s[0]}]] : s);
                 node_data.nodes.forEach(n => {
                     const el = document.getElementById(`${data.html_id}-${n.node_child_id}`);
                     if(el) {
@@ -775,6 +774,7 @@ const updateSimulationNodes = (dispatch, data) => {
                     }
                 });
 
+                dispatch(s => s?.panzoom_selected_effect ? [s, [s.panzoom_selected_effect, {...s, ...node_data, selected: s.selected[0]}]] : s);
             })
         })
         return;
@@ -1373,8 +1373,6 @@ const findViewBox = (nodes, links, selected, node_el_width, htmlid, dimensions) 
         if(el) {
             const x = n.x - node_el_width * 0.5;
             const y = n.y ;
-            el.setAttribute('x', Math.floor(x - 20));
-            el.setAttribute('y', Math.floor(y - 20));
 
             if(n.node_id === selected) {
                 visible_nodes.push({x, y})
