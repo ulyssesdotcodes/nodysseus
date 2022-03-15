@@ -1369,7 +1369,7 @@
                 {"id": "display_graph", "ref": "arg", "value": "state.display_graph"},
                 {"id": "payload", "ref": "arg", "value": "payload"},
                 {"id": "dispatch", "ref": "arg", "value": "dispatch"},
-                {"id": "display_graph_runnable", "script": "return {fn: 'main/out', graph: {...display_graph, nodes: [...display_graph.nodes], edges: [...display_graph.edges]}, args: {state, payload: {event: payload}}}"},
+                {"id": "display_graph_runnable", "script": "return {fn: 'main/out', graph: {...display_graph, nodes: [...display_graph.nodes], edges: [...display_graph.edges]}, args: {state, graph: state.display_graph, payload: {event: payload}}}"},
                 {"id": "_result_runnable", "ref": "run"},
                 {"id": "result_runnable", "script": "try { return _lib.no.runGraph(runnable) } catch(e) { dispatch(s => ({...s, error: e}));}"},
                 {"id": "run_result", "ref": "runnable_hyperapp_effect"},

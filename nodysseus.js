@@ -525,13 +525,26 @@ const executeGraph = ({ cache, graph, cache_id, node_cache }) => {
                     }, [[], false]);
 
                 try {
-                    return args[1] ? Promise.all(args[0]).then(as => extern.fn.apply(null, as)).catch(e => { throw new AggregateError([
-                        new NodysseusError(
-                            node_id, 
-                            e instanceof AggregateError ? "Error in node chain" : e
-                        )]
-                        .concat(e instanceof AggregateError ? e.errors : []));}) 
-                        : extern.fn.apply(null, args[0]);
+                    if (usecache && cache.get(cache_id).has(node.id)) {
+                        const val = cache.get(cache_id).get(node.id);
+                        let hit = usecache && compare(args[0], val[1]);
+                        // hit = hit && compare(graph_input_value, val[2]);
+                        if (hit) {
+                            return val[0]
+                        }
+                    }
+
+                    if(args[1]) {
+                        return Promise.all(args[0]).then(as => {
+                            const res = extern.fn.apply(null, as);
+                            cache.get(cache_id).set(node_id, [res, args[0]])
+                            return res;
+                        })
+                    } else {
+                        const res = extern.fn.apply(null, args[0]);
+                        cache.get(cache_id).set(node_id, [res, args[0]])
+                        return res;
+                    }
                 } catch(e) {
                     throw new AggregateError([
                         new NodysseusError(
