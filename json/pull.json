@@ -5416,6 +5416,7 @@
                 {"id": "nodes", "ref": "arg", "value": "state.display_graph.nodes"},
                 {"id": "edges", "ref": "arg", "value": "state.display_graph.edges"},
                 {"id": "history", "ref": "arg", "value": "state.history"},
+                {"id": "display_graph", "ref": "arg", "value": "state.display_graph"},
                 {"id": "update_hyperapp", "ref": "arg", "value": "state.update_hyperapp"},
                 {"id": "update_hyperapp_effect", "ref": "array"},
                 {"id": "display_graph_nodes_path", "value": "display_graph.nodes"},
@@ -5436,6 +5437,7 @@
                 {"id": "set_display_graph_edges", "ref": "set"},
                 {"id": "history_path", "value": "history"},
                 {"id": "set_history", "ref": "set"},
+                {"id": "dirty_node_effect", "script": "return [() => _lib.no.runtime.dirty_node(display_graph, id)]"},
                 {"id": "effects", "ref": "array"},
                 {"id": "out"}
             ],
@@ -5474,7 +5476,10 @@
                 {"from": "new_history", "to": "set_history", "as": "value"},
                 {"from": "set_history", "to": "out", "as": "state"},
                 {"from": "update_hyperapp", "to": "update_hyperapp_effect", "as": "a0"},
-                {"from": "update_hyperapp_effect", "to": "effects", "as": "a0"},
+                {"from": "update_hyperapp_effect", "to": "effects", "as": "a1"},
+                {"from": "node_id", "to": "dirty_node_effect", "as": "id"},
+                {"from": "display_graph", "to": "dirty_node_effect", "as": "display_graph"},
+                {"from": "dirty_node_effect", "to": "effects", "as": "a0"},
                 {"from": "effects", "to": "out", "as": "effects"}
             ]
         },
@@ -6308,9 +6313,7 @@
                     "id": "add_node_action",
                     "out": "out",
                     "nodes":[
-                        {
-                            "id": "in"
-                        },
+                        {"id": "in"},
                         {"id": "id", "ref": "arg", "value": "payload.node.id"},
                         {"id": "payload", "ref": "arg", "value": "payload"},
                         {"id": "node", "ref": "arg", "value": "payload.node"},
@@ -6319,21 +6322,11 @@
                         {"id": "child_as", "ref": "arg", "value": "payload.child_as"},
                         {"id": "history", "ref": "arg", "value": "state.history"},
                         {"id": "selected", "ref": "arg", "value": "state.selected"},
+                        {"id": "state", "ref": "arg", "value": "state"},
+                        {"id": "display_graph", "ref": "arg", "value": "state.display_graph"},
                         {"id": "history_path", "value": "history"},
-                        {
-                            "id": "id_array",
-                            "ref": "array"
-                        },
-                        {
-                            "id": "state",
-                            "ref": "arg",
-                            "value": "state"
-                        },
-                        {
-                            "id": "update_sim_effect",
-                            "ref": "arg",
-                            "value": "state.update_sim_effect"
-                        },
+                        { "id": "id_array", "ref": "array" },
+                        { "id": "update_sim_effect", "ref": "arg", "value": "state.update_sim_effect" },
                         {
                             "id": "nodes",
                             "ref": "arg",
@@ -6343,28 +6336,14 @@
                         {"id": "new_history", "ref": "append"},
                         {
                             "id": "effects",
-                            "script": "return [[add_edge, {to: child, from: id, as: child_as}], [update_sim_effect]]"
+                            "script": "return [[add_edge, {to: child, from: id, as: child_as}], [update_sim_effect], [() => _lib.no.runtime.dirty_node(display_graph, id)]]"
                         },
-                        {
-                            "id": "nodes_path",
-                            "value": "display_graph.nodes"
-                        },
-                        {
-                            "id": "selected_path",
-                            "value": "selected"
-                        },
-                        {
-                            "id": "new_node"
-                        },
-                        {
-                            "id": "new_nodes",
-                            "ref": "append"
-                        },
+                        {"id": "nodes_path", "value": "display_graph.nodes"},
+                        {"id": "selected_path", "value": "selected"},
+                        {"id": "new_node"},
+                        {"id": "new_nodes", "ref": "append"},
                         {"id": "add_edge_effector", "ref": "add_edge"},
-                        {
-                            "id": "set_new_nodes",
-                            "ref": "set"
-                        },
+                        {"id": "set_new_nodes", "ref": "set"},
                         {"id": "new_selected", "ref": "if"},
                         {
                             "id": "set_selected",
@@ -6428,6 +6407,7 @@
                         {"from": "child", "to": "effects", "as": "child"},
                         {"from": "payload", "to": "effects", "as": "payload"},
                         {"from": "child_as", "to": "effects", "as": "child_as"},
+                        {"from": "display_graph", "to": "effects", "as": "display_graph"},
                         {
                             "from": "add_edge_effector",
                             "to": "effects",

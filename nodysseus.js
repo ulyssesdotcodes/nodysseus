@@ -1508,6 +1508,10 @@ const lib = {
                 get_node: (graph, id) => getorsetgraph(graph, id, 'node_map', () => graph.nodes.find(n => n.id === id)),
                 get_edges_in: (graph, id) => getorsetgraph(graph, id, 'in_edge_map', () => graph.edges.filter(e => e.to === id)),
                 get_fn: (graph, orderedargs, node_ref) => getorsetgraph(graph, orderedargs + node_ref.script, 'fn_cache', () => new Function(`return function _${(node_ref.name?.replace(/\W/g, "_") ?? node_ref.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script}}`)()),
+                dirty_node: (graph, id) => (
+                    getorset(cache, graph.id, new_graph_cache(graph)).node_map.delete(id), 
+                    getorset(cache, graph.id, new_graph_cache(graph)).fn_cache.delete(id)
+                ),
                 expand_node: (graph, id, node_ref) => {
                     // TODO: fix this mess
                     const gcache = getorset(cache, graph.id, new_graph_cache(graph));
