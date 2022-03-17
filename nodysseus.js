@@ -81,9 +81,17 @@ function compareObjects(value1, value2) {
     for (var i = 0; i < len; i++) {
         var key1 = keys1[i];
         // var key2 = keys2[i];
-        if (value1[key1] !== value2[key1]) {
-            return false;
+        if (value1[key1] === value2[key1]) {
+            continue;
         }
+
+        if(value1[key1]?._Proxy && value2[key1]?._Proxy 
+            && value1[key1]._value === value2[key1]._value) {
+            continue;
+        }
+
+        return false;
+
         // if (!(compare(value1[key1], value2[key1]))) {
         //     return false;
         // }
@@ -925,6 +933,17 @@ const listenToEvent = (dispatch, props) => {
 
 const listen = (type, action) => [listenToEvent, {type, action}]
 
+const graph_subscription = (dispatch, props) => {
+    const listener = (graph) => {
+        const result = lib.no.runGraph({...graph, nodes: [...graph.nodes], edges: [...graph.edges]}, 'main/out', {});
+        requestAnimationFrame(() =>  dispatch(s => [{...s, display_graph: graph}, [s.update_sim_effect]]))
+    };
+
+    lib.no.runtime.add_listener(props.graph, 'graphchange', listener);
+
+    return () => lib.no.runtime.remove_listener(props.graph, 'graphchange', listener)
+}
+
 // Creates the simulation, updates the node elements when the simulation changes, and runs an action when the nodes have settled.
 // This is probably doing too much.
 const d3subscription = (dispatch, props) => {
@@ -1499,19 +1518,51 @@ const lib = {
         runtime: (function(){
             const cache = new Map(); 
             const new_graph_cache = (graph) => () => ({
+                graph,
                 node_map: new Map(graph.nodes.map(n => [n.id, n])), 
                 in_edge_map: new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.to === n.id)])),
-                fn_cache: new Map()
+                fn_cache: new Map(),
+                listeners: new Map()
             });
             const getorsetgraph = (graph, id, path, valfn) => getorset(getorset(cache, graph.id, new_graph_cache(graph))[path], id, valfn);
+            const publish = (graph, event) => {
+                const gcache = getorset(cache, graph.id, new_graph_cache(graph));
+                gcache.listeners.get(event).forEach(l => l(graph));
+            }
             return { 
                 get_node: (graph, id) => getorsetgraph(graph, id, 'node_map', () => graph.nodes.find(n => n.id === id)),
                 get_edges_in: (graph, id) => getorsetgraph(graph, id, 'in_edge_map', () => graph.edges.filter(e => e.to === id)),
                 get_fn: (graph, orderedargs, node_ref) => getorsetgraph(graph, orderedargs + node_ref.script, 'fn_cache', () => new Function(`return function _${(node_ref.name?.replace(/\W/g, "_") ?? node_ref.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script}}`)()),
-                dirty_node: (graph, id) => (
-                    getorset(cache, graph.id, new_graph_cache(graph)).node_map.delete(id), 
-                    getorset(cache, graph.id, new_graph_cache(graph)).fn_cache.delete(id)
-                ),
+                add_node: (graph, node, edge) => {
+                    const gcache = getorset(cache, graph.id, new_graph_cache(graph));
+
+                    gcache.node_map.set(node.id, resolve(node));
+                    gcache.fn_cache.delete(node.id);
+
+                    const next_edge = edge ? lib.no.runGraph(cache.get('nodysseus_hyperapp').graph, 'next_edge', {edge, graph}) : undefined;
+                    if(next_edge) {
+                        gcache.in_edge_map.set(edge.to, (gcache.in_edge_map.get(edge.to) ?? []).concat([next_edge]));
+                    }
+
+                    const new_graph = {
+                        ...graph, 
+                        nodes: graph.nodes.filter(n => n.id !== node.id).concat([node]), 
+                        edges: edge ? graph.edges.filter(e => !(e.from === next_edge.from && e.to === next_edge.to)).concat(next_edge) : graph.edges
+                    };
+
+                    gcache.graph = new_graph;
+
+                    publish(new_graph, 'graphchange');
+                    return new_graph;
+                },
+                add_listener: (graph, event, fn) => {
+                    const gcache = getorset(cache, graph.id, new_graph_cache(graph));
+                    gcache.listeners.set(event, (gcache.listeners.get(event) ?? []).concat([fn]));
+                },
+                remove_listener: (graph, event, fn) => {
+                    const gcache = getorset(cache, graph.id, new_graph_cache(graph));
+                    gcache.listeners.set(event, (gcache.listeners.get(event) ?? []).filter(f => f !== fn));
+                },
                 expand_node: (graph, id, node_ref) => {
                     // TODO: fix this mess
                     const gcache = getorset(cache, graph.id, new_graph_cache(graph));
@@ -1639,7 +1690,7 @@ const lib = {
             fn: (args) => JSON.parse(args)
         }
     },
-    scripts: { d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all, listen},
+    scripts: { d3subscription, updateSimulationNodes, graphToSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all, listen, graph_subscription},
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
     Fuse,
     pz: {
