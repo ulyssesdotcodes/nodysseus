@@ -667,7 +667,7 @@
                 {"id": "delete_fn", "ref": "delete"},
                 {"id": "delete_args", "ref": "delete"},
                 {"id": "args", "ref": "merge_objects"},
-                {"id": "out", "script": "const parent_id = _node.id.substring(0, _node.id.lastIndexOf('/')); const input = _graph.in_edge_map.get(parent_id).find(i => i.as === 'fn'); return input ? {fn: input.from, graph: _graph, args: args ?? {}} : false"}
+                {"id": "out", "script": "const parent_id = _node.id.substring(0, _node.id.lastIndexOf('/')); const input = _lib.no.runtime.get_edges_in(_graph, parent_id).find(i => i.as === 'fn'); return input ? {fn: input.from, graph: _graph, args: args ?? {}} : false"}
             ],
             "edges": [
                 {"from": "context_args", "to": "delete_fn", "as": "target"},
@@ -1351,6 +1351,19 @@
             ]
         },
         {
+            "id": "create_fn",
+            "out": "out",
+            "nodes": [
+                {"id": "runnable", "ref": "arg", "value": "runnable"},
+                {"id": "args", "ref": "arg", "value": "_args"},
+                {"id": "out", "script": "return (fnargs) => _lib.no.runGraph(runnable.graph, runnable.fn, Object.assign({}, args, {runnable: undefined}, runnable.args, typeof fnargs === 'object' ? fnargs : {}))"}
+            ],
+            "edges": [
+                {"from": "args", "to": "out", "as": "args", "type": "resolve"},
+                {"from": "runnable", "to": "out", "as": "runnable"}
+            ]
+        },
+        {
             "id": "runnable_hyperapp_effect",
             "out": "out",
             "nodes": [
@@ -1370,10 +1383,10 @@
                 {"id": "payload", "ref": "arg", "value": "payload"},
                 {"id": "dispatch", "ref": "arg", "value": "dispatch"},
                 {"id": "display_graph_runnable", "script": "return {fn: 'main/out', graph: {...display_graph, nodes: [...display_graph.nodes], edges: [...display_graph.edges]}, args: {state, graph: state.display_graph, payload: {event: payload}}}"},
-                {"id": "_result_runnable", "ref": "run"},
-                {"id": "result_runnable", "script": "try { return _lib.no.runGraph(runnable) } catch(e) { dispatch(s => ({...s, error: e}));}"},
+                {"id": "result_runnable", "script": "try { const res = _lib.no.runGraph(runnable); dispatch(s => s.error ? {...s, error: false} : s); return res; } catch(e) { dispatch(s => ({...s, error: e}));}"},
                 {"id": "run_result", "ref": "runnable_hyperapp_effect"},
-                {"id": "out", "script": "return (dispatch, payload) => {const wrapped_dispatch = (a, p) => Promise.resolve(p).then(resp => Promise.resolve(a).then(aresp => [aresp, resp])).then(([a, p]) => dispatch(a, p)).catch(e => dispatch(s => [{...s, error: e}])); wrapped_dispatch(state => {new Promise((resolve, reject) => resolve(_lib.no.runGraph({...runnable, args: {...runnable.args, dispatch: wrapped_dispatch}}))).then(res => _lib.no.runGraph(res)).catch(e => dispatch(s => [{...s, error: e}])); return state.error ? {...state, error: false} : state;})}"}
+                {"id": "out", "script": "return (dispatch, payload) => {try { const res = _lib.no.runGraph(runnable); Promise.resolve(res).then(r => dispatch(s => r.result_display ? {...s, result_display: r.result_display, error: false} : s.error ? {...s, error: false} : s)); } catch(e) { dispatch(s => ({...s, error: e}));}}"},
+                {"id": "_out", "script": "return (dispatch, payload) => {const wrapped_dispatch = (a, p) => Promise.resolve(p).then(resp => Promise.resolve(a).then(aresp => [aresp, resp])).then(([a, p]) => dispatch(a, p)).catch(e => dispatch(s => [{...s, error: e}])); wrapped_dispatch(state => {new Promise((resolve, reject) => resolve(_lib.no.runGraph({...runnable, args: {...runnable.args, dispatch: wrapped_dispatch}}))).then(res => _lib.no.runGraph(res)).catch(e => dispatch(s => [{...s, error: e}])); return state.error ? {...state, error: false} : state;})}"}
             ],
             "edges": [
                 {"from": "state", "to": "result", "as": "state"},
@@ -6097,13 +6110,15 @@
                 {"id": "in"},
                 {"id": "state", "ref": "arg", "value": "state"},
                 {"id": "edge", "ref": "arg", "value": "payload.edge"},
+                {"id": "edge_to", "ref": "arg", "value": "payload.edge.to"},
+                {"id": "edge_as", "ref": "arg", "value": "payload.edge.as"},
                 {"id": "id", "ref": "arg", "value": "payload.node.id"},
                 {"id": "name", "ref": "arg", "value": "payload.node.name"},
                 {"id": "in_node", "ref": "arg", "value": "payload.in_node"},
                 {"id": "select", "script": "return !in_node"},
                 {"id": "edges_path", "value": "display_graph.edges"},
                 {"id": "edges", "ref": "arg", "value": "state.display_graph.edges"},
-                {"id": "new_edges", "script": "return edges.filter(e => !(e.from === edge.from && e.to === edge.to)).concat(in_node ? [{...edge, to: id}, {from: id, to: edge.to}] : [{from: edge.from, to: id, as: 'arg0'}, {...edge, from: id, to: edge.to}])"},
+                {"id": "new_edges", "script": "return edges.filter(e => !(e.from === edge.from && e.to === edge.to)).concat(in_node ? [{...edge, to: id}] : [{from: edge.from, to: id, as: 'arg0'}])"},
                 {"id": "set_edges", "ref": "set"},
                 {"id": "add_node_effector", "ref": "add_node"},
                 {"id": "new_node"},
@@ -6124,6 +6139,8 @@
                 {"from": "set_edges", "to": "result", "as": "state"},
                 {"from": "id", "to": "new_node", "as": "id"},
                 {"from": "name", "to": "new_node", "as": "name"},
+                {"from": "edge_to", "to": "add_node_payload", "as": "child"},
+                {"from": "edge_as", "to": "add_node_payload", "as": "child_as"},
                 {"from": "new_node", "to": "add_node_payload", "as": "node"},
                 {"from": "in_node", "to": "select", "as": "in_node"},
                 {"from": "in_node", "to": "new_edges", "as": "in_node"},
@@ -6294,7 +6311,7 @@
                         {
                             "id": "in"
                         },
-                        { "id": "id", "ref": "arg", "value": "payload.node.id" },
+                        {"id": "id", "ref": "arg", "value": "payload.node.id"},
                         {"id": "payload", "ref": "arg", "value": "payload"},
                         {"id": "node", "ref": "arg", "value": "payload.node"},
                         {"id": "select", "ref": "arg", "value": "payload.select"},
@@ -6472,14 +6489,9 @@
             "id": "add_node",
             "out": "out",
             "nodes": [
-                {
-                    "id": "in"
-                },
+                { "id": "in" }, 
                 {"id": "add_node_fn", "ref": "add_node_action"},
-                {
-                    "id": "out",
-                    "ref": "hyperapp_action_effect"
-                }
+                { "id": "out", "ref": "hyperapp_action_effect" }
             ],
             "edges": [
                 {
