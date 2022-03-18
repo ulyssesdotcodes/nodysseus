@@ -228,7 +228,7 @@
                         "init",
                         "view"
                     ],
-                    "script": "return {dispatch: _lib.ha.app({dispatch: _lib.no.middleware, init: () => [init, static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}],  !static && [_lib.scripts.graph_subscription, {graph: s.display_graph}], !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.pz.panzoom, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]]})}"
+                    "script": "return {dispatch: _lib.ha.app({dispatch: _lib.no.middleware, init: () => [init, static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp], [() => _lib.no.runtime.add_graph(init.display_graph)]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}], !static && [_lib.scripts.graph_subscription, {graph: s.display_graph}], !static && [_lib.scripts.result_subscription, {graph: s.display_graph}], !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.pz.panzoom, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]]})}"
                 }
             ],
             "edges": [
@@ -928,6 +928,32 @@
                 {"from": "in", "to": "out", "as": "args"},
                 {"from": "target", "to": "out", "as": "target"},
                 {"from": "path", "to": "out", "as": "path"}
+            ]
+        },
+        {
+            "id": "event_publisher",
+            "out": "update",
+            "nodes": [
+                {"id": "name", "ref": "arg", "value": "name"},
+                {"id": "value", "ref": "arg", "value": "value"},
+                {"id": "update", "extern": "no.runtime.publish"}
+            ],
+            "edges": [
+                {"from": "name", "to": "update", "as": "event"},
+                {"from": "value", "to": "update", "as": "data"}
+            ]
+        },
+        {
+            "id": "event_subscriber",
+            "out": "add_listener",
+            "nodes": [
+                {"id": "name", "ref": "arg", "value": "name"},
+                {"id": "add_listener", "script": "const parent = _lib.no.runtime.get_node(_graph, _node.id.substring(0, _node.id.lastIndexOf('/'))); _lib.no.runtime.add_listener(_graph, event, parent.id, (graph, ev) => (console.log('presub'), _lib).no.runtime.add_node(_graph, {...parent , value: (console.log('sub'), console.log(ev), ev)}))"},
+                {"id": "out"}
+            ],
+            "edges": [
+                {"from": "name", "to": "add_listener", "as": "event"},
+                {"from": "add_listener", "to": "out", "as": "listener"}
             ]
         },
         {
@@ -5041,6 +5067,7 @@
                     "ref": "arg",
                     "value": "state.display_graph.out"
                 },
+                {"id": "display_graph", "ref": "arg", "value": "state.display_graph"},
                 {"id": "history", "ref": "arg", "value": "state.history"},
                 {
                     "id": "edges_path",
@@ -5110,7 +5137,7 @@
                 },
                 {
                     "id": "effects",
-                    "script": "return [[update_sim_effect, new_state.state]]"
+                    "script": "return [[() => _lib.no.runtime.delete_node(display_graph, id)], [update_sim_effect, new_state.state]]"
                 },
                 {"id": "out", "ref": "hyperapp_action_effect"}
             ],
@@ -5122,7 +5149,7 @@
                 {"from": "nodes", "to": "node", "as": "nodes"},
                 {"from": "new_nodes", "to": "set_nodes", "as": "value"},
                 {"from": "nodes_path", "to": "set_nodes", "as": "path"},
-                {"from": "set_nodes", "to": "set_selected", "as": "target"},
+                {"from": "state", "to": "set_selected", "as": "target"},
                 {"from": "edges", "to": "new_edges", "as": "edges"},
                 {"from": "node_id", "to": "new_edges", "as": "node_id"},
                 {"from": "parent_edge", "to": "new_edges", "as": "parent_edge"},
@@ -5151,11 +5178,9 @@
                 {"from": "history_path", "to": "set_history", "as": "path"},
                 {"from": "set_history", "to": "out", "as": "state"},
                 {"from": "set_history", "to": "effects", "as": "new_state"},
-                {
-                    "from": "update_sim_effect",
-                    "to": "effects",
-                    "as": "update_sim_effect"
-                },
+                {"from": "update_sim_effect", "to": "effects", "as": "update_sim_effect"},
+                {"from": "node_id", "to": "effects", "as": "id"},
+                {"from": "display_graph", "to": "effects", "as": "display_graph"},
                 {
                     "from": "effects",
                     "to": "out",
@@ -5448,6 +5473,7 @@
                 {"id": "state", "ref": "arg", "value": "state"},
                 {"id": "edges", "ref": "arg", "value": "state.display_graph.edges"},
                 {"id": "history","ref": "arg", "value": "state.history"},
+                {"id": "display_graph","ref": "arg", "value": "state.display_graph"},
                 {"id": "display_graph_edges_path", "value": "display_graph.edges"},
                 {"id": "payload", "ref": "arg", "value": "payload"},
                 {"id": "edge", "ref": "arg", "value": "payload.id"},
@@ -5455,6 +5481,7 @@
                 {"id": "history_path", "value": "history"},
                 {"id": "display_graph_edges_path", "value": "display_graph.edges"},
                 {"id": "prev_edge", "script": "return edges.find(e => e.to === edge.to && e.from === edge.from)"},
+                {"id": "new_edge", "ref": "merge_objects"},
                 {"id": "replace_edge", "script": "return edges.map(e => e.from === edge.from && e.to === edge.to ? Object.assign({}, e, Object.fromEntries(Object.entries(update).map(e => [e[0], e[1] === '' ? undefined : e[1]]))) : e)"},
                 {"id": "history_item", "script": "return {action: 'update_edge', edge, update, runnable: {fn: 'update_edge_fn', graph: _graph, args: payload}}"},
                 {"id": "new_history", "ref": "append"},
@@ -5462,6 +5489,7 @@
                 {"id": "set_display_graph_edges", "ref": "set"},
                 {"id": "update_hyperapp", "ref": "arg", "value": "state.update_hyperapp"},
                 {"id": "update_hyperapp_effect", "ref": "array"},
+                {"id": "edit_edge_effect", "script": "console.log('fx'); console.log(edge); return [() => _lib.no.runtime.edit_edge(display_graph, edge)]"},
                 {"id": "effects", "ref": "array"},
                 {"id": "out"}
             ],
@@ -5480,12 +5508,17 @@
                 {"from": "payload", "to": "history_item", "as": "payload"},
                 {"from": "history_item", "to": "new_history", "as": "item"},
                 {"from": "history", "to": "new_history", "as": "array"},
-                {"from": "set_display_graph_edges", "to": "set_history", "as": "target"},
+                {"from": "state", "to": "set_history", "as": "target"},
                 {"from": "history_path", "to": "set_history", "as": "path"},
                 {"from": "new_history", "to": "set_history", "as": "value"},
                 {"from": "set_history", "to": "out", "as": "state"},
                 {"from": "update_hyperapp", "to": "update_hyperapp_effect", "as": "a0"},
+                {"from": "prev_edge", "to": "new_edge", "as": "o0"},
+                {"from": "properties", "to": "new_edge", "as": "o1"},
+                {"from": "new_edge", "to": "edit_edge_effect", "as": "edge"},
+                {"from": "display_graph", "to": "edit_edge_effect", "as": "display_graph"},
                 {"from": "update_hyperapp_effect", "to": "effects", "as": "a0"},
+                {"from": "edit_edge_effect", "to": "effects", "as": "a1"},
                 {"from": "effects", "to": "out", "as": "effects"}
             ]
         },
@@ -6045,6 +6078,7 @@
             "nodes": [
                 {"id": "in"},
                 {"id": "state", "ref": "arg", "value": "state"},
+                {"id": "display_graph", "ref": "arg", "value": "state.display_graph"},
                 {"id": "edge", "ref": "arg", "value": "payload.edge"},
                 {"id": "edge_to", "ref": "arg", "value": "payload.edge.to"},
                 {"id": "edge_as", "ref": "arg", "value": "payload.edge.as"},
@@ -6059,7 +6093,8 @@
                 {"id": "add_node_effector", "ref": "add_node"},
                 {"id": "new_node"},
                 {"id": "add_node_payload"},
-                {"id": "add_node_effect", "ref": "array"},
+                {"id": "add_node_effect", "ref": "array", "_script": "[() => _lib.no.runtime.add_node(display_graph, payload.node, {to: payload.child, from: payload.node.id, as: payload.child_as})]"},
+                {"id": "edit_edge_effect", "script": "return [() => _lib.no.runtime.edit_edge(display_graph, {from: edge.from, to: id}, edge)]"},
                 {"id": "effects", "ref": "array"},
                 {"id": "result"},
                 {"id": "out", "ref": "hyperapp_action_effect"}
@@ -6084,6 +6119,10 @@
                 {"from": "add_node_payload", "to": "add_node_effect", "as": "a1"},
                 {"from": "add_node_effector", "to": "add_node_effect", "as": "a0"},
                 {"from": "add_node_effect", "to": "effects", "as": "a0"},
+                {"from": "id", "to": "edit_edge_effect", "as": "id"},
+                {"from": "display_graph", "to": "edit_edge_effect", "as": "display_graph"},
+                {"from": "edge", "to": "edit_edge_effect", "as": "edge"},
+                {"from": "edit_edge_effect", "to": "effects", "as": "a1"},
                 {"from": "effects", "to": "result", "as": "effects"},
                 {"from": "result","to": "out", "as": "fn","type": "ref"}
             ]
