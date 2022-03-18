@@ -945,11 +945,11 @@
         },
         {
             "id": "event_subscriber",
-            "out": "add_listener",
+            "out": "out",
             "nodes": [
                 {"id": "name", "ref": "arg", "value": "name"},
-                {"id": "add_listener", "script": "const parent = _lib.no.runtime.get_node(_graph, _node.id.substring(0, _node.id.lastIndexOf('/'))); _lib.no.runtime.add_listener(_graph, event, parent.id, (graph, ev) => (console.log('presub'), _lib).no.runtime.add_node(_graph, {...parent , value: (console.log('sub'), console.log(ev), ev)}))"},
-                {"id": "out"}
+                {"id": "add_listener", "script": "const parent = _lib.no.runtime.get_node(_graph, _node.id.substring(0, _node.id.lastIndexOf('/'))); _lib.no.runtime.add_listener(_graph, event, parent.id, (graph, ev) => _lib.no.runtime.add_node(_graph, {...parent , value: ev}), true)"},
+                {"id": "out", "script": "return _lib.no.runtime.get_node(_graph, _node.id.substring(0, _node.id.lastIndexOf('/'))).value;"}
             ],
             "edges": [
                 {"from": "name", "to": "add_listener", "as": "event"},
@@ -5489,7 +5489,7 @@
                 {"id": "set_display_graph_edges", "ref": "set"},
                 {"id": "update_hyperapp", "ref": "arg", "value": "state.update_hyperapp"},
                 {"id": "update_hyperapp_effect", "ref": "array"},
-                {"id": "edit_edge_effect", "script": "console.log('fx'); console.log(edge); return [() => _lib.no.runtime.edit_edge(display_graph, edge)]"},
+                {"id": "edit_edge_effect", "script": "return [() => _lib.no.runtime.edit_edge(display_graph, edge)]"},
                 {"id": "effects", "ref": "array"},
                 {"id": "out"}
             ],

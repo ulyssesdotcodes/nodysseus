@@ -251,7 +251,7 @@ const executeGraph = ({ cache, graph, cache_id}) => {
                 return lib.utility.arg.fn(node, graph_input_value);
             }
 
-            if (node.value !== undefined && !node.script) {
+            if (node.value !== undefined && !node.script && !node.ref) {
                 if(typeof node.value === 'string' && node.value.match(/[0-9]*/g)[0].length === node.value.length) {
                     const int = parseInt(node.value);
                     if(!isNaN(int)){
@@ -1583,7 +1583,11 @@ const lib = {
                 }
             }
 
-            const add_listener = (graph, event, listener_id, fn) => {
+            const add_listener = (graph, event, listener_id, fn, remove) => {
+                if(remove) {
+                    remove_listener(graph, event, listener_id);
+                }
+
                 const listeners = getorsetgraph(graph, event, 'listeners', () => new Map());
                 listeners.set(listener_id, fn);
                 
@@ -1594,8 +1598,10 @@ const lib = {
             }
 
             const remove_listener = (graph, event, listener_id) => {
-                const listeners = getorsetgraph(graph, event, 'listeners', () => new Map());
-                listeners.delete(listener_id);
+                const listeners = cache.get(graph.id).listeners;
+                for(let l of listeners.values()) {
+                    l.delete(listener_id);
+                }
                 
                 //TODO: rethink this maybe?
                 if (listeners.size === 0) {
