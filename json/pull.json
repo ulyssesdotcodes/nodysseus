@@ -368,7 +368,7 @@
                 "id": "lahq5z4",
                 "args": [],
                 "name": "filter/out",
-                "script": "const filter_fn = _lib.no.executeGraphNode({graph: _graph})(fn); return arr.filter(filter_fn)"
+                "script": "const filter_fn = _lib.no.executeGraphNode({graph: _graph})(typeof fn === 'string' ? fn : fn.fn); return arr.filter(element => filter_fn(Object.assign(fn.args ?? {}, {element})))"
                 },
                 {
                 "id": "pfoypo5",
@@ -3099,7 +3099,7 @@
                 },
                 {
                     "id": "hfexsuu",
-                    "script": "return !key.startsWith('_');"
+                    "script": "return !key?.startsWith('_');"
                 },
                 {
                     "id": "bgi2g37",
@@ -3874,16 +3874,10 @@
                 {"id": "div", "value": "div"},
                 {
                     "id": "fill_children",
-                    "args": [
-                        "children"
-                    ],
                     "script": "return children === undefined ? [] : children.length !== undefined ? children.filter(c => !!c).map(c => c.el ?? c) : [children.el ?? children]"
                 },
                 {
                     "id": "fill_props",
-                    "args": [
-                        "input"
-                    ],
                     "script": "return props ?? {}"
                 },
                 {"id": "dom_type_def", "ref": "default"},
@@ -7170,6 +7164,11 @@
                 {"from": "edge_out", "to": "edit_edge", "as": "edge"},
                 {"from": "show_edit_text", "to": "edit_edge", "as": "show_edit_text"},
                 {"from": "update_edge", "to": "edit_edge", "as": "update_edge"},
+                {
+                    "from": "el_node",
+                    "to": "edit_edge",
+                    "as": "node"
+                },
                 {
                     "from": "edit_ref",
                     "to": "graph_effects",

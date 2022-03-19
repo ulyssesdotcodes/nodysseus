@@ -964,10 +964,8 @@ const result_subscription = (dispatch, props) => {
             dispatch(s => Object.assign({}, s, {error: false}, result)));
     
 
-    const error_listener = (graph, error) => (
-        console.error(error),
-        requestAnimationFrame(() => dispatch(s => Object.assign({}, s, {error})))
-    )
+    const error_listener = (graph, error) =>
+        requestAnimationFrame(() => dispatch(s => Object.assign({}, s, {error, display_graph: graph})))
 
     lib.no.runtime.add_listener(props.graph, 'graphrun', 'update_hyperapp_result_display', listener);
     lib.no.runtime.add_listener(props.graph, 'grapherror', 'update_hyperapp_error', error_listener);
@@ -1578,7 +1576,13 @@ const lib = {
                 cancelAnimationFrame(cache.get(graph.id).animrun)
                 cache.get(graph.id).animrun = requestAnimationFrame(() =>{
                     try {
-                        publish(graph, 'graphrun', lib.no.runGraph(graph, graph.out ?? 'main/out', {}))
+                        const gcache = cache.get(graph.id);
+                        const last_result = gcache.last_result;
+                        const result = lib.no.runGraph(graph, graph.out ?? 'main/out', last_result ?? {});
+                        Promise.resolve(result).then(res => {
+                            gcache.last_result = res;
+                            publish(graph, 'graphrun', res);
+                        }).catch(e => publish(graph, 'grapherror', e))
                     } catch(e) {
                         publish(graph, 'grapherror', e);
                     }
@@ -1624,6 +1628,9 @@ const lib = {
                 publish(graph, 'graphchange');
             }
 
+            const get_node = (graph, id) => getorsetgraph(resolve(graph), id, 'node_map', () => graph.nodes.find(n => n.id === id));
+            const get_edges_in = (graph, id) => getorsetgraph(resolve(graph), id, 'in_edge_map', () => graph.edges.filter(e => e.to === id));
+
             return { 
                 add_graph: (graph) => {
                     const gcache = getorset(cache, graph.id, new_graph_cache(graph));
@@ -1631,8 +1638,8 @@ const lib = {
                     publish(graph, 'graphchange');
                 },
                 is_cached: (graph, id) => getorset(cache, graph.id, new_graph_cache(graph)).node_map.has(id),
-                get_node: (graph, id) => getorsetgraph(resolve(graph), id, 'node_map', () => graph.nodes.find(n => n.id === id)),
-                get_edges_in: (graph, id) => getorsetgraph(resolve(graph), id, 'in_edge_map', () => graph.edges.filter(e => e.to === id)),
+                get_node,
+                get_edges_in,
                 get_fn: (graph, orderedargs, node_ref) => getorsetgraph(resolve(graph), orderedargs + node_ref.script, 'fn_cache', () => new Function(`return function _${(node_ref.name?.replace(/\W/g, "_") ?? node_ref.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script}}`)()),
                 update_graph,
                 edit_edge: (graph, edge, old_edge) => {
@@ -1657,19 +1664,42 @@ const lib = {
                     // edge = resolve({...edge, _needsresolve: true});
                     const gcache = getorset(cache, graph.id, new_graph_cache(resolve(graph)));
                     graph = gcache.graph;
+                    const graph_node = get_node(graph, node.id);
+
+
+                    const old_edge_out = graph.edges.find(e => e.from === node.id);
 
                     gcache.node_map.delete(node.id);
+                    gcache.in_edge_map.delete(node.id);
+                    gcache.in_edge_map.delete(old_edge_out?.to);
                     gcache.fn_cache.delete(node.id);
 
-                    const next_edge = edge ? lib.no.runGraph(cache.get('nodysseus_hyperapp').graph, 'next_edge', {edge, graph}) : undefined;
-                    if(next_edge) {
-                        gcache.in_edge_map.set(edge.to, (gcache.in_edge_map.get(edge.to) ?? []).concat([next_edge]));
+                    if (graph_node?.nodes || graph_node?.ref && get_node(graph, graph_node.ref).nodes) {
+                        for(let k of gcache.node_map.keys()) {
+                            if(k.startsWith(node.id)) {
+                                gcache.node_map.delete(k)
+                            }
+                        }
+
+                        for(let k of gcache.in_edge_map.keys()) {
+                            if(k.startsWith(node.id)) {
+                                gcache.in_edge_map.delete(k);
+                            }
+                        }
+                    }
+
+                    const edge_out = edge ? lib.no.runGraph(cache.get('nodysseus_hyperapp').graph, 'next_edge', {edge, graph}) : undefined;
+
+                    const edges_in = get_edges_in(graph, node.id);
+                    if (edges_in && edges_in.length > 0) {
+                        const needed_args = lib.no.runGraph(cache.get('nodysseus_hyperapp').graph, 'node_args', {node, nodes: graph.nodes});
+                        console.log(needed_args);
                     }
 
                     const new_graph = {
                         ...graph, 
                         nodes: graph.nodes.filter(n => n.id !== node.id).concat([node]), 
-                        edges: edge ? graph.edges.filter(e => !(e.from === next_edge.from && e.to === next_edge.to)).concat(next_edge) : graph.edges
+                        edges: edge ? graph.edges.filter(e => !(e.from === edge_out.from && e.to === edge_out.to)).concat(edge_out) : graph.edges
                     };
 
                     publish(new_graph, 'graphchange');
