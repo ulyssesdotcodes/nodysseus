@@ -6,7 +6,7 @@ pages:
   - npm install
   - npm run package
   - mkdir public
-  - cp index.html nodysseus.bundle.js sw.js nodysseus.webmanifest standalone/
+  - cp index.html nodysseus.bundle.js sw.js nodysseus.webmanifest public/
   - cp -R json/ public
   artifacts:
     paths:
