@@ -2,13 +2,17 @@
     "name": "Nodysseus",
     "short_name": "nodysseus",
     "description": "Generic node-based editor",
-    "start_url": "index.html",
+    "start_url": ".",
     "display": "fullscreen",
+    "background_color": "#112",
     "icons": [
         {
             "src": "icons/radio-button-off.svg",
-            "sizes": "32x32",
-            "type": "image/svg"
+            "sizes": "192x192"
+        },
+        {
+            "src": "icons/radio-button-off.svg",
+            "sizes": "512x512"
         }
     ]
 }
