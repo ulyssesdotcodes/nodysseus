@@ -1,0 +1,14 @@
+{
+    "name": "Nodysseus",
+    "short_name": "nodysseus",
+    "description": "Generic node-based editor",
+    "start_url": "index.html",
+    "display": "fullscreen",
+    "icons": [
+        {
+            "src": "icons/radio-button-off.svg",
+            "sizes": "32x32",
+            "type": "image/svg"
+        }
+    ]
+}
