@@ -8,6 +8,7 @@ pages:
   - mkdir public
   - cp index.html nodysseus.bundle.js sw.js nodysseus.webmanifest public/
   - cp -R json/ public
+  - cp -R icons/ public
   artifacts:
     paths:
     - public
