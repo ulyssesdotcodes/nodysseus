@@ -1616,6 +1616,14 @@ const lib = {
                 }
             }
 
+            const update_graph = (graph) => {
+                graph = resolve(graph);
+                const new_cache = new_graph_cache(graph)();
+                cache.get(graph.id).node_map = new_cache.node_map;
+                cache.get(graph.id).in_edge_map = new_cache.in_edge_map;
+                publish(graph, 'graphchange');
+            }
+
             return { 
                 add_graph: (graph) => {
                     const gcache = getorset(cache, graph.id, new_graph_cache(graph));
@@ -1626,14 +1634,7 @@ const lib = {
                 get_node: (graph, id) => getorsetgraph(resolve(graph), id, 'node_map', () => graph.nodes.find(n => n.id === id)),
                 get_edges_in: (graph, id) => getorsetgraph(resolve(graph), id, 'in_edge_map', () => graph.edges.filter(e => e.to === id)),
                 get_fn: (graph, orderedargs, node_ref) => getorsetgraph(resolve(graph), orderedargs + node_ref.script, 'fn_cache', () => new Function(`return function _${(node_ref.name?.replace(/\W/g, "_") ?? node_ref.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script}}`)()),
-                update_graph: (graph) => {
-                    graph = resolve(graph);
-                    console.log(graph);
-                    const new_cache = new_graph_cache(graph)();
-                    cache.get(graph.id).node_map = new_cache.node_map;
-                    cache.get(graph.id).in_edge_map = new_cache.in_edge_map;
-                    publish(graph, 'graphchange');
-                },
+                update_graph,
                 edit_edge: (graph, edge, old_edge) => {
                     const gcache = getorset(cache, graph.id, new_graph_cache(resolve(graph)));
                     graph = gcache.graph;
@@ -1677,15 +1678,11 @@ const lib = {
                     const gcache = getorset(cache, graph.id, new_graph_cache(resolve(graph)));
                     graph = gcache.graph;
 
-                    gcache.node_map.delete(id);
                     const parent_edge = graph.edges.find(e => e.from === id);
                     const child_edges = graph.edges.filter(e => e.to === id);
-                    const parent = gcache.node_map.get(parent_edge.to);
 
                     const current_child_edges = graph.edges.filter(e => e.to === parent_edge.to);
-                    const new_child_edges = child_edges.map(e => ({...e, to: parent_edge.to, as: !e.as ? e.as : current_child_edges.find(ce => ce.as === e.as && ce.from !== id) ? e.as + '1' : e.as}));
-                    gcache.in_edge_map.delete(parent_edge.to);
-                    gcache.in_edge_map.delete(`${parent_edge.to}/${parent.in ?? 'in'}`);
+                    const new_child_edges = child_edges.map((e, i) => ({...e, to: parent_edge.to, as: i === 0 ? parent_edge.as : !e.as ? e.as : current_child_edges.find(ce => ce.as === e.as && ce.from !== id) ? e.as + '1' : e.as}));
 
                     const new_graph = {
                         ...graph,
@@ -1693,7 +1690,7 @@ const lib = {
                         edges: graph.edges.filter(e => e !== parent_edge && e.to !== id).concat(new_child_edges)
                     }
 
-                    publish(new_graph, 'graphchange');
+                    update_graph(new_graph);
                 },
                 add_listener,
                 add_listener_extern: {

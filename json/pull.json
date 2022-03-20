@@ -6499,6 +6499,7 @@
                 {"value": "edit_name","id": "n" },
                 {"value": "edit_ref","id": "r" },
                 {"value": "edit_script","id": "s" },
+                {"value": "edit_edge","id": "e"},
                 {"value": "node_menu","id": "node_menu"},
                 {"value": "create_input", "id": "create_input"},
                 {"value": "delete","id": "delete" },
@@ -6544,6 +6545,7 @@
                 {"from": "x", "to": "graph", "as": "x"},
                 {"from": "a", "to": "graph", "as": "a"},
                 {"from": "f", "to": "graph", "as": "f"},
+                {"from": "e", "to": "graph", "as": "e"},
                 {"from": "enter", "to": "graph", "as": "enter"},
                 {"from": "ctrl_c", "to": "graph", "as": "ctrl_c"},
                 {"from": "ctrl_v", "to": "graph", "as": "ctrl_v"},
@@ -6617,6 +6619,11 @@
                     "value": "state.nodes"
                 },
                 {
+                    "id": "edges",
+                    "ref": "arg",
+                    "value": "state.display_graph.edges"
+                },
+                {
                     "id": "links",
                     "ref": "arg",
                     "value": "state.links"
@@ -6677,6 +6684,7 @@
                     "id": "onselectnode_effect",
                     "ref": "onselectnode_effect"
                 },
+                {"id": "update_edge", "ref": "update_edge_action"},
                 {"id": "onselectnode_action", "ref": "onselectnode_action"},
                 {"id": "search_effect", "ref": "search_effect"},
                 {"id": "focus_effect", "ref": "focus_effect"},
@@ -6704,6 +6712,7 @@
                     "script": "return (ev.ctrlKey ? 'ctrl_' : '') + (ev.shiftKey ? 'shift_' : '') + ev.key.toLowerCase()"
                 },
                 {"id": "selected_node", "ref": "find_node"},
+                {"id": "edge_out", "script": "return edges.find(e => e.from === node_id)"},
                 {"id": "el_node", "script": "return nodes.find(n => n.node_id === node_id)"},
                 {
                     "id": "save",
@@ -6750,6 +6759,10 @@
                 {
                     "id": "edit_script",
                     "script": "return [[show_edit_text, {id, property:'script', oneditconfirm: update_node, value: selected_node.script, position: {x: node.x, y: node.y}}]]"
+                },
+                {
+                    "id": "edit_edge",
+                    "script": "return [[show_edit_text, {id: edge, property: 'as', oneditconfirm: update_edge, value: edge.as, position: {x: node.x, y: node.y}}]]"
                 },
                 {"id": "select", "script": "return [[onselectnode, {node_id, event}]]"},
                 {
@@ -6851,6 +6864,7 @@
                 {"from": "edit_name", "to": "effects_map", "as": "edit_name"},
                 {"from": "edit_ref", "to": "effects_map", "as": "edit_ref"},
                 {"from": "edit_script", "to": "effects_map", "as": "edit_script"},
+                {"from": "edit_edge", "to": "effects_map", "as": "edit_edge"},
                 {"from": "add_node", "to": "effects_map", "as": "add_node"},
                 {"from": "add_arg_node", "to": "effects_map", "as": "add_arg_node"},
                 {"from": "delete_node", "to": "effects_map", "as": "delete_node"},
@@ -6934,6 +6948,16 @@
                 {
                     "from": "selected",
                     "to": "el_node",
+                    "as": "node_id"
+                },
+                {
+                    "from": "edges",
+                    "to": "edge_out",
+                    "as": "edges"
+                },
+                {
+                    "from": "selected",
+                    "to": "edge_out",
                     "as": "node_id"
                 },
                 {
@@ -7142,6 +7166,10 @@
                     "to": "edit_script",
                     "as": "id"
                 },
+                { "from": "el_node", "to": "edit_edge", "as": "node" },
+                {"from": "edge_out", "to": "edit_edge", "as": "edge"},
+                {"from": "show_edit_text", "to": "edit_edge", "as": "show_edit_text"},
+                {"from": "update_edge", "to": "edit_edge", "as": "update_edge"},
                 {
                     "from": "edit_ref",
                     "to": "graph_effects",
