@@ -15,5 +15,5 @@ const simple = examples.find(g => g.id === 'simple');
 let stored_graph;
 try{ stored_graph = JSON.parse(stored); } catch(e){}
 
-Promise.resolve(stored_graph ?? (hash_graph ? fetch(`json/${hash_graph}.json`).then(r => r.json()).catch(_ => simple) : simple))
+Promise.resolve(stored_graph ?? (hash_graph ? fetch(`json/${hash_graph}.json`).then(r => r.status !== 200 ? simple : r.json()).catch(_ => simple) : simple))
     .then(init_display_graph => nodysseus('node-editor', init_display_graph))

@@ -1555,7 +1555,6 @@ const lib = {
                 graph,
                 node_map: new Map(graph.nodes.map(n => [n.id, n])), 
                 in_edge_map: new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.to === n.id)])),
-                out_edge_map: new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.to === n.id)])),
                 fn_cache: new Map(),
                 listeners: new Map()
             });
@@ -1576,11 +1575,14 @@ const lib = {
             }
 
             const rungraph = graph => {
-                try {
-                    publish(graph, 'graphrun', lib.no.runGraph(graph, graph.out ?? 'main/out', {}))
-                } catch(e) {
-                    publish(graph, 'grapherror', e);
-                }
+                cancelAnimationFrame(cache.get(graph.id).animrun)
+                cache.get(graph.id).animrun = requestAnimationFrame(() =>{
+                    try {
+                        publish(graph, 'graphrun', lib.no.runGraph(graph, graph.out ?? 'main/out', {}))
+                    } catch(e) {
+                        publish(graph, 'grapherror', e);
+                    }
+                })
             }
 
             const add_listener = (graph, event, listener_id, fn, remove) => {
@@ -1624,6 +1626,14 @@ const lib = {
                 get_node: (graph, id) => getorsetgraph(resolve(graph), id, 'node_map', () => graph.nodes.find(n => n.id === id)),
                 get_edges_in: (graph, id) => getorsetgraph(resolve(graph), id, 'in_edge_map', () => graph.edges.filter(e => e.to === id)),
                 get_fn: (graph, orderedargs, node_ref) => getorsetgraph(resolve(graph), orderedargs + node_ref.script, 'fn_cache', () => new Function(`return function _${(node_ref.name?.replace(/\W/g, "_") ?? node_ref.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script}}`)()),
+                update_graph: (graph) => {
+                    graph = resolve(graph);
+                    console.log(graph);
+                    const new_cache = new_graph_cache(graph)();
+                    cache.get(graph.id).node_map = new_cache.node_map;
+                    cache.get(graph.id).in_edge_map = new_cache.in_edge_map;
+                    publish(graph, 'graphchange');
+                },
                 edit_edge: (graph, edge, old_edge) => {
                     const gcache = getorset(cache, graph.id, new_graph_cache(resolve(graph)));
                     graph = gcache.graph;
@@ -1641,6 +1651,7 @@ const lib = {
                     publish(new_graph, 'graphchange');
                 },
                 add_node: (graph, node, edge) => {
+                    console.log("adding");
                     // node = resolve(node);
                     // edge = resolve({...edge, _needsresolve: true});
                     const gcache = getorset(cache, graph.id, new_graph_cache(resolve(graph)));

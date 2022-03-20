@@ -7,7 +7,7 @@
             {"id": "args"},
             {"id": "state_log", "ref": "log"},
             {"id": "log_state", "ref": "runnable"},
-            {"id": "main/out", "ref": "sequence"}
+            {"id": "main/out"}
         ],
         "edges": [
             {"from": "args", "to": "main/out", "as": "args"},
