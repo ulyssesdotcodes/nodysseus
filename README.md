@@ -4,7 +4,7 @@ A generic node-based editor. Built with hyperapp.
 
 ## Reading a graph
 
-Each node does something or passes its data to its children. Edges define the relationships between nodes.
+Each node does something or passes data to its children. Edges (connections/lines) define the relationships between nodes.
 
 ### Node content
 

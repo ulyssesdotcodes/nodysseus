@@ -9739,6 +9739,7 @@
                                                 {"id": "payload_node", "ref": "arg", "value": "payload.node"},
                                                 {"id": "node", "ref": "default"},
                                                 {"id": "event", "ref": "arg", "value": "payload.event"},
+                                                {"id": "empty_string", "value": ""},
                                                 {
                                                     "id": "hide_types",
                                                     "ref": "arg",
@@ -9888,7 +9889,7 @@
                                                     "as": "target"
                                                 },
                                                 {
-                                                    "from": "get_id",
+                                                    "from": "empty_string",
                                                     "to": "display_name",
                                                     "as": "id"
                                                 },
