@@ -13,7 +13,7 @@ export default [{
     file: "./public/nodysseus.bundle.js",
     format: "es"
   },
-  plugins: [rucommonjs, json()],
+  plugins: [nodeResolve(), rucommonjs, json()],
 }, {
   input: "src/worker.js",
   cache,
@@ -21,7 +21,7 @@ export default [{
     file: "./public/worker.js",
     format: "iife"
   },
-  plugins: [rucommonjs, json()],
+  plugins: [nodeResolve(), rucommonjs, json()],
 }, {
   input: "src/editor.js",
   cache,
@@ -29,7 +29,7 @@ export default [{
     file: "./public/editor.bundle.js",
     format: "es"
   },
-  plugins: [rucommonjs, json(), copy({
+  plugins: [nodeResolve(), rucommonjs, json(), copy({
     targets: [
       {src: 'json/*', dest: 'public/json'}
     ]
