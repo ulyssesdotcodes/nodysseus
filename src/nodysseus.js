@@ -925,11 +925,6 @@ const nolib = {
         objToGraph,
         NodysseusError,
         runtime: (function(){
-            console.log(self);
-            let worker = typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope ? false : new Worker('./worker.js');
-            if(worker){
-                worker.onerror = (e) => worker = false;
-            }
             const cache = new Map(); 
             const new_graph_cache = (graph) => () => ({
                 graph,
@@ -954,6 +949,15 @@ const nolib = {
 
             }
 
+            let worker = false; //typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope ? false : new Worker('./worker.js');
+            if(worker){
+                worker.onerror = (e) => worker = false;
+                worker.onmessage = (e) => {
+                    console.log(e);
+                    cache.get(e.data.graph.id).last_result = e.data.result;
+                }
+            }
+
             const rungraph = graph => {
                 cancelAnimationFrame(cache.get(graph.id).animrun)
                 cache.get(graph.id).animrun = requestAnimationFrame(() =>{
@@ -968,6 +972,9 @@ const nolib = {
                             Promise.resolve(result).then(res => {
                                 gcache.last_result = res;
                                 publish(graph, 'graphrun', res);
+                                if(graph.nodes.find(n => n.ref === 'arg' && res[n.value] !== last_result?.[n.value]) !== undefined){
+                                    rungraph(graph);
+                                }
                             }).catch(e => publish(graph, 'grapherror', e))
                         }
                     } catch(e) {
@@ -1009,8 +1016,8 @@ const nolib = {
             const update_graph = (graph) => {
                 graph = resolve(graph);
                 const new_cache = new_graph_cache(graph)();
-                cache.get(graph.id).node_map = new_cache.node_map;
-                cache.get(graph.id).in_edge_map = new_cache.in_edge_map;
+                getorset(cache, graph.id, () => new_cache).node_map = new_cache.node_map;
+                getorset(cache, graph.id, () => new_cache).in_edge_map = new_cache.in_edge_map;
                 publish(graph, 'graphchange');
             }
 
@@ -1263,4 +1270,4 @@ const add_default_nodes_and_edges = g => ({
 
 const runGraph = nolib.no.runGraph;
 
-export { nolib, runGraph, objToGraph, flattenNode, bfs, calculateLevels, compare, hashcode, contract_all, contract_node, expand_node, add_default_nodes_and_edges, ispromise };
+export { nolib, runGraph, objToGraph, flattenNode, bfs, calculateLevels, compare, hashcode, contract_all, contract_node, expand_node, add_default_nodes_and_edges, ispromise, resolve };

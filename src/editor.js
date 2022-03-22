@@ -1,4 +1,4 @@
-import { hashcode, add_default_nodes_and_edges, nolib, runGraph, expand_node, flattenNode, contract_node, calculateLevels, contract_all, ispromise } from "./nodysseus";
+import { bfs, hashcode, add_default_nodes_and_edges, nolib, runGraph, expand_node, flattenNode, contract_node, calculateLevels, contract_all, ispromise, resolve } from "./nodysseus";
 import DEFAULT_GRAPH from "../json/pull.json"
 import examples from "../json/examples.json"
 import { h, app, text, memo } from "hyperapp"
