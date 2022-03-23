@@ -57,31 +57,15 @@ Nodysseus caches results and proxies return values automatically. A node will no
 
 ### node edit mode
 
-- **a** change args
 - **v** change value
 - **s** change script
-- **n** change name
-- **t** change type
-- **shift-t** create type (node name is used as type `id`)
-- **esc** exit edit mode and save
+- **r** change reference
+- **shift-enter** expand / collapse
 
 ### node creation/deletion
-- **o** create node below
-- **shift-o** create node above
+- **o** create parent node
 - **x** delete node (edges are adjusted automatically)
 
-### edge creation
+### edges
 
-When `to` and `from` are both present, an edge will be created if there isn't one, or destroyed if there is.
-
-- **c** set pending edge `from` value
-- **shift-c** set pending edge `to` value
-
-
-### edge edit mode
-
-- **e** edit edge edit mode
-- **left** move left to sibling edge
-- **right** move right to sibling edge
-- **a** change "as"
-- **t** change type
+- **e** edit output edge

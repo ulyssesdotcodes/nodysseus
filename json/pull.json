@@ -9726,6 +9726,9 @@
                                                 },
                                                 {
                                                     "id": "get_ref",
+                                                    "ref": "get"
+                                                }, {
+                                                    "id": "ref_name",
                                                     "script": "return (target.ref ? target.ref : target.value !== undefined ? 'value' : target.script ? 'script' : target.nodes ? `graph (${target.nested_node_count}, ${target.nested_edge_count})` : 'object')"
                                                 },
                                                 {
@@ -9752,7 +9755,7 @@
                                                     "id": "tspan_dom_type",
                                                     "value": "tspan"
                                                 },
-                                                {"id": "display_name_input", "script": "return n.name ? 'name' : n.value !== undefined ? 'value' : 'id'"},
+                                                {"id": "display_name_input", "script": "return n.name ? 'name' : n.value !== undefined ? 'value' : undefined"},
                                                 {"id": "display_name", "ref": "switch"},
                                                 {
                                                     "id": "node_primary_text_text",
@@ -9850,6 +9853,11 @@
                                                 },
                                                 {
                                                     "from": "node",
+                                                    "to": "ref_name",
+                                                    "as": "target"
+                                                },
+                                                {
+                                                    "from": "node",
                                                     "to": "get_value",
                                                     "as": "target"
                                                 },
@@ -9874,13 +9882,18 @@
                                                     "as": "path"
                                                 },
                                                 {
+                                                    "from": "node_ref",
+                                                    "to": "ref_name",
+                                                    "as": "path"
+                                                },
+                                                {
                                                     "from": "node_name",
                                                     "to": "get_name",
                                                     "as": "path"
                                                 },
                                                 {
                                                     "from": "script",
-                                                    "to": "get_ref",
+                                                    "to": "ref_name",
                                                     "as": "default_value"
                                                 },
                                                 {
@@ -9906,7 +9919,7 @@
                                                     "as": "text"
                                                 },
                                                 {
-                                                    "from": "get_ref",
+                                                    "from": "ref_name",
                                                     "to": "node_secondary_text_text",
                                                     "as": "text"
                                                 },
