@@ -5253,7 +5253,7 @@
             "out": "out",
             "nodes": [
                 {"id": "in"},
-                {"id": "display_graph", "ref": "state.display_graph"},
+                {"id": "display_graph", "ref": "arg", "value": "state.display_graph"},
                 {"id": "next_edge", "ref": "next_edge"},
                 { "id": "edges_path", "value": "display_graph.edges" },
                 { "id": "new_edges", "ref": "append" },
@@ -5617,16 +5617,12 @@
                 {"from": "node", "to": "new_node", "as": "target"},
                 {"from": "new_node", "to": "add_node_payload", "as": "node"},
                 {"from": "select", "to": "add_node_payload", "as": "select"},
+                {"from": "selected", "to": "add_node_payload", "as": "child"},
                 {"from": "clipboard_path", "to": "delete_clipboard", "as": "path"},
                 {"from": "delete_clipboard", "to": "result", "as": "state"},
                 {"from": "add_node_effector", "to": "add_node_effect", "as": "a0"},
                 {"from": "add_node_payload", "to": "add_node_effect", "as": "a1"},
                 {"from": "add_node_effect", "to": "effects", "as": "a0"},
-                {"from": "randid", "to": "add_edge_payload", "as": "from"},
-                {"from": "selected", "to": "add_edge_payload", "as": "to"},
-                {"from": "add_edge_effector", "to": "add_edge_effect", "as": "a0"},
-                {"from": "add_edge_payload", "to": "add_edge_effect", "as": "a1"},
-                {"from": "add_edge_effect", "to": "effects", "as": "a1"},
                 {"from": "update_hyperapp", "to": "update_hyperapp_effect", "as": "a0"},
                 {"from": "update_hyperapp_effect", "to": "effects", "as": "a2"},
                 {"from": "effects", "to": "result", "as": "effects"},
@@ -6512,7 +6508,7 @@
                 {"value": "undo", "id": "ctrl_z"},
                 {"value": "redo", "id": "ctrl_y"},
                 {"value": "select", "id": "enter"},
-                {"value": "show_keybindings", "id": "?"},
+                {"value": "show_keybindings", "id": "questionmark"},
                 {"value": "find", "id": "f"},
                 {"value": "cancel_search","id": "esc_search" },
                 {"id": "out"}
@@ -6540,6 +6536,7 @@
                 {"from": "a", "to": "graph", "as": "a"},
                 {"from": "f", "to": "graph", "as": "f"},
                 {"from": "e", "to": "graph", "as": "e"},
+                {"from": "questionmark", "to": "graph", "as": "shift_questionmark"},
                 {"from": "enter", "to": "graph", "as": "enter"},
                 {"from": "ctrl_c", "to": "graph", "as": "ctrl_c"},
                 {"from": "ctrl_v", "to": "graph", "as": "ctrl_v"},
@@ -6557,46 +6554,14 @@
                 {
                     "id": "in"
                 },
-                {
-                    "id": "key_event",
-                    "ref": "arg",
-                    "value": "payload"
-                },
-                {
-                    "id": "state",
-                    "ref": "arg",
-                    "value": "state"
-                },
-                {
-                    "id": "static",
-                    "ref": "arg",
-                    "value": "state.static"
-                },
-                {
-                    "id": "randid",
-                    "ref": "arg",
-                    "value": "state.randid"
-                },
-                {
-                    "id": "arg_levels",
-                    "ref": "arg",
-                    "value": "state.levels"
-                },
-                {
-                    "id": "dimensions",
-                    "ref": "arg",
-                    "value": "state.dimensions"
-                },
-                {
-                    "id": "html_id",
-                    "ref": "arg",
-                    "value": "state.html_id"
-                },
-                {
-                    "id": "arg_display_graph",
-                    "ref": "arg",
-                    "value": "state.display_graph"
-                },
+                { "id": "key_event", "ref": "arg", "value": "payload" },
+                { "id": "state", "ref": "arg", "value": "state" },
+                { "id": "static", "ref": "arg", "value": "state.static" },
+                { "id": "randid", "ref": "arg", "value": "state.randid" },
+                { "id": "arg_levels", "ref": "arg", "value": "state.levels" },
+                { "id": "dimensions", "ref": "arg", "value": "state.dimensions" },
+                { "id": "html_id", "ref": "arg", "value": "state.html_id" },
+                { "id": "arg_display_graph", "ref": "arg", "value": "state.display_graph" },
                 {
                     "id": "arg_display_graph_nodes",
                     "ref": "arg",
@@ -6666,10 +6631,7 @@
                     "id": "update_node",
                     "ref": "update_node_action"
                 },
-                {
-                    "id": "open_reference_popover",
-                    "ref": "open_reference_popover"
-                },
+                {"id": "open_reference_popover", "ref": "open_reference_popover"},
                 {
                     "id": "confirm_edit_text",
                     "ref": "confirm_edit_text"
@@ -6686,9 +6648,12 @@
                 {"id": "stop_propagation", "ref": "stop_propagation_effect"},
                 {"id": "copy_effect", "ref": "copy_effect"},
                 {"id": "paste_effect", "ref": "paste_node_effect"},
+                {"id": "clear_popover", "ref": "clear_popover_graph"},
                 {"id": "expand_contract_effect", "ref": "expand_contract_effect"},
                 {"id": "run_display_graph_effector", "ref": "run_display_graph_effect"},
                 {"id": "run_display_graph_effect", "ref": "array"},
+                {"id": "keybindings_graph", "script": "return _lib.no.runtime.get_node(_graph, 'keybindings')"},
+                {"id": "show_popover_effect", "ref": "show_popover_graph"},
 
                 {"id": "keybindings", "ref": "keybindings"},
                 {"id": "mode", "script": "return editing !== false ? 'editing' : search !== false ? 'searching' : 'graph'"},
@@ -6703,7 +6668,7 @@
                 },
                 {
                     "id": "key_inputs",
-                    "script": "return (ev.ctrlKey ? 'ctrl_' : '') + (ev.shiftKey ? 'shift_' : '') + ev.key.toLowerCase()"
+                    "script": "return (ev.ctrlKey ? 'ctrl_' : '') + (ev.shiftKey ? 'shift_' : '') + (ev.key === '?' ? 'questionmark' : ev.key.toLowerCase())"
                 },
                 {"id": "selected_node", "ref": "find_node"},
                 {"id": "edge_out", "script": "return edges.find(e => e.from === node_id)"},
@@ -6793,6 +6758,7 @@
                     "id": "esc",
                     "script": "return [[onselectnode, {node_id, event}]]" 
                 },
+                {"id": "show_keybindings", "script": "return [[show_popover_effect, {popover_graph: {...keybindings, nodes: keybindings.nodes.map(n => n.id === 'out' ? {...n, name: 'keybindings', value: [[clear_popover]]} : n)}}]]"},
                 {"id": "panzoom_selected_id", "script": "return selected"},
                 {"id": "panzoom_selected_effector", "ref": "arg", "value": "state.panzoom_selected_effect"},
                 {"id": "panzoom_selected_effect", "ref": "array"},
@@ -6869,6 +6835,7 @@
                 {"from": "cancel_search", "to": "effects_map", "as": "cancel_search"},
                 {"from": "find", "to": "effects_map", "as": "find"},
                 {"from": "select", "to": "effects_map", "as": "select"},
+                {"from": "show_keybindings", "to": "effects_map", "as": "show_keybindings"},
 
                 {"from": "undo", "to": "actions_map", "as": "undo"},
                 {"from": "redo", "to": "actions_map", "as": "redo"},
@@ -7533,6 +7500,9 @@
                     "to": "editing_effects",
                     "as": "escape"
                 },
+                {"from": "clear_popover", "to": "show_keybindings", "as": "clear_popover"},
+                {"from": "show_popover_effect", "to": "show_keybindings", "as": "show_popover_effect"},
+                {"from": "keybindings_graph", "to": "show_keybindings", "as": "keybindings"},
                 {"from": "html_id", "to": "cancel_search", "as": "html_id"},
                 {"from": "search_effect", "to": "cancel_search", "as": "search"},
                 {"from": "blur_effect", "to": "cancel_search", "as": "blur"},

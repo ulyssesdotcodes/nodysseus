@@ -55,13 +55,15 @@ const updateSimulationNodes = (dispatch, data) => {
             const parents_count = Math.min(8, parents.get(n.id)?.length) ?? 0;
             const siblings = children.get(n.id)?.length ? parents.get(children.get(n.id)[0]) : [n.id];
             const sibling_count = Math.max(siblings.length, 4);
-            const increment = Math.PI * 2 / (Math.max(1, sibling_count - 1) * (Math.pow(Math.PI, 2 * (levels.get(n.id) - 1)) + 1));
+            let increment = Math.PI * 2 / (Math.max(1, sibling_count - 1) * (Math.pow(Math.PI, 2 * (levels.get(n.id) - 1)) + 1));
+            increment = Math.max(increment, .05);
             const offset = child ? node_positions.get(child)[2] : 0;
-            const theta = ((siblings.findIndex(l => l == n.id) - (siblings.length === 1 ? 0 : 0.5)) * increment) + offset;
+            let theta = ((siblings.findIndex(l => l == n.id) - (siblings.length === 1 ? 0 : 0.5)) * increment) + offset;
             const dist = !child ? 0 : (node_el_width * 0.75
                 + node_positions.get(child)[3]
                 + node_el_width * 0.25 * parents_count
             );
+
                 //+ (child ? node_positions.get(child)[3] : 0);
 
             node_positions.set(n.id,
