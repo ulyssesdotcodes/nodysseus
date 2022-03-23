@@ -638,8 +638,16 @@ const middleware = dispatch => (ha_action, ha_payload) => {
         : dispatch(action, payload)
 }
 
+const runh = el => h(el.d, el.p, el.c);
+
 const hlib = {
-    ha: { middleware, h: {args: ['dom_type', 'props', 'children'], fn: h}, app, text: {args: ['text'], fn: text}, memo: {args: ['view', 'props'], fn: memo} },
+    ha: { 
+        middleware, 
+        h: {args: ['dom_type', 'props', 'children'], fn: (dom_type, props, children) => runh({d: dom_type, p: props, c: children})}, 
+        app, 
+        text: {args: ['text'], fn: text}, 
+        memo: {args: ['view', 'props'], fn: memo} 
+    },
     scripts: { d3subscription, updateSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all, listen, graph_subscription, result_subscription},
     pz: {
     panzoom: (dispatch, sub_payload) => {
