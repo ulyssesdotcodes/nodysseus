@@ -1,5 +1,5 @@
 node_modules
 .vscode/
 log.txt
-public/
-nodysseus.bundle.js
+public/*.bundle.js
+public/worker.js
