@@ -1,6 +1,7 @@
 import { bfs, hashcode, add_default_nodes_and_edges, nolib, runGraph, expand_node, flattenNode, contract_node, calculateLevels, contract_all, ispromise, resolve } from "./nodysseus";
 import DEFAULT_GRAPH from "../public/json/pull.json"
-import examples from "../public/json/examples.json"
+import simple_html_hyperapp from "../public/json/simple_html_hyperapp.json"
+import simple from "../public/json/simple.json"
 import { h, app, text, memo } from "hyperapp"
 import panzoom from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
@@ -319,6 +320,7 @@ const updateSimulationNodes = (dispatch, data) => {
 
 const editor = function(html_id, display_graph) {
     const url_params = new URLSearchParams(document.location.search);
+    const examples = [simple_html_hyperapp, simple];
     const dispatch = runGraph(DEFAULT_GRAPH, "initialize_hyperapp_app", { 
         graph: DEFAULT_GRAPH, 
         display_graph: add_default_nodes_and_edges(display_graph),

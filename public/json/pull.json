@@ -5601,6 +5601,7 @@
                 {"id": "state", "ref": "arg", "value": "state"},
                 {"id": "update_sim_effector", "ref": "arg", "value": "state.update_sim_effect"},
                 {"id": "update_graph", "script": "return [() => _lib.no.runtime.update_graph(graph)]"},
+                {"id": "update_location", "script": "return [() => window.location.hash = '#' + graph.id]"},
                 {"id": "display_graph_path", "value": "display_graph"},
                 {"id": "set_display_graph", "ref": "set"},
                 {"id": "update_sim_effect", "ref": "array"},
@@ -5614,10 +5615,12 @@
                 {"from": "display_graph_path", "to": "set_display_graph", "as": "path"},
                 {"from": "new_graph", "to": "set_display_graph", "as": "value"},
                 {"from": "new_graph", "to": "update_graph", "as": "graph"},
+                {"from": "new_graph", "to": "update_location", "as": "graph"},
                 {"from": "set_display_graph", "to": "result", "as": "state"},
                 {"from": "update_sim_effector", "to": "update_sim_effect", "as": "a0"},
                 {"from": "update_sim_effect", "to": "effects", "as": "a0"},
                 {"from": "update_graph", "to": "effects", "as": "a1"},
+                {"from": "update_location", "to": "effects", "as": "a2"},
                 {"from": "effects", "to": "result", "as": "effects"},
                 {"from": "result", "to": "out", "as": "fn", "type": "ref"}
             ]

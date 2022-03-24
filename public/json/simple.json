@@ -1,0 +1,17 @@
+{
+    "out": "main/out",
+    "id": "simple",
+    "nodes": [
+        {"id": "state_path", "ref": "arg", "value": "state"},
+        {"id": "args"},
+        {"id": "state_log", "ref": "log"},
+        {"id": "log_state", "ref": "runnable"},
+        {"id": "main/out"}
+    ],
+    "edges": [
+        {"from": "args", "to": "main/out", "as": "args"},
+        {"from": "state_path", "to": "state_log", "as": "value"},
+        {"from": "state_log", "to": "log_state", "as": "fn"},
+        {"from": "log_state", "to": "main/out", "as": "arg0"}
+    ]
+}
