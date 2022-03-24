@@ -1419,7 +1419,7 @@
                 {"id": "display_graph_runnable", "script": "return {fn: 'main/out', graph: {...display_graph, nodes: [...display_graph.nodes], edges: [...display_graph.edges]}, args: {state, graph: state.display_graph, payload: {event: payload}}}"},
                 {"id": "result_runnable", "script": "try { const res = _lib.no.runGraph(runnable); dispatch(s => s.error ? {...s, error: false} : s); return res; } catch(e) { dispatch(s => ({...s, error: e}));}"},
                 {"id": "run_result", "ref": "runnable_hyperapp_effect"},
-                {"id": "out", "script": "return (dispatch, payload) => {try { const res = _lib.no.runGraph(runnable); Promise.resolve(res).then(r => dispatch(s => r.result_display ? {...s, result_display: r.result_display, error: false} : s.error ? {...s, error: false} : s)); } catch(e) { dispatch(s => ({...s, error: e}));}}"},
+                {"id": "out", "script": "return (dispatch, payload) => {try { const res = _lib.no.runGraph(runnable); Promise.resolve(res).then(r => dispatch(s => r.display ? {...s, result_display: r.display, error: false} : s.error ? {...s, error: false} : s)); } catch(e) { dispatch(s => ({...s, error: e}));}}"},
                 {"id": "_out", "script": "return (dispatch, payload) => {const wrapped_dispatch = (a, p) => Promise.resolve(p).then(resp => Promise.resolve(a).then(aresp => [aresp, resp])).then(([a, p]) => dispatch(a, p)).catch(e => dispatch(s => [{...s, error: e}])); wrapped_dispatch(state => {new Promise((resolve, reject) => resolve(_lib.no.runGraph({...runnable, args: {...runnable.args, dispatch: wrapped_dispatch}}))).then(res => _lib.no.runGraph(res)).catch(e => dispatch(s => [{...s, error: e}])); return state.error ? {...state, error: false} : state;})}"}
             ],
             "edges": [
@@ -5600,6 +5600,7 @@
                 {"id": "new_graph", "ref": "arg", "value": "payload.graph"},
                 {"id": "state", "ref": "arg", "value": "state"},
                 {"id": "update_sim_effector", "ref": "arg", "value": "state.update_sim_effect"},
+                {"id": "update_graph", "script": "return [() => _lib.no.runtime.update_graph(graph)]"},
                 {"id": "display_graph_path", "value": "display_graph"},
                 {"id": "set_display_graph", "ref": "set"},
                 {"id": "update_sim_effect", "ref": "array"},
@@ -5612,9 +5613,11 @@
                 {"from": "state", "to": "set_display_graph", "as": "target"},
                 {"from": "display_graph_path", "to": "set_display_graph", "as": "path"},
                 {"from": "new_graph", "to": "set_display_graph", "as": "value"},
+                {"from": "new_graph", "to": "update_graph", "as": "graph"},
                 {"from": "set_display_graph", "to": "result", "as": "state"},
                 {"from": "update_sim_effector", "to": "update_sim_effect", "as": "a0"},
                 {"from": "update_sim_effect", "to": "effects", "as": "a0"},
+                {"from": "update_graph", "to": "effects", "as": "a1"},
                 {"from": "effects", "to": "result", "as": "effects"},
                 {"from": "result", "to": "out", "as": "fn", "type": "ref"}
             ]
@@ -8748,7 +8751,7 @@
                 {
                     "id": "result_display",
                     "ref": "arg",
-                    "value": "result_display"
+                    "value": "display"
                 },
                 {
                     "id": "editing",

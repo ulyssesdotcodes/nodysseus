@@ -1,4 +1,4 @@
-import DEFAULT_GRAPH from "../json/pull.json"
+import DEFAULT_GRAPH from "../public/json/pull.json"
 import get from "just-safe-get";
 import set from "just-safe-set";
 import { diff } from "just-diff";
