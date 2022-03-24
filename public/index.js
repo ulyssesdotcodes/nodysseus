@@ -1,6 +1,6 @@
 import { editor } from './editor.bundle.js'
 
-fetch('json/examples.json').then(e => e.json())
+Promise.all(["json/simple.json", "json/simple_html_hyperapp.json"].map(fetch).then(e => e.json()))
     .then((examples) => {
         if('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js');
