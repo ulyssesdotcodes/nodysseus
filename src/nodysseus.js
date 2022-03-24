@@ -456,7 +456,7 @@ const create_data = (inputs, input_data_map) => {
 
 const executeGraph = ({ cache, graph, lib, cache_id}) => {
     const full_lib = {...nolib, ...(lib ?? {})}
-    let usecache = true;
+    let usecache = false;
 
     if (!graph.nodes) {
         throw new Error(`Graph has no nodes! in: ${graph.in} out: ${graph.out}`)
