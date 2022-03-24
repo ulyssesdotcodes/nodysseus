@@ -224,11 +224,7 @@
                 },
                 {
                     "id": "out",
-                    "args": [
-                        "init",
-                        "view"
-                    ],
-                    "script": "return {dispatch: _lib.ha.app({dispatch: _lib.ha.middleware, init: () => [init, static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp], [() => _lib.no.runtime.add_graph(init.display_graph)]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}], !static && [_lib.scripts.graph_subscription, {graph: s.display_graph}], !static && [_lib.scripts.result_subscription, {graph: s.display_graph}], !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.pz.panzoom, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]]})}"
+                    "script": "return {dispatch: _lib.ha.app({dispatch: _lib.ha.middleware, init: () => [init, static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp], [() => _lib.no.runtime.add_graph(init.display_graph)]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}], !static && [_lib.scripts.graph_subscription, {graph: s.display_graph}], !static && !init.norun._value && [_lib.scripts.result_subscription, {graph: s.display_graph}], !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.pz.panzoom, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]]})}"
                 }
             ],
             "edges": [
@@ -941,6 +937,17 @@
             "edges": [
                 {"from": "name", "to": "update", "as": "event"},
                 {"from": "value", "to": "update", "as": "data"}
+            ]
+        },
+        {
+            "id":"input_value",
+            "out": "out",
+            "nodes": [
+                {"id": "value", "ref": "arg", "value": "value"},
+                {"id": "out", "script": "const parent = _lib.no.runtime.get_node(_graph, _node.id.substring(0, _node.id.lastIndexOf('/'))); if(parent.value !== value) { _lib.no.runtime.add_node(_graph, {...parent , value}); } return value"}
+            ],
+            "edges": [
+                {"from": "value", "to": "out", "as": "value"}
             ]
         },
         {
@@ -2229,8 +2236,8 @@
             "out": "06osgt6",
             "nodes": [
                 {
-                    "id": "06osgt6",
-                    "ref": "initial_state_runnable",
+                    "id": "lapeojg",
+                    "script": "const new_nodes = import_graph.nodes.map(n => ({...n, id: name + '.' + n.id}));\n\nconst new_graph = {\n..._graph,\nnodes: [...(new Map(_graph.nodes.concat(new_nodes).map(n => [n.id, n])).values())]\n}\n\n_lib.no.runtime.update_graph(new_graph); return name;",
                     "name": "out"
                 },
                 {
@@ -3146,6 +3153,32 @@
             ]
         },
         {
+            "id": "css_anim",
+            "name": "css_anim",
+            "in": "cawqofn",
+            "out": "spy9h48",
+            "nodes": [
+                {
+                    "name": "out",
+                    "id": "spy9h48",
+                    "script": "return Object.fromEntries((Array.isArray(arr[0]) ? arr[0] : arr).map((v, i, a) => [Math.floor((i / a.length)*100) + \"%\", v]))"
+                },
+                {
+                    "id": "cawqofn",
+                    "ref": "array",
+                    "name": "in"
+                }
+            ],
+            "edges": [
+                {
+                    "as": "arr",
+                    "from": "cawqofn",
+                    "to": "spy9h48",
+                    "type": "resolve"
+                }
+            ]
+        },
+        {
             "id": "css_styles",
             "name": "css_styles",
             "in": "xw3pmx7",
@@ -3173,7 +3206,8 @@
                 },
                 {
                     "id": "jlgp7uy",
-                    "ref": "call"
+                    "ref": "call",
+                    "name": "named_obj/out"
                 },
                 {
                     "id": "o1j78dd",
@@ -3197,8 +3231,8 @@
                     "ref": "object_entries"
                 },
                 {
-                    "id": "aelf1a7",
-                    "script": "return key + '{' + value + '}'"
+                    "id": "n9g4wyq",
+                    "ref": "runnable"
                 },
                 {
                     "id": "z63iaay",
@@ -3209,13 +3243,9 @@
                     "ref": "default"
                 },
                 {
-                    "id": "5eqf77t",
-                    "value": "element.0",
-                    "ref": "arg"
-                },
-                {
-                    "id": "1hpnid4",
-                    "ref": "call"
+                    "id": "aelf1a7",
+                    "script": "return key + '{' + value + '}'",
+                    "name": "out"
                 },
                 {
                     "id": "mkwx4yx"
@@ -3224,6 +3254,33 @@
                     "id": "fzr4mkv",
                     "ref": "arg",
                     "value": "css_object"
+                },
+                {
+                    "id": "5eqf77t",
+                    "value": "element.0",
+                    "ref": "arg"
+                },
+                {
+                    "id": "5pwetw5",
+                    "ref": "if"
+                },
+                {
+                    "id": "o5ojdyc",
+                    "script": "return key.startsWith(\"@keyframes\")"
+                },
+                {
+                    "id": "1hpnid4",
+                    "ref": "call"
+                },
+                {
+                    "id": "slj7ynn/jlgp7uy",
+                    "ref": "call",
+                    "name": "named_obj/out"
+                },
+                {
+                    "id": "ft1oksl",
+                    "ref": "arg",
+                    "value": "element.0"
                 },
                 {
                     "id": "bbbp82v",
@@ -3238,15 +3295,40 @@
                     "ref": "array"
                 },
                 {
+                    "id": "slj7ynn/ij4z84e",
+                    "ref": "map"
+                },
+                {
+                    "id": "slj7ynn/q3pwj9j",
+                    "value": "join"
+                },
+                {
+                    "id": "slj7ynn/d6h3gdw",
+                    "ref": "array"
+                },
+                {
                     "id": "i1ifamx",
                     "ref": "object_entries"
                 },
                 {
-                    "id": "0d4yh8u",
-                    "script": "return key + ': ' + value + \";\";"
+                    "id": "druspar",
+                    "ref": "runnable"
                 },
                 {
                     "id": "gth1wc2",
+                    "script": "return \"\\n\";"
+                },
+                {
+                    "id": "slj7ynn/j8c79uf",
+                    "name": "object_entries",
+                    "ref": "object_entries"
+                },
+                {
+                    "id": "slj7ynn/n9g4wyq",
+                    "ref": "runnable"
+                },
+                {
+                    "id": "slj7ynn/z63iaay",
                     "script": "return \"\\n\";"
                 },
                 {
@@ -3255,12 +3337,85 @@
                     "ref": "arg"
                 },
                 {
+                    "id": "0d4yh8u",
+                    "script": "return key + ': ' + value + \";\";"
+                },
+                {
+                    "id": "slj7ynn/vwsgweb",
+                    "ref": "default"
+                },
+                {
+                    "id": "slj7ynn/aelf1a7",
+                    "script": "return key + '{' + value + '}'",
+                    "name": "out"
+                },
+                {
                     "id": "h13a9fd",
                     "ref": "arg",
                     "value": "element.0"
                 },
                 {
                     "id": "h7me3v8",
+                    "ref": "arg",
+                    "value": "element.1"
+                },
+                {
+                    "id": "slj7ynn/mkwx4yx"
+                },
+                {
+                    "id": "slj7ynn/fzr4mkv",
+                    "ref": "arg",
+                    "value": "element.1"
+                },
+                {
+                    "id": "slj7ynn/5eqf77t",
+                    "value": "element.0",
+                    "ref": "arg"
+                },
+                {
+                    "id": "slj7ynn/1hpnid4",
+                    "ref": "call"
+                },
+                {
+                    "id": "slj7ynn/bbbp82v",
+                    "ref": "map"
+                },
+                {
+                    "id": "slj7ynn/cp66ig5",
+                    "value": "join"
+                },
+                {
+                    "id": "slj7ynn/uwq9u81",
+                    "ref": "array"
+                },
+                {
+                    "id": "slj7ynn/i1ifamx",
+                    "ref": "object_entries"
+                },
+                {
+                    "id": "slj7ynn/druspar",
+                    "ref": "runnable"
+                },
+                {
+                    "id": "slj7ynn/gth1wc2",
+                    "script": "return \"\\n\";"
+                },
+                {
+                    "id": "slj7ynn/y25dg2n",
+                    "value": "element.1",
+                    "ref": "arg"
+                },
+                {
+                    "id": "slj7ynn/0d4yh8u",
+                    "script": "return key + ': ' + value + \";\";"
+                },
+                {
+                    "id": "slj7ynn/h13a9fd",
+                    "ref": "arg",
+                    "value": "element.0"
+                },
+                {
+                    "id": "slj7ynn/h7me3v8",
                     "ref": "arg",
                     "value": "element.1"
                 }
@@ -3317,10 +3472,9 @@
                     "as": "array"
                 },
                 {
-                    "from": "aelf1a7",
-                    "to": "ij4z84e",
                     "as": "fn",
-                    "type": "ref"
+                    "from": "n9g4wyq",
+                    "to": "ij4z84e"
                 },
                 {
                     "from": "z63iaay",
@@ -3333,14 +3487,9 @@
                     "as": "object"
                 },
                 {
-                    "from": "5eqf77t",
-                    "to": "aelf1a7",
-                    "as": "key"
-                },
-                {
-                    "from": "1hpnid4",
-                    "to": "aelf1a7",
-                    "as": "value"
+                    "as": "fn",
+                    "from": "aelf1a7",
+                    "to": "n9g4wyq"
                 },
                 {
                     "from": "mkwx4yx",
@@ -3351,6 +3500,36 @@
                     "from": "fzr4mkv",
                     "to": "vwsgweb",
                     "as": "value"
+                },
+                {
+                    "from": "5eqf77t",
+                    "to": "aelf1a7",
+                    "as": "key"
+                },
+                {
+                    "from": "5pwetw5",
+                    "to": "aelf1a7",
+                    "as": "value"
+                },
+                {
+                    "from": "o5ojdyc",
+                    "to": "5pwetw5",
+                    "as": "pred"
+                },
+                {
+                    "as": "false",
+                    "from": "1hpnid4",
+                    "to": "5pwetw5"
+                },
+                {
+                    "from": "slj7ynn/jlgp7uy",
+                    "to": "5pwetw5",
+                    "as": "true"
+                },
+                {
+                    "as": "key",
+                    "from": "ft1oksl",
+                    "to": "o5ojdyc"
                 },
                 {
                     "from": "bbbp82v",
@@ -3368,15 +3547,29 @@
                     "as": "args"
                 },
                 {
+                    "from": "slj7ynn/ij4z84e",
+                    "to": "slj7ynn/jlgp7uy",
+                    "as": "self"
+                },
+                {
+                    "from": "slj7ynn/q3pwj9j",
+                    "to": "slj7ynn/jlgp7uy",
+                    "as": "fn"
+                },
+                {
+                    "from": "slj7ynn/d6h3gdw",
+                    "to": "slj7ynn/jlgp7uy",
+                    "as": "args"
+                },
+                {
                     "from": "i1ifamx",
                     "to": "bbbp82v",
                     "as": "array"
                 },
                 {
-                    "from": "0d4yh8u",
-                    "to": "bbbp82v",
                     "as": "fn",
-                    "type": "ref"
+                    "from": "druspar",
+                    "to": "bbbp82v"
                 },
                 {
                     "from": "gth1wc2",
@@ -3384,9 +3577,39 @@
                     "as": "arg0"
                 },
                 {
+                    "from": "slj7ynn/j8c79uf",
+                    "to": "slj7ynn/ij4z84e",
+                    "as": "array"
+                },
+                {
+                    "as": "fn",
+                    "from": "slj7ynn/n9g4wyq",
+                    "to": "slj7ynn/ij4z84e"
+                },
+                {
+                    "from": "slj7ynn/z63iaay",
+                    "to": "slj7ynn/d6h3gdw",
+                    "as": "arg0"
+                },
+                {
                     "from": "y25dg2n",
                     "to": "i1ifamx",
                     "as": "object"
+                },
+                {
+                    "as": "fn",
+                    "from": "0d4yh8u",
+                    "to": "druspar"
+                },
+                {
+                    "from": "slj7ynn/vwsgweb",
+                    "to": "slj7ynn/j8c79uf",
+                    "as": "object"
+                },
+                {
+                    "as": "fn",
+                    "from": "slj7ynn/aelf1a7",
+                    "to": "slj7ynn/n9g4wyq"
                 },
                 {
                     "from": "h13a9fd",
@@ -3396,6 +3619,76 @@
                 {
                     "from": "h7me3v8",
                     "to": "0d4yh8u",
+                    "as": "value"
+                },
+                {
+                    "from": "slj7ynn/mkwx4yx",
+                    "to": "slj7ynn/vwsgweb",
+                    "as": "otherwise"
+                },
+                {
+                    "from": "slj7ynn/fzr4mkv",
+                    "to": "slj7ynn/vwsgweb",
+                    "as": "value"
+                },
+                {
+                    "from": "slj7ynn/5eqf77t",
+                    "to": "slj7ynn/aelf1a7",
+                    "as": "key"
+                },
+                {
+                    "as": "value",
+                    "from": "slj7ynn/1hpnid4",
+                    "to": "slj7ynn/aelf1a7"
+                },
+                {
+                    "from": "slj7ynn/bbbp82v",
+                    "to": "slj7ynn/1hpnid4",
+                    "as": "self"
+                },
+                {
+                    "from": "slj7ynn/cp66ig5",
+                    "to": "slj7ynn/1hpnid4",
+                    "as": "fn"
+                },
+                {
+                    "from": "slj7ynn/uwq9u81",
+                    "to": "slj7ynn/1hpnid4",
+                    "as": "args"
+                },
+                {
+                    "from": "slj7ynn/i1ifamx",
+                    "to": "slj7ynn/bbbp82v",
+                    "as": "array"
+                },
+                {
+                    "as": "fn",
+                    "from": "slj7ynn/druspar",
+                    "to": "slj7ynn/bbbp82v"
+                },
+                {
+                    "from": "slj7ynn/gth1wc2",
+                    "to": "slj7ynn/uwq9u81",
+                    "as": "arg0"
+                },
+                {
+                    "from": "slj7ynn/y25dg2n",
+                    "to": "slj7ynn/i1ifamx",
+                    "as": "object"
+                },
+                {
+                    "as": "fn",
+                    "from": "slj7ynn/0d4yh8u",
+                    "to": "slj7ynn/druspar"
+                },
+                {
+                    "from": "slj7ynn/h13a9fd",
+                    "to": "slj7ynn/0d4yh8u",
+                    "as": "key"
+                },
+                {
+                    "from": "slj7ynn/h7me3v8",
+                    "to": "slj7ynn/0d4yh8u",
                     "as": "value"
                 }
             ]

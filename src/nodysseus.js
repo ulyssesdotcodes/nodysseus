@@ -922,6 +922,7 @@ const generic_nodes = new Set([
     "toggle",
     "input",
     "css_styles",
+    "css_anim",
 
     "array",
     "filter",
@@ -946,6 +947,7 @@ const generic_nodes = new Set([
     "import_json",
     "event_publisher",
     "event_subscriber",
+    "input_value",
 
     "math",
     "add",
@@ -1033,16 +1035,23 @@ const nolib = {
             }
 
             const rungraph = graph => {
-                cancelAnimationFrame(cache.get(graph.id).animrun)
-                cache.get(graph.id).animrun = requestAnimationFrame(() =>{
+                if(!self.cancelAnimationFrame) {
+                    self.cancelAnimationFrame = () => {};
+                }
+                self.cancelAnimationFrame(cache.get(graph.id).animrun)
+                if(!self.requestAnimationFrame) {
+                    self.requestAnimationFrame = fn => fn();
+                }
+                cache.get(graph.id).animrun = self.requestAnimationFrame(() =>{
                     try {
                         graph = resolve(graph);
                         const gcache = cache.get(graph.id);
                         const last_result = gcache.last_result;
-                        const result = nolib.no.runGraph(graph, graph.out ?? 'main/out', last_result ?? {});
+                        
                         if(worker){
                             worker.postMessage({graph, fn: graph.out ?? 'main/out', args: last_result ?? {}});
                         } else {
+                            const result = nolib.no.runGraph(graph, graph.out ?? 'main/out', last_result ?? {});
                             Promise.resolve(result).then(res => {
                                 gcache.last_result = res;
                                 publish(graph, 'graphrun', res);
