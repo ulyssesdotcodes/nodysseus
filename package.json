@@ -25,8 +25,8 @@
   },
   "name": "nodysseus",
   "description": "A generic node-based editor. Built with hyperapp.",
-  "version": "1.0.15",
-  "module": "editor.bundle.js",
+  "version": "1.0.18",
+  "main": "src/editor.js",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@gitlab.com/ulysses.codes/nodysseus.git"
