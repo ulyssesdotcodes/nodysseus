@@ -694,4 +694,4 @@ const hlib = {
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX }
 }
 
-export { editor }
+export { editor, runGraph }
