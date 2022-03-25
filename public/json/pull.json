@@ -3835,7 +3835,7 @@
             { "id": "in" },
             {
               "id": "style_content",
-              "value": "#node-editor { position: relative; width: 100%; height: 100vh; color: white; font-family: consolas; overflow: hidden; } #node-editor-editor.hash-view { background-color: unset; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .more { cursor: pointer; } .edit-value .centering { position: absolute; width: 32vw; display: flex; flex-direction: column; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .node-info { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; display: flex; gap: .4em; flex-direction: column; } .node-info .args { display: flex; gap: 8px; flex-wrap: wrap; } .node-info .args span.clickable { cursor: pointer; text-decoration: underline dotted;  } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node, #dummy-add-node { cursor: pointer; stroke: #fff; stroke-width: 32; stroke-opacity: 1; } .insert-node .circle, #dummy-add-node .circle { fill-opacity: 0.5; } .node text { filter: url(#flood-background) } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .node.selected text .secondary:hover { text-decoration: dashed underline; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"
+              "value": "#node-editor { position: relative; width: 100%; height: 100vh; color: white; font-family: consolas; overflow: hidden; } #node-editor-editor.hash-view { background-color: unset; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .more { cursor: pointer; } .edit-value .centering { position: absolute; width: 32vw; display: flex; flex-direction: column; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .node-info { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; display: flex; gap: .4em; flex-direction: column; } .node-info .args { display: flex; gap: 8px; flex-wrap: wrap; } .node-info .args span.clickable { cursor: pointer; text-decoration: underline dotted;  } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node, #dummy-add-node { cursor: pointer; stroke: #fff; stroke-width: 32; stroke-opacity: 1; } .insert-node .circle, #dummy-add-node .circle { fill-opacity: 0.5; } .node text { filter: url(#flood-background) } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .node.selected text .secondary:hover, .node.selected text .primary:hover { text-decoration: dashed underline; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"
             },
             { "id": "style_h_text", "ref": "html_text" },
             { "id": "style_dom_type", "value": "style" },
@@ -4334,6 +4334,7 @@
                         { "id": "get_name", "ref": "get" },
                         { "id": "arg_node", "ref": "arg", "value": "node" },
                         { "id": "payload_node", "ref": "arg", "value": "payload.node" },
+                        { "id": "payload_node_value", "ref": "arg", "value": "payload.node.value" },
                         { "id": "node", "ref": "default" },
                         { "id": "event", "ref": "arg", "value": "payload.event" },
                         { "id": "empty_string", "value": "" },
@@ -4358,13 +4359,21 @@
                           "args": ["text"],
                           "script": "return text.substring(text.lastIndexOf('/') + 1)"
                         },
-                        { "id": "node_primary_text_attrs", "value": { "class": "primary", "dy": ".6em", "x": "48" } },
+                        { "id": "node_primary_text_base_props", "value": { "class": "primary", "dy": ".6em", "x": "48" } },
                         { "id": "tspan_dom_type", "value": "tspan" },
                         {
                           "id": "display_name_input",
                           "script": "return n.name ? 'name' : n.value !== undefined ? 'value' : undefined"
                         },
                         { "id": "display_name", "ref": "switch" },
+                        { "id": "node_primary_text_onclick_show_edit_text_payload" },
+                        { "id": "node_primary_text_onclick_show_edit_text", "ref": "array" },
+                        { "id": "node_primary_text_onclick_effects", "ref": "array" },
+                        { "id": "node_primary_text_onclick" },
+                        { "id": "node_primary_text_onclick_runnable", "ref": "runnable" },
+                        { "id": "node_selected_primary_text_onclick_runnable", "ref": "if" },
+                        { "id": "node_primary_text_onclick_props" },
+                        { "id": "node_primary_text_props", "ref": "merge_objects" },
                         { "id": "node_primary_text_text", "ref": "html_text" },
                         { "id": "node_primary_text", "ref": "html_element" },
                         {
@@ -4439,6 +4448,72 @@
                         { "from": "node_primary_text_attrs", "to": "node_primary_text", "as": "props" },
                         { "from": "node_primary_text", "to": "node_text_children", "as": "primary" },
                         { "from": "hide_types", "to": "node_text_children", "as": "hide_types" },
+                        { "from": "node_primary_text_text", "to": "node_primary_text", "as": "children" },
+                        { "from": "node_primary_text_base_props", "to": "node_primary_text_props", "as": "a0" },
+                        { "from": "node_primary_text_onclick_props", "to": "node_primary_text_props", "as": "a1" },
+                        { "from": "node", "to": "node_primary_text_onclick_runnable", "as": "node" },
+                        {
+                          "from": "node_primary_text_onclick_runnable",
+                          "to": "node_selected_primary_text_onclick_runnable",
+                          "as": "true"
+                        },
+                        { "from": "arg_selected", "to": "node_selected_primary_text_onclick_runnable", "as": "pred" },
+                        {
+                          "from": "node_selected_primary_text_onclick_runnable",
+                          "to": "node_primary_text_onclick_props",
+                          "as": "onclick"
+                        },
+                        {
+                          "from": "node_selected_primary_text_onclick_runnable",
+                          "to": "node_primary_text_onclick_props",
+                          "as": "ontouchstart"
+                        },
+                        {
+                          "from": "node_primary_text_onclick",
+                          "to": "node_primary_text_onclick_runnable",
+                          "as": "fn"
+                        },
+                        { "from": "show_edit_text", "to": "node_primary_text_onclick_show_edit_text", "as": "a0" },
+                        {
+                          "from": "update_node",
+                          "to": "node_primary_text_onclick_show_edit_text_payload",
+                          "as": "oneditconfirm"
+                        },
+                        {
+                          "from": "node",
+                          "to": "node_primary_text_onclick_show_edit_text_payload",
+                          "as": "position"
+                        },
+                        { "from": "get_id", "to": "node_primary_text_onclick_show_edit_text_payload", "as": "id" },
+                        {
+                          "from": "payload_node_value",
+                          "to": "node_primary_text_onclick_show_edit_text_payload",
+                          "as": "value"
+                        },
+                        {
+                          "from": "node_value",
+                          "to": "node_primary_text_onclick_show_edit_text_payload",
+                          "as": "property"
+                        },
+                        { "from": "node", "to": "node_primary_text_onclick_show_edit_text_payload", "as": "node" },
+                        {
+                          "from": "node_primary_text_onclick_show_edit_text_payload",
+                          "to": "node_primary_text_onclick_show_edit_text",
+                          "as": "a1"
+                        },
+                        { "from": "stop_propagation_effect", "to": "node_primary_text_onclick_effects", "as": "a1" },
+                        {
+                          "from": "node_primary_text_onclick_show_edit_text",
+                          "to": "node_primary_text_onclick_effects",
+                          "as": "a0"
+                        },
+                        {
+                          "from": "node_primary_text_onclick_effects",
+                          "to": "node_primary_text_onclick",
+                          "as": "effects"
+                        },
+                        { "from": "state", "to": "node_primary_text_onclick", "as": "state" },
+                        { "from": "node_primary_text_props", "to": "node_primary_text", "as": "props" },
                         { "from": "node_secondary_text_text", "to": "node_secondary_text", "as": "children" },
                         { "from": "node_secondary_text_base_props", "to": "node_secondary_text_props", "as": "a0" },
                         { "from": "node_secondary_text_onclick_props", "to": "node_secondary_text_props", "as": "a1" },
