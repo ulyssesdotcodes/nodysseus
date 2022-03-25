@@ -14,9 +14,9 @@ function compare(value1, value2, keys) {
     if (value1 !== value1 && value2 !== value2) {
         return true;
     }
-    if (value1?._Proxy && value2?._Proxy) {
-        return value1._nodeid === value2._nodeid;
-    }
+    // if (value1?._Proxy && value2?._Proxy) {
+    //     return value1._nodeid === value2._nodeid;
+    // }
     if(typeof value1 !== typeof value2) {
         return false;
     }
@@ -65,31 +65,20 @@ function compareArrays(value1, value2) {
 }
 
 function compareObjects(value1, value2, keys) {
-    var keys1 = Object.keys(value1);
-    var len = keys1.length;
     if (value1._needsresolve || value2._needsresolve) {
         return false;
     }
-    for (var i = 0; i < len; i++) {
-        var key1 = keys1[i];
-        // var key2 = keys2[i];
-        if ((!!keys && !keys.includes(key1)) || value1[key1] === value2[key1]) {
-            continue;
+
+    for(let key in value1) {
+        if(value1.hasOwnProperty(key)) {
+            if (value1[key] === value2[key]) {
+                continue;
+            }
+
+            return false
         }
-
-        if(value1[key1]?._Proxy && value2[key1]?._Proxy 
-            && value1[key1]._nodeid === value2[key1]._nodeid
-            && compare(value1[key1]._graph_input_value, value2[key1]._graph_input_value)
-            ) {
-            continue;
-        }
-
-        return false;
-
-        // if (!(compare(value1[key1], value2[key1]))) {
-        //     return false;
-        // }
     }
+
     return true;
 }
 
@@ -110,6 +99,7 @@ const hashcode = function(str, seed = 0) {
 const createProxy = (run_with_val, input, graph_input_value) => { 
     let res = Object.create(null);
     let resolved = false;
+    // return run_with_val(input.from)(graph_input_value);
     return new Proxy(res, {
     get: (_, prop) => {
         if (prop === "_Proxy") {
@@ -118,7 +108,7 @@ const createProxy = (run_with_val, input, graph_input_value) => {
             return input.from;
         } else if (prop === "_graph_input_value") {
             return graph_input_value;
-        } 
+        }
         
         if (prop === 'toJSON') {
             return () => resolved ? res : {Proxy: input.from}
@@ -456,7 +446,7 @@ const create_data = (inputs, input_data_map) => {
 
 const executeGraph = ({ cache, graph, lib, cache_id}) => {
     const full_lib = {...nolib, ...(lib ?? {})}
-    let usecache = false;
+    let usecache = true;
 
     if (!graph.nodes) {
         throw new Error(`Graph has no nodes! in: ${graph.in} out: ${graph.out}`)
@@ -970,10 +960,11 @@ const generic_nodes = new Set([
 
 const ispromise = a => a?._Proxy ? false : typeof a?.then === 'function';
 const getorset = (map, id, value_fn) => {
-	if(map.has(id)) {
-		return map.get(id);
+    let val = map.get(id);
+	if(val) {
+		return val;
 	} else {
-		const val = value_fn();
+		let val = value_fn();
 		map.set(id, val);
 		return val
 	}
