@@ -350,7 +350,7 @@ const node_script = (node, node_ref, cache, graph_input_value, data, full_lib, g
         console.log(data);
         throw new AggregateError([
             new NodysseusError(
-                node_id, 
+                node.id, 
                 e instanceof AggregateError ? "Error in node chain" : e
             )]
             .concat(e instanceof AggregateError ? e.errors : []));
@@ -408,7 +408,7 @@ const node_extern = (node, node_ref, node_id, cache, graph_input_value, data, fu
     } catch(e) {
         throw new AggregateError([
             new NodysseusError(
-                node_ref.id, 
+                node_id, 
                 e instanceof AggregateError ? "Error in node chain" : e
             )]
             .concat(e instanceof AggregateError ? e.errors : []));
