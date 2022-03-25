@@ -14,9 +14,9 @@ function compare(value1, value2, keys) {
     if (value1 !== value1 && value2 !== value2) {
         return true;
     }
-    // if (value1?._Proxy && value2?._Proxy) {
-    //     return value1._nodeid === value2._nodeid;
-    // }
+    if (value1?._Proxy || value2?._Proxy) {
+        return false;
+    }
     if(typeof value1 !== typeof value2) {
         return false;
     }
@@ -138,20 +138,24 @@ const createProxy = (run_with_val, input, graph_input_value) => {
             resolved = true;
         }
 
-        return typeof res === 'object' ? Reflect.ownKeys(res) : undefined;
+        return typeof res === 'object' ? Reflect.ownKeys(res) : [];
     },
     getOwnPropertyDescriptor: (target, prop) => {
         if (!resolved) {
             res = run_with_val(input.from)(graph_input_value);
             resolved = true;
         }
+        const descriptor = Reflect.getOwnPropertyDescriptor(res, prop);
+        if(descriptor && Array.isArray(res) && prop === 'length') {
+            descriptor.configurable = true;
+        }
 
-        return typeof res === 'object' && !!res ? (Reflect.getOwnPropertyDescriptor(res, prop) || {value: get(target, prop)}) : undefined;
+        return typeof res === 'object' && !!res ? (descriptor || {value: get(target, prop)}) : undefined;
     }
 })
 }
 
-const resolve = (o) => {
+const resolve = (o, cache) => {
     if (o?._Proxy) {
         return resolve(o._value)
     } else if (Array.isArray(o)) {
@@ -161,7 +165,7 @@ const resolve = (o) => {
         while(i > 0) {
             i--;
             new_arr[i] = resolve(o[i]);
-            same = same && o[i] === new_arr[i];
+            same = same && compare(o[i], new_arr[i]);
         }
         return same ? o : new_arr;
     } else if (typeof o === 'object' && !!o && o._needsresolve) {
@@ -184,10 +188,25 @@ const resolve = (o) => {
                 j++;
             }
         }
-        return same ? (delete o._needsresolve, o) : promise 
-            ? Promise.all(new_obj_entries.map(kv => Promise.resolve(kv[1]).then(v => [kv[0], v])))
+        if(same) {
+            delete o._needsresolve;
+            return o;
+        }
+        if(promise) {
+            return Promise.all(new_obj_entries.map(kv => Promise.resolve(kv[1]).then(v => [kv[0], v])))
                 .then(kvs => Object.fromEntries(kvs)) 
-            : Object.fromEntries(new_obj_entries);
+        }
+        const res = Object.fromEntries(new_obj_entries);
+        if(!cache) {
+            return res;
+        }
+
+        const cached = cache.get(o._nodeid + '+resolve');
+        if(compare(res, cached)) {
+            return cached;
+        }
+        cache.set(o._nodeid + '+resolve', res);
+        return res;
     } else {
         return o;
     }
@@ -335,7 +354,11 @@ const node_script = (node, node_ref, cache, graph_input_value, data, full_lib, g
         return results;
     } catch (e) {
         console.log(`error in node`);
-        console.error(e);
+        if(e instanceof AggregateError) {
+            e.errors.map(console.error)
+        } else {
+            console.error(e);
+        }
         console.dir(node_ref);
         console.log(data);
         throw new AggregateError([
@@ -354,7 +377,7 @@ const node_extern = (node, node_ref, node_id, cache, graph_input_value, data, fu
                 acc[0].push(node)
                 return [acc[0], acc[1]];
             } else if (arg === '_node_inputs') {
-                const res = extern.resolve ? resolve({...data, _needsresolve: true}) : data;
+                const res = extern.resolve ? resolve({...data, _needsresolve: true}, cache.get(cache_id)) : data;
                 if(Array.isArray(res)) {
                     res?.forEach(r => acc[0].push(r))
                 } else {
@@ -365,7 +388,7 @@ const node_extern = (node, node_ref, node_id, cache, graph_input_value, data, fu
                 acc[0].push(graph);
                 return [acc[0], acc[1]]
             }
-            const value = extern.resolve === false ? data[arg] : resolve(data[arg]);
+            const value = extern.resolve === false ? data[arg] : resolve(data[arg], cache.get(cache_id));
             acc[0].push(value)
             return [acc[0], ispromise(value) || acc[1]];
         }, [[], false]);
@@ -508,7 +531,7 @@ const executeGraph = ({ cache, graph, lib, cache_id}) => {
                     //     throw new Error(`Input not found ${input.from} for node ${node_id}`)
                     // }
 
-                    return resolve(run_with_val(input.from)(graph_input_value));
+                    return resolve(run_with_val(input.from)(graph_input_value), cache.get(cache_id));
                 } else if (!input.as || node_ref.script) {
                     // if(!node_map.has(input.from)) {
                     //     throw new Error(`Input not found ${input.from} for node ${node_id}`)
@@ -579,7 +602,7 @@ const executeGraph = ({ cache, graph, lib, cache_id}) => {
         }
     }
 
-    return (node_id) => (graph_input_value) => resolve(run_with_val(node_id)(graph_input_value));
+    return (node_id) => (graph_input_value) => resolve(run_with_val(node_id)(graph_input_value), cache.get(cache_id));
 }
 
 //////////
@@ -1021,7 +1044,6 @@ const nolib = {
             if(worker){
                 worker.onerror = (e) => worker = false;
                 worker.onmessage = (e) => {
-                    console.log(e);
                     cache.get(e.data.graph.id).last_result = e.data.result;
                 }
             }

@@ -603,7 +603,7 @@ const middleware = dispatch => (ha_action, ha_payload) => {
         ? dispatch((state, payload) => {
             try {
                 const execute_graph_fn = nolib.no.executeGraphNode({graph: action.graph, lib: hlib})(action.fn);
-                Object.defineProperty(execute_graph_fn, 'name', {value: action.fn, writable: false});
+                // Object.defineProperty(execute_graph_fn, 'name', {value: action.fn, writable: false});
                 const result = action.stateonly 
                     ? execute_graph_fn(state)
                     : execute_graph_fn({state, payload});
@@ -617,7 +617,7 @@ const middleware = dispatch => (ha_action, ha_payload) => {
                     && e.hasOwnProperty('fn') 
                     && e.hasOwnProperty('graph')) {
                         const effect_fn = nolib.no.executeGraphNode({graph: e.graph})(e.fn);
-                        Object.defineProperty(effect_fn, 'name', {value: e.fn, writable: false})
+                        // Object.defineProperty(effect_fn, 'name', {value: e.fn, writable: false})
                         return effect_fn;
                     }
                     return e
@@ -640,12 +640,14 @@ const middleware = dispatch => (ha_action, ha_payload) => {
         : dispatch(action, payload)
 }
 
-const runh = el => h(el.d, el.p, el.c);
+const runh = el => el.d && el.p && el.c && h(el.d, el.p, el.c);
 
 const hlib = {
     ha: { 
         middleware, 
-        h: {args: ['dom_type', 'props', 'children'], fn: (dom_type, props, children) => runh({d: dom_type, p: props, c: children})}, 
+        h: {
+            args: ['dom_type', 'props', 'children', 'memo'], 
+            fn: (dom_type, props, children, usememo) => usememo ? memo(runh, {d: dom_type, p: props, c: children}) : runh({d: dom_type, p: props, c: children})}, 
         app, 
         text: {args: ['text'], fn: text}, 
         memo: {args: ['view', 'props'], fn: memo} 
