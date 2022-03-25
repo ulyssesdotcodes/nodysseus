@@ -928,6 +928,7 @@ const generic_nodes = new Set([
     "filter",
     "map",
     "append",
+    "ancestors",
 
     "utility",
     "log",
