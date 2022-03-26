@@ -64,19 +64,24 @@ function compareArrays(value1, value2) {
     return alike;
 }
 
-function compareObjects(value1, value2, keys) {
+function compareObjects(value1, value2) {
     if (value1._needsresolve || value2._needsresolve) {
         return false;
     }
 
-    for(let key in value1) {
-        if(value1.hasOwnProperty(key)) {
-            if (value1[key] === value2[key]) {
-                continue;
-            }
+    const keys1 = Object.keys(value1);
+    const keys2 = Object.keys(value2);
 
-            return false
+    if(keys1.length !== keys2.length) {
+        return false;
+    }
+
+    for(let key of keys1) {
+        if (value1[key] === value2[key]) {
+            continue;
         }
+
+        return false
     }
 
     return true;
@@ -155,16 +160,25 @@ const createProxy = (run_with_val, input, graph_input_value) => {
 })
 }
 
-const resolve = (o, cache) => {
+const resolve = (o, cache, is_node_cached) => {
     if (o?._Proxy) {
-        return resolve(o._value)
+        const res = resolve(o._value);
+        if(!cache) {
+            return res;
+        }
+        const cached = cache.get(o._nodeid + '+resolve');
+        if(!is_node_cached && compare(res, cached)) {
+            return cached;
+        }
+        cache.set(o._nodeid + '+resolve', res);
+        return res;
     } else if (Array.isArray(o)) {
         const new_arr = [];
         let same = true;
         let i = o.length;
         while(i > 0) {
             i--;
-            new_arr[i] = resolve(o[i]);
+            new_arr[i] = resolve(o[i], cache, is_node_cached);
             same = same && compare(o[i], new_arr[i]);
         }
         return same ? o : new_arr;
@@ -182,7 +196,7 @@ const resolve = (o, cache) => {
         while(i > 0) {
             i--;
             if(entries[i][0] !== '_needsresolve') {
-                new_obj_entries[j] = [entries[i][0], resolve(entries[i][1])];
+                new_obj_entries[j] = [entries[i][0], resolve(entries[i][1], cache, is_node_cached)];
                 same = same && entries[i][1] === new_obj_entries[j][1]
                 promise = promise || ispromise(new_obj_entries[j][1])
                 j++;
@@ -197,15 +211,6 @@ const resolve = (o, cache) => {
                 .then(kvs => Object.fromEntries(kvs)) 
         }
         const res = Object.fromEntries(new_obj_entries);
-        if(!cache) {
-            return res;
-        }
-
-        const cached = cache.get(o._nodeid + '+resolve');
-        if(compare(res, cached)) {
-            return cached;
-        }
-        cache.set(o._nodeid + '+resolve', res);
         return res;
     } else {
         return o;
@@ -377,7 +382,7 @@ const node_extern = (node, node_ref, node_id, cache, graph_input_value, data, fu
                 acc[0].push(node)
                 return [acc[0], acc[1]];
             } else if (arg === '_node_inputs') {
-                const res = extern.resolve ? resolve({...data, _needsresolve: true}, cache.get(cache_id)) : data;
+                const res = extern.resolve ? resolve({...data, _needsresolve: true}, cache.get(cache_id), is_node_cached) : data;
                 if(Array.isArray(res)) {
                     res?.forEach(r => acc[0].push(r))
                 } else {
@@ -388,7 +393,7 @@ const node_extern = (node, node_ref, node_id, cache, graph_input_value, data, fu
                 acc[0].push(graph);
                 return [acc[0], acc[1]]
             }
-            const value = extern.resolve === false ? data[arg] : resolve(data[arg], cache.get(cache_id));
+            const value = extern.resolve === false ? data[arg] : resolve(data[arg], cache.get(cache_id), is_node_cached);
             acc[0].push(value)
             return [acc[0], ispromise(value) || acc[1]];
         }, [[], false]);
@@ -531,7 +536,7 @@ const executeGraph = ({ cache, graph, lib, cache_id}) => {
                     //     throw new Error(`Input not found ${input.from} for node ${node_id}`)
                     // }
 
-                    return resolve(run_with_val(input.from)(graph_input_value), cache.get(cache_id));
+                    return resolve(run_with_val(input.from)(graph_input_value), cache.get(cache_id), is_node_cached);
                 } else if (!input.as || node_ref.script) {
                     // if(!node_map.has(input.from)) {
                     //     throw new Error(`Input not found ${input.from} for node ${node_id}`)
@@ -602,7 +607,7 @@ const executeGraph = ({ cache, graph, lib, cache_id}) => {
         }
     }
 
-    return (node_id) => (graph_input_value) => resolve(run_with_val(node_id)(graph_input_value), cache.get(cache_id));
+    return (node_id) => (graph_input_value) => resolve(run_with_val(node_id)(graph_input_value));
 }
 
 //////////
@@ -988,7 +993,9 @@ const getorset = (map, id, value_fn) => {
 		return val;
 	} else {
 		let val = value_fn();
-		map.set(id, val);
+        if(val !== undefined){
+            map.set(id, val);
+        }
 		return val
 	}
 }
@@ -1050,11 +1057,11 @@ const nolib = {
 
             const rungraph = graph => {
                 if(!self.cancelAnimationFrame) {
-                    self.cancelAnimationFrame = () => {};
+                    self.cancelAnimationFrame = clearTimeout;
                 }
                 self.cancelAnimationFrame(cache.get(graph.id).animrun)
                 if(!self.requestAnimationFrame) {
-                    self.requestAnimationFrame = fn => fn();
+                    self.requestAnimationFrame = fn => setTimeout(() => fn(), 16);
                 }
                 cache.get(graph.id).animrun = self.requestAnimationFrame(() =>{
                     try {
@@ -1069,7 +1076,10 @@ const nolib = {
                             Promise.resolve(result).then(res => {
                                 gcache.last_result = res;
                                 publish(graph, 'graphrun', res);
-                                if(graph.nodes.find(n => n.ref === 'arg' && res[n.value] !== last_result?.[n.value]) !== undefined){
+
+                                const change = graph.nodes.find(n => n.ref === 'arg' && res[n.value] !== last_result?.[n.value]);
+                                if(change !== undefined){
+                                    console.log(change);
                                     rungraph(graph);
                                 }
                             }).catch(e => publish(graph, 'grapherror', e))
@@ -1177,17 +1187,10 @@ const nolib = {
                         }
                     }
 
-                    const edge_out = edge ? nolib.no.runGraph(cache.get('nodysseus_hyperapp').graph, 'next_edge', {edge, graph}) : undefined;
-
-                    const edges_in = get_edges_in(graph, node.id);
-                    if (edges_in && edges_in.length > 0) {
-                        const needed_args = nolib.no.runGraph(cache.get('nodysseus_hyperapp').graph, 'node_args', {node, nodes: graph.nodes});
-                    }
-
                     const new_graph = {
                         ...graph, 
                         nodes: graph.nodes.filter(n => n.id !== node.id).concat([node]), 
-                        edges: edge ? graph.edges.filter(e => !(e.from === edge_out.from && e.to === edge_out.to)).concat(edge_out) : graph.edges
+                        edges: edge ? graph.edges.filter(e => !(e.from === edge.from && e.to === edge.to)).concat(edge) : graph.edges
                     };
 
                     publish(new_graph, 'graphchange');

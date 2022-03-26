@@ -32,6 +32,20 @@
     { "id": "mult", "extern": "utility.mult" },
     { "id": "divide", "extern": "utility.divide" },
     { "id": "negate", "extern": "utility.negate" },
+    { "id": "wrap_array", "args": ["value"], "script": "return [value]" },
+    {
+      "id": "graph_to_sim_fn",
+      "out": "action",
+      "nodes": [
+        { "id": "state", "ref": "arg", "value": 0 },
+        { "id": "payload", "ref": "arg", "value": 1 },
+        { "id": "action", "script": "return _lib.scripts.graphToSimulationNodes(state, payload)" }
+      ],
+      "edges": [
+        { "from": "state", "to": "action", "as": "state" },
+        { "from": "payload", "to": "action", "as": "payload" }
+      ]
+    },
     {
       "id": "sim_to_hyperapp_action",
       "out": "action",
@@ -43,6 +57,7 @@
         { "id": "new_links", "ref": "arg", "value": "1.links" },
         { "id": "selected", "ref": "arg", "value": "0.selected" },
         { "id": "display_graph", "ref": "arg", "value": "0.display_graph" },
+        { "id": "payload", "ref": "arg", "value": 1 },
         {
           "id": "calculate_levels",
           "script": "return _lib.scripts.calculateLevels(nodes, links, display_graph, selected)"
@@ -79,6 +94,7 @@
     {
       "id": "hyperapp_app",
       "nodes": [
+        { "id": "in" },
         { "id": "init", "ref": "arg", "value": "init" },
         { "id": "view", "ref": "arg", "value": "view" },
         { "id": "html_id", "ref": "arg", "value": "html_id" },
@@ -108,20 +124,9 @@
       ]
     },
     {
-      "id": "ancestors",
-      "out": "out",
-      "nodes": [
-        { "id": "in" },
-        { "id": "graph", "ref": "arg", "value": "graph" },
-        {
-          "id": "out",
-          "script": "const parents = (id) => graph.edges.filter(e => e.to === id).flatMap(e => parents(e.from)).concat([id]); return parents(graph.out ?? 'out')"
-        }
-      ],
-      "edges": [
-        { "from": "in", "to": "out", "as": "_", "type": "ref" },
-        { "from": "graph", "to": "out", "as": "graph" }
-      ]
+      "id": "children_els",
+      "nodes": [{ "id": "in" }, { "id": "out", "args": ["children"], "script": "return [children.map(c => c.el)]" }],
+      "edges": [{ "from": "in", "to": "out" }]
     },
     {
       "id": "append",
@@ -158,7 +163,6 @@
       "name": "filter",
       "in": "74n1jfm",
       "out": "lahq5z4",
-      "description": "Filters an array using `fn: (element) => boolean`",
       "nodes": [
         {
           "id": "lahq5z4",
@@ -166,11 +170,15 @@
           "name": "filter/out",
           "script": "const filter_fn = _lib.no.executeGraphNode({graph: _graph, lib: _lib})(typeof fn === 'string' ? fn : fn.fn); return arr.filter(element => filter_fn(Object.assign(fn.args ?? {}, {element})))"
         },
+        { "id": "pfoypo5", "args": [], "ref": "arg", "value": "key" },
+        { "id": "zinx621", "args": [], "ref": "arg", "value": "value" },
         { "id": "x2sz5kb", "args": [], "ref": "arg", "value": "arr" },
         { "id": "fn", "ref": "arg", "value": "fn" },
         { "id": "74n1jfm", "args": [], "name": "filter/in" }
       ],
       "edges": [
+        { "from": "pfoypo5", "to": "lahq5z4", "as": "key" },
+        { "from": "zinx621", "to": "lahq5z4", "as": "value" },
         { "from": "x2sz5kb", "to": "lahq5z4", "as": "arr" },
         { "from": "74n1jfm", "to": "lahq5z4", "as": "input" },
         { "from": "fn", "to": "lahq5z4", "as": "fn" }
@@ -216,7 +224,7 @@
       "args": ["data", "input"],
       "nodes": [
         { "id": "in" },
-        { "id": "out", "args": ["data", "input"], "script": "return data[input] ?? otherwise;" },
+        { "id": "out", "script": "return data[input] ?? otherwise;" },
         { "id": "input", "ref": "arg", "value": "input" },
         { "id": "otherwise", "ref": "arg", "value": "otherwise" }
       ],
@@ -252,11 +260,13 @@
       "id": "svg_text",
       "out": "out",
       "nodes": [
+        { "id": "in" },
         { "id": "dom_type", "value": "text" },
         { "id": "text", "ref": "arg", "value": "text" },
         { "id": "props", "ref": "arg", "value": "props" },
         { "id": "text_el", "ref": "html_text" },
         { "id": "children", "script": "return [text]" },
+        { "id": "div", "value": "div" },
         { "id": "out", "ref": "html_element" }
       ],
       "edges": [
@@ -298,11 +308,30 @@
       ]
     },
     {
+      "id": "dispatch_runnable",
+      "nodes": [
+        { "id": "dispatch", "ref": "arg", "value": "dispatch", "type": "internal" },
+        { "id": "fn", "ref": "arg", "value": "fn" },
+        { "id": "run", "ref": "run" },
+        { "id": "args", "ref": "arg", "value": "_args" },
+        { "id": "out", "script": "dispatch({...fn, args: {...args, ...fn.args}})" }
+      ],
+      "edges": [
+        { "from": "fn", "to": "run", "as": "runnable" },
+        { "from": "fn", "to": "out", "as": "fn" },
+        { "from": "run", "to": "_out", "as": "res" },
+        { "from": "dispatch", "to": "out", "as": "dispatch" },
+        { "from": "args", "to": "out", "as": "args" }
+      ]
+    },
+    {
       "id": "execute_graph",
       "nodes": [
         { "id": "in" },
         { "id": "fn", "ref": "arg", "value": "fn" },
         { "id": "fn_graph", "ref": "arg", "value": "fn_graph" },
+        { "id": "args", "ref": "arg", "value": "_args" },
+        { "id": "filter_args", "script": "const ret = {...args}; delete ret.fn; delete ret.graph;" },
         {
           "id": "out",
           "script": "const res_graph = fn_graph ?? _graph; return (...inner_args) => {return _lib.no.executeGraphNode({graph: {...res_graph, nodes: [...res_graph.nodes], edges: [...res_graph.edges]}, lib: _lib})(fn)(Object.keys(args).length > 0 ? Object.assign(args, inner_args.length === 1 ? inner_args[0] : inner_args) : inner_args.length === 1 ? inner_args[0] : inner_args);}"
@@ -359,9 +388,25 @@
       ]
     },
     { "id": "array", "name": "array", "extern": "utility.new_array" },
+    {
+      "id": "wrap_effect_fn",
+      "args": ["fn"],
+      "nodes": [
+        { "id": "in" },
+        { "id": "fn", "ref": "arg", "value": "fn" },
+        { "id": "payload", "ref": "arg", "value": "payload" },
+        { "id": "out", "args": ["fn"], "script": "return (_, payload) => fn(payload)" }
+      ],
+      "edges": [
+        { "from": "in", "to": "out", "as": "arg0" },
+        { "from": "payload", "to": "out", "as": "payload" },
+        { "from": "fn", "to": "out", "as": "fn" }
+      ]
+    },
     { "id": "merge_objects", "extern": "utility.merge_objects" },
     {
       "id": "get",
+      "args": ["target", "path"],
       "nodes": [
         { "id": "in" },
         { "id": "target", "ref": "arg", "value": "target" },
@@ -442,6 +487,145 @@
         { "from": "add_listener", "to": "out", "as": "listener" }
       ]
     },
+    {
+      "id": "fuse vertices",
+      "name": "fuse vertices",
+      "in": "g8mx5sn1u",
+      "out": "vnw7d8iaw",
+      "args": ["graph"],
+      "nodes": [
+        { "id": "vnw7d8iaw", "name": "fuse vertices", "ref": "switch", "args": ["fuse", "graph"] },
+        { "id": "6uzm3ifn3", "args": ["graph"], "script": "return graph.edges.length > 0 ? \"fuse\" : \"graph\"" },
+        { "id": "p229wzcj5", "ref": "fuse vertices" },
+        { "id": "idjoql4db" },
+        {
+          "id": "wfld638dn",
+          "args": ["remaining_edges"],
+          "script": "return [remaining_edges.map(e => ({...e, to: e.to === chosen_edge.to || e.to === chosen_edge.from ? new_id : e.to, from: e.from === chosen_edge.from || e.from === chosen_edge.to ? new_id : e.from}))]"
+        },
+        {
+          "id": "ungdjbio6",
+          "args": ["graph", "chosen_edge"],
+          "script": "const remaining = graph.nodes\n.filter(n => n.id !== chosen_edge.to && n.id !== chosen_edge.from);\n\nconst from = [...(graph.nodes\n.find(n => n.id === chosen_edge.to).nodes ?? [chosen_edge.to])]\n\nconst to = [...(graph.nodes.find(n => n.id === chosen_edge.from).nodes ?? [chosen_edge.from])];\n\nreturn [remaining\n.concat([{\nid: new_id, \nnodes: [...(new Set(from.concat(to))).keys()],\n}])\n\n];"
+        },
+        { "id": "mh8lknkfv", "args": ["graph"], "script": "return [graph.edges.slice(1)]" },
+        {
+          "id": "h8bhlzbph",
+          "args": ["chosen_edge"],
+          "script": "return chosen_edge.to + \"_\" + chosen_edge.from;",
+          "name": "new_id"
+        },
+        { "id": "1m739wxv9", "args": ["graph"], "script": "return graph.edges[0]", "name": "edge" },
+        { "id": "nznzj5bfn", "name": "get graph", "ref": "get" },
+        { "id": "g8mx5sn1u", "name": "fuse vertices/in" },
+        { "id": "tta1nggm4", "value": "graph" }
+      ],
+      "edges": [
+        { "from": "6uzm3ifn3", "to": "vnw7d8iaw", "as": "input" },
+        { "from": "p229wzcj5", "to": "vnw7d8iaw", "as": "fuse" },
+        { "from": "idjoql4db", "to": "p229wzcj5", "as": "graph" },
+        { "from": "wfld638dn", "to": "idjoql4db", "as": "edges" },
+        { "from": "ungdjbio6", "to": "idjoql4db", "as": "nodes" },
+        { "from": "mh8lknkfv", "to": "wfld638dn", "as": "remaining_edges" },
+        { "from": "h8bhlzbph", "to": "wfld638dn", "as": "new_id" },
+        { "from": "1m739wxv9", "to": "wfld638dn", "as": "chosen_edge" },
+        { "from": "h8bhlzbph", "to": "ungdjbio6", "as": "new_id" },
+        { "from": "1m739wxv9", "to": "ungdjbio6", "as": "chosen_edge" },
+        { "from": "nznzj5bfn", "to": "vnw7d8iaw", "as": "graph" },
+        { "from": "nznzj5bfn", "to": "6uzm3ifn3", "as": "graph" },
+        { "from": "nznzj5bfn", "to": "ungdjbio6", "as": "graph" },
+        { "from": "nznzj5bfn", "to": "mh8lknkfv", "as": "graph" },
+        { "from": "1m739wxv9", "to": "h8bhlzbph", "as": "chosen_edge" },
+        { "from": "nznzj5bfn", "to": "1m739wxv9", "as": "graph" },
+        { "from": "g8mx5sn1u", "to": "nznzj5bfn", "as": "target" },
+        { "from": "tta1nggm4", "to": "nznzj5bfn", "as": "path" }
+      ]
+    },
+    {
+      "id": "remove pendant",
+      "name": "remove pendant",
+      "in": "jhykipayt",
+      "out": "ay4hfrqw1",
+      "nodes": [
+        { "id": "ay4hfrqw1", "args": [], "name": "remove pendant", "ref": "switch" },
+        { "id": "r5lka2sj5", "args": [], "script": "return pendants.length > 0 ? [\"remove\"] : [\"graph\"]" },
+        { "id": "7elx5ekij", "args": [], "ref": "remove pendant" },
+        { "id": "cz08pewa3", "args": [] },
+        {
+          "id": "7n24u6kpt",
+          "args": ["nodes"],
+          "script": "return [nodes.filter(n => !pendant_edges.includes(n.id))]",
+          "name": "filter out pendants"
+        },
+        {
+          "id": "cuiccwvbv",
+          "args": [],
+          "script": "return [edges.filter(e => !pendant_edges.includes(e.to) && !pendant_edges.includes(e.from))]",
+          "name": "filter penant"
+        },
+        {
+          "id": "lgzenfpvl",
+          "args": [],
+          "script": "let accfrom = edges.flatMap(e => [e.from]).reduce((acc, v) => { acc[v] = (acc[v] ?? 0) + 1; return acc}, {});\nlet accto = edges.flatMap(e => [e.to]).reduce((acc, v) => { acc[v] = (acc[v] ?? 0) + 1; return acc}, {});\n\nreturn nodes.map(n => n.id).filter(n => (!isNaN(accfrom[n]) && accfrom[n] <= 1) && !accto[n] );",
+          "name": "pendant edges"
+        },
+        {
+          "id": "7g81ijcqb",
+          "name": "nodes",
+          "in": "in",
+          "out": "7g81ijcqb",
+          "nodes": [
+            { "id": "7g81ijcqb", "args": [], "ref": "get", "name": "nodes" },
+            { "id": "2yshp7jvu", "args": [], "value": "nodes" },
+            { "id": "in" }
+          ],
+          "edges": [
+            { "from": "2yshp7jvu", "to": "7g81ijcqb", "as": "path" },
+            { "from": "in", "to": "7g81ijcqb" }
+          ]
+        },
+        {
+          "id": "zkg9zpu3e",
+          "name": "edges",
+          "in": "in",
+          "out": "zkg9zpu3e",
+          "nodes": [
+            { "id": "zkg9zpu3e", "args": [], "ref": "get", "name": "edges" },
+            { "id": "g18jj6zvq", "args": [], "value": "edges" },
+            { "id": "in" }
+          ],
+          "edges": [
+            { "from": "g18jj6zvq", "to": "zkg9zpu3e", "as": "path" },
+            { "from": "in", "to": "zkg9zpu3e" }
+          ]
+        },
+        { "id": "bp1cy89hk", "args": [], "ref": "get", "name": "graph" },
+        { "id": "jhykipayt", "args": [], "name": "remove pendant/in" },
+        { "id": "iqkdwjpuz", "args": [], "value": "graph" }
+      ],
+      "edges": [
+        { "from": "r5lka2sj5", "to": "ay4hfrqw1", "as": "input" },
+        { "from": "7elx5ekij", "to": "ay4hfrqw1", "as": "remove" },
+        { "from": "cz08pewa3", "to": "7elx5ekij", "as": "graph" },
+        { "from": "7n24u6kpt", "to": "cz08pewa3", "as": "nodes" },
+        { "from": "cuiccwvbv", "to": "cz08pewa3", "as": "edges" },
+        { "from": "lgzenfpvl", "to": "r5lka2sj5", "as": "pendants" },
+        { "from": "lgzenfpvl", "to": "cz08pewa3", "as": "pendants" },
+        { "from": "7g81ijcqb", "to": "7n24u6kpt", "as": "nodes" },
+        { "from": "lgzenfpvl", "to": "7n24u6kpt", "as": "pendant_edges" },
+        { "from": "zkg9zpu3e", "to": "7n24u6kpt", "as": "edges" },
+        { "from": "lgzenfpvl", "to": "cuiccwvbv", "as": "pendant_edges" },
+        { "from": "zkg9zpu3e", "to": "cuiccwvbv", "as": "edges" },
+        { "from": "zkg9zpu3e", "to": "lgzenfpvl", "as": "edges" },
+        { "from": "7g81ijcqb", "to": "lgzenfpvl", "as": "nodes" },
+        { "from": "bp1cy89hk", "to": "ay4hfrqw1", "as": "graph" },
+        { "from": "bp1cy89hk", "to": "cz08pewa3" },
+        { "from": "bp1cy89hk", "to": "7g81ijcqb", "as": "target" },
+        { "from": "bp1cy89hk", "to": "zkg9zpu3e", "as": "target" },
+        { "from": "jhykipayt", "to": "bp1cy89hk", "as": "target" },
+        { "from": "iqkdwjpuz", "to": "bp1cy89hk", "as": "path" }
+      ]
+    },
     { "id": "hyperapp_action", "script": "return {fn, graph: _graph}" },
     { "id": "hyperapp_state_action", "script": "return {fn, graph: _graph, stateonly: true}" },
     {
@@ -499,6 +683,50 @@
       "edges": [{ "from": "fn", "to": "out", "as": "fn" }]
     },
     {
+      "id": "run_display_graph_effect",
+      "out": "out",
+      "nodes": [
+        { "id": "state", "ref": "arg", "value": "state" },
+        { "id": "display_graph", "ref": "arg", "value": "state.display_graph" },
+        { "id": "payload", "ref": "arg", "value": "payload" },
+        { "id": "dispatch", "ref": "arg", "value": "dispatch" },
+        {
+          "id": "display_graph_runnable",
+          "script": "return {fn: 'main/out', graph: {...display_graph, nodes: [...display_graph.nodes], edges: [...display_graph.edges]}, args: {state, graph: state.display_graph, payload: {event: payload}}}"
+        },
+        {
+          "id": "result_runnable",
+          "script": "try { const res = _lib.no.runGraph(runnable); dispatch(s => s.error ? {...s, error: false} : s); return res; } catch(e) { dispatch(s => ({...s, error: e}));}"
+        },
+        { "id": "run_result", "ref": "runnable_hyperapp_effect" },
+        {
+          "id": "out",
+          "script": "return (dispatch, payload) => {try { const res = _lib.no.runGraph(runnable); Promise.resolve(res).then(r => dispatch(s => r.result_display ? {...s, result_display: r.result_display, error: false} : s.error ? {...s, error: false} : s)); } catch(e) { dispatch(s => ({...s, error: e}));}}"
+        },
+        {
+          "id": "_out",
+          "script": "return (dispatch, payload) => {const wrapped_dispatch = (a, p) => Promise.resolve(p).then(resp => Promise.resolve(a).then(aresp => [aresp, resp])).then(([a, p]) => dispatch(a, p)).catch(e => dispatch(s => [{...s, error: e}])); wrapped_dispatch(state => {new Promise((resolve, reject) => resolve(_lib.no.runGraph({...runnable, args: {...runnable.args, dispatch: wrapped_dispatch}}))).then(res => _lib.no.runGraph(res)).catch(e => dispatch(s => [{...s, error: e}])); return state.error ? {...state, error: false} : state;})}"
+        }
+      ],
+      "edges": [
+        { "from": "state", "to": "result", "as": "state" },
+        { "from": "payload", "to": "result", "as": "payload" },
+        { "from": "dispatch", "to": "result", "as": "dispatch" },
+        { "from": "display_graph", "to": "result", "as": "fn_graph" },
+        { "from": "result", "to": "_out", "as": "fn", "type": "ref" },
+        { "from": "result", "to": "_run_result", "as": "fn" },
+        { "from": "display_graph", "to": "display_graph_runnable", "as": "display_graph" },
+        { "from": "dispatch", "to": "display_graph_runnable", "as": "dispatch" },
+        { "from": "payload", "to": "display_graph_runnable", "as": "payload" },
+        { "from": "state", "to": "display_graph_runnable", "as": "state" },
+        { "from": "display_graph_runnable", "to": "result_runnable", "as": "runnable" },
+        { "from": "dispatch", "to": "result_runnable", "as": "dispatch" },
+        { "from": "result_runnable", "to": "result_wrapper", "as": "fn" },
+        { "from": "result_runnable", "to": "run_result", "as": "fn" },
+        { "from": "display_graph_runnable", "to": "out", "as": "runnable" }
+      ]
+    },
+    {
       "id": "update_graph_display",
       "in": "in",
       "out": "out",
@@ -508,12 +736,15 @@
         { "id": "payload", "ref": "arg", "value": "payload" },
         { "id": "update_sim_effect", "ref": "arg", "value": "state.update_sim_effect" },
         { "id": "show_result", "ref": "arg", "value": "state.show_result" },
+        { "id": "state_result", "ref": "arg", "value": "state.result" },
+        { "id": "error_nodes", "ref": "arg", "value": "state.error_nodes" },
         { "id": "update_arg", "ref": "arg", "value": "state.update" },
         { "id": "nodes", "ref": "arg", "value": "state.nodes" },
         { "id": "links", "ref": "arg", "value": "state.links" },
         { "id": "selected", "ref": "arg", "value": "state.selected" },
         { "id": "readonly", "ref": "arg", "value": "state.readonly" },
         { "id": "html_id", "ref": "arg", "value": "state.html_id" },
+        { "id": "norun", "ref": "arg", "value": "state.norun" },
         { "id": "show_args_effector", "ref": "show_args_effect" },
         { "id": "show_args_effect", "ref": "array" },
         { "id": "should_show_args", "ref": "switch" },
@@ -526,6 +757,7 @@
           "id": "calculate_levels",
           "script": "return _lib.scripts.calculateLevels(nodes, links, display_graph, selected)"
         },
+        { "id": "reduce_graph", "ref": "fuse vertices" },
         { "id": "levels", "ref": "switch", "args": ["levels"] },
         { "id": "levels_inputs", "args": ["selected"], "script": "return ['levels']" },
         {
@@ -534,11 +766,14 @@
           "script": "return {...state, levels: levels ?? state.levels}"
         },
         { "id": "graph_sim", "script": "return undefined;" },
+        { "id": "new_state_cases", "script": "return [graph_sim && 'graph_sim', 'state']" },
         {
           "id": "new_state",
           "script": "return Object.assign({}, state, {nodes: graph_sim?.nodes ?? state.nodes, links: graph_sim?.links ?? state.links, levels: graph_sim?.levels ?? state.levels});"
         },
         { "id": "update", "script": "return update || !!display_graph || !!selected" },
+        { "id": "run", "ref": "run_display_graph_effect" },
+        { "id": "run_wrapper" },
         {
           "id": "out",
           "script": "return {state, effects: [!readonly && (!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && [dispatch_custom_event_effect, {html_id, event: 'updategraph', detail: {graph: state.display_graph}}], ...(effects?.filter(e => e?.[0]) ?? [])]}"
@@ -550,6 +785,9 @@
         { "from": "in", "to": "levels_inputs" },
         { "from": "in", "to": "graph" },
         { "from": "display_graph", "to": "reduce_graph", "as": "graph" },
+        { "from": "payload", "to": "run", "as": "payload" },
+        { "from": "display_graph", "to": "run", "as": "display_graph" },
+        { "from": "html_id", "to": "run", "as": "html_id" },
         { "from": "nodes", "to": "calculate_levels", "as": "nodes" },
         { "from": "links", "to": "calculate_levels", "as": "links" },
         { "from": "selected", "to": "calculate_levels", "as": "selected" },
@@ -559,7 +797,13 @@
         { "from": "set_levels", "to": "new_state", "as": "state" },
         { "from": "levels_inputs", "to": "levels", "as": "input" },
         { "from": "graph_sim", "to": "new_state", "as": "graph_sim" },
+        { "from": "error_nodes", "to": "run", "as": "error_nodes" },
+        { "from": "state_result", "to": "run", "as": "prev_result" },
+        { "from": "run", "to": "result", "as": "run" },
+        { "from": "norun", "to": "out", "as": "norun" },
         { "from": "show_result", "to": "out", "as": "show_result" },
+        { "from": "run", "to": "run_wrapper", "as": "run" },
+        { "from": "run_wrapper", "to": "out", "as": "run" },
         { "from": "readonly", "to": "out", "as": "readonly" },
         { "from": "selected", "to": "update", "as": "selected" },
         { "from": "display_graph", "to": "update", "as": "display_graph" },
@@ -642,6 +886,66 @@
       ]
     },
     {
+      "id": "toggle",
+      "name": "toggle",
+      "in": "itrzmbe",
+      "out": "nn4twx9",
+      "nodes": [
+        {
+          "id": "nn4twx9",
+          "ref": "html_element",
+          "inputs": [
+            { "from": "lvzwtzi", "to": "nn4twx9", "as": "children" },
+            { "from": "t6q6rvf", "to": "nn4twx9", "as": "props" },
+            { "from": "tchu5kq", "to": "nn4twx9", "as": "dom_type" }
+          ],
+          "name": "out"
+        },
+        { "id": "lvzwtzi", "ref": "array" },
+        { "id": "t6q6rvf" },
+        { "id": "tchu5kq", "value": "button" },
+        { "id": "583nwco", "name": "in" },
+        { "id": "itrzmbe", "name": "in" },
+        { "id": "vmehp75/h4hkmke", "ref": "html_text", "name": "button_text" },
+        { "id": "punpbfw", "ref": "execute_graph", "name": "onclick_fn" },
+        { "id": "2aqvso8", "ref": "arg", "value": "value" },
+        { "id": "teuf938", "ref": "arg", "value": "value" },
+        { "id": "1067z1h", "ref": "array" },
+        { "id": "b8q8y2q", "ref": "array" },
+        { "id": "pprukwn", "ref": "set" },
+        { "id": "zu0hb6e", "ref": "arg", "value": "0.update_hyperapp" },
+        { "id": "eo8hxkq", "script": "return !toggle;" },
+        { "id": "s6847dx", "ref": "arg", "value": "0" },
+        { "id": "5g3gdi1", "script": "return 'result.' + value;" },
+        { "id": "flcuh31", "ref": "get" },
+        { "id": "0eoq13n", "ref": "arg", "value": "value" },
+        { "id": "ysqu0jj", "ref": "arg", "value": "0.result" },
+        { "id": "8ji5lb6", "ref": "arg", "value": "value" }
+      ],
+      "edges": [
+        { "from": "lvzwtzi", "to": "nn4twx9", "as": "children" },
+        { "from": "t6q6rvf", "to": "nn4twx9", "as": "props" },
+        { "from": "tchu5kq", "to": "nn4twx9", "as": "dom_type" },
+        { "from": "583nwco", "to": "nn4twx9", "as": "arg3" },
+        { "from": "itrzmbe", "to": "nn4twx9", "as": "arg4" },
+        { "to": "lvzwtzi", "from": "vmehp75/h4hkmke", "as": "arg1" },
+        { "from": "punpbfw", "to": "t6q6rvf", "as": "onclick" },
+        { "from": "2aqvso8", "to": "vmehp75/h4hkmke", "as": "text" },
+        { "from": "teuf938", "to": "punpbfw", "as": "value" },
+        { "from": "1067z1h", "to": "punpbfw", "as": "fn", "type": "ref" },
+        { "from": "b8q8y2q", "to": "1067z1h", "as": "arg1" },
+        { "from": "pprukwn", "to": "1067z1h", "as": "arg0" },
+        { "from": "zu0hb6e", "to": "b8q8y2q", "as": "update_hyperapp" },
+        { "from": "eo8hxkq", "to": "pprukwn", "as": "value" },
+        { "from": "s6847dx", "to": "pprukwn", "as": "target" },
+        { "from": "5g3gdi1", "to": "pprukwn", "as": "path" },
+        { "from": "flcuh31", "to": "eo8hxkq", "as": "toggle" },
+        { "from": "0eoq13n", "to": "5g3gdi1", "as": "value" },
+        { "from": "ysqu0jj", "to": "flcuh31", "as": "target" },
+        { "from": "8ji5lb6", "to": "flcuh31", "as": "path" }
+      ]
+    },
+    {
       "id": "sequence",
       "name": "sequence",
       "out": "out",
@@ -689,118 +993,118 @@
     {
       "id": "import_json",
       "name": "import_json",
-      "in": "j5hwdot",
-      "out": "06osgt6",
+      "in": "gsiimdp",
+      "out": "lapeojg",
       "nodes": [
-        { "id": "lx2r71d", "ref": "runnable" },
-        { "id": "j5hwdot", "name": "in" },
-        { "id": "upzmz7i", "script": "return 'imports.' + name" },
-        { "id": "hfgitu2", "ref": "run" },
-        { "id": "i68oe5k" },
-        { "id": "qomntld", "ref": "arg", "value": "name" },
-        { "id": "hgo86cn", "ref": "runnable" },
-        { "id": "7m3jfmy", "ref": "arg", "value": "name" },
-        { "id": "z9zvilt", "ref": "arg", "value": "url" },
-        { "id": "f89a5u2" },
-        { "id": "1v653xe", "ref": "get" },
-        { "id": "my879k4", "ref": "call" },
-        { "id": "gfpdf11", "ref": "arg", "value": "name" },
-        { "id": "23kbk1n", "ref": "run" },
-        { "id": "71ppowa", "script": "return \"1\";" },
-        { "id": "mzijca2", "ref": "fetch" },
-        { "id": "vdfrqzc", "value": "json" },
-        { "id": "83xy8y2", "ref": "sequence" },
-        { "id": "5hat6g2", "ref": "arg", "value": "url" },
-        { "id": "olx0rqo", "ref": "runnable" },
-        { "id": "9swjqs2", "ref": "runnable" },
-        { "id": "cbahtxj" },
-        { "id": "jpuj66z", "ref": "dispatch_runnable" },
-        { "id": "rfmgm5u", "ref": "arg", "value": "imported_graph", "type": "internal" },
-        { "id": "jrt3ao3", "ref": "arg", "value": "name", "type": "internal" },
-        { "id": "830e6rx", "ref": "arg", "value": "imported_graph", "type": "internal" },
-        { "id": "4qd7fl3", "ref": "runnable" },
-        { "id": "sae69iz" },
-        { "id": "j6g4jd4" },
-        { "id": "um99k99", "ref": "arg", "value": "imported_graph", "type": "internal" },
-        { "id": "z2ccs2u", "ref": "arg", "value": "name" },
-        { "id": "xl0tqsd", "ref": "set" },
-        { "id": "sajmrbs", "value": "display_graph" },
-        { "id": "i50d0rl", "ref": "set" },
-        { "id": "59iaxzp", "ref": "arg", "value": "state", "type": "internal" },
-        { "id": "pfe7svb", "ref": "arg", "value": "state.display_graph", "type": "internal" },
-        { "id": "dsqrh2d", "value": "nodes" },
-        { "id": "9zfxac6", "ref": "append" },
-        { "id": "2zvxan2", "ref": "map" },
         {
-          "id": "hrzgjqm",
-          "script": "return nodes.filter(n => !n.id.startsWith(imported_id)).concat([{id: imported_id}]);"
+          "id": "lapeojg",
+          "script": "const new_nodes = import_graph.nodes.map(n => ({...n, id: name + '.' + n.id}));\n\nconst new_graph = {\n..._graph,\nnodes: [...(new Map(_graph.nodes.concat(new_nodes).map(n => [n.id, n])).values())]\n}\n\n_lib.no.runtime.update_graph(new_graph); return name;",
+          "name": "out"
         },
-        { "id": "a8x8a5c", "ref": "arg", "value": "payload.imported_graph.nodes", "type": "internal" },
-        { "id": "d4yl375", "ref": "runnable" },
-        { "id": "2f1lyvz", "ref": "arg", "value": "state.display_graph.nodes", "type": "internal" },
-        { "id": "oco33oy", "ref": "arg", "value": "payload.name", "type": "internal" },
-        { "id": "55qulh4", "ref": "set" },
-        { "id": "4az2m7o" },
-        { "id": "ugtx81k", "ref": "arg", "value": "element", "type": "internal" },
-        { "id": "2eq7kuu", "value": "id" },
-        { "id": "2tekj7w", "script": "return imported_id + '.' + node_id;" },
-        { "id": "2xt8tpx", "ref": "arg", "value": "payload.name", "type": "internal" },
-        { "id": "og27c4d", "ref": "arg", "value": "imported_id", "type": "internal" },
-        { "id": "aodmtk1", "ref": "arg", "value": "element.id", "type": "internal" }
+        { "id": "gsiimdp", "name": "in" },
+        { "id": "3zfjt1h", "ref": "call" },
+        { "id": "05eag47", "ref": "arg", "value": "name" },
+        { "id": "2vtokcl", "script": "return fetch(url);" },
+        { "id": "i9x02is", "value": "json" },
+        { "id": "irr99xz", "ref": "arg", "value": "url" }
       ],
       "edges": [
-        { "from": "lx2r71d", "to": "06osgt6", "as": "fn" },
-        { "from": "j5hwdot", "to": "06osgt6", "as": "_" },
-        { "from": "upzmz7i", "to": "06osgt6", "as": "value" },
-        { "from": "hfgitu2", "to": "lx2r71d", "as": "fn" },
-        { "from": "i68oe5k", "to": "lx2r71d", "as": "args" },
-        { "from": "qomntld", "to": "upzmz7i", "as": "name" },
-        { "from": "hgo86cn", "to": "hfgitu2", "as": "runnable" },
-        { "from": "7m3jfmy", "to": "i68oe5k", "as": "name" },
-        { "from": "z9zvilt", "to": "i68oe5k", "as": "url" },
-        { "from": "f89a5u2", "to": "hgo86cn", "as": "args" },
-        { "from": "1v653xe", "to": "hgo86cn", "as": "fn" },
-        { "from": "my879k4", "to": "f89a5u2", "as": "imported_graph" },
-        { "from": "gfpdf11", "to": "f89a5u2", "as": "name" },
-        { "from": "23kbk1n", "to": "1v653xe", "as": "target" },
-        { "from": "71ppowa", "to": "1v653xe", "as": "path" },
-        { "from": "mzijca2", "to": "my879k4", "as": "self" },
-        { "from": "vdfrqzc", "to": "my879k4", "as": "fn" },
-        { "from": "83xy8y2", "to": "23kbk1n", "as": "runnable" },
-        { "from": "5hat6g2", "to": "mzijca2", "as": "url" },
-        { "from": "olx0rqo", "to": "83xy8y2", "as": "arg0" },
-        { "from": "9swjqs2", "to": "83xy8y2", "as": "arg1" },
-        { "from": "cbahtxj", "to": "83xy8y2", "as": "args" },
-        { "from": "jpuj66z", "to": "olx0rqo", "as": "fn" },
-        { "from": "rfmgm5u", "to": "9swjqs2", "as": "fn" },
-        { "from": "jrt3ao3", "to": "cbahtxj", "as": "name" },
-        { "from": "830e6rx", "to": "cbahtxj", "as": "imported_graph" },
-        { "from": "4qd7fl3", "to": "jpuj66z", "as": "fn" },
-        { "from": "sae69iz", "to": "4qd7fl3", "as": "args" },
-        { "from": "j6g4jd4", "to": "4qd7fl3", "as": "fn" },
-        { "from": "um99k99", "to": "sae69iz", "as": "imported_graph" },
-        { "from": "z2ccs2u", "to": "sae69iz", "as": "name" },
-        { "from": "xl0tqsd", "to": "j6g4jd4", "as": "state" },
-        { "from": "sajmrbs", "to": "xl0tqsd", "as": "path" },
-        { "from": "i50d0rl", "to": "xl0tqsd", "as": "value" },
-        { "from": "59iaxzp", "to": "xl0tqsd", "as": "target" },
-        { "from": "pfe7svb", "to": "i50d0rl", "as": "target" },
-        { "from": "dsqrh2d", "to": "i50d0rl", "as": "path" },
-        { "from": "9zfxac6", "to": "i50d0rl", "as": "value" },
-        { "from": "2zvxan2", "to": "9zfxac6", "as": "item" },
-        { "from": "hrzgjqm", "to": "9zfxac6", "as": "array" },
-        { "from": "a8x8a5c", "to": "2zvxan2", "as": "array" },
-        { "from": "d4yl375", "to": "2zvxan2", "as": "fn" },
-        { "from": "2f1lyvz", "to": "hrzgjqm", "as": "nodes" },
-        { "from": "oco33oy", "to": "hrzgjqm", "as": "imported_id" },
-        { "from": "55qulh4", "to": "d4yl375", "as": "fn" },
-        { "from": "4az2m7o", "to": "d4yl375", "as": "args" },
-        { "from": "ugtx81k", "to": "55qulh4", "as": "target" },
-        { "from": "2eq7kuu", "to": "55qulh4", "as": "path" },
-        { "from": "2tekj7w", "to": "55qulh4", "as": "value" },
-        { "from": "2xt8tpx", "to": "4az2m7o", "as": "imported_id" },
-        { "from": "og27c4d", "to": "2tekj7w", "as": "imported_id" },
-        { "from": "aodmtk1", "to": "2tekj7w", "as": "node_id" }
+        { "from": "gsiimdp", "to": "lapeojg", "as": "arg0" },
+        { "as": "import_graph", "from": "3zfjt1h", "to": "lapeojg" },
+        { "from": "05eag47", "to": "lapeojg", "as": "name" },
+        { "as": "self", "from": "2vtokcl", "to": "3zfjt1h" },
+        { "from": "i9x02is", "to": "3zfjt1h", "as": "fn" },
+        { "from": "irr99xz", "to": "2vtokcl", "as": "url" }
+      ]
+    },
+    {
+      "id": "initial_state_runnable",
+      "name": "initial_state_runnable",
+      "in": "0tsqw11",
+      "out": "pd64cr8",
+      "nodes": [
+        { "name": "out", "id": "pd64cr8", "ref": "default" },
+        { "id": "usd4433", "name": "modify_state_runnable", "ref": "modify_state_runnable" },
+        { "id": "0tsqw11", "name": "in" },
+        { "id": "6rdgk5r", "ref": "get" },
+        { "id": "4g0xgt3", "value": "value", "ref": "arg" },
+        { "id": "itmdest", "value": "fn", "ref": "arg" },
+        { "id": "s5ns82c", "ref": "arg", "value": "state" },
+        { "id": "eb0nj9q", "ref": "arg", "value": "value" }
+      ],
+      "edges": [
+        { "from": "usd4433", "to": "pd64cr8", "as": "otherwise" },
+        { "from": "0tsqw11", "to": "pd64cr8", "as": "_" },
+        { "from": "6rdgk5r", "to": "pd64cr8", "as": "value" },
+        { "from": "4g0xgt3", "to": "usd4433", "as": "value" },
+        { "from": "itmdest", "to": "usd4433", "as": "fn" },
+        { "from": "s5ns82c", "to": "6rdgk5r", "as": "target" },
+        { "from": "eb0nj9q", "to": "6rdgk5r", "as": "path" }
+      ]
+    },
+    {
+      "id": "modify_state_runnable",
+      "name": "modify_state_runnable",
+      "in": "0tke7mk",
+      "out": "4k16rxs",
+      "nodes": [
+        { "id": "4k16rxs", "ref": "runnable", "name": "out" },
+        { "id": "17hgmhe", "ref": "dispatch_runnable" },
+        { "id": "0tke7mk", "name": "in" },
+        { "id": "qsm5fqf" },
+        { "id": "6i1lek8", "ref": "runnable" },
+        { "id": "ecixhbu", "ref": "arg", "value": "value" },
+        { "id": "3d6xwzp", "ref": "arg", "value": "fn" },
+        { "id": "ysv47a4", "ref": "arg", "value": "state" },
+        { "id": "yl8sikb" },
+        { "id": "4hrg1ky" },
+        { "id": "ywscm67", "ref": "set" },
+        { "id": "hsgqfec", "ref": "arg", "value": "value" },
+        { "id": "a5z6wdp", "ref": "run" },
+        { "id": "vjtdfop", "ref": "arg", "value": "payload.value" },
+        { "id": "hej7g0o", "ref": "arg", "value": "payload.state_value" },
+        { "id": "bohly2o", "ref": "arg", "value": "state" },
+        { "id": "y65mfa8", "ref": "set" },
+        { "id": "tmsibf6", "ref": "merge_objects" },
+        { "id": "dkoqs5x", "value": "args" },
+        { "id": "zmexk3x", "ref": "arg", "value": "fn" },
+        { "id": "nl97w9x" },
+        { "id": "oz8h5rr", "ref": "arg", "value": "fn.args" },
+        { "id": "5g3mq34", "ref": "arg", "value": "dispatch" },
+        { "id": "jdxnymc", "ref": "arg", "value": "payload" },
+        { "id": "69fs5ao", "ref": "get" },
+        { "id": "lsjg9ew", "ref": "arg", "value": "state" },
+        { "id": "vc4ejyt", "ref": "arg", "value": "state" },
+        { "id": "n3riawv", "ref": "arg", "value": "value" }
+      ],
+      "edges": [
+        { "from": "17hgmhe", "to": "4k16rxs", "as": "fn" },
+        { "from": "0tke7mk", "to": "4k16rxs", "as": "arg0" },
+        { "from": "qsm5fqf", "to": "4k16rxs", "as": "args" },
+        { "from": "6i1lek8", "to": "17hgmhe", "as": "fn" },
+        { "from": "ecixhbu", "to": "qsm5fqf", "as": "value" },
+        { "from": "3d6xwzp", "to": "qsm5fqf", "as": "fn" },
+        { "from": "ysv47a4", "to": "qsm5fqf", "as": "state" },
+        { "from": "yl8sikb", "to": "6i1lek8", "as": "fn" },
+        { "from": "4hrg1ky", "to": "6i1lek8", "as": "args" },
+        { "from": "ywscm67", "to": "yl8sikb", "as": "state" },
+        { "from": "hsgqfec", "to": "4hrg1ky", "as": "value" },
+        { "from": "a5z6wdp", "to": "4hrg1ky", "as": "state_value" },
+        { "from": "vjtdfop", "to": "ywscm67", "as": "path" },
+        { "from": "hej7g0o", "to": "ywscm67", "as": "value" },
+        { "from": "bohly2o", "to": "ywscm67", "as": "target" },
+        { "from": "y65mfa8", "to": "a5z6wdp", "as": "runnable" },
+        { "from": "tmsibf6", "to": "y65mfa8", "as": "value" },
+        { "from": "dkoqs5x", "to": "y65mfa8", "as": "path" },
+        { "from": "zmexk3x", "to": "y65mfa8", "as": "target" },
+        { "from": "nl97w9x", "to": "tmsibf6", "as": "arg0" },
+        { "from": "oz8h5rr", "to": "tmsibf6", "as": "arg1" },
+        { "from": "5g3mq34", "to": "nl97w9x", "as": "dispatch" },
+        { "from": "jdxnymc", "to": "nl97w9x", "as": "payload" },
+        { "from": "69fs5ao", "to": "nl97w9x", "as": "state_value" },
+        { "from": "lsjg9ew", "to": "nl97w9x", "as": "state" },
+        { "from": "vc4ejyt", "to": "69fs5ao", "as": "target" },
+        { "from": "n3riawv", "to": "69fs5ao", "as": "path" }
       ]
     },
     {
@@ -959,38 +1263,62 @@
       ]
     },
     {
-      "edges": [
-        { "from": "gvkhkfw", "to": "nn4twx9", "as": "children" },
-        { "from": "7rhq0q5", "to": "nn4twx9", "as": "_" },
-        { "from": "4972gx3", "to": "gvkhkfw", "as": "arg1" },
-        { "from": "1ldhfah", "to": "gvkhkfw", "as": "arg0" },
-        { "from": "ee5i5r2", "to": "4972gx3", "as": "dom_type" },
-        { "from": "ro8n2gc", "to": "4972gx3", "as": "props" },
-        { "from": "wet0jdv", "to": "1ldhfah", "as": "children" },
-        { "from": "gcuxiw9", "to": "1ldhfah", "as": "props" },
-        { "from": "875c1wk", "to": "1ldhfah", "as": "dom_type" },
-        { "from": "t6q6rvf", "to": "ro8n2gc", "as": "arg0" },
-        { "from": "rjwtb3c", "to": "ro8n2gc", "as": "props" },
-        { "from": "utkc9o6", "to": "wet0jdv", "as": "arg0" },
-        { "from": "jxl9r29", "to": "gcuxiw9", "as": "for" },
-        { "from": "2zxw9oo", "to": "t6q6rvf", "as": "onkeydown" },
-        { "from": "i7y9dyy", "to": "t6q6rvf", "as": "onchange" },
-        { "from": "vks4vul", "to": "rjwtb3c", "as": "value" },
-        { "from": "ddfgy2s", "to": "rjwtb3c", "as": "otherwise" },
-        { "from": "trd8ptp", "to": "utkc9o6", "as": "text" },
-        { "from": "zfrrk0z", "to": "jxl9r29", "as": "value" },
-        { "to": "2zxw9oo", "from": "qseh2tb", "as": "fn", "type": "ref" },
-        { "from": "b0j8nyq", "to": "i7y9dyy", "as": "dispatch" },
-        { "from": "eotod0l", "to": "i7y9dyy", "as": "seq" },
-        { "from": "qxwvdfe", "to": "i7y9dyy", "as": "value" },
-        { "from": "0dnqo5l", "to": "i7y9dyy", "as": "onchange_fn" },
-        { "from": "1wps21n", "to": "qseh2tb", "as": "a1" },
-        { "from": "y5q7mbn", "to": "qseh2tb", "as": "a0" },
-        { "from": "qjc0zt6", "to": "eotod0l", "as": "arg" },
-        { "from": "widk6u6", "to": "qjc0zt6", "as": "fn" },
-        { "from": "506ntvb", "to": "qjc0zt6", "as": "value" },
-        { "from": "4ck1vaf", "to": "widk6u6", "as": "fn" }
+      "id": "set_display",
+      "name": "set_display",
+      "description": "Use like an html_element to add html to the page.",
+      "in": "fkp4pck/wb73q0h",
+      "out": "a59hci8",
+      "nodes": [
+        { "name": "out", "id": "a59hci8", "ref": "sequence" },
+        { "id": "da71z9c/2435ihf/jd1mc84", "name": "modify_state_runnable", "ref": "modify_state_runnable" },
+        { "id": "fkp4pck/wb73q0h", "name": "in" },
+        { "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/y4qbl8k", "value": "result_display" },
+        { "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/lol0vdh", "ref": "runnable" },
+        { "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/w8vpdfx", "ref": "html_element" },
+        { "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/vofecaa", "ref": "arg", "value": "props" },
+        { "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/j8qudts", "ref": "arg", "value": "children" },
+        { "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/iead5y3", "ref": "arg", "value": "dom_type" }
       ],
+      "edges": [
+        { "from": "da71z9c/2435ihf/jd1mc84", "to": "a59hci8", "as": "arg0" },
+        { "to": "a59hci8", "from": "fkp4pck/wb73q0h", "as": "arg1" },
+        {
+          "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/y4qbl8k",
+          "to": "da71z9c/2435ihf/jd1mc84",
+          "as": "value"
+        },
+        {
+          "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/lol0vdh",
+          "to": "da71z9c/2435ihf/jd1mc84",
+          "as": "fn"
+        },
+        {
+          "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/w8vpdfx",
+          "to": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/lol0vdh",
+          "as": "fn"
+        },
+        {
+          "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/vofecaa",
+          "to": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/w8vpdfx",
+          "as": "props"
+        },
+        {
+          "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/j8qudts",
+          "to": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/w8vpdfx",
+          "as": "children"
+        },
+        {
+          "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/iead5y3",
+          "to": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/w8vpdfx",
+          "as": "dom_type"
+        }
+      ]
+    },
+    {
+      "id": "input",
+      "name": "input",
+      "in": "7rhq0q5",
+      "out": "nn4twx9",
       "nodes": [
         {
           "id": "nn4twx9",
@@ -1052,10 +1380,38 @@
         { "id": "506ntvb", "ref": "arg", "value": "value" },
         { "id": "4ck1vaf", "ref": "arg", "value": "payload.target.value" }
       ],
-      "out": "nn4twx9",
-      "in": "7rhq0q5",
-      "name": "input",
-      "id": "input"
+      "edges": [
+        { "from": "gvkhkfw", "to": "nn4twx9", "as": "children" },
+        { "from": "7rhq0q5", "to": "nn4twx9", "as": "_" },
+        { "from": "4972gx3", "to": "gvkhkfw", "as": "arg1" },
+        { "from": "1ldhfah", "to": "gvkhkfw", "as": "arg0" },
+        { "from": "ee5i5r2", "to": "4972gx3", "as": "dom_type" },
+        { "from": "ro8n2gc", "to": "4972gx3", "as": "props" },
+        { "from": "wet0jdv", "to": "1ldhfah", "as": "children" },
+        { "from": "gcuxiw9", "to": "1ldhfah", "as": "props" },
+        { "from": "875c1wk", "to": "1ldhfah", "as": "dom_type" },
+        { "from": "t6q6rvf", "to": "ro8n2gc", "as": "arg0" },
+        { "from": "rjwtb3c", "to": "ro8n2gc", "as": "props" },
+        { "from": "utkc9o6", "to": "wet0jdv", "as": "arg0" },
+        { "from": "jxl9r29", "to": "gcuxiw9", "as": "for" },
+        { "from": "2zxw9oo", "to": "t6q6rvf", "as": "onkeydown" },
+        { "from": "i7y9dyy", "to": "t6q6rvf", "as": "onchange" },
+        { "from": "vks4vul", "to": "rjwtb3c", "as": "value" },
+        { "from": "ddfgy2s", "to": "rjwtb3c", "as": "otherwise" },
+        { "from": "trd8ptp", "to": "utkc9o6", "as": "text" },
+        { "from": "zfrrk0z", "to": "jxl9r29", "as": "value" },
+        { "to": "2zxw9oo", "from": "qseh2tb", "as": "fn", "type": "ref" },
+        { "from": "b0j8nyq", "to": "i7y9dyy", "as": "dispatch" },
+        { "from": "eotod0l", "to": "i7y9dyy", "as": "seq" },
+        { "from": "qxwvdfe", "to": "i7y9dyy", "as": "value" },
+        { "from": "0dnqo5l", "to": "i7y9dyy", "as": "onchange_fn" },
+        { "from": "1wps21n", "to": "qseh2tb", "as": "a1" },
+        { "from": "y5q7mbn", "to": "qseh2tb", "as": "a0" },
+        { "from": "qjc0zt6", "to": "eotod0l", "as": "arg" },
+        { "from": "widk6u6", "to": "qjc0zt6", "as": "fn" },
+        { "from": "506ntvb", "to": "qjc0zt6", "as": "value" },
+        { "from": "4ck1vaf", "to": "widk6u6", "as": "fn" }
+      ]
     },
     {
       "id": "html_text",
@@ -1069,8 +1425,8 @@
       ],
       "edges": [
         { "from": "in", "to": "out", "as": "_", "type": "ref" },
-        { "from": "text_value", "to": "out", "as": "dom_type" },
-        { "from": "text", "to": "out", "as": "text" }
+        { "from": "text_value", "to": "out", "as": "dom_type", "type": "resolve" },
+        { "from": "text", "to": "out", "as": "text", "type": "resolve"}
       ]
     },
     {
@@ -1079,6 +1435,7 @@
       "nodes": [
         { "id": "in" },
         { "id": "children", "ref": "arg", "value": "children" },
+        { "id": "memo", "ref": "arg", "value": "memo" },
         { "id": "props", "ref": "arg", "value": "props" },
         { "id": "dom_type", "ref": "arg", "value": "dom_type" },
         { "id": "div", "value": "div" },
@@ -1090,17 +1447,18 @@
         { "id": "dom_type_def", "ref": "default" },
         {
           "id": "out",
-          "script": "if(!(typeof dom_type === 'string' && Array.isArray(children))){ throw new Error('invalid element');} children.filter(c => c).forEach(c => {if(typeof c.dom_type !== 'string'){throw new Error ('invalid child element');}}); return {el: {dom_type, props, children}}"
+          "script": "if(!(typeof dom_type === 'string' && Array.isArray(children))){ throw new Error('invalid element');} return {el: {dom_type, props, children, memo}}"
         }
       ],
       "edges": [
         { "from": "children", "to": "fill_children", "as": "children" },
-        { "from": "props", "to": "fill_props", "as": "props", "type": "resolve" },
-        { "from": "fill_children", "to": "out", "as": "children", "type": "resolve" },
-        { "from": "fill_props", "to": "out", "as": "props" },
+        { "from": "props", "to": "fill_props", "as": "props" },
+        { "from": "fill_children", "to": "out", "as": "children" },
+        { "from": "fill_props", "to": "out", "as": "props", "type": "resolve" },
+        { "from": "memo", "to": "out", "as": "memo", "type": "resolve" },
         { "from": "dom_type", "to": "dom_type_def", "as": "value" },
         { "from": "div", "to": "dom_type_def", "as": "otherwise" },
-        { "from": "dom_type_def", "to": "out", "as": "dom_type" },
+        { "from": "dom_type_def", "to": "out", "as": "dom_type", "type": "resolve" },
         { "from": "in", "to": "out", "as": "args", "type": "ref" }
       ]
     },
@@ -1174,14 +1532,15 @@
         { "id": "dom_type", "ref": "arg", "value": "dom_type" },
         { "id": "props", "ref": "arg", "value": "props" },
         { "id": "children", "ref": "arg", "value": "children" },
-        { "id": "graph", "ref": "arg", "value": "graph" },
         { "id": "text", "ref": "arg", "value": "text" },
+        { "id": "memo", "ref": "arg", "value": "memo" },
         {
           "id": "mapped_children",
-          "script": "let run_graph = {...graph, in: 'run_h/in', out: 'run_h'}; const fn = _lib.no.executeGraphValue({graph: run_graph, lib: _lib}); const cs = []; children?.forEach(c => { if(!!c){const cfn = fn({...c, graph: run_graph}); if(!!cfn){cs.push(cfn.el ?? cfn)}}}); return cs;"
+          "script": "const fn = _lib.no.executeGraphNode({graph: _graph, lib: _lib})('run_h'); return (children?.filter(c => !!c) ?? []).map(fn).filter(c => c).map(c => c.hasOwnProperty('el') ? (c.el ?? false) : c);"
         },
         { "id": "out_h", "extern": "ha.h" },
         { "id": "out_text", "extern": "ha.text" },
+        { "id": "els" },
         { "id": "out_input", "args": ["dom_type"], "script": "return dom_type === 'text_value' ? 'h_text' : 'h'" },
         { "id": "out_el", "ref": "switch" },
         { "id": "out" }
@@ -1192,8 +1551,8 @@
         { "from": "dom_type", "to": "out_h", "as": "dom_type" },
         { "from": "children", "to": "mapped_children", "as": "children" },
         { "from": "mapped_children", "to": "out_h", "as": "children" },
-        { "from": "props", "to": "out_h", "as": "props" },
-        { "from": "graph", "to": "mapped_children", "as": "graph" },
+        { "from": "props", "to": "out_h", "as": "props", "type": "resolve" },
+        { "from": "memo", "to": "out_h", "as": "memo", "type": "resolve" },
         { "from": "text", "to": "out_text", "as": "text", "type": "resolve" },
         { "from": "out_text", "to": "out_el", "as": "h_text" },
         { "from": "out_h", "to": "out_el", "as": "h" },
@@ -1267,6 +1626,29 @@
       ]
     },
     {
+      "id": "default_node_display",
+      "name": "default_node_display",
+      "in": "6pqqchhnk",
+      "out": "tsxlng4gd",
+      "nodes": [
+        { "id": "tsxlng4gd", "ref": "html_element", "name": "default_node_display" },
+        { "id": "osgrk7ddu", "args": [], "ref": "html_text" },
+        { "id": "hghirvcml", "args": [], "value": "pre" },
+        {
+          "id": "ha6b5qttf",
+          "args": ["data"],
+          "script": "return JSON.stringify({node: data.node, result: data.result}, null, 2)"
+        },
+        { "id": "6pqqchhnk", "name": "default_node_display/in" }
+      ],
+      "edges": [
+        { "from": "osgrk7ddu", "to": "tsxlng4gd", "as": "children" },
+        { "from": "hghirvcml", "to": "tsxlng4gd", "as": "dom_type" },
+        { "from": "ha6b5qttf", "to": "osgrk7ddu", "as": "text" },
+        { "from": "6pqqchhnk", "to": "ha6b5qttf", "as": "data" }
+      ]
+    },
+    {
       "id": "graph_display",
       "name": "graph_display",
       "in": "in",
@@ -1290,6 +1672,87 @@
         { "from": "in", "to": "stringify", "as": "data" }
       ]
     },
+    {
+      "id": "number_display",
+      "name": "number_display",
+      "in": "6pqqchhnk",
+      "out": "tsxlng4gd",
+      "nodes": [
+        { "id": "tsxlng4gd", "args": [], "ref": "html_element", "name": "number_display" },
+        { "id": "hghirvcml", "args": [], "value": "input" },
+        { "id": "cd571vftv" },
+        { "id": "h5xzkeoql", "args": [], "value": { "ref": "number" } },
+        { "id": "ltncqmqe9", "args": [], "ref": "get" },
+        { "id": "9kkegcpi2", "args": [], "ref": "execute_graph" },
+        { "id": "e96vv0gpq", "args": [], "value": "node.value" },
+        { "id": "tw41k3wzg", "args": [], "ref": "get" },
+        { "id": "u9feks2l9", "args": [], "ref": "update_graph_display" },
+        { "id": "6pqqchhnk", "args": [], "name": "number_display/in" },
+        { "id": "yxaspmy5c", "args": [], "value": "graph" },
+        { "id": "rhzddw3c6", "args": [], "ref": "set" },
+        { "id": "8jmaa71ct", "args": [], "script": "return arg0 !== arg1;" },
+        { "id": "w5lqhh9qr", "args": [], "value": "value" },
+        { "id": "es0e6as0j", "args": [], "ref": "get", "name": "get target value" },
+        { "id": "vnta2m4py", "args": [], "ref": "get" },
+        { "id": "gh99zvhy2", "args": [], "value": "1.target.valueAsNumber", "name": "target valueasnum" },
+        { "id": "88f3s3qrq", "args": [], "value": "value" },
+        { "id": "fxbdw1jrr", "args": [], "ref": "selected_node" },
+        { "id": "pkih97fsa", "args": [], "ref": "get", "name": "state" },
+        { "id": "mbbx3d26q", "args": [] },
+        { "id": "vbwsmt7jt", "args": [], "value": 0 }
+      ],
+      "edges": [
+        { "from": "hghirvcml", "to": "tsxlng4gd", "as": "dom_type" },
+        { "from": "cd571vftv", "to": "tsxlng4gd", "as": "props" },
+        { "from": "h5xzkeoql", "to": "cd571vftv" },
+        { "from": "ltncqmqe9", "to": "cd571vftv", "as": "value" },
+        { "from": "9kkegcpi2", "to": "cd571vftv", "as": "oninput" },
+        { "from": "e96vv0gpq", "to": "ltncqmqe9", "as": "path" },
+        { "from": "tw41k3wzg", "to": "9kkegcpi2", "as": "graph" },
+        { "from": "u9feks2l9", "to": "9kkegcpi2", "as": "fn", "type": "ref" },
+        { "from": "6pqqchhnk", "to": "ltncqmqe9", "as": "target" },
+        { "from": "6pqqchhnk", "to": "tw41k3wzg", "as": "target" },
+        { "from": "yxaspmy5c", "to": "tw41k3wzg", "as": "path" },
+        { "from": "rhzddw3c6", "to": "u9feks2l9", "as": "node" },
+        { "from": "8jmaa71ct", "to": "u9feks2l9", "as": "update_graph_display" },
+        { "from": "w5lqhh9qr", "to": "rhzddw3c6", "as": "path" },
+        { "from": "es0e6as0j", "to": "rhzddw3c6", "as": "value" },
+        { "from": "vnta2m4py", "to": "8jmaa71ct", "as": "arg0" },
+        { "from": "es0e6as0j", "to": "8jmaa71ct", "as": "arg1" },
+        { "from": "gh99zvhy2", "to": "es0e6as0j", "as": "path" },
+        { "from": "88f3s3qrq", "to": "vnta2m4py", "as": "path" },
+        { "from": "fxbdw1jrr", "to": "rhzddw3c6", "as": "target" },
+        { "from": "fxbdw1jrr", "to": "vnta2m4py", "as": "target" },
+        { "from": "mbbx3d26q", "to": "pkih97fsa", "as": "target" },
+        { "from": "mbbx3d26q", "to": "9kkegcpi2", "as": "in_node", "type": "ref" },
+        { "from": "mbbx3d26q", "to": "es0e6as0j", "as": "target" },
+        { "from": "pkih97fsa", "to": "u9feks2l9" },
+        { "from": "pkih97fsa", "to": "fxbdw1jrr" },
+        { "from": "vbwsmt7jt", "to": "pkih97fsa", "as": "path" }
+      ]
+    },
+    {
+      "id": "default_error_display",
+      "in": "in",
+      "out": "out",
+      "nodes": [
+        { "id": "in" },
+        {
+          "id": "stringify",
+          "args": ["data"],
+          "script": "const e = data.error; return JSON.stringify({error: e instanceof AggregateError ? e.errors.map(e => e.toString()).join(\" \") : e.toString(), data}, null, 2)"
+        },
+        { "id": "text", "ref": "html_text" },
+        { "id": "out_dom_type", "value": "pre" },
+        { "id": "out", "ref": "html_element" }
+      ],
+      "edges": [
+        { "from": "in", "to": "stringify", "as": "data" },
+        { "from": "stringify", "to": "text", "as": "text" },
+        { "from": "text", "to": "out", "as": "children", "type": "resolve" },
+        { "from": "out_dom_type", "to": "out", "as": "dom_type" }
+      ]
+    },
     { "id": "not", "args": ["target"], "script": "return !target" },
     { "id": "data", "value": "data" },
     { "id": "graph", "value": "graph" },
@@ -1300,14 +1763,7 @@
     { "id": "hash", "ref": "arg", "value": "hash" },
     { "id": "static", "ref": "arg", "value": "static" },
     { "id": "hide_types", "ref": "arg", "value": "hide_types" },
-    { "id": "nodes", "ref": "arg", "value": "nodes" },
-    { "id": "links", "ref": "arg", "value": "links" },
-    { "id": "dimensions", "ref": "arg", "value": "dimensions" },
-    { "id": "get_graph", "ref": "arg", "value": "graph" },
-    { "id": "get_display_graph", "ref": "arg", "value": "display_graph" },
-    { "id": "display_graph_out", "ref": "arg", "value": "display_graph.out" },
-    { "id": "html_id", "ref": "arg", "value": "html_id" },
-    { "id": "examples", "ref": "arg", "value": "examples" },
+    { "id": "graph_nodes", "value": [["graph", "nodes"]] },
     {
       "id": "initial_state",
       "value": {
@@ -1324,16 +1780,24 @@
         "redo_history": []
       }
     },
+    { "id": "dimensions", "ref": "arg", "value": "dimensions" },
     { "id": "error_nodes", "script": "return new Map()" },
     { "id": "hyperapp_init_state" },
     { "id": "calculate_levels", "script": "return _lib.scripts.calculateLevels([], [], display_graph, selected)" },
+    { "id": "get_graph", "ref": "arg", "value": "graph" },
+    { "id": "get_display_graph", "ref": "arg", "value": "display_graph" },
+    { "id": "display_graph_out", "ref": "arg", "value": "display_graph.out" },
     { "id": "init_selected", "ref": "array" },
     { "id": "hyperapp_view", "ref": "execute_graph" },
     { "id": "update_hyperapp", "ref": "update_graph_display" },
     { "id": "update_hyperapp_action", "ref": "hyperapp_action" },
     { "id": "update_hyperapp_effect", "ref": "hyperapp_action_effect" },
+    { "id": "html_id", "ref": "arg", "value": "html_id" },
+    { "id": "examples", "ref": "arg", "value": "examples" },
     { "id": "initialize_hyperapp_app", "ref": "hyperapp_app" },
     { "id": "out" },
+    { "id": "nodes", "ref": "arg", "value": "nodes" },
+    { "id": "links", "ref": "arg", "value": "links" },
     {
       "id": "graph_to_simulation",
       "args": ["nodes", "links", "display_graph", "selected", "levels"],
@@ -1384,6 +1848,7 @@
         { "id": "state", "ref": "arg", "value": "state" },
         { "id": "popover_graph_path", "value": "popover_graph" },
         { "id": "graph", "ref": "arg", "value": "state.graph" },
+        { "id": "selected", "ref": "arg", "value": "state.selected.0" },
         { "id": "html_id", "ref": "arg", "value": "state.html_id" },
         { "id": "dimensions", "ref": "arg", "value": "state.dimensions" },
         { "id": "popover_dispatch", "ref": "arg", "value": "state.popover_dispatch" },
@@ -1427,6 +1892,7 @@
         { "id": "expand_contract", "ref": "expand_contract" },
         { "id": "expand_contract_display_graph", "ref": "get" },
         { "id": "expand_contract_selected", "ref": "get" },
+        { "id": "set_display_graph", "ref": "set" },
         { "id": "set_selected", "ref": "set" },
         { "id": "update_sim_effector", "ref": "arg", "value": "state.update_sim_effect" },
         { "id": "update_sim_effect", "ref": "array" },
@@ -1469,13 +1935,21 @@
         { "id": "display_graph_out", "ref": "arg", "value": "state.display_graph.out" },
         { "id": "display_graph", "ref": "arg", "value": "state.display_graph" },
         { "id": "history", "ref": "arg", "value": "state.history" },
+        { "id": "edges_path", "value": "display_graph.edges" },
+        { "id": "nodes_path", "value": "display_graph.nodes" },
         { "id": "selected_path", "value": "selected" },
         { "id": "history_path", "value": "history" },
         { "id": "payload", "ref": "arg", "value": "payload" },
         { "id": "node_id", "ref": "arg", "value": "payload.id" },
+        { "id": "edge", "ref": "arg", "value": "edge" },
         { "id": "node", "ref": "find_node" },
+        { "id": "new_nodes", "script": "return nodes.filter(n => n.id !== node_id)" },
         { "id": "parent_edge", "script": "return edges.find(e => e.from === node_id)" },
         { "id": "replaced_edges", "script": "return edges.filter(e => e.to === node_id)" },
+        {
+          "id": "new_edges",
+          "script": "return edges.filter(e => e !== parent_edge).map(e => e.to === node_id ? {...e, ...parent_edge, from: e.from} : e)"
+        },
         { "id": "new_selected", "script": "return [edges.find(e => e.from === node_id)?.to ?? out]" },
         {
           "id": "history_item",
@@ -1483,6 +1957,8 @@
         },
         { "id": "new_history", "ref": "append" },
         { "id": "set_selected", "ref": "set" },
+        { "id": "set_nodes", "ref": "set" },
+        { "id": "set_edges", "ref": "set" },
         { "id": "set_history", "ref": "set" },
         { "id": "out" },
         {
@@ -1547,6 +2023,7 @@
       "id": "next_edge",
       "out": "new_edge",
       "nodes": [
+        { "id": "in" },
         { "id": "payload_edge", "ref": "arg", "value": "edge" },
         { "id": "nodes", "ref": "arg", "value": "graph.nodes" },
         { "id": "edges", "ref": "arg", "value": "graph.edges" },
@@ -1635,8 +2112,6 @@
         { "id": "new_graph", "ref": "arg", "value": "payload.graph" },
         { "id": "state", "ref": "arg", "value": "state" },
         { "id": "update_sim_effector", "ref": "arg", "value": "state.update_sim_effect" },
-        { "id": "update_graph", "script": "return [() => _lib.no.runtime.update_graph(graph)]" },
-        { "id": "update_location", "script": "return [() => window.location.hash = '#' + graph.id]" },
         { "id": "display_graph_path", "value": "display_graph" },
         { "id": "set_display_graph", "ref": "set" },
         { "id": "update_sim_effect", "ref": "array" },
@@ -1649,13 +2124,9 @@
         { "from": "state", "to": "set_display_graph", "as": "target" },
         { "from": "display_graph_path", "to": "set_display_graph", "as": "path" },
         { "from": "new_graph", "to": "set_display_graph", "as": "value" },
-        { "from": "new_graph", "to": "update_graph", "as": "graph" },
-        { "from": "new_graph", "to": "update_location", "as": "graph" },
         { "from": "set_display_graph", "to": "result", "as": "state" },
         { "from": "update_sim_effector", "to": "update_sim_effect", "as": "a0" },
         { "from": "update_sim_effect", "to": "effects", "as": "a0" },
-        { "from": "update_graph", "to": "effects", "as": "a1" },
-        { "from": "update_location", "to": "effects", "as": "a2" },
         { "from": "effects", "to": "result", "as": "effects" },
         { "from": "result", "to": "out", "as": "fn", "type": "ref" }
       ]
@@ -1720,6 +2191,7 @@
           "script": "return {action: 'update_node', node, update, parent_edge: edges.find(e => e.from === node.id), child_edges: edges.filter(e => e.to === node.id), runnable: {fn: 'update_node_fn', graph: _graph, args: payload}}"
         },
         { "id": "new_history", "ref": "append" },
+        { "id": "display_graph_nodes_path", "value": "display_graph.nodes" },
         { "id": "history_path", "value": "history" },
         { "id": "set_history", "ref": "set" },
         { "id": "add_node_effect", "script": "return [() => _lib.no.runtime.update_graph(display_graph)]" },
@@ -1803,18 +2275,25 @@
         { "id": "edges", "ref": "arg", "value": "state.display_graph.edges" },
         { "id": "history", "ref": "arg", "value": "state.history" },
         { "id": "display_graph", "ref": "arg", "value": "state.display_graph" },
+        { "id": "display_graph_edges_path", "value": "display_graph.edges" },
         { "id": "payload", "ref": "arg", "value": "payload" },
         { "id": "edge", "ref": "arg", "value": "payload.id" },
         { "id": "properties", "ref": "arg", "value": "payload.properties" },
         { "id": "history_path", "value": "history" },
+        { "id": "display_graph_edges_path", "value": "display_graph.edges" },
         { "id": "prev_edge", "script": "return edges.find(e => e.to === edge.to && e.from === edge.from)" },
         { "id": "new_edge", "ref": "merge_objects" },
+        {
+          "id": "replace_edge",
+          "script": "return edges.map(e => e.from === edge.from && e.to === edge.to ? Object.assign({}, e, Object.fromEntries(Object.entries(update).map(e => [e[0], e[1] === '' ? undefined : e[1]]))) : e)"
+        },
         {
           "id": "history_item",
           "script": "return {action: 'update_edge', edge, update, runnable: {fn: 'update_edge_fn', graph: _graph, args: payload}}"
         },
         { "id": "new_history", "ref": "append" },
         { "id": "set_history", "ref": "set" },
+        { "id": "set_display_graph_edges", "ref": "set" },
         { "id": "update_hyperapp", "ref": "arg", "value": "state.update_hyperapp" },
         { "id": "update_hyperapp_effect", "ref": "array" },
         { "id": "edit_edge_effect", "script": "return [() => _lib.no.runtime.edit_edge(display_graph, edge)]" },
@@ -1882,6 +2361,7 @@
         { "id": "node_id", "ref": "arg", "value": "payload.id" },
         { "id": "node", "ref": "find_node" },
         { "id": "set_clipboard", "ref": "set" },
+        { "id": "effects", "ref": "array" },
         { "id": "result" },
         { "id": "out", "ref": "hyperapp_action_effect" }
       ],
@@ -1925,6 +2405,8 @@
       "nodes": [
         { "id": "in" },
         { "id": "state", "ref": "arg", "value": "state" },
+        { "id": "nodes", "ref": "arg", "value": "state.display_graph.nodes" },
+        { "id": "edges", "ref": "arg", "value": "state.display_graph.edges" },
         { "id": "randid", "ref": "arg", "value": "payload.randid" },
         { "id": "selected", "ref": "arg", "value": "payload.node_id" },
         { "id": "node", "ref": "arg", "value": "state.clipboard" },
@@ -1936,6 +2418,9 @@
         { "id": "select", "value": "true" },
         { "id": "add_node_payload" },
         { "id": "add_node_effect", "ref": "array" },
+        { "id": "add_edge_effector", "ref": "add_edge" },
+        { "id": "add_edge_payload" },
+        { "id": "add_edge_effect", "ref": "array" },
         { "id": "update_hyperapp", "ref": "arg", "value": "state.update_hyperapp" },
         { "id": "update_hyperapp_effect", "ref": "array" },
         { "id": "effects", "ref": "array" },
@@ -1967,6 +2452,7 @@
       "nodes": [
         { "id": "in" },
         { "id": "state", "ref": "arg", "value": "state" },
+        { "id": "display_graph", "ref": "arg", "value": "state.display_graph" },
         { "id": "dimensions", "ref": "arg", "value": "state.dimensions" },
         { "id": "html_id", "ref": "arg", "value": "state.html_id" },
         { "id": "node_el_width", "ref": "arg", "value": "state.node_el_width" },
@@ -1976,6 +2462,7 @@
         { "id": "current_value", "ref": "arg", "value": "payload.value" },
         { "id": "property", "ref": "arg", "value": "payload.property" },
         { "id": "arg_position", "ref": "arg", "value": "payload.position" },
+        { "id": "more_action", "ref": "arg", "value": "payload.more_action" },
         { "id": "editing_path", "value": "editing" },
         { "id": "edit_value_path", "value": "edit_value" },
         { "id": "edit_id_path", "value": "edit_id" },
@@ -2052,6 +2539,7 @@
         { "id": "nodes_path", "value": "nodes" },
         { "id": "node_nodes", "ref": "get" },
         { "id": "node_arg_nodes", "script": "return nodes?.filter(n => n.ref ==='arg' && n.type !== 'internal')" },
+        { "id": "should_show", "ref": "get" },
         {
           "id": "nested_node_args",
           "script": "return [...(new Set(nodes.map(n => n.value).filter(a => !a.includes('.'))))]"
@@ -2059,7 +2547,7 @@
         { "id": "extern_node_args", "script": "return _lib.just.get.fn(_lib, node.extern).args" },
         {
           "id": "node_args_input",
-          "script": "return node.id === 'arg' ? undefined : node.extern ? 'extern' : node.nodes ?  'nested' : 'none'"
+          "script": "return node?.id === 'arg' ? undefined : node?.extern ? 'extern' : node?.nodes ?  'nested' : 'none'"
         },
         { "id": "node_args", "ref": "switch" },
         { "id": "empty", "value": [] },
@@ -2217,6 +2705,7 @@
         { "id": "description_h", "ref": "html_element" },
         { "id": "description_h_out", "ref": "if" },
         { "id": "info_h_children", "ref": "array" },
+        { "id": "info_h_dom_type", "value": "div" },
         {
           "id": "info_h_props",
           "script": "return {class: {'node-info': true}, style: {left: `${Math.min(x * (svg_offset?.scale ?? 1) + (svg_offset?.x ?? 0) - 64, dimensions.x - 256)}px`, top: `${y * (svg_offset?.scale ?? 1) + (svg_offset?.y ?? 0) + 32}px`}}"
@@ -2313,6 +2802,8 @@
         { "id": "new_node_props", "ref": "set" },
         { "id": "effects", "ref": "array" },
         { "id": "result" },
+        { "id": "noop" },
+        { "id": "out_result", "ref": "if" },
         { "id": "out", "ref": "hyperapp_action_effect" }
       ],
       "edges": [
@@ -2358,6 +2849,7 @@
         { "id": "edges", "ref": "arg", "value": "state.display_graph.edges" },
         { "id": "levels", "ref": "arg", "value": "state.levels" },
         { "id": "node_id", "ref": "arg", "value": "payload.id" },
+        { "id": "set_popover_graph_path", "value": "popover_graph" },
         { "id": "update_node", "ref": "update_node" },
         { "id": "clear_popover", "ref": "clear_popover_graph" },
         { "id": "valid_nodes", "script": "return nodes.filter(n => !n.ref && !levels.level_by_node.has(n.id))" },
@@ -2374,6 +2866,7 @@
         { "id": "show_popover_graph_payload" },
         { "id": "show_popover_graph", "ref": "show_popover_graph" },
         { "id": "show_popover_graph_effect", "ref": "array" },
+        { "id": "set_popover_graph", "ref": "set" },
         { "id": "effects", "ref": "array" },
         { "id": "result" },
         { "id": "out", "ref": "hyperapp_action_effect" }
@@ -2412,20 +2905,34 @@
         { "id": "state", "ref": "arg", "value": "state" },
         { "id": "display_graph", "ref": "arg", "value": "state.display_graph" },
         { "id": "edge", "ref": "arg", "value": "payload.edge" },
+        { "id": "edge_to", "ref": "arg", "value": "payload.edge.to" },
+        { "id": "edge_as", "ref": "arg", "value": "payload.edge.as" },
         { "id": "edge_from", "ref": "arg", "value": "payload.edge.from" },
         { "id": "id", "ref": "arg", "value": "payload.node.id" },
         { "id": "name", "ref": "arg", "value": "payload.node.name" },
+        { "id": "in_node", "ref": "arg", "value": "payload.in_node" },
+        { "id": "edges", "ref": "arg", "value": "state.display_graph.edges" },
+        { "id": "nodes", "ref": "arg", "value": "state.display_graph.nodes" },
         { "id": "display_graph_path", "value": "display_graph" },
         { "id": "from_path", "value": "from" },
         { "id": "selected_path", "value": "selected" },
+        { "id": "select", "script": "return !in_node" },
+        { "id": "edges_path", "value": "edges" },
         { "id": "arg0", "value": "arg0" },
         { "id": "new_in_edge" },
         { "id": "new_out_edge", "ref": "set" },
+        { "id": "set_edges", "ref": "set" },
+        { "id": "add_node_effector", "ref": "add_node" },
         { "id": "new_node" },
+        { "id": "next_edge", "ref": "next_edge" },
+        { "id": "new_nodes", "ref": "append" },
         { "id": "remove_edge", "ref": "remove_edge" },
         { "id": "add_node", "ref": "create_or_update_node" },
         { "id": "add_out_edge", "ref": "create_or_update_edge" },
         { "id": "add_in_edge", "ref": "create_or_update_edge" },
+        { "id": "new_display_graph_values" },
+        { "id": "new_display_graph", "ref": "merge_objects" },
+        { "id": "add_node_payload" },
         { "id": "selected_array", "ref": "array" },
         { "id": "set_selected", "ref": "set" },
         { "id": "set_display_graph", "ref": "set" },
@@ -2522,6 +3029,8 @@
         { "id": "state", "ref": "arg", "value": "state" },
         { "id": "update", "ref": "arg", "value": "state.update_sim_effect" },
         { "id": "state_path", "value": "state" },
+        { "id": "effects_path", "value": "effects" },
+        { "id": "new_history", "ref": "append" },
         { "id": "new_redo_history", "script": "return redo_history.slice(0, -1)" },
         { "id": "last_change", "script": "return redo_history[redo_history.length - 1]" },
         {
@@ -2733,6 +3242,7 @@
         { "id": "display_graph_path", "value": "display_graph" },
         { "id": "id_array", "ref": "array" },
         { "id": "update_sim_effect", "ref": "arg", "value": "state.update_sim_effect" },
+        { "id": "nodes", "ref": "arg", "value": "state.display_graph.nodes" },
         {
           "id": "history_item",
           "script": "return {action: 'add_node', node, child, runnable: {fn: 'add_node_action', graph: _graph, args: payload}}"
@@ -2747,8 +3257,12 @@
           "script": "return [[() => _lib.no.runtime.update_graph(display_graph)], [update_sim_effect]]"
         },
         { "id": "set_display_graph", "ref": "set" },
+        { "id": "nodes_path", "value": "display_graph.nodes" },
         { "id": "selected_path", "value": "selected" },
         { "id": "new_node" },
+        { "id": "new_nodes", "ref": "append" },
+        { "id": "add_edge_effector", "ref": "add_edge" },
+        { "id": "set_new_nodes", "ref": "set" },
         { "id": "new_selected", "ref": "if" },
         { "id": "set_selected", "ref": "set" },
         { "id": "set_history", "ref": "set" },
@@ -2830,6 +3344,12 @@
         { "value": "edit_ref", "id": "r" },
         { "value": "edit_script", "id": "s" },
         { "value": "edit_edge", "id": "e" },
+        { "value": "node_menu", "id": "node_menu" },
+        { "value": "create_input", "id": "create_input" },
+        { "value": "delete", "id": "delete" },
+        { "value": "find", "id": "find" },
+        { "value": "esc_editing", "id": "esc_editing" },
+        { "value": "clear_popover", "id": "esc" },
         { "value": "copy", "id": "y" },
         { "value": "copy", "id": "ctrl_c" },
         { "value": "paste", "id": "p" },
@@ -2885,6 +3405,7 @@
       "id": "onkey_fn_body",
       "out": "out",
       "nodes": [
+        { "id": "in" },
         { "id": "key_event", "ref": "arg", "value": "payload" },
         { "id": "state", "ref": "arg", "value": "state" },
         { "id": "static", "ref": "arg", "value": "state.static" },
@@ -2894,6 +3415,7 @@
         { "id": "html_id", "ref": "arg", "value": "state.html_id" },
         { "id": "arg_display_graph", "ref": "arg", "value": "state.display_graph" },
         { "id": "arg_display_graph_nodes", "ref": "arg", "value": "state.display_graph.nodes" },
+        { "id": "display_graph_out", "ref": "arg", "value": "state.display_graph.out" },
         { "id": "nodes", "ref": "arg", "value": "state.nodes" },
         { "id": "edges", "ref": "arg", "value": "state.display_graph.edges" },
         { "id": "links", "ref": "arg", "value": "state.links" },
@@ -2907,6 +3429,8 @@
         { "id": "save_effect", "ref": "save_effect" },
         { "id": "show_edit_text", "ref": "show_edit_text" },
         { "id": "update_node", "ref": "update_node_action" },
+        { "id": "open_reference_popover", "ref": "open_reference_popover" },
+        { "id": "confirm_edit_text", "ref": "confirm_edit_text" },
         { "id": "onselectnode_effect", "ref": "onselectnode_effect" },
         { "id": "update_edge", "ref": "update_edge_action" },
         { "id": "onselectnode_action", "ref": "onselectnode_action" },
@@ -2918,14 +3442,20 @@
         { "id": "paste_effect", "ref": "paste_node_effect" },
         { "id": "clear_popover", "ref": "clear_popover_graph" },
         { "id": "expand_contract_effect", "ref": "expand_contract_effect" },
+        { "id": "run_display_graph_effector", "ref": "run_display_graph_effect" },
+        { "id": "run_display_graph_effect", "ref": "array" },
+        { "id": "publish_key", "script": "return [() => _lib.no.runtime.publish.fn(display_graph, 'keydown', key)]" },
         { "id": "keybindings_graph", "script": "return _lib.no.runtime.get_node(_graph, 'keybindings')" },
         { "id": "show_popover_effect", "ref": "show_popover_graph" },
+
         { "id": "keybindings", "ref": "keybindings" },
         { "id": "mode", "script": "return editing !== false ? 'editing' : search !== false ? 'searching' : 'graph'" },
         { "id": "mode_keybindings", "ref": "get" },
         { "id": "key_action_effect", "ref": "get" },
-        { "id": "effects_map", "ref": "switch" },
-        { "id": "actions_map", "ref": "switch" },
+        { "id": "effects_map", "ref": "switch"},
+        { "id": "actions_map", "ref": "switch"},
+
+        { "id": "key", "script": "return ev.key?.toLowerCase()" },
         {
           "id": "key_inputs",
           "script": "return (ev.ctrlKey ? 'ctrl_' : '') + (ev.shiftKey ? 'shift_' : '') + (ev.key === '?' ? 'questionmark' : ev.key.toLowerCase())"
@@ -2949,8 +3479,16 @@
           "script": "const current_node = nodes.find(n => n.node_id === selected); const siblings = levels.siblings.get(selected); const next_node = static ? nodes.find(n => n.node_id === siblings[(siblings.findIndex(s => s === selected) - 1 + siblings.length) % siblings.length]): siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = (sibling_node.x < current_node.x) && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [dimensions.x])[1]; return next_node ? {state: {...state, selected: [next_node.node_id]}, effects: [[stop_propagation, event], [state.panzoom_selected_effect, {...state, selected: next_node.node_id}], [state.update_hyperapp]]} : {state, effects: [[stop_propagation, event]]}"
         },
         {
+          "id": "left_edge",
+          "script": "const link = links.find(l => l.source.node_child_id === selected_edge.from + '_' + selected_edge.to); return links.filter(l => l.target.node_id === link.target.node_id).reduce(([current, dist], l) => l.source.x < link.source.x && Math.abs(l.source.x - link.source.x) < dist ? [{from: l.source.node_id, to: l.target.node_id} , Math.abs(l.source.x - link.source.x)] : [current, dist], [selected_edge, 10000])[0]"
+        },
+        {
           "id": "right",
           "script": "const current_node = nodes.find(n => n.node_id === selected); const siblings = levels.siblings.get(selected); const next_node = static ? nodes.find(n => n.node_id === siblings[(siblings.findIndex(s => s === selected) + 1) % siblings.length]) : siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [dimensions.x])[1]; return next_node ? {state: {...state, selected: [next_node.node_id]}, effects: [[stop_propagation, event], [state.panzoom_selected_effect, {...state, selected: next_node.node_id}], [state.update_hyperapp]]} : {state, effects: [[stop_propagation, event]]}"
+        },
+        {
+          "id": "right_edge",
+          "script": "const link = links.find(l => l.source.node_child_id === selected_edge.from + '_' + selected_edge.to); return links.filter(l => l.target.node_id === link.target.node_id).reduce(([current, dist], l) => l.source.x > link.source.x && Math.abs(l.source.x - link.source.x) < dist ? [{from: l.source.node_id, to: l.target.node_id} , Math.abs(l.source.x - link.source.x)] : [current, dist], [{to: link.target.node_id, from: link.source.node_id}, 10000])[0]"
         },
         {
           "id": "edit_value",
@@ -2991,15 +3529,39 @@
           "id": "cancel_search",
           "script": "return [[search, {search: false}], [blur, {selector: `#${html_id}-search-input`}]]"
         },
+
+        { "id": "e", "script": "return selected_edge ? null : display_graph.edges.find(e => e.to === selected);" },
+        { "id": "esc_editing", "script": "return [[confirm_edit_text]]" },
+        { "id": "esc", "script": "return [[onselectnode, {node_id, event}]]" },
         {
           "id": "show_keybindings",
           "script": "return [[show_popover_effect, {popover_graph: {...keybindings, nodes: keybindings.nodes.map(n => n.id === 'out' ? {...n, name: 'keybindings', value: [[clear_popover]]} : n)}}]]"
         },
+        { "id": "panzoom_selected_id", "script": "return selected" },
+        { "id": "panzoom_selected_effector", "ref": "arg", "value": "state.panzoom_selected_effect" },
+        { "id": "panzoom_selected_effect", "ref": "array" },
+        { "id": "panzoom_selected_effect_arr", "ref": "array" },
+        { "id": "panzoom_selected_payload" },
+        { "id": "set_clipboard", "script": "state.clipboard = clipboard ? clipboard : state.clipboard; return state" },
+        { "id": "graph_effects", "ref": "switch" },
+        { "id": "update_effects_input", "script": "return typeof search === 'string' ? 'search' : 'graph'" },
+        { "id": "update_effects", "ref": "switch" },
+        { "id": "editing_effects", "ref": "switch" },
+        { "id": "effects", "ref": "switch" },
+        {
+          "id": "update_graph_sim",
+          "script": "return (!state.editing && state.search === false && (key === 'enter' || key.toLowerCase() === 'o' || key === 'x' || (key === 't' && shiftKey) || (!!pending_edges.edge_to && !!pending_edges.edge_from))) || key === 'escape' || selected"
+        },
+        { "id": "graph_state" },
+        { "id": "search_state" },
+        { "id": "update_state", "ref": "switch" },
+        { "id": "no_update" },
         { "id": "update", "ref": "update_graph_display" },
         { "id": "update_effector", "ref": "hyperapp_action_effect" },
         { "id": "update_effect", "ref": "array" },
         { "id": "default_fx", "ref": "array" },
         { "id": "default_out" },
+
         { "id": "out_effects" },
         { "id": "out_action_effect", "ref": "default" },
         { "id": "out_pred", "script": "return action || effect" },
@@ -3023,6 +3585,7 @@
         { "from": "add_node_effect", "to": "add_arg_node", "as": "add_node" },
         { "from": "show_edit_text", "to": "add_arg_node", "as": "show_edit_text" },
         { "from": "update_node", "to": "add_arg_node", "as": "update_node" },
+
         { "from": "edit_value", "to": "effects_map", "as": "edit_value" },
         { "from": "edit_name", "to": "effects_map", "as": "edit_name" },
         { "from": "edit_ref", "to": "effects_map", "as": "edit_ref" },
@@ -3039,12 +3602,14 @@
         { "from": "find", "to": "effects_map", "as": "find" },
         { "from": "select", "to": "effects_map", "as": "select" },
         { "from": "show_keybindings", "to": "effects_map", "as": "show_keybindings" },
+
         { "from": "undo", "to": "actions_map", "as": "undo" },
         { "from": "redo", "to": "actions_map", "as": "redo" },
         { "from": "down", "to": "actions_map", "as": "down" },
         { "from": "up", "to": "actions_map", "as": "up" },
         { "from": "left", "to": "actions_map", "as": "left" },
         { "from": "right", "to": "actions_map", "as": "right" },
+
         { "from": "editing", "to": "mode", "as": "editing" },
         { "from": "search", "to": "mode", "as": "search" },
         { "from": "keybindings", "to": "mode_keybindings", "as": "target" },
@@ -3064,13 +3629,17 @@
         { "from": "run_display_graph_effector", "to": "run_display_graph_effect", "as": "a0" },
         { "from": "key_event", "to": "run_display_graph_effect", "as": "a1" },
         { "from": "run_display_graph_effect", "to": "_default_fx", "as": "a0" },
+        { "from": "arg_display_graph", "to": "publish_key", "as": "display_graph" },
+        { "from": "key_inputs", "to": "publish_key", "as": "key" },
+        { "from": "publish_key", "to": "default_fx", "as": "a1" },
         { "from": "update", "to": "update_effector", "as": "fn", "type": "ref" },
         { "from": "update_effector", "to": "update_effect", "as": "a0" },
         { "from": "key_event", "to": "update_effect", "as": "a1" },
-        { "from": "update_effect", "to": "default_fx", "as": "a0" },
+        { "from": "update_effect", "to": "_default_fx", "as": "a0" },
         { "from": "default_fx", "to": "default_out", "as": "effects" },
         { "from": "out_pred", "to": "out", "as": "pred" },
         { "from": "default_out", "to": "out", "as": "false" },
+
         { "from": "state", "to": "key_inputs", "as": "state" },
         { "from": "key_event", "to": "key", "as": "ev" },
         { "from": "state", "to": "key_inputs", "as": "state" },
@@ -3139,6 +3708,13 @@
         { "from": "el_node", "to": "s", "as": "node" },
         { "from": "selected_node", "to": "s", "as": "selected_node" },
         { "from": "s", "to": "graph_effects", "as": "s" },
+        { "from": "add_node_effect", "to": "a", "as": "add_node" },
+        { "from": "show_edit_text", "to": "a", "as": "show_edit_text" },
+        { "from": "update_node", "to": "a", "as": "update_node" },
+        { "from": "el_node", "to": "a", "as": "node" },
+        { "from": "add_edge_effect", "to": "a", "as": "add_edge" },
+        { "from": "randid", "to": "a", "as": "randid" },
+        { "from": "a", "to": "graph_effects", "as": "a" },
         { "from": "selected", "to": "select", "as": "node_id" },
         { "from": "onselectnode_effect", "to": "select", "as": "onselectnode" },
         { "from": "key_event", "to": "select", "as": "event" },
@@ -3149,7 +3725,6 @@
         { "from": "html_id", "to": "s", "as": "html_id" },
         { "from": "html_id", "to": "f", "as": "html_id" },
         { "from": "focus_effect", "to": "f", "as": "focus_effect" },
-        { "from": "html_id", "to": "a", "as": "html_id" },
         { "from": "html_id", "to": "t", "as": "html_id" },
         { "from": "html_id", "to": "set_selected", "as": "html_id" },
         { "from": "html_id", "to": "esc_search", "as": "html_id" },
@@ -3235,13 +3810,14 @@
     },
     { "id": "update_sim_in" },
     { "id": "update_sim_fn", "ref": "execute_graph" },
+    { "id": "_update_sim_effect", "ref": "wrap_effect_fn" },
     {
       "id": "stop_propagation_effect",
       "script": "return (_, payload) => {payload.stopPropagation(); payload.preventDefault();}"
     },
     {
       "id": "dispatch_custom_event_effect",
-      "script": "return (_, payload) => document.getElementById(`${payload.html_id}`)?.dispatchEvent(new CustomEvent(payload.event, {detail: payload.detail}))"
+      "script": "return (_, payload) => document.getElementById(`${payload.html_id}`).dispatchEvent(new CustomEvent(payload.event, {detail: payload.detail}))"
     },
     {
       "id": "search_effect",
@@ -3270,6 +3846,7 @@
       "nodes": [
         { "id": "in" },
         { "id": "in_obj", "ref": "arg", "value": "obj" },
+        { "id": "name", "ref": "arg", "value": "name" },
         { "id": "map_obj", "script": "return _lib.no.objToGraph(obj)" },
         { "id": "out_node_id", "script": "return Object.keys(obj)[0]" },
         { "id": "out" }
@@ -3328,26 +3905,41 @@
         { "id": "save_payload" },
         { "id": "save_effect", "ref": "array" },
         { "id": "save_node_effects", "ref": "array" },
+        { "id": "save_name", "value": "save" },
+        { "id": "save_id", "value": "save" },
+        { "id": "save_node" },
         { "id": "export_effector", "ref": "export_effect" },
         { "id": "export_json_payload" },
         { "id": "export_json_ext", "value": "json" },
         { "id": "export_json_effect", "ref": "array" },
         { "id": "export_json_node_effects", "ref": "array" },
+        { "id": "export_json_node_name", "value": "json" },
+        { "id": "export_json_node_id", "value": "export_json" },
         { "id": "export_json_data", "script": "return JSON.stringify(display_graph)" },
         { "id": "export_js_payload" },
         { "id": "export_js_ext", "value": "js" },
         { "id": "export_js_effect", "ref": "array" },
         { "id": "export_js_node_effects", "ref": "array" },
+        { "id": "export_js_node_name", "value": "js" },
+        { "id": "export_js_node_id", "value": "export_js" },
         {
           "id": "export_js_data",
           "script": "return `let graph = ${JSON.stringify(display_graph)}; import('nodysseus.bundle.js').then(({runGraph}) => runGraph(graph, 'main/out', {}))`"
         },
+        { "id": "export_json_name", "value": "export" },
+        { "id": "export_json_id", "value": "export" },
+        { "id": "export_js_name", "value": "export" },
+        { "id": "export_js_id", "value": "export" },
         { "id": "export_json_node" },
         { "id": "export_js_node" },
         { "id": "export_node" },
         { "id": "new_graph_effector", "ref": "new_graph_effect" },
         { "id": "new_graph_effect", "ref": "array" },
+        { "id": "new_graph_name", "value": "new_graph" },
+        { "id": "new_graph_id", "value": "new_graph" },
         { "id": "new_graph_node_effects", "ref": "array" },
+        { "id": "new_graph_node" },
+        { "id": "popover_graph_actions", "ref": "array" },
         { "id": "empty", "value": {} },
         { "id": "popover_graph_obj_actions", "ref": "array" },
         { "id": "popover_graph_obj" },
@@ -3358,7 +3950,10 @@
         { "id": "show_popover_payload" },
         { "id": "display_graph_path", "value": "display_graph" },
         { "id": "change_display_graph_id", "ref": "change_display_graph_id" },
+        { "id": "change_display_graph_id_node_name", "value": "change id" },
+        { "id": "change_display_graph_id_node_id", "value": "change_display_graph_id_node" },
         { "id": "change_display_graph_id_node_value", "ref": "array" },
+        { "id": "change_display_graph_id_node" },
         { "id": "show_edit_text_effector", "ref": "show_edit_text" },
         { "id": "show_edit_text_payload" },
         { "id": "show_edit_text_effect", "ref": "array" },
@@ -3513,11 +4108,23 @@
         { "id": "dimensions", "ref": "arg", "value": "state.dimensions" },
         { "id": "nodes", "ref": "arg", "value": "state.nodes" },
         { "id": "links", "ref": "arg", "value": "state.links" },
+        { "id": "wrapped_node_id", "ref": "wrap_array" },
         {
           "id": "get_selected_node",
           "script": "return Object.assign({}, nodes.find(n => n.node_id === node_id), display_graph.nodes.find(n => n.id === node_id))"
         },
+        { "id": "show_all_path", "value": "show_all" },
         { "id": "set_selected", "args": ["selected", "state"], "script": "return {...state, selected: [node_id]}" },
+        {
+          "id": "display_graph_inputs",
+          "script": "return event.ty === 'down' && node.node_id === selected[0] ? 'expand_contract' : undefined"
+        },
+        { "id": "display_graph", "ref": "switch" },
+        {
+          "id": "set_display_graph",
+          "args": ["display_graph", "state"],
+          "script": "state.display_graph = display_graph ?? state.display_graph; return state"
+        },
         { "id": "false", "value": false },
         { "id": "should_show_popover", "script": "return !readonly && node_id === selected[0]" },
         { "id": "randid", "ref": "arg", "value": "state.randid" },
@@ -3546,6 +4153,7 @@
         { "id": "show_popover_effector", "ref": "show_popover_graph" },
         { "id": "show_popover_effect", "ref": "array" },
         { "id": "stop_propagation_effector", "ref": "stop_propagation_effect" },
+        { "id": "payload", "ref": "arg", "value": "payload" },
         { "id": "stop_propagation_effect", "ref": "array" },
         { "id": "panzoom_selected_effector", "ref": "arg", "value": "state.panzoom_selected_effect" },
         { "id": "panzoom_selected_effect", "ref": "array" },
@@ -3657,9 +4265,14 @@
       "nodes": [
         { "id": "state", "ref": "arg", "value": "state" },
         { "id": "edge", "ref": "arg", "value": "state.edit_id" },
+        { "id": "edge_as", "ref": "arg", "value": "state.edit_id.as" },
         { "id": "state", "ref": "arg", "value": "state" },
+        { "id": "readonly", "ref": "arg", "value": "state.readonly" },
         { "id": "randid", "ref": "arg", "value": "state.randid" },
         { "id": "display_graph_nodes", "ref": "arg", "value": "state.display_graph.nodes" },
+        { "id": "links", "ref": "arg", "value": "state.links" },
+        { "id": "event", "ref": "arg", "value": "payload.event" },
+        { "id": "as_path", "value": "as" },
         { "id": "clear_popover", "ref": "clear_popover_graph" },
         { "id": "clear_popover_type", "ref": "clear_popover_graph" },
         { "id": "update_edge", "ref": "update_edge" },
@@ -3726,9 +4339,12 @@
         { "id": "edge_as", "ref": "arg", "value": "payload.edge.as" },
         { "id": "state", "ref": "arg", "value": "state" },
         { "id": "readonly", "ref": "arg", "value": "state.readonly" },
+        { "id": "randid", "ref": "arg", "value": "state.randid" },
+        { "id": "display_graph_nodes", "ref": "arg", "value": "state.display_graph.nodes" },
         { "id": "links", "ref": "arg", "value": "state.links" },
         { "id": "event", "ref": "arg", "value": "payload.event" },
         { "id": "as_path", "value": "as" },
+        { "id": "update_edge", "ref": "update_edge" },
         { "id": "update_edge_action", "ref": "update_edge_action" },
         { "id": "show_edit_text", "ref": "show_edit_text" },
         {
@@ -3810,24 +4426,27 @@
       "id": "editor",
       "out": "out",
       "nodes": [
+        { "id": "in" },
         { "id": "wrapper", "ref": "run_h" },
         { "id": "graph", "ref": "arg", "value": "graph" },
         { "id": "display_graph", "ref": "arg", "value": "display_graph" },
         { "id": "show_result", "ref": "arg", "value": "show_result" },
         { "id": "show_all", "ref": "arg", "value": "show_all" },
         { "id": "html_id", "ref": "arg", "value": "html_id" },
-        { "id": "result_display", "ref": "arg", "value": "display" },
+        { "id": "result_display", "ref": "arg", "value": "result_display" },
         { "id": "editing", "ref": "arg", "value": "editing" },
         { "id": "args_display", "ref": "arg", "value": "args_display" },
+        { "id": "update_sim", "ref": "arg", "value": "update_sim" },
         { "id": "popover_graph", "ref": "arg", "value": "popover_graph" },
         { "id": "readonly", "ref": "arg", "value": "readonly" },
         { "id": "error", "ref": "arg", "value": "error" },
         { "id": "search", "ref": "arg", "value": "search" },
+        { "id": "result_wrapper", "ref": "run_h" },
         { "id": "wrapper_dom_type", "value": "div" },
         { "id": "wrapper_props", "value": {} },
         {
           "id": "wrapper_children",
-          "script": "return [styles.el, node_editor.el, !readonly && editing !== false && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, !!result_display && result_display.el, !editing && !show_all && args_display && args_display.el, !!error && error_display.el, menu.el].filter(e => e)"
+          "script": "return [styles.el, node_editor.el, !!result_display && result_display.el, !readonly && editing !== false && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, !editing && !show_all && args_display && args_display.el, !!error && error_display.el, menu.el].filter(e => e)"
         },
         {
           "id": "styles",
@@ -3835,7 +4454,7 @@
             { "id": "in" },
             {
               "id": "style_content",
-              "value": "#node-editor { position: relative; width: 100%; height: 100vh; color: white; font-family: consolas; overflow: hidden; } #node-editor-editor.hash-view { background-color: unset; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .more { cursor: pointer; } .edit-value .centering { position: absolute; width: 32vw; display: flex; flex-direction: column; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .node-info { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; display: flex; gap: .4em; flex-direction: column; } .node-info .args { display: flex; gap: 8px; flex-wrap: wrap; } .node-info .args span.clickable { cursor: pointer; text-decoration: underline dotted;  } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node, #dummy-add-node { cursor: pointer; stroke: #fff; stroke-width: 32; stroke-opacity: 1; } .insert-node .circle, #dummy-add-node .circle { fill-opacity: 0.5; } .node text { filter: url(#flood-background) } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .node.selected text .secondary:hover, .node.selected text .primary:hover { text-decoration: dashed underline; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"
+              "value": "#node-editor { position: relative; width: 100%; height: 100vh; color: white; font-family: consolas; overflow: hidden; } #node-editor-editor.hash-view { background-color: unset; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .more { cursor: pointer; } .edit-value .centering { position: absolute; width: 32vw; display: flex; flex-direction: column; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .node-info { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; display: flex; gap: .4em; flex-direction: column; } .node-info .args { display: flex; gap: 8px; flex-wrap: wrap; } .node-info .args span.clickable { cursor: pointer; text-decoration: underline dotted;  } /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node, #dummy-add-node { cursor: pointer; stroke: #fff; stroke-width: 32; stroke-opacity: 1; } .insert-node .circle, #dummy-add-node .circle { fill-opacity: 0.5; } .node text { filter: url(#flood-background) } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .node.selected text .secondary:hover { text-decoration: dashed underline; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"
             },
             { "id": "style_h_text", "ref": "html_text" },
             { "id": "style_dom_type", "value": "style" },
@@ -3894,12 +4513,12 @@
             { "id": "edit_text_textarea_dom_type", "args": ["editing"], "script": "return 'textarea'" },
             {
               "id": "edit_text_textarea_props",
-              "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected))[editing]); return {id: `${html_id}-textarea`, class: {textarea: true, [editing]: true}, onclick: (s, payload) => (payload.stopPropagation(), s), onkeydown: (s, payload) => (payload.stopPropagation(), s), value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), onchange: (s, payload) => ({...s, edit_value: payload.target.value}), onfocus: (s, payload) => [s, [() => payload.target.setSelectionRange(0, payload.target.value.length)]] }"
+              "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected))[editing]); return {id: `${html_id}-textarea`, class: {textarea: true, [editing]: true}, onclick: (s, payload) => (payload.stopPropagation(), s), value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), oninput: (s, payload) => ({...s, edit_value: payload.target.value}), onfocus: (s, payload) => [s, [() => payload.target.setSelectionRange(0, payload.target.value.length)]] }"
             },
             { "id": "edit_text_input_dom_type", "args": ["editing"], "script": "return 'input'" },
             {
               "id": "edit_text_input_props",
-              "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected))[editing]); return Object.assign({id: `${html_id}-edit-text`, class: {input: true, [editing]: true}, value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), onclick: (s, payload) => (payload.stopPropagation(), s), onkeydown: (s, payload) => (payload.stopPropagation(), payload.key === 'Enter' ? [{...s, edit_value: payload.target.value}, [confirm_edit_text, payload]] : [s]), onchange: (s, payload) => ({...s, edit_value: payload.target.value}), onfocus: (s, payload) => [s, [() => payload.target.setSelectionRange(0, payload.target.value.length)]]}, editing === 'ref' ? {list: 'node-options', type: 'text'} : {})"
+              "script": "const start_value = edit_value ?? (!editing ? '' : (selected_edge ? display_graph.edges.find(e => e.from === selected_edge.from && e.to === selected_edge.to) : display_graph.nodes.find(n => n.id === selected))[editing]); return Object.assign({id: `${html_id}-edit-text`, class: {input: true, [editing]: true}, value: typeof(start_value) === 'string' ? start_value : JSON.stringify(start_value), onclick: (s, payload) => (payload.stopPropagation(), s), onkeydown: (s, payload) => [s, (payload.key === 'Enter' ? (payload.stopPropagation(), [confirm_edit_text, payload]): false)], oninput: (s, payload) => ({...s, edit_value: payload.target.value}), onfocus: (s, payload) => [s, [() => payload.target.setSelectionRange(0, payload.target.value.length)]]}, editing === 'ref' ? {list: 'node-options', type: 'text'} : {})"
             },
             { "id": "edit_text_label", "ref": "html_element" },
             { "id": "edit_text_label_dom_type", "value": "label" },
@@ -4073,6 +4692,57 @@
           ]
         },
         { "id": "popover_graph_h_wrapper" },
+        {
+          "id": "result",
+          "nodes": [
+            { "id": "in" },
+            { "id": "error", "ref": "arg", "value": "error" },
+            { "id": "html_id", "ref": "arg", "value": "html_id" },
+            { "id": "get_node", "script": "return display_graph.nodes.find(n => n.id === selected[0])" },
+            {
+              "id": "get_type",
+              "script": "return ref?.display_type ? ref.display_type : typeof value !== 'undefined' && typeof value !== 'object' ? typeof value : ref ? (ref.node_type ?? ref) : nodes ? 'graph' : script ? 'script' : 'object'"
+            },
+            { "id": "result", "ref": "arg", "value": "result" },
+            { "id": "display_graph", "ref": "arg", "value": "display_graph" },
+            { "id": "container_dom_type", "value": "div" },
+            {
+              "id": "container_props",
+              "args": ["error"],
+              "script": "return {class: {error: error ? 'error' : '', result: true}, id: `${html_id}-result`}"
+            },
+            { "id": "container_children_inputs", "script": "return error? ['error_display'] : ['display']" },
+            { "id": "container_children", "ref": "switch" },
+            { "id": "container", "ref": "html_element" },
+            { "id": "text_value", "args": ["result", "error"], "script": "return error ?? result ?? ''" },
+            { "id": "out" }
+          ],
+          "edges": [
+            { "from": "in", "to": "container_props" },
+            { "from": "in", "to": "get_node" },
+            { "from": "in", "to": "get_node_display" },
+            { "from": "in", "to": "get_error_display" },
+            { "from": "in", "to": "run_error_display" },
+            { "from": "error", "to": "container_children_inputs", "as": "error" },
+            { "from": "get_node", "to": "get_type" },
+            { "from": "get_type", "to": "get_node_display", "as": "type" },
+            { "from": "get_type", "to": "get_error_display", "as": "type" },
+            { "from": "get_node", "to": "run_node_display", "as": "node" },
+            { "from": "get_node", "to": "run_error_display", "as": "node" },
+            { "from": "get_node_display", "to": "run_node_display", "as": "display" },
+            { "from": "display_graph", "to": "run_node_display", "as": "display_graph" },
+            { "from": "result", "to": "run_node_display", "as": "result" },
+            { "from": "get_error_display", "to": "run_error_display", "as": "error_display" },
+            { "from": "container_children_inputs", "to": "container_children", "as": "input" },
+            { "from": "run_node_display", "to": "container_children", "as": "display" },
+            { "from": "run_error_display", "to": "container_children", "as": "error_display" },
+            { "from": "run_node_display", "to": "run_error_display" },
+            { "from": "container_props", "to": "container", "as": "props" },
+            { "from": "container_children", "to": "container", "as": "children" },
+            { "from": "container_dom_type", "to": "container", "as": "dom_type" },
+            { "from": "container", "to": "out" }
+          ]
+        },
         {
           "id": "menu",
           "nodes": [
@@ -4275,7 +4945,7 @@
             },
             {
               "id": "node_layout",
-              "script": "const error_nodes = error instanceof AggregateError ? error.errors.map(e => e instanceof _lib.no.NodysseusError ? e.node_id : false).filter(n => n) : error instanceof _lib.no.NodysseusError ? [error.node_id] : []; const fn = _lib.no.executeGraphNode({graph: {..._graph}, lib: _lib})(node_layout_map); return nodes.sort((a, b) => levels.distance_from_selected.get(b.node_child_id) - levels.distance_from_selected.get(a.node_child_id)).map(n => fn(Object.assign({node: Object.assign({}, n, display_graph.nodes.find(dgn => dgn.id === n.node_id)), hide_types, show_all, selected_distance: levels.distance_from_selected.get(n.node_child_id), level: levels.level_by_node.get(n.node_id), node_error: !error_nodes ? false : error_nodes.filter(k => k.startsWith(n.node_id)).length > 0}, _node_inputs), n.node_id))"
+              "script": "const error_nodes = error instanceof AggregateError ? error.errors.map(e => e instanceof _lib.no.NodysseusError ? e.node_id : false).filter(n => n) : error instanceof _lib.no.NodysseusError ? [error.node_id] : []; const fn = _lib.no.executeGraphNode({graph: {..._graph}, lib: _lib})(node_layout_map); return nodes.sort((a, b) => levels.distance_from_selected.get(b.node_child_id) - levels.distance_from_selected.get(a.node_child_id)).map(n => fn(Object.assign({node: Object.assign({}, n, display_graph.nodes.find(dgn => dgn.id === n.node_id)), hide_types, show_all, selected_distance: levels.distance_from_selected.get(n.node_child_id), level: levels.level_by_node.get(n.node_id), node_error: !error_nodes ? false : error_nodes.filter(k => k.startsWith(n.node_id)).length > 0}, _node_inputs)))"
             },
             {
               "id": "node_layout_map",
@@ -4293,6 +4963,7 @@
                 { "id": "level", "ref": "arg", "value": "level" },
                 { "id": "hide_types", "ref": "arg", "value": "hide_types" },
                 { "id": "error", "ref": "arg", "value": "node_error" },
+                { "id": "memo", "value": true },
                 { "id": "out", "ref": "html_element" },
                 { "id": "parent", "ref": "html_element" },
                 { "id": "parent_dom_type", "value": "svg" },
@@ -4334,7 +5005,6 @@
                         { "id": "get_name", "ref": "get" },
                         { "id": "arg_node", "ref": "arg", "value": "node" },
                         { "id": "payload_node", "ref": "arg", "value": "payload.node" },
-                        { "id": "payload_node_value", "ref": "arg", "value": "payload.node.value" },
                         { "id": "node", "ref": "default" },
                         { "id": "event", "ref": "arg", "value": "payload.event" },
                         { "id": "empty_string", "value": "" },
@@ -4359,21 +5029,13 @@
                           "args": ["text"],
                           "script": "return text.substring(text.lastIndexOf('/') + 1)"
                         },
-                        { "id": "node_primary_text_base_props", "value": { "class": "primary", "dy": ".6em", "x": "48" } },
+                        { "id": "node_primary_text_attrs", "value": { "class": "primary", "dy": ".6em", "x": "48" } },
                         { "id": "tspan_dom_type", "value": "tspan" },
                         {
                           "id": "display_name_input",
                           "script": "return n.name ? 'name' : n.value !== undefined ? 'value' : undefined"
                         },
                         { "id": "display_name", "ref": "switch" },
-                        { "id": "node_primary_text_onclick_show_edit_text_payload" },
-                        { "id": "node_primary_text_onclick_show_edit_text", "ref": "array" },
-                        { "id": "node_primary_text_onclick_effects", "ref": "array" },
-                        { "id": "node_primary_text_onclick" },
-                        { "id": "node_primary_text_onclick_runnable", "ref": "runnable" },
-                        { "id": "node_selected_primary_text_onclick_runnable", "ref": "if" },
-                        { "id": "node_primary_text_onclick_props" },
-                        { "id": "node_primary_text_props", "ref": "merge_objects" },
                         { "id": "node_primary_text_text", "ref": "html_text" },
                         { "id": "node_primary_text", "ref": "html_element" },
                         {
@@ -4448,72 +5110,6 @@
                         { "from": "node_primary_text_attrs", "to": "node_primary_text", "as": "props" },
                         { "from": "node_primary_text", "to": "node_text_children", "as": "primary" },
                         { "from": "hide_types", "to": "node_text_children", "as": "hide_types" },
-                        { "from": "node_primary_text_text", "to": "node_primary_text", "as": "children" },
-                        { "from": "node_primary_text_base_props", "to": "node_primary_text_props", "as": "a0" },
-                        { "from": "node_primary_text_onclick_props", "to": "node_primary_text_props", "as": "a1" },
-                        { "from": "node", "to": "node_primary_text_onclick_runnable", "as": "node" },
-                        {
-                          "from": "node_primary_text_onclick_runnable",
-                          "to": "node_selected_primary_text_onclick_runnable",
-                          "as": "true"
-                        },
-                        { "from": "arg_selected", "to": "node_selected_primary_text_onclick_runnable", "as": "pred" },
-                        {
-                          "from": "node_selected_primary_text_onclick_runnable",
-                          "to": "node_primary_text_onclick_props",
-                          "as": "onclick"
-                        },
-                        {
-                          "from": "node_selected_primary_text_onclick_runnable",
-                          "to": "node_primary_text_onclick_props",
-                          "as": "ontouchstart"
-                        },
-                        {
-                          "from": "node_primary_text_onclick",
-                          "to": "node_primary_text_onclick_runnable",
-                          "as": "fn"
-                        },
-                        { "from": "show_edit_text", "to": "node_primary_text_onclick_show_edit_text", "as": "a0" },
-                        {
-                          "from": "update_node",
-                          "to": "node_primary_text_onclick_show_edit_text_payload",
-                          "as": "oneditconfirm"
-                        },
-                        {
-                          "from": "node",
-                          "to": "node_primary_text_onclick_show_edit_text_payload",
-                          "as": "position"
-                        },
-                        { "from": "get_id", "to": "node_primary_text_onclick_show_edit_text_payload", "as": "id" },
-                        {
-                          "from": "payload_node_value",
-                          "to": "node_primary_text_onclick_show_edit_text_payload",
-                          "as": "value"
-                        },
-                        {
-                          "from": "node_value",
-                          "to": "node_primary_text_onclick_show_edit_text_payload",
-                          "as": "property"
-                        },
-                        { "from": "node", "to": "node_primary_text_onclick_show_edit_text_payload", "as": "node" },
-                        {
-                          "from": "node_primary_text_onclick_show_edit_text_payload",
-                          "to": "node_primary_text_onclick_show_edit_text",
-                          "as": "a1"
-                        },
-                        { "from": "stop_propagation_effect", "to": "node_primary_text_onclick_effects", "as": "a1" },
-                        {
-                          "from": "node_primary_text_onclick_show_edit_text",
-                          "to": "node_primary_text_onclick_effects",
-                          "as": "a0"
-                        },
-                        {
-                          "from": "node_primary_text_onclick_effects",
-                          "to": "node_primary_text_onclick",
-                          "as": "effects"
-                        },
-                        { "from": "state", "to": "node_primary_text_onclick", "as": "state" },
-                        { "from": "node_primary_text_props", "to": "node_primary_text", "as": "props" },
                         { "from": "node_secondary_text_text", "to": "node_secondary_text", "as": "children" },
                         { "from": "node_secondary_text_base_props", "to": "node_secondary_text_props", "as": "a0" },
                         { "from": "node_secondary_text_onclick_props", "to": "node_secondary_text_props", "as": "a1" },
@@ -4629,12 +5225,13 @@
                 { "from": "onclick_node", "to": "parent_attrs", "as": "onclick" },
                 { "from": "parent_attrs", "to": "out", "as": "props" },
                 { "from": "parent_dom_type", "to": "out", "as": "dom_type" },
+                { "from": "memo", "to": "out", "as": "memo" },
                 { "from": "get_node", "to": "parent_attrs", "as": "node" }
               ]
             },
             {
               "id": "link_layout",
-              "script": "const fn = _lib.no.executeGraphNode({graph: _graph, lib: _lib})(link_layout_map); return links.map(link => fn(Object.assign({readonly, show_all, randid, link: Object.assign({edge: display_graph.edges.find(e => link.source.node_id === e.from && link.target.node_id === e.to)}, link), selected_distance: levels.distance_from_selected.get(link.target.node_child_id) !== undefined ? Math.min(levels.distance_from_selected.get(link.target.node_child_id), levels.distance_from_selected.get(link.source.node_child_id)) : undefined, sibling_index_normalized: (levels.siblings.get(link.source.node_id).findIndex(n => n === link.source.node_id) + 1) / (levels.siblings.get(link.source.node_id).length + 1)}, _node_inputs), link.source.node_chld_id))"
+              "script": "const fn = _lib.no.executeGraphNode({graph: _graph, lib: _lib})(link_layout_map); return links.map(link => fn(Object.assign({readonly, show_all, randid, link: Object.assign({edge: display_graph.edges.find(e => link.source.node_id === e.from && link.target.node_id === e.to)}, link), selected_distance: levels.distance_from_selected.get(link.target.node_child_id) !== undefined ? Math.min(levels.distance_from_selected.get(link.target.node_child_id), levels.distance_from_selected.get(link.source.node_child_id)) : undefined, sibling_index_normalized: (levels.siblings.get(link.source.node_id).findIndex(n => n === link.source.node_id) + 1) / (levels.siblings.get(link.source.node_id).length + 1)}, _node_inputs)))"
             },
             {
               "id": "link_layout_map",
@@ -5025,15 +5622,18 @@
     { "from": "update_sim_fn", "to": "update_sim_effect", "as": "fn" },
     { "from": "update_sim_effect", "to": "editor", "as": "update_sim" },
     { "from": "update_sim_effect", "to": "initialize_hyperapp_app", "as": "update_sim" },
-    { "from": "initialize_hyperapp_app", "to": "out", "type": "resolve" },
+    { "to": "out", "type": "resolve" },
     { "from": "get", "to": "object" },
     { "from": "set", "to": "object" },
     { "from": "delete", "to": "object" },
     { "from": "switch", "to": "flow" },
     { "from": "if", "to": "flow" },
     { "from": "html_element", "to": "html" },
+    { "from": "toggle", "to": "html" },
     { "from": "input", "to": "html" },
     { "from": "css_styles", "to": "html" },
+    { "from": "modify_state_runnable", "to": "state" },
+    { "from": "set_display", "to": "state" },
     { "from": "array", "to": "arrays" },
     { "from": "filter", "to": "arrays" },
     { "from": "append", "to": "arrays" },
