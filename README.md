@@ -22,12 +22,25 @@ Nodes that have something other than `object` in *italics* reference other hidde
 
 Some common nodes and their Typescript function types:
 
+#### log
 `log: (value: any) => any` - `console.log`s the value and returns it. Useful for inserting logs into node chains.
+
+#### if
 `if: (pred: boolean, true?: any, false?: any) => any` - if `pred` is true, returns `true` otherwise returns `false`
+
+#### default
 `default: (value: any, otherwise: any) => any` - if `value` is not `undefined`, returns `value`, otherwise returns `otherwise`
+
+#### switch
 `switch: (input: string, ...args) => any` - returns the value of the input edge labeled `input`
+
+#### html_element
 `html_element: (children: (html_element | html_text | (html_element|html_text)[], dom_type: string, props: any)` - use with `result_display` to add html to the page
+
+#### event_publisher
 `event_publisher: (name: string, value: any) => void` - publishes `value` as a `name` event
+
+#### event_subscriber
 `event_subscriber: (name: string) => any` - subscribes to `name` events
 
 ## Edge content
