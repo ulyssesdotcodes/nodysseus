@@ -309,7 +309,7 @@ const updateSimulationNodes = (dispatch, data) => {
             (((parents_map.get(n.node_id)?.length > 0 ? 1 : 0)
                 + (children_map.get(n.node_id)?.length > 0 ? -1 : 0)
                 + (children_map.get(n.node_id)?.length > 0 && n.node_child_id !== n.node_id + "_" + children_map.get(n.node_id)[0] ? -1 : 0))
-                * 8 + .5) * window.innerHeight)
+                * 16 + .5) * window.innerHeight)
         .strength(n => (!!parents_map.get(n.node_id)?.length === !children_map.get(n.node_id)?.length)
             || children_map.get(n.node_id)?.length > 0 && n.node_child_id !== n.node_id + "_" + children_map.get(n.node_id)[0] ? .025 : 0);
 

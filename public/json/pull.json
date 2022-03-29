@@ -113,14 +113,16 @@
       "nodes": [
         { "id": "in" },
         { "id": "graph", "ref": "arg", "value": "graph" },
+        { "id": "node", "ref": "arg", "value": "node" },
         {
           "id": "out",
-          "script": "const parents = (id) => graph.edges.filter(e => e.to === id).flatMap(e => parents(e.from)).concat([id]); return parents(graph.out ?? 'out')"
+          "script": "const parents = (id) => (graph ?? _graph).edges.filter(e => e.to === id).flatMap(e => parents(e.from)).concat([id]); return parents(node ?? graph.out ?? 'out')"
         }
       ],
       "edges": [
         { "from": "in", "to": "out", "as": "_", "type": "ref" },
-        { "from": "graph", "to": "out", "as": "graph" }
+        { "from": "graph", "to": "out", "as": "graph" },
+        { "from": "node", "to": "out", "as": "node" }
       ]
     },
     {
@@ -172,8 +174,8 @@
       ],
       "edges": [
         { "from": "x2sz5kb", "to": "lahq5z4", "as": "arr" },
-        { "from": "74n1jfm", "to": "lahq5z4", "as": "input" },
-        { "from": "fn", "to": "lahq5z4", "as": "fn" }
+        { "from": "fn", "to": "lahq5z4", "as": "fn" },
+        { "from": "74n1jfm", "to": "lahq5z4", "as": "_", "type": "ref" }
       ]
     },
     {
@@ -282,7 +284,7 @@
         { "id": "args", "ref": "merge_objects" },
         {
           "id": "out",
-          "script": "const parent_id = _node.id.substring(0, _node.id.lastIndexOf('/')); const input = _lib.no.runtime.get_edges_in(_graph, parent_id).find(i => i.as === 'fn'); return input ? {fn: input.from, graph: _graph, args: args ?? {}} : false"
+          "script": "const parent_id = _lib.no.runtime.get_parent(_graph, _node.id); const input = _lib.no.runtime.get_edges_in(_graph, parent_id).find(i => i.as === 'fn'); return input ? {fn: input.from, graph: _graph, args: args ?? {}} : false"
         }
       ],
       "edges": [
@@ -430,16 +432,37 @@
         { "id": "name", "ref": "arg", "value": "name" },
         {
           "id": "add_listener",
-          "script": "const parent = _lib.no.runtime.get_node(_graph, _node.id.substring(0, _node.id.lastIndexOf('/'))); _lib.no.runtime.add_listener(_graph, event, parent.id, (graph, ev) => _lib.no.runtime.add_node(_graph, {...parent , value: ev}), true)"
+          "script": "const parent = _lib.no.runtime.get_node(_graph, _lib.no.runtime.get_parent(_graph, _node.id)); _lib.no.runtime.add_listener(_graph, event, parent.id, (graph, ev) => (_lib.no.runtime.add_node(_graph, {...parent , value: ev})), true)"
         },
         {
           "id": "out",
-          "script": "return _lib.no.runtime.get_node(_graph, _node.id.substring(0, _node.id.lastIndexOf('/'))).value;"
+          "script": "return _lib.no.runtime.get_node(_graph, _lib.no.runtime.get_parent(_graph, _node.id)).value;"
         }
       ],
       "edges": [
         { "from": "name", "to": "add_listener", "as": "event" },
         { "from": "add_listener", "to": "out", "as": "listener" }
+      ]
+    },
+    { 
+      "id": "events_broadcast_channel", 
+      "out": "out",
+      "nodes": [
+        {"id": "arg_onmessage", "ref": "arg", "value": "onmessage"},
+        {"id": "message_data", "ref": "arg", "value": "message.data.data"},
+        {"id": "message_name", "ref": "arg", "value": "message.data.name"},
+        {"id": "publish_event", "ref": "event_publisher"},
+        {"id": "publish_event_runnable", "ref": "runnable"},
+        {"id": "onmessageseq", "ref": "sequence"},
+        {"id": "out", "script": "const bc = new BroadcastChannel('events'); bc.onmessage = e => { _lib.no.runGraph(onmessage.graph, onmessage.fn, {message: e}); }; return bc;"}
+      ],
+      "edges": [
+        {"from": "message_data", "to": "publish_event", "as": "value"},
+        {"from": "message_name", "to": "publish_event", "as": "name"},
+        {"from": "publish_event", "to": "publish_event_runnable", "as": "fn"},
+        {"from": "publish_event_runnable", "to": "onmessageseq", "as": "arg0"},
+        {"from": "arg_onmessage", "to": "onmessageseq", "as": "arg1"},
+        {"from": "onmessageseq", "to": "out", "as": "onmessage"}
       ]
     },
     { "id": "hyperapp_action", "script": "return {fn, graph: _graph}" },
@@ -635,7 +658,7 @@
         { "from": "rielyq8", "to": "tgurdpo", "as": "fn" },
         { "from": "1rre4bx", "to": "tgurdpo", "as": "self" },
         { "from": "w0zzawl", "to": "tgurdpo", "as": "args", "type": "resolve" },
-        { "from": "pdljod1", "to": "w0zzawl", "as": "a0" },
+        { "from": "pdljod1", "to": "w0zzawl", "as": "a0", "type": "resolve" },
         { "from": "2lvs5dj", "to": "pdljod1", "as": "graph" },
         { "from": "args", "to": "pdljod1", "as": "args" },
         { "from": "6g75abk", "to": "pdljod1", "as": "fn" }
@@ -659,7 +682,7 @@
         { "id": "map_runnables", "ref": "map" },
         {
           "id": "runnables",
-          "script": "const runnables = Object.entries(inputs).filter(e => e[0] !== 'args').map(e => [e[0], e[1] && e[1]._Proxy ? e[1]._value : e[1]]).filter(r => r[1] && r[1].hasOwnProperty('fn') && r[1].hasOwnProperty('graph')); const filtered_args = Object.fromEntries(Object.entries(args).filter(a => !runnables.find(r => r[0] === a[0]))); return runnables.map(r => r[1]).map(r => ({...r, args: {...r.args, ...filtered_args}}))"
+          "script": "const runnables = Object.entries(inputs).filter(e => e[0] !== 'args').map(e => [e[0], e[1] && e[1]._Proxy ? e[1]._value : e[1]]).filter(r => r[1] && (!r[1]._Proxy || r[1]._value) && r[1].hasOwnProperty('fn') && r[1].hasOwnProperty('graph')); const filtered_args = Object.fromEntries(Object.entries(args).filter(a => !runnables.find(r => r[0] === a[0]))); return runnables.map(r => r[1]).map(r => ({...r, args: {...r.args, ...filtered_args}}))"
         },
         { "id": "element", "ref": "arg", "value": "element", "type": "internal" },
         {
@@ -1003,31 +1026,30 @@
         },
         { "id": "gvkhkfw", "ref": "array" },
         { "id": "7rhq0q5", "name": "in" },
-        { "id": "4972gx3", "ref": "html_element" },
         { "id": "1ldhfah", "ref": "html_element", "name": "label" },
-        { "id": "ee5i5r2", "value": "input" },
-        { "id": "ro8n2gc", "ref": "merge_objects" },
+        { "id": "4972gx3", "ref": "html_element" },
         { "id": "wet0jdv", "ref": "array" },
         { "id": "gcuxiw9" },
         { "id": "875c1wk", "value": "label" },
+        { "id": "ee5i5r2", "value": "input" },
+        { "id": "ro8n2gc", "ref": "merge_objects" },
+        { "id": "n1qcxu2", "value": "true" },
+        { "id": "utkc9o6", "ref": "html_text" },
+        { "id": "jxl9r29", "script": "return \"input-\" + name;" },
         { "id": "t6q6rvf" },
         { "id": "rjwtb3c", "ref": "default" },
-        { "id": "utkc9o6", "ref": "html_text" },
-        { "id": "jxl9r29", "script": "return \"input-\" + value;" },
+        { "id": "varubwp" },
+        { "id": "trd8ptp", "ref": "arg", "value": "name" },
+        { "id": "zfrrk0z", "ref": "arg", "value": "name" },
         { "id": "2zxw9oo", "ref": "execute_graph", "name": "stop_propagation" },
-        {
-          "id": "i7y9dyy",
-          "script": "return (state, payload) => [{...state, [value]: payload.target.value}, onchange_fn && [_ => dispatch(onchange_fn)]]"
-        },
+        { "id": "sjw3rie", "ref": "default" },
         { "id": "vks4vul", "ref": "arg", "value": "props" },
         { "id": "ddfgy2s" },
-        { "id": "trd8ptp", "ref": "arg", "value": "value" },
-        { "id": "zfrrk0z", "ref": "arg", "value": "value" },
+        { "id": "671rzr9", "ref": "arg", "value": "name" },
+        { "id": "ccir2fl", "ref": "arg", "value": "name" },
         { "id": "qseh2tb", "ref": "array" },
-        { "id": "b0j8nyq", "ref": "arg", "value": "dispatch" },
-        { "id": "eotod0l", "ref": "sequence" },
-        { "id": "qxwvdfe", "ref": "arg", "value": "value" },
-        { "id": "0dnqo5l", "ref": "arg", "value": "onchange_fn" },
+        { "id": "i7y9dyy", "ref": "runnable" },
+        { "id": "fihihz0", "ref": "arg", "value": "oninput" },
         {
           "id": "1wps21n",
           "name": "stop propagation effect",
@@ -1047,10 +1069,11 @@
           ]
         },
         { "id": "y5q7mbn", "ref": "arg", "value": "0" },
-        { "id": "qjc0zt6", "ref": "modify_state_runnable" },
-        { "id": "widk6u6", "ref": "runnable" },
-        { "id": "506ntvb", "ref": "arg", "value": "value" },
-        { "id": "4ck1vaf", "ref": "arg", "value": "payload.target.value" }
+        { "id": "y9bkhqc" },
+        { "id": "6m6m1hq_1/ocuonub/qjc0zt6", "ref": "event_publisher" },
+        { "id": "nb2sswc", "ref": "arg", "value": "name" },
+        { "id": "6m6m1hq_1/ocuonub/506ntvb", "value": "payload.event.target.value", "ref": "arg" },
+        { "id": "6m6m1hq_1/ocuonub/4ck1vaf", "ref": "arg", "value": "payload.name" }
       ],
       "out": "nn4twx9",
       "in": "7rhq0q5",
@@ -2490,6 +2513,8 @@
         { "id": "set_nodes", "ref": "set" },
         { "id": "new_edges", "script": "return edges.concat([{from: ref, to: 'custom'}])" },
         { "id": "set_edges", "ref": "set" },
+        {"id": "update_graph_effect", "script": "return [() => _lib.no.runtime.udpate_graph(graph)]"},
+        {"id": "effects", "ref": "array"},
         { "id": "result" },
         { "id": "out", "ref": "hyperapp_action_effect" }
       ],
@@ -2510,6 +2535,9 @@
         { "from": "edges_path", "to": "set_edges", "as": "path" },
         { "from": "set_nodes", "to": "set_edges", "as": "target" },
         { "from": "set_edges", "to": "result", "as": "state" },
+        { "from": "set_edges", "to": "update_graph_effect", "as": "graph" },
+        { "from": "update_graph_effect", "to": "effects", "as": "a0" },
+        { "from": "effects", "to": "result", "as": "effects" },
         { "from": "result", "to": "out", "as": "fn", "type": "ref" }
       ]
     },
@@ -2998,7 +3026,8 @@
         { "id": "update", "ref": "update_graph_display" },
         { "id": "update_effector", "ref": "hyperapp_action_effect" },
         { "id": "update_effect", "ref": "array" },
-        { "id": "default_fx", "ref": "array" },
+        { "id": "default_graph_fx", "ref": "array" },
+        { "id": "default_fx", "ref": "switch" },
         { "id": "default_out" },
         { "id": "out_effects" },
         { "id": "out_action_effect", "ref": "default" },
@@ -3064,6 +3093,11 @@
         { "from": "run_display_graph_effector", "to": "run_display_graph_effect", "as": "a0" },
         { "from": "key_event", "to": "run_display_graph_effect", "as": "a1" },
         { "from": "run_display_graph_effect", "to": "_default_fx", "as": "a0" },
+        { "from": "arg_display_graph", "to": "publish_key", "as": "display_graph" },
+        { "from": "key_inputs", "to": "publish_key", "as": "key" },
+        { "from": "publish_key", "to": "default_graph_fx", "as": "a1" },
+        { "from": "mode", "to": "default_fx", "as": "input"},
+        { "from": "default_graph_fx", "to": "default_fx", "as": "graph"},
         { "from": "update", "to": "update_effector", "as": "fn", "type": "ref" },
         { "from": "update_effector", "to": "update_effect", "as": "a0" },
         { "from": "key_event", "to": "update_effect", "as": "a1" },
@@ -4346,7 +4380,7 @@
                         { "id": "stop_propagation_effect", "ref": "array" },
                         {
                           "id": "get_value",
-                          "script": "return target.value !== undefined ? (typeof target.value === 'object' ? JSON.stringify(target.value) : target.value.toString()) : def"
+                          "script": "return (target.value !== undefined ? (typeof target.value === 'object' ? JSON.stringify(target.value) : target.value.toString()) : def).substring(0, 255)"
                         },
                         { "id": "get_ref", "ref": "get" },
                         {
