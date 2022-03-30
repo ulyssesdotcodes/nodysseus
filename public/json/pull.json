@@ -701,7 +701,7 @@
         { "id": "run_result", "ref": "runnable_hyperapp_effect" },
         {
           "id": "out",
-          "script": "return (dispatch, payload) => {try { const res = _lib.no.runGraph(runnable); Promise.resolve(res).then(r => dispatch(s => r.result_display ? {...s, result_display: r.result_display, error: false} : s.error ? {...s, error: false} : s)); } catch(e) { dispatch(s => ({...s, error: e}));}}"
+          "script": "return (dispatch, payload) => {try { const res = _lib.no.runGraph(runnable); Promise.resolve(res).then(r => dispatch(s => r.display ? {...s, result_display: r.result_display, error: false} : s.error ? {...s, error: false} : s)); } catch(e) { dispatch(s => ({...s, error: e}));}}"
         },
         {
           "id": "_out",
@@ -4433,7 +4433,7 @@
         { "id": "show_result", "ref": "arg", "value": "show_result" },
         { "id": "show_all", "ref": "arg", "value": "show_all" },
         { "id": "html_id", "ref": "arg", "value": "html_id" },
-        { "id": "result_display", "ref": "arg", "value": "result_display" },
+        { "id": "result_display", "ref": "arg", "value": "display" },
         { "id": "editing", "ref": "arg", "value": "editing" },
         { "id": "args_display", "ref": "arg", "value": "args_display" },
         { "id": "update_sim", "ref": "arg", "value": "update_sim" },
