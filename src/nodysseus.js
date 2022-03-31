@@ -1183,7 +1183,8 @@ const nolib = {
                 getorset(cache, graph.id, () => new_cache).node_map = new_cache.node_map;
                 getorset(cache, graph.id, () => new_cache).in_edge_map = new_cache.in_edge_map;
                 if(result) {
-                    getorset(cache, graph.id, () => new_cache).last_result = result;
+                    const last_result = getorset(cache, graph.id, () => new_cache).last_result;
+                    getorset(cache, graph.id, () => new_cache).last_result = {...last_result, ...result};
                 }
                 publish(graph, 'graphchange');
             }
@@ -1301,6 +1302,10 @@ const nolib = {
                                 id: new_node.id.substring(nest_up_id.length + 1)
                             };
                             const nest_up = get_node(graph, nest_up_id);
+                            if(!nest_up){
+                                update_graph(graph);
+                                return;
+                            }
                             new_node = {
                                 ...nest_up,
                                 nodes: nest_up.nodes.filter(n => n.id !== new_node.id).concat([new_node])

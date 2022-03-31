@@ -28,6 +28,8 @@ onmessage = function(e) {
 
         });
 
+        console.log(e.data.args);
+
         nolib.no.runtime.update_graph(run_graph, e.data.args);
     } catch (e) { console.error(e) }
 }

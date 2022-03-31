@@ -277,15 +277,19 @@ const updateSimulationNodes = (dispatch, data) => {
             }
 
             const l = simulation_link_data.get(e.from + "_" + e.to);
+            const proximal = (
+                (parents_map.get(main_node_map.get(e.to))?.length ?? 0) + 
+                (parents_map.get(children_map.get(main_node_map.get(e.to)))?.length ?? 0)
+            ) * 0.5;
             return {
                 source: e.from + "_" + e.to,
                 from: e.from,
                 to: e.to,
                 target: main_node_map.get(e.to),
                 sibling_index_normalized: simulation_node_data.get(e.from + "_" + e.to).sibling_index_normalized,
-                strength: 2 * (1.5 - Math.abs(simulation_node_data.get(e.from + "_" + e.to).sibling_index_normalized - 0.5)) / (1 + 2 * Math.min(4, (parents_map.get(main_node_map.get(e.from))?.length ?? 0))),
+                strength: 2 * (1.5 - Math.abs(simulation_node_data.get(e.from + "_" + e.to).sibling_index_normalized - 0.5)) / (1 + 2 * Math.min(4, proximal)),
                 distance: 128 
-                    + 16 * (Math.min(4, parents_map.get(main_node_map.get(e.to))?.length ?? 0)) 
+                    + 4 * (Math.min(8, proximal)) 
             };
         }).filter(l => !!l);
 
