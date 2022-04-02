@@ -1130,21 +1130,17 @@ const nolib = {
                         const last_result = gcache.last_result;
                         graph = gcache.graph ?? graph;
 
-                        if (worker) {
-                            worker.postMessage({ graph, fn: graph.out ?? 'main/out', args: last_result ?? {} });
-                        } else {
-                            const result = nolib.no.runGraph(graph, graph.out ?? 'main/out', last_result ?? {});
-                            Promise.resolve(result).then(res => {
-                                gcache.last_result = res;
-                                publish(graph, 'graphrun', res);
+                        const result = nolib.no.runGraph(graph, graph.out ?? 'main/out', last_result ?? {});
+                        Promise.resolve(result).then(res => {
+                            gcache.last_result = res;
+                            publish(graph, 'graphrun', res);
 
-                                const change = [...gcache.node_map.values()]
-                                    .find(n => n.ref === 'arg' && !compare(nodysseus_get(res, n.value), nodysseus_get(last_result, n.value)));
-                                if (change !== undefined) {
-                                    rungraph(graph);
-                                }
-                            }).catch(e => publish(graph, 'grapherror', e))
-                        }
+                            const change = [...gcache.node_map.values()]
+                                .find(n => n.ref === 'arg' && !compare(nodysseus_get(res, n.value), nodysseus_get(last_result, n.value)));
+                            if (change !== undefined) {
+                                rungraph(graph);
+                            }
+                        }).catch(e => publish(graph, 'grapherror', e))
                     } catch (e) {
                         publish(graph, 'grapherror', e);
                     }
