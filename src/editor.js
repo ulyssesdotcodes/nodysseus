@@ -322,7 +322,7 @@ const updateSimulationNodes = (dispatch, data) => {
     // data.simulation.force('center').strength(n => (levels.parents_map.get(n.node_id)?.length ?? 0) * 0.25 + (levels.children_map.get(n.node_id)?.length ?? 0) * 0.25)
 }
 
-const editor = function(html_id, display_graph) {
+const editor = function(html_id, display_graph, lib, norun) {
     const url_params = new URLSearchParams(document.location.search);
     const examples = [simple_html_hyperapp, simple];
     const dispatch = runGraph(DEFAULT_GRAPH, "initialize_hyperapp_app", { 
@@ -337,10 +337,10 @@ const editor = function(html_id, display_graph) {
         },
         examples: examples.map(add_default_nodes_and_edges),
         readonly: false, 
-        norun: url_params.get("norun") !== null,
+        norun: norun || url_params.get("norun") !== null,
         hide_types: false,
         offset: {x: 0, y: 0}
-    }, hlib);
+    }, {...hlib, ...(lib ?? {})});
 
     return () => requestAnimationFrame(() => dispatch.dispatch(s => undefined));
 }
