@@ -289,6 +289,10 @@ const node_value = (node) => {
         return node.value;
     }
 
+    if(node.value === "undefined") {
+        return undefined;
+    }
+
     if (typeof node.value === 'string' && node.value.match(/[0-9]*/g)[0].length === node.value.length) {
         const int = parseInt(node.value);
         if (!isNaN(int)) {
@@ -454,7 +458,7 @@ const node_extern = (node, node_ref, node_id, cache, graph_input_value, data, fu
     }, [[], false]);
 
     try {
-        if (usecache && is_node_cached && cache.get(cache_id).has(node.id)) {
+        if (usecache && is_node_cached && !extern.nocache && cache.get(cache_id).has(node.id)) {
             const val = cache.get(cache_id).get(node.id);
             let hit = compare(args[0], val[1]);
             // hit = hit && compare(graph_input_value, val[2]);
@@ -579,7 +583,9 @@ const executeGraph = ({ cache, graph, lib, cache_id, usecache }) => {
     const run_with_val = (node_id) => {
         return (graph_input_value, cache_id_node) => {
 
+            let is_node_cached = full_lib.no.runtime.is_cached(graph, node_id);
             let node = full_lib.no.runtime.get_node(graph, node_id);
+            full_lib.no.runtime.set_cached(graph, node_id);
 
             if (node === undefined) {
                 throw new Error(`Undefined node_id ${node_id}`)
@@ -589,7 +595,7 @@ const executeGraph = ({ cache, graph, lib, cache_id, usecache }) => {
                 return full_lib.utility.arg.fn(node, graph_input_value);
             }
 
-            if (node.value !== undefined && !node.script && !node.ref) {
+            if (node.value !== undefined && !node.script && !node.ref && !node.nodes) {
                 return node_value(node);
             }
 
@@ -600,7 +606,6 @@ const executeGraph = ({ cache, graph, lib, cache_id, usecache }) => {
                 // cache.get(cache_id).set("__handles", cache.get(cache_id).get("__handles") + 1);
             }
 
-            let is_node_cached = full_lib.no.runtime.is_cached(graph, node_id);
             const inputs = full_lib.no.runtime.get_edges_in(graph, node_id);
 
             let node_ref;
@@ -800,87 +805,59 @@ const contract_all = (graph) => {
 
 const contract_node = (data, keep_expanded = false) => {
     const node = data.display_graph.nodes.find(n => n.id === data.node_id);
+    const slash_index = data.node_id.lastIndexOf('/');
+    const node_id = slash_index >= 0 ? data.node_id.substring(0, slash_index) : data.node_id;
     if (!node.nodes) {
-        const slash_index = data.node_id.lastIndexOf('/');
-        const node_id = slash_index >= 0 ? data.node_id.substring(0, slash_index) : data.node_id;
-        const name = data.name ?? node_id;
-
         const inside_nodes = [Object.assign({}, node)];
         const inside_node_map = new Map();
-        const dangling = new Set();
         inside_node_map.set(inside_nodes[0].id, inside_nodes[0]);
         const inside_edges = new Set();
 
         const q = data.display_graph.edges.filter(e => e.to === inside_nodes[0].id);
 
         let in_edge = [];
+        let args_edge;
 
         while (q.length > 0) {
             const e = q.shift();
-            dangling.delete(e.from);
 
-            let this_dangling = 0;
-
-            if (e.from !== data.node_id) {
-                data.display_graph.edges.filter(ie => ie.from === e.from).forEach(ie => {
-                    if (!inside_node_map.has(ie.to)) {
-                        this_dangling += 1;
-                        dangling.add(ie.to)
-                    }
-                });
+            if(e.to === node.id && e.as === 'args') {
+                args_edge = e;
             }
 
-            if (this_dangling === 0) {
+            in_edge.filter(ie => ie.from === e.from).forEach(ie => {
+                inside_edges.add(ie)
+            });
+            in_edge = in_edge.filter(ie => ie.from !== e.from);
 
+            const old_node = inside_nodes.find(i => e.from === i.id);
+            let inside_node = old_node ?? Object.assign({}, data.display_graph.nodes.find(p => p.id === e.from));
 
-                in_edge.filter(ie => ie.from === e.from).forEach(ie => {
-                    inside_edges.add(ie)
-                });
-                in_edge = in_edge.filter(ie => ie.from !== e.from);
+            inside_node_map.set(inside_node.id, inside_node);
+            inside_edges.add(e);
+            if (!old_node) {
+                delete inside_node.inputs;
+                inside_nodes.push(inside_node);
+            }
 
-                const old_node = inside_nodes.find(i => e.from === i.id);
-                let inside_node = old_node ?? Object.assign({}, data.display_graph.nodes.find(p => p.id === e.from));
-
-                inside_node_map.set(inside_node.id, inside_node);
-                inside_edges.add(e);
-                if (!old_node) {
-                    delete inside_node.inputs;
-                    inside_nodes.push(inside_node);
-                }
-
-                if (!inside_node.name?.endsWith(name + '/in')) {
-                    data.display_graph.edges.filter(de => de.to === e.from).forEach(de => {
-                        q.push(de);
-                    });
-                }
-
-            } else {
-                in_edge.push(e);
+            if (e.from !== args_edge?.from) {
+                nolib.no.runtime.get_edges_in(data.display_graph, e.from).forEach(de => q.push(de));
             }
         }
 
-        let in_node_id = in_edge[0]?.to;
+        let in_node_id = args_edge?.from;
 
+        // just return the original graph if it's a single node 
         if (in_edge.find(ie => ie.to !== in_node_id) || inside_nodes.length < 2) {
             return { display_graph: data.display_graph, selected: [data.node_id] };
         }
 
-        const out_node = inside_nodes.find(n => n.id === data.node_id || n.name === name + "/out" || n.id === node_id + "/out");
-        const out_node_id = out_node.id;
+        const out_node_id = data.node_id;
 
         const in_node = inside_node_map.get(in_node_id);
 
         let node_id_count = data.display_graph.nodes.filter(n => n.id === node_id).length;
         let final_node_id = node_id_count === 0 ? node_id : `${node_id}_${node_id_count}`
-
-        // if there's no in node, just return
-        if (in_node_id && !in_node_id.endsWith('in')) {
-            return { display_graph: data.display_graph, selected: [data.node_id] };
-        }
-
-        if (!in_node_id) {
-            in_node_id = inside_nodes.find(n => n.id === node_id + "/in" || n.name === name + "/in")?.id;
-        }
 
         const edges = [];
         for (const e of inside_edges) {
@@ -901,13 +878,12 @@ const contract_node = (data, keep_expanded = false) => {
                 .filter(n => keep_expanded || !inside_node_map.has(n.id))
                 .concat([{
                     id: final_node_id,
-                    name: name === data.node_id ? data.node_name : name,
+                    value: node.value,
                     in: in_node_id?.startsWith(node_id + '/') ? in_node_id.substring(node_id.length + 1) : in_node_id,
                     out: out_node_id.startsWith(node_id + '/') ? out_node_id.substring(node_id.length + 1) : out_node_id,
                     nodes: inside_nodes.map(n => ({
                         ...n,
-                        id: n.id.startsWith(node_id + "/") ? n.id.substring(node_id.length + 1) : n.id,
-                        name: !n.name?.startsWith(name + "/") ? n.name : n.name.substring(name.length + 1)
+                        id: n.id.startsWith(node_id + "/") ? n.id.substring(node_id.length + 1) : n.id
                     })),
                     edges
                 }]),
@@ -1029,6 +1005,7 @@ const generic_nodes = new Set([
     "events_broadcast_channel",
     "input_value",
     "ancestors",
+    "return",
 
     "math",
     "add",
@@ -1095,7 +1072,8 @@ const nolib = {
                 in_edge_map: new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.to === n.id)])),
                 parent_map: new Map(),
                 fn_cache: new Map(),
-                listeners: new Map()
+                listeners: new Map(),
+                is_cached: new Set()
             });
             const getorsetgraph = (graph, id, path, valfn) => getorset(getorset(cache, graph.id, () => new_graph_cache(graph))[path], id, valfn);
             const publish = (graph, event, data) => {
@@ -1182,6 +1160,7 @@ const nolib = {
                 const new_cache = new_graph_cache(graph);
                 getorset(cache, graph.id, () => new_cache).node_map = new_cache.node_map;
                 getorset(cache, graph.id, () => new_cache).in_edge_map = new_cache.in_edge_map;
+                getorset(cache, graph.id, () => new_cache).is_cached = new_cache.is_cached;
                 if(result) {
                     const last_result = getorset(cache, graph.id, () => new_cache).last_result;
                     getorset(cache, graph.id, () => new_cache).last_result = {...last_result, ...result};
@@ -1263,7 +1242,8 @@ const nolib = {
                     // publish(graph, 'graphchange');
                     update_graph(graph);
                 },
-                is_cached: (graph, id) => getorset(cache, graph.id, () => new_graph_cache(graph)).node_map.has(id),
+                is_cached: (graph, id) => getorset(cache, graph.id, () => new_graph_cache(graph)).is_cached.has(id),
+                set_cached: (graph, id) => getorset(cache, graph.id, () => new_graph_cache(graph)).is_cached.add(id),
                 get_node,
                 get_edges_in,
                 get_parent: (graph, id) => cache.get(graph.id).parent_map.get(id),
@@ -1355,6 +1335,7 @@ const nolib = {
         })()
     },
     utility: {
+        compare,
         eq: ({ a, b }) => a === b,
         arg: {
             args: ['_node', 'target'],
