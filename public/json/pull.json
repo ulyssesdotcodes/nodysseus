@@ -753,7 +753,7 @@
         { "id": "gsiimdp", "name": "in" },
         { "id": "3zfjt1h", "ref": "call" },
         { "id": "05eag47", "ref": "arg", "value": "name" },
-        { "id": "2vtokcl", "script": "return fetch(url, {mode: 'no-cors', headers: {'Access-Control-Allow-Origin': '*'}});" },
+        { "id": "2vtokcl", "script": "return fetch(url);" },
         { "id": "i9x02is", "value": "json" },
         { "id": "irr99xz", "ref": "arg", "value": "url" }
       ],
