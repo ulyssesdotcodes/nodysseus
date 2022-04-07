@@ -321,6 +321,9 @@ const node_value = (node) => {
 }
 
 const mockcombined = (data, graph_input_value) => {
+    data.__args = graph_input_value;
+    return data;
+    // TODO: remove after we're sure this works
     return Object.assign({}, graph_input_value, data);
     return new Proxy(data, {
         get: (something, prop) => {
@@ -1132,11 +1135,11 @@ const nolib = {
                             gcache.last_result = res;
                             publish(graph, 'graphrun', res);
 
-                            const change = [...gcache.node_map.values()]
-                                .find(n => n.ref === 'arg' && !compare(nodysseus_get(res, n.value), nodysseus_get(last_result, n.value)));
-                            if (change !== undefined) {
-                                rungraph(graph);
-                            }
+                            // const change = [...gcache.node_map.values()]
+                            //     .find(n => n.ref === 'arg' && !compare(nodysseus_get(res, n.value), nodysseus_get(last_result, n.value)));
+                            // if (change !== undefined) {
+                            //     rungraph(graph);
+                            // }
                         }).catch(e => publish(graph, 'grapherror', e))
                     } catch (e) {
                         publish(graph, 'grapherror', e);

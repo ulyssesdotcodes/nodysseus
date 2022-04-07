@@ -2,6 +2,7 @@ import {nodeResolve} from "@rollup/plugin-node-resolve"
 import commonjs from "@rollup/plugin-commonjs"
 import json from "@rollup/plugin-json"
 import copy from "rollup-plugin-copy"
+import sourcemaps from "rollup-plugin-sourcemaps";
 
 let cache = null;
 const rucommonjs = commonjs();
@@ -27,9 +28,10 @@ export default [{
   cache,
   output: {
     file: "./public/editor.bundle.js",
-    format: "es"
+    format: "es",
+    sourcemap: true
   },
-  plugins: [nodeResolve(), rucommonjs, json(), copy({
+  plugins: [nodeResolve(), rucommonjs, json(), sourcemaps(), copy({
     targets: [
       {src: 'json/*', dest: 'public/json'}
     ]

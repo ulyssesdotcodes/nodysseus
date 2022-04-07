@@ -109,8 +109,6 @@ const updateSimulationNodes = (dispatch, data) => {
             }))
         }
         requestAnimationFrame(() => {
-            console.log('check simth');
-            console.log(data.sim_to_hyperapp)
             dispatch(s => s ? [resolve(data.sim_to_hyperapp), node_data] : s)
             requestAnimationFrame(() => {
                 node_data.nodes.forEach(n => {
@@ -657,28 +655,14 @@ const middleware = dispatch => (ha_action, ha_payload) => {
     const action = is_action_array_payload ? ha_action[0] : ha_action;
     const payload = is_action_array_payload ? ha_action[1] : is_action_obj_payload ? {...ha_action.args, event: ha_payload} : ha_payload;
 
-
-    if(hasbeennodes && action.hasOwnProperty("nodes") && action.nodes.length === 0) {
-        debugger;
-    }
-
     hasbeennodes = hasbeennodes || action.nodes?.length > 0 || ha_action.nodes?.length > 0;
 
-
-    console.log('action')
-    console.info(action);
-    console.log('ha_action')
-    console.info(ha_action);
-    console.log('payload')
-    console.info(ha_payload);
 
     return typeof action === 'object' && action.hasOwnProperty('fn') && action.hasOwnProperty('graph')
         ? dispatch((state, payload) => {
             try {
                 const execute_graph_fn = nolib.no.executeGraphNode({graph: action.graph, lib: hlib})(action.fn);
                 // Object.defineProperty(execute_graph_fn, 'name', {value: action.fn, writable: false});
-                console.log('state')
-                console.info(state);
                 const result = action.stateonly 
                     ? execute_graph_fn(state)
                     : execute_graph_fn({state, payload});
@@ -689,14 +673,6 @@ const middleware = dispatch => (ha_action, ha_payload) => {
                 }
 
                 hasbeennodes = hasbeennodes || state.nodes?.length > 0;
-
-                console.log('post action')
-                console.info(action);
-                console.log('post ha_action')
-                console.info(ha_action);
-                console.log('post payload')
-                console.info(ha_payload);
-                console.info(result);
 
                 const effects = (result.effects ?? []).filter(e => e).map(e => {
                     if(typeof e === 'object' 
