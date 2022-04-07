@@ -34,15 +34,15 @@
     { "id": "negate", "extern": "utility.negate" },
     {
       "id": "sim_to_hyperapp_action",
-      "out": "action",
+      "out": "out",
       "nodes": [
-        { "id": "state", "ref": "arg", "value": 0 },
-        { "id": "old_nodes", "ref": "arg", "value": "0.nodes" },
-        { "id": "old_links", "ref": "arg", "value": "0.links" },
-        { "id": "new_nodes", "ref": "arg", "value": "1.nodes" },
-        { "id": "new_links", "ref": "arg", "value": "1.links" },
-        { "id": "selected", "ref": "arg", "value": "0.selected" },
-        { "id": "display_graph", "ref": "arg", "value": "0.display_graph" },
+        { "id": "state", "ref": "arg", "value": "state" },
+        { "id": "old_nodes", "ref": "arg", "value": "state.nodes" },
+        { "id": "old_links", "ref": "arg", "value": "state.links" },
+        { "id": "new_nodes", "ref": "arg", "value": "payload.nodes" },
+        { "id": "new_links", "ref": "arg", "value": "payload.links" },
+        { "id": "selected", "ref": "arg", "value": "state.selected" },
+        { "id": "display_graph", "ref": "arg", "value": "state.display_graph" },
         {
           "id": "calculate_levels",
           "script": "return _lib.scripts.calculateLevels(nodes, links, display_graph, selected)"
@@ -50,11 +50,11 @@
         { "id": "with_levels", "script": "return {...state, levels}" },
         { "id": "graph_topology_change", "script": "return true" },
         { "id": "if_levels", "ref": "if" },
-        { "id": "panzoom_selected_effector", "ref": "arg", "value": "0.panzoom_selected_effect" },
         {
           "id": "action",
-          "script": "return [{...state, nodes: new_nodes, links: new_links, randid: Math.random().toString(36).substring(2, 9)}, panzoom_selected_effect && false && [panzoom_selected_effect, {...state, selected: state.selected[0], nodes: new_nodes, links: new_links}], [state.update_hyperapp]]"
-        }
+          "script": "return {state: {...state, nodes: new_nodes, links: new_links, randid: Math.random().toString(36).substring(2, 9)}, effects: [[state.update_hyperapp]]};"
+        },
+        {"id": "out", "ref": "hyperapp_action"}
       ],
       "edges": [
         { "from": "old_nodes", "to": "graph_topology_change", "as": "old_nodes" },
@@ -73,7 +73,7 @@
         { "from": "new_nodes", "to": "action", "as": "new_nodes" },
         { "from": "new_links", "to": "action", "as": "new_links" },
         { "from": "if_levels", "to": "action", "as": "state" },
-        { "from": "panzoom_selected_effector", "to": "action", "as": "panzoom_selected_effect" }
+        {"from": "action", "to": "out", "as": "fn", "type": "ref"}
       ]
     },
     {
@@ -91,7 +91,7 @@
         { "id": "onkey_fn", "ref": "arg", "value": "onkey_fn" },
         {
           "id": "out",
-          "script": "return {dispatch: _lib.ha.app({dispatch: _lib.ha.middleware, init: () => [init, static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp], [() => _lib.no.runtime.add_graph(init.display_graph)]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}], !static && [_lib.scripts.graph_subscription, {graph: s.display_graph}], !static && !init.norun._value && [_lib.scripts.result_subscription, {graph: s.display_graph}], !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.pz.panzoom, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]]})}"
+          "script": "console.log('stha'); console.log(sim_to_hyperapp_action); return {dispatch: _lib.ha.app({dispatch: _lib.ha.middleware, init: () => [init, static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp], [() => _lib.no.runtime.add_graph(init.display_graph)]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}], !static && [_lib.scripts.graph_subscription, {graph: s.display_graph}], !static && !init.norun._value && [_lib.scripts.result_subscription, {graph: s.display_graph}], !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.panzoom.init, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]]})}"
         }
       ],
       "edges": [
@@ -505,7 +505,7 @@
     {
       "id": "hyperapp_action_effect_debounced",
       "description": "Creates an effect that dispatches the passed-in fn",
-      "script": "const action = typeof fn === 'string' ? {fn, graph: _graph} : (typeof fn === 'function' || (typeof fn === 'object' && fn.hasOwnProperty('fn'))) ? fn : undefined; return (dispatch, payload) => requestAnimationFrame(() => dispatch(action, payload))"
+      "script": "const action = typeof fn === 'string' ? {fn, graph: _graph} : (typeof fn === 'function' || (typeof fn === 'object' && fn.hasOwnProperty('fn'))) ? fn : undefined; return (dispatch, payload) => requestAnimationFrame(() => {dispatch(action, payload)})"
     },
     {
       "id": "run",
@@ -1304,7 +1304,6 @@
       "_script": "return _lib.scripts.graphToSimulationNodes({display_graph, nodes, links, selected, levels})"
     },
     { "id": "sim_to_hyperapp", "ref": "sim_to_hyperapp_action" },
-    { "id": "sim_to_hyperapp_fn", "ref": "execute_graph" },
     { "id": "graph_to_sim_action", "ref": "execute_graph" },
     { "id": "update_nodes_in" },
     { "id": "onkey_fn", "ref": "hyperapp_action" },
@@ -2510,7 +2509,7 @@
         { "id": "set_nodes", "ref": "set" },
         { "id": "new_edges", "script": "return edges.concat([{from: ref, to: 'custom'}])" },
         { "id": "set_edges", "ref": "set" },
-        {"id": "update_graph_effect", "script": "return [() => _lib.no.runtime.udpate_graph(graph)]"},
+        {"id": "update_graph_effect", "script": "return [() => _lib.no.runtime.update_graph(graph)]"},
         {"id": "effects", "ref": "array"},
         { "id": "result" },
         { "id": "out", "ref": "hyperapp_action_effect" }
@@ -2963,19 +2962,19 @@
         { "id": "redo", "ref": "redo_action" },
         {
           "id": "down",
-          "script": "const next_node_edge = display_graph.edges.find(e => e.from === selected); return next_node_edge ? {state: {...state, selected: [next_node_edge.to]}, effects: [[stop_propagation, event], [state.panzoom_selected_effect, {...state, selected: [next_node_edge.to]}], [state.update_hyperapp]]} : {state, effects: [[stop_propagation, event]]}"
+          "script": "const next_node_edge = display_graph.edges.find(e => e.from === selected); return next_node_edge ? {state: {...state, selected: [next_node_edge.to]}, effects: [[stop_propagation, event], [_lib.panzoom.effect, {...state, selected: [next_node_edge.to]}], [state.update_hyperapp]]} : {state, effects: [[stop_propagation, event]]}"
         },
         {
           "id": "up",
-          "script": "const next_edges = display_graph.edges.filter(e => e.to === selected); const next_node_edge = next_edges[Math.ceil(next_edges.length / 2) - 1]; return next_node_edge ? {state: {...state, selected: [next_node_edge.from]}, effects: [[stop_propagation, event], [state.panzoom_selected_effect, {...state, selected: [next_node_edge.from]}], [state.update_hyperapp]]} : {state, effects: [[stop_propagation, event]]}"
+          "script": "const next_edges = display_graph.edges.filter(e => e.to === selected); const next_node_edge = next_edges[Math.ceil(next_edges.length / 2) - 1]; return next_node_edge ? {state: {...state, selected: [next_node_edge.from]}, effects: [[stop_propagation, event], [_lib.panzoom.effect, {...state, selected: [next_node_edge.from]}], [state.update_hyperapp]]} : {state, effects: [[stop_propagation, event]]}"
         },
         {
           "id": "left",
-          "script": "const current_node = nodes.find(n => n.node_id === selected); const siblings = levels.siblings.get(selected); const next_node = static ? nodes.find(n => n.node_id === siblings[(siblings.findIndex(s => s === selected) - 1 + siblings.length) % siblings.length]): siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = (sibling_node.x < current_node.x) && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [dimensions.x])[1]; return next_node ? {state: {...state, selected: [next_node.node_id]}, effects: [[stop_propagation, event], [state.panzoom_selected_effect, {...state, selected: next_node.node_id}], [state.update_hyperapp]]} : {state, effects: [[stop_propagation, event]]}"
+          "script": "const current_node = nodes.find(n => n.node_id === selected); const siblings = levels.siblings.get(selected); const next_node = static ? nodes.find(n => n.node_id === siblings[(siblings.findIndex(s => s === selected) - 1 + siblings.length) % siblings.length]): siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = (sibling_node.x < current_node.x) && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [dimensions.x])[1]; return next_node ? {state: {...state, selected: [next_node.node_id]}, effects: [[stop_propagation, event], [_lib.panzoom.effect, {...state, selected: next_node.node_id}], [state.update_hyperapp]]} : {state, effects: [[stop_propagation, event]]}"
         },
         {
           "id": "right",
-          "script": "const current_node = nodes.find(n => n.node_id === selected); const siblings = levels.siblings.get(selected); const next_node = static ? nodes.find(n => n.node_id === siblings[(siblings.findIndex(s => s === selected) + 1) % siblings.length]) : siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [dimensions.x])[1]; return next_node ? {state: {...state, selected: [next_node.node_id]}, effects: [[stop_propagation, event], [state.panzoom_selected_effect, {...state, selected: next_node.node_id}], [state.update_hyperapp]]} : {state, effects: [[stop_propagation, event]]}"
+          "script": "const current_node = nodes.find(n => n.node_id === selected); const siblings = levels.siblings.get(selected); const next_node = static ? nodes.find(n => n.node_id === siblings[(siblings.findIndex(s => s === selected) + 1) % siblings.length]) : siblings.reduce((dist, sibling) => { const sibling_node = nodes.find(n => n.node_id === sibling); if(!sibling_node){ return dist } const xdist = Math.abs(sibling_node.x - current_node.x); dist = sibling_node.x > current_node.x && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist }, [dimensions.x])[1]; return next_node ? {state: {...state, selected: [next_node.node_id]}, effects: [[stop_propagation, event], [_lib.panzoom.effect, {...state, selected: next_node.node_id}], [state.update_hyperapp]]} : {state, effects: [[stop_propagation, event]]}"
         },
         {
           "id": "edit_value",
@@ -3575,7 +3574,7 @@
         { "id": "show_popover_effect", "ref": "array" },
         { "id": "stop_propagation_effector", "ref": "stop_propagation_effect" },
         { "id": "stop_propagation_effect", "ref": "array" },
-        { "id": "panzoom_selected_effector", "ref": "arg", "value": "state.panzoom_selected_effect" },
+        { "id": "panzoom_selected_effector", "script": "return _lib.panzoom.effect" },
         { "id": "panzoom_selected_effect", "ref": "array" },
         { "id": "panzoom_selected_payload" },
         { "id": "clear_search_payload", "value": { "search": false } },
@@ -4118,7 +4117,7 @@
                 { "id": "display_graph", "ref": "arg", "value": "display_graph" },
                 {
                   "id": "search_input_props",
-                  "script": "return {id: `${html_id}-search-input`, key: `${html_id}-search-input`, class: 'search-input', type: 'text', onkeydown: (s, payload) => { if(payload.key === 'Enter'){ const direction = payload.shiftKey ? -1 : 1; const idx = (s.search_results.length + s.search_index + direction) % s.search_results.length; return [{...s, selected: s.search_results.slice(idx, idx + 1), search_index: idx}, [s.panzoom_selected_effect, {...s, selected: s.search_results[idx]}], [s.update_hyperapp]] } else { return s;} }, oninput: (s, payload) => {const search_results = new _lib.Fuse(nodes.map(n => Object.assign({}, n, display_graph.nodes.find(d => d.id === n.node_id))), {keys: ['name', 'node_id', 'ref']}).search(payload.target.value).map(r => r.item.node_id); return [{...s, search: payload.target.value, selected: search_results.length > 0 ? search_results.slice(0, 1) : s.selected, search_results, search_index: 0}, search_results.length > 0 && [s.panzoom_selected_effect, {...s, selected: search_results[0]}], [s.update_hyperapp]]}}"
+                  "script": "return {id: `${html_id}-search-input`, key: `${html_id}-search-input`, class: 'search-input', type: 'text', onkeydown: (s, payload) => { if(payload.key === 'Enter'){ const direction = payload.shiftKey ? -1 : 1; const idx = (s.search_results.length + s.search_index + direction) % s.search_results.length; return [{...s, selected: s.search_results.slice(idx, idx + 1), search_index: idx}, [_lib.panzoom.effect, {...s, selected: s.search_results[idx]}], [s.update_hyperapp]] } else { return s;} }, oninput: (s, payload) => {const search_results = new _lib.Fuse(nodes.map(n => Object.assign({}, n, display_graph.nodes.find(d => d.id === n.node_id))), {keys: ['name', 'node_id', 'ref']}).search(payload.target.value).map(r => r.item.node_id); return [{...s, search: payload.target.value, selected: search_results.length > 0 ? search_results.slice(0, 1) : s.selected, search_results, search_index: 0}, search_results.length > 0 && [_lib.panzoom.effect, {...s, selected: search_results[0]}], [s.update_hyperapp]]}}"
                 },
                 { "id": "search_field", "ref": "html_element" },
                 { "id": "search_effect", "ref": "search_effect" },
@@ -5018,7 +5017,7 @@
     { "from": "display_graph_out", "to": "init_selected", "as": "a0" },
     { "from": "init_selected", "to": "hyperapp_init_state", "as": "selected" },
     { "from": "update_sim_effect", "to": "hyperapp_init_state", "as": "update_sim_effect" },
-    { "from": "sim_to_hyperapp_fn", "to": "hyperapp_init_state", "as": "sim_to_hyperapp" },
+    { "from": "sim_to_hyperapp", "to": "hyperapp_init_state", "as": "sim_to_hyperapp" },
     { "from": "get_graph", "to": "onkey_fn", "as": "graph" },
     { "from": "onkey_fn", "to": "initialize_hyperapp_app", "as": "onkey_fn" },
     { "from": "onkey_fn_body", "to": "onkey_fn", "as": "fn", "type": "ref" },
@@ -5046,8 +5045,7 @@
     { "from": "nodes", "to": "graph_to_simulation", "as": "nodes" },
     { "from": "links", "to": "graph_to_simulation", "as": "links" },
     { "from": "graph_to_simulation", "to": "graph_to_sim_action", "as": "fn", "type": "ref" },
-    { "from": "sim_to_hyperapp", "to": "sim_to_hyperapp_fn", "as": "fn", "type": "ref" },
-    { "from": "sim_to_hyperapp_fn", "to": "initialize_hyperapp_app", "as": "sim_to_hyperapp_action" },
+    { "from": "sim_to_hyperapp", "to": "initialize_hyperapp_app", "as": "sim_to_hyperapp_action" },
     { "from": "graph_to_sim_action", "to": "initialize_hyperapp_app", "as": "graph_to_sim_action" },
     { "from": "update_sim_in", "to": "update_sim_fn", "as": "in_node", "type": "ref" },
     { "from": "update_sim_fn", "to": "update_sim_effect", "as": "fn" },

@@ -5,6 +5,7 @@ import { diffApply } from "just-diff-apply";
 import Fuse from "fuse.js";
 
 function nodysseus_get(obj, propsArg, defaultValue) {
+    let objArg = obj;
   if (!obj) {
     return defaultValue;
   }
@@ -36,7 +37,7 @@ function nodysseus_get(obj, propsArg, defaultValue) {
         obj = obj[prop];
     }
     if (obj === undefined) {
-      return defaultValue;
+      return (objArg?.__args ? nodysseus_get(objArg.__args, propsArg, defaultValue) : defaultValue) ?? defaultValue;
     }
   }
   return obj;
@@ -144,7 +145,7 @@ const createProxy = (run_with_val, input, graph_input_value, is_node_cached, use
     // return run_with_val(input.from)(graph_input_value);
     if (usecache && cache) {
         const cached = cache.get(input.from + '+proxy');
-        if (usecache && is_node_cached && compare(graph_input_value, cached[1])) {
+        if (usecache && is_node_cached && cached && compare(graph_input_value, cached[1])) {
             console.log('proxy cache');
             return cached[0];
         }
@@ -156,8 +157,6 @@ const createProxy = (run_with_val, input, graph_input_value, is_node_cached, use
                 return true;
             } else if (prop === "_nodeid") {
                 return input.from;
-            } else if (prop === "_graph_input_value") {
-                return graph_input_value;
             }
 
             if (prop === 'toJSON') {
@@ -321,11 +320,34 @@ const node_value = (node) => {
     return node.value;
 }
 
+const mockcombined = (data, graph_input_value) => {
+    return Object.assign({}, graph_input_value, data);
+    return new Proxy(data, {
+        get: (something, prop) => {
+            if(data.hasOwnProperty(prop) || prop === "_Proxy" || prop === "then" || prop === "__args" || prop === "_needsresolve") {
+                return data[prop];
+            }
+
+            return graph_input_value[prop]
+        },
+        ownKeys: (_) => {
+            const dkeys = Reflect.ownKeys(data);
+            return dkeys.concat(Reflect.ownKeys(graph_input_value).filter(k => !dkeys.includes(k)));
+        },
+        getOwnPropertyDescriptor: (target, prop) => {
+
+            const descriptor = Reflect.getOwnPropertyDescriptor(data, prop);
+
+            return descriptor ?? Reflect.getOwnPropertyDescriptor(graph_input_value, prop);
+        }
+    })
+}
+
 const node_nodes = (node, node_ref, cache, graph_input_value, data, full_lib, graph, usecache, is_node_cached, run_with_val, inputs, cache_id, _needsresolve) => {
     const outid = `${node.id}/${node_ref.out ?? 'out'}`;
     const keys = node_ref.nodes.filter(n => n.ref === 'arg').map(n => n.value);
     const combined_data_input = typeof graph_input_value === 'object' && !Array.isArray(graph_input_value) && data
-        ? Object.assign({}, graph_input_value, data)
+        ? mockcombined(data, graph_input_value)
         : inputs.length > 0
             ? data
             : graph_input_value;
@@ -625,9 +647,6 @@ const executeGraph = ({ cache, graph, lib, cache_id, usecache }) => {
             const tryrun = (input) => {
                 if (input.type === "ref") {
                     return input.from;
-                } else if (input.from === "_graph_input_value" || input.from === graph.in) {
-                    _needsresolve = _needsresolve || !!graph_input_value._needsresolve
-                    return graph_input_value;
                 } else if (input.type === "resolve") {
                     // if(!node_map.has(input.from)) {
                     //     throw new Error(`Input not found ${input.from} for node ${node_id}`)
@@ -1044,9 +1063,6 @@ const nolib = {
         get: {
             args: ['target', 'path', 'def'],
             fn: (target, path, def) => {
-                if(path === 'graph.nodes' || (path?._Proxy && path._value === 'graph.nodes')) {
-                    debugger;
-                }
                 return nodysseus_get(target?._Proxy ? target._value : target, path?._Proxy ? path._value : path, def?._Proxy ? def._value : def);
             },
         },
@@ -1073,6 +1089,7 @@ const nolib = {
                 parent_map: new Map(),
                 fn_cache: new Map(),
                 listeners: new Map(),
+                event_values: new Map(),
                 is_cached: new Set()
             });
             const getorsetgraph = (graph, id, path, valfn) => getorset(getorset(cache, graph.id, () => new_graph_cache(graph))[path], id, valfn);
@@ -1084,6 +1101,8 @@ const nolib = {
                     gcache.graph = graph;
                 }
                 const listeners = getorsetgraph(graph, event, 'listeners', () => new Map());
+                const event_values = getorsetgraph(graph, event, 'event_values', () => new Map());
+                event_values.set('event', data);
                 for (let l of listeners.values()) {
                     if (typeof l === 'function') {
                         l(graph, data);

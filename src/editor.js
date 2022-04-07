@@ -109,6 +109,8 @@ const updateSimulationNodes = (dispatch, data) => {
             }))
         }
         requestAnimationFrame(() => {
+            console.log('check simth');
+            console.log(data.sim_to_hyperapp)
             dispatch(s => s ? [resolve(data.sim_to_hyperapp), node_data] : s)
             requestAnimationFrame(() => {
                 node_data.nodes.forEach(n => {
@@ -148,7 +150,7 @@ const updateSimulationNodes = (dispatch, data) => {
                     }
                 });
 
-                dispatch(s => s?.panzoom_selected_effect ? [s, [s.panzoom_selected_effect, {...s, ...node_data, selected: s.selected[0]}]] : s);
+                dispatch(s => [s, [hlib.panzoom.effect, {...s, ...node_data, selected: s.selected[0]}]]);
             })
         })
         return;
@@ -373,7 +375,7 @@ const d3subscription = (dispatch, props) => {
     const node_el_width = 256;
     const tick = () => {
         if(simulation.nodes().length === 0) {
-            dispatch(s => [(htmlid = s.html_id, {...s, simulation}), [props.update, s]]);
+            requestAnimationFrame(() => dispatch(s => [(htmlid = s.html_id, {...s, simulation}), [props.update, s]]));
         }
 
         const data = {
@@ -403,9 +405,19 @@ const d3subscription = (dispatch, props) => {
             const ids = simulation.nodes().map(n => n.node_id).join(',');
             stopped = false;
             simulation.tick();
-            dispatch([s => (selected = s.selected[0], dimensions = s.dimensions, 
+            requestAnimationFrame(() => dispatch([s => (selected = s.selected[0], dimensions = s.dimensions, 
                 s.nodes.map(n => n.node_id).join(',') !== ids ? [props.action, data] 
-                    : s.panzoom_selected_effect ? [s, [s.panzoom_selected_effect, {...s, nodes: simulation.nodes().map(n => ({...n, x: n.x - 8, y: n.y})), links: simulation.force('links').links(), prevent_dispatch: true, selected: s.selected[0]}]] : s)]);
+                    : [s, 
+                        [
+                            hlib.panzoom.effect, {
+                                ...s, 
+                                nodes: simulation.nodes().map(n => ({...n, x: n.x - 8, y: n.y})), 
+                                links: simulation.force('links').links(), 
+                                prevent_dispatch: true, 
+                                selected: s.selected[0]
+                            }
+                        ]
+                    ])]));
 
             const visible_nodes = [];
             const visible_node_set = new Set();
@@ -471,9 +483,9 @@ const d3subscription = (dispatch, props) => {
             })
         } else if(!stopped) {
             stopped = true; 
-            dispatch([props.action, data])
             requestAnimationFrame(() => {
-                dispatch(s => s?.panzoom_selected_effect ? [s, [s.panzoom_selected_effect, {...s, selected: s.selected[0]}]] : s)
+                dispatch([props.action, data])
+                dispatch(s => [s, [hlib.panzoom.effect, {...s, selected: s.selected[0]}]])
             });
         }
 
@@ -589,6 +601,48 @@ const findViewBox = (nodes, links, selected, node_el_width, htmlid, dimensions) 
     return {nodes_box_dimensions, center};
 }
 
+const pzobj = {
+    effect: function(dispatch, payload){
+        if(!hlib.panzoom.instance || !payload.selected){ return; }
+        this.lastpanzoom = performance.now();
+        const viewbox = findViewBox(
+            payload.nodes, 
+            payload.links, 
+            typeof payload.selected === 'string' ? payload.selected : payload.selected[0], 
+            payload.node_el_width, 
+            payload.html_id,
+            payload.dimensions
+        );
+        const x = payload.dimensions.x * 0.5 - viewbox.center.x;
+        const y = payload.dimensions.y * 0.5 - viewbox.center.y
+        const scale = hlib.panzoom.instance.getTransform().scale;
+        hlib.panzoom.instance.moveTo(x, y);
+        hlib.panzoom.instance.zoomTo(x, y, 1 / scale)
+
+        if(!payload.prevent_dispatch) {
+            requestAnimationFrame(() => 
+                dispatch((s, p) => [
+                    {...s, show_all: false, svg_offset: hlib.panzoom.instance.getTransform()}, 
+                ])
+            )
+        }
+    },
+    init: function (dispatch, sub_payload) {
+        hlib.panzoom.lastpanzoom = 0;
+        let init = requestAnimationFrame(() => {
+            hlib.panzoom.instance = panzoom(document.getElementById(sub_payload.id), {
+                // onTouch: e => false,
+                filterKey: e => true,
+                smoothScroll: false
+            });
+            hlib.panzoom.instance.on('panstart', e => performance.now() - hlib.panzoom.lastpanzoom > 100 ? dispatch(sub_payload.action, {event: 'panstart', transform: e.getTransform()}) : undefined);
+            hlib.panzoom.instance.moveTo(window.innerWidth * 0, window.innerHeight * 0.5);
+        });
+        return () => { cancelAnimationFrame(init); instance?.dispose(); }
+    }
+}
+
+let hasbeennodes = false;
 const middleware = dispatch => (ha_action, ha_payload) => {
     const is_action_array_payload = Array.isArray(ha_action) 
         && ha_action.length === 2
@@ -603,18 +657,46 @@ const middleware = dispatch => (ha_action, ha_payload) => {
     const action = is_action_array_payload ? ha_action[0] : ha_action;
     const payload = is_action_array_payload ? ha_action[1] : is_action_obj_payload ? {...ha_action.args, event: ha_payload} : ha_payload;
 
+
+    if(hasbeennodes && action.hasOwnProperty("nodes") && action.nodes.length === 0) {
+        debugger;
+    }
+
+    hasbeennodes = hasbeennodes || action.nodes?.length > 0 || ha_action.nodes?.length > 0;
+
+
+    console.log('action')
+    console.info(action);
+    console.log('ha_action')
+    console.info(ha_action);
+    console.log('payload')
+    console.info(ha_payload);
+
     return typeof action === 'object' && action.hasOwnProperty('fn') && action.hasOwnProperty('graph')
         ? dispatch((state, payload) => {
             try {
                 const execute_graph_fn = nolib.no.executeGraphNode({graph: action.graph, lib: hlib})(action.fn);
                 // Object.defineProperty(execute_graph_fn, 'name', {value: action.fn, writable: false});
+                console.log('state')
+                console.info(state);
                 const result = action.stateonly 
                     ? execute_graph_fn(state)
                     : execute_graph_fn({state, payload});
 
+
                 if(!result) {
                     return state;
                 }
+
+                hasbeennodes = hasbeennodes || state.nodes?.length > 0;
+
+                console.log('post action')
+                console.info(action);
+                console.log('post ha_action')
+                console.info(ha_action);
+                console.log('post payload')
+                console.info(ha_payload);
+                console.info(result);
 
                 const effects = (result.effects ?? []).filter(e => e).map(e => {
                     if(typeof e === 'object' 
@@ -657,45 +739,7 @@ const hlib = {
         memo: {args: ['view', 'props'], fn: memo} 
     },
     scripts: { d3subscription, updateSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all, listen, graph_subscription, result_subscription},
-    pz: {
-    panzoom: (dispatch, sub_payload) => {
-            let instance;
-            let lastpanzoom = 0;
-            const panzoom_selected_effect = (dispatch, payload) => {
-                if(!instance || !payload.selected){ return; }
-                lastpanzoom = performance.now();
-                const viewbox = findViewBox(
-                    payload.nodes, 
-                    payload.links, 
-                    typeof payload.selected === 'string' ? payload.selected : payload.selected[0], 
-                    payload.node_el_width, 
-                    payload.html_id,
-                    payload.dimensions
-                );
-                const x = payload.dimensions.x * 0.5 - viewbox.center.x;
-                const y = payload.dimensions.y * 0.5 - viewbox.center.y
-                const scale = instance.getTransform().scale;
-                instance.moveTo(x, y);
-                instance.zoomTo(x, y, 1 / scale)
-
-                if(!payload.prevent_dispatch) {
-                    dispatch(sub_payload.action, {event: 'effect_transform', transform: instance.getTransform()})
-                }
-            }
-
-            let init = requestAnimationFrame(() => {
-                instance = panzoom(document.getElementById(sub_payload.id), {
-                    // onTouch: e => false,
-                    filterKey: e => true,
-                    smoothScroll: false
-                });
-                instance.on('panstart', e => performance.now() - lastpanzoom > 100 ? dispatch(sub_payload.action, {event: 'panstart', transform: e.getTransform()}) : undefined);
-                instance.moveTo(window.innerWidth * 0, window.innerHeight * 0.5);
-            });
-            requestAnimationFrame(() => dispatch(s => [{...s, panzoom_selected_effect}]));
-            return () => { cancelAnimationFrame(init); instance?.dispose(); }
-        }
-    },
+    panzoom: pzobj,
     runGraph: (graph, node, args, lib) => nolib.no.runGraph(graph, node, args, {...hlib, ...(lib ?? {})}),
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX }
 }
