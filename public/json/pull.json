@@ -218,7 +218,7 @@
       "args": ["data", "input"],
       "nodes": [
         { "id": "in" },
-        { "id": "out", "script": "return data[new String(input).toString()] ?? otherwise;" },
+        { "id": "out", "script": "console.log('switch returning'); console.log(input); console.info(data[new String(input).toString()] ?? otherwise); return data[new String(input).toString()] ?? otherwise;" },
         { "id": "input", "ref": "arg", "value": "input" },
         { "id": "otherwise", "ref": "arg", "value": "otherwise" }
       ],
@@ -314,7 +314,7 @@
         { "id": "args", "ref": "merge_objects" },
         {
           "id": "out",
-          "script": "const parent_id = _lib.no.runtime.get_parent(_graph, _node.id); const input = _lib.no.runtime.get_edges_in(_graph, parent_id).find(i => i.as === 'fn'); return input ? {fn: input.from, graph: _graph, args: args ?? {}} : false"
+          "script": "console.log('runnable'); console.log(_graph); const parent_graph = _lib.no.runtime.get_parent(_graph); console.log(parent_graph); const input = _lib.no.runtime.get_edges_in(parent_graph, _graph.node_id).find(i => i.as === 'fn'); return input ? {fn: input.from, graph: parent_graph, args: args ?? {}} : false"
         }
       ],
       "edges": [
@@ -333,15 +333,17 @@
       "id": "execute_graph",
       "nodes": [
         { "id": "in" },
+        { "id": "args", "ref": "arg", "value": "_args" },
         { "id": "fn", "ref": "arg", "value": "fn" },
         { "id": "fn_graph", "ref": "arg", "value": "fn_graph" },
         {
           "id": "out",
-          "script": "const res_graph = fn_graph ?? _graph; return (...inner_args) => {return _lib.no.executeGraphNode({graph: {...res_graph, nodes: [...res_graph.nodes], edges: [...res_graph.edges]}, lib: _lib})(fn)(Object.keys(args).length > 0 ? Object.assign(args, inner_args.length === 1 ? inner_args[0] : inner_args) : inner_args.length === 1 ? inner_args[0] : inner_args);}"
+          "script": "const res_graph = fn_graph ?? _graph; return (...inner_args) => {console.log(inner_args); console.log(res_graph);console.log(args); return _lib.no.executeGraphNode({graph: {...res_graph, nodes: [...res_graph.nodes], edges: [...res_graph.edges]}, lib: _lib})(fn)(Object.keys(args).length > 0 ? Object.assign(args, inner_args.length === 1 ? inner_args[0] : inner_args) : inner_args.length === 1 ? inner_args[0] : inner_args);}"
         }
       ],
       "edges": [
-        { "from": "in", "to": "out", "as": "args" },
+        { "from": "in", "to": "out", "as": "_", "type": "ref" },
+        { "from": "args", "to": "out", "as": "args" },
         { "from": "fn", "to": "out", "as": "fn" },
         { "from": "fn_graph", "to": "out", "as": "fn_graph" }
       ]
@@ -594,7 +596,7 @@
         { "id": "update", "script": "return update || !!display_graph || !!selected" },
         {
           "id": "out",
-          "script": "return {state, effects: [!readonly && (!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && [dispatch_custom_event_effect, {html_id, event: 'updategraph', detail: {graph: state.display_graph}}], ...(effects?.filter(e => e?.[0]) ?? [])]}"
+          "script": "console.log('hi'); console.log(dispatch_custom_event_effect); return {state, effects: [!readonly && (!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && [dispatch_custom_event_effect, {html_id, event: 'updategraph', detail: {graph: state.display_graph}}], ...(effects?.filter(e => e?.[0]) ?? [])]}"
         }
       ],
       "edges": [
@@ -1137,11 +1139,10 @@
         { "id": "dom_type", "ref": "arg", "value": "dom_type" },
         { "id": "props", "ref": "arg", "value": "props" },
         { "id": "children", "ref": "arg", "value": "children" },
-        { "id": "graph", "ref": "arg", "value": "graph" },
         { "id": "text", "ref": "arg", "value": "text" },
         {
           "id": "mapped_children",
-          "script": "let run_graph = {...graph, in: 'run_h/in', out: 'run_h'}; const fn = _lib.no.executeGraphValue({graph: run_graph, lib: _lib}); const cs = []; children?.forEach(c => { if(!!c){const cfn = fn({...c, graph: run_graph}); if(!!cfn){cs.push(cfn.el ?? cfn)}}}); return cs;"
+          "script": "console.log('mapped'); const fn = _lib.no.executeGraphNode({graph: _lib.no.runtime.get_parent(_graph), lib: _lib}); const cs = []; children?.forEach(c => { if(!!c){const cfn = fn('run_h')(c); console.log('cfn'); console.info(cfn); if(!!cfn){cs.push(cfn.el ?? cfn)}}}); console.log('final children'); console.log(cs); return cs;"
         },
         { "id": "out_h", "extern": "ha.h" },
         { "id": "out_text", "extern": "ha.text" },
@@ -1156,7 +1157,6 @@
         { "from": "children", "to": "mapped_children", "as": "children" },
         { "from": "mapped_children", "to": "out_h", "as": "children" },
         { "from": "props", "to": "out_h", "as": "props" },
-        { "from": "graph", "to": "mapped_children", "as": "graph" },
         { "from": "text", "to": "out_text", "as": "text", "type": "resolve" },
         { "from": "out_text", "to": "out_el", "as": "h_text" },
         { "from": "out_h", "to": "out_el", "as": "h" },
@@ -3854,7 +3854,7 @@
         { "id": "wrapper_props", "value": {} },
         {
           "id": "wrapper_children",
-          "script": "return [styles.el, node_editor.el, !!result_display && result_display.el, !readonly && editing !== false && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, !editing && !show_all && args_display && args_display.el, !!error && error_display.el, menu.el].filter(e => e)"
+          "script": "console.log('ne'); console.log(node_editor.el); return [styles.el, node_editor.el, !!result_display && result_display.el, !readonly && editing !== false && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, !editing && !show_all && args_display && args_display.el, !!error && error_display.el, menu.el].filter(e => e)"
         },
         {
           "id": "styles",
@@ -3967,6 +3967,7 @@
                 { "id": "buav28h", "value": "datalist" },
                 { "id": "ql1hqrf" },
                 { "id": "jppiihp/jppiihp", "ref": "html_element" },
+                {"id": "map_runnable", "ref": "runnable"},
                 { "id": "h2altl0", "ref": "arg", "value": "ref_nodes" },
                 { "id": "jgaye79", "value": "node-options" },
                 { "id": "tk685lj" },
@@ -3981,7 +3982,8 @@
                 { "from": "0msbgbm", "to": "xtr0qj6", "as": "children" },
                 { "from": "buav28h", "to": "xtr0qj6", "as": "dom_type" },
                 { "from": "ql1hqrf", "to": "xtr0qj6", "as": "props" },
-                { "from": "jppiihp/jppiihp", "to": "0msbgbm", "as": "fn", "type": "ref" },
+                { "from": "jppiihp/jppiihp", "to": "map_runnable", "as": "fn"},
+                { "from": "map_runnable", "to": "0msbgbm", "as": "fn"},
                 { "from": "h2altl0", "to": "0msbgbm", "as": "array" },
                 { "from": "jgaye79", "to": "ql1hqrf", "as": "id" },
                 { "from": "tk685lj", "to": "jppiihp/jppiihp", "as": "props" },
@@ -4964,7 +4966,7 @@
           "id": "error_display",
           "script": "return {el: {dom_type: 'div', props: {class:{error: true, main: true}, key: `${html_id}-error_display`}, children: [{dom_type: 'text_value', text: error instanceof AggregateError ? error.errors.map(e => e.toString()).join(\" \") : error?.toString()}]}}"
         },
-        { "id": "noop", "script": "return {el: _lib.ha.h.fn('div', {key: 'loading'}, _lib.ha.text.fn('loading...'))}" },
+        { "id": "noop", "script": "console.log('should return'); console.log({el: _lib.ha.h.fn('div', {key: 'loading'}, _lib.ha.text.fn('loading...'))}); return {el: _lib.ha.h.fn('div', {key: 'loading'}, _lib.ha.text.fn('loading...'))}" },
         { "id": "out_input", "script": "return display_graph && graph ? 'hel' : 'noop'" },
         { "id": "out", "ref": "switch" }
       ],

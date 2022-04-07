@@ -356,9 +356,9 @@ const node_nodes = (node, node_ref, cache, graph_input_value, data, full_lib, gr
             : graph_input_value;
 
     let hit = false;
-    if (!full_lib.no.runtime.get_node(graph, outid)) {
-        full_lib.no.runtime.expand_node(graph, node.id, node_ref);
-    }
+    // if (!full_lib.no.runtime.get_node(graph, outid)) {
+    //     full_lib.no.runtime.expand_node(graph, node.id, node_ref);
+    // }
 
     if (usecache && is_node_cached && cache.get(cache_id).has(outid)) {
         const val = cache.get(cache_id).get(outid);
@@ -368,7 +368,17 @@ const node_nodes = (node, node_ref, cache, graph_input_value, data, full_lib, gr
         }
     }
 
-    const res = run_with_val(outid)(combined_data_input)
+    // const res = run_with_val(outid)(combined_data_input)
+    const node_graph = {
+        ...node, 
+        id: graph.id + "/" + node.id,
+        node_id: node.id,
+        nodes: node_ref.nodes.map(n => n.id === 'in' ? {...n, value: combined_data_input} : n), 
+        edges: node_ref.edges
+    };
+    full_lib.no.runtime.set_parent(node_graph, graph);
+    const res = full_lib.no.runGraph(node_graph, node_ref.out ?? 'out', combined_data_input, full_lib);
+    console.log(res);
     if (typeof res === 'object' && !!res && !res._Proxy && !Array.isArray(res) && Object.keys(res).length > 0) {
         if (_needsresolve || !!res._needsresolve) {
             res._needsresolve = !!res._needsresolve || _needsresolve;
@@ -595,7 +605,7 @@ const create_data = (inputs, input_data_map) => {
 
 const executeGraph = ({ cache, graph, lib, cache_id, usecache }) => {
     const full_lib = { ...nolib, ...(lib ?? {}) }
-    usecache = usecache ?? true;
+    usecache = usecache ?? false;
 
     if (!graph.nodes) {
         throw new Error(`Graph has no nodes! in: ${graph.in} out: ${graph.out}`)
@@ -637,7 +647,7 @@ const executeGraph = ({ cache, graph, lib, cache_id, usecache }) => {
 
             const ref = node.ref?.node_ref ?? typeof node.ref === 'string' ? node.ref : undefined;
             if (ref) {
-                node_ref = full_lib.no.runtime.get_node(graph, ref);
+                node_ref = full_lib.no.runtime.get_ref(graph, ref);
                 if (!node_ref) {
                     throw new Error(`Unable to find ref ${ref} for node ${node.name ?? node.id}`)
                 }
@@ -1090,6 +1100,7 @@ const nolib = {
                 node_map: new Map(graph.nodes.map(n => [n.id, n])),
                 in_edge_map: new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.to === n.id)])),
                 parent_map: new Map(),
+                parent: undefined,
                 fn_cache: new Map(),
                 listeners: new Map(),
                 event_values: new Map(),
@@ -1251,8 +1262,11 @@ const nolib = {
                 }
             }
 
+            const get_ref = (graph, id) => cache.get(graph.id)?.parent ? 
+                get_ref(cache.get(graph.id)?.parent, id) : get_node(graph, id)
             const get_node = (graph, id) => getorsetgraph(resolve(graph), id, 'node_map', () =>
-                get_graph(graph).nodes.find(n => n.id === id) ?? get_nested(graph, id));
+                get_graph(graph).nodes.find(n => n.id === id) 
+                    ?? (cache.get(graph.id)?.parent ? get_ref(graph, id) : undefined));
             const get_edges_in = (graph, id) => getorsetgraph(resolve(graph), id, 'in_edge_map', () => graph.edges.filter(e => e.to === id));
 
             const get_graph = (graph) => cache.get(graph.id).graph ?? graph;
@@ -1266,9 +1280,10 @@ const nolib = {
                 },
                 is_cached: (graph, id) => getorset(cache, graph.id, () => new_graph_cache(graph)).is_cached.has(id),
                 set_cached: (graph, id) => getorset(cache, graph.id, () => new_graph_cache(graph)).is_cached.add(id),
+                get_ref,
                 get_node,
                 get_edges_in,
-                get_parent: (graph, id) => cache.get(graph.id).parent_map.get(id),
+                get_parent: (graph) => cache.get(graph.id)?.parent,
                 get_fn: (graph, orderedargs, node_ref) => getorsetgraph(resolve(graph), orderedargs + node_ref.script, 'fn_cache', () => new Function(`return function _${(node_ref.name?.replace(/\W/g, "_") ?? node_ref.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script}}`)()),
                 update_graph,
                 get_graph,
@@ -1352,7 +1367,11 @@ const nolib = {
                     args: ['_graph', 'event', 'data'],
                     fn: publish
                 },
-                expand_node
+                expand_node,
+                set_parent: (graph, parent) => {
+                    const gcache = getorset(cache, graph.id, () => new_graph_cache(resolve(graph)));
+                    gcache.parent = parent;
+                }
             }
         })()
     },
