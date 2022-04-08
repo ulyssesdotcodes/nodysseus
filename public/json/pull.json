@@ -13,14 +13,13 @@
     { "id": "JSON" },
     {
       "id": "log",
-      "args": ["value"],
       "nodes": [
         { "id": "in" },
         { "id": "value", "ref": "arg", "value": "value" },
-        { "id": "out", "args": [], "script": "console.log(_node.name ?? _node.id); console.log(value); return value" }
+        { "id": "out", "args": [], "script": "console.log(_graph.name ?? _graph.id); console.log(value); return value" }
       ],
       "edges": [
-        { "from": "in", "to": "out", "as": "input" },
+        { "from": "in", "to": "out", "as": "input", "type":"ref"},
         { "from": "value", "to": "out", "as": "value" }
       ]
     },
@@ -91,7 +90,7 @@
         { "id": "onkey_fn", "ref": "arg", "value": "onkey_fn" },
         {
           "id": "out",
-          "script": "return {dispatch: _lib.ha.app({dispatch: _lib.ha.middleware, init: () => [init, static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp], [() => _lib.no.runtime.add_graph(init.display_graph)]], view: s => {if(s instanceof Map){ throw new Error('stop') } return view(s).el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}], !static && [_lib.scripts.graph_subscription, {graph: s.display_graph}], !static && !init.norun._value && [_lib.scripts.result_subscription, {graph: s.display_graph}], !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.panzoom.init, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]]})}"
+          "script": "return {dispatch: _lib.ha.app({dispatch: _lib.ha.middleware, init: () => [init, static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp], [() => _lib.no.runtime.add_graph(init.display_graph)]], view: s => {if(s instanceof Map){ throw new Error('stop') } const vs = view(s); return vs.el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}], !static && [_lib.scripts.graph_subscription, {graph: s.display_graph}], !static && !init.norun._value && [_lib.scripts.result_subscription, {graph: s.display_graph}], !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.panzoom.init, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]]})}"
         }
       ],
       "edges": [
@@ -218,13 +217,17 @@
       "args": ["data", "input"],
       "nodes": [
         { "id": "in" },
-        { "id": "out", "script": "console.log('switch returning'); console.log(input); console.info(data[new String(input).toString()] ?? otherwise); return data[new String(input).toString()] ?? otherwise;" },
+        {"id": "args", "ref": "arg", "value": "_args"},
+        { "id": "out",  "ref": "get"},
         { "id": "input", "ref": "arg", "value": "input" },
-        { "id": "otherwise", "ref": "arg", "value": "otherwise" }
+        { "id": "otherwise", "ref": "arg", "value": "otherwise" },
+        {"id": "string_input",  "script": "return new String(input).toString()"}
       ],
       "edges": [
-        { "from": "in", "to": "out", "as": "data" },
-        { "from": "input", "to": "out", "as": "input" },
+        { "from": "in", "to": "out", "as": "_", "type": "ref" },
+        { "from": "args", "to": "out", "as": "target" },
+        { "from": "input", "to": "string_input", "as": "input" },
+        { "from": "string_input", "to": "out", "as": "path" },
         { "from": "otherwise", "to": "out", "as": "otherwise" }
       ]
     },
@@ -235,11 +238,11 @@
         { "id": "pred", "ref": "arg", "value": "pred" },
         { "id": "true", "ref": "arg", "value": "true" },
         { "id": "false", "ref": "arg", "value": "false" },
-        { "id": "data" },
+        { "id": "data"},
         { "id": "out", "script": "return !!pred ? data.true_val : data.false_val" }
       ],
       "edges": [
-        { "from": "in", "to": "out", "as": "data" },
+        { "from": "in", "to": "out", "as": "_", "type":"ref" },
         { "from": "true", "to": "data", "as": "true_val" },
         { "from": "false", "to": "data", "as": "false_val" },
         { "from": "data", "to": "out", "as": "data" },
@@ -314,7 +317,7 @@
         { "id": "args", "ref": "merge_objects" },
         {
           "id": "out",
-          "script": "console.log('runnable'); console.log(_graph); const parent_graph = _lib.no.runtime.get_parent(_graph); console.log(parent_graph); const input = _lib.no.runtime.get_edges_in(parent_graph, _graph.node_id).find(i => i.as === 'fn'); return input ? {fn: input.from, graph: parent_graph, args: args ?? {}} : false"
+          "script": "const parent_graph = _lib.no.runtime.get_parent(_graph); const input = _lib.no.runtime.get_edges_in(parent_graph, _graph.node_id).find(i => i.as === 'fn'); return input ? {fn: input.from, graph: parent_graph, args: args ?? {}} : false"
         }
       ],
       "edges": [
@@ -338,7 +341,7 @@
         { "id": "fn_graph", "ref": "arg", "value": "fn_graph" },
         {
           "id": "out",
-          "script": "const res_graph = fn_graph ?? _graph; return (...inner_args) => {console.log(inner_args); console.log(res_graph);console.log(args); return _lib.no.executeGraphNode({graph: {...res_graph, nodes: [...res_graph.nodes], edges: [...res_graph.edges]}, lib: _lib})(fn)(Object.keys(args).length > 0 ? Object.assign(args, inner_args.length === 1 ? inner_args[0] : inner_args) : inner_args.length === 1 ? inner_args[0] : inner_args);}"
+          "script": "const res_graph = fn_graph ?? _graph; return (...inner_args) => {return _lib.no.executeGraphNode({graph: {...res_graph, nodes: [...res_graph.nodes], edges: [...res_graph.edges]}, lib: _lib})(fn)(Object.keys(args).length > 0 ? Object.assign(args, inner_args.length === 1 ? inner_args[0] : inner_args) : inner_args.length === 1 ? inner_args[0] : inner_args);}"
         }
       ],
       "edges": [
@@ -400,12 +403,12 @@
         { "id": "in" },
         { "id": "target", "ref": "arg", "value": "target" },
         { "id": "path", "ref": "arg", "value": "path" },
-        { "id": "def", "ref": "arg", "value": "def" },
+        { "id": "otherwise", "ref": "arg", "value": "otherwise" },
         { "id": "out", "extern": "just.get" }
       ],
       "edges": [
         { "from": "in", "to": "out", "as": "input" },
-        { "from": "def", "to": "out", "as": "def" },
+        { "from": "otherwise", "to": "out", "as": "def" },
         { "from": "path", "to": "out", "as": "path" },
         { "from": "target", "to": "out", "as": "target" }
       ]
@@ -486,7 +489,7 @@
         {"id": "publish_event", "ref": "event_publisher"},
         {"id": "publish_event_runnable", "ref": "runnable"},
         {"id": "onmessageseq", "ref": "sequence"},
-        {"id": "out", "script": "const bc = new BroadcastChannel('events'); bc.onmessage = e => { _lib.no.runGraph(onmessage.graph, onmessage.fn, {message: e}); }; return bc;"}
+        {"id": "out", "script": "const bc = new BroadcastChannel('events'); bc.onmessage = e => { _lib.no.runGraph(onmessage.graph, onmessage.fn, {message: e}, _lib); }; return bc;"}
       ],
       "edges": [
         {"from": "message_data", "to": "publish_event", "as": "value"},
@@ -517,7 +520,7 @@
         { "id": "args", "ref": "arg", "value": "_args" },
         {
           "id": "out",
-          "script": "return _lib.no.runGraph(runnable.graph, runnable.fn, Object.assign({}, args, {runnable: undefined}, runnable.args))"
+          "script": "return _lib.no.runGraph(runnable.graph, runnable.fn, Object.assign({}, args, {runnable: undefined}, runnable.args), _lib)"
         }
       ],
       "edges": [
@@ -533,7 +536,7 @@
         { "id": "args", "ref": "arg", "value": "_args" },
         {
           "id": "out",
-          "script": "return (fnargs) => _lib.no.runGraph(runnable.graph, runnable.fn, Object.assign({}, args, {runnable: undefined}, runnable.args, typeof fnargs === 'object' ? fnargs : {}))"
+          "script": "return (fnargs) => _lib.no.runGraph(runnable.graph, runnable.fn, Object.assign({}, args, {runnable: undefined}, runnable.args, typeof fnargs === 'object' ? fnargs : {}), _lib)"
         }
       ],
       "edges": [
@@ -548,7 +551,7 @@
         { "id": "fn", "ref": "arg", "value": "fn" },
         {
           "id": "out",
-          "script": "return (dispatch, payload) => {const wrapped_dispatch = (a, p) => Promise.resolve(p).then(resp => Promise.resolve(a).then(aresp => [aresp, resp])).then(([a, p]) => dispatch(a, p)).catch(e => dispatch(s => [{...s, error: e}])); wrapped_dispatch(state => {Promise.resolve(state).then(s => _lib.no.runGraph(fn.graph, fn.fn, {state: s, ...payload, ...fn.args, dispatch: wrapped_dispatch})); return state.error ? {...state, error: false} : state;})}"
+          "script": "return (dispatch, payload) => {const wrapped_dispatch = (a, p) => Promise.resolve(p).then(resp => Promise.resolve(a).then(aresp => [aresp, resp])).then(([a, p]) => dispatch(a, p)).catch(e => dispatch(s => [{...s, error: e}])); wrapped_dispatch(state => {Promise.resolve(state).then(s => _lib.no.runGraph(fn.graph, fn.fn, {state: s, ...payload, ...fn.args, dispatch: wrapped_dispatch}, _lib)); return state.error ? {...state, error: false} : state;})}"
         }
       ],
       "edges": [{ "from": "fn", "to": "out", "as": "fn" }]
@@ -596,7 +599,7 @@
         { "id": "update", "script": "return update || !!display_graph || !!selected" },
         {
           "id": "out",
-          "script": "console.log('hi'); console.log(dispatch_custom_event_effect); return {state, effects: [!readonly && (!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && [dispatch_custom_event_effect, {html_id, event: 'updategraph', detail: {graph: state.display_graph}}], ...(effects?.filter(e => e?.[0]) ?? [])]}"
+          "script": "return {state, effects: [!readonly && (!!update || !!update_graph_sim) && [update_sim_effect, state], !readonly && [dispatch_custom_event_effect, {html_id, event: 'updategraph', detail: {graph: state.display_graph}}], ...(effects?.filter(e => e?.[0]) ?? [])]}"
         }
       ],
       "edges": [
@@ -650,7 +653,7 @@
         {
           "id": "pdljod1",
           "name": "pdljod1",
-          "script": "return (previous, current, index, array) => _lib.no.runGraph(fn?.graph ?? _graph, fn?.fn ?? fn, Object.assign({}, args, {previous, current, index, array}));"
+          "script": "return (previous, current, index, array) => _lib.no.runGraph(fn?.graph ?? _graph, fn?.fn ?? fn, Object.assign({}, args, {previous, current, index, array}), _lib);"
         },
         { "id": "2lvs5dj", "script": "return _graph", "name": "2lvs5dj" }
       ],
@@ -681,7 +684,7 @@
         {
           "id": "pdljod1",
           "name": "pdljod1",
-          "script": "return (element, index, array) => _lib.no.runGraph(fn?.graph ?? _graph, fn?.fn ?? fn, Object.assign({}, fn.args, args, {element, index, array}));"
+          "script": "return (element, index, array) => _lib.no.runGraph(fn?.graph ?? _graph, fn?.fn ?? fn, Object.assign({}, fn.args, args, {element, index, array}), _lib);"
         },
         { "id": "2lvs5dj", "script": "return _graph", "name": "2lvs5dj" }
       ],
@@ -689,6 +692,7 @@
         { "from": "m3b5wg3", "to": "tgurdpo", "as": "args", "type": "ref" },
         { "from": "rielyq8", "to": "tgurdpo", "as": "fn" },
         { "from": "1rre4bx", "to": "tgurdpo", "as": "self" },
+        { "from": "1rre4bx", "to": "pdljod1", "as": "arr" },
         { "from": "w0zzawl", "to": "tgurdpo", "as": "args", "type": "resolve" },
         { "from": "pdljod1", "to": "w0zzawl", "as": "a0", "type": "resolve" },
         { "from": "2lvs5dj", "to": "pdljod1", "as": "graph" },
@@ -719,7 +723,7 @@
         { "id": "element", "ref": "arg", "value": "element", "type": "internal" },
         {
           "id": "map_fn",
-          "script": "return new Promise((resolve, reject) => resolve(_lib.no.runGraph(runnable.graph, runnable.fn, runnable.args)));"
+          "script": "return new Promise((resolve, reject) => resolve(_lib.no.runGraph(runnable.graph, runnable.fn, runnable.args, _lib)));"
         },
         { "id": "map_fn_runnable", "ref": "runnable" },
         { "name": "seq_runnable", "id": "out", "ref": "runnable" }
@@ -1132,7 +1136,6 @@
     },
     {
       "id": "run_h",
-      "in": "in",
       "out": "out",
       "nodes": [
         { "id": "in" },
@@ -1140,27 +1143,48 @@
         { "id": "props", "ref": "arg", "value": "props" },
         { "id": "children", "ref": "arg", "value": "children" },
         { "id": "text", "ref": "arg", "value": "text" },
+        {"id": "map_child_text", "ref": "arg", "value": "element.text"},
+        {"id": "map_child_props", "ref": "arg", "value": "element.props"},
+        {"id": "map_child_dom_type", "ref": "arg", "value": "element.dom_type"},
+        {"id": "map_child_children", "ref": "arg", "value": "element.children"},
+        {"id": "el_path", "value": "el"},
+        {"id": "map_run", "ref": "run_h"},
+        {"id": "map_el", "ref": "get"},
+        {"id": "map_runnable", "ref": "runnable"},
         {
           "id": "mapped_children",
-          "script": "console.log('mapped'); const fn = _lib.no.executeGraphNode({graph: _lib.no.runtime.get_parent(_graph), lib: _lib}); const cs = []; children?.forEach(c => { if(!!c){const cfn = fn('run_h')(c); console.log('cfn'); console.info(cfn); if(!!cfn){cs.push(cfn.el ?? cfn)}}}); console.log('final children'); console.log(cs); return cs;"
+          "ref": "map"
         },
+        {"id": "empty_array", "value": []},
+        {"id": "out_children", "ref": "if"},
         { "id": "out_h", "extern": "ha.h" },
         { "id": "out_text", "extern": "ha.text" },
-        { "id": "out_input", "args": ["dom_type"], "script": "return dom_type === 'text_value' ? 'h_text' : 'h'" },
+        { "id": "out_input", "script": "return dom_type === 'text_value' ? 'h_text' : 'h'" },
         { "id": "out_el", "ref": "switch" },
         { "id": "out" }
       ],
       "edges": [
         { "from": "in", "to": "out", "as": "_", "type": "ref" },
-        { "from": "dom_type", "to": "out_input", "as": "dom_type" },
+        { "from": "dom_type", "to": "out_input", "as": "dom_type"},
         { "from": "dom_type", "to": "out_h", "as": "dom_type" },
-        { "from": "children", "to": "mapped_children", "as": "children" },
-        { "from": "mapped_children", "to": "out_h", "as": "children" },
+        {"from": "map_child_props", "to": "map_run", "as": "props"},
+        {"from": "map_child_text", "to": "map_run", "as": "text"},
+        {"from": "map_child_dom_type", "to": "map_run", "as": "dom_type"},
+        {"from": "map_child_children", "to": "map_run", "as": "children"},
+        {"from": "map_run", "to": "map_el", "as": "target"},
+        {"from": "el_path", "to": "map_el", "as": "path"},
+        {"from": "map_el", "to": "map_runnable", "as": "fn"},
+        {"from": "map_runnable", "to": "mapped_children", "as": "fn"},
+        { "from": "children", "to": "mapped_children", "as": "array"},
+        { "from": "children", "to": "out_children", "as": "pred" },
+        { "from": "mapped_children", "to": "out_children", "as": "true" },
+        { "from": "empty_array", "to": "out_children", "as": "false" },
+        { "from": "out_children", "to": "out_h", "as": "children"},
         { "from": "props", "to": "out_h", "as": "props" },
         { "from": "text", "to": "out_text", "as": "text", "type": "resolve" },
         { "from": "out_text", "to": "out_el", "as": "h_text" },
         { "from": "out_h", "to": "out_el", "as": "h" },
-        { "from": "out_input", "to": "out_el", "as": "input" },
+        { "from": "out_input", "to": "out_el", "as": "input"},
         { "from": "out_el", "to": "out", "as": "el", "type": "resolve" }
       ]
     },
@@ -3367,7 +3391,7 @@
         { "id": "export_js_node_effects", "ref": "array" },
         {
           "id": "export_js_data",
-          "script": "return `let graph = ${JSON.stringify(display_graph)}; import('nodysseus.bundle.js').then(({runGraph}) => runGraph(graph, 'main/out', {}))`"
+          "script": "return `let graph = ${JSON.stringify(display_graph)}; import('nodysseus.bundle.js').then(({runGraph}) => runGraph(graph, 'main/out', {}, _lib))`"
         },
         { "id": "export_json_node" },
         { "id": "export_js_node" },
@@ -3854,7 +3878,7 @@
         { "id": "wrapper_props", "value": {} },
         {
           "id": "wrapper_children",
-          "script": "console.log('ne'); console.log(node_editor.el); return [styles.el, node_editor.el, !!result_display && result_display.el, !readonly && editing !== false && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, !editing && !show_all && args_display && args_display.el, !!error && error_display.el, menu.el].filter(e => e)"
+          "script": "return [styles.el, node_editor.el, !!result_display && result_display.el, !readonly && editing !== false && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, !editing && !show_all && args_display && args_display.el, !!error && error_display.el, menu.el].filter(e => e)"
         },
         {
           "id": "styles",
@@ -4966,12 +4990,11 @@
           "id": "error_display",
           "script": "return {el: {dom_type: 'div', props: {class:{error: true, main: true}, key: `${html_id}-error_display`}, children: [{dom_type: 'text_value', text: error instanceof AggregateError ? error.errors.map(e => e.toString()).join(\" \") : error?.toString()}]}}"
         },
-        { "id": "noop", "script": "console.log('should return'); console.log({el: _lib.ha.h.fn('div', {key: 'loading'}, _lib.ha.text.fn('loading...'))}); return {el: _lib.ha.h.fn('div', {key: 'loading'}, _lib.ha.text.fn('loading...'))}" },
+        { "id": "noop", "script": "return {el: _lib.ha.h.fn('div', {key: 'loading'}, _lib.ha.text.fn('loading...'))}" },
         { "id": "out_input", "script": "return display_graph && graph ? 'hel' : 'noop'" },
         { "id": "out", "ref": "switch" }
       ],
       "edges": [
-        { "from": "graph", "to": "wrapper", "as": "graph" },
         { "from": "graph", "to": "out_input", "as": "graph" },
         { "from": "display_graph", "to": "out_input", "as": "display_graph" },
         { "from": "error", "to": "error_display", "as": "error" },

@@ -6,6 +6,7 @@ import Fuse from "fuse.js";
 
 function nodysseus_get(obj, propsArg, defaultValue) {
     let objArg = obj;
+    let level = 0;
   if (!obj) {
     return defaultValue;
   }
@@ -23,22 +24,24 @@ function nodysseus_get(obj, propsArg, defaultValue) {
     throw new Error('props arg must be an array, a string or a symbol');
   }
   while (props.length) {
-    if (!obj) {
-      return defaultValue;
-    }
-    if(obj._Proxy) {
+    if(obj?._Proxy) {
         obj = obj._value;
         continue;
     }
     prop = props.shift();
+    if(obj === undefined || !obj.hasOwnProperty(prop)){
+        if(level === 0) {
+            return objArg?.__args ? nodysseus_get(objArg.__args, propsArg, defaultValue) : defaultValue;
+        }
+        return defaultValue;
+    }
+
     if(ispromise(obj)) {
         obj = obj.then(v => v[prop]);
     } else {
         obj = obj[prop];
     }
-    if (obj === undefined) {
-      return (objArg?.__args ? nodysseus_get(objArg.__args, propsArg, defaultValue) : defaultValue) ?? defaultValue;
-    }
+    level += 1;
   }
   return obj;
 }
@@ -159,6 +162,7 @@ const createProxy = (run_with_val, input, graph_input_value, is_node_cached, use
                 return input.from;
             }
 
+
             if (prop === 'toJSON') {
                 return () => resolved ? res : { Proxy: input.from }
             }
@@ -167,7 +171,6 @@ const createProxy = (run_with_val, input, graph_input_value, is_node_cached, use
                 res = run_with_val(input.from)(graph_input_value);
                 resolved = true;
             }
-
 
             if (prop === "_value") {
                 return res
@@ -213,7 +216,7 @@ const createProxy = (run_with_val, input, graph_input_value, is_node_cached, use
 const resolve = (o, cache, is_node_cached) => {
     if (o?._Proxy) {
         const res = resolve(o._value);
-        if (!cache) {
+        if (!(cache && is_node_cached)) {
             return res;
         }
         const cached = cache.get(o._nodeid + '+resolve');
@@ -321,10 +324,13 @@ const node_value = (node) => {
 }
 
 const mockcombined = (data, graph_input_value) => {
-    data.__args = graph_input_value;
-    return data;
+    // if(!data.__args){
+    //     data.__args = graph_input_value;
+    //     // data._needsresolve = true;
+    // }
+    return {...data, __args: graph_input_value};
     // TODO: remove after we're sure this works
-    return Object.assign({}, graph_input_value, data);
+    // return Object.assign({}, graph_input_value, data);
     return new Proxy(data, {
         get: (something, prop) => {
             if(data.hasOwnProperty(prop) || prop === "_Proxy" || prop === "then" || prop === "__args" || prop === "_needsresolve") {
@@ -378,7 +384,11 @@ const node_nodes = (node, node_ref, cache, graph_input_value, data, full_lib, gr
     };
     full_lib.no.runtime.set_parent(node_graph, graph);
     const res = full_lib.no.runGraph(node_graph, node_ref.out ?? 'out', combined_data_input, full_lib);
-    console.log(res);
+    if(node_ref.id.length > 256) {
+        debugger;
+    }
+    // console.log(resolve(combined_data_input));
+    // console.log(res);
     if (typeof res === 'object' && !!res && !res._Proxy && !Array.isArray(res) && Object.keys(res).length > 0) {
         if (_needsresolve || !!res._needsresolve) {
             res._needsresolve = !!res._needsresolve || _needsresolve;
@@ -476,7 +486,7 @@ const node_extern = (node, node_ref, node_id, cache, graph_input_value, data, fu
             acc[0].push(node)
             return [acc[0], acc[1]];
         } else if (arg === '_node_inputs') {
-            const res = extern.resolve ? resolve({ ...data, _needsresolve: true }, cache.get(cache_id), is_node_cached) : data;
+            const res = extern.resolve ? resolve({ ...data, _needsresolve: true }, usecache && cache.get(cache_id), is_node_cached) : data;
             if (Array.isArray(res)) {
                 res?.forEach(r => acc[0].push(r))
             } else {
@@ -487,7 +497,7 @@ const node_extern = (node, node_ref, node_id, cache, graph_input_value, data, fu
             acc[0].push(graph);
             return [acc[0], acc[1]]
         }
-        const value = extern.resolve === false ? data[arg] : resolve(data[arg], cache.get(cache_id), is_node_cached);
+        const value = extern.resolve === false ? data[arg] : resolve(data[arg], usecache && cache.get(cache_id), is_node_cached);
         acc[0].push(value)
         return [acc[0], ispromise(value) || acc[1]];
     }, [[], false]);
@@ -604,8 +614,8 @@ const create_data = (inputs, input_data_map) => {
 }
 
 const executeGraph = ({ cache, graph, lib, cache_id, usecache }) => {
-    const full_lib = { ...nolib, ...(lib ?? {}) }
-    usecache = usecache ?? false;
+    const full_lib = lib ? lib.no ? lib : {...nolib, ...lib} : nolib;
+    usecache = false;// usecache ?? true;
 
     if (!graph.nodes) {
         throw new Error(`Graph has no nodes! in: ${graph.in} out: ${graph.out}`)
@@ -620,7 +630,7 @@ const executeGraph = ({ cache, graph, lib, cache_id, usecache }) => {
 
             let is_node_cached = full_lib.no.runtime.is_cached(graph, node_id);
             let node = full_lib.no.runtime.get_node(graph, node_id);
-            full_lib.no.runtime.set_cached(graph, node_id);
+            // full_lib.no.runtime.set_cached(graph, node_id);
 
             if (node === undefined) {
                 throw new Error(`Undefined node_id ${node_id}`)
@@ -665,7 +675,7 @@ const executeGraph = ({ cache, graph, lib, cache_id, usecache }) => {
                     //     throw new Error(`Input not found ${input.from} for node ${node_id}`)
                     // }
 
-                    return resolve(run_with_val(input.from)(graph_input_value), cache.get(cache_id), is_node_cached);
+                    return resolve(run_with_val(input.from)(graph_input_value), usecache && cache.get(cache_id), is_node_cached);
                 } else if (!input.as || node_ref.script) {
                     // if(!node_map.has(input.from)) {
                     //     throw new Error(`Input not found ${input.from} for node ${node_id}`)
@@ -1201,67 +1211,6 @@ const nolib = {
                 publish(graph, 'graphchange');
             }
 
-            const get_nested = (graph, id) =>
-                getorsetgraph(resolve(graph), id, 'node_map', () => {
-                    if (id.includes('/')) {
-                        let new_id = id.substring(0, id.lastIndexOf('/'));
-                        let nest_up = get_node(graph, new_id);
-                        while (!nest_up && new_id?.includes('/')) {
-                            new_id = new_id.substring(0, new_id.lastIndexOf('/'));
-                            nest_up = get_node(graph, new_id);
-                        }
-                        expand_node(
-                            graph,
-                            new_id,
-                            nest_up.ref ? get_node(graph, nest_up.ref) : nest_up
-                        );
-                    }
-                    return cache.get(graph.id).node_map.get(id) ?? get_graph(graph).nodes.find(n => n.id === id)
-                });
-
-            const expand_node = (graph, id, node_ref) => {
-                // TODO: fix this mess. like for real this is bad.
-                const gcache = getorset(cache, graph.id, () => new_graph_cache(graph));
-                graph = get_graph(graph);
-                for (let i = 0; i < node_ref.edges.length; i++) {
-                    const new_edge = Object.assign({}, node_ref.edges[i]);
-                    new_edge.from = `${id}/${new_edge.from}`;
-                    new_edge.to = `${id}/${new_edge.to}`;
-                    // working_graph.edges.push(new_edge);
-                    if (!gcache.in_edge_map.get(new_edge.to)?.find(e => e.from === new_edge.from && e.as === new_edge.as)) {
-                        gcache.in_edge_map.set(new_edge.to, (gcache.in_edge_map.get(new_edge.to) ?? []).concat([new_edge]))
-                    }
-                    // in_edge_map.set(new_edge.to, (in_edge_map.get(new_edge.to) ?? []).concat([new_edge]))
-                }
-
-                for (const child of node_ref.nodes) {
-                    const new_node = Object.assign({}, child);
-                    new_node.id = `${id}/${child.id}`;
-                    // working_graph.nodes.push(new_node)
-                    if (!gcache.node_map.get(new_node.id)) {
-                        gcache.node_map.set(new_node.id, new_node);
-                        gcache.parent_map.set(new_node.id, id);
-                    }
-                    // node_map.set(new_node.id, new_node);
-                    const has_inputs = gcache.in_edge_map.has(new_node.id);
-                    if (new_node.id === `${id}/${node_ref.in ?? 'in'}`) {
-                        // in_edge_map.get(node.id).map(e => ({ ...e, to: `${node.id}/${node_ref.in ?? 'in'}` }))
-                        //     .forEach(e => working_graph.edges.push(e));
-                        if (!gcache.in_edge_map.has(new_node.id)) {
-                            const new_edges = [];
-                            gcache.in_edge_map.get(id).forEach(e => {
-                                new_edges.push({ ...e, to: `${id}/${node_ref.in ?? 'in'}` })
-                            })
-                            gcache.in_edge_map.set(new_node.id, new_edges)
-                        }
-                        // in_edge_map.set(new_node.id, working_graph.edges.filter(e => e.to === `${node.id}/${node_ref.in ?? 'in'}`))
-                    } else if (!has_inputs) {
-                        // in_edge_map.set(new_node.id, []);
-                        gcache.in_edge_map.set(new_node.id, []);
-                    }
-                }
-            }
-
             const get_ref = (graph, id) => cache.get(graph.id)?.parent ? 
                 get_ref(cache.get(graph.id)?.parent, id) : get_node(graph, id)
             const get_node = (graph, id) => getorsetgraph(resolve(graph), id, 'node_map', () =>
@@ -1367,7 +1316,6 @@ const nolib = {
                     args: ['_graph', 'event', 'data'],
                     fn: publish
                 },
-                expand_node,
                 set_parent: (graph, parent) => {
                     const gcache = getorset(cache, graph.id, () => new_graph_cache(resolve(graph)));
                     gcache.parent = parent;
@@ -1405,7 +1353,7 @@ const nolib = {
                         acc[0].concat([args[k]]),
                         acc[1] || ispromise(args[k])
                     ], [[], false]);
-                return arr[1] ? Promise.all((console.log('arr is prom'), console.log(arr[0]), arr[0])).then(vs => (console.log('prom arr'), console.log(vs), vs)) : arr[0];
+                return arr[1] ? Promise.all(arr[0]) : arr[0];
             }
         },
         fetch: {
