@@ -514,13 +514,15 @@ const keydownSubscription = (dispatch, options) => {
 
 const graph_subscription = (dispatch, props) => {
     const listener = (graph) => {
-        requestAnimationFrame(() =>  {
-            dispatch(s => [{...s, display_graph: graph}, [s.update_sim_effect]])
-        })
+        if(graph.id === props.id){
+            requestAnimationFrame(() =>  {
+                dispatch(s => [{...s, display_graph: graph}, [s.update_sim_effect]])
+            })
+        }
     };
 
-    nolib.no.runtime.add_listener(props.graph, 'graphchange', 'update_hyperapp', listener);
-    return () => nolib.no.runtime.remove_listener(props.graph, 'graphchange', 'update_hyperapp');
+    nolib.no.runtime.add_listener('graphchange', 'update_hyperapp', listener);
+    return () => nolib.no.runtime.remove_listener('graphchange', 'update_hyperapp');
 }
 
 const listen = (type, action) => [listenToEvent, {type, action}]
@@ -533,20 +535,23 @@ const listenToEvent = (dispatch, props) => {
 }
 
 const result_subscription = (dispatch, props) => {
-    const listener = (graph, result) =>
-        requestAnimationFrame(() => 
-            dispatch(s => Object.assign({}, s, {error: false}, result)));
+    const listener = (graph, result) => {
+        if(graph.id === props.graph.id) {
+            requestAnimationFrame(() => 
+                dispatch(s => Object.assign({}, s, {error: false}, result)));
+        }
+    }
     
 
     const error_listener = (graph, error) =>
         requestAnimationFrame(() => dispatch(s => Object.assign({}, s, {error, display_graph: graph})))
 
-    nolib.no.runtime.add_listener(props.graph, 'graphrun', 'update_hyperapp_result_display', listener);
-    nolib.no.runtime.add_listener(props.graph, 'grapherror', 'update_hyperapp_error', error_listener);
+    nolib.no.runtime.add_listener('graphrun', 'update_hyperapp_result_display', listener);
+    nolib.no.runtime.add_listener('grapherror', 'update_hyperapp_error', error_listener);
 
     return () => (
-        nolib.no.runtime.remove_listener(props.graph, 'graphrun', 'update_hyperapp_result_display', listener),
-        nolib.no.runtime.remove_listener(props.graph, 'grapherror', 'update_hyperapp_error', error_listener)
+        nolib.no.runtime.remove_listener('graphrun', 'update_hyperapp_result_display', listener),
+        nolib.no.runtime.remove_listener('grapherror', 'update_hyperapp_error', error_listener)
     );
 }
 

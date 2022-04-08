@@ -1111,13 +1111,12 @@ const nolib = {
                 graph,
                 node_map: new Map(graph.nodes.map(n => [n.id, n])),
                 in_edge_map: new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.to === n.id)])),
-                parent_map: new Map(),
                 parent: undefined,
+                args: {},
                 fn_cache: new Map(),
-                listeners: new Map(),
-                event_values: new Map(),
                 is_cached: new Set()
             });
+            const event_listeners = new Map();
             const getorsetgraph = (graph, id, path, valfn) => getorset(getorset(cache, graph.id, () => new_graph_cache(graph))[path], id, valfn);
             const publish = (graph, event, data) => {
                 const gcache = cache.get(graph.id);
@@ -1126,14 +1125,13 @@ const nolib = {
                     // gcache.graph = {...graph, out: gcache.graph.out ?? graph.out ?? 'main/out'};
                     gcache.graph = graph;
                 }
-                const listeners = getorsetgraph(graph, event, 'listeners', () => new Map());
-                const event_values = getorsetgraph(graph, event, 'event_values', () => new Map());
-                event_values.set('event', data);
+
+                const listeners = getorset(event_listeners, event, () => new Map());
                 for (let l of listeners.values()) {
                     if (typeof l === 'function') {
                         l(graph, data);
                     } else if (typeof l === 'object' && l.fn && l.graph) {
-                        nolib.no.runGraph(l.graph, l.fn, Object.assign({}, l.args ?? {}, { data }))
+                        nolib.no.runGraph(l.graph, l.fn, Object.assign({}, l.args ?? {}, { data }), gcache.lib)
                     }
                 }
             }
@@ -1152,16 +1150,9 @@ const nolib = {
                         const gcache = cache.get(graph.id);
                         graph = gcache.graph ?? graph;
 
-                        const result = nolib.no.runGraph(graph, graph.out ?? 'main/out');
+                        const result = nolib.no.runGraph(graph, graph.out ?? 'out', get_args(graph), gcache.lib);
                         Promise.resolve(result).then(res => {
-                            gcache.last_result = res;
-                            publish(graph, 'graphrun', res);
-
-                            // const change = [...gcache.node_map.values()]
-                            //     .find(n => n.ref === 'arg' && !compare(nodysseus_get(res, n.value), nodysseus_get(last_result, n.value)));
-                            // if (change !== undefined) {
-                            //     rungraph(graph);
-                            // }
+                            publish(graph,'graphrun', res);
                         }).catch(e => publish(graph, 'grapherror', e))
                     } catch (e) {
                         publish(graph, 'grapherror', e);
@@ -1169,45 +1160,45 @@ const nolib = {
                 })
             }
 
-            const add_listener = (graph, event, listener_id, fn, remove) => {
+            const add_listener = (event, listener_id, fn, remove) => {
                 if (remove) {
-                    remove_listener(graph, event, listener_id);
+                    remove_listener(event, listener_id);
                 }
 
-                const listeners = getorsetgraph(graph, event, 'listeners', () => new Map());
+                const listeners = getorset(event_listeners, event, () => new Map());
                 listeners.set(listener_id, fn);
 
                 //TODO: rethink this maybe?
                 if (event !== 'graphchange') {
-                    add_listener(graph, 'graphchange', 'rungraph', rungraph);
+                    add_listener('graphchange', 'rungraph', rungraph);
                 }
             }
 
-            const remove_listener = (graph, event, listener_id) => {
-                const listeners = cache.get(graph.id).listeners;
-                for (let l of listeners.values()) {
-                    l.delete(listener_id);
-                }
+            const remove_listener = (event, listener_id) => {
+                const listeners = event_listeners.get(event);
+                listeners.delete(listener_id);
 
                 //TODO: rethink this maybe?
                 if (listeners.size === 0) {
-                    const graph_listeners = cache.get(graph.id).listeners;
-                    graph_listeners.delete(event);
-                    if (graph_listeners.size === 1 && graph_listeners.has('graphchange')) {
-                        remove_listener(graph, 'graphchange', 'rungraph');
+                    event_listeners.delete(event);
+                    if (event_listeners.size === 1 && event_listeners.has('graphchange')) {
+                        remove_listener('graphchange', 'rungraph');
                     }
                 }
             }
 
-            const update_graph = (graph, result) => {
+            const update_graph = (graph, args, lib) => {
                 graph = resolve(graph);
                 const new_cache = new_graph_cache(graph);
                 getorset(cache, graph.id, () => new_cache).node_map = new_cache.node_map;
                 getorset(cache, graph.id, () => new_cache).in_edge_map = new_cache.in_edge_map;
                 getorset(cache, graph.id, () => new_cache).is_cached = new_cache.is_cached;
-                if(result) {
-                    const last_result = getorset(cache, graph.id, () => new_cache).last_result;
-                    getorset(cache, graph.id, () => new_cache).last_result = {...last_result, ...result};
+                if(lib){
+                    getorset(cache, graph.id, () => new_cache).lib = lib;
+                }
+                if(args) {
+                    const last_args = getorset(cache, graph.id, () => new_cache).args;
+                    getorset(cache, graph.id, () => new_cache).args = {...last_args, ...args};
                 }
                 publish(graph, 'graphchange');
             }
@@ -1218,16 +1209,10 @@ const nolib = {
                 get_graph(graph).nodes.find(n => n.id === id) 
                     ?? (cache.get(graph.id)?.parent ? get_ref(graph, id) : undefined));
             const get_edges_in = (graph, id) => getorsetgraph(resolve(graph), id, 'in_edge_map', () => graph.edges.filter(e => e.to === id));
-
+            const get_args = (graph) => cache.get(graph.id).args;
             const get_graph = (graph) => cache.get(graph.id).graph ?? graph;
 
             return {
-                add_graph: (graph) => {
-                    // const gcache = getorset(cache, graph.id, () => new_graph_cache(graph));
-                    // add_listener(graph, 'graphchange', 'update_gcache', g => gcache.graph = g);
-                    // publish(graph, 'graphchange');
-                    update_graph(graph);
-                },
                 is_cached: (graph, id) => getorset(cache, graph.id, () => new_graph_cache(graph)).is_cached.has(id),
                 set_cached: (graph, id) => getorset(cache, graph.id, () => new_graph_cache(graph)).is_cached.add(id),
                 get_ref,
@@ -1237,6 +1222,7 @@ const nolib = {
                 get_fn: (graph, orderedargs, node_ref) => getorsetgraph(resolve(graph), orderedargs + node_ref.script, 'fn_cache', () => new Function(`return function _${(node_ref.name?.replace(/\W/g, "_") ?? node_ref.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script}}`)()),
                 update_graph,
                 get_graph,
+                get_args,
                 edit_edge: (graph, edge, old_edge) => {
                     const gcache = getorset(cache, graph.id, () => new_graph_cache(resolve(graph)));
                     graph = gcache.graph;
@@ -1309,7 +1295,7 @@ const nolib = {
                 },
                 add_listener,
                 add_listener_extern: {
-                    args: ['graph', 'event', 'listener_id', 'fn'],
+                    args: ['event', 'listener_id', 'fn'],
                     add_listener,
                 },
                 remove_listener,
