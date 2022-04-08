@@ -3,3 +3,4 @@ node_modules
 log.txt
 public/*.bundle.js
 public/worker.js
+*.js.map
