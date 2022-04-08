@@ -15,7 +15,11 @@ function nodysseus_get(obj, propsArg, defaultValue) {
     props = propsArg.slice(0);
   }
   if (typeof propsArg == 'string') {
-    props = propsArg.split('.');
+      if(!propsArg.includes('.')) {
+          props = [propsArg];
+      } else {
+        props = propsArg.split('.');
+      }
   }
   if (typeof propsArg == 'symbol' || typeof propsArg === 'number') {
     props = [propsArg];
@@ -46,7 +50,7 @@ function nodysseus_get(obj, propsArg, defaultValue) {
   return obj;
 }
 
-function compare(value1, value2, keys) {
+function compare(value1, value2) {
     if (value1 === value2) {
         return true;
     }
@@ -79,7 +83,7 @@ function compare(value1, value2, keys) {
             return compareArrays(Array.from(value1), Array.from(value2));
         }
 
-        return compareObjects(value1, value2, keys);
+        return compareObjects(value1, value2);
     }
 
     return compareNativeSubrefs(value1, value2);
@@ -328,7 +332,8 @@ const mockcombined = (data, graph_input_value) => {
     //     data.__args = graph_input_value;
     //     // data._needsresolve = true;
     // }
-    return {...data, __args: graph_input_value};
+    data.__args = graph_input_value
+    return data;
     // TODO: remove after we're sure this works
     // return Object.assign({}, graph_input_value, data);
     return new Proxy(data, {
@@ -353,7 +358,7 @@ const mockcombined = (data, graph_input_value) => {
 }
 
 const node_nodes = (node, node_ref, cache, graph_input_value, data, full_lib, graph, usecache, is_node_cached, run_with_val, inputs, cache_id, _needsresolve) => {
-    const outid = `${node.id}/${node_ref.out ?? 'out'}`;
+    const outid = graph.id + "/" + node.id;
     const keys = node_ref.nodes.filter(n => n.ref === 'arg').map(n => n.value);
     const combined_data_input = typeof graph_input_value === 'object' && !Array.isArray(graph_input_value) && data
         ? mockcombined(data, graph_input_value)
@@ -377,16 +382,13 @@ const node_nodes = (node, node_ref, cache, graph_input_value, data, full_lib, gr
     // const res = run_with_val(outid)(combined_data_input)
     const node_graph = {
         ...node, 
-        id: graph.id + "/" + node.id,
+        id: outid,
         node_id: node.id,
-        nodes: node_ref.nodes.map(n => n.id === 'in' ? {...n, value: combined_data_input} : n), 
+        nodes: node_ref.nodes,
         edges: node_ref.edges
     };
     full_lib.no.runtime.set_parent(node_graph, graph);
     const res = full_lib.no.runGraph(node_graph, node_ref.out ?? 'out', combined_data_input, full_lib);
-    if(node_ref.id.length > 256) {
-        debugger;
-    }
     // console.log(resolve(combined_data_input));
     // console.log(res);
     if (typeof res === 'object' && !!res && !res._Proxy && !Array.isArray(res) && Object.keys(res).length > 0) {
@@ -1148,10 +1150,9 @@ const nolib = {
                     try {
                         graph = resolve(graph);
                         const gcache = cache.get(graph.id);
-                        const last_result = gcache.last_result;
                         graph = gcache.graph ?? graph;
 
-                        const result = nolib.no.runGraph(graph, graph.out ?? 'main/out', last_result ?? {});
+                        const result = nolib.no.runGraph(graph, graph.out ?? 'main/out');
                         Promise.resolve(result).then(res => {
                             gcache.last_result = res;
                             publish(graph, 'graphrun', res);
