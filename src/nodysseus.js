@@ -435,7 +435,6 @@ const node_script = (node, node_ref, cache, graph_input_value, data, full_lib, g
         let hit = compare(data, val[1]);
         // hit = hit && compare(graph_input_value, val[2]);
         if (hit) {
-            console.log('script hit')
             return val[0]
         }
     }
@@ -512,7 +511,6 @@ const node_extern = (node, node_ref, node_id, cache, graph_input_value, data, fu
             let hit = compare(args[0], val[1]);
             // hit = hit && compare(graph_input_value, val[2]);
             if (hit) {
-                console.log('extern hit')
                 return val[0]
             }
         }
@@ -634,8 +632,13 @@ const executeGraph = ({ cache, graph, lib, cache_id, usecache }) => {
     const run_with_val = (node_id) => {
         return (graph_input_value, cache_id_node) => {
 
-            // graph_input_value = Object.assign({}, full_lib.no.runtime.get_args(graph) ?? {}, graph_input_value)
-            let is_node_cached = full_lib.no.runtime.is_cached(graph, node_id);
+            const cache_args = full_lib.no.runtime.get_args(graph);
+            if(cache_args) {
+                Object.assign(graph_input_value, cache_args);
+            }
+            
+            // let is_node_cached = full_lib.no.runtime.is_cached(graph, node_id);
+            let is_node_cached = true;
             let node = full_lib.no.runtime.get_node(graph, node_id);
             // full_lib.no.runtime.set_cached(graph, node_id);
 
@@ -709,7 +712,7 @@ const executeGraph = ({ cache, graph, lib, cache_id, usecache }) => {
             const data = create_data(inputs, input_data_map);
 
             if (node_ref.nodes) {
-                return node_nodes(node, node_ref, cache, graph_input_value, data, full_lib, graph, usecache, is_node_cached, run_with_val, inputs, cache_id, _needsresolve)
+                return node_nodes(node, node_ref, cache, graph_input_value, data, full_lib, graph, false, is_node_cached, run_with_val, inputs, cache_id, _needsresolve)
             } else if (node_ref.script) {
                 return node_script(node, node_ref, cache, graph_input_value, data, full_lib, graph, usecache, is_node_cached, run_with_val, inputs, cache_id, _needsresolve)
             } else if (node_ref.extern) {
@@ -1117,7 +1120,7 @@ const nolib = {
                 node_map: new Map(graph.nodes.map(n => [n.id, n])),
                 in_edge_map: new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.to === n.id)])),
                 parent: undefined,
-                args: {},
+                args: false,
                 fn_cache: new Map(),
                 is_cached: new Set()
             });

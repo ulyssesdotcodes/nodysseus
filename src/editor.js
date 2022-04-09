@@ -714,8 +714,7 @@ const hlib = {
             args: ['dom_type', 'props', 'children', 'memo'], 
             fn: (dom_type, props, children, usememo) => usememo ? memo(runh, {d: dom_type, p: props, c: children}) : runh({d: dom_type, p: props, c: children})}, 
         app, 
-        text: {args: ['text'], fn: text}, 
-        memo: {args: ['view', 'props'], fn: memo} 
+        text: {args: ['text'], fn: text}
     },
     scripts: { d3subscription, updateSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all, listen, graph_subscription, result_subscription},
     panzoom: pzobj,

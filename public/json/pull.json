@@ -1050,22 +1050,24 @@
         { "id": "children", "ref": "arg", "value": "children" },
         { "id": "props", "ref": "arg", "value": "props" },
         { "id": "dom_type", "ref": "arg", "value": "dom_type" },
+        { "id": "memo", "ref": "arg", "value": "memo" },
         { "id": "div", "value": "div" },
         {
           "id": "fill_children",
-          "script": "return children === undefined ? [] : children.length !== undefined ? children.filter(c => !!c).map(c => c.el ?? c) : [children.el ?? children]"
+          "script": "return children === undefined ? [] : children.length !== undefined ? children.map(c => _lib.no.resolve(c)).filter(c => !!c).map(c => c.el ?? c) : [children.el ?? children]"
         },
         { "id": "fill_props", "script": "return props ?? {}" },
         { "id": "dom_type_def", "ref": "default" },
         {
           "id": "out",
-          "script": "if(!(typeof dom_type === 'string' && Array.isArray(children))){ throw new Error('invalid element');} children.filter(c => c).forEach(c => {if(typeof c.dom_type !== 'string'){throw new Error ('invalid child element');}}); return {el: {dom_type, props, children}}"
+          "script": "if(!(typeof dom_type === 'string' && Array.isArray(children))){ throw new Error('invalid element');} children.filter(c => c).forEach(c => {if(typeof c.dom_type !== 'string'){throw new Error ('invalid child element');}}); return {el: {dom_type, props, children, memo}}"
         }
       ],
       "edges": [
         { "from": "children", "to": "fill_children", "as": "children" },
         { "from": "props", "to": "fill_props", "as": "props", "type": "resolve" },
-        { "from": "fill_children", "to": "out", "as": "children", "type": "resolve" },
+        { "from": "memo", "to": "out", "as": "memo"},
+        { "from": "fill_children", "to": "out", "as": "children"},
         { "from": "fill_props", "to": "out", "as": "props" },
         { "from": "dom_type", "to": "dom_type_def", "as": "value" },
         { "from": "div", "to": "dom_type_def", "as": "otherwise" },
@@ -1143,10 +1145,12 @@
         { "id": "props", "ref": "arg", "value": "props" },
         { "id": "children", "ref": "arg", "value": "children" },
         { "id": "text", "ref": "arg", "value": "text" },
+        { "id": "memo", "ref": "arg", "value": "memo" },
         {"id": "map_child_text", "ref": "arg", "value": "element.text"},
         {"id": "map_child_props", "ref": "arg", "value": "element.props"},
         {"id": "map_child_dom_type", "ref": "arg", "value": "element.dom_type"},
         {"id": "map_child_children", "ref": "arg", "value": "element.children"},
+        {"id": "map_child_memo", "ref": "arg", "value": "element.memo"},
         {"id": "el_path", "value": "el"},
         {"id": "map_run", "ref": "run_h"},
         {"id": "map_el", "ref": "get"},
@@ -1167,10 +1171,12 @@
         { "from": "in", "to": "out", "as": "_", "type": "ref" },
         { "from": "dom_type", "to": "out_input", "as": "dom_type"},
         { "from": "dom_type", "to": "out_h", "as": "dom_type" },
+        { "from": "memo", "to": "out_h", "as": "memo" },
         {"from": "map_child_props", "to": "map_run", "as": "props"},
         {"from": "map_child_text", "to": "map_run", "as": "text"},
         {"from": "map_child_dom_type", "to": "map_run", "as": "dom_type"},
         {"from": "map_child_children", "to": "map_run", "as": "children"},
+        {"from": "map_child_memo", "to": "map_run", "as": "memo"},
         {"from": "map_run", "to": "map_el", "as": "target"},
         {"from": "el_path", "to": "map_el", "as": "path"},
         {"from": "map_el", "to": "map_runnable", "as": "fn"},
@@ -1185,7 +1191,7 @@
         { "from": "out_text", "to": "out_el", "as": "h_text" },
         { "from": "out_h", "to": "out_el", "as": "h" },
         { "from": "out_input", "to": "out_el", "as": "input"},
-        { "from": "out_el", "to": "out", "as": "el", "type": "resolve" }
+        { "from": "out_el", "to": "out", "as": "el" }
       ]
     },
     {
@@ -4352,6 +4358,7 @@
                 { "id": "level", "ref": "arg", "value": "level" },
                 { "id": "hide_types", "ref": "arg", "value": "hide_types" },
                 { "id": "error", "ref": "arg", "value": "node_error" },
+                {"id": "memo", "value": true},
                 { "id": "out", "ref": "html_element" },
                 { "id": "parent", "ref": "html_element" },
                 { "id": "parent_dom_type", "value": "svg" },
@@ -4700,6 +4707,7 @@
                 { "from": "onclick_node", "to": "parent_attrs", "as": "onclick" },
                 { "from": "parent_attrs", "to": "out", "as": "props" },
                 { "from": "parent_dom_type", "to": "out", "as": "dom_type" },
+                { "from": "memo", "to": "out", "as": "memo" },
                 { "from": "get_node", "to": "parent_attrs", "as": "node" }
               ]
             },
@@ -5036,7 +5044,7 @@
         { "from": "styles", "to": "wrapper_children", "as": "styles" },
         { "from": "popover_graph_h", "to": "popover_graph_h_wrapper", "as": "el" },
         { "from": "popover_graph_h_wrapper", "to": "wrapper_children", "as": "popover_graph_h" },
-        { "from": "wrapper_children", "to": "wrapper", "as": "children", "type": "resolve" },
+        { "from": "wrapper_children", "to": "wrapper", "as": "children"},
         { "from": "wrapper_dom_type", "to": "wrapper", "as": "dom_type" },
         { "from": "wrapper_props", "to": "wrapper", "as": "props", "type": "resolve" },
         { "from": "out_input", "to": "out", "as": "input" },
