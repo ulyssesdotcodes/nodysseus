@@ -90,7 +90,7 @@
         { "id": "onkey_fn", "ref": "arg", "value": "onkey_fn" },
         {
           "id": "out",
-          "script": "return {dispatch: _lib.ha.app({dispatch: _lib.ha.middleware, init: () => [init, static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp], [() => _lib.no.runtime.update_graph(init.display_graph)]], view: s => {if(s instanceof Map){ throw new Error('stop') } const vs = view(s); return vs.el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}], !static && [_lib.scripts.graph_subscription, {graph: s.display_graph}], !static && !init.norun._value && [_lib.scripts.result_subscription, {graph: s.display_graph}], !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.panzoom.init, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]]})}"
+          "script": "return {dispatch: _lib.ha.app({dispatch: _lib.ha.middleware, init: () => [_lib.no.resolve(init), static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp], [() => _lib.no.runtime.update_graph(init.display_graph)]], view: s => {if(s instanceof Map){ throw new Error('stop') } const vs = view(s); return vs.el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}], !static && [_lib.scripts.graph_subscription, {graph: s.display_graph}], !static && !init.norun._value && [_lib.scripts.result_subscription, {graph: s.display_graph}], !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.panzoom.init, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]]})}"
         }
       ],
       "edges": [
@@ -3828,7 +3828,7 @@
     { "id": "html_id", "ref": "arg", "value": "html_id" },
     {
       "id": "render_popover_graph_effect",
-      "script": "return (dispatch, payload) => requestAnimationFrame(() => {payload = _lib.no.resolve(payload); if(payload.popover_dispatch) { payload.popover_dispatch(s => [{...s, display_graph: payload.display_graph, selected: [payload.display_graph.out]}, [s.update_sim_effect, {...s, display_graph: payload.display_graph}], [s.update_hyperapp] ]) } else { const popover_dispatch = _lib.no.executeGraphNode({graph: payload.graph, lib: _lib})('initialize_hyperapp_app')({graph: payload.graph, display_graph: payload.display_graph, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions, readonly: true, hide_types: true, static: true, hash: ''}).dispatch; dispatch(s => ({...s, popover_dispatch}));}})"
+      "script": "return (dispatch, payload) => requestAnimationFrame(() => {payload = _lib.no.resolve(payload); if(payload.popover_dispatch) { payload.popover_dispatch(s => [{...s, display_graph: payload.display_graph, selected: [payload.display_graph.out]}, [s.update_sim_effect, {...s, display_graph: payload.display_graph}], [s.update_hyperapp] ]) } else { const popover_dispatch = _lib.no.executeGraphNode({graph: payload.graph, lib: _lib})('initialize_hyperapp_app')({graph: payload.graph, display_graph: {...payload.display_graph, id: 'popover'}, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions, readonly: true, hide_types: true, static: true, hash: ''}).dispatch; dispatch(s => ({...s, popover_dispatch}));}})"
     },
     {
       "id": "handle_popover_event",
@@ -4388,6 +4388,7 @@
                         { "id": "arg_node", "ref": "arg", "value": "node" },
                         { "id": "payload_node", "ref": "arg", "value": "payload.node" },
                         { "id": "payload_node_value", "ref": "arg", "value": "payload.node.value" },
+                        { "id": "static", "ref": "arg", "value": "state.static" },
                         { "id": "node", "ref": "default" },
                         { "id": "event", "ref": "arg", "value": "payload.event" },
                         { "id": "empty_string", "value": "" },
@@ -4425,6 +4426,7 @@
                         { "id": "node_primary_text_onclick" },
                         { "id": "node_primary_text_onclick_runnable", "ref": "runnable" },
                         { "id": "node_selected_primary_text_onclick_runnable", "ref": "if" },
+                        { "id": "node_not_static_primary_text_onclick_runnable", "ref": "if" },
                         { "id": "node_primary_text_onclick_props" },
                         { "id": "node_primary_text_props", "ref": "merge_objects" },
                         { "id": "node_primary_text_text", "ref": "html_text" },
@@ -4512,7 +4514,17 @@
                         },
                         { "from": "arg_selected", "to": "node_selected_primary_text_onclick_runnable", "as": "pred" },
                         {
+                          "from": "static",
+                          "to": "node_not_static_primary_text_onclick_runnable",
+                          "as": "pred"
+                        },
+                        {
                           "from": "node_selected_primary_text_onclick_runnable",
+                          "to": "node_not_static_primary_text_onclick_runnable",
+                          "as": "true"
+                        },
+                        {
+                          "from": "node_not_static_primary_text_onclick_runnable",
                           "to": "node_primary_text_onclick_props",
                           "as": "onclick"
                         },

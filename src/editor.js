@@ -641,7 +641,7 @@ const pzobj = {
             hlib.panzoom.instance.on('panstart', e => performance.now() - hlib.panzoom.lastpanzoom > 100 ? dispatch(sub_payload.action, {event: 'panstart', transform: e.getTransform()}) : undefined);
             hlib.panzoom.instance.moveTo(window.innerWidth * 0, window.innerHeight * 0.5);
         });
-        return () => { cancelAnimationFrame(init); instance?.dispose(); }
+        return () => { cancelAnimationFrame(init); hlib.panzoom.instance?.dispose(); }
     }
 }
 

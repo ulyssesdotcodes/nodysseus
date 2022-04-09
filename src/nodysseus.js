@@ -375,6 +375,7 @@ const node_nodes = (node, node_ref, cache, graph_input_value, data, full_lib, gr
         const val = cache.get(cache_id).get(outid);
         hit = compare(val[1], combined_data_input, keys);
         if (hit) {
+            console.log('nodes hit')
             return val[0];
         }
     }
@@ -434,6 +435,7 @@ const node_script = (node, node_ref, cache, graph_input_value, data, full_lib, g
         let hit = compare(data, val[1]);
         // hit = hit && compare(graph_input_value, val[2]);
         if (hit) {
+            console.log('script hit')
             return val[0]
         }
     }
@@ -510,6 +512,7 @@ const node_extern = (node, node_ref, node_id, cache, graph_input_value, data, fu
             let hit = compare(args[0], val[1]);
             // hit = hit && compare(graph_input_value, val[2]);
             if (hit) {
+                console.log('extern hit')
                 return val[0]
             }
         }
@@ -545,6 +548,7 @@ const node_data = (node, node_ref, node_id, cache, graph_input_value, data, full
         let hit = compare(data, val);
         // hit = hit && compare(graph_input_value, val[2]);
         if (hit) {
+            console.log('data hit');
             return val;
         }
     }
@@ -617,7 +621,7 @@ const create_data = (inputs, input_data_map) => {
 
 const executeGraph = ({ cache, graph, lib, cache_id, usecache }) => {
     const full_lib = lib ? lib.no ? lib : {...nolib, ...lib} : nolib;
-    usecache = false;// usecache ?? true;
+    usecache = usecache ?? true;
 
     if (!graph.nodes) {
         throw new Error(`Graph has no nodes! in: ${graph.in} out: ${graph.out}`)
@@ -630,6 +634,7 @@ const executeGraph = ({ cache, graph, lib, cache_id, usecache }) => {
     const run_with_val = (node_id) => {
         return (graph_input_value, cache_id_node) => {
 
+            // graph_input_value = Object.assign({}, full_lib.no.runtime.get_args(graph) ?? {}, graph_input_value)
             let is_node_cached = full_lib.no.runtime.is_cached(graph, node_id);
             let node = full_lib.no.runtime.get_node(graph, node_id);
             // full_lib.no.runtime.set_cached(graph, node_id);
@@ -1192,6 +1197,7 @@ const nolib = {
                 const new_cache = new_graph_cache(graph);
                 getorset(cache, graph.id, () => new_cache).node_map = new_cache.node_map;
                 getorset(cache, graph.id, () => new_cache).in_edge_map = new_cache.in_edge_map;
+                getorset(cache, graph.id, () => new_cache).fn_cache = new_cache.fn_cache;
                 getorset(cache, graph.id, () => new_cache).is_cached = new_cache.is_cached;
                 if(lib){
                     getorset(cache, graph.id, () => new_cache).lib = lib;
@@ -1209,7 +1215,7 @@ const nolib = {
                 get_graph(graph).nodes.find(n => n.id === id) 
                     ?? (cache.get(graph.id)?.parent ? get_ref(graph, id) : undefined));
             const get_edges_in = (graph, id) => getorsetgraph(resolve(graph), id, 'in_edge_map', () => graph.edges.filter(e => e.to === id));
-            const get_args = (graph) => cache.get(graph.id).args;
+            const get_args = (graph) => getorset(cache, graph.id, () => new_graph_cache(graph)).args;
             const get_graph = (graph) => cache.get(graph.id).graph ?? graph;
 
             return {
@@ -1219,7 +1225,7 @@ const nolib = {
                 get_node,
                 get_edges_in,
                 get_parent: (graph) => cache.get(graph.id)?.parent,
-                get_fn: (graph, orderedargs, node_ref) => getorsetgraph(resolve(graph), orderedargs + node_ref.script, 'fn_cache', () => new Function(`return function _${(node_ref.name?.replace(/\W/g, "_") ?? node_ref.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script}}`)()),
+                get_fn: (graph, orderedargs, node_ref) => getorsetgraph(resolve(graph), orderedargs + node_ref.id, 'fn_cache', () => new Function(`return function _${(node_ref.name?.replace(/\W/g, "_") ?? node_ref.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script}}`)()),
                 update_graph,
                 get_graph,
                 get_args,
@@ -1238,6 +1244,9 @@ const nolib = {
                         edges: graph.edges.filter(e => !(e.to === (old_edge ?? edge).to && e.from === (old_edge ?? edge).from)).concat([edge])
                     }
                     publish(new_graph, 'graphchange');
+                },
+                update_args: (graph, args) => { 
+                    getorset(cache, graph.id, () => new_graph_cache(graph)).args = {...(args ?? {}), ...(cache.get(graph.id).args ?? {})};
                 },
                 add_node: (graph, node, edge) => {
                     // Add the node to the graph, making sure to use the right node_id at every level.
