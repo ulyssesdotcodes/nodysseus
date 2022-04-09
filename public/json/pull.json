@@ -90,7 +90,7 @@
         { "id": "onkey_fn", "ref": "arg", "value": "onkey_fn" },
         {
           "id": "out",
-          "script": "return {dispatch: _lib.ha.app({dispatch: _lib.ha.middleware, init: () => [_lib.no.resolve(init), static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp], [() => _lib.no.runtime.update_graph(init.display_graph)]], view: s => {if(s instanceof Map){ throw new Error('stop') } const vs = view(s); return vs.el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}], !static && [_lib.scripts.graph_subscription, {graph: s.display_graph}], !static && !init.norun._value && [_lib.scripts.result_subscription, {graph: s.display_graph}], !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.panzoom.init, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]]})}"
+          "script": "return {dispatch: _lib.ha.app({dispatch: _lib.ha.middleware, init: () => [_lib.no.resolve(init), static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp], [() => _lib.no.runtime.update_graph(init.display_graph)]], view: s => {if(s instanceof Map){ throw new Error('stop') } const vs = view(s); return vs.el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}], !static && [_lib.scripts.graph_subscription], !static && !init.norun._value && [_lib.scripts.result_subscription, {graph: s.display_graph}], !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.panzoom.init, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]]})}"
         }
       ],
       "edges": [
@@ -1479,48 +1479,54 @@
         { "id": "history", "ref": "arg", "value": "state.history" },
         { "id": "selected_path", "value": "selected" },
         { "id": "history_path", "value": "history" },
+        { "id": "display_graph_path", "value": "display_graph" },
         { "id": "payload", "ref": "arg", "value": "payload" },
         { "id": "node_id", "ref": "arg", "value": "payload.id" },
         { "id": "node", "ref": "find_node" },
         { "id": "parent_edge", "script": "return edges.find(e => e.from === node_id)" },
         { "id": "replaced_edges", "script": "return edges.filter(e => e.to === node_id)" },
+        { "id": "new_edges", "script": "return edges.filter(e => e !== parent_edge && e.to !== node_id).concat(child_edges.map((e, i) => ({ ...e, to: parent_edge.to, as: i === 0 ? parent_edge.as : !e.as ? e.as : current_child_edges.find(ce => ce.as === e.as && ce.from !== id) ? e.as + '1' : e.as })))" },
         { "id": "new_selected", "script": "return [edges.find(e => e.from === node_id)?.to ?? out]" },
+        { "id": "new_nodes", "script": "return nodes.filter(n => n.id !== node_id)" },
+        {"id": "new_graph_nodes_edges"},
+        {"id": "new_graph", "ref": "merge_objects"},
         {
           "id": "history_item",
           "script": "return {action: 'delete_node', node, edges, parent_edge, runnable: {fn: 'delete_node_action', graph: _graph, args: payload}}"
         },
         { "id": "new_history", "ref": "append" },
+        {"id": "set_display_graph", "ref": "set"},
         { "id": "set_selected", "ref": "set" },
         { "id": "set_history", "ref": "set" },
         { "id": "out" },
         {
           "id": "effects",
-          "script": "return [[() => _lib.no.runtime.delete_node(display_graph, id)], [update_sim_effect, new_state.state]]"
-        },
-        { "id": "out", "ref": "hyperapp_action_effect" }
+          "script": "return [[() => _lib.no.runtime.update_graph(display_graph)], [update_sim_effect, new_state.state]]"
+        }
       ],
       "edges": [
-        { "from": "state", "to": "set_edges", "as": "target" },
         { "from": "node_id", "to": "new_nodes", "as": "node_id" },
         { "from": "nodes", "to": "new_nodes", "as": "nodes" },
         { "from": "node_id", "to": "node", "as": "node_id" },
         { "from": "nodes", "to": "node", "as": "nodes" },
-        { "from": "new_nodes", "to": "set_nodes", "as": "value" },
-        { "from": "nodes_path", "to": "set_nodes", "as": "path" },
-        { "from": "state", "to": "set_selected", "as": "target" },
+        { "from": "new_nodes", "to": "new_graph_nodes_edges", "as": "nodes" },
+        { "from": "replaced_edges", "to": "new_edges", "as": "child_edges" },
         { "from": "edges", "to": "new_edges", "as": "edges" },
         { "from": "node_id", "to": "new_edges", "as": "node_id" },
         { "from": "parent_edge", "to": "new_edges", "as": "parent_edge" },
-        { "from": "edge", "to": "new_edges", "as": "edge" },
-        { "from": "new_edges", "to": "set_edges", "as": "value" },
-        { "from": "edges_path", "to": "set_edges", "as": "path" },
+        { "from": "new_edges", "to": "new_graph_nodes_edges", "as": "edges" },
+        { "from": "display_graph", "to": "new_graph", "as": "arg0" },
+        { "from": "new_graph_nodes_edges", "to": "new_graph", "as": "arg1" },
+        { "from": "state", "to": "set_display_graph", "as": "target" },
+        { "from": "new_graph", "to": "set_display_graph", "as": "value" },
+        { "from": "display_graph_path", "to": "set_display_graph", "as": "path" },
         { "from": "in", "to": "out", "as": "args" },
-        { "from": "set_edges", "to": "set_nodes", "as": "target" },
         { "from": "edges", "to": "new_selected", "as": "edges" },
         { "from": "node_id", "to": "new_selected", "as": "node_id" },
         { "from": "display_graph_out", "to": "new_selected", "as": "out" },
         { "from": "new_selected", "to": "set_selected", "as": "value" },
         { "from": "selected_path", "to": "set_selected", "as": "path" },
+        { "from": "set_display_graph", "to": "set_selected", "as": "target" },
         { "from": "set_selected", "to": "set_history", "as": "target" },
         { "from": "payload", "to": "history_item", "as": "payload" },
         { "from": "node", "to": "history_item", "as": "node" },
@@ -1535,10 +1541,10 @@
         { "from": "new_history", "to": "set_history", "as": "value" },
         { "from": "history_path", "to": "set_history", "as": "path" },
         { "from": "set_history", "to": "out", "as": "state" },
+        { "from": "new_graph", "to": "effects", "as": "display_graph" },
         { "from": "set_history", "to": "effects", "as": "new_state" },
         { "from": "update_sim_effect", "to": "effects", "as": "update_sim_effect" },
         { "from": "node_id", "to": "effects", "as": "id" },
-        { "from": "display_graph", "to": "effects", "as": "display_graph" },
         { "from": "effects", "to": "out", "as": "effects" }
       ]
     },
