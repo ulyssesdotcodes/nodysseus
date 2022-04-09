@@ -1126,7 +1126,6 @@ const nolib = {
             const publish = (graph, event, data) => {
                 const gcache = cache.get(graph.id);
                 if (event === 'graphchange') {
-                    console.log(graph);
                     // cache.get(graph.id).graph = 
                     // gcache.graph = {...graph, out: gcache.graph.out ?? graph.out ?? 'main/out'};
                     gcache.graph = graph;
