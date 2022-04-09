@@ -1170,7 +1170,7 @@ const nolib = {
                         const gcache = cache.get(graph.id);
                         graph = gcache.graph ?? graph;
 
-                        const result = nolib.no.runGraph(graph, graph.out ?? 'out', get_args(graph), gcache.lib);
+                        const result = nolib.no.runGraph(graph, graph.out ?? 'main/out', get_args(graph), gcache.lib);
                         Promise.resolve(result).then(res => {
                             publish(graph,'graphrun', res);
                         }).catch(e => publish(graph, 'grapherror', e))

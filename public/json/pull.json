@@ -166,7 +166,7 @@
           "id": "lahq5z4",
           "args": [],
           "name": "filter/out",
-          "script": "const filter_fn = _lib.no.executeGraphNode({graph: _graph, lib: _lib})(typeof fn === 'string' ? fn : fn.fn); return arr.filter(element => filter_fn(Object.assign(fn.args ?? {}, {element})))"
+          "script": "const filter_fn = _lib.no.executeGraphNode({graph: fn.graph ?? _graph, lib: _lib})(typeof fn === 'string' ? fn : fn.fn); return arr.filter(element => filter_fn(Object.assign(fn.args ?? {}, {element})))"
         },
         { "id": "x2sz5kb", "args": [], "ref": "arg", "value": "arr" },
         { "id": "fn", "ref": "arg", "value": "fn" },
@@ -803,13 +803,15 @@
         { "name": "out", "id": "j8c79uf", "ref": "filter" },
         { "id": "tkd4tqn", "name": "in" },
         { "id": "hfexsuu", "script": "return !key?.startsWith('_');" },
+        { "id": "runnable", "ref": "runnable" },
         { "id": "bgi2g37", "script": "return Object.entries(obj)" },
         { "id": "7gqcw0o", "ref": "arg", "value": "0.0" },
         { "id": "kpakw50", "ref": "arg", "value": "object" }
       ],
       "edges": [
         { "from": "tkd4tqn", "to": "j8c79uf", "as": "arr" },
-        { "from": "hfexsuu", "to": "j8c79uf", "as": "fn", "type": "ref" },
+        { "from": "hfexsuu", "to": "runnable", "as": "fn"},
+        { "from": "runnable", "to": "j8c79uf", "as": "fn"},
         { "from": "bgi2g37", "to": "j8c79uf", "as": "arr" },
         { "from": "7gqcw0o", "to": "hfexsuu", "as": "key" },
         { "from": "kpakw50", "to": "bgi2g37", "as": "obj" }
