@@ -281,11 +281,11 @@
         {"id": "args", "ref": "arg", "value": "args"},
         {"id": "fn_el_from", "ref": "arg", "value": "element.from"},
         {"id": "fn_el_as", "ref": "arg", "value": "element.as"},
-        {"id": "fn", "script": "return {fn, graph: _graph, args}"},
+        {"id": "fn", "script": "return {fn, graph: _lib.no.runtime.get_parent(_graph), args}"},
         {"id": "fn_run", "ref": "run"},
         {"id": "result_entry", "ref": "array"},
         {"id": "fn_runnable", "ref": "runnable"},
-        {"id": "edges", "script": "return _lib.no.runtime.get_edges_in(_graph, _lib.no.runtime.get_parent(_graph, _node.id)).filter(e => e.as !== 'args');"},
+        {"id": "edges", "script": "return _lib.no.runtime.get_edges_in(_lib.no.runtime.get_parent(_graph), _graph.node_id).filter(e => e.as !== 'args');"},
         {"id": "entries", "ref": "map"},
         {"id": "out", "script": "return Object.fromEntries(entries)"}
       ],
@@ -455,6 +455,18 @@
         {"from": "cached_value", "to": "out", "as": "false"},
         {"from": "cache", "to": "out", "as": "true"},
         {"from": "recache", "to": "out", "as": "pred"}
+      ]
+    },
+    {
+      "id": "set_arg",
+      "nodes": [
+        {"id": "name", "ref": "arg", "value": "name"},
+        {"id": "value", "ref": "arg", "value": "value"},
+        {"id": "out", "script": "_lib.no.runtime.update_graph(_lib.no.runtime.get_parentest(_graph), {[name]: value}); return value;"}
+      ],
+      "edges": [
+        {"from": "name", "to": "out", "as": "name"},
+        {"from": "value", "to": "out", "as": "value"}
       ]
     },
     {

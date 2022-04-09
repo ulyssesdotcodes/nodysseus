@@ -941,7 +941,7 @@ const contract_node = (data, keep_expanded = false) => {
                 .filter(n => keep_expanded || !inside_node_map.has(n.id))
                 .concat([{
                     id: final_node_id,
-                    value: node.value,
+                    name: node.name,
                     in: in_node_id?.startsWith(node_id + '/') ? in_node_id.substring(node_id.length + 1) : in_node_id,
                     out: out_node_id.startsWith(node_id + '/') ? out_node_id.substring(node_id.length + 1) : out_node_id,
                     nodes: inside_nodes.map(n => ({
@@ -981,9 +981,7 @@ const flattenNode = (graph, levels = -1) => {
             flat_nodes: acc.flat_nodes.concat(n.flat_nodes?.flat() ?? []).map(fn => {
                 // adjust for easy graph renaming
                 if ((fn.id === prefix + (graph.out ?? "out")) && graph.name) {
-                    fn.name = graph.name + "/out";
-                } else if (graph.in && (fn.id === prefix + (graph.in ?? "/in")) && graph.name) {
-                    fn.name = graph.name + "/in"
+                    fn.name = graph.name;
                 }
                 return fn
             }),
@@ -1070,6 +1068,7 @@ const generic_nodes = new Set([
     "ancestors",
     "return",
     "cache",
+    "set_arg",
 
     "math",
     "add",
@@ -1232,6 +1231,11 @@ const nolib = {
             const get_edges_in = (graph, id) => getorsetgraph(resolve(graph), id, 'in_edge_map', () => graph.edges.filter(e => e.to === id));
             const get_args = (graph) => getorset(cache, graph.id, () => new_graph_cache(graph)).args;
             const get_graph = (graph) => cache.get(graph.id).graph ?? graph;
+            const get_parent = (graph) => cache.get(graph.id)?.parent;
+            const get_parentest = (graph) => {
+                const parent = get_parent(graph);
+                return parent ? get_parentest(parent) : graph;
+            }
 
             return {
                 is_cached: (graph, id) => getorset(cache, graph.id, () => new_graph_cache(graph)).is_cached.has(id),
@@ -1239,7 +1243,8 @@ const nolib = {
                 get_ref,
                 get_node,
                 get_edges_in,
-                get_parent: (graph) => cache.get(graph.id)?.parent,
+                get_parent,
+                get_parentest,
                 get_fn: (graph, orderedargs, node_ref) => getorsetgraph(resolve(graph), orderedargs + node_ref.id, 'fn_cache', () => new Function(`return function _${(node_ref.name?.replace(/\W/g, "_") ?? node_ref.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script}}`)()),
                 update_graph,
                 get_graph,
