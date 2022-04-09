@@ -1058,6 +1058,7 @@ const generic_nodes = new Set([
     "input_value",
     "ancestors",
     "return",
+    "cache",
 
     "math",
     "add",

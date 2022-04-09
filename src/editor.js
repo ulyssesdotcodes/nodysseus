@@ -514,9 +514,11 @@ const keydownSubscription = (dispatch, options) => {
 
 const graph_subscription = (dispatch, props) => {
     const listener = (graph) => {
-        requestAnimationFrame(() =>  {
-            dispatch(s => [{...s, display_graph: graph}, [s.update_sim_effect]])
-        })
+        if(props.display_graph_id === graph.id) {
+            requestAnimationFrame(() =>  {
+                dispatch(s => [{...s, display_graph: graph}, [s.update_sim_effect]])
+            })
+        }
     };
 
     nolib.no.runtime.add_listener('graphchange', 'update_hyperapp', listener);

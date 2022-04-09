@@ -90,13 +90,14 @@
         { "id": "onkey_fn", "ref": "arg", "value": "onkey_fn" },
         {
           "id": "out",
-          "script": "return {dispatch: _lib.ha.app({dispatch: _lib.ha.middleware, init: () => [_lib.no.resolve(init), static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp], [() => _lib.no.runtime.update_graph(init.display_graph)]], view: s => {if(s instanceof Map){ throw new Error('stop') } const vs = view(s); return vs.el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}], !static && [_lib.scripts.graph_subscription], !static && !init.norun._value && [_lib.scripts.result_subscription, {graph: s.display_graph}], !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.panzoom.init, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]]})}"
+          "script": "return {dispatch: _lib.ha.app({dispatch: _lib.ha.middleware, init: () => [_lib.no.resolve(init), static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp], [() => _lib.no.runtime.update_graph(init.display_graph)]], view: s => {if(s instanceof Map){ throw new Error('stop') } const vs = view(s); return vs.el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}], !static && [_lib.scripts.graph_subscription, {display_graph_id: s.display_graph_id}], !static && !init.norun._value && [_lib.scripts.result_subscription, {graph: s.display_graph}], !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.panzoom.init, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]]})}"
         }
       ],
       "edges": [
         { "from": "view", "to": "out", "as": "view" },
         { "from": "html_id", "to": "out", "as": "html_id" },
         { "from": "display_graph", "to": "out", "as": "display_graph" },
+        { "from": "display_graph_id", "to": "out", "as": "display_graph_id" },
         { "from": "static", "to": "out", "as": "static" },
         { "from": "update_sim", "to": "out", "as": "update_sim" },
         { "from": "update_hyperapp", "to": "out", "as": "update_hyperapp" },
@@ -433,6 +434,27 @@
         { "from": "in", "to": "out", "as": "args" },
         { "from": "target", "to": "out", "as": "target" },
         { "from": "path", "to": "out", "as": "path" }
+      ]
+    },
+    {
+      "id": "cache",
+      "nodes": [
+        {"id": "in"},
+        {"id": "value", "ref": "arg", "value": "value"},
+        {"id": "recache", "ref": "arg", "value": "recache"},
+        {"id": "cached", "ref": "arg", "value": "cached", "type": "internal"},
+        {"id": "cache", "script": "_lib.no.runtime.update_graph(_graph, {cached: value}); return value;"},
+        {"id": "cached_value", "ref": "default"},
+        {"id": "out", "ref": "if"}
+      ],
+      "edges": [
+        {"from": "in", "to": "out", "as": "_"},
+        {"from": "value", "to": "cache", "as": "value"},
+        {"from": "cache", "to": "cached_value", "as": "otherwise"},
+        {"from": "cached", "to": "cached_value", "as": "value"},
+        {"from": "cached_value", "to": "out", "as": "false"},
+        {"from": "cache", "to": "out", "as": "true"},
+        {"from": "recache", "to": "out", "as": "pred"}
       ]
     },
     {
@@ -1298,6 +1320,7 @@
     { "id": "dimensions", "ref": "arg", "value": "dimensions" },
     { "id": "get_graph", "ref": "arg", "value": "graph" },
     { "id": "get_display_graph", "ref": "arg", "value": "display_graph" },
+    { "id": "display_graph_id", "ref": "arg", "value": "display_graph.id" },
     { "id": "display_graph_out", "ref": "arg", "value": "display_graph.out" },
     { "id": "html_id", "ref": "arg", "value": "html_id" },
     { "id": "examples", "ref": "arg", "value": "examples" },
@@ -5089,6 +5112,7 @@
     { "from": "get_graph", "to": "update_nodes", "as": "graph" },
     { "from": "get_display_graph", "to": "update_nodes", "as": "display_graph" },
     { "from": "get_display_graph", "to": "hyperapp_init_state", "as": "display_graph" },
+    { "from": "display_graph_id", "to": "hyperapp_init_state", "as": "display_graph_id" },
     { "from": "display_graph_out", "to": "calculate_levels", "as": "selected" },
     { "from": "get_display_graph", "to": "calculate_levels", "as": "display_graph" },
     { "from": "calculate_levels", "to": "hyperapp_init_state", "as": "levels" },
