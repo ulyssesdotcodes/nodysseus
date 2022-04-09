@@ -65,6 +65,10 @@ function compare(value1, value2) {
     if (typeof value1 !== typeof value2) {
         return false;
     }
+    if(typeof value1 === 'function' || typeof value2 === 'function') {
+        // no way to know if context of the functions has changed
+        return false;
+    }
     // if (value1 !== Object(value1)) {
     //     // non equal primitives
     //     return false;
@@ -85,6 +89,7 @@ function compare(value1, value2) {
 
         return compareObjects(value1, value2);
     }
+
 
     return compareNativeSubrefs(value1, value2);
 }
@@ -146,24 +151,31 @@ const hashcode = function (str, seed = 0) {
     return 4294967296 * (2097151 & h2) + (h1 >>> 0);
 };
 
-const createProxy = (run_with_val, input, graph_input_value, is_node_cached, usecache, cache) => {
+const createProxy = (run_with_val, input, graphid, graph_input_value, is_node_cached, usecache, cache) => {
     let res = Object.create(null);
     let resolved = false;
     // return run_with_val(input.from)(graph_input_value);
     if (usecache && cache) {
-        const cached = cache.get(input.from + '+proxy');
+        const cached = cache.get(graphid + input.from + '+proxy');
         if (usecache && is_node_cached && cached && compare(graph_input_value, cached[1])) {
-            console.log('proxy cache');
+            cached[0]['_reset'];
             return cached[0];
         }
     }
 
     const proxy = new Proxy(res, {
+        reset: () => {res = undefined; resolved = false;},
         get: (_, prop) => {
             if (prop === "_Proxy") {
                 return true;
             } else if (prop === "_nodeid") {
                 return input.from;
+            } else if (prop === "_graphid") {
+                return graphid;
+            } else if (prop === "_reset") {
+                res = undefined;
+                resolved = false;
+                return false;
             }
 
 
@@ -211,7 +223,7 @@ const createProxy = (run_with_val, input, graph_input_value, is_node_cached, use
     });
 
     if (usecache) {
-        cache.set(input.from, [proxy, graph_input_value]);
+        cache.set(graphid + input.from + "+proxy", [proxy, graph_input_value]);
     }
 
     return proxy;
@@ -223,13 +235,13 @@ const resolve = (o, cache, is_node_cached) => {
         if (!(cache && is_node_cached)) {
             return res;
         }
-        const cached = cache.get(o._nodeid + '+resolve');
+        const cached = cache.get(o._graphid + o._nodeid + '+resolve');
         if (compare(res, cached)) {
             // console.log('cached resolve');
-            // console.log(o._nodeid);
+            // console.log(o._graphid + o._nodeid);
             return cached;
         }
-        cache.set(o._nodeid + '+resolve', res);
+        cache.set(o._graphid + o._nodeid + '+resolve', res);
         return res;
     } else if (Array.isArray(o)) {
         const new_arr = [];
@@ -617,7 +629,7 @@ const create_data = (inputs, input_data_map) => {
     return data;
 }
 
-const executeGraph = ({ cache, graph, lib, cache_id, usecache }) => {
+const executeGraph = ({ cache, graph, lib, usecache }) => {
     const full_lib = lib ? lib.no ? lib : {...nolib, ...lib} : nolib;
     usecache = usecache ?? true;
 
@@ -637,10 +649,9 @@ const executeGraph = ({ cache, graph, lib, cache_id, usecache }) => {
                 Object.assign(graph_input_value, cache_args);
             }
             
-            // let is_node_cached = full_lib.no.runtime.is_cached(graph, node_id);
-            let is_node_cached = true;
+            let is_node_cached = full_lib.no.runtime.is_cached(graph, node_id);
             let node = full_lib.no.runtime.get_node(graph, node_id);
-            // full_lib.no.runtime.set_cached(graph, node_id);
+            full_lib.no.runtime.set_cached(graph, node_id);
 
             if (node === undefined) {
                 throw new Error(`Undefined node_id ${node_id}`)
@@ -654,7 +665,7 @@ const executeGraph = ({ cache, graph, lib, cache_id, usecache }) => {
                 return node_value(node);
             }
 
-            cache_id = cache_id_node ?? cache_id;
+            let cache_id = cache_id_node ?? graph.id;
             if (!cache.has(cache_id)) {
                 cache.set(cache_id, new Map([["__handles", 1]]));
             } else {
@@ -702,7 +713,7 @@ const executeGraph = ({ cache, graph, lib, cache_id, usecache }) => {
                     return res;
                 } else {
                     _needsresolve = true;
-                    return createProxy(run_with_val, input, graph_input_value, is_node_cached, false, cache.get(cache_id));
+                    return createProxy(run_with_val, input, graph.id, graph_input_value, is_node_cached, false, cache.get(cache_id));
                 }
             }
 

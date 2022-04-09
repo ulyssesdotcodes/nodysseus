@@ -1208,7 +1208,7 @@
         { "from": "mapped_children", "to": "out_children", "as": "true" },
         { "from": "empty_array", "to": "out_children", "as": "false" },
         { "from": "out_children", "to": "out_h", "as": "children"},
-        { "from": "props", "to": "out_h", "as": "props" },
+        { "from": "props", "to": "out_h", "as": "props"},
         { "from": "text", "to": "out_text", "as": "text", "type": "resolve" },
         { "from": "out_text", "to": "out_el", "as": "h_text" },
         { "from": "out_h", "to": "out_el", "as": "h" },
@@ -1676,12 +1676,15 @@
       "nodes": [
         { "id": "in" },
         { "id": "new_graph", "ref": "arg", "value": "payload.graph" },
+        { "id": "new_graph_id", "ref": "arg", "value": "payload.graph.id" },
         { "id": "state", "ref": "arg", "value": "state" },
         { "id": "update_sim_effector", "ref": "arg", "value": "state.update_sim_effect" },
         { "id": "update_graph", "script": "return [() => _lib.no.runtime.update_graph(graph)]" },
         { "id": "update_location", "script": "return [() => window.location.hash = '#' + graph.id]" },
         { "id": "display_graph_path", "value": "display_graph" },
+        { "id": "display_graph_id_path", "value": "display_graph_id" },
         { "id": "set_display_graph", "ref": "set" },
+        { "id": "set_display_graph_id", "ref": "set" },
         { "id": "update_sim_effect", "ref": "array" },
         { "id": "effects", "ref": "array" },
         { "id": "result" },
@@ -1694,11 +1697,14 @@
         { "from": "new_graph", "to": "set_display_graph", "as": "value" },
         { "from": "new_graph", "to": "update_graph", "as": "graph" },
         { "from": "new_graph", "to": "update_location", "as": "graph" },
-        { "from": "set_display_graph", "to": "result", "as": "state" },
+        { "from": "set_display_graph", "to": "set_display_graph_id", "as": "target" },
+        { "from": "display_graph_id_path", "to": "set_display_graph_id", "as": "path" },
+        { "from": "new_graph_id", "to": "set_display_graph_id", "as": "value" },
+        { "from": "set_display_graph_id", "to": "result", "as": "state" },
         { "from": "update_sim_effector", "to": "update_sim_effect", "as": "a0" },
         { "from": "update_sim_effect", "to": "effects", "as": "a0" },
-        { "from": "update_graph", "to": "effects", "as": "a1" },
-        { "from": "update_location", "to": "effects", "as": "a2" },
+        { "from": "update_graph", "to": "effects", "as": "a2" },
+        { "from": "update_location", "to": "effects", "as": "a1" },
         { "from": "effects", "to": "result", "as": "effects" },
         { "from": "result", "to": "out", "as": "fn", "type": "ref" }
       ]
@@ -3863,7 +3869,7 @@
     { "id": "html_id", "ref": "arg", "value": "html_id" },
     {
       "id": "render_popover_graph_effect",
-      "script": "return (dispatch, payload) => requestAnimationFrame(() => {payload = _lib.no.resolve(payload); if(payload.popover_dispatch) { payload.popover_dispatch(s => [{...s, display_graph: payload.display_graph, selected: [payload.display_graph.out]}, [s.update_sim_effect, {...s, display_graph: payload.display_graph}], [s.update_hyperapp] ]) } else { const popover_dispatch = _lib.no.executeGraphNode({graph: payload.graph, lib: _lib})('initialize_hyperapp_app')({graph: payload.graph, display_graph: {...payload.display_graph, id: 'popover'}, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions, readonly: true, hide_types: true, static: true, hash: ''}).dispatch; dispatch(s => ({...s, popover_dispatch}));}})"
+      "script": "return (dispatch, payload) => requestAnimationFrame(() => {payload = _lib.no.resolve(payload); if(payload.popover_dispatch) { payload.popover_dispatch(s => [{...s, display_graph: payload.display_graph, selected: [payload.display_graph.out]}, [s.update_sim_effect, {...s, display_graph: payload.display_graph}], [s.update_hyperapp] ]) } else { const popover_dispatch = _lib.no.executeGraphNode({graph: payload.graph, lib: _lib})('initialize_hyperapp_app')({graph: payload.graph, display_graph: {...payload.display_graph, id: 'popover_graph_display'}, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions, readonly: true, hide_types: true, static: true, hash: ''}).dispatch; dispatch(s => ({...s, popover_dispatch}));}})"
     },
     {
       "id": "handle_popover_event",
@@ -3878,6 +3884,7 @@
         { "id": "clear_popover_effect", "ref": "clear_popover_graph" },
         { "id": "effects", "script": "return popover_graph.nodes.find(n => n.id === payload.detail.node).value" },
         { "id": "new_state" },
+        {"id": "state_log", "ref": "log"},
         { "id": "out", "ref": "hyperapp_action" }
       ],
       "edges": [
@@ -3889,6 +3896,7 @@
         { "from": "randid", "to": "effects", "as": "randid" },
         { "from": "payload", "to": "effects", "as": "payload" },
         { "from": "effects", "to": "new_state", "as": "effects" },
+        { "from": "new_state", "to": "state_log", "as": "value" },
         { "from": "new_state", "to": "out", "as": "fn", "type": "ref" }
       ]
     },
@@ -4142,18 +4150,18 @@
             { "id": "html_id", "ref": "arg", "value": "html_id" },
             { "id": "update_sim", "ref": "arg", "value": "update_sim" },
             { "id": "randid", "ref": "arg", "value": "randid" },
-            { "id": "handle_popover_event", "ref": "handle_popover_event" },
+            { "id": "handle_popover_event_action", "ref": "handle_popover_event" },
             { "id": "clear_popover", "ref": "clear_popover_graph" },
             {
               "id": "props",
-              "script": "return {id: `${html_id}-popover`, class: {popover: true}, key:  `${html_id}-popover`, onselectnode: handle_popover_event, ongraphclick: (s, p) => [s]}"
+              "script": "console.log(handle_popover_event); return {id: `${html_id}-popover`, class: {popover: true}, key:  `${html_id}-popover`, onselectnode: handle_popover_event, ongraphclick: (s, p) => [s]}"
             },
             { "id": "dom_type", "value": "div" },
             { "id": "out", "ref": "html_element" }
           ],
           "edges": [
             { "from": "update_sim", "to": "props", "as": "update_sim" },
-            { "from": "handle_popover_event", "to": "props", "as": "handle_popover_event" },
+            { "from": "handle_popover_event_action", "to": "props", "as": "handle_popover_event" },
             { "from": "clear_popover", "to": "props", "as": "clear_popover" },
             { "from": "props", "to": "out", "as": "props" },
             { "from": "html_id", "to": "props", "as": "html_id" },
