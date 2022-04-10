@@ -1,168 +1,6 @@
 {
-    "edges": [
-        {
-            "from": "skx28w9_1",
-            "to": "main/out",
-            "as": "display"
-        },
-        {
-            "from": "hprs7dg",
-            "to": "main/out",
-            "as": "arg0"
-        },
-        {
-            "as": "true",
-            "from": "ks4cidv",
-            "to": "hprs7dg"
-        },
-        {
-            "as": "pred",
-            "from": "u8y6845",
-            "to": "hprs7dg"
-        },
-        {
-            "from": "aj0fpb1",
-            "to": "1nx75fs",
-            "as": "frequency"
-        },
-        {
-            "from": "rix9b6n",
-            "to": "ks4cidv",
-            "as": "runnable"
-        },
-        {
-            "from": "hdrk08g",
-            "to": "rix9b6n",
-            "as": "fn"
-        },
-        {
-            "as": "self",
-            "from": "1nx75fs",
-            "to": "hdrk08g"
-        },
-        {
-            "as": "self",
-            "from": "ngjxqnt",
-            "to": "1nx75fs"
-        },
-        {
-            "from": "8b6j8c5",
-            "to": "m9zoa11",
-            "as": "arg1"
-        },
-        {
-            "from": "m9zoa11",
-            "to": "main/out",
-            "as": "setup"
-        },
-        {
-            "from": "ud6tgbm",
-            "to": "3s24md4_1/in",
-            "as": "Hydra"
-        },
-        {
-            "as": "arg0",
-            "from": "2tl2o9m_1",
-            "to": "m9zoa11"
-        },
-        {
-            "from": "onzie6g",
-            "to": "2tl2o9m_1",
-            "as": "Hydra"
-        },
-        {
-            "from": "get",
-            "to": "object"
-        },
-        {
-            "from": "set",
-            "to": "object"
-        },
-        {
-            "from": "delete",
-            "to": "object"
-        },
-        {
-            "from": "switch",
-            "to": "flow"
-        },
-        {
-            "from": "if",
-            "to": "flow"
-        },
-        {
-            "from": "html_element",
-            "to": "html"
-        },
-        {
-            "from": "input",
-            "to": "html"
-        },
-        {
-            "from": "css_styles",
-            "to": "html"
-        },
-        {
-            "from": "log",
-            "to": "utility"
-        },
-        {
-            "from": "execute_graph",
-            "to": "utility"
-        },
-        {
-            "from": "arg",
-            "to": "utility"
-        },
-        {
-            "from": "partial",
-            "to": "utility"
-        },
-        {
-            "from": "apply",
-            "to": "utility"
-        },
-        {
-            "from": "fetch",
-            "to": "utility"
-        },
-        {
-            "from": "merge_objects",
-            "to": "utility"
-        },
-        {
-            "from": "sequence",
-            "to": "utility"
-        },
-        {
-            "from": "runnable",
-            "to": "utility"
-        },
-        {
-            "from": "object_entries",
-            "to": "utility"
-        },
-        {
-            "from": "add",
-            "to": "math"
-        },
-        {
-            "from": "divide",
-            "to": "math"
-        },
-        {
-            "from": "negate",
-            "to": "math"
-        },
-        {
-            "from": "mult",
-            "to": "math"
-        },
-        {
-            "from": "stringify",
-            "to": "JSON"
-        }
-    ],
+    "out": "main/out",
+    "id": "new_hydra",
     "nodes": [
         {
             "id": "main/out"
@@ -8910,6 +8748,10 @@
             "id": "m9zoa11"
         },
         {
+            "id": "ud6tgbm",
+            "script": "return window['Hydra'];"
+        },
+        {
             "id": "8b6j8c5",
             "name": "setup_hydra_nodes",
             "out": "wtsyyp8",
@@ -8970,14 +8812,6 @@
             ]
         },
         {
-            "id": "ud6tgbm",
-            "script": "return window['Hydra'];"
-        },
-        {
-            "id": "onzie6g",
-            "script": "return window['Hydra'];"
-        },
-        {
             "id": "2tl2o9m_1",
             "name": "hydra_setup",
             "in": "yvr0dhw",
@@ -8996,17 +8830,8 @@
                     "id": "yvr0dhw"
                 },
                 {
-                    "id": "3s24md4_1/u2xki4y",
-                    "ref": "if"
-                },
-                {
                     "id": "3s24md4_1/zbe1e7x",
                     "ref": "set_arg"
-                },
-                {
-                    "id": "3s24md4_1/3qb32ww",
-                    "ref": "arg",
-                    "value": "Hydra"
                 },
                 {
                     "id": "3s24md4_1/h8ol1dr_1/sspqiz6",
@@ -9027,6 +8852,18 @@
                 {
                     "id": "3s24md4_1/m3yl1cf",
                     "value": "hydra"
+                },
+                {
+                    "id": "7vszdfj",
+                    "script": "//console.log(value);\n//console.log(time);\nreturn new Promise((resolve, reject) => setTimeout(() => (console.log('resolving'), resolve(value)), time));"
+                },
+                {
+                    "id": "66kglb9",
+                    "value": "Hydra"
+                },
+                {
+                    "id": "9m1d26z",
+                    "value": "1000"
                 }
             ],
             "edges": [
@@ -9042,18 +8879,8 @@
                 },
                 {
                     "as": "value",
-                    "from": "3s24md4_1/u2xki4y",
-                    "to": "3s24md4_1/3s24md4"
-                },
-                {
-                    "as": "true",
                     "from": "3s24md4_1/zbe1e7x",
-                    "to": "3s24md4_1/u2xki4y"
-                },
-                {
-                    "from": "3s24md4_1/3qb32ww",
-                    "to": "3s24md4_1/u2xki4y",
-                    "as": "pred"
+                    "to": "3s24md4_1/3s24md4"
                 },
                 {
                     "as": "value",
@@ -9079,6 +8906,21 @@
                     "from": "3s24md4_1/m3yl1cf",
                     "to": "3s24md4_1/qkqizd2",
                     "as": "name"
+                },
+                {
+                    "from": "7vszdfj",
+                    "to": "3s24md4_1/f5ovpz6",
+                    "as": "arg0"
+                },
+                {
+                    "from": "66kglb9",
+                    "to": "7vszdfj",
+                    "as": "value"
+                },
+                {
+                    "from": "9m1d26z",
+                    "to": "7vszdfj",
+                    "as": "time"
                 }
             ]
         },
@@ -11625,6 +11467,163 @@
             ]
         }
     ],
-    "id": "new_hydra",
-    "out": "main/out"
+    "edges": [
+        {
+            "from": "skx28w9_1",
+            "to": "main/out",
+            "as": "display"
+        },
+        {
+            "from": "hprs7dg",
+            "to": "main/out",
+            "as": "arg0"
+        },
+        {
+            "as": "true",
+            "from": "ks4cidv",
+            "to": "hprs7dg"
+        },
+        {
+            "as": "pred",
+            "from": "u8y6845",
+            "to": "hprs7dg"
+        },
+        {
+            "from": "aj0fpb1",
+            "to": "1nx75fs",
+            "as": "frequency"
+        },
+        {
+            "from": "rix9b6n",
+            "to": "ks4cidv",
+            "as": "runnable"
+        },
+        {
+            "from": "hdrk08g",
+            "to": "rix9b6n",
+            "as": "fn"
+        },
+        {
+            "as": "self",
+            "from": "1nx75fs",
+            "to": "hdrk08g"
+        },
+        {
+            "as": "self",
+            "from": "ngjxqnt",
+            "to": "1nx75fs"
+        },
+        {
+            "from": "8b6j8c5",
+            "to": "m9zoa11",
+            "as": "arg1"
+        },
+        {
+            "from": "m9zoa11",
+            "to": "main/out",
+            "as": "setup"
+        },
+        {
+            "from": "ud6tgbm",
+            "to": "3s24md4_1/in",
+            "as": "Hydra"
+        },
+        {
+            "as": "arg0",
+            "from": "2tl2o9m_1",
+            "to": "m9zoa11"
+        },
+        {
+            "from": "get",
+            "to": "object"
+        },
+        {
+            "from": "set",
+            "to": "object"
+        },
+        {
+            "from": "delete",
+            "to": "object"
+        },
+        {
+            "from": "switch",
+            "to": "flow"
+        },
+        {
+            "from": "if",
+            "to": "flow"
+        },
+        {
+            "from": "html_element",
+            "to": "html"
+        },
+        {
+            "from": "input",
+            "to": "html"
+        },
+        {
+            "from": "css_styles",
+            "to": "html"
+        },
+        {
+            "from": "log",
+            "to": "utility"
+        },
+        {
+            "from": "execute_graph",
+            "to": "utility"
+        },
+        {
+            "from": "arg",
+            "to": "utility"
+        },
+        {
+            "from": "partial",
+            "to": "utility"
+        },
+        {
+            "from": "apply",
+            "to": "utility"
+        },
+        {
+            "from": "fetch",
+            "to": "utility"
+        },
+        {
+            "from": "merge_objects",
+            "to": "utility"
+        },
+        {
+            "from": "sequence",
+            "to": "utility"
+        },
+        {
+            "from": "runnable",
+            "to": "utility"
+        },
+        {
+            "from": "object_entries",
+            "to": "utility"
+        },
+        {
+            "from": "add",
+            "to": "math"
+        },
+        {
+            "from": "divide",
+            "to": "math"
+        },
+        {
+            "from": "negate",
+            "to": "math"
+        },
+        {
+            "from": "mult",
+            "to": "math"
+        },
+        {
+            "from": "stringify",
+            "to": "JSON"
+        }
+    ]
 }
