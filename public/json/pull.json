@@ -1785,7 +1785,7 @@
         { "id": "new_history", "ref": "append" },
         { "id": "history_path", "value": "history" },
         { "id": "set_history", "ref": "set" },
-        { "id": "add_node_effect", "script": "return [() => _lib.no.runtime.update_graph(display_graph)]" },
+        { "id": "add_node_effect", "script": "return [() => { if(new_node.nodes || new_node.ref){ _lib.no.runtime.delete_cache(display_graph.id + '/' + new_node.id)} _lib.no.runtime.update_graph(display_graph)}]" },
         { "id": "effects", "ref": "array" },
         { "id": "out" }
       ],
@@ -1826,6 +1826,7 @@
         { "from": "set_history", "to": "out", "as": "state" },
         { "from": "update_hyperapp", "to": "update_hyperapp_effect", "as": "a0" },
         { "from": "update_hyperapp_effect", "to": "effects", "as": "a1" },
+        { "from": "new_node", "to": "add_node_effect", "as": "new_node" },
         { "from": "new_display_graph", "to": "add_node_effect", "as": "display_graph" },
         { "from": "add_node_effect", "to": "effects", "as": "a0" },
         { "from": "effects", "to": "out", "as": "effects" }

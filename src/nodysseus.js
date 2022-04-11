@@ -1206,6 +1206,8 @@ const nolib = {
                 }
             }
 
+            const delete_cache = (graph) => cache.delete(typeof graph === 'string' ? graph : graph.id);
+
             const update_graph = (graph, args, lib) => {
                 graph = resolve(graph);
                 const new_cache = new_graph_cache(graph);
@@ -1220,6 +1222,7 @@ const nolib = {
                     const last_args = getorset(cache, graph.id, () => new_cache).args;
                     getorset(cache, graph.id, () => new_cache).args = {...last_args, ...args};
                 }
+
                 publish(graph, 'graphchange');
             }
 
@@ -1247,6 +1250,7 @@ const nolib = {
                 get_parentest,
                 get_fn: (graph, orderedargs, node_ref) => getorsetgraph(resolve(graph), orderedargs + node_ref.id, 'fn_cache', () => new Function(`return function _${(node_ref.name?.replace(/\W/g, "_") ?? node_ref.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script}}`)()),
                 update_graph,
+                delete_cache,
                 get_graph,
                 get_args,
                 edit_edge: (graph, edge, old_edge) => {
