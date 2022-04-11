@@ -32,11 +32,8 @@
         },
         {
             "id": "o1wn5x1",
-            "name": "class"
-        },
-        {
-            "id": "zz730do",
-            "value": "true"
+            "name": "class",
+            "value": "result"
         },
         {
             "id": "pgygs2p/pgygs2p",
@@ -50,13 +47,8 @@
         },
         {
             "id": "pgygs2p/6yewnx1",
-            "ref": "html_text",
+            "ref": "css_styles",
             "name": "styles/6yewnx1"
-        },
-        {
-            "id": "pgygs2p/02951w8",
-            "value": ".result { position: absolute; bottom: 0; left: 0; font-size: 4em}\n.run-count { font-size: .5em; color: green}",
-            "name": "css styles"
         },
         {
             "id": "hyperapp"
@@ -68,11 +60,86 @@
         },
         {
             "id": "c2sko9c/2lr3ihi",
-            "value": "Hello, world!"
+            "value": "Hello, "
         },
         {
             "id": "ndiz2ap",
             "ref": "html_element"
+        },
+        {
+            "id": "ei2v3i1"
+        },
+        {
+            "id": "738zvw0"
+        },
+        {
+            "id": "xmxaeam",
+            "value": "2em"
+        },
+        {
+            "id": "633t5fa",
+            "value": "fixed"
+        },
+        {
+            "id": "zymxe0p",
+            "value": ".2em"
+        },
+        {
+            "id": "72n68a5",
+            "value": ".2em"
+        },
+        {
+            "id": "volcn6l",
+            "ref": "array"
+        },
+        {
+            "id": "o9eng7j",
+            "ref": "html_element"
+        },
+        {
+            "id": "t8ogrr4",
+            "ref": "html_text"
+        },
+        {
+            "id": "53j1tzp",
+            "value": "world"
+        },
+        {
+            "id": "v6kth1o",
+            "ref": "html_text"
+        },
+        {
+            "id": "ktscze0",
+            "value": "!"
+        },
+        {
+            "id": "kug4dbr"
+        },
+        {
+            "id": "ckyn67n",
+            "value": "span"
+        },
+        {
+            "id": "ph9jtb9"
+        },
+        {
+            "id": "lqobycq",
+            "value": "true"
+        },
+        {
+            "id": "a0gsnn8"
+        },
+        {
+            "id": "vkk7es5",
+            "value": "underline"
+        },
+        {
+            "id": "q9c6g4v",
+            "ref": "html_element"
+        },
+        {
+            "id": "kemaje6",
+            "value": "p"
         },
         {
             "id": "utility"
@@ -97,9 +164,6 @@
         },
         {
             "id": "log",
-            "args": [
-                "value"
-            ],
             "nodes": [
                 {
                     "id": "in"
@@ -112,14 +176,15 @@
                 {
                     "id": "out",
                     "args": [],
-                    "script": "console.log(_node.name ?? _node.id); console.log(value); return value"
+                    "script": "console.log(_graph.name ?? _graph.id); console.log(value); return value"
                 }
             ],
             "edges": [
                 {
                     "from": "in",
                     "to": "out",
-                    "as": "input"
+                    "as": "input",
+                    "type": "ref"
                 },
                 {
                     "from": "value",
@@ -163,6 +228,47 @@
         {
             "id": "negate",
             "extern": "utility.negate"
+        },
+        {
+            "id": "ancestors",
+            "out": "out",
+            "nodes": [
+                {
+                    "id": "in"
+                },
+                {
+                    "id": "graph",
+                    "ref": "arg",
+                    "value": "graph"
+                },
+                {
+                    "id": "node",
+                    "ref": "arg",
+                    "value": "node"
+                },
+                {
+                    "id": "out",
+                    "script": "const parents = (id) => (graph ?? _graph).edges.filter(e => e.to === id).flatMap(e => parents(e.from)).concat([id]); return parents(node ?? graph.out ?? 'out')"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "in",
+                    "to": "out",
+                    "as": "_",
+                    "type": "ref"
+                },
+                {
+                    "from": "graph",
+                    "to": "out",
+                    "as": "graph"
+                },
+                {
+                    "from": "node",
+                    "to": "out",
+                    "as": "node"
+                }
+            ]
         },
         {
             "id": "append",
@@ -210,24 +316,13 @@
             "name": "filter",
             "in": "74n1jfm",
             "out": "lahq5z4",
+            "description": "Filters an array using `fn: (element) => boolean`",
             "nodes": [
                 {
                     "id": "lahq5z4",
                     "args": [],
                     "name": "filter/out",
-                    "script": "const filter_fn = _lib.no.executeGraphNode({graph: _graph, lib: _lib})(typeof fn === 'string' ? fn : fn.fn); return arr.filter(element => filter_fn(Object.assign(fn.args ?? {}, {element})))"
-                },
-                {
-                    "id": "pfoypo5",
-                    "args": [],
-                    "ref": "arg",
-                    "value": "key"
-                },
-                {
-                    "id": "zinx621",
-                    "args": [],
-                    "ref": "arg",
-                    "value": "value"
+                    "script": "const filter_fn = _lib.no.executeGraphNode({graph: fn.graph ?? _graph, lib: _lib})(typeof fn === 'string' ? fn : fn.fn); return arr.filter(element => filter_fn(Object.assign(fn.args ?? {}, {element})))"
                 },
                 {
                     "id": "x2sz5kb",
@@ -248,29 +343,20 @@
             ],
             "edges": [
                 {
-                    "from": "pfoypo5",
-                    "to": "lahq5z4",
-                    "as": "key"
-                },
-                {
-                    "from": "zinx621",
-                    "to": "lahq5z4",
-                    "as": "value"
-                },
-                {
                     "from": "x2sz5kb",
                     "to": "lahq5z4",
                     "as": "arr"
                 },
                 {
-                    "from": "74n1jfm",
-                    "to": "lahq5z4",
-                    "as": "input"
-                },
-                {
                     "from": "fn",
                     "to": "lahq5z4",
                     "as": "fn"
+                },
+                {
+                    "from": "74n1jfm",
+                    "to": "lahq5z4",
+                    "as": "_",
+                    "type": "ref"
                 }
             ]
         },
@@ -333,12 +419,13 @@
                     "id": "in"
                 },
                 {
+                    "id": "args",
+                    "ref": "arg",
+                    "value": "_args"
+                },
+                {
                     "id": "out",
-                    "args": [
-                        "data",
-                        "input"
-                    ],
-                    "script": "return data[input] ?? otherwise;"
+                    "ref": "get"
                 },
                 {
                     "id": "input",
@@ -349,18 +436,33 @@
                     "id": "otherwise",
                     "ref": "arg",
                     "value": "otherwise"
+                },
+                {
+                    "id": "string_input",
+                    "script": "return new String(input).toString()"
                 }
             ],
             "edges": [
                 {
                     "from": "in",
                     "to": "out",
-                    "as": "data"
+                    "as": "_",
+                    "type": "ref"
+                },
+                {
+                    "from": "args",
+                    "to": "out",
+                    "as": "target"
                 },
                 {
                     "from": "input",
-                    "to": "out",
+                    "to": "string_input",
                     "as": "input"
+                },
+                {
+                    "from": "string_input",
+                    "to": "out",
+                    "as": "path"
                 },
                 {
                     "from": "otherwise",
@@ -402,7 +504,8 @@
                 {
                     "from": "in",
                     "to": "out",
-                    "as": "data"
+                    "as": "_",
+                    "type": "ref"
                 },
                 {
                     "from": "true",
@@ -423,6 +526,117 @@
                     "from": "pred",
                     "to": "out",
                     "as": "pred"
+                }
+            ]
+        },
+        {
+            "id": "return",
+            "out": "out",
+            "nodes": [
+                {
+                    "id": "fn_args",
+                    "ref": "arg",
+                    "value": "_args"
+                },
+                {
+                    "id": "args",
+                    "ref": "arg",
+                    "value": "args"
+                },
+                {
+                    "id": "fn_el_from",
+                    "ref": "arg",
+                    "value": "element.from"
+                },
+                {
+                    "id": "fn_el_as",
+                    "ref": "arg",
+                    "value": "element.as"
+                },
+                {
+                    "id": "fn",
+                    "script": "return {fn, graph: _lib.no.runtime.get_parent(_graph), args}"
+                },
+                {
+                    "id": "fn_run",
+                    "ref": "run"
+                },
+                {
+                    "id": "result_entry",
+                    "ref": "array"
+                },
+                {
+                    "id": "fn_runnable",
+                    "ref": "runnable"
+                },
+                {
+                    "id": "edges",
+                    "script": "return _lib.no.runtime.get_edges_in(_lib.no.runtime.get_parent(_graph), _graph.node_id).filter(e => e.as !== 'args');"
+                },
+                {
+                    "id": "entries",
+                    "ref": "map"
+                },
+                {
+                    "id": "out",
+                    "script": "return Object.fromEntries(entries)"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "fn_args",
+                    "to": "fn",
+                    "as": "args"
+                },
+                {
+                    "from": "fn_el_from",
+                    "to": "fn",
+                    "as": "fn"
+                },
+                {
+                    "from": "fn",
+                    "to": "fn_run",
+                    "as": "runnable"
+                },
+                {
+                    "from": "fn_run",
+                    "to": "result_entry",
+                    "as": "a1"
+                },
+                {
+                    "from": "fn_el_as",
+                    "to": "result_entry",
+                    "as": "a0"
+                },
+                {
+                    "from": "result_entry",
+                    "to": "fn_runnable",
+                    "as": "fn"
+                },
+                {
+                    "from": "result",
+                    "to": "fn_runnable",
+                    "as": "fn"
+                },
+                {
+                    "from": "fn_runnable",
+                    "to": "entries",
+                    "as": "fn"
+                },
+                {
+                    "from": "edges",
+                    "to": "entries",
+                    "as": "array"
+                },
+                {
+                    "from": "args",
+                    "to": "entries",
+                    "as": "args"
+                },
+                {
+                    "from": "entries",
+                    "to": "out",
+                    "as": "entries"
                 }
             ]
         },
@@ -473,7 +687,7 @@
                 },
                 {
                     "id": "out",
-                    "script": "const parent_id = _node.id.substring(0, _node.id.lastIndexOf('/')); const input = _lib.no.runtime.get_edges_in(_graph, parent_id).find(i => i.as === 'fn'); return input ? {fn: input.from, graph: _graph, args: args ?? {}} : false"
+                    "script": "const parent_graph = _lib.no.runtime.get_parent(_graph); const input = _lib.no.runtime.get_edges_in(parent_graph, _graph.node_id).find(i => i.as === 'fn'); return input ? {fn: input.from, graph: parent_graph, args: args ?? {}} : false"
                 }
             ],
             "edges": [
@@ -527,66 +741,15 @@
             ]
         },
         {
-            "id": "dispatch_runnable",
+            "id": "execute_graph",
             "nodes": [
                 {
-                    "id": "dispatch",
-                    "ref": "arg",
-                    "value": "dispatch",
-                    "type": "internal"
-                },
-                {
-                    "id": "fn",
-                    "ref": "arg",
-                    "value": "fn"
-                },
-                {
-                    "id": "run",
-                    "ref": "run"
+                    "id": "in"
                 },
                 {
                     "id": "args",
                     "ref": "arg",
                     "value": "_args"
-                },
-                {
-                    "id": "out",
-                    "script": "dispatch({...fn, args: {...args, ...fn.args}})"
-                }
-            ],
-            "edges": [
-                {
-                    "from": "fn",
-                    "to": "run",
-                    "as": "runnable"
-                },
-                {
-                    "from": "fn",
-                    "to": "out",
-                    "as": "fn"
-                },
-                {
-                    "from": "run",
-                    "to": "_out",
-                    "as": "res"
-                },
-                {
-                    "from": "dispatch",
-                    "to": "out",
-                    "as": "dispatch"
-                },
-                {
-                    "from": "args",
-                    "to": "out",
-                    "as": "args"
-                }
-            ]
-        },
-        {
-            "id": "execute_graph",
-            "nodes": [
-                {
-                    "id": "in"
                 },
                 {
                     "id": "fn",
@@ -599,15 +762,6 @@
                     "value": "fn_graph"
                 },
                 {
-                    "id": "args",
-                    "ref": "arg",
-                    "value": "_args"
-                },
-                {
-                    "id": "filter_args",
-                    "script": "const ret = {...args}; delete ret.fn; delete ret.graph;"
-                },
-                {
                     "id": "out",
                     "script": "const res_graph = fn_graph ?? _graph; return (...inner_args) => {return _lib.no.executeGraphNode({graph: {...res_graph, nodes: [...res_graph.nodes], edges: [...res_graph.edges]}, lib: _lib})(fn)(Object.keys(args).length > 0 ? Object.assign(args, inner_args.length === 1 ? inner_args[0] : inner_args) : inner_args.length === 1 ? inner_args[0] : inner_args);}"
                 }
@@ -615,6 +769,12 @@
             "edges": [
                 {
                     "from": "in",
+                    "to": "out",
+                    "as": "_",
+                    "type": "ref"
+                },
+                {
+                    "from": "args",
                     "to": "out",
                     "as": "args"
                 },
@@ -695,10 +855,6 @@
         },
         {
             "id": "get",
-            "args": [
-                "target",
-                "path"
-            ],
             "nodes": [
                 {
                     "id": "in"
@@ -714,9 +870,9 @@
                     "value": "path"
                 },
                 {
-                    "id": "def",
+                    "id": "otherwise",
                     "ref": "arg",
-                    "value": "def"
+                    "value": "otherwise"
                 },
                 {
                     "id": "out",
@@ -730,7 +886,7 @@
                     "as": "input"
                 },
                 {
-                    "from": "def",
+                    "from": "otherwise",
                     "to": "out",
                     "as": "def"
                 },
@@ -796,6 +952,110 @@
             ]
         },
         {
+            "id": "cache",
+            "nodes": [
+                {
+                    "id": "in"
+                },
+                {
+                    "id": "value",
+                    "ref": "arg",
+                    "value": "value"
+                },
+                {
+                    "id": "recache",
+                    "ref": "arg",
+                    "value": "recache"
+                },
+                {
+                    "id": "cached",
+                    "ref": "arg",
+                    "value": "cached",
+                    "type": "internal"
+                },
+                {
+                    "id": "cache",
+                    "script": "_lib.no.runtime.update_graph(_graph, {cached: value}); return value;"
+                },
+                {
+                    "id": "cached_value",
+                    "ref": "default"
+                },
+                {
+                    "id": "out",
+                    "ref": "if"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "in",
+                    "to": "out",
+                    "as": "_"
+                },
+                {
+                    "from": "value",
+                    "to": "cache",
+                    "as": "value"
+                },
+                {
+                    "from": "cache",
+                    "to": "cached_value",
+                    "as": "otherwise"
+                },
+                {
+                    "from": "cached",
+                    "to": "cached_value",
+                    "as": "value"
+                },
+                {
+                    "from": "cached_value",
+                    "to": "out",
+                    "as": "false"
+                },
+                {
+                    "from": "cache",
+                    "to": "out",
+                    "as": "true"
+                },
+                {
+                    "from": "recache",
+                    "to": "out",
+                    "as": "pred"
+                }
+            ]
+        },
+        {
+            "id": "set_arg",
+            "nodes": [
+                {
+                    "id": "name",
+                    "ref": "arg",
+                    "value": "name"
+                },
+                {
+                    "id": "value",
+                    "ref": "arg",
+                    "value": "value"
+                },
+                {
+                    "id": "out",
+                    "script": "_lib.no.runtime.update_graph(_lib.no.runtime.get_parentest(_graph), {[name]: value}); return value;"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "name",
+                    "to": "out",
+                    "as": "name"
+                },
+                {
+                    "from": "value",
+                    "to": "out",
+                    "as": "value"
+                }
+            ]
+        },
+        {
             "id": "event_publisher",
             "out": "update",
             "nodes": [
@@ -838,14 +1098,15 @@
                 },
                 {
                     "id": "out",
-                    "script": "const parent = _lib.no.runtime.get_node(_graph, _node.id.substring(0, _node.id.lastIndexOf('/'))); if(parent.value !== value) { _lib.no.runtime.add_node(_graph, {...parent , value}); } return value"
+                    "script": "const parent = _lib.no.runtime.get_node(_graph, _node.id.substring(0, _node.id.lastIndexOf('/'))); if(!_lib.utility.compare(parent.value, value)) { _lib.no.runtime.add_node(_graph, {...parent , value}); } return value"
                 }
             ],
             "edges": [
                 {
                     "from": "value",
                     "to": "out",
-                    "as": "value"
+                    "as": "value",
+                    "type": "resolve"
                 }
             ]
         },
@@ -860,11 +1121,11 @@
                 },
                 {
                     "id": "add_listener",
-                    "script": "const parent = _lib.no.runtime.get_node(_graph, _node.id.substring(0, _node.id.lastIndexOf('/'))); _lib.no.runtime.add_listener(_graph, event, parent.id, (graph, ev) => _lib.no.runtime.add_node(_graph, {...parent , value: ev}), true)"
+                    "script": "const parent = _lib.no.runtime.get_node(_graph, _lib.no.runtime.get_parent(_graph, _node.id)); _lib.no.runtime.add_listener(event, parent.id, (graph, ev) => (_lib.no.runtime.add_node(_graph, {...parent , value: ev})), true)"
                 },
                 {
                     "id": "out",
-                    "script": "return _lib.no.runtime.get_node(_graph, _node.id.substring(0, _node.id.lastIndexOf('/'))).value;"
+                    "script": "return _lib.no.runtime.get_node(_graph, _lib.no.runtime.get_parent(_graph, _node.id)).value;"
                 }
             ],
             "edges": [
@@ -877,6 +1138,75 @@
                     "from": "add_listener",
                     "to": "out",
                     "as": "listener"
+                }
+            ]
+        },
+        {
+            "id": "events_broadcast_channel",
+            "out": "out",
+            "nodes": [
+                {
+                    "id": "arg_onmessage",
+                    "ref": "arg",
+                    "value": "onmessage"
+                },
+                {
+                    "id": "message_data",
+                    "ref": "arg",
+                    "value": "message.data.data"
+                },
+                {
+                    "id": "message_name",
+                    "ref": "arg",
+                    "value": "message.data.name"
+                },
+                {
+                    "id": "publish_event",
+                    "ref": "event_publisher"
+                },
+                {
+                    "id": "publish_event_runnable",
+                    "ref": "runnable"
+                },
+                {
+                    "id": "onmessageseq",
+                    "ref": "sequence"
+                },
+                {
+                    "id": "out",
+                    "script": "const bc = new BroadcastChannel('events'); bc.onmessage = e => { _lib.no.runGraph(onmessage.graph, onmessage.fn, {message: e}, _lib); }; return bc;"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "message_data",
+                    "to": "publish_event",
+                    "as": "value"
+                },
+                {
+                    "from": "message_name",
+                    "to": "publish_event",
+                    "as": "name"
+                },
+                {
+                    "from": "publish_event",
+                    "to": "publish_event_runnable",
+                    "as": "fn"
+                },
+                {
+                    "from": "publish_event_runnable",
+                    "to": "onmessageseq",
+                    "as": "arg0"
+                },
+                {
+                    "from": "arg_onmessage",
+                    "to": "onmessageseq",
+                    "as": "arg1"
+                },
+                {
+                    "from": "onmessageseq",
+                    "to": "out",
+                    "as": "onmessage"
                 }
             ]
         },
@@ -896,7 +1226,7 @@
                 },
                 {
                     "id": "out",
-                    "script": "return _lib.no.runGraph(runnable.graph, runnable.fn, Object.assign({}, args, {runnable: undefined}, runnable.args))"
+                    "script": "return _lib.no.runGraph(runnable.graph, runnable.fn, Object.assign({}, args, {runnable: undefined}, runnable.args), _lib)"
                 }
             ],
             "edges": [
@@ -958,7 +1288,7 @@
                 {
                     "id": "pdljod1",
                     "name": "pdljod1",
-                    "script": "return (element, index, array) => _lib.no.runGraph(fn?.graph ?? _graph, fn?.fn ?? fn, Object.assign({}, fn.args, args, {element, index, array}));"
+                    "script": "return (element, index, array) => _lib.no.runGraph(fn?.graph ?? _graph, fn?.fn ?? fn, Object.assign({}, fn.args, args, {element, index, array}), _lib);"
                 },
                 {
                     "id": "2lvs5dj",
@@ -984,6 +1314,11 @@
                     "as": "self"
                 },
                 {
+                    "from": "1rre4bx",
+                    "to": "pdljod1",
+                    "as": "arr"
+                },
+                {
                     "from": "w0zzawl",
                     "to": "tgurdpo",
                     "as": "args",
@@ -992,7 +1327,8 @@
                 {
                     "from": "pdljod1",
                     "to": "w0zzawl",
-                    "as": "a0"
+                    "as": "a0",
+                    "type": "resolve"
                 },
                 {
                     "from": "2lvs5dj",
@@ -1008,227 +1344,6 @@
                     "from": "6g75abk",
                     "to": "pdljod1",
                     "as": "fn"
-                }
-            ]
-        },
-        {
-            "id": "toggle",
-            "name": "toggle",
-            "in": "itrzmbe",
-            "out": "nn4twx9",
-            "nodes": [
-                {
-                    "id": "nn4twx9",
-                    "ref": "html_element",
-                    "inputs": [
-                        {
-                            "from": "lvzwtzi",
-                            "to": "nn4twx9",
-                            "as": "children"
-                        },
-                        {
-                            "from": "t6q6rvf",
-                            "to": "nn4twx9",
-                            "as": "props"
-                        },
-                        {
-                            "from": "tchu5kq",
-                            "to": "nn4twx9",
-                            "as": "dom_type"
-                        }
-                    ],
-                    "name": "out"
-                },
-                {
-                    "id": "lvzwtzi",
-                    "ref": "array"
-                },
-                {
-                    "id": "t6q6rvf"
-                },
-                {
-                    "id": "tchu5kq",
-                    "value": "button"
-                },
-                {
-                    "id": "583nwco",
-                    "name": "in"
-                },
-                {
-                    "id": "itrzmbe",
-                    "name": "in"
-                },
-                {
-                    "id": "vmehp75/h4hkmke",
-                    "ref": "html_text",
-                    "name": "button_text"
-                },
-                {
-                    "id": "punpbfw",
-                    "ref": "execute_graph",
-                    "name": "onclick_fn"
-                },
-                {
-                    "id": "2aqvso8",
-                    "ref": "arg",
-                    "value": "value"
-                },
-                {
-                    "id": "teuf938",
-                    "ref": "arg",
-                    "value": "value"
-                },
-                {
-                    "id": "1067z1h",
-                    "ref": "array"
-                },
-                {
-                    "id": "b8q8y2q",
-                    "ref": "array"
-                },
-                {
-                    "id": "pprukwn",
-                    "ref": "set"
-                },
-                {
-                    "id": "zu0hb6e",
-                    "ref": "arg",
-                    "value": "0.update_hyperapp"
-                },
-                {
-                    "id": "eo8hxkq",
-                    "script": "return !toggle;"
-                },
-                {
-                    "id": "s6847dx",
-                    "ref": "arg",
-                    "value": "0"
-                },
-                {
-                    "id": "5g3gdi1",
-                    "script": "return 'result.' + value;"
-                },
-                {
-                    "id": "flcuh31",
-                    "ref": "get"
-                },
-                {
-                    "id": "0eoq13n",
-                    "ref": "arg",
-                    "value": "value"
-                },
-                {
-                    "id": "ysqu0jj",
-                    "ref": "arg",
-                    "value": "0.result"
-                },
-                {
-                    "id": "8ji5lb6",
-                    "ref": "arg",
-                    "value": "value"
-                }
-            ],
-            "edges": [
-                {
-                    "from": "lvzwtzi",
-                    "to": "nn4twx9",
-                    "as": "children"
-                },
-                {
-                    "from": "t6q6rvf",
-                    "to": "nn4twx9",
-                    "as": "props"
-                },
-                {
-                    "from": "tchu5kq",
-                    "to": "nn4twx9",
-                    "as": "dom_type"
-                },
-                {
-                    "from": "583nwco",
-                    "to": "nn4twx9",
-                    "as": "arg3"
-                },
-                {
-                    "from": "itrzmbe",
-                    "to": "nn4twx9",
-                    "as": "arg4"
-                },
-                {
-                    "to": "lvzwtzi",
-                    "from": "vmehp75/h4hkmke",
-                    "as": "arg1"
-                },
-                {
-                    "from": "punpbfw",
-                    "to": "t6q6rvf",
-                    "as": "onclick"
-                },
-                {
-                    "from": "2aqvso8",
-                    "to": "vmehp75/h4hkmke",
-                    "as": "text"
-                },
-                {
-                    "from": "teuf938",
-                    "to": "punpbfw",
-                    "as": "value"
-                },
-                {
-                    "from": "1067z1h",
-                    "to": "punpbfw",
-                    "as": "fn",
-                    "type": "ref"
-                },
-                {
-                    "from": "b8q8y2q",
-                    "to": "1067z1h",
-                    "as": "arg1"
-                },
-                {
-                    "from": "pprukwn",
-                    "to": "1067z1h",
-                    "as": "arg0"
-                },
-                {
-                    "from": "zu0hb6e",
-                    "to": "b8q8y2q",
-                    "as": "update_hyperapp"
-                },
-                {
-                    "from": "eo8hxkq",
-                    "to": "pprukwn",
-                    "as": "value"
-                },
-                {
-                    "from": "s6847dx",
-                    "to": "pprukwn",
-                    "as": "target"
-                },
-                {
-                    "from": "5g3gdi1",
-                    "to": "pprukwn",
-                    "as": "path"
-                },
-                {
-                    "from": "flcuh31",
-                    "to": "eo8hxkq",
-                    "as": "toggle"
-                },
-                {
-                    "from": "0eoq13n",
-                    "to": "5g3gdi1",
-                    "as": "value"
-                },
-                {
-                    "from": "ysqu0jj",
-                    "to": "flcuh31",
-                    "as": "target"
-                },
-                {
-                    "from": "8ji5lb6",
-                    "to": "flcuh31",
-                    "as": "path"
                 }
             ]
         },
@@ -1286,7 +1401,7 @@
                 },
                 {
                     "id": "runnables",
-                    "script": "const runnables = Object.entries(inputs).filter(e => e[0] !== 'args').map(e => [e[0], e[1] && e[1]._Proxy ? e[1]._value : e[1]]).filter(r => r[1] && r[1].hasOwnProperty('fn') && r[1].hasOwnProperty('graph')); const filtered_args = Object.fromEntries(Object.entries(args).filter(a => !runnables.find(r => r[0] === a[0]))); return runnables.map(r => r[1]).map(r => ({...r, args: {...r.args, ...filtered_args}}))"
+                    "script": "const runnables = Object.entries(inputs).filter(e => e[0] !== 'args').map(e => [e[0], e[1] && e[1]._Proxy ? e[1]._value : e[1]]).filter(r => r[1] && (!r[1]._Proxy || r[1]._value) && r[1].hasOwnProperty('fn') && r[1].hasOwnProperty('graph')); const filtered_args = Object.fromEntries(Object.entries(args).filter(a => !runnables.find(r => r[0] === a[0]))); return runnables.map(r => r[1]).map(r => ({...r, args: {...r.args, ...filtered_args}}))"
                 },
                 {
                     "id": "element",
@@ -1296,7 +1411,7 @@
                 },
                 {
                     "id": "map_fn",
-                    "script": "return new Promise((resolve, reject) => resolve(_lib.no.runGraph(runnable.graph, runnable.fn, runnable.args)));"
+                    "script": "return new Promise((resolve, reject) => resolve(_lib.no.runGraph(runnable.graph, runnable.fn, runnable.args, _lib)));"
                 },
                 {
                     "id": "map_fn_runnable",
@@ -1384,8 +1499,8 @@
         {
             "id": "import_json",
             "name": "import_json",
-            "in": "j5hwdot",
-            "out": "06osgt6",
+            "in": "gsiimdp",
+            "out": "lapeojg",
             "nodes": [
                 {
                     "id": "lapeojg",
@@ -1393,851 +1508,62 @@
                     "name": "out"
                 },
                 {
-                    "id": "lx2r71d",
-                    "ref": "runnable"
-                },
-                {
-                    "id": "j5hwdot",
+                    "id": "gsiimdp",
                     "name": "in"
                 },
                 {
-                    "id": "upzmz7i",
-                    "script": "return 'imports.' + name"
-                },
-                {
-                    "id": "hfgitu2",
-                    "ref": "run"
-                },
-                {
-                    "id": "i68oe5k"
-                },
-                {
-                    "id": "qomntld",
-                    "ref": "arg",
-                    "value": "name"
-                },
-                {
-                    "id": "hgo86cn",
-                    "ref": "runnable"
-                },
-                {
-                    "id": "7m3jfmy",
-                    "ref": "arg",
-                    "value": "name"
-                },
-                {
-                    "id": "z9zvilt",
-                    "ref": "arg",
-                    "value": "url"
-                },
-                {
-                    "id": "f89a5u2"
-                },
-                {
-                    "id": "1v653xe",
-                    "ref": "get"
-                },
-                {
-                    "id": "my879k4",
+                    "id": "3zfjt1h",
                     "ref": "call"
                 },
                 {
-                    "id": "gfpdf11",
+                    "id": "05eag47",
                     "ref": "arg",
                     "value": "name"
                 },
                 {
-                    "id": "23kbk1n",
-                    "ref": "run"
+                    "id": "2vtokcl",
+                    "script": "return fetch(url);"
                 },
                 {
-                    "id": "71ppowa",
-                    "script": "return \"1\";"
-                },
-                {
-                    "id": "mzijca2",
-                    "ref": "fetch"
-                },
-                {
-                    "id": "vdfrqzc",
+                    "id": "i9x02is",
                     "value": "json"
                 },
                 {
-                    "id": "83xy8y2",
-                    "ref": "sequence"
-                },
-                {
-                    "id": "5hat6g2",
+                    "id": "irr99xz",
                     "ref": "arg",
                     "value": "url"
-                },
-                {
-                    "id": "olx0rqo",
-                    "ref": "runnable"
-                },
-                {
-                    "id": "9swjqs2",
-                    "ref": "runnable"
-                },
-                {
-                    "id": "cbahtxj"
-                },
-                {
-                    "id": "jpuj66z",
-                    "ref": "dispatch_runnable"
-                },
-                {
-                    "id": "rfmgm5u",
-                    "ref": "arg",
-                    "value": "imported_graph",
-                    "type": "internal"
-                },
-                {
-                    "id": "jrt3ao3",
-                    "ref": "arg",
-                    "value": "name",
-                    "type": "internal"
-                },
-                {
-                    "id": "830e6rx",
-                    "ref": "arg",
-                    "value": "imported_graph",
-                    "type": "internal"
-                },
-                {
-                    "id": "4qd7fl3",
-                    "ref": "runnable"
-                },
-                {
-                    "id": "sae69iz"
-                },
-                {
-                    "id": "j6g4jd4"
-                },
-                {
-                    "id": "um99k99",
-                    "ref": "arg",
-                    "value": "imported_graph",
-                    "type": "internal"
-                },
-                {
-                    "id": "z2ccs2u",
-                    "ref": "arg",
-                    "value": "name"
-                },
-                {
-                    "id": "xl0tqsd",
-                    "ref": "set"
-                },
-                {
-                    "id": "sajmrbs",
-                    "value": "display_graph"
-                },
-                {
-                    "id": "i50d0rl",
-                    "ref": "set"
-                },
-                {
-                    "id": "59iaxzp",
-                    "ref": "arg",
-                    "value": "state",
-                    "type": "internal"
-                },
-                {
-                    "id": "pfe7svb",
-                    "ref": "arg",
-                    "value": "state.display_graph",
-                    "type": "internal"
-                },
-                {
-                    "id": "dsqrh2d",
-                    "value": "nodes"
-                },
-                {
-                    "id": "9zfxac6",
-                    "ref": "append"
-                },
-                {
-                    "id": "2zvxan2",
-                    "ref": "map"
-                },
-                {
-                    "id": "hrzgjqm",
-                    "script": "return nodes.filter(n => !n.id.startsWith(imported_id)).concat([{id: imported_id}]);"
-                },
-                {
-                    "id": "a8x8a5c",
-                    "ref": "arg",
-                    "value": "payload.imported_graph.nodes",
-                    "type": "internal"
-                },
-                {
-                    "id": "d4yl375",
-                    "ref": "runnable"
-                },
-                {
-                    "id": "2f1lyvz",
-                    "ref": "arg",
-                    "value": "state.display_graph.nodes",
-                    "type": "internal"
-                },
-                {
-                    "id": "oco33oy",
-                    "ref": "arg",
-                    "value": "payload.name",
-                    "type": "internal"
-                },
-                {
-                    "id": "55qulh4",
-                    "ref": "set"
-                },
-                {
-                    "id": "4az2m7o"
-                },
-                {
-                    "id": "ugtx81k",
-                    "ref": "arg",
-                    "value": "element",
-                    "type": "internal"
-                },
-                {
-                    "id": "2eq7kuu",
-                    "value": "id"
-                },
-                {
-                    "id": "2tekj7w",
-                    "script": "return imported_id + '.' + node_id;"
-                },
-                {
-                    "id": "2xt8tpx",
-                    "ref": "arg",
-                    "value": "payload.name",
-                    "type": "internal"
-                },
-                {
-                    "id": "og27c4d",
-                    "ref": "arg",
-                    "value": "imported_id",
-                    "type": "internal"
-                },
-                {
-                    "id": "aodmtk1",
-                    "ref": "arg",
-                    "value": "element.id",
-                    "type": "internal"
                 }
             ],
             "edges": [
                 {
-                    "from": "lx2r71d",
-                    "to": "06osgt6",
-                    "as": "fn"
+                    "from": "gsiimdp",
+                    "to": "lapeojg",
+                    "as": "arg0"
                 },
                 {
-                    "from": "j5hwdot",
-                    "to": "06osgt6",
-                    "as": "_"
+                    "as": "import_graph",
+                    "from": "3zfjt1h",
+                    "to": "lapeojg"
                 },
                 {
-                    "from": "upzmz7i",
-                    "to": "06osgt6",
-                    "as": "value"
-                },
-                {
-                    "from": "hfgitu2",
-                    "to": "lx2r71d",
-                    "as": "fn"
-                },
-                {
-                    "from": "i68oe5k",
-                    "to": "lx2r71d",
-                    "as": "args"
-                },
-                {
-                    "from": "qomntld",
-                    "to": "upzmz7i",
+                    "from": "05eag47",
+                    "to": "lapeojg",
                     "as": "name"
                 },
                 {
-                    "from": "hgo86cn",
-                    "to": "hfgitu2",
-                    "as": "runnable"
+                    "as": "self",
+                    "from": "2vtokcl",
+                    "to": "3zfjt1h"
                 },
                 {
-                    "from": "7m3jfmy",
-                    "to": "i68oe5k",
-                    "as": "name"
+                    "from": "i9x02is",
+                    "to": "3zfjt1h",
+                    "as": "fn"
                 },
                 {
-                    "from": "z9zvilt",
-                    "to": "i68oe5k",
+                    "from": "irr99xz",
+                    "to": "2vtokcl",
                     "as": "url"
-                },
-                {
-                    "from": "f89a5u2",
-                    "to": "hgo86cn",
-                    "as": "args"
-                },
-                {
-                    "from": "1v653xe",
-                    "to": "hgo86cn",
-                    "as": "fn"
-                },
-                {
-                    "from": "my879k4",
-                    "to": "f89a5u2",
-                    "as": "imported_graph"
-                },
-                {
-                    "from": "gfpdf11",
-                    "to": "f89a5u2",
-                    "as": "name"
-                },
-                {
-                    "from": "23kbk1n",
-                    "to": "1v653xe",
-                    "as": "target"
-                },
-                {
-                    "from": "71ppowa",
-                    "to": "1v653xe",
-                    "as": "path"
-                },
-                {
-                    "from": "mzijca2",
-                    "to": "my879k4",
-                    "as": "self"
-                },
-                {
-                    "from": "vdfrqzc",
-                    "to": "my879k4",
-                    "as": "fn"
-                },
-                {
-                    "from": "83xy8y2",
-                    "to": "23kbk1n",
-                    "as": "runnable"
-                },
-                {
-                    "from": "5hat6g2",
-                    "to": "mzijca2",
-                    "as": "url"
-                },
-                {
-                    "from": "olx0rqo",
-                    "to": "83xy8y2",
-                    "as": "arg0"
-                },
-                {
-                    "from": "9swjqs2",
-                    "to": "83xy8y2",
-                    "as": "arg1"
-                },
-                {
-                    "from": "cbahtxj",
-                    "to": "83xy8y2",
-                    "as": "args"
-                },
-                {
-                    "from": "jpuj66z",
-                    "to": "olx0rqo",
-                    "as": "fn"
-                },
-                {
-                    "from": "rfmgm5u",
-                    "to": "9swjqs2",
-                    "as": "fn"
-                },
-                {
-                    "from": "jrt3ao3",
-                    "to": "cbahtxj",
-                    "as": "name"
-                },
-                {
-                    "from": "830e6rx",
-                    "to": "cbahtxj",
-                    "as": "imported_graph"
-                },
-                {
-                    "from": "4qd7fl3",
-                    "to": "jpuj66z",
-                    "as": "fn"
-                },
-                {
-                    "from": "sae69iz",
-                    "to": "4qd7fl3",
-                    "as": "args"
-                },
-                {
-                    "from": "j6g4jd4",
-                    "to": "4qd7fl3",
-                    "as": "fn"
-                },
-                {
-                    "from": "um99k99",
-                    "to": "sae69iz",
-                    "as": "imported_graph"
-                },
-                {
-                    "from": "z2ccs2u",
-                    "to": "sae69iz",
-                    "as": "name"
-                },
-                {
-                    "from": "xl0tqsd",
-                    "to": "j6g4jd4",
-                    "as": "state"
-                },
-                {
-                    "from": "sajmrbs",
-                    "to": "xl0tqsd",
-                    "as": "path"
-                },
-                {
-                    "from": "i50d0rl",
-                    "to": "xl0tqsd",
-                    "as": "value"
-                },
-                {
-                    "from": "59iaxzp",
-                    "to": "xl0tqsd",
-                    "as": "target"
-                },
-                {
-                    "from": "pfe7svb",
-                    "to": "i50d0rl",
-                    "as": "target"
-                },
-                {
-                    "from": "dsqrh2d",
-                    "to": "i50d0rl",
-                    "as": "path"
-                },
-                {
-                    "from": "9zfxac6",
-                    "to": "i50d0rl",
-                    "as": "value"
-                },
-                {
-                    "from": "2zvxan2",
-                    "to": "9zfxac6",
-                    "as": "item"
-                },
-                {
-                    "from": "hrzgjqm",
-                    "to": "9zfxac6",
-                    "as": "array"
-                },
-                {
-                    "from": "a8x8a5c",
-                    "to": "2zvxan2",
-                    "as": "array"
-                },
-                {
-                    "from": "d4yl375",
-                    "to": "2zvxan2",
-                    "as": "fn"
-                },
-                {
-                    "from": "2f1lyvz",
-                    "to": "hrzgjqm",
-                    "as": "nodes"
-                },
-                {
-                    "from": "oco33oy",
-                    "to": "hrzgjqm",
-                    "as": "imported_id"
-                },
-                {
-                    "from": "55qulh4",
-                    "to": "d4yl375",
-                    "as": "fn"
-                },
-                {
-                    "from": "4az2m7o",
-                    "to": "d4yl375",
-                    "as": "args"
-                },
-                {
-                    "from": "ugtx81k",
-                    "to": "55qulh4",
-                    "as": "target"
-                },
-                {
-                    "from": "2eq7kuu",
-                    "to": "55qulh4",
-                    "as": "path"
-                },
-                {
-                    "from": "2tekj7w",
-                    "to": "55qulh4",
-                    "as": "value"
-                },
-                {
-                    "from": "2xt8tpx",
-                    "to": "4az2m7o",
-                    "as": "imported_id"
-                },
-                {
-                    "from": "og27c4d",
-                    "to": "2tekj7w",
-                    "as": "imported_id"
-                },
-                {
-                    "from": "aodmtk1",
-                    "to": "2tekj7w",
-                    "as": "node_id"
-                }
-            ]
-        },
-        {
-            "id": "initial_state_runnable",
-            "name": "initial_state_runnable",
-            "in": "0tsqw11",
-            "out": "pd64cr8",
-            "nodes": [
-                {
-                    "name": "out",
-                    "id": "pd64cr8",
-                    "ref": "default"
-                },
-                {
-                    "id": "usd4433",
-                    "name": "modify_state_runnable",
-                    "ref": "modify_state_runnable"
-                },
-                {
-                    "id": "0tsqw11",
-                    "name": "in"
-                },
-                {
-                    "id": "6rdgk5r",
-                    "ref": "get"
-                },
-                {
-                    "id": "4g0xgt3",
-                    "value": "value",
-                    "ref": "arg"
-                },
-                {
-                    "id": "itmdest",
-                    "value": "fn",
-                    "ref": "arg"
-                },
-                {
-                    "id": "s5ns82c",
-                    "ref": "arg",
-                    "value": "state"
-                },
-                {
-                    "id": "eb0nj9q",
-                    "ref": "arg",
-                    "value": "value"
-                }
-            ],
-            "edges": [
-                {
-                    "from": "usd4433",
-                    "to": "pd64cr8",
-                    "as": "otherwise"
-                },
-                {
-                    "from": "0tsqw11",
-                    "to": "pd64cr8",
-                    "as": "_"
-                },
-                {
-                    "from": "6rdgk5r",
-                    "to": "pd64cr8",
-                    "as": "value"
-                },
-                {
-                    "from": "4g0xgt3",
-                    "to": "usd4433",
-                    "as": "value"
-                },
-                {
-                    "from": "itmdest",
-                    "to": "usd4433",
-                    "as": "fn"
-                },
-                {
-                    "from": "s5ns82c",
-                    "to": "6rdgk5r",
-                    "as": "target"
-                },
-                {
-                    "from": "eb0nj9q",
-                    "to": "6rdgk5r",
-                    "as": "path"
-                }
-            ]
-        },
-        {
-            "id": "modify_state_runnable",
-            "name": "modify_state_runnable",
-            "in": "0tke7mk",
-            "out": "4k16rxs",
-            "nodes": [
-                {
-                    "id": "4k16rxs",
-                    "ref": "runnable",
-                    "name": "out"
-                },
-                {
-                    "id": "17hgmhe",
-                    "ref": "dispatch_runnable"
-                },
-                {
-                    "id": "0tke7mk",
-                    "name": "in"
-                },
-                {
-                    "id": "qsm5fqf"
-                },
-                {
-                    "id": "6i1lek8",
-                    "ref": "runnable"
-                },
-                {
-                    "id": "ecixhbu",
-                    "ref": "arg",
-                    "value": "value"
-                },
-                {
-                    "id": "3d6xwzp",
-                    "ref": "arg",
-                    "value": "fn"
-                },
-                {
-                    "id": "ysv47a4",
-                    "ref": "arg",
-                    "value": "state"
-                },
-                {
-                    "id": "yl8sikb"
-                },
-                {
-                    "id": "4hrg1ky"
-                },
-                {
-                    "id": "ywscm67",
-                    "ref": "set"
-                },
-                {
-                    "id": "hsgqfec",
-                    "ref": "arg",
-                    "value": "value"
-                },
-                {
-                    "id": "a5z6wdp",
-                    "ref": "run"
-                },
-                {
-                    "id": "vjtdfop",
-                    "ref": "arg",
-                    "value": "payload.value"
-                },
-                {
-                    "id": "hej7g0o",
-                    "ref": "arg",
-                    "value": "payload.state_value"
-                },
-                {
-                    "id": "bohly2o",
-                    "ref": "arg",
-                    "value": "state"
-                },
-                {
-                    "id": "y65mfa8",
-                    "ref": "set"
-                },
-                {
-                    "id": "tmsibf6",
-                    "ref": "merge_objects"
-                },
-                {
-                    "id": "dkoqs5x",
-                    "value": "args"
-                },
-                {
-                    "id": "zmexk3x",
-                    "ref": "arg",
-                    "value": "fn"
-                },
-                {
-                    "id": "nl97w9x"
-                },
-                {
-                    "id": "oz8h5rr",
-                    "ref": "arg",
-                    "value": "fn.args"
-                },
-                {
-                    "id": "5g3mq34",
-                    "ref": "arg",
-                    "value": "dispatch"
-                },
-                {
-                    "id": "jdxnymc",
-                    "ref": "arg",
-                    "value": "payload"
-                },
-                {
-                    "id": "69fs5ao",
-                    "ref": "get"
-                },
-                {
-                    "id": "lsjg9ew",
-                    "ref": "arg",
-                    "value": "state"
-                },
-                {
-                    "id": "vc4ejyt",
-                    "ref": "arg",
-                    "value": "state"
-                },
-                {
-                    "id": "n3riawv",
-                    "ref": "arg",
-                    "value": "value"
-                }
-            ],
-            "edges": [
-                {
-                    "from": "17hgmhe",
-                    "to": "4k16rxs",
-                    "as": "fn"
-                },
-                {
-                    "from": "0tke7mk",
-                    "to": "4k16rxs",
-                    "as": "arg0"
-                },
-                {
-                    "from": "qsm5fqf",
-                    "to": "4k16rxs",
-                    "as": "args"
-                },
-                {
-                    "from": "6i1lek8",
-                    "to": "17hgmhe",
-                    "as": "fn"
-                },
-                {
-                    "from": "ecixhbu",
-                    "to": "qsm5fqf",
-                    "as": "value"
-                },
-                {
-                    "from": "3d6xwzp",
-                    "to": "qsm5fqf",
-                    "as": "fn"
-                },
-                {
-                    "from": "ysv47a4",
-                    "to": "qsm5fqf",
-                    "as": "state"
-                },
-                {
-                    "from": "yl8sikb",
-                    "to": "6i1lek8",
-                    "as": "fn"
-                },
-                {
-                    "from": "4hrg1ky",
-                    "to": "6i1lek8",
-                    "as": "args"
-                },
-                {
-                    "from": "ywscm67",
-                    "to": "yl8sikb",
-                    "as": "state"
-                },
-                {
-                    "from": "hsgqfec",
-                    "to": "4hrg1ky",
-                    "as": "value"
-                },
-                {
-                    "from": "a5z6wdp",
-                    "to": "4hrg1ky",
-                    "as": "state_value"
-                },
-                {
-                    "from": "vjtdfop",
-                    "to": "ywscm67",
-                    "as": "path"
-                },
-                {
-                    "from": "hej7g0o",
-                    "to": "ywscm67",
-                    "as": "value"
-                },
-                {
-                    "from": "bohly2o",
-                    "to": "ywscm67",
-                    "as": "target"
-                },
-                {
-                    "from": "y65mfa8",
-                    "to": "a5z6wdp",
-                    "as": "runnable"
-                },
-                {
-                    "from": "tmsibf6",
-                    "to": "y65mfa8",
-                    "as": "value"
-                },
-                {
-                    "from": "dkoqs5x",
-                    "to": "y65mfa8",
-                    "as": "path"
-                },
-                {
-                    "from": "zmexk3x",
-                    "to": "y65mfa8",
-                    "as": "target"
-                },
-                {
-                    "from": "nl97w9x",
-                    "to": "tmsibf6",
-                    "as": "arg0"
-                },
-                {
-                    "from": "oz8h5rr",
-                    "to": "tmsibf6",
-                    "as": "arg1"
-                },
-                {
-                    "from": "5g3mq34",
-                    "to": "nl97w9x",
-                    "as": "dispatch"
-                },
-                {
-                    "from": "jdxnymc",
-                    "to": "nl97w9x",
-                    "as": "payload"
-                },
-                {
-                    "from": "69fs5ao",
-                    "to": "nl97w9x",
-                    "as": "state_value"
-                },
-                {
-                    "from": "lsjg9ew",
-                    "to": "nl97w9x",
-                    "as": "state"
-                },
-                {
-                    "from": "vc4ejyt",
-                    "to": "69fs5ao",
-                    "as": "target"
-                },
-                {
-                    "from": "n3riawv",
-                    "to": "69fs5ao",
-                    "as": "path"
                 }
             ]
         },
@@ -2259,6 +1585,10 @@
                 {
                     "id": "hfexsuu",
                     "script": "return !key?.startsWith('_');"
+                },
+                {
+                    "id": "runnable",
+                    "ref": "runnable"
                 },
                 {
                     "id": "bgi2g37",
@@ -2283,9 +1613,13 @@
                 },
                 {
                     "from": "hfexsuu",
+                    "to": "runnable",
+                    "as": "fn"
+                },
+                {
+                    "from": "runnable",
                     "to": "j8c79uf",
-                    "as": "fn",
-                    "type": "ref"
+                    "as": "fn"
                 },
                 {
                     "from": "bgi2g37",
@@ -2846,298 +2180,6 @@
             ]
         },
         {
-            "id": "set_display",
-            "name": "set_display",
-            "description": "Use like an html_element to add html to the page.",
-            "in": "fkp4pck/wb73q0h",
-            "out": "a59hci8",
-            "nodes": [
-                {
-                    "name": "out",
-                    "id": "a59hci8",
-                    "ref": "sequence"
-                },
-                {
-                    "id": "da71z9c/2435ihf/jd1mc84",
-                    "name": "modify_state_runnable",
-                    "ref": "modify_state_runnable"
-                },
-                {
-                    "id": "fkp4pck/wb73q0h",
-                    "name": "in"
-                },
-                {
-                    "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/y4qbl8k",
-                    "value": "result_display"
-                },
-                {
-                    "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/lol0vdh",
-                    "ref": "runnable"
-                },
-                {
-                    "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/w8vpdfx",
-                    "ref": "html_element"
-                },
-                {
-                    "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/vofecaa",
-                    "ref": "arg",
-                    "value": "props"
-                },
-                {
-                    "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/j8qudts",
-                    "ref": "arg",
-                    "value": "children"
-                },
-                {
-                    "id": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/iead5y3",
-                    "ref": "arg",
-                    "value": "dom_type"
-                }
-            ],
-            "edges": [
-                {
-                    "from": "da71z9c/2435ihf/jd1mc84",
-                    "to": "a59hci8",
-                    "as": "arg0"
-                },
-                {
-                    "to": "a59hci8",
-                    "from": "fkp4pck/wb73q0h",
-                    "as": "arg1"
-                },
-                {
-                    "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/y4qbl8k",
-                    "to": "da71z9c/2435ihf/jd1mc84",
-                    "as": "value"
-                },
-                {
-                    "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/lol0vdh",
-                    "to": "da71z9c/2435ihf/jd1mc84",
-                    "as": "fn"
-                },
-                {
-                    "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/w8vpdfx",
-                    "to": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/lol0vdh",
-                    "as": "fn"
-                },
-                {
-                    "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/vofecaa",
-                    "to": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/w8vpdfx",
-                    "as": "props"
-                },
-                {
-                    "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/j8qudts",
-                    "to": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/w8vpdfx",
-                    "as": "children"
-                },
-                {
-                    "from": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/iead5y3",
-                    "to": "da71z9c/2435ihf/jd1mc84/a59hci8/da71z9c/2435ihf/w8vpdfx",
-                    "as": "dom_type"
-                }
-            ]
-        },
-        {
-            "id": "input",
-            "name": "input",
-            "in": "7rhq0q5",
-            "out": "nn4twx9",
-            "nodes": [
-                {
-                    "id": "nn4twx9",
-                    "ref": "html_element",
-                    "inputs": [
-                        {
-                            "from": "bw4iez5/gvkhkfw",
-                            "to": "bw4iez5/nn4twx9",
-                            "as": "children"
-                        },
-                        {
-                            "from": "bw4iez5/7rhq0q5",
-                            "to": "bw4iez5/nn4twx9",
-                            "as": "props"
-                        }
-                    ],
-                    "name": "out"
-                },
-                {
-                    "id": "gvkhkfw",
-                    "ref": "array"
-                },
-                {
-                    "id": "7rhq0q5",
-                    "name": "in"
-                },
-                {
-                    "id": "4972gx3",
-                    "ref": "html_element"
-                },
-                {
-                    "id": "1ldhfah",
-                    "ref": "html_element",
-                    "name": "label"
-                },
-                {
-                    "id": "ee5i5r2",
-                    "value": "input"
-                },
-                {
-                    "id": "ro8n2gc",
-                    "ref": "merge_objects"
-                },
-                {
-                    "id": "wet0jdv",
-                    "ref": "array"
-                },
-                {
-                    "id": "gcuxiw9"
-                },
-                {
-                    "id": "875c1wk",
-                    "value": "label"
-                },
-                {
-                    "id": "t6q6rvf"
-                },
-                {
-                    "id": "rjwtb3c",
-                    "ref": "default"
-                },
-                {
-                    "id": "utkc9o6",
-                    "ref": "html_text"
-                },
-                {
-                    "id": "jxl9r29",
-                    "script": "return \"input-\" + value;"
-                },
-                {
-                    "id": "2zxw9oo",
-                    "ref": "execute_graph",
-                    "name": "stop_propagation"
-                },
-                {
-                    "id": "i7y9dyy",
-                    "script": "return (state, payload) => [{...state, [value]: payload.target.value}, onchange_fn && [_ => dispatch(onchange_fn)]]"
-                },
-                {
-                    "id": "vks4vul",
-                    "ref": "arg",
-                    "value": "props"
-                },
-                {
-                    "id": "ddfgy2s"
-                },
-                {
-                    "id": "trd8ptp",
-                    "ref": "arg",
-                    "value": "value"
-                },
-                {
-                    "id": "zfrrk0z",
-                    "ref": "arg",
-                    "value": "value"
-                },
-                {
-                    "id": "qseh2tb",
-                    "ref": "array"
-                },
-                {
-                    "id": "b0j8nyq",
-                    "ref": "arg",
-                    "value": "dispatch"
-                },
-                {
-                    "id": "eotod0l",
-                    "ref": "sequence"
-                },
-                {
-                    "id": "qxwvdfe",
-                    "ref": "arg",
-                    "value": "value"
-                },
-                {
-                    "id": "0dnqo5l",
-                    "ref": "arg",
-                    "value": "onchange_fn"
-                },
-                {
-                    "id": "1wps21n",
-                    "name": "stop propagation effect",
-                    "out": "hj2cig0",
-                    "nodes": [
-                        {
-                            "id": "hj2cig0",
-                            "ref": "array",
-                            "name": "stop propagation effect"
-                        },
-                        {
-                            "id": "1pvaim9",
-                            "ref": "execute_graph"
-                        },
-                        {
-                            "id": "0o86xp3",
-                            "ref": "arg",
-                            "value": "1"
-                        },
-                        {
-                            "id": "d60jwms",
-                            "script": "payload.stopPropagation();"
-                        },
-                        {
-                            "id": "xgbubrq",
-                            "ref": "arg",
-                            "value": "1"
-                        }
-                    ],
-                    "edges": [
-                        {
-                            "from": "1pvaim9",
-                            "to": "hj2cig0",
-                            "as": "a0"
-                        },
-                        {
-                            "from": "0o86xp3",
-                            "to": "hj2cig0",
-                            "as": "a1"
-                        },
-                        {
-                            "from": "d60jwms",
-                            "to": "1pvaim9",
-                            "as": "fn",
-                            "type": "ref"
-                        },
-                        {
-                            "from": "xgbubrq",
-                            "to": "d60jwms",
-                            "as": "payload"
-                        }
-                    ]
-                },
-                {
-                    "id": "y5q7mbn",
-                    "ref": "arg",
-                    "value": "0"
-                },
-                {
-                    "id": "qjc0zt6",
-                    "ref": "modify_state_runnable"
-                },
-                {
-                    "id": "widk6u6",
-                    "ref": "runnable"
-                },
-                {
-                    "id": "506ntvb",
-                    "ref": "arg",
-                    "value": "value"
-                },
-                {
-                    "id": "4ck1vaf",
-                    "ref": "arg",
-                    "value": "payload.target.value"
-                }
-            ],
             "edges": [
                 {
                     "from": "gvkhkfw",
@@ -3290,7 +2332,218 @@
                     "to": "widk6u6",
                     "as": "fn"
                 }
-            ]
+            ],
+            "nodes": [
+                {
+                    "id": "nn4twx9",
+                    "ref": "html_element",
+                    "inputs": [
+                        {
+                            "from": "bw4iez5/gvkhkfw",
+                            "to": "bw4iez5/nn4twx9",
+                            "as": "children"
+                        },
+                        {
+                            "from": "bw4iez5/7rhq0q5",
+                            "to": "bw4iez5/nn4twx9",
+                            "as": "props"
+                        }
+                    ],
+                    "name": "out"
+                },
+                {
+                    "id": "gvkhkfw",
+                    "ref": "array"
+                },
+                {
+                    "id": "7rhq0q5",
+                    "name": "in"
+                },
+                {
+                    "id": "1ldhfah",
+                    "ref": "html_element",
+                    "name": "label"
+                },
+                {
+                    "id": "4972gx3",
+                    "ref": "html_element"
+                },
+                {
+                    "id": "wet0jdv",
+                    "ref": "array"
+                },
+                {
+                    "id": "gcuxiw9"
+                },
+                {
+                    "id": "875c1wk",
+                    "value": "label"
+                },
+                {
+                    "id": "ee5i5r2",
+                    "value": "input"
+                },
+                {
+                    "id": "ro8n2gc",
+                    "ref": "merge_objects"
+                },
+                {
+                    "id": "n1qcxu2",
+                    "value": "true"
+                },
+                {
+                    "id": "utkc9o6",
+                    "ref": "html_text"
+                },
+                {
+                    "id": "jxl9r29",
+                    "script": "return \"input-\" + name;"
+                },
+                {
+                    "id": "t6q6rvf"
+                },
+                {
+                    "id": "rjwtb3c",
+                    "ref": "default"
+                },
+                {
+                    "id": "varubwp"
+                },
+                {
+                    "id": "trd8ptp",
+                    "ref": "arg",
+                    "value": "name"
+                },
+                {
+                    "id": "zfrrk0z",
+                    "ref": "arg",
+                    "value": "name"
+                },
+                {
+                    "id": "2zxw9oo",
+                    "ref": "execute_graph",
+                    "name": "stop_propagation"
+                },
+                {
+                    "id": "sjw3rie",
+                    "ref": "default"
+                },
+                {
+                    "id": "vks4vul",
+                    "ref": "arg",
+                    "value": "props"
+                },
+                {
+                    "id": "ddfgy2s"
+                },
+                {
+                    "id": "671rzr9",
+                    "ref": "arg",
+                    "value": "name"
+                },
+                {
+                    "id": "ccir2fl",
+                    "ref": "arg",
+                    "value": "name"
+                },
+                {
+                    "id": "qseh2tb",
+                    "ref": "array"
+                },
+                {
+                    "id": "i7y9dyy",
+                    "ref": "runnable"
+                },
+                {
+                    "id": "fihihz0",
+                    "ref": "arg",
+                    "value": "oninput"
+                },
+                {
+                    "id": "1wps21n",
+                    "name": "stop propagation effect",
+                    "out": "hj2cig0",
+                    "nodes": [
+                        {
+                            "id": "hj2cig0",
+                            "ref": "array",
+                            "name": "stop propagation effect"
+                        },
+                        {
+                            "id": "1pvaim9",
+                            "ref": "execute_graph"
+                        },
+                        {
+                            "id": "0o86xp3",
+                            "ref": "arg",
+                            "value": "1"
+                        },
+                        {
+                            "id": "d60jwms",
+                            "script": "payload.stopPropagation();"
+                        },
+                        {
+                            "id": "xgbubrq",
+                            "ref": "arg",
+                            "value": "1"
+                        }
+                    ],
+                    "edges": [
+                        {
+                            "from": "1pvaim9",
+                            "to": "hj2cig0",
+                            "as": "a0"
+                        },
+                        {
+                            "from": "0o86xp3",
+                            "to": "hj2cig0",
+                            "as": "a1"
+                        },
+                        {
+                            "from": "d60jwms",
+                            "to": "1pvaim9",
+                            "as": "fn",
+                            "type": "ref"
+                        },
+                        {
+                            "from": "xgbubrq",
+                            "to": "d60jwms",
+                            "as": "payload"
+                        }
+                    ]
+                },
+                {
+                    "id": "y5q7mbn",
+                    "ref": "arg",
+                    "value": "0"
+                },
+                {
+                    "id": "y9bkhqc"
+                },
+                {
+                    "id": "6m6m1hq_1/ocuonub/qjc0zt6",
+                    "ref": "event_publisher"
+                },
+                {
+                    "id": "nb2sswc",
+                    "ref": "arg",
+                    "value": "name"
+                },
+                {
+                    "id": "6m6m1hq_1/ocuonub/506ntvb",
+                    "value": "payload.event.target.value",
+                    "ref": "arg"
+                },
+                {
+                    "id": "6m6m1hq_1/ocuonub/4ck1vaf",
+                    "ref": "arg",
+                    "value": "payload.name"
+                }
+            ],
+            "out": "nn4twx9",
+            "in": "7rhq0q5",
+            "name": "input",
+            "id": "input"
         },
         {
             "id": "html_text",
@@ -3355,12 +2608,17 @@
                     "value": "dom_type"
                 },
                 {
+                    "id": "memo",
+                    "ref": "arg",
+                    "value": "memo"
+                },
+                {
                     "id": "div",
                     "value": "div"
                 },
                 {
                     "id": "fill_children",
-                    "script": "return children === undefined ? [] : children.length !== undefined ? children.filter(c => !!c).map(c => c.el ?? c) : [children.el ?? children]"
+                    "script": "return children === undefined ? [] : children.length !== undefined ? children.map(c => _lib.no.resolve(c)).filter(c => !!c).map(c => c.el ?? c) : [children.el ?? children]"
                 },
                 {
                     "id": "fill_props",
@@ -3372,7 +2630,7 @@
                 },
                 {
                     "id": "out",
-                    "script": "if(!(typeof dom_type === 'string' && Array.isArray(children))){ throw new Error('invalid element');} children.filter(c => c).forEach(c => {if(typeof c.dom_type !== 'string'){throw new Error ('invalid child element');}}); return {el: {dom_type, props, children}}"
+                    "script": "if(!(typeof dom_type === 'string' && Array.isArray(children))){ throw new Error('invalid element');} children.filter(c => c).forEach(c => {if(typeof c.dom_type !== 'string'){throw new Error ('invalid child element');}}); return {el: {dom_type, props, children, memo}}"
                 }
             ],
             "edges": [
@@ -3388,10 +2646,14 @@
                     "type": "resolve"
                 },
                 {
+                    "from": "memo",
+                    "to": "out",
+                    "as": "memo"
+                },
+                {
                     "from": "fill_children",
                     "to": "out",
-                    "as": "children",
-                    "type": "resolve"
+                    "as": "children"
                 },
                 {
                     "from": "fill_props",
@@ -3444,24 +2706,9 @@
             "as": "props"
         },
         {
-            "from": "o1wn5x1",
-            "to": "l6mvkla",
-            "as": "class"
-        },
-        {
-            "from": "zz730do",
-            "to": "o1wn5x1",
-            "as": "result"
-        },
-        {
             "from": "pgygs2p/vdyskp6",
             "to": "pgygs2p/pgygs2p",
             "as": "dom_type"
-        },
-        {
-            "from": "pgygs2p/02951w8",
-            "to": "pgygs2p/6yewnx1",
-            "as": "text"
         },
         {
             "from": "63tva08",
@@ -3479,11 +2726,6 @@
             "as": "arg1"
         },
         {
-            "as": "children",
-            "from": "c2sko9c/c2sko9c",
-            "to": "ndiz2ap"
-        },
-        {
             "from": "main/in",
             "to": "main/out",
             "as": "args",
@@ -3493,6 +2735,116 @@
             "from": "pgygs2p/6yewnx1",
             "to": "pgygs2p/pgygs2p",
             "as": "children"
+        },
+        {
+            "from": "ei2v3i1",
+            "to": "pgygs2p/6yewnx1",
+            "as": "css_object"
+        },
+        {
+            "from": "xmxaeam",
+            "to": "738zvw0",
+            "as": "font-size"
+        },
+        {
+            "from": "633t5fa",
+            "to": "738zvw0",
+            "as": "position"
+        },
+        {
+            "from": "zymxe0p",
+            "to": "738zvw0",
+            "as": "bottom"
+        },
+        {
+            "from": "72n68a5",
+            "to": "738zvw0",
+            "as": "left"
+        },
+        {
+            "from": "o1wn5x1",
+            "to": "l6mvkla",
+            "as": "id"
+        },
+        {
+            "from": "738zvw0",
+            "to": "ei2v3i1",
+            "as": "#result"
+        },
+        {
+            "as": "arg0",
+            "from": "c2sko9c/c2sko9c",
+            "to": "volcn6l"
+        },
+        {
+            "from": "o9eng7j",
+            "to": "volcn6l",
+            "as": "arg1"
+        },
+        {
+            "from": "t8ogrr4",
+            "to": "o9eng7j",
+            "as": "children"
+        },
+        {
+            "from": "53j1tzp",
+            "to": "t8ogrr4",
+            "as": "text"
+        },
+        {
+            "from": "v6kth1o",
+            "to": "volcn6l",
+            "as": "arg2"
+        },
+        {
+            "from": "ktscze0",
+            "to": "v6kth1o",
+            "as": "text"
+        },
+        {
+            "from": "kug4dbr",
+            "to": "o9eng7j",
+            "as": "props"
+        },
+        {
+            "from": "ckyn67n",
+            "to": "o9eng7j",
+            "as": "dom_type"
+        },
+        {
+            "from": "ph9jtb9",
+            "to": "kug4dbr",
+            "as": "class"
+        },
+        {
+            "from": "lqobycq",
+            "to": "ph9jtb9",
+            "as": "name"
+        },
+        {
+            "from": "vkk7es5",
+            "to": "a0gsnn8",
+            "as": "text-decoration"
+        },
+        {
+            "from": "a0gsnn8",
+            "to": "ei2v3i1",
+            "as": "#result .name"
+        },
+        {
+            "as": "children",
+            "from": "q9c6g4v",
+            "to": "ndiz2ap"
+        },
+        {
+            "as": "children",
+            "from": "volcn6l",
+            "to": "q9c6g4v"
+        },
+        {
+            "from": "kemaje6",
+            "to": "q9c6g4v",
+            "as": "dom_type"
         },
         {
             "from": "get",
@@ -3519,24 +2871,12 @@
             "to": "html"
         },
         {
-            "from": "toggle",
-            "to": "html"
-        },
-        {
             "from": "input",
             "to": "html"
         },
         {
             "from": "css_styles",
             "to": "html"
-        },
-        {
-            "from": "modify_state_runnable",
-            "to": "state"
-        },
-        {
-            "from": "set_display",
-            "to": "state"
         },
         {
             "from": "log",
