@@ -80,6 +80,11 @@ function compare(value1, value2) {
         return compareArrays(value1, value2);
     }
     if (typeof value1 === 'object' && typeof value2 === 'object') {
+        if(value1.fn && value2.fn 
+            && compare(value1.graph, value2.graph)
+            && compare(value1.args, value2.args)) {
+            return value1.fn === value2.fn;
+        }
         if ((value1 instanceof Map) && (value2 instanceof Map)) {
             return compareArrays([...value1.entries()], [...value2.entries()]);
         }
@@ -1069,6 +1074,7 @@ const generic_nodes = new Set([
     "return",
     "cache",
     "set_arg",
+    "run_path",
 
     "math",
     "add",
@@ -1194,7 +1200,7 @@ const nolib = {
             }
 
             const remove_listener = (event, listener_id) => {
-                const listeners = event_listeners.get(event);
+                const listeners = getorset(event_listeners, event, () => new Map());
                 listeners.delete(listener_id);
 
                 //TODO: rethink this maybe?
@@ -1239,6 +1245,19 @@ const nolib = {
                 const parent = get_parent(graph);
                 return parent ? get_parentest(parent) : graph;
             }
+            const get_path = (graph, path) => {
+                    let gcache = cache.get(graph.id);
+                    let pathSplit = path.split(".");
+                    let node = gcache.graph.out ?? "out";
+                    while(pathSplit.length > 0 && node) {
+                        console.log('finding')
+                        let pathval = pathSplit.shift();
+                        console.log(pathval);
+                        node = get_edges_in(graph, node).find(e => e.as === pathval)?.from;
+                        console.log(node);
+                    } 
+                    return node;
+                }
 
             return {
                 is_cached: (graph, id) => getorset(cache, graph.id, () => new_graph_cache(graph)).is_cached.has(id),
@@ -1253,6 +1272,7 @@ const nolib = {
                 delete_cache,
                 get_graph,
                 get_args,
+                get_path,
                 edit_edge: (graph, edge, old_edge) => {
                     const gcache = getorset(cache, graph.id, () => new_graph_cache(resolve(graph)));
                     graph = gcache.graph;
@@ -1273,38 +1293,15 @@ const nolib = {
                     getorset(cache, graph.id, () => new_graph_cache(graph)).args = {...(args ?? {}), ...(cache.get(graph.id).args ?? {})};
                 },
                 add_node: (graph, node, edge) => {
-                    // Add the node to the graph, making sure to use the right node_id at every level.
-                    // The added node has to not have the parent id
-                    // The parent might have slashes in it
-                    let node_id = node.id;
-                    let new_node = node;
                     const gcache = getorset(cache, graph.id, () => new_graph_cache(resolve(graph)));
                     graph = gcache.graph;
-                    do {
-                        let nest_up_id = gcache.parent_map.get(node_id);
-                        if (nest_up_id) {
-                            new_node = {
-                                ...new_node,
-                                id: new_node.id.substring(nest_up_id.length + 1)
-                            };
-                            const nest_up = get_node(graph, nest_up_id);
-                            if(!nest_up){
-                                update_graph(graph);
-                                return;
-                            }
-                            new_node = {
-                                ...nest_up,
-                                nodes: nest_up.nodes.filter(n => n.id !== new_node.id).concat([new_node])
-                            };
-                        }
-                        node_id = nest_up_id;
-                    } while (node_id);
 
                     const new_graph = {
                         ...graph,
-                        nodes: graph.nodes.filter(n => n.id !== new_node.id).concat([new_node]),
-                        edges: edge ? graph.edges.filter(e => !(e.from === edge.from && e.to === edge.to)).concat(edge) : graph.edges
+                        nodes: graph.nodes.filter(n => n.id !== node.id).concat([node])
                     };
+
+                    cache.delete(graph.id + "/" + node.id);
 
                     update_graph(new_graph);
                 },

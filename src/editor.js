@@ -327,7 +327,7 @@ const editor = function(html_id, display_graph, lib, norun) {
     const examples = [simple_html_hyperapp, simple];
     const dispatch = runGraph(DEFAULT_GRAPH, "initialize_hyperapp_app", { 
         graph: DEFAULT_GRAPH, 
-        display_graph: add_default_nodes_and_edges(display_graph),
+        display_graph: {...add_default_nodes_and_edges(display_graph), out: "main/out"},
         hash: window.location.hash ?? "",
         url_params,
         html_id,
@@ -538,7 +538,7 @@ const result_subscription = (dispatch, props) => {
     const listener = (graph, result) => {
         if(graph.id === props.graph.id) {
             requestAnimationFrame(() => 
-                dispatch(s => Object.assign({}, s, {error: false}, result)));
+                dispatch(s => Object.assign({}, s, {error: false}, {display: result.display})));
         }
     }
     

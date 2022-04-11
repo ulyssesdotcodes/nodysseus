@@ -16,10 +16,12 @@
       "nodes": [
         { "id": "in" },
         { "id": "value", "ref": "arg", "value": "value" },
-        { "id": "out", "args": [], "script": "console.log(_graph.name ?? _graph.id); console.log(value); return value" }
+        { "id": "tag", "ref": "arg", "value": "tag" },
+        { "id": "out", "args": [], "script": "console.log(tag ?? _graph.name ?? _graph.id); console.log(value); return value" }
       ],
       "edges": [
         { "from": "in", "to": "out", "as": "input", "type":"ref"},
+        { "from": "tag", "to": "out", "as": "tag"},
         { "from": "value", "to": "out", "as": "value" }
       ]
     },
@@ -458,15 +460,33 @@
       ]
     },
     {
+      "id": "run_path",
+      "out": "out",
+      "nodes": [
+        {"id": "path", "ref": "arg", "value": "path"},
+        {"id": "args", "ref": "arg", "value": "_args", "type": "internal"},
+        {"id": "runnable", "script": "const parentest = _lib.no.runtime.get_parentest(_graph); return {fn: _lib.no.runtime.get_path(parentest, path), graph: parentest, args}"},
+        {"id": "out", "ref": "run"}
+      ],
+      "edges": [
+        {"from": "path", "to": "runnable", "as": "path"},
+        {"from": "args", "to": "runnable", "as": "args"},
+        {"from": "runnable", "to": "out", "as": "runnable"}
+      ]
+    },
+    {
       "id": "set_arg",
       "nodes": [
         {"id": "name", "ref": "arg", "value": "name"},
         {"id": "value", "ref": "arg", "value": "value"},
-        {"id": "out", "script": "_lib.no.runtime.update_graph(_lib.no.runtime.get_parentest(_graph), {[name]: value}); return value;"}
+        {"id": "env", "ref": "arg", "value": "_args", "type": "internal"},
+        {"id": "prev_value", "ref": "get"},
+        {"id": "out", "script": "console.log(_lib.utility.get.fn(env, name)); if(!_lib.utility.compare(env[name]._value, value)){ console.log('setting ' + name); _lib.no.runtime.update_graph(_lib.no.runtime.get_parentest(_graph), {[name]: value});} return value;"}
       ],
       "edges": [
         {"from": "name", "to": "out", "as": "name"},
-        {"from": "value", "to": "out", "as": "value"}
+        {"from": "value", "to": "out", "as": "value"},
+        {"from": "env", "to": "out", "as": "env"}
       ]
     },
     {
@@ -489,7 +509,7 @@
         { "id": "value", "ref": "arg", "value": "value" },
         {
           "id": "out",
-          "script": "const parent = _lib.no.runtime.get_node(_graph, _node.id.substring(0, _node.id.lastIndexOf('/'))); if(!_lib.utility.compare(parent.value, value)) { _lib.no.runtime.add_node(_graph, {...parent , value}); } return value"
+          "script": "const parent = _lib.no.runtime.get_parent(_graph); if(!_lib.utility.compare(parent.value, value)) { _lib.no.runtime.add_node(parent, {..._graph, id: _graph.node_id, value}); } return value"
         }
       ],
       "edges": [{ "from": "value", "to": "out", "as": "value", "type": "resolve" }]
@@ -499,17 +519,20 @@
       "out": "out",
       "nodes": [
         { "id": "name", "ref": "arg", "value": "name" },
+        { "id": "onevent", "ref": "arg", "value": "onevent" },
         {
           "id": "add_listener",
-          "script": "const parent = _lib.no.runtime.get_node(_graph, _lib.no.runtime.get_parent(_graph, _node.id)); _lib.no.runtime.add_listener(event, parent.id, (graph, ev) => (_lib.no.runtime.add_node(_graph, {...parent , value: ev})), true)"
+          "script": "const parent = _lib.no.runtime.get_parent(_graph); const self = _lib.no.runtime.get_node(parent, _graph.node_id); _lib.no.runtime.add_listener(event, parent.id, (graph, ev) => (_lib.no.runtime.add_node(parent, {...self, value: ev})), true)",
+          "_script": "const parent = _lib.no.runtime.get_parent(_graph); _lib.no.runtime.add_listener(event, _graph.id, (graph, data) => {if(onevent) { _lib.no.runGraph(onevent.graph, onevent.fn, {...onevent.args, data})}}, true)"
         },
         {
           "id": "out",
-          "script": "return _lib.no.runtime.get_node(_graph, _lib.no.runtime.get_parent(_graph, _node.id)).value;"
+          "script": "return _graph.value;"
         }
       ],
       "edges": [
         { "from": "name", "to": "add_listener", "as": "event" },
+        { "from": "onevent", "to": "add_listener", "as": "onevent" },
         { "from": "add_listener", "to": "out", "as": "listener" }
       ]
     },
@@ -3022,6 +3045,7 @@
         { "id": "paste_effect", "ref": "paste_node_effect" },
         { "id": "clear_popover", "ref": "clear_popover_graph" },
         { "id": "expand_contract_effect", "ref": "expand_contract_effect" },
+        { "id": "publish_key", "script": "return [() => _lib.no.runtime.publish.fn(display_graph, 'keydown', key)]" },
         { "id": "keybindings_graph", "script": "return _lib.no.runtime.get_node(_graph, 'keybindings')" },
         { "id": "show_popover_effect", "ref": "show_popover_graph" },
         { "id": "keybindings", "ref": "keybindings" },
@@ -3169,6 +3193,9 @@
         { "from": "run_display_graph_effector", "to": "run_display_graph_effect", "as": "a0" },
         { "from": "key_event", "to": "run_display_graph_effect", "as": "a1" },
         { "from": "run_display_graph_effect", "to": "_default_fx", "as": "a0" },
+        { "from": "arg_display_graph", "to": "publish_key", "as": "display_graph" },
+        { "from": "key_inputs", "to": "publish_key", "as": "key" },
+        { "from": "publish_key", "to": "default_graph_fx", "as": "a1" },
         { "from": "mode", "to": "default_fx", "as": "input"},
         { "from": "default_graph_fx", "to": "default_fx", "as": "graph"},
         { "from": "update", "to": "update_effector", "as": "fn", "type": "ref" },
