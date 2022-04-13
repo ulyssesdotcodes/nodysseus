@@ -535,16 +535,16 @@ const listenToEvent = (dispatch, props) => {
 }
 
 const result_subscription = (dispatch, props) => {
-    const listener = (graph, result) => {
-        if(graph.id === props.graph.id) {
+    const listener = ({graph, result}) => {
+        if(graph.id === props.display_graph_id) {
             requestAnimationFrame(() => 
                 dispatch(s => Object.assign({}, s, {error: false}, {display: result.display})));
         }
     }
     
 
-    const error_listener = (graph, error) =>
-        requestAnimationFrame(() => dispatch(s => Object.assign({}, s, {error, display_graph: graph})))
+    const error_listener = (error) =>
+        requestAnimationFrame(() => dispatch(s => Object.assign({}, s, {error})))
 
     nolib.no.runtime.add_listener('graphrun', 'update_hyperapp_result_display', listener);
     nolib.no.runtime.add_listener('grapherror', 'update_hyperapp_error', error_listener);

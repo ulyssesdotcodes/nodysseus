@@ -80,10 +80,10 @@ function compare(value1, value2) {
         return compareArrays(value1, value2);
     }
     if (typeof value1 === 'object' && typeof value2 === 'object') {
-        if(value1.fn && value2.fn 
+        if(value1.fn && value1.fn === value2.fn 
             && compare(value1.graph, value2.graph)
             && compare(value1.args, value2.args)) {
-            return value1.fn === value2.fn;
+            return true;
         }
         if ((value1 instanceof Map) && (value2 instanceof Map)) {
             return compareArrays([...value1.entries()], [...value2.entries()]);
@@ -132,6 +132,9 @@ function compareObjects(value1, value2) {
     }
 
     for (let key of keys1) {
+        if(key === "__args" /*&& compare(value1[key], value2[key])*/){
+            continue;
+        }
         if (value1[key] === value2[key]) {
             continue;
         }
@@ -636,7 +639,12 @@ const create_data = (inputs, input_data_map) => {
 
 const executeGraph = ({ cache, graph, lib, usecache }) => {
     const full_lib = lib ? lib.no ? lib : {...nolib, ...lib} : nolib;
-    usecache = usecache ?? true;
+    if(typeof graph === "string") {
+        graph = full_lib.no.runtime.get_graph(graph);
+    }
+    // Can't cache right now because things use _lib methods which rely on graph
+    // As an alternative, use the `cache` node for things that take a long time.
+    usecache = false; //usecache ?? true;
 
     if (!graph.nodes) {
         throw new Error(`Graph has no nodes! in: ${graph.in} out: ${graph.out}`)
@@ -925,7 +933,7 @@ const contract_node = (data, keep_expanded = false) => {
         const in_node = inside_node_map.get(in_node_id);
 
         let node_id_count = data.display_graph.nodes.filter(n => n.id === node_id).length;
-        let final_node_id = node_id_count === 0 ? node_id : `${node_id}_${node_id_count}`
+        let final_node_id = node_id_count === 1 ? node_id : `${node_id}_${node_id_count}`
 
         const edges = [];
         for (const e of inside_edges) {
@@ -1067,20 +1075,22 @@ const generic_nodes = new Set([
     "object_entries",
     "import_json",
     "event_publisher",
+    "event_publisher_onchange",
     "event_subscriber",
     "events_broadcast_channel",
     "input_value",
     "ancestors",
     "return",
     "cache",
+    "isunchanged",
     "set_arg",
-    "run_path",
 
     "math",
     "add",
     "divide",
     "mult",
     "negate",
+    "eq",
 
     "JSON",
     "stringify",
@@ -1142,23 +1152,27 @@ const nolib = {
                 is_cached: new Set()
             });
             const event_listeners = new Map();
+            const event_data = new Map();
             const getorsetgraph = (graph, id, path, valfn) => getorset(getorset(cache, graph.id, () => new_graph_cache(graph))[path], id, valfn);
-            const publish = (graph, event, data) => {
-                const gcache = cache.get(graph.id);
+            const publish = (event, data) => {
+                event_data.set(event, data);
                 if (event === 'graphchange') {
+                    const gcache = cache.get(data.id);
                     // cache.get(graph.id).graph = 
                     // gcache.graph = {...graph, out: gcache.graph.out ?? graph.out ?? 'main/out'};
-                    gcache.graph = graph;
+                    gcache.graph = data;
                 }
 
                 const listeners = getorset(event_listeners, event, () => new Map());
                 for (let l of listeners.values()) {
                     if (typeof l === 'function') {
-                        l(graph, data);
+                        l(data);
                     } else if (typeof l === 'object' && l.fn && l.graph) {
                         nolib.no.runGraph(l.graph, l.fn, Object.assign({}, l.args ?? {}, { data }), gcache.lib)
                     }
                 }
+
+                return data;
             }
 
             const rungraph = graph => {
@@ -1176,21 +1190,29 @@ const nolib = {
                         graph = gcache.graph ?? graph;
 
                         const result = nolib.no.runGraph(graph, graph.out ?? 'main/out', get_args(graph), gcache.lib);
-                        Promise.resolve(result).then(res => {
-                            publish(graph,'graphrun', res);
-                        }).catch(e => publish(graph, 'grapherror', e))
+                        Promise.resolve(result).then(result => {
+                            publish('graphrun', {graph, result});
+                        }).catch(e => publish('grapherror', e))
                     } catch (e) {
-                        publish(graph, 'grapherror', e);
+                        publish('grapherror', e);
                     }
                 })
             }
 
             const add_listener = (event, listener_id, fn, remove) => {
+                const listeners = getorset(event_listeners, event, () => new Map());
+                if(!listeners.has(listener_id)) {
+                    requestAnimationFrame(() => {
+                        if(event_data.has(event)) {
+                            fn(event_data.get(event));
+                        }
+                    })
+                }
+
                 if (remove) {
                     remove_listener(event, listener_id);
                 }
 
-                const listeners = getorset(event_listeners, event, () => new Map());
                 listeners.set(listener_id, fn);
 
                 //TODO: rethink this maybe?
@@ -1200,6 +1222,7 @@ const nolib = {
             }
 
             const remove_listener = (event, listener_id) => {
+
                 const listeners = getorset(event_listeners, event, () => new Map());
                 listeners.delete(listener_id);
 
@@ -1217,6 +1240,12 @@ const nolib = {
             const update_graph = (graph, args, lib) => {
                 graph = resolve(graph);
                 const new_cache = new_graph_cache(graph);
+                const old_graph = getorset(cache, graph.id, () => new_cache).graph;
+
+                // if(compare(graph.nodes, old_graph.nodes) && compare(graph.edges, old_graph.edges)) {
+                //     return;
+                // }
+
                 getorset(cache, graph.id, () => new_cache).node_map = new_cache.node_map;
                 getorset(cache, graph.id, () => new_cache).in_edge_map = new_cache.in_edge_map;
                 getorset(cache, graph.id, () => new_cache).fn_cache = new_cache.fn_cache;
@@ -1229,7 +1258,12 @@ const nolib = {
                     getorset(cache, graph.id, () => new_cache).args = {...last_args, ...args};
                 }
 
-                publish(graph, 'graphchange');
+                const parent = get_parent(graph);
+                if(parent) {
+                    update_graph(parent);
+                }
+
+                publish('graphchange', graph);
             }
 
             const get_ref = (graph, id) => cache.get(graph.id)?.parent ? 
@@ -1239,7 +1273,7 @@ const nolib = {
                     ?? (cache.get(graph.id)?.parent ? get_ref(graph, id) : undefined));
             const get_edges_in = (graph, id) => getorsetgraph(resolve(graph), id, 'in_edge_map', () => graph.edges.filter(e => e.to === id));
             const get_args = (graph) => getorset(cache, graph.id, () => new_graph_cache(graph)).args;
-            const get_graph = (graph) => cache.get(graph.id).graph ?? graph;
+            const get_graph = (graph) => cache.get(graph.id ?? graph).graph ?? graph;
             const get_parent = (graph) => cache.get(graph.id)?.parent;
             const get_parentest = (graph) => {
                 const parent = get_parent(graph);
@@ -1250,11 +1284,8 @@ const nolib = {
                     let pathSplit = path.split(".");
                     let node = gcache.graph.out ?? "out";
                     while(pathSplit.length > 0 && node) {
-                        console.log('finding')
                         let pathval = pathSplit.shift();
-                        console.log(pathval);
                         node = get_edges_in(graph, node).find(e => e.as === pathval)?.from;
-                        console.log(node);
                     } 
                     return node;
                 }
@@ -1287,7 +1318,7 @@ const nolib = {
                         ...graph,
                         edges: graph.edges.filter(e => !(e.to === (old_edge ?? edge).to && e.from === (old_edge ?? edge).from)).concat([edge])
                     }
-                    publish(new_graph, 'graphchange');
+                    publish('graphchange', new_graph);
                 },
                 update_args: (graph, args) => { 
                     getorset(cache, graph.id, () => new_graph_cache(graph)).args = {...(args ?? {}), ...(cache.get(graph.id).args ?? {})};
@@ -1330,7 +1361,7 @@ const nolib = {
                 },
                 remove_listener,
                 publish: {
-                    args: ['_graph', 'event', 'data'],
+                    args: ['event', 'data'],
                     fn: publish
                 },
                 set_parent: (graph, parent) => {

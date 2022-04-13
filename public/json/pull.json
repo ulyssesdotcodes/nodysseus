@@ -92,7 +92,7 @@
         { "id": "onkey_fn", "ref": "arg", "value": "onkey_fn" },
         {
           "id": "out",
-          "script": "return {dispatch: _lib.ha.app({dispatch: _lib.ha.middleware, init: () => [_lib.no.resolve(init), static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp], [() => _lib.no.runtime.update_graph(init.display_graph)]], view: s => {if(s instanceof Map){ throw new Error('stop') } const vs = view(s); return vs.el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}], !static && [_lib.scripts.graph_subscription, {display_graph_id: s.display_graph_id}], !static && !init.norun._value && [_lib.scripts.result_subscription, {graph: s.display_graph}], !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.panzoom.init, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]]})}"
+          "script": "return {dispatch: _lib.ha.app({dispatch: _lib.ha.middleware, init: () => [_lib.no.resolve(init), static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp], [() => _lib.no.runtime.update_graph(init.display_graph)]], view: s => {if(s instanceof Map){ throw new Error('stop') } const vs = view(s); return vs.el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}], !static && [_lib.scripts.graph_subscription, {display_graph_id: s.display_graph_id}], !static && !init.norun._value && [_lib.scripts.result_subscription, {display_graph_id: s.display_graph_id}], !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.panzoom.init, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]]})}"
         }
       ],
       "edges": [
@@ -320,7 +320,7 @@
         { "id": "args", "ref": "merge_objects" },
         {
           "id": "out",
-          "script": "const parent_graph = _lib.no.runtime.get_parent(_graph); const input = _lib.no.runtime.get_edges_in(parent_graph, _graph.node_id).find(i => i.as === 'fn'); return input ? {fn: input.from, graph: parent_graph, args: args ?? {}} : false"
+          "script": "const parent_graph = _lib.no.runtime.get_parent(_graph); const input = _lib.no.runtime.get_edges_in(parent_graph, _graph.node_id).find(i => i.as === 'fn'); return input ? {fn: input.from, graph: parent_graph.id, args: args ?? {}} : false"
         }
       ],
       "edges": [
@@ -460,6 +460,37 @@
       ]
     },
     {
+      "id": "isunchanged",
+      "nodes": [
+        {"id": "in"},
+        {"id": "value", "ref": "arg", "value": "value"},
+        {"id": "fn", "ref": "arg", "value": "fn"},
+        {"id": "cached", "ref": "arg", "value": "cached", "type": "internal"},
+        {"id": "eq_default", "ref": "eq"},
+        {"id": "eq_runnable", "ref": "runnable"},
+        {"id": "fn_runnable", "ref": "default"},
+        {"id": "eq_fn_runnable", "script": "return {...fn, args: {...(fn.args ?? {}), a, b}}"},
+        {"id": "eq_fn", "ref": "run"},
+        {"id": "cache", "script": "_lib.no.runtime.update_graph(_graph, {cached: value}); return eq;"},
+        {"id": "out", "ref": "if"}
+      ],
+      "edges": [
+        {"from": "in", "to": "out", "as": "_"},
+        {"from": "eq_default", "to": "eq_runnable", "as": "fn"},
+        {"from": "eq_runnable", "to": "fn_runnable", "as": "otherwise"},
+        {"from": "fn", "to": "fn_runnable", "as": "value"},
+        {"from": "fn_runnable", "to": "eq_fn_runnable", "as": "fn"},
+        {"from": "value", "to": "eq_fn_runnable", "as": "a"},
+        {"from": "cached", "to": "eq_fn_runnable", "as": "b"},
+        {"from": "eq_fn_runnable", "to": "eq_fn", "as": "runnable"},
+        {"from": "eq_fn", "to": "out", "as": "pred"},
+        {"from": "eq_fn", "to": "out", "as": "true"},
+        {"from": "value", "to": "cache", "as": "value"},
+        {"from": "eq_fn", "to": "cache", "as": "eq"},
+        {"from": "cache", "to": "out", "as": "false"}
+      ]
+    },
+    {
       "id": "run_path",
       "out": "out",
       "nodes": [
@@ -481,7 +512,7 @@
         {"id": "value", "ref": "arg", "value": "value"},
         {"id": "env", "ref": "arg", "value": "_args", "type": "internal"},
         {"id": "prev_value", "ref": "get"},
-        {"id": "out", "script": "console.log(_lib.utility.get.fn(env, name)); if(!_lib.utility.compare(env[name]._value, value)){ console.log('setting ' + name); _lib.no.runtime.update_graph(_lib.no.runtime.get_parentest(_graph), {[name]: value});} return value;"}
+        {"id": "out", "script": "if(!_lib.utility.compare(env[name]._value, value)){ _lib.no.runtime.update_graph(_lib.no.runtime.get_parentest(_graph), {[name]: value});} return value;"}
       ],
       "edges": [
         {"from": "name", "to": "out", "as": "name"},
@@ -503,13 +534,37 @@
       ]
     },
     {
+      "id": "event_publisher_onchange",
+      "out": "out",
+      "nodes": [
+        {"id": "value", "ref": "arg", "value": "value"},
+        {"id": "value_eq_a", "ref": "arg", "value": "a"},
+        {"id": "value_eq_b", "ref": "arg", "value": "b"},
+        {"id": "value_eq_fn", "script": "return _lib.utility.compare(a, b)"},
+        {"id": "value_eq", "ref": "runnable"},
+        {"id": "value_unchanged", "ref": "isunchanged"},
+        {"id": "publisher", "ref": "event_publisher"},
+        {"id": "out", "ref": "if"}
+      ],
+      "edges": [
+        {"from": "value", "to": "value_eq", "as": "value"},
+        {"from": "value_eq_a", "to": "value_eq_fn", "as": "a"},
+        {"from": "value_eq_b", "to": "value_eq_fn", "as": "b"},
+        {"from": "value_eq_fn", "to": "value_eq", "as": "fn"},
+        {"from": "value_eq", "to": "value_unchanged", "as": "fn"},
+        {"from": "value_unchanged", "to": "out", "as": "pred"},
+        {"from": "publisher", "to": "out", "as": "false"},
+        {"from": "value", "to": "out", "as": "true"}
+      ]
+    },
+    {
       "id": "input_value",
       "out": "out",
       "nodes": [
         { "id": "value", "ref": "arg", "value": "value" },
         {
           "id": "out",
-          "script": "const parent = _lib.no.runtime.get_parent(_graph); if(!_lib.utility.compare(parent.value, value)) { _lib.no.runtime.add_node(parent, {..._graph, id: _graph.node_id, value}); } return value"
+          "script": "const parent = _lib.no.runtime.get_parent(_graph); if(!_lib.utility.compare(_lib.no.runtime.get_node(parent, _graph.node_id).value, value)) { _lib.no.runtime.add_node(parent, {..._graph, id: _graph.node_id, value}); } return value"
         }
       ],
       "edges": [{ "from": "value", "to": "out", "as": "value", "type": "resolve" }]
@@ -520,20 +575,19 @@
       "nodes": [
         { "id": "name", "ref": "arg", "value": "name" },
         { "id": "onevent", "ref": "arg", "value": "onevent" },
+        { "id": "data", "ref": "arg", "value": "data", "type": "internal" },
         {
           "id": "add_listener",
-          "script": "const parent = _lib.no.runtime.get_parent(_graph); const self = _lib.no.runtime.get_node(parent, _graph.node_id); _lib.no.runtime.add_listener(event, parent.id, (graph, ev) => (_lib.no.runtime.add_node(parent, {...self, value: ev})), true)",
+          "script": "_lib.no.runtime.add_listener(event, _graph.id, (data) => (_lib.no.runtime.update_graph(_graph, {data})), false);",
           "_script": "const parent = _lib.no.runtime.get_parent(_graph); _lib.no.runtime.add_listener(event, _graph.id, (graph, data) => {if(onevent) { _lib.no.runGraph(onevent.graph, onevent.fn, {...onevent.args, data})}}, true)"
         },
-        {
-          "id": "out",
-          "script": "return _graph.value;"
-        }
+        { "id": "out", "ref": "default"}
       ],
       "edges": [
         { "from": "name", "to": "add_listener", "as": "event" },
         { "from": "onevent", "to": "add_listener", "as": "onevent" },
-        { "from": "add_listener", "to": "out", "as": "listener" }
+        { "from": "add_listener", "to": "out", "as": "otherwise" },
+        { "from": "data", "to": "out", "as": "value" }
       ]
     },
     { 
@@ -574,14 +628,12 @@
       "out": "out",
       "nodes": [
         { "id": "runnable", "ref": "arg", "value": "runnable" },
-        { "id": "args", "ref": "arg", "value": "_args" },
         {
           "id": "out",
-          "script": "return _lib.no.runGraph(runnable.graph, runnable.fn, Object.assign({}, args, {runnable: undefined}, runnable.args), _lib)"
+          "script": "return _lib.no.runGraph(runnable.graph, runnable.fn, runnable.args, _lib)"
         }
       ],
       "edges": [
-        { "from": "args", "to": "out", "as": "args", "type": "resolve" },
         { "from": "runnable", "to": "out", "as": "runnable" }
       ]
     },
@@ -3045,7 +3097,7 @@
         { "id": "paste_effect", "ref": "paste_node_effect" },
         { "id": "clear_popover", "ref": "clear_popover_graph" },
         { "id": "expand_contract_effect", "ref": "expand_contract_effect" },
-        { "id": "publish_key", "script": "return [() => _lib.no.runtime.publish.fn(display_graph, 'keydown', key)]" },
+        { "id": "publish_key", "script": "return [() => _lib.no.runtime.publish.fn('keydown', key)]" },
         { "id": "keybindings_graph", "script": "return _lib.no.runtime.get_node(_graph, 'keybindings')" },
         { "id": "show_popover_effect", "ref": "show_popover_graph" },
         { "id": "keybindings", "ref": "keybindings" },
@@ -4196,7 +4248,7 @@
             { "id": "clear_popover", "ref": "clear_popover_graph" },
             {
               "id": "props",
-              "script": "console.log(handle_popover_event); return {id: `${html_id}-popover`, class: {popover: true}, key:  `${html_id}-popover`, onselectnode: handle_popover_event, ongraphclick: (s, p) => [s]}"
+              "script": "return {id: `${html_id}-popover`, class: {popover: true}, key:  `${html_id}-popover`, onselectnode: handle_popover_event, ongraphclick: (s, p) => [s]}"
             },
             { "id": "dom_type", "value": "div" },
             { "id": "out", "ref": "html_element" }
