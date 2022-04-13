@@ -564,7 +564,7 @@
         { "id": "value", "ref": "arg", "value": "value" },
         {
           "id": "out",
-          "script": "const parent = _lib.no.runtime.get_parent(_graph); if(!_lib.utility.compare(_lib.no.runtime.get_node(parent, _graph.node_id).value, value)) { _lib.no.runtime.add_node(parent, {..._graph, id: _graph.node_id, value}); } return value"
+          "script": "const parent = _lib.no.runtime.get_parent(_graph); const graph_node = _lib.no.runtime.get_node(parent, _graph.node_id); if(!_lib.utility.compare(_lib.no.runtime.get_node(parent, _graph.node_id).value, value)) { _lib.no.runtime.add_node(parent, {...graph_node, id: _graph.node_id, value}); } return value"
         }
       ],
       "edges": [{ "from": "value", "to": "out", "as": "value", "type": "resolve" }]
@@ -578,7 +578,7 @@
         { "id": "data", "ref": "arg", "value": "data", "type": "internal" },
         {
           "id": "add_listener",
-          "script": "_lib.no.runtime.add_listener(event, _graph.id, (data) => (_lib.no.runtime.update_graph(_graph, {data})), false);",
+          "script": "_lib.no.runtime.add_listener(event, _graph.id, (data) => (_lib.no.runtime.update_args(_graph, {data})), false);",
           "_script": "const parent = _lib.no.runtime.get_parent(_graph); _lib.no.runtime.add_listener(event, _graph.id, (graph, data) => {if(onevent) { _lib.no.runGraph(onevent.graph, onevent.fn, {...onevent.args, data})}}, true)"
         },
         { "id": "out", "ref": "default"}

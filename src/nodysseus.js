@@ -159,13 +159,13 @@ const hashcode = function (str, seed = 0) {
     return 4294967296 * (2097151 & h2) + (h1 >>> 0);
 };
 
-const createProxy = (run_with_val, input, graphid, graph_input_value, is_node_cached, usecache, cache) => {
+const createProxy = (run_with_val, input, graphid, graph_input_value, usecache, cache) => {
     let res = Object.create(null);
     let resolved = false;
     // return run_with_val(input.from)(graph_input_value);
     if (usecache && cache) {
         const cached = cache.get(graphid + input.from + '+proxy');
-        if (usecache && is_node_cached && cached && compare(graph_input_value, cached[1])) {
+        if (usecache && cached && compare(graph_input_value, cached[1])) {
             cached[0]['_reset'];
             return cached[0];
         }
@@ -237,10 +237,10 @@ const createProxy = (run_with_val, input, graphid, graph_input_value, is_node_ca
     return proxy;
 }
 
-const resolve = (o, cache, is_node_cached) => {
+const resolve = (o, cache, usecache) => {
     if (o?._Proxy) {
         const res = resolve(o._value);
-        if (!(cache && is_node_cached)) {
+        if (!(cache && usecache)) {
             return res;
         }
         const cached = cache.get(o._graphid + o._nodeid + '+resolve');
@@ -257,7 +257,7 @@ const resolve = (o, cache, is_node_cached) => {
         let i = o.length;
         while (i > 0) {
             i--;
-            new_arr[i] = resolve(o[i], cache, is_node_cached);
+            new_arr[i] = resolve(o[i], cache, usecache);
             same = same && compare(o[i], new_arr[i]);
         }
         return same ? o : new_arr;
@@ -275,7 +275,7 @@ const resolve = (o, cache, is_node_cached) => {
         while (i > 0) {
             i--;
             if (entries[i][0] !== '_needsresolve') {
-                new_obj_entries[j] = [entries[i][0], resolve(entries[i][1], cache, is_node_cached)];
+                new_obj_entries[j] = [entries[i][0], resolve(entries[i][1], cache, usecache)];
                 same = same && entries[i][1] === new_obj_entries[j][1]
                 promise = promise || ispromise(new_obj_entries[j][1])
                 j++;
@@ -377,7 +377,7 @@ const mockcombined = (data, graph_input_value) => {
     })
 }
 
-const node_nodes = (node, node_ref, cache, graph_input_value, data, full_lib, graph, usecache, is_node_cached, run_with_val, inputs, cache_id, _needsresolve) => {
+const node_nodes = (node, node_ref, cache, graph_input_value, data, full_lib, graph, usecache, run_with_val, inputs, cache_id, _needsresolve) => {
     const outid = graph.id + "/" + node.id;
     const keys = node_ref.nodes.filter(n => n.ref === 'arg').map(n => n.value);
     const combined_data_input = typeof graph_input_value === 'object' && !Array.isArray(graph_input_value) && data
@@ -391,7 +391,7 @@ const node_nodes = (node, node_ref, cache, graph_input_value, data, full_lib, gr
     //     full_lib.no.runtime.expand_node(graph, node.id, node_ref);
     // }
 
-    if (usecache && is_node_cached && cache.get(cache_id).has(outid)) {
+    if (usecache && cache.get(cache_id).has(outid)) {
         const val = cache.get(cache_id).get(outid);
         hit = compare(val[1], combined_data_input, keys);
         if (hit) {
@@ -427,7 +427,7 @@ const node_nodes = (node, node_ref, cache, graph_input_value, data, full_lib, gr
     return res;
 }
 
-const node_script = (node, node_ref, cache, graph_input_value, data, full_lib, graph, usecache, is_node_cached, run_with_val, inputs, cache_id, _needsresolve) => {
+const node_script = (node, node_ref, cache, graph_input_value, data, full_lib, graph, usecache, run_with_val, inputs, cache_id, _needsresolve) => {
     const argset = new Set();
     argset.add('_lib');
     argset.add('_node');
@@ -450,7 +450,7 @@ const node_script = (node, node_ref, cache, graph_input_value, data, full_lib, g
         orderedargs += `${a},`;
     }
 
-    if (usecache && is_node_cached && cache.get(cache_id).has(node.id)) {
+    if (usecache && cache.get(cache_id).has(node.id)) {
         const val = cache.get(cache_id).get(node.id);
         let hit = compare(data, val[1]);
         // hit = hit && compare(graph_input_value, val[2]);
@@ -502,14 +502,14 @@ const node_script = (node, node_ref, cache, graph_input_value, data, full_lib, g
     }
 }
 
-const node_extern = (node, node_ref, node_id, cache, graph_input_value, data, full_lib, graph, usecache, is_node_cached, run_with_val, inputs, cache_id, _needsresolve) => {
+const node_extern = (node, node_ref, node_id, cache, graph_input_value, data, full_lib, graph, usecache, run_with_val, inputs, cache_id, _needsresolve) => {
     const extern = nodysseus_get(full_lib, node_ref.extern);
     const args = extern.args.reduce((acc, arg) => {
         if (arg === '_node') {
             acc[0].push(node)
             return [acc[0], acc[1]];
         } else if (arg === '_node_inputs') {
-            const res = extern.resolve ? resolve({ ...data, _needsresolve: true }, usecache && cache.get(cache_id), is_node_cached) : data;
+            const res = extern.resolve ? resolve({ ...data, _needsresolve: true }, usecache && cache.get(cache_id)) : data;
             if (Array.isArray(res)) {
                 res?.forEach(r => acc[0].push(r))
             } else {
@@ -520,13 +520,13 @@ const node_extern = (node, node_ref, node_id, cache, graph_input_value, data, fu
             acc[0].push(graph);
             return [acc[0], acc[1]]
         }
-        const value = extern.resolve === false ? data[arg] : resolve(data[arg], usecache && cache.get(cache_id), is_node_cached);
+        const value = extern.resolve === false ? data[arg] : resolve(data[arg], usecache && cache.get(cache_id));
         acc[0].push(value)
         return [acc[0], ispromise(value) || acc[1]];
     }, [[], false]);
 
     try {
-        if (usecache && is_node_cached && !extern.nocache && cache.get(cache_id).has(node.id)) {
+        if (usecache && !extern.nocache && cache.get(cache_id).has(node.id)) {
             const val = cache.get(cache_id).get(node.id);
             let hit = compare(args[0], val[1]);
             // hit = hit && compare(graph_input_value, val[2]);
@@ -560,8 +560,8 @@ const node_extern = (node, node_ref, node_id, cache, graph_input_value, data, fu
     }
 }
 
-const node_data = (node, node_ref, node_id, cache, graph_input_value, data, full_lib, graph, usecache, is_node_cached, run_with_val, inputs, cache_id, _needsresolve) => {
-    if (usecache && is_node_cached && cache.get(cache_id).has(node.id)) {
+const node_data = (node, node_ref, node_id, cache, graph_input_value, data, full_lib, graph, usecache, run_with_val, inputs, cache_id, _needsresolve) => {
+    if (usecache && cache.get(cache_id).has(node.id)) {
         const val = cache.get(cache_id).get(node.id);
         let hit = compare(data, val);
         // hit = hit && compare(graph_input_value, val[2]);
@@ -644,7 +644,7 @@ const executeGraph = ({ cache, graph, lib, usecache }) => {
     }
     // Can't cache right now because things use _lib methods which rely on graph
     // As an alternative, use the `cache` node for things that take a long time.
-    usecache = false; //usecache ?? true;
+    usecache = usecache ?? false;
 
     if (!graph.nodes) {
         throw new Error(`Graph has no nodes! in: ${graph.in} out: ${graph.out}`)
@@ -662,9 +662,11 @@ const executeGraph = ({ cache, graph, lib, usecache }) => {
                 Object.assign(graph_input_value, cache_args);
             }
             
-            let is_node_cached = full_lib.no.runtime.is_cached(graph, node_id);
+            let nodeusecache = usecache && full_lib.no.runtime.is_cached(graph, node_id);
             let node = full_lib.no.runtime.get_node(graph, node_id);
-            full_lib.no.runtime.set_cached(graph, node_id);
+            if(usecache) {
+                full_lib.no.runtime.set_cached(graph, node_id);
+            }
 
             if (node === undefined) {
                 throw new Error(`Undefined node_id ${node_id}`)
@@ -709,7 +711,7 @@ const executeGraph = ({ cache, graph, lib, usecache }) => {
                     //     throw new Error(`Input not found ${input.from} for node ${node_id}`)
                     // }
 
-                    return resolve(run_with_val(input.from)(graph_input_value), usecache && cache.get(cache_id), is_node_cached);
+                    return resolve(run_with_val(input.from)(graph_input_value), nodeusecache && cache.get(cache_id));
                 } else if (!input.as || node_ref.script) {
                     // if(!node_map.has(input.from)) {
                     //     throw new Error(`Input not found ${input.from} for node ${node_id}`)
@@ -726,7 +728,7 @@ const executeGraph = ({ cache, graph, lib, usecache }) => {
                     return res;
                 } else {
                     _needsresolve = true;
-                    return createProxy(run_with_val, input, graph.id, graph_input_value, is_node_cached, false, cache.get(cache_id));
+                    return createProxy(run_with_val, input, graph.id, graph_input_value, false, cache.get(cache_id));
                 }
             }
 
@@ -736,15 +738,15 @@ const executeGraph = ({ cache, graph, lib, usecache }) => {
             const data = create_data(inputs, input_data_map);
 
             if (node_ref.nodes) {
-                return node_nodes(node, node_ref, cache, graph_input_value, data, full_lib, graph, false, is_node_cached, run_with_val, inputs, cache_id, _needsresolve)
+                return node_nodes(node, node_ref, cache, graph_input_value, data, full_lib, graph, false, run_with_val, inputs, cache_id, _needsresolve)
             } else if (node_ref.script) {
-                return node_script(node, node_ref, cache, graph_input_value, data, full_lib, graph, usecache, is_node_cached, run_with_val, inputs, cache_id, _needsresolve)
+                return node_script(node, node_ref, cache, graph_input_value, data, full_lib, graph, nodeusecache, run_with_val, inputs, cache_id, _needsresolve)
             } else if (node_ref.extern) {
-                return node_extern(node, node_ref, node_id, cache, graph_input_value, data, full_lib, graph, usecache, is_node_cached, run_with_val, inputs, cache_id, _needsresolve);
+                return node_extern(node, node_ref, node_id, cache, graph_input_value, data, full_lib, graph, nodeusecache, run_with_val, inputs, cache_id, _needsresolve);
             }
 
 
-            return node_data(node, node_ref, node_id, cache, graph_input_value, data, full_lib, graph, usecache, is_node_cached, run_with_val, inputs, cache_id, _needsresolve);
+            return node_data(node, node_ref, node_id, cache, graph_input_value, data, full_lib, graph, nodeusecache, run_with_val, inputs, cache_id, _needsresolve);
         }
     }
 
@@ -843,6 +845,8 @@ const bfs = (graph, fn) => {
 const expand_node = (data) => {
     const node_id = data.node_id;
     const node = data.display_graph.nodes.find(n => n.id === node_id)
+    console.log(data.node_id)
+    console.log(node)
 
     if (!(node && node.nodes)) {
         console.log('no nodes?');
@@ -881,8 +885,7 @@ const contract_all = (graph) => {
 
 const contract_node = (data, keep_expanded = false) => {
     const node = data.display_graph.nodes.find(n => n.id === data.node_id);
-    const slash_index = data.node_id.lastIndexOf('/');
-    const node_id = slash_index >= 0 ? data.node_id.substring(0, slash_index) : data.node_id;
+    const node_id = data.node_id;
     if (!node.nodes) {
         const inside_nodes = [Object.assign({}, node)];
         const inside_node_map = new Map();
@@ -1240,12 +1243,9 @@ const nolib = {
             const update_graph = (graph, args, lib) => {
                 graph = resolve(graph);
                 const new_cache = new_graph_cache(graph);
-                const old_graph = getorset(cache, graph.id, () => new_cache).graph;
+                const old_graph = cache.get(graph.id)?.graph;
 
-                // if(compare(graph.nodes, old_graph.nodes) && compare(graph.edges, old_graph.edges)) {
-                //     return;
-                // }
-
+                getorset(cache, graph.id, () => new_cache).graph = graph;
                 getorset(cache, graph.id, () => new_cache).node_map = new_cache.node_map;
                 getorset(cache, graph.id, () => new_cache).in_edge_map = new_cache.in_edge_map;
                 getorset(cache, graph.id, () => new_cache).fn_cache = new_cache.fn_cache;
@@ -1258,12 +1258,40 @@ const nolib = {
                     getorset(cache, graph.id, () => new_cache).args = {...last_args, ...args};
                 }
 
+                if(old_graph) {
+                    for(const n of old_graph.nodes) {
+                        if(get_node(graph, n.id) !== n) {
+                            const nodegraphid = graph.id + "/" + n.id;
+                            for(const key of cache.keys()) {
+                                if(key.startsWith(nodegraphid)){
+                                    cache.delete(key);
+                                }
+                            }
+                        }
+                    }
+                }
+
                 const parent = get_parent(graph);
                 if(parent) {
                     update_graph(parent);
+                } else {
+                    publish('graphchange', graph);
+                }
+            }
+
+            const update_args = (graph, args) => {
+                graph = resolve(graph);
+                if(!cache.has(graph.id)) {
+                    return;
                 }
 
-                publish('graphchange', graph);
+                if(args) {
+                    const last_args = cache.get(graph.id).args;
+                    cache.get(graph.id).args = {...last_args, ...args};
+                }
+
+
+                publish('graphchange', get_parentest(graph));
             }
 
             const get_ref = (graph, id) => cache.get(graph.id)?.parent ? 
@@ -1300,6 +1328,7 @@ const nolib = {
                 get_parentest,
                 get_fn: (graph, orderedargs, node_ref) => getorsetgraph(resolve(graph), orderedargs + node_ref.id, 'fn_cache', () => new Function(`return function _${(node_ref.name?.replace(/\W/g, "_") ?? node_ref.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script}}`)()),
                 update_graph,
+                update_args,
                 delete_cache,
                 get_graph,
                 get_args,
@@ -1319,9 +1348,6 @@ const nolib = {
                         edges: graph.edges.filter(e => !(e.to === (old_edge ?? edge).to && e.from === (old_edge ?? edge).from)).concat([edge])
                     }
                     publish('graphchange', new_graph);
-                },
-                update_args: (graph, args) => { 
-                    getorset(cache, graph.id, () => new_graph_cache(graph)).args = {...(args ?? {}), ...(cache.get(graph.id).args ?? {})};
                 },
                 add_node: (graph, node, edge) => {
                     const gcache = getorset(cache, graph.id, () => new_graph_cache(resolve(graph)));
