@@ -92,7 +92,7 @@
         { "id": "onkey_fn", "ref": "arg", "value": "onkey_fn" },
         {
           "id": "out",
-          "script": "return {dispatch: _lib.ha.app({dispatch: _lib.ha.middleware, init: () => [_lib.no.resolve(init), static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp], [() => _lib.no.runtime.update_graph(init.display_graph)]], view: s => {if(s instanceof Map){ throw new Error('stop') } const vs = view(s); return vs.el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}], !static && [_lib.scripts.graph_subscription, {display_graph_id: s.display_graph_id}], !static && !init.norun._value && [_lib.scripts.result_subscription, {display_graph_id: s.display_graph_id}], !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.panzoom.init, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]]})}"
+          "script": "return {dispatch: _lib.ha.app({dispatch: _lib.ha.middleware, init: () => [_lib.no.resolve(init), static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp], [() => _lib.no.runtime.update_graph(init.display_graph)]], view: s => {const vs = view(s); return vs.el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}], !static && [_lib.scripts.graph_subscription, {display_graph_id: s.display_graph_id}], !static && !init.norun._value && [_lib.scripts.result_subscription, {display_graph_id: s.display_graph_id}], !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.panzoom.init, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]]})}"
         }
       ],
       "edges": [
@@ -2042,8 +2042,10 @@
         { "id": "in" },
         { "id": "state", "ref": "arg", "value": "state" },
         { "id": "id_path", "value": "display_graph.id" },
+        { "id": "display_graph_id_path", "value": "display_graph_id" },
         { "id": "id", "ref": "arg", "value": "payload.properties.id" },
         { "id": "set_display_graph_id", "ref": "set" },
+        { "id": "set_state_display_graph_id", "ref": "set" },
         { "id": "effects", "ref": "array" },
         { "id": "result" },
         { "id": "out", "ref": "hyperapp_action" }
@@ -2053,7 +2055,10 @@
         { "from": "state", "to": "set_display_graph_id", "as": "target" },
         { "from": "id_path", "to": "set_display_graph_id", "as": "path" },
         { "from": "id", "to": "set_display_graph_id", "as": "value" },
-        { "from": "set_display_graph_id", "to": "result", "as": "state" },
+        { "from": "set_display_graph_id", "to": "set_state_display_graph_id", "as": "target" },
+        { "from": "id", "to": "set_state_display_graph_id", "as": "value" },
+        { "from": "display_graph_id_path", "to": "set_state_display_graph_id", "as": "path" },
+        { "from": "set_state_display_graph_id", "to": "result", "as": "state" },
         { "from": "effects", "to": "result", "as": "effects" },
         { "from": "result", "to": "out", "as": "fn", "type": "ref" }
       ]
@@ -2307,6 +2312,7 @@
             { "id": "inputs", "ref": "arg", "value": "inputs" },
             { "id": "add_node", "ref": "add_node_action" },
             { "id": "add_node_action", "ref": "runnable" },
+            {"id": "true", "value": true},
             { "id": "new_node" },
             { "id": "payload" },
             { "id": "create_node" },
@@ -2329,6 +2335,7 @@
             { "from": "randid", "to": "new_node", "as": "id" },
             { "from": "new_node", "to": "payload", "as": "node" },
             { "from": "child_as", "to": "payload", "as": "child_as" },
+            { "from": "true", "to": "payload", "as": "select" },
             { "from": "add_node", "to": "add_node_action", "as": "fn" },
             { "from": "add_node_action", "to": "create_node", "as": "action" },
             { "from": "payload", "to": "create_node", "as": "payload" },
@@ -2367,6 +2374,14 @@
         { "id": "expand_contract_text", "ref": "html_text"},
         { "id": "expand_contract_show", "script": "return expand_contract !== false"},
         { "id": "expand_contract_out", "ref": "if"},
+        {"id": "delete_node", "value": "delete_node"},
+        {"id": "delete_node_action_args"},
+        {"id": "delete_node_action", "ref": "delete_node_action"},
+        {"id": "delete_node_text", "ref": "html_text"},
+        {"id": "delete_node_onclick", "ref": "runnable"},
+        {"id": "delete_node_class"},
+        {"id": "delete_node_el_props"},
+        {"id": "delete_node_el", "ref": "html_element"},
         { "id": "description_h_text", "ref": "html_text" },
         { "id": "description_h", "ref": "html_element" },
         { "id": "description_h_out", "ref": "if" },
@@ -2439,13 +2454,23 @@
         { "from": "expand_contract_actionor", "to": "expand_contract_action", "as": "a0" },
         { "from": "expand_contract_action_props", "to": "expand_contract_action", "as": "a1" },
         { "from": "expand_contract_action", "to": "expand_contract_el_props", "as": "onclick" },
-        { "from": "true", "to": "expand_contract_class", "as": "expand_contract" },
+        { "from": "true", "to": "expand_contract_class", "as": "action" },
         { "from": "expand_contract_class", "to": "expand_contract_el_props", "as": "class" },
         { "from": "expand_contract_el_props", "to": "expand_contract_el", "as": "props" },
         { "from": "expand_contract_el", "to": "expand_contract_out", "as": "true" },
         { "from": "expand_contract", "to": "expand_contract_show", "as": "expand_contract" },
         { "from": "expand_contract_show", "to": "expand_contract_out", "as": "pred" },
         { "from": "expand_contract_out", "to": "info_h_children", "as": "a2" },
+        { "from": "true", "to": "delete_node_class", "as": "action" },
+        {"from": "delete_node", "to": "delete_node_text", "as": "text"},
+        {"from": "delete_node_text", "to": "delete_node_el", "as": "children"},
+        {"from": "selected", "to": "delete_node_action_args", "as": "id"},
+        {"from": "delete_node_action_args", "to": "delete_node_onclick", "as": "args"},
+        {"from": "delete_node_action", "to": "delete_node_onclick", "as": "fn"},
+        {"from": "delete_node_onclick", "to": "delete_node_el_props", "as": "onclick"},
+        {"from": "delete_node_class", "to": "delete_node_el_props", "as": "class"},
+        { "from": "delete_node_el_props", "to": "delete_node_el", "as": "props" },
+        { "from": "delete_node_el", "to": "info_h_children", "as": "a3" },
         { "from": "info_h_children", "to": "info_h", "as": "children" },
         { "from": "info_h", "to": "info_out", "as": "true" },
         { "from": "node_args_count", "to": "info_pred", "as": "args_count" },
@@ -2908,6 +2933,7 @@
         { "id": "selected", "ref": "arg", "value": "state.selected" },
         { "id": "state", "ref": "arg", "value": "state" },
         { "id": "display_graph", "ref": "arg", "value": "state.display_graph" },
+        { "id": "selected_path", "value": "selected" },
         { "id": "history_path", "value": "history" },
         { "id": "display_graph_path", "value": "display_graph" },
         { "id": "id_array", "ref": "array" },
@@ -2923,10 +2949,9 @@
         { "id": "add_edge", "ref": "create_or_update_edge" },
         {
           "id": "effects",
-          "script": "return [[() => _lib.no.runtime.update_graph(display_graph)], [update_sim_effect]]"
+          "script": "console.log(new_selected); console.log(new_state); return [[() => _lib.no.runtime.update_graph(display_graph)], [update_sim_effect]]"
         },
         { "id": "set_display_graph", "ref": "set" },
-        { "id": "selected_path", "value": "selected" },
         { "id": "new_node" },
         { "id": "new_selected", "ref": "if" },
         { "id": "set_selected", "ref": "set" },
@@ -2971,6 +2996,7 @@
         { "from": "selected", "to": "new_selected", "as": "false" },
         { "from": "select", "to": "new_selected", "as": "pred" },
         { "from": "new_selected", "to": "set_selected", "as": "value" },
+        { "from": "new_selected", "to": "effects", "as": "new_selected" },
         { "from": "set_selected", "to": "effects", "as": "new_state" },
         { "from": "set_history", "to": "out", "as": "state" },
         { "from": "effects", "to": "out", "as": "effects" }
@@ -4013,6 +4039,8 @@
         { "id": "search", "ref": "arg", "value": "search" },
         { "id": "wrapper_dom_type", "value": "div" },
         { "id": "wrapper_props", "value": {} },
+        {"id": "result_wrapper_props", "value": {"id": "result"}},
+        {"id": "result_wrapper", "ref": "html_element"},
         {
           "id": "wrapper_children",
           "script": "return [styles.el, node_editor.el, !!result_display && result_display.el, !readonly && editing !== false && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, !editing && !show_all && args_display && args_display.el, !!error && error_display.el, menu.el].filter(e => e)"
@@ -4023,7 +4051,7 @@
             { "id": "in" },
             {
               "id": "style_content",
-              "value": "#node-editor { position: relative; width: 100%; height: 100vh; color: white; font-family: consolas; overflow: hidden; } #node-editor-editor.hash-view { background-color: unset; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .more { cursor: pointer; } .edit-value .centering { position: absolute; width: 32vw; display: flex; flex-direction: column; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .node-info { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; display: flex; gap: .4em; flex-direction: column; } .node-info .args { display: flex; gap: 8px; flex-wrap: wrap; } .node-info .args span.clickable { cursor: pointer; text-decoration: underline dotted;  } .expand_contract {cursor: pointer; text-decoration: underline dotted;} /* result props */ .result { position: fixed; bottom: 100px; left: 100px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node, #dummy-add-node { cursor: pointer; stroke: #fff; stroke-width: 32; stroke-opacity: 1; } .insert-node .circle, #dummy-add-node .circle { fill-opacity: 0.5; } .node text { filter: url(#flood-background) } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .node.selected text .secondary:hover, .node.selected text .primary:hover { text-decoration: dashed underline; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"
+              "value": "#node-editor { position: relative; width: 100%; height: 100vh; color: white; font-family: consolas; overflow: hidden; } #node-editor-editor.hash-view { background-color: unset; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .more { cursor: pointer; } .edit-value .centering { position: absolute; width: 32vw; display: flex; flex-direction: column; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node.hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node.hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .node-info { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; display: flex; gap: .4em; flex-direction: column; } .node-info .args { display: flex; gap: 8px; flex-wrap: wrap; } .node-info .args span.clickable { cursor: pointer; text-decoration: underline dotted;  } .action {cursor: pointer; text-decoration: underline dotted;} /* result props */ #result { position: fixed; bottom: 32px; left: 32px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node, #dummy-add-node { cursor: pointer; stroke: #fff; stroke-width: 32; stroke-opacity: 1; } .insert-node .circle, #dummy-add-node .circle { fill-opacity: 0.5; } .node text { filter: url(#flood-background) } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .node.selected text .secondary:hover, .node.selected text .primary:hover { text-decoration: dashed underline; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }"
             },
             { "id": "style_h_text", "ref": "html_text" },
             { "id": "style_dom_type", "value": "style" },
@@ -4659,7 +4687,7 @@
                         {
                           "from": "node_selected_primary_text_onclick_runnable",
                           "to": "node_not_static_primary_text_onclick_runnable",
-                          "as": "true"
+                          "as": "false"
                         },
                         {
                           "from": "node_not_static_primary_text_onclick_runnable",
@@ -5163,8 +5191,9 @@
         { "from": "node_editor", "to": "wrapper_children", "as": "node_editor" },
         { "from": "edit_text", "to": "wrapper_children", "as": "edit_text" },
         { "from": "menu", "to": "wrapper_children", "as": "menu" },
-        { "from": "result_display", "to": "result_wrapper", "as": "run" },
-        { "from": "result_display", "to": "wrapper_children", "as": "result_display" },
+        { "from": "result_display", "to": "result_wrapper", "as": "children" },
+        { "from": "result_wrapper_props", "to": "result_wrapper", "as": "props"},
+        { "from": "result_wrapper", "to": "wrapper_children", "as": "result_display" },
         { "from": "show_all", "to": "wrapper_children", "as": "show_all" },
         { "from": "styles", "to": "wrapper_children", "as": "styles" },
         { "from": "popover_graph_h", "to": "popover_graph_h_wrapper", "as": "el" },
@@ -5228,33 +5257,6 @@
     { "from": "update_sim_fn", "to": "update_sim_effect", "as": "fn" },
     { "from": "update_sim_effect", "to": "editor", "as": "update_sim" },
     { "from": "update_sim_effect", "to": "initialize_hyperapp_app", "as": "update_sim" },
-    { "from": "initialize_hyperapp_app", "to": "out", "type": "resolve" },
-    { "from": "get", "to": "object" },
-    { "from": "set", "to": "object" },
-    { "from": "delete", "to": "object" },
-    { "from": "switch", "to": "flow" },
-    { "from": "if", "to": "flow" },
-    { "from": "html_element", "to": "html" },
-    { "from": "input", "to": "html" },
-    { "from": "css_styles", "to": "html" },
-    { "from": "array", "to": "arrays" },
-    { "from": "filter", "to": "arrays" },
-    { "from": "append", "to": "arrays" },
-    { "from": "map", "to": "arrays" },
-    { "from": "log", "to": "utility" },
-    { "from": "execute_graph", "to": "utility" },
-    { "from": "arg", "to": "utility" },
-    { "from": "partial", "to": "utility" },
-    { "from": "apply", "to": "utility" },
-    { "from": "fetch", "to": "utility" },
-    { "from": "merge_objects", "to": "utility" },
-    { "from": "sequence", "to": "utility" },
-    { "from": "runnable", "to": "utility" },
-    { "from": "object_entries", "to": "utility" },
-    { "from": "add", "to": "math" },
-    { "from": "divide", "to": "math" },
-    { "from": "negate", "to": "math" },
-    { "from": "mult", "to": "math" },
-    { "from": "stringify", "to": "JSON" }
+    { "from": "initialize_hyperapp_app", "to": "out", "type": "resolve" }
   ]
 }
