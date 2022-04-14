@@ -308,14 +308,19 @@ const updateSimulationNodes = (dispatch, data) => {
         // data.simulation.force('fuse_links').links(data.fuse_links);
     }
 
+    const parentlengths = [...parents_map.values()].map(c => c.length).filter(l => l > 0);
+    const maxparents = Math.max(...parentlengths);
+    const avgparents = parentlengths.reduce((acc, v) => acc + v, 0) / nodes.length;
+    const logmaxparents = maxparents === 1 ? nodes.length : Math.log(nodes.length) / Math.log(1 + avgparents);
+
     data.simulation.force('link_direction')
         .y(n =>
             (((parents_map.get(n.node_id)?.length > 0 ? 1 : 0)
                 + (children_map.get(n.node_id)?.length > 0 ? -1 : 0)
                 + (children_map.get(n.node_id)?.length > 0 && n.node_child_id !== n.node_id + "_" + children_map.get(n.node_id)[0] ? -1 : 0))
-                * Math.log2(nodes.length)  + .5) * window.innerHeight)
+                * (logmaxparents + 3) + .5) * window.innerHeight)
         .strength(n => (!!parents_map.get(n.node_id)?.length === !children_map.get(n.node_id)?.length)
-            || children_map.get(n.node_id)?.length > 0 && n.node_child_id !== n.node_id + "_" + children_map.get(n.node_id)[0] ? .025 : 0);
+            || children_map.get(n.node_id)?.length > 0 && n.node_child_id !== n.node_id + "_" + children_map.get(n.node_id)[0] ? .02 : 0);
 
 
     data.simulation.force('collide').radius(96);
@@ -538,7 +543,7 @@ const result_subscription = (dispatch, props) => {
     const listener = ({graph, result}) => {
         if(graph.id === props.display_graph_id) {
             requestAnimationFrame(() => 
-                dispatch(s => Object.assign({}, s, {error: false}, {display: result.display})));
+                dispatch(s => Object.assign({}, s, {error: false}, result?.display?.el ? {display: result.display} : {})));
         }
     }
     
