@@ -1867,7 +1867,7 @@
         { "id": "node_args", "ref": "node_args" },
         {
           "id": "arg_value",
-          "script": "return node.ref === 'arg' ? node.value.substring(node.value.lastIndexOf('.') + 1) : undefined"
+          "script": "return node.ref === 'arg' && node.value ? node.value.substring(node.value.lastIndexOf('.') + 1) : undefined"
         },
         {
           "id": "replace_edges",
