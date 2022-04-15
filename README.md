@@ -12,18 +12,21 @@ A generic node-based editor. Built with hyperapp.
 
 ## Editing
 
-You can edit a node by using keybindings or by clicking/tapping the selected node to bring up the node menu.
+You can edit a node by using keybindings or by clicking/tapping the selected node's value or reference.
 
 You can edit an edge by using keybindings or clicking/tapping the edge name.
 
 ## References
 
-Nodes that have something other than `object` in *italics* reference other hidden nodes. It's similar to calling a function with the input nodes as arguments. Using the node menu, you can copy the referenced node or create a reference from the node.
+Nodes that have something other than `object` or `value` in *italics* reference other hidden nodes. It's similar to calling a function with the input nodes as arguments. Using the node menu, you can copy the referenced node or create a reference from the node.
 
 Some common nodes and their Typescript function types:
 
 #### log
 `log: (value: any) => any` - `console.log`s the value and returns it. Useful for inserting logs into node chains.
+
+#### input_value
+`input_value: (value: any) => any` - uses the received value as the nodes `value` and shows it.
 
 #### if
 `if: (pred: boolean, true?: any, false?: any) => any` - if `pred` is true, returns `true` otherwise returns `false`
@@ -35,7 +38,19 @@ Some common nodes and their Typescript function types:
 `switch: (input: string, ...args) => any` - returns the value of the input edge labeled `input`
 
 #### html_element
-`html_element: (children: (html_element | html_text | (html_element|html_text)[], dom_type: string, props: any)` - use with `result_display` to add html to the page
+`html_element: (children: (html_element | html_text | (html_element|html_text)[], dom_type: string, props: any) => html_element` - use with `result_display` to add html to the page
+
+#### html_text
+`html_text: (text: string) => html_text` - use with `html_element` to create a [DOM text node](https://developer.mozilla.org/en-US/docs/Web/API/Text)
+
+#### css_styles
+`css_styles: (css_object: {[selector]: {[attribute]: value}}) => html_element` - creates a `style` element from the passed in css_object with the object keys as selectors and the object values as attribute/value objects.
+
+#### fetch
+`fetch: (url: string, params: any) => response` - calls `fetch` with the url and params given. Note that this returns a Promise, which Nodysseus should handle automatically.
+
+#### runnable
+`runnable: (fn: node, args?: any) => {fn: node.id, args}` - creates a reference to the input graph to be used in other places (e.g. html input events, a `run` node)
 
 #### event_publisher
 `event_publisher: (name: string, value: any) => void` - publishes `value` as a `name` event
@@ -48,23 +63,35 @@ An edge takes the return value from one node and feeds it into another node. The
 
 ## Graph execution
 
-The graph is rerun whenever it change. The return value of `main/out` can be retrieved using an `arg` node. Any time such an `arg` changes in the result, the graph is rerun. If the return value contains the key `result_display`, then `result_display` will be added to the html using hyperapp.
+The graph is rerun whenever it changes.
+- Using `switch`, `if`, or `default` will only evaluate the branches that are chosen. All the other branches will not execute.
+- If the return value of any executed node is a Promise, the nodes following that node will all return promises. 
+- If the return value contains the key `display`, then `display` will be added to the html document using hyperapp. 
 
-The graph is executed using a pull model - each node asks its parents (if it has any) for new data before running itself.
+The graph is executed using a pull model - each node asks its parents (if it has any) for new data before running itself. 
 
-## Caching and Proxies
+## Examples
+New nodes introduced in the example are included in parentheses.
 
-Nodysseus caches results and proxies return values automatically. A node will not be rerun unless any of its parents change. The input values of `object` nodes are proxied so they will only be evaluated when necessary. This allows nodes like `if`, `switch`, and `default` to control execution flow.
+### Debugging and viewing data
+1. [Simple logging (`input_value`, `log`)](https://nodysseus.ulysses.codes/#example_1_1)
+
+### HTML
+1. [Simple text (`html_element`, `html_text`)](https://nodysseus.ulysses.codes/#example_1_2_1)
+2. [Children (`array`, `dom_type`)](https://nodysseus.ulysses.codes/#example_1_2_2)
+3. [CSS (`css_styles`, `props`)](https://nodysseus.ulysses.codes/#example_1_2_3)
+4. [Using http requests (`fetch`, `call`, `cache`)](https://nodysseus.ulysses.codes/#example_1_2_4)
+4. [Input response (`runnable`, `event_subscriber`, `event_publisher`)](https://nodysseus.ulysses.codes/#example_1_2_5)
 
 ## Shortcuts
 
 ### navigation
 
-- **up** move to left most parent node
-- **down** move to child node
-- **left** move to sibling node to the left
-- **right** move to sibling node to the right
-- **enter** open subgraph
+- **up/k** move to left most parent node
+- **down/j** move to child node
+- **left/h** move to sibling node to the left
+- **right/l** move to sibling node to the right
+- **enter** open node menu
 - **f** search
 - **esc** exit search
 
@@ -73,6 +100,7 @@ Nodysseus caches results and proxies return values automatically. A node will no
 - **v** change value
 - **s** change script
 - **r** change reference
+- **n** change name
 - **shift-enter** expand / collapse
 
 ### node creation/deletion

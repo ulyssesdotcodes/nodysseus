@@ -581,8 +581,7 @@
         { "id": "data", "ref": "arg", "value": "data", "type": "internal" },
         {
           "id": "add_listener",
-          "script": "_lib.no.runtime.add_listener(event, _graph.id, (data) => (_lib.no.runtime.update_args(_graph, {data})), false);",
-          "_script": "const parent = _lib.no.runtime.get_parent(_graph); _lib.no.runtime.add_listener(event, _graph.id, (graph, data) => {if(onevent) { _lib.no.runGraph(onevent.graph, onevent.fn, {...onevent.args, data})}}, true)"
+          "script": "_lib.no.runtime.add_listener(event, _graph.id, (data) => (_lib.no.runtime.update_args(_graph, {data})), false);"
         },
         { "id": "out", "ref": "default"}
       ],

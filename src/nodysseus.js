@@ -401,13 +401,12 @@ const node_nodes = (node, node_ref, cache, graph_input_value, data, full_lib, gr
     }
 
     // const res = run_with_val(outid)(combined_data_input)
-    const node_graph = {
-        ...node, 
+    const node_graph = Object.assign({}, node, {
         id: outid,
         node_id: node.id,
         nodes: node_ref.nodes,
         edges: node_ref.edges
-    };
+    });
     full_lib.no.runtime.set_parent(node_graph, graph);
     const res = full_lib.no.runGraph(node_graph, node_ref.out ?? 'out', combined_data_input, full_lib);
     // console.log(resolve(combined_data_input));
@@ -461,7 +460,7 @@ const node_script = (node, node_ref, cache, graph_input_value, data, full_lib, g
 
 
     try {
-        const fn = full_lib.no.runtime.get_fn(graph, orderedargs, node_ref);
+        const fn = full_lib.no.runtime.get_fn(graph, orderedargs, node.id, node_ref);
 
         const is_iv_promised = input_values.reduce((acc, iv) => acc || ispromise(iv), false);
         const results = is_iv_promised
@@ -1334,7 +1333,7 @@ const nolib = {
                 get_edges_in,
                 get_parent,
                 get_parentest,
-                get_fn: (graph, orderedargs, node_ref) => getorsetgraph(resolve(graph), orderedargs + node_ref.id, 'fn_cache', () => new Function(`return function _${(node_ref.name?.replace(/\W/g, "_") ?? node_ref.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script}}`)()),
+                get_fn: (graph, orderedargs, id, node_ref) => getorsetgraph(resolve(graph), id, 'fn_cache', () => new Function(`return function _${(node_ref.name?.replace(/\W/g, "_") ?? node_ref.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script}}`)()),
                 update_graph,
                 update_args,
                 delete_cache,
