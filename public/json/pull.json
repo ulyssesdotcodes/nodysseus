@@ -170,7 +170,7 @@
           "name": "filter/out",
           "script": "const filter_fn = _lib.no.executeGraphNode({graph: fn.graph ?? _graph, lib: _lib})(typeof fn === 'string' ? fn : fn.fn); return arr.filter(element => filter_fn(Object.assign(fn.args ?? {}, {element})))"
         },
-        { "id": "x2sz5kb", "args": [], "ref": "arg", "value": "arr" },
+        { "id": "x2sz5kb", "args": [], "ref": "arg", "value": "array" },
         { "id": "fn", "ref": "arg", "value": "fn" },
         { "id": "74n1jfm", "args": [], "name": "filter/in" }
       ],
@@ -524,8 +524,8 @@
       "id": "event_publisher",
       "out": "update",
       "nodes": [
-        { "id": "name", "ref": "arg", "value": "name" },
         { "id": "value", "ref": "arg", "value": "value" },
+        { "id": "name", "ref": "arg", "value": "name" },
         { "id": "update", "extern": "no.runtime.publish" }
       ],
       "edges": [
@@ -781,7 +781,7 @@
       "id": "map",
       "name": "map",
       "in": "m3b5wg3",
-      "out": "tgurdpo",
+      "out": "handle_promise",
       "nodes": [
         { "id": "tgurdpo", "ref": "call", "name": "out" },
         { "id": "m3b5wg3", "name": "in" },
@@ -790,6 +790,7 @@
         { "ref": "arg", "id": "6g75abk", "value": "fn", "name": "6g75abk" },
         { "id": "w0zzawl", "ref": "array", "name": "w0zzawl" },
         { "id": "args", "ref": "arg", "value": "args" },
+        {"id": "handle_promise", "script": "return _lib.utility.liftarraypromise(array);"},
         {
           "id": "pdljod1",
           "name": "pdljod1",
@@ -806,7 +807,8 @@
         { "from": "pdljod1", "to": "w0zzawl", "as": "a0", "type": "resolve" },
         { "from": "2lvs5dj", "to": "pdljod1", "as": "graph" },
         { "from": "args", "to": "pdljod1", "as": "args" },
-        { "from": "6g75abk", "to": "pdljod1", "as": "fn" }
+        { "from": "6g75abk", "to": "pdljod1", "as": "fn" },
+        {"from": "tgurdpo", "to": "handle_promise", "as": "array"}
       ]
     },
     {
@@ -896,7 +898,7 @@
         { "id": "kpakw50", "ref": "arg", "value": "object" }
       ],
       "edges": [
-        { "from": "tkd4tqn", "to": "j8c79uf", "as": "arr" },
+        { "from": "tkd4tqn", "to": "j8c79uf", "as": "array" },
         { "from": "hfexsuu", "to": "runnable", "as": "fn"},
         { "from": "runnable", "to": "j8c79uf", "as": "fn"},
         { "from": "bgi2g37", "to": "j8c79uf", "as": "arr" },
@@ -1162,10 +1164,18 @@
         { "id": "props", "ref": "arg", "value": "props" },
         { "id": "dom_type", "ref": "arg", "value": "dom_type" },
         { "id": "memo", "ref": "arg", "value": "memo" },
+        { "id": "element", "ref": "arg", "value": "element" },
         { "id": "div", "value": "div" },
+        {"id": "filter_children_fn", "script": "return element?._Proxy ? element._value : element"},
+        {"id": "filter_children_fn_runnable", "ref": "runnable"},
+        {"id": "fill_children_fn", "script": "return element.el ?? element"},
+        {"id": "fill_children_fn_runnable", "ref": "runnable"},
+        {"id": "filter_children", "ref": "filter"},
+        {"id": "wrapped_children", "script": "return Array.isArray(children) ? children : [children]"},
         {
           "id": "fill_children",
-          "script": "return children === undefined ? [] : children.length !== undefined ? children.map(c => _lib.no.resolve(c)).filter(c => !!c).map(c => c.el ?? c) : [children.el ?? children]"
+          "ref": "map",
+          "_script": "return children === undefined ? [] : children.length !== undefined ? children.map(c => _lib.no.resolve(c)).filter(c => !!c).map(c => c.el ?? c) : [children.el ?? children]"
         },
         { "id": "fill_props", "script": "return props ?? {}" },
         { "id": "dom_type_def", "ref": "default" },
@@ -1175,9 +1185,17 @@
         }
       ],
       "edges": [
-        { "from": "children", "to": "fill_children", "as": "children" },
+        { "from": "children", "to": "wrapped_children", "as": "children" },
+        { "from": "wrapped_children", "to": "filter_children", "as": "array" },
         { "from": "props", "to": "fill_props", "as": "props", "type": "resolve" },
         { "from": "memo", "to": "out", "as": "memo"},
+        {"from": "element", "to": "filter_children_fn", "as": "element"},
+        {"from": "filter_children_fn", "to": "filter_children_fn_runnable", "as": "fn"},
+        {"from": "filter_children_fn_runnable", "to": "filter_children", "as": "fn"},
+        {"from": "element", "to": "fill_children_fn", "as": "element"},
+        {"from": "fill_children_fn", "to": "fill_children_fn_runnable", "as": "fn"},
+        {"from": "fill_children_fn_runnable", "to": "fill_children", "as": "fn"},
+        { "from": "filter_children", "to": "fill_children", "as": "array"},
         { "from": "fill_children", "to": "out", "as": "children"},
         { "from": "fill_props", "to": "out", "as": "props" },
         { "from": "dom_type", "to": "dom_type_def", "as": "value" },
@@ -2953,7 +2971,7 @@
         { "id": "add_edge", "ref": "create_or_update_edge" },
         {
           "id": "effects",
-          "script": "console.log(new_selected); console.log(new_state); return [[() => _lib.no.runtime.update_graph(display_graph)], [update_sim_effect]]"
+          "script": "return [[() => _lib.no.runtime.update_graph(display_graph)], [update_sim_effect]]"
         },
         { "id": "set_display_graph", "ref": "set" },
         { "id": "new_node" },
@@ -3725,6 +3743,7 @@
         { "id": "readonly", "ref": "arg", "value": "state.readonly" },
         { "id": "arg_display_graph", "ref": "arg", "value": "state.display_graph" },
         { "id": "display_graph_nodes", "ref": "arg", "value": "state.display_graph.nodes" },
+        { "id": "show_all", "ref": "arg", "value": "state.show_all" },
         { "id": "node_el_width", "ref": "arg", "value": "state.node_el_width" },
         { "id": "dimensions", "ref": "arg", "value": "state.dimensions" },
         { "id": "nodes", "ref": "arg", "value": "state.nodes" },
@@ -3735,7 +3754,7 @@
         },
         { "id": "set_selected", "args": ["selected", "state"], "script": "return {...state, selected: [node_id]}" },
         { "id": "false", "value": false },
-        { "id": "should_show_popover", "script": "return !readonly && node_id === selected[0]" },
+        { "id": "should_show_popover", "script": "return !readonly && node_id === selected[0] && !show_all" },
         { "id": "randid", "ref": "arg", "value": "state.randid" },
         { "id": "add_node_effect", "ref": "add_node" },
         { "id": "add_edge_effect", "ref": "add_edge" },
@@ -3820,6 +3839,7 @@
         { "from": "false", "to": "if_show_popover", "as": "false" },
         { "from": "node_id", "to": "should_show_popover", "as": "node_id" },
         { "from": "readonly", "to": "should_show_popover", "as": "readonly" },
+        { "from": "show_all", "to": "should_show_popover", "as": "show_all" },
         { "from": "arg_selected", "to": "should_show_popover", "as": "selected" },
         { "from": "should_show_popover", "to": "if_show_popover", "as": "pred" },
         { "from": "arg_selected", "to": "dispatch_custom_event_effect", "as": "selected" },
@@ -4086,7 +4106,7 @@
             { "id": "selected_node", "script": "return nodes.find(n => n.node_id === selected)" },
             {
               "id": "ref_nodes",
-              "script": "return nodes.filter(n => !(n.ref || levels.level_by_node.has(n.id)) && (n.script || n.nodes))"
+              "script": "return nodes.filter(n => !(n.ref || levels.level_by_node.has(n.id)) && (n.script || n.nodes || n.extern))"
             },
             { "id": "edit_text", "ref": "html_element" },
             { "id": "edit_text_dom_type", "value": "div" },

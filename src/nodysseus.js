@@ -5,8 +5,8 @@ import { diffApply } from "just-diff-apply";
 import Fuse from "fuse.js";
 
 function nodysseus_get(obj, propsArg, defaultValue) {
-    let objArg = obj;
-    let level = 0;
+let objArg = obj;
+let level = 0;
   if (!obj) {
     return defaultValue;
   }
@@ -33,7 +33,7 @@ function nodysseus_get(obj, propsArg, defaultValue) {
         continue;
     }
     prop = props.shift();
-    if(obj === undefined || !obj.hasOwnProperty(prop)){
+    if(obj === undefined || (obj[prop] === undefined && !obj.hasOwnProperty(prop))){
         if(level === 0) {
             return objArg?.__args ? nodysseus_get(objArg.__args, propsArg, defaultValue) : defaultValue;
         }
@@ -845,8 +845,6 @@ const bfs = (graph, fn) => {
 const expand_node = (data) => {
     const node_id = data.node_id;
     const node = data.display_graph.nodes.find(n => n.id === node_id)
-    console.log(data.node_id)
-    console.log(node)
 
     if (!(node && node.nodes)) {
         console.log('no nodes?');
@@ -1290,19 +1288,18 @@ const nolib = {
                     cache.get(graph.id).args = {...last_args, ...args};
                 }
 
-
                 publish('graphchange', get_parentest(graph));
             }
 
-            const get_ref = (graph, id) => cache.get(graph.id)?.parent ? 
-                get_ref(cache.get(graph.id)?.parent, id) : get_node(graph, id)
+            const get_ref = (graph, id) => get_parent(graph) ? 
+                get_ref(get_parent(graph), id) : get_node(graph, id)
             const get_node = (graph, id) => getorsetgraph(resolve(graph), id, 'node_map', () =>
                 get_graph(graph).nodes.find(n => n.id === id) 
-                    ?? (cache.get(graph.id)?.parent ? get_ref(graph, id) : undefined));
+                    ?? (get_parent(graph) ? get_ref(graph, id) : undefined));
             const get_edges_in = (graph, id) => getorsetgraph(resolve(graph), id, 'in_edge_map', () => graph.edges.filter(e => e.to === id));
             const get_args = (graph) => getorset(cache, graph.id, () => new_graph_cache(graph)).args;
-            const get_graph = (graph) => cache.get(graph.id ?? graph).graph ?? graph;
-            const get_parent = (graph) => cache.get(graph.id)?.parent;
+            const get_graph = (graph) => cache.get(graph?.id ?? graph)?.graph ?? graph;
+            const get_parent = (graph) => get_graph(cache.get(graph.id)?.parent);
             const get_parentest = (graph) => {
                 const parent = get_parent(graph);
                 return parent ? get_parentest(parent) : graph;
@@ -1392,7 +1389,7 @@ const nolib = {
                 },
                 set_parent: (graph, parent) => {
                     const gcache = getorset(cache, graph.id, () => new_graph_cache(resolve(graph)));
-                    gcache.parent = parent;
+                    gcache.parent = parent.id;
                 }
             }
         })()
@@ -1417,6 +1414,10 @@ const nolib = {
                             : undefined
             },
         },
+        liftarraypromise: (array) => {
+            const isarraypromise = array.reduce((acc, v) => acc || ispromise(v), false);
+            return isarraypromise ? Promise.all(array) : array;
+        },
         new_array: {
             args: ['_node_inputs'],
             resolve: false,
@@ -1435,8 +1436,8 @@ const nolib = {
             fn: fetch
         },
         call: {
-            args: ['fn', 'args', 'self'],
-            fn: (fn, args, self) => typeof self === 'function' 
+            args: ['self', 'fn', 'args'],
+            fn: (self, fn, args) => typeof self === 'function' 
                 ? self(...((args ?? [])
                     .reverse()
                     .reduce((acc, v) => [
