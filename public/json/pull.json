@@ -900,10 +900,10 @@
         { "id": "kpakw50", "ref": "arg", "value": "object" }
       ],
       "edges": [
-        { "from": "tkd4tqn", "to": "j8c79uf", "as": "array" },
+        { "from": "tkd4tqn", "to": "j8c79uf", "as": "_", "type": "ref" },
         { "from": "hfexsuu", "to": "runnable", "as": "fn"},
         { "from": "runnable", "to": "j8c79uf", "as": "fn"},
-        { "from": "bgi2g37", "to": "j8c79uf", "as": "arr" },
+        { "from": "bgi2g37", "to": "j8c79uf", "as": "array" },
         { "from": "7gqcw0o", "to": "hfexsuu", "as": "key" },
         { "from": "kpakw50", "to": "bgi2g37", "as": "obj" }
       ]
