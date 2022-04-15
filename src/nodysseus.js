@@ -1127,7 +1127,18 @@ const nolib = {
                 return nodysseus_get(target?._Proxy ? target._value : target, path?._Proxy ? path._value : path, def?._Proxy ? def._value : def);
             },
         },
-        set,
+        set: {
+            args: ['target', 'path', 'value'],
+            fn: (target, path, value) => {
+                const keys = path.split('.'); 
+                const check = (o, v, k) => k.length === 1 
+                    ? {...o, [k[0]]: v, _needsresolve: true} 
+                    : o.hasOwnProperty(k[0]) 
+                    ? {...o, [k[0]]: check(o[k[0]], v, k.slice(1)), _needsresolve: true} 
+                    : o; 
+                return check(target, value, keys)
+            },
+        },
         diff,
         diffApply
     },

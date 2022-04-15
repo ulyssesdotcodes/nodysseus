@@ -398,10 +398,11 @@
         { "from": "collate", "to": "out", "as": "data" }
       ]
     },
-    { "id": "array", "name": "array", "extern": "utility.new_array" },
-    { "id": "merge_objects", "extern": "utility.merge_objects" },
+    { "id": "array", "name": "array", "description": "Create an array from all the inputs in alphabetical order", "extern": "utility.new_array" },
+    { "id": "merge_objects", "description": "Merge the keys of two objects, in descending alphabetical order priority (`Object.assign(...inputs)`).", "extern": "utility.merge_objects" },
     {
       "id": "get",
+      "description": "Get the value at the path of object. Accepts a `.` separated path e.g. get(target, 'a.b.c') returns target.a.b.c",
       "nodes": [
         { "id": "in" },
         { "id": "target", "ref": "arg", "value": "target" },
@@ -416,12 +417,13 @@
         { "from": "target", "to": "out", "as": "target" }
       ]
     },
-    { "id": "arg", "extern": "utility.arg" },
+    { "id": "arg", "description": "Get an input to the graph this is a part of.", "extern": "utility.arg" },
     { "id": "set-mutable", "args": ["target", "path", "value"], "script": "return _lib.just.set(target, path, value)" },
     {
       "id": "set",
+      "description": "Set the property at `path` on target. Accepts a `.` separated path e.g. set(target, 'a.b', 'c') returns {...target, a: {...target.a, b: 'c'}}",
       "type": "(target: any, value: any, path: string) => any",
-      "script": "const keys = path.split('.'); const check = (o, v, k) => k.length === 1 ? {...o, [k[0]]: v, _needsresolve: true} : o.hasOwnProperty(k[0]) ? {...o, [k[0]]: check(o[k[0]], v, k.slice(1)), _needsresolve: true} : o; return check(target, value, keys)"
+      "extern": "just.set"
     },
     {
       "id": "delete",
