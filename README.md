@@ -6,7 +6,7 @@ A generic node-based editor. Built with hyperapp.
 New nodes introduced in the example are included in parentheses.
 
 ### Debugging and viewing data
-1. [Simple logging (`input_value`, `log`)](https://nodysseus.ulysses.codes/#example_1_1)
+1. [Simple logging (`input_value`, `log`)](https://nodysseus.ulysses.codes/#example_1_1) ([tutorial](https://gitlab.com/ulysses.codes/nodysseus/-/blob/main/docs/examples/1_1_viewing_data.md))
 
 ### HTML
 1. [Simple text (`html_element`, `html_text`)](https://nodysseus.ulysses.codes/#example_1_2_1)

@@ -4,6 +4,7 @@
     <img src="https://gitlab.com/ulysses.codes/nodysseus/-/raw/main/docs/examples/images/1_1_graph.png" title="Example 1.1 Viewing Data" />
 </div>
 
+[Link](https://nodysseus.ulysses.codes/#example_1_1)
 
 ## Graph breakdown
 
