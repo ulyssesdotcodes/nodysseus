@@ -1,4 +1,4 @@
-# Example 1.2.5 Input ([Graph](https://nodysseus.ulysses.codes/#example_1_2_4))
+# Example 1.2.5 Input ([Graph](https://nodysseus.ulysses.codes/#example_1_2_5))
 Fetching a quote and outputting it as HTML.
 
 <div align="center">
