@@ -29,6 +29,8 @@ You can edit a node by using keybindings or by clicking/tapping the selected nod
 
 You can edit an edge by using keybindings or clicking/tapping the edge name.
 
+You can edit the graph name by clicking the graph menu in the top right.
+
 ## References
 
 Nodes that have something other than `object` or `value` in *italics* reference other hidden nodes. It's similar to calling a function with the input nodes as arguments. Using the node menu, you can copy the referenced node or create a reference from the node.
@@ -81,10 +83,35 @@ The graph is rerun whenever it changes.
 - If the return value of any executed node is a Promise, the nodes following that node will all return promises. 
 - If the return value contains the key `display`, then `display` will be added to the html document using hyperapp. 
 
-The graph is executed using a pull model - each node asks its parents (if it has any) for new data before running itself. 
+The graph is executed using a pull model - each node asks its parents (if it has any) for new data before running itself. It uses a [Proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) object for inputs until they are needed, allowing lazy evaluation while retaining js-compatible objects and correct handling of `switch`, `if`, etc.
 
+## Exporting
+
+Exporting can be done through the graph menu.
+
+### JSON
+
+Downloads the JSON representation of the graph. This can be used with `import_json` to import into another node.
+
+Planned improvements:
+- loading a .json graph file
+- selective importing from a .json file
+
+### JS
+
+Downloads the graph as a runnable .js file. It uses `import "nodysseus"` so make sure wherever you're running it you have access to the [`nodysseus` npm package](https://www.npmjs.com/package/nodysseus).
+
+
+## NPM Package ([link](https://www.npmjs.com/package/nodysseus))
+
+The npm package can be used to run graphs from javascript and includes Typescript bindings. It exports `editor` to enable embedding editable or static graphs in a webpage, and `runGraph` for running a graph.
 
 ## Shortcuts
+
+### graph actions
+- **ctrl-s** save
+- **ctrl-z** undo
+- **ctrl-y** redo
 
 ### navigation
 
@@ -106,8 +133,21 @@ The graph is executed using a pull model - each node asks its parents (if it has
 
 ### node creation/deletion
 - **o** create parent node
+- **a** create parent `arg` node
 - **x** delete node (edges are adjusted automatically)
+- **ctrl-c** copy
+- **ctrl-v** paste
 
 ### edges
 
 - **e** edit output edge
+
+
+## Notes
+
+- This is still very much in alpha. It is slow (but I'm working on it!) and there are bugs.
+- Exporting 
+
+### Runtime
+
+Nodysseus uses a custom `Map` based runtime for graph execution. The runtime stores graphs, nodes, and arguments; implements event pubsub and caching; and is used extensively in nodes such as `input_value`, `cache` and `event_publisher` (among others).
