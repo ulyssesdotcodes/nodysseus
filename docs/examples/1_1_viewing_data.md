@@ -2,6 +2,7 @@
 <div align="center">
     <img src="https://gitlab.com/ulysses.codes/nodysseus/-/raw/main/docs/examples/images/1_1_graph.png" title="Example 1.1 Viewing Data" />
 </div>
+
 # Example 1.1 Viewing Data
 
 ## Graph breakdown
