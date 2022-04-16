@@ -1,16 +1,18 @@
 # Example 1.1 Viewing Data
+[Graph](https://nodysseus.ulysses.codes/#example_1_1)
+Creating and displaying simple values using nodes.
 
 <div align="center">
     <img src="https://gitlab.com/ulysses.codes/nodysseus/-/raw/main/docs/examples/images/1_1_graph.png" title="Example 1.1 Viewing Data" />
 </div>
 
-[Link](https://nodysseus.ulysses.codes/#example_1_1)
 
 ## Graph breakdown
 
-1. The top node creates a value ("Hello, World!"), and passes it to `input_value`. 
-2. `input_value` sets its own value to the data from the input labeled `value` and then passes the value onward
-3. `log` calls `console.log` with the data passed in at `value` and its own id.
+1. `return` indicates the end of the graph - everything coming into `return` will be run
+2. `log` calls `console.log` with the data passed in at `value` and its own id.
+3. `input_value` sets its own value to the data from the input labeled `value` and then passes the value onward
+4. The top node creates a value ("Hello, World!")
 
 ## Exercises
 

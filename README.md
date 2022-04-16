@@ -6,13 +6,13 @@ A generic node-based editor. Built with hyperapp.
 New nodes introduced in the example are included in parentheses.
 
 ### Debugging and viewing data
-1. [Simple logging (`input_value`, `log`)](https://nodysseus.ulysses.codes/#example_1_1) ([tutorial](https://gitlab.com/ulysses.codes/nodysseus/-/blob/main/docs/examples/1_1_viewing_data.md))
+1. [Logging and viewing data (`input_value`, `log`)](https://nodysseus.ulysses.codes/#example_1_1) ([tutorial](https://gitlab.com/ulysses.codes/nodysseus/-/blob/main/docs/examples/1_1_viewing_data.md))
 
 ### HTML
-1. [Simple text (`html_element`, `html_text`)](https://nodysseus.ulysses.codes/#example_1_2_1)
+1. [Text (`html_element`, `html_text`)](https://nodysseus.ulysses.codes/#example_1_2_1)
 2. [Children (`array`, `dom_type`)](https://nodysseus.ulysses.codes/#example_1_2_2)
 3. [CSS (`css_styles`, `props`)](https://nodysseus.ulysses.codes/#example_1_2_3)
-4. [Using http requests (`fetch`, `call`, `cache`)](https://nodysseus.ulysses.codes/#example_1_2_4)
+4. [Using http requests (`fetch`, `call`, `cache`, Promise)](https://nodysseus.ulysses.codes/#example_1_2_4)
 4. [Input response (`runnable`, `event_subscriber`, `event_publisher`)](https://nodysseus.ulysses.codes/#example_1_2_5)
 
 ## Reading a graph
