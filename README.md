@@ -2,6 +2,19 @@
 
 A generic node-based editor. Built with hyperapp.
 
+## Examples
+New nodes introduced in the example are included in parentheses.
+
+### Debugging and viewing data
+1. [Simple logging (`input_value`, `log`)](https://nodysseus.ulysses.codes/#example_1_1)
+
+### HTML
+1. [Simple text (`html_element`, `html_text`)](https://nodysseus.ulysses.codes/#example_1_2_1)
+2. [Children (`array`, `dom_type`)](https://nodysseus.ulysses.codes/#example_1_2_2)
+3. [CSS (`css_styles`, `props`)](https://nodysseus.ulysses.codes/#example_1_2_3)
+4. [Using http requests (`fetch`, `call`, `cache`)](https://nodysseus.ulysses.codes/#example_1_2_4)
+4. [Input response (`runnable`, `event_subscriber`, `event_publisher`)](https://nodysseus.ulysses.codes/#example_1_2_5)
+
 ## Reading a graph
 
 - Each node does something or passes data to its child. 
@@ -70,18 +83,6 @@ The graph is rerun whenever it changes.
 
 The graph is executed using a pull model - each node asks its parents (if it has any) for new data before running itself. 
 
-## Examples
-New nodes introduced in the example are included in parentheses.
-
-### Debugging and viewing data
-1. [Simple logging (`input_value`, `log`)](https://nodysseus.ulysses.codes/#example_1_1)
-
-### HTML
-1. [Simple text (`html_element`, `html_text`)](https://nodysseus.ulysses.codes/#example_1_2_1)
-2. [Children (`array`, `dom_type`)](https://nodysseus.ulysses.codes/#example_1_2_2)
-3. [CSS (`css_styles`, `props`)](https://nodysseus.ulysses.codes/#example_1_2_3)
-4. [Using http requests (`fetch`, `call`, `cache`)](https://nodysseus.ulysses.codes/#example_1_2_4)
-4. [Input response (`runnable`, `event_subscriber`, `event_publisher`)](https://nodysseus.ulysses.codes/#example_1_2_5)
 
 ## Shortcuts
 
