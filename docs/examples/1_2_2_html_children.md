@@ -1,5 +1,4 @@
-# Example 1.2.1 HTML text
-[Graph](https://nodysseus.ulysses.codes/#example_1_2_2)
+# Example 1.2.1 HTML text ([Graph](https://nodysseus.ulysses.codes/#example_1_2_2))
 Building up a more complex example by combining HTML nodes.
 
 <div align="center">

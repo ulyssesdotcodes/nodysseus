@@ -1,5 +1,4 @@
-# Example 1.2.1 HTML text
-[Graph](https://nodysseus.ulysses.codes/#example_1_2_1)
+# Example 1.2.1 HTML text ([Graph](https://nodysseus.ulysses.codes/#example_1_2_1))
 Showing simple HTML text elements.
 
 <div align="center">

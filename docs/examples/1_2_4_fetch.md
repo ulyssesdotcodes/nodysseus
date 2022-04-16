@@ -1,5 +1,4 @@
-# Example 1.2.4 Fetch
-[Graph](https://nodysseus.ulysses.codes/#example_1_2_4)
+# Example 1.2.4 Fetch ([Graph](https://nodysseus.ulysses.codes/#example_1_2_4))
 Fetching a quote and outputting it as HTML.
 
 <div align="center">

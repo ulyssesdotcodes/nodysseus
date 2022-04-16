@@ -1,5 +1,4 @@
-# Example 1.1 Viewing Data
-[Graph](https://nodysseus.ulysses.codes/#example_1_1)
+# Example 1.1 Viewing Data ([Graph](https://nodysseus.ulysses.codes/#example_1_1))
 Creating and displaying simple values using nodes.
 
 <div align="center">
