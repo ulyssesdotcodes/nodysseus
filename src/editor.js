@@ -331,7 +331,7 @@ const editor = function(html_id, display_graph, lib, norun) {
     const url_params = new URLSearchParams(document.location.search);
     const examples = [simple_html_hyperapp, simple];
     const dispatch = runGraph(DEFAULT_GRAPH, "initialize_hyperapp_app", { 
-        nodysseus_graph: DEFAULT_GRAPH, 
+        graph: DEFAULT_GRAPH, 
         display_graph: {...add_default_nodes_and_edges(display_graph), out: "main/out"},
         hash: window.location.hash ?? "",
         url_params,

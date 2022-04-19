@@ -321,7 +321,7 @@
         { "id": "graph", "ref": "arg", "value": "graph"},
         {
           "id": "out",
-          "script": "const parent_graph = _lib.no.runtime.get_parent(_graph); const input = _lib.no.runtime.get_edges_in(parent_graph, _graph.node_id).find(i => i.as === 'fn'); return input ? {fn: input.from, graph: graph ?? parent_graph.id, args: args ?? {}} : false"
+          "script": "const parent_graph = _lib.no.runtime.get_parent(_graph); const input = _lib.no.runtime.get_edges_in(parent_graph, _graph.node_id).find(i => i.as === 'fn'); return input ? {fn: input.from, graph: graph?.id === parent_graph.id ? graph : parent_graph, args: args ?? {}} : false"
         }
       ],
       "edges": [

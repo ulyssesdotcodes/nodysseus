@@ -1442,8 +1442,8 @@ const nolib = {
             }
         },
         fetch: {
-            args: ['url', 'params'],
-            fn: fetch
+            args: ['_node', 'url', 'params'],
+            fn: (node, url, params) => fetch(url ?? node.value, params)
         },
         call: {
             args: ['self', 'fn', 'args'],
