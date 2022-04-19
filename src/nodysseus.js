@@ -1,12 +1,12 @@
-import DEFAULT_GRAPH from "../public/json/pull.json"
+import generic from "../public/json/generic";
 import set from "just-safe-set";
 import { diff } from "just-diff";
 import { diffApply } from "just-diff-apply";
 import Fuse from "fuse.js";
 
 function nodysseus_get(obj, propsArg, defaultValue) {
-let objArg = obj;
-let level = 0;
+    let objArg = obj;
+    let level = 0;
   if (!obj) {
     return defaultValue;
   }
@@ -645,12 +645,12 @@ const executeGraph = ({ cache, graph, lib, usecache }) => {
     // As an alternative, use the `cache` node for things that take a long time.
     usecache = usecache ?? false;
 
-    if (!graph.nodes) {
-        throw new Error(`Graph has no nodes! in: ${graph.in} out: ${graph.out}`)
-    }
-
     if (graph._Proxy) {
         graph = graph._value;
+    }
+
+    if (!graph.nodes) {
+        throw new Error(`Graph has no nodes! in: ${graph.in} out: ${graph.out}`)
     }
 
     const run_with_val = (node_id) => {
@@ -1033,76 +1033,6 @@ const objToGraph = (obj, path) => Object.entries(obj)
 /////////////////////////////////
 
 const cache = new Map();
-
-const generic_nodes = new Set([
-    "get",
-    "set",
-    "delete",
-    "object",
-
-    "switch",
-    "if",
-    "flow",
-
-    "html",
-    "html_element",
-    "html_text",
-    "toggle",
-    "input",
-    "css_styles",
-    "css_anim",
-
-    "array",
-    "filter",
-    "map",
-    "append",
-    "ancestors",
-
-    "utility",
-    "log",
-    "execute_graph",
-    "arg",
-    "apply",
-    "partial",
-    "fetch",
-    "call",
-    "default",
-    "merge_objects",
-    "sequence",
-    "runnable",
-    "run",
-    "dispatch_runnable",
-    "object_entries",
-    "import_json",
-    "event_publisher",
-    "event_publisher_onchange",
-    "event_subscriber",
-    "events_broadcast_channel",
-    "input_value",
-    "ancestors",
-    "return",
-    "cache",
-    "isunchanged",
-    "set_arg",
-
-    "math",
-    "add",
-    "divide",
-    "mult",
-    "negate",
-    "eq",
-
-    "JSON",
-    "stringify",
-    "parse",
-
-    "state",
-    "modify_state_runnable",
-    "initial_state_runnable",
-    "set_display",
-
-    "custom"
-]);
 
 const ispromise = a => a?._Proxy ? false : typeof a?.then === 'function';
 const getorset = (map, id, value_fn) => {
@@ -1518,16 +1448,23 @@ const nolib = {
     // THREE
 };
 
+const generic_nodes = new Set(generic.nodes.map(n => n.id));
+
 const add_default_nodes_and_edges = g => ({
     ...g,
     nodes: g.nodes
         .filter(n => !generic_nodes.has(n.id))
-        .concat(DEFAULT_GRAPH.nodes.filter(n => generic_nodes.has(n.id))),
-    edges: g.edges
-        .filter(e => !generic_nodes.has(e.from))
-        .concat(DEFAULT_GRAPH.edges.filter(e => generic_nodes.has(e.to)))
+        .concat(generic.nodes)
 })
 
-const runGraph = nolib.no.runGraph;
+const runGraph = (graph, node, args, lib) => {
+    let rgraph = graph.graph ? graph.graph : graph;
+
+    if(!rgraph.nodes.find(n => n.id === "get")) {
+        rgraph = add_default_nodes_and_edges(rgraph);
+    }
+
+    nolib.no.runGraph(graph.graph ? {...graph, graph: rgraph} : rgraph, node, args, lib);
+}
 
 export { nolib, runGraph, objToGraph, flattenNode, bfs, calculateLevels, compare, hashcode, contract_all, contract_node, expand_node, add_default_nodes_and_edges, ispromise, resolve, NodysseusError };
