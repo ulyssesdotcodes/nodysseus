@@ -1,5 +1,4 @@
 import { bfs, hashcode, add_default_nodes_and_edges, nolib, runGraph, expand_node, flattenNode, contract_node, calculateLevels, contract_all, ispromise, resolve } from "./nodysseus.js";
-import editor_graph from "../public/json/editor.json";
 import { h, app, text, memo } from "hyperapp";
 import panzoom from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
@@ -328,6 +327,7 @@ const updateSimulationNodes = (dispatch, data) => {
 const editor = async function(html_id, display_graph, lib, norun) {
     const simple = await fetch("json/simple.json").then(r => r.json());
     const simple_html_hyperapp = await fetch("json/simple_html_hyperapp.json").then(r => r.json());
+    const editor_graph = await fetch("json/editor.json").then(r => r.json());
     const url_params = new URLSearchParams(document.location.search);
     const examples = [simple_html_hyperapp, simple];
     const dispatch = runGraph(editor_graph, "initialize_hyperapp_app", { 
@@ -381,30 +381,30 @@ const d3subscription = (dispatch, props) => {
             requestAnimationFrame(() => dispatch(s => [(htmlid = s.html_id, {...s, simulation}), [props.update, s]]));
         }
 
-        const data = {
-            nodes: simulation.nodes().map(n => {
-                return ({ ...n, x: ( Math.floor(n.x)), y: Math.floor(n.y) })
-            }),
-            links: simulation.force('links').links().map(l => ({
-                ...l,
-                as: l.as,
-                type: l.type,
-                source: ({
-                    node_child_id: l.source.node_child_id,
-                    node_id: l.source.node_id,
-                    x: Math.floor(l.source.x),
-                    y: Math.floor(l.source.y)
-                }),
-                target: ({
-                    node_child_id: l.target.node_child_id,
-                    node_id: l.target.node_id,
-                    x: Math.floor(l.target.x),
-                    y: Math.floor(l.target.y)
-                })
-            }))};
 
 
         if (simulation.alpha() > simulation.alphaMin()) {
+            const data = {
+                nodes: simulation.nodes().map(n => {
+                    return ({ ...n, x: ( Math.floor(n.x)), y: Math.floor(n.y) })
+                }),
+                links: simulation.force('links').links().map(l => ({
+                    ...l,
+                    as: l.as,
+                    type: l.type,
+                    source: ({
+                        node_child_id: l.source.node_child_id,
+                        node_id: l.source.node_id,
+                        x: Math.floor(l.source.x),
+                        y: Math.floor(l.source.y)
+                    }),
+                    target: ({
+                        node_child_id: l.target.node_child_id,
+                        node_id: l.target.node_id,
+                        x: Math.floor(l.target.x),
+                        y: Math.floor(l.target.y)
+                    })
+                }))};
             const ids = simulation.nodes().map(n => n.node_id).join(',');
             stopped = false;
             simulation.tick();
@@ -485,6 +485,27 @@ const d3subscription = (dispatch, props) => {
                 }
             })
         } else if(!stopped) {
+            const data = {
+                nodes: simulation.nodes().map(n => {
+                    return ({ ...n, x: ( Math.floor(n.x)), y: Math.floor(n.y) })
+                }),
+                links: simulation.force('links').links().map(l => ({
+                    ...l,
+                    as: l.as,
+                    type: l.type,
+                    source: ({
+                        node_child_id: l.source.node_child_id,
+                        node_id: l.source.node_id,
+                        x: Math.floor(l.source.x),
+                        y: Math.floor(l.source.y)
+                    }),
+                    target: ({
+                        node_child_id: l.target.node_child_id,
+                        node_id: l.target.node_id,
+                        x: Math.floor(l.target.x),
+                        y: Math.floor(l.target.y)
+                    })
+                }))};
             stopped = true; 
             requestAnimationFrame(() => {
                 dispatch([props.action, data])

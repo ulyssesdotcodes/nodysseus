@@ -1,8 +1,18 @@
-import generic from "../public/json/generic";
+import generic from "../public/json/generic.js";
 import set from "just-safe-set";
 import { diff } from "just-diff";
 import { diffApply } from "just-diff-apply";
 import Fuse from "fuse.js";
+let resfetch = typeof fetch !== "undefined" ? fetch : 
+    (url, params) =>
+        import('https').then(https => new Promise((resolve, reject) => https.request(params, async response => {
+            const buffer = [];
+            for await(const chunk of response) {
+                buffer.push(chunk);
+            }
+            const data = Buffer.concat(buffer).toString();
+            resolve(data);
+        })));
 
 function nodysseus_get(obj, propsArg, defaultValue) {
     let objArg = obj;
@@ -672,7 +682,7 @@ const executeGraph = ({ cache, graph, lib, usecache }) => {
             }
 
             if (node.ref === "arg") {
-                return full_lib.utility.arg.fn(node, graph_input_value);
+                return full_lib.utility.arg.fn(node, graph, graph_input_value);
             }
 
             if (node.value !== undefined && !node.script && !node.ref && !node.nodes) {
@@ -1035,6 +1045,9 @@ const objToGraph = (obj, path) => Object.entries(obj)
 const cache = new Map();
 
 const ispromise = a => a?._Proxy ? false : typeof a?.then === 'function';
+const getmap = (map, id) => {
+    return id ? map.get(id) : id;
+}
 const getorset = (map, id, value_fn) => {
     let val = map.get(id);
     if (val) {
@@ -1051,9 +1064,9 @@ const getorset = (map, id, value_fn) => {
 const nolib = {
     just: {
         get: {
-            args: ['target', 'path', 'def'],
-            fn: (target, path, def) => {
-                return nodysseus_get(target?._Proxy ? target._value : target, path?._Proxy ? path._value : path, def?._Proxy ? def._value : def);
+            args: ['_graph', 'target', 'path', 'def'],
+            fn: (graph, target, path, def) => {
+                return nodysseus_get(target?._Proxy ? target._value : target, path?._Proxy ? path._value : (path ?? graph.value), def?._Proxy ? def._value : def);
             },
         },
         set: {
@@ -1085,20 +1098,20 @@ const nolib = {
             const cache = new Map(); 
             const new_graph_cache = (graph) => ({
                 graph,
-                node_map: new Map(graph.nodes.map(n => [n.id, n])),
-                in_edge_map: new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.to === n.id)])),
+                node_map: new Map(graph.nodes.map(n => [hashcode(n.id), n])),
+                in_edge_map: new Map(graph.nodes.map(n => [hashcode(n.id), graph.edges.filter(e => e.to === n.id)])),
                 parent: undefined,
-                args: false,
+                args: {},
                 fn_cache: new Map(),
                 is_cached: new Set()
             });
             const event_listeners = new Map();
             const event_data = new Map();
-            const getorsetgraph = (graph, id, path, valfn) => getorset(getorset(cache, graph.id, () => new_graph_cache(graph))[path], id, valfn);
+            const getorsetgraph = (graph, id, path, valfn) => getorset(getorset(cache, hashcode(graph.id), () => new_graph_cache(graph))[path], id, valfn);
             const publish = (event, data) => {
                 event_data.set(event, data);
                 if (event === 'graphchange') {
-                    const gcache = cache.get(data.id);
+                    const gcache = getmap(cache, data.id);
                     // cache.get(graph.id).graph = 
                     // gcache.graph = {...graph, out: gcache.graph.out ?? graph.out ?? 'main/out'};
                     gcache.graph = data;
@@ -1120,14 +1133,14 @@ const nolib = {
                 if (!self.cancelAnimationFrame) {
                     self.cancelAnimationFrame = clearTimeout;
                 }
-                self.cancelAnimationFrame(cache.get(graph.id).animrun)
+                self.cancelAnimationFrame(getmap(cache, graph.id).animrun)
                 if (!self.requestAnimationFrame) {
                     self.requestAnimationFrame = fn => setTimeout(() => fn(), 16);
                 }
-                cache.get(graph.id).animrun = self.requestAnimationFrame(() => {
+                getmap(cache, graph.id).animrun = self.requestAnimationFrame(() => {
                     try {
                         graph = resolve(graph);
-                        const gcache = cache.get(graph.id);
+                        const gcache = getmap(cache, graph.id);
                         graph = gcache.graph ?? graph;
 
                         const result = nolib.no.runGraph(graph, graph.out ?? 'main/out', get_args(graph), gcache.lib);
@@ -1176,12 +1189,14 @@ const nolib = {
                 }
             }
 
-            const delete_cache = (graph) => cache.delete(typeof graph === 'string' ? graph : graph.id);
+            const delete_cache = (graph) => {
+                cache.delete(hashcode(typeof graph === 'string' ? graph : graph.id));
+            }
 
             const update_graph = (graph, args, lib) => {
                 graph = resolve(graph);
                 const new_cache = new_graph_cache(graph);
-                const old_graph = cache.get(graph.id)?.graph;
+                const old_graph = getmap(cache, graph.id)?.graph;
 
                 getorset(cache, graph.id, () => new_cache).graph = graph;
                 getorset(cache, graph.id, () => new_cache).node_map = new_cache.node_map;
@@ -1200,11 +1215,11 @@ const nolib = {
                     for(const n of old_graph.nodes) {
                         if(get_node(graph, n.id) !== n) {
                             const nodegraphid = graph.id + "/" + n.id;
-                            for(const key of cache.keys()) {
-                                if(key.startsWith(nodegraphid)){
-                                    cache.delete(key);
-                                }
-                            }
+                            // for(const key of cache.keys()) {
+                            //     if(key.startsWith(nodegraphid)){
+                            //         cache.delete(key);
+                            //     }
+                            // }
                         }
                     }
                 }
@@ -1219,13 +1234,13 @@ const nolib = {
 
             const update_args = (graph, args) => {
                 graph = resolve(graph);
-                if(!cache.has(graph.id)) {
+                if(!cache.has(hashcode(graph.id))) {
                     return;
                 }
 
                 if(args) {
-                    const last_args = cache.get(graph.id).args;
-                    cache.get(graph.id).args = {...last_args, ...args};
+                    const last_args = getmap(cache, graph.id).args;
+                    getmap(cache, graph.id).args = {...last_args, ...args};
                 }
 
                 publish('graphchange', get_parentest(graph));
@@ -1238,14 +1253,14 @@ const nolib = {
                     ?? (get_parent(graph) ? get_ref(graph, id) : undefined));
             const get_edges_in = (graph, id) => getorsetgraph(resolve(graph), id, 'in_edge_map', () => graph.edges.filter(e => e.to === id));
             const get_args = (graph) => getorset(cache, graph.id, () => new_graph_cache(graph)).args;
-            const get_graph = (graph) => cache.get(graph?.id ?? graph)?.graph ?? graph;
-            const get_parent = (graph) => get_graph(cache.get(graph.id)?.parent);
+            const get_graph = (graph) => getmap(cache, graph?.id ?? graph)?.graph ?? graph;
+            const get_parent = (graph) => get_graph(getmap(cache, graph.id)?.parent);
             const get_parentest = (graph) => {
                 const parent = get_parent(graph);
                 return parent ? get_parentest(parent) : graph;
             }
             const get_path = (graph, path) => {
-                    let gcache = cache.get(graph.id);
+                    let gcache = getmap(cache, graph.id);
                     let pathSplit = path.split(".");
                     let node = gcache.graph.out ?? "out";
                     while(pathSplit.length > 0 && node) {
@@ -1295,7 +1310,7 @@ const nolib = {
                         nodes: graph.nodes.filter(n => n.id !== node.id).concat([node])
                     };
 
-                    cache.delete(graph.id + "/" + node.id);
+                    cache.delete(hashcode(graph.id + "/" + node.id));
 
                     update_graph(new_graph);
                 },
@@ -1324,8 +1339,8 @@ const nolib = {
                 },
                 remove_listener,
                 publish: {
-                    args: ['event', 'data'],
-                    fn: publish
+                    args: ['_node', 'event', 'data'],
+                    fn: (node, event, data) => publish(event, data)
                 },
                 set_parent: (graph, parent) => {
                     const gcache = getorset(cache, graph.id, () => new_graph_cache(resolve(graph)));
@@ -1338,20 +1353,24 @@ const nolib = {
         compare,
         eq: ({ a, b }) => a === b,
         arg: {
-            args: ['_node', 'target'],
+            args: ['_node', '_graph', 'target'],
             resolve: false,
-            fn: (node, target) => {
+            fn: (node, graph, target) => {
                 return typeof node.value === 'string'
-                ? node.value === '_args'
+                ?   node.value === '_args'
                     ? target
-                    : nodysseus_get(target, node.value)
-                : node.value === '_graph'
+                    : node.value === '_graph'
                     ? graph
                     : node.value === '_node'
-                        ? node
-                        : node.value !== undefined && target !== undefined
-                            ? target[node.value]
-                            : undefined
+                    ? node
+                    : node.value.startsWith('_graph.')
+                    ? nodysseus_get(graph, node.value.substring('_graph.'.length))
+                    : node.value.startsWith('_node.')
+                    ? nodysseus_get(node, node.value.substring('_node.'.length))
+                    : nodysseus_get(target, node.value)
+                : node.value !== undefined && target !== undefined
+                    ? target[node.value]
+                    : undefined
             },
         },
         liftarraypromise: (array) => {
@@ -1373,11 +1392,11 @@ const nolib = {
         },
         fetch: {
             args: ['_node', 'url', 'params'],
-            fn: (node, url, params) => fetch(url ?? node.value, params)
+            fn: (node, url, params) => resfetch(url ?? node.value, params)
         },
         call: {
-            args: ['self', 'fn', 'args'],
-            fn: (self, fn, args) => typeof self === 'function' 
+            args: ['_node', 'self', 'fn', 'args'],
+            fn: (node, self, fn, args) => typeof self === 'function' 
                 ? self(...((args ?? [])
                     .reverse()
                     .reduce((acc, v) => [
@@ -1386,7 +1405,7 @@ const nolib = {
                         : acc[1]
                     ], [false, []])[1]
                     .reverse())) 
-                : self[fn](...((args ?? [])
+                : self[fn ?? node.value](...((args ?? [])
                     .reverse()
                     .reduce((acc, v) => [
                         !acc[0] && v !== undefined, acc[0] || v !== undefined 
