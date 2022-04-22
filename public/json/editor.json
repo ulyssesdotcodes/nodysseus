@@ -2317,13 +2317,15 @@
         },
         {
           "id": "out_input",
-          "script": "return display_graph && graph ? 'hel' : 'noop'"
+          "script": "return display_graph && graph && nodes.length > 0 && links.length > 0 ? 'hel' : 'noop'"
         },
         { "id": "out", "ref": "switch" }
       ],
       "edges": [
         { "from": "graph", "to": "out_input", "as": "graph" },
         { "from": "display_graph", "to": "out_input", "as": "display_graph" },
+        { "from": "nodes", "to": "out_input", "as": "nodes" },
+        { "from": "links", "to": "out_input", "as": "links" },
         { "from": "error", "to": "error_display", "as": "error" },
         { "from": "html_id", "to": "error_display", "as": "html_id" },
         { "from": "error", "to": "wrapper_children", "as": "error" },

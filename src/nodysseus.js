@@ -155,9 +155,6 @@ function compareObjects(value1, value2) {
 }
 
 const hashcode = function (str, seed = 0) {
-    // console.log(str);
-    // console.log(hash(Uint8ClampedArray.from(str)));
-    return hash(Uint8ClampedArray.from(str));
     let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
     let i = str.length, ch;
     while (i > 0) {
@@ -667,13 +664,13 @@ const executeGraph = ({ cache, graph, lib, usecache }) => {
 
     const run_with_val = (node_id) => {
         return (graph_input_value, cache_id_node) => {
-
             const cache_args = full_lib.no.runtime.get_args(graph);
             if(cache_args) {
                 Object.assign(graph_input_value, cache_args);
             }
             
             let nodeusecache = usecache && full_lib.no.runtime.is_cached(graph, node_id);
+            
             let node = full_lib.no.runtime.get_node(graph, node_id);
             if(usecache) {
                 full_lib.no.runtime.set_cached(graph, node_id);
@@ -1099,6 +1096,7 @@ const nolib = {
         runtime: (function(){
             const cache = new Map(); 
             const get_hashcode = (id) => {
+                return id;
                 return typeof id === "number" ? id : hashcode(id);
             }
             const new_graph_cache = (graph) => ({
@@ -1113,11 +1111,11 @@ const nolib = {
             });
             const event_listeners = new Map();
             const event_data = new Map();
-            const getorsetgraph = (graph, id, path, valfn) => getorset(getorset(cache, get_hashcode(graph.id), () => new_graph_cache(graph))[path], id, valfn);
+            const getorsetgraph = (graph, id, path, valfn) => getorset(get_cache(graph)[path], id, valfn);
             const publish = (event, data) => {
                 event_data.set(event, data);
                 if (event === 'graphchange') {
-                    const gcache = getmap(cache, get_hashcode(data.id));
+                    const gcache = get_cache(data.id);
                     // cache.get(graph.id).graph = 
                     // gcache.graph = {...graph, out: gcache.graph.out ?? graph.out ?? 'main/out'};
                     gcache.graph = data;
@@ -1139,14 +1137,14 @@ const nolib = {
                 if (!self.cancelAnimationFrame) {
                     self.cancelAnimationFrame = clearTimeout;
                 }
-                self.cancelAnimationFrame(getmap(cache, get_hashcode(graph.id)).animrun)
+                self.cancelAnimationFrame(getmap(get_cache(graph).animrun))
                 if (!self.requestAnimationFrame) {
                     self.requestAnimationFrame = fn => setTimeout(() => fn(), 16);
                 }
-                getmap(cache, get_hashcode(graph.id)).animrun = self.requestAnimationFrame(() => {
+                get_cache(graph.id).animrun = self.requestAnimationFrame(() => {
                     try {
                         graph = resolve(graph);
-                        const gcache = getmap(cache, get_hashcode(graph.id));
+                        const gcache = get_cache(graph.id);
                         graph = gcache.graph ?? graph;
 
                         const result = nolib.no.runGraph(graph, graph.out ?? 'main/out', get_args(graph), gcache.lib);
@@ -1202,19 +1200,18 @@ const nolib = {
             const update_graph = (graph, args, lib) => {
                 graph = resolve(graph);
                 const new_cache = new_graph_cache(graph);
-                const graphhash = get_hashcode(graph.id);
 
-                getorset(cache, graphhash, () => new_cache).graph = graph;
-                getorset(cache, graphhash, () => new_cache).node_map = new_cache.node_map;
-                getorset(cache, graphhash, () => new_cache).in_edge_map = new_cache.in_edge_map;
-                getorset(cache, graphhash, () => new_cache).fn_cache = new_cache.fn_cache;
-                getorset(cache, graphhash, () => new_cache).is_cached = new_cache.is_cached;
+                get_cache(graph, new_cache).graph = graph;
+                get_cache(graph, new_cache).node_map = new_cache.node_map;
+                get_cache(graph, new_cache).in_edge_map = new_cache.in_edge_map;
+                get_cache(graph, new_cache).fn_cache = new_cache.fn_cache;
+                get_cache(graph, new_cache).is_cached = new_cache.is_cached;
                 if(lib){
                     getorset(cache, graphhash, () => new_cache).lib = lib;
                 }
                 if(args) {
-                    const last_args = getorset(cache, get_hashcode(graphhash, () => new_cache)).args;
-                    getorset(cache, graphhash, () => new_cache).args = {...last_args, ...args};
+                    const last_args = get_cache(graph, new_cache).args;
+                    get_cache(graph, new_cache).args = {...last_args, ...args};
                 }
 
                 // if(old_graph) {
@@ -1245,8 +1242,8 @@ const nolib = {
                 }
 
                 if(args) {
-                    const last_args = getmap(cache, get_hashcode(graph.id)).args;
-                    getmap(cache, get_hashcode(graph.id)).args = {...last_args, ...args};
+                    const last_args = get_cache(graph.id).args;
+                    get_cache(graph.id).args = {...last_args, ...args};
                 }
 
                 publish('graphchange', get_parentest(graph));
@@ -1260,13 +1257,31 @@ const nolib = {
                 get_graph(graph).nodes.find(n => n.id === id))
                     ?? (get_parent(graph) ? get_ref(graph, id) : undefined);
             const get_edges_in = (graph, id) => getorsetgraph(resolve(graph), id, 'in_edge_map', () => graph.edges.filter(e => e.to === id));
-            const get_args = (graph) => getorset(cache, get_hashcode(graph.id), () => new_graph_cache(graph)).args;
+            const get_args = (graph) => get_cache(graph).args;
             const get_graph = (graph) => get_cache(graph)?.graph ?? graph;
-            const get_parent = (graph) => get_graph(getmap(cache, get_hashcode(graph.id))?.parent);
-            const get_cache = (graph) => !graph ? undefined : cache.get(typeof graph === "number" ? graph : get_hashcode(typeof graph === "string" ? graph : graph.id));
+            const get_parent = (graph) => get_graph(get_cache(graph)?.parent);
+            const get_cache = (graph, newgraphcache) => {
+                const graphid = typeof graph === "string" ? graph : typeof graph === "object" ? graph.id : undefined;
+                const graphhash = graphid ? get_hashcode(graphid) : graph;
+                const ret = !graph 
+                    ? undefined 
+                    : typeof graph === 'object' 
+                    ? getorset(cache, graphhash, () => [new_graph_cache(graph)])
+                    : cache.get(graphhash);
+                if(ret){
+                    const found = ret.find(g => g.graph.id === graphid);
+                    if(!found && typeof graph === "object"){
+                        const newcache = newgraphcache ?? new_graph_cache(graph);
+                        ret.push(newcache);
+                        return newcache;
+                    }
+                    return found;
+                }
+                return ret;
+            }
             const get_parentest = (graph) => get_cache(get_cache(graph)?.parentest)?.graph;
             const get_path = (graph, path) => {
-                    let gcache = getmap(cache, get_hashcode(graph.id));
+                    let gcache = get_cache(graph.id);
                     let pathSplit = path.split(".");
                     let node = gcache.graph.out ?? "out";
                     while(pathSplit.length > 0 && node) {
@@ -1277,8 +1292,8 @@ const nolib = {
                 }
 
             return {
-                is_cached: (graph, id) => getorset(cache, get_hashcode(graph.id), () => new_graph_cache(graph)).is_cached.has(id),
-                set_cached: (graph, id) => getorset(cache, get_hashcode(graph.id), () => new_graph_cache(graph)).is_cached.add(id),
+                is_cached: (graph, id) => get_cache(graph.id),
+                set_cached: (graph, id) => get_cache(graph.id).is_cached.add(id),
                 get_ref,
                 get_node,
                 get_edges_in,
@@ -1292,7 +1307,7 @@ const nolib = {
                 get_args,
                 get_path,
                 edit_edge: (graph, edge, old_edge) => {
-                    const gcache = getorset(cache, get_hashcode(graph.id), () => new_graph_cache(resolve(graph)));
+                    const gcache = get_cache(resolve(graph));
                     graph = gcache.graph;
 
                     gcache.in_edge_map.delete((old_edge ?? edge).to);
@@ -1308,7 +1323,7 @@ const nolib = {
                     publish('graphchange', new_graph);
                 },
                 add_node: (graph, node, edge) => {
-                    const gcache = getorset(cache, get_hashcode(graph.id), () => new_graph_cache(resolve(graph)));
+                    const gcache = get_cache(resolve(graph));
                     graph = gcache.graph;
 
                     const new_graph = {
@@ -1321,7 +1336,7 @@ const nolib = {
                     update_graph(new_graph);
                 },
                 delete_node: (graph, id) => {
-                    const gcache = getorset(cache, get_hashcode(graph.id), () => new_graph_cache(resolve(graph)));
+                    const gcache = get_cache(graph);
                     graph = gcache.graph;
 
                     const parent_edge = graph.edges.find(e => e.from === id);
@@ -1349,9 +1364,9 @@ const nolib = {
                     fn: (node, event, data) => publish(event, data)
                 },
                 set_parent: (graph, parent) => {
-                    const gcache = getorset(cache, get_hashcode(graph.id), () => new_graph_cache(resolve(graph)));
-                    const parentcache = cache.get(get_hashcode(parent.id));
-                    gcache.parent = get_hashcode(parent.id);
+                    const gcache = get_cache(graph);
+                    const parentcache = get_cache(parent);
+                    gcache.parent = parent.id;
                     gcache.parentest = parentcache.parentest ?? gcache.parent;
                 }
             }
