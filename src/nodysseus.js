@@ -1211,7 +1211,7 @@ const nolib = {
                 graph = resolve(graph);
                 const new_cache = new_graph_cache(graph);
 
-                const doc = nodesdb.by("id", graph.id);
+                const doc = get_cache(graph, new_cache);
                 doc.graph = graph;
                 doc.node_map = new_cache.node_map;
                 doc.in_edge_map = new_cache.in_edge_map;
