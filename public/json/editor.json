@@ -112,7 +112,7 @@
         { "id": "result_wrapper", "ref": "html_element" },
         {
           "id": "noop",
-          "script": "console.log('noop'); return {el: _lib.ha.h.fn('div', {key: 'loading'}, _lib.ha.text.fn('loading...'))}"
+          "script": "return {el: _lib.ha.h.fn('div', {key: 'loading'}, _lib.ha.text.fn('loading...'))}"
         },
         {
           "id": "wrapper_children",
