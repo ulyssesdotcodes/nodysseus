@@ -527,7 +527,6 @@ export default {
         { "id": "name", "ref": "arg", "value": "name" },
         { "id": "onevent", "ref": "arg", "value": "onevent" },
         { "id": "data", "ref": "arg", "value": "data", "type": "internal" },
-        {"id": "data_log", "ref": "log", "value": "sub_data"},
         {
           "id": "add_listener",
           "script": "_lib.no.runtime.add_listener(event ?? _graph.value, _graph.id, (data) => (_lib.no.runtime.update_args(_graph, {data})), false);"
@@ -538,8 +537,7 @@ export default {
         { "from": "name", "to": "add_listener", "as": "event" },
         { "from": "onevent", "to": "add_listener", "as": "onevent" },
         { "from": "add_listener", "to": "out", "as": "otherwise" },
-        {"from": "data", "to": "data_log", "as": "value"},
-        { "from": "data_log", "to": "out", "as": "value" }
+        { "from": "data", "to": "out", "as": "value" }
       ]
     },
     { 

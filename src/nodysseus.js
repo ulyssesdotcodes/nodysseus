@@ -41,7 +41,7 @@ function nodysseus_get(obj, propsArg, defaultValue) {
         obj = obj._value;
         continue;
     }
-    prop = props.shift();
+    prop = props.length == 0 ? props[0] : props.shift();
     if(obj === undefined || (obj[prop] === undefined && !obj.hasOwnProperty(prop))){
         if(level === 0) {
             return objArg && objArg.__args ? nodysseus_get(objArg.__args, propsArg, defaultValue) : defaultValue;
@@ -171,18 +171,10 @@ const hashcode = function (str, seed = 0) {
     return 4294967296 * (2097151 & h2) + (h1 >>> 0);
 };
 
-const createProxy = (run_with_val, input, graphid, graph_input_value, usecache, cache) => {
+const createProxy = (run_with_val, input, graphid, graph_input_value) => {
     let res = Object.create(null);
     let resolved = false;
     // return run_with_val(input.from)(graph_input_value);
-    if (usecache && cache) {
-        const cached = cache.get(graphid + input.from + '+proxy');
-        if (usecache && cached && compare(graph_input_value, cached[1])) {
-            cached[0]['_reset'];
-            return cached[0];
-        }
-    }
-
     const proxy = new Proxy(res, {
         reset: () => {res = undefined; resolved = false;},
         get: (_, prop) => {
@@ -242,26 +234,12 @@ const createProxy = (run_with_val, input, graphid, graph_input_value, usecache, 
         }
     });
 
-    if (usecache) {
-        cache.set(graphid + input.from + "+proxy", [proxy, graph_input_value]);
-    }
-
     return proxy;
 }
 
-const resolve = (o, cache, usecache) => {
+const resolve = (o) => {
     if (o && o._Proxy) {
         const res = resolve(o._value);
-        if (!(cache && usecache)) {
-            return res;
-        }
-        const cached = cache.get(o._graphid + o._nodeid + '+resolve');
-        if (compare(res, cached)) {
-            // console.log('cached resolve');
-            // console.log(o._graphid + o._nodeid);
-            return cached;
-        }
-        cache.set(o._graphid + o._nodeid + '+resolve', res);
         return res;
     } else if (Array.isArray(o)) {
         const new_arr = [];
@@ -269,7 +247,7 @@ const resolve = (o, cache, usecache) => {
         let i = o.length;
         while (i > 0) {
             i--;
-            new_arr[i] = resolve(o[i], cache, usecache);
+            new_arr[i] = resolve(o[i]);
             same = same && compare(o[i], new_arr[i]);
         }
         return same ? o : new_arr;
@@ -282,14 +260,15 @@ const resolve = (o, cache, usecache) => {
         let i = entries.length;
         let j = 0;
         let same = true;
-        let new_obj_entries = [];
+        let new_obj = {};
         let promise = false;
         while (i > 0) {
             i--;
             if (entries[i][0] !== '_needsresolve') {
-                new_obj_entries[j] = [entries[i][0], resolve(entries[i][1], cache, usecache)];
-                same = same && entries[i][1] === new_obj_entries[j][1]
-                promise = promise || ispromise(new_obj_entries[j][1])
+                const val = resolve(entries[i][1]);
+                new_obj[entries[i][0]] = val;
+                same = same && entries[i][1] === val;
+                promise = promise || ispromise(val)
                 j++;
             }
         }
@@ -298,11 +277,10 @@ const resolve = (o, cache, usecache) => {
             return o;
         }
         if (promise) {
-            return Promise.all(new_obj_entries.map(kv => Promise.resolve(kv[1]).then(v => [kv[0], v])))
+            return Promise.all(Object.entries(new_obj).map(kv => Promise.resolve(kv[1]).then(v => [kv[0], v])))
                 .then(kvs => Object.fromEntries(kvs))
         }
-        const res = Object.fromEntries(new_obj_entries);
-        return res;
+        return new_obj;
     } else {
         return o;
     }
@@ -331,30 +309,32 @@ const node_value = (node) => {
         return undefined;
     }
 
-    if (typeof node.value === 'string' && node.value.match(/[0-9]*/g)[0].length === node.value.length) {
-        const int = parseInt(node.value);
-        if (!isNaN(int)) {
-            return int;
+    if(typeof node.value === "string") {
+        if (node.value.startsWith('{') || node.value.startsWith('[')) {
+            try {
+                return JSON.parse(node.value.replaceAll("'", "\""));
+            } catch (e) { }
         }
-    }
 
-    if (typeof node.value === 'string' && node.value.match(/[0-9.]*/g)[0].length === node.value.length) {
-        const float = parseFloat(node.value);
-        if (!isNaN(float)) {
-            return float;
+        if(node.value.match(/[0-9.]*/g)[0].length === node.value.length){
+            if(node.value.includes(".")) {
+                const int = parseInt(node.value);
+                if (!isNaN(int)) {
+                    return int;
+                }
+            }
+
+            const float = parseFloat(node.value);
+            if (!isNaN(float)) {
+                return float;
+            }
         }
-    }
 
-    if (node.value === 'false' || node.value === 'true') {
-        return node.value === 'true';
-    }
+        if (node.value === 'false' || node.value === 'true') {
+            return node.value === 'true';
+        }
 
-    if (node.value.startsWith('{') || node.value.startsWith('[')) {
-        try {
-            return JSON.parse(node.value.replaceAll("'", "\""));
-        } catch (e) { }
     }
-
 
     return node.value;
 }
@@ -389,7 +369,7 @@ const mockcombined = (data, graph_input_value) => {
     // })
 }
 
-const node_nodes = (node, node_ref, cache, graph_input_value, data, full_lib, graph, usecache, run_with_val, inputs, cache_id, _needsresolve) => {
+const node_nodes = (node, node_ref, graph_input_value, data, full_lib, graph, run_with_val, inputs, _needsresolve) => {
     const outid = graph.id + "/" + node.id;
     const keys = node_ref.nodes.filter(n => n.ref === 'arg').map(n => n.value);
     const combined_data_input = typeof graph_input_value === 'object' && !Array.isArray(graph_input_value) && data
@@ -398,19 +378,6 @@ const node_nodes = (node, node_ref, cache, graph_input_value, data, full_lib, gr
             ? data
             : graph_input_value;
 
-    let hit = false;
-    // if (!full_lib.no.runtime.get_node(graph, outid)) {
-    //     full_lib.no.runtime.expand_node(graph, node.id, node_ref);
-    // }
-
-    if (usecache && cache.get(cache_id).has(outid)) {
-        const val = cache.get(cache_id).get(outid);
-        hit = compare(val[1], combined_data_input, keys);
-        if (hit) {
-            console.log('nodes hit')
-            return val[0];
-        }
-    }
 
     // const res = run_with_val(outid)(combined_data_input)
     const node_graph = Object.assign({}, node, {
@@ -431,14 +398,10 @@ const node_nodes = (node, node_ref, cache, graph_input_value, data, full_lib, gr
         }
     }
 
-    if (usecache) {
-        cache.get(cache_id).set(outid, [res, combined_data_input]);
-    }
-
     return res;
 }
 
-const node_script = (node, node_ref, cache, graph_input_value, data, full_lib, graph, usecache, run_with_val, inputs, cache_id, _needsresolve) => {
+const node_script = (node, node_ref, graph_input_value, data, full_lib, graph, run_with_val, inputs, _needsresolve) => {
     const argset = new Set();
     argset.add('_lib');
     argset.add('_node');
@@ -461,16 +424,6 @@ const node_script = (node, node_ref, cache, graph_input_value, data, full_lib, g
         orderedargs += `${a},`;
     }
 
-    if (usecache && cache.get(cache_id).has(node.id)) {
-        const val = cache.get(cache_id).get(node.id);
-        let hit = compare(data, val[1]);
-        // hit = hit && compare(graph_input_value, val[2]);
-        if (hit) {
-            return val[0]
-        }
-    }
-
-
     try {
         const fn = full_lib.no.runtime.get_fn(graph, orderedargs, node.id, node_ref);
 
@@ -478,13 +431,6 @@ const node_script = (node, node_ref, cache, graph_input_value, data, full_lib, g
         const results = is_iv_promised
             ? Promise.all(input_values.map(iv => Promise.resolve(iv))).then(iv => fn.apply(null, iv))
             : fn.apply(null, input_values);
-
-        // don't cache things without arguments
-        // if (node_ref.args?.length > 0) {
-        if (usecache) {
-            cache.get(cache_id).set(node.id, [results, data]);
-        }
-        // }
 
         if (typeof results === 'object' && !!results && !results._Proxy && !Array.isArray(results) && Object.keys(results).length > 0) {
             if (_needsresolve || !!results._needsresolve) {
@@ -513,14 +459,14 @@ const node_script = (node, node_ref, cache, graph_input_value, data, full_lib, g
     }
 }
 
-const node_extern = (node, node_ref, node_id, cache, graph_input_value, data, full_lib, graph, usecache, run_with_val, inputs, cache_id, _needsresolve) => {
+const node_extern = (node, node_ref, node_id, graph_input_value, data, full_lib, graph, run_with_val, inputs, _needsresolve) => {
     const extern = nodysseus_get(full_lib, node_ref.extern);
     const args = extern.args.reduce((acc, arg) => {
         if (arg === '_node') {
             acc[0].push(node)
             return [acc[0], acc[1]];
         } else if (arg === '_node_inputs') {
-            const res = extern.resolve ? resolve({ ...data, _needsresolve: true }, usecache && cache.get(cache_id)) : data;
+            const res = extern.resolve ? resolve({ ...data, _needsresolve: true }) : data;
             if (Array.isArray(res)) {
                 res.forEach(r => acc[0].push(r))
             } else {
@@ -531,34 +477,20 @@ const node_extern = (node, node_ref, node_id, cache, graph_input_value, data, fu
             acc[0].push(graph);
             return [acc[0], acc[1]]
         }
-        const value = extern.resolve === false ? data[arg] : resolve(data[arg], usecache && cache.get(cache_id));
+        const value = extern.resolve === false ? data[arg] : resolve(data[arg]);
         acc[0].push(value)
         return [acc[0], ispromise(value) || acc[1]];
     }, [[], false]);
 
     try {
-        if (usecache && !extern.nocache && cache.get(cache_id).has(node.id)) {
-            const val = cache.get(cache_id).get(node.id);
-            let hit = compare(args[0], val[1]);
-            // hit = hit && compare(graph_input_value, val[2]);
-            if (hit) {
-                return val[0]
-            }
-        }
 
         if (args[1]) {
             return Promise.all(args[0]).then(as => {
                 const res = extern.fn.apply(null, as);
-                if (usecache) {
-                    cache.get(cache_id).set(node_id, [res, args[0]])
-                }
                 return res;
             })
         } else {
             const res = extern.fn.apply(null, args[0]);
-            if (usecache) {
-                cache.get(cache_id).set(node_id, [res, args[0]])
-            }
             return res;
         }
     } catch (e) {
@@ -571,18 +503,7 @@ const node_extern = (node, node_ref, node_id, cache, graph_input_value, data, fu
     }
 }
 
-const node_data = (node, node_ref, node_id, cache, graph_input_value, data, full_lib, graph, usecache, run_with_val, inputs, cache_id, _needsresolve) => {
-    if (usecache && cache.get(cache_id).has(node.id)) {
-        const val = cache.get(cache_id).get(node.id);
-        let hit = compare(data, val);
-        // hit = hit && compare(graph_input_value, val[2]);
-        if (hit) {
-            console.log('data hit');
-            return val;
-        }
-    }
-
-
+const node_data = (node, node_ref, node_id, graph_input_value, data, full_lib, graph, run_with_val, inputs, _needsresolve) => {
     if (typeof data === 'object' && !!data && !data._Proxy && !Array.isArray(data) && Object.keys(data).length > 0) {
         data._needsresolve = true;
     }
@@ -598,13 +519,9 @@ const node_data = (node, node_ref, node_id, cache, graph_input_value, data, full
             promises.push([kv[0], Promise.resolve(kv[1])])
         })
         return Promise.all(promises)
-            .then(Object.fromEntries)
-            .then(res => (usecache ? cache.get(cache_id).set(node.id, [res, data]) : undefined, res));
+            .then(Object.fromEntries);
     }
 
-    if (usecache) {
-        cache.get(cache_id).set(node.id, [data, data]);
-    }
 
     return data;
 }
@@ -648,14 +565,95 @@ const create_data = (inputs, input_data_map) => {
     return data;
 }
 
-const executeGraph = ({ cache, graph, lib, usecache }) => {
+const run_with_val_full = (graph, full_lib, node_id, graph_input_value) => {
+        const cache_args = full_lib.no.runtime.get_args(graph);
+        if(cache_args) {
+            Object.assign(graph_input_value, cache_args);
+        }
+        
+        let node = full_lib.no.runtime.get_node(graph, node_id);
+
+        if (node === undefined) {
+            throw new Error(`Undefined node_id ${node_id}`)
+        }
+
+        if (node.ref === "arg") {
+            return full_lib.utility.arg.fn(node, graph, graph_input_value);
+        }
+
+        if (node.value !== undefined && !node.script && !node.ref && !node.nodes) {
+            return node_value(node);
+        }
+
+        const inputs = full_lib.no.runtime.get_edges_in(graph, node_id);
+
+        let node_ref;
+
+        const ref = (node.ref && node.ref.node_ref) || typeof node.ref === 'string' ? node.ref : undefined;
+        if (ref) {
+            node_ref = full_lib.no.runtime.get_ref(graph, ref);
+            if (!node_ref) {
+                throw new Error(`Unable to find ref ${ref} for node ${node.name || node.id}`)
+            }
+        } else {
+            node_ref = node;
+        }
+
+        let _needsresolve = false;
+
+        const tryrun = (input) => {
+            if (input.type === "ref") {
+                return input.from;
+            } else if (input.type === "resolve") {
+                // if(!node_map.has(input.from)) {
+                //     throw new Error(`Input not found ${input.from} for node ${node_id}`)
+                // }
+
+                return resolve(run_with_val(graph, full_lib)(input.from)(graph_input_value));
+            } else if (!input.as || node_ref.script) {
+                // if(!node_map.has(input.from)) {
+                //     throw new Error(`Input not found ${input.from} for node ${node_id}`)
+                // }
+
+                let res = run_with_val(graph, full_lib)(input.from)(graph_input_value);
+
+                while (res && res._Proxy) {
+                    res = res._value;
+                }
+
+                _needsresolve = _needsresolve || (!!res && typeof res === 'object' && !!res._needsresolve)
+
+                return res;
+            } else {
+                _needsresolve = true;
+                return createProxy(run_with_val(graph, full_lib), input, graph.id, graph_input_value);
+            }
+        }
+
+
+        // const input_data_map = new Map();
+        const input_data_map = create_input_data_map(inputs, tryrun);
+        const data = create_data(inputs, input_data_map);
+
+        if (node_ref.nodes) {
+            return node_nodes(node, node_ref, graph_input_value, data, full_lib, graph, false, run_with_val(graph, full_lib), inputs, _needsresolve)
+        } else if (node_ref.script) {
+            return node_script(node, node_ref, graph_input_value, data, full_lib, graph, run_with_val(graph, full_lib), inputs, _needsresolve)
+        } else if (node_ref.extern) {
+            return node_extern(node, node_ref, node_id, graph_input_value, data, full_lib, graph, run_with_val(graph, full_lib), inputs, _needsresolve);
+        }
+
+
+        return node_data(node, node_ref, node_id, graph_input_value, data, full_lib, graph, run_with_val(graph, full_lib), inputs, _needsresolve);
+}
+
+const run_with_val = (graph, full_lib) => node_id => (graph_input_value) => run_with_val_full(graph, full_lib, node_id, graph_input_value);
+
+const executeGraph = ({ graph, lib }) => {
     const full_lib = lib ? lib.no ? lib : {...nolib, ...lib} : nolib;
     if(typeof graph === "string") {
         graph = full_lib.no.runtime.get_graph(graph);
     }
-    // Can't cache right now because things use _lib methods which rely on graph
-    // As an alternative, use the `cache` node for things that take a long time.
-    usecache = usecache || false;
 
     if (graph._Proxy) {
         graph = graph._value;
@@ -665,103 +663,7 @@ const executeGraph = ({ cache, graph, lib, usecache }) => {
         throw new Error(`Graph has no nodes! in: ${graph.in} out: ${graph.out}`)
     }
 
-    const run_with_val = (node_id) => {
-        return (graph_input_value, cache_id_node) => {
-            const cache_args = full_lib.no.runtime.get_args(graph);
-            if(cache_args) {
-                Object.assign(graph_input_value, cache_args);
-            }
-            
-            let nodeusecache = usecache && full_lib.no.runtime.is_cached(graph, node_id);
-            
-            let node = full_lib.no.runtime.get_node(graph, node_id);
-            if(usecache) {
-                full_lib.no.runtime.set_cached(graph, node_id);
-            }
-
-            if (node === undefined) {
-                throw new Error(`Undefined node_id ${node_id}`)
-            }
-
-            if (node.ref === "arg") {
-                return full_lib.utility.arg.fn(node, graph, graph_input_value);
-            }
-
-            if (node.value !== undefined && !node.script && !node.ref && !node.nodes) {
-                return node_value(node);
-            }
-
-            let cache_id = cache_id_node || graph.id;
-            if (usecache && !cache.has(cache_id)) {
-                cache.set(cache_id, new Map([["__handles", 1]]));
-            } else {
-                // cache.get(cache_id).set("__handles", cache.get(cache_id).get("__handles") + 1);
-            }
-
-            const inputs = full_lib.no.runtime.get_edges_in(graph, node_id);
-
-            let node_ref;
-
-            const ref = (node.ref && node.ref.node_ref) || typeof node.ref === 'string' ? node.ref : undefined;
-            if (ref) {
-                node_ref = full_lib.no.runtime.get_ref(graph, ref);
-                if (!node_ref) {
-                    throw new Error(`Unable to find ref ${ref} for node ${node.name || node.id}`)
-                }
-            } else {
-                node_ref = node;
-            }
-
-            let _needsresolve = false;
-
-            const tryrun = (input) => {
-                if (input.type === "ref") {
-                    return input.from;
-                } else if (input.type === "resolve") {
-                    // if(!node_map.has(input.from)) {
-                    //     throw new Error(`Input not found ${input.from} for node ${node_id}`)
-                    // }
-
-                    return resolve(run_with_val(input.from)(graph_input_value), nodeusecache && cache.get(cache_id));
-                } else if (!input.as || node_ref.script) {
-                    // if(!node_map.has(input.from)) {
-                    //     throw new Error(`Input not found ${input.from} for node ${node_id}`)
-                    // }
-
-                    let res = run_with_val(input.from)(graph_input_value);
-
-                    while (res && res._Proxy) {
-                        res = res._value;
-                    }
-
-                    _needsresolve = _needsresolve || (!!res && typeof res === 'object' && !!res._needsresolve)
-
-                    return res;
-                } else {
-                    _needsresolve = true;
-                    return createProxy(run_with_val, input, graph.id, graph_input_value, false, cache.get(cache_id));
-                }
-            }
-
-
-            // const input_data_map = new Map();
-            const input_data_map = create_input_data_map(inputs, tryrun);
-            const data = create_data(inputs, input_data_map);
-
-            if (node_ref.nodes) {
-                return node_nodes(node, node_ref, cache, graph_input_value, data, full_lib, graph, false, run_with_val, inputs, cache_id, _needsresolve)
-            } else if (node_ref.script) {
-                return node_script(node, node_ref, cache, graph_input_value, data, full_lib, graph, nodeusecache, run_with_val, inputs, cache_id, _needsresolve)
-            } else if (node_ref.extern) {
-                return node_extern(node, node_ref, node_id, cache, graph_input_value, data, full_lib, graph, nodeusecache, run_with_val, inputs, cache_id, _needsresolve);
-            }
-
-
-            return node_data(node, node_ref, node_id, cache, graph_input_value, data, full_lib, graph, nodeusecache, run_with_val, inputs, cache_id, _needsresolve);
-        }
-    }
-
-    return (node_id) => (graph_input_value) => resolve(run_with_val(node_id)(graph_input_value));
+    return (node_id) => (graph_input_value) => resolve(run_with_val(graph, full_lib)(node_id)(graph_input_value));
 }
 
 //////////
@@ -932,7 +834,7 @@ const contract_node = (data, keep_expanded = false) => {
                 inside_nodes.push(inside_node);
             }
 
-            if (args_edge && e.from !== args_edge.from) {
+            if (!args_edge || e.from !== args_edge.from) {
                 nolib.no.runtime.get_edges_in(data.display_graph, e.from).forEach(de => q.push(de));
             }
         }
@@ -1048,8 +950,6 @@ const objToGraph = (obj, path) => Object.entries(obj)
 
 /////////////////////////////////
 
-const cache = new Map();
-
 const ispromise = a => a && a._Proxy ? false : a ? typeof a.then === 'function' : false;
 const getmap = (map, id) => {
     return id ? map.get(id) : id;
@@ -1091,12 +991,12 @@ const nolib = {
         diffApply
     },
     no: {
-        executeGraph: ({ state, graph, cache_id, lib }) => executeGraph({ cache, state, graph, cache_id: cache_id || "main" })(graph.out)(state.get(graph.in)),
-        executeGraphValue: ({ graph, cache_id, lib }) => executeGraph({ cache, graph, cache_id: cache_id || "main", lib })(graph.out),
-        executeGraphNode: ({ graph, cache_id, lib }) => executeGraph({ cache, graph, cache_id: cache_id || "main", lib }),
+        executeGraph: ({ state, graph, lib }) => executeGraph({ state, graph })(graph.out)(state.get(graph.in)),
+        executeGraphValue: ({ graph, lib }) => executeGraph({ graph, lib })(graph.out),
+        executeGraphNode: ({ graph, lib }) => executeGraph({ graph, lib }),
         runGraph: (graph, node, args, lib) => node !== undefined
-            ? executeGraph({ graph, cache, cache_id: "main", lib })(node)(args)
-            : executeGraph({ graph: graph.graph, cache, cache_id: "main", lib })(graph.fn)(graph.args),
+            ? executeGraph({ graph, lib })(node)(args)
+            : executeGraph({ graph: graph.graph, lib })(graph.fn)(graph.args),
         resolve,
         objToGraph,
         NodysseusError,
@@ -1204,12 +1104,19 @@ const nolib = {
             }
 
             const delete_cache = (graph) => {
-                cache.delete(get_hashcode(typeof graph === 'string' ? graph : graph.id));
+                const graphid = typeof graph === 'string' ? graph : graph.id;
+                nodesdb.findAndRemove({"parent": graphid});
+                const doc = nodesdb.by("id", "graphid");
+                if(doc){
+                    nodesdb.remove(doc);
+                }
             }
 
             const update_graph = (graph, args, lib) => {
                 graph = resolve(graph);
                 const new_cache = new_graph_cache(graph);
+                const gcache = get_cache(graph.id);
+                const old_graph = gcache && gcache.graph;
 
                 const doc = get_cache(graph, new_cache);
                 doc.graph = graph;
@@ -1225,18 +1132,14 @@ const nolib = {
                     doc.args = {...last_args, ...args};
                 }
 
-                // if(old_graph) {
-                    // for(const n of old_graph.nodes) {
-                        // if(get_node(graph, n.id) !== n) {
-                            // const nodegraphid = graph.id + "/" + n.id;
-                            // for(const key of cache.keys()) {
-                            //     if(key.startsWith(nodegraphid)){
-                            //         cache.delete(key);
-                            //     }
-                            // }
-                    //     }
-                    // }
-                // }
+                if(old_graph) {
+                    for(const n of old_graph.nodes) {
+                        if(get_node(graph, n.id) !== n) {
+                            const nodegraphid = graph.id + "/" + n.id;
+                            delete_cache(nodegraphid);
+                        }
+                    }
+                }
 
                 const parent = get_parent(graph);
                 if(parent) {
@@ -1248,13 +1151,10 @@ const nolib = {
 
             const update_args = (graph, args) => {
                 graph = resolve(graph);
-                if(!cache.has(get_hashcode(graph.id))) {
-                    return;
-                }
+                const gcache = get_cache(graph.id);
 
-                if(args) {
-                    const last_args = get_cache(graph.id).args;
-                    get_cache(graph.id).args = {...last_args, ...args};
+                if(gcache && args) {
+                    Object.assign(gcache.args, args);
                 }
 
                 publish('graphchange', get_parentest(graph));
@@ -1264,10 +1164,10 @@ const nolib = {
                 const parentest = get_parentest(graph);
                 return parentest ? get_ref(parentest, id) : get_node(graph, id);
             }
-            const get_node = (graph, id) => getorsetgraph(resolve(graph), id, 'node_map', () =>
+            const get_node = (graph, id) => getorsetgraph(graph, id, 'node_map', () =>
                 get_graph(graph).nodes.find(n => n.id === id))
                     || (get_parent(graph) ? get_ref(graph, id) : undefined);
-            const get_edges_in = (graph, id) => getorsetgraph(resolve(graph), id, 'in_edge_map', () => graph.edges.filter(e => e.to === id));
+            const get_edges_in = (graph, id) => getorsetgraph(graph, id, 'in_edge_map', () => graph.edges.filter(e => e.to === id));
             const get_args = (graph) => get_cache(graph).args;
             const get_graph = (graph) => {
                 const cached = get_cache(graph);
@@ -1275,6 +1175,7 @@ const nolib = {
             }
             const get_parent = (graph) => get_graph(get_cache(graph).parent);
             const get_cache = (graph, newgraphcache) => {
+                graph = resolve(graph);
                 const graphid = typeof graph === "string" ? graph : typeof graph === "object" ? graph.id : undefined;
                 const lokiret = nodesdb.by("id", graphid);
 
@@ -1328,7 +1229,7 @@ const nolib = {
                 get_edges_in,
                 get_parent,
                 get_parentest,
-                get_fn: (graph, orderedargs, id, node_ref) => getorsetgraph(resolve(graph), id, 'fn_cache', () => new Function(`return function _${(node_ref.name ? node_ref.name.replace(/\W/g, "_") : node_ref.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script}}`)()),
+                get_fn: (graph, orderedargs, id, node_ref) => getorsetgraph(graph, id, 'fn_cache', () => new Function(`return function _${(node_ref.name ? node_ref.name.replace(/\W/g, "_") : node_ref.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script}}`)()),
                 update_graph,
                 update_args,
                 delete_cache,
@@ -1336,7 +1237,7 @@ const nolib = {
                 get_args,
                 get_path,
                 edit_edge: (graph, edge, old_edge) => {
-                    const gcache = get_cache(resolve(graph));
+                    const gcache = get_cache(graph);
                     graph = gcache.graph;
 
                     gcache.in_edge_map.delete((old_edge || edge).to);
@@ -1352,7 +1253,7 @@ const nolib = {
                     publish('graphchange', new_graph);
                 },
                 add_node: (graph, node, edge) => {
-                    const gcache = get_cache(resolve(graph));
+                    const gcache = get_cache(graph);
                     graph = gcache.graph;
 
                     const new_graph = {

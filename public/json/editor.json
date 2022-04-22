@@ -4446,7 +4446,7 @@
         { "id": "paste_effect", "ref": "paste_node_effect" },
         { "id": "clear_popover", "ref": "clear_popover_graph" },
         { "id": "expand_contract_effect", "ref": "expand_contract_effect" },
-        { "id": "publish_key", "script": "return [() => _lib.no.runtime.publish.fn('keydown', key)]" },
+        { "id": "publish_key", "script": "return [() => _lib.no.runtime.publish.fn(_node, 'keydown', key)]" },
         { "id": "keybindings_graph", "script": "return _lib.no.runtime.get_node(_graph, 'keybindings')" },
         { "id": "show_popover_effect", "ref": "show_popover_graph" },
         { "id": "keybindings", "ref": "keybindings" },
