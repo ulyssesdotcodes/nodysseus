@@ -15,7 +15,8 @@
     "just-safe-set": "^4.0.1",
     "panzoom": "^9.4.2",
     "rollup": "^2.52.2",
-    "sourcemap-codec": "^1.4.8"
+    "sourcemap-codec": "^1.4.8",
+    "superfasthash": "github:mjethani/superfasthash"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^19.0.0",

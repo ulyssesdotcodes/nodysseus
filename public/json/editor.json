@@ -66,6 +66,30 @@
       ]
     },
     {
+      "id": "editor_run", 
+      "nodes": [
+        {"id": "state", "ref": "arg", "value": "el"},
+        {"id": "children", "ref": "arg", "value": "el.children"},
+        {"id": "dom_type", "value": "div"},
+        {"id": "props", "value": {}},
+        {"id": "html", "ref": "run_h"},
+        {
+          "id": "noop",
+          "script": "return {el: _lib.ha.h.fn('div', {key: 'loading'}, _lib.ha.text.fn('loading...'))}"
+        },
+        {"id": "out", "ref": "if"}
+      ],
+      "edges": [
+        {"from": "state", "to": "noop", "as": "state"},
+        {"from": "children", "to": "html", "as": "children"},
+        {"from": "dom_type", "to": "html", "as": "dom_type"},
+        {"from": "props", "to": "html", "as": "props"},
+        {"from": "noop", "to": "out", "as": "false"},
+        {"from": "html", "to": "out", "as": "true"},
+        {"from": "state", "to": "out", "as": "pred"}
+      ]
+    },
+    {
       "id": "editor",
       "out": "out",
       "nodes": [
@@ -86,6 +110,10 @@
         { "id": "wrapper_props", "value": {} },
         { "id": "result_wrapper_props", "value": { "id": "result" } },
         { "id": "result_wrapper", "ref": "html_element" },
+        {
+          "id": "noop",
+          "script": "console.log('noop'); return {el: _lib.ha.h.fn('div', {key: 'loading'}, _lib.ha.text.fn('loading...'))}"
+        },
         {
           "id": "wrapper_children",
           "script": "return [styles.el, node_editor.el, !!result_display && result_display.el, !readonly && editing !== false && edit_text.el, !readonly && popover_graph && popover_graph_h.el.el, !editing && !show_all && args_display && args_display.el, !!error && error_display.el, menu.el].filter(e => e)"
@@ -2288,10 +2316,6 @@
           "script": "return {el: {dom_type: 'div', props: {class:{error: true, main: true}, key: `${html_id}-error_display`}, children: [{dom_type: 'text_value', text: error instanceof AggregateError ? error.errors.map(e => e.toString()).join(\" \") : error?.toString()}]}}"
         },
         {
-          "id": "noop",
-          "script": "return {el: _lib.ha.h.fn('div', {key: 'loading'}, _lib.ha.text.fn('loading...'))}"
-        },
-        {
           "id": "out_input",
           "script": "return display_graph && graph ? 'hel' : 'noop'"
         },
@@ -2461,6 +2485,7 @@
           "script": "return {...state, levels: levels ?? state.levels}"
         },
         { "id": "graph_sim", "script": "return undefined;" },
+        {"id": "editor_dom", "ref": "editor"},
         {
           "id": "new_state",
           "script": "return Object.assign({}, state, {nodes: graph_sim?.nodes ?? state.nodes, links: graph_sim?.links ?? state.links, levels: graph_sim?.levels ?? state.levels});"
@@ -2503,6 +2528,8 @@
         { "from": "effects", "to": "out", "as": "effects", "type": "resolve" },
         { "from": "dispatch_custom_event_effect", "to": "out", "as": "dispatch_custom_event_effect" },
         { "from": "update_sim_effect", "to": "out", "as": "update_sim_effect" },
+        {"from": "editor_dom", "to": "out", "as": "editor"},
+        {"from": "new_state", "to": "editor_dom"},
         { "from": "new_state", "to": "out", "as": "state" }
       ]
     },{
