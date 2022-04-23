@@ -10,6 +10,6 @@
     { "id": "8dy573e", "ref": "html_element" },
     {"id": "main/out", "ref": "return"}
   ],
-  "id": "simple_html",
+  "id": "simple",
   "out": "main/out"
 }

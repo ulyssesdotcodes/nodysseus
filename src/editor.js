@@ -649,11 +649,7 @@ const pzobj = {
         hlib.panzoom.instance.zoomTo(x, y, 1 / scale)
 
         if(!payload.prevent_dispatch) {
-            requestAnimationFrame(() => 
-                dispatch((s, p) => [
-                    {...s, show_all: false, svg_offset: hlib.panzoom.instance.getTransform()}, 
-                ])
-            )
+            requestAnimationFrame(() => dispatch((s, p) => s.show_all ? [ {...s, show_all: false}] : [s]))
         }
     },
     init: function (dispatch, sub_payload) {
@@ -664,7 +660,11 @@ const pzobj = {
                 filterKey: e => true,
                 smoothScroll: false
             });
-            hlib.panzoom.instance.on('panstart', e => performance.now() - hlib.panzoom.lastpanzoom > 100 ? dispatch(sub_payload.action, {event: 'panstart', transform: e.getTransform()}) : undefined);
+            hlib.panzoom.instance.on('panstart', e => 
+                performance.now() - hlib.panzoom.lastpanzoom > 100 
+                ? dispatch(sub_payload.action, {event: 'panstart', transform: e.getTransform()}) 
+                : undefined
+            );
             hlib.panzoom.instance.moveTo(window.innerWidth * 0, window.innerHeight * 0.5);
         });
         return () => { cancelAnimationFrame(init); hlib.panzoom.instance?.dispose(); }
@@ -745,6 +745,18 @@ const hlib = {
         text: {args: ['text'], fn: text}
     },
     scripts: { d3subscription, updateSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all, listen, graph_subscription, result_subscription},
+    effects: {
+        position_by_selected: (id, selected, dimensions, nodes) => {
+            selected = Array.isArray(selected) ? selected[0] : selected;
+            const el = document.getElementById(id);
+            const node = nodes.find(n => n.id === selected);
+            const x = node.x;
+            const y = node.y;
+            const svg_offset = hlib.panzoom.getTransform();
+            el.setAttribute("left",  `${Math.min(x * (svg_offset?.scale ?? 1) + (svg_offset?.x ?? 0) - 64, dimensions.x - 256)}px`);
+            el.setAttribute("top", `${y * (svg_offset?.scale ?? 1) + (svg_offset?.y ?? 0) + 32}px`);
+        }
+    },
     panzoom: pzobj,
     runGraph: (graph, node, args, lib) => nolib.no.runGraph(graph, node, args, {...hlib, ...(lib ?? {})}),
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX }

@@ -182,7 +182,7 @@ export default {
     },
     {
       "id": "find_node",
-      "script": "const nid = typeof node_id === 'string' ? node_id : node_id[0]; return nodes.find(n => n.id === nid || n.node_id === nid)"
+      "script": "if(!node_id){ return undefined } const nid = typeof node_id === 'string' ? node_id : node_id[0]; return nodes.find(n => n.id === nid || n.node_id === nid)"
     },
     {
       "id": "svg_text",
