@@ -369,7 +369,7 @@ const mockcombined = (data, graph_input_value) => {
     // })
 }
 
-const node_nodes = (node, node_ref, graph_input_value, data, full_lib, graph, run_with_val, inputs, _needsresolve) => {
+const node_nodes = (node, node_ref, graph_input_value, data, full_lib, graph, inputs, _needsresolve) => {
     const outid = graph.id + "/" + node.id;
     const keys = node_ref.nodes.filter(n => n.ref === 'arg').map(n => n.value);
     const combined_data_input = typeof graph_input_value === 'object' && !Array.isArray(graph_input_value) && data
@@ -401,7 +401,7 @@ const node_nodes = (node, node_ref, graph_input_value, data, full_lib, graph, ru
     return res;
 }
 
-const node_script = (node, node_ref, graph_input_value, data, full_lib, graph, run_with_val, inputs, _needsresolve) => {
+const node_script = (node, node_ref, data, full_lib, graph, inputs, _needsresolve) => {
     const argset = new Set();
     argset.add('_lib');
     argset.add('_node');
@@ -459,7 +459,7 @@ const node_script = (node, node_ref, graph_input_value, data, full_lib, graph, r
     }
 }
 
-const node_extern = (node, node_ref, node_id, graph_input_value, data, full_lib, graph, run_with_val, inputs, _needsresolve) => {
+const node_extern = (node, node_ref, node_id, data, full_lib, graph, _needsresolve) => {
     const extern = nodysseus_get(full_lib, node_ref.extern);
     const args = extern.args.reduce((acc, arg) => {
         if (arg === '_node') {
@@ -503,7 +503,7 @@ const node_extern = (node, node_ref, node_id, graph_input_value, data, full_lib,
     }
 }
 
-const node_data = (node, node_ref, node_id, graph_input_value, data, full_lib, graph, run_with_val, inputs, _needsresolve) => {
+const node_data = (data, _needsresolve) => {
     if (typeof data === 'object' && !!data && !data._Proxy && !Array.isArray(data) && Object.keys(data).length > 0) {
         data._needsresolve = true;
     }
@@ -615,7 +615,7 @@ const run_with_val_full = (graph, full_lib, node_id, graph_input_value) => {
                 //     throw new Error(`Input not found ${input.from} for node ${node_id}`)
                 // }
 
-                let res = run_with_val(graph, full_lib)(input.from)(graph_input_value);
+                let res = run_with_val_full(graph, full_lib, input.from, graph_input_value);
 
                 while (res && res._Proxy) {
                     res = res._value;
@@ -636,15 +636,15 @@ const run_with_val_full = (graph, full_lib, node_id, graph_input_value) => {
         const data = create_data(inputs, input_data_map);
 
         if (node_ref.nodes) {
-            return node_nodes(node, node_ref, graph_input_value, data, full_lib, graph, false, run_with_val(graph, full_lib), inputs, _needsresolve)
+            return node_nodes(node, node_ref, graph_input_value, data, full_lib, graph, false, inputs, _needsresolve)
         } else if (node_ref.script) {
-            return node_script(node, node_ref, graph_input_value, data, full_lib, graph, run_with_val(graph, full_lib), inputs, _needsresolve)
+            return node_script(node, node_ref, data, full_lib, graph, inputs, _needsresolve)
         } else if (node_ref.extern) {
-            return node_extern(node, node_ref, node_id, graph_input_value, data, full_lib, graph, run_with_val(graph, full_lib), inputs, _needsresolve);
+            return node_extern(node, node_ref, node_id, data, full_lib, graph, _needsresolve);
         }
 
 
-        return node_data(node, node_ref, node_id, graph_input_value, data, full_lib, graph, run_with_val(graph, full_lib), inputs, _needsresolve);
+        return node_data(data, _needsresolve);
 }
 
 const run_with_val = (graph, full_lib) => node_id => (graph_input_value) => run_with_val_full(graph, full_lib, node_id, graph_input_value);
@@ -663,7 +663,7 @@ const executeGraph = ({ graph, lib }) => {
         throw new Error(`Graph has no nodes! in: ${graph.in} out: ${graph.out}`)
     }
 
-    return (node_id) => (graph_input_value) => resolve(run_with_val(graph, full_lib)(node_id)(graph_input_value));
+    return (node_id) => (graph_input_value) => resolve(run_with_val_full(graph, full_lib, node_id, graph_input_value));
 }
 
 //////////
