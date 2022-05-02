@@ -167,12 +167,12 @@ svg {
     left: 0;
     z-index: 10;
     border: 1px solid white;
-    background: black;
+    background: #111;
     padding: .4em;
     max-width: 256px;
     color: white;
     display: flex;
-    gap: .4em;
+    gap: .6em;
     flex-direction: column;
 }
 
@@ -185,6 +185,34 @@ svg {
 .node-info .args span.clickable {
     cursor: pointer;
     text-decoration: underline dotted;
+}
+
+.node-info input {
+    color: white;
+    font-family: consolas;
+    margin: 0;
+    border: none;
+    background-color: #000;
+}
+
+.node-info .inputs {
+    display: flex;
+    flex-direction: column;
+    gap: .4em;
+}
+
+.node-info .value-input {
+    display: flex;
+    flex-direction: row;
+    gap: .5em;
+}
+
+.node-info .value-input label {
+    flex-basis: 18em;
+}
+
+.node-info .value-input input {
+    flex-grow: 1;
 }
 
 .action {
@@ -256,7 +284,6 @@ svg.edge-info.selected rect {
     right: 100px;
     top: 100px;
     font-size: 2em;
-    ;
     font-family: consolas;
 }
 

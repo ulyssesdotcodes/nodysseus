@@ -80,7 +80,6 @@ const updateSimulationNodes = (dispatch, data) => {
 
         const node_data = {
             nodes: [...node_positions.values()].map(([n, c, x, y]) => ({
-                ...nodes.get(n.id),
                 node_id: n.id,
                 nested_node_count: n.nodes?.length,
                 nested_edge_count: n.edges?.length,
@@ -221,8 +220,6 @@ const updateSimulationNodes = (dispatch, data) => {
         }
 
         const calculated_nodes = children.length === 0 ? [{
-            ...n,
-            node_id: n.id,
             node_id: n.id,
             hash: simulation_node_data.get(node_id)?.hash ?? hashcode(n.id),
             nested_node_count: n.nodes?.length,
@@ -234,7 +231,6 @@ const updateSimulationNodes = (dispatch, data) => {
                 ?? addorundefined(simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.y, 128)
                 ?? Math.floor(window.innerHeight * (randpos.y * .5 + .25)))
         }] : children.map((c, i) => ({
-            ...n,
             node_id: n.id,
             hash: simulation_node_data.get(node_id)?.hash ?? hashcode(n.id),
             sibling_index_normalized: parents_map.get(c).findIndex(p => p === n.id) / parents_map.get(c).length,
@@ -695,6 +691,15 @@ const DeleteNode = (state, {parent, node_id}) => [
     [() => nolib.no.runtime.delete_node(state.display_graph, node_id)]
 ]
 
+const StopPropagation = (state, payload) => [state, [() => payload.stopPropagation()]];
+
+const base_node = node => ({id: node.id, value: node.value, name: node.name, ref: node.ref});
+
+const UpdateNode = (state, {node, property, value}) => [
+    state,
+    [() => nolib.no.runtime.add_node(state.display_graph, Object.assign({}, base_node(node), {[property]: value}))]
+]
+
 const fill_rect_el = () =>ha.h('rect', {class: 'fill', width: '48', 'height': '48'}, [])
 const node_text_el = ({primary, secondary}) =>ha.h('text', {x: 48, y: 12}, [
    ha.h('tspan', {class: "primary", dy: ".6em", x: "48"}, ha.text(primary)),
@@ -748,6 +753,15 @@ const link_el = ({link, selected_distance}) =>ha.h('g', {}, [
     ])
 ])
 
+const input_el = ({action, label, value}) => ha.h(
+    'div',
+    {class: 'value-input'},
+    [
+        ha.h('label', {for: "edit-text"}, [ha.text(label)]),
+        ha.h('input', {id: "edit-text", name: "edit-text", oninput: action, onkeydown: StopPropagation, value}),
+    ]
+)
+
 const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_graph_id, randid}) => {
     const node_ref = node.ref ? nolib.no.runtime.get_node(display_graph_id, node.ref) : node;
     const description =  node_ref?.description;
@@ -775,6 +789,10 @@ const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_grap
                         onclick: links_in.filter(l => l.as === n.value).map(l => [SelectNode, {node_id: l.source.node_id}])[0]
                             ?? [CreateNode, {node: {id: randid}, child: node.id, child_as: n.value}]
                     }, [ha.text(n.value)])) ?? []),
+            ha.h('div', {class: "inputs"}, [
+                input_el({label: "value", value: node.value, action: (state, payload) => [UpdateNode, {node, property: "value", value: payload.target.value}]}),
+                input_el({label: "name", value: node.name, action: (state, payload) =>[UpdateNode, {node, property: "name", value: payload.target.value}]}),
+            ]),
             description && ha.h('div', {class: "description"}, ha.text(description)),
             ha.h('div', {class: "buttons"}, [
                 ha.h('div', {class: "action"}, ha.text(node.nodes?.length > 0 ? "expand" : "contract")),
@@ -855,7 +873,8 @@ const editor = async function(html_id, display_graph, lib, norun) {
                             selected: s.selected[0], 
                             error: s.error, 
                             selected_distance: s.show_all ? 0 : s.levels.distance_from_selected.get(node.node_id) > 3 ? 'far' : s.levels.distance_from_selected.get(node.node_id),
-                            node}))) ?? []
+                            node: Object.assign({}, node, nolib.no.runtime.get_node(s.display_graph, node.node_id))
+                        }))) ?? []
                     ).concat(
                         s.links?.map(link => ha.memo(link_el, {
                             link,
@@ -866,7 +885,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
             ]),
             !s.show_all && s.svg_offset && info_el({
                 node_id: s.selected[0], 
-                node: s.nodes.find(n => n.node_id === s.selected[0]),
+                node: Object.assign({}, s.nodes.find(n => n.node_id === s.selected[0]), nolib.no.runtime.get_node(s.display_graph, s.selected[0])),
                 links_in: s.links.filter(l => l.target.node_id === s.selected[0]),
                 link_out: s.links.find(l => l.source.node_id === s.selected[0]),
                 svg_offset: s.svg_offset,

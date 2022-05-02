@@ -1379,7 +1379,6 @@ const add_default_nodes_and_edges = g => ({
 
 const runGraph = (graph, node, args, lib) => {
     let rgraph = graph.graph ? graph.graph : graph;
-    console.log(rgraph);
 
     if(!rgraph.nodes.find(n => n.id === "get")) {
         rgraph = add_default_nodes_and_edges(rgraph);
