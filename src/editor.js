@@ -674,6 +674,27 @@ const SelectNode = (state, payload) => [
     (state.show_all || state.selected[0] !== payload.node_id) && [pzobj.effect, {...state, node_id: payload.node_id}]
 ]
 
+const CreateNode = (state, {node, child, child_as}) => [
+    {
+        ...state, 
+        history: state.history.concat([{action: 'add_node', node, child, child_as}])
+    },
+    [dispatch => {
+        nolib.no.runtime.add_node(state.display_graph, node, {from: node.id, to: child, as: child_as})
+        // Hacky - have to wait until the node is finished adding and the graph callback takes place before updating selected node.
+        setTimeout(() => requestAnimationFrame(() => dispatch(s => [{...s, selected: [node.id]}])), 50);
+    }]
+];
+
+const DeleteNode = (state, {parent, node_id}) => [
+    {
+        ...state, 
+        selected: [parent?.to ?? "main/out"],
+        history: state.history.concat([{action: 'delete_node', node_id}]) 
+    },
+    [() => nolib.no.runtime.delete_node(state.display_graph, node_id)]
+]
+
 const fill_rect_el = () =>ha.h('rect', {class: 'fill', width: '48', 'height': '48'}, [])
 const node_text_el = ({primary, secondary}) =>ha.h('text', {x: 48, y: 12}, [
    ha.h('tspan', {class: "primary", dy: ".6em", x: "48"}, ha.text(primary)),
@@ -727,7 +748,7 @@ const link_el = ({link, selected_distance}) =>ha.h('g', {}, [
     ])
 ])
 
-const info_el = ({node, links, svg_offset, dimensions, display_graph_id}) => {
+const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_graph_id, randid}) => {
     const node_ref = node.ref ? nolib.no.runtime.get_node(display_graph_id, node.ref) : node;
     const description =  node_ref?.description;
 
@@ -742,12 +763,25 @@ const info_el = ({node, links, svg_offset, dimensions, display_graph_id}) => {
         },
         [
             ha.h('div', {class: "args"}, 
-                node_ref.nodes?.filter(n => n.ref === "arg" && !n.value.includes('.') && !n.value.startsWith("_"))
-                    .map(n => ha.h('span', {class: "clickable"}, [ha.text(n.value)])) ?? []),
+                (node_ref.nodes?.filter(n => n.ref === "arg" && !n.value.includes('.') && !n.value.startsWith("_")) ?? [])
+                    .concat(
+                        [{value: "arg" + ((links_in.filter(l => 
+                                    l.as?.startsWith("arg") 
+                                    && new RegExp("[0-9]+").test(l.as.substring(3)))
+                                .map(l => parseInt(l.as.substring(3))) ?? [])
+                            .reduce((acc, i) => acc > i ? acc : i + 1, 0))}])
+                    .map(n => ha.h('span', {
+                        class: "clickable", 
+                        onclick: links_in.filter(l => l.as === n.value).map(l => [SelectNode, {node_id: l.source.node_id}])[0]
+                            ?? [CreateNode, {node: {id: randid}, child: node.id, child_as: n.value}]
+                    }, [ha.text(n.value)])) ?? []),
             description && ha.h('div', {class: "description"}, ha.text(description)),
             ha.h('div', {class: "buttons"}, [
                 ha.h('div', {class: "action"}, ha.text(node.nodes?.length > 0 ? "expand" : "contract")),
-                ha.h('div', {class: "action"}, ha.text("delete"))
+                ha.h('div', {class: "action", onclick: [DeleteNode, {
+                    parent: link_out ? {from: link_out.source.node_id, to: link_out.target.node_id, as: link_out.as} : undefined, 
+                    node_id: node.node_id
+                }]}, ha.text("delete"))
             ])
         ]
     )
@@ -833,10 +867,12 @@ const editor = async function(html_id, display_graph, lib, norun) {
             !s.show_all && s.svg_offset && info_el({
                 node_id: s.selected[0], 
                 node: s.nodes.find(n => n.node_id === s.selected[0]),
-                links: s.links.find(l => l.target.node_id === s.selected[0]),
+                links_in: s.links.filter(l => l.target.node_id === s.selected[0]),
+                link_out: s.links.find(l => l.source.node_id === s.selected[0]),
                 svg_offset: s.svg_offset,
                 dimensions: s.dimensions,
-                display_graph_id: s.display_graph_id
+                display_graph_id: s.display_graph_id,
+                randid: s.randid
             }),
             ha.h('div', {id: `${html_id}-result`})
         ]),

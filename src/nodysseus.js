@@ -1205,7 +1205,8 @@ const nolib = {
 
                     const new_graph = {
                         ...graph,
-                        nodes: graph.nodes.filter(n => n.id !== node.id).concat([node])
+                        nodes: graph.nodes.filter(n => n.id !== node.id).concat([node]),
+                        edges: edge ? graph.edges.filter(e => !(e.from === edge.from && e.to === edge.to)).concat(edge) : graph.edges
                     };
 
                     cache.delete(get_hashcode(graph.id + "/" + node.id));
