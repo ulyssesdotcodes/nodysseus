@@ -957,9 +957,17 @@ const nolib = {
         executeGraph: ({ state, graph, lib }) => executeGraph({ state, graph })(graph.out)(state.get(graph.in)),
         executeGraphValue: ({ graph, lib }) => executeGraph({ graph, lib })(graph.out),
         executeGraphNode: ({ graph, lib }) => executeGraph({ graph, lib }),
-        runGraph: (graph, node, args, lib) => node !== undefined
-            ? executeGraph({ graph, lib })(node)(args)
-            : executeGraph({ graph: graph.graph, lib })(graph.fn)(graph.args),
+        runGraph: (graph, node, args, lib) => {
+            let rgraph = graph.graph ? graph.graph : graph;
+
+            if(!rgraph.nodes.find(n => n.id === "get")) {
+                rgraph = add_default_nodes_and_edges(rgraph);
+            }
+
+            return node !== undefined
+                ? executeGraph({ graph: rgraph, lib })(node)(args)
+                : executeGraph({ graph: rgraph, lib })(graph.fn)(graph.args)
+        },
         resolve,
         objToGraph,
         NodysseusError,
@@ -1377,14 +1385,6 @@ const add_default_nodes_and_edges = g => ({
         .concat(generic.nodes)
 })
 
-const runGraph = (graph, node, args, lib) => {
-    let rgraph = graph.graph ? graph.graph : graph;
-
-    if(!rgraph.nodes.find(n => n.id === "get")) {
-        rgraph = add_default_nodes_and_edges(rgraph);
-    }
-
-    return nolib.no.runGraph(graph.graph ? {...graph, graph: rgraph} : rgraph, node, args, lib);
-}
+const runGraph = nolib.no.runGraph;
 
 export { nolib, runGraph, objToGraph, flattenNode, bfs, calculateLevels, compare, hashcode, contract_all, contract_node, expand_node, add_default_nodes_and_edges, ispromise, resolve, NodysseusError };

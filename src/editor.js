@@ -1,4 +1,4 @@
-import { bfs, hashcode, nolib, runGraph, expand_node, flattenNode, contract_node, calculateLevels, contract_all, ispromise, resolve } from "./nodysseus.js";
+import { bfs, hashcode, nolib, runGraph, expand_node, flattenNode, contract_node, calculateLevels, contract_all, ispromise, resolve, add_default_nodes_and_edges } from "./nodysseus.js";
 import * as ha from "hyperapp";
 import panzoom from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
@@ -693,6 +693,8 @@ const DeleteNode = (state, {parent, node_id}) => [
 
 const StopPropagation = (state, payload) => [state, [() => payload.stopPropagation()]];
 
+const SaveGraph = (dispatch, payload) => { const graph_list = JSON.parse(localStorage.getItem('graph_list'))?.filter(l => l !== payload.display_graph.id) ?? []; graph_list.unshift(payload.display_graph.id); localStorage.setItem('graph_list', JSON.stringify(graph_list)); const graphstr = JSON.stringify({...payload.display_graph, node_map: undefined, in_edge_map: undefined}); localStorage.setItem(payload.display_graph.id, graphstr); window.location.hash = '#' + payload.display_graph.id; }
+
 const base_node = node => ({id: node.id, value: node.value, name: node.name, ref: node.ref});
 
 const UpdateNode = (state, {node, property, value}) => [
@@ -830,7 +832,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
     const init = { 
         graph: editor_graph, 
         display_graph_id: display_graph.id,
-        display_graph: {...display_graph, out: "main/out"},
+        display_graph: add_default_nodes_and_edges({...display_graph, out: "main/out"}),
         hash: window.location.hash ?? "",
         url_params,
         html_id,
@@ -908,6 +910,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
                 const selected = state.selected[0];
                 const result = runGraph(editor_graph, "keybindings", {}, hlib)[mode][key_input];
                 let action;
+                let effects = [];
                 switch(result){
                     case "up": {
                         const parent_edges = nolib.no.runtime.get_edges_in(state.display_graph, selected);
@@ -935,10 +938,13 @@ const editor = async function(html_id, display_graph, lib, norun) {
                         action = node_id ? [SelectNode, {node_id}] : [state]
                         break;
                     }
+                    case "save": {
+                        effects.push([SaveGraph, state])
+                    }
                     default: nolib.no.runtime.publish.fn(undefined, 'keydown', key_input)
                 }
 
-                return action ? action : state;
+                return action ? action : [state, ...effects];
             }}],
             listen('resize', s => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}]),
             !!document.getElementById( `${html_id}-editor-panzoom`) && [pzobj.init, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]
