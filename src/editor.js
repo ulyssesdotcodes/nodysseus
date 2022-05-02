@@ -819,6 +819,8 @@ const result_display = html_id => ha.app({
     }
 })
 
+const error_nodes = (error) => error instanceof AggregateError ? error.errors.map(e => e instanceof nolib.no.NodysseusError ? e.node_id : false).filter(n => n) : error instanceof nolib.no.NodysseusError ? [error.node_id] : []; 
+
 const editor = async function(html_id, display_graph, lib, norun) {
     const simple = await fetch("json/simple.json").then(r => r.json());
     const simple_html_hyperapp = await fetch("json/simple_html_hyperapp.json").then(r => r.json());
@@ -871,7 +873,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
                         s.nodes?.map(node => ha.memo(node_el, ({
                             html_id: s.html_id, 
                             selected: s.selected[0], 
-                            error: s.error, 
+                            error: error_nodes(s.error).find(e => e.startsWith(s.display_graph.id + "/" + node.node_id)), 
                             selected_distance: s.show_all ? 0 : s.levels.distance_from_selected.get(node.node_id) > 3 ? 'far' : s.levels.distance_from_selected.get(node.node_id),
                             node: Object.assign({}, node, nolib.no.runtime.get_node(s.display_graph, node.node_id))
                         }))) ?? []

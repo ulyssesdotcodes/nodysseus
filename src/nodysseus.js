@@ -422,7 +422,7 @@ const node_script = (node, node_ref, data, full_lib, graph, inputs) => {
         console.log(data);
         throw new AggregateError([
             new NodysseusError(
-                node.id,
+                graph.id + "/" + node.id,
                 e instanceof AggregateError ? "Error in node chain" : e
             )]
             .concat(e instanceof AggregateError ? e.errors : []));
