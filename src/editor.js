@@ -625,7 +625,10 @@ const pzobj = {
         hlib.panzoom.instance.zoomTo(x, y, 1 / scale)
 
         if(!payload.prevent_dispatch) {
-            requestAnimationFrame(() => dispatch((s, p) => s.show_all ? [ {...s, show_all: false}] : [s]))
+            requestAnimationFrame(() => dispatch((s, p) => [ {...s, 
+                show_all: false, 
+                svg_offset: hlib.panzoom.instance.getTransform()
+            }]));
         }
     },
     init: function (dispatch, sub_payload) {
@@ -724,6 +727,32 @@ const link_el = ({link, selected_distance}) =>ha.h('g', {}, [
     ])
 ])
 
+const info_el = ({node, links, svg_offset, dimensions, display_graph_id}) => {
+    const node_ref = node.ref ? nolib.no.runtime.get_node(display_graph_id, node.ref) : node;
+    const description =  node_ref?.description;
+
+    return ha.h(
+        'div',
+        {
+            class: {'node-info': true}, 
+            style: {
+                left: `${Math.min(node.x * (svg_offset?.scale ?? 1) + (svg_offset?.x ?? 0) - 64, dimensions.x - 256)}px`,
+                top: `${node.y * (svg_offset?.scale ?? 1) + (svg_offset?.y ?? 0) + 32}px`
+            }
+        },
+        [
+            ha.h('div', {class: "args"}, 
+                node_ref.nodes?.filter(n => n.ref === "arg" && !n.value.includes('.') && !n.value.startsWith("_"))
+                    .map(n => ha.h('span', {class: "clickable"}, [ha.text(n.value)])) ?? []),
+            description && ha.h('div', {class: "description"}, ha.text(description)),
+            ha.h('div', {class: "buttons"}, [
+                ha.h('div', {class: "action"}, ha.text(node.nodes?.length > 0 ? "expand" : "contract")),
+                ha.h('div', {class: "action"}, ha.text("delete"))
+            ])
+        ]
+    )
+}
+
 const UpdateResultDisplay = (state, el) => ({
     ...state,
     el: el.el ? {...el.el} : {...el}
@@ -801,7 +830,15 @@ const editor = async function(html_id, display_graph, lib, norun) {
                     )
                 ),
             ]),
-           ha.h('div', {id: `${html_id}-result`})
+            !s.show_all && s.svg_offset && info_el({
+                node_id: s.selected[0], 
+                node: s.nodes.find(n => n.node_id === s.selected[0]),
+                links: s.links.find(l => l.target.node_id === s.selected[0]),
+                svg_offset: s.svg_offset,
+                dimensions: s.dimensions,
+                display_graph_id: s.display_graph_id
+            }),
+            ha.h('div', {id: `${html_id}-result`})
         ]),
         node: document.getElementById(html_id),
         subscriptions: s => [
