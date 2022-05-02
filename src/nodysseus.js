@@ -1152,27 +1152,6 @@ const nolib = {
                 }
 
                 return lokiret;
-
-                const ret = !graph 
-                    ? undefined 
-                    : typeof graph === 'object' 
-                    ? getorset(cache, graphhash, () => [new_graph_cache(graph)])
-                    : cache.get(graphhash);
-                
-
-                if(!lokiret && typeof graph === "object"){
-                    nodesdb.insert(graph);
-                }
-                if(ret){
-                    const found = ret.find(g => g.graph.id === graphid);
-                    if(!found && typeof graph === "object"){
-                        const newcache = newgraphcache || new_graph_cache(graph);
-                        ret.push(newcache);
-                        return newcache;
-                    }
-                    return found;
-                }
-                return ret;
             }
             const get_parentest = (graph) => get_cache(get_cache(graph).parentest).graph;
             const get_path = (graph, path) => {
