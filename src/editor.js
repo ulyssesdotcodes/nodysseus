@@ -1,5 +1,5 @@
 import { bfs, hashcode, add_default_nodes_and_edges, nolib, runGraph, expand_node, flattenNode, contract_node, calculateLevels, contract_all, ispromise, resolve } from "./nodysseus.js";
-import { h, app, text, memo } from "hyperapp";
+import * as ha from "hyperapp";
 import panzoom from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 
@@ -44,8 +44,6 @@ const updateSimulationNodes = (dispatch, data) => {
             .map(e => e.to)]
         ));
 
-        const nodes_by_level = [...levels.entries()].reduce((acc, [n, l]) => (acc[l] ? acc[l].push(n) : acc[l] = [n], acc), {});
-
         const node_el_width = 196;
         const node_positions = new Map();
         [...nodes.values()].forEach(n => {
@@ -82,22 +80,22 @@ const updateSimulationNodes = (dispatch, data) => {
 
         const node_data = {
             nodes: [...node_positions.values()].map(([n, c, x, y]) => ({
+                ...nodes.get(n.id),
                 node_id: n.id,
-                node_child_id: c,
+                node_id: c,
                 nested_node_count: n.nodes?.length,
                 nested_edge_count: n.edges?.length,
                 x,
                 y
             })),
             links: data.display_graph.edges.filter(e => levels.has(e.to)).map(e => ({
+                ...e,
                 source: {
-                    node_child_id: node_positions.get(e.from)[1],
                     node_id: node_positions.get(e.from)[0].id,
                     x: Math.floor(node_positions.get(e.from)[2]),
                     y: Math.floor(node_positions.get(e.from)[3])
                 },
                 target: {
-                    node_child_id: node_positions.get(e.to)[1],
                     node_id: node_positions.get(e.to)[0].id,
                     x: Math.floor(node_positions.get(e.to)[2]),
                     y: Math.floor(node_positions.get(e.to)[3])
@@ -109,7 +107,7 @@ const updateSimulationNodes = (dispatch, data) => {
             dispatch(s => s ? [resolve(data.sim_to_hyperapp), node_data] : s)
             requestAnimationFrame(() => {
                 node_data.nodes.forEach(n => {
-                    const el = document.getElementById(`${data.html_id}-${n.node_child_id}`);
+                    const el = document.getElementById(`${data.html_id}-${n.node_id}`);
                     if(el) {
                         const x = n.x - node_el_width * 0.5;
                         const y = n.y ;
@@ -119,9 +117,9 @@ const updateSimulationNodes = (dispatch, data) => {
                 });
 
                 node_data.links.forEach(l => {
-                    const el = document.getElementById(`link-${l.source.node_child_id}`);
-                    const info_el = document.getElementById(`edge-info-${l.source.node_child_id}`);
-                    const insert_el = document.getElementById(`insert-${l.source.node_child_id}`);
+                    const el = document.getElementById(`link-${l.source.node_id}`);
+                    const info_el = document.getElementById(`edge-info-${l.source.node_id}`);
+                    const insert_el = document.getElementById(`insert-${l.source.node_id}`);
                     if(el && info_el) {
                         const source = {x: l.source.x - node_el_width * 0.5, y: l.source.y};
                         const target = {x: l.target.x - node_el_width * 0.5, y: l.target.y};
@@ -129,7 +127,6 @@ const updateSimulationNodes = (dispatch, data) => {
                         const length_y = Math.abs(source.y - target.y); 
                         const length = Math.sqrt(length_x * length_x + length_y * length_y); 
                         const lerp_length = 24;
-                        // return {selected_distance, selected_edge, source: {...source, x: source.x + (target.x - source.x) * lerp_length / length, y: source.y + (target.y - source.y) * lerp_length / length}, target: {...target, x: source.x + (target.x - source.x) * (1 - (lerp_length / length)), y: source.y + (target.y - source.y) * (1 - (lerp_length / length))}}"
                         el.setAttribute('x1', Math.floor(Math.floor(source.x + (target.x - source.x) * lerp_length / length)));
                         el.setAttribute('y1', Math.floor(Math.floor(source.y + (target.y - source.y) * lerp_length / length)));
                         el.setAttribute('x2', Math.floor(Math.floor(source.x + (target.x - source.x) * (1 - lerp_length / length))));
@@ -153,14 +150,14 @@ const updateSimulationNodes = (dispatch, data) => {
 
     const simulation_node_data = new Map();
     data.simulation.nodes().forEach(n => {
-        simulation_node_data.set(n.node_child_id, n)
+        simulation_node_data.set(n.node_id, n)
     });
 
     const start_sim_node_size = simulation_node_data.size;
     
     const simulation_link_data = new Map();
     data.simulation.force('links').links().forEach(l => {
-        simulation_link_data.set(l.source.node_child_id, l);
+        simulation_link_data.set(l.source.node_id, l);
     })
 
     const start_sim_link_size = simulation_link_data.size;
@@ -188,8 +185,8 @@ const updateSimulationNodes = (dispatch, data) => {
         order.push(node);
 
         const children = children_map.get(node);
-        const node_child_id = children.length > 0 ? node + "_" + children[0] : node;
-        main_node_map.set(node, node_child_id);
+        const node_id = children.length > 0 ? node + "_" + children[0] : node;
+        main_node_map.set(node, node_id);
 
         parents_map.get(node).forEach(p => {queue.push(p)})
     }
@@ -204,8 +201,8 @@ const updateSimulationNodes = (dispatch, data) => {
     //// pushes all root nodes, not just display_graph.out
     // data.display_graph.nodes.forEach(n => {
     //     const children = children_map.get(n.id);
-    //     const node_child_id = children.length > 0 ? n.id + "_" + children[0] : n.id;
-    //     main_node_map.set(n.id, node_child_id);
+    //     const node_id = children.length > 0 ? n.id + "_" + children[0] : n.id;
+    //     main_node_map.set(n.id, node_id);
 
         // if(children_map.get(n.id).length === 0) {
         //     queue.push(n.id);
@@ -216,9 +213,9 @@ const updateSimulationNodes = (dispatch, data) => {
     const nodes = order.flatMap(nid => {
         let n = node_map.get(nid);
         const children = children_map.get(n.id);
-        const node_child_id = main_node_map.get(n.id);
+        const node_id = main_node_map.get(n.id);
 
-        const node_hash = simulation_node_data.get(node_child_id)?.hash ?? hashcode(nid);
+        const node_hash = simulation_node_data.get(node_id)?.hash ?? hashcode(nid);
         const randpos = {x: (((node_hash * 0.254) % 256.0) / 256.0), y: ((node_hash * 0.874) % 256.0) / 256.0};
 
         const addorundefined = (a, b) => {
@@ -226,32 +223,34 @@ const updateSimulationNodes = (dispatch, data) => {
         }
 
         const calculated_nodes = children.length === 0 ? [{
+            ...n,
             node_id: n.id,
-            node_child_id: n.id,
-            hash: simulation_node_data.get(node_child_id)?.hash ?? hashcode(n.id),
+            node_id: n.id,
+            hash: simulation_node_data.get(node_id)?.hash ?? hashcode(n.id),
             nested_node_count: n.nodes?.length,
             nested_edge_count: n.edges?.length,
-            x: Math.floor(simulation_node_data.get(node_child_id)?.x 
+            x: Math.floor(simulation_node_data.get(node_id)?.x 
                 ?? simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.x
                 ?? Math.floor(window.innerWidth * (randpos.x * .5 + .25))),
-            y: Math.floor(simulation_node_data.get(node_child_id)?.y 
+            y: Math.floor(simulation_node_data.get(node_id)?.y 
                 ?? addorundefined(simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.y, 128)
                 ?? Math.floor(window.innerHeight * (randpos.y * .5 + .25)))
         }] : children.map((c, i) => ({
+            ...n,
             node_id: n.id,
-            node_child_id: n.id + "_" + c,
-            hash: simulation_node_data.get(node_child_id)?.hash ?? hashcode(n.id),
+            node_id: n.id + "_" + c,
+            hash: simulation_node_data.get(node_id)?.hash ?? hashcode(n.id),
             sibling_index_normalized: parents_map.get(c).findIndex(p => p === n.id) / parents_map.get(c).length,
             nested_node_count: n.nodes?.length,
             nested_edge_count: n.edges?.length,
-            x: Math.floor(simulation_node_data.get(node_child_id)?.x 
+            x: Math.floor(simulation_node_data.get(node_id)?.x 
                 ?? simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.x
                 ?? addorundefined(
                     simulation_node_data.get(main_node_map.get(children_map.get(n.id)?.[0]))?.x, 
                     (parents_map.get(children_map.get(n.id)?.[0])?.findIndex(v => v === n.id) - (parents_map.get(children_map.get(n.id)?.[0])?.length - 1) * 0.5) * 256
                 )
                 ?? Math.floor(window.innerWidth * (randpos.x * .5 + .25))),
-            y: Math.floor(simulation_node_data.get(node_child_id)?.y 
+            y: Math.floor(simulation_node_data.get(node_id)?.y 
                 ?? addorundefined(256, simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.y)
                 ?? addorundefined(
                     -(196 + 32 * (parents_map.get(n.id).length ?? 0)),
@@ -260,7 +259,7 @@ const updateSimulationNodes = (dispatch, data) => {
                 ?? Math.floor(window.innerHeight * (randpos.y * .5 + .25)))
         }));
 
-        calculated_nodes.map(n => simulation_node_data.set(n.node_child_id, n));
+        calculated_nodes.map(n => simulation_node_data.set(n.node_id, n));
 
         return calculated_nodes;
     })
@@ -279,9 +278,8 @@ const updateSimulationNodes = (dispatch, data) => {
                 (parents_map.get(children_map.get(main_node_map.get(e.to)))?.length ?? 0)
             ) * 0.5;
             return {
+                ...e,
                 source: e.from + "_" + e.to,
-                from: e.from,
-                to: e.to,
                 target: main_node_map.get(e.to),
                 sibling_index_normalized: simulation_node_data.get(e.from + "_" + e.to).sibling_index_normalized,
                 strength: 2 * (1.5 - Math.abs(simulation_node_data.get(e.from + "_" + e.to).sibling_index_normalized - 0.5)) / (1 + 2 * Math.min(4, proximal)),
@@ -314,41 +312,16 @@ const updateSimulationNodes = (dispatch, data) => {
         .y(n =>
             (((parents_map.get(n.node_id)?.length > 0 ? 1 : 0)
                 + (children_map.get(n.node_id)?.length > 0 ? -1 : 0)
-                + (children_map.get(n.node_id)?.length > 0 && n.node_child_id !== n.node_id + "_" + children_map.get(n.node_id)[0] ? -1 : 0))
+                + (children_map.get(n.node_id)?.length > 0 && n.node_id !== n.node_id + "_" + children_map.get(n.node_id)[0] ? -1 : 0))
                 * (logmaxparents + 3) + .5) * window.innerHeight)
         .strength(n => (!!parents_map.get(n.node_id)?.length === !children_map.get(n.node_id)?.length)
-            || children_map.get(n.node_id)?.length > 0 && n.node_child_id !== n.node_id + "_" + children_map.get(n.node_id)[0] ? .02 : 0);
+            || children_map.get(n.node_id)?.length > 0 && n.node_id !== n.node_id + "_" + children_map.get(n.node_id)[0] ? .02 : 0);
 
 
     data.simulation.force('collide').radius(96);
     // data.simulation.force('center').strength(n => (levels.parents_map.get(n.node_id)?.length ?? 0) * 0.25 + (levels.children_map.get(n.node_id)?.length ?? 0) * 0.25)
 }
 
-const editor = async function(html_id, display_graph, lib, norun) {
-    const simple = await fetch("json/simple.json").then(r => r.json());
-    const simple_html_hyperapp = await fetch("json/simple_html_hyperapp.json").then(r => r.json());
-    const editor_graph = await fetch("json/editor.json").then(r => r.json());
-    const url_params = new URLSearchParams(document.location.search);
-    const examples = [simple_html_hyperapp, simple];
-    const dispatch = runGraph(editor_graph, "initialize_hyperapp_app", { 
-        graph: editor_graph, 
-        display_graph: {...add_default_nodes_and_edges(display_graph), out: "main/out"},
-        hash: window.location.hash ?? "",
-        url_params,
-        html_id,
-        dimensions: {
-            x: document.getElementById(html_id).clientWidth,
-            y: document.getElementById(html_id).clientHeight
-        },
-        examples: examples.map(add_default_nodes_and_edges),
-        readonly: false, 
-        norun: norun || url_params.get("norun") !== null,
-        hide_types: false,
-        offset: {x: 0, y: 0}
-    }, {...hlib, ...(lib ?? {})});
-
-    return () => requestAnimationFrame(() => dispatch.dispatch(s => undefined));
-}
 
 // Creates the simulation, updates the node elements when the simulation changes, and runs an action when the nodes have settled.
 // This is probably doing too much.
@@ -360,10 +333,10 @@ const d3subscription = (dispatch, props) => {
             .forceLink([])
             .distance(l => l.distance ?? 128)
             .strength(l => l.strength)
-            .id(n => n.node_child_id))
+            .id(n => n.node_id))
         .force('link_direction', hlib.d3.forceY().strength(.01))
         .force('center', hlib.d3.forceCenter().strength(0.01))
-        // .force('fuse_links', lib.d3.forceLink([]).distance(128).strength(.1).id(n => n.node_child_id))
+        // .force('fuse_links', lib.d3.forceLink([]).distance(128).strength(.1).id(n => n.node_id))
         // .force('link_siblings', lib.d3.forceX().strength(1))
         // .force('selected', lib.d3.forceRadial(0, window.innerWidth * 0.5, window.innerHeight * 0.5).strength(2))
         .velocityDecay(0.7)
@@ -393,13 +366,13 @@ const d3subscription = (dispatch, props) => {
                     as: l.as,
                     type: l.type,
                     source: ({
-                        node_child_id: l.source.node_child_id,
+                        node_id: l.source.node_id,
                         node_id: l.source.node_id,
                         x: Math.floor(l.source.x),
                         y: Math.floor(l.source.y)
                     }),
                     target: ({
-                        node_child_id: l.target.node_child_id,
+                        node_id: l.target.node_id,
                         node_id: l.target.node_id,
                         x: Math.floor(l.target.x),
                         y: Math.floor(l.target.y)
@@ -427,7 +400,7 @@ const d3subscription = (dispatch, props) => {
             let selected_pos;
 
             simulation.nodes().map(n => {
-                const el = document.getElementById(`${htmlid}-${n.node_child_id}`);
+                const el = document.getElementById(`${htmlid}-${n.node_id}`);
                 if(el) {
                     const x = n.x - node_el_width * 0.5;
                     const y = n.y ;
@@ -443,9 +416,9 @@ const d3subscription = (dispatch, props) => {
 
 
             simulation.force('links').links().map(l => {
-                const el = document.getElementById(`link-${l.source.node_child_id}`);
-                const info_el = document.getElementById(`edge-info-${l.source.node_child_id}`);
-                const insert_el = document.getElementById(`insert-${l.source.node_child_id}`);
+                const el = document.getElementById(`link-${l.source.node_id}`);
+                const info_el = document.getElementById(`edge-info-${l.source.node_id}`);
+                const insert_el = document.getElementById(`insert-${l.source.node_id}`);
                 if(el && info_el) {
                     const source = {x: l.source.x - node_el_width * 0.5, y: l.source.y};
                     const target = {x: l.target.x - node_el_width * 0.5, y: l.target.y};
@@ -494,13 +467,13 @@ const d3subscription = (dispatch, props) => {
                     as: l.as,
                     type: l.type,
                     source: ({
-                        node_child_id: l.source.node_child_id,
+                        node_id: l.source.node_id,
                         node_id: l.source.node_id,
                         x: Math.floor(l.source.x),
                         y: Math.floor(l.source.y)
                     }),
                     target: ({
-                        node_child_id: l.target.node_child_id,
+                        node_id: l.target.node_id,
                         node_id: l.target.node_id,
                         x: Math.floor(l.target.x),
                         y: Math.floor(l.target.y)
@@ -542,7 +515,7 @@ const graph_subscription = (dispatch, props) => {
     const listener = (graph) => {
         if(props.display_graph_id === graph.id) {
             requestAnimationFrame(() =>  {
-                dispatch(s => [{...s, display_graph: graph}, [s.update_sim_effect]])
+                dispatch(s => [{...s, display_graph: graph}, [UpdateSimulation]])
             })
         }
     };
@@ -560,11 +533,23 @@ const listenToEvent = (dispatch, props) => {
     return () => removeEventListener(props.type, listener);
 }
 
+const run_h = ({dom_type, props, children, text}) => dom_type === "text_value" 
+    ? ha.text(text) 
+    : ha.h(dom_type, props, children?.filter(c => !!c).map(run_h) ?? []) 
+
 const result_subscription = (dispatch, props) => {
+    console.log(props);
     const listener = ({graph, result}) => {
+        console.log('got result');
+        console.log(props.display_graph_id);
+        console.log(graph);
+        console.log(result);
+        console.log(result.display.el);
         if(graph.id === props.display_graph_id) {
-            requestAnimationFrame(() => 
-                dispatch(s => Object.assign({}, s, {error: false}, result?.display?.el ? {display: result.display} : {})));
+            requestAnimationFrame(() => {
+                dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s);
+                props.result_display_dispatch(UpdateResultDisplay, {el: result.display.el ? result.display.el :ha.h('div', {})})
+            })
         }
     }
     
@@ -574,6 +559,8 @@ const result_subscription = (dispatch, props) => {
 
     nolib.no.runtime.add_listener('graphrun', 'update_hyperapp_result_display', listener);
     nolib.no.runtime.add_listener('grapherror', 'update_hyperapp_error', error_listener);
+
+    nolib.no.runtime.update_graph(props.display_graph);
 
     return () => (
         nolib.no.runtime.remove_listener('graphrun', 'update_hyperapp_result_display', listener),
@@ -586,8 +573,8 @@ const findViewBox = (nodes, links, selected, node_el_width, htmlid, dimensions) 
     const visible_node_set = new Set();
     let selected_pos;
     links.forEach(l => {
-        const el = document.getElementById(`link-${l.source.node_child_id}`);
-        const info_el = document.getElementById(`edge-info-${l.source.node_child_id}`);
+        const el = document.getElementById(`link-${l.source.node_id}`);
+        const info_el = document.getElementById(`edge-info-${l.source.node_id}`);
         if(el && info_el) {
             const source = {x: l.source.x - node_el_width * 0.5, y: l.source.y};
             const target = {x: l.target.x - node_el_width * 0.5, y: l.target.y};
@@ -610,7 +597,7 @@ const findViewBox = (nodes, links, selected, node_el_width, htmlid, dimensions) 
     });
 
     nodes.forEach(n => {
-        const el = document.getElementById(`${htmlid}-${n.node_child_id}`);
+        const el = document.getElementById(`${htmlid}-${n.node_id}`);
         if(el) {
             const x = n.x - node_el_width * 0.5;
             const y = n.y ;
@@ -671,7 +658,164 @@ const pzobj = {
     }
 }
 
-let hasbeennodes = false;
+const UpdateSimulation = (dispatch, payload) => payload ? !(payload.simulation || payload.static) ? undefined : updateSimulationNodes(dispatch, payload) : dispatch(state => [state, [() => !(state.simulation || state.static) ? undefined : updateSimulationNodes(dispatch, state)]])
+
+const CustomDOMEvent = (_, payload) => document.getElementById(`${payload.html_id}`)?.dispatchEvent(new CustomEvent(payload.event, {detail: payload.detail}))
+
+const SimulationToHyperapp = (state, payload) => [{
+    ...state,
+    levels: calculateLevels(payload.nodes, payload.links, state.display_graph, state.selected),
+    nodes: payload.nodes,
+    links: payload.links,
+    randid: Math.random().toString(36).substring(2, 9),
+}, [CustomDOMEvent, {html_id: state.html_id, event: 'updategraph', detail: {graph: state.display_graph}}]];
+
+const SelectNode = (state, payload) => state.selected[0] === payload.node_id ? state : [{...state, selected: [payload.node_id]}]
+
+const style_content = "#node-editor { position: relative; width: 100%; height: 100vh; color: white; font-family: consolas; overflow: hidden; } #node-editor-editor.hash-view { background-color: unset; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .more { cursor: pointer; } .edit-value .centering { position: absolute; width: 32vw; display: flex; flex-direction: column; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node:hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node:hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .node-info { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; display: flex; gap: .4em; flex-direction: column; } .node-info .args { display: flex; gap: 8px; flex-wrap: wrap; } .node-info .args span.clickable { cursor: pointer; text-decoration: underline dotted;  } .action {cursor: pointer; text-decoration: underline dotted;} /* result props */ #result { position: fixed; bottom: 32px; left: 32px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node, #dummy-add-node { cursor: pointer; stroke: #fff; stroke-width: 32; stroke-opacity: 1; } .insert-node .circle, #dummy-add-node .circle { fill-opacity: 0.5; } .node text { filter: url(#flood-background) } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .node.selected text .secondary:hover, .node.selected text .primary:hover { text-decoration: dashed underline; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }";
+
+const fill_rect_el = () =>ha.h('rect', {class: 'fill', width: '48', 'height': '48'}, [])
+const node_text_el = ({primary, secondary}) =>ha.h('text', {x: 48, y: 12}, [
+   ha.h('tspan', {class: "primary", dy: ".6em", x: "48"}, ha.text(primary)),
+   ha.h('tspan', {class: "secondary", dy: "1.2em", x: "48"}, ha.text(secondary))
+])
+
+const defs = () =>ha.h('defs', {}, [
+   ha.h('filter', {id: "flood-background", width: 1.2, height: 1.1, x: -0.1, y: -0.05}, [
+       ha.h('feFlood', {floodColor: "#000a"}),
+       ha.h('feComposite', {in: "SourceGraphic"})
+    ]),
+   ha.h('marker', {id: "arrow", refX: 8, refY: 4, markerWidth: 8, markerHeight: 8, markerUnits: "userSpaceOnUse", orient: "auto"}, [
+       ha.h('polyline', {points: "1 1, 8 4, 1 8"})
+    ])
+])
+
+const radius = 24;
+const node_el = ({html_id, selected, error, node}) =>ha.h('svg', {
+    onclick: [SelectNode, {node_id: node.node_id}],  
+    ontouchstart: [SelectNode, {node_id: node.node_id}], 
+    width: '256', 
+    height: '64', 
+    key: html_id + '-' + node.node_id, 
+    id: html_id + '-' + node.node_id, 
+    class: {node: true,  selected: selected === node.node_id}
+}, [
+   ha.h(
+        node.script ? 'rect' : node.ref && node.ref !== 'arg' ? 'rect' : node.nodes ? 'circle' : node.value ? 'polygon' : 'circle', 
+        node.script 
+            ? {class:{shape: true, script: true, error}, width: radius, height: radius, x: 10, y: 10} 
+            : node.ref && node.ref !== 'arg' 
+            ? {class: {shape: true, ref: true, error}, width: radius, height: radius, x: 10, y: 10} 
+            : node.nodes 
+            ? {class: {shape: true, graph: true, error}, r: radius * 0.5, cx: radius * 0.5 + 4, cy: radius * 0.5 + 4} 
+            : node.value !== undefined 
+            ? {class: {shape: true, value: true, error}, points: `4,${4 + radius} ${4 + radius},${4 + radius} ${4 + radius * 0.5},4`} 
+            : {class: {shape: true, none: true, error}, r: radius * 0.5 , cx: radius * 0.5 + 4, cy: radius * 0.5 + 4}
+    ),
+    ha.memo(node_text_el, {
+        primary: node.name ? node.name : node.value ? node.value : '', 
+        secondary: node.ref ? node.ref : node.script ? 'script' : node.nodes ? `graph (${node.nested_node_count}, ${node.nested_edge_count})` : node.value !== undefined ? 'value' : 'object'
+    }),
+    ha.memo(fill_rect_el)
+])
+
+const link_el = ({link}) =>ha.h('g', {}, [
+   ha.h('line', {id: `link-${link.source.node_id}`, class: 'link', "marker-end": "url(#arrow)"}),
+   ha.h('svg', {id: `edge-info-${link.source.node_id}`, class: "edge-info"}, [
+       ha.h('rect', {}),
+       ha.h('text', {fontSize: 14, y: 16}, [ha.text(link.as)])
+    ])
+])
+
+const UpdateResultDisplay = (state, el) => ({
+    ...state,
+    el: el.el ?? el
+})
+
+const result_display = html_id => ha.app({
+    init: {el: {dom_type: 'div', props: {}, children: [{dom_type: 'text_value', text: 'loading result'}]}},
+    node: document.getElementById(html_id + "-result"),
+    view: s => {
+        return run_h(s.el)
+    }
+})
+
+const editor = async function(html_id, display_graph, lib, norun) {
+    const simple = await fetch("json/simple.json").then(r => r.json());
+    const simple_html_hyperapp = await fetch("json/simple_html_hyperapp.json").then(r => r.json());
+    const editor_graph = await fetch("json/editor.json").then(r => r.json());
+    const url_params = new URLSearchParams(document.location.search);
+    const examples = [simple_html_hyperapp, simple];
+    const init = { 
+        graph: editor_graph, 
+        display_graph_id: display_graph.id,
+        display_graph: {...add_default_nodes_and_edges(display_graph), out: "main/out"},
+        hash: window.location.hash ?? "",
+        url_params,
+        html_id,
+        dimensions: {
+            x: document.getElementById(html_id).clientWidth,
+            y: document.getElementById(html_id).clientHeight
+        },
+        examples: examples.map(add_default_nodes_and_edges),
+        readonly: false, 
+        norun: norun || url_params.get("norun") !== null,
+        hide_types: false,
+        offset: {x: 0, y: 0},
+        nodes: [],
+        links: [],
+        editing: false,
+        search: false,
+        show_all: false,
+        show_result: false,
+        node_el_width: 256,
+        args_display: false,
+        imports: {},
+        history: [],
+        redo_history: [],
+        selected: ["main/out"]
+    };
+
+    let result_display_dispatch;
+
+    const dispatch = ha.app({
+        init: ()=> [init, 
+            [() => requestAnimationFrame(() => {
+                result_display_dispatch = result_display(html_id)
+            })],
+            [UpdateSimulation, {...init, action: SimulationToHyperapp}], 
+        ],
+        view: s =>ha.h('div', {id: s.html_id}, [
+           ha.h('svg', {id: `${s.html_id}-editor`, width: s.dimensions.x, height: s.dimensions.y}, [
+               ha.h('g', {id: `${s.html_id}-editor-panzoom`}, 
+                    [ha.memo(defs)].concat(
+                        s.nodes?.map(node => ha.memo(node_el, ({html_id: s.html_id, selected: s.selected[0], error: s.error, node}))) ?? []
+                    ).concat(
+                        s.links?.map(link => ha.memo(link_el, {link})) ?? []
+                    )
+                ),
+            ]),
+           ha.h('style', {}, [ha.text(style_content)]),
+           ha.h('div', {id: `${html_id}-result`})
+        ]),
+        node: document.getElementById(html_id),
+        subscriptions: s => [
+            [d3subscription, {action: SimulationToHyperapp, update: UpdateSimulation}], 
+            [graph_subscription, {display_graph_id: s.display_graph_id}],
+            result_display_dispatch && [result_subscription, {display_graph: s.display_graph, display_graph_id: s.display_graph_id, result_display_dispatch}],
+            [keydownSubscription, {action: s => s}],
+            listen('resize', s => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}]),
+            !!document.getElementById( `${html_id}-editor-panzoom`) && [pzobj.init, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]
+        ], 
+    });
+
+    // runGraph(editor_graph, "main/out", {...hlib, ...(lib ?? {})});
+
+    return () => requestAnimationFrame(() => dispatch.dispatch(s => undefined));
+}
+
+// return {dispatch: _lib.ha.app({dispatch: _lib.ha.middleware, init: () => [_lib.no.resolve(init), static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp], [() => _lib.no.runtime.update_graph(init.display_graph)]], view: s => {const vs = view(s); return vs.el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}], !static && [_lib.scripts.graph_subscription, {display_graph_id: s.display_graph_id}], !static && !init.norun._value && [_lib.scripts.result_subscription, {display_graph_id: s.display_graph_id}], !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.panzoom.init, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]]})}
+
 const middleware = dispatch => (ha_action, ha_payload) => {
     const is_action_array_payload = Array.isArray(ha_action) 
         && ha_action.length === 2
@@ -686,9 +830,6 @@ const middleware = dispatch => (ha_action, ha_payload) => {
     const action = is_action_array_payload ? ha_action[0] : ha_action;
     const payload = is_action_array_payload ? ha_action[1] : is_action_obj_payload ? {...ha_action.args, event: ha_payload} : ha_payload;
 
-    hasbeennodes = hasbeennodes || action.nodes?.length > 0 || ha_action.nodes?.length > 0;
-
-
     return typeof action === 'object' && action.hasOwnProperty('fn') && action.hasOwnProperty('graph')
         ? dispatch((state, payload) => {
             try {
@@ -702,8 +843,6 @@ const middleware = dispatch => (ha_action, ha_payload) => {
                 if(!result) {
                     return state;
                 }
-
-                hasbeennodes = hasbeennodes || state.nodes?.length > 0;
 
                 const effects = (result.effects ?? []).filter(e => e).map(e => {
                     if(typeof e === 'object' 
@@ -733,16 +872,16 @@ const middleware = dispatch => (ha_action, ha_payload) => {
         : dispatch(action, payload)
 }
 
-const runh = el => el.d && el.p && el.c && h(el.d, el.p, el.c);
+const runh = el => el.d && el.p && el.c && ha.h(el.d, el.p, el.c);
 
 const hlib = {
     ha: { 
         middleware, 
         h: {
             args: ['dom_type', 'props', 'children', 'memo'], 
-            fn: (dom_type, props, children, usememo) => usememo ? memo(runh, {d: dom_type, p: props, c: children}) : runh({d: dom_type, p: props, c: children})}, 
-        app, 
-        text: {args: ['text'], fn: text}
+            fn: (dom_type, props, children, usememo) => usememo ? ha.memo(runh, {d: dom_type, p: props, c: children}) : runh({d: dom_type, p: props, c: children})}, 
+        app: ha.app, 
+        text: {args: ['text'], fn: ha.text}
     },
     scripts: { d3subscription, updateSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all, listen, graph_subscription, result_subscription},
     effects: {

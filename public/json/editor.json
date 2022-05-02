@@ -1204,7 +1204,7 @@
                         {
                           "from": "empty_string",
                           "to": "display_name",
-                          "as": "id"
+                          "as": "otherwise"
                         },
                         {
                           "from": "get_value",
@@ -2754,7 +2754,7 @@
     { "id": "update_hyperapp", "ref": "update_graph_display" },
     { "id": "update_hyperapp_action", "ref": "hyperapp_action" },
     { "id": "update_hyperapp_effect", "ref": "hyperapp_action_effect" },
-    { "id": "initialize_hyperapp_app", "ref": "hyperapp_app" },
+    { "id": "main/out", "ref": "hyperapp_app" },
     { "id": "out" },
     {
       "id": "graph_to_simulation",
@@ -2764,7 +2764,6 @@
     },
     { "id": "sim_to_hyperapp", "ref": "sim_to_hyperapp_action" },
     { "id": "graph_to_sim_action", "ref": "execute_graph" },
-    { "id": "update_nodes_in" },
     { "id": "onkey_fn", "ref": "hyperapp_action" },
     { "id": "eq", "script": "return a === b;" },
     { "id": "neq", "script": "return a !== b;" },
@@ -3587,8 +3586,16 @@
       "id": "show_args_effect",
       "nodes": [
         { "id": "in" },
-        { "id": "display_graph_nodes", "ref": "arg", "value": "state.display_graph.nodes" },
-        { "id": "display_graph_edges", "ref": "arg", "value": "state.display_graph.edges" },
+        {
+          "id": "display_graph_nodes",
+          "ref": "arg",
+          "value": "state.display_graph.nodes"
+        },
+        {
+          "id": "display_graph_edges",
+          "ref": "arg",
+          "value": "state.display_graph.edges"
+        },
         { "id": "nodes", "ref": "arg", "value": "state.nodes" },
         { "id": "selected", "ref": "arg", "value": "state.selected.0" },
         { "id": "dimensions", "ref": "arg", "value": "state.dimensions" },
@@ -3601,21 +3608,33 @@
         { "id": "nodes_path", "value": "nodes" },
         { "id": "length_path", "value": "length" },
         { "id": "node_args_arr", "ref": "node_args" },
-        {"id": "valid_node_args", "script": "const in_edges = edges.filter(e => e.to === node_id); return args.filter(a => !(in_edges.find(e => e.as === a) || a === '_args'))"},
+        {
+          "id": "valid_node_args",
+          "script": "const in_edges = edges.filter(e => e.to === node_id); return args.filter(a => !(a === '_args' || a === '_node_inputs'))"
+        },
         {
           "id": "create_input",
           "script": "return `arg${(siblings.map(s => s.as).filter(a => a.startsWith('arg')).sort().map(s => parseInt(s.substring(3))).filter(i => !isNaN(i)).reverse()[0] ?? -1) + 1}`"
         },
         { "id": "clickable_args", "ref": "append" },
-        { "id": "node_args_text", "value": "create input: " },
+        { "id": "node_args_text", "value": "inputs: " },
         { "id": "node_args_count", "ref": "get" },
         { "id": "node_description", "ref": "node_description" },
         { "id": "info_display_path", "value": "args_display" },
-        { "id": "selected_node", "script": "return nodes.find(n => n.id === selected)" },
+        {
+          "id": "selected_node",
+          "script": "return nodes.find(n => n.id === selected)"
+        },
         { "id": "selected_node_ref", "ref": "get" },
         { "id": "selected_node_nodes", "ref": "get" },
-        { "id": "selected_inputs", "script": "return edges.filter(e => e.to === selected)" },
-        { "id": "selected_el_node", "script": "return nodes.find(n => n.node_id === selected)" },
+        {
+          "id": "selected_inputs",
+          "script": "return edges.filter(e => e.to === selected)"
+        },
+        {
+          "id": "selected_el_node",
+          "script": "return nodes.find(n => n.node_id === selected)"
+        },
         { "id": "x", "ref": "get" },
         { "id": "y", "ref": "get" },
         {
@@ -3630,7 +3649,7 @@
             { "id": "inputs", "ref": "arg", "value": "inputs" },
             { "id": "add_node", "ref": "add_node_action" },
             { "id": "add_node_action", "ref": "runnable" },
-            {"id": "true", "value": true},
+            { "id": "true", "value": true },
             { "id": "new_node" },
             { "id": "payload" },
             { "id": "create_node" },
@@ -3658,7 +3677,11 @@
             { "from": "add_node_action", "to": "create_node", "as": "action" },
             { "from": "payload", "to": "create_node", "as": "payload" },
             { "from": "text", "to": "clickable_action_args", "as": "text" },
-            { "from": "clickable_action_args", "to": "clickable_action", "as": "args" },
+            {
+              "from": "clickable_action_args",
+              "to": "clickable_action",
+              "as": "args"
+            },
             { "from": "create_node", "to": "clickable_action", "as": "fn" },
             { "from": "clickable", "to": "action", "as": "pred" },
             { "from": "clickable_action", "to": "action", "as": "true" },
@@ -3682,24 +3705,42 @@
         { "id": "args_h", "ref": "html_element" },
         { "id": "args_h_props", "value": { "class": "args" } },
         { "id": "args_h_out", "ref": "default" },
-        { "id": "expand_contract", "script": "return nodes?.length > 0 ? 'expand' : (ref === 'return' || in_edges.length > 0) ? 'contract' : false"},
-        { "id": "expand_contract_action_props"},
-        { "id": "expand_contract_actionor", "ref": "expand_contract_action"},
-        { "id": "expand_contract_action", "ref": "array"},
-        { "id": "expand_contract_class"},
-        { "id": "expand_contract_el_props"},
-        { "id": "expand_contract_el", "ref": "html_element"},
-        { "id": "expand_contract_text", "ref": "html_text"},
-        { "id": "expand_contract_show", "script": "return expand_contract !== false"},
-        { "id": "expand_contract_out", "ref": "if"},
-        {"id": "delete_node", "value": "delete"},
-        {"id": "delete_node_action_args"},
-        {"id": "delete_node_action", "ref": "delete_node_action"},
-        {"id": "delete_node_text", "ref": "html_text"},
-        {"id": "delete_node_onclick", "ref": "runnable"},
-        {"id": "delete_node_class"},
-        {"id": "delete_node_el_props"},
-        {"id": "delete_node_el", "ref": "html_element"},
+        {
+          "id": "edit_node_property_el",
+          "nodes": [
+            {"id": "arg", "value": "property"},
+            {"id": "label", "ref": "html_element"},
+            {"id": "input", "ref": "html_element"},
+            {"id": "oninput_runnable", "ref": "runnable"}
+          ],
+          "edges": [
+
+          ]
+        },
+        {
+          "id": "expand_contract",
+          "script": "return nodes?.length > 0 ? 'expand' : (ref === 'return' || in_edges.length > 0) ? 'contract' : false"
+        },
+        { "id": "expand_contract_action_props" },
+        { "id": "expand_contract_actionor", "ref": "expand_contract_action" },
+        { "id": "expand_contract_action", "ref": "array" },
+        { "id": "expand_contract_class" },
+        { "id": "expand_contract_el_props" },
+        { "id": "expand_contract_el", "ref": "html_element" },
+        { "id": "expand_contract_text", "ref": "html_text" },
+        {
+          "id": "expand_contract_show",
+          "script": "return expand_contract !== false"
+        },
+        { "id": "expand_contract_out", "ref": "if" },
+        { "id": "delete_node", "value": "delete" },
+        { "id": "delete_node_action_args" },
+        { "id": "delete_node_action", "ref": "delete_node_action" },
+        { "id": "delete_node_text", "ref": "html_text" },
+        { "id": "delete_node_onclick", "ref": "runnable" },
+        { "id": "delete_node_class" },
+        { "id": "delete_node_el_props" },
+        { "id": "delete_node_el", "ref": "html_element" },
         { "id": "description_h_text", "ref": "html_text" },
         { "id": "description_h", "ref": "html_element" },
         { "id": "description_h_out", "ref": "if" },
@@ -5287,7 +5328,7 @@
     { "id": "html_id", "ref": "arg", "value": "html_id" },
     {
       "id": "render_popover_graph_effect",
-      "script": "return (dispatch, payload) => requestAnimationFrame(() => {payload = _lib.no.resolve(payload); if(payload.popover_dispatch) { payload.popover_dispatch(s => [{...s, display_graph: payload.display_graph, selected: [payload.display_graph.out]}, [s.update_sim_effect, {...s, display_graph: payload.display_graph}], [s.update_hyperapp] ]) } else { const popover_dispatch = _lib.no.executeGraphNode({graph: payload.graph, lib: _lib})('initialize_hyperapp_app')({graph: payload.graph, display_graph: {...payload.display_graph, id: 'popover_graph_display'}, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions, readonly: true, hide_types: true, static: true, hash: ''}).dispatch; dispatch(s => ({...s, popover_dispatch}));}})"
+      "script": "return (dispatch, payload) => requestAnimationFrame(() => {payload = _lib.no.resolve(payload); if(payload.popover_dispatch) { payload.popover_dispatch(s => [{...s, display_graph: payload.display_graph, selected: [payload.display_graph.out]}, [s.update_sim_effect, {...s, display_graph: payload.display_graph}], [s.update_hyperapp] ]) } else { const popover_dispatch = _lib.no.executeGraphNode({graph: payload.graph, lib: _lib})('main/out')({graph: payload.graph, display_graph: {...payload.display_graph, id: 'popover_graph_display'}, html_id: `${payload.html_id}-popover`, dimensions: payload.dimensions, readonly: true, hide_types: true, static: true, hash: ''}).dispatch; dispatch(s => ({...s, popover_dispatch}));}})"
     },
     {
       "id": "handle_popover_event",
@@ -5336,24 +5377,16 @@
     { "from": "update_sim_effect", "to": "hyperapp_init_state", "as": "update_sim_effect" },
     { "from": "sim_to_hyperapp", "to": "hyperapp_init_state", "as": "sim_to_hyperapp" },
     { "from": "get_graph", "to": "onkey_fn", "as": "graph" },
-    { "from": "onkey_fn", "to": "initialize_hyperapp_app", "as": "onkey_fn" },
+    { "from": "onkey_fn", "to": "main/out", "as": "onkey_fn" },
     { "from": "onkey_fn_body", "to": "onkey_fn", "as": "fn", "type": "ref" },
-    { "from": "html_id", "to": "render_graph_effect", "as": "html_id" },
-    { "from": "update_sim_effect", "to": "render_graph_effect", "as": "update_sim" },
-    { "from": "popover_dimensions", "to": "render_graph_effect", "as": "dimensions" },
-    { "from": "get_graph", "to": "render_graph_effect", "as": "graph" },
-    { "from": "html_id", "to": "initialize_hyperapp_app", "as": "html_id" },
-    { "from": "render_graph_effect", "to": "_initialize_hyperapp_app", "as": "render_graph_effect" },
-    { "from": "hyperapp_view", "to": "initialize_hyperapp_app", "as": "view" },
+    { "from": "hyperapp_view", "to": "main/out", "as": "view" },
     { "from": "update_hyperapp", "to": "update_hyperapp_action", "as": "fn", "type": "ref" },
     { "from": "update_hyperapp_action", "to": "update_hyperapp_effect", "as": "fn" },
-    { "from": "update_hyperapp_effect", "to": "initialize_hyperapp_app", "as": "update_hyperapp" },
+    { "from": "update_hyperapp_effect", "to": "main/out", "as": "update_hyperapp" },
     { "from": "update_hyperapp_effect", "to": "hyperapp_init_state", "as": "update_hyperapp" },
-    { "from": "merged_init_state", "to": "initialize_hyperapp_app", "as": "init" },
+    { "from": "merged_init_state", "to": "main/out", "as": "init" },
     { "from": "get_graph", "to": "hyperapp_view", "as": "graph" },
     { "from": "get_graph", "to": "hyperapp_init_state", "as": "graph" },
-    { "from": "get_graph", "to": "update_nodes", "as": "graph" },
-    { "from": "get_display_graph", "to": "update_nodes", "as": "display_graph" },
     { "from": "get_display_graph", "to": "hyperapp_init_state", "as": "display_graph" },
     { "from": "display_graph_id", "to": "hyperapp_init_state", "as": "display_graph_id" },
     { "from": "display_graph_out", "to": "calculate_levels", "as": "selected" },
@@ -5364,12 +5397,12 @@
     { "from": "nodes", "to": "graph_to_simulation", "as": "nodes" },
     { "from": "links", "to": "graph_to_simulation", "as": "links" },
     { "from": "graph_to_simulation", "to": "graph_to_sim_action", "as": "fn", "type": "ref" },
-    { "from": "sim_to_hyperapp", "to": "initialize_hyperapp_app", "as": "sim_to_hyperapp_action" },
-    { "from": "graph_to_sim_action", "to": "initialize_hyperapp_app", "as": "graph_to_sim_action" },
+    { "from": "sim_to_hyperapp", "to": "main/out", "as": "sim_to_hyperapp_action" },
+    { "from": "graph_to_sim_action", "to": "main/out", "as": "graph_to_sim_action" },
     { "from": "update_sim_in", "to": "update_sim_fn", "as": "in_node", "type": "ref" },
     { "from": "update_sim_fn", "to": "update_sim_effect", "as": "fn" },
     { "from": "update_sim_effect", "to": "editor", "as": "update_sim" },
-    { "from": "update_sim_effect", "to": "initialize_hyperapp_app", "as": "update_sim" },
-    { "from": "initialize_hyperapp_app", "to": "out", "type": "resolve", "as": "app" }
+    { "from": "update_sim_effect", "to": "main/out", "as": "update_sim" },
+    { "from": "main/out", "to": "out", "type": "resolve", "as": "app" }
   ]
 }
