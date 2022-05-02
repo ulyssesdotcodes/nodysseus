@@ -672,7 +672,7 @@ const calculateLevels = (nodes, links, graph, selected) => {
     const connected_vertices = new Map(); //new Map(!fixed_vertices ? [] : fixed_vertices.nodes.flatMap(v => (v.nodes || []).map(n => [n, v.nodes])));
 
     const calculate_selected_graph = (s, i, c) => {
-        const id = c || children.has(s) ? children.get(s).length > 0 ? (s + "_" + (c || children.get(s)[0])) : s : s;
+        const id = s;
         if (distance_from_selected.get(id) <= i) {
             return;
         }
@@ -1378,12 +1378,13 @@ const add_default_nodes_and_edges = g => ({
 
 const runGraph = (graph, node, args, lib) => {
     let rgraph = graph.graph ? graph.graph : graph;
+    console.log(rgraph);
 
     if(!rgraph.nodes.find(n => n.id === "get")) {
         rgraph = add_default_nodes_and_edges(rgraph);
     }
 
-    nolib.no.runGraph(graph.graph ? {...graph, graph: rgraph} : rgraph, node, args, lib);
+    return nolib.no.runGraph(graph.graph ? {...graph, graph: rgraph} : rgraph, node, args, lib);
 }
 
 export { nolib, runGraph, objToGraph, flattenNode, bfs, calculateLevels, compare, hashcode, contract_all, contract_node, expand_node, add_default_nodes_and_edges, ispromise, resolve, NodysseusError };

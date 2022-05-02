@@ -1,4 +1,4 @@
-import { bfs, hashcode, add_default_nodes_and_edges, nolib, runGraph, expand_node, flattenNode, contract_node, calculateLevels, contract_all, ispromise, resolve } from "./nodysseus.js";
+import { bfs, hashcode, nolib, runGraph, expand_node, flattenNode, contract_node, calculateLevels, contract_all, ispromise, resolve } from "./nodysseus.js";
 import * as ha from "hyperapp";
 import panzoom from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
@@ -82,7 +82,6 @@ const updateSimulationNodes = (dispatch, data) => {
             nodes: [...node_positions.values()].map(([n, c, x, y]) => ({
                 ...nodes.get(n.id),
                 node_id: n.id,
-                node_id: c,
                 nested_node_count: n.nodes?.length,
                 nested_edge_count: n.edges?.length,
                 x,
@@ -142,7 +141,7 @@ const updateSimulationNodes = (dispatch, data) => {
                     }
                 });
 
-                dispatch(s => [s, [hlib.panzoom.effect, {...s, ...node_data, selected: s.selected[0]}]]);
+                dispatch(s => [s, [hlib.panzoom.effect, {...s, ...node_data, node_id: s.selected[0]}]]);
             })
         })
         return;
@@ -185,8 +184,7 @@ const updateSimulationNodes = (dispatch, data) => {
         order.push(node);
 
         const children = children_map.get(node);
-        const node_id = children.length > 0 ? node + "_" + children[0] : node;
-        main_node_map.set(node, node_id);
+        main_node_map.set(node, node);
 
         parents_map.get(node).forEach(p => {queue.push(p)})
     }
@@ -238,7 +236,6 @@ const updateSimulationNodes = (dispatch, data) => {
         }] : children.map((c, i) => ({
             ...n,
             node_id: n.id,
-            node_id: n.id + "_" + c,
             hash: simulation_node_data.get(node_id)?.hash ?? hashcode(n.id),
             sibling_index_normalized: parents_map.get(c).findIndex(p => p === n.id) / parents_map.get(c).length,
             nested_node_count: n.nodes?.length,
@@ -272,17 +269,17 @@ const updateSimulationNodes = (dispatch, data) => {
                 throw new Error(`edge node undefined ${main_node_map.has(e.from) ? '' : '>'}${e.from} ${main_node_map.has(e.to) ? '' : '>'}${e.to} `);
             }
 
-            const l = simulation_link_data.get(e.from + "_" + e.to);
+            const l = simulation_link_data.get(e.from);
             const proximal = (
                 (parents_map.get(main_node_map.get(e.to))?.length ?? 0) + 
                 (parents_map.get(children_map.get(main_node_map.get(e.to)))?.length ?? 0)
             ) * 0.5;
             return {
                 ...e,
-                source: e.from + "_" + e.to,
+                source: e.from,
                 target: main_node_map.get(e.to),
-                sibling_index_normalized: simulation_node_data.get(e.from + "_" + e.to).sibling_index_normalized,
-                strength: 2 * (1.5 - Math.abs(simulation_node_data.get(e.from + "_" + e.to).sibling_index_normalized - 0.5)) / (1 + 2 * Math.min(4, proximal)),
+                sibling_index_normalized: simulation_node_data.get(e.from).sibling_index_normalized,
+                strength: 2 * (1.5 - Math.abs(simulation_node_data.get(e.from).sibling_index_normalized - 0.5)) / (1 + 2 * Math.min(4, proximal)),
                 distance: 128 
                     + 4 * (Math.min(8, proximal)) 
             };
@@ -312,10 +309,10 @@ const updateSimulationNodes = (dispatch, data) => {
         .y(n =>
             (((parents_map.get(n.node_id)?.length > 0 ? 1 : 0)
                 + (children_map.get(n.node_id)?.length > 0 ? -1 : 0)
-                + (children_map.get(n.node_id)?.length > 0 && n.node_id !== n.node_id + "_" + children_map.get(n.node_id)[0] ? -1 : 0))
+                + (children_map.get(n.node_id)?.length > 0 ? -1 : 0))
                 * (logmaxparents + 3) + .5) * window.innerHeight)
         .strength(n => (!!parents_map.get(n.node_id)?.length === !children_map.get(n.node_id)?.length)
-            || children_map.get(n.node_id)?.length > 0 && n.node_id !== n.node_id + "_" + children_map.get(n.node_id)[0] ? .02 : 0);
+            || children_map.get(n.node_id)?.length > 0 ? .02 : 0);
 
 
     data.simulation.force('collide').radius(96);
@@ -347,7 +344,6 @@ const d3subscription = (dispatch, props) => {
     let htmlid;
     let stopped = false;
     let selected;
-    let dimensions;
     const node_el_width = 256;
     const tick = () => {
         if(simulation.nodes().length === 0) {
@@ -367,12 +363,10 @@ const d3subscription = (dispatch, props) => {
                     type: l.type,
                     source: ({
                         node_id: l.source.node_id,
-                        node_id: l.source.node_id,
                         x: Math.floor(l.source.x),
                         y: Math.floor(l.source.y)
                     }),
                     target: ({
-                        node_id: l.target.node_id,
                         node_id: l.target.node_id,
                         x: Math.floor(l.target.x),
                         y: Math.floor(l.target.y)
@@ -381,7 +375,7 @@ const d3subscription = (dispatch, props) => {
             const ids = simulation.nodes().map(n => n.node_id).join(',');
             stopped = false;
             simulation.tick();
-            requestAnimationFrame(() => dispatch([s => (selected = s.selected[0], dimensions = s.dimensions, 
+            requestAnimationFrame(() => dispatch([s => (selected = s.selected[0],
                 s.nodes.map(n => n.node_id).join(',') !== ids ? [props.action, data] 
                     : [s, 
                         [
@@ -390,7 +384,7 @@ const d3subscription = (dispatch, props) => {
                                 nodes: simulation.nodes().map(n => ({...n, x: n.x - 8, y: n.y})), 
                                 links: simulation.force('links').links(), 
                                 prevent_dispatch: true, 
-                                selected: s.selected[0]
+                                node_id: s.selected[0]
                             }
                         ]
                     ])]));
@@ -468,12 +462,10 @@ const d3subscription = (dispatch, props) => {
                     type: l.type,
                     source: ({
                         node_id: l.source.node_id,
-                        node_id: l.source.node_id,
                         x: Math.floor(l.source.x),
                         y: Math.floor(l.source.y)
                     }),
                     target: ({
-                        node_id: l.target.node_id,
                         node_id: l.target.node_id,
                         x: Math.floor(l.target.x),
                         y: Math.floor(l.target.y)
@@ -482,7 +474,7 @@ const d3subscription = (dispatch, props) => {
             stopped = true; 
             requestAnimationFrame(() => {
                 dispatch([props.action, data])
-                dispatch(s => [s, [hlib.panzoom.effect, {...s, selected: s.selected[0]}]])
+                dispatch(s => [s, [hlib.panzoom.effect, {...s, node_id: s.selected[0]}]])
             });
         }
 
@@ -538,17 +530,14 @@ const run_h = ({dom_type, props, children, text}) => dom_type === "text_value"
     : ha.h(dom_type, props, children?.filter(c => !!c).map(run_h) ?? []) 
 
 const result_subscription = (dispatch, props) => {
-    console.log(props);
     const listener = ({graph, result}) => {
-        console.log('got result');
-        console.log(props.display_graph_id);
-        console.log(graph);
-        console.log(result);
-        console.log(result.display.el);
+        result = resolve(result);
         if(graph.id === props.display_graph_id) {
             requestAnimationFrame(() => {
                 dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s);
-                props.result_display_dispatch(UpdateResultDisplay, {el: result.display.el ? result.display.el :ha.h('div', {})})
+                if(!!result.display.el){
+                    props.result_display_dispatch(UpdateResultDisplay, {el: result.display.el ? result.display.el : ha.h('div', {})})
+                }
             })
         }
     }
@@ -624,7 +613,7 @@ const pzobj = {
         const viewbox = findViewBox(
             payload.nodes, 
             payload.links, 
-            typeof payload.selected === 'string' ? payload.selected : payload.selected[0], 
+            payload.node_id,
             payload.node_el_width, 
             payload.html_id,
             payload.dimensions
@@ -660,6 +649,11 @@ const pzobj = {
 
 const UpdateSimulation = (dispatch, payload) => payload ? !(payload.simulation || payload.static) ? undefined : updateSimulationNodes(dispatch, payload) : dispatch(state => [state, [() => !(state.simulation || state.static) ? undefined : updateSimulationNodes(dispatch, state)]])
 
+const UpdateGraphDisplay = (dispatch, payload) => requestAnimationFrame(() => dispatch(s => [{
+    ...s,
+    levels: calculateLevels(payload.nodes, payload.links, payload.display_graph, payload.selected)
+}]))
+
 const CustomDOMEvent = (_, payload) => document.getElementById(`${payload.html_id}`)?.dispatchEvent(new CustomEvent(payload.event, {detail: payload.detail}))
 
 const SimulationToHyperapp = (state, payload) => [{
@@ -670,9 +664,12 @@ const SimulationToHyperapp = (state, payload) => [{
     randid: Math.random().toString(36).substring(2, 9),
 }, [CustomDOMEvent, {html_id: state.html_id, event: 'updategraph', detail: {graph: state.display_graph}}]];
 
-const SelectNode = (state, payload) => state.selected[0] === payload.node_id ? state : [{...state, selected: [payload.node_id]}]
-
-const style_content = "#node-editor { position: relative; width: 100%; height: 100vh; color: white; font-family: consolas; overflow: hidden; } #node-editor-editor.hash-view { background-color: unset; } svg { user-select: none; } .graph-ui { display: flex; position: absolute; right: 100px; top: 100px; flex-direction: row; gap: 8px; } .graph-ui ion-icon { cursor: pointer; width: 1.5em; height: 1.5em; color: #ccc; } .graph-ui ion-icon:hover { color: #fff; } .edit-value { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #00000011; } .edit-value .more { cursor: pointer; } .edit-value .centering { position: absolute; width: 32vw; display: flex; flex-direction: column; } .edit-value.none { left: -1000%; } .edit-value textarea { width: 32vw; font-size: (1em + 1vh); outline: none; resize: none; } .edit-value label { font-size: calc(1em + 2vh) } .edit-value textarea { height: 64em; } .edit-value.ref input { position:relative; left: 0; } .edit-value .input { width: 256px; } .search-input.hidden { left: -1000px; } #arrow polyline { stroke: #fff; stroke-width: 2; fill: none } .node { cursor: pointer; } .node:hover { opacity: 1 !important; } .node .fill { opacity: 0; } .node .shape { animation_: 2s blink infinite; fill: #66ccff; } .node:hover .shape { stroke-width: 2; stroke: #3fc } .node.selected .shape { fill: #fcc; } .node .shape.script { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(45deg); fill: none; stroke-width: 2px; stroke: #66ccff; } .node.selected .shape.script { stroke: #fcc; } .node .shape.none { stroke-width: 2px; stroke: #66ccff; } .node .shape.error { fill: #FF0000 !important; } .node.selected .shape.none { stroke: #fcc; } .node-info { position: absolute; top: 0; left: 0; z-index: 10; border: 1px solid white; background: black; padding: .4em; max-width: 256px; color: white; display: flex; gap: .4em; flex-direction: column; } .node-info .args { display: flex; gap: 8px; flex-wrap: wrap; } .node-info .args span.clickable { cursor: pointer; text-decoration: underline dotted;  } .action {cursor: pointer; text-decoration: underline dotted;} /* result props */ #result { position: fixed; bottom: 32px; left: 32px; max-width: 33%; } .result.error { color: red; } text { user-select: none; fill: white; } .link.selected { stroke: red; } .link { stroke: #ccc; } svg.edge-info.selected rect { fill: red; } .insert-node, #dummy-add-node { cursor: pointer; stroke: #fff; stroke-width: 32; stroke-opacity: 1; } .insert-node .circle, #dummy-add-node .circle { fill-opacity: 0.5; } .node text { filter: url(#flood-background) } .node text .primary { font-weight: bold; } .node text .secondary { font-style: italic; } .node.selected text .secondary:hover, .node.selected text .primary:hover { text-decoration: dashed underline; } .show-key { position: fixed; right: 100px; top: 100px; font-size: 2em;; font-family: consolas; } .edge-info { filter: url(\"#flood-background\"); padding: 4px; cursor: pointer; } .edge-info.selected { filter: url(\"#selected-flood-background\"); } .error.main { position: absolute; top: 0; left: 0; width: 25vw; color: red; padding: 1em; height: 8em; z-index: 100; } /* popover */ #node-editor-popover { position: fixed; width: 100vw; height: 100vh; z-index: 100; top: 0; left: 0; background: #000000EE; } .popover { position: absolute; z-index: 100; background: #000000EE; }";
+const SelectNode = (state, payload) => [
+    state.selected[0] === payload.node_id ? state : {...state, selected: [payload.node_id]},
+    [pzobj.effect, {...state, node_id: payload.node_id}],
+    [UpdateGraphDisplay, {...state, selected: [payload.node_id]}],
+    (state.show_all || state.selected[0] !== payload.node_id) && [pzobj.effect, {...state, node_id: payload.node_id}]
+]
 
 const fill_rect_el = () =>ha.h('rect', {class: 'fill', width: '48', 'height': '48'}, [])
 const node_text_el = ({primary, secondary}) =>ha.h('text', {x: 48, y: 12}, [
@@ -691,14 +688,14 @@ const defs = () =>ha.h('defs', {}, [
 ])
 
 const radius = 24;
-const node_el = ({html_id, selected, error, node}) =>ha.h('svg', {
+const node_el = ({html_id, selected, error, selected_distance, node}) =>ha.h('svg', {
     onclick: [SelectNode, {node_id: node.node_id}],  
     ontouchstart: [SelectNode, {node_id: node.node_id}], 
     width: '256', 
     height: '64', 
     key: html_id + '-' + node.node_id, 
     id: html_id + '-' + node.node_id, 
-    class: {node: true,  selected: selected === node.node_id}
+    class: {node: true, selected: selected === node.node_id, [`distance-${selected_distance < 4 ? selected_distance : 'far'}`]: true}
 }, [
    ha.h(
         node.script ? 'rect' : node.ref && node.ref !== 'arg' ? 'rect' : node.nodes ? 'circle' : node.value ? 'polygon' : 'circle', 
@@ -719,9 +716,9 @@ const node_el = ({html_id, selected, error, node}) =>ha.h('svg', {
     ha.memo(fill_rect_el)
 ])
 
-const link_el = ({link}) =>ha.h('g', {}, [
-   ha.h('line', {id: `link-${link.source.node_id}`, class: 'link', "marker-end": "url(#arrow)"}),
-   ha.h('svg', {id: `edge-info-${link.source.node_id}`, class: "edge-info"}, [
+const link_el = ({link, selected_distance}) =>ha.h('g', {}, [
+   ha.h('line', {id: `link-${link.source.node_id}`, class: {"link": true, [`distance-${selected_distance}`]: true}, "marker-end": "url(#arrow)"}),
+   ha.h('svg', {id: `edge-info-${link.source.node_id}`, class: {"edge-info": true, [`distance-${selected_distance}`]: true}}, [
        ha.h('rect', {}),
        ha.h('text', {fontSize: 14, y: 16}, [ha.text(link.as)])
     ])
@@ -729,12 +726,13 @@ const link_el = ({link}) =>ha.h('g', {}, [
 
 const UpdateResultDisplay = (state, el) => ({
     ...state,
-    el: el.el ?? el
+    el: el.el ? {...el.el} : {...el}
 })
 
 const result_display = html_id => ha.app({
     init: {el: {dom_type: 'div', props: {}, children: [{dom_type: 'text_value', text: 'loading result'}]}},
     node: document.getElementById(html_id + "-result"),
+    dispatch: middleware,
     view: s => {
         return run_h(s.el)
     }
@@ -749,7 +747,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
     const init = { 
         graph: editor_graph, 
         display_graph_id: display_graph.id,
-        display_graph: {...add_default_nodes_and_edges(display_graph), out: "main/out"},
+        display_graph: {...display_graph, out: "main/out"},
         hash: window.location.hash ?? "",
         url_params,
         html_id,
@@ -757,7 +755,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
             x: document.getElementById(html_id).clientWidth,
             y: document.getElementById(html_id).clientHeight
         },
-        examples: examples.map(add_default_nodes_and_edges),
+        examples: examples,
         readonly: false, 
         norun: norun || url_params.get("norun") !== null,
         hide_types: false,
@@ -781,7 +779,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
     const dispatch = ha.app({
         init: ()=> [init, 
             [() => requestAnimationFrame(() => {
-                result_display_dispatch = result_display(html_id)
+                result_display_dispatch = result_display(html_id);
             })],
             [UpdateSimulation, {...init, action: SimulationToHyperapp}], 
         ],
@@ -789,21 +787,65 @@ const editor = async function(html_id, display_graph, lib, norun) {
            ha.h('svg', {id: `${s.html_id}-editor`, width: s.dimensions.x, height: s.dimensions.y}, [
                ha.h('g', {id: `${s.html_id}-editor-panzoom`}, 
                     [ha.memo(defs)].concat(
-                        s.nodes?.map(node => ha.memo(node_el, ({html_id: s.html_id, selected: s.selected[0], error: s.error, node}))) ?? []
+                        s.nodes?.map(node => ha.memo(node_el, ({
+                            html_id: s.html_id, 
+                            selected: s.selected[0], 
+                            error: s.error, 
+                            selected_distance: s.show_all ? 0 : s.levels.distance_from_selected.get(node.node_id) > 3 ? 'far' : s.levels.distance_from_selected.get(node.node_id),
+                            node}))) ?? []
                     ).concat(
-                        s.links?.map(link => ha.memo(link_el, {link})) ?? []
+                        s.links?.map(link => ha.memo(link_el, {
+                            link,
+                            selected_distance: s.show_all ? 0 : s.levels.distance_from_selected.get(link.source.node_id) > 3 ? 'far' : s.levels.distance_from_selected.get(link.source.node_id),
+                        })) ?? []
                     )
                 ),
             ]),
-           ha.h('style', {}, [ha.text(style_content)]),
            ha.h('div', {id: `${html_id}-result`})
         ]),
         node: document.getElementById(html_id),
         subscriptions: s => [
             [d3subscription, {action: SimulationToHyperapp, update: UpdateSimulation}], 
             [graph_subscription, {display_graph_id: s.display_graph_id}],
-            result_display_dispatch && [result_subscription, {display_graph: s.display_graph, display_graph_id: s.display_graph_id, result_display_dispatch}],
-            [keydownSubscription, {action: s => s}],
+            result_display_dispatch && [result_subscription, {display_graph: nolib.no.runtime.get_graph(s.display_graph), display_graph_id: s.display_graph_id, result_display_dispatch}],
+            [keydownSubscription, {action: (state, payload) => {
+                const mode = state.editing !== false ? 'editing' : state.search !== false ? 'searching' : 'graph';
+                const key_input = (payload.ctrlKey ? 'ctrl_' : '') + (payload.shiftKey ? 'shift_' : '') + (payload.key === '?' ? 'questionmark' : payload.key.toLowerCase());
+                const selected = state.selected[0];
+                const result = runGraph(editor_graph, "keybindings", {}, hlib)[mode][key_input];
+                let action;
+                switch(result){
+                    case "up": {
+                        const parent_edges = nolib.no.runtime.get_edges_in(state.display_graph, selected);
+                        const node_id = parent_edges?.[Math.ceil(parent_edges.length / 2) - 1]?.from
+                        action = node_id ? [SelectNode, {node_id}] : [state]
+                        break;
+                    }
+                    case "down": {
+                        const child_edge = state.display_graph.edges.find(e => e.from === selected);
+                        const node_id = child_edge?.to
+                        action = node_id ? [SelectNode, {node_id}] : [state]
+                        break;
+                    }
+                    case "left": 
+                    case "right": {
+                        const dirmult = result === "left" ? 1 : -1;
+                        const current_node = state.nodes.find(n => n.node_id === selected); 
+                        const siblings = state.levels.siblings.get(selected); 
+                        const node_id = siblings.reduce((dist, sibling) => { 
+                            const sibling_node = state.nodes.find(n => n.node_id === sibling); 
+                            if(!sibling_node){ return dist } 
+                            const xdist = Math.abs(sibling_node.x - current_node.x); 
+                            dist = (dirmult * (sibling_node.x - current_node.x) < 0) && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist 
+                        }, [state.dimensions.x])?.[1]?.node_id; 
+                        action = node_id ? [SelectNode, {node_id}] : [state]
+                        break;
+                    }
+                    default: nolib.no.runtime.publish.fn(undefined, 'keydown', key_input)
+                }
+
+                return action ? action : state;
+            }}],
             listen('resize', s => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}]),
             !!document.getElementById( `${html_id}-editor-panzoom`) && [pzobj.init, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]
         ], 
