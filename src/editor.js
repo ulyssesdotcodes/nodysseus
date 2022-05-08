@@ -670,13 +670,19 @@ const SelectNode = (state, payload) => [
     (state.show_all || state.selected[0] !== payload.node_id) && [pzobj.effect, {...state, node_id: payload.node_id}]
 ]
 
-const CreateNode = (state, {node, child, child_as}) => [
+const CreateNode = (state, {node, child, child_as, parent}) => [
     {
         ...state, 
         history: state.history.concat([{action: 'add_node', node, child, child_as}])
     },
     [dispatch => {
-        nolib.no.runtime.add_node(state.display_graph, node, {from: node.id, to: child, as: child_as})
+        nolib.no.runtime.add_node(state.display_graph, node)
+        nolib.no.runtime.update_edges(state.display_graph, 
+            parent 
+                ? [{from: node.id, to: child, as: parent.as}, {from: parent.from, to: node.id, as: 'arg0'}] 
+                : [{from: node.id, to: child, as: child_as}], 
+            parent ? [{from: parent.from, to: child}] : []
+        )
         // Hacky - have to wait until the node is finished adding and the graph callback takes place before updating selected node.
         setTimeout(() => requestAnimationFrame(() => dispatch(s => [{...s, selected: [node.id]}])), 50);
     }]
@@ -755,6 +761,22 @@ const link_el = ({link, selected_distance}) =>ha.h('g', {}, [
     ])
 ])
 
+
+const insert_node_el = ({link, randid, node_el_width}) => ha.h('svg', {
+    viewBox: "0 0 512 512",
+    id: `insert-${link.source.node_id}`,
+    key: `insert-${link.source.node_id}`,
+    height: "32px",
+    width: "32px",
+    x: Math.floor((link.source.x + link.target.x - node_el_width) * 0.5) - 16,
+    y: Math.floor((link.source.y + link.target.y) * 0.5) - 16,
+    class: 'insert-node',
+    onclick: (s, p) => [CreateNode, {node: {id: randid}, child: link.target.node_id, parent: {from: link.source.node_id, to: link.target.node_id, as: link.as}}]
+}, [
+    ha.h('path', {d: "M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192z", class: "circle" }, []),
+    ha.h('path', {d: "M256 176v160M336 256H176", class: "add"}, [])
+])
+
 const input_el = ({action, label, value}) => ha.h(
     'div',
     {class: 'value-input'},
@@ -764,7 +786,7 @@ const input_el = ({action, label, value}) => ha.h(
     ]
 )
 
-const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_graph_id, randid}) => {
+const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_graph_id, randid, refs}) => {
     const node_ref = node.ref ? nolib.no.runtime.get_node(display_graph_id, node.ref) : node;
     const description =  node_ref?.description;
 
@@ -794,6 +816,11 @@ const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_grap
             ha.h('div', {class: "inputs"}, [
                 input_el({label: "value", value: node.value, action: (state, payload) => [UpdateNode, {node, property: "value", value: payload.target.value}]}),
                 input_el({label: "name", value: node.name, action: (state, payload) =>[UpdateNode, {node, property: "name", value: payload.target.value}]}),
+                ha.h('div', {class: 'value-input'}, [
+                    ha.h('label', {for: 'ref-select'}, [ha.text("ref")]),
+                    ha.h('input', {list: 'ref-nodes', id: 'ref-select', name: 'ref-select'}),
+                    ha.h('datalist', {id: 'ref-nodes'}, refs.map(r => ha.h('option', {value: r.id})))
+                ])
             ]),
             description && ha.h('div', {class: "description"}, ha.text(description)),
             ha.h('div', {class: "buttons"}, [
@@ -884,6 +911,9 @@ const editor = async function(html_id, display_graph, lib, norun) {
                             link,
                             selected_distance: s.show_all ? 0 : s.levels.distance_from_selected.get(link.source.node_id) > 3 ? 'far' : s.levels.distance_from_selected.get(link.source.node_id),
                         })) ?? []
+                    ).concat(
+                        s.links?.filter(link => link.source.node_id == s.selected[0] || link.target.node_id === s.selected[0])
+                            .map(link => insert_node_el({link, randid: s.randid, node_el_width: s.node_el_width}))
                     )
                 ),
             ]),
@@ -895,7 +925,9 @@ const editor = async function(html_id, display_graph, lib, norun) {
                 svg_offset: s.svg_offset,
                 dimensions: s.dimensions,
                 display_graph_id: s.display_graph_id,
-                randid: s.randid
+                randid: s.randid,
+                refs: s.display_graph.nodes
+                    .filter(n => !(n.ref || s.levels.level_by_node.has(n.id)) && (n.script ||n.nodes || n.extern))
             }),
             ha.h('div', {id: `${html_id}-result`})
         ]),
@@ -946,7 +978,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
 
                 return action ? action : [state, ...effects];
             }}],
-            listen('resize', s => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}]),
+            listen('resize', s => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, () => nolib.no.runtime.publish('resize', {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight})]),
             !!document.getElementById( `${html_id}-editor-panzoom`) && [pzobj.init, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]
         ], 
     });

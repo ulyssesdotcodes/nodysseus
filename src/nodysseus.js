@@ -1207,14 +1207,24 @@ const nolib = {
                     }
                     publish('graphchange', new_graph);
                 },
-                add_node: (graph, node, edge) => {
+                update_edges: (graph, add ,remove) => {
                     const gcache = get_cache(graph);
                     graph = gcache.graph;
 
                     const new_graph = {
                         ...graph,
-                        nodes: graph.nodes.filter(n => n.id !== node.id).concat([node]),
-                        edges: edge ? graph.edges.filter(e => !(e.from === edge.from && e.to === edge.to)).concat(edge) : graph.edges
+                        edges: graph.edges.filter(e => !(remove.find(r => r.from === e.from && r.to === e.to))).concat(add)
+                    }
+
+                    update_graph(new_graph);
+                },
+                add_node: (graph, node) => {
+                    const gcache = get_cache(graph);
+                    graph = gcache.graph;
+
+                    const new_graph = {
+                        ...graph,
+                        nodes: graph.nodes.filter(n => n.id !== node.id).concat([node])
                     };
 
                     cache.delete(get_hashcode(graph.id + "/" + node.id));
