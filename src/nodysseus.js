@@ -1138,6 +1138,7 @@ const nolib = {
             const get_node = (graph, id) => getorsetgraph(graph, id, 'node_map', () =>
                 get_graph(graph).nodes.find(n => n.id === id))
                     || (get_parent(graph) ? get_ref(graph, id) : undefined);
+            const get_edge = (graph, from) => get_cache(graph).graph.edges.find(e => e.from === from);
             const get_edges_in = (graph, id) => getorsetgraph(graph, id, 'in_edge_map', () => graph.edges.filter(e => e.to === id));
             const get_args = (graph) => get_cache(graph).args;
             const get_graph = (graph) => {
@@ -1179,6 +1180,7 @@ const nolib = {
                 set_cached: (graph, id) => get_cache(graph.id).is_cached.add(id),
                 get_ref,
                 get_node,
+                get_edge,
                 get_edges_in,
                 get_parent,
                 get_parentest,
@@ -1203,9 +1205,11 @@ const nolib = {
 
                     const new_graph = {
                         ...graph,
-                        edges: graph.edges.filter(e => !(e.to === (old_edge || edge).to && e.from === (old_edge || edge).from)).concat([edge])
+                        edges: graph.edges
+                            .filter(e => !(e.to === (old_edge || edge).to && e.from === (old_edge || edge).from)).concat([edge])
                     }
-                    publish('graphchange', new_graph);
+
+                    update_graph(new_graph);
                 },
                 update_edges: (graph, add ,remove) => {
                     const gcache = get_cache(graph);

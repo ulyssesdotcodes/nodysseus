@@ -531,7 +531,7 @@ const result_subscription = (dispatch, props) => {
         if(graph.id === props.display_graph_id) {
             requestAnimationFrame(() => {
                 dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s);
-                if(!!result.display.el){
+                if(!!result?.display?.el){
                     props.result_display_dispatch(UpdateResultDisplay, {el: result.display.el ? result.display.el : ha.h('div', {})})
                 }
             })
@@ -708,6 +708,11 @@ const UpdateNode = (state, {node, property, value}) => [
     [() => nolib.no.runtime.add_node(state.display_graph, Object.assign({}, base_node(node), {[property]: value}))]
 ]
 
+const UpdateEdge = (state, {edge, as}) => [
+    state,
+    [() => nolib.no.runtime.edit_edge(state.display_graph, {...edge, as}, edge)]
+]
+
 const fill_rect_el = () =>ha.h('rect', {class: 'fill', width: '48', 'height': '48'}, [])
 const node_text_el = ({primary, secondary}) =>ha.h('text', {x: 48, y: 12}, [
    ha.h('tspan', {class: "primary", dy: ".6em", x: "48"}, ha.text(primary)),
@@ -820,13 +825,14 @@ const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_grap
                     ha.h('label', {for: 'ref-select'}, [ha.text("ref")]),
                     ha.h('input', {list: 'ref-nodes', id: 'ref-select', name: 'ref-select'}),
                     ha.h('datalist', {id: 'ref-nodes'}, refs.map(r => ha.h('option', {value: r.id})))
-                ])
+                ]),
+                link_out && link_out.source && input_el({label: "edge", value: link_out.as, action: (state, payload) =>[UpdateEdge, {edge: {from: link_out.from, to: link_out.to, as: link_out.as}, as: payload.target.value}]}),
             ]),
             description && ha.h('div', {class: "description"}, ha.text(description)),
             ha.h('div', {class: "buttons"}, [
                 ha.h('div', {class: "action"}, ha.text(node.nodes?.length > 0 ? "expand" : "contract")),
                 ha.h('div', {class: "action", onclick: [DeleteNode, {
-                    parent: link_out ? {from: link_out.source.node_id, to: link_out.target.node_id, as: link_out.as} : undefined, 
+                    parent: link_out && link_out.source ? {from: link_out.source.node_id, to: link_out.target.node_id, as: link_out.as} : undefined, 
                     node_id: node.node_id
                 }]}, ha.text("delete"))
             ])
@@ -908,7 +914,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
                         }))) ?? []
                     ).concat(
                         s.links?.map(link => ha.memo(link_el, {
-                            link,
+                            link: Object.assign({}, link, nolib.no.runtime.get_edge(s.display_graph, link.source.node_id)),
                             selected_distance: s.show_all ? 0 : s.levels.distance_from_selected.get(link.source.node_id) > 3 ? 'far' : s.levels.distance_from_selected.get(link.source.node_id),
                         })) ?? []
                     ).concat(
@@ -921,7 +927,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
                 node_id: s.selected[0], 
                 node: Object.assign({}, s.nodes.find(n => n.node_id === s.selected[0]), nolib.no.runtime.get_node(s.display_graph, s.selected[0])),
                 links_in: s.links.filter(l => l.target.node_id === s.selected[0]),
-                link_out: s.links.find(l => l.source.node_id === s.selected[0]),
+                link_out: Object.assign({}, s.links.find(l => l.source.node_id === s.selected[0]), nolib.no.runtime.get_edge(s.display_graph, s.selected[0])),
                 svg_offset: s.svg_offset,
                 dimensions: s.dimensions,
                 display_graph_id: s.display_graph_id,
