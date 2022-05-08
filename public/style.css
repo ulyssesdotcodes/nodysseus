@@ -221,7 +221,7 @@ svg {
 }
 
 /* result props */
-#result {
+#node-editor-result {
     position: fixed;
     bottom: 32px;
     left: 32px;
