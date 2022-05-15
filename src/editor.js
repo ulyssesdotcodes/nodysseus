@@ -801,6 +801,11 @@ const pzobj = {
                 ? dispatch(sub_payload.action, {event: 'panstart', transform: e.getTransform()}) 
                 : undefined
             );
+            hlib.panzoom.instance.on('zoom', e => 
+                performance.now() - hlib.panzoom.lastpanzoom > 100 
+                ? dispatch(sub_payload.action, {event: 'zoom', transform: e.getTransform()}) 
+                : undefined
+            );
             hlib.panzoom.instance.moveTo(window.innerWidth * 0, window.innerHeight * 0.5);
         });
         return () => { cancelAnimationFrame(init); hlib.panzoom.instance?.dispose(); }
@@ -824,11 +829,22 @@ const SimulationToHyperapp = (state, payload) => [{
     randid: Math.random().toString(36).substring(2, 9),
 }, [CustomDOMEvent, {html_id: state.html_id, event: 'updategraph', detail: {graph: state.display_graph}}]];
 
-const SelectNode = (state, payload) => [
-    state.selected[0] === payload.node_id ? state : {...state, selected: [payload.node_id]},
-    [pzobj.effect, {...state, node_id: payload.node_id}],
-    [UpdateGraphDisplay, {...state, selected: [payload.node_id]}],
-    (state.show_all || state.selected[0] !== payload.node_id) && [pzobj.effect, {...state, node_id: payload.node_id}]
+const FocusEffect = (_, {selector}) => setTimeout(() => {
+    const el = document.querySelector(selector);
+    if(!el) return
+
+    el.focus();
+    if(el instanceof HTMLInputElement && el.type === "text") {
+        el.select()
+    }
+}, 50);
+
+const SelectNode = (state, {node_id, focus_property}) => [
+    state.selected[0] === node_id ? state : {...state, selected: [node_id]},
+    !state.show_all && [pzobj.effect, {...state, node_id: node_id}],
+    [UpdateGraphDisplay, {...state, selected: [node_id]}],
+    (state.show_all || state.selected[0] !== node_id) && [pzobj.effect, {...state, node_id}],
+    focus_property && [FocusEffect, {selector: `.node-info input.${focus_property}`}]
 ]
 
 const CreateNode = (state, {node, child, child_as, parent}) => [
@@ -888,9 +904,9 @@ const UpdateEdge = (state, {edge, as}) => [
 ]
 
 const fill_rect_el = () =>ha.h('rect', {class: 'fill', width: '48', 'height': '48'}, [])
-const node_text_el = ({primary, secondary}) =>ha.h('text', {x: 48, y: 12}, [
-   ha.h('tspan', {class: "primary", dy: ".6em", x: "48"}, ha.text(primary)),
-   ha.h('tspan', {class: "secondary", dy: "1.2em", x: "48"}, ha.text(secondary))
+const node_text_el = ({node_id, primary, focus_primary, secondary}) =>ha.h('text', {x: 48, y: 12}, [
+   ha.h('tspan', {class: "primary", dy: ".6em", x: "48", onclick: [SelectNode, {node_id, focus_property: focus_primary}]}, ha.text(primary)),
+   ha.h('tspan', {class: "secondary", dy: "1.2em", x: "48", onclick: [SelectNode, {node_id, focus_property: "ref"}]}, ha.text(secondary))
 ])
 
 const defs = () =>ha.h('defs', {}, [
@@ -911,7 +927,11 @@ const node_el = ({html_id, selected, error, selected_distance, node}) =>ha.h('sv
     height: '64', 
     key: html_id + '-' + node.node_id, 
     id: html_id + '-' + node.node_id, 
-    class: {node: true, selected: selected === node.node_id, [`distance-${selected_distance < 4 ? selected_distance : 'far'}`]: true}
+    class: {
+        node: true, 
+        selected: selected === node.node_id, 
+        [`distance-${selected_distance < 4 ? selected_distance : 'far'}`]: true
+    }
 }, [
    ha.h(
         node.script ? 'rect' : node.ref && node.ref !== 'arg' ? 'rect' : node.nodes ? 'circle' : node.value ? 'polygon' : 'circle', 
@@ -926,7 +946,9 @@ const node_el = ({html_id, selected, error, selected_distance, node}) =>ha.h('sv
             : {class: {shape: true, none: true, error}, r: radius * 0.5 , cx: radius * 0.5 + 4, cy: radius * 0.5 + 4}
     ),
     ha.memo(node_text_el, {
+        node_id: node.id,
         primary: node.name ? node.name : node.value ? node.value : '', 
+        focus_primary: node.name ? "name" : "value",
         secondary: node.ref ? node.ref : node.script ? 'script' : node.nodes ? `graph (${node.nested_node_count}, ${node.nested_edge_count})` : node.value !== undefined ? 'value' : 'object'
     }),
     ha.memo(fill_rect_el)
@@ -934,7 +956,11 @@ const node_el = ({html_id, selected, error, selected_distance, node}) =>ha.h('sv
 
 const link_el = ({link, selected_distance}) =>ha.h('g', {}, [
    ha.h('line', {id: `link-${link.source.node_id}`, class: {"link": true, [`distance-${selected_distance}`]: true}, "marker-end": "url(#arrow)"}),
-   ha.h('svg', {id: `edge-info-${link.source.node_id}`, class: {"edge-info": true, [`distance-${selected_distance}`]: true}}, [
+   ha.h('svg', {
+       id: `edge-info-${link.source.node_id}`, 
+       class: {"edge-info": true, [`distance-${selected_distance}`]: true},
+       onclick: [SelectNode, {node_id: link.source.node_id, focus_property: "edge"}]
+    }, [
        ha.h('rect', {}),
        ha.h('text', {fontSize: 14, y: 16}, [ha.text(link.as)])
     ])
@@ -956,12 +982,12 @@ const insert_node_el = ({link, randid, node_el_width}) => ha.h('svg', {
     ha.h('path', {d: "M256 176v160M336 256H176", class: "add"}, [])
 ])
 
-const input_el = ({action, label, value}) => ha.h(
+const input_el = ({action, label, property, value}) => ha.h(
     'div',
     {class: 'value-input'},
     [
         ha.h('label', {for: "edit-text"}, [ha.text(label)]),
-        ha.h('input', {id: "edit-text", name: "edit-text", oninput: action, onkeydown: StopPropagation, value}),
+        ha.h('input', {class: property, id: "edit-text", name: "edit-text", oninput: action, onkeydown: StopPropagation, value}),
     ]
 )
 
@@ -993,14 +1019,19 @@ const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_grap
                             ?? [CreateNode, {node: {id: randid}, child: node.id, child_as: n.value}]
                     }, [ha.text(n.value)])) ?? []),
             ha.h('div', {class: "inputs"}, [
-                input_el({label: "value", value: node.value, action: (state, payload) => [UpdateNode, {node, property: "value", value: payload.target.value}]}),
-                input_el({label: "name", value: node.name, action: (state, payload) =>[UpdateNode, {node, property: "name", value: payload.target.value}]}),
+                input_el({label: "value", value: node.value, property: "value", action: (state, payload) => [UpdateNode, {node, property: "value", value: payload.target.value}]}),
+                input_el({label: "name", value: node.name, property: "name", action: (state, payload) =>[UpdateNode, {node, property: "name", value: payload.target.value}]}),
                 ha.h('div', {class: 'value-input'}, [
                     ha.h('label', {for: 'ref-select'}, [ha.text("ref")]),
-                    ha.h('input', {list: 'ref-nodes', id: 'ref-select', name: 'ref-select'}),
+                    ha.h('input', {class: 'ref', list: 'ref-nodes', id: 'ref-select', name: 'ref-select'}),
                     ha.h('datalist', {id: 'ref-nodes'}, refs.map(r => ha.h('option', {value: r.id})))
                 ]),
-                link_out && link_out.source && input_el({label: "edge", value: link_out.as, action: (state, payload) =>[UpdateEdge, {edge: {from: link_out.from, to: link_out.to, as: link_out.as}, as: payload.target.value}]}),
+                link_out && link_out.source && input_el({
+                    label: "edge", 
+                    value: link_out.as, 
+                    property: "edge",
+                    action: (state, payload) =>[UpdateEdge, {edge: {from: link_out.from, to: link_out.to, as: link_out.as}, as: payload.target.value}]
+                }),
             ]),
             description && ha.h('div', {class: "description"}, ha.text(description)),
             ha.h('div', {class: "buttons"}, [
