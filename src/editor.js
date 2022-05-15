@@ -1,4 +1,4 @@
-import { bfs, hashcode, nolib, runGraph, expand_node, flattenNode, contract_node, calculateLevels, contract_all, ispromise, resolve, add_default_nodes_and_edges } from "./nodysseus.js";
+import { bfs, hashcode, nolib, runGraph, calculateLevels, ispromise, resolve, add_default_nodes_and_edges } from "./nodysseus.js";
 import * as ha from "hyperapp";
 import panzoom from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
@@ -484,6 +484,167 @@ const d3subscription = (dispatch, props) => {
     return () => { abort_signal.stop = true; }
 }
 
+const flattenNode = (graph, levels = -1) => {
+    if (graph.nodes === undefined || levels === 0) {
+        return graph;
+    }
+
+    // needs to not prefix base node because then flatten node can't run  next
+    const prefix = graph.id ? `${graph.id}/` : '';
+    const prefix_name = graph.id ? `${graph.name}/` : '';
+
+    return graph.nodes
+        .map(n => Object.assign({}, n, { id: `${prefix}${n.id}` }))
+        .map(g => flattenNode(g, levels - 1))
+        .reduce((acc, n) => Object.assign({}, acc, {
+            flat_nodes: acc.flat_nodes.concat(n.flat_nodes ? n.flat_nodes.flat() : []).map(fn => {
+                // adjust for easy graph renaming
+                if ((fn.id === prefix + (graph.out || "out")) && graph.name) {
+                    fn.name = graph.name;
+                }
+                return fn
+            }),
+            flat_edges: acc.flat_edges.map(e => n.flat_nodes ?
+                e.to === n.id ?
+                    Object.assign({}, e, { to: `${e.to}/${n.in || 'in'}` }) :
+                    e.from === n.id ?
+                        Object.assign({}, e, { from: `${e.from}/${n.out || 'out'}` }) :
+                        e :
+                e).flat().concat(n.flat_edges).filter(e => e !== undefined)
+        }), Object.assign({}, graph, {
+            flat_nodes: graph.nodes
+                .map(n => Object.assign({}, n, { id: `${prefix}${n.id}` })),
+            flat_edges: graph.edges
+                .map(e => ({ ...e, from: `${prefix}${e.from}`, to: `${prefix}${e.to}` }))
+        }));
+}
+
+
+const expand_node = (data) => {
+    const node_id = data.node_id;
+    const node = data.display_graph.nodes.find(n => n.id === node_id)
+
+    if (!(node && node.nodes)) {
+        console.log('no nodes?');
+        return { display_graph: data.display_graph, selected: [data.node_id] };
+    }
+
+    const flattened = flattenNode(node, 1);
+
+    const new_display_graph = {
+        nodes: data.display_graph.nodes
+            .filter(n => n.id !== node_id)
+            .concat(flattened.flat_nodes),
+        edges: data.display_graph.edges
+            .map(e => ({
+                ...e,
+                from: e.from === node_id ? node.id + "/" + (node.out || 'out') : e.from,
+                to: e.to === node_id ? node.id + "/" + (node.in || 'in') : e.to
+            }))
+            .concat(flattened.flat_edges)
+    };
+
+    return { display_graph: { ...data.display_graph, ...new_display_graph }, selected: [node_id + '/' + (node.out || 'out')] };
+}
+
+const contract_node = (data, keep_expanded = false) => {
+    const node = data.display_graph.nodes.find(n => n.id === data.node_id);
+    const node_id = data.node_id;
+    if (!node.nodes) {
+        const inside_nodes = [Object.assign({}, node)];
+        const inside_node_map = new Map();
+        inside_node_map.set(inside_nodes[0].id, inside_nodes[0]);
+        const inside_edges = new Set();
+
+        const q = data.display_graph.edges.filter(e => e.to === inside_nodes[0].id);
+
+        let in_edge = [];
+        let args_edge;
+
+        while (q.length > 0) {
+            const e = q.shift();
+
+            if(e.to === node.id && e.as === 'args') {
+                args_edge = e;
+            }
+
+            in_edge.filter(ie => ie.from === e.from).forEach(ie => {
+                inside_edges.add(ie)
+            });
+            in_edge = in_edge.filter(ie => ie.from !== e.from);
+
+            const old_node = inside_nodes.find(i => e.from === i.id);
+            let inside_node = old_node || Object.assign({}, data.display_graph.nodes.find(p => p.id === e.from));
+
+            inside_node_map.set(inside_node.id, inside_node);
+            inside_edges.add(e);
+            if (!old_node) {
+                delete inside_node.inputs;
+                inside_nodes.push(inside_node);
+            }
+
+            if (!args_edge || e.from !== args_edge.from) {
+                nolib.no.runtime.get_edges_in(data.display_graph, e.from).forEach(de => q.push(de));
+            }
+        }
+
+        let in_node_id = args_edge ? args_edge.from : undefined;
+
+        // just return the original graph if it's a single node 
+        if (in_edge.find(ie => ie.to !== in_node_id) || inside_nodes.length < 2) {
+            return { display_graph: data.display_graph, selected: [data.node_id] };
+        }
+
+        const out_node_id = data.node_id;
+
+        const in_node = inside_node_map.get(in_node_id);
+
+        let node_id_count = data.display_graph.nodes.filter(n => n.id === node_id).length;
+        let final_node_id = node_id_count === 1 ? node_id : `${node_id}_${node_id_count}`
+
+        const edges = [];
+        for (const e of inside_edges) {
+            edges.push({
+                ...e,
+                from: e.from.startsWith(node_id + "/")
+                    ? e.from.substring(node_id.length + 1)
+                    : e.from,
+                to: e.to.startsWith(node_id + "/")
+                    ? e.to.substring(node_id.length + 1)
+                    : e.to
+            })
+        }
+
+        const new_display_graph = {
+            nodes: data.display_graph.nodes
+                .filter(n => n.id !== data.node_id)
+                .filter(n => keep_expanded || !inside_node_map.has(n.id))
+                .concat([{
+                    id: final_node_id,
+                    name: node.name,
+                    in: in_node_id && in_node_id.startsWith(node_id + '/') ? in_node_id.substring(node_id.length + 1) : in_node_id,
+                    out: out_node_id.startsWith(node_id + '/') ? out_node_id.substring(node_id.length + 1) : out_node_id,
+                    nodes: inside_nodes.map(n => ({
+                        ...n,
+                        id: n.id.startsWith(node_id + "/") ? n.id.substring(node_id.length + 1) : n.id
+                    })),
+                    edges
+                }]),
+            edges: data.display_graph.edges
+                .filter(e => keep_expanded || !(inside_node_map.has(e.from) && inside_node_map.has(e.to)))
+                .map(e =>
+                    e.from === data.node_id ? { ...e, from: final_node_id }
+                        : e.to === in_node && in_node.id ? { ...e, to: final_node_id }
+                            : inside_node_map.has(e.to)
+                                ? { ...e, to: final_node_id }
+                                : e
+                )
+        };
+
+        return { display_graph: { ...data.display_graph, ...new_display_graph }, selected: [final_node_id] };
+    }
+}
+
 
 const keydownSubscription = (dispatch, options) => {
     const handler = ev => {
@@ -697,6 +858,19 @@ const DeleteNode = (state, {parent, node_id}) => [
     [() => nolib.no.runtime.delete_node(state.display_graph, node_id)]
 ]
 
+const ExpandContract = (state, {node_id}) => {
+    const node = state.display_graph.nodes.find(n => n.id === node_id);
+    const update = node.nodes 
+            ? expand_node({node_id, display_graph: state.display_graph})
+            : contract_node({node_id, display_graph: state.display_graph});
+    
+    return [
+        state,
+        [() => nolib.no.runtime.update_graph(update.display_graph)],
+        [dispatch => requestAnimationFrame(() => dispatch(s => ({...s, selected: update.selected})))]
+    ]
+}
+
 const StopPropagation = (state, payload) => [state, [() => payload.stopPropagation()]];
 
 const SaveGraph = (dispatch, payload) => { const graph_list = JSON.parse(localStorage.getItem('graph_list'))?.filter(l => l !== payload.display_graph.id) ?? []; graph_list.unshift(payload.display_graph.id); localStorage.setItem('graph_list', JSON.stringify(graph_list)); const graphstr = JSON.stringify({...payload.display_graph, node_map: undefined, in_edge_map: undefined}); localStorage.setItem(payload.display_graph.id, graphstr); window.location.hash = '#' + payload.display_graph.id; }
@@ -830,7 +1004,7 @@ const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_grap
             ]),
             description && ha.h('div', {class: "description"}, ha.text(description)),
             ha.h('div', {class: "buttons"}, [
-                ha.h('div', {class: "action"}, ha.text(node.nodes?.length > 0 ? "expand" : "contract")),
+                ha.h('div', {class: "action", onclick: [ExpandContract, {node_id: node.node_id}]}, ha.text(node.nodes?.length > 0 ? "expand" : "contract")),
                 ha.h('div', {class: "action", onclick: [DeleteNode, {
                     parent: link_out && link_out.source ? {from: link_out.source.node_id, to: link_out.target.node_id, as: link_out.as} : undefined, 
                     node_id: node.node_id
@@ -1063,7 +1237,7 @@ const hlib = {
         app: ha.app, 
         text: {args: ['text'], fn: ha.text}
     },
-    scripts: { d3subscription, updateSimulationNodes, expand_node, flattenNode, contract_node, keydownSubscription, calculateLevels, contract_all, listen, graph_subscription, result_subscription},
+    scripts: { d3subscription, updateSimulationNodes, keydownSubscription, calculateLevels, listen, graph_subscription, result_subscription},
     effects: {
         position_by_selected: (id, selected, dimensions, nodes) => {
             selected = Array.isArray(selected) ? selected[0] : selected;
