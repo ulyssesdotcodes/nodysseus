@@ -1,3 +1,9 @@
+:root {
+    --nodex: 0px;
+    --nodey: 0px;
+}
+
+
 #node-editor {
     position: relative;
     width: 100%;
@@ -176,6 +182,24 @@ svg {
     flex-direction: column;
 }
 
+.node-info:focus-within {
+    max-width: 256px;
+    height: auto;
+}
+
+@media (max-width: 600px) {
+    .node-info:focus-within {
+        width: calc(100vw - 2px - .8em);
+        max-width: 100vw;
+        height: calc(100vh - 2px - .8em);
+    }
+
+    .node-info.align-selected:focus-within {
+        left: 0;
+        top: 0;
+    }
+}
+
 .node-info .args {
     display: flex;
     gap: 8px;
@@ -306,6 +330,11 @@ svg.edge-info.selected rect {
     padding: 1em;
     height: 8em;
     z-index: 100;
+}
+
+.align-selected {
+    left: var(--nodex);
+    top: var(--nodey);
 }
 
 /* popover */

@@ -785,7 +785,8 @@ const pzobj = {
             requestAnimationFrame(() => dispatch((s, p) => [ {...s, 
                 show_all: false, 
                 svg_offset: hlib.panzoom.instance.getTransform()
-            }]));
+            } 
+        ]));
         }
     },
     init: function (dispatch, sub_payload) {
@@ -794,18 +795,36 @@ const pzobj = {
             hlib.panzoom.instance = panzoom(document.getElementById(sub_payload.id), {
                 // onTouch: e => false,
                 filterKey: e => true,
-                smoothScroll: false
+                smoothScroll: false,
+                onTouch: (e) => {
+                    if(e.target.id.endsWith("-editor") && performance.now() - hlib.panzoom.lastpanzoom > 100){
+                        dispatch(sub_payload.action, {event: 'panstart', transform: hlib.panzoom.instance.getTransform()}) 
+                    }
+                    return false;
+                },
+                beforeWheel: (e) => {
+                    if(e.target.id.endsWith("-editor") && performance.now() - hlib.panzoom.lastpanzoom > 100){
+                        dispatch(sub_payload.action, {event: 'panstart', transform: hlib.panzoom.instance.getTransform()}) 
+                    }
+                    return false;
+                },
+                beforeMouseDown: (e) => {
+                    if(e.target.id.endsWith("-editor") && performance.now() - hlib.panzoom.lastpanzoom > 100){
+                        dispatch(sub_payload.action, {event: 'panstart', transform: hlib.panzoom.instance.getTransform()}) 
+                    }
+                    return false;
+                }
             });
-            hlib.panzoom.instance.on('panstart', e => 
-                performance.now() - hlib.panzoom.lastpanzoom > 100 
-                ? dispatch(sub_payload.action, {event: 'panstart', transform: e.getTransform()}) 
-                : undefined
-            );
-            hlib.panzoom.instance.on('zoom', e => 
-                performance.now() - hlib.panzoom.lastpanzoom > 100 
-                ? dispatch(sub_payload.action, {event: 'zoom', transform: e.getTransform()}) 
-                : undefined
-            );
+            // hlib.panzoom.instance.on('panstart', e =>
+            //     performance.now() - hlib.panzoom.lastpanzoom > 100 
+            //     ? dispatch(sub_payload.action, {event: 'panstart', transform: e.getTransform()}) 
+            //     : undefined
+            // );
+            // hlib.panzoom.instance.on('zoom', e =>
+            //     performance.now() - hlib.panzoom.lastpanzoom > 100 
+            //     ? dispatch(sub_payload.action, {event: 'zoom', transform: e.getTransform()}) 
+            //     : undefined
+            // );
             hlib.panzoom.instance.moveTo(window.innerWidth * 0, window.innerHeight * 0.5);
         });
         return () => { cancelAnimationFrame(init); hlib.panzoom.instance?.dispose(); }
@@ -827,7 +846,9 @@ const SimulationToHyperapp = (state, payload) => [{
     nodes: payload.nodes,
     links: payload.links,
     randid: Math.random().toString(36).substring(2, 9),
-}, [CustomDOMEvent, {html_id: state.html_id, event: 'updategraph', detail: {graph: state.display_graph}}]];
+}, 
+    [CustomDOMEvent, {html_id: state.html_id, event: 'updategraph', detail: {graph: state.display_graph}}]
+];
 
 const FocusEffect = (_, {selector}) => setTimeout(() => {
     const el = document.querySelector(selector);
@@ -839,12 +860,19 @@ const FocusEffect = (_, {selector}) => setTimeout(() => {
     }
 }, 50);
 
+const SetSelectedPositionStyleEffect = (_, {node, svg_offset, dimensions}) => {
+    const rt = document.querySelector(':root');
+    rt.style.setProperty('--nodex',  `${Math.min(node.x * (svg_offset?.scale ?? 1) + (svg_offset?.x ?? 0) - 64, dimensions.x - 256)}px`);
+    rt.style.setProperty('--nodey',  `${node.y * (svg_offset?.scale ?? 1) + (svg_offset?.y ?? 0) + 32}px`);
+}
+
 const SelectNode = (state, {node_id, focus_property}) => [
     state.selected[0] === node_id ? state : {...state, selected: [node_id]},
     !state.show_all && [pzobj.effect, {...state, node_id: node_id}],
     [UpdateGraphDisplay, {...state, selected: [node_id]}],
     (state.show_all || state.selected[0] !== node_id) && [pzobj.effect, {...state, node_id}],
-    focus_property && [FocusEffect, {selector: `.node-info input.${focus_property}`}]
+    focus_property && [FocusEffect, {selector: `.node-info input.${focus_property}`}],
+    [SetSelectedPositionStyleEffect, {node: state.nodes.find(n => n.node_id === node_id), svg_offset: state.svg_offset, dimensions: state.dimensions}]
 ]
 
 const CreateNode = (state, {node, child, child_as, parent}) => [
@@ -987,19 +1015,28 @@ const input_el = ({action, label, property, value}) => ha.h(
     {class: 'value-input'},
     [
         ha.h('label', {for: "edit-text"}, [ha.text(label)]),
-        ha.h('input', {class: property, id: "edit-text", name: "edit-text", oninput: action, onkeydown: StopPropagation, value}),
+        ha.h('input', {
+            class: property, 
+            id: `edit-text-${property}`, 
+            name: `edit-text-${property}`, 
+            oninput: action, 
+            onkeydown: StopPropagation, 
+            onfocus: (state, event) => [{...state, focused: event.target.id}],
+            onblur: (state, event) => [{...state, focused: false}],
+            value
+        }),
     ]
 )
 
-const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_graph_id, randid, refs}) => {
+const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_graph_id, randid, refs, focused}) => {
     const node_ref = node.ref ? nolib.no.runtime.get_node(display_graph_id, node.ref) : node;
     const description =  node_ref?.description;
 
     return ha.h(
         'div',
         {
-            class: {'node-info': true}, 
-            style: {
+            class: {'node-info': true, 'align-selected': true}, 
+            nostyle: !focused && {
                 left: `${Math.min(node.x * (svg_offset?.scale ?? 1) + (svg_offset?.x ?? 0) - 64, dimensions.x - 256)}px`,
                 top: `${node.y * (svg_offset?.scale ?? 1) + (svg_offset?.y ?? 0) + 32}px`
             }
@@ -1137,6 +1174,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
                 dimensions: s.dimensions,
                 display_graph_id: s.display_graph_id,
                 randid: s.randid,
+                focused: s.focused,
                 refs: s.display_graph.nodes
                     .filter(n => !(n.ref || s.levels.level_by_node.has(n.id)) && (n.script ||n.nodes || n.extern))
             }),
@@ -1189,8 +1227,17 @@ const editor = async function(html_id, display_graph, lib, norun) {
 
                 return action ? action : [state, ...effects];
             }}],
-            listen('resize', s => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, () => nolib.no.runtime.publish('resize', {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight})]),
-            !!document.getElementById( `${html_id}-editor-panzoom`) && [pzobj.init, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]
+            listen('resize', s => [{
+                    ...s, 
+                    dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}
+                }, false && [() => nolib.no.runtime.publish('resize', {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight})]
+            ]),
+            !!document.getElementById( `${html_id}-editor-panzoom`) && [pzobj.init, {
+                id: `${html_id}-editor-panzoom`, 
+                action: (s, p) => [
+                    {...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}
+                ]
+            }]
         ], 
     });
 
