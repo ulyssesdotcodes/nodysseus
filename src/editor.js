@@ -919,7 +919,19 @@ const ExpandContract = (state, {node_id}) => {
 
 const StopPropagation = (state, payload) => [state, [() => payload.stopPropagation()]];
 
-const SaveGraph = (dispatch, payload) => { const graph_list = JSON.parse(localStorage.getItem('graph_list'))?.filter(l => l !== payload.display_graph.id) ?? []; graph_list.unshift(payload.display_graph.id); localStorage.setItem('graph_list', JSON.stringify(graph_list)); const graphstr = JSON.stringify({...payload.display_graph, node_map: undefined, in_edge_map: undefined}); localStorage.setItem(payload.display_graph.id, graphstr); window.location.hash = '#' + payload.display_graph.id; }
+const SaveGraph = (dispatch, payload) => { 
+    const graph_list = 
+        JSON.parse(localStorage.getItem('graph_list'))?.filter(l => l !== payload.display_graph.id) ?? []; 
+    graph_list.unshift(payload.display_graph.id); 
+    localStorage.setItem('graph_list', JSON.stringify(graph_list)); 
+    const graphstr = JSON.stringify({
+        ...payload.display_graph, 
+        node_map: undefined, 
+        in_edge_map: undefined
+    }); 
+    localStorage.setItem(payload.display_graph.id, graphstr); 
+    window.location.hash = '#' + payload.display_graph.id; 
+}
 
 const base_node = node => ({id: node.id, value: node.value, name: node.name, ref: node.ref});
 
@@ -1006,7 +1018,8 @@ const insert_node_el = ({link, randid, node_el_width}) => ha.h('svg', {
     x: Math.floor((link.source.x + link.target.x - node_el_width) * 0.5) - 16,
     y: Math.floor((link.source.y + link.target.y) * 0.5) - 16,
     class: 'insert-node',
-    onclick: (s, p) => [CreateNode, {node: {id: randid}, child: link.target.node_id, parent: {from: link.source.node_id, to: link.target.node_id, as: link.as}}]
+    onclick: (s, p) => [CreateNode, {node: {id: randid}, child: link.target.node_id, parent: {from: link.source.node_id, to: link.target.node_id, as: link.as}}],
+    ontouchstart: (s, p) => [CreateNode, {node: {id: randid}, child: link.target.node_id, parent: {from: link.source.node_id, to: link.target.node_id, as: link.as}}]
 }, [
     ha.h('path', {d: "M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192z", class: "circle" }, []),
     ha.h('path', {d: "M256 176v160M336 256H176", class: "add"}, [])
@@ -1067,6 +1080,7 @@ const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_grap
                         list: 'ref-nodes', 
                         id: 'ref-select', 
                         name: 'ref-select', 
+                        value: node.ref,
                         onchange: (state, event) => [UpdateNode, {node, property: "ref", value: (console.log(event), event).target.value}]
                     }),
                     ha.h('datalist', {id: 'ref-nodes'}, refs.map(r => ha.h('option', {value: r.id})))
