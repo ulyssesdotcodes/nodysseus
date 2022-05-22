@@ -933,6 +933,11 @@ const SaveGraph = (dispatch, payload) => {
     window.location.hash = '#' + payload.display_graph.id; 
 }
 
+const ChangeDisplayGraphId = (state, {id}) => [
+    {...state, display_graph_id: id},
+    [() => nolib.no.runtime.update_graph(Object.assign({}, state.display_graph, {id}))]
+]
+
 const base_node = node => ({id: node.id, value: node.value, name: node.name, ref: node.ref});
 
 const UpdateNode = (state, {node, property, value}) => [
@@ -1025,7 +1030,7 @@ const insert_node_el = ({link, randid, node_el_width}) => ha.h('svg', {
     ha.h('path', {d: "M256 176v160M336 256H176", class: "add"}, [])
 ])
 
-const input_el = ({action, label, property, value}) => ha.h(
+const input_el = ({action, label, property, value, onchange}) => ha.h(
     'div',
     {class: 'value-input'},
     [
@@ -1035,6 +1040,7 @@ const input_el = ({action, label, property, value}) => ha.h(
             id: `edit-text-${property}`, 
             name: `edit-text-${property}`, 
             oninput: action, 
+            onchange,
             onkeydown: StopPropagation, 
             onfocus: (state, event) => [{...state, focused: event.target.id}],
             onblur: (state, event) => [{...state, focused: false}],
@@ -1058,21 +1064,35 @@ const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_grap
         },
         [
             ha.h('div', {class: "args"}, 
-                (node_ref.nodes?.filter(n => n.ref === "arg" && !n.value.includes('.') && !n.value.startsWith("_")) ?? [])
+                (node_ref.extern 
+                ? nolib.just.get.fn({}, nolib, node_ref.extern).args
+                : (node_ref.nodes?.filter(n => n.ref === "arg" && !n.value.includes('.') && !n.value.startsWith("_")) ?? [])
                     .concat(
                         [{value: "arg" + ((links_in.filter(l => 
                                     l.as?.startsWith("arg") 
                                     && new RegExp("[0-9]+").test(l.as.substring(3)))
                                 .map(l => parseInt(l.as.substring(3))) ?? [])
                             .reduce((acc, i) => acc > i ? acc : i + 1, 0))}])
+                    .map(n => n.value))
                     .map(n => ha.h('span', {
                         class: "clickable", 
                         onclick: links_in.filter(l => l.as === n.value).map(l => [SelectNode, {node_id: l.source.node_id}])[0]
                             ?? [CreateNode, {node: {id: randid}, child: node.id, child_as: n.value}]
                     }, [ha.text(n.value)])) ?? []),
             ha.h('div', {class: "inputs"}, [
-                input_el({label: "value", value: node.value, property: "value", action: (state, payload) => [UpdateNode, {node, property: "value", value: payload.target.value}]}),
-                input_el({label: "name", value: node.name, property: "name", action: (state, payload) =>[UpdateNode, {node, property: "name", value: payload.target.value}]}),
+                input_el({
+                    label: "value", 
+                    value: node.value, 
+                    property: "value", 
+                    action: (state, payload) => [UpdateNode, {node, property: "value", value: payload.target.value
+                }]}),
+                input_el({
+                    label: "name", 
+                    value: node.name, 
+                    property: "name", 
+                    action: (state, payload) => [UpdateNode, {node, property: "name", value: payload.target.value}],
+                    onchange: node.id === "main/out" && ((_, payload) => [ChangeDisplayGraphId, {id: payload.target.value}])
+                }),
                 ha.h('div', {class: 'value-input'}, [
                     ha.h('label', {for: 'ref-select'}, [ha.text("ref")]),
                     ha.h('input', {
@@ -1081,7 +1101,7 @@ const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_grap
                         id: 'ref-select', 
                         name: 'ref-select', 
                         value: node.ref,
-                        onchange: (state, event) => [UpdateNode, {node, property: "ref", value: (console.log(event), event).target.value}]
+                        onchange: (state, event) => [UpdateNode, {node, property: "ref", value: event.target.value}]
                     }),
                     ha.h('datalist', {id: 'ref-nodes'}, refs.map(r => ha.h('option', {value: r.id})))
                 ]),
@@ -1098,7 +1118,11 @@ const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_grap
                 ha.h('div', {class: "action", onclick: [DeleteNode, {
                     parent: link_out && link_out.source ? {from: link_out.source.node_id, to: link_out.target.node_id, as: link_out.as} : undefined, 
                     node_id: node.node_id
-                }]}, ha.text("delete"))
+                }]}, ha.text("delete")),
+                node.node_id == "main/out" && ha.h('div', {
+                    class: "action", 
+                    onclick: (state, payload) => [state, [SaveGraph, state]]
+                }, [ha.text("save")])
             ])
         ]
     )
