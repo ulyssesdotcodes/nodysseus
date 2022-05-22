@@ -800,7 +800,9 @@ const pzobj = {
                     if(e.target.id.endsWith("-editor") && performance.now() - hlib.panzoom.lastpanzoom > 100){
                         dispatch(sub_payload.action, {event: 'panstart', transform: hlib.panzoom.instance.getTransform()}) 
                     }
-                    return false;
+                    // e.stopPropagation();
+                    // e.preventDefault();
+                    return true;
                 },
                 beforeWheel: (e) => {
                     if(e.target.id.endsWith("-editor") && performance.now() - hlib.panzoom.lastpanzoom > 100){
@@ -1060,7 +1062,13 @@ const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_grap
                 input_el({label: "name", value: node.name, property: "name", action: (state, payload) =>[UpdateNode, {node, property: "name", value: payload.target.value}]}),
                 ha.h('div', {class: 'value-input'}, [
                     ha.h('label', {for: 'ref-select'}, [ha.text("ref")]),
-                    ha.h('input', {class: 'ref', list: 'ref-nodes', id: 'ref-select', name: 'ref-select'}),
+                    ha.h('input', {
+                        class: 'ref', 
+                        list: 'ref-nodes', 
+                        id: 'ref-select', 
+                        name: 'ref-select', 
+                        onchange: (state, event) => [UpdateNode, {node, property: "ref", value: (console.log(event), event).target.value}]
+                    }),
                     ha.h('datalist', {id: 'ref-nodes'}, refs.map(r => ha.h('option', {value: r.id})))
                 ]),
                 link_out && link_out.source && input_el({
