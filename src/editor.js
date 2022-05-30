@@ -1006,7 +1006,8 @@ const link_el = ({link, selected_distance}) =>ha.h('g', {}, [
    ha.h('svg', {
        id: `edge-info-${link.source.node_id}`, 
        class: {"edge-info": true, [`distance-${selected_distance}`]: true},
-       onclick: [SelectNode, {node_id: link.source.node_id, focus_property: "edge"}]
+       onclick: [SelectNode, {node_id: link.source.node_id, focus_property: "edge"}],
+       ontouchstart: [SelectNode, {node_id: link.source.node_id, focus_property: "edge"}]
     }, [
        ha.h('rect', {}),
        ha.h('text', {fontSize: 14, y: 16}, [ha.text(link.as)])
@@ -1030,7 +1031,7 @@ const insert_node_el = ({link, randid, node_el_width}) => ha.h('svg', {
     ha.h('path', {d: "M256 176v160M336 256H176", class: "add"}, [])
 ])
 
-const input_el = ({action, label, property, value, onchange}) => ha.h(
+const input_el = ({label, property, value, oninput, onchange}) => ha.h(
     'div',
     {class: 'value-input'},
     [
@@ -1039,7 +1040,7 @@ const input_el = ({action, label, property, value, onchange}) => ha.h(
             class: property, 
             id: `edit-text-${property}`, 
             name: `edit-text-${property}`, 
-            oninput: action, 
+            oninput, 
             onchange,
             onkeydown: StopPropagation, 
             onfocus: (state, event) => [{...state, focused: event.target.id}],
@@ -1064,9 +1065,9 @@ const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_grap
         },
         [
             ha.h('div', {class: "args"}, 
-                (node_ref.extern 
+                (node_ref?.extern 
                 ? nolib.just.get.fn({}, nolib, node_ref.extern).args
-                : (node_ref.nodes?.filter(n => n.ref === "arg" && !n.value.includes('.') && !n.value.startsWith("_")) ?? [])
+                : (node_ref?.nodes?.filter(n => n.ref === "arg" && !n.value.includes('.') && !n.value.startsWith("_")) ?? [])
                     .concat(
                         [{value: "arg" + ((links_in.filter(l => 
                                     l.as?.startsWith("arg") 
@@ -1076,21 +1077,21 @@ const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_grap
                     .map(n => n.value))
                     .map(n => ha.h('span', {
                         class: "clickable", 
-                        onclick: links_in.filter(l => l.as === n.value).map(l => [SelectNode, {node_id: l.source.node_id}])[0]
-                            ?? [CreateNode, {node: {id: randid}, child: node.id, child_as: n.value}]
-                    }, [ha.text(n.value)])) ?? []),
+                        onclick: links_in.filter(l => l.as === n).map(l => [SelectNode, {node_id: l.source.node_id}])[0]
+                            ?? [CreateNode, {node: {id: randid}, child: node.id, child_as: n}]
+                    }, [ha.text(n)])) ?? []),
             ha.h('div', {class: "inputs"}, [
                 input_el({
                     label: "value", 
                     value: node.value, 
                     property: "value", 
-                    action: (state, payload) => [UpdateNode, {node, property: "value", value: payload.target.value
+                    oninput: (state, payload) => [UpdateNode, {node, property: "value", value: payload.target.value
                 }]}),
                 input_el({
                     label: "name", 
                     value: node.name, 
                     property: "name", 
-                    action: (state, payload) => [UpdateNode, {node, property: "name", value: payload.target.value}],
+                    oninput: (state, payload) => [UpdateNode, {node, property: "name", value: payload.target.value}],
                     onchange: node.id === "main/out" && ((_, payload) => [ChangeDisplayGraphId, {id: payload.target.value}])
                 }),
                 ha.h('div', {class: 'value-input'}, [
@@ -1109,7 +1110,7 @@ const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_grap
                     label: "edge", 
                     value: link_out.as, 
                     property: "edge",
-                    action: (state, payload) =>[UpdateEdge, {edge: {from: link_out.from, to: link_out.to, as: link_out.as}, as: payload.target.value}]
+                    onchange: (state, payload) => [UpdateEdge, {edge: {from: link_out.from, to: link_out.to, as: link_out.as}, as: payload.target.value}]
                 }),
             ]),
             description && ha.h('div', {class: "description"}, ha.text(description)),

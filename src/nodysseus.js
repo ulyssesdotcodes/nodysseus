@@ -927,6 +927,7 @@ const nolib = {
                 if(lib){
                     doc.lib = lib;
                 }
+
                 if(args) {
                     const last_args = doc.args;
                     doc.args = {...last_args, ...args};
