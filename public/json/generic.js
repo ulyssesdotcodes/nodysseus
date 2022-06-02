@@ -326,6 +326,7 @@ export default {
       "id": "partial_graph",
       "script": "return _lib.no.executeGraphNode({graph, lib: _lib})(fn)(Object.assign({}, _args, args))"
     },
+    {"id":"script", "extern": "utility.script"},
     {
       "id": "resolve",
       "args": ["data"],

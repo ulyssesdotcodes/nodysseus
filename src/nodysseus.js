@@ -398,6 +398,7 @@ const node_script = (node, node_ref, data, full_lib, graph, inputs) => {
                 orderedargs += ", " + i.as;
             }
         }
+        node_ref = node_ref || full_lib.no.runtime.get_ref(graph, node.ref) || node;
         const fn = full_lib.no.runtime.get_fn(graph, `_lib, _node, _node_inputs, _graph${orderedargs}`, node.id, node_ref);
 
         let is_iv_promised = false;
@@ -445,6 +446,9 @@ const node_extern = (node, node_ref, node_id, data, full_lib, graph) => {
             return [acc[0], acc[1]]
         } else if (arg === '_graph') {
             acc[0].push(graph);
+            return [acc[0], acc[1]]
+        } else if (arg == '_lib') {
+            acc[0].push(full_lib);
             return [acc[0], acc[1]]
         }
         const value = extern.resolve === false ? data[arg] : resolve(data[arg]);
@@ -1016,7 +1020,9 @@ const nolib = {
                 get_parentest,
                 get_fn: (graph, orderedargs, id, node_ref) => 
                     getorsetgraph(graph, id, 'fn_cache', () => 
-                        new Function(`return function _${(node_ref.name ? node_ref.name.replace(/\W/g, "_") : node_ref.id).replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script}}`)()),
+                        new Function(
+                            `return function _${(node_ref.name ? node_ref.name.replace(/\W/g, "_") : node_ref.id)
+                                .replace(/(\s|\/)/g, '_')}(${orderedargs}){${node_ref.script || node_ref.value}}`)()),
                 update_graph,
                 update_args,
                 delete_cache,
@@ -1061,8 +1067,7 @@ const nolib = {
                         nodes: graph.nodes.filter(n => n.id !== node.id).concat([node])
                     };
 
-                    cache.delete(get_hashcode(graph.id + "/" + node.id));
-
+                    delete_cache(graph)
                     update_graph(new_graph);
                 },
                 delete_node: (graph, id) => {
@@ -1129,6 +1134,11 @@ const nolib = {
         liftarraypromise: (array) => {
             const isarraypromise = array.reduce((acc, v) => acc || ispromise(v), false);
             return isarraypromise ? Promise.all(array) : array;
+        },
+        script: {
+            args: ['_node', '_node_inputs', '_graph', '_lib'],
+            fn: (node, node_inputs, graph, _lib) => 
+                node_script(node, node, node_inputs, _lib, graph, _lib.no.runtime.get_edges_in(graph, node.id))
         },
         new_array: {
             args: ['_node_inputs'],
