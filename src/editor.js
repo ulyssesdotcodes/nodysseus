@@ -930,13 +930,17 @@ const SaveGraph = (dispatch, payload) => {
         in_edge_map: undefined
     }); 
     localStorage.setItem(payload.display_graph.id, graphstr); 
-    window.location.hash = '#' + payload.display_graph.id; 
 }
 
-const ChangeDisplayGraphId = (state, {id}) => [
-    {...state, display_graph_id: id},
-    [() => nolib.no.runtime.update_graph(Object.assign({}, state.display_graph, {id}))]
-]
+const ChangeDisplayGraphId = (state, {id}) => {
+    const json = localStorage.getItem(id);
+    const graph = json && JSON.parse(json);
+    window.location.hash = '#' + id; 
+    return [
+        {...state, display_graph_id: id},
+        [() => nolib.no.runtime.update_graph(graph || Object.assign({}, state.display_graph, {id}))]
+    ]
+}
 
 const base_node = node => ({id: node.id, value: node.value, name: node.name, ref: node.ref});
 
@@ -949,6 +953,8 @@ const UpdateEdge = (state, {edge, as}) => [
     state,
     [() => nolib.no.runtime.edit_edge(state.display_graph, {...edge, as}, edge)]
 ]
+
+const OpenMenu = state => [{...state, menu: true}]
 
 const fill_rect_el = () =>ha.h('rect', {class: 'fill', width: '48', 'height': '48'}, [])
 const node_text_el = ({node_id, primary, focus_primary, secondary}) =>ha.h('text', {x: 48, y: 12}, [
@@ -1031,15 +1037,16 @@ const insert_node_el = ({link, randid, node_el_width}) => ha.h('svg', {
     ha.h('path', {d: "M256 176v160M336 256H176", class: "add"}, [])
 ])
 
-const input_el = ({label, property, value, oninput, onchange}) => ha.h(
+const input_el = ({label, property, value, oninput, onchange, options}) => ha.h(
     'div',
     {class: 'value-input'},
     [
-        ha.h('label', {for: "edit-text"}, [ha.text(label)]),
+        ha.h('label', {for: `edit-text-${property}`}, [ha.text(label)]),
         ha.h('input', {
             class: property, 
             id: `edit-text-${property}`, 
             name: `edit-text-${property}`, 
+            list: options && options.length > 0 ? 'edit-text-list' : undefined,
             oninput, 
             onchange,
             onkeydown: StopPropagation, 
@@ -1047,6 +1054,7 @@ const input_el = ({label, property, value, oninput, onchange}) => ha.h(
             onblur: (state, event) => [{...state, focused: false}],
             value
         }),
+        options && options.length > 0 && ha.h('datalist', {id: 'edit-text-list'}, options.map(o => ha.h('option', {value: o}))) 
     ]
 )
 
@@ -1092,20 +1100,15 @@ const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_grap
                     value: node.name, 
                     property: "name", 
                     oninput: (state, payload) => [UpdateNode, {node, property: "name", value: payload.target.value}],
-                    onchange: node.id === "main/out" && ((_, payload) => [ChangeDisplayGraphId, {id: payload.target.value}])
+                    onchange: node.id === "main/out" && ((_, payload) => [ChangeDisplayGraphId, {id: payload.target.value}]),
+                    options: node.id === "main/out" && JSON.parse(localStorage.getItem('graph_list'))
                 }),
-                ha.h('div', {class: 'value-input'}, [
-                    ha.h('label', {for: 'ref-select'}, [ha.text("ref")]),
-                    ha.h('input', {
-                        class: 'ref', 
-                        list: 'ref-nodes', 
-                        id: 'ref-select', 
-                        name: 'ref-select', 
-                        value: node.ref,
-                        onchange: (state, event) => [UpdateNode, {node, property: "ref", value: event.target.value}]
-                    }),
-                    ha.h('datalist', {id: 'ref-nodes'}, refs.map(r => ha.h('option', {value: r.id})))
-                ]),
+                input_el({
+                    label: 'ref',
+                    value: node.ref,
+                    onchange: (state, event) => [UpdateNode, {node, property: "ref", value: event.target.value}],
+                    options: refs.map(r => r.id)
+                }),
                 link_out && link_out.source && input_el({
                     label: "edge", 
                     value: link_out.as, 
@@ -1115,15 +1118,22 @@ const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_grap
             ]),
             description && ha.h('div', {class: "description"}, ha.text(description)),
             ha.h('div', {class: "buttons"}, [
-                ha.h('div', {class: "action", onclick: [ExpandContract, {node_id: node.node_id}]}, ha.text(node.nodes?.length > 0 ? "expand" : "contract")),
-                ha.h('div', {class: "action", onclick: [DeleteNode, {
-                    parent: link_out && link_out.source ? {from: link_out.source.node_id, to: link_out.target.node_id, as: link_out.as} : undefined, 
-                    node_id: node.node_id
-                }]}, ha.text("delete")),
-                node.node_id == "main/out" && ha.h('div', {
+                ha.h('div', {
+                    class: "action", 
+                    onclick: [ExpandContract, {node_id: node.node_id}]
+                }, ha.text(node.nodes?.length > 0 ? "expand" : "contract")),
+                node.node_id == "main/out" 
+                ? ha.h('div', {
                     class: "action", 
                     onclick: (state, payload) => [state, [SaveGraph, state]]
-                }, [ha.text("save")])
+                }, ha.text("save"))
+                : ha.h('div', {
+                    class: "action", 
+                    onclick: [DeleteNode, {
+                        parent: link_out && link_out.source ? {from: link_out.source.node_id, to: link_out.target.node_id, as: link_out.as} : undefined, 
+                        node_id: node.node_id
+                    }]
+                }, ha.text("delete"))
             ])
         ]
     )
