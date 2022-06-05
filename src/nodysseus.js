@@ -1062,10 +1062,26 @@ const nolib = {
                     const gcache = get_cache(graph);
                     graph = gcache.graph;
 
+                    const old_node = get_node(graph, node.id);
+                    const in_edges = old_node && get_edges_in(graph, node.id);
+                    const node_ref = node.ref ? get_ref(graph, node.ref) : node;
+                    const args = node_ref.extern
+                        ? nolib.just.get.fn({}, nolib, node_ref.extern).args
+                        : node_ref.nodes 
+                        ? node_ref.nodes.filter(n => n.ref === "arg" && !n.value.includes('.') && !n.value.startsWith("_")).map(n => n.value)
+                        : undefined;
+                    const unused_args = args && args.filter(a => !in_edges.find(e => e.as === a));
+                    const nonargs_edges = args && in_edges.filter(e => !args.find(a => e.as === a));
+
                     const new_graph = {
                         ...graph,
-                        nodes: graph.nodes.filter(n => n.id !== node.id).concat([node])
+                        nodes: graph.nodes.filter(n => n.id !== node.id).concat([node]),
+                        edges: !nonargs_edges ? graph.edges : 
+                            graph.edges.filter(e => !nonargs_edges.find(ae => e.to === ae.to && e.from === ae.from))
+                                .concat(nonargs_edges.map((e, i) => i < unused_args.length ? ({...e, as: unused_args[i]}) : e))
                     };
+
+                    console.log(new_graph)
 
                     delete_cache(graph)
                     update_graph(new_graph);
