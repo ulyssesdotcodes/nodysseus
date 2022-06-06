@@ -419,14 +419,15 @@ const node_script = (node, node_ref, data, full_lib, graph, inputs) => {
         } else {
             console.error(e);
         }
-        console.dir(node_ref);
-        console.log(data);
-        throw new AggregateError([
-            new NodysseusError(
-                graph.id + "/" + node.id,
-                e instanceof AggregateError ? "Error in node chain" : e
-            )]
-            .concat(e instanceof AggregateError ? e.errors : []));
+        const parentest = full_lib.no.runtime.get_parentest(graph)
+        let error_node = graph;
+        while(full_lib.no.runtime.get_parent(error_node) !== parentest) {
+            error_node = full_lib.no.runtime.get_parent(error_node);
+        }
+        full_lib.no.runtime.publish.fn(node, "grapherror", new NodysseusError(
+            error_node.id, 
+            e instanceof AggregateError ? "Error in node chain" : e
+        ))
     }
 }
 
@@ -468,12 +469,22 @@ const node_extern = (node, node_ref, node_id, data, full_lib, graph) => {
             return res;
         }
     } catch (e) {
-        throw new AggregateError([
+        console.log(`error in node`);
+        if (e instanceof AggregateError) {
+            e.errors.map(console.error)
+        } else {
+            console.error(e);
+        }
+        const parentest = full_lib.no.runtime.get_parentest(graph)
+        let error_node = graph;
+        while(get_parent(error_node) !== parentest) {
+            error_node = get_parent(error_node);
+        }
+        full_lib.no.runtime.publish.fn("grapherror", 
             new NodysseusError(
-                node_id, 
+                error_node.id, 
                 e instanceof AggregateError ? "Error in node chain" : e
-            )]
-            .concat(e instanceof AggregateError ? e.errors : []));
+            ))
     }
 }
 
@@ -1080,8 +1091,6 @@ const nolib = {
                             graph.edges.filter(e => !nonargs_edges.find(ae => e.to === ae.to && e.from === ae.from))
                                 .concat(nonargs_edges.map((e, i) => i < unused_args.length ? ({...e, as: unused_args[i]}) : e))
                     };
-
-                    console.log(new_graph)
 
                     delete_cache(graph)
                     update_graph(new_graph);

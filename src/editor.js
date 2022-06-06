@@ -691,7 +691,6 @@ const result_subscription = (dispatch, props) => {
         result = resolve(result);
         if(graph.id === props.display_graph_id) {
             requestAnimationFrame(() => {
-                dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s);
                 if(!!result?.display?.el){
                     props.result_display_dispatch(UpdateResultDisplay, {el: result.display.el ? result.display.el : ha.h('div', {})})
                 }
@@ -703,7 +702,11 @@ const result_subscription = (dispatch, props) => {
     const error_listener = (error) =>
         requestAnimationFrame(() => dispatch(s => Object.assign({}, s, {error})))
 
+    const change_listener = () => requestAnimationFrame(() =>
+            dispatch(s => s.error ? Object.assign({}, s, (console.log('clearing'), console.log(s.error), {error: false})) : s));
+
     nolib.no.runtime.add_listener('graphrun', 'update_hyperapp_result_display', listener);
+    nolib.no.runtime.add_listener('graphchange', 'clear_hyperapp_error', change_listener);
     nolib.no.runtime.add_listener('grapherror', 'update_hyperapp_error', error_listener);
 
     nolib.no.runtime.update_graph(props.display_graph);
