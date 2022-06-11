@@ -421,7 +421,7 @@ const node_script = (node, node_ref, data, full_lib, graph, inputs) => {
         }
         const parentest = full_lib.no.runtime.get_parentest(graph)
         let error_node = graph;
-        while(full_lib.no.runtime.get_parent(error_node) !== parentest) {
+        while(full_lib.no.runtime.get_parent(error_node).id !== parentest.id) {
             error_node = full_lib.no.runtime.get_parent(error_node);
         }
         full_lib.no.runtime.publish.fn(node, "grapherror", new NodysseusError(
@@ -477,8 +477,8 @@ const node_extern = (node, node_ref, node_id, data, full_lib, graph) => {
         }
         const parentest = full_lib.no.runtime.get_parentest(graph)
         let error_node = graph;
-        while(get_parent(error_node) !== parentest) {
-            error_node = get_parent(error_node);
+        while(full_lib.no.runtime.get_parent(error_node).id !== parentest.id) {
+            error_node = full_lib.no.runtime.get_parent(error_node);
         }
         full_lib.no.runtime.publish.fn("grapherror", 
             new NodysseusError(
@@ -804,7 +804,7 @@ const nolib = {
         runGraph: (graph, node, args, lib) => {
             let rgraph = graph.graph ? graph.graph : graph;
 
-            if(!rgraph.nodes.find(n => n.id === "get")) {
+            if(!rgraph.nodes.find(n => n.id === "get") && nolib.no.runtime.get_parent(rgraph) === undefined) {
                 rgraph = add_default_nodes_and_edges(rgraph);
             }
 
@@ -816,20 +816,14 @@ const nolib = {
         objToGraph,
         NodysseusError,
         runtime: (function(){
-            const db = new loki("nodysseus.db", {env: "BROWSER", persistenceMethod:"memory"})
+            const db = new loki("nodysseus.db", {env: "BROWSER", persistenceMethod:"memory"});
             const nodesdb = db.addCollection("nodes", {unique: ["id"]});
-            const cache = new Map(); 
-            const get_hashcode = (id) => {
-                return id;
-                return typeof id === "number" ? id : hashcode(id);
-            }
+            const parentdb = db.addCollection("parents", {unique: ["id"]});
             const new_graph_cache = (graph) => ({
                 id: graph.id,
                 graph,
                 node_map: new Map(graph.nodes.map(n => [n.id, n])),
                 in_edge_map: new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.to === n.id)])),
-                parent: undefined,
-                parentest: undefined,
                 args: {},
                 fn_cache: new Map(),
                 is_cached: new Set()
@@ -920,8 +914,9 @@ const nolib = {
 
             const delete_cache = (graph) => {
                 const graphid = typeof graph === 'string' ? graph : graph.id;
-                nodesdb.findAndRemove({"parent": graphid});
-                const doc = nodesdb.by("id", "graphid");
+                const nested = parentdb.find({"parent_id": graphid})
+                nested.forEach(v => nodesdb.findAndRemove({"id": v.id}))
+                const doc = nodesdb.by("id", graphid);
                 if(doc){
                     nodesdb.remove(doc);
                 }
@@ -967,7 +962,7 @@ const nolib = {
 
             const update_args = (graph, args) => {
                 graph = resolve(graph);
-                const gcache = get_cache(graph.id);
+                const gcache = get_cache(graph);
 
                 if(gcache && args) {
                     Object.assign(gcache.args, args);
@@ -981,8 +976,7 @@ const nolib = {
                 return parentest ? get_ref(parentest, id) : get_node(graph, id);
             }
             const get_node = (graph, id) => getorsetgraph(graph, id, 'node_map', () =>
-                get_graph(graph).nodes.find(n => n.id === id))
-                    || (get_parent(graph) ? get_ref(graph, id) : undefined);
+                get_graph(graph).nodes.find(n => n.id === id));
             const get_edge = (graph, from) => get_cache(graph).graph.edges.find(e => e.from === from);
             const get_edges_in = (graph, id) => getorsetgraph(graph, id, 'in_edge_map', () => graph.edges.filter(e => e.to === id));
             const get_args = (graph) => get_cache(graph).args;
@@ -990,7 +984,14 @@ const nolib = {
                 const cached = get_cache(graph);
                 return cached ? cached.graph : graph;
             }
-            const get_parent = (graph) => get_graph(get_cache(graph).parent);
+            const get_parent = (graph) => {
+                const parent = parentdb.by("id", typeof graph === "string" ? graph : graph.id);
+                return parent ? get_graph(parent.parent_id) : undefined;
+            }
+            const get_parentest = (graph) => {
+                const parent = parentdb.by("id", typeof graph === "string" ? graph : graph.id);
+                return parent && parent.parentest_id && get_graph(parent.parentest_id);
+            }
             const get_cache = (graph, newgraphcache) => {
                 // if(graph && graph._needsresolve) {
                 //     debugger;
@@ -1007,7 +1008,6 @@ const nolib = {
 
                 return lokiret;
             }
-            const get_parentest = (graph) => get_cache(get_cache(graph).parentest).graph;
             const get_path = (graph, path) => {
                     let gcache = get_cache(graph.id);
                     let pathSplit = path.split(".");
@@ -1124,10 +1124,16 @@ const nolib = {
                     fn: (node, event, data) => publish(event, data)
                 },
                 set_parent: (graph, parent) => {
-                    const gcache = get_cache(graph);
-                    const parentcache = get_cache(parent);
-                    gcache.parent = parent.id;
-                    gcache.parentest = parentcache.parentest || gcache.parent;
+                    const parent_parent = parentdb.by("id", parent.id) 
+                    const parentest_id = (parent_parent ? parent_parent.parentest_id : false) || parent.id;
+                    const existing = parentdb.by("id", graph.id)
+                    const new_parent = {id: graph.id, parent_id: parent.id, parentest_id};
+                    if(existing){
+                        Object.assign(existing, new_parent)
+                        parentdb.update(existing)
+                    } else {
+                        parentdb.insert(new_parent)
+                    }
                 }
             }
         })()
