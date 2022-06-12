@@ -217,7 +217,7 @@ export default {
         {"id": "fn_runnable", "ref": "runnable"},
         {"id": "edges", "script": "return _lib.no.runtime.get_edges_in(_lib.no.runtime.get_parent(_graph), _graph.node_id).filter(e => e.as !== 'args');"},
         {"id": "entries", "ref": "map"},
-        {"id": "out", "script": "return Object.fromEntries(entries)"}
+        {"id": "out", "script": "const res = Object.fromEntries(entries); return res?.value ?? res"}
       ],
       "edges": [
         {"from": "fn_args", "to": "fn", "as": "args"},

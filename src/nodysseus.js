@@ -547,7 +547,7 @@ const tryrun = (input, node_ref, graph, graph_input_value, full_lib) => {
         // }
 
         return resolve(run_with_val(graph, full_lib)(input.from)(graph_input_value));
-    } else if (!input.as || node_ref.script) {
+    } else if (!input.as || node_ref.script || node_ref.id === "script") {
         // if(!node_map.has(input.from)) {
         //     throw new Error(`Input not found ${input.from} for node ${node_id}`)
         // }
@@ -565,9 +565,6 @@ const tryrun = (input, node_ref, graph, graph_input_value, full_lib) => {
 }
 
 const run_with_val_full = (graph, full_lib, node_id, graph_input_value) => {
-        if(graph.id === "nodysseus_hyperapp/update_hyperapp/editor_dom/node_editor/dummy_node_el/out" && node_id === "children") {
-            debugger;
-        }
         const cache_args = full_lib.no.runtime.get_args(graph);
         if(cache_args) {
             Object.assign(graph_input_value, cache_args);
@@ -1074,15 +1071,15 @@ const nolib = {
                     graph = gcache.graph;
 
                     const old_node = get_node(graph, node.id);
-                    const in_edges = old_node && get_edges_in(graph, node.id);
+                    const in_edges = old_node && old_node.ref !== node.ref && get_edges_in(graph, node.id);
                     const node_ref = node.ref ? get_ref(graph, node.ref) : node;
                     const args = node_ref.extern
                         ? nolib.just.get.fn({}, nolib, node_ref.extern).args
                         : node_ref.nodes 
                         ? node_ref.nodes.filter(n => n.ref === "arg" && !n.value.includes('.') && !n.value.startsWith("_")).map(n => n.value)
                         : undefined;
-                    const unused_args = args && args.filter(a => !in_edges.find(e => e.as === a));
-                    const nonargs_edges = args && in_edges.filter(e => !args.find(a => e.as === a));
+                    const unused_args = args && in_edges && args.filter(a => !in_edges.find(e => e.as === a));
+                    const nonargs_edges = args && in_edges && in_edges.filter(e => !args.find(a => e.as === a));
 
                     const new_graph = {
                         ...graph,
