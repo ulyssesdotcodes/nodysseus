@@ -703,7 +703,7 @@ const result_subscription = (dispatch, props) => {
         requestAnimationFrame(() => dispatch(s => Object.assign({}, s, {error})))
 
     const change_listener = () => requestAnimationFrame(() =>
-            dispatch(s => s.error ? Object.assign({}, s, (console.log('clearing'), console.log(s.error), {error: false})) : s));
+            dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s));
 
     nolib.no.runtime.add_listener('graphrun', 'update_hyperapp_result_display', listener);
     nolib.no.runtime.add_listener('graphchange', 'clear_hyperapp_error', change_listener);
