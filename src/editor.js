@@ -928,7 +928,6 @@ const SaveGraph = (dispatch, payload) => {
     graph_list.unshift(payload.display_graph.id); 
     localStorage.setItem('graph_list', JSON.stringify(graph_list)); 
     const graphstr = JSON.stringify(base_graph(payload.display_graph)); 
-    console.log(graphstr)
     localStorage.setItem(payload.display_graph.id, graphstr); 
 }
 
@@ -1060,9 +1059,8 @@ const input_el = ({label, property, value, oninput, onchange, options}) => ha.h(
 )
 
 const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_graph_id, randid, refs, focused}) => {
-    const node_ref = node.ref ? nolib.no.runtime.get_node(display_graph_id, node.ref) : node;
+    const node_ref = node.ref ? nolib.no.runtime.get_ref(display_graph_id, node.ref) : node;
     const description =  node_ref?.description;
-
     return ha.h(
         'div',
         {
@@ -1076,14 +1074,15 @@ const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_grap
             ha.h('div', {class: "args"}, 
                 (node_ref?.extern 
                 ? nolib.just.get.fn({}, nolib, node_ref.extern).args
-                : (node_ref?.nodes?.filter(n => n.ref === "arg" && !n.value.includes('.') && !n.value.startsWith("_")) ?? [])
+                : node_ref?.nodes?.filter(n => n.ref === "arg").map(n => n.value) ?? [])
+                    .filter(a => !a.includes('.') && !a.startsWith("_"))
+                    .concat(links_in.map(l => l.as))
                     .concat(
-                        [{value: "arg" + ((links_in.filter(l => 
+                        ["arg" + ((links_in.filter(l => 
                                     l.as?.startsWith("arg") 
                                     && new RegExp("[0-9]+").test(l.as.substring(3)))
                                 .map(l => parseInt(l.as.substring(3))) ?? [])
-                            .reduce((acc, i) => acc > i ? acc : i + 1, 0))}])
-                    .map(n => n.value))
+                            .reduce((acc, i) => acc > i ? acc : i + 1, 0))])
                     .map(n => ha.h('span', {
                         class: "clickable", 
                         onclick: links_in.filter(l => l.as === n).map(l => [SelectNode, {node_id: l.source.node_id}])[0]
