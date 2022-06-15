@@ -698,7 +698,7 @@ const result_subscription = (dispatch, props) => {
 
         requestAnimationFrame(() => {
             dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
-            props.result_display_dispatch(UpdateResultDisplay, {el: display_el.el || ha.h('div', {})})
+            display_el && props.result_display_dispatch(UpdateResultDisplay, {el: display_el.el || ha.h('div', {})})
         })
     };
 
