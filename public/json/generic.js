@@ -207,8 +207,10 @@ export default {
       "id": "return",
       "out": "out",
       "nodes": [
+        {"id": "node_args", "ref": "arg", "value": "_args"},
         {"id": "fn_args", "ref": "arg", "value": "_args"},
         {"id": "args", "ref": "arg", "value": "args"},
+        {"id": "merged_args", "ref": "merge_objects"},
         {"id": "fn_el_from", "ref": "arg", "value": "element.from"},
         {"id": "fn_el_as", "ref": "arg", "value": "element.as"},
         {"id": "fn", "script": "return {fn, graph: _lib.no.runtime.get_parent(_graph), args}"},
@@ -229,7 +231,9 @@ export default {
         {"from": "result", "to": "fn_runnable", "as": "fn"},
         {"from": "fn_runnable", "to": "entries", "as": "fn"},
         {"from": "edges", "to": "entries", "as": "array"},
-        {"from": "args", "to": "entries", "as": "args"},
+        {"from": "args", "to": "merged_args", "as": "a0"},
+        {"from": "node_args", "to": "merged_args", "as": "a1"},
+        {"from": "merged_args", "to": "entries", "as": "args"},
         {"from": "entries", "to": "out", "as": "entries"}
       ]
     },

@@ -687,32 +687,27 @@ const run_h = ({dom_type, props, children, text}) => dom_type === "text_value"
     : ha.h(dom_type, props, children?.filter(c => !!c).map(run_h) ?? []) 
 
 const result_subscription = (dispatch, props) => {
-    const listener = ({graph, result}) => {
-        result = resolve(result);
-        if(graph.id === props.display_graph_id) {
-            requestAnimationFrame(() => {
-                if(!!result?.display?.el){
-                    props.result_display_dispatch(UpdateResultDisplay, {el: result.display.el ? result.display.el : ha.h('div', {})})
-                }
-            })
-        }
-    }
-    
-
     const error_listener = (error) =>
         requestAnimationFrame(() => dispatch(s => Object.assign({}, s, {error})))
 
-    const change_listener = () => requestAnimationFrame(() =>
-            dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s));
+    const change_listener = graph => {
+        const display_node = nolib.no.runtime.get_path(graph, "display");
+        const node_args_node = nolib.no.runtime.get_path(graph, "args");
+        const display_args = display_node && node_args_node && nolib.no.runGraph(graph, node_args_node);
+        const display_el = display_node && nolib.no.runGraph(graph, display_node, display_args)
 
-    nolib.no.runtime.add_listener('graphrun', 'update_hyperapp_result_display', listener);
+        requestAnimationFrame(() => {
+            dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
+            props.result_display_dispatch(UpdateResultDisplay, {el: display_el.el || ha.h('div', {})})
+        })
+    };
+
     nolib.no.runtime.add_listener('graphchange', 'clear_hyperapp_error', change_listener);
     nolib.no.runtime.add_listener('grapherror', 'update_hyperapp_error', error_listener);
 
     nolib.no.runtime.update_graph(props.display_graph);
 
     return () => (
-        nolib.no.runtime.remove_listener('graphrun', 'update_hyperapp_result_display', listener),
         nolib.no.runtime.remove_listener('grapherror', 'update_hyperapp_error', error_listener)
     );
 }
@@ -1058,9 +1053,20 @@ const input_el = ({label, property, value, oninput, onchange, options}) => ha.h(
     ]
 )
 
-const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_graph_id, randid, refs, focused}) => {
+const info_el = ({node, display_graph, links_in, link_out, svg_offset, dimensions, display_graph_id, randid, refs, focused}) => {
     const node_ref = node.ref ? nolib.no.runtime.get_ref(display_graph_id, node.ref) : node;
     const description =  node_ref?.description;
+    const node_display = node_ref.nodes && nolib.no.runtime.get_path(node_ref, "display");
+    console.log('node display')
+    console.info(node_display)
+    console.info(nolib.no.runtime.get_node(display_graph, display_graph.id + "/" + node.id))
+    
+    const node_args = nolib.no.runtime.get_args(display_graph, display_graph.id + "/" + node.id);
+    console.log('node_args')
+    console.info(node_args)
+    const node_display_el = node_display && nolib.no.runGraph(node_ref, node_display, node_args)
+    console.log('display')
+    console.log(node_display_el)
     return ha.h(
         'div',
         {
@@ -1120,6 +1126,7 @@ const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_grap
                 }),
             ]),
             description && ha.h('div', {class: "description"}, ha.text(description)),
+            node_display_el && run_h(node_display_el.el),
             ha.h('div', {class: "buttons"}, [
                 ha.h('div', {
                     class: "action", 
@@ -1190,6 +1197,7 @@ const dispatch = (init) => {
             ),
         ]),
         !s.show_all && s.svg_offset && info_el({
+            display_graph: s.display_graph,
             node_id: s.selected[0], 
             node: Object.assign({}, s.nodes.find(n => n.node_id === s.selected[0]), nolib.no.runtime.get_node(s.display_graph, s.selected[0])),
             links_in: s.links.filter(l => l.target.node_id === s.selected[0]),

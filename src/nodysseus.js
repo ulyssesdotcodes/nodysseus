@@ -806,8 +806,8 @@ const nolib = {
             // }
 
             return node !== undefined
-                ? executeGraph({ graph: rgraph, lib })(node)(args)
-                : executeGraph({ graph: rgraph, lib })(graph.fn)(graph.args)
+                ? executeGraph({ graph: rgraph, lib })(node)(args || {})
+                : executeGraph({ graph: rgraph, lib })(graph.fn)(graph.args || {})
         },
         resolve,
         objToGraph,
@@ -1015,9 +1015,9 @@ const nolib = {
                 return lokiret;
             }
             const get_path = (graph, path) => {
-                    let gcache = get_cache(graph.id);
+                    graph = get_graph(graph);
                     let pathSplit = path.split(".");
-                    let node = gcache.graph.out || "out";
+                    let node = graph.out || "main/out";
                     while(pathSplit.length > 0 && node) {
                         let pathval = pathSplit.shift();
                         const edge = get_edges_in(graph, node).find(e => e.as === pathval);
