@@ -1,4 +1,4 @@
-import { bfs, hashcode, nolib, runGraph, calculateLevels, ispromise, resolve, add_default_nodes_and_edges } from "./nodysseus.js";
+import { bfs, hashcode, nolib, runGraph, calculateLevels, ispromise, resolve } from "./nodysseus.js";
 import * as ha from "hyperapp";
 import panzoom from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
@@ -927,25 +927,23 @@ const SaveGraph = (dispatch, payload) => {
         JSON.parse(localStorage.getItem('graph_list'))?.filter(l => l !== payload.display_graph.id) ?? []; 
     graph_list.unshift(payload.display_graph.id); 
     localStorage.setItem('graph_list', JSON.stringify(graph_list)); 
-    const graphstr = JSON.stringify({
-        ...payload.display_graph, 
-        node_map: undefined, 
-        in_edge_map: undefined
-    }); 
+    const graphstr = JSON.stringify(base_graph(payload.display_graph)); 
+    console.log(graphstr)
     localStorage.setItem(payload.display_graph.id, graphstr); 
 }
 
-const ChangeDisplayGraphId = (state, {id}) => {
+const ChangeDisplayGraphId = (dispatch, {id}) => {
     const json = localStorage.getItem(id);
-    const graph = json && JSON.parse(json);
+    const graph = json && base_graph(JSON.parse(json))
     window.location.hash = '#' + id; 
-    return [
+    dispatch(state => [
         {...state, display_graph_id: id},
-        [() => nolib.no.runtime.update_graph(graph || Object.assign({}, state.display_graph, {id}))]
-    ]
+        [() => nolib.no.runtime.update_graph(graph || Object.assign({}, base_graph(state.display_graph), {id}))]
+    ])
 }
 
 const base_node = node => ({id: node.id, value: node.value, name: node.name, ref: node.ref});
+const base_graph = graph => ({id: graph.id, value: graph.value, name: graph.name, nodes: graph.nodes, edges: graph.edges, out: graph.out})
 
 const UpdateNode = (state, {node, property, value}) => [
     state,
@@ -1096,21 +1094,24 @@ const info_el = ({node, links_in, link_out, svg_offset, dimensions, display_grap
                     label: "value", 
                     value: node.value, 
                     property: "value", 
-                    oninput: (state, payload) => [UpdateNode, {node, property: "value", value: payload.target.value
+                    onchange: (state, payload) => [UpdateNode, {node, property: "value", value: payload.target.value
                 }]}),
                 input_el({
                     label: "name", 
                     value: node.name, 
                     property: "name", 
-                    oninput: (state, payload) => [UpdateNode, {node, property: "name", value: payload.target.value}],
-                    onchange: node.id === "main/out" && ((_, payload) => [ChangeDisplayGraphId, {id: payload.target.value}]),
+                    onchange: (state, payload) => [
+                        state,
+                        [d => d(UpdateNode, {node, property: "name", value: payload.target.value})],
+                        node.id === "main/out" && [ChangeDisplayGraphId, {id: payload.target.value}]
+                    ],
                     options: node.id === "main/out" && JSON.parse(localStorage.getItem('graph_list'))
                 }),
                 input_el({
                     label: 'ref',
                     value: node.ref,
                     onchange: (state, event) => [UpdateNode, {node, property: "ref", value: event.target.value}],
-                    options: refs.map(r => r.id)
+                    options: refs
                 }),
                 link_out && link_out.source && input_el({
                     label: "edge", 
@@ -1157,6 +1158,113 @@ const result_display = html_id => ha.app({
 })
 
 const error_nodes = (error) => error instanceof AggregateError ? error.errors.map(e => e instanceof nolib.no.NodysseusError ? e.node_id : false).filter(n => n) : error instanceof nolib.no.NodysseusError ? [error.node_id] : []; 
+const dispatch = (init) => {
+    let result_display_dispatch;
+        // return () => requestAnimationFrame(() => dispatch.dispatch(s => undefined));
+    return ha.app({
+    init: ()=> [init, 
+        [() => requestAnimationFrame(() => {
+            result_display_dispatch = result_display(init.html_id);
+        })],
+        [UpdateSimulation, {...init, action: SimulationToHyperapp}], 
+    ],
+    view: s =>ha.h('div', {id: s.html_id}, [
+        ha.h('svg', {id: `${s.html_id}-editor`, width: s.dimensions.x, height: s.dimensions.y}, [
+            ha.h('g', {id: `${s.html_id}-editor-panzoom`}, 
+                [ha.memo(defs)].concat(
+                    s.nodes?.map(node => ha.memo(node_el, ({
+                        html_id: s.html_id, 
+                        selected: s.selected[0], 
+                        error: error_nodes(s.error).find(e => e.startsWith(s.display_graph.id + "/" + node.node_id)), 
+                        selected_distance: s.show_all ? 0 : s.levels.distance_from_selected.get(node.node_id) > 3 ? 'far' : s.levels.distance_from_selected.get(node.node_id),
+                        node: Object.assign({}, node, nolib.no.runtime.get_node(s.display_graph, node.node_id))
+                    }))) ?? []
+                ).concat(
+                    s.links?.map(link => ha.memo(link_el, {
+                        link: Object.assign({}, link, nolib.no.runtime.get_edge(s.display_graph, link.source.node_id)),
+                        selected_distance: s.show_all ? 0 : s.levels.distance_from_selected.get(link.source.node_id) > 3 ? 'far' : s.levels.distance_from_selected.get(link.source.node_id),
+                    })) ?? []
+                ).concat(
+                    s.links?.filter(link => link.source.node_id == s.selected[0] || link.target.node_id === s.selected[0])
+                        .map(link => insert_node_el({link, randid: s.randid, node_el_width: s.node_el_width}))
+                )
+            ),
+        ]),
+        !s.show_all && s.svg_offset && info_el({
+            node_id: s.selected[0], 
+            node: Object.assign({}, s.nodes.find(n => n.node_id === s.selected[0]), nolib.no.runtime.get_node(s.display_graph, s.selected[0])),
+            links_in: s.links.filter(l => l.target.node_id === s.selected[0]),
+            link_out: Object.assign({}, s.links.find(l => l.source.node_id === s.selected[0]), nolib.no.runtime.get_edge(s.display_graph, s.selected[0])),
+            svg_offset: s.svg_offset,
+            dimensions: s.dimensions,
+            display_graph_id: s.display_graph_id,
+            randid: s.randid,
+            focused: s.focused,
+            refs: nolib.no.runtime.refs()
+        }),
+        ha.h('div', {id: `${init.html_id}-result`})
+    ]),
+    node: document.getElementById(init.html_id),
+    subscriptions: s => [
+        [d3subscription, {action: SimulationToHyperapp, update: UpdateSimulation}], 
+        [graph_subscription, {display_graph_id: s.display_graph_id}],
+        result_display_dispatch && [result_subscription, {display_graph: nolib.no.runtime.get_graph(s.display_graph), display_graph_id: s.display_graph_id, result_display_dispatch}],
+        [keydownSubscription, {action: (state, payload) => {
+            const mode = state.editing !== false ? 'editing' : state.search !== false ? 'searching' : 'graph';
+            const key_input = (payload.ctrlKey ? 'ctrl_' : '') + (payload.shiftKey ? 'shift_' : '') + (payload.key === '?' ? 'questionmark' : payload.key.toLowerCase());
+            const selected = state.selected[0];
+            const result = runGraph(init.graph, "keybindings", {}, hlib)[mode][key_input];
+            let action;
+            let effects = [];
+            switch(result){
+                case "up": {
+                    const parent_edges = nolib.no.runtime.get_edges_in(state.display_graph, selected);
+                    const node_id = parent_edges?.[Math.ceil(parent_edges.length / 2) - 1]?.from
+                    action = node_id ? [SelectNode, {node_id}] : [state]
+                    break;
+                }
+                case "down": {
+                    const child_edge = state.display_graph.edges.find(e => e.from === selected);
+                    const node_id = child_edge?.to
+                    action = node_id ? [SelectNode, {node_id}] : [state]
+                    break;
+                }
+                case "left": 
+                case "right": {
+                    const dirmult = result === "left" ? 1 : -1;
+                    const current_node = state.nodes.find(n => n.node_id === selected); 
+                    const siblings = state.levels.siblings.get(selected); 
+                    const node_id = siblings.reduce((dist, sibling) => { 
+                        const sibling_node = state.nodes.find(n => n.node_id === sibling); 
+                        if(!sibling_node){ return dist } 
+                        const xdist = Math.abs(sibling_node.x - current_node.x); 
+                        dist = (dirmult * (sibling_node.x - current_node.x) < 0) && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist 
+                    }, [state.dimensions.x])?.[1]?.node_id; 
+                    action = node_id ? [SelectNode, {node_id}] : [state]
+                    break;
+                }
+                case "save": {
+                    effects.push([SaveGraph, state])
+                }
+                default: nolib.no.runtime.publish.fn(undefined, 'keydown', key_input)
+            }
+
+            return action ? action : [state, ...effects];
+        }}],
+        listen('resize', s => [{
+                ...s, 
+                dimensions: {x: document.getElementById(init.html_id).clientWidth, y: document.getElementById(init.html_id).clientHeight}
+            }, false && [() => nolib.no.runtime.publish('resize', {x: document.getElementById(init.html_id).clientWidth, y: document.getElementById(init.html_id).clientHeight})]
+        ]),
+        !!document.getElementById( `${init.html_id}-editor-panzoom`) && [pzobj.init, {
+            id: `${init.html_id}-editor-panzoom`, 
+            action: (s, p) => [
+                {...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}
+            ]
+        }]
+    ], 
+});
+}
 
 const editor = async function(html_id, display_graph, lib, norun) {
     const simple = await fetch("json/simple.json").then(r => r.json());
@@ -1164,146 +1272,55 @@ const editor = async function(html_id, display_graph, lib, norun) {
     const editor_graph = await fetch("json/editor.json").then(r => r.json());
     const url_params = new URLSearchParams(document.location.search);
     const examples = [simple_html_hyperapp, simple];
-    const init = { 
-        graph: editor_graph, 
-        display_graph_id: display_graph.id,
-        display_graph: add_default_nodes_and_edges({...display_graph, out: "main/out"}),
-        hash: window.location.hash ?? "",
-        url_params,
-        html_id,
-        dimensions: {
-            x: document.getElementById(html_id).clientWidth,
-            y: document.getElementById(html_id).clientHeight
-        },
-        examples: examples,
-        readonly: false, 
-        norun: norun || url_params.get("norun") !== null,
-        hide_types: false,
-        offset: {x: 0, y: 0},
-        nodes: [],
-        links: [],
-        editing: false,
-        search: false,
-        show_all: false,
-        show_result: false,
-        node_el_width: 256,
-        args_display: false,
-        imports: {},
-        history: [],
-        redo_history: [],
-        selected: ["main/out"]
-    };
+    const graph_list = JSON.parse(localStorage.getItem("graph_list")) ?? [];
+    const hash_graph = window.location.hash.substring(1);
+    if(!hash_graph && graph_list?.length > 0) {
+        window.location.hash = graph_list[0]
+    }
+    let stored_graph = JSON.parse(localStorage.getItem(hash_graph ?? graph_list?.[0]));
+    stored_graph = stored_graph ? base_graph(stored_graph) : undefined
+    graph_list.map(id => localStorage.getItem(id)).filter(g => g).map(graph => nolib.no.runtime.update_graph(base_graph(JSON.parse(graph))))
+    Promise.resolve(stored_graph ?? (hash_graph ? fetch(`json/${hash_graph}.json`).then(r => r.status !== 200 ? simple : r.json()).catch(_ => simple) : simple))
+        .then(display_graph => {
 
-    let result_display_dispatch;
+        const init = { 
+            graph: editor_graph, 
+            display_graph_id: display_graph.id,
+            display_graph: display_graph,
+            hash: window.location.hash ?? "",
+            url_params,
+            html_id,
+            dimensions: {
+                x: document.getElementById(html_id).clientWidth,
+                y: document.getElementById(html_id).clientHeight
+            },
+            examples: examples,
+            readonly: false, 
+            norun: norun || url_params.get("norun") !== null,
+            hide_types: false,
+            offset: {x: 0, y: 0},
+            nodes: [],
+            links: [],
+            editing: false,
+            search: false,
+            show_all: false,
+            show_result: false,
+            node_el_width: 256,
+            args_display: false,
+            imports: {},
+            history: [],
+            redo_history: [],
+            selected: ["main/out"]
+        };
 
-    const dispatch = ha.app({
-        init: ()=> [init, 
-            [() => requestAnimationFrame(() => {
-                result_display_dispatch = result_display(html_id);
-            })],
-            [UpdateSimulation, {...init, action: SimulationToHyperapp}], 
-        ],
-        view: s =>ha.h('div', {id: s.html_id}, [
-           ha.h('svg', {id: `${s.html_id}-editor`, width: s.dimensions.x, height: s.dimensions.y}, [
-               ha.h('g', {id: `${s.html_id}-editor-panzoom`}, 
-                    [ha.memo(defs)].concat(
-                        s.nodes?.map(node => ha.memo(node_el, ({
-                            html_id: s.html_id, 
-                            selected: s.selected[0], 
-                            error: error_nodes(s.error).find(e => e.startsWith(s.display_graph.id + "/" + node.node_id)), 
-                            selected_distance: s.show_all ? 0 : s.levels.distance_from_selected.get(node.node_id) > 3 ? 'far' : s.levels.distance_from_selected.get(node.node_id),
-                            node: Object.assign({}, node, nolib.no.runtime.get_node(s.display_graph, node.node_id))
-                        }))) ?? []
-                    ).concat(
-                        s.links?.map(link => ha.memo(link_el, {
-                            link: Object.assign({}, link, nolib.no.runtime.get_edge(s.display_graph, link.source.node_id)),
-                            selected_distance: s.show_all ? 0 : s.levels.distance_from_selected.get(link.source.node_id) > 3 ? 'far' : s.levels.distance_from_selected.get(link.source.node_id),
-                        })) ?? []
-                    ).concat(
-                        s.links?.filter(link => link.source.node_id == s.selected[0] || link.target.node_id === s.selected[0])
-                            .map(link => insert_node_el({link, randid: s.randid, node_el_width: s.node_el_width}))
-                    )
-                ),
-            ]),
-            !s.show_all && s.svg_offset && info_el({
-                node_id: s.selected[0], 
-                node: Object.assign({}, s.nodes.find(n => n.node_id === s.selected[0]), nolib.no.runtime.get_node(s.display_graph, s.selected[0])),
-                links_in: s.links.filter(l => l.target.node_id === s.selected[0]),
-                link_out: Object.assign({}, s.links.find(l => l.source.node_id === s.selected[0]), nolib.no.runtime.get_edge(s.display_graph, s.selected[0])),
-                svg_offset: s.svg_offset,
-                dimensions: s.dimensions,
-                display_graph_id: s.display_graph_id,
-                randid: s.randid,
-                focused: s.focused,
-                refs: s.display_graph.nodes
-                    .filter(n => !(n.ref || s.levels.level_by_node.has(n.id)) && (n.script ||n.nodes || n.extern))
-            }),
-            ha.h('div', {id: `${html_id}-result`})
-        ]),
-        node: document.getElementById(html_id),
-        subscriptions: s => [
-            [d3subscription, {action: SimulationToHyperapp, update: UpdateSimulation}], 
-            [graph_subscription, {display_graph_id: s.display_graph_id}],
-            result_display_dispatch && [result_subscription, {display_graph: nolib.no.runtime.get_graph(s.display_graph), display_graph_id: s.display_graph_id, result_display_dispatch}],
-            [keydownSubscription, {action: (state, payload) => {
-                const mode = state.editing !== false ? 'editing' : state.search !== false ? 'searching' : 'graph';
-                const key_input = (payload.ctrlKey ? 'ctrl_' : '') + (payload.shiftKey ? 'shift_' : '') + (payload.key === '?' ? 'questionmark' : payload.key.toLowerCase());
-                const selected = state.selected[0];
-                const result = runGraph(editor_graph, "keybindings", {}, hlib)[mode][key_input];
-                let action;
-                let effects = [];
-                switch(result){
-                    case "up": {
-                        const parent_edges = nolib.no.runtime.get_edges_in(state.display_graph, selected);
-                        const node_id = parent_edges?.[Math.ceil(parent_edges.length / 2) - 1]?.from
-                        action = node_id ? [SelectNode, {node_id}] : [state]
-                        break;
-                    }
-                    case "down": {
-                        const child_edge = state.display_graph.edges.find(e => e.from === selected);
-                        const node_id = child_edge?.to
-                        action = node_id ? [SelectNode, {node_id}] : [state]
-                        break;
-                    }
-                    case "left": 
-                    case "right": {
-                        const dirmult = result === "left" ? 1 : -1;
-                        const current_node = state.nodes.find(n => n.node_id === selected); 
-                        const siblings = state.levels.siblings.get(selected); 
-                        const node_id = siblings.reduce((dist, sibling) => { 
-                            const sibling_node = state.nodes.find(n => n.node_id === sibling); 
-                            if(!sibling_node){ return dist } 
-                            const xdist = Math.abs(sibling_node.x - current_node.x); 
-                            dist = (dirmult * (sibling_node.x - current_node.x) < 0) && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist 
-                        }, [state.dimensions.x])?.[1]?.node_id; 
-                        action = node_id ? [SelectNode, {node_id}] : [state]
-                        break;
-                    }
-                    case "save": {
-                        effects.push([SaveGraph, state])
-                    }
-                    default: nolib.no.runtime.publish.fn(undefined, 'keydown', key_input)
-                }
+        dispatch(init)
 
-                return action ? action : [state, ...effects];
-            }}],
-            listen('resize', s => [{
-                    ...s, 
-                    dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}
-                }, false && [() => nolib.no.runtime.publish('resize', {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight})]
-            ]),
-            !!document.getElementById( `${html_id}-editor-panzoom`) && [pzobj.init, {
-                id: `${html_id}-editor-panzoom`, 
-                action: (s, p) => [
-                    {...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}
-                ]
-            }]
-        ], 
-    });
+    })
+
+
 
     // runGraph(editor_graph, "main/out", {...hlib, ...(lib ?? {})});
 
-    return () => requestAnimationFrame(() => dispatch.dispatch(s => undefined));
 }
 
 // return {dispatch: _lib.ha.app({dispatch: _lib.ha.middleware, init: () => [_lib.no.resolve(init), static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp], [() => _lib.no.runtime.update_graph(init.display_graph)]], view: s => {const vs = view(s); return vs.el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}], !static && [_lib.scripts.graph_subscription, {display_graph_id: s.display_graph_id}], !static && !init.norun._value && [_lib.scripts.result_subscription, {display_graph_id: s.display_graph_id}], !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.panzoom.init, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]]})}

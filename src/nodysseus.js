@@ -801,9 +801,9 @@ const nolib = {
         runGraph: (graph, node, args, lib) => {
             let rgraph = graph.graph ? graph.graph : graph;
 
-            if(!rgraph.nodes.find(n => n.id === "get") && nolib.no.runtime.get_parent(rgraph) === undefined) {
-                rgraph = add_default_nodes_and_edges(rgraph);
-            }
+            // if(!rgraph.nodes.find(n => n.id === "get") && nolib.no.runtime.get_parent(rgraph) === undefined) {
+            //     rgraph = add_default_nodes_and_edges(rgraph);
+            // }
 
             return node !== undefined
                 ? executeGraph({ graph: rgraph, lib })(node)(args)
@@ -815,6 +815,9 @@ const nolib = {
         runtime: (function(){
             const db = new loki("nodysseus.db", {env: "BROWSER", persistenceMethod:"memory"});
             const nodesdb = db.addCollection("nodes", {unique: ["id"]});
+            const refsdb = db.addCollection("refs", {unique: ["id"]});
+            generic.nodes.map(n => refsdb.insert(n));
+            
             const parentdb = db.addCollection("parents", {unique: ["id"]});
             const new_graph_cache = (graph) => ({
                 id: graph.id,
@@ -953,6 +956,12 @@ const nolib = {
                 if(parent) {
                     update_graph(parent);
                 } else {
+                    const existing = refsdb.by("id", graph.id);
+                    if(existing) {
+                        refsdb.update(Object.assign(existing, graph))
+                    } else {
+                        refsdb.insert(graph)
+                    }
                     publish('graphchange', graph);
                 }
             }
@@ -970,7 +979,7 @@ const nolib = {
 
             const get_ref = (graph, id) => {
                 const parentest = get_parentest(graph);
-                return parentest ? get_ref(parentest, id) : get_node(graph, id);
+                return refsdb.by("id", id) || (parentest ? get_ref(parentest, id) : get_node(graph, id));
             }
             const get_node = (graph, id) => getorsetgraph(graph, id, 'node_map', () =>
                 get_graph(graph).nodes.find(n => n.id === id));
@@ -1037,6 +1046,7 @@ const nolib = {
                 get_graph,
                 get_args,
                 get_path,
+                refs: () => refsdb.where(() => true).map(v => v.id).concat(refsdb.where(() => true).map(v => v.id)),
                 edit_edge: (graph, edge, old_edge) => {
                     const gcache = get_cache(graph);
                     graph = gcache.graph;
