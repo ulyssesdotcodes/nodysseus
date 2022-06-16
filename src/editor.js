@@ -691,17 +691,14 @@ const result_subscription = (dispatch, props) => {
         requestAnimationFrame(() => dispatch(s => Object.assign({}, s, {error})))
 
     const change_listener = graph => {
-        const display_node = nolib.no.runtime.get_path(graph, "display");
-        const node_args_node = nolib.no.runtime.get_path(graph, "args");
-        const display_args = display_node && node_args_node && nolib.no.runGraph(graph, node_args_node);
-        const display_el = display_node && nolib.no.runGraph(graph, display_node, display_args)
-
+        const display = nolib.no.runGraph(graph, graph.out, {property: "display"});
         requestAnimationFrame(() => {
             dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
-            display_el && props.result_display_dispatch(UpdateResultDisplay, {el: display_el.el || ha.h('div', {})})
+            props.result_display_dispatch(UpdateResultDisplay, {el: display && display.el ? display.el : ha.h('div', {})})
         })
-    };
+    }
 
+    // nolib.no.runtime.add_listener('graphrun', 'update_hyperapp_result_display', listener);
     nolib.no.runtime.add_listener('graphchange', 'clear_hyperapp_error', change_listener);
     nolib.no.runtime.add_listener('grapherror', 'update_hyperapp_error', error_listener);
 
@@ -1056,17 +1053,7 @@ const input_el = ({label, property, value, oninput, onchange, options}) => ha.h(
 const info_el = ({node, display_graph, links_in, link_out, svg_offset, dimensions, display_graph_id, randid, refs, focused}) => {
     const node_ref = node.ref ? nolib.no.runtime.get_ref(display_graph_id, node.ref) : node;
     const description =  node_ref?.description;
-    const node_display = node_ref.nodes && nolib.no.runtime.get_path(node_ref, "display");
-    console.log('node display')
-    console.info(node_display)
-    console.info(nolib.no.runtime.get_node(display_graph, display_graph.id + "/" + node.id))
-    
-    const node_args = nolib.no.runtime.get_args(display_graph, display_graph.id + "/" + node.id);
-    console.log('node_args')
-    console.info(node_args)
-    const node_display_el = node_display && nolib.no.runGraph(node_ref, node_display, node_args)
-    console.log('display')
-    console.log(node_display_el)
+    const node_display_el = nolib.no.runGraph(display_graph, node.id, {property: "display"});
     return ha.h(
         'div',
         {
@@ -1078,11 +1065,10 @@ const info_el = ({node, display_graph, links_in, link_out, svg_offset, dimension
         },
         [
             ha.h('div', {class: "args"}, 
-                (node_ref?.extern 
+                [...new Set((node_ref?.extern 
                 ? nolib.just.get.fn({}, nolib, node_ref.extern).args
                 : node_ref?.nodes?.filter(n => n.ref === "arg").map(n => n.value) ?? [])
-                    .filter(a => !a.includes('.') && !a.startsWith("_"))
-                    .concat(links_in.map(l => l.as))
+                    .filter(a => !a.includes('.') && !a.startsWith("_")))]
                     .concat(
                         ["arg" + ((links_in.filter(l => 
                                     l.as?.startsWith("arg") 
@@ -1126,7 +1112,7 @@ const info_el = ({node, display_graph, links_in, link_out, svg_offset, dimension
                 }),
             ]),
             description && ha.h('div', {class: "description"}, ha.text(description)),
-            node_display_el && run_h(node_display_el.el),
+            node_display_el && node_display_el.el && run_h(node_display_el.el),
             ha.h('div', {class: "buttons"}, [
                 ha.h('div', {
                     class: "action", 

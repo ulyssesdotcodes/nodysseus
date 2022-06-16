@@ -209,17 +209,24 @@ export default {
       "nodes": [
         {"id": "node_args", "ref": "arg", "value": "_args"},
         {"id": "fn_args", "ref": "arg", "value": "_args"},
+        {"id": "return", "ref": "arg", "value": "return"},
+        {"id": "display", "ref": "arg", "value": "display"},
+        {"id": "property", "ref": "arg", "value": "property"},
+        {"id": "default_property", "ref": "default"},
+        {"id": "return_str", "value": "return"},
         {"id": "args", "ref": "arg", "value": "args"},
+        {"id": "is_parentest", "ref": "script", "value": "return !_lib.no.runtime.get_parent(_lib.no.runtime.get_parent(_graph))"},
+        {"id": "top_level_args", "ref": "if"},
         {"id": "merged_args", "ref": "merge_objects"},
         {"id": "fn_el_from", "ref": "arg", "value": "element.from"},
         {"id": "fn_el_as", "ref": "arg", "value": "element.as"},
-        {"id": "fn", "script": "return {fn, graph: _lib.no.runtime.get_parent(_graph), args}"},
+        {"id": "fn", "script": "return {fn, graph: _lib.no.runtime.get_parent(_graph), args: {...(args ?? {}), property: undefined, args: undefined}}"},
         {"id": "fn_run", "ref": "run"},
         {"id": "result_entry", "ref": "array"},
         {"id": "fn_runnable", "ref": "runnable"},
-        {"id": "edges", "script": "return _lib.no.runtime.get_edges_in(_lib.no.runtime.get_parent(_graph), _graph.node_id).filter(e => e.as !== 'args');"},
+        {"id": "edges", "script": "return _lib.no.runtime.get_edges_in(_lib.no.runtime.get_parent(_graph), _graph.node_id).filter(e => e.as === property);"},
         {"id": "entries", "ref": "map"},
-        {"id": "out", "script": "const res = Object.fromEntries(entries); return res?.value ?? res"}
+        {"id": "out", "script": "const res = Object.fromEntries(entries); return res[property]"}
       ],
       "edges": [
         {"from": "fn_args", "to": "fn", "as": "args"},
@@ -231,10 +238,17 @@ export default {
         {"from": "result", "to": "fn_runnable", "as": "fn"},
         {"from": "fn_runnable", "to": "entries", "as": "fn"},
         {"from": "edges", "to": "entries", "as": "array"},
-        {"from": "args", "to": "merged_args", "as": "a0"},
+        {"from": "is_parentest", "to": "top_level_args", "as": "pred"},
+        {"from": "args", "to": "top_level_args", "as": "true"},
+        {"from": "top_level_args", "to": "merged_args", "as": "a0"},
         {"from": "node_args", "to": "merged_args", "as": "a1"},
         {"from": "merged_args", "to": "entries", "as": "args"},
-        {"from": "entries", "to": "out", "as": "entries"}
+        {"from": "node_args", "to": "edges", "as": "args"},
+        {"from": "entries", "to": "out", "as": "entries"},
+        {"from": "default_property", "to": "out", "as": "property"},
+        {"from": "default_property", "to": "edges", "as": "property"},
+        {"from": "return_str", "to": "default_property", "as": "otherwise"},
+        {"from": "property", "to": "default_property", "as": "value"}
       ]
     },
     {
@@ -333,7 +347,6 @@ export default {
     {"id":"script", "extern": "utility.script"},
     {
       "id": "resolve",
-      "args": ["data"],
       "nodes": [
         { "id": "in" },
         { "id": "keys", "args": ["data"], "script": "return [...data.keys()]" },

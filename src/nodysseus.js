@@ -42,7 +42,7 @@ function nodysseus_get(obj, propsArg, defaultValue) {
         continue;
     }
     prop = props.length == 0 ? props[0] : props.shift();
-    if(obj === undefined || (obj[prop] === undefined && !obj.hasOwnProperty(prop))){
+    if((obj === undefined || !obj.hasOwnProperty(prop)) && prop !== "args"){
         if(level === 0) {
             return objArg && objArg.__args ? nodysseus_get(objArg.__args, propsArg, defaultValue) : defaultValue;
         }
@@ -387,7 +387,7 @@ const node_nodes = (node, node_ref, graph_input_value, data, full_lib, graph, in
 
     full_lib.no.runtime.set_parent(node_graph, graph);
 
-    return full_lib.no.runGraph(node_graph, node_ref.out || 'out', combined_data_input, full_lib);;
+    return full_lib.no.runGraph(node_graph, node_ref.out || 'out', combined_data_input, full_lib);
 }
 
 const node_script = (node, node_ref, data, full_lib, graph, inputs) => {
@@ -569,7 +569,7 @@ const run_with_val_full = (graph, full_lib, node_id, graph_input_value) => {
         if(cache_args) {
             Object.assign(graph_input_value, cache_args);
         }
-        
+
         let node = full_lib.no.runtime.get_node(graph, node_id);
 
         if (node === undefined) {
@@ -795,7 +795,6 @@ const nolib = {
         diffApply
     },
     no: {
-        executeGraph: ({ state, graph, lib }) => executeGraph({ state, graph })(graph.out)(state.get(graph.in)),
         executeGraphValue: ({ graph, lib }) => executeGraph({ graph, lib })(graph.out),
         executeGraphNode: ({ graph, lib }) => executeGraph({ graph, lib }),
         runGraph: (graph, node, args, lib) => {
@@ -974,7 +973,7 @@ const nolib = {
                     Object.assign(gcache.args, args);
                 }
 
-                publish('graphchange', get_parentest(graph));
+                // publish('graphchange', get_parentest(graph));
             }
 
             const get_ref = (graph, id) => {
