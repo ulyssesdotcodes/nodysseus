@@ -42,7 +42,7 @@ function nodysseus_get(obj, propsArg, defaultValue) {
         continue;
     }
     prop = props.length == 0 ? props[0] : props.shift();
-    if((obj === undefined || !obj.hasOwnProperty(prop)) && prop !== "args"){
+    if((obj === undefined || (obj[prop] === undefined && !obj.hasOwnProperty(prop))) && prop !== "args"){
         if(level === 0) {
             return objArg && objArg.__args ? nodysseus_get(objArg.__args, propsArg, defaultValue) : defaultValue;
         }
@@ -419,8 +419,8 @@ const node_script = (node, node_ref, data, full_lib, graph, inputs) => {
         } else {
             console.error(e);
         }
-        const parentest = full_lib.no.runtime.get_parentest(graph)
-        let error_node = graph;
+        const parentest = full_lib.no.runtime.get_parentest(node)
+        let error_node = node;
         while(full_lib.no.runtime.get_parent(error_node).id !== parentest.id) {
             error_node = full_lib.no.runtime.get_parent(error_node);
         }

@@ -3,6 +3,10 @@
     --nodey: 0px;
 }
 
+.hidden {
+    visibility: hidden;
+}
+
 
 #node-editor {
     position: relative;

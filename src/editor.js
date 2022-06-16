@@ -1050,14 +1050,15 @@ const input_el = ({label, property, value, oninput, onchange, options}) => ha.h(
     ]
 )
 
-const info_el = ({node, display_graph, links_in, link_out, svg_offset, dimensions, display_graph_id, randid, refs, focused}) => {
+const info_el = ({node, hidden, display_graph, links_in, link_out, svg_offset, dimensions, display_graph_id, randid, refs, focused, info_display_dispatch, html_id}) => {
     const node_ref = node.ref ? nolib.no.runtime.get_ref(display_graph_id, node.ref) : node;
     const description =  node_ref?.description;
-    const node_display_el = nolib.no.runGraph(display_graph, node.id, {property: "display"});
+    const node_display_el = (node.ref === "return" || node.nodes) && nolib.no.runGraph(display_graph, node.id, {property: "display"});
+    info_display_dispatch && requestAnimationFrame(() => info_display_dispatch(UpdateResultDisplay, {el: node_display_el && node_display_el.el ? node_display_el.el : ha.h('div', {})}))
     return ha.h(
         'div',
         {
-            class: {'node-info': true, 'align-selected': true}, 
+            class: {'node-info': true, 'align-selected': true, hidden}, 
             nostyle: !focused && {
                 left: `${Math.min(node.x * (svg_offset?.scale ?? 1) + (svg_offset?.x ?? 0) - 64, dimensions.x - 256)}px`,
                 top: `${node.y * (svg_offset?.scale ?? 1) + (svg_offset?.y ?? 0) + 32}px`
@@ -1111,8 +1112,8 @@ const info_el = ({node, display_graph, links_in, link_out, svg_offset, dimension
                     onchange: (state, payload) => [UpdateEdge, {edge: {from: link_out.from, to: link_out.to, as: link_out.as}, as: payload.target.value}]
                 }),
             ]),
+            ha.h('div', {id: `${html_id}-info-display`}),
             description && ha.h('div', {class: "description"}, ha.text(description)),
-            node_display_el && node_display_el.el && run_h(node_display_el.el),
             ha.h('div', {class: "buttons"}, [
                 ha.h('div', {
                     class: "action", 
@@ -1149,14 +1150,25 @@ const result_display = html_id => ha.app({
     }
 })
 
+const info_display = html_id => ha.app({
+    init: {el: {dom_type: 'div', props: {}, children: [{dom_type: 'text_value', text: 'loading result'}]}},
+    node: document.getElementById(html_id + "-info-display"),
+    dispatch: middleware,
+    view: s => {
+        return run_h(s.el)
+    }
+})
+
 const error_nodes = (error) => error instanceof AggregateError ? error.errors.map(e => e instanceof nolib.no.NodysseusError ? e.node_id : false).filter(n => n) : error instanceof nolib.no.NodysseusError ? [error.node_id] : []; 
 const dispatch = (init) => {
     let result_display_dispatch;
+    let info_display_dispatch;
         // return () => requestAnimationFrame(() => dispatch.dispatch(s => undefined));
     return ha.app({
     init: ()=> [init, 
         [() => requestAnimationFrame(() => {
             result_display_dispatch = result_display(init.html_id);
+            info_display_dispatch = info_display(init.html_id);
         })],
         [UpdateSimulation, {...init, action: SimulationToHyperapp}], 
     ],
@@ -1182,7 +1194,9 @@ const dispatch = (init) => {
                 )
             ),
         ]),
-        !s.show_all && s.svg_offset && info_el({
+        info_el({
+            hidden: s.show_all || !s.svg_offset,
+            html_id: s.html_id,
             display_graph: s.display_graph,
             node_id: s.selected[0], 
             node: Object.assign({}, s.nodes.find(n => n.node_id === s.selected[0]), nolib.no.runtime.get_node(s.display_graph, s.selected[0])),
@@ -1193,9 +1207,10 @@ const dispatch = (init) => {
             display_graph_id: s.display_graph_id,
             randid: s.randid,
             focused: s.focused,
-            refs: nolib.no.runtime.refs()
+            refs: nolib.no.runtime.refs(),
+            info_display_dispatch
         }),
-        ha.h('div', {id: `${init.html_id}-result`})
+        ha.h('div', {id: `${init.html_id}-result`}),
     ]),
     node: document.getElementById(init.html_id),
     subscriptions: s => [

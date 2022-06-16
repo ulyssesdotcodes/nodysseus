@@ -1033,6 +1033,8 @@ export default {
         { "id": "memo", "ref": "arg", "value": "memo" },
         { "id": "element", "ref": "arg", "value": "element" },
         { "id": "div", "value": "div" },
+        { "id": "dom_type_value", "ref": "if"},
+        { "id": "graph_value", "ref": "script", "value": "return _graph.value"},
         {"id": "filter_children_fn", "script": "return element?._Proxy ? element._value : element"},
         {"id": "filter_children_fn_runnable", "ref": "runnable"},
         {"id": "fill_children_fn", "script": "return element.el ?? element"},
@@ -1066,7 +1068,10 @@ export default {
         { "from": "fill_children", "to": "out", "as": "children"},
         { "from": "fill_props", "to": "out", "as": "props" },
         { "from": "dom_type", "to": "dom_type_def", "as": "value" },
-        { "from": "div", "to": "dom_type_def", "as": "otherwise" },
+        { "from": "graph_value", "to": "dom_type_value", "as": "pred" },
+        { "from": "div", "to": "dom_type_value", "as": "false" },
+        { "from": "graph_value", "to": "dom_type_value", "as": "true" },
+        { "from": "dom_type_value", "to": "dom_type_def", "as": "otherwise" },
         { "from": "dom_type_def", "to": "out", "as": "dom_type" },
         { "from": "in", "to": "out", "as": "args", "type": "ref" }
       ]
