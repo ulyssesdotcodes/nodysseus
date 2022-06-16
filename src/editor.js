@@ -694,17 +694,16 @@ const result_subscription = (dispatch, props) => {
         const display = nolib.no.runGraph(graph, graph.out, {property: "display"});
         requestAnimationFrame(() => {
             dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
-            props.result_display_dispatch(UpdateResultDisplay, {el: display && display.el ? display.el : ha.h('div', {})})
+            props.result_display_dispatch(UpdateResultDisplay, {el: display && display.el ? display.el : {dom_type: 'div'}})
         })
     }
 
-    // nolib.no.runtime.add_listener('graphrun', 'update_hyperapp_result_display', listener);
     nolib.no.runtime.add_listener('graphchange', 'clear_hyperapp_error', change_listener);
     nolib.no.runtime.add_listener('grapherror', 'update_hyperapp_error', error_listener);
 
-    nolib.no.runtime.update_graph(props.display_graph);
 
     return () => (
+        nolib.no.runtime.remove_listener('graphchange', 'clear_hyperapp_error', change_listener),
         nolib.no.runtime.remove_listener('grapherror', 'update_hyperapp_error', error_listener)
     );
 }
@@ -1146,7 +1145,11 @@ const result_display = html_id => ha.app({
     node: document.getElementById(html_id + "-result"),
     dispatch: middleware,
     view: s => {
-        return run_h(s.el)
+        try{
+            return run_h(s.el);
+        } catch(e) {
+            return ha.h('div', {}, ha.text('error'))
+        }
     }
 })
 
@@ -1216,7 +1219,7 @@ const dispatch = (init) => {
     subscriptions: s => [
         [d3subscription, {action: SimulationToHyperapp, update: UpdateSimulation}], 
         [graph_subscription, {display_graph_id: s.display_graph_id}],
-        result_display_dispatch && [result_subscription, {display_graph: nolib.no.runtime.get_graph(s.display_graph), display_graph_id: s.display_graph_id, result_display_dispatch}],
+        result_display_dispatch && [result_subscription, {display_graph_id: s.display_graph_id, result_display_dispatch}],
         [keydownSubscription, {action: (state, payload) => {
             const mode = state.editing !== false ? 'editing' : state.search !== false ? 'searching' : 'graph';
             const key_input = (payload.ctrlKey ? 'ctrl_' : '') + (payload.shiftKey ? 'shift_' : '') + (payload.key === '?' ? 'questionmark' : payload.key.toLowerCase());

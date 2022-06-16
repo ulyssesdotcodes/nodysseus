@@ -419,8 +419,8 @@ const node_script = (node, node_ref, data, full_lib, graph, inputs) => {
         } else {
             console.error(e);
         }
-        const parentest = full_lib.no.runtime.get_parentest(node)
-        let error_node = node;
+        const parentest = full_lib.no.runtime.get_parentest(graph)
+        let error_node = parentest ? graph : node;
         while(full_lib.no.runtime.get_parent(error_node).id !== parentest.id) {
             error_node = full_lib.no.runtime.get_parent(error_node);
         }
