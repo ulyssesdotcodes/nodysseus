@@ -926,10 +926,11 @@ const ChangeDisplayGraphId = (dispatch, {id}) => {
     const json = localStorage.getItem(id);
     const graph = json && base_graph(JSON.parse(json))
     window.location.hash = '#' + id; 
-    dispatch(state => [
-        {...state, display_graph_id: id},
-        [() => nolib.no.runtime.update_graph(graph || Object.assign({}, base_graph(state.display_graph), {id}))]
-    ])
+    requestAnimationFrame(() =>
+        dispatch(state => [
+            {...state, display_graph_id: id},
+            [() => nolib.no.runtime.update_graph(graph || Object.assign({}, base_graph(state.display_graph), {id}))]
+        ]))
 }
 
 const base_node = node => ({id: node.id, value: node.value, name: node.name, ref: node.ref});
