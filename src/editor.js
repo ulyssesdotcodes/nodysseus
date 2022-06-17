@@ -691,16 +691,15 @@ const result_subscription = (dispatch, props) => {
         requestAnimationFrame(() => dispatch(s => Object.assign({}, s, {error})))
 
     const change_listener = graph => {
-        const display = nolib.no.runGraph(graph, graph.out, {property: "display"});
+        const display = nolib.no.runGraph(graph, graph.out, {[graph.id]: {property: "display"}});
         requestAnimationFrame(() => {
             dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
-            props.result_display_dispatch(UpdateResultDisplay, {el: display && display.el ? display.el : {dom_type: 'div'}})
+            props.result_display_dispatch(UpdateResultDisplay, {el: display && display.el ? display.el : {dom_type: 'div', props: {}, children: []}})
         })
     }
 
     nolib.no.runtime.add_listener('graphchange', 'clear_hyperapp_error', change_listener);
     nolib.no.runtime.add_listener('grapherror', 'update_hyperapp_error', error_listener);
-
 
     return () => (
         nolib.no.runtime.remove_listener('graphchange', 'clear_hyperapp_error', change_listener),
@@ -1040,7 +1039,7 @@ const input_el = ({label, property, value, oninput, onchange, options}) => ha.h(
 const info_el = ({node, hidden, display_graph, links_in, link_out, svg_offset, dimensions, display_graph_id, randid, refs, focused, info_display_dispatch, html_id}) => {
     const node_ref = node.ref ? nolib.no.runtime.get_ref(display_graph_id, node.ref) : node;
     const description =  node_ref?.description;
-    const node_display_el = (node.ref === "return" || node.nodes) && nolib.no.runGraph(display_graph, node.id, {property: "display"});
+    const node_display_el = (node.ref === "return" || node_ref.nodes) && nolib.no.runGraph(display_graph, node.id, {edge: {node_id: display_graph.id + "/" + node.id, as: "display"}});
     info_display_dispatch && requestAnimationFrame(() => info_display_dispatch(UpdateResultDisplay, {el: node_display_el && node_display_el.el ? node_display_el.el : ha.h('div', {})}))
     return ha.h('div', {class: {"node-info-wrapper": true}}, [ha.h('div', {class: "spacer before"}, []), ha.h(
         'div',
@@ -1095,7 +1094,6 @@ const info_el = ({node, hidden, display_graph, links_in, link_out, svg_offset, d
                     onchange: (state, payload) => [UpdateEdge, {edge: {from: link_out.from, to: link_out.to, as: link_out.as}, as: payload.target.value}]
                 }),
             ]),
-            ha.h('div', {id: `${html_id}-info-display`}),
             description && ha.h('div', {class: "description"}, ha.text(description)),
             ha.h('div', {class: "buttons"}, [
                 ha.h('div', {
@@ -1114,7 +1112,8 @@ const info_el = ({node, hidden, display_graph, links_in, link_out, svg_offset, d
                         node_id: node.node_id
                     }]
                 }, ha.text("delete"))
-            ])
+            ]),
+            ha.h('div', {id: `${html_id}-info-display`}),
         ]
     ), ha.h('div', {class: "spacer after"}, [])])
 }
@@ -1132,7 +1131,7 @@ const result_display = html_id => ha.app({
         try{
             return run_h(s.el);
         } catch(e) {
-            return ha.h('div', {}, ha.text('error'))
+            return ha.h('div', {}, [ha.text(`Error: ${e}`), ha.h('pre', {}, ha.text(JSON.stringify(s.el)))])
         }
     }
 })

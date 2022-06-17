@@ -202,6 +202,8 @@ svg {
     gap: .6em;
     flex-direction: column;
     pointer-events: all;
+    max-height: 100%;
+    overflow: auto;
 }
 
 @media (max-width: 600px) {

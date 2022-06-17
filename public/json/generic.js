@@ -211,8 +211,10 @@ export default {
         {"id": "fn_args", "ref": "arg", "value": "_args"},
         {"id": "return", "ref": "arg", "value": "return"},
         {"id": "display", "ref": "arg", "value": "display"},
-        {"id": "property", "ref": "arg", "value": "property"},
-        {"id": "default_property", "ref": "default"},
+        {"id": "edge", "ref": "arg", "value": "edge"},
+        {"id": "edge_as", "ref": "get", "value": "as"},
+        {"id": "is_edge_for_node", "ref": "script", "value": "return edge && _graph.id.startsWith(edge.node_id)"},
+        {"id": "default_edge", "ref": "if"},
         {"id": "return_str", "value": "return"},
         {"id": "args", "ref": "arg", "value": "args"},
         {"id": "is_parentest", "ref": "script", "value": "return !_lib.no.runtime.get_parent(_lib.no.runtime.get_parent(_graph))"},
@@ -220,13 +222,13 @@ export default {
         {"id": "merged_args", "ref": "merge_objects"},
         {"id": "fn_el_from", "ref": "arg", "value": "element.from"},
         {"id": "fn_el_as", "ref": "arg", "value": "element.as"},
-        {"id": "fn", "script": "return {fn, graph: _lib.no.runtime.get_parent(_graph), args: {...(args ?? {}), property: undefined, args: undefined}}"},
+        {"id": "fn", "script": "return {fn, graph: _lib.no.runtime.get_parent(_graph), args: {...(args ?? {}), edge: undefined, args: undefined}}"},
         {"id": "fn_run", "ref": "run"},
         {"id": "result_entry", "ref": "array"},
         {"id": "fn_runnable", "ref": "runnable"},
-        {"id": "edges", "script": "return _lib.no.runtime.get_edges_in(_lib.no.runtime.get_parent(_graph), _graph.node_id).filter(e => e.as === property);"},
+        {"id": "edges", "script": "return _lib.no.runtime.get_edges_in(_lib.no.runtime.get_parent(_graph), _graph.node_id).filter(e => e.as === edge);"},
         {"id": "entries", "ref": "map"},
-        {"id": "out", "script": "const res = Object.fromEntries(entries); return res[property]"}
+        {"id": "out", "script": "const res = Object.fromEntries(entries); return res[edge]"}
       ],
       "edges": [
         {"from": "fn_args", "to": "fn", "as": "args"},
@@ -245,10 +247,13 @@ export default {
         {"from": "merged_args", "to": "entries", "as": "args"},
         {"from": "node_args", "to": "edges", "as": "args"},
         {"from": "entries", "to": "out", "as": "entries"},
-        {"from": "default_property", "to": "out", "as": "property"},
-        {"from": "default_property", "to": "edges", "as": "property"},
-        {"from": "return_str", "to": "default_property", "as": "otherwise"},
-        {"from": "property", "to": "default_property", "as": "value"}
+        {"from": "default_edge", "to": "out", "as": "edge"},
+        {"from": "default_edge", "to": "edges", "as": "edge"},
+        {"from": "return_str", "to": "default_edge", "as": "false"},
+        {"from": "edge", "to": "edge_as", "as": "target"},
+        {"from": "edge_as", "to": "default_edge", "as": "true"},
+        {"from": "is_edge_for_node", "to": "default_edge", "as": "pred"},
+        {"from": "edge", "to": "is_edge_for_node", "as": "edge"}
       ]
     },
     {
@@ -527,16 +532,28 @@ export default {
     },
     {
       "id": "input_value",
-      "out": "out",
-      "description": "Show the `value` input on this node.",
       "nodes": [
-        { "id": "value", "ref": "arg", "value": "value" },
-        {
-          "id": "out",
-          "script": "const parent = _lib.no.runtime.get_parent(_graph); const graph_node = _lib.no.runtime.get_node(parent, _graph.node_id); if(!_lib.utility.compare(_lib.no.runtime.get_node(parent, _graph.node_id).value, value)) { _lib.no.runtime.add_node(parent, {...graph_node, id: _graph.node_id, value}); } return value"
-        }
+        { "id": "args" },
+        { "id": "main/out", "name": "input_value", "ref": "return" },
+        { "id": "cfuymky", "value": "{\"a\": 1, \"b\": {\"c\": 2, \"d\": 3}}" },
+        { "id": "4d8qcss", "ref": "html_text" },
+        { "id": "1znvqbi", "value": "value", "ref": "arg" },
+        { "id": "qwz3ftj", "ref": "stringify" },
+        { "id": "5a6pljw", "value": "pre", "ref": "html_element" },
+        { "id": "17pcf8z", "value": "2" },
+        { "id": "rpys4rr", "value": "value", "ref": "arg" }
       ],
-      "edges": [{ "from": "value", "to": "out", "as": "value", "type": "resolve" }]
+      "edges": [
+        { "from": "args", "to": "main/out", "as": "args" },
+        { "from": "5a6pljw", "to": "main/out", "as": "display" },
+        { "from": "cfuymky", "to": "args", "as": "value" },
+        { "from": "4d8qcss", "to": "5a6pljw", "as": "children" },
+        { "from": "1znvqbi", "to": "qwz3ftj", "as": "object" },
+        { "from": "17pcf8z", "to": "qwz3ftj", "as": "spacer" },
+        { "from": "qwz3ftj", "to": "4d8qcss", "as": "text" },
+        { "from": "rpys4rr", "to": "main/out", "as": "return" }
+      ],
+      "out": "main/out"
     },
     {
       "id": "event_subscriber",

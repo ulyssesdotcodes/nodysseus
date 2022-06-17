@@ -421,8 +421,10 @@ const node_script = (node, node_ref, data, full_lib, graph, inputs) => {
         }
         const parentest = full_lib.no.runtime.get_parentest(graph)
         let error_node = parentest ? graph : node;
-        while(full_lib.no.runtime.get_parent(error_node).id !== parentest.id) {
-            error_node = full_lib.no.runtime.get_parent(error_node);
+        if(parentest){
+            while(full_lib.no.runtime.get_parent(error_node).id !== parentest.id) {
+                error_node = full_lib.no.runtime.get_parent(error_node);
+            }
         }
         full_lib.no.runtime.publish.fn(node, "grapherror", new NodysseusError(
             error_node.id, 
@@ -476,15 +478,16 @@ const node_extern = (node, node_ref, node_id, data, full_lib, graph) => {
             console.error(e);
         }
         const parentest = full_lib.no.runtime.get_parentest(graph)
-        let error_node = graph;
-        while(full_lib.no.runtime.get_parent(error_node).id !== parentest.id) {
-            error_node = full_lib.no.runtime.get_parent(error_node);
+        let error_node = parentest ? graph : node;
+        if(parentest){
+            while(full_lib.no.runtime.get_parent(error_node).id !== parentest.id) {
+                error_node = full_lib.no.runtime.get_parent(error_node);
+            }
         }
-        full_lib.no.runtime.publish.fn("grapherror", 
-            new NodysseusError(
-                error_node.id, 
-                e instanceof AggregateError ? "Error in node chain" : e
-            ))
+        full_lib.no.runtime.publish.fn(node, "grapherror", new NodysseusError(
+            error_node.id, 
+            e instanceof AggregateError ? "Error in node chain" : e
+        ))
     }
 }
 
@@ -774,8 +777,8 @@ const getorset = (map, id, value_fn) => {
 const nolib = {
     just: {
         get: {
-            args: ['_graph', 'target', 'path', 'def'],
-            fn: (graph, target, path, def) => {
+            args: ['_graph', '_node', 'target', 'path', 'def'],
+            fn: (graph, node, target, path, def) => {
                 return nodysseus_get(target && target._Proxy ? target._value : target, path && path._Proxy ? path._value : (path || graph.value), def && def._Proxy ? def._value : def);
             },
         },
@@ -852,6 +855,7 @@ const nolib = {
             }
 
             const rungraph = graph => {
+                console.log('running ' + graph.id)
                 if (!self.cancelAnimationFrame) {
                     self.cancelAnimationFrame = clearTimeout;
                 }
@@ -866,6 +870,7 @@ const nolib = {
                         graph = gcache.graph || graph;
 
                         const result = nolib.no.runGraph(graph, graph.out || 'main/out', get_args(graph), gcache.lib);
+                        console.log(result);
                         Promise.resolve(result).then(result => {
                             publish('graphrun', {graph, result});
                         }).catch(e => publish('grapherror', e))
@@ -1045,7 +1050,7 @@ const nolib = {
                 get_graph,
                 get_args,
                 get_path,
-                refs: () => refsdb.where(() => true).map(v => v.id).concat(refsdb.where(() => true).map(v => v.id)),
+                refs: () => refsdb.where(() => true).map(v => v.id),
                 edit_edge: (graph, edge, old_edge) => {
                     const gcache = get_cache(graph);
                     graph = gcache.graph;
@@ -1082,13 +1087,13 @@ const nolib = {
                     const old_node = get_node(graph, node.id);
                     const in_edges = old_node && old_node.ref !== node.ref && get_edges_in(graph, node.id);
                     const node_ref = node.ref ? get_ref(graph, node.ref) : node;
-                    const args = node_ref.extern
+                    const args = (node_ref.extern
                         ? nolib.just.get.fn({}, nolib, node_ref.extern).args
                         : node_ref.nodes 
-                        ? node_ref.nodes.filter(n => n.ref === "arg" && !n.value.includes('.') && !n.value.startsWith("_")).map(n => n.value)
-                        : undefined;
-                    const unused_args = args && in_edges && args.filter(a => !in_edges.find(e => e.as === a));
-                    const nonargs_edges = args && in_edges && in_edges.filter(e => !args.find(a => e.as === a));
+                        ? node_ref.nodes.filter(n => n.ref === "arg").map(n => n.value)
+                        : []).filter(a => !a.includes('.') && !a.startsWith("_"));
+                    const unused_args = args && args.length > 0 && in_edges && args.filter(a => !in_edges.find(e => e.as === a));
+                    const nonargs_edges = args && args.length > 0 && in_edges && in_edges.filter(e => !args.find(a => e.as === a));
 
                     const new_graph = {
                         ...graph,
