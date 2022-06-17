@@ -692,6 +692,7 @@ const result_subscription = (dispatch, props) => {
 
     const change_listener = graph => {
         const display = nolib.no.runGraph(graph, graph.out, {edge: {node_id: graph.id + '/' + graph.out, as: "display"}});
+        console.log(display._Proxy)
         requestAnimationFrame(() => {
             dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
             dispatch(s => [s, [() => update_info_display({node_id: s.selected[0], graph_id: s.display_graph_id})]])
@@ -1166,7 +1167,8 @@ const dispatch = (init) => {
             result_display_dispatch = result_display(init.html_id);
             info_display_dispatch = info_display(init.html_id);
         })],
-        [UpdateSimulation, {...init, action: SimulationToHyperapp}], 
+        [UpdateSimulation, {...init, action: SimulationToHyperapp}],
+        [() => nolib.no.runtime.update_graph(init.display_graph)]
     ],
     view: s =>ha.h('div', {id: s.html_id}, [
         ha.h('svg', {id: `${s.html_id}-editor`, width: s.dimensions.x, height: s.dimensions.y}, [
@@ -1332,8 +1334,8 @@ const middleware = dispatch => (ha_action, ha_payload) => {
         && ha_action.hasOwnProperty('fn') 
         && ha_action.hasOwnProperty('graph') 
         && ha_action.hasOwnProperty('args');
-    const action = is_action_array_payload ? ha_action[0] : ha_action;
-    const payload = is_action_array_payload ? ha_action[1] : is_action_obj_payload ? {...ha_action.args, event: ha_payload} : ha_payload;
+    const action = resolve(is_action_array_payload ? ha_action[0] : ha_action);
+    const payload = resolve(is_action_array_payload ? ha_action[1] : is_action_obj_payload ? {...ha_action.args, event: ha_payload} : ha_payload);
 
     return typeof action === 'object' && action.hasOwnProperty('fn') && action.hasOwnProperty('graph')
         ? dispatch((state, payload) => {

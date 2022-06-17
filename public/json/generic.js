@@ -1067,7 +1067,7 @@ export default {
         { "id": "dom_type_def", "ref": "default" },
         {
           "id": "out",
-          "script": "if(!(typeof dom_type === 'string' && Array.isArray(children))){ throw new Error('invalid element');} children.filter(c => c).forEach(c => {if(typeof c.dom_type !== 'string'){throw new Error ('invalid child element');}}); return {el: {dom_type, props, children, memo}}"
+          "script": "if(!(typeof dom_type === 'string' && Array.isArray(children))){ throw new Error('invalid element');} children.filter(c => c).forEach(c => {if(typeof c.dom_type !== 'string'){throw new Error ('invalid child element');}}); return {el: {dom_type, props, children, memo, _needsresolve: true}, _needsresolve: true}"
         }
       ],
       "edges": [

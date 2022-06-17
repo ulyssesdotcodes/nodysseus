@@ -492,10 +492,6 @@ const node_extern = (node, node_ref, node_id, data, full_lib, graph) => {
 }
 
 const node_data = (data) => {
-    if (typeof data === 'object' && !!data && !data._Proxy && !Array.isArray(data) && Object.keys(data).length > 0) {
-        data._needsresolve = true;
-    }
-
     let is_promise = false;
     Object.entries(data).forEach(kv => {
         is_promise = is_promise || !!kv[1] && !kv[1]._Proxy && ispromise(kv[1]);
@@ -610,9 +606,9 @@ const run_with_val_full = (graph, full_lib, node_id, graph_input_value) => {
                 : node_script(node, node_ref, data, full_lib, graph, inputs)
 
             if (typeof res === 'object' && !!res && !res._Proxy && !Array.isArray(res) && Object.keys(res).length > 0) {
-                if (_needsresolve || !!res._needsresolve) {
+                if (!!res._needsresolve) {
                     res._needsresolve = true;
-                } else if (res.hasOwnProperty("_needsresolve")) {
+                } else if (res.hasOwnProperty && res.hasOwnProperty("_needsresolve")) {
                     delete res._needsresolve;
                 }
             }
