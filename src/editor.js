@@ -787,15 +787,12 @@ const pzobj = {
         hlib.panzoom.lastpanzoom = 0;
         let init = requestAnimationFrame(() => {
             hlib.panzoom.instance = panzoom(document.getElementById(sub_payload.id), {
-                // onTouch: e => false,
                 filterKey: e => true,
                 smoothScroll: false,
                 onTouch: (e) => {
                     if(e.target.id.endsWith("-editor") && performance.now() - hlib.panzoom.lastpanzoom > 100){
                         dispatch(sub_payload.action, {event: 'panstart', transform: hlib.panzoom.instance.getTransform()}) 
                     }
-                    // e.stopPropagation();
-                    // e.preventDefault();
                     return true;
                 },
                 beforeWheel: (e) => {
@@ -811,16 +808,6 @@ const pzobj = {
                     return false;
                 }
             });
-            // hlib.panzoom.instance.on('panstart', e =>
-            //     performance.now() - hlib.panzoom.lastpanzoom > 100 
-            //     ? dispatch(sub_payload.action, {event: 'panstart', transform: e.getTransform()}) 
-            //     : undefined
-            // );
-            // hlib.panzoom.instance.on('zoom', e =>
-            //     performance.now() - hlib.panzoom.lastpanzoom > 100 
-            //     ? dispatch(sub_payload.action, {event: 'zoom', transform: e.getTransform()}) 
-            //     : undefined
-            // );
             hlib.panzoom.instance.moveTo(window.innerWidth * 0, window.innerHeight * 0.5);
         });
         return () => { cancelAnimationFrame(init); hlib.panzoom.instance?.dispose(); }
@@ -1055,14 +1042,14 @@ const info_el = ({node, hidden, display_graph, links_in, link_out, svg_offset, d
     const description =  node_ref?.description;
     const node_display_el = (node.ref === "return" || node.nodes) && nolib.no.runGraph(display_graph, node.id, {property: "display"});
     info_display_dispatch && requestAnimationFrame(() => info_display_dispatch(UpdateResultDisplay, {el: node_display_el && node_display_el.el ? node_display_el.el : ha.h('div', {})}))
-    return ha.h(
+    return ha.h('div', {class: {"node-info-wrapper": true}}, [ha.h('div', {class: "spacer before"}, []), ha.h(
         'div',
         {
-            class: {'node-info': true, 'align-selected': true, hidden}, 
-            nostyle: !focused && {
-                left: `${Math.min(node.x * (svg_offset?.scale ?? 1) + (svg_offset?.x ?? 0) - 64, dimensions.x - 256)}px`,
-                top: `${node.y * (svg_offset?.scale ?? 1) + (svg_offset?.y ?? 0) + 32}px`
-            }
+            class: {'node-info': true, 'align-selected': false, hidden}, 
+            // nostyle: !focused && {
+            //     left: `${Math.min(node.x * (svg_offset?.scale ?? 1) + (svg_offset?.x ?? 0) - 64, dimensions.x - 256)}px`,
+            //     top: `${node.y * (svg_offset?.scale ?? 1) + (svg_offset?.y ?? 0) + 32}px`
+            // }
         },
         [
             ha.h('div', {class: "args"}, 
@@ -1133,7 +1120,7 @@ const info_el = ({node, hidden, display_graph, links_in, link_out, svg_offset, d
                 }, ha.text("delete"))
             ])
         ]
-    )
+    ), ha.h('div', {class: "spacer after"}, [])])
 }
 
 const UpdateResultDisplay = (state, el) => ({
@@ -1328,14 +1315,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
         dispatch(init)
 
     })
-
-
-
-    // runGraph(editor_graph, "main/out", {...hlib, ...(lib ?? {})});
-
 }
-
-// return {dispatch: _lib.ha.app({dispatch: _lib.ha.middleware, init: () => [_lib.no.resolve(init), static && [update_sim, {...init, action: sim_to_hyperapp_action}], [update_hyperapp], [() => _lib.no.runtime.update_graph(init.display_graph)]], view: s => {const vs = view(s); return vs.el}, node: document.getElementById(html_id), subscriptions: s => [!static && [_lib.scripts.d3subscription, {action: sim_to_hyperapp_action, update: update_sim}], !static && [_lib.scripts.graph_subscription, {display_graph_id: s.display_graph_id}], !static && !init.norun._value && [_lib.scripts.result_subscription, {display_graph_id: s.display_graph_id}], !s.popover_graph && [_lib.scripts.keydownSubscription, {action: onkey_fn}], _lib.scripts.listen('resize', (s, _) => [{...s, dimensions: {x: document.getElementById(html_id).clientWidth, y: document.getElementById(html_id).clientHeight}}, [update_sim, s]]), !!document.getElementById( `${html_id}-editor-panzoom`) && [_lib.panzoom.init, {id: `${html_id}-editor-panzoom`, action: (s, p) => [{...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform}]}]]})}
 
 const middleware = dispatch => (ha_action, ha_payload) => {
     const is_action_array_payload = Array.isArray(ha_action) 

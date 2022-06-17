@@ -1253,9 +1253,9 @@ const nolib = {
     },
     JSON: {
         stringify: {
-            args: ['object'],
+            args: ['object', 'spacer'],
             resolve: true,
-            fn: (args) => JSON.stringify(args)
+            fn: (obj, spacer) => JSON.stringify(obj, null, spacer)
         },
         parse: {
             args: ['string'],
