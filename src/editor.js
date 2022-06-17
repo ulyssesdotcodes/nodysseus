@@ -1045,11 +1045,7 @@ const info_el = ({node, hidden, display_graph, links_in, link_out, svg_offset, d
     return ha.h('div', {class: {"node-info-wrapper": true}}, [ha.h('div', {class: "spacer before"}, []), ha.h(
         'div',
         {
-            class: {'node-info': true, 'align-selected': false, hidden}, 
-            // nostyle: !focused && {
-            //     left: `${Math.min(node.x * (svg_offset?.scale ?? 1) + (svg_offset?.x ?? 0) - 64, dimensions.x - 256)}px`,
-            //     top: `${node.y * (svg_offset?.scale ?? 1) + (svg_offset?.y ?? 0) + 32}px`
-            // }
+            class: {'node-info': true, hidden}, 
         },
         [
             ha.h('div', {class: "args"}, 

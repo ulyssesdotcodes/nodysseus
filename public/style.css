@@ -180,6 +180,7 @@ svg {
     display: flex;
     flex-flow: column nowrap;
     pointer-events: none;
+    max-width: 256px;
 }
 
 .node-info-wrapper .spacer {
@@ -196,7 +197,6 @@ svg {
     border: 1px solid white;
     background: #111;
     padding: .4em;
-    max-width: 256px;
     color: white;
     display: flex;
     gap: .6em;
@@ -204,21 +204,25 @@ svg {
     pointer-events: all;
 }
 
-.node-info:focus-within {
-    max-width: 256px;
-    height: auto;
-}
-
 @media (max-width: 600px) {
-    .node-info:focus-within {
+    .node-info-wrapper:focus-within {
         width: calc(100vw - 2px - .8em);
         max-width: 100vw;
         height: calc(100vh - 2px - .8em);
+        left: 0;
+        right: 0;
     }
 
-    .node-info:focus-within {
-        left: 0;
-        top: 0;
+    .node-info-wrapper:focus-within {
+        width: 100%;
+    }
+
+    .node-info-wrapper:focus-within .spacer {
+        flex-basis: 0;
+    }
+
+    .node-info-wrapper:focus-within .node-info {
+        flex-grow: 1;
     }
 }
 
