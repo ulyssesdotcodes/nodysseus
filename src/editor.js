@@ -682,18 +682,19 @@ const listenToEvent = (dispatch, props) => {
     return () => removeEventListener(props.type, listener);
 }
 
-const run_h = ({dom_type, props, children, text}) => dom_type === "text_value" 
+const run_h = ({dom_type, props, children, text}, exclude_tags=[]) => dom_type === "text_value" 
     ? ha.text(text) 
-    : ha.h(dom_type, props, children?.filter(c => !!c).map(run_h) ?? []) 
+    : ha.h(dom_type, props, children?.filter(c => !!c && !exclude_tags.includes(c.dom_type)).map(c => run_h(c, exclude_tags)) ?? []) 
 
 const result_subscription = (dispatch, props) => {
     const error_listener = (error) =>
         requestAnimationFrame(() => dispatch(s => Object.assign({}, s, {error})))
 
     const change_listener = graph => {
-        const display = nolib.no.runGraph(graph, graph.out, {[graph.id]: {property: "display"}});
+        const display = nolib.no.runGraph(graph, graph.out, {edge: {node_id: graph.id + '/' + graph.out, as: "display"}});
         requestAnimationFrame(() => {
             dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
+            dispatch(s => [s, [() => update_info_display({node_id: s.selected[0], graph_id: s.display_graph_id})]])
             props.result_display_dispatch(UpdateResultDisplay, {el: display && display.el ? display.el : {dom_type: 'div', props: {}, children: []}})
         })
     }
@@ -854,7 +855,8 @@ const SelectNode = (state, {node_id, focus_property}) => [
     [UpdateGraphDisplay, {...state, selected: [node_id]}],
     (state.show_all || state.selected[0] !== node_id) && [pzobj.effect, {...state, node_id}],
     focus_property && [FocusEffect, {selector: `.node-info input.${focus_property}`}],
-    [SetSelectedPositionStyleEffect, {node: state.nodes.find(n => n.node_id === node_id), svg_offset: state.svg_offset, dimensions: state.dimensions}]
+    [SetSelectedPositionStyleEffect, {node: state.nodes.find(n => n.node_id === node_id), svg_offset: state.svg_offset, dimensions: state.dimensions}],
+    [() => update_info_display({node_id, graph_id: state.display_graph_id})]
 ]
 
 const CreateNode = (state, {node, child, child_as, parent}) => [
@@ -915,7 +917,8 @@ const ChangeDisplayGraphId = (dispatch, {id}) => {
     requestAnimationFrame(() =>
         dispatch(state => [
             {...state, display_graph_id: id},
-            [() => nolib.no.runtime.update_graph(graph || Object.assign({}, base_graph(state.display_graph), {id}))]
+            [() => nolib.no.runtime.update_graph(graph || Object.assign({}, base_graph(state.display_graph), {id}))],
+            [() => update_info_display({node_id: state.selected[0], graph_id: id})]
         ]))
 }
 
@@ -1036,11 +1039,9 @@ const input_el = ({label, property, value, oninput, onchange, options}) => ha.h(
     ]
 )
 
-const info_el = ({node, hidden, display_graph, links_in, link_out, svg_offset, dimensions, display_graph_id, randid, refs, focused, info_display_dispatch, html_id}) => {
+const info_el = ({node, hidden, display_graph, links_in, link_out, svg_offset, dimensions, display_graph_id, randid, refs, focused, html_id})=> {
     const node_ref = node.ref ? nolib.no.runtime.get_ref(display_graph_id, node.ref) : node;
     const description =  node_ref?.description;
-    const node_display_el = (node.ref === "return" || node_ref.nodes) && nolib.no.runGraph(display_graph, node.id, {edge: {node_id: display_graph.id + "/" + node.id, as: "display"}});
-    info_display_dispatch && requestAnimationFrame(() => info_display_dispatch(UpdateResultDisplay, {el: node_display_el && node_display_el.el ? node_display_el.el : ha.h('div', {})}))
     return ha.h('div', {class: {"node-info-wrapper": true}}, [ha.h('div', {class: "spacer before"}, []), ha.h(
         'div',
         {
@@ -1123,6 +1124,14 @@ const UpdateResultDisplay = (state, el) => ({
     el: el.el ? {...el.el} : {...el}
 })
 
+const update_info_display = ({node_id, graph_id}) => {
+    const node = nolib.no.runtime.get_graph(graph_id + '/' + node_id) || nolib.no.runtime.get_node(graph_id, node_id);
+    const node_ref = node && (node.ref && nolib.no.runtime.get_ref(graph_id, node.ref)) || node;
+    const out_ref = node && (node.nodes && nolib.no.runtime.get_node(node, node.out)) || (node_ref.nodes && nolib.no.runtime.get_node(node_ref, node_ref.out));
+    const node_display_el = (node.ref === "return" || (out_ref && out_ref.ref === "return")) && nolib.no.runGraph(graph_id, node_id, {edge: {node_id: graph_id + "/" + node_id, as: "display"}});
+    info_display_dispatch && requestAnimationFrame(() => info_display_dispatch(UpdateResultDisplay, {el: node_display_el && node_display_el.el ? node_display_el.el : ha.h('div', {})}))
+}
+
 const result_display = html_id => ha.app({
     init: {el: {dom_type: 'div', props: {}, children: [{dom_type: 'text_value', text: 'loading result'}]}},
     node: document.getElementById(html_id + "-result"),
@@ -1141,14 +1150,15 @@ const info_display = html_id => ha.app({
     node: document.getElementById(html_id + "-info-display"),
     dispatch: middleware,
     view: s => {
-        return run_h(s.el)
+        return run_h(s.el, ['script'])
     }
 })
 
+let result_display_dispatch;
+let info_display_dispatch;
+
 const error_nodes = (error) => error instanceof AggregateError ? error.errors.map(e => e instanceof nolib.no.NodysseusError ? e.node_id : false).filter(n => n) : error instanceof nolib.no.NodysseusError ? [error.node_id] : []; 
 const dispatch = (init) => {
-    let result_display_dispatch;
-    let info_display_dispatch;
         // return () => requestAnimationFrame(() => dispatch.dispatch(s => undefined));
     return ha.app({
     init: ()=> [init, 
@@ -1193,8 +1203,7 @@ const dispatch = (init) => {
             display_graph_id: s.display_graph_id,
             randid: s.randid,
             focused: s.focused,
-            refs: nolib.no.runtime.refs(),
-            info_display_dispatch
+            refs: nolib.no.runtime.refs()
         }),
         ha.h('div', {id: `${init.html_id}-result`}),
     ]),

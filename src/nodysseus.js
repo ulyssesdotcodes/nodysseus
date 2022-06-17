@@ -801,7 +801,7 @@ const nolib = {
         executeGraphValue: ({ graph, lib }) => executeGraph({ graph, lib })(graph.out),
         executeGraphNode: ({ graph, lib }) => executeGraph({ graph, lib }),
         runGraph: (graph, node, args, lib) => {
-            let rgraph = graph.graph ? graph.graph : graph;
+            let rgraph = typeof graph === "string" ? nolib.no.runtime.get_graph(graph) : graph.graph ? graph.graph : graph;
 
             // if(!rgraph.nodes.find(n => n.id === "get") && nolib.no.runtime.get_parent(rgraph) === undefined) {
             //     rgraph = add_default_nodes_and_edges(rgraph);
@@ -855,7 +855,6 @@ const nolib = {
             }
 
             const rungraph = graph => {
-                console.log('running ' + graph.id)
                 if (!self.cancelAnimationFrame) {
                     self.cancelAnimationFrame = clearTimeout;
                 }
@@ -870,7 +869,6 @@ const nolib = {
                         graph = gcache.graph || graph;
 
                         const result = nolib.no.runGraph(graph, graph.out || 'main/out', get_args(graph), gcache.lib);
-                        console.log(result);
                         Promise.resolve(result).then(result => {
                             publish('graphrun', {graph, result});
                         }).catch(e => publish('grapherror', e))
@@ -992,7 +990,7 @@ const nolib = {
             const get_args = (graph) => get_cache(graph).args;
             const get_graph = (graph) => {
                 const cached = get_cache(graph);
-                return cached ? cached.graph : graph;
+                return cached ? cached.graph : typeof graph !== "string" ? graph : undefined;
             }
             const get_parent = (graph) => {
                 const parent = parentdb.by("id", typeof graph === "string" ? graph : graph.id);
