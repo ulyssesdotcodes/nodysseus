@@ -777,7 +777,7 @@ const getorset = (map, id, value_fn) => {
 const nolib = {
     just: {
         get: {
-            args: ['_graph', '_node', 'target', 'path', 'def'],
+            args: ['_graph', 'target', 'path', 'def'],
             fn: (graph, node, target, path, def) => {
                 return nodysseus_get(target && target._Proxy ? target._value : target, path && path._Proxy ? path._value : (path || graph.value), def && def._Proxy ? def._value : def);
             },
