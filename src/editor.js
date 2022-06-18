@@ -682,9 +682,15 @@ const listenToEvent = (dispatch, props) => {
     return () => removeEventListener(props.type, listener);
 }
 
-const run_h = ({dom_type, props, children, text}, exclude_tags=[]) => dom_type === "text_value" 
-    ? ha.text(text) 
-    : ha.h(dom_type, props, children?.filter(c => !!c && !exclude_tags.includes(c.dom_type)).map(c => run_h(c, exclude_tags)) ?? []) 
+const run_h = ({dom_type, props, children, text}, exclude_tags=[]) => {
+    dom_type = dom_type && dom_type._Proxy ? dom_type._value : dom_type;
+    text = text && text._Proxy ? text._value : text;
+    props = props && props._Proxy ? props._value : props;
+    children = children && children._Proxy ? children._value : children;
+    return dom_type === "text_value" 
+        ? ha.text(text) 
+        : ha.h(dom_type, props, children?.filter(c => !!c && !exclude_tags.includes(c.dom_type)).map(c => run_h(c, exclude_tags)) ?? []) 
+}
 
 const result_subscription = (dispatch, props) => {
     const error_listener = (error) =>
