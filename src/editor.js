@@ -692,7 +692,6 @@ const result_subscription = (dispatch, props) => {
 
     const change_listener = graph => {
         const display = nolib.no.runGraph(graph, graph.out, {edge: {node_id: graph.id + '/' + graph.out, as: "display"}});
-        console.log(display._Proxy)
         requestAnimationFrame(() => {
             dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
             dispatch(s => [s, [() => update_info_display({node_id: s.selected[0], graph_id: s.display_graph_id})]])
