@@ -171,7 +171,7 @@ svg {
     opacity: 0.1;
 }
 
-.node-info-wrapper {
+#node-info-wrapper {
     position: absolute;
     left: var(--nodex);
     top: 0;
@@ -183,11 +183,11 @@ svg {
     max-width: 256px;
 }
 
-.node-info-wrapper .spacer {
+#node-info-wrapper .spacer {
     pointer-events: none;
 }
 
-.node-info-wrapper .spacer.before {
+#node-info-wrapper .spacer.before {
     flex-basis: var(--nodey);
     flex-shrink: 1;
 }

@@ -692,7 +692,7 @@ const run_h = ({dom_type, props, children, text}, exclude_tags=[]) => {
         : ha.h(dom_type, props, children?.filter(c => !!c && !exclude_tags.includes(c.dom_type)).map(c => run_h(c, exclude_tags)) ?? []) 
 }
 
-const result_subscription = (dispatch, props) => {
+const result_subscription = (dispatch) => {
     const error_listener = (error) =>
         requestAnimationFrame(() => dispatch(s => Object.assign({}, s, {error})))
 
@@ -700,8 +700,8 @@ const result_subscription = (dispatch, props) => {
         const display = nolib.no.runGraph(graph, graph.out, {edge: {node_id: graph.id + '/' + graph.out, as: "display"}});
         requestAnimationFrame(() => {
             dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
-            dispatch(s => [s, [() => update_info_display({node_id: s.selected[0], graph_id: s.display_graph_id})]])
-            props.result_display_dispatch(UpdateResultDisplay, {el: display && display.el ? display.el : {dom_type: 'div', props: {}, children: []}})
+            dispatch(s => [s, s.selected[0] !== s.display_graph.out && [() => update_info_display({node_id: s.selected[0], graph_id: s.display_graph_id})]])
+            result_display_dispatch(UpdateResultDisplay, {el: display && display.el ? display.el : {dom_type: 'div', props: {}, children: []}})
         })
     }
 
@@ -862,7 +862,7 @@ const SelectNode = (state, {node_id, focus_property}) => [
     (state.show_all || state.selected[0] !== node_id) && [pzobj.effect, {...state, node_id}],
     focus_property && [FocusEffect, {selector: `.node-info input.${focus_property}`}],
     [SetSelectedPositionStyleEffect, {node: state.nodes.find(n => n.node_id === node_id), svg_offset: state.svg_offset, dimensions: state.dimensions}],
-    [() => update_info_display({node_id, graph_id: state.display_graph_id})]
+    node_id !== state.display_graph.out && [() => update_info_display({node_id, graph_id: state.display_graph_id})]
 ]
 
 const CreateNode = (state, {node, child, child_as, parent}) => [
@@ -924,7 +924,6 @@ const ChangeDisplayGraphId = (dispatch, {id}) => {
         dispatch(state => [
             {...state, display_graph_id: id},
             [() => nolib.no.runtime.update_graph(graph || Object.assign({}, base_graph(state.display_graph), {id}))],
-            [() => update_info_display({node_id: state.selected[0], graph_id: id})]
         ]))
 }
 
@@ -1048,7 +1047,7 @@ const input_el = ({label, property, value, oninput, onchange, options}) => ha.h(
 const info_el = ({node, hidden, display_graph, links_in, link_out, svg_offset, dimensions, display_graph_id, randid, refs, focused, html_id})=> {
     const node_ref = node.ref ? nolib.no.runtime.get_ref(display_graph_id, node.ref) : node;
     const description =  node_ref?.description;
-    return ha.h('div', {class: {"node-info-wrapper": true}}, [ha.h('div', {class: "spacer before"}, []), ha.h(
+    return ha.h('div', {id: "node-info-wrapper"}, [ha.h('div', {class: "spacer before"}, []), ha.h(
         'div',
         {
             class: {'node-info': true, hidden}, 
@@ -1139,7 +1138,7 @@ const update_info_display = ({node_id, graph_id}) => {
 }
 
 const result_display = html_id => ha.app({
-    init: {el: {dom_type: 'div', props: {}, children: [{dom_type: 'text_value', text: 'loading result'}]}},
+    init: {el: {dom_type: 'div', props: {}, children: []}},
     node: document.getElementById(html_id + "-result"),
     dispatch: middleware,
     view: s => {
@@ -1152,7 +1151,7 @@ const result_display = html_id => ha.app({
 })
 
 const info_display = html_id => ha.app({
-    init: {el: {dom_type: 'div', props: {}, children: [{dom_type: 'text_value', text: 'loading result'}]}},
+    init: {el: {dom_type: 'div', props: {}, children: []}},
     node: document.getElementById(html_id + "-info-display"),
     dispatch: middleware,
     view: s => {
@@ -1171,9 +1170,9 @@ const dispatch = (init) => {
         [() => requestAnimationFrame(() => {
             result_display_dispatch = result_display(init.html_id);
             info_display_dispatch = info_display(init.html_id);
+            nolib.no.runtime.update_graph(init.display_graph)
         })],
         [UpdateSimulation, {...init, action: SimulationToHyperapp}],
-        [() => nolib.no.runtime.update_graph(init.display_graph)]
     ],
     view: s =>ha.h('div', {id: s.html_id}, [
         ha.h('svg', {id: `${s.html_id}-editor`, width: s.dimensions.x, height: s.dimensions.y}, [
