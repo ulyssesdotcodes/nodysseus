@@ -2,6 +2,7 @@ import { bfs, hashcode, nolib, runGraph, calculateLevels, ispromise, resolve } f
 import * as ha from "hyperapp";
 import panzoom from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
+import Fuse from "fuse.js";
 
 const updateSimulationNodes = (dispatch, data) => {
     if(data.static) {
@@ -182,12 +183,16 @@ const updateSimulationNodes = (dispatch, data) => {
         const node = queue.shift();
         order.push(node);
 
-        const children = children_map.get(node);
         main_node_map.set(node, node);
 
         parents_map.get(node).forEach(p => {queue.push(p)})
     }
 
+    const ancestor_count = new Map();
+    const reverse_order = [...order];
+    reverse_order.reverse();
+
+    reverse_order.forEach(n => ancestor_count.set(n, parents_map.has(n) ? parents_map.get(n).reduce((acc, c) => acc + (ancestor_count.get(c) || 0) + 1, 0): 0));
 
     for(let ps of parents_map.values()) {
         let i = 0;
@@ -240,13 +245,14 @@ const updateSimulationNodes = (dispatch, data) => {
                 ?? simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.x
                 ?? addorundefined(
                     simulation_node_data.get(main_node_map.get(children_map.get(n.id)?.[0]))?.x, 
-                    (parents_map.get(children_map.get(n.id)?.[0])?.findIndex(v => v === n.id) - (parents_map.get(children_map.get(n.id)?.[0])?.length - 1) * 0.5) * 256
+                    ((parents_map.get(children_map.get(n.id)?.[0])?.findIndex(v => v === n.id) / Math.max(1, (parents_map.get(children_map.get(n.id)?.[0])?.length - 1))) - 0.5) 
+                    * (256 + 64 * Math.log(Math.max(1, ancestor_count.get(n.id) + parents_map.get(children_map.get(n.id)?.[0])?.length - 1))/ Math.log(1.25))
                 )
                 ?? Math.floor(window.innerWidth * (randpos.x * .5 + .25))),
             y: Math.floor(simulation_node_data.get(node_id)?.y 
                 ?? addorundefined(256, simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.y)
                 ?? addorundefined(
-                    -(196 + 32 * (parents_map.get(n.id).length ?? 0)),
+                    -(16 + 32 * Math.log(Math.max(1, ancestor_count.get(n.id) * 0.5 + parents_map.get(children_map.get(n.id)?.[0])?.length)) / Math.log(1.25)),
                     simulation_node_data.get(main_node_map.get(children_map.get(n.id)?.[0]))?.y
                 )
                 ?? Math.floor(window.innerHeight * (randpos.y * .5 + .25)))
@@ -276,8 +282,7 @@ const updateSimulationNodes = (dispatch, data) => {
                 target: main_node_map.get(e.to),
                 sibling_index_normalized: simulation_node_data.get(e.from).sibling_index_normalized,
                 strength: 2 * (1.5 - Math.abs(simulation_node_data.get(e.from).sibling_index_normalized - 0.5)) / (1 + 2 * Math.min(4, proximal)),
-                distance: 128 
-                    + 4 * (Math.min(8, proximal)) 
+                distance: 32 + 4 * (Math.min(8, proximal)) 
             };
         }).filter(l => !!l);
 
@@ -308,7 +313,7 @@ const updateSimulationNodes = (dispatch, data) => {
                 + (children_map.get(n.node_id)?.length > 0 ? -1 : 0))
                 * (logmaxparents + 3) + .5) * window.innerHeight)
         .strength(n => (!!parents_map.get(n.node_id)?.length === !children_map.get(n.node_id)?.length)
-            || children_map.get(n.node_id)?.length > 0 ? .02 : 0);
+            || children_map.get(n.node_id)?.length > 0 ? .01 : 0);
 
 
     data.simulation.force('collide').radius(96);
@@ -320,7 +325,7 @@ const updateSimulationNodes = (dispatch, data) => {
 // This is probably doing too much.
 const d3subscription = (dispatch, props) => {
     const simulation = hlib.d3.forceSimulation()
-        .force('charge', hlib.d3.forceManyBody().strength(-64).distanceMax(256).distanceMin(64).strength(0))
+        .force('charge', hlib.d3.forceManyBody().strength(-1024).distanceMax(1024).distanceMin(64))
         .force('collide', hlib.d3.forceCollide(64))
         .force('links', hlib.d3
             .forceLink([])
@@ -328,7 +333,7 @@ const d3subscription = (dispatch, props) => {
             .strength(l => l.strength)
             .id(n => n.node_id))
         .force('link_direction', hlib.d3.forceY().strength(.01))
-        .force('center', hlib.d3.forceCenter().strength(0.01))
+        // .force('center', hlib.d3.forceCenter().strength(0.01))
         // .force('fuse_links', lib.d3.forceLink([]).distance(128).strength(.1).id(n => n.node_id))
         // .force('link_siblings', lib.d3.forceX().strength(1))
         // .force('selected', lib.d3.forceRadial(0, window.innerWidth * 0.5, window.innerHeight * 0.5).strength(2))
@@ -829,12 +834,14 @@ const UpdateGraphDisplay = (dispatch, payload) => requestAnimationFrame(() => di
 
 const CustomDOMEvent = (_, payload) => document.getElementById(`${payload.html_id}`)?.dispatchEvent(new CustomEvent(payload.event, {detail: payload.detail}))
 
+const create_randid = () => Math.random().toString(36).substring(2, 9);
+
 const SimulationToHyperapp = (state, payload) => [{
     ...state,
     levels: calculateLevels(payload.nodes, payload.links, state.display_graph, state.selected),
     nodes: payload.nodes,
     links: payload.links,
-    randid: Math.random().toString(36).substring(2, 9),
+    randid: create_randid(),
 }, 
     [CustomDOMEvent, {html_id: state.html_id, event: 'updategraph', detail: {graph: state.display_graph}}]
 ];
@@ -861,7 +868,7 @@ const SelectNode = (state, {node_id, focus_property}) => [
     [UpdateGraphDisplay, {...state, selected: [node_id]}],
     (state.show_all || state.selected[0] !== node_id) && [pzobj.effect, {...state, node_id}],
     focus_property && [FocusEffect, {selector: `.node-info input.${focus_property}`}],
-    [SetSelectedPositionStyleEffect, {node: state.nodes.find(n => n.node_id === node_id), svg_offset: state.svg_offset, dimensions: state.dimensions}],
+    state.nodes.find(n => n.node_id === node_id) && [SetSelectedPositionStyleEffect, {node: state.nodes.find(n => n.node_id === node_id), svg_offset: state.svg_offset, dimensions: state.dimensions}],
     node_id !== state.display_graph.out && [() => update_info_display({node_id, graph_id: state.display_graph_id})]
 ]
 
@@ -905,6 +912,35 @@ const ExpandContract = (state, {node_id}) => {
     ]
 }
 
+const Copy = (state, {cut}) => {
+    let edges_in;
+    let queue = [...state.selected];
+    let copied_root;
+    const graph = {nodes: [], edges: []};
+    while(queue.length > 0) {
+        let node_id = queue.pop();
+        const new_node_id = create_randid();
+        if(node_id === state.selected[0]) {
+            copied_root = new_node_id;
+        }
+        graph.nodes.push({...nolib.no.runtime.get_node(state.display_graph, node_id), id: new_node_id})
+        edges_in = nolib.no.runtime.get_edges_in(state.display_graph, node_id);
+        edges_in.forEach(e => queue.push(e.from))
+        graph.edges = graph.edges.concat(edges_in.map(e => ({...e, to: new_node_id})));
+    }
+
+    return {...state, copied_graph: graph, copied_root}
+}
+
+const Paste = state => [
+    {...state, copied_graph: undefined},
+    [dispatch => {
+        state.copied_graph.nodes.forEach(n => nolib.no.runtime.add_node(state.display_graph, n));
+        nolib.no.runtime.update_edges(state.display_graph, state.copied_graph.edges.concat([{from: state.copied_root, to: state.selected[0], as: "arg0"}]));
+        requestAnimationFrame(() => dispatch(SelectNode, {node_id: state.copied_root}))
+    }]
+]
+
 const StopPropagation = (state, payload) => [state, [() => payload.stopPropagation()]];
 
 const SaveGraph = (dispatch, payload) => { 
@@ -925,6 +961,28 @@ const ChangeDisplayGraphId = (dispatch, {id}) => {
             {...state, display_graph_id: id},
             [() => nolib.no.runtime.update_graph(graph || Object.assign({}, base_graph(state.display_graph), {id}))],
         ]))
+}
+
+const Search = (state, {payload, nodes}) => {
+    if(payload.key === "Escape") {
+        return [{...state, search: false, search_index: 0}, [dispatch => payload.target.value = ""]]
+    }
+
+    const direction = payload.key === "Enter" ? payload.shiftKey ? -1 : 1 : 0; 
+    const search_results = new Fuse(
+        nodes.map(n => Object.assign({}, n, 
+            nolib.no.runtime.get_node(state.display_graph, n.node_id), 
+            nolib.no.runtime.get_edge_out(state.display_graph, n.node_id))), 
+        {keys: ['name', 'ref', 'value', 'as']}
+    ).search(payload.target.value);
+    const search_index = search_results.length > 0 ? (search_results.length + (state.search_index ?? 0) + direction) % search_results.length : 0; 
+
+    return [{
+            ...state, 
+            search: payload.target.value, 
+            search_index,
+        }, search_results.length > 0 && [dispatch => requestAnimationFrame(() => dispatch(SelectNode, {node_id: search_results[search_index].item.id}))]
+    ]
 }
 
 const base_node = node => ({id: node.id, value: node.value, name: node.name, ref: node.ref});
@@ -1044,7 +1102,7 @@ const input_el = ({label, property, value, oninput, onchange, options}) => ha.h(
     ]
 )
 
-const info_el = ({node, hidden, display_graph, links_in, link_out, svg_offset, dimensions, display_graph_id, randid, refs, focused, html_id})=> {
+const info_el = ({node, hidden, display_graph, links_in, link_out, svg_offset, dimensions, display_graph_id, randid, refs, focused, html_id, copied_graph})=> {
     const node_ref = node.ref ? nolib.no.runtime.get_ref(display_graph_id, node.ref) : node;
     const description =  node_ref?.description;
     return ha.h('div', {id: "node-info-wrapper"}, [ha.h('div', {class: "spacer before"}, []), ha.h(
@@ -1106,6 +1164,16 @@ const info_el = ({node, hidden, display_graph, links_in, link_out, svg_offset, d
                     class: "action", 
                     onclick: [ExpandContract, {node_id: node.node_id}]
                 }, ha.text(node.nodes?.length > 0 ? "expand" : "contract")),
+                ha.h('div', {
+                    class: "action", 
+                    onclick: [Copy, {cut: false}],
+                    key: "copy-action"
+                }, ha.text("copy")),
+                copied_graph && ha.h('div', {
+                    class: "action", 
+                    onclick: [Paste],
+                    key: "paste-action"
+                }, ha.text("paste")),
                 node.node_id == "main/out" 
                 ? ha.h('div', {
                     class: "action", 
@@ -1123,6 +1191,12 @@ const info_el = ({node, hidden, display_graph, links_in, link_out, svg_offset, d
         ]
     ), ha.h('div', {class: "spacer after"}, [])])
 }
+
+const search_el = ({search}) => ha.h('div', {id: "search"}, [
+    typeof search === "string" && ha.h('input', {type: "text", onkeydown: (state, payload) => [Search,  {payload, nodes: state.nodes}], onblur: (state, payload) => [{...state, search: false}]}, []),
+    typeof search !== "string" && ha.h('ion-icon', {name: 'search', onclick: s => [{...s, search: ""}, [FocusEffect, {selector: "#search input"}]]}, [ha.text('search')]),
+])
+
 
 const UpdateResultDisplay = (state, el) => ({
     ...state,
@@ -1163,7 +1237,7 @@ let result_display_dispatch;
 let info_display_dispatch;
 
 const error_nodes = (error) => error instanceof AggregateError ? error.errors.map(e => e instanceof nolib.no.NodysseusError ? e.node_id : false).filter(n => n) : error instanceof nolib.no.NodysseusError ? [error.node_id] : []; 
-const dispatch = (init) => {
+const dispatch = (init, _lib) => {
         // return () => requestAnimationFrame(() => dispatch.dispatch(s => undefined));
     return ha.app({
     init: ()=> [init, 
@@ -1209,8 +1283,10 @@ const dispatch = (init) => {
             display_graph_id: s.display_graph_id,
             randid: s.randid,
             focused: s.focused,
-            refs: nolib.no.runtime.refs()
+            refs: nolib.no.runtime.refs(),
+            copied_graph: s.copied_graph
         }),
+        search_el({search: s.search, _lib}),
         ha.h('div', {id: `${init.html_id}-result`}),
     ]),
     node: document.getElementById(init.html_id),
@@ -1223,6 +1299,7 @@ const dispatch = (init) => {
             const key_input = (payload.ctrlKey ? 'ctrl_' : '') + (payload.shiftKey ? 'shift_' : '') + (payload.key === '?' ? 'questionmark' : payload.key.toLowerCase());
             const selected = state.selected[0];
             const result = runGraph(init.graph, "keybindings", {}, hlib)[mode][key_input];
+            console.log(result)
             let action;
             let effects = [];
             switch(result){
@@ -1254,6 +1331,11 @@ const dispatch = (init) => {
                 }
                 case "save": {
                     effects.push([SaveGraph, state])
+                    break;
+                }
+                case "find": {
+                    action = s => [{...s, search: ""}, [FocusEffect, {selector: "#search input"}]]; 
+                    break;
                 }
                 default: nolib.no.runtime.publish.fn(undefined, 'keydown', key_input)
             }
@@ -1322,7 +1404,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
             selected: ["main/out"]
         };
 
-        dispatch(init)
+        dispatch(init, lib)
 
     })
 }

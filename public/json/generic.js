@@ -561,10 +561,10 @@ export default {
       "nodes": [
         { "id": "name", "ref": "arg", "value": "name" },
         { "id": "onevent", "ref": "arg", "value": "onevent" },
-        { "id": "data", "ref": "arg", "value": "data", "type": "internal" },
+        { "id": "data", "ref": "arg", "value": "_data", "type": "internal" },
         {
           "id": "add_listener",
-          "script": "_lib.no.runtime.add_listener(event ?? _graph.value, _graph.id, (data) => (_lib.no.runtime.update_args(_graph, {data})), false);"
+          "script": "_lib.no.runtime.add_listener(event ?? _graph.value, _graph.id, (data) => (_lib.no.runtime.update_args(_graph, {_data: data})), false);"
         },
         { "id": "out", "ref": "default"}
       ],

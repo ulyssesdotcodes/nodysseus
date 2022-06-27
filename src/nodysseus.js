@@ -2,7 +2,6 @@ import generic from "../public/json/generic.js";
 import set from "just-safe-set";
 import { diff } from "just-diff";
 import { diffApply } from "just-diff-apply";
-import Fuse from "fuse.js";
 import loki from "lokijs";
 
 let resfetch = fetch; 
@@ -184,6 +183,8 @@ const createProxy = (run_with_val, input, graphid, graph_input_value) => {
                 return input.from;
             } else if (prop === "_graphid") {
                 return graphid;
+            } else if (prop === "_needsresolve") {
+                return true;
             } else if (prop === "_reset") {
                 res = undefined;
                 resolved = false;
@@ -493,8 +494,10 @@ const node_extern = (node, node_ref, node_id, data, full_lib, graph) => {
 
 const node_data = (data) => {
     let is_promise = false;
+    let needsresolve = false;
     Object.entries(data).forEach(kv => {
         is_promise = is_promise || !!kv[1] && !kv[1]._Proxy && ispromise(kv[1]);
+        needsresolve = needsresolve || kv[1]._needsresolve;
     })
 
     if (is_promise) {
@@ -506,6 +509,7 @@ const node_data = (data) => {
             .then(Object.fromEntries);
     }
 
+    if(needsresolve) data._needsresolve = true;
 
     return data;
 }
@@ -779,9 +783,9 @@ const nolib = {
             },
         },
         set: {
-            args: ['target', 'path', 'value'],
-            fn: (target, path, value) => {
-                const keys = path.split('.'); 
+            args: ['target', 'path', 'value', '_node'],
+            fn: (target, path, value, node) => {
+                const keys = (path || node.value).split('.'); 
                 const check = (o, v, k) => k.length === 1 
                     ? {...o, [k[0]]: v, _needsresolve: true} 
                     : o.hasOwnProperty(k[0]) 
@@ -803,9 +807,11 @@ const nolib = {
             //     rgraph = add_default_nodes_and_edges(rgraph);
             // }
 
-            return node !== undefined
+            const res =  node !== undefined
                 ? executeGraph({ graph: rgraph, lib })(node)(args || {})
                 : executeGraph({ graph: rgraph, lib })(graph.fn)(graph.args || {})
+            
+            return res;
         },
         resolve,
         objToGraph,
@@ -968,11 +974,10 @@ const nolib = {
                 graph = resolve(graph);
                 const gcache = get_cache(graph);
 
-                if(gcache && args) {
+                if(gcache && args && !compare(gcache.args, args)) {
                     Object.assign(gcache.args, args);
+                    publish('graphchange', get_parentest(graph));
                 }
-
-                // publish('graphchange', get_parentest(graph));
             }
 
             const get_ref = (graph, id) => {
@@ -983,6 +988,7 @@ const nolib = {
                 get_graph(graph).nodes.find(n => n.id === id));
             const get_edge = (graph, from) => get_cache(graph).graph.edges.find(e => e.from === from);
             const get_edges_in = (graph, id) => getorsetgraph(graph, id, 'in_edge_map', () => graph.edges.filter(e => e.to === id));
+            const get_edge_out = (graph, id) => get_cache(graph).graph.edges.find(e => e.from === id);
             const get_args = (graph) => get_cache(graph).args;
             const get_graph = (graph) => {
                 const cached = get_cache(graph);
@@ -1031,6 +1037,7 @@ const nolib = {
                 get_node,
                 get_edge,
                 get_edges_in,
+                get_edge_out,
                 get_parent,
                 get_parentest,
                 get_fn: (graph, orderedargs, id, node_ref) => 
@@ -1063,7 +1070,7 @@ const nolib = {
 
                     update_graph(new_graph);
                 },
-                update_edges: (graph, add ,remove) => {
+                update_edges: (graph, add ,remove=[]) => {
                     const gcache = get_cache(graph);
                     graph = gcache.graph;
 
@@ -1097,7 +1104,8 @@ const nolib = {
                                 .concat(nonargs_edges.map((e, i) => i < unused_args.length ? ({...e, as: unused_args[i]}) : e))
                     };
 
-                    delete_cache(graph)
+                    // n.b. commented out because it blasts update_args which is not desirable
+                    // delete_cache(graph)
                     update_graph(new_graph);
                 },
                 delete_node: (graph, id) => {
@@ -1177,15 +1185,18 @@ const nolib = {
                 node_script(node, node, node_inputs, _lib, graph, _lib.no.runtime.get_edges_in(graph, node.id))
         },
         new_array: {
-            args: ['_node_inputs'],
+            args: ['_node_inputs', '_node'],
             resolve: false,
-            fn: (args) => {
-                const arr = Object.keys(args)
-                    .sort()
-                    .reduce((acc, k) => [
-                        acc[0].concat([args[k]]),
-                        acc[1] || ispromise(args[k])
-                    ], [[], false]);
+            fn: (args, node) => {
+                const argskeys = Object.keys(args);
+                const arr = args && argskeys.length > 0
+                    ? argskeys
+                        .sort()
+                        .reduce((acc, k) => [
+                            acc[0].concat([args[k]]),
+                            acc[1] || ispromise(args[k])
+                        ], [[], false])
+                    : JSON.parse("[" + node.value + "]");
                 return arr[1] ? Promise.all(arr[0]) : arr[0];
             }
         },
@@ -1262,7 +1273,6 @@ const nolib = {
             fn: (args) => JSON.parse(args)
         }
     },
-    Fuse,
     // THREE
 };
 
