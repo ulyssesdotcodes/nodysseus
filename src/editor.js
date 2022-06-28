@@ -216,9 +216,23 @@ const updateSimulationNodes = (dispatch, data) => {
         let n = node_map.get(nid);
         const children = children_map.get(n.id);
         const node_id = main_node_map.get(n.id);
+        const stored_siblings = parents_map.get(children[0]);
+        stored_siblings?.sort((a, b) => ancestor_count.get(a) - ancestor_count.get(b));
+
+        const siblings = [];
+        stored_siblings?.forEach((s, i) => {
+            if(i % 2 == 0) {
+                siblings.push(s);
+            } else {
+                siblings.unshift(s);
+            }
+        })
 
         const node_hash = simulation_node_data.get(node_id)?.hash ?? hashcode(nid);
         const randpos = {x: (((node_hash * 0.254) % 256.0) / 256.0), y: ((node_hash * 0.874) % 256.0) / 256.0};
+
+        const sibling_idx = siblings?.findIndex(v => v === n.id);
+        const sibling_mult = sibling_idx - (siblings?.length - 1) * 0.5;
 
         const addorundefined = (a, b) => {
             return a === undefined || b === undefined ? undefined : a + b
@@ -244,9 +258,8 @@ const updateSimulationNodes = (dispatch, data) => {
             x: Math.floor(simulation_node_data.get(node_id)?.x 
                 ?? simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.x
                 ?? addorundefined(
-                    simulation_node_data.get(main_node_map.get(children_map.get(n.id)?.[0]))?.x, 
-                    ((parents_map.get(children_map.get(n.id)?.[0])?.findIndex(v => v === n.id) / Math.max(1, (parents_map.get(children_map.get(n.id)?.[0])?.length - 1))) - 0.5) 
-                    * (256 + 64 * Math.log(Math.max(1, ancestor_count.get(n.id) + parents_map.get(children_map.get(n.id)?.[0])?.length - 1))/ Math.log(1.25))
+                    simulation_node_data.get(children[0])?.x, 
+                    sibling_mult * (256 + 32 * Math.log(Math.max(1, ancestor_count.get(n.id))/ Math.log(1.01)))
                 )
                 ?? Math.floor(window.innerWidth * (randpos.x * .5 + .25))),
             y: Math.floor(simulation_node_data.get(node_id)?.y 
@@ -293,7 +306,7 @@ const updateSimulationNodes = (dispatch, data) => {
             simulation_link_data.size !== start_sim_link_size || 
             data.simulation.nodes()?.length !== nodes.length ||
             data.simulation.force('links')?.links().length !== links.length) {
-            data.simulation.alpha(0.4);
+            data.simulation.alpha(0.8);
         }
 
         data.simulation.nodes(nodes);
