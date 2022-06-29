@@ -211,6 +211,8 @@ export default {
         {"id": "fn_args", "ref": "arg", "value": "_args"},
         {"id": "return", "ref": "arg", "value": "return"},
         {"id": "display", "ref": "arg", "value": "display"},
+        {"id": "publish", "ref": "arg", "value": "publish"},
+        {"id": "subscribe", "ref": "arg", "value": "subscribe"},
         {"id": "edge", "ref": "arg", "value": "edge"},
         {"id": "edge_as", "ref": "get", "value": "as"},
         {"id": "is_edge_for_node", "ref": "script", "value": "return edge && _graph.id.startsWith(edge.node_id)"},
@@ -226,9 +228,9 @@ export default {
         {"id": "fn_run", "ref": "run"},
         {"id": "result_entry", "ref": "array"},
         {"id": "fn_runnable", "ref": "runnable"},
-        {"id": "edges", "script": "return _lib.no.runtime.get_edges_in(_lib.no.runtime.get_parent(_graph), _graph.node_id).filter(e => e.as === edge);"},
+        {"id": "edges", "script": "return _lib.no.runtime.get_edges_in(_lib.no.runtime.get_parent(_graph), _graph.node_id).filter(e => e.as === edge || e.as === 'publish' || e.as === 'subscribe');"},
         {"id": "entries", "ref": "map"},
-        {"id": "out", "script": "const res = Object.fromEntries(entries); return res[edge]"}
+        {"id": "out", "script": "const res = Object.fromEntries(entries); console.log(res.publish); console.log(res.subscribe); Object.entries(res.publish ?? {}).forEach(([k, v]) => _lib.no.runtime.publish.fn(k, {data: v})); Object.entries(res.subscribe ?? {}).forEach(([k, v]) => _lib.no.runtime.add_listener(k, _graph.id, v)); return res[edge]"}
       ],
       "edges": [
         {"from": "fn_args", "to": "fn", "as": "args"},
@@ -1118,6 +1120,7 @@ export default {
         { "from": "s5x2r1f", "to": "a0jb5es", "as": "value" }
       ]
     },
-    { "id": "not", "args": ["target"], "script": "return !target" }
+    { "id": "not", "args": ["target"], "script": "return !target" },
+    {"id":"walk_graph","nodes":[{"id":"args"},{"id":"cfuymky","value":"testx"},{"id":"5a6pljw","ref":"html_element"},{"id":"main/out","name":"walk_graph","ref":"return"},{"id":"5xlxejq","ref":"html_text"},{"id":"8qkc61x","ref":"runnable"},{"id":"dv0p0id","value":"walker","ref":"log"},{"id":"dqs1arj","value":"graph","name":"","ref":"arg"},{"id":"pe7geox","value":"return _lib.no.runtime.get_edges_in(graph.graph, graph.node)","ref":"script"},{"id":"glnadhk","value":"return {node: _node.id, graph: _graph.id}","ref":"script"},{"id":"yophjcb","ref":"map"},{"id":"r3nrc31","ref":"runnable"},{"id":"nhqynsn","value":"element.from","ref":"arg"},{"id":"y4eppvf","value":"graph.graph","ref":"arg"},{"id":"lxjljmp","value":"node","ref":"arg"},{"id":"fo2ul3t","value":"fn","ref":"arg"},{"id":"x2ieyic","ref":"walk_graph"},{"id":"8kp4fri","value":"testz"},{"id":"b8n58i0","value":"testa"},{"id":"ik55pc7","value":"texty"},{"id":"1ecvy51","value":"return {node: _lib.no.runtime.get_node(graph, edge_from), graph}","ref":"script"},{"id":"27950jh"},{"id":"deh12wg","value":"edge","ref":"arg"},{"id":"sfwk3w6","value":"edge","ref":"log"},{"id":"uw2yljj","value":"node","ref":"log"},{"id":"dc70b7u","value":"element","ref":"arg"},{"id":"fhqwbjg","value":"_lib.no.runGraph(fn.graph, fn.fn, {node: node.node, edge}); return {graph: node.graph, node: node.node.id};","ref":"script"}],"edges":[{"from":"args","to":"main/out","as":"args"},{"from":"5a6pljw","to":"main/out","as":"display"},{"from":"cfuymky","to":"glnadhk","as":"arg0"},{"from":"8kp4fri","to":"glnadhk","as":"arg1"},{"from":"ik55pc7","to":"8kp4fri","as":"arg0"},{"from":"5xlxejq","to":"5a6pljw","as":"children"},{"from":"8qkc61x","to":"args","as":"fn"},{"from":"dv0p0id","to":"8qkc61x","as":"fn"},{"from":"glnadhk","to":"args","as":"graph"},{"from":"dqs1arj","to":"pe7geox","as":"graph"},{"from":"pe7geox","to":"yophjcb","as":"array"},{"from":"r3nrc31","to":"yophjcb","as":"fn"},{"from":"nhqynsn","to":"1ecvy51","as":"edge_from"},{"from":"y4eppvf","to":"1ecvy51","as":"graph"},{"from":"fo2ul3t","to":"fhqwbjg","as":"fn"},{"from":"1ecvy51","to":"fhqwbjg","as":"node"},{"from":"x2ieyic","to":"r3nrc31","as":"fn"},{"from":"fhqwbjg","to":"x2ieyic","as":"graph"},{"from":"yophjcb","to":"main/out","as":"return"},{"from":"27950jh","to":"dv0p0id","as":"value"},{"from":"sfwk3w6","to":"27950jh","as":"arg1"},{"from":"deh12wg","to":"sfwk3w6","as":"value"},{"from":"uw2yljj","to":"27950jh","as":"arg0"},{"from":"lxjljmp","to":"uw2yljj","as":"value"},{"from":"dc70b7u","to":"fhqwbjg","as":"edge"},{"from":"b8n58i0","to":"glnadhk","as":"arg22"}],"out":"main/out"}
   ]
 }

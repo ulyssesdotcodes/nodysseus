@@ -880,8 +880,9 @@ const nolib = {
                 })
             }
 
-            const add_listener = (event, listener_id, fn, remove) => {
+            const add_listener = (event, listener_id, input_fn, remove) => {
                 const listeners = getorset(event_listeners, event, () => new Map());
+                const fn = typeof input_fn === "function" ? input_fn : args => nolib.no.runGraph(input_fn.graph, input_fn.fn, Object.assign({}, input_fn.args, args))
                 if(!listeners.has(listener_id)) {
                     requestAnimationFrame(() => {
                         if(event_data.has(event)) {
@@ -1133,8 +1134,8 @@ const nolib = {
                 },
                 remove_listener,
                 publish: {
-                    args: ['_node', 'event', 'data'],
-                    fn: (node, event, data) => publish(event, data)
+                    args: ['event', 'data'],
+                    fn: (event, data) => publish(event, data)
                 },
                 set_parent: (graph, parent) => {
                     const parent_parent = parentdb.by("id", parent.id) 
