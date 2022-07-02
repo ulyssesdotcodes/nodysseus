@@ -416,7 +416,7 @@ export default {
         {"id": "value", "ref": "arg", "value": "value"},
         {"id": "recache", "ref": "arg", "value": "recache"},
         {"id": "cached", "ref": "arg", "value": "cached", "type": "internal"},
-        {"id": "cache", "script": "if(value !== undefined){_lib.no.runtime.update_graph(_graph, {cached: value});} return value;"},
+        {"id": "cache", "script": "if(value !== undefined){console.log('value undefined'); _lib.no.runtime.update_args(_graph, {cached: value});} return value;"},
         {"id": "cached_value", "ref": "default"},
         {"id": "out", "ref": "if"}
       ],

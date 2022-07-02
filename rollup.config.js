@@ -5,17 +5,19 @@ import copy from "rollup-plugin-copy"
 import sourcemaps from "rollup-plugin-sourcemaps";
 import globals from "rollup-plugin-node-globals";
 import builtins from "rollup-plugin-node-builtins";
+import dynamicImportVars from '@rollup/plugin-dynamic-import-vars';
+
 
 let cache = null;
 
 export default [{
-  input: "src/nodysseus.js",
+  input: "src/nodysseus.mjs",
   cache,
   output: {
     file: "./public/nodysseus.bundle.js",
     format: "es"
   },
-  plugins: [nodeResolve(), commonjs(), json(), globals(), builtins()],
+  plugins: [nodeResolve(), commonjs(), json(), globals(), /*dynamicImportVars(), */ builtins()],
 }, {
   input: "src/worker.js",
   cache,
@@ -23,7 +25,7 @@ export default [{
     file: "./public/worker.js",
     format: "iife"
   },
-  plugins: [nodeResolve(), commonjs(), json(), globals(), builtins()],
+  plugins: [nodeResolve(), commonjs(), json(), globals(), /*dynamicImportVars(),*/ builtins()],
 }, {
   input: "src/editor.js",
   cache,
@@ -32,7 +34,8 @@ export default [{
     format: "es",
     sourcemap: true
   },
-  plugins: [commonjs(), json(), globals(), builtins(), nodeResolve(), sourcemaps(), copy({
+  inlineDynamicImports: true,
+  plugins: [commonjs(), json(), globals(), builtins(), nodeResolve(), sourcemaps(), /*dynamicImportVars(), */ copy({
     targets: [
       {src: 'json/*', dest: 'public/json'}
     ]
