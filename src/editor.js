@@ -577,7 +577,8 @@ const result_subscription = (dispatch, {display_graph_id}) => {
         if(graph.id === display_graph_id) {
             cancelAnimationFrame(animrun)
             animrun = requestAnimationFrame(() => {
-                const display = nolib.no.runGraph(graph, graph.out, {edge: {node_id: graph.id + '/' + graph.out, as: "display"}});
+                const result = nolib.no.runGraph(graph, graph.out, {edge: {node_id: graph.id + '/' + graph.out, as: "return"}});
+                const display = nolib.no.runGraph(graph, graph.out, {edge: {node_id: graph.id + '/' + graph.out, as: "display"}, result});
                 result_display_dispatch(UpdateResultDisplay, {el: display && display.el ? display.el : {dom_type: 'div', props: {}, children: []}})
                 dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
                 dispatch(s => [s, s.selected[0] !== s.display_graph.out && [() => update_info_display({node_id: s.selected[0], graph_id: s.display_graph_id})]])
