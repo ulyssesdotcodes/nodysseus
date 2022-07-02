@@ -385,10 +385,17 @@ const node_nodes = (node, node_ref, graph_input_value, data, full_lib, graph, in
         edges: node_ref.edges
     });
 
+    combined_data_input.result = full_lib.no.runtime.get_result(node_graph);
     full_lib.no.runtime.set_parent(node_graph, graph);
 
     const result = full_lib.no.runGraph(node_graph, node_ref.out || 'out', combined_data_input, full_lib);
-    full_lib.no.runtime.update_result(node_graph, result);
+    if(node_ref.id === "set_dropdown") {
+        console.log('data');
+        console.log(data)
+    }
+    if(nodysseus_get(data, 'edge.as') !== "display") {
+        full_lib.no.runtime.update_result(node_graph, result);
+    }
     return result;
 }
 
@@ -798,6 +805,7 @@ const nolib = {
                 return check(target, value, keys)
             },
         },
+        set_mutable: set,
         diff,
         diffApply
     },
@@ -1129,7 +1137,7 @@ const nolib = {
                     }
                 },
                 get_result: (graph) => {
-                    return resultsdb.get(graph.id);
+                    return resultsdb.by("id", graph.id)?.data;
                 },
                 set_parent: (graph, parent) => {
                     const parent_parent = parentdb.by("id", parent.id) 

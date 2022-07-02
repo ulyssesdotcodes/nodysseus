@@ -387,7 +387,7 @@ export default {
       ]
     },
     { "id": "arg", "description": "Get an input to the graph this is a part of.", "extern": "utility.arg" },
-    { "id": "set-mutable", "args": ["target", "path", "value"], "script": "return _lib.just.set(target, path, value)" },
+    { "id": "set_mutable", "args": ["target", "path", "value"], "script": "_lib.just.set_mutable(target, path, value); return target" },
     {
       "id": "set",
       "description": "Set the property at `path` on target. Accepts a `.` separated path e.g. set(target, 'a.b', 'c') returns {...target, a: {...target.a, b: 'c'}}",
