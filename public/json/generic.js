@@ -1807,6 +1807,7 @@ export default {
   },
 {
     "id": "call_method",
+    "out": "main/out",
     "nodes": [
       {
         "id": "args"
@@ -1961,7 +1962,7 @@ export default {
       },
       {
         "id": "vnl7z87",
-        "value": "return res && typeof res === 'object' ? Object.keys(res).filter(k => typeof res[k] === 'function').map(key => ({key})) : [];",
+        "value": "const keys = []; for(const k in res){ keys.push(k) } keys.sort(); return res && typeof res === 'object' ? keys.filter(k => typeof res[k] === 'function').map(key => ({key})) : [];",
         "ref": "script"
       },
       {
@@ -2147,13 +2148,6 @@ export default {
         "as": "array"
       }
     ],
-    "out": "main/out",
-    "meta": {
-      "revision": 0,
-      "created": 1656868208294,
-      "version": 0
-    },
-    "$loki": 65
   }
   ]
 }
