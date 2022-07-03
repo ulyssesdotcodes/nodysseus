@@ -1804,6 +1804,356 @@ export default {
         "as": "list"
       }
     ],
+  },
+{
+    "id": "call_method",
+    "nodes": [
+      {
+        "id": "args"
+      },
+      {
+        "id": "5a6pljw",
+        "ref": "html_element"
+      },
+      {
+        "id": "7iawyvs",
+        "ref": "map"
+      },
+      {
+        "id": "j89dbbh",
+        "ref": "runnable"
+      },
+      {
+        "id": "b4scd6w",
+        "value": "element.key",
+        "ref": "arg"
+      },
+      {
+        "id": "sfivh4x"
+      },
+      {
+        "id": "bg17wom",
+        "value": "element.key",
+        "ref": "arg"
+      },
+      {
+        "id": "zxz1gis",
+        "ref": "html_text"
+      },
+      {
+        "id": "3x804e3",
+        "value": "option",
+        "ref": "html_element"
+      },
+      {
+        "id": "94txz4w",
+        "value": "property",
+        "ref": "arg"
+      },
+      {
+        "id": "ke2gd7r",
+        "ref": "if"
+      },
+      {
+        "id": "t3ve35s",
+        "value": "hi",
+        "name": ""
+      },
+      {
+        "id": "bnyrd44",
+        "ref": "default"
+      },
+      {
+        "id": "nzg5arg",
+        "value": "return _graph?.value;",
+        "ref": "script"
+      },
+      {
+        "id": "v965sw7",
+        "ref": "array"
+      },
+      {
+        "id": "am447fy",
+        "value": "input",
+        "ref": "html_element"
+      },
+      {
+        "id": "bvs9qz1",
+        "value": "datalist",
+        "ref": "html_element"
+      },
+      {
+        "id": "5zclxv2"
+      },
+      {
+        "id": "6s9b6g0",
+        "value": "return _graph?.value;",
+        "ref": "script"
+      },
+      {
+        "id": "or9k7xt",
+        "ref": "runnable"
+      },
+      {
+        "id": "fzeowyv",
+        "value": "payload.event.target.value",
+        "ref": "arg"
+      },
+      {
+        "id": "exsgmpn"
+      },
+      {
+        "id": "zujxtmx",
+        "value": "return `${_graph.id}-selector`",
+        "ref": "script"
+      },
+      {
+        "id": "prhtthx",
+        "value": "return `${_graph.id}-selector`",
+        "ref": "script"
+      },
+      {
+        "id": "ddgxhvl",
+        "value": "return _graph?.value",
+        "ref": "script"
+      },
+      {
+        "id": "main/out",
+        "name": "call_method",
+        "ref": "return"
+      },
+      {
+        "id": "j0zzhc1",
+        "ref": "call"
+      },
+      {
+        "id": "1xbcyyf",
+        "value": "return {a: 'hi', b: () => console.log('test')}",
+        "ref": "script"
+      },
+      {
+        "id": "pjqedg3",
+        "value": "args",
+        "ref": "arg"
+      },
+      {
+        "id": "9vf40d3",
+        "ref": "default"
+      },
+      {
+        "id": "iqtiiiy",
+        "value": "[]"
+      },
+      {
+        "id": "35nk2ya",
+        "value": "const parent = _lib.no.runtime.get_parent(_graph); return parent ? _lib.no.runtime.add_node(parent, {id: _graph.node_id, ref: 'call_method', value: property}) : _lib.no.runtime.update_args(_graph, {property});",
+        "ref": "script"
+      },
+      {
+        "id": "xmreb7u",
+        "value": "self",
+        "ref": "arg"
+      },
+      {
+        "id": "mf6qadh",
+        "value": "self",
+        "ref": "arg"
+      },
+      {
+        "id": "vnl7z87",
+        "value": "return res && typeof res === 'object' ? Object.keys(res).filter(k => typeof res[k] === 'function').map(key => ({key})) : [];",
+        "ref": "script"
+      },
+      {
+        "id": "57hbdfk",
+        "value": "self",
+        "ref": "arg"
+      }
+    ],
+    "edges": [
+      {
+        "from": "args",
+        "to": "main/out",
+        "as": "args"
+      },
+      {
+        "from": "5a6pljw",
+        "to": "main/out",
+        "as": "display"
+      },
+      {
+        "from": "7iawyvs",
+        "to": "bvs9qz1",
+        "as": "children"
+      },
+      {
+        "from": "j89dbbh",
+        "to": "7iawyvs",
+        "as": "fn"
+      },
+      {
+        "from": "3x804e3",
+        "to": "j89dbbh",
+        "as": "fn"
+      },
+      {
+        "from": "sfivh4x",
+        "to": "3x804e3",
+        "as": "props"
+      },
+      {
+        "from": "bg17wom",
+        "to": "sfivh4x",
+        "as": "value"
+      },
+      {
+        "from": "zxz1gis",
+        "to": "3x804e3",
+        "as": "children"
+      },
+      {
+        "from": "b4scd6w",
+        "to": "zxz1gis",
+        "as": "text"
+      },
+      {
+        "from": "j0zzhc1",
+        "to": "ke2gd7r",
+        "as": "true"
+      },
+      {
+        "from": "mf6qadh",
+        "to": "ke2gd7r",
+        "as": "false"
+      },
+      {
+        "from": "t3ve35s",
+        "to": "args",
+        "as": "value"
+      },
+      {
+        "from": "nzg5arg",
+        "to": "bnyrd44",
+        "as": "value"
+      },
+      {
+        "from": "94txz4w",
+        "to": "bnyrd44",
+        "as": "otherwise"
+      },
+      {
+        "from": "v965sw7",
+        "to": "5a6pljw",
+        "as": "children"
+      },
+      {
+        "from": "bvs9qz1",
+        "to": "v965sw7",
+        "as": "arg0"
+      },
+      {
+        "from": "am447fy",
+        "to": "v965sw7",
+        "as": "arg1"
+      },
+      {
+        "from": "5zclxv2",
+        "to": "am447fy",
+        "as": "props"
+      },
+      {
+        "from": "6s9b6g0",
+        "to": "5zclxv2",
+        "as": "value"
+      },
+      {
+        "from": "35nk2ya",
+        "to": "or9k7xt",
+        "as": "fn"
+      },
+      {
+        "from": "or9k7xt",
+        "to": "5zclxv2",
+        "as": "onchange"
+      },
+      {
+        "from": "fzeowyv",
+        "to": "35nk2ya",
+        "as": "property"
+      },
+      {
+        "from": "exsgmpn",
+        "to": "bvs9qz1",
+        "as": "props"
+      },
+      {
+        "from": "zujxtmx",
+        "to": "exsgmpn",
+        "as": "id"
+      },
+      {
+        "from": "prhtthx",
+        "to": "5zclxv2",
+        "as": "list"
+      },
+      {
+        "from": "bnyrd44",
+        "to": "j0zzhc1",
+        "as": "fn"
+      },
+      {
+        "from": "ddgxhvl",
+        "to": "ke2gd7r",
+        "as": "pred"
+      },
+      {
+        "from": "ke2gd7r",
+        "to": "main/out",
+        "as": "return"
+      },
+      {
+        "from": "9vf40d3",
+        "to": "j0zzhc1",
+        "as": "args"
+      },
+      {
+        "from": "pjqedg3",
+        "to": "9vf40d3",
+        "as": "value"
+      },
+      {
+        "from": "iqtiiiy",
+        "to": "9vf40d3",
+        "as": "otherwise"
+      },
+      {
+        "from": "1xbcyyf",
+        "to": "args",
+        "as": "self"
+      },
+      {
+        "from": "xmreb7u",
+        "to": "vnl7z87",
+        "as": "res"
+      },
+      {
+        "from": "57hbdfk",
+        "to": "j0zzhc1",
+        "as": "self"
+      },
+      {
+        "from": "vnl7z87",
+        "to": "7iawyvs",
+        "as": "array"
+      }
+    ],
+    "out": "main/out",
+    "meta": {
+      "revision": 0,
+      "created": 1656868208294,
+      "version": 0
+    },
+    "$loki": 65
   }
   ]
 }
