@@ -430,13 +430,13 @@ const node_script = (node, node_ref, data, full_lib, graph, inputs) => {
         }
         const parentest = full_lib.no.runtime.get_parentest(graph)
         let error_node = parentest ? graph : node;
-        if(parentest){
-            while(full_lib.no.runtime.get_parent(error_node).id !== parentest.id) {
-                error_node = full_lib.no.runtime.get_parent(error_node);
-            }
-        }
+        // if(parentest){
+        //     while(full_lib.no.runtime.get_parent(error_node).id !== parentest.id) {
+        //         error_node = full_lib.no.runtime.get_parent(error_node);
+        //     }
+        // }
         full_lib.no.runtime.publish.fn("grapherror", new NodysseusError(
-            (parentest?.id ?? graph.id) + "/" + error_node.id, 
+            graph.id + "/" + error_node.id, 
             e instanceof AggregateError ? "Error in node chain" : e
         ))
     }
@@ -488,13 +488,13 @@ const node_extern = (node, node_ref, node_id, data, full_lib, graph) => {
         }
         const parentest = full_lib.no.runtime.get_parentest(graph)
         let error_node = parentest ? graph : node;
-        if(parentest){
-            while(full_lib.no.runtime.get_parent(error_node).id !== parentest.id) {
-                error_node = full_lib.no.runtime.get_parent(error_node);
-            }
-        }
+        // if(parentest){
+        //     while(full_lib.no.runtime.get_parent(error_node).id !== parentest.id) {
+        //         error_node = full_lib.no.runtime.get_parent(error_node);
+        //     }
+        // }
         full_lib.no.runtime.publish.fn("grapherror", new NodysseusError(
-            (parentest?.id ?? graph.id) + "/" + error_node.id, 
+            graph.id + "/" + error_node.id, 
             e instanceof AggregateError ? "Error in node chain" : e
         ))
     }
@@ -968,7 +968,7 @@ const nolib = {
 
                 if(gcache && args && !compare(gcache.args, args)) {
                     Object.assign(gcache.args, args);
-                    publish('graphchange', get_parentest(graph));
+                    publish('graphchange', get_parentest(graph) ?? graph);
                 }
             }
 

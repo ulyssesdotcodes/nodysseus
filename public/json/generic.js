@@ -431,6 +431,21 @@ export default {
       ]
     },
     {
+      "id": "save_value",
+      "out": "out",
+      "nodes": [
+        {"id": "value", "ref": "arg", "value": "value"},
+        {"id": "graph_value", "ref": "script", "value": "return _graph.value"},
+        {"id": "save", "ref": "script", "value": "if(!_lib.utility.compare(value, graph_value)){ _lib.no.runtime.add_node(_lib.no.runtime.get_parent(_graph), {id: _graph.node_id, ref: 'save_value', value});} return value;"},
+        {"id": "out", "ref": "return"}
+      ],
+      "edges": [
+        {"from": "value", "to": "save", "as": "value"},
+        {"from": "graph_value", "to": "save", "as": "graph_value"},
+        {"from": "save", "to": "out", "as": "return"}
+      ]
+    },
+    {
       "id": "isunchanged",
       "nodes": [
         {"id": "in"},
@@ -1406,5 +1421,389 @@ export default {
         ],
         "out": "main/out",
       },
+      {
+    "id": "set_property",
+    "nodes": [
+      {
+        "id": "args"
+      },
+      {
+        "id": "5a6pljw",
+        "ref": "html_element"
+      },
+      {
+        "id": "xmreb7u",
+        "value": "result",
+        "ref": "arg"
+      },
+      {
+        "id": "ueijpjz",
+        "value": "return import(\"https://unpkg.com/hydra-synth\")",
+        "ref": "script"
+      },
+      {
+        "id": "k3ktuq6",
+        "ref": "cache"
+      },
+      {
+        "id": "m6n51hz",
+        "ref": "cache"
+      },
+      {
+        "id": "n77uupb",
+        "value": "return import(\"https://unpkg.com/three@latest/build/three.module.js\")",
+        "ref": "script"
+      },
+      {
+        "id": "imr2dvi",
+        "value": "output",
+        "ref": "log"
+      },
+      {
+        "id": "7iawyvs",
+        "ref": "map"
+      },
+      {
+        "id": "j89dbbh",
+        "ref": "runnable"
+      },
+      {
+        "id": "b4scd6w",
+        "value": "element.key",
+        "ref": "arg"
+      },
+      {
+        "id": "sfivh4x"
+      },
+      {
+        "id": "bg17wom",
+        "value": "element.key",
+        "ref": "arg"
+      },
+      {
+        "id": "zxz1gis",
+        "ref": "html_text"
+      },
+      {
+        "id": "3x804e3",
+        "value": "option",
+        "ref": "html_element"
+      },
+      {
+        "id": "vnl7z87",
+        "value": "return res && typeof res === 'object' ? Object.keys(res).filter(k => typeof res[k] !== 'function').map(key => ({key})) : [];",
+        "ref": "script"
+      },
+      {
+        "id": "7ed3f7y",
+        "value": "target",
+        "name": "",
+        "ref": "arg"
+      },
+      {
+        "id": "j0zzhc1",
+        "ref": "set_mutable"
+      },
+      {
+        "id": "94txz4w",
+        "value": "property",
+        "ref": "arg"
+      },
+      {
+        "id": "v171kxm",
+        "value": "value",
+        "ref": "arg"
+      },
+      {
+        "id": "ke2gd7r",
+        "ref": "if"
+      },
+      {
+        "id": "mf6qadh",
+        "value": "target",
+        "ref": "arg"
+      },
+      {
+        "id": "7fvvlnw",
+        "value": "prop",
+        "ref": "log"
+      },
+      {
+        "id": "1xbcyyf",
+        "value": "return{}",
+        "ref": "script"
+      },
+      {
+        "id": "t3ve35s",
+        "value": "hi",
+        "name": ""
+      },
+      {
+        "id": "bnyrd44",
+        "ref": "default"
+      },
+      {
+        "id": "nzg5arg",
+        "value": "return _graph?.value;",
+        "ref": "script"
+      },
+      {
+        "id": "v965sw7",
+        "ref": "array"
+      },
+      {
+        "id": "am447fy",
+        "value": "input",
+        "ref": "html_element"
+      },
+      {
+        "id": "bvs9qz1",
+        "value": "datalist",
+        "ref": "html_element"
+      },
+      {
+        "id": "5zclxv2"
+      },
+      {
+        "id": "6s9b6g0",
+        "value": "return _graph?.value;",
+        "ref": "script"
+      },
+      {
+        "id": "35nk2ya",
+        "value": "const parent = _lib.no.runtime.get_parent(_graph); return parent ? _lib.no.runtime.add_node(parent, {id: _graph.node_id, ref: 'set_property', value: property}) : _lib.no.runtime.update_args(_graph, {property});",
+        "ref": "script"
+      },
+      {
+        "id": "or9k7xt",
+        "ref": "runnable"
+      },
+      {
+        "id": "fzeowyv",
+        "value": "payload.event.target.value",
+        "ref": "arg"
+      },
+      {
+        "id": "exsgmpn"
+      },
+      {
+        "id": "zujxtmx",
+        "value": "return `${_graph.id}-selector`",
+        "ref": "script"
+      },
+      {
+        "id": "prhtthx",
+        "value": "return `${_graph.id}-selector`",
+        "ref": "script"
+      },
+      {
+        "id": "ddgxhvl",
+        "value": "return _graph?.value",
+        "ref": "script"
+      },
+      {
+        "id": "main/out",
+        "name": "threejs",
+        "ref": "return"
+      }
+    ],
+    "edges": [
+      {
+        "from": "args",
+        "to": "main/out",
+        "as": "args"
+      },
+      {
+        "from": "5a6pljw",
+        "to": "main/out",
+        "as": "display"
+      },
+      {
+        "from": "imr2dvi",
+        "to": "main/out",
+        "as": "return"
+      },
+      {
+        "from": "ueijpjz",
+        "to": "k3ktuq6",
+        "as": "value"
+      },
+      {
+        "from": "k3ktuq6",
+        "to": "args",
+        "as": "hydra"
+      },
+      {
+        "from": "n77uupb",
+        "to": "m6n51hz",
+        "as": "value"
+      },
+      {
+        "from": "m6n51hz",
+        "to": "args",
+        "as": "THREE"
+      },
+      {
+        "from": "7iawyvs",
+        "to": "bvs9qz1",
+        "as": "children"
+      },
+      {
+        "from": "vnl7z87",
+        "to": "7iawyvs",
+        "as": "array"
+      },
+      {
+        "from": "xmreb7u",
+        "to": "vnl7z87",
+        "as": "res"
+      },
+      {
+        "from": "j89dbbh",
+        "to": "7iawyvs",
+        "as": "fn"
+      },
+      {
+        "from": "3x804e3",
+        "to": "j89dbbh",
+        "as": "fn"
+      },
+      {
+        "from": "sfivh4x",
+        "to": "3x804e3",
+        "as": "props"
+      },
+      {
+        "from": "bg17wom",
+        "to": "sfivh4x",
+        "as": "value"
+      },
+      {
+        "from": "zxz1gis",
+        "to": "3x804e3",
+        "as": "children"
+      },
+      {
+        "from": "b4scd6w",
+        "to": "zxz1gis",
+        "as": "text"
+      },
+      {
+        "from": "7ed3f7y",
+        "to": "j0zzhc1",
+        "as": "target"
+      },
+      {
+        "from": "v171kxm",
+        "to": "j0zzhc1",
+        "as": "value"
+      },
+      {
+        "from": "1xbcyyf",
+        "to": "args",
+        "as": "target"
+      },
+      {
+        "from": "ke2gd7r",
+        "to": "imr2dvi",
+        "as": "value"
+      },
+      {
+        "from": "j0zzhc1",
+        "to": "ke2gd7r",
+        "as": "true"
+      },
+      {
+        "from": "mf6qadh",
+        "to": "ke2gd7r",
+        "as": "false"
+      },
+      {
+        "from": "t3ve35s",
+        "to": "args",
+        "as": "value"
+      },
+      {
+        "from": "7fvvlnw",
+        "to": "ke2gd7r",
+        "as": "pred"
+      },
+      {
+        "from": "ddgxhvl",
+        "to": "7fvvlnw",
+        "as": "value"
+      },
+      {
+        "from": "bnyrd44",
+        "to": "j0zzhc1",
+        "as": "path"
+      },
+      {
+        "from": "nzg5arg",
+        "to": "bnyrd44",
+        "as": "value"
+      },
+      {
+        "from": "94txz4w",
+        "to": "bnyrd44",
+        "as": "otherwise"
+      },
+      {
+        "from": "v965sw7",
+        "to": "5a6pljw",
+        "as": "children"
+      },
+      {
+        "from": "bvs9qz1",
+        "to": "v965sw7",
+        "as": "arg0"
+      },
+      {
+        "from": "am447fy",
+        "to": "v965sw7",
+        "as": "arg1"
+      },
+      {
+        "from": "5zclxv2",
+        "to": "am447fy",
+        "as": "props"
+      },
+      {
+        "from": "6s9b6g0",
+        "to": "5zclxv2",
+        "as": "value"
+      },
+      {
+        "from": "35nk2ya",
+        "to": "or9k7xt",
+        "as": "fn"
+      },
+      {
+        "from": "or9k7xt",
+        "to": "5zclxv2",
+        "as": "onchange"
+      },
+      {
+        "from": "fzeowyv",
+        "to": "35nk2ya",
+        "as": "property"
+      },
+      {
+        "from": "exsgmpn",
+        "to": "bvs9qz1",
+        "as": "props"
+      },
+      {
+        "from": "zujxtmx",
+        "to": "exsgmpn",
+        "as": "id"
+      },
+      {
+        "from": "prhtthx",
+        "to": "5zclxv2",
+        "as": "list"
+      }
+    ],
+  }
   ]
 }

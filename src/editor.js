@@ -571,16 +571,18 @@ const run_h = ({dom_type, props, children, text}, exclude_tags=[]) => {
 const result_subscription = (dispatch, {display_graph_id}) => {
     let animrun;
     const error_listener = (error) =>
-        requestAnimationFrame(() => dispatch(s => Object.assign({}, s, {error})))
+        requestAnimationFrame(() => {
+            dispatch(s => Object.assign({}, s, {error}))
+        });
 
     const change_listener = graph => {
         if(graph.id === display_graph_id) {
             cancelAnimationFrame(animrun)
             animrun = requestAnimationFrame(() => {
                 const result = nolib.no.runGraph(graph, graph.out, {edge: {node_id: graph.id + '/' + graph.out, as: "return"}});
+                result && dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
                 const display = nolib.no.runGraph(graph, graph.out, {edge: {node_id: graph.id + '/' + graph.out, as: "display"}, result});
                 result_display_dispatch(UpdateResultDisplay, {el: display && display.el ? display.el : {dom_type: 'div', props: {}, children: []}})
-                dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
                 dispatch(s => [s, s.selected[0] !== s.display_graph.out && [() => update_info_display({node_id: s.selected[0], graph_id: s.display_graph_id})]])
             })
         }
@@ -1089,6 +1091,14 @@ const update_info_display = ({node_id, graph_id}) => {
     info_display_dispatch && requestAnimationFrame(() => info_display_dispatch(UpdateResultDisplay, {el: node_display_el && node_display_el.el ? node_display_el.el : ha.h('div', {})}))
 }
 
+const show_error = (e, t) => ({
+    dom_type: 'div', 
+    props: {}, 
+    children: [
+        {dom_type: 'text_value', text: `Error: ${e}`}, 
+        {dom_type: 'pre', props: {}, children: [{dom_type: 'text_value', text: t}]}
+    ]})
+
 const result_display = html_id => ha.app({
     init: {el: {dom_type: 'div', props: {}, children: []}},
     node: document.getElementById(html_id + "-result"),
@@ -1097,7 +1107,7 @@ const result_display = html_id => ha.app({
         try{
             return run_h(s.el);
         } catch(e) {
-            return ha.h('div', {}, [ha.text(`Error: ${e}`), ha.h('pre', {}, ha.text(JSON.stringify(s.el)))])
+            return show_error(e, JSON.stringify(s.el));
         }
     }
 })
@@ -1165,6 +1175,7 @@ const dispatch = (init, _lib) => {
         }),
         search_el({search: s.search, _lib}),
         ha.h('div', {id: `${init.html_id}-result`}),
+        s.error && ha.h('div', {id: 'node-editor-error'}, run_h(show_error(s.error, s.error.node_id)))
     ]),
     node: document.getElementById(init.html_id),
     subscriptions: s => [
