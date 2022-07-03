@@ -1810,7 +1810,9 @@ export default {
     "out": "main/out",
     "nodes": [
       {
-        "id": "args"
+        "id": "xmreb7u",
+        "value": "self",
+        "ref": "arg"
       },
       {
         "id": "5a6pljw",
@@ -1849,7 +1851,8 @@ export default {
       {
         "id": "94txz4w",
         "value": "property",
-        "ref": "arg"
+        "ref": "arg",
+        "type": "internal"
       },
       {
         "id": "ke2gd7r",
@@ -1934,7 +1937,7 @@ export default {
       },
       {
         "id": "pjqedg3",
-        "value": "args",
+        "value": "fn_args",
         "ref": "arg"
       },
       {
@@ -1949,11 +1952,6 @@ export default {
         "id": "35nk2ya",
         "value": "const parent = _lib.no.runtime.get_parent(_graph); return parent ? _lib.no.runtime.add_node(parent, {id: _graph.node_id, ref: 'call_method', value: property}) : _lib.no.runtime.update_args(_graph, {property});",
         "ref": "script"
-      },
-      {
-        "id": "xmreb7u",
-        "value": "self",
-        "ref": "arg"
       },
       {
         "id": "mf6qadh",
@@ -1972,11 +1970,6 @@ export default {
       }
     ],
     "edges": [
-      {
-        "from": "args",
-        "to": "main/out",
-        "as": "args"
-      },
       {
         "from": "5a6pljw",
         "to": "main/out",

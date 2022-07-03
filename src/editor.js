@@ -579,8 +579,8 @@ const result_subscription = (dispatch, {display_graph_id}) => {
         if(graph.id === display_graph_id) {
             cancelAnimationFrame(animrun)
             animrun = requestAnimationFrame(() => {
+                dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
                 const result = nolib.no.runGraph(graph, graph.out, {edge: {node_id: graph.id + '/' + graph.out, as: "return"}});
-                result && dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
                 const display = nolib.no.runGraph(graph, graph.out, {edge: {node_id: graph.id + '/' + graph.out, as: "display"}, result});
                 result_display_dispatch(UpdateResultDisplay, {el: display && display.el ? display.el : {dom_type: 'div', props: {}, children: []}})
                 dispatch(s => [s, s.selected[0] !== s.display_graph.out && [() => update_info_display({node_id: s.selected[0], graph_id: s.display_graph_id})]])
@@ -969,7 +969,6 @@ const input_el = ({label, property, value, onchange, options, inputs}) => ha.h(
             list: options && options.length > 0 ? 'edit-text-list' : undefined,
             oninput: (s, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: e.target.value})}], 
             onchange: (s, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: undefined})}, [dispatch => dispatch(onchange, e)]],
-            onkeydown: StopPropagation, 
             onfocus: (state, event) => [{...state, focused: event.target.id}],
             onblur: (state, event) => [{...state, focused: false}],
             value: inputs[`edit-text-${property}`] ?? value
@@ -985,16 +984,17 @@ const info_el = ({node, hidden, links_in, link_out, display_graph_id, randid, re
         'div',
         {
             class: {'node-info': true, hidden}, 
+            onkeydown: (state, event) => event.key === 's' && event.ctrlKey ? state : [StopPropagation, event]
         },
         [
             ha.h('div', {class: "args"}, 
                 [...new Set((node_ref?.extern 
                 ? nolib.just.get.fn({}, nolib, node_ref.extern).args
-                : node_ref?.nodes?.filter(n => n.ref === "arg").map(n => n.value) ?? [])
+                : node_ref?.nodes?.filter(n => n.ref === "arg" && n.type !== "internal").map(n => n.value) ?? [])
                     .filter(a => !a.includes('.') && !a.startsWith("_")))]
                     .concat(
                         ["arg" + ((links_in.filter(l => 
-                                    l.as?.startsWith("arg") 
+                                    l.as?.startsWith("arg")
                                     && new RegExp("[0-9]+").test(l.as.substring(3)))
                                 .map(l => parseInt(l.as.substring(3))) ?? [])
                             .reduce((acc, i) => acc > i ? acc : i + 1, 0))])
