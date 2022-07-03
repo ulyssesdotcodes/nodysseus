@@ -1137,7 +1137,7 @@ const dispatch = (init, _lib) => {
             info_display_dispatch = info_display(init.html_id);
             nolib.no.runtime.update_graph(init.display_graph)
         })],
-        [UpdateSimulation, {...init, action: SimulationToHyperapp}],
+        [UpdateSimulation, {...init, action: SimulationToHyperapp}]
     ],
     view: s =>ha.h('div', {id: s.html_id}, [
         ha.h('svg', {id: `${s.html_id}-editor`, width: s.dimensions.x, height: s.dimensions.y}, [

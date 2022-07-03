@@ -848,6 +848,7 @@ const nolib = {
             const event_listeners = new Map();
             const event_data = new Map();
             const getorsetgraph = (graph, id, path, valfn) => getorset(get_cache(graph)[path], id, valfn);
+            let animationframe;
             const publish = (event, data) => {
                 event_data.set(event, data);
                 if (event === 'graphchange') {
@@ -864,6 +865,11 @@ const nolib = {
                     } else if (typeof l === 'object' && l.fn && l.graph) {
                         nolib.no.runGraph(l.graph, l.fn, Object.assign({}, l.args || {}, { data }), gcache.lib)
                     }
+                }
+
+
+                if(event === 'animationframe' && listeners.size > 0 && !animationframe) {
+                    animationframe = requestAnimationFrame(() => {animationframe = false; publish('animationframe')});
                 }
 
                 return data;
@@ -886,6 +892,10 @@ const nolib = {
 
                 listeners.set(listener_id, fn);
 
+                if (event === 'animationframe') {
+                    requestAnimationFrame(() => publish(event))
+                }
+
                 //TODO: rethink this maybe?
                 // if (event !== 'graphchange') {
                 //     add_listener('graphchange', 'rungraph', rungraph);
@@ -893,9 +903,12 @@ const nolib = {
             }
 
             const remove_listener = (event, listener_id) => {
-
-                const listeners = getorset(event_listeners, event, () => new Map());
-                listeners.delete(listener_id);
+                if(event === "*") {
+                    [...event_listeners.values()].forEach(e => e.delete(listener_id))
+                } else {
+                    const listeners = getorset(event_listeners, event, () => new Map());
+                    listeners.delete(listener_id);
+                }
 
                 //TODO: rethink this maybe?
                 // if (listeners.size === 0) {
@@ -1150,6 +1163,10 @@ const nolib = {
                     } else {
                         parentdb.insert(new_parent)
                     }
+                },
+                animate: () => {
+                    publish("animationframe");
+                    requestAnimationFrame(() => nolib.no.runtime.animate())
                 }
             }
         })()

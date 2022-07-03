@@ -230,7 +230,7 @@ export default {
         {"id": "fn_runnable", "ref": "runnable"},
         {"id": "edges", "script": "return _lib.no.runtime.get_edges_in(_lib.no.runtime.get_parent(_graph), _graph.node_id).filter(e => e.as === edge || e.as === 'publish' || e.as === 'subscribe');"},
         {"id": "entries", "ref": "map"},
-        {"id": "out", "script": "const res = Object.fromEntries(entries); Object.entries(res.publish ?? {}).forEach(([k, v]) => _lib.no.runtime.publish.fn(k, {data: v})); Object.entries(res.subscribe ?? {}).forEach(([k, v]) => _lib.no.runtime.add_listener(k, _graph.id, v)); return res[edge]"}
+        {"id": "out", "script": "const res = Object.fromEntries(entries); Object.entries(res.publish ?? {}).forEach(([k, v]) => _lib.no.runtime.publish.fn(k, {data: v})); _lib.no.runtime.remove_listener('*', _graph.id); Object.entries(res.subscribe ?? {}).forEach(([k, v]) => _lib.no.runtime.add_listener(k, _graph.id, v)); return res[edge]"}
       ],
       "edges": [
         {"from": "fn_args", "to": "fn", "as": "args"},
