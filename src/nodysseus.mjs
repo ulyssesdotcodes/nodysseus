@@ -435,8 +435,8 @@ const node_script = (node, node_ref, data, full_lib, graph, inputs) => {
                 error_node = full_lib.no.runtime.get_parent(error_node);
             }
         }
-        full_lib.no.runtime.publish.fn(node, "grapherror", new NodysseusError(
-            error_node.id, 
+        full_lib.no.runtime.publish.fn("grapherror", new NodysseusError(
+            (parentest?.id ?? graph.id) + "/" + error_node.id, 
             e instanceof AggregateError ? "Error in node chain" : e
         ))
     }
@@ -493,8 +493,8 @@ const node_extern = (node, node_ref, node_id, data, full_lib, graph) => {
                 error_node = full_lib.no.runtime.get_parent(error_node);
             }
         }
-        full_lib.no.runtime.publish.fn(node, "grapherror", new NodysseusError(
-            error_node.id, 
+        full_lib.no.runtime.publish.fn("grapherror", new NodysseusError(
+            (parentest?.id ?? graph.id) + "/" + error_node.id, 
             e instanceof AggregateError ? "Error in node chain" : e
         ))
     }

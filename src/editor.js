@@ -881,9 +881,9 @@ const node_text_el = ({node_id, primary, focus_primary, secondary}) =>ha.h('text
 ])
 
 const defs = () =>ha.h('defs', {}, [
-   ha.h('filter', {id: "flood-background", width: 1.2, height: 1.1, x: -0.1, y: -0.05}, [
+   ha.h('filter', {id: "flood-background", width: 1.2, height: 1.1, x: 0, y: 0}, [
        ha.h('feFlood', {floodColor: "#000a"}),
-       ha.h('feComposite', {in: "SourceGraphic"})
+       ha.h('feComposite', {in: "SourceGraphic", operator: "over"})
     ]),
    ha.h('marker', {id: "arrow", refX: 8, refY: 4, markerWidth: 8, markerHeight: 8, markerUnits: "userSpaceOnUse", orient: "auto"}, [
        ha.h('polyline', {points: "1 1, 8 4, 1 8"})
@@ -1114,7 +1114,10 @@ const info_display = html_id => ha.app({
 let result_display_dispatch;
 let info_display_dispatch;
 
-const error_nodes = (error) => error instanceof AggregateError ? error.errors.map(e => e instanceof nolib.no.NodysseusError ? e.node_id : false).filter(n => n) : error instanceof nolib.no.NodysseusError ? [error.node_id] : []; 
+const error_nodes = (error) => error instanceof AggregateError 
+    ? error.errors.map(e => e instanceof nolib.no.NodysseusError ? e.node_id : false).filter(n => n) 
+    : error instanceof nolib.no.NodysseusError 
+    ? [error.node_id] : []; 
 const dispatch = (init, _lib) => {
         // return () => requestAnimationFrame(() => dispatch.dispatch(s => undefined));
     return ha.app({
@@ -1133,7 +1136,7 @@ const dispatch = (init, _lib) => {
                     s.nodes?.map(node => ha.memo(node_el, ({
                         html_id: s.html_id, 
                         selected: s.selected[0], 
-                        error: error_nodes(s.error).find(e => e.startsWith(s.display_graph.id + "/" + node.node_id)), 
+                        error: (s.error?.node_id === s.display_graph.id + "/" + node.node_id ? console.log(error_nodes(s.error).find(e => e.startsWith(s.display_graph.id + "/" + node.node_id))) : undefined, !!error_nodes(s.error).find(e => e.startsWith(s.display_graph.id + "/" + node.node_id))), 
                         selected_distance: s.show_all ? 0 : s.levels.distance_from_selected.get(node.node_id) > 3 ? 'far' : s.levels.distance_from_selected.get(node.node_id),
                         node: Object.assign({}, node, nolib.no.runtime.get_node(s.display_graph, node.node_id))
                     }))) ?? []
