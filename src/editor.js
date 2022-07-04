@@ -793,29 +793,38 @@ const ExpandContract = (state, {node_id}) => {
 const Copy = (state, {cut}) => {
     let edges_in;
     let queue = [...state.selected];
-    let copied_root;
     const graph = {nodes: [], edges: []};
     while(queue.length > 0) {
         let node_id = queue.pop();
-        const new_node_id = create_randid();
-        if(node_id === state.selected[0]) {
-            copied_root = new_node_id;
-        }
-        graph.nodes.push({...nolib.no.runtime.get_node(state.display_graph, node_id), id: new_node_id})
+        graph.nodes.push({...nolib.no.runtime.get_node(state.display_graph, node_id)})
         edges_in = nolib.no.runtime.get_edges_in(state.display_graph, node_id);
-        edges_in.forEach(e => queue.push(e.from))
-        graph.edges = graph.edges.concat(edges_in.map(e => ({...e, to: new_node_id})));
+        graph.edges = graph.edges.concat(edges_in);
+        edges_in.forEach(e => queue.push(e.from));
     }
 
-    return {...state, copied_graph: graph, copied_root}
+    return {...state, copied_graph: graph, copied_root: state.selected[0]}
 }
 
 const Paste = state => [
-    {...state, copied_graph: undefined},
+    {...state},
     [dispatch => {
-        state.copied_graph.nodes.forEach(n => nolib.no.runtime.add_node(state.display_graph, n));
-        nolib.no.runtime.update_edges(state.display_graph, state.copied_graph.edges.concat([{from: state.copied_root, to: state.selected[0], as: "arg0"}]));
-        requestAnimationFrame(() => dispatch(SelectNode, {node_id: state.copied_root}))
+        const node_id_map = {};
+        state.copied_graph.nodes.forEach(n => {
+            const new_id = create_randid();
+            node_id_map[n.id] = new_id;
+            nolib.no.runtime.add_node(state.display_graph, {...n, id: new_id})
+        });
+        console.log(
+            state.copied_graph.edges
+                .map(e => ({...e, from: node_id_map[e.from], to: node_id_map[e.to]}))
+        )
+        nolib.no.runtime.update_edges(
+            state.display_graph, 
+            state.copied_graph.edges
+                .map(e => ({...e, from: node_id_map[e.from], to: node_id_map[e.to]}))
+                .concat([{from: node_id_map[state.copied_root], to: state.selected[0], as: "arg0"}])
+            );
+        requestAnimationFrame(() => dispatch(SelectNode, {node_id: node_id_map[state.copied_root]}))
     }]
 ]
 
@@ -1219,6 +1228,14 @@ const dispatch = (init, _lib) => {
                 }
                 case "save": {
                     effects.push([SaveGraph, state])
+                    break;
+                }
+                case "copy": {
+                    action = [Copy, {}];
+                    break;
+                }
+                case "paste": {
+                    action = [Paste];
                     break;
                 }
                 case "find": {

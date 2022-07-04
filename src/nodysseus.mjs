@@ -1109,6 +1109,8 @@ const nolib = {
                                 .concat(nonargs_edges.map((e, i) => i < unused_args.length ? ({...e, as: unused_args[i]}) : e))
                     };
 
+                    console.log(new_graph)
+
                     // n.b. commented out because it blasts update_args which is not desirable
                     // delete_cache(graph)
                     update_graph(new_graph);
