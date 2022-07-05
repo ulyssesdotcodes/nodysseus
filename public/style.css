@@ -7,6 +7,18 @@
     visibility: hidden;
 }
 
+.collapsed {
+    visibility: collapse;
+}
+
+.shown {
+    visibility: visible;
+}
+
+.display-none {
+    display: none;
+}
+
 
 #node-editor {
     position: relative;

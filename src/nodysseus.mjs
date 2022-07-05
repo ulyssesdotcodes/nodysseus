@@ -40,10 +40,7 @@ function nodysseus_get(obj, propsArg, defaultValue) {
     }
     prop = props.length == 0 ? props[0] : props.shift();
     if((obj === undefined || (obj[prop] === undefined && !obj.hasOwnProperty(prop))) && prop !== "args"){
-        if(level === 0) {
-            return objArg && objArg.__args ? nodysseus_get(objArg.__args, propsArg, defaultValue) : defaultValue;
-        }
-        return defaultValue;
+        return objArg && objArg.__args ? nodysseus_get(objArg.__args, propsArg, defaultValue) : defaultValue;
     }
 
     if(ispromise(obj)) {
@@ -385,21 +382,19 @@ const node_nodes = (node, node_ref, graph_input_value, data, full_lib, graph, in
         edges: node_ref.edges
     });
 
+    full_lib.no.runtime.update_inputdata(node_graph, {...combined_data_input});
+
     combined_data_input.result = full_lib.no.runtime.get_result(node_graph);
     full_lib.no.runtime.set_parent(node_graph, graph);
 
     const result = full_lib.no.runGraph(node_graph, node_ref.out || 'out', combined_data_input, full_lib);
-    if(node_ref.id === "set_dropdown") {
-        console.log('data');
-        console.log(data)
-    }
     if(nodysseus_get(data, 'edge.as') !== "display") {
         full_lib.no.runtime.update_result(node_graph, result);
     }
     return result;
 }
 
-const node_script = (node, node_ref, data, full_lib, graph, inputs) => {
+const node_script = (node, node_ref, data, full_lib, graph, inputs, graph_input_value) => {
     try {
         let orderedargs = "";
         for(let i of inputs) {
@@ -408,7 +403,7 @@ const node_script = (node, node_ref, data, full_lib, graph, inputs) => {
             }
         }
         node_ref = node_ref || full_lib.no.runtime.get_ref(graph, node.ref) || node;
-        const fn = full_lib.no.runtime.get_fn(graph, `_lib, _node, _node_inputs, _graph${orderedargs}`, node.id, node_ref);
+        const fn = full_lib.no.runtime.get_fn(graph, `_lib, _node, _node_inputs, _graph, _graph_input_value${orderedargs}`, node.id, node_ref);
 
         let is_iv_promised = false;
 
@@ -417,8 +412,8 @@ const node_script = (node, node_ref, data, full_lib, graph, inputs) => {
         }
 
         const results = is_iv_promised
-            ? Promise.all(inputs.map(iv => Promise.resolve(data[iv.as]))).then(iv => fn.apply(null, [full_lib, node, data, nolib.no.runtime.get_graph(graph), ...iv]))
-            : fn.apply(null, [full_lib, node, data, nolib.no.runtime.get_graph(graph), ...inputs.map(i => data[i.as])]);
+            ? Promise.all(inputs.map(iv => Promise.resolve(data[iv.as]))).then(iv => fn.apply(null, [full_lib, node, data, nolib.no.runtime.get_graph(graph), graph_input_value, ...iv]))
+            : fn.apply(null, [full_lib, node, data, nolib.no.runtime.get_graph(graph), graph_input_value, ...inputs.map(i => data[i.as])]);
 
         return results;
     } catch (e) {
@@ -442,7 +437,7 @@ const node_script = (node, node_ref, data, full_lib, graph, inputs) => {
     }
 }
 
-const node_extern = (node, node_ref, node_id, data, full_lib, graph) => {
+const node_extern = (node, node_ref, node_id, data, full_lib, graph, graph_input_value) => {
     const extern = nodysseus_get(full_lib, node_ref.extern);
     const args = extern.args.reduce((acc, arg) => {
         if (arg === '_node') {
@@ -461,6 +456,9 @@ const node_extern = (node, node_ref, node_id, data, full_lib, graph) => {
             return [acc[0], acc[1]]
         } else if (arg == '_lib') {
             acc[0].push(full_lib);
+            return [acc[0], acc[1]]
+        } else if (arg == '_graph_input_value') {
+            acc[0].push(graph_input_value);
             return [acc[0], acc[1]]
         }
         const value = extern.resolve === false ? data[arg] : resolve(data[arg]);
@@ -627,7 +625,7 @@ const run_with_val_full = (graph, full_lib, node_id, graph_input_value) => {
 
             return res;
         } else if (node_ref.extern) {
-            return node_extern(node, node_ref, node_id, data, full_lib, graph);
+            return node_extern(node, node_ref, node_id, data, full_lib, graph, graph_input_value);
         }
 
         return node_data(data);
@@ -833,6 +831,7 @@ const nolib = {
             const nodesdb = db.addCollection("nodes", {unique: ["id"]});
             const refsdb = db.addCollection("refs", {unique: ["id"]});
             const resultsdb = db.addCollection("results", {unique: ["id"]});
+            const inputdatadb = db.addCollection("inputdata", {unique: ["id"]});
             generic.nodes.map(n => refsdb.insert(n));
             
             const parentdb = db.addCollection("parents", {unique: ["id"]});
@@ -1109,8 +1108,6 @@ const nolib = {
                                 .concat(nonargs_edges.map((e, i) => i < unused_args.length ? ({...e, as: unused_args[i]}) : e))
                     };
 
-                    console.log(new_graph)
-
                     // n.b. commented out because it blasts update_args which is not desirable
                     // delete_cache(graph)
                     update_graph(new_graph);
@@ -1152,7 +1149,26 @@ const nolib = {
                     }
                 },
                 get_result: (graph) => {
+                    if(graph.name === 'a') {
+                        console.log('getting result for ' + graph.id);
+                        console.log(resultsdb.by("id", graph.id)?.data);
+                    }
                     return resultsdb.by("id", graph.id)?.data;
+                },
+                update_inputdata: (graph, inputdata) => {
+                    const old = inputdatadb.by("id", graph.id);
+                    if(old){
+                        inputdatadb.update(Object.assign(old, {data: inputdata}))
+                    } else {
+                        inputdatadb.insert({id: graph.id, data: inputdata})
+                    }
+                },
+                get_inputdata: (graph) => {
+                    if(graph.name === 'a') {
+                        console.log('getting inputdata for ' + graph.id);
+                        console.log(inputdatadb.by("id", graph.id)?.data);
+                    }
+                    return inputdatadb.by("id", graph.id)?.data;
                 },
                 set_parent: (graph, parent) => {
                     const parent_parent = parentdb.by("id", parent.id) 
@@ -1202,9 +1218,9 @@ const nolib = {
             return isarraypromise ? Promise.all(array) : array;
         },
         script: {
-            args: ['_node', '_node_inputs', '_graph', '_lib'],
-            fn: (node, node_inputs, graph, _lib) => 
-                node_script(node, node, node_inputs, _lib, graph, _lib.no.runtime.get_edges_in(graph, node.id))
+            args: ['_node', '_node_inputs', '_graph', '_lib', "_graph_input_value"],
+            fn: (node, node_inputs, graph, _lib, _graph_input_value) => 
+                node_script(node, node, node_inputs, _lib, graph, _lib.no.runtime.get_edges_in(graph, node.id), _graph_input_value)
         },
         new_array: {
             args: ['_node_inputs', '_node'],
@@ -1285,6 +1301,68 @@ const nolib = {
             args: ["_node_inputs"],
             resolve: true,
             fn: (args) => Object.values(args).reduce((acc, v) => acc / v, 1)
+        },
+        properties: {
+            getOwnEnumerables: function(obj) {
+                return this._getPropertyNames(obj, true, false, this._enumerable);
+                // Or could use for..in filtered with hasOwnProperty or just this: return Object.keys(obj);
+            },
+            getOwnNonenumerables: function(obj) {
+                return this._getPropertyNames(obj, true, false, this._notEnumerable);
+            },
+            getOwnEnumerablesAndNonenumerables: function(obj) {
+                return this._getPropertyNames(obj, true, false, this._enumerableAndNotEnumerable);
+                // Or just use: return Object.getOwnPropertyNames(obj);
+            },
+            getPrototypeEnumerables: function(obj) {
+                return this._getPropertyNames(obj, false, true, this._enumerable);
+            },
+            getPrototypeNonenumerables: function(obj) {
+                return this._getPropertyNames(obj, false, true, this._notEnumerable);
+            },
+            getPrototypeEnumerablesAndNonenumerables: function(obj) {
+                return this._getPropertyNames(obj, false, true, this._enumerableAndNotEnumerable);
+            },
+            getOwnAndPrototypeEnumerables: function(obj) {
+                return this._getPropertyNames(obj, true, true, this._enumerable);
+                // Or could use unfiltered for..in
+            },
+            getOwnAndPrototypeNonenumerables: function(obj) {
+                return this._getPropertyNames(obj, true, true, this._notEnumerable);
+            },
+            getOwnAndPrototypeEnumerablesAndNonenumerables: function(obj) {
+                return this._getPropertyNames(obj, true, true, this._enumerableAndNotEnumerable);
+            },
+            // Private static property checker callbacks
+            _enumerable: function(obj, prop) {
+                return obj.propertyIsEnumerable(prop);
+            },
+            _notEnumerable: function(obj, prop) {
+                return !obj.propertyIsEnumerable(prop);
+            },
+            _enumerableAndNotEnumerable: function(obj, prop) {
+                return true;
+            },
+            // Inspired by http://stackoverflow.com/a/8024294/271577
+            _getPropertyNames: function getAllPropertyNames(obj, iterateSelfBool, iteratePrototypeBool, includePropCb) {
+                var props = [];
+
+                do {
+                    if (iterateSelfBool) {
+                        Object.getOwnPropertyNames(obj).forEach(function(prop) {
+                            if (props.indexOf(prop) === -1 && includePropCb(obj, prop)) {
+                                props.push(prop);
+                            }
+                        });
+                    }
+                    if (!iteratePrototypeBool) {
+                        break;
+                    }
+                    iterateSelfBool = true;
+                } while (obj = Object.getPrototypeOf(obj));
+
+                return props;
+            }
         }
     },
     JSON: {

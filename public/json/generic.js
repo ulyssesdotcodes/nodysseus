@@ -354,17 +354,13 @@ export default {
     {"id":"script", "extern": "utility.script"},
     {
       "id": "resolve",
+      "out": "out",
       "nodes": [
-        { "id": "in" },
-        { "id": "keys", "args": ["data"], "script": "return [...data.keys()]" },
-        { "id": "collate" },
-        { "id": "out", "args": ["data"], "script": "return data" }
+        {"id": "args", "ref": "arg", "value": "_args"},
+        { "id": "out", "script": "return Object.fromEntries(Object.entries(args).filter(a => a[0] !== '__args').map(a => [a[0], _lib.no.resolve(a[1])]))" }
       ],
       "edges": [
-        { "from": "in", "to": "keys" },
-        { "from": "keys", "to": "collate", "as": "input" },
-        { "from": "in", "to": "collate" },
-        { "from": "collate", "to": "out", "as": "data" }
+        { "from": "args", "to": "out", "as": "args" }
       ]
     },
     { "id": "array", "name": "array", "description": "Create an array from all the inputs in alphabetical order", "extern": "utility.new_array" },
@@ -1428,6 +1424,11 @@ export default {
         "id": "args"
       },
       {
+        "id": "mf6qadh",
+        "value": "target",
+        "ref": "arg"
+      },
+      {
         "id": "5a6pljw",
         "ref": "html_element"
       },
@@ -1517,11 +1518,6 @@ export default {
       {
         "id": "ke2gd7r",
         "ref": "if"
-      },
-      {
-        "id": "mf6qadh",
-        "value": "target",
-        "ref": "arg"
       },
       {
         "id": "7fvvlnw",
@@ -1946,7 +1942,8 @@ export default {
       },
       {
         "id": "iqtiiiy",
-        "value": "[]"
+        "ref": "script",
+        "value": "const parent = _lib.no.runtime.get_parent(_graph); return _lib.no.runtime.get_edges_in(parent, _graph.node_id).filter(e => e.as.startsWith('arg')).reduce((acc, e) => { acc[parseInt(e.as.substring(3))] = _lib.just.get.fn(_graph, _graph_input_value, e.as); return acc; }, []).map(a => a?._Proxy ? a._value : a)"
       },
       {
         "id": "35nk2ya",
@@ -1960,7 +1957,7 @@ export default {
       },
       {
         "id": "vnl7z87",
-        "value": "const keys = []; for(const k in res){ keys.push(k) } keys.sort(); return res && typeof res === 'object' ? keys.filter(k => typeof res[k] === 'function').map(key => ({key})) : [];",
+        "value": "console.log('in call'); console.log(res); if(typeof res !== 'object'){ return []; } const keys = _lib.utility.properties.getOwnAndPrototypeEnumerablesAndNonenumerables(res); return keys.filter(k => !k.startsWith('_') && typeof res[k] === 'function').sort().map(key => ({key}));",
         "ref": "script"
       },
       {
@@ -2141,6 +2138,205 @@ export default {
         "as": "array"
       }
     ],
-  }
+  },
+  {
+      "id": "import",
+      "nodes": [
+        {
+          "id": "args"
+        },
+        {
+          "id": "8dy573e",
+          "ref": "html_element"
+        },
+        {
+          "id": "main/out",
+          "name": "import",
+          "ref": "return"
+        },
+        {
+          "id": "arcnyff",
+          "ref": "array"
+        },
+        {
+          "id": "qgbinm2",
+          "value": "Upload a json file",
+          "ref": "html_text"
+        },
+        {
+          "id": "rtrp3nj",
+          "value": "input",
+          "ref": "html_element"
+        },
+        {
+          "id": "vnibm4q"
+        },
+        {
+          "id": "07fjn2b",
+          "value": "file"
+        },
+        {
+          "id": "rdt0k55",
+          "value": ".json"
+        },
+        {
+          "id": "jmqcpll",
+          "ref": "runnable"
+        },
+        {
+          "id": "o9ukwn8",
+          "value": "payload.event.target.files.0",
+          "ref": "arg"
+        },
+        {
+          "id": "1672j69",
+          "value": "text",
+          "ref": "call"
+        },
+        {
+          "id": "jvoijof",
+          "ref": "parse"
+        },
+        {
+          "id": "uymxrxe",
+          "ref": "map"
+        },
+        {
+          "id": "yu0e7mk",
+          "ref": "runnable"
+        },
+        {
+          "id": "3z8hhss",
+          "value": "element",
+          "ref": "arg"
+        },
+        {
+          "id": "ij46kiv",
+          "value": "return ({id: graph.id, value: graph.value, name: graph.name, nodes: graph.nodes, edges: graph.edges, out: graph.out})",
+          "ref": "script"
+        },
+        {
+          "id": "hcp6xds",
+          "ref": "log"
+        },
+        {
+          "id": "cixrltc",
+          "value": "_lib.no.runtime.update_graph(graph); return graph;",
+          "ref": "script"
+        },
+        {
+          "id": "odeeqm8",
+          "value": "return _lib;",
+          "ref": "script"
+        },
+        {
+          "id": "sl7qlmj",
+          "value": "scripts.save_graph",
+          "ref": "call"
+        }
+      ],
+      "edges": [
+        {
+          "from": "8dy573e",
+          "to": "main/out",
+          "as": "display"
+        },
+        {
+          "from": "args",
+          "to": "main/out",
+          "as": "args"
+        },
+        {
+          "from": "arcnyff",
+          "to": "8dy573e",
+          "as": "children"
+        },
+        {
+          "from": "qgbinm2",
+          "to": "arcnyff",
+          "as": "arg0"
+        },
+        {
+          "from": "rtrp3nj",
+          "to": "arcnyff",
+          "as": "arg1"
+        },
+        {
+          "from": "vnibm4q",
+          "to": "rtrp3nj",
+          "as": "props"
+        },
+        {
+          "from": "07fjn2b",
+          "to": "vnibm4q",
+          "as": "type"
+        },
+        {
+          "from": "rdt0k55",
+          "to": "vnibm4q",
+          "as": "accept"
+        },
+        {
+          "from": "jmqcpll",
+          "to": "vnibm4q",
+          "as": "onchange"
+        },
+        {
+          "from": "o9ukwn8",
+          "to": "1672j69",
+          "as": "self"
+        },
+        {
+          "from": "1672j69",
+          "to": "jvoijof",
+          "as": "string"
+        },
+        {
+          "from": "uymxrxe",
+          "to": "jmqcpll",
+          "as": "fn"
+        },
+        {
+          "from": "jvoijof",
+          "to": "uymxrxe",
+          "as": "array"
+        },
+        {
+          "from": "yu0e7mk",
+          "to": "uymxrxe",
+          "as": "fn"
+        },
+        {
+          "from": "3z8hhss",
+          "to": "ij46kiv",
+          "as": "graph"
+        },
+        {
+          "from": "ij46kiv",
+          "to": "hcp6xds",
+          "as": "value"
+        },
+        {
+          "from": "hcp6xds",
+          "to": "cixrltc",
+          "as": "graph"
+        },
+        {
+          "from": "sl7qlmj",
+          "to": "yu0e7mk",
+          "as": "fn"
+        },
+        {
+          "from": "cixrltc",
+          "to": "sl7qlmj",
+          "as": "args"
+        },
+        {
+          "from": "odeeqm8",
+          "to": "sl7qlmj",
+          "as": "self"
+        }
+      ],
+    }
   ]
 }

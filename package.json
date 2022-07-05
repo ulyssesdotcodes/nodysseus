@@ -4,8 +4,13 @@
     "watch": "rollup -c -w"
   },
   "dependencies": {
+    "@codemirror/lang-javascript": "^6.0.1",
+    "@codemirror/state": "^6.1.0",
+    "@codemirror/theme-one-dark": "^6.0.0",
+    "@codemirror/view": "^6.0.2",
     "@jlongster/sql.js": "^1.6.7",
     "brace-expansion": "^2.0.1",
+    "codemirror": "^6.0.1",
     "cross-fetch": "^3.1.5",
     "d3-force": "^3.0.0",
     "fs-web": "^1.0.1",

@@ -3,6 +3,8 @@ import * as ha from "hyperapp";
 import panzoom from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 import Fuse from "fuse.js";
+import { basicSetup, EditorView, language } from "codemirror";
+import { javascript } from "@codemirror/lang-javascript";
 
 const updateSimulationNodes = (dispatch, data) => {
     const simulation_node_data = new Map();
@@ -747,7 +749,7 @@ const SelectNode = (state, {node_id, focus_property}) => [
     (state.show_all || state.selected[0] !== node_id) && [pzobj.effect, {...state, node_id}],
     focus_property && [FocusEffect, {selector: `.node-info input.${focus_property}`}],
     state.nodes.find(n => n.node_id === node_id) && [SetSelectedPositionStyleEffect, {node: state.nodes.find(n => n.node_id === node_id), svg_offset: state.svg_offset, dimensions: state.dimensions}],
-    node_id !== state.display_graph.out && [() => update_info_display({node_id, graph_id: state.display_graph_id})]
+    node_id !== state.display_graph.out && [() => update_info_display({node_id, graph_id: state.display_graph_id})],
 ]
 
 const CreateNode = (state, {node, child, child_as, parent}) => [
@@ -768,10 +770,10 @@ const CreateNode = (state, {node, child, child_as, parent}) => [
     }]
 ];
 
-const DeleteNode = (state, {parent, node_id}) => [
+const DeleteNode = (state, {node_id}) => [
     {
         ...state, 
-        selected: [parent?.to ?? "main/out"],
+        selected: [nolib.no.runtime.get_edge_out(state.display_graph, node_id).to],
         history: state.history.concat([{action: 'delete_node', node_id}]) 
     },
     [() => nolib.no.runtime.delete_node(state.display_graph, node_id)]
@@ -785,8 +787,10 @@ const ExpandContract = (state, {node_id}) => {
     
     return [
         state,
-        [() => nolib.no.runtime.update_graph(update.display_graph)],
-        [dispatch => requestAnimationFrame(() => dispatch(s => ({...s, selected: update.selected})))]
+        [dispatch => requestAnimationFrame(() => {
+            nolib.no.runtime.update_graph(update.display_graph);
+            dispatch(s => ({...s, selected: update.selected}));
+        })]
     ]
 }
 
@@ -814,10 +818,6 @@ const Paste = state => [
             node_id_map[n.id] = new_id;
             nolib.no.runtime.add_node(state.display_graph, {...n, id: new_id})
         });
-        console.log(
-            state.copied_graph.edges
-                .map(e => ({...e, from: node_id_map[e.from], to: node_id_map[e.to]}))
-        )
         nolib.no.runtime.update_edges(
             state.display_graph, 
             state.copied_graph.edges
@@ -875,7 +875,13 @@ const Search = (state, {payload, nodes}) => {
 
 const UpdateNode = (state, {node, property, value}) => [
     state,
-    [() => nolib.no.runtime.add_node(state.display_graph, Object.assign({}, base_node(node), {[property]: value}))]
+    [() => nolib.no.runtime.add_node(
+        state.display_graph, 
+        Object.assign({}, 
+            base_node(node ?? nolib.no.runtime.get_node(state.display_graph, state.selected[0])), 
+            {[property]: value}
+        ))
+    ]
 ]
 
 const UpdateEdge = (state, {edge, as}) => [
@@ -1048,6 +1054,11 @@ const info_el = ({node, hidden, links_in, link_out, display_graph_id, randid, re
                 }),
             ]),
             description && ha.h('div', {class: "description"}, ha.text(description)),
+            ha.h('div', {
+                id: `${html_id}-code-editor`, 
+                class: node.script || node.ref === "script" ? "visible" : "display-none",
+            }, []),
+            ha.h('div', {id: `${html_id}-info-display`}),
             ha.h('div', {class: "buttons"}, [
                 ha.h('div', {
                     class: "action", 
@@ -1076,7 +1087,6 @@ const info_el = ({node, hidden, links_in, link_out, display_graph_id, randid, re
                     }]
                 }, ha.text("delete"))
             ]),
-            ha.h('div', {id: `${html_id}-info-display`}),
         ]
     ), ha.h('div', {class: "spacer after"}, [])])
 }
@@ -1094,9 +1104,22 @@ const UpdateResultDisplay = (state, el) => ({
 
 const update_info_display = ({node_id, graph_id}) => {
     const node = nolib.no.runtime.get_graph(graph_id + '/' + node_id) || nolib.no.runtime.get_node(graph_id, node_id);
+
+    if (node.ref === "script" || node.script) {
+        code_editor.dispatch({changes:{from: 0, to: code_editor.state.doc.length, insert: node.script ?? node.value}})
+    }
+
     const node_ref = node && (node.ref && nolib.no.runtime.get_ref(graph_id, node.ref)) || node;
     const out_ref = node && (node.nodes && nolib.no.runtime.get_node(node, node.out)) || (node_ref.nodes && nolib.no.runtime.get_node(node_ref, node_ref.out));
-    const node_display_el = (node.ref === "return" || (out_ref && out_ref.ref === "return")) && nolib.no.runGraph(graph_id, node_id, {edge: {node_id: graph_id + "/" + node_id, as: "display"}});
+    if(node.name === "a") {
+        console.log('input data')
+        console.log(nolib.no.runtime.get_inputdata(node));
+    }
+    const node_display_el = (node.ref === "return" || (out_ref && out_ref.ref === "return")) 
+        && nolib.no.runGraph(graph_id, node_id, Object.assign(
+            {edge: {node_id: graph_id + "/" + node_id, as: "display"}}, 
+            nolib.no.runtime.get_inputdata(node)
+        ));
     info_display_dispatch && requestAnimationFrame(() => info_display_dispatch(UpdateResultDisplay, {el: node_display_el && node_display_el.el ? node_display_el.el : ha.h('div', {})}))
 }
 
@@ -1128,10 +1151,45 @@ const info_display = html_id => ha.app({
     view: s => {
         return run_h(s.el, ['script'])
     }
-})
+});
 
 let result_display_dispatch;
 let info_display_dispatch;
+let code_editor;
+
+const init_code_editor = (dispatch, {html_id}) => {
+    requestAnimationFrame(() => {
+        // const state = EditorState.create({extensions: [basicSetup, javascript(), EditorView.theme({
+        //     "&": {
+        //         backgroundColor: "#282c34"
+        //     }
+        // }, {dark: true})]});
+        const background = "#111";
+        const highlightBackground = "#000";
+        code_editor = new EditorView({extensions: [
+            basicSetup, 
+            EditorView.theme({
+                "&": {
+                    "backgroundColor": background,
+                },
+                ".cm-content": {
+                    caretColor: "#66ccff"
+                },
+                ".cm-gutters": {
+                    backgroundColor: background,
+                    outline: "1px solid #515a6b"
+                },
+                ".cm-activeLine": {
+                    backgroundColor: highlightBackground,
+                }
+            }, {dark: true}),
+            javascript(),
+            EditorView.domEventHandlers({
+                "blur": () => dispatch(UpdateNode, {property: "value", value: code_editor.state.doc.sliceString(0, code_editor.state.doc.length, "\n")})
+            })
+        ], parent: document.getElementById(`${html_id}-code-editor`)});
+    })
+}
 
 const error_nodes = (error) => error instanceof AggregateError 
     ? error.errors.map(e => e instanceof nolib.no.NodysseusError ? e.node_id : false).filter(n => n) 
@@ -1146,7 +1204,8 @@ const dispatch = (init, _lib) => {
             info_display_dispatch = info_display(init.html_id);
             nolib.no.runtime.update_graph(init.display_graph)
         })],
-        [UpdateSimulation, {...init, action: SimulationToHyperapp}]
+        [UpdateSimulation, {...init, action: SimulationToHyperapp}],
+        [init_code_editor, {html_id: init.html_id}]
     ],
     view: s =>ha.h('div', {id: s.html_id}, [
         ha.h('svg', {id: `${s.html_id}-editor`, width: s.dimensions.x, height: s.dimensions.y}, [
@@ -1155,7 +1214,7 @@ const dispatch = (init, _lib) => {
                     s.nodes?.map(node => ha.memo(node_el, ({
                         html_id: s.html_id, 
                         selected: s.selected[0], 
-                        error: (s.error?.node_id === s.display_graph.id + "/" + node.node_id ? console.log(error_nodes(s.error).find(e => e.startsWith(s.display_graph.id + "/" + node.node_id))) : undefined, !!error_nodes(s.error).find(e => e.startsWith(s.display_graph.id + "/" + node.node_id))), 
+                        error: !!error_nodes(s.error).find(e => e.startsWith(s.display_graph.id + "/" + node.node_id)), 
                         selected_distance: s.show_all ? 0 : s.levels.distance_from_selected.get(node.node_id) > 3 ? 'far' : s.levels.distance_from_selected.get(node.node_id),
                         node: Object.assign({}, node, nolib.no.runtime.get_node(s.display_graph, node.node_id))
                     }))) ?? []
@@ -1196,7 +1255,6 @@ const dispatch = (init, _lib) => {
             const key_input = (payload.ctrlKey ? 'ctrl_' : '') + (payload.shiftKey ? 'shift_' : '') + (payload.key === '?' ? 'questionmark' : payload.key.toLowerCase());
             const selected = state.selected[0];
             const result = runGraph(init.graph, "keybindings", {}, hlib)[mode][key_input];
-            console.log(result)
             let action;
             let effects = [];
             switch(result){
@@ -1242,7 +1300,19 @@ const dispatch = (init, _lib) => {
                     action = s => [{...s, search: ""}, [FocusEffect, {selector: "#search input"}]]; 
                     break;
                 }
-                default: nolib.no.runtime.publish.fn(undefined, 'keydown', key_input)
+                case "expand_contract": {
+                    action = [ExpandContract, {node_id: state.selected[0]}];
+                    break;
+                }
+                case "delete_node": {
+                    action = [DeleteNode, {
+                        node_id: state.selected[0]
+                    }]
+                }
+                default: {
+                    console.log(`Not implemented ${result}`)
+                    nolib.no.runtime.publish.fn(undefined, 'keydown', key_input)
+                }
             }
 
             return action ? action : [state, ...effects];
