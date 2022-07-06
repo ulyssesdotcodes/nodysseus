@@ -571,12 +571,5 @@
         "as": "two"
       }
     ],
-    "out": "main/out",
-    "meta": {
-      "revision": 48,
-      "created": 1657095512176,
-      "version": 0,
-      "updated": 1657095899890
-    },
-    "$loki": 67
+    "out": "main/out"
   }
