@@ -577,7 +577,7 @@ export default {
         { "id": "data", "ref": "arg", "value": "_data", "type": "internal" },
         {
           "id": "add_listener",
-          "script": "_lib.no.runtime.add_listener(event ?? _graph.value, _graph.id, (data) => (_lib.no.runtime.update_args(_graph, {_data: data})), false);"
+          "script": "_lib.no.runtime.add_listener(event ?? _graph.value, _graph.id, (data) => (_lib.no.runtime.update_args(_graph, {_data: data.data})), false);"
         },
         { "id": "out", "ref": "default"}
       ],
@@ -1169,6 +1169,11 @@ export default {
             "ref": "arg"
           },
           {
+            "id": "zvop9wi_2",
+            "value": "canvas_id",
+            "ref": "arg"
+          },
+          {
             "id": "qe7qvud",
             "ref": "css_styles"
           },
@@ -1303,6 +1308,11 @@ export default {
             "from": "zvop9wi",
             "to": "cilv4od",
             "as": "id"
+          },
+          {
+            "from": "zvop9wi_2",
+            "to": "cilv4od",
+            "as": "key"
           },
           {
             "from": "qe7qvud",
@@ -1810,6 +1820,8 @@ export default {
         "value": "self",
         "ref": "arg"
       },
+      {"id": "self_args", "ref": "arg", "value": "_args"},
+      {"id": "def_self", "ref": "default"},
       {
         "id": "5a6pljw",
         "ref": "html_element"
@@ -1957,7 +1969,7 @@ export default {
       },
       {
         "id": "vnl7z87",
-        "value": "console.log('in call'); console.log(res); if(typeof res !== 'object'){ return []; } const keys = _lib.utility.properties.getOwnAndPrototypeEnumerablesAndNonenumerables(res); return keys.filter(k => !k.startsWith('_') && typeof res[k] === 'function').sort().map(key => ({key}));",
+        "value": "if(typeof res !== 'object'){ return []; } const keys = _lib.utility.properties.getOwnAndPrototypeEnumerablesAndNonenumerables(res, true); return keys.filter(k => !k.startsWith('_') && typeof res[k] === 'function').sort().map(key => ({key}));",
         "ref": "script"
       },
       {
@@ -2122,13 +2134,15 @@ export default {
         "to": "args",
         "as": "self"
       },
+      {"from": "xmreb7u", "to": "def_self", "as": "value"},
+      {"from": "self_args", "to": "def_self", "as": "otherwise"},
       {
-        "from": "xmreb7u",
+        "from": "def_self",
         "to": "vnl7z87",
         "as": "res"
       },
       {
-        "from": "57hbdfk",
+        "from": "def_self",
         "to": "j0zzhc1",
         "as": "self"
       },

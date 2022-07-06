@@ -1149,10 +1149,6 @@ const nolib = {
                     }
                 },
                 get_result: (graph) => {
-                    if(graph.name === 'a') {
-                        console.log('getting result for ' + graph.id);
-                        console.log(resultsdb.by("id", graph.id)?.data);
-                    }
                     return resultsdb.by("id", graph.id)?.data;
                 },
                 update_inputdata: (graph, inputdata) => {
@@ -1243,8 +1239,8 @@ const nolib = {
             fn: (node, url, params) => resfetch(url || node.value, params)
         },
         call: {
-            args: ['_node', 'self', 'fn', 'args', '_args'],
-            fn: (node, self, fn, args) => typeof self === 'function' 
+            args: ['_node', 'self', 'fn', 'args', '_graph_input_value'],
+            fn: (node, self, fn, args, _args) => typeof self === 'function' 
                 ? Array.isArray(args) 
                     ? self(...(args
                         .reverse()
@@ -1256,7 +1252,7 @@ const nolib = {
                         .reverse()))
                     : self(args) 
                 : Array.isArray(args) 
-                    ? nodysseus_get(self, fn || node.value).apply(self, (args || [])
+                    ? nodysseus_get(self ?? (console.log('gip'), console.log(_args), _args), fn || node.value).apply(self, (args || [])
                         .reverse()
                         .reduce((acc, v) => [
                             !acc[0] && v !== undefined, acc[0] || v !== undefined 
@@ -1264,7 +1260,7 @@ const nolib = {
                             : acc[1]
                         ], [false, []])[1]
                         .reverse())
-                    : nodysseus_get(self, fn || node.value).apply(self, [args])
+                    : nodysseus_get(self ?? (console.log('gip'), console.log(_args), _args), fn || node.value).apply(self, [args])
         },
         merge_objects: {
             args: ['_node_inputs'],
@@ -1330,8 +1326,9 @@ const nolib = {
             getOwnAndPrototypeNonenumerables: function(obj) {
                 return this._getPropertyNames(obj, true, true, this._notEnumerable);
             },
-            getOwnAndPrototypeEnumerablesAndNonenumerables: function(obj) {
-                return this._getPropertyNames(obj, true, true, this._enumerableAndNotEnumerable);
+            getOwnAndPrototypeEnumerablesAndNonenumerables: function(obj, includeArgs) {
+                if(includeArgs) console.log('including args')
+                return this._getPropertyNames(obj, true, true, this._enumerableAndNotEnumerable, includeArgs);
             },
             // Private static property checker callbacks
             _enumerable: function(obj, prop) {
@@ -1344,7 +1341,7 @@ const nolib = {
                 return true;
             },
             // Inspired by http://stackoverflow.com/a/8024294/271577
-            _getPropertyNames: function getAllPropertyNames(obj, iterateSelfBool, iteratePrototypeBool, includePropCb) {
+            _getPropertyNames: function getAllPropertyNames(obj, iterateSelfBool, iteratePrototypeBool, includePropCb, includeArgs) {
                 var props = [];
 
                 do {

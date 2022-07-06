@@ -571,21 +571,27 @@ const run_h = ({dom_type, props, children, text}, exclude_tags=[]) => {
 }
 
 const result_subscription = (dispatch, {display_graph_id}) => {
-    let animrun;
+    let animrun = false;
     const error_listener = (error) =>
         requestAnimationFrame(() => {
             dispatch(s => Object.assign({}, s, {error}))
         });
 
     const change_listener = graph => {
-        if(graph.id === display_graph_id) {
+        if(graph.id === display_graph_id && !animrun) {
             cancelAnimationFrame(animrun)
             animrun = requestAnimationFrame(() => {
                 dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
                 const result = nolib.no.runGraph(graph, graph.out, {edge: {node_id: graph.id + '/' + graph.out, as: "return"}});
-                const display = nolib.no.runGraph(graph, graph.out, {edge: {node_id: graph.id + '/' + graph.out, as: "display"}, result});
-                result_display_dispatch(UpdateResultDisplay, {el: display && display.el ? display.el : {dom_type: 'div', props: {}, children: []}})
-                dispatch(s => [s, s.selected[0] !== s.display_graph.out && [() => update_info_display({node_id: s.selected[0], graph_id: s.display_graph_id})]])
+                const display_fn = result => nolib.no.runGraph(graph, graph.out, {edge: {node_id: graph.id + '/' + graph.out, as: "display"}, result});
+                const update_result_display_fn = display => result_display_dispatch(UpdateResultDisplay, {el: display && display.el ? display.el : {dom_type: 'div', props: {}, children: []}})
+                const update_info_display_fn = () => dispatch(s => [s, s.selected[0] !== s.display_graph.out && [() => update_info_display({node_id: s.selected[0], graph_id: s.display_graph_id})]])
+                const reset_animrun = () => animrun = false;
+                const ap = (fn, v) => fn(v);
+                const ap_promise = (p, fn) => p && typeof p['then'] === 'function' ? p.then(fn) : ap(fn, p);
+                ap_promise(ap_promise(result, display_fn), update_result_display_fn);
+                ap_promise(result, update_info_display_fn)
+                ap_promise(result, reset_animrun)
             })
         }
     }
