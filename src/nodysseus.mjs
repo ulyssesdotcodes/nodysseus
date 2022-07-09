@@ -39,7 +39,7 @@ function nodysseus_get(obj, propsArg, defaultValue) {
         continue;
     }
     prop = props.length == 0 ? props[0] : props.shift();
-    if((obj === undefined || (obj[prop] === undefined && !obj.hasOwnProperty(prop))) && prop !== "args"){
+    if((obj === undefined || typeof obj !== 'object' || (obj[prop] === undefined && !obj.hasOwnProperty(prop))) && prop !== "args"){
         return objArg && objArg.__args ? nodysseus_get(objArg.__args, propsArg, defaultValue) : defaultValue;
     }
 
@@ -411,6 +411,9 @@ const node_script = (node, node_ref, data, full_lib, graph, inputs, graph_input_
             is_iv_promised = is_iv_promised || ispromise(data[inputs[i].as]);
         }
 
+        if(graph.id === "hydra_example_setup/ysash4u" && node.id === "cyzymv3"){
+        }
+
         const results = is_iv_promised
             ? Promise.all(inputs.map(iv => Promise.resolve(data[iv.as]))).then(iv => fn.apply(null, [full_lib, node, data, nolib.no.runtime.get_graph(graph), graph_input_value, ...iv]))
             : fn.apply(null, [full_lib, node, data, nolib.no.runtime.get_graph(graph), graph_input_value, ...inputs.map(i => data[i.as])]);
@@ -430,7 +433,7 @@ const node_script = (node, node_ref, data, full_lib, graph, inputs, graph_input_
         //         error_node = full_lib.no.runtime.get_parent(error_node);
         //     }
         // }
-        full_lib.no.runtime.publish.fn("grapherror", new NodysseusError(
+        full_lib.no.runtime.publish("grapherror", new NodysseusError(
             graph.id + "/" + error_node.id, 
             e instanceof AggregateError ? "Error in node chain" : e
         ))
@@ -491,7 +494,7 @@ const node_extern = (node, node_ref, node_id, data, full_lib, graph, graph_input
         //         error_node = full_lib.no.runtime.get_parent(error_node);
         //     }
         // }
-        full_lib.no.runtime.publish.fn("grapherror", new NodysseusError(
+        full_lib.no.runtime.publish("grapherror", new NodysseusError(
             graph.id + "/" + error_node.id, 
             e instanceof AggregateError ? "Error in node chain" : e
         ))
@@ -780,7 +783,7 @@ const getorset = (map, id, value_fn) => {
     }
 }
 
-const base_node = node => ({id: node.id, value: node.value, name: node.name, ref: node.ref});
+const base_node = node => node.ref ? ({id: node.id, value: node.value, name: node.name, ref: node.ref}) : base_graph(node);
 const base_graph = graph => ({id: graph.id, value: graph.value, name: graph.name, nodes: graph.nodes, edges: graph.edges, out: graph.out})
 
 const nolib = {
@@ -832,6 +835,7 @@ const nolib = {
             const refsdb = db.addCollection("refs", {unique: ["id"]});
             const resultsdb = db.addCollection("results", {unique: ["id"]});
             const inputdatadb = db.addCollection("inputdata", {unique: ["id"]});
+            const argsdb = db.addCollection("args", {unique: ["id"]});
             generic.nodes.map(n => refsdb.insert(n));
             
             const parentdb = db.addCollection("parents", {unique: ["id"]});
@@ -840,7 +844,6 @@ const nolib = {
                 graph,
                 node_map: new Map(graph.nodes.map(n => [n.id, n])),
                 in_edge_map: new Map(graph.nodes.map(n => [n.id, graph.edges.filter(e => e.to === n.id)])),
-                args: {},
                 fn_cache: new Map(),
                 is_cached: new Set()
             });
@@ -964,10 +967,8 @@ const nolib = {
                 } else {
                     const existing = refsdb.by("id", graph.id);
                     if(existing) {
-                        console.log(`updating ${graph.id}`)
                         refsdb.update(Object.assign(existing, graph))
                     } else {
-                        console.log(`inserting ${graph.id}`)
                         refsdb.insert(graph)
                     }
                     publish('graphchange', graph);
@@ -976,10 +977,16 @@ const nolib = {
 
             const update_args = (graph, args) => {
                 graph = resolve(graph);
-                const gcache = get_cache(graph);
+                let prevargs = argsdb.by("id", graph.id) ?? {};
 
-                if(gcache && args && !compare(gcache.args, args)) {
-                    Object.assign(gcache.args, args);
+                if(!prevargs.data){
+                    prevargs.id = graph.id;
+                    prevargs.data = {};
+                    argsdb.insert(prevargs)
+                }
+
+                if(!compare(prevargs.data, args)) {
+                    Object.assign(prevargs.data, args);
                     publish('graphchange', get_parentest(graph) ?? graph);
                 }
             }
@@ -993,7 +1000,7 @@ const nolib = {
             const get_edge = (graph, from) => get_cache(graph).graph.edges.find(e => e.from === from);
             const get_edges_in = (graph, id) => getorsetgraph(graph, id, 'in_edge_map', () => graph.edges.filter(e => e.to === id));
             const get_edge_out = (graph, id) => get_cache(graph).graph.edges.find(e => e.from === id);
-            const get_args = (graph) => get_cache(graph).args;
+            const get_args = (graph) => argsdb.by("id", typeof graph === "string" ? graph : graph.id)?.data ?? {};
             const get_graph = (graph) => {
                 const cached = get_cache(graph);
                 return cached ? cached.graph : typeof graph !== "string" ? graph : undefined;
@@ -1136,10 +1143,7 @@ const nolib = {
                     add_listener,
                 },
                 remove_listener,
-                publish: {
-                    args: ['event', 'data'],
-                    fn: (event, data) => publish(event, data)
-                },
+                publish: (event, data) => publish(event, data),
                 update_result: (graph, result) => {
                     const old = resultsdb.by("id", graph.id);
                     if(old){
@@ -1160,10 +1164,6 @@ const nolib = {
                     }
                 },
                 get_inputdata: (graph) => {
-                    if(graph.name === 'a') {
-                        console.log('getting inputdata for ' + graph.id);
-                        console.log(inputdatadb.by("id", graph.id)?.data);
-                    }
                     return inputdatadb.by("id", graph.id)?.data;
                 },
                 set_parent: (graph, parent) => {
@@ -1250,9 +1250,9 @@ const nolib = {
                             : acc[1]
                         ], [false, []])[1]
                         .reverse()))
-                    : self(args) 
+                    : self(args === undefined ? [] : args)
                 : Array.isArray(args) 
-                    ? nodysseus_get(self ?? (console.log('gip'), console.log(_args), _args), fn || node.value).apply(self, (args || [])
+                    ? nodysseus_get(self ?? _args, fn || node.value).apply(self, (args || [])
                         .reverse()
                         .reduce((acc, v) => [
                             !acc[0] && v !== undefined, acc[0] || v !== undefined 
@@ -1260,7 +1260,7 @@ const nolib = {
                             : acc[1]
                         ], [false, []])[1]
                         .reverse())
-                    : nodysseus_get(self ?? (console.log('gip'), console.log(_args), _args), fn || node.value).apply(self, [args])
+                    : nodysseus_get(self ?? _args, fn || node.value).apply(self, args === undefined ? [] : [args])
         },
         merge_objects: {
             args: ['_node_inputs'],
@@ -1327,7 +1327,6 @@ const nolib = {
                 return this._getPropertyNames(obj, true, true, this._notEnumerable);
             },
             getOwnAndPrototypeEnumerablesAndNonenumerables: function(obj, includeArgs) {
-                if(includeArgs) console.log('including args')
                 return this._getPropertyNames(obj, true, true, this._enumerableAndNotEnumerable, includeArgs);
             },
             // Private static property checker callbacks

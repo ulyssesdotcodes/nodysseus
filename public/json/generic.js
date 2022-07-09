@@ -230,7 +230,7 @@ export default {
         {"id": "fn_runnable", "ref": "runnable"},
         {"id": "edges", "script": "return _lib.no.runtime.get_edges_in(_lib.no.runtime.get_parent(_graph), _graph.node_id).filter(e => e.as === edge || e.as === 'publish' || e.as === 'subscribe');"},
         {"id": "entries", "ref": "map"},
-        {"id": "out", "script": "const res = Object.fromEntries(entries); Object.entries(res.publish ?? {}).forEach(([k, v]) => _lib.no.runtime.publish.fn(k, {data: v})); _lib.no.runtime.remove_listener('*', _graph.id); Object.entries(res.subscribe ?? {}).forEach(([k, v]) => _lib.no.runtime.add_listener(k, _graph.id, v)); return res[edge]"}
+        {"id": "out", "script": "const res = Object.fromEntries(entries); Object.entries(res.publish ?? {}).forEach(([k, v]) => _lib.no.runtime.publish(k, {data: v})); _lib.no.runtime.remove_listener('*', 'subscribe-' + _graph.id); Object.entries(res.subscribe ?? {}).forEach(([k, v]) => { _lib.no.runtime.add_listener(k, 'subscribe-' + _graph.id, {...v, args: Object.assign({}, args, v.args, {result: edge === 'return' ? res[edge] : _lib.no.runtime.get_result(_graph.id)})}) }); return res[edge]"}
       ],
       "edges": [
         {"from": "fn_args", "to": "fn", "as": "args"},
@@ -248,6 +248,7 @@ export default {
         {"from": "node_args", "to": "merged_args", "as": "a1"},
         {"from": "merged_args", "to": "entries", "as": "args"},
         {"from": "node_args", "to": "edges", "as": "args"},
+        {"from": "args", "to": "out", "as": "args"},
         {"from": "entries", "to": "out", "as": "entries"},
         {"from": "default_edge", "to": "out", "as": "edge"},
         {"from": "default_edge", "to": "edges", "as": "edge"},
@@ -412,7 +413,7 @@ export default {
         {"id": "value", "ref": "arg", "value": "value"},
         {"id": "recache", "ref": "arg", "value": "recache"},
         {"id": "cached", "ref": "arg", "value": "cached", "type": "internal"},
-        {"id": "cache", "script": "if(value !== undefined){ _lib.no.runtime.update_args(_graph, {cached: value});} return value;"},
+        {"id": "cache", "script": "if(value !== undefined){ _lib.no.runtime.update_args(_graph, {cached: _lib.no.resolve(value)});} return value;"},
         {"id": "cached_value", "ref": "default"},
         {"id": "out", "ref": "if"}
       ],
@@ -575,9 +576,10 @@ export default {
         { "id": "name", "ref": "arg", "value": "name" },
         { "id": "onevent", "ref": "arg", "value": "onevent" },
         { "id": "data", "ref": "arg", "value": "_data", "type": "internal" },
+        {"id": "data_log", "ref": "log"},
         {
           "id": "add_listener",
-          "script": "_lib.no.runtime.add_listener(event ?? _graph.value, _graph.id, (data) => (_lib.no.runtime.update_args(_graph, {_data: data.data})), false);"
+          "script": "_lib.no.runtime.add_listener(event ?? _graph.value, 'evt-listener-' + _graph.id, (data) => { let update = true; if(onevent){ update = _lib.no.runGraph(onevent.graph, onevent.fn, {...onevent.args, data}); } if(update){ _lib.no.runtime.update_args(_graph, {_data: data.data}) } }, false);"
         },
         { "id": "out", "ref": "default"}
       ],
@@ -585,7 +587,7 @@ export default {
         { "from": "name", "to": "add_listener", "as": "event" },
         { "from": "onevent", "to": "add_listener", "as": "onevent" },
         { "from": "add_listener", "to": "out", "as": "otherwise" },
-        { "from": "data", "to": "out", "as": "value" }
+        { "from": "data", "to": "out", "as": "value" },
       ]
     },
     { 

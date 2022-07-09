@@ -756,6 +756,7 @@ const SelectNode = (state, {node_id, focus_property}) => [
     focus_property && [FocusEffect, {selector: `.node-info input.${focus_property}`}],
     state.nodes.find(n => n.node_id === node_id) && [SetSelectedPositionStyleEffect, {node: state.nodes.find(n => n.node_id === node_id), svg_offset: state.svg_offset, dimensions: state.dimensions}],
     node_id !== state.display_graph.out && [() => update_info_display({node_id, graph_id: state.display_graph_id})],
+    state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: node_id})]
 ]
 
 const CreateNode = (state, {node, child, child_as, parent}) => [
@@ -772,16 +773,16 @@ const CreateNode = (state, {node, child, child_as, parent}) => [
             parent ? [{from: parent.from, to: child}] : []
         )
         // Hacky - have to wait until the node is finished adding and the graph callback takes place before updating selected node.
-        setTimeout(() => requestAnimationFrame(() => dispatch(s => [{...s, selected: [node.id]}])), 50);
+        setTimeout(() => requestAnimationFrame(() => dispatch(SelectNode, {node_id: node.id})), 50);
     }]
 ];
 
 const DeleteNode = (state, {node_id}) => [
     {
         ...state, 
-        selected: [nolib.no.runtime.get_edge_out(state.display_graph, node_id).to],
         history: state.history.concat([{action: 'delete_node', node_id}]) 
     },
+    [(dispatch, {node_id}) => requestAnimationFrame(() => dispatch(SelectNode, {node_id})), {node_id: nolib.no.runtime.get_edge_out(state.display_graph, node_id).to}],
     [() => nolib.no.runtime.delete_node(state.display_graph, node_id)]
 ]
 
@@ -793,14 +794,32 @@ const ExpandContract = (state, {node_id}) => {
     
     return [
         state,
-        [dispatch => requestAnimationFrame(() => {
-            nolib.no.runtime.update_graph(update.display_graph);
-            dispatch(s => ({...s, selected: update.selected}));
-        })]
+        [dispatch => {
+            requestAnimationFrame(() => {
+                // Have to be the same time so the right node is selected
+                nolib.no.runtime.update_graph(update.display_graph);
+                dispatch(SelectNode, {node_id: update.selected[0]})
+            })
+        }]
     ]
 }
 
-const Copy = (state, {cut}) => {
+const CreateRef = (state, {node}) => [
+    state,
+    [dispatch => {
+        const graph = {...base_graph(node), id: node.name, value: undefined};
+        nolib.no.runtime.update_graph(graph);
+        save_graph(graph);
+        nolib.no.runtime.add_node(state.display_graph, {
+            id: node.id,
+            value: node.value,
+            ref: node.name,
+            name: undefined,
+        });
+    }]
+]
+
+const Copy = (state, {cut, as}) => {
     let edges_in;
     let queue = [...state.selected];
     const graph = {nodes: [], edges: []};
@@ -812,25 +831,25 @@ const Copy = (state, {cut}) => {
         edges_in.forEach(e => queue.push(e.from));
     }
 
-    return {...state, copied_graph: graph, copied_root: state.selected[0]}
+    return {...state, copied: {graph: graph, root: state.selected[0], as}};
 }
 
 const Paste = state => [
     {...state},
     [dispatch => {
         const node_id_map = {};
-        state.copied_graph.nodes.forEach(n => {
+        state.copied.graph.nodes.forEach(n => {
             const new_id = create_randid();
             node_id_map[n.id] = new_id;
             nolib.no.runtime.add_node(state.display_graph, {...n, id: new_id})
         });
         nolib.no.runtime.update_edges(
             state.display_graph, 
-            state.copied_graph.edges
+            state.copied.graph.edges
                 .map(e => ({...e, from: node_id_map[e.from], to: node_id_map[e.to]}))
-                .concat([{from: node_id_map[state.copied_root], to: state.selected[0], as: "arg0"}])
+                .concat([{from: node_id_map[state.copied.root], to: state.selected[0], as: state.copied.as}])
             );
-        requestAnimationFrame(() => dispatch(SelectNode, {node_id: node_id_map[state.copied_root]}))
+        requestAnimationFrame(() => dispatch(SelectNode, {node_id: node_id_map[state.copied.root], focus_property: 'edge'}))
     }]
 ]
 
@@ -846,14 +865,17 @@ const save_graph = graph => {
 
 const SaveGraph = (dispatch, payload) => save_graph(payload.display_graph)
 
-const ChangeDisplayGraphId = (dispatch, {id}) => {
+const ChangeDisplayGraphId = (dispatch, {id, select_out}) => {
     const json = localStorage.getItem(id);
     const graph = json && base_graph(JSON.parse(json))
     window.location.hash = '#' + id; 
     requestAnimationFrame(() =>
         dispatch(state => [
             {...state, display_graph_id: id},
-            [() => nolib.no.runtime.update_graph(graph || Object.assign({}, base_graph(state.display_graph), {id}))],
+            [dispatch => {
+                nolib.no.runtime.update_graph(graph || Object.assign({}, base_graph(state.display_graph), {id}));
+                dispatch(SelectNode, {node_id: graph.out})
+            }],
         ]))
 }
 
@@ -998,7 +1020,7 @@ const input_el = ({label, property, value, onchange, options, inputs}) => ha.h(
     ]
 )
 
-const info_el = ({node, hidden, links_in, link_out, display_graph_id, randid, refs, html_id, copied_graph, inputs})=> {
+const info_el = ({node, hidden, links_in, link_out, display_graph_id, randid, refs, html_id, copied_graph, inputs, graph_out})=> {
     const node_ref = node.ref ? nolib.no.runtime.get_ref(display_graph_id, node.ref) : node;
     const description =  node_ref?.description;
     return ha.h('div', {id: "node-info-wrapper"}, [ha.h('div', {class: "spacer before"}, []), ha.h(
@@ -1040,9 +1062,9 @@ const info_el = ({node, hidden, links_in, link_out, display_graph_id, randid, re
                     onchange: (state, payload) => [
                         state,
                         [d => d(UpdateNode, {node, property: "name", value: payload.target.value})],
-                        node.id === "main/out" && [ChangeDisplayGraphId, {id: payload.target.value}]
+                        node.id === graph_out && [ChangeDisplayGraphId, {id: payload.target.value, select_out: true}]
                     ],
-                    options: node.id === "main/out" && JSON.parse(localStorage.getItem('graph_list'))
+                    options: node.id === graph_out && JSON.parse(localStorage.getItem('graph_list'))
                 }),
                 input_el({
                     label: 'ref',
@@ -1064,15 +1086,21 @@ const info_el = ({node, hidden, links_in, link_out, display_graph_id, randid, re
                 id: `${html_id}-code-editor`, 
                 class: node.script || node.ref === "script" ? "visible" : "display-none",
             }, []),
+            ha.h('canvas', {
+                id: `${html_id}-info-canvas`,
+                class: "display-none",
+                key: "node-editor-info-canvas"
+            }, []),
             ha.h('div', {id: `${html_id}-info-display`}),
             ha.h('div', {class: "buttons"}, [
                 ha.h('div', {
                     class: "action", 
                     onclick: [ExpandContract, {node_id: node.node_id}]
                 }, ha.text(node.nodes?.length > 0 ? "expand" : "contract")),
+                node.nodes?.length > 0 && node.name !== '' && ha.h('div', {class: 'action', onclick: [CreateRef, {node}]}, ha.text("make ref")),
                 ha.h('div', {
                     class: "action", 
-                    onclick: [Copy, {cut: false}],
+                    onclick: [Copy, {cut: false, as: link_out.as}],
                     key: "copy-action"
                 }, ha.text("copy")),
                 copied_graph && ha.h('div', {
@@ -1080,12 +1108,11 @@ const info_el = ({node, hidden, links_in, link_out, display_graph_id, randid, re
                     onclick: [Paste],
                     key: "paste-action"
                 }, ha.text("paste")),
-                node.node_id == "main/out" 
-                ? ha.h('div', {
+                node.node_id == graph_out && ha.h('div', {
                     class: "action", 
                     onclick: (state, payload) => [state, [SaveGraph, state]]
-                }, ha.text("save"))
-                : ha.h('div', {
+                }, ha.text("save")),
+                node.node_id !== graph_out && ha.h('div', {
                     class: "action", 
                     onclick: [DeleteNode, {
                         parent: link_out && link_out.source ? {from: link_out.source.node_id, to: link_out.target.node_id, as: link_out.as} : undefined, 
@@ -1179,11 +1206,13 @@ const init_code_editor = (dispatch, {html_id}) => {
                     "backgroundColor": background,
                 },
                 ".cm-content": {
-                    caretColor: "#66ccff"
+                    caretColor: "#66ccff",
+                    whiteSpace: "pre-wrap",
+                    width: "325px"
                 },
                 ".cm-gutters": {
                     backgroundColor: background,
-                    outline: "1px solid #515a6b"
+                    outline: "1px solid #515a6b",
                 },
                 ".cm-activeLine": {
                     backgroundColor: highlightBackground,
@@ -1245,7 +1274,8 @@ const dispatch = (init, _lib) => {
             refs: nolib.no.runtime.refs(),
             html_id: s.html_id,
             copied_graph: s.copied_graph,
-            inputs: s.inputs
+            inputs: s.inputs,
+            graph_out: s.display_graph.out
         }),
         search_el({search: s.search, _lib}),
         ha.h('div', {id: `${init.html_id}-result`}),
@@ -1279,7 +1309,7 @@ const dispatch = (init, _lib) => {
                 case "left": 
                 case "right": {
                     const dirmult = result === "left" ? 1 : -1;
-                    const current_node = state.nodes.find(n => n.node_id === selected); 
+                    const current_node = nolib.no.runtime.get_node(state.display_graph, selected)
                     const siblings = state.levels.siblings.get(selected); 
                     const node_id = siblings.reduce((dist, sibling) => { 
                         const sibling_node = state.nodes.find(n => n.node_id === sibling); 
@@ -1295,7 +1325,7 @@ const dispatch = (init, _lib) => {
                     break;
                 }
                 case "copy": {
-                    action = [Copy, {}];
+                    action = [Copy, {as: nolib.no.runtime.get_edge_out(state.display_graph, state.selected[0]).as}];
                     break;
                 }
                 case "paste": {
@@ -1314,10 +1344,11 @@ const dispatch = (init, _lib) => {
                     action = [DeleteNode, {
                         node_id: state.selected[0]
                     }]
+                    break;
                 }
                 default: {
                     console.log(`Not implemented ${result}`)
-                    nolib.no.runtime.publish.fn(undefined, 'keydown', key_input)
+                    nolib.no.runtime.publish(undefined, 'keydown', key_input)
                 }
             }
 
@@ -1382,7 +1413,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
             imports: {},
             history: [],
             redo_history: [],
-            selected: ["main/out"],
+            selected: [display_graph.out ?? "main/out"],
             inputs: {}
         };
 

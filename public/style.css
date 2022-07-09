@@ -192,7 +192,7 @@ svg {
     display: flex;
     flex-flow: column nowrap;
     pointer-events: none;
-    max-width: 256px;
+    max-width: 400px;
 }
 
 #node-info-wrapper .spacer {
