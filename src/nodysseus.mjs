@@ -791,13 +791,17 @@ const nolib = {
         get: {
             args: ['_graph', 'target', 'path', 'def'],
             fn: (graph, target, path, def) => {
-                return nodysseus_get(target && target._Proxy ? target._value : target, path && path._Proxy ? path._value : (path || graph.value), def && def._Proxy ? def._value : def);
+                return nodysseus_get(
+                    target && target._Proxy ? target._value : target, 
+                    path && path._Proxy ? path._value : (graph.value || path), 
+                    def && def._Proxy ? def._value : def
+                );
             },
         },
         set: {
             args: ['target', 'path', 'value', '_node'],
             fn: (target, path, value, node) => {
-                const keys = (path || node.value).split('.'); 
+                const keys = (node.value || path).split('.'); 
                 const check = (o, v, k) => k.length === 1 
                     ? {...o, [k[0]]: v, _needsresolve: true} 
                     : o.hasOwnProperty(k[0]) 
@@ -930,7 +934,6 @@ const nolib = {
             const remove_graph_listeners = (graph_id) => {
                 const graph_listeners = event_listeners_by_graph.get(graph_id);
                 if(graph_listeners) {
-                    console.log(graph_listeners);
                     for(const evt of graph_listeners.entries()) {
                         getorset(event_listeners, evt[0])?.delete(evt[1]);
                     }
@@ -1008,8 +1011,8 @@ const nolib = {
             }
 
             const get_ref = (graph, id) => {
-                const parentest = get_parentest(graph);
-                return refsdb.by("id", id) || (parentest ? get_ref(parentest, id) : get_node(graph, id));
+                const parentest = graph && get_parentest(graph);
+                return refsdb.by("id", id) || (parentest ? get_ref(parentest, id) : (graph && get_node(graph, id)));
             }
             const get_node = (graph, id) => getorsetgraph(graph, id, 'node_map', () =>
                 get_graph(graph).nodes.find(n => n.id === id));

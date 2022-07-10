@@ -4444,9 +4444,11 @@
         { "from": "ctrl_s", "to": "graph", "as": "ctrl_s" },
         { "from": "ctrl_z", "to": "graph", "as": "ctrl_z" },
         { "from": "ctrl_y", "to": "graph", "as": "ctrl_y" },
+        { "from": "esc_editing", "to": "graph", "as": "escape" },
         { "from": "shift_enter", "to": "graph", "as": "shift_enter" },
         { "from": "esc_search", "to": "searching", "as": "escape" },
-        { "from": "esc_editing", "to": "editing", "as": "escape" }
+        { "from": "esc_editing", "to": "editing", "as": "escape" },
+        { "from": "ctrl_s", "to": "editing", "as": "ctrl_s" }
       ]
     },
     {

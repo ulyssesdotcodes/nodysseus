@@ -867,16 +867,17 @@ const SaveGraph = (dispatch, payload) => save_graph(payload.display_graph)
 
 const ChangeDisplayGraphId = (dispatch, {id, select_out}) => {
     const json = localStorage.getItem(id);
-    const graph = json && base_graph(JSON.parse(json))
+    const graph = (json && base_graph(JSON.parse(json))) ?? nolib.no.runtime.get_graph(id) ?? nolib.no.runtime.get_ref(undefined, id)
     window.location.hash = '#' + id; 
     requestAnimationFrame(() =>
         dispatch(state => [
             {...state, display_graph_id: id},
             [dispatch => {
                 requestAnimationFrame(() => {
-                    nolib.no.runtime.update_graph(graph || Object.assign({}, base_graph(state.display_graph), {id}));
+                    const new_graph = graph || Object.assign({}, base_graph(state.display_graph), {id});
+                    nolib.no.runtime.update_graph(new_graph);
                     nolib.no.runtime.remove_graph_listeners(state.display_graph_id);
-                    dispatch(SelectNode, {node_id: graph.out})
+                    dispatch(SelectNode, {node_id: new_graph.out})
                 })
             }],
         ]))
@@ -1030,7 +1031,11 @@ const info_el = ({node, hidden, links_in, link_out, display_graph_id, randid, re
     const description =  node_ref?.description;
     return ha.h('div', {id: "node-info-wrapper"}, [ha.h('div', {class: "spacer before"}, []), ha.h(
         'div',
-        { class: {'node-info': true, hidden} },
+        { 
+            class: {'node-info': true, hidden}, 
+            onfocusin: state => [{...state, editing: true}], 
+            onblurout: state => [{...state, editing: false}] 
+        },
         [
             ha.h('div', {class: "args"}, 
                 [...new Set((node_ref?.extern 
@@ -1071,6 +1076,7 @@ const info_el = ({node, hidden, links_in, link_out, display_graph_id, randid, re
                 input_el({
                     label: 'ref',
                     value: node.ref,
+                    property: 'ref',
                     inputs,
                     options: refs,
                     onchange: (state, event) => [UpdateNode, {node, property: "ref", value: event.target.value}],
@@ -1146,10 +1152,6 @@ const update_info_display = ({node_id, graph_id}) => {
 
     const node_ref = node && (node.ref && nolib.no.runtime.get_ref(graph_id, node.ref)) || node;
     const out_ref = node && (node.nodes && nolib.no.runtime.get_node(node, node.out)) || (node_ref.nodes && nolib.no.runtime.get_node(node_ref, node_ref.out));
-    if(node.name === "a") {
-        console.log('input data')
-        console.log(nolib.no.runtime.get_inputdata(node));
-    }
     const node_display_el = (node.ref === "return" || (out_ref && out_ref.ref === "return")) 
         && nolib.no.runGraph(graph_id, node_id, Object.assign(
             {edge: {node_id: graph_id + "/" + node_id, as: "display"}}, 
@@ -1289,9 +1291,9 @@ const dispatch = (init, _lib) => {
         [graph_subscription, {display_graph_id: s.display_graph_id}],
         result_display_dispatch && [result_subscription, {display_graph_id: s.display_graph_id}],
         [keydownSubscription, {action: (state, payload) => {
-            const mode = state.focused !== false ? 'editing' : state.search !== false ? 'searching' : 'graph';
-            console.log(mode);
+            const mode = state.editing !== false ? 'editing' : state.search !== false ? 'searching' : 'graph';
             const key_input = (payload.ctrlKey ? 'ctrl_' : '') + (payload.shiftKey ? 'shift_' : '') + (payload.key === '?' ? 'questionmark' : payload.key.toLowerCase());
+            //console.log(mode + ": " + key_input)
             const selected = state.selected[0];
             const result = runGraph(init.graph, "keybindings", {}, hlib)[mode][key_input];
             let action;
@@ -1358,15 +1360,21 @@ const dispatch = (init, _lib) => {
                     break;
                 }
                 case "edit_ref": {
-                    action = [SelectNode, { node_id: state.selected[0], focus_property: "value" }]
+                    action = [SelectNode, { node_id: state.selected[0], focus_property: "ref" }]
+                    break;
+                }
+                case "edit_edge": {
+                    action = [SelectNode, { node_id: state.selected[0], focus_property: "edge" }]
                     break;
                 }
                 case "end_editing": {
-                    action = [state => [{...state, show_all: true, focused: false}]]
+                    action = [state => [{...state, show_all: true, focused: false, editing: false}]]
                     break;
                 }
                 default: {
-                    console.log(`Not implemented ${result}`)
+                    if(result !== undefined) {
+                        console.log(`Not implemented ${result}`)
+                    }
                     nolib.no.runtime.publish(undefined, 'keydown', key_input)
                 }
             }
@@ -1381,7 +1389,13 @@ const dispatch = (init, _lib) => {
         !!document.getElementById( `${init.html_id}-editor-panzoom`) && [pzobj.init, {
             id: `${init.html_id}-editor-panzoom`, 
             action: (s, p) => [
-                {...s, show_all: p.event !== 'effect_transform', svg_offset: p.transform, noautozoom: p.noautozoom && !s.stopped}
+                {...s, 
+                    show_all: p.event !== 'effect_transform', 
+                    editing: p.event === 'effect_transform' && s.editing, 
+                    focused: p.event === 'effect_transform' && s.focused, 
+                    svg_offset: p.transform, 
+                    noautozoom: p.noautozoom && !s.stopped
+                }
             ]
         }]
     ], 
@@ -1424,6 +1438,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
             nodes: [],
             links: [],
             focused: false,
+            editing: false,
             search: false,
             show_all: false,
             show_result: false,

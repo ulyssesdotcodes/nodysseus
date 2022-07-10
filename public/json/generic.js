@@ -483,7 +483,7 @@ export default {
       "nodes": [
         {"id": "path", "ref": "arg", "value": "path"},
         {"id": "args", "ref": "arg", "value": "_args", "type": "internal"},
-        {"id": "runnable", "script": "const parentest = _lib.no.runtime.get_parentest(_graph); return {fn: _lib.no.runtime.get_path(parentest, path), graph: parentest, args}"},
+        {"id": "runnable", "script": "const parent = _lib.no.runtime.get_parent(_graph); const node_id = _lib.no.runtime.get_path(parent, path); return {fn: node_id, graph: parent, args: {...args, edge: args.edge ? {...args.edge, node_id: parent.id + '/' + node_id} : undefined}}"},
         {"id": "out", "ref": "run"}
       ],
       "edges": [
@@ -1817,7 +1817,7 @@ export default {
       }
     ],
   },
-{
+  {
     "id": "call_method",
     "out": "main/out",
     "nodes": [
@@ -1826,8 +1826,20 @@ export default {
         "value": "self",
         "ref": "arg"
       },
-      {"id": "self_args", "ref": "arg", "value": "_args"},
-      {"id": "def_self", "ref": "default"},
+      {
+        "id": "self_args",
+        "ref": "arg",
+        "value": "_args"
+      },
+      {
+        "id": "def_self",
+        "ref": "default"
+      },
+      {
+        "id": "fn",
+        "ref": "arg",
+        "value": "fn"
+      },
       {
         "id": "5a6pljw",
         "ref": "html_element"
@@ -1883,7 +1895,7 @@ export default {
       },
       {
         "id": "nzg5arg",
-        "value": "return _graph?.value;",
+        "value": "return fn ?? _graph?.value;",
         "ref": "script"
       },
       {
@@ -1905,7 +1917,7 @@ export default {
       },
       {
         "id": "6s9b6g0",
-        "value": "return _graph?.value;",
+        "value": "return fn ?? _graph?.value;",
         "ref": "script"
       },
       {
@@ -1932,7 +1944,7 @@ export default {
       },
       {
         "id": "ddgxhvl",
-        "value": "return _graph?.value",
+        "value": "return fn ?? _graph?.value",
         "ref": "script"
       },
       {
@@ -1963,22 +1975,46 @@ export default {
         "ref": "edge_in_argx"
       },
       {
-        "id": "35nk2ya",
-        "value": "const parent = _lib.no.runtime.get_parent(_graph); return parent ? _lib.no.runtime.add_node(parent, {id: _graph.node_id, ref: 'call_method', value: property}) : _lib.no.runtime.update_args(_graph, {property});",
-        "ref": "script"
-      },
-      {
         "id": "mf6qadh",
         "value": "self",
         "ref": "arg"
       },
       {
-        "id": "vnl7z87",
+        "id": "jyoexsb",
+        "value": "fn",
+        "ref": "arg"
+      },
+      {
+        "id": "cac9u81",
+        "value": "fn",
+        "ref": "arg"
+      },
+      {
+        "id": "k14owom",
+        "value": "fn",
+        "ref": "arg"
+      },
+      {
+        "id": "vbtokuf",
+        "ref": "default"
+      },
+      {
+        "id": "e60u6s6",
+        "value": "onchange",
+        "ref": "arg"
+      },
+      {
+        "id": "35nk2ya",
+        "value": "const parent = _lib.no.runtime.get_parent(_graph); return parent ? _lib.no.runtime.add_node(parent, {id: _graph.node_id, ref: 'call_method', value: property}) : _lib.no.runtime.update_args(_graph, {property});",
+        "ref": "script"
+      },
+      {
+        "id": "xvxhk01",
         "value": "if(typeof res !== 'object'){ return []; } const keys = _lib.utility.properties.getOwnAndPrototypeEnumerablesAndNonenumerables(res, true); return keys.filter(k => !k.startsWith('_') && typeof res[k] === 'function').sort().map(key => ({key}));",
         "ref": "script"
       },
       {
-        "id": "57hbdfk",
+        "id": "3w3cepy",
         "value": "self",
         "ref": "arg"
       }
@@ -2080,11 +2116,6 @@ export default {
         "as": "fn"
       },
       {
-        "from": "or9k7xt",
-        "to": "5zclxv2",
-        "as": "onchange"
-      },
-      {
         "from": "fzeowyv",
         "to": "35nk2ya",
         "as": "property"
@@ -2139,12 +2170,15 @@ export default {
         "to": "args",
         "as": "self"
       },
-      {"from": "xmreb7u", "to": "def_self", "as": "value"},
-      {"from": "self_args", "to": "def_self", "as": "otherwise"},
       {
-        "from": "def_self",
-        "to": "vnl7z87",
-        "as": "res"
+        "from": "xmreb7u",
+        "to": "def_self",
+        "as": "value"
+      },
+      {
+        "from": "self_args",
+        "to": "def_self",
+        "as": "otherwise"
       },
       {
         "from": "def_self",
@@ -2152,12 +2186,52 @@ export default {
         "as": "self"
       },
       {
-        "from": "vnl7z87",
+        "from": "cac9u81",
+        "to": "nzg5arg",
+        "as": "fn"
+      },
+      {
+        "from": "k14owom",
+        "to": "ddgxhvl",
+        "as": "fn"
+      },
+      {
+        "from": "vbtokuf",
+        "to": "5zclxv2",
+        "as": "onchange"
+      },
+      {
+        "from": "e60u6s6",
+        "to": "vbtokuf",
+        "as": "value"
+      },
+      {
+        "from": "or9k7xt",
+        "to": "vbtokuf",
+        "as": "otherwise"
+      },
+      {
+        "from": "jyoexsb",
+        "to": "6s9b6g0",
+        "as": "fn"
+      },
+      {
+        "from": "def_self",
         "to": "7iawyvs",
         "as": "array"
+      },
+      {
+        "from": "xvxhk01",
+        "to": "7iawyvs",
+        "as": "array"
+      },
+      {
+        "from": "3w3cepy",
+        "to": "xvxhk01",
+        "as": "res"
       }
-    ],
-  },
+    ]}
+,
   {
       "id": "import",
       "nodes": [
