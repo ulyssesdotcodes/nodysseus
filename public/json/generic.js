@@ -2548,6 +2548,140 @@ export default {
       }
     ],
     "out": "v10aosf"
+  },{
+    "id": "offscreen-canvas",
+    "name": "offscreen-canvas",
+    "nodes": [
+      {
+        "id": "0g1zopd",
+        "name": "create-offscreen-canvas",
+        "ref": "return"
+      },
+      {
+        "id": "ein7naf",
+        "ref": "if"
+      },
+      {
+        "id": "9p0focj"
+      },
+      {
+        "id": "98f35dl",
+        "value": "return !!window.OffscreenCanvas",
+        "ref": "script"
+      },
+      {
+        "id": "dzb8l3m",
+        "value": "canvas",
+        "ref": "html_element"
+      },
+      {
+        "id": "c2vbqba"
+      },
+      {
+        "id": "hdn9zr5",
+        "value": "offscreen"
+      },
+      {
+        "id": "o40rphy"
+      },
+      {
+        "id": "p6vd4i7",
+        "value": "canvas_id",
+        "ref": "arg"
+      },
+      {
+        "id": "lik4fr6",
+        "value": "return window.innerWidth;",
+        "ref": "script"
+      },
+      {
+        "id": "5q5ltj4",
+        "value": "return window.innerHeight",
+        "ref": "script"
+      },
+      {
+        "id": "w7dugd7",
+        "value": "return window.innerWidth;",
+        "ref": "script"
+      },
+      {
+        "id": "1wirpfe",
+        "value": "return window.innerHeight",
+        "ref": "script"
+      },
+      {
+        "id": "16rxy2o",
+        "value": "hidden"
+      }
+    ],
+    "edges": [
+      {
+        "from": "ein7naf",
+        "to": "0g1zopd",
+        "as": "return"
+      },
+      {
+        "from": "9p0focj",
+        "to": "0g1zopd",
+        "as": "args"
+      },
+      {
+        "from": "98f35dl",
+        "to": "ein7naf",
+        "as": "pred"
+      },
+      {
+        "from": "dzb8l3m",
+        "to": "ein7naf",
+        "as": "false"
+      },
+      {
+        "from": "c2vbqba",
+        "to": "dzb8l3m",
+        "as": "props"
+      },
+      {
+        "from": "hdn9zr5",
+        "to": "c2vbqba",
+        "as": "key"
+      },
+      {
+        "from": "o40rphy",
+        "to": "c2vbqba",
+        "as": "style"
+      },
+      {
+        "from": "p6vd4i7",
+        "to": "c2vbqba",
+        "as": "id"
+      },
+      {
+        "from": "lik4fr6",
+        "to": "c2vbqba",
+        "as": "width"
+      },
+      {
+        "from": "5q5ltj4",
+        "to": "c2vbqba",
+        "as": "height"
+      },
+      {
+        "from": "w7dugd7",
+        "to": "o40rphy",
+        "as": "width"
+      },
+      {
+        "from": "1wirpfe",
+        "to": "o40rphy",
+        "as": "height"
+      },
+      {
+        "from": "16rxy2o",
+        "to": "o40rphy",
+        "as": "visibility"
+      }
+    ],
+    "out": "0g1zopd"
   }
   ]
 }
