@@ -616,7 +616,7 @@ const run_with_val_full = (graph, full_lib, node_id, graph_input_value) => {
         if (node_ref.nodes || node_ref.script) {
             const res = node_ref.nodes 
                 ? node_nodes(node, node_ref, graph_input_value, data, full_lib, graph, false, inputs) 
-                : node_script(node, node_ref, data, full_lib, graph, inputs)
+                : node_script(node, node_ref, data, full_lib, graph, inputs, graph_input_value)
 
             if (typeof res === 'object' && !!res && !res._Proxy && !Array.isArray(res) && Object.keys(res).length > 0) {
                 if (!!res._needsresolve) {
@@ -848,6 +848,7 @@ const nolib = {
                 is_cached: new Set()
             });
             const event_listeners = new Map();
+            const event_listeners_by_graph = new Map();
             const event_data = new Map();
             const getorsetgraph = (graph, id, path, valfn) => getorset(get_cache(graph)[path], id, valfn);
             let animationframe;
@@ -877,7 +878,7 @@ const nolib = {
                 return data;
             }
 
-            const add_listener = (event, listener_id, input_fn, remove) => {
+            const add_listener = (event, listener_id, input_fn, remove, graph_id) => {
                 const listeners = getorset(event_listeners, event, () => new Map());
                 const fn = typeof input_fn === "function" ? input_fn : args => nolib.no.runGraph(input_fn.graph, input_fn.fn, Object.assign({}, input_fn.args, args))
                 if(!listeners.has(listener_id)) {
@@ -886,6 +887,11 @@ const nolib = {
                             fn(event_data.get(event));
                         }
                     })
+
+                    if(graph_id) {
+                        const graph_id_listeners = getorset(event_listeners_by_graph, graph_id, () => new Map());
+                        graph_id_listeners.set(event, listener_id);
+                    }
                 }
 
                 if (remove) {
@@ -919,6 +925,16 @@ const nolib = {
                 //         remove_listener('graphchange', 'rungraph');
                 //     }
                 // }
+            }
+
+            const remove_graph_listeners = (graph_id) => {
+                const graph_listeners = event_listeners_by_graph.get(graph_id);
+                if(graph_listeners) {
+                    console.log(graph_listeners);
+                    for(const evt of graph_listeners.entries()) {
+                        getorset(event_listeners, evt[0])?.delete(evt[1]);
+                    }
+                }
             }
 
             const delete_cache = (graph) => {
@@ -1143,6 +1159,7 @@ const nolib = {
                     add_listener,
                 },
                 remove_listener,
+                remove_graph_listeners,
                 publish: (event, data) => publish(event, data),
                 update_result: (graph, result) => {
                     const old = resultsdb.by("id", graph.id);

@@ -230,7 +230,7 @@ export default {
         {"id": "fn_runnable", "ref": "runnable"},
         {"id": "edges", "script": "return _lib.no.runtime.get_edges_in(_lib.no.runtime.get_parent(_graph), _graph.node_id).filter(e => e.as === edge || e.as === 'publish' || e.as === 'subscribe');"},
         {"id": "entries", "ref": "map"},
-        {"id": "out", "script": "const res = Object.fromEntries(entries); Object.entries(res.publish ?? {}).forEach(([k, v]) => _lib.no.runtime.publish(k, {data: v})); _lib.no.runtime.remove_listener('*', 'subscribe-' + _graph.id); Object.entries(res.subscribe ?? {}).forEach(([k, v]) => { _lib.no.runtime.add_listener(k, 'subscribe-' + _graph.id, {...v, args: Object.assign({}, args, v.args, {result: edge === 'return' ? res[edge] : _lib.no.runtime.get_result(_graph.id)})}) }); return res[edge]"}
+        {"id": "out", "script": "const res = Object.fromEntries(entries); Object.entries(res.publish ?? {}).forEach(([k, v]) => _lib.no.runtime.publish(k, {data: v})); _lib.no.runtime.remove_listener('*', 'subscribe-' + _graph.id); Object.entries(res.subscribe ?? {}).forEach(([k, v]) => { _lib.no.runtime.add_listener(k, 'subscribe-' + _graph.id, {...v, args: Object.assign({}, args, v.args, {result: edge === 'return' ? res[edge] : _lib.no.runtime.get_result(_graph.id)})}, false, _lib.no.runtime.get_parentest(_graph).id) }); return res[edge]"}
       ],
       "edges": [
         {"from": "fn_args", "to": "fn", "as": "args"},
@@ -384,6 +384,10 @@ export default {
       ]
     },
     { "id": "arg", "description": "Get an input to the graph this is a part of.", "extern": "utility.arg" },
+    {
+      "id": "edge_in_argx",
+      "script": "const parent = _lib.no.runtime.get_parent(_graph); return _lib.no.runtime.get_edges_in(parent, _graph.node_id).filter(e => e.as.startsWith('arg')).reduce((acc, e) => { acc[parseInt(e.as.substring(3))] = _lib.just.get.fn(_graph, _graph_input_value, e.as); return acc; }, []).map(a => a?._Proxy ? a._value : a);"
+    },
     { "id": "set_mutable", "args": ["target", "path", "value"], "script": "_lib.just.set_mutable(target, path, value); return target" },
     {
       "id": "set",
@@ -1956,8 +1960,7 @@ export default {
       },
       {
         "id": "iqtiiiy",
-        "ref": "script",
-        "value": "const parent = _lib.no.runtime.get_parent(_graph); return _lib.no.runtime.get_edges_in(parent, _graph.node_id).filter(e => e.as.startsWith('arg')).reduce((acc, e) => { acc[parseInt(e.as.substring(3))] = _lib.just.get.fn(_graph, _graph_input_value, e.as); return acc; }, []).map(a => a?._Proxy ? a._value : a)"
+        "ref": "edge_in_argx"
       },
       {
         "id": "35nk2ya",

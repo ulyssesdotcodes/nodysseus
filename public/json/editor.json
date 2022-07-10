@@ -4411,6 +4411,7 @@
         { "value": "show_keybindings", "id": "questionmark" },
         { "value": "find", "id": "f" },
         { "value": "cancel_search", "id": "esc_search" },
+        { "value": "end_editing", "id": "esc_editing" },
         { "id": "out" }
       ],
       "edges": [
@@ -4444,7 +4445,8 @@
         { "from": "ctrl_z", "to": "graph", "as": "ctrl_z" },
         { "from": "ctrl_y", "to": "graph", "as": "ctrl_y" },
         { "from": "shift_enter", "to": "graph", "as": "shift_enter" },
-        { "from": "esc_search", "to": "searching", "as": "escape" }
+        { "from": "esc_search", "to": "searching", "as": "escape" },
+        { "from": "esc_editing", "to": "editing", "as": "escape" }
       ]
     },
     {
