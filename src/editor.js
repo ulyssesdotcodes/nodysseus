@@ -526,7 +526,7 @@ const contract_node = (data, keep_expanded = false) => {
 
 const keydownSubscription = (dispatch, options) => {
     const handler = ev => {
-        if (ev.key === "s" && ev.ctrlKey) {
+        if ((ev.key === "s" || ev.key === "o") && ev.ctrlKey) {
             ev.preventDefault();
         } else if (!ev.key) {
             return;
@@ -582,8 +582,8 @@ const result_subscription = (dispatch, {display_graph_id}) => {
             cancelAnimationFrame(animrun)
             animrun = requestAnimationFrame(() => {
                 dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
-                const result = nolib.no.runGraph(graph, graph.out, {edge: {node_id: graph.id + '/' + graph.out, as: "return"}});
-                const display_fn = result => nolib.no.runGraph(graph, graph.out, {edge: {node_id: graph.id + '/' + graph.out, as: "display"}, result});
+                const result = hlib.runGraph(graph, graph.out, {edge: {node_id: graph.id + '/' + graph.out, as: "return"}});
+                const display_fn = result => hlib.runGraph(graph, graph.out, {edge: {node_id: graph.id + '/' + graph.out, as: "display"}, result});
                 const update_result_display_fn = display => result_display_dispatch(UpdateResultDisplay, {el: display && display.el ? display.el : {dom_type: 'div', props: {}, children: []}})
                 const update_info_display_fn = () => dispatch(s => [s, s.selected[0] !== s.display_graph.out && [() => update_info_display({node_id: s.selected[0], graph_id: s.display_graph_id})]])
                 const reset_animrun = () => animrun = false;
@@ -1153,7 +1153,7 @@ const update_info_display = ({node_id, graph_id}) => {
     const node_ref = node && (node.ref && nolib.no.runtime.get_ref(graph_id, node.ref)) || node;
     const out_ref = node && (node.nodes && nolib.no.runtime.get_node(node, node.out)) || (node_ref.nodes && nolib.no.runtime.get_node(node_ref, node_ref.out));
     const node_display_el = (node.ref === "return" || (out_ref && out_ref.ref === "return")) 
-        && nolib.no.runGraph(graph_id, node_id, Object.assign(
+        && hlib.runGraph(graph_id, node_id, Object.assign(
             {edge: {node_id: graph_id + "/" + node_id, as: "display"}}, 
             nolib.no.runtime.get_inputdata(node)
         ));
@@ -1293,89 +1293,99 @@ const dispatch = (init, _lib) => {
         [keydownSubscription, {action: (state, payload) => {
             const mode = state.editing !== false ? 'editing' : state.search !== false ? 'searching' : 'graph';
             const key_input = (payload.ctrlKey ? 'ctrl_' : '') + (payload.shiftKey ? 'shift_' : '') + (payload.key === '?' ? 'questionmark' : payload.key.toLowerCase());
-            //console.log(mode + ": " + key_input)
-            const selected = state.selected[0];
-            const result = runGraph(init.graph, "keybindings", {}, hlib)[mode][key_input];
             let action;
             let effects = [];
-            switch(result){
-                case "up": {
-                    const parent_edges = nolib.no.runtime.get_edges_in(state.display_graph, selected);
-                    const node_id = parent_edges?.[Math.ceil(parent_edges.length / 2) - 1]?.from
-                    action = node_id ? [SelectNode, {node_id}] : [state]
-                    break;
-                }
-                case "down": {
-                    const child_edge = state.display_graph.edges.find(e => e.from === selected);
-                    const node_id = child_edge?.to
-                    action = node_id ? [SelectNode, {node_id}] : [state]
-                    break;
-                }
-                case "left": 
-                case "right": {
-                    const dirmult = result === "left" ? 1 : -1;
-                    const current_node = nolib.no.runtime.get_node(state.display_graph, selected)
-                    const siblings = state.levels.siblings.get(selected); 
-                    const node_id = siblings.reduce((dist, sibling) => { 
-                        const sibling_node = state.nodes.find(n => n.node_id === sibling); 
-                        if(!sibling_node){ return dist } 
-                        const xdist = Math.abs(sibling_node.x - current_node.x); 
-                        dist = (dirmult * (sibling_node.x - current_node.x) < 0) && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist 
-                    }, [state.dimensions.x])?.[1]?.node_id; 
-                    action = node_id ? [SelectNode, {node_id}] : [state]
-                    break;
-                }
-                case "save": {
-                    effects.push([SaveGraph, state])
-                    break;
-                }
-                case "copy": {
-                    action = [Copy, {as: nolib.no.runtime.get_edge_out(state.display_graph, state.selected[0]).as}];
-                    break;
-                }
-                case "paste": {
-                    action = [Paste];
-                    break;
-                }
-                case "find": {
-                    action = s => [{...s, search: ""}, [FocusEffect, {selector: "#search input"}]]; 
-                    break;
-                }
-                case "expand_contract": {
-                    action = [ExpandContract, {node_id: state.selected[0]}];
-                    break;
-                }
-                case "delete_node": {
-                    action = [DeleteNode, {
-                        node_id: state.selected[0]
-                    }]
-                    break;
-                }
-                case "edit_name": {
-                    action = [SelectNode, { node_id: state.selected[0], focus_property: "name" }]
-                    break;
-                }
-                case "edit_value": {
-                    action = [SelectNode, { node_id: state.selected[0], focus_property: "value" }]
-                    break;
-                }
-                case "edit_ref": {
-                    action = [SelectNode, { node_id: state.selected[0], focus_property: "ref" }]
-                    break;
-                }
-                case "edit_edge": {
-                    action = [SelectNode, { node_id: state.selected[0], focus_property: "edge" }]
-                    break;
-                }
-                case "end_editing": {
-                    action = [state => [{...state, show_all: true, focused: false, editing: false}]]
+            const selected = state.selected[0];
+            switch(key_input) {
+                case "ctrl_o": {
+                    action = [SelectNode, {node_id: state.display_graph.out, focus_property: 'name'}]
+                    payload.stopPropagation();
+                    payload.preventDefault();
                     break;
                 }
                 default: {
-                    if(result !== undefined) {
-                        console.log(`Not implemented ${result}`)
+                    //console.log(mode + ": " + key_input)
+                    const result = hlib.runGraph(init.graph, "keybindings", {}, hlib)[mode][key_input];
+                    switch(result){
+                        case "up": {
+                            const parent_edges = nolib.no.runtime.get_edges_in(state.display_graph, selected);
+                            const node_id = parent_edges?.[Math.ceil(parent_edges.length / 2) - 1]?.from
+                            action = node_id ? [SelectNode, {node_id}] : [state]
+                            break;
+                        }
+                        case "down": {
+                            const child_edge = state.display_graph.edges.find(e => e.from === selected);
+                            const node_id = child_edge?.to
+                            action = node_id ? [SelectNode, {node_id}] : [state]
+                            break;
+                        }
+                        case "left": 
+                        case "right": {
+                            const dirmult = result === "left" ? 1 : -1;
+                            const current_node = nolib.no.runtime.get_node(state.display_graph, selected)
+                            const siblings = state.levels.siblings.get(selected); 
+                            const node_id = siblings.reduce((dist, sibling) => { 
+                                const sibling_node = state.nodes.find(n => n.node_id === sibling); 
+                                if(!sibling_node){ return dist } 
+                                const xdist = Math.abs(sibling_node.x - current_node.x); 
+                                dist = (dirmult * (sibling_node.x - current_node.x) < 0) && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist 
+                            }, [state.dimensions.x])?.[1]?.node_id; 
+                            action = node_id ? [SelectNode, {node_id}] : [state]
+                            break;
+                        }
+                        case "save": {
+                            effects.push([SaveGraph, state])
+                            break;
+                        }
+                        case "copy": {
+                            action = [Copy, {as: nolib.no.runtime.get_edge_out(state.display_graph, state.selected[0]).as}];
+                            break;
+                        }
+                        case "paste": {
+                            action = [Paste];
+                            break;
+                        }
+                        case "find": {
+                            action = s => [{...s, search: ""}, [FocusEffect, {selector: "#search input"}]]; 
+                            break;
+                        }
+                        case "expand_contract": {
+                            action = [ExpandContract, {node_id: state.selected[0]}];
+                            break;
+                        }
+                        case "delete_node": {
+                            action = [DeleteNode, {
+                                node_id: state.selected[0]
+                            }]
+                            break;
+                        }
+                        case "edit_name": {
+                            action = [SelectNode, { node_id: state.selected[0], focus_property: "name" }]
+                            break;
+                        }
+                        case "edit_value": {
+                            action = [SelectNode, { node_id: state.selected[0], focus_property: "value" }]
+                            break;
+                        }
+                        case "edit_ref": {
+                            action = [SelectNode, { node_id: state.selected[0], focus_property: "ref" }]
+                            break;
+                        }
+                        case "edit_edge": {
+                            action = [SelectNode, { node_id: state.selected[0], focus_property: "edge" }]
+                            break;
+                        }
+                        case "end_editing": {
+                            action = [state => [{...state, show_all: true, focused: false, editing: false}]]
+                            break;
+                        }
+                        default: {
+                            if(result !== undefined) {
+                                console.log(`Not implemented ${result}`)
+                            }
+                            nolib.no.runtime.publish(undefined, 'keydown', key_input)
+                        }
                     }
-                    nolib.no.runtime.publish(undefined, 'keydown', key_input)
                 }
             }
 
@@ -1537,7 +1547,7 @@ const hlib = {
         }
     },
     panzoom: pzobj,
-    runGraph: (graph, node, args, lib) => nolib.no.runGraph(graph, node, args, {...hlib, ...(lib ?? {})}),
+    runGraph: (graph, node, args) => nolib.no.runGraph(graph, node, args, {...hlib, ...nolib}),
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX }
 }
 

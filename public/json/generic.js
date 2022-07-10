@@ -386,7 +386,7 @@ export default {
     { "id": "arg", "description": "Get an input to the graph this is a part of.", "extern": "utility.arg" },
     {
       "id": "edge_in_argx",
-      "script": "const parent = _lib.no.runtime.get_parent(_graph); return _lib.no.runtime.get_edges_in(parent, _graph.node_id).filter(e => e.as.startsWith('arg')).reduce((acc, e) => { acc[parseInt(e.as.substring(3))] = _lib.just.get.fn(_graph, _graph_input_value, e.as); return acc; }, []).map(a => a?._Proxy ? a._value : a);"
+      "script": "const parent = _lib.no.runtime.get_parent(_graph); return _lib.no.runtime.get_edges_in(parent, _graph.node_id).filter(e => e.as.startsWith('arg')).reduce((acc, e) => { acc[parseInt(e.as.substring(3))] = _lib.just.get.fn({}, _graph_input_value, e.as); return acc; }, []).map(a => a?._Proxy ? a._value : a);"
     },
     { "id": "set_mutable", "args": ["target", "path", "value"], "script": "_lib.just.set_mutable(target, path, value); return target" },
     {
@@ -2430,6 +2430,124 @@ export default {
           "as": "self"
         }
       ],
-    }
+    },
+{
+    "id": "import_nodes",
+    "name": "import_nodes",
+    "nodes": [
+      {
+        "id": "v10aosf",
+        "name": "import_nodes",
+        "ref": "return"
+      },
+      {
+        "id": "uymxrxe",
+        "ref": "map"
+      },
+      {
+        "id": "mvg23pd"
+      },
+      {
+        "id": "jvoijof",
+        "ref": "parse"
+      },
+      {
+        "id": "yu0e7mk",
+        "ref": "runnable"
+      },
+      {
+        "id": "ffu9m49",
+        "value": "nodes",
+        "ref": "arg"
+      },
+      {
+        "id": "sl7qlmj",
+        "value": "scripts.save_graph",
+        "ref": "call"
+      },
+      {
+        "id": "cixrltc",
+        "value": "_lib.no.runtime.update_graph(graph); return graph;",
+        "ref": "script"
+      },
+      {
+        "id": "odeeqm8",
+        "value": "return _lib;",
+        "ref": "script"
+      },
+      {
+        "id": "hcp6xds",
+        "ref": "log"
+      },
+      {
+        "id": "ij46kiv",
+        "value": "return ({id: graph.id, value: graph.value, name: graph.name, nodes: graph.nodes, edges: graph.edges, out: graph.out})",
+        "ref": "script"
+      },
+      {
+        "id": "3z8hhss",
+        "value": "element",
+        "ref": "arg"
+      }
+    ],
+    "edges": [
+      {
+        "from": "uymxrxe",
+        "to": "v10aosf",
+        "as": "return"
+      },
+      {
+        "from": "mvg23pd",
+        "to": "v10aosf",
+        "as": "args"
+      },
+      {
+        "from": "jvoijof",
+        "to": "uymxrxe",
+        "as": "array"
+      },
+      {
+        "from": "yu0e7mk",
+        "to": "uymxrxe",
+        "as": "fn"
+      },
+      {
+        "from": "ffu9m49",
+        "to": "jvoijof",
+        "as": "string"
+      },
+      {
+        "from": "sl7qlmj",
+        "to": "yu0e7mk",
+        "as": "fn"
+      },
+      {
+        "from": "cixrltc",
+        "to": "sl7qlmj",
+        "as": "args"
+      },
+      {
+        "from": "odeeqm8",
+        "to": "sl7qlmj",
+        "as": "self"
+      },
+      {
+        "from": "hcp6xds",
+        "to": "cixrltc",
+        "as": "graph"
+      },
+      {
+        "from": "ij46kiv",
+        "to": "hcp6xds",
+        "as": "value"
+      },
+      {
+        "from": "3z8hhss",
+        "to": "ij46kiv",
+        "as": "graph"
+      }
+    ],
+    "out": "v10aosf"
+  }
   ]
 }
