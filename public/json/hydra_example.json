@@ -1,6 +1,5 @@
-  {
+{
     "id": "hydra_example",
-    "out": "main/out",
     "nodes": [
       {
         "id": "5a6pljw/5a6pljw",
@@ -299,5 +298,6 @@
         "to": "main/out",
         "as": "return"
       }
-    ]
+    ],
+    "out": "main/out"
   }
