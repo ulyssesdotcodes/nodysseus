@@ -2234,6 +2234,7 @@ export default {
 ,
   {
       "id": "import",
+      "out": "main/out",
       "nodes": [
         {
           "id": "args"
