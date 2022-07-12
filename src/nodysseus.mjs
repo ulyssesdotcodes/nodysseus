@@ -387,11 +387,7 @@ const node_nodes = (node, node_ref, graph_input_value, data, full_lib, graph, in
     combined_data_input.result = full_lib.no.runtime.get_result(node_graph);
     full_lib.no.runtime.set_parent(node_graph, graph);
 
-    const result = full_lib.no.runGraph(node_graph, node_ref.out || 'out', combined_data_input, full_lib);
-    if(nodysseus_get(data, 'edge.as') !== "display") {
-        full_lib.no.runtime.update_result(node_graph, result);
-    }
-    return result;
+    return full_lib.no.runGraph(node_graph, node_ref.out || 'out', combined_data_input, full_lib);;
 }
 
 const node_script = (node, node_ref, data, full_lib, graph, inputs, graph_input_value) => {

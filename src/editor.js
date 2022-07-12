@@ -675,10 +675,12 @@ const pzobj = {
         if(!payload.prevent_dispatch) {
             requestAnimationFrame(() => dispatch((s, p) => [ {...s, 
                 show_all: false, 
-                svg_offset: hlib.panzoom.instance.getTransform()
             } 
         ]));
         }
+    },
+    getTransform: function() {
+        return hlib.panzoom.instance.getTransform()
     },
     init: function (dispatch, sub_payload) {
         hlib.panzoom.lastpanzoom = 0;
@@ -754,7 +756,7 @@ const SelectNode = (state, {node_id, focus_property}) => [
     [UpdateGraphDisplay, {...state, selected: [node_id]}],
     (state.show_all || state.selected[0] !== node_id) && [pzobj.effect, {...state, node_id}],
     focus_property && [FocusEffect, {selector: `.node-info input.${focus_property}`}],
-    state.nodes.find(n => n.node_id === node_id) && [SetSelectedPositionStyleEffect, {node: state.nodes.find(n => n.node_id === node_id), svg_offset: state.svg_offset, dimensions: state.dimensions}],
+    state.nodes.find(n => n.node_id === node_id) && [SetSelectedPositionStyleEffect, {node: state.nodes.find(n => n.node_id === node_id), svg_offset: pzobj.getTransform(), dimensions: state.dimensions}],
     node_id !== state.display_graph.out && [() => update_info_display({node_id, graph_id: state.display_graph_id})],
     state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: node_id})]
 ]
@@ -1270,7 +1272,7 @@ const dispatch = (init, _lib) => {
         ]),
         info_el({
             node: Object.assign({}, s.nodes.find(n => n.node_id === s.selected[0]), nolib.no.runtime.get_node(s.display_graph, s.selected[0])),
-            hidden: s.show_all || !s.svg_offset,
+            hidden: s.show_all,
             links_in: s.links.filter(l => l.target.node_id === s.selected[0]),
             link_out: Object.assign({}, s.links.find(l => l.source.node_id === s.selected[0]), nolib.no.runtime.get_edge(s.display_graph, s.selected[0])),
             display_graph_id: s.display_graph_id,
@@ -1403,7 +1405,6 @@ const dispatch = (init, _lib) => {
                     show_all: p.event !== 'effect_transform', 
                     editing: p.event === 'effect_transform' && s.editing, 
                     focused: p.event === 'effect_transform' && s.focused, 
-                    svg_offset: p.transform, 
                     noautozoom: p.noautozoom && !s.stopped
                 }
             ]
