@@ -228,9 +228,9 @@ export default {
         {"id": "fn_run", "ref": "run"},
         {"id": "result_entry", "ref": "array"},
         {"id": "fn_runnable", "ref": "runnable"},
-        {"id": "edges", "script": "return _lib.no.runtime.get_edges_in(_lib.no.runtime.get_parent(_graph), _graph.node_id).filter(e => e.as === edge || e.as === 'publish' || e.as === 'subscribe');"},
+        {"id": "edges", "script": "return _lib.no.runtime.get_edges_in(_lib.no.runtime.get_parent(_graph), _graph.node_id).filter(e => e.as === edge || (edge === 'return' && (e.as === 'publish' || e.as === 'subscribe')));"},
         {"id": "entries", "ref": "map"},
-        {"id": "out", "script": "const res = Object.fromEntries(entries); if(edge === 'return'){ _lib.no.runtime.update_result(_graph, res.result)} Object.entries(res.publish ?? {}).forEach(([k, v]) => _lib.no.runtime.publish(k, {data: v})); _lib.no.runtime.remove_listener('*', 'subscribe-' + _graph.id); Object.entries(res.subscribe ?? {}).forEach(([k, v]) => { _lib.no.runtime.add_listener(k, 'subscribe-' + _graph.id, {...v, args: Object.assign({}, args, v.args, {result: edge === 'return' ? res[edge] : _lib.no.runtime.get_result(_graph.id)})}, false, _lib.no.runtime.get_parentest(_graph).id) }); return res[edge]"}
+        {"id": "out", "script": "const res = Object.fromEntries(entries); if(edge === 'return'){ _lib.no.runtime.update_result(_graph, res.result)} const pubfn = pub => Object.entries(pub ?? {}).forEach(([k, v]) => _lib.no.runtime.publish(k, {data: v})); if(typeof res.publish?.then === 'function'){ res.publish.then(pubfn) } else { pubfn(res.publish) } _lib.no.runtime.remove_listener('*', 'subscribe-' + _graph.id); Object.entries(res.subscribe ?? {}).forEach(([k, v]) => { _lib.no.runtime.add_listener(k, 'subscribe-' + _graph.id, {...v, args: Object.assign({}, args, v.args, {result: edge === 'return' ? res[edge] : _lib.no.runtime.get_result(_graph.id)})}, false, _lib.no.runtime.get_parentest(_graph).id) }); return res[edge]"}
       ],
       "edges": [
         {"from": "fn_args", "to": "fn", "as": "args"},
@@ -388,7 +388,22 @@ export default {
       "id": "edge_in_argx",
       "script": "const parent = _lib.no.runtime.get_parent(_graph); return _lib.no.runtime.get_edges_in(parent, _graph.node_id).filter(e => e.as.startsWith('arg')).reduce((acc, e) => { acc[parseInt(e.as.substring(3))] = _lib.just.get.fn({}, _graph_input_value, e.as); return acc; }, []).map(a => a?._Proxy ? a._value : a);"
     },
-    { "id": "set_mutable", "args": ["target", "path", "value"], "script": "_lib.just.set_mutable(target, path, value); return target" },
+    { 
+      "id": "set_mutable", 
+      "extern": "just.set_mutable",
+      "_out": "out",
+      "_nodes": [
+        {"id": "path", "ref": "arg", "value": "path"},
+        {"id": "target", "ref": "arg", "value": "target"},
+        {"id": "value", "ref": "arg", "value": "value"},
+        {"id": "out", "extern": "just.set_mutable"}
+      ],
+      "_edges": [
+        {"from": "path", "to": "out", "as": "path"},
+        {"from": "target", "to": "out", "as": "target"},
+        {"from": "value", "to": "out", "as": "value"}
+      ]
+    },
     {
       "id": "set",
       "description": "Set the property at `path` on target. Accepts a `.` separated path e.g. set(target, 'a.b', 'c') returns {...target, a: {...target.a, b: 'c'}}",
@@ -715,7 +730,6 @@ export default {
       "name": "sequence",
       "out": "out",
       "nodes": [
-        { "id": "in" },
         { "id": "args", "ref": "arg", "value": "_args" },
         { "id": "runnable_args", "ref": "arg", "value": "_args" },
         { "id": "value_args", "ref": "arg", "value": "args" },
@@ -728,7 +742,7 @@ export default {
         { "id": "map_runnables", "ref": "map" },
         {
           "id": "runnables",
-          "script": "const runnables = Object.entries(inputs).filter(e => e[0] !== 'args').map(e => [e[0], e[1] && e[1]._Proxy ? e[1]._value : e[1]]).filter(r => r[1] && (!r[1]._Proxy || r[1]._value) && r[1].hasOwnProperty('fn') && r[1].hasOwnProperty('graph')); const filtered_args = Object.fromEntries(Object.entries(args).filter(a => !runnables.find(r => r[0] === a[0]))); return runnables.map(r => r[1]).map(r => ({...r, args: {...r.args, ...filtered_args}}))"
+          "script": "const runnables = _lib.no.runtime.get_edges_in(_lib.no.runtime.get_parent(_graph), _graph.node_id).filter(e => e.as !== 'args').map(e => args[e.as]).filter(r => r && (!r._Proxy || r._value) ).map(r => r._Proxy ? r._value : r).filter(r => r.hasOwnProperty('fn') && r.hasOwnProperty('graph')); return runnables.map(r => ({...r, args: {...r.args, ...(fn_args ?? {})}}))"
         },
         { "id": "element", "ref": "arg", "value": "element", "type": "internal" },
         {
@@ -752,6 +766,7 @@ export default {
         { "from": "value_args", "to": "merged_args", "as": "a1" },
         { "from": "merged_args", "to": "seq_runnable_args", "as": "target" },
         { "from": "args_path", "to": "seq_runnable_args", "as": "path" },
+        { "from": "seq_runnable_args", "to": "runnables", "as": "fn_args" },
         { "from": "seq_runnable_args", "to": "out", "as": "args" }
       ]
     },

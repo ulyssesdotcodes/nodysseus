@@ -806,7 +806,10 @@ const nolib = {
                 return check(target, value, keys)
             },
         },
-        set_mutable: set,
+        set_mutable: {
+            args: ['target', 'path', 'value', '_node'],
+            fn: (target, path, value, node) => { set(target, node.value || path, value); return target }
+        },
         diff,
         diffApply
     },

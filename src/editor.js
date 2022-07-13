@@ -1006,7 +1006,7 @@ const insert_node_el = ({link, randid, node_el_width}) => ha.h('svg', {
     ha.h('path', {d: "M256 176v160M336 256H176", class: "add"}, [])
 ])
 
-const input_el = ({label, property, value, onchange, options, inputs}) => ha.h(
+const input_el = ({label, property, value, onchange, options, inputs, disabled}) => ha.h(
     'div',
     {
         class: 'value-input', 
@@ -1017,6 +1017,7 @@ const input_el = ({label, property, value, onchange, options, inputs}) => ha.h(
             class: property, 
             id: `edit-text-${property}`, 
             name: `edit-text-${property}`, 
+            disabled,
             list: options && options.length > 0 ? 'edit-text-list' : undefined,
             oninput: (s, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: e.target.value})}], 
             onchange: (s, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: undefined})}, [dispatch => dispatch(onchange, e)]],
@@ -1082,6 +1083,7 @@ const info_el = ({node, hidden, links_in, link_out, display_graph_id, randid, re
                     inputs,
                     options: refs,
                     onchange: (state, event) => [UpdateNode, {node, property: "ref", value: event.target.value}],
+                    disabled: node.id === graph_out
                 }),
                 link_out && link_out.source && input_el({
                     label: "edge", 
