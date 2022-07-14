@@ -1222,7 +1222,7 @@ const nolib = {
                     ? nodysseus_get(graph, node.value.substring('_graph.'.length))
                     : node.value.startsWith('_node.')
                     ? nodysseus_get(node, node.value.substring('_node.'.length))
-                    : nodysseus_get(target, node.value)
+                    : nodysseus_get(node.type === "local" ? Object.assign(target, {__args: {}}) : target, node.value)
                 : node.value !== undefined && target !== undefined
                     ? target[node.value]
                     : undefined

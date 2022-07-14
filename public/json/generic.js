@@ -593,7 +593,7 @@ export default {
       "out": "out",
       "nodes": [
         { "id": "name", "ref": "arg", "value": "name" },
-        { "id": "onevent", "ref": "arg", "value": "onevent" },
+        { "id": "onevent", "ref": "arg", "value": "onevent", "type": "local" },
         { "id": "data", "ref": "arg", "value": "_data", "type": "internal" },
         {"id": "data_log", "ref": "log"},
         {
@@ -750,7 +750,7 @@ export default {
           "script": "return new Promise((resolve, reject) => resolve(_lib.no.runGraph(runnable.graph, runnable.fn, runnable.args, _lib)));"
         },
         { "id": "map_fn_runnable", "ref": "runnable" },
-        { "name": "seq_runnable", "id": "out", "ref": "runnable" }
+        { "id": "out", "ref": "runnable", "name": "seq_runnable" }
       ],
       "edges": [
         { "from": "in", "to": "runnables", "as": "inputs" },
