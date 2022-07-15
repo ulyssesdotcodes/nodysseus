@@ -39,7 +39,7 @@ function nodysseus_get(obj, propsArg, defaultValue) {
         continue;
     }
     prop = props.length == 0 ? props[0] : props.shift();
-    if((obj === undefined || typeof obj !== 'object' || (obj[prop] === undefined && !obj.hasOwnProperty(prop))) && prop !== "args"){
+    if((obj === undefined || typeof obj !== 'object' || (obj[prop] === undefined && !obj.hasOwnProperty(prop)))){
         return objArg && objArg.__args ? nodysseus_get(objArg.__args, propsArg, defaultValue) : defaultValue;
     }
 
@@ -873,7 +873,6 @@ const nolib = {
                     }
                 }
 
-
                 if(event === 'animationframe' && listeners.size > 0 && !animationframe) {
                     animationframe = requestAnimationFrame(() => {animationframe = false; publish('animationframe')});
                 }
@@ -881,15 +880,17 @@ const nolib = {
                 return data;
             }
 
-            const add_listener = (event, listener_id, input_fn, remove, graph_id) => {
+            const add_listener = (event, listener_id, input_fn, remove, graph_id, prevent_initial_trigger) => {
                 const listeners = getorset(event_listeners, event, () => new Map());
                 const fn = typeof input_fn === "function" ? input_fn : args => nolib.no.runGraph(input_fn.graph, input_fn.fn, Object.assign({}, input_fn.args, args))
                 if(!listeners.has(listener_id)) {
-                    requestAnimationFrame(() => {
-                        if(event_data.has(event)) {
-                            fn(event_data.get(event));
-                        }
-                    })
+                    if(!prevent_initial_trigger) {
+                        requestAnimationFrame(() => {
+                            if(event_data.has(event)) {
+                                fn(event_data.get(event));
+                            }
+                        })
+                    }
 
                     if(graph_id) {
                         const graph_id_listeners = getorset(event_listeners_by_graph, graph_id, () => new Map());
@@ -1222,7 +1223,7 @@ const nolib = {
                     ? nodysseus_get(graph, node.value.substring('_graph.'.length))
                     : node.value.startsWith('_node.')
                     ? nodysseus_get(node, node.value.substring('_node.'.length))
-                    : nodysseus_get(node.type === "local" ? Object.assign(target, {__args: {}}) : target, node.value)
+                    : nodysseus_get(node.type === "local" ? Object.assign(target, {__args: {}}) : node.type === "parent" ? target.__args : target, node.value)
                 : node.value !== undefined && target !== undefined
                     ? target[node.value]
                     : undefined

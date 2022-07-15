@@ -204,15 +204,65 @@ export default {
       ]
     },
     {
+      "id": "edge_in_argx",
+      "script": "const parent = _lib.no.runtime.get_parent(_graph); return _lib.no.runtime.get_edges_in(parent, _graph.node_id).filter(e => e.as.startsWith('arg')).reduce((acc, e) => { acc[parseInt(e.as.substring(3))] = _lib.just.get.fn({}, _graph_input_value, e.as); return acc; }, []).map(a => a?._Proxy ? a._value : a);"
+    },
+    {
+      "id": "input_edge",
+      "out": "out",
+      "nodes": [
+        {
+          "id": "out", 
+          "ref": "script", 
+          "value": "const parent = _lib.no.runtime.get_parent(_graph); const super_parent = _lib.no.runtime.get_parent(parent); const edge = _lib.no.runtime.get_edges_in(super_parent, parent.node_id).find(e => e.as === _graph.value); return edge"
+        }
+      ],
+      "edges": [
+      ]
+    },
+    {
+      "id": "runnable_return",
+      "out": "out",
+      "nodes": [
+        {"id": "return_arg", "ref": "arg", "value": "return"},
+        {"id": "display", "ref": "arg", "value": "display"},
+        {"id": "publish", "ref": "arg", "value": "publish"},
+        {"id": "subscribe", "ref": "arg", "value": "subscribe"},
+        {"id": "args", "ref": "arg", "value": "args"},
+        {"id": "context", "ref": "arg", "value": "_args"},
+        {"id": "overwrite_args", "_value": {"publish": false, "subscribe": false, "return": false} },
+        {"id": "merge_args", "ref": "merge_objects"},
+        {"id": "return_node", "ref": "return"},
+        {"id": "out", "ref": "runnable"}
+      ],
+      "edges": [
+        {"from": "return_arg", "to": "return_node", "as": "return"},
+        {"from": "display", "to": "return_node", "as": "display"},
+        {"from": "subscribe", "to": "return_node", "as": "subscribe"},
+        {"from": "publish", "to": "return_node", "as": "publish"},
+        {"from": "display_2", "to": "overwrite_args", "as": "display"},
+        {"from": "subscribe_2", "to": "overwrite_args", "as": "subscribe"},
+        {"from": "publish_2", "to": "overwrite_args", "as": "publish"},
+        {"from": "return_arg_2", "to": "overwrite_args", "as": "return"},
+        {"from": "args", "to": "merge_args", "as": "a0"},
+        {"from": "context", "to": "_merge_args", "as": "a1"},
+        {"from": "overwrite_args", "to": "merge_args", "as": "a2"},
+        {"from": "merge_args", "to": "_out", "as": "args"},
+        {"from": "overwrite_args", "to": "return_node", "as": "args"},
+        {"from": "merge_args", "to": "out", "as": "args"},
+        {"from": "return_node", "to": "out", "as": "fn"}
+      ]
+    },
+    {
       "id": "return",
       "out": "out",
       "nodes": [
         {"id": "node_args", "ref": "arg", "value": "_args"},
         {"id": "fn_args", "ref": "arg", "value": "_args"},
-        {"id": "return", "ref": "arg", "value": "return"},
-        {"id": "display", "ref": "arg", "value": "display"},
-        {"id": "publish", "ref": "arg", "value": "publish"},
-        {"id": "subscribe", "ref": "arg", "value": "subscribe"},
+        {"id": "return_edge", "ref": "input_edge", "value": "return"},
+        {"id": "display_edge", "ref": "input_edge", "value": "display"},
+        {"id": "publish_edge", "ref": "input_edge", "value": "publish"},
+        {"id": "subscribe_edge", "ref": "input_edge", "value": "subscribe"},
         {"id": "edge", "ref": "arg", "value": "edge"},
         {"id": "edge_as", "ref": "get", "value": "as"},
         {"id": "is_edge_for_node", "ref": "script", "value": "return edge && _graph.id.startsWith(edge.node_id)"},
@@ -222,17 +272,25 @@ export default {
         {"id": "is_parentest", "ref": "script", "value": "const parent = _lib.no.runtime.get_parent(_graph); return !_lib.no.runtime.get_parent(parent) || _graph.node_id !== parent.out"},
         {"id": "top_level_args", "ref": "if"},
         {"id": "merged_args", "ref": "merge_objects"},
+        {"id": "test_args"},
         {"id": "fn_el_from", "ref": "arg", "value": "element.from"},
         {"id": "fn_el_as", "ref": "arg", "value": "element.as"},
-        {"id": "fn", "script": "return {fn, graph: _lib.no.runtime.get_parent(_graph), args: {...(args ?? {}), edge: undefined, args: undefined}}"},
+        {"id": "fn", "script": "return {fn, graph: _lib.no.runtime.get_parent(_graph), args: Object.fromEntries(Object.entries(args).filter(e => e[0] !== 'edge'))}"},
         {"id": "fn_run", "ref": "run"},
         {"id": "result_entry", "ref": "array"},
         {"id": "fn_runnable", "ref": "runnable"},
-        {"id": "edges", "script": "return _lib.no.runtime.get_edges_in(_lib.no.runtime.get_parent(_graph), _graph.node_id).filter(e => e.as === edge || (edge === 'return' && (e.as === 'publish' || e.as === 'subscribe')));"},
+        {"id": "edges_array", "ref": "array"},
+        {"id": "edges", "script": "const edges = arr.filter(e => e && (e.as === edge || (edge === 'return' && (e.as === 'publish' || e.as === 'subscribe')))); return edges;"},
         {"id": "entries", "ref": "map"},
-        {"id": "out", "script": "const res = Object.fromEntries(entries); if(edge === 'return'){ _lib.no.runtime.update_result(_graph, res.result)} const pubfn = pub => Object.entries(pub ?? {}).forEach(([k, v]) => _lib.no.runtime.publish(k, {data: v})); if(typeof res.publish?.then === 'function'){ res.publish.then(pubfn) } else { pubfn(res.publish) } _lib.no.runtime.remove_listener('*', 'subscribe-' + _graph.id); Object.entries(res.subscribe ?? {}).forEach(([k, v]) => { _lib.no.runtime.add_listener(k, 'subscribe-' + _graph.id, {...v, args: Object.assign({}, args, v.args, {result: edge === 'return' ? res[edge] : _lib.no.runtime.get_result(_graph.id)})}, false, _lib.no.runtime.get_parentest(_graph).id) }); return res[edge]"}
+        {"id": "run_pub", "ref": "script", "value": "const res = Object.fromEntries(entries); if(res.subscribe){ console.log(res); } const pubfn = pub => Object.entries(pub ?? {}).forEach(([k, v]) => _lib.no.runtime.publish(k, {data: v})); if(typeof res.publish?.then === 'function'){ res.publish.then(pubfn) } else { pubfn(res.publish) } return res;"},
+        {"id": "out", "script": "if(edge === 'return'){ _lib.no.runtime.update_result(_graph, res.result); _lib.no.runtime.remove_listener('*', 'subscribe-' + _graph.id); Object.entries(res.subscribe ?? {}).filter(kv => kv[1]).forEach(([k, v]) => { _lib.no.runtime.add_listener(k, 'subscribe-' + _graph.id, {...v, args: Object.assign({}, args, v.args, {result: edge === 'return' ? res[edge] : _lib.no.runtime.get_result(_graph.id)})}, false, _lib.no.runtime.get_parentest(_graph).id, true) }); } return res[edge]"}
       ],
       "edges": [
+        {"to": "edges_array", "from": "return_edge", "as": "arg0"},
+        {"to": "edges_array", "from": "display_edge", "as": "arg1"},
+        {"to": "edges_array", "from": "subscribe_edge", "as": "arg2"},
+        {"to": "edges_array", "from": "publish_edge", "as": "arg3"},
+        {"from": "edges_array", "to": "edges", "as": "arr"},
         {"from": "fn_args", "to": "fn", "as": "args"},
         {"from": "fn_el_from", "to": "fn", "as": "fn"},
         {"from": "fn", "to": "fn_run", "as": "runnable"},
@@ -244,12 +302,13 @@ export default {
         {"from": "edges", "to": "entries", "as": "array"},
         {"from": "is_parentest", "to": "top_level_args", "as": "pred"},
         {"from": "args", "to": "top_level_args", "as": "true"},
-        {"from": "top_level_args", "to": "merged_args", "as": "a0"},
-        {"from": "node_args", "to": "merged_args", "as": "a1"},
+        {"from": "top_level_args", "to": "merged_args", "as": "a1"},
+        {"from": "node_args", "to": "merged_args", "as": "a0"},
         {"from": "merged_args", "to": "entries", "as": "args"},
         {"from": "node_args", "to": "edges", "as": "args"},
         {"from": "args", "to": "out", "as": "args"},
-        {"from": "entries", "to": "out", "as": "entries"},
+        {"from": "entries", "to": "run_pub", "as": "entries"},
+        {"from": "run_pub", "to": "out", "as": "res"},
         {"from": "default_edge", "to": "out", "as": "edge"},
         {"from": "default_edge", "to": "edges", "as": "edge"},
         {"from": "return_str", "to": "default_edge", "as": "false"},
@@ -384,10 +443,6 @@ export default {
       ]
     },
     { "id": "arg", "description": "Get an input to the graph this is a part of.", "extern": "utility.arg" },
-    {
-      "id": "edge_in_argx",
-      "script": "const parent = _lib.no.runtime.get_parent(_graph); return _lib.no.runtime.get_edges_in(parent, _graph.node_id).filter(e => e.as.startsWith('arg')).reduce((acc, e) => { acc[parseInt(e.as.substring(3))] = _lib.just.get.fn({}, _graph_input_value, e.as); return acc; }, []).map(a => a?._Proxy ? a._value : a);"
-    },
     { 
       "id": "set_mutable", 
       "extern": "just.set_mutable",
@@ -514,7 +569,7 @@ export default {
         {"id": "value", "ref": "arg", "value": "value"},
         {"id": "env", "ref": "arg", "value": "_args", "type": "internal"},
         {"id": "prev_value", "ref": "get"},
-        {"id": "out", "script": "if(!_lib.utility.compare(env[name]._value, value)){ _lib.no.runtime.update_graph(_lib.no.runtime.get_parentest(_graph), {[name]: value});} return value;"}
+        {"id": "out", "script": "if(!_lib.utility.compare(env[name]._value, value)){ _lib.no.runtime.update_graph(_lib.no.runtime.get_parent(_graph), {[name]: value});} return value;"}
       ],
       "edges": [
         {"from": "name", "to": "out", "as": "name"},
