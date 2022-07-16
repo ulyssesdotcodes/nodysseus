@@ -1029,13 +1029,13 @@ const input_el = ({label, property, value, onchange, options, inputs, disabled})
     ]
 )
 
-const info_el = ({node, hidden, links_in, link_out, display_graph_id, randid, refs, html_id, copied_graph, inputs, graph_out})=> {
+const info_el = ({node, hidden, links_in, link_out, display_graph_id, randid, refs, html_id, copied_graph, inputs, graph_out, editing})=> {
     const node_ref = node.ref ? nolib.no.runtime.get_ref(display_graph_id, node.ref) : node;
     const description =  node_ref?.description;
     return ha.h('div', {id: "node-info-wrapper"}, [ha.h('div', {class: "spacer before"}, []), ha.h(
         'div',
         { 
-            class: {'node-info': true, hidden}, 
+            class: {'node-info': true, hidden, editing}, 
             onfocusin: state => [{...state, editing: true}], 
             onblurout: state => [{...state, editing: false}] 
         },
@@ -1279,6 +1279,7 @@ const dispatch = (init, _lib) => {
             link_out: Object.assign({}, s.links.find(l => l.source.node_id === s.selected[0]), nolib.no.runtime.get_edge(s.display_graph, s.selected[0])),
             display_graph_id: s.display_graph_id,
             randid: s.randid,
+            editing: s.editing,
             refs: nolib.no.runtime.refs(),
             html_id: s.html_id,
             copied_graph: s.copied?.graph,
