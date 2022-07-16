@@ -1281,7 +1281,7 @@ const dispatch = (init, _lib) => {
             randid: s.randid,
             refs: nolib.no.runtime.refs(),
             html_id: s.html_id,
-            copied_graph: s.copied_graph,
+            copied_graph: s.copied.graph,
             inputs: s.inputs,
             graph_out: s.display_graph.out
         }),
