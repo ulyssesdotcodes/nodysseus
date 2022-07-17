@@ -654,11 +654,11 @@ export default {
         { "id": "main/out", "name": "input_value", "ref": "return" },
         { "id": "cfuymky", "value": "{\"a\": 1, \"b\": {\"c\": 2, \"d\": 3}}" },
         { "id": "4d8qcss", "ref": "html_text" },
+        { "id": "rpys4rr", "value": "value", "ref": "arg" },
         { "id": "1znvqbi", "value": "result", "ref": "arg", "type": "internal" },
         { "id": "qwz3ftj", "ref": "script", "value": "return typeof object !== 'object' || Array.isArray(object) || Object.getPrototype(object) === Object.prototype ? JSON.stringify(object) : Object.getPrototype(object).constructor.name" },
         { "id": "5a6pljw", "value": "pre", "ref": "html_element" },
         { "id": "17pcf8z", "value": "2" },
-        { "id": "rpys4rr", "value": "value", "ref": "arg" }
       ],
       "edges": [
         { "from": "5a6pljw", "to": "main/out", "as": "display" },
@@ -2780,6 +2780,195 @@ export default {
       }
     ],
     "out": "0g1zopd"
+  },
+{
+    "id": "deleteref",
+    "nodes": [
+      {
+        "id": "args"
+      },
+      {
+        "id": "jklqh38",
+        "ref": "html_element"
+      },
+      {
+        "id": "6qkew20",
+        "ref": "array"
+      },
+      {
+        "id": "s901gau",
+        "value": "button",
+        "ref": "html_element"
+      },
+      {
+        "id": "r29uz24"
+      },
+      {
+        "id": "ry9drh5",
+        "ref": "runnable"
+      },
+      {
+        "id": "tad7830",
+        "value": "test"
+      },
+      {
+        "id": "riwuwbo",
+        "value": "input",
+        "ref": "html_element"
+      },
+      {
+        "id": "59gcmwe"
+      },
+      {
+        "id": "m9wjk35",
+        "ref": "runnable_return"
+      },
+      {
+        "id": "5rneqyp"
+      },
+      {
+        "id": "mogbcfo",
+        "ref": "runnable"
+      },
+      {
+        "id": "hsmuv28",
+        "value": "stopPropagation",
+        "ref": "call"
+      },
+      {
+        "id": "lfn812d",
+        "value": "payload.event",
+        "ref": "arg"
+      },
+      {
+        "id": "ryomnvu",
+        "value": "payload.event.target.value",
+        "ref": "arg"
+      },
+      {
+        "id": "5jnnwil",
+        "value": "return _lib.no.runtime.refs().filter(r => r.startsWith(namespace + '.') || r === namespace)",
+        "ref": "event_subscriber"
+      },
+      {
+        "id": "ouvvf06",
+        "value": "delete",
+        "ref": "html_text"
+      },
+      {
+        "id": "qc52702",
+        "value": "return _lib.no.runtime.refs().filter(r => r.startsWith(namespace + '.') || r === namespace)",
+        "ref": "script"
+      },
+      {
+        "id": "e4sglil",
+        "value": "refs.forEach(r => localStorage.removeItem(r));",
+        "ref": "script"
+      },
+      {
+        "id": "main/out",
+        "name": "export",
+        "ref": "return"
+      }
+    ],
+    "edges": [
+      {
+        "from": "args",
+        "to": "main/out",
+        "as": "args"
+      },
+      {
+        "from": "jklqh38",
+        "to": "main/out",
+        "as": "display"
+      },
+      {
+        "from": "6qkew20",
+        "to": "jklqh38",
+        "as": "children"
+      },
+      {
+        "from": "tad7830",
+        "to": "args",
+        "as": "namespace"
+      },
+      {
+        "from": "ouvvf06",
+        "to": "s901gau",
+        "as": "children"
+      },
+      {
+        "from": "r29uz24",
+        "to": "s901gau",
+        "as": "props"
+      },
+      {
+        "from": "ry9drh5",
+        "to": "r29uz24",
+        "as": "onclick"
+      },
+      {
+        "from": "riwuwbo",
+        "to": "6qkew20",
+        "as": "arg2"
+      },
+      {
+        "from": "59gcmwe",
+        "to": "riwuwbo",
+        "as": "props"
+      },
+      {
+        "from": "m9wjk35",
+        "to": "59gcmwe",
+        "as": "onchange"
+      },
+      {
+        "from": "5rneqyp",
+        "to": "m9wjk35",
+        "as": "publish"
+      },
+      {
+        "from": "ryomnvu",
+        "to": "5rneqyp",
+        "as": "name"
+      },
+      {
+        "from": "mogbcfo",
+        "to": "59gcmwe",
+        "as": "onkeydown"
+      },
+      {
+        "from": "hsmuv28",
+        "to": "mogbcfo",
+        "as": "fn"
+      },
+      {
+        "from": "lfn812d",
+        "to": "hsmuv28",
+        "as": "self"
+      },
+      {
+        "from": "e4sglil",
+        "to": "ry9drh5",
+        "as": "fn"
+      },
+      {
+        "from": "5jnnwil",
+        "to": "qc52702",
+        "as": "namespace"
+      },
+      {
+        "from": "s901gau",
+        "to": "6qkew20",
+        "as": "arg3"
+      },
+      {
+        "from": "qc52702",
+        "to": "e4sglil",
+        "as": "refs"
+      }
+    ],
+    "out": "main/out"
   }
   ]
 }

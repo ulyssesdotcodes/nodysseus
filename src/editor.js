@@ -823,7 +823,7 @@ const CreateRef = (state, {node}) => [
 
 const ancestor_graph = (node_id, from_graph) => {
     let edges_in;
-    let queue = [...node_id];
+    let queue = [node_id];
     const graph = {nodes: [], edges: []};
     while(queue.length > 0) {
         let node_id = queue.pop();

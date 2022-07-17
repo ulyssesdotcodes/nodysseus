@@ -779,7 +779,7 @@ const getorset = (map, id, value_fn) => {
     }
 }
 
-const base_node = node => node.ref ? ({id: node.id, value: node.value, name: node.name, ref: node.ref}) : base_graph(node);
+const base_node = node => node.ref || node.extern ? ({id: node.id, value: node.value, name: node.name, ref: node.ref, extern: node.extern}) : base_graph(node);
 const base_graph = graph => ({id: graph.id, value: graph.value, name: graph.name, nodes: graph.nodes, edges: graph.edges, out: graph.out})
 
 const nolib = {
@@ -839,7 +839,7 @@ const nolib = {
             const resultsdb = db.addCollection("results", {unique: ["id"]});
             const inputdatadb = db.addCollection("inputdata", {unique: ["id"]});
             const argsdb = db.addCollection("args", {unique: ["id"]});
-            generic.nodes.map(n => refsdb.insert(n));
+            generic.nodes.map(n => refsdb.insert({id: n.id, data: n}));
             
             const parentdb = db.addCollection("parents", {unique: ["id"]});
             const new_graph_cache = (graph) => ({
@@ -986,9 +986,9 @@ const nolib = {
                 } else {
                     const existing = refsdb.by("id", graph.id);
                     if(existing) {
-                        refsdb.update(Object.assign(existing, graph))
+                        refsdb.update(Object.assign(existing, {data: graph}))
                     } else {
-                        refsdb.insert(graph)
+                        refsdb.insert({id: graph.id, data: graph})
                     }
                     publish('graphchange', graph);
                 }
@@ -1012,7 +1012,8 @@ const nolib = {
 
             const get_ref = (graph, id) => {
                 const parentest = graph && get_parentest(graph);
-                return refsdb.by("id", id) || (parentest ? get_ref(parentest, id) : (graph && get_node(graph, id)));
+                const fromdb = refsdb.by("id", id)?.data;
+                return fromdb ? fromdb : (parentest ? get_ref(parentest, id) : (graph && get_node(graph, id)));
             }
             const get_node = (graph, id) => getorsetgraph(graph, id, 'node_map', () =>
                 get_graph(graph).nodes.find(n => n.id === id));
