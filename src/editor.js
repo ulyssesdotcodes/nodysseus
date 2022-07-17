@@ -821,19 +821,22 @@ const CreateRef = (state, {node}) => [
     }]
 ]
 
-const Copy = (state, {cut, as}) => {
+const ancestor_graph = (node_id, from_graph) => {
     let edges_in;
-    let queue = [...state.selected];
+    let queue = [...node_id];
     const graph = {nodes: [], edges: []};
     while(queue.length > 0) {
         let node_id = queue.pop();
-        graph.nodes.push({...nolib.no.runtime.get_node(state.display_graph, node_id)})
-        edges_in = nolib.no.runtime.get_edges_in(state.display_graph, node_id);
+        graph.nodes.push({...nolib.no.runtime.get_node(from_graph, node_id)})
+        edges_in = nolib.no.runtime.get_edges_in(from_graph, node_id);
         graph.edges = graph.edges.concat(edges_in);
         edges_in.forEach(e => queue.push(e.from));
     }
+    return graph;
+}
 
-    return {...state, copied: {graph: graph, root: state.selected[0], as}};
+const Copy = (state, {cut, as}) => {
+    return {...state, copied: {graph: ancestor_graph(state.selected[0], state.display_graph), root: state.selected[0], as}};
 }
 
 const Paste = state => [
