@@ -829,6 +829,8 @@ const nolib = {
             
             return res;
         },
+        base_graph,
+        base_node,
         resolve,
         objToGraph,
         NodysseusError,

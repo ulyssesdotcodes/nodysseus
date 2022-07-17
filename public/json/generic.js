@@ -656,7 +656,7 @@ export default {
         { "id": "4d8qcss", "ref": "html_text" },
         { "id": "rpys4rr", "value": "value", "ref": "arg" },
         { "id": "1znvqbi", "value": "result", "ref": "arg", "type": "internal" },
-        { "id": "qwz3ftj", "ref": "script", "value": "return typeof object !== 'object' || Array.isArray(object) || Object.getPrototype(object) === Object.prototype ? JSON.stringify(object) : Object.getPrototype(object).constructor.name" },
+        { "id": "qwz3ftj", "ref": "script", "value": "return typeof object !== 'object' || Array.isArray(object) || Object.getPrototypeOf(object) === Object.prototype ? JSON.stringify(object) : Object.getPrototypeOf(object).constructor.name" },
         { "id": "5a6pljw", "value": "pre", "ref": "html_element" },
         { "id": "17pcf8z", "value": "2" },
       ],
