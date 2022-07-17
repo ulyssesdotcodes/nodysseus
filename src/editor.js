@@ -1043,7 +1043,10 @@ const info_el = ({node, hidden, links_in, link_out, display_graph_id, randid, re
             ha.h('div', {class: "args"}, 
                 [...new Set((node_ref?.extern 
                 ? nolib.just.get.fn({}, nolib, node_ref.extern).args
-                : node_ref?.nodes?.filter(n => n.ref === "arg" && n.type !== "internal").map(n => n.value) ?? [])
+                : node_ref?.nodes?.filter(n => 
+                    n.ref === "arg" 
+                    && n.type !== "internal" 
+                    && !(Array.isArray(n.type) && n.type.includes("internal"))).map(n => n.value) ?? [])
                     .filter(a => !a.includes('.') && !a.startsWith("_")))]
                     .concat(
                         ["arg" + ((links_in.filter(l => 
@@ -1180,7 +1183,7 @@ const result_display = html_id => ha.app({
         try{
             return run_h(s.el);
         } catch(e) {
-            return show_error(e, JSON.stringify(s.el));
+            return run_h(show_error(e, JSON.stringify(s.el)));
         }
     }
 })
