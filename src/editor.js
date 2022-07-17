@@ -880,6 +880,8 @@ const ChangeDisplayGraphId = (dispatch, {id, select_out}) => {
             [dispatch => {
                 requestAnimationFrame(() => {
                     const new_graph = graph || Object.assign({}, base_graph(state.display_graph), {id});
+                    const mainout = new_graph.nodes.find(n => n.id === new_graph.out);
+                    mainout.name = new_graph.id;
                     nolib.no.runtime.update_graph(new_graph);
                     nolib.no.runtime.remove_graph_listeners(state.display_graph_id);
                     dispatch(SelectNode, {node_id: new_graph.out})
