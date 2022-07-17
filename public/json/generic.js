@@ -304,8 +304,8 @@ export default {
         {"id": "_edges", "script": "const edges = _lib.no.runtime.get_edges_in(_lib.no.runtime.get_parent(_graph), _graph.node_id).filter(e => e.as === edge || (edge === 'return' && (e.as === 'publish' || e.as === 'subscribe'))); return edges;"},
         {"id": "edges", "script": "const edges = arr.map(e => e._value).filter(e => e && (e.as === edge || (edge === 'return' && (e.as === 'publish' || e.as === 'subscribe')))); return edges;"},
         {"id": "entries", "ref": "map"},
-        {"id": "run_pub", "ref": "script", "value": "const res = Object.fromEntries(entries); const pubfn = pub => Object.entries(pub ?? {}).forEach(([k, v]) => _lib.no.runtime.publish(k, {data: v})); if(typeof res.publish?.then === 'function'){ res.publish.then(pubfn) } else { pubfn(res.publish) } return res;"},
-        {"id": "out", "script": "if(edge === 'return'){ _lib.no.runtime.update_result(_graph, res.result); _lib.no.runtime.remove_listener('*', 'subscribe-' + _graph.id); Object.entries(res.subscribe ?? {}).filter(kv => kv[1]).forEach(([k, v]) => { _lib.no.runtime.add_listener(k, 'subscribe-' + _graph.id, {...v, args: Object.assign({}, args, v.args, {result: edge === 'return' ? res[edge] : _lib.no.runtime.get_result(_graph.id)})}, false, _lib.no.runtime.get_parentest(_graph).id, true) }); } return res[edge]"}
+        {"id": "run_pub", "ref": "script", "value": "const res = Object.fromEntries(entries); const pubfn = pub => Object.entries(pub ?? {}).forEach(([k, v]) => _lib.no.runtime.publish(k, {data: v, result: edge === 'return' ? res[edge] : _lib.no.runtime.get_result(_graph)})); if(typeof res.publish?.then === 'function'){ res.publish.then(pubfn) } else { pubfn(res.publish) } return res;"},
+        {"id": "out", "script": "if(edge === 'return'){ _lib.no.runtime.update_result(_graph, res.return); _lib.no.runtime.remove_listener('*', 'subscribe-' + _graph.id); Object.entries(res.subscribe ?? {}).filter(kv => kv[1]).forEach(([k, v]) => { _lib.no.runtime.add_listener(k, 'subscribe-' + _graph.id, {...v, args: Object.assign({}, args, v.args, {result: edge === 'return' ? res[edge] : _lib.no.runtime.get_result(_graph.id)})}, false, _lib.no.runtime.get_parentest(_graph).id, true) }); } return res[edge]"}
       ],
       "edges": [
         {"from": "return_edge_arg", "to": "return_edge", "as": "value"},
@@ -338,6 +338,7 @@ export default {
         {"from": "edges_array", "to": "edges", "as": "arr"},
         {"from": "args", "to": "out", "as": "args"},
         {"from": "entries", "to": "run_pub", "as": "entries"},
+        {"from": "default_edge", "to": "run_pub", "as": "edge"},
         {"from": "run_pub", "to": "out", "as": "res"},
         {"from": "default_edge", "to": "out", "as": "edge"},
         {"from": "default_edge", "to": "edges", "as": "edge"},
@@ -648,19 +649,18 @@ export default {
     },
     {
       "id": "input_value",
+      "out": "main/out",
       "nodes": [
-        { "id": "args" },
         { "id": "main/out", "name": "input_value", "ref": "return" },
         { "id": "cfuymky", "value": "{\"a\": 1, \"b\": {\"c\": 2, \"d\": 3}}" },
         { "id": "4d8qcss", "ref": "html_text" },
-        { "id": "1znvqbi", "value": "value", "ref": "arg" },
-        { "id": "qwz3ftj", "ref": "stringify" },
+        { "id": "1znvqbi", "value": "result", "ref": "arg", "type": "internal" },
+        { "id": "qwz3ftj", "ref": "script", "value": "return typeof object !== 'object' || Array.isArray(object) || Object.getPrototype(object) === Object.prototype ? JSON.stringify(object) : Object.getPrototype(object).constructor.name" },
         { "id": "5a6pljw", "value": "pre", "ref": "html_element" },
         { "id": "17pcf8z", "value": "2" },
         { "id": "rpys4rr", "value": "value", "ref": "arg" }
       ],
       "edges": [
-        { "from": "args", "to": "main/out", "as": "args" },
         { "from": "5a6pljw", "to": "main/out", "as": "display" },
         { "from": "cfuymky", "to": "args", "as": "value" },
         { "from": "4d8qcss", "to": "5a6pljw", "as": "children" },
@@ -669,7 +669,6 @@ export default {
         { "from": "qwz3ftj", "to": "4d8qcss", "as": "text" },
         { "from": "rpys4rr", "to": "main/out", "as": "return" }
       ],
-      "out": "main/out"
     },
     {
       "id": "event_subscriber",
