@@ -2847,7 +2847,7 @@ export default {
       },
       {
         "id": "5jnnwil",
-        "value": "return _lib.no.runtime.refs().filter(r => r.startsWith(namespace + '.') || r === namespace)",
+        "value": "name",
         "ref": "event_subscriber"
       },
       {
