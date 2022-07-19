@@ -33,6 +33,10 @@
     background-color: unset;
 }
 
+#node-editor-editor-panzoom {
+    pointer-events: all;
+}
+
 svg {
     user-select: none;
 }

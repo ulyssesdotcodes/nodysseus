@@ -858,6 +858,7 @@ const nolib = {
             const getorsetgraph = (graph, id, path, valfn) => getorset(get_cache(graph)[path], id, valfn);
             let animationframe;
             const publish = (event, data) => {
+                data = resolve(data);
                 event_data.set(event, data);
                 if (event === 'graphchange') {
                     const gcache = get_cache(data.id);
@@ -1226,7 +1227,10 @@ const nolib = {
                     ? nodysseus_get(graph, node.value.substring('_graph.'.length))
                     : node.value.startsWith('_node.')
                     ? nodysseus_get(node, node.value.substring('_node.'.length))
-                    : nodysseus_get(node.type === "local" ? Object.assign({}, target, {__args: {}}) : node.type === "parent" ? target.__args : target, node.value)
+                    : nodysseus_get(node.type === "local" || node.type?.includes?.("local") 
+                        ? Object.assign({}, target, {__args: {}}) 
+                        : node.type === "parent" || node.type?.includes?.("parent") 
+                        ? target.__args : target, node.value)
                 : node.value !== undefined && target !== undefined
                     ? target[node.value]
                     : undefined
@@ -1258,10 +1262,12 @@ const nolib = {
             }
         },
         fetch: {
+            resolve: true,
             args: ['_node', 'url', 'params'],
             fn: (node, url, params) => resfetch(url || node.value, params)
         },
         call: {
+            resolve: true,
             args: ['_node', 'self', 'fn', 'args', '_graph_input_value'],
             fn: (node, self, fn, args, _args) => typeof self === 'function' 
                 ? Array.isArray(args) 

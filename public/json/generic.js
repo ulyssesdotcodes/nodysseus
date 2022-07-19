@@ -1367,7 +1367,7 @@ export default {
           },
           {
             "id": "main/out",
-            "name": "export",
+            "name": "canvas-behind-editor",
             "ref": "return"
           }
         ],
@@ -2867,7 +2867,7 @@ export default {
       },
       {
         "id": "main/out",
-        "name": "export",
+        "name": "deleteref",
         "ref": "return"
       }
     ],
