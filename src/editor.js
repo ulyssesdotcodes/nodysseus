@@ -713,14 +713,13 @@ const pzobj = {
                 if(e.buttons == 4 || e.altKey) {
                     if(!currentEvent) {
                         currentEvent = {
-                            is_x_direction: Math.abs(e.movementX) > Math.abs(e.movementY),
                             offset: {
                                 x: e.offsetX,
                                 y: e.offsetY
                             }
                         }
                     }
-                    const movementSign = currentEvent.is_x_direction ? e.movementX : -e.movementY;
+                    const movementSign = Math.abs(e.movementX) > Math.abs(e.movementY) ? e.movementX : -e.movementY;
                     const scaleMultiplier = 1 + movementSign * 0.01;
                     hlib.panzoom.instance.zoomTo(currentEvent.offset.x, currentEvent.offset.y, scaleMultiplier);
                 } else {
@@ -778,7 +777,7 @@ const SelectNode = (state, {node_id, focus_property}) => [
     !state.show_all && [pzobj.effect, {...state, node_id: node_id}],
     [UpdateGraphDisplay, {...state, selected: [node_id]}],
     (state.show_all || state.selected[0] !== node_id) && [pzobj.effect, {...state, node_id}],
-    focus_property && [(console.log(focus_property), FocusEffect), {selector: `.node-info input.${focus_property}`}],
+    focus_property && [FocusEffect, {selector: `.node-info input.${focus_property}`}],
     state.nodes.find(n => n.node_id === node_id) && [SetSelectedPositionStyleEffect, {node: state.nodes.find(n => n.node_id === node_id), svg_offset: pzobj.getTransform(), dimensions: state.dimensions}],
     node_id !== state.display_graph.out && [() => update_info_display({node_id, graph_id: state.display_graph_id})],
     state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: node_id})]

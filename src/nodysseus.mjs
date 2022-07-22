@@ -5,14 +5,27 @@ import { diffApply } from "just-diff-apply";
 import loki from "lokijs";
 
 let resfetch = typeof fetch !== "undefined" ? fetch : 
-    (url, params) => import('https').then(https => new Promise((resolve, reject) => https.request(params, async response => {
+    (urlstr, params) => import('node:https').then(https => new Promise((resolve, reject) => {
+        const url = new URL(urlstr);
+        const req = https.request({
+            hostname: url.hostname,
+            port: url.port,
+            path: url.pathname + url.search,
+            headers: params.headers,
+            method: params.method.toUpperCase()
+        }, async response => {
             const buffer = [];
             for await(const chunk of response) {
                 buffer.push(chunk);
             }
             const data = Buffer.concat(buffer).toString();
             resolve(data);
-        })));
+        })
+        if(params.body) {
+            req.write(params.body)
+        }
+        req.end();
+    }));
 
 function nodysseus_get(obj, propsArg, defaultValue) {
     let objArg = obj;
