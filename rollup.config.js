@@ -5,7 +5,6 @@ import copy from "rollup-plugin-copy"
 import sourcemaps from "rollup-plugin-sourcemaps";
 import globals from "rollup-plugin-node-globals";
 import builtins from "rollup-plugin-node-builtins";
-import dynamicImportVars from '@rollup/plugin-dynamic-import-vars';
 
 
 let cache = null;

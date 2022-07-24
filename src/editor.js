@@ -764,7 +764,7 @@ const FocusEffect = (_, {selector}) => setTimeout(() => {
     if(el instanceof HTMLInputElement && el.type === "text") {
         el.select()
     }
-}, 50);
+}, 100);
 
 const SetSelectedPositionStyleEffect = (_, {node, svg_offset, dimensions}) => {
     const rt = document.querySelector(':root');
@@ -1418,7 +1418,7 @@ const dispatch = (init, _lib) => {
                             if(result !== undefined) {
                                 console.log(`Not implemented ${result}`)
                             }
-                            nolib.no.runtime.publish(undefined, 'keydown', key_input)
+                            nolib.no.runtime.publish('keydown', {data: key_input})
                         }
                     }
                 }

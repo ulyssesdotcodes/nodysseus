@@ -1,7 +1,5 @@
 import generic from "../public/json/generic.js";
 import set from "just-safe-set";
-import { diff } from "just-diff";
-import { diffApply } from "just-diff-apply";
 import loki from "lokijs";
 
 let resfetch = typeof fetch !== "undefined" ? fetch : 
@@ -52,7 +50,7 @@ function nodysseus_get(obj, propsArg, defaultValue) {
         continue;
     }
     prop = props.length == 0 ? props[0] : props.shift();
-    if((obj === undefined || typeof obj !== 'object' || (obj[prop] === undefined && !obj.hasOwnProperty(prop)))){
+    if((obj === undefined || typeof obj !== 'object' || (obj[prop] === undefined && !(obj.hasOwnProperty && obj.hasOwnProperty(prop))))){
         return objArg && objArg.__args ? nodysseus_get(objArg.__args, propsArg, defaultValue) : defaultValue;
     }
 
@@ -250,14 +248,21 @@ const resolve = (o) => {
     if (o && o._Proxy) {
         const res = resolve(o._value);
         return res;
+    } else if (ispromise(o)) {
+        return o.then(resolve);
     } else if (Array.isArray(o)) {
         const new_arr = [];
         let same = true;
         let i = o.length;
+        let promise = false;
         while (i > 0) {
             i--;
             new_arr[i] = resolve(o[i]);
             same = same && compare(o[i], new_arr[i]);
+            promise = promise || ispromise(new_arr[i]);
+        }
+        if(promise) {
+            return Promise.all((same ? o : new_arr).map(ov => Promise.resolve(ov)));
         }
         return same ? o : new_arr;
     } else if (typeof o === 'object' && !!o && o._needsresolve) {
@@ -399,8 +404,10 @@ const node_nodes = (node, node_ref, graph_input_value, data, full_lib, graph, in
 
     combined_data_input.result = full_lib.no.runtime.get_result(node_graph);
     full_lib.no.runtime.set_parent(node_graph, graph);
-
-    return full_lib.no.runGraph(node_graph, node_ref.out || 'out', combined_data_input, full_lib);;
+    // console.log('running')
+    // console.log(node.id);
+    return run_with_val_full(node_graph, full_lib, node_ref.out || 'out', combined_data_input)
+    //return full_lib.no.runGraph(node_graph, node_ref.out || 'out', combined_data_input, full_lib);;
 }
 
 const node_script = (node, node_ref, data, full_lib, graph, inputs, graph_input_value) => {
@@ -823,8 +830,6 @@ const nolib = {
             args: ['target', 'path', 'value', '_node'],
             fn: (target, path, value, node) => { set(target, node.value || path, value); return target }
         },
-        diff,
-        diffApply
     },
     no: {
         executeGraphValue: ({ graph, lib }) => executeGraph({ graph, lib })(graph.out),
@@ -872,25 +877,34 @@ const nolib = {
             let animationframe;
             const publish = (event, data) => {
                 data = resolve(data);
-                event_data.set(event, data);
-                if (event === 'graphchange') {
-                    const gcache = get_cache(data.id);
-                    // cache.get(graph.id).graph = 
-                    // gcache.graph = {...graph, out: gcache.graph.out || graph.out || 'main/out'};
-                    gcache.graph = data;
-                }
 
-                const listeners = getorset(event_listeners, event, () => new Map());
-                for (let l of listeners.values()) {
-                    if (typeof l === 'function') {
-                        l(data);
-                    } else if (typeof l === 'object' && l.fn && l.graph) {
-                        nolib.no.runGraph(l.graph, l.fn, Object.assign({}, l.args || {}, { data }), gcache.lib)
+                const runpublish = (data) => {
+                    event_data.set(event, data);
+                    if (event === 'graphchange') {
+                        const gcache = get_cache(data.id);
+                        // cache.get(graph.id).graph = 
+                        // gcache.graph = {...graph, out: gcache.graph.out || graph.out || 'main/out'};
+                        gcache.graph = data;
+                    }
+
+                    const listeners = getorset(event_listeners, event, () => new Map());
+                    for (let l of listeners.values()) {
+                        if (typeof l === 'function') {
+                            l(data);
+                        } else if (typeof l === 'object' && l.fn && l.graph) {
+                            nolib.no.runGraph(l.graph, l.fn, Object.assign({}, l.args || {}, { data }), gcache.lib)
+                        }
+                    }
+
+                    if(event === 'animationframe' && listeners.size > 0 && !animationframe) {
+                        animationframe = requestAnimationFrame(() => {animationframe = false; publish('animationframe')});
                     }
                 }
 
-                if(event === 'animationframe' && listeners.size > 0 && !animationframe) {
-                    animationframe = requestAnimationFrame(() => {animationframe = false; publish('animationframe')});
+                if(typeof data === 'object' && ispromise(data)) {
+                    data.then(runpublish)
+                } else {
+                    runpublish(data);
                 }
 
                 return data;
@@ -1262,6 +1276,9 @@ const nolib = {
             args: ['_node_inputs', '_node'],
             resolve: false,
             fn: (args, node) => {
+                if(node.value){
+                    return node.value.split(/,\s+/)
+                }
                 const argskeys = Object.keys(args);
                 const arr = args && argskeys.length > 0
                     ? argskeys
@@ -1309,11 +1326,13 @@ const nolib = {
             resolve: false,
             fn: (args) => {
                 const keys = Object.keys(args).sort();
-                const promise = keys.reduce((acc, k) => acc || ispromise(args[k]), false);
+                const resolved = {}
+                keys.forEach(k => resolved[k] = args[k]._Proxy ? args[k]._value : args[k]);
+                const promise = keys.reduce((acc, k) => acc || ispromise(resolved[k]), false);
                 return promise
-                    ? Promise.all(keys.map(k => Promise.resolve(args[k])))
-                        .then(es => Object.assign({}, ...es.map(k => args[k] && args[k]._Proxy ? args[k]._value : args[k]).filter(a => a && typeof a === 'object')))
-                    : Object.assign({}, ...keys.map(k => args[k] && args[k]._Proxy ? args[k]._value : args[k]).filter(a => a && typeof a === 'object'))
+                    ? Promise.all(keys.map(k => Promise.resolve(resolved[k])))
+                        .then(es => Object.assign({}, ...es.filter(a => a && typeof a === 'object')))
+                    : Object.assign({}, ...keys.map(k => resolved[k] && resolved[k]._Proxy ? resolved[k]._value : resolved[k]).filter(a => a && typeof a === 'object'))
                 // Object.fromEntries(keys
                 //     .map(k => args[k]?._Proxy ? args[k]._value : args[k])
                 //     .flatMap(o => typeof o === 'object' && o ? Object.entries(o) : [])
