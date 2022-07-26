@@ -1204,7 +1204,7 @@ const nolib = {
                     }
                 },
                 get_result: (graph) => {
-                    return resultsdb.by("id", graph.id)?.data;
+                    return resultsdb.by("id", typeof graph === "string" ? graph : graph.id)?.data;
                 },
                 update_inputdata: (graph, inputdata) => {
                     const old = inputdatadb.by("id", graph.id);
