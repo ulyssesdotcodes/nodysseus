@@ -605,7 +605,7 @@
           {"id": "env", "ref": "script", "value": "return _lib.no.runtime.get_args(_graph)"},
           {"id": "prev_value", "ref": "get"},
           {"id": "set_val", "ref": "set", "_script": "if(!_lib.utility.compare(env[name]._value, value)){ _lib.no.runtime.update_graph(_lib.no.runtime.get_parent(_graph), {[name]: value});} return value;"},
-          {"id": "update_args", "ref": "script", "value": "_lib.no.runtime.update_args(_graph, success); return success;"},
+          {"id": "update_args", "ref": "script", "value": "_lib.no.runtime.update_args(_lib.no.runtime.get_parent(_graph), success); return success;"},
           {"id": "on_false", "script": "return value;"},
           {"id": "on_true", "ref": "arg", "value": "value"},
           {"id": "out", "ref": "if"}
