@@ -602,7 +602,7 @@
           {"id": "value", "ref": "arg", "value": "value"},
           {"id": "value_path", "ref": "arg", "value": "_graph.value"},
           {"id": "def_path", "ref": "default"},
-          {"id": "env", "ref": "script", "value": "return _lib.no.runtime.get_args(_graph)"},
+          {"id": "env", "ref": "script", "value": "return _lib.no.runtime.get_args(_lib.no.runtime.get_parent(_graph))"},
           {"id": "prev_value", "ref": "get"},
           {"id": "set_val", "ref": "set", "_script": "if(!_lib.utility.compare(env[name]._value, value)){ _lib.no.runtime.update_graph(_lib.no.runtime.get_parent(_graph), {[name]: value});} return value;"},
           {"id": "update_args", "ref": "script", "value": "_lib.no.runtime.update_args(_lib.no.runtime.get_parent(_graph), success); return success;"},
