@@ -1197,7 +1197,9 @@ const nolib = {
                 publish: (event, data) => publish(event, data),
                 update_result: (graph, result) => {
                     const old = resultsdb.by("id", graph.id);
-                    if(old){
+                    if(ispromise(result)){
+                        result.then(r => nolib.no.runtime.update_result(graph, r))
+                    } else if(old){
                         resultsdb.update(Object.assign(old, {data: result}))
                     } else {
                         resultsdb.insert({id: graph.id, data: result})
