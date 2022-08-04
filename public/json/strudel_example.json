@@ -1,0 +1,655 @@
+{
+    "id": "strudel_example",
+    "name": "strudel_example",
+    "nodes": [
+      {
+        "id": "args"
+      },
+      {
+        "id": "5a6pljw",
+        "ref": "html_element"
+      },
+      {
+        "id": "yvo2tan",
+        "ref": "array"
+      },
+      {
+        "id": "1v1vc83",
+        "ref": "runnable"
+      },
+      {
+        "id": "230xos4",
+        "ref": "cache"
+      },
+      {
+        "id": "tl7alak",
+        "ref": "if"
+      },
+      {
+        "id": "m9wtmnq",
+        "value": "event",
+        "ref": "arg"
+      },
+      {
+        "id": "z5zg7lh",
+        "value": "strudel.tone",
+        "ref": "arg"
+      },
+      {
+        "id": "29mwegs",
+        "value": "const analyser = new stone.Tone.Analyser(\"waveform\", 1024);\nreturn analyser;",
+        "ref": "script"
+      },
+      {
+        "id": "8yu1oi6",
+        "ref": "call_method",
+        "value": "tone"
+      },
+      {
+        "id": "88eirai",
+        "value": "strudel.tone",
+        "ref": "arg"
+      },
+      {
+        "id": "r0rvy5d",
+        "value": "strudel.tone",
+        "ref": "arg"
+      },
+      {
+        "id": "98l5xgz",
+        "value": "strudel.tone",
+        "ref": "arg"
+      },
+      {
+        "id": "jiccwwe",
+        "value": "strudel.tone",
+        "ref": "arg"
+      },
+      {
+        "id": "uv1sngi",
+        "value": "set",
+        "ref": "call_method"
+      },
+      {
+        "id": "e9yfbjn",
+        "value": "strudel.tone",
+        "ref": "arg"
+      },
+      {
+        "id": "urkvmw9",
+        "value": "sawtooth4"
+      },
+      {
+        "id": "fzmfjtq",
+        "value": "strudel.tone",
+        "ref": "arg"
+      },
+      {
+        "id": "il3poqc",
+        "value": "4"
+      },
+      {
+        "id": "rq4ti8f",
+        "value": "strudel.tone",
+        "ref": "arg"
+      },
+      {
+        "id": "abwktwi",
+        "ref": "call_method",
+        "value": "sequence"
+      },
+      {
+        "id": "d5ackx5",
+        "value": "strudel.core",
+        "ref": "arg"
+      },
+      {
+        "id": "2egz79s",
+        "ref": "array"
+      },
+      {
+        "id": "1bz2kuo",
+        "ref": "call_method",
+        "value": "stack"
+      },
+      {
+        "id": "sfxa9hx",
+        "value": "strudel.core",
+        "ref": "arg"
+      },
+      {
+        "id": "wiiy0pf",
+        "value": "eb3"
+      },
+      {
+        "id": "20xxc46",
+        "ref": "cache"
+      },
+      {
+        "id": "x75e0wg",
+        "value": "keydown",
+        "ref": "event_subscriber"
+      },
+      {
+        "id": "z7ws02c",
+        "value": "true"
+      },
+      {
+        "id": "24p4o3h",
+        "value": "return key === \"ctrl_enter\";",
+        "ref": "script"
+      },
+      {
+        "id": "p8v5ed5",
+        "ref": "changed"
+      },
+      {
+        "id": "rj34djg",
+        "ref": "if"
+      },
+      {
+        "id": "d70vtbk",
+        "value": "strudel.core",
+        "ref": "arg"
+      },
+      {
+        "id": "etpii7i",
+        "value": "return !!strudel",
+        "ref": "script"
+      },
+      {
+        "id": "qhscdnr",
+        "name": "playpause button",
+        "out": "qhscdnr",
+        "nodes": [
+          {
+            "id": "qhscdnr",
+            "value": "button",
+            "name": "playpause button",
+            "ref": "html_element"
+          },
+          {
+            "id": "enf5wa9",
+            "value": "play!",
+            "ref": "html_text"
+          },
+          {
+            "id": "liekhxf"
+          },
+          {
+            "id": "k6moesx",
+            "ref": "if"
+          },
+          {
+            "id": "g64097d",
+            "ref": "runnable"
+          },
+          {
+            "id": "tr7elkg",
+            "value": "pause"
+          },
+          {
+            "id": "jebbmbi",
+            "value": "play"
+          },
+          {
+            "id": "0kpj48x",
+            "value": "@strudel/playpause",
+            "ref": "event_subscriber"
+          },
+          {
+            "id": "znigcze",
+            "ref": "return"
+          },
+          {
+            "id": "mnks3mt"
+          },
+          {
+            "id": "avsccxy",
+            "value": "return !current;",
+            "ref": "script"
+          },
+          {
+            "id": "phbi8ae",
+            "value": "@strudel/playpause",
+            "ref": "event_subscriber"
+          }
+        ],
+        "edges": [
+          {
+            "from": "enf5wa9",
+            "to": "qhscdnr",
+            "as": "children"
+          },
+          {
+            "from": "liekhxf",
+            "to": "qhscdnr",
+            "as": "props"
+          },
+          {
+            "from": "k6moesx",
+            "to": "enf5wa9",
+            "as": "text"
+          },
+          {
+            "from": "g64097d",
+            "to": "liekhxf",
+            "as": "onclick"
+          },
+          {
+            "from": "tr7elkg",
+            "to": "k6moesx",
+            "as": "true"
+          },
+          {
+            "from": "jebbmbi",
+            "to": "k6moesx",
+            "as": "false"
+          },
+          {
+            "from": "0kpj48x",
+            "to": "k6moesx",
+            "as": "pred"
+          },
+          {
+            "from": "znigcze",
+            "to": "g64097d",
+            "as": "fn"
+          },
+          {
+            "from": "mnks3mt",
+            "to": "znigcze",
+            "as": "publish"
+          },
+          {
+            "from": "avsccxy",
+            "to": "mnks3mt",
+            "as": "@strudel/playpause"
+          },
+          {
+            "from": "phbi8ae",
+            "to": "avsccxy",
+            "as": "current"
+          }
+        ]
+      },
+      {
+        "id": "791dp9t",
+        "value": "chain",
+        "ref": "@strudel.node"
+      },
+      {
+        "id": "2gob5ls",
+        "value": "polysynth",
+        "ref": "@strudel.node"
+      },
+      {
+        "id": "z0vcs6g",
+        "value": "osc",
+        "ref": "@strudel.node"
+      },
+      {
+        "id": "jo34nhw",
+        "value": "chain",
+        "ref": "@strudel.node"
+      },
+      {
+        "id": "od88d4s",
+        "value": "out",
+        "ref": "@strudel.node"
+      },
+      {
+        "id": "x5hnfvl",
+        "value": "chain",
+        "ref": "@strudel.node"
+      },
+      {
+        "id": "k9rbzjx",
+        "value": "out",
+        "ref": "@strudel.node"
+      },
+      {
+        "id": "oprhah6",
+        "value": "lowpass",
+        "ref": "@strudel.node"
+      },
+      {
+        "id": "ddqo5s5",
+        "value": "out",
+        "ref": "@strudel.node"
+      },
+      {
+        "id": "rx0ulnx",
+        "value": "vol",
+        "ref": "@strudel.node"
+      },
+      {
+        "id": "a9ulaqq",
+        "value": "c2"
+      },
+      {
+        "id": "f2fmspr",
+        "ref": "if"
+      },
+      {
+        "id": "ugu4dlu",
+        "value": "return !!_lib.no.runtime.get_ref(_graph, '@strudel.setup')",
+        "ref": "script"
+      },
+      {
+        "id": "3n6u07v/uptw8ed",
+        "name": "import_strudel",
+        "ref": "return"
+      },
+      {
+        "id": "3n6u07v/dfk63hb",
+        "value": "_lib.no.runtime.update_graph(_graph);",
+        "ref": "script"
+      },
+      {
+        "id": "3n6u07v/bc9c7g4",
+        "ref": "import_nodes"
+      },
+      {
+        "id": "3n6u07v/z5vn4g3",
+        "value": "text",
+        "ref": "call"
+      },
+      {
+        "id": "3n6u07v/n3btr4x",
+        "value": "return fetch(\"/json/strudel.json\")",
+        "ref": "script"
+      },
+      {
+        "id": "e1pxir9/z6r7djw",
+        "ref": "@strudel.setup"
+      },
+      {
+        "id": "tzgzm7u",
+        "ref": "@strudel.play"
+      },
+      {
+        "id": "main/out",
+        "name": "export",
+        "ref": "return"
+      }
+    ],
+    "edges": [
+      {
+        "from": "args",
+        "to": "main/out",
+        "as": "args"
+      },
+      {
+        "from": "5a6pljw",
+        "to": "main/out",
+        "as": "display"
+      },
+      {
+        "from": "yvo2tan",
+        "to": "5a6pljw",
+        "as": "children"
+      },
+      {
+        "from": "qhscdnr",
+        "to": "yvo2tan",
+        "as": "arg0"
+      },
+      {
+        "from": "tl7alak",
+        "to": "230xos4",
+        "as": "value"
+      },
+      {
+        "from": "29mwegs",
+        "to": "tl7alak",
+        "as": "true"
+      },
+      {
+        "from": "m9wtmnq",
+        "to": "tl7alak",
+        "as": "pred"
+      },
+      {
+        "from": "z5zg7lh",
+        "to": "29mwegs",
+        "as": "stone"
+      },
+      {
+        "from": "tzgzm7u",
+        "to": "main/out",
+        "as": "return"
+      },
+      {
+        "from": "230xos4",
+        "to": "1v1vc83",
+        "as": "fn"
+      },
+      {
+        "from": "abwktwi",
+        "to": "8yu1oi6",
+        "as": "self"
+      },
+      {
+        "from": "x5hnfvl",
+        "to": "8yu1oi6",
+        "as": "arg0"
+      },
+      {
+        "from": "jo34nhw",
+        "to": "x5hnfvl",
+        "as": "self"
+      },
+      {
+        "from": "88eirai",
+        "to": "od88d4s",
+        "as": "self"
+      },
+      {
+        "from": "791dp9t",
+        "to": "jo34nhw",
+        "as": "self"
+      },
+      {
+        "from": "r0rvy5d",
+        "to": "ddqo5s5",
+        "as": "self"
+      },
+      {
+        "from": "uv1sngi",
+        "to": "791dp9t",
+        "as": "self"
+      },
+      {
+        "from": "98l5xgz",
+        "to": "k9rbzjx",
+        "as": "self"
+      },
+      {
+        "from": "jiccwwe",
+        "to": "oprhah6",
+        "as": "self"
+      },
+      {
+        "from": "2gob5ls",
+        "to": "uv1sngi",
+        "as": "self"
+      },
+      {
+        "from": "z0vcs6g",
+        "to": "uv1sngi",
+        "as": "arg0"
+      },
+      {
+        "from": "e9yfbjn",
+        "to": "z0vcs6g",
+        "as": "self"
+      },
+      {
+        "from": "fzmfjtq",
+        "to": "2gob5ls",
+        "as": "self"
+      },
+      {
+        "from": "rq4ti8f",
+        "to": "rx0ulnx",
+        "as": "self"
+      },
+      {
+        "from": "a9ulaqq",
+        "to": "abwktwi",
+        "as": "arg0"
+      },
+      {
+        "from": "2egz79s",
+        "to": "abwktwi",
+        "as": "arg1"
+      },
+      {
+        "from": "d5ackx5",
+        "to": "abwktwi",
+        "as": "self"
+      },
+      {
+        "from": "wiiy0pf",
+        "to": "2egz79s",
+        "as": "arg0"
+      },
+      {
+        "from": "1bz2kuo",
+        "to": "2egz79s",
+        "as": "arg1"
+      },
+      {
+        "from": "z7ws02c",
+        "to": "p8v5ed5",
+        "as": "initial"
+      },
+      {
+        "from": "24p4o3h",
+        "to": "p8v5ed5",
+        "as": "value"
+      },
+      {
+        "from": "x75e0wg",
+        "to": "24p4o3h",
+        "as": "key"
+      },
+      {
+        "from": "p8v5ed5",
+        "to": "20xxc46",
+        "as": "recache"
+      },
+      {
+        "from": "1v1vc83",
+        "to": "e1pxir9/z6r7djw",
+        "as": "stone"
+      },
+      {
+        "from": "20xxc46",
+        "to": "tzgzm7u",
+        "as": "pattern"
+      },
+      {
+        "from": "rj34djg",
+        "to": "20xxc46",
+        "as": "value"
+      },
+      {
+        "from": "8yu1oi6",
+        "to": "rj34djg",
+        "as": "true"
+      },
+      {
+        "from": "etpii7i",
+        "to": "rj34djg",
+        "as": "pred"
+      },
+      {
+        "from": "d70vtbk",
+        "to": "etpii7i",
+        "as": "strudel"
+      },
+      {
+        "from": "sfxa9hx",
+        "to": "1bz2kuo",
+        "as": "self"
+      },
+      {
+        "from": "k9rbzjx",
+        "to": "791dp9t",
+        "as": "is_connected"
+      },
+      {
+        "from": "ddqo5s5",
+        "to": "jo34nhw",
+        "as": "is_connected"
+      },
+      {
+        "from": "urkvmw9",
+        "to": "z0vcs6g",
+        "as": "arg0"
+      },
+      {
+        "from": "il3poqc",
+        "to": "rx0ulnx",
+        "as": "arg0"
+      },
+      {
+        "from": "od88d4s",
+        "to": "x5hnfvl",
+        "as": "arg0"
+      },
+      {
+        "from": "rx0ulnx",
+        "to": "jo34nhw",
+        "as": "arg0"
+      },
+      {
+        "from": "oprhah6",
+        "to": "791dp9t",
+        "as": "arg0"
+      },
+      {
+        "from": "f2fmspr",
+        "to": "args",
+        "as": "strudel"
+      },
+      {
+        "from": "e1pxir9/z6r7djw",
+        "to": "f2fmspr",
+        "as": "true"
+      },
+      {
+        "from": "ugu4dlu",
+        "to": "f2fmspr",
+        "as": "pred"
+      },
+      {
+        "from": "3n6u07v/uptw8ed",
+        "to": "f2fmspr",
+        "as": "false"
+      },
+      {
+        "from": "3n6u07v/dfk63hb",
+        "to": "3n6u07v/uptw8ed",
+        "as": "return"
+      },
+      {
+        "from": "3n6u07v/bc9c7g4",
+        "to": "3n6u07v/dfk63hb",
+        "as": "arg0"
+      },
+      {
+        "from": "3n6u07v/z5vn4g3",
+        "to": "3n6u07v/bc9c7g4",
+        "as": "nodes"
+      },
+      {
+        "from": "3n6u07v/n3btr4x",
+        "to": "3n6u07v/z5vn4g3",
+        "as": "self"
+      }
+    ],
+    "out": "main/out"
+  }

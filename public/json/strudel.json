@@ -1,0 +1,1774 @@
+[
+  {
+    "id": "@strudel.node",
+    "name": "hydra.node",
+    "nodes": [
+      {
+        "id": "0z8n1c5"
+      },
+      {
+        "id": "2manqin",
+        "value": "fn_args",
+        "ref": "arg"
+      },
+      {
+        "id": "6s9fomt",
+        "ref": "default"
+      },
+      {
+        "id": "by7pe8d",
+        "value": "[]"
+      },
+      {
+        "id": "7etfnud",
+        "ref": "append"
+      },
+      {
+        "id": "a6acmeq",
+        "ref": "edge_in_argx"
+      },
+      {
+        "id": "r929mj3",
+        "value": "1"
+      },
+      {
+        "id": "hqkgc3g",
+        "value": "2"
+      },
+      {
+        "id": "86kzr1o",
+        "ref": "html_element"
+      },
+      {
+        "id": "rzci86a",
+        "ref": "array"
+      },
+      {
+        "id": "pw8kk77",
+        "ref": "runnable"
+      },
+      {
+        "id": "sj8tsrv",
+        "value": "payload.event.target.value",
+        "ref": "arg"
+      },
+      {
+        "id": "gas8zcj",
+        "value": "_graph.value",
+        "ref": "arg"
+      },
+      {
+        "id": "6zt08u4",
+        "value": "style",
+        "ref": "css_styles"
+      },
+      {
+        "id": "b2m8e4s"
+      },
+      {
+        "id": "jtzwnqk"
+      },
+      {
+        "id": "qml8aow",
+        "value": "1"
+      },
+      {
+        "id": "4hlp98p"
+      },
+      {
+        "id": "82caisp",
+        "value": "3"
+      },
+      {
+        "id": "be8dcbb"
+      },
+      {
+        "id": "kbjtblt",
+        "value": "2"
+      },
+      {
+        "id": "zmwewdq",
+        "value": "block"
+      },
+      {
+        "id": "18nbcbw",
+        "value": "const parent = _lib.no.runtime.get_parent(_graph);\nparent && _lib.no.runtime.add_node(parent, { id: _graph.node_id, ref: _graph.ref, value: property});",
+        "ref": "script"
+      },
+      {
+        "id": "tp8pbx2",
+        "ref": "if"
+      },
+      {
+        "id": "kneof17",
+        "value": "is_connected",
+        "ref": "arg"
+      },
+      {
+        "id": "v2fv739",
+        "value": "",
+        "ref": "call_method"
+      },
+      {
+        "id": "j2aw6g0",
+        "value": "{\"as\": \"display\"}"
+      },
+      {
+        "id": "rp2cup3",
+        "value": "",
+        "ref": "run_path"
+      },
+      {
+        "id": "dvcw4sg",
+        "value": "return"
+      },
+      {
+        "id": "hrmunje"
+      },
+      {
+        "id": "w6e8yly",
+        "value": "result",
+        "ref": "arg"
+      },
+      {
+        "id": "kf7ot4x",
+        "value": "is_connected",
+        "ref": "arg"
+      },
+      {
+        "id": "16a9pha",
+        "value": "selected",
+        "ref": "set_arg"
+      },
+      {
+        "id": "8z6gbwe",
+        "value": "return selected === _graph.node_id;",
+        "ref": "script"
+      },
+      {
+        "id": "guur4p1",
+        "value": "strudel",
+        "ref": "arg"
+      },
+      {
+        "id": "hl6jbal",
+        "ref": "runnable"
+      },
+      {
+        "id": "8l6zso0",
+        "value": "is_connected",
+        "ref": "set_arg"
+      },
+      {
+        "id": "vhouqzv",
+        "value": "data",
+        "ref": "arg"
+      },
+      {
+        "id": "mrzjjsr",
+        "value": "self",
+        "ref": "arg"
+      },
+      {
+        "id": "ysash4u",
+        "name": "@strudel.node",
+        "ref": "return"
+      },
+      {
+        "id": "ubogd95",
+        "value": "if(selected && self.connect && !is_connected){ \n  self.connect(strudel.analyser);\n} else if(self && self.disconnect && is_connected && !selected) {\n  try {\n    self.disconnect(strudel.analyser);\n  } catch(e) {\n    console.error(e);\n  }\n}\n\nreturn selected && !!self.connect;",
+        "ref": "script"
+      }
+    ],
+    "edges": [
+      {
+        "from": "0z8n1c5",
+        "to": "ysash4u",
+        "as": "args"
+      },
+      {
+        "from": "by7pe8d",
+        "to": "6s9fomt",
+        "as": "otherwise"
+      },
+      {
+        "from": "6s9fomt",
+        "to": "7etfnud",
+        "as": "array"
+      },
+      {
+        "from": "r929mj3",
+        "to": "0z8n1c5",
+        "as": "arg0"
+      },
+      {
+        "from": "hqkgc3g",
+        "to": "0z8n1c5",
+        "as": "arg1"
+      },
+      {
+        "from": "7etfnud",
+        "to": "v2fv739",
+        "as": "fn_args"
+      },
+      {
+        "from": "a6acmeq",
+        "to": "7etfnud",
+        "as": "item"
+      },
+      {
+        "from": "86kzr1o",
+        "to": "ysash4u",
+        "as": "display"
+      },
+      {
+        "from": "rzci86a",
+        "to": "86kzr1o",
+        "as": "children"
+      },
+      {
+        "from": "18nbcbw",
+        "to": "pw8kk77",
+        "as": "fn"
+      },
+      {
+        "from": "sj8tsrv",
+        "to": "18nbcbw",
+        "as": "property"
+      },
+      {
+        "from": "gas8zcj",
+        "to": "v2fv739",
+        "as": "fn"
+      },
+      {
+        "from": "b2m8e4s",
+        "to": "6zt08u4",
+        "as": "css_object"
+      },
+      {
+        "from": "be8dcbb",
+        "to": "b2m8e4s",
+        "as": "#node-editor-info-canvas"
+      },
+      {
+        "from": "4hlp98p",
+        "to": "b2m8e4s",
+        "as": "#node-info-wrapper .buttons"
+      },
+      {
+        "from": "jtzwnqk",
+        "to": "b2m8e4s",
+        "as": "#node-info-property"
+      },
+      {
+        "from": "qml8aow",
+        "to": "jtzwnqk",
+        "as": "order"
+      },
+      {
+        "from": "82caisp",
+        "to": "4hlp98p",
+        "as": "order"
+      },
+      {
+        "from": "zmwewdq",
+        "to": "be8dcbb",
+        "as": "display"
+      },
+      {
+        "from": "kbjtblt",
+        "to": "be8dcbb",
+        "as": "order"
+      },
+      {
+        "from": "tp8pbx2",
+        "to": "rzci86a",
+        "as": "arg0"
+      },
+      {
+        "from": "6zt08u4",
+        "to": "tp8pbx2",
+        "as": "true"
+      },
+      {
+        "from": "kneof17",
+        "to": "tp8pbx2",
+        "as": "pred"
+      },
+      {
+        "from": "rp2cup3",
+        "to": "rzci86a",
+        "as": "arg1"
+      },
+      {
+        "from": "j2aw6g0",
+        "to": "rp2cup3",
+        "as": "edge"
+      },
+      {
+        "from": "dvcw4sg",
+        "to": "rp2cup3",
+        "as": "path"
+      },
+      {
+        "from": "v2fv739",
+        "to": "ysash4u",
+        "as": "return"
+      },
+      {
+        "from": "hrmunje",
+        "to": "ysash4u",
+        "as": "subscribe"
+      },
+      {
+        "from": "hl6jbal",
+        "to": "hrmunje",
+        "as": "nodeselect"
+      },
+      {
+        "from": "guur4p1",
+        "to": "ubogd95",
+        "as": "strudel"
+      },
+      {
+        "from": "16a9pha",
+        "to": "ubogd95",
+        "as": "selected"
+      },
+      {
+        "from": "kf7ot4x",
+        "to": "ubogd95",
+        "as": "is_connected"
+      },
+      {
+        "from": "w6e8yly",
+        "to": "ubogd95",
+        "as": "self"
+      },
+      {
+        "from": "8z6gbwe",
+        "to": "16a9pha",
+        "as": "value"
+      },
+      {
+        "from": "8l6zso0",
+        "to": "hl6jbal",
+        "as": "fn"
+      },
+      {
+        "from": "ubogd95",
+        "to": "8l6zso0",
+        "as": "value"
+      },
+      {
+        "from": "vhouqzv",
+        "to": "8z6gbwe",
+        "as": "selected"
+      },
+      {
+        "from": "pw8kk77",
+        "to": "v2fv739",
+        "as": "onchange"
+      },
+      {
+        "from": "mrzjjsr",
+        "to": "v2fv739",
+        "as": "self"
+      },
+      {
+        "from": "2manqin",
+        "to": "6s9fomt",
+        "as": "value"
+      }
+    ],
+    "out": "ysash4u"
+  },
+  {
+    "id": "@strudel.setup",
+    "name": "strudel.setup",
+    "nodes": [
+      {
+        "id": "e1pxir9/mr3a2yz"
+      },
+      {
+        "id": "e1pxir9/1464u8z",
+        "ref": "return"
+      },
+      {
+        "id": "e1pxir9/okudpah"
+      },
+      {
+        "id": "e1pxir9/s3j8j5u"
+      },
+      {
+        "id": "0hlqktg",
+        "ref": ""
+      },
+      {
+        "id": "e1pxir9/16uhdfn",
+        "value": "stone",
+        "ref": "arg"
+      },
+      {
+        "id": "e1pxir9/wt0md82",
+        "value": "score",
+        "ref": "arg"
+      },
+      {
+        "id": "e1pxir9/lkhdp6o",
+        "ref": "cache"
+      },
+      {
+        "id": "e1pxir9/l7kwgs6",
+        "ref": "cache"
+      },
+      {
+        "id": "e1pxir9/xrxp6iq",
+        "value": "return import(\"https://cdn.skypack.dev/@strudel.cycles/core@0.0.2\")",
+        "ref": "script"
+      },
+      {
+        "id": "e1pxir9/h1ibtcd",
+        "value": "return import(\"https://cdn.skypack.dev/@strudel.cycles/tone@0.0.2\")",
+        "ref": "script"
+      },
+      {
+        "id": "cydvtyo",
+        "value": "stone",
+        "ref": "arg"
+      },
+      {
+        "id": "1vg13x6",
+        "value": "score",
+        "ref": "arg"
+      },
+      {
+        "id": "mfx0slp",
+        "value": "stone",
+        "ref": "arg"
+      },
+      {
+        "id": "mo27g8g",
+        "ref": "cache"
+      },
+      {
+        "id": "ezj0loq",
+        "ref": "cache"
+      },
+      {
+        "id": "o2bkcoi",
+        "value": "",
+        "ref": "if"
+      },
+      {
+        "id": "dp8cbkt",
+        "value": "return document.getElementById(\"strudel-offscreencanvas\");",
+        "ref": "script"
+      },
+      {
+        "id": "01q90dx",
+        "value": "return !!window.OffscreenCanvas",
+        "ref": "script"
+      },
+      {
+        "id": "72uyxxc",
+        "ref": "cache"
+      },
+      {
+        "id": "6wit2hn",
+        "value": "return new Uint8Array(1024).fill(0).map((_, i) => i*128/1024)",
+        "ref": "script"
+      },
+      {
+        "id": "lfhax1r",
+        "value": "",
+        "ref": "cache"
+      },
+      {
+        "id": "6okdweq",
+        "value": "const el = document.getElementById(\"node-editor-info-canvas\");\nreturn el.getContext('bitmaprenderer');",
+        "ref": "script"
+      },
+      {
+        "id": "wehk7i0",
+        "value": "const analyser = new stone.Tone.Analyser(\"waveform\", 1024);\nreturn analyser;",
+        "ref": "script"
+      },
+      {
+        "id": "1l6j54f",
+        "value": "const cvs = new OffscreenCanvas(300, 300*9/16);\nreturn cvs;",
+        "ref": "script"
+      },
+      {
+        "id": "nd0ncl4/nd0ncl4",
+        "name": "info_canvas",
+        "ref": "runnable"
+      },
+      {
+        "id": "nd0ncl4/jv95lbm",
+        "ref": "if"
+      },
+      {
+        "id": "nd0ncl4/hh2bp4r",
+        "ref": "webgl"
+      },
+      {
+        "id": "nd0ncl4/yphcotc",
+        "value": "offscreen_canvas",
+        "ref": "arg"
+      },
+      {
+        "id": "nd0ncl4/sdeyicx",
+        "value": "infoctx",
+        "ref": "arg"
+      },
+      {
+        "id": "nd0ncl4/5ipa51k",
+        "ref": "cache"
+      },
+      {
+        "id": "nd0ncl4/90azwef",
+        "ref": "cache"
+      },
+      {
+        "id": "nd0ncl4/qjccgh5",
+        "value": "",
+        "ref": "cache"
+      },
+      {
+        "id": "nd0ncl4/fiszoli",
+        "value": "",
+        "ref": "cache"
+      },
+      {
+        "id": "nd0ncl4/xh4mdas",
+        "value": "return `#version 300 es\n\n    precision highp float;\n\n\n\n    out vec2 texCoord;\n\n    void main() {\n      float x = float((gl_VertexID & 1) << 2);\n      float y = float((gl_VertexID & 2) << 1);\n      texCoord.x = x * 0.5;\n      texCoord.y = y * 0.5;\n      gl_Position = vec4(x - 1.0, y - 1.0, 0, 1);\n    }\n  `;",
+        "ref": "script"
+      },
+      {
+        "id": "nd0ncl4/t1x1qdu",
+        "value": "return `#version 300 es\n\n    precision highp float;\n\n    uniform float uData[1024];\n\n    in vec2 texCoord;\n\n    out vec4 fragmentColor;\n\n    float idx_val(int idx) {\n      return float(uData[idx]) * 1. + 0.5;\n    }\n    \n    void main() {\n      vec2 coord = vec2(gl_FragCoord.x/300.0, gl_FragCoord.y/150.0);\n      int idx = int(floor(1024.*coord.x));\n      float data = (idx_val(idx) * 0.5 + idx_val(max(0, idx-1))*0.25 + idx_val(min(1023, idx+1))*0.25);      \n      float val = max(0., 1. - pow(abs(data - coord.y) * 16., 2.));\n      \n      fragmentColor = vec4(val,val,val, 1.0);\n    }\n  `;",
+        "ref": "script"
+      },
+      {
+        "id": "nd0ncl4/jxybg0i",
+        "value": "return {data: analyser.getValue()};",
+        "ref": "script"
+      },
+      {
+        "id": "nd0ncl4/gnlclc3",
+        "value": "return {flag: false};",
+        "ref": "script"
+      },
+      {
+        "id": "nd0ncl4/ldrd4t1"
+      },
+      {
+        "id": "nd0ncl4/t6trkeo",
+        "value": "return ofc.getContext('webgl2')",
+        "ref": "script"
+      },
+      {
+        "id": "nd0ncl4/vx0gmdq",
+        "value": "return ofc.getContext('webgl2')",
+        "ref": "script"
+      },
+      {
+        "id": "nd0ncl4/mivegm0",
+        "value": "result.analyser",
+        "ref": "arg"
+      },
+      {
+        "id": "nd0ncl4/4m7njvj",
+        "value": "return new Uint8ClampedArray(window.innerHeight * window.innerWidth * 4);",
+        "ref": "script"
+      },
+      {
+        "id": "nd0ncl4/8eug4vb",
+        "value": "offscreen_canvas",
+        "ref": "arg"
+      },
+      {
+        "id": "nd0ncl4/gn211xh",
+        "value": "offscreen_canvas",
+        "ref": "arg"
+      },
+      {
+        "id": "9lz9uxx",
+        "in": "u0nmc8r",
+        "out": "9lz9uxx",
+        "nodes": [
+          {
+            "id": "9lz9uxx",
+            "ref": "runnable"
+          },
+          {
+            "id": "vu48upk",
+            "ref": "return"
+          },
+          {
+            "id": "u0nmc8r"
+          },
+          {
+            "id": "byysyra",
+            "value": "",
+            "ref": "if"
+          },
+          {
+            "id": "ke0mkjh"
+          },
+          {
+            "id": "nctvav5",
+            "value": "pause",
+            "ref": "call"
+          },
+          {
+            "id": "w0ueu95",
+            "ref": "return"
+          },
+          {
+            "id": "7ln5i0m",
+            "value": "data",
+            "ref": "arg"
+          },
+          {
+            "id": "t1avhtw",
+            "value": "stone",
+            "ref": "arg"
+          },
+          {
+            "id": "kly2qmk",
+            "value": "score",
+            "ref": "arg"
+          },
+          {
+            "id": "mzmuktz",
+            "value": "data",
+            "ref": "arg"
+          },
+          {
+            "id": "3shirix",
+            "value": "stone.Tone.getTransport",
+            "ref": "call"
+          },
+          {
+            "id": "y175vs9",
+            "value": "start",
+            "ref": "call"
+          },
+          {
+            "id": "315024b"
+          },
+          {
+            "id": "a5t90qi",
+            "ref": "array"
+          },
+          {
+            "id": "yo4mz5y",
+            "value": "stone.Tone.getTransport",
+            "ref": "call"
+          },
+          {
+            "id": "y2js1tj",
+            "ref": "default"
+          },
+          {
+            "id": "hvbcb0m",
+            "value": "+0.1"
+          },
+          {
+            "id": "13kfbhn",
+            "value": "@strudel/cycle",
+            "ref": "event_subscriber"
+          },
+          {
+            "id": "7wk4wqm",
+            "value": "0"
+          }
+        ],
+        "edges": [
+          {
+            "from": "vu48upk",
+            "to": "9lz9uxx",
+            "as": "fn"
+          },
+          {
+            "from": "u0nmc8r",
+            "to": "9lz9uxx",
+            "as": "args"
+          },
+          {
+            "from": "byysyra",
+            "to": "vu48upk",
+            "as": "return"
+          },
+          {
+            "from": "ke0mkjh",
+            "to": "vu48upk",
+            "as": "args"
+          },
+          {
+            "from": "nctvav5",
+            "to": "byysyra",
+            "as": "false"
+          },
+          {
+            "from": "w0ueu95",
+            "to": "byysyra",
+            "as": "true"
+          },
+          {
+            "from": "7ln5i0m",
+            "to": "byysyra",
+            "as": "pred"
+          },
+          {
+            "from": "t1avhtw",
+            "to": "ke0mkjh",
+            "as": "stone"
+          },
+          {
+            "from": "kly2qmk",
+            "to": "ke0mkjh",
+            "as": "score"
+          },
+          {
+            "from": "mzmuktz",
+            "to": "ke0mkjh",
+            "as": "data"
+          },
+          {
+            "from": "3shirix",
+            "to": "nctvav5",
+            "as": "self"
+          },
+          {
+            "from": "y175vs9",
+            "to": "w0ueu95",
+            "as": "return"
+          },
+          {
+            "from": "315024b",
+            "to": "w0ueu95",
+            "as": "publish"
+          },
+          {
+            "from": "a5t90qi",
+            "to": "y175vs9",
+            "as": "args"
+          },
+          {
+            "from": "yo4mz5y",
+            "to": "y175vs9",
+            "as": "self"
+          },
+          {
+            "from": "y2js1tj",
+            "to": "315024b",
+            "as": "@strudel/cycle"
+          },
+          {
+            "from": "hvbcb0m",
+            "to": "a5t90qi",
+            "as": "arg0"
+          },
+          {
+            "from": "13kfbhn",
+            "to": "y2js1tj",
+            "as": "value"
+          },
+          {
+            "from": "7wk4wqm",
+            "to": "y2js1tj",
+            "as": "otherwise"
+          }
+        ]
+      },
+      {
+        "id": "nd0ncl4/danpkm0",
+        "value": "@strudel/playpause",
+        "ref": "event_subscriber"
+      },
+      {
+        "id": "nd0ncl4/pu9r8ig",
+        "value": "if(!offscreen || (isrunning.flag && isrunning.flag > performance.now() - 1000)){\n  console.log('skipped ' + isrunning.flag);\n  return false;\n}\n\nisrunning.flag = performance.now();\n\nif(offscreen['transferToImageBitmap']){\n  isrunning.flag = false;\n  const img = offscreen.transferToImageBitmap();\n  infoctx\n    .transferFromImageBitmap(img);\n  return;\n}\n\nconst pixels = offscreenctx.readPixels(\n  0, 0, \n  window.innerWidth, \n  window.innerHeight,\n  offscreenctx.RGBA,\n  offscreenctx.UNSIGNED_BYTE,\n  arr.value\n);\n  \nreturn createImageBitmap(new ImageData( \n  arr.value, \n  window.innerWidth, \n  window.innerHeight))\n  .catch(e => {isrunning.flag = false; throw e; })\n  .then(bm => {\n    isrunning.flag = false; \n  infoctx\n    .transferFromImageBitmap(bm);\n  })",
+        "ref": "script"
+      },
+      {
+        "id": "e1pxir9/z6r7djw",
+        "name": "@strudel.setup",
+        "ref": "return"
+      }
+    ],
+    "edges": [
+      {
+        "from": "e1pxir9/mr3a2yz",
+        "to": "e1pxir9/z6r7djw",
+        "as": "args"
+      },
+      {
+        "from": "e1pxir9/1464u8z",
+        "to": "e1pxir9/z6r7djw",
+        "as": "return"
+      },
+      {
+        "from": "e1pxir9/okudpah",
+        "to": "e1pxir9/1464u8z",
+        "as": "return"
+      },
+      {
+        "from": "e1pxir9/s3j8j5u",
+        "to": "e1pxir9/1464u8z",
+        "as": "args"
+      },
+      {
+        "from": "0hlqktg",
+        "to": "e1pxir9/1464u8z",
+        "as": "subscribe"
+      },
+      {
+        "from": "e1pxir9/16uhdfn",
+        "to": "e1pxir9/okudpah",
+        "as": "tone"
+      },
+      {
+        "from": "e1pxir9/wt0md82",
+        "to": "e1pxir9/okudpah",
+        "as": "core"
+      },
+      {
+        "from": "e1pxir9/lkhdp6o",
+        "to": "e1pxir9/s3j8j5u",
+        "as": "score"
+      },
+      {
+        "from": "e1pxir9/l7kwgs6",
+        "to": "e1pxir9/s3j8j5u",
+        "as": "stone"
+      },
+      {
+        "from": "e1pxir9/xrxp6iq",
+        "to": "e1pxir9/lkhdp6o",
+        "as": "value"
+      },
+      {
+        "from": "e1pxir9/h1ibtcd",
+        "to": "e1pxir9/l7kwgs6",
+        "as": "value"
+      },
+      {
+        "from": "cydvtyo",
+        "to": "9lz9uxx",
+        "as": "stone"
+      },
+      {
+        "from": "1vg13x6",
+        "to": "9lz9uxx",
+        "as": "score"
+      },
+      {
+        "from": "mfx0slp",
+        "to": "wehk7i0",
+        "as": "stone"
+      },
+      {
+        "from": "wehk7i0",
+        "to": "mo27g8g",
+        "as": "value"
+      },
+      {
+        "from": "mo27g8g",
+        "to": "e1pxir9/okudpah",
+        "as": "analyser"
+      },
+      {
+        "from": "nd0ncl4/nd0ncl4",
+        "to": "0hlqktg",
+        "as": "animationframe"
+      },
+      {
+        "from": "o2bkcoi",
+        "to": "ezj0loq",
+        "as": "value"
+      },
+      {
+        "from": "01q90dx",
+        "to": "o2bkcoi",
+        "as": "pred"
+      },
+      {
+        "from": "dp8cbkt",
+        "to": "o2bkcoi",
+        "as": "false"
+      },
+      {
+        "from": "1l6j54f",
+        "to": "o2bkcoi",
+        "as": "true"
+      },
+      {
+        "from": "ezj0loq",
+        "to": "e1pxir9/s3j8j5u",
+        "as": "offscreen_canvas"
+      },
+      {
+        "from": "6wit2hn",
+        "to": "72uyxxc",
+        "as": "value"
+      },
+      {
+        "from": "72uyxxc",
+        "to": "e1pxir9/s3j8j5u",
+        "as": "buffer"
+      },
+      {
+        "from": "6okdweq",
+        "to": "lfhax1r",
+        "as": "value"
+      },
+      {
+        "from": "lfhax1r",
+        "to": "e1pxir9/s3j8j5u",
+        "as": "infoctx"
+      },
+      {
+        "from": "9lz9uxx",
+        "to": "0hlqktg",
+        "as": "@strudel/playpause"
+      },
+      {
+        "from": "nd0ncl4/jv95lbm",
+        "to": "nd0ncl4/nd0ncl4",
+        "as": "fn"
+      },
+      {
+        "from": "nd0ncl4/danpkm0",
+        "to": "nd0ncl4/jv95lbm",
+        "as": "pred"
+      },
+      {
+        "from": "nd0ncl4/pu9r8ig",
+        "to": "nd0ncl4/jv95lbm",
+        "as": "true"
+      },
+      {
+        "from": "nd0ncl4/hh2bp4r",
+        "to": "nd0ncl4/pu9r8ig",
+        "as": "prog"
+      },
+      {
+        "from": "nd0ncl4/yphcotc",
+        "to": "nd0ncl4/pu9r8ig",
+        "as": "offscreen"
+      },
+      {
+        "from": "nd0ncl4/sdeyicx",
+        "to": "nd0ncl4/pu9r8ig",
+        "as": "infoctx"
+      },
+      {
+        "from": "nd0ncl4/5ipa51k",
+        "to": "nd0ncl4/pu9r8ig",
+        "as": "isrunning"
+      },
+      {
+        "from": "nd0ncl4/90azwef",
+        "to": "nd0ncl4/pu9r8ig",
+        "as": "arr"
+      },
+      {
+        "from": "nd0ncl4/qjccgh5",
+        "to": "nd0ncl4/pu9r8ig",
+        "as": "offscreenctx"
+      },
+      {
+        "from": "nd0ncl4/fiszoli",
+        "to": "nd0ncl4/hh2bp4r",
+        "as": "gl"
+      },
+      {
+        "from": "nd0ncl4/xh4mdas",
+        "to": "nd0ncl4/hh2bp4r",
+        "as": "vtx"
+      },
+      {
+        "from": "nd0ncl4/t1x1qdu",
+        "to": "nd0ncl4/hh2bp4r",
+        "as": "frg"
+      },
+      {
+        "from": "nd0ncl4/jxybg0i",
+        "to": "nd0ncl4/hh2bp4r",
+        "as": "buffer"
+      },
+      {
+        "from": "nd0ncl4/gnlclc3",
+        "to": "nd0ncl4/5ipa51k",
+        "as": "value"
+      },
+      {
+        "from": "nd0ncl4/ldrd4t1",
+        "to": "nd0ncl4/90azwef",
+        "as": "value"
+      },
+      {
+        "from": "nd0ncl4/t6trkeo",
+        "to": "nd0ncl4/qjccgh5",
+        "as": "value"
+      },
+      {
+        "from": "nd0ncl4/vx0gmdq",
+        "to": "nd0ncl4/fiszoli",
+        "as": "value"
+      },
+      {
+        "from": "nd0ncl4/mivegm0",
+        "to": "nd0ncl4/jxybg0i",
+        "as": "analyser"
+      },
+      {
+        "from": "nd0ncl4/4m7njvj",
+        "to": "nd0ncl4/ldrd4t1",
+        "as": "value"
+      },
+      {
+        "from": "nd0ncl4/8eug4vb",
+        "to": "nd0ncl4/t6trkeo",
+        "as": "ofc"
+      },
+      {
+        "from": "nd0ncl4/gn211xh",
+        "to": "nd0ncl4/vx0gmdq",
+        "as": "ofc"
+      }
+    ],
+    "out": "e1pxir9/z6r7djw"
+  },
+  {
+    "id": "@strudel.play",
+    "name": "strudel.play",
+    "nodes": [
+      {
+        "id": "yd43rsf"
+      },
+      {
+        "id": "ndna6vl"
+      },
+      {
+        "id": "0n8k0b7",
+        "value": "events",
+        "ref": "arg"
+      },
+      {
+        "id": "r0v26jn",
+        "name": "",
+        "ref": "reduce"
+      },
+      {
+        "id": "rxoook3",
+        "ref": "merge_objects"
+      },
+      {
+        "id": "2mcffa6"
+      },
+      {
+        "id": "daykk9b"
+      },
+      {
+        "id": "l1ovegw",
+        "value": "evt_runnable",
+        "ref": "arg"
+      },
+      {
+        "id": "8zi1gzy",
+        "value": "runnable",
+        "ref": "arg"
+      },
+      {
+        "id": "kd528s8",
+        "name": "",
+        "ref": "runnable"
+      },
+      {
+        "id": "5mzlv42"
+      },
+      {
+        "id": "bzkaiyo",
+        "name": "",
+        "ref": "set"
+      },
+      {
+        "id": "pkd8b0p",
+        "value": "current",
+        "ref": "arg"
+      },
+      {
+        "id": "6kwqo8l",
+        "value": "previous",
+        "name": "",
+        "ref": "arg"
+      },
+      {
+        "id": "hrw9i04",
+        "value": "@strudel/cycle, @strudel/playpause",
+        "ref": "array"
+      },
+      {
+        "id": "q0gj8si",
+        "ref": "runnable"
+      },
+      {
+        "id": "uj0771n",
+        "ref": "run"
+      },
+      {
+        "id": "7doulnd"
+      },
+      {
+        "id": "6e9oudx",
+        "value": "current",
+        "ref": "arg"
+      },
+      {
+        "id": "i7tgtne",
+        "value": "evt",
+        "ref": "arg"
+      },
+      {
+        "id": "6m19w81",
+        "value": "data",
+        "ref": "arg"
+      },
+      {
+        "id": "d98s2id",
+        "value": "evt_runnable",
+        "ref": "arg"
+      },
+      {
+        "id": "ow8poho/ow8poho",
+        "name": "evt_runnable",
+        "ref": "runnable"
+      },
+      {
+        "id": "ow8poho/2fgc4g0",
+        "ref": "return"
+      },
+      {
+        "id": "ow8poho/of2ul38"
+      },
+      {
+        "id": "ow8poho/vbsa6ny",
+        "ref": "if"
+      },
+      {
+        "id": "ow8poho/wssqcw0",
+        "value": "data.@strudel/cycle",
+        "ref": "arg"
+      },
+      {
+        "id": "ow8poho/6myc0zk",
+        "value": "cycle",
+        "ref": "arg"
+      },
+      {
+        "id": "ld37qq4",
+        "name": "",
+        "ref": "return"
+      },
+      {
+        "id": "mrqba2h",
+        "value": "args.data",
+        "ref": "set"
+      },
+      {
+        "id": "ccfhvxl",
+        "ref": "cache"
+      },
+      {
+        "id": "czl2oeo",
+        "ref": "set_mutable"
+      },
+      {
+        "id": "ow8poho/px59z0w",
+        "value": "playpause",
+        "ref": "arg"
+      },
+      {
+        "id": "zipaa4j",
+        "value": "return \"args.data.\" + evt;",
+        "ref": "script"
+      },
+      {
+        "id": "ow8poho/4p88ftp",
+        "value": "data.@strudel/playpause",
+        "ref": "arg"
+      },
+      {
+        "id": "c78kufy"
+      },
+      {
+        "id": "9tj6uzq"
+      },
+      {
+        "id": "n2slk4w",
+        "value": "pattern",
+        "ref": "arg"
+      },
+      {
+        "id": "caxxiqc",
+        "value": "base",
+        "ref": "arg"
+      },
+      {
+        "id": "opox5xi",
+        "value": "base",
+        "ref": "arg"
+      },
+      {
+        "id": "hi50l05",
+        "ref": "get"
+      },
+      {
+        "id": "hsq8vrp",
+        "value": "base",
+        "ref": "arg"
+      },
+      {
+        "id": "ioguo6p",
+        "value": "base",
+        "ref": "arg"
+      },
+      {
+        "id": "5szjf17",
+        "value": "evt",
+        "ref": "arg"
+      },
+      {
+        "id": "9716t7q",
+        "name": "",
+        "ref": "sequence"
+      },
+      {
+        "id": "8fmidpv/8fmidpv",
+        "name": "cycle",
+        "ref": "runnable"
+      },
+      {
+        "id": "8fmidpv/fwhkv4x"
+      },
+      {
+        "id": "8fmidpv/8re6vcq",
+        "ref": "if"
+      },
+      {
+        "id": "8fmidpv/9uxv2v9",
+        "ref": "return"
+      },
+      {
+        "id": "8fmidpv/0lxcaad",
+        "value": "pattern",
+        "ref": "arg"
+      },
+      {
+        "id": "8fmidpv/licxlfc",
+        "ref": "map"
+      },
+      {
+        "id": "8fmidpv/ur2trx0"
+      },
+      {
+        "id": "8fmidpv/xgf86m9",
+        "ref": "runnable"
+      },
+      {
+        "id": "8fmidpv/nyvdq26",
+        "value": "score",
+        "ref": "arg"
+      },
+      {
+        "id": "8fmidpv/9n4r9iw",
+        "value": "pattern",
+        "ref": "arg"
+      },
+      {
+        "id": "8fmidpv/uyctc3t",
+        "value": "data",
+        "ref": "arg"
+      },
+      {
+        "id": "8fmidpv/v0cl80e",
+        "value": "return Tone.getTransport().schedule(fn, event.part.begin.valueOf());",
+        "name": "",
+        "ref": "script"
+      },
+      {
+        "id": "8fmidpv/6f6yjzz",
+        "value": "pattern",
+        "ref": "arg"
+      },
+      {
+        "id": "8fmidpv/z20d0d2",
+        "value": "strudel.core",
+        "ref": "arg"
+      },
+      {
+        "id": "8fmidpv/rr7v7ep",
+        "value": "cycle",
+        "ref": "arg"
+      },
+      {
+        "id": "8fmidpv/f0op43d",
+        "value": "element",
+        "ref": "arg"
+      },
+      {
+        "id": "8fmidpv/1dyrxv3",
+        "ref": "function"
+      },
+      {
+        "id": "8fmidpv/bat7iun",
+        "value": "strudel.tone.Tone",
+        "ref": "arg"
+      },
+      {
+        "id": "8fmidpv/vc004vm",
+        "ref": "sequence"
+      },
+      {
+        "id": "8fmidpv/461cnqd"
+      },
+      {
+        "id": "8fmidpv/bu1ilck",
+        "value": "onevent",
+        "ref": "arg"
+      },
+      {
+        "id": "8fmidpv/v691mur",
+        "ref": "runnable"
+      },
+      {
+        "id": "8fmidpv/ku0gvzj",
+        "value": "element",
+        "ref": "arg"
+      },
+      {
+        "id": "8fmidpv/mgpznjz",
+        "value": "context.onTrigger",
+        "ref": "call"
+      },
+      {
+        "id": "8fmidpv/mbjcy55",
+        "ref": "array"
+      },
+      {
+        "id": "8fmidpv/z53qzh8",
+        "value": "event",
+        "ref": "arg"
+      },
+      {
+        "id": "8fmidpv/xs2jquz",
+        "value": "fnargs",
+        "ref": "arg"
+      },
+      {
+        "id": "8fmidpv/ja5a1ft",
+        "value": "event",
+        "ref": "arg"
+      },
+      {
+        "id": "8fmidpv/9nha7p4",
+        "value": "return pattern.query(new s.State(new s.TimeSpan(cycle, cycle + 1)))",
+        "ref": "script"
+      },
+      {
+        "id": "ow8poho/40dayfl",
+        "value": "return new Promise(res => setTimeout(() => res((cycle ?? 0) + 1), 1000));",
+        "ref": "script"
+      },
+      {
+        "id": "tzgzm7u",
+        "name": "@strudel.play",
+        "ref": "return"
+      }
+    ],
+    "edges": [
+      {
+        "from": "yd43rsf",
+        "to": "tzgzm7u",
+        "as": "args"
+      },
+      {
+        "from": "ndna6vl",
+        "to": "ld37qq4",
+        "as": "args"
+      },
+      {
+        "from": "ow8poho/ow8poho",
+        "to": "ndna6vl",
+        "as": "runnable"
+      },
+      {
+        "from": "hrw9i04",
+        "to": "ndna6vl",
+        "as": "events"
+      },
+      {
+        "from": "0n8k0b7",
+        "to": "r0v26jn",
+        "as": "array"
+      },
+      {
+        "from": "kd528s8",
+        "to": "r0v26jn",
+        "as": "fn"
+      },
+      {
+        "from": "rxoook3",
+        "to": "kd528s8",
+        "as": "fn"
+      },
+      {
+        "from": "2mcffa6",
+        "to": "r0v26jn",
+        "as": "initial"
+      },
+      {
+        "from": "daykk9b",
+        "to": "kd528s8",
+        "as": "args"
+      },
+      {
+        "from": "5mzlv42",
+        "to": "bzkaiyo",
+        "as": "target"
+      },
+      {
+        "from": "pkd8b0p",
+        "to": "bzkaiyo",
+        "as": "path"
+      },
+      {
+        "from": "6kwqo8l",
+        "to": "rxoook3",
+        "as": "arg1"
+      },
+      {
+        "from": "bzkaiyo",
+        "to": "rxoook3",
+        "as": "arg0"
+      },
+      {
+        "from": "l1ovegw",
+        "to": "czl2oeo",
+        "as": "target"
+      },
+      {
+        "from": "zipaa4j",
+        "to": "czl2oeo",
+        "as": "path"
+      },
+      {
+        "from": "mrqba2h",
+        "to": "daykk9b",
+        "as": "evt_runnable"
+      },
+      {
+        "from": "i7tgtne",
+        "to": "zipaa4j",
+        "as": "evt"
+      },
+      {
+        "from": "q0gj8si",
+        "to": "bzkaiyo",
+        "as": "value"
+      },
+      {
+        "from": "7doulnd",
+        "to": "q0gj8si",
+        "as": "args"
+      },
+      {
+        "from": "6e9oudx",
+        "to": "7doulnd",
+        "as": "evt"
+      },
+      {
+        "from": "uj0771n",
+        "to": "q0gj8si",
+        "as": "fn"
+      },
+      {
+        "from": "d98s2id",
+        "to": "7doulnd",
+        "as": "evt_runnable"
+      },
+      {
+        "from": "ow8poho/2fgc4g0",
+        "to": "ow8poho/ow8poho",
+        "as": "fn"
+      },
+      {
+        "from": "ow8poho/of2ul38",
+        "to": "ow8poho/2fgc4g0",
+        "as": "args"
+      },
+      {
+        "from": "8zi1gzy",
+        "to": "mrqba2h",
+        "as": "target"
+      },
+      {
+        "from": "ccfhvxl",
+        "to": "mrqba2h",
+        "as": "value"
+      },
+      {
+        "from": "caxxiqc",
+        "to": "ccfhvxl",
+        "as": "value"
+      },
+      {
+        "from": "r0v26jn",
+        "to": "ld37qq4",
+        "as": "return"
+      },
+      {
+        "from": "ow8poho/4p88ftp",
+        "to": "ow8poho/of2ul38",
+        "as": "playpause"
+      },
+      {
+        "from": "ow8poho/wssqcw0",
+        "to": "ow8poho/of2ul38",
+        "as": "cycle"
+      },
+      {
+        "from": "6m19w81",
+        "to": "czl2oeo",
+        "as": "value"
+      },
+      {
+        "from": "ow8poho/vbsa6ny",
+        "to": "ow8poho/2fgc4g0",
+        "as": "publish"
+      },
+      {
+        "from": "ow8poho/40dayfl",
+        "to": "c78kufy",
+        "as": "@strudel/cycle"
+      },
+      {
+        "from": "c78kufy",
+        "to": "ow8poho/vbsa6ny",
+        "as": "true"
+      },
+      {
+        "from": "ow8poho/6myc0zk",
+        "to": "ow8poho/40dayfl",
+        "as": "cycle"
+      },
+      {
+        "from": "ow8poho/px59z0w",
+        "to": "ow8poho/vbsa6ny",
+        "as": "pred"
+      },
+      {
+        "from": "8fmidpv/8fmidpv",
+        "to": "9tj6uzq",
+        "as": "@strudel/cycle"
+      },
+      {
+        "from": "n2slk4w",
+        "to": "8fmidpv/fwhkv4x",
+        "as": "pattern"
+      },
+      {
+        "from": "9tj6uzq",
+        "to": "ndna6vl",
+        "as": "base"
+      },
+      {
+        "from": "9716t7q",
+        "to": "uj0771n",
+        "as": "runnable"
+      },
+      {
+        "from": "czl2oeo",
+        "to": "9716t7q",
+        "as": "arg0"
+      },
+      {
+        "from": "hi50l05",
+        "to": "9716t7q",
+        "as": "arg1"
+      },
+      {
+        "from": "opox5xi",
+        "to": "hi50l05",
+        "as": "target"
+      },
+      {
+        "from": "5szjf17",
+        "to": "hi50l05",
+        "as": "path"
+      },
+      {
+        "from": "hsq8vrp",
+        "to": "daykk9b",
+        "as": "base"
+      },
+      {
+        "from": "ioguo6p",
+        "to": "7doulnd",
+        "as": "base"
+      },
+      {
+        "from": "8fmidpv/fwhkv4x",
+        "to": "8fmidpv/8fmidpv",
+        "as": "args"
+      },
+      {
+        "from": "8fmidpv/8re6vcq",
+        "to": "8fmidpv/8fmidpv",
+        "as": "fn"
+      },
+      {
+        "from": "8fmidpv/9uxv2v9",
+        "to": "8fmidpv/8re6vcq",
+        "as": "true"
+      },
+      {
+        "from": "8fmidpv/licxlfc",
+        "to": "8fmidpv/9uxv2v9",
+        "as": "return"
+      },
+      {
+        "from": "8fmidpv/ur2trx0",
+        "to": "8fmidpv/9uxv2v9",
+        "as": "args"
+      },
+      {
+        "from": "8fmidpv/xgf86m9",
+        "to": "8fmidpv/licxlfc",
+        "as": "fn"
+      },
+      {
+        "from": "8fmidpv/9nha7p4",
+        "to": "8fmidpv/licxlfc",
+        "as": "array"
+      },
+      {
+        "from": "8fmidpv/nyvdq26",
+        "to": "8fmidpv/ur2trx0",
+        "as": "score"
+      },
+      {
+        "from": "8fmidpv/9n4r9iw",
+        "to": "8fmidpv/ur2trx0",
+        "as": "pattern"
+      },
+      {
+        "from": "8fmidpv/uyctc3t",
+        "to": "8fmidpv/ur2trx0",
+        "as": "cycle"
+      },
+      {
+        "from": "8fmidpv/v0cl80e",
+        "to": "8fmidpv/xgf86m9",
+        "as": "fn"
+      },
+      {
+        "from": "8fmidpv/6f6yjzz",
+        "to": "8fmidpv/9nha7p4",
+        "as": "pattern"
+      },
+      {
+        "from": "8fmidpv/z20d0d2",
+        "to": "8fmidpv/9nha7p4",
+        "as": "s"
+      },
+      {
+        "from": "8fmidpv/rr7v7ep",
+        "to": "8fmidpv/9nha7p4",
+        "as": "cycle"
+      },
+      {
+        "from": "8fmidpv/f0op43d",
+        "to": "8fmidpv/v0cl80e",
+        "as": "event"
+      },
+      {
+        "from": "8fmidpv/1dyrxv3",
+        "to": "8fmidpv/v0cl80e",
+        "as": "fn"
+      },
+      {
+        "from": "8fmidpv/bat7iun",
+        "to": "8fmidpv/v0cl80e",
+        "as": "Tone"
+      },
+      {
+        "from": "8fmidpv/vc004vm",
+        "to": "8fmidpv/1dyrxv3",
+        "as": "runnable"
+      },
+      {
+        "from": "8fmidpv/461cnqd",
+        "to": "8fmidpv/vc004vm",
+        "as": "args"
+      },
+      {
+        "from": "8fmidpv/bu1ilck",
+        "to": "8fmidpv/vc004vm",
+        "as": "arg1"
+      },
+      {
+        "from": "8fmidpv/v691mur",
+        "to": "8fmidpv/vc004vm",
+        "as": "arg0"
+      },
+      {
+        "from": "8fmidpv/ku0gvzj",
+        "to": "8fmidpv/461cnqd",
+        "as": "event"
+      },
+      {
+        "from": "8fmidpv/mgpznjz",
+        "to": "8fmidpv/v691mur",
+        "as": "fn"
+      },
+      {
+        "from": "8fmidpv/mbjcy55",
+        "to": "8fmidpv/mgpznjz",
+        "as": "args"
+      },
+      {
+        "from": "8fmidpv/z53qzh8",
+        "to": "8fmidpv/mgpznjz",
+        "as": "self"
+      },
+      {
+        "from": "8fmidpv/xs2jquz",
+        "to": "8fmidpv/mbjcy55",
+        "as": "arg0"
+      },
+      {
+        "from": "8fmidpv/ja5a1ft",
+        "to": "8fmidpv/mbjcy55",
+        "as": "arg1"
+      },
+      {
+        "from": "8fmidpv/0lxcaad",
+        "to": "8fmidpv/8re6vcq",
+        "as": "pred"
+      },
+      {
+        "from": "ld37qq4",
+        "to": "tzgzm7u",
+        "as": "subscribe"
+      }
+    ],
+    "out": "tzgzm7u"
+  }
+]
