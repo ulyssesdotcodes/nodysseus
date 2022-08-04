@@ -330,14 +330,7 @@ const node_value = (node) => {
             } catch (e) { }
         }
 
-        if(node.value.match(/[0-9.]*/g)[0].length === node.value.length){
-            if(node.value.includes(".")) {
-                const int = parseInt(node.value);
-                if (!isNaN(int)) {
-                    return int;
-                }
-            }
-
+        if(node.value.match(/-?[0-9.]*/g)[0].length === node.value.length){
             const float = parseFloat(node.value);
             if (!isNaN(float)) {
                 return float;

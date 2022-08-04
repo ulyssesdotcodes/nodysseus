@@ -207,7 +207,7 @@
       },
       {
         "id": "edge_in_argx",
-        "script": "const parent = _lib.no.runtime.get_parent(_graph); return _lib.no.runtime.get_edges_in(parent, _graph.node_id).filter(e => e.as.startsWith('arg')).reduce((acc, e) => { acc[parseInt(e.as.substring(3))] = _lib.just.get.fn({}, _graph_input_value, e.as); return acc; }, []).map(a => a?._Proxy ? a._value : a);"
+        "script": "const parent = _lib.no.runtime.get_parent(_graph); const edges = _lib.no.runtime.get_edges_in(parent, _graph.node_id).filter(e => e.as.startsWith('arg')).reduce((acc, e) => { acc[parseInt(e.as.substring(3))] = _lib.just.get.fn({}, _graph_input_value, e.as); return acc; }, []).map(a => a?._Proxy ? a._value : a); return edges;"
       },
       {
         "id": "input_edge",
@@ -307,7 +307,7 @@
           {"id": "edges", "script": "const edges = arr.map(e => e._value).filter(e => e && (e.as === edge || (edge === 'return' && (e.as === 'publish' || e.as === 'subscribe')))); return edges;"},
           {"id": "entries", "ref": "script", "value": "return array.map(e => [e.as, _lib.no.runGraph(e.graph, e.from, {...args, result: _lib.no.runtime.get_result(_graph)}, _lib)])"},
           {"id": "run_pub", "ref": "script", "value": "const res = Object.fromEntries(entries); const pubfn = pub => Object.entries(pub ?? {}).forEach(([k, v]) => v !== undefined && _lib.no.runtime.publish(k, {data: v, result: edge === 'return' ? res[edge] : _lib.no.runtime.get_result(_graph)})); if(typeof res.publish?.then === 'function'){ res.publish.then(pubfn) } else { pubfn(res.publish) } return res;"},
-          {"id": "out", "script": "if(edge === 'return'){ _lib.no.runtime.update_result(_graph, res.return); _lib.no.runtime.remove_listener('*', 'subscribe-' + _graph.id); Object.entries(res.subscribe ?? {}).filter(kv => kv[1]).forEach(([k, v]) => { _lib.no.runtime.add_listener(k, 'subscribe-' + _graph.id, {...v, args: Object.assign({}, args, v.args, {result: edge === 'return' ? res[edge] : _lib.no.runtime.get_result(_graph)})}, false, _lib.no.runtime.get_parentest(_graph).id, true) }); } return res[edge]"}
+          {"id": "out", "script": "if(edge === 'return'){ _lib.no.runtime.update_result(_graph, res.return); _lib.no.runtime.remove_listener('*', 'subscribe-' + _graph.id); Object.entries(res.subscribe ?? {}).filter(kv => kv[1]).forEach(([k, v]) => { _lib.no.runtime.add_listener(k, 'subscribe-' + _graph.id, {...v, args: Object.assign({}, args, v.args, {result: edge === 'return' ? res[edge] : _lib.no.runtime.get_result(_graph)})}, false, _lib.no.runtime.get_parent(_graph).id, true) }); } return res[edge]"}
         ],
         "edges": [
           {"from": "return_edge_arg", "to": "return_edge", "as": "value"},
@@ -598,8 +598,8 @@
         "id": "set_arg",
         "out": "out",
         "nodes": [
-          {"id": "path", "ref": "arg", "value": "path"},
           {"id": "value", "ref": "arg", "value": "value"},
+          {"id": "path", "ref": "arg", "value": "path"},
           {"id": "value_path", "ref": "arg", "value": "_graph.value"},
           {"id": "def_path", "ref": "default"},
           {"id": "env", "ref": "script", "value": "return _lib.no.runtime.get_args(_lib.no.runtime.get_parent(_graph))"},
