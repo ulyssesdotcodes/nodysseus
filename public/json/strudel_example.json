@@ -1,6 +1,5 @@
 {
     "id": "strudel_example",
-    "name": "strudel_example",
     "nodes": [
       {
         "id": "args"
@@ -342,11 +341,6 @@
         "ref": "return"
       },
       {
-        "id": "3n6u07v/dfk63hb",
-        "value": "_lib.no.runtime.update_graph(_graph);",
-        "ref": "script"
-      },
-      {
         "id": "3n6u07v/bc9c7g4",
         "ref": "import_nodes"
       },
@@ -369,8 +363,13 @@
         "ref": "@strudel.play"
       },
       {
+        "id": "3n6u07v/dfk63hb",
+        "value": "console.log(arg0); _lib.no.runtime.update_graph(_graph);",
+        "ref": "script"
+      },
+      {
         "id": "main/out",
-        "name": "export",
+        "name": "strudel_example",
         "ref": "return"
       }
     ],

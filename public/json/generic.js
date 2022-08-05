@@ -2989,6 +2989,626 @@
       }
     ],
     "out": "main/out"
+  },
+  {
+    "id": "changed",
+    "name": "changed",
+    "nodes": [
+      {
+        "id": "p8v5ed5",
+        "name": "changed",
+        "ref": "return"
+      },
+      {
+        "id": "14mzqe3"
+      },
+      {
+        "id": "vs4opfd",
+        "ref": "return"
+      },
+      {
+        "id": "3l4ufol"
+      },
+      {
+        "id": "jlmvbt7",
+        "value": "comparison",
+        "ref": "get"
+      },
+      {
+        "id": "izbtl3g",
+        "value": "value",
+        "ref": "arg"
+      },
+      {
+        "id": "mm880mz",
+        "ref": "cache"
+      },
+      {
+        "id": "kw0x0bm",
+        "value": "state.value",
+        "ref": "set_mutable"
+      },
+      {
+        "id": "qqzgl4i"
+      },
+      {
+        "id": "f0ticbo"
+      },
+      {
+        "id": "fvvux6n",
+        "value": "value",
+        "ref": "arg"
+      },
+      {
+        "id": "2cvrnm9",
+        "value": "initial",
+        "ref": "arg"
+      },
+      {
+        "id": "uqm4o4b",
+        "value": "state",
+        "ref": "arg"
+      },
+      {
+        "id": "a59coum",
+        "value": "return state != value;",
+        "ref": "script"
+      },
+      {
+        "id": "pt5nb1r",
+        "value": "state.value",
+        "ref": "arg"
+      },
+      {
+        "id": "hkxrk6s",
+        "value": "value",
+        "ref": "arg"
+      }
+    ],
+    "edges": [
+      {
+        "from": "14mzqe3",
+        "to": "p8v5ed5",
+        "as": "args"
+      },
+      {
+        "from": "vs4opfd",
+        "to": "p8v5ed5",
+        "as": "return"
+      },
+      {
+        "from": "3l4ufol",
+        "to": "vs4opfd",
+        "as": "args"
+      },
+      {
+        "from": "jlmvbt7",
+        "to": "vs4opfd",
+        "as": "return"
+      },
+      {
+        "from": "izbtl3g",
+        "to": "3l4ufol",
+        "as": "value"
+      },
+      {
+        "from": "mm880mz",
+        "to": "3l4ufol",
+        "as": "state"
+      },
+      {
+        "from": "kw0x0bm",
+        "to": "jlmvbt7",
+        "as": "target"
+      },
+      {
+        "from": "qqzgl4i",
+        "to": "mm880mz",
+        "as": "value"
+      },
+      {
+        "from": "f0ticbo",
+        "to": "kw0x0bm",
+        "as": "target"
+      },
+      {
+        "from": "fvvux6n",
+        "to": "kw0x0bm",
+        "as": "value"
+      },
+      {
+        "from": "2cvrnm9",
+        "to": "qqzgl4i",
+        "as": "value"
+      },
+      {
+        "from": "uqm4o4b",
+        "to": "f0ticbo",
+        "as": "state"
+      },
+      {
+        "from": "a59coum",
+        "to": "f0ticbo",
+        "as": "comparison"
+      },
+      {
+        "from": "pt5nb1r",
+        "to": "a59coum",
+        "as": "state"
+      },
+      {
+        "from": "hkxrk6s",
+        "to": "a59coum",
+        "as": "value"
+      }
+    ],
+    "out": "p8v5ed5"
+  },
+{
+    "id": "webgl",
+    "nodes": [
+      {
+        "id": "j219svq"
+      },
+      {
+        "id": "04xuprq"
+      },
+      {
+        "id": "jidlrdv",
+        "value": "return document.getElementById(\"node-editor-info-canvas\").getContext('webgl2')",
+        "ref": "script"
+      },
+      {
+        "id": "gkv4bqi",
+        "ref": "cache"
+      },
+      {
+        "id": "ea0tgct",
+        "value": "vtx",
+        "ref": "arg"
+      },
+      {
+        "id": "rh45l5q",
+        "value": "gl",
+        "ref": "arg"
+      },
+      {
+        "id": "hzz1ww4",
+        "value": "return gl.VERTEX_SHADER;",
+        "ref": "script"
+      },
+      {
+        "id": "qjktjzv",
+        "value": "gl",
+        "ref": "arg"
+      },
+      {
+        "id": "bu3m3jq",
+        "ref": "load_shader"
+      },
+      {
+        "id": "camgxqu",
+        "ref": "load_shader"
+      },
+      {
+        "id": "3j7l8wk",
+        "value": "gl",
+        "ref": "arg"
+      },
+      {
+        "id": "wrpwzyg",
+        "value": "gl",
+        "ref": "arg"
+      },
+      {
+        "id": "l41589j",
+        "value": "frg",
+        "ref": "arg"
+      },
+      {
+        "id": "5luq4y5",
+        "value": "return gl.FRAGMENT_SHADER;",
+        "ref": "script"
+      },
+      {
+        "id": "esayius",
+        "value": "gl",
+        "ref": "arg"
+      },
+      {
+        "id": "2mgzzwp",
+        "ref": "return"
+      },
+      {
+        "id": "bkeent2",
+        "value": "shaderProgram",
+        "ref": "arg"
+      },
+      {
+        "id": "qbj2tl2",
+        "value": "gl",
+        "ref": "arg"
+      },
+      {
+        "id": "wyb1z00",
+        "name": ""
+      },
+      {
+        "id": "8njh1mx",
+        "value": "gl",
+        "ref": "arg"
+      },
+      {
+        "id": "ca17ykm",
+        "value": "gl",
+        "ref": "arg"
+      },
+      {
+        "id": "main/out",
+        "name": "webgl",
+        "ref": "return"
+      },
+      {
+        "id": "ng2kjpd",
+        "value": "buffer",
+        "ref": "arg"
+      },
+      {
+        "id": "7i0o3pn",
+        "value": "return `#version 300 es\n\n    precision highp float;\n\n\n\n    out vec2 texCoord;\n\n    void main() {\n      float x = float((gl_VertexID & 1) << 2);\n      float y = float((gl_VertexID & 2) << 1);\n      texCoord.x = x * 0.5;\n      texCoord.y = y * 0.5;\n      gl_Position = vec4(x - 1.0, y - 1.0, 0, 1);\n    }\n  `;",
+        "ref": "script"
+      },
+      {
+        "id": "p2ibbe3",
+        "value": "return {\n    program: shaderProgram,\n    attribLocations: {\n    },\n    uniformLocations: {\n      dataBuffer: gl.getUniformLocation(shaderProgram, 'uData')\n    },\n  };\n",
+        "ref": "script"
+      },
+      {
+        "id": "8dy573e/8dy573e",
+        "out": "8dy573e/8dy573e",
+        "nodes": [
+          {
+            "id": "8dy573e/8dy573e",
+            "ref": "html_element"
+          },
+          {
+            "id": "8dy573e/576gi1y",
+            "ref": "array"
+          },
+          {
+            "id": "8dy573e/t6fz346",
+            "ref": "css_styles"
+          },
+          {
+            "id": "8dy573e/21xxdy8"
+          },
+          {
+            "id": "8dy573e/cuio21r"
+          },
+          {
+            "id": "8dy573e/dx424v3",
+            "value": "block"
+          }
+        ],
+        "edges": [
+          {
+            "from": "8dy573e/576gi1y",
+            "to": "8dy573e/8dy573e",
+            "as": "children"
+          },
+          {
+            "from": "8dy573e/t6fz346",
+            "to": "8dy573e/576gi1y",
+            "as": "arg2"
+          },
+          {
+            "from": "8dy573e/21xxdy8",
+            "to": "8dy573e/t6fz346",
+            "as": "css_object"
+          },
+          {
+            "from": "8dy573e/cuio21r",
+            "to": "8dy573e/21xxdy8",
+            "as": "#node-editor-info-canvas"
+          },
+          {
+            "from": "8dy573e/dx424v3",
+            "to": "8dy573e/cuio21r",
+            "as": "display"
+          }
+        ]
+      },
+      {
+        "id": "1lgkj23",
+        "value": "gl",
+        "ref": "arg"
+      },
+      {
+        "id": "derz1cv",
+        "value": "vtx",
+        "ref": "arg"
+      },
+      {
+        "id": "duubxl9",
+        "value": "frg",
+        "ref": "arg"
+      },
+      {
+        "id": "5pjjo2a",
+        "value": "return `#version 300 es\n\n    precision highp float;\n\n    uniform int uData[1024];\n\n    in vec2 texCoord;\n\n    out vec4 fragmentColor;\n    \n    void main() {\n      int idx = int(floor(1024.*gl_FragCoord.x/300.0));\n      float val = float(uData[idx]) / 128.;\n      fragmentColor = vec4(val,val,val, 1.0);\n    }\n  `;",
+        "ref": "script"
+      },
+      {
+        "id": "4r5fc0b",
+        "value": "buffer",
+        "ref": "arg"
+      },
+      {
+        "id": "fbru2p5",
+        "value": "const shaderProgram = gl.createProgram();\n  gl.attachShader(shaderProgram, vertexShader);\n  gl.attachShader(shaderProgram, fragmentShader);\n  gl.linkProgram(shaderProgram);\n\n  // If creating the shader program failed, alert\n\n  if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {\n    throw new Error(gl.getProgramInfoLog(shaderProgram));\n    return null;\n  }\n\n  return shaderProgram;",
+        "ref": "script"
+      },
+      {
+        "id": "01l4ilv",
+        "value": "  gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque\n  gl.clearDepth(1.0);                 // Clear everything\n\n  // Clear the canvas before we start drawing on it.\n\n  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);\n\n  // Tell WebGL to use our program when drawing\n  \n\n  gl.useProgram(programInfo.program);\ngl.uniform1fv(programInfo.uniformLocations.dataBuffer, buffers.data);\n\n  {\n    const offset = 0;\n    const vertexCount = 3;\n    gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);\n  }",
+        "name": "",
+        "ref": "script"
+      },
+      {
+        "id": "tfz84l0",
+        "ref": "cache"
+      },
+      {
+        "id": "5bt6mgs",
+        "ref": "cache"
+      },
+      {
+        "id": "njrst9d",
+        "value": "const valBuffer = gl.createBuffer();\ngl.bindBuffer(gl.ARRAY_BUFFER, valBuffer);\n\ngl.bufferData(gl.ARRAY_BUFFER, buffer.data, gl.STATIC_DRAW);\n\nreturn {\n  val: valBuffer,\n  data: buffer.data\n}",
+        "name": "",
+        "ref": "script"
+      }
+    ],
+    "edges": [
+      {
+        "from": "8dy573e/8dy573e",
+        "to": "main/out",
+        "as": "display"
+      },
+      {
+        "from": "j219svq",
+        "to": "main/out",
+        "as": "subscribe"
+      },
+      {
+        "from": "04xuprq",
+        "to": "main/out",
+        "as": "args"
+      },
+      {
+        "from": "jidlrdv",
+        "to": "gkv4bqi",
+        "as": "value"
+      },
+      {
+        "from": "gkv4bqi",
+        "to": "04xuprq",
+        "as": "gl"
+      },
+      {
+        "from": "7i0o3pn",
+        "to": "04xuprq",
+        "as": "vtx"
+      },
+      {
+        "from": "5pjjo2a",
+        "to": "04xuprq",
+        "as": "frg"
+      },
+      {
+        "from": "ea0tgct",
+        "to": "bu3m3jq",
+        "as": "source"
+      },
+      {
+        "from": "hzz1ww4",
+        "to": "bu3m3jq",
+        "as": "shader_type"
+      },
+      {
+        "from": "rh45l5q",
+        "to": "hzz1ww4",
+        "as": "gl"
+      },
+      {
+        "from": "qjktjzv",
+        "to": "bu3m3jq",
+        "as": "gl"
+      },
+      {
+        "from": "l41589j",
+        "to": "camgxqu",
+        "as": "source"
+      },
+      {
+        "from": "5luq4y5",
+        "to": "camgxqu",
+        "as": "shader_type"
+      },
+      {
+        "from": "3j7l8wk",
+        "to": "camgxqu",
+        "as": "gl"
+      },
+      {
+        "from": "wrpwzyg",
+        "to": "5luq4y5",
+        "as": "gl"
+      },
+      {
+        "from": "2mgzzwp",
+        "to": "main/out",
+        "as": "return"
+      },
+      {
+        "from": "wyb1z00",
+        "to": "2mgzzwp",
+        "as": "args"
+      },
+      {
+        "from": "bkeent2",
+        "to": "p2ibbe3",
+        "as": "shaderProgram"
+      },
+      {
+        "from": "qbj2tl2",
+        "to": "p2ibbe3",
+        "as": "gl"
+      },
+      {
+        "from": "esayius",
+        "to": "fbru2p5",
+        "as": "gl"
+      },
+      {
+        "from": "01l4ilv",
+        "to": "2mgzzwp",
+        "as": "return"
+      },
+      {
+        "from": "8njh1mx",
+        "to": "njrst9d",
+        "as": "gl"
+      },
+      {
+        "from": "ca17ykm",
+        "to": "01l4ilv",
+        "as": "gl"
+      },
+      {
+        "from": "camgxqu",
+        "to": "fbru2p5",
+        "as": "fragmentShader"
+      },
+      {
+        "from": "bu3m3jq",
+        "to": "fbru2p5",
+        "as": "vertexShader"
+      },
+      {
+        "from": "ng2kjpd",
+        "to": "njrst9d",
+        "as": "buffer"
+      },
+      {
+        "from": "1lgkj23",
+        "to": "wyb1z00",
+        "as": "gl"
+      },
+      {
+        "from": "derz1cv",
+        "to": "wyb1z00",
+        "as": "vtx"
+      },
+      {
+        "from": "duubxl9",
+        "to": "wyb1z00",
+        "as": "frg"
+      },
+      {
+        "from": "njrst9d",
+        "to": "01l4ilv",
+        "as": "buffers"
+      },
+      {
+        "from": "4r5fc0b",
+        "to": "wyb1z00",
+        "as": "buffer"
+      },
+      {
+        "from": "tfz84l0",
+        "to": "wyb1z00",
+        "as": "shaderProgram"
+      },
+      {
+        "from": "fbru2p5",
+        "to": "tfz84l0",
+        "as": "value"
+      },
+      {
+        "from": "5bt6mgs",
+        "to": "01l4ilv",
+        "as": "programInfo"
+      },
+      {
+        "from": "p2ibbe3",
+        "to": "5bt6mgs",
+        "as": "value"
+      }
+    ],
+    "out": "main/out"
+  }, {
+    "id": "load_shader",
+    "name": "load_shader",
+    "nodes": [
+      {
+        "id": "37nc07d"
+      },
+      {
+        "id": "c0cr54c",
+        "value": "const shader = gl.createShader(shader_type);\n\n  // Send the source to the shader object\n\n  gl.shaderSource(shader, source);\n\n  // Compile the shader program\n\n  gl.compileShader(shader);\n\n  // See if it compiled successfully\n\n  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {\n    alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));\n    gl.deleteShader(shader);\n    return null;\n  }\n\n  return shader;",
+        "name": "",
+        "ref": "script"
+      },
+      {
+        "id": "l3qddzc",
+        "value": "gl",
+        "ref": "arg"
+      },
+      {
+        "id": "e5uhxrd",
+        "value": "source",
+        "ref": "arg"
+      },
+      {
+        "id": "6o4os08",
+        "value": "shader_type",
+        "ref": "arg"
+      },
+      {
+        "id": "bu3m3jq",
+        "name": "export",
+        "ref": "return"
+      }
+    ],
+    "edges": [
+      {
+        "from": "37nc07d",
+        "to": "bu3m3jq",
+        "as": "args"
+      },
+      {
+        "from": "c0cr54c",
+        "to": "bu3m3jq",
+        "as": "return"
+      },
+      {
+        "from": "l3qddzc",
+        "to": "c0cr54c",
+        "as": "gl"
+      },
+      {
+        "from": "e5uhxrd",
+        "to": "c0cr54c",
+        "as": "source"
+      },
+      {
+        "from": "6o4os08",
+        "to": "c0cr54c",
+        "as": "shader_type"
+      }
+    ],
+    "out": "bu3m3jq"
   }
   ]
 }

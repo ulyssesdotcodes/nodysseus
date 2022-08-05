@@ -49,16 +49,28 @@ function nodysseus_get(obj, propsArg, defaultValue) {
         obj = obj._value;
         continue;
     }
+
+    if(obj && ispromise(obj)){
+        return obj.then(r => props.length > 0 ? nodysseus_get(r, props.join('.'), defaultValue) : r)
+    }
+
     prop = props.length == 0 ? props[0] : props.shift();
     if((obj === undefined || typeof obj !== 'object' || (obj[prop] === undefined && !(obj.hasOwnProperty && obj.hasOwnProperty(prop))))){
         return objArg && objArg.__args ? nodysseus_get(objArg.__args, propsArg, defaultValue) : defaultValue;
     }
 
-    if(ispromise(obj)) {
-        obj = obj.then(v => v[prop]);
-    } else {
-        obj = obj[prop];
+    obj = obj[prop];
+
+    // while(obj && obj._Proxy) {
+    //     obj = obj._value;
+    //     continue;
+    // }
+
+    if(obj && ispromise(obj)){
+        return obj.then(r => props.length > 0 ? nodysseus_get(r, props.join('.'), defaultValue) : r)
     }
+
+
     level += 1;
   }
   return obj;
@@ -1238,23 +1250,25 @@ const nolib = {
             args: ['_node', '_graph', 'target'],
             resolve: false,
             fn: (node, graph, target) => {
-                return typeof node.value === 'string'
-                ?   node.value === '_args'
+                const typedvalue = node.value.split(": ")
+                const nodevalue = typedvalue[0]
+                return typeof nodevalue === 'string'
+                ?   nodevalue === '_args'
                     ? target
-                    : node.value === '_graph'
+                    : nodevalue === '_graph'
                     ? graph
-                    : node.value === '_node'
+                    : nodevalue === '_node'
                     ? node
-                    : node.value.startsWith('_graph.')
-                    ? nodysseus_get(graph, node.value.substring('_graph.'.length))
-                    : node.value.startsWith('_node.')
-                    ? nodysseus_get(node, node.value.substring('_node.'.length))
+                    : nodevalue.startsWith('_graph.')
+                    ? nodysseus_get(graph, nodevalue.substring('_graph.'.length))
+                    : nodevalue.startsWith('_node.')
+                    ? nodysseus_get(node, nodevalue.substring('_node.'.length))
                     : nodysseus_get(node.type === "local" || node.type?.includes?.("local") 
                         ? Object.assign({}, target, {__args: {}}) 
                         : node.type === "parent" || node.type?.includes?.("parent") 
-                        ? target.__args : target, node.value)
-                : node.value !== undefined && target !== undefined
-                    ? target[node.value]
+                        ? target.__args : target, nodevalue)
+                : nodevalue !== undefined && target !== undefined
+                    ? target[nodevalue]
                     : undefined
             },
         },
@@ -1294,27 +1308,33 @@ const nolib = {
         call: {
             resolve: true,
             args: ['_node', 'self', 'fn', 'args', '_graph_input_value'],
-            fn: (node, self, fn, args, _args) => typeof self === 'function' 
-                ? Array.isArray(args) 
-                    ? self(...(args
-                        .reverse()
-                        .reduce((acc, v) => [
-                            !acc[0] && v !== undefined, acc[0] || v !== undefined 
-                            ? acc[1].concat([v]) 
-                            : acc[1]
-                        ], [false, []])[1]
-                        .reverse()))
-                    : self(args === undefined ? [] : args)
-                : Array.isArray(args) 
-                    ? nodysseus_get(self ?? _args, fn || node.value).apply(self, (args || [])
-                        .reverse()
-                        .reduce((acc, v) => [
-                            !acc[0] && v !== undefined, acc[0] || v !== undefined 
-                            ? acc[1].concat([v]) 
-                            : acc[1]
-                        ], [false, []])[1]
-                        .reverse())
-                    : nodysseus_get(self ?? _args, fn || node.value).apply(self, args === undefined ? [] : [args])
+            fn: (node, self, fn, args, _args) => {
+                if(typeof self === 'function'){
+                    return Array.isArray(args) 
+                        ? self(...(args
+                            .reverse()
+                            .reduce((acc, v) => [
+                                !acc[0] && v !== undefined, acc[0] || v !== undefined 
+                                ? acc[1].concat([v]) 
+                                : acc[1]
+                            ], [false, []])[1]
+                            .reverse()))
+                        : self(args === undefined ? [] : args)
+                } else { 
+                    const ng_fn = nodysseus_get(self ?? _args, fn || node.value)
+                    const fnargs = Array.isArray(args) 
+                        ? (args || [])
+                            .reverse()
+                            .reduce((acc, v) => [
+                                !acc[0] && v !== undefined, acc[0] || v !== undefined 
+                                ? acc[1].concat([v]) 
+                                : acc[1]
+                            ], [false, []])[1]
+                            .reverse()
+                        : args === undefined ? [] : [args]
+                    return ispromise(ng_fn) ? ng_fn.then(f => f.apply(fnargs)) : ng_fn.apply(self, fnargs)
+                }
+            }
         },
         merge_objects: {
             args: ['_node_inputs'],

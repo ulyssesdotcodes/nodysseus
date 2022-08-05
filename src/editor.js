@@ -1073,6 +1073,7 @@ const info_el = ({node, hidden, links_in, link_out, display_graph_id, randid, re
                 : node_ref?.nodes?.filter(n => 
                     n.ref === "arg" 
                     && n.type !== "internal" 
+                    && !n.value.split(":")[1]?.toLowerCase()?.includes("internal")
                     && !(Array.isArray(n.type) && n.type.includes("internal"))).map(n => n.value) ?? [])
                     .filter(a => !a.includes('.') && !a.startsWith("_")))]
                     .concat(
