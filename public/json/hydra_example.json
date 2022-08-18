@@ -39,7 +39,7 @@
       {
         "id": "m8sgasc",
         "value": "kaleid",
-        "ref": "hydra.node"
+        "ref": "@hydra.node"
       },
       {
         "id": "i1qonbc",
@@ -54,12 +54,12 @@
       {
         "id": "ulki2ii",
         "value": "noise",
-        "ref": "hydra.node"
+        "ref": "@hydra.node"
       },
       {
         "id": "z9hrjui",
         "value": "colorama",
-        "ref": "hydra.node"
+        "ref": "@hydra.node"
       },
       {
         "id": "uxm6lm2",
@@ -67,7 +67,7 @@
       },
       {
         "id": "pu58ta7",
-        "ref": "hydra.setup"
+        "ref": "@hydra.setup"
       },
       {
         "id": "4igiepn",
@@ -81,7 +81,7 @@
         "id": "ysash4u",
         "value": "repeatX",
         "name": "",
-        "ref": "hydra.node"
+        "ref": "@hydra.node"
       },
       {
         "id": "sv92oa5",
@@ -109,7 +109,7 @@
       },
       {
         "id": "34pzvn4",
-        "value": "return !!_lib.no.runtime.get_ref(_graph, 'hydra.setup')",
+        "value": "return !!_lib.no.runtime.get_ref(_graph, '@hydra.setup')",
         "ref": "script"
       },
       {

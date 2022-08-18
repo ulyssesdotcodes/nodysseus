@@ -1,7 +1,7 @@
 [
   {
     "id": "@hydra.setup",
-    "name": "hydra.setup",
+    "name": "@hydra.setup",
     "nodes": [
       {
         "id": "qprobxb"
@@ -578,7 +578,7 @@
   },
   {
     "id": "@hydra.node",
-    "name": "hydra.node",
+    "name": "@hydra.node",
     "nodes": [
       {
         "id": "0z8n1c5"
