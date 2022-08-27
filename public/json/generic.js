@@ -584,12 +584,16 @@
         "out": "out",
         "nodes": [
           {"id": "path", "ref": "arg", "value": "path"},
+          {"id": "value", "ref": "arg", "value": "_graph.value"},
+          {"id": "path_value", "ref": "default"},
           {"id": "args", "ref": "arg", "value": "_args", "type": "internal"},
           {"id": "runnable", "script": "const parent = _lib.no.runtime.get_parent(_graph); const node_id = _lib.no.runtime.get_path(parent, path); return {fn: node_id, graph: parent, args: {...args, edge: args.edge ? {...args.edge, node_id: parent.id + '/' + node_id} : undefined}}"},
           {"id": "out", "ref": "run"}
         ],
         "edges": [
-          {"from": "path", "to": "runnable", "as": "path"},
+          {"from": "path", "to": "path_value", "as": "value"},
+          {"from": "value", "to": "path_value", "as": "otherwise"},
+          {"from": "path_value", "to": "runnable", "as": "path"},
           {"from": "args", "to": "runnable", "as": "args"},
           {"from": "runnable", "to": "out", "as": "runnable"}
         ]
@@ -3609,6 +3613,315 @@
       }
     ],
     "out": "bu3m3jq"
+  },
+  {
+    "id": "subscribe_many",
+    "name": "subscribe_many",
+    "nodes": [
+      {
+        "id": "ld37qq4",
+        "name": "subscribe_many",
+        "ref": "return"
+      },
+      {
+        "id": "ndna6vl"
+      },
+      {
+        "id": "r0v26jn",
+        "name": "",
+        "ref": "reduce"
+      },
+      {
+        "id": "0n8k0b7",
+        "value": "events",
+        "ref": "arg"
+      },
+      {
+        "id": "kd528s8",
+        "name": "",
+        "ref": "runnable"
+      },
+      {
+        "id": "2mcffa6"
+      },
+      {
+        "id": "rxoook3",
+        "ref": "merge_objects"
+      },
+      {
+        "id": "daykk9b"
+      },
+      {
+        "id": "6kwqo8l",
+        "value": "previous",
+        "name": "",
+        "ref": "arg"
+      },
+      {
+        "id": "bzkaiyo",
+        "name": "",
+        "ref": "set"
+      },
+      {
+        "id": "hsq8vrp",
+        "value": "base",
+        "ref": "arg"
+      },
+      {
+        "id": "mrqba2h",
+        "value": "args.data",
+        "ref": "set"
+      },
+      {
+        "id": "5mzlv42"
+      },
+      {
+        "id": "pkd8b0p",
+        "value": "current",
+        "ref": "arg"
+      },
+      {
+        "id": "q0gj8si",
+        "ref": "runnable"
+      },
+      {
+        "id": "8zi1gzy",
+        "value": "runnable",
+        "ref": "arg"
+      },
+      {
+        "id": "5qsrs7b",
+        "ref": "cache"
+      },
+      {
+        "id": "7doulnd"
+      },
+      {
+        "id": "uj0771n",
+        "ref": "run"
+      },
+      {
+        "id": "caxxiqc",
+        "value": "{}",
+        "ref": ""
+      },
+      {
+        "id": "d98s2id",
+        "value": "evt_runnable",
+        "ref": "arg"
+      },
+      {
+        "id": "ioguo6p",
+        "value": "base",
+        "ref": "arg"
+      },
+      {
+        "id": "6e9oudx",
+        "value": "current",
+        "ref": "arg"
+      },
+      {
+        "id": "9716t7q",
+        "name": "",
+        "ref": "sequence"
+      },
+      {
+        "id": "hi50l05",
+        "ref": "get"
+      },
+      {
+        "id": "czl2oeo",
+        "ref": "set_mutable"
+      },
+      {
+        "id": "opox5xi",
+        "value": "base",
+        "ref": "arg"
+      },
+      {
+        "id": "5szjf17",
+        "value": "evt",
+        "ref": "arg"
+      },
+      {
+        "id": "l1ovegw",
+        "value": "evt_runnable",
+        "ref": "arg"
+      },
+      {
+        "id": "zipaa4j",
+        "value": "return \"args.data.\" + evt;",
+        "ref": "script"
+      },
+      {
+        "id": "6m19w81",
+        "value": "data",
+        "ref": "arg"
+      },
+      {
+        "id": "i7tgtne",
+        "value": "evt",
+        "ref": "arg"
+      }
+    ],
+    "edges": [
+      {
+        "from": "ndna6vl",
+        "to": "ld37qq4",
+        "as": "args"
+      },
+      {
+        "from": "r0v26jn",
+        "to": "ld37qq4",
+        "as": "return"
+      },
+      {
+        "from": "0n8k0b7",
+        "to": "r0v26jn",
+        "as": "array"
+      },
+      {
+        "from": "kd528s8",
+        "to": "r0v26jn",
+        "as": "fn"
+      },
+      {
+        "from": "2mcffa6",
+        "to": "r0v26jn",
+        "as": "initial"
+      },
+      {
+        "from": "rxoook3",
+        "to": "kd528s8",
+        "as": "fn"
+      },
+      {
+        "from": "daykk9b",
+        "to": "kd528s8",
+        "as": "args"
+      },
+      {
+        "from": "6kwqo8l",
+        "to": "rxoook3",
+        "as": "arg1"
+      },
+      {
+        "from": "bzkaiyo",
+        "to": "rxoook3",
+        "as": "arg0"
+      },
+      {
+        "from": "hsq8vrp",
+        "to": "daykk9b",
+        "as": "base"
+      },
+      {
+        "from": "mrqba2h",
+        "to": "daykk9b",
+        "as": "evt_runnable"
+      },
+      {
+        "from": "5mzlv42",
+        "to": "bzkaiyo",
+        "as": "target"
+      },
+      {
+        "from": "pkd8b0p",
+        "to": "bzkaiyo",
+        "as": "path"
+      },
+      {
+        "from": "q0gj8si",
+        "to": "bzkaiyo",
+        "as": "value"
+      },
+      {
+        "from": "8zi1gzy",
+        "to": "mrqba2h",
+        "as": "target"
+      },
+      {
+        "from": "5qsrs7b",
+        "to": "mrqba2h",
+        "as": "value"
+      },
+      {
+        "from": "7doulnd",
+        "to": "q0gj8si",
+        "as": "args"
+      },
+      {
+        "from": "uj0771n",
+        "to": "q0gj8si",
+        "as": "fn"
+      },
+      {
+        "from": "caxxiqc",
+        "to": "5qsrs7b",
+        "as": "value"
+      },
+      {
+        "from": "d98s2id",
+        "to": "7doulnd",
+        "as": "evt_runnable"
+      },
+      {
+        "from": "ioguo6p",
+        "to": "7doulnd",
+        "as": "base"
+      },
+      {
+        "from": "6e9oudx",
+        "to": "7doulnd",
+        "as": "evt"
+      },
+      {
+        "from": "9716t7q",
+        "to": "uj0771n",
+        "as": "runnable"
+      },
+      {
+        "from": "hi50l05",
+        "to": "9716t7q",
+        "as": "arg1"
+      },
+      {
+        "from": "czl2oeo",
+        "to": "9716t7q",
+        "as": "arg0"
+      },
+      {
+        "from": "opox5xi",
+        "to": "hi50l05",
+        "as": "target"
+      },
+      {
+        "from": "5szjf17",
+        "to": "hi50l05",
+        "as": "path"
+      },
+      {
+        "from": "l1ovegw",
+        "to": "czl2oeo",
+        "as": "target"
+      },
+      {
+        "from": "zipaa4j",
+        "to": "czl2oeo",
+        "as": "path"
+      },
+      {
+        "from": "6m19w81",
+        "to": "czl2oeo",
+        "as": "value"
+      },
+      {
+        "from": "i7tgtne",
+        "to": "zipaa4j",
+        "as": "evt"
+      }
+    ],
+    "out": "ld37qq4"
   }
   ]
 }
