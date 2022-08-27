@@ -1053,102 +1053,9 @@
         "id": "yd43rsf"
       },
       {
-        "id": "ndna6vl"
-      },
-      {
-        "id": "0n8k0b7",
-        "value": "events",
-        "ref": "arg"
-      },
-      {
-        "id": "r0v26jn",
-        "name": "",
-        "ref": "reduce"
-      },
-      {
-        "id": "rxoook3",
-        "ref": "merge_objects"
-      },
-      {
-        "id": "2mcffa6"
-      },
-      {
-        "id": "daykk9b"
-      },
-      {
-        "id": "l1ovegw",
-        "value": "evt_runnable",
-        "ref": "arg"
-      },
-      {
-        "id": "8zi1gzy",
-        "value": "runnable",
-        "ref": "arg"
-      },
-      {
-        "id": "kd528s8",
-        "name": "",
-        "ref": "runnable"
-      },
-      {
-        "id": "5mzlv42"
-      },
-      {
-        "id": "bzkaiyo",
-        "name": "",
-        "ref": "set"
-      },
-      {
-        "id": "pkd8b0p",
-        "value": "current",
-        "ref": "arg"
-      },
-      {
-        "id": "6kwqo8l",
-        "value": "previous",
-        "name": "",
-        "ref": "arg"
-      },
-      {
         "id": "hrw9i04",
         "value": "@strudel/cycle, @strudel/playpause",
         "ref": "array"
-      },
-      {
-        "id": "q0gj8si",
-        "ref": "runnable"
-      },
-      {
-        "id": "uj0771n",
-        "ref": "run"
-      },
-      {
-        "id": "7doulnd"
-      },
-      {
-        "id": "6e9oudx",
-        "value": "current",
-        "ref": "arg"
-      },
-      {
-        "id": "i7tgtne",
-        "value": "evt",
-        "ref": "arg"
-      },
-      {
-        "id": "6m19w81",
-        "value": "data",
-        "ref": "arg"
-      },
-      {
-        "id": "d98s2id",
-        "value": "evt_runnable",
-        "ref": "arg"
-      },
-      {
-        "id": "ow8poho/ow8poho",
-        "name": "evt_runnable",
-        "ref": "runnable"
       },
       {
         "id": "ow8poho/2fgc4g0",
@@ -1172,32 +1079,9 @@
         "ref": "arg"
       },
       {
-        "id": "ld37qq4",
-        "name": "",
-        "ref": "return"
-      },
-      {
-        "id": "mrqba2h",
-        "value": "args.data",
-        "ref": "set"
-      },
-      {
-        "id": "ccfhvxl",
-        "ref": "cache"
-      },
-      {
-        "id": "czl2oeo",
-        "ref": "set_mutable"
-      },
-      {
         "id": "ow8poho/px59z0w",
         "value": "playpause",
         "ref": "arg"
-      },
-      {
-        "id": "zipaa4j",
-        "value": "return \"args.data.\" + evt;",
-        "ref": "script"
       },
       {
         "id": "ow8poho/4p88ftp",
@@ -1214,40 +1098,6 @@
         "id": "n2slk4w",
         "value": "pattern",
         "ref": "arg"
-      },
-      {
-        "id": "caxxiqc",
-        "value": "base",
-        "ref": "arg"
-      },
-      {
-        "id": "opox5xi",
-        "value": "base",
-        "ref": "arg"
-      },
-      {
-        "id": "hi50l05",
-        "ref": "get"
-      },
-      {
-        "id": "hsq8vrp",
-        "value": "base",
-        "ref": "arg"
-      },
-      {
-        "id": "ioguo6p",
-        "value": "base",
-        "ref": "arg"
-      },
-      {
-        "id": "5szjf17",
-        "value": "evt",
-        "ref": "arg"
-      },
-      {
-        "id": "9716t7q",
-        "name": "",
-        "ref": "sequence"
       },
       {
         "id": "8fmidpv/8fmidpv",
@@ -1382,14 +1232,23 @@
         "ref": "script"
       },
       {
+        "id": "tzgzm7u",
+        "name": "@strudel.play",
+        "ref": "return"
+      },
+      {
+        "id": "ow8poho/ow8poho",
+        "name": "",
+        "ref": "runnable"
+      },
+      {
         "id": "ow8poho/40dayfl",
         "value": "return new Promise(res => setTimeout(() => res((cycle ?? 0) + 1), 1000));",
         "ref": "script"
       },
       {
-        "id": "tzgzm7u",
-        "name": "@strudel.play",
-        "ref": "return"
+        "id": "ld37qq4",
+        "ref": "subscribe_many"
       }
     ],
     "edges": [
@@ -1399,154 +1258,19 @@
         "as": "args"
       },
       {
-        "from": "ndna6vl",
-        "to": "ld37qq4",
-        "as": "args"
-      },
-      {
         "from": "ow8poho/ow8poho",
-        "to": "ndna6vl",
+        "to": "ld37qq4",
         "as": "runnable"
       },
       {
         "from": "hrw9i04",
-        "to": "ndna6vl",
+        "to": "ld37qq4",
         "as": "events"
-      },
-      {
-        "from": "0n8k0b7",
-        "to": "r0v26jn",
-        "as": "array"
-      },
-      {
-        "from": "kd528s8",
-        "to": "r0v26jn",
-        "as": "fn"
-      },
-      {
-        "from": "rxoook3",
-        "to": "kd528s8",
-        "as": "fn"
-      },
-      {
-        "from": "2mcffa6",
-        "to": "r0v26jn",
-        "as": "initial"
-      },
-      {
-        "from": "daykk9b",
-        "to": "kd528s8",
-        "as": "args"
-      },
-      {
-        "from": "5mzlv42",
-        "to": "bzkaiyo",
-        "as": "target"
-      },
-      {
-        "from": "pkd8b0p",
-        "to": "bzkaiyo",
-        "as": "path"
-      },
-      {
-        "from": "6kwqo8l",
-        "to": "rxoook3",
-        "as": "arg1"
-      },
-      {
-        "from": "bzkaiyo",
-        "to": "rxoook3",
-        "as": "arg0"
-      },
-      {
-        "from": "l1ovegw",
-        "to": "czl2oeo",
-        "as": "target"
-      },
-      {
-        "from": "zipaa4j",
-        "to": "czl2oeo",
-        "as": "path"
-      },
-      {
-        "from": "mrqba2h",
-        "to": "daykk9b",
-        "as": "evt_runnable"
-      },
-      {
-        "from": "i7tgtne",
-        "to": "zipaa4j",
-        "as": "evt"
-      },
-      {
-        "from": "q0gj8si",
-        "to": "bzkaiyo",
-        "as": "value"
-      },
-      {
-        "from": "7doulnd",
-        "to": "q0gj8si",
-        "as": "args"
-      },
-      {
-        "from": "6e9oudx",
-        "to": "7doulnd",
-        "as": "evt"
-      },
-      {
-        "from": "uj0771n",
-        "to": "q0gj8si",
-        "as": "fn"
-      },
-      {
-        "from": "d98s2id",
-        "to": "7doulnd",
-        "as": "evt_runnable"
-      },
-      {
-        "from": "ow8poho/2fgc4g0",
-        "to": "ow8poho/ow8poho",
-        "as": "fn"
       },
       {
         "from": "ow8poho/of2ul38",
         "to": "ow8poho/2fgc4g0",
         "as": "args"
-      },
-      {
-        "from": "8zi1gzy",
-        "to": "mrqba2h",
-        "as": "target"
-      },
-      {
-        "from": "ccfhvxl",
-        "to": "mrqba2h",
-        "as": "value"
-      },
-      {
-        "from": "caxxiqc",
-        "to": "ccfhvxl",
-        "as": "value"
-      },
-      {
-        "from": "r0v26jn",
-        "to": "ld37qq4",
-        "as": "return"
-      },
-      {
-        "from": "ow8poho/4p88ftp",
-        "to": "ow8poho/of2ul38",
-        "as": "playpause"
-      },
-      {
-        "from": "ow8poho/wssqcw0",
-        "to": "ow8poho/of2ul38",
-        "as": "cycle"
-      },
-      {
-        "from": "6m19w81",
-        "to": "czl2oeo",
-        "as": "value"
       },
       {
         "from": "ow8poho/vbsa6ny",
@@ -1569,58 +1293,13 @@
         "as": "cycle"
       },
       {
-        "from": "ow8poho/px59z0w",
-        "to": "ow8poho/vbsa6ny",
-        "as": "pred"
-      },
-      {
         "from": "8fmidpv/8fmidpv",
         "to": "9tj6uzq",
         "as": "@strudel/cycle"
       },
       {
-        "from": "n2slk4w",
-        "to": "8fmidpv/fwhkv4x",
-        "as": "pattern"
-      },
-      {
         "from": "9tj6uzq",
-        "to": "ndna6vl",
-        "as": "base"
-      },
-      {
-        "from": "9716t7q",
-        "to": "uj0771n",
-        "as": "runnable"
-      },
-      {
-        "from": "czl2oeo",
-        "to": "9716t7q",
-        "as": "arg0"
-      },
-      {
-        "from": "hi50l05",
-        "to": "9716t7q",
-        "as": "arg1"
-      },
-      {
-        "from": "opox5xi",
-        "to": "hi50l05",
-        "as": "target"
-      },
-      {
-        "from": "5szjf17",
-        "to": "hi50l05",
-        "as": "path"
-      },
-      {
-        "from": "hsq8vrp",
-        "to": "daykk9b",
-        "as": "base"
-      },
-      {
-        "from": "ioguo6p",
-        "to": "7doulnd",
+        "to": "ld37qq4",
         "as": "base"
       },
       {
@@ -1759,14 +1438,39 @@
         "as": "arg1"
       },
       {
-        "from": "8fmidpv/0lxcaad",
-        "to": "8fmidpv/8re6vcq",
-        "as": "pred"
+        "from": "n2slk4w",
+        "to": "8fmidpv/fwhkv4x",
+        "as": "pattern"
       },
       {
         "from": "ld37qq4",
         "to": "tzgzm7u",
         "as": "subscribe"
+      },
+      {
+        "from": "ow8poho/4p88ftp",
+        "to": "ow8poho/of2ul38",
+        "as": "playpause"
+      },
+      {
+        "from": "ow8poho/wssqcw0",
+        "to": "ow8poho/of2ul38",
+        "as": "cycle"
+      },
+      {
+        "from": "ow8poho/px59z0w",
+        "to": "ow8poho/vbsa6ny",
+        "as": "pred"
+      },
+      {
+        "from": "ow8poho/2fgc4g0",
+        "to": "ow8poho/ow8poho",
+        "as": "fn"
+      },
+      {
+        "from": "8fmidpv/0lxcaad",
+        "to": "8fmidpv/8re6vcq",
+        "as": "pred"
       }
     ],
     "out": "tzgzm7u"

@@ -323,10 +323,6 @@
         "ref": "@strudel.node"
       },
       {
-        "id": "a9ulaqq",
-        "value": "c2"
-      },
-      {
         "id": "f2fmspr",
         "ref": "if"
       },
@@ -368,8 +364,17 @@
         "ref": "script"
       },
       {
+        "id": "ofaojn2",
+        "value": "strudel",
+        "ref": "if_arg"
+      },
+      {
+        "id": "a9ulaqq",
+        "value": "c2"
+      },
+      {
         "id": "main/out",
-        "name": "strudel_example",
+        "name": "export",
         "ref": "return"
       }
     ],
@@ -413,11 +418,6 @@
         "from": "z5zg7lh",
         "to": "29mwegs",
         "as": "stone"
-      },
-      {
-        "from": "tzgzm7u",
-        "to": "main/out",
-        "as": "return"
       },
       {
         "from": "230xos4",
@@ -648,6 +648,16 @@
         "from": "3n6u07v/n3btr4x",
         "to": "3n6u07v/z5vn4g3",
         "as": "self"
+      },
+      {
+        "from": "ofaojn2",
+        "to": "main/out",
+        "as": "return"
+      },
+      {
+        "from": "tzgzm7u",
+        "to": "ofaojn2",
+        "as": "true"
       }
     ],
     "out": "main/out"
