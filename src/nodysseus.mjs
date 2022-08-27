@@ -1243,7 +1243,7 @@ const nolib = {
                 const typedvalue = node.value.split(": ")
                 const nodevalue = typedvalue[0]
                 return typeof nodevalue === 'string'
-                ?   nodevalue === '_args'
+                ? nodevalue === '_args'
                     ? target
                     : nodevalue === '_graph'
                     ? graph

@@ -49,7 +49,7 @@
       },
       {
         "id": "sj8tsrv",
-        "value": "payload.event.target.value",
+        "value": "event.target.value",
         "ref": "arg"
       },
       {

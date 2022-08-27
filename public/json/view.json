@@ -65,7 +65,7 @@
         {
             "id": "if1mzyd",
             "ref": "arg",
-            "value": "payload.message.data"
+            "value": "message.data"
         },
         {
             "id": "j86jww4",
@@ -112,7 +112,7 @@
         {
             "id": "7k1u86b",
             "ref": "arg",
-            "value": "payload.message.data"
+            "value": "message.data"
         },
         {
             "id": "zosnk67",
@@ -1512,7 +1512,7 @@
                 {
                     "id": "a8x8a5c",
                     "ref": "arg",
-                    "value": "payload.imported_graph.nodes",
+                    "value": "imported_graph.nodes",
                     "type": "internal"
                 },
                 {
@@ -1528,7 +1528,7 @@
                 {
                     "id": "oco33oy",
                     "ref": "arg",
-                    "value": "payload.name",
+                    "value": "name",
                     "type": "internal"
                 },
                 {
@@ -1555,7 +1555,7 @@
                 {
                     "id": "2xt8tpx",
                     "ref": "arg",
-                    "value": "payload.name",
+                    "value": "name",
                     "type": "internal"
                 },
                 {
@@ -1980,12 +1980,12 @@
                 {
                     "id": "vjtdfop",
                     "ref": "arg",
-                    "value": "payload.value"
+                    "value": "value"
                 },
                 {
                     "id": "hej7g0o",
                     "ref": "arg",
-                    "value": "payload.state_value"
+                    "value": "state_value"
                 },
                 {
                     "id": "bohly2o",
@@ -2676,7 +2676,7 @@
                 },
                 {
                     "id": "i7y9dyy",
-                    "script": "return (state, payload) => [{...state, [value]: payload.target.value}, onchange_fn && [_ => dispatch(onchange_fn)]]"
+                    "script": "return (state, payload) => [{...state, [value]: target.value}, onchange_fn && [_ => dispatch(onchange_fn)]]"
                 },
                 {
                     "id": "vks4vul",
@@ -2793,7 +2793,7 @@
                 {
                     "id": "4ck1vaf",
                     "ref": "arg",
-                    "value": "payload.target.value"
+                    "value": "target.value"
                 }
             ],
             "edges": [

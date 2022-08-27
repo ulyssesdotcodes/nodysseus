@@ -1351,8 +1351,8 @@ const dispatch = (init, _lib) => {
                     break;
                 }
                 default: {
-                    //console.log(mode + ": " + key_input)
-                    const result = hlib.runGraph(init.graph, "keybindings", {}, hlib)[mode][key_input];
+                    console.log(mode + ": " + key_input)
+                    const result = hlib.runGraph(init.keybindings, "out", {}, hlib)[mode][key_input];
                     switch(result){
                         case "up": {
                             const parent_edges = nolib.no.runtime.get_edges_in(state.display_graph, selected);
@@ -1461,11 +1461,11 @@ const dispatch = (init, _lib) => {
 const editor = async function(html_id, display_graph, lib, norun) {
     const simple = await resfetch("json/simple.json").then(r => r.json());
     const simple_html_hyperapp = await resfetch("json/simple_html_hyperapp.json").then(r => r.json());
-    const editor_graph = await resfetch("json/editor.json").then(r => r.json());
     const url_params = new URLSearchParams(document.location.search);
     const examples = [simple_html_hyperapp, simple];
     const graph_list = JSON.parse(localStorage.getItem("graph_list")) ?? [];
     const hash_graph = window.location.hash.substring(1);
+    const keybindings = await resfetch("json/keybindings.json").then(r => r.json())
     if(!hash_graph && graph_list?.length > 0) {
         window.location.hash = graph_list[0]
     }
@@ -1476,7 +1476,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
         .then(display_graph => {
 
         const init = { 
-            graph: editor_graph, 
+            keybindings,
             display_graph_id: display_graph.id,
             display_graph: display_graph,
             hash: window.location.hash ?? "",
@@ -1533,7 +1533,7 @@ const middleware = dispatch => (ha_action, ha_payload) => {
                 // Object.defineProperty(execute_graph_fn, 'name', {value: action.fn, writable: false});
                 const result = action.stateonly 
                     ? execute_graph_fn(state)
-                    : execute_graph_fn({state, payload});
+                    : execute_graph_fn({state, ...payload});
 
 
                 if(!result) {

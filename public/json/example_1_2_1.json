@@ -896,13 +896,13 @@
         { "id": "nb2sswc", "ref": "arg", "value": "name" },
         {
           "id": "6m6m1hq_1/ocuonub/506ntvb",
-          "value": "payload.event.target.value",
+          "value": "event.target.value",
           "ref": "arg"
         },
         {
           "id": "6m6m1hq_1/ocuonub/4ck1vaf",
           "ref": "arg",
-          "value": "payload.name"
+          "value": "name"
         }
       ],
       "out": "nn4twx9",

@@ -71,29 +71,6 @@
         ]
       },
       {
-        "id": "filter",
-        "name": "filter",
-        "in": "74n1jfm",
-        "out": "lahq5z4",
-        "description": "Filters an array using `fn: (element) => boolean`",
-        "nodes": [
-          {
-            "id": "lahq5z4",
-            "args": [],
-            "name": "filter/out",
-            "script": "const filter_fn = _lib.no.executeGraphNode({graph: fn.graph ?? _graph, lib: _lib})(typeof fn === 'string' ? fn : fn.fn); return arr.filter(element => filter_fn(Object.assign(fn.args ?? {}, {element})))"
-          },
-          { "id": "x2sz5kb", "args": [], "ref": "arg", "value": "array" },
-          { "id": "fn", "ref": "arg", "value": "fn" },
-          { "id": "74n1jfm", "args": [], "name": "filter/in" }
-        ],
-        "edges": [
-          { "from": "x2sz5kb", "to": "lahq5z4", "as": "arr" },
-          { "from": "fn", "to": "lahq5z4", "as": "fn" },
-          { "from": "74n1jfm", "to": "lahq5z4", "as": "_", "type": "ref" }
-        ]
-      },
-      {
         "id": "filter_eq",
         "name": "filter_eq",
         "in": "74n1jfm",
@@ -599,13 +576,44 @@
         ]
       },
       {
+        "id": "get_arg",
+        "description": "Get the value at the path of object. Accepts a `.` separated path e.g. get(target, 'a.b.c') returns target.a.b.c",
+        "nodes": [
+          { "id": "target", "ref": "arg", "value": "target" },
+          { "id": "path", "ref": "arg", "value": "path" },
+          {"id": "value_path", "ref": "arg", "value": "_graph.value"},
+          {"id": "def_path", "ref": "default"},
+          {"id": "args", "ref": "arg", "value": "_args"},
+          { "id": "key", "ref": "arg", "value": "key" },
+          { "id": "key_def", "ref": "default", "value": "" },
+          { "id": "key_path", "ref": "add"},
+          { "id": "otherwise", "ref": "arg", "value": "otherwise" },
+          { "id": "out", "extern": "just.get" }
+        ],
+        "edges": [
+          { "from": "in", "to": "out", "as": "input" },
+          { "from": "otherwise", "to": "out", "as": "def" },
+          {"from": "value_path", "to": "def_path", "as": "value"},
+          {"from": "path", "to": "def_path", "as": "otherwise"},
+          {"from": "def_path", "to": "key_path", "as": "a1"},
+          {"from": "key", "to": "key_def", "as": "value"},
+          {"from": "key_def", "to": "key_path", "as": "a2"},
+          {"from": "key_path", "to": "out", "as": "path"},
+          { "from": "args", "to": "out", "as": "target" }
+        ]
+      },
+      {
         "id": "set_arg",
         "out": "out",
         "nodes": [
           {"id": "value", "ref": "arg", "value": "value"},
           {"id": "path", "ref": "arg", "value": "path"},
+          {"id": "key", "ref": "arg", "value": "key"},
           {"id": "value_path", "ref": "arg", "value": "_graph.value"},
           {"id": "def_path", "ref": "default"},
+          {"id": "key_path", "ref": "add"},
+          { "id": "key_def", "ref": "default", "value": "" },
+          {"id": "args", "ref": "arg", "value": "_args"},
           {"id": "env", "ref": "script", "value": "return _lib.no.runtime.get_args(_lib.no.runtime.get_parent(_graph))"},
           {"id": "prev_value", "ref": "get"},
           {"id": "set_val", "ref": "set", "_script": "if(!_lib.utility.compare(env[name]._value, value)){ _lib.no.runtime.update_graph(_lib.no.runtime.get_parent(_graph), {[name]: value});} return value;"},
@@ -617,8 +625,12 @@
       "edges": [
         {"from": "value_path", "to": "def_path", "as": "value"},
         {"from": "path", "to": "def_path", "as": "otherwise"},
-        {"from": "def_path", "to": "set_val", "as": "path"},
+        {"from": "def_path", "to": "key_path", "as": "a1"},
+        {"from": "key", "to": "key_def", "as": "value"},
+        {"from": "key_def", "to": "key_path", "as": "a2"},
+        {"from": "key_path", "to": "set_val", "as": "path"},
         {"from": "value", "to": "set_val", "as": "value"},
+        {"from": "args", "to": "env", "as": "args"},
         {"from": "env", "to": "set_val", "as": "target"},
         {"from": "on_false", "to": "out", "as": "false"},
         {"from": "on_true", "to": "out", "as": "true"},
@@ -771,6 +783,7 @@
       "out": "tgurdpo",
       "nodes": [
         { "id": "tgurdpo", "ref": "call", "name": "out" },
+        { "id": "key", "ref": "arg", "value": "key" },
         { "id": "m3b5wg3", "name": "in" },
         { "id": "rielyq8", "value": "reduce", "name": "rielyq8" },
         { "ref": "arg", "id": "1rre4bx", "value": "array", "name": "1rre4bx" },
@@ -781,7 +794,7 @@
         {
           "id": "pdljod1",
           "name": "pdljod1",
-          "script": "return (previous, current, index, array) => _lib.no.runGraph(fn?.graph ?? _graph, fn?.fn ?? fn, Object.assign({}, args ?? {}, fn.args ?? {}, {previous, current, index, array}), _lib);"
+          "script": "return (previous, current, index, array) => _lib.no.runGraph(fn?.graph ?? _graph, fn?.fn ?? fn, Object.assign({}, args ?? {}, fn.args ?? {}, {previous, current, index, array, key: outer_key ? `${index}_${outer_key}` : `${index}`}), _lib);"
         },
         { "id": "2lvs5dj", "script": "return _graph", "name": "2lvs5dj" }
       ],
@@ -793,6 +806,7 @@
         { "from": "pdljod1", "to": "w0zzawl", "as": "a0" },
         { "from": "initial", "to": "w0zzawl", "as": "a1" },
         { "from": "2lvs5dj", "to": "pdljod1", "as": "graph" },
+        { "from": "key", "to": "pdljod1", "as": "outer_key" },
         { "from": "args", "to": "pdljod1", "as": "args" },
         { "from": "6g75abk", "to": "pdljod1", "as": "fn" }
       ]
@@ -804,6 +818,7 @@
       "out": "handle_promise",
       "nodes": [
         { "id": "tgurdpo", "ref": "call", "name": "out" },
+        { "id": "key", "ref": "arg", "value": "key" },
         { "id": "m3b5wg3", "name": "in" },
         { "id": "rielyq8", "value": "map", "name": "rielyq8" },
         { "ref": "arg", "id": "1rre4bx", "value": "array", "name": "1rre4bx" },
@@ -814,7 +829,7 @@
         {
           "id": "pdljod1",
           "name": "pdljod1",
-          "script": "return (element, index, array) => _lib.no.runGraph(fn?.graph ?? _graph, fn?.fn ?? fn, Object.assign({}, args ?? {}, fn.args ?? {}, {element, index, array}), _lib);"
+          "script": "return (element, index, array) => _lib.no.runGraph(fn?.graph ?? _graph, fn?.fn ?? fn, Object.assign({}, args ?? {}, fn.args ?? {}, {element, index, array, key: outer_key ? `${index}_${outer_key}` : `${index}`}), _lib);"
         },
         { "id": "2lvs5dj", "script": "return _graph", "name": "2lvs5dj" }
       ],
@@ -826,9 +841,35 @@
         { "from": "w0zzawl", "to": "tgurdpo", "as": "args", "type": "resolve" },
         { "from": "pdljod1", "to": "w0zzawl", "as": "a0", "type": "resolve" },
         { "from": "2lvs5dj", "to": "pdljod1", "as": "graph" },
+        { "from": "key", "to": "pdljod1", "as": "outer_key" },
         { "from": "args", "to": "pdljod1", "as": "args" },
         { "from": "6g75abk", "to": "pdljod1", "as": "fn" },
         {"from": "tgurdpo", "to": "handle_promise", "as": "array"}
+      ]
+    },
+    {
+      "id": "filter",
+      "name": "filter",
+      "in": "74n1jfm",
+      "out": "lahq5z4",
+      "description": "Filters an array using `fn: (element) => boolean`",
+      "nodes": [
+        { "id": "key", "ref": "arg", "value": "key" },
+        {
+          "id": "lahq5z4",
+          "args": [],
+          "name": "filter/out",
+          "script": "const filter_fn = _lib.no.executeGraphNode({graph: fn.graph ?? _graph, lib: _lib})(typeof fn === 'string' ? fn : fn.fn); return arr.filter((element, index, array) => filter_fn(Object.assign(fn.args ?? {}, {element, index, array, key: outer_key ? `${index}_${outer_key}` : `${index}`})))"
+        },
+        { "id": "x2sz5kb", "args": [], "ref": "arg", "value": "array" },
+        { "id": "fn", "ref": "arg", "value": "fn" },
+        { "id": "74n1jfm", "args": [], "name": "filter/in" }
+      ],
+      "edges": [
+        { "from": "x2sz5kb", "to": "lahq5z4", "as": "arr" },
+        { "from": "fn", "to": "lahq5z4", "as": "fn" },
+        { "from": "key", "to": "lahq5z4", "as": "outer_key" },
+        { "from": "74n1jfm", "to": "lahq5z4", "as": "_", "type": "ref" }
       ]
     },
     {
@@ -942,125 +983,6 @@
       "edges": [{ "as": "arr", "from": "cawqofn", "to": "spy9h48", "type": "resolve" }]
     },
     {
-      "id": "css_styles",
-      "name": "css_styles",
-      "in": "xw3pmx7",
-      "out": "5yxmxua",
-      "nodes": [
-        { "id": "5yxmxua", "ref": "html_element", "name": "out" },
-        { "id": "vgv61zj", "ref": "html_text" },
-        { "id": "jstjx7g" },
-        { "id": "h40e3j9", "value": "style" },
-        { "id": "xw3pmx7", "name": "in" },
-        { "id": "jlgp7uy", "ref": "call", "name": "named_obj/out" },
-        { "id": "o1j78dd", "value": "result-view" },
-        { "id": "ij4z84e", "ref": "map" },
-        { "id": "q3pwj9j", "value": "join" },
-        { "id": "d6h3gdw", "ref": "array" },
-        { "id": "j8c79uf", "name": "object_entries", "ref": "object_entries" },
-        { "id": "n9g4wyq", "ref": "runnable" },
-        { "id": "z63iaay", "script": "return \"\\n\";" },
-        { "id": "vwsgweb", "ref": "default" },
-        { "id": "aelf1a7", "script": "return key + '{' + value + '}'", "name": "out" },
-        { "id": "mkwx4yx" },
-        { "id": "fzr4mkv", "ref": "arg", "value": "css_object" },
-        { "id": "5eqf77t", "value": "element.0", "ref": "arg" },
-        { "id": "5pwetw5", "ref": "if" },
-        { "id": "o5ojdyc", "script": "return key.startsWith(\"@keyframes\")" },
-        { "id": "1hpnid4", "ref": "call" },
-        { "id": "slj7ynn/jlgp7uy", "ref": "call", "name": "named_obj/out" },
-        { "id": "ft1oksl", "ref": "arg", "value": "element.0" },
-        { "id": "bbbp82v", "ref": "map" },
-        { "id": "cp66ig5", "value": "join" },
-        { "id": "uwq9u81", "ref": "array" },
-        { "id": "slj7ynn/ij4z84e", "ref": "map" },
-        { "id": "slj7ynn/q3pwj9j", "value": "join" },
-        { "id": "slj7ynn/d6h3gdw", "ref": "array" },
-        { "id": "i1ifamx", "ref": "object_entries" },
-        { "id": "druspar", "ref": "runnable" },
-        { "id": "gth1wc2", "script": "return \"\\n\";" },
-        { "id": "slj7ynn/j8c79uf", "name": "object_entries", "ref": "object_entries" },
-        { "id": "slj7ynn/n9g4wyq", "ref": "runnable" },
-        { "id": "slj7ynn/z63iaay", "script": "return \"\\n\";" },
-        { "id": "y25dg2n", "value": "element.1", "ref": "arg" },
-        { "id": "0d4yh8u", "script": "return key + ': ' + value + \";\";" },
-        { "id": "slj7ynn/vwsgweb", "ref": "default" },
-        { "id": "slj7ynn/aelf1a7", "script": "return key + '{' + value + '}'", "name": "out" },
-        { "id": "h13a9fd", "ref": "arg", "value": "element.0" },
-        { "id": "h7me3v8", "ref": "arg", "value": "element.1" },
-        { "id": "slj7ynn/mkwx4yx" },
-        { "id": "slj7ynn/fzr4mkv", "ref": "arg", "value": "element.1" },
-        { "id": "slj7ynn/5eqf77t", "value": "element.0", "ref": "arg" },
-        { "id": "slj7ynn/1hpnid4", "ref": "call" },
-        { "id": "slj7ynn/bbbp82v", "ref": "map" },
-        { "id": "slj7ynn/cp66ig5", "value": "join" },
-        { "id": "slj7ynn/uwq9u81", "ref": "array" },
-        { "id": "slj7ynn/i1ifamx", "ref": "object_entries" },
-        { "id": "slj7ynn/druspar", "ref": "runnable" },
-        { "id": "slj7ynn/gth1wc2", "script": "return \"\\n\";" },
-        { "id": "slj7ynn/y25dg2n", "value": "element.1", "ref": "arg" },
-        { "id": "slj7ynn/0d4yh8u", "script": "return key + ': ' + value + \";\";" },
-        { "id": "slj7ynn/h13a9fd", "ref": "arg", "value": "element.0" },
-        { "id": "slj7ynn/h7me3v8", "ref": "arg", "value": "element.1" }
-      ],
-      "edges": [
-        { "from": "vgv61zj", "to": "5yxmxua", "as": "children" },
-        { "from": "jstjx7g", "to": "5yxmxua", "as": "props" },
-        { "from": "h40e3j9", "to": "5yxmxua", "as": "dom_type" },
-        { "from": "xw3pmx7", "to": "5yxmxua", "as": "arg3" },
-        { "from": "jlgp7uy", "to": "vgv61zj", "as": "text" },
-        { "from": "o1j78dd", "to": "jstjx7g", "as": "key" },
-        { "from": "ij4z84e", "to": "jlgp7uy", "as": "self" },
-        { "from": "q3pwj9j", "to": "jlgp7uy", "as": "fn" },
-        { "from": "d6h3gdw", "to": "jlgp7uy", "as": "args" },
-        { "from": "j8c79uf", "to": "ij4z84e", "as": "array" },
-        { "as": "fn", "from": "n9g4wyq", "to": "ij4z84e" },
-        { "from": "z63iaay", "to": "d6h3gdw", "as": "arg0" },
-        { "from": "vwsgweb", "to": "j8c79uf", "as": "object" },
-        { "as": "fn", "from": "aelf1a7", "to": "n9g4wyq" },
-        { "from": "mkwx4yx", "to": "vwsgweb", "as": "otherwise" },
-        { "from": "fzr4mkv", "to": "vwsgweb", "as": "value" },
-        { "from": "5eqf77t", "to": "aelf1a7", "as": "key" },
-        { "from": "5pwetw5", "to": "aelf1a7", "as": "value" },
-        { "from": "o5ojdyc", "to": "5pwetw5", "as": "pred" },
-        { "as": "false", "from": "1hpnid4", "to": "5pwetw5" },
-        { "from": "slj7ynn/jlgp7uy", "to": "5pwetw5", "as": "true" },
-        { "as": "key", "from": "ft1oksl", "to": "o5ojdyc" },
-        { "from": "bbbp82v", "to": "1hpnid4", "as": "self" },
-        { "from": "cp66ig5", "to": "1hpnid4", "as": "fn" },
-        { "from": "uwq9u81", "to": "1hpnid4", "as": "args" },
-        { "from": "slj7ynn/ij4z84e", "to": "slj7ynn/jlgp7uy", "as": "self" },
-        { "from": "slj7ynn/q3pwj9j", "to": "slj7ynn/jlgp7uy", "as": "fn" },
-        { "from": "slj7ynn/d6h3gdw", "to": "slj7ynn/jlgp7uy", "as": "args" },
-        { "from": "i1ifamx", "to": "bbbp82v", "as": "array" },
-        { "as": "fn", "from": "druspar", "to": "bbbp82v" },
-        { "from": "gth1wc2", "to": "uwq9u81", "as": "arg0" },
-        { "from": "slj7ynn/j8c79uf", "to": "slj7ynn/ij4z84e", "as": "array" },
-        { "as": "fn", "from": "slj7ynn/n9g4wyq", "to": "slj7ynn/ij4z84e" },
-        { "from": "slj7ynn/z63iaay", "to": "slj7ynn/d6h3gdw", "as": "arg0" },
-        { "from": "y25dg2n", "to": "i1ifamx", "as": "object" },
-        { "as": "fn", "from": "0d4yh8u", "to": "druspar" },
-        { "from": "slj7ynn/vwsgweb", "to": "slj7ynn/j8c79uf", "as": "object" },
-        { "as": "fn", "from": "slj7ynn/aelf1a7", "to": "slj7ynn/n9g4wyq" },
-        { "from": "h13a9fd", "to": "0d4yh8u", "as": "key" },
-        { "from": "h7me3v8", "to": "0d4yh8u", "as": "value" },
-        { "from": "slj7ynn/mkwx4yx", "to": "slj7ynn/vwsgweb", "as": "otherwise" },
-        { "from": "slj7ynn/fzr4mkv", "to": "slj7ynn/vwsgweb", "as": "value" },
-        { "from": "slj7ynn/5eqf77t", "to": "slj7ynn/aelf1a7", "as": "key" },
-        { "as": "value", "from": "slj7ynn/1hpnid4", "to": "slj7ynn/aelf1a7" },
-        { "from": "slj7ynn/bbbp82v", "to": "slj7ynn/1hpnid4", "as": "self" },
-        { "from": "slj7ynn/cp66ig5", "to": "slj7ynn/1hpnid4", "as": "fn" },
-        { "from": "slj7ynn/uwq9u81", "to": "slj7ynn/1hpnid4", "as": "args" },
-        { "from": "slj7ynn/i1ifamx", "to": "slj7ynn/bbbp82v", "as": "array" },
-        { "as": "fn", "from": "slj7ynn/druspar", "to": "slj7ynn/bbbp82v" },
-        { "from": "slj7ynn/gth1wc2", "to": "slj7ynn/uwq9u81", "as": "arg0" },
-        { "from": "slj7ynn/y25dg2n", "to": "slj7ynn/i1ifamx", "as": "object" },
-        { "as": "fn", "from": "slj7ynn/0d4yh8u", "to": "slj7ynn/druspar" },
-        { "from": "slj7ynn/h13a9fd", "to": "slj7ynn/0d4yh8u", "as": "key" },
-        { "from": "slj7ynn/h7me3v8", "to": "slj7ynn/0d4yh8u", "as": "value" }
-      ]
-    },
-    {
       "edges": [
         { "from": "gvkhkfw", "to": "nn4twx9", "as": "children" },
         { "from": "7rhq0q5", "to": "nn4twx9", "as": "_" },
@@ -1151,8 +1073,8 @@
         { "id": "y9bkhqc" },
         { "id": "6m6m1hq_1/ocuonub/qjc0zt6", "ref": "event_publisher" },
         { "id": "nb2sswc", "ref": "arg", "value": "name" },
-        { "id": "6m6m1hq_1/ocuonub/506ntvb", "value": "payload.event.target.value", "ref": "arg" },
-        { "id": "6m6m1hq_1/ocuonub/4ck1vaf", "ref": "arg", "value": "payload.name" }
+        { "id": "6m6m1hq_1/ocuonub/506ntvb", "value": "event.target.value", "ref": "arg" },
+        { "id": "6m6m1hq_1/ocuonub/4ck1vaf", "ref": "arg", "value": "name" }
       ],
       "out": "nn4twx9",
       "in": "7rhq0q5",
@@ -1713,7 +1635,7 @@
       },
       {
         "id": "fzeowyv",
-        "value": "payload.event.target.value",
+        "value": "event.target.value",
         "ref": "arg"
       },
       {
@@ -2047,7 +1969,7 @@
       },
       {
         "id": "fzeowyv",
-        "value": "payload.event.target.value",
+        "value": "event.target.value",
         "ref": "arg"
       },
       {
@@ -2400,7 +2322,7 @@
         },
         {
           "id": "o9ukwn8",
-          "value": "payload.event.target.files.0",
+          "value": "event.target.files.0",
           "ref": "arg"
         },
         {
@@ -2861,12 +2783,12 @@
       },
       {
         "id": "lfn812d",
-        "value": "payload.event",
+        "value": "event",
         "ref": "arg"
       },
       {
         "id": "ryomnvu",
-        "value": "payload.event.target.value",
+        "value": "event.target.value",
         "ref": "arg"
       },
       {
@@ -3922,6 +3844,335 @@
       }
     ],
     "out": "ld37qq4"
+  },
+{
+    "id": "slider",
+    "nodes": [
+      {
+        "id": "j219svq"
+      },
+      {
+        "id": "5mog0bc",
+        "value": "input",
+        "ref": "html_element"
+      },
+      {
+        "id": "24q0egm"
+      },
+      {
+        "id": "mpbvtrq",
+        "value": "range"
+      },
+      {
+        "id": "y407zfo",
+        "ref": "html_element"
+      },
+      {
+        "id": "sb9qdgy",
+        "ref": "array"
+      },
+      {
+        "id": "kyu6h8m",
+        "ref": "html_text"
+      },
+      {
+        "id": "3gv1qlb",
+        "ref": "runnable"
+      },
+      {
+        "id": "pqdqauw",
+        "value": "0.0"
+      },
+      {
+        "id": "a4y3jfa",
+        "value": "1.0"
+      },
+      {
+        "id": "x90akqb",
+        "ref": "default"
+      },
+      {
+        "id": "2mf0qec",
+        "value": "1.0"
+      },
+      {
+        "id": "yv0o41n",
+        "ref": "default"
+      },
+      {
+        "id": "z3jopgg",
+        "value": "step",
+        "ref": "arg"
+      },
+      {
+        "id": "racg3p7",
+        "value": "label",
+        "ref": "arg"
+      },
+      {
+        "id": "0i85qjj"
+      },
+      {
+        "id": "u4k2auv",
+        "value": "Slider"
+      },
+      {
+        "id": "a6rdag9"
+      },
+      {
+        "id": "sxjhepz"
+      },
+      {
+        "id": "93rx3ru",
+        "value": "flex"
+      },
+      {
+        "id": "q8ugbch",
+        "value": "row"
+      },
+      {
+        "id": "qi4odll",
+        "ref": "default"
+      },
+      {
+        "id": "wnr7m0u",
+        "value": "_graph.value",
+        "ref": "arg"
+      },
+      {
+        "id": "doz740g",
+        "ref": "html_text"
+      },
+      {
+        "id": "700kbj3",
+        "value": "_sliderval"
+      },
+      {
+        "id": "sv49nso",
+        "value": "_sliderval"
+      },
+      {
+        "id": "old0t0c",
+        "ref": "set_arg"
+      },
+      {
+        "id": "l5bzesi",
+        "value": "_sliderval"
+      },
+      {
+        "id": "20w95l2",
+        "value": "test"
+      },
+      {
+        "id": "c7wt9d7",
+        "ref": "get_arg"
+      },
+      {
+        "id": "ewycyaq",
+        "ref": "get_arg"
+      },
+      {
+        "id": "6hxkrv4",
+        "ref": "get_arg"
+      },
+      {
+        "id": "vgishln",
+        "value": "_sliderval"
+      },
+      {
+        "id": "gibdj45",
+        "value": "event.target.value",
+        "ref": "arg"
+      },
+      {
+        "id": "q09a315",
+        "value": "0.01",
+        "ref": ""
+      },
+      {
+        "id": "main/out",
+        "name": "export",
+        "ref": "return"
+      }
+    ],
+    "edges": [
+      {
+        "from": "j219svq",
+        "to": "main/out",
+        "as": "subscribe"
+      },
+      {
+        "from": "24q0egm",
+        "to": "5mog0bc",
+        "as": "props"
+      },
+      {
+        "from": "mpbvtrq",
+        "to": "24q0egm",
+        "as": "type"
+      },
+      {
+        "from": "y407zfo",
+        "to": "main/out",
+        "as": "display"
+      },
+      {
+        "from": "sb9qdgy",
+        "to": "y407zfo",
+        "as": "children"
+      },
+      {
+        "from": "3gv1qlb",
+        "to": "24q0egm",
+        "as": "oninput"
+      },
+      {
+        "from": "pqdqauw",
+        "to": "24q0egm",
+        "as": "min"
+      },
+      {
+        "from": "a4y3jfa",
+        "to": "24q0egm",
+        "as": "max"
+      },
+      {
+        "from": "x90akqb",
+        "to": "24q0egm",
+        "as": "value"
+      },
+      {
+        "from": "2mf0qec",
+        "to": "x90akqb",
+        "as": "otherwise"
+      },
+      {
+        "from": "yv0o41n",
+        "to": "24q0egm",
+        "as": "step"
+      },
+      {
+        "from": "q09a315",
+        "to": "yv0o41n",
+        "as": "otherwise"
+      },
+      {
+        "from": "z3jopgg",
+        "to": "yv0o41n",
+        "as": "value"
+      },
+      {
+        "from": "5mog0bc",
+        "to": "sb9qdgy",
+        "as": "arg1"
+      },
+      {
+        "from": "0i85qjj",
+        "to": "main/out",
+        "as": "args"
+      },
+      {
+        "from": "u4k2auv",
+        "to": "0i85qjj",
+        "as": "label"
+      },
+      {
+        "from": "a6rdag9",
+        "to": "y407zfo",
+        "as": "props"
+      },
+      {
+        "from": "sxjhepz",
+        "to": "a6rdag9",
+        "as": "style"
+      },
+      {
+        "from": "93rx3ru",
+        "to": "sxjhepz",
+        "as": "display"
+      },
+      {
+        "from": "q8ugbch",
+        "to": "sxjhepz",
+        "as": "flex-direction"
+      },
+      {
+        "from": "wnr7m0u",
+        "to": "qi4odll",
+        "as": "value"
+      },
+      {
+        "from": "doz740g",
+        "to": "sb9qdgy",
+        "as": "arg0"
+      },
+      {
+        "from": "qi4odll",
+        "to": "doz740g",
+        "as": "text"
+      },
+      {
+        "from": "kyu6h8m",
+        "to": "sb9qdgy",
+        "as": "arg2"
+      },
+      {
+        "from": "racg3p7",
+        "to": "qi4odll",
+        "as": "otherwise"
+      },
+      {
+        "from": "old0t0c",
+        "to": "3gv1qlb",
+        "as": "fn"
+      },
+      {
+        "from": "20w95l2",
+        "to": "0i85qjj",
+        "as": "key"
+      },
+      {
+        "from": "700kbj3",
+        "to": "c7wt9d7",
+        "as": "path"
+      },
+      {
+        "from": "c7wt9d7",
+        "to": "main/out",
+        "as": "return"
+      },
+      {
+        "from": "vgishln",
+        "to": "ewycyaq",
+        "as": "path"
+      },
+      {
+        "from": "l5bzesi",
+        "to": "old0t0c",
+        "as": "path"
+      },
+      {
+        "from": "gibdj45",
+        "to": "old0t0c",
+        "as": "value"
+      },
+      {
+        "from": "sv49nso",
+        "to": "6hxkrv4",
+        "as": "path"
+      },
+      {
+        "from": "ewycyaq",
+        "to": "kyu6h8m",
+        "as": "text"
+      },
+      {
+        "from": "6hxkrv4",
+        "to": "x90akqb",
+        "as": "value"
+      }
+    ],
+    "out": "main/out"
   }
   ]
 }
