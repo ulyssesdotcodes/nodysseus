@@ -336,6 +336,10 @@ const node_value = (node) => {
     }
 
     if(typeof node.value === "string") {
+        if (node.value === '""') {
+            return ""
+        }
+
         if (node.value.startsWith('{') || node.value.startsWith('[')) {
             try {
                 return JSON.parse(node.value.replaceAll("'", "\""));
@@ -1343,7 +1347,9 @@ const nolib = {
         add: {
             args: ["_node_inputs"],
             resolve: true,
-            fn: (args) => Object.values(args).reduce((acc, v) => acc + v, 0)
+            fn: (args) => Object.values(args).reduce((acc, v) => acc + v, 
+                typeof args[0] === "number" ? 0 : ""
+            )
         },
         mult: {
             args: ["_node_inputs"],

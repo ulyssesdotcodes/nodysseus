@@ -934,15 +934,19 @@ const Search = (state, {payload, nodes}) => {
     ]
 }
 
+const UpdateNodeEffect = (_, {display_graph, node}) => nolib.no.runtime.add_node( display_graph, node)
 const UpdateNode = (state, {node, property, value}) => [
-    state,
-    [() => nolib.no.runtime.add_node(
-        state.display_graph, 
-        Object.assign({}, 
+    {
+        ...state, 
+        history: state.history.concat([{action: 'update_node', node: node, property, value }]) 
+    },
+    [UpdateNodeEffect, {
+        display_graph: state.display_graph,
+        node: Object.assign({}, 
             base_node(node ?? nolib.no.runtime.get_node(state.display_graph, state.selected[0])), 
             {[property]: value}
-        ))
-    ]
+        )
+    }]
 ]
 
 const UpdateEdge = (state, {edge, as}) => [
@@ -951,6 +955,13 @@ const UpdateEdge = (state, {edge, as}) => [
 ]
 
 const OpenMenu = state => [{...state, menu: true}]
+
+const Undo = state => [
+    { ...state, history: state.history.slice(0, -1) },
+    state.history[0]?.action === "update_node"
+    ? [UpdateNodeEffect, {display_graph: state.history[0].display_graph, node: state.history[0].node}]
+    : []
+]
 
 const fill_rect_el = () =>ha.h('rect', {class: 'fill', width: '48', 'height': '48'}, [])
 const node_text_el = ({node_id, primary, focus_primary, secondary}) =>ha.h('text', {x: 48, y: 12}, [
