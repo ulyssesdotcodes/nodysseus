@@ -1450,7 +1450,7 @@ const nolib = {
         stringify: {
             args: ['object', 'spacer'],
             resolve: true,
-            fn: (obj, spacer) => JSON.stringify(obj, null, spacer)
+            fn: (obj, spacer) => JSON.stringify(obj, (key, value) => value?._Proxy ? value._value : value, spacer)
         },
         parse: {
             args: ['string'],
