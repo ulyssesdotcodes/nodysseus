@@ -451,6 +451,10 @@ const node_script = (node, node_ref, data, full_lib, graph, inputs, graph_input_
         } else {
             console.error(e);
         }
+        if(e instanceof NodysseusError) {
+            full_lib.no.runtime.publish("grapherror", e)
+            return;
+        }
         const parentest = full_lib.no.runtime.get_parentest(graph)
         let error_node = parentest ? graph : node;
         // if(parentest){
@@ -512,6 +516,12 @@ const node_extern = (node, node_ref, node_id, data, full_lib, graph, graph_input
         } else {
             console.error(e);
         }
+
+        if(e instanceof NodysseusError) {
+            full_lib.no.runtime.publish("grapherror", e)
+            return;
+        }
+
         const parentest = full_lib.no.runtime.get_parentest(graph)
         let error_node = parentest ? graph : node;
         // if(parentest){
@@ -622,6 +632,17 @@ const run_with_val_full = (graph, full_lib, node_id, graph_input_value) => {
         }
 
         const inputs = full_lib.no.runtime.get_edges_in(graph, node_id);
+
+        if(new Set(inputs.map(e => e.as)).size !== inputs.size) {
+            const as_set = new Set()
+            inputs.forEach(e => {
+                if (as_set.has(e.as)) {
+                    throw new NodysseusError(graph.id + "/" + node_id, `Multiple input edges have the same label ${e.as}`)
+                }
+                as_set.add(e.as)
+            })
+        }
+
 
         let node_ref;
 
@@ -845,10 +866,6 @@ const nolib = {
         executeGraphNode: ({ graph, lib }) => executeGraph({ graph, lib }),
         runGraph: (graph, node, args, lib) => {
             let rgraph = typeof graph === "string" ? nolib.no.runtime.get_graph(graph) : graph.graph ? graph.graph : graph;
-
-            // if(!rgraph.nodes.find(n => n.id === "get") && nolib.no.runtime.get_parent(rgraph) === undefined) {
-            //     rgraph = add_default_nodes_and_edges(rgraph);
-            // }
 
             const res =  node !== undefined
                 ? executeGraph({ graph: rgraph, lib })(node)(args || {})

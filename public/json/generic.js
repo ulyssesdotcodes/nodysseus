@@ -784,7 +784,6 @@
       "nodes": [
         { "id": "tgurdpo", "ref": "call", "name": "out" },
         { "id": "key", "ref": "arg", "value": "key" },
-        { "id": "m3b5wg3", "name": "in" },
         { "id": "rielyq8", "value": "reduce", "name": "rielyq8" },
         { "ref": "arg", "id": "1rre4bx", "value": "array", "name": "1rre4bx" },
         { "ref": "arg", "id": "6g75abk", "value": "fn", "name": "6g75abk" },
@@ -799,7 +798,6 @@
         { "id": "2lvs5dj", "script": "return _graph", "name": "2lvs5dj" }
       ],
       "edges": [
-        { "from": "m3b5wg3", "to": "tgurdpo", "as": "args", "type": "ref" },
         { "from": "rielyq8", "to": "tgurdpo", "as": "fn" },
         { "from": "1rre4bx", "to": "tgurdpo", "as": "self" },
         { "from": "w0zzawl", "to": "tgurdpo", "as": "args", "type": "resolve" },
@@ -819,7 +817,6 @@
       "nodes": [
         { "id": "tgurdpo", "ref": "call", "name": "out" },
         { "id": "key", "ref": "arg", "value": "key" },
-        { "id": "m3b5wg3", "name": "in" },
         { "id": "rielyq8", "value": "map", "name": "rielyq8" },
         { "ref": "arg", "id": "1rre4bx", "value": "array", "name": "1rre4bx" },
         { "ref": "arg", "id": "6g75abk", "value": "fn", "name": "6g75abk" },
@@ -834,7 +831,6 @@
         { "id": "2lvs5dj", "script": "return _graph", "name": "2lvs5dj" }
       ],
       "edges": [
-        { "from": "m3b5wg3", "to": "tgurdpo", "as": "args", "type": "ref" },
         { "from": "rielyq8", "to": "tgurdpo", "as": "fn" },
         { "from": "1rre4bx", "to": "tgurdpo", "as": "self" },
         { "from": "1rre4bx", "to": "pdljod1", "as": "arr" },

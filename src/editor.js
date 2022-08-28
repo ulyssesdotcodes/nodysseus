@@ -1,4 +1,4 @@
-import { resfetch, bfs, hashcode, nolib, runGraph, calculateLevels, ispromise, resolve, base_graph, base_node } from "./nodysseus.mjs";
+import { resfetch, hashcode, nolib, runGraph, calculateLevels, ispromise, resolve, base_graph, base_node } from "./nodysseus.mjs";
 import * as ha from "hyperapp";
 import panzoom from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
@@ -574,7 +574,7 @@ const result_subscription = (dispatch, {display_graph_id}) => {
     let animrun = false;
     const error_listener = (error) =>
         requestAnimationFrame(() => {
-            dispatch(s => Object.assign({}, s, {error}))
+            dispatch(s => Object.assign({}, s, {error: s.error ? s.error.concat([error]) : [error]}))
         });
 
     const change_listener = graph => {
@@ -1276,8 +1276,9 @@ const init_code_editor = (dispatch, {html_id}) => {
     })
 }
 
-const error_nodes = (error) => error instanceof AggregateError 
-    ? error.errors.map(e => e instanceof nolib.no.NodysseusError ? e.node_id : false).filter(n => n) 
+const error_nodes = (error) => error instanceof AggregateError || Array.isArray(error)
+    ? (Array.isArray(error) ? error : error.errors)
+        .map(e => e instanceof nolib.no.NodysseusError ? e.node_id : false).filter(n => n) 
     : error instanceof nolib.no.NodysseusError 
     ? [error.node_id] : []; 
 const dispatch = (init, _lib) => {
