@@ -229,21 +229,22 @@ export const node_args = (nolib, ha, graph, node_id) => {
     const node = nolib.no.runtime.get_node(graph, node_id);
     const node_ref = node.ref ? nolib.no.runtime.get_ref(graph, node.ref) : node;
     const edges_in = nolib.no.runtime.get_edges_in(graph, node_id);
-    return [
-        ...new Set((node_ref?.extern 
+
+    const argslist_path = node_ref.nodes && nolib.no.runtime.get_path(node_ref, "argslist");
+
+    return [...new Set(argslist_path ? nolib.no.runGraph(node_ref, argslist_path) : (node_ref?.extern 
             ? nolib.just.get.fn({}, nolib, node_ref.extern).args
             : node_ref?.nodes?.filter(n => 
                 n.ref === "arg" 
                 && n.type !== "internal" 
                 && !n.value.split(":")[1]?.toLowerCase()?.includes("internal")
                 && !(Array.isArray(n.type) && n.type.includes("internal"))).map(n => n.value) ?? [])
-                .filter(a => !a.includes('.') && !a.startsWith("_")))
-        ]
-        .concat(
-            ["arg" + ((edges_in.filter(l => 
-                        l.as?.startsWith("arg")
-                        && new RegExp("[0-9]+").test(l.as.substring(3)))
-                    .map(l => parseInt(l.as.substring(3))) ?? [])
-                .reduce((acc, i) => acc > i ? acc : i + 1, 0))])
-        ?? []
+                .filter(a => !a.includes('.') && !a.startsWith("_")) ?? [])
+            .concat(
+                ["arg" + ((edges_in.filter(l => 
+                            l.as?.startsWith("arg")
+                            && new RegExp("[0-9]+").test(l.as.substring(3)))
+                        .map(l => parseInt(l.as.substring(3))) ?? [])
+                    .reduce((acc, i) => acc > i ? acc : i + 1, 0))])
+    ]
 }

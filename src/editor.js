@@ -1079,7 +1079,7 @@ const dispatch = (init, _lib) => {
                 )
             ),
         ]),
-        nolib.no.runtime.get_node(s.display_graph, s.selected[0]) && info_el({
+        s.display_graph.id === s.display_graph_id && nolib.no.runtime.get_node(s.display_graph, s.selected[0]) && info_el({
             node: Object.assign({}, s.nodes.find(n => n.node_id === s.selected[0]), nolib.no.runtime.get_node(s.display_graph, s.selected[0])),
             hidden: s.show_all,
             links_in: s.links.filter(l => l.target.node_id === s.selected[0]),

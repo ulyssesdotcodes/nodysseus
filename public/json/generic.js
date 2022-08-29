@@ -249,6 +249,7 @@
           {"id": "display", "ref": "arg", "value": "display"},
           {"id": "subscribe", "ref": "arg", "value": "subscribe"},
           {"id": "publish", "ref": "arg", "value": "publish"},
+          {"id": "argslist", "ref": "arg", "value": "argslist"},
           {"id": "node_args", "ref": "arg", "value": "__args"},
           {"id": "fn_args", "ref": "arg", "value": "_args"},
           {"id": "return_edge_input", "ref": "input_edge", "value": "return"},

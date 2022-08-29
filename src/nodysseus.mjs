@@ -563,9 +563,12 @@ const tryrun = (input, node_ref, graph, graph_input_value, full_lib) => {
 const run_with_val_full = (graph, full_lib, node_id, graph_input_value) => {
     try {
         const cache_args = full_lib.no.runtime.get_args(graph);
+        const result = full_lib.no.runtime.get_result(graph);
+
         if(cache_args) {
-            Object.assign(graph_input_value, cache_args);
+            Object.assign(graph_input_value, cache_args, result ? {result} : {});
         }
+
 
         let node = full_lib.no.runtime.get_node(graph, node_id);
 
