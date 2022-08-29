@@ -422,14 +422,7 @@
       {"id":"script", "extern": "utility.script"},
       {
         "id": "resolve",
-        "out": "out",
-        "nodes": [
-          {"id": "args", "ref": "arg", "value": "_args"},
-          { "id": "out", "script": "return Object.fromEntries(Object.entries(args).filter(a => a[0] !== '__args').map(a => [a[0], _lib.no.resolve(a[1])]))" }
-        ],
-        "edges": [
-          { "from": "args", "to": "out", "as": "args" }
-        ]
+        "extern": "utility.resolve"
       },
       { "id": "array", "name": "array", "description": "Create an array from all the inputs in alphabetical order", "extern": "utility.new_array" },
       { "id": "merge_objects", "description": "Merge the keys of two objects, in descending alphabetical order priority (`Object.assign(...inputs)`).", "extern": "utility.merge_objects" },

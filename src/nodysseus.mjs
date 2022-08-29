@@ -1359,6 +1359,11 @@ const nolib = {
             resolve: true,
             fn: (args) => Object.values(args).reduce((acc, v) => acc / v, 1)
         },
+        resolve: {
+            args: ["_args"],
+            resolve: true,
+            fn: (args) => args
+        },
         properties: {
             getOwnEnumerables: function(obj) {
                 return this._getPropertyNames(obj, true, false, this._enumerable);
