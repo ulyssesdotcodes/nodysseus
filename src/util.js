@@ -239,12 +239,12 @@ export const node_args = (nolib, ha, graph, node_id) => {
                 && n.type !== "internal" 
                 && !n.value.split(":")[1]?.toLowerCase()?.includes("internal")
                 && !(Array.isArray(n.type) && n.type.includes("internal"))).map(n => n.value) ?? [])
-                .filter(a => !a.includes('.') && !a.startsWith("_")) ?? [])
-            .concat(
-                ["arg" + ((edges_in.filter(l => 
-                            l.as?.startsWith("arg")
-                            && new RegExp("[0-9]+").test(l.as.substring(3)))
-                        .map(l => parseInt(l.as.substring(3))) ?? [])
-                    .reduce((acc, i) => acc > i ? acc : i + 1, 0))])
+                .filter(a => !a.includes('.') && !a.startsWith("_"))
+                .concat(
+                    ["arg" + ((edges_in.filter(l => 
+                                l.as?.startsWith("arg")
+                                && new RegExp("[0-9]+").test(l.as.substring(3)))
+                            .map(l => parseInt(l.as.substring(3))) ?? [])
+                        .reduce((acc, i) => acc > i ? acc : i + 1, 0))]))
     ]
 }
