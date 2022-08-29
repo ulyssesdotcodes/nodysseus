@@ -302,7 +302,7 @@ const d3subscription = (dispatch, props) => {
                     el.setAttribute('y2', Math.floor(Math.floor(source.y + (target.y - source.y) * (1 - lerp_length / length))));
 
                     const min_edge_label_dist = 32 / (target.y - source.y);
-                    const max_edge_label_dist = 64 / (target.y - source.y);
+                    const max_edge_label_dist = Math.min(64 / (target.y - source.y), 0.5);
                     const edge_label_dist = Math.min(max_edge_label_dist, Math.max(min_edge_label_dist, 0.125));
 
                     edge_label_el.setAttribute('x', (target.x - source.x) * edge_label_dist + source.x + 16)
