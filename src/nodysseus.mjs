@@ -420,53 +420,29 @@ const node_nodes = (node, node_ref, graph_input_value, data, full_lib, graph, in
 }
 
 const node_script = (node, node_ref, data, full_lib, graph, inputs, graph_input_value) => {
-    try {
-        let orderedargs = "";
-        for(let i of inputs) {
-            if(i.as){
-                orderedargs += ", " + i.as;
-            }
+    let orderedargs = "";
+    for(let i of inputs) {
+        if(i.as){
+            orderedargs += ", " + i.as;
         }
-        node_ref = node_ref || full_lib.no.runtime.get_ref(graph, node.ref) || node;
-        const fn = full_lib.no.runtime.get_fn(graph, `_lib, _node, _node_inputs, _graph, _graph_input_value${orderedargs}`, node.id, node_ref);
-
-        let is_iv_promised = false;
-
-        for(let i = 0; i < inputs.length; i++) {
-            is_iv_promised = is_iv_promised || ispromise(data[inputs[i].as]);
-        }
-
-        if(graph.id === "hydra_example_setup/ysash4u" && node.id === "cyzymv3"){
-        }
-
-        const results = is_iv_promised
-            ? Promise.all(inputs.map(iv => Promise.resolve(data[iv.as]))).then(iv => fn.apply(null, [full_lib, node, data, nolib.no.runtime.get_graph(graph), graph_input_value, ...iv]))
-            : fn.apply(null, [full_lib, node, data, nolib.no.runtime.get_graph(graph), graph_input_value, ...inputs.map(i => data[i.as])]);
-
-        return results;
-    } catch (e) {
-        console.log(`error in node`);
-        if (e instanceof AggregateError) {
-            e.errors.map(console.error)
-        } else {
-            console.error(e);
-        }
-        if(e instanceof NodysseusError) {
-            full_lib.no.runtime.publish("grapherror", e)
-            return;
-        }
-        const parentest = full_lib.no.runtime.get_parentest(graph)
-        let error_node = parentest ? graph : node;
-        // if(parentest){
-        //     while(full_lib.no.runtime.get_parent(error_node).id !== parentest.id) {
-        //         error_node = full_lib.no.runtime.get_parent(error_node);
-        //     }
-        // }
-        full_lib.no.runtime.publish("grapherror", new NodysseusError(
-            graph.id + "/" + error_node.id, 
-            e instanceof AggregateError ? "Error in node chain" : e
-        ))
     }
+    node_ref = node_ref || full_lib.no.runtime.get_ref(graph, node.ref) || node;
+    const fn = full_lib.no.runtime.get_fn(graph, `_lib, _node, _node_inputs, _graph, _graph_input_value${orderedargs}`, node.id, node_ref);
+
+    let is_iv_promised = false;
+
+    for(let i = 0; i < inputs.length; i++) {
+        is_iv_promised = is_iv_promised || ispromise(data[inputs[i].as]);
+    }
+
+    if(graph.id === "hydra_example_setup/ysash4u" && node.id === "cyzymv3"){
+    }
+
+    const results = is_iv_promised
+        ? Promise.all(inputs.map(iv => Promise.resolve(data[iv.as]))).then(iv => fn.apply(null, [full_lib, node, data, nolib.no.runtime.get_graph(graph), graph_input_value, ...iv]))
+        : fn.apply(null, [full_lib, node, data, nolib.no.runtime.get_graph(graph), graph_input_value, ...inputs.map(i => data[i.as])]);
+
+    return results;
 }
 
 const node_extern = (node, node_ref, node_id, data, full_lib, graph, graph_input_value) => {
@@ -498,41 +474,14 @@ const node_extern = (node, node_ref, node_id, data, full_lib, graph, graph_input
         return [acc[0], ispromise(value) || acc[1]];
     }, [[], false]);
 
-    try {
-
-        if (args[1]) {
-            return Promise.all(args[0]).then(as => {
-                const res = extern.fn.apply(null, as);
-                return res;
-            })
-        } else {
-            const res = extern.fn.apply(null, args[0]);
+    if (args[1]) {
+        return Promise.all(args[0]).then(as => {
+            const res = extern.fn.apply(null, as);
             return res;
-        }
-    } catch (e) {
-        console.log(`error in node`);
-        if (e instanceof AggregateError) {
-            e.errors.map(console.error)
-        } else {
-            console.error(e);
-        }
-
-        if(e instanceof NodysseusError) {
-            full_lib.no.runtime.publish("grapherror", e)
-            return;
-        }
-
-        const parentest = full_lib.no.runtime.get_parentest(graph)
-        let error_node = parentest ? graph : node;
-        // if(parentest){
-        //     while(full_lib.no.runtime.get_parent(error_node).id !== parentest.id) {
-        //         error_node = full_lib.no.runtime.get_parent(error_node);
-        //     }
-        // }
-        full_lib.no.runtime.publish("grapherror", new NodysseusError(
-            graph.id + "/" + error_node.id, 
-            e instanceof AggregateError ? "Error in node chain" : e
-        ))
+        })
+    } else {
+        const res = extern.fn.apply(null, args[0]);
+        return res;
     }
 }
 
@@ -612,6 +561,7 @@ const tryrun = (input, node_ref, graph, graph_input_value, full_lib) => {
 }
 
 const run_with_val_full = (graph, full_lib, node_id, graph_input_value) => {
+    try {
         const cache_args = full_lib.no.runtime.get_args(graph);
         if(cache_args) {
             Object.assign(graph_input_value, cache_args);
@@ -678,6 +628,29 @@ const run_with_val_full = (graph, full_lib, node_id, graph_input_value) => {
         }
 
         return node_data(data);
+    } catch (e) {
+        console.log(`error in node`);
+        if (e instanceof AggregateError) {
+            e.errors.map(console.error)
+        } else {
+            console.error(e);
+        }
+        if(e instanceof NodysseusError) {
+            full_lib.no.runtime.publish("grapherror", e)
+            return;
+        }
+        const parentest = full_lib.no.runtime.get_parentest(graph)
+        let error_node = parentest ? graph : node;
+        // if(parentest){
+        //     while(full_lib.no.runtime.get_parent(error_node).id !== parentest.id) {
+        //         error_node = full_lib.no.runtime.get_parent(error_node);
+        //     }
+        // }
+        full_lib.no.runtime.publish("grapherror", new NodysseusError(
+            graph.id + "/" + error_node.id, 
+            e instanceof AggregateError ? "Error in node chain" : e
+        ))
+    }
 }
 
 const run_with_val = (graph, full_lib) => node_id => (graph_input_value) => run_with_val_full(graph, full_lib, node_id, graph_input_value);
