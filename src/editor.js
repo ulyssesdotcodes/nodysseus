@@ -5,6 +5,7 @@ import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, fo
 import Fuse from "fuse.js";
 import { basicSetup, EditorView } from "codemirror";
 import { javascript } from "@codemirror/lang-javascript";
+import { create_randid, findViewBox, node_args } from "./util.js";
 
 const updateSimulationNodes = (dispatch, data) => {
     const simulation_node_data = new Map();
@@ -362,168 +363,6 @@ const d3subscription = (dispatch, props) => {
     return () => { abort_signal.stop = true; }
 }
 
-const flattenNode = (graph, levels = -1) => {
-    if (graph.nodes === undefined || levels === 0) {
-        return graph;
-    }
-
-    // needs to not prefix base node because then flatten node can't run  next
-    const prefix = graph.id ? `${graph.id}/` : '';
-    const prefix_name = graph.id ? `${graph.name}/` : '';
-
-    return graph.nodes
-        .map(n => Object.assign({}, n, { id: `${prefix}${n.id}` }))
-        .map(g => flattenNode(g, levels - 1))
-        .reduce((acc, n) => Object.assign({}, acc, {
-            flat_nodes: acc.flat_nodes.concat(n.flat_nodes ? n.flat_nodes.flat() : []).map(fn => {
-                // adjust for easy graph renaming
-                if ((fn.id === prefix + (graph.out || "out")) && graph.name) {
-                    fn.name = graph.name;
-                }
-                return fn
-            }),
-            flat_edges: acc.flat_edges.map(e => n.flat_nodes ?
-                e.to === n.id ?
-                    Object.assign({}, e, { to: `${e.to}/${n.in || 'in'}` }) :
-                    e.from === n.id ?
-                        Object.assign({}, e, { from: `${e.from}/${n.out || 'out'}` }) :
-                        e :
-                e).flat().concat(n.flat_edges).filter(e => e !== undefined)
-        }), Object.assign({}, graph, {
-            flat_nodes: graph.nodes
-                .map(n => Object.assign({}, n, { id: `${prefix}${n.id}` })),
-            flat_edges: graph.edges
-                .map(e => ({ ...e, from: `${prefix}${e.from}`, to: `${prefix}${e.to}` }))
-        }));
-}
-
-
-const expand_node = (data) => {
-    const node_id = data.node_id;
-    const node = data.display_graph.nodes.find(n => n.id === node_id)
-
-    if (!(node && node.nodes)) {
-        console.log('no nodes?');
-        return { display_graph: data.display_graph, selected: [data.node_id] };
-    }
-
-    const flattened = flattenNode(node, 1);
-
-    const new_display_graph = {
-        nodes: data.display_graph.nodes
-            .filter(n => n.id !== node_id)
-            .concat(flattened.flat_nodes),
-        edges: data.display_graph.edges
-            .map(e => ({
-                ...e,
-                from: e.from === node_id ? node.id + "/" + (node.out || 'out') : e.from,
-                to: e.to === node_id ? node.id + "/" + (node.in || 'in') : e.to
-            }))
-            .concat(flattened.flat_edges)
-    };
-
-    return { display_graph: { ...data.display_graph, ...new_display_graph }, selected: [node_id + '/' + (node.out || 'out')] };
-}
-
-const contract_node = (data, keep_expanded = false) => {
-    const node = data.display_graph.nodes.find(n => n.id === data.node_id);
-    const node_id = data.node_id;
-    if (!node.nodes) {
-        const inside_nodes = [Object.assign({}, node)];
-        const inside_node_map = new Map();
-        inside_node_map.set(inside_nodes[0].id, inside_nodes[0]);
-        const inside_edges = new Set();
-
-        const q = data.display_graph.edges.filter(e => e.to === inside_nodes[0].id);
-
-        let in_edge = [];
-        let args_edge;
-
-        while (q.length > 0) {
-            const e = q.shift();
-
-            if(e.to === node.id && e.as === 'args') {
-                args_edge = e;
-            }
-
-            in_edge.filter(ie => ie.from === e.from).forEach(ie => {
-                inside_edges.add(ie)
-            });
-            in_edge = in_edge.filter(ie => ie.from !== e.from);
-
-            const old_node = inside_nodes.find(i => e.from === i.id);
-            let inside_node = old_node || Object.assign({}, data.display_graph.nodes.find(p => p.id === e.from));
-
-            inside_node_map.set(inside_node.id, inside_node);
-            inside_edges.add(e);
-            if (!old_node) {
-                delete inside_node.inputs;
-                inside_nodes.push(inside_node);
-            }
-
-            if (!args_edge || e.from !== args_edge.from) {
-                nolib.no.runtime.get_edges_in(data.display_graph, e.from).forEach(de => q.push(de));
-            }
-        }
-
-        let in_node_id = args_edge ? args_edge.from : undefined;
-
-        // just return the original graph if it's a single node 
-        if (in_edge.find(ie => ie.to !== in_node_id) || inside_nodes.length < 2) {
-            return { display_graph: data.display_graph, selected: [data.node_id] };
-        }
-
-        const out_node_id = data.node_id;
-
-        const in_node = inside_node_map.get(in_node_id);
-
-        let node_id_count = data.display_graph.nodes.filter(n => n.id === node_id).length;
-        let final_node_id = node_id_count === 1 ? node_id : `${node_id}_${node_id_count}`
-
-        const edges = [];
-        for (const e of inside_edges) {
-            edges.push({
-                ...e,
-                from: e.from.startsWith(node_id + "/")
-                    ? e.from.substring(node_id.length + 1)
-                    : e.from,
-                to: e.to.startsWith(node_id + "/")
-                    ? e.to.substring(node_id.length + 1)
-                    : e.to
-            })
-        }
-
-        const new_display_graph = {
-            nodes: data.display_graph.nodes
-                .filter(n => n.id !== data.node_id)
-                .filter(n => keep_expanded || !inside_node_map.has(n.id))
-                .concat([{
-                    id: final_node_id,
-                    name: node.name,
-                    in: in_node_id && in_node_id.startsWith(node_id + '/') ? in_node_id.substring(node_id.length + 1) : in_node_id,
-                    out: out_node_id.startsWith(node_id + '/') ? out_node_id.substring(node_id.length + 1) : out_node_id,
-                    nodes: inside_nodes.map(n => ({
-                        ...n,
-                        id: n.id.startsWith(node_id + "/") ? n.id.substring(node_id.length + 1) : n.id
-                    })),
-                    edges
-                }]),
-            edges: data.display_graph.edges
-                .filter(e => keep_expanded || !(inside_node_map.has(e.from) && inside_node_map.has(e.to)))
-                .map(e =>
-                    e.from === data.node_id ? { ...e, from: final_node_id }
-                        : e.to === in_node && in_node.id ? { ...e, to: final_node_id }
-                            : inside_node_map.has(e.to)
-                                ? { ...e, to: final_node_id }
-                                : e
-                )
-        };
-
-        return { display_graph: { ...data.display_graph, ...new_display_graph }, selected: [final_node_id] };
-    }
-}
-
-
 const keydownSubscription = (dispatch, options) => {
     const handler = ev => {
         if ((ev.key === "s" || ev.key === "o") && ev.ctrlKey) {
@@ -560,16 +399,6 @@ const listenToEvent = (dispatch, props) => {
     return () => removeEventListener(props.type, listener);
 }
 
-const run_h = ({dom_type, props, children, text}, exclude_tags=[]) => {
-    dom_type = dom_type && dom_type._Proxy ? dom_type._value : dom_type;
-    text = text && text._Proxy ? text._value : text;
-    props = props && props._Proxy ? props._value : props;
-    children = children && children._Proxy ? children._value : children;
-    return dom_type === "text_value" 
-        ? ha.text(text) 
-        : ha.h(dom_type, props, children?.filter(c => !!c && !exclude_tags.includes(c.dom_type)).map(c => run_h(c, exclude_tags)) ?? []) 
-}
-
 const result_subscription = (dispatch, {display_graph_id}) => {
     let animrun = false;
     const error_listener = (error) =>
@@ -603,55 +432,6 @@ const result_subscription = (dispatch, {display_graph_id}) => {
         nolib.no.runtime.remove_listener('graphchange', 'clear_hyperapp_error', change_listener),
         nolib.no.runtime.remove_listener('grapherror', 'update_hyperapp_error', error_listener)
     );
-}
-
-const findViewBox = (nodes, links, selected, node_el_width, htmlid, dimensions) => {
-    const visible_nodes = [];
-    const visible_node_set = new Set();
-    let selected_pos;
-    links.forEach(l => {
-        const el = document.getElementById(`link-${l.source.node_id}`);
-        const info_el = document.getElementById(`edge-info-${l.source.node_id}`);
-        if(el && info_el) {
-            const source = {x: l.source.x - node_el_width * 0.5, y: l.source.y};
-            const target = {x: l.target.x - node_el_width * 0.5, y: l.target.y};
-
-            if (l.source.node_id === selected) {
-                visible_nodes.push({x: target.x, y: target.y});
-                visible_node_set.add(l.target.node_id);
-            } else if (l.target.node_id === selected) {
-                visible_nodes.push({x: source.x, y: source.y});
-                visible_node_set.add(l.source.node_id);
-            }
-        }
-    });
-
-    links.forEach(l => {
-        if(visible_node_set.has(l.target.node_id) && !visible_node_set.has(l.source.node_id)) {
-            const source = {x: l.source.x - node_el_width * 0.5, y: l.source.y};
-            visible_nodes.push({x: source.x, y: source.y});
-        }
-    });
-
-    nodes.forEach(n => {
-        const el = document.getElementById(`${htmlid}-${n.node_id}`);
-        if(el) {
-            const x = n.x - node_el_width * 0.5;
-            const y = n.y ;
-
-            if(n.node_id === selected) {
-                visible_nodes.push({x, y})
-                selected_pos = {x, y};
-            }
-        }
-    });
-
-    const nodes_box = visible_nodes.reduce((acc, n) => ({min: {x: Math.min(acc.min.x, n.x - 24), y: Math.min(acc.min.y, n.y - 24)}, max: {x: Math.max(acc.max.x, n.x + node_el_width * 0.5 - 24), y: Math.max(acc.max.y, n.y + 24)}}), {min: {x: selected_pos ? (selected_pos.x - 96) : dimensions.x , y: selected_pos ? (selected_pos.y - 256) : dimensions.y}, max: {x: selected_pos ? (selected_pos.x + 96) : -dimensions.x, y: selected_pos ? (selected_pos.y + 128) : -dimensions.y}})
-    const nodes_box_center = {x: (nodes_box.max.x + nodes_box.min.x) * 0.5, y: (nodes_box.max.y + nodes_box.min.y) * 0.5}; 
-    const nodes_box_dimensions = {x: Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))), y: Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y)))}
-    const center = !selected_pos ? nodes_box_center : {x: (selected_pos.x + nodes_box_center.x * 3) * 0.25, y: (selected_pos.y + nodes_box_center.y * 3) * 0.25}
-
-    return {nodes_box_dimensions, center};
 }
 
 const pzobj = {
@@ -735,6 +515,16 @@ const pzobj = {
     }
 }
 
+const run_h = ({dom_type, props, children, text}, exclude_tags=[]) => {
+    dom_type = dom_type && dom_type._Proxy ? dom_type._value : dom_type;
+    text = text && text._Proxy ? text._value : text;
+    props = props && props._Proxy ? props._value : props;
+    children = children && children._Proxy ? children._value : children;
+    return dom_type === "text_value" 
+        ? ha.text(text) 
+        : ha.h(dom_type, props, children?.filter(c => !!c && !exclude_tags.includes(c.dom_type)).map(c => run_h(c, exclude_tags)) ?? []) 
+}
+
 const UpdateSimulation = (dispatch, payload) => payload ? !(payload.simulation || payload.static) ? undefined : updateSimulationNodes(dispatch, payload) : dispatch(state => [state, [() => !(state.simulation || state.static) ? undefined : updateSimulationNodes(dispatch, state)]])
 
 const UpdateGraphDisplay = (dispatch, payload) => requestAnimationFrame(() => dispatch(s => [{
@@ -743,8 +533,6 @@ const UpdateGraphDisplay = (dispatch, payload) => requestAnimationFrame(() => di
 }]))
 
 const CustomDOMEvent = (_, payload) => document.getElementById(`${payload.html_id}`)?.dispatchEvent(new CustomEvent(payload.event, {detail: payload.detail}))
-
-const create_randid = () => Math.random().toString(36).substring(2, 9);
 
 const SimulationToHyperapp = (state, payload) => [{
     ...state,
@@ -842,20 +630,6 @@ const CreateRef = (state, {node}) => [
         });
     }]
 ]
-
-const ancestor_graph = (node_id, from_graph) => {
-    let edges_in;
-    let queue = [node_id];
-    const graph = {nodes: [], edges: []};
-    while(queue.length > 0) {
-        let node_id = queue.pop();
-        graph.nodes.push({...nolib.no.runtime.get_node(from_graph, node_id)})
-        edges_in = nolib.no.runtime.get_edges_in(from_graph, node_id);
-        graph.edges = graph.edges.concat(edges_in);
-        edges_in.forEach(e => queue.push(e.from));
-    }
-    return graph;
-}
 
 const Copy = (state, {cut, as}) => {
     return {...state, copied: {graph: ancestor_graph(state.selected[0], state.display_graph), root: state.selected[0], as}};
@@ -1054,22 +828,24 @@ const input_el = ({label, property, value, onchange, options, inputs, disabled})
         ha.h('input', {
             class: property, 
             id: `edit-text-${property}`, 
+            key: `edit-text-${property}`, 
             name: `edit-text-${property}`, 
             disabled,
-            list: options && options.length > 0 ? 'edit-text-list' : undefined,
+            list: options && options.length > 0 ? `edit-text-list-${property}` : undefined,
             oninput: (s, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: e.target.value})}], 
             onchange: (s, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: undefined})}, [dispatch => dispatch(onchange, e)]],
             onfocus: (state, event) => [{...state, focused: event.target.id}],
             onblur: (state, event) => [{...state, focused: false}],
             value: inputs[`edit-text-${property}`] ?? value
         }),
-        options && options.length > 0 && ha.h('datalist', {id: 'edit-text-list'}, options.map(o => ha.h('option', {value: o}))) 
+        options && options.length > 0 && ha.h('datalist', {id: `edit-text-list-${property}`}, options.map(o => ha.h('option', {value: o}))) 
     ]
 )
 
 const info_el = ({node, hidden, links_in, link_out, display_graph_id, randid, refs, html_id, copied_graph, inputs, graph_out, editing})=> {
     const node_ref = node.ref ? nolib.no.runtime.get_ref(display_graph_id, node.ref) : node;
     const description =  node_ref?.description;
+    const node_arg_labels = node_args(nolib, ha, display_graph_id, node.id, links_in);
     return ha.h('div', {id: "node-info-wrapper"}, [ha.h('div', {class: "spacer before"}, []), ha.h(
         'div',
         { 
@@ -1079,25 +855,12 @@ const info_el = ({node, hidden, links_in, link_out, display_graph_id, randid, re
         },
         [
             ha.h('div', {class: "args"}, 
-                [...new Set((node_ref?.extern 
-                ? nolib.just.get.fn({}, nolib, node_ref.extern).args
-                : node_ref?.nodes?.filter(n => 
-                    n.ref === "arg" 
-                    && n.type !== "internal" 
-                    && !n.value.split(":")[1]?.toLowerCase()?.includes("internal")
-                    && !(Array.isArray(n.type) && n.type.includes("internal"))).map(n => n.value) ?? [])
-                    .filter(a => !a.includes('.') && !a.startsWith("_")))]
-                    .concat(
-                        ["arg" + ((links_in.filter(l => 
-                                    l.as?.startsWith("arg")
-                                    && new RegExp("[0-9]+").test(l.as.substring(3)))
-                                .map(l => parseInt(l.as.substring(3))) ?? [])
-                            .reduce((acc, i) => acc > i ? acc : i + 1, 0))])
+                node_arg_labels
                     .map(n => ha.h('span', {
                         class: "clickable", 
                         onclick: links_in.filter(l => l.as === n).map(l => [SelectNode, {node_id: l.source.node_id}])[0]
                             ?? [CreateNode, {node: {id: randid}, child: node.id, child_as: n}]
-                    }, [ha.text(n)])) ?? []),
+                    }, [ha.text(n)]))),
             ha.h('div', {class: "inputs"}, [
                 input_el({
                     label: "value", 
@@ -1132,6 +895,7 @@ const info_el = ({node, hidden, links_in, link_out, display_graph_id, randid, re
                     value: link_out.as, 
                     property: "edge",
                     inputs,
+                    options: node_args(nolib, ha, display_graph_id, link_out.to),
                     onchange: (state, payload) => [UpdateEdge, {edge: {from: link_out.from, to: link_out.to, as: link_out.as}, as: payload.target.value}]
                 }),
             ]),
@@ -1315,7 +1079,7 @@ const dispatch = (init, _lib) => {
                 )
             ),
         ]),
-        info_el({
+        nolib.no.runtime.get_node(s.display_graph, s.selected[0]) && info_el({
             node: Object.assign({}, s.nodes.find(n => n.node_id === s.selected[0]), nolib.no.runtime.get_node(s.display_graph, s.selected[0])),
             hidden: s.show_all,
             links_in: s.links.filter(l => l.target.node_id === s.selected[0]),
