@@ -286,9 +286,9 @@ const d3subscription = (dispatch, props) => {
 
             simulation.force('links').links().map(l => {
                 const el = document.getElementById(`link-${l.source.node_id}`);
-                const info_el = document.getElementById(`edge-info-${l.source.node_id}`);
+                const edge_label_el = document.getElementById(`edge-info-${l.source.node_id}`);
                 const insert_el = document.getElementById(`insert-${l.source.node_id}`);
-                if(el && info_el) {
+                if(el && edge_label_el) {
                     const source = {x: l.source.x - node_el_width * 0.5, y: l.source.y};
                     const target = {x: l.target.x - node_el_width * 0.5, y: l.target.y};
                     const length_x = Math.abs(source.x - target.x); 
@@ -301,8 +301,12 @@ const d3subscription = (dispatch, props) => {
                     el.setAttribute('x2', Math.floor(Math.floor(source.x + (target.x - source.x) * (1 - lerp_length / length))));
                     el.setAttribute('y2', Math.floor(Math.floor(source.y + (target.y - source.y) * (1 - lerp_length / length))));
 
-                    info_el.setAttribute('x', Math.floor((l.sibling_index_normalized * 0.2 + 0.2) * (target.x - source.x) + source.x) + 16)
-                    info_el.setAttribute('y', Math.floor((l.sibling_index_normalized * 0.2 + 0.2) * (target.y - source.y) + source.y));
+                    const min_edge_label_dist = 32 / (target.y - source.y);
+                    const max_edge_label_dist = 64 / (target.y - source.y);
+                    const edge_label_dist = Math.min(max_edge_label_dist, Math.max(min_edge_label_dist, 0.125));
+
+                    edge_label_el.setAttribute('x', (target.x - source.x) * edge_label_dist + source.x + 16)
+                    edge_label_el.setAttribute('y', (target.y - source.y) * edge_label_dist + source.y);
 
                     if(insert_el) {
                         insert_el.setAttribute('x', Math.floor((source.x + target.x) * 0.5 - 16))
