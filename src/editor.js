@@ -5,7 +5,7 @@ import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, fo
 import Fuse from "fuse.js";
 import { basicSetup, EditorView } from "codemirror";
 import { javascript } from "@codemirror/lang-javascript";
-import { create_randid, findViewBox, node_args } from "./util.js";
+import { ancestor_graph, contract_node, create_randid, expand_node, findViewBox, node_args } from "./util.js";
 
 const updateSimulationNodes = (dispatch, data) => {
     const simulation_node_data = new Map();
@@ -565,7 +565,7 @@ const SetSelectedPositionStyleEffect = (_, {node, svg_offset, dimensions}) => {
 }
 
 const SelectNode = (state, {node_id, focus_property}) => [
-    state.selected[0] === node_id ? state : {...state, selected: [node_id]},
+    state.selected[0] === node_id ? state : {...state, selected: [node_id], inputs: {}},
     !state.show_all && [pzobj.effect, {...state, node_id: node_id}],
     [UpdateGraphDisplay, {...state, selected: [node_id]}],
     (state.show_all || state.selected[0] !== node_id) && [pzobj.effect, {...state, node_id}],
@@ -605,8 +605,8 @@ const DeleteNode = (state, {node_id}) => [
 const ExpandContract = (state, {node_id}) => {
     const node = state.display_graph.nodes.find(n => n.id === node_id);
     const update = node.nodes 
-            ? expand_node({node_id, display_graph: state.display_graph})
-            : contract_node({node_id, display_graph: state.display_graph});
+            ? expand_node({nolib, node_id, display_graph: state.display_graph})
+            : contract_node({nolib, node_id, display_graph: state.display_graph});
     
     return [
         state,
@@ -636,7 +636,7 @@ const CreateRef = (state, {node}) => [
 ]
 
 const Copy = (state, {cut, as}) => {
-    return {...state, copied: {graph: ancestor_graph(state.selected[0], state.display_graph), root: state.selected[0], as}};
+    return {...state, copied: {graph: ancestor_graph(nolib, state.selected[0], state.display_graph), root: state.selected[0], as}};
 }
 
 const Paste = state => [
@@ -772,16 +772,10 @@ const node_el = ({html_id, selected, error, selected_distance, node}) =>ha.h('sv
     }
 }, [
    ha.h(
-        node.script ? 'rect' : node.ref && node.ref !== 'arg' ? 'rect' : node.nodes ? 'circle' : node.value ? 'polygon' : 'circle', 
-        node.script 
-            ? {class:{shape: true, script: true, error}, width: radius, height: radius, x: 10, y: 10} 
-            : node.ref && node.ref !== 'arg' 
-            ? {class: {shape: true, ref: true, error}, width: radius, height: radius, x: 10, y: 10} 
-            : node.nodes 
-            ? {class: {shape: true, graph: true, error}, r: radius * 0.5, cx: radius * 0.5 + 4, cy: radius * 0.5 + 4} 
-            : node.value !== undefined 
+        node.value !== undefined && !(node.ref && node.ref !== "arg") ? 'polygon' : 'circle', 
+        node.value !== undefined && !(node.ref && node.ref !== "arg") 
             ? {class: {shape: true, value: true, error}, points: `4,${4 + radius} ${4 + radius},${4 + radius} ${4 + radius * 0.5},4`} 
-            : {class: {shape: true, none: true, error}, r: radius * 0.5 , cx: radius * 0.5 + 4, cy: radius * 0.5 + 4}
+            : {class: {shape: true, none: true, error}, r: radius * 0.5 , cx: radius * 0.5 + 8, cy: radius * 0.5 + 8}
     ),
     ha.memo(node_text_el, {
         node_id: node.id,
@@ -918,7 +912,7 @@ const info_el = ({node, hidden, links_in, link_out, display_graph_id, randid, re
                 ha.h('div', {
                     class: "action", 
                     onclick: [ExpandContract, {node_id: node.node_id}]
-                }, ha.text(node.nodes?.length > 0 ? "expand" : "contract")),
+                }, ha.text(node.nodes?.length > 0 ? "expand" : "collapse")),
                 node.nodes?.length > 0 && node.name !== '' && ha.h('div', {class: 'action', onclick: [CreateRef, {node}]}, ha.text("make ref")),
                 ha.h('div', {
                     class: "action", 
@@ -1107,6 +1101,9 @@ const dispatch = (init, _lib) => {
         [graph_subscription, {display_graph_id: s.display_graph_id}],
         result_display_dispatch && [result_subscription, {display_graph_id: s.display_graph_id}],
         [keydownSubscription, {action: (state, payload) => {
+            if(document.getElementById("node-editor-result").contains(payload.target)) {
+                return [state];
+            }
             const mode = state.editing !== false ? 'editing' : state.search !== false ? 'searching' : 'graph';
             const key_input = (payload.ctrlKey ? 'ctrl_' : '') + (payload.shiftKey ? 'shift_' : '') + (payload.key === '?' ? 'questionmark' : payload.key.toLowerCase());
             let action;
@@ -1120,7 +1117,6 @@ const dispatch = (init, _lib) => {
                     break;
                 }
                 default: {
-                    console.log(mode + ": " + key_input)
                     const result = hlib.runGraph(init.keybindings, "out", {}, hlib)[mode][key_input];
                     switch(result){
                         case "up": {

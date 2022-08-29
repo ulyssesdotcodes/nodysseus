@@ -37,6 +37,7 @@ export const flattenNode = (graph, levels = -1) => {
 
 
 export const expand_node = (data) => {
+    const nolib = data.nolib;
     const node_id = data.node_id;
     const node = data.display_graph.nodes.find(n => n.id === node_id)
 
@@ -64,6 +65,7 @@ export const expand_node = (data) => {
 }
 
 export const contract_node = (data, keep_expanded = false) => {
+    const nolib = data.nolib;
     const node = data.display_graph.nodes.find(n => n.id === data.node_id);
     const node_id = data.node_id;
     if (!node.nodes) {
