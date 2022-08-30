@@ -3989,19 +3989,7 @@
         "ref": "runnable"
       },
       {
-        "id": "pqdqauw",
-        "value": "0.0"
-      },
-      {
         "id": "a4y3jfa",
-        "value": "1.0"
-      },
-      {
-        "id": "x90akqb",
-        "ref": "default"
-      },
-      {
-        "id": "2mf0qec",
         "value": "1.0"
       },
       {
@@ -4038,10 +4026,6 @@
       {
         "id": "q8ugbch",
         "value": "row"
-      },
-      {
-        "id": "qi4odll",
-        "ref": "default"
       },
       {
         "id": "wnr7m0u",
@@ -4099,6 +4083,56 @@
         "ref": ""
       },
       {
+        "id": "qi4odll",
+        "value": "return value || otherwise",
+        "ref": "script"
+      },
+      {
+        "id": "16b092x",
+        "ref": "default"
+      },
+      {
+        "id": "9fk784a",
+        "value": "max",
+        "ref": "arg"
+      },
+      {
+        "id": "7c2vt3d",
+        "ref": "default"
+      },
+      {
+        "id": "fd7yax9",
+        "value": "min",
+        "ref": "arg"
+      },
+      {
+        "id": "r1ah7g2",
+        "value": "0.0"
+      },
+      {
+        "id": "pxjyi1r",
+        "value": "max",
+        "ref": "arg"
+      },
+      {
+        "id": "y89gegr",
+        "ref": "default"
+      },
+      {
+        "id": "2w29jnu",
+        "value": "1.0"
+      },
+      {
+        "id": "x5sogkd",
+        "value": "result",
+        "ref": "arg"
+      },
+      {
+        "id": "bts7694",
+        "value": "result",
+        "ref": "arg"
+      },
+      {
         "id": "main/out",
         "name": "export",
         "ref": "return"
@@ -4134,26 +4168,6 @@
         "from": "3gv1qlb",
         "to": "24q0egm",
         "as": "oninput"
-      },
-      {
-        "from": "pqdqauw",
-        "to": "24q0egm",
-        "as": "min"
-      },
-      {
-        "from": "a4y3jfa",
-        "to": "24q0egm",
-        "as": "max"
-      },
-      {
-        "from": "x90akqb",
-        "to": "24q0egm",
-        "as": "value"
-      },
-      {
-        "from": "2mf0qec",
-        "to": "x90akqb",
-        "as": "otherwise"
       },
       {
         "from": "yv0o41n",
@@ -4246,11 +4260,6 @@
         "as": "path"
       },
       {
-        "from": "c7wt9d7",
-        "to": "main/out",
-        "as": "return"
-      },
-      {
         "from": "vgishln",
         "to": "ewycyaq",
         "as": "path"
@@ -4276,9 +4285,69 @@
         "as": "text"
       },
       {
-        "from": "6hxkrv4",
-        "to": "x90akqb",
+        "from": "16b092x",
+        "to": "24q0egm",
+        "as": "max"
+      },
+      {
+        "from": "a4y3jfa",
+        "to": "16b092x",
+        "as": "otherwise"
+      },
+      {
+        "from": "9fk784a",
+        "to": "16b092x",
         "as": "value"
+      },
+      {
+        "from": "r1ah7g2",
+        "to": "7c2vt3d",
+        "as": "otherwise"
+      },
+      {
+        "from": "fd7yax9",
+        "to": "7c2vt3d",
+        "as": "value"
+      },
+      {
+        "from": "7c2vt3d",
+        "to": "24q0egm",
+        "as": "min"
+      },
+      {
+        "from": "c7wt9d7",
+        "to": "main/out",
+        "as": "return"
+      },
+      {
+        "from": "y89gegr",
+        "to": "c7wt9d7",
+        "as": "otherwise"
+      },
+      {
+        "from": "2w29jnu",
+        "to": "y89gegr",
+        "as": "otherwise"
+      },
+      {
+        "from": "pxjyi1r",
+        "to": "y89gegr",
+        "as": "value"
+      },
+      {
+        "from": "6hxkrv4",
+        "to": "24q0egm",
+        "as": "value"
+      },
+      {
+        "from": "x5sogkd",
+        "to": "6hxkrv4",
+        "as": "otherwise"
+      },
+      {
+        "from": "bts7694",
+        "to": "ewycyaq",
+        "as": "otherwise"
       }
     ],
     "out": "main/out"
