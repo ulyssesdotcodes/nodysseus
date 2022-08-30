@@ -242,6 +242,7 @@ export const node_args = (nolib, ha, graph, node_id) => {
                 && !n.value.split(":")[1]?.toLowerCase()?.includes("internal")
                 && !(Array.isArray(n.type) && n.type.includes("internal"))).map(n => n.value) ?? [])
                 .filter(a => !a.includes('.') && !a.startsWith("_"))
+                .concat(edges_in.map(e => e.as))
                 .concat(
                     ["arg" + ((edges_in.filter(l => 
                                 l.as?.startsWith("arg")

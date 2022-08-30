@@ -840,10 +840,10 @@ const input_el = ({label, property, value, onchange, options, inputs, disabled})
     ]
 )
 
-const info_el = ({node, hidden, links_in, link_out, display_graph_id, randid, refs, html_id, copied_graph, inputs, graph_out, editing})=> {
+const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, refs, html_id, copied_graph, inputs, graph_out, editing})=> {
     const node_ref = node.ref ? nolib.no.runtime.get_ref(display_graph_id, node.ref) : node;
     const description =  node_ref?.description;
-    const node_arg_labels = node_args(nolib, ha, display_graph_id, node.id, links_in);
+    const node_arg_labels = node_args(nolib, ha, display_graph_id, node.id);
     return ha.h('div', {id: "node-info-wrapper"}, [ha.h('div', {class: "spacer before"}, []), ha.h(
         'div',
         { 
@@ -856,7 +856,7 @@ const info_el = ({node, hidden, links_in, link_out, display_graph_id, randid, re
                 node_arg_labels
                     .map(n => ha.h('span', {
                         class: "clickable", 
-                        onclick: links_in.filter(l => l.as === n).map(l => [SelectNode, {node_id: l.source.node_id}])[0]
+                        onclick: edges_in.filter(l => l.as === n).map(l => [SelectNode, {node_id: l.from}])[0]
                             ?? [CreateNode, {node: {id: randid}, child: node.id, child_as: n}]
                     }, [ha.text(n)]))),
             ha.h('div', {class: "inputs"}, [
@@ -1080,7 +1080,7 @@ const dispatch = (init, _lib) => {
         s.display_graph.id === s.display_graph_id && nolib.no.runtime.get_node(s.display_graph, s.selected[0]) && info_el({
             node: Object.assign({}, s.nodes.find(n => n.node_id === s.selected[0]), nolib.no.runtime.get_node(s.display_graph, s.selected[0])),
             hidden: s.show_all,
-            links_in: s.links.filter(l => l.target.node_id === s.selected[0]),
+            edges_in: nolib.no.runtime.get_edges_in(s.display_graph, s.selected[0]),
             link_out: Object.assign({}, s.links.find(l => l.source.node_id === s.selected[0]), nolib.no.runtime.get_edge(s.display_graph, s.selected[0])),
             display_graph_id: s.display_graph_id,
             randid: s.randid,
