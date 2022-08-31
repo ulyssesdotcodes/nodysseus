@@ -1340,7 +1340,7 @@ const nolib = {
         add: {
             args: ["_node_inputs"],
             resolve: true,
-            fn: (args) => Object.values(args).reduce((acc, v) => acc + v, 
+            fn: (args) => Object.entries(args).sort((a, b) => a[0].localeCompare(b[0])).reduce((acc, v) => acc + v[1], 
                 typeof args[0] === "number" ? 0 : ""
             )
         },
@@ -1363,6 +1363,19 @@ const nolib = {
             args: ["_args"],
             resolve: true,
             fn: (args) => args
+        },
+        modify: {
+            args: ['target', 'path', 'fn', '_node', '_lib', '_graph_input_value'],
+            resolve: false,
+            fn: (target, path, fn, node, _lib, args) => {
+                const keys = (node.value || path).split('.'); 
+                const check = (o, fn, k) => k.length === 1 
+                    ? {...o, [k[0]]: _lib.no.runGraph(fn._graphid, fn._nodeid, {...args, value: o[k[0]]}), _needsresolve: true} 
+                    : o.hasOwnProperty(k[0]) 
+                    ? {...o, [k[0]]: check(o[k[0]], fn, k.slice(1)), _needsresolve: true} 
+                    : o; 
+                return check(target, fn, keys)
+            },
         },
         properties: {
             getOwnEnumerables: function(obj) {

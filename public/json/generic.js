@@ -467,6 +467,12 @@
         "extern": "just.set"
       },
       {
+        "id": "modify",
+        "description": "Modifies the property at `path` on target with a function. Accepts a `.` separated path e.g. set(target, 'a.b', 'c') returns {...target, a: {...target.a, b: 'c'}}",
+        "type": "(target: any, value: any, path: string) => any",
+        "extern": "utility.modify"
+      },
+      {
         "id": "delete",
         "out": "out",
         "nodes": [

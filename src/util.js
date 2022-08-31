@@ -229,10 +229,10 @@ export const ancestor_graph = (nolib, node_id, from_graph) => {
 
 export const node_args = (nolib, ha, graph, node_id) => {
     const node = nolib.no.runtime.get_node(graph, node_id);
-    const node_ref = node.ref ? nolib.no.runtime.get_ref(graph, node.ref) : node;
-    const edges_in = nolib.no.runtime.get_edges_in(graph, node_id);
+    const node_ref = node?.ref ? nolib.no.runtime.get_ref(graph, node.ref) : node;
+    const edges_in = node_ref && nolib.no.runtime.get_edges_in(graph, node_id);
 
-    const argslist_path = node_ref.nodes && nolib.no.runtime.get_path(node_ref, "argslist");
+    const argslist_path = node_ref?.nodes && nolib.no.runtime.get_path(node_ref, "argslist");
 
     return [...new Set(argslist_path ? nolib.no.runGraph(node_ref, argslist_path) : (node_ref?.extern 
             ? nolib.just.get.fn({}, nolib, node_ref.extern).args
@@ -242,9 +242,9 @@ export const node_args = (nolib, ha, graph, node_id) => {
                 && !n.value.split(":")[1]?.toLowerCase()?.includes("internal")
                 && !(Array.isArray(n.type) && n.type.includes("internal"))).map(n => n.value) ?? [])
                 .filter(a => !a.includes('.') && !a.startsWith("_"))
-                .concat(edges_in.map(e => e.as))
+                .concat(edges_in?.map(e => e.as) ?? [])
                 .concat(
-                    ["arg" + ((edges_in.filter(l => 
+                    ["arg" + ((edges_in?.filter(l => 
                                 l.as?.startsWith("arg")
                                 && new RegExp("[0-9]+").test(l.as.substring(3)))
                             .map(l => parseInt(l.as.substring(3))) ?? [])

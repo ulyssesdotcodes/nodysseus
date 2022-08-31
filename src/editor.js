@@ -841,9 +841,10 @@ const input_el = ({label, property, value, onchange, options, inputs, disabled})
 )
 
 const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, refs, html_id, copied_graph, inputs, graph_out, editing})=> {
-    const node_ref = node.ref ? nolib.no.runtime.get_ref(display_graph_id, node.ref) : node;
+    //const s.display_graph.id === s.display_graph_id && nolib.no.runtime.get_node(s.display_graph, s.selected[0]) && 
+    const node_ref = node && node.ref ? nolib.no.runtime.get_ref(display_graph_id, node.ref) : node;
     const description =  node_ref?.description;
-    const node_arg_labels = node_args(nolib, ha, display_graph_id, node.id);
+    const node_arg_labels = node && node_args(nolib, ha, display_graph_id, node.id);
     return ha.h('div', {id: "node-info-wrapper"}, [ha.h('div', {class: "spacer before"}, []), ha.h(
         'div',
         { 
@@ -1009,6 +1010,8 @@ const init_code_editor = (dispatch, {html_id}) => {
         //         backgroundColor: "#282c34"
         //     }
         // }, {dark: true})]});
+        console.log("editor container")
+        console.log(document.getElementById(`${html_id}-code-editor`))
         const background = "#111";
         const highlightBackground = "#000";
         code_editor = new EditorView({extensions: [
@@ -1077,7 +1080,7 @@ const dispatch = (init, _lib) => {
                 )
             ),
         ]),
-        s.display_graph.id === s.display_graph_id && nolib.no.runtime.get_node(s.display_graph, s.selected[0]) && info_el({
+        info_el({
             node: Object.assign({}, s.nodes.find(n => n.node_id === s.selected[0]), nolib.no.runtime.get_node(s.display_graph, s.selected[0])),
             hidden: s.show_all,
             edges_in: nolib.no.runtime.get_edges_in(s.display_graph, s.selected[0]),
