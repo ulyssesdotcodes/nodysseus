@@ -671,15 +671,19 @@ const save_graph = graph => {
 const SaveGraph = (dispatch, payload) => save_graph(payload.display_graph)
 
 const ChangeDisplayGraphId = (dispatch, {id, select_out}) => {
-    const json = localStorage.getItem(id);
-    const graph = (json && base_graph(JSON.parse(json))) ?? nolib.no.runtime.get_graph(id) ?? nolib.no.runtime.get_ref(undefined, id)
-    window.location.hash = '#' + id; 
-    requestAnimationFrame(() =>
-        dispatch(state => [
+    requestAnimationFrame(() => {
+        const json = localStorage.getItem(id);
+        const graphPromise = Promise.resolve((json && base_graph(JSON.parse(json))) 
+            ?? nolib.no.runtime.get_graph(id) 
+            ?? nolib.no.runtime.get_ref(undefined, id)
+            ?? resfetch(`json/${id}.json`).then(r => r.status !== 200 ? simple : r.json()).catch(_ => undefined))
+
+        window.location.hash = '#' + id; 
+        graphPromise.then(graph => dispatch(state => [
             {...state, display_graph_id: id},
             [dispatch => {
                 requestAnimationFrame(() => {
-                    const new_graph = graph || Object.assign({}, base_graph(state.display_graph), {id});
+                    const new_graph = graph ?? Object.assign({}, base_graph(state.display_graph), {id});
                     const mainout = new_graph.nodes.find(n => n.id === new_graph.out);
                     mainout.name = new_graph.id;
                     nolib.no.runtime.update_graph(new_graph);
@@ -688,6 +692,7 @@ const ChangeDisplayGraphId = (dispatch, {id, select_out}) => {
                 })
             }],
         ]))
+    })
 }
 
 const Search = (state, {payload, nodes}) => {
@@ -1085,7 +1090,7 @@ const dispatch = (init, _lib) => {
             hidden: s.show_all,
             edges_in: nolib.no.runtime.get_edges_in(s.display_graph, s.selected[0]),
             link_out: Object.assign({}, s.links.find(l => l.source.node_id === s.selected[0]), nolib.no.runtime.get_edge(s.display_graph, s.selected[0])),
-            display_graph_id: s.display_graph_id,
+            display_graph_id: s.display_graph.id,
             randid: s.randid,
             editing: s.editing,
             refs: nolib.no.runtime.refs(),
