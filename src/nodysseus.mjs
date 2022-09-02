@@ -590,7 +590,7 @@ const run_with_val_full = (graph, full_lib, node_id, graph_input_value) => {
             const as_set = new Set()
             inputs.forEach(e => {
                 if (as_set.has(e.as)) {
-                    throw new NodysseusError(graph.id + "/" + node_id, `Multiple input edges have the same label ${e.as}`)
+                    throw new NodysseusError(graph.id + "/" + node_id, `Multiple input edges have the same label "${e.as}"`)
                 }
                 as_set.add(e.as)
             })

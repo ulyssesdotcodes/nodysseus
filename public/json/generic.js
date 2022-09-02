@@ -2374,17 +2374,12 @@
         "as": "fn"
       },
       {
-        "from": "def_self",
-        "to": "7iawyvs",
-        "as": "array"
-      },
-      {
         "from": "xvxhk01",
         "to": "7iawyvs",
         "as": "array"
       },
       {
-        "from": "3w3cepy",
+        "from": "def_self",
         "to": "xvxhk01",
         "as": "res"
       }
