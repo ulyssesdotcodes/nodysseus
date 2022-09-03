@@ -2,6 +2,7 @@
     "nodes": [
       {
         "id": "log",
+        "description": "Prints value to console.log",
         "nodes": [
           { "id": "in" },
           { "id": "value", "ref": "arg", "value": "value" },
@@ -14,17 +15,18 @@
           { "from": "value", "to": "out", "as": "value" }
         ]
       },
-      { "id": "fetch", "name": "fetch", "extern": "utility.fetch" },
-      { "id": "call", "name": "call", "extern": "utility.call" },
-      { "id": "stringify", "name": "stringify", "extern": "JSON.stringify" },
-      { "id": "parse", "name": "parse", "extern": "JSON.parse" },
-      { "id": "add", "extern": "utility.add" },
-      { "id": "mult", "extern": "utility.mult" },
-      { "id": "divide", "extern": "utility.divide" },
-      { "id": "negate", "extern": "utility.negate" },
+      { "id": "fetch", "name": "fetch", "description": "Uses the <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API'>Fetch API</a> to get data.", "extern": "utility.fetch" },
+      { "id": "call", "name": "call", "description": "Calls `self.fn` with `args`. If `self is not found, uses the node's context.", "extern": "utility.call" },
+      { "id": "stringify", "name": "stringify", "description": "<a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify'>JSON.stringify</a> the `value` argument", "extern": "JSON.stringify" },
+      { "id": "parse", "name": "parse", "description": "<a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify'>JSON.parse</a> the `value` argument", "extern": "JSON.parse" },
+      { "id": "add", "extern": "utility.add", "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Addition'>+ operator</a>" },
+      { "id": "mult", "extern": "utility.mult", "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Multiplication'>* operator</a>" },
+      { "id": "divide", "extern": "utility.divide", "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Division'>/ operator</a>"  },
+      { "id": "negate", "extern": "utility.negate", "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Subtraction'>- operator</a>"  },
       {
         "id": "ancestors",
         "out": "out",
+        "description": "Gets the ancestors of the `node` in `graph`",
         "nodes": [
           { "id": "in" },
           { "id": "graph", "ref": "arg", "value": "graph" },
@@ -42,7 +44,7 @@
       },
       {
         "id": "append",
-        "type": "(array: A[], item: A) => A[]",
+        "description": "Appends `item` to `array`. `item` can be a single item or an array.",
         "nodes": [
           { "id": "in" },
           { "id": "array", "ref": "arg", "value": "array" },
@@ -57,7 +59,7 @@
       },
       {
         "id": "concat",
-        "type": "(array: A[], items: A[]) => A[]",
+        "description": "Concats `items` to `array`.",
         "nodes": [
           { "id": "in" },
           { "id": "array", "ref": "arg", "value": "array" },
@@ -73,13 +75,13 @@
       {
         "id": "filter_eq",
         "name": "filter_eq",
-        "in": "74n1jfm",
+        "description": "Filters `array` for items where `item.key` === `value`",
         "out": "lahq5z4",
         "nodes": [
           { "id": "lahq5z4", "args": [], "name": "filter/out", "script": "return arr.filter(v => v[key] === value)" },
           { "id": "pfoypo5", "args": [], "ref": "arg", "value": "key" },
           { "id": "zinx621", "args": [], "ref": "arg", "value": "value" },
-          { "id": "x2sz5kb", "args": [], "ref": "arg", "value": "arr" },
+          { "id": "x2sz5kb", "args": [], "ref": "arg", "value": "array" },
           { "id": "74n1jfm", "args": [], "name": "filter/in" }
         ],
         "edges": [
@@ -91,6 +93,7 @@
       },
       {
         "id": "default",
+        "description": "Returns `value` if it's defined, if not then returns `otherwise`",
         "nodes": [
           { "id": "in" },
           { "id": "value", "ref": "arg", "value": "value" },
@@ -109,7 +112,7 @@
       },
       {
         "id": "switch",
-        "args": ["data", "input"],
+        "description": "Returns the result  of the branch passed into it by `input`",
         "nodes": [
           { "id": "in" },
           {"id": "args", "ref": "arg", "value": "_args"},
@@ -128,6 +131,7 @@
       },
       {
         "id": "if_arg",
+        "description": "If this node's `value` exists in the node's context, return the value from the `true` branch",
         "nodes": [
           {"id": "name", "ref": "arg", "value": "_graph.value"},
           {"id": "args", "ref": "arg", "value": "_args"},
@@ -143,6 +147,7 @@
       },
       {
         "id": "if",
+        "description": "If `pred` exists in the node's context, return the value from the `true` branch. Otherwise, return the value from the `false` branch.",
         "nodes": [
           { "id": "in" },
           { "id": "pred", "ref": "arg", "value": "pred" },
@@ -161,15 +166,17 @@
       },
       {
         "id": "find_node",
+        "description": "Find the node with id `node_id` in `nodes`.",
         "script": "if(!node_id){ return undefined } const nid = typeof node_id === 'string' ? node_id : node_id[0]; return nodes.find(n => n.id === nid || n.node_id === nid)"
       },
       {
         "id": "svg_text",
+        "description": "Returns a hyperapp `svg` text element with `text` and `props`",
         "out": "out",
         "nodes": [
-          { "id": "dom_type", "value": "text" },
           { "id": "text", "ref": "arg", "value": "text" },
           { "id": "props", "ref": "arg", "value": "props" },
+          { "id": "dom_type", "value": "text" },
           { "id": "text_el", "ref": "html_text" },
           { "id": "children", "script": "return [text]" },
           { "id": "out", "ref": "html_element" }
@@ -184,10 +191,12 @@
       },
       {
         "id": "edge_in_argx",
+        "description": "Returns all edges labeled `arg` and a number, e.g. `arg0`, `arg1`, etc.",
         "script": "const parent = _lib.no.runtime.get_parent(_graph); const edges = _lib.no.runtime.get_edges_in(parent, _graph.node_id).filter(e => e.as.startsWith('arg')).reduce((acc, e) => { acc[parseInt(e.as.substring(3))] = _lib.just.get.fn({}, _graph_input_value, e.as); return acc; }, []).map(a => a?._Proxy ? a._value : a); return edges;"
       },
       {
         "id": "input_edge",
+        "description": "Finds the input edge labeled with this node's `value`",
         "out": "out",
         "nodes": [
           {
@@ -201,6 +210,7 @@
       },
       {
         "id": "runnable_return",
+        "description": "Combines `return` and `runnable` into one node.",
         "out": "out",
         "nodes": [
           {"id": "return", "ref": "arg", "value": "return"},
@@ -243,6 +253,7 @@
       },
       {
         "id": "return",
+        "description": "Creates an inline graph with args, pub/sub, etc. See docs for more detail.",
         "out": "out",
         "nodes": [
           {"id": "return", "ref": "arg", "value": "return"},
@@ -330,6 +341,7 @@
       },
       {
         "id": "runnable",
+        "description": "Creates a reference to `fn` that can be run in various contexts.",
         "out": "out",
         "nodes": [
           { "id": "fn", "ref": "arg", "value": "fn" },
@@ -364,6 +376,7 @@
       },
       {
         "id": "function", 
+        "description": "Creates a function from the `fn` input.",
         "nodes": [
           {"id": "runnable", "ref": "arg", "value": "runnable"},
           {"id": "out", "script":"return (fnargs) => _lib.no.runGraph(runnable.graph, runnable.fn, {...runnable.args, fnargs}, _lib)"}
@@ -372,56 +385,10 @@
           {"from": "runnable", "to": "out", "as": "runnable"}
         ]
       },
-      {
-        "id": "execute_graph",
-        "nodes": [
-          { "id": "in" },
-          { "id": "args", "ref": "arg", "value": "_args" },
-          { "id": "fn", "ref": "arg", "value": "fn" },
-          { "id": "fn_graph", "ref": "arg", "value": "fn_graph" },
-          {
-            "id": "out",
-            "script": "const res_graph = fn_graph ?? _graph; return (...inner_args) => {return _lib.no.executeGraphNode({graph: {...res_graph, nodes: [...res_graph.nodes], edges: [...res_graph.edges]}, lib: _lib})(fn)(Object.keys(args).length > 0 ? Object.assign(args, inner_args.length === 1 ? inner_args[0] : inner_args) : inner_args.length === 1 ? inner_args[0] : inner_args);}"
-          }
-        ],
-        "edges": [
-          { "from": "in", "to": "out", "as": "_", "type": "ref" },
-          { "from": "args", "to": "out", "as": "args" },
-          { "from": "fn", "to": "out", "as": "fn" },
-          { "from": "fn_graph", "to": "out", "as": "fn_graph" }
-        ]
-      },
-      {
-        "id": "apply",
-        "script": "return _lib.no.executeGraphNode({graph: fn.graph ?? _graph, lib: _lib})(fn.fn ?? fn)(args);"
-      },
-      { "id": "apply_graph", "script": "return _lib.no.executeGraphNode({graph, lib: _lib})(fn)(args);" },
-      {
-        "id": "partial",
-        "nodes": [
-          { "id": "in" },
-          { "id": "input_value", "ref": "arg", "value": "_args" },
-          { "id": "fn", "ref": "arg", "value": "fn" },
-          { "id": "args", "ref": "arg", "value": "args", "type": "local" },
-          {
-            "id": "out",
-            "script": "return _lib.no.executeGraphNode({graph: _graph, lib: _lib})(fn)(Object.assign({}, _args, args))"
-          }
-        ],
-        "edges": [
-          { "from": "in", "to": "out", "as": "args", "type": "ref" },
-          { "from": "fn", "to": "out", "as": "fn" },
-          { "from": "args", "to": "out", "as": "args" },
-          { "from": "input_value", "to": "out", "as": "_args" }
-        ]
-      },
-      {
-        "id": "partial_graph",
-        "script": "return _lib.no.executeGraphNode({graph, lib: _lib})(fn)(Object.assign({}, _args, args))"
-      },
-      {"id":"script", "extern": "utility.script"},
+      {"id":"script", "description": "Runs this as a javascript function. `return` is needed at the end of the script to return anything.", "extern": "utility.script"},
       {
         "id": "resolve",
+        "description": "Resolves any `Proxy` inputs and returns an object.",
         "extern": "utility.resolve"
       },
       { "id": "array", "name": "array", "description": "Create an array from all the inputs in alphabetical order", "extern": "utility.new_array" },
@@ -446,6 +413,7 @@
       { "id": "arg", "description": "Get an input to the graph this is a part of.", "extern": "utility.arg" },
       { 
         "id": "set_mutable", 
+        "description": "Sets `target` value at `path` to `value` and returns the object.",
         "extern": "just.set_mutable",
         "_out": "out",
         "_nodes": [
@@ -462,18 +430,19 @@
       },
       {
         "id": "set",
-        "description": "Set the property at `path` on target. Accepts a `.` separated path e.g. set(target, 'a.b', 'c') returns {...target, a: {...target.a, b: 'c'}}",
+        "description": "Returns a new object with the property at `path` (or the node's value) on `target` set to `value`. Accepts a `.` separated path e.g. set(target, 'a.b', 'c') returns {...target, a: {...target.a, b: 'c'}}",
         "type": "(target: any, value: any, path: string) => any",
         "extern": "just.set"
       },
       {
         "id": "modify",
-        "description": "Modifies the property at `path` on target with a function. Accepts a `.` separated path e.g. set(target, 'a.b', 'c') returns {...target, a: {...target.a, b: 'c'}}",
+        "description": "Returns a new object with the property at `path` (or the node's value) on `target` modified with `fn`. Accepts a `.` separated path e.g. set(target, 'a.b', 'c') returns {...target, a: {...target.a, b: 'c'}}",
         "type": "(target: any, value: any, path: string) => any",
         "extern": "utility.modify"
       },
       {
         "id": "delete",
+        "description": "Deletes `target` property at `path`",
         "out": "out",
         "nodes": [
           { "id": "in" },
@@ -489,6 +458,7 @@
       },
       {
         "id": "cache",
+        "description": "Stores the first value that's `!== undefined` and returns that value whenever called. If used within a `map`, `filter`, or `reduce` node, each iteration's value will be cached separately.",
         "nodes": [
           {"id": "in"},
           {"id": "value", "ref": "arg", "value": "value"},
@@ -511,22 +481,8 @@
         ]
       },
       {
-        "id": "save_value",
-        "out": "out",
-        "nodes": [
-          {"id": "value", "ref": "arg", "value": "value"},
-          {"id": "graph_value", "ref": "script", "value": "return _graph.value"},
-          {"id": "save", "ref": "script", "value": "if(!_lib.utility.compare(value, graph_value)){ _lib.no.runtime.add_node(_lib.no.runtime.get_parent(_graph), {id: _graph.node_id, ref: 'save_value', value});} return value;"},
-          {"id": "out", "ref": "return"}
-        ],
-        "edges": [
-          {"from": "value", "to": "save", "as": "value"},
-          {"from": "graph_value", "to": "save", "as": "graph_value"},
-          {"from": "save", "to": "out", "as": "return"}
-        ]
-      },
-      {
         "id": "isunchanged",
+        "description": "Returns true if `value` is unchanged otherwise `false`.",
         "nodes": [
           {"id": "in"},
           {"id": "value", "ref": "arg", "value": "value"},
@@ -558,6 +514,7 @@
       },
       {
         "id": "run_path",
+        "description": "Runs the node at `path` (or this node's value).Path is determined as a route from the output node of the graph",
         "out": "out",
         "nodes": [
           {"id": "path", "ref": "arg", "value": "path"},
@@ -577,7 +534,7 @@
       },
       {
         "id": "get_arg",
-        "description": "Get the value at the path of object. Accepts a `.` separated path e.g. get(target, 'a.b.c') returns target.a.b.c",
+        "description": "Gets the value at `path` (or this node's value) from the context. Similar to an arg node. Accepts a `.` separated path e.g. get(target, 'a.b.c') returns target.a.b.c",
         "nodes": [
           { "id": "target", "ref": "arg", "value": "target" },
           { "id": "path", "ref": "arg", "value": "path" },
@@ -604,6 +561,7 @@
       },
       {
         "id": "set_arg",
+        "description": "Sets the value at `path` (or this node's value) on this graph's context. If used within a `map`, `filter`, or `reduce`, the arg will be separate for each loop. This behaviour can be changed by passing in a `key` separately.",
         "out": "out",
         "nodes": [
           {"id": "value", "ref": "arg", "value": "value"},
@@ -641,6 +599,7 @@
     },
     {
       "id": "event_publisher",
+      "description": "Publishes a `name` (or this node's value) event with the data `value`.",
       "out": "update",
       "nodes": [
         { "id": "value", "ref": "arg", "value": "value" },
@@ -658,6 +617,7 @@
     },
     {
       "id": "event_publisher_onchange",
+      "description": "Publishes a `name` (or this node's value) event with the data `value` when `value` changes.",
       "out": "out",
       "nodes": [
         {"id": "value", "ref": "arg", "value": "value"},
@@ -682,6 +642,7 @@
     },
     {
       "id": "input_value",
+      "description": "Displays the last `value` received. Will display \"undefined\" if this node has not been run.",
       "out": "main/out",
       "nodes": [
         { "id": "main/out", "name": "input_value", "ref": "return" },
@@ -705,6 +666,7 @@
     },
     {
       "id": "event_subscriber",
+      "description": "Returns the last value of the `name` (or this node's value) event.",
       "out": "out",
       "nodes": [
         { "id": "name", "ref": "arg", "value": "name" },
@@ -727,6 +689,7 @@
     },
     { 
       "id": "events_broadcast_channel", 
+      "description": "Runs `runnable` when a message is received from the events <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/API/BroadcastChannel'>broadcast channel</a>. Can be used to communicate between tabs or worker processes.",
       "out": "out",
       "nodes": [
         {"id": "arg_onmessage", "ref": "arg", "value": "onmessage"},
@@ -748,6 +711,7 @@
     },
     {
       "id": "run",
+      "description": "Runs `runnable` and returns the result.",
       "out": "out",
       "nodes": [
         { "id": "runnable", "ref": "arg", "value": "runnable" },
@@ -762,6 +726,7 @@
     },
     {
       "id": "create_fn",
+      "description": "Returns a function created from `runnable`",
       "out": "out",
       "nodes": [
         { "id": "runnable", "ref": "arg", "value": "runnable" },
@@ -778,6 +743,7 @@
     },
     {
       "id": "reduce",
+      "description": "<a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce'>Aray.reduce</a> the `array` with `fn`. Arguments for `fn` are `previous`, `current`, `index`, `array`, and a unique per nested loop `key`.",
       "name": "reduce",
       "in": "m3b5wg3",
       "out": "tgurdpo",
@@ -811,6 +777,7 @@
     },
     {
       "id": "map",
+      "description": "<a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map'>Aray.map</a> the `array` with `fn`. Arguments for `fn` are `element`, `index`, `array`, and a unique per nested loop `key`.",
       "name": "map",
       "in": "m3b5wg3",
       "out": "handle_promise",
@@ -845,6 +812,7 @@
     },
     {
       "id": "filter",
+      "description": "<a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter'>Aray.filter</a> the `array` with `fn`. Arguments for `fn` are `element`, `index`, `array`, and a unique per nested loop `key`.",
       "name": "filter",
       "in": "74n1jfm",
       "out": "lahq5z4",
@@ -870,6 +838,7 @@
     },
     {
       "id": "sequence",
+      "description": "Create a new runnable that runs the input runnables in sequence.",
       "name": "sequence",
       "out": "out",
       "nodes": [
@@ -915,6 +884,7 @@
     },
     {
       "id": "import_json",
+      "description": "Imports the node or nodes found at the `url`.",
       "name": "import_json",
       "in": "gsiimdp",
       "out": "lapeojg",
@@ -942,6 +912,7 @@
     },
     {
       "id": "object_entries",
+      "description": "Calls <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/entries'>Object.entries</a> on `object`.",
       "name": "object_entries",
       "in": "tkd4tqn",
       "out": "j8c79uf",
@@ -965,6 +936,7 @@
     },
     {
       "id": "css_styles",
+      "description": "Creates a style element from `css_object`. Inputs to the object should be labeled with css selectors, and inputs to those objects with css properties.",
       "name": "css_styles",
       "in": "xw3pmx7",
       "out": "5yxmxua",
@@ -1084,6 +1056,7 @@
     },
     {
       "id": "css_anim",
+      "description": "Creates a css animation string. For use with `css_styles`.",
       "name": "css_anim",
       "in": "cawqofn",
       "out": "spy9h48",
@@ -1157,7 +1130,7 @@
         { "id": "varubwp" },
         { "id": "trd8ptp", "ref": "arg", "value": "name" },
         { "id": "zfrrk0z", "ref": "arg", "value": "name" },
-        { "id": "2zxw9oo", "ref": "execute_graph", "name": "stop_propagation" },
+        { "id": "2zxw9oo", "ref": "run", "name": "stop_propagation" },
         { "id": "sjw3rie", "ref": "default" },
         { "id": "vks4vul", "ref": "arg", "value": "props" },
         { "id": "ddfgy2s" },
@@ -1172,7 +1145,7 @@
           "out": "hj2cig0",
           "nodes": [
             { "id": "hj2cig0", "ref": "array", "name": "stop propagation effect" },
-            { "id": "1pvaim9", "ref": "execute_graph" },
+            { "id": "1pvaim9", "ref": "run" },
             { "id": "0o86xp3", "ref": "arg", "value": "1" },
             { "id": "d60jwms", "script": "payload.stopPropagation();" },
             { "id": "xgbubrq", "ref": "arg", "value": "1" }
@@ -1198,7 +1171,7 @@
     },
     {
       "id": "html_text",
-      "description": "Some HTML plaintext. Usually used as a child of html_element.",
+      "description": "Some HTML plaintext of `text` (or this node's value). Usually used as a child of html_element.",
       "out": "out",
       "nodes": [
         { "id": "in" },
@@ -1218,7 +1191,7 @@
     },
     {
       "id": "html_element",
-      "description": "An HTML Element. `children` is an array of html_element or html_text, `props` are the attributes for the html element as an object.",
+      "description": "An HTML Element. `children` is an array of html_element or html_text, `props` are the attributes for the html element as an object, `dom_type` (or this node's value) is the dom type, `memo` refers to <a target='_blank' href='https://github.com/jorgebucaran/hyperapp/blob/main/docs/api/memo.md'>hyperapp's memo</a>.",
       "nodes": [
         { "id": "in" },
         { "id": "children", "ref": "arg", "value": "children" },
@@ -1272,6 +1245,7 @@
     },
     {
       "id": "icon",
+      "description": "A ionicon in hyperapp format.",
       "name": "icon",
       "out": "c2sko9c",
       "nodes": [
@@ -1298,7 +1272,8 @@
     { "id": "not", "args": ["target"], "script": "return !target" },
     {"id":"walk_graph","nodes":[{"id":"args"},{"id":"cfuymky","value":"testx"},{"id":"5a6pljw","ref":"html_element"},{"id":"main/out","name":"walk_graph","ref":"return"},{"id":"5xlxejq","ref":"html_text"},{"id":"8qkc61x","ref":"runnable"},{"id":"dv0p0id","value":"walker","ref":"log"},{"id":"dqs1arj","value":"graph","name":"","ref":"arg"},{"id":"pe7geox","value":"return _lib.no.runtime.get_edges_in(graph.graph, graph.node)","ref":"script"},{"id":"glnadhk","value":"return {node: _node.id, graph: _graph.id}","ref":"script"},{"id":"yophjcb","ref":"map"},{"id":"r3nrc31","ref":"runnable"},{"id":"nhqynsn","value":"element.from","ref":"arg"},{"id":"y4eppvf","value":"graph.graph","ref":"arg"},{"id":"lxjljmp","value":"node","ref":"arg"},{"id":"fo2ul3t","value":"fn","ref":"arg"},{"id":"x2ieyic","ref":"walk_graph"},{"id":"8kp4fri","value":"testz"},{"id":"b8n58i0","value":"testa"},{"id":"ik55pc7","value":"texty"},{"id":"1ecvy51","value":"return {node: _lib.no.runtime.get_node(graph, edge_from), graph}","ref":"script"},{"id":"27950jh"},{"id":"deh12wg","value":"edge","ref":"arg"},{"id":"sfwk3w6","value":"edge","ref":"log"},{"id":"uw2yljj","value":"node","ref":"log"},{"id":"dc70b7u","value":"element","ref":"arg"},{"id":"fhqwbjg","value":"_lib.no.runGraph(fn.graph, fn.fn, {node: node.node, edge}); return {graph: node.graph, node: node.node.id};","ref":"script"}],"edges":[{"from":"args","to":"main/out","as":"args"},{"from":"5a6pljw","to":"main/out","as":"display"},{"from":"cfuymky","to":"glnadhk","as":"arg0"},{"from":"8kp4fri","to":"glnadhk","as":"arg1"},{"from":"ik55pc7","to":"8kp4fri","as":"arg0"},{"from":"5xlxejq","to":"5a6pljw","as":"children"},{"from":"8qkc61x","to":"args","as":"fn"},{"from":"dv0p0id","to":"8qkc61x","as":"fn"},{"from":"glnadhk","to":"args","as":"graph"},{"from":"dqs1arj","to":"pe7geox","as":"graph"},{"from":"pe7geox","to":"yophjcb","as":"array"},{"from":"r3nrc31","to":"yophjcb","as":"fn"},{"from":"nhqynsn","to":"1ecvy51","as":"edge_from"},{"from":"y4eppvf","to":"1ecvy51","as":"graph"},{"from":"fo2ul3t","to":"fhqwbjg","as":"fn"},{"from":"1ecvy51","to":"fhqwbjg","as":"node"},{"from":"x2ieyic","to":"r3nrc31","as":"fn"},{"from":"fhqwbjg","to":"x2ieyic","as":"graph"},{"from":"yophjcb","to":"main/out","as":"return"},{"from":"27950jh","to":"dv0p0id","as":"value"},{"from":"sfwk3w6","to":"27950jh","as":"arg1"},{"from":"deh12wg","to":"sfwk3w6","as":"value"},{"from":"uw2yljj","to":"27950jh","as":"arg0"},{"from":"lxjljmp","to":"uw2yljj","as":"value"},{"from":"dc70b7u","to":"fhqwbjg","as":"edge"},{"from":"b8n58i0","to":"glnadhk","as":"arg22"}],"out":"main/out"},
     {
-        "id": "canvas-behind-editor",
+        "id": "canvas_behind_editor",
+        "description": "Creates a HTML canvas behind the node editor",
         "nodes": [
           {
             "id": "args"
@@ -1428,7 +1403,7 @@
           },
           {
             "id": "main/out",
-            "name": "canvas-behind-editor",
+            "name": "canvas_behind_editor",
             "ref": "return"
           }
         ],
@@ -1591,392 +1566,9 @@
         ],
         "out": "main/out",
       },
-      {
-    "id": "set_property",
-    "nodes": [
-      {
-        "id": "args"
-      },
-      {
-        "id": "mf6qadh",
-        "value": "target",
-        "ref": "arg"
-      },
-      {
-        "id": "5a6pljw",
-        "ref": "html_element"
-      },
-      {
-        "id": "xmreb7u",
-        "value": "result",
-        "ref": "arg"
-      },
-      {
-        "id": "ueijpjz",
-        "value": "return import(\"https://unpkg.com/hydra-synth\")",
-        "ref": "script"
-      },
-      {
-        "id": "k3ktuq6",
-        "ref": "cache"
-      },
-      {
-        "id": "m6n51hz",
-        "ref": "cache"
-      },
-      {
-        "id": "n77uupb",
-        "value": "return import(\"https://unpkg.com/three@latest/build/three.module.js\")",
-        "ref": "script"
-      },
-      {
-        "id": "imr2dvi",
-        "value": "output",
-        "ref": "log"
-      },
-      {
-        "id": "7iawyvs",
-        "ref": "map"
-      },
-      {
-        "id": "j89dbbh",
-        "ref": "runnable"
-      },
-      {
-        "id": "b4scd6w",
-        "value": "element.key",
-        "ref": "arg"
-      },
-      {
-        "id": "sfivh4x"
-      },
-      {
-        "id": "bg17wom",
-        "value": "element.key",
-        "ref": "arg"
-      },
-      {
-        "id": "zxz1gis",
-        "ref": "html_text"
-      },
-      {
-        "id": "3x804e3",
-        "value": "option",
-        "ref": "html_element"
-      },
-      {
-        "id": "vnl7z87",
-        "value": "return res && typeof res === 'object' ? Object.keys(res).filter(k => typeof res[k] !== 'function').map(key => ({key})) : [];",
-        "ref": "script"
-      },
-      {
-        "id": "7ed3f7y",
-        "value": "target",
-        "name": "",
-        "ref": "arg"
-      },
-      {
-        "id": "j0zzhc1",
-        "ref": "set_mutable"
-      },
-      {
-        "id": "94txz4w",
-        "value": "property",
-        "ref": "arg"
-      },
-      {
-        "id": "v171kxm",
-        "value": "value",
-        "ref": "arg"
-      },
-      {
-        "id": "ke2gd7r",
-        "ref": "if"
-      },
-      {
-        "id": "7fvvlnw",
-        "value": "prop",
-        "ref": "log"
-      },
-      {
-        "id": "1xbcyyf",
-        "value": "return{}",
-        "ref": "script"
-      },
-      {
-        "id": "t3ve35s",
-        "value": "hi",
-        "name": ""
-      },
-      {
-        "id": "bnyrd44",
-        "ref": "default"
-      },
-      {
-        "id": "nzg5arg",
-        "value": "return _graph?.value;",
-        "ref": "script"
-      },
-      {
-        "id": "v965sw7",
-        "ref": "array"
-      },
-      {
-        "id": "am447fy",
-        "value": "input",
-        "ref": "html_element"
-      },
-      {
-        "id": "bvs9qz1",
-        "value": "datalist",
-        "ref": "html_element"
-      },
-      {
-        "id": "5zclxv2"
-      },
-      {
-        "id": "6s9b6g0",
-        "value": "return _graph?.value;",
-        "ref": "script"
-      },
-      {
-        "id": "35nk2ya",
-        "value": "const parent = _lib.no.runtime.get_parent(_graph); return parent ? _lib.no.runtime.add_node(parent, {id: _graph.node_id, ref: 'set_property', value: property}) : _lib.no.runtime.update_args(_graph, {property});",
-        "ref": "script"
-      },
-      {
-        "id": "or9k7xt",
-        "ref": "runnable"
-      },
-      {
-        "id": "fzeowyv",
-        "value": "event.target.value",
-        "ref": "arg"
-      },
-      {
-        "id": "exsgmpn"
-      },
-      {
-        "id": "zujxtmx",
-        "value": "return `${_graph.id}-selector`",
-        "ref": "script"
-      },
-      {
-        "id": "prhtthx",
-        "value": "return `${_graph.id}-selector`",
-        "ref": "script"
-      },
-      {
-        "id": "ddgxhvl",
-        "value": "return _graph?.value",
-        "ref": "script"
-      },
-      {
-        "id": "main/out",
-        "name": "threejs",
-        "ref": "return"
-      }
-    ],
-    "edges": [
-      {
-        "from": "args",
-        "to": "main/out",
-        "as": "args"
-      },
-      {
-        "from": "5a6pljw",
-        "to": "main/out",
-        "as": "display"
-      },
-      {
-        "from": "imr2dvi",
-        "to": "main/out",
-        "as": "return"
-      },
-      {
-        "from": "ueijpjz",
-        "to": "k3ktuq6",
-        "as": "value"
-      },
-      {
-        "from": "k3ktuq6",
-        "to": "args",
-        "as": "hydra"
-      },
-      {
-        "from": "n77uupb",
-        "to": "m6n51hz",
-        "as": "value"
-      },
-      {
-        "from": "m6n51hz",
-        "to": "args",
-        "as": "THREE"
-      },
-      {
-        "from": "7iawyvs",
-        "to": "bvs9qz1",
-        "as": "children"
-      },
-      {
-        "from": "vnl7z87",
-        "to": "7iawyvs",
-        "as": "array"
-      },
-      {
-        "from": "xmreb7u",
-        "to": "vnl7z87",
-        "as": "res"
-      },
-      {
-        "from": "j89dbbh",
-        "to": "7iawyvs",
-        "as": "fn"
-      },
-      {
-        "from": "3x804e3",
-        "to": "j89dbbh",
-        "as": "fn"
-      },
-      {
-        "from": "sfivh4x",
-        "to": "3x804e3",
-        "as": "props"
-      },
-      {
-        "from": "bg17wom",
-        "to": "sfivh4x",
-        "as": "value"
-      },
-      {
-        "from": "zxz1gis",
-        "to": "3x804e3",
-        "as": "children"
-      },
-      {
-        "from": "b4scd6w",
-        "to": "zxz1gis",
-        "as": "text"
-      },
-      {
-        "from": "7ed3f7y",
-        "to": "j0zzhc1",
-        "as": "target"
-      },
-      {
-        "from": "v171kxm",
-        "to": "j0zzhc1",
-        "as": "value"
-      },
-      {
-        "from": "1xbcyyf",
-        "to": "args",
-        "as": "target"
-      },
-      {
-        "from": "ke2gd7r",
-        "to": "imr2dvi",
-        "as": "value"
-      },
-      {
-        "from": "j0zzhc1",
-        "to": "ke2gd7r",
-        "as": "true"
-      },
-      {
-        "from": "mf6qadh",
-        "to": "ke2gd7r",
-        "as": "false"
-      },
-      {
-        "from": "t3ve35s",
-        "to": "args",
-        "as": "value"
-      },
-      {
-        "from": "7fvvlnw",
-        "to": "ke2gd7r",
-        "as": "pred"
-      },
-      {
-        "from": "ddgxhvl",
-        "to": "7fvvlnw",
-        "as": "value"
-      },
-      {
-        "from": "bnyrd44",
-        "to": "j0zzhc1",
-        "as": "path"
-      },
-      {
-        "from": "nzg5arg",
-        "to": "bnyrd44",
-        "as": "value"
-      },
-      {
-        "from": "94txz4w",
-        "to": "bnyrd44",
-        "as": "otherwise"
-      },
-      {
-        "from": "v965sw7",
-        "to": "5a6pljw",
-        "as": "children"
-      },
-      {
-        "from": "bvs9qz1",
-        "to": "v965sw7",
-        "as": "arg0"
-      },
-      {
-        "from": "am447fy",
-        "to": "v965sw7",
-        "as": "arg1"
-      },
-      {
-        "from": "5zclxv2",
-        "to": "am447fy",
-        "as": "props"
-      },
-      {
-        "from": "6s9b6g0",
-        "to": "5zclxv2",
-        "as": "value"
-      },
-      {
-        "from": "35nk2ya",
-        "to": "or9k7xt",
-        "as": "fn"
-      },
-      {
-        "from": "or9k7xt",
-        "to": "5zclxv2",
-        "as": "onchange"
-      },
-      {
-        "from": "fzeowyv",
-        "to": "35nk2ya",
-        "as": "property"
-      },
-      {
-        "from": "exsgmpn",
-        "to": "bvs9qz1",
-        "as": "props"
-      },
-      {
-        "from": "zujxtmx",
-        "to": "exsgmpn",
-        "as": "id"
-      },
-      {
-        "from": "prhtthx",
-        "to": "5zclxv2",
-        "as": "list"
-      }
-    ],
-  },
   {
     "id": "call_method",
+    "description": "Calls the method corresponding to this node's value of `self`. It can be '.' separated path. If `self` is not set, the node's context will be used.",
     "out": "main/out",
     "nodes": [
       {
@@ -2387,6 +1979,7 @@
 ,
   {
       "id": "import",
+      "description": "Imports the node or nodes from the provided json file",
       "out": "main/out",
       "nodes": [
         {
@@ -2587,6 +2180,7 @@
     },
 {
     "id": "import_nodes",
+    "description": "Imports the passed in `nodes`",
     "name": "import_nodes",
     "nodes": [
       {
@@ -2704,6 +2298,7 @@
     "out": "v10aosf"
   },{
     "id": "offscreen-canvas",
+    "description": "Creates an offscreen canvas for rendering WebGL content. Multiple canvases can be created to allow switching content on a canvas behind the node editor or the info popup canvas.",
     "name": "offscreen-canvas",
     "nodes": [
       {
@@ -2839,6 +2434,7 @@
   },
 {
     "id": "deleteref",
+    "description": "Deletes the graph with the name provided in the text field.",
     "nodes": [
       {
         "id": "args"
@@ -3028,6 +2624,7 @@
   },
   {
     "id": "changed",
+    "description": "Returns true if `value` has changed",
     "name": "changed",
     "nodes": [
       {
@@ -3182,6 +2779,7 @@
   },
 {
     "id": "webgl",
+    "description": "Creates a webgl program with vertex shader `vtx`, fragment shader `frg`, in gl context `gl`.",
     "nodes": [
       {
         "id": "j219svq"
@@ -3585,6 +3183,7 @@
     "out": "main/out"
   }, {
     "id": "load_shader",
+    "description": "Loads the `source` shader program in webgl context `gl`",
     "name": "load_shader",
     "nodes": [
       {
@@ -3648,6 +3247,7 @@
   },
   {
     "id": "subscribe_many",
+    "description": "Modifies the `base` subscribe object to include a single `runnable` that receives events from all `events`.",
     "name": "subscribe_many",
     "nodes": [
       {
@@ -3957,6 +3557,7 @@
   },
 {
     "id": "slider",
+    "description": "A basic HTML input range slider labelled `label` (or this node's value). `step`, `min`, and `max` are optional.",
     "nodes": [
       {
         "id": "j219svq"
