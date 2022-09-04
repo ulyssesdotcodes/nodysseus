@@ -466,7 +466,7 @@ const node_extern = (node, node_ref, node_id, data, full_lib, graph, graph_input
             acc[0].push(full_lib);
             return [acc[0], acc[1]]
         } else if (arg == '_graph_input_value') {
-            acc[0].push(graph_input_value);
+            acc[0].push(mockcombined(data, graph_input_value));
             return [acc[0], acc[1]]
         }
         const value = extern.resolve === false ? data[arg] : resolve(data[arg]);
@@ -829,7 +829,10 @@ const nolib = {
                     : o.hasOwnProperty(k[0]) 
                     ? {...o, [k[0]]: check(o[k[0]], v, k.slice(1)), _needsresolve: true} 
                     : o; 
-                return check(target, value, keys)
+                return value !== undefined && (ispromise(value) || ispromise(target) 
+                    ? Promise.all([Promise.resolve(value), Promise.resolve(target)]).then(vt => vt[1] !== undefined && check(vt[1], vt[0], keys)) 
+                    : check(target, value, keys))
+                // return check(target, value, keys)
             },
         },
         set_mutable: {
@@ -1288,6 +1291,10 @@ const nolib = {
             args: ['_node', 'url', 'params'],
             fn: (node, url, params) => resfetch(url || node.value, params)
         },
+        import_module: {
+            args: ['url', '_node'],
+            fn: (url, node) => import(url || node.value)
+        },
         call: {
             resolve: true,
             args: ['_node', 'self', 'fn', 'args', '_graph_input_value'],
@@ -1298,7 +1305,7 @@ const nolib = {
                             .reverse()
                             .reduce((acc, v) => [
                                 !acc[0] && v !== undefined, acc[0] || v !== undefined 
-                                ? acc[1].concat([v]) 
+                                ? acc[1].concat([v._Proxy ? v._value : v]) 
                                 : acc[1]
                             ], [false, []])[1]
                             .reverse()))
@@ -1310,7 +1317,7 @@ const nolib = {
                             .reverse()
                             .reduce((acc, v) => [
                                 !acc[0] && v !== undefined, acc[0] || v !== undefined 
-                                ? acc[1].concat([v]) 
+                                ? acc[1].concat([v._Proxy ? v._value : v]) 
                                 : acc[1]
                             ], [false, []])[1]
                             .reverse()

@@ -465,7 +465,7 @@
           {"id": "recache", "ref": "arg", "value": "recache"},
           {"id": "recache_check", "ref": "script", "value": "return recache !== false && recache !== undefined && (typeof recache !== 'object' || Object.keys(recache).length > 0)"},
           {"id": "cached", "ref": "arg", "value": "cached", "type": "internal"},
-          {"id": "cache", "script": "Promise.resolve(value).then(value => { if(value !== undefined){ _lib.no.runtime.update_args(_graph, {cached: _lib.no.resolve(value)});} }); return value;"},
+          {"id": "cache", "ref": "set_arg", "value": "cached", "_script": "Promise.resolve(value).then(value => { if(value !== undefined){ _lib.no.runtime.update_args(_graph, {cached: _lib.no.resolve(value)});} }); return value;"},
           {"id": "cached_value", "ref": "default"},
           {"id": "out", "ref": "if"}
         ],
@@ -493,7 +493,7 @@
           {"id": "fn_runnable", "ref": "default"},
           {"id": "eq_fn_runnable", "script": "return {...fn, args: {...(fn.args ?? {}), a, b}}"},
           {"id": "eq_fn", "ref": "run"},
-          {"id": "cache", "script": "_lib.no.runtime.update_graph(_graph, {cached: value}); return eq;"},
+          {"id": "cache", "ref": "set_arg", "value": "cached", "_script": "_lib.no.runtime.update_graph(_graph, {cached: value}); return eq;"},
           {"id": "out", "ref": "if"}
         ],
         "edges": [
@@ -650,7 +650,7 @@
         { "id": "4d8qcss", "ref": "html_text" },
         { "id": "rpys4rr", "value": "value", "ref": "arg" },
         { "id": "1znvqbi", "value": "result", "ref": "arg", "type": "internal" },
-        { "id": "qwz3ftj", "ref": "script", "value": "return typeof object !== 'object' || Array.isArray(object) || Object.getPrototypeOf(object) === Object.prototype ? JSON.stringify(object) : Object.getPrototypeOf(object).constructor.name" },
+        { "id": "qwz3ftj", "ref": "script", "value": "return typeof object !== 'object' || Array.isArray(object) || Object.getPrototypeOf(object) === Object.prototype ? JSON.stringify(object) : Object.getPrototypeOf(object) ? Object.getPrototypeOf(object).constructor.name : `${object}`" },
         { "id": "5a6pljw", "value": "pre", "ref": "html_element" },
         { "id": "17pcf8z", "value": "2" },
       ],
@@ -1977,6 +1977,7 @@
       }
     ]}
 ,
+  { "id": "import_module", "description": "Dynamically import an es6 module", "extern": "utility.import_module"},
   {
       "id": "import",
       "description": "Imports the node or nodes from the provided json file",
