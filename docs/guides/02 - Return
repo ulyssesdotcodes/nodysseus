@@ -1,0 +1,48 @@
+# Return
+
+The `return` node is the building block of everything in Nodysseus. They are the square nodes. It is roughly equivalent to a function in most programming languages. It's purpose is to receive inputs and return an output. Like a normal function, its inputs are named arguments, and it's output is the value along the `return` edge. It has some additional features that a normal function does not have. It can output a `display` and an `argslist` which are used to populate the info popup of the return and nodes referencing the return's graph. `publish` and `subscribe` are used for sending and handling events between different `return` and `event_subscriber` nodes across the application.
+
+Graphs are required to have a `return` node as the last node in the graph, but `return` can also be used elsewhere for publishing and subscribing to events, or for using a node's output as input for multiple nodes
+
+## Input edges
+
+### `return` edge (output)
+
+The `return` input to a `return` node is the value that will be passed along the output edge of the return. When it is the last node in a graph, any nodes referencing that graph will also pass on the `return` value along their output edge.
+
+### `args` edge (inputs)
+
+In the graph above any `return` node there are triangular nodes labeled `arg` with a node value. These `arg` nodes, or inputs to the graph, are like named parameters for a function - they can have any value stored in them, and can be placed anywhere in the graph to access a graph's arguments. The `arg` node's value corresponds to the named argument to access.
+
+A `return` node's arguments are set in a few different ways, but the primary one is using the `args` input edge. The object passed along the `args` node becomes the named arguments, where the name is the object's key, and the value is the object's value at the specified key. In practical terms, this means that when the input `args` node has no value or ref, any edge becomes an argument with the same name as the edge.
+
+### `argslist` edge
+
+By default, without an `argslist`, the UI will find all `arg` nodes and show their values in the node info window as named arguments. `argslist` is a helper input to indicate to the UI which named inputs are expected and will take precedence over parsing the `arg` nodes.
+
+### `display` edge
+
+When the `return` node is the output node of a graph, the `display` input is shown in the bottom right. Any nodes referencing the graph will show the `display` output in the node info popup. Elsewhere in the graph, the `display` output shows in the node info of the `return` node.
+
+### `publish` edge
+
+The `publish` edge publishes app-wide events. It should be an object with the event names as keys, and the event data as values. In practical terms, this means that it should be an object node with named inputs corresponding to events.
+
+Any `return` node anywhere in the graph can publish events this way.
+
+### `subscribe` edge
+
+
+
+
+## Usage cases
+
+### Multiple outputs
+
+A node can only have one output.
+
+However, in the same way that a function's arguments can be used multiple times in the function, an argument to a return node can be used in any of the ancestors of that node (other than on the `args` edge). Any time a node's output needs to go to multiple nodes, use a return node.
+
+This restriction is in place because with multiple outputs, a node graph can get very messy. In graph theory terms it goes from a tree (specifically an in-tree) to a more generic directed acyclic graph. There are many directed acyclic graphs which cannot be drawn without edges crossing, and even figuring out the fewest number of crossings is a very difficult problem. In contrast, a tree is very easy to draw, even though Nodysseus gets it wrong sometimes because it's trying to optimize for space.
+
+A single output is also more of a "functional programing" paradigm - a function has one output and multiple inputs.

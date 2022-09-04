@@ -1,4 +1,5 @@
 # Tour of Nodysseus
+
 1. Overall interface
 	1. Center - node graph
 	   Shows the open graph. Programming happens here. E.g. this is showing the `tutorial` graph
@@ -8,6 +9,7 @@
 	   Find: searches the open graph for text
 	4. Popup - node info
 	   Change the node properties and interact with custom controls.
+
 2. Node graph
    The currently open graph
 	1. Output node - the last node of the graph. Controls things that a "file" menu would do in most applications such as opening a graph, renaming the current graph, and saving.
@@ -17,9 +19,10 @@
 		1. First line - value or name (if set) of the node e.g. "Hello, world!"
 		2. Second line - node reference e.g. `html_text` 
 	3. Edges
-	   Connects two nodes. The input node's output will be passed as a named argument to the output node with the name of the edge label
-		1. Name - the name to use when calling the output node's function e.g. `display`
-		2. (+) icon - inserts a node into the specified edge preserving the edge nam
+	   Connects two nodes. The input node's output will be passed as a named argument to the output node with the name of the edge label. An edge's input node is called the "parent" of the edge's output node. Likewise, an output node is the "child" of the edge's input node. A node can have many parents (inputs) but only one child (output). All of the nodes above a node (a node's parents and their parents, etc) are the node's ancestors.
+		1. Name - the name to use when calling the output node's function e.g. `display`. 
+		2. (+) icon - inserts a node into the specified edge preserving the edge name
+
 3. Node info
    A dialog to change the currently selected node's attributes
 	1. Argument list - shows the valid input arguments along with `arg[x]`. `arg[x]` is used in some graph references, but can generally be ignored. Clicking on one will create a new node if that one doesn't exist, or go to that node if it does.
@@ -32,7 +35,7 @@
 	6. Custom `display` - the display of the `ref` graph. E.g. the `slider` graph has a label and `<input type="range" />` element 
 	7. Actions
 	   Things you can do to the node
-		1. `collapse` - collapses the node and it's ancestors (nodes above the node) into a single node-graph. The node-graph will keep the name.
+		1. `collapse` - collapses the node and it's ancestors into a single node-graph. The node-graph will keep the name.
 		2. `copy` - copies the node and ancestors as a node-graph
 		3. `paste` (if there's a copied node) - pastes the copied node-graph preserving the output edge
 		4. `delete` - deletes the node
