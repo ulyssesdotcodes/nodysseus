@@ -777,9 +777,13 @@ const node_el = ({html_id, selected, error, selected_distance, node}) =>ha.h('sv
     }
 }, [
    ha.h(
-        node.value !== undefined && !(node.ref && node.ref !== "arg") ? 'polygon' : 'circle', 
+        node.value !== undefined && !(node.ref && node.ref !== "arg") ? 'polygon' 
+        : node.ref === 'return' ? 'rect'
+        : 'circle', 
         node.value !== undefined && !(node.ref && node.ref !== "arg") 
             ? {class: {shape: true, value: true, error}, points: `4,${4 + radius} ${4 + radius},${4 + radius} ${4 + radius * 0.5},4`} 
+            : node.ref === 'return'
+            ? {class:{shape: true, ref: true, error}, width: radius, height: radius, x: 10, y: 10}
             : {class: {shape: true, none: true, error}, r: radius * 0.5 , cx: radius * 0.5 + 8, cy: radius * 0.5 + 8}
     ),
     ha.memo(node_text_el, {
