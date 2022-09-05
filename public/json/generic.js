@@ -590,6 +590,7 @@
         {"from": "value", "to": "set_val", "as": "value"},
         {"from": "args", "to": "env", "as": "args"},
         {"from": "env", "to": "set_val", "as": "target"},
+        {"from": "update_args", "to": "on_false", "as": "value"},
         {"from": "on_false", "to": "out", "as": "false"},
         {"from": "on_true", "to": "out", "as": "true"},
         {"from": "env", "to": "update_args", "as": "env"},

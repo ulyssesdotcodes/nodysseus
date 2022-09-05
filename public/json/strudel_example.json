@@ -152,11 +152,6 @@
         "ref": "arg"
       },
       {
-        "id": "etpii7i",
-        "value": "return !!strudel",
-        "ref": "script"
-      },
-      {
         "id": "qhscdnr",
         "name": "playpause button",
         "out": "qhscdnr",
@@ -374,8 +369,35 @@
       },
       {
         "id": "main/out",
-        "name": "export",
+        "name": "strudel_example",
         "ref": "return"
+      },
+      {
+        "id": "oh3oauu",
+        "ref": "cache"
+      },
+      {
+        "id": "odtosaq",
+        "value": "@strudel/playpause",
+        "ref": "event_subscriber"
+      },
+      {
+        "id": "zt5wau8",
+        "value": "@strudel/playpause",
+        "ref": "event_subscriber"
+      },
+      {
+        "id": "etpii7i",
+        "value": "return !!strudel && playpause",
+        "ref": "script"
+      },
+      {
+        "id": "p9h2al3",
+        "ref": "default"
+      },
+      {
+        "id": "72acruu",
+        "value": "false"
       }
     ],
     "edges": [
@@ -535,29 +557,9 @@
         "as": "key"
       },
       {
-        "from": "p8v5ed5",
-        "to": "20xxc46",
-        "as": "recache"
-      },
-      {
         "from": "1v1vc83",
         "to": "e1pxir9/z6r7djw",
         "as": "stone"
-      },
-      {
-        "from": "20xxc46",
-        "to": "tzgzm7u",
-        "as": "pattern"
-      },
-      {
-        "from": "rj34djg",
-        "to": "20xxc46",
-        "as": "value"
-      },
-      {
-        "from": "8yu1oi6",
-        "to": "rj34djg",
-        "as": "true"
       },
       {
         "from": "etpii7i",
@@ -658,7 +660,52 @@
         "from": "tzgzm7u",
         "to": "ofaojn2",
         "as": "true"
+      },
+      {
+        "from": "20xxc46",
+        "to": "tzgzm7u",
+        "as": "pattern"
+      },
+      {
+        "from": "rj34djg",
+        "to": "20xxc46",
+        "as": "value"
+      },
+      {
+        "from": "p8v5ed5",
+        "to": "20xxc46",
+        "as": "recache"
+      },
+      {
+        "from": "oh3oauu",
+        "to": "etpii7i",
+        "as": "playpause"
+      },
+      {
+        "from": "zt5wau8",
+        "to": "oh3oauu",
+        "as": "recache"
+      },
+      {
+        "from": "p9h2al3",
+        "to": "oh3oauu",
+        "as": "value"
+      },
+      {
+        "from": "odtosaq",
+        "to": "p9h2al3",
+        "as": "value"
+      },
+      {
+        "from": "72acruu",
+        "to": "p9h2al3",
+        "as": "otherwise"
+      },
+      {
+        "from": "8yu1oi6",
+        "to": "rj34djg",
+        "as": "true"
       }
     ],
     "out": "main/out"
-  }
+}
