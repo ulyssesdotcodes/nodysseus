@@ -567,15 +567,16 @@
           {"id": "value", "ref": "arg", "value": "value"},
           {"id": "path", "ref": "arg", "value": "path"},
           {"id": "key", "ref": "arg", "value": "key"},
+          {"id": "graph", "ref": "arg", "value": "graph"},
+          {"id": "args", "ref": "arg", "value": "_args"},
           {"id": "value_path", "ref": "arg", "value": "_graph.value"},
           {"id": "def_path", "ref": "default"},
           {"id": "key_path", "ref": "add"},
           { "id": "key_def", "ref": "default", "value": "" },
-          {"id": "args", "ref": "arg", "value": "_args"},
-          {"id": "env", "ref": "script", "value": "return _lib.no.runtime.get_args(_lib.no.runtime.get_parent(_graph))"},
+          {"id": "env", "ref": "script", "value": "return _lib.no.runtime.get_args(_lib.no.runtime.get_parent(graph ?? _graph))"},
           {"id": "prev_value", "ref": "get"},
-          {"id": "set_val", "ref": "set", "_script": "if(!_lib.utility.compare(env[name]._value, value)){ _lib.no.runtime.update_graph(_lib.no.runtime.get_parent(_graph), {[name]: value});} return value;"},
-          {"id": "update_args", "ref": "script", "value": "_lib.no.runtime.update_args(_lib.no.runtime.get_parent(_graph), success); return success;"},
+          {"id": "set_val", "ref": "set"},
+          {"id": "update_args", "ref": "script", "value": "_lib.no.runtime.update_args(_lib.no.runtime.get_parent(graph ?? _graph), success); return success !== undefined;"},
           {"id": "on_false", "script": "return value;"},
           {"id": "on_true", "ref": "arg", "value": "value"},
           {"id": "out", "ref": "if"}
@@ -584,11 +585,14 @@
         {"from": "value_path", "to": "def_path", "as": "value"},
         {"from": "path", "to": "def_path", "as": "otherwise"},
         {"from": "def_path", "to": "key_path", "as": "a1"},
+        {"from": "def_path", "to": "update_args", "as": "path"},
         {"from": "key", "to": "key_def", "as": "value"},
         {"from": "key_def", "to": "key_path", "as": "a2"},
         {"from": "key_path", "to": "set_val", "as": "path"},
         {"from": "value", "to": "set_val", "as": "value"},
         {"from": "args", "to": "env", "as": "args"},
+        {"from": "graph", "to": "env", "as": "graph"},
+        {"from": "graph", "to": "update_args", "as": "graph"},
         {"from": "env", "to": "set_val", "as": "target"},
         {"from": "update_args", "to": "on_false", "as": "value"},
         {"from": "on_false", "to": "out", "as": "false"},
@@ -596,6 +600,30 @@
         {"from": "env", "to": "update_args", "as": "env"},
         {"from": "set_val", "to": "update_args", "as": "success"},
         {"from": "update_args", "to": "out", "as": "pred"}
+      ]
+    },
+    {
+      "id": "set_arg_runnable",
+      "description": "See set_arg",
+      "out": "out",
+      "nodes": [
+        {"id": "value", "ref": "arg", "value": "value"},
+        {"id": "key", "ref": "arg", "value": "key"},
+        {"id": "path", "ref": "arg", "value": "path"},
+        {"id": "value_path", "ref": "arg", "value": "_graph.value"},
+        {"id": "graph", "ref": "arg", "value": "_graph"},
+        {"id": "def_path", "ref": "default"},
+        {"id": "set", "ref": "set_arg"},
+        {"id": "out", "ref": "runnable"}
+      ],
+      "edges": [
+        {"from": "value_path", "to": "def_path", "as": "value"},
+        {"from": "path", "to": "def_path", "as": "otherwise"},
+        {"from": "value", "to": "set", "as": "value"},
+        {"from": "def_path", "to": "set", "as": "path"},
+        {"from": "graph", "to": "set", "as": "graph"},
+        {"from": "key", "to": "set", "as": "key"},
+        {"from": "set", "to": "out", "as": "fn"}
       ]
     },
     {
