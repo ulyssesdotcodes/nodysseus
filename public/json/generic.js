@@ -353,7 +353,7 @@
           { "id": "delete_fn", "ref": "delete" },
           { "id": "delete_args", "ref": "delete" },
           { "id": "delete_graph", "ref": "delete" },
-          { "id": "args", "ref": "merge_objects" },
+          { "id": "args", "ref": "set", "value": "__args" },
           { "id": "graph", "ref": "arg", "value": "graph"},
           {
             "id": "out",
@@ -367,8 +367,8 @@
           { "from": "args_path", "to": "delete_args", "as": "path" },
           { "from": "delete_args", "to": "delete_graph", "as": "target" },
           { "from": "graph_path", "to": "delete_graph", "as": "path" },
-          { "from": "delete_graph", "to": "args", "as": "o0" },
-          { "from": "value_args", "to": "args", "as": "o2" },
+          { "from": "delete_graph", "to": "args", "as": "value" },
+          { "from": "value_args", "to": "args", "as": "target" },
           { "from": "graph", "to": "out", "as": "graph" },
           { "from": "args", "to": "out", "as": "args", "type": "resolve" },
           { "from": "fn", "to": "out", "as": "fn", "type": "ref" }
@@ -443,18 +443,7 @@
       {
         "id": "delete",
         "description": "Deletes `target` property at `path`",
-        "out": "out",
-        "nodes": [
-          { "id": "in" },
-          { "id": "target", "ref": "arg", "value": "target" },
-          { "id": "path", "ref": "arg", "value": "path" },
-          { "id": "out", "script": "const new_val = Object.assign({}, target); delete new_val[path]; return new_val" }
-        ],
-        "edges": [
-          { "from": "in", "to": "out", "as": "args" },
-          { "from": "target", "to": "out", "as": "target" },
-          { "from": "path", "to": "out", "as": "path" }
-        ]
+        "extern": "utility.delete"
       },
       {
         "id": "cache",
@@ -576,7 +565,7 @@
           {"id": "env", "ref": "script", "value": "return _lib.no.runtime.get_args(_lib.no.runtime.get_parent(graph ?? _graph))"},
           {"id": "prev_value", "ref": "get"},
           {"id": "set_val", "ref": "set"},
-          {"id": "update_args", "ref": "script", "value": "_lib.no.runtime.update_args(_lib.no.runtime.get_parent(graph ?? _graph), success); return success !== undefined;"},
+          {"id": "update_args", "ref": "script", "value": "_lib.no.runtime.update_args(_lib.no.runtime.get_parent(graph ?? _graph), success); return success;"},
           {"id": "on_false", "script": "return value;"},
           {"id": "on_true", "ref": "arg", "value": "value"},
           {"id": "out", "ref": "if"}
@@ -612,6 +601,7 @@
         {"id": "path", "ref": "arg", "value": "path"},
         {"id": "value_path", "ref": "arg", "value": "_graph.value"},
         {"id": "graph", "ref": "arg", "value": "_graph"},
+        {"id": "runnable_args"},
         {"id": "def_path", "ref": "default"},
         {"id": "set", "ref": "set_arg"},
         {"id": "out", "ref": "runnable"}
@@ -619,10 +609,11 @@
       "edges": [
         {"from": "value_path", "to": "def_path", "as": "value"},
         {"from": "path", "to": "def_path", "as": "otherwise"},
-        {"from": "value", "to": "set", "as": "value"},
-        {"from": "def_path", "to": "set", "as": "path"},
-        {"from": "graph", "to": "set", "as": "graph"},
+        {"from": "value", "to": "runnable_args", "as": "value"},
+        {"from": "def_path", "to": "runnable_args", "as": "path"},
         {"from": "key", "to": "set", "as": "key"},
+        {"from": "graph", "to": "runnable_args", "as": "graph"},
+        {"from": "runnable_args", "to": "out", "as": "args"},
         {"from": "set", "to": "out", "as": "fn"}
       ]
     },
@@ -635,7 +626,7 @@
         { "id": "arg_name", "ref": "arg", "value": "name" },
         {"id": "graph_value", "ref": "arg", "value": "_graph.value"},
         {"id": "name", "ref": "default"},
-        { "id": "update", "extern": "no.runtime.publish" }
+        { "id": "update", "script": "return _lib.no.runtime.publish(event, data)" }
       ],
       "edges": [
         {"from": "arg_name", "to": "name", "as": "value"},
@@ -881,14 +872,15 @@
         { "name": "in", "id": "in" },
         { "id": "runnables_promise", "script": "return Promise.all(promises);" },
         { "id": "map_runnables", "ref": "map" },
+        {"id": "edge_in_runnables", "ref": "edge_in_argx"},
         {
           "id": "runnables",
-          "script": "const runnables = _lib.no.runtime.get_edges_in(_lib.no.runtime.get_parent(_graph), _graph.node_id).filter(e => e.as !== 'args').map(e => args[e.as]).filter(r => r && (!r._Proxy || r._value) ).map(r => r._Proxy ? r._value : r).filter(r => r.hasOwnProperty('fn') && r.hasOwnProperty('graph')); return runnables.map(r => ({...r, args: {...r.args, ...(fn_args ?? {})}}))"
+          "script": "const runnables = argxrunnables.filter(r => r && (!r._Proxy || r._value) ).map(r => r._Proxy ? r._value : r).filter(r => r.hasOwnProperty('fn') && r.hasOwnProperty('graph')); return runnables.map(r => ({...r, args: {...r.args, __args: (fn_args ?? {})}}))",
         },
         { "id": "element", "ref": "arg", "value": "element", "type": "internal" },
         {
           "id": "map_fn",
-          "script": "return new Promise((resolve, reject) => resolve(_lib.no.runGraph(runnable.graph, runnable.fn, runnable.args, _lib)));"
+          "script": "return _lib.no.runGraph(runnable.graph, runnable.fn, runnable.args, _lib);"
         },
         { "id": "map_fn_runnable", "ref": "runnable" },
         { "id": "out", "ref": "runnable", "name": "seq_runnable" }
@@ -902,13 +894,15 @@
         { "from": "runnables", "to": "map_runnables", "as": "array" },
         { "from": "map_fn_runnable", "to": "map_runnables", "as": "fn" },
         { "from": "map_runnables", "to": "runnables_promise", "as": "promises" },
-        { "from": "runnables_promise", "to": "out", "as": "fn" },
+        { "from": "map_runnables", "to": "out", "as": "fn" },
         { "from": "context_args", "to": "merged_args", "as": "a0" },
         { "from": "value_args", "to": "merged_args", "as": "a1" },
         { "from": "merged_args", "to": "seq_runnable_args", "as": "target" },
         { "from": "args_path", "to": "seq_runnable_args", "as": "path" },
+        { "from": "edge_in_runnables", "to": "runnables", "as": "argxrunnables" },
         { "from": "seq_runnable_args", "to": "runnables", "as": "fn_args" },
-        { "from": "seq_runnable_args", "to": "out", "as": "args" }
+        { "from": "seq_runnable_args", "to": "_out", "as": "args" },
+        { "from": "value_args", "to": "_out", "as": "args" }
       ]
     },
     {
@@ -1298,7 +1292,7 @@
         { "from": "s5x2r1f", "to": "a0jb5es", "as": "value" }
       ]
     },
-    { "id": "not", "args": ["target"], "script": "return !target" },
+    { "id": "not", "script": "return !target" },
     {"id":"walk_graph","nodes":[{"id":"args"},{"id":"cfuymky","value":"testx"},{"id":"5a6pljw","ref":"html_element"},{"id":"main/out","name":"walk_graph","ref":"return"},{"id":"5xlxejq","ref":"html_text"},{"id":"8qkc61x","ref":"runnable"},{"id":"dv0p0id","value":"walker","ref":"log"},{"id":"dqs1arj","value":"graph","name":"","ref":"arg"},{"id":"pe7geox","value":"return _lib.no.runtime.get_edges_in(graph.graph, graph.node)","ref":"script"},{"id":"glnadhk","value":"return {node: _node.id, graph: _graph.id}","ref":"script"},{"id":"yophjcb","ref":"map"},{"id":"r3nrc31","ref":"runnable"},{"id":"nhqynsn","value":"element.from","ref":"arg"},{"id":"y4eppvf","value":"graph.graph","ref":"arg"},{"id":"lxjljmp","value":"node","ref":"arg"},{"id":"fo2ul3t","value":"fn","ref":"arg"},{"id":"x2ieyic","ref":"walk_graph"},{"id":"8kp4fri","value":"testz"},{"id":"b8n58i0","value":"testa"},{"id":"ik55pc7","value":"texty"},{"id":"1ecvy51","value":"return {node: _lib.no.runtime.get_node(graph, edge_from), graph}","ref":"script"},{"id":"27950jh"},{"id":"deh12wg","value":"edge","ref":"arg"},{"id":"sfwk3w6","value":"edge","ref":"log"},{"id":"uw2yljj","value":"node","ref":"log"},{"id":"dc70b7u","value":"element","ref":"arg"},{"id":"fhqwbjg","value":"_lib.no.runGraph(fn.graph, fn.fn, {node: node.node, edge}); return {graph: node.graph, node: node.node.id};","ref":"script"}],"edges":[{"from":"args","to":"main/out","as":"args"},{"from":"5a6pljw","to":"main/out","as":"display"},{"from":"cfuymky","to":"glnadhk","as":"arg0"},{"from":"8kp4fri","to":"glnadhk","as":"arg1"},{"from":"ik55pc7","to":"8kp4fri","as":"arg0"},{"from":"5xlxejq","to":"5a6pljw","as":"children"},{"from":"8qkc61x","to":"args","as":"fn"},{"from":"dv0p0id","to":"8qkc61x","as":"fn"},{"from":"glnadhk","to":"args","as":"graph"},{"from":"dqs1arj","to":"pe7geox","as":"graph"},{"from":"pe7geox","to":"yophjcb","as":"array"},{"from":"r3nrc31","to":"yophjcb","as":"fn"},{"from":"nhqynsn","to":"1ecvy51","as":"edge_from"},{"from":"y4eppvf","to":"1ecvy51","as":"graph"},{"from":"fo2ul3t","to":"fhqwbjg","as":"fn"},{"from":"1ecvy51","to":"fhqwbjg","as":"node"},{"from":"x2ieyic","to":"r3nrc31","as":"fn"},{"from":"fhqwbjg","to":"x2ieyic","as":"graph"},{"from":"yophjcb","to":"main/out","as":"return"},{"from":"27950jh","to":"dv0p0id","as":"value"},{"from":"sfwk3w6","to":"27950jh","as":"arg1"},{"from":"deh12wg","to":"sfwk3w6","as":"value"},{"from":"uw2yljj","to":"27950jh","as":"arg0"},{"from":"lxjljmp","to":"uw2yljj","as":"value"},{"from":"dc70b7u","to":"fhqwbjg","as":"edge"},{"from":"b8n58i0","to":"glnadhk","as":"arg22"}],"out":"main/out"},
     {
         "id": "canvas_behind_editor",

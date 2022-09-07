@@ -207,6 +207,8 @@ const createProxy = (run_with_val, input, graphid, graph_input_value) => {
                 res = undefined;
                 resolved = false;
                 return false;
+            } else if (prop === "_graph_input_value") {
+                return graph_input_value;
             }
 
 
@@ -413,10 +415,7 @@ const node_nodes = (node, node_ref, graph_input_value, data, full_lib, graph, in
 
     combined_data_input.result = full_lib.no.runtime.get_result(node_graph);
     full_lib.no.runtime.set_parent(node_graph, graph);
-    // console.log('running')
-    // console.log(node.id);
     return run_with_val_full(node_graph, full_lib, node_ref.out || 'out', combined_data_input)
-    //return full_lib.no.runGraph(node_graph, node_ref.out || 'out', combined_data_input, full_lib);;
 }
 
 const node_script = (node, node_ref, data, full_lib, graph, inputs, graph_input_value) => {
@@ -917,7 +916,9 @@ const nolib = {
 
             const add_listener = (event, listener_id, input_fn, remove, graph_id, prevent_initial_trigger) => {
                 const listeners = getorset(event_listeners, event, () => new Map());
-                const fn = typeof input_fn === "function" ? input_fn : args => nolib.no.runGraph(input_fn.graph, input_fn.fn, Object.assign({}, input_fn.args, args))
+                const fn = typeof input_fn === "function" ? input_fn : args => {
+                    nolib.no.runGraph(input_fn.graph, input_fn.fn, {...args, __args: input_fn.args})
+                }
                 if(!listeners.has(listener_id)) {
                     if(!prevent_initial_trigger) {
                         requestAnimationFrame(() => {
@@ -1344,6 +1345,19 @@ const nolib = {
                 // )
             }
         },
+        delete: {
+            args: ['target', 'path'],
+            resolve: false,
+            fn: (target, path) => {
+                path = resolve(path)
+                while(target && target._Proxy) {
+                    target = target._value
+                }
+                const newval = Object.assign({}, target);
+                delete newval[path]
+                return newval
+            }
+        },
         add: {
             args: ["_node_inputs"],
             resolve: true,
@@ -1370,6 +1384,11 @@ const nolib = {
             args: ["_args"],
             resolve: true,
             fn: (args) => args
+        },
+        unwrap_proxy: {
+            args: ["proxy", "_graph_input_value"],
+            resolve: false,
+            fn: (proxy, _args) => ({fn: proxy._nodeid, graph: proxy._graphid, args: _args})
         },
         modify: {
             args: ['target', 'path', 'fn', '_node', '_lib', '_graph_input_value'],
