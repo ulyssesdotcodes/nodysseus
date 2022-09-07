@@ -408,9 +408,16 @@ svg.edge-info.selected rect {
 
 /* search */
 
-#search {
+#graph-actions {
     position: absolute;
     right: 2em;
     top: 2em;
     cursor: pointer;
+    display: flex;
+    gap: 1em;
+}
+
+#graph-actions ion-icon {
+    width: 1.5em;
+    height: 1.5em;
 }

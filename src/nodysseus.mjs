@@ -876,7 +876,7 @@ const nolib = {
             });
             const event_listeners = new Map();
             const event_listeners_by_graph = new Map();
-            const event_data = new Map();
+            const event_data = new Map(); // TODO: get rid of this
             const getorsetgraph = (graph, id, path, valfn) => getorset(get_cache(graph)[path], id, valfn);
             let animationframe;
             const publish = (event, data) => {
@@ -977,12 +977,21 @@ const nolib = {
             }
 
             const delete_cache = (graph) => {
-                const graphid = typeof graph === 'string' ? graph : graph.id;
-                const nested = parentdb.find({"parent_id": graphid})
-                nested.forEach(v => nodesdb.findAndRemove({"id": v.id}))
-                const doc = nodesdb.by("id", graphid);
-                if(doc){
-                    nodesdb.remove(doc);
+                if(graph) {
+                    const graphid = typeof graph === 'string' ? graph : graph.id;
+                    const nested = parentdb.find({"parent_id": graphid})
+                    nested.forEach(v => nodesdb.findAndRemove({"id": v.id}))
+                    const doc = nodesdb.by("id", graphid);
+                    if(doc){
+                        nodesdb.remove(doc);
+                    }
+                } else {
+                    argsdb.clear()
+                    event_data.clear()
+                    resultsdb.clear()
+                    
+                    // event_listeners.clear()
+                    // event_listeners_by_graph.clear()
                 }
             }
 

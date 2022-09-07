@@ -403,6 +403,21 @@ const listenToEvent = (dispatch, props) => {
     return () => removeEventListener(props.type, listener);
 }
 
+const ap = (fn, v) => fn(v);
+const ap_promise = (p, fn) => p && typeof p['then'] === 'function' ? p.then(fn) : ap(fn, p);
+
+const refresh_graph = (graph, dispatch) => {
+    dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
+    const result = hlib.runGraph(graph, graph.out, {edge: {node_id: graph.id + '/' + graph.out, as: "return"}});
+    const display_fn = result => hlib.runGraph(graph, graph.out, {edge: {node_id: graph.id + '/' + graph.out, as: "display"}, result});
+    const update_result_display_fn = display => result_display_dispatch(UpdateResultDisplay, {el: display && display.el ? display.el : {dom_type: 'div', props: {}, children: []}})
+    const update_info_display_fn = () => dispatch(s => [s, s.selected[0] !== s.display_graph.out 
+        && [() => update_info_display({node_id: s.selected[0], graph_id: s.display_graph_id})]])
+    ap_promise(ap_promise(result, display_fn), update_result_display_fn);
+    ap_promise(result, update_info_display_fn)
+    return result
+}
+
 const result_subscription = (dispatch, {display_graph_id}) => {
     let animrun = false;
     const error_listener = (error) =>
@@ -414,16 +429,8 @@ const result_subscription = (dispatch, {display_graph_id}) => {
         if(graph.id === display_graph_id && !animrun) {
             cancelAnimationFrame(animrun)
             animrun = requestAnimationFrame(() => {
-                dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
-                const result = hlib.runGraph(graph, graph.out, {edge: {node_id: graph.id + '/' + graph.out, as: "return"}});
-                const display_fn = result => hlib.runGraph(graph, graph.out, {edge: {node_id: graph.id + '/' + graph.out, as: "display"}, result});
-                const update_result_display_fn = display => result_display_dispatch(UpdateResultDisplay, {el: display && display.el ? display.el : {dom_type: 'div', props: {}, children: []}})
-                const update_info_display_fn = () => dispatch(s => [s, s.selected[0] !== s.display_graph.out && [() => update_info_display({node_id: s.selected[0], graph_id: s.display_graph_id})]])
+                const result = refresh_graph(graph, dispatch)
                 const reset_animrun = () => animrun = false;
-                const ap = (fn, v) => fn(v);
-                const ap_promise = (p, fn) => p && typeof p['then'] === 'function' ? p.then(fn) : ap(fn, p);
-                ap_promise(ap_promise(result, display_fn), update_result_display_fn);
-                ap_promise(result, update_info_display_fn)
                 ap_promise(result, reset_animrun)
             })
         }
@@ -1014,13 +1021,6 @@ let code_editor;
 
 const init_code_editor = (dispatch, {html_id}) => {
     requestAnimationFrame(() => {
-        // const state = EditorState.create({extensions: [basicSetup, javascript(), EditorView.theme({
-        //     "&": {
-        //         backgroundColor: "#282c34"
-        //     }
-        // }, {dark: true})]});
-        console.log("editor container")
-        console.log(document.getElementById(`${html_id}-code-editor`))
         const background = "#111";
         const highlightBackground = "#000";
         code_editor = new EditorView({extensions: [
@@ -1103,7 +1103,10 @@ const dispatch = (init, _lib) => {
             inputs: s.inputs,
             graph_out: s.display_graph.out
         }),
-        search_el({search: s.search, _lib}),
+        ha.h('div', {id: "graph-actions"}, [
+            search_el({search: s.search, _lib}),
+            ha.h('ion-icon', {name: 'sync-outline', onclick: s => [s, [dispatch => { nolib.no.runtime.delete_cache(); hlib.runGraph(s.display_graph, s.display_graph.out, {edge: {node_id: s.display_graph.id + '/' + s.display_graph.out, as: "return"}}); requestAnimationFrame(() =>  dispatch(s => [s, [() => {s.simulation.alpha(1); s.simulation.nodes([]); }], [UpdateSimulation]])) }]]}, [ha.text('refresh')])
+        ]),
         ha.h('div', {id: `${init.html_id}-result`}),
         s.error && ha.h('div', {id: 'node-editor-error'}, run_h(show_error(s.error, s.error.node_id)))
     ]),
