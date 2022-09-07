@@ -501,304 +501,314 @@
         "ref": "script"
       },
       {
-        "id": "nd0ncl4/nd0ncl4",
-        "name": "info_canvas",
+        "id": "e1pxir9/z6r7djw",
+        "name": "@strudel.setup",
+        "ref": "return"
+      },
+      {
+        "id": "9lz9uxx/9lz9uxx",
         "ref": "runnable"
       },
       {
-        "id": "nd0ncl4/jv95lbm",
+        "id": "9lz9uxx/vu48upk",
+        "ref": "return"
+      },
+      {
+        "id": "9lz9uxx/u0nmc8r"
+      },
+      {
+        "id": "9lz9uxx/byysyra",
+        "value": "",
         "ref": "if"
       },
       {
-        "id": "nd0ncl4/hh2bp4r",
-        "ref": "webgl"
+        "id": "9lz9uxx/ke0mkjh"
       },
       {
-        "id": "nd0ncl4/yphcotc",
-        "value": "offscreen_canvas",
+        "id": "9lz9uxx/nctvav5",
+        "value": "pause",
+        "ref": "call"
+      },
+      {
+        "id": "9lz9uxx/w0ueu95",
+        "ref": "return"
+      },
+      {
+        "id": "9lz9uxx/7ln5i0m",
+        "value": "data",
         "ref": "arg"
       },
       {
-        "id": "nd0ncl4/sdeyicx",
-        "value": "infoctx",
+        "id": "9lz9uxx/t1avhtw",
+        "value": "stone",
         "ref": "arg"
       },
       {
-        "id": "nd0ncl4/5ipa51k",
-        "ref": "cache"
-      },
-      {
-        "id": "nd0ncl4/90azwef",
-        "ref": "cache"
-      },
-      {
-        "id": "nd0ncl4/qjccgh5",
-        "value": "",
-        "ref": "cache"
-      },
-      {
-        "id": "nd0ncl4/fiszoli",
-        "value": "",
-        "ref": "cache"
-      },
-      {
-        "id": "nd0ncl4/xh4mdas",
-        "value": "return `#version 300 es\n\n    precision highp float;\n\n\n\n    out vec2 texCoord;\n\n    void main() {\n      float x = float((gl_VertexID & 1) << 2);\n      float y = float((gl_VertexID & 2) << 1);\n      texCoord.x = x * 0.5;\n      texCoord.y = y * 0.5;\n      gl_Position = vec4(x - 1.0, y - 1.0, 0, 1);\n    }\n  `;",
-        "ref": "script"
-      },
-      {
-        "id": "nd0ncl4/t1x1qdu",
-        "value": "return `#version 300 es\n\n    precision highp float;\n\n    uniform float uData[1024];\n\n    in vec2 texCoord;\n\n    out vec4 fragmentColor;\n\n    float idx_val(int idx) {\n      return float(uData[idx]) * 1. + 0.5;\n    }\n    \n    void main() {\n      vec2 coord = vec2(gl_FragCoord.x/300.0, gl_FragCoord.y/150.0);\n      int idx = int(floor(1024.*coord.x));\n      float data = (idx_val(idx) * 0.5 + idx_val(max(0, idx-1))*0.25 + idx_val(min(1023, idx+1))*0.25);      \n      float val = max(0., 1. - pow(abs(data - coord.y) * 16., 2.));\n      \n      fragmentColor = vec4(val,val,val, 1.0);\n    }\n  `;",
-        "ref": "script"
-      },
-      {
-        "id": "nd0ncl4/jxybg0i",
-        "value": "return {data: analyser.getValue()};",
-        "ref": "script"
-      },
-      {
-        "id": "nd0ncl4/gnlclc3",
-        "value": "return {flag: false};",
-        "ref": "script"
-      },
-      {
-        "id": "nd0ncl4/ldrd4t1"
-      },
-      {
-        "id": "nd0ncl4/t6trkeo",
-        "value": "return ofc.getContext('webgl2')",
-        "ref": "script"
-      },
-      {
-        "id": "nd0ncl4/vx0gmdq",
-        "value": "return ofc.getContext('webgl2')",
-        "ref": "script"
-      },
-      {
-        "id": "nd0ncl4/mivegm0",
-        "value": "result.analyser",
+        "id": "9lz9uxx/kly2qmk",
+        "value": "score",
         "ref": "arg"
       },
       {
-        "id": "nd0ncl4/4m7njvj",
-        "value": "return new Uint8ClampedArray(window.innerHeight * window.innerWidth * 4);",
-        "ref": "script"
-      },
-      {
-        "id": "nd0ncl4/8eug4vb",
-        "value": "offscreen_canvas",
+        "id": "9lz9uxx/mzmuktz",
+        "value": "data",
         "ref": "arg"
       },
       {
-        "id": "nd0ncl4/gn211xh",
-        "value": "offscreen_canvas",
-        "ref": "arg"
+        "id": "9lz9uxx/3shirix",
+        "value": "stone.Tone.getTransport",
+        "ref": "call"
       },
       {
-        "id": "9lz9uxx",
-        "in": "u0nmc8r",
-        "out": "9lz9uxx",
+        "id": "9lz9uxx/y175vs9",
+        "value": "start",
+        "ref": "call"
+      },
+      {
+        "id": "9lz9uxx/315024b"
+      },
+      {
+        "id": "9lz9uxx/a5t90qi",
+        "ref": "array"
+      },
+      {
+        "id": "9lz9uxx/yo4mz5y",
+        "value": "stone.Tone.getTransport",
+        "ref": "call"
+      },
+      {
+        "id": "9lz9uxx/y2js1tj",
+        "ref": "default"
+      },
+      {
+        "id": "9lz9uxx/hvbcb0m",
+        "value": "+0.1"
+      },
+      {
+        "id": "9lz9uxx/13kfbhn",
+        "value": "@strudel/cycle",
+        "ref": "event_subscriber"
+      },
+      {
+        "id": "9lz9uxx/7wk4wqm",
+        "value": "0"
+      },
+      {
+        "id": "nd0ncl4/nd0ncl4",
+        "name": "info_canvas",
+        "out": "nd0ncl4/nd0ncl4",
         "nodes": [
           {
-            "id": "9lz9uxx",
+            "id": "nd0ncl4/nd0ncl4",
+            "name": "info_canvas",
             "ref": "runnable"
           },
           {
-            "id": "vu48upk",
-            "ref": "return"
-          },
-          {
-            "id": "u0nmc8r"
-          },
-          {
-            "id": "byysyra",
-            "value": "",
+            "id": "nd0ncl4/jv95lbm",
             "ref": "if"
           },
           {
-            "id": "ke0mkjh"
-          },
-          {
-            "id": "nctvav5",
-            "value": "pause",
-            "ref": "call"
-          },
-          {
-            "id": "w0ueu95",
-            "ref": "return"
-          },
-          {
-            "id": "7ln5i0m",
-            "value": "data",
+            "id": "nd0ncl4/danpkm0",
+            "value": "playpause",
             "ref": "arg"
           },
           {
-            "id": "t1avhtw",
-            "value": "stone",
+            "id": "nd0ncl4/pu9r8ig",
+            "value": "if(!offscreen || (isrunning.flag && isrunning.flag > performance.now() - 1000)){\n  console.log('skipped ' + isrunning.flag);\n  return false;\n}\n\nisrunning.flag = performance.now();\n\nif(offscreen['transferToImageBitmap']){\n  isrunning.flag = false;\n  const img = offscreen.transferToImageBitmap();\n  infoctx\n    .transferFromImageBitmap(img);\n  return;\n}\n\nconst pixels = offscreenctx.readPixels(\n  0, 0, \n  window.innerWidth, \n  window.innerHeight,\n  offscreenctx.RGBA,\n  offscreenctx.UNSIGNED_BYTE,\n  arr.value\n);\n  \nreturn createImageBitmap(new ImageData( \n  arr.value, \n  window.innerWidth, \n  window.innerHeight))\n  .catch(e => {isrunning.flag = false; throw e; })\n  .then(bm => {\n    isrunning.flag = false; \n  infoctx\n    .transferFromImageBitmap(bm);\n  })",
+            "ref": "script"
+          },
+          {
+            "id": "nd0ncl4/hh2bp4r",
+            "ref": "webgl"
+          },
+          {
+            "id": "nd0ncl4/yphcotc",
+            "value": "offscreen_canvas",
             "ref": "arg"
           },
           {
-            "id": "kly2qmk",
-            "value": "score",
+            "id": "nd0ncl4/sdeyicx",
+            "value": "infoctx",
             "ref": "arg"
           },
           {
-            "id": "mzmuktz",
-            "value": "data",
+            "id": "nd0ncl4/5ipa51k",
+            "ref": "cache"
+          },
+          {
+            "id": "nd0ncl4/90azwef",
+            "ref": "cache"
+          },
+          {
+            "id": "nd0ncl4/qjccgh5",
+            "value": "",
+            "ref": "cache"
+          },
+          {
+            "id": "nd0ncl4/fiszoli",
+            "value": "",
+            "ref": "cache"
+          },
+          {
+            "id": "nd0ncl4/xh4mdas",
+            "value": "return `#version 300 es\n\n    precision highp float;\n\n\n\n    out vec2 texCoord;\n\n    void main() {\n      float x = float((gl_VertexID & 1) << 2);\n      float y = float((gl_VertexID & 2) << 1);\n      texCoord.x = x * 0.5;\n      texCoord.y = y * 0.5;\n      gl_Position = vec4(x - 1.0, y - 1.0, 0, 1);\n    }\n  `;",
+            "ref": "script"
+          },
+          {
+            "id": "nd0ncl4/t1x1qdu",
+            "value": "return `#version 300 es\n\n    precision highp float;\n\n    uniform float uData[1024];\n\n    in vec2 texCoord;\n\n    out vec4 fragmentColor;\n\n    float idx_val(int idx) {\n      return float(uData[idx]) * 1. + 0.5;\n    }\n    \n    void main() {\n      vec2 coord = vec2(gl_FragCoord.x/300.0, gl_FragCoord.y/150.0);\n      int idx = int(floor(1024.*coord.x));\n      float data = (idx_val(idx) * 0.5 + idx_val(max(0, idx-1))*0.25 + idx_val(min(1023, idx+1))*0.25);      \n      float val = max(0., 1. - pow(abs(data - coord.y) * 16., 2.));\n      \n      fragmentColor = vec4(val,val,val, 1.0);\n    }\n  `;",
+            "ref": "script"
+          },
+          {
+            "id": "nd0ncl4/jxybg0i",
+            "value": "return {data: analyser.getValue()};",
+            "ref": "script"
+          },
+          {
+            "id": "nd0ncl4/gnlclc3",
+            "value": "return {flag: false};",
+            "ref": "script"
+          },
+          {
+            "id": "nd0ncl4/ldrd4t1"
+          },
+          {
+            "id": "nd0ncl4/t6trkeo",
+            "value": "return ofc.getContext('webgl2')",
+            "ref": "script"
+          },
+          {
+            "id": "nd0ncl4/vx0gmdq",
+            "value": "return ofc.getContext('webgl2')",
+            "ref": "script"
+          },
+          {
+            "id": "nd0ncl4/mivegm0",
+            "value": "result.analyser",
             "ref": "arg"
           },
           {
-            "id": "3shirix",
-            "value": "stone.Tone.getTransport",
-            "ref": "call"
+            "id": "nd0ncl4/4m7njvj",
+            "value": "return new Uint8ClampedArray(window.innerHeight * window.innerWidth * 4);",
+            "ref": "script"
           },
           {
-            "id": "y175vs9",
-            "value": "start",
-            "ref": "call"
+            "id": "nd0ncl4/8eug4vb",
+            "value": "offscreen_canvas",
+            "ref": "arg"
           },
           {
-            "id": "315024b"
-          },
-          {
-            "id": "a5t90qi",
-            "ref": "array"
-          },
-          {
-            "id": "yo4mz5y",
-            "value": "stone.Tone.getTransport",
-            "ref": "call"
-          },
-          {
-            "id": "y2js1tj",
-            "ref": "default"
-          },
-          {
-            "id": "hvbcb0m",
-            "value": "+0.1"
-          },
-          {
-            "id": "13kfbhn",
-            "value": "@strudel/cycle",
-            "ref": "event_subscriber"
-          },
-          {
-            "id": "7wk4wqm",
-            "value": "0"
+            "id": "nd0ncl4/gn211xh",
+            "value": "offscreen_canvas",
+            "ref": "arg"
           }
         ],
         "edges": [
           {
-            "from": "vu48upk",
-            "to": "9lz9uxx",
+            "from": "nd0ncl4/jv95lbm",
+            "to": "nd0ncl4/nd0ncl4",
             "as": "fn"
           },
           {
-            "from": "u0nmc8r",
-            "to": "9lz9uxx",
-            "as": "args"
-          },
-          {
-            "from": "byysyra",
-            "to": "vu48upk",
-            "as": "return"
-          },
-          {
-            "from": "ke0mkjh",
-            "to": "vu48upk",
-            "as": "args"
-          },
-          {
-            "from": "nctvav5",
-            "to": "byysyra",
-            "as": "false"
-          },
-          {
-            "from": "w0ueu95",
-            "to": "byysyra",
-            "as": "true"
-          },
-          {
-            "from": "7ln5i0m",
-            "to": "byysyra",
+            "from": "nd0ncl4/danpkm0",
+            "to": "nd0ncl4/jv95lbm",
             "as": "pred"
           },
           {
-            "from": "t1avhtw",
-            "to": "ke0mkjh",
-            "as": "stone"
+            "from": "nd0ncl4/pu9r8ig",
+            "to": "nd0ncl4/jv95lbm",
+            "as": "true"
           },
           {
-            "from": "kly2qmk",
-            "to": "ke0mkjh",
-            "as": "score"
+            "from": "nd0ncl4/hh2bp4r",
+            "to": "nd0ncl4/pu9r8ig",
+            "as": "prog"
           },
           {
-            "from": "mzmuktz",
-            "to": "ke0mkjh",
-            "as": "data"
+            "from": "nd0ncl4/yphcotc",
+            "to": "nd0ncl4/pu9r8ig",
+            "as": "offscreen"
           },
           {
-            "from": "3shirix",
-            "to": "nctvav5",
-            "as": "self"
+            "from": "nd0ncl4/sdeyicx",
+            "to": "nd0ncl4/pu9r8ig",
+            "as": "infoctx"
           },
           {
-            "from": "y175vs9",
-            "to": "w0ueu95",
-            "as": "return"
+            "from": "nd0ncl4/5ipa51k",
+            "to": "nd0ncl4/pu9r8ig",
+            "as": "isrunning"
           },
           {
-            "from": "315024b",
-            "to": "w0ueu95",
-            "as": "publish"
+            "from": "nd0ncl4/90azwef",
+            "to": "nd0ncl4/pu9r8ig",
+            "as": "arr"
           },
           {
-            "from": "a5t90qi",
-            "to": "y175vs9",
-            "as": "args"
+            "from": "nd0ncl4/qjccgh5",
+            "to": "nd0ncl4/pu9r8ig",
+            "as": "offscreenctx"
           },
           {
-            "from": "yo4mz5y",
-            "to": "y175vs9",
-            "as": "self"
+            "from": "nd0ncl4/fiszoli",
+            "to": "nd0ncl4/hh2bp4r",
+            "as": "gl"
           },
           {
-            "from": "y2js1tj",
-            "to": "315024b",
-            "as": "@strudel/cycle"
+            "from": "nd0ncl4/xh4mdas",
+            "to": "nd0ncl4/hh2bp4r",
+            "as": "vtx"
           },
           {
-            "from": "hvbcb0m",
-            "to": "a5t90qi",
-            "as": "arg0"
+            "from": "nd0ncl4/t1x1qdu",
+            "to": "nd0ncl4/hh2bp4r",
+            "as": "frg"
           },
           {
-            "from": "13kfbhn",
-            "to": "y2js1tj",
+            "from": "nd0ncl4/jxybg0i",
+            "to": "nd0ncl4/hh2bp4r",
+            "as": "buffer"
+          },
+          {
+            "from": "nd0ncl4/gnlclc3",
+            "to": "nd0ncl4/5ipa51k",
             "as": "value"
           },
           {
-            "from": "7wk4wqm",
-            "to": "y2js1tj",
-            "as": "otherwise"
+            "from": "nd0ncl4/ldrd4t1",
+            "to": "nd0ncl4/90azwef",
+            "as": "value"
+          },
+          {
+            "from": "nd0ncl4/t6trkeo",
+            "to": "nd0ncl4/qjccgh5",
+            "as": "value"
+          },
+          {
+            "from": "nd0ncl4/vx0gmdq",
+            "to": "nd0ncl4/fiszoli",
+            "as": "value"
+          },
+          {
+            "from": "nd0ncl4/mivegm0",
+            "to": "nd0ncl4/jxybg0i",
+            "as": "analyser"
+          },
+          {
+            "from": "nd0ncl4/4m7njvj",
+            "to": "nd0ncl4/ldrd4t1",
+            "as": "value"
+          },
+          {
+            "from": "nd0ncl4/8eug4vb",
+            "to": "nd0ncl4/t6trkeo",
+            "as": "ofc"
+          },
+          {
+            "from": "nd0ncl4/gn211xh",
+            "to": "nd0ncl4/vx0gmdq",
+            "as": "ofc"
           }
         ]
-      },
-      {
-        "id": "nd0ncl4/danpkm0",
-        "value": "@strudel/playpause",
-        "ref": "event_subscriber"
-      },
-      {
-        "id": "nd0ncl4/pu9r8ig",
-        "value": "if(!offscreen || (isrunning.flag && isrunning.flag > performance.now() - 1000)){\n  console.log('skipped ' + isrunning.flag);\n  return false;\n}\n\nisrunning.flag = performance.now();\n\nif(offscreen['transferToImageBitmap']){\n  isrunning.flag = false;\n  const img = offscreen.transferToImageBitmap();\n  infoctx\n    .transferFromImageBitmap(img);\n  return;\n}\n\nconst pixels = offscreenctx.readPixels(\n  0, 0, \n  window.innerWidth, \n  window.innerHeight,\n  offscreenctx.RGBA,\n  offscreenctx.UNSIGNED_BYTE,\n  arr.value\n);\n  \nreturn createImageBitmap(new ImageData( \n  arr.value, \n  window.innerWidth, \n  window.innerHeight))\n  .catch(e => {isrunning.flag = false; throw e; })\n  .then(bm => {\n    isrunning.flag = false; \n  infoctx\n    .transferFromImageBitmap(bm);\n  })",
-        "ref": "script"
-      },
-      {
-        "id": "e1pxir9/z6r7djw",
-        "name": "@strudel.setup",
-        "ref": "return"
       }
     ],
     "edges": [
@@ -859,12 +869,12 @@
       },
       {
         "from": "cydvtyo",
-        "to": "9lz9uxx",
+        "to": "9lz9uxx/u0nmc8r",
         "as": "stone"
       },
       {
         "from": "1vg13x6",
-        "to": "9lz9uxx",
+        "to": "9lz9uxx/u0nmc8r",
         "as": "score"
       },
       {
@@ -933,114 +943,104 @@
         "as": "infoctx"
       },
       {
-        "from": "9lz9uxx",
+        "from": "9lz9uxx/9lz9uxx",
         "to": "0hlqktg",
         "as": "@strudel/playpause"
       },
       {
-        "from": "nd0ncl4/jv95lbm",
-        "to": "nd0ncl4/nd0ncl4",
+        "from": "9lz9uxx/vu48upk",
+        "to": "9lz9uxx/9lz9uxx",
         "as": "fn"
       },
       {
-        "from": "nd0ncl4/danpkm0",
-        "to": "nd0ncl4/jv95lbm",
-        "as": "pred"
+        "from": "9lz9uxx/u0nmc8r",
+        "to": "9lz9uxx/9lz9uxx",
+        "as": "args"
       },
       {
-        "from": "nd0ncl4/pu9r8ig",
-        "to": "nd0ncl4/jv95lbm",
+        "from": "9lz9uxx/byysyra",
+        "to": "9lz9uxx/vu48upk",
+        "as": "return"
+      },
+      {
+        "from": "9lz9uxx/ke0mkjh",
+        "to": "9lz9uxx/vu48upk",
+        "as": "args"
+      },
+      {
+        "from": "9lz9uxx/nctvav5",
+        "to": "9lz9uxx/byysyra",
+        "as": "false"
+      },
+      {
+        "from": "9lz9uxx/w0ueu95",
+        "to": "9lz9uxx/byysyra",
         "as": "true"
       },
       {
-        "from": "nd0ncl4/hh2bp4r",
-        "to": "nd0ncl4/pu9r8ig",
-        "as": "prog"
+        "from": "9lz9uxx/t1avhtw",
+        "to": "9lz9uxx/ke0mkjh",
+        "as": "stone"
       },
       {
-        "from": "nd0ncl4/yphcotc",
-        "to": "nd0ncl4/pu9r8ig",
-        "as": "offscreen"
+        "from": "9lz9uxx/kly2qmk",
+        "to": "9lz9uxx/ke0mkjh",
+        "as": "score"
       },
       {
-        "from": "nd0ncl4/sdeyicx",
-        "to": "nd0ncl4/pu9r8ig",
-        "as": "infoctx"
+        "from": "9lz9uxx/mzmuktz",
+        "to": "9lz9uxx/ke0mkjh",
+        "as": "data"
       },
       {
-        "from": "nd0ncl4/5ipa51k",
-        "to": "nd0ncl4/pu9r8ig",
-        "as": "isrunning"
+        "from": "9lz9uxx/3shirix",
+        "to": "9lz9uxx/nctvav5",
+        "as": "self"
       },
       {
-        "from": "nd0ncl4/90azwef",
-        "to": "nd0ncl4/pu9r8ig",
-        "as": "arr"
+        "from": "9lz9uxx/y175vs9",
+        "to": "9lz9uxx/w0ueu95",
+        "as": "return"
       },
       {
-        "from": "nd0ncl4/qjccgh5",
-        "to": "nd0ncl4/pu9r8ig",
-        "as": "offscreenctx"
+        "from": "9lz9uxx/315024b",
+        "to": "9lz9uxx/w0ueu95",
+        "as": "publish"
       },
       {
-        "from": "nd0ncl4/fiszoli",
-        "to": "nd0ncl4/hh2bp4r",
-        "as": "gl"
+        "from": "9lz9uxx/a5t90qi",
+        "to": "9lz9uxx/y175vs9",
+        "as": "args"
       },
       {
-        "from": "nd0ncl4/xh4mdas",
-        "to": "nd0ncl4/hh2bp4r",
-        "as": "vtx"
+        "from": "9lz9uxx/yo4mz5y",
+        "to": "9lz9uxx/y175vs9",
+        "as": "self"
       },
       {
-        "from": "nd0ncl4/t1x1qdu",
-        "to": "nd0ncl4/hh2bp4r",
-        "as": "frg"
+        "from": "9lz9uxx/hvbcb0m",
+        "to": "9lz9uxx/a5t90qi",
+        "as": "arg0"
       },
       {
-        "from": "nd0ncl4/jxybg0i",
-        "to": "nd0ncl4/hh2bp4r",
-        "as": "buffer"
-      },
-      {
-        "from": "nd0ncl4/gnlclc3",
-        "to": "nd0ncl4/5ipa51k",
+        "from": "9lz9uxx/13kfbhn",
+        "to": "9lz9uxx/y2js1tj",
         "as": "value"
       },
       {
-        "from": "nd0ncl4/ldrd4t1",
-        "to": "nd0ncl4/90azwef",
-        "as": "value"
+        "from": "9lz9uxx/7wk4wqm",
+        "to": "9lz9uxx/y2js1tj",
+        "as": "otherwise"
       },
       {
-        "from": "nd0ncl4/t6trkeo",
-        "to": "nd0ncl4/qjccgh5",
-        "as": "value"
+        "from": "9lz9uxx/y2js1tj",
+        "to": "9lz9uxx/315024b",
+        "as": "@strudel/cycle"
       },
       {
-        "from": "nd0ncl4/vx0gmdq",
-        "to": "nd0ncl4/fiszoli",
-        "as": "value"
-      },
-      {
-        "from": "nd0ncl4/mivegm0",
-        "to": "nd0ncl4/jxybg0i",
-        "as": "analyser"
-      },
-      {
-        "from": "nd0ncl4/4m7njvj",
-        "to": "nd0ncl4/ldrd4t1",
-        "as": "value"
-      },
-      {
-        "from": "nd0ncl4/8eug4vb",
-        "to": "nd0ncl4/t6trkeo",
-        "as": "ofc"
-      },
-      {
-        "from": "nd0ncl4/gn211xh",
-        "to": "nd0ncl4/vx0gmdq",
-        "as": "ofc"
+        "from": "9lz9uxx/7ln5i0m",
+        "to": "9lz9uxx/byysyra",
+        "as": "pred"
       }
     ],
     "out": "e1pxir9/z6r7djw"
@@ -1069,11 +1069,6 @@
         "ref": "if"
       },
       {
-        "id": "ow8poho/wssqcw0",
-        "value": "data.@strudel/cycle",
-        "ref": "arg"
-      },
-      {
         "id": "ow8poho/6myc0zk",
         "value": "cycle",
         "ref": "arg"
@@ -1081,11 +1076,6 @@
       {
         "id": "ow8poho/px59z0w",
         "value": "playpause",
-        "ref": "arg"
-      },
-      {
-        "id": "ow8poho/4p88ftp",
-        "value": "data.@strudel/playpause",
         "ref": "arg"
       },
       {
@@ -1145,12 +1135,6 @@
         "id": "8fmidpv/uyctc3t",
         "value": "data",
         "ref": "arg"
-      },
-      {
-        "id": "8fmidpv/v0cl80e",
-        "value": "return Tone.getTransport().schedule(fn, event.part.begin.valueOf());",
-        "name": "",
-        "ref": "script"
       },
       {
         "id": "8fmidpv/6f6yjzz",
@@ -1249,6 +1233,40 @@
       {
         "id": "ld37qq4",
         "ref": "subscribe_many"
+      },
+      {
+        "id": "nb4eye1",
+        "value": "_args",
+        "ref": "arg"
+      },
+      {
+        "id": "ow8poho/4p88ftp",
+        "value": "datacache.@strudel/playpause",
+        "ref": "arg"
+      },
+      {
+        "id": "ow8poho/wssqcw0",
+        "value": "datacache.@strudel/cycle",
+        "ref": "arg"
+      },
+      {
+        "id": "8fmidpv/v0cl80e",
+        "value": "return Tone.getTransport().schedule(fn, event.part.begin.valueOf());",
+        "name": "",
+        "ref": "script"
+      },
+      {
+        "id": "qq31vzf"
+      },
+      {
+        "id": "pou3ahs",
+        "value": "element",
+        "ref": "arg"
+      },
+      {
+        "id": "6atj4eh",
+        "value": "return arg0;",
+        "ref": "script"
       }
     ],
     "edges": [
@@ -1348,11 +1366,6 @@
         "as": "pattern"
       },
       {
-        "from": "8fmidpv/uyctc3t",
-        "to": "8fmidpv/ur2trx0",
-        "as": "cycle"
-      },
-      {
         "from": "8fmidpv/v0cl80e",
         "to": "8fmidpv/xgf86m9",
         "as": "fn"
@@ -1408,11 +1421,6 @@
         "as": "arg0"
       },
       {
-        "from": "8fmidpv/ku0gvzj",
-        "to": "8fmidpv/461cnqd",
-        "as": "event"
-      },
-      {
         "from": "8fmidpv/mgpznjz",
         "to": "8fmidpv/v691mur",
         "as": "fn"
@@ -1421,11 +1429,6 @@
         "from": "8fmidpv/mbjcy55",
         "to": "8fmidpv/mgpznjz",
         "as": "args"
-      },
-      {
-        "from": "8fmidpv/z53qzh8",
-        "to": "8fmidpv/mgpznjz",
-        "as": "self"
       },
       {
         "from": "8fmidpv/xs2jquz",
@@ -1466,6 +1469,41 @@
         "from": "ow8poho/2fgc4g0",
         "to": "ow8poho/ow8poho",
         "as": "fn"
+      },
+      {
+        "from": "8fmidpv/uyctc3t",
+        "to": "6atj4eh",
+        "as": "arg0"
+      },
+      {
+        "from": "nb4eye1",
+        "to": "6atj4eh",
+        "as": "args"
+      },
+      {
+        "from": "qq31vzf",
+        "to": "8fmidpv/v691mur",
+        "as": "args"
+      },
+      {
+        "from": "pou3ahs",
+        "to": "qq31vzf",
+        "as": "event"
+      },
+      {
+        "from": "8fmidpv/ku0gvzj",
+        "to": "8fmidpv/461cnqd",
+        "as": "event"
+      },
+      {
+        "from": "8fmidpv/z53qzh8",
+        "to": "8fmidpv/mgpznjz",
+        "as": "self"
+      },
+      {
+        "from": "6atj4eh",
+        "to": "8fmidpv/ur2trx0",
+        "as": "cycle"
       },
       {
         "from": "8fmidpv/0lxcaad",

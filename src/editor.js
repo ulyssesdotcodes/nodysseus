@@ -884,7 +884,7 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
                     inputs,
                     onchange: (state, payload) => [
                         state,
-                        [d => d(UpdateNode, {node, property: "name", value: payload.target.value})],
+                        node.id !== graph_out && [d => d(UpdateNode, {node, property: "name", value: payload.target.value})],
                         node.id === graph_out && [ChangeDisplayGraphId, {id: payload.target.value, select_out: true}]
                     ],
                     options: node.id === graph_out && JSON.parse(localStorage.getItem('graph_list'))

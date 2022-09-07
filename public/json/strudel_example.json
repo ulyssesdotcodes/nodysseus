@@ -152,122 +152,6 @@
         "ref": "arg"
       },
       {
-        "id": "qhscdnr",
-        "name": "playpause button",
-        "out": "qhscdnr",
-        "nodes": [
-          {
-            "id": "qhscdnr",
-            "value": "button",
-            "name": "playpause button",
-            "ref": "html_element"
-          },
-          {
-            "id": "enf5wa9",
-            "value": "play!",
-            "ref": "html_text"
-          },
-          {
-            "id": "liekhxf"
-          },
-          {
-            "id": "k6moesx",
-            "ref": "if"
-          },
-          {
-            "id": "g64097d",
-            "ref": "runnable"
-          },
-          {
-            "id": "tr7elkg",
-            "value": "pause"
-          },
-          {
-            "id": "jebbmbi",
-            "value": "play"
-          },
-          {
-            "id": "0kpj48x",
-            "value": "@strudel/playpause",
-            "ref": "event_subscriber"
-          },
-          {
-            "id": "znigcze",
-            "ref": "return"
-          },
-          {
-            "id": "mnks3mt"
-          },
-          {
-            "id": "avsccxy",
-            "value": "return !current;",
-            "ref": "script"
-          },
-          {
-            "id": "phbi8ae",
-            "value": "@strudel/playpause",
-            "ref": "event_subscriber"
-          }
-        ],
-        "edges": [
-          {
-            "from": "enf5wa9",
-            "to": "qhscdnr",
-            "as": "children"
-          },
-          {
-            "from": "liekhxf",
-            "to": "qhscdnr",
-            "as": "props"
-          },
-          {
-            "from": "k6moesx",
-            "to": "enf5wa9",
-            "as": "text"
-          },
-          {
-            "from": "g64097d",
-            "to": "liekhxf",
-            "as": "onclick"
-          },
-          {
-            "from": "tr7elkg",
-            "to": "k6moesx",
-            "as": "true"
-          },
-          {
-            "from": "jebbmbi",
-            "to": "k6moesx",
-            "as": "false"
-          },
-          {
-            "from": "0kpj48x",
-            "to": "k6moesx",
-            "as": "pred"
-          },
-          {
-            "from": "znigcze",
-            "to": "g64097d",
-            "as": "fn"
-          },
-          {
-            "from": "mnks3mt",
-            "to": "znigcze",
-            "as": "publish"
-          },
-          {
-            "from": "avsccxy",
-            "to": "mnks3mt",
-            "as": "@strudel/playpause"
-          },
-          {
-            "from": "phbi8ae",
-            "to": "avsccxy",
-            "as": "current"
-          }
-        ]
-      },
-      {
         "id": "791dp9t",
         "value": "chain",
         "ref": "@strudel.node"
@@ -354,11 +238,6 @@
         "ref": "@strudel.play"
       },
       {
-        "id": "3n6u07v/dfk63hb",
-        "value": "console.log(arg0); _lib.no.runtime.update_graph(_graph);",
-        "ref": "script"
-      },
-      {
         "id": "ofaojn2",
         "value": "strudel",
         "ref": "if_arg"
@@ -368,23 +247,8 @@
         "value": "c2"
       },
       {
-        "id": "main/out",
-        "name": "strudel_example",
-        "ref": "return"
-      },
-      {
         "id": "oh3oauu",
         "ref": "cache"
-      },
-      {
-        "id": "odtosaq",
-        "value": "@strudel/playpause",
-        "ref": "event_subscriber"
-      },
-      {
-        "id": "zt5wau8",
-        "value": "@strudel/playpause",
-        "ref": "event_subscriber"
       },
       {
         "id": "etpii7i",
@@ -398,6 +262,155 @@
       {
         "id": "72acruu",
         "value": "false"
+      },
+      {
+        "id": "qhscdnr/qhscdnr",
+        "value": "button",
+        "name": "playpause button",
+        "ref": "html_element"
+      },
+      {
+        "id": "qhscdnr/liekhxf"
+      },
+      {
+        "id": "qhscdnr/k6moesx",
+        "ref": "if"
+      },
+      {
+        "id": "qhscdnr/g64097d",
+        "ref": "runnable"
+      },
+      {
+        "id": "qhscdnr/tr7elkg",
+        "value": "pause"
+      },
+      {
+        "id": "qhscdnr/jebbmbi",
+        "value": "play"
+      },
+      {
+        "id": "qhscdnr/znigcze",
+        "ref": "return"
+      },
+      {
+        "id": "qhscdnr/mnks3mt"
+      },
+      {
+        "id": "qhscdnr/avsccxy",
+        "value": "return !current;",
+        "ref": "script"
+      },
+      {
+        "id": "qhscdnr/phbi8ae",
+        "value": "@strudel/playpause",
+        "ref": "event_subscriber"
+      },
+      {
+        "id": "qhscdnr/enf5wa9",
+        "value": "",
+        "ref": "html_text"
+      },
+      {
+        "id": "lu1kffb",
+        "ref": "not"
+      },
+      {
+        "id": "rws4iuy",
+        "value": "playpause",
+        "ref": "arg"
+      },
+      {
+        "id": "qhscdnr/0kpj48x",
+        "value": "playpause",
+        "ref": "arg"
+      },
+      {
+        "id": "zt5wau8",
+        "value": "playpause",
+        "ref": "arg"
+      },
+      {
+        "id": "odtosaq",
+        "value": "playpause",
+        "ref": "arg"
+      },
+      {
+        "id": "syxiuit",
+        "value": "playpause",
+        "ref": "arg"
+      },
+      {
+        "id": "gcpok57",
+        "value": "playpause",
+        "ref": "arg"
+      },
+      {
+        "id": "3n6u07v/dfk63hb",
+        "value": "_lib.no.runtime.update_graph(_graph);",
+        "ref": "script"
+      },
+      {
+        "id": "nmymdp3",
+        "value": "playpause",
+        "name": "",
+        "ref": "set_arg_runnable"
+      },
+      {
+        "id": "f3084zv",
+        "ref": "sequence"
+      },
+      {
+        "id": "av6eamd",
+        "value": "playpause",
+        "ref": "arg"
+      },
+      {
+        "id": "f3co3ry",
+        "ref": "default"
+      },
+      {
+        "id": "lflbmpz",
+        "value": "false"
+      },
+      {
+        "id": "7kem7la",
+        "value": "playpause",
+        "name": "",
+        "ref": "set_arg_runnable"
+      },
+      {
+        "id": "5t7ap32",
+        "ref": "not"
+      },
+      {
+        "id": "ypac6yi",
+        "ref": "default"
+      },
+      {
+        "id": "j2snp4e",
+        "value": "playpause",
+        "ref": "arg"
+      },
+      {
+        "id": "xm7vqgp",
+        "value": "false"
+      },
+      {
+        "id": "er1x3fy",
+        "value": "pattern",
+        "ref": "log"
+      },
+      {
+        "id": "cnqg54r",
+        "ref": "runnable_return"
+      },
+      {
+        "id": "22ec92k"
+      },
+      {
+        "id": "main/out",
+        "name": "strudel_example",
+        "ref": "return"
       }
     ],
     "edges": [
@@ -417,7 +430,7 @@
         "as": "children"
       },
       {
-        "from": "qhscdnr",
+        "from": "qhscdnr/qhscdnr",
         "to": "yvo2tan",
         "as": "arg0"
       },
@@ -667,11 +680,6 @@
         "as": "pattern"
       },
       {
-        "from": "rj34djg",
-        "to": "20xxc46",
-        "as": "value"
-      },
-      {
         "from": "p8v5ed5",
         "to": "20xxc46",
         "as": "recache"
@@ -702,10 +710,155 @@
         "as": "otherwise"
       },
       {
-        "from": "8yu1oi6",
+        "from": "qhscdnr/enf5wa9",
+        "to": "qhscdnr/qhscdnr",
+        "as": "children"
+      },
+      {
+        "from": "qhscdnr/liekhxf",
+        "to": "qhscdnr/qhscdnr",
+        "as": "props"
+      },
+      {
+        "from": "qhscdnr/k6moesx",
+        "to": "qhscdnr/enf5wa9",
+        "as": "text"
+      },
+      {
+        "from": "qhscdnr/tr7elkg",
+        "to": "qhscdnr/k6moesx",
+        "as": "true"
+      },
+      {
+        "from": "qhscdnr/jebbmbi",
+        "to": "qhscdnr/k6moesx",
+        "as": "false"
+      },
+      {
+        "from": "qhscdnr/0kpj48x",
+        "to": "qhscdnr/k6moesx",
+        "as": "pred"
+      },
+      {
+        "from": "qhscdnr/znigcze",
+        "to": "qhscdnr/g64097d",
+        "as": "fn"
+      },
+      {
+        "from": "qhscdnr/mnks3mt",
+        "to": "qhscdnr/znigcze",
+        "as": "publish"
+      },
+      {
+        "from": "qhscdnr/avsccxy",
+        "to": "qhscdnr/mnks3mt",
+        "as": "@strudel/playpause"
+      },
+      {
+        "from": "qhscdnr/phbi8ae",
+        "to": "qhscdnr/avsccxy",
+        "as": "current"
+      },
+      {
+        "from": "qhscdnr/g64097d",
+        "to": "qhscdnr/liekhxf",
+        "as": "_onclick"
+      },
+      {
+        "from": "lu1kffb",
+        "to": "nmymdp3",
+        "as": "value"
+      },
+      {
+        "from": "syxiuit",
+        "to": "tzgzm7u",
+        "as": "playpause"
+      },
+      {
+        "from": "gcpok57",
+        "to": "e1pxir9/z6r7djw",
+        "as": "playpause"
+      },
+      {
+        "from": "lflbmpz",
+        "to": "f3co3ry",
+        "as": "otherwise"
+      },
+      {
+        "from": "rws4iuy",
+        "to": "f3co3ry",
+        "as": "value"
+      },
+      {
+        "from": "5t7ap32",
+        "to": "7kem7la",
+        "as": "value"
+      },
+      {
+        "from": "xm7vqgp",
+        "to": "ypac6yi",
+        "as": "otherwise"
+      },
+      {
+        "from": "j2snp4e",
+        "to": "ypac6yi",
+        "as": "value"
+      },
+      {
+        "from": "7kem7la",
+        "to": "qhscdnr/liekhxf",
+        "as": "___onclick"
+      },
+      {
+        "from": "f3084zv",
+        "to": "qhscdnr/liekhxf",
+        "as": "onclick"
+      },
+      {
+        "from": "rj34djg",
+        "to": "20xxc46",
+        "as": "value"
+      },
+      {
+        "from": "er1x3fy",
         "to": "rj34djg",
         "as": "true"
+      },
+      {
+        "from": "8yu1oi6",
+        "to": "er1x3fy",
+        "as": "value"
+      },
+      {
+        "from": "22ec92k",
+        "to": "cnqg54r",
+        "as": "publish"
+      },
+      {
+        "from": "cnqg54r",
+        "to": "f3084zv",
+        "as": "arg1"
+      },
+      {
+        "from": "nmymdp3",
+        "to": "f3084zv",
+        "as": "arg0"
+      },
+      {
+        "from": "av6eamd",
+        "to": "22ec92k",
+        "as": "@strudel/playpause"
+      },
+      {
+        "from": "ypac6yi",
+        "to": "5t7ap32",
+        "as": "target"
+      },
+      {
+        "from": "f3co3ry",
+        "to": "lu1kffb",
+        "as": "target"
       }
     ],
     "out": "main/out"
-}
+  }
