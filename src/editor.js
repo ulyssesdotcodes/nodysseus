@@ -464,10 +464,10 @@ const pzobj = {
         hlib.panzoom.instance.zoomTo(x, y, 1 / scale)
 
         if(!payload.prevent_dispatch) {
-            requestAnimationFrame(() => dispatch((s, p) => [ 
-                { ...s, show_all: false, },
-                [() => requestAnimationFrame(() => nolib.no.runtime.publish('show_all', {data: false}))]
-            ]));
+            requestAnimationFrame(() => dispatch((s, p) => [ {...s, 
+                show_all: false, 
+            } 
+        ]));
         }
     },
     getTransform: function() {
@@ -1203,10 +1203,7 @@ const dispatch = (init, _lib) => {
                             break;
                         }
                         case "end_editing": {
-                            action = [state => [
-                                {...state, show_all: true, focused: false, editing: false},
-                                [() => requestAnimationFrame(() => nolib.no.runtime.publish('show_all', {data: true}))]
-                            ]]
+                            action = [state => [{...state, show_all: true, focused: false, editing: false}]]
                             break;
                         }
                         default: {
@@ -1234,8 +1231,7 @@ const dispatch = (init, _lib) => {
                     editing: p.event === 'effect_transform' && s.editing, 
                     focused: p.event === 'effect_transform' && s.focused, 
                     noautozoom: p.noautozoom && !s.stopped
-                },
-                [() => requestAnimationFrame(() => nolib.no.runtime.publish('show_all', {data: p.event !== 'effect_transform'}))]
+                }
             ]
         }]
     ], 
