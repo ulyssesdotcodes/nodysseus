@@ -251,7 +251,7 @@ const createProxy = (run_with_val, input, graphid, graph_input_value) => {
                 descriptor.configurable = true;
             }
 
-            return typeof res === 'object' && !!res ? (descriptor || { value: get(target, prop) }) : undefined;
+            return typeof res === 'object' && !!res ? (descriptor || { value: nodysseus_get(target, prop) }) : undefined;
         }
     });
 
@@ -820,8 +820,13 @@ const nolib = {
             },
         },
         set: {
-            args: ['target', 'path', 'value', '_node'],
-            fn: (target, path, value, node) => {
+            args: ['target', 'path', 'value', '_node', '_graph_input_value'],
+            resolve: false,
+            fn: (target, path, value, node, _args) => {
+                path = resolve(path)
+                while(target && target._Proxy) {
+                    target = target._value
+                }
                 const keys = (node.value || path).split('.'); 
                 const check = (o, v, k) => k.length === 1 
                     ? {...o, [k[0]]: v, _needsresolve: true} 
@@ -831,7 +836,6 @@ const nolib = {
                 return value !== undefined && (ispromise(value) || ispromise(target) 
                     ? Promise.all([Promise.resolve(value), Promise.resolve(target)]).then(vt => vt[1] !== undefined && check(vt[1], vt[0], keys)) 
                     : check(target, value, keys))
-                // return check(target, value, keys)
             },
         },
         set_mutable: {
@@ -844,6 +848,9 @@ const nolib = {
         executeGraphNode: ({ graph, lib }) => executeGraph({ graph, lib }),
         runGraph: (graph, node, args, lib) => {
             let rgraph = typeof graph === "string" ? nolib.no.runtime.get_graph(graph) : graph.graph ? graph.graph : graph;
+            while(args?._Proxy) {
+                args = args._value
+            }
 
             const res =  node !== undefined
                 ? executeGraph({ graph: rgraph, lib })(node)(args || {})
@@ -1041,6 +1048,7 @@ const nolib = {
 
             const update_args = (graph, args) => {
                 graph = resolve(graph);
+                args = resolve(args)
                 let prevargs = argsdb.by("id", graph.id) ?? {};
 
                 if(!prevargs.data){
@@ -1374,6 +1382,11 @@ const nolib = {
                 typeof args[0] === "number" ? 0 : ""
             )
         },
+        and: {
+            args: ["_node_inputs"],
+            resolve: true,
+            fn: (args) => Object.values(args).reduce((acc, v) => acc && !!v, true)
+        },
         mult: {
             args: ["_node_inputs"],
             resolve: true,
@@ -1395,9 +1408,9 @@ const nolib = {
             fn: (args) => args
         },
         unwrap_proxy: {
-            args: ["proxy", "_graph_input_value"],
+            args: ["proxy"],
             resolve: false,
-            fn: (proxy, _args) => ({fn: proxy._nodeid, graph: proxy._graphid, args: _args})
+            fn: (proxy) => ({fn: proxy._value._nodeid, graph: proxy._value._graphid, args: proxy._value._graph_input_value})
         },
         modify: {
             args: ['target', 'path', 'fn', '_node', '_lib', '_graph_input_value'],

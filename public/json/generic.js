@@ -23,6 +23,7 @@
       { "id": "mult", "extern": "utility.mult", "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Multiplication'>* operator</a>" },
       { "id": "divide", "extern": "utility.divide", "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Division'>/ operator</a>"  },
       { "id": "negate", "extern": "utility.negate", "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Subtraction'>- operator</a>"  },
+      { "id": "and", "extern": "utility.and", "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_AND'>&& operator</a>" },
       {
         "id": "ancestors",
         "out": "out",
@@ -296,7 +297,7 @@
           {"id": "edges", "script": "const edges = arr.map(e => e._value).filter(e => e && (e.as === edge || (edge === 'return' && (e.as === 'publish' || e.as === 'subscribe')))); return edges;"},
           {"id": "entries", "ref": "script", "value": "return array.map(e => [e.as, _lib.no.runGraph(e.graph, e.from, {...args, result: _lib.no.runtime.get_result(_graph)}, _lib)])"},
           {"id": "run_pub", "ref": "script", "value": "const res = Object.fromEntries(entries); const pubfn = pub => Object.entries(pub ?? {}).forEach(([k, v]) => v !== undefined && _lib.no.runtime.publish(k, {data: v, result: edge === 'return' ? res[edge] : _lib.no.runtime.get_result(_graph)})); if(typeof res.publish?.then === 'function'){ res.publish.then(pubfn) } else { pubfn(res.publish) } return res;"},
-          {"id": "out", "script": "if(edge === 'return'){ _lib.no.runtime.update_result(_graph, res.return); _lib.no.runtime.remove_listener('*', 'subscribe-' + _graph.id); Object.entries(res.subscribe ?? {}).filter(kv => kv[1]).forEach(([k, v]) => { _lib.no.runtime.add_listener(k, 'subscribe-' + _graph.id, {...v, args: Object.assign({}, args, v.args, {result: edge === 'return' ? res[edge] : _lib.no.runtime.get_result(_graph)})}, false, _lib.no.runtime.get_parent(_graph).id, true) }); } return res[edge]"}
+          {"id": "out", "script": "if(edge === 'return'){ _lib.no.runtime.update_result(_graph, res.return); _lib.no.runtime.remove_listener('*', 'subscribe-' + _graph.id); Object.entries(res.subscribe ?? {}).filter(kv => kv[1]).forEach(([k, v]) => { _lib.no.runtime.add_listener(k, 'subscribe-' + _graph.id, v, false, _lib.no.runtime.get_parent(_graph).id, true) }); } return res[edge]"}
         ],
         "edges": [
           {"from": "return_edge_arg", "to": "return_edge", "as": "value"},
@@ -346,13 +347,15 @@
         "nodes": [
           { "id": "fn", "ref": "arg", "value": "fn" },
           { "id": "value_args", "ref": "arg", "value": "args", "type": "local" },
-          { "id": "context_args", "ref": "arg", "value": "_args" },
+          { "id": "context_args", "ref": "arg", "value": "__args" },
           { "id": "fn_path", "value": "fn" },
           { "id": "args_path", "value": "args" },
           { "id": "graph_path", "value": "graph" },
+          { "id": "needsresolve_path", "value": "_needsresolve" },
           { "id": "delete_fn", "ref": "delete" },
           { "id": "delete_args", "ref": "delete" },
           { "id": "delete_graph", "ref": "delete" },
+          { "id": "delete_needsresolve", "ref": "delete" },
           { "id": "args", "ref": "set", "value": "__args" },
           { "id": "graph", "ref": "arg", "value": "graph"},
           {
@@ -367,10 +370,12 @@
           { "from": "args_path", "to": "delete_args", "as": "path" },
           { "from": "delete_args", "to": "delete_graph", "as": "target" },
           { "from": "graph_path", "to": "delete_graph", "as": "path" },
-          { "from": "delete_graph", "to": "args", "as": "value" },
+          { "from": "context_args", "to": "args", "as": "value" },
+          { "from": "needsresolve_path", "to": "delete_needsresolve", "as": "path" },
+          { "from": "delete_needsresolve", "to": "_out", "as": "args" },
           { "from": "value_args", "to": "args", "as": "target" },
           { "from": "graph", "to": "out", "as": "graph" },
-          { "from": "args", "to": "out", "as": "args", "type": "resolve" },
+          { "from": "args", "to": "out", "as": "args" },
           { "from": "fn", "to": "out", "as": "fn", "type": "ref" }
         ]
       },
@@ -596,22 +601,41 @@
       "description": "See set_arg",
       "out": "out",
       "nodes": [
-        {"id": "value", "ref": "arg", "value": "value"},
+        {"id": "sa_value", "ref": "arg", "value": "value"},
+        {"id": "value_runnable", "ref": "arg", "value": "value_runnable"},
         {"id": "key", "ref": "arg", "value": "key"},
         {"id": "path", "ref": "arg", "value": "path"},
         {"id": "value_path", "ref": "arg", "value": "_graph.value"},
         {"id": "graph", "ref": "arg", "value": "_graph"},
+        {"id": "input_args", "ref": "arg", "value": "_args"},
+        {"id": "node_args", "ref": "arg", "value": "args"},
+        {"id": "inner_value", "ref": "arg", "value": "value"},
+        {"id": "_sa_value_args", "ref": "set", "value": "__args"},
+        {"id": "sa_value_args", "ref": "script", "value": "return {...target, __args: value}"},
         {"id": "runnable_args"},
+        {"id": "unwrap_sa_value", "extern": "utility.unwrap_proxy"},
+        {"id": "set_sa_value_args", "ref": "set", "value": "args"},
+        {"id": "run_sa_value", "ref": "run"},
         {"id": "def_path", "ref": "default"},
+        {"id": "log_def_path", "ref": "log", "value": "logdefpath"},
         {"id": "set", "ref": "set_arg"},
         {"id": "out", "ref": "runnable"}
       ],
       "edges": [
+        {"from": "key", "to": "set", "as": "key"},
+        {"from": "sa_value", "to": "unwrap_sa_value", "as": "proxy"},
+        {"from": "node_args", "to": "sa_value_args", "as": "target"},
+        {"from": "input_args", "to": "sa_value_args", "as": "value"},
+        {"from": "value_runnable", "to": "set_sa_value_args", "as": "target"},
+        {"from": "sa_value_args", "to": "set_sa_value_args", "as": "value"},
+        {"from": "input_args", "to": "_set_sa_value_args", "as": "value"},
+        {"from": "set_sa_value_args", "to": "run_sa_value", "as": "runnable"},
+        {"from": "run_sa_value", "to": "set", "as": "value"},
         {"from": "value_path", "to": "def_path", "as": "value"},
         {"from": "path", "to": "def_path", "as": "otherwise"},
-        {"from": "value", "to": "runnable_args", "as": "value"},
+        {"from": "unwrap_sa_value", "to": "runnable_args", "as": "value_runnable"},
+        {"from": "def_path", "to": "log_def_path", "as": "value"},
         {"from": "def_path", "to": "runnable_args", "as": "path"},
-        {"from": "key", "to": "set", "as": "key"},
         {"from": "graph", "to": "runnable_args", "as": "graph"},
         {"from": "runnable_args", "to": "out", "as": "args"},
         {"from": "set", "to": "out", "as": "fn"}
@@ -875,7 +899,7 @@
         {"id": "edge_in_runnables", "ref": "edge_in_argx"},
         {
           "id": "runnables",
-          "script": "const runnables = argxrunnables.filter(r => r && (!r._Proxy || r._value) ).map(r => r._Proxy ? r._value : r).filter(r => r.hasOwnProperty('fn') && r.hasOwnProperty('graph')); return runnables.map(r => ({...r, args: {...r.args, __args: (fn_args ?? {})}}))",
+          "script": "const runnables = argxrunnables.filter(r => r && (!r._Proxy || r._value) ).map(r => r._Proxy ? r._value : r).filter(r => r.hasOwnProperty('fn') && r.hasOwnProperty('graph')).map(r => ({...r, args: { ...r.args, ...(fn_args ?? {})}})); return runnables",
         },
         { "id": "element", "ref": "arg", "value": "element", "type": "internal" },
         {
