@@ -583,7 +583,7 @@
         {"from": "key", "to": "key_def", "as": "value"},
         {"from": "key_def", "to": "key_path", "as": "a2"},
         {"from": "key_path", "to": "set_val", "as": "path"},
-        {"from": "value", "to": "set_val", "as": "value"},
+        {"from": "value", "to": "set_val", "as": "value", "type": "resolve"},
         {"from": "args", "to": "env", "as": "args"},
         {"from": "graph", "to": "env", "as": "graph"},
         {"from": "graph", "to": "update_args", "as": "graph"},
