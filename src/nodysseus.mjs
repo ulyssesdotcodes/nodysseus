@@ -1048,7 +1048,7 @@ const nolib = {
 
             const update_args = (graph, args) => {
                 graph = resolve(graph);
-                args = resolve(args)
+                args = resolve({...args, _needsresolve: true})
                 let prevargs = argsdb.by("id", graph.id) ?? {};
 
                 if(!prevargs.data){
