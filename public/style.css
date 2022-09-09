@@ -131,9 +131,26 @@ svg {
     opacity: 0;
 }
 
+@keyframes flash {
+    0% {
+        fill: #66ccff;
+    }
+
+    2% { 
+        fill: #ef02fc;
+    }
+
+    100% {
+        fill: #66ccff;
+    }
+}
+
 .node .shape {
-    animation_: 2s blink infinite;
     fill: #66ccff;
+}
+
+.node .shape.flash {
+    animation: 1s flash 1;
 }
 
 .node:hover .shape {

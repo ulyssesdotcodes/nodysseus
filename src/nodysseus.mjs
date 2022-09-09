@@ -575,6 +575,10 @@ const run_with_val_full = (graph, full_lib, node_id, graph_input_value) => {
             throw new Error(`Undefined node_id ${node_id}`)
         }
 
+        if(full_lib.no.runtime.get_parent(graph) === undefined) {
+            full_lib.no.runtime.publish('noderun', {node_id: node_id, graph: graph})
+        }
+
         if (node.ref === "arg") {
             return full_lib.utility.arg.fn(node, graph, graph_input_value);
         }

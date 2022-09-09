@@ -269,7 +269,7 @@ const d3subscription = (dispatch, props) => {
             let selected_pos;
 
             simulation.nodes().map(n => {
-                const el = document.getElementById(`${htmlid}-${n.node_id}`);
+                const el = document.getElementById(`${htmlid}-${n.node_id.replace("/", "_")}`);
                 if(el) {
                     const x = n.x - node_el_width * 0.5;
                     const y = n.y ;
@@ -420,10 +420,13 @@ const refresh_graph = (graph, dispatch) => {
 
 const result_subscription = (dispatch, {display_graph_id}) => {
     let animrun = false;
+
     const error_listener = (error) =>
         requestAnimationFrame(() => {
             dispatch(s => Object.assign({}, s, {error: s.error ? s.error.concat([error]) : [error]}))
         });
+
+    nolib.no.runtime.add_listener('grapherror', 'update_hyperapp_error', error_listener);
 
     const change_listener = graph => {
         if(graph.id === display_graph_id && !animrun) {
@@ -437,7 +440,24 @@ const result_subscription = (dispatch, {display_graph_id}) => {
     }
 
     nolib.no.runtime.add_listener('graphchange', 'clear_hyperapp_error', change_listener);
-    nolib.no.runtime.add_listener('grapherror', 'update_hyperapp_error', error_listener);
+
+    const noderun_listener = (data) => {
+        if (data.graph.id === display_graph_id) {
+            // console.log('should show')
+            // console.log(data.node_id)
+            const el = document.querySelector(`#node-editor-${data.node_id.replace("/", "_")} .shape`)
+            if(el) {
+                el.classList.remove("flash");
+                requestAnimationFrame(() => {
+                el.classList.add("flash")
+                })
+                // el.style.animationPlayState = "paused"
+                // el.style.animationPlayState = "running"
+            }
+        }
+    }
+
+    nolib.no.runtime.add_listener('noderun', 'update_hyperapp_error', noderun_listener);
 
     return () => (
         nolib.no.runtime.remove_listener('graphchange', 'clear_hyperapp_error', change_listener),
@@ -770,34 +790,34 @@ const defs = () =>ha.h('defs', {}, [
 ])
 
 const radius = 24;
-const node_el = ({html_id, selected, error, selected_distance, node}) =>ha.h('svg', {
-    onclick: [SelectNode, {node_id: node.node_id}],  
-    ontouchstart: [SelectNode, {node_id: node.node_id}], 
+const node_el = ({html_id, selected, error, selected_distance, node_id, node_ref, node_name, node_value, has_nodes, nested_edge_count, nested_node_count}) =>ha.h('svg', {
+    onclick: [SelectNode, {node_id}],  
+    ontouchstart: [SelectNode, {node_id}], 
     width: '256', 
     height: '64', 
-    key: html_id + '-' + node.node_id, 
-    id: html_id + '-' + node.node_id, 
+    key: html_id + '-' + node_id, 
+    id: html_id + '-' + node_id.replace("/", "_"), 
     class: {
         node: true, 
-        selected: selected === node.node_id, 
+        selected: selected === node_id, 
         [`distance-${selected_distance < 4 ? selected_distance : 'far'}`]: true
     }
 }, [
    ha.h(
-        node.value !== undefined && !(node.ref && node.ref !== "arg") ? 'polygon' 
-        : node.ref === 'return' ? 'rect'
+        node_value !== undefined && !(node_ref && node_ref !== "arg") ? 'polygon' 
+        : node_ref === 'return' ? 'rect'
         : 'circle', 
-        node.value !== undefined && !(node.ref && node.ref !== "arg") 
+        node_value !== undefined && !(node_ref && node_ref !== "arg") 
             ? {class: {shape: true, value: true, error}, points: `4,${4 + radius} ${4 + radius},${4 + radius} ${4 + radius * 0.5},4`} 
-            : node.ref === 'return'
+            : node_ref === 'return'
             ? {class:{shape: true, ref: true, error}, width: radius, height: radius, x: 10, y: 10}
             : {class: {shape: true, none: true, error}, r: radius * 0.5 , cx: radius * 0.5 + 8, cy: radius * 0.5 + 8}
     ),
     ha.memo(node_text_el, {
-        node_id: node.id,
-        primary: node.name ? node.name : node.value ? node.value : '', 
-        focus_primary: node.name ? "name" : "value",
-        secondary: node.ref ? node.ref : node.script ? 'script' : node.nodes ? `graph (${node.nested_node_count}, ${node.nested_edge_count})` : node.value !== undefined ? 'value' : 'object'
+        node_id: node_id,
+        primary: node_name ? node_name : node_value ? node_value : '', 
+        focus_primary: node_name ? "name" : "value",
+        secondary: node_ref ? node_ref : has_nodes ? `graph (${nested_node_count}, ${nested_edge_count})` : node_value !== undefined ? 'value' : 'object'
     }),
     ha.memo(fill_rect_el)
 ])
@@ -1071,13 +1091,21 @@ const dispatch = (init, _lib) => {
         ha.h('svg', {id: `${s.html_id}-editor`, width: s.dimensions.x, height: s.dimensions.y}, [
             ha.h('g', {id: `${s.html_id}-editor-panzoom`}, 
                 [ha.memo(defs)].concat(
-                    s.nodes?.map(node => ha.memo(node_el, ({
-                        html_id: s.html_id, 
-                        selected: s.selected[0], 
-                        error: !!error_nodes(s.error).find(e => e.startsWith(s.display_graph.id + "/" + node.node_id)), 
-                        selected_distance: s.show_all ? 0 : s.levels.distance_from_selected.get(node.node_id) > 3 ? 'far' : s.levels.distance_from_selected.get(node.node_id),
-                        node: Object.assign({}, node, nolib.no.runtime.get_node(s.display_graph, node.node_id))
-                    }))) ?? []
+                    s.nodes?.map(node => {
+                        const newnode = Object.assign({}, node, nolib.no.runtime.get_node(s.display_graph, node.node_id))
+                        return ha.memo(node_el, ({
+                            html_id: s.html_id, 
+                            selected: s.selected[0], 
+                            error: !!error_nodes(s.error).find(e => e.startsWith(s.display_graph.id + "/" + node.node_id)), 
+                            selected_distance: s.show_all ? 0 : s.levels.distance_from_selected.get(node.node_id) > 3 ? 'far' : s.levels.distance_from_selected.get(node.node_id),
+                            node_id: newnode.id,
+                            node_name: newnode.name,
+                            node_ref: newnode.ref,
+                            node_value: newnode.value,
+                            nested_edge_count: newnode.nested_edge_count,
+                            nested_node_count: newnode.nested_node_count
+                        }))
+                }) ?? []
                 ).concat(
                     s.links?.map(link => ha.memo(link_el, {
                         link: Object.assign({}, link, nolib.no.runtime.get_edge(s.display_graph, link.source.node_id)),
@@ -1367,7 +1395,7 @@ const hlib = {
     effects: {
         position_by_selected: (id, selected, dimensions, nodes) => {
             selected = Array.isArray(selected) ? selected[0] : selected;
-            const el = document.getElementById(id);
+            const el = document.getElementById(id.replace("/", "_"));
             const node = nodes.find(n => n.id === selected);
             const x = node.x;
             const y = node.y;
