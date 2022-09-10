@@ -468,7 +468,7 @@ const result_subscription = (dispatch, {display_graph_id}) => {
 const pzobj = {
     effect: function(dispatch, payload){
         if(!hlib.panzoom.instance || !payload.selected){ return; }
-        this.lastpanzoom = performance.now();
+        pzobj.lastpanzoom = performance.now();
         const viewbox = findViewBox(
             payload.nodes, 
             payload.links, 
@@ -698,7 +698,10 @@ const save_graph = graph => {
 const SaveGraph = (dispatch, payload) => save_graph(payload.display_graph)
 
 const ChangeDisplayGraphId = (dispatch, {id, select_out}) => {
+    console.log('should change')
     requestAnimationFrame(() => {
+        console.log('changing graph')
+        console.log(id);
         const json = localStorage.getItem(id);
         const graphPromise = Promise.resolve((json && base_graph(JSON.parse(json))) 
             ?? nolib.no.runtime.get_graph(id) 
@@ -711,6 +714,7 @@ const ChangeDisplayGraphId = (dispatch, {id, select_out}) => {
             [dispatch => {
                 requestAnimationFrame(() => {
                     const new_graph = graph ?? Object.assign({}, base_graph(state.display_graph), {id});
+                    console.log(new_graph);
                     const mainout = new_graph.nodes.find(n => n.id === new_graph.out);
                     mainout.name = new_graph.id;
                     nolib.no.runtime.update_graph(new_graph);
@@ -1075,18 +1079,20 @@ const error_nodes = (error) => error instanceof AggregateError || Array.isArray(
         .map(e => e instanceof nolib.no.NodysseusError ? e.node_id : false).filter(n => n) 
     : error instanceof nolib.no.NodysseusError 
     ? [error.node_id] : []; 
-const dispatch = (init, _lib) => {
+const runapp = (init, load_graph, _lib) => {
         // return () => requestAnimationFrame(() => dispatch.dispatch(s => undefined));
     return ha.app({
-    init: ()=> [init, 
+    init: [init, 
         [() => requestAnimationFrame(() => {
             result_display_dispatch = result_display(init.html_id);
             info_display_dispatch = info_display(init.html_id);
             nolib.no.runtime.update_graph(init.display_graph)
         })],
-        [UpdateSimulation, {...init, action: SimulationToHyperapp}],
+        [ChangeDisplayGraphId, {id: load_graph, select_out: true}],
+        // [UpdateSimulation, {...init, action: SimulationToHyperapp}],
         [init_code_editor, {html_id: init.html_id}]
     ],
+    dispatch: middleware,
     view: s =>ha.h('div', {id: s.html_id}, [
         ha.h('svg', {id: `${s.html_id}-editor`, width: s.dimensions.x, height: s.dimensions.y}, [
             ha.h('g', {id: `${s.html_id}-editor-panzoom`}, 
@@ -1098,7 +1104,7 @@ const dispatch = (init, _lib) => {
                             selected: s.selected[0], 
                             error: !!error_nodes(s.error).find(e => e.startsWith(s.display_graph.id + "/" + node.node_id)), 
                             selected_distance: s.show_all ? 0 : s.levels.distance_from_selected.get(node.node_id) > 3 ? 'far' : s.levels.distance_from_selected.get(node.node_id),
-                            node_id: newnode.id,
+                            node_id: node.node_id,
                             node_name: newnode.name,
                             node_ref: newnode.ref,
                             node_value: newnode.value,
@@ -1278,19 +1284,16 @@ const editor = async function(html_id, display_graph, lib, norun) {
     const graph_list = JSON.parse(localStorage.getItem("graph_list")) ?? [];
     const hash_graph = window.location.hash.substring(1);
     const keybindings = await resfetch("json/keybindings.json").then(r => r.json())
-    if(!hash_graph && graph_list?.length > 0) {
-        window.location.hash = graph_list[0]
-    }
-    let stored_graph = JSON.parse(localStorage.getItem(hash_graph ?? graph_list?.[0]));
-    stored_graph = stored_graph ? base_graph(stored_graph) : undefined
-    graph_list.map(id => localStorage.getItem(id)).filter(g => g).map(graph => nolib.no.runtime.update_graph(base_graph(JSON.parse(graph))))
-    Promise.resolve(stored_graph ?? (hash_graph ? resfetch(`json/${hash_graph}.json`).then(r => r.status !== 200 ? simple : r.json()).catch(_ => simple) : simple))
-        .then(display_graph => {
+    // let stored_graph = JSON.parse(localStorage.getItem(hash_graph ?? graph_list?.[0]));
+    // stored_graph = stored_graph ? base_graph(stored_graph) : undefined
+    // graph_list.map(id => localStorage.getItem(id)).filter(g => g).map(graph => nolib.no.runtime.update_graph(base_graph(JSON.parse(graph))))
+    // Promise.resolve(stored_graph ?? (hash_graph ? resfetch(`json/${hash_graph}.json`).then(r => r.status !== 200 ? simple : r.json()).catch(_ => simple) : simple))
+        // .then(display_graph => {
 
         const init = { 
             keybindings,
-            display_graph_id: display_graph.id,
-            display_graph: display_graph,
+            display_graph_id: 'simple',
+            display_graph: simple,
             hash: window.location.hash ?? "",
             url_params,
             html_id,
@@ -1315,13 +1318,13 @@ const editor = async function(html_id, display_graph, lib, norun) {
             imports: {},
             history: [],
             redo_history: [],
-            selected: [display_graph.out ?? "main/out"],
+            selected: ["main/out"],
             inputs: {}
         };
 
-        dispatch(init, lib)
+        runapp(init,  hash_graph ?? graph_list?.[0] ?? 'simple', lib)
 
-    })
+    // })
 }
 
 const middleware = dispatch => (ha_action, ha_payload) => {

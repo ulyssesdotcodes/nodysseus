@@ -8,7 +8,7 @@
     {"id": "args"},
     { "id": "qgbinm2", "value": "Hello, world!", "ref": "html_text" },
     { "id": "8dy573e", "ref": "html_element" },
-    {"id": "main/out", "ref": "return"}
+    {"id": "main/out", "ref": "return", "name": "simple"}
   ],
   "id": "simple",
   "out": "main/out"

@@ -3,6 +3,12 @@
     --nodey: 0px;
 }
 
+body {
+    width: 100%;
+    height: 100%;
+    margin:0;
+}
+
 .hidden {
     visibility: hidden;
 }
@@ -22,11 +28,17 @@
 
 #node-editor {
     position: relative;
-    width: 100%;
+    width: 100vw;
     height: 100vh;
     color: white;
     font-family: consolas;
     overflow: hidden;
+    background: #101010;
+}
+
+#node-editor-editor {
+    position: absolute;
+    z-index: 8;
 }
 
 #node-editor-editor.hash-view {
@@ -133,15 +145,15 @@ svg {
 
 @keyframes flash {
     0% {
-        fill: #66ccff;
+        stroke: #66ccff;
     }
 
     2% { 
-        fill: #ef02fc;
+        stroke: #ef02fc;
     }
 
     100% {
-        fill: #66ccff;
+        stroke: #66ccff;
     }
 }
 
@@ -322,7 +334,9 @@ svg {
     position: absolute;
     top: 0;
     left: 0;
-
+    z-index: 0;
+    width: 50vw;
+    height: 50vh;
 }
 
 text {
@@ -398,7 +412,7 @@ svg.edge-info.selected rect {
     color: red;
     padding: 1em;
     height: 8em;
-    z-index: 100;
+    z-index: 2;
 }
 
 .align-selected {

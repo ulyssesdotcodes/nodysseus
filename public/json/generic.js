@@ -516,14 +516,16 @@
           {"id": "path_value", "ref": "default"},
           {"id": "args", "ref": "arg", "value": "_args", "type": "internal"},
           {"id": "runnable", "script": "const parent = _lib.no.runtime.get_parent(_graph); const node_id = _lib.no.runtime.get_path(parent, path); return {fn: node_id, graph: parent, args: {...args, edge: args.edge ? {...args.edge, node_id: parent.id + '/' + node_id} : undefined}}"},
-          {"id": "out", "ref": "run"}
+          {"id": "run_runnable", "ref": "run"},
+          {"id": "out", "ref": "return"}
         ],
         "edges": [
           {"from": "path", "to": "path_value", "as": "value"},
           {"from": "value", "to": "path_value", "as": "otherwise"},
           {"from": "path_value", "to": "runnable", "as": "path"},
           {"from": "args", "to": "runnable", "as": "args"},
-          {"from": "runnable", "to": "out", "as": "runnable"}
+          {"from": "runnable", "to": "run_runnable", "as": "runnable"},
+          {"from": "run_runnable", "to": "out", "as": "return"}
         ]
       },
       {

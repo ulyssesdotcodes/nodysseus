@@ -4,7 +4,7 @@
     "description": "Generic node-based editor",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#112",
+    "background_color": "#111",
     "icons": [
         {
             "src": "icons/radio-button-off.svg",
