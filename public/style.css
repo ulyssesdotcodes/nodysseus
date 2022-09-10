@@ -38,7 +38,7 @@ body {
 
 #node-editor-editor {
     position: absolute;
-    z-index: 8;
+    z-index: 4;
 }
 
 #node-editor-editor.hash-view {
@@ -145,14 +145,17 @@ svg {
 
 @keyframes flash {
     0% {
+        stroke-width: 2;
         stroke: #66ccff;
     }
 
     2% { 
+        stroke-width: 6;
         stroke: #ef02fc;
     }
 
     100% {
+        stroke-width: 2;
         stroke: #66ccff;
     }
 }
@@ -162,7 +165,7 @@ svg {
 }
 
 .node .shape.flash {
-    animation: 1s flash 1;
+    animation: 1s flash 1 ease-out;
 }
 
 .node:hover .shape {
@@ -323,6 +326,7 @@ svg {
     bottom: 32px;
     left: 32px;
     max-width: 33%;
+    z-index: 6;
 }
 
 .result.error {

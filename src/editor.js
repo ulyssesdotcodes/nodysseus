@@ -714,7 +714,6 @@ const ChangeDisplayGraphId = (dispatch, {id, select_out}) => {
             [dispatch => {
                 requestAnimationFrame(() => {
                     const new_graph = graph ?? Object.assign({}, base_graph(state.display_graph), {id});
-                    console.log(new_graph);
                     const mainout = new_graph.nodes.find(n => n.id === new_graph.out);
                     mainout.name = new_graph.id;
                     nolib.no.runtime.update_graph(new_graph);
@@ -758,7 +757,7 @@ const UpdateNode = (state, {node, property, value}) => [
         display_graph: state.display_graph,
         node: Object.assign({}, 
             base_node(node ?? nolib.no.runtime.get_node(state.display_graph, state.selected[0])), 
-            {[property]: value}
+            {[property]: value === "" ? undefined : value}
         )
     }]
 ]
@@ -803,8 +802,8 @@ const node_el = ({html_id, selected, error, selected_distance, node_id, node_ref
     id: html_id + '-' + node_id.replace("/", "_"), 
     class: {
         node: true, 
-        selected: selected === node_id, 
-        [`distance-${selected_distance < 4 ? selected_distance : 'far'}`]: true
+        selected, 
+        // [`distance-${selected_distance < 4 ? selected_distance : 'far'}`]: true
     }
 }, [
    ha.h(
@@ -1064,7 +1063,10 @@ const init_code_editor = (dispatch, {html_id}) => {
                 },
                 ".cm-activeLine": {
                     backgroundColor: highlightBackground,
-                }
+                },
+                "&.cm-focused .cm-cursor": {
+                    borderLeftColor: "#fff"
+                },
             }, {dark: true}),
             javascript(),
             EditorView.domEventHandlers({
@@ -1101,9 +1103,9 @@ const runapp = (init, load_graph, _lib) => {
                         const newnode = Object.assign({}, node, nolib.no.runtime.get_node(s.display_graph, node.node_id))
                         return ha.memo(node_el, ({
                             html_id: s.html_id, 
-                            selected: s.selected[0], 
+                            selected: s.selected[0] === node.node_id, 
                             error: !!error_nodes(s.error).find(e => e.startsWith(s.display_graph.id + "/" + node.node_id)), 
-                            selected_distance: s.show_all ? 0 : s.levels.distance_from_selected.get(node.node_id) > 3 ? 'far' : s.levels.distance_from_selected.get(node.node_id),
+                            // selected_distance: s.show_all ? 0 : s.levels.distance_from_selected.get(node.node_id) > 3 ? 'far' : s.levels.distance_from_selected.get(node.node_id),
                             node_id: node.node_id,
                             node_name: newnode.name,
                             node_ref: newnode.ref,
@@ -1286,7 +1288,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
     const keybindings = await resfetch("json/keybindings.json").then(r => r.json())
     // let stored_graph = JSON.parse(localStorage.getItem(hash_graph ?? graph_list?.[0]));
     // stored_graph = stored_graph ? base_graph(stored_graph) : undefined
-    // graph_list.map(id => localStorage.getItem(id)).filter(g => g).map(graph => nolib.no.runtime.update_graph(base_graph(JSON.parse(graph))))
+    graph_list.map(id => localStorage.getItem(id)).filter(g => g).map(graph => nolib.no.runtime.update_graph(base_graph(JSON.parse(graph))))
     // Promise.resolve(stored_graph ?? (hash_graph ? resfetch(`json/${hash_graph}.json`).then(r => r.status !== 200 ? simple : r.json()).catch(_ => simple) : simple))
         // .then(display_graph => {
 

@@ -338,8 +338,8 @@ const node_value = (node) => {
     }
 
     if(typeof node.value === "string") {
-        if (node.value === '""') {
-            return ""
+        if (node.value.startsWith('"') && node.value.endsWith('"')) {
+            return node.value.substring(1, node.value.length - 1)
         }
 
         if (node.value.startsWith('{') || node.value.startsWith('[')) {
@@ -447,30 +447,27 @@ const node_script = (node, node_ref, data, full_lib, graph, inputs, graph_input_
 const node_extern = (node, node_ref, node_id, data, full_lib, graph, graph_input_value) => {
     const extern = nodysseus_get(full_lib, node_ref.extern);
     const args = extern.args.reduce((acc, arg) => {
+        let newval;
         if (arg === '_node') {
-            acc[0].push(node)
-            return [acc[0], acc[1]];
+            newval = node 
         } else if (arg === '_node_inputs') {
             const res = extern.resolve ? resolve({ ...data, _needsresolve: true }) : data;
-            if (Array.isArray(res)) {
-                res.forEach(r => acc[0].push(r))
-            } else {
-                acc[0].push(res);
-            }
-            return [acc[0], acc[1]]
+            newval = res;
         } else if (arg === '_graph') {
-            acc[0].push(graph);
-            return [acc[0], acc[1]]
+            newval = graph;
         } else if (arg == '_lib') {
-            acc[0].push(full_lib);
-            return [acc[0], acc[1]]
+            newval = full_lib;
         } else if (arg == '_graph_input_value') {
-            acc[0].push(mockcombined(data, graph_input_value));
-            return [acc[0], acc[1]]
+            newval = mockcombined(data, graph_input_value) ;
+            newval._needsresolve = true;
+        } else {
+            newval = data[arg];
         }
-        const value = extern.resolve === false ? data[arg] : resolve(data[arg]);
-        acc[0].push(value)
-        return [acc[0], ispromise(value) || acc[1]];
+        if(extern.resolve !== false){
+            newval = resolve(newval)
+        }
+        acc[0].push(newval)
+        return [acc[0], ispromise(newval) || acc[1]];
     }, [[], false]);
 
     if (args[1]) {
@@ -1170,6 +1167,10 @@ const nolib = {
                     update_graph(new_graph);
                 },
                 add_node: (graph, node) => {
+                    if(!(node && typeof node === 'object' && node.id)) {
+                        throw new Error(`Invalid node: ${JSON.stringify(node)}`)
+                    }
+
                     const gcache = get_cache(graph);
                     graph = gcache.graph;
 
@@ -1407,7 +1408,7 @@ const nolib = {
             fn: (args) => Object.values(args).reduce((acc, v) => acc / v, 1)
         },
         resolve: {
-            args: ["_args"],
+            args: ["_graph_input_value"],
             resolve: true,
             fn: (args) => args
         },

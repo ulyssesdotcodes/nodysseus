@@ -487,7 +487,7 @@
           {"id": "fn_runnable", "ref": "default"},
           {"id": "eq_fn_runnable", "script": "return {...fn, args: {...(fn.args ?? {}), a, b}}"},
           {"id": "eq_fn", "ref": "run"},
-          {"id": "cache", "ref": "set_arg", "value": "cached", "_script": "_lib.no.runtime.update_graph(_graph, {cached: value}); return eq;"},
+          {"id": "cache", "ref": "set_arg", "value": "cached"},
           {"id": "out", "ref": "if"}
         ],
         "edges": [
