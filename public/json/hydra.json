@@ -286,7 +286,7 @@
       {
         "from": "19c8goa",
         "to": "pu58ta7",
-        "as": "return"
+        "as": "value"
       },
       {
         "from": "79c8k2a",
@@ -301,7 +301,7 @@
       {
         "from": "f2prcop",
         "to": "19c8goa",
-        "as": "return"
+        "as": "value"
       },
       {
         "from": "ykgl85f",
@@ -739,7 +739,7 @@
       {
         "from": "cyzymv3",
         "to": "ysash4u",
-        "as": "return"
+        "as": "value"
       },
       {
         "from": "v2fv739",

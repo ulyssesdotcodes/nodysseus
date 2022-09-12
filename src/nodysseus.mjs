@@ -209,6 +209,8 @@ const createProxy = (run_with_val, input, graphid, graph_input_value) => {
                 return false;
             } else if (prop === "_graph_input_value") {
                 return graph_input_value;
+            } else if (prop === "_update_args") {
+                return (args) => createProxy(run_with_val, input, graphid, {...graph_input_value, ...(args ?? {})})
             }
 
 
@@ -365,43 +367,18 @@ const node_value = (node) => {
 }
 
 const mockcombined = (data, graph_input_value) => {
-    // if(!data.__args){
-    //     data.__args = graph_input_value;
-    //     // data._needsresolve = true;
-    // }
     data.__args = graph_input_value
     return data;
-    // TODO: remove after we're sure this works
-    // return Object.assign({}, graph_input_value, data);
-    // return new Proxy(data, {
-    //     get: (something, prop) => {
-    //         if(data.hasOwnProperty(prop) || prop === "_Proxy" || prop === "then" || prop === "__args" || prop === "_needsresolve") {
-    //             return data[prop];
-    //         }
-
-    //         return graph_input_value[prop]
-    //     },
-    //     ownKeys: (_) => {
-    //         const dkeys = Reflect.ownKeys(data);
-    //         return dkeys.concat(Reflect.ownKeys(graph_input_value).filter(k => !dkeys.includes(k)));
-    //     },
-    //     getOwnPropertyDescriptor: (target, prop) => {
-
-    //         const descriptor = Reflect.getOwnPropertyDescriptor(data, prop);
-
-    //         return descriptor || Reflect.getOwnPropertyDescriptor(graph_input_value, prop);
-    //     }
-    // })
 }
 
-const node_nodes = (node, node_ref, graph_input_value, data, full_lib, graph, inputs) => {
+const node_nodes = (node, node_ref, graph_input_value, data, full_lib, graph, context_in_scope, inputs) => {
     const outid = graph.id + "/" + node.id;
-    const combined_data_input = typeof graph_input_value === 'object' && !Array.isArray(graph_input_value) && data
+    const combined_data_input = node.ref && !context_in_scope ? data
+        : typeof graph_input_value === 'object' && !Array.isArray(graph_input_value) && data
         ? mockcombined(data, graph_input_value)
         : inputs.length > 0
             ? data
             : graph_input_value;
-
 
     const node_graph = Object.assign({}, node, {
         id: outid,
@@ -415,7 +392,8 @@ const node_nodes = (node, node_ref, graph_input_value, data, full_lib, graph, in
 
     combined_data_input.result = full_lib.no.runtime.get_result(node_graph);
     full_lib.no.runtime.set_parent(node_graph, graph);
-    return run_with_val_full(node_graph, full_lib, node_ref.out || 'out', combined_data_input)
+
+    return run_with_val_full(node_graph, full_lib, node_ref.out || 'out', combined_data_input, context_in_scope)
 }
 
 const node_script = (node, node_ref, data, full_lib, graph, inputs, graph_input_value) => {
@@ -445,7 +423,7 @@ const node_script = (node, node_ref, data, full_lib, graph, inputs, graph_input_
 }
 
 const node_extern = (node, node_ref, node_id, data, full_lib, graph, graph_input_value) => {
-    const extern = nodysseus_get(full_lib, node_ref.extern);
+    const extern = nodysseus_get(full_lib.extern, node.ref === "extern" ? node.value : node_ref.value);
     const args = extern.args.reduce((acc, arg) => {
         let newval;
         if (arg === '_node') {
@@ -461,7 +439,7 @@ const node_extern = (node, node_ref, node_id, data, full_lib, graph, graph_input
             newval = mockcombined(data, graph_input_value) ;
             newval._needsresolve = true;
         } else {
-            newval = data[arg];
+            newval = data[arg] ?? nodysseus_get(graph_input_value, arg)
         }
         if(extern.resolve !== false){
             newval = resolve(newval)
@@ -556,28 +534,27 @@ const tryrun = (input, node_ref, graph, graph_input_value, full_lib) => {
     }
 }
 
-const run_with_val_full = (graph, full_lib, node_id, graph_input_value) => {
+const run_with_val_full = (graph, full_lib, node_id, graph_input_value, include_context) => {
+    const cache_args = full_lib.no.runtime.get_args(graph);
+    const result = full_lib.no.runtime.get_result(graph);
+
+    if(cache_args) {
+        Object.assign(graph_input_value, cache_args, result ? {result} : {});
+    }
+
+    let node = full_lib.no.runtime.get_node(graph, node_id);
+
+    if (node === undefined) {
+        throw new Error(`Undefined node_id ${node_id}`)
+    }
     try {
-        const cache_args = full_lib.no.runtime.get_args(graph);
-        const result = full_lib.no.runtime.get_result(graph);
-
-        if(cache_args) {
-            Object.assign(graph_input_value, cache_args, result ? {result} : {});
-        }
-
-
-        let node = full_lib.no.runtime.get_node(graph, node_id);
-
-        if (node === undefined) {
-            throw new Error(`Undefined node_id ${node_id}`)
-        }
 
         if(full_lib.no.runtime.get_parent(graph) === undefined) {
             full_lib.no.runtime.publish('noderun', {node_id: node_id, graph: graph})
         }
 
         if (node.ref === "arg") {
-            return full_lib.utility.arg.fn(node, graph, graph_input_value);
+            return full_lib.extern.arg.fn(node, graph, graph_input_value);
         }
 
         if (node.value !== undefined && !node.script && !node.ref && !node.nodes) {
@@ -602,6 +579,7 @@ const run_with_val_full = (graph, full_lib, node_id, graph_input_value) => {
         const ref = (node.ref && node.ref.node_ref) || typeof node.ref === 'string' ? node.ref : undefined;
         if (ref) {
             node_ref = full_lib.no.runtime.get_ref(graph, ref);
+
             if (!node_ref) {
                 throw new Error(`Unable to find ref ${ref} for node ${node.name || node.id}`)
             }
@@ -609,12 +587,12 @@ const run_with_val_full = (graph, full_lib, node_id, graph_input_value) => {
             node_ref = node;
         }
 
-        // const input_data_map = new Map();
         const [data, _needsresolve] = create_data(inputs, node_ref, graph, graph_input_value, full_lib);
 
         if (node_ref.nodes || node_ref.script) {
+            // refs have lexical scope context unless they're the first node called
             const res = node_ref.nodes 
-                ? node_nodes(node, node_ref, graph_input_value, data, full_lib, graph, false, inputs) 
+                ? node_nodes(node, node_ref, node_ref === undefined ? graph_input_value : {}, {...data, output: nodysseus_get(data, 'output') ?? nodysseus_get(graph_input_value, 'output')}, full_lib, graph, include_context, inputs) 
                 : node_script(node, node_ref, data, full_lib, graph, inputs, graph_input_value)
 
             if (typeof res === 'object' && !!res && !res._Proxy && !Array.isArray(res) && Object.keys(res).length > 0) {
@@ -626,8 +604,8 @@ const run_with_val_full = (graph, full_lib, node_id, graph_input_value) => {
             }
 
             return res;
-        } else if (node_ref.extern) {
-            return node_extern(node, node_ref, node_id, data, full_lib, graph, graph_input_value);
+        } else if (node.ref === "extern" || node_ref.ref === "extern") {
+            return node_extern(node, node_ref, node_id, data, full_lib, graph, include_context ? graph_input_value : {output: nodysseus_get(graph_input_value, 'output')});
         }
 
         return node_data(data);
@@ -658,7 +636,7 @@ const run_with_val_full = (graph, full_lib, node_id, graph_input_value) => {
 
 const run_with_val = (graph, full_lib) => node_id => (graph_input_value) => run_with_val_full(graph, full_lib, node_id, graph_input_value);
 
-const executeGraph = ({ graph, lib }) => {
+const executeGraph = ({ graph, lib, output }) => {
     const full_lib = lib ? lib.no ? lib : {...nolib, ...lib} : nolib;
     if(typeof graph === "string") {
         graph = full_lib.no.runtime.get_graph(graph);
@@ -672,7 +650,7 @@ const executeGraph = ({ graph, lib }) => {
         throw new Error(`Graph has no nodes! in: ${graph.in} out: ${graph.out}`)
     }
 
-    return (node_id) => (graph_input_value) => resolve(run_with_val_full(graph, full_lib, node_id, graph_input_value));
+    return (node_id) => (graph_input_value) => resolve(run_with_val_full(graph, full_lib, node_id, graph_input_value, true));
 }
 
 //////////
@@ -777,9 +755,9 @@ const objToGraph = (obj, path) => Object.entries(obj)
     ).reduce((acc, n) => ({
         nodes: acc.nodes.concat(n[1].nodes || [])
             .concat([Object.assign({ id: path ? `${path}.${n[0]}` : n[0], name: n[0] },
-                n[1].hasOwnProperty('value')
+                n[1]?.hasOwn?.('value')
                     ? { value: n[1].value }
-                    : n[1].hasOwnProperty('_value')
+                    : n[1]?.hasOwn?.('_value')
                         ? { value: n[1]._value }
                         : {})]),
         edges: acc.edges.concat(n[1].edges || []).concat(path ? [{ to: path, from: `${path}.${n[0]}` }] : [])
@@ -809,41 +787,6 @@ const base_node = node => node.ref || node.extern ? ({id: node.id, value: node.v
 const base_graph = graph => ({id: graph.id, value: graph.value, name: graph.name, nodes: graph.nodes, edges: graph.edges, out: graph.out})
 
 const nolib = {
-    just: {
-        get: {
-            args: ['_graph', 'target', 'path', 'def'],
-            fn: (graph, target, path, def) => {
-                return nodysseus_get(
-                    target && target._Proxy ? target._value : target, 
-                    path && path._Proxy ? path._value : (graph.value || path), 
-                    def && def._Proxy ? def._value : def
-                );
-            },
-        },
-        set: {
-            args: ['target', 'path', 'value', '_node', '_graph_input_value'],
-            resolve: false,
-            fn: (target, path, value, node, _args) => {
-                path = resolve(path)
-                while(target && target._Proxy) {
-                    target = target._value
-                }
-                const keys = (node.value || path).split('.'); 
-                const check = (o, v, k) => k.length === 1 
-                    ? {...o, [k[0]]: v, _needsresolve: true} 
-                    : o.hasOwnProperty(k[0]) 
-                    ? {...o, [k[0]]: check(o[k[0]], v, k.slice(1)), _needsresolve: true} 
-                    : o; 
-                return value !== undefined && (ispromise(value) || ispromise(target) 
-                    ? Promise.all([Promise.resolve(value), Promise.resolve(target)]).then(vt => vt[1] !== undefined && check(vt[1], vt[0], keys)) 
-                    : check(target, value, keys))
-            },
-        },
-        set_mutable: {
-            args: ['target', 'path', 'value', '_node'],
-            fn: (target, path, value, node) => { set(target, node.value || path, value); return target }
-        },
-    },
     no: {
         executeGraphValue: ({ graph, lib }) => executeGraph({ graph, lib })(graph.out),
         executeGraphNode: ({ graph, lib }) => executeGraph({ graph, lib }),
@@ -1252,7 +1195,24 @@ const nolib = {
             }
         })()
     },
-    utility: {
+    extern: {
+        return: {
+            resolve: false,
+            args: ['output', 'value', 'display', 'subscribe', 'argslist', 'args', '_node', '_graph', '_graph_input_value', '_lib'],
+            fn: (output, value, display, subscribe, argslist, args, _node, _graph, _args, _lib) => {
+                output = resolve(output);
+                const runedge = output ?? 'value';
+                const edgemap = {value, display, subscribe, argslist};
+
+                // don't apply inner args on root returns
+                // output only applies to the first return
+                let edgeval = _graph.out === _node.id && _lib.no.runtime.get_parent(_graph) 
+                    ? edgemap[runedge]?._update_args({output: undefined})
+                    : edgemap[runedge]?._update_args({...args, output: undefined});
+
+                return resolve(edgeval);
+            }
+        },
         compare,
         eq: ({ a, b }) => a === b,
         arg: {
@@ -1281,9 +1241,46 @@ const nolib = {
                     : undefined
             },
         },
-        liftarraypromise: (array) => {
-            const isarraypromise = array.reduce((acc, v) => acc || ispromise(v), false);
-            return isarraypromise ? Promise.all(array) : array;
+        get: {
+            args: ['_graph', 'target', 'path', 'def'],
+            fn: (graph, target, path, def) => {
+                return nodysseus_get(
+                    target && target._Proxy ? target._value : target, 
+                    path && path._Proxy ? path._value : (graph.value || path), 
+                    def && def._Proxy ? def._value : def
+                );
+            },
+        },
+        set: {
+            args: ['target', 'path', 'value', '_node', '_graph_input_value'],
+            resolve: false,
+            fn: (target, path, value, node, _args) => {
+                path = resolve(path)
+                while(target && target._Proxy) {
+                    target = target._value
+                }
+                const keys = (node.value || path).split('.'); 
+                const check = (o, v, k) => k.length === 1 
+                    ? {...o, [k[0]]: v, _needsresolve: true} 
+                    : o?.hasOwn?.(k[0]) 
+                    ? {...o, [k[0]]: check(o[k[0]], v, k.slice(1)), _needsresolve: true} 
+                    : o; 
+                return value !== undefined && (ispromise(value) || ispromise(target) 
+                    ? Promise.all([Promise.resolve(value), Promise.resolve(target)]).then(vt => vt[1] !== undefined && check(vt[1], vt[0], keys)) 
+                    : check(target, value, keys))
+            },
+        },
+        set_mutable: {
+            args: ['target', 'path', 'value', '_node'],
+            fn: (target, path, value, node) => { set(target, node.value || path, value); return target }
+        },
+        liftarraypromise: {
+            args: ['array'],
+            resolve: true,
+            fn: (array) => {
+                const isarraypromise = array.reduce((acc, v) => acc || ispromise(v), false);
+                return isarraypromise ? Promise.all(array) : array;
+            }
         },
         script: {
             args: ['_node', '_node_inputs', '_graph', '_lib', "_graph_input_value"],
@@ -1421,10 +1418,13 @@ const nolib = {
             args: ['target', 'path', 'fn', '_node', '_lib', '_graph_input_value'],
             resolve: false,
             fn: (target, path, fn, node, _lib, args) => {
+                while(target?._Proxy) {
+                    target = target._value;
+                }
                 const keys = (node.value || path).split('.'); 
                 const check = (o, fn, k) => k.length === 1 
                     ? {...o, [k[0]]: _lib.no.runGraph(fn._graphid, fn._nodeid, {...args, value: o[k[0]]}), _needsresolve: true} 
-                    : o.hasOwnProperty(k[0]) 
+                    : o?.hasOwn?.(k[0]) 
                     ? {...o, [k[0]]: check(o[k[0]], fn, k.slice(1)), _needsresolve: true} 
                     : o; 
                 return check(target, fn, keys)
@@ -1517,12 +1517,12 @@ const add_default_nodes_and_edges = g => ({
         .concat(generic.nodes)
 })
 
-const runGraph = (graph, node, args, lib) => {
+const runGraph = (graph, node, args, lib ) => {
     if(typeof graph === "object") {
         nolib.no.runtime.update_graph(graph.graph ?? graph)
     }
 
-    return nolib.no.runGraph(graph, node, args, lib);
+    return nolib.no.runGraph(graph, node, args, lib );
 }
 
 export { nolib, runGraph, objToGraph, bfs, calculateLevels, compare, hashcode, add_default_nodes_and_edges, ispromise, resolve, NodysseusError, base_graph, base_node, resfetch };

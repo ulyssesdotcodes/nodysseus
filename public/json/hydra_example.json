@@ -146,7 +146,7 @@
           {
             "from": "dfk63hb",
             "to": "uptw8ed",
-            "as": "return"
+            "as": "value"
           },
           {
             "from": "bc9c7g4",
@@ -296,7 +296,7 @@
       {
         "from": "lj5o68q",
         "to": "main/out",
-        "as": "return"
+        "as": "value"
       }
     ],
     "out": "main/out"

@@ -10,12 +10,11 @@ export const flattenNode = (graph, levels = -1) => {
     const prefix_name = graph.id ? `${graph.name}/` : '';
 
     return graph.nodes
-        .map(n => Object.assign({}, n, { id: `${prefix}${n.id}` }))
         .map(g => flattenNode(g, levels - 1))
         .reduce((acc, n) => Object.assign({}, acc, {
             flat_nodes: acc.flat_nodes.concat(n.flat_nodes ? n.flat_nodes.flat() : []).map(fn => {
                 // adjust for easy graph renaming
-                if ((fn.id === prefix + (graph.out || "out")) && graph.name) {
+                if ((fn.id === (graph.out || "out")) && graph.name) {
                     fn.name = graph.name;
                 }
                 return fn
@@ -28,10 +27,8 @@ export const flattenNode = (graph, levels = -1) => {
                         e :
                 e).flat().concat(n.flat_edges).filter(e => e !== undefined)
         }), Object.assign({}, graph, {
-            flat_nodes: graph.nodes
-                .map(n => Object.assign({}, n, { id: `${prefix}${n.id}` })),
+            flat_nodes: graph.nodes,
             flat_edges: graph.edges
-                .map(e => ({ ...e, from: `${prefix}${e.from}`, to: `${prefix}${e.to}` }))
         }));
 }
 
@@ -48,20 +45,22 @@ export const expand_node = (data) => {
 
     const flattened = flattenNode(node, 1);
 
+    const new_id_map = flattened.flat_nodes.reduce((acc, n) => nolib.no.runtime.get_node(data.display_graph, n.id) ? (acc[n.id] = create_randid(), acc) : n, {})
+
     const new_display_graph = {
         nodes: data.display_graph.nodes
             .filter(n => n.id !== node_id)
-            .concat(flattened.flat_nodes),
+            .concat(flattened.flat_nodes.map(n => new_id_map[n.id] ? Object.assign({}, n, new_id_map[n.id]) : n)),
         edges: data.display_graph.edges
             .map(e => ({
                 ...e,
-                from: e.from === node_id ? node.id + "/" + (node.out || 'out') : e.from,
-                to: e.to === node_id ? node.id + "/" + (node.in || 'in') : e.to
+                from: new_id_map[e.from] ?? e.from,
+                to: new_id_map[e.to] ?? e.to
             }))
             .concat(flattened.flat_edges)
     };
 
-    return { display_graph: { ...data.display_graph, ...new_display_graph }, selected: [node_id + '/' + (node.out || 'out')] };
+    return { display_graph: { ...data.display_graph, ...new_display_graph }, selected: [new_id_map[node.out] ?? node.out ?? 'out'] };
 }
 
 export const contract_node = (data, keep_expanded = false) => {
@@ -234,8 +233,9 @@ export const node_args = (nolib, ha, graph, node_id) => {
 
     const argslist_path = node_ref?.nodes && nolib.no.runtime.get_path(node_ref, "argslist");
 
-    return [...new Set(argslist_path ? nolib.no.runGraph(node_ref, argslist_path) : (node_ref?.extern 
-            ? nolib.just.get.fn({}, nolib, node_ref.extern).args
+    return [...new Set(argslist_path ? nolib.no.runGraph(node_ref, argslist_path) : (
+        node_ref?.ref === "extern" 
+            ? nolib.extern.get.fn({}, nolib.extern, node_ref?.value).args
             : node_ref?.nodes?.filter(n => 
                 n.ref === "arg" 
                 && n.type !== "internal" 
