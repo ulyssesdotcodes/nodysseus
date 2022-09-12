@@ -390,7 +390,6 @@ const node_nodes = (node, node_ref, graph_input_value, data, full_lib, graph, co
 
     full_lib.no.runtime.update_inputdata(node_graph, {...combined_data_input});
 
-    combined_data_input.result = full_lib.no.runtime.get_result(node_graph);
     full_lib.no.runtime.set_parent(node_graph, graph);
 
     return run_with_val_full(node_graph, full_lib, node_ref.out || 'out', combined_data_input, context_in_scope)
@@ -1153,13 +1152,14 @@ const nolib = {
                 remove_graph_listeners,
                 publish: (event, data) => publish(event, data),
                 update_result: (graph, result) => {
-                    const old = resultsdb.by("id", graph.id);
+                    const graphid = typeof "graph" === "string" ? graph : graph.id;
+                    const old = resultsdb.by("id", graphid);
                     if(ispromise(result)){
-                        result.then(r => nolib.no.runtime.update_result(graph, r))
+                        result.then(r => nolib.no.runtime.update_result(graphid, r))
                     } else if(old){
                         resultsdb.update(Object.assign(old, {data: result}))
                     } else {
-                        resultsdb.insert({id: graph.id, data: result})
+                        resultsdb.insert({id: graphid, data: result})
                     }
                 },
                 get_result: (graph) => {
@@ -1206,9 +1206,19 @@ const nolib = {
 
                 // don't apply inner args on root returns
                 // output only applies to the first return
-                let edgeval = _graph.out === _node.id && _lib.no.runtime.get_parent(_graph) 
-                    ? edgemap[runedge]?._update_args({output: undefined})
-                    : edgemap[runedge]?._update_args({...args, output: undefined});
+                let edgeval = edgemap[runedge]?._update_args(Object.assign({}, ...[
+                        {
+                            output: undefined,
+                            result: _lib.no.runtime.get_result(`${_graph.id}/${_node.id}`)
+                        },
+                        (_graph.out !== _node.id || !_lib.no.runtime.get_parent(_graph)) && {...args, __args: _args},
+                    ].filter(v => v)))
+                
+
+                if(runedge === 'value' && _graph.out === _node.id) {
+                    const ret = resolve(edgeval);
+                    _lib.no.runtime.update_result(_graph.id, ret)
+                }
 
                 return resolve(edgeval);
             }
@@ -1491,9 +1501,7 @@ const nolib = {
 
                 return props;
             }
-        }
-    },
-    JSON: {
+        },
         stringify: {
             args: ['object', 'spacer'],
             resolve: true,
