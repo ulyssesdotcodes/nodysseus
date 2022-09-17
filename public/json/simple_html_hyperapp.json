@@ -1,10 +1,10 @@
 {
     "in": "main/in",
-    "out": "main/out",
+    "out": "out",
     "id": "simple_html_hyperapp",
     "nodes": [
         {
-            "id": "main/out",
+            "id": "out",
             "args": [
                 "value"
             ]
@@ -308,166 +308,6 @@
                     "from": "item",
                     "to": "out",
                     "as": "item"
-                }
-            ]
-        },
-        {
-            "id": "filter",
-            "name": "filter",
-            "in": "74n1jfm",
-            "out": "lahq5z4",
-            "description": "Filters an array using `fn: (element) => boolean`",
-            "nodes": [
-                {
-                    "id": "lahq5z4",
-                    "args": [],
-                    "name": "filter/out",
-                    "script": "const filter_fn = _lib.no.executeGraphNode({graph: fn.graph ?? _graph, lib: _lib})(typeof fn === 'string' ? fn : fn.fn); return arr.filter(element => filter_fn(Object.assign(fn.args ?? {}, {element})))"
-                },
-                {
-                    "id": "x2sz5kb",
-                    "args": [],
-                    "ref": "arg",
-                    "value": "arr"
-                },
-                {
-                    "id": "fn",
-                    "ref": "arg",
-                    "value": "fn"
-                },
-                {
-                    "id": "74n1jfm",
-                    "args": [],
-                    "name": "filter/in"
-                }
-            ],
-            "edges": [
-                {
-                    "from": "x2sz5kb",
-                    "to": "lahq5z4",
-                    "as": "arr"
-                },
-                {
-                    "from": "fn",
-                    "to": "lahq5z4",
-                    "as": "fn"
-                },
-                {
-                    "from": "74n1jfm",
-                    "to": "lahq5z4",
-                    "as": "_",
-                    "type": "ref"
-                }
-            ]
-        },
-        {
-            "id": "default",
-            "nodes": [
-                {
-                    "id": "in"
-                },
-                {
-                    "id": "value",
-                    "ref": "arg",
-                    "value": "value"
-                },
-                {
-                    "id": "otherwise",
-                    "ref": "arg",
-                    "value": "otherwise"
-                },
-                {
-                    "id": "data"
-                },
-                {
-                    "id": "out",
-                    "script": "return value ?? data['otherwise']"
-                }
-            ],
-            "edges": [
-                {
-                    "from": "in",
-                    "to": "out",
-                    "as": "_args",
-                    "type": "ref"
-                },
-                {
-                    "from": "value",
-                    "to": "out",
-                    "as": "value"
-                },
-                {
-                    "from": "otherwise",
-                    "to": "data",
-                    "as": "otherwise"
-                },
-                {
-                    "from": "data",
-                    "to": "out",
-                    "as": "data"
-                }
-            ]
-        },
-        {
-            "id": "switch",
-            "args": [
-                "data",
-                "input"
-            ],
-            "nodes": [
-                {
-                    "id": "in"
-                },
-                {
-                    "id": "args",
-                    "ref": "arg",
-                    "value": "_args"
-                },
-                {
-                    "id": "out",
-                    "ref": "get"
-                },
-                {
-                    "id": "input",
-                    "ref": "arg",
-                    "value": "input"
-                },
-                {
-                    "id": "otherwise",
-                    "ref": "arg",
-                    "value": "otherwise"
-                },
-                {
-                    "id": "string_input",
-                    "script": "return new String(input).toString()"
-                }
-            ],
-            "edges": [
-                {
-                    "from": "in",
-                    "to": "out",
-                    "as": "_",
-                    "type": "ref"
-                },
-                {
-                    "from": "args",
-                    "to": "out",
-                    "as": "target"
-                },
-                {
-                    "from": "input",
-                    "to": "string_input",
-                    "as": "input"
-                },
-                {
-                    "from": "string_input",
-                    "to": "out",
-                    "as": "path"
-                },
-                {
-                    "from": "otherwise",
-                    "to": "out",
-                    "as": "otherwise"
                 }
             ]
         },
@@ -2712,7 +2552,7 @@
         },
         {
             "from": "63tva08",
-            "to": "main/out",
+            "to": "out",
             "as": "display"
         },
         {
@@ -2727,7 +2567,7 @@
         },
         {
             "from": "main/in",
-            "to": "main/out",
+            "to": "out",
             "as": "args",
             "type": "ref"
         },

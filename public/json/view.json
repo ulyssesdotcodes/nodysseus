@@ -1,9 +1,9 @@
 {
-    "out": "main/out",
+    "out": "out",
     "id": "view",
     "nodes": [
         {
-            "id": "main/out",
+            "id": "out",
             "ref": "sequence"
         },
         {
@@ -89,7 +89,7 @@
         },
         {
             "id": "7alogud",
-            "script": "const node_set = new Set();\nconst nodes = data.display_graph.nodes.filter(n => n.id !== 'main/out');\nnodes.forEach(n => node_set.add(n.id));\n\nreturn {state: {\n  ...state, \n  remote_dg: data.display_graph,\n  display_graph: {\n    ...state.display_graph, \n    nodes: state.display_graph.nodes\n      .filter(n => !node_set.has(n.id))\n      .concat(nodes), \n    edges: state.display_graph.edges\n      .filter(e => !node_set.has(e.from))\n      .concat(\n        data.display_graph.edges\n          .map(e => e.to === 'main/out' ? {...e, to: state.remote_root} : e)) \n  }\n}};"
+            "script": "const node_set = new Set();\nconst nodes = data.display_graph.nodes.filter(n => n.id !== 'out');\nnodes.forEach(n => node_set.add(n.id));\n\nreturn {state: {\n  ...state, \n  remote_dg: data.display_graph,\n  display_graph: {\n    ...state.display_graph, \n    nodes: state.display_graph.nodes\n      .filter(n => !node_set.has(n.id))\n      .concat(nodes), \n    edges: state.display_graph.edges\n      .filter(e => !node_set.has(e.from))\n      .concat(\n        data.display_graph.edges\n          .map(e => e.to === 'out' ? {...e, to: state.remote_root} : e)) \n  }\n}};"
         },
         {
             "id": "9ffnkbh",
@@ -102,7 +102,7 @@
         },
         {
             "id": "d3q5lys",
-            "script": "const selected_changed = !!data.state.find(d => d.path[0] === 'selected');\n\nconsole.log(data);\n\n_lib.just.diffApply(state, data.state.filter(d => d.path[0] !== 'display_graph'));\n\nconst node_set = new Set();\nstate.remote_dg.nodes.forEach(n => node_set.add(n.id));\nnode_set.delete('main/out');\n\n\n\n_lib.just.diffApply(state.remote_dg, data.display_graph);\n\nconst nodes = state.remote_dg.nodes.filter(n => n.id !== 'main/out');\nnodes.forEach(n => node_set.add(n.id));\n\nconsole.log(data)\n\nconst new_state = {\n  ...state,\n  display_graph: {\n    ...state.display_graph, \n    nodes: state.display_graph.nodes\n      .filter(n => !node_set.has(n.id))\n      .concat(nodes), \n    edges: state.display_graph.edges\n      .filter(e => !node_set.has(e.from))\n      .concat(\n        state.remote_dg.edges\n          .map(e => e.to === 'main/out' ? {...e, to: state.remote_root} : e)) \n  }\n};\n\nreturn {state: new_state, effects: [selected_changed && [state.panzoom_selected_effect, state], [state.update_hyperapp]]}"
+            "script": "const selected_changed = !!data.state.find(d => d.path[0] === 'selected');\n\nconsole.log(data);\n\n_lib.just.diffApply(state, data.state.filter(d => d.path[0] !== 'display_graph'));\n\nconst node_set = new Set();\nstate.remote_dg.nodes.forEach(n => node_set.add(n.id));\nnode_set.delete('out');\n\n\n\n_lib.just.diffApply(state.remote_dg, data.display_graph);\n\nconst nodes = state.remote_dg.nodes.filter(n => n.id !== 'out');\nnodes.forEach(n => node_set.add(n.id));\n\nconsole.log(data)\n\nconst new_state = {\n  ...state,\n  display_graph: {\n    ...state.display_graph, \n    nodes: state.display_graph.nodes\n      .filter(n => !node_set.has(n.id))\n      .concat(nodes), \n    edges: state.display_graph.edges\n      .filter(e => !node_set.has(e.from))\n      .concat(\n        state.remote_dg.edges\n          .map(e => e.to === 'out' ? {...e, to: state.remote_root} : e)) \n  }\n};\n\nreturn {state: new_state, effects: [selected_changed && [state.panzoom_selected_effect, state], [state.update_hyperapp]]}"
         },
         {
             "id": "jmbm8u1",
@@ -3087,7 +3087,7 @@
     ],
     "edges": [
         {
-            "to": "main/out",
+            "to": "out",
             "from": "z7fp8h0",
             "as": "arg1"
         },
@@ -3112,12 +3112,12 @@
             "as": "url"
         },
         {
-            "to": "main/out",
+            "to": "out",
             "from": "niw8vaa",
             "as": "args"
         },
         {
-            "to": "main/out",
+            "to": "out",
             "from": "wooqzi8",
             "as": "arg2"
         },

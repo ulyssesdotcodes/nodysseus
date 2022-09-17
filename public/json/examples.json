@@ -1,11 +1,11 @@
 [
     {
         "in": "main/in",
-        "out": "main/out",
+        "out": "out",
         "id": "hyperapp_state",
         "nodes": [
             {
-                "id": "main/out",
+                "id": "out",
                 "script": "console.log(\"state\")\nconsole.log(state);\nconsole.log(\"prev\")\nconsole.log(prev);\nreturn {state, display};"
             },
             {
@@ -157,13 +157,13 @@
         "edges": [
             {
                 "from": "main/in",
-                "to": "main/out",
+                "to": "out",
                 "as": "args",
                 "type": "ref"
             },
             {
                 "from": "63tva08",
-                "to": "main/out",
+                "to": "out",
                 "as": "display"
             },
             {
@@ -243,7 +243,7 @@
             },
             {
                 "from": "tznmg79",
-                "to": "main/out",
+                "to": "out",
                 "as": "state"
             },
             {
@@ -258,7 +258,7 @@
             },
             {
                 "from": "xev2phu",
-                "to": "main/out",
+                "to": "out",
                 "as": "prev"
             },
             {
@@ -300,11 +300,11 @@
     },
     {
         "in": "main/in",
-        "out": "main/out",
+        "out": "out",
         "id": "promises",
         "nodes": [
             {
-                "id": "main/out",
+                "id": "out",
                 "args": [
                     "value"
                 ]
@@ -1092,13 +1092,13 @@
         "edges": [
             {
                 "from": "main/in",
-                "to": "main/out",
+                "to": "out",
                 "as": "args",
                 "type": "ref"
             },
             {
                 "from": "63tva08",
-                "to": "main/out",
+                "to": "out",
                 "as": "display"
             },
             {
@@ -1128,12 +1128,12 @@
             },
             {
                 "from": "xev2phu",
-                "to": "main/out",
+                "to": "out",
                 "as": "prev"
             },
             {
                 "from": "el0app0",
-                "to": "main/out",
+                "to": "out",
                 "as": "state"
             },
             {

@@ -166,7 +166,7 @@
         ]
       },
       {
-        "id": "main/out",
+        "id": "out",
         "value": "",
         "name": "export",
         "ref": "return"
@@ -175,7 +175,7 @@
     "edges": [
       {
         "from": "5a6pljw/5a6pljw",
-        "to": "main/out",
+        "to": "out",
         "as": "display"
       },
       {
@@ -215,7 +215,7 @@
       },
       {
         "from": "7nz84ut",
-        "to": "main/out",
+        "to": "out",
         "as": "args"
       },
       {
@@ -295,9 +295,9 @@
       },
       {
         "from": "lj5o68q",
-        "to": "main/out",
+        "to": "out",
         "as": "value"
       }
     ],
-    "out": "main/out"
+    "out": "out"
   }

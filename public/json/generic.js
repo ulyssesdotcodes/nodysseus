@@ -94,23 +94,29 @@
         ]
       },
       {
-        "id": "default",
-        "description": "Returns `value` if it's defined, if not then returns `otherwise`",
-        "nodes": [
-          { "id": "in" },
-          { "id": "value", "ref": "arg", "value": "value" },
-          { "id": "otherwise", "ref": "arg", "value": "otherwise" },
-          { "id": "def_otherwise", "ref": "script", "value": "return _graph.value ?? otherwise"},
-          { "id": "data" },
-          { "id": "out", "script": "return value ?? data['otherwise']" }
-        ],
-        "edges": [
-          { "from": "in", "to": "out", "as": "_args", "type": "ref" },
-          { "from": "value", "to": "out", "as": "value" },
-          { "from": "otherwise", "to": "def_otherwise", "as": "otherwise" },
-          { "from": "def_otherwise", "to": "data", "as": "otherwise" },
-          { "from": "data", "to": "out", "as": "data" }
-        ]
+        "fn": "choose",
+        "graph": {
+          "id": "default",
+          "description": "Returns `value` if it's defined, if not then returns `otherwise`",
+          "nodes": [
+            { "id": "value", "ref": "arg", "value": "value" },
+            { "id": "graph_value", "ref": "arg", "value": "_value" },
+            { "id": "otherwise", "ref": "arg", "value": "otherwise" },
+            { "id": "def_otherwise", "ref": "script", "value": "return _value ?? otherwise"},
+            { "id": "data" },
+            { "id": "choose", "ref": "script", "value": "return value ?? otherwise", "_value": "return value ?? data['otherwise']" },
+            { "id": "out"}
+          ],
+          "edges": [
+            { "from": "value", "to": "choose", "as": "value" },
+            { "from": "graph_value", "to": "def_otherwise", "as": "_value" },
+            { "from": "otherwise", "to": "def_otherwise", "as": "otherwise" },
+            { "from": "def_otherwise", "to": "data", "as": "otherwise" },
+            { "from": "data", "to": "_choose", "as": "data" },
+            { "from": "def_otherwise", "to": "choose", "as": "otherwise" },
+            { "from": "choose", "to": "out", "as": "value" }
+          ]
+        }
       },
       {
         "id": "switch",
@@ -262,13 +268,15 @@
       },
       {
         "id": "runnable",
-        "out": "out",
-        "nodes": [
+        "_out": "out",
+        "ref": "extern",
+        "value": "runnable",
+        "_nodes": [
           {"id": "fn", "ref": "arg", "value": "fn"},
           {"id": "unwrap_fn", "ref": "extern", "value": "unwrap_proxy"},
           {"id": "out", "ref": "script", "value": "return proxy"}
         ],
-        "edges": [
+        "_edges": [
           {"from": "fn", "to": "unwrap_fn", "as": "proxy"},
           {"from": "unwrap_fn", "to": "out", "as": "proxy"},
         ]
@@ -278,7 +286,7 @@
         "description": "Creates a function from the `fn` input.",
         "nodes": [
           {"id": "runnable", "ref": "arg", "value": "runnable"},
-          {"id": "out", "script":"return (fnargs) => _lib.no.runGraph(runnable.graph, runnable.fn, {...runnable.args, fnargs}, _lib)"}
+          {"id": "out", "script":"return (fnargs) => _lib.no.run(runnable.graph, runnable.fn, {...runnable.args, fnargs}, _lib)"}
         ],
         "edges": [
           {"from": "runnable", "to": "out", "as": "runnable"}
@@ -584,9 +592,9 @@
     {
       "id": "input_value",
       "description": "Displays the last `value` received. Will display \"undefined\" if this node has not been run.",
-      "out": "main/out",
+      "out": "out",
       "nodes": [
-        { "id": "main/out", "name": "input_value", "ref": "return" },
+        { "id": "out", "name": "input_value", "ref": "return" },
         { "id": "cfuymky", "value": "{\"a\": 1, \"b\": {\"c\": 2, \"d\": 3}}" },
         { "id": "4d8qcss", "ref": "html_text" },
         { "id": "rpys4rr", "value": "value", "ref": "arg" },
@@ -596,13 +604,13 @@
         { "id": "17pcf8z", "value": "2" },
       ],
       "edges": [
-        { "from": "5a6pljw", "to": "main/out", "as": "display" },
+        { "from": "5a6pljw", "to": "out", "as": "display" },
         { "from": "cfuymky", "to": "args", "as": "value" },
         { "from": "4d8qcss", "to": "5a6pljw", "as": "children" },
         { "from": "1znvqbi", "to": "qwz3ftj", "as": "object" },
         { "from": "17pcf8z", "to": "qwz3ftj", "as": "spacer" },
         { "from": "qwz3ftj", "to": "4d8qcss", "as": "text" },
-        { "from": "rpys4rr", "to": "main/out", "as": "value" }
+        { "from": "rpys4rr", "to": "out", "as": "value" }
       ],
     },
     {
@@ -616,7 +624,7 @@
         {"id": "data_log", "ref": "log"},
         {
           "id": "add_listener",
-          "script": "_lib.no.runtime.add_listener(event ?? _graph.value, 'evt-listener-' + _graph.id, (data) => { let update = true; if(onevent){ update = _lib.no.runGraph(onevent.graph, onevent.fn, {...onevent.args, data, prev}); } if(update){ _lib.no.runtime.update_args(_graph, {_data: data.data}) } }, false); return _lib.no.runtime.get_args(_graph)['_data'];"
+          "script": "_lib.no.runtime.add_listener(event ?? _graph.value, 'evt-listener-' + _graph.id, (data) => { let update = true; if(onevent){ update = _lib.no.run(onevent.graph, onevent.fn, {...onevent.args, data, prev}); } if(update){ _lib.no.runtime.update_args(_graph, {_data: data.data}) } }, false); return _lib.no.runtime.get_args(_graph)['_data'];"
         },
         { "id": "out", "ref": "default"}
       ],
@@ -639,7 +647,7 @@
         {"id": "publish_event", "ref": "event_publisher"},
         {"id": "publish_event_runnable", "ref": "runnable"},
         {"id": "onmessageseq", "ref": "sequence"},
-        {"id": "out", "script": "const bc = new BroadcastChannel('events'); bc.onmessage = e => { _lib.no.runGraph(onmessage.graph, onmessage.fn, {message: e}, _lib); }; return bc;"}
+        {"id": "out", "script": "const bc = new BroadcastChannel('events'); bc.onmessage = e => { _lib.no.run(onmessage.graph, onmessage.fn, {message: e}, _lib); }; return bc;"}
       ],
       "edges": [
         {"from": "message_data", "to": "publish_event", "as": "value"},
@@ -658,7 +666,7 @@
         { "id": "runnable", "ref": "arg", "value": "runnable" },
         {
           "id": "out",
-          "script": "return _lib.no.runGraph(runnable.graph, runnable.fn, runnable.args, _lib)"
+          "script": "return _lib.no.run(runnable.graph, runnable.fn, runnable.args, _lib)"
         }
       ],
       "edges": [
@@ -674,7 +682,7 @@
         { "id": "args", "ref": "arg", "value": "_args" },
         {
           "id": "out",
-          "script": "return (fnargs) => _lib.no.runGraph(runnable.graph, runnable.fn, Object.assign({}, args, {runnable: undefined}, runnable.args, typeof fnargs === 'object' ? fnargs : {}), _lib)"
+          "script": "return (fnargs) => _lib.no.run(runnable.graph, runnable.fn, Object.assign({}, args, {runnable: undefined}, runnable.args, typeof fnargs === 'object' ? fnargs : {}), _lib)"
         }
       ],
       "edges": [
@@ -700,7 +708,7 @@
         {
           "id": "pdljod1",
           "name": "pdljod1",
-          "script": "return (previous, current, index, array) => _lib.no.runGraph(fn?.graph ?? _graph, fn?.fn ?? fn, Object.assign({}, args ?? {}, fn.args ?? {}, {previous, current, index, array, key: outer_key ? `${index}_${outer_key}` : `${index}`}), _lib);"
+          "script": "return (previous, current, index, array) => _lib.no.run(fn?.graph ?? _graph, fn?.fn ?? fn, Object.assign({}, args ?? {}, fn.args ?? {}, {previous, current, index, array, key: outer_key ? `${index}_${outer_key}` : `${index}`}), _lib);"
         },
         { "id": "2lvs5dj", "script": "return _graph", "name": "2lvs5dj" }
       ],
@@ -717,7 +725,7 @@
       ]
     },
     {
-      "id": "map",
+      "id": "_map",
       "description": "<a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map'>Aray.map</a> the `array` with `fn`. Arguments for `fn` are `element`, `index`, `array`, and a unique per nested loop `key`.",
       "name": "map",
       "in": "m3b5wg3",
@@ -734,7 +742,7 @@
         {
           "id": "pdljod1",
           "name": "pdljod1",
-          "script": "return (element, index, array) => _lib.no.runGraph(fn?.graph ?? _graph, fn?.fn ?? fn, Object.assign({}, args ?? {}, fn.args ?? {}, {element, index, array, key: outer_key ? `${index}_${outer_key}` : `${index}`}), _lib);"
+          "script": "return (element, index, array) => _lib.no.run(fn?.graph ?? _graph, fn?.fn ?? fn, Object.assign({}, args ?? {}, fn.args ?? {}, {element, index, array, key: outer_key ? `${index}_${outer_key}` : `${index}`}), _lib);"
         },
         { "id": "2lvs5dj", "script": "return _graph", "name": "2lvs5dj" }
       ],
@@ -752,7 +760,64 @@
       ]
     },
     {
+      "id": "map",
+      "out": "out",
+      "nodes": [
+        {"id": "object", "ref": "arg", "value": "array"},
+        {"id": "map_fn", "ref": "arg", "value": "fn"},
+        {"id": "element", "ref": "arg", "value": "element"},
+        {"id": "map_fn_args"},
+        {"id": "map_element_fn", "ref": "extern", "value": "ap"},
+        {"id": "currentValue", "ref": "arg", "value": "currentValue"},
+        {"id": "previousValue", "ref": "arg", "value": "previousValue"},
+        {"id": "append", "ref": "script", "value": "arr.push(value); return arr;"},
+        {"id": "initial", "value": "[]"},
+        {"id": "fold", "ref": "extern", "value": "fold"},
+        {"id": "out", "ref": "return"}
+      ],
+      "edges": [
+        {"from": "element", "to": "map_fn_args", "as": "element"},
+        {"from": "map_fn_args", "to": "map_element_fn", "as": "args"},
+        {"from": "map_fn", "to": "map_element_fn", "as": "fn"},
+        {"from": "currentValue", "to": "append", "as": "value"},
+        {"from": "previousValue", "to": "append", "as": "arr"},
+        {"from": "append", "to": "fold", "as": "fn"},
+        {"from": "object", "to": "fold", "as": "object"},
+        {"from": "initial", "to": "fold", "as": "initial"},
+        {"from": "fold", "to": "out", "as": "value"},
+      ]
+    },
+    {
       "id": "filter",
+      "out": "out",
+      "nodes": [
+        {"id": "object", "ref": "arg", "value": "array"},
+        {"id": "pred_fn", "ref": "arg", "value": "fn"},
+        {"id": "el_currentValue", "ref": "arg", "value": "currentValue"},
+        {"id": "pred_fn_args"},
+        {"id": "pred_element_fn", "ref": "extern", "value": "ap"},
+        {"id": "currentValue", "ref": "arg", "value": "currentValue"},
+        {"id": "previousValue", "ref": "arg", "value": "previousValue"},
+        {"id": "pred_append", "ref": "script", "value": "console.log('filtering array'); console.log(arr); console.log(pred); if(pred){ arr.push(value); } return arr;"},
+        {"id": "initial", "value": "[]"},
+        {"id": "fold", "ref": "extern", "value": "fold"},
+        {"id": "out", "ref": "return"}
+      ],
+      "edges": [
+        {"from": "el_currentValue", "to": "pred_fn_args", "as": "element"},
+        {"from": "pred_fn_args", "to": "pred_element_fn", "as": "args"},
+        {"from": "pred_fn", "to": "pred_element_fn", "as": "fn"},
+        {"from": "currentValue", "to": "pred_append", "as": "value"},
+        {"from": "previousValue", "to": "pred_append", "as": "arr"},
+        {"from": "pred_element_fn", "to": "pred_append", "as": "pred"},
+        {"from": "pred_append", "to": "fold", "as": "fn"},
+        {"from": "object", "to": "fold", "as": "object"},
+        {"from": "initial", "to": "fold", "as": "initial"},
+        {"from": "fold", "to": "out", "as": "value"},
+      ]
+    },
+    {
+      "id": "_filter",
       "description": "<a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter'>Aray.filter</a> the `array` with `fn`. Arguments for `fn` are `element`, `index`, `array`, and a unique per nested loop `key`.",
       "name": "filter",
       "in": "74n1jfm",
@@ -784,24 +849,22 @@
       "out": "out",
       "nodes": [
         { "id": "args", "ref": "arg", "value": "_args" },
-        { "id": "runnable_args", "ref": "arg", "value": "_args" },
-        { "id": "value_args", "ref": "arg", "value": "args", "type": "local" },
-        { "id": "context_args", "ref": "arg", "value": "_args" },
+        { "id": "value_args", "ref": "arg", "value": "args" },
         { "id": "merged_args", "ref": "merge_objects" },
         { "id": "args_path", "value": "args" },
         { "id": "seq_runnable_args", "ref": "delete" },
         { "name": "in", "id": "in" },
         { "id": "runnables_promise", "script": "return Promise.all(promises);" },
         { "id": "map_runnables", "ref": "map" },
-        {"id": "edge_in_runnables", "ref": "edge_in_argx"},
+        { "id": "edge_in_runnables", "ref": "arg", "value": "_args" },
         {
           "id": "runnables",
-          "script": "const runnables = argxrunnables.filter(r => r && (!r._Proxy || r._value) ).map(r => r._Proxy ? r._value : r).filter(r => r.hasOwnProperty('fn') && r.hasOwnProperty('graph')).map(r => ({...r, args: { ...r.args, ...(fn_args ?? {})}})); return runnables",
+          "script": "const runnables = Object.values(argxrunnables).filter(r => r && (!r._Proxy || r._value) ).map(r => r._Proxy ? r._value : r).filter(r => r.hasOwnProperty('fn') && r.hasOwnProperty('graph')).map(r => ({...r, args: { ...r.args, ...(fn_args ?? {})}})); return runnables",
         },
         { "id": "element", "ref": "arg", "value": "element", "type": "internal" },
         {
           "id": "map_fn",
-          "script": "return _lib.no.runGraph(runnable.graph, runnable.fn, runnable.args, _lib);"
+          "script": "return _lib.no.run(runnable.graph, runnable.fn, runnable.args, _lib);"
         },
         { "id": "map_fn_runnable", "ref": "runnable" },
         { "id": "out", "ref": "runnable", "name": "seq_runnable" }
@@ -811,14 +874,14 @@
         { "from": "args", "to": "runnables", "as": "args" },
         { "from": "element", "to": "map_fn", "as": "runnable" },
         { "from": "map_fn", "to": "map_fn_runnable", "as": "fn" },
-        { "from": "runnable_args", "to": "map_runnables", "as": "args" },
+        { "from": "value_args", "to": "map_runnables", "as": "args" },
         { "from": "runnables", "to": "map_runnables", "as": "array" },
         { "from": "map_fn_runnable", "to": "map_runnables", "as": "fn" },
         { "from": "map_runnables", "to": "runnables_promise", "as": "promises" },
         { "from": "map_runnables", "to": "out", "as": "fn" },
-        { "from": "context_args", "to": "merged_args", "as": "a0" },
+        { "from": "args", "to": "merged_args", "as": "a0" },
         { "from": "value_args", "to": "merged_args", "as": "a1" },
-        { "from": "merged_args", "to": "seq_runnable_args", "as": "target" },
+        { "from": "value_args", "to": "seq_runnable_args", "as": "target" },
         { "from": "args_path", "to": "seq_runnable_args", "as": "path" },
         { "from": "edge_in_runnables", "to": "runnables", "as": "argxrunnables" },
         { "from": "seq_runnable_args", "to": "runnables", "as": "fn_args" },
@@ -1134,58 +1197,59 @@
       ]
     },
     {
-      "id": "html_element",
-      "description": "An HTML Element. `children` is an array of html_element or html_text, `props` are the attributes for the html element as an object, `dom_type` (or this node's value) is the dom type, `memo` refers to <a target='_blank' href='https://github.com/jorgebucaran/hyperapp/blob/main/docs/api/memo.md'>hyperapp's memo</a>.",
-      "nodes": [
-        { "id": "in" },
-        { "id": "children", "ref": "arg", "value": "children" },
-        { "id": "props", "ref": "arg", "value": "props" },
-        { "id": "dom_type", "ref": "arg", "value": "dom_type" },
-        { "id": "memo", "ref": "arg", "value": "memo" },
-        { "id": "element", "ref": "arg", "value": "element" },
-        { "id": "div", "value": "div" },
-        { "id": "dom_type_value", "ref": "if"},
-        { "id": "graph_value", "ref": "script", "value": "return _graph.value"},
-        {"id": "filter_children_fn", "script": "return element?._Proxy ? element._value : element"},
-        {"id": "filter_children_fn_runnable", "ref": "runnable"},
-        {"id": "fill_children_fn", "script": "return element.el ?? element"},
-        {"id": "fill_children_fn_runnable", "ref": "runnable"},
-        {"id": "filter_children", "ref": "filter"},
-        {"id": "wrapped_children", "script": "return Array.isArray(children) ? children : [children]"},
-        {
-          "id": "fill_children",
-          "ref": "map",
-          "_script": "return children === undefined ? [] : children.length !== undefined ? children.map(c => _lib.no.resolve(c)).filter(c => !!c).map(c => c.el ?? c) : [children.el ?? children]"
-        },
-        { "id": "fill_props", "script": "return props ?? {}" },
-        { "id": "dom_type_def", "ref": "default" },
-        {
-          "id": "out",
-          "script": "dom_type = dom_type?._Proxy ? dom_type._value : dom_type; if(!(typeof dom_type === 'string' && Array.isArray(children))){ throw new Error('invalid element');} return {el: {dom_type, props, children, memo, _needsresolve: true}, _needsresolve: true}"
-        }
-      ],
-      "edges": [
-        { "from": "children", "to": "wrapped_children", "as": "children" },
-        { "from": "wrapped_children", "to": "filter_children", "as": "array" },
-        { "from": "props", "to": "fill_props", "as": "props", "type": "resolve" },
-        { "from": "memo", "to": "out", "as": "memo"},
-        {"from": "element", "to": "filter_children_fn", "as": "element"},
-        {"from": "filter_children_fn", "to": "filter_children_fn_runnable", "as": "fn"},
-        {"from": "filter_children_fn_runnable", "to": "filter_children", "as": "fn"},
-        {"from": "element", "to": "fill_children_fn", "as": "element"},
-        {"from": "fill_children_fn", "to": "fill_children_fn_runnable", "as": "fn"},
-        {"from": "fill_children_fn_runnable", "to": "fill_children", "as": "fn"},
-        { "from": "filter_children", "to": "fill_children", "as": "array"},
-        { "from": "fill_children", "to": "out", "as": "children"},
-        { "from": "fill_props", "to": "out", "as": "props" },
-        { "from": "dom_type", "to": "dom_type_def", "as": "value" },
-        { "from": "graph_value", "to": "dom_type_value", "as": "pred" },
-        { "from": "div", "to": "dom_type_value", "as": "false" },
-        { "from": "graph_value", "to": "dom_type_value", "as": "true" },
-        { "from": "dom_type_value", "to": "dom_type_def", "as": "otherwise" },
-        { "from": "dom_type_def", "to": "out", "as": "dom_type" },
-        { "from": "in", "to": "out", "as": "args", "type": "ref" }
-      ]
+      "fn": "out_ret",
+      "graph": {
+        "id": "html_element",
+        "description": "An HTML Element. `children` is an array of html_element or html_text, `props` are the attributes for the html element as an object, `dom_type` (or this node's value) is the dom type, `memo` refers to <a target='_blank' href='https://github.com/jorgebucaran/hyperapp/blob/main/docs/api/memo.md'>hyperapp's memo</a>.",
+        "nodes": [
+          { "id": "children", "ref": "arg", "value": "children" },
+          { "id": "props", "ref": "arg", "value": "props" },
+          { "id": "dom_type", "ref": "arg", "value": "dom_type" },
+          { "id": "memo", "ref": "arg", "value": "memo" },
+          { "id": "element", "ref": "arg", "value": "element" },
+          { "id": "div", "value": "div" },
+          { "id": "dom_type_value", "ref": "if"},
+          { "id": "graph_value", "ref": "script", "value": "return _graph.value"},
+          {"id": "filter_children_fn", "script": "console.log('filtering child'); console.log(_graph_input_value); console.log(element); return !!element"},
+          {"id": "filter_children_fn_runnable", "ref": "runnable"},
+          {"id": "fill_children_fn", "script": "console.log('mapping el'); console.log(element); return element.el ?? element"},
+          {"id": "fill_children_fn_runnable", "ref": "runnable"},
+          {"id": "wrapped_children", "script": "return Array.isArray(children) ? children : [children]"},
+          {"id": "filter_children", "ref": "filter"},
+          {
+            "id": "fill_children",
+            "ref": "map",
+            "_script": "return children === undefined ? [] : children.length !== undefined ? children.map(c => _lib.no.resolve(c)).filter(c => !!c).map(c => c.el ?? c) : [children.el ?? children]"
+          },
+          { "id": "fill_props", "script": "return props ?? {}" },
+          { "id": "dom_type_def", "ref": "default" },
+          {
+            "id": "out",
+            "script": "dom_type = dom_type?._Proxy ? dom_type._value : dom_type; if(!(typeof dom_type === 'string' && typeof children === 'object')){ throw new Error('invalid element');} return {el: {dom_type, props, children: children, memo, _needsresolve: true}, _needsresolve: true}"
+          },
+          {"id": "out_ret", "ref": "return"}
+        ],
+        "edges": [
+          { "from": "children", "to": "wrapped_children", "as": "children" },
+          { "from": "wrapped_children", "to": "filter_children", "as": "array" },
+          { "from": "props", "to": "fill_props", "as": "props", "type": "resolve" },
+          { "from": "memo", "to": "out", "as": "memo"},
+          {"from": "element", "to": "filter_children_fn", "as": "element"},
+          {"from": "filter_children_fn", "to": "filter_children", "as": "fn"},
+          {"from": "element", "to": "fill_children_fn", "as": "element"},
+          {"from": "fill_children_fn", "to": "fill_children", "as": "fn"},
+          { "from": "filter_children", "to": "fill_children", "as": "array"},
+          { "from": "fill_children", "to": "out", "as": "children"},
+          { "from": "fill_props", "to": "out", "as": "props" },
+          { "from": "dom_type", "to": "dom_type_def", "as": "value" },
+          { "from": "graph_value", "to": "dom_type_value", "as": "pred" },
+          { "from": "div", "to": "dom_type_value", "as": "false" },
+          { "from": "graph_value", "to": "dom_type_value", "as": "true" },
+          { "from": "dom_type_value", "to": "dom_type_def", "as": "otherwise" },
+          { "from": "dom_type_def", "to": "out", "as": "dom_type" },
+          {"from": "out", "to": "out_ret", "as": "value"}
+        ]
+      }
     },
     {
       "id": "icon",
@@ -1214,7 +1278,7 @@
       ]
     },
     { "id": "not", "script": "return !target" },
-    {"id":"walk_graph","nodes":[{"id":"args"},{"id":"cfuymky","value":"testx"},{"id":"5a6pljw","ref":"html_element"},{"id":"main/out","name":"walk_graph","ref":"return"},{"id":"5xlxejq","ref":"html_text"},{"id":"8qkc61x","ref":"runnable"},{"id":"dv0p0id","value":"walker","ref":"log"},{"id":"dqs1arj","value":"graph","name":"","ref":"arg"},{"id":"pe7geox","value":"return _lib.no.runtime.get_edges_in(graph.graph, graph.node)","ref":"script"},{"id":"glnadhk","value":"return {node: _node.id, graph: _graph.id}","ref":"script"},{"id":"yophjcb","ref":"map"},{"id":"r3nrc31","ref":"runnable"},{"id":"nhqynsn","value":"element.from","ref":"arg"},{"id":"y4eppvf","value":"graph.graph","ref":"arg"},{"id":"lxjljmp","value":"node","ref":"arg"},{"id":"fo2ul3t","value":"fn","ref":"arg"},{"id":"x2ieyic","ref":"walk_graph"},{"id":"8kp4fri","value":"testz"},{"id":"b8n58i0","value":"testa"},{"id":"ik55pc7","value":"texty"},{"id":"1ecvy51","value":"return {node: _lib.no.runtime.get_node(graph, edge_from), graph}","ref":"script"},{"id":"27950jh"},{"id":"deh12wg","value":"edge","ref":"arg"},{"id":"sfwk3w6","value":"edge","ref":"log"},{"id":"uw2yljj","value":"node","ref":"log"},{"id":"dc70b7u","value":"element","ref":"arg"},{"id":"fhqwbjg","value":"_lib.no.runGraph(fn.graph, fn.fn, {node: node.node, edge}); return {graph: node.graph, node: node.node.id};","ref":"script"}],"edges":[{"from":"args","to":"main/out","as":"args"},{"from":"5a6pljw","to":"main/out","as":"display"},{"from":"cfuymky","to":"glnadhk","as":"arg0"},{"from":"8kp4fri","to":"glnadhk","as":"arg1"},{"from":"ik55pc7","to":"8kp4fri","as":"arg0"},{"from":"5xlxejq","to":"5a6pljw","as":"children"},{"from":"8qkc61x","to":"args","as":"fn"},{"from":"dv0p0id","to":"8qkc61x","as":"fn"},{"from":"glnadhk","to":"args","as":"graph"},{"from":"dqs1arj","to":"pe7geox","as":"graph"},{"from":"pe7geox","to":"yophjcb","as":"array"},{"from":"r3nrc31","to":"yophjcb","as":"fn"},{"from":"nhqynsn","to":"1ecvy51","as":"edge_from"},{"from":"y4eppvf","to":"1ecvy51","as":"graph"},{"from":"fo2ul3t","to":"fhqwbjg","as":"fn"},{"from":"1ecvy51","to":"fhqwbjg","as":"node"},{"from":"x2ieyic","to":"r3nrc31","as":"fn"},{"from":"fhqwbjg","to":"x2ieyic","as":"graph"},{"from":"yophjcb","to":"main/out","as":"return"},{"from":"27950jh","to":"dv0p0id","as":"value"},{"from":"sfwk3w6","to":"27950jh","as":"arg1"},{"from":"deh12wg","to":"sfwk3w6","as":"value"},{"from":"uw2yljj","to":"27950jh","as":"arg0"},{"from":"lxjljmp","to":"uw2yljj","as":"value"},{"from":"dc70b7u","to":"fhqwbjg","as":"edge"},{"from":"b8n58i0","to":"glnadhk","as":"arg22"}],"out":"main/out"},
+    {"id":"walk_graph","nodes":[{"id":"args"},{"id":"cfuymky","value":"testx"},{"id":"5a6pljw","ref":"html_element"},{"id":"out","name":"walk_graph","ref":"return"},{"id":"5xlxejq","ref":"html_text"},{"id":"8qkc61x","ref":"runnable"},{"id":"dv0p0id","value":"walker","ref":"log"},{"id":"dqs1arj","value":"graph","name":"","ref":"arg"},{"id":"pe7geox","value":"return _lib.no.runtime.get_edges_in(graph.graph, graph.node)","ref":"script"},{"id":"glnadhk","value":"return {node: _node.id, graph: _graph.id}","ref":"script"},{"id":"yophjcb","ref":"map"},{"id":"r3nrc31","ref":"runnable"},{"id":"nhqynsn","value":"element.from","ref":"arg"},{"id":"y4eppvf","value":"graph.graph","ref":"arg"},{"id":"lxjljmp","value":"node","ref":"arg"},{"id":"fo2ul3t","value":"fn","ref":"arg"},{"id":"x2ieyic","ref":"walk_graph"},{"id":"8kp4fri","value":"testz"},{"id":"b8n58i0","value":"testa"},{"id":"ik55pc7","value":"texty"},{"id":"1ecvy51","value":"return {node: _lib.no.runtime.get_node(graph, edge_from), graph}","ref":"script"},{"id":"27950jh"},{"id":"deh12wg","value":"edge","ref":"arg"},{"id":"sfwk3w6","value":"edge","ref":"log"},{"id":"uw2yljj","value":"node","ref":"log"},{"id":"dc70b7u","value":"element","ref":"arg"},{"id":"fhqwbjg","value":"_lib.no.run(fn.graph, fn.fn, {node: node.node, edge}); return {graph: node.graph, node: node.node.id};","ref":"script"}],"edges":[{"from":"args","to":"out","as":"args"},{"from":"5a6pljw","to":"out","as":"display"},{"from":"cfuymky","to":"glnadhk","as":"arg0"},{"from":"8kp4fri","to":"glnadhk","as":"arg1"},{"from":"ik55pc7","to":"8kp4fri","as":"arg0"},{"from":"5xlxejq","to":"5a6pljw","as":"children"},{"from":"8qkc61x","to":"args","as":"fn"},{"from":"dv0p0id","to":"8qkc61x","as":"fn"},{"from":"glnadhk","to":"args","as":"graph"},{"from":"dqs1arj","to":"pe7geox","as":"graph"},{"from":"pe7geox","to":"yophjcb","as":"array"},{"from":"r3nrc31","to":"yophjcb","as":"fn"},{"from":"nhqynsn","to":"1ecvy51","as":"edge_from"},{"from":"y4eppvf","to":"1ecvy51","as":"graph"},{"from":"fo2ul3t","to":"fhqwbjg","as":"fn"},{"from":"1ecvy51","to":"fhqwbjg","as":"node"},{"from":"x2ieyic","to":"r3nrc31","as":"fn"},{"from":"fhqwbjg","to":"x2ieyic","as":"graph"},{"from":"yophjcb","to":"out","as":"return"},{"from":"27950jh","to":"dv0p0id","as":"value"},{"from":"sfwk3w6","to":"27950jh","as":"arg1"},{"from":"deh12wg","to":"sfwk3w6","as":"value"},{"from":"uw2yljj","to":"27950jh","as":"arg0"},{"from":"lxjljmp","to":"uw2yljj","as":"value"},{"from":"dc70b7u","to":"fhqwbjg","as":"edge"},{"from":"b8n58i0","to":"glnadhk","as":"arg22"}],"out":"out"},
     {
         "id": "canvas_behind_editor",
         "description": "Creates a HTML canvas behind the node editor",
@@ -1346,7 +1410,7 @@
             "name": ""
           },
           {
-            "id": "main/out",
+            "id": "out",
             "name": "canvas_behind_editor",
             "ref": "return"
           }
@@ -1354,17 +1418,17 @@
         "edges": [
           {
             "from": "args",
-            "to": "main/out",
+            "to": "out",
             "as": "args"
           },
           {
             "from": "imr2dvi",
-            "to": "main/out",
+            "to": "out",
             "as": "value"
           },
           {
             "from": "5a6pljw",
-            "to": "main/out",
+            "to": "out",
             "as": "display"
           },
           {
@@ -1508,12 +1572,12 @@
             "as": "left"
           }
         ],
-        "out": "main/out",
+        "out": "out",
       },
   {
     "id": "call_method",
     "description": "Calls the method corresponding to this node's value of `self`. It can be '.' separated path. If `self` is not set, the node's context will be used.",
-    "out": "main/out",
+    "out": "out",
     "nodes": [
       {
         "id": "xmreb7u",
@@ -1642,7 +1706,7 @@
         "ref": "script"
       },
       {
-        "id": "main/out",
+        "id": "out",
         "name": "call_method",
         "ref": "return"
       },
@@ -1716,7 +1780,7 @@
     "edges": [
       {
         "from": "5a6pljw",
-        "to": "main/out",
+        "to": "out",
         "as": "display"
       },
       {
@@ -1841,7 +1905,7 @@
       },
       {
         "from": "ke2gd7r",
-        "to": "main/out",
+        "to": "out",
         "as": "value"
       },
       {
@@ -1925,7 +1989,7 @@
   {
       "id": "import",
       "description": "Imports the node or nodes from the provided json file",
-      "out": "main/out",
+      "out": "out",
       "nodes": [
         {
           "id": "args"
@@ -1935,7 +1999,7 @@
           "ref": "html_element"
         },
         {
-          "id": "main/out",
+          "id": "out",
           "name": "import",
           "ref": "return"
         },
@@ -2023,12 +2087,12 @@
       "edges": [
         {
           "from": "8dy573e",
-          "to": "main/out",
+          "to": "out",
           "as": "display"
         },
         {
           "from": "args",
-          "to": "main/out",
+          "to": "out",
           "as": "args"
         },
         {
@@ -2463,7 +2527,7 @@
         "ref": "script"
       },
       {
-        "id": "main/out",
+        "id": "out",
         "name": "deleteref",
         "ref": "return"
       }
@@ -2471,12 +2535,12 @@
     "edges": [
       {
         "from": "args",
-        "to": "main/out",
+        "to": "out",
         "as": "args"
       },
       {
         "from": "jklqh38",
-        "to": "main/out",
+        "to": "out",
         "as": "display"
       },
       {
@@ -2565,7 +2629,7 @@
         "as": "refs"
       }
     ],
-    "out": "main/out"
+    "out": "out"
   },
   {
     "id": "changed",
@@ -2823,7 +2887,7 @@
         "ref": "arg"
       },
       {
-        "id": "main/out",
+        "id": "out",
         "name": "webgl",
         "ref": "return"
       },
@@ -2951,17 +3015,17 @@
     "edges": [
       {
         "from": "8dy573e/8dy573e",
-        "to": "main/out",
+        "to": "out",
         "as": "display"
       },
       {
         "from": "j219svq",
-        "to": "main/out",
+        "to": "out",
         "as": "subscribe"
       },
       {
         "from": "04xuprq",
-        "to": "main/out",
+        "to": "out",
         "as": "args"
       },
       {
@@ -3026,7 +3090,7 @@
       },
       {
         "from": "2mgzzwp",
-        "to": "main/out",
+        "to": "out",
         "as": "value"
       },
       {
@@ -3125,7 +3189,7 @@
         "as": "value"
       }
     ],
-    "out": "main/out"
+    "out": "out"
   }, {
     "id": "load_shader",
     "description": "Loads the `source` shader program in webgl context `gl`",
@@ -3371,7 +3435,7 @@
         "ref": "arg"
       },
       {
-        "id": "main/out",
+        "id": "out",
         "name": "export",
         "ref": "return"
       }
@@ -3379,7 +3443,7 @@
     "edges": [
       {
         "from": "j219svq",
-        "to": "main/out",
+        "to": "out",
         "as": "subscribe"
       },
       {
@@ -3394,7 +3458,7 @@
       },
       {
         "from": "y407zfo",
-        "to": "main/out",
+        "to": "out",
         "as": "display"
       },
       {
@@ -3429,7 +3493,7 @@
       },
       {
         "from": "0i85qjj",
-        "to": "main/out",
+        "to": "out",
         "as": "args"
       },
       {
@@ -3554,7 +3618,7 @@
       },
       {
         "from": "c7wt9d7",
-        "to": "main/out",
+        "to": "out",
         "as": "value"
       },
       {
@@ -3588,7 +3652,7 @@
         "as": "otherwise"
       }
     ],
-    "out": "main/out"
+    "out": "out"
   }
   ]
 }

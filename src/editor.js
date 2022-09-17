@@ -1,4 +1,4 @@
-import { resfetch, hashcode, nolib, runGraph, calculateLevels, ispromise, resolve, base_graph, base_node } from "./nodysseus.mjs";
+import { resfetch, hashcode, nolib, run, calculateLevels, ispromise, resolve, base_graph, base_node } from "./nodysseus.mjs";
 import * as ha from "hyperapp";
 import panzoom from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
@@ -32,7 +32,7 @@ const updateSimulationNodes = (dispatch, data) => {
     ]));
 
     const order = [];
-    const queue = [data.display_graph.out];
+    const queue = [data.display_graph_out];
 
     const parents_map = new Map(data.display_graph.nodes.map(n => [n.id, 
         data.display_graph.edges
@@ -406,21 +406,24 @@ const listenToEvent = (dispatch, props) => {
 const ap = (fn, v) => fn(v);
 const ap_promise = (p, fn) => p && typeof p['then'] === 'function' ? p.then(fn) : ap(fn, p);
 
-const refresh_graph = (graph, dispatch) => {
+const refresh_graph = (graph, node_id, dispatch) => {
     dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
-    const result = hlib.runGraph(graph, graph.out, {output: "value"});
-    // const result = hlib.runGraph(graph, graph.out, {});
-    const display_fn = result => hlib.runGraph(graph, graph.out, {output: "display"});
-    // const display_fn = result => hlib.runGraph(graph, graph.out, {}, "display");
+    const result = hlib.run({graph, fn: node_id}, {output: "value"}, {...hlib, ...nolib});
+    // const result = hlib.run(graph, graph.out, {});
+    const display_fn = result => hlib.run({graph, fn: node_id}, {output: "display"});
+    // const display_fn = result => hlib.run(graph, graph.out, {}, "display");
+    console.log('refresh graph')
+    console.log(result);
+    console.log(ap(display_fn, result))
     const update_result_display_fn = display => result_display_dispatch(UpdateResultDisplay, {el: display && display.el ? display.el : {dom_type: 'div', props: {}, children: []}})
     const update_info_display_fn = () => dispatch(s => [s, s.selected[0] !== s.display_graph.out 
-        && [() => update_info_display({node_id: s.selected[0], graph_id: s.display_graph_id})]])
+        && [() => update_info_display({fn: s.selected[0], graph: s.display_graph, args: {}})]])
     ap_promise(ap_promise(result, display_fn), update_result_display_fn);
     ap_promise(result, update_info_display_fn)
     return result
 }
 
-const result_subscription = (dispatch, {display_graph_id}) => {
+const result_subscription = (dispatch, {display_graph_id, display_graph_out}) => {
     let animrun = false;
 
     const error_listener = (error) =>
@@ -434,7 +437,7 @@ const result_subscription = (dispatch, {display_graph_id}) => {
         if(graph.id === display_graph_id && !animrun) {
             cancelAnimationFrame(animrun)
             animrun = requestAnimationFrame(() => {
-                const result = refresh_graph(graph, dispatch)
+                const result = refresh_graph(graph, display_graph_out, dispatch)
                 const reset_animrun = () => animrun = false;
                 ap_promise(result, reset_animrun)
             })
@@ -553,7 +556,7 @@ const run_h = ({dom_type, props, children, text}, exclude_tags=[]) => {
     children = children && children._Proxy ? children._value : children;
     return dom_type === "text_value" 
         ? ha.text(text) 
-        : ha.h(dom_type, props, children?.filter(c => !!c && !exclude_tags.includes(c.dom_type)).map(c => run_h(c, exclude_tags)) ?? []) 
+        : ha.h(dom_type, props, children?.map(c => c.el ?? c).filter(c => !!c && !exclude_tags.includes(c.dom_type)).map(c => run_h(c, exclude_tags)) ?? []) 
 }
 
 const UpdateSimulation = (dispatch, payload) => payload ? !(payload.simulation || payload.static) ? undefined : updateSimulationNodes(dispatch, payload) : dispatch(state => [state, [() => !(state.simulation || state.static) ? undefined : updateSimulationNodes(dispatch, state)]])
@@ -598,7 +601,7 @@ const SelectNode = (state, {node_id, focus_property}) => [
     (state.show_all || state.selected[0] !== node_id) && [pzobj.effect, {...state, node_id}],
     focus_property && [FocusEffect, {selector: `.node-info input.${focus_property}`}],
     state.nodes.find(n => n.node_id === node_id) && [SetSelectedPositionStyleEffect, {node: state.nodes.find(n => n.node_id === node_id), svg_offset: pzobj.getTransform(), dimensions: state.dimensions}],
-    node_id !== state.display_graph.out && [() => update_info_display({node_id, graph_id: state.display_graph_id})],
+    node_id !== state.display_graph.out && [() => update_info_display({fn: node_id, graph: state.display_graph, args: {}})],
     state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: node_id})]
 ]
 
@@ -711,11 +714,9 @@ const ChangeDisplayGraphId = (dispatch, {id, select_out}) => {
             [dispatch => {
                 requestAnimationFrame(() => {
                     const new_graph = graph ?? Object.assign({}, base_graph(state.display_graph), {id});
-                    const mainout = new_graph.nodes.find(n => n.id === new_graph.out);
-                    mainout.name = new_graph.id;
                     nolib.no.runtime.update_graph(new_graph);
                     nolib.no.runtime.remove_graph_listeners(state.display_graph_id);
-                    dispatch(SelectNode, {node_id: new_graph.out})
+                    dispatch(SelectNode, {node_id: state.display_graph_out})
                 })
             }],
         ]))
@@ -988,17 +989,16 @@ const UpdateResultDisplay = (state, el) => ({
     el: el.el ? {...el.el} : {...el}
 })
 
-const update_info_display = ({node_id, graph_id}) => {
-    const node = nolib.no.runtime.get_graph(graph_id + '/' + node_id) || nolib.no.runtime.get_node(graph_id, node_id);
-
+const update_info_display = ({fn, graph, args}) => {
+    const node = nolib.no.runtime.get_node(graph, fn);
     if (node.ref === "script" || node.script) {
         code_editor.dispatch({changes:{from: 0, to: code_editor.state.doc.length, insert: node.script ?? node.value}})
     }
 
-    const node_ref = node && (node.ref && nolib.no.runtime.get_ref(graph_id, node.ref)) || node;
+    const node_ref = node && (node.ref && nolib.no.runtime.get_ref(graph, node.ref)) || node;
     const out_ref = node && (node.nodes && nolib.no.runtime.get_node(node, node.out)) || (node_ref.nodes && nolib.no.runtime.get_node(node_ref, node_ref.out));
     const node_display_el = (node.ref === "return" || (out_ref && out_ref.ref === "return")) 
-        && hlib.runGraph(graph_id, node_id, {...nolib.no.runtime.get_inputdata(node), output: "display"});
+        && hlib.run({graph, fn}, {...args, output: "display"});
     info_display_dispatch && requestAnimationFrame(() => info_display_dispatch(UpdateResultDisplay, {el: node_display_el && node_display_el.el ? node_display_el.el : ha.h('div', {})}))
 }
 
@@ -1136,7 +1136,7 @@ const runapp = (init, load_graph, _lib) => {
         }),
         ha.h('div', {id: "graph-actions"}, [
             search_el({search: s.search, _lib}),
-            ha.h('ion-icon', {name: 'sync-outline', onclick: s => [s, [dispatch => { nolib.no.runtime.delete_cache(); hlib.runGraph(s.display_graph, s.display_graph.out, {output: "value"}); requestAnimationFrame(() =>  dispatch(s => [s, [() => {s.simulation.alpha(1); s.simulation.nodes([]); }], [UpdateSimulation]])) }]]}, [ha.text('refresh')])
+            ha.h('ion-icon', {name: 'sync-outline', onclick: s => [s, [dispatch => { nolib.no.runtime.delete_cache(); hlib.run(s.display_graph, s.display_graph.out, {output: "value"}); requestAnimationFrame(() =>  dispatch(s => [s, [() => {s.simulation.alpha(1); s.simulation.nodes([]); }], [UpdateSimulation]])) }]]}, [ha.text('refresh')])
         ]),
         ha.h('div', {id: `${init.html_id}-result`}),
         s.error && ha.h('div', {id: 'node-editor-error'}, run_h(show_error(s.error, s.error.node_id)))
@@ -1145,7 +1145,7 @@ const runapp = (init, load_graph, _lib) => {
     subscriptions: s => [
         [d3subscription, {action: SimulationToHyperapp, update: UpdateSimulation}], 
         [graph_subscription, {display_graph_id: s.display_graph_id}],
-        result_display_dispatch && [result_subscription, {display_graph_id: s.display_graph_id}],
+        result_display_dispatch && [result_subscription, {display_graph_id: s.display_graph_id, display_graph_out: s.display_graph_out}],
         [keydownSubscription, {action: (state, payload) => {
             if(document.getElementById("node-editor-result").contains(payload.target)) {
                 return [state];
@@ -1157,13 +1157,13 @@ const runapp = (init, load_graph, _lib) => {
             const selected = state.selected[0];
             switch(key_input) {
                 case "ctrl_o": {
-                    action = [SelectNode, {node_id: state.display_graph.out, focus_property: 'name'}]
+                    action = [SelectNode, {node_id: state.display_graph_out, focus_property: 'name'}]
                     payload.stopPropagation();
                     payload.preventDefault();
                     break;
                 }
                 default: {
-                    const result = hlib.runGraph(init.keybindings, "out", {}, hlib)[mode][key_input];
+                    const result = hlib.run(init.keybindings, "out", {}, hlib)[mode][key_input];
                     switch(result){
                         case "up": {
                             const parent_edges = nolib.no.runtime.get_edges_in(state.display_graph, selected);
@@ -1275,22 +1275,21 @@ const runapp = (init, load_graph, _lib) => {
 
 const editor = async function(html_id, display_graph, lib, norun) {
     const simple = await resfetch("json/simple.json").then(r => r.json());
-    const simple_html_hyperapp = await resfetch("json/simple_html_hyperapp.json").then(r => r.json());
     const url_params = new URLSearchParams(document.location.search);
-    const examples = [simple_html_hyperapp, simple];
     const graph_list = JSON.parse(localStorage.getItem("graph_list")) ?? [];
     const hash_graph = window.location.hash.substring(1);
     const keybindings = await resfetch("json/keybindings.json").then(r => r.json())
     // let stored_graph = JSON.parse(localStorage.getItem(hash_graph ?? graph_list?.[0]));
     // stored_graph = stored_graph ? base_graph(stored_graph) : undefined
-    graph_list.map(id => localStorage.getItem(id)).filter(g => g).map(graph => nolib.no.runtime.update_graph(base_graph(JSON.parse(graph))))
+    graph_list.map(id => localStorage.getItem(id)).filter(g => g).map(graph => JSON.parse(graph)).map(fn => nolib.no.runtime.update_graph(base_graph((console.log(fn), fn).graph)))
     // Promise.resolve(stored_graph ?? (hash_graph ? resfetch(`json/${hash_graph}.json`).then(r => r.status !== 200 ? simple : r.json()).catch(_ => simple) : simple))
         // .then(display_graph => {
 
         const init = { 
             keybindings,
             display_graph_id: 'simple',
-            display_graph: simple,
+            display_graph: simple.graph,
+            display_graph_out: simple.fn,
             hash: window.location.hash ?? "",
             url_params,
             html_id,
@@ -1298,7 +1297,6 @@ const editor = async function(html_id, display_graph, lib, norun) {
                 x: document.getElementById(html_id).clientWidth,
                 y: document.getElementById(html_id).clientHeight
             },
-            examples: examples,
             readonly: false, 
             norun: norun || url_params.get("norun") !== null,
             hide_types: false,
@@ -1315,11 +1313,11 @@ const editor = async function(html_id, display_graph, lib, norun) {
             imports: {},
             history: [],
             redo_history: [],
-            selected: ["main/out"],
+            selected: ["out"],
             inputs: {}
         };
 
-        runapp(init,  hash_graph ?? graph_list?.[0] ?? 'simple', lib)
+        runapp(init,  hash_graph && hash_graph !== "" ? hash_graph : graph_list?.[0] ?? 'simple', lib)
 
     // })
 }
@@ -1341,11 +1339,9 @@ const middleware = dispatch => (ha_action, ha_payload) => {
     return typeof action === 'object' && action.hasOwnProperty('fn') && action.hasOwnProperty('graph')
         ? dispatch((state, payload) => {
             try {
-                const execute_graph_fn = nolib.no.executeGraphNode({graph: action.graph, lib: hlib})(action.fn);
-                // Object.defineProperty(execute_graph_fn, 'name', {value: action.fn, writable: false});
                 const result = action.stateonly 
-                    ? execute_graph_fn(state)
-                    : execute_graph_fn({state, ...payload});
+                    ? run(state)
+                    : run({state, ...payload});
 
 
                 if(!result) {
@@ -1356,7 +1352,7 @@ const middleware = dispatch => (ha_action, ha_payload) => {
                     if(typeof e === 'object' 
                     && e.hasOwnProperty('fn') 
                     && e.hasOwnProperty('graph')) {
-                        const effect_fn = nolib.no.executeGraphNode({graph: e.graph})(e.fn);
+                        const effect_fn = nolib.no.run({graph: e.graph, fn: e.fn});
                         // Object.defineProperty(effect_fn, 'name', {value: e.fn, writable: false})
                         return effect_fn;
                     }
@@ -1405,8 +1401,8 @@ const hlib = {
         }
     },
     panzoom: pzobj,
-    runGraph: (graph, node, args) => nolib.no.runGraph(graph, node, args, {...hlib, ...nolib}),
+    run: (node, args) => run(node, args, {...hlib, ...nolib}),
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX }
 }
 
-export { editor, runGraph }
+export { editor, run }

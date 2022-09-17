@@ -1,9 +1,9 @@
 {
-  "out": "main/out",
+  "out": "out",
   "id": "example_1_2_1",
   "nodes": [
     { "id": "state_path", "value": "Hello, world!" },
-    { "id": "main/out", "ref": "return" },
+    { "id": "out", "ref": "return" },
     { "id": "98b92ur", "ref": "html_element" },
     { "id": "utility" },
     { "id": "flow" },
@@ -970,6 +970,6 @@
   "edges": [
     { "from": "state_path", "to": "log_state", "as": "text" },
     { "as": "children", "from": "log_state", "to": "98b92ur" },
-    { "from": "98b92ur", "to": "main/out", "as": "display" }
+    { "from": "98b92ur", "to": "out", "as": "display" }
   ]
 }
