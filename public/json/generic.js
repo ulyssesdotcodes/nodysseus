@@ -94,29 +94,27 @@
         ]
       },
       {
-        "fn": "choose",
-        "graph": {
-          "id": "default",
-          "description": "Returns `value` if it's defined, if not then returns `otherwise`",
-          "nodes": [
-            { "id": "value", "ref": "arg", "value": "value" },
-            { "id": "graph_value", "ref": "arg", "value": "_value" },
-            { "id": "otherwise", "ref": "arg", "value": "otherwise" },
-            { "id": "def_otherwise", "ref": "script", "value": "return _value ?? otherwise"},
-            { "id": "data" },
-            { "id": "choose", "ref": "script", "value": "return value ?? otherwise", "_value": "return value ?? data['otherwise']" },
-            { "id": "out"}
-          ],
-          "edges": [
-            { "from": "value", "to": "choose", "as": "value" },
-            { "from": "graph_value", "to": "def_otherwise", "as": "_value" },
-            { "from": "otherwise", "to": "def_otherwise", "as": "otherwise" },
-            { "from": "def_otherwise", "to": "data", "as": "otherwise" },
-            { "from": "data", "to": "_choose", "as": "data" },
-            { "from": "def_otherwise", "to": "choose", "as": "otherwise" },
-            { "from": "choose", "to": "out", "as": "value" }
-          ]
-        }
+        "id": "default",
+        "out": "out",
+        "description": "Returns `value` if it's defined, if not then returns `otherwise`",
+        "nodes": [
+          { "id": "value", "ref": "arg", "value": "value" },
+          { "id": "graph_value", "ref": "arg", "value": "__value" },
+          { "id": "otherwise", "ref": "arg", "value": "otherwise" },
+          { "id": "def_otherwise", "ref": "script", "value": "return graph_value ?? otherwise"},
+          { "id": "data" },
+          { "id": "choose", "ref": "script", "value": "return value ?? otherwise", "_value": "return value ?? data['otherwise']" },
+          { "id": "out",  "ref": "return"}
+        ],
+        "edges": [
+          { "from": "value", "to": "choose", "as": "value" },
+          { "from": "graph_value", "to": "def_otherwise", "as": "graph_value" },
+          { "from": "otherwise", "to": "def_otherwise", "as": "otherwise" },
+          { "from": "def_otherwise", "to": "data", "as": "otherwise" },
+          { "from": "data", "to": "_choose", "as": "data" },
+          { "from": "def_otherwise", "to": "choose", "as": "otherwise" },
+          { "from": "choose", "to": "out", "as": "value" }
+        ]
       },
       {
         "id": "switch",
@@ -154,23 +152,24 @@
         ]
       },
       {
-        "id": "if",
-        "description": "If `pred` exists in the node's context, return the value from the `true` branch. Otherwise, return the value from the `false` branch.",
-        "nodes": [
-          { "id": "in" },
-          { "id": "pred", "ref": "arg", "value": "pred" },
-          { "id": "true", "ref": "arg", "value": "true" },
-          { "id": "false", "ref": "arg", "value": "false" },
-          { "id": "data"},
-          { "id": "out", "script": "return !!pred ? data.true_val : data.false_val" }
-        ],
-        "edges": [
-          { "from": "in", "to": "out", "as": "_", "type":"ref" },
-          { "from": "true", "to": "data", "as": "true_val" },
-          { "from": "false", "to": "data", "as": "false_val" },
-          { "from": "data", "to": "out", "as": "data" },
-          { "from": "pred", "to": "out", "as": "pred" }
-        ]
+        "fn": "out",
+        "graph": {
+          "id": "if",
+          "description": "If `pred` exists in the node's context, return the value from the `true` branch. Otherwise, return the value from the `false` branch.",
+          "nodes": [
+            { "id": "pred", "ref": "arg", "value": "pred" },
+            { "id": "true", "ref": "arg", "value": "true" },
+            { "id": "false", "ref": "arg", "value": "false" },
+            { "id": "data"},
+            { "id": "out", "script": "return !!pred ? data.true_val : data.false_val" }
+          ],
+          "edges": [
+            { "from": "true", "to": "data", "as": "true_val" },
+            { "from": "false", "to": "data", "as": "false_val" },
+            { "from": "data", "to": "out", "as": "data" },
+            { "from": "pred", "to": "out", "as": "pred" }
+          ]
+        }
       },
       {
         "id": "find_node",
@@ -776,7 +775,7 @@
         {"id": "out", "ref": "return"}
       ],
       "edges": [
-        {"from": "element", "to": "map_fn_args", "as": "element"},
+        {"from": "currentValue", "to": "map_fn_args", "as": "element"},
         {"from": "map_fn_args", "to": "map_element_fn", "as": "args"},
         {"from": "map_fn", "to": "map_element_fn", "as": "fn"},
         {"from": "currentValue", "to": "append", "as": "value"},
@@ -1181,15 +1180,13 @@
       "description": "Some HTML plaintext of `text` (or this node's value). Usually used as a child of html_element.",
       "out": "out",
       "nodes": [
-        { "id": "in" },
         { "id": "arg_text", "ref": "arg", "value": "text" },
-        { "id": "value_text", "ref": "arg", "value": "_graph.value" },
+        { "id": "value_text", "ref": "arg", "value": "__value" },
         {"id": "text", "ref": "default"},
         { "id": "text_value", "value": "text_value" },
         { "id": "out" }
       ],
       "edges": [
-        { "from": "in", "to": "out", "as": "_", "type": "ref" },
         { "from": "text_value", "to": "out", "as": "dom_type" },
         { "from": "arg_text", "to": "text", "as": "value" },
         { "from": "value_text", "to": "text", "as": "otherwise" },
@@ -1197,9 +1194,8 @@
       ]
     },
     {
-      "fn": "out_ret",
-      "graph": {
         "id": "html_element",
+        "out": "out_ret",
         "description": "An HTML Element. `children` is an array of html_element or html_text, `props` are the attributes for the html element as an object, `dom_type` (or this node's value) is the dom type, `memo` refers to <a target='_blank' href='https://github.com/jorgebucaran/hyperapp/blob/main/docs/api/memo.md'>hyperapp's memo</a>.",
         "nodes": [
           { "id": "children", "ref": "arg", "value": "children" },
@@ -1209,23 +1205,23 @@
           { "id": "element", "ref": "arg", "value": "element" },
           { "id": "div", "value": "div" },
           { "id": "dom_type_value", "ref": "if"},
-          { "id": "graph_value", "ref": "script", "value": "return _graph.value"},
-          {"id": "filter_children_fn", "script": "console.log('filtering child'); console.log(_graph_input_value); console.log(element); return !!element"},
+          { "id": "graph_value", "ref": "arg", "value": "_value"},
+          {"id": "filter_children_fn", "script": "console.log('filtering child'); console.log(_graph_input_value); console.log(element); return !!element && (element.dom_type || element.text_value)"},
           {"id": "filter_children_fn_runnable", "ref": "runnable"},
           {"id": "fill_children_fn", "script": "console.log('mapping el'); console.log(element); return element.el ?? element"},
           {"id": "fill_children_fn_runnable", "ref": "runnable"},
-          {"id": "wrapped_children", "script": "return Array.isArray(children) ? children : [children]"},
+          {"id": "wrapped_children", "script": "console.log('wrapped children'); console.log(children); return Array.isArray(children) ? children : [children]"},
           {"id": "filter_children", "ref": "filter"},
           {
             "id": "fill_children",
             "ref": "map",
-            "_script": "return children === undefined ? [] : children.length !== undefined ? children.map(c => _lib.no.resolve(c)).filter(c => !!c).map(c => c.el ?? c) : [children.el ?? children]"
+            "_script": "return children === undefined ? [] : children.length !== undefined ? children.map(c => _lib.no.resolve(c)).filter(c => !!c).map(c => c.el ?? c) : [children.el ?? children.value ?? children]"
           },
           { "id": "fill_props", "script": "return props ?? {}" },
           { "id": "dom_type_def", "ref": "default" },
           {
             "id": "out",
-            "script": "dom_type = dom_type?._Proxy ? dom_type._value : dom_type; if(!(typeof dom_type === 'string' && typeof children === 'object')){ throw new Error('invalid element');} return {el: {dom_type, props, children: children, memo, _needsresolve: true}, _needsresolve: true}"
+            "script": "dom_type = dom_type?._Proxy ? dom_type._value : dom_type; if(!(typeof dom_type === 'string' && typeof children === 'object')){ throw new Error('invalid element');} return {dom_type, props, children: children, memo}"
           },
           {"id": "out_ret", "ref": "return"}
         ],
@@ -1235,9 +1231,11 @@
           { "from": "props", "to": "fill_props", "as": "props", "type": "resolve" },
           { "from": "memo", "to": "out", "as": "memo"},
           {"from": "element", "to": "filter_children_fn", "as": "element"},
-          {"from": "filter_children_fn", "to": "filter_children", "as": "fn"},
+          {"from": "filter_children_fn", "to": "filter_children_fn_runnable", "as": "fn"},
+          {"from": "filter_children_fn_runnable", "to": "filter_children", "as": "fn"},
           {"from": "element", "to": "fill_children_fn", "as": "element"},
-          {"from": "fill_children_fn", "to": "fill_children", "as": "fn"},
+          {"from": "fill_children_fn", "to": "fill_children_runnable", "as": "fn"},
+          {"from": "fill_children_fn_runnable", "to": "fill_children", "as": "fn"},
           { "from": "filter_children", "to": "fill_children", "as": "array"},
           { "from": "fill_children", "to": "out", "as": "children"},
           { "from": "fill_props", "to": "out", "as": "props" },
@@ -1249,7 +1247,6 @@
           { "from": "dom_type_def", "to": "out", "as": "dom_type" },
           {"from": "out", "to": "out_ret", "as": "value"}
         ]
-      }
     },
     {
       "id": "icon",

@@ -551,7 +551,7 @@ const pzobj = {
 
 const run_h = ({dom_type, props, children, text}, exclude_tags=[]) => {
     dom_type = dom_type && dom_type._Proxy ? dom_type._value : dom_type;
-    text = text && text._Proxy ? text._value : text;
+    text = text?.value ?? text;
     props = props && props._Proxy ? props._value : props;
     children = children && children._Proxy ? children._value : children;
     return dom_type === "text_value" 
@@ -999,7 +999,9 @@ const update_info_display = ({fn, graph, args}) => {
     const out_ref = node && (node.nodes && nolib.no.runtime.get_node(node, node.out)) || (node_ref.nodes && nolib.no.runtime.get_node(node_ref, node_ref.out));
     const node_display_el = (node.ref === "return" || (out_ref && out_ref.ref === "return")) 
         && hlib.run({graph, fn}, {...args, output: "display"});
-    info_display_dispatch && requestAnimationFrame(() => info_display_dispatch(UpdateResultDisplay, {el: node_display_el && node_display_el.el ? node_display_el.el : ha.h('div', {})}))
+    console.log("node display el")
+    console.log(node_display_el)
+    info_display_dispatch && requestAnimationFrame(() => info_display_dispatch(UpdateResultDisplay, {el: node_display_el ? node_display_el : ha.h('div', {})}))
 }
 
 const show_error = (e, t) => ({

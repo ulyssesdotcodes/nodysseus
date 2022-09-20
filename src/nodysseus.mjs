@@ -300,32 +300,37 @@ const mockcombined = (data, graph_input_value) => {
 }
 
 const node_nodes = (node, node_id, data, graph_input_value, lib, inputs) => {
+    data = Object.fromEntries(Object.entries(data).map(e => [e[0], e[1] === undefined ? e[1] : run_node(e[1], {}, e[1].args, lib)]))
     return run_graph(node, node_id, mockcombined(data, graph_input_value), lib)
 }
 
-const node_script = (node, stab, lib) => {
+const node_script = (node, nodeArgs, lib) => {
     let orderedargs = "";
     const data = {};
-    for(let i of Object.keys(stab)) {
+    for(let i of Object.keys(nodeArgs)) {
         orderedargs += ", " + i;
-        if(stab[i] !== undefined){
-            data[i] = run(stab[i], stab[i].args, lib)
+        if(nodeArgs[i] !== undefined){
+            const graphval = run_node(nodeArgs[i], {}, nodeArgs[i].args, lib);
+            // TODO: figure out how to now wrap
+            data[i] = graphval === undefined || !graphval.value ? graphval : run_node(graphval, {}, graphval.args, lib)
         }
     }
 
     const name = node.name ? node.name.replace(/\W/g, "_") : node.id;
-    const fn = lib.no.runtime.get_fn(node.id, name, `_lib, _node, _graph_input_value${orderedargs}`, node.script);
+    const fn = lib.no.runtime.get_fn(node.id, name, `_lib, _node, _graph_input_value${orderedargs}`, node.script ?? node.value);
 
     let is_iv_promised = false;
 
     const result = is_iv_promised
         ? Promise.all(inputs.map(iv => Promise.resolve(data[iv.as]))).then(iv => fn.apply(null, [lib, node, data, nolib.no.runtime.get_graph(graph), ...iv]))
         : fn.apply(null, [lib, node, data, ...Object.values(data)]);
+    
+    debugger;
 
     return lib.no.of(result);
 }
 
-const node_extern = (node, data, pstab, lib) => {
+const node_extern = (node, data, graphArgs, lib) => {
     const extern = nodysseus_get(lib.extern, node.ref === "extern" ? node.value : node_ref.value);
     const args = extern.args.reduce((acc, arg) => {
         let newval;
@@ -337,13 +342,13 @@ const node_extern = (node, data, pstab, lib) => {
         } else if (arg == '_lib') {
             newval = lib;
         } else if (arg == '_graph_input_value') {
-            newval = pstab;
+            newval = graphArgs;
         } else {
             newval = data[arg];
         }
 
         if(!extern.rawArgs && isrunnable(newval)) {
-            newval = run(newval)
+            newval = run(newval, {}, lib)
         }
 
         if(extern.resolve !== false){
@@ -353,12 +358,6 @@ const node_extern = (node, data, pstab, lib) => {
         acc[0].push(newval)
         return [acc[0], ispromise(newval) || acc[1]];
     }, [[], false]);
-
-    console.log("got extern args for ")
-    console.log(node)
-    console.log(extern.args)
-    console.log(args)
-
 
     if (args[1]) {
         return Promise.all(args[0]).then(as => {
@@ -371,41 +370,44 @@ const node_extern = (node, data, pstab, lib) => {
     }
 }
 
-const node_data = (data, pstab, lib) => {
+const node_data = (nodeArgs, graphArgs, lib) => {
     let is_promise = false;
     let needsresolve = false;
-    Object.entries(data).forEach(kv => {
+    Object.entries(nodeArgs).forEach(kv => {
         is_promise = is_promise || !!kv[1] && !kv[1]._Proxy && ispromise(kv[1]);
         needsresolve = needsresolve || kv[1]?._needsresolve;
     })
 
     if (is_promise) {
         const promises = [];
-        Object.entries(data).forEach(kv => {
+        Object.entries(nodeArgs).forEach(kv => {
             promises.push([kv[0], Promise.resolve(kv[1])])
         })
         return Promise.all(promises)
             .then(Object.fromEntries);
     }
 
-    if(needsresolve) data._needsresolve = true;
+    if(needsresolve) nodeArgs._needsresolve = true;
 
-    return Object.fromEntries(Object.entries(data).map(e => [e[0], e[1]]));
+    debugger;
+
+    return lib.no.of(Object.fromEntries(Object.entries(nodeArgs).map(e => [e[0], run_graph(e[1].graph, e[1].fn, e[1].args, lib)])));
 }
 
 // derives data from the args symbolic table
-const create_data = (graph, inputs, pstab, lib) => {
+const create_data = (graph, inputs, graphArgs, lib) => {
     const data = {};
     let input;
     let lgraph = {...graph}
-    if(graph.name === "simple"){debugger;}
+    //TODO: remove
+    const newgraphargs = {...graphArgs, output: undefined};
 
     // grab inputs from state
     for (let i = 0; i < inputs.length; i++) {
         input = inputs[i];
 
         // lgraph.out = input.from;
-        const val = {graph: lgraph, fn: input.from, args: pstab} //run_graph(lgraph, input.from, pstab, lib);
+        const val = {graph: lgraph, fn: input.from, args: newgraphargs} //run_graph(lgraph, input.from, graphArgs, lib);
         data[input.as] = val;
     }
 
@@ -413,22 +415,26 @@ const create_data = (graph, inputs, pstab, lib) => {
 }
 
 // graph, node, symtable, parent symtable, lib
-const run_node = (node, stab, pstab, lib) => {
-    console.log("running")
-    console.log(node)
-    console.log(stab)
-    console.log(pstab)
+const run_node = (node, nodeArgs, graphArgs, lib) => {
     if (node.ref) {
 
         if (node.ref === "arg") {
-            return nolib.no.arg(node, pstab, lib, node.value);
+            // console.log("got arg")
+            // console.log(node.value)
+            const val = nolib.no.arg(node, graphArgs, lib, node.value);
+            // console.log(val)
+            // return val;
+            // return val === undefined ? val : run_node(val, {}, {},  lib);
+            const resval = val === undefined || !val.value ? val : run_node(val, {}, val.args, lib)
+            // console.log(resval)
+            return resval;
         } else if (node.ref === "runnable"){
-            return stab;
+            return nodeArgs.fn;
         } else if (node.ref === "extern") {
-            return node_extern(node, stab, pstab, lib)
+            return node_extern(node, nodeArgs, graphArgs, lib)
         } else if (node.ref === "script") {
-            const data = Object.fromEntries(Object.entries(stab).filter(e => e[1] !== undefined).map(e => [e[0], run(e[1], pstab, lib)]))
-            return node_script(node, data, lib)
+            // const data = Object.fromEntries(Object.entries(nodeArgs).filter(e => e[1] !== undefined).map(e => [e[0], run_graph(e[1].graph, e[1].fn, e[1].args , lib)]))
+            return node_script(node, nodeArgs, lib)
         }
 
         let node_ref = lib.no.runtime.get_ref(node.ref);
@@ -437,33 +443,41 @@ const run_node = (node, stab, pstab, lib) => {
             throw new Error(`Unable to find ref ${ref} for node ${node.name || node.id}`)
         }
 
-        return run_node(node_ref, {...stab, _value: node.value}, node.ref === "return" ? {output: nodysseus_get(pstab, "output")} : {}, lib)
-    } else if (node.fn && node.graph) {
-        // backwards compatability
-        const data = Object.fromEntries(Object.entries(stab).map(e => [e[0], e[1]]))
+        // console.log("running ref")
+        // console.log(node)
+        // console.log(node_ref)
 
-        if(!(Object.hasOwn(node, "graph") && Object.hasOwn(node, "fn"))){
-            return node_nodes(node, node.out, data, pstab, lib)
-        }
-        return node_nodes(node.graph, node.fn, data, pstab, lib)
+        return run_node(node_ref, {...nodeArgs, __value: lib.no.of(node.value)}, node.ref === "return" ? {output: nodysseus_get(graphArgs, "output")} : {}, lib)
+    } else if (node.nodes) {
+        const data = Object.fromEntries(Object.entries(nodeArgs).map(e => [e[0], e[1]]))
+
+        // backwards compatability
+        return node_nodes(node, node.out, data, node.args, lib)
+    } else if (node.fn && node.graph) {
+        const data = Object.fromEntries(Object.entries(nodeArgs).map(e => [e[0], e[1]]))
+
+        // backwards compatability
+        return node_nodes(node.graph, node.fn, nodeArgs, node.args, lib)
     } else if (node.script){
         // deprecated
-        const data = Object.fromEntries(Object.entries(stab).filter(e => e[1] !== undefined).map(e => [e[0], run(e[1], pstab, lib)]))
-        return node_script(node, data, lib)
-    } else if(node.value !== undefined) {
+        // const data = Object.fromEntries(Object.entries(nodeArgs)
+        //     .filter(e => e[1] !== undefined)
+        //     .map(e => [e[0], run_graph(e[1].graph, e[1].fn, e[1].args, lib)]))
+        return node_script(node, nodeArgs, lib)
+    } else if(Object.hasOwn(node, "value")) {
         return node_value(node);
     } else {
-        return node_data(stab, pstab, lib)
+        return node_data(nodeArgs, graphArgs, lib)
     }
 }
 
 // handles graph things like edges
-const run_graph = (graph, node_id, stab, lib) => {
+const run_graph = (graph, node_id, graphArgs, lib) => {
     // const cache_args = lib.no.runtime.get_args(graph);
     // const result = lib.no.runtime.get_result(graph);
 
     // if(cache_args) {
-    //     Object.assign({}, stab, cache_args, result ? {result} : {});
+    //     Object.assign({}, nodeArgs, cache_args, result ? {result} : {});
     // }
 
     try {
@@ -483,9 +497,9 @@ const run_graph = (graph, node_id, stab, lib) => {
 
         lib.no.runtime.publish('noderun', {graph, node_id})
 
-        const data = create_data(graph, inputs, stab, lib);
+        const data = create_data(graph, inputs, graphArgs, lib);
         const node = lib.no.runtime.get_node(graph, node_id);
-        return run_node(node, data, stab, lib);
+        return run_node(node, data, graphArgs, lib);
     } catch (e) {
         console.log(`error in node`);
         if (e instanceof AggregateError) {
@@ -1065,9 +1079,14 @@ const nolib = {
         // runGraph: F<A> => A
         ap: {
             rawArgs: true,
-            args: ['fn', 'args'],
-            fn: (fn, args) => {
-                args = run(args);
+            args: ['fn', 'args', '_lib'],
+            fn: (fn, args, lib) => {
+                // console.log("applying")
+                // console.log(fn)
+                // console.dir(args)
+                args = run_node(run_node(args, {}, {}, lib));
+                // console.dir(args)
+                // debugger;
                 return {...fn, args: {...fn.args, ...args, __args: fn.__args}}
             }
         },
@@ -1083,19 +1102,15 @@ const nolib = {
             rawArgs: true,
             args: ['fn', 'object', 'initial', '_lib'],
             fn: (fn, object, initial, _lib) => {
-                if(object && isrunnable(object)) {
-                    object = run(object);
-                }
-                debugger;
+                object = run_node(object, {}, object.args, _lib);
+                // object = run_node(run_node(object, {}, object.args, _lib), {}, {}, _lib);
                 if(object === undefined) return undefined;
-                initial = run(nolib.no.of(initial));
+                initial = run_node(initial, {}, initial.args, _lib);
+                // fn = run_graph(fn.graph, fn.fn, fn.args, _lib)
 
                 const mapobjarr = (mapobj, mapfn, mapinit) => Array.isArray(mapobj) ? mapobj.reduce(mapfn, mapinit) : Object.fromEntries(Object.entries(mapobj).reduce(mapfn, mapinit));
 
-                const ret = mapobjarr(object, (previousValue, currentValue) => run({
-                    ...fn, 
-                    args: Object.assign({}, fn.args, {previousValue: (console.log(previousValue), previousValue), currentValue: (console.log(currentValue), currentValue)})
-                }), initial);
+                const ret = mapobjarr(object, (previousValue, currentValue) => run_graph(fn.graph, fn.fn, mockcombined({previousValue: previousValue, currentValue: currentValue}, fn.args), _lib), initial);
                 return ret;
             }
         },
@@ -1125,8 +1140,8 @@ const nolib = {
             args: ['output', 'value', 'display', 'subscribe', 'argslist', 'args', '_node', '_graph', '_graph_input_value', '_lib'],
             fn: (output, value, display, subscribe, argslist, args, _node, _graph, _args, _lib) => {
                 output = _args["output"]
-                if(args && isrunnable(args)) {
-                    args = run(args, {}, _lib);
+                if(args) {
+                    args = run_graph(args.graph, args.fn, {}, _lib);
                 }
                 const runedge = output ?? 'value';
                 const edgemap = {value, display, subscribe, argslist};
@@ -1154,7 +1169,7 @@ const nolib = {
                     // _lib.no.runtime.update_result(_graph.id, ret)
                 // }
 
-                return run(edgemap[runedge], args, _lib);
+                return edgemap[runedge] ? run_graph(edgemap[runedge].graph, edgemap[runedge].fn, {...args, ...edgemap[runedge].args}, _lib) : undefined;
             }
         },
         compare,
@@ -1433,6 +1448,6 @@ const add_default_nodes_and_edges = g => ({
         .concat(generic.nodes)
 })
 
-const run = (node, args, lib) => run_node(node, (args ?? {}), {}, lib)
+const run = (node, args, lib) => run_node(node, Object.fromEntries(Object.entries(args ?? {}).map(e => [e[0], lib.no.of(e[1])])), node.args, lib).value
 
 export { nolib, run, objToGraph, bfs, calculateLevels, compare, hashcode, add_default_nodes_and_edges, ispromise, resolve, NodysseusError, base_graph, base_node, resfetch };
