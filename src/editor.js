@@ -415,7 +415,7 @@ const refresh_graph = (graph, node_id, dispatch) => {
     console.log('refresh graph')
     console.log(result);
     console.log(ap(display_fn, result))
-    const update_result_display_fn = display => result_display_dispatch(UpdateResultDisplay, {el: display && display.el ? display.el : {dom_type: 'div', props: {}, children: []}})
+    const update_result_display_fn = display => result_display_dispatch(UpdateResultDisplay, {el: display ? display : {dom_type: 'div', props: {}, children: []}})
     const update_info_display_fn = () => dispatch(s => [s, s.selected[0] !== s.display_graph.out 
         && [() => update_info_display({fn: s.selected[0], graph: s.display_graph, args: {}})]])
     ap_promise(ap_promise(result, display_fn), update_result_display_fn);
