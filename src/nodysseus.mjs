@@ -396,7 +396,8 @@ const create_data = (graph, inputs, graphArgs, lib) => {
     let input;
     let lgraph = {...graph}
     //TODO: remove
-    const newgraphargs = {...graphArgs, output: undefined};
+    const newgraphargs = {...graphArgs};
+    delete newgraphargs.output
 
     // grab inputs from state
     for (let i = 0; i < inputs.length; i++) {
@@ -665,20 +666,20 @@ const nolib = {
         arg: (node, target, _lib, value) => {
             const typedvalue = value.split(": ")
             const nodevalue = typedvalue[0]
+            const newtarget = () => { const newt = Object.assign({}, target.__args); delete newt.__args; return newt }
+            console.log(newtarget())
             // const named_args = graph.nodes.filter(n => n.ref === "arg").map(n => n.value);
-            return typeof nodevalue === 'string'
-            ? nodevalue === '_node'
+            return nodevalue === undefined || target === undefined
+                ? undefined
+                : nodevalue === '_node'
                 ? node
                 : nodevalue.startsWith('_node.')
                 ? nodysseus_get(node, nodevalue.substring('_node.'.length))
-                : nodevalue === '_args' ? target
+                : nodevalue === '_args' ? newtarget()
                 : nodysseus_get(node.type === "local" || node.type?.includes?.("local") 
-                    ? Object.assign({}, target, {__args: {}}) 
+                    ? newtarget()
                     : node.type === "parent" || node.type?.includes?.("parent") 
                     ? target.__args : target, nodevalue)
-            : nodevalue !== undefined && target !== undefined
-                ? target[nodevalue]
-                : undefined
         },
         base_graph,
         base_node,
@@ -947,12 +948,19 @@ const nolib = {
                     const fnid = id + orderedargs;
                     let fn = fndb.by("id", fnid);
                     if(!fn || fn.script !== script) {
+                        const update = !!fn;
+
                         fn = {
                             id: fnid,
                             script,
                             fn: new Function(`return function _${name.replace(/(\s|\/)/g, '_')}(${orderedargs}){${script}}`)()
                         }
-                        fndb.insert(fn)
+
+                        if(update){
+                            fndb.update(fn)
+                        } else {
+                            fndb.insert(fn)
+                        }
                     }
 
                     return fn.fn
