@@ -457,7 +457,7 @@ const run_node = (node, nodeArgs, graphArgs, lib) => {
         // backwards compatability
         return node_nodes(node, node.out, data, node.args, lib)
     } else if (node.fn && node.graph) {
-        const data = Object.fromEntries(Object.entries(nodeArgs).map(e => [e[0], e[1]]))
+        // const data = Object.fromEntries(Object.entries(nodeArgs).map(e => [e[0], e[1]]))
 
         // backwards compatability
         return node_nodes(node.graph, node.fn, nodeArgs, node.args, lib)
@@ -674,6 +674,7 @@ const nolib = {
                     ? Object.assign({}, target, {__args: {}}) 
                     : node.type === "parent" || node.type?.includes?.("parent") 
                     ? target.__args : target, nodevalue)
+            : nodevalue === '_args' ? target
             : nodevalue !== undefined && target !== undefined
                 ? target[nodevalue]
                 : undefined
