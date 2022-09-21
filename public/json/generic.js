@@ -7,7 +7,7 @@
           { "id": "in" },
           { "id": "value", "ref": "arg", "value": "value" },
           { "id": "tag", "ref": "arg", "value": "tag" },
-          { "id": "out", "args": [], "script": "console.log(tag ?? _graph.value ?? _graph.name ?? _graph.id); console.log(value); return value" }
+          { "id": "out", "args": [], "script": "console.log(tag ?? __value ?? _graph.name ?? _graph.id); console.log(value); return value" }
         ],
         "edges": [
           { "from": "in", "to": "out", "as": "input", "type":"ref"},
@@ -139,7 +139,7 @@
         "id": "if_arg",
         "description": "If this node's `value` exists in the node's context, return the value from the `true` branch",
         "nodes": [
-          {"id": "name", "ref": "arg", "value": "_graph.value"},
+          {"id": "name", "ref": "arg", "value": "__value"},
           {"id": "args", "ref": "arg", "value": "_args"},
           {"id": "true", "ref": "arg", "value": "true"},
           {"id": "get_name", "ref": "get"},
@@ -209,7 +209,7 @@
           {
             "id": "out", 
             "ref": "script", 
-            "value": "const parent = _lib.no.runtime.get_parent(_graph); const super_parent = _lib.no.runtime.get_parent(parent); const edge = _lib.no.runtime.get_edges_in(super_parent, parent.node_id).find(e => e.as === _graph.value); return {...edge, graph: super_parent}"
+            "value": "const parent = _lib.no.runtime.get_parent(_graph); const super_parent = _lib.no.runtime.get_parent(parent); const edge = _lib.no.runtime.get_edges_in(super_parent, parent.node_id).find(e => e.as === __value); return {...edge, graph: super_parent}"
           }
         ],
         "edges": [
@@ -261,9 +261,13 @@
       {
         "id": "return",
         "description": "Creates an inline graph with args, pub/sub, etc. See docs for more detail.",
-        "out": "choose_edge",
         "ref": "extern",
         "value": "return"
+      },
+      {
+        "id": "fold",
+        "ref": "extern",
+        "value": "fold"
       },
       {
         "id": "runnable",
@@ -303,13 +307,16 @@
       {
         "id": "get",
         "description": "Get the value at the path of object. Accepts a `.` separated path e.g. get(target, 'a.b.c') returns target.a.b.c",
+        "out": "out",
         "nodes": [
           { "id": "target", "ref": "arg", "value": "target" },
           { "id": "path", "ref": "arg", "value": "path" },
+          { "id": "graph_value", "ref": "arg", "value": "__value" },
           { "id": "otherwise", "ref": "arg", "value": "otherwise" },
           { "id": "out", "ref": "extern", "value": "get" }
         ],
         "edges": [
+          { "from": "graph_value", "to": "out", "as": "graphval" },
           { "from": "otherwise", "to": "out", "as": "def" },
           { "from": "path", "to": "out", "as": "path" },
           { "from": "target", "to": "out", "as": "target" }
@@ -412,7 +419,7 @@
         "out": "out",
         "nodes": [
           {"id": "path", "ref": "arg", "value": "path"},
-          {"id": "value", "ref": "arg", "value": "_graph.value"},
+          {"id": "value", "ref": "arg", "value": "__value"},
           {"id": "path_value", "ref": "default"},
           {"id": "args", "ref": "arg", "value": "_args", "type": "internal"},
           {"id": "runnable", "script": "const parent = _lib.no.runtime.get_parent(_graph); const node_id = _lib.no.runtime.get_path(parent, path); return {fn: node_id, graph: parent, args: {...args, edge: args.edge ? {...args.edge, node_id: parent.id + '/' + node_id} : undefined}}"},
@@ -434,7 +441,7 @@
         "nodes": [
           { "id": "target", "ref": "arg", "value": "target" },
           { "id": "path", "ref": "arg", "value": "path" },
-          {"id": "value_path", "ref": "arg", "value": "_graph.value"},
+          {"id": "value_path", "ref": "arg", "value": "__value"},
           {"id": "def_path", "ref": "default"},
           {"id": "args", "ref": "arg", "value": "_args"},
           { "id": "key", "ref": "arg", "value": "key" },
@@ -465,7 +472,7 @@
           {"id": "key", "ref": "arg", "value": "key"},
           {"id": "graph", "ref": "arg", "value": "graph"},
           {"id": "args", "ref": "arg", "value": "_args"},
-          {"id": "value_path", "ref": "arg", "value": "_graph.value"},
+          {"id": "value_path", "ref": "arg", "value": "__value"},
           {"id": "def_path", "ref": "default"},
           {"id": "key_path", "ref": "add"},
           { "id": "key_def", "ref": "default", "value": "" },
@@ -509,7 +516,7 @@
         {"id": "value_runnable", "ref": "arg", "value": "value_runnable"},
         {"id": "key", "ref": "arg", "value": "key"},
         {"id": "path", "ref": "arg", "value": "path"},
-        {"id": "value_path", "ref": "arg", "value": "_graph.value"},
+        {"id": "value_path", "ref": "arg", "value": "__value"},
         {"id": "graph", "ref": "arg", "value": "_graph"},
         {"id": "input_args", "ref": "arg", "value": "_args"},
         {"id": "node_args", "ref": "arg", "value": "args"},
@@ -552,7 +559,7 @@
       "nodes": [
         { "id": "value", "ref": "arg", "value": "value" },
         { "id": "arg_name", "ref": "arg", "value": "name" },
-        {"id": "graph_value", "ref": "arg", "value": "_graph.value"},
+        {"id": "graph_value", "ref": "arg", "value": "__value"},
         {"id": "name", "ref": "default"},
         { "id": "update", "script": "return _lib.no.runtime.publish(event, data)" }
       ],
@@ -623,7 +630,7 @@
         {"id": "data_log", "ref": "log"},
         {
           "id": "add_listener",
-          "script": "_lib.no.runtime.add_listener(event ?? _graph.value, 'evt-listener-' + _graph.id, (data) => { let update = true; if(onevent){ update = _lib.no.run(onevent.graph, onevent.fn, {...onevent.args, data, prev}); } if(update){ _lib.no.runtime.update_args(_graph, {_data: data.data}) } }, false); return _lib.no.runtime.get_args(_graph)['_data'];"
+          "script": "_lib.no.runtime.add_listener(event ?? __value, 'evt-listener-' + _graph.id, (data) => { let update = true; if(onevent){ update = _lib.no.run(onevent.graph, onevent.fn, {...onevent.args, data, prev}); } if(update){ _lib.no.runtime.update_args(_graph, {_data: data.data}) } }, false); return _lib.no.runtime.get_args(_graph)['_data'];"
         },
         { "id": "out", "ref": "default"}
       ],
@@ -3332,7 +3339,7 @@
       },
       {
         "id": "wnr7m0u",
-        "value": "_graph.value",
+        "value": "__value",
         "ref": "arg"
       },
       {

@@ -345,8 +345,8 @@ const node_extern = (node, data, graphArgs, lib) => {
             newval = data[arg];
         }
 
-        if(!extern.rawArgs && isrunnable(newval)) {
-            newval = run(newval, {}, lib)
+        if(!extern.rawArgs) {
+            newval = run_runnable(newval, lib)
         }
 
         if(extern.resolve !== false){
@@ -483,6 +483,8 @@ const run_graph = (graph, node_id, graphArgs, lib) => {
     //     Object.assign({}, nodeArgs, cache_args, result ? {result} : {});
     // }
 
+    const node = lib.no.runtime.get_node(graph, node_id);
+
     try {
         const inputs = lib.no.runtime.get_edges_in(graph, node_id);
 
@@ -501,7 +503,6 @@ const run_graph = (graph, node_id, graphArgs, lib) => {
         lib.no.runtime.publish('noderun', {graph, node_id})
 
         const data = create_data(graph, inputs, graphArgs, lib);
-        const node = lib.no.runtime.get_node(graph, node_id);
         return run_node(node, data, graphArgs, lib);
     } catch (e) {
         console.log(`error in node`);
@@ -670,11 +671,11 @@ const nolib = {
                 ? node
                 : nodevalue.startsWith('_node.')
                 ? nodysseus_get(node, nodevalue.substring('_node.'.length))
+                : nodevalue === '_args' ? target
                 : nodysseus_get(node.type === "local" || node.type?.includes?.("local") 
                     ? Object.assign({}, target, {__args: {}}) 
                     : node.type === "parent" || node.type?.includes?.("parent") 
                     ? target.__args : target, nodevalue)
-            : nodevalue === '_args' ? target
             : nodevalue !== undefined && target !== undefined
                 ? target[nodevalue]
                 : undefined
@@ -1138,7 +1139,7 @@ const nolib = {
             fn: (output, value, display, subscribe, argslist, args, _node, _graph, _args, _lib) => {
                 output = _args["output"]
                 if(args) {
-                    args = run_graph(args.graph, args.fn, {}, _lib);
+                    args = run_runnable(run_runnable(args, _lib), _lib);
                 }
                 const runedge = output ?? 'value';
                 const edgemap = {value, display, subscribe, argslist};
@@ -1172,11 +1173,11 @@ const nolib = {
         compare,
         eq: ({ a, b }) => a === b,
         get: {
-            args: ['_graph', 'target', 'path', 'def'],
-            fn: (graph, target, path, def) => {
+            args: ['_graph', 'target', 'path', 'def', 'graphval'],
+            fn: (graph, target, path, def, graph_value) => {
                 return nodysseus_get(
                     target && target._Proxy ? target._value : target, 
-                    path && path._Proxy ? path._value : (graph.value || path), 
+                    path && path._Proxy ? path._value : (graph_value || path), 
                     def && def._Proxy ? def._value : def
                 );
             },
@@ -1445,6 +1446,6 @@ const add_default_nodes_and_edges = g => ({
         .concat(generic.nodes)
 })
 
-const run = (node, args, lib) => run_node(node, Object.fromEntries(Object.entries(args ?? {}).map(e => [e[0], lib.no.of(e[1])])), node.args, lib).value
+const run = (node, args, lib) => run_node(node, Object.fromEntries(Object.entries(args ?? {}).map(e => [e[0], lib.no.of(e[1])])), node.args, lib)?.value
 
 export { nolib, run, objToGraph, bfs, calculateLevels, compare, hashcode, add_default_nodes_and_edges, ispromise, resolve, NodysseusError, base_graph, base_node, resfetch };

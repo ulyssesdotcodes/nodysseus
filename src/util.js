@@ -43,6 +43,8 @@ export const expand_node = (data) => {
         return { display_graph: data.display_graph, selected: [data.node_id] };
     }
 
+    const args_node = node.edges.find(e => e.to === node.out && e.as === "args").from;
+
     const flattened = flattenNode(node, 1);
 
     const new_id_map = flattened.flat_nodes.reduce((acc, n) => nolib.no.runtime.get_node(data.display_graph, n.id) ? (acc[n.id] = create_randid(), acc) : n, {})
@@ -55,7 +57,7 @@ export const expand_node = (data) => {
             .map(e => ({
                 ...e,
                 from: new_id_map[e.from] ?? e.from,
-                to: new_id_map[e.to] ?? e.to
+                to: new_id_map[e.to] ?? e.to === node_id ? args_node : e.to
             }))
             .concat(flattened.flat_edges)
     };
@@ -239,8 +241,8 @@ export const node_args = (nolib, ha, graph, node_id) => {
             : node_ref?.nodes?.filter(n => 
                 n.ref === "arg" 
                 && n.type !== "internal" 
-                && !n.value.split(":")[1]?.toLowerCase()?.includes("internal")
-                && !(Array.isArray(n.type) && n.type.includes("internal"))).map(n => n.value) ?? [])
+                && !n.value?.split(":")[1]?.toLowerCase()?.includes("internal")
+                && !(Array.isArray(n.type) && n.type.includes("internal"))).map(n => n.value).filter(a => a) ?? [])
                 .filter(a => !a.includes('.') && !a.startsWith("_"))
                 .concat(edges_in?.map(e => e.as) ?? [])
                 .concat(
