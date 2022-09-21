@@ -325,8 +325,6 @@ const node_script = (node, nodeArgs, lib) => {
         ? Promise.all(inputs.map(iv => Promise.resolve(data[iv.as]))).then(iv => fn.apply(null, [lib, node, data, nolib.no.runtime.get_graph(graph), ...iv]))
         : fn.apply(null, [lib, node, data, ...Object.values(data)]);
     
-    debugger;
-
     return lib.no.of(result);
 }
 
@@ -389,8 +387,6 @@ const node_data = (nodeArgs, graphArgs, lib) => {
 
     if(needsresolve) nodeArgs._needsresolve = true;
 
-    debugger;
-
     return lib.no.of(Object.fromEntries(Object.entries(nodeArgs).map(e => [e[0], run_graph(e[1].graph, e[1].fn, e[1].args, lib)])));
 }
 
@@ -414,6 +410,13 @@ const create_data = (graph, inputs, graphArgs, lib) => {
     return data;
 }
 
+const run_runnable = (runnable, lib) => 
+    runnable?.fn && runnable?.graph 
+    ? run_graph(runnable.graph, runnable.fn, runnable.args ?? {}, lib)
+    : runnable?.id 
+    ? run_node(runnable, {}, {}, lib)
+    : runnable
+
 // graph, node, symtable, parent symtable, lib
 const run_node = (node, nodeArgs, graphArgs, lib) => {
     if (node.ref) {
@@ -423,11 +426,11 @@ const run_node = (node, nodeArgs, graphArgs, lib) => {
             // console.log(node.value)
             const val = nolib.no.arg(node, graphArgs, lib, node.value);
             // console.log(val)
-            // return val;
+            return val;
             // return val === undefined ? val : run_node(val, {}, {},  lib);
-            const resval = val === undefined || !val.value ? val : run_node(val, {}, val.args, lib)
+            // const resval = run_runnable(val, lib)
             // console.log(resval)
-            return resval;
+            // return resval;
         } else if (node.ref === "runnable"){
             return nodeArgs.fn;
         } else if (node.ref === "extern") {
@@ -1079,38 +1082,31 @@ const nolib = {
         // runGraph: F<A> => A
         ap: {
             rawArgs: true,
-            args: ['fn', 'args', '_lib'],
-            fn: (fn, args, lib) => {
-                // console.log("applying")
-                // console.log(fn)
-                // console.dir(args)
-                args = run_node(run_node(args, {}, {}, lib));
-                // console.dir(args)
-                // debugger;
-                return {...fn, args: {...fn.args, ...args, __args: fn.__args}}
-            }
-        },
-        chain: {
-            rawArgs: true,
-            args: ['fa', 'afb'],
-            fn: (fa, afb) => {
-                const a = run(fa);
-                return {...afb, args: {...afb.args, ...a}}
+            args: ['fn', 'args', 'run', '_lib'],
+            fn: (fn, args, run, lib) => {
+                // args = run_runnable(args, lib);
+                const fnrunnable = run_runnable(fn, lib);
+                const runvalue = run_runnable(run, lib)
+                const argsvalue = run_runnable(args, lib)
+                const fnap = {...fnrunnable, args: {...fnrunnable.args, ...argsvalue.value, __args: fnrunnable.__args}}
+                return runvalue ? run_runnable(fnap, lib) : fnap;
             }
         },
         fold: {
             rawArgs: true,
             args: ['fn', 'object', 'initial', '_lib'],
             fn: (fn, object, initial, _lib) => {
-                object = run_node(object, {}, object.args, _lib);
+                const objectvalue = run_runnable(object, _lib).value;
                 // object = run_node(run_node(object, {}, object.args, _lib), {}, {}, _lib);
-                if(object === undefined) return undefined;
+                if(objectvalue === undefined) return undefined;
                 initial = run_node(initial, {}, initial.args, _lib);
-                // fn = run_graph(fn.graph, fn.fn, fn.args, _lib)
+                console.log("folding")
+                console.log(fn)
+                const fnrunnable = fn;//run_runnable(fn, _lib)
 
                 const mapobjarr = (mapobj, mapfn, mapinit) => Array.isArray(mapobj) ? mapobj.reduce(mapfn, mapinit) : Object.fromEntries(Object.entries(mapobj).reduce(mapfn, mapinit));
 
-                const ret = mapobjarr(object, (previousValue, currentValue) => run_graph(fn.graph, fn.fn, mockcombined({previousValue: previousValue, currentValue: currentValue}, fn.args), _lib), initial);
+                const ret = mapobjarr(objectvalue, (previousValue, currentValue) => run_graph(fnrunnable.graph, fnrunnable.fn, mockcombined({previousValue: previousValue, currentValue: currentValue}, fnrunnable.args), _lib), initial);
                 return ret;
             }
         },
@@ -1222,7 +1218,7 @@ const nolib = {
         },
         new_array: {
             args: ['_node_inputs', '_node'],
-            resolve: false,
+            rawArgs: true,
             fn: (args, node) => {
                 if(node.value){
                     return node.value.split(/,\s+/)

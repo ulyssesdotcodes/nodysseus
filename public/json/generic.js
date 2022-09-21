@@ -415,7 +415,7 @@
           {"id": "value", "ref": "arg", "value": "_graph.value"},
           {"id": "path_value", "ref": "default"},
           {"id": "args", "ref": "arg", "value": "_args", "type": "internal"},
-          {"id": "runnable", "script": "console.log('runpath'); console.log(path); const parent = _lib.no.runtime.get_parent(_graph); const node_id = _lib.no.runtime.get_path(parent, path); console.log(node_id); return {fn: node_id, graph: parent, args: {...args, edge: args.edge ? {...args.edge, node_id: parent.id + '/' + node_id} : undefined}}"},
+          {"id": "runnable", "script": "const parent = _lib.no.runtime.get_parent(_graph); const node_id = _lib.no.runtime.get_path(parent, path); return {fn: node_id, graph: parent, args: {...args, edge: args.edge ? {...args.edge, node_id: parent.id + '/' + node_id} : undefined}}"},
           {"id": "run_runnable", "ref": "run"},
           {"id": "out", "ref": "return"}
         ],
@@ -766,6 +766,7 @@
         {"id": "map_fn", "ref": "arg", "value": "fn"},
         {"id": "element", "ref": "arg", "value": "element"},
         {"id": "map_fn_args"},
+        {"id": "run_map", "value": "true"},
         {"id": "map_element_fn", "ref": "extern", "value": "ap"},
         {"id": "currentValue", "ref": "arg", "value": "currentValue"},
         {"id": "previousValue", "ref": "arg", "value": "previousValue"},
@@ -778,6 +779,7 @@
         {"from": "currentValue", "to": "map_fn_args", "as": "element"},
         {"from": "map_fn_args", "to": "map_element_fn", "as": "args"},
         {"from": "map_fn", "to": "map_element_fn", "as": "fn"},
+        {"from": "run_map", "to": "map_element_fn", "as": "run"},
         {"from": "currentValue", "to": "append", "as": "value"},
         {"from": "previousValue", "to": "append", "as": "arr"},
         {"from": "append", "to": "fold", "as": "fn"},
@@ -794,10 +796,11 @@
         {"id": "pred_fn", "ref": "arg", "value": "fn"},
         {"id": "el_currentValue", "ref": "arg", "value": "currentValue"},
         {"id": "pred_fn_args"},
+        {"id": "run_pred", "value": "true"},
         {"id": "pred_element_fn", "ref": "extern", "value": "ap"},
         {"id": "currentValue", "ref": "arg", "value": "currentValue"},
         {"id": "previousValue", "ref": "arg", "value": "previousValue"},
-        {"id": "pred_append", "ref": "script", "value": "console.log('filtering array'); console.log(arr); console.log(pred); if(pred){ arr.push(value); } return arr;"},
+        {"id": "pred_append", "ref": "script", "value": "console.log('appending'); console.log(value); console.log(pred); if(pred === true){ arr.push(value); } return arr;"},
         {"id": "initial", "value": "[]"},
         {"id": "fold", "ref": "extern", "value": "fold"},
         {"id": "out", "ref": "return"}
@@ -806,6 +809,7 @@
         {"from": "el_currentValue", "to": "pred_fn_args", "as": "element"},
         {"from": "pred_fn_args", "to": "pred_element_fn", "as": "args"},
         {"from": "pred_fn", "to": "pred_element_fn", "as": "fn"},
+        {"from": "run_pred", "to": "pred_element_fn", "as": "run"},
         {"from": "currentValue", "to": "pred_append", "as": "value"},
         {"from": "previousValue", "to": "pred_append", "as": "arr"},
         {"from": "pred_element_fn", "to": "pred_append", "as": "pred"},
@@ -1206,7 +1210,7 @@
           { "id": "div", "value": "div" },
           { "id": "dom_type_value", "ref": "if"},
           { "id": "graph_value", "ref": "arg", "value": "_value"},
-          {"id": "filter_children_fn", "script": "console.log('filtering child'); console.log(_graph_input_value); console.log(element); return !!element && (element.dom_type || element.text_value)"},
+          {"id": "filter_children_fn", "script": "console.log('filtering child'); console.log(_graph_input_value); console.log(element); return !!element && !!(element.dom_type || element.text_value)"},
           {"id": "filter_children_fn_runnable", "ref": "runnable"},
           {"id": "fill_children_fn", "script": "console.log('mapping el'); console.log(element); return element.el ?? element"},
           {"id": "fill_children_fn_runnable", "ref": "runnable"},
@@ -1221,7 +1225,7 @@
           { "id": "dom_type_def", "ref": "default" },
           {
             "id": "out",
-            "script": "dom_type = dom_type?._Proxy ? dom_type._value : dom_type; if(!(typeof dom_type === 'string' && typeof children === 'object')){ throw new Error('invalid element');} return {dom_type, props, children: children, memo}"
+            "script": "dom_type = dom_type?._Proxy ? dom_type._value : dom_type; if(!(typeof dom_type === 'string' && typeof children === 'object')){ throw new Error('invalid element');} console.log('element'); console.log({dom_type, props, children: children, memo}); return {dom_type, props, children: children, memo}"
           },
           {"id": "out_ret", "ref": "return"}
         ],

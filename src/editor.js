@@ -32,7 +32,7 @@ const updateSimulationNodes = (dispatch, data) => {
     ]));
 
     const order = [];
-    const queue = [data.display_graph_out];
+    const queue = [data.display_graph.out];
 
     const parents_map = new Map(data.display_graph.nodes.map(n => [n.id, 
         data.display_graph.edges
@@ -406,11 +406,11 @@ const listenToEvent = (dispatch, props) => {
 const ap = (fn, v) => fn(v);
 const ap_promise = (p, fn) => p && typeof p['then'] === 'function' ? p.then(fn) : ap(fn, p);
 
-const refresh_graph = (graph, node_id, dispatch) => {
+const refresh_graph = (graph, dispatch) => {
     dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
-    const result = hlib.run({graph, fn: node_id}, {output: "value"}, {...hlib, ...nolib});
+    const result = hlib.run({graph, fn: graph.out}, {output: "value"}, {...hlib, ...nolib});
     // const result = hlib.run(graph, graph.out, {});
-    const display_fn = result => hlib.run({graph, fn: node_id}, {output: "display"});
+    const display_fn = result => hlib.run({graph, fn: graph.out}, {output: "display"});
     // const display_fn = result => hlib.run(graph, graph.out, {}, "display");
     console.log('refresh graph')
     console.log(result);
@@ -423,7 +423,7 @@ const refresh_graph = (graph, node_id, dispatch) => {
     return result
 }
 
-const result_subscription = (dispatch, {display_graph_id, display_graph_out}) => {
+const result_subscription = (dispatch, {display_graph_id}) => {
     let animrun = false;
 
     const error_listener = (error) =>
@@ -437,7 +437,7 @@ const result_subscription = (dispatch, {display_graph_id, display_graph_out}) =>
         if(graph.id === display_graph_id && !animrun) {
             cancelAnimationFrame(animrun)
             animrun = requestAnimationFrame(() => {
-                const result = refresh_graph(graph, display_graph_out, dispatch)
+                const result = refresh_graph(graph, dispatch)
                 const reset_animrun = () => animrun = false;
                 ap_promise(result, reset_animrun)
             })
@@ -716,7 +716,7 @@ const ChangeDisplayGraphId = (dispatch, {id, select_out}) => {
                     const new_graph = graph ?? Object.assign({}, base_graph(state.display_graph), {id});
                     nolib.no.runtime.update_graph(new_graph);
                     nolib.no.runtime.remove_graph_listeners(state.display_graph_id);
-                    dispatch(SelectNode, {node_id: state.display_graph_out})
+                    dispatch(SelectNode, {node_id: state.display_graph.out})
                 })
             }],
         ]))
@@ -999,8 +999,6 @@ const update_info_display = ({fn, graph, args}) => {
     const out_ref = node && (node.nodes && nolib.no.runtime.get_node(node, node.out)) || (node_ref.nodes && nolib.no.runtime.get_node(node_ref, node_ref.out));
     const node_display_el = (node.ref === "return" || (out_ref && out_ref.ref === "return")) 
         && hlib.run({graph, fn}, {...args, output: "display"});
-    console.log("node display el")
-    console.log(node_display_el)
     info_display_dispatch && requestAnimationFrame(() => info_display_dispatch(UpdateResultDisplay, {el: node_display_el ? node_display_el : ha.h('div', {})}))
 }
 
@@ -1147,7 +1145,7 @@ const runapp = (init, load_graph, _lib) => {
     subscriptions: s => [
         [d3subscription, {action: SimulationToHyperapp, update: UpdateSimulation}], 
         [graph_subscription, {display_graph_id: s.display_graph_id}],
-        result_display_dispatch && [result_subscription, {display_graph_id: s.display_graph_id, display_graph_out: s.display_graph_out}],
+        result_display_dispatch && [result_subscription, {display_graph_id: s.display_graph_id}],
         [keydownSubscription, {action: (state, payload) => {
             if(document.getElementById("node-editor-result").contains(payload.target)) {
                 return [state];
@@ -1159,7 +1157,7 @@ const runapp = (init, load_graph, _lib) => {
             const selected = state.selected[0];
             switch(key_input) {
                 case "ctrl_o": {
-                    action = [SelectNode, {node_id: state.display_graph_out, focus_property: 'name'}]
+                    action = [SelectNode, {node_id: state.display_graph.out, focus_property: 'name'}]
                     payload.stopPropagation();
                     payload.preventDefault();
                     break;
@@ -1283,15 +1281,14 @@ const editor = async function(html_id, display_graph, lib, norun) {
     const keybindings = await resfetch("json/keybindings.json").then(r => r.json())
     // let stored_graph = JSON.parse(localStorage.getItem(hash_graph ?? graph_list?.[0]));
     // stored_graph = stored_graph ? base_graph(stored_graph) : undefined
-    graph_list.map(id => localStorage.getItem(id)).filter(g => g).map(graph => JSON.parse(graph)).map(fn => nolib.no.runtime.update_graph(base_graph((console.log(fn), fn).graph)))
+    graph_list.map(id => localStorage.getItem(id)).filter(g => g).map(graph => JSON.parse(graph)).map(graph => nolib.no.runtime.update_graph(base_graph(graph)))
     // Promise.resolve(stored_graph ?? (hash_graph ? resfetch(`json/${hash_graph}.json`).then(r => r.status !== 200 ? simple : r.json()).catch(_ => simple) : simple))
         // .then(display_graph => {
 
         const init = { 
             keybindings,
             display_graph_id: 'simple',
-            display_graph: simple.graph,
-            display_graph_out: simple.fn,
+            display_graph: simple,
             hash: window.location.hash ?? "",
             url_params,
             html_id,
