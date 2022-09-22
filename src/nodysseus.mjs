@@ -436,6 +436,11 @@ const run_node = (node, nodeArgs, graphArgs, lib) => {
         } else if (node.ref === "script") {
             // const data = Object.fromEntries(Object.entries(nodeArgs).filter(e => e[1] !== undefined).map(e => [e[0], run_graph(e[1].graph, e[1].fn, e[1].args , lib)]))
             return node_script(node, nodeArgs, lib)
+        } else if (node.ref === "state") {
+            if(nodeArgs["value"]) {
+                lib.no.runtime.update_args({id: "__state"}, {[node.value]: run_runnable(nodeArgs["value"])})
+            }
+            return lib.no.runtime.get_args({id: "__state"})[node.value]
         }
 
         let node_ref = lib.no.runtime.get_ref(node.ref);

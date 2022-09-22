@@ -270,6 +270,11 @@
         "value": "fold"
       },
       {
+        "id": "state",
+        "ref": "extern",
+        "value": "state"
+      },
+      {
         "id": "runnable",
         "_out": "out",
         "ref": "extern",
