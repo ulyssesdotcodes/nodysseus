@@ -419,7 +419,7 @@ const run_runnable = (runnable, lib) =>
     : runnable
 
 // graph, node, symtable, parent symtable, lib
-const run_node = (node, nodeArgs, graphArgs, lib) => {
+const run_node = (node, nodeArgs, graphArgs, lib, graph) => {
     if (node.ref) {
 
         if (node.ref === "arg") {
@@ -438,9 +438,9 @@ const run_node = (node, nodeArgs, graphArgs, lib) => {
             return node_script(node, nodeArgs, lib)
         } else if (node.ref === "state") {
             if(nodeArgs["value"]) {
-                lib.no.runtime.update_args({id: "__state"}, {[node.value]: run_runnable(nodeArgs["value"], lib)})
+                lib.no.runtime.update_args(graph, {[node.value]: run_runnable(nodeArgs["value"], lib)})
             }
-            return lib.no.runtime.get_args({id: "__state"})[node.value]
+            return lib.no.runtime.get_args(graph)[node.value]
         }
 
         let node_ref = lib.no.runtime.get_ref(node.ref);
@@ -502,7 +502,7 @@ const run_graph = (graph, node_id, graphArgs, lib) => {
         lib.no.runtime.publish('noderun', {graph, node_id})
 
         const data = create_data(graph, inputs, graphArgs, lib);
-        return run_node(node, data, graphArgs, lib);
+        return run_node(node, data, graphArgs, lib, graph);
     } catch (e) {
         console.log(`error in node`);
         if (e instanceof AggregateError) {
