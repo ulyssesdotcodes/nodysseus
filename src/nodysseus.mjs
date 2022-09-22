@@ -423,10 +423,7 @@ const run_node = (node, nodeArgs, graphArgs, lib) => {
     if (node.ref) {
 
         if (node.ref === "arg") {
-            // console.log("got arg")
-            // console.log(node.value)
             const val = nolib.no.arg(node, graphArgs, lib, node.value);
-            // console.log(val)
             return val;
             // return val === undefined ? val : run_node(val, {}, {},  lib);
             // const resval = run_runnable(val, lib)
@@ -446,10 +443,6 @@ const run_node = (node, nodeArgs, graphArgs, lib) => {
         if (!node_ref) {
             throw new Error(`Unable to find ref ${ref} for node ${node.name || node.id}`)
         }
-
-        // console.log("running ref")
-        // console.log(node)
-        // console.log(node_ref)
 
         return run_node(node_ref, {...nodeArgs, __value: lib.no.of(node.value)}, node.ref === "return" ? {output: nodysseus_get(graphArgs, "output")} : {}, lib)
     } else if (node.nodes) {
@@ -667,7 +660,6 @@ const nolib = {
             const typedvalue = value.split(": ")
             const nodevalue = typedvalue[0]
             const newtarget = () => { const newt = Object.assign({}, target.__args); delete newt.__args; return newt }
-            console.log(newtarget())
             // const named_args = graph.nodes.filter(n => n.ref === "arg").map(n => n.value);
             return nodevalue === undefined || target === undefined
                 ? undefined
@@ -1110,8 +1102,6 @@ const nolib = {
                 // object = run_node(run_node(object, {}, object.args, _lib), {}, {}, _lib);
                 if(objectvalue === undefined) return undefined;
                 initial = run_node(initial, {}, initial.args, _lib);
-                console.log("folding")
-                console.log(fn)
                 const fnrunnable = fn;//run_runnable(fn, _lib)
 
                 const mapobjarr = (mapobj, mapfn, mapinit) => Array.isArray(mapobj) ? mapobj.reduce(mapfn, mapinit) : Object.fromEntries(Object.entries(mapobj).reduce(mapfn, mapinit));

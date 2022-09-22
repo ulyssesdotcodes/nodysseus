@@ -413,8 +413,7 @@ const refresh_graph = (graph, dispatch) => {
     const display_fn = result => hlib.run({graph, fn: graph.out}, {output: "display"});
     // const display_fn = result => hlib.run(graph, graph.out, {}, "display");
     console.log('refresh graph')
-    console.log(result);
-    console.log(ap(display_fn, result))
+    console.log(graph);
     const update_result_display_fn = display => result_display_dispatch(UpdateResultDisplay, {el: display ? display : {dom_type: 'div', props: {}, children: []}})
     const update_info_display_fn = () => dispatch(s => [s, s.selected[0] !== s.display_graph.out 
         && [() => update_info_display({fn: s.selected[0], graph: s.display_graph, args: {}})]])
@@ -713,9 +712,20 @@ const ChangeDisplayGraphId = (dispatch, {id, select_out}) => {
             {...state, display_graph_id: id},
             [dispatch => {
                 requestAnimationFrame(() => {
+                    console.log("changing to")
+                    console.log(id);
                     const new_graph = graph ?? Object.assign({}, base_graph(state.display_graph), {id});
+                    console.log(new_graph);
                     nolib.no.runtime.update_graph(new_graph);
                     nolib.no.runtime.remove_graph_listeners(state.display_graph_id);
+                    dispatch(UpdateNode, {
+                        node: nolib.no.runtime.get_node(new_graph, new_graph.out), 
+                        property: "name", 
+                        value: id,
+                        display_graph: new_graph
+                    })
+                    console.log(id);
+                    console.log(nolib.no.runtime.get_node(new_graph, new_graph.out))
                     dispatch(SelectNode, {node_id: state.display_graph.out})
                 })
             }],
@@ -746,13 +756,13 @@ const Search = (state, {payload, nodes}) => {
 }
 
 const UpdateNodeEffect = (_, {display_graph, node}) => nolib.no.runtime.add_node( display_graph, node)
-const UpdateNode = (state, {node, property, value}) => [
+const UpdateNode = (state, {node, property, value, display_graph}) => [
     {
         ...state, 
         history: state.history.concat([{action: 'update_node', node: node, property, value }]) 
     },
     [UpdateNodeEffect, {
-        display_graph: state.display_graph,
+        display_graph: display_graph ?? state.display_graph,
         node: Object.assign({}, 
             base_node(node ?? nolib.no.runtime.get_node(state.display_graph, state.selected[0])), 
             {[property]: value === "" ? undefined : value}
