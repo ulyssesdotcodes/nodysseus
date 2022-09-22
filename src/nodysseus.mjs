@@ -438,9 +438,9 @@ const run_node = (node, nodeArgs, graphArgs, lib) => {
             return node_script(node, nodeArgs, lib)
         } else if (node.ref === "state") {
             if(nodeArgs["value"]) {
-                lib.no.runtime.update_args({id: "__state"}, {[node.value]: run_runnable(nodeArgs["value"])})
+                lib.no.runtime.update_args({id: "__state"}, {[node.value]: run_runnable(nodeArgs["value"], lib)})
             }
-            return lib.no.runtime.get_args({id: "__state"})[node.value]
+            return linoo.runtime.get_args({id: "__state"})[node.value]
         }
 
         let node_ref = lib.no.runtime.get_ref(node.ref);
