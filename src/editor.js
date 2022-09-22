@@ -551,7 +551,7 @@ const pzobj = {
 const run_h = ({dom_type, props, children, text}, exclude_tags=[]) => {
     dom_type = dom_type && dom_type._Proxy ? dom_type._value : dom_type;
     text = text?.value ?? text;
-    props = props && props._Proxy ? props._value : props;
+    props = props && props.value ? props.value : props;
     children = children && children._Proxy ? children._value : children;
     return dom_type === "text_value" 
         ? ha.text(text) 
