@@ -7,7 +7,7 @@
           { "id": "in" },
           { "id": "value", "ref": "arg", "value": "value" },
           { "id": "tag", "ref": "arg", "value": "tag" },
-          { "id": "out", "args": [], "script": "console.log(tag ?? __value ?? _graph.name ?? _graph.id); console.log(value); return value" }
+          { "id": "out", "args": [], "script": "console.log(tag ?? value ?? _graph.name ?? _graph.id); console.log(value); return value" }
         ],
         "edges": [
           { "from": "in", "to": "out", "as": "input", "type":"ref"},
@@ -807,7 +807,7 @@
         {"id": "pred_element_fn", "ref": "extern", "value": "ap"},
         {"id": "currentValue", "ref": "arg", "value": "currentValue"},
         {"id": "previousValue", "ref": "arg", "value": "previousValue"},
-        {"id": "pred_append", "ref": "script", "value": "console.log('appending'); console.log(value); console.log(pred); if(pred === true){ arr.push(value); } return arr;"},
+        {"id": "pred_append", "ref": "script", "value": "if(pred === true){ arr.push(value); } return arr;"},
         {"id": "initial", "value": "[]"},
         {"id": "fold", "ref": "extern", "value": "fold"},
         {"id": "out", "ref": "return"}
@@ -1217,11 +1217,11 @@
           { "id": "div", "value": "div" },
           { "id": "dom_type_value", "ref": "if"},
           { "id": "graph_value", "ref": "arg", "value": "_value"},
-          {"id": "filter_children_fn", "script": "console.log('filtering child'); console.log(_graph_input_value); console.log(element); return !!element && !!(element.dom_type || element.text_value)"},
+          {"id": "filter_children_fn", "script": "return !!element && !!(element.dom_type || element.text_value)"},
           {"id": "filter_children_fn_runnable", "ref": "runnable"},
-          {"id": "fill_children_fn", "script": "console.log('mapping el'); console.log(element); return element.el ?? element"},
+          {"id": "fill_children_fn", "script": "return element.el ?? element"},
           {"id": "fill_children_fn_runnable", "ref": "runnable"},
-          {"id": "wrapped_children", "script": "console.log('wrapped children'); console.log(children); return Array.isArray(children) ? children : [children]"},
+          {"id": "wrapped_children", "script": "return Array.isArray(children) ? children : [children]"},
           {"id": "filter_children", "ref": "filter"},
           {
             "id": "fill_children",
@@ -1232,7 +1232,7 @@
           { "id": "dom_type_def", "ref": "default" },
           {
             "id": "out",
-            "script": "dom_type = dom_type?._Proxy ? dom_type._value : dom_type; if(!(typeof dom_type === 'string' && typeof children === 'object')){ throw new Error('invalid element');} console.log('element'); console.log({dom_type, props, children: children, memo}); return {dom_type, props, children: children, memo}"
+            "script": "dom_type = dom_type?._Proxy ? dom_type._value : dom_type; if(!(typeof dom_type === 'string' && typeof children === 'object')){ throw new Error('invalid element');} return {dom_type, props, children: children, memo}"
           },
           {"id": "out_ret", "ref": "return"}
         ],

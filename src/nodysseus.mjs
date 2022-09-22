@@ -449,7 +449,7 @@ const run_node = (node, nodeArgs, graphArgs, lib) => {
         const data = Object.fromEntries(Object.entries(nodeArgs).map(e => [e[0], e[1]]))
 
         // backwards compatability
-        return node_nodes(node, node.out, data, node.args, lib)
+        return node_nodes(node, node.out ?? "out", data, node.args, lib)
     } else if (node.fn && node.graph) {
         // const data = Object.fromEntries(Object.entries(nodeArgs).map(e => [e[0], e[1]]))
 

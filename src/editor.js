@@ -712,21 +712,19 @@ const ChangeDisplayGraphId = (dispatch, {id, select_out}) => {
             {...state, display_graph_id: id},
             [dispatch => {
                 requestAnimationFrame(() => {
-                    console.log("changing to")
-                    console.log(id);
                     const new_graph = graph ?? Object.assign({}, base_graph(state.display_graph), {id});
-                    console.log(new_graph);
                     nolib.no.runtime.update_graph(new_graph);
                     nolib.no.runtime.remove_graph_listeners(state.display_graph_id);
-                    dispatch(UpdateNode, {
-                        node: nolib.no.runtime.get_node(new_graph, new_graph.out), 
-                        property: "name", 
-                        value: id,
-                        display_graph: new_graph
-                    })
-                    console.log(id);
-                    console.log(nolib.no.runtime.get_node(new_graph, new_graph.out))
-                    dispatch(SelectNode, {node_id: state.display_graph.out})
+                    dispatch(s => [{...s, display_graph: new_graph, selected: [new_graph.out], display_graph_id: new_graph.id}])
+                    if(!graph) {
+                        dispatch(UpdateNode, {
+                            node: nolib.no.runtime.get_node(new_graph, new_graph.out), 
+                            property: "name", 
+                            value: id,
+                            display_graph: new_graph
+                        })
+                    }
+                    // dispatch(SelectNode, {node_id: new_graph.out})
                 })
             }],
         ]))
