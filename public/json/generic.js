@@ -609,7 +609,7 @@
         { "id": "cfuymky", "value": "{\"a\": 1, \"b\": {\"c\": 2, \"d\": 3}}" },
         { "id": "4d8qcss", "ref": "html_text" },
         { "id": "rpys4rr", "value": "value", "ref": "arg" },
-        { "id": "1znvqbi", "value": "result", "ref": "arg" },
+        { "id": "1znvqbi", "value": "value", "ref": "arg" },
         { "id": "qwz3ftj", "ref": "script", "value": "return typeof object !== 'object' || Array.isArray(object) || Object.getPrototypeOf(object) === Object.prototype ? JSON.stringify(object) : Object.getPrototypeOf(object) ? Object.getPrototypeOf(object).constructor.name : `${object}`" },
         { "id": "5a6pljw", "value": "pre", "ref": "html_element" },
         { "id": "17pcf8z", "value": "2" },
