@@ -440,7 +440,7 @@ const run_node = (node, nodeArgs, graphArgs, lib) => {
             if(nodeArgs["value"]) {
                 lib.no.runtime.update_args({id: "__state"}, {[node.value]: run_runnable(nodeArgs["value"], lib)})
             }
-            return linoo.runtime.get_args({id: "__state"})[node.value]
+            return lib.runtime.get_args({id: "__state"})[node.value]
         }
 
         let node_ref = lib.no.runtime.get_ref(node.ref);
