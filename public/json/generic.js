@@ -7,7 +7,7 @@
           { "id": "in" },
           { "id": "value", "ref": "arg", "value": "value" },
           { "id": "tag", "ref": "arg", "value": "tag" },
-          { "id": "out", "args": [], "script": "console.log(tag ?? value ?? _graph.name ?? _graph.id); console.log(value); return value" }
+          { "id": "out", "args": [], "script": "tag && console.log(tag); console.log(value); return value" }
         ],
         "edges": [
           { "from": "in", "to": "out", "as": "input", "type":"ref"},

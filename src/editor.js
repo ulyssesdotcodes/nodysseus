@@ -552,6 +552,8 @@ const run_h = ({dom_type, props, children, text}, exclude_tags=[]) => {
     dom_type = dom_type && dom_type._Proxy ? dom_type._value : dom_type;
     text = text?.value ?? text;
     props = props && props.value ? props.value : props;
+    props = props ? Object.fromEntries(Object.entries(props).map(kv => [kv[0], kv[1]?.value ?? kv[1]])) : props
+    console.log(props)
     children = children && children._Proxy ? children._value : children;
     return dom_type === "text_value" 
         ? ha.text(text) 
@@ -1347,8 +1349,8 @@ const middleware = dispatch => (ha_action, ha_payload) => {
         ? dispatch((state, payload) => {
             try {
                 const result = action.stateonly 
-                    ? run(state)
-                    : run({state, ...payload});
+                    ? hlib.run(action, state)
+                    : hlib.run(action, {state, ...payload});
 
 
                 if(!result) {
@@ -1359,7 +1361,7 @@ const middleware = dispatch => (ha_action, ha_payload) => {
                     if(typeof e === 'object' 
                     && e.hasOwnProperty('fn') 
                     && e.hasOwnProperty('graph')) {
-                        const effect_fn = nolib.no.run({graph: e.graph, fn: e.fn});
+                        const effect_fn = hlib.run({graph: e.graph, fn: e.fn});
                         // Object.defineProperty(effect_fn, 'name', {value: e.fn, writable: false})
                         return effect_fn;
                     }
