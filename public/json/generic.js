@@ -7,11 +7,13 @@
           { "id": "in" },
           { "id": "value", "ref": "arg", "value": "value" },
           { "id": "tag", "ref": "arg", "value": "tag" },
-          { "id": "out", "args": [], "script": "tag && console.log(tag); console.log(value); return value" }
+          {"id": "graph_value", "ref": "arg", "value": "__value"},
+          { "id": "out", "args": [], "script": "tag && console.log(tag); graph_value && console.log(graph_value); console.log(value); return value" }
         ],
         "edges": [
           { "from": "in", "to": "out", "as": "input", "type":"ref"},
           { "from": "tag", "to": "out", "as": "tag"},
+          { "from": "graph_value", "to": "out", "as": "graph_value"},
           { "from": "value", "to": "out", "as": "value" }
         ]
       },
@@ -152,24 +154,22 @@
         ]
       },
       {
-        "fn": "out",
-        "graph": {
-          "id": "if",
-          "description": "If `pred` exists in the node's context, return the value from the `true` branch. Otherwise, return the value from the `false` branch.",
-          "nodes": [
-            { "id": "pred", "ref": "arg", "value": "pred" },
-            { "id": "true", "ref": "arg", "value": "true" },
-            { "id": "false", "ref": "arg", "value": "false" },
-            { "id": "data"},
-            { "id": "out", "script": "return !!pred ? data.true_val : data.false_val" }
-          ],
-          "edges": [
-            { "from": "true", "to": "data", "as": "true_val" },
-            { "from": "false", "to": "data", "as": "false_val" },
-            { "from": "data", "to": "out", "as": "data" },
-            { "from": "pred", "to": "out", "as": "pred" }
-          ]
-        }
+        "id": "if",
+        "out": "out",
+        "description": "If `pred` exists in the node's context, return the value from the `true` branch. Otherwise, return the value from the `false` branch.",
+        "nodes": [
+          { "id": "pred", "ref": "arg", "value": "pred" },
+          { "id": "true", "ref": "arg", "value": "true" },
+          { "id": "false", "ref": "arg", "value": "false" },
+          {"id": "predval", "ref": "script", "value": "return !!pred ? 'true_val' : 'false_val'"},
+          { "id": "out", "ref": "extern", "value": "switch"}
+        ],
+        "edges": [
+          { "from": "true", "to": "out", "as": "true_val" },
+          { "from": "false", "to": "out", "as": "false_val" },
+          { "from": "pred", "to": "predval", "as": "pred" },
+          { "from": "predval", "to": "out", "as": "input" }
+        ]
       },
       {
         "id": "find_node",
@@ -268,11 +268,6 @@
         "id": "fold",
         "ref": "extern",
         "value": "fold"
-      },
-      {
-        "id": "state",
-        "ref": "extern",
-        "value": "state"
       },
       {
         "id": "runnable",
@@ -468,19 +463,45 @@
         ]
       },
       {
+        "id": "state",
+        "out": "out",
+        "nodes": [
+          {"id": "graphid", "ref": "arg", "value": "__graphid"},
+          {"id": "path", "ref": "arg", "value": "__value"},
+          {"id": "value", "ref": "arg", "value": "value"},
+          {"id": "state_val", "ref": "script", "value": "return _lib.no.runtime.get_args(graphid)[path];"},
+          {"id": "set_state_val", "ref": "script", "value": "_lib.no.runtime.update_args(graphid, {[path]: value}); return value"},
+          {"id": "if_value", "ref": "if"},
+          {"id": "display_text", "ref": "html_text"},
+          {"id": "display", "ref": "html_element"},
+          {"id": "out", "ref": "return"}
+        ],
+        "edges": [
+          {"from": "graphid", "to": "state_val", "as": "graphid"},
+          {"from": "path", "to": "state_val", "as": "path"},
+          {"from": "graphid", "to": "set_state_val", "as": "graphid"},
+          {"from": "value", "to": "set_state_val", "as": "value"},
+          {"from": "path", "to": "set_state_val", "as": "path"},
+          {"from": "state_val", "to": "if_value", "as": "false"},
+          {"from": "set_state_val", "to": "if_value", "as": "true"},
+          {"from": "value", "to": "if_value", "as": "pred"},
+          {"from": "if_value", "to": "out", "as": "value"},
+          {"from": "state_val", "to": "display_text", "as": "text"},
+          {"from": "display_text", "to": "display", "as": "children"},
+          {"from": "display", "to": "out", "as": "display"}
+        ]
+      },
+      {
         "id": "set_arg",
         "description": "Sets the value at `path` (or this node's value) on this graph's context. If used within a `map`, `filter`, or `reduce`, the arg will be separate for each loop. This behaviour can be changed by passing in a `key` separately.",
         "out": "out_ret",
         "nodes": [
           {"id": "value", "ref": "arg", "value": "value"},
           {"id": "path", "ref": "arg", "value": "path"},
-          {"id": "key", "ref": "arg", "value": "key"},
           {"id": "graph", "ref": "arg", "value": "graph"},
           {"id": "args", "ref": "arg", "value": "_args"},
           {"id": "value_path", "ref": "arg", "value": "__value"},
           {"id": "def_path", "ref": "default"},
-          {"id": "key_path", "ref": "add"},
-          { "id": "key_def", "ref": "default", "value": "" },
           {"id": "env", "ref": "script", "value": "return _lib.no.runtime.get_args(_lib.no.runtime.get_parent(graph ?? _graph))"},
           {"id": "prev_value", "ref": "get"},
           {"id": "set_val", "ref": "set"},
@@ -792,7 +813,7 @@
         {"from": "map_fn_args", "to": "map_element_fn", "as": "args"},
         {"from": "map_fn", "to": "map_element_fn", "as": "fn"},
         {"from": "run_map", "to": "map_element_fn", "as": "run"},
-        {"from": "currentValue", "to": "append", "as": "value"},
+        {"from": "map_element_fn", "to": "append", "as": "value"},
         {"from": "previousValue", "to": "append", "as": "arr"},
         {"from": "append", "to": "fold", "as": "fn"},
         {"from": "object", "to": "fold", "as": "object"},
@@ -1220,8 +1241,8 @@
           { "id": "memo", "ref": "arg", "value": "memo" },
           { "id": "element", "ref": "arg", "value": "element" },
           { "id": "div", "value": "div" },
-          { "id": "dom_type_value", "ref": "if"},
-          { "id": "graph_value", "ref": "arg", "value": "_value"},
+          { "id": "dom_type_value", "ref": "default"},
+          { "id": "graph_value", "ref": "arg", "value": "__value"},
           {"id": "filter_children_fn", "script": "return !!element && !!(element.dom_type || element.text_value)"},
           {"id": "filter_children_fn_runnable", "ref": "runnable"},
           {"id": "fill_children_fn", "script": "return element.el ?? element"},
@@ -1250,15 +1271,14 @@
           {"from": "filter_children_fn", "to": "filter_children_fn_runnable", "as": "fn"},
           {"from": "filter_children_fn_runnable", "to": "filter_children", "as": "fn"},
           {"from": "element", "to": "fill_children_fn", "as": "element"},
-          {"from": "fill_children_fn", "to": "fill_children_runnable", "as": "fn"},
+          {"from": "fill_children_fn", "to": "fill_children_fn_runnable", "as": "fn"},
           {"from": "fill_children_fn_runnable", "to": "fill_children", "as": "fn"},
           { "from": "filter_children", "to": "fill_children", "as": "array"},
           { "from": "fill_children", "to": "out", "as": "children"},
           { "from": "fill_props", "to": "out", "as": "props" },
           { "from": "dom_type", "to": "dom_type_def", "as": "value" },
-          { "from": "graph_value", "to": "dom_type_value", "as": "pred" },
-          { "from": "div", "to": "dom_type_value", "as": "false" },
-          { "from": "graph_value", "to": "dom_type_value", "as": "true" },
+          { "from": "div", "to": "dom_type_value", "as": "otherwise" },
+          { "from": "graph_value", "to": "dom_type_value", "as": "value" },
           { "from": "dom_type_value", "to": "dom_type_def", "as": "otherwise" },
           { "from": "dom_type_def", "to": "out", "as": "dom_type" },
           {"from": "out", "to": "out_ret", "as": "value"}

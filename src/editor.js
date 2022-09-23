@@ -412,8 +412,6 @@ const refresh_graph = (graph, dispatch) => {
     // const result = hlib.run(graph, graph.out, {});
     const display_fn = result => hlib.run({graph, fn: graph.out}, {output: "display"});
     // const display_fn = result => hlib.run(graph, graph.out, {}, "display");
-    console.log('refresh graph')
-    console.log(graph);
     const update_result_display_fn = display => result_display_dispatch(UpdateResultDisplay, {el: display ? display : {dom_type: 'div', props: {}, children: []}})
     const update_info_display_fn = () => dispatch(s => [s, s.selected[0] !== s.display_graph.out 
         && [() => update_info_display({fn: s.selected[0], graph: s.display_graph, args: {}})]])
@@ -553,7 +551,6 @@ const run_h = ({dom_type, props, children, text}, exclude_tags=[]) => {
     text = text?.value ?? text;
     props = props && props.value ? props.value : props;
     props = props ? Object.fromEntries(Object.entries(props).map(kv => [kv[0], kv[1]?.value ?? kv[1]])) : props
-    console.log(props)
     children = children && children._Proxy ? children._value : children;
     return dom_type === "text_value" 
         ? ha.text(text) 
@@ -1351,7 +1348,6 @@ const middleware = dispatch => (ha_action, ha_payload) => {
                 const result = action.stateonly 
                     ? hlib.run(action, state)
                     : hlib.run(action, {state, ...payload});
-
 
                 if(!result) {
                     return state;
