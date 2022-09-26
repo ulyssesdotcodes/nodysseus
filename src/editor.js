@@ -1170,7 +1170,7 @@ const runapp = (init, load_graph, _lib) => {
                     break;
                 }
                 default: {
-                    const result = hlib.run(init.keybindings, "out", {}, hlib)[mode][key_input];
+                    const result = hlib.run(init.keybindings, "out", {}, hlib)[mode].__value[key_input];
                     switch(result){
                         case "up": {
                             const parent_edges = nolib.no.runtime.get_edges_in(state.display_graph, selected);
