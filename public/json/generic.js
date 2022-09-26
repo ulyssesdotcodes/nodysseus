@@ -3,11 +3,12 @@
       {
         "id": "log",
         "description": "Prints value to console.log",
+        "out": "out",
         "nodes": [
           { "id": "in" },
           { "id": "value", "ref": "arg", "value": "value" },
           { "id": "tag", "ref": "arg", "value": "tag" },
-          {"id": "graph_value", "ref": "arg", "value": "__value"},
+          {"id": "graph_value", "ref": "arg", "value": "__graph_value"},
           { "id": "out", "args": [], "script": "tag && console.log(tag); graph_value && console.log(graph_value); console.log(value); return value" }
         ],
         "edges": [
@@ -101,21 +102,24 @@
         "description": "Returns `value` if it's defined, if not then returns `otherwise`",
         "nodes": [
           { "id": "value", "ref": "arg", "value": "value" },
-          { "id": "graph_value", "ref": "arg", "value": "__value" },
+          { "id": "graph_value", "ref": "arg", "value": "__graph_value" },
           { "id": "otherwise", "ref": "arg", "value": "otherwise" },
-          { "id": "def_otherwise", "ref": "script", "value": "return graph_value ?? otherwise"},
-          { "id": "data" },
-          { "id": "choose", "ref": "script", "value": "return value ?? otherwise", "_value": "return value ?? data['otherwise']" },
+          { "id": "is_otherwise", "ref": "script", "value": "return otherwise !== undefined"},
+          { "id": "if_otherwise", "ref": "if"},
+          {"id": "is_value", "ref": "script", "value": "return value !== undefined"},
+          { "id": "if_value", "ref": "if"},
           { "id": "out",  "ref": "return"}
         ],
         "edges": [
-          { "from": "value", "to": "choose", "as": "value" },
-          { "from": "graph_value", "to": "def_otherwise", "as": "graph_value" },
-          { "from": "otherwise", "to": "def_otherwise", "as": "otherwise" },
-          { "from": "def_otherwise", "to": "data", "as": "otherwise" },
-          { "from": "data", "to": "_choose", "as": "data" },
-          { "from": "def_otherwise", "to": "choose", "as": "otherwise" },
-          { "from": "choose", "to": "out", "as": "value" }
+          { "from": "otherwise", "to": "if_otherwise", "as": "true" },
+          { "from": "otherwise", "to": "is_otherwise", "as": "otherwise" },
+          {"from": "is_otherwise", "to": "if_otherwise", "as": "pred"},
+          { "from": "graph_value", "to": "if_otherwise", "as": "false" },
+          { "from": "value", "to": "is_value", "as": "value" },
+          { "from": "value", "to": "if_value", "as": "true" },
+          {"from": "is_value", "to": "if_value", "as": "pred"},
+          { "from": "otherwise", "to": "if_value", "as": "false" },
+          { "from": "if_value", "to": "out", "as": "value" }
         ]
       },
       {
@@ -141,7 +145,7 @@
         "id": "if_arg",
         "description": "If this node's `value` exists in the node's context, return the value from the `true` branch",
         "nodes": [
-          {"id": "name", "ref": "arg", "value": "__value"},
+          {"id": "name", "ref": "arg", "value": "__graph_value"},
           {"id": "args", "ref": "arg", "value": "_args"},
           {"id": "true", "ref": "arg", "value": "true"},
           {"id": "get_name", "ref": "get"},
@@ -209,7 +213,7 @@
           {
             "id": "out", 
             "ref": "script", 
-            "value": "const parent = _lib.no.runtime.get_parent(_graph); const super_parent = _lib.no.runtime.get_parent(parent); const edge = _lib.no.runtime.get_edges_in(super_parent, parent.node_id).find(e => e.as === __value); return {...edge, graph: super_parent}"
+            "value": "const parent = _lib.no.runtime.get_parent(_graph); const super_parent = _lib.no.runtime.get_parent(parent); const edge = _lib.no.runtime.get_edges_in(super_parent, parent.node_id).find(e => e.as === __graph_value); return {...edge, graph: super_parent}"
           }
         ],
         "edges": [
@@ -311,7 +315,7 @@
         "nodes": [
           { "id": "target", "ref": "arg", "value": "target" },
           { "id": "path", "ref": "arg", "value": "path" },
-          { "id": "graph_value", "ref": "arg", "value": "__value" },
+          { "id": "graph_value", "ref": "arg", "value": "__graph_value" },
           { "id": "otherwise", "ref": "arg", "value": "otherwise" },
           { "id": "out", "ref": "extern", "value": "get" }
         ],
@@ -419,7 +423,7 @@
         "out": "out",
         "nodes": [
           {"id": "path", "ref": "arg", "value": "path"},
-          {"id": "value", "ref": "arg", "value": "__value"},
+          {"id": "value", "ref": "arg", "value": "__graph_value"},
           {"id": "path_value", "ref": "default"},
           {"id": "args", "ref": "arg", "value": "_args", "type": "internal"},
           {"id": "runnable", "script": "const parent = _lib.no.runtime.get_parent(_graph); const node_id = _lib.no.runtime.get_path(parent, path); return {fn: node_id, graph: parent, args: {...args, edge: args.edge ? {...args.edge, node_id: parent.id + '/' + node_id} : undefined}}"},
@@ -441,7 +445,7 @@
         "nodes": [
           { "id": "target", "ref": "arg", "value": "target" },
           { "id": "path", "ref": "arg", "value": "path" },
-          {"id": "value_path", "ref": "arg", "value": "__value"},
+          {"id": "value_path", "ref": "arg", "value": "__graph_value"},
           {"id": "def_path", "ref": "default"},
           {"id": "args", "ref": "arg", "value": "_args"},
           { "id": "key", "ref": "arg", "value": "key" },
@@ -467,13 +471,14 @@
         "out": "out",
         "nodes": [
           {"id": "graphid", "ref": "arg", "value": "__graphid"},
-          {"id": "path", "ref": "arg", "value": "__value"},
-          {"id": "value", "ref": "arg", "value": "value"},
+          {"id": "path", "value": "state"},
           {"id": "state_val", "ref": "script", "value": "return _lib.no.runtime.get_args(graphid)[path];"},
+          {"id": "value", "ref": "arg", "value": "value"},
           {"id": "set_state_val", "ref": "script", "value": "_lib.no.runtime.update_args(graphid, {[path]: value}); return value"},
-          {"id": "if_value", "ref": "if"},
+          {"id": "set_state_val_runnable", "ref": "runnable"},
           {"id": "display_text", "ref": "html_text"},
           {"id": "display", "ref": "html_element"},
+          {"id": "out_atom"},
           {"id": "out", "ref": "return"}
         ],
         "edges": [
@@ -482,13 +487,13 @@
           {"from": "graphid", "to": "set_state_val", "as": "graphid"},
           {"from": "value", "to": "set_state_val", "as": "value"},
           {"from": "path", "to": "set_state_val", "as": "path"},
-          {"from": "state_val", "to": "if_value", "as": "false"},
-          {"from": "set_state_val", "to": "if_value", "as": "true"},
-          {"from": "value", "to": "if_value", "as": "pred"},
-          {"from": "if_value", "to": "out", "as": "value"},
+          {"from": "set_state_val", "to": "set_state_val_runnable", "as": "fn"},
+          {"from": "set_state_val_runnable", "to": "out_atom", "as": "set"},
+          {"from": "state_val", "to": "out_atom", "as": "state"},
           {"from": "state_val", "to": "display_text", "as": "text"},
           {"from": "display_text", "to": "display", "as": "children"},
-          {"from": "display", "to": "out", "as": "display"}
+          {"from": "display", "to": "out", "as": "display"},
+          {"from": "out_atom", "to": "out", "as": "value"}
         ]
       },
       {
@@ -500,7 +505,7 @@
           {"id": "path", "ref": "arg", "value": "path"},
           {"id": "graph", "ref": "arg", "value": "graph"},
           {"id": "args", "ref": "arg", "value": "_args"},
-          {"id": "value_path", "ref": "arg", "value": "__value"},
+          {"id": "value_path", "ref": "arg", "value": "__graph_value"},
           {"id": "def_path", "ref": "default"},
           {"id": "env", "ref": "script", "value": "return _lib.no.runtime.get_args(_lib.no.runtime.get_parent(graph ?? _graph))"},
           {"id": "prev_value", "ref": "get"},
@@ -542,7 +547,7 @@
         {"id": "value_runnable", "ref": "arg", "value": "value_runnable"},
         {"id": "key", "ref": "arg", "value": "key"},
         {"id": "path", "ref": "arg", "value": "path"},
-        {"id": "value_path", "ref": "arg", "value": "__value"},
+        {"id": "value_path", "ref": "arg", "value": "__graph_value"},
         {"id": "graph", "ref": "arg", "value": "_graph"},
         {"id": "input_args", "ref": "arg", "value": "_args"},
         {"id": "node_args", "ref": "arg", "value": "args"},
@@ -585,7 +590,7 @@
       "nodes": [
         { "id": "value", "ref": "arg", "value": "value" },
         { "id": "arg_name", "ref": "arg", "value": "name" },
-        {"id": "graph_value", "ref": "arg", "value": "__value"},
+        {"id": "graph_value", "ref": "arg", "value": "__graph_value"},
         {"id": "name", "ref": "default"},
         { "id": "update", "script": "return _lib.no.runtime.publish(event, data)" }
       ],
@@ -656,7 +661,7 @@
         {"id": "data_log", "ref": "log"},
         {
           "id": "add_listener",
-          "script": "_lib.no.runtime.add_listener(event ?? __value, 'evt-listener-' + _graph.id, (data) => { let update = true; if(onevent){ update = _lib.no.run(onevent.graph, onevent.fn, {...onevent.args, data, prev}); } if(update){ _lib.no.runtime.update_args(_graph, {_data: data.data}) } }, false); return _lib.no.runtime.get_args(_graph)['_data'];"
+          "script": "_lib.no.runtime.add_listener(event ?? __graph_value, 'evt-listener-' + _graph.id, (data) => { let update = true; if(onevent){ update = _lib.no.run(onevent.graph, onevent.fn, {...onevent.args, data, prev}); } if(update){ _lib.no.runtime.update_args(_graph, {_data: data.data}) } }, false); return _lib.no.runtime.get_args(_graph)['_data'];"
         },
         { "id": "out", "ref": "default"}
       ],
@@ -1218,7 +1223,7 @@
       "out": "out",
       "nodes": [
         { "id": "arg_text", "ref": "arg", "value": "text" },
-        { "id": "value_text", "ref": "arg", "value": "__value" },
+        { "id": "value_text", "ref": "arg", "value": "__graph_value" },
         {"id": "text", "ref": "default"},
         { "id": "text_value", "value": "text_value" },
         { "id": "out" }
@@ -1242,10 +1247,10 @@
           { "id": "element", "ref": "arg", "value": "element" },
           { "id": "div", "value": "div" },
           { "id": "dom_type_value", "ref": "default"},
-          { "id": "graph_value", "ref": "arg", "value": "__value"},
-          {"id": "filter_children_fn", "script": "return !!element && !!(element.dom_type || element.text_value)"},
+          { "id": "graph_value", "ref": "arg", "value": "__graph_value"},
+          {"id": "filter_children_fn", "script": "console.log('filtering'); console.log(element); return !!element && !!(element.dom_type || element.text_value)"},
           {"id": "filter_children_fn_runnable", "ref": "runnable"},
-          {"id": "fill_children_fn", "script": "return element.el ?? element"},
+          {"id": "fill_children_fn", "script": "console.log('filling'); console.log(element); return element.el ?? element"},
           {"id": "fill_children_fn_runnable", "ref": "runnable"},
           {"id": "wrapped_children", "script": "return Array.isArray(children) ? children : [children]"},
           {"id": "filter_children", "ref": "filter"},
@@ -1255,17 +1260,19 @@
             "_script": "return children === undefined ? [] : children.length !== undefined ? children.map(c => _lib.no.resolve(c)).filter(c => !!c).map(c => c.el ?? c) : [children.el ?? children.value ?? children]"
           },
           { "id": "fill_props", "script": "return props ?? {}" },
+          {"id": "resolve_props", "ref": "extern", "value": "resolve"},
           { "id": "dom_type_def", "ref": "default" },
           {
             "id": "out",
-            "script": "dom_type = dom_type?._Proxy ? dom_type._value : dom_type; if(!(typeof dom_type === 'string' && typeof children === 'object')){ throw new Error('invalid element');} return {dom_type, props, children: children, memo}"
+            "script": "debugger; dom_type = dom_type?._Proxy ? dom_type._value : dom_type; if(!(typeof dom_type === 'string' && typeof children === 'object')){ throw new Error('invalid element');} return {dom_type, props, children: children, memo}"
           },
           {"id": "out_ret", "ref": "return"}
         ],
         "edges": [
           { "from": "children", "to": "wrapped_children", "as": "children" },
           { "from": "wrapped_children", "to": "filter_children", "as": "array" },
-          { "from": "props", "to": "fill_props", "as": "props", "type": "resolve" },
+          { "from": "props", "to": "fill_props", "as": "props" },
+          { "from": "fill_props", "to": "resolve_props", "as": "object" },
           { "from": "memo", "to": "out", "as": "memo"},
           {"from": "element", "to": "filter_children_fn", "as": "element"},
           {"from": "filter_children_fn", "to": "filter_children_fn_runnable", "as": "fn"},
@@ -1275,7 +1282,7 @@
           {"from": "fill_children_fn_runnable", "to": "fill_children", "as": "fn"},
           { "from": "filter_children", "to": "fill_children", "as": "array"},
           { "from": "fill_children", "to": "out", "as": "children"},
-          { "from": "fill_props", "to": "out", "as": "props" },
+          { "from": "resolve_props", "to": "out", "as": "props" },
           { "from": "dom_type", "to": "dom_type_def", "as": "value" },
           { "from": "div", "to": "dom_type_value", "as": "otherwise" },
           { "from": "graph_value", "to": "dom_type_value", "as": "value" },
@@ -3364,7 +3371,7 @@
       },
       {
         "id": "wnr7m0u",
-        "value": "__value",
+        "value": "__graph_value",
         "ref": "arg"
       },
       {

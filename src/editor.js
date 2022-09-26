@@ -548,9 +548,9 @@ const pzobj = {
 
 const run_h = ({dom_type, props, children, text}, exclude_tags=[]) => {
     dom_type = dom_type && dom_type._Proxy ? dom_type._value : dom_type;
-    text = text?.value ?? text;
-    props = props && props.value ? props.value : props;
-    props = props ? Object.fromEntries(Object.entries(props).map(kv => [kv[0], kv[1]?.value ?? kv[1]])) : props
+    text = text?.__value ?? text;
+    props = props && props.__value ? props.__value : props;
+    props = props ? Object.fromEntries(Object.entries(props).map(kv => [kv[0], kv[1]?.__value ?? kv[1]])) : props
     children = children && children._Proxy ? children._value : children;
     return dom_type === "text_value" 
         ? ha.text(text) 
@@ -1002,7 +1002,7 @@ const update_info_display = ({fn, graph, args}) => {
         code_editor.dispatch({changes:{from: 0, to: code_editor.state.doc.length, insert: node.script ?? node.value}})
     }
 
-    const node_ref = node && (node.ref && nolib.no.runtime.get_ref(graph, node.ref)) || node;
+    const node_ref = node && (node.ref && nolib.no.runtime.get_ref(node.ref)) || node;
     const out_ref = node && (node.nodes && nolib.no.runtime.get_node(node, node.out)) || (node_ref.nodes && nolib.no.runtime.get_node(node_ref, node_ref.out));
     const node_display_el = (node.ref === "return" || (out_ref && out_ref.ref === "return")) 
         && hlib.run({graph, fn}, {...args, output: "display"});
@@ -1340,7 +1340,7 @@ const middleware = dispatch => (ha_action, ha_payload) => {
         && ha_action.hasOwnProperty('graph') 
         && ha_action.hasOwnProperty('args');
     const action = resolve(is_action_array_payload ? ha_action[0] : ha_action);
-    const payload = resolve(is_action_array_payload ? ha_action[1] : is_action_obj_payload ? {...ha_action.args, event: ha_payload} : ha_payload);
+    const payload = resolve(is_action_array_payload ? ha_action[1] : is_action_obj_payload ? {event: ha_payload} : ha_payload);
 
     return typeof action === 'object' && action.hasOwnProperty('fn') && action.hasOwnProperty('graph')
         ? dispatch((state, payload) => {
