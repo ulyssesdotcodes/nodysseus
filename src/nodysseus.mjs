@@ -1039,7 +1039,7 @@ const nolib = {
           if (!fn || fn.script !== script) {
             const update = !!fn;
 
-            fn = {
+            fn = Object.assign(fn ?? {}, {
               id: fnid,
               script,
               fn: new Function(
@@ -1048,7 +1048,7 @@ const nolib = {
                   "_"
                 )}(${orderedargs}){${script}}`
               )(),
-            };
+            });
 
             if (update) {
               fndb.update(fn);
