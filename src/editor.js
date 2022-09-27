@@ -408,9 +408,9 @@ const ap_promise = (p, fn) => p && typeof p['then'] === 'function' ? p.then(fn) 
 
 const refresh_graph = (graph, dispatch) => {
     dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
-    const result = hlib.run({graph, fn: graph.out}, {output: "value"}, {...hlib, ...nolib});
+    const result = hlib.run({graph, fn: graph.out}, {_output: "value"}, {...hlib, ...nolib});
     // const result = hlib.run(graph, graph.out, {});
-    const display_fn = result => hlib.run({graph, fn: graph.out}, {output: "display"});
+    const display_fn = result => hlib.run({graph, fn: graph.out}, {_output: "display"});
     // const display_fn = result => hlib.run(graph, graph.out, {}, "display");
     const update_result_display_fn = display => result_display_dispatch(UpdateResultDisplay, {el: display ? display : {dom_type: 'div', props: {}, children: []}})
     const update_info_display_fn = () => dispatch(s => [s, s.selected[0] !== s.display_graph.out 
@@ -1005,7 +1005,7 @@ const update_info_display = ({fn, graph, args}) => {
     const node_ref = node && (node.ref && nolib.no.runtime.get_ref(node.ref)) || node;
     const out_ref = node && (node.nodes && nolib.no.runtime.get_node(node, node.out)) || (node_ref.nodes && nolib.no.runtime.get_node(node_ref, node_ref.out));
     const node_display_el = (node.ref === "return" || (out_ref && out_ref.ref === "return")) 
-        && hlib.run({graph, fn}, {...args, output: "display"});
+        && hlib.run({graph, fn}, {...args, _output: "display"});
     info_display_dispatch && requestAnimationFrame(() => info_display_dispatch(UpdateResultDisplay, {el: node_display_el ? node_display_el : ha.h('div', {})}))
 }
 
@@ -1143,7 +1143,7 @@ const runapp = (init, load_graph, _lib) => {
         }),
         ha.h('div', {id: "graph-actions"}, [
             search_el({search: s.search, _lib}),
-            ha.h('ion-icon', {name: 'sync-outline', onclick: s => [s, [dispatch => { nolib.no.runtime.delete_cache(); hlib.run(s.display_graph, s.display_graph.out, {output: "value"}); requestAnimationFrame(() =>  dispatch(s => [s, [() => {s.simulation.alpha(1); s.simulation.nodes([]); }], [UpdateSimulation]])) }]]}, [ha.text('refresh')])
+            ha.h('ion-icon', {name: 'sync-outline', onclick: s => [s, [dispatch => { nolib.no.runtime.delete_cache(); hlib.run(s.display_graph, s.display_graph.out, {_output: "value"}); requestAnimationFrame(() =>  dispatch(s => [s, [() => {s.simulation.alpha(1); s.simulation.nodes([]); }], [UpdateSimulation]])) }]]}, [ha.text('refresh')])
         ]),
         ha.h('div', {id: `${init.html_id}-result`}),
         s.error && ha.h('div', {id: 'node-editor-error'}, run_h(show_error(s.error, s.error.node_id)))

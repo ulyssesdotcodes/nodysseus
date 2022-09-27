@@ -333,7 +333,7 @@ const create_data = (graph, inputs, graphArgs, lib) => {
     let lgraph = {...graph}
     //TODO: remove
     const newgraphargs = {...graphArgs};
-    delete newgraphargs.output
+    delete newgraphargs._output
 
     // grab inputs from state
     for (let i = 0; i < inputs.length; i++) {
@@ -374,7 +374,7 @@ const run_node = (node, nodeArgs, graphArgs, lib) => {
             throw new Error(`Unable to find ref ${ref} for node ${node.name || node.id}`)
         }
 
-        const newGraphArgs = {output: nodysseus_get(graphArgs, "output", lib)};
+        const newGraphArgs = {_output: nodysseus_get(graphArgs, "_output", lib)};
         if(node_ref.nodes) {
             const graphid = nodysseus_get(graphArgs, "__graphid", lib)?.__value;
             const newgraphid = (graphid ? graphid + "/" : "") + node.id
@@ -396,7 +396,7 @@ const run_node = (node, nodeArgs, graphArgs, lib) => {
         const graphid = nodysseus_get(graphArgs, "__graphid", lib)?.__value;
         const nodegraphargs = node.args ?? {}
         nodegraphargs.__graphid = graphid ?? lib.no.of(node.graph.id);
-        nodegraphargs.output = nodysseus_get(graphArgs, "output", lib)
+        nodegraphargs._output = nodysseus_get(graphArgs, "_output", lib)
 
         return node_nodes(node.graph, node.fn, nodeArgs, nodegraphargs, lib)
     } else if (node.script){
@@ -607,7 +607,7 @@ const nolib = {
       const nodevalue = typedvalue[0];
       const newtarget = () => {
         const newt = Object.assign({}, target.__args);
-        delete newt.__args;
+        Object.keys(newt).forEach(k => k.startsWith("_") && delete newt[k])
         return newt;
       };
       // const named_args = graph.nodes.filter(n => n.ref === "arg").map(n => n.value);
@@ -1182,13 +1182,14 @@ const nolib = {
         const objectvalue = run_runnable(object, lib).__value;
         // object = run_node(run_node(object, {}, object.args, _lib), {}, {}, _lib);
         if (objectvalue === undefined) return undefined;
-        initial = run_runnable(initial, lib).__value;
         const fnrunnable = fn; //run_runnable(fn, _lib)
 
         const mapobjarr = (mapobj, mapfn, mapinit) =>
           Array.isArray(mapobj)
             ? mapobj.reduce(mapfn, mapinit)
-            : Object.fromEntries(Object.entries(mapobj).reduce(mapfn, mapinit));
+            : Object.entries(mapobj).sort((a, b) => a[0].localeCompare(b[0])).reduce(mapfn, mapinit);
+
+        initial = run_runnable(initial, lib)?.__value ?? (Array.isArray(objectvalue) ? [] : {});
         
         const ret = mapobjarr(
           objectvalue,
@@ -1234,7 +1235,6 @@ const nolib = {
       resolve: false,
       rawArgs: true,
       args: [
-        "output",
         "value",
         "display",
         "subscribe",
@@ -1246,7 +1246,6 @@ const nolib = {
         "_lib",
       ],
       fn: (
-        output,
         value,
         display,
         subscribe,
@@ -1257,7 +1256,7 @@ const nolib = {
         _args,
         _lib
       ) => {
-        output = _args["output"]?.__value;
+        const output = _args["_output"]?.__value;
         if (args) {
           args = run_runnable(args, _lib).__value;
         }
@@ -1289,7 +1288,6 @@ const nolib = {
             { ...args, ...edgemap.subscribe.args},
             _lib
           ).__value
-          console.log(subscriptions)
 
           const graphid = nodysseus_get(subscribe.args, "__graphid").__value;
 

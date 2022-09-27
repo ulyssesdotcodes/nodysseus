@@ -895,44 +895,18 @@
       "out": "out",
       "nodes": [
         { "id": "args", "ref": "arg", "value": "_args" },
-        { "id": "value_args", "ref": "arg", "value": "args" },
-        { "id": "merged_args", "ref": "merge_objects" },
-        { "id": "args_path", "value": "args" },
-        { "id": "seq_runnable_args", "ref": "delete" },
-        { "name": "in", "id": "in" },
-        { "id": "runnables_promise", "script": "return Promise.all(promises);" },
-        { "id": "map_runnables", "ref": "map" },
-        { "id": "edge_in_runnables", "ref": "arg", "value": "_args" },
-        {
-          "id": "runnables",
-          "script": "const runnables = Object.values(argxrunnables).filter(r => r && (!r._Proxy || r._value) ).map(r => r._Proxy ? r._value : r).filter(r => r.hasOwnProperty('fn') && r.hasOwnProperty('graph')).map(r => ({...r, args: { ...r.args, ...(fn_args ?? {})}})); return runnables",
-        },
-        { "id": "element", "ref": "arg", "value": "element", "type": "internal" },
-        {
-          "id": "map_fn",
-          "script": "return _lib.no.run(runnable.graph, runnable.fn, runnable.args, _lib);"
-        },
-        { "id": "map_fn_runnable", "ref": "runnable" },
-        { "id": "out", "ref": "runnable", "name": "seq_runnable" }
+        { "id": "seq_fold_currentValue", "ref": "arg", "value": "currentValue.1" },
+        { "id": "seq_ap_run", "value": "true" },
+        { "id": "seq_ap", "ref": "ap" },
+        { "id": "seq_fold", "ref": "fold"},
+        { "id": "out", "ref": "runnable"}
       ],
       "edges": [
-        { "from": "in", "to": "runnables", "as": "inputs" },
-        { "from": "args", "to": "runnables", "as": "args" },
-        { "from": "element", "to": "map_fn", "as": "runnable" },
-        { "from": "map_fn", "to": "map_fn_runnable", "as": "fn" },
-        { "from": "value_args", "to": "map_runnables", "as": "args" },
-        { "from": "runnables", "to": "map_runnables", "as": "array" },
-        { "from": "map_fn_runnable", "to": "map_runnables", "as": "fn" },
-        { "from": "map_runnables", "to": "runnables_promise", "as": "promises" },
-        { "from": "map_runnables", "to": "out", "as": "fn" },
-        { "from": "args", "to": "merged_args", "as": "a0" },
-        { "from": "value_args", "to": "merged_args", "as": "a1" },
-        { "from": "value_args", "to": "seq_runnable_args", "as": "target" },
-        { "from": "args_path", "to": "seq_runnable_args", "as": "path" },
-        { "from": "edge_in_runnables", "to": "runnables", "as": "argxrunnables" },
-        { "from": "seq_runnable_args", "to": "runnables", "as": "fn_args" },
-        { "from": "seq_runnable_args", "to": "_out", "as": "args" },
-        { "from": "value_args", "to": "_out", "as": "args" }
+        { "from": "args", "to": "seq_fold", "as": "object" },
+        {"from": "seq_ap_run", "to": "seq_ap", "as": "run"},
+        {"from": "seq_fold_currentValue", "to": "seq_ap", "as": "fn"},
+        {"from": "seq_ap", "to": "seq_fold", "as": "fn"},
+        {"from": "seq_fold", "to": "out", "as": "fn"},
       ]
     },
     {
