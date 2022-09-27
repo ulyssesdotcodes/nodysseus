@@ -123,7 +123,7 @@
         ]
       },
       {
-        "id": "switch",
+        "id": "_switch",
         "description": "Returns the result  of the branch passed into it by `input`",
         "nodes": [
           { "id": "in" },
@@ -275,18 +275,13 @@
       },
       {
         "id": "runnable",
-        "_out": "out",
         "ref": "extern",
         "value": "runnable",
-        "_nodes": [
-          {"id": "fn", "ref": "arg", "value": "fn"},
-          {"id": "unwrap_fn", "ref": "extern", "value": "unwrap_proxy"},
-          {"id": "out", "ref": "script", "value": "return proxy"}
-        ],
-        "_edges": [
-          {"from": "fn", "to": "unwrap_fn", "as": "proxy"},
-          {"from": "unwrap_fn", "to": "out", "as": "proxy"},
-        ]
+      },
+      {
+        "id": "ap",
+        "ref": "extern",
+        "value": "ap",
       },
       {
         "id": "function", 
@@ -584,21 +579,31 @@
       ]
     },
     {
-      "id": "event_publisher",
+      "id": "publish_event",
       "description": "Publishes a `name` (or this node's value) event with the data `value`.",
-      "out": "update",
+      "out": "out",
       "nodes": [
-        { "id": "value", "ref": "arg", "value": "value" },
+        { "id": "value", "ref": "arg", "value": "data" },
         { "id": "arg_name", "ref": "arg", "value": "name" },
         {"id": "graph_value", "ref": "arg", "value": "__graph_value"},
+        { "id": "update_event", "ref": "arg", "value": "event_name" },
+        { "id": "update_data", "ref": "arg", "value": "event_data" },
         {"id": "name", "ref": "default"},
-        { "id": "update", "script": "return _lib.no.runtime.publish(event, data)" }
+        { "id": "update", "script": "return _lib.no.runtime.publish(event_name, {data: event_data})" },
+        {"id": "ap_args"},
+        {"id": "update_runnable", "ref": "runnable"},
+        {"id": "out", "ref": "ap"}
       ],
       "edges": [
         {"from": "arg_name", "to": "name", "as": "value"},
         {"from": "graph_value", "to": "name", "as": "otherwise"},
-        { "from": "name", "to": "update", "as": "event" },
-        { "from": "value", "to": "update", "as": "data" }
+        { "from": "name", "to": "ap_args", "as": "event_name" },
+        { "from": "value", "to": "ap_args", "as": "event_data" },
+        {"from": "update_event", "to": "update", "as": "event_name"},
+        {"from": "update_data", "to": "update", "as": "event_data"},
+        {"from": "update", "to": "update_runnable", "as": "fn"},
+        {"from": "update_runnable", "to": "out", "as": "fn"},
+        {"from": "ap_args", "to": "out", "as": "args"},
       ]
     },
     {
@@ -1232,7 +1237,7 @@
         { "from": "text_value", "to": "out", "as": "dom_type" },
         { "from": "arg_text", "to": "text", "as": "value" },
         { "from": "value_text", "to": "text", "as": "otherwise" },
-        { "from": "text", "to": "out", "as": "text" }
+        { "from": "text", "to": "out", "as": "text" },
       ]
     },
     {
@@ -1244,13 +1249,14 @@
           { "id": "props", "ref": "arg", "value": "props" },
           { "id": "dom_type", "ref": "arg", "value": "dom_type" },
           { "id": "memo", "ref": "arg", "value": "memo" },
-          { "id": "element", "ref": "arg", "value": "element" },
+          { "id": "element_dt", "ref": "arg", "value": "element.dom_type" },
+          { "id": "element_tv", "ref": "arg", "value": "element.text_value" },
           { "id": "div", "value": "div" },
           { "id": "dom_type_value", "ref": "default"},
           { "id": "graph_value", "ref": "arg", "value": "__graph_value"},
-          {"id": "filter_children_fn", "script": "console.log('filtering'); console.log(element); return !!element && !!(element.dom_type || element.text_value)"},
+          {"id": "filter_children_fn", "script": "return !!(element_dt || element_tv)"},
           {"id": "filter_children_fn_runnable", "ref": "runnable"},
-          {"id": "fill_children_fn", "script": "console.log('filling'); console.log(element); return element.el ?? element"},
+          {"id": "fill_children_fn", "script": "return element.el ?? element"},
           {"id": "fill_children_fn_runnable", "ref": "runnable"},
           {"id": "wrapped_children", "script": "return Array.isArray(children) ? children : [children]"},
           {"id": "filter_children", "ref": "filter"},
@@ -1260,11 +1266,10 @@
             "_script": "return children === undefined ? [] : children.length !== undefined ? children.map(c => _lib.no.resolve(c)).filter(c => !!c).map(c => c.el ?? c) : [children.el ?? children.value ?? children]"
           },
           { "id": "fill_props", "script": "return props ?? {}" },
-          {"id": "resolve_props", "ref": "extern", "value": "resolve"},
           { "id": "dom_type_def", "ref": "default" },
           {
             "id": "out",
-            "script": "debugger; dom_type = dom_type?._Proxy ? dom_type._value : dom_type; if(!(typeof dom_type === 'string' && typeof children === 'object')){ throw new Error('invalid element');} return {dom_type, props, children: children, memo}"
+            "script": "if(!(typeof dom_type === 'string' && typeof children === 'object')){ throw new Error('invalid element');} return {dom_type, props, children: children, memo}"
           },
           {"id": "out_ret", "ref": "return"}
         ],
@@ -1272,17 +1277,17 @@
           { "from": "children", "to": "wrapped_children", "as": "children" },
           { "from": "wrapped_children", "to": "filter_children", "as": "array" },
           { "from": "props", "to": "fill_props", "as": "props" },
-          { "from": "fill_props", "to": "resolve_props", "as": "object" },
           { "from": "memo", "to": "out", "as": "memo"},
-          {"from": "element", "to": "filter_children_fn", "as": "element"},
+          {"from": "element_dt", "to": "filter_children_fn", "as": "element_dt"},
+          {"from": "element_tv", "to": "filter_children_fn", "as": "element_tv"},
           {"from": "filter_children_fn", "to": "filter_children_fn_runnable", "as": "fn"},
           {"from": "filter_children_fn_runnable", "to": "filter_children", "as": "fn"},
           {"from": "element", "to": "fill_children_fn", "as": "element"},
           {"from": "fill_children_fn", "to": "fill_children_fn_runnable", "as": "fn"},
           {"from": "fill_children_fn_runnable", "to": "fill_children", "as": "fn"},
           { "from": "filter_children", "to": "fill_children", "as": "array"},
-          { "from": "fill_children", "to": "out", "as": "children"},
-          { "from": "resolve_props", "to": "out", "as": "props" },
+          { "from": "filter_children", "to": "out", "as": "children"},
+          { "from": "fill_props", "to": "out", "as": "props" },
           { "from": "dom_type", "to": "dom_type_def", "as": "value" },
           { "from": "div", "to": "dom_type_value", "as": "otherwise" },
           { "from": "graph_value", "to": "dom_type_value", "as": "value" },

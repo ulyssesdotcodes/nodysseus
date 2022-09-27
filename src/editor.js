@@ -1,4 +1,4 @@
-import { resfetch, hashcode, nolib, run, calculateLevels, ispromise, resolve, base_graph, base_node } from "./nodysseus.mjs";
+import { resfetch, hashcode, nolib, run, calculateLevels, ispromise, base_graph, base_node } from "./nodysseus.mjs";
 import * as ha from "hyperapp";
 import panzoom from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
@@ -1170,7 +1170,7 @@ const runapp = (init, load_graph, _lib) => {
                     break;
                 }
                 default: {
-                    const result = hlib.run(init.keybindings, "out", {}, hlib)[mode].__value[key_input];
+                    const result = hlib.run(init.keybindings, "out", {}, hlib)[mode][key_input];
                     switch(result){
                         case "up": {
                             const parent_edges = nolib.no.runtime.get_edges_in(state.display_graph, selected);
@@ -1339,8 +1339,8 @@ const middleware = dispatch => (ha_action, ha_payload) => {
         && ha_action.hasOwnProperty('fn') 
         && ha_action.hasOwnProperty('graph') 
         && ha_action.hasOwnProperty('args');
-    const action = resolve(is_action_array_payload ? ha_action[0] : ha_action);
-    const payload = resolve(is_action_array_payload ? ha_action[1] : is_action_obj_payload ? {event: ha_payload} : ha_payload);
+    const action = is_action_array_payload ? ha_action[0] : ha_action;
+    const payload = is_action_array_payload ? ha_action[1] : is_action_obj_payload ? {event: ha_payload} : ha_payload;
 
     return typeof action === 'object' && action.hasOwnProperty('fn') && action.hasOwnProperty('graph')
         ? dispatch((state, payload) => {
