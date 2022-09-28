@@ -109,7 +109,7 @@
       },
       {
         "id": "34pzvn4",
-        "value": "return !!_lib.no.runtime.get_ref(_graph, '@hydra.setup')",
+        "value": "return !!_lib.no.runtime.get_ref('@hydra.setup')",
         "ref": "script"
       },
       {
@@ -121,11 +121,6 @@
             "id": "uptw8ed",
             "name": "import_hydra_nodes",
             "ref": "return"
-          },
-          {
-            "id": "dfk63hb",
-            "value": "_lib.no.runtime.update_graph(_graph);",
-            "ref": "script"
           },
           {
             "id": "bc9c7g4",
@@ -144,14 +139,9 @@
         ],
         "edges": [
           {
-            "from": "dfk63hb",
+            "from": "bc9c7g4",
             "to": "uptw8ed",
             "as": "value"
-          },
-          {
-            "from": "bc9c7g4",
-            "to": "dfk63hb",
-            "as": "arg0"
           },
           {
             "from": "z5vn4g3",

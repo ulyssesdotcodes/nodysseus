@@ -43,7 +43,7 @@ export const expand_node = (data) => {
         return { display_graph: data.display_graph, selected: [data.node_id] };
     }
 
-    const args_node = node.edges.find(e => e.to === node.out && e.as === "args").from;
+    const args_node = node.edges.find(e => e.to === node.out && e.as === "args")?.from;
 
     const flattened = flattenNode(node, 1);
 

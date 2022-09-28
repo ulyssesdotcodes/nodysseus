@@ -918,7 +918,7 @@
       "nodes": [
         {
           "id": "lapeojg",
-          "script": "const new_nodes = import_graph.nodes.map(n => ({...n, id: name + '.' + n.id})); const parentest = _lib.no.runtime.get_parentest(_graph.id); \n\nconst new_graph = {\n...parentest,\nnodes: [...(new Map(parentest.nodes.concat(new_nodes).map(n => [n.id, n])).values())]\n}\n\n_lib.no.runtime.update_graph(new_graph); return name;",
+          "script": "debugger; const new_nodes = import_graph.nodes.map(n => ({...n, id: name + '.' + n.id})); const parentest = _lib.no.runtime.get_parentest(_graph.id); \n\nconst new_graph = {\n...parentest,\nnodes: [...(new Map(parentest.nodes.concat(new_nodes).map(n => [n.id, n])).values())]\n}\n\n_lib.no.runtime.update_graph(new_graph); return name;",
           "name": "out"
         },
         { "id": "gsiimdp", "name": "in" },

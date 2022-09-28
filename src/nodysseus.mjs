@@ -249,25 +249,26 @@ const node_nodes = (node, node_id, data, graph_input_value, lib, inputs) => {
 const node_script = (node, nodeArgs, lib) => {
     let orderedargs = "";
     const data = {};
+    let is_iv_promised = false;
     for(let i of Object.keys(nodeArgs)) {
         orderedargs += ", " + i;
         if(nodeArgs[i] !== undefined){
             const graphval = run_runnable(nodeArgs[i], lib);
             // TODO: figure out how to now wrap
-            data[i] = graphval?.__value // ?? graphval// run_runnable(graphval, lib);
+            data[i] = graphval // ?? graphval// run_runnable(graphval, lib);
+            is_iv_promised ||= ispromise(graphval);
         }
     }
 
     const name = node.name ? node.name.replace(/\W/g, "_") : node.id;
     const fn = lib.no.runtime.get_fn(node.id, name, `_lib, _node, _graph_input_value${orderedargs}`, node.script ?? node.value);
 
-    let is_iv_promised = false;
 
     const result = is_iv_promised
-        ? Promise.all(inputs.map(iv => Promise.resolve(data[iv.as]))).then(iv => fn.apply(null, [lib, node, data, nolib.no.runtime.get_graph(graph), ...iv]))
-        : fn.apply(null, [lib, node, data, ...Object.values(data)]);
+        ? Promise.all(Object.keys(nodeArgs).map(iv => Promise.resolve(data[iv]))).then(ivs => lib.no.of(fn.apply(null, [lib, node, data, ...ivs.map(iv => iv.__value)])))
+        : lib.no.of(fn.apply(null, [lib, node, data, ...Object.values(data).map(d => d.__value)]));
     
-    return lib.no.of(result);
+    return result;
 }
 
 const node_extern = (node, data, graphArgs, lib) => {
@@ -283,14 +284,9 @@ const node_extern = (node, data, graphArgs, lib) => {
         } else if (arg == '_graph_input_value') {
             newval = graphArgs;
         } else {
-            newval = data[arg];
+            newval = extern.rawArgs ? data[arg] : run_runnable(data[arg], lib)?.__value;
         }
 
-        // newval = run_runnable(newval, lib);
-
-        if(!extern.rawArgs) {
-            newval = run_runnable(newval, lib).__value
-        }
 
         acc[0].push(newval)
         return [acc[0], ispromise(newval) || acc[1]];
@@ -320,7 +316,7 @@ const node_data = (nodeArgs, graphArgs, lib) => {
         Object.entries(nodeArgs).forEach(kv => {
             promises.push([kv[0], Promise.resolve(kv[1])])
         })
-        return Promise.all(promises).then(Object.fromEntries);
+        return Promise.all(promises).then(Object.fromEntries).then(ov => lib.no.of(ov));
     }
 
     return lib.no.of(Object.fromEntries(Object.entries(nodeArgs).map(e => [e[0], run_runnable(e[1], lib).__value])));
@@ -1240,6 +1236,7 @@ const nolib = {
         "subscribe",
         "argslist",
         "args",
+        "lib",
         "_node",
         "_graph",
         "_graph_input_value",
@@ -1251,6 +1248,7 @@ const nolib = {
         subscribe,
         argslist,
         args,
+        lib,
         _node,
         _graph,
         _args,
@@ -1260,7 +1258,7 @@ const nolib = {
         if (args) {
           args = run_runnable(args, _lib).__value;
         }
-        const edgemap = { value, display, subscribe, argslist };
+        const edgemap = { value, display, subscribe, argslist, lib };
         const runedge = output && edgemap[output] ? output : "value";
 
         const runedgeresult = edgemap[runedge]
@@ -1408,8 +1406,8 @@ const nolib = {
     },
     call: {
       resolve: true,
-      args: ["_node", "self", "fn", "args", "_graph_input_value", "_lib"],
-      fn: (node, self, fn, args, _args, lib) => {
+      args: ["__graph_value", "self", "fn", "args", "_graph_input_value", "_lib"],
+      fn: (nodevalue, self, fn, args, _args, lib) => {
         if (typeof self === "function") {
           return Array.isArray(args)
             ? self(
@@ -1428,7 +1426,7 @@ const nolib = {
               )
             : self(args === undefined ? [] : args);
         } else {
-          const ng_fn = nodysseus_get(self ?? _args, fn || node.value, lib);
+          const ng_fn = nodysseus_get(self ?? _args, fn || nodevalue, lib);
           const fnargs = Array.isArray(args)
             ? (args || [])
                 .reverse()
