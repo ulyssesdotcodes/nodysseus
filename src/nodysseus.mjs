@@ -278,15 +278,15 @@ const node_extern = (node, data, graphArgs, lib) => {
         if (arg === '_node') {
             newval = node 
         } else if (arg === '_node_args') {
-            newval = extern.rawArgs ? data : lib.no.of(Object.fromEntries(Object.entries(data).map(d => [d[0], run_runnable(d[1], lib).__value])));
+            newval = extern.rawArgs ? data : Object.fromEntries(Object.entries(data).filter(d => !d[0].startsWith("__")).map(d => [d[0], run_runnable(d[1], lib).__value]));
         } else if (arg == '_lib') {
             newval = lib;
         } else if (arg == '_graph_input_value') {
             newval = graphArgs;
         } else {
-            newval = extern.rawArgs ? data[arg] : run_runnable(data[arg], lib)?.__value;
+            newval = extern.rawArgs ? data[arg] : run_runnable(data[arg], lib)
+            newval = ispromise(newval) ? newval.then(v => v?.__value) : newval && !extern.rawArgs ? newval.__value : newval;
         }
-
 
         acc[0].push(newval)
         return [acc[0], ispromise(newval) || acc[1]];
@@ -319,7 +319,7 @@ const node_data = (nodeArgs, graphArgs, lib) => {
         return Promise.all(promises).then(Object.fromEntries).then(ov => lib.no.of(ov));
     }
 
-    return lib.no.of(Object.fromEntries(Object.entries(nodeArgs).map(e => [e[0], run_runnable(e[1], lib).__value])));
+    return lib.no.of(Object.fromEntries(Object.entries(nodeArgs).map(e => [e[0], run_runnable(e[1], lib)?.__value])));
 }
 
 // derives data from the args symbolic table
@@ -597,7 +597,7 @@ const base_graph = graph => ({id: graph.id, value: graph.value, name: graph.name
 
 const nolib = {
   no: {
-    of: (value) => value?.__value ? value : { id: "out", __value: value },
+    of: (value) => ispromise(value) ? value.then(nolib.no.of) : value?.__value ? value : { id: "out", __value: value },
     arg: (node, target, _lib, value) => {
       const typedvalue = value.split(": ");
       const nodevalue = typedvalue[0];
@@ -870,6 +870,14 @@ const nolib = {
       const get_ref = (id) => {
         return refsdb.by("id", id)?.data;
       };
+      const add_ref = (graph) => {
+        const existing = refsdb.by("id", graph.id);
+        if(existing) {
+          refsdb.update(Object.assign(existing, {data: graph}))
+        } else {
+          refsdb.insert({id: graph.id, data: graph})
+        }
+      } 
       const get_node = (graph, id) =>
         getorsetgraph(graph, id, "node_map", () =>
           get_graph(graph).nodes.find((n) => n.id === id)
@@ -941,6 +949,7 @@ const nolib = {
         is_cached: (graph, id) => get_cache(graph.id),
         set_cached: (graph, id) => get_cache(graph.id).is_cached.add(id),
         get_ref,
+        add_ref,
         get_node,
         get_edge,
         get_edges_in,
@@ -1270,8 +1279,8 @@ const nolib = {
             )
           : undefined;
 
-        if (runedge !== "value" && runedgeresult) {
-          runedgeresult.value = run_graph(
+        if (runedge !== "value" && runedgeresult && value) {
+          runedgeresult.__value.value = run_graph(
             value.graph,
             value.fn,
             { ...value.args, ...args },
@@ -1313,32 +1322,34 @@ const nolib = {
       },
     },
     set: {
-      args: ["target", "path", "value", "_node", "_graph_input_value"],
+      args: ["target", "path", "value", "__graph_value", "_graph_input_value"],
       resolve: false,
-      fn: (target, path, value, node, _args) => {
-        if (target && target._Proxy) {
-          target = target._value;
-        }
-        const keys = (node.value || path).split(".");
+      fn: (target, path, value, nodevalue, _args) => {
+        console.log('setting')
+        console.log(target)
+        console.log(path)
+        console.log(value)
+        console.log(nodevalue)
+        const keys = (nodevalue || path).split(".");
         const check = (o, v, k) =>
           k.length === 1
-            ? { ...o, [k[0]]: v, _needsresolve: true }
+            ? { ...o, [k[0]]: v }
             : o?.hasOwn?.(k[0])
             ? {
                 ...o,
                 [k[0]]: check(o[k[0]], v, k.slice(1)),
-                _needsresolve: true,
               }
             : o;
-        return (
-          value !== undefined &&
-          (ispromise(value) || ispromise(target)
+        const ret = (
+          ((value !== undefined && ispromise(value)) || ispromise(target)
             ? Promise.all([
                 Promise.resolve(value),
                 Promise.resolve(target),
               ]).then((vt) => vt[1] !== undefined && check(vt[1], vt[0], keys))
             : check(target, value, keys))
         );
+        console.log(ret)
+        return ret;
       },
     },
     set_mutable: {
@@ -1373,11 +1384,10 @@ const nolib = {
         ),
     },
     new_array: {
-      args: ["_node_args", "_node"],
-      rawArgs: true,
-      fn: (args, node) => {
-        if (node.value) {
-          return node.value.split(/,\s+/);
+      args: ["_node_args", "__graph_value"],
+      fn: (args, nodevalue) => {
+        if (nodevalue) {
+          return nodevalue.split(/,\s+/);
         }
         const argskeys = Object.keys(args);
         const arr =
@@ -1443,9 +1453,9 @@ const nolib = {
             : args === undefined
             ? []
             : [args];
-          return ispromise(ng_fn)
+          return lib.no.of(ispromise(ng_fn)
             ? ng_fn.then((f) => f.apply(fnargs))
-            : ng_fn.apply(self, fnargs);
+            : ng_fn.apply(self, fnargs));
         }
       },
     },

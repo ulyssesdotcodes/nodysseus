@@ -158,7 +158,7 @@
       {
         "id": "out",
         "value": "",
-        "name": "export",
+        "name": "hydra_example",
         "ref": "return"
       }
     ],
