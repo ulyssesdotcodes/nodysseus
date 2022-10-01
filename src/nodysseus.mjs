@@ -1325,11 +1325,6 @@ const nolib = {
       args: ["target", "path", "value", "__graph_value", "_graph_input_value"],
       resolve: false,
       fn: (target, path, value, nodevalue, _args) => {
-        console.log('setting')
-        console.log(target)
-        console.log(path)
-        console.log(value)
-        console.log(nodevalue)
         const keys = (nodevalue || path).split(".");
         const check = (o, v, k) =>
           k.length === 1
