@@ -359,25 +359,38 @@
       {
         "id": "cache",
         "description": "Stores the first value that's `!== undefined` and returns that value whenever called. If used within a `map`, `filter`, or `reduce` node, each iteration's value will be cached separately.",
+        "out": "out",
         "nodes": [
-          {"id": "in"},
           {"id": "value", "ref": "arg", "value": "value"},
+          {"id": "graphid", "ref": "arg", "value": "__graphid"},
           {"id": "recache", "ref": "arg", "value": "recache"},
-          {"id": "recache_check", "ref": "script", "value": "return recache !== false && recache !== undefined && (typeof recache !== 'object' || Object.keys(recache).length > 0)"},
-          {"id": "cached", "ref": "arg", "value": "cached", "type": "internal"},
-          {"id": "cache", "ref": "set_arg", "value": "cached", "_script": "Promise.resolve(value).then(value => { if(value !== undefined){ _lib.no.runtime.update_args(_graph, {cached: _lib.no.resolve(value)});} }); return value;"},
-          {"id": "cached_value", "ref": "default"},
-          {"id": "out", "ref": "if"}
+          {"id": "cachevalue_state", "ref": "arg", "value": "cachevalue.state"},
+          {"id": "pred_cache_state", "ref": "script", "value": "return !cachevaluestate || (recache !== false && recache !== undefined && (typeof recache !== 'object' || Object.keys(recache).length > 0))"},
+          {"id": "ap_cache_value", "ref": "arg", "value": "value"},
+          {"id": "ap_cache_args"},
+          {"id": "ap_cache_run", "value": "true"},
+          {"id": "ap_cache_fn", "ref": "arg", "value": "cachevalue.set"},
+          {"id": "cache", "ref": "ap"},
+          {"id": "if_cache_state", "ref": "if"},
+          {"id": "cache_state", "ref": "state"},
+          {"id": "cache_return_args"},
+          {"id": "cache_return", "ref": "return"},
+          {"id": "out", "ref": "return"}
         ],
         "edges": [
-          {"from": "in", "to": "out", "as": "_"},
-          {"from": "value", "to": "cache", "as": "value"},
-          {"from": "cache", "to": "cached_value", "as": "otherwise"},
-          {"from": "cached", "to": "cached_value", "as": "value"},
-          {"from": "cached_value", "to": "out", "as": "false"},
-          {"from": "cache", "to": "out", "as": "true"},
-          {"from": "recache", "to": "recache_check", "as": "recache"},
-          {"from": "recache_check", "to": "out", "as": "pred"}
+          {"from": "ap_cache_value", "to": "ap_cache_args", "as": "value"},
+          {"from": "ap_cache_args", "to": "cache", "as": "args"},
+          {"from": "ap_cache_run", "to": "cache", "as": "run"},
+          {"from": "ap_cache_fn", "to": "cache", "as": "fn"},
+          {"from": "cachevalue_state", "to": "pred_cache_state", "as": "cachevaluestate"},
+          {"from": "recache", "to": "pred_cache_state", "as": "recache"},
+          {"from": "cachevalue_state", "to": "if_cache_state", "as": "false"},
+          {"from": "cache", "to": "if_cache_state", "as": "true"},
+          {"from": "pred_cache_state", "to": "if_cache_state", "as": "pred"},
+          {"from": "if_cache_state", "to": "cache_return", "as": "value"},
+          {"from": "cache_state", "to": "cache_return_args", "as": "cachevalue"},
+          {"from": "cache_return_args", "to": "cache_return", "as": "args"},
+          {"from": "cache_return", "to": "out", "as": "value"}
         ]
       },
       {
@@ -920,7 +933,7 @@
       "nodes": [
         {
           "id": "lapeojg",
-          "script": "import_graph.forEach(_lib.no.runtime.add_ref); _lib.no.runtime.update_graph(_lib.no.runtime.get_graph(graphid))",
+          "script": "import_graph.forEach(_lib.no.runtime.add_ref); _lib.no.runtime.change_graph(_lib.no.runtime.get_graph(graphid))",
           "name": "out"
         },
         { "id": "3zfjt1h", "ref": "call" },
@@ -2091,7 +2104,7 @@
         },
         {
           "id": "cixrltc",
-          "value": "_lib.no.runtime.update_graph(graph); return graph;",
+          "value": "_lib.no.runtime.change_graph(graph); return graph;",
           "ref": "script"
         },
         {
@@ -2245,7 +2258,7 @@
       },
       {
         "id": "cixrltc",
-        "value": "_lib.no.runtime.update_graph(graph); return graph;",
+        "value": "_lib.no.runtime.change_graph(graph); return graph;",
         "ref": "script"
       },
       {
@@ -2336,6 +2349,7 @@
         "name": "create-offscreen-canvas",
         "ref": "return"
       },
+      {"id": "create_ofc", "ref": "script", "value": "return new OffscreenCanvas(window.innerWidth, window.innerHeight)"},
       {
         "id": "ein7naf",
         "ref": "if"
@@ -2413,6 +2427,11 @@
         "from": "dzb8l3m",
         "to": "ein7naf",
         "as": "false"
+      },
+      {
+        "from": "create_ofc",
+        "to": "ein7naf",
+        "as": "true"
       },
       {
         "from": "c2vbqba",

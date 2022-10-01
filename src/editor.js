@@ -17,7 +17,7 @@ const updateSimulationNodes = (dispatch, data) => {
     
     const simulation_link_data = new Map();
     data.simulation.force('links').links().forEach(l => {
-        simulation_link_data.set(l.source.node_id, l);
+        simulation_link_data.set(`${l.source.node_id}__${l.target.node_id}`, l);
     })
 
     const start_sim_link_size = simulation_link_data.size;
@@ -40,13 +40,19 @@ const updateSimulationNodes = (dispatch, data) => {
             .map(e => e.from)
         ]));
 
+    let needsupdate = false;
     while(queue.length > 0) {
         const node = queue.shift();
         order.push(node);
 
+        needsupdate ||= !simulation_node_data.has(node)
+
         main_node_map.set(node, node);
 
-        parents_map.get(node).forEach(p => {queue.push(p)})
+        parents_map.get(node).forEach(p => {
+            needsupdate ||= simulation_link_data.has(`${p}_${node}`)
+            queue.push(p)
+        })
     }
 
     const ancestor_count = new Map();
@@ -140,12 +146,7 @@ const updateSimulationNodes = (dispatch, data) => {
     const links = data.display_graph.edges
         .filter(e => main_node_map.has(e.from) && main_node_map.has(e.to))
         .map(e => {
-            if (!(main_node_map.has(e.from) && main_node_map.has(e.to))) {
-                // won't throw - just doesn't display non main-graph nodes
-                throw new Error(`edge node undefined ${main_node_map.has(e.from) ? '' : '>'}${e.from} ${main_node_map.has(e.to) ? '' : '>'}${e.to} `);
-            }
-
-            const l = simulation_link_data.get(e.from);
+            const l = simulation_link_data.get(`${e.from}__${e.to}`);
             const proximal = (
                 (parents_map.get(main_node_map.get(e.to))?.length ?? 0) + 
                 (parents_map.get(children_map.get(main_node_map.get(e.to)))?.length ?? 0)
@@ -224,8 +225,6 @@ const d3subscription = (dispatch, props) => {
         if(simulation.nodes().length === 0) {
             requestAnimationFrame(() => dispatch(s => [(htmlid = s.html_id, {...s, simulation}), [props.update, s]]));
         }
-
-
 
         if (simulation.alpha() > simulation.alphaMin()) {
             const data = {
@@ -385,8 +384,7 @@ const graph_subscription = (dispatch, props) => {
     let animframe = false;
     const listener = (graph) => {
         if(props.display_graph_id === graph.id) {
-            animframe && cancelAnimationFrame(animframe)
-            animframe = requestAnimationFrame(() =>  {
+            !animframe && requestAnimationFrame(() =>  {
                 animframe = false;
                 dispatch(s => [{...s, display_graph: graph}, [UpdateSimulation]])
             })
@@ -415,7 +413,7 @@ const refresh_graph = (graph, dispatch) => {
     // const result = hlib.run(graph, graph.out, {});
     const display_fn = result => hlib.run({graph, fn: graph.out}, {_output: "display"});
     // const display_fn = result => hlib.run(graph, graph.out, {}, "display");
-    const update_result_display_fn = display => result_display_dispatch(UpdateResultDisplay, {el: display ? display : {dom_type: 'div', props: {}, children: []}})
+    const update_result_display_fn = display => result_display_dispatch(UpdateResultDisplay, {el: display && display.dom_type ? display : {dom_type: 'div', props: {}, children: []}})
     const update_info_display_fn = () => dispatch(s => [s, s.selected[0] !== s.display_graph.out 
         && !s.show_all && [() => update_info_display({fn: s.selected[0], graph: s.display_graph, args: {}})]])
     ap_promise(ap_promise(result, display_fn), update_result_display_fn);
@@ -444,14 +442,14 @@ const result_subscription = (dispatch, {display_graph_id}) => {
         }
     }
 
-    nolib.no.runtime.add_listener('graphchange', 'clear_hyperapp_error', change_listener);
+    nolib.no.runtime.add_listener('graphupdate', 'clear_hyperapp_error', change_listener);
     const timeouts = {}
     const animframes = {}
 
     const noderun_listener = (data) => {
         if (data.graph.id === display_graph_id) {
             const el = document.querySelector(`#node-editor-${data.node_id.replaceAll("/", "_")} .shape`)
-            if(el) {
+            if(el && !timeouts[data.node_id]) {
                 timeouts[data.node_id] && clearTimeout(timeouts[data.node_id])
                 animframes[data.node_id] && cancelAnimationFrame(animframes[data.node_id])
                 el.classList.remove("flash-transition-out");
@@ -476,7 +474,7 @@ const result_subscription = (dispatch, {display_graph_id}) => {
     nolib.no.runtime.add_listener('noderun', 'update_hyperapp_error', noderun_listener);
 
     return () => (
-        nolib.no.runtime.remove_listener('graphchange', 'clear_hyperapp_error', change_listener),
+        nolib.no.runtime.remove_listener('graphupdate', 'clear_hyperapp_error', change_listener),
         nolib.no.runtime.remove_listener('grapherror', 'update_hyperapp_error', error_listener)
     );
 }
@@ -657,7 +655,7 @@ const ExpandContract = (state, {node_id}) => {
         [dispatch => {
             requestAnimationFrame(() => {
                 // Have to be the same time so the right node is selected
-                nolib.no.runtime.update_graph(update.display_graph);
+                nolib.no.runtime.change_graph(update.display_graph);
                 dispatch(SelectNode, {node_id: update.selected[0]})
             })
         }]
@@ -668,7 +666,7 @@ const CreateRef = (state, {node}) => [
     state,
     [dispatch => {
         const graph = {...base_graph(node), id: node.name, value: undefined};
-        nolib.no.runtime.update_graph(graph);
+        nolib.no.runtime.change_graph(graph);
         save_graph(graph);
         nolib.no.runtime.add_node(state.display_graph, {
             id: node.id,
@@ -728,7 +726,7 @@ const ChangeDisplayGraphId = (dispatch, {id, select_out}) => {
             [dispatch => {
                 requestAnimationFrame(() => {
                     const new_graph = graph ?? Object.assign({}, base_graph(state.display_graph), {id});
-                    nolib.no.runtime.update_graph(new_graph);
+                    nolib.no.runtime.change_graph(new_graph);
                     nolib.no.runtime.remove_graph_listeners(state.display_graph_id);
                     dispatch(s => [{...s, display_graph: new_graph, selected: [new_graph.out], display_graph_id: new_graph.id}])
                     if(!graph) {
@@ -1022,7 +1020,7 @@ const update_info_display = ({fn, graph, args}) => {
     const out_ref = node && (node.nodes && nolib.no.runtime.get_node(node, node.out)) || (node_ref.nodes && nolib.no.runtime.get_node(node_ref, node_ref.out));
     const node_display_el = (node.ref === "return" || (out_ref && out_ref.ref === "return")) 
         && hlib.run({graph, fn}, {...args, _output: "display"});
-    info_display_dispatch && requestAnimationFrame(() => info_display_dispatch(UpdateResultDisplay, {el: node_display_el?.dom_type ? node_display_el : ha.h('div', {})}))
+    info_display_dispatch && node_display_el?.dom_type && requestAnimationFrame(() => info_display_dispatch(UpdateResultDisplay, {el: ha.h('div', {})}))
 }
 
 const show_error = (e, t) => ({
@@ -1105,7 +1103,7 @@ const runapp = (init, load_graph, _lib) => {
         [() => requestAnimationFrame(() => {
             result_display_dispatch = result_display(init.html_id);
             info_display_dispatch = info_display(init.html_id);
-            nolib.no.runtime.update_graph(init.display_graph)
+            nolib.no.runtime.change_graph(init.display_graph)
         })],
         [ChangeDisplayGraphId, {id: load_graph, select_out: true}],
         [UpdateSimulation, {...init, action: SimulationToHyperapp}],
@@ -1304,7 +1302,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
     const keybindings = await resfetch("json/keybindings.json").then(r => r.json())
     // let stored_graph = JSON.parse(localStorage.getItem(hash_graph ?? graph_list?.[0]));
     // stored_graph = stored_graph ? base_graph(stored_graph) : undefined
-    graph_list.map(id => localStorage.getItem(id)).filter(g => g).map(graph => JSON.parse(graph)).map(graph => nolib.no.runtime.update_graph(base_graph(graph)))
+    graph_list.map(id => localStorage.getItem(id)).filter(g => g).map(graph => JSON.parse(graph)).map(graph => nolib.no.runtime.change_graph(base_graph(graph)))
     // Promise.resolve(stored_graph ?? (hash_graph ? resfetch(`json/${hash_graph}.json`).then(r => r.status !== 200 ? simple : r.json()).catch(_ => simple) : simple))
         // .then(display_graph => {
 

@@ -230,6 +230,10 @@ export const ancestor_graph = (nolib, node_id, from_graph) => {
 
 export const node_args = (nolib, ha, graph, node_id) => {
     const node = nolib.no.runtime.get_node(graph, node_id);
+    if(!node) {
+        // between graph update and simulation update it's possible links are bad
+        return []
+    }
     const node_ref = node?.ref ? nolib.no.runtime.get_ref(node.ref) : node;
     const edges_in = node_ref && nolib.no.runtime.get_edges_in(graph, node_id);
 

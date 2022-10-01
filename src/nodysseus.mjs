@@ -305,21 +305,21 @@ const node_extern = (node, data, graphArgs, lib) => {
 
 const node_data = (nodeArgs, graphArgs, lib) => {
     let is_promise = false;
-    let needsresolve = false;
+    const result = {}
     Object.entries(nodeArgs).forEach(kv => {
-        is_promise = is_promise || !!kv[1] && !kv[1]._Proxy && ispromise(kv[1]);
-        needsresolve = needsresolve || kv[1]?._needsresolve;
+      result[kv[0]] = run_runnable(kv[1], lib);
+      is_promise = is_promise || !!kv[1] && ispromise(result[kv[0]]);
     })
 
     if (is_promise) {
         const promises = [];
-        Object.entries(nodeArgs).forEach(kv => {
-            promises.push([kv[0], Promise.resolve(kv[1])])
+        Object.entries(result).forEach(kv => {
+            promises.push(Promise.resolve(kv[1]).then(pv => [kv[0], pv?.__value]))
         })
-        return Promise.all(promises).then(Object.fromEntries).then(ov => lib.no.of(ov));
+        return Promise.all(promises).then(Object.fromEntries).then(v => lib.no.of(v));
     }
 
-    return lib.no.of(Object.fromEntries(Object.entries(nodeArgs).map(e => [e[0], run_runnable(e[1], lib)?.__value])));
+    return lib.no.of(Object.fromEntries(Object.entries(result).map(e => [e[0], e[1]?.__value])));
 }
 
 // derives data from the args symbolic table
@@ -373,7 +373,12 @@ const run_node = (node, nodeArgs, graphArgs, lib) => {
         if(node_ref.nodes) {
             const graphid = nodysseus_get(graphArgs, "__graphid", lib)?.__value;
             const newgraphid = (graphid ? graphid + "/" : "") + node.id
-            lib.no.runtime.update_graph({...node_ref, id: newgraphid})
+            const current = lib.no.runtime.get_graph(newgraphid);
+            if(current?.refid !== node_ref.id){
+              lib.no.runtime.change_graph({...node_ref, id: newgraphid, refid: node_ref.id})
+            } else {
+              lib.no.runtime.update_graph(newgraphid)
+            }
             lib.no.runtime.set_parent(newgraphid, graphid)
             Object.assign(newGraphArgs, {__graphid: lib.no.of(newgraphid)})
         }
@@ -807,7 +812,7 @@ const nolib = {
         }
       };
 
-      const update_graph = (graph, args, lib) => {
+      const change_graph = (graph, args, lib) => {
         const new_cache = new_graph_cache(graph);
         const gcache = get_cache(graph.id);
         const old_graph = gcache && gcache.graph;
@@ -837,7 +842,7 @@ const nolib = {
 
         const parent = get_parentest(graph);
         if (parent) {
-          update_graph(parent);
+          change_graph(parent);
         } else {
           const existing = refsdb.by("id", graph.id);
           if (existing) {
@@ -846,6 +851,7 @@ const nolib = {
             refsdb.insert({ id: graph.id, data: graph });
           }
           publish("graphchange", graph);
+          publish("graphupdate", graph);
         }
       };
 
@@ -862,7 +868,7 @@ const nolib = {
         if (!compare(prevargs.data, args)) {
           Object.assign(prevargs.data, args);
           const fullgraph = get_graph(graphid);
-          publish("graphchange", get_parentest(fullgraph) ?? fullgraph);
+          publish("graphupdate", get_parentest(fullgraph) ?? fullgraph);
         }
       };
 
@@ -981,7 +987,8 @@ const nolib = {
 
           return fn.fn;
         },
-        update_graph,
+        change_graph,
+        update_graph: (graphid) => publish('graphupdate', {graphid}),
         update_args,
         delete_cache,
         get_graph,
@@ -1011,7 +1018,7 @@ const nolib = {
               .concat([edge]),
           };
 
-          update_graph(new_graph);
+          change_graph(new_graph);
         },
         update_edges: (graph, add, remove = []) => {
           const gcache = get_cache(graph);
@@ -1026,7 +1033,7 @@ const nolib = {
               .concat(add),
           };
 
-          update_graph(new_graph);
+          change_graph(new_graph);
         },
         add_node: (graph, node) => {
           if (!(node && typeof node === "object" && node.id)) {
@@ -1043,7 +1050,7 @@ const nolib = {
 
           // n.b. commented out because it blasts update_args which is not desirable
           // delete_cache(graph)
-          update_graph(new_graph);
+          change_graph(new_graph);
         },
         delete_node: (graph, id) => {
           const gcache = get_cache(graph);
@@ -1078,7 +1085,7 @@ const nolib = {
               .concat(new_child_edges),
           };
 
-          update_graph(new_graph);
+          change_graph(new_graph);
         },
         add_listener,
         add_listener_extern: {
@@ -1148,20 +1155,28 @@ const nolib = {
       rawArgs: true,
       args: ["fn", "args", "run", "_lib"],
       fn: (fn, args, run, lib) => {
-        let fnrunnable = run_runnable(fn, lib).__value;
+        let fnrunnable = run_runnable(fn, lib);
         // TODO: fix hack
         // fnrunnable = fnrunnable.__value ?? fnrunnable
-        const runvalue = run_runnable(run, lib)?.__value;
-        const argsvalue = run_runnable(args, lib)?.__value;
-        const fnap = {
-          ...fnrunnable,
-          args: {
-            ...fnrunnable.args,
-            ...argsvalue,
-            __args: fnrunnable.args.__args,
-          },
-        };
-        return runvalue ? run_runnable(fnap, lib) : lib.no.of(fnap);
+        const runvalue = run_runnable(run, lib);
+        const argsvalue = run_runnable(args, lib);
+        const execute = (fnr, rv, av) => {
+          const fnap = {
+            ...fnr,
+            args: {
+              ...fnr.args,
+              ...av,
+              __args: fnr.args.__args,
+            },
+          };
+
+          return runvalue ? run_runnable(fnap, lib) : lib.no.of(fnap);
+        }
+
+        if(ispromise(fnrunnable) || ispromise(runvalue) || ispromise(argsvalue)) {
+          return Promise.all([fnrunnable, runvalue, argsvalue]).then(([fnr, rv, av]) => execute(fnr?.__value, rv?.__value, av?.__value))
+        }
+        return execute(fnrunnable?.__value, runvalue?.__value, argsvalue?.__value)
       },
     },
     switch: {
@@ -1255,7 +1270,7 @@ const nolib = {
         display,
         subscribe,
         argslist,
-        args,
+        argsfn,
         lib,
         _node,
         _graph,
@@ -1263,11 +1278,17 @@ const nolib = {
         _lib
       ) => {
         const output = _args["_output"]?.__value;
-        if (args) {
-          args = run_runnable({...args, args: {...args.args, _output: _lib.no.of("value")}}, _lib).__value;
-        }
         const edgemap = { value, display, subscribe, argslist, lib };
         const runedge = output && edgemap[output] ? output : "value";
+
+        if(lib) {
+          _lib = {..._lib, ...(run_runnable(lib, _lib)?.__value ?? {})}
+        }
+
+        let args;
+        if (argsfn) {
+          args = run_runnable({...argsfn, args: {...argsfn.args, _output: _lib.no.of("value")}}, _lib).__value;
+        }
 
         const runedgeresult = edgemap[runedge]
           ? run_graph(
