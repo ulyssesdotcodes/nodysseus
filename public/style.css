@@ -162,10 +162,25 @@ svg {
 
 .node .shape {
     fill: #66ccff;
+    stroke: #66ccff;
+    stroke-width: 2;
 }
 
 .node .shape.flash {
     animation: 1s flash 1 ease-out;
+}
+
+.node .shape.flash-transition, 
+.node .shape.none.flash-transition, 
+.node .shape.script.flash-transition {
+    stroke: #ef02fc;
+    stroke-width: 6;
+}
+
+.node .shape.flash-transition-out, 
+.node .shape.none.flash-transition-out, 
+.node .shape.script.flash-transition-out {
+    transition: stroke 1s ease-out, stroke-width 1s ease-out;
 }
 
 .node:hover .shape {

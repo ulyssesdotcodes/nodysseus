@@ -1343,7 +1343,6 @@ const nolib = {
               ]).then((vt) => vt[1] !== undefined && check(vt[1], vt[0], keys))
             : check(target, value, keys))
         );
-        console.log(ret)
         return ret;
       },
     },

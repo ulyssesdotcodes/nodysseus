@@ -447,10 +447,15 @@ const result_subscription = (dispatch, {display_graph_id}) => {
         if (data.graph.id === display_graph_id) {
             const el = document.querySelector(`#node-editor-${data.node_id.replaceAll("/", "_")} .shape`)
             if(el) {
-                el.classList.remove("flash");
+                el.classList.remove("flash-transition-out");
+                el.classList.add("flash-transition")
                 requestAnimationFrame(() => {
-                el.classList.add("flash")
+                    el.classList.add("flash-transition-out")
+                    el.classList.remove("flash-transition")
                 })
+                setTimeout(() => {
+                    el.classList.remove("flash-transition-out");
+                }, 1000)
                 // el.style.animationPlayState = "paused"
                 // el.style.animationPlayState = "running"
             }
