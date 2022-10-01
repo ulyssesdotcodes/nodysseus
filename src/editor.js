@@ -382,9 +382,12 @@ const keydownSubscription = (dispatch, options) => {
 }
 
 const graph_subscription = (dispatch, props) => {
+    let animframe = false;
     const listener = (graph) => {
         if(props.display_graph_id === graph.id) {
-            requestAnimationFrame(() =>  {
+            animframe && cancelAnimationFrame(animframe)
+            animframe = requestAnimationFrame(() =>  {
+                animframe = false;
                 dispatch(s => [{...s, display_graph: graph}, [UpdateSimulation]])
             })
         }
@@ -414,7 +417,7 @@ const refresh_graph = (graph, dispatch) => {
     // const display_fn = result => hlib.run(graph, graph.out, {}, "display");
     const update_result_display_fn = display => result_display_dispatch(UpdateResultDisplay, {el: display ? display : {dom_type: 'div', props: {}, children: []}})
     const update_info_display_fn = () => dispatch(s => [s, s.selected[0] !== s.display_graph.out 
-        && [() => update_info_display({fn: s.selected[0], graph: s.display_graph, args: {}})]])
+        && !s.show_all && [() => update_info_display({fn: s.selected[0], graph: s.display_graph, args: {}})]])
     ap_promise(ap_promise(result, display_fn), update_result_display_fn);
     ap_promise(result, update_info_display_fn)
     return result
@@ -442,18 +445,26 @@ const result_subscription = (dispatch, {display_graph_id}) => {
     }
 
     nolib.no.runtime.add_listener('graphchange', 'clear_hyperapp_error', change_listener);
+    const timeouts = {}
+    const animframes = {}
 
     const noderun_listener = (data) => {
         if (data.graph.id === display_graph_id) {
             const el = document.querySelector(`#node-editor-${data.node_id.replaceAll("/", "_")} .shape`)
             if(el) {
+                timeouts[data.node_id] && clearTimeout(timeouts[data.node_id])
+                animframes[data.node_id] && cancelAnimationFrame(animframes[data.node_id])
                 el.classList.remove("flash-transition-out");
                 el.classList.add("flash-transition")
-                requestAnimationFrame(() => {
-                    el.classList.add("flash-transition-out")
-                    el.classList.remove("flash-transition")
+                animframes[data.node_id] = requestAnimationFrame(() => {
+                    animframes[data.node_id] = false;
+                    if(timeouts[data.node_id]) {
+                        el.classList.add("flash-transition-out")
+                        el.classList.remove("flash-transition")
+                    }
                 })
-                setTimeout(() => {
+                timeouts[data.node_id] = setTimeout(() => {
+                    timeouts[data.node_id] = false
                     el.classList.remove("flash-transition-out");
                 }, 1000)
                 // el.style.animationPlayState = "paused"

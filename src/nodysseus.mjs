@@ -36,7 +36,7 @@ function nodysseus_get(obj, propsArg, lib, defaultValue) {
     props = propsArg.slice(0);
   }
   if (typeof propsArg == 'string') {
-    props = propsArg.split('.');
+    props = /\./.test(propsArg) ? propsArg.split('.') : [propsArg];
   }
   if (typeof propsArg == 'symbol' || typeof propsArg === 'number') {
     props = [propsArg];
@@ -326,17 +326,16 @@ const node_data = (nodeArgs, graphArgs, lib) => {
 const create_data = (graph, inputs, graphArgs, lib) => {
     const data = {};
     let input;
-    let lgraph = {...graph}
     //TODO: remove
-    const newgraphargs = {...graphArgs};
-    delete newgraphargs._output
+    const newgraphargs = graphArgs;// {...graphArgs};
+    // delete newgraphargs._output
 
     // grab inputs from state
     for (let i = 0; i < inputs.length; i++) {
         input = inputs[i];
 
         // lgraph.out = input.from;
-        const val = {graph: lgraph, fn: input.from, args: newgraphargs, isArg: true} //run_graph(lgraph, input.from, graphArgs, lib);
+        const val = {graph, fn: input.from, args: newgraphargs, isArg: true} //run_graph(lgraph, input.from, graphArgs, lib);
         data[input.as] = val;
     }
 
@@ -573,7 +572,7 @@ const objToGraph = (obj, path) => Object.entries(obj)
 
 /////////////////////////////////
 
-const ispromise = a => a && a._Proxy ? false : a ? typeof a.then === 'function' : false;
+const ispromise = a => a && typeof a.then === 'function';
 const isrunnable = a => a && ((a.value && a.id && !a.ref) || a.fn && a.graph);
 const isgraph = g => g && g.out !== undefined && g.nodes !== undefined && g.edges !== undefined
 const getmap = (map, id) => {
@@ -836,7 +835,7 @@ const nolib = {
           }
         }
 
-        const parent = get_parent(graph);
+        const parent = get_parentest(graph);
         if (parent) {
           update_graph(parent);
         } else {
@@ -1265,7 +1264,7 @@ const nolib = {
       ) => {
         const output = _args["_output"]?.__value;
         if (args) {
-          args = run_runnable(args, _lib).__value;
+          args = run_runnable({...args, args: {...args.args, _output: _lib.no.of("value")}}, _lib).__value;
         }
         const edgemap = { value, display, subscribe, argslist, lib };
         const runedge = output && edgemap[output] ? output : "value";
@@ -1274,18 +1273,20 @@ const nolib = {
           ? run_graph(
               edgemap[runedge].graph,
               edgemap[runedge].fn,
-              { ...args, ...edgemap[runedge].args },
+              { ...args, ...edgemap[runedge].args, _output: _lib.no.of(runedge === "display" ? "display" : "value") },
               _lib
             )
-          : undefined;
+          : {__value: undefined};
 
         if (runedge !== "value" && runedgeresult && value) {
           runedgeresult.__value.value = run_graph(
             value.graph,
             value.fn,
-            { ...value.args, ...args },
+            { ...value.args, ...args, _output: _lib.no.of("value") },
             _lib
-          );
+          ).__value;
+        } else if(runedge === "value" && !value && display) {
+          runedgeresult.__value = run_graph(display.graph, display.fn, {...display.args, ...args}, _lib).__value.value;
         }
 
         if (edgemap.subscribe) {
@@ -1323,7 +1324,6 @@ const nolib = {
     },
     set: {
       args: ["target", "path", "value", "__graph_value", "_graph_input_value"],
-      resolve: false,
       fn: (target, path, value, nodevalue, _args) => {
         const keys = (nodevalue || path).split(".");
         const check = (o, v, k) =>
