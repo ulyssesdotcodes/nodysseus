@@ -2349,7 +2349,6 @@
         "name": "create-offscreen-canvas",
         "ref": "return"
       },
-      {"id": "create_ofc", "ref": "script", "value": "return new OffscreenCanvas(window.innerWidth, window.innerHeight)"},
       {
         "id": "ein7naf",
         "ref": "if"
@@ -2427,11 +2426,6 @@
         "from": "dzb8l3m",
         "to": "ein7naf",
         "as": "false"
-      },
-      {
-        "from": "create_ofc",
-        "to": "ein7naf",
-        "as": "true"
       },
       {
         "from": "c2vbqba",

@@ -1155,11 +1155,7 @@ const nolib = {
       rawArgs: true,
       args: ["fn", "args", "run", "_lib"],
       fn: (fn, args, run, lib) => {
-        let fnrunnable = run_runnable(fn, lib);
-        // TODO: fix hack
-        // fnrunnable = fnrunnable.__value ?? fnrunnable
-        const runvalue = run_runnable(run, lib);
-        const argsvalue = run_runnable(args, lib);
+        const runvalue = run_runnable(run, lib).__value;
         const execute = (fnr, rv, av) => {
           const fnap = {
             ...fnr,
@@ -1173,11 +1169,32 @@ const nolib = {
           return runvalue ? run_runnable(fnap, lib) : lib.no.of(fnap);
         }
 
-        if(ispromise(fnrunnable) || ispromise(runvalue) || ispromise(argsvalue)) {
-          return Promise.all([fnrunnable, runvalue, argsvalue]).then(([fnr, rv, av]) => execute(fnr?.__value, rv?.__value, av?.__value))
+        const execpromise = (fnrg, rvg, avg) => {
+          if(ispromise(fnrg) || ispromise(rvg) || ispromise(avg)) {
+            return Promise.all([fnrg, rvg, avg]).then(([fnr, rv, av]) => execute(fnr?.__value, rv?.__value, av?.__value))
+          }
+
+          return execute(fnrg?.__value, rvg?.__value, avg?.__value)
         }
-        return execute(fnrunnable?.__value, runvalue?.__value, argsvalue?.__value)
-      },
+
+        return runvalue ? execpromise(run_runnable(fn, lib), run_runnable(run, lib), run_runnable(args, lib))
+          : {
+            "fn": "runfn",
+            "graph": {
+              "nodes": [
+                {"id": "fnarg", "ref": "arg", "value": "fn"},
+                {"id": "argsarg", "ref": "arg", "value": "args"},
+                {"id": "run", "value": "true"},
+                {"id": "runfn", "ref": "ap"}
+              ],
+              "edges": [
+                {"from": "fnarg", "to": "runfn", "as": "fn"},
+                {"from": "argsarg", "to": "runfn", "as": "args"}
+              ]
+            },
+            "args": { fn, args }
+          }
+      }
     },
     switch: {
       rawArgs: true,
