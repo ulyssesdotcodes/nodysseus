@@ -263,7 +263,6 @@ const node_script = (node, nodeArgs, lib) => {
     const name = node.name ? node.name.replace(/\W/g, "_") : node.id;
     const fn = lib.no.runtime.get_fn(node.id, name, `_lib, _node, _graph_input_value${orderedargs}`, node.script ?? node.value);
 
-
     const result = is_iv_promised
         ? Promise.all(Object.keys(nodeArgs).map(iv => Promise.resolve(data[iv]))).then(ivs => lib.no.of(fn.apply(null, [lib, node, data, ...ivs.map(iv => iv.__value)])))
         : lib.no.of(fn.apply(null, [lib, node, data, ...Object.values(data).map(d => d.__value)]));
@@ -272,7 +271,7 @@ const node_script = (node, nodeArgs, lib) => {
 }
 
 const node_extern = (node, data, graphArgs, lib) => {
-    const extern = nodysseus_get(lib.extern, node.ref === "extern" ? node.value : node_ref.value, lib);
+    const extern = nodysseus_get(lib, node.ref === "extern" ? node.value : node_ref.value, lib);
     const args = extern.args.reduce((acc, arg) => {
         let newval;
         if (arg === '_node') {
@@ -616,7 +615,9 @@ const nolib = {
         : nodevalue === "_node"
         ? node
         : nodevalue.startsWith("_node.")
-        ? nodysseus_get(node, nodevalue.substring("_node.".length), _lib)
+        ? nodysseus_get(node, nodevalue.substring("_node.".length), lib)
+        : nodevalue.startsWith("_lib.")
+        ? nodysseus_get(lib, nodevalue.substring("_lib.".length), lib)
         : nodevalue === "_args"
         ? newtarget()
         : nodysseus_get(
@@ -633,7 +634,8 @@ const nolib = {
         debugger;
       }
 
-      return ret?.isArg && typedvalue[1] !== "raw" ? run_runnable(ret, lib)?.__value : ret;
+      const retrun = ret?.isArg && typedvalue[1] !== "raw" ? run_runnable(ret, lib) : undefined;
+      return ispromise(retrun) ? retrun.then(v => v?.__value) : retrun ? retrun?.__value : ret;
     },
     base_graph,
     base_node,

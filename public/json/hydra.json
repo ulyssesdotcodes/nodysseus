@@ -150,11 +150,6 @@
         "ref": "if"
       },
       {
-        "id": "v2ss4fq",
-        "value": "return selected \n  && _lib.no.runtime.get_node(\n  _lib.no.runtime.get_parentest(_graph),\n    selected).ref === \"hydra.node\";",
-        "ref": "script"
-      },
-      {
         "id": "c207gtt",
         "value": "return new Hydra({detectAudio: false, autoLoop: false, makeGlobal: false, canvas: offscreencanvas});",
         "ref": "script"
@@ -272,19 +267,9 @@
         "value": "true"
       },
       {
-        "id": "afk1htf",
-        "value": "hydralib",
-        "ref": "log"
-      },
-      {
         "id": "81t5o91",
         "value": "return import(\"https://unpkg.com/hydra-synth@1.3.18\")",
         "ref": "script"
-      },
-      {
-        "id": "c44oojg",
-        "value": "hydralibout",
-        "ref": "log"
       },
       {
         "id": "l063dsq",
@@ -347,6 +332,16 @@
       {
         "id": "jawt1f7",
         "value": "const run =  hydrafn && infoctx && hydractx;\nreturn run;",
+        "ref": "script"
+      },
+      {
+        "id": "p9462u4",
+        "value": "__graphid",
+        "ref": "arg"
+      },
+      {
+        "id": "v2ss4fq",
+        "value": "const parentest = _lib.no.runtime.get_parentest(graphid);\nreturn selected \n  && parentest && _lib.no.runtime.get_node(\n  parentest,\n    selected)?.ref === \"@hydra.node\";",
         "ref": "script"
       }
     ],
@@ -627,49 +622,14 @@
         "as": "hydrafn"
       },
       {
-        "from": "wynqj8w",
-        "to": "19c8goa",
-        "as": "value"
-      },
-      {
         "from": "adwssev",
         "to": "wynqj8w",
         "as": "args"
       },
       {
-        "from": "n4rz3ia",
-        "to": "wynqj8w",
-        "as": "fn"
-      },
-      {
         "from": "xanx4dd",
         "to": "wynqj8w",
         "as": "run"
-      },
-      {
-        "from": "f2prcop",
-        "to": "adwssev",
-        "as": "value"
-      },
-      {
-        "from": "c44oojg",
-        "to": "79c8k2a",
-        "as": "hydralib"
-      },
-      {
-        "from": "1bcbd8k",
-        "to": "c44oojg",
-        "as": "value"
-      },
-      {
-        "from": "afk1htf",
-        "to": "1bcbd8k",
-        "as": "value"
-      },
-      {
-        "from": "81t5o91",
-        "to": "afk1htf",
-        "as": "value"
       },
       {
         "from": "l063dsq",
@@ -730,6 +690,36 @@
         "from": "kp5v9tn",
         "to": "jawt1f7",
         "as": "infoctx"
+      },
+      {
+        "from": "p9462u4",
+        "to": "v2ss4fq",
+        "as": "graphid"
+      },
+      {
+        "from": "wynqj8w",
+        "to": "19c8goa",
+        "as": "value"
+      },
+      {
+        "from": "81t5o91",
+        "to": "1bcbd8k",
+        "as": "value"
+      },
+      {
+        "from": "1bcbd8k",
+        "to": "79c8k2a",
+        "as": "hydralib"
+      },
+      {
+        "from": "f2prcop",
+        "to": "adwssev",
+        "as": "value"
+      },
+      {
+        "from": "n4rz3ia",
+        "to": "wynqj8w",
+        "as": "fn"
       }
     ],
     "out": "pu58ta7"
@@ -742,100 +732,12 @@
         "id": "0z8n1c5"
       },
       {
-        "id": "v2h2xlr",
-        "value": "hydra.synth",
-        "ref": "arg"
-      },
-      {
-        "id": "x5tyfuo",
-        "value": "self",
-        "ref": "arg"
-      },
-      {
-        "id": "2manqin",
-        "value": "fn_args",
-        "ref": "arg"
-      },
-      {
-        "id": "6bc3v7h",
-        "value": "nodeselect",
-        "ref": "event_subscriber"
-      },
-      {
-        "id": "cyzymv3",
-        "value": "if(selected === _graph.node_id){ \n  self.out(hydra.o1); \n}\n\nreturn self;",
-        "ref": "script"
-      },
-      {
-        "id": "6s9fomt",
-        "ref": "default"
-      },
-      {
-        "id": "by7pe8d",
-        "value": "[]"
-      },
-      {
-        "id": "7etfnud",
-        "ref": "append"
-      },
-      {
-        "id": "a6acmeq",
-        "ref": "edge_in_argx"
-      },
-      {
-        "id": "r929mj3",
-        "value": "1"
-      },
-      {
-        "id": "hqkgc3g",
-        "value": "2"
-      },
-      {
-        "id": "v2fv739",
-        "ref": "call_method"
-      },
-      {
         "id": "86kzr1o",
         "ref": "html_element"
       },
       {
         "id": "rzci86a",
         "ref": "array"
-      },
-      {
-        "id": "rjg8gvp",
-        "value": "",
-        "ref": "run_path"
-      },
-      {
-        "id": "81miuas"
-      },
-      {
-        "id": "5ufoyr4",
-        "value": "display"
-      },
-      {
-        "id": "cgajc6r",
-        "value": "return.self"
-      },
-      {
-        "id": "pw8kk77",
-        "ref": "runnable"
-      },
-      {
-        "id": "sj8tsrv",
-        "value": "event.target.value",
-        "ref": "arg"
-      },
-      {
-        "id": "18nbcbw",
-        "value": "const parent = _lib.no.runtime.get_parent(_graph);\nparent && _lib.no.runtime.add_node(parent, { id: _graph.node_id, ref: 'hydra.node', value: property});",
-        "ref": "script"
-      },
-      {
-        "id": "gas8zcj",
-        "value": "_graph.value",
-        "ref": "arg"
       },
       {
         "id": "cxogbsx",
@@ -867,18 +769,6 @@
         "id": "raqk17g"
       },
       {
-        "id": "rm82vm5"
-      },
-      {
-        "id": "me9gz6h",
-        "value": "node-info-property"
-      },
-      {
-        "id": "n86ipo8",
-        "value": "el.props",
-        "ref": "set"
-      },
-      {
         "id": "ec680ja",
         "value": "1"
       },
@@ -886,6 +776,115 @@
         "id": "ysash4u",
         "name": "@hydra.node",
         "ref": "return"
+      },
+      {
+        "id": "nn4xcwp",
+        "ref": "state"
+      },
+      {
+        "id": "15rp6fz",
+        "ref": "return"
+      },
+      {
+        "id": "mb9eakn"
+      },
+      {
+        "id": "zj1khwm",
+        "ref": "ap"
+      },
+      {
+        "id": "l13no4n"
+      },
+      {
+        "id": "t46m810",
+        "value": "selectednode.set",
+        "ref": "arg"
+      },
+      {
+        "id": "ojc7op1"
+      },
+      {
+        "id": "gvs68dy",
+        "ref": "state"
+      },
+      {
+        "id": "z36hn49",
+        "value": "__graphid",
+        "ref": "arg"
+      },
+      {
+        "id": "4dfbsxf",
+        "value": "selectednode.state",
+        "ref": "arg"
+      },
+      {
+        "id": "30x4krt",
+        "ref": "call_method"
+      },
+      {
+        "id": "yn30cd2",
+        "value": "self",
+        "ref": "arg"
+      },
+      {
+        "id": "svha9v2",
+        "value": "fn_args",
+        "ref": "arg"
+      },
+      {
+        "id": "7lu02w1",
+        "value": "__graph_value",
+        "ref": "arg"
+      },
+      {
+        "id": "efbru6j",
+        "ref": "runnable"
+      },
+      {
+        "id": "3cw9dfh",
+        "value": "const parent = _lib.no.runtime.get_parent(graphid);\nparent && _lib.no.runtime.add_node(parent, { id: graphid.split('/').slice(-1)[0], ref: '@hydra.node', value: property});",
+        "ref": "script"
+      },
+      {
+        "id": "d6feiph",
+        "value": "__graphid",
+        "ref": "arg"
+      },
+      {
+        "id": "piuy4fl",
+        "value": "event.target.value",
+        "ref": "arg"
+      },
+      {
+        "id": "z72kd81",
+        "ref": "ap"
+      },
+      {
+        "id": "0li027l"
+      },
+      {
+        "id": "i2dymn5",
+        "value": "selfstate.set",
+        "ref": "arg"
+      },
+      {
+        "id": "wr2n658",
+        "value": "true"
+      },
+      {
+        "id": "1f4sf4g",
+        "value": "data",
+        "ref": "arg"
+      },
+      {
+        "id": "uiysn1q",
+        "value": "_lib.hydra.synth",
+        "ref": "arg"
+      },
+      {
+        "id": "l1f572i",
+        "value": "if(graphid.endsWith(selected)){ \n  self.out(hydra.o1); \n}\n\nreturn self;",
+        "ref": "script"
       }
     ],
     "edges": [
@@ -895,114 +894,14 @@
         "as": "args"
       },
       {
-        "from": "cyzymv3",
-        "to": "ysash4u",
-        "as": "value"
-      },
-      {
-        "from": "v2fv739",
-        "to": "cyzymv3",
-        "as": "self"
-      },
-      {
-        "from": "v2h2xlr",
-        "to": "cyzymv3",
-        "as": "hydra"
-      },
-      {
-        "from": "x5tyfuo",
-        "to": "v2fv739",
-        "as": "self"
-      },
-      {
-        "from": "6bc3v7h",
-        "to": "cyzymv3",
-        "as": "selected"
-      },
-      {
-        "from": "2manqin",
-        "to": "6s9fomt",
-        "as": "value"
-      },
-      {
-        "from": "by7pe8d",
-        "to": "6s9fomt",
-        "as": "otherwise"
-      },
-      {
-        "from": "6s9fomt",
-        "to": "7etfnud",
-        "as": "array"
-      },
-      {
-        "from": "r929mj3",
-        "to": "0z8n1c5",
-        "as": "arg0"
-      },
-      {
-        "from": "hqkgc3g",
-        "to": "0z8n1c5",
-        "as": "arg1"
-      },
-      {
-        "from": "7etfnud",
-        "to": "v2fv739",
-        "as": "fn_args"
-      },
-      {
-        "from": "a6acmeq",
-        "to": "7etfnud",
-        "as": "item"
-      },
-      {
-        "from": "86kzr1o",
-        "to": "ysash4u",
-        "as": "display"
-      },
-      {
         "from": "cxogbsx",
         "to": "rzci86a",
         "as": "arg0"
       },
       {
-        "from": "cgajc6r",
-        "to": "rjg8gvp",
-        "as": "path"
-      },
-      {
-        "from": "81miuas",
-        "to": "rjg8gvp",
-        "as": "edge"
-      },
-      {
-        "from": "5ufoyr4",
-        "to": "81miuas",
-        "as": "as"
-      },
-      {
         "from": "rzci86a",
         "to": "86kzr1o",
         "as": "children"
-      },
-      {
-        "from": "pw8kk77",
-        "to": "v2fv739",
-        "as": "onchange"
-      },
-      {
-        "from": "18nbcbw",
-        "to": "pw8kk77",
-        "as": "fn"
-      },
-      {
-        "from": "sj8tsrv",
-        "to": "18nbcbw",
-        "as": "property"
-      },
-      {
-        "from": "gas8zcj",
-        "to": "v2fv739",
-        "as": "fn"
       },
       {
         "from": "cwsnw3u",
@@ -1035,21 +934,6 @@
         "as": "#node-info-wrapper .buttons"
       },
       {
-        "from": "rjg8gvp",
-        "to": "n86ipo8",
-        "as": "target"
-      },
-      {
-        "from": "rm82vm5",
-        "to": "n86ipo8",
-        "as": "value"
-      },
-      {
-        "from": "me9gz6h",
-        "to": "rm82vm5",
-        "as": "id"
-      },
-      {
         "from": "raqk17g",
         "to": "cwsnw3u",
         "as": "#node-info-property"
@@ -1060,9 +944,134 @@
         "as": "order"
       },
       {
-        "from": "n86ipo8",
-        "to": "rzci86a",
-        "as": "arg1"
+        "from": "nn4xcwp",
+        "to": "0z8n1c5",
+        "as": "selfstate"
+      },
+      {
+        "from": "l1f572i",
+        "to": "15rp6fz",
+        "as": "value"
+      },
+      {
+        "from": "ojc7op1",
+        "to": "15rp6fz",
+        "as": "args"
+      },
+      {
+        "from": "mb9eakn",
+        "to": "15rp6fz",
+        "as": "subscribe"
+      },
+      {
+        "from": "zj1khwm",
+        "to": "mb9eakn",
+        "as": "nodeselect"
+      },
+      {
+        "from": "t46m810",
+        "to": "zj1khwm",
+        "as": "fn"
+      },
+      {
+        "from": "l13no4n",
+        "to": "zj1khwm",
+        "as": "args"
+      },
+      {
+        "from": "gvs68dy",
+        "to": "ojc7op1",
+        "as": "selectednode"
+      },
+      {
+        "from": "30x4krt",
+        "to": "l1f572i",
+        "as": "self"
+      },
+      {
+        "from": "uiysn1q",
+        "to": "l1f572i",
+        "as": "hydra"
+      },
+      {
+        "from": "4dfbsxf",
+        "to": "l1f572i",
+        "as": "selected"
+      },
+      {
+        "from": "z36hn49",
+        "to": "l1f572i",
+        "as": "graphid"
+      },
+      {
+        "from": "efbru6j",
+        "to": "30x4krt",
+        "as": "onchange"
+      },
+      {
+        "from": "7lu02w1",
+        "to": "30x4krt",
+        "as": "fn"
+      },
+      {
+        "from": "svha9v2",
+        "to": "30x4krt",
+        "as": "fn_args"
+      },
+      {
+        "from": "3cw9dfh",
+        "to": "efbru6j",
+        "as": "fn"
+      },
+      {
+        "from": "piuy4fl",
+        "to": "3cw9dfh",
+        "as": "property"
+      },
+      {
+        "from": "d6feiph",
+        "to": "3cw9dfh",
+        "as": "graphid"
+      },
+      {
+        "from": "15rp6fz",
+        "to": "ysash4u",
+        "as": "value"
+      },
+      {
+        "from": "86kzr1o",
+        "to": "ysash4u",
+        "as": "display"
+      },
+      {
+        "from": "z72kd81",
+        "to": "30x4krt",
+        "as": "self"
+      },
+      {
+        "from": "0li027l",
+        "to": "z72kd81",
+        "as": "args"
+      },
+      {
+        "from": "yn30cd2",
+        "to": "0li027l",
+        "as": "value"
+      },
+      {
+        "from": "i2dymn5",
+        "to": "z72kd81",
+        "as": "fn"
+      },
+      {
+        "from": "wr2n658",
+        "to": "z72kd81",
+        "as": "run"
+      },
+      {
+        "from": "1f4sf4g",
+        "to": "l13no4n",
+        "as": "value"
       }
     ],
     "out": "ysash4u"

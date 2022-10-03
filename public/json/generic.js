@@ -18,16 +18,16 @@
           { "from": "value", "to": "out", "as": "value" }
         ]
       },
-      { "id": "fetch", "name": "fetch", "description": "Uses the <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API'>Fetch API</a> to get data.", "ref": "extern", "value": "fetch" },
-      { "id": "call", "name": "call", "description": "Calls `self.fn` with `args`. If `self is not found, uses the node's context.", "ref": "extern", "value": "call" },
-      { "id": "stringify", "name": "stringify", "description": "<a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify'>JSON.stringify</a> the `value` argument", "ref": "extern", "value": "stringify" },
-      { "id": "parse", "name": "parse", "description": "<a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify'>JSON.parse</a> the `value` argument", "ref": "extern", "value": "parse" },
-      { "id": "add", "ref": "extern", "value": "add", "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Addition'>+ operator</a>" },
-      { "id": "mult", "ref": "extern", "value": "mult", "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Multiplication'>* operator</a>" },
-      { "id": "divide", "ref": "extern", "value": "divide", "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Division'>/ operator</a>"  },
-      { "id": "negate", "ref": "extern", "value": "negate", "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Subtraction'>- operator</a>"  },
-      { "id": "and", "ref": "extern", "value": "and", "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_AND'>&& operator</a>" },
-      { "id": "liftarraypromise", "ref": "extern", "value": "liftarraypromise", "description": "If an array contains a promise, wrap the whole array with `Promise.all`." },
+      { "id": "fetch", "name": "fetch", "description": "Uses the <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API'>Fetch API</a> to get data.", "ref": "extern", "value": "extern.fetch" },
+      { "id": "call", "name": "call", "description": "Calls `self.fn` with `args`. If `self is not found, uses the node's context.", "ref": "extern", "value": "extern.call" },
+      { "id": "stringify", "name": "stringify", "description": "<a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify'>JSON.stringify</a> the `value` argument", "ref": "extern", "value": "extern.stringify" },
+      { "id": "parse", "name": "parse", "description": "<a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify'>JSON.parse</a> the `value` argument", "ref": "extern", "value": "extern.parse" },
+      { "id": "add", "ref": "extern", "value": "extern.add", "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Addition'>+ operator</a>" },
+      { "id": "mult", "ref": "extern", "value": "extern.mult", "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Multiplication'>* operator</a>" },
+      { "id": "divide", "ref": "extern", "value": "extern.divide", "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Division'>/ operator</a>"  },
+      { "id": "negate", "ref": "extern", "value": "extern.negate", "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Subtraction'>- operator</a>"  },
+      { "id": "and", "ref": "extern", "value": "extern.and", "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_AND'>&& operator</a>" },
+      { "id": "liftarraypromise", "ref": "extern", "value": "extern.liftarraypromise", "description": "If an array contains a promise, wrap the whole array with `Promise.all`." },
       {
         "id": "ancestors",
         "out": "out",
@@ -166,7 +166,7 @@
           { "id": "true", "ref": "arg", "value": "true" },
           { "id": "false", "ref": "arg", "value": "false" },
           {"id": "predval", "ref": "script", "value": "return !!pred ? 'true_val' : 'false_val'"},
-          { "id": "out", "ref": "extern", "value": "switch"}
+          { "id": "out", "ref": "extern", "value": "extern.switch"}
         ],
         "edges": [
           { "from": "true", "to": "out", "as": "true_val" },
@@ -266,22 +266,22 @@
         "id": "return",
         "description": "Creates an inline graph with args, pub/sub, etc. See docs for more detail.",
         "ref": "extern",
-        "value": "return"
+        "value": "extern.return"
       },
       {
         "id": "fold",
         "ref": "extern",
-        "value": "fold"
+        "value": "extern.fold"
       },
       {
         "id": "runnable",
         "ref": "extern",
-        "value": "runnable",
+        "value": "extern.runnable",
       },
       {
         "id": "ap",
         "ref": "extern",
-        "value": "ap",
+        "value": "extern.ap",
       },
       {
         "id": "function", 
@@ -294,15 +294,15 @@
           {"from": "runnable", "to": "out", "as": "runnable"}
         ]
       },
-      {"id": "script", "description": "Runs this as a javascript function. `return` is needed at the end of the script to return anything.", "ref": "extern", "value": "script"},
+      {"id": "script", "description": "Runs this as a javascript function. `return` is needed at the end of the script to return anything.", "ref": "extern", "value": "extern.script"},
       {"id": "extern", "description": "Uses a function from the nodysseus extern library directly"},
       {
         "id": "resolve",
         "description": "Resolves any `Proxy` inputs and returns an object.",
-        "ref": "extern", "value": "resolve"
+        "ref": "extern", "value": "extern.resolve"
       },
-      { "id": "array", "name": "array", "description": "Create an array from all the inputs in alphabetical order", "ref": "extern", "value": "new_array" },
-      { "id": "merge_objects", "description": "Merge the keys of two objects, in descending alphabetical order priority (`Object.assign(...inputs)`).", "ref": "extern", "value": "merge_objects" },
+      { "id": "array", "name": "array", "description": "Create an array from all the inputs in alphabetical order", "ref": "extern", "value": "extern.new_array" },
+      { "id": "merge_objects", "description": "Merge the keys of two objects, in descending alphabetical order priority (`Object.assign(...inputs)`).", "ref": "extern", "value": "extern.merge_objects" },
       {
         "id": "get",
         "description": "Get the value at the path of object. Accepts a `.` separated path e.g. get(target, 'a.b.c') returns target.a.b.c",
@@ -312,7 +312,7 @@
           { "id": "path", "ref": "arg", "value": "path" },
           { "id": "graph_value", "ref": "arg", "value": "__graph_value" },
           { "id": "otherwise", "ref": "arg", "value": "otherwise" },
-          { "id": "out", "ref": "extern", "value": "get" }
+          { "id": "out", "ref": "extern", "value": "extern.get" }
         ],
         "edges": [
           { "from": "graph_value", "to": "out", "as": "graphval" },
@@ -321,17 +321,17 @@
           { "from": "target", "to": "out", "as": "target" }
         ]
       },
-      { "id": "arg", "description": "Get an input to the graph this is a part of.", "ref": "extern", "value": "arg" },
+      { "id": "arg", "description": "Get an input to the graph this is a part of.", "ref": "extern", "value": "extern.arg" },
       { 
         "id": "set_mutable", 
         "description": "Sets `target` value at `path` to `value` and returns the object.",
-        "ref": "extern", "value": "set_mutable",
+        "ref": "extern", "value": "extern.set_mutable",
         "_out": "out",
         "_nodes": [
           {"id": "path", "ref": "arg", "value": "path"},
           {"id": "target", "ref": "arg", "value": "target"},
           {"id": "value", "ref": "arg", "value": "value"},
-          {"id": "out", "ref": "extern", "value": "set_mutable"}
+          {"id": "out", "ref": "extern", "value": "extern.set_mutable"}
         ],
         "_edges": [
           {"from": "path", "to": "out", "as": "path"},
@@ -343,18 +343,18 @@
         "id": "set",
         "description": "Returns a new object with the property at `path` (or the node's value) on `target` set to `value`. Accepts a `.` separated path e.g. set(target, 'a.b', 'c') returns {...target, a: {...target.a, b: 'c'}}",
         "type": "(target: any, value: any, path: string) => any",
-        "ref": "extern", "value": "set"
+        "ref": "extern", "value": "extern.set"
       },
       {
         "id": "modify",
         "description": "Returns a new object with the property at `path` (or the node's value) on `target` modified with `fn`. Accepts a `.` separated path e.g. set(target, 'a.b', 'c') returns {...target, a: {...target.a, b: 'c'}}",
         "type": "(target: any, value: any, path: string) => any",
-        "ref": "extern", "value": "modify"
+        "ref": "extern", "value": "extern.modify"
       },
       {
         "id": "delete",
         "description": "Deletes `target` property at `path`",
-        "ref": "extern", "value": "delete"
+        "ref": "extern", "value": "extern.delete"
       },
       {
         "id": "cache",
@@ -460,7 +460,7 @@
           { "id": "key_def", "ref": "default", "value": "" },
           { "id": "key_path", "ref": "add"},
           { "id": "otherwise", "ref": "arg", "value": "otherwise" },
-          { "id": "out", "ref": "extern", "value": "get" }
+          { "id": "out", "ref": "extern", "value": "extern.get" }
         ],
         "edges": [
           { "from": "in", "to": "out", "as": "input" },
@@ -566,7 +566,7 @@
         {"id": "_sa_value_args", "ref": "set", "value": "__args"},
         {"id": "sa_value_args", "ref": "script", "value": "return {...target, __args: value}"},
         {"id": "runnable_args"},
-        {"id": "unwrap_sa_value", "ref": "extern", "value": "unwrap_proxy"},
+        {"id": "unwrap_sa_value", "ref": "extern", "value": "extern.unwrap_proxy"},
         {"id": "set_sa_value_args", "ref": "set", "value": "args"},
         {"id": "run_sa_value", "ref": "run"},
         {"id": "def_path", "ref": "default"},
@@ -826,12 +826,12 @@
         {"id": "element", "ref": "arg", "value": "element"},
         {"id": "map_fn_args"},
         {"id": "run_map", "value": "true"},
-        {"id": "map_element_fn", "ref": "extern", "value": "ap"},
+        {"id": "map_element_fn", "ref": "extern", "value": "extern.ap"},
         {"id": "currentValue", "ref": "arg", "value": "currentValue"},
         {"id": "previousValue", "ref": "arg", "value": "previousValue"},
         {"id": "append", "ref": "script", "value": "arr.push(value); return arr;"},
         {"id": "initial", "value": "[]"},
-        {"id": "fold", "ref": "extern", "value": "fold"},
+        {"id": "fold", "ref": "extern", "value": "extern.fold"},
         {"id": "out", "ref": "return"}
       ],
       "edges": [
@@ -856,12 +856,12 @@
         {"id": "el_currentValue", "ref": "arg", "value": "currentValue"},
         {"id": "pred_fn_args"},
         {"id": "run_pred", "value": "true"},
-        {"id": "pred_element_fn", "ref": "extern", "value": "ap"},
+        {"id": "pred_element_fn", "ref": "extern", "value": "extern.ap"},
         {"id": "currentValue", "ref": "arg", "value": "currentValue"},
         {"id": "previousValue", "ref": "arg", "value": "previousValue"},
         {"id": "pred_append", "ref": "script", "value": "if(pred === true){ arr.push(value); } return arr;"},
         {"id": "initial", "value": "[]"},
-        {"id": "fold", "ref": "extern", "value": "fold"},
+        {"id": "fold", "ref": "extern", "value": "extern.fold"},
         {"id": "out", "ref": "return"}
       ],
       "edges": [
@@ -2038,7 +2038,7 @@
       }
     ]}
 ,
-  { "id": "import_module", "description": "Dynamically import an es6 module", "ref": "extern", "value": "import_module"},
+  { "id": "import_module", "description": "Dynamically import an es6 module", "ref": "extern", "value": "extern.import_module"},
   {
       "id": "import",
       "description": "Imports the node or nodes from the provided json file",

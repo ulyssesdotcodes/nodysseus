@@ -244,7 +244,7 @@ export const node_args = (nolib, ha, graph, node_id) => {
                 .map(l => parseInt(l.as.substring(3))) ?? [])
             .reduce((acc, i) => acc > i ? acc : i + 1, 0))
     
-    const externfn = node_ref?.ref === "extern" && nolib.extern.get.fn({}, nolib.extern, node_ref?.value)
+    const externfn = node_ref?.ref === "extern" && nolib.extern.get.fn({}, nolib, node_ref?.value)
     const baseargs = !argslist_path && externfn
             ? externfn.args
             : node_ref?.nodes?.filter(n => 

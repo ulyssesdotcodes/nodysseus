@@ -27,16 +27,6 @@
         "name": ""
       },
       {
-        "id": "rh6n8sn",
-        "value": "hydra.synth",
-        "ref": "arg"
-      },
-      {
-        "id": "k85r3d8",
-        "value": "hydra.synth",
-        "ref": "arg"
-      },
-      {
         "id": "m8sgasc",
         "value": "kaleid",
         "ref": "@hydra.node"
@@ -88,20 +78,9 @@
         "value": "4"
       },
       {
-        "id": "ui2b86i",
-        "value": "hydra",
-        "name": "",
-        "ref": "arg"
-      },
-      {
         "id": "lj5o68q",
         "name": "",
         "ref": "if"
-      },
-      {
-        "id": "3pv6i7r",
-        "value": "synth",
-        "ref": "log"
       },
       {
         "id": "ee7261e",
@@ -132,24 +111,20 @@
         "value": "/json/hydra.json"
       },
       {
-        "id": "ap84c5u",
-        "value": "hydra",
-        "ref": "log"
+        "id": "k85r3d8",
+        "value": "_lib.hydra.synth",
+        "ref": "arg"
       },
       {
-        "id": "3spykbx",
-        "value": "hydrasetup",
-        "ref": "log"
+        "id": "ui2b86i",
+        "value": "_lib.hydra",
+        "name": "",
+        "ref": "arg"
       },
       {
-        "id": "5j6ja1v",
-        "value": "canvasel",
-        "ref": "log"
-      },
-      {
-        "id": "93mwoo0",
-        "value": "offscreenel",
-        "ref": "log"
+        "id": "rh6n8sn",
+        "value": "_lib.hydra.synth",
+        "ref": "arg"
       }
     ],
     "edges": [
@@ -179,16 +154,6 @@
         "as": "self"
       },
       {
-        "from": "k85r3d8",
-        "to": "0dxoi5w",
-        "as": "hydra"
-      },
-      {
-        "from": "7nz84ut",
-        "to": "out",
-        "as": "args"
-      },
-      {
         "from": "ysash4u",
         "to": "z9hrjui",
         "as": "self"
@@ -204,11 +169,6 @@
         "as": "canvas_id"
       },
       {
-        "from": "z9hrjui",
-        "to": "m8sgasc",
-        "as": "self"
-      },
-      {
         "from": "ulki2ii",
         "to": "ysash4u",
         "as": "self"
@@ -222,16 +182,6 @@
         "from": "i1qonbc",
         "to": "pu58ta7",
         "as": "canvas_id"
-      },
-      {
-        "from": "3pv6i7r",
-        "to": "ulki2ii",
-        "as": "self"
-      },
-      {
-        "from": "ymyfmh8",
-        "to": "3pv6i7r",
-        "as": "value"
       },
       {
         "from": "uxm6lm2",
@@ -269,44 +219,44 @@
         "as": "url"
       },
       {
-        "from": "ap84c5u",
+        "from": "7nz84ut",
+        "to": "out",
+        "as": "lib"
+      },
+      {
+        "from": "z9hrjui",
+        "to": "m8sgasc",
+        "as": "self"
+      },
+      {
+        "from": "ui2b86i",
         "to": "lj5o68q",
         "as": "pred"
       },
       {
-        "from": "ui2b86i",
-        "to": "ap84c5u",
-        "as": "value"
-      },
-      {
-        "from": "3spykbx",
-        "to": "ee7261e",
-        "as": "true"
-      },
-      {
-        "from": "pu58ta7",
-        "to": "3spykbx",
-        "as": "value"
-      },
-      {
-        "from": "5j6ja1v",
+        "from": "rptqdrs",
         "to": "5a6pljw/af7ncbh",
         "as": "arg3"
       },
       {
-        "from": "93mwoo0",
+        "from": "pu58ta7",
+        "to": "ee7261e",
+        "as": "true"
+      },
+      {
+        "from": "0g1zopd",
         "to": "5a6pljw/af7ncbh",
         "as": "arg4"
       },
       {
-        "from": "0g1zopd",
-        "to": "93mwoo0",
-        "as": "value"
+        "from": "k85r3d8",
+        "to": "0dxoi5w",
+        "as": "hydra"
       },
       {
-        "from": "rptqdrs",
-        "to": "5j6ja1v",
-        "as": "value"
+        "from": "ymyfmh8",
+        "to": "ulki2ii",
+        "as": "self"
       }
     ],
     "out": "out"
