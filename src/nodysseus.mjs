@@ -356,7 +356,7 @@ const run_node = (node, nodeArgs, graphArgs, lib) => {
         if (node.ref === "arg") {
             // const val = nolib.no.arg(node, graphArgs, lib, node.value);
             const resval = nolib.no.arg(node, graphArgs, lib, node.value);
-            return typeof resval === 'object' && Object.hasOwn(resval, "__value") ? resval : lib.no.of(resval);
+            return resval && typeof resval === 'object' && Object.hasOwn(resval, "__value") ? resval : lib.no.of(resval);
         } else if (node.ref === "extern") {
             return node_extern(node, nodeArgs, graphArgs, lib)
         } else if (node.ref === "script") {
