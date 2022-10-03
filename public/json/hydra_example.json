@@ -109,57 +109,47 @@
       },
       {
         "id": "34pzvn4",
-        "value": "return !!_lib.no.runtime.get_ref('@hydra.setup')",
+        "value": "return !!_lib.no.runtime.get_ref('@hydra.setup') && !!_lib.no.runtime.get_ref('@hydra.node')",
         "ref": "script"
-      },
-      {
-        "id": "uptw8ed",
-        "name": "import_hydra_nodes",
-        "out": "uptw8ed",
-        "nodes": [
-          {
-            "id": "uptw8ed",
-            "name": "import_hydra_nodes",
-            "ref": "return"
-          },
-          {
-            "id": "bc9c7g4",
-            "ref": "import_nodes"
-          },
-          {
-            "id": "z5vn4g3",
-            "value": "text",
-            "ref": "call"
-          },
-          {
-            "id": "n3btr4x",
-            "value": "return fetch(\"/json/hydra.json\")",
-            "ref": "script"
-          }
-        ],
-        "edges": [
-          {
-            "from": "bc9c7g4",
-            "to": "uptw8ed",
-            "as": "value"
-          },
-          {
-            "from": "z5vn4g3",
-            "to": "bc9c7g4",
-            "as": "nodes"
-          },
-          {
-            "from": "n3btr4x",
-            "to": "z5vn4g3",
-            "as": "self"
-          }
-        ]
       },
       {
         "id": "out",
         "value": "",
         "name": "hydra_example",
         "ref": "return"
+      },
+      {
+        "id": "uptw8ed",
+        "name": "import_hydra_nodes",
+        "ref": "return"
+      },
+      {
+        "id": "bc9c7g4",
+        "ref": "import_json"
+      },
+      {
+        "id": "9vdzs2b",
+        "value": "/json/hydra.json"
+      },
+      {
+        "id": "ap84c5u",
+        "value": "hydra",
+        "ref": "log"
+      },
+      {
+        "id": "3spykbx",
+        "value": "hydrasetup",
+        "ref": "log"
+      },
+      {
+        "id": "5j6ja1v",
+        "value": "canvasel",
+        "ref": "log"
+      },
+      {
+        "id": "93mwoo0",
+        "value": "offscreenel",
+        "ref": "log"
       }
     ],
     "edges": [
@@ -172,11 +162,6 @@
         "from": "5a6pljw/af7ncbh",
         "to": "5a6pljw/5a6pljw",
         "as": "children"
-      },
-      {
-        "from": "rptqdrs",
-        "to": "5a6pljw/af7ncbh",
-        "as": "arg3"
       },
       {
         "from": "rd2ji0i",
@@ -192,11 +177,6 @@
         "from": "m8sgasc",
         "to": "0dxoi5w",
         "as": "self"
-      },
-      {
-        "from": "ui2b86i",
-        "to": "lj5o68q",
-        "as": "pred"
       },
       {
         "from": "k85r3d8",
@@ -217,11 +197,6 @@
         "from": "0dxoi5w",
         "to": "lj5o68q",
         "as": "true"
-      },
-      {
-        "from": "0g1zopd",
-        "to": "5a6pljw/af7ncbh",
-        "as": "arg4"
       },
       {
         "from": "4igiepn",
@@ -269,11 +244,6 @@
         "as": "hydra"
       },
       {
-        "from": "pu58ta7",
-        "to": "ee7261e",
-        "as": "true"
-      },
-      {
         "from": "34pzvn4",
         "to": "ee7261e",
         "as": "pred"
@@ -286,6 +256,56 @@
       {
         "from": "lj5o68q",
         "to": "out",
+        "as": "value"
+      },
+      {
+        "from": "bc9c7g4",
+        "to": "uptw8ed",
+        "as": "value"
+      },
+      {
+        "from": "9vdzs2b",
+        "to": "bc9c7g4",
+        "as": "url"
+      },
+      {
+        "from": "ap84c5u",
+        "to": "lj5o68q",
+        "as": "pred"
+      },
+      {
+        "from": "ui2b86i",
+        "to": "ap84c5u",
+        "as": "value"
+      },
+      {
+        "from": "3spykbx",
+        "to": "ee7261e",
+        "as": "true"
+      },
+      {
+        "from": "pu58ta7",
+        "to": "3spykbx",
+        "as": "value"
+      },
+      {
+        "from": "5j6ja1v",
+        "to": "5a6pljw/af7ncbh",
+        "as": "arg3"
+      },
+      {
+        "from": "93mwoo0",
+        "to": "5a6pljw/af7ncbh",
+        "as": "arg4"
+      },
+      {
+        "from": "0g1zopd",
+        "to": "93mwoo0",
+        "as": "value"
+      },
+      {
+        "from": "rptqdrs",
+        "to": "5j6ja1v",
         "as": "value"
       }
     ],

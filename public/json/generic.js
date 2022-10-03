@@ -20,7 +20,7 @@
       },
       { "id": "fetch", "name": "fetch", "description": "Uses the <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API'>Fetch API</a> to get data.", "ref": "extern", "value": "fetch" },
       { "id": "call", "name": "call", "description": "Calls `self.fn` with `args`. If `self is not found, uses the node's context.", "ref": "extern", "value": "call" },
-      { "id": "stringify", "name": "stringify", "description": "<a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify'>JSON.stringify</a> the `value` argument", "ref": "extern", "value": "JSON.stringify" },
+      { "id": "stringify", "name": "stringify", "description": "<a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify'>JSON.stringify</a> the `value` argument", "ref": "extern", "value": "stringify" },
       { "id": "parse", "name": "parse", "description": "<a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify'>JSON.parse</a> the `value` argument", "ref": "extern", "value": "parse" },
       { "id": "add", "ref": "extern", "value": "add", "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Addition'>+ operator</a>" },
       { "id": "mult", "ref": "extern", "value": "mult", "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Multiplication'>* operator</a>" },
@@ -909,8 +909,11 @@
       "description": "Create a new runnable that runs the input runnables in sequence.",
       "name": "sequence",
       "out": "out",
+      "_ref": "extern",
+      "_value": "sequence",
       "nodes": [
         { "id": "args", "ref": "arg", "value": "_args" },
+        {"id": "delete_args", "ref": "script", "value": "const ret = {...target}; delete ret.args; return ret;"},
         { "id": "seq_fold_currentValue", "ref": "arg", "value": "currentValue.1" },
         { "id": "seq_ap_run", "value": "true" },
         { "id": "seq_ap", "ref": "ap" },
@@ -918,7 +921,9 @@
         { "id": "out", "ref": "runnable"}
       ],
       "edges": [
-        { "from": "args", "to": "seq_fold", "as": "object" },
+        { "from": "args", "to": "delete_args", "as": "target" },
+        { "from": "delete_args", "to": "seq_fold", "as": "object" },
+        { "from": "argargs", "to": "_seq_ap_args", "as": "fn" },
         {"from": "seq_ap_run", "to": "seq_ap", "as": "run"},
         {"from": "seq_fold_currentValue", "to": "seq_ap", "as": "fn"},
         {"from": "seq_ap", "to": "seq_fold", "as": "fn"},
@@ -1458,11 +1463,6 @@
           {
             "from": "imr2dvi",
             "to": "out",
-            "as": "value"
-          },
-          {
-            "from": "5a6pljw",
-            "to": "out",
             "as": "display"
           },
           {
@@ -1685,9 +1685,12 @@
         "id": "bnyrd44",
         "ref": "default"
       },
+      {"id": "graphvalue", "ref": "arg", "value": "__graph_value"},
+      {"id": "graphvalue2", "ref": "arg", "value": "__graph_value"},
+      {"id": "graphvalue3", "ref": "arg", "value": "__graph_value"},
       {
         "id": "nzg5arg",
-        "value": "return fn ?? _graph?.value;",
+        "value": "return fn ?? graphvalue;",
         "ref": "script"
       },
       {
@@ -1709,7 +1712,7 @@
       },
       {
         "id": "6s9b6g0",
-        "value": "return fn ?? _graph?.value;",
+        "value": "return fn ?? graphvalue;",
         "ref": "script"
       },
       {
@@ -1736,7 +1739,7 @@
       },
       {
         "id": "ddgxhvl",
-        "value": "return fn ?? _graph?.value",
+        "value": "return fn ?? graphvalue",
         "ref": "script"
       },
       {
@@ -1764,7 +1767,8 @@
       },
       {
         "id": "iqtiiiy",
-        "ref": "edge_in_argx"
+        "_ref": "edge_in_argx",
+        "value": "[]"
       },
       {
         "id": "mf6qadh",
@@ -1983,9 +1987,19 @@
         "as": "fn"
       },
       {
+        "from": "graphvalue",
+        "to": "nzg5arg",
+        "as": "graphvalue"
+      },
+      {
         "from": "k14owom",
         "to": "ddgxhvl",
         "as": "fn"
+      },
+      {
+        "from": "graphvalue2",
+        "to": "ddgxhvl",
+        "as": "graphvalue"
       },
       {
         "from": "vbtokuf",
@@ -2001,6 +2015,11 @@
         "from": "or9k7xt",
         "to": "vbtokuf",
         "as": "otherwise"
+      },
+      {
+        "from": "graphvalue3",
+        "to": "6s9b6g0",
+        "as": "graphvalue"
       },
       {
         "from": "jyoexsb",

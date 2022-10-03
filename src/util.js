@@ -245,20 +245,20 @@ export const node_args = (nolib, ha, graph, node_id) => {
             .reduce((acc, i) => acc > i ? acc : i + 1, 0))
     
     const externfn = node_ref?.ref === "extern" && nolib.extern.get.fn({}, nolib.extern, node_ref?.value)
-
-    return [...new Set(argslist_path ? nolib.no.runGraph(node_ref, argslist_path) : (
-        externfn
+    const baseargs = !argslist_path && externfn
             ? externfn.args
             : node_ref?.nodes?.filter(n => 
                 n.ref === "arg" 
                 && n.type !== "internal" 
                 && !n.value?.split(":")[1]?.toLowerCase()?.includes("internal")
                 && !(Array.isArray(n.type) && n.type.includes("internal")))
-                .map(n => n.value).filter(a => a) ?? [])
+                .map(n => n.value).filter(a => a) ?? []
+
+    return [...new Set(argslist_path ? nolib.no.runGraph(node_ref, argslist_path) : baseargs
         .filter(a => !a.includes('.') && !a.startsWith("_"))
         .concat(edges_in?.map(e => e.as) ?? [])
         .concat(
-            (externfn?.args?.includes("_node_args"))
+            (externfn?.args?.includes("_node_args") || baseargs.includes("_args"))
             || (node.ref === undefined && !node.value)
             ? [nextIndexedArg]
             : []
