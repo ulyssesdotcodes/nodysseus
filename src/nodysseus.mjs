@@ -334,7 +334,7 @@ const create_data = (graph, inputs, graphArgs, lib) => {
         input = inputs[i];
 
         // lgraph.out = input.from;
-        const val = {graph, fn: input.from, args: newgraphargs, isArg: true} //run_graph(lgraph, input.from, graphArgs, lib);
+        const val = {graph, fn: input.from, args: newgraphargs, isArg: true, __isnodysseus: true} //run_graph(lgraph, input.from, graphArgs, lib);
         data[input.as] = val;
     }
 
@@ -342,7 +342,9 @@ const create_data = (graph, inputs, graphArgs, lib) => {
 }
 
 const run_runnable = (runnable, lib) => 
-    runnable?.fn && runnable?.graph 
+    !runnable?.__isnodysseus
+    ? runnable
+    : runnable?.fn && runnable?.graph 
     ? run_graph(runnable.graph, runnable.fn, runnable.args ?? {}, lib)
     : runnable?.id
     ? run_node(runnable, {}, {}, lib)
@@ -595,12 +597,12 @@ const getorset = (map, id, value_fn) => {
     }
 }
 
-const base_node = node => node.ref || node.extern ? ({id: node.id, value: node.value, name: node.name, ref: node.ref, extern: node.extern}) : base_graph(node);
-const base_graph = graph => ({id: graph.id, value: graph.value, name: graph.name, nodes: graph.nodes, edges: graph.edges, out: graph.out})
+const base_node = node => node.ref || node.extern ? ({id: node.id, value: node.value, name: node.name, ref: node.ref, extern: node.extern, __isnodysseus: true}) : base_graph(node);
+const base_graph = graph => ({id: graph.id, value: graph.value, name: graph.name, nodes: graph.nodes, edges: graph.edges, out: graph.out, __isnodysseus: true})
 
 const nolib = {
   no: {
-    of: (value) => ispromise(value) ? value.then(nolib.no.of) : value?.__value ? value : { id: "out", __value: value },
+    of: (value) => ispromise(value) ? value.then(nolib.no.of) : value?.__value ? value : { id: "out", __value: value, __isnodysseus: true },
     arg: (node, target, lib, value) => {
       const typedvalue = value.split(": ");
       const nodevalue = typedvalue[0];
@@ -629,10 +631,6 @@ const nolib = {
             nodevalue,
             lib
           );
-
-      if(typedvalue[1]) {
-        debugger;
-      }
 
       const retrun = ret?.isArg && typedvalue[1] !== "raw" ? run_runnable(ret, lib) : undefined;
       return ispromise(retrun) ? retrun.then(v => v?.__value) : retrun ? retrun?.__value : ret;
@@ -854,9 +852,9 @@ const nolib = {
         } else {
           const existing = refsdb.by("id", graph.id);
           if (existing) {
-            refsdb.update(Object.assign(existing, { data: graph }));
+            refsdb.update(Object.assign(existing, { data: graph.__isnodysseus ? graph : {...graph, __isnodysseus: true} }));
           } else {
-            refsdb.insert({ id: graph.id, data: graph });
+            refsdb.insert({ id: graph.id, data: graph.__isnodysseus ? graph : {...graph, __isnodysseus: true} });
           }
           publish("graphchange", graph);
           publish("graphupdate", graph);
@@ -1220,9 +1218,14 @@ const nolib = {
                 {"from": "argsarg", "to": "runfn", "as": "args"}
               ]
             },
-            "args": { fnr: fnv?.__value, argsr: args }
+            "args": { fnr: fnv?.__value, argsr: args },
+            "__isnodysseus": true,
           }))
       }
+    },
+    create_fn: {
+      args: ["runnable", "_lib"],
+      fn: (runnable, lib) => (args) => run_runnable({...runnable, args: {...args, __args: runnable.args.__args}}, lib)?.__value
     },
     switch: {
       rawArgs: true,
@@ -1499,8 +1502,8 @@ const nolib = {
       fn: (node, url, params) => resfetch(url || node.value, params),
     },
     import_module: {
-      args: ["url", "_node"],
-      fn: (url, node) => import(url || node.value),
+      args: ["url", "__graph_value"],
+      fn: (url, graphvalue) => (url || graphvalue) && import(url || graphvalue),
     },
     call: {
       resolve: true,

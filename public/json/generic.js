@@ -302,6 +302,7 @@
         "ref": "extern", "value": "extern.resolve"
       },
       { "id": "array", "name": "array", "description": "Create an array from all the inputs in alphabetical order", "ref": "extern", "value": "extern.new_array" },
+      {"id": "create_fn", "ref": "extern", "value": "extern.create_fn"},
       { "id": "merge_objects", "description": "Merge the keys of two objects, in descending alphabetical order priority (`Object.assign(...inputs)`).", "ref": "extern", "value": "extern.merge_objects" },
       {
         "id": "get",
@@ -732,7 +733,7 @@
       ]
     },
     {
-      "id": "create_fn",
+      "id": "_create_fn",
       "description": "Returns a function created from `runnable`",
       "out": "out",
       "nodes": [
