@@ -3707,6 +3707,489 @@
       }
     ],
     "out": "out"
+  },{
+    "id": "export",
+    "nodes": [
+      {
+        "id": "args"
+      },
+      {
+        "id": "main/out",
+        "name": "export",
+        "ref": "return"
+      },
+      {
+        "id": "jklqh38",
+        "ref": "html_element"
+      },
+      {
+        "id": "8dy573e",
+        "value": "a",
+        "ref": "html_element"
+      },
+      {
+        "id": "6qkew20",
+        "ref": "array"
+      },
+      {
+        "id": "zihm1kd"
+      },
+      {
+        "id": "2dz33fg",
+        "value": "_new"
+      },
+      {
+        "id": "n7aaoju",
+        "value": "Export",
+        "ref": "html_text"
+      },
+      {
+        "id": "jdoak4g",
+        "value": "return ns + '.json';",
+        "ref": "script"
+      },
+      {
+        "id": "3b7bnzm",
+        "ref": "state"
+      },
+      {
+        "id": "ug26ugw",
+        "value": "hrefstate.state",
+        "name": "",
+        "ref": "arg"
+      },
+      {
+        "id": "pni2xuu",
+        "value": "href",
+        "ref": "log"
+      },
+      {
+        "id": "pcx97n4",
+        "value": "input",
+        "ref": "html_element",
+        "__isnodysseus": true
+      },
+      {
+        "id": "rk7hcxc"
+      },
+      {
+        "id": "b8wohxv",
+        "value": "select",
+        "__isnodysseus": true
+      },
+      {
+        "id": "x200f4j",
+        "value": "export-list",
+        "__isnodysseus": true
+      },
+      {
+        "id": "et5g0m1",
+        "__isnodysseus": true,
+        "ref": "map"
+      },
+      {
+        "id": "9tv13iq",
+        "value": "return _lib.no.runtime.refs()",
+        "ref": "script",
+        "__isnodysseus": true
+      },
+      {
+        "id": "dd6st1b",
+        "value": "element",
+        "ref": "arg",
+        "__isnodysseus": true
+      },
+      {
+        "id": "2yur4h7",
+        "ref": "runnable",
+        "__isnodysseus": true
+      },
+      {
+        "id": "xdot36k"
+      },
+      {
+        "id": "1edrrwq",
+        "value": "option",
+        "ref": "html_element",
+        "__isnodysseus": true
+      },
+      {
+        "id": "skqnl08",
+        "__isnodysseus": true,
+        "ref": "html_text"
+      },
+      {
+        "id": "3y8pyc2",
+        "value": "datalist",
+        "ref": "html_element",
+        "__isnodysseus": true
+      },
+      {
+        "id": "tfwqhqf",
+        "value": "export-list",
+        "__isnodysseus": true
+      },
+      {
+        "id": "xp4pv1h",
+        "value": "return element",
+        "ref": "script",
+        "__isnodysseus": true
+      },
+      {
+        "id": "i5wnhvh",
+        "ref": "ap"
+      },
+      {
+        "id": "mp0ce5t",
+        "value": "hrefstate.set",
+        "ref": "arg"
+      },
+      {
+        "id": "zucq3k4"
+      },
+      {
+        "id": "8470sfe",
+        "value": "return URL.createObjectURL(file)",
+        "ref": "script"
+      },
+      {
+        "id": "hke54sp",
+        "value": "return new Blob([json], {type: \"application/json\"})",
+        "ref": "script"
+      },
+      {
+        "id": "syfso39",
+        "ref": "stringify"
+      },
+      {
+        "id": "kaiwusy",
+        "value": "mapout",
+        "ref": "log"
+      },
+      {
+        "id": "db0reg4",
+        "ref": "map"
+      },
+      {
+        "id": "0pnyh3t",
+        "value": "mapin",
+        "ref": "log"
+      },
+      {
+        "id": "l4o1umt",
+        "value": "return _lib.no.runtime.refs().filter(r => r.startsWith('@' + namespace + '.') || r === namespace)",
+        "ref": "script"
+      },
+      {
+        "id": "w78q6vm",
+        "value": "ns",
+        "ref": "log"
+      },
+      {
+        "id": "959i120",
+        "ref": "runnable"
+      },
+      {
+        "id": "a1vqjzz",
+        "value": "element",
+        "ref": "arg"
+      },
+      {
+        "id": "1148sh5",
+        "value": "2"
+      },
+      {
+        "id": "1axuplc",
+        "value": "event.target.value",
+        "ref": "arg",
+        "__isnodysseus": true
+      },
+      {
+        "id": "tad7830",
+        "ref": "state",
+        "__isnodysseus": true
+      },
+      {
+        "id": "jdufmth",
+        "value": "namespace.state",
+        "ref": "arg",
+        "__isnodysseus": true
+      },
+      {
+        "id": "91lhfar",
+        "__isnodysseus": true,
+        "ref": "sequence"
+      },
+      {
+        "id": "898n6f7",
+        "__isnodysseus": true,
+        "ref": "ap"
+      },
+      {
+        "id": "9jvfgj1",
+        "value": "namespace.set",
+        "ref": "arg",
+        "__isnodysseus": true
+      },
+      {
+        "id": "j2c518b"
+      },
+      {
+        "id": "qpiqhgp",
+        "value": "event.target.value",
+        "ref": "arg",
+        "__isnodysseus": true
+      },
+      {
+        "id": "x8ik3x4",
+        "value": "const graph = {..._lib.no.runtime.get_ref(ref)};\ndelete graph.__isnodysseus;\nreturn graph;",
+        "ref": "script"
+      }
+    ],
+    "edges": [
+      {
+        "from": "args",
+        "to": "main/out",
+        "as": "args"
+      },
+      {
+        "from": "n7aaoju",
+        "to": "8dy573e",
+        "as": "children"
+      },
+      {
+        "from": "jklqh38",
+        "to": "main/out",
+        "as": "display"
+      },
+      {
+        "from": "6qkew20",
+        "to": "jklqh38",
+        "as": "children"
+      },
+      {
+        "from": "8dy573e",
+        "to": "6qkew20",
+        "as": "arg0"
+      },
+      {
+        "from": "zihm1kd",
+        "to": "8dy573e",
+        "as": "props"
+      },
+      {
+        "from": "2dz33fg",
+        "to": "zihm1kd",
+        "as": "target"
+      },
+      {
+        "from": "tad7830",
+        "to": "args",
+        "as": "namespace"
+      },
+      {
+        "from": "jdufmth",
+        "to": "jdoak4g",
+        "as": "ns"
+      },
+      {
+        "from": "jdoak4g",
+        "to": "zihm1kd",
+        "as": "download"
+      },
+      {
+        "from": "3b7bnzm",
+        "to": "args",
+        "as": "hrefstate"
+      },
+      {
+        "from": "pni2xuu",
+        "to": "zihm1kd",
+        "as": "href"
+      },
+      {
+        "from": "ug26ugw",
+        "to": "pni2xuu",
+        "as": "value"
+      },
+      {
+        "from": "pcx97n4",
+        "to": "6qkew20",
+        "as": "arg2"
+      },
+      {
+        "from": "rk7hcxc",
+        "to": "pcx97n4",
+        "as": "props"
+      },
+      {
+        "from": "b8wohxv",
+        "to": "rk7hcxc",
+        "as": "type"
+      },
+      {
+        "from": "x200f4j",
+        "to": "rk7hcxc",
+        "as": "list"
+      },
+      {
+        "from": "3y8pyc2",
+        "to": "6qkew20",
+        "as": "arg3"
+      },
+      {
+        "from": "et5g0m1",
+        "to": "3y8pyc2",
+        "as": "children"
+      },
+      {
+        "from": "9tv13iq",
+        "to": "et5g0m1",
+        "as": "array"
+      },
+      {
+        "from": "2yur4h7",
+        "to": "et5g0m1",
+        "as": "fn"
+      },
+      {
+        "from": "dd6st1b",
+        "to": "xp4pv1h",
+        "as": "element"
+      },
+      {
+        "from": "xdot36k",
+        "to": "3y8pyc2",
+        "as": "props"
+      },
+      {
+        "from": "1edrrwq",
+        "to": "2yur4h7",
+        "as": "fn"
+      },
+      {
+        "from": "skqnl08",
+        "to": "1edrrwq",
+        "as": "children"
+      },
+      {
+        "from": "xp4pv1h",
+        "to": "skqnl08",
+        "as": "text"
+      },
+      {
+        "from": "tfwqhqf",
+        "to": "xdot36k",
+        "as": "id"
+      },
+      {
+        "from": "zucq3k4",
+        "to": "i5wnhvh",
+        "as": "args"
+      },
+      {
+        "from": "8470sfe",
+        "to": "zucq3k4",
+        "as": "value"
+      },
+      {
+        "from": "hke54sp",
+        "to": "8470sfe",
+        "as": "file"
+      },
+      {
+        "from": "syfso39",
+        "to": "hke54sp",
+        "as": "json"
+      },
+      {
+        "from": "1148sh5",
+        "to": "syfso39",
+        "as": "spacer"
+      },
+      {
+        "from": "kaiwusy",
+        "to": "syfso39",
+        "as": "object"
+      },
+      {
+        "from": "db0reg4",
+        "to": "kaiwusy",
+        "as": "value"
+      },
+      {
+        "from": "959i120",
+        "to": "db0reg4",
+        "as": "fn"
+      },
+      {
+        "from": "0pnyh3t",
+        "to": "db0reg4",
+        "as": "array"
+      },
+      {
+        "from": "l4o1umt",
+        "to": "0pnyh3t",
+        "as": "value"
+      },
+      {
+        "from": "w78q6vm",
+        "to": "l4o1umt",
+        "as": "namespace"
+      },
+      {
+        "from": "1axuplc",
+        "to": "w78q6vm",
+        "as": "value"
+      },
+      {
+        "from": "x8ik3x4",
+        "to": "959i120",
+        "as": "fn"
+      },
+      {
+        "from": "a1vqjzz",
+        "to": "x8ik3x4",
+        "as": "ref"
+      },
+      {
+        "from": "mp0ce5t",
+        "to": "i5wnhvh",
+        "as": "fn"
+      },
+      {
+        "from": "91lhfar",
+        "to": "rk7hcxc",
+        "as": "onchange"
+      },
+      {
+        "from": "i5wnhvh",
+        "to": "91lhfar",
+        "as": "arg1"
+      },
+      {
+        "from": "898n6f7",
+        "to": "91lhfar",
+        "as": "arg0"
+      },
+      {
+        "from": "9jvfgj1",
+        "to": "898n6f7",
+        "as": "fn"
+      },
+      {
+        "from": "j2c518b",
+        "to": "898n6f7",
+        "as": "args"
+      },
+      {
+        "from": "qpiqhgp",
+        "to": "j2c518b",
+        "as": "value"
+      }
+    ],
+    "out": "main/out"
   }
+
   ]
 }
