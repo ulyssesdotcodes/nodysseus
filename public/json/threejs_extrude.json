@@ -1,0 +1,822 @@
+{
+    "id": "threejs_extrude",
+    "nodes": [
+      {
+        "id": "args"
+      },
+      {
+        "id": "5a6pljw",
+        "ref": "html_element"
+      },
+      {
+        "id": "main/out",
+        "name": "threejs_extrude",
+        "ref": "return"
+      },
+      {
+        "id": "pagji9e",
+        "value": "canvas_id",
+        "ref": "arg"
+      },
+      {
+        "id": "a8zrttk",
+        "value": "threecanvas",
+        "name": ""
+      },
+      {
+        "id": "af7ncbh",
+        "name": "",
+        "ref": "array"
+      },
+      {
+        "id": "39cm8j2",
+        "ref": "cache"
+      },
+      {
+        "id": "sg4uugf",
+        "value": "return new THREE.MeshStandardMaterial()",
+        "ref": "script"
+      },
+      {
+        "id": "7z4w54j",
+        "value": "return new THREE.Color(0x00ff00);",
+        "ref": "script"
+      },
+      {
+        "id": "458pcrh",
+        "ref": "runnable"
+      },
+      {
+        "id": "xbdsa2n",
+        "ref": "cache"
+      },
+      {
+        "id": "bu3bsk1",
+        "value": "return new THREE.Color(0xffffff);",
+        "ref": "script"
+      },
+      {
+        "id": "ieu9h0w",
+        "value": "return new THREE.HemisphereLight(0xffffff, 0x080820, 1);",
+        "ref": "script"
+      },
+      {
+        "id": "ngyhq1a",
+        "name": "",
+        "ref": "cache"
+      },
+      {
+        "id": "5ydb9gt",
+        "value": "100"
+      },
+      {
+        "id": "exxjoa9",
+        "value": "false"
+      },
+      {
+        "id": "xg7wz0b",
+        "value": "catmullrom"
+      },
+      {
+        "id": "2cveh11",
+        "value": "true"
+      },
+      {
+        "id": "4gccaik",
+        "value": "index",
+        "ref": "arg"
+      },
+      {
+        "id": "umnie7j",
+        "name": ""
+      },
+      {
+        "id": "9g0hkhj",
+        "name": "",
+        "ref": "runnable"
+      },
+      {
+        "id": "po4hz9e",
+        "value": "return new Array(3).fill(0);",
+        "ref": "script"
+      },
+      {
+        "id": "ngsmswa",
+        "value": "return new THREE.CatmullRomCurve3([\t\t\t\t\tnew THREE.Vector3( - 60, - 100, 60 ),\n\t\t\t\t\tnew THREE.Vector3( - 60, 20, 60 ),\n\t\t\t\t\tnew THREE.Vector3( - 60, 120, 60 ),\n\t\t\t\t\tnew THREE.Vector3( 60, 20, - 60 ),\n\t\t\t\t\tnew THREE.Vector3( 60, - 100, - 60 )]);",
+        "ref": "script"
+      },
+      {
+        "id": "o4g2c9v",
+        "value": "false",
+        "name": ""
+      },
+      {
+        "id": "bfvclv5"
+      },
+      {
+        "id": "vnuhref",
+        "value": "return new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color: 0xff0000}));",
+        "ref": "script"
+      },
+      {
+        "id": "m3mto9g",
+        "value": "geo",
+        "ref": "arg"
+      },
+      {
+        "id": "choft8z",
+        "ref": "cache"
+      },
+      {
+        "id": "3ftlgif/6uxy7hz",
+        "value": "geo",
+        "ref": "arg"
+      },
+      {
+        "id": "pms1n58",
+        "ref": "cache"
+      },
+      {
+        "id": "j9affhb",
+        "value": "return new THREE.BufferGeometry();",
+        "name": "",
+        "ref": "script"
+      },
+      {
+        "id": "7pvi1kn",
+        "value": "",
+        "name": "",
+        "ref": "return"
+      },
+      {
+        "id": "0uvxl8m",
+        "value": "",
+        "ref": "cache"
+      },
+      {
+        "id": "1vohh60",
+        "value": "objs.buffer.geometry",
+        "ref": "arg"
+      },
+      {
+        "id": "pvlgsnt",
+        "value": "return new THREE.ExtrudeGeometry(curve, settings)",
+        "name": "",
+        "ref": "script"
+      },
+      {
+        "id": "86m5eg3",
+        "ref": "canvas_behind_editor"
+      },
+      {
+        "id": "3ftlgif/3ftlgif",
+        "value": "geo.setAttribute('position', new THREE.BufferAttribute( new Float32Array( [\n\t-4.0, -1.0,  1.0,\n\t 1.0, -1.0,  1.0,\n\t 1.0,  1.0,  1.0,\n\n\t 1.0,  1.0,  1.0,\n\t-4.0,  1.0,  1.0,\n\t-4.0, -1.0,  1.0\n] ), 3));\ngeo.computeVertexNormals();\n\nreturn geo",
+        "ref": "script"
+      },
+      {
+        "id": "6t3n0sw"
+      },
+      {
+        "id": "3oo2se6",
+        "ref": "cache"
+      },
+      {
+        "id": "s9hrcfq",
+        "value": "return import(\"https://unpkg.com/three@latest/build/three.module.js\")",
+        "ref": "script"
+      },
+      {
+        "id": "nu8ir92",
+        "value": "_lib.THREE",
+        "ref": "arg"
+      },
+      {
+        "id": "cmci6cf",
+        "value": "_lib.THREE",
+        "ref": "arg"
+      },
+      {
+        "id": "pq654mj",
+        "value": "_lib.THREE",
+        "ref": "arg"
+      },
+      {
+        "id": "3ftlgif/gixctyo",
+        "value": "_lib.THREE",
+        "ref": "arg"
+      },
+      {
+        "id": "v7g7mec",
+        "value": "_lib.THREE",
+        "ref": "arg"
+      },
+      {
+        "id": "trn1dn6",
+        "value": "_lib.THREE",
+        "ref": "arg"
+      },
+      {
+        "id": "14b3h7h",
+        "value": "_lib.THREE",
+        "ref": "arg"
+      },
+      {
+        "id": "xe86144",
+        "value": "_lib.THREE",
+        "ref": "arg"
+      },
+      {
+        "id": "pu6eun2",
+        "value": "_lib.THREE",
+        "ref": "arg"
+      },
+      {
+        "id": "q5l26jr",
+        "value": "_lib.THREE",
+        "ref": "arg"
+      },
+      {
+        "id": "ee8pit2"
+      },
+      {
+        "id": "xad346t",
+        "value": "color",
+        "ref": "set_mutable"
+      },
+      {
+        "id": "ahqevq9",
+        "value": "_lib.THREE",
+        "ref": "arg"
+      },
+      {
+        "id": "kaxb8cl",
+        "value": "_lib.THREE",
+        "ref": "arg"
+      },
+      {
+        "id": "yyuxjg7",
+        "value": "color",
+        "ref": "set_mutable"
+      },
+      {
+        "id": "vd13xwl",
+        "value": "return mesh;",
+        "name": "a",
+        "ref": "script"
+      },
+      {
+        "id": "seay6z5",
+        "value": "curveType",
+        "ref": "set_mutable",
+        "__isnodysseus": true
+      },
+      {
+        "id": "uxfisa5",
+        "value": "closed",
+        "ref": "set_mutable",
+        "__isnodysseus": true
+      },
+      {
+        "id": "427572a",
+        "ref": "cache"
+      },
+      {
+        "id": "jqb1xjf",
+        "value": "_lib.THREE",
+        "ref": "arg"
+      },
+      {
+        "id": "c9kbomi",
+        "ref": "cache"
+      },
+      {
+        "id": "9q3tu1f",
+        "value": "return new THREE.BufferAttribute( new Float32Array( [\n\t-4.0, -1.0,  1.0,\n\t 1.0, -1.0,  1.0,\n\t 1.0,  1.0,  1.0,\n\n\t 1.0,  1.0,  1.0,\n\t-4.0,  1.0,  1.0,\n\t-4.0, -1.0,  1.0\n] ), 3)",
+        "ref": "script"
+      },
+      {
+        "id": "x1kz1ha",
+        "value": "_lib.THREE",
+        "ref": "arg"
+      },
+      {
+        "id": "svrni0p",
+        "value": "geo.setAttribute('position', buffer);\ngeo.setAttribute('normal', norm_buffer);\nreturn geo;",
+        "ref": "script",
+        "__isnodysseus": true
+      },
+      {
+        "id": "48d78sx",
+        "value": "return new THREE.BufferAttribute( new Float32Array( [\n\t-4.0, -1.0,  1.0,\n\t 1.0, -1.0,  1.0,\n\t 1.0,  1.0,  1.0,\n\n\t 1.0,  1.0,  1.0,\n\t-4.0,  1.0,  1.0,\n\t-4.0, -1.0,  1.0\n] ), 3)",
+        "ref": "script"
+      },
+      {
+        "id": "7vmfh40",
+        "value": "_lib.THREE",
+        "ref": "arg"
+      },
+      {
+        "id": "qjsvqsl",
+        "value": "return new THREE.Shape(pts);",
+        "ref": "script",
+        "__isnodysseus": true
+      },
+      {
+        "id": "j5syp8s",
+        "__isnodysseus": true,
+        "ref": "if"
+      },
+      {
+        "id": "wq8txxr",
+        "value": "_lib.THREE",
+        "ref": "arg",
+        "__isnodysseus": true
+      },
+      {
+        "id": "xptwian",
+        "value": "canvas_id",
+        "ref": "arg",
+        "__isnodysseus": true
+      },
+      {
+        "id": "8f8xaxa",
+        "value": "threejscanvasid",
+        "ref": "log",
+        "__isnodysseus": true
+      },
+      {
+        "id": "cyt8lrf",
+        "ref": "cache",
+        "__isnodysseus": true
+      },
+      {
+        "id": "8hth8ih",
+        "value": "const pos = geo.getAttribute('position');\nconst N = geo.getAttribute('normal');\nconst pnow = performance.now() * 0.001;\nconst scale = 1.1;\nfor(let i = 0; i < geo.attributes.position.count; i++) {\n  buffer.array[i*3] = pos.array[i*3] + N.array[i*3] * ((pnow % 1) - 0.5) * scale;\n  buffer.array[i*3 + 1] = pos.array[i*3+1] +  N.array[i*3 + 1] * ((pnow % 1) - 0.5) * scale;\n  buffer.array[i*3 + 2] = pos.array[i*3+2] +  N.array[i*3 + 2] * ((pnow % 1) - 0.5) * scale;\n}\n\ngeo.setAttribute('position', buffer);\ngeo.attributes.position.needsUpdate = true;\n\nreturn geo;",
+        "ref": "script",
+        "__isnodysseus": true
+      },
+      {
+        "id": "dj47a38",
+        "value": "init_buffer",
+        "ref": "log",
+        "__isnodysseus": true
+      },
+      {
+        "id": "ud1y56k",
+        "value": "return new THREE.BufferAttribute( new Float32Array( [\n\t-4.0, -1.0,  1.0,\n\t 1.0, -1.0,  1.0,\n\t 1.0,  1.0,  1.0,\n\n\t 1.0,  1.0,  1.0,\n\t-4.0,  1.0,  1.0,\n\t-4.0, -1.0,  1.0\n] ), 3)",
+        "ref": "script",
+        "__isnodysseus": true
+      },
+      {
+        "id": "q55h32v",
+        "value": "cube",
+        "ref": "log",
+        "__isnodysseus": true
+      },
+      {
+        "id": "gy8l1w5",
+        "value": "return new THREE.Mesh(geo, material);",
+        "ref": "script",
+        "__isnodysseus": true
+      },
+      {
+        "id": "php3ure",
+        "value": "const l = 20;\nconst a = 2 * i / l * Math.PI;\n\nreturn new THREE.Vector2(Math.cos(a) * l, Math.sin(a) * l);",
+        "ref": "script",
+        "__isnodysseus": true
+      },
+      {
+        "id": "dm6pbhw",
+        "value": "pts",
+        "ref": "log",
+        "__isnodysseus": true
+      },
+      {
+        "id": "eq08l6r",
+        "__isnodysseus": true,
+        "ref": "create_fn"
+      },
+      {
+        "id": "9tpxz5s",
+        "value": "return array.map((element, index) => fn({element, index}))",
+        "name": "",
+        "ref": "script",
+        "__isnodysseus": true
+      },
+      {
+        "id": "8m5muxn/8m5muxn",
+        "name": "",
+        "ref": "@three.setup",
+        "__isnodysseus": true
+      }
+    ],
+    "edges": [
+      {
+        "from": "args",
+        "to": "main/out",
+        "as": "args"
+      },
+      {
+        "from": "5a6pljw",
+        "to": "main/out",
+        "as": "display"
+      },
+      {
+        "from": "af7ncbh",
+        "to": "5a6pljw",
+        "as": "children"
+      },
+      {
+        "from": "86m5eg3",
+        "to": "af7ncbh",
+        "as": "arg0"
+      },
+      {
+        "from": "pagji9e",
+        "to": "86m5eg3",
+        "as": "canvas_id"
+      },
+      {
+        "from": "a8zrttk",
+        "to": "args",
+        "as": "canvas_id"
+      },
+      {
+        "from": "xad346t",
+        "to": "gy8l1w5",
+        "as": "material"
+      },
+      {
+        "from": "7z4w54j",
+        "to": "xad346t",
+        "as": "value"
+      },
+      {
+        "from": "39cm8j2",
+        "to": "xad346t",
+        "as": "target"
+      },
+      {
+        "from": "sg4uugf",
+        "to": "39cm8j2",
+        "as": "value"
+      },
+      {
+        "from": "trn1dn6",
+        "to": "sg4uugf",
+        "as": "THREE"
+      },
+      {
+        "from": "v7g7mec",
+        "to": "7z4w54j",
+        "as": "THREE"
+      },
+      {
+        "from": "ahqevq9",
+        "to": "gy8l1w5",
+        "as": "THREE"
+      },
+      {
+        "from": "458pcrh",
+        "to": "8m5muxn/8m5muxn",
+        "as": "onupdate"
+      },
+      {
+        "from": "ngyhq1a",
+        "to": "umnie7j",
+        "as": "cube"
+      },
+      {
+        "from": "pu6eun2",
+        "to": "ieu9h0w",
+        "as": "THREE"
+      },
+      {
+        "from": "yyuxjg7",
+        "to": "umnie7j",
+        "as": "light"
+      },
+      {
+        "from": "bu3bsk1",
+        "to": "yyuxjg7",
+        "as": "value"
+      },
+      {
+        "from": "xbdsa2n",
+        "to": "yyuxjg7",
+        "as": "target"
+      },
+      {
+        "from": "nu8ir92",
+        "to": "bu3bsk1",
+        "as": "THREE"
+      },
+      {
+        "from": "ieu9h0w",
+        "to": "xbdsa2n",
+        "as": "value"
+      },
+      {
+        "from": "pvlgsnt",
+        "to": "gy8l1w5",
+        "as": "geo"
+      },
+      {
+        "from": "5ydb9gt",
+        "to": "ee8pit2",
+        "as": "steps"
+      },
+      {
+        "from": "exxjoa9",
+        "to": "ee8pit2",
+        "as": "bevelEnabled"
+      },
+      {
+        "from": "2cveh11",
+        "to": "uxfisa5",
+        "as": "value"
+      },
+      {
+        "from": "seay6z5",
+        "to": "uxfisa5",
+        "as": "target"
+      },
+      {
+        "from": "xg7wz0b",
+        "to": "seay6z5",
+        "as": "value"
+      },
+      {
+        "from": "ngsmswa",
+        "to": "seay6z5",
+        "as": "target"
+      },
+      {
+        "from": "xe86144",
+        "to": "ngsmswa",
+        "as": "THREE"
+      },
+      {
+        "from": "uxfisa5",
+        "to": "ee8pit2",
+        "as": "extrudePath"
+      },
+      {
+        "from": "qjsvqsl",
+        "to": "pvlgsnt",
+        "as": "curve"
+      },
+      {
+        "from": "q5l26jr",
+        "to": "qjsvqsl",
+        "as": "THREE"
+      },
+      {
+        "from": "o4g2c9v",
+        "to": "ngyhq1a",
+        "as": "recache"
+      },
+      {
+        "from": "kaxb8cl",
+        "to": "pvlgsnt",
+        "as": "THREE"
+      },
+      {
+        "from": "po4hz9e",
+        "to": "9tpxz5s",
+        "as": "array"
+      },
+      {
+        "from": "php3ure",
+        "to": "9g0hkhj",
+        "as": "fn"
+      },
+      {
+        "from": "4gccaik",
+        "to": "php3ure",
+        "as": "i"
+      },
+      {
+        "from": "14b3h7h",
+        "to": "php3ure",
+        "as": "THREE"
+      },
+      {
+        "from": "7pvi1kn",
+        "to": "umnie7j",
+        "as": "buffer"
+      },
+      {
+        "from": "bfvclv5",
+        "to": "7pvi1kn",
+        "as": "args"
+      },
+      {
+        "from": "cmci6cf",
+        "to": "j9affhb",
+        "as": "THREE"
+      },
+      {
+        "from": "pq654mj",
+        "to": "vnuhref",
+        "as": "THREE"
+      },
+      {
+        "from": "m3mto9g",
+        "to": "vnuhref",
+        "as": "geo"
+      },
+      {
+        "from": "choft8z",
+        "to": "vd13xwl",
+        "as": "mesh"
+      },
+      {
+        "from": "vnuhref",
+        "to": "choft8z",
+        "as": "value"
+      },
+      {
+        "from": "umnie7j",
+        "to": "8m5muxn/8m5muxn",
+        "as": "objs"
+      },
+      {
+        "from": "3ftlgif/gixctyo",
+        "to": "3ftlgif/3ftlgif",
+        "as": "THREE"
+      },
+      {
+        "from": "3ftlgif/6uxy7hz",
+        "to": "3ftlgif/3ftlgif",
+        "as": "geo"
+      },
+      {
+        "from": "pms1n58",
+        "to": "bfvclv5",
+        "as": "geo"
+      },
+      {
+        "from": "j9affhb",
+        "to": "pms1n58",
+        "as": "value"
+      },
+      {
+        "from": "3ftlgif/3ftlgif",
+        "to": "0uvxl8m",
+        "as": "value"
+      },
+      {
+        "from": "8hth8ih",
+        "to": "458pcrh",
+        "as": "fn"
+      },
+      {
+        "from": "svrni0p",
+        "to": "8hth8ih",
+        "as": "geo"
+      },
+      {
+        "from": "1vohh60",
+        "to": "svrni0p",
+        "as": "geo"
+      },
+      {
+        "from": "ee8pit2",
+        "to": "pvlgsnt",
+        "as": "settings"
+      },
+      {
+        "from": "6t3n0sw",
+        "to": "main/out",
+        "as": "lib"
+      },
+      {
+        "from": "s9hrcfq",
+        "to": "3oo2se6",
+        "as": "value"
+      },
+      {
+        "from": "3oo2se6",
+        "to": "6t3n0sw",
+        "as": "THREE"
+      },
+      {
+        "from": "vd13xwl",
+        "to": "7pvi1kn",
+        "as": "value"
+      },
+      {
+        "from": "jqb1xjf",
+        "to": "ud1y56k",
+        "as": "THREE"
+      },
+      {
+        "from": "427572a",
+        "to": "svrni0p",
+        "as": "buffer"
+      },
+      {
+        "from": "9q3tu1f",
+        "to": "c9kbomi",
+        "as": "value"
+      },
+      {
+        "from": "x1kz1ha",
+        "to": "9q3tu1f",
+        "as": "THREE"
+      },
+      {
+        "from": "c9kbomi",
+        "to": "svrni0p",
+        "as": "norm_buffer"
+      },
+      {
+        "from": "48d78sx",
+        "to": "cyt8lrf",
+        "as": "value"
+      },
+      {
+        "from": "7vmfh40",
+        "to": "48d78sx",
+        "as": "THREE"
+      },
+      {
+        "from": "cyt8lrf",
+        "to": "8hth8ih",
+        "as": "buffer"
+      },
+      {
+        "from": "0uvxl8m",
+        "to": "vd13xwl",
+        "as": "arg0"
+      },
+      {
+        "from": "j5syp8s",
+        "to": "main/out",
+        "as": "value"
+      },
+      {
+        "from": "8m5muxn/8m5muxn",
+        "to": "j5syp8s",
+        "as": "true"
+      },
+      {
+        "from": "wq8txxr",
+        "to": "j5syp8s",
+        "as": "pred"
+      },
+      {
+        "from": "8f8xaxa",
+        "to": "8m5muxn/8m5muxn",
+        "as": "canvas_id"
+      },
+      {
+        "from": "xptwian",
+        "to": "8f8xaxa",
+        "as": "value"
+      },
+      {
+        "from": "dj47a38",
+        "to": "427572a",
+        "as": "value"
+      },
+      {
+        "from": "ud1y56k",
+        "to": "dj47a38",
+        "as": "value"
+      },
+      {
+        "from": "q55h32v",
+        "to": "ngyhq1a",
+        "as": "value"
+      },
+      {
+        "from": "gy8l1w5",
+        "to": "q55h32v",
+        "as": "value"
+      },
+      {
+        "from": "dm6pbhw",
+        "to": "qjsvqsl",
+        "as": "pts"
+      },
+      {
+        "from": "9tpxz5s",
+        "to": "dm6pbhw",
+        "as": "value"
+      },
+      {
+        "from": "eq08l6r",
+        "to": "9tpxz5s",
+        "as": "fn"
+      },
+      {
+        "from": "9g0hkhj",
+        "to": "eq08l6r",
+        "as": "runnable"
+      }
+    ],
+    "out": "main/out",
+    "__isnodysseus": true
+  }
