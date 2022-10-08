@@ -19,12 +19,12 @@ const network = r => fetch(r).then(d => d.ok ? caches.open(assetCacheName).then(
 
 self.addEventListener('fetch', (e) => {
     console.log(e)
-    if(!(e.request.url.startsWith("http") && new URL(e.request.url).host === location.host)) {
+    if(!(e.request.url.startsWith("http"))) {
         return;
     }
   console.log(`[Service Worker] Fetching resource ${e.request.url}`);
   e.respondWith(
-      network(e.request)
-        .catch(ne => (console.log("[Service Worker] Network request failed, trying cache"), caches.match(e.request))
-            .catch(ce => (console.log("[Service Worker] Request failed"), console.error(ne), console.error(ce)))));
+     (navigator.onLine ? network(e.request)
+        .catch(ne => (console.log("[Service Worker] Network request failed, trying cache"), caches.match(e.request))) : caches.match(e.request))
+        .catch(ce => (console.log("[Service Worker] Request failed"), console.error(ne), console.error(ce))));
 });
