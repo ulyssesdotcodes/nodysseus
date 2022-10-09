@@ -110,8 +110,7 @@
         "as": "value"
       }
     ],
-    "out": "main/out",
-    "__isnodysseus": true
+    "out": "main/out"
   },
   {
     "id": "@three.camera",
@@ -203,8 +202,7 @@
         "as": "value"
       }
     ],
-    "out": "main/out",
-    "__isnodysseus": true
+    "out": "main/out"
   },
   {
     "id": "@three.hemispherelight",
@@ -248,8 +246,7 @@
         "as": "value"
       }
     ],
-    "out": "main/out",
-    "__isnodysseus": true
+    "out": "main/out"
   },
   {
     "id": "@three.scene",
@@ -293,8 +290,7 @@
         "as": "value"
       }
     ],
-    "out": "main/out",
-    "__isnodysseus": true
+    "out": "main/out"
   },
   {
     "id": "@three.setup",
@@ -418,12 +414,6 @@
         "ref": "arg"
       },
       {
-        "id": "8m5muxn/ud4p5ey",
-        "value": "if(name !== '_needsresolve' && obj){ scene.add( obj ); }\nreturn scene;",
-        "name": "",
-        "ref": "script"
-      },
-      {
         "id": "b2z2580",
         "ref": "ap"
       },
@@ -475,6 +465,13 @@
         "id": "8m5muxn/zci8apj",
         "value": "",
         "ref": "@three.camera",
+        "__isnodysseus": true
+      },
+      {
+        "id": "8m5muxn/ud4p5ey",
+        "value": "if(name !== '_needsresolve' && obj){ scene.add( obj ); }\nconsole.log(obj);\nreturn scene;",
+        "name": "",
+        "ref": "script",
         "__isnodysseus": true
       }
     ],
@@ -660,7 +657,252 @@
         "as": "value"
       }
     ],
-    "out": "8m5muxn/8m5muxn",
-    "__isnodysseus": true
+    "out": "8m5muxn/8m5muxn"
+  },
+  {
+    "id": "@three.modify_attribute",
+    "nodes": [
+      {
+        "id": "args"
+      },
+      {
+        "id": "8dy573e",
+        "ref": "html_element"
+      },
+      {
+        "id": "wc64ttm",
+        "value": "testing.state",
+        "ref": "arg"
+      },
+      {
+        "id": "p9plj5n",
+        "ref": "html_text"
+      },
+      {
+        "id": "yai4q6q",
+        "ref": "array"
+      },
+      {
+        "id": "ffp87am",
+        "ref": "slider"
+      },
+      {
+        "id": "cgtq1da",
+        "ref": "ap"
+      },
+      {
+        "id": "rr0o319",
+        "value": "testing.set",
+        "ref": "arg"
+      },
+      {
+        "id": "o47d2kv"
+      },
+      {
+        "id": "gljdsjo",
+        "value": "event.target.value",
+        "ref": "arg"
+      },
+      {
+        "id": "out",
+        "name": "@three.modify_attribute",
+        "ref": "return"
+      },
+      {
+        "id": "u36qh21",
+        "ref": "cache"
+      },
+      {
+        "id": "scte9zo"
+      },
+      {
+        "id": "cisb6j6",
+        "value": "return {};",
+        "ref": "script"
+      },
+      {
+        "id": "my9677p",
+        "ref": "create_fn"
+      },
+      {
+        "id": "gjr14z1",
+        "value": "fn",
+        "ref": "arg"
+      },
+      {
+        "id": "3viy8mt",
+        "ref": "cache"
+      },
+      {
+        "id": "orkrdzx",
+        "value": "attribute",
+        "ref": "arg"
+      },
+      {
+        "id": "buoyv1q",
+        "value": "geo",
+        "ref": "arg"
+      },
+      {
+        "id": "nd6zslm",
+        "value": "initgeo: internal",
+        "ref": "arg"
+      },
+      {
+        "id": "iwzvdj8",
+        "value": "const item_size = 3;\n\nObject.entries(inputgeo.attributes)\n  .forEach(kv => {\n    initgeo.setAttribute(kv[0], kv[0] === attribute ? inputgeo.getAttribute(kv[0]).clone() : inputgeo.getAttribute(kv[0]))\n})\n\nif(!initgeo.hasAttribute(attribute) || initgeo.getAttribute(attribute)?.count !== inputgeo.getAttribute(\"position\")?.count) {\n  initbuffer.buffer = new _lib.THREE.BufferAttribute(new Float32Array(inputgeo.getAttribute(\"position\").count * item_size), item_size);\n}\n\nif(!inputgeo.hasAttribute(attribute)) {\n  initgeo.setAttribute(attribute, initbuffer.buffer.clone());\n}\n\nconst attr_array = initgeo.getAttribute(attribute);\nif(attribute === \"color\"){\n  //console.log(attr_array);\n}\nfor(let i = 0; i < attr_array.count; i++){\n  const index_vector = attr_array.array.subarray(i * attr_array.itemSize, (i + 1) * attr_array.itemSize);\n  fn({index_vector})\n}\n\n//console.log(inputgeo);\n//console.log(initgeo);\n\nreturn initgeo;",
+        "ref": "script"
+      },
+      {
+        "id": "e7gu67v",
+        "value": "const geo = new _lib.THREE.BufferGeometry();\ngeo.setAttribute('position', new _lib.THREE.BufferAttribute( new Float32Array( [\n] ), 3));\ngeo.computeVertexNormals();\n\nreturn geo",
+        "ref": "script"
+      },
+      {
+        "id": "ay1mgi1",
+        "ref": "default"
+      },
+      {
+        "id": "vio1bz1",
+        "ref": "default"
+      },
+      {
+        "id": "y2ley4r",
+        "value": "__graph_value",
+        "ref": "arg"
+      },
+      {
+        "id": "b9gexfo",
+        "value": "position"
+      }
+    ],
+    "edges": [
+      {
+        "from": "8dy573e",
+        "to": "out",
+        "as": "display"
+      },
+      {
+        "from": "args",
+        "to": "out",
+        "as": "args"
+      },
+      {
+        "from": "wc64ttm",
+        "to": "p9plj5n",
+        "as": "text"
+      },
+      {
+        "from": "p9plj5n",
+        "to": "yai4q6q",
+        "as": "arg0"
+      },
+      {
+        "from": "ffp87am",
+        "to": "yai4q6q",
+        "as": "arg1"
+      },
+      {
+        "from": "yai4q6q",
+        "to": "8dy573e",
+        "as": "children"
+      },
+      {
+        "from": "cgtq1da",
+        "to": "ffp87am",
+        "as": "onchange"
+      },
+      {
+        "from": "rr0o319",
+        "to": "cgtq1da",
+        "as": "fn"
+      },
+      {
+        "from": "o47d2kv",
+        "to": "cgtq1da",
+        "as": "args"
+      },
+      {
+        "from": "gljdsjo",
+        "to": "o47d2kv",
+        "as": "value"
+      },
+      {
+        "from": "nd6zslm",
+        "to": "iwzvdj8",
+        "as": "initgeo"
+      },
+      {
+        "from": "my9677p",
+        "to": "iwzvdj8",
+        "as": "fn"
+      },
+      {
+        "from": "u36qh21",
+        "to": "iwzvdj8",
+        "as": "initbuffer"
+      },
+      {
+        "from": "scte9zo",
+        "to": "u36qh21",
+        "as": "value"
+      },
+      {
+        "from": "cisb6j6",
+        "to": "scte9zo",
+        "as": "buffer"
+      },
+      {
+        "from": "gjr14z1",
+        "to": "my9677p",
+        "as": "runnable"
+      },
+      {
+        "from": "e7gu67v",
+        "to": "3viy8mt",
+        "as": "value"
+      },
+      {
+        "from": "3viy8mt",
+        "to": "args",
+        "as": "initgeo"
+      },
+      {
+        "from": "iwzvdj8",
+        "to": "out",
+        "as": "value"
+      },
+      {
+        "from": "buoyv1q",
+        "to": "iwzvdj8",
+        "as": "inputgeo"
+      },
+      {
+        "from": "ay1mgi1",
+        "to": "iwzvdj8",
+        "as": "attribute"
+      },
+      {
+        "from": "vio1bz1",
+        "to": "ay1mgi1",
+        "as": "otherwise"
+      },
+      {
+        "from": "orkrdzx",
+        "to": "ay1mgi1",
+        "as": "value"
+      },
+      {
+        "from": "y2ley4r",
+        "to": "vio1bz1",
+        "as": "value"
+      },
+      {
+        "from": "b9gexfo",
+        "to": "vio1bz1",
+        "as": "otherwise"
+      }
+    ],
+    "out": "out"
   }
 ]
