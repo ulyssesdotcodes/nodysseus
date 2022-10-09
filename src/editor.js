@@ -936,7 +936,7 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
                         node.id !== graph_out && [d => d(UpdateNode, {node, property: "name", value: payload.target.value})],
                         node.id === graph_out && [ChangeDisplayGraphId, {id: payload.target.value, select_out: true}]
                     ],
-                    options: node.id === graph_out && JSON.parse(localStorage.getItem('graph_list')).concat(ref_graphs)
+                    options: node.id === graph_out && ref_graphs
                 }),
                 input_el({
                     label: 'ref',
