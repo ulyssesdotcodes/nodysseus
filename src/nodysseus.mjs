@@ -890,7 +890,7 @@ const nolib = {
         }
       } 
       const remove_ref = (id) => {
-        const existing = refsdb.by("id", graph.id);
+        const existing = refsdb.by("id", id);
         if(existing) {
           refsdb.remove(Object.assign(existing, {data: graph}))
         }
