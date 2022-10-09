@@ -967,6 +967,7 @@ const nolib = {
         set_cached: (graph, id) => get_cache(graph.id).is_cached.add(id),
         get_ref,
         add_ref,
+        remove_ref,
         get_node,
         get_edge,
         get_edges_in,
