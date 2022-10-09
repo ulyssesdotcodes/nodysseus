@@ -4189,6 +4189,314 @@
       }
     ],
     "out": "main/out"
+  },
+  {
+    "id": "delete_graph",
+    "nodes": [
+      {
+        "id": "args"
+      },
+      {
+        "id": "jklqh38",
+        "ref": "html_element"
+      },
+      {
+        "id": "6qkew20",
+        "ref": "array"
+      },
+      {
+        "id": "zihm1kd"
+      },
+      {
+        "id": "3b7bnzm",
+        "ref": "state"
+      },
+      {
+        "id": "pcx97n4",
+        "value": "input",
+        "ref": "html_element",
+        "__isnodysseus": true
+      },
+      {
+        "id": "rk7hcxc"
+      },
+      {
+        "id": "b8wohxv",
+        "value": "select",
+        "__isnodysseus": true
+      },
+      {
+        "id": "x200f4j",
+        "value": "export-list",
+        "__isnodysseus": true
+      },
+      {
+        "id": "et5g0m1",
+        "__isnodysseus": true,
+        "ref": "map"
+      },
+      {
+        "id": "9tv13iq",
+        "value": "return _lib.no.runtime.refs()",
+        "ref": "script",
+        "__isnodysseus": true
+      },
+      {
+        "id": "dd6st1b",
+        "value": "element",
+        "ref": "arg",
+        "__isnodysseus": true
+      },
+      {
+        "id": "2yur4h7",
+        "ref": "runnable",
+        "__isnodysseus": true
+      },
+      {
+        "id": "xdot36k"
+      },
+      {
+        "id": "1edrrwq",
+        "value": "option",
+        "ref": "html_element",
+        "__isnodysseus": true
+      },
+      {
+        "id": "skqnl08",
+        "__isnodysseus": true,
+        "ref": "html_text"
+      },
+      {
+        "id": "3y8pyc2",
+        "value": "datalist",
+        "ref": "html_element",
+        "__isnodysseus": true
+      },
+      {
+        "id": "tfwqhqf",
+        "value": "export-list",
+        "__isnodysseus": true
+      },
+      {
+        "id": "xp4pv1h",
+        "value": "return element",
+        "ref": "script",
+        "__isnodysseus": true
+      },
+      {
+        "id": "tad7830",
+        "ref": "state",
+        "__isnodysseus": true
+      },
+      {
+        "id": "jdufmth",
+        "value": "namespace.state",
+        "ref": "arg",
+        "__isnodysseus": true
+      },
+      {
+        "id": "91lhfar",
+        "__isnodysseus": true,
+        "ref": "sequence"
+      },
+      {
+        "id": "898n6f7",
+        "__isnodysseus": true,
+        "ref": "ap"
+      },
+      {
+        "id": "9jvfgj1",
+        "value": "namespace.set",
+        "ref": "arg",
+        "__isnodysseus": true
+      },
+      {
+        "id": "j2c518b"
+      },
+      {
+        "id": "qpiqhgp",
+        "value": "event.target.value",
+        "ref": "arg",
+        "__isnodysseus": true
+      },
+      {
+        "id": "main/out",
+        "name": "delete_graph",
+        "ref": "return"
+      },
+      {
+        "id": "8dy573e",
+        "value": "button",
+        "ref": "html_element"
+      },
+      {
+        "id": "n7aaoju",
+        "value": "delete",
+        "ref": "html_text"
+      },
+      {
+        "id": "ibmy4bt",
+        "ref": "runnable"
+      },
+      {
+        "id": "jdoak4g",
+        "value": "localStorage.removeItem(ns);\nlocalStorage.setItem(\"graph_list\", JSON.stringify(JSON.parse(localStorage.getItem(\"graph_list\")).filter(g => g !== ns)))\n_lib.no.runtime.remove_ref(ns);",
+        "ref": "script"
+      }
+    ],
+    "edges": [
+      {
+        "from": "args",
+        "to": "main/out",
+        "as": "args"
+      },
+      {
+        "from": "n7aaoju",
+        "to": "8dy573e",
+        "as": "children"
+      },
+      {
+        "from": "jklqh38",
+        "to": "main/out",
+        "as": "display"
+      },
+      {
+        "from": "6qkew20",
+        "to": "jklqh38",
+        "as": "children"
+      },
+      {
+        "from": "zihm1kd",
+        "to": "8dy573e",
+        "as": "props"
+      },
+      {
+        "from": "tad7830",
+        "to": "args",
+        "as": "namespace"
+      },
+      {
+        "from": "jdufmth",
+        "to": "jdoak4g",
+        "as": "ns"
+      },
+      {
+        "from": "3b7bnzm",
+        "to": "args",
+        "as": "hrefstate"
+      },
+      {
+        "from": "pcx97n4",
+        "to": "6qkew20",
+        "as": "arg2"
+      },
+      {
+        "from": "rk7hcxc",
+        "to": "pcx97n4",
+        "as": "props"
+      },
+      {
+        "from": "b8wohxv",
+        "to": "rk7hcxc",
+        "as": "type"
+      },
+      {
+        "from": "x200f4j",
+        "to": "rk7hcxc",
+        "as": "list"
+      },
+      {
+        "from": "3y8pyc2",
+        "to": "6qkew20",
+        "as": "arg3"
+      },
+      {
+        "from": "et5g0m1",
+        "to": "3y8pyc2",
+        "as": "children"
+      },
+      {
+        "from": "9tv13iq",
+        "to": "et5g0m1",
+        "as": "array"
+      },
+      {
+        "from": "2yur4h7",
+        "to": "et5g0m1",
+        "as": "fn"
+      },
+      {
+        "from": "dd6st1b",
+        "to": "xp4pv1h",
+        "as": "element"
+      },
+      {
+        "from": "xdot36k",
+        "to": "3y8pyc2",
+        "as": "props"
+      },
+      {
+        "from": "1edrrwq",
+        "to": "2yur4h7",
+        "as": "fn"
+      },
+      {
+        "from": "skqnl08",
+        "to": "1edrrwq",
+        "as": "children"
+      },
+      {
+        "from": "xp4pv1h",
+        "to": "skqnl08",
+        "as": "text"
+      },
+      {
+        "from": "tfwqhqf",
+        "to": "xdot36k",
+        "as": "id"
+      },
+      {
+        "from": "91lhfar",
+        "to": "rk7hcxc",
+        "as": "onchange"
+      },
+      {
+        "from": "898n6f7",
+        "to": "91lhfar",
+        "as": "arg0"
+      },
+      {
+        "from": "9jvfgj1",
+        "to": "898n6f7",
+        "as": "fn"
+      },
+      {
+        "from": "j2c518b",
+        "to": "898n6f7",
+        "as": "args"
+      },
+      {
+        "from": "qpiqhgp",
+        "to": "j2c518b",
+        "as": "value"
+      },
+      {
+        "from": "8dy573e",
+        "to": "6qkew20",
+        "as": "arg4"
+      },
+      {
+        "from": "ibmy4bt",
+        "to": "zihm1kd",
+        "as": "onclick"
+      },
+      {
+        "from": "jdoak4g",
+        "to": "ibmy4bt",
+        "as": "fn"
+      }
+    ],
+    "out": "main/out"
   }
 
   ]

@@ -889,6 +889,12 @@ const nolib = {
           refsdb.insert({id: graph.id, data: graph})
         }
       } 
+      const remove_ref = (id) => {
+        const existing = refsdb.by("id", graph.id);
+        if(existing) {
+          refsdb.remove(Object.assign(existing, {data: graph}))
+        }
+      };
       const get_node = (graph, id) =>
         getorsetgraph(graph, id, "node_map", () =>
           get_graph(graph).nodes.find((n) => n.id === id)
