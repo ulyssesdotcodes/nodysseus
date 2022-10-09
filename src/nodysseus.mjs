@@ -1008,6 +1008,7 @@ const nolib = {
         get_args,
         get_path,
         refs: () => refsdb.where(() => true).map((v) => v.id),
+        ref_graphs: () => refsdb.where(() => true).filter((v) => v.data.out && get_node(v.data, v.data.out).ref === "return").map(v => v.id),
         edit_edge: (graph, edge, old_edge) => {
           const gcache = get_cache(graph);
           graph = gcache.graph;

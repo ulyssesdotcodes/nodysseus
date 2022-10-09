@@ -898,7 +898,7 @@ const input_el = ({label, property, value, onchange, options, inputs, disabled})
     ]
 )
 
-const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, refs, html_id, copied_graph, inputs, graph_out, editing})=> {
+const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, refs, ref_graphs, html_id, copied_graph, inputs, graph_out, editing})=> {
     //const s.display_graph.id === s.display_graph_id && nolib.no.runtime.get_node(s.display_graph, s.selected[0]) && 
     const node_ref = node && node.ref ? nolib.no.runtime.get_ref(display_graph_id, node.ref) : node;
     const description =  node_ref?.description;
@@ -936,7 +936,7 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
                         node.id !== graph_out && [d => d(UpdateNode, {node, property: "name", value: payload.target.value})],
                         node.id === graph_out && [ChangeDisplayGraphId, {id: payload.target.value, select_out: true}]
                     ],
-                    options: node.id === graph_out && JSON.parse(localStorage.getItem('graph_list'))
+                    options: node.id === graph_out && JSON.parse(localStorage.getItem('graph_list')).concat(ref_graphs)
                 }),
                 input_el({
                     label: 'ref',
@@ -1150,6 +1150,7 @@ const runapp = (init, load_graph, _lib) => {
             randid: s.randid,
             editing: s.editing,
             refs: nolib.no.runtime.refs(),
+            ref_graphs: nolib.no.runtime.ref_graphs(),
             html_id: s.html_id,
             copied_graph: s.copied?.graph,
             inputs: s.inputs,
