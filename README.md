@@ -2,6 +2,20 @@
 
 A generic node-based editor. Built with hyperapp.
 
+## Why use Nodysseus?
+
+### Simple low-code environment
+
+A user needs to know and/or write very little actual code to be able to use Nodysseus effectively. Simple graphs can be created from scratch by anyone, and more complex graphs containing complex programming logic can still be edited by someone without prior programming experience.
+
+Nodysseus also aims to simplify the experience of node-based editing by changing the paradigms employed by many industry-standard applications today. There are a few simple rules taht make it easier to avoid spaghetti networks and allow nodysseus to automatically layout the graph:
+
+1. Nodes can have many inputs but only one output. Edges are labeled to allow function-argument-like access.
+2. There is only one node that stores information - the `state` node
+3. The `return` node is the main utility that allows argument reuse, event publish/subscribe, and library management
+
+These rules are derived from a mixture of functional programming paradigms, design decisions of the React library, and experimentation within the platform itself.
+
 ## Examples
 New nodes introduced in the example are included in parentheses.
 

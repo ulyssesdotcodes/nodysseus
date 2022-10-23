@@ -1,6 +1,6 @@
 # Return
 
-The `return` node is the building block of everything in Nodysseus. They are the square nodes. It is roughly equivalent to a function in most programming languages. It's purpose is to receive inputs and return an output. Like a normal function, its inputs are named arguments, and it's output is the value along the `return` edge. It has some additional features that a normal function does not have. It can output a `display` and an `argslist` which are used to populate the info popup of the return and nodes referencing the return's graph. `publish` and `subscribe` are used for sending and handling events between different `return` and `event_subscriber` nodes across the application.
+The `return` node is the building block of everything in Nodysseus. They are the square nodes. It is roughly equivalent to a function in most programming languages. It's purpose is to receive inputs and return an output. Like a normal function, its inputs are named arguments, and it's output is the value along the `value` edge. It has some additional features that a normal function does not have. It can output a `display` and an `argslist` which are used to populate the info popup of the return and nodes referencing the return's graph. `publish` and `subscribe` are used for sending and handling events between different `return` and `event_subscriber` nodes across the application. `lib` is a utility for broadcasting libraries to all connected nodes and sub-nodes.
 
 Graphs are required to have a `return` node as the last node in the graph, but `return` can also be used elsewhere for publishing and subscribing to events, or for using a node's output as input for multiple nodes.
 
@@ -8,9 +8,9 @@ Suggested reading for beginners: Basic input edges
 
 ## Basic input edges
 
-### `return` edge (output)
+### `value` edge (output)
 
-The `return` input to a `return` node is the value that will be passed along the output edge of the return. When it is the last node in a graph, any nodes referencing that graph will also pass on the `return` value along their output edge.
+The `value` input to a `return` node is the value that will be passed along the output edge of the return. When it is the last node in a graph, any nodes referencing that graph will also pass on the `value` along their output edge if they are not being evaluated for their `display`.
 
 ### `args` edge (inputs)
 
@@ -38,14 +38,18 @@ Any `return` node anywhere in the graph can publish events this way.
 
 The `subscribe` edge subscribes to app-wide events. It should be an object with the event names as keys, and runnables as values. When the event is fired, the corresponding runnable is run.
 
+### `lib` edge
+
+Any globally used libraries and utilities can be passed to all nodes evaluated by this `return`. This should primarily be used for libraries that need to be passed many levels deep.
+
 ## Usage cases
 
 ### Multiple outputs
 
 A node can only have one output.
 
-However, in the same way that a function's arguments can be used multiple times in the function, an argument to a return node can be used in any of the ancestors of that node (other than on the `args` edge). Any time a node's output needs to go to multiple nodes, use a return node.
+However, in the same way that a function's arguments can be used multiple times in the function, an argument to a return node can be used in any of the ancestors of that node. Any time a node's output needs to go to multiple nodes, connect it to the `args` edge, and then on the `value`, `publish`, or `subscribe` edges reference that `arg`.
+
+Having a single output is also a "functional programing" paradigm - a function has one output and multiple inputs.
 
 This restriction is in place because with multiple outputs, a node graph can get very messy. In graph theory terms it goes from a tree (specifically an in-tree) to a more generic directed acyclic graph. There are many directed acyclic graphs which cannot be drawn without edges crossing, and even figuring out the fewest number of crossings is a very difficult problem. In contrast, a tree is very easy to draw, even though Nodysseus gets it wrong sometimes because it's trying to optimize for space.
-
-A single output is also more of a "functional programing" paradigm - a function has one output and multiple inputs.

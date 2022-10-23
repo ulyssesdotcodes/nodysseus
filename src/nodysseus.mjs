@@ -1233,7 +1233,12 @@ const nolib = {
     },
     create_fn: {
       args: ["runnable", "_lib"],
-      fn: (runnable, lib) => (args) => run_runnable({...runnable, args: {...args, __args: runnable.args.__args}}, lib)?.__value
+      fn: (runnable, lib) => (args) => {
+        const __args = runnable.args.__args;
+        runnable.args = args;
+        runnable.args.__args = __args;
+        return run_runnable(runnable, lib)?.__value
+      }
     },
     switch: {
       rawArgs: true,
