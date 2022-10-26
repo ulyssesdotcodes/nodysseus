@@ -1259,33 +1259,40 @@ const nolib = {
       rawArgs: true,
       args: ["fn", "object", "initial", "_lib"],
       fn: (fn, object, initial, lib) => {
-        // debugger;
-        const objectvalue = run_runnable(object, lib).__value;
-        // object = run_node(run_node(object, {}, object.args, _lib), {}, {}, _lib);
-        if (objectvalue === undefined) return undefined;
-        const fnrunnable = fn; //run_runnable(fn, _lib)
+        if(Array.isArray(object) || ispromise(object)) {
+          debugger;
+        }
+        const foldvalue = objectvalue => {
+          // object = run_node(run_node(object, {}, object.args, _lib), {}, {}, _lib);
+          if (objectvalue === undefined) return undefined;
+          const fnrunnable = fn; //run_runnable(fn, _lib)
 
-        const mapobjarr = (mapobj, mapfn, mapinit) =>
-          Array.isArray(mapobj)
-            ? mapobj.reduce(mapfn, mapinit)
-            : Object.entries(mapobj).sort((a, b) => a[0].localeCompare(b[0])).reduce(mapfn, mapinit);
+          const mapobjarr = (mapobj, mapfn, mapinit) =>
+            Array.isArray(mapobj)
+              ? mapobj.reduce(mapfn, mapinit)
+              : Object.entries(mapobj).sort((a, b) => a[0].localeCompare(b[0])).reduce(mapfn, mapinit);
 
-        initial = run_runnable(initial, lib)?.__value ?? (Array.isArray(objectvalue) ? [] : {});
-        
-        const ret = mapobjarr(
-          objectvalue,
-          (previousValue, currentValue) =>
-            run_graph(
-              fnrunnable.graph,
-              fnrunnable.fn,
-              mockcombined(
-              {previousValue: lib.no.of(previousValue), currentValue: lib.no.of(currentValue) },
-              fnrunnable.args),
-              lib
-            ).__value,
-          initial
-        );
-        return lib.no.of(ret);
+          initial = run_runnable(initial, lib)?.__value ?? (Array.isArray(objectvalue) ? [] : {});
+          
+          const ret = mapobjarr(
+            objectvalue,
+            (previousValue, currentValue) =>
+              run_graph(
+                fnrunnable.graph,
+                fnrunnable.fn,
+                mockcombined(
+                {previousValue: lib.no.of(previousValue), currentValue: lib.no.of(currentValue) },
+                fnrunnable.args),
+                lib
+              ).__value,
+            initial
+          );
+          return lib.no.of(ret);
+        }
+        const objectvalue = run_runnable(object, lib);
+
+
+        return ispromise(objectvalue) ? objectvalue.then(ov => foldvalue(ov.__value)) : foldvalue(objectvalue.__value)
       },
     },
     sequence: {
