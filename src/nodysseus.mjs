@@ -289,23 +289,23 @@ const node_extern = (node, data, graphArgs, lib) => {
 
         acc[0].push(newval)
         return [acc[0], ispromise(newval) || acc[1]];
-    }, [[], false]) : data;
+    }, [[], false]) : resolve_args(data);
 
     if (args[1]) {
         return Promise.all(args[0]).then(as => {
-            const res = extern.fn.apply(null, as);
+            const res = (typeof extern === 'function' ? extern :  extern.fn).apply(null, as);
             return extern.rawArgs ? res : lib.no.of(res);
         })
     } else {
-        const res = extern.fn.apply(null, args[0]);
+        const res = (typeof extern === 'function' ? extern :  extern.fn).apply(null, args[0]);
         return extern.rawArgs ? res : lib.no.of(res);
     }
 }
 
-const node_data = (nodeArgs, graphArgs, lib) => {
+const resolve_args = (data, lib) => {
     let is_promise = false;
     const result = {}
-    Object.entries(nodeArgs).forEach(kv => {
+    Object.entries(data).forEach(kv => {
       result[kv[0]] = run_runnable(kv[1], lib);
       is_promise = is_promise || !!kv[1] && ispromise(result[kv[0]]);
     })
@@ -319,6 +319,11 @@ const node_data = (nodeArgs, graphArgs, lib) => {
     }
 
     return lib.no.of(Object.fromEntries(Object.entries(result).map(e => [e[0], e[1]?.__value])));
+
+}
+
+const node_data = (nodeArgs, graphArgs, lib) => {
+    return resolve_args(nodeArgs, lib);
 }
 
 // derives data from the args symbolic table
