@@ -272,7 +272,7 @@ const node_script = (node, nodeArgs, lib) => {
 
 const node_extern = (node, data, graphArgs, lib) => {
     const extern = nodysseus_get(lib, node.ref === "extern" ? node.value : node_ref.value, lib);
-    const args = extern.args.reduce((acc, arg) => {
+    const args = extern.args ?  extern.args.reduce((acc, arg) => {
         let newval;
         if (arg === '_node') {
             newval = node 
@@ -289,7 +289,7 @@ const node_extern = (node, data, graphArgs, lib) => {
 
         acc[0].push(newval)
         return [acc[0], ispromise(newval) || acc[1]];
-    }, [[], false]);
+    }, [[], false]) : data;
 
     if (args[1]) {
         return Promise.all(args[0]).then(as => {
@@ -326,7 +326,7 @@ const create_data = (graph, inputs, graphArgs, lib) => {
     const data = {};
     let input;
     //TODO: remove
-    const newgraphargs = graphArgs;// {...graphArgs};
+    const newgraphargs = graphArgs._output ? {...graphArgs, _output: undefined} : graphArgs;// {...graphArgs};
     // delete newgraphargs._output
 
     // grab inputs from state
@@ -1529,10 +1529,28 @@ const nolib = {
       resolve: true,
       args: ["__graph_value", "self", "fn", "args", "_graph_input_value", "_lib"],
       fn: (nodevalue, self, fn, args, _args, lib) => {
-        if (typeof self === "function") {
-          return Array.isArray(args)
-            ? self(
-                ...args
+        const runfn = (args) => {
+          if (typeof self === "function") {
+            return Array.isArray(args)
+              ? self(
+                  ...args
+                    .reverse()
+                    .reduce(
+                      (acc, v) => [
+                        !acc[0] && v !== undefined,
+                        acc[0] || v !== undefined
+                          ? acc[1].concat([v._Proxy ? v._value : v])
+                          : acc[1],
+                      ],
+                      [false, []]
+                    )[1]
+                    .reverse()
+                )
+              : self(args === undefined ? [] : args);
+          } else {
+            const ng_fn = nodysseus_get(self ?? _args, fn || nodevalue, lib);
+            const fnargs = Array.isArray(args)
+              ? (args || [])
                   .reverse()
                   .reduce(
                     (acc, v) => [
@@ -1544,30 +1562,16 @@ const nolib = {
                     [false, []]
                   )[1]
                   .reverse()
-              )
-            : self(args === undefined ? [] : args);
-        } else {
-          const ng_fn = nodysseus_get(self ?? _args, fn || nodevalue, lib);
-          const fnargs = Array.isArray(args)
-            ? (args || [])
-                .reverse()
-                .reduce(
-                  (acc, v) => [
-                    !acc[0] && v !== undefined,
-                    acc[0] || v !== undefined
-                      ? acc[1].concat([v._Proxy ? v._value : v])
-                      : acc[1],
-                  ],
-                  [false, []]
-                )[1]
-                .reverse()
-            : args === undefined
-            ? []
-            : [args];
-          return lib.no.of(ispromise(ng_fn)
-            ? ng_fn.then((f) => f.apply(fnargs))
-            : ng_fn.apply(self, fnargs));
+              : args === undefined
+              ? []
+              : [args];
+            return lib.no.of(ispromise(ng_fn)
+              ? ng_fn.then((f) => f.apply(fnargs))
+              : ng_fn.apply(self, fnargs));
+          }
         }
+
+        return ispromise(args) ? args.then(runfn) : runfn(args);
       },
     },
     merge_objects: {

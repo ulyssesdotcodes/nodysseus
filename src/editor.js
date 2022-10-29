@@ -9,16 +9,20 @@ import { ancestor_graph, contract_node, create_randid, expand_node, findViewBox,
 
 const updateSimulationNodes = (dispatch, data) => {
     const simulation_node_data = new Map();
-    data.simulation.nodes().forEach(n => {
-        simulation_node_data.set(n.node_id, n)
-    });
+    if(!data.clear_simulation_cache){
+        data.simulation.nodes().forEach(n => {
+            simulation_node_data.set(n.node_id, n)
+        });
+    }
 
     const start_sim_node_size = simulation_node_data.size;
     
     const simulation_link_data = new Map();
-    data.simulation.force('links').links().forEach(l => {
-        simulation_link_data.set(`${l.source.node_id}__${l.target.node_id}`, l);
-    })
+    if(!data.clear_simulation_cache){
+        data.simulation.force('links').links().forEach(l => {
+            simulation_link_data.set(`${l.source.node_id}__${l.target.node_id}`, l);
+        })
+    }
 
     const start_sim_link_size = simulation_link_data.size;
 
@@ -703,11 +707,12 @@ const Paste = state => [
 const StopPropagation = (state, payload) => [state, [() => payload.stopPropagation()]];
 
 const save_graph = graph => {
-    const graph_list = JSON.parse(localStorage.getItem('graph_list'))?.filter(l => l !== graph.id) ?? []; 
-    graph_list.unshift(graph.id); 
-    localStorage.setItem('graph_list', JSON.stringify(graph_list)); 
-    const graphstr = JSON.stringify(base_graph(graph)); 
-    localStorage.setItem(graph.id, graphstr); 
+  const graph_list = JSON.parse(localStorage.getItem('graph_list'))?.filter(l => l !== graph.id) ?? []; 
+  graph_list.unshift(graph.id); 
+  localStorage.setItem('graph_list', JSON.stringify(graph_list)); 
+  const graphstr = JSON.stringify(base_graph(graph)); 
+  localStorage.setItem(graph.id, graphstr); 
+  nolib.no.runtime.add_ref(graph);
 }
 
 const SaveGraph = (dispatch, payload) => save_graph(payload.display_graph)
@@ -728,7 +733,10 @@ const ChangeDisplayGraphId = (dispatch, {id, select_out}) => {
                     const new_graph = graph ?? Object.assign({}, base_graph(state.display_graph), {id});
                     nolib.no.runtime.change_graph(new_graph);
                     nolib.no.runtime.remove_graph_listeners(state.display_graph_id);
-                    dispatch(s => [{...s, display_graph: new_graph, selected: [new_graph.out], display_graph_id: new_graph.id}])
+                    dispatch(s => {
+                        const news = {...s, display_graph: new_graph, selected: [new_graph.out], display_graph_id: new_graph.id}
+                        return [news, [UpdateSimulation, {...news, clear_simulation_cache: true}]]
+                    })
                     if(!graph) {
                         dispatch(UpdateNode, {
                             node: nolib.no.runtime.get_node(new_graph, new_graph.out), 
@@ -1037,9 +1045,13 @@ const result_display = html_id => ha.app({
     dispatch: middleware,
     view: s => {
         try{
-            return run_h(s.el);
+            return run_h({dom_type: 'div', props: {id: `${html_id}-result`}, children: [s.el]});
         } catch(e) {
+          try{
             return run_h(show_error(e, JSON.stringify(s.el)));
+          } catch(e) {
+            return run_h({dom_type: 'div', props: {}, children: [{dom_type: 'text_value', text: 'Could not show error'}]})
+          }
         }
     }
 })
@@ -1303,7 +1315,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
     const keybindings = await resfetch("json/keybindings.json").then(r => r.json())
     // let stored_graph = JSON.parse(localStorage.getItem(hash_graph ?? graph_list?.[0]));
     // stored_graph = stored_graph ? base_graph(stored_graph) : undefined
-    graph_list.map(id => localStorage.getItem(id)).filter(g => g).map(graph => JSON.parse(graph)).map(graph => nolib.no.runtime.change_graph(base_graph(graph)))
+    graph_list.map(id => localStorage.getItem(id)).filter(g => g).map(graph => JSON.parse(graph)).map(graph => nolib.no.runtime.add_ref(base_graph(graph)))
     // Promise.resolve(stored_graph ?? (hash_graph ? resfetch(`json/${hash_graph}.json`).then(r => r.status !== 200 ? simple : r.json()).catch(_ => simple) : simple))
         // .then(display_graph => {
 

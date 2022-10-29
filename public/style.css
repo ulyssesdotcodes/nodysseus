@@ -465,6 +465,7 @@ svg.edge-info.selected rect {
     cursor: pointer;
     display: flex;
     gap: 1em;
+    z-index: 6;
 }
 
 #graph-actions ion-icon {
