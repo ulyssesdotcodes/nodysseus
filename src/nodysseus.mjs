@@ -272,12 +272,14 @@ const node_script = (node, nodeArgs, lib) => {
 
 const node_extern = (node, data, graphArgs, lib) => {
     const extern = nodysseus_get(lib, node.ref === "extern" ? node.value : node_ref.value, lib);
-    const args = extern.args ?  extern.args.reduce((acc, arg) => {
+    let argspromise = false;
+    const args = typeof extern === 'function' ?  resolve_args(data, lib) :  extern.args.map(arg => {
         let newval;
         if (arg === '_node') {
             newval = node 
         } else if (arg === '_node_args') {
-            newval = extern.rawArgs ? data : Object.fromEntries(Object.entries(data).filter(d => !d[0].startsWith("__")).map(d => [d[0], run_runnable(d[1], lib).__value]));
+            newval = extern.rawArgs ? data : resolve_args(data, lib)
+            newval = ispromise(newval) ? newval.then(v => v?.__value)  : extern.rawArgs ? newval : newval.__value
         } else if (arg == '_lib') {
             newval = lib;
         } else if (arg == '_graph_input_value') {
@@ -287,17 +289,19 @@ const node_extern = (node, data, graphArgs, lib) => {
             newval = ispromise(newval) ? newval.then(v => v?.__value) : newval && !extern.rawArgs ? newval.__value : newval;
         }
 
-        acc[0].push(newval)
-        return [acc[0], ispromise(newval) || acc[1]];
-    }, [[], false]) : resolve_args(data, lib);
+        argspromise ||= ispromise(newval);
+        return newval;
+    });
 
-    if (args[1]) {
-        return Promise.all(args[0]).then(as => {
+    argspromise ||= ispromise(args)
+
+    if (argspromise) {
+        return (Array.isArray(args) ? Promise.all(args) : args.then(v => v?.__value.args)).then(as => {
             const res = (typeof extern === 'function' ? extern :  extern.fn).apply(null, as);
             return extern.rawArgs ? res : lib.no.of(res);
         })
     } else {
-        const res = (typeof extern === 'function' ? extern :  extern.fn).apply(null, args[0]);
+        const res = (typeof extern === 'function' ? extern :  extern.fn).apply(null, args);
         return extern.rawArgs ? res : lib.no.of(res);
     }
 }
@@ -318,7 +322,11 @@ const resolve_args = (data, lib) => {
         return Promise.all(promises).then(Object.fromEntries).then(v => lib.no.of(v));
     }
 
-    return lib.no.of(Object.fromEntries(Object.entries(result).map(e => [e[0], e[1]?.__value])));
+    return lib.no.of(Object.fromEntries(
+        Object.entries(result)
+            .filter(d => !d[0].startsWith("__")) // filter out private variables
+            .map(e => [e[0], e[1]?.__value])
+    ));
 
 }
 
@@ -1509,6 +1517,7 @@ const nolib = {
         const arr =
           args && argskeys.length > 0
             ? argskeys
+                .filter(k => !k.startsWith("__"))
                 .sort()
                 .reduce(
                   (acc, k) => [
