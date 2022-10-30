@@ -289,7 +289,7 @@ const node_extern = (node, data, graphArgs, lib) => {
 
         acc[0].push(newval)
         return [acc[0], ispromise(newval) || acc[1]];
-    }, [[], false]) : resolve_args(data);
+    }, [[], false]) : resolve_args(data, lib);
 
     if (args[1]) {
         return Promise.all(args[0]).then(as => {
