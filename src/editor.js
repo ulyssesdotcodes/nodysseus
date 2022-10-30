@@ -617,7 +617,20 @@ const SelectNode = (state, {node_id, focus_property}) => [
     (state.show_all || state.selected[0] !== node_id) && [pzobj.effect, {...state, node_id}],
     focus_property && [FocusEffect, {selector: `.node-info input.${focus_property}`}],
     state.nodes.find(n => n.node_id === node_id) && [SetSelectedPositionStyleEffect, {node: state.nodes.find(n => n.node_id === node_id), svg_offset: pzobj.getTransform(), dimensions: state.dimensions}],
-    node_id !== state.display_graph.out && [() => update_info_display({fn: node_id, graph: state.display_graph, args: {}})],
+    node_id === state.display_graph.out 
+        ? [() => info_display_dispatch({el: {dom_type: "div", props: {}, children: [
+            {dom_type: "text_value", text: "Most recent graphs"},
+            { dom_type: "ul", props: {}, children: localStorage.getItem("graph_list") 
+                ? JSON.parse(localStorage.getItem("graph_list")).slice(0, 10).map(gid => ({dom_type: "li", props: {}, children: [
+                    {
+                        dom_type: "a", 
+                        props: { href: "#", onclick: s => [s, [() => main_app_dispatch(ms => [ms, [ChangeDisplayGraphId, {id: gid}]])]]}, 
+                        children: [{dom_type: "text_value", text: gid}]}
+                ]}))
+                : []
+            }
+        ]}})]
+        : [() => update_info_display({fn: node_id, graph: state.display_graph, args: {}})],
     state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: node_id})]
 ]
 
@@ -1308,6 +1321,8 @@ const runapp = (init, load_graph, _lib) => {
 });
 }
 
+let main_app_dispatch;
+
 const editor = async function(html_id, display_graph, lib, norun) {
     const simple = await resfetch("json/simple.json").then(r => r.json());
     const url_params = new URLSearchParams(document.location.search);
@@ -1351,7 +1366,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
             inputs: {}
         };
 
-        runapp(init,  hash_graph && hash_graph !== "" ? hash_graph : graph_list?.[0] ?? 'simple', lib)
+        main_app_dispatch = runapp(init,  hash_graph && hash_graph !== "" ? hash_graph : graph_list?.[0] ?? 'simple', lib)
 
     // })
 }
