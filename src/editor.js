@@ -1079,8 +1079,29 @@ const info_display = html_id => ha.app({
     }
 });
 
+const custom_editor_display = html_id => ha.app({
+    init: {el: {dom_type: 'div', props: {}, children: []}},
+    node: document.getElementById(html_id + "-custom-editor-display"),
+    dispatch: middleware,
+    view: s => {
+        return run_h(s.el, ['script'])
+    }
+});
+
+const refresh_custom_editor = () => {
+    if(localStorage.getItem("custom_editor")) {
+        // TODO: combine with update_info
+        const graph = JSON.parse(localStorage.getItem("custom_editor"));
+        const result = hlib.run({graph, fn: graph.out}, {_output: "display"}, {...hlib, ...nolib});
+        custom_editor_display_dispatch(() => ({el: result}))
+    } else {
+        custom_editor_display_dispatch(() => ({el: {dom_type: "div", props: {}, children: []}}))
+    }
+}
+
 let result_display_dispatch;
 let info_display_dispatch;
+let custom_editor_display_dispatch;
 let code_editor;
 
 const init_code_editor = (dispatch, {html_id}) => {
@@ -1129,6 +1150,8 @@ const runapp = (init, load_graph, _lib) => {
         [() => requestAnimationFrame(() => {
             result_display_dispatch = result_display(init.html_id);
             info_display_dispatch = info_display(init.html_id);
+            custom_editor_display_dispatch = custom_editor_display(init.html_id)
+            refresh_custom_editor()
             nolib.no.runtime.change_graph(init.display_graph)
         })],
         [ChangeDisplayGraphId, {id: load_graph, select_out: true}],
@@ -1182,9 +1205,23 @@ const runapp = (init, load_graph, _lib) => {
             inputs: s.inputs,
             graph_out: s.display_graph.out
         }),
+        ha.h('div', {id: `${init.html_id}-custom-editor-display`}),
         ha.h('div', {id: "graph-actions"}, [
             search_el({search: s.search, _lib}),
-            ha.h('ion-icon', {name: 'sync-outline', onclick: s => [s, [dispatch => { nolib.no.runtime.delete_cache(); hlib.run(s.display_graph, s.display_graph.out, {_output: "value"}); requestAnimationFrame(() =>  dispatch(s => [s, [() => {s.simulation.alpha(1); s.simulation.nodes([]); }], [UpdateSimulation]])) }]]}, [ha.text('refresh')])
+            ha.h('ion-icon', {
+                    name: 'sync-outline', 
+                    onclick: s => [s, [dispatch => { 
+                            nolib.no.runtime.delete_cache(); 
+                            hlib.run(s.display_graph, s.display_graph.out, {_output: "value"});  
+                            refresh_custom_editor()
+                            requestAnimationFrame(() =>  dispatch(s => [s, [() => {
+                                s.simulation.alpha(1); 
+                                s.simulation.nodes([]); 
+                            }], [UpdateSimulation]])) 
+                        }]]
+                }, 
+                [ha.text('refresh')]
+            )
         ]),
         ha.h('div', {id: `${init.html_id}-result`}),
         s.error && ha.h('div', {id: 'node-editor-error'}, run_h(show_error(s.error, s.error.node_id)))
