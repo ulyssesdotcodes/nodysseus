@@ -1415,7 +1415,7 @@ const nolib = {
           //   _lib
           // ).__value;
         } else if(runedge === "value" && !value && display) {
-          runedgeresult.__value = run_graph(display.graph, display.fn, {...display.args, ...args}, _lib).__value.value;
+          runedgeresult.__value = run_graph(display.graph, display.fn, {...display.args, ...args}, _lib).__value?.value;
         }
 
         if (edgemap.subscribe) {

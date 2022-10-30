@@ -707,6 +707,7 @@ const Paste = state => [
 const StopPropagation = (state, payload) => [state, [() => payload.stopPropagation()]];
 
 const save_graph = graph => {
+  graph = base_graph(graph);
   const graph_list = JSON.parse(localStorage.getItem('graph_list'))?.filter(l => l !== graph.id) ?? []; 
   graph_list.unshift(graph.id); 
   localStorage.setItem('graph_list', JSON.stringify(graph_list)); 
