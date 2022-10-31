@@ -399,6 +399,15 @@ const graph_subscription = (dispatch, props) => {
     return () => nolib.no.runtime.remove_listener('graphchange', 'update_hyperapp');
 }
 
+const select_node_subscription = (dispatch, props) => {
+    const listener = (data) => {
+        dispatch(SelectNode, { node_id: data.data.substring(data.data.indexOf("/") + 1) })
+    }
+
+    nolib.no.runtime.add_listener("selectnode", 'hyperapp', listener);
+    return () => nolib.no.runtime.remove_listener('selectnode', 'hyperapp');
+}
+
 const listen = (type, action) => [listenToEvent, {type, action}]
 
 const listenToEvent = (dispatch, props) => {
@@ -1230,6 +1239,7 @@ const runapp = (init, load_graph, _lib) => {
     subscriptions: s => [
         [d3subscription, {action: SimulationToHyperapp, update: UpdateSimulation}], 
         [graph_subscription, {display_graph_id: s.display_graph_id}],
+        [select_node_subscription, {}],
         result_display_dispatch && [result_subscription, {display_graph_id: s.display_graph_id}],
         [keydownSubscription, {action: (state, payload) => {
             if(document.getElementById("node-editor-result").contains(payload.target)) {
