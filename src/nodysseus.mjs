@@ -653,19 +653,38 @@ const nolib = {
     objToGraph,
     NodysseusError,
     runtime: (function () {
+      let load_callbacks = [];
       const db = new loki("nodysseus.db", {
         env: "BROWSER",
         persistenceMethod: "memory",
       });
+      let refsdb;
+      const persistdb = new loki("nodysseus_persist.db", {
+        env: "BROWSER",
+        adapter: new (loki.prototype.getIndexedAdapter())(),
+        autoload: true,
+        autoloadCallback: () => {
+          refsdb = persistdb.getCollection("refs");
+
+          if(!refsdb) {
+            refsdb = persistdb.addCollection("refs", { unique: ["id"] });
+          }
+
+          generic.nodes.map((n) =>
+            add_ref(n)
+          );
+
+          load_callbacks.forEach(lc => lc())
+          load_callbacks = false;
+        },
+        autosave: true,
+        autosaveInterval: 4000
+      })
       const nodesdb = db.addCollection("nodes", { unique: ["id"] });
-      const refsdb = db.addCollection("refs", { unique: ["id"] });
       const resultsdb = db.addCollection("results", { unique: ["id"] });
       const inputdatadb = db.addCollection("inputdata", { unique: ["id"] });
       const argsdb = db.addCollection("args", { unique: ["id"] });
       const fndb = db.addCollection("fns", { unique: ["id"] });
-      generic.nodes.map((n) =>
-        refsdb.insert({ id: n.id ?? n.graph.id, data: n })
-      );
 
       const parentdb = db.addCollection("parents", { unique: ["id"] });
       const new_graph_cache = (graph) => ({
@@ -892,9 +911,22 @@ const nolib = {
       };
 
       const get_ref = (id) => {
+        if(load_callbacks !== false) {
+          return new Promise((resolve, reject) => {
+            load_callbacks.push(() => {
+              resolve(refsdb.by("id", id)?.data)
+            })
+          })
+        }
+
         return refsdb.by("id", id)?.data;
       };
       const add_ref = (graph) => {
+        if(!refsdb) {
+          return new Promise((resolve, reject) => {
+            load_callbacks.push(() => resolve(add_ref(graph)))
+          })
+        }
         const existing = refsdb.by("id", graph.id);
         if(existing) {
           refsdb.update(Object.assign(existing, {data: graph}))
@@ -925,7 +957,9 @@ const nolib = {
         {};
       const get_graph = (graph) => {
         const cached = get_cache(graph);
-        return cached
+        return ispromise(cached) 
+          ? cached.then(c => c.graph)
+          : cached
           ? cached.graph
           : typeof graph !== "string"
           ? graph
@@ -953,6 +987,7 @@ const nolib = {
             : typeof graph === "object"
             ? graph.id
             : undefined;
+        
         const lokiret = nodesdb.by("id", graphid);
 
         if (!lokiret && typeof graph === "object") {

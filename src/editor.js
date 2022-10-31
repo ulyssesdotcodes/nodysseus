@@ -728,11 +728,15 @@ const Paste = state => [
 
 const StopPropagation = (state, payload) => [state, [() => payload.stopPropagation()]];
 
+const update_graph_list = graph_id => {
+  const graph_list = JSON.parse(localStorage.getItem('graph_list'))?.filter(l => l !== graph_id) ?? []; 
+  graph_list.unshift(graph_id); 
+  localStorage.setItem('graph_list', JSON.stringify(graph_list)); 
+
+}
+
 const save_graph = graph => {
   graph = base_graph(graph);
-  const graph_list = JSON.parse(localStorage.getItem('graph_list'))?.filter(l => l !== graph.id) ?? []; 
-  graph_list.unshift(graph.id); 
-  localStorage.setItem('graph_list', JSON.stringify(graph_list)); 
   const graphstr = JSON.stringify(base_graph(graph)); 
   localStorage.setItem(graph.id, graphstr); 
   nolib.no.runtime.add_ref(graph);
@@ -742,17 +746,19 @@ const SaveGraph = (dispatch, payload) => save_graph(payload.display_graph)
 
 const ChangeDisplayGraphId = (dispatch, {id, select_out}) => {
     requestAnimationFrame(() => {
-        const json = localStorage.getItem(id);
+        const json = undefined; //localStorage.getItem(id);
         const graphPromise = Promise.resolve((json && base_graph(JSON.parse(json))) 
             ?? nolib.no.runtime.get_graph(id) 
             ?? nolib.no.runtime.get_ref(id)
             ?? resfetch(`json/${id}.json`).then(r => r.status === 200 ? r.json() : undefined).catch(_ => undefined))
+
 
         window.location.hash = '#' + id; 
         graphPromise.then(graph => dispatch(state => [
             {...state, display_graph_id: id},
             [dispatch => {
                 requestAnimationFrame(() => {
+                    update_graph_list(id)
                     const new_graph = graph ?? Object.assign({}, base_graph(state.display_graph), {id});
                     nolib.no.runtime.change_graph(new_graph);
                     nolib.no.runtime.remove_graph_listeners(state.display_graph_id);
@@ -1378,7 +1384,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
     const keybindings = await resfetch("json/keybindings.json").then(r => r.json())
     // let stored_graph = JSON.parse(localStorage.getItem(hash_graph ?? graph_list?.[0]));
     // stored_graph = stored_graph ? base_graph(stored_graph) : undefined
-    graph_list.map(id => localStorage.getItem(id)).filter(g => g).map(graph => JSON.parse(graph)).map(graph => nolib.no.runtime.add_ref(base_graph(graph)))
+    await Promise.all(graph_list.map(id => localStorage.getItem(id)).filter(g => g).map(graph => JSON.parse(graph)).map(graph => Promise.resolve(nolib.no.runtime.add_ref(base_graph(graph)))))
     // Promise.resolve(stored_graph ?? (hash_graph ? resfetch(`json/${hash_graph}.json`).then(r => r.status !== 200 ? simple : r.json()).catch(_ => simple) : simple))
         // .then(display_graph => {
 
