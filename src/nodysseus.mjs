@@ -1,6 +1,7 @@
 import generic from "../public/json/generic.js";
 import set from "just-safe-set";
 import loki from "lokijs";
+import {openDB } from "idb"
 
 let resfetch = typeof fetch !== "undefined" ? fetch : 
     (urlstr, params) => import('node:https').then(https => new Promise((resolve, reject) => {
@@ -301,7 +302,7 @@ const node_extern = (node, data, graphArgs, lib) => {
             return extern.rawArgs ? res : lib.no.of(res);
         })
     } else {
-        const res = (typeof extern === 'function' ? extern :  extern.fn).apply(null, args);
+        const res = (typeof extern === 'function' ? extern :  extern.fn).apply(null, Array.isArray(args) ? args : args?.__value.args);
         return extern.rawArgs ? res : lib.no.of(res);
     }
 }
@@ -680,6 +681,13 @@ const nolib = {
         autosave: true,
         autosaveInterval: 4000
       })
+      let nodysseusidb;
+      openDB("nodysseus", 2, {
+        upgrade(db) {
+          db.createObjectStore("assets")
+        }
+      }).then(db => { nodysseusidb = db })
+
       const nodesdb = db.addCollection("nodes", { unique: ["id"] });
       const resultsdb = db.addCollection("results", { unique: ["id"] });
       const inputdatadb = db.addCollection("inputdata", { unique: ["id"] });
@@ -937,9 +945,24 @@ const nolib = {
       const remove_ref = (id) => {
         const existing = refsdb.by("id", id);
         if(existing) {
-          refsdb.remove(Object.assign(existing, {data: graph}))
+          refsdb.remove(existing)
         }
       };
+      const add_asset = (id, asset) => {
+        return nodysseusidb.put("assets", asset, id)
+      }
+
+      const get_asset = id => {
+        return nodysseusidb.get("assets", id);
+      }
+
+      const remove_asset = id => {
+        const existing = assetsdb.by("id", id);
+        if(existing) {
+          assetsdb.remove(existing)
+        }
+      }
+
       const get_node = (graph, id) =>
         getorsetgraph(graph, id, "node_map", () =>
           get_graph(graph).nodes.find((n) => n.id === id)
@@ -1016,6 +1039,9 @@ const nolib = {
         get_ref,
         add_ref,
         remove_ref,
+        get_asset,
+        add_asset,
+        remove_asset,
         get_node,
         get_edge,
         get_edges_in,
@@ -1424,54 +1450,53 @@ const nolib = {
         const edgemap = { value, display, subscribe, argslist, lib };
         const runedge = output && edgemap[output] ? output : "value";
 
-        if(lib) {
-          _lib = {..._lib, ...(run_runnable(lib, _lib)?.__value ?? {})}
-        }
+        const return_result = (_lib, args) => {
+          const runedgeresult = edgemap[runedge]
+            ? run_graph(
+                edgemap[runedge].graph,
+                edgemap[runedge].fn,
+                { ...args, ...edgemap[runedge].args, _output: _lib.no.of(runedge === "display" ? "display" : "value") },
+                _lib
+              )
+            : {__value: undefined};
 
-        let args;
-        if (argsfn) {
-          args = run_runnable({...argsfn, args: {...argsfn.args, _output: _lib.no.of("value")}}, _lib).__value;
-        }
+          if(runedge === "value" && !value && display) {
+            runedgeresult.__value = run_graph(display.graph, display.fn, {...display.args, ...args}, _lib).__value?.value;
+          }
 
-        const runedgeresult = edgemap[runedge]
-          ? run_graph(
-              edgemap[runedge].graph,
-              edgemap[runedge].fn,
-              { ...args, ...edgemap[runedge].args, _output: _lib.no.of(runedge === "display" ? "display" : "value") },
+          if (edgemap.subscribe) {
+            const subscriptions = run_graph(
+              edgemap.subscribe.graph, 
+              edgemap.subscribe.fn,
+              { ...args, ...edgemap.subscribe.args},
               _lib
-            )
-          : {__value: undefined};
+            ).__value
 
-        if (runedge !== "value" && runedgeresult && value) {
-          // runedgeresult.__value.value = run_graph(
-          //   value.graph,
-          //   value.fn,
-          //   { ...value.args, ...args, _output: _lib.no.of("value") },
-          //   _lib
-          // ).__value;
-        } else if(runedge === "value" && !value && display) {
-          runedgeresult.__value = run_graph(display.graph, display.fn, {...display.args, ...args}, _lib).__value?.value;
+            const graphid = nodysseus_get(subscribe.args, "__graphid").__value;
+            const newgraphid = graphid + "/" + _node.id;
+
+            Object.entries(subscriptions)
+              .filter(kv => kv[1])
+              .forEach(([k, v]) => 
+                _lib.no.runtime.add_listener(k, 'subscribe-' + newgraphid, v, false, 
+                  graphid, true, _lib));
+          }
+
+          return runedgeresult;
         }
 
-        if (edgemap.subscribe) {
-          const subscriptions = run_graph(
-            edgemap.subscribe.graph, 
-            edgemap.subscribe.fn,
-            { ...args, ...edgemap.subscribe.args},
-            _lib
-          ).__value
-
-          const graphid = nodysseus_get(subscribe.args, "__graphid").__value;
-          const newgraphid = graphid + "/" + _node.id;
-
-          Object.entries(subscriptions)
-            .filter(kv => kv[1])
-            .forEach(([k, v]) => 
-              _lib.no.runtime.add_listener(k, 'subscribe-' + newgraphid, v, false, 
-                graphid, true, _lib));
+        const libprom = lib && run_runnable(lib, _lib);
+        if(ispromise(libprom)) {
+          return libprom.then(libr => {
+            _lib = {..._lib, ...(libr?.__value ?? {})}
+            Promise.resolve(run_runnable({...argsfn, args: {...argsfn.args, _output: _lib.no.of("value")}}, _lib))
+              .then(args => return_result(_lib, args?.__value))
+          })
+        } else {
+          _lib = libprom ? {..._lib, ...(libprom.__value ?? {})} : _lib;
+          const argsprom = argsfn && run_runnable({...argsfn, args: {...argsfn.args, _output: _lib.no.of("value")}}, _lib)
+          return ispromise(argsprom) ? argsprom.then(args => return_result(_lib, args?.__value)): return_result(_lib, argsprom?.__value)
         }
-
-        return runedgeresult;
       },
     },
     compare,
@@ -1854,7 +1879,8 @@ const add_default_nodes_and_edges = g => ({
 
 const run = (node, args, lib) => {
   lib.no.runtime.update_graph(node.graph);
-  return run_node(node, Object.fromEntries(Object.entries(args ?? {}).map(e => [e[0], lib.no.of(e[1])])), node.args, lib)?.__value
+  const res = run_node(node, Object.fromEntries(Object.entries(args ?? {}).map(e => [e[0], lib.no.of(e[1])])), node.args, lib);
+  return ispromise(res) ? res.then(r => r?.__value) : res?.__value
 }
 
 export { nolib, run, objToGraph, bfs, calculateLevels, compare, hashcode, add_default_nodes_and_edges, ispromise, NodysseusError, base_graph, base_node, resfetch };

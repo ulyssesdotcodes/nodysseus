@@ -247,6 +247,8 @@ export const node_args = (nolib, ha, graph, node_id) => {
     const externfn = node_ref?.ref === "extern" && nolib.extern.get.fn({}, nolib, node_ref?.value)
     const baseargs = !argslist_path && externfn
             ? externfn.args
+              ? externfn.args
+              : ['args']
             : node_ref?.nodes?.filter(n => 
                 n.ref === "arg" 
                 && n.type !== "internal" 
