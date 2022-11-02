@@ -953,7 +953,7 @@ const nolib = {
       }
 
       const get_asset = id => {
-        return nodysseusidb.get("assets", id);
+        return id && nodysseusidb.get("assets", id);
       }
 
       const remove_asset = id => {
