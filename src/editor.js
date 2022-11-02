@@ -1057,7 +1057,8 @@ const update_info_display = ({fn, graph, args}) => {
     const out_ref = node && (node.nodes && nolib.no.runtime.get_node(node, node.out)) || (node_ref.nodes && nolib.no.runtime.get_node(node_ref, node_ref.out));
     const node_display_el = (node.ref === "return" || (out_ref && out_ref.ref === "return")) 
         && hlib.run({graph, fn}, {...args, _output: "display"});
-    info_display_dispatch && requestAnimationFrame(() => info_display_dispatch(UpdateResultDisplay, {el: node_display_el?.dom_type ? node_display_el : ha.h('div', {})}))
+    const update_info_display_fn = display => info_display_dispatch && requestAnimationFrame(() => info_display_dispatch(UpdateResultDisplay, {el: display?.dom_type ? display : ha.h('div', {})}))
+  ap_promise(node_display_el, update_info_display_fn)
 }
 
 const show_error = (e, t) => ({

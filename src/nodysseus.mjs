@@ -48,7 +48,7 @@ function nodysseus_get(obj, propsArg, lib, defaultValue) {
   while (props.length) {
     if(obj) {
         const ran = run_runnable(obj, lib)
-        if(obj !== ran || ran.__value) {
+        if(ran?.__value) {
           obj = ran.__value;
           continue;
         }
@@ -1318,8 +1318,10 @@ const nolib = {
       rawArgs: true,
       args: ["input", "_node_args", "_lib"],
       fn: (input, args, lib) => {
-        const inputval = run_runnable(input, lib).__value;
-        return run_runnable(args[inputval], lib);
+        const inputval = run_runnable(input, lib);
+        return ispromise(inputval) 
+          ? inputval.then(ival => run_runnable(args[ival?.__value], lib)) 
+          : run_runnable(args[inputval?.__value], lib);
       },
     },
     resolve: {
@@ -1363,8 +1365,8 @@ const nolib = {
           );
           return lib.no.of(ret);
         }
-        const objectvalue = run_runnable(object, lib);
 
+        const objectvalue = run_runnable(object, lib);
 
         return ispromise(objectvalue) ? objectvalue.then(ov => foldvalue(ov.__value)) : foldvalue(objectvalue.__value)
       },
