@@ -2252,8 +2252,9 @@
             "id": "css_styles",
             "name": "css_styles",
             "in": "xw3pmx7",
-            "out": "5yxmxua",
+            "out": "out",
             "nodes": [
+              {"id": "out", "ref": "return", "name": "css_styles"},
                 {
                     "id": "5yxmxua",
                     "ref": "html_element",
@@ -2369,6 +2370,7 @@
                 }
             ],
             "edges": [
+              {"from": "5yxmxua", "to": "out", "as": "value"},
                 {
                     "from": "vgv61zj",
                     "to": "5yxmxua",

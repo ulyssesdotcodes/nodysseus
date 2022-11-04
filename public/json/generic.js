@@ -987,8 +987,9 @@
       "description": "Creates a style element from `css_object`. Inputs to the object should be labeled with css selectors, and inputs to those objects with css properties.",
       "name": "css_styles",
       "in": "xw3pmx7",
-      "out": "5yxmxua",
+      "out": "out",
       "nodes": [
+        { "id": "out", "ref": "return", "name": "css_styles" },
         { "id": "5yxmxua", "ref": "html_element", "name": "out" },
         { "id": "vgv61zj", "ref": "html_text" },
         { "id": "jstjx7g" },
@@ -1046,6 +1047,7 @@
         { "id": "slj7ynn/h7me3v8", "ref": "arg", "value": "element.1" }
       ],
       "edges": [
+        { "from": "5yxmxua", "to": "out", "as": "value" },
         { "from": "vgv61zj", "to": "5yxmxua", "as": "children" },
         { "from": "jstjx7g", "to": "5yxmxua", "as": "props" },
         { "from": "h40e3j9", "to": "5yxmxua", "as": "dom_type" },

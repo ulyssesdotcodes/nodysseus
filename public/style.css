@@ -330,6 +330,10 @@ svg {
     flex-grow: 1;
 }
 
+#node-editor-code-editor {
+  display: none;
+}
+
 .action {
     cursor: pointer;
     text-decoration: underline dotted;

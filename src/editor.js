@@ -943,7 +943,7 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
     return ha.h('div', {id: "node-info-wrapper"}, [ha.h('div', {class: "spacer before"}, []), ha.h(
         'div',
         { 
-            class: {'node-info': true, hidden, editing}, 
+            class: {'node-info': true, hidden, editing, [node.ref]: true}, 
             onfocusin: state => [{...state, editing: true}], 
             onblurout: state => [{...state, editing: false}] 
         },
@@ -996,7 +996,6 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
             description && ha.h('div', {class: "description"}, ha.text(description)),
             ha.h('div', {
                 id: `${html_id}-code-editor`, 
-                class: node.script || node.ref === "script" ? "visible" : "display-none",
             }, []),
             ha.h('canvas', {
                 id: `${html_id}-info-canvas`,
