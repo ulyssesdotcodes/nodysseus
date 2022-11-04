@@ -943,7 +943,7 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
     return ha.h('div', {id: "node-info-wrapper"}, [ha.h('div', {class: "spacer before"}, []), ha.h(
         'div',
         { 
-            class: {'node-info': true, hidden, editing, [node.ref]: true}, 
+            class: {'node-info': true, hidden, editing, [node.ref]: !!node.ref}, 
             onfocusin: state => [{...state, editing: true}], 
             onblurout: state => [{...state, editing: false}] 
         },
