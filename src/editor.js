@@ -421,7 +421,7 @@ const listenToEvent = (dispatch, props) => {
 }
 
 const ap = (fn, v) => fn(v);
-const ap_promise = (p, fn) => p && typeof p['then'] === 'function' ? p.then(fn) : ap(fn, p);
+const ap_promise = (p, fn, cfn) => p && typeof p['then'] === 'function' ? cfn ? p.then(fn).catch(cfn) : p.then(fn) : ap(fn, p);
 
 const refresh_graph = (graph, dispatch) => {
     dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
@@ -453,7 +453,7 @@ const result_subscription = (dispatch, {display_graph_id}) => {
             animrun = requestAnimationFrame(() => {
                 const result = refresh_graph(graph, dispatch)
                 const reset_animrun = () => animrun = false;
-                ap_promise(result, reset_animrun)
+                ap_promise(result, reset_animrun, reset_animrun)
             })
         }
     }
