@@ -334,6 +334,10 @@ svg {
   display: none;
 }
 
+.script #node-editor-code-editor {
+  display: block;
+}
+
 .action {
     cursor: pointer;
     text-decoration: underline dotted;
