@@ -28,6 +28,7 @@
       { "id": "negate", "ref": "extern", "value": "extern.negate", "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Subtraction'>- operator</a>"  },
       { "id": "and", "ref": "extern", "value": "extern.and", "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_AND'>&& operator</a>" },
       { "id": "liftarraypromise", "ref": "extern", "value": "extern.liftarraypromise", "description": "If an array contains a promise, wrap the whole array with `Promise.all`." },
+      {"id": "typeof", "ref": "extern", "value": "extern.typeof", "description": "javascript typeof operator"},
       {
         "id": "ancestors",
         "out": "out",

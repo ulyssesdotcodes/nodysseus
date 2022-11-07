@@ -1866,6 +1866,10 @@ const nolib = {
       resolve: true,
       fn: (args) => JSON.parse(args),
     },
+    typeof: {
+      args: ["value"],
+      fn: (value) => typeof value
+    }
   },
   // THREE
 };
