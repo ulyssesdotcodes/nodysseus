@@ -1048,15 +1048,18 @@ const UpdateResultDisplay = (state, el) => ({
 
 const update_info_display = ({fn, graph, args}) => {
     const node = nolib.no.runtime.get_node(graph, fn);
-    if (node.ref === "script" || node.script) {
-        code_editor.dispatch({changes:{from: 0, to: code_editor.state.doc.length, insert: node.script ?? node.value}})
-    }
 
     const node_ref = node && (node.ref && nolib.no.runtime.get_ref(node.ref)) || node;
     const out_ref = node && (node.nodes && nolib.no.runtime.get_node(node, node.out)) || (node_ref.nodes && nolib.no.runtime.get_node(node_ref, node_ref.out));
     const node_display_el = (node.ref === "return" || (out_ref && out_ref.ref === "return")) 
         && hlib.run({graph, fn}, {...args, _output: "display"});
-    const update_info_display_fn = display => info_display_dispatch && requestAnimationFrame(() => info_display_dispatch(UpdateResultDisplay, {el: display?.dom_type ? display : ha.h('div', {})}))
+    const update_info_display_fn = display => info_display_dispatch && requestAnimationFrame(() => {
+      info_display_dispatch(UpdateResultDisplay, {el: display?.dom_type ? display : ha.h('div', {})})
+      if(window.getComputedStyle(document.getElementById("node-editor-code-editor")).getPropertyValue("display") !== "none") {
+        code_editor.dispatch({changes:{from: 0, to: code_editor.state.doc.length, insert: node.script ?? node.value}})
+      }
+
+    })
   ap_promise(node_display_el, update_info_display_fn)
 }
 
