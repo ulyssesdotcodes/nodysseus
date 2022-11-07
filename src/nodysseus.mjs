@@ -1491,7 +1491,7 @@ const nolib = {
         if(ispromise(libprom)) {
           return libprom.then(libr => {
             _lib = {..._lib, ...(libr?.__value ?? {})}
-            Promise.resolve(run_runnable({...argsfn, args: {...argsfn.args, _output: _lib.no.of("value")}}, _lib))
+            Promise.resolve(argsfn ? run_runnable({...argsfn, args: {...argsfn.args, _output: _lib.no.of("value")}}, _lib) : {})
               .then(args => return_result(_lib, args?.__value))
           })
         } else {
