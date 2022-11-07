@@ -736,6 +736,7 @@ const update_graph_list = graph_id => {
 }
 
 const save_graph = graph => {
+  console.log(`saving ${graph.id}`)
   graph = base_graph(graph);
   const graphstr = JSON.stringify(base_graph(graph)); 
   localStorage.setItem(graph.id, graphstr); 
@@ -1055,9 +1056,11 @@ const update_info_display = ({fn, graph, args}) => {
         && hlib.run({graph, fn}, {...args, _output: "display"});
     const update_info_display_fn = display => info_display_dispatch && requestAnimationFrame(() => {
       info_display_dispatch(UpdateResultDisplay, {el: display?.dom_type ? display : ha.h('div', {})})
-      if(window.getComputedStyle(document.getElementById("node-editor-code-editor")).getPropertyValue("display") !== "none") {
-        code_editor.dispatch({changes:{from: 0, to: code_editor.state.doc.length, insert: node.script ?? node.value}})
-      }
+      requestAnimationFrame(() => {
+        if(window.getComputedStyle(document.getElementById("node-editor-code-editor")).getPropertyValue("display") !== "none") {
+          code_editor.dispatch({changes:{from: 0, to: code_editor.state.doc.length, insert: node.script ?? node.value}})
+        }
+      });
 
     })
   ap_promise(node_display_el, update_info_display_fn)
