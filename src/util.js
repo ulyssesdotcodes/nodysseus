@@ -140,7 +140,7 @@ export const contract_node = (data, keep_expanded = false) => {
                 .filter(n => keep_expanded || !inside_node_map.has(n.id))
                 .concat([{
                     id: final_node_id,
-                    name: node.name,
+                    name: node.name ?? node.value,
                     in: in_node_id && in_node_id.startsWith(node_id + '/') ? in_node_id.substring(node_id.length + 1) : in_node_id,
                     out: out_node_id.startsWith(node_id + '/') ? out_node_id.substring(node_id.length + 1) : out_node_id,
                     nodes: inside_nodes.map(n => ({
