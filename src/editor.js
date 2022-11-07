@@ -4,7 +4,10 @@ import panzoom from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 import Fuse from "fuse.js";
 import { basicSetup, EditorView } from "codemirror";
-import { javascript } from "@codemirror/lang-javascript";
+import { EditorState, Compartment } from "@codemirror/state"
+import { language } from "@codemirror/language"
+import { javascript, javascriptLanguage } from "@codemirror/lang-javascript";
+import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { ancestor_graph, contract_node, create_randid, expand_node, findViewBox, node_args } from "./util.js";
 
 const updateSimulationNodes = (dispatch, data) => {
@@ -1127,6 +1130,16 @@ let code_editor;
 
 const init_code_editor = (dispatch, {html_id}) => {
     requestAnimationFrame(() => {
+        const languageConf = new Compartment()
+        const autoLanguage = EditorState.transactionExtender.of(tr => {
+          if(!tr.docChanged) return null;
+          let docLang = document.getElementsByClassName("markdown").length > 0 ? 'markdown' : 'javascript';
+          let stateLang = tr.startState.facet(language) == markdownLanguage ? 'markdown' : 'javascript';
+          if(docLang === stateLang) return null;
+          return {
+            effects: languageConf.reconfigure(docLang === 'markdown' ? markdown() : javascript())
+          }
+        })
         const background = "#111";
         const highlightBackground = "#000";
         code_editor = new EditorView({extensions: [
@@ -1151,7 +1164,8 @@ const init_code_editor = (dispatch, {html_id}) => {
                     borderLeftColor: "#fff"
                 },
             }, {dark: true}),
-            javascript(),
+            languageConf.of(javascript()),
+            autoLanguage,
             EditorView.domEventHandlers({
                 "blur": () => dispatch(UpdateNode, {property: "value", value: code_editor.state.doc.sliceString(0, code_editor.state.doc.length, "\n")})
             })
