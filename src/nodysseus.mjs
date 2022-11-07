@@ -265,8 +265,8 @@ const node_script = (node, nodeArgs, lib) => {
     const fn = lib.no.runtime.get_fn(node.id, name, `_lib, _node, _graph_input_value${orderedargs}`, node.script ?? node.value);
 
     const result = is_iv_promised
-        ? Promise.all(Object.keys(nodeArgs).map(iv => Promise.resolve(data[iv]))).then(ivs => lib.no.of(fn.apply(null, [lib, node, data, ...ivs.map(iv => iv.__value)])))
-        : lib.no.of(fn.apply(null, [lib, node, data, ...Object.values(data).map(d => d.__value)]));
+        ? Promise.all(Object.keys(nodeArgs).map(iv => Promise.resolve(data[iv]))).then(ivs => lib.no.of(fn.apply(null, [lib, node, data, ...ivs.map(iv => iv?.__value)])))
+        : lib.no.of(fn.apply(null, [lib, node, data, ...Object.values(data).map(d => d?.__value)]));
     
     return result;
 }
