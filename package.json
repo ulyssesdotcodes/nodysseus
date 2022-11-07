@@ -12,7 +12,7 @@
     "d3-force": "^3.0.0",
     "fs-web": "^1.0.1",
     "fuse.js": "^6.4.6",
-    "hyperapp": "^2.0.18",
+    "hyperapp": "^2.0.22",
     "idb": "^7.1.0",
     "just-safe-get": "^4.0.1",
     "just-safe-set": "^4.0.1",
