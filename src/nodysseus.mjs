@@ -1277,10 +1277,6 @@ const nolib = {
           return execute(fn, fnv?.__value, rv?.__value, av?.__value)
         }
 
-        if(runvalue) {
-          // debugger;
-        }
-
         const fnv = run_runnable(fn, lib);
 
         return runvalue ? execpromise(fn, fnv, run, args)
@@ -1539,9 +1535,9 @@ const nolib = {
       },
     },
     set_mutable: {
-      args: ["target", "path", "value", "_node"],
-      fn: (target, path, value, node) => {
-        set(target, node.value || path, value);
+      args: ["target", "path", "value", "__graph_value"],
+      fn: (target, path, value, nodevalue) => {
+        set(target, nodevalue || path, value);
         return target;
       },
     },

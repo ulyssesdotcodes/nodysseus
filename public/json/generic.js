@@ -925,7 +925,6 @@
       "edges": [
         { "from": "args", "to": "delete_args", "as": "target" },
         { "from": "delete_args", "to": "seq_fold", "as": "object" },
-        { "from": "argargs", "to": "_seq_ap_args", "as": "fn" },
         {"from": "seq_ap_run", "to": "seq_ap", "as": "run"},
         {"from": "seq_fold_currentValue", "to": "seq_ap", "as": "fn"},
         {"from": "seq_ap", "to": "seq_fold", "as": "fn"},
