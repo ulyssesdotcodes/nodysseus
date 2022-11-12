@@ -218,6 +218,10 @@ svg {
     stroke: #fcc;
 }
 
+.distance-0 {
+    opacity: 1;
+}
+
 .distance-1 {
     opacity: 0.85;
 } 

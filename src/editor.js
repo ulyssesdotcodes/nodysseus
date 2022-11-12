@@ -863,7 +863,7 @@ const node_el = ({html_id, selected, error, selected_distance, node_id, node_ref
     class: {
         node: true, 
         selected, 
-        // [`distance-${selected_distance < 4 ? selected_distance : 'far'}`]: true
+        [`distance-${selected_distance < 4 ? selected_distance : 'far'}`]: true
     }
 }, [
    ha.h(
@@ -1204,7 +1204,7 @@ const runapp = (init, load_graph, _lib) => {
                             html_id: s.html_id, 
                             selected: s.selected[0] === node.node_id, 
                             error: !!error_nodes(s.error).find(e => e.startsWith(s.display_graph.id + "/" + node.node_id)), 
-                            // selected_distance: s.show_all ? 0 : s.levels.distance_from_selected.get(node.node_id) > 3 ? 'far' : s.levels.distance_from_selected.get(node.node_id),
+                            selected_distance: s.show_all ? 0 : s.levels.distance_from_selected.get(node.node_id) > 3 ? 'far' : s.levels.distance_from_selected.get(node.node_id),
                             node_id: node.node_id,
                             node_name: newnode.name,
                             node_ref: newnode.ref,
