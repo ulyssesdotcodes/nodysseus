@@ -1450,7 +1450,7 @@ const nolib = {
       ) => {
         const output = _args["_output"]?.__value;
         const edgemap = { value, display, subscribe, argslist, lib };
-        const runedge = output && edgemap[output] ? output : "value";
+        const runedge = output && output === display ? display : edgemap[output] ? output : "value";
 
         const return_result = (_lib, args) => {
           const runedgeresult = edgemap[runedge]

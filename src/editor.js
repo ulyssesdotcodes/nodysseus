@@ -1141,7 +1141,7 @@ const init_code_editor = (dispatch, {html_id}) => {
           }
         })
         const background = "#111";
-        const highlightBackground = "#000";
+        const highlightBackground = "#00000033";
         code_editor = new EditorView({extensions: [
             basicSetup, 
             EditorView.theme({
@@ -1157,12 +1157,15 @@ const init_code_editor = (dispatch, {html_id}) => {
                     backgroundColor: background,
                     outline: "1px solid #515a6b",
                 },
-                ".cm-activeLine": {
+                "&.cm-activeLine, .cm-activeLine": {
                     backgroundColor: highlightBackground,
                 },
                 "&.cm-focused .cm-cursor": {
                     borderLeftColor: "#fff"
                 },
+                "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, ::selection": {
+                  backgroundColor: "#233"
+                }
             }, {dark: true}),
             languageConf.of(javascript()),
             autoLanguage,
