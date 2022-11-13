@@ -463,9 +463,9 @@ const result_subscription = (dispatch, {display_graph_id}) => {
     const animframes = {}
 
     const noderun_listener = (data) => {
-        if (data.graph.id === display_graph_id) {
+        if (data.graph.id === display_graph_id && !timeouts[data.node_id]) {
             const el = document.querySelector(`#node-editor-${data.node_id.replaceAll("/", "_")} .shape`)
-            if(el && !timeouts[data.node_id]) {
+            if(el) {
                 timeouts[data.node_id] && clearTimeout(timeouts[data.node_id])
                 animframes[data.node_id] && cancelAnimationFrame(animframes[data.node_id])
                 el.classList.remove("flash-transition-out");
