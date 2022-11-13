@@ -349,6 +349,16 @@ const create_data = (graph, inputs, graphArgs, lib) => {
 
         // lgraph.out = input.from;
         const val = {graph, fn: input.from, args: newgraphargs, isArg: true, __isnodysseus: true} //run_graph(lgraph, input.from, graphArgs, lib);
+        // Check for duplicates
+        if(data[input.as]) {
+            const as_set = new Set()
+            inputs.forEach(e => {
+                if (as_set.has(e.as)) {
+                    throw new NodysseusError(graph.id + "/" + node_id, `Multiple input edges have the same label "${e.as}"`)
+                }
+                as_set.add(e.as)
+            })
+        }
         data[input.as] = val;
     }
 
@@ -442,17 +452,6 @@ const run_graph = (graph, node_id, graphArgs, lib) => {
 
     try {
         const inputs = lib.no.runtime.get_edges_in(graph, node_id);
-
-        // Check for duplicates
-        if(new Set(inputs.map(e => e.as)).size !== inputs.size) {
-            const as_set = new Set()
-            inputs.forEach(e => {
-                if (as_set.has(e.as)) {
-                    throw new NodysseusError(graph.id + "/" + node_id, `Multiple input edges have the same label "${e.as}"`)
-                }
-                as_set.add(e.as)
-            })
-        }
 
 
         lib.no.runtime.publish('noderun', {graph, node_id})
@@ -618,8 +617,14 @@ const nolib = {
   no: {
     of: (value) => ispromise(value) ? value.then(nolib.no.of) : value?.__value ? value : { id: "out", __value: value, __isnodysseus: true },
     arg: (node, target, lib, value) => {
-      const typedvalue = value.split(": ");
-      const nodevalue = typedvalue[0];
+      let valuetype, nodevalue;
+      if(value.includes(": ")) {
+        const typedvalue = value.split(": ");
+        nodevalue = typedvalue[0];
+        valuetype = typedvalue[1];
+      } else {
+        nodevalue = value;
+      }
       const newtarget = () => {
         const newt = Object.assign({}, target.__args);
         Object.keys(newt).forEach(k => k.startsWith("_") && delete newt[k])
@@ -646,7 +651,7 @@ const nolib = {
             lib
           );
 
-      const retrun = ret?.isArg && typedvalue[1] !== "raw" ? run_runnable(ret, lib) : undefined;
+      const retrun = ret?.isArg && valuetype !== "raw" ? run_runnable(ret, lib) : undefined;
       return ispromise(retrun) ? retrun.then(v => v?.__value) : retrun ? retrun?.__value : ret;
     },
     base_graph,

@@ -1008,32 +1008,32 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
             }, []),
             ha.h('div', {id: `${html_id}-info-display`}),
             ha.h('div', {class: "buttons"}, [
-                ha.h('div', {
+                node.node_id !== graph_out && ha.h('div', {
                     class: "action", 
                     onclick: [ExpandContract, {node_id: node.node_id}]
-                }, ha.text(node.nodes?.length > 0 ? "expand" : "collapse")),
+                }, [ha.h('ion-icon', {name: node.nodes?.length > 0 ? "expand" : "contract"}), ha.text(node.nodes?.length > 0 ? "expand" : "collapse")]),
                 node.nodes?.length > 0 && node.name !== '' && ha.h('div', {class: 'action', onclick: [CreateRef, {node}]}, ha.text("make ref")),
                 ha.h('div', {
                     class: "action", 
                     onclick: [Copy, {cut: false, as: link_out.as}],
                     key: "copy-action"
-                }, ha.text("copy")),
+                }, [ha.h('ion-icon', {name: 'copy-outline'}), ha.text("copy")]),
                 copied_graph && ha.h('div', {
                     class: "action", 
                     onclick: [Paste],
                     key: "paste-action"
-                }, ha.text("paste")),
+                }, [ha.h('ion-icon', {name: 'paste-outline'}), ha.text("paste")]),
                 node.node_id == graph_out && ha.h('div', {
                     class: "action", 
                     onclick: (state, payload) => [state, [SaveGraph, state]]
-                }, ha.text("save")),
+                }, [ha.h('ion-icon', {name: 'save-outline'}), ha.text("save")]),
                 node.node_id !== graph_out && ha.h('div', {
                     class: "action", 
                     onclick: [DeleteNode, {
                         parent: link_out && link_out.source ? {from: link_out.source.node_id, to: link_out.target.node_id, as: link_out.as} : undefined, 
                         node_id: node.node_id
                     }]
-                }, ha.text("delete"))
+                }, [ha.h('ion-icon', {name: 'trash-outline'}), ha.text("delete")]),
             ]),
         ]
     ), ha.h('div', {class: "spacer after"}, [])])
