@@ -1267,7 +1267,7 @@
           { "id": "dom_type_def", "ref": "default" },
           {
             "id": "out",
-            "script": "if(!(typeof dom_type === 'string' && typeof children === 'object')){ throw new Error('invalid element');} return {dom_type, props, children: children, memo}"
+            "script": "if(!(typeof dom_type === 'string' && typeof children === 'object')){ throw new Error('invalid element');} return {dom_type, props, children: children, memo, value}"
           },
           {"id": "out_ret", "ref": "return"}
         ],
