@@ -2,6 +2,7 @@ import generic from "../public/json/generic.js";
 import set from "just-safe-set";
 import loki from "lokijs";
 import {openDB } from "idb"
+import * as util from "./util.js"
 
 let resfetch = typeof fetch !== "undefined" ? fetch : 
     (urlstr, params) => import('node:https').then(https => new Promise((resolve, reject) => {
@@ -31,6 +32,10 @@ function nodysseus_get(obj, propsArg, lib, defaultValue) {
     let level = 0;
   if (!obj) {
     return defaultValue;
+  }
+  const naive = obj[propsArg];
+  if(naive) {
+    return naive;
   }
   var props, prop;
   if (Array.isArray(propsArg)) {
@@ -336,7 +341,7 @@ const node_data = (nodeArgs, graphArgs, lib) => {
 }
 
 // derives data from the args symbolic table
-const create_data = (graph, inputs, graphArgs, lib) => {
+const create_data = (node_id, graph, inputs, graphArgs, lib) => {
     const data = {};
     let input;
     //TODO: remove
@@ -456,7 +461,7 @@ const run_graph = (graph, node_id, graphArgs, lib) => {
 
         lib.no.runtime.publish('noderun', {graph, node_id})
 
-        const data = create_data(graph, inputs, graphArgs, lib);
+        const data = create_data(node_id, graph, inputs, graphArgs, lib);
         return run_node(node, data, graphArgs, lib, graph);
     } catch (e) {
         console.log(`error in node`);
@@ -1308,11 +1313,55 @@ const nolib = {
     },
     create_fn: {
       args: ["runnable", "_lib"],
-      fn: (runnable, lib) => (args) => {
+      fn: (runnable, lib) => {
         const __args = runnable.args.__args;
-        runnable.args = args;
-        runnable.args.__args = __args;
-        return run_runnable(runnable, lib)?.__value
+
+        const graph = util.ancestor_graph(runnable.fn, runnable.graph, lib);
+        graph.id = runnable.fn + "-fn";
+        const graphArgs = new Set(graph.nodes.filter(n => n.ref === "arg").map(a => a.value));
+
+        const baseArgs = {};
+        for(const arg of graphArgs) {
+          baseArgs[arg] = nodysseus_get(runnable.args, arg)
+        }
+
+        let text = "";
+
+        graph.nodes.forEach(n => {
+          if(n.ref === "arg") {
+            return;
+          }
+          const noderef = lib.no.runtime.get_ref(n.ref) ?? n;
+          if(noderef.id === "script") {
+            // TODO: extract this logic from node_script
+            let orderedargs = graph.edges.filter(e => e.to === n.id).map(i => i.as).join(",")
+            text += `function fn_${n.id}({${orderedargs}}){${n.script ?? n.value}}\n\n`
+          } else if(noderef.ref == "extern") {
+            const extern = nodysseus_get(lib, noderef.value)
+            text += `function fn_${n.id}(${extern.args.join(",")}){return (${extern.fn.toString()})(${extern.args.join(",")})}\n\n`
+          }
+        })
+
+
+        const fninputs = graph.edges.filter(e => e.to === runnable.fn)
+
+        // for now just assumeing everything is an arg of the last node out
+        // TODO: tree walk
+        text += `return fn_${runnable.fn}({${[...fninputs].map(rinput => `${rinput.as}: fnargs.${graph.nodes.find(n => n.id === rinput.from).value}`).join(",")}})`
+        const fn = new Function("fnargs", text);
+
+        return fn;
+        // (fnargs) => {
+        //   for(const arg of graphArgs) {
+        //     if(fnargs.hasOwnProperty(arg)) {
+        //       baseArgs[arg] = fnargs[arg];
+        //     }
+        //   }
+        //
+        //   runnable.args = baseArgs;
+        //   
+        //   return run_runnable(runnable, lib)?.__value
+        // }
       }
     },
     switch: {
@@ -1699,6 +1748,11 @@ const nolib = {
         delete newval[path];
         return newval;
       },
+    },
+    math: {
+      args: ["__graph_value", "_node_args"],
+      resolve: true,
+      fn: (graph_value, args) => Math[graph_value](...Ojbect.entries(args).sort((a, b) => a[0].localeCompare(b[0])).map(kv => kv[1]))
     },
     add: {
       args: ["_node_args"],

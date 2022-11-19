@@ -214,7 +214,7 @@ export const findViewBox = (nodes, links, selected, node_el_width, htmlid, dimen
     return {nodes_box_dimensions, center};
 }
 
-export const ancestor_graph = (nolib, node_id, from_graph) => {
+export const ancestor_graph = (node_id, from_graph, nolib) => {
     let edges_in;
     let queue = [node_id];
     const graph = {nodes: [], edges: []};
