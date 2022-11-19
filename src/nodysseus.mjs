@@ -1326,6 +1326,7 @@ const nolib = {
         }
 
         let text = "";
+        const _extern_args = {};
 
         graph.nodes.forEach(n => {
           if(n.ref === "arg") {
@@ -1335,20 +1336,35 @@ const nolib = {
           if(noderef.id === "script") {
             // TODO: extract this logic from node_script
             let inputs = graph.edges.filter(e => e.to === n.id).map(edge => ({edge, node: graph.nodes.find(n => n.id === edge.from)}));
-            console.log(inputs);
             text += `function fn_${n.id}(){\n${inputs.map(input => `let ${input.edge.as} = ${input.node.ref === "arg" ? `fnargs["${input.node.value}"]` : `fn_${input.node.id}()`};`).join("\n")}\n\n${n.script ?? n.value}}\n\n`
           } else if(noderef.ref == "extern") {
+            _extern_args[n.id] = {};
             const extern = nodysseus_get(lib, noderef.value)
-            text += `function fn_${n.id}(${extern.args.join(",")}){return (${extern.fn.toString()})(${extern.args.join(",")})}\n\n`
+            let inputs = graph.edges.filter(e => e.to === n.id).map(edge => ({edge, node: graph.nodes.find(n => n.id === edge.from)}));
+            const varset = []
+            extern.args.map(a => {
+              if(a === "__graph_value" || a === "_node") {
+                _extern_args[n.id][a] = a === "__graph_value" ? n.value
+                  : "_node" ? n
+                  : undefined;
+                varset.push(`let ${a} = _extern_args[${n.id}][${a}];`)
+              } else if (a === "_node_args") {
+                varset.push(`let ${a} = {\n${inputs.map(input => `${input.edge.as}: ${input.node.ref === "arg" ? `fnargs.${input.node.value}` : `fn_${input.edge.from}()`}`).join(",\n")}};`);
+              } else {
+                const input = inputs.find(i => i.as === a);
+                const inputNode = graph.nodes.find(n => n.id === input.from);
+                varset.push(`let ${a} = ${inputNode.ref === "arg" ? `fnargs.${input.as}` : `fn_${input.from}()`};`)
+              }
+            })
+            text += `function fn_${n.id}(){\n${varset.join("\n")}\nreturn (${extern.fn.toString()})(${extern.args.join(", ")})}\n\n`
           }
         })
-
 
         const fninputs = graph.edges.filter(e => e.to === runnable.fn)
 
         // for now just assumeing everything is an arg of the last node out
         // TODO: tree walk
-        text += `console.log(typeof fn_${runnable.fn}); return fn_${runnable.fn}()`//({${[...fninputs].map(rinput => `${rinput.as}: fnargs.${graph.nodes.find(n => n.id === rinput.from).value}`).join(",")}})`
+        text += `return fn_${runnable.fn}()`//({${[...fninputs].map(rinput => `${rinput.as}: fnargs.${graph.nodes.find(n => n.id === rinput.from).value}`).join(",")}})`
         const fn = new Function("fnargs", text);
 
         return fn;
@@ -1761,7 +1777,8 @@ const nolib = {
       fn: (args) =>
         Object.entries(args)
           .sort((a, b) => a[0].localeCompare(b[0]))
-          .reduce((acc, v) => acc + v[1], typeof args[0] === "number" ? 0 : ""),
+          .map(kv => kv[1])
+          .reduce((acc, v) => acc + v),
     },
     and: {
       args: ["_node_args"],
