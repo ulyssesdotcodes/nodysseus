@@ -1334,8 +1334,9 @@ const nolib = {
           const noderef = lib.no.runtime.get_ref(n.ref) ?? n;
           if(noderef.id === "script") {
             // TODO: extract this logic from node_script
-            let orderedargs = graph.edges.filter(e => e.to === n.id).map(i => i.as).join(",")
-            text += `function fn_${n.id}({${orderedargs}}){${n.script ?? n.value}}\n\n`
+            let inputs = graph.edges.filter(e => e.to === n.id).map(edge => ({edge, node: graph.nodes.find(n => n.id === edge.from)}));
+            console.log(inputs);
+            text += `function fn_${n.id}(){\n${inputs.map(input => `let ${input.edge.as} = ${input.node.ref === "arg" ? `fnargs["${input.node.value}"]` : `fn_${input.node.id}()`};`).join("\n")}\n\n${n.script ?? n.value}}\n\n`
           } else if(noderef.ref == "extern") {
             const extern = nodysseus_get(lib, noderef.value)
             text += `function fn_${n.id}(${extern.args.join(",")}){return (${extern.fn.toString()})(${extern.args.join(",")})}\n\n`
@@ -1347,7 +1348,7 @@ const nolib = {
 
         // for now just assumeing everything is an arg of the last node out
         // TODO: tree walk
-        text += `return fn_${runnable.fn}({${[...fninputs].map(rinput => `${rinput.as}: fnargs.${graph.nodes.find(n => n.id === rinput.from).value}`).join(",")}})`
+        text += `console.log(typeof fn_${runnable.fn}); return fn_${runnable.fn}()`//({${[...fninputs].map(rinput => `${rinput.as}: fnargs.${graph.nodes.find(n => n.id === rinput.from).value}`).join(",")}})`
         const fn = new Function("fnargs", text);
 
         return fn;
