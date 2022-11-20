@@ -102,13 +102,6 @@ function compare(value1, value2) {
         // no way to know if context of the functions has changed
         return false;
     }
-    // if (value1 !== Object(value1)) {
-    //     // non equal primitives
-    //     return false;
-    // }
-    // if (!value1) {
-    //     return false;
-    // }
     if (Array.isArray(value1)) {
         return compareArrays(value1, value2);
     }
@@ -165,7 +158,7 @@ function compareObjects(value1, value2) {
     }
 
     for (let key of keys1) {
-        if(key === "__args" /*&& compare(value1[key], value2[key])*/){
+        if(key === "__args"){
             continue;
         }
         if (value1[key] === value2[key]) {
@@ -248,7 +241,6 @@ const mockcombined = (data, graph_input_value) => {
 }
 
 const node_nodes = (node, node_id, data, graph_input_value, lib, inputs) => {
-    // data = Object.fromEntries(Object.entries(data).map(e => [e[0], e[1]]))
     return run_graph(node, node_id, mockcombined(data, graph_input_value), lib)
 }
 
@@ -260,8 +252,7 @@ const node_script = (node, nodeArgs, lib) => {
         orderedargs += ", " + i;
         if(nodeArgs[i] !== undefined){
             const graphval = run_runnable(nodeArgs[i], lib);
-            // TODO: figure out how to now wrap
-            data[i] = graphval // ?? graphval// run_runnable(graphval, lib);
+            data[i] = graphval
             is_iv_promised ||= ispromise(graphval);
         }
     }
@@ -345,15 +336,14 @@ const create_data = (node_id, graph, inputs, graphArgs, lib) => {
     const data = {};
     let input;
     //TODO: remove
-    const newgraphargs = graphArgs._output ? {...graphArgs, _output: undefined} : graphArgs;// {...graphArgs};
+    const newgraphargs = graphArgs._output ? {...graphArgs, _output: undefined} : graphArgs;
     // delete newgraphargs._output
 
     // grab inputs from state
     for (let i = 0; i < inputs.length; i++) {
         input = inputs[i];
 
-        // lgraph.out = input.from;
-        const val = {graph, fn: input.from, args: newgraphargs, isArg: true, __isnodysseus: true} //run_graph(lgraph, input.from, graphArgs, lib);
+        const val = {graph, fn: input.from, args: newgraphargs, isArg: true, __isnodysseus: true}
         // Check for duplicates
         if(data[input.as]) {
             const as_set = new Set()
@@ -384,7 +374,6 @@ const run_node = (node, nodeArgs, graphArgs, lib) => {
     if (node.ref) {
 
         if (node.ref === "arg") {
-            // const val = nolib.no.arg(node, graphArgs, lib, node.value);
             const resval = nolib.no.arg(node, graphArgs, lib, node.value);
             return resval && typeof resval === 'object' && Object.hasOwn(resval, "__value") ? resval : lib.no.of(resval);
         } else if (node.ref === "extern") {
@@ -415,12 +404,6 @@ const run_node = (node, nodeArgs, graphArgs, lib) => {
 
         return run_node(node_ref, {...nodeArgs, __graph_value: lib.no.of(node.value)}, newGraphArgs, lib)
     } else if (node.nodes) {
-        // const data = Object.fromEntries(Object.entries(nodeArgs).map(e => [e[0], e[1]]))
-        // const graphid = nodysseus_get(graphArgs, "__graphid");
-        // const graphid = nodysseus_get(graphArgs, "__graphid");
-        // const nodegraphargs = graph.args ?? {}
-        // nodegraphargs.__graphid = (graphid ? graphid + "/" : "") + node.graph.id;
-
         return node_nodes(node, node.out ?? "out", nodeArgs, graphArgs, lib)
     } else if (node.fn && node.graph) {
         const graphid = nodysseus_get(graphArgs, "__graphid", lib)?.__value;
@@ -430,10 +413,6 @@ const run_node = (node, nodeArgs, graphArgs, lib) => {
 
         return node_nodes(node.graph, node.fn, nodeArgs, nodegraphargs, lib)
     } else if (node.script){
-        // deprecated
-        // const data = Object.fromEntries(Object.entries(nodeArgs)
-        //     .filter(e => e[1] !== undefined)
-        //     .map(e => [e[0], run_graph(e[1].graph, e[1].fn, e[1].args, lib)]))
         return node_script(node, nodeArgs, lib)
     } else if(Object.hasOwn(node, "value")) {
         return lib.no.of(node_value(node));
@@ -446,13 +425,6 @@ const run_node = (node, nodeArgs, graphArgs, lib) => {
 
 // handles graph things like edges
 const run_graph = (graph, node_id, graphArgs, lib) => {
-    // const cache_args = lib.no.runtime.get_args(graph);
-    // const result = lib.no.runtime.get_result(graph);
-
-    // if(cache_args) {
-    //     Object.assign({}, nodeArgs, cache_args, result ? {result} : {});
-    // }
-
     const node = lib.no.runtime.get_node(graph, node_id);
 
     try {
@@ -482,9 +454,6 @@ const run_graph = (graph, node_id, graphArgs, lib) => {
         ))
     }
 }
-
-//////////
-// TODO: convert these to nodes
 
 const calculateLevels = (nodes, links, graph, selected) => {
     const find_childest = n => {
@@ -523,7 +492,7 @@ const calculateLevels = (nodes, links, graph, selected) => {
     const siblings = new Map(nodes.map(n => [n.node_id, [...(new Set(children.has(n.node_id)? children.get(n.node_id).flatMap(c => parents.get(c) || []) : [])).values()]]))
     const distance_from_selected = new Map();
 
-    const connected_vertices = new Map(); //new Map(!fixed_vertices ? [] : fixed_vertices.nodes.flatMap(v => (v.nodes || []).map(n => [n, v.nodes])));
+    const connected_vertices = new Map();
 
     const calculate_selected_graph = (s, i, c) => {
         const id = s;
@@ -594,8 +563,6 @@ const objToGraph = (obj, path) => Object.entries(obj)
     })
         , { nodes: [], edges: [] });
 
-/////////////////////////////////
-
 const ispromise = a => a && typeof a.then === 'function';
 const isrunnable = a => a && ((a.value && a.id && !a.ref) || a.fn && a.graph);
 const isgraph = g => g && g.out !== undefined && g.nodes !== undefined && g.edges !== undefined
@@ -635,7 +602,7 @@ const nolib = {
         Object.keys(newt).forEach(k => k.startsWith("_") && delete newt[k])
         return newt;
       };
-      // const named_args = graph.nodes.filter(n => n.ref === "arg").map(n => n.value);
+
       const ret = nodevalue === undefined || target === undefined
         ? undefined
         : nodevalue === "_node"
@@ -729,8 +696,6 @@ const nolib = {
           event_data.set(event, data);
           if (event === "graphchange") {
             const gcache = get_cache(data.id);
-            // cache.get(graph.id).graph =
-            // gcache.graph = {...graph, out: gcache.graph.out || graph.out || 'out'};
             gcache.graph = data;
           }
 
@@ -817,10 +782,6 @@ const nolib = {
           requestAnimationFrame(() => publish(event));
         }
 
-        //TODO: rethink this maybe?
-        // if (event !== 'graphchange') {
-        //     add_listener('graphchange', 'rungraph', rungraph);
-        // }
       };
 
       const remove_listener = (event, listener_id) => {
@@ -830,14 +791,6 @@ const nolib = {
           const listeners = getorset(event_listeners, event, () => new Map());
           listeners.delete(listener_id);
         }
-
-        //TODO: rethink this maybe?
-        // if (listeners.size === 0) {
-        //     event_listeners.delete(event);
-        //     if (event_listeners.size === 1 && event_listeners.has('graphchange')) {
-        //         remove_listener('graphchange', 'rungraph');
-        //     }
-        // }
       };
 
       const remove_graph_listeners = (graph_id) => {
@@ -862,9 +815,6 @@ const nolib = {
           argsdb.clear();
           event_data.clear();
           resultsdb.clear();
-
-          // event_listeners.clear()
-          // event_listeners_by_graph.clear()
         }
       };
 
@@ -1013,7 +963,6 @@ const nolib = {
         return parent && parent.parentest_id && get_graph(parent.parentest_id);
       };
       const get_cache = (graph, newgraphcache) => {
-        // graph = resolve(graph);
         const graphid =
           typeof graph === "string"
             ? graph
@@ -1099,9 +1048,6 @@ const nolib = {
 
           gcache.in_edge_map.delete((old_edge || edge).to);
           edge.as = edge.as || "arg0";
-          // const next_edge = !edge.as
-          //     ? lib.no.runGraph(cache.get('nodysseus_hyperapp').graph, 'next_edge', {edge, graph})
-          //     : edge;
 
           const new_graph = {
             ...graph,
@@ -1253,7 +1199,6 @@ const nolib = {
       rawArgs: true,
       args: ["fn", "args", "run", "_lib", "_graph_input_value"],
       fn: (fn, args, run, lib, graph_input_value) => {
-        // debugger;
         const runvalue = run_runnable(run, lib)?.__value;
         const execute = (fn, fnr, rv, av) => {
           if(fnr === undefined) {
@@ -1277,7 +1222,7 @@ const nolib = {
         }
 
         const execpromise = (fn, fnrg, rvg, avg) => {
-          const fnv = fnrg;//run_runnable(fnrg, lib);
+          const fnv = fnrg;
           const rv = run_runnable(rvg, lib);
           const av = run_runnable(avg, lib);
           if(ispromise(fnv) || ispromise(rv) || ispromise(av)) {
@@ -1368,17 +1313,6 @@ const nolib = {
         const fn = new Function("fnargs", text);
 
         return fn;
-        // (fnargs) => {
-        //   for(const arg of graphArgs) {
-        //     if(fnargs.hasOwnProperty(arg)) {
-        //       baseArgs[arg] = fnargs[arg];
-        //     }
-        //   }
-        //
-        //   runnable.args = baseArgs;
-        //   
-        //   return run_runnable(runnable, lib)?.__value
-        // }
       }
     },
     switch: {
@@ -1406,9 +1340,8 @@ const nolib = {
           debugger;
         }
         const foldvalue = objectvalue => {
-          // object = run_node(run_node(object, {}, object.args, _lib), {}, {}, _lib);
           if (objectvalue === undefined) return undefined;
-          const fnrunnable = fn; //run_runnable(fn, _lib)
+          const fnrunnable = fn;
 
           const mapobjarr = (mapobj, mapfn, mapinit) =>
             Array.isArray(mapobj)
@@ -1442,8 +1375,6 @@ const nolib = {
       rawArgs: true,
       args: ["_node_args", "_lib"],
       fn: (_args, lib) => {
-        // debugger;
-        // return Object.entries(_args).filter(e => e[0] !== "args").map(e => run_runnable(run_runnable(e[1], lib), lib))
         const delayfn = (fn, args) => lib.no.of({
             "fn": "runfn",
             "graph": {
@@ -1748,10 +1679,6 @@ const nolib = {
                 )
                 .filter((a) => a && typeof a === "object")
             );
-        // Object.fromEntries(keys
-        //     .map(k => args[k]?._Proxy ? args[k]._value : args[k])
-        //     .flatMap(o => typeof o === 'object' && o ? Object.entries(o) : [])
-        // )
       },
     },
     delete: {

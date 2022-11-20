@@ -125,25 +125,6 @@
         ]
       },
       {
-        "id": "_switch",
-        "description": "Returns the result  of the branch passed into it by `input`",
-        "nodes": [
-          { "id": "in" },
-          {"id": "args", "ref": "arg", "value": "_args"},
-          { "id": "input", "ref": "arg", "value": "input" },
-          { "id": "otherwise", "ref": "arg", "value": "otherwise" },
-          {"id": "string_input",  "script": "return new String(input).toString()"},
-          { "id": "out",  "ref": "get"}
-        ],
-        "edges": [
-          { "from": "in", "to": "out", "as": "_", "type": "ref" },
-          { "from": "args", "to": "out", "as": "target" },
-          { "from": "input", "to": "string_input", "as": "input" },
-          { "from": "string_input", "to": "out", "as": "path" },
-          { "from": "otherwise", "to": "out", "as": "otherwise" }
-        ]
-      },
-      {
         "id": "if_arg",
         "description": "If this node's `value` exists in the node's context, return the value from the `true` branch",
         "nodes": [
@@ -201,11 +182,6 @@
           { "from": "props", "to": "out", "as": "props" },
           { "from": "children", "to": "out", "as": "children" }
         ]
-      },
-      {
-        "id": "edge_in_argx",
-        "description": "Returns all edges labeled `arg` and a number, e.g. `arg0`, `arg1`, etc.",
-        "script": "const parent = _lib.no.runtime.get_parent(_graph); const edges = _lib.no.runtime.get_edges_in(parent, _graph.node_id).filter(e => e.as.startsWith('arg')).reduce((acc, e) => { acc[parseInt(e.as.substring(3))] = _lib.get.fn({}, _graph_input_value, e.as); return acc; }, []).map(a => a?._Proxy ? a._value : a); return edges;"
       },
       {
         "id": "input_edge",
@@ -735,23 +711,6 @@
       ]
     },
     {
-      "id": "_create_fn",
-      "description": "Returns a function created from `runnable`",
-      "out": "out",
-      "nodes": [
-        { "id": "runnable", "ref": "arg", "value": "runnable" },
-        { "id": "args", "ref": "arg", "value": "_args" },
-        {
-          "id": "out",
-          "script": "return (fnargs) => _lib.no.run(runnable.graph, runnable.fn, Object.assign({}, args, {runnable: undefined}, runnable.args, typeof fnargs === 'object' ? fnargs : {}), _lib)"
-        }
-      ],
-      "edges": [
-        { "from": "args", "to": "out", "as": "args", "type": "resolve" },
-        { "from": "runnable", "to": "out", "as": "runnable" }
-      ]
-    },
-    {
       "id": "reduce",
       "description": "<a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce'>Aray.reduce</a> the `array` with `fn`. Arguments for `fn` are `previous`, `current`, `index`, `array`, and a unique per nested loop `key`.",
       "name": "reduce",
@@ -786,43 +745,9 @@
       ]
     },
     {
-      "id": "_map",
-      "description": "<a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map'>Aray.map</a> the `array` with `fn`. Arguments for `fn` are `element`, `index`, `array`, and a unique per nested loop `key`.",
-      "name": "map",
-      "in": "m3b5wg3",
-      "out": "handle_promise",
-      "nodes": [
-        { "id": "tgurdpo", "ref": "call", "name": "out" },
-        { "id": "key", "ref": "arg", "value": "key" },
-        { "id": "rielyq8", "value": "map", "name": "rielyq8" },
-        { "ref": "arg", "id": "1rre4bx", "value": "array", "name": "1rre4bx" },
-        { "ref": "arg", "id": "6g75abk", "value": "fn", "name": "6g75abk" },
-        { "id": "w0zzawl", "ref": "array", "name": "w0zzawl" },
-        { "id": "args", "ref": "arg", "value": "args", "type": "local" },
-        {"id": "handle_promise", "ref": "liftarraypromise"},
-        {
-          "id": "pdljod1",
-          "name": "pdljod1",
-          "script": "return (element, index, array) => _lib.no.run(fn?.graph ?? _graph, fn?.fn ?? fn, Object.assign({}, args ?? {}, fn.args ?? {}, {element, index, array, key: outer_key ? `${index}_${outer_key}` : `${index}`}), _lib);"
-        },
-        { "id": "2lvs5dj", "script": "return _graph", "name": "2lvs5dj" }
-      ],
-      "edges": [
-        { "from": "rielyq8", "to": "tgurdpo", "as": "fn" },
-        { "from": "1rre4bx", "to": "tgurdpo", "as": "self" },
-        { "from": "1rre4bx", "to": "pdljod1", "as": "arr" },
-        { "from": "w0zzawl", "to": "tgurdpo", "as": "args", "type": "resolve" },
-        { "from": "pdljod1", "to": "w0zzawl", "as": "a0", "type": "resolve" },
-        { "from": "2lvs5dj", "to": "pdljod1", "as": "graph" },
-        { "from": "key", "to": "pdljod1", "as": "outer_key" },
-        { "from": "args", "to": "pdljod1", "as": "args" },
-        { "from": "6g75abk", "to": "pdljod1", "as": "fn" },
-        {"from": "tgurdpo", "to": "handle_promise", "as": "array"}
-      ]
-    },
-    {
       "id": "map",
       "out": "out",
+      "description": "<a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map'>Aray.map</a> the `array` with `fn`. Arguments for `fn` are `element`, `index`, `array`, and a unique per nested loop `key`.",
       "nodes": [
         {"id": "object", "ref": "arg", "value": "array"},
         {"id": "map_fn", "ref": "arg", "value": "fn"},
@@ -852,6 +777,7 @@
     },
     {
       "id": "filter",
+      "description": "<a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter'>Aray.filter</a> the `array` with `fn`. Arguments for `fn` are `element`, `index`, `array`, and a unique per nested loop `key`.",
       "out": "out",
       "nodes": [
         {"id": "object", "ref": "arg", "value": "array"},
@@ -879,32 +805,6 @@
         {"from": "object", "to": "fold", "as": "object"},
         {"from": "initial", "to": "fold", "as": "initial"},
         {"from": "fold", "to": "out", "as": "value"},
-      ]
-    },
-    {
-      "id": "_filter",
-      "description": "<a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter'>Aray.filter</a> the `array` with `fn`. Arguments for `fn` are `element`, `index`, `array`, and a unique per nested loop `key`.",
-      "name": "filter",
-      "in": "74n1jfm",
-      "out": "lahq5z4",
-      "description": "Filters an array using `fn: (element) => boolean`",
-      "nodes": [
-        { "id": "key", "ref": "arg", "value": "key" },
-        {
-          "id": "lahq5z4",
-          "args": [],
-          "name": "filter/out",
-          "script": "const filter_fn = _lib.no.executeGraphNode({graph: fn.graph ?? _graph, lib: _lib})(typeof fn === 'string' ? fn : fn.fn); return arr.filter((element, index, array) => filter_fn(Object.assign(fn.args ?? {}, {element, index, array, key: outer_key ? `${index}_${outer_key}` : `${index}`})))"
-        },
-        { "id": "x2sz5kb", "args": [], "ref": "arg", "value": "array" },
-        { "id": "fn", "ref": "arg", "value": "fn" },
-        { "id": "74n1jfm", "args": [], "name": "filter/in" }
-      ],
-      "edges": [
-        { "from": "x2sz5kb", "to": "lahq5z4", "as": "arr" },
-        { "from": "fn", "to": "lahq5z4", "as": "fn" },
-        { "from": "key", "to": "lahq5z4", "as": "outer_key" },
-        { "from": "74n1jfm", "to": "lahq5z4", "as": "_", "type": "ref" }
       ]
     },
     {
@@ -1773,7 +1673,6 @@
       },
       {
         "id": "iqtiiiy",
-        "_ref": "edge_in_argx",
         "value": "[]"
       },
       {
