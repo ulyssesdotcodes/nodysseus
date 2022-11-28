@@ -631,6 +631,7 @@ const nolib = {
     objToGraph,
     NodysseusError,
     runtime: (function () {
+      const isBrowser = typeof window !== 'undefined';
       let load_callbacks = [];
       const db = new loki("nodysseus.db", {
         env: "BROWSER",
@@ -639,7 +640,7 @@ const nolib = {
       let refsdb;
       const persistdb = new loki("nodysseus_persist.db", {
         env: "BROWSER",
-        adapter: new (loki.prototype.getIndexedAdapter())(),
+        adapter: isBrowser ? new (loki.prototype.getIndexedAdapter())() : new loki.LokiFsAdapter(),
         autoload: true,
         autoloadCallback: () => {
           refsdb = persistdb.getCollection("refs");
@@ -659,11 +660,14 @@ const nolib = {
         autosaveInterval: 4000
       })
       let nodysseusidb;
-      openDB("nodysseus", 2, {
-        upgrade(db) {
-          db.createObjectStore("assets")
-        }
-      }).then(db => { nodysseusidb = db })
+
+      if (isBrowser) {
+        openDB("nodysseus", 2, {
+          upgrade(db) {
+            db.createObjectStore("assets")
+          }
+        }).then(db => { nodysseusidb = db })
+      }
 
       const nodesdb = db.addCollection("nodes", { unique: ["id"] });
       const resultsdb = db.addCollection("results", { unique: ["id"] });
@@ -1883,7 +1887,7 @@ const add_default_nodes_and_edges = g => ({
         .concat(generic.nodes)
 })
 
-const run = (node, args, lib) => {
+const run = (node, args, lib = nolib) => {
   lib.no.runtime.update_graph(node.graph);
   const res = run_node(node, Object.fromEntries(Object.entries(args ?? {}).map(e => [e[0], lib.no.of(e[1])])), node.args, lib);
   return ispromise(res) ? res.then(r => r?.__value) : res?.__value

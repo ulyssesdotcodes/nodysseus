@@ -1,4 +1,4 @@
-import { resfetch, hashcode, nolib, run, calculateLevels, ispromise, base_graph, base_node } from "./nodysseus.mjs";
+import { resfetch, hashcode, nolib, run, calculateLevels, ispromise, base_graph, base_node } from "./nodysseus.js";
 import * as ha from "hyperapp";
 import panzoom from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
