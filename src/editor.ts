@@ -1,4 +1,4 @@
-import { resfetch, hashcode, nolib, run, calculateLevels, ispromise, base_graph, base_node } from "./nodysseus.js";
+import { resfetch, hashcode, nolib, run, calculateLevels, ispromise, base_graph, base_node } from "./nodysseus.ts";
 import * as ha from "hyperapp";
 import panzoom from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
@@ -1401,6 +1401,8 @@ let main_app_dispatch;
 
 const editor = async function(html_id, display_graph, lib, norun) {
     const simple = await resfetch("json/simple.json").then(r => r.json());
+    // TODO: clean this up it's just used for side effect of initializing the db
+    run(simple);
     const url_params = new URLSearchParams(document.location.search);
     const graph_list = JSON.parse(localStorage.getItem("graph_list")) ?? [];
     const hash_graph = window.location.hash.substring(1);

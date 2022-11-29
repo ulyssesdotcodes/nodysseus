@@ -1,4 +1,4 @@
-import * as editor from './editor.bundle.js'
+import { editor, run} from './editor.ts'
 
 Promise.all(["json/simple.json", "json/simple_html_hyperapp.json"].map(url => fetch(url).then(e => e.json())))
     .then((examples) => {
