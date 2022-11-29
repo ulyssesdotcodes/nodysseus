@@ -632,33 +632,25 @@ const nolib = {
     NodysseusError,
     runtime: (function () {
       const isBrowser = typeof window !== 'undefined';
-      let load_callbacks = [];
+      const persistdb = new loki("nodysseus_persist.db", {
+        env: isBrowser ? "BROWSER" : "NODE",
+        persistenceMethod: "memory",
+      })
+      const refsdb = persistdb.addCollection("refs", {unique: ["id"]});
+
       const db = new loki("nodysseus.db", {
-        env: "BROWSER",
+        env: isBrowser ? "BROWSER" : "NODE",
         persistenceMethod: "memory",
       });
-      let refsdb;
-      const persistdb = new loki("nodysseus_persist.db", {
-        env: "BROWSER",
-        adapter: isBrowser ? new (loki.prototype.getIndexedAdapter())() : new loki.LokiFsAdapter(),
-        autoload: true,
-        autoloadCallback: () => {
-          refsdb = persistdb.getCollection("refs");
 
-          if(!refsdb) {
-            refsdb = persistdb.addCollection("refs", { unique: ["id"] });
-          }
+      const nodesdb = db.addCollection("nodes", { unique: ["id"] });
+      const resultsdb = db.addCollection("results", { unique: ["id"] });
+      const inputdatadb = db.addCollection("inputdata", { unique: ["id"] });
+      const argsdb = db.addCollection("args", { unique: ["id"] });
+      const fndb = db.addCollection("fns", { unique: ["id"] });
 
-          generic.nodes.map((n) =>
-            add_ref(n)
-          );
+      const parentdb = db.addCollection("parents", { unique: ["id"] });
 
-          load_callbacks.forEach(lc => lc())
-          load_callbacks = false;
-        },
-        autosave: true,
-        autosaveInterval: 4000
-      })
       let nodysseusidb;
 
       if (isBrowser) {
@@ -669,13 +661,6 @@ const nolib = {
         }).then(db => { nodysseusidb = db })
       }
 
-      const nodesdb = db.addCollection("nodes", { unique: ["id"] });
-      const resultsdb = db.addCollection("results", { unique: ["id"] });
-      const inputdatadb = db.addCollection("inputdata", { unique: ["id"] });
-      const argsdb = db.addCollection("args", { unique: ["id"] });
-      const fndb = db.addCollection("fns", { unique: ["id"] });
-
-      const parentdb = db.addCollection("parents", { unique: ["id"] });
       const new_graph_cache = (graph) => ({
         id: graph.id,
         graph,
@@ -883,22 +868,9 @@ const nolib = {
       };
 
       const get_ref = (id) => {
-        if(load_callbacks !== false) {
-          return new Promise((resolve, reject) => {
-            load_callbacks.push(() => {
-              resolve(refsdb.by("id", id)?.data)
-            })
-          })
-        }
-
         return refsdb.by("id", id)?.data;
       };
       const add_ref = (graph) => {
-        if(!refsdb) {
-          return new Promise((resolve, reject) => {
-            load_callbacks.push(() => resolve(add_ref(graph)))
-          })
-        }
         const existing = refsdb.by("id", graph.id);
         if(existing) {
           refsdb.update(Object.assign(existing, {data: graph}))
@@ -995,6 +967,10 @@ const nolib = {
         }
         return node;
       };
+
+      generic.nodes.map((n) =>
+        add_ref(n)
+      );
 
       return {
         is_cached: (graph, id) => get_cache(graph.id),
