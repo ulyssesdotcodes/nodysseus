@@ -5,11 +5,13 @@ import copy from "rollup-plugin-copy"
 import sourcemaps from "rollup-plugin-sourcemaps";
 import globals from "rollup-plugin-node-globals";
 import builtins from "rollup-plugin-node-builtins";
+import swc from "./node_modules/rollup-plugin-swc/dist/esm/index.js";
+import typescript from "rollup-plugin-typescript";
 
 
 let cache = null;
 
-export default [{
+const oldconfig = [{
   input: "src/nodysseus.js",
   cache,
   output: {
@@ -42,3 +44,24 @@ export default [{
   })],
 }
 ]
+
+export default {
+  input: 'src/index.js',
+  output: {
+    file: './public/index.bundle.js',
+    sourcemap: true
+  },
+  plugins: [
+    commonjs(),
+    nodeResolve(),
+    swc({
+      jsc: {
+        parser: {
+          syntax: "typescript"
+        },
+        target: "es2018"
+      },
+      sourceMaps: true
+    }),
+  ]
+}

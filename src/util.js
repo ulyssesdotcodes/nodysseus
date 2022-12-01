@@ -267,3 +267,95 @@ export const node_args = (nolib, ha, graph, node_id) => {
         ))
     ]
 }
+
+
+export const bfs = (graph, fn) => {
+    const visited = new Set();
+    const iter = (id, level) => {
+        if (visited.has(id)) {
+            return;
+        }
+
+        fn(id, level);
+
+        visited.add(id);
+
+        for (const e of graph.edges) {
+            if (e.to === id) {
+                iter(e.from, level + 1);
+            }
+        }
+    }
+
+    return iter;
+}
+
+
+export const calculateLevels = (nodes, links, graph, selected) => {
+    const find_childest = n => {
+        const e = graph.edges.find(ed => ed.from === n);
+        if (e) {
+            return find_childest(e.to);
+        } else {
+            return n;
+        }
+    }
+    selected = selected[0];
+    const top = find_childest(selected);
+
+    const levels = new Map();
+    bfs(graph, (id, level) => levels.set(id, Math.min(levels.get(id) || Number.MAX_SAFE_INTEGER, level)))(top, 0);
+
+    const parents = new Map(nodes.map(n => [n.node_id, links.filter(l => l.target.node_id === n.node_id).map(l => l.source.node_id)]));
+
+    [...parents.values()].forEach(nps => {
+        nps.sort((a, b) => parents.get(b).length - parents.get(a).length);
+        for (let i = 0; i < nps.length * 0.5; i++) {
+            if (i % 2 === 1) {
+                const tmp = nps[i];
+                const endidx = nps.length - 1 - Math.floor(i / 2)
+                nps[i] = nps[endidx];
+                nps[endidx] = tmp;
+            }
+        }
+    })
+
+    const children = new Map(nodes
+        .map(n => [n.node_id,
+        links.filter(l => l.source.node_id === n.node_id)
+            .map(l => l.target.node_id)
+        ]));
+    const siblings = new Map(nodes.map(n => [n.node_id, [...(new Set(children.has(n.node_id)? children.get(n.node_id).flatMap(c => parents.get(c) || []) : [])).values()]]))
+    const distance_from_selected = new Map();
+
+    const connected_vertices = new Map();
+
+    const calculate_selected_graph = (s, i, c) => {
+        const id = s;
+        if (distance_from_selected.get(id) <= i) {
+            return;
+        }
+
+        distance_from_selected.set(id, i);
+        if(parents.has(s)) {
+            parents.get(s).forEach(p => { calculate_selected_graph(p, i + 1, s); });
+        }
+        if(children.has(s)){
+            children.get(s).forEach(c => { calculate_selected_graph(c, i + 1); });
+        }
+    }
+
+    calculate_selected_graph(selected, 0);
+
+    return {
+        level_by_node: levels,
+        parents,
+        children,
+        siblings,
+        distance_from_selected,
+        min: Math.min(...levels.values()),
+        max: Math.max(...levels.values()),
+        nodes_by_level: [...levels.entries()].reduce((acc, [n, l]) => (acc[l] ? acc[l].push(n) : acc[l] = [n], acc), {}),
+        connected_vertices
+    }
+}

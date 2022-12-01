@@ -1,4 +1,4 @@
-import { resfetch, hashcode, nolib, run, calculateLevels, ispromise, base_graph, base_node } from "./nodysseus.ts";
+import { resfetch, hashcode, nolib, run, ispromise, base_graph, base_node, lokidbToStore } from "./nodysseus.ts";
 import * as ha from "hyperapp";
 import panzoom from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
@@ -8,7 +8,9 @@ import { EditorState, Compartment } from "@codemirror/state"
 import { language } from "@codemirror/language"
 import { javascript, javascriptLanguage } from "@codemirror/lang-javascript";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
-import { ancestor_graph, contract_node, create_randid, expand_node, findViewBox, node_args } from "./util.js";
+import { ancestor_graph, contract_node, calculateLevels, create_randid, expand_node, findViewBox, node_args } from "./util.js";
+import loki from "lokijs";
+import {openDB } from "idb"
 
 const updateSimulationNodes = (dispatch, data) => {
     const simulation_node_data = new Map();
@@ -425,9 +427,9 @@ const ap_promise = (p, fn, cfn) => p && typeof p['then'] === 'function' ? cfn ? 
 
 const refresh_graph = (graph, dispatch) => {
     dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
-    const result = hlib.run({graph, fn: graph.out}, {_output: "value"}, {...hlib, ...nolib});
+    const result = hlib.run({graph, fn: graph.out}, {_output: "value"});
     // const result = hlib.run(graph, graph.out, {});
-    const display_fn = result => hlib.run({graph, fn: graph.out}, {_output: "display"});
+    const display_fn = result => hlib.run({graph, fn: graph.out}, {_output: "display"}, {...hlib, ...nolib});
     // const display_fn = result => hlib.run(graph, graph.out, {}, "display");
     const update_result_display_fn = display => result_display_dispatch(UpdateResultDisplay, {el: display && display.dom_type ? display : {dom_type: 'div', props: {}, children: []}})
     const update_info_display_fn = () => dispatch(s => [s, s.selected[0] !== s.display_graph.out 
@@ -1116,7 +1118,7 @@ const refresh_custom_editor = () => {
     if(localStorage.getItem("custom_editor")) {
         // TODO: combine with update_info
         const graph = JSON.parse(localStorage.getItem("custom_editor"));
-        const result = hlib.run({graph, fn: graph.out}, {_output: "display"}, {...hlib, ...nolib});
+        const result = hlib.run({graph, fn: graph.out}, {_output: "display"});
         custom_editor_display_dispatch(() => ({el: result}))
     } else {
         custom_editor_display_dispatch(() => ({el: {dom_type: "div", props: {}, children: []}}))
@@ -1400,13 +1402,15 @@ const runapp = (init, load_graph, _lib) => {
 let main_app_dispatch;
 
 const editor = async function(html_id, display_graph, lib, norun) {
+    nodysseusStore = await createStore();
     const simple = await resfetch("json/simple.json").then(r => r.json());
     // TODO: clean this up it's just used for side effect of initializing the db
-    run(simple);
+    // run(simple);
     const url_params = new URLSearchParams(document.location.search);
     const graph_list = JSON.parse(localStorage.getItem("graph_list")) ?? [];
     const hash_graph = window.location.hash.substring(1);
     const keybindings = await resfetch("json/keybindings.json").then(r => r.json())
+
     // let stored_graph = JSON.parse(localStorage.getItem(hash_graph ?? graph_list?.[0]));
     // stored_graph = stored_graph ? base_graph(stored_graph) : undefined
     await Promise.all(graph_list.map(id => localStorage.getItem(id)).filter(g => g).map(graph => JSON.parse(graph)).map(graph => Promise.resolve(nolib.no.runtime.add_ref(base_graph(graph)))))
@@ -1504,6 +1508,84 @@ const middleware = dispatch => (ha_action, ha_payload) => {
 
 const runh = el => el.d && el.p && el.c && ha.h(el.d, el.p, el.c);
 
+let nodysseusStore;
+
+const createStore = () => {
+  let load_callbacks = [];
+  const isBrowser = typeof window !== 'undefined';
+  const persistdb = onrefsdb => {
+    const db = new loki("nodysseus_persist.db", {
+      env: "BROWSER",
+      adapter: new (loki.prototype.getIndexedAdapter())(),
+      autoload: true,
+      autoloadCallback: () => {
+        let refsdb = db.getCollection("refs");
+
+        if(!refsdb) {
+          refsdb = db.addCollection("refs", { unique: ["id"] });
+        }
+
+        load_callbacks.forEach(lc => lc())
+        load_callbacks = false;
+
+        onrefsdb(refsdb)
+      },
+      autosave: true,
+      autosaveInterval: 4000
+    })
+  }
+
+  return new Promise((resolve, reject) => {
+    const db = new loki("nodysseus.db", {
+      env: "BROWSER",
+      persistenceMethod: "memory",
+    });
+
+
+    const nodesdb = db.addCollection("nodes", { unique: ["id"] });
+    const statedb = db.addCollection("state", { unique: ["id"] });
+    const fnsdb = db.addCollection("fns", { unique: ["id"] });
+    const parentsdb = db.addCollection("parents", { unique: ["id"] });
+
+    let nodysseusidb;
+
+    openDB("nodysseus", 2, {
+      upgrade(db) {
+        db.createObjectStore("assets")
+      }
+    }).then(db => { nodysseusidb = db })
+
+    const pdb = persistdb(refsdb =>
+      resolve({
+        refs: lokidbToStore(refsdb),
+        parents: lokidbToStore(parentsdb),
+        nodes: lokidbToStore(nodesdb),
+        state: lokidbToStore(statedb),
+        fns: lokidbToStore(fnsdb)
+      })
+    )
+  })
+}
+
+const localStore = () => {
+  let store = new Map();
+  return {
+    add: (id, data) => store.set(id, data),
+    get: (id) => store.get(id),
+    remove: (id) => store.remove(id),
+    removeAll: () => { store.clear() },
+    all: () => [...store.entries()]
+  }
+}
+
+const localNodyStore = {
+  refs: localStore(),
+  parents: localStore(),
+  nodes: localStore(),
+  state: localStore(),
+  fns: localStore(),
+}
+
 const hlib = {
     ha: { 
         middleware, 
@@ -1527,7 +1609,7 @@ const hlib = {
         }
     },
     panzoom: pzobj,
-    run: (node, args) => run(node, args, {...hlib, ...nolib}),
+    run: (node, args) => run({node, args, lib: {...hlib, ...nolib}, store: nodysseusStore}),
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX }
 }
 

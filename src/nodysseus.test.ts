@@ -1,7 +1,7 @@
-import { chdir } from "process";
-import { run, nolib, runWithDb, defaultDb } from "./nodysseus"
+import { run } from "./nodysseus"
+import {expect, test} from "@jest/globals"
 
-test('returns a single value', () => {
+test('returning a single value', () => {
   const val = {A: "x"};
   const graph = {
     id: "test",
@@ -14,8 +14,23 @@ test('returns a single value', () => {
     ]
   }
   
-  const db = defaultDb({saveDb: false})
-  const run = runWithDb(db)
+  expect(run({node: {graph, fn: "out", args: {}}, args: {}})).toEqual(val)
+})
 
-  expect(run({graph, fn: "out"})).toEqual(val)
+test('caching', () => {
+  const graph = {
+    id: "test2",
+    nodes: [
+      {id: "st", ref: "cache"},
+      {id: "val", ref: "arg", value: "val"},
+      {id: "out", ref: "return"}
+    ],
+    edges: [
+      {from: "val", to: "st", as: "value"},
+      {from: "st", to: "out", as: "value"},
+    ]
+  }
+  const a = run({node: {graph, fn: "out", args: {}}, args: {val: {a: 'A'}}});
+  const b = run({node: {graph, fn: "out", args: {}}, args: {val: {b: 'B'}}});
+  expect(a).toBe(b)
 })
