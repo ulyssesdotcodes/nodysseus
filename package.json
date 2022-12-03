@@ -19,7 +19,7 @@
   },
   "homepage": "https://gitlab.com/ulysses.codes/nodysseus#readme",
   "scripts": {
-    "package": "rollup -c",
+    "package": "esbuild .\\src\\index.js --bundle --outfile=public/index.bundle.js --sourcemap --target=es2020 --external:node:https ",
     "watch": "concurrently --raw \"npm run run:esbuild\" \"http-server -s\" \"tsc --watch --noEmit\"",
     "test": "node node_modules/jest/bin/jest.js",
     "test:watch": "node node_modules/jest/bin/jest.js --watch",
