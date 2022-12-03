@@ -1,3 +1,8 @@
+import { d3Link, d3Node, Edge, Graph } from "./types";
+
+export const ispromise = a => a && typeof a.then === 'function';
+export const isrunnable = a => a && ((a.value && a.id && !a.ref) || a.fn && a.graph);
+export const isgraph = g => g && g.out !== undefined && g.nodes !== undefined && g.edges !== undefined
 
 export const create_randid = () => Math.random().toString(36).substring(2, 9);
 export const flattenNode = (graph, levels = -1) => {
@@ -73,7 +78,7 @@ export const contract_node = (data, keep_expanded = false) => {
         const inside_nodes = [Object.assign({}, node)];
         const inside_node_map = new Map();
         inside_node_map.set(inside_nodes[0].id, inside_nodes[0]);
-        const inside_edges = new Set();
+        const inside_edges = new Set<Edge>();
 
         const q = data.display_graph.edges.filter(e => e.to === inside_nodes[0].id);
 
@@ -214,10 +219,10 @@ export const findViewBox = (nodes, links, selected, node_el_width, htmlid, dimen
     return {nodes_box_dimensions, center};
 }
 
-export const ancestor_graph = (node_id, from_graph, nolib) => {
+export const ancestor_graph = (node_id, from_graph, nolib): Graph => {
     let edges_in;
     let queue = [node_id];
-    const graph = {nodes: [], edges: []};
+    const graph = {...from_graph, nodes: [], edges: []};
     while(queue.length > 0) {
         let node_id = queue.pop();
         graph.nodes.push({...nolib.no.runtime.get_node(from_graph, node_id)})
@@ -244,7 +249,7 @@ export const node_args = (nolib, ha, graph, node_id) => {
                 .map(l => parseInt(l.as.substring(3))) ?? [])
             .reduce((acc, i) => acc > i ? acc : i + 1, 0))
     
-    const externfn = node_ref?.ref === "extern" && nolib.extern.get.fn({}, nolib, node_ref?.value)
+    const externfn = node_ref?.ref === "extern" && nolib.extern.get.fn({}, nolib, node_ref?.value, undefined, undefined, nolib)
     const baseargs = !argslist_path && externfn
             ? externfn.args
               ? externfn.args
@@ -291,7 +296,7 @@ export const bfs = (graph, fn) => {
 }
 
 
-export const calculateLevels = (nodes, links, graph, selected) => {
+export const calculateLevels = (nodes: Array<d3Node>, links: Array<d3Link>, graph: Graph, selected: string) => {
     const find_childest = n => {
         const e = graph.edges.find(ed => ed.from === n);
         if (e) {
@@ -306,7 +311,12 @@ export const calculateLevels = (nodes, links, graph, selected) => {
     const levels = new Map();
     bfs(graph, (id, level) => levels.set(id, Math.min(levels.get(id) || Number.MAX_SAFE_INTEGER, level)))(top, 0);
 
-    const parents = new Map(nodes.map(n => [n.node_id, links.filter(l => l.target.node_id === n.node_id).map(l => l.source.node_id)]));
+    const parents = new Map(
+      nodes.map(n => [
+        n.node_id, 
+        links.filter(l => typeof l.target == "object" ? l.target.node_id : l.target === n.node_id)
+        .map(l => typeof l.source === "object" ? l.source.node_id : String(l.source))
+      ]));
 
     [...parents.values()].forEach(nps => {
         nps.sort((a, b) => parents.get(b).length - parents.get(a).length);
@@ -322,15 +332,15 @@ export const calculateLevels = (nodes, links, graph, selected) => {
 
     const children = new Map(nodes
         .map(n => [n.node_id,
-        links.filter(l => l.source.node_id === n.node_id)
-            .map(l => l.target.node_id)
+        links.filter(l => typeof l.source === "object" ? l.source.node_id : l.source === n.node_id)
+            .map(l => typeof l.target === "object" ? l.target.node_id : String(l.target))
         ]));
     const siblings = new Map(nodes.map(n => [n.node_id, [...(new Set(children.has(n.node_id)? children.get(n.node_id).flatMap(c => parents.get(c) || []) : [])).values()]]))
     const distance_from_selected = new Map();
 
     const connected_vertices = new Map();
 
-    const calculate_selected_graph = (s, i, c) => {
+    const calculate_selected_graph = (s, i) => {
         const id = s;
         if (distance_from_selected.get(id) <= i) {
             return;
@@ -338,7 +348,7 @@ export const calculateLevels = (nodes, links, graph, selected) => {
 
         distance_from_selected.set(id, i);
         if(parents.has(s)) {
-            parents.get(s).forEach(p => { calculate_selected_graph(p, i + 1, s); });
+            parents.get(s).forEach(p => { calculate_selected_graph(p, i + 1); });
         }
         if(children.has(s)){
             children.get(s).forEach(c => { calculate_selected_graph(c, i + 1); });

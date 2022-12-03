@@ -1,14 +1,25 @@
+import { SimulationLinkDatum, SimulationNodeDatum } from "d3-force";
 
-export type Node = ({
-  id: string;
-  name?: string;
-} & (
-  {value: any}
-  | {value?: any, ref: string}
-  | {script: string} // deprecated
-)) | (Graph & {value?: any});
+export type Node = GraphNode | ScriptNode | ValueNode | RefNode;
+
+type BaseNode = {id: string, name?: string};
+export type GraphNode = Graph & {value?: any};
+export type ScriptNode = BaseNode & {script: string};
+export type ValueNode = BaseNode & {value?: any};
+export type RefNode = BaseNode & {ref: string, value?: any}
+
 
 export const isNodeGraph = (n: Node): n is Graph => !!(n as Graph).nodes
+export const isNodeScript = (n: Node): n is ScriptNode => !!(n as ScriptNode)?.script;
+export const isNodeRef = (n: Node): n is RefNode => !!(n as RefNode)?.ref;
+
+export type d3Node = SimulationNodeDatum & {
+  node_id: string
+} & Node
+
+export type d3Link = SimulationLinkDatum<d3Node> & {
+  edge: Edge
+}
 
 export type Graph = {
   id: string,

@@ -1,8 +1,9 @@
 import set from "just-safe-set";
 import loki from "lokijs";
-import * as util from "./util.js"
+import { ispromise } from "./util"
 import { isNodeGraph, Graph, LokiT, Node, NodysseusStore, Store, Result, Runnable, isValue } from "./types"
 import generic from "./generic.js";
+import { create_fn } from "./externs";
 
 const Nodysseus = (): NodysseusStore => {
   const isBrowser = typeof window !== 'undefined';
@@ -77,7 +78,7 @@ let resfetch = typeof fetch !== "undefined" ? fetch :
         req.end();
     }));
 
-function nodysseus_get(obj, propsArg, lib, defaultValue=undefined) {
+export const nodysseus_get = (obj, propsArg, lib, defaultValue=undefined) => {
     let objArg = obj;
     let level = 0;
   if (!obj) {
@@ -129,6 +130,7 @@ function nodysseus_get(obj, propsArg, lib, defaultValue=undefined) {
   }
   return obj;
 }
+
 
 function compare(value1, value2) {
     if (value1 === value2) {
@@ -446,7 +448,7 @@ const run_node = (node, nodeArgs, graphArgs, lib) => {
             const current = lib.no.runtime.get_graph(newgraphid);
             lib.no.runtime.set_parent(newgraphid, graphid); // before so that change/update has the parent id
             if(current?.refid !== node_ref.id){
-              lib.no.runtime.change_graph({...node_ref, id: newgraphid, refid: node_ref.id})
+              lib.no.runtime.change_graph({...node_ref, id: newgraphid, refid: node_ref.id}, lib)
             } else {
               lib.no.runtime.update_graph(newgraphid)
             }
@@ -507,9 +509,6 @@ const run_graph = (graph, node_id, graphArgs, lib) => {
 }
 
 
-const ispromise = a => a && typeof a.then === 'function';
-const isrunnable = a => a && ((a.value && a.id && !a.ref) || a.fn && a.graph);
-const isgraph = g => g && g.out !== undefined && g.nodes !== undefined && g.edges !== undefined
 const getmap = (map, id) => {
     return id ? map.get(id) : id;
 }
@@ -528,6 +527,21 @@ const getorset = (map, id, value_fn=undefined) => {
 
 const base_node = node => node.ref || node.extern ? ({id: node.id, value: node.value, name: node.name, ref: node.ref}) : base_graph(node);
 const base_graph = graph => ({id: graph.id, value: graph.value, name: graph.name, nodes: graph.nodes, edges: graph.edges, out: graph.out})
+
+const run = ({node, args, lib, store}: {node: Runnable<any>, args?: any, lib?: any, store?: NodysseusStore}) => {
+  if(store) {
+    nodysseus = store;
+  }
+
+  lib = lib ?? nolib
+  if(isValue(node)) {
+    return node.__value;
+  }
+
+  lib.no.runtime.update_graph(node.graph, lib);
+  const res = run_node(node, Object.fromEntries(Object.entries(args ?? {}).map(e => [e[0], lib.no.of(e[1])])), node.args, lib);
+  return ispromise(res) ? res.then(r => r?.__value) : res?.__value
+}
 
 const nolib = {
   no: {
@@ -594,12 +608,15 @@ const nolib = {
         getorset(get_cache(graph)[path], id, valfn);
       let animationframe;
       const publish = (event, data, lib) => {
-
         const runpublish = (data) => {
           event_data.set(event, data);
           if (event === "graphchange") {
+            if(!data) {
+              return;
+            }
             const gcache = get_cache(data.id);
             gcache.graph = data;
+            getorset(event_listeners, event, () => new Map());
           }
 
           const listeners = getorset(event_listeners, event, () => new Map());
@@ -679,7 +696,7 @@ const nolib = {
           remove_listener(event, listener_id);
         }
 
-        listeners.set(listener_id, fn);
+        listeners.set(listener_id, input_fn);
 
         if (event === "animationframe") {
           requestAnimationFrame(() => publish(event, {}, lib));
@@ -700,7 +717,7 @@ const nolib = {
         const graph_listeners = event_listeners_by_graph.get(graph_id);
         if (graph_listeners) {
           for (const evt of graph_listeners.entries()) {
-            getorset(event_listeners, evt[0]?.delete(evt[1]));
+            getorset(event_listeners, evt[0])?.delete(evt[1]);
           }
         }
       };
@@ -744,7 +761,9 @@ const nolib = {
         if (parent) {
           change_graph(parent, lib);
         } else {
-          nodysseus.refs.add(graph.id, graph.__isnodysseus ? graph : {...graph, __isnodysseus: true})
+          if(!graph.__isnodysseus) {
+            nodysseus.refs.add(graph.id, graph)
+          }
           publish("graphchange", graph, lib);
           publish("graphupdate", graph, lib);
         }
@@ -842,6 +861,7 @@ const nolib = {
       (generic as Graph).nodes.map(add_ref);
 
       return {
+        run: run,
         is_cached: (graph, id) => get_cache(graph.id),
         set_cached: (graph, id) => get_cache(graph.id).is_cached.add(id),
         get_ref,
@@ -864,12 +884,12 @@ const nolib = {
 
             fn = Object.assign(fn ?? {}, {
               script,
-              fn: new Function(
-                `return function _${name.replace(
+              fn: new Function( `return function _${name.replace(
                   /(\s|\/)/g,
                   "_"
                 )}(${orderedargs}){${script}}`
               )(),
+              // ` this comment is here because my syntax highlighter is not well
             });
 
             nodysseus.fns.add(fnid, fn)
@@ -1049,6 +1069,7 @@ const nolib = {
             "fn": "runfn",
             "graph": {
               "id": `run_${fn.fn}`,
+              "out": "runfn",
               "nodes": [
                 {"id": "fnarg", "ref": "arg", "value": "fnr"},
                 {"id": "argsarg", "ref": "arg", "value": "argsr"},
@@ -1068,62 +1089,7 @@ const nolib = {
     },
     create_fn: {
       args: ["runnable", "_lib"],
-      fn: (runnable, lib) => {
-        const __args = runnable.args.__args;
-
-        const graph = util.ancestor_graph(runnable.fn, runnable.graph, lib);
-        graph.id = runnable.fn + "-fn";
-        const graphArgs = new Set(graph.nodes.filter(n => n.ref === "arg").map(a => a.value));
-
-        const baseArgs = {};
-        for(const arg of graphArgs) {
-          baseArgs[arg] = nodysseus_get(runnable.args, arg, lib)
-        }
-
-        let text = "";
-        const _extern_args = {};
-
-        graph.nodes.forEach(n => {
-          if(n.ref === "arg") {
-            return;
-          }
-          const noderef = lib.no.runtime.get_ref(n.ref) ?? n;
-          if(noderef.id === "script") {
-            // TODO: extract this logic from node_script
-            let inputs = graph.edges.filter(e => e.to === n.id).map(edge => ({edge, node: graph.nodes.find(n => n.id === edge.from)}));
-            text += `function fn_${n.id}(){\n${inputs.map(input => `let ${input.edge.as} = ${input.node.ref === "arg" ? `fnargs["${input.node.value}"]` : `fn_${input.node.id}()`};`).join("\n")}\n\n${n.script ?? n.value}}\n\n`
-          } else if(noderef.ref == "extern") {
-            _extern_args[n.id] = {};
-            const extern = nodysseus_get(lib, noderef.value, lib)
-            let inputs = graph.edges.filter(e => e.to === n.id).map(edge => ({edge, node: graph.nodes.find(n => n.id === edge.from)}));
-            const varset = []
-            extern.args.map(a => {
-              if(a === "__graph_value" || a === "_node") {
-                _extern_args[n.id][a] = a === "__graph_value" ? n.value
-                  : "_node" ? n
-                  : undefined;
-                varset.push(`let ${a} = _extern_args[${n.id}][${a}];`)
-              } else if (a === "_node_args") {
-                varset.push(`let ${a} = {\n${inputs.map(input => `${input.edge.as}: ${input.node.ref === "arg" ? `fnargs.${input.node.value}` : `fn_${input.edge.from}()`}`).join(",\n")}};`);
-              } else {
-                const input = inputs.find(i => i.edge.as === a);
-                const inputNode = graph.nodes.find(n => n.id === input.edge.from);
-                varset.push(`let ${a} = ${inputNode.ref === "arg" ? `fnargs.${input.edge.as}` : `fn_${input.edge.from}()`};`)
-              }
-            })
-            text += `function fn_${n.id}(){\n${varset.join("\n")}\nreturn (${extern.fn.toString()})(${extern.args.join(", ")})}\n\n`
-          }
-        })
-
-        const fninputs = graph.edges.filter(e => e.to === runnable.fn)
-
-        // for now just assumeing everything is an arg of the last node out
-        // TODO: tree walk
-        text += `return fn_${runnable.fn}()`//({${[...fninputs].map(rinput => `${rinput.as}: fnargs.${graph.nodes.find(n => n.id === rinput.from).value}`).join(",")}})`
-        const fn = new Function("fnargs", text);
-
-        return fn;
-      }
+      fn: create_fn
     },
     switch: {
       rawArgs: true,
@@ -1398,8 +1364,8 @@ const nolib = {
     },
     fetch: {
       resolve: true,
-      args: ["_node", "url", "params"],
-      fn: (node, url, params) => resfetch(url || node.value, params),
+      args: ["__graph_value", "url", "params"],
+      fn: (nodevalue, url, params) => resfetch(url || nodevalue, params),
     },
     import_module: {
       args: ["url", "__graph_value"],
@@ -1675,6 +1641,19 @@ const nolib = {
     typeof: {
       args: ["value"],
       fn: (value) => typeof value
+    },
+    construct: {
+      args: ["args", "__graph_value"],
+      fn: (args, nodevalue) => new (Function.prototype.bind.apply(window[nodevalue], [null, ...args]))
+    },
+    addEventListeners: {
+      args: ["target", "_node_args", "_lib"],
+      fn: (target, nodeargs, lib) => {
+        Object.entries(nodeargs)
+        .filter(kv => kv[0] !== "target")
+        .forEach(([k, fn]: [string, Runnable<any>]) => target[k] = event => fn && run({node: fn, args: {event}, lib}))
+        return target;
+      }
     }
   },
   // THREE
@@ -1688,20 +1667,5 @@ const add_default_nodes_and_edges = g => ({
         .filter(n => !generic_nodes.has(n.id))
         .concat(generic.nodes)
 })
-
-const run = ({node, args, lib, store}: {node: Runnable<any>, args?: any, lib?: any, store?: NodysseusStore}) => {
-  if(store) {
-    nodysseus = store;
-  }
-
-  lib = lib ?? nolib
-  if(isValue(node)) {
-    return node.__value;
-  }
-
-  lib.no.runtime.update_graph(node.graph, lib);
-  const res = run_node(node, Object.fromEntries(Object.entries(args ?? {}).map(e => [e[0], lib.no.of(e[1])])), node.args, lib);
-  return ispromise(res) ? res.then(r => r?.__value) : res?.__value
-}
 
 export { nolib, run, compare, hashcode, add_default_nodes_and_edges, ispromise, NodysseusError, base_graph, base_node, resfetch };

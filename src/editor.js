@@ -1,4 +1,4 @@
-import { resfetch, hashcode, nolib, run, ispromise, base_graph, base_node, lokidbToStore } from "./nodysseus.ts";
+import { resfetch, hashcode, nolib, run, ispromise, base_graph, base_node, lokidbToStore } from "./nodysseus";
 import * as ha from "hyperapp";
 import panzoom from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
@@ -8,7 +8,7 @@ import { EditorState, Compartment } from "@codemirror/state"
 import { language } from "@codemirror/language"
 import { javascript, javascriptLanguage } from "@codemirror/lang-javascript";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
-import { ancestor_graph, contract_node, calculateLevels, create_randid, expand_node, findViewBox, node_args } from "./util.js";
+import { ancestor_graph, contract_node, calculateLevels, create_randid, expand_node, findViewBox, node_args } from "./util";
 import loki from "lokijs";
 import {openDB } from "idb"
 
@@ -654,13 +654,13 @@ const CreateNode = (state, {node, child, child_as, parent}) => [
         history: state.history.concat([{action: 'add_node', node, child, child_as}])
     },
     [dispatch => {
-        nolib.no.runtime.add_node(state.display_graph, node)
+        nolib.no.runtime.add_node(state.display_graph, node, {...hlib, ...nolib})
         nolib.no.runtime.update_edges(state.display_graph, 
             parent 
                 ? [{from: node.id, to: child, as: parent.as}, {from: parent.from, to: node.id, as: 'arg0'}] 
                 : [{from: node.id, to: child, as: child_as}], 
             parent ? [{from: parent.from, to: child}] : []
-        )
+        , {...hlib, ...nolib})
         // Hacky - have to wait until the node is finished adding and the graph callback takes place before updating selected node.
         setTimeout(() => requestAnimationFrame(() => dispatch(SelectNode, {node_id: node.id})), 50);
     }]
@@ -672,7 +672,7 @@ const DeleteNode = (state, {node_id}) => [
         history: state.history.concat([{action: 'delete_node', node_id}]) 
     },
     [(dispatch, {node_id}) => requestAnimationFrame(() => dispatch(SelectNode, {node_id})), {node_id: nolib.no.runtime.get_edge_out(state.display_graph, node_id).to}],
-    [() => nolib.no.runtime.delete_node(state.display_graph, node_id)]
+    [() => nolib.no.runtime.delete_node(state.display_graph, node_id, {...hlib, ...nolib})]
 ]
 
 const ExpandContract = (state, {node_id}) => {
@@ -686,7 +686,7 @@ const ExpandContract = (state, {node_id}) => {
         [dispatch => {
             requestAnimationFrame(() => {
                 // Have to be the same time so the right node is selected
-                nolib.no.runtime.change_graph(update.display_graph);
+                nolib.no.runtime.change_graph(base_graph(update.display_graph), {...hlib, ...nolib});
                 dispatch(SelectNode, {node_id: update.selected[0]})
             })
         }]
@@ -697,19 +697,19 @@ const CreateRef = (state, {node}) => [
     state,
     [dispatch => {
         const graph = {...base_graph(node), id: node.name, value: undefined};
-        nolib.no.runtime.change_graph(graph);
+        nolib.no.runtime.change_graph(base_graph(graph), {...hlib, ...nolib});
         save_graph(graph);
         nolib.no.runtime.add_node(state.display_graph, {
             id: node.id,
             value: node.value,
             ref: node.name,
             name: undefined,
-        });
+        }, {...hlib, ...nolib});
     }]
 ]
 
 const Copy = (state, {cut, as}) => {
-    return {...state, copied: {graph: ancestor_graph(nolib, state.selected[0], state.display_graph), root: state.selected[0], as}};
+    return {...state, copied: {graph: ancestor_graph(state.selected[0], state.display_graph, nolib), root: state.selected[0], as}};
 }
 
 const Paste = state => [
@@ -719,13 +719,15 @@ const Paste = state => [
         state.copied.graph.nodes.forEach(n => {
             const new_id = create_randid();
             node_id_map[n.id] = new_id;
-            nolib.no.runtime.add_node(state.display_graph, {...n, id: new_id})
+            nolib.no.runtime.add_node(state.display_graph, {...n, id: new_id}, {...hlib, ...nolib})
         });
         nolib.no.runtime.update_edges(
             state.display_graph, 
             state.copied.graph.edges
                 .map(e => ({...e, from: node_id_map[e.from], to: node_id_map[e.to]}))
-                .concat([{from: node_id_map[state.copied.root], to: state.selected[0], as: state.copied.as}])
+                .concat([{from: node_id_map[state.copied.root], to: state.selected[0], as: state.copied.as}]),
+          [],
+          {...hlib, ...nolib}
             );
         requestAnimationFrame(() => dispatch(SelectNode, {node_id: node_id_map[state.copied.root], focus_property: 'edge'}))
     }]
@@ -766,7 +768,7 @@ const ChangeDisplayGraphId = (dispatch, {id, select_out}) => {
                 requestAnimationFrame(() => {
                     update_graph_list(id)
                     const new_graph = graph ?? Object.assign({}, base_graph(state.display_graph), {id});
-                    nolib.no.runtime.change_graph(new_graph);
+                    nolib.no.runtime.change_graph(new_graph, {...hlib, ...nolib});
                     nolib.no.runtime.remove_graph_listeners(state.display_graph_id);
                     dispatch(s => {
                         const news = {...s, display_graph: new_graph, selected: [new_graph.out], display_graph_id: new_graph.id}
@@ -809,7 +811,7 @@ const Search = (state, {payload, nodes}) => {
     ]
 }
 
-const UpdateNodeEffect = (_, {display_graph, node}) => nolib.no.runtime.add_node( display_graph, node)
+const UpdateNodeEffect = (_, {display_graph, node}) => nolib.no.runtime.add_node( display_graph, node, {...hlib, ...nolib})
 const UpdateNode = (state, {node, property, value, display_graph}) => [
     {
         ...state, 
@@ -826,7 +828,7 @@ const UpdateNode = (state, {node, property, value, display_graph}) => [
 
 const UpdateEdge = (state, {edge, as}) => [
     state,
-    [() => nolib.no.runtime.edit_edge(state.display_graph, {...edge, as}, edge)]
+    [() => nolib.no.runtime.edit_edge(state.display_graph, {...edge, as}, edge, {...hlib, ...nolib})]
 ]
 
 const OpenMenu = state => [{...state, menu: true}]
@@ -1192,7 +1194,7 @@ const runapp = (init, load_graph, _lib) => {
             info_display_dispatch = info_display(init.html_id);
             custom_editor_display_dispatch = custom_editor_display(init.html_id)
             refresh_custom_editor()
-            nolib.no.runtime.change_graph(init.display_graph)
+            nolib.no.runtime.change_graph(base_graph(init.display_graph), {...hlib, ...nolib})
         })],
         [ChangeDisplayGraphId, {id: load_graph, select_out: true}],
         [UpdateSimulation, {...init, action: SimulationToHyperapp}],
