@@ -838,13 +838,14 @@
       "id": "import_json",
       "description": "Imports the node or nodes found at the `url`.",
       "name": "import_json",
-      "out": "lapeojg",
+      "out": "out",
       "nodes": [
         {
           "id": "lapeojg",
-          "script": "import_graph.forEach(_lib.no.runtime.add_ref); _lib.no.runtime.change_graph(_lib.no.runtime.get_graph(graphid))",
+          "script": "console.log('importj son'); console.log(import_graph); import_graph.forEach(_lib.no.runtime.add_ref); _lib.no.runtime.change_graph(_lib.no.runtime.get_graph(graphid))",
           "name": "out"
         },
+        { "id": "out", "ref": "return" },
         { "id": "3zfjt1h", "ref": "call" },
         { "id": "05eag47", "ref": "arg", "value": "name" },
         { "id": "graphid", "ref": "arg", "value": "__graphid" },
@@ -856,6 +857,7 @@
         { "as": "import_graph", "from": "3zfjt1h", "to": "lapeojg" },
         { "from": "graphid", "to": "lapeojg", "as": "graphid" },
         { "from": "05eag47", "to": "lapeojg", "as": "name" },
+        { "from": "lapeojg", "to": "out", "as": "value" },
         { "as": "self", "from": "2vtokcl", "to": "3zfjt1h" },
         { "from": "i9x02is", "to": "3zfjt1h", "as": "fn" },
         { "from": "irr99xz", "to": "2vtokcl", "as": "url" }
@@ -1158,7 +1160,7 @@
           { "id": "graph_value", "ref": "arg", "value": "__graph_value"},
           {"id": "filter_children_fn", "script": "return !!(element_dt || element_tv)"},
           {"id": "filter_children_fn_runnable", "ref": "runnable"},
-          {"id": "fill_children_fn", "script": "console.log('fillchildren'); console.log(element); return element.el ?? typeof element === 'string' ? {dom_type: 'text_value', text: element} : element"},
+          {"id": "fill_children_fn", "script": "return element?.el ?? typeof element === 'string' ? {dom_type: 'text_value', text: element} : element"},
           {"id": "fill_children_fn_runnable", "ref": "runnable"},
           {"id": "wrapped_children", "script": "console.log(children); return Array.isArray(children) ? children : [children]"},
           {"id": "filter_children", "ref": "filter"},

@@ -1,4 +1,4 @@
-import { resfetch, hashcode, nolib, run, ispromise, base_graph, base_node, lokidbToStore } from "./nodysseus";
+import { resfetch, hashcode, nolib, run, ispromise, base_graph, base_node, lokidbToStore, initStore } from "./nodysseus";
 import * as ha from "hyperapp";
 import panzoom from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
@@ -11,6 +11,30 @@ import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { ancestor_graph, contract_node, calculateLevels, create_randid, expand_node, findViewBox, node_args } from "./util";
 import loki from "lokijs";
 import {openDB } from "idb"
+import * as Y from "yjs"
+import {IndexeddbPersistence} from "y-indexeddb";
+import { WebsocketProvider } from "y-websocket";
+
+// const azureconnmap = new Map()
+//
+//
+// class AzureWebrtcProvider {
+//   connect() {
+//     super.connect()
+//     const azureconn = map.setifUndefined(azureconnmap, , () => new )
+//   }
+// }
+
+class NodyWS extends WebSocket {
+  send(v){
+    super.send(JSON.stringify({
+      group: 'group1',
+      data: v,
+      datatype: 'json'
+    }))
+  }
+}
+
 
 const updateSimulationNodes = (dispatch, data) => {
     const simulation_node_data = new Map();
@@ -746,7 +770,7 @@ const save_graph = graph => {
   console.log(`saving ${graph.id}`)
   graph = base_graph(graph);
   const graphstr = JSON.stringify(base_graph(graph)); 
-  localStorage.setItem(graph.id, graphstr); 
+  // localStorage.setItem(graph.id, graphstr); 
   nolib.no.runtime.add_ref(graph);
 }
 
@@ -1405,6 +1429,8 @@ let main_app_dispatch;
 
 const editor = async function(html_id, display_graph, lib, norun) {
     nodysseusStore = await createStore();
+    // nodysseusStore = await yNodyStore();
+    initStore(nodysseusStore)
     const simple = await resfetch("json/simple.json").then(r => r.json());
     // TODO: clean this up it's just used for side effect of initializing the db
     // run(simple);
@@ -1587,6 +1613,54 @@ const localNodyStore = {
   state: localStore(),
   fns: localStore(),
 }
+
+const ydocStore = async (persist = false) => {
+  const ydoc = new Y.Doc()
+  const ymap = ydoc.getMap()
+
+  ydoc.on('update', event =>{
+    // console.log('change detected')
+    // console.log(event);
+  })
+
+  if(persist) {
+    const indexeddbProvider = new IndexeddbPersistence(persist, ydoc)
+    indexeddbProvider.whenSynced.then(v => (console.log('loaded from indexeddb'), console.log(v)))
+
+    const url = await fetch("http://localhost:7071/api/Negotiate?userId=me").then(r => r.json())
+    console.log("syncing on ")
+    console.log(url.url)
+    const wsurl = new URL(url.url)
+
+    // const wsprovider = new WebsocketProvider('wss://nodysseus.webpubsub.azure.com/client/hubs', 'collaboration', ydoc, {
+    //   WebSocketPolyfill: NodyWS,
+    //   params: {access_token: wsurl.searchParams.get('access_token')}
+    // })
+    //
+    // const oldonmessage= wsprovider.ws.onmessage;
+    // wsprovider.ws.onmessage = (v) => {
+    //   oldonmessage(v)
+    // }
+  }
+
+  return {
+    get: id => ymap.get(id),
+    add: (id, data) => {
+      ymap.set(id, {...data})
+    },
+    remove: id => ymap.delete(id),
+    removeAll: () => {},
+    all: () => [...ymap.values()]
+  }
+}
+const yNodyStore = async () => ({
+  refs: await ydocStore('refs'),
+  parents: await ydocStore(),
+  nodes: await ydocStore(),
+  state: await ydocStore(),
+  fns: await ydocStore(),
+})
+
 
 const hlib = {
     ha: { 

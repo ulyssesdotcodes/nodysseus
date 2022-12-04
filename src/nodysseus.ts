@@ -53,7 +53,7 @@ export const lokidbToStore = <T>(collection: loki.Collection<LokiT<T>>) => ({
   all: () => collection.where(_ => true).map(v => v.data)
 })
 
-let nodysseus: NodysseusStore = Nodysseus();
+let nodysseus: NodysseusStore;
 
 let resfetch = typeof fetch !== "undefined" ? fetch : 
     (urlstr, params) => import('node:https').then(https => new Promise((resolve, reject) => {
@@ -529,9 +529,7 @@ const base_node = node => node.ref || node.extern ? ({id: node.id, value: node.v
 const base_graph = graph => ({id: graph.id, value: graph.value, name: graph.name, nodes: graph.nodes, edges: graph.edges, out: graph.out})
 
 const run = ({node, args, lib, store}: {node: Runnable<any>, args?: any, lib?: any, store?: NodysseusStore}) => {
-  if(store) {
-    nodysseus = store;
-  }
+  initStore(store);
 
   lib = lib ?? nolib
   if(isValue(node)) {
@@ -541,6 +539,18 @@ const run = ({node, args, lib, store}: {node: Runnable<any>, args?: any, lib?: a
   lib.no.runtime.update_graph(node.graph, lib);
   const res = run_node(node, Object.fromEntries(Object.entries(args ?? {}).map(e => [e[0], lib.no.of(e[1])])), node.args, lib);
   return ispromise(res) ? res.then(r => r?.__value) : res?.__value
+}
+
+const initStore = (store: NodysseusStore | undefined = undefined) => {
+  if(store) {
+    nodysseus = store;
+  } else if(!nodysseus) {
+    nodysseus = Nodysseus();
+  }
+
+  if(!nolib.no.runtime) {
+    nolib.no.runtime = nolib.no.runtimefn()
+  }
 }
 
 const nolib = {
@@ -587,7 +597,8 @@ const nolib = {
     base_graph,
     base_node,
     NodysseusError,
-    runtime: (function () {
+    runtime: undefined,
+    runtimefn: (function () {
 
       const new_graph_cache = (graph) => ({
         id: graph.id,
@@ -696,7 +707,7 @@ const nolib = {
           remove_listener(event, listener_id);
         }
 
-        listeners.set(listener_id, input_fn);
+        listeners.set(listener_id, fn);
 
         if (event === "animationframe") {
           requestAnimationFrame(() => publish(event, {}, lib));
@@ -1021,7 +1032,7 @@ const nolib = {
           requestAnimationFrame(() => nolib.no.runtime.animate());
         },
       };
-    })(),
+    }),
   },
   extern: {
     // runGraph: F<A> => A
@@ -1668,4 +1679,4 @@ const add_default_nodes_and_edges = g => ({
         .concat(generic.nodes)
 })
 
-export { nolib, run, compare, hashcode, add_default_nodes_and_edges, ispromise, NodysseusError, base_graph, base_node, resfetch };
+export { nolib, run, initStore, compare, hashcode, add_default_nodes_and_edges, ispromise, NodysseusError, base_graph, base_node, resfetch };
