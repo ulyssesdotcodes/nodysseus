@@ -14,6 +14,7 @@ import {openDB } from "idb"
 import * as Y from "yjs"
 import {IndexeddbPersistence} from "y-indexeddb";
 import { WebsocketProvider } from "y-websocket";
+import { WebrtcProvider } from "y-webrtc";
 
 // const azureconnmap = new Map()
 //
@@ -1441,7 +1442,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
 
     // let stored_graph = JSON.parse(localStorage.getItem(hash_graph ?? graph_list?.[0]));
     // stored_graph = stored_graph ? base_graph(stored_graph) : undefined
-    await Promise.all(graph_list.map(id => localStorage.getItem(id)).filter(g => g).map(graph => JSON.parse(graph)).map(graph => Promise.resolve(nolib.no.runtime.add_ref(base_graph(graph)))))
+    // await Promise.all(graph_list.map(id => localStorage.getItem(id)).filter(g => g).map(graph => JSON.parse(graph)).map(graph => Promise.resolve(nolib.no.runtime.add_ref(base_graph(graph)))))
     // Promise.resolve(stored_graph ?? (hash_graph ? resfetch(`json/${hash_graph}.json`).then(r => r.status !== 200 ? simple : r.json()).catch(_ => simple) : simple))
         // .then(display_graph => {
 
@@ -1614,23 +1615,27 @@ const localNodyStore = {
   fns: localStore(),
 }
 
-const ydocStore = async (persist = false) => {
+const ydocStore = async (persist = false, update = undefined) => {
   const ydoc = new Y.Doc()
   const ymap = ydoc.getMap()
 
-  ydoc.on('update', event =>{
-    // console.log('change detected')
-    // console.log(event);
-  })
+
+  if(update) {
+    ymap.observe(event =>{
+      update(event)
+    })
+  }
 
   if(persist) {
     const indexeddbProvider = new IndexeddbPersistence(persist, ydoc)
     indexeddbProvider.whenSynced.then(v => (console.log('loaded from indexeddb'), console.log(v)))
 
-    const url = await fetch("http://localhost:7071/api/Negotiate?userId=me").then(r => r.json())
-    console.log("syncing on ")
-    console.log(url.url)
-    const wsurl = new URL(url.url)
+    const webrtcprovider = new WebrtcProvider('nodysseus', ydoc)
+
+    // const url = await fetch("http://localhost:7071/api/Negotiate?userId=me").then(r => r.json())
+    // console.log("syncing on ")
+    // console.log(url.url)
+    // const wsurl = new URL(url.url)
 
     // const wsprovider = new WebsocketProvider('wss://nodysseus.webpubsub.azure.com/client/hubs', 'collaboration', ydoc, {
     //   WebSocketPolyfill: NodyWS,
@@ -1654,7 +1659,17 @@ const ydocStore = async (persist = false) => {
   }
 }
 const yNodyStore = async () => ({
-  refs: await ydocStore('refs'),
+  refs: await ydocStore('refs', event => {
+    if(!main_app_dispatch) {
+      return;
+    }
+    console.log(event)
+    const updatedgraph = event.keysChanged.values().next().value;
+    requestAnimationFrame(() =>  {
+      console.log(nolib.no.runtime.get_ref(updatedgraph))
+        main_app_dispatch(s => s.display_graph_id === updatedgraph ? [{...s, display_graph: nolib.no.runtime.get_ref(updatedgraph)}, [UpdateSimulation]] : [s])
+    }) 
+  }),
   parents: await ydocStore(),
   nodes: await ydocStore(),
   state: await ydocStore(),
