@@ -1382,6 +1382,16 @@ const runapp = (init, load_graph, _lib) => {
                             ]]
                             break;
                         }
+                        case "undo": {
+                          console.log('undoing')
+                          nodysseusStore.refs.undo()
+                          break;
+                        }
+                        case "redo": {
+                          console.log('redoing')
+                          nodysseusStore.refs.redo()
+                          break;
+                        }
                         default: {
                             if(result !== undefined) {
                                 console.log(`Not implemented ${result}`)
@@ -1591,21 +1601,21 @@ const ydocStore = async (persist = false, update = undefined) => {
 
   if(update) {
     ymap.observe(event =>{
-      if(!event.transaction.local) {
+      console.log(event);
+      if(!event.transaction.local || event.transaction.origin === undoManager) {
         update(event)
       }
     })
   }
+  const params = new URLSearchParams(location.search)
+  let undoManager;
 
   if(persist) {
     const indexeddbProvider = new IndexeddbPersistence(persist, ydoc)
     await indexeddbProvider.whenSynced.then(v => (console.log('loaded from indexeddb'), console.log(v)))
-    const params = new URLSearchParams(location.search)
+    new WebrtcProvider(`nodysseus${params.get("rtcroom")}`, ydoc)
 
-    if(params.get("rtcroom") !== undefined) {
-      console.log(params.get("rtcroom"))
-      const webrtcprovider = new WebrtcProvider(`nodysseus${params.get("rtcroom")}`, ydoc)
-    }
+    undoManager = new Y.UndoManager(ymap)
 
     // const url = await fetch("http://localhost:7071/api/Negotiate?userId=me").then(r => r.json())
     // console.log("syncing on ")
@@ -1630,12 +1640,14 @@ const ydocStore = async (persist = false, update = undefined) => {
     },
     remove: id => ymap.delete(id),
     removeAll: () => {},
-    all: () => [...ymap.values()]
+    all: () => [...ymap.values()],
+    undo: persist && (() => undoManager.undo()),
+    redo: persist && (() => undoManager.redo()),
   }
 }
 const yNodyStore = async () => ({
   refs: await ydocStore('refs', event => {
-    if(!main_app_dispatch) {
+    if(!main_app_dispatch || event.keysChanged.size > 1) {
       return;
     }
 

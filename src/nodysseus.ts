@@ -871,6 +871,10 @@ const nolib = {
 
       (generic as Graph).nodes.map(add_ref);
 
+      if(nodysseus.refs.startListening) {
+        nodysseus.refs.startListening()
+      }
+
       return {
         run: run,
         is_cached: (graph, id) => get_cache(graph.id),
