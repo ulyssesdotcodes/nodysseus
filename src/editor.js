@@ -11,20 +11,6 @@ import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { ancestor_graph, contract_node, calculateLevels, create_randid, expand_node, findViewBox, node_args } from "./util";
 import loki from "lokijs";
 import {openDB } from "idb"
-import * as Y from "yjs"
-import {IndexeddbPersistence} from "y-indexeddb";
-import { WebsocketProvider } from "y-websocket";
-import { WebrtcProvider } from "y-webrtc";
-
-// const azureconnmap = new Map()
-//
-//
-// class AzureWebrtcProvider {
-//   connect() {
-//     super.connect()
-//     const azureconn = map.setifUndefined(azureconnmap, , () => new )
-//   }
-// }
 
 class NodyWS extends WebSocket {
   send(v){
@@ -1595,87 +1581,6 @@ const createStore = () => {
     )
   })
 }
-
-const localStore = () => {
-  let store = new Map();
-  return {
-    add: (id, data) => store.set(id, data),
-    get: (id) => store.get(id),
-    remove: (id) => store.remove(id),
-    removeAll: () => { store.clear() },
-    all: () => [...store.entries()]
-  }
-}
-
-const localNodyStore = {
-  refs: localStore(),
-  parents: localStore(),
-  nodes: localStore(),
-  state: localStore(),
-  fns: localStore(),
-}
-
-const ydocStore = async (persist = false, update = undefined) => {
-  const ydoc = new Y.Doc()
-  const ymap = ydoc.getMap()
-
-
-  if(update) {
-    ymap.observe(event =>{
-      update(event)
-    })
-  }
-
-  if(persist) {
-    const indexeddbProvider = new IndexeddbPersistence(persist, ydoc)
-    indexeddbProvider.whenSynced.then(v => (console.log('loaded from indexeddb'), console.log(v)))
-
-    const webrtcprovider = new WebrtcProvider('nodysseus', ydoc)
-
-    // const url = await fetch("http://localhost:7071/api/Negotiate?userId=me").then(r => r.json())
-    // console.log("syncing on ")
-    // console.log(url.url)
-    // const wsurl = new URL(url.url)
-
-    // const wsprovider = new WebsocketProvider('wss://nodysseus.webpubsub.azure.com/client/hubs', 'collaboration', ydoc, {
-    //   WebSocketPolyfill: NodyWS,
-    //   params: {access_token: wsurl.searchParams.get('access_token')}
-    // })
-    //
-    // const oldonmessage= wsprovider.ws.onmessage;
-    // wsprovider.ws.onmessage = (v) => {
-    //   oldonmessage(v)
-    // }
-  }
-
-  return {
-    get: id => ymap.get(id),
-    add: (id, data) => {
-      ymap.set(id, {...data})
-    },
-    remove: id => ymap.delete(id),
-    removeAll: () => {},
-    all: () => [...ymap.values()]
-  }
-}
-const yNodyStore = async () => ({
-  refs: await ydocStore('refs', event => {
-    if(!main_app_dispatch) {
-      return;
-    }
-    console.log(event)
-    const updatedgraph = event.keysChanged.values().next().value;
-    requestAnimationFrame(() =>  {
-      console.log(nolib.no.runtime.get_ref(updatedgraph))
-        main_app_dispatch(s => s.display_graph_id === updatedgraph ? [{...s, display_graph: nolib.no.runtime.get_ref(updatedgraph)}, [UpdateSimulation]] : [s])
-    }) 
-  }),
-  parents: await ydocStore(),
-  nodes: await ydocStore(),
-  state: await ydocStore(),
-  fns: await ydocStore(),
-})
-
 
 const hlib = {
     ha: { 
