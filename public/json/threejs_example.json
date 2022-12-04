@@ -1,0 +1,225 @@
+[
+  {
+    "id": "threejs_example",
+    "nodes": [
+      {
+        "id": "args"
+      },
+      {
+        "id": "8dy573e",
+        "ref": "html_element"
+      },
+      {
+        "id": "output_val",
+        "value": "some output"
+      },
+      {
+        "id": "tmj66vh",
+        "ref": "import_json"
+      },
+      {
+        "id": "d6hbagr",
+        "value": "json/three.json"
+      },
+      {
+        "id": "uzfo5bm",
+        "ref": "if"
+      },
+      {
+        "id": "72wzn5d",
+        "ref": "@three.setup"
+      },
+      {
+        "id": "dbxyytc"
+      },
+      {
+        "id": "bbhzt03"
+      },
+      {
+        "id": "vj5dpbv",
+        "ref": "cache"
+      },
+      {
+        "id": "hw5uzay",
+        "value": "https://unpkg.com/three@latest/build/three.module.js",
+        "ref": "import_module"
+      },
+      {
+        "id": "2g581fl",
+        "value": "threejsrender"
+      },
+      {
+        "id": "8wmlat1",
+        "ref": "canvas_behind_editor"
+      },
+      {
+        "id": "7c54921",
+        "value": "threejsrender"
+      },
+      {
+        "id": "akna0ig",
+        "value": "return !!_lib.no.runtime.get_ref(\"@three.setup\")",
+        "ref": "script"
+      },
+      {
+        "id": "ko0wprz",
+        "value": "objs.cube",
+        "ref": "arg"
+      },
+      {
+        "id": "out",
+        "name": "threejs_example",
+        "ref": "return"
+      },
+      {
+        "id": "qplqs03",
+        "ref": "array"
+      },
+      {
+        "id": "0r7134k",
+        "ref": "runnable"
+      },
+      {
+        "id": "p801291",
+        "ref": "cache"
+      },
+      {
+        "id": "88nyyfz",
+        "value": "return  new _lib.THREE.Mesh(new _lib.THREE.BoxGeometry(1, 1, 1), new _lib.THREE.MeshStandardMaterial());",
+        "ref": "script"
+      },
+      {
+        "id": "c3ytyv3",
+        "value": "cube.rotation.x += 0.01;\ncube.rotation.z += 0.01;",
+        "ref": "script"
+      },
+      {
+        "id": "p0z4xxk",
+        "ref": "cache"
+      },
+      {
+        "id": "uqln0ee",
+        "value": "return new _lib.THREE.HemisphereLight( 0xffffff, 0x080820, 1 );",
+        "ref": "script"
+      }
+    ],
+    "edges": [
+      {
+        "from": "8dy573e",
+        "to": "out",
+        "as": "display"
+      },
+      {
+        "from": "args",
+        "to": "out",
+        "as": "args"
+      },
+      {
+        "from": "output_val",
+        "to": "tmj66vh",
+        "as": "arg0"
+      },
+      {
+        "from": "d6hbagr",
+        "to": "tmj66vh",
+        "as": "url"
+      },
+      {
+        "from": "uzfo5bm",
+        "to": "out",
+        "as": "value"
+      },
+      {
+        "from": "akna0ig",
+        "to": "uzfo5bm",
+        "as": "pred"
+      },
+      {
+        "from": "tmj66vh",
+        "to": "uzfo5bm",
+        "as": "false"
+      },
+      {
+        "from": "72wzn5d",
+        "to": "uzfo5bm",
+        "as": "true"
+      },
+      {
+        "from": "dbxyytc",
+        "to": "72wzn5d",
+        "as": "objs"
+      },
+      {
+        "from": "bbhzt03",
+        "to": "out",
+        "as": "lib"
+      },
+      {
+        "from": "vj5dpbv",
+        "to": "bbhzt03",
+        "as": "THREE"
+      },
+      {
+        "from": "hw5uzay",
+        "to": "vj5dpbv",
+        "as": "value"
+      },
+      {
+        "from": "2g581fl",
+        "to": "72wzn5d",
+        "as": "canvas_id"
+      },
+      {
+        "from": "7c54921",
+        "to": "8wmlat1",
+        "as": "canvas_id"
+      },
+      {
+        "from": "ko0wprz",
+        "to": "c3ytyv3",
+        "as": "cube"
+      },
+      {
+        "from": "qplqs03",
+        "to": "8dy573e",
+        "as": "children"
+      },
+      {
+        "from": "8wmlat1",
+        "to": "qplqs03",
+        "as": "arg0"
+      },
+      {
+        "from": "0r7134k",
+        "to": "72wzn5d",
+        "as": "onupdate"
+      },
+      {
+        "from": "c3ytyv3",
+        "to": "0r7134k",
+        "as": "fn"
+      },
+      {
+        "from": "p801291",
+        "to": "dbxyytc",
+        "as": "cube"
+      },
+      {
+        "from": "88nyyfz",
+        "to": "p801291",
+        "as": "value"
+      },
+      {
+        "from": "p0z4xxk",
+        "to": "dbxyytc",
+        "as": "light"
+      },
+      {
+        "from": "uqln0ee",
+        "to": "p0z4xxk",
+        "as": "value"
+      }
+    ],
+    "out": "out"
+  }
+]

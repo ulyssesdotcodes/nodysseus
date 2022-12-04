@@ -46,16 +46,15 @@
         "ref": "arg"
       },
       {
-        "id": "x4zdk2w",
-        "value": "console.log(\"creating renderer\")\nconsole.log(canvas)\nreturn new THREE.WebGLRenderer({canvas})",
-        "ref": "script",
-        "__isnodysseus": true
-      },
-      {
         "id": "main/out",
         "name": "@three.renderer",
         "ref": "return",
         "__isnodysseus": true
+      },
+      {
+        "id": "x4zdk2w",
+        "value": "console.log(\"creating renderer\")\nconsole.log(canvas)\nreturn new THREE.WebGLRenderer({canvas})",
+        "ref": "script"
       }
     ],
     "edges": [
@@ -369,16 +368,6 @@
         "ref": "arg"
       },
       {
-        "id": "8m5muxn/8p7y4uk",
-        "value": "scene",
-        "ref": "arg"
-      },
-      {
-        "id": "i27z5jc",
-        "value": "light",
-        "ref": "arg"
-      },
-      {
         "id": "elimy7s",
         "value": "element.1",
         "ref": "arg"
@@ -386,26 +375,6 @@
       {
         "id": "httv0fw",
         "value": "renderer",
-        "ref": "arg"
-      },
-      {
-        "id": "8m5muxn/crb3hd2",
-        "value": "renderer.render(scene, camera);",
-        "ref": "script"
-      },
-      {
-        "id": "8m5muxn/13mcd2m",
-        "value": "renderer",
-        "ref": "arg"
-      },
-      {
-        "id": "8m5muxn/hs1z581",
-        "value": "scene",
-        "ref": "arg"
-      },
-      {
-        "id": "8m5muxn/0v7x4xs",
-        "value": "camera",
         "ref": "arg"
       },
       {
@@ -419,11 +388,6 @@
       },
       {
         "id": "m291v0o"
-      },
-      {
-        "id": "xgl6r05",
-        "value": "objs",
-        "ref": "arg"
       },
       {
         "id": "nmx3h5j",
@@ -468,11 +432,50 @@
         "__isnodysseus": true
       },
       {
+        "id": "8m5muxn/0v7x4xs",
+        "value": "camera: internal",
+        "ref": "arg"
+      },
+      {
+        "id": "8m5muxn/hs1z581",
+        "value": "scene: internal",
+        "ref": "arg"
+      },
+      {
+        "id": "8m5muxn/13mcd2m",
+        "value": "renderer: internal",
+        "ref": "arg"
+      },
+      {
+        "id": "y2f8gog",
+        "value": "camera: internal",
+        "ref": "arg"
+      },
+      {
+        "id": "xgl6r05",
+        "value": "objs: internal",
+        "ref": "arg"
+      },
+      {
+        "id": "8m5muxn/8p7y4uk",
+        "value": "scene: internal",
+        "ref": "arg"
+      },
+      {
         "id": "8m5muxn/ud4p5ey",
         "value": "if(name !== '_needsresolve' && obj){ scene.add( obj ); }\nconsole.log(obj);\nreturn scene;",
         "name": "",
-        "ref": "script",
-        "__isnodysseus": true
+        "ref": "script"
+      },
+      {
+        "id": "8m5muxn/crb3hd2",
+        "value": "renderer.render(scene, camera);",
+        "ref": "script"
+      },
+      {
+        "id": "zfeakzj",
+        "value": "console.log(value.position.z);\n  return value;",
+        "ref": "script"
       }
     ],
     "edges": [
@@ -500,11 +503,6 @@
         "from": "8m5muxn/inq87j9",
         "to": "8m5muxn/hlqmo48",
         "as": "scene"
-      },
-      {
-        "from": "8m5muxn/7in78pu",
-        "to": "8m5muxn/hlqmo48",
-        "as": "camera"
       },
       {
         "from": "ptak9t2",
@@ -552,11 +550,6 @@
         "as": "fn"
       },
       {
-        "from": "f7krd8u",
-        "to": "vrevjmh",
-        "as": "object"
-      },
-      {
         "from": "8m5muxn/zci8apj",
         "to": "8m5muxn/33kmaec",
         "as": "value"
@@ -570,11 +563,6 @@
         "from": "8m5muxn/8p7y4uk",
         "to": "8m5muxn/ud4p5ey",
         "as": "scene"
-      },
-      {
-        "from": "i27z5jc",
-        "to": "8m5muxn/ud4p5ey",
-        "as": "light"
       },
       {
         "from": "elimy7s",
@@ -654,6 +642,26 @@
       {
         "from": "8m5muxn/p7pzcqi",
         "to": "nmx3h5j",
+        "as": "value"
+      },
+      {
+        "from": "y2f8gog",
+        "to": "m291v0o",
+        "as": "camera"
+      },
+      {
+        "from": "f7krd8u",
+        "to": "vrevjmh",
+        "as": "object"
+      },
+      {
+        "from": "zfeakzj",
+        "to": "8m5muxn/hlqmo48",
+        "as": "camera"
+      },
+      {
+        "from": "8m5muxn/7in78pu",
+        "to": "zfeakzj",
         "as": "value"
       }
     ],
@@ -749,16 +757,6 @@
         "ref": "arg"
       },
       {
-        "id": "iwzvdj8",
-        "value": "const item_size = 3;\n\nObject.entries(inputgeo.attributes)\n  .forEach(kv => {\n    initgeo.setAttribute(kv[0], kv[0] === attribute ? inputgeo.getAttribute(kv[0]).clone() : inputgeo.getAttribute(kv[0]))\n})\n\nif(!initgeo.hasAttribute(attribute) || initgeo.getAttribute(attribute)?.count !== inputgeo.getAttribute(\"position\")?.count) {\n  initbuffer.buffer = new _lib.THREE.BufferAttribute(new Float32Array(inputgeo.getAttribute(\"position\").count * item_size), item_size);\n}\n\nif(!inputgeo.hasAttribute(attribute)) {\n  initgeo.setAttribute(attribute, initbuffer.buffer.clone());\n}\n\nconst attr_array = initgeo.getAttribute(attribute);\nif(attribute === \"color\"){\n  //console.log(attr_array);\n}\nfor(let i = 0; i < attr_array.count; i++){\n  const index_vector = attr_array.array.subarray(i * attr_array.itemSize, (i + 1) * attr_array.itemSize);\n  fn({index_vector})\n}\n\n//console.log(inputgeo);\n//console.log(initgeo);\n\nreturn initgeo;",
-        "ref": "script"
-      },
-      {
-        "id": "e7gu67v",
-        "value": "const geo = new _lib.THREE.BufferGeometry();\ngeo.setAttribute('position', new _lib.THREE.BufferAttribute( new Float32Array( [\n] ), 3));\ngeo.computeVertexNormals();\n\nreturn geo",
-        "ref": "script"
-      },
-      {
         "id": "ay1mgi1",
         "ref": "default"
       },
@@ -774,6 +772,35 @@
       {
         "id": "b9gexfo",
         "value": "position"
+      },
+      {
+        "id": "e7gu67v",
+        "value": "const geo = new _lib.THREE.BufferGeometry();\ngeo.setAttribute('position', new _lib.THREE.BufferAttribute( new Float32Array( [\n] ), 3));\ngeo.computeVertexNormals();\n\nreturn geo",
+        "ref": "script"
+      },
+      {
+        "id": "iwzvdj8",
+        "value": "const item_size = 3;\n\n\n// Object.entries(inputgeo.attributes)\n//   .forEach(kv => {\n//     initgeo.setAttribute(kv[0], kv[0] === attribute ? inputgeo.getAttribute(kv[0]).clone() : inputgeo.getAttribute(kv[0]));\n//     });\n\ninitgeo.copy(inputgeo);\n\nif(!initgeo.hasAttribute(attribute) || initgeo.getAttribute(attribute)?.count !== inputgeo.getAttribute(\"position\")?.count) {\n  initbuffer.buffer = new _lib.THREE.BufferAttribute(new Float32Array(inputgeo.getAttribute(\"position\").count * item_size), item_size);\n}\n\nif(!inputgeo.hasAttribute(attribute)) {\n  initgeo.setAttribute(attribute, initbuffer.buffer.clone());\n}\n\nconst attrs = Object.keys(initgeo.attributes);\nconst count = initgeo.getAttribute(\"position\").count;\nconst point_data = {};\n\nfor(let i = 0; i < count; i++){\n  attrs.map(attr => {\n  point_data[attr] = initgeo.getAttribute(attr).array.subarray(i * item_size, (i + 1) * item_size);\n    })\n  fn({point_data, index: i})\n}\n\ninitgeo.getAttribute(attribute).needsUpdate = true;\n\n//console.log(inputgeo);\n//console.log(initgeo);\n\nreturn initgeo;",
+        "ref": "script"
+      },
+      {
+        "id": "ph7ugf6",
+        "ref": "if"
+      },
+      {
+        "id": "9nre5m4",
+        "value": "fn",
+        "ref": "arg"
+      },
+      {
+        "id": "ai1ckv5",
+        "value": "return typeof fn === \"function\";",
+        "ref": "script"
+      },
+      {
+        "id": "h923zl1",
+        "value": "fn",
+        "ref": "arg"
       }
     ],
     "edges": [
@@ -831,11 +858,6 @@
         "from": "nd6zslm",
         "to": "iwzvdj8",
         "as": "initgeo"
-      },
-      {
-        "from": "my9677p",
-        "to": "iwzvdj8",
-        "as": "fn"
       },
       {
         "from": "u36qh21",
@@ -901,6 +923,31 @@
         "from": "b9gexfo",
         "to": "vio1bz1",
         "as": "otherwise"
+      },
+      {
+        "from": "ph7ugf6",
+        "to": "iwzvdj8",
+        "as": "fn"
+      },
+      {
+        "from": "ai1ckv5",
+        "to": "ph7ugf6",
+        "as": "pred"
+      },
+      {
+        "from": "9nre5m4",
+        "to": "ai1ckv5",
+        "as": "fn"
+      },
+      {
+        "from": "my9677p",
+        "to": "ph7ugf6",
+        "as": "false"
+      },
+      {
+        "from": "h923zl1",
+        "to": "ph7ugf6",
+        "as": "true"
       }
     ],
     "out": "out"
