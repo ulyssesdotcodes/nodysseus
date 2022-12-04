@@ -44,7 +44,11 @@
     "just-safe-set": "^4.0.1",
     "lokijs": "^1.5.12",
     "panzoom": "^9.4.2",
-    "typescript": "4.8"
+    "typescript": "4.8",
+    "y-indexeddb": "^9.0.9",
+    "y-webrtc": "^10.2.3",
+    "y-websocket": "^1.4.5",
+    "yjs": "^13.5.43"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^23.0.3",
