@@ -50,7 +50,7 @@ export const lokidbToStore = <T>(collection: loki.Collection<LokiT<T>>) => ({
     }
   },
   removeAll: () => collection.clear(),
-  all: () => collection.where(_ => true).map(v => v.data)
+  all: () => collection.where(_ => true).map(v => v.data),
 })
 
 let nodysseus: NodysseusStore;
@@ -869,7 +869,7 @@ const nolib = {
         return node;
       };
 
-      (generic as Graph).nodes.map(add_ref);
+      nodysseus.refs.addMany((generic as Graph).nodes.filter(n => !nodysseus.refs.get(n.id)).map(n => [n.id, n]));
 
       if(nodysseus.refs.startListening) {
         nodysseus.refs.startListening()
@@ -881,6 +881,7 @@ const nolib = {
         set_cached: (graph, id) => get_cache(graph.id).is_cached.add(id),
         get_ref,
         add_ref,
+        add_refs: nodysseus.refs.addMany,
         remove_ref,
         // get_asset,
         // add_asset,

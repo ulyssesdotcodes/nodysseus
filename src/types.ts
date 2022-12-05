@@ -40,9 +40,10 @@ export type Store<T> = {
   get: (id: string) => T | undefined;
   removeAll: () => void;
   all: () => Array<T>;
-  undo: false | (() => void);
-  redo: false | (() => void);
-  startListening: false | (() => void);
+  undo?: false | (() => void);
+  redo?: false | (() => void);
+  startListening?: false | (() => void);
+  addMany?: (datas: Array<[string, any]>) => void;
 }
 
 export type NodysseusStore = {

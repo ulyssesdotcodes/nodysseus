@@ -16,17 +16,6 @@ import {IndexeddbPersistence} from "y-indexeddb";
 import { WebsocketProvider } from "y-websocket";
 import { WebrtcProvider } from "y-webrtc";
 
-class NodyWS extends WebSocket {
-  send(v){
-    super.send(JSON.stringify({
-      group: 'group1',
-      data: v,
-      datatype: 'json'
-    }))
-  }
-}
-
-
 const updateSimulationNodes = (dispatch, data) => {
     const simulation_node_data = new Map();
     if(!data.clear_simulation_cache){
@@ -767,12 +756,21 @@ const save_graph = graph => {
 const SaveGraph = (dispatch, payload) => save_graph(payload.display_graph)
 
 const ChangeDisplayGraphId = (dispatch, {id, select_out}) => {
+  console.log('changing')
+  console.log(id)
+  console.log(nolib.no.runtime.get_ref(id))
+  console.log(nolib.no.runtime.get_graph(id))
     requestAnimationFrame(() => {
         const json = undefined; //localStorage.getItem(id);
         const graphPromise = Promise.resolve((json && base_graph(JSON.parse(json))) 
             ?? nolib.no.runtime.get_graph(id) 
             ?? nolib.no.runtime.get_ref(id)
-            ?? resfetch(`json/${id}.json`).then(r => r.status === 200 ? r.json() : undefined).catch(_ => undefined))
+            ?? resfetch(`json/${id}.json`).then(r => r.status === 200 ? r.json() : undefined)
+                .then(gs => {
+                  nolib.no.runtime.add_refs(Array.isArray(gs) ? gs : [gs]).map(g => g);
+                  nolib.no.runtime.get_ref(id);
+                })
+                .catch(_ => undefined))
 
 
         window.location.hash = '#' + id; 
@@ -1613,9 +1611,12 @@ const ydocStore = async (persist = false, update = undefined) => {
   if(persist) {
     const indexeddbProvider = new IndexeddbPersistence(persist, ydoc)
     await indexeddbProvider.whenSynced.then(v => (console.log('loaded from indexeddb'), console.log(v)))
-    new WebrtcProvider(`nodysseus${params.get("rtcroom")}`, ydoc)
+    if(typeof params.get("rtcroom") === 'string') {
+      console.log('webrtc')
+      new WebrtcProvider(`nodysseus${params.get("rtcroom")}`, ydoc)
+    }
 
-    undoManager = new Y.UndoManager(ymap)
+    // undoManager = new Y.UndoManager(ymap)
 
     // const url = await fetch("http://localhost:7071/api/Negotiate?userId=me").then(r => r.json())
     // console.log("syncing on ")
@@ -1636,31 +1637,51 @@ const ydocStore = async (persist = false, update = undefined) => {
   return {
     get: id => ymap.get(id),
     add: (id, data) => {
-      ymap.set(id, {...data})
+      ymap.set(id, data)
     },
-    remove: id => ymap.delete(id),
+    addMany: (datas) => {
+      ydoc.transact(() => {
+        datas.forEach(([id, data]) => ymap.set(id, data))
+      })
+    },
+    remove: id => {
+      console.log(`removing ${id}`)
+      ymap.delete(id)
+    },
     removeAll: () => {},
     all: () => [...ymap.values()],
     undo: persist && (() => undoManager.undo()),
     redo: persist && (() => undoManager.redo()),
   }
 }
-const yNodyStore = async () => ({
-  refs: await ydocStore('refs', event => {
-    if(!main_app_dispatch || event.keysChanged.size > 1) {
-      return;
-    }
+const yNodyStore = async () => {
+    const db = new loki("nodysseus.db", {
+      env: "BROWSER",
+      persistenceMethod: "memory",
+    });
 
-    const updatedgraph = event.keysChanged.values().next().value;
-    requestAnimationFrame(() =>  {
-      nolib.no.runtime.change_graph(nolib.no.runtime.get_ref(updatedgraph), {...nolib, ...hlib})
-    }) 
-  }),
-  parents: await ydocStore(),
-  nodes: await ydocStore(),
-  state: await ydocStore(),
-  fns: await ydocStore(),
-})
+  const nodesdb = db.addCollection("nodes", { unique: ["id"] });
+  const statedb = db.addCollection("state", { unique: ["id"] });
+  const fnsdb = db.addCollection("fns", { unique: ["id"] });
+  const parentsdb = db.addCollection("parents", { unique: ["id"] });
+
+  return {
+    refs: await ydocStore('refs', event => {
+      if(!main_app_dispatch || event.keysChanged.size > 1) {
+        return;
+      }
+
+      const updatedgraph = event.keysChanged.values().next().value;
+      requestAnimationFrame(() =>  {
+        nolib.no.runtime.change_graph(nolib.no.runtime.get_ref(updatedgraph), {...nolib, ...hlib})
+      }) 
+    }),
+    parents: lokidbToStore(parentsdb),
+    nodes: lokidbToStore(nodesdb),
+    state: lokidbToStore(statedb),
+    fns: lokidbToStore(fnsdb)
+  }
+}
 
 const hlib = {
     ha: { 
