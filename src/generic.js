@@ -1044,8 +1044,9 @@
       "_ref": "extern",
       "_value": "sequence",
       "nodes": [
-        { "id": "args", "ref": "arg", "value": "_args" },
-        {"id": "delete_args", "ref": "script", "value": "console.log(target); const ret = {...target}; console.log(ret); delete ret.args; return ret;"},
+        { "id": "args", "ref": "arg", "value": "__args" },
+        { "id": "seq_ap_args", "ref": "arg", "value": "_args" },
+        {"id": "delete_args", "ref": "script", "value": "const ret = {...target}; delete ret.args; return ret;"},
         { "id": "seq_fold_currentValue", "ref": "arg", "value": "currentValue.1" },
         { "id": "seq_ap_run", "value": "true" },
         { "id": "seq_ap", "ref": "ap" },
@@ -1055,11 +1056,12 @@
       ],
       "edges": [
         { "from": "args", "to": "delete_args", "as": "target" },
-        { "from": "args", "to": "seq_fold", "as": "object" },
-        { "from": "delete_args", "to": "_seq_fold", "as": "object" },
+        { "from": "args", "to": "_seq_fold", "as": "object" },
+        { "from": "delete_args", "to": "seq_fold", "as": "object" },
         {"from": "seq_ap_run", "to": "seq_ap", "as": "run"},
         {"from": "seq_fold_currentValue", "to": "seq_ap", "as": "fn"},
         {"from": "seq_ap", "to": "seq_ap_runnable", "as": "fn"},
+        {"from": "seq_ap_args", "to": "seq_ap", "as": "args"},
         {"from": "seq_ap_runnable", "to": "seq_fold", "as": "fn"},
         {"from": "seq_fold", "to": "out", "as": "fn"},
       ]

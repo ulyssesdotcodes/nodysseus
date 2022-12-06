@@ -568,6 +568,12 @@ const nolib = {
         nodevalue = value;
       }
       const newtarget = () => {
+        const newt = Object.assign({}, target);
+        Object.keys(newt).forEach(k => k.startsWith("_") && delete newt[k])
+        return newt;
+      };
+
+      const parenttarget = () => {
         const newt = Object.assign({}, target.__args);
         Object.keys(newt).forEach(k => k.startsWith("_") && delete newt[k])
         return newt;
@@ -583,6 +589,8 @@ const nolib = {
         ? nodysseus_get(lib, nodevalue.substring("_lib.".length), lib)
         : nodevalue === "_args"
         ? lib.no.of(Object.fromEntries(Object.entries(newtarget()).map(([key, value]: [string, any]) => [key, value?.isArg && valuetype !== "raw" ? run_runnable(value, lib)?.__value : value])))
+        : nodevalue === "__args"
+        ? lib.no.of(Object.fromEntries(Object.entries(parenttarget()).map(([key, value]: [string, any]) => [key, value?.isArg && valuetype !== "raw" ? run_runnable(value, lib)?.__value : value])))
         : nodysseus_get(
             node.type === "local" || node.type?.includes?.("local")
               ? newtarget()
