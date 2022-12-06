@@ -51,6 +51,7 @@ export const lokidbToStore = <T>(collection: loki.Collection<LokiT<T>>) => ({
   },
   removeAll: () => collection.clear(),
   all: () => collection.where(_ => true).map(v => v.data),
+  addMany: gs => gs.map(([id, data]) => collection.insert({id, data}))
 })
 
 let nodysseus: NodysseusStore;
@@ -487,7 +488,8 @@ const run_graph = (graph, node_id, graphArgs, lib) => {
         lib.no.runtime.publish('noderun', {graph, node_id})
 
         const data = create_data(node_id, graph, inputs, graphArgs, lib);
-        return run_node(node, data, graphArgs, lib);
+        const res = run_node(node, data, graphArgs, lib);
+        return res
     } catch (e) {
         console.log(`error in node`);
         if (e instanceof AggregateError) {
@@ -566,7 +568,7 @@ const nolib = {
         nodevalue = value;
       }
       const newtarget = () => {
-        const newt = Object.assign({}, target.__args);
+        const newt = Object.assign({}, target);
         Object.keys(newt).forEach(k => k.startsWith("_") && delete newt[k])
         return newt;
       };
@@ -580,7 +582,7 @@ const nolib = {
         : nodevalue.startsWith("_lib.")
         ? nodysseus_get(lib, nodevalue.substring("_lib.".length), lib)
         : nodevalue === "_args"
-        ? newtarget()
+        ? lib.no.of(Object.fromEntries(Object.entries(newtarget()).map(([key, value]: [string, any]) => [key, value?.isArg && valuetype !== "raw" ? run_runnable(value, lib)?.__value : value])))
         : nodysseus_get(
             node.type === "local" || node.type?.includes?.("local")
               ? newtarget()
@@ -591,8 +593,13 @@ const nolib = {
             lib
           );
 
-      const retrun = ret?.isArg && valuetype !== "raw" ? run_runnable(ret, lib) : undefined;
-      return ispromise(retrun) ? retrun.then(v => v?.__value) : retrun ? retrun?.__value : ret;
+      let retrun = ret;
+      while(retrun?.isArg && valuetype !== "raw") {
+        retrun = run_runnable(ret, lib)
+      }
+
+      // const retrun = ret?.isArg && valuetype !== "raw" ? run_runnable(ret, lib) : undefined;
+      return ispromise(retrun) ? retrun.then(v => v?.__value) : retrun ? retrun.hasOwnProperty("__value") ? retrun?.__value : retrun : ret;
     },
     base_graph,
     base_node,
@@ -869,7 +876,7 @@ const nolib = {
         return node;
       };
 
-      nodysseus.refs.addMany((generic as Graph).nodes.filter(n => !nodysseus.refs.get(n.id)).map(n => [n.id, n]));
+      nodysseus.refs.addMany((generic as Graph).nodes.map(n => [n.id, n]));
 
       if(nodysseus.refs.startListening) {
         nodysseus.refs.startListening()
@@ -1050,6 +1057,7 @@ const nolib = {
           if(fnr === undefined) {
             return lib.no.of(undefined)
           }
+
           if(av?.fn && av?.graph) {
             av = run_runnable({...av, args: {...av.args, ...fn.args}}, lib)?.__value
           }
@@ -1078,24 +1086,28 @@ const nolib = {
           return execute(fn, fnv?.__value, rv?.__value, av?.__value)
         }
 
-        const fnv = run_runnable(fn, lib);
+
+        let fnv = run_runnable(fn, lib);
 
         return runvalue ? execpromise(fn, fnv, run, args)
+          // : {...fn, args: {...fn.args, ...args}}
           : (delete args?.isArg, delete args?.args?._output, lib.no.of({
-            "fn": "runfn",
+            "fn": "out",
             "graph": {
-              "id": `run_${fn.fn}`,
+              "id": `run_${fn.fn}_${Math.floor(performance.now())}`,
               "out": "runfn",
               "nodes": [
                 {"id": "fnarg", "ref": "arg", "value": "fnr"},
                 {"id": "argsarg", "ref": "arg", "value": "argsr"},
-                {"id": "run", "value": "true"},
-                {"id": "runfn", "ref": "ap"}
+                {"id": "runval", "value": "true"},
+                {"id": "runfn", "ref": "ap"},
+                {"id": "out", "ref": "return"}
               ],
               "edges": [
                 {"from": "fnarg", "to": "runfn", "as": "fn"},
-                {"from": "run", "to": "runfn", "as": "run"},
-                {"from": "argsarg", "to": "runfn", "as": "args"}
+                {"from": "runval", "to": "runfn", "as": "run"},
+                {"from": "argsarg", "to": "runfn", "as": "args"},
+                {"from": "runfn", "to": "out", "as": "value"}
               ]
             },
             "args": { fnr: fnv?.__value, argsr: args },
@@ -1133,7 +1145,8 @@ const nolib = {
         }
         const foldvalue = objectvalue => {
           if (objectvalue === undefined) return undefined;
-          const fnrunnable = fn;
+          const fnrunnable = run_runnable(fn, lib).__value;
+
 
           const mapobjarr = (mapobj, mapfn, mapinit) =>
             Array.isArray(mapobj)
@@ -1148,9 +1161,7 @@ const nolib = {
               run_graph(
                 fnrunnable.graph,
                 fnrunnable.fn,
-                mockcombined(
-                {previousValue: lib.no.of(previousValue), currentValue: lib.no.of(currentValue) },
-                fnrunnable.args),
+                {previousValue: lib.no.of(previousValue), currentValue: lib.no.of(currentValue), ...fnrunnable.args },
                 lib
               ).__value,
             initial
@@ -1160,13 +1171,15 @@ const nolib = {
 
         const objectvalue = run_runnable(object, lib);
 
-        return ispromise(objectvalue) ? objectvalue.then(ov => foldvalue(ov.__value)) : foldvalue(objectvalue.__value)
+        return ispromise(objectvalue) ? objectvalue.then(ov => foldvalue(ov.__value ?? ov)) : foldvalue(objectvalue.__value ?? objectvalue)
       },
     },
     sequence: {
       rawArgs: true,
       args: ["_node_args", "_lib"],
       fn: (_args, lib) => {
+        const runnableargs = Object.fromEntries(Object.entries(_args).filter(kv => !kv[0].startsWith("_")))
+
         const delayfn = (fn, args) => lib.no.of({
             "fn": "runfn",
             "graph": {
@@ -1659,8 +1672,8 @@ const nolib = {
       fn: (value) => typeof value
     },
     construct: {
-      args: ["args", "__graph_value"],
-      fn: (args, nodevalue) => new (Function.prototype.bind.apply(window[nodevalue], [null, ...args]))
+      args: ["args", "__graph_value", "_lib"],
+      fn: (args, nodevalue, _lib) => new (Function.prototype.bind.apply(nodysseus_get(_lib, nodevalue, _lib, window[nodevalue]), [null, ...(args ?? [])]))
     },
     addEventListeners: {
       args: ["target", "_node_args", "_lib"],

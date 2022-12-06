@@ -337,6 +337,219 @@
         "description": "Deletes `target` property at `path`",
         "ref": "extern", "value": "extern.delete"
       },
+{
+    "id": "tapbutton",
+    "nodes": [
+      {
+        "id": "args"
+      },
+      {
+        "id": "8dy573e",
+        "ref": "html_element"
+      },
+      {
+        "id": "out",
+        "name": "ontap",
+        "ref": "return"
+      },
+      {
+        "id": "qgbinm2",
+        "value": "button",
+        "ref": "html_element"
+      },
+      {
+        "id": "9fogdzn",
+        "value": "signal",
+        "ref": "html_text"
+      },
+      {
+        "id": "ehximpo"
+      },
+      {
+        "id": "4stvov8",
+        "ref": "ap"
+      },
+      {
+        "id": "8ywgts7",
+        "ref": "state"
+      },
+      {
+        "id": "v089o3o",
+        "value": "signal.set",
+        "ref": "arg"
+      },
+      {
+        "id": "k3rjgad"
+      },
+      {
+        "id": "76he898",
+        "value": "true"
+      },
+      {
+        "id": "nhmeamz",
+        "ref": "ap"
+      },
+      {
+        "id": "7mj35x5"
+      },
+      {
+        "id": "bim5wsv",
+        "value": "signal.set",
+        "ref": "arg"
+      },
+      {
+        "id": "4mha35d",
+        "value": "false"
+      },
+      {
+        "id": "hbo5tmq",
+        "ref": "array"
+      },
+      {
+        "id": "lgx7u5i",
+        "ref": "html_text"
+      },
+      {
+        "id": "g19y12v",
+        "value": "signal.state",
+        "ref": "arg"
+      },
+      {
+        "id": "9vqinsg"
+      },
+      {
+        "id": "i38qweq",
+        "value": "none"
+      },
+      {
+        "id": "eemfhib",
+        "value": "signal.state",
+        "ref": "arg"
+      },
+      {
+        "id": "n2a984s",
+        "ref": "sequence"
+      },
+      {
+        "id": "a14g4yc",
+        "value": "ontap",
+        "ref": "arg"
+      }
+    ],
+    "edges": [
+      {
+        "from": "8dy573e",
+        "to": "out",
+        "as": "display"
+      },
+      {
+        "from": "args",
+        "to": "out",
+        "as": "args"
+      },
+      {
+        "from": "9fogdzn",
+        "to": "qgbinm2",
+        "as": "children"
+      },
+      {
+        "from": "ehximpo",
+        "to": "qgbinm2",
+        "as": "props"
+      },
+      {
+        "from": "8ywgts7",
+        "to": "args",
+        "as": "signal"
+      },
+      {
+        "from": "v089o3o",
+        "to": "4stvov8",
+        "as": "fn"
+      },
+      {
+        "from": "k3rjgad",
+        "to": "4stvov8",
+        "as": "args"
+      },
+      {
+        "from": "76he898",
+        "to": "k3rjgad",
+        "as": "value"
+      },
+      {
+        "from": "4stvov8",
+        "to": "ehximpo",
+        "as": "onpointerdown"
+      },
+      {
+        "from": "bim5wsv",
+        "to": "nhmeamz",
+        "as": "fn"
+      },
+      {
+        "from": "7mj35x5",
+        "to": "nhmeamz",
+        "as": "args"
+      },
+      {
+        "from": "4mha35d",
+        "to": "7mj35x5",
+        "as": "value"
+      },
+      {
+        "from": "hbo5tmq",
+        "to": "8dy573e",
+        "as": "children"
+      },
+      {
+        "from": "qgbinm2",
+        "to": "hbo5tmq",
+        "as": "arg1"
+      },
+      {
+        "from": "lgx7u5i",
+        "to": "hbo5tmq",
+        "as": "arg2"
+      },
+      {
+        "from": "g19y12v",
+        "to": "lgx7u5i",
+        "as": "text"
+      },
+      {
+        "from": "9vqinsg",
+        "to": "ehximpo",
+        "as": "style"
+      },
+      {
+        "from": "i38qweq",
+        "to": "9vqinsg",
+        "as": "userSelect"
+      },
+      {
+        "from": "eemfhib",
+        "to": "8dy573e",
+        "as": "value"
+      },
+      {
+        "from": "n2a984s",
+        "to": "ehximpo",
+        "as": "onpointerup"
+      },
+      {
+        "from": "nhmeamz",
+        "to": "n2a984s",
+        "as": "arg0"
+      },
+      {
+        "from": "a14g4yc",
+        "to": "n2a984s",
+        "as": "arg1"
+      }
+    ],
+    "out": "out"
+  },
       {
         "id": "cache",
         "description": "Stores the first value that's `!== undefined` and returns that value whenever called. If used within a `map`, `filter`, or `reduce` node, each iteration's value will be cached separately.",
@@ -346,7 +559,7 @@
           {"id": "graphid", "ref": "arg", "value": "__graphid"},
           {"id": "recache", "ref": "arg", "value": "recache"},
           {"id": "cachevalue_state", "ref": "arg", "value": "cachevalue.state"},
-          {"id": "pred_cache_state", "ref": "script", "value": "return !cachevaluestate || (recache !== false && recache !== undefined && (typeof recache !== 'object' || Object.keys(recache).length > 0))"},
+          {"id": "pred_cache_state", "ref": "script", "value": "return (cachevaluestate === undefined || cachevaluestate === null) || (recache !== false && recache !== undefined && (typeof recache !== 'object' || Object.keys(recache).length > 0))"},
           {"id": "ap_cache_value", "ref": "arg", "value": "value"},
           {"id": "ap_cache_args"},
           {"id": "ap_cache_run", "value": "true"},
@@ -356,6 +569,11 @@
           {"id": "cache_state", "ref": "state"},
           {"id": "cache_return_args"},
           {"id": "cache_return", "ref": "return"},
+          {"id": "recache_button_fn", "ref": "arg", "value": "cachevalue.set"},
+          {"id": "recache_button_fn_args"},
+          {"id": "recache_button_fn_value", "value": "console.log('running fn value'); return 'hmmm'"},
+          {"id": "recache_button_ap", "ref": "ap"},
+          {"id": "recache_button", "ref": "tapbuttonlocal"},
           {"id": "out", "ref": "return"}
         ],
         "edges": [
@@ -371,7 +589,12 @@
           {"from": "if_cache_state", "to": "cache_return", "as": "value"},
           {"from": "cache_state", "to": "cache_return_args", "as": "cachevalue"},
           {"from": "cache_return_args", "to": "cache_return", "as": "args"},
-          {"from": "cache_return", "to": "out", "as": "value"}
+          {"from": "cache_return", "to": "out", "as": "value"},
+          {"from": "recache_button_fn_value", "to": "recache_button_fn_args", "as": "value"},
+          {"from": "recache_button_fn_args", "to": "recache_button_ap", "as": "args"},
+          {"from": "recache_button_fn", "to": "recache_button_ap", "as": "fn"},
+          {"from": "recache_button_ap", "to": "recache_button", "as": "ontap"},
+          {"from": "recache_button", "to": "out", "as": "display"}
         ]
       },
       {
@@ -760,6 +983,7 @@
         {"id": "currentValue", "ref": "arg", "value": "currentValue"},
         {"id": "previousValue", "ref": "arg", "value": "previousValue"},
         {"id": "append", "ref": "script", "value": "arr.push(value); return arr;"},
+        {"id": "append_runnable", "ref": "runnable"},
         {"id": "initial", "value": "[]"},
         {"id": "fold", "ref": "extern", "value": "extern.fold"},
         {"id": "out", "ref": "return"}
@@ -771,7 +995,8 @@
         {"from": "run_map", "to": "map_element_fn", "as": "run"},
         {"from": "map_element_fn", "to": "append", "as": "value"},
         {"from": "previousValue", "to": "append", "as": "arr"},
-        {"from": "append", "to": "fold", "as": "fn"},
+        {"from": "append", "to": "append_runnable", "as": "fn"},
+        {"from": "append_runnable", "to": "fold", "as": "fn"},
         {"from": "object", "to": "fold", "as": "object"},
         {"from": "initial", "to": "fold", "as": "initial"},
         {"from": "fold", "to": "out", "as": "value"},
@@ -818,19 +1043,22 @@
       "_value": "sequence",
       "nodes": [
         { "id": "args", "ref": "arg", "value": "_args" },
-        {"id": "delete_args", "ref": "script", "value": "const ret = {...target}; delete ret.args; return ret;"},
+        {"id": "delete_args", "ref": "script", "value": "console.log(target); const ret = {...target}; console.log(ret); delete ret.args; return ret;"},
         { "id": "seq_fold_currentValue", "ref": "arg", "value": "currentValue.1" },
         { "id": "seq_ap_run", "value": "true" },
         { "id": "seq_ap", "ref": "ap" },
+        { "id": "seq_ap_runnable", "ref": "runnable" },
         { "id": "seq_fold", "ref": "fold"},
         { "id": "out", "ref": "runnable"}
       ],
       "edges": [
         { "from": "args", "to": "delete_args", "as": "target" },
-        { "from": "delete_args", "to": "seq_fold", "as": "object" },
+        { "from": "args", "to": "seq_fold", "as": "object" },
+        { "from": "delete_args", "to": "_seq_fold", "as": "object" },
         {"from": "seq_ap_run", "to": "seq_ap", "as": "run"},
         {"from": "seq_fold_currentValue", "to": "seq_ap", "as": "fn"},
-        {"from": "seq_ap", "to": "seq_fold", "as": "fn"},
+        {"from": "seq_ap", "to": "seq_ap_runnable", "as": "fn"},
+        {"from": "seq_ap_runnable", "to": "seq_fold", "as": "fn"},
         {"from": "seq_fold", "to": "out", "as": "fn"},
       ]
     },
@@ -1373,7 +1601,7 @@
       {
         "from": "imr2dvi",
         "to": "out",
-        "as": "display"
+        "as": "value"
       },
       {
         "from": "h2e7s9l",

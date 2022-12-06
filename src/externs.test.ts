@@ -1,9 +1,11 @@
 import {describe, expect, test} from "@jest/globals"
-import {nolib} from "./nodysseus"
+import {initStore, nolib} from "./nodysseus"
 import { create_fn } from "./externs"
 
 describe('create_fn', () => {
   test('parsing a single script', async () => {
+    initStore()
+
     const fn = create_fn({
       fn: 'set',
       graph: {
@@ -20,6 +22,8 @@ describe('create_fn', () => {
   })
 
   test('using an argument', async () => {
+    initStore()
+
     const fn = create_fn({
       fn: 'ret',
       graph: {
@@ -39,6 +43,8 @@ describe('create_fn', () => {
   })
 
   test('setting a value', async () => {
+    initStore()
+
     const fn = create_fn({
       fn: 'setval',
       graph: {
