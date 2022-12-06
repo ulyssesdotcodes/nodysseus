@@ -568,7 +568,7 @@ const nolib = {
         nodevalue = value;
       }
       const newtarget = () => {
-        const newt = Object.assign({}, target);
+        const newt = Object.assign({}, target.__args);
         Object.keys(newt).forEach(k => k.startsWith("_") && delete newt[k])
         return newt;
       };
@@ -593,12 +593,12 @@ const nolib = {
             lib
           );
 
-      let retrun = ret;
-      while(retrun?.isArg && valuetype !== "raw") {
-        retrun = run_runnable(ret, lib)
-      }
+      // let retrun = run_runnable(ret, lib);
+      // while(retrun?.isArg && valuetype !== "raw") {
+      //   retrun = run_runnable(ret, lib)
+      // }
 
-      // const retrun = ret?.isArg && valuetype !== "raw" ? run_runnable(ret, lib) : undefined;
+      const retrun = ret?.isArg && valuetype !== "raw" ? run_runnable(ret, lib) : undefined;
       return ispromise(retrun) ? retrun.then(v => v?.__value) : retrun ? retrun.hasOwnProperty("__value") ? retrun?.__value : retrun : ret;
     },
     base_graph,
@@ -1094,7 +1094,7 @@ const nolib = {
           : (delete args?.isArg, delete args?.args?._output, lib.no.of({
             "fn": "out",
             "graph": {
-              "id": `run_${fn.fn}_${Math.floor(performance.now())}`,
+              "id": `run_${fn.fn}_${Math.floor(performance.now() * 100)}`,
               "out": "runfn",
               "nodes": [
                 {"id": "fnarg", "ref": "arg", "value": "fnr"},

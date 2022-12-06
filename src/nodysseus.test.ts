@@ -38,12 +38,12 @@ test('returning a single value', () => {
 test('running a fn arg in sequence', () => {
   initStore()
   const ret_fn = {
-    id: "ret_fn",
+    id: expect.getState().currentTestName + "ret_fn",
     out: "out",
     nodes: [
       {id: "input", ref: "arg", value: "input"},
       // {id: "setval", ref: "set_mutable", value: "x"},
-      {id: "setval", ref: "script", value: "console.log('setting'); target.x = value;"},
+      {id: "setval", ref: "script", value: "console.log('setting');  console.log('' + target); console.log('' + value); console.log('done set'); target.x = value;"},
       {id: "finalval", value: "B"},
       {id: "runnablefn", ref: "runnable"},
       {id: "out", ref: "return"}
@@ -60,12 +60,14 @@ test('running a fn arg in sequence', () => {
     id: expect.getState().currentTestName,
     out: "out",
     nodes: [
-      {id: "retfn", ref: "ret_fn"},
+      {id: "retfn", ref: expect.getState().currentTestName + "ret_fn"},
       {id: "apfn", ref: "ap"},
       // {id: "apfn", ref: "script", value: "console.log('hi'); return {}"},
       {id: "apfnargs"},
       {id: "apfninput", ref: "arg", value: "input"},
       {id: "seq", ref: "sequence"},
+      {id: "apseqinput", ref: "arg", value: "input"},
+      {id: "apseqargs"},
       {id: "apseq", ref: "ap"},
       {id: "apseqrun", value: "true"},
       {id: "logval", ref: "log"},
@@ -78,6 +80,8 @@ test('running a fn arg in sequence', () => {
       {from: "apfn", to: "seq", as: "arg0"},
       {from: "seq", to: "apseq", as: "fn"},
       {from: "apseqrun", to: "apseq", as: "run"},
+      {from: "apseqinput", to: "apseqargs", as: "input"},
+      {from: "apseqargs", to: "apseq", as: "args"},
       {from: "apseq", to: "out", as: "value"},
     ]
   }
@@ -95,7 +99,7 @@ test('applying an fn twice', () => {
     out: "out",
     nodes: [
       {id: "input", ref: "arg", value: "input"},
-      {id: "setval", ref: "script", value: "console.log('setting'); target.x = value;"},
+      {id: "setval", ref: "script", value: "target.x = value;"},
       {id: "finalval", value: "B"},
       {id: "runnablefn", ref: "runnable"},
 
@@ -125,7 +129,7 @@ test('applying an fn twice', () => {
   }
 
   const inval = {x: "A"}
-  console.log(run({node: {graph: run_fn, fn: "out", args: {"input": inval}}}));
+  run({node: {graph: run_fn, fn: "out", args: {"input": inval}}});
   expect(inval.x).toBe("B")
 })
 
@@ -136,7 +140,7 @@ test('applying a fn once', () => {
     out: "out",
     nodes: [
       {id: "input", ref: "arg", value: "input"},
-      {id: "setval", ref: "script", value: "console.log('setting'); target.x = value;"},
+      {id: "setval", ref: "script", value: "target.x = value;"},
       {id: "finalval", value: "B"},
       {id: "runnablefn", ref: "runnable"},
 
