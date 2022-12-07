@@ -761,16 +761,17 @@ const ChangeDisplayGraphId = (dispatch, {id, select_out}) => {
   console.log(nolib.no.runtime.get_ref(id))
   console.log(nolib.no.runtime.get_graph(id))
     requestAnimationFrame(() => {
-        const json = undefined; //localStorage.getItem(id);
-        const graphPromise = Promise.resolve((json && base_graph(JSON.parse(json))) 
-            ?? nolib.no.runtime.get_graph(id) 
-            ?? nolib.no.runtime.get_ref(id)
-            ?? resfetch(`json/${id}.json`).then(r => r.status === 200 ? r.json() : undefined)
+        const graphPromise = Promise.resolve(nolib.no.runtime.get_ref(id)
+            ?? Promise.race([
+              navigator.onLine ? resfetch(`json/${id}.json`)
+                .then(r => r.status === 200 ? r.json() : undefined)
                 .then(gs => {
-                  nolib.no.runtime.add_refs(Array.isArray(gs) ? gs : [gs]).map(g => g);
-                  nolib.no.runtime.get_ref(id);
+                  nolib.no.runtime.add_refs(Array.isArray((console.log(gs), gs)) ? gs : [gs]);
+                  return nolib.no.runtime.get_ref(id);
                 })
-                .catch(_ => undefined))
+                .catch(_ => undefined) : undefined,
+              new Promise((res, rej) => setTimeout(() => res(undefined), 1000))
+            ]))
 
 
         window.location.hash = '#' + id; 

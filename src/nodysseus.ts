@@ -896,7 +896,7 @@ const nolib = {
         set_cached: (graph, id) => get_cache(graph.id).is_cached.add(id),
         get_ref,
         add_ref,
-        add_refs: nodysseus.refs.addMany,
+        add_refs: (gs) => nodysseus.refs.addMany(gs.map(g => [g.id, g])),
         remove_ref,
         // get_asset,
         // add_asset,
