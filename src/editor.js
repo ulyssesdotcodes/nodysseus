@@ -1574,13 +1574,6 @@ const createStore = () => {
     const fnsdb = db.addCollection("fns", { unique: ["id"] });
     const parentsdb = db.addCollection("parents", { unique: ["id"] });
 
-    let nodysseusidb;
-
-    openDB("nodysseus", 2, {
-      upgrade(db) {
-        db.createObjectStore("assets")
-      }
-    }).then(db => { nodysseusidb = db })
 
     const pdb = persistdb(refsdb =>
       resolve({
@@ -1665,6 +1658,13 @@ const yNodyStore = async () => {
   const statedb = db.addCollection("state", { unique: ["id"] });
   const fnsdb = db.addCollection("fns", { unique: ["id"] });
   const parentsdb = db.addCollection("parents", { unique: ["id"] });
+  let nodysseusidb;
+
+  openDB("nodysseus", 2, {
+    upgrade(db) {
+      db.createObjectStore("assets")
+    }
+  }).then(db => { nodysseusidb = db })
 
   return {
     refs: await ydocStore('refs', event => {
@@ -1680,7 +1680,15 @@ const yNodyStore = async () => {
     parents: lokidbToStore(parentsdb),
     nodes: lokidbToStore(nodesdb),
     state: lokidbToStore(statedb),
-    fns: lokidbToStore(fnsdb)
+    fns: lokidbToStore(fnsdb),
+    assets: {
+      get: (id) => nodysseusidb.get('assets', id),
+      add: (id, blob) => nodysseusidb.put('assets', blob, id),
+      remove: id => nodysseusidb.delete('assets', id),
+      removeAll: () => nodysseusidb.clear('assets'),
+      all: () => nodysseusidb.getAll(),
+      addMany: bs => bs.map(([id, b]) => nodysseus.idb.add('assets', b, id))
+    }
   }
 }
 
@@ -1706,6 +1714,9 @@ const hlib = {
             el.setAttribute("top", `${y * (svg_offset?.scale ?? 1) + (svg_offset?.y ?? 0) + 32}px`);
         }
     },
+    add_asset: (id, b) => nodysseusStore.assets.add(id, b),
+    get_asset: (id, b) => id && nodysseusStore.assets.get(id),
+    remove_asset: id => nodysseusStore.assets.remove(id),
     panzoom: pzobj,
     run: (node, args) => run({node, args, lib: {...hlib, ...nolib}, store: nodysseusStore}),
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX }

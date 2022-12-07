@@ -4630,6 +4630,430 @@
       }
     ],
     "out": "main/out"
+  },
+{
+    "id": "store_file",
+    "nodes": [
+      {
+        "id": "args"
+      },
+      {
+        "id": "8dy573e",
+        "ref": "html_element"
+      },
+      {
+        "id": "arcnyff",
+        "ref": "array"
+      },
+      {
+        "id": "qgbinm2",
+        "value": "Upload a json file",
+        "ref": "html_text"
+      },
+      {
+        "id": "rtrp3nj",
+        "value": "input",
+        "ref": "html_element"
+      },
+      {
+        "id": "vnibm4q"
+      },
+      {
+        "id": "07fjn2b",
+        "value": "file"
+      },
+      {
+        "id": "jmqcpll",
+        "ref": "runnable"
+      },
+      {
+        "id": "o9ukwn8",
+        "value": "event.target.files.0",
+        "ref": "arg"
+      },
+      {
+        "id": "out",
+        "name": "store_file",
+        "ref": "return"
+      },
+      {
+        "id": "1672j69",
+        "value": "arrayBuffer",
+        "ref": "call"
+      },
+      {
+        "id": "qzp14wr",
+        "value": "add_asset",
+        "ref": "extern"
+      },
+      {
+        "id": "v99fk3p",
+        "ref": "array"
+      },
+      {
+        "id": "y58g8pm",
+        "value": "img",
+        "ref": "html_element"
+      },
+      {
+        "id": "pldugnx"
+      },
+      {
+        "id": "ceomp2r",
+        "ref": "array"
+      },
+      {
+        "id": "uyspmvr",
+        "value": "get_asset",
+        "ref": "extern"
+      },
+      {
+        "id": "psxdib2",
+        "ref": "return"
+      },
+      {
+        "id": "nxdj21x"
+      },
+      {
+        "id": "gsrb9e6"
+      },
+      {
+        "id": "4j186m3",
+        "value": "50vh"
+      },
+      {
+        "id": "rdt0k55",
+        "value": "image/*"
+      },
+      {
+        "id": "gi30q1h"
+      },
+      {
+        "id": "0clgvk2",
+        "value": "event.target.files.0.type",
+        "ref": "arg"
+      },
+      {
+        "id": "yj9sw4x",
+        "value": "asset",
+        "ref": "arg"
+      },
+      {
+        "id": "c0gcfke",
+        "value": "asset.data",
+        "ref": "arg"
+      },
+      {
+        "id": "qh60wjb",
+        "value": "asset.type",
+        "ref": "arg"
+      },
+      {
+        "id": "ncih0ts",
+        "value": "asset_id",
+        "ref": "arg"
+      },
+      {
+        "id": "zugbd71",
+        "ref": "if"
+      },
+      {
+        "id": "fmostjp",
+        "value": "get_asset",
+        "ref": "extern"
+      },
+      {
+        "id": "hj6upcm",
+        "ref": "array"
+      },
+      {
+        "id": "eviegts",
+        "value": "asset_id",
+        "ref": "arg"
+      },
+      {
+        "id": "kldqqu0",
+        "value": "asset.type",
+        "ref": "arg"
+      },
+      {
+        "id": "ic7fy1m",
+        "value": "asset.data",
+        "ref": "arg"
+      },
+      {
+        "id": "yx80n2x",
+        "ref": "return"
+      },
+      {
+        "id": "2qd7694",
+        "value": "const blob = new Blob([data], {type: filetype})\nconst url = URL.createObjectURL(blob);\nreturn url",
+        "ref": "script"
+      },
+      {
+        "id": "5mfdcg0"
+      },
+      {
+        "id": "izkowx6",
+        "ref": "default"
+      },
+      {
+        "id": "i6lfbjh",
+        "value": "__graph_value",
+        "ref": "arg"
+      },
+      {
+        "id": "b444vmf",
+        "ref": "default"
+      },
+      {
+        "id": "lpet497",
+        "value": "asset_id",
+        "ref": "arg"
+      },
+      {
+        "id": "lkz76u7",
+        "value": "__graph_value",
+        "ref": "arg"
+      },
+      {
+        "id": "6t8kqs9",
+        "ref": "default"
+      },
+      {
+        "id": "ke8lvin",
+        "value": "__graph_value",
+        "ref": "arg"
+      },
+      {
+        "id": "j7ct5iw",
+        "value": "const blob = new Blob([data], {type: filetype})\nconst url = URL.createObjectURL(blob);\nreturn url",
+        "ref": "script"
+      }
+    ],
+    "edges": [
+      {
+        "from": "8dy573e",
+        "to": "out",
+        "as": "display"
+      },
+      {
+        "from": "args",
+        "to": "out",
+        "as": "args"
+      },
+      {
+        "from": "arcnyff",
+        "to": "8dy573e",
+        "as": "children"
+      },
+      {
+        "from": "rtrp3nj",
+        "to": "arcnyff",
+        "as": "arg1"
+      },
+      {
+        "from": "vnibm4q",
+        "to": "rtrp3nj",
+        "as": "props"
+      },
+      {
+        "from": "07fjn2b",
+        "to": "vnibm4q",
+        "as": "type"
+      },
+      {
+        "from": "rdt0k55",
+        "to": "vnibm4q",
+        "as": "accept"
+      },
+      {
+        "from": "jmqcpll",
+        "to": "vnibm4q",
+        "as": "onchange"
+      },
+      {
+        "from": "o9ukwn8",
+        "to": "1672j69",
+        "as": "self"
+      },
+      {
+        "from": "qzp14wr",
+        "to": "jmqcpll",
+        "as": "fn"
+      },
+      {
+        "from": "v99fk3p",
+        "to": "qzp14wr",
+        "as": "args"
+      },
+      {
+        "from": "y58g8pm",
+        "to": "arcnyff",
+        "as": "arg2"
+      },
+      {
+        "from": "ceomp2r",
+        "to": "uyspmvr",
+        "as": "args"
+      },
+      {
+        "from": "nxdj21x",
+        "to": "psxdib2",
+        "as": "args"
+      },
+      {
+        "from": "qgbinm2",
+        "to": "arcnyff",
+        "as": "arg0"
+      },
+      {
+        "from": "psxdib2",
+        "to": "pldugnx",
+        "as": "src"
+      },
+      {
+        "from": "pldugnx",
+        "to": "y58g8pm",
+        "as": "props"
+      },
+      {
+        "from": "gsrb9e6",
+        "to": "pldugnx",
+        "as": "style"
+      },
+      {
+        "from": "4j186m3",
+        "to": "gsrb9e6",
+        "as": "max-width"
+      },
+      {
+        "from": "gi30q1h",
+        "to": "v99fk3p",
+        "as": "arg1"
+      },
+      {
+        "from": "1672j69",
+        "to": "gi30q1h",
+        "as": "data"
+      },
+      {
+        "from": "0clgvk2",
+        "to": "gi30q1h",
+        "as": "type"
+      },
+      {
+        "from": "qh60wjb",
+        "to": "j7ct5iw",
+        "as": "filetype"
+      },
+      {
+        "from": "c0gcfke",
+        "to": "j7ct5iw",
+        "as": "data"
+      },
+      {
+        "from": "j7ct5iw",
+        "to": "zugbd71",
+        "as": "true"
+      },
+      {
+        "from": "yj9sw4x",
+        "to": "zugbd71",
+        "as": "pred"
+      },
+      {
+        "from": "yx80n2x",
+        "to": "out",
+        "as": "value"
+      },
+      {
+        "from": "uyspmvr",
+        "to": "nxdj21x",
+        "as": "asset"
+      },
+      {
+        "from": "zugbd71",
+        "to": "psxdib2",
+        "as": "value"
+      },
+      {
+        "from": "hj6upcm",
+        "to": "fmostjp",
+        "as": "args"
+      },
+      {
+        "from": "kldqqu0",
+        "to": "2qd7694",
+        "as": "filetype"
+      },
+      {
+        "from": "ic7fy1m",
+        "to": "2qd7694",
+        "as": "data"
+      },
+      {
+        "from": "2qd7694",
+        "to": "yx80n2x",
+        "as": "value"
+      },
+      {
+        "from": "5mfdcg0",
+        "to": "yx80n2x",
+        "as": "args"
+      },
+      {
+        "from": "fmostjp",
+        "to": "5mfdcg0",
+        "as": "asset"
+      },
+      {
+        "from": "izkowx6",
+        "to": "ceomp2r",
+        "as": "arg0"
+      },
+      {
+        "from": "i6lfbjh",
+        "to": "izkowx6",
+        "as": "otherwise"
+      },
+      {
+        "from": "ncih0ts",
+        "to": "izkowx6",
+        "as": "value"
+      },
+      {
+        "from": "lkz76u7",
+        "to": "b444vmf",
+        "as": "otherwise"
+      },
+      {
+        "from": "lpet497",
+        "to": "b444vmf",
+        "as": "value"
+      },
+      {
+        "from": "b444vmf",
+        "to": "v99fk3p",
+        "as": "arg0"
+      },
+      {
+        "from": "6t8kqs9",
+        "to": "hj6upcm",
+        "as": "arg0"
+      },
+      {
+        "from": "eviegts",
+        "to": "6t8kqs9",
+        "as": "value"
+      },
+      {
+        "from": "ke8lvin",
+        "to": "6t8kqs9",
+        "as": "otherwise"
+      }
+    ],
+    "out": "out"
   }
 
   ]

@@ -51,7 +51,8 @@ export type NodysseusStore = {
   parents: Store<{parent: string, parentest: string}>,
   nodes: Store<Node>,
   state: Store<any>,
-  fns: Store<{script: string, fn: Function}>
+  fns: Store<{script: string, fn: Function}>,
+  assets: Store<Blob>
 }
 
 export type LokiT<T> = {

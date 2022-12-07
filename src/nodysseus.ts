@@ -29,7 +29,15 @@ const Nodysseus = (): NodysseusStore => {
     parents: lokidbToStore(parentsdb),
     nodes: lokidbToStore(nodesdb),
     state: lokidbToStore(statedb),
-    fns: lokidbToStore(fnsdb)
+    fns: lokidbToStore(fnsdb),
+    assets: {
+      get: id => { throw new Error("not implemented")},
+      add: (id, value) => { throw new Error("not implemented")},
+      remove: id => { throw new Error("not implemented")},
+      removeAll: () => { throw new Error("not implemented")},
+      all: () => {  throw new Error("not implemented")},
+      addMany: bs => { throw new Error("not implemented")}
+    }
   }
 }
 
