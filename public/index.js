@@ -11430,7 +11430,7 @@ const info_el = ({ node , hidden , edges_in , link_out , display_graph_id , rand
                     value: link_out.as,
                     property: "edge",
                     inputs,
-                    options: node_args(nolib, ha, display_graph_id, link_out.to),
+                    options: node_args(nolib, display_graph_id, link_out.to),
                     onchange: (state, payload)=>[
                             UpdateEdge,
                             {

@@ -967,7 +967,7 @@ const nolib = {
 
           change_graph(new_graph, lib);
         },
-        update_edges: (graph, add, remove = [], lib) => {
+        update_edges: (graph, add, remove = [], lib, dryRun = false) => {
           const gcache = get_cache(graph);
           graph = gcache.graph;
 
@@ -976,11 +976,16 @@ const nolib = {
             edges: graph.edges
               .filter(
                 (e) => !remove.find((r) => r.from === e.from && r.to === e.to)
+                  && !add.find((r) => r.from === e.from && r.to === e.to)
               )
               .concat(add),
           };
 
-          change_graph(new_graph, lib);
+          if(!dryRun) {
+            change_graph(new_graph, lib);
+          } else {
+            console.log(new_graph)
+          }
         },
         add_node: (graph, node, lib) => {
           if (!(node && typeof node === "object" && node.id)) {

@@ -818,7 +818,14 @@ const Search = (state, {payload, nodes}) => {
     ]
 }
 
-const UpdateNodeEffect = (_, {display_graph, node}) => nolib.no.runtime.add_node( display_graph, node, {...hlib, ...nolib})
+const UpdateNodeEffect = (_, {display_graph, node}) => {
+  nolib.no.runtime.add_node( display_graph, node, {...hlib, ...nolib})
+  const edges_in = nolib.no.runtime.get_edges_in(display_graph, node.id);
+  const nodeargs = node_args(nolib, display_graph, node.id);
+  if(edges_in.length === 1 && nodeargs.length === 2) {
+    nolib.no.runtime.update_edges(display_graph, [{...edges_in[0], as: nodeargs[0]}], [], {...hlib, ...nolib})
+  }
+}
 const UpdateNode = (state, {node, property, value, display_graph}) => [
     {
         ...state, 
@@ -954,7 +961,7 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
     //const s.display_graph.id === s.display_graph_id && nolib.no.runtime.get_node(s.display_graph, s.selected[0]) && 
     const node_ref = node && node.ref ? nolib.no.runtime.get_ref(display_graph_id, node.ref) : node;
     const description =  node_ref?.description;
-    const node_arg_labels = node?.id ? node_args(nolib, ha, display_graph_id, node.id) : [];
+    const node_arg_labels = node?.id ? node_args(nolib, display_graph_id, node.id) : [];
     return ha.h('div', {id: "node-info-wrapper"}, [ha.h('div', {class: "spacer before"}, []), ha.h(
         'div',
         { 
@@ -1004,7 +1011,7 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
                     value: link_out.as, 
                     property: "edge",
                     inputs,
-                    options: node_args(nolib, ha, display_graph_id, link_out.to),
+                    options: node_args(nolib, display_graph_id, link_out.to),
                     onchange: (state, payload) => [UpdateEdge, {edge: {from: link_out.from, to: link_out.to, as: link_out.as}, as: payload.target.value}]
                 }),
             ]),
