@@ -768,7 +768,7 @@ const nolib = {
         }
       };
 
-      const change_graph = (graph, lib) => {
+      const change_graph = (graph, lib, addToStore = true) => {
         const new_cache = new_graph_cache(graph);
         const gcache = get_cache(graph.id);
         const old_graph = gcache && gcache.graph;
@@ -795,7 +795,7 @@ const nolib = {
         if (parent) {
           change_graph(parent, lib);
         } else {
-          if(!graph.__isnodysseus) {
+          if(!graph.__isnodysseus && addToStore) {
             nodysseus.refs.add(graph.id, graph)
           }
           publish("graphchange", graph, lib);

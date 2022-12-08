@@ -487,8 +487,6 @@ const result_subscription = (dispatch, {display_graph_id}) => {
                     timeouts[data.node_id] = false
                     el.classList.remove("flash-transition-out");
                 }, 1000)
-                // el.style.animationPlayState = "paused"
-                // el.style.animationPlayState = "running"
             }
         }
     }
@@ -756,17 +754,13 @@ const save_graph = graph => {
 const SaveGraph = (dispatch, payload) => save_graph(payload.display_graph)
 
 const ChangeDisplayGraphId = (dispatch, {id, select_out}) => {
-  console.log('changing')
-  console.log(id)
-  console.log(nolib.no.runtime.get_ref(id))
-  console.log(nolib.no.runtime.get_graph(id))
     requestAnimationFrame(() => {
         const graphPromise = Promise.resolve(nolib.no.runtime.get_ref(id)
             ?? Promise.race([
               navigator.onLine ? resfetch(`json/${id}.json`)
                 .then(r => r.status === 200 ? r.json() : undefined)
                 .then(gs => {
-                  nolib.no.runtime.add_refs(Array.isArray((console.log(gs), gs)) ? gs : [gs]);
+                  nolib.no.runtime.add_refs(Array.isArray(gs) ? gs : [gs]);
                   return nolib.no.runtime.get_ref(id);
                 })
                 .catch(_ => undefined) : undefined,
@@ -1382,12 +1376,10 @@ const runapp = (init, load_graph, _lib) => {
                             break;
                         }
                         case "undo": {
-                          console.log('undoing')
                           nodysseusStore.refs.undo()
                           break;
                         }
                         case "redo": {
-                          console.log('redoing')
                           nodysseusStore.refs.redo()
                           break;
                         }
@@ -1593,7 +1585,6 @@ const ydocStore = async (persist = false, update = undefined) => {
 
   if(update) {
     ymap.observe(event =>{
-      console.log(event);
       if(!event.transaction.local || event.transaction.origin === undoManager) {
         update(event)
       }
@@ -1610,7 +1601,8 @@ const ydocStore = async (persist = false, update = undefined) => {
       new WebrtcProvider(`nodysseus${params.get("rtcroom")}`, ydoc)
     }
 
-    // undoManager = new Y.UndoManager(ymap)
+    undoManager = new Y.UndoManager(ymap)
+    undoManager.on('stack-item-popped', i => console.log(i))
 
     // const url = await fetch("http://localhost:7071/api/Negotiate?userId=me").then(r => r.json())
     // console.log("syncing on ")
@@ -1674,7 +1666,7 @@ const yNodyStore = async () => {
 
       const updatedgraph = event.keysChanged.values().next().value;
       requestAnimationFrame(() =>  {
-        nolib.no.runtime.change_graph(nolib.no.runtime.get_ref(updatedgraph), {...nolib, ...hlib})
+        nolib.no.runtime.change_graph(nolib.no.runtime.get_ref(updatedgraph), {...nolib, ...hlib}, false)
       }) 
     }),
     parents: lokidbToStore(parentsdb),
