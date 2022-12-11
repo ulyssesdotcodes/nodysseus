@@ -1748,7 +1748,7 @@
       {
         "from": "3ucsio2",
         "to": "45uuwjl",
-        "as": "#node-info-wrapper"
+        "as": "#node-info-wrapper, #graph-actions"
       },
       {
         "from": "0uhor53",

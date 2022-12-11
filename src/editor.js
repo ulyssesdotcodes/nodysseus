@@ -842,10 +842,9 @@ const UpdateNode = (state, {node, property, value, display_graph}) => [
     },
     [UpdateNodeEffect, {
         display_graph: display_graph ?? state.display_graph,
-        node: Object.assign({}, 
+        node: Object.fromEntries(Object.entries(Object.assign({}, 
             base_node(node ?? nolib.no.runtime.get_node(state.display_graph, state.selected[0])), 
-            {[property]: value === "" ? undefined : value}
-        )
+            {[property]: value === "" ? undefined : value})).filter(kv => kv[1] !== undefined))
     }]
 ]
 

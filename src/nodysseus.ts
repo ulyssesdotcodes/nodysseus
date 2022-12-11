@@ -1192,9 +1192,6 @@ const nolib = {
       rawArgs: true,
       args: ["fn", "object", "initial", "_lib"],
       fn: (fn, object, initial, lib) => {
-        if(Array.isArray(object) || ispromise(object)) {
-          debugger;
-        }
         const foldvalue = objectvalue => {
           if (objectvalue === undefined) return undefined;
           const fnrunnable = run_runnable(fn, lib).__value;
