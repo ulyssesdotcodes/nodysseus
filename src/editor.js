@@ -1690,7 +1690,7 @@ const yNodyStore = async () => {
 
       const updatedgraph = event.keysChanged.values().next().value;
       requestAnimationFrame(() =>  {
-        nolib.no.runtime.change_graph(nolib.no.runtime.get_ref(updatedgraph), {...nolib, ...hlib}, false)
+        nolib.no.runtime.change_graph(nolib.no.runtime.get_ref(updatedgraph), {...nolib, ...hlib}, event.transaction.local)
       }) 
     }),
     parents: lokidbToStore(parentsdb),

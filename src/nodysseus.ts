@@ -1224,7 +1224,7 @@ const nolib = {
         return ispromise(objectvalue) ? objectvalue.then(ov => foldvalue(ov.__value ?? ov)) : foldvalue(objectvalue.__value ?? objectvalue)
       },
     },
-    _sequence: {
+    sequence: {
       rawArgs: true,
       args: ["_node_args", "_lib", "__graphid"],
       fn: (_args, lib, graphid) => {

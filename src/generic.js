@@ -1045,18 +1045,18 @@
       ]
     },
     {
-      "id": "_sequence",
+      "id": "sequence",
       "description": "Create a new runnable that runs the input runnables in sequence.",
       "name": "sequence",
       "out": "out",
-      "ref": "extern",
-      "value": "extern.sequence",
-      "__nodes": [
+      "_ref": "extern",
+      "_value": "extern.sequence",
+      "nodes": [
         {"id": "args", "ref": "arg", "value": "_args"},
         {"id": "fn", "ref": "script", "value": "return Object.values(args)"},
         {"id": "out", "ref": "ap"}
       ],
-      "__edges": [
+      "edges": [
         {"from": "args", "to": "fn", "as": "args"},
         {"from": "fn", "to": "out", "as": "fn"},
       ],

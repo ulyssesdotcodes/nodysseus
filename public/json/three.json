@@ -331,8 +331,9 @@
       {
         "id": "ptak9t2",
         "name": "",
-        "ref": "sequence"
+        "ref": "array"
       },
+      {"id": "ptak9t2_out", "ref": "ap"},
       {
         "id": "sq9t0ix",
         "ref": "runnable"
@@ -506,6 +507,11 @@
       },
       {
         "from": "ptak9t2",
+        "to": "ptak9t2_out",
+        "as": "fn"
+      },
+      {
+        "from": "ptak9t2_out",
         "to": "8m5muxn/vyr07ts",
         "as": "animationframe"
       },
