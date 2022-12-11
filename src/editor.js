@@ -429,21 +429,25 @@ const listenToEvent = (dispatch, props) => {
 const ap = (fn, v) => fn(v);
 const ap_promise = (p, fn, cfn) => p && typeof p['then'] === 'function' ? cfn ? p.then(fn).catch(cfn) : p.then(fn) : ap(fn, p);
 
-const refresh_graph = (graph, dispatch) => {
+const refresh_graph = (graph, dispatch, norun = false) => {
+    if(norun) {
+      return
+    }
     dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
     const result = hlib.run({graph, fn: graph.out}, {_output: "value"});
+    const reslib = hlib.run({graph, fn: graph.out}, {_output: "lib"})
     // const result = hlib.run(graph, graph.out, {});
     const display_fn = result => hlib.run({graph, fn: graph.out}, {_output: "display"}, {...hlib, ...nolib});
     // const display_fn = result => hlib.run(graph, graph.out, {}, "display");
     const update_result_display_fn = display => result_display_dispatch(UpdateResultDisplay, {el: display && display.dom_type ? display : {dom_type: 'div', props: {}, children: []}})
     const update_info_display_fn = () => dispatch(s => [s, s.selected[0] !== s.display_graph.out 
-        && !s.show_all && [() => update_info_display({fn: s.selected[0], graph: s.display_graph, args: {}})]])
+        && !s.show_all && [() => update_info_display({fn: s.selected[0], graph: s.display_graph, args: {}, lib: {...hlib, ...nolib, ...reslib}})]])
     ap_promise(ap_promise(result, display_fn), update_result_display_fn);
     ap_promise(result, update_info_display_fn)
     return result
 }
 
-const result_subscription = (dispatch, {display_graph_id}) => {
+const result_subscription = (dispatch, {display_graph_id, norun}) => {
     let animrun = false;
 
     const error_listener = (error) =>
@@ -457,7 +461,7 @@ const result_subscription = (dispatch, {display_graph_id}) => {
         if(graph.id === display_graph_id && !animrun) {
             cancelAnimationFrame(animrun)
             animrun = requestAnimationFrame(() => {
-                const result = refresh_graph(graph, dispatch)
+                const result = refresh_graph(graph, dispatch, norun)
                 const reset_animrun = () => animrun = false;
                 ap_promise(result, reset_animrun, reset_animrun)
             })
@@ -646,7 +650,12 @@ const SelectNode = (state, {node_id, focus_property}) => [
                 : []
             }
         ]}})]
-        : [() => update_info_display({fn: node_id, graph: state.display_graph, args: {}})],
+        : [() => update_info_display({
+          fn: node_id, 
+          graph: state.display_graph, 
+          args: {}, 
+          lib: {...hlib, ...nolib, ...hlib.run({graph: state.display_graph, fn: state.display_graph.out}, {_output: "lib"})}
+        })],
     state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: node_id})]
 ]
 
@@ -1068,13 +1077,13 @@ const UpdateResultDisplay = (state, el) => ({
     el: el.el ? {...el.el} : {...el}
 })
 
-const update_info_display = ({fn, graph, args}) => {
+const update_info_display = ({fn, graph, args, lib}) => {
     const node = nolib.no.runtime.get_node(graph, fn);
 
     const node_ref = node && (node.ref && nolib.no.runtime.get_ref(node.ref)) || node;
     const out_ref = node && (node.nodes && nolib.no.runtime.get_node(node, node.out)) || (node_ref.nodes && nolib.no.runtime.get_node(node_ref, node_ref.out));
     const node_display_el = (node.ref === "return" || (out_ref && out_ref.ref === "return")) 
-        && hlib.run({graph, fn}, {...args, _output: "display"});
+        && hlib.run({graph, fn, lib}, {...args, _output: "display"});
     const update_info_display_fn = display => info_display_dispatch && requestAnimationFrame(() => {
       info_display_dispatch(UpdateResultDisplay, {el: display?.dom_type ? display : ha.h('div', {})})
       requestAnimationFrame(() => {
@@ -1131,9 +1140,9 @@ const custom_editor_display = html_id => ha.app({
 });
 
 const refresh_custom_editor = () => {
-    if(localStorage.getItem("custom_editor")) {
+    if(nolib.no.runtime.get_ref("custom_editor")) {
         // TODO: combine with update_info
-        const graph = JSON.parse(localStorage.getItem("custom_editor"));
+        const graph = nolib.no.runtime.get_ref("custom_editor");
         const result = hlib.run({graph, fn: graph.out}, {_output: "display"});
         custom_editor_display_dispatch(() => ({el: result}))
     } else {
@@ -1287,7 +1296,7 @@ const runapp = (init, load_graph, _lib) => {
         [d3subscription, {action: SimulationToHyperapp, update: UpdateSimulation}], 
         [graph_subscription, {display_graph_id: s.display_graph_id}],
         [select_node_subscription, {}],
-        result_display_dispatch && [result_subscription, {display_graph_id: s.display_graph_id}],
+        result_display_dispatch && [result_subscription, {display_graph_id: s.display_graph_id, norun: s.norun}],
         [keydownSubscription, {action: (state, payload) => {
             if(document.getElementById("node-editor-result").contains(payload.target)) {
                 return [state];
@@ -1602,11 +1611,15 @@ const ydocStore = async (persist = false, update = undefined) => {
 
   if(persist) {
     const indexeddbProvider = new IndexeddbPersistence(persist, ydoc)
-    await indexeddbProvider.whenSynced.then(v => (console.log('loaded from indexeddb'), console.log(v)))
-    if(typeof params.get("rtcroom") === 'string') {
-      console.log('webrtc')
-      new WebrtcProvider(`nodysseus${params.get("rtcroom")}`, ydoc)
-    }
+    await indexeddbProvider.whenSynced.then(v => {
+      requestAnimationFrame(() => {
+        const custom_editor = nolib.no.runtime.get_ref("custom_editor");
+        const rtcroom = params.get("rtcroom") ?? (custom_editor && hlib.run({node: {graph: custom_editor, out: custom_editor.out}}, {})?.rtcroom);
+        if(rtcroom) {
+          new WebrtcProvider(`nodysseus${rtcroom}`, ydoc)
+        }
+      })
+    })
 
     undoManager = new Y.UndoManager(ymap)
     undoManager.on('stack-item-popped', i => console.log(i))
@@ -1630,7 +1643,9 @@ const ydocStore = async (persist = false, update = undefined) => {
   return {
     get: id => ymap.get(id),
     add: (id, data) => {
-      ymap.set(id, data)
+      if(!id.startsWith("_")) {
+        ymap.set(id, data)
+      }
     },
     addMany: (datas) => {
       ydoc.transact(() => {
@@ -1638,11 +1653,14 @@ const ydocStore = async (persist = false, update = undefined) => {
       })
     },
     remove: id => {
-      console.log(`removing ${id}`)
       ymap.delete(id)
     },
     removeAll: () => {},
-    all: () => [...ymap.values()],
+    all: () => {
+      const vals = [...ymap.values()];
+      vals.forEach(g => (g.id.match(/^[a-z0-9]{7}$/) || g.id.match(/^run_[a-z]{7}.*/)) && g.id !== 'default' && g.id !== 'resolve' && g.id !== 'changed' && ymap.delete(g.id))
+      return vals
+    },
     undo: persist && (() => undoManager.undo()),
     redo: persist && (() => undoManager.redo()),
   }

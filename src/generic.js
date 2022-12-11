@@ -284,6 +284,7 @@
       { "id": "array", "name": "array", "description": "Create an array from all the inputs in alphabetical order", "ref": "extern", "value": "extern.new_array" },
       {"id": "create_fn", "ref": "extern", "value": "extern.create_fn"},
       { "id": "merge_objects", "description": "Merge the keys of two objects, in descending alphabetical order priority (`Object.assign(...inputs)`).", "ref": "extern", "value": "extern.merge_objects" },
+      { "id": "merge_objects_mutable", "description": "Merge the keys of one or more objects into the target object, in descending alphabetical order priority (`Object.assign(...inputs)`).", "ref": "extern", "value": "extern.merge_objects_mutable" },
       {
         "id": "get",
         "description": "Get the value at the path of object. Accepts a `.` separated path e.g. get(target, 'a.b.c') returns target.a.b.c",
@@ -1044,26 +1045,48 @@
       "_ref": "extern",
       "_value": "sequence",
       "nodes": [
+        {"id": "args", "ref": "arg", "value": "_args"},
+        {"id": "fn", "ref": "script", "value": "return Object.values(args)"},
+        {"id": "out", "ref": "ap"}
+      ],
+      "edges": [
+        {"from": "args", "to": "fn", "as": "args"},
+        {"from": "fn", "to": "out", "as": "fn"},
+      ],
+      "_nodes": [
         { "id": "args", "ref": "arg", "value": "__args" },
+        { "id": "runnables", "ref": "arg", "value": "runnables" },
         { "id": "seq_ap_args", "ref": "arg", "value": "_args" },
+        { "id": "seq_ap_par_args", "ref": "arg", "value": "__args.__args" },
+        {"id": "delete_seq_ap_args", "ref": "script", "value": "const newargs = {...args, runnables, _seq_keys: Object.keys(args)}; console.log('newargs'); console.log(newargs); return newargs"},
+        {"id": "new_seq_ap_args", "ref": "script", "value": "console.log('new seq ap'); console.log(args); return args"},
         {"id": "delete_args", "ref": "script", "value": "const ret = {...target}; delete ret.args; return ret;"},
         { "id": "seq_fold_currentValue", "ref": "arg", "value": "currentValue.1" },
         { "id": "seq_ap_run", "value": "true" },
         { "id": "seq_ap", "ref": "ap" },
         { "id": "seq_ap_runnable", "ref": "runnable" },
         { "id": "seq_fold", "ref": "fold"},
-        { "id": "out", "ref": "runnable"}
+        { "id": "out_runnable", "ref": "runnable"},
+        { "id": "out", "ref": "ap"},
       ],
-      "edges": [
+      "_edges": [
         { "from": "args", "to": "delete_args", "as": "target" },
         { "from": "args", "to": "_seq_fold", "as": "object" },
-        { "from": "delete_args", "to": "seq_fold", "as": "object" },
+        { "from": "seq_ap_args", "to": "new_seq_ap_args", "as": "args" },
+        { "from": "delete_args", "to": "_seq_fold", "as": "object" },
+        { "from": "runnables", "to": "seq_fold", "as": "object" },
         {"from": "seq_ap_run", "to": "seq_ap", "as": "run"},
         {"from": "seq_fold_currentValue", "to": "seq_ap", "as": "fn"},
         {"from": "seq_ap", "to": "seq_ap_runnable", "as": "fn"},
-        {"from": "seq_ap_args", "to": "seq_ap", "as": "args"},
+        { "from": "delete_args", "to": "delete_seq_ap_args", "as": "target" },
+        {"from": "seq_ap_args", "to": "delete_seq_ap_args", "as": "args"},
+        {"from": "seq_ap_par_args", "to": "delete_seq_ap_args", "as": "parargs"},
+        {"from": "new_seq_ap_args", "to": "_seq_ap", "as": "args"},
         {"from": "seq_ap_runnable", "to": "seq_fold", "as": "fn"},
-        {"from": "seq_fold", "to": "out", "as": "fn"},
+        {"from": "seq_fold", "to": "out_runnable", "as": "fn"},
+        {"from": "delete_seq_ap_args", "to": "out", "as": "args"},
+        {"from": "runnables", "to": "delete_seq_ap_args", "as": "runnables"},
+        {"from": "out_runnable", "to": "out", "as": "fn"},
       ]
     },
     {
@@ -3536,6 +3559,7 @@
         "value": "event.target.value",
         "ref": "arg"
       },
+      {"id": "parseval", "ref": "script", "value": "return parseFloat(val)"},
       {
         "id": "q09a315",
         "value": "0.01",
@@ -3804,6 +3828,11 @@
       },
       {
         "from": "gibdj45",
+        "to": "parseval",
+        "as": "val"
+      },
+      {
+        "from": "parseval",
         "to": "ezx9hxj",
         "as": "value"
       },

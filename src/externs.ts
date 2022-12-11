@@ -51,6 +51,9 @@ import { isNodeRef, isNodeScript, RefNode } from "./types";
               }
             })
             text += `function fn_${n.id}(){\n${varset.join("\n")}\nreturn (${extern.fn.toString()})(${extern.args.join(", ")})}\n\n`
+          } else if (noderef.id === "get"){
+            let inputs = graph.edges.filter(e => e.to === n.id).map(edge => ({edge, node: graph.nodes.find(n => n.id === edge.from)}));
+            text += `function fn_${n.id}(){\n${inputs.map(input => `let ${input.edge.as} = ${isNodeRef(input.node) && input.node.ref === "arg" ? input.node.value === '_lib' ? '_lib' : `fnargs["${input.node.value}"]` : `fn_${input.node.id}()`};`).join("\n")}\n\nreturn target.${isNodeRef(n) ? n.value : 'undefined'}}\n\n`
           } else {
             text += `function fn_${n.id}(){\nreturn ${noderef.value}}\n\n`
           }
@@ -61,7 +64,7 @@ import { isNodeRef, isNodeScript, RefNode } from "./types";
         // for now just assumeing everything is an arg of the last node out
         // TODO: tree walk
         text += `return fn_${runnable.fn}()`//({${[...fninputs].map(rinput => `${rinput.as}: fnargs.${graph.nodes.find(n => n.id === rinput.from).value}`).join(",")}})`
-        const fn = new Function("fnargs", "_extern_args", "import_util", text);
+        const fn = new Function("fnargs", "_extern_args", "import_util", "_lib", text);
 
-        return (args={}) => fn(args, _extern_args, util);
+        return (args={}) => fn(args, _extern_args, util, lib);
       }

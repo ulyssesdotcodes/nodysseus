@@ -62,11 +62,24 @@ export type LokiT<T> = {
 
 export type Result = {__value: any, __isnodysseus: true}
 
-export type Runnable<T extends {}> = ({
+// not used
+export type ApRunnable = {
+  fn: Runnable,
+  args: Runnable,
+  lib?: any,
+  __isnodysseus?: true
+}
+
+export type GraphRunnable = {
   fn: string,
   graph: Graph,
-  args: T,
+  args: any,
+  lib?: any,
   __isnodysseus?: true
-} | Result)
+}
 
-export const isValue = <T>(r: Runnable<T>): r is Result => !!(r as Result)?.__value;
+export type Runnable =  Result | GraphRunnable
+
+export const isValue = (r: Runnable): r is Result => !!(r as Result)?.__value;
+export const isGraphRunnable = (r: Runnable): r is GraphRunnable => !!(r as GraphRunnable).graph
+//export const isApRunnable = (r: Runnable): r is ApRunnable => isGraphRunnable((r as ApRunnable).fn)
