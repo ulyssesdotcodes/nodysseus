@@ -832,7 +832,7 @@ const UpdateNodeEffect = (_, {display_graph, node}) => {
   const edges_in = nolib.no.runtime.get_edges_in(display_graph, node.id);
   const nodeargs = node_args(nolib, display_graph, node.id);
   if(edges_in.length === 1 && nodeargs.length === 2) {
-    nolib.no.runtime.update_edges(display_graph, [{...edges_in[0], as: nodeargs[0]}], [], {...hlib, ...nolib})
+    nolib.no.runtime.update_edges(display_graph, [{...edges_in[0], as: nodeargs[0].name}], [], {...hlib, ...nolib})
   }
 }
 const UpdateNode = (state, {node, property, value, display_graph}) => [
@@ -982,9 +982,9 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
                 node_arg_labels
                     .map(n => ha.h('span', {
                         class: "clickable", 
-                        onclick: edges_in.filter(l => l.as === n).map(l => [SelectNode, {node_id: l.from}])[0]
-                            ?? [CreateNode, {node: {id: randid}, child: node.id, child_as: n}]
-                    }, [ha.text(n)]))),
+                        onclick: n.exists ? edges_in.filter(l => l.as === n.name).map(l => [SelectNode, {node_id: l.from}])[0]
+                          : [CreateNode, {node: {id: randid}, child: node.id, child_as: n.name}]
+                    }, [ha.text(n.exists ? n.name : `+${n.name}`)]))),
             ha.h('div', {class: "inputs"}, [
                 input_el({
                     label: "value", 
@@ -1019,7 +1019,7 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
                     value: link_out.as, 
                     property: "edge",
                     inputs,
-                    options: node_args(nolib, display_graph_id, link_out.to),
+                    options: node_args(nolib, display_graph_id, link_out.to).map(na => na.name),
                     onchange: (state, payload) => [UpdateEdge, {edge: {from: link_out.from, to: link_out.to, as: link_out.as}, as: payload.target.value}]
                 }),
             ]),

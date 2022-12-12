@@ -1,4 +1,4 @@
-import { d3Link, d3Node, Edge, Graph } from "./types";
+import { d3Link, d3Node, Edge, Graph, NodeArg } from "./types";
 
 export const ispromise = a => a && typeof a.then === 'function';
 export const isrunnable = a => a && ((a.value && a.id && !a.ref) || a.fn && a.graph);
@@ -233,7 +233,7 @@ export const ancestor_graph = (node_id, from_graph, nolib): Graph => {
     return graph;
 }
 
-export const node_args = (nolib, graph, node_id) => {
+export const node_args = (nolib, graph, node_id): Array<NodeArg> => {
     const node = nolib.no.runtime.get_node(graph, node_id);
     if(!node) {
         // between graph update and simulation update it's possible links are bad
@@ -270,7 +270,7 @@ export const node_args = (nolib, graph, node_id) => {
             ? [nextIndexedArg]
             : []
         ))
-    ]
+    ].map((a: string) => ({exists: !!edges_in.find(e => e.as === a), name: a}))
 }
 
 

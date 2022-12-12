@@ -68,3 +68,5 @@ import { isNodeRef, isNodeScript, RefNode } from "./types";
 
         return (args={}) => fn(args, _extern_args, util, lib);
       }
+
+export const now = (scale?: number) => performance.now() * (scale ?? 1)

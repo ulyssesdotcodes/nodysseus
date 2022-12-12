@@ -83,3 +83,5 @@ export type Runnable =  Result | GraphRunnable
 export const isValue = (r: Runnable): r is Result => !!(r as Result)?.__value;
 export const isGraphRunnable = (r: Runnable): r is GraphRunnable => !!(r as GraphRunnable).graph
 //export const isApRunnable = (r: Runnable): r is ApRunnable => isGraphRunnable((r as ApRunnable).fn)
+
+export type NodeArg = { exists: boolean, name: string }

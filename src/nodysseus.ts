@@ -3,7 +3,7 @@ import loki from "lokijs";
 import { ispromise } from "./util"
 import { isNodeGraph, Graph, LokiT, Node, NodysseusStore, Store, Result, Runnable, isValue } from "./types"
 import generic from "./generic.js";
-import { create_fn } from "./externs";
+import { create_fn, now } from "./externs";
 
 const Nodysseus = (): NodysseusStore => {
   const isBrowser = typeof window !== 'undefined';
@@ -1224,34 +1224,13 @@ const nolib = {
         return ispromise(objectvalue) ? objectvalue.then(ov => foldvalue(ov.__value ?? ov)) : foldvalue(objectvalue.__value ?? objectvalue)
       },
     },
-    sequence: {
+    _sequence: {
       rawArgs: true,
       args: ["_node_args", "_lib", "__graphid"],
       fn: (_args, lib, graphid) => {
         const fns = run_runnable({..._args, args: {graphid: graphid, ..._args.args}}, lib)
         console.log(fns)
         return nolib.extern.ap.fn(lib.no.of(Object.entries(fns).filter(kv => !kv[0].startsWith("_")).map(kv => kv[1])), undefined, false, lib, {})
-        // const runnableargs = Object.fromEntries(Object.entries(_args).filter(kv => !kv[0].startsWith("_")))
-        //
-        // const delayfn = (fn, args) => lib.no.of({
-        //     "fn": "runfn",
-        //     "graph": {
-        //       "id": `_run_${fn.fn}`,
-        //       "nodes": [
-        //         {"id": "fnarg", "ref": "arg", "value": "fn"},
-        //         {"id": "argsarg", "ref": "arg", "value": "args"},
-        //         {"id": "run", "value": "true"},
-        //         {"id": "runfn", "ref": "ap"}
-        //       ],
-        //       "edges": [
-        //         {"from": "fnarg", "to": "runfn", "as": "fn"},
-        //         {"from": "run", "to": "runfn", "as": "run"},
-        //         {"from": "argsarg", "to": "runfn", "as": "args"}
-        //       ]
-        //     },
-        //     "args": { fn: fn?.__value, args }
-        //   })
-        // return lib.no.of(Object.entries(_args).map(e => delayfn(run_runnable(e[1], lib), _args.args)))
       }
     },
     runnable: {
@@ -1550,6 +1529,10 @@ const nolib = {
         delete newval[path];
         return newval;
       },
+    },
+    now: {
+      args: ["scale"],
+      fn: now
     },
     math: {
       args: ["__graph_value", "_node_args"],
