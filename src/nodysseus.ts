@@ -1095,6 +1095,8 @@ const nolib = {
             // console.log('end while avhttp://gitlab.etc.com/et-playground/ml-stylized-art/stable-diffusion-cli/-/merge_requests/3')
             // console.log(av)
           }
+          console.log('in ap')
+          console.log(av)
           let isArray = Array.isArray(fnr);
           if(!isArray) {
             fnr = [fnr]
@@ -1160,16 +1162,17 @@ const nolib = {
         }
 
         const execpromise = (fnrg, rvg, avg) => {
-          const rv = run_runnable(rvg, lib)?.__value;
-          // console.log(avg)
+          const rv = run_runnable(rvg, lib);
+          console.log(avg)
           avg = avg?.__value ? avg.__value : avg;
           let av = avg && !ispromise(avg) && run_runnable({...avg, args: {...avg.args, ...fn.args}}, fnrg.lib ? { ...lib, ...fnrg.lib} : lib);
+          console.log(av)
 
           if(ispromise(fnrg) || ispromise(rv) || ispromise(av)) {
             return Promise.all([fnrg, rv, ispromise(avg) ? avg : av]).then(([fnr, rv, av]) => execpromise(fnr, rv, av))
           }
 
-          return av?.__value?.fn && av?.__value?.graph ? execpromise(fnrg, rv, av) : execute(fnrg, rv?.__value, av)
+          return av?.__value?.fn && av?.__value?.graph ? execpromise(fnrg, rv, av) : execute(fnrg, rv, av.__value)
         }
 
 
