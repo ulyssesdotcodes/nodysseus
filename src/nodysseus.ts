@@ -1189,12 +1189,9 @@ const nolib = {
         // console.log(args)
         // args = lib.no.runtime.get_node(args.graph, args.fn)?.ref === "arg" ? run_runnable(args, lib) : args;
         // console.log(args);
-
-        const argargs = !runvalue && args && ancestor_graph(args.fn, args.graph, lib).nodes.filter(isNodeRef).filter(n => n.ref === "arg").map(n => n.value?.includes(".") ? n.value.substring(0, n.value.indexOf(".")) : n.value)
-
-        const ret = runvalue ? execpromise(fnv.__value, run, args)
-          // : {...fn, args: {...fn.args, ...args}}
-          : (delete args?.isArg, delete args?.args?._output, lib.no.of(run_runnable({
+  const constructRunGraph = (args) => {
+        const argargs = !runvalue && args && ancestor_graph(args.fn, args.graph, lib).nodes.filter(isNodeRef).filter(n => n.ref === "arg").map(n => n.value?.includes(".") ? n.value.substring(0, n.value.indexOf(".")) : n.value);
+        return (delete args?.isArg, delete args?.args?._output, lib.no.of(run_runnable({
             "fn": "runout",
             "graph": {
               "id": `_run_${graphid.__value}_${Math.floor(performance.now() * 100)}`,
@@ -1232,6 +1229,11 @@ const nolib = {
         //   console.log(fnvr.fnargs)
         //   console.log(ret)
         // }
+      }
+
+        const ret = runvalue ? execpromise(fnv.__value, run, args)
+          // : {...fn, args: {...fn.args, ...args}}
+          : ispromise(args) ? args.then(ags => constructRunGraph(ags)) : constructRunGraph(args)
 
         return ret;
       }
