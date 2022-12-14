@@ -3521,9 +3521,6 @@
     "id": "slider",
     "nodes": [
       {
-        "id": "j219svq"
-      },
-      {
         "id": "5mog0bc",
         "value": "input",
         "ref": "html_element"
@@ -3604,7 +3601,11 @@
         "value": "event.target.value",
         "ref": "arg"
       },
-      {"id": "parseval", "ref": "script", "value": "return parseFloat(val)"},
+      {
+        "id": "parseval",
+        "ref": "script",
+        "value": "return parseFloat(val)"
+      },
       {
         "id": "q09a315",
         "value": "0.01",
@@ -3641,11 +3642,6 @@
         "id": "bts7694",
         "value": "result",
         "ref": "arg"
-      },
-      {
-        "id": "out",
-        "name": "slider",
-        "ref": "return"
       },
       {
         "id": "t1deznd",
@@ -3698,6 +3694,24 @@
       {
         "id": "d68tdna",
         "value": "1.0"
+      },
+      {
+        "id": "out",
+        "name": "slider",
+        "ref": "return"
+      },
+      {
+        "id": "j219svq",
+        "value": "{}"
+      },
+      {
+        "id": "2wp8ffd",
+        "ref": "array"
+      },
+      {
+        "id": "4dh6wzn",
+        "value": "oninput",
+        "ref": "arg"
       }
     ],
     "edges": [
@@ -3857,11 +3871,6 @@
         "as": "args"
       },
       {
-        "from": "l5bzesi",
-        "to": "old0t0c",
-        "as": "fn"
-      },
-      {
         "from": "old0t0c",
         "to": "24q0egm",
         "as": "oninput"
@@ -3910,6 +3919,21 @@
         "from": "y407zfo",
         "to": "out",
         "as": "value"
+      },
+      {
+        "from": "2wp8ffd",
+        "to": "old0t0c",
+        "as": "fn"
+      },
+      {
+        "from": "l5bzesi",
+        "to": "2wp8ffd",
+        "as": "arg0"
+      },
+      {
+        "from": "4dh6wzn",
+        "to": "2wp8ffd",
+        "as": "arg1"
       }
     ],
     "out": "out"
@@ -4584,7 +4608,7 @@
       {
         "id": "178thpd",
         "value": "Input",
-        "ref": "slidernew"
+        "ref": "slider"
       }
     ],
     "edges": [
