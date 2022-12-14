@@ -1087,16 +1087,8 @@ const nolib = {
           }
 
           while(av?.fn && av?.graph) {
-            // console.log('in while')
-            // console.log(av)
-            // console.log(fnv)
-            // console.log(fn)
             av = run_runnable({...av, args: {...av.args, ...fn.args}}, fnv.__value.lib ? { ...lib, ...fnv.__value.lib} : lib)?.__value
-            // console.log('end while avhttp://gitlab.etc.com/et-playground/ml-stylized-art/stable-diffusion-cli/-/merge_requests/3')
-            // console.log(av)
           }
-          console.log('in ap')
-          console.log(av)
           let isArray = Array.isArray(fnr);
           if(!isArray) {
             fnr = [fnr]
@@ -1112,46 +1104,18 @@ const nolib = {
             if(av) {
               const avkeys = Object.keys(av).filter(a => a !== '__isnodysseus' && a !== "__args");
               newfnargs = fnr.fnargs && fnr.fnargs.filter(a => !avkeys.find(i => i === a))
-              // console.log('got args')
-              // console.log(fnvr.fnargs)
-              // console.log(newfnargs)
             }
-
-            // console.log('in ap')
-            // console.log(fnr.fnargs)
-            // console.log(av);
-            // console.log(args)
-            // if(fnr.fnargs[0] === "event") {
-              // debugger;
-            // }
 
             const fnap = {
               ...fnr,
               fnargs: newfnargs,
               args: {
-                // ...fn.args.__args,
-                // ...fn.args,
-                // ...fnr.args,
-                // ...(fnr.fnargs ? Object.fromEntries(Object.entries(av ?? {}).filter(kv => !!fnr.fnargs.find(a => kv[0] === a))) : (av ?? {})),
-                // __args: {...fnr.args.__args},
-                // __graphid: nodysseus_get(fnr.args, "__graphid", lib),
-                // ...fn.args,
                 ...(!av ? fn.args : fnr.fnargs && av ? Object.fromEntries(fnr.fnargs.map(a => [a, av[a]])) : (av ?? {})),
                 __args: {
-                  ...fnr.args.__args,
-                  // ...av,
-                  // ...(av ?? {}),
-                  // ...av,
+                  ...(fnr.fnargs ? Object.fromEntries(Object.entries(fnr.args).filter(a => !fnr.fnargs.find(r => r === a[0]))) : fnr.args)
                 },
               },
             };
-
-            // console.log('apping')
-            // console.log(fnap)
-            // console.log(fnv)
-            // console.log(fnr)
-            // console.log(fnr.fnargs)
-            // console.log(av)
 
             return rv ? run_runnable(fnap, lib) : lib.no.of(fnap);
           }
@@ -1163,16 +1127,14 @@ const nolib = {
 
         const execpromise = (fnrg, rvg, avg) => {
           const rv = run_runnable(rvg, lib);
-          console.log(avg)
           avg = avg?.__value ? avg.__value : avg;
           let av = avg && !ispromise(avg) && run_runnable({...avg, args: {...avg.args, ...fn.args}}, fnrg.lib ? { ...lib, ...fnrg.lib} : lib);
-          console.log(av)
 
           if(ispromise(fnrg) || ispromise(rv) || ispromise(av)) {
             return Promise.all([fnrg, rv, ispromise(avg) ? avg : av]).then(([fnr, rv, av]) => execpromise(fnr, rv, av))
           }
 
-          return av?.__value?.fn && av?.__value?.graph ? execpromise(fnrg, rv, av) : execute(fnrg, rv, av.__value)
+          return av?.__value?.fn && av?.__value?.graph ? execpromise(fnrg, rv, av) : execute(fnrg, rv, av?.__value)
         }
 
 
@@ -1184,22 +1146,13 @@ const nolib = {
 
         const fnvr = fnv.__value;
 
-        // const newfnv = newfnargs ? {...fnv.__value, fnargs: newfnargs} : fnv.__value
-
-
         const graphid = nodysseus_get(fn.args, "__graphid", lib);
-        // TODO: Fix for sequence. if __args arg0 is a sequence then that gets passed to the first sequence but the first sequence context including arg0 is then passed to the second sequence
-        //
-        // console.log("inap")
-        // console.log(args)
-        // args = lib.no.runtime.get_node(args.graph, args.fn)?.ref === "arg" ? run_runnable(args, lib) : args;
-        // console.log(args);
   const constructRunGraph = (args) => {
         const argargs = !runvalue && args && ancestor_graph(args.fn, args.graph, lib).nodes.filter(isNodeRef).filter(n => n.ref === "arg").map(n => n.value?.includes(".") ? n.value.substring(0, n.value.indexOf(".")) : n.value);
         return (delete args?.isArg, delete args?.args?._output, lib.no.of(run_runnable({
             "fn": "runout",
             "graph": {
-              "id": `_run_${graphid.__value}_${Math.floor(performance.now() * 100)}`,
+              "id": `_run_${graphid.__value}_${fn.fn}_${Math.floor(performance.now() * 100)}`,
               "out": "runout",
               "nodes": [
                 {"id": "fnarg", "value": fnv},
@@ -1229,11 +1182,6 @@ const nolib = {
             "fnargs": (argargs ?? fnvr.fnargs ?? []),
             "__isnodysseus": true,
           }, lib)))
-        // if(!runvalue) {
-        //   console.log(argargs)
-        //   console.log(fnvr.fnargs)
-        //   console.log(ret)
-        // }
       }
 
         const ret = runvalue ? execpromise(fnv.__value, run, args)
@@ -1302,7 +1250,6 @@ const nolib = {
     _sequence: {
       args: ["_node_args", "_lib", "__graphid"],
       fn: (_args, lib, graphid) => {
-        console.log(_args);
         // const fns = run_runnable({..._args, args: {graphid: graphid, ..._args.args}}, lib)
         // return nolib.extern.ap.fn(lib.no.of(Object.entries(fns).filter(kv => !kv[0].startsWith("_")).map(kv => kv[1])), undefined, false, lib, {})
         return lib.extern.ap.fn(lib.no.of(Object.values(_args)), undefined, lib.no.of(false), lib);
