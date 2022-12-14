@@ -14,11 +14,6 @@
         "id": "gkf0vld"
       },
       {
-        "id": "mqyloha",
-        "value": "return  document.getElementById(canvas_id);",
-        "ref": "script"
-      },
-      {
         "id": "1433a1o",
         "value": "canvas",
         "name": "",
@@ -28,16 +23,6 @@
         "id": "cwl59lh",
         "value": "canvas",
         "name": "",
-        "ref": "arg"
-      },
-      {
-        "id": "92odlmk",
-        "value": "rendererid",
-        "ref": "log"
-      },
-      {
-        "id": "sqan3fs",
-        "value": "canvas_id",
         "ref": "arg"
       },
       {
@@ -55,6 +40,15 @@
         "id": "x4zdk2w",
         "value": "console.log(\"creating renderer\")\nconsole.log(canvas)\nreturn new THREE.WebGLRenderer({canvas})",
         "ref": "script"
+      },
+      {
+        "id": "gux0ddy",
+        "ref": "cache"
+      },
+      {
+        "id": "ur2g80t",
+        "value": "canvas",
+        "ref": "arg"
       }
     ],
     "edges": [
@@ -84,21 +78,6 @@
         "as": "args"
       },
       {
-        "from": "92odlmk",
-        "to": "mqyloha",
-        "as": "canvas_id"
-      },
-      {
-        "from": "sqan3fs",
-        "to": "92odlmk",
-        "as": "value"
-      },
-      {
-        "from": "mqyloha",
-        "to": "gkf0vld",
-        "as": "canvas"
-      },
-      {
         "from": "e84dum1",
         "to": "main/out",
         "as": "value"
@@ -106,6 +85,16 @@
       {
         "from": "f4fwiru",
         "to": "e84dum1",
+        "as": "value"
+      },
+      {
+        "from": "gux0ddy",
+        "to": "gkf0vld",
+        "as": "value"
+      },
+      {
+        "from": "ur2g80t",
+        "to": "gux0ddy",
         "as": "value"
       }
     ],
@@ -329,12 +318,6 @@
         "ref": "set_mutable"
       },
       {
-        "id": "ptak9t2",
-        "name": "",
-        "ref": "array"
-      },
-      {"id": "ptak9t2_out", "ref": "ap"},
-      {
         "id": "sq9t0ix",
         "ref": "runnable"
       },
@@ -351,17 +334,9 @@
         "value": "5"
       },
       {
-        "id": "8m5muxn/qro9awp",
-        "ref": "runnable"
-      },
-      {
         "id": "f7krd8u",
         "value": "objs",
         "ref": "arg"
-      },
-      {
-        "id": "6l87a9y",
-        "ref": "if"
       },
       {
         "id": "wcnk2sw",
@@ -371,11 +346,6 @@
       {
         "id": "elimy7s",
         "value": "element.1",
-        "ref": "arg"
-      },
-      {
-        "id": "httv0fw",
-        "value": "renderer",
         "ref": "arg"
       },
       {
@@ -393,18 +363,6 @@
       {
         "id": "nmx3h5j",
         "value": "renderer",
-        "ref": "log",
-        "__isnodysseus": true
-      },
-      {
-        "id": "c229fdg",
-        "value": "canvas_id",
-        "ref": "arg",
-        "__isnodysseus": true
-      },
-      {
-        "id": "ngjogsk",
-        "value": "setupcanvas_id",
         "ref": "log",
         "__isnodysseus": true
       },
@@ -433,21 +391,6 @@
         "__isnodysseus": true
       },
       {
-        "id": "8m5muxn/0v7x4xs",
-        "value": "camera: internal",
-        "ref": "arg"
-      },
-      {
-        "id": "8m5muxn/hs1z581",
-        "value": "scene: internal",
-        "ref": "arg"
-      },
-      {
-        "id": "8m5muxn/13mcd2m",
-        "value": "renderer: internal",
-        "ref": "arg"
-      },
-      {
         "id": "y2f8gog",
         "value": "camera: internal",
         "ref": "arg"
@@ -469,13 +412,79 @@
         "ref": "script"
       },
       {
-        "id": "8m5muxn/crb3hd2",
+        "id": "zfeakzj",
+        "value": "console.log(value.position.z);\n  return value;",
+        "ref": "script"
+      },
+      {
+        "id": "c6eig78",
+        "ref": "array"
+      },
+      {
+        "id": "1js087x",
+        "value": "camera: internal",
+        "ref": "arg"
+      },
+      {
+        "id": "cha35wd",
+        "value": "scene: internal",
+        "ref": "arg"
+      },
+      {
+        "id": "zs7iowa",
+        "value": "renderer: internal",
+        "ref": "arg"
+      },
+      {
+        "id": "dyst9ju",
         "value": "renderer.render(scene, camera);",
         "ref": "script"
       },
       {
-        "id": "zfeakzj",
-        "value": "console.log(value.position.z);\n  return value;",
+        "id": "wa794xa"
+      },
+      {
+        "id": "s7mw857"
+      },
+      {
+        "id": "rmqxb31",
+        "ref": "if"
+      },
+      {
+        "id": "mh5ikoc",
+        "value": "onupdate",
+        "ref": "arg"
+      },
+      {
+        "id": "p3c1hnd",
+        "value": "onupdate",
+        "ref": "log"
+      },
+      {
+        "id": "ptak9t2",
+        "name": "",
+        "ref": "ap"
+      },
+      {
+        "id": "z552097",
+        "ref": "runnable"
+      },
+      {
+        "id": "jiobf52"
+      },
+      {
+        "id": "slwyovm",
+        "value": "renderer",
+        "ref": "arg"
+      },
+      {
+        "id": "73um52p",
+        "value": "canvas_id",
+        "ref": "arg"
+      },
+      {
+        "id": "yc0grb5",
+        "value": "return document.getElementById(canvasid);",
         "ref": "script"
       }
     ],
@@ -507,11 +516,6 @@
       },
       {
         "from": "ptak9t2",
-        "to": "ptak9t2_out",
-        "as": "fn"
-      },
-      {
-        "from": "ptak9t2_out",
         "to": "8m5muxn/vyr07ts",
         "as": "animationframe"
       },
@@ -541,16 +545,6 @@
         "as": "value"
       },
       {
-        "from": "8m5muxn/qro9awp",
-        "to": "ptak9t2",
-        "as": "arg0"
-      },
-      {
-        "from": "b2z2580",
-        "to": "ptak9t2",
-        "as": "arg1"
-      },
-      {
         "from": "8m5muxn/ud4p5ey",
         "to": "sq9t0ix",
         "as": "fn"
@@ -559,11 +553,6 @@
         "from": "8m5muxn/zci8apj",
         "to": "8m5muxn/33kmaec",
         "as": "value"
-      },
-      {
-        "from": "6l87a9y",
-        "to": "8m5muxn/qro9awp",
-        "as": "fn"
       },
       {
         "from": "8m5muxn/8p7y4uk",
@@ -576,31 +565,6 @@
         "as": "obj"
       },
       {
-        "from": "httv0fw",
-        "to": "6l87a9y",
-        "as": "pred"
-      },
-      {
-        "from": "8m5muxn/crb3hd2",
-        "to": "6l87a9y",
-        "as": "true"
-      },
-      {
-        "from": "8m5muxn/13mcd2m",
-        "to": "8m5muxn/crb3hd2",
-        "as": "renderer"
-      },
-      {
-        "from": "8m5muxn/hs1z581",
-        "to": "8m5muxn/crb3hd2",
-        "as": "scene"
-      },
-      {
-        "from": "8m5muxn/0v7x4xs",
-        "to": "8m5muxn/crb3hd2",
-        "as": "camera"
-      },
-      {
         "from": "kgvzbaz",
         "to": "8m5muxn/ud4p5ey",
         "as": "name"
@@ -608,11 +572,6 @@
       {
         "from": "8m5muxn/njzfcz8",
         "to": "8m5muxn/8m5muxn",
-        "as": "value"
-      },
-      {
-        "from": "m4cr3fk",
-        "to": "8m5muxn/njzfcz8",
         "as": "value"
       },
       {
@@ -633,16 +592,6 @@
       {
         "from": "nmx3h5j",
         "to": "8m5muxn/83bu48f",
-        "as": "value"
-      },
-      {
-        "from": "ngjogsk",
-        "to": "8m5muxn/p7pzcqi",
-        "as": "canvas_id"
-      },
-      {
-        "from": "c229fdg",
-        "to": "ngjogsk",
         "as": "value"
       },
       {
@@ -669,6 +618,91 @@
         "from": "8m5muxn/7in78pu",
         "to": "zfeakzj",
         "as": "value"
+      },
+      {
+        "from": "zs7iowa",
+        "to": "dyst9ju",
+        "as": "renderer"
+      },
+      {
+        "from": "cha35wd",
+        "to": "dyst9ju",
+        "as": "scene"
+      },
+      {
+        "from": "1js087x",
+        "to": "dyst9ju",
+        "as": "camera"
+      },
+      {
+        "from": "wa794xa",
+        "to": "sq9t0ix",
+        "as": "args"
+      },
+      {
+        "from": "s7mw857",
+        "to": "wa794xa",
+        "as": "element"
+      },
+      {
+        "from": "c6eig78",
+        "to": "ptak9t2",
+        "as": "fn"
+      },
+      {
+        "from": "rmqxb31",
+        "to": "c6eig78",
+        "as": "arg0"
+      },
+      {
+        "from": "dyst9ju",
+        "to": "z552097",
+        "as": "fn"
+      },
+      {
+        "from": "p3c1hnd",
+        "to": "rmqxb31",
+        "as": "pred"
+      },
+      {
+        "from": "mh5ikoc",
+        "to": "p3c1hnd",
+        "as": "value"
+      },
+      {
+        "from": "z552097",
+        "to": "c6eig78",
+        "as": "arg1"
+      },
+      {
+        "from": "b2z2580",
+        "to": "rmqxb31",
+        "as": "true"
+      },
+      {
+        "from": "jiobf52",
+        "to": "8m5muxn/njzfcz8",
+        "as": "value"
+      },
+      {
+        "from": "m4cr3fk",
+        "to": "jiobf52",
+        "as": "objs"
+      },
+      {
+        "from": "slwyovm",
+        "to": "jiobf52",
+        "as": "renderer"
+      },
+      {
+        "from": "yc0grb5",
+        "to": "8m5muxn/p7pzcqi",
+        "as": "canvas"
+      },
+      {
+        "from": "73um52p",
+        "to": "yc0grb5",
+        "as": "canvasid"
       }
     ],
     "out": "8m5muxn/8m5muxn"
@@ -957,5 +991,313 @@
       }
     ],
     "out": "out"
+  },
+  {
+    "id": "three",
+    "nodes": [
+      {
+        "id": "args"
+      },
+      {
+        "id": "jklqh38",
+        "ref": "html_element"
+      },
+      {
+        "id": "6qkew20",
+        "ref": "array"
+      },
+      {
+        "id": "zihm1kd"
+      },
+      {
+        "id": "3b7bnzm",
+        "ref": "state"
+      },
+      {
+        "id": "pcx97n4",
+        "value": "input",
+        "ref": "html_element",
+        "__isnodysseus": true
+      },
+      {
+        "id": "rk7hcxc"
+      },
+      {
+        "id": "b8wohxv",
+        "value": "select",
+        "__isnodysseus": true
+      },
+      {
+        "id": "x200f4j",
+        "value": "export-list",
+        "__isnodysseus": true
+      },
+      {
+        "id": "et5g0m1",
+        "__isnodysseus": true,
+        "ref": "map"
+      },
+      {
+        "id": "9tv13iq",
+        "value": "return _lib.no.runtime.refs()",
+        "ref": "script",
+        "__isnodysseus": true
+      },
+      {
+        "id": "dd6st1b",
+        "value": "element",
+        "ref": "arg",
+        "__isnodysseus": true
+      },
+      {
+        "id": "2yur4h7",
+        "ref": "runnable",
+        "__isnodysseus": true
+      },
+      {
+        "id": "xdot36k"
+      },
+      {
+        "id": "1edrrwq",
+        "value": "option",
+        "ref": "html_element",
+        "__isnodysseus": true
+      },
+      {
+        "id": "skqnl08",
+        "__isnodysseus": true,
+        "ref": "html_text"
+      },
+      {
+        "id": "3y8pyc2",
+        "value": "datalist",
+        "ref": "html_element",
+        "__isnodysseus": true
+      },
+      {
+        "id": "tfwqhqf",
+        "value": "export-list",
+        "__isnodysseus": true
+      },
+      {
+        "id": "xp4pv1h",
+        "value": "return element",
+        "ref": "script",
+        "__isnodysseus": true
+      },
+      {
+        "id": "tad7830",
+        "ref": "state",
+        "__isnodysseus": true
+      },
+      {
+        "id": "jdufmth",
+        "value": "namespace.state",
+        "ref": "arg",
+        "__isnodysseus": true
+      },
+      {
+        "id": "91lhfar",
+        "__isnodysseus": true,
+        "ref": "sequence"
+      },
+      {
+        "id": "898n6f7",
+        "__isnodysseus": true,
+        "ref": "ap"
+      },
+      {
+        "id": "9jvfgj1",
+        "value": "namespace.set",
+        "ref": "arg",
+        "__isnodysseus": true
+      },
+      {
+        "id": "j2c518b"
+      },
+      {
+        "id": "qpiqhgp",
+        "value": "event.target.value",
+        "ref": "arg",
+        "__isnodysseus": true
+      },
+      {
+        "id": "8dy573e",
+        "value": "button",
+        "ref": "html_element"
+      },
+      {
+        "id": "n7aaoju",
+        "value": "delete",
+        "ref": "html_text"
+      },
+      {
+        "id": "ibmy4bt",
+        "ref": "runnable"
+      },
+      {
+        "id": "jdoak4g",
+        "value": "localStorage.removeItem(ns);\nlocalStorage.setItem(\"graph_list\", JSON.stringify(JSON.parse(localStorage.getItem(\"graph_list\")).filter(g => g !== ns)))\n_lib.no.runtime.remove_ref(ns);",
+        "ref": "script"
+      },
+      {
+        "id": "main/out",
+        "name": "three",
+        "ref": "return"
+      }
+    ],
+    "edges": [
+      {
+        "from": "args",
+        "to": "main/out",
+        "as": "args"
+      },
+      {
+        "from": "n7aaoju",
+        "to": "8dy573e",
+        "as": "children"
+      },
+      {
+        "from": "jklqh38",
+        "to": "main/out",
+        "as": "display"
+      },
+      {
+        "from": "6qkew20",
+        "to": "jklqh38",
+        "as": "children"
+      },
+      {
+        "from": "zihm1kd",
+        "to": "8dy573e",
+        "as": "props"
+      },
+      {
+        "from": "tad7830",
+        "to": "args",
+        "as": "namespace"
+      },
+      {
+        "from": "jdufmth",
+        "to": "jdoak4g",
+        "as": "ns"
+      },
+      {
+        "from": "3b7bnzm",
+        "to": "args",
+        "as": "hrefstate"
+      },
+      {
+        "from": "pcx97n4",
+        "to": "6qkew20",
+        "as": "arg2"
+      },
+      {
+        "from": "rk7hcxc",
+        "to": "pcx97n4",
+        "as": "props"
+      },
+      {
+        "from": "b8wohxv",
+        "to": "rk7hcxc",
+        "as": "type"
+      },
+      {
+        "from": "x200f4j",
+        "to": "rk7hcxc",
+        "as": "list"
+      },
+      {
+        "from": "3y8pyc2",
+        "to": "6qkew20",
+        "as": "arg3"
+      },
+      {
+        "from": "et5g0m1",
+        "to": "3y8pyc2",
+        "as": "children"
+      },
+      {
+        "from": "9tv13iq",
+        "to": "et5g0m1",
+        "as": "array"
+      },
+      {
+        "from": "2yur4h7",
+        "to": "et5g0m1",
+        "as": "fn"
+      },
+      {
+        "from": "dd6st1b",
+        "to": "xp4pv1h",
+        "as": "element"
+      },
+      {
+        "from": "xdot36k",
+        "to": "3y8pyc2",
+        "as": "props"
+      },
+      {
+        "from": "1edrrwq",
+        "to": "2yur4h7",
+        "as": "fn"
+      },
+      {
+        "from": "skqnl08",
+        "to": "1edrrwq",
+        "as": "children"
+      },
+      {
+        "from": "xp4pv1h",
+        "to": "skqnl08",
+        "as": "text"
+      },
+      {
+        "from": "tfwqhqf",
+        "to": "xdot36k",
+        "as": "id"
+      },
+      {
+        "from": "91lhfar",
+        "to": "rk7hcxc",
+        "as": "onchange"
+      },
+      {
+        "from": "898n6f7",
+        "to": "91lhfar",
+        "as": "arg0"
+      },
+      {
+        "from": "9jvfgj1",
+        "to": "898n6f7",
+        "as": "fn"
+      },
+      {
+        "from": "j2c518b",
+        "to": "898n6f7",
+        "as": "args"
+      },
+      {
+        "from": "qpiqhgp",
+        "to": "j2c518b",
+        "as": "value"
+      },
+      {
+        "from": "8dy573e",
+        "to": "6qkew20",
+        "as": "arg4"
+      },
+      {
+        "from": "ibmy4bt",
+        "to": "zihm1kd",
+        "as": "onclick"
+      },
+      {
+        "from": "jdoak4g",
+        "to": "ibmy4bt",
+        "as": "fn"
+      }
+    ],
+    "out": "main/out"
   }
 ]
