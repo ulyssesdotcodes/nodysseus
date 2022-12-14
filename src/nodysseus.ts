@@ -1160,14 +1160,16 @@ const nolib = {
         }
 
         const execpromise = (fnrg, rvg, avg) => {
-          const rv = run_runnable(rvg, lib);
+          const rv = run_runnable(rvg, lib)?.__value;
           // console.log(avg)
-          let av = avg //&& run_runnable({...avg, args:{...fn.args, ...avg.args}}, lib);
+          avg = avg?.__value ? avg.__value : avg;
+          let av = avg &&!ispromise(avg) &&run_runnable({...avg, args: {...avg.args, ...fn.args}}, fnv.__value.lib ? { ...lib, ...fnv.__value.lib} : lib);
+
           if(ispromise(fnrg) || ispromise(rv) || ispromise(av)) {
-            return Promise.all([fnrg, rv, av]).then(([fnr, rv, av]) => execute(fnr, rv?.__value, av?.__value))
+            return Promise.all([fnrg, rv, ispromise(avg) ? avg : av]).then(([fnr, rv, av]) => execpromise(fnr, rv, av))
           }
 
-          return execute(fnrg, rv?.__value, av)
+          return av?.__value?.fn && av?.__value?.graph ? execpromise(fnrg, rv, av) : execute(fnrg, rv?.__value, av?.__value)
         }
 
 
