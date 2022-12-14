@@ -879,7 +879,7 @@ const defs = () =>ha.h('defs', {}, [
 ])
 
 const radius = 24;
-const node_el = ({html_id, selected, error, selected_distance, node_id, node_ref, node_name, node_value, has_nodes, nested_edge_count, nested_node_count}) =>ha.h('svg', {
+const node_el = ({html_id, selected, error, selected_distance, node_id, node_ref, node_name, node_value, has_nodes, nested_edge_count, nested_node_count, input_count}) =>ha.h('svg', {
     onclick: [SelectNode, {node_id}],  
     ontouchstart: [SelectNode, {node_id}], 
     width: '256', 
@@ -893,10 +893,12 @@ const node_el = ({html_id, selected, error, selected_distance, node_id, node_ref
     }
 }, [
    ha.h(
-        node_value !== undefined && !(node_ref && node_ref !== "arg") ? 'polygon' 
+        (node_value !== undefined && !(node_ref && node_ref !== "arg")) 
+          || (node_value === undefined && node_ref === undefined && input_count === 0) ? 'polygon' 
         : node_ref === 'return' ? 'rect'
         : 'circle', 
         node_value !== undefined && !(node_ref && node_ref !== "arg") 
+          || (node_value === undefined && node_ref === undefined && input_count === 0)
             ? {class: {shape: true, value: true, error}, points: `4,${4 + radius} ${4 + radius},${4 + radius} ${4 + radius * 0.5},4`} 
             : node_ref === 'return'
             ? {class:{shape: true, ref: true, error}, width: radius, height: radius, x: 10, y: 10}
@@ -906,7 +908,7 @@ const node_el = ({html_id, selected, error, selected_distance, node_id, node_ref
         node_id: node_id,
         primary: node_name ? node_name : node_value ? node_value : '', 
         focus_primary: node_name ? "name" : "value",
-        secondary: node_ref ? node_ref : has_nodes ? `graph (${nested_node_count}, ${nested_edge_count})` : node_value !== undefined ? 'value' : 'object'
+        secondary: node_ref ? node_ref : has_nodes ? `graph (${nested_node_count}, ${nested_edge_count})` : node_value !== undefined ? 'value' : input_count > 0 ? 'object' : 'undefined'
     }),
     ha.memo(fill_rect_el)
 ])
@@ -1241,6 +1243,7 @@ const runapp = (init, load_graph, _lib) => {
                             has_nodes: !!newnode.nodes,
                             nested_edge_count: newnode.nested_edge_count,
                             nested_node_count: newnode.nested_node_count,
+                            input_count: nolib.no.runtime.get_edges_in(s.display_graph, node.node_id).length
                         }))
                 }) ?? []
                 ).concat(

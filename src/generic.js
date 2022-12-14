@@ -17,6 +17,7 @@
         ]
       },
       {"id": "math", "ref": "extern", "value": "extern.math"},
+      {"id": "expect", "ref": "extern", "value": "extern.expect"},
       { "id": "fetch", "name": "fetch", "description": "Uses the <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API'>Fetch API</a> to get data.", "ref": "extern", "value": "extern.fetch" },
       { "id": "call", "name": "call", "description": "Calls `self.fn` with `args`. If `self is not found, uses the node's context.", "ref": "extern", "value": "extern.call" },
       { "id": "stringify", "name": "stringify", "description": "<a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify'>JSON.stringify</a> the `value` argument", "ref": "extern", "value": "extern.stringify" },
@@ -695,6 +696,7 @@
           {"id": "state_val", "ref": "script", "value": "return _lib.no.runtime.get_args(graphid)[path];"},
           {"id": "value", "ref": "arg", "value": "value"},
           {"id": "set_state_val", "ref": "script", "value": "_lib.no.runtime.update_args(graphid, {[path]: value}); return value"},
+          {"id": "set_state_val_runnable_args", "value": {value: undefined}},
           {"id": "set_state_val_runnable", "ref": "runnable"},
           {"id": "display_text", "ref": "html_text"},
           {"id": "display", "ref": "html_element"},
@@ -707,6 +709,7 @@
           {"from": "graphid", "to": "set_state_val", "as": "graphid"},
           {"from": "value", "to": "set_state_val", "as": "value"},
           {"from": "path", "to": "set_state_val", "as": "path"},
+          {"from": "set_state_val_runnable_args", "to": "set_state_val_runnable", "as": "args"},
           {"from": "set_state_val", "to": "set_state_val_runnable", "as": "fn"},
           {"from": "set_state_val_runnable", "to": "out_atom", "as": "set"},
           {"from": "state_val", "to": "out_atom", "as": "state"},
@@ -991,6 +994,9 @@
         {"id": "currentValue", "ref": "arg", "value": "currentValue"},
         {"id": "previousValue", "ref": "arg", "value": "previousValue"},
         {"id": "append", "ref": "script", "value": "arr.push(value); return arr;"},
+        {"id": "append_runnable_currentValue"},
+        {"id": "append_runnable_previousValue"},
+        {"id": "append_runnable_args"},
         {"id": "append_runnable", "ref": "runnable"},
         {"id": "initial", "value": "[]"},
         {"id": "fold", "ref": "extern", "value": "extern.fold"},
@@ -1003,6 +1009,9 @@
         {"from": "run_map", "to": "map_element_fn", "as": "run"},
         {"from": "map_element_fn", "to": "append", "as": "value"},
         {"from": "previousValue", "to": "append", "as": "arr"},
+        {"from": "append_runnable_previousValue", "to": "append_runnable_args", "as": "previousValue"},
+        {"from": "append_runnable_currentValue", "to": "append_runnable_args", "as": "currentValue"},
+        {"from": "append_runnable_args", "to": "append_runnable", "as": "args"},
         {"from": "append", "to": "append_runnable", "as": "fn"},
         {"from": "append_runnable", "to": "fold", "as": "fn"},
         {"from": "object", "to": "fold", "as": "object"},
@@ -1024,6 +1033,7 @@
         {"id": "currentValue", "ref": "arg", "value": "currentValue"},
         {"id": "previousValue", "ref": "arg", "value": "previousValue"},
         {"id": "pred_append", "ref": "script", "value": "if(pred === true){ arr.push(value); } return arr;"},
+        {"id": "pred_append_fn_args", "value": {previousValue: undefined, currentValue: undefined}},
         {"id": "pred_append_fn", "ref": "runnable"},
         {"id": "initial", "value": "[]"},
         {"id": "fold", "ref": "extern", "value": "extern.fold"},
@@ -1038,6 +1048,7 @@
         {"from": "previousValue", "to": "pred_append", "as": "arr"},
         {"from": "pred_element_fn", "to": "pred_append", "as": "pred"},
         {"from": "pred_append", "to": "pred_append_fn", "as": "fn"},
+        {"from": "pred_append_fn_args", "to": "pred_append_fn", "as": "args"},
         {"from": "pred_append_fn", "to": "fold", "as": "fn"},
         {"from": "object", "to": "fold", "as": "object"},
         {"from": "initial", "to": "fold", "as": "initial"},
@@ -1048,12 +1059,12 @@
       "id": "sequence",
       "description": "Create a new runnable that runs the input runnables in sequence.",
       "name": "sequence",
-      "out": "out",
+      "__out": "out",
       "_ref": "extern",
       "_value": "extern.sequence",
       "nodes": [
         {"id": "args", "ref": "arg", "value": "_args"},
-        {"id": "fn", "ref": "script", "value": "return Object.values(args)"},
+        {"id": "fn", "ref": "script", "value": "console.log('seq args'); console.log(args); return Object.values(args)"},
         {"id": "out", "ref": "ap"}
       ],
       "edges": [
@@ -1135,6 +1146,7 @@
         { "name": "out", "id": "j8c79uf", "ref": "filter" },
         { "id": "tkd4tqn", "name": "in" },
         { "id": "hfexsuu", "script": "return !key?.startsWith('_');" },
+        { "id": "runnable_args", "value": {element: undefined}},
         { "id": "runnable", "ref": "runnable" },
         { "id": "bgi2g37", "script": "return Object.entries(obj)" },
         { "id": "7gqcw0o", "ref": "arg", "value": "0.0" },
@@ -1142,6 +1154,7 @@
       ],
       "edges": [
         { "from": "tkd4tqn", "to": "j8c79uf", "as": "_", "type": "ref" },
+        { "from": "runnable_args", "to": "runnable", "as": "args"},
         { "from": "hfexsuu", "to": "runnable", "as": "fn"},
         { "from": "runnable", "to": "j8c79uf", "as": "fn"},
         { "from": "bgi2g37", "to": "j8c79uf", "as": "array" },
@@ -1187,6 +1200,7 @@
         { "id": "slj7ynn/q3pwj9j", "value": "join" },
         { "id": "slj7ynn/d6h3gdw", "ref": "array" },
         { "id": "i1ifamx", "ref": "object_entries" },
+        { "id": "druspar_args", "value": {"element": undefined} },
         { "id": "druspar", "ref": "runnable" },
         { "id": "gth1wc2", "script": "return \"\\n\";" },
         { "id": "slj7ynn/j8c79uf", "name": "object_entries", "ref": "object_entries" },
@@ -1244,6 +1258,10 @@
         { "from": "slj7ynn/q3pwj9j", "to": "slj7ynn/jlgp7uy", "as": "fn" },
         { "from": "slj7ynn/d6h3gdw", "to": "slj7ynn/jlgp7uy", "as": "args" },
         { "from": "i1ifamx", "to": "bbbp82v", "as": "array" },
+        { "as": "args", "from": "druspar_args", "to": "slj7ynn/druspar" },
+        { "as": "args", "from": "druspar_args", "to": "slj7ynn/n9g4wyq" },
+        { "as": "args", "from": "druspar_args", "to": "n9g4wyq" },
+        { "as": "args", "from": "druspar_args", "to": "druspar" },
         { "as": "fn", "from": "druspar", "to": "bbbp82v" },
         { "from": "gth1wc2", "to": "uwq9u81", "as": "arg0" },
         { "from": "slj7ynn/j8c79uf", "to": "slj7ynn/ij4z84e", "as": "array" },
@@ -1421,8 +1439,10 @@
           { "id": "dom_type_value", "ref": "default"},
           { "id": "graph_value", "ref": "arg", "value": "__graph_value"},
           {"id": "filter_children_fn", "script": "return !!(element_dt || element_tv)"},
+          {"id": "filter_children_fn_runnable_args", "value": {element: undefined}},
           {"id": "filter_children_fn_runnable", "ref": "runnable"},
           {"id": "fill_children_fn", "script": "return element?.el ?? typeof element === 'string' ? {dom_type: 'text_value', text: element} : element"},
+          {"id": "fill_children_fn_runnable_args", "value": {element: undefined}},
           {"id": "fill_children_fn_runnable", "ref": "runnable"},
           {"id": "wrapped_children", "script": "return Array.isArray(children) ? children : [children]"},
           {"id": "filter_children", "ref": "filter"},
@@ -1445,9 +1465,11 @@
           { "from": "memo", "to": "out", "as": "memo"},
           {"from": "element_dt", "to": "filter_children_fn", "as": "element_dt"},
           {"from": "element_tv", "to": "filter_children_fn", "as": "element_tv"},
+          {"from": "filter_children_fn_runnable_args", "to": "filter_children_fn_runnable", "as": "args"},
           {"from": "filter_children_fn", "to": "filter_children_fn_runnable", "as": "fn"},
           {"from": "filter_children_fn_runnable", "to": "filter_children", "as": "fn"},
           {"from": "element", "to": "fill_children_fn", "as": "element"},
+          {"from": "fill_children_fn_runnable_args", "to": "fill_children_fn_runnable", "as": "args"},
           {"from": "fill_children_fn", "to": "fill_children_fn_runnable", "as": "fn"},
           {"from": "fill_children_fn_runnable", "to": "fill_children", "as": "fn"},
           { "from": "fill_children", "to": "filter_children", "as": "array"},
@@ -3891,8 +3913,8 @@
       }
     ],
     "out": "out"
-  }
-    ,{
+  },
+{
     "id": "export",
     "nodes": [
       {
@@ -4134,6 +4156,31 @@
         "id": "x8ik3x4",
         "value": "const graph = {..._lib.no.runtime.get_ref(ref)};\ndelete graph.__isnodysseus;\nreturn graph;",
         "ref": "script"
+      },
+      {
+        "id": "6ag8lnc"
+      },
+      {
+        "id": "9rf8bds"
+      },
+      {
+        "id": "690ivn1",
+        "value": "val",
+        "ref": "log"
+      },
+      {
+        "id": "zpv5bk2"
+      },
+      {
+        "id": "6dadrg0",
+        "value": "event",
+        "ref": "arg"
+      },
+      {
+        "id": "i60dlmh"
+      },
+      {
+        "id": "g7pa2bl"
       }
     ],
     "edges": [
@@ -4373,17 +4420,306 @@
         "as": "fn"
       },
       {
-        "from": "j2c518b",
+        "from": "qpiqhgp",
+        "to": "j2c518b",
+        "as": "value"
+      },
+      {
+        "from": "6ag8lnc",
+        "to": "2yur4h7",
+        "as": "args"
+      },
+      {
+        "from": "9rf8bds",
+        "to": "6ag8lnc",
+        "as": "element"
+      },
+      {
+        "from": "690ivn1",
         "to": "898n6f7",
         "as": "args"
       },
       {
-        "from": "qpiqhgp",
-        "to": "j2c518b",
+        "from": "j2c518b",
+        "to": "690ivn1",
         "as": "value"
+      },
+      {
+        "from": "zpv5bk2",
+        "to": "91lhfar",
+        "as": "args"
+      },
+      {
+        "from": "6dadrg0",
+        "to": "zpv5bk2",
+        "as": "event"
+      },
+      {
+        "from": "i60dlmh",
+        "to": "959i120",
+        "as": "args"
+      },
+      {
+        "from": "g7pa2bl",
+        "to": "i60dlmh",
+        "as": "element"
       }
     ],
     "out": "main/out"
+  },
+{
+    "id": "switch_inputs",
+    "nodes": [
+      {
+        "id": "args"
+      },
+      {
+        "id": "8dy573e",
+        "ref": "html_element"
+      },
+      {
+        "id": "out",
+        "name": "switch_inputs",
+        "ref": "return"
+      },
+      {
+        "id": "lvin35y",
+        "ref": "object_entries"
+      },
+      {
+        "id": "6280gtl",
+        "ref": "get"
+      },
+      {
+        "id": "53zzzsq",
+        "value": "1"
+      },
+      {
+        "id": "76ck9e4",
+        "value": "length",
+        "ref": "get"
+      },
+      {
+        "id": "hsgpgti",
+        "ref": "input_value"
+      },
+      {
+        "id": "ofy30nx",
+        "ref": "object_entries"
+      },
+      {
+        "id": "wp85v73",
+        "value": "0"
+      },
+      {
+        "id": "1cudll9",
+        "value": "el",
+        "ref": "arg"
+      },
+      {
+        "id": "output_val",
+        "value": "_args",
+        "ref": "arg"
+      },
+      {
+        "id": "4szp976",
+        "value": "_args",
+        "ref": "arg"
+      },
+      {
+        "id": "vh955iv",
+        "ref": "filter"
+      },
+      {
+        "id": "v6ewxxa",
+        "ref": "runnable"
+      },
+      {
+        "id": "nxekknh",
+        "value": "element.0",
+        "ref": "arg"
+      },
+      {
+        "id": "tksr4z4",
+        "value": "return arg0 !== 'el'",
+        "ref": "script"
+      },
+      {
+        "id": "o2ov639",
+        "ref": "add"
+      },
+      {
+        "id": "go1erqv",
+        "value": "-1"
+      },
+      {
+        "id": "qxd792w",
+        "value": "el.value",
+        "ref": "arg"
+      },
+      {
+        "id": "b2lg0f8",
+        "value": "return name + \".1\"",
+        "ref": "script"
+      },
+      {
+        "id": "m8szb7c",
+        "ref": "ap"
+      },
+      {
+        "id": "p124xyx",
+        "value": "true"
+      },
+      {
+        "id": "un0m73e",
+        "value": "arr.sort((a, b) => a[0].localeCompare(b[0]))\nconsole.log('switch inputs')\nconsole.log(arr);\nreturn arr",
+        "ref": "script"
+      },
+      {
+        "id": "85v75zq"
+      },
+      {
+        "id": "p5fs58p"
+      },
+      {
+        "id": "178thpd",
+        "value": "Input",
+        "ref": "slidernew"
+      }
+    ],
+    "edges": [
+      {
+        "from": "8dy573e",
+        "to": "out",
+        "as": "display"
+      },
+      {
+        "from": "args",
+        "to": "out",
+        "as": "args"
+      },
+      {
+        "from": "wp85v73",
+        "to": "178thpd",
+        "as": "min"
+      },
+      {
+        "from": "53zzzsq",
+        "to": "178thpd",
+        "as": "step"
+      },
+      {
+        "from": "hsgpgti",
+        "to": "76ck9e4",
+        "as": "target"
+      },
+      {
+        "from": "ofy30nx",
+        "to": "hsgpgti",
+        "as": "value"
+      },
+      {
+        "from": "4szp976",
+        "to": "ofy30nx",
+        "as": "object"
+      },
+      {
+        "from": "178thpd",
+        "to": "args",
+        "as": "el"
+      },
+      {
+        "from": "1cudll9",
+        "to": "8dy573e",
+        "as": "children"
+      },
+      {
+        "from": "output_val",
+        "to": "lvin35y",
+        "as": "object"
+      },
+      {
+        "from": "vh955iv",
+        "to": "6280gtl",
+        "as": "target"
+      },
+      {
+        "from": "v6ewxxa",
+        "to": "vh955iv",
+        "as": "fn"
+      },
+      {
+        "from": "tksr4z4",
+        "to": "v6ewxxa",
+        "as": "fn"
+      },
+      {
+        "from": "o2ov639",
+        "to": "178thpd",
+        "as": "max"
+      },
+      {
+        "from": "76ck9e4",
+        "to": "o2ov639",
+        "as": "arg0"
+      },
+      {
+        "from": "go1erqv",
+        "to": "o2ov639",
+        "as": "arg1"
+      },
+      {
+        "from": "b2lg0f8",
+        "to": "6280gtl",
+        "as": "path"
+      },
+      {
+        "from": "qxd792w",
+        "to": "b2lg0f8",
+        "as": "name"
+      },
+      {
+        "from": "un0m73e",
+        "to": "vh955iv",
+        "as": "array"
+      },
+      {
+        "from": "m8szb7c",
+        "to": "out",
+        "as": "value"
+      },
+      {
+        "from": "p124xyx",
+        "to": "m8szb7c",
+        "as": "run"
+      },
+      {
+        "from": "lvin35y",
+        "to": "un0m73e",
+        "as": "arr"
+      },
+      {
+        "from": "85v75zq",
+        "to": "v6ewxxa",
+        "as": "args"
+      },
+      {
+        "from": "p5fs58p",
+        "to": "85v75zq",
+        "as": "element"
+      },
+      {
+        "from": "6280gtl",
+        "to": "m8szb7c",
+        "as": "fn"
+      },
+      {
+        "from": "nxekknh",
+        "to": "tksr4z4",
+        "as": "arg0"
+      }
+    ],
+    "out": "out"
   },
   {
     "id": "delete_graph",

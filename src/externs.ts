@@ -70,3 +70,14 @@ import { isNodeRef, isNodeScript, RefNode } from "./types";
       }
 
 export const now = (scale?: number) => performance.now() * (scale ?? 1)
+
+export const expect = (a: any, b: any, value: string) => {
+  if(a === b) return a 
+  else {
+    console.log('a:')
+    console.log(a)
+    console.log("b:")
+    console.log(b);
+    throw new Error(`${value}: Value a does not match value b`)
+  }
+}

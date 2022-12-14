@@ -1,4 +1,4 @@
-import { d3Link, d3Node, Edge, Graph, NodeArg } from "./types";
+import { d3Link, d3Node, Edge, Graph, isNodeRef, NodeArg } from "./types";
 
 export const ispromise = a => a && typeof a.then === 'function';
 export const isrunnable = a => a && ((a.value && a.id && !a.ref) || a.fn && a.graph);
@@ -241,6 +241,10 @@ export const node_args = (nolib, graph, node_id): Array<NodeArg> => {
     }
     const node_ref = node?.ref ? nolib.no.runtime.get_ref(node.ref) : node;
     const edges_in = node_ref && nolib.no.runtime.get_edges_in(graph, node_id);
+    const edge_out = nolib.no.runtime.get_edge_out(graph, node_id)
+    const node_out = edge_out && edge_out.as === "args" && nolib.no.runtime.get_node(graph, edge_out.to);
+    const node_out_args = node_out?.ref === "runnable" && 
+      ancestor_graph(node_out.id, graph, nolib).nodes.filter(isNodeRef).filter(n => n.ref === "arg").map(a => a.value.includes(".") ? a.value.substring(0, a.value.indexOf(".")) : a.value);
 
     const argslist_path = node_ref?.nodes && nolib.no.runtime.get_path(node_ref, "argslist");
 
@@ -269,7 +273,8 @@ export const node_args = (nolib, graph, node_id): Array<NodeArg> => {
             || (node.ref === undefined && !node.value)
             ? [nextIndexedArg]
             : []
-        ))
+        )
+        .concat(node_out_args ? node_out_args : []))
     ].map((a: string) => ({exists: !!edges_in.find(e => e.as === a), name: a}))
 }
 
