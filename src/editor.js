@@ -1616,7 +1616,7 @@ const ydocStore = async (persist = false, update = undefined) => {
     await indexeddbProvider.whenSynced.then(v => {
       requestAnimationFrame(() => {
         const custom_editor = nolib.no.runtime.get_ref("custom_editor");
-        const rtcroom = params.get("rtcroom") ?? (custom_editor && hlib.run({node: {graph: custom_editor, out: custom_editor.out}}, {})?.rtcroom);
+        const rtcroom = params.get("rtcroom") ?? (custom_editor && hlib.run({graph: custom_editor, fn: custom_editor.out})?.rtcroom);
         if(rtcroom) {
           new WebrtcProvider(`nodysseus${rtcroom}`, ydoc)
         }
