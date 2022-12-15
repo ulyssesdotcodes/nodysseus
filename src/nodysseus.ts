@@ -928,7 +928,7 @@ const nolib = {
         get_parentest,
         get_fn: (id, name, orderedargs, script): Function => {
           const fnid = id;
-          let fn = nodysseus.fns.get(fnid);
+          let fn = nodysseus.fns.get(fnid + orderedargs);
           if (!fn || fn.script !== script) {
             const update = !!fn;
 
@@ -942,7 +942,7 @@ const nolib = {
               // ` this comment is here because my syntax highlighter is not well
             });
 
-            nodysseus.fns.add(fnid, fn)
+            nodysseus.fns.add(fnid + orderedargs, fn)
           }
 
           return fn.fn;
