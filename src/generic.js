@@ -1032,7 +1032,7 @@
         {"id": "pred_element_fn", "ref": "extern", "value": "extern.ap"},
         {"id": "currentValue", "ref": "arg", "value": "currentValue"},
         {"id": "previousValue", "ref": "arg", "value": "previousValue"},
-        {"id": "pred_append", "ref": "script", "value": "if(pred === true){ arr.push(value); } return arr;"},
+        {"id": "pred_append", "ref": "script", "value": "if(pred !== false && pred !== undefined && pred !== null){ arr.push(value); } return arr;"},
         {"id": "pred_append_fn_args", "value": {previousValue: undefined, currentValue: undefined}},
         {"id": "pred_append_fn", "ref": "runnable"},
         {"id": "initial", "value": "[]"},
