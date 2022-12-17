@@ -540,16 +540,16 @@ const getorset = (map, id, value_fn=undefined) => {
 const base_node = node => node.ref || node.extern ? ({id: node.id, value: node.value, name: node.name, ref: node.ref}) : base_graph(node);
 const base_graph = graph => ({id: graph.id, value: graph.value, name: graph.name, nodes: graph.nodes, edges: graph.edges, out: graph.out})
 
-const run = ({node, args, store}: {node: Runnable, args?: any, store?: NodysseusStore}) => {
+const run = ({node, args, lib, store}: {node: Runnable, lib?: any, args?: any, store?: NodysseusStore}) => {
   initStore(store);
 
-  let lib = (isValue(node) ? nolib : node?.lib) ?? nolib
+  let _lib = (isValue(node) ? (lib ?? nolib) : node?.lib) ?? (lib ?? nolib)
   if(isValue(node)) {
     return node.__value;
   }
 
-  lib.no.runtime.update_graph(node.graph, lib);
-  const res = run_node(node, Object.fromEntries(Object.entries(args ?? {}).map(e => [e[0], lib.no.of(e[1])])), node.args, lib);
+  lib.no.runtime.update_graph(node.graph, _lib);
+  const res = run_node(node, Object.fromEntries(Object.entries(args ?? {}).map(e => [e[0], lib.no.of(e[1])])), node.args, _lib);
   return ispromise(res) ? res.then(r => r?.__value) : res?.__value
 }
 

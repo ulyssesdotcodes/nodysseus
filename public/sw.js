@@ -1,4 +1,4 @@
-const assetCacheName = 'assets-v0.0.1';
+const assetCacheName = 'assets-v0.0.2';
 
 const assets = [
     "./index.html",
@@ -28,3 +28,4 @@ self.addEventListener('fetch', (e) => {
         .catch(ne => (console.log("[Service Worker] Network request failed, trying cache"), caches.match(e.request))) : caches.match(e.request))
         .catch(ce => (console.log("[Service Worker] Request failed"), console.error(ne), console.error(ce))));
 });
+
