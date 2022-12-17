@@ -1,5 +1,22 @@
   export default {
     "nodes": [
+{
+  "id": "simple",
+  "out": "out",
+  "edges": [
+    { "from": "qgbinm2", "to": "8dy573e", "as": "children" },
+    { "from": "8dy573e", "to": "out", "as": "display" },
+    { "from": "output_val", "to": "out", "as": "value"},
+    { "from": "args", "to": "out", "as": "args" }
+  ],
+  "nodes": [
+    {"id": "args"},
+    { "id": "qgbinm2", "value": "Hello, world!", "ref": "html_text" },
+    { "id": "8dy573e", "ref": "html_element" },
+    { "id": "output_val", "value": "some output"},
+    {"id": "out", "ref": "return", "name": "simple"}
+  ]
+},
       {
         "id": "log",
         "description": "Prints value to console.log",
@@ -8,7 +25,7 @@
           { "id": "in" },
           { "id": "value", "ref": "arg", "value": "value" },
           {"id": "graph_value", "ref": "arg", "value": "__graph_value"},
-          { "id": "out", "args": [], "script": "graph_value && console.log(graph_value); console.log(value); return value" }
+          { "id": "out", "args": [], "ref": "script", "value": "graph_value && console.log(graph_value); console.log(value); return value" }
         ],
         "edges": [
           { "from": "in", "to": "out", "as": "input", "type":"ref"},
@@ -41,7 +58,7 @@
           { "id": "node", "ref": "arg", "value": "node" },
           {
             "id": "out",
-            "script": "const parents = (id) => (graph ?? _graph).edges.filter(e => e.to === id).flatMap(e => parents(e.from)).concat([id]); return parents(node ?? graph.out ?? 'out')"
+            "ref": "script", "value": "const parents = (id) => (graph ?? _graph).edges.filter(e => e.to === id).flatMap(e => parents(e.from)).concat([id]); return parents(node ?? graph.out ?? 'out')"
           }
         ],
         "edges": [
@@ -57,7 +74,7 @@
           { "id": "in" },
           { "id": "array", "ref": "arg", "value": "array" },
           { "id": "item", "ref": "arg", "value": "item" },
-          { "id": "out", "script": "return array.concat(Array.isArray(item) ? item : [item])" }
+          { "id": "out", "ref": "script", "value": "return array.concat(Array.isArray(item) ? item : [item])" }
         ],
         "edges": [
           { "from": "in", "to": "out", "as": "_", "type": "ref" },
@@ -72,7 +89,7 @@
           { "id": "in" },
           { "id": "array", "ref": "arg", "value": "array" },
           { "id": "items", "ref": "arg", "value": "items" },
-          { "id": "out", "args": ["item", "array"], "script": "return (array ?? []).concat(items ?? [])" }
+          { "id": "out", "args": ["item", "array"], "ref": "script", "value": "return (array ?? []).concat(items ?? [])" }
         ],
         "edges": [
           { "from": "in", "to": "out", "as": "args" },
@@ -86,7 +103,7 @@
         "description": "Filters `array` for items where `item.key` === `value`",
         "out": "lahq5z4",
         "nodes": [
-          { "id": "lahq5z4", "args": [], "name": "filter/out", "script": "return arr.filter(v => v[key] === value)" },
+          { "id": "lahq5z4", "args": [], "name": "filter/out", "ref": "script", "value": "return arr.filter(v => v[key] === value)" },
           { "id": "pfoypo5", "args": [], "ref": "arg", "value": "key" },
           { "id": "zinx621", "args": [], "ref": "arg", "value": "value" },
           { "id": "x2sz5kb", "args": [], "ref": "arg", "value": "array" },
@@ -162,7 +179,7 @@
       {
         "id": "find_node",
         "description": "Find the node with id `node_id` in `nodes`.",
-        "script": "if(!node_id){ return undefined } const nid = typeof node_id === 'string' ? node_id : node_id[0]; return nodes.find(n => n.id === nid || n.node_id === nid)"
+        "ref": "script", "value": "if(!node_id){ return undefined } const nid = typeof node_id === 'string' ? node_id : node_id[0]; return nodes.find(n => n.id === nid || n.node_id === nid)"
       },
       {
         "id": "svg_text",
@@ -173,7 +190,7 @@
           { "id": "props", "ref": "arg", "value": "props" },
           { "id": "dom_type", "value": "text" },
           { "id": "text_el", "ref": "html_text" },
-          { "id": "children", "script": "return [text]" },
+          { "id": "children", "ref": "script", "value": "return [text]" },
           { "id": "out", "ref": "html_element" }
         ],
         "edges": [
@@ -267,7 +284,7 @@
         "description": "Creates a function from the `fn` input.",
         "nodes": [
           {"id": "runnable", "ref": "arg", "value": "runnable"},
-          {"id": "out", "script":"return (fnargs) => _lib.no.run(runnable.graph, runnable.fn, {...runnable.args, fnargs}, _lib)"}
+          {"id": "out", "ref": "script", "value":"return (fnargs) => _lib.no.run(runnable.graph, runnable.fn, {...runnable.args, fnargs}, _lib)"}
         ],
         "edges": [
           {"from": "runnable", "to": "out", "as": "runnable"}
@@ -617,7 +634,7 @@
           {"id": "eq_default", "ref": "eq"},
           {"id": "eq_runnable", "ref": "runnable"},
           {"id": "fn_runnable", "ref": "default"},
-          {"id": "eq_fn_runnable", "script": "return {...fn, args: {...(fn.args ?? {}), a, b}}"},
+          {"id": "eq_fn_runnable", "ref": "script", "value": "return {...fn, args: {...(fn.args ?? {}), a, b}}"},
           {"id": "eq_fn", "ref": "run"},
           {"id": "cache", "ref": "set_arg", "value": "cached"},
           {"id": "out", "ref": "if"}
@@ -647,7 +664,7 @@
           {"id": "value", "ref": "arg", "value": "__graph_value"},
           {"id": "path_value", "ref": "default"},
           {"id": "args", "ref": "arg", "value": "_args", "type": "internal"},
-          {"id": "runnable", "script": "const parent = _lib.no.runtime.get_parent(_graph); const node_id = _lib.no.runtime.get_path(parent, path); return {fn: node_id, graph: parent, args: {...args, edge: args.edge ? {...args.edge, node_id: parent.id + '/' + node_id} : undefined}}"},
+          {"id": "runnable", "ref": "script", "value": "const parent = _lib.no.runtime.get_parent(_graph); const node_id = _lib.no.runtime.get_path(parent, path); return {fn: node_id, graph: parent, args: {...args, edge: args.edge ? {...args.edge, node_id: parent.id + '/' + node_id} : undefined}}"},
           {"id": "run_runnable", "ref": "run"},
           {"id": "out", "ref": "return"}
         ],
@@ -735,7 +752,7 @@
           {"id": "prev_value", "ref": "get"},
           {"id": "set_val", "ref": "set"},
           {"id": "update_args", "ref": "script", "value": "_lib.no.runtime.update_args(_lib.no.runtime.get_parent(graph ?? graphid), success); return success;"},
-          {"id": "on_false", "script": "return value;"},
+          {"id": "on_false", "ref": "script", "value": "return value;"},
           {"id": "on_true", "ref": "arg", "value": "value"},
           {"id": "out", "ref": "if"},
           {"id": "out_ret", "ref": "return"}
@@ -820,7 +837,7 @@
         { "id": "update_event", "ref": "arg", "value": "event_name" },
         { "id": "update_data", "ref": "arg", "value": "event_data" },
         {"id": "name", "ref": "default"},
-        { "id": "update", "script": "return _lib.no.runtime.publish(event_name, {data: event_data})" },
+        { "id": "update", "ref": "script", "value": "return _lib.no.runtime.publish(event_name, {data: event_data})" },
         {"id": "ap_args"},
         {"id": "update_runnable", "ref": "runnable"},
         {"id": "out", "ref": "ap"}
@@ -845,7 +862,7 @@
         {"id": "value", "ref": "arg", "value": "value"},
         {"id": "value_eq_a", "ref": "arg", "value": "a"},
         {"id": "value_eq_b", "ref": "arg", "value": "b"},
-        {"id": "value_eq_fn", "script": "return _lib.compare(a, b)"},
+        {"id": "value_eq_fn", "ref": "script", "value": "return _lib.compare(a, b)"},
         {"id": "value_eq", "ref": "runnable"},
         {"id": "value_unchanged", "ref": "isunchanged"},
         {"id": "publisher", "ref": "event_publisher"},
@@ -897,7 +914,7 @@
         {"id": "data_log", "ref": "log"},
         {
           "id": "add_listener",
-          "script": "_lib.no.runtime.add_listener(event ?? __graph_value, 'evt-listener-' + _graph.id, (data) => { let update = true; if(onevent){ update = _lib.no.run(onevent.graph, onevent.fn, {...onevent.args, data, prev}); } if(update){ _lib.no.runtime.update_args(_graph, {_data: data.data}) } }, false); return _lib.no.runtime.get_args(_graph)['_data'];"
+          "ref": "script", "value": "_lib.no.runtime.add_listener(event ?? __graph_value, 'evt-listener-' + _graph.id, (data) => { let update = true; if(onevent){ update = _lib.no.run(onevent.graph, onevent.fn, {...onevent.args, data, prev}); } if(update){ _lib.no.runtime.update_args(_graph, {_data: data.data}) } }, false); return _lib.no.runtime.get_args(_graph)['_data'];"
         },
         { "id": "out", "ref": "default"}
       ],
@@ -920,7 +937,7 @@
         {"id": "publish_event", "ref": "event_publisher"},
         {"id": "publish_event_runnable", "ref": "runnable"},
         {"id": "onmessageseq", "ref": "sequence"},
-        {"id": "out", "script": "const bc = new BroadcastChannel('events'); bc.onmessage = e => { _lib.no.run(onmessage.graph, onmessage.fn, {message: e}, _lib); }; return bc;"}
+        {"id": "out", "ref": "script", "value": "const bc = new BroadcastChannel('events'); bc.onmessage = e => { _lib.no.run(onmessage.graph, onmessage.fn, {message: e}, _lib); }; return bc;"}
       ],
       "edges": [
         {"from": "message_data", "to": "publish_event", "as": "value"},
@@ -939,7 +956,7 @@
         { "id": "runnable", "ref": "arg", "value": "runnable" },
         {
           "id": "out",
-          "script": "return _lib.no.run(runnable.graph, runnable.fn, runnable.args, _lib)"
+          "ref": "script", "value": "return _lib.no.run(runnable.graph, runnable.fn, runnable.args, _lib)"
         }
       ],
       "edges": [
@@ -964,9 +981,9 @@
         {
           "id": "pdljod1",
           "name": "pdljod1",
-          "script": "return (previous, current, index, array) => _lib.no.run(fn?.graph ?? _graph, fn?.fn ?? fn, Object.assign({}, args ?? {}, fn.args ?? {}, {previous, current, index, array, key: outer_key ? `${index}_${outer_key}` : `${index}`}), _lib);"
+          "ref": "script", "value": "return (previous, current, index, array) => _lib.no.run(fn?.graph ?? _graph, fn?.fn ?? fn, Object.assign({}, args ?? {}, fn.args ?? {}, {previous, current, index, array, key: outer_key ? `${index}_${outer_key}` : `${index}`}), _lib);"
         },
-        { "id": "2lvs5dj", "script": "return _graph", "name": "2lvs5dj" }
+        { "id": "2lvs5dj", "ref": "script", "value": "return _graph", "name": "2lvs5dj" }
       ],
       "edges": [
         { "from": "rielyq8", "to": "tgurdpo", "as": "fn" },
@@ -1115,14 +1132,14 @@
       "nodes": [
         {
           "id": "lapeojg",
-          "script": "console.log('importj son'); console.log(import_graph); import_graph.forEach(_lib.no.runtime.add_ref); _lib.no.runtime.change_graph(_lib.no.runtime.get_graph(graphid))",
+          "ref": "script", "value": "console.log('importj son'); console.log(import_graph); import_graph.forEach(_lib.no.runtime.add_ref); _lib.no.runtime.change_graph(_lib.no.runtime.get_graph(graphid))",
           "name": "out"
         },
         { "id": "out", "ref": "return" },
         { "id": "3zfjt1h", "ref": "call" },
         { "id": "05eag47", "ref": "arg", "value": "name" },
         { "id": "graphid", "ref": "arg", "value": "__graphid" },
-        { "id": "2vtokcl", "script": "return fetch(url);" },
+        { "id": "2vtokcl", "ref": "script", "value": "return fetch(url);" },
         { "id": "i9x02is", "value": "json" },
         { "id": "irr99xz", "ref": "arg", "value": "url" }
       ],
@@ -1145,10 +1162,10 @@
       "nodes": [
         { "name": "out", "id": "j8c79uf", "ref": "filter" },
         { "id": "tkd4tqn", "name": "in" },
-        { "id": "hfexsuu", "script": "return !key?.startsWith('_');" },
+        { "id": "hfexsuu", "ref": "script", "value": "return !key?.startsWith('_');" },
         { "id": "runnable_args", "value": {element: undefined}},
         { "id": "runnable", "ref": "runnable" },
-        { "id": "bgi2g37", "script": "return Object.entries(obj)" },
+        { "id": "bgi2g37", "ref": "script", "value": "return Object.entries(obj)" },
         { "id": "7gqcw0o", "ref": "arg", "value": "0.0" },
         { "id": "kpakw50", "ref": "arg", "value": "object" }
       ],
@@ -1182,14 +1199,14 @@
         { "id": "d6h3gdw", "ref": "array" },
         { "id": "j8c79uf", "name": "object_entries", "ref": "object_entries" },
         { "id": "n9g4wyq", "ref": "runnable" },
-        { "id": "z63iaay", "script": "return \"\\n\";" },
+        { "id": "z63iaay", "ref": "script", "value": "return \"\\n\";" },
         { "id": "vwsgweb", "ref": "default" },
-        { "id": "aelf1a7", "script": "return key + '{' + value + '}'", "name": "out" },
+        { "id": "aelf1a7", "ref": "script", "value": "return key + '{' + value + '}'", "name": "out" },
         { "id": "mkwx4yx" },
         { "id": "fzr4mkv", "ref": "arg", "value": "css_object" },
         { "id": "5eqf77t", "value": "element.0", "ref": "arg" },
         { "id": "5pwetw5", "ref": "if" },
-        { "id": "o5ojdyc", "script": "return key.startsWith(\"@keyframes\")" },
+        { "id": "o5ojdyc", "ref": "script", "value": "return key.startsWith(\"@keyframes\")" },
         { "id": "1hpnid4", "ref": "call" },
         { "id": "slj7ynn/jlgp7uy", "ref": "call", "name": "named_obj/out" },
         { "id": "ft1oksl", "ref": "arg", "value": "element.0" },
@@ -1202,14 +1219,14 @@
         { "id": "i1ifamx", "ref": "object_entries" },
         { "id": "druspar_args", "value": {"element": undefined} },
         { "id": "druspar", "ref": "runnable" },
-        { "id": "gth1wc2", "script": "return \"\\n\";" },
+        { "id": "gth1wc2", "ref": "script", "value": "return \"\\n\";" },
         { "id": "slj7ynn/j8c79uf", "name": "object_entries", "ref": "object_entries" },
         { "id": "slj7ynn/n9g4wyq", "ref": "runnable" },
-        { "id": "slj7ynn/z63iaay", "script": "return \"\\n\";" },
+        { "id": "slj7ynn/z63iaay", "ref": "script", "value": "return \"\\n\";" },
         { "id": "y25dg2n", "value": "element.1", "ref": "arg" },
-        { "id": "0d4yh8u", "script": "return key + ': ' + value + \";\";" },
+        { "id": "0d4yh8u", "ref": "script", "value": "return key + ': ' + value + \";\";" },
         { "id": "slj7ynn/vwsgweb", "ref": "default" },
-        { "id": "slj7ynn/aelf1a7", "script": "return key + '{' + value + '}'", "name": "out" },
+        { "id": "slj7ynn/aelf1a7", "ref": "script", "value": "return key + '{' + value + '}'", "name": "out" },
         { "id": "h13a9fd", "ref": "arg", "value": "element.0" },
         { "id": "h7me3v8", "ref": "arg", "value": "element.1" },
         { "id": "slj7ynn/mkwx4yx" },
@@ -1221,9 +1238,9 @@
         { "id": "slj7ynn/uwq9u81", "ref": "array" },
         { "id": "slj7ynn/i1ifamx", "ref": "object_entries" },
         { "id": "slj7ynn/druspar", "ref": "runnable" },
-        { "id": "slj7ynn/gth1wc2", "script": "return \"\\n\";" },
+        { "id": "slj7ynn/gth1wc2", "ref": "script", "value": "return \"\\n\";" },
         { "id": "slj7ynn/y25dg2n", "value": "element.1", "ref": "arg" },
-        { "id": "slj7ynn/0d4yh8u", "script": "return key + ': ' + value + \";\";" },
+        { "id": "slj7ynn/0d4yh8u", "ref": "script", "value": "return key + ': ' + value + \";\";" },
         { "id": "slj7ynn/h13a9fd", "ref": "arg", "value": "element.0" },
         { "id": "slj7ynn/h7me3v8", "ref": "arg", "value": "element.1" }
       ],
@@ -1299,7 +1316,7 @@
         {
           "name": "out",
           "id": "spy9h48",
-          "script": "return Object.fromEntries((Array.isArray(arr[0]) ? arr[0] : arr).map((v, i, a) => [Math.floor((i / a.length)*100) + \"%\", v]))"
+          "ref": "script", "value": "return Object.fromEntries((Array.isArray(arr[0]) ? arr[0] : arr).map((v, i, a) => [Math.floor((i / a.length)*100) + \"%\", v]))"
         },
         { "id": "cawqofn", "ref": "array", "name": "in" }
       ],
@@ -1359,7 +1376,7 @@
         { "id": "ro8n2gc", "ref": "merge_objects" },
         { "id": "n1qcxu2", "value": "true" },
         { "id": "utkc9o6", "ref": "html_text" },
-        { "id": "jxl9r29", "script": "return \"input-\" + name;" },
+        { "id": "jxl9r29", "ref": "script", "value": "return \"input-\" + name;" },
         { "id": "t6q6rvf" },
         { "id": "rjwtb3c", "ref": "default" },
         { "id": "varubwp" },
@@ -1382,7 +1399,7 @@
             { "id": "hj2cig0", "ref": "array", "name": "stop propagation effect" },
             { "id": "1pvaim9", "ref": "run" },
             { "id": "0o86xp3", "ref": "arg", "value": "1" },
-            { "id": "d60jwms", "script": "payload.stopPropagation();" },
+            { "id": "d60jwms", "ref": "script", "value": "payload.stopPropagation();" },
             { "id": "xgbubrq", "ref": "arg", "value": "1" }
           ],
           "edges": [
@@ -1438,23 +1455,23 @@
           { "id": "div", "value": "div" },
           { "id": "dom_type_value", "ref": "default"},
           { "id": "graph_value", "ref": "arg", "value": "__graph_value"},
-          {"id": "filter_children_fn", "script": "return !!(element_dt || element_tv)"},
+          {"id": "filter_children_fn", "ref": "script", "value": "return !!(element_dt || element_tv)"},
           {"id": "filter_children_fn_runnable_args", "value": {element: undefined}},
           {"id": "filter_children_fn_runnable", "ref": "runnable"},
-          {"id": "fill_children_fn", "script": "return element?.el ?? typeof element === 'string' ? {dom_type: 'text_value', text: element} : element"},
+          {"id": "fill_children_fn", "ref": "script", "value": "return element?.el ?? typeof element === 'string' ? {dom_type: 'text_value', text: element} : element"},
           {"id": "fill_children_fn_runnable_args", "value": {element: undefined}},
           {"id": "fill_children_fn_runnable", "ref": "runnable"},
-          {"id": "wrapped_children", "script": "return Array.isArray(children) ? children : [children]"},
+          {"id": "wrapped_children", "ref": "script", "value": "return Array.isArray(children) ? children : [children]"},
           {"id": "filter_children", "ref": "filter"},
           {
             "id": "fill_children",
             "ref": "map",
           },
-          { "id": "fill_props", "script": "return props ?? {}" },
+          { "id": "fill_props", "ref": "script", "value": "return props ?? {}" },
           { "id": "dom_type_def", "ref": "default" },
           {
             "id": "out",
-            "script": "if(!(typeof dom_type === 'string' && typeof children === 'object')){ throw new Error('invalid element');} return {dom_type, props, children: children, memo, value}"
+            "ref": "script", "value": "if(!(typeof dom_type === 'string' && typeof children === 'object')){ throw new Error('invalid element');} return {dom_type, props, children: children, memo, value}"
           },
           {"id": "out_ret", "ref": "return"}
         ],
@@ -1510,7 +1527,7 @@
         { "from": "s5x2r1f", "to": "a0jb5es", "as": "value" }
       ]
     },
-    { "id": "not", "script": "return !target" },
+    { "id": "not", "ref": "script", "value": "return !target" },
     {"id":"walk_graph","nodes":[{"id":"args"},{"id":"cfuymky","value":"testx"},{"id":"5a6pljw","ref":"html_element"},{"id":"out","name":"walk_graph","ref":"return"},{"id":"5xlxejq","ref":"html_text"},{"id":"8qkc61x","ref":"runnable"},{"id":"dv0p0id","value":"walker","ref":"log"},{"id":"dqs1arj","value":"graph","name":"","ref":"arg"},{"id":"pe7geox","value":"return _lib.no.runtime.get_edges_in(graph.graph, graph.node)","ref":"script"},{"id":"glnadhk","value":"return {node: _node.id, graph: _graph.id}","ref":"script"},{"id":"yophjcb","ref":"map"},{"id":"r3nrc31","ref":"runnable"},{"id":"nhqynsn","value":"element.from","ref":"arg"},{"id":"y4eppvf","value":"graph.graph","ref":"arg"},{"id":"lxjljmp","value":"node","ref":"arg"},{"id":"fo2ul3t","value":"fn","ref":"arg"},{"id":"x2ieyic","ref":"walk_graph"},{"id":"8kp4fri","value":"testz"},{"id":"b8n58i0","value":"testa"},{"id":"ik55pc7","value":"texty"},{"id":"1ecvy51","value":"return {node: _lib.no.runtime.get_node(graph, edge_from), graph}","ref":"script"},{"id":"27950jh"},{"id":"deh12wg","value":"edge","ref":"arg"},{"id":"sfwk3w6","value":"edge","ref":"log"},{"id":"uw2yljj","value":"node","ref":"log"},{"id":"dc70b7u","value":"element","ref":"arg"},{"id":"fhqwbjg","value":"_lib.no.run(fn.graph, fn.fn, {node: node.node, edge}); return {graph: node.graph, node: node.node.id};","ref":"script"}],"edges":[{"from":"args","to":"out","as":"args"},{"from":"5a6pljw","to":"out","as":"display"},{"from":"cfuymky","to":"glnadhk","as":"arg0"},{"from":"8kp4fri","to":"glnadhk","as":"arg1"},{"from":"ik55pc7","to":"8kp4fri","as":"arg0"},{"from":"5xlxejq","to":"5a6pljw","as":"children"},{"from":"8qkc61x","to":"args","as":"fn"},{"from":"dv0p0id","to":"8qkc61x","as":"fn"},{"from":"glnadhk","to":"args","as":"graph"},{"from":"dqs1arj","to":"pe7geox","as":"graph"},{"from":"pe7geox","to":"yophjcb","as":"array"},{"from":"r3nrc31","to":"yophjcb","as":"fn"},{"from":"nhqynsn","to":"1ecvy51","as":"edge_from"},{"from":"y4eppvf","to":"1ecvy51","as":"graph"},{"from":"fo2ul3t","to":"fhqwbjg","as":"fn"},{"from":"1ecvy51","to":"fhqwbjg","as":"node"},{"from":"x2ieyic","to":"r3nrc31","as":"fn"},{"from":"fhqwbjg","to":"x2ieyic","as":"graph"},{"from":"yophjcb","to":"out","as":"return"},{"from":"27950jh","to":"dv0p0id","as":"value"},{"from":"sfwk3w6","to":"27950jh","as":"arg1"},{"from":"deh12wg","to":"sfwk3w6","as":"value"},{"from":"uw2yljj","to":"27950jh","as":"arg0"},{"from":"lxjljmp","to":"uw2yljj","as":"value"},{"from":"dc70b7u","to":"fhqwbjg","as":"edge"},{"from":"b8n58i0","to":"glnadhk","as":"arg22"}],"out":"out"},
   {
     "id": "canvas_behind_editor",

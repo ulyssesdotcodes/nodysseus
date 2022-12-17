@@ -14,7 +14,24 @@ import {openDB } from "idb"
 import * as Y from "yjs"
 import {IndexeddbPersistence} from "y-indexeddb";
 import { WebsocketProvider } from "y-websocket";
+// import { WebrtcProvider } from "./nod-y-webrtc";
 import { WebrtcProvider } from "y-webrtc";
+
+class NodyWS extends WebSocket {
+  constructor(url) {
+    super(url, 'json.webpubsub.azure.v1')
+  }
+  send(v){
+    super.send(JSON.stringify({
+      type: "sendToGroup",
+      group: 'group1',
+      data: v,
+      dataType: 'binary'
+    }))
+  }
+}
+
+
 
 const updateSimulationNodes = (dispatch, data) => {
     const simulation_node_data = new Map();
@@ -45,7 +62,7 @@ const updateSimulationNodes = (dispatch, data) => {
     ]));
 
     const order = [];
-    const queue = [data.display_graph.out];
+    const queue = [data.display_graph.out ?? "out"];
 
     const parents_map = new Map(data.display_graph.nodes.map(n => [n.id, 
         data.display_graph.edges
@@ -1005,7 +1022,7 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
                         node.id !== graph_out && [d => d(UpdateNode, {node, property: "name", value: payload.target.value})],
                         node.id === graph_out && [ChangeDisplayGraphId, {id: payload.target.value, select_out: true}]
                     ],
-                    options: node.id === graph_out && ref_graphs
+                    options: node.id === graph_out && (ref_graphs)
                 }),
                 input_el({
                     label: 'ref',
@@ -1143,12 +1160,13 @@ const custom_editor_display = html_id => ha.app({
 const refresh_custom_editor = () => {
     if(nolib.no.runtime.get_ref("custom_editor")) {
         // TODO: combine with update_info
-        const graph = nolib.no.runtime.get_ref("custom_editor");
-        const result = hlib.run({graph, fn: graph.out}, {_output: "display"});
-        custom_editor_display_dispatch(() => ({el: result}))
+        // const graph = nolib.no.runtime.get_ref("custom_editor");
+        // const result = hlib.run({graph, fn: graph.out}, {_output: "display"});
+        // custom_editor_display_dispatch(() => ({el: result}))
     } else {
         custom_editor_display_dispatch(() => ({el: {dom_type: "div", props: {}, children: []}}))
     }
+    custom_editor_display_dispatch(() => ({el: {dom_type: "div", props: {}, children: []}}))
 }
 
 let result_display_dispatch;
@@ -1611,14 +1629,16 @@ const ydocStore = async (persist = false, update = undefined) => {
   const params = new URLSearchParams(location.search)
   let undoManager;
 
+  // const url = await fetch(`http://${location.hostname}:7071/api/Negotiate?userId=${Math.floor(performance.now() * 1000)}`).then(b => b.json());
+
   if(persist) {
     const indexeddbProvider = new IndexeddbPersistence(persist, ydoc)
-    await indexeddbProvider.whenSynced.then(v => {
+    await indexeddbProvider.whenSynced.then(_ => {
       requestAnimationFrame(() => {
         const custom_editor = nolib.no.runtime.get_ref("custom_editor");
         const rtcroom = params.get("rtcroom") ?? (custom_editor && hlib.run({graph: custom_editor, fn: custom_editor.out})?.rtcroom);
         if(rtcroom) {
-          new WebrtcProvider(`nodysseus${rtcroom}`, ydoc)
+      
         }
       })
     })
@@ -1642,16 +1662,128 @@ const ydocStore = async (persist = false, update = undefined) => {
     // }
   }
 
-  return {
-    get: id => ymap.get(id),
-    add: (id, data) => {
-      if(!id.startsWith("_")) {
-        ymap.set(id, data)
+  const add = (id, data) => {
+    // console.log('storing')
+    // console.log(id)
+    // console.log(data)
+    if(!id.startsWith("_")) {
+      let current = ymap.get(id);
+      let found = !!current && current._map;
+      if(!found) {
+        current = new Y.Map()
       }
-    },
+      ydoc.transact(() => {
+        // const infomap = current.getMap();
+        let infomap = current
+        if(infomap.get("id") !== id) {
+          infomap.set("id", id);
+        }
+        if(infomap.get("name") !== data.name) {
+          infomap.set("name", data.name);
+        }
+        if(data.ref && data.ref !== infomap.get("ref")){
+          infomap.set("ref", data?.ref);
+        } else if(infomap.has('ref') && !data.ref) {
+          infomap.delete('ref')
+        }
+
+        if(data.value && data.value !== infomap.get("value")){
+          infomap.set("value", data?.value);
+        } else if(infomap.has('value') && !data.value) {
+          infomap.delete('value')
+        }
+
+        if(data.out && data.out !== infomap.get("out")){
+          infomap.set("out", data?.out);
+        } else if(infomap.has('out') && !data.out) {
+          infomap.delete('out')
+        }
+
+        if(data.nodes)  {
+          infomap.set('nodes', data.nodes);
+          // let curnodes = infomap.get('nodes');
+          // if(!curnodes) {
+          //   curnodes = new Y.Map();
+          //   infomap.set('nodes', curnodes);
+          // }
+          // data.nodes.forEach(n => curnodes.set(n.id, n))
+        }
+
+        if(data.edges) {
+          infomap.set('edges', data.edges)
+          // let curedges = infomap.get('edges');
+          // if(!curedges) {
+          //   curedges = new Y.Map();
+          //   infomap.set('edges', curedges);
+          // }
+          // data.edges.forEach(e => curedges.set(e.to + "__" + e.from, e));
+        }
+      })
+
+      if(!found) {
+        // console.log(current)
+        ymap.set(id, current);
+      }
+
+      // console.log(ymap.get(id))
+    }
+  }
+
+  // if(false) {
+    ydoc.on('subdocs', e => {
+          // console.log(url)
+      console.log('subdocs')
+      console.log(e);
+      e.loaded.forEach(sd => {
+        // console.log('loaded subdoc')
+        // console.log(sd)
+        // console.log(sd.getMap().get("id"))
+        if(sd.getMap().get("id") === "testsync") {
+          console.log('got testsyncsubdoc')
+          // new WebsocketProvider(`nodysseus${rtcroom}_`+sd.getMap().get("id"), sd, {signaling: [url.url]})
+          // new WebsocketProvider(url.baseUrl, "", /*`nodysseus${rtcroom}_${sd.getMap().get("id")}`*/ sd, {
+          //   WebSocketPolyfill: NodyWS,
+          //   params: {access_token: url.accessToken}
+          // })
+          //
+          new WebrtcProvider(`nodysseus${rtcroom}_${sd.getMap().get("id")}`, sd, {signaling: ["ws://161.35.136.33:4444"]})
+          sd.getMap().observe(event => {
+            console.log('sd event')
+            console.log(event);
+            update(event, sd.getMap().get("id"))
+          })
+        }
+      })
+    })
+  // }
+
+  const get = id => {
+    if(ymap.get(id) && !ymap.get(id)._map) {
+      add(id, ymap.get(id))
+    }
+
+    // ymap.get(id).load()
+    const frommap = ymap.get(id)?.toJSON();
+    // const res = frommap?.nodes && frommap?.edges ? {...frommap, nodes: frommap.nodes, edges: frommap.edges} : frommap;
+    const res = frommap;
+    if(res && Object.keys(res).length === 0) {
+      debugger;
+      const val = get("simple");
+      val.id = id;
+      add(id, val)
+      return val
+    }
+    // console.log(id);
+    // console.log(res);
+    return res;
+  }
+
+  return {
+    get,
+    add,
     addMany: (datas) => {
       ydoc.transact(() => {
-        datas.forEach(([id, data]) => ymap.set(id, data))
+        datas.forEach(([id, data]) => add(id, data))
       })
     },
     remove: id => {
@@ -1659,9 +1791,9 @@ const ydocStore = async (persist = false, update = undefined) => {
     },
     removeAll: () => {},
     all: () => {
-      const vals = [...ymap.values()];
-      vals.forEach(g => (g.id.match(/^[a-z0-9]{7}$/) || g.id.match(/^run_[a-z]{7}.*/)) && g.id !== 'default' && g.id !== 'resolve' && g.id !== 'changed' && ymap.delete(g.id))
-      return vals
+      const keys = [...ymap.keys()];
+      // keys.forEach(k => (k.match(/^[a-z0-9]{7}$/) || k.match(/^run_[a-z]{7}.*/)) && k !== 'default' && k !== 'resolve' && k !== 'changed' && ymap.delete(k))
+      return keys
     },
     undo: persist && (() => undoManager.undo()),
     redo: persist && (() => undoManager.redo()),
@@ -1686,12 +1818,12 @@ const yNodyStore = async () => {
   }).then(db => { nodysseusidb = db })
 
   return {
-    refs: await ydocStore('refs', event => {
-      if(!main_app_dispatch || event.keysChanged.size > 1) {
+    refs: await ydocStore('refs', (event, id) => {
+      if(!main_app_dispatch || (!id && event.keysChanged.size > 1)) {
         return;
       }
 
-      const updatedgraph = event.keysChanged.values().next().value;
+      const updatedgraph = id ?? event.keysChanged.values().next().value;
       requestAnimationFrame(() =>  {
         nolib.no.runtime.change_graph(nolib.no.runtime.get_ref(updatedgraph), {...nolib, ...hlib}, event.transaction.local)
       }) 

@@ -954,8 +954,8 @@ const nolib = {
         get_graph,
         get_args,
         get_path,
-        refs: () => nodysseus.refs.all().map(r => r.id),
-        ref_graphs: () => nodysseus.refs.all().filter(v => isNodeGraph(v) && get_node(v, (v?.out ?? "out"))?.ref === "return").map(v => v.id),
+        refs: () => nodysseus.refs.all(),
+        ref_graphs: () => nodysseus.refs.all(),
         edit_edge: (graph, edge, old_edge, lib) => {
           const gcache = get_cache(graph);
           graph = gcache.graph;
