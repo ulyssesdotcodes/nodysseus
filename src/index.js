@@ -6,6 +6,5 @@ Promise.all(["json/simple.json", "json/simple_html_hyperapp.json"].map(url => fe
             navigator.serviceWorker.register('./sw.js');
         }
 
-        console.log(editor);
         editor('node-editor')
     })
