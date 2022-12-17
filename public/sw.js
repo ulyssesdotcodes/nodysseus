@@ -1,4 +1,4 @@
-const assetCacheName = 'assets-v1';
+const assetCacheName = 'assets-v0.0.1';
 
 const assets = [
     "./index.html",
