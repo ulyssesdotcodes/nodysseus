@@ -4,9 +4,11 @@
 }
 
 body {
-    width: 100%;
-    height: 100%;
-    margin:0;
+  width: 100%;
+  height: 100%;
+  margin:0;
+  font-family: consolas;
+  color: white;
 }
 
 .hidden {
@@ -25,13 +27,10 @@ body {
     display: none;
 }
 
-
 #node-editor {
     position: relative;
     width: 100vw;
     height: 100vh;
-    color: white;
-    font-family: consolas;
     overflow: hidden;
     background: #101010;
 }
@@ -115,6 +114,22 @@ svg {
 .edit-value.ref input {
     position: relative;
     left: 0;
+}
+
+.ref-autocomplete-list {
+  position: relative;
+  z-index: 12;
+  overflow: hidden;
+}
+
+.autocomplete-item {
+  background: #111;
+  line-height: 1.2em;
+  padding: .2em;
+}
+
+.autocomplete-item.selected {
+  background: #333;
 }
 
 .edit-value .input {

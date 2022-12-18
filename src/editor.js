@@ -16,6 +16,7 @@ import {IndexeddbPersistence} from "y-indexeddb";
 import { WebsocketProvider } from "y-websocket";
 // import { WebrtcProvider } from "./nod-y-webrtc";
 import { WebrtcProvider } from "y-webrtc";
+import autocomplete from "autocompleter";
 
 class NodyWS extends WebSocket {
   constructor(url) {
@@ -852,10 +853,11 @@ const UpdateNodeEffect = (_, {display_graph, node}) => {
     nolib.no.runtime.update_edges(display_graph, [{...edges_in[0], as: nodeargs[0].name}], [], {...hlib, ...nolib})
   }
 }
+
 const UpdateNode = (state, {node, property, value, display_graph}) => [
     {
         ...state, 
-        history: state.history.concat([{action: 'update_node', node: node, property, value }]) 
+        history: state.history.concat([{action: 'update_node', node: node ?? nolib.no.runtime.get_node(state.display_graph, state.selected[0]), property, value }]) 
     },
     [UpdateNodeEffect, {
         display_graph: display_graph ?? state.display_graph,
@@ -980,7 +982,7 @@ const input_el = ({label, property, value, onchange, options, inputs, disabled})
             onblur: (state, event) => [{...state, focused: false}],
             value: inputs[`edit-text-${property}`] ?? value
         }),
-        options && options.length > 0 && ha.h('datalist', {id: `edit-text-list-${property}`}, options.map(o => ha.h('option', {value: o}))) 
+        // options && options.length > 0 && ha.h('datalist', {id: `edit-text-list-${property}`}, options.map(o => ha.h('option', {value: o}))) 
     ]
 )
 
@@ -1240,7 +1242,27 @@ const runapp = (init, load_graph, _lib) => {
         })],
         [ChangeDisplayGraphId, {id: load_graph, select_out: true}],
         [UpdateSimulation, {...init, action: SimulationToHyperapp}],
-        [init_code_editor, {html_id: init.html_id}]
+        [init_code_editor, {html_id: init.html_id}],
+        [(dispatch) => requestAnimationFrame(() => autocomplete({
+          input: document.getElementById("edit-text-ref"),
+          emptyMsg: "ref",
+          minLength: 1,
+          fetch: (text, update) => {
+            update(nolib.no.runtime.refs().filter(r => r.toLowerCase().startsWith(text)).map(r => ({label: r, value: r})))
+          },
+          className: "ref-autocomplete-list",
+          showOnFocus: true,
+          onSelect: item => {
+            document.getElementById("edit-text-ref").value = item.value;
+            dispatch(UpdateNode, {property: "ref", value: item.value})
+          },
+          render: item => {
+            const itemEl = document.createElement("div")
+            itemEl.className = "autocomplete-item"
+            itemEl.textContent = item.value;
+            return itemEl;
+          }
+        }))]
     ],
     dispatch: middleware,
     view: s =>ha.h('div', {id: s.html_id}, [
