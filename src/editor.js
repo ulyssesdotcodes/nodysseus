@@ -982,11 +982,11 @@ const input_el = ({label, property, value, onchange, options, inputs, disabled})
             onblur: (state, event) => [{...state, focused: false}],
             value: inputs[`edit-text-${property}`] ?? value
         }),
-        // options && options.length > 0 && ha.h('datalist', {id: `edit-text-list-${property}`}, options.map(o => ha.h('option', {value: o}))) 
+        options && options.length > 0 && ha.h('datalist', {id: `edit-text-list-${property}`}, options.map(o => ha.h('option', {value: o}))) 
     ]
 )
 
-const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, refs, ref_graphs, html_id, copied_graph, inputs, graph_out, editing})=> {
+const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, ref_graphs, html_id, copied_graph, inputs, graph_out, editing})=> {
     //const s.display_graph.id === s.display_graph_id && nolib.no.runtime.get_node(s.display_graph, s.selected[0]) && 
     const node_ref = node && node.ref ? nolib.no.runtime.get_ref(display_graph_id, node.ref) : node;
     const description =  node_ref?.description;
@@ -1031,7 +1031,6 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
                     value: node.ref,
                     property: 'ref',
                     inputs,
-                    options: refs,
                     onchange: (state, event) => [UpdateNode, {node, property: "ref", value: event.target.value}],
                     disabled: node.id === graph_out
                 }),
@@ -1246,15 +1245,15 @@ const runapp = (init, load_graph, _lib) => {
         [(dispatch) => requestAnimationFrame(() => autocomplete({
           input: document.getElementById("edit-text-ref"),
           emptyMsg: "ref",
-          minLength: 1,
+          minLength: 0,
           fetch: (text, update) => {
-            update(nolib.no.runtime.refs().filter(r => r.toLowerCase().startsWith(text)).map(r => ({label: r, value: r})))
+            const refs = nolib.no.runtime.refs().map(r => ({label: r, value: r}));
+            update(text === "" ? refs : new Fuse(refs, {keys: ["value"], distance: 80, threshold: 0.4}).search(text).map(searchResult => searchResult.item))
           },
           className: "ref-autocomplete-list",
           showOnFocus: true,
           onSelect: item => {
             document.getElementById("edit-text-ref").value = item.value;
-            dispatch(UpdateNode, {property: "ref", value: item.value})
           },
           render: item => {
             const itemEl = document.createElement("div")
@@ -1305,7 +1304,6 @@ const runapp = (init, load_graph, _lib) => {
             display_graph_id: s.display_graph.id,
             randid: s.randid,
             editing: s.editing,
-            refs: nolib.no.runtime.refs(),
             ref_graphs: nolib.no.runtime.ref_graphs(),
             html_id: s.html_id,
             copied_graph: s.copied?.graph,
