@@ -1012,8 +1012,7 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
                     value: node.value, 
                     property: "value", 
                     inputs,
-                    onchange: (state, payload) => [UpdateNode, {node, property: "value", value: payload.target.value,
-                }]}),
+                    onchange: (state, payload) => [UpdateNode, {node, property: "value", value: payload.target.value}]}),
                 input_el({
                     label: "name", 
                     value: node.name, 
@@ -1254,6 +1253,7 @@ const runapp = (init, load_graph, _lib) => {
           showOnFocus: true,
           onSelect: item => {
             document.getElementById("edit-text-ref").value = item.value;
+            dispatch([UpdateNode, {property: "ref", value: item.value}])
           },
           render: item => {
             const itemEl = document.createElement("div")
@@ -1811,9 +1811,9 @@ const ydocStore = async (persist = false, update = undefined) => {
     },
     removeAll: () => {},
     all: () => {
-      const keys = [...ymap.keys()];
+      const values = [...ymap.values()];
       // keys.forEach(k => (k.match(/^[a-z0-9]{7}$/) || k.match(/^run_[a-z]{7}.*/)) && k !== 'default' && k !== 'resolve' && k !== 'changed' && ymap.delete(k))
-      return keys
+      return values.map(v => v.id)
     },
     undo: persist && (() => undoManager.undo()),
     redo: persist && (() => undoManager.redo()),
