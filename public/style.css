@@ -118,7 +118,7 @@ svg {
 
 .ref-autocomplete-list {
   position: relative;
-  z-index: 12;
+  z-index: 999;
   overflow: hidden;
 }
 
