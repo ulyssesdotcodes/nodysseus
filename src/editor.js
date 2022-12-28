@@ -17,6 +17,7 @@ import { WebsocketProvider } from "y-websocket";
 // import { WebrtcProvider } from "./nod-y-webrtc";
 import { WebrtcProvider } from "y-webrtc";
 import autocomplete from "autocompleter";
+import generic from "./generic"
 
 class NodyWS extends WebSocket {
   constructor(url) {
@@ -55,21 +56,17 @@ const updateSimulationNodes = (dispatch, data) => {
 
     const main_node_map = new Map();
 
-    const node_map = new Map(data.display_graph.nodes.map(n => [n.id, n]));
-    const children_map = new Map(data.display_graph.nodes.map(n => [n.id, 
-        data.display_graph.edges
-            .filter(e => e.from === n.id)
-            .map(e => e.to)
+    const node_map = new Map(Object.entries(data.display_graph.nodes));
+    const children_map = new Map(Object.values(data.display_graph.nodes).map(n => [n.id, 
+        [data.display_graph.edges[n.id]?.to].filter(e => e)
     ]));
 
     const order = [];
     const queue = [data.display_graph.out ?? "out"];
 
-    const parents_map = new Map(data.display_graph.nodes.map(n => [n.id, 
-        data.display_graph.edges
-            .filter(e => e.to === n.id)
-            .map(e => e.from)
-        ]));
+    const parents_map = new Map(Object.values(data.display_graph.nodes).map(n => [n.id, 
+        nolib.no.runtime.get_edges_in(data.display_graph, n.id).map(e => e.from)
+    ]));
 
     let needsupdate = false;
     while(queue.length > 0) {
@@ -139,8 +136,8 @@ const updateSimulationNodes = (dispatch, data) => {
         const calculated_nodes = children.length === 0 ? [{
             node_id: n.id,
             hash: simulation_node_data.get(node_id)?.hash ?? hashcode(n.id),
-            nested_node_count: n.nodes?.length,
-            nested_edge_count: n.edges?.length,
+            nested_node_count: n.nodes ? Object.keys(n.nodes).length : n.nodes,
+            nested_edge_count: n.edges ? Object.keys(n.edges).length : n.edges,
             x: Math.floor(simulation_node_data.get(node_id)?.x 
                 ?? simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.x
                 ?? Math.floor(window.innerWidth * (randpos.x * .5 + .25))),
@@ -151,8 +148,8 @@ const updateSimulationNodes = (dispatch, data) => {
             node_id: n.id,
             hash: simulation_node_data.get(node_id)?.hash ?? hashcode(n.id),
             sibling_index_normalized: parents_map.get(c).findIndex(p => p === n.id) / parents_map.get(c).length,
-            nested_node_count: n.nodes?.length,
-            nested_edge_count: n.edges?.length,
+            nested_node_count: n.nodes ? Object.keys(n.nodes).length : n.nodes,
+            nested_edge_count: n.edges ? Object.keys(n.edges).length : n.edges,
             x: Math.floor(simulation_node_data.get(node_id)?.x 
                 ?? simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.x
                 ?? addorundefined(
@@ -174,7 +171,7 @@ const updateSimulationNodes = (dispatch, data) => {
         return calculated_nodes;
     })
 
-    const links = data.display_graph.edges
+    const links = Object.values(data.display_graph.edges)
         .filter(e => main_node_map.has(e.from) && main_node_map.has(e.to))
         .map(e => {
             const l = simulation_link_data.get(`${e.from}__${e.to}`);
@@ -415,10 +412,13 @@ const graph_subscription = (dispatch, props) => {
     let animframe = false;
     const listener = (graph) => {
         if(props.display_graph_id === graph.id) {
-            !animframe && requestAnimationFrame(() =>  {
-                animframe = false;
-                dispatch(s => [{...s, display_graph: graph}, [UpdateSimulation]])
-            })
+          if(animframe){
+            cancelAnimationFrame(animframe)
+          }
+          animframe = requestAnimationFrame(() =>  {
+              animframe = false;
+              dispatch(s => [{...s, display_graph: graph}, [UpdateSimulation]])
+          })
         }
     };
 
@@ -662,7 +662,7 @@ const SelectNode = (state, {node_id, focus_property}) => [
                 ? JSON.parse(localStorage.getItem("graph_list")).slice(0, 10).map(gid => ({dom_type: "li", props: {}, children: [
                     {
                         dom_type: "a", 
-                        props: { href: "#", onclick: s => [s, [() => main_app_dispatch(ms => [ms, [ChangeDisplayGraphId, {id: gid}]])]]}, 
+                        props: { href: "#", onclick: s => [s, [() => main_app_dispatch(ms => [ms, [ChangeDisplayGraphId, {id: gid, display_graph_id: state.display_graph_id}]])]]}, 
                         children: [{dom_type: "text_value", text: gid}]}
                 ]}))
                 : []
@@ -705,7 +705,7 @@ const DeleteNode = (state, {node_id}) => [
 ]
 
 const ExpandContract = (state, {node_id}) => {
-    const node = state.display_graph.nodes.find(n => n.id === node_id);
+    const node = state.display_graph.nodes[node_id]
     const update = node.nodes 
             ? expand_node({nolib, node_id, display_graph: state.display_graph})
             : contract_node({nolib, node_id, display_graph: state.display_graph});
@@ -715,7 +715,6 @@ const ExpandContract = (state, {node_id}) => {
         [dispatch => {
             requestAnimationFrame(() => {
                 // Have to be the same time so the right node is selected
-                nolib.no.runtime.change_graph(base_graph(update.display_graph), {...hlib, ...nolib});
                 dispatch(SelectNode, {node_id: update.selected[0]})
             })
         }]
@@ -745,7 +744,7 @@ const Paste = state => [
     {...state},
     [dispatch => {
         const node_id_map = {};
-        state.copied.graph.nodes.forEach(n => {
+        Object.values(state.copied.graph.nodes).forEach(n => {
             const new_id = create_randid();
             node_id_map[n.id] = new_id;
             nolib.no.runtime.add_node(state.display_graph, {...n, id: new_id}, {...hlib, ...nolib})
@@ -780,19 +779,19 @@ const save_graph = graph => {
 
 const SaveGraph = (dispatch, payload) => save_graph(payload.display_graph)
 
-const ChangeDisplayGraphId = (dispatch, {id, select_out}) => {
+const ChangeDisplayGraphId = (dispatch, {id, select_out, display_graph_id}) => {
     requestAnimationFrame(() => {
         const graphPromise = Promise.resolve(nolib.no.runtime.get_ref(id)
-            ?? Promise.race([
+            ?? Promise.any([
               navigator.onLine ? resfetch(`json/${id}.json`)
-                .then(r => r.status === 200 ? r.json() : undefined)
+                .then(r => r.status === 200 ? r.json() : Promise.reject())
                 .then(gs => {
                   nolib.no.runtime.add_refs(Array.isArray(gs) ? gs : [gs]);
                   return nolib.no.runtime.get_ref(id);
-                })
-                .catch(_ => undefined) : undefined,
-              new Promise((res, rej) => setTimeout(() => res(undefined), 1000))
-            ]))
+                }) : Promise.reject(),
+              new Promise((res, rej) => setTimeout(() => res({...nolib.no.runtime.get_ref(display_graph_id ?? "simple"), id, name: id}), 1000))
+                .then(g => ({...g, nodes: Object.fromEntries(Object.values(g.nodes).map(n => [n.id, n.id === (g.out ?? "out") ? {...n, name: id} : n]))}))
+            ])).then(g => Array.isArray(g.nodes) && Array.isArray(g.edges) ? {...g, nodes: Object.fromEntries(g.nodes.map(n => [n.id, n])), edges: Object.fromEntries(g.edges.map(e => [e.from, e]))} : g )
 
 
         window.location.hash = '#' + id; 
@@ -869,7 +868,7 @@ const UpdateNode = (state, {node, property, value, display_graph}) => [
 
 const UpdateEdge = (state, {edge, as}) => [
     state,
-    [() => nolib.no.runtime.edit_edge(state.display_graph, {...edge, as}, edge, {...hlib, ...nolib})]
+    [() => nolib.no.runtime.update_edges(state.display_graph, {...edge, as}, edge, {...hlib, ...nolib})]
 ]
 
 const OpenMenu = state => [{...state, menu: true}]
@@ -1021,9 +1020,9 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
                     onchange: (state, payload) => [
                         state,
                         node.id !== graph_out && [d => d(UpdateNode, {node, property: "name", value: payload.target.value})],
-                        node.id === graph_out && [ChangeDisplayGraphId, {id: payload.target.value, select_out: true}]
+                        node.id === graph_out && [ChangeDisplayGraphId, {id: payload.target.value, select_out: true, display_graph_id}]
                     ],
-                    options: node.id === graph_out && (ref_graphs)
+                    options: node.id === graph_out && ref_graphs.map(g => g.id)
                 }),
                 input_el({
                     label: 'ref',
@@ -1056,7 +1055,7 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
                 node.node_id !== graph_out && ha.h('div', {
                     class: "action", 
                     onclick: [ExpandContract, {node_id: node.node_id}]
-                }, [ha.h('ion-icon', {name: node.nodes?.length > 0 ? "expand" : "contract"}), ha.text(node.nodes?.length > 0 ? "expand" : "collapse")]),
+                }, [ha.h('ion-icon', {name: Object.keys(node.nodes ?? {}).length > 0 ? "expand" : "contract"}), ha.text(Object.keys(node.nodes ?? {}).length > 0 ? "expand" : "collapse")]),
                 node.nodes?.length > 0 && node.name !== '' && ha.h('div', {class: 'action', onclick: [CreateRef, {node}]}, ha.text("make ref")),
                 ha.h('div', {
                     class: "action", 
@@ -1238,16 +1237,16 @@ const runapp = (init, load_graph, _lib) => {
             refresh_custom_editor()
             nolib.no.runtime.change_graph(base_graph(init.display_graph), {...hlib, ...nolib})
         })],
-        [ChangeDisplayGraphId, {id: load_graph, select_out: true}],
+        [ChangeDisplayGraphId, {id: load_graph, select_out: true, display_graph_id: undefined}],
         [UpdateSimulation, {...init, action: SimulationToHyperapp}],
         [init_code_editor, {html_id: init.html_id}],
         [(dispatch) => requestAnimationFrame(() => autocomplete({
           input: document.getElementById("edit-text-ref"),
-          emptyMsg: "ref",
+          emptyMsg: "not found",
           minLength: 0,
           fetch: (text, update) => {
-            const refs = nolib.no.runtime.refs().map(r => ({label: r, value: r}));
-            update(text === "" ? refs : new Fuse(refs, {keys: ["value"], distance: 80, threshold: 0.4}).search(text).map(searchResult => searchResult.item))
+            const refs = nolib.no.runtime.refs();
+            update(text === "" ? refs : new Fuse(refs, {keys: ["id"], distance: 80, threshold: 0.4}).search(text).map(searchResult => ({label: searchResult.item.id, value: searchResult.item.id})))
           },
           className: "ref-autocomplete-list",
           showOnFocus: true,
@@ -1354,7 +1353,7 @@ const runapp = (init, load_graph, _lib) => {
                     break;
                 }
                 default: {
-                    const result = hlib.run(init.keybindings, "out", {}, hlib)[mode][key_input];
+                    const result = hlib.run({graph: init.keybindings, fn: "out", args: {}}, hlib)[mode][key_input];
                     switch(result){
                         case "up": {
                             const parent_edges = nolib.no.runtime.get_edges_in(state.display_graph, selected);
@@ -1363,7 +1362,7 @@ const runapp = (init, load_graph, _lib) => {
                             break;
                         }
                         case "down": {
-                            const child_edge = state.display_graph.edges.find(e => e.from === selected);
+                            const child_edge = Object.values(state.display_graph.edges).find(e => e.from === selected);
                             const node_id = child_edge?.to
                             action = node_id ? [SelectNode, {node_id}] : [state]
                             break;
@@ -1542,6 +1541,7 @@ const middleware = dispatch => (ha_action, ha_payload) => {
     const action = is_action_array_payload ? ha_action[0] : ha_action;
     const payload = is_action_array_payload ? ha_action[1] : is_action_obj_payload ? {event: ha_payload} : ha_payload;
 
+  // console.log(action);
     return typeof action === 'object' && action.hasOwnProperty('fn') && action.hasOwnProperty('graph')
         ? dispatch((state, payload) => {
             try {
@@ -1651,41 +1651,7 @@ const ydocStore = async (persist = false, update = undefined) => {
 
   // const url = await fetch(`http://${location.hostname}:7071/api/Negotiate?userId=${Math.floor(performance.now() * 1000)}`).then(b => b.json());
 
-  if(persist) {
-    const indexeddbProvider = new IndexeddbPersistence(persist, ydoc)
-    await indexeddbProvider.whenSynced.then(_ => {
-      requestAnimationFrame(() => {
-        const custom_editor = nolib.no.runtime.get_ref("custom_editor");
-        const rtcroom = params.get("rtcroom") ?? (custom_editor && hlib.run({graph: custom_editor, fn: custom_editor.out})?.rtcroom);
-        if(rtcroom) {
-      
-        }
-      })
-    })
-
-    undoManager = new Y.UndoManager(ymap)
-    undoManager.on('stack-item-popped', i => console.log(i))
-
-    // const url = await fetch("http://localhost:7071/api/Negotiate?userId=me").then(r => r.json())
-    // console.log("syncing on ")
-    // console.log(url.url)
-    // const wsurl = new URL(url.url)
-
-    // const wsprovider = new WebsocketProvider('wss://nodysseus.webpubsub.azure.com/client/hubs', 'collaboration', ydoc, {
-    //   WebSocketPolyfill: NodyWS,
-    //   params: {access_token: wsurl.searchParams.get('access_token')}
-    // })
-    //
-    // const oldonmessage= wsprovider.ws.onmessage;
-    // wsprovider.ws.onmessage = (v) => {
-    //   oldonmessage(v)
-    // }
-  }
-
   const add = (id, data) => {
-    // console.log('storing')
-    // console.log(id)
-    // console.log(data)
     if(!id.startsWith("_")) {
       let current = ymap.get(id);
       let found = !!current && current._map;
@@ -1720,7 +1686,16 @@ const ydocStore = async (persist = false, update = undefined) => {
         }
 
         if(data.nodes)  {
-          infomap.set('nodes', data.nodes);
+          let nodesymap = infomap.get("nodes")
+          if(!infomap.get("nodes")?.set) {
+            nodesymap = new Y.Map();
+            infomap.set("nodes", nodesymap)
+          }
+          if(Array.isArray(data.nodes)){
+            data.nodes.map(n => nodesymap.set(n.id, n)) 
+          } else {
+            Object.entries(data.nodes).forEach(kv => nodesymap.set(kv[0], kv[1]))
+          } 
           // let curnodes = infomap.get('nodes');
           // if(!curnodes) {
           //   curnodes = new Y.Map();
@@ -1730,7 +1705,24 @@ const ydocStore = async (persist = false, update = undefined) => {
         }
 
         if(data.edges) {
-          infomap.set('edges', data.edges)
+          let edgesymap = infomap.get("edges")
+          if(!infomap.get("edges")?.set) {
+            edgesymap = new Y.Map();
+            infomap.set("edges", edgesymap)
+          }
+
+          if(Array.isArray(data.edges)){
+            const edgeset = new Set(data.edges.map(e => e.from))
+            if(edgeset.size !== data.edges.length) {
+              console.log(`invalid edges for ${data.id}`)
+              console.log(data.edges.filter(e => {
+                edgeset.has(e.from) ? edgeset.delete(e.from) : console.log(e.from)
+              }))
+            }
+            data.edges.map(e => edgesymap.set(e.from, e)) 
+          } else {
+            Object.entries(data.edges).forEach(kv => edgesymap.set(kv[0], kv[1]))
+          } 
           // let curedges = infomap.get('edges');
           // if(!curedges) {
           //   curedges = new Y.Map();
@@ -1744,9 +1736,91 @@ const ydocStore = async (persist = false, update = undefined) => {
         // console.log(current)
         ymap.set(id, current);
       }
-
-      // console.log(ymap.get(id))
     }
+  }
+
+  const add_node = (graphId, node) => {
+    ydoc.transact(() => {
+      ymap.get(graphId).get("nodes").set(node.id, node)
+    })
+  }
+
+  const remove_node = (graphId, node) => {
+    ydoc.transact(() => {
+      ymap.get(graphId).get("nodes").delete(typeof node === "string" ? node : node.id)
+    })
+  }
+
+  const add_edge = (graphId, edge) => {
+    ydoc.transact(() => {
+      ymap.get(graphId).get("edges").set(edge.from, edge)
+    })
+  }
+
+  const remove_edge = (graphId, edge) => {
+    ydoc.transact(() => {
+      ymap.get(graphId).get("edges").delete(edge.from)
+    })
+  }
+
+  if(persist) {
+    const indexeddbProvider = new IndexeddbPersistence(persist, ydoc)
+    await indexeddbProvider.whenSynced.then(_ => {
+      [...ydoc.getMap().keys()].map(k => {
+        if(k.startsWith("_") || k === "" || generic.nodes[k]) {
+          // remove "_" items
+          // console.log(`removing ${k}`)
+          ydoc.getMap().delete(k)
+        } else if (ydoc.getMap().get(k).id) {
+          // convert old maps to ymap
+          add(k, ydoc.getMap().get(k))
+        } else if (Array.isArray(ydoc.getMap().get(k).get("nodes"))) {
+          const graph = ydoc.getMap().get(k);
+          const nodes = graph.get("nodes");
+          const edges = graph.get("edges");
+          const updatedNodes = new Y.Map();
+          const updatedEdges = new Y.Map();
+          nodes.forEach(n => updatedNodes.set(n.id, n))
+          edges.forEach(e => updatedEdges.set(e.from, e))
+          console.log("nodes")
+          console.log(updatedNodes)
+          console.log("edges")
+          console.log(updatedEdges)
+
+          graph.set("_nodes_old", nodes)
+          graph.set("_edges_old", edges)
+          graph.set("nodes", updatedNodes)
+          graph.set("edges", updatedEdges)
+        } else if (!ydoc.getMap().get(k)?.get("nodes")?.set) {
+          add(k, ydoc.getMap().get(k))
+        }
+      })
+      requestAnimationFrame(() => {
+        const custom_editor = nolib.no.runtime.get_ref("custom_editor");
+        const rtcroom = params.get("rtcroom") ?? (custom_editor && hlib.run({graph: custom_editor, fn: custom_editor.out})?.rtcroom);
+        if(rtcroom) {
+      
+        }
+      })
+    })
+
+    undoManager = new Y.UndoManager(ymap)
+    undoManager.on('stack-item-popped', i => console.log(i))
+
+    // const url = await fetch("http://localhost:7071/api/Negotiate?userId=me").then(r => r.json())
+    // console.log("syncing on ")
+    // console.log(url.url)
+    // const wsurl = new URL(url.url)
+
+    // const wsprovider = new WebsocketProvider('wss://nodysseus.webpubsub.azure.com/client/hubs', 'collaboration', ydoc, {
+    //   WebSocketPolyfill: NodyWS,
+    //   params: {access_token: wsurl.searchParams.get('access_token')}
+    // })
+    //
+    // const oldonmessage= wsprovider.ws.onmessage;
+    // wsprovider.ws.onmessage = (v) => {
+    //   oldonmessage(v)
+    // }
   }
 
   // if(false) {
@@ -1787,12 +1861,12 @@ const ydocStore = async (persist = false, update = undefined) => {
     // const res = frommap?.nodes && frommap?.edges ? {...frommap, nodes: frommap.nodes, edges: frommap.edges} : frommap;
     const res = frommap;
     if(res && Object.keys(res).length === 0) {
-      debugger;
       const val = get("simple");
       val.id = id;
       add(id, val)
       return val
     }
+
     // console.log(id);
     // console.log(res);
     return res;
@@ -1801,6 +1875,10 @@ const ydocStore = async (persist = false, update = undefined) => {
   return {
     get,
     add,
+    add_node,
+    remove_node,
+    add_edge,
+    remove_edge,
     addMany: (datas) => {
       ydoc.transact(() => {
         datas.forEach(([id, data]) => add(id, data))
@@ -1811,9 +1889,9 @@ const ydocStore = async (persist = false, update = undefined) => {
     },
     removeAll: () => {},
     all: () => {
-      const values = [...ymap.values()];
+      const keys = [...ymap.keys()];
       // keys.forEach(k => (k.match(/^[a-z0-9]{7}$/) || k.match(/^run_[a-z]{7}.*/)) && k !== 'default' && k !== 'resolve' && k !== 'changed' && ymap.delete(k))
-      return values.map(v => v.id)
+      return keys.map(v => get(v))
     },
     undo: persist && (() => undoManager.undo()),
     redo: persist && (() => undoManager.redo()),
@@ -1825,7 +1903,7 @@ const yNodyStore = async () => {
       persistenceMethod: "memory",
     });
 
-  const nodesdb = db.addCollection("nodes", { unique: ["id"] });
+  const graphsdb = db.addCollection("graphs", { unique: ["id"] });
   const statedb = db.addCollection("state", { unique: ["id"] });
   const fnsdb = db.addCollection("fns", { unique: ["id"] });
   const parentsdb = db.addCollection("parents", { unique: ["id"] });
@@ -1849,7 +1927,7 @@ const yNodyStore = async () => {
       }) 
     }),
     parents: lokidbToStore(parentsdb),
-    nodes: lokidbToStore(nodesdb),
+    graphs: lokidbToStore(graphsdb),
     state: lokidbToStore(statedb),
     fns: lokidbToStore(fnsdb),
     assets: {

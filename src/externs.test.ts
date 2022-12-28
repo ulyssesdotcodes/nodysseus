@@ -10,10 +10,10 @@ describe('create_fn', () => {
       fn: 'set',
       graph: {
         id: expect.getState().currentTestName,
-        nodes: [
-          {id: "set", ref: "script", value: "return 1 + 1"}
-        ],
-        edges: []
+        nodes: {
+          set: {id: "set", ref: "script", value: "return 1 + 1"}
+        },
+        edges: {}
       },
       args: {}
     }, nolib)
@@ -28,13 +28,13 @@ describe('create_fn', () => {
       fn: 'ret',
       graph: {
         id: expect.getState().currentTestName,
-        nodes: [
-          {id: "inval", ref: "arg", value: "value"},
-          {id: "ret", ref: "script", value: "return 1 + inval"}
-        ],
-        edges: [
-          {from: "inval", to: "ret", as: "inval"}
-        ]
+        nodes: {
+          inval: {id: "inval", ref: "arg", value: "value"},
+          ret: {id: "ret", ref: "script", value: "return 1 + inval"}
+        },
+        edges: {
+          inval: {from: "inval", to: "ret", as: "inval"}
+        }
       },
       args: {}
     }, nolib)
@@ -49,15 +49,15 @@ describe('create_fn', () => {
       fn: 'setval',
       graph: {
         id: expect.getState().currentTestName,
-        nodes: [
-          {id: "inval", ref: "arg", value: "value"},
-          {id: "setval", ref: "set", value: "x"},
-          {id: "newval", value: "3"},
-        ],
-        edges: [
-          {from: "inval", to: "setval", as: "target"},
-          {from: "newval", to: "setval", as: "value"}
-        ]
+        nodes: {
+          inval: {id: "inval", ref: "arg", value: "value"},
+          setval: {id: "setval", ref: "set", value: "x"},
+          newval: {id: "newval", value: "3"},
+        },
+        edges: {
+          inval: {from: "inval", to: "setval", as: "target"},
+          newval: {from: "newval", to: "setval", as: "value"}
+        }
       },
       args: {}
     }, nolib)

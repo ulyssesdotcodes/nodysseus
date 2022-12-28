@@ -9,9 +9,10 @@ export type ValueNode = BaseNode & {value?: any};
 export type RefNode = BaseNode & {ref: string, value?: any}
 
 
-export const isNodeGraph = (n: Node): n is Graph => !!(n as Graph).nodes
-export const isNodeScript = (n: Node): n is ScriptNode => !!(n as ScriptNode)?.script;
-export const isNodeRef = (n: Node): n is RefNode => !!(n as RefNode)?.ref;
+export const isNodeValue = (n: Node): n is ValueNode => n && !!(n as ValueNode).value
+export const isNodeGraph = (n: Node): n is GraphNode => n && !!(n as GraphNode).nodes
+export const isNodeScript = (n: Node): n is ScriptNode => n && !!(n as ScriptNode)?.script;
+export const isNodeRef = (n: Node): n is RefNode => n && !!(n as RefNode)?.ref;
 
 export type d3Node = SimulationNodeDatum & {
   node_id: string
@@ -24,8 +25,9 @@ export type d3Link = SimulationLinkDatum<d3Node> & {
 export type Graph = {
   id: string,
   out?: string,
-  nodes: Array<Node>,
-  edges: Array<Edge>
+  name?: string,
+  nodes: Record<string, Node>,
+  edges: Record<string, Edge>
 }
 
 export type Edge = {
@@ -46,10 +48,17 @@ export type Store<T> = {
   addMany?: (datas: Array<[string, any]>) => void;
 }
 
+export type RefStore = Store<Node> & {
+  add_node: (graphId: string, node: Node) => void;
+  remove_node: (graphId: string, node: Node) => void;
+  add_edge: (graphId: string, edge: Edge) => void;
+  remove_edge: (graphId: string, edge: Edge) => void;
+}
+
 export type NodysseusStore = {
-  refs: Store<Node>,
+  refs: RefStore,
   parents: Store<{parent: string, parentest: string}>,
-  nodes: Store<Node>,
+  graphs: Store<Graph>,
   state: Store<any>,
   fns: Store<{script: string, fn: Function}>,
   assets: Store<Blob>

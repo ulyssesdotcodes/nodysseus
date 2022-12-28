@@ -8,7 +8,7 @@ import { isNodeRef, isNodeScript, RefNode } from "./types";
 
         const graph = util.ancestor_graph(runnable.fn, runnable.graph, lib);
         graph.id = runnable.fn + "-fn";
-        const graphArgs = new Set(graph.nodes.filter<RefNode>(isNodeRef).filter(n => n.ref === "arg").map(a => a.value));
+        const graphArgs = new Set(Object.values(graph.nodes).filter<RefNode>(isNodeRef).filter(n => n.ref === "arg").map(a => a.value));
 
         const baseArgs = {};
         for(const arg of graphArgs) {
@@ -18,19 +18,19 @@ import { isNodeRef, isNodeScript, RefNode } from "./types";
         let text = "";
         const _extern_args = {};
 
-        graph.nodes.forEach(n => {
+        Object.values(graph.nodes).forEach(n => {
           if(isNodeRef(n) && n.ref === "arg") {
             return;
           }
           const noderef = isNodeRef(n) ? lib.no.runtime.get_ref(n.ref) : n;
           if(noderef.id === "script") {
             // TODO: extract this logic from node_script
-            let inputs = graph.edges.filter(e => e.to === n.id).map(edge => ({edge, node: graph.nodes.find(n => n.id === edge.from)}));
+            let inputs = Object.values(graph.edges).filter(e => e.to === n.id).map(edge => ({edge, node: Object.values(graph.nodes).find(n => n.id === edge.from)}));
             text += `function fn_${n.id}(){\n${inputs.map(input => `let ${input.edge.as} = ${isNodeRef(input.node) && input.node.ref === "arg" ? `fnargs["${input.node.value}"]` : `fn_${input.node.id}()`};`).join("\n")}\n\n${isNodeScript(n) ? n.script : n.value}}\n\n`
           } else if(noderef.ref == "extern") {
             _extern_args[n.id] = {};
             const extern = nodysseus_get(lib, noderef.value, lib)
-            let inputs = graph.edges.filter(e => e.to === n.id).map(edge => ({edge, node: graph.nodes.find(n => n.id === edge.from)}));
+            let inputs = Object.values(graph.edges).filter(e => e.to === n.id).map(edge => ({edge, node: Object.values(graph.nodes).find(n => n.id === edge.from)}));
             const varset = []
             extern.args.map(a => {
               if(a === "__graph_value" || a === "_node") {
@@ -45,21 +45,21 @@ import { isNodeRef, isNodeScript, RefNode } from "./types";
                 if(!input){
                   varset.push(`let ${a} = undefined;`)
                 } else {
-                  const inputNode = graph.nodes.find(n => n.id === input.edge.from);
+                  const inputNode = Object.values(graph.nodes).find(n => n.id === input.edge.from);
                   varset.push(`let ${a} = ${isNodeRef(inputNode) && inputNode.ref === "arg" ? `fnargs.${input.edge.as}` : `fn_${input.edge.from}()`};`)
                 }
               }
             })
             text += `function fn_${n.id}(){\n${varset.join("\n")}\nreturn (${extern.fn.toString()})(${extern.args.join(", ")})}\n\n`
           } else if (noderef.id === "get"){
-            let inputs = graph.edges.filter(e => e.to === n.id).map(edge => ({edge, node: graph.nodes.find(n => n.id === edge.from)}));
+            let inputs = Object.values(graph.edges).filter(e => e.to === n.id).map(edge => ({edge, node: Object.values(graph.nodes).find(n => n.id === edge.from)}));
             text += `function fn_${n.id}(){\n${inputs.map(input => `let ${input.edge.as} = ${isNodeRef(input.node) && input.node.ref === "arg" ? input.node.value === '_lib' ? '_lib' : `fnargs["${input.node.value}"]` : `fn_${input.node.id}()`};`).join("\n")}\n\nreturn target.${isNodeRef(n) ? n.value : 'undefined'}}\n\n`
           } else {
             text += `function fn_${n.id}(){\nreturn ${noderef.value}}\n\n`
           }
         })
 
-        const fninputs = graph.edges.filter(e => e.to === runnable.fn)
+        const fninputs = Object.values(graph.edges).filter(e => e.to === runnable.fn)
 
         // for now just assumeing everything is an arg of the last node out
         // TODO: tree walk

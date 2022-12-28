@@ -1,7 +1,7 @@
 import set from "just-safe-set";
 import loki from "lokijs";
 import { ancestor_graph, ispromise, node_args } from "./util"
-import { isNodeGraph, Graph, LokiT, Node, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode } from "./types"
+import { isNodeGraph, Graph, LokiT, Node, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge } from "./types"
 import generic from "./generic.js";
 import { create_fn, expect, now } from "./externs";
 
@@ -19,15 +19,21 @@ const Nodysseus = (): NodysseusStore => {
   });
 
 
-  const nodesdb = db.addCollection<LokiT<Node>>("nodes", { unique: ["id"] });
+  const graphsdb = db.addCollection<LokiT<Graph>>("nodes", { unique: ["id"] });
   const statedb = db.addCollection<LokiT<any>>("state", { unique: ["id"] });
   const fnsdb = db.addCollection<LokiT<{script: string, fn: Function}>>("fns", { unique: ["id"] });
   const parentsdb = db.addCollection<LokiT<{parent: string, parentest: string}>>("parents", { unique: ["id"] });
 
   return {
-    refs: lokidbToStore(refsdb),
+    refs: {
+      ...lokidbToStore(refsdb), 
+      add_node: () => {}, 
+      remove_edge: () => {},
+      add_edge: () => {},
+      remove_node: () => {},
+    },
     parents: lokidbToStore(parentsdb),
-    nodes: lokidbToStore(nodesdb),
+    graphs: lokidbToStore(graphsdb),
     state: lokidbToStore(statedb),
     fns: lokidbToStore(fnsdb),
     assets: {
@@ -413,7 +419,7 @@ const create_data = (node_id, graph, inputs, graphArgs, lib) => {
             const as_set = new Set()
             inputs.forEach(e => {
                 if (as_set.has(e.as)) {
-                    throw new NodysseusError(graph.id + "/" + node_id, `Multiple input edges have the same label "${e.as}"`)
+                    throw new NodysseusError(nodysseus_get(graphArgs, "__graphid", lib).__value + "/" + node_id, `Multiple input edges have the same label "${e.as}"`)
                 }
                 as_set.add(e.as)
             })
@@ -488,19 +494,8 @@ const run_node = (node, nodeArgs, graphArgs, lib) => {
 }
 
 // handles graph things like edges
-const run_graph = (graph, node_id, graphArgs, lib) => {
-    const node = lib.no.runtime.get_node(graph, node_id);
-
-    try {
-        const inputs = lib.no.runtime.get_edges_in(graph, node_id);
-
-
-        lib.no.runtime.publish('noderun', {graph, node_id})
-
-        const data = create_data(node_id, graph, inputs, graphArgs, lib);
-        const res = run_node(node, data, graphArgs, lib);
-        return res
-    } catch (e) {
+const run_graph = (graph: Graph | (Graph & {nodes: Array<Node>, edges: Array<Edge>}), node_id: string, graphArgs, lib) => {
+  const handleError = e => {
         console.log(`error in node`);
         if (e instanceof AggregateError) {
             e.errors.map(console.error)
@@ -514,9 +509,24 @@ const run_graph = (graph, node_id, graphArgs, lib) => {
         const parentest = lib.no.runtime.get_parentest(graph)
         let error_node = parentest ? graph : node;
         lib.no.runtime.publish("grapherror", new NodysseusError(
-            graph.id + "/" + error_node.id, 
+            nodysseus_get(graphArgs, "__graphid", lib)?.__value + "/" + error_node.id, 
             e instanceof AggregateError ? "Error in node chain" : e
         ))
+  }
+    const newgraph = Array.isArray(graph.nodes) && Array.isArray(graph.edges) ? {...graph, nodes: Object.fromEntries(graph.nodes.map(n => [n.id, n])), edges: Object.fromEntries(graph.edges.map(e => [e.from, e]))} : graph;
+    const node = lib.no.runtime.get_node(newgraph, node_id);
+
+    try {
+        const inputs = lib.no.runtime.get_edges_in(graph, node_id);
+
+
+        lib.no.runtime.publish('noderun', {graph: newgraph, node_id})
+
+        const data = create_data(node_id, newgraph, inputs, graphArgs, lib);
+        const res = run_node(node, data, graphArgs, lib);
+        return ispromise(res) ? res.catch(handleError) : res
+    } catch (e) {
+      handleError(e)
     }
 }
 
@@ -548,8 +558,12 @@ const run = ({node, args, lib, store}: {node: Runnable, lib?: any, args?: any, s
     return node.__value;
   }
 
-  lib.no.runtime.update_graph(node.graph, _lib);
-  const res = run_node(node, Object.fromEntries(Object.entries(args ?? {}).map(e => [e[0], lib.no.of(e[1])])), node.args, _lib);
+  if(!_lib.no.runtime.get_ref(node.graph.id)) {
+    _lib.no.runtime.change_graph(node.graph)
+  }
+
+  _lib.no.runtime.update_graph(node.graph, _lib);
+  const res = run_node(node, Object.fromEntries(Object.entries(args ?? {}).map(e => [e[0], _lib.no.of(e[1])])), node.args, _lib);
   return ispromise(res) ? res.then(r => r?.__value) : res?.__value
 }
 
@@ -628,36 +642,17 @@ const nolib = {
     runtime: undefined,
     runtimefn: (function () {
 
-      const new_graph_cache = (graph) => ({
-        id: graph.id,
-        graph,
-        node_map: new Map(graph.nodes.map((n) => [n.id, n])),
-        in_edge_map: new Map(
-          graph.nodes.map((n) => [
-            n.id,
-            graph.edges.filter((e) => e.to === n.id),
-          ])
-        ),
-        is_cached: new Set(),
-      });
+      const polyfillRequestAnimationFrame = typeof window !== "undefined" ? window.requestAnimationFrame : (fn => setTimeout(fn, 16))
+
       const event_listeners = new Map();
       const event_listeners_by_graph = new Map();
       const event_data = new Map(); // TODO: get rid of this
-      const getorsetgraph = (graph, id, path, valfn) =>
-        getorset(get_cache(graph)[path], id, valfn);
+      const getorsetgraph = (graph, id) => nodysseus.graphs.get(id) ?? (nodysseus.graphs.add(id, graph), graph)
       let animationframe;
       let animationerrors = [];
       const publish = (event, data, lib) => {
         const runpublish = (data) => {
           event_data.set(event, data);
-          if (event === "graphchange") {
-            if(!data) {
-              return;
-            }
-            const gcache = get_cache(data.id);
-            gcache.graph = data;
-            getorset(event_listeners, event, () => new Map());
-          }
 
           const listeners = getorset(event_listeners, event, () => new Map());
           for (let l of listeners.values()) {
@@ -679,7 +674,7 @@ const nolib = {
             !animationframe &&
             animationerrors.length == 0
           ) {
-            animationframe = requestAnimationFrame(() => {
+            animationframe = polyfillRequestAnimationFrame(() => {
               animationframe = false;
               publish("animationframe", {}, lib);
             });
@@ -716,7 +711,7 @@ const nolib = {
               };
         if (!listeners.has(listener_id)) {
           if (!prevent_initial_trigger) {
-            requestAnimationFrame(() => {
+            polyfillRequestAnimationFrame(() => {
               if (event_data.has(event)) {
                 fn(event_data.get(event));
               }
@@ -740,7 +735,7 @@ const nolib = {
         listeners.set(listener_id, fn);
 
         if (event === "animationframe") {
-          requestAnimationFrame(() => publish(event, {}, lib));
+          polyfillRequestAnimationFrame(() => publish(event, {}, lib));
         }
 
       };
@@ -767,46 +762,24 @@ const nolib = {
         }
       };
 
-      const delete_cache = (graph) => {
-        if (graph) {
-          const graphid = typeof graph === "string" ? graph : graph.id;
-          // const nested = parentdb.find({ parent_id: graphid });
-          // nested.forEach((v) => nodysseus.nodes.remove(v.id));
-          nodysseus.nodes.remove(graphid)
-        } else {
-          nodysseus.state.removeAll();
-          event_data.clear();
-        }
-      };
+      const change_graph = (graph: Graph, lib, addToStore = true) => {
+        const old_graph = nodysseus.graphs.get(graph.id);
+        nodysseus.graphs.add(graph.id, graph)
 
-      const change_graph = (graph, lib, addToStore = true) => {
-        const new_cache = new_graph_cache(graph);
-        const gcache = get_cache(graph.id);
-        const old_graph = gcache && gcache.graph;
-
-        const doc = get_cache(graph, new_cache);
-        doc.graph = graph;
-        doc.node_map = new_cache.node_map;
-        doc.in_edge_map = new_cache.in_edge_map;
-        doc.is_cached = new_cache.is_cached;
-        if (lib) {
-          doc.lib = lib;
-        }
-
-        if (old_graph) {
-          for (const n of old_graph.nodes) {
-            if (get_node(graph, n.id) !== n) {
-              const nodegraphid = graph.id + "/" + n.id;
-              delete_cache(nodegraphid);
-            }
-          }
-        }
+        // if (old_graph) {
+        //   for (const n of Object.keys(old_graph.nodes)) {
+        //     if (graph[n] !== n) {
+        //       const nodegraphid = graph.id + "/" + n;
+        //       nodysseus.graphs.remove(graph.id + "/" + n)
+        //     }
+        //   }
+        // }
 
         const parent = get_parentest(graph);
         if (parent) {
           lib.no.runtime.update_graph(parent, lib);
         } else {
-          if(!graph.__isnodysseus && addToStore) {
+          if(addToStore) {
             nodysseus.refs.add(graph.id, graph)
           }
           publish("graphchange", graph, lib);
@@ -830,37 +803,21 @@ const nolib = {
         }
       };
 
-      const get_ref = nodysseus.refs.get
-      const add_ref = (graph: Node) => nodysseus.refs.add(graph.id, graph)
+      const get_ref = id => nodysseus.refs.get(id) ?? generic.nodes[id]
+      const add_ref = (graph: Node) => {
+        if(!generic.nodes[graph.id]) {
+          nodysseus.refs.add(graph.id, graph)
+        }
+      }
       const remove_ref = nodysseus.refs.remove
-      // const add_asset = nodysseus.assets.add
-      // const get_asset = nodysseus.assets.get
 
-      // const remove_asset = nodysseus.assets.remove
-
-      const get_node = (graph, id) =>
-        getorsetgraph(graph, id, "node_map", () =>
-          get_graph(graph).nodes.find((n) => n.id === id)
-        );
-      const get_edge = (graph, from) =>
-        get_cache(graph).graph.edges.find((e) => e.from === from);
+      const get_node = (graph: Graph, id: string) => get_graph(graph)?.nodes[id]
+      const get_edge = (graph, from) => get_graph(graph)?.edges[from]
       const get_edges_in = (graph, id) =>
-        getorsetgraph(graph, id, "in_edge_map", () =>
-          graph.edges.filter((e) => e.to === id)
-        );
-      const get_edge_out = (graph, id) =>
-        get_cache(graph).graph.edges.find((e) => e.from === id);
+        Object.values(get_graph(graph).edges).filter((e: Edge) => e.to === id)
+      const get_edge_out = get_edge
       const get_args = (graph) => nodysseus.state.get(typeof graph === "string" ? graph : graph.id) ?? {};
-      const get_graph = (graph) => {
-        const cached = get_cache(graph);
-        return ispromise(cached) 
-          ? cached.then(c => c.graph)
-          : cached
-          ? cached.graph
-          : typeof graph !== "string"
-          ? graph
-          : undefined;
-      };
+      const get_graph = (graph: string | Graph): Graph => nodysseus.refs.get(typeof graph === "string" ? graph : graph.id) as Graph ?? graph as Graph
       const get_parent = (graph) => {
         const parent = nodysseus.parents.get(
           typeof graph === "string" ? graph : graph.id
@@ -872,24 +829,6 @@ const nolib = {
           typeof graph === "string" ? graph : graph.id
         );
         return parent && parent.parentest && get_graph(parent.parentest);
-      };
-      const get_cache = (graph, newgraphcache=undefined) => {
-        const graphid =
-          typeof graph === "string"
-            ? graph
-            : typeof graph === "object"
-            ? graph.id
-            : undefined;
-        
-        const lokiret = nodysseus.nodes.get(graphid);
-
-        if (!lokiret && typeof graph === "object") {
-          const newcache = newgraphcache || new_graph_cache(graph);
-          nodysseus.nodes.add(newcache.id, newcache);
-          return newcache;
-        }
-
-        return lokiret;
       };
       const get_path = (graph, path) => {
         graph = get_graph(graph);
@@ -903,7 +842,7 @@ const nolib = {
         return node;
       };
 
-      nodysseus.refs.addMany((generic as Graph).nodes.map(n => [n.id, n]));
+      nodysseus.refs.addMany(Object.values((generic as Graph).nodes).map(n => [n.id, n]));
 
       if(nodysseus.refs.startListening) {
         nodysseus.refs.startListening()
@@ -911,8 +850,6 @@ const nolib = {
 
       return {
         run: run,
-        is_cached: (graph, id) => get_cache(graph.id),
-        set_cached: (graph, id) => get_cache(graph.id).is_cached.add(id),
         get_ref,
         add_ref,
         add_refs: (gs) => nodysseus.refs.addMany(gs.map(g => [g.id, g])),
@@ -950,79 +887,67 @@ const nolib = {
         change_graph,
         update_graph: (graphid, lib) => publish('graphupdate', {graphid}, lib),
         update_args,
-        delete_cache,
         get_graph,
         get_args,
         get_path,
         refs: () => nodysseus.refs.all(),
         ref_graphs: () => nodysseus.refs.all(),
-        edit_edge: (graph, edge, old_edge, lib) => {
-          const gcache = get_cache(graph);
-          graph = gcache.graph;
-
-          gcache.in_edge_map.delete((old_edge || edge).to);
-          edge.as = edge.as || "arg0";
-
-          const new_graph = {
-            ...graph,
-            edges: graph.edges
-              .filter(
-                (e) =>
-                  !(
-                    e.to === (old_edge || edge).to &&
-                    e.from === (old_edge || edge).from
-                  )
-              )
-              .concat([edge]),
-          };
-
-          change_graph(new_graph, lib);
-        },
-        update_edges: (graph, add, remove = [], lib, dryRun = false) => {
-          const gcache = get_cache(graph);
-          graph = gcache.graph;
-
-          const new_graph = {
-            ...graph,
-            edges: graph.edges
-              .filter(
-                (e) => !remove.find((r) => r.from === e.from && r.to === e.to)
-                  && !add.find((r) => r.from === e.from && r.to === e.to)
-              )
-              .concat(add),
-          };
-
-          if(!dryRun) {
-            change_graph(new_graph, lib);
-          } else {
-            console.log(new_graph)
+        update_edges: (graph: string | Graph, add: Array<Edge>, remove: Array<Edge> = [], lib, dryRun = false): void => {
+          const graphId = typeof graph === "string" ? graph : graph.id;
+          if(Array.isArray(remove)) {
+            remove.map(e => nodysseus.refs.remove_edge(graphId, e))
+          } else if (typeof remove === "object") {
+            nodysseus.refs.remove_edge(graphId, remove)
           }
+          if(Array.isArray(add)) {
+            add.map(e => nodysseus.refs.add_edge(graphId, e))
+          } else if (typeof add === "object") {
+            nodysseus.refs.add_edge(graphId, add)
+          }
+          change_graph(nodysseus.refs.get(graphId) as Graph, lib);
+          // graph = get_graph(graph);
+          //
+          // const newedges = Object.assign({}, graph.edges);
+          // remove.forEach(e => delete newedges[e.from])
+          // add.forEach(e => newedges[e.from] = e)
+          //
+          // const new_graph = {
+          //   ...graph,
+          //   edges: newedges
+          // };
+          //
+          // if(!dryRun) {
+          //   change_graph(new_graph, lib);
+          // } else {
+          //   console.log(new_graph)
+          // }
         },
-        add_node: (graph, node, lib) => {
+        add_node: (graph: Graph, node: Node, lib) => {
           if (!(node && typeof node === "object" && node.id)) {
             throw new Error(`Invalid node: ${JSON.stringify(node)}`);
           }
 
-          const gcache = get_cache(graph);
-          graph = gcache.graph;
+          // graph = get_graph(graph);
 
-          const new_graph = {
-            ...graph,
-            nodes: graph.nodes.filter((n) => n.id !== node.id).concat([node]),
-          };
+          // const new_graph = {
+          //   ...graph,
+          //   nodes: {...graph.nodes, [node.id]: node},
+          // };
 
           // n.b. commented out because it blasts update_args which is not desirable
           // delete_cache(graph)
-          change_graph(new_graph, lib);
+          const graphId = typeof graph === "string" ? graph : graph.id;
+          nodysseus.refs.add_node(graphId, node)
+          change_graph(nodysseus.refs.get(graphId) as Graph, lib);
         },
-        delete_node: (graph, id, lib) => {
-          const gcache = get_cache(graph);
-          graph = gcache.graph;
+        delete_node: (graph: Graph, id, lib, changeEdges=true) => {
+          graph = get_graph(graph);
+          const graphId = typeof graph === "string" ? graph : graph.id;
 
-          const parent_edge = graph.edges.find((e) => e.from === id);
-          const child_edges = graph.edges.filter((e) => e.to === id);
+          const parent_edge = graph.edges[id]
+          const child_edges = Object.values(graph.edges).filter((e) => e.to === id);
 
-          const current_child_edges = graph.edges.filter(
+          const current_child_edges = Object.values(graph.edges).filter(
             (e) => e.to === parent_edge.to
           );
           const new_child_edges = child_edges.map((e, i) => ({
@@ -1040,15 +965,27 @@ const nolib = {
                 : e.as,
           }));
 
-          const new_graph = {
-            ...graph,
-            nodes: graph.nodes.filter((n) => n.id !== id),
-            edges: graph.edges
-              .filter((e) => e !== parent_edge && e.to !== id)
-              .concat(new_child_edges),
-          };
+          const newnodes = {...graph.nodes}
+          delete newnodes[id]
 
-          change_graph(new_graph, lib);
+          nodysseus.refs.remove_node(graphId, id)
+          if(changeEdges) {
+            child_edges.map(e => nodysseus.refs.remove_edge(graphId, e))
+            nodysseus.refs.remove_edge(graphId, parent_edge)
+            new_child_edges.map(e => nodysseus.refs.add_edge(graphId, e))
+            change_graph(nodysseus.refs.get(graphId) as Graph, lib);
+          }
+
+
+          // const new_graph = {
+          //   ...graph,
+          //   nodes: newnodes,
+          //   eages: Object.fromEntries(Object.entries(graph.edges)
+          //     .filter((e) => e[1] !== parent_edge && e[1].to !== id)
+          //     .concat(new_child_edges.map(e => [e.from, e]))),
+          // };
+
+          // change_graph(new_graph, lib);
         },
         add_listener,
         add_listener_extern: {
@@ -1148,35 +1085,36 @@ const nolib = {
 
         const graphid = nodysseus_get(fn.args, "__graphid", lib);
   const constructRunGraph = (args) => {
-        const argargs = !runvalue && args && ancestor_graph(args.fn, args.graph, lib).nodes.filter(isNodeRef).filter(n => n.ref === "arg").map(n => n.value?.includes(".") ? n.value.substring(0, n.value.indexOf(".")) : n.value);
+        const argargs = !runvalue && args && Object.values(ancestor_graph(args.fn, args.graph, lib).nodes).filter(isNodeRef).filter(n => n.ref === "arg").map(n => n.value?.includes(".") ? n.value.substring(0, n.value.indexOf(".")) : n.value);
         return (delete args?.isArg, delete args?.args?._output, lib.no.of(run_runnable({
             "fn": "runout",
             "graph": {
               "id": `_run_${graphid.__value}_${fn.fn}_${Math.floor(performance.now() * 100)}`,
               "out": "runout",
-              "nodes": [
-                {"id": "fnarg", "value": fnv},
-                {"id": "argsarg", "value": args},
-                {"id": "args_runnable", "value": args },//&& lib.no.of({...args, fnargs: argargs ?? [], args: {__args: args.args}})},
-                {"id": "args_runnable_ap", "ref": "ap"},
-                {"id": "args_runnable_args", "value":"" },
-                {"id": "runval", "value": "true"},
-                {"id": "out", "ref": "ap"},
-                {"id": "runout_args", "value": argargs && Object.fromEntries(argargs?.map(a => [a, undefined]))},
-                {"id": "runout", "ref": "runnable"}
-              ],
-              "edges": [
-                {"from": "fnarg", "to": "out", "as": "fn"},
-                {"from": "runval", "to": "out", "as": "run"},
-                {"from": "runval", "to": "args_runnable_ap", "as": "run"},
-                {"from": "args_runnable", "to": "args_runnable_ap", "as": "fn"},
-                // {"from": "argsarg", "to": "out", "as": "args"},
-                // {"from": "argsarg", "to": "args_runnable", "as": "fn"},
-                // {"from": "args_runnable_args", "to": "args_runnable", "as": "args"},
-                args && {"from": "args_runnable", "to": "out", "as": "args"},
-                argargs && {"from": "runout_args", "to": "runout", "as": "args"},
-                {"from": "out", "to": "runout", "as": "fn"}
-              ].filter(e => e)
+              "nodes": {
+                fnarg: {"id": "fnarg", "value": fnv},
+                argsarg: {"id": "argsarg", "value": args},
+                args_runnable: {"id": "args_runnable", "value": args },//&& lib.no.of({...args, fnargs: argargs ?? [], args: {__args: args.args}})},
+                args_runnable_ap: {"id": "args_runnable_ap", "ref": "ap"},
+                args_runnable_args: {"id": "args_runnable_args", "value":"" },
+                runval: {"id": "runval", "value": "true"},
+                runval_args_runnable: {"id": "runval_args_runnable", "value": "true"},
+                out: {"id": "out", "ref": "ap"},
+                runout_args: {"id": "runout_args", "value": argargs && Object.fromEntries(argargs?.map(a => [a, undefined]))},
+                runout: {"id": "runout", "ref": "runnable"}
+              },
+              "edges": Object.assign({
+                  fnarg: {"from": "fnarg", "to": "out", "as": "fn"},
+                  runval: {"from": "runval", "to": "out", "as": "run"},
+                  // runval_args_runnable: {"from": "runval_args_runnable", "to": "args_runnable_ap", "as": "run"},
+                  // args_runnable: {"from": "args_runnable", "to": "args_runnable_ap", "as": "fn"},
+                  // argsarg: {"from": "argsarg", "to": "out", "as": "args"},
+                  // argsarg: {"from": "argsarg", "to": "args_runnable", "as": "fn"},
+                  // {"from": "args_runnable_args", "to": "args_runnable", "as": "args"},
+                  out: {"from": "out", "to": "runout", "as": "fn"}
+                },
+                args && {"args_runnable": {"from": "args_runnable", "to": "out", "as": "args"}},
+                argargs && {"runout_args": {"from": "runout_args", "to": "runout", "as": "args"}})
             },
             "args": { fnr: fnv?.__value, argsr: args , __graphid: graphid },
             "fnargs": (argargs ?? fnvr.fnargs ?? []),
@@ -1227,11 +1165,16 @@ const nolib = {
               : Object.entries(mapobj).sort((a, b) => a[0].localeCompare(b[0])).reduce(mapfn, mapinit);
 
           initial = run_runnable(initial, lib)?.__value ?? (Array.isArray(objectvalue) ? [] : {});
+
+          let errored = false;
+          const errorlistener = (error) => errored = true;
+
+          lib.no.runtime.add_listener('grapherror', fnrunnable.graph.id, errorlistener)
           
           const ret = mapobjarr(
             objectvalue,
             (previousValue, currentValue) =>
-              run_graph(
+              !errored && run_graph(
                 fnrunnable.graph,
                 fnrunnable.fn,
                 {...fnrunnable.args, previousValue: lib.no.of(previousValue), currentValue: lib.no.of(currentValue) },
@@ -1239,6 +1182,9 @@ const nolib = {
               ).__value,
             initial
           );
+
+          lib.no.runtime.remove_listener('grapherror', fnrunnable.graph.id, errorlistener)
+
           return lib.no.of(ret);
         }
 
@@ -1762,13 +1708,4 @@ const nolib = {
   // THREE
 };
 
-const generic_nodes = new Set(generic.nodes.map(n => n.id));
-
-const add_default_nodes_and_edges = g => ({
-    ...g,
-    nodes: g.nodes
-        .filter(n => !generic_nodes.has(n.id))
-        .concat(generic.nodes)
-})
-
-export { nolib, run, initStore, compare, hashcode, add_default_nodes_and_edges, ispromise, NodysseusError, base_graph, base_node, resfetch };
+export { nolib, run, initStore, compare, hashcode, ispromise, NodysseusError, base_graph, base_node, resfetch };

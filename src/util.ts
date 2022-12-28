@@ -1,86 +1,66 @@
-import { d3Link, d3Node, Edge, Graph, isNodeRef, NodeArg } from "./types";
+import { d3Link, d3Node, Edge, Graph, GraphNode, Node, isNodeRef, isNodeGraph, isNodeValue, NodeArg } from "./types";
 
 export const ispromise = a => a && typeof a.then === 'function';
 export const isrunnable = a => a && ((a.value && a.id && !a.ref) || a.fn && a.graph);
 export const isgraph = g => g && g.out !== undefined && g.nodes !== undefined && g.edges !== undefined
 
 export const create_randid = () => Math.random().toString(36).substring(2, 9);
-export const flattenNode = (graph, levels = -1) => {
-    if (graph.nodes === undefined || levels === 0) {
-        return graph;
-    }
-
-    // needs to not prefix base node because then flatten node can't run  next
-    const prefix = graph.id ? `${graph.id}/` : '';
-    const prefix_name = graph.id ? `${graph.name}/` : '';
-
-    return graph.nodes
-        .map(g => flattenNode(g, levels - 1))
-        .reduce((acc, n) => Object.assign({}, acc, {
-            flat_nodes: acc.flat_nodes.concat(n.flat_nodes ? n.flat_nodes.flat() : []).map(fn => {
+type FlattenedGraph = {flat_nodes: Record<string, Node>, flat_edges: Record<string, Edge>};
+const isFlattenedGraph = (g: Node | FlattenedGraph): g is FlattenedGraph => !!(g as FlattenedGraph).flat_nodes;
+export const flattenNode = (graph: Node, levels = -1): FlattenedGraph | Node =>
+    !isNodeGraph(graph) || !graph.nodes || levels <= 0
+    ? graph
+    : Object.values(graph.nodes)
+        .map(g => flattenNode(g as GraphNode, levels - 1))
+        .reduce((acc: {flat_nodes: Record<string, Node>, flat_edges: Record<string, Edge>}, n) => isFlattenedGraph(n) ? Object.assign({}, acc, {
+            flat_nodes: Object.assign(acc.flat_nodes, Object.fromEntries(Object.values(n.flat_nodes).map(fn => {
                 // adjust for easy graph renaming
                 if ((fn.id === (graph.out || "out")) && graph.name) {
                     fn.name = graph.name;
                 }
-                return fn
-            }),
-            flat_edges: acc.flat_edges.map(e => n.flat_nodes ?
-                e.to === n.id ?
-                    Object.assign({}, e, { to: `${e.to}/${n.in || 'in'}` }) :
-                    e.from === n.id ?
-                        Object.assign({}, e, { from: `${e.from}/${n.out || 'out'}` }) :
-                        e :
-                e).flat().concat(n.flat_edges).filter(e => e !== undefined)
-        }), Object.assign({}, graph, {
+                return [fn.id, fn]
+            }))),
+            flat_edges: Object.assign(acc.flat_edges, n.flat_edges)
+        }) : acc, {
             flat_nodes: graph.nodes,
             flat_edges: graph.edges
-        }));
-}
+        });
 
 
-export const expand_node = (data) => {
+export const expand_node = (data): {display_graph: Graph, selected: Array<string>} => {
     const nolib = data.nolib;
     const node_id = data.node_id;
-    const node = data.display_graph.nodes.find(n => n.id === node_id)
+    const node: Node = data.display_graph.nodes[node_id]
 
-    if (!(node && node.nodes)) {
+    if (!isNodeGraph(node)) {
         console.log('no nodes?');
         return { display_graph: data.display_graph, selected: [data.node_id] };
     }
 
-    const args_node = node.edges.find(e => e.to === node.out && e.as === "args")?.from;
+    const args_node = Object.values(node.edges).find(e => e.to === node.out && e.as === "args")?.from;
+    const in_edges = nolib.no.runtime.get_edges_in(data.display_graph.id, node_id);
 
     const flattened = flattenNode(node, 1);
 
-    const new_id_map = flattened.flat_nodes.reduce((acc, n) => nolib.no.runtime.get_node(data.display_graph, n.id) ? (acc[n.id] = create_randid(), acc) : n, {})
+    const new_id_map = isFlattenedGraph(flattened) ? Object.values(flattened.flat_nodes).reduce((acc, n) => nolib.no.runtime.get_node(data.display_graph, n.id) ? (acc[n.id] = create_randid(), acc) : n, {}) : flattened
 
-    const new_display_graph = {
-        nodes: data.display_graph.nodes
-            .filter(n => n.id !== node_id)
-            .concat(flattened.flat_nodes.map(n => new_id_map[n.id] ? Object.assign({}, n, new_id_map[n.id]) : n)),
-        edges: data.display_graph.edges
-            .map(e => ({
-                ...e,
-                from: new_id_map[e.from] ?? e.from,
-                to: new_id_map[e.to] ?? e.to === node_id ? args_node : e.to
-            }))
-            .concat(flattened.flat_edges)
-    };
+    isFlattenedGraph(flattened) && Object.values(flattened.flat_nodes).forEach(n => nolib.no.runtime.add_node(data.display_graph, n, nolib))
+    isFlattenedGraph(flattened) && nolib.no.runtime.update_edges(data.display_graph, Object.values(flattened.flat_edges).concat(in_edges.map(e => ({...e, to: args_node}))), in_edges)
 
-    return { display_graph: { ...data.display_graph, ...new_display_graph }, selected: [new_id_map[node.out] ?? node.out ?? 'out'] };
+    return { display_graph: data.display_graph, selected: [new_id_map[node.out] ?? node.out ?? 'out'] };
 }
 
-export const contract_node = (data, keep_expanded = false) => {
+export const contract_node = (data: {display_graph: Graph, node_id: string, nolib: any}, keep_expanded = false) => {
     const nolib = data.nolib;
-    const node = data.display_graph.nodes.find(n => n.id === data.node_id);
+    const node = data.display_graph.nodes[data.node_id];
     const node_id = data.node_id;
-    if (!node.nodes) {
-        const inside_nodes = [Object.assign({}, node)];
+    if (!isNodeGraph(node)) {
+        const inside_nodes: Array<Node> = [Object.assign({}, node)];
         const inside_node_map = new Map();
         inside_node_map.set(inside_nodes[0].id, inside_nodes[0]);
         const inside_edges = new Set<Edge>();
 
-        const q = data.display_graph.edges.filter(e => e.to === inside_nodes[0].id);
+        const q = nolib.no.runtime.get_edges_in(data.display_graph.id, inside_nodes[0].id)
 
         let in_edge = [];
         let args_edge;
@@ -98,12 +78,11 @@ export const contract_node = (data, keep_expanded = false) => {
             in_edge = in_edge.filter(ie => ie.from !== e.from);
 
             const old_node = inside_nodes.find(i => e.from === i.id);
-            let inside_node = old_node || Object.assign({}, data.display_graph.nodes.find(p => p.id === e.from));
+            let inside_node = old_node || Object.assign({}, data.display_graph.nodes[e.from]);
 
             inside_node_map.set(inside_node.id, inside_node);
             inside_edges.add(e);
             if (!old_node) {
-                delete inside_node.inputs;
                 inside_nodes.push(inside_node);
             }
 
@@ -112,58 +91,67 @@ export const contract_node = (data, keep_expanded = false) => {
             }
         }
 
-        let in_node_id = args_edge ? args_edge.from : undefined;
+        let args_node_id = args_edge ? args_edge.from : undefined;
 
         // just return the original graph if it's a single node 
-        if (in_edge.find(ie => ie.to !== in_node_id) || inside_nodes.length < 2) {
+        if (in_edge.find(ie => ie.to !== args_node_id) || inside_nodes.length < 2) {
             return { display_graph: data.display_graph, selected: [data.node_id] };
         }
 
         const out_node_id = data.node_id;
 
-        const in_node = inside_node_map.get(in_node_id);
-
-        let node_id_count = data.display_graph.nodes.filter(n => n.id === node_id).length;
+        let node_id_count = data.display_graph.nodes[node_id] ? 1 : 0;
         let final_node_id = node_id_count === 1 ? node_id : `${node_id}_${node_id_count}`
 
-        const edges = [];
+        const edges = {};
         for (const e of inside_edges) {
-            edges.push({
-                ...e,
-                from: e.from.startsWith(node_id + "/")
+          const from = e.from.startsWith(node_id + "/")
                     ? e.from.substring(node_id.length + 1)
-                    : e.from,
+                    : e.from;
+            edges[from] = {
+                ...e,
+                from,
                 to: e.to.startsWith(node_id + "/")
                     ? e.to.substring(node_id.length + 1)
                     : e.to
-            })
+            };
         }
 
         const new_display_graph = {
-            nodes: data.display_graph.nodes
-                .filter(n => n.id !== data.node_id)
-                .filter(n => keep_expanded || !inside_node_map.has(n.id))
-                .concat([{
-                    id: final_node_id,
-                    name: node.name ?? node.value,
-                    in: in_node_id && in_node_id.startsWith(node_id + '/') ? in_node_id.substring(node_id.length + 1) : in_node_id,
-                    out: out_node_id.startsWith(node_id + '/') ? out_node_id.substring(node_id.length + 1) : out_node_id,
-                    nodes: inside_nodes.map(n => ({
-                        ...n,
-                        id: n.id.startsWith(node_id + "/") ? n.id.substring(node_id.length + 1) : n.id
-                    })),
-                    edges
-                }]),
+          ...data.display_graph,
+            nodes: data.display_graph.nodes,
             edges: data.display_graph.edges
-                .filter(e => keep_expanded || !(inside_node_map.has(e.from) && inside_node_map.has(e.to)))
-                .map(e =>
-                    e.from === data.node_id ? { ...e, from: final_node_id }
-                        : e.to === in_node && in_node.id ? { ...e, to: final_node_id }
-                            : inside_node_map.has(e.to)
-                                ? { ...e, to: final_node_id }
-                                : e
-                )
         };
+
+        for(const newn of inside_node_map.keys()) {
+          nolib.no.runtime.delete_node(data.display_graph.id, newn, nolib, false)
+        }
+
+        nolib.no.runtime.add_node(data.display_graph.id, {
+            id: final_node_id,
+            name: node.name ?? (isNodeValue(node) ? node.value : undefined),
+            out: out_node_id.startsWith(node_id + '/') ? out_node_id.substring(node_id.length + 1) : out_node_id,
+            nodes: Object.fromEntries(inside_nodes.map(n => [n.id.startsWith(node_id + "/") ? n.id.substring(node_id.length + 1) : n.id, {
+                ...n,
+                id: n.id.startsWith(node_id + "/") ? n.id.substring(node_id.length + 1) : n.id
+            }])),
+            edges
+        })
+
+        const edgesToRemove = [];
+        const edgesToAdd = [];
+
+        Object.values(data.display_graph.edges).forEach(e => {
+            if(inside_node_map.has(e.from) && inside_node_map.has(e.to)) {
+              edgesToRemove.push(e)
+            } else if(e.from === data.node_id) {
+              edgesToAdd.push({...e, from: final_node_id})
+            } else if (e.to === args_node_id) {
+              edgesToAdd.push({...e, to: final_node_id})
+            }
+        })
+
+        nolib.no.runtime.update_edges(data.display_graph.id, edgesToAdd, edgesToRemove, nolib)
 
         return { display_graph: { ...data.display_graph, ...new_display_graph }, selected: [final_node_id] };
     }
@@ -219,21 +207,21 @@ export const findViewBox = (nodes, links, selected, node_el_width, htmlid, dimen
     return {nodes_box_dimensions, center};
 }
 
-export const ancestor_graph = (node_id, from_graph, nolib): Graph => {
+export const ancestor_graph = (node_id, from_graph: Graph, nolib): Graph => {
     let edges_in;
     let queue = [node_id];
-    const graph = {...from_graph, nodes: [], edges: []};
+    const graph: Graph = {...from_graph, nodes: {}, edges: {}};
     while(queue.length > 0) {
         let node_id = queue.pop();
-        graph.nodes.push({...nolib.no.runtime.get_node(from_graph, node_id)})
+        graph.nodes[node_id] = ({...nolib.no.runtime.get_node(from_graph, node_id)})
         edges_in = nolib.no.runtime.get_edges_in(from_graph, node_id);
-        graph.edges = graph.edges.concat(edges_in);
+        graph.edges = Object.assign(graph.edges, Object.fromEntries(edges_in.map(e => [e.from, e])));
         edges_in.forEach(e => queue.push(e.from));
     }
     return graph;
 }
 
-export const node_args = (nolib, graph, node_id): Array<NodeArg> => {
+export const node_args = (nolib, graph: Graph, node_id): Array<NodeArg> => {
     const node = nolib.no.runtime.get_node(graph, node_id);
     if(!node) {
         // between graph update and simulation update it's possible links are bad
@@ -244,7 +232,7 @@ export const node_args = (nolib, graph, node_id): Array<NodeArg> => {
     const edge_out = nolib.no.runtime.get_edge_out(graph, node_id)
     const node_out = edge_out && edge_out.as === "args" && nolib.no.runtime.get_node(graph, edge_out.to);
     const node_out_args = node_out?.ref === "runnable" && 
-      ancestor_graph(node_out.id, graph, nolib).nodes.filter(isNodeRef).filter(n => n.ref === "arg").map(a => a.value.includes(".") ? a.value.substring(0, a.value.indexOf(".")) : a.value);
+      Object.values(ancestor_graph(node_out.id, graph, nolib).nodes).filter(isNodeRef).filter(n => n.ref === "arg").map(a => a.value?.includes(".") ? a.value?.substring(0, a.value?.indexOf(".")) : a.value);
 
     const argslist_path = node_ref?.nodes && nolib.no.runtime.get_path(node_ref, "argslist");
 
@@ -258,12 +246,12 @@ export const node_args = (nolib, graph, node_id): Array<NodeArg> => {
             ? externfn.args
               ? externfn.args
               : ['args']
-            : node_ref?.nodes?.filter(n => 
+            : isNodeGraph(node_ref)
+            ? Object.values(node_ref?.nodes).filter(isNodeRef).filter(n => 
                 n.ref === "arg" 
-                && n.type !== "internal" 
-                && !n.value?.split(":")[1]?.toLowerCase()?.includes("internal")
-                && !(Array.isArray(n.type) && n.type.includes("internal")))
+                && !n.value?.split(":")[1]?.toLowerCase()?.includes("internal"))
                 .map(n => n.value).filter(a => a) ?? []
+            : []
 
     return [...new Set(argslist_path ? nolib.no.runGraph(node_ref, argslist_path) : baseargs
         .filter(a => !a.includes('.') && !a.startsWith("_"))
@@ -279,7 +267,7 @@ export const node_args = (nolib, graph, node_id): Array<NodeArg> => {
 }
 
 
-export const bfs = (graph, fn) => {
+export const bfs = (graph: Graph, fn) => {
     const visited = new Set();
     const iter = (id, level) => {
         if (visited.has(id)) {
@@ -290,7 +278,7 @@ export const bfs = (graph, fn) => {
 
         visited.add(id);
 
-        for (const e of graph.edges) {
+        for (const e of Object.values(graph.edges)) {
             if (e.to === id) {
                 iter(e.from, level + 1);
             }
@@ -303,7 +291,7 @@ export const bfs = (graph, fn) => {
 
 export const calculateLevels = (nodes: Array<d3Node>, links: Array<d3Link>, graph: Graph, selected: string) => {
     const find_childest = n => {
-        const e = graph.edges.find(ed => ed.from === n);
+        const e = graph.edges[n];
         if (e) {
             return find_childest(e.to);
         } else {
