@@ -1,6 +1,6 @@
 import { initStore, nolib, run } from "./nodysseus"
 import {expect, test} from "@jest/globals"
-import {Graph} from "./types"
+import {Graph, newEnv} from "./types"
 
 test('returning a single value', () => {
   const val = {A: "x"};
@@ -15,7 +15,7 @@ test('returning a single value', () => {
     }
   }
   
-  expect(run({node: {graph, fn: "out", args: {}}, args: {}})).toEqual(val)
+  expect(run({graph, fn: "out"})).toEqual(val)
 })
 
 // test('caching', () => {
@@ -89,7 +89,7 @@ test('running a fn arg in sequence', () => {
 
   const inval = {x: "A"}
   nolib.no.runtime?.add_ref(ret_fn);
-  console.log(run({node: {graph: run_fn, fn: "out", args: {"input": inval}}}));
+  console.log(run({graph: run_fn, fn: "out"}));
   expect(inval.x).toBe("B")
 })
 
@@ -130,7 +130,7 @@ test('applying an fn twice', () => {
   }
 
   const inval = {x: "A"}
-  run({node: {graph: run_fn, fn: "out", args: {"input": inval}}});
+  run({graph: run_fn, fn: "out"}, undefined, undefined, {"input": inval});
   expect(inval.x).toBe("B")
 })
 
@@ -165,6 +165,9 @@ test('applying a fn once', () => {
   }
 
   const inval = {x: "A"}
-  console.log(run({node: {graph: run_fn, fn: "out", args: {"input": inval}}}));
+  console.log(run({graph: run_fn, fn: "out"}, undefined, undefined, newEnv({"input": inval})));
   expect(inval.x).toBe("B")
 })
+
+
+// TODO: test lib

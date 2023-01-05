@@ -1,8 +1,40 @@
-import { d3Link, d3Node, Edge, Graph, GraphNode, Node, isNodeRef, isNodeGraph, isNodeValue, NodeArg } from "./types";
+import { ForceLink, SimulationLinkDatum, SimulationNodeDatum } from "d3-force";
+import { d3Link, d3Node, Edge, Graph, GraphNode, Node, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable } from "./types";
 
-export const ispromise = a => a && typeof a.then === 'function';
-export const isrunnable = a => a && ((a.value && a.id && !a.ref) || a.fn && a.graph);
+export const ispromise = <T>(a: any): a is Promise<T> => a && typeof a.then === 'function' && !isWrappedPromise(a);
+export const isWrappedPromise = <T>(a: any): a is WrappedPromise<T> => a && a.__kind === "wrapped";
 export const isgraph = g => g && g.out !== undefined && g.nodes !== undefined && g.edges !== undefined
+
+export type WrappedPromise<T> = {
+  __kind: "wrapped"
+  then: <S>(fn: (t: FlattenPromise<T>) => S) => WrappedPromise<S>,
+  value: T
+}
+
+type FlattenWrappedPromise<T> = T extends WrappedPromise<infer Item> ? Item : T
+
+export const wrapPromise = <T>(t: T): WrappedPromise<FlattenWrappedPromise<T>> => 
+  (isWrappedPromise(t) ? t
+    : {
+      __kind: "wrapped",
+      then: <S>(fn: (t: FlattenPromise<T>) => S) => wrapPromise(ispromise(t) ? t.then(fn as (value: unknown) => S | PromiseLike<S>) : fn(t as FlattenPromise<T>)),
+      value: t
+    }) as WrappedPromise<FlattenWrappedPromise<T>>
+
+export const wrapPromiseAll = (wrappedPromises: Array<WrappedPromise<any>>): WrappedPromise<Array<any> | Promise<Array<any>>> => {
+  const hasPromise = wrappedPromises.reduce((acc, wrappedPromise) => acc || ispromise(wrappedPromise.value), false)
+  return wrapPromise(hasPromise ? Promise.all(wrappedPromises.map(wp => Promise.resolve(wp.value)))
+    : wrappedPromises.map(wp => wp.value));
+}
+
+// type MaybePromiseFn<T, S> = T extends Promise<infer Item> ? ((i: Item) => S) : ((i: T) => S);
+// export function mapMaybePromise<T, S>(a: Promise<T>, fn: (t: T) => S): Promise<S>;
+// export function mapMaybePromise<T, S>(a: T, fn: (t: T) => S): S;
+// declare function mapMaybePromise<T, S>(a: T | Promise<T>, fn: (t: T) => S): S | Promise<S>;
+// export function mapMaybePromise<T, S>(a: Promise<T> | T, fn: (t: T) => S) { return ispromise(a) ? a.then(fn) : fn(a) }
+export type IfPromise<T, S> = T extends Promise<infer _> ? S : Promise<S>;
+export type FlattenPromise<T> = T extends Promise<infer Item> ? Item : T;
+export const mapMaybePromise = <T, S>(a: T, fn: (t: FlattenPromise<T>) => S): IfPromise<T, S> => (ispromise(a) ? a.then(fn as (value: unknown) => S | PromiseLike<S>) : (fn(a as FlattenPromise<T>))) as IfPromise<T, S>
 
 export const create_randid = () => Math.random().toString(36).substring(2, 9);
 type FlattenedGraph = {flat_nodes: Record<string, Node>, flat_edges: Record<string, Edge>};
@@ -27,7 +59,7 @@ export const flattenNode = (graph: Node, levels = -1): FlattenedGraph | Node =>
         });
 
 
-export const expand_node = (data): {display_graph: Graph, selected: Array<string>} => {
+export const expand_node = (data: {nolib: Record<string, any>, node_id: string, display_graph: Graph}): {display_graph: Graph, selected: Array<string>} => {
     const nolib = data.nolib;
     const node_id = data.node_id;
     const node: Node = data.display_graph.nodes[node_id]
@@ -42,12 +74,12 @@ export const expand_node = (data): {display_graph: Graph, selected: Array<string
 
     const flattened = flattenNode(node, 1);
 
-    const new_id_map = isFlattenedGraph(flattened) ? Object.values(flattened.flat_nodes).reduce((acc, n) => nolib.no.runtime.get_node(data.display_graph, n.id) ? (acc[n.id] = create_randid(), acc) : n, {}) : flattened
+    const new_id_map = isFlattenedGraph(flattened) ? Object.values(flattened.flat_nodes).reduce((acc, n) => nolib.no.runtime.get_node(data.display_graph, n.id) ? (acc[n.id] = create_randid(), acc) : n, {} as Record<string, any>) : flattened
 
     isFlattenedGraph(flattened) && Object.values(flattened.flat_nodes).forEach(n => nolib.no.runtime.add_node(data.display_graph, n, nolib))
-    isFlattenedGraph(flattened) && nolib.no.runtime.update_edges(data.display_graph, Object.values(flattened.flat_edges).concat(in_edges.map(e => ({...e, to: args_node}))), in_edges)
+    isFlattenedGraph(flattened) && nolib.no.runtime.update_edges(data.display_graph, Object.values(flattened.flat_edges).concat(in_edges.map((e: Edge) => ({...e, to: args_node}))), in_edges)
 
-    return { display_graph: data.display_graph, selected: [new_id_map[node.out] ?? node.out ?? 'out'] };
+    return { display_graph: data.display_graph, selected: [new_id_map[node.out ?? "out"] ?? node.out ?? 'out'] };
 }
 
 export const contract_node = (data: {display_graph: Graph, node_id: string, nolib: any}, keep_expanded = false) => {
@@ -62,7 +94,7 @@ export const contract_node = (data: {display_graph: Graph, node_id: string, noli
 
         const q = nolib.no.runtime.get_edges_in(data.display_graph.id, inside_nodes[0].id)
 
-        let in_edge = [];
+        let in_edge: Array<Edge> = [];
         let args_edge;
 
         while (q.length > 0) {
@@ -87,7 +119,7 @@ export const contract_node = (data: {display_graph: Graph, node_id: string, noli
             }
 
             if (!args_edge || e.from !== args_edge.from) {
-                nolib.no.runtime.get_edges_in(data.display_graph, e.from).forEach(de => q.push(de));
+                nolib.no.runtime.get_edges_in(data.display_graph, e.from).forEach((de: Edge) => q.push(de));
             }
         }
 
@@ -103,7 +135,7 @@ export const contract_node = (data: {display_graph: Graph, node_id: string, noli
         let node_id_count = data.display_graph.nodes[node_id] ? 1 : 0;
         let final_node_id = node_id_count === 1 ? node_id : `${node_id}_${node_id_count}`
 
-        const edges = {};
+        const edges: Record<string, Edge> = {};
         for (const e of inside_edges) {
           const from = e.from.startsWith(node_id + "/")
                     ? e.from.substring(node_id.length + 1)
@@ -138,8 +170,8 @@ export const contract_node = (data: {display_graph: Graph, node_id: string, noli
             edges
         })
 
-        const edgesToRemove = [];
-        const edgesToAdd = [];
+        const edgesToRemove: Array<Edge> = [];
+        const edgesToAdd: Array<Edge> = [];
 
         Object.values(data.display_graph.edges).forEach(e => {
             if(inside_node_map.has(e.from) && inside_node_map.has(e.to)) {
@@ -158,30 +190,30 @@ export const contract_node = (data: {display_graph: Graph, node_id: string, noli
 }
 
 
-export const findViewBox = (nodes, links, selected, node_el_width, htmlid, dimensions) => {
-    const visible_nodes = [];
+export const findViewBox = (nodes: Array<d3Node>, links: Array<d3Link>, selected: string, node_el_width: number, htmlid: string, dimensions: {x: number, y: number}) => {
+    const visible_nodes: Array<{x: number, y: number}> = [];
     const visible_node_set = new Set();
     let selected_pos;
     links.forEach(l => {
-        const el = document.getElementById(`link-${l.source.node_id}`);
-        const info_el = document.getElementById(`edge-info-${l.source.node_id}`);
-        if(el && info_el) {
-            const source = {x: l.source.x - node_el_width * 0.5, y: l.source.y};
-            const target = {x: l.target.x - node_el_width * 0.5, y: l.target.y};
+        const el = document.getElementById(`link-${(l.source as d3Node).node_id}`);
+        const info_el = document.getElementById(`edge-info-${(l.source as d3Node).node_id}`);
+        if(el && info_el && l.source && l.target) {
+            const source = {x: (l.source as d3Node).x - node_el_width * 0.5, y: (l.source as d3Node).y};
+            const target = {x: (l.target as d3Node).x - node_el_width * 0.5, y: (l.target as d3Node).y};
 
-            if (l.source.node_id === selected) {
+            if ((l.source as d3Node).node_id === selected) {
                 visible_nodes.push({x: target.x, y: target.y});
-                visible_node_set.add(l.target.node_id);
-            } else if (l.target.node_id === selected) {
+                visible_node_set.add((l.target as d3Node).node_id);
+            } else if ((l.target as d3Node).node_id === selected) {
                 visible_nodes.push({x: source.x, y: source.y});
-                visible_node_set.add(l.source.node_id);
+                visible_node_set.add((l.source as d3Node).node_id);
             }
         }
     });
 
     links.forEach(l => {
-        if(visible_node_set.has(l.target.node_id) && !visible_node_set.has(l.source.node_id)) {
-            const source = {x: l.source.x - node_el_width * 0.5, y: l.source.y};
+        if(visible_node_set.has((l.target as d3Node).node_id) && !visible_node_set.has((l.source as d3Node).node_id)) {
+            const source = {x: (l.source as d3Node).x - node_el_width * 0.5, y: (l.source as d3Node).y};
             visible_nodes.push({x: source.x, y: source.y});
         }
     });
@@ -199,7 +231,10 @@ export const findViewBox = (nodes, links, selected, node_el_width, htmlid, dimen
         }
     });
 
-    const nodes_box = visible_nodes.reduce((acc, n) => ({min: {x: Math.min(acc.min.x, n.x - 24), y: Math.min(acc.min.y, n.y - 24)}, max: {x: Math.max(acc.max.x, n.x + node_el_width * 0.5 - 24), y: Math.max(acc.max.y, n.y + 24)}}), {min: {x: selected_pos ? (selected_pos.x - 96) : dimensions.x , y: selected_pos ? (selected_pos.y - 256) : dimensions.y}, max: {x: selected_pos ? (selected_pos.x + 96) : -dimensions.x, y: selected_pos ? (selected_pos.y + 128) : -dimensions.y}})
+    const nodes_box = visible_nodes.reduce(
+      (acc: {min: {x: number, y: number}, max: {x: number, y: number}}, n) => 
+        ({min: {x: Math.min(acc.min.x, n.x - 24), y: Math.min(acc.min.y, n.y - 24)}, max: {x: Math.max(acc.max.x, n.x + node_el_width * 0.5 - 24), y: Math.max(acc.max.y, n.y + 24)}}), 
+        {min: {x: selected_pos ? (selected_pos.x - 96) : dimensions.x , y: selected_pos ? (selected_pos.y - 256) : dimensions.y}, max: {x: selected_pos ? (selected_pos.x + 96) : -dimensions.x, y: selected_pos ? (selected_pos.y + 128) : -dimensions.y}})
     const nodes_box_center = {x: (nodes_box.max.x + nodes_box.min.x) * 0.5, y: (nodes_box.max.y + nodes_box.min.y) * 0.5}; 
     const nodes_box_dimensions = {x: Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))), y: Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y)))}
     const center = !selected_pos ? nodes_box_center : {x: (selected_pos.x + nodes_box_center.x * 3) * 0.25, y: (selected_pos.y + nodes_box_center.y * 3) * 0.25}

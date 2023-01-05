@@ -4179,7 +4179,7 @@ const generic = {
         {
           "id": "filter_children_fn",
           "ref": "script",
-          "value": "return !!(element_dt || element_tv)"
+          "value": "console.log('filter el'); console.log(element_dt || element_tv); return !!(element_dt || element_tv)"
         },
         {
           "id": "filter_children_fn_runnable_args",
@@ -4192,7 +4192,7 @@ const generic = {
         {
           "id": "fill_children_fn",
           "ref": "script",
-          "value": "return element?.el ?? typeof element === 'string' ? {dom_type: 'text_value', text: element} : element"
+          "value": "console.log('el'); console.log(element); return element?.el ?? typeof element === 'string' ? {dom_type: 'text_value', text: element} : element"
         },
         {
           "id": "fill_children_fn_runnable_args",

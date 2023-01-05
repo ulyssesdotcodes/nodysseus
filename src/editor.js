@@ -18,6 +18,7 @@ import { WebsocketProvider } from "y-websocket";
 import { WebrtcProvider } from "y-webrtc";
 import autocomplete from "autocompleter";
 import generic from "./generic"
+import { isRunnable } from "./types";
 
 class NodyWS extends WebSocket {
   constructor(url) {
@@ -452,10 +453,10 @@ const refresh_graph = (graph, dispatch, norun = false) => {
       return
     }
     dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
-    const result = hlib.run({graph, fn: graph.out}, {_output: "value"});
-    const reslib = hlib.run({graph, fn: graph.out}, {_output: "lib"})
+    const result = hlib.run(graph, graph.out, {_output: "value"});
+    const reslib = hlib.run(graph, graph.out, {_output: "lib"})
     // const result = hlib.run(graph, graph.out, {});
-    const display_fn = result => hlib.run({graph, fn: graph.out}, {_output: "display"}, {...hlib, ...nolib});
+    const display_fn = result => hlib.run(graph, graph.out, {_output: "display"});
     // const display_fn = result => hlib.run(graph, graph.out, {}, "display");
     const update_result_display_fn = display => result_display_dispatch(UpdateResultDisplay, {el: display && display.dom_type ? display : {dom_type: 'div', props: {}, children: []}})
     const update_info_display_fn = () => dispatch(s => [s, s.selected[0] !== s.display_graph.out 
@@ -604,10 +605,10 @@ const pzobj = {
 
 const run_h = ({dom_type, props, children, text}, exclude_tags=[]) => {
     dom_type = dom_type && dom_type._Proxy ? dom_type._value : dom_type;
-    text = text?.__value ?? text;
-    props = props && props.__value ? props.__value : props;
-    props = props ? Object.fromEntries(Object.entries(props).map(kv => [kv[0], kv[1]?.__value ?? kv[1]])) : props
-    children = children && children._Proxy ? children._value : children;
+    text = text?.value ?? text;
+    props = props && props.value ? props.value : props;
+    props = props ? Object.fromEntries(Object.entries(props).map(kv => [kv[0], kv[1]?.value ?? kv[1]])) : props
+    children = children && children._Proxy ? children.value : children;
     return dom_type === "text_value" 
         ? ha.text(text) 
         : ha.h(dom_type, props, children?.map(c => c.el ?? c).filter(c => !!c && !exclude_tags.includes(c.dom_type)).map(c => run_h(c, exclude_tags)) ?? []) 
@@ -672,7 +673,7 @@ const SelectNode = (state, {node_id, focus_property}) => [
           fn: node_id, 
           graph: state.display_graph, 
           args: {}, 
-          lib: {...hlib, ...nolib, ...hlib.run({graph: state.display_graph, fn: state.display_graph.out}, {_output: "lib"})}
+          lib: {...hlib, ...nolib, ...hlib.run(state.display_graph, state.display_graph.out, {_output: "lib"})}
         })],
     state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: node_id})]
 ]
@@ -1100,7 +1101,7 @@ const update_info_display = ({fn, graph, args, lib}) => {
     const node_ref = node && (node.ref && nolib.no.runtime.get_ref(node.ref)) || node;
     const out_ref = node && (node.nodes && nolib.no.runtime.get_node(node, node.out)) || (node_ref.nodes && nolib.no.runtime.get_node(node_ref, node_ref.out));
     const node_display_el = (node.ref === "return" || (out_ref && out_ref.ref === "return")) 
-        && hlib.run({graph, fn, lib}, {...args, _output: "display"});
+        && hlib.run(graph, fn, {...args, _output: "display"}, lib);
     const update_info_display_fn = display => info_display_dispatch && requestAnimationFrame(() => {
       info_display_dispatch(UpdateResultDisplay, {el: display?.dom_type ? display : ha.h('div', {})})
       requestAnimationFrame(() => {
@@ -1130,9 +1131,9 @@ const result_display = html_id => ha.app({
             return run_h({dom_type: 'div', props: {id: `${html_id}-result`}, children: [s.el]});
         } catch(e) {
           try{
-            return run_h(show_error(e, JSON.stringify(s.el)));
+            return run_h({dom_type: 'div', props: {id: `${html_id}-result`}, children: [show_error(e, JSON.stringify(s.el))]});
           } catch(e) {
-            return run_h({dom_type: 'div', props: {}, children: [{dom_type: 'text_value', text: 'Could not show error'}]})
+            return run_h({dom_type: 'div', props: {id: `${html_id}-result`}, children: [{dom_type: 'text_value', text: 'Could not show error'}]})
           }
         }
     }
@@ -1353,7 +1354,7 @@ const runapp = (init, load_graph, _lib) => {
                     break;
                 }
                 default: {
-                    const result = hlib.run({graph: init.keybindings, fn: "out", args: {}}, hlib)[mode][key_input];
+                    const result = hlib.run(init.keybindings, "out")[mode][key_input];
                     switch(result){
                         case "up": {
                             const parent_edges = nolib.no.runtime.get_edges_in(state.display_graph, selected);
@@ -1531,33 +1532,26 @@ const middleware = dispatch => (ha_action, ha_payload) => {
     const is_action_array_payload = Array.isArray(ha_action) 
         && ha_action.length === 2
         && (typeof ha_action[0] === 'function' 
-                || (ha_action[0].hasOwnProperty('fn') 
-                    && ha_action[0].hasOwnProperty('graph')));
+                || (isRunnable(ha_action[0])));
 
-    const is_action_obj_payload = typeof ha_action === 'object' 
-        && ha_action.hasOwnProperty('fn') 
-        && ha_action.hasOwnProperty('graph') 
-        && ha_action.hasOwnProperty('args');
+    const is_action_obj_payload = isRunnable(ha_action)
     const action = is_action_array_payload ? ha_action[0] : ha_action;
     const payload = is_action_array_payload ? ha_action[1] : is_action_obj_payload ? {event: ha_payload} : ha_payload;
 
-  // console.log(action);
-    return typeof action === 'object' && action.hasOwnProperty('fn') && action.hasOwnProperty('graph')
+    return typeof action === 'object' && isRunnable(ha_action)
         ? dispatch((state, payload) => {
             try {
                 const result = action.stateonly 
-                    ? hlib.run(action, state)
-                    : hlib.run(action, {state, ...payload});
+                    ? hlib.run_runnable(action, state)
+                    : hlib.run_runnable(action, {state, ...payload});
 
                 if(!result) {
                     return state;
                 }
 
                 const effects = (result.effects ?? []).filter(e => e).map(e => {
-                    if(typeof e === 'object' 
-                    && e.hasOwnProperty('fn') 
-                    && e.hasOwnProperty('graph')) {
-                        const effect_fn = hlib.run({graph: e.graph, fn: e.fn});
+                    if(isRunnable(e)) {
+                        const effect_fn = hlib.run_runnable(e, {});
                         // Object.defineProperty(effect_fn, 'name', {value: e.fn, writable: false})
                         return effect_fn;
                     }
@@ -1797,7 +1791,7 @@ const ydocStore = async (persist = false, update = undefined) => {
       })
       requestAnimationFrame(() => {
         const custom_editor = nolib.no.runtime.get_ref("custom_editor");
-        const rtcroom = params.get("rtcroom") ?? (custom_editor && hlib.run({graph: custom_editor, fn: custom_editor.out})?.rtcroom);
+        const rtcroom = params.get("rtcroom") ?? (custom_editor && hlib.run(custom_editor, custom_editor.out ?? "out")?.rtcroom);
         if(rtcroom) {
       
         }
@@ -1967,7 +1961,8 @@ const hlib = {
     get_asset: (id, b) => id && nodysseusStore.assets.get(id),
     remove_asset: id => nodysseusStore.assets.remove(id),
     panzoom: pzobj,
-    run: (node, args) => run({node, args, lib: {...hlib, ...nolib}, store: nodysseusStore}),
+    run: (graph, fn, args) => run({graph, fn}, {...hlib, ...nolib}, nodysseusStore, args),
+    run_runnable: (runnable, args) => run(runnable, {...hlib, ...nolib}, nodysseusStore, args),
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX }
 }
 

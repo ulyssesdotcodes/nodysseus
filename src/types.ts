@@ -25,6 +25,7 @@ export type d3Link = SimulationLinkDatum<d3Node> & {
 export type Graph = {
   id: string,
   out?: string,
+  Functor?: string,
   name?: string,
   nodes: Record<string, Node>,
   edges: Record<string, Edge>
@@ -69,28 +70,62 @@ export type LokiT<T> = {
   data: T
 }
 
-export type Result = {__value: any, __isnodysseus: true}
+export type Result = { __kind: "result", value: any }
 
-// not used
-export type ApRunnable = {
-  fn: Runnable,
-  args: Runnable,
-  lib?: any,
-  __isnodysseus?: true
-}
-
-export type GraphRunnable = {
+export type BaseRunnable = {
+  __kind: unknown,
   fn: string,
   graph: Graph,
-  args: any,
-  lib?: any,
-  __isnodysseus?: true
+  env: Env,
+  lib?: Lib,
 }
 
-export type Runnable =  Result | GraphRunnable
+export type InputRunnable = Omit<BaseRunnable, "__kind" | "env"> & {
+  env?: Env
+};
 
-export const isValue = (r: Runnable): r is Result => !!(r as Result)?.__value;
-export const isGraphRunnable = (r: Runnable): r is GraphRunnable => !!(r as GraphRunnable).graph
+export type ApRunnable = {
+  __kind: "ap",
+  fn: FunctorRunnable,
+  args: ConstRunnable,
+  lib?: Lib
+}
+
+export type ConstRunnable = BaseRunnable & {
+  __kind: "const"
+}
+
+export type FunctorRunnable = BaseRunnable & {
+  __kind: "functor",
+  fnargs: Array<string>
+}
+
+export type Runnable =  Result | ApRunnable | FunctorRunnable | ConstRunnable
+
+export const isRunnable = (r: any): r is Runnable => isValue(r as Runnable) || isConstRunnable(r as Runnable) || isApRunnable(r as Runnable) || isFunctorRunnable(r as Runnable);
+export const isValue = (r: Runnable): r is Result => (r as Result)?.__kind === "result" && !!(r as Result)?.value;
+export const isConstRunnable = (r: Runnable): r is ConstRunnable => r?.__kind === "const";
+export const isApRunnable = (r: Runnable): r is ApRunnable => r?.__kind === "ap";
+export const isFunctorRunnable = (r: Runnable): r is FunctorRunnable => r?.__kind === "functor";
+export const isInputRunnable = (r: Runnable | InputRunnable) => !Object.hasOwn(r, "__kind")
+
+export type Lib = {
+  __kind: "lib",
+  data: Record<string, any>
+}
+
+export const newLib = (data): Lib => ({__kind: "lib", data})
+
+export type Env = {
+  __kind: "env",
+  data: Record<string, unknown>,
+  env?: Env
+}
+
+export const newEnv = (data): Env => ({__kind: "env", data})
+export const combineEnv = (data, env: Env): Env => ({__kind: "env", data, env})
+
+
 //export const isApRunnable = (r: Runnable): r is ApRunnable => isGraphRunnable((r as ApRunnable).fn)
 
 export type NodeArg = { exists: boolean, name: string }
