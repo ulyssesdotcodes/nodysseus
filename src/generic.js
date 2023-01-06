@@ -1072,7 +1072,7 @@ const generic = {
         },
         {
           "id": "out",
-          "name": "ontap",
+          "name": "tapbutton",
           "ref": "return"
         },
         {
@@ -2760,7 +2760,7 @@ const generic = {
         {
           "id": "fn",
           "ref": "script",
-          "value": "console.log('seq args'); console.log(args); return Object.values(args)"
+          "value": "return Object.values(args)"
         },
         {
           "id": "out",
@@ -2803,12 +2803,12 @@ const generic = {
         {
           "id": "delete_seq_ap_args",
           "ref": "script",
-          "value": "const newargs = {...args, runnables, _seq_keys: Object.keys(args)}; console.log('newargs'); console.log(newargs); return newargs"
+          "value": "const newargs = {...args, runnables, _seq_keys: Object.keys(args)}; return newargs"
         },
         {
           "id": "new_seq_ap_args",
           "ref": "script",
-          "value": "console.log('new seq ap'); console.log(args); return args"
+          "value": "return args"
         },
         {
           "id": "delete_args",
@@ -2942,7 +2942,7 @@ const generic = {
         {
           "id": "lapeojg",
           "ref": "script",
-          "value": "console.log('importj son'); console.log(import_graph); import_graph.forEach(_lib.no.runtime.add_ref); _lib.no.runtime.change_graph(_lib.no.runtime.get_graph(graphid))",
+          "value": "import_graph.forEach(_lib.no.runtime.add_ref); _lib.no.runtime.change_graph(_lib.no.runtime.get_graph(graphid))",
           "name": "out"
         },
         {
@@ -4179,7 +4179,7 @@ const generic = {
         {
           "id": "filter_children_fn",
           "ref": "script",
-          "value": "console.log('filter el'); console.log(element_dt || element_tv); return !!(element_dt || element_tv)"
+          "value": "return !!(element_dt || element_tv)"
         },
         {
           "id": "filter_children_fn_runnable_args",
@@ -4192,7 +4192,7 @@ const generic = {
         {
           "id": "fill_children_fn",
           "ref": "script",
-          "value": "console.log('el'); console.log(element); return element?.el ?? typeof element === 'string' ? {dom_type: 'text_value', text: element} : element"
+          "value": "return element?.el ?? typeof element === 'string' ? {dom_type: 'text_value', text: element} : element"
         },
         {
           "id": "fill_children_fn_runnable_args",

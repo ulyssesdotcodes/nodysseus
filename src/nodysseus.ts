@@ -1,7 +1,7 @@
 import set from "just-safe-set";
 import loki from "lokijs";
-import { ancestor_graph, ispromise, isWrappedPromise, mapMaybePromise, node_args, wrapPromise, wrapPromiseAll } from "./util"
-import { isNodeGraph, Graph, LokiT, Node, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, combineEnv, Env, newLib, newEnv } from "./types"
+import { ancestor_graph, ispromise, isWrappedPromise, mapMaybePromise, node_args, WrappedPromise, wrapPromise, wrapPromiseAll } from "./util"
+import { isNodeGraph, Graph, LokiT, Node, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, combineEnv, Env, newLib, newEnv, isEnv, mergeEnv } from "./types"
 import generic from "./generic.js";
 import { create_fn, expect, now } from "./externs";
 
@@ -95,6 +95,7 @@ let resfetch = typeof fetch !== "undefined" ? fetch :
 
 export const nodysseus_get = (obj: Record<string, any>, propsArg: string, lib: Lib, defaultValue=undefined) => {
     let objArg = obj;
+    obj = isEnv(obj) ? obj.data : obj
     let level = 0;
   if (!obj) {
     return defaultValue;
@@ -134,7 +135,7 @@ export const nodysseus_get = (obj: Record<string, any>, propsArg: string, lib: L
 
     prop = props.length == 0 ? props[0] : props.shift();
     if((obj === undefined || typeof obj !== 'object' || (obj[prop] === undefined && !(obj.hasOwnProperty && obj.hasOwnProperty(prop))))){
-        return objArg && objArg.__args ? nodysseus_get(objArg.__args, propsArg, lib, defaultValue) : defaultValue;
+        return isEnv(objArg) ? nodysseus_get(objArg.env, propsArg, lib, defaultValue) : defaultValue;
     }
 
     obj = obj[prop];
@@ -307,7 +308,7 @@ const node_value = (node) => {
 }
 
 const node_nodes = (node, node_id, data, graph_input_value: Env, lib: Lib) => {
-    return run_graph(node, node_id, combineEnv(data, graph_input_value), lib)
+    return run_graph(node, node_id, combineEnv(data, graph_input_value, "nodenodes" + node_id, graph_input_value._output), lib)
 }
 
 const node_script = (node, nodeArgs: Record<string, ConstRunnable>, lib: Lib): Result | Promise<Result> => {
@@ -325,17 +326,11 @@ const node_script = (node, nodeArgs: Record<string, ConstRunnable>, lib: Lib): R
     const fn = lib.data.no.runtime.get_fn(node.id, name, `_lib, _node, _graph_input_value${orderedargs}`, node.script ?? node.value);
 
     return wrapPromiseAll(Object.values(data))
-      .then(promisedData => lib.data.no.of(fn.apply(null, [lib, node, data, ...promisedData]))).value
-    // const result = is_iv_promised
-    //     ? Promise.all(Object.keys(nodeArgs).map(iv => Promise.resolve(data[iv])))
-    //       .then(ivs => lib.no.of(fn.apply(null, [lib, node, data, ...ivs.map(iv => iv?.value)])))
-    //     : lib.no.of(fn.apply(null, [lib, node, data, ...Object.values(data).map(d => (d as Result)?.value)]));
-    
-    // return result;
+      .then(promisedData => lib.data.no.of(fn.apply(null, [lib.data, node, data, ...promisedData]))).value
 }
 
 const node_extern = (node: RefNode, data: Record<string, ConstRunnable>, graphArgs: Env, lib: Lib) => {
-    const extern = nodysseus_get(lib, node.value, lib);
+    const extern = nodysseus_get(lib.data, node.value, lib);
     let argspromise = false;
     const args = typeof extern === 'function' ?  resolve_args(data, lib) :  extern.args.map(arg => {
         let newval;
@@ -397,14 +392,14 @@ const resolve_args = (data: Record<string, ConstRunnable>, lib: Lib): Result | P
 }
 
 const node_data = (nodeArgs, graphArgs, lib) => {
-  return Object.keys(nodeArgs).length === 0 ? lib.no.of(undefined) : resolve_args(nodeArgs, lib);
+  return Object.keys(nodeArgs).length === 0 ? lib.data.no.of(undefined) : resolve_args(nodeArgs, lib);
 }
 
 const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, args: ConstRunnable, lib): FunctorRunnable | Promise<FunctorRunnable> => {
   const argsval = args && run_runnable(args, lib)
-  const ret = fn && mapMaybePromise(argsval, args => lib.no.of({
+  const ret = fn && mapMaybePromise(argsval, args => lib.data.no.of({
     __kind: "functor",
-    fnargs: [...new Set(args.value ? Object.keys(args.value).map(k => k.includes(".") ? k.substring(0, k.indexOf('.')) : k) : [])],
+    fnargs: args ? [...new Set(args.value ? Object.keys(args.value).map(k => k.includes(".") ? k.substring(0, k.indexOf('.')) : k) : [])] : [],
     env: fn.env,
     graph: fn.graph,
     fn: fn.fn
@@ -414,7 +409,7 @@ const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, args:
 
 const run_runnable = (runnable: Runnable, lib: Lib, args: Record<string, any> = {}): Result | Promise<Result> => 
     isConstRunnable(runnable)
-    ? run_graph(runnable.graph, runnable.fn, combineEnv(args, runnable.env), {...lib, ...(runnable.lib ?? {})})
+    ? run_graph(runnable.graph, runnable.fn, mergeEnv(args, runnable.env), {...lib, ...(runnable.lib ?? {})})
     : isApRunnable(runnable)
     ? run_ap_runnable(runnable, args, lib)
     : isFunctorRunnable(runnable)
@@ -423,7 +418,7 @@ const run_runnable = (runnable: Runnable, lib: Lib, args: Record<string, any> = 
 
 
 // graph, node, symtable, parent symtable, lib
-const run_node = (node: Node | Runnable, nodeArgs: Record<string, ConstRunnable>, graphArgs, lib: Lib): Result | Promise<Result> => {
+const run_node = (node: Node | Runnable, nodeArgs: Record<string, ConstRunnable>, graphArgs: Env, lib: Lib): Result | Promise<Result> => {
     if (isRunnable(node)){
       if(isValue(node)) {
         return node
@@ -431,9 +426,8 @@ const run_node = (node: Node | Runnable, nodeArgs: Record<string, ConstRunnable>
         throw new Error("Unexpected node")
       } else {
         const graphid = nodysseus_get(graphArgs, "__graphid", lib)?.value;
-        const nodegraphargs: Env = node.env ?? newEnv({})
-        nodegraphargs.data.__graphid = graphid ?? lib.no.of(node.graph.id);
-        nodegraphargs.data._output = nodysseus_get(graphArgs, "_output", lib)
+        const nodegraphargs: Env = node.env ?? newEnv({}, graphArgs._output)
+        nodegraphargs.data.__graphid = graphid ?? lib.data.no.of(node.graph.id);
         lib = node.lib ? {...lib, ...node.lib} : lib;
 
         return node_nodes(node.graph, node.fn, nodeArgs, nodegraphargs, lib)
@@ -442,14 +436,14 @@ const run_node = (node: Node | Runnable, nodeArgs: Record<string, ConstRunnable>
 
         if (node.ref === "arg") {
             const resval = nolib.no.arg(node, graphArgs, lib, node.value);
-            return resval && typeof resval === 'object' && Object.hasOwn(resval, "value") ? resval : lib.no.of(resval);
+            return resval && typeof resval === 'object' && isValue(resval) ? resval : lib.data.no.of(resval);
         } else if (node.ref === "extern") {
             return node_extern(node, nodeArgs, graphArgs, lib)
         } else if (node.ref === "script") {
             return node_script(node, nodeArgs, lib)
         }
 
-        let node_ref = lib.no.runtime.get_ref(node.ref);
+        let node_ref = lib.data.no.runtime.get_ref(node.ref);
 
         if (!node_ref) {
             throw new Error(`Unable to find ref ${node.ref} for node ${node.name || node.id}`)
@@ -457,36 +451,36 @@ const run_node = (node: Node | Runnable, nodeArgs: Record<string, ConstRunnable>
 
         const graphid = nodysseus_get(graphArgs, "__graphid", lib)?.value;
         const newgraphid = (graphid ? graphid + "/" : "") + node.id
-        const newGraphArgs = {_output: nodysseus_get(graphArgs, "_output", lib), __graphid: lib.no.of(newgraphid)};
+        const newGraphArgs = newEnv({__graphid: lib.data.no.of(newgraphid)}, graphArgs._output);
         if(node_ref.nodes) {
-            const current = lib.no.runtime.get_graph(newgraphid);
-            lib.no.runtime.set_parent(newgraphid, graphid); // before so that change/update has the parent id
-            if(current?.refid !== node_ref.id){
-              lib.no.runtime.change_graph({...node_ref, id: newgraphid, refid: node_ref.id}, lib, false)
+            const current = lib.data.no.runtime.get_graph(newgraphid);
+            lib.data.no.runtime.set_parent(newgraphid, graphid); // before so that change/update has the parent id
+            if(current.refid && current?.refid !== node_ref.id){
+              lib.data.no.runtime.change_graph({...node_ref, id: newgraphid, refid: node_ref.id}, lib, false)
             } else {
-              lib.no.runtime.update_graph(newgraphid)
+              lib.data.no.runtime.update_graph(newgraphid)
             }
         }
 
-        return run_node(node_ref, {...nodeArgs, __graph_value: lib.no.of(node.value)}, newGraphArgs, lib)
+        return run_node(node_ref, {...nodeArgs, __graph_value: lib.data.no.of(node.value)}, newGraphArgs, lib)
     } else if (isNodeGraph(node)) {
         return node_nodes(node, node.out ?? "out", nodeArgs, graphArgs, lib)
     } else if (isNodeScript(node)){
         return node_script(node, nodeArgs, lib)
     } else if(Object.hasOwn(node, "value")) {
-        return lib.no.of(node_value(node));
+        return lib.data.no.of(node_value(node));
     } else {
         return node_data(nodeArgs, graphArgs, lib)
     }
 }
 
 // derives data from the args symbolic table
-const create_data = (node_id, graph, graphArgs, lib: Lib): Record<string, ConstRunnable> => {
-    const inputs = lib.no.runtime.get_edges_in(graph, node_id);
+const create_data = (node_id, graph, graphArgs: Env, lib: Lib): Record<string, ConstRunnable> => {
+    const inputs = lib.data.no.runtime.get_edges_in(graph, node_id);
     const data: Record<string, ConstRunnable> = {};
     let input: Edge;
     //TODO: remove
-    const newgraphargs = graphArgs._output ? {...graphArgs, _output: undefined} : graphArgs;
+    const newgraphargs = graphArgs._output ? mergeEnv({_output: undefined}, graphArgs) : graphArgs;
     // delete newgraphargs._output
 
     // grab inputs from state
@@ -511,7 +505,7 @@ const create_data = (node_id, graph, graphArgs, lib: Lib): Record<string, ConstR
 }
 
 // handles graph things like edges
-const run_graph = (graph: Graph | (Graph & {nodes: Array<Node>, edges: Array<Edge>}), node_id: string, env: Record<string, any>, lib: Lib): Result | Promise<Result> => {
+const run_graph = (graph: Graph | (Graph & {nodes: Array<Node>, edges: Array<Edge>}), node_id: string, env: Env, lib: Lib): Result | Promise<Result> => {
   const handleError = e => {
         console.log(`error in node`);
         if (e instanceof AggregateError) {
@@ -520,12 +514,12 @@ const run_graph = (graph: Graph | (Graph & {nodes: Array<Node>, edges: Array<Edg
             console.error(e);
         }
         if(e instanceof NodysseusError) {
-            lib.no.runtime.publish("grapherror", e)
+            lib.data.no.runtime.publish("grapherror", e)
             return;
         }
-        const parentest = lib.no.runtime.get_parentest(graph)
+        const parentest = lib.data.no.runtime.get_parentest(graph)
         let error_node = parentest ? graph : node;
-        lib.no.runtime.publish("grapherror", new NodysseusError(
+        lib.data.no.runtime.publish("grapherror", new NodysseusError(
             nodysseus_get(env, "__graphid", lib)?.value + "/" + error_node.id, 
             e instanceof AggregateError ? "Error in node chain" : e
         ))
@@ -534,10 +528,10 @@ const run_graph = (graph: Graph | (Graph & {nodes: Array<Node>, edges: Array<Edg
   }
   // TODO: remove old graph notation
     const newgraph = Array.isArray(graph.nodes) && Array.isArray(graph.edges) ? {...graph, nodes: Object.fromEntries(graph.nodes.map(n => [n.id, n])), edges: Object.fromEntries(graph.edges.map(e => [e.from, e]))} : graph;
-    const node = lib.no.runtime.get_node(newgraph, node_id);
+    const node = lib.data.no.runtime.get_node(newgraph, node_id);
 
     try {
-        lib.no.runtime.publish('noderun', {graph: newgraph, node_id})
+        lib.data.no.runtime.publish('noderun', {graph: newgraph, node_id})
 
         const data = create_data(node_id, newgraph, env, lib);
         const res = run_node(node, data, env, lib);
@@ -551,7 +545,7 @@ const run_functor_runnable = (runnable: FunctorRunnable, args: Record<string, un
   const execArgs = Object.fromEntries(runnable.fnargs?.map(k => [k, nodysseus_get(args, k, lib, runnable.fnargs[k])]) ?? []);
   const newRunnable: ConstRunnable = {
     __kind: "const",
-    env: combineEnv(execArgs, runnable.env),
+    env: combineEnv(execArgs ?? {}, runnable.env, "functor runnable" + runnable.fn),
     fn: runnable.fn,
     graph: runnable.graph
   }
@@ -560,13 +554,15 @@ const run_functor_runnable = (runnable: FunctorRunnable, args: Record<string, un
 
 const run_ap_runnable = (runnable: ApRunnable, args: Record<string, any>, lib: Lib): Result | Promise<Result> => {
   const computedArgs = run_runnable(runnable.args, lib, args);
-  const execute = execArgs => {
-    console.log('execargs')
-    console.log(execArgs);
-    const ret = run_functor_runnable(runnable.fn, Object.fromEntries(Object.entries(execArgs.value).map(kv => [kv[0], lib.no.of(kv[1])])), lib)
-    return ret;
+  const execute = (execArgs): WrappedPromise<any> => {
+    const ret = (Array.isArray(runnable.fn) ? runnable.fn : [runnable.fn]).map(rfn => run_runnable(
+      rfn,
+      lib,
+      execArgs ? Object.fromEntries(Object.entries(execArgs.value).map(kv => [kv[0], lib.data.no.of(kv[1])])) : {}, 
+    ))
+    return Array.isArray(runnable.fn) ? wrapPromiseAll(ret.map(wrapPromise)) : wrapPromise(ret[0]);
   }
-  return wrapPromise(computedArgs).then(execute).value;
+  return wrapPromise(computedArgs).then(execute).then(v => v.value).value;
 }
 
 
@@ -600,7 +596,16 @@ export const run = (node: Runnable | InputRunnable, lib: Lib | undefined = undef
   isRunnable(node) && isFunctorRunnable(node) && !_lib.data.no.runtime.get_ref(node.graph.id) && _lib.data.no.runtime.change_graph(node.graph)
   isRunnable(node) && isFunctorRunnable(node) && _lib.data.no.runtime.update_graph(node.graph, _lib);
 
-  const res = run_runnable(isRunnable(node) ? node : {...node, __kind: "const", env: node.env ?? newEnv({})}, _lib, newEnv(Object.fromEntries(Object.entries(args ?? {}).map(e => [e[0], _lib.data.no.of(e[1])]))));
+  const res = run_runnable(
+    isRunnable(node) 
+      ? node 
+      : {...node, __kind: "const", env: node.env ?? newEnv({__graphid: _lib.data.no.of(node.graph.id)})
+        // mergeEnv(
+        //   Object.fromEntries(Object.entries(args ?? {}).map(e => [e[0], _lib.data.no.of(e[1])])), 
+        //   node.env ?? newEnv({__graphid: _lib.data.no.of(node.graph.id)})
+        // )
+      }, 
+    _lib, args);
   return ispromise(res) ? res.then(r => r?.value) : res?.value
 }
 
@@ -619,7 +624,7 @@ const initStore = (store: NodysseusStore | undefined = undefined) => {
 const nolib = {
   no: {
     of: <T>(value): Result | Promise<Runnable> => ispromise(value) ? value.then(nolib.no.of) : isValue(value) ? value : { __kind: "result", value: value},
-    arg: (node, target, lib: Lib, value) => {
+    arg: (node, target: Env, lib: Lib, value) => {
       let valuetype, nodevalue;
       if(value.includes(": ")) {
         const typedvalue = value.split(": ");
@@ -629,13 +634,13 @@ const nolib = {
         nodevalue = value;
       }
       const newtarget = () => {
-        const newt = Object.assign({}, target);
+        const newt = Object.assign({}, target.data);
         Object.keys(newt).forEach(k => k.startsWith("_") && delete newt[k])
         return newt;
       };
 
       const parenttarget = () => {
-        const newt = Object.assign({}, target.__args);
+        const newt = Object.assign({}, target.env.data);
         Object.keys(newt).forEach(k => k.startsWith("_") && delete newt[k])
         return newt;
       };
@@ -647,17 +652,17 @@ const nolib = {
         : nodevalue.startsWith("_node.")
         ? nodysseus_get(node, nodevalue.substring("_node.".length), lib)
         : nodevalue.startsWith("_lib.")
-        ? nodysseus_get(lib, nodevalue.substring("_lib.".length), lib)
+        ? nodysseus_get(lib.data, nodevalue.substring("_lib.".length), lib)
         : nodevalue === "_args"
         ? newtarget()
         : nodevalue === "__args"
         ? parenttarget()
-          // lib.no.of(Object.fromEntries(Object.entries(parenttarget()).map(([key, value]: [string, any]) => [key, value?.isArg && valuetype !== "raw" ? run_runnable(value, lib)?.value : value])))
+          // lib.data.no.of(Object.fromEntries(Object.entries(parenttarget()).map(([key, value]: [string, any]) => [key, value?.isArg && valuetype !== "raw" ? run_runnable(value, lib)?.value : value])))
         : nodysseus_get(
             node.type === "local" || node.type?.includes?.("local")
               ? newtarget()
               : node.type === "parent" || node.type?.includes?.("parent")
-              ? target.__args
+              ? target.env
               : target,
             nodevalue,
             lib
@@ -669,7 +674,8 @@ const nolib = {
       // }
 
       const retrun = isConstRunnable(ret) && valuetype !== "raw" ? run_runnable(ret, lib) : undefined;
-      return ispromise(retrun) ? retrun.then(v => v?.value) : retrun ? isValue(retrun) || isWrappedPromise(retrun) ? retrun?.value : retrun : ret;
+      const r = ispromise(retrun) ? retrun.then(v => v?.value) : retrun ? isValue(retrun) || isWrappedPromise(retrun) ? retrun?.value : retrun : ret;
+      return r
     },
     base_graph,
     base_node,
@@ -739,10 +745,8 @@ const nolib = {
           typeof input_fn === "function"
             ? input_fn
             : (args) => {
-                run_graph(input_fn.graph, input_fn.fn, {
-                  ...args,
-                  __args: input_fn.args,
-                }, input_fn.lib ? {...lib, ...input_fn.lib} : lib);
+                run_graph(input_fn.graph, input_fn.fn, combineEnv(args, input_fn.args), 
+                          input_fn.lib ? {...lib, ...input_fn.lib} : lib);
               };
         if (!listeners.has(listener_id)) {
           if (!prevent_initial_trigger) {
@@ -812,7 +816,7 @@ const nolib = {
 
         const parent = get_parentest(graph);
         if (parent) {
-          lib.no.runtime.update_graph(parent, lib);
+          lib.data.no.runtime.update_graph(parent, lib);
         } else {
           if(addToStore) {
             nodysseus.refs.add(graph.id, graph)
@@ -940,22 +944,6 @@ const nolib = {
             nodysseus.refs.add_edge(graphId, add)
           }
           change_graph(nodysseus.refs.get(graphId) as Graph, lib);
-          // graph = get_graph(graph);
-          //
-          // const newedges = Object.assign({}, graph.edges);
-          // remove.forEach(e => delete newedges[e.from])
-          // add.forEach(e => newedges[e.from] = e)
-          //
-          // const new_graph = {
-          //   ...graph,
-          //   edges: newedges
-          // };
-          //
-          // if(!dryRun) {
-          //   change_graph(new_graph, lib);
-          // } else {
-          //   console.log(new_graph)
-          // }
         },
         add_node: (graph: Graph, node: Node, lib: Lib) => {
           if (!(node && typeof node === "object" && node.id)) {
@@ -1052,130 +1040,15 @@ const nolib = {
       rawArgs: true,
       args: ["fn", "args", "run", "_lib"],
       fn: (fn, args, run, lib: Lib) => {
-        console.log('apping')
-        console.log(fn)
         const fnResult = wrapPromise(run_runnable(fn, lib));
-        console.log(fnResult)
-        if(Array.isArray((fnResult.value as Result).value!)) {
-          debugger;
-        }
-        const apRunnable = (fnRunnable: FunctorRunnable): ApRunnable => ({
+
+        const apRunnable = (fnRunnable: FunctorRunnable | Array<FunctorRunnable>): ApRunnable => ({
           __kind: "ap",
-          fn: fnRunnable,
+          fn: Array.isArray(fnRunnable) ? fnRunnable.filter(v => v) : fnRunnable,
           args,
         });
         return fnResult.then(fnr => apRunnable(fnr.value))
-          .then(apfn => run ? run_runnable(apfn, lib) : apfn).then(res => lib.no.of(res)).value
-  //       const runvalue = run_runnable(run, {}, lib)?.value;
-  //       const execute = (fnr, rv, av) => {
-  //         if(fnr === undefined) {
-  //           return lib.no.of(undefined)
-  //         }
-  //
-  //         while(av?.fn && av?.graph) {
-  //           av = run_runnable({...av, args: {...av.args, ...fn.args}}, fnv.value.lib ? { ...lib, ...fnv.value.lib} : lib)?.value
-  //         }
-  //         let isArray = Array.isArray(fnr);
-  //         if(!isArray) {
-  //           fnr = [fnr]
-  //         }
-  //
-  //         fnr = fnr.filter(f => f);
-  //         if(fnr.length === 0) {
-  //           throw new Error("No functions to ap to")
-  //         }
-  //
-  //         const apfn = fnr => {
-  //           let newfnargs: string[] = [];
-  //           if(av) {
-  //             const avkeys = Object.keys(av).filter(a => a !== '__isnodysseus' && a !== "__args");
-  //             newfnargs = fnr.fnargs && fnr.fnargs.filter(a => !avkeys.find(i => i === a))
-  //           }
-  //
-  //           const fnap = {
-  //             ...fnr,
-  //             fnargs: newfnargs,
-  //             args: {
-  //               ...(!av ? fn.args : fnr.fnargs && av ? Object.fromEntries(fnr.fnargs.map(a => [a, av[a]])) : (av ?? {})),
-  //               __args: {
-  //                 ...(fnr.fnargs ? Object.fromEntries(Object.entries(fnr.args).filter(a => !fnr.fnargs.find(r => r === a[0]))) : fnr.args)
-  //               },
-  //             },
-  //           };
-  //
-  //           return rv ? run_runnable(fnap, lib) : lib.no.of(fnap);
-  //         }
-  //
-  //         const res = fnr.map(apfn);
-  //
-  //         return isArray ? res : res[0];
-  //       }
-  //
-  //       const execpromise = (fnrg, rvg, avg) => {
-  //         const rv = run_runnable(rvg, lib);
-  //         avg = avg?.value ? avg.value : avg;
-  //         let av = avg && !ispromise(avg) && run_runnable({...avg, args: {...avg.args, ...fn.args}}, args.lib ? { ...lib, ...args.lib} : lib);
-  //
-  //         if(ispromise(fnrg) || ispromise(rv) || ispromise(av)) {
-  //           return Promise.all([fnrg, rv, ispromise(avg) ? avg : av]).then(([fnr, rv, av]) => execpromise(fnr, rv, av))
-  //         }
-  //
-  //         return av?.value?.fn && av?.value?.graph ? execpromise(fnrg, rv, av) : execute(fnrg, rv, av?.value)
-  //       }
-  //
-  //
-  //       let fnv = run_runnable(fn, lib);
-  //
-  //       if(fnv.value === undefined) {
-  //         throw new Error("ap needs a fn")
-  //       }
-  //
-  //       const fnvr = fnv.value;
-  //
-  //       const graphid = nodysseus_get(fn.args, "__graphid", lib);
-  // const constructRunGraph = (args) => {
-  //       const argargs = !runvalue && args && Object.values(ancestor_graph(args.fn, args.graph, lib).nodes).filter(isNodeRef).filter(n => n.ref === "arg").map(n => n.value?.includes(".") ? n.value.substring(0, n.value.indexOf(".")) : n.value);
-  //       return (delete args?.isArg, delete args?.args?._output, lib.no.of(run_runnable({
-  //           "fn": "runout",
-  //           "graph": {
-  //             "id": `_run_${graphid.value}_${fn.fn}_${Math.floor(performance.now() * 100)}`,
-  //             "out": "runout",
-  //             "nodes": {
-  //               fnarg: {"id": "fnarg", "value": fnv},
-  //               argsarg: {"id": "argsarg", "value": args},
-  //               args_runnable: {"id": "args_runnable", "value": args },//&& lib.no.of({...args, fnargs: argargs ?? [], args: {__args: args.args}})},
-  //               args_runnable_ap: {"id": "args_runnable_ap", "ref": "ap"},
-  //               args_runnable_args: {"id": "args_runnable_args", "value":"" },
-  //               runval: {"id": "runval", "value": "true"},
-  //               runval_args_runnable: {"id": "runval_args_runnable", "value": "true"},
-  //               out: {"id": "out", "ref": "ap"},
-  //               runout_args: {"id": "runout_args", "value": argargs && Object.fromEntries(argargs?.map(a => [a, undefined]))},
-  //               runout: {"id": "runout", "ref": "runnable"}
-  //             },
-  //             "edges": Object.assign({
-  //                 fnarg: {"from": "fnarg", "to": "out", "as": "fn"},
-  //                 runval: {"from": "runval", "to": "out", "as": "run"},
-  //                 // runval_args_runnable: {"from": "runval_args_runnable", "to": "args_runnable_ap", "as": "run"},
-  //                 // args_runnable: {"from": "args_runnable", "to": "args_runnable_ap", "as": "fn"},
-  //                 // argsarg: {"from": "argsarg", "to": "out", "as": "args"},
-  //                 // argsarg: {"from": "argsarg", "to": "args_runnable", "as": "fn"},
-  //                 // {"from": "args_runnable_args", "to": "args_runnable", "as": "args"},
-  //                 out: {"from": "out", "to": "runout", "as": "fn"}
-  //               },
-  //               args && {"args_runnable": {"from": "args_runnable", "to": "out", "as": "args"}},
-  //               argargs && {"runout_args": {"from": "runout_args", "to": "runout", "as": "args"}})
-  //           },
-  //           "args": { fnr: fnv?.value, argsr: args , __graphid: graphid },
-  //           "fnargs": (argargs ?? fnvr.fnargs ?? []),
-  //           "__isnodysseus": true,
-  //         }, lib)))
-  //     }
-  //
-  //       const ret = runvalue ? execpromise(fnv.value, run, args)
-  //         // : {...fn, args: {...fn.args, ...args}}
-  //         : ispromise(args) ? args.then(ags => constructRunGraph(ags)) : constructRunGraph(args)
-  //
-  //       return ret;
+          .then(apfn => run ? run_runnable(apfn, lib) : apfn).then(res => lib.data.no.of(res)).value
       }
     },
     create_fn: {
@@ -1223,24 +1096,20 @@ const nolib = {
                       let errored = false;
                       const errorlistener = (error) => errored = true;
 
-                      lib.no.runtime.add_listener('grapherror', fnrunnable.graph.id, errorlistener)
+                      lib.data.no.runtime.add_listener('grapherror', fnrunnable.graph.id, errorlistener)
 
                       const ret = mapobjarr(
                         objectvalue,
                         (previousValue, currentValue) =>
                           !errored && wrapPromise(previousValue).then(prevVal => run_runnable(fnrunnable, lib,
-                            {previousValue: lib.no.of((console.log("prevval"), console.log(prevVal), prevVal)), currentValue: lib.no.of((console.log('curval'), console.log(currentValue), console.log(lib.no.of(currentValue)), currentValue))},
+                            {previousValue: lib.data.no.of(prevVal), currentValue: lib.data.no.of(currentValue)},
                           )).then(rv => rv.value).value,
                         initial
                       );
 
-                      console.log('fold ret')
-                      console.log(ret);
-                      console.log(objectvalue)
+                      lib.data.no.runtime.remove_listener('grapherror', fnrunnable.graph.id, errorlistener)
 
-                      lib.no.runtime.remove_listener('grapherror', fnrunnable.graph.id, errorlistener)
-
-                      return lib.no.of(ret);
+                      return lib.data.no.of(ret);
                     })))
           .value,
     },
@@ -1248,8 +1117,8 @@ const nolib = {
       args: ["_node_args", "_lib", "__graphid"],
       fn: (_args, lib: Lib, graphid) => {
         // const fns = run_runnable({..._args, args: {graphid: graphid, ..._args.args}}, lib)
-        // return nolib.extern.ap.fn(lib.no.of(Object.entries(fns).filter(kv => !kv[0].startsWith("_")).map(kv => kv[1])), undefined, false, lib, {})
-        return lib.extern.ap.fn(lib.no.of(Object.values(_args)), undefined, lib.no.of(false), lib);
+        // return nolib.extern.ap.fn(lib.data.no.of(Object.entries(fns).filter(kv => !kv[0].startsWith("_")).map(kv => kv[1])), undefined, false, lib, {})
+        return lib.data.extern.ap.fn(lib.data.no.of(Object.values(_args)), undefined, lib.data.no.of(false), lib);
       }
     },
     runnable: {
@@ -1294,23 +1163,22 @@ const nolib = {
         subscribe,
         argslist,
         argsfn,
-        lib: Lib,
+        lib,
         _node,
         _graph,
         _args,
-        _lib
+        _lib: Lib
       ) => {
-        const output = _args["_output"]?.value;
+        const output = _args._output;
         const edgemap = { value, display, subscribe, argslist, lib };
         const runedge = output && output === display ? display : edgemap[output] ? output : "value";
 
         const return_result = (_lib, args) => {
           const runedgeresult = edgemap[runedge]
-            ? run_runnable(edgemap[runedge], _lib, { ...args, _output: _lib.no.of(runedge === "display" ? "display" : "value") })
+            ? run_runnable(edgemap[runedge], _lib, { ...args, _output: _lib.data.no.of(runedge === "display" ? "display" : "value") })
             : runedge === "value" && !value && display
             ? run_runnable(display, _lib, args)
-            : _lib.no.of(undefined)
-
+            : _lib.data.no.of(undefined)
 
           if (edgemap.subscribe) {
             const subscriptions = wrapPromise(run_runnable(
@@ -1325,7 +1193,7 @@ const nolib = {
             Object.entries(subscriptions)
               .filter(kv => kv[1])
               .forEach(([k, v]) => 
-                _lib.no.runtime.add_listener(k, 'subscribe-' + newgraphid, v, false, 
+                _lib.data.no.runtime.add_listener(k, 'subscribe-' + newgraphid, v, false, 
                   graphid, true, _lib));
           }
 
@@ -1333,20 +1201,8 @@ const nolib = {
         }
 
         const ret = wrapPromise(run_runnable(lib, _lib))
-          .then(lib => wrapPromise(argsfn ? run_runnable({...argsfn, lib: {..._lib, ...lib}}, _lib) : undefined).then(args => return_result(lib ?? _lib, args))).value
+          .then(lib => wrapPromise(argsfn ? run_runnable({...argsfn, lib: {..._lib, ...lib}}, _lib) : undefined).then(args => return_result(lib ?? _lib, args?.value))).value
         return ret;
-        //   .then(([lib, args]) => wrapPromise(return_result(lib, args)))
-        // if(ispromise(libprom)) {
-        //   return libprom.then(libr => {
-        //     _lib = {..._lib, ...(libr?.value ?? {})}
-        //     Promise.resolve(argsfn ? run_runnable({...argsfn, args: {...argsfn.args, _output: _lib.no.of("value")}}, _lib) : {})
-        //       .then(args => return_result(_lib, args?.value))
-        //   })
-        // } else {
-        //   _lib = libprom ? {..._lib, ...(libprom.value ?? {})} : _lib;
-        //   const argsprom = argsfn && run_runnable({...argsfn, args: {...argsfn.args, _output: _lib.no.of("value")}}, _lib)
-        //   return ispromise(argsprom) ? argsprom.then(args => return_result(_lib, args?.value)): return_result(_lib, argsprom?.value)
-        // }
       },
     },
     compare,
@@ -1485,7 +1341,7 @@ const nolib = {
               : args === undefined
               ? []
               : [args];
-            return lib.no.of(ispromise(ng_fn)
+            return lib.data.no.of(ispromise(ng_fn)
               ? ng_fn.then((f: any) => f.apply(fnargs))
               : ng_fn.apply(self, fnargs));
           }

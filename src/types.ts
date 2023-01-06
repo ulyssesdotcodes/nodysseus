@@ -86,7 +86,7 @@ export type InputRunnable = Omit<BaseRunnable, "__kind" | "env"> & {
 
 export type ApRunnable = {
   __kind: "ap",
-  fn: FunctorRunnable,
+  fn: FunctorRunnable | Array<FunctorRunnable>,
   args: ConstRunnable,
   lib?: Lib
 }
@@ -103,11 +103,11 @@ export type FunctorRunnable = BaseRunnable & {
 export type Runnable =  Result | ApRunnable | FunctorRunnable | ConstRunnable
 
 export const isRunnable = (r: any): r is Runnable => isValue(r as Runnable) || isConstRunnable(r as Runnable) || isApRunnable(r as Runnable) || isFunctorRunnable(r as Runnable);
-export const isValue = (r: Runnable): r is Result => (r as Result)?.__kind === "result" && !!(r as Result)?.value;
+export const isValue = (r: Runnable): r is Result => (r as Result)?.__kind === "result";
 export const isConstRunnable = (r: Runnable): r is ConstRunnable => r?.__kind === "const";
 export const isApRunnable = (r: Runnable): r is ApRunnable => r?.__kind === "ap";
 export const isFunctorRunnable = (r: Runnable): r is FunctorRunnable => r?.__kind === "functor";
-export const isInputRunnable = (r: Runnable | InputRunnable) => !Object.hasOwn(r, "__kind")
+export const isInputRunnable = (r: Runnable | InputRunnable) => !Object.hasOwn(r, "__kind") && Object.hasOwn(r, "fn") && Object.hasOwn(r, "graph")
 
 export type Lib = {
   __kind: "lib",
@@ -119,11 +119,31 @@ export const newLib = (data): Lib => ({__kind: "lib", data})
 export type Env = {
   __kind: "env",
   data: Record<string, unknown>,
-  env?: Env
+  _output?: string, 
+  env?: Env,
+  node_id?: string,
 }
 
-export const newEnv = (data): Env => ({__kind: "env", data})
-export const combineEnv = (data, env: Env): Env => ({__kind: "env", data, env})
+export const newEnv = (data, _output?): Env => ({__kind: "env", data, _output})
+export const combineEnv = (data, env: Env, node_id?: string, _output?: string): Env => {
+  if(isEnv(data)) {
+    throw new Error("Can't create an env with env data")
+  }
+  return ({__kind: "env", data, env, node_id, _output})
+}
+export const mergeEnv = (data, env: Env): Env => {
+  if(isRunnable(data)) {
+    throw new Error("Can't merge a runnable")
+  }
+
+  return {
+  __kind: "env", 
+    data: {...env.data, ...data, _output: undefined}, 
+    env: env.env, 
+    _output: Object.hasOwn(data, "_output") ? isValue(data._output) ? data._output.value : data._output : env._output
+  }
+}
+export const isEnv = (env: any) => env?.__kind === "env"
 
 
 //export const isApRunnable = (r: Runnable): r is ApRunnable => isGraphRunnable((r as ApRunnable).fn)
