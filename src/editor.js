@@ -752,7 +752,7 @@ const Paste = state => [
         });
         nolib.no.runtime.update_edges(
             state.display_graph, 
-            state.copied.graph.edges
+            Object.values(state.copied.graph.edges)
                 .map(e => ({...e, from: node_id_map[e.from], to: node_id_map[e.to]}))
                 .concat([{from: node_id_map[state.copied.root], to: state.selected[0], as: state.copied.as}]),
           [],

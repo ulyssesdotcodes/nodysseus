@@ -1,18 +1,15 @@
 import * as util from "./util"
 import {nodysseus_get} from "./nodysseus"
-import { isNodeRef, isNodeScript, RefNode } from "./types";
+import { ConstRunnable, isNodeRef, isNodeScript, Lib, RefNode, Runnable } from "./types";
 
- export const create_fn = (runnable, lib) => {
-
-        const __args = runnable.args.__args;
-
+ export const create_fn = (runnable: ConstRunnable, lib: Lib) => {
         const graph = util.ancestor_graph(runnable.fn, runnable.graph, lib);
         graph.id = runnable.fn + "-fn";
         const graphArgs = new Set(Object.values(graph.nodes).filter<RefNode>(isNodeRef).filter(n => n.ref === "arg").map(a => a.value));
 
         const baseArgs = {};
         for(const arg of graphArgs) {
-          baseArgs[arg] = nodysseus_get(runnable.args, arg, lib)
+          baseArgs[arg] = nodysseus_get(runnable.env, arg, lib)
         }
 
         let text = "";
@@ -22,7 +19,7 @@ import { isNodeRef, isNodeScript, RefNode } from "./types";
           if(isNodeRef(n) && n.ref === "arg") {
             return;
           }
-          const noderef = isNodeRef(n) ? lib.no.runtime.get_ref(n.ref) : n;
+          const noderef = isNodeRef(n) ? lib.data.no.runtime.get_ref(n.ref) : n;
           if(noderef.id === "script") {
             // TODO: extract this logic from node_script
             let inputs = Object.values(graph.edges).filter(e => e.to === n.id).map(edge => ({edge, node: Object.values(graph.nodes).find(n => n.id === edge.from)}));
@@ -66,7 +63,7 @@ import { isNodeRef, isNodeScript, RefNode } from "./types";
         text += `return fn_${runnable.fn}()`//({${[...fninputs].map(rinput => `${rinput.as}: fnargs.${graph.nodes.find(n => n.id === rinput.from).value}`).join(",")}})`
         const fn = new Function("fnargs", "_extern_args", "import_util", "_lib", text);
 
-        return (args={}) => fn(args, _extern_args, util, lib);
+        return (args={}) => fn(args, _extern_args, util, lib.data);
       }
 
 export const now = (scale?: number) => performance.now() * (scale ?? 1)

@@ -243,14 +243,14 @@ export const findViewBox = (nodes: Array<d3Node>, links: Array<d3Link>, selected
     return {nodes_box_dimensions, center};
 }
 
-export const ancestor_graph = (node_id, from_graph: Graph, nolib): Graph => {
+export const ancestor_graph = (node_id: string, from_graph: Graph, nolib: Lib): Graph => {
     let edges_in;
     let queue = [node_id];
     const graph: Graph = {...from_graph, nodes: {}, edges: {}};
     while(queue.length > 0) {
         let node_id = queue.pop();
-        graph.nodes[node_id] = ({...nolib.no.runtime.get_node(from_graph, node_id)})
-        edges_in = nolib.no.runtime.get_edges_in(from_graph, node_id);
+        graph.nodes[node_id] = ({...nolib.data.no.runtime.get_node(from_graph, node_id)})
+        edges_in = nolib.data.no.runtime.get_edges_in(from_graph, node_id);
         graph.edges = Object.assign(graph.edges, Object.fromEntries(edges_in.map(e => [e.from, e])));
         edges_in.forEach(e => queue.push(e.from));
     }
@@ -405,7 +405,7 @@ export const calculateLevels = (nodes: Array<d3Node>, links: Array<d3Link>, grap
  * Type utils
  */
 
-export const newEnv = (data, _output?): Env => ({__kind: "env", data, _output})
+export const newEnv = (data, _output?, env?: Env): Env => ({__kind: "env", data: env ? {...env.data, ...data} : data, _output, env: env?.env})
 export const combineEnv = (data, env: Env, node_id?: string, _output?: string): Env => {
   if(isEnv(data)) {
     throw new Error("Can't create an env with env data")

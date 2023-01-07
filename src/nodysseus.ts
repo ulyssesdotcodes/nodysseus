@@ -749,7 +749,7 @@ const nolib = {
           typeof input_fn === "function"
             ? input_fn
             : (args) => {
-                run_graph(input_fn.graph, input_fn.fn, combineEnv(args, input_fn.args), mergeLib(input_fn.lib, lib));
+                run_runnable(input_fn, mergeLib(input_fn.lib, lib), args);
               };
         if (!listeners.has(listener_id)) {
           if (!prevent_initial_trigger) {
@@ -1177,26 +1177,34 @@ const nolib = {
         const runedge = output && output === display ? display : edgemap[output] ? output : "value";
 
         const return_result = (_lib: Lib, args) => {
-          const runedgeresult = edgemap[runedge]
-            ? run_runnable(edgemap[runedge], _lib, { ...args, _output: _lib.data.no.of(runedge === "display" ? "display" : "value") })
-            : runedge === "value" && !value && display
-            ? run_runnable(display, _lib, args)
-            : _lib.data.no.of(undefined)
+          const runnable = edgemap[runedge] ? {...edgemap[runedge]} : runedge === "value" && !value && display ? display : _lib.data.no.of(undefined);
+          if(isRunnable(runnable) && !isValue(runnable) && !isApRunnable(runnable)) {
+            runnable.env = combineEnv(runnable.env.data, newEnv(args, _lib.data.no.of(runedge === "display" ? "display" : "value"), runnable.env))
+          }
+          const runedgeresult = run_runnable(runnable, _lib)
+            // edgemap[runedge]
+            // ? run_runnable(edgemap[runedge], _lib, Object.assign(
+            //   { _output: _lib.data.no.of(runedge === "display" ? "display" : "value") },
+            // ))
+            // : runedge === "value" && !value && display
+            // ? run_runnable(display, _lib, args)
+            // : _lib.data.no.of(undefined)
 
           if (edgemap.subscribe) {
-            const subscriptions = wrapPromise(run_runnable(
-              edgemap.subscribe,
-              args,
-            ))
-
             const graphid = nodysseus_get(subscribe.env, "__graphid", _lib).value;
             const newgraphid = graphid + "/" + _node.id;
 
-            Object.entries(subscriptions)
-              .filter(kv => kv[1])
-              .forEach(([k, v]) => 
-                _lib.data.no.runtime.add_listener(k, 'subscribe-' + newgraphid, v, false, 
-                  graphid, true, _lib));
+            wrapPromise(run_runnable(
+              edgemap.subscribe,
+              _lib,
+              args,
+            )).then(subscriptions => subscriptions.value)
+            .then(subscriptions =>
+              Object.entries(subscriptions)
+                .filter(kv => kv[1])
+                .forEach(([k, v]) => 
+                  _lib.data.no.runtime.add_listener(k, 'subscribe-' + newgraphid, v, false, 
+                    graphid, true, _lib)))
           }
 
           return runedgeresult;
@@ -1205,7 +1213,7 @@ const nolib = {
         const ret = wrapPromise(run_runnable(lib, _lib))
             .then(lib => lib?.value)
             .then(lib => wrapPromise(argsfn ? run_runnable({
-                ...argsfn, 
+                ...argsfn,
                 lib: mergeLib(lib, _lib)
               }, _lib) : undefined)
               .then(args => return_result(mergeLib(lib, _lib), args?.value))).value
@@ -1590,7 +1598,7 @@ const nolib = {
     construct: {
       args: ["args", "__graph_value", "_lib"],
       fn: (args, nodevalue, _lib) => new (Function.prototype.bind.apply(
-        nodysseus_get(_lib, nodevalue, _lib, window[nodevalue]), 
+        nodysseus_get(_lib.data, nodevalue, _lib, window[nodevalue]), 
         [null, ...(args === undefined ? [] : Array.isArray(args) ? args : [args])])
       )
     },
