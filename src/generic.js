@@ -7598,7 +7598,7 @@ const generic = {
         },
         {
           "id": "l4o1umt",
-          "value": "return _lib.no.runtime.refs().filter(r => r.startsWith('@' + namespace + '.') || r === namespace)",
+          "value": "return _lib.no.runtime.refs().filter(r => r.id.startsWith('@' + namespace + '.') || r === namespace)",
           "ref": "script"
         },
         {
