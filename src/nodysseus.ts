@@ -1,7 +1,8 @@
 import set from "just-safe-set";
 import loki from "lokijs";
 import { ancestor_graph, ispromise, isWrappedPromise, mapMaybePromise, node_args, WrappedPromise, wrapPromise, wrapPromiseAll } from "./util"
-import { isNodeGraph, Graph, LokiT, Node, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, combineEnv, Env, newLib, newEnv, isEnv, mergeEnv } from "./types"
+import { isNodeGraph, Graph, LokiT, Node, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib } from "./types"
+import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util"
 import generic from "./generic.js";
 import { create_fn, expect, now } from "./externs";
 
@@ -134,6 +135,9 @@ export const nodysseus_get = (obj: Record<string, any>, propsArg: string, lib: L
     }
 
     prop = props.length == 0 ? props[0] : props.shift();
+    if(propsArg === "extern.return" && !obj[prop]) {
+      debugger;
+    }
     if((obj === undefined || typeof obj !== 'object' || (obj[prop] === undefined && !(obj.hasOwnProperty && obj.hasOwnProperty(prop))))){
         return isEnv(objArg) ? nodysseus_get(objArg.env, propsArg, lib, defaultValue) : defaultValue;
     }
@@ -409,7 +413,7 @@ const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, args:
 
 const run_runnable = (runnable: Runnable, lib: Lib, args: Record<string, any> = {}): Result | Promise<Result> => 
     isConstRunnable(runnable)
-    ? run_graph(runnable.graph, runnable.fn, mergeEnv(args, runnable.env), {...lib, ...(runnable.lib ?? {})})
+    ? run_graph(runnable.graph, runnable.fn, mergeEnv(args, runnable.env), mergeLib(runnable.lib, lib))
     : isApRunnable(runnable)
     ? run_ap_runnable(runnable, args, lib)
     : isFunctorRunnable(runnable)
@@ -428,7 +432,7 @@ const run_node = (node: Node | Runnable, nodeArgs: Record<string, ConstRunnable>
         const graphid = nodysseus_get(graphArgs, "__graphid", lib)?.value;
         const nodegraphargs: Env = node.env ?? newEnv({}, graphArgs._output)
         nodegraphargs.data.__graphid = graphid ?? lib.data.no.of(node.graph.id);
-        lib = node.lib ? {...lib, ...node.lib} : lib;
+        lib = mergeLib(node.lib, lib)
 
         return node_nodes(node.graph, node.fn, nodeArgs, nodegraphargs, lib)
       }
@@ -585,10 +589,10 @@ const getorset = (map, id, value_fn=undefined) => {
 const base_node = node => node.ref || node.extern ? ({id: node.id, value: node.value, name: node.name, ref: node.ref}) : base_graph(node);
 const base_graph = graph => ({id: graph.id, value: graph.value, name: graph.name, nodes: graph.nodes, edges: graph.edges, out: graph.out})
 
-export const run = (node: Runnable | InputRunnable, lib: Lib | undefined = undefined, store: NodysseusStore = nodysseus, args: Record<string, any> = {}) => {
+export const run = (node: Runnable | InputRunnable, args: Record<string, any> = {}, lib: Lib | undefined = undefined, store: NodysseusStore = nodysseus) => {
   initStore(store);
 
-  let _lib: Lib = (isRunnable(node) && isValue(node) ? (lib ?? newLib(nolib)) : lib?.__kind === "lib" ? lib : newLib(lib)) ?? (lib ?? newLib(nolib))
+  let _lib: Lib = mergeLib(lib, newLib(nolib))
   if(isRunnable(node) && isValue(node)) {
     return node.value;
   }
@@ -691,7 +695,7 @@ const nolib = {
       const getorsetgraph = (graph, id) => nodysseus.graphs.get(id) ?? (nodysseus.graphs.add(id, graph), graph)
       let animationframe;
       let animationerrors = [];
-      const publish = (event, data, lib) => {
+      const publish = (event, data, lib: Lib) => {
         const runpublish = (data) => {
           event_data.set(event, data);
 
@@ -704,7 +708,7 @@ const nolib = {
                 l.graph,
                 l.fn,
                 Object.assign({}, l.args || {}, { data }),
-                l.lib ? {...lib, ...l.lib} : lib
+                mergeLib(l.lib, lib)
               );
             }
           }
@@ -738,15 +742,14 @@ const nolib = {
         remove = false,
         graph_id = false,
         prevent_initial_trigger = false,
-        lib = nolib
+        lib: Lib = {__kind: "lib", data: nolib}
       ) => {
         const listeners = getorset(event_listeners, event, () => new Map());
         const fn =
           typeof input_fn === "function"
             ? input_fn
             : (args) => {
-                run_graph(input_fn.graph, input_fn.fn, combineEnv(args, input_fn.args), 
-                          input_fn.lib ? {...lib, ...input_fn.lib} : lib);
+                run_graph(input_fn.graph, input_fn.fn, combineEnv(args, input_fn.args), mergeLib(input_fn.lib, lib));
               };
         if (!listeners.has(listener_id)) {
           if (!prevent_initial_trigger) {
@@ -1173,7 +1176,7 @@ const nolib = {
         const edgemap = { value, display, subscribe, argslist, lib };
         const runedge = output && output === display ? display : edgemap[output] ? output : "value";
 
-        const return_result = (_lib, args) => {
+        const return_result = (_lib: Lib, args) => {
           const runedgeresult = edgemap[runedge]
             ? run_runnable(edgemap[runedge], _lib, { ...args, _output: _lib.data.no.of(runedge === "display" ? "display" : "value") })
             : runedge === "value" && !value && display
@@ -1183,7 +1186,6 @@ const nolib = {
           if (edgemap.subscribe) {
             const subscriptions = wrapPromise(run_runnable(
               edgemap.subscribe,
-              edgemap.subscribe.lib ? {...edgemap.subscribe.lib, ..._lib} : _lib,
               args,
             ))
 
@@ -1201,7 +1203,12 @@ const nolib = {
         }
 
         const ret = wrapPromise(run_runnable(lib, _lib))
-          .then(lib => wrapPromise(argsfn ? run_runnable({...argsfn, lib: {..._lib, ...lib}}, _lib) : undefined).then(args => return_result(lib ?? _lib, args?.value))).value
+            .then(lib => lib?.value)
+            .then(lib => wrapPromise(argsfn ? run_runnable({
+                ...argsfn, 
+                lib: mergeLib(lib, _lib)
+              }, _lib) : undefined)
+              .then(args => return_result(mergeLib(lib, _lib), args?.value))).value
         return ret;
       },
     },

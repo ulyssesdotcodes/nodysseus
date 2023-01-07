@@ -1,6 +1,7 @@
 import { initStore, nolib, run } from "./nodysseus"
 import {expect, test} from "@jest/globals"
-import {Graph, newEnv} from "./types"
+import {Graph} from "./types"
+import {newEnv} from "./util"
 
 test('returning a single value', () => {
   const val = {A: "x"};
@@ -130,7 +131,7 @@ test('applying an fn twice', () => {
   }
 
   const inval = {x: "A"}
-  run({graph: run_fn, fn: "out"}, undefined, undefined, {"input": inval});
+  run({graph: run_fn, fn: "out"}, {"input": inval});
   expect(inval.x).toBe("B")
 })
 
@@ -165,7 +166,7 @@ test('applying a fn once', () => {
   }
 
   const inval = {x: "A"}
-  console.log(run({graph: run_fn, fn: "out"}, undefined, undefined, newEnv({"input": inval})));
+  console.log(run({graph: run_fn, fn: "out"}, newEnv({"input": inval})));
   expect(inval.x).toBe("B")
 })
 

@@ -41,6 +41,7 @@
     "fuse.js": "^6.4.6",
     "hyperapp": "^2.0.22",
     "idb": "^7.1.0",
+    "just-extend": "^6.2.0",
     "just-safe-get": "^4.0.1",
     "just-safe-set": "^4.0.1",
     "lokijs": "^1.5.12",

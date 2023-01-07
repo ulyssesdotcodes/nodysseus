@@ -684,13 +684,13 @@ const CreateNode = (state, {node, child, child_as, parent}) => [
         history: state.history.concat([{action: 'add_node', node, child, child_as}])
     },
     [dispatch => {
-        nolib.no.runtime.add_node(state.display_graph, node, {...hlib, ...nolib})
+        nolib.no.runtime.add_node(state.display_graph, node, hlib)
         nolib.no.runtime.update_edges(state.display_graph, 
             parent 
                 ? [{from: node.id, to: child, as: parent.as}, {from: parent.from, to: node.id, as: 'arg0'}] 
                 : [{from: node.id, to: child, as: child_as}], 
             parent ? [{from: parent.from, to: child}] : []
-        , {...hlib, ...nolib})
+        , hlib)
         // Hacky - have to wait until the node is finished adding and the graph callback takes place before updating selected node.
         setTimeout(() => requestAnimationFrame(() => dispatch(SelectNode, {node_id: node.id})), 50);
     }]
@@ -702,7 +702,7 @@ const DeleteNode = (state, {node_id}) => [
         history: state.history.concat([{action: 'delete_node', node_id}]) 
     },
     [(dispatch, {node_id}) => requestAnimationFrame(() => dispatch(SelectNode, {node_id})), {node_id: nolib.no.runtime.get_edge_out(state.display_graph, node_id).to}],
-    [() => nolib.no.runtime.delete_node(state.display_graph, node_id, {...hlib, ...nolib})]
+    [() => nolib.no.runtime.delete_node(state.display_graph, node_id, hlib)]
 ]
 
 const ExpandContract = (state, {node_id}) => {
@@ -726,14 +726,14 @@ const CreateRef = (state, {node}) => [
     state,
     [dispatch => {
         const graph = {...base_graph(node), id: node.name, value: undefined};
-        nolib.no.runtime.change_graph(base_graph(graph), {...hlib, ...nolib});
+        nolib.no.runtime.change_graph(base_graph(graph), hlib);
         save_graph(graph);
         nolib.no.runtime.add_node(state.display_graph, {
             id: node.id,
             value: node.value,
             ref: node.name,
             name: undefined,
-        }, {...hlib, ...nolib});
+        }, hlib);
     }]
 ]
 
@@ -748,7 +748,7 @@ const Paste = state => [
         Object.values(state.copied.graph.nodes).forEach(n => {
             const new_id = create_randid();
             node_id_map[n.id] = new_id;
-            nolib.no.runtime.add_node(state.display_graph, {...n, id: new_id}, {...hlib, ...nolib})
+            nolib.no.runtime.add_node(state.display_graph, {...n, id: new_id}, hlib)
         });
         nolib.no.runtime.update_edges(
             state.display_graph, 
@@ -756,7 +756,7 @@ const Paste = state => [
                 .map(e => ({...e, from: node_id_map[e.from], to: node_id_map[e.to]}))
                 .concat([{from: node_id_map[state.copied.root], to: state.selected[0], as: state.copied.as}]),
           [],
-          {...hlib, ...nolib}
+          hlib
             );
         requestAnimationFrame(() => dispatch(SelectNode, {node_id: node_id_map[state.copied.root], focus_property: 'edge'}))
     }]
@@ -802,7 +802,7 @@ const ChangeDisplayGraphId = (dispatch, {id, select_out, display_graph_id}) => {
                 requestAnimationFrame(() => {
                     update_graph_list(id)
                     const new_graph = graph ?? Object.assign({}, base_graph(state.display_graph), {id});
-                    nolib.no.runtime.change_graph(new_graph, {...hlib, ...nolib});
+                    nolib.no.runtime.change_graph(new_graph, hlib);
                     nolib.no.runtime.remove_graph_listeners(state.display_graph_id);
                     dispatch(s => {
                         const news = {...s, display_graph: new_graph, selected: [new_graph.out], display_graph_id: new_graph.id}
@@ -846,11 +846,11 @@ const Search = (state, {payload, nodes}) => {
 }
 
 const UpdateNodeEffect = (_, {display_graph, node}) => {
-  nolib.no.runtime.add_node( display_graph, node, {...hlib, ...nolib})
+  nolib.no.runtime.add_node( display_graph, node, hlib)
   const edges_in = nolib.no.runtime.get_edges_in(display_graph, node.id);
   const nodeargs = node_args(nolib, display_graph, node.id);
   if(edges_in.length === 1 && nodeargs.length === 2) {
-    nolib.no.runtime.update_edges(display_graph, [{...edges_in[0], as: nodeargs[0].name}], [], {...hlib, ...nolib})
+    nolib.no.runtime.update_edges(display_graph, [{...edges_in[0], as: nodeargs[0].name}], [], hlib)
   }
 }
 
@@ -869,7 +869,7 @@ const UpdateNode = (state, {node, property, value, display_graph}) => [
 
 const UpdateEdge = (state, {edge, as}) => [
     state,
-    [() => nolib.no.runtime.update_edges(state.display_graph, {...edge, as}, edge, {...hlib, ...nolib})]
+    [() => nolib.no.runtime.update_edges(state.display_graph, {...edge, as}, edge, hlib)]
 ]
 
 const OpenMenu = state => [{...state, menu: true}]
@@ -1236,7 +1236,7 @@ const runapp = (init, load_graph, _lib) => {
             info_display_dispatch = info_display(init.html_id);
             custom_editor_display_dispatch = custom_editor_display(init.html_id)
             refresh_custom_editor()
-            nolib.no.runtime.change_graph(base_graph(init.display_graph), {...hlib, ...nolib})
+            nolib.no.runtime.change_graph(base_graph(init.display_graph), hlib)
         })],
         [ChangeDisplayGraphId, {id: load_graph, select_out: true, display_graph_id: undefined}],
         [UpdateSimulation, {...init, action: SimulationToHyperapp}],
@@ -1551,7 +1551,7 @@ const middleware = dispatch => (ha_action, ha_payload) => {
 
                 const effects = (result.effects ?? []).filter(e => e).map(e => {
                     if(isRunnable(e)) {
-                        const effect_fn = hlib.run_runnable(e, {});
+                        const effect_fn = hlib.run_runnable(e);
                         // Object.defineProperty(effect_fn, 'name', {value: e.fn, writable: false})
                         return effect_fn;
                     }
@@ -1936,6 +1936,7 @@ const yNodyStore = async () => {
 }
 
 const hlib = {
+    ...nolib,
     ha: { 
         middleware, 
         h: {
@@ -1961,8 +1962,8 @@ const hlib = {
     get_asset: (id, b) => id && nodysseusStore.assets.get(id),
     remove_asset: id => nodysseusStore.assets.remove(id),
     panzoom: pzobj,
-    run: (graph, fn, args) => run({graph, fn}, {...hlib, ...nolib}, nodysseusStore, args),
-    run_runnable: (runnable, args) => run(runnable, {...hlib, ...nolib}, nodysseusStore, args),
+    run: (graph, fn, args) => run({graph, fn, lib: hlib}, args, nodysseusStore),
+    run_runnable: (runnable, args) => run(runnable, args, nodysseusStore),
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX }
 }
 

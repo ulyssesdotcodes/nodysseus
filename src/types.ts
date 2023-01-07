@@ -114,7 +114,7 @@ export type Lib = {
   data: Record<string, any>
 }
 
-export const newLib = (data): Lib => ({__kind: "lib", data})
+export const isLib = (lib: any) => lib?.__kind === "lib";
 
 export type Env = {
   __kind: "env",
@@ -124,25 +124,6 @@ export type Env = {
   node_id?: string,
 }
 
-export const newEnv = (data, _output?): Env => ({__kind: "env", data, _output})
-export const combineEnv = (data, env: Env, node_id?: string, _output?: string): Env => {
-  if(isEnv(data)) {
-    throw new Error("Can't create an env with env data")
-  }
-  return ({__kind: "env", data, env, node_id, _output})
-}
-export const mergeEnv = (data, env: Env): Env => {
-  if(isRunnable(data)) {
-    throw new Error("Can't merge a runnable")
-  }
-
-  return {
-  __kind: "env", 
-    data: {...env.data, ...data, _output: undefined}, 
-    env: env.env, 
-    _output: Object.hasOwn(data, "_output") ? isValue(data._output) ? data._output.value : data._output : env._output
-  }
-}
 export const isEnv = (env: any) => env?.__kind === "env"
 
 

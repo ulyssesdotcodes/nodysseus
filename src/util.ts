@@ -1,5 +1,6 @@
 import { ForceLink, SimulationLinkDatum, SimulationNodeDatum } from "d3-force";
-import { d3Link, d3Node, Edge, Graph, GraphNode, Node, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable } from "./types";
+import { d3Link, d3Node, Edge, Graph, GraphNode, Node, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable, isEnv, isRunnable, isValue, Lib, isLib, Env } from "./types";
+import extend from "just-extend";
 
 export const ispromise = <T>(a: any): a is Promise<T> => a && typeof a.then === 'function' && !isWrappedPromise(a);
 export const isWrappedPromise = <T>(a: any): a is WrappedPromise<T> => a && a.__kind === "wrapped";
@@ -397,3 +398,35 @@ export const calculateLevels = (nodes: Array<d3Node>, links: Array<d3Link>, grap
         connected_vertices
     }
 }
+
+
+
+/*
+ * Type utils
+ */
+
+export const newEnv = (data, _output?): Env => ({__kind: "env", data, _output})
+export const combineEnv = (data, env: Env, node_id?: string, _output?: string): Env => {
+  if(isEnv(data)) {
+    throw new Error("Can't create an env with env data")
+  }
+  return ({__kind: "env", data, env, node_id, _output})
+}
+export const mergeEnv = (data, env: Env): Env => {
+  if(isRunnable(data)) {
+    throw new Error("Can't merge a runnable")
+  }
+
+  return {
+  __kind: "env", 
+    data: {...env.data, ...data, _output: undefined}, 
+    env: env.env, 
+    _output: Object.hasOwn(data, "_output") ? isValue(data._output) ? data._output.value : data._output : env._output
+  }
+}
+
+export const newLib = (data): Lib => ({__kind: "lib", data})
+export const mergeLib = (a: Record<string, any> | Lib, b: Lib): Lib => (a ? {
+  __kind: "lib",
+  data: extend({}, isLib(a) ? a.data : a, b.data)
+}: b)
