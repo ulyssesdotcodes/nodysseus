@@ -80,8 +80,9 @@ export type BaseRunnable = {
   lib: Lib,
 }
 
-export type InputRunnable = Omit<BaseRunnable, "__kind" | "env"> & {
-  env?: Env
+export type InputRunnable = Omit<BaseRunnable, "__kind" | "env" | "lib"> & {
+  env?: Env,
+  lib?: Lib
 };
 
 export type ApRunnable = {

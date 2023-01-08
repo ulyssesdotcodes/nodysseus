@@ -1810,7 +1810,7 @@ const generic = {
         {
           "id": "set_state_val",
           "ref": "script",
-          "value": "_lib.no.runtime.update_args(graphid, {[path]: value}); return value"
+          "value": "console.log('setting'); console.log(value); _lib.no.runtime.update_args(graphid, {[path]: value}); return value"
         },
         {
           "id": "set_state_val_runnable_args",
@@ -1937,12 +1937,12 @@ const generic = {
         {
           "id": "update_event",
           "ref": "arg",
-          "value": "event_name"
+          "value": "name"
         },
         {
           "id": "update_data",
           "ref": "arg",
-          "value": "event_data"
+          "value": "data"
         },
         {
           "id": "name",
@@ -1951,7 +1951,7 @@ const generic = {
         {
           "id": "update",
           "ref": "script",
-          "value": "return _lib.no.runtime.publish(event_name, {data: event_data})"
+          "value": "return _lib.no.runtime.publish(event_name, event_data)"
         },
         {
           "id": "ap_args"
@@ -1978,18 +1978,13 @@ const generic = {
         },
         {
           "from": "name",
-          "to": "ap_args",
+          "to": "update",
           "as": "event_name"
         },
         {
           "from": "value",
           "to": "ap_args",
           "as": "event_data"
-        },
-        {
-          "from": "update_event",
-          "to": "update",
-          "as": "event_name"
         },
         {
           "from": "update_data",
@@ -2760,7 +2755,7 @@ const generic = {
         {
           "id": "fn",
           "ref": "script",
-          "value": "return Object.values(args)"
+          "value": "console.log(args); return Object.values(args)"
         },
         {
           "id": "out",
@@ -7598,7 +7593,7 @@ const generic = {
         },
         {
           "id": "l4o1umt",
-          "value": "return _lib.no.runtime.refs().filter(r => r.id.startsWith('@' + namespace + '.') || r === namespace)",
+          "value": "return _lib.no.runtime.refs().filter(r => r.id.startsWith('@' + namespace + '.') || r.id === namespace)",
           "ref": "script"
         },
         {

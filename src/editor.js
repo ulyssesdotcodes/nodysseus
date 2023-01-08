@@ -477,10 +477,10 @@ const result_subscription = (dispatch, {display_graph_id, norun}) => {
     nolib.no.runtime.add_listener('grapherror', 'update_hyperapp_error', error_listener);
 
     const change_listener = graph => {
-        if(graph.id === display_graph_id && !animrun) {
+        if((graph.id === display_graph_id || graph.graphid === display_graph_id) && !animrun) {
             cancelAnimationFrame(animrun)
             animrun = requestAnimationFrame(() => {
-                const result = refresh_graph(graph, dispatch, norun)
+                const result = refresh_graph(nolib.no.runtime.get_ref(display_graph_id), dispatch, norun)
                 const reset_animrun = () => animrun = false;
                 ap_promise(result, reset_animrun, reset_animrun)
             })
@@ -983,8 +983,8 @@ const input_el = ({label, property, value, onchange, options, inputs, disabled})
             name: `edit-text-${property}`, 
             disabled,
             list: options && options.length > 0 ? `edit-text-list-${property}` : undefined,
-            oninput: (s, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: e.target.value})}], 
-            onchange: (s, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: undefined})}, [dispatch => dispatch(onchange, e)]],
+            oninput: oninput && ((s, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: e.target.value})}]), 
+            onchange: onchange && ((s, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: undefined})}, [dispatch => dispatch(onchange, e)]]),
             onfocus: (state, event) => [{...state, focused: event.target.id}],
             onblur: (state, event) => [{...state, focused: false}],
             value: inputs[`edit-text-${property}`] ?? value
@@ -1037,7 +1037,7 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
                     value: node.ref,
                     property: 'ref',
                     inputs,
-                    onchange: (state, event) => [UpdateNode, {node, property: "ref", value: event.target.value}],
+                    // onchange: (state, event) => [UpdateNode, {node, property: "ref", value: event.target.value}],
                     disabled: node.id === graph_out
                 }),
                 link_out && link_out.source && input_el({
@@ -1260,7 +1260,9 @@ const runapp = (init, load_graph, _lib) => {
           showOnFocus: true,
           onSelect: item => {
             document.getElementById("edit-text-ref").value = item.value;
-            dispatch([UpdateNode, {property: "ref", value: item.value}])
+            requestAnimationFrame(() => {
+              dispatch([UpdateNode, {property: "ref", value: item.value}])
+            })
           },
           render: item => {
             const itemEl = document.createElement("div")

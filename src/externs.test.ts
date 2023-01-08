@@ -17,7 +17,8 @@ describe('create_fn', () => {
         },
         edges: {}
       }, 
-      env: newEnv({})
+      env: newEnv({}),
+      lib: newLib(nolib)
     }, newLib(nolib))
 
     expect(fn()).toEqual(2);
@@ -39,7 +40,8 @@ describe('create_fn', () => {
           inval: {from: "inval", to: "ret", as: "inval"}
         }
       },
-      env: newEnv({})
+      env: newEnv({}),
+      lib: newLib(nolib)
     }, newLib(nolib))
 
     expect(fn({value: 2})).toEqual(3);
@@ -63,7 +65,8 @@ describe('create_fn', () => {
           newval: {from: "newval", to: "setval", as: "value"}
         }
       },
-      env: newEnv({})
+      env: newEnv({}),
+      lib: newLib(nolib)
     }, newLib(nolib))
 
     expect(fn({value: {x: 0}}).x).toEqual(3);
