@@ -428,5 +428,5 @@ export const mergeEnv = (data, env: Env): Env => {
 export const newLib = (data): Lib => ({__kind: "lib", data})
 export const mergeLib = (a: Record<string, any> | Lib, b: Lib): Lib => (a ? {
   __kind: "lib",
-  data: extend({}, isLib(a) ? a.data : a, b.data)
+  data: Object.assign({}, isLib(a) ? a.data : a, b.data)
 }: b)

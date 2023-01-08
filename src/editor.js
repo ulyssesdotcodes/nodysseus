@@ -523,6 +523,7 @@ const result_subscription = (dispatch, {display_graph_id, norun}) => {
 }
 
 const pzobj = {
+    animationframe: false,
     effect: function(dispatch, payload){
         if(!hlib.panzoom.instance || !payload.node_id){ return; }
         pzobj.lastpanzoom = performance.now();
@@ -541,10 +542,16 @@ const pzobj = {
         hlib.panzoom.instance.zoomTo(x, y, 1 / scale)
 
         if(!payload.prevent_dispatch) {
-            requestAnimationFrame(() => dispatch((s, p) => [ 
-                { ...s, show_all: false, },
-                [() => requestAnimationFrame(() => nolib.no.runtime.publish('show_all', {data: false}))]
-            ]));
+            if(pzobj.animationframe) {
+              cancelAnimationFrame(pzobj.animationframe)
+            }
+            pzobj.animationframe = requestAnimationFrame(() => {
+              pzobj.animationframe = false;
+              dispatch((s, p) => [ 
+                  { ...s, show_all: false, },
+                  [() => requestAnimationFrame(() => nolib.no.runtime.publish('show_all', {data: false}))]
+              ])
+            });
         }
     },
     getTransform: function() {
@@ -1629,8 +1636,10 @@ const createStore = () => {
   })
 }
 const ydocStore = async (persist = false, update = undefined) => {
-  const ydoc = new Y.Doc()
-  const ymap = ydoc.getMap()
+  const ydoc = new Y.Doc();
+  const ymap = ydoc.getMap();
+  const simpleYDoc = new Y.Doc();
+  const simpleYMap = simpleYDoc.getMap();
 
 
   if(update) {
@@ -1638,6 +1647,12 @@ const ydocStore = async (persist = false, update = undefined) => {
       if(!event.transaction.local || event.transaction.origin === undoManager) {
         update(event)
       }
+
+      simpleYDoc.transact(() => {
+        for(let k of event.keysChanged) {
+          simpleYMap.set(k, ymap.get(k)?.toJSON())
+        }
+      })
     })
   }
   const params = new URLSearchParams(location.search)
@@ -1733,28 +1748,42 @@ const ydocStore = async (persist = false, update = undefined) => {
     }
   }
 
+  const updateSimple = id => {
+    simpleYDoc.transact(() => {
+      simpleYMap.set(id, ymap.get(id).toJSON())
+    })
+  }
+
   const add_node = (graphId, node) => {
     ydoc.transact(() => {
       ymap.get(graphId).get("nodes").set(node.id, node)
     })
+
+    updateSimple(graphId)
   }
 
   const remove_node = (graphId, node) => {
     ydoc.transact(() => {
       ymap.get(graphId).get("nodes").delete(typeof node === "string" ? node : node.id)
     })
+
+    updateSimple(graphId)
   }
 
   const add_edge = (graphId, edge) => {
     ydoc.transact(() => {
       ymap.get(graphId).get("edges").set(edge.from, edge)
     })
+
+    updateSimple(graphId)
   }
 
   const remove_edge = (graphId, edge) => {
     ydoc.transact(() => {
       ymap.get(graphId).get("edges").delete(edge.from)
     })
+
+    updateSimple(graphId)
   }
 
   if(persist) {
@@ -1851,9 +1880,10 @@ const ydocStore = async (persist = false, update = undefined) => {
     }
 
     // ymap.get(id).load()
-    const frommap = ymap.get(id)?.toJSON();
+    // const frommap = ymap.get(id)?.toJSON();
     // const res = frommap?.nodes && frommap?.edges ? {...frommap, nodes: frommap.nodes, edges: frommap.edges} : frommap;
-    const res = frommap;
+    const res = simpleYMap.get(id);
+      //frommap;
     if(res && Object.keys(res).length === 0) {
       const val = get("simple");
       val.id = id;

@@ -77,7 +77,7 @@ export type BaseRunnable = {
   fn: string,
   graph: Graph,
   env: Env,
-  lib?: Lib,
+  lib: Lib,
 }
 
 export type InputRunnable = Omit<BaseRunnable, "__kind" | "env"> & {
@@ -88,7 +88,7 @@ export type ApRunnable = {
   __kind: "ap",
   fn: FunctorRunnable | Array<FunctorRunnable>,
   args: ConstRunnable,
-  lib?: Lib
+  lib: Lib
 }
 
 export type ConstRunnable = BaseRunnable & {

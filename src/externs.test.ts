@@ -1,12 +1,14 @@
 import {describe, expect, test} from "@jest/globals"
 import {initStore, nolib} from "./nodysseus"
 import { create_fn } from "./externs"
+import { newEnv, newLib } from "./util"
 
 describe('create_fn', () => {
   test('parsing a single script', async () => {
     initStore()
 
     const fn = create_fn({
+      __kind: "const",
       fn: 'set',
       graph: {
         id: expect.getState().currentTestName,
@@ -14,9 +16,9 @@ describe('create_fn', () => {
           set: {id: "set", ref: "script", value: "return 1 + 1"}
         },
         edges: {}
-      },
-      args: {}
-    }, nolib)
+      }, 
+      env: newEnv({})
+    }, newLib(nolib))
 
     expect(fn()).toEqual(2);
   })
@@ -25,6 +27,7 @@ describe('create_fn', () => {
     initStore()
 
     const fn = create_fn({
+      __kind: "const",
       fn: 'ret',
       graph: {
         id: expect.getState().currentTestName,
@@ -36,8 +39,8 @@ describe('create_fn', () => {
           inval: {from: "inval", to: "ret", as: "inval"}
         }
       },
-      args: {}
-    }, nolib)
+      env: newEnv({})
+    }, newLib(nolib))
 
     expect(fn({value: 2})).toEqual(3);
   })
@@ -46,6 +49,7 @@ describe('create_fn', () => {
     initStore()
 
     const fn = create_fn({
+      __kind: "const",
       fn: 'setval',
       graph: {
         id: expect.getState().currentTestName,
@@ -59,8 +63,8 @@ describe('create_fn', () => {
           newval: {from: "newval", to: "setval", as: "value"}
         }
       },
-      args: {}
-    }, nolib)
+      env: newEnv({})
+    }, newLib(nolib))
 
     expect(fn({value: {x: 0}}).x).toEqual(3);
   })

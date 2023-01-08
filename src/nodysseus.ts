@@ -406,14 +406,15 @@ const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, args:
     fnargs: args ? [...new Set(args.value ? Object.keys(args.value).map(k => k.includes(".") ? k.substring(0, k.indexOf('.')) : k) : [])] : [],
     env: fn.env,
     graph: fn.graph,
-    fn: fn.fn
+    fn: fn.fn,
+    lib
   }))
   return ret;
 }
 
 const run_runnable = (runnable: Runnable, lib: Lib, args: Record<string, any> = {}): Result | Promise<Result> => 
     isConstRunnable(runnable)
-    ? run_graph(runnable.graph, runnable.fn, mergeEnv(args, runnable.env), mergeLib(runnable.lib, lib))
+    ? run_graph(runnable.graph, runnable.fn, mergeEnv(args, runnable.env), runnable.lib)
     : isApRunnable(runnable)
     ? run_ap_runnable(runnable, args, lib)
     : isFunctorRunnable(runnable)
@@ -551,7 +552,8 @@ const run_functor_runnable = (runnable: FunctorRunnable, args: Record<string, un
     __kind: "const",
     env: combineEnv(execArgs ?? {}, runnable.env, "functor runnable" + runnable.fn),
     fn: runnable.fn,
-    graph: runnable.graph
+    graph: runnable.graph,
+    lib
   }
   return run_runnable(newRunnable, lib)
 }
@@ -602,8 +604,8 @@ export const run = (node: Runnable | InputRunnable, args: Record<string, any> = 
 
   const res = run_runnable(
     isRunnable(node) 
-      ? node 
-      : {...node, __kind: "const", env: node.env ?? newEnv({__graphid: _lib.data.no.of(node.graph.id)})
+      ? {...node, lib: node.lib && isLib(node.lib) ? mergeLib(node.lib, _lib) :  _lib}
+      : {...node, __kind: "const", env: node.env ?? newEnv({__graphid: _lib.data.no.of(node.graph.id)}), lib: _lib
         // mergeEnv(
         //   Object.fromEntries(Object.entries(args ?? {}).map(e => [e[0], _lib.data.no.of(e[1])])), 
         //   node.env ?? newEnv({__graphid: _lib.data.no.of(node.graph.id)})
@@ -1049,6 +1051,7 @@ const nolib = {
           __kind: "ap",
           fn: Array.isArray(fnRunnable) ? fnRunnable.filter(v => v) : fnRunnable,
           args,
+          lib
         });
         return fnResult.then(fnr => apRunnable(fnr.value))
           .then(apfn => run ? run_runnable(apfn, lib) : apfn).then(res => lib.data.no.of(res)).value
@@ -1099,7 +1102,8 @@ const nolib = {
                       let errored = false;
                       const errorlistener = (error) => errored = true;
 
-                      lib.data.no.runtime.add_listener('grapherror', fnrunnable.graph.id, errorlistener)
+                      // TODO: rethink. Too costly for now
+                      // lib.data.no.runtime.add_listener('grapherror', fnrunnable.graph.id, errorlistener)
 
                       const ret = mapobjarr(
                         objectvalue,
@@ -1110,7 +1114,7 @@ const nolib = {
                         initial
                       );
 
-                      lib.data.no.runtime.remove_listener('grapherror', fnrunnable.graph.id, errorlistener)
+                      // lib.data.no.runtime.remove_listener('grapherror', fnrunnable.graph.id, errorlistener)
 
                       return lib.data.no.of(ret);
                     })))
