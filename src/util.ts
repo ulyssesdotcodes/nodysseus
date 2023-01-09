@@ -257,7 +257,7 @@ export const ancestor_graph = (node_id: string, from_graph: Graph, nolib: Record
     return graph;
 }
 
-export const node_args = (nolib, graph: Graph, node_id): Array<NodeArg> => {
+export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Array<NodeArg> => {
     const node = nolib.no.runtime.get_node(graph, node_id);
     if(!node) {
         // between graph update and simulation update it's possible links are bad

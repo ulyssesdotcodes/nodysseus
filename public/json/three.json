@@ -197,7 +197,7 @@
         "to": "main/out",
         "as": "value"
       }
-    },
+    }
   },
   {
     "id": "@three.scene",
@@ -241,7 +241,7 @@
         "to": "main/out",
         "as": "value"
       }
-    },
+    }
   },
   {
     "id": "@three.setup",
@@ -809,80 +809,7 @@
       },
       "yai4q6q": {
         "id": "yai4q6q",
-        "out": "yai4q6q",
-        "nodes": {
-          "yai4q6q": {
-            "id": "yai4q6q",
-            "ref": "array"
-          },
-          "p9plj5n": {
-            "id": "p9plj5n",
-            "ref": "html_text"
-          },
-          "ffp87am": {
-            "id": "ffp87am",
-            "ref": "slider"
-          },
-          "wc64ttm": {
-            "id": "wc64ttm",
-            "value": "testing.state",
-            "ref": "arg"
-          },
-          "cgtq1da": {
-            "id": "cgtq1da",
-            "ref": "ap"
-          },
-          "rr0o319": {
-            "id": "rr0o319",
-            "value": "testing.set",
-            "ref": "arg"
-          },
-          "o47d2kv": {
-            "id": "o47d2kv"
-          },
-          "gljdsjo": {
-            "id": "gljdsjo",
-            "value": "event.target.value",
-            "ref": "arg"
-          }
-        },
-        "edges": {
-          "p9plj5n": {
-            "from": "p9plj5n",
-            "to": "yai4q6q",
-            "as": "arg0"
-          },
-          "ffp87am": {
-            "from": "ffp87am",
-            "to": "yai4q6q",
-            "as": "arg1"
-          },
-          "wc64ttm": {
-            "from": "wc64ttm",
-            "to": "p9plj5n",
-            "as": "text"
-          },
-          "cgtq1da": {
-            "from": "cgtq1da",
-            "to": "ffp87am",
-            "as": "onchange"
-          },
-          "rr0o319": {
-            "from": "rr0o319",
-            "to": "cgtq1da",
-            "as": "fn"
-          },
-          "o47d2kv": {
-            "from": "o47d2kv",
-            "to": "cgtq1da",
-            "as": "args"
-          },
-          "gljdsjo": {
-            "from": "gljdsjo",
-            "to": "o47d2kv",
-            "as": "value"
-          }
-        }
+        "ref": "array"
       },
       "ffp87am": {
         "id": "ffp87am",
@@ -969,7 +896,7 @@
       },
       "iwzvdj8": {
         "id": "iwzvdj8",
-        "value": "const item_size = 3;\n\n\n// Object.entries(inputgeo.attributes)\n//   .forEach(kv => {\n//     initgeo.setAttribute(kv[0], kv[0] === attribute ? inputgeo.getAttribute(kv[0]).clone() : inputgeo.getAttribute(kv[0]));\n//     });\n\ninitgeo.copy(inputgeo);\n\nif(!initgeo.hasAttribute(attribute) || initgeo.getAttribute(attribute)?.count !== inputgeo.getAttribute(\"position\")?.count) {\n  initbuffer.buffer = new _lib.THREE.BufferAttribute(new Float32Array(inputgeo.getAttribute(\"position\").count * item_size), item_size);\n}\n\nif(!inputgeo.hasAttribute(attribute)) {\n  initgeo.setAttribute(attribute, initbuffer.buffer.clone());\n}\n\nconst attrs = Object.keys(initgeo.attributes);\nconst count = initgeo.getAttribute(\"position\").count;\nconst point_data = {};\n\nfor(let i = 0; i < count; i++){\n  attrs.map(attr => {\n  point_data[attr] = initgeo.getAttribute(attr).array.subarray(i * item_size, (i + 1) * item_size);\n    })\n  fn({point_data, index: i})\n}\n\ninitgeo.getAttribute(attribute).needsUpdate = true;\n\n//console.log(inputgeo);\n//console.log(initgeo);\n\nreturn initgeo;",
+        "value": "const item_size = 3;\n\n// Object.entries(inputgeo.attributes)\n//   .forEach(kv => {\n//     initgeo.setAttribute(kv[0], kv[0] === attribute ? inputgeo.getAttribute(kv[0]).clone() : inputgeo.getAttribute(kv[0]));\n//     });\nif(!feedback || initgeo.getAttribute(\"position\")?.count === 0) {\n  initgeo.copy(inputgeo);\n}\n\nif(!initgeo.hasAttribute(attribute) || initgeo.getAttribute(attribute)?.count !== inputgeo.getAttribute(\"position\")?.count) {\n  initbuffer.buffer = new _lib.THREE.BufferAttribute(new Float32Array(inputgeo.getAttribute(\"position\").count * item_size), item_size);\n}\n\nif(!inputgeo.hasAttribute(attribute)) {\n  initgeo.setAttribute(attribute, initbuffer.buffer.clone());\n}\n\nconst attrs = Object.keys(initgeo.attributes);\nconst count = initgeo.getAttribute(\"position\").count;\nconst point_data = {};\n\nfor(let i = 0; i < count; i++){\n  attrs.map(attr => {\n  point_data[attr] = initgeo.getAttribute(attr).array.subarray(i * item_size, (i + 1) * item_size);\n    })\n  fn({point_data, index: i})\n}\n\ninitgeo.getAttribute(attribute).needsUpdate = true;\n\n//console.log(inputgeo);\n//console.log(initgeo);\n\nreturn initgeo;",
         "ref": "script"
       },
       "ph7ugf6": {
@@ -999,6 +926,40 @@
       "st1qot0": {
         "id": "st1qot0",
         "ref": "state"
+      },
+      "ha9sbe6": {
+        "id": "ha9sbe6",
+        "value": "input",
+        "ref": "html_element"
+      },
+      "1oskoai": {
+        "id": "1oskoai"
+      },
+      "qapcl0i": {
+        "id": "qapcl0i",
+        "value": "checkbox"
+      },
+      "dtp36mu": {
+        "id": "dtp36mu",
+        "ref": "ap"
+      },
+      "8uiwk65": {
+        "id": "8uiwk65",
+        "value": "feedback.set",
+        "ref": "arg"
+      },
+      "1eft9yl": {
+        "id": "1eft9yl"
+      },
+      "mrpotq6": {
+        "id": "mrpotq6",
+        "value": "event.target.checked",
+        "ref": "arg"
+      },
+      "tkmxaye": {
+        "id": "tkmxaye",
+        "value": "feedback.state",
+        "ref": "arg"
       }
     },
     "edges": {
@@ -1019,12 +980,10 @@
       },
       "p9plj5n": {
         "from": "p9plj5n",
-        "to": "yai4q6q",
         "as": "arg0"
       },
       "ffp87am": {
         "from": "ffp87am",
-        "to": "yai4q6q",
         "as": "arg1"
       },
       "yai4q6q": {
@@ -1151,6 +1110,354 @@
         "from": "st1qot0",
         "to": "args",
         "as": "feedback"
+      },
+      "ha9sbe6": {
+        "from": "ha9sbe6",
+        "to": "yai4q6q",
+        "as": "arg0"
+      },
+      "1oskoai": {
+        "from": "1oskoai",
+        "to": "ha9sbe6",
+        "as": "props"
+      },
+      "qapcl0i": {
+        "from": "qapcl0i",
+        "to": "1oskoai",
+        "as": "type"
+      },
+      "dtp36mu": {
+        "from": "dtp36mu",
+        "to": "1oskoai",
+        "as": "onchange"
+      },
+      "8uiwk65": {
+        "from": "8uiwk65",
+        "to": "dtp36mu",
+        "as": "fn"
+      },
+      "1eft9yl": {
+        "from": "1eft9yl",
+        "to": "dtp36mu",
+        "as": "args"
+      },
+      "mrpotq6": {
+        "from": "mrpotq6",
+        "to": "1eft9yl",
+        "as": "value"
+      },
+      "tkmxaye": {
+        "from": "tkmxaye",
+        "to": "iwzvdj8",
+        "as": "feedback"
+      }
+    }
+  },
+  {
+    "id": "three",
+    "out": "main/out",
+    "nodes": {
+      "args": {
+        "id": "args"
+      },
+      "jklqh38": {
+        "id": "jklqh38",
+        "ref": "html_element"
+      },
+      "6qkew20": {
+        "id": "6qkew20",
+        "ref": "array"
+      },
+      "zihm1kd": {
+        "id": "zihm1kd"
+      },
+      "3b7bnzm": {
+        "id": "3b7bnzm",
+        "ref": "state"
+      },
+      "pcx97n4": {
+        "id": "pcx97n4",
+        "value": "input",
+        "ref": "html_element",
+        "__isnodysseus": true
+      },
+      "rk7hcxc": {
+        "id": "rk7hcxc"
+      },
+      "b8wohxv": {
+        "id": "b8wohxv",
+        "value": "select",
+        "__isnodysseus": true
+      },
+      "x200f4j": {
+        "id": "x200f4j",
+        "value": "export-list",
+        "__isnodysseus": true
+      },
+      "et5g0m1": {
+        "id": "et5g0m1",
+        "__isnodysseus": true,
+        "ref": "map"
+      },
+      "9tv13iq": {
+        "id": "9tv13iq",
+        "value": "return _lib.no.runtime.refs()",
+        "ref": "script",
+        "__isnodysseus": true
+      },
+      "dd6st1b": {
+        "id": "dd6st1b",
+        "value": "element",
+        "ref": "arg",
+        "__isnodysseus": true
+      },
+      "2yur4h7": {
+        "id": "2yur4h7",
+        "ref": "runnable",
+        "__isnodysseus": true
+      },
+      "xdot36k": {
+        "id": "xdot36k"
+      },
+      "1edrrwq": {
+        "id": "1edrrwq",
+        "value": "option",
+        "ref": "html_element",
+        "__isnodysseus": true
+      },
+      "skqnl08": {
+        "id": "skqnl08",
+        "__isnodysseus": true,
+        "ref": "html_text"
+      },
+      "3y8pyc2": {
+        "id": "3y8pyc2",
+        "value": "datalist",
+        "ref": "html_element",
+        "__isnodysseus": true
+      },
+      "tfwqhqf": {
+        "id": "tfwqhqf",
+        "value": "export-list",
+        "__isnodysseus": true
+      },
+      "xp4pv1h": {
+        "id": "xp4pv1h",
+        "value": "return element",
+        "ref": "script",
+        "__isnodysseus": true
+      },
+      "tad7830": {
+        "id": "tad7830",
+        "ref": "state",
+        "__isnodysseus": true
+      },
+      "jdufmth": {
+        "id": "jdufmth",
+        "value": "namespace.state",
+        "ref": "arg",
+        "__isnodysseus": true
+      },
+      "91lhfar": {
+        "id": "91lhfar",
+        "__isnodysseus": true,
+        "ref": "sequence"
+      },
+      "898n6f7": {
+        "id": "898n6f7",
+        "__isnodysseus": true,
+        "ref": "ap"
+      },
+      "9jvfgj1": {
+        "id": "9jvfgj1",
+        "value": "namespace.set",
+        "ref": "arg",
+        "__isnodysseus": true
+      },
+      "j2c518b": {
+        "id": "j2c518b"
+      },
+      "qpiqhgp": {
+        "id": "qpiqhgp",
+        "value": "event.target.value",
+        "ref": "arg",
+        "__isnodysseus": true
+      },
+      "8dy573e": {
+        "id": "8dy573e",
+        "value": "button",
+        "ref": "html_element"
+      },
+      "n7aaoju": {
+        "id": "n7aaoju",
+        "value": "delete",
+        "ref": "html_text"
+      },
+      "ibmy4bt": {
+        "id": "ibmy4bt",
+        "ref": "runnable"
+      },
+      "jdoak4g": {
+        "id": "jdoak4g",
+        "value": "localStorage.removeItem(ns);\nlocalStorage.setItem(\"graph_list\", JSON.stringify(JSON.parse(localStorage.getItem(\"graph_list\")).filter(g => g !== ns)))\n_lib.no.runtime.remove_ref(ns);",
+        "ref": "script"
+      },
+      "main/out": {
+        "id": "main/out",
+        "name": "three",
+        "ref": "return"
+      }
+    },
+    "edges": {
+      "args": {
+        "from": "args",
+        "to": "main/out",
+        "as": "args"
+      },
+      "n7aaoju": {
+        "from": "n7aaoju",
+        "to": "8dy573e",
+        "as": "children"
+      },
+      "jklqh38": {
+        "from": "jklqh38",
+        "to": "main/out",
+        "as": "display"
+      },
+      "6qkew20": {
+        "from": "6qkew20",
+        "to": "jklqh38",
+        "as": "children"
+      },
+      "zihm1kd": {
+        "from": "zihm1kd",
+        "to": "8dy573e",
+        "as": "props"
+      },
+      "tad7830": {
+        "from": "tad7830",
+        "to": "args",
+        "as": "namespace"
+      },
+      "jdufmth": {
+        "from": "jdufmth",
+        "to": "jdoak4g",
+        "as": "ns"
+      },
+      "3b7bnzm": {
+        "from": "3b7bnzm",
+        "to": "args",
+        "as": "hrefstate"
+      },
+      "pcx97n4": {
+        "from": "pcx97n4",
+        "to": "6qkew20",
+        "as": "arg2"
+      },
+      "rk7hcxc": {
+        "from": "rk7hcxc",
+        "to": "pcx97n4",
+        "as": "props"
+      },
+      "b8wohxv": {
+        "from": "b8wohxv",
+        "to": "rk7hcxc",
+        "as": "type"
+      },
+      "x200f4j": {
+        "from": "x200f4j",
+        "to": "rk7hcxc",
+        "as": "list"
+      },
+      "3y8pyc2": {
+        "from": "3y8pyc2",
+        "to": "6qkew20",
+        "as": "arg3"
+      },
+      "et5g0m1": {
+        "from": "et5g0m1",
+        "to": "3y8pyc2",
+        "as": "children"
+      },
+      "9tv13iq": {
+        "from": "9tv13iq",
+        "to": "et5g0m1",
+        "as": "array"
+      },
+      "2yur4h7": {
+        "from": "2yur4h7",
+        "to": "et5g0m1",
+        "as": "fn"
+      },
+      "dd6st1b": {
+        "from": "dd6st1b",
+        "to": "xp4pv1h",
+        "as": "element"
+      },
+      "xdot36k": {
+        "from": "xdot36k",
+        "to": "3y8pyc2",
+        "as": "props"
+      },
+      "1edrrwq": {
+        "from": "1edrrwq",
+        "to": "2yur4h7",
+        "as": "fn"
+      },
+      "skqnl08": {
+        "from": "skqnl08",
+        "to": "1edrrwq",
+        "as": "children"
+      },
+      "xp4pv1h": {
+        "from": "xp4pv1h",
+        "to": "skqnl08",
+        "as": "text"
+      },
+      "tfwqhqf": {
+        "from": "tfwqhqf",
+        "to": "xdot36k",
+        "as": "id"
+      },
+      "91lhfar": {
+        "from": "91lhfar",
+        "to": "rk7hcxc",
+        "as": "onchange"
+      },
+      "898n6f7": {
+        "from": "898n6f7",
+        "to": "91lhfar",
+        "as": "arg0"
+      },
+      "9jvfgj1": {
+        "from": "9jvfgj1",
+        "to": "898n6f7",
+        "as": "fn"
+      },
+      "j2c518b": {
+        "from": "j2c518b",
+        "to": "898n6f7",
+        "as": "args"
+      },
+      "qpiqhgp": {
+        "from": "qpiqhgp",
+        "to": "j2c518b",
+        "as": "value"
+      },
+      "8dy573e": {
+        "from": "8dy573e",
+        "to": "6qkew20",
+        "as": "arg4"
+      },
+      "ibmy4bt": {
+        "from": "ibmy4bt",
+        "to": "zihm1kd",
+        "as": "onclick"
+      },
+      "jdoak4g": {
+        "from": "jdoak4g",
+        "to": "ibmy4bt",
+        "as": "fn"
       }
     }
   }

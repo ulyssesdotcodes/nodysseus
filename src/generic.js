@@ -6029,7 +6029,7 @@ const generic = {
         },
         "main/out": {
           "id": "main/out",
-          "name": "new_delete",
+          "name": "deleteref",
           "ref": "return"
         },
         "8dy573e": {
@@ -7928,7 +7928,7 @@ const generic = {
         },
         {
           "id": "x8ik3x4",
-          "value": "const graph = {..._lib.no.runtime.get_ref(ref)};\ndelete graph.__isnodysseus;\nreturn graph;",
+          "value": "const graph = {...ref};\ndelete graph._nodes_old;\ndelete graph._edges_old;\nreturn graph;",
           "ref": "script"
         },
         {

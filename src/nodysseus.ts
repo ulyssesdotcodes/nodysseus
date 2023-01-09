@@ -363,11 +363,11 @@ const node_extern = (node: RefNode, data: Record<string, ConstRunnable>, graphAr
     if (argspromise) {
         return (Array.isArray(args) ? Promise.all(args) : args.then(v => v?.value.args)).then(as => {
             const res = (typeof extern === 'function' ? extern :  extern.fn).apply(null, as);
-            return extern.rawArgs ? res : lib.data.no.of(res);
+            return mapMaybePromise(res, res => extern.rawArgs ? res : lib.data.no.of(res));
         })
     } else {
         const res = (typeof extern === 'function' ? extern :  extern.fn).apply(null, Array.isArray(args) ? args : args?.value.args);
-        return extern.rawArgs ? res : lib.data.no.of(res);
+        return mapMaybePromise(res, res => extern.rawArgs ? res : lib.data.no.of(res));
     }
 }
 
@@ -438,10 +438,10 @@ const run_node = (node: Node | Runnable, nodeArgs: Record<string, ConstRunnable>
         return node_nodes(node.graph, node.fn, nodeArgs, nodegraphargs, lib)
       }
     } else if(isNodeRef(node)) {
-
         if (node.ref === "arg") {
             const resval = nolib.no.arg(node, graphArgs, lib, node.value);
-            return resval && typeof resval === 'object' && isValue(resval) ? resval : lib.data.no.of(resval);
+            // return resval && typeof resval === 'object' && isValue(resval) ? resval : lib.data.no.of(resval);
+            return wrapPromise(resval).then(resval => resval && typeof resval === 'object' && isValue(resval) ? resval : lib.data.no.of(resval)).value;
         } else if (node.ref === "extern") {
             return node_extern(node, nodeArgs, graphArgs, lib)
         } else if (node.ref === "script") {
@@ -1193,6 +1193,11 @@ const nolib = {
           if(isRunnable(runnable) && !isValue(runnable) && !isApRunnable(runnable)) {
             runnable.env = combineEnv(runnable.env.data, newEnv(args, _lib.data.no.of(runedge === "display" ? "display" : "value"), runnable.env))
           }
+
+          if(lib) {
+            runnable.lib = _lib;
+          }
+
           const runedgeresult = run_runnable(runnable, _lib)
             // edgemap[runedge]
             // ? run_runnable(edgemap[runedge], _lib, Object.assign(
@@ -1368,9 +1373,10 @@ const nolib = {
               : args === undefined
               ? []
               : [args];
-            return lib.data.no.of(ispromise(ng_fn)
+            const ret = lib.data.no.of(ispromise(ng_fn)
               ? ng_fn.then((f: any) => f.apply(fnargs))
               : ng_fn.apply(self, fnargs));
+              return ret;
           }
         }
 
