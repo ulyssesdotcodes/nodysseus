@@ -23,7 +23,7 @@
     "watch": "concurrently --raw \"npm run run:esbuild\" \"http-server -s\" \"tsc --watch --noEmit\"",
     "test": "node node_modules/jest/bin/jest.js",
     "test:watch": "node node_modules/jest/bin/jest.js --watch",
-    "run:esbuild": "esbuild ./src/index.js --bundle --outfile=public/index.bundle.js --sourcemap --target=es2020 --external:node:https --watch"
+    "run:esbuild": "esbuild ./src/index.js --bundle --outfile=public/index.bundle.js --sourcemap --target=es2020 --external:node:https --external:three --watch --format=esm"
   },
   "dependencies": {
     "@codemirror/lang-javascript": "^6.0.1",
