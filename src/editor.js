@@ -1807,15 +1807,6 @@ const ydocStore = async (persist = false, update = undefined) => {
           const updatedEdges = new Y.Map();
           nodes.forEach(n => updatedNodes.set(n.id, n))
           edges.forEach(e => updatedEdges.set(e.from, e))
-          console.log("nodes")
-          console.log(updatedNodes)
-          console.log("edges")
-          console.log(updatedEdges)
-
-          graph.set("_nodes_old", nodes)
-          graph.set("_edges_old", edges)
-          graph.set("nodes", updatedNodes)
-          graph.set("edges", updatedEdges)
         } else if (!ydoc.getMap().get(k)?.get("nodes")?.set) {
           add(k, ydoc.getMap().get(k))
         }
@@ -1994,7 +1985,7 @@ const hlib = {
     get_asset: (id, b) => id && nodysseusStore.assets.get(id),
     remove_asset: id => nodysseusStore.assets.remove(id),
     panzoom: pzobj,
-    run: (graph, fn, args) => run({graph, fn, lib: hlib}, args, nodysseusStore),
+    run: (graph, fn, args, lib) => run({graph, fn, lib: lib ? {...hlib, ...lib} : hlib}, args, nodysseusStore),
     run_runnable: (runnable, args) => run(runnable, args, nodysseusStore),
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX }
 }

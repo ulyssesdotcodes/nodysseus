@@ -135,9 +135,6 @@ export const nodysseus_get = (obj: Record<string, any>, propsArg: string, lib: L
     }
 
     prop = props.length == 0 ? props[0] : props.shift();
-    if(propsArg === "extern.return" && !obj[prop]) {
-      debugger;
-    }
     if((obj === undefined || typeof obj !== 'object' || (obj[prop] === undefined && !(obj.hasOwnProperty && obj.hasOwnProperty(prop))))){
         return isEnv(objArg) ? nodysseus_get(objArg.env, propsArg, lib, defaultValue) : defaultValue;
     }
@@ -295,6 +292,13 @@ const node_value = (node) => {
             } catch (e) { }
         }
 
+        if(node.value.startsWith("0x")) {
+          const int = parseInt(node.value);
+          if(!isNaN(int)) {
+            return int;
+          }
+        }
+
         if(node.value.match(/-?[0-9.]*/g)[0].length === node.value.length){
             const float = parseFloat(node.value);
             if (!isNaN(float)) {
@@ -407,19 +411,21 @@ const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, args:
     env: fn.env,
     graph: fn.graph,
     fn: fn.fn,
-    lib
+    lib: fn.lib
   }))
   return ret;
 }
 
-const run_runnable = (runnable: Runnable, lib: Lib, args: Record<string, any> = {}): Result | Promise<Result> => 
-    isConstRunnable(runnable)
+const run_runnable = (runnable: Runnable, lib: Lib, args: Record<string, any> = {}): Result | Promise<Result> =>  {
+  // isConstRunnable(runnable) && (console.log("three"), console.log(runnable.lib.data.THREE))
+    return isConstRunnable(runnable)
     ? run_graph(runnable.graph, runnable.fn, mergeEnv(args, runnable.env), runnable.lib)
     : isApRunnable(runnable)
     ? run_ap_runnable(runnable, args, lib)
     : isFunctorRunnable(runnable)
     ? run_functor_runnable(runnable, args, lib)
     : runnable
+}
 
 
 // graph, node, symtable, parent symtable, lib
@@ -547,7 +553,7 @@ const run_graph = (graph: Graph | (Graph & {nodes: Array<Node>, edges: Array<Edg
 }
 
 const run_functor_runnable = (runnable: FunctorRunnable, args: Record<string, unknown>, lib: Lib): Result | Promise<Result> => {
-  const execArgs = Object.fromEntries(runnable.fnargs?.map(k => [k, nodysseus_get(args, k, lib, runnable.fnargs[k])]) ?? []);
+  const execArgs = Object.fromEntries(runnable.fnargs?.map(k => [k, nodysseus_get({...args, lib: runnable.lib}, k, lib, runnable.fnargs[k])]) ?? []);
   const newRunnable: ConstRunnable = {
     __kind: "const",
     env: combineEnv(execArgs ?? {}, runnable.env, "functor runnable" + runnable.fn),
@@ -559,19 +565,18 @@ const run_functor_runnable = (runnable: FunctorRunnable, args: Record<string, un
 }
 
 const run_ap_runnable = (runnable: ApRunnable, args: Record<string, any>, lib: Lib): Result | Promise<Result> => {
-  const computedArgs = run_runnable(runnable.args, lib, args);
+  const computedArgs = runnable.args && run_runnable({...runnable.args, lib: runnable.lib}, lib, args);
   const execute = (execArgs): WrappedPromise<any> => {
     const ret = (Array.isArray(runnable.fn) ? runnable.fn : [runnable.fn])
     .map(rfn => run_runnable(
       rfn,
-      lib,
+      runnable.lib,
       execArgs ? Object.fromEntries(Object.entries(execArgs.value).map(kv => [kv[0], lib.data.no.of(kv[1])])) : {}, 
     ))
     return Array.isArray(runnable.fn) ? wrapPromiseAll(ret.map(wrapPromise)) : wrapPromise(ret[0]);
   }
   return wrapPromise(computedArgs).then(execute).then(v => v.value).value;
 }
-
 
 const getmap = (map, id) => {
     return id ? map.get(id) : id;
@@ -605,8 +610,8 @@ export const run = (node: Runnable | InputRunnable, args: Record<string, any> = 
 
   const res = run_runnable(
     isRunnable(node) 
-      ? {...node, lib: node.lib && isLib(node.lib) ? mergeLib(node.lib, _lib) :  _lib}
-      : {...node, __kind: "const", env: node.env ?? newEnv({__graphid: _lib.data.no.of(node.graph.id)}), lib: _lib
+      ? {...node, lib: node.lib ? mergeLib(node.lib, _lib) :  _lib}
+      : {...node, __kind: "const", env: node.env ?? newEnv({__graphid: _lib.data.no.of(node.graph.id)}), lib: mergeLib(node.lib, _lib)
         // mergeEnv(
         //   Object.fromEntries(Object.entries(args ?? {}).map(e => [e[0], _lib.data.no.of(e[1])])), 
         //   node.env ?? newEnv({__graphid: _lib.data.no.of(node.graph.id)})
@@ -1058,6 +1063,7 @@ const nolib = {
             args,
             lib
           })
+
         return fnResult
           .then(fnr => Array.isArray(fnr.value) ? fnr.value.map(fnrv => resolveRunnable(fnrv).value) :  resolveRunnable(fnr.value).value)
           .then(fnr => apRunnable(fnr))

@@ -1781,6 +1781,16 @@ const generic = {
           "value": "__graphid"
         },
         {
+          "id": "runnable_atom_graphid",
+          "ref": "arg",
+          "value": "__graphid"
+        },
+        {
+          "id": "store_runnable_graphid",
+          "ref": "arg",
+          "value": "__graphid"
+        },
+        {
           "id": "path_text",
           "value": "state"
         },
@@ -1810,7 +1820,7 @@ const generic = {
         {
           "id": "set_state_val",
           "ref": "script",
-          "value": "console.log('setting'); console.log(value); _lib.no.runtime.update_args(graphid, {[path]: value}); return value"
+          "value": "value && _lib.no.runtime.update_args(graphid, {[path]: value}); return value"
         },
         {
           "id": "set_state_val_runnable_args",
@@ -1820,6 +1830,9 @@ const generic = {
           "id": "set_state_val_runnable",
           "ref": "runnable"
         },
+        {"id": "store_runnable", "ref": "script", "value": "_lib.no.runtime.update_args(graphid, {_runnable: value}); return value"},
+        {"id": "runnable_atom", "ref": "script", "value": "return _lib.no.runtime.get_args(graphid)._runnable"},
+        {"id": "if_runnable", "ref": "default"},
         {
           "id": "display_text",
           "ref": "html_text"
@@ -1863,6 +1876,11 @@ const generic = {
           "as": "graphid"
         },
         {
+          "from": "store_runnable_graphid",
+          "to": "store_runnable",
+          "as": "graphid"
+        },
+        {
           "from": "value",
           "to": "set_state_val",
           "as": "value"
@@ -1883,7 +1901,27 @@ const generic = {
           "as": "fn"
         },
         {
+          "from": "runnable_atom",
+          "to": "if_runnable",
+          "as": "value"
+        },
+        {
           "from": "set_state_val_runnable",
+          "to": "store_runnable",
+          "as": "value"
+        },
+        {
+          "from": "runnable_atom_graphid",
+          "to": "runnable_atom",
+          "as": "graphid"
+        },
+        {
+          "from": "store_runnable",
+          "to": "if_runnable",
+          "as": "otherwise"
+        },
+        {
+          "from": "if_runnable",
           "to": "out_atom",
           "as": "set"
         },
