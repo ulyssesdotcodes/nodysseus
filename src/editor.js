@@ -8,7 +8,7 @@ import { EditorState, Compartment } from "@codemirror/state"
 import { language } from "@codemirror/language"
 import { javascript, javascriptLanguage } from "@codemirror/lang-javascript";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
-import { ancestor_graph, contract_node, calculateLevels, create_randid, expand_node, findViewBox, node_args } from "./util";
+import { ancestor_graph, contract_node, calculateLevels, create_randid, expand_node, findViewBox, node_args, mapMaybePromise, wrapPromise } from "./util";
 import loki from "lokijs";
 import {openDB } from "idb"
 import * as Y from "yjs"
@@ -19,6 +19,7 @@ import { WebrtcProvider } from "y-webrtc";
 import autocomplete from "autocompleter";
 import generic from "./generic"
 import { isRunnable } from "./types";
+import extend from "just-extend";
 
 class NodyWS extends WebSocket {
   constructor(url) {
@@ -453,10 +454,10 @@ const refresh_graph = (graph, dispatch, norun = false) => {
       return
     }
     dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
-    const result = hlib.run(graph, graph.out, {_output: "value"});
-    const reslib = hlib.run(graph, graph.out, {_output: "lib"})
+    const result = hlib.run(graph, graph.out ?? "out", {_output: "value"});
+    const reslib = hlib.run(graph, graph.out ?? "out", {_output: "lib"})
     // const result = hlib.run(graph, graph.out, {});
-    const display_fn = result => hlib.run(graph, graph.out, {_output: "display"});
+    const display_fn = result => hlib.run(graph, graph.out ?? "out", {_output: "display"});
     // const display_fn = result => hlib.run(graph, graph.out, {}, "display");
     const update_result_display_fn = display => result_display_dispatch(UpdateResultDisplay, {el: display && display.dom_type ? display : {dom_type: 'div', props: {}, children: []}})
     const update_info_display_fn = () => dispatch(s => [s, s.selected[0] !== s.display_graph.out 
@@ -680,7 +681,7 @@ const SelectNode = (state, {node_id, focus_property}) => [
           fn: node_id, 
           graph: state.display_graph, 
           args: {}, 
-          lib: {...hlib, ...nolib, ...hlib.run(state.display_graph, state.display_graph.out, {_output: "lib"})}
+          lib: {...hlib, ...nolib, ...hlib.run(state.display_graph, state.display_graph.out ?? "out", {_output: "lib"})}
         })],
     state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: node_id})]
 ]
@@ -823,7 +824,10 @@ const ChangeDisplayGraphId = (dispatch, {id, select_out, display_graph_id}) => {
                             display_graph: new_graph
                         })
                     }
-                    // dispatch(SelectNode, {node_id: new_graph.out})
+                  console.log("select out")
+                  console.log(select_out)
+                  console.log(new_graph.out)
+                    select_out && dispatch(SelectNode, {node_id: new_graph.out ?? "out"})
                 })
             }],
         ]))
@@ -1027,10 +1031,10 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
                     inputs,
                     onchange: (state, payload) => [
                         state,
-                        node.id !== graph_out && [d => d(UpdateNode, {node, property: "name", value: payload.target.value})],
-                        node.id === graph_out && [ChangeDisplayGraphId, {id: payload.target.value, select_out: true, display_graph_id}]
+                        (node.id !== graph_out && node.id !== "out") && [d => d(UpdateNode, {node, property: "name", value: payload.target.value})],
+                        (node.id === graph_out || node.id === "out") && [ChangeDisplayGraphId, {id: payload.target.value, select_out: true, display_graph_id}]
                     ],
-                    options: node.id === graph_out && ref_graphs.map(g => g.id)
+                    options: (node.id === graph_out || node.id === "out") && ref_graphs
                 }),
                 input_el({
                     label: 'ref',
@@ -1253,7 +1257,9 @@ const runapp = (init, load_graph, _lib) => {
           emptyMsg: "not found",
           minLength: 0,
           fetch: (text, update) => {
-            const refs = nolib.no.runtime.refs();
+            const refs = nolib.no.runtime.refs().map(r => ({id: r}));
+            console.log("refs")
+            console.log(refs)
             update(text === "" ? refs : new Fuse(refs, {keys: ["id"], distance: 80, threshold: 0.4}).search(text).map(searchResult => ({label: searchResult.item.id, value: searchResult.item.id})))
           },
           className: "ref-autocomplete-list",
@@ -1326,7 +1332,7 @@ const runapp = (init, load_graph, _lib) => {
                     name: 'sync-outline', 
                     onclick: s => [s, [dispatch => { 
                             nolib.no.runtime.delete_cache(); 
-                            hlib.run(s.display_graph, s.display_graph.out, {_output: "value"});  
+                            hlib.run(s.display_graph, s.display_graph.out ?? "out", {_output: "value"});  
                             refresh_custom_editor()
                             requestAnimationFrame(() =>  dispatch(s => [s, [() => {
                                 s.simulation.alpha(1); 
@@ -1493,7 +1499,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
     const url_params = new URLSearchParams(document.location.search);
     const graph_list = JSON.parse(localStorage.getItem("graph_list")) ?? [];
     const hash_graph = window.location.hash.substring(1);
-    const keybindings = await resfetch("json/keybindings.json").then(r => r.json())
+    const keybindings = await resfetch("json/keybindings.json").then(r => r.json()).then(kb => (nodysseusStore.refs.add("keybindings", kb), kb))
 
     // let stored_graph = JSON.parse(localStorage.getItem(hash_graph ?? graph_list?.[0]));
     // stored_graph = stored_graph ? base_graph(stored_graph) : undefined
@@ -1650,9 +1656,17 @@ const ydocStore = async (persist = false, update = undefined) => {
         update(event)
       }
 
+      // for(let k of event.keysChanged) {
+      //   if(ymap.get(k)?._map && !generic.nodes[k]) {
+      //     add(k, ymap.get(k).toJSON())
+      //   }
+      // }
+
       simpleYDoc.transact(() => {
         for(let k of event.keysChanged) {
-          simpleYMap.set(k, ymap.get(k)?.toJSON())
+          if(ymap.get(k)?.isLoaded) {
+            simpleYMap.set(k, ymap.get(k)?.getMap().toJSON())
+          }
         }
       })
     })
@@ -1663,118 +1677,146 @@ const ydocStore = async (persist = false, update = undefined) => {
   // const url = await fetch(`http://${location.hostname}:7071/api/Negotiate?userId=${Math.floor(performance.now() * 1000)}`).then(b => b.json());
 
   const add = (id, data) => {
-    if(!id.startsWith("_")) {
+    if(generic.nodes[id]) {
+      simpleYMap.set(id, generic.nodes[id])
+    } else if(!id.startsWith("_") && Object.keys(data).length > 0) {
       let current = ymap.get(id);
-      let found = !!current && current._map;
+      let found = !!current?.guid; // && !!current.getMap().get("id");
       if(!found) {
-        current = new Y.Map()
+        debugger;
+        current = new Y.Doc();
+        // current.getMap().set("id", id)
       }
+      // if(id === "simple") {
+      //   debugger;
+      // }
       ydoc.transact(() => {
-        // const infomap = current.getMap();
-        let infomap = current
-        if(infomap.get("id") !== id) {
-          infomap.set("id", id);
+        if(!current.isLoaded) {
+          current.load()
         }
-        if(infomap.get("name") !== data.name) {
-          infomap.set("name", data.name);
-        }
-        if(data.ref && data.ref !== infomap.get("ref")){
-          infomap.set("ref", data?.ref);
-        } else if(infomap.has('ref') && !data.ref) {
-          infomap.delete('ref')
-        }
-
-        if(data.value && data.value !== infomap.get("value")){
-          infomap.set("value", data?.value);
-        } else if(infomap.has('value') && !data.value) {
-          infomap.delete('value')
-        }
-
-        if(data.out && data.out !== infomap.get("out")){
-          infomap.set("out", data?.out);
-        } else if(infomap.has('out') && !data.out) {
-          infomap.delete('out')
-        }
-
-        if(data.nodes)  {
-          let nodesymap = infomap.get("nodes")
-          if(!infomap.get("nodes")?.set) {
-            nodesymap = new Y.Map();
-            infomap.set("nodes", nodesymap)
+        wrapPromise(current.isLoaded ? true : current.whenLoaded).then(_ => {
+          const infomap = generic.nodes[id] ? current : current.getMap();
+          // let infomap = current
+          if(infomap.get("id") !== id) {
+            infomap.set("id", id);
           }
-          if(Array.isArray(data.nodes)){
-            data.nodes.map(n => nodesymap.set(n.id, n)) 
-          } else {
-            Object.entries(data.nodes).forEach(kv => nodesymap.set(kv[0], kv[1]))
-          } 
-          // let curnodes = infomap.get('nodes');
-          // if(!curnodes) {
-          //   curnodes = new Y.Map();
-          //   infomap.set('nodes', curnodes);
-          // }
-          // data.nodes.forEach(n => curnodes.set(n.id, n))
-        }
-
-        if(data.edges) {
-          let edgesymap = infomap.get("edges")
-          if(!infomap.get("edges")?.set) {
-            edgesymap = new Y.Map();
-            infomap.set("edges", edgesymap)
+          if(infomap.get("name") !== data.name) {
+            infomap.set("name", data.name);
+          }
+          if(data.ref && data.ref !== infomap.get("ref")){
+            infomap.set("ref", data?.ref);
+          } else if(infomap.has('ref') && !data.ref) {
+            infomap.delete('ref')
           }
 
-          if(Array.isArray(data.edges)){
-            const edgeset = new Set(data.edges.map(e => e.from))
-            if(edgeset.size !== data.edges.length) {
-              console.log(`invalid edges for ${data.id}`)
-              console.log(data.edges.filter(e => {
-                edgeset.has(e.from) ? edgeset.delete(e.from) : console.log(e.from)
-              }))
+          if(data.value && data.value !== infomap.get("value")){
+            infomap.set("value", data?.value);
+          } else if(infomap.has('value') && !data.value) {
+            infomap.delete('value')
+          }
+
+          if(data.out && data.out !== infomap.get("out")){
+            infomap.set("out", data?.out);
+          } else if(infomap.has('out') && !data.out) {
+            infomap.delete('out')
+          }
+
+          if(data.nodes)  {
+            let nodesymap = infomap.get("nodes")
+            if(!infomap.get("nodes")?.set) {
+              nodesymap = new Y.Map();
+              infomap.set("nodes", nodesymap)
             }
-            data.edges.map(e => edgesymap.set(e.from, e)) 
-          } else {
-            Object.entries(data.edges).forEach(kv => edgesymap.set(kv[0], kv[1]))
-          } 
-          // let curedges = infomap.get('edges');
-          // if(!curedges) {
-          //   curedges = new Y.Map();
-          //   infomap.set('edges', curedges);
-          // }
-          // data.edges.forEach(e => curedges.set(e.to + "__" + e.from, e));
-        }
+            if(Array.isArray(data.nodes)){
+              data.nodes.map(n => nodesymap.set(n.id, n)) 
+            } else {
+              Object.entries(data.nodes).forEach(kv => nodesymap.set(kv[0], kv[1]))
+            } 
+            // let curnodes = infomap.get('nodes');
+            // if(!curnodes) {
+            //   curnodes = new Y.Map();
+            //   infomap.set('nodes', curnodes);
+            // }
+            // data.nodes.forEach(n => curnodes.set(n.id, n))
+          }
+
+          if(data.edges) {
+            let edgesymap = infomap.get("edges")
+            if(!infomap.get("edges")?.set) {
+              edgesymap = new Y.Map();
+              infomap.set("edges", edgesymap)
+            }
+
+            if(Array.isArray(data.edges)){
+              const edgeset = new Set(data.edges.map(e => e.from))
+              if(edgeset.size !== data.edges.length) {
+                console.log(`invalid edges for ${data.id}`)
+                console.log(data.edges.filter(e => {
+                  edgeset.has(e.from) ? edgeset.delete(e.from) : console.log(e.from)
+                }))
+              }
+              data.edges.map(e => edgesymap.set(e.from, e)) 
+            } else {
+              Object.entries(data.edges).forEach(kv => edgesymap.set(kv[0], kv[1]))
+            } 
+            // let curedges = infomap.get('edges');
+            // if(!curedges) {
+            //   curedges = new Y.Map();
+            //   infomap.set('edges', curedges);
+            // }
+            // data.edges.forEach(e => curedges.set(e.to + "__" + e.from, e));
+          }
+
+
+          updateSimple(id)
+        })
       })
 
       if(!found) {
         // console.log(current)
         ymap.set(id, current);
       }
+
     }
+
   }
 
   const updateSimple = id => {
     simpleYDoc.transact(() => {
-      simpleYMap.set(id, ymap.get(id).toJSON())
+      // debugger;
+      if(ymap.get(id).isLoaded) {
+        console.log("adding node " + id)
+        console.log(ymap.get(id).getMap().toJSON())
+        simpleYMap.set(id, ymap.get(id).getMap().toJSON())
+      }
     })
   }
 
   const add_node = (graphId, node) => {
-    ydoc.transact(() => {
-      ymap.get(graphId).get("nodes").set(node.id, node)
+    if(generic.nodes[graphId]) return;
+
+    ymap.get(graphId).transact(() => {
+      ymap.get(graphId).getMap().get("nodes").set(node.id, node)
     })
 
     updateSimple(graphId)
   }
 
   const remove_node = (graphId, node) => {
+    if(generic.nodes[graphId]) return;
+
     ydoc.transact(() => {
-      ymap.get(graphId).get("nodes").delete(typeof node === "string" ? node : node.id)
+      ymap.get(graphId).getMap().get("nodes").delete(typeof node === "string" ? node : node.id)
     })
 
     updateSimple(graphId)
   }
 
   const add_edge = (graphId, edge) => {
+    if(generic.nodes[graphId]) return;
+
     ydoc.transact(() => {
-      ymap.get(graphId).get("edges").set(edge.from, edge)
+      ymap.get(graphId).getMap().get("edges").set(edge.from, edge)
     })
 
     updateSimple(graphId)
@@ -1782,42 +1824,66 @@ const ydocStore = async (persist = false, update = undefined) => {
 
   const remove_edge = (graphId, edge) => {
     ydoc.transact(() => {
-      ymap.get(graphId).get("edges").delete(edge.from)
+      ymap.get(graphId).getMap().get("edges").delete(edge.from)
     })
 
     updateSimple(graphId)
   }
 
   if(persist) {
-    const indexeddbProvider = new IndexeddbPersistence(persist, ydoc)
-    await indexeddbProvider.whenSynced.then(_ => {
-      [...ydoc.getMap().keys()].map(k => {
+    const prevdoc = new Y.Doc();
+    const prevIndexeddbProvider = new IndexeddbPersistence(`${persist}`, prevdoc)
+    prevIndexeddbProvider.whenSynced.then(val => {
+      [...prevdoc.getMap().keys()].map(k => {
+        if(prevdoc.getMap().get(k).guid) {
+          return;
+        }
         if(k.startsWith("_") || k === "" || generic.nodes[k]) {
           // remove "_" items
-          // console.log(`removing ${k}`)
-          ydoc.getMap().delete(k)
-        } else if (ydoc.getMap().get(k).id) {
+          console.log(`removing ${k}`)
+          prevdoc.getMap().delete(k)
+        } else if (prevdoc.getMap().get(k).id) {
           // convert old maps to ymap
-          add(k, ydoc.getMap().get(k))
-        } else if (Array.isArray(ydoc.getMap().get(k).get("nodes"))) {
-          const graph = ydoc.getMap().get(k);
+          console.log(`old maps ${k}`)
+          add(k, prevdoc.getMap().get(k))
+        } else if (Array.isArray(prevdoc.getMap().get(k).get("nodes"))) {
+          console.log(`old nodes ${k}`)
+          const graph = prevdoc.getMap().get(k);
           const nodes = graph.get("nodes");
           const edges = graph.get("edges");
           const updatedNodes = new Y.Map();
           const updatedEdges = new Y.Map();
           nodes.forEach(n => updatedNodes.set(n.id, n))
           edges.forEach(e => updatedEdges.set(e.from, e))
-        } else if (!ydoc.getMap().get(k)?.get("nodes")?.set) {
-          add(k, ydoc.getMap().get(k))
+        } else if (!prevdoc.getMap().get(k)?.getMap().get("nodes")?.set) {
+          console.log("readding")
+          console.log(k);
+          console.log(prevdoc.getMap().get(k))
+          console.log(prevdoc.getMap().get(k).getMap())
+          console.log(prevdoc.getMap().get(k).getMap().get("nodes"))
+          add(k, prevdoc.getMap().get(k).getMap().toJSON())
         }
       })
-      requestAnimationFrame(() => {
-        const custom_editor = nolib.no.runtime.get_ref("custom_editor");
-        const rtcroom = params.get("rtcroom") ?? (custom_editor && hlib.run(custom_editor, custom_editor.out ?? "out")?.rtcroom);
-        if(rtcroom) {
-      
+    })
+
+    const indexeddbProvider = new IndexeddbPersistence(`${persist}-subdocs`, ydoc)
+    await indexeddbProvider.whenSynced.then(val => {
+      const runcustom = () => {
+        if(!nolib.no.runtime){
+          requestAnimationFrame(runcustom);
+          return;
         }
-      })
+        const custom_editor_res = nolib.no.runtime.get_ref("custom_editor");
+        mapMaybePromise(custom_editor_res, custom_editor => {
+          const rtcroom = params.get("rtcroom") ?? (custom_editor && hlib.run(custom_editor, custom_editor.out ?? "out")?.rtcroom);
+          if(rtcroom) {
+            console.log("gotrtcroom")
+            console.log(rtcroom)
+          }
+        })
+      }
+
+      requestAnimationFrame(runcustom)
     })
 
     undoManager = new Y.UndoManager(ymap)
@@ -1840,53 +1906,84 @@ const ydocStore = async (persist = false, update = undefined) => {
   }
 
   // if(false) {
-    ydoc.on('subdocs', e => {
-          // console.log(url)
-      console.log('subdocs')
-      console.log(e);
-      e.loaded.forEach(sd => {
-        // console.log('loaded subdoc')
-        // console.log(sd)
-        // console.log(sd.getMap().get("id"))
-        if(sd.getMap().get("id") === "testsync") {
-          console.log('got testsyncsubdoc')
-          // new WebsocketProvider(`nodysseus${rtcroom}_`+sd.getMap().get("id"), sd, {signaling: [url.url]})
-          // new WebsocketProvider(url.baseUrl, "", /*`nodysseus${rtcroom}_${sd.getMap().get("id")}`*/ sd, {
-          //   WebSocketPolyfill: NodyWS,
-          //   params: {access_token: url.accessToken}
-          // })
-          //
-          new WebrtcProvider(`nodysseus${rtcroom}_${sd.getMap().get("id")}`, sd, {signaling: ["ws://161.35.136.33:4444"]})
-          sd.getMap().observe(event => {
-            console.log('sd event')
-            console.log(event);
-            update(event, sd.getMap().get("id"))
-          })
-        }
+      console.log("hi?")
+  const refIdbs = {};
+      ydoc.on('subdocs', e => {
+            // console.log(url)
+        console.log('subdocs')
+        console.log(e);
+        e.loaded.forEach(sd => {
+          const sdmap = sd.getMap();
+          if(!refIdbs[sd.guid]) {
+            refIdbs[sd.guid] = new IndexeddbPersistence(`${persist}-subdocs-${sd.guid}`, sd)
+            refIdbs[sd.guid].whenSynced.then(() => sd.emit('load', [sd]))
+          }
+          simpleYMap.set(sdmap.get("id"), sdmap.toJSON())
+          // console.log('loaded subdoc')
+          // console.log(sd)
+          // console.log(sd.getMap().get("id"))
+          if(sd.getMap().get("id") === "testsync") {
+            console.log('got testsyncsubdoc')
+            // new WebsocketProvider(`nodysseus${rtcroom}_`+sd.getMap().get("id"), sd, {signaling: [url.url]})
+            // new WebsocketProvider(url.baseUrl, "", /*`nodysseus${rtcroom}_${sd.getMap().get("id")}`*/ sd, {
+            //   WebSocketPolyfill: NodyWS,
+            //   params: {access_token: url.accessToken}
+            // })
+            //
+            new WebrtcProvider(`nodysseus${rtcroom}_${sd.getMap().get("id")}`, sd, {signaling: ["ws://51.11.165.142:4444"]})
+
+            sd.getMap().observe(event => {
+              console.log('sd event')
+              console.log(event);
+              update(event, sd.getMap().get("id"))
+            })
+          }
+        })
       })
-    })
+
   // }
 
   const get = id => {
-    if(ymap.get(id) && !ymap.get(id)._map) {
-      add(id, ymap.get(id))
-    }
+    // console.log(`getting ${id}`)
+    // if(ymap.get(id).getMap && !ymap.get(id)._map) {
+    //   add(id, ymap.get(id))
+    // }
 
     // ymap.get(id).load()
     // const frommap = ymap.get(id)?.toJSON();
     // const res = frommap?.nodes && frommap?.edges ? {...frommap, nodes: frommap.nodes, edges: frommap.edges} : frommap;
-    const res = simpleYMap.get(id);
+    // const ymapRes = ymap.get(id);
+    // if(!ymapRes.isLoaded) {
+    //   ymapRes.load();
+    // }
+    // const res = simpleYMap.get(id);
       //frommap;
-    if(res && Object.keys(res).length === 0) {
-      const val = get("simple");
-      val.id = id;
-      add(id, val)
-      return val
-    }
 
     // console.log(id);
     // console.log(res);
-    return res;
+    // ymap.get(id).on('synced', evt => {
+    //   debugger;
+    // })
+    // if(id === "simple") {
+      // debugger;
+    // }
+    return mapMaybePromise(generic.nodes[id] ?? (simpleYMap.get(id)?.id || ymap.get(id)?.isLoaded ? simpleYMap.get(id) : (ymap.get(id)?.load(), ymap.get(id)?.whenLoaded)?.then(d => d.getMap().toJSON())), res => {
+      if(res && !res?.id) {
+        debugger;
+      }
+      if(!generic.nodes[id]) {
+        // debugger;
+      }
+      if(!res || Object.keys(res).length === 0) {
+        const val = {...extend(true, {}, get("simple"))};
+        val.id = id;
+        val.nodes.out.name = id;
+        add(id, val)
+        return val
+      }
+
+      return res;
+    });
   }
 
   return {
@@ -1906,9 +2003,9 @@ const ydocStore = async (persist = false, update = undefined) => {
     },
     removeAll: () => {},
     all: () => {
-      const keys = [...ymap.keys()];
+      const keys = [...simpleYMap.keys()];
       // keys.forEach(k => (k.match(/^[a-z0-9]{7}$/) || k.match(/^run_[a-z]{7}.*/)) && k !== 'default' && k !== 'resolve' && k !== 'changed' && ymap.delete(k))
-      return keys.map(v => get(v))
+      return keys//.map(v => get(v))
     },
     undo: persist && (() => undoManager.undo()),
     redo: persist && (() => undoManager.redo()),

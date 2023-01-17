@@ -454,26 +454,22 @@ const run_node = (node: Node | Runnable, nodeArgs: Record<string, ConstRunnable>
             return node_script(node, nodeArgs, lib)
         }
 
-        let node_ref = lib.data.no.runtime.get_ref(node.ref);
-
-        if (!node_ref) {
-            throw new Error(`Unable to find ref ${node.ref} for node ${node.name || node.id}`)
-        }
 
         const graphid = nodysseus_get(graphArgs, "__graphid", lib).value;
         const newgraphid = (graphid + "/") + node.id
         const newGraphArgs = newEnv({__graphid: lib.data.no.of(newgraphid)}, graphArgs._output);
-        if(node_ref.nodes) {
-            const current = lib.data.no.runtime.get_graph(newgraphid);
-            lib.data.no.runtime.set_parent(newgraphid, graphid); // before so that change/update has the parent id
-            if(current.refid && current?.refid !== node_ref.id){
-              lib.data.no.runtime.change_graph({...node_ref, id: newgraphid, refid: node_ref.id}, lib, false)
-            } else {
-              lib.data.no.runtime.update_graph(newgraphid)
-            }
-        }
 
-        return run_node(node_ref, node.value ? {...nodeArgs, __graph_value: lib.data.no.of(node.value)} : nodeArgs, newGraphArgs, lib)
+        return wrapPromise(lib.data.no.runtime.get_ref(node.ref)).then(node_ref => {
+          if (!node_ref) {
+              throw new Error(`Unable to find ref ${node.ref} for node ${node.name || node.id}`)
+          }
+          if(node_ref.nodes) {
+              lib.data.no.runtime.set_parent(newgraphid, graphid); // before so that change/update has the parent id
+              lib.data.no.runtime.update_graph(newgraphid)
+          }
+
+          return run_node(node_ref, node.value ? {...nodeArgs, __graph_value: lib.data.no.of(node.value)} : nodeArgs, newGraphArgs, lib)
+        }).value
     } else if (isNodeGraph(node)) {
         return node_nodes(node, node.out ?? "out", nodeArgs, graphArgs, lib)
     } else if (isNodeScript(node)){
@@ -545,7 +541,7 @@ const run_graph = (graph: Graph | (Graph & {nodes: Array<Node>, edges: Array<Edg
         lib.data.no.runtime.publish('noderun', {graph: newgraph, node_id})
 
         const data = create_data(node_id, newgraph, env, lib);
-        const res = run_node(node, data, env, lib);
+        const res = wrapPromise(node).then(node => run_node(node, data, env, lib)).value;
         return ispromise(res) ? res.catch(handleError) : res
     } catch (e) {
       return handleError(e)
@@ -853,7 +849,12 @@ const nolib = {
         }
       };
 
-      const get_ref = id => nodysseus.refs.get(id) ?? generic.nodes[id]
+      const get_ref = id => {
+        if(id.startsWith("testnew")) {
+          // debugger;
+        }
+        return nodysseus.refs.get(id) ?? generic.nodes[id]
+      }
       const add_ref = (graph: Node) => {
         if(!generic.nodes[graph.id]) {
           nodysseus.refs.add(graph.id, graph)
@@ -861,13 +862,17 @@ const nolib = {
       }
       const remove_ref = nodysseus.refs.remove
 
-      const get_node = (graph: Graph, id: string) => get_graph(graph)?.nodes[id]
-      const get_edge = (graph, from) => get_graph(graph)?.edges[from]
-      const get_edges_in = (graph, id) =>
-        Object.values(get_graph(graph).edges).filter((e: Edge) => e.to === id)
+      const get_node = (graph: Graph, id: string) => wrapPromise(get_graph(graph)).then(g => g?.nodes[id]).value
+      const get_edge = (graph, from) => wrapPromise(get_graph(graph)).then(g => g?.edges[from]).value
+      const get_edges_in = (graph, id) => wrapPromise(get_graph(graph))
+        .then(g => Object.values(g.edges).filter((e: Edge) => e.to === id)).value
       const get_edge_out = get_edge
       const get_args = (graph) => nodysseus.state.get(typeof graph === "string" ? graph : graph.id) ?? {};
-      const get_graph = (graph: string | Graph): Graph => nodysseus.refs.get(typeof graph === "string" ? graph : graph.id) as Graph ?? graph as Graph
+      const get_graph = (graph: string | Graph): Graph | Promise<Graph> | undefined => wrapPromise(nodysseus.refs.get(typeof graph === "string" ? graph : graph.id))
+        .then(g => {
+          if(!g.id) debugger;
+          return (isNodeGraph(g) ? g : undefined) ?? (graph as Graph)
+        }).value
       const get_parent = (graph) => {
         const parent = nodysseus.parents.get(
           typeof graph === "string" ? graph : graph.id
@@ -975,51 +980,52 @@ const nolib = {
           change_graph(nodysseus.refs.get(graphId) as Graph, lib);
         },
         delete_node: (graph: Graph, id, lib: Lib, changeEdges=true) => {
-          graph = get_graph(graph);
-          const graphId = typeof graph === "string" ? graph : graph.id;
+          wrapPromise(get_graph(graph)).then(graph => {
+            const graphId = typeof graph === "string" ? graph : graph.id;
 
-          const parent_edge = graph.edges[id]
-          const child_edges = Object.values(graph.edges).filter((e) => e.to === id);
+            const parent_edge = graph.edges[id]
+            const child_edges = Object.values(graph.edges).filter((e) => e.to === id);
 
-          const current_child_edges = Object.values(graph.edges).filter(
-            (e) => e.to === parent_edge.to
-          );
-          const new_child_edges = child_edges.map((e, i) => ({
-            ...e,
-            to: parent_edge.to,
-            as:
-              i === 0
-                ? parent_edge.as
-                : !e.as
-                ? e.as
-                : current_child_edges.find(
-                    (ce) => ce.as === e.as && ce.from !== id
-                  )
-                ? e.as + "1"
-                : e.as,
-          }));
+            const current_child_edges = Object.values(graph.edges).filter(
+              (e) => e.to === parent_edge.to
+            );
+            const new_child_edges = child_edges.map((e, i) => ({
+              ...e,
+              to: parent_edge.to,
+              as:
+                i === 0
+                  ? parent_edge.as
+                  : !e.as
+                  ? e.as
+                  : current_child_edges.find(
+                      (ce) => ce.as === e.as && ce.from !== id
+                    )
+                  ? e.as + "1"
+                  : e.as,
+            }));
 
-          const newnodes = {...graph.nodes}
-          delete newnodes[id]
+            const newnodes = {...graph.nodes}
+            delete newnodes[id]
 
-          nodysseus.refs.remove_node(graphId, id)
-          if(changeEdges) {
-            child_edges.map(e => nodysseus.refs.remove_edge(graphId, e))
-            nodysseus.refs.remove_edge(graphId, parent_edge)
-            new_child_edges.map(e => nodysseus.refs.add_edge(graphId, e))
-            change_graph(nodysseus.refs.get(graphId) as Graph, lib);
-          }
+            nodysseus.refs.remove_node(graphId, id)
+            if(changeEdges) {
+              child_edges.map(e => nodysseus.refs.remove_edge(graphId, e))
+              nodysseus.refs.remove_edge(graphId, parent_edge)
+              new_child_edges.map(e => nodysseus.refs.add_edge(graphId, e))
+              change_graph(nodysseus.refs.get(graphId) as Graph, lib);
+            }
 
 
-          // const new_graph = {
-          //   ...graph,
-          //   nodes: newnodes,
-          //   eages: Object.fromEntries(Object.entries(graph.edges)
-          //     .filter((e) => e[1] !== parent_edge && e[1].to !== id)
-          //     .concat(new_child_edges.map(e => [e.from, e]))),
-          // };
+            // const new_graph = {
+            //   ...graph,
+            //   nodes: newnodes,
+            //   eages: Object.fromEntries(Object.entries(graph.edges)
+            //     .filter((e) => e[1] !== parent_edge && e[1].to !== id)
+            //     .concat(new_child_edges.map(e => [e.from, e]))),
+            // };
 
-          // change_graph(new_graph, lib);
+            // change_graph(new_graph, lib);
+          })
         },
         add_listener,
         add_listener_extern: {

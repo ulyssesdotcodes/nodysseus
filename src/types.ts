@@ -49,7 +49,7 @@ export type Store<T> = {
   addMany?: (datas: Array<[string, any]>) => void;
 }
 
-export type RefStore = Store<Node> & {
+export type RefStore = Store<Node | Promise<Node>> & {
   add_node: (graphId: string, node: Node) => void;
   remove_node: (graphId: string, node: Node) => void;
   add_edge: (graphId: string, edge: Edge) => void;
