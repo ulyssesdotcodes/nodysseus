@@ -790,17 +790,19 @@ const SaveGraph = (dispatch, payload) => save_graph(payload.display_graph)
 
 const ChangeDisplayGraphId = (dispatch, {id, select_out, display_graph_id}) => {
     requestAnimationFrame(() => {
-        const graphPromise = Promise.resolve(nolib.no.runtime.get_ref(id)
-            ?? Promise.any([
-              navigator.onLine ? resfetch(`json/${id}.json`)
-                .then(r => r.status === 200 ? r.json() : Promise.reject())
-                .then(gs => {
-                  nolib.no.runtime.add_refs(Array.isArray(gs) ? gs : [gs]);
-                  return nolib.no.runtime.get_ref(id);
-                }) : Promise.reject(),
-              new Promise((res, rej) => setTimeout(() => res({...nolib.no.runtime.get_ref(display_graph_id ?? "simple"), id, name: id}), 1000))
-                .then(g => ({...g, nodes: Object.fromEntries(Object.values(g.nodes).map(n => [n.id, n.id === (g.out ?? "out") ? {...n, name: id} : n]))}))
-            ])).then(g => Array.isArray(g.nodes) && Array.isArray(g.edges) ? {...g, nodes: Object.fromEntries(g.nodes.map(n => [n.id, n])), edges: Object.fromEntries(g.edges.map(e => [e.from, e]))} : g )
+        const graphPromise = wrapPromise(nolib.no.runtime.get_ref(id, display_graph_id && nolib.no.runtime.get_ref(display_graph_id)))
+            // ?? Promise.any([
+            //   navigator.onLine ? resfetch(`json/${id}.json`)
+            //     .then(r => r.status === 200 ? r.json() : Promise.reject())
+            //     .then(gs => {
+            //       nolib.no.runtime.add_refs(Array.isArray(gs) ? gs : [gs]);
+            //       return nolib.no.runtime.get_ref(id);
+            //     }) : Promise.reject()]))
+            //   new Promise((res, rej) => setTimeout(() => res(), 1000))
+            //     .then(() => nolib.no.runtime.get_ref(display_graph_id ?? "simple"))
+            //     .then(graph => ({...graph, id, name: id}))
+            //     .then(g => ({...g, nodes: Object.fromEntries(Object.values(g.nodes).map(n => [n.id, n.id === (g.out ?? "out") ? {...n, name: id} : n]))}))
+            // ])).then(g => Array.isArray(g.nodes) && Array.isArray(g.edges) ? {...g, nodes: Object.fromEntries(g.nodes.map(n => [n.id, n])), edges: Object.fromEntries(g.edges.map(e => [e.from, e]))} : g )
 
 
         window.location.hash = '#' + id; 
@@ -824,9 +826,6 @@ const ChangeDisplayGraphId = (dispatch, {id, select_out, display_graph_id}) => {
                             display_graph: new_graph
                         })
                     }
-                  console.log("select out")
-                  console.log(select_out)
-                  console.log(new_graph.out)
                     select_out && dispatch(SelectNode, {node_id: new_graph.out ?? "out"})
                 })
             }],
@@ -999,7 +998,7 @@ const input_el = ({label, property, value, onchange, options, inputs, disabled})
 
 const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, ref_graphs, html_id, copied_graph, inputs, graph_out, editing})=> {
     //const s.display_graph.id === s.display_graph_id && nolib.no.runtime.get_node(s.display_graph, s.selected[0]) && 
-    const node_ref = node && node.ref ? nolib.no.runtime.get_ref(display_graph_id, node.ref) : node;
+    const node_ref = node && node.ref ? nolib.no.runtime.get_ref(node.ref) : node;
     const description =  node_ref?.description;
     const node_arg_labels = node?.id ? node_args(nolib, display_graph_id, node.id) : [];
     return ha.h('div', {id: "node-info-wrapper"}, [ha.h('div', {class: "spacer before"}, []), ha.h(
@@ -1258,8 +1257,6 @@ const runapp = (init, load_graph, _lib) => {
           minLength: 0,
           fetch: (text, update) => {
             const refs = nolib.no.runtime.refs().map(r => ({id: r}));
-            console.log("refs")
-            console.log(refs)
             update(text === "" ? refs : new Fuse(refs, {keys: ["id"], distance: 80, threshold: 0.4}).search(text).map(searchResult => ({label: searchResult.item.id, value: searchResult.item.id})))
           },
           className: "ref-autocomplete-list",
@@ -1677,121 +1674,124 @@ const ydocStore = async (persist = false, update = undefined) => {
   // const url = await fetch(`http://${location.hostname}:7071/api/Negotiate?userId=${Math.floor(performance.now() * 1000)}`).then(b => b.json());
 
   const add = (id, data) => {
-    console.log(`adding ${id}`)
-    console.log(data);
     if(generic.nodes[id]) {
       simpleYMap.set(id, generic.nodes[id])
+      return generic.nodes[id];
     } else if(!id.startsWith("_") && Object.keys(data).length > 0) {
       let current = ymap.get(id);
       let found = !!current?.guid; // && !!current.getMap().get("id");
       if(!found) {
-        debugger;
+        // debugger;
         current = new Y.Doc();
         // current.getMap().set("id", id)
       }
       // if(id === "simple") {
       //   debugger;
       // }
-      ydoc.transact(() => {
-        if(!current.isLoaded) {
-          current.load()
-        }
-        wrapPromise(current.isLoaded ? true : current.whenLoaded).then(_ => {
-          const infomap = generic.nodes[id] ? current : current.getMap();
-          // let infomap = current
-          if(infomap.get("id") !== id) {
-            infomap.set("id", id);
+      return new Promise(res => {
+        ydoc.transact(() => {
+          if(!current.isLoaded) {
+            current.load()
           }
-          if(infomap.get("name") !== data.name) {
-            infomap.set("name", data.name);
-          }
-          if(data.ref && data.ref !== infomap.get("ref")){
-            infomap.set("ref", data?.ref);
-          } else if(infomap.has('ref') && !data.ref) {
-            infomap.delete('ref')
-          }
-
-          if(data.value && data.value !== infomap.get("value")){
-            infomap.set("value", data?.value);
-          } else if(infomap.has('value') && !data.value) {
-            infomap.delete('value')
-          }
-
-          if(data.out && data.out !== infomap.get("out")){
-            infomap.set("out", data?.out);
-          } else if(infomap.has('out') && !data.out) {
-            infomap.delete('out')
-          }
-
-          if(data.nodes)  {
-            let nodesymap = infomap.get("nodes")
-            if(!infomap.get("nodes")?.set) {
-              nodesymap = new Y.Map();
-              infomap.set("nodes", nodesymap)
+          wrapPromise(current.isLoaded ? true : current.whenLoaded).then(_ => {
+            const infomap = generic.nodes[id] ? current : current.getMap();
+            // let infomap = current
+            if(infomap.get("id") !== id) {
+              infomap.set("id", id);
             }
-            if(Array.isArray(data.nodes)){
-              data.nodes.map(n => nodesymap.set(n.id, n)) 
-            } else {
-              Object.entries(data.nodes).forEach(kv => nodesymap.set(kv[0], kv[1]))
-            } 
-            // let curnodes = infomap.get('nodes');
-            // if(!curnodes) {
-            //   curnodes = new Y.Map();
-            //   infomap.set('nodes', curnodes);
-            // }
-            // data.nodes.forEach(n => curnodes.set(n.id, n))
-          }
-
-          if(data.edges) {
-            let edgesymap = infomap.get("edges")
-            if(!infomap.get("edges")?.set) {
-              edgesymap = new Y.Map();
-              infomap.set("edges", edgesymap)
+            if(infomap.get("name") !== data.name) {
+              infomap.set("name", data.name);
+            }
+            if(data.ref && data.ref !== infomap.get("ref")){
+              infomap.set("ref", data?.ref);
+            } else if(infomap.has('ref') && !data.ref) {
+              infomap.delete('ref')
             }
 
-            if(Array.isArray(data.edges)){
-              const edgeset = new Set(data.edges.map(e => e.from))
-              if(edgeset.size !== data.edges.length) {
-                console.log(`invalid edges for ${data.id}`)
-                console.log(data.edges.filter(e => {
-                  edgeset.has(e.from) ? edgeset.delete(e.from) : console.log(e.from)
-                }))
+            if(data.value && data.value !== infomap.get("value")){
+              infomap.set("value", data?.value);
+            } else if(infomap.has('value') && !data.value) {
+              infomap.delete('value')
+            }
+
+            if(data.out && data.out !== infomap.get("out")){
+              infomap.set("out", data?.out);
+            } else if(infomap.has('out') && !data.out) {
+              infomap.delete('out')
+            }
+
+            if(data.nodes)  {
+              let nodesymap = infomap.get("nodes")
+              if(!infomap.get("nodes")?.set) {
+                nodesymap = new Y.Map();
+                infomap.set("nodes", nodesymap)
               }
-              data.edges.map(e => edgesymap.set(e.from, e)) 
-            } else {
-              Object.entries(data.edges).forEach(kv => edgesymap.set(kv[0], kv[1]))
-            } 
-            // let curedges = infomap.get('edges');
-            // if(!curedges) {
-            //   curedges = new Y.Map();
-            //   infomap.set('edges', curedges);
-            // }
-            // data.edges.forEach(e => curedges.set(e.to + "__" + e.from, e));
-          }
+              if(Array.isArray(data.nodes)){
+                data.nodes.map(n => nodesymap.set(n.id, n)) 
+              } else {
+                Object.entries(data.nodes).forEach(kv => nodesymap.set(kv[0], kv[1]))
+              } 
+              // let curnodes = infomap.get('nodes');
+              // if(!curnodes) {
+              //   curnodes = new Y.Map();
+              //   infomap.set('nodes', curnodes);
+              // }
+              // data.nodes.forEach(n => curnodes.set(n.id, n))
+            }
+
+            if(data.edges) {
+              let edgesymap = infomap.get("edges")
+              if(!infomap.get("edges")?.set) {
+                edgesymap = new Y.Map();
+                infomap.set("edges", edgesymap)
+              }
+
+              if(Array.isArray(data.edges)){
+                const edgeset = new Set(data.edges.map(e => e.from))
+                if(edgeset.size !== data.edges.length) {
+                  console.log(`invalid edges for ${data.id}`)
+                  console.log(data.edges.filter(e => {
+                    edgeset.has(e.from) ? edgeset.delete(e.from) : console.log(e.from)
+                  }))
+                }
+                data.edges.map(e => edgesymap.set(e.from, e)) 
+              } else {
+                Object.entries(data.edges).forEach(kv => edgesymap.set(kv[0], kv[1]))
+              } 
+              // let curedges = infomap.get('edges');
+              // if(!curedges) {
+              //   curedges = new Y.Map();
+              //   infomap.set('edges', curedges);
+              // }
+              // data.edges.forEach(e => curedges.set(e.to + "__" + e.from, e));
+            }
 
 
-          updateSimple(id)
+            updateSimple(id)
+
+            res(simpleYMap.get(id))
+          })
         })
-      })
 
-      if(!found) {
-        // console.log(current)
-        ymap.set(id, current);
-      }
+        if(!found) {
+          // console.log(current)
+          ymap.set(id, current);
+        }
+      })
 
     }
 
   }
 
   const updateSimple = id => {
-    simpleYDoc.transact(() => {
+    // simpleYDoc.transact(() => {
       // debugger;
-      if(ymap.get(id).isLoaded) {
-        console.log("adding node " + id)
-        console.log(ymap.get(id).getMap().toJSON())
-        simpleYMap.set(id, ymap.get(id).getMap().toJSON())
-      }
-    })
+    if(ymap.get(id).isLoaded) {
+      console.log("adding " + id)
+      console.log(ymap.get(id).getMap().toJSON())
+      simpleYMap.set(id, ymap.get(id).getMap().toJSON())
+    }
+    // })
   }
 
   const add_node = (graphId, node) => {
@@ -1878,7 +1878,7 @@ const ydocStore = async (persist = false, update = undefined) => {
           const updatedEdges = new Y.Map();
           nodes.forEach(n => updatedNodes.set(n.id, n))
           edges.forEach(e => updatedEdges.set(e.from, e))
-        } else if (prevdoc.getMap().get(k)?.get("nodes")) {
+        } else if (prevdoc.getMap().get(k)?.get("nodes") && !ymap.has(k)) {
           console.log("readding")
           console.log(k);
           console.log(prevdoc.getMap().get(k))
@@ -1908,24 +1908,25 @@ const ydocStore = async (persist = false, update = undefined) => {
   }
 
   // if(false) {
-      console.log("hi?")
   const refIdbs = {};
       ydoc.on('subdocs', e => {
             // console.log(url)
-        console.log('subdocs')
-        console.log(e);
         e.loaded.forEach(sd => {
           const sdmap = sd.getMap();
           if(!refIdbs[sd.guid]) {
             refIdbs[sd.guid] = new IndexeddbPersistence(`${persist}-subdocs-${sd.guid}`, sd)
-            refIdbs[sd.guid].whenSynced.then(() => sd.emit('load', [sd]))
+            refIdbs[sd.guid].whenSynced.then(() => {
+              if(sdmap.get("id")) {
+                simpleYMap.set(sdmap.get("id"), ymap.get(sdmap.get("id")).getMap().toJSON())
+              }
+              sd.emit('load', [sd])
+            })
           }
           simpleYMap.set(sdmap.get("id"), sdmap.toJSON())
           // console.log('loaded subdoc')
           // console.log(sd)
           // console.log(sd.getMap().get("id"))
           if(sd.getMap().get("id") === "testsync") {
-            console.log('got testsyncsubdoc')
             // new WebsocketProvider(`nodysseus${rtcroom}_`+sd.getMap().get("id"), sd, {signaling: [url.url]})
             // new WebsocketProvider(url.baseUrl, "", /*`nodysseus${rtcroom}_${sd.getMap().get("id")}`*/ sd, {
             //   WebSocketPolyfill: NodyWS,
@@ -1945,7 +1946,7 @@ const ydocStore = async (persist = false, update = undefined) => {
 
   // }
 
-  const get = id => {
+  const get = (id, otherwise) => {
     // console.log(`getting ${id}`)
     // if(ymap.get(id).getMap && !ymap.get(id)._map) {
     //   add(id, ymap.get(id))
@@ -1973,15 +1974,12 @@ const ydocStore = async (persist = false, update = undefined) => {
       if(res && !res?.id) {
         debugger;
       }
-      if(!generic.nodes[id]) {
-        // debugger;
-      }
       if(!res || Object.keys(res).length === 0) {
         const val = {...extend(true, {}, get("simple"))};
         val.id = id;
         val.nodes.out.name = id;
-        add(id, val)
-        return val
+        console.log("creating new " + id)
+        return add(id, otherwise ?? val)
       }
 
       return res;

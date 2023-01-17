@@ -849,11 +849,11 @@ const nolib = {
         }
       };
 
-      const get_ref = id => {
+      const get_ref = (id, otherwise) => {
         if(id.startsWith("testnew")) {
           // debugger;
         }
-        return nodysseus.refs.get(id) ?? generic.nodes[id]
+        return generic.nodes[id] ?? nodysseus.refs.get(id, otherwise && {...otherwise, id, nodes: {...otherwise.nodes, [otherwise.out ?? "out"]: {...otherwise.nodes[otherwise.out ?? "out"], name: id}}})
       }
       const add_ref = (graph: Node) => {
         if(!generic.nodes[graph.id]) {
