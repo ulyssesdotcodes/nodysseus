@@ -1677,6 +1677,8 @@ const ydocStore = async (persist = false, update = undefined) => {
   // const url = await fetch(`http://${location.hostname}:7071/api/Negotiate?userId=${Math.floor(performance.now() * 1000)}`).then(b => b.json());
 
   const add = (id, data) => {
+    console.log(`adding ${id}`)
+    console.log(data);
     if(generic.nodes[id]) {
       simpleYMap.set(id, generic.nodes[id])
     } else if(!id.startsWith("_") && Object.keys(data).length > 0) {
@@ -1832,6 +1834,27 @@ const ydocStore = async (persist = false, update = undefined) => {
 
   if(persist) {
     const prevdoc = new Y.Doc();
+
+    const indexeddbProvider = new IndexeddbPersistence(`${persist}-subdocs`, ydoc)
+    await indexeddbProvider.whenSynced.then(val => {
+      const runcustom = () => {
+        if(!nolib.no.runtime){
+          requestAnimationFrame(runcustom);
+          return;
+        }
+        const custom_editor_res = nolib.no.runtime.get_ref("custom_editor");
+        mapMaybePromise(custom_editor_res, custom_editor => {
+          const rtcroom = params.get("rtcroom") ?? (custom_editor && hlib.run(custom_editor, custom_editor.out ?? "out")?.rtcroom);
+          if(rtcroom) {
+            console.log("gotrtcroom")
+            console.log(rtcroom)
+          }
+        })
+      }
+
+      requestAnimationFrame(runcustom)
+    })
+
     const prevIndexeddbProvider = new IndexeddbPersistence(`${persist}`, prevdoc)
     prevIndexeddbProvider.whenSynced.then(val => {
       [...prevdoc.getMap().keys()].map(k => {
@@ -1855,35 +1878,14 @@ const ydocStore = async (persist = false, update = undefined) => {
           const updatedEdges = new Y.Map();
           nodes.forEach(n => updatedNodes.set(n.id, n))
           edges.forEach(e => updatedEdges.set(e.from, e))
-        } else if (!prevdoc.getMap().get(k)?.getMap().get("nodes")?.set) {
+        } else if (prevdoc.getMap().get(k)?.get("nodes")) {
           console.log("readding")
           console.log(k);
           console.log(prevdoc.getMap().get(k))
-          console.log(prevdoc.getMap().get(k).getMap())
-          console.log(prevdoc.getMap().get(k).getMap().get("nodes"))
-          add(k, prevdoc.getMap().get(k).getMap().toJSON())
+          console.log(prevdoc.getMap().get(k).toJSON())
+          add(k, prevdoc.getMap().get(k).toJSON())
         }
       })
-    })
-
-    const indexeddbProvider = new IndexeddbPersistence(`${persist}-subdocs`, ydoc)
-    await indexeddbProvider.whenSynced.then(val => {
-      const runcustom = () => {
-        if(!nolib.no.runtime){
-          requestAnimationFrame(runcustom);
-          return;
-        }
-        const custom_editor_res = nolib.no.runtime.get_ref("custom_editor");
-        mapMaybePromise(custom_editor_res, custom_editor => {
-          const rtcroom = params.get("rtcroom") ?? (custom_editor && hlib.run(custom_editor, custom_editor.out ?? "out")?.rtcroom);
-          if(rtcroom) {
-            console.log("gotrtcroom")
-            console.log(rtcroom)
-          }
-        })
-      }
-
-      requestAnimationFrame(runcustom)
     })
 
     undoManager = new Y.UndoManager(ymap)
