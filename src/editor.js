@@ -658,7 +658,12 @@ const SetSelectedPositionStyleEffect = (_, {node, svg_offset, dimensions}) => {
 }
 
 const SelectNode = (state, {node_id, focus_property}) => [
-    state.selected[0] === node_id ? state : {...state, selected: [node_id], inputs: {}},
+    state.selected[0] === node_id ? state : {
+      ...state, 
+      selected: [node_id], 
+      inputs: {},
+      selected_edges_in: nolib.no.runtime.get_edges_in(state.display_graph, node_id)
+    },
     !state.show_all && [pzobj.effect, {...state, node_id: node_id}],
     [UpdateGraphDisplay, {...state, selected: [node_id]}],
     (state.show_all || state.selected[0] !== node_id) && [pzobj.effect, {...state, node_id}],
@@ -908,7 +913,7 @@ const defs = () =>ha.h('defs', {}, [
 ])
 
 const radius = 24;
-const node_el = ({html_id, selected, error, selected_distance, node_id, node_ref, node_name, node_value, has_nodes, nested_edge_count, nested_node_count, input_count}) =>ha.h('svg', {
+const node_el = ({html_id, selected, error, selected_distance, node_id, node_ref, node_name, node_value, has_nodes, nested_edge_count, nested_node_count}) =>ha.h('svg', {
     onclick: [SelectNode, {node_id}],  
     ontouchstart: [SelectNode, {node_id}], 
     width: '256', 
@@ -923,11 +928,11 @@ const node_el = ({html_id, selected, error, selected_distance, node_id, node_ref
 }, [
    ha.h(
         (node_value !== undefined && !(node_ref && node_ref !== "arg")) 
-          || (node_value === undefined && node_ref === undefined && input_count === 0) ? 'polygon' 
+          || (node_value === undefined && node_ref === undefined) ? 'polygon' 
         : node_ref === 'return' ? 'rect'
         : 'circle', 
         node_value !== undefined && !(node_ref && node_ref !== "arg") 
-          || (node_value === undefined && node_ref === undefined && input_count === 0)
+          || (node_value === undefined && node_ref === undefined)
             ? {class: {shape: true, value: true, error}, points: `4,${4 + radius} ${4 + radius},${4 + radius} ${4 + radius * 0.5},4`} 
             : node_ref === 'return'
             ? {class:{shape: true, ref: true, error}, width: radius, height: radius, x: 10, y: 10}
@@ -937,7 +942,7 @@ const node_el = ({html_id, selected, error, selected_distance, node_id, node_ref
         node_id: node_id,
         primary: node_name ? node_name : node_value ? node_value : '', 
         focus_primary: node_name ? "name" : "value",
-        secondary: node_ref ? node_ref : has_nodes ? `graph (${nested_node_count}, ${nested_edge_count})` : node_value !== undefined ? 'value' : input_count > 0 ? 'object' : 'undefined'
+        secondary: node_ref ? node_ref : has_nodes ? `graph (${nested_node_count}, ${nested_edge_count})` : node_value !== undefined ? 'value' : 0 > 0 ? 'object' : 'undefined'
     }),
     ha.memo(fill_rect_el)
 ])
@@ -1281,7 +1286,7 @@ const runapp = (init, load_graph, _lib) => {
             ha.h('g', {id: `${s.html_id}-editor-panzoom`}, 
                 [ha.memo(defs)].concat(
                     s.nodes?.map(node => {
-                        const newnode = Object.assign({}, node, nolib.no.runtime.get_node(s.display_graph, node.node_id))
+                        const newnode = Object.assign({}, node, s.display_graph.nodes[node.node_id])
                         return ha.memo(node_el, ({
                             html_id: s.html_id, 
                             selected: s.selected[0] === node.node_id, 
@@ -1293,13 +1298,12 @@ const runapp = (init, load_graph, _lib) => {
                             node_value: newnode.value,
                             has_nodes: !!newnode.nodes,
                             nested_edge_count: newnode.nested_edge_count,
-                            nested_node_count: newnode.nested_node_count,
-                            input_count: nolib.no.runtime.get_edges_in(s.display_graph, node.node_id).length
+                            nested_node_count: newnode.nested_node_count
                         }))
                 }) ?? []
                 ).concat(
                     s.links?.map(link => ha.memo(link_el, {
-                        link: Object.assign({}, link, nolib.no.runtime.get_edge(s.display_graph, link.source.node_id)),
+                        link: Object.assign({}, link, s.display_graph.edges[link.source.node_id]),
                         selected_distance: s.show_all ? 0 : s.levels.distance_from_selected.get(link.source.node_id) > 3 ? 'far' : s.levels.distance_from_selected.get(link.source.node_id),
                     })) ?? []
                 ).concat(
@@ -1309,10 +1313,10 @@ const runapp = (init, load_graph, _lib) => {
             ),
         ]),
         info_el({
-            node: Object.assign({}, s.nodes.find(n => n.node_id === s.selected[0]), nolib.no.runtime.get_node(s.display_graph, s.selected[0])),
+            node: Object.assign({}, s.nodes.find(n => n.node_id === s.selected[0]), s.display_graph.nodes[s.selected[0]]),
             hidden: s.show_all,
-            edges_in: nolib.no.runtime.get_edges_in(s.display_graph, s.selected[0]),
-            link_out: Object.assign({}, s.links.find(l => l.source.node_id === s.selected[0]), nolib.no.runtime.get_edge(s.display_graph, s.selected[0])),
+            edges_in: s.selected_edges_in,
+            link_out: Object.assign({}, s.links.find(l => l.source.node_id === s.selected[0]), s.display_graph.edges[s.selected[0]]),
             display_graph_id: s.display_graph.id,
             randid: s.randid,
             editing: s.editing,
@@ -1366,98 +1370,101 @@ const runapp = (init, load_graph, _lib) => {
                     break;
                 }
                 default: {
-                    const result = hlib.run(init.keybindings, "out")[mode][key_input];
-                    switch(result){
-                        case "up": {
-                            const parent_edges = nolib.no.runtime.get_edges_in(state.display_graph, selected);
-                            const node_id = parent_edges?.[Math.ceil(parent_edges.length / 2) - 1]?.from
-                            action = node_id ? [SelectNode, {node_id}] : [state]
+                  const kbres = hlib.run(init.keybindings, "out");
+                    wrapPromise(kbres).then(kb => {
+                      const result = kb[mode][key_input];
+                      switch(result){
+                          case "up": {
+                              const parent_edges = nolib.no.runtime.get_edges_in(state.display_graph, selected);
+                              const node_id = parent_edges?.[Math.ceil(parent_edges.length / 2) - 1]?.from
+                              action = node_id ? [SelectNode, {node_id}] : [state]
+                              break;
+                          }
+                          case "down": {
+                              const child_edge = Object.values(state.display_graph.edges).find(e => e.from === selected);
+                              const node_id = child_edge?.to
+                              action = node_id ? [SelectNode, {node_id}] : [state]
+                              break;
+                          }
+                          case "left": 
+                          case "right": {
+                              const dirmult = result === "left" ? 1 : -1;
+                              const current_node = nolib.no.runtime.get_node(state.display_graph, selected)
+                              const siblings = state.levels.siblings.get(selected); 
+                              const node_id = siblings.reduce((dist, sibling) => { 
+                                  const sibling_node = state.nodes.find(n => n.node_id === sibling); 
+                                  if(!sibling_node){ return dist } 
+                                  const xdist = Math.abs(sibling_node.x - current_node.x); 
+                                  dist = (dirmult * (sibling_node.x - current_node.x) < 0) && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist 
+                              }, [state.dimensions.x])?.[1]?.node_id; 
+                              action = node_id ? [SelectNode, {node_id}] : [state]
+                              break;
+                          }
+                          case "save": {
+                              effects.push([SaveGraph, state])
+                              break;
+                          }
+                          case "copy": {
+                              action = [Copy, {as: nolib.no.runtime.get_edge_out(state.display_graph, state.selected[0]).as}];
+                              break;
+                          }
+                          case "paste": {
+                              action = [Paste];
+                              break;
+                          }
+                          case "find": {
+                              action = s => [{...s, search: ""}, [FocusEffect, {selector: "#search input"}]]; 
+                              break;
+                          }
+                          case "expand_contract": {
+                              action = [ExpandContract, {node_id: state.selected[0]}];
+                              break;
+                          }
+                          case "delete_node": {
+                              action = [DeleteNode, {
+                                  node_id: state.selected[0]
+                              }]
+                              break;
+                          }
+                          case "edit_name": {
+                              action = [SelectNode, { node_id: state.selected[0], focus_property: "name" }]
+                              break;
+                          }
+                          case "edit_value": {
+                              action = [SelectNode, { node_id: state.selected[0], focus_property: "value" }]
+                              break;
+                          }
+                          case "edit_ref": {
+                              action = [SelectNode, { node_id: state.selected[0], focus_property: "ref" }]
+                              break;
+                          }
+                          case "edit_edge": {
+                              action = [SelectNode, { node_id: state.selected[0], focus_property: "edge" }]
+                              break;
+                          }
+                          case "end_editing": {
+                              action = [state => [
+                                  {...state, show_all: true, focused: false, editing: false},
+                                  [() => requestAnimationFrame(() => nolib.no.runtime.publish('show_all', {data: true}))]
+                              ]]
+                              break;
+                          }
+                          case "undo": {
+                            nodysseusStore.refs.undo()
                             break;
-                        }
-                        case "down": {
-                            const child_edge = Object.values(state.display_graph.edges).find(e => e.from === selected);
-                            const node_id = child_edge?.to
-                            action = node_id ? [SelectNode, {node_id}] : [state]
+                          }
+                          case "redo": {
+                            nodysseusStore.refs.redo()
                             break;
-                        }
-                        case "left": 
-                        case "right": {
-                            const dirmult = result === "left" ? 1 : -1;
-                            const current_node = nolib.no.runtime.get_node(state.display_graph, selected)
-                            const siblings = state.levels.siblings.get(selected); 
-                            const node_id = siblings.reduce((dist, sibling) => { 
-                                const sibling_node = state.nodes.find(n => n.node_id === sibling); 
-                                if(!sibling_node){ return dist } 
-                                const xdist = Math.abs(sibling_node.x - current_node.x); 
-                                dist = (dirmult * (sibling_node.x - current_node.x) < 0) && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist 
-                            }, [state.dimensions.x])?.[1]?.node_id; 
-                            action = node_id ? [SelectNode, {node_id}] : [state]
-                            break;
-                        }
-                        case "save": {
-                            effects.push([SaveGraph, state])
-                            break;
-                        }
-                        case "copy": {
-                            action = [Copy, {as: nolib.no.runtime.get_edge_out(state.display_graph, state.selected[0]).as}];
-                            break;
-                        }
-                        case "paste": {
-                            action = [Paste];
-                            break;
-                        }
-                        case "find": {
-                            action = s => [{...s, search: ""}, [FocusEffect, {selector: "#search input"}]]; 
-                            break;
-                        }
-                        case "expand_contract": {
-                            action = [ExpandContract, {node_id: state.selected[0]}];
-                            break;
-                        }
-                        case "delete_node": {
-                            action = [DeleteNode, {
-                                node_id: state.selected[0]
-                            }]
-                            break;
-                        }
-                        case "edit_name": {
-                            action = [SelectNode, { node_id: state.selected[0], focus_property: "name" }]
-                            break;
-                        }
-                        case "edit_value": {
-                            action = [SelectNode, { node_id: state.selected[0], focus_property: "value" }]
-                            break;
-                        }
-                        case "edit_ref": {
-                            action = [SelectNode, { node_id: state.selected[0], focus_property: "ref" }]
-                            break;
-                        }
-                        case "edit_edge": {
-                            action = [SelectNode, { node_id: state.selected[0], focus_property: "edge" }]
-                            break;
-                        }
-                        case "end_editing": {
-                            action = [state => [
-                                {...state, show_all: true, focused: false, editing: false},
-                                [() => requestAnimationFrame(() => nolib.no.runtime.publish('show_all', {data: true}))]
-                            ]]
-                            break;
-                        }
-                        case "undo": {
-                          nodysseusStore.refs.undo()
-                          break;
-                        }
-                        case "redo": {
-                          nodysseusStore.refs.redo()
-                          break;
-                        }
-                        default: {
-                            if(result !== undefined) {
-                                console.log(`Not implemented ${result}`)
-                            }
-                            nolib.no.runtime.publish('keydown', {data: key_input})
-                        }
-                    }
+                          }
+                          default: {
+                              if(result !== undefined) {
+                                  console.log(`Not implemented ${result}`)
+                              }
+                              nolib.no.runtime.publish('keydown', {data: key_input})
+                          }
+                      }
+                  })
                 }
             }
 
@@ -1496,7 +1503,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
     const url_params = new URLSearchParams(document.location.search);
     const graph_list = JSON.parse(localStorage.getItem("graph_list")) ?? [];
     const hash_graph = window.location.hash.substring(1);
-    const keybindings = await resfetch("json/keybindings.json").then(r => r.json()).then(kb => (nodysseusStore.refs.add("keybindings", kb), kb))
+    const keybindings = await resfetch("json/keybindings.json").then(r => r.json()).then(kb => (nolib.no.runtime.add_ref(kb), kb))
 
     // let stored_graph = JSON.parse(localStorage.getItem(hash_graph ?? graph_list?.[0]));
     // stored_graph = stored_graph ? base_graph(stored_graph) : undefined
@@ -1532,7 +1539,8 @@ const editor = async function(html_id, display_graph, lib, norun) {
             history: [],
             redo_history: [],
             selected: ["out"],
-            inputs: {}
+            inputs: {},
+            selected_edges_in: []
         };
 
         main_app_dispatch = runapp(init,  hash_graph && hash_graph !== "" ? hash_graph : graph_list?.[0] ?? 'simple', lib)
@@ -1591,55 +1599,6 @@ const runh = el => el.d && el.p && el.c && ha.h(el.d, el.p, el.c);
 
 let nodysseusStore;
 
-const createStore = () => {
-  let load_callbacks = [];
-  const isBrowser = typeof window !== 'undefined';
-  const persistdb = onrefsdb => {
-    const db = new loki("nodysseus_persist.db", {
-      env: "BROWSER",
-      adapter: new (loki.prototype.getIndexedAdapter())(),
-      autoload: true,
-      autoloadCallback: () => {
-        let refsdb = db.getCollection("refs");
-
-        if(!refsdb) {
-          refsdb = db.addCollection("refs", { unique: ["id"] });
-        }
-
-        load_callbacks.forEach(lc => lc())
-        load_callbacks = false;
-
-        onrefsdb(refsdb)
-      },
-      autosave: true,
-      autosaveInterval: 4000
-    })
-  }
-
-  return new Promise((resolve, reject) => {
-    const db = new loki("nodysseus.db", {
-      env: "BROWSER",
-      persistenceMethod: "memory",
-    });
-
-
-    const nodesdb = db.addCollection("nodes", { unique: ["id"] });
-    const statedb = db.addCollection("state", { unique: ["id"] });
-    const fnsdb = db.addCollection("fns", { unique: ["id"] });
-    const parentsdb = db.addCollection("parents", { unique: ["id"] });
-
-
-    const pdb = persistdb(refsdb =>
-      resolve({
-        refs: lokidbToStore(refsdb),
-        parents: lokidbToStore(parentsdb),
-        nodes: lokidbToStore(nodesdb),
-        state: lokidbToStore(statedb),
-        fns: lokidbToStore(fnsdb)
-      })
-    )
-  })
-}
 const ydocStore = async (persist = false, update = undefined) => {
   const ydoc = new Y.Doc();
   const ymap = ydoc.getMap();
@@ -1649,6 +1608,8 @@ const ydocStore = async (persist = false, update = undefined) => {
 
   if(update) {
     ymap.observe(event =>{
+      console.log("event");
+      console.log(event);
       if(!event.transaction.local || event.transaction.origin === undoManager) {
         update(event)
       }
@@ -1668,33 +1629,32 @@ const ydocStore = async (persist = false, update = undefined) => {
       })
     })
   }
+
   const params = new URLSearchParams(location.search)
   let undoManager;
-
-  // const url = await fetch(`http://${location.hostname}:7071/api/Negotiate?userId=${Math.floor(performance.now() * 1000)}`).then(b => b.json());
 
   const add = (id, data) => {
     if(generic.nodes[id]) {
       simpleYMap.set(id, generic.nodes[id])
       return generic.nodes[id];
     } else if(!id.startsWith("_") && Object.keys(data).length > 0) {
+      console.log(`adding ${id}`)
       let current = ymap.get(id);
       let found = !!current?.guid; // && !!current.getMap().get("id");
       if(!found) {
+        console.log("creating new ydoc")
         // debugger;
         current = new Y.Doc();
         // current.getMap().set("id", id)
+        ymap.set(id, current);
+        current.load()
       }
-      // if(id === "simple") {
-      //   debugger;
-      // }
-      return new Promise(res => {
+
+      return wrapPromise(current.isLoaded ? true : current.whenLoaded).then(_ => {
         ydoc.transact(() => {
-          if(!current.isLoaded) {
-            current.load()
-          }
-          wrapPromise(current.isLoaded ? true : current.whenLoaded).then(_ => {
-            const infomap = generic.nodes[id] ? current : current.getMap();
+          const infomap = generic.nodes[id] ? current : current.getMap();
+          console.log('in loaded')
+          console.log(infomap)
             // let infomap = current
             if(infomap.get("id") !== id) {
               infomap.set("id", id);
@@ -1765,31 +1725,22 @@ const ydocStore = async (persist = false, update = undefined) => {
               // }
               // data.edges.forEach(e => curedges.set(e.to + "__" + e.from, e));
             }
-
-
-            updateSimple(id)
-
-            res(simpleYMap.get(id))
           })
-        })
 
-        if(!found) {
-          // console.log(current)
-          ymap.set(id, current);
-        }
-      })
+        updateSimple(id)
 
+        return simpleYMap.get(id)
+      }).value
     }
-
   }
 
   const updateSimple = id => {
     // simpleYDoc.transact(() => {
       // debugger;
     if(ymap.get(id).isLoaded) {
-      console.log("adding " + id)
-      console.log(ymap.get(id).getMap().toJSON())
       simpleYMap.set(id, ymap.get(id).getMap().toJSON())
+    } else {
+      console.log(`not loaded ${id}`)
     }
     // })
   }
@@ -1842,33 +1793,23 @@ const ydocStore = async (persist = false, update = undefined) => {
           requestAnimationFrame(runcustom);
           return;
         }
-        const custom_editor_res = nolib.no.runtime.get_ref("custom_editor");
-        mapMaybePromise(custom_editor_res, custom_editor => {
-          const rtcroom = params.get("rtcroom") ?? (custom_editor && hlib.run(custom_editor, custom_editor.out ?? "out")?.rtcroom);
-          if(rtcroom) {
-            console.log("gotrtcroom")
-            console.log(rtcroom)
-          }
-        })
       }
 
       requestAnimationFrame(runcustom)
     })
 
     const prevIndexeddbProvider = new IndexeddbPersistence(`${persist}`, prevdoc)
-    prevIndexeddbProvider.whenSynced.then(val => {
-      [...prevdoc.getMap().keys()].map(k => {
-        if(prevdoc.getMap().get(k).guid) {
-          return;
-        }
-        if(k.startsWith("_") || k === "" || generic.nodes[k]) {
-          // remove "_" items
-          console.log(`removing ${k}`)
-          prevdoc.getMap().delete(k)
+    await prevIndexeddbProvider.whenSynced.then(val => {
+      Promise.all([...prevdoc.getMap().keys()].map(k => {
+        console.log(`prevdoc ${k}`);
+        // if(prevdoc.getMap().get(k).guid) {
+        //   return;
+        // }
+        if(k.startsWith("_") || k === "" || generic.nodes[k] || ymap.has(k)) {
         } else if (prevdoc.getMap().get(k).id) {
           // convert old maps to ymap
           console.log(`old maps ${k}`)
-          add(k, prevdoc.getMap().get(k))
+          return add(k, prevdoc.getMap().get(k))
         } else if (Array.isArray(prevdoc.getMap().get(k).get("nodes"))) {
           console.log(`old nodes ${k}`)
           const graph = prevdoc.getMap().get(k);
@@ -1878,14 +1819,14 @@ const ydocStore = async (persist = false, update = undefined) => {
           const updatedEdges = new Y.Map();
           nodes.forEach(n => updatedNodes.set(n.id, n))
           edges.forEach(e => updatedEdges.set(e.from, e))
-        } else if (prevdoc.getMap().get(k)?.get("nodes") && !ymap.has(k)) {
+        } else if (prevdoc.getMap().get(k)?.get("nodes")) {
           console.log("readding")
           console.log(k);
           console.log(prevdoc.getMap().get(k))
           console.log(prevdoc.getMap().get(k).toJSON())
-          add(k, prevdoc.getMap().get(k).toJSON())
+          return add(k, prevdoc.getMap().get(k).toJSON())
         }
-      })
+      }))
     })
 
     undoManager = new Y.UndoManager(ymap)
@@ -1909,40 +1850,92 @@ const ydocStore = async (persist = false, update = undefined) => {
 
   // if(false) {
   const refIdbs = {};
-      ydoc.on('subdocs', e => {
-            // console.log(url)
-        e.loaded.forEach(sd => {
-          const sdmap = sd.getMap();
-          if(!refIdbs[sd.guid]) {
-            refIdbs[sd.guid] = new IndexeddbPersistence(`${persist}-subdocs-${sd.guid}`, sd)
-            refIdbs[sd.guid].whenSynced.then(() => {
-              if(sdmap.get("id")) {
-                simpleYMap.set(sdmap.get("id"), ymap.get(sdmap.get("id")).getMap().toJSON())
-              }
-              sd.emit('load', [sd])
-            })
+  let rdoc;
+
+  const setuprtc = (rtcroom, sd) => {
+    if(!rdoc) {
+      rdoc = new Y.Doc({autoLoad: true})
+      rdoc.on('subdocs', e => {
+        console.log('rdoc subdocs')
+        console.log(e)
+        // console.log("loaded rdoc")
+        // if(!rdoc.getMap().has(sdmap.get("id"))) {
+        //   console.log(`setting new map ${sdmap.get("id")}`)
+        //   rdoc.getMap().set(sdmap.get("id"), new Y.Doc({guid: sd.guid}))
+        // } else {
+        //   console.log(`using existing map ${sdmap.get("id")}`)
+        //   ydoc.getMap().set(sdmap.get("id"), new Y.Doc({guid: rdoc.getMap().get(sdmap.get("id")).guid}))
+        //   updateSimple(sdmap.get("id"))
+        // }
+
+      })
+      rdoc.getMap().observe(evt => {
+        console.log("rdoc obs")
+        console.log(evt)
+      })
+      const rdocrtc = new WebrtcProvider(`nodysseus${rtcroom}_subdocs`, rdoc, {signaling: ["ws://51.11.165.142:4444"]})
+    }
+
+    rdoc.getMap().set(sd.getMap().get("id"), sd)
+  }
+
+  ydoc.on('subdocs', e => {
+        // console.log(url)
+    console.log("subdocs")
+    console.log(e);
+    e.loaded.forEach(sd => {
+      const sdmap = sd.getMap();
+      if(!refIdbs[sd.guid]) {
+        refIdbs[sd.guid] = new IndexeddbPersistence(`${persist}-subdocs-${sd.guid}`, sd)
+        refIdbs[sd.guid].whenSynced.then(() => {
+          if(sdmap.get("id")) {
+            simpleYMap.set(sdmap.get("id"), ymap.get(sdmap.get("id")).getMap().toJSON())
           }
-          simpleYMap.set(sdmap.get("id"), sdmap.toJSON())
-          // console.log('loaded subdoc')
-          // console.log(sd)
-          // console.log(sd.getMap().get("id"))
-          if(sd.getMap().get("id") === "testsync") {
+          sd.emit('load', [sd])
             // new WebsocketProvider(`nodysseus${rtcroom}_`+sd.getMap().get("id"), sd, {signaling: [url.url]})
             // new WebsocketProvider(url.baseUrl, "", /*`nodysseus${rtcroom}_${sd.getMap().get("id")}`*/ sd, {
             //   WebSocketPolyfill: NodyWS,
             //   params: {access_token: url.accessToken}
             // })
             //
-            new WebrtcProvider(`nodysseus${rtcroom}_${sd.getMap().get("id")}`, sd, {signaling: ["ws://51.11.165.142:4444"]})
+            const custom_editor_res = nolib.no.runtime.get_ref("custom_editor");
+            mapMaybePromise(custom_editor_res, custom_editor => {
+              const rtcroom = params.get("rtcroom") ?? (custom_editor && hlib.run(custom_editor, custom_editor.out ?? "out")?.rtcroom);
+              if(rtcroom && sdmap.get("id")) {
+                console.log("gotrtcroom")
+                console.log(rtcroom)
+                console.log(sd.getMap().get("id"))
 
-            sd.getMap().observe(event => {
-              console.log('sd event')
-              console.log(event);
-              update(event, sd.getMap().get("id"))
+                setuprtc(rtcroom, sd);
+
+                const grobs = new WebrtcProvider(`nodysseus${rtcroom}_${sd.getMap().get("id")}`, sd, {signaling: ["ws://51.11.165.142:4444"]})
+              }
             })
-          }
+
+            sd.getMap().observeDeep(event => {
+              // console.log('rtcroom event sd')
+              // console.log(event)
+              // console.log(sd.getMap().toJSON())
+              if(event[0].transaction.local === false) {
+                updateSimple(sd.getMap().get("id"))
+                update(event[0])
+              }
+            })
+          sd.on('update', evt => {
+            // console.log("got update")
+            // console.log(sd.getMap().get("id"))
+          })
+            sd.on('synced', event => {
+              console.log("synced")
+              console.log(event);
+              console.log(sd.guid)
+              console.log(sd.getMap().toJSON())
+            })
         })
-      })
+      }
+      simpleYMap.set(sdmap.get("id"), sdmap.toJSON())
+    })
+  })
 
   // }
 
@@ -1970,7 +1963,10 @@ const ydocStore = async (persist = false, update = undefined) => {
     // if(id === "simple") {
       // debugger;
     // }
-    return mapMaybePromise(generic.nodes[id] ?? (simpleYMap.get(id)?.id || ymap.get(id)?.isLoaded ? simpleYMap.get(id) : (ymap.get(id)?.load(), ymap.get(id)?.whenLoaded)?.then(d => d.getMap().toJSON())), res => {
+    const genericGraph = generic.nodes[id];
+    return genericGraph ?? mapMaybePromise(simpleYMap.get(id)?.id || ymap.get(id)?.isLoaded 
+      ? simpleYMap.get(id) 
+      : (ymap.get(id)?.load(), ymap.get(id)?.whenLoaded)?.then(d => d.getMap().toJSON()), res => {
       if(res && !res?.id) {
         debugger;
       }
@@ -2035,10 +2031,14 @@ const yNodyStore = async () => {
         return;
       }
 
-      const updatedgraph = id ?? event.keysChanged.values().next().value;
-      requestAnimationFrame(() =>  {
-        nolib.no.runtime.change_graph(nolib.no.runtime.get_ref(updatedgraph), {...nolib, ...hlib}, event.transaction.local)
-      }) 
+      const updatedgraph = id ?? event.currentTarget.get("id");
+      if(updatedgraph) {
+        requestAnimationFrame(() =>  {
+          console.log(updatedgraph);
+          console.log(nolib.no.runtime.get_ref(updatedgraph))
+          nolib.no.runtime.change_graph(nolib.no.runtime.get_ref(updatedgraph), {...nolib, ...hlib}, event.transaction.local)
+        }) 
+      }
     }),
     parents: lokidbToStore(parentsdb),
     graphs: lokidbToStore(graphsdb),

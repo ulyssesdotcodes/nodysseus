@@ -538,11 +538,13 @@ const run_graph = (graph: Graph | (Graph & {nodes: Array<Node>, edges: Array<Edg
     const node = lib.data.no.runtime.get_node(newgraph, node_id);
 
     try {
-        lib.data.no.runtime.publish('noderun', {graph: newgraph, node_id})
+        return wrapPromise(node).then(node => {
+          lib.data.no.runtime.publish('noderun', {graph: newgraph, node_id})
 
-        const data = create_data(node_id, newgraph, env, lib);
-        const res = wrapPromise(node).then(node => run_node(node, data, env, lib)).value;
-        return ispromise(res) ? res.catch(handleError) : res
+          const data = create_data(node_id, newgraph, env, lib);
+          const res = run_node(node, data, env, lib);
+          return ispromise(res) ? res.catch(handleError) : res
+        }).value
     } catch (e) {
       return handleError(e)
     }
@@ -614,7 +616,7 @@ export const run = (node: Runnable | InputRunnable, args: Record<string, any> = 
         // )
       }, 
     _lib, args);
-  return ispromise(res) ? res.then(r => r?.value) : res?.value
+  return wrapPromise(res).then(r => r?.value).value;
 }
 
 const initStore = (store: NodysseusStore | undefined = undefined) => {
