@@ -1968,7 +1968,7 @@ const ydocStore = async (persist = false, update = undefined) => {
       ? simpleYMap.get(id) 
       : (ymap.get(id)?.load(), ymap.get(id)?.whenLoaded)?.then(d => d.getMap().toJSON()), res => {
       if(res && !res?.id) {
-        debugger;
+        //debugger;
       }
       if(!res || Object.keys(res).length === 0) {
         const val = {...extend(true, {}, get("simple"))};
