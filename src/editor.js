@@ -1873,7 +1873,7 @@ const ydocStore = async (persist = false, update = undefined) => {
         console.log("rdoc obs")
         console.log(evt)
       })
-      const rdocrtc = new WebrtcProvider(`nodysseus${rtcroom}_subdocs`, rdoc, {signaling: ["ws://51.11.165.142:4444"]})
+      const rdocrtc = new WebrtcProvider(`nodysseus${rtcroom}_subdocs`, rdoc, {signaling: ["wss://ws.nodysseus.io"]})
     }
 
     rdoc.getMap().set(sd.getMap().get("id"), new Y.Doc({guid: sd.guid}))
