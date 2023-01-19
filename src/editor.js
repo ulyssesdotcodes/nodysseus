@@ -1908,7 +1908,7 @@ const ydocStore = async (persist = false, update = undefined) => {
 
                 setuprtc(rtcroom, sd);
 
-                const grobs = new WebrtcProvider(`nodysseus${rtcroom}_${sd.getMap().get("id")}`, sd, {signaling: ["ws://51.11.165.142:4444"]})
+                const grobs = new WebrtcProvider(`nodysseus${rtcroom}_${sd.getMap().get("id")}`, sd, {signaling: ["wss://ws.nodysseus.io"]})
               }
             })
 
