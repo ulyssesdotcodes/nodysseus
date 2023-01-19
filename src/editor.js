@@ -1869,14 +1869,16 @@ const ydocStore = async (persist = false, update = undefined) => {
         // }
 
       })
-      rdoc.getMap().observe(evt => {
+      rdoc.getMap().observeDeep(evt => {
         console.log("rdoc obs")
         console.log(evt)
       })
+      rdoc.on('update', evt => console.log(evt))
       const rdocrtc = new WebrtcProvider(`nodysseus${rtcroom}_subdocs`, rdoc, {signaling: ["wss://ws.nodysseus.io"]})
     }
-
-    rdoc.getMap().set(sd.getMap().get("id"), new Y.Doc({guid: sd.guid}))
+    const rtcsd = new Y.Doc({guid: sd.guid});
+    rdoc.getMap().set(sd.getMap().get("id"), rtcsd)
+    return rtcsd;
   }
 
   ydoc.on('subdocs', e => {
@@ -1906,9 +1908,9 @@ const ydocStore = async (persist = false, update = undefined) => {
                 console.log(rtcroom)
                 console.log(sd.getMap().get("id"))
 
-                setuprtc(rtcroom, sd);
+                const rtcdoc = setuprtc(rtcroom, sd);
 
-                const grobs = new WebrtcProvider(`nodysseus${rtcroom}_${sd.getMap().get("id")}`, sd, {signaling: ["wss://ws.nodysseus.io"]})
+                const grobs = new WebrtcProvider(`nodysseus${rtcroom}_${sd.getMap().get("id")}`, rtcdoc, {signaling: ["wss://ws.nodysseus.io"]})
               }
             })
 
