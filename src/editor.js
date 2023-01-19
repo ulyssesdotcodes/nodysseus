@@ -1886,7 +1886,7 @@ const ydocStore = async (persist = false, update = undefined) => {
     e.loaded.forEach(sd => {
       const sdmap = sd.getMap();
       if(!refIdbs[sd.guid]) {
-        refIdbs[sd.guid] = new IndexeddbPersistence(`${persist}-subdocs-${sd.guid}`, sd)
+        refIdbs[sd.guid] = new IndexeddbPersistence(`${persist}-subdocs-${sd.guid}`, new Y.Doc({guid: sd.guid}))
         refIdbs[sd.guid].whenSynced.then(() => {
           if(sdmap.get("id")) {
             simpleYMap.set(sdmap.get("id"), ymap.get(sdmap.get("id")).getMap().toJSON())
