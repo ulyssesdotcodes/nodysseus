@@ -828,7 +828,7 @@ const nolib = {
           lib.data.no.runtime.update_graph(parent, lib);
         } else {
           if(addToStore) {
-            nodysseus.refs.add(graph.id, graph)
+            // nodysseus.refs.add(graph.id, graph)
           }
           publish("graphchange", graph, lib);
           publish("graphupdate", graph, lib);

@@ -1600,16 +1600,17 @@ const runh = el => el.d && el.p && el.c && ha.h(el.d, el.p, el.c);
 let nodysseusStore;
 
 const ydocStore = async (persist = false, update = undefined) => {
+  const rootDoc = new Y.Doc();
   const ydoc = new Y.Doc();
+  rootDoc.getMap().set("ydoc", ydoc);
   const ymap = ydoc.getMap();
   const simpleYDoc = new Y.Doc();
   const simpleYMap = simpleYDoc.getMap();
 
 
   if(update) {
-    ymap.observe(event =>{
-      console.log("event");
-      console.log(event);
+    ymap.observeDeep(events =>{
+      events.forEach(event => {
       if(!event.transaction.local || event.transaction.origin === undoManager) {
         update(event)
       }
@@ -1626,6 +1627,8 @@ const ydocStore = async (persist = false, update = undefined) => {
             simpleYMap.set(k, ymap.get(k)?.getMap().toJSON())
           }
         }
+      })
+
       })
     })
   }
@@ -1739,6 +1742,7 @@ const ydocStore = async (persist = false, update = undefined) => {
       // debugger;
     if(ymap.get(id).isLoaded) {
       simpleYMap.set(id, ymap.get(id).getMap().toJSON())
+      nolib.no.runtime.publish('graphchange', simpleYMap.get(id), {...nolib, ...hlib}) 
     } else {
       console.log(`not loaded ${id}`)
     }
@@ -1850,35 +1854,90 @@ const ydocStore = async (persist = false, update = undefined) => {
 
   // if(false) {
   const refIdbs = {};
+  const refRtcs = {};
   let rdoc;
 
-  const setuprtc = (rtcroom, sd) => {
+  const setuprtc = (rtcroom, sd, id) => {
+    // console.log(`setup ${id}`)
     if(!rdoc) {
       rdoc = new Y.Doc({autoLoad: true})
-      rdoc.on('subdocs', e => {
-        console.log('rdoc subdocs')
-        console.log(e)
-        // console.log("loaded rdoc")
-        // if(!rdoc.getMap().has(sdmap.get("id"))) {
-        //   console.log(`setting new map ${sdmap.get("id")}`)
-        //   rdoc.getMap().set(sdmap.get("id"), new Y.Doc({guid: sd.guid}))
-        // } else {
-        //   console.log(`using existing map ${sdmap.get("id")}`)
-        //   ydoc.getMap().set(sdmap.get("id"), new Y.Doc({guid: rdoc.getMap().get(sdmap.get("id")).guid}))
-        //   updateSimple(sdmap.get("id"))
-        // }
+      rootDoc.getMap().set("rdoc", rdoc)
 
-      })
-      rdoc.getMap().observeDeep(evt => {
-        console.log("rdoc obs")
-        console.log(evt)
-      })
-      rdoc.on('update', evt => console.log(evt))
       const rdocrtc = new WebrtcProvider(`nodysseus${rtcroom}_subdocs`, rdoc, {signaling: ["wss://ws.nodysseus.io"]})
+
+      rdoc.getMap().observe(evts => {
+        // console.log("rdoc obs")
+        // console.log(evts)
+
+        if(!refRtcs[id]) {
+          // console.log(`creating first graph provider ${id}`)
+          // console.log(rdoc.getMap().get(id).getMap().toJSON())
+            // refRtcs[id] = new WebsocketProvider("wss://ws.nodysseus.io", `nodysseus${rtcroom}_${sd.getMap().get("id")}`, rdoc.getMap().get(id))
+          refRtcs[id] = new WebrtcProvider(`nodysseus${rtcroom}_${id}`, sd, {signaling: ["wss://ws.nodysseus.io"], filterBcConns: false})
+          if(!rdoc.getMap().has(id)) {
+            // console.log(`setting rdoc ${id} to ${sd.guid}`)
+            rdoc.getMap().set(id, sd.guid)
+          }
+        }
+
+        evts.keysChanged.forEach(k => {
+          const kguid = rdoc.getMap().get(k);
+          if(!ymap.has(k)) {
+            // console.log(`got new graph ${k}`)
+            const rsd = new Y.Doc({guid: kguid})
+            ymap.set(k, rsd);
+          }
+
+          if(!refRtcs[k]) {
+            console.log(`syncing existing rtc graph ${k}`)
+            refRtcs[k] = new WebrtcProvider(`nodysseus${rtcroom}_${k}`, ymap.get(k), {signaling: ["wss://ws.nodysseus.io"], filterBcConns: false})
+          }
+        })
+        // evts.forEach(evt => [...evt.keysChanged].filter(k => !(k === "custom_editor" || k === "keybindings")).forEach(k => {
+          // console.log(rdoc.getMap().get(k))
+          //
+          // if(!refRtcs[k]) {
+          //   console.log(`getting rtc provider ${k}`)
+          //   const doc = ymap.get(k) ?? new Y.Doc();
+          //   refRtcs[k] = new WebrtcProvider(`nodysseus${rtcroom}_${k}`, doc, {signaling: ["wss://ws.nodysseus.io"]})
+          //   doc.load();
+          //   console.log(doc);
+          //   doc.whenLoaded.then(() => {
+          //     console.log(`whenloaded ${k}`)
+          //     console.log(doc.getMap().toJSON())
+          //     ymap.set(k, doc)
+          //   })
+          // }
+
+          // rdoc.getMap().get(k).load();
+          // rdoc.getMap().get(k).whenLoaded.then(load => {
+          //   console.log(`rdoc loaded ${k}`)
+          //   console.log(rdoc.getMap().get(k).getMap().toJSON())
+          // })
+          // console.log(rdoc.getMap().get(k).getMap().toJSON())
+        // }))
+      })
+
+      rdoc.on('update', evt => console.log(evt))
+    } else {
+      if(id && !rdoc.getMap().has(id)) {
+        if(!refRtcs[id]) {
+          console.log(`creating rtc provider ${id}`)
+          // console.log(rdoc.getMap().get(id).getMap().toJSON())
+            // refRtcs[id] = new WebsocketProvider("wss://ws.nodysseus.io", `nodysseus${rtcroom}_${sd.getMap().get("id")}`, rdoc.getMap().get(id))
+            refRtcs[id] = new WebrtcProvider(`nodysseus${rtcroom}_${id}`, sd, {signaling: ["wss://ws.nodysseus.io"], filterBcConns: false})
+        }
+        console.log(`setting rdoc ${id} to ${sd.guid}`)
+        rdoc.getMap().set(id, sd.guid)
+        // if(!refRtcs[sd.guid]) {
+        //   console.log(`creating rtc provider ${id}`)
+        //   console.log(rdoc.getMap().get(id).getMap().toJSON())
+        //     // refRtcs[id] = new WebsocketProvider("wss://ws.nodysseus.io", `nodysseus${rtcroom}_${sd.getMap().get("id")}`, rdoc.getMap().get(id))
+        //     refRtcs[sd.guid] = new WebrtcProvider(`nodysseus${rtcroom}_${sd.guid}`, rdoc.getMap().get(id), {signaling: ["wss://ws.nodysseus.io"]})
+        // }
+      }
     }
-    const rtcsd = new Y.Doc({guid: sd.guid});
-    rdoc.getMap().set(sd.getMap().get("id"), rtcsd)
-    return rtcsd;
+
   }
 
   ydoc.on('subdocs', e => {
@@ -1900,29 +1959,23 @@ const ydocStore = async (persist = false, update = undefined) => {
             //   params: {access_token: url.accessToken}
             // })
             //
+          if(!(sdmap.get("id") === "custom_editor" || sdmap.get("id") === "keybindings")) {
             const custom_editor_res = nolib.no.runtime.get_ref("custom_editor");
             mapMaybePromise(custom_editor_res, custom_editor => {
               const rtcroom = params.get("rtcroom") ?? (custom_editor && hlib.run(custom_editor, custom_editor.out ?? "out")?.rtcroom);
               if(rtcroom && sdmap.get("id")) {
-                console.log("gotrtcroom")
-                console.log(rtcroom)
-                console.log(sd.getMap().get("id"))
 
-                const rtcdoc = setuprtc(rtcroom, sd);
-
-                const grobs = new WebrtcProvider(`nodysseus${rtcroom}_${sd.getMap().get("id")}`, rtcdoc, {signaling: ["wss://ws.nodysseus.io"]})
+                setuprtc(rtcroom, sd, sd.getMap().get("id"));
               }
             })
 
             sd.getMap().observeDeep(event => {
-              // console.log('rtcroom event sd')
-              // console.log(event)
-              // console.log(sd.getMap().toJSON())
               if(event[0].transaction.local === false) {
                 updateSimple(sd.getMap().get("id"))
                 update(event[0])
               }
             })
+          }
           sd.on('update', evt => {
             // console.log("got update")
             // console.log(sd.getMap().get("id"))
@@ -1976,7 +2029,7 @@ const ydocStore = async (persist = false, update = undefined) => {
         const val = {...extend(true, {}, get("simple"))};
         val.id = id;
         val.nodes.out.name = id;
-        console.log("creating new " + id)
+        // console.log("creating new " + id)
         return add(id, otherwise ?? val)
       }
 
@@ -2029,6 +2082,8 @@ const yNodyStore = async () => {
 
   return {
     refs: await ydocStore('refs', (event, id) => {
+      console.log(`update event`)
+      console.log(event);
       if(!main_app_dispatch || (!id && event.keysChanged.size > 1)) {
         return;
       }
