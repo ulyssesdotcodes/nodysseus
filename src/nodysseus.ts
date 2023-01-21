@@ -557,7 +557,7 @@ const run_functor_runnable = (runnable: FunctorRunnable, args: Record<string, un
     env: combineEnv(execArgs ?? {}, runnable.env, "functor runnable" + runnable.fn),
     fn: runnable.fn,
     graph: runnable.graph,
-    lib
+    lib: runnable.lib
   }
   return run_runnable(newRunnable, lib)
 }
@@ -1370,7 +1370,9 @@ const nolib = {
                 )
               : self(args === undefined ? [] : args);
           } else {
-            const ng_fn = nodysseus_get(self ?? _args, fn || nodevalue, lib);
+            console.log(fn || nodevalue)
+            console.log(lib.data)
+            const ng_fn = nodysseus_get(self ?? lib.data, fn || nodevalue, lib);
             const fnargs = Array.isArray(args)
               ? (args || [])
                   .reverse()

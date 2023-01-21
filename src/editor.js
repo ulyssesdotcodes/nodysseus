@@ -1623,7 +1623,7 @@ const ydocStore = async (persist = false, update = undefined) => {
 
       simpleYDoc.transact(() => {
         for(let k of event.keysChanged) {
-          if(ymap.get(k)?.isLoaded) {
+          if(k && ymap.get(k)?.isLoaded) {
             simpleYMap.set(k, ymap.get(k)?.getMap().toJSON())
           }
         }
@@ -1640,7 +1640,7 @@ const ydocStore = async (persist = false, update = undefined) => {
     if(generic.nodes[id]) {
       simpleYMap.set(id, generic.nodes[id])
       return generic.nodes[id];
-    } else if(!id.startsWith("_") && Object.keys(data).length > 0) {
+    } else if(id && !id.startsWith("_") && Object.keys(data).length > 0) {
       console.log(`adding ${id}`)
       let current = ymap.get(id);
       let found = !!current?.guid; // && !!current.getMap().get("id");
@@ -1740,7 +1740,7 @@ const ydocStore = async (persist = false, update = undefined) => {
   const updateSimple = id => {
     // simpleYDoc.transact(() => {
       // debugger;
-    if(ymap.get(id).isLoaded) {
+    if(id && ymap.get(id).isLoaded) {
       simpleYMap.set(id, ymap.get(id).getMap().toJSON())
       nolib.no.runtime.publish('graphchange', simpleYMap.get(id), {...nolib, ...hlib}) 
     } else {
@@ -1987,8 +1987,10 @@ const ydocStore = async (persist = false, update = undefined) => {
               console.log(sd.getMap().toJSON())
             })
         })
+      } else if (sdmap.get("id")) {
+        simpleYMap.set(sdmap.get("id"), sdmap.toJSON())
       }
-      simpleYMap.set(sdmap.get("id"), sdmap.toJSON())
+
     })
   })
 
@@ -2054,7 +2056,7 @@ const ydocStore = async (persist = false, update = undefined) => {
     },
     removeAll: () => {},
     all: () => {
-      const keys = [...simpleYMap.keys()];
+      const keys = [...ymap.keys(), ...Object.keys(generic.nodes)];
       // keys.forEach(k => (k.match(/^[a-z0-9]{7}$/) || k.match(/^run_[a-z]{7}.*/)) && k !== 'default' && k !== 'resolve' && k !== 'changed' && ymap.delete(k))
       return keys//.map(v => get(v))
     },
