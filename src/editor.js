@@ -1792,6 +1792,7 @@ const ydocStore = async (persist = false, update = undefined) => {
 
     const indexeddbProvider = new IndexeddbPersistence(`${persist}-subdocs`, ydoc)
     await indexeddbProvider.whenSynced.then(val => {
+      console.log(ydoc)
       const runcustom = () => {
         if(!nolib.no.runtime){
           requestAnimationFrame(runcustom);

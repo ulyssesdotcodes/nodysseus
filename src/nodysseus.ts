@@ -1370,8 +1370,6 @@ const nolib = {
                 )
               : self(args === undefined ? [] : args);
           } else {
-            console.log(fn || nodevalue)
-            console.log(lib.data)
             const ng_fn = nodysseus_get(self ?? lib.data, fn || nodevalue, lib);
             const fnargs = Array.isArray(args)
               ? (args || [])
