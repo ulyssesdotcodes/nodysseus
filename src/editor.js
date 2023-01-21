@@ -419,7 +419,7 @@ const graph_subscription = (dispatch, props) => {
           }
           animframe = requestAnimationFrame(() =>  {
               animframe = false;
-              dispatch(s => [{...s, display_graph: graph}, [UpdateSimulation]])
+              dispatch(s => [{...s, display_graph: graph}, [UpdateSimulation], [refresh_graph, {graph, norun: props.norun, graphChanged: true}]])
           })
         }
     };
@@ -449,8 +449,8 @@ const listenToEvent = (dispatch, props) => {
 const ap = (fn, v) => fn(v);
 const ap_promise = (p, fn, cfn) => p && typeof p['then'] === 'function' ? cfn ? p.then(fn).catch(cfn) : p.then(fn) : ap(fn, p);
 
-const refresh_graph = (graph, dispatch, norun = false) => {
-    if(norun) {
+const refresh_graph = (dispatch, {graph, graphChanged, norun}) => {
+    if(norun ?? false) {
       return
     }
     dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
@@ -461,7 +461,7 @@ const refresh_graph = (graph, dispatch, norun = false) => {
     // const display_fn = result => hlib.run(graph, graph.out, {}, "display");
     const update_result_display_fn = display => result_display_dispatch(UpdateResultDisplay, {el: display && display.dom_type ? display : {dom_type: 'div', props: {}, children: []}})
     const update_info_display_fn = () => dispatch(s => [s, s.selected[0] !== s.display_graph.out 
-        && !s.show_all && [() => update_info_display({fn: s.selected[0], graph: s.display_graph, args: {}, lib: {...hlib, ...nolib, ...reslib}})]])
+        && !s.show_all && [() => update_info_display({fn: s.selected[0], graph: s.display_graph, args: {}, lib: {...hlib, ...nolib, ...reslib}}, graphChanged)]])
     ap_promise(ap_promise(result, display_fn), update_result_display_fn);
     ap_promise(result, update_info_display_fn)
     return result
@@ -481,7 +481,7 @@ const result_subscription = (dispatch, {display_graph_id, norun}) => {
         if((graph.id === display_graph_id || graph.graphid === display_graph_id) && !animrun) {
             cancelAnimationFrame(animrun)
             animrun = requestAnimationFrame(() => {
-                const result = refresh_graph(nolib.no.runtime.get_ref(display_graph_id), dispatch, norun)
+                const result = refresh_graph(dispatch, {graph: nolib.no.runtime.get_ref(display_graph_id), graphChanged: false, norun})
                 const reset_animrun = () => animrun = false;
                 ap_promise(result, reset_animrun, reset_animrun)
             })
@@ -687,7 +687,7 @@ const SelectNode = (state, {node_id, focus_property}) => [
           graph: state.display_graph, 
           args: {}, 
           lib: {...hlib, ...nolib, ...hlib.run(state.display_graph, state.display_graph.out ?? "out", {_output: "lib"})}
-        })],
+        }, true)],
     state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: node_id})]
 ]
 
@@ -1110,7 +1110,7 @@ const UpdateResultDisplay = (state, el) => ({
     el: el.el ? {...el.el} : {...el}
 })
 
-const update_info_display = ({fn, graph, args, lib}) => {
+const update_info_display = ({fn, graph, args, lib}, graphChanged = true) => {
     const node = nolib.no.runtime.get_node(graph, fn);
 
     const node_ref = node && (node.ref && nolib.no.runtime.get_ref(node.ref)) || node;
@@ -1120,7 +1120,7 @@ const update_info_display = ({fn, graph, args, lib}) => {
     const update_info_display_fn = display => info_display_dispatch && requestAnimationFrame(() => {
       info_display_dispatch(UpdateResultDisplay, {el: display?.dom_type ? display : ha.h('div', {})})
       requestAnimationFrame(() => {
-        if(window.getComputedStyle(document.getElementById("node-editor-code-editor")).getPropertyValue("display") !== "none") {
+        if(graphChanged && window.getComputedStyle(document.getElementById("node-editor-code-editor")).getPropertyValue("display") !== "none") {
           code_editor.dispatch({changes:{from: 0, to: code_editor.state.doc.length, insert: node.script ?? node.value}})
         }
       });
@@ -1350,7 +1350,7 @@ const runapp = (init, load_graph, _lib) => {
     node: document.getElementById(init.html_id),
     subscriptions: s => [
         [d3subscription, {action: SimulationToHyperapp, update: UpdateSimulation}], 
-        [graph_subscription, {display_graph_id: s.display_graph_id}],
+        [graph_subscription, {display_graph_id: s.display_graph_id, norun: s.norun}],
         [select_node_subscription, {}],
         result_display_dispatch && [result_subscription, {display_graph_id: s.display_graph_id, norun: s.norun}],
         [keydownSubscription, {action: (state, payload) => {
