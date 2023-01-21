@@ -573,7 +573,7 @@ const run_ap_runnable = (runnable: ApRunnable, args: Record<string, any>, lib: L
     ))
     return Array.isArray(runnable.fn) ? wrapPromiseAll(ret.map(wrapPromise)) : wrapPromise(ret[0]);
   }
-  return wrapPromise(computedArgs).then(execute).then(v => v.value).value;
+  return wrapPromise(computedArgs).then(execute).then(v => v?.value).value;
 }
 
 const getmap = (map, id) => {
