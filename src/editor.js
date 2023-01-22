@@ -1810,8 +1810,9 @@ const ydocStore = async (persist = false, update = undefined) => {
         // if(prevdoc.getMap().get(k).guid) {
         //   return;
         // }
-        console.log(ymap.get(k))
-        if(k.startsWith("_") || k === "" || generic.nodes[k]) {
+        // console.log(ymap.get(k))
+        const addedkey = `__${k}__added`
+        if(k.startsWith("_") || k === "" || generic.nodes[k] || prevdoc.getMap().get(addedkey)) {
         } else if (prevdoc.getMap().get(k).id) {
           // convert old maps to ymap
           console.log(`old maps ${k}`)
@@ -1830,7 +1831,8 @@ const ydocStore = async (persist = false, update = undefined) => {
           console.log(k);
           console.log(prevdoc.getMap().get(k))
           console.log(prevdoc.getMap().get(k).toJSON())
-          return add(k, prevdoc.getMap().get(k).toJSON())
+          add(k, prevdoc.getMap().get(k).toJSON());
+          prevdoc.getMap().set(addedkey, true)
         }
       }))
     })
