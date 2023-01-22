@@ -1794,14 +1794,14 @@ const ydocStore = async (persist = false, update = undefined) => {
     const indexeddbProvider = new IndexeddbPersistence(`${persist}-subdocs`, ydoc)
     await indexeddbProvider.whenSynced.then(val => {
       console.log(ydoc)
-      const runcustom = () => {
-        if(!nolib.no.runtime){
-          requestAnimationFrame(runcustom);
-          return;
-        }
-      }
-
-      requestAnimationFrame(runcustom)
+      // const runcustom = () => {
+      //   if(!nolib.no.runtime){
+      //     requestAnimationFrame(runcustom);
+      //     return;
+      //   }
+      // }
+      //
+      // requestAnimationFrame(runcustom)
     })
 
     const prevIndexeddbProvider = new IndexeddbPersistence(`${persist}`, prevdoc)
@@ -1812,7 +1812,7 @@ const ydocStore = async (persist = false, update = undefined) => {
         //   return;
         // }
         // console.log(ymap.get(k))
-        const addedkey = `__${k}__added_4`
+        const addedkey = `__${k}__added_5`
         if(k.startsWith("_") || k === "" || generic.nodes[k] || prevdoc.getMap().get(addedkey)) {
         } else if (prevdoc.getMap().get(k).id) {
           // convert old maps to ymap
@@ -1832,6 +1832,7 @@ const ydocStore = async (persist = false, update = undefined) => {
           console.log(k);
           console.log(prevdoc.getMap().get(k))
           console.log(prevdoc.getMap().get(k).toJSON())
+          ymap.remove(k);
           add(k, prevdoc.getMap().get(k).toJSON());
           prevdoc.getMap().set(addedkey, true)
         }
@@ -1955,7 +1956,7 @@ const ydocStore = async (persist = false, update = undefined) => {
         refIdbs[sd.guid] = new IndexeddbPersistence(`${persist}-subdocs-${sd.guid}`, sd)
         refIdbs[sd.guid].whenSynced.then(() => {
           console.log(`indexeddb ${sdmap.get("id")}`)
-          if(sdmap.get("id").includes("/")) {
+          if(sdmap.get("id")?.includes("/")) {
             debugger;
             ymap.remove(sdmap.get("id"))
             sd.destroy();

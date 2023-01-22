@@ -899,7 +899,7 @@ const nolib = {
         return node;
       };
 
-      nodysseus.refs.addMany(Object.values((generic as Graph).nodes).map(n => [n.id, n]));
+      // nodysseus.refs.addMany(Object.values((generic as Graph).nodes).map(n => [n.id, n]));
 
       if(nodysseus.refs.startListening) {
         nodysseus.refs.startListening()
