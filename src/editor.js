@@ -1810,6 +1810,7 @@ const ydocStore = async (persist = false, update = undefined) => {
         // if(prevdoc.getMap().get(k).guid) {
         //   return;
         // }
+        console.log(ymap.get(k))
         if(k.startsWith("_") || k === "" || generic.nodes[k] || ymap.has(k)) {
         } else if (prevdoc.getMap().get(k).id) {
           // convert old maps to ymap
