@@ -1642,6 +1642,7 @@ const ydocStore = async (persist = false, update = undefined) => {
       return generic.nodes[id];
     } else if(id && !id.startsWith("_") && Object.keys(data).length > 0) {
       console.log(`adding ${id}`)
+      console.log(data);
       let current = ymap.get(id);
       let found = !!current?.guid; // && !!current.getMap().get("id");
       if(!found) {
@@ -1804,14 +1805,14 @@ const ydocStore = async (persist = false, update = undefined) => {
     })
 
     const prevIndexeddbProvider = new IndexeddbPersistence(`${persist}`, prevdoc)
-    await prevIndexeddbProvider.whenSynced.then(val => {
+    prevIndexeddbProvider.whenSynced.then(val => {
       Promise.all([...prevdoc.getMap().keys()].map(k => {
         console.log(`prevdoc ${k}`);
         // if(prevdoc.getMap().get(k).guid) {
         //   return;
         // }
         // console.log(ymap.get(k))
-        const addedkey = `__${k}__added_2`
+        const addedkey = `__${k}__added_4`
         if(k.startsWith("_") || k === "" || generic.nodes[k] || prevdoc.getMap().get(addedkey)) {
         } else if (prevdoc.getMap().get(k).id) {
           // convert old maps to ymap
