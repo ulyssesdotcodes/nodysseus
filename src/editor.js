@@ -1811,7 +1811,7 @@ const ydocStore = async (persist = false, update = undefined) => {
         //   return;
         // }
         // console.log(ymap.get(k))
-        const addedkey = `__${k}__added`
+        const addedkey = `__${k}__added_2`
         if(k.startsWith("_") || k === "" || generic.nodes[k] || prevdoc.getMap().get(addedkey)) {
         } else if (prevdoc.getMap().get(k).id) {
           // convert old maps to ymap
