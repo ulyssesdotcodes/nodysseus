@@ -28,7 +28,6 @@ export type Graph = {
   name?: string,
   nodes: Record<string, Node>,
   edges: Record<string, Edge>,
-  edgesIn: Record<string, Edge>,
 }
 
 export type Edge = {

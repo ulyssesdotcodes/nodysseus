@@ -1950,6 +1950,15 @@ const ydocStore = async (persist = false, update = undefined) => {
       if(!refIdbs[sd.guid]) {
         refIdbs[sd.guid] = new IndexeddbPersistence(`${persist}-subdocs-${sd.guid}`, sd)
         refIdbs[sd.guid].whenSynced.then(() => {
+          console.log(`indexeddb ${sdmap.get("id")}`)
+          if(sdmap.get("id").includes("/")) {
+            debugger;
+            ymap.remove(sdmap.get("id"))
+            sd.destroy();
+            refIdbs[sd.guid].clearData();
+            return;
+          }
+
           if(sdmap.get("id")) {
             simpleYMap.set(sdmap.get("id"), ymap.get(sdmap.get("id")).getMap().toJSON())
           }
@@ -2025,15 +2034,9 @@ const ydocStore = async (persist = false, update = undefined) => {
     return genericGraph ?? mapMaybePromise(simpleYMap.get(id)?.id || ymap.get(id)?.isLoaded 
       ? simpleYMap.get(id) 
       : (ymap.get(id)?.load(), ymap.get(id)?.whenLoaded)?.then(d => d.getMap().toJSON()), res => {
-      if(res && !res?.id) {
-        //debugger;
-      }
-      if(!res || Object.keys(res).length === 0) {
-        const val = {...extend(true, {}, get("simple"))};
-        val.id = id;
-        val.nodes.out.name = id;
+      if((!res || Object.keys(res).length === 0) && otherwise) {
         // console.log("creating new " + id)
-        return add(id, otherwise ?? val)
+        return add(id, otherwise)
       }
 
       return res;

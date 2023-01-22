@@ -846,8 +846,7 @@ const nolib = {
 
         if (!compare(prevargs, args)) {
           Object.assign(prevargs, args);
-          const fullgraph = get_graph(graphid);
-          publish("graphupdate", get_parentest(fullgraph) ?? fullgraph, lib);
+          publish("graphupdate", get_parentest(graphid) ?? get_graph(graphid), lib);
         }
       };
 
@@ -870,11 +869,12 @@ const nolib = {
         .then(g => Object.values(g.edges).filter((e: Edge) => e.to === id)).value
       const get_edge_out = get_edge
       const get_args = (graph) => nodysseus.state.get(typeof graph === "string" ? graph : graph.id) ?? {};
-      const get_graph = (graph: string | Graph): Graph | Promise<Graph> | undefined => wrapPromise(nodysseus.refs.get(typeof graph === "string" ? graph : graph.id))
-        .then(g => {
-          if(!g.id) debugger;
-          return (isNodeGraph(g) ? g : undefined) ?? (graph as Graph)
-        }).value
+      const get_graph = (graph: string | Graph): Graph | Promise<Graph> | undefined => wrapPromise(
+        nodysseus.refs.get(typeof graph === "string" ? graph : graph.id))
+          .then(g => {
+            if(!g.id) debugger;
+            return (isNodeGraph(g) ? g : undefined) ?? (graph as Graph)
+          }).value
       const get_parent = (graph) => {
         const parent = nodysseus.parents.get(
           typeof graph === "string" ? graph : graph.id
