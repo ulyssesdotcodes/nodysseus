@@ -1832,7 +1832,7 @@ const ydocStore = async (persist = false, update = undefined) => {
           console.log(k);
           console.log(prevdoc.getMap().get(k))
           console.log(prevdoc.getMap().get(k).toJSON())
-          ymap.remove(k);
+          ymap.delete(k);
           add(k, prevdoc.getMap().get(k).toJSON());
           prevdoc.getMap().set(addedkey, true)
         }
