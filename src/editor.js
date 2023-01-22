@@ -1654,7 +1654,6 @@ const ydocStore = async (persist = false, update = undefined) => {
         current.load()
       }
 
-      return wrapPromise(current.isLoaded ? true : current.whenLoaded).then(_ => {
         ydoc.transact(() => {
           const infomap = generic.nodes[id] ? current : current.getMap();
           console.log('in loaded')
@@ -1734,7 +1733,6 @@ const ydocStore = async (persist = false, update = undefined) => {
         updateSimple(id)
 
         return simpleYMap.get(id)
-      }).value
     }
   }
 
