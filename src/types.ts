@@ -25,10 +25,10 @@ export type d3Link = SimulationLinkDatum<d3Node> & {
 export type Graph = {
   id: string,
   out?: string,
-  Functor?: string,
   name?: string,
   nodes: Record<string, Node>,
-  edges: Record<string, Edge>
+  edges: Record<string, Edge>,
+  edgesIn: Record<string, Edge>,
 }
 
 export type Edge = {
