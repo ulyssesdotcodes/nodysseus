@@ -21,6 +21,8 @@ import generic from "./generic"
 import { isRunnable } from "./types";
 import extend from "just-extend";
 
+const EXAMPLES = ["threejs_example", "hydra_example"];
+
 class NodyWS extends WebSocket {
   constructor(url) {
     super(url, 'json.webpubsub.azure.v1')
@@ -802,23 +804,15 @@ const SaveGraph = (dispatch, payload) => save_graph(payload.display_graph)
 
 const ChangeDisplayGraphId = (dispatch, {id, select_out, display_graph_id}) => {
     requestAnimationFrame(() => {
-        const graphPromise = wrapPromise(nolib.no.runtime.get_ref(id, display_graph_id && nolib.no.runtime.get_ref(display_graph_id)))
-            // ?? Promise.any([
-            //   navigator.onLine ? resfetch(`json/${id}.json`)
-            //     .then(r => r.status === 200 ? r.json() : Promise.reject())
-            //     .then(gs => {
-            //       nolib.no.runtime.add_refs(Array.isArray(gs) ? gs : [gs]);
-            //       return nolib.no.runtime.get_ref(id);
-            //     }) : Promise.reject()]))
-            //   new Promise((res, rej) => setTimeout(() => res(), 1000))
-            //     .then(() => nolib.no.runtime.get_ref(display_graph_id ?? "simple"))
-            //     .then(graph => ({...graph, id, name: id}))
-            //     .then(g => ({...g, nodes: Object.fromEntries(Object.values(g.nodes).map(n => [n.id, n.id === (g.out ?? "out") ? {...n, name: id} : n]))}))
-            // ])).then(g => Array.isArray(g.nodes) && Array.isArray(g.edges) ? {...g, nodes: Object.fromEntries(g.nodes.map(n => [n.id, n])), edges: Object.fromEntries(g.edges.map(e => [e.from, e]))} : g )
-
+        const graphPromise = wrapPromise(
+          EXAMPLES.includes(id) && !nolib.no.runtime.refs().includes(id) 
+          ? fetch(`json/${id}.json`).then(res => res.json()).then(g => nolib.no.runtime.add_ref(g))
+          : nolib.no.runtime.get_ref(id, display_graph_id && nolib.no.runtime.get_ref(display_graph_id))
+        )
 
         window.location.hash = '#' + id; 
-        graphPromise.then(graph => dispatch(state => [
+        graphPromise
+          .then(graph => dispatch(state => [
             {...state, display_graph_id: id},
             [dispatch => {
                 requestAnimationFrame(() => {

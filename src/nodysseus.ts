@@ -855,7 +855,7 @@ const nolib = {
       }
       const add_ref = (graph: Node) => {
         if(!generic.nodes[graph.id]) {
-          nodysseus.refs.add(graph.id, graph)
+          return nodysseus.refs.add(graph.id, graph)
         }
       }
       const remove_ref = nodysseus.refs.remove
