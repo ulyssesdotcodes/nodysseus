@@ -994,19 +994,19 @@ const input_el = ({label, property, value, onchange, options, inputs, disabled})
     },
     [
         ha.h('label', {for: `edit-text-${property}`}, [ha.text(label)]),
-        ha.memo(({property, optionsLength, value, disabled}) => ha.h('input', {
+        ha.h('input', {
             class: property, 
             id: `edit-text-${property}`, 
             key: `edit-text-${property}`, 
             name: `edit-text-${property}`, 
             disabled,
-            list: options && optionsLength > 0 ? `edit-text-list-${property}` : undefined,
+            list: options && options.length > 0 ? `edit-text-list-${property}` : undefined,
             oninput: oninput && ((s, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: e.target.value})}]), 
             onchange: onchange && ((s, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: undefined})}, [dispatch => dispatch(onchange, e)]]),
             onfocus: (state, event) => [{...state, focused: event.target.id}],
             onblur: (state, event) => [{...state, focused: false}],
             value: inputs[`edit-text-${property}`] ?? value
-        }), {property, optionsLength: options?.length, value, disabled}),
+        }),
         options && options.length > 0 && ha.h('datalist', {id: `edit-text-list-${property}`}, options.map(o => ha.h('option', {value: o}))) 
     ]
 )
@@ -1032,13 +1032,14 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
                           : [CreateNode, {node: {id: randid}, child: node.id, child_as: n.name}]
                     }, [ha.text(n.exists ? n.name : `+${n.name}`)]))),
             ha.h('div', {class: "inputs"}, [
-                input_el({
+                ha.memo(({nodevalue, nodeid}) => input_el({
                     label: "value", 
                     value: node.value, 
                     property: "value", 
                     inputs,
                     onchange: (state, payload) => [UpdateNode, {node, property: "value", value: payload.target.value}]}),
-                input_el({
+                  {nodevalue: node.value, nodeid: node.id}),
+                ha.memo(({nodevalue, nodeid}) => input_el({
                     label: "name", 
                     value: node.name, 
                     property: "name", 
@@ -1049,15 +1050,15 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
                         (node.id === graph_out || node.id === "out") && [ChangeDisplayGraphId, {id: payload.target.value, select_out: true, display_graph_id}]
                     ],
                     options: (node.id === graph_out || node.id === "out") && ref_graphs
-                }),
-                input_el({
+                }), {nodevalue: node.value, nodeid: node.id}),
+                ha.memo(({nodevalue, nodeid}) => input_el({
                     label: 'ref',
                     value: node.ref,
                     property: 'ref',
                     inputs,
                     // onchange: (state, event) => [UpdateNode, {node, property: "ref", value: event.target.value}],
                     disabled: node.id === graph_out
-                }),
+                }), {nodevalue: node.value, nodeid: node.id}),
                 link_out && link_out.source && input_el({
                     label: "edge", 
                     value: link_out.as, 
