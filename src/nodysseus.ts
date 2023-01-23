@@ -569,7 +569,7 @@ const run_ap_runnable = (runnable: ApRunnable, args: Record<string, any>, lib: L
     .map(rfn => run_runnable(
       rfn,
       runnable.lib,
-      execArgs ? Object.fromEntries(Object.entries(execArgs.value).map(kv => [kv[0], lib.data.no.of(kv[1])])) : {}, 
+      execArgs?.value ? Object.fromEntries(Object.entries(execArgs.value).map(kv => [kv[0], lib.data.no.of(kv[1])])) : {}, 
     ))
     return Array.isArray(runnable.fn) ? wrapPromiseAll(ret.map(wrapPromise)) : wrapPromise(ret[0]);
   }
@@ -869,7 +869,6 @@ const nolib = {
       const get_graph = (graph: string | Graph): Graph | Promise<Graph> | undefined => wrapPromise(
         nodysseus.refs.get(typeof graph === "string" ? graph : graph.id))
           .then(g => {
-            if(!g.id) debugger;
             return (isNodeGraph(g) ? g : undefined) ?? (graph as Graph)
           }).value
       const get_parent = (graph) => {

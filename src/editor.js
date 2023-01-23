@@ -994,19 +994,19 @@ const input_el = ({label, property, value, onchange, options, inputs, disabled})
     },
     [
         ha.h('label', {for: `edit-text-${property}`}, [ha.text(label)]),
-        ha.h('input', {
+        ha.memo(({property, optionsLength, value, disabled}) => ha.h('input', {
             class: property, 
             id: `edit-text-${property}`, 
             key: `edit-text-${property}`, 
             name: `edit-text-${property}`, 
             disabled,
-            list: options && options.length > 0 ? `edit-text-list-${property}` : undefined,
+            list: options && optionsLength > 0 ? `edit-text-list-${property}` : undefined,
             oninput: oninput && ((s, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: e.target.value})}]), 
             onchange: onchange && ((s, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: undefined})}, [dispatch => dispatch(onchange, e)]]),
             onfocus: (state, event) => [{...state, focused: event.target.id}],
             onblur: (state, event) => [{...state, focused: false}],
             value: inputs[`edit-text-${property}`] ?? value
-        }),
+        }), {property, optionsLength: options?.length, value, disabled}),
         options && options.length > 0 && ha.h('datalist', {id: `edit-text-list-${property}`}, options.map(o => ha.h('option', {value: o}))) 
     ]
 )
