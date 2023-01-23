@@ -6119,7 +6119,7 @@ const generic = {
         },
         "semslq4": {
           "id": "semslq4",
-          "value": "console.log(namespace);\nconsole.log(_lib.no.runtime.get_ref(namespace))\nreturn _lib.no.runtime.get_ref(namespace)",
+          "value": "console.log(namespace);\nconst ref = _lib.no.runtime.get_ref(namespace);\nref?.then ? ref.then(console.log) : console.log(ref)\nreturn _lib.no.runtime.get_ref(namespace)",
           "ref": "script"
         },
         "vffalrt": {

@@ -485,7 +485,7 @@ const result_subscription = (dispatch, {display_graph_id, norun}) => {
     nolib.no.runtime.add_listener('grapherror', 'update_hyperapp_error', error_listener);
 
     const change_listener = graph => {
-        if((graph.id === display_graph_id || graph.graphid === display_graph_id) && !animrun) {
+        if(!animrun) {
             cancelAnimationFrame(animrun)
             animrun = requestAnimationFrame(() => {
                 const result = refresh_graph(dispatch, {graph: nolib.no.runtime.get_ref(display_graph_id), graphChanged: false, norun})
@@ -721,8 +721,8 @@ const DeleteNode = (state, {node_id}) => [
         ...state, 
         history: state.history.concat([{action: 'delete_node', node_id}]) 
     },
-    [(dispatch, {node_id}) => requestAnimationFrame(() => dispatch(SelectNode, {node_id})), {node_id: nolib.no.runtime.get_edge_out(state.display_graph, node_id).to}],
-    [() => nolib.no.runtime.delete_node(state.display_graph, node_id, hlib)]
+    [(dispatch, {node_id}) => dispatch(SelectNode, {node_id}), {node_id: nolib.no.runtime.get_edge_out(state.display_graph, node_id).to}],
+    [() => requestAnimationFrame(() => nolib.no.runtime.delete_node(state.display_graph, node_id, hlib))]
 ]
 
 const ExpandContract = (state, {node_id}) => {
@@ -1124,7 +1124,7 @@ const update_info_display = ({fn, graph, args, lib}, graphChanged = true) => {
     const node = nolib.no.runtime.get_node(graph, fn);
 
     const node_ref = node && (node.ref && nolib.no.runtime.get_ref(node.ref)) || node;
-    const out_ref = node && (node.nodes && nolib.no.runtime.get_node(node, node.out)) || (node_ref.nodes && nolib.no.runtime.get_node(node_ref, node_ref.out));
+    const out_ref = node && (node.nodes && nolib.no.runtime.get_node(node, node.out)) || (node_ref?.nodes && nolib.no.runtime.get_node(node_ref, node_ref.out));
     const node_display_el = (node.ref === "return" || (out_ref && out_ref.ref === "return")) 
         && hlib.run(graph, fn, {...args, _output: "display"}, lib);
     const update_info_display_fn = display => info_display_dispatch && requestAnimationFrame(() => {
@@ -1725,7 +1725,6 @@ const ydocStore = async (persist = false, update = undefined) => {
       let current = ymap.get(id);
       let found = !!current?.guid; // && !!current.getMap().get("id");
       if(found) {
-
         return wrapPromise(current.isLoaded ? true : (current.load(), current.whenLoaded)).then(_ => {
           const infomap = generic.nodes[id] ? current : current.getMap();
           setMapFromGraph(infomap, data)
@@ -1964,11 +1963,11 @@ const ydocStore = async (persist = false, update = undefined) => {
       if(!refIdbs[sd.guid]) {
         refIdbs[sd.guid] = new IndexeddbPersistence(`${persist}-subdocs-${sd.guid}`, sd)
         refIdbs[sd.guid].whenSynced.then(() => {
+          sd.emit('load', [sd])
+
           if(!sdmap.get("id")){
             return;
           }
-
-          sd.emit('load', [sd])
 
           console.log(`indexeddb ${sdmap.get("id")}`)
           if(sdmap.get("id")?.includes("/")) {
@@ -2038,8 +2037,9 @@ const ydocStore = async (persist = false, update = undefined) => {
     // if(!ymapRes.isLoaded) {
     //   ymapRes.load();
     // }
-    // const res = simpleYMap.get(id);
-      //frommap;
+    // const res = simpleYMap.get(id)
+      // console.log(`loaded (?)`)
+     //frommap;
 
     // console.log(id);
     // console.log(res);
@@ -2054,7 +2054,7 @@ const ydocStore = async (persist = false, update = undefined) => {
       ? simpleYMap.get(id) 
       : (ymap.get(id)?.load(), ymap.get(id)?.whenLoaded)?.then(d => d.getMap().toJSON()), res => {
       if((!res || Object.keys(res).length === 0) && otherwise) {
-        // console.log("creating new " + id)
+        console.log("creating new " + id)
         return add(id, otherwise)
       }
 
@@ -2075,6 +2075,8 @@ const ydocStore = async (persist = false, update = undefined) => {
       })
     },
     remove: id => {
+      console.log(`removing ${id}`)
+      simpleYMap.delete(id);
       ymap.delete(id)
     },
     removeAll: () => {},
