@@ -66,9 +66,15 @@ const updateSimulationNodes = (dispatch, data) => {
     const order = [];
     const queue = [data.display_graph.out ?? "out"];
 
-    const parents_map = new Map(Object.values(data.display_graph.nodes).map(n => [n.id, 
-        nolib.no.runtime.get_edges_in(data.display_graph, n.id).map(e => e.from)
-    ]));
+    const parents_map = 
+      wrapPromise(Promise.all(Object.values(data.display_graph.nodes)
+        .map(n => 
+          wrapPromise(nolib.no.runtime.get_edges_in(data.display_graph, n.id))
+            .then(edges => [n.id, edges.map(e => e.from)]).value
+        )))
+      .then(kvs => new Map(kvs))
+      .then(parents_map => {
+  
 
     let needsupdate = false;
     while(queue.length > 0) {
@@ -223,6 +229,7 @@ const updateSimulationNodes = (dispatch, data) => {
 
     data.simulation.force('collide').radius(96);
     // data.simulation.force('center').strength(n => (levels.parents_map.get(n.node_id)?.length ?? 0) * 0.25 + (levels.children_map.get(n.node_id)?.length ?? 0) * 0.25)
+    })
 }
 
 
@@ -824,12 +831,15 @@ const ChangeDisplayGraphId = (dispatch, {id, select_out, display_graph_id}) => {
                         return [news, [UpdateSimulation, {...news, clear_simulation_cache: true}]]
                     })
                     if(!graph) {
-                        dispatch(UpdateNode, {
-                            node: nolib.no.runtime.get_node(new_graph, new_graph.out), 
-                            property: "name", 
-                            value: id,
-                            display_graph: new_graph
-                        })
+                        wrapPromise(nolib.no.runtime.get_node(new_graph, new_graph.out))
+                          .then(node =>{
+                            dispatch(UpdateNode, {
+                                node, 
+                                property: "name", 
+                                value: id,
+                                display_graph: new_graph
+                            })
+                          })
                     }
                     select_out && dispatch(SelectNode, {node_id: new_graph.out ?? "out"})
                 })
@@ -1636,110 +1646,111 @@ const ydocStore = async (persist = false, update = undefined) => {
   const params = new URLSearchParams(location.search)
   let undoManager;
 
+  const setMapFromGraph = (infomap, data) => {
+    infomap.doc.transact(() => {
+        if(infomap.get("name") !== data.name) {
+          infomap.set("name", data.name);
+        }
+        if(data.ref && data.ref !== infomap.get("ref")){
+          infomap.set("ref", data?.ref);
+        } else if(infomap.has('ref') && !data.ref) {
+          infomap.delete('ref')
+        }
+
+        if(data.value && data.value !== infomap.get("value")){
+          infomap.set("value", data?.value);
+        } else if(infomap.has('value') && !data.value) {
+          infomap.delete('value')
+        }
+
+        if(data.out && data.out !== infomap.get("out")){
+          infomap.set("out", data?.out);
+        } else if(infomap.has('out') && !data.out) {
+          infomap.delete('out')
+        }
+
+        if(data.nodes)  {
+          let nodesymap = infomap.get("nodes")
+          if(!infomap.get("nodes")?.set) {
+            nodesymap = new Y.Map();
+            infomap.set("nodes", nodesymap)
+          }
+          if(Array.isArray(data.nodes)){
+            data.nodes.map(n => nodesymap.set(n.id, n)) 
+          } else {
+            Object.entries(data.nodes).forEach(kv => nodesymap.set(kv[0], kv[1]))
+          } 
+          // let curnodes = infomap.get('nodes');
+          // if(!curnodes) {
+          //   curnodes = new Y.Map();
+          //   infomap.set('nodes', curnodes);
+          // }
+          // data.nodes.forEach(n => curnodes.set(n.id, n))
+        }
+
+        if(data.edges) {
+          let edgesymap = infomap.get("edges")
+          if(!infomap.get("edges")?.set) {
+            edgesymap = new Y.Map();
+            infomap.set("edges", edgesymap)
+          }
+
+          if(Array.isArray(data.edges)){
+            const edgeset = new Set(data.edges.map(e => e.from))
+            if(edgeset.size !== data.edges.length) {
+              console.log(`invalid edges for ${data.id}`)
+              console.log(data.edges.filter(e => {
+                edgeset.has(e.from) ? edgeset.delete(e.from) : console.log(e.from)
+              }))
+            }
+            data.edges.map(e => edgesymap.set(e.from, e)) 
+          } else {
+            Object.entries(data.edges).forEach(kv => edgesymap.set(kv[0], kv[1]))
+          } 
+          // let curedges = infomap.get('edges');
+          // if(!curedges) {
+          //   curedges = new Y.Map();
+          //   infomap.set('edges', curedges);
+          // }
+          // data.edges.forEach(e => curedges.set(e.to + "__" + e.from, e));
+        }
+    })
+  }
+
   const add = (id, data) => {
     if(generic.nodes[id]) {
       simpleYMap.set(id, generic.nodes[id])
       return generic.nodes[id];
     } else if(id && !id.startsWith("_") && Object.keys(data).length > 0) {
-      console.log(`adding ${id}`)
-      console.log(data);
       let current = ymap.get(id);
       let found = !!current?.guid; // && !!current.getMap().get("id");
-      if(!found) {
+      if(found) {
+
+        return wrapPromise(current.isLoaded ? true : (current.load(), current.whenLoaded)).then(_ => {
+          const infomap = generic.nodes[id] ? current : current.getMap();
+          setMapFromGraph(infomap, data)
+          updateSimple(id)
+          return simpleYMap.get(id)
+        }).value
+
+      } else {
         console.log("creating new ydoc")
         // debugger;
         current = new Y.Doc();
         // current.getMap().set("id", id)
         ymap.set(id, current);
-        current.load()
-      }
-
-        ydoc.transact(() => {
-          const infomap = generic.nodes[id] ? current : current.getMap();
-          console.log('in loaded')
-          console.log(infomap)
-            // let infomap = current
-            if(infomap.get("id") !== id) {
-              infomap.set("id", id);
-            }
-            if(infomap.get("name") !== data.name) {
-              infomap.set("name", data.name);
-            }
-            if(data.ref && data.ref !== infomap.get("ref")){
-              infomap.set("ref", data?.ref);
-            } else if(infomap.has('ref') && !data.ref) {
-              infomap.delete('ref')
-            }
-
-            if(data.value && data.value !== infomap.get("value")){
-              infomap.set("value", data?.value);
-            } else if(infomap.has('value') && !data.value) {
-              infomap.delete('value')
-            }
-
-            if(data.out && data.out !== infomap.get("out")){
-              infomap.set("out", data?.out);
-            } else if(infomap.has('out') && !data.out) {
-              infomap.delete('out')
-            }
-
-            if(data.nodes)  {
-              let nodesymap = infomap.get("nodes")
-              if(!infomap.get("nodes")?.set) {
-                nodesymap = new Y.Map();
-                infomap.set("nodes", nodesymap)
-              }
-              if(Array.isArray(data.nodes)){
-                data.nodes.map(n => nodesymap.set(n.id, n)) 
-              } else {
-                Object.entries(data.nodes).forEach(kv => nodesymap.set(kv[0], kv[1]))
-              } 
-              // let curnodes = infomap.get('nodes');
-              // if(!curnodes) {
-              //   curnodes = new Y.Map();
-              //   infomap.set('nodes', curnodes);
-              // }
-              // data.nodes.forEach(n => curnodes.set(n.id, n))
-            }
-
-            if(data.edges) {
-              let edgesymap = infomap.get("edges")
-              if(!infomap.get("edges")?.set) {
-                edgesymap = new Y.Map();
-                infomap.set("edges", edgesymap)
-              }
-
-              if(Array.isArray(data.edges)){
-                const edgeset = new Set(data.edges.map(e => e.from))
-                if(edgeset.size !== data.edges.length) {
-                  console.log(`invalid edges for ${data.id}`)
-                  console.log(data.edges.filter(e => {
-                    edgeset.has(e.from) ? edgeset.delete(e.from) : console.log(e.from)
-                  }))
-                }
-                data.edges.map(e => edgesymap.set(e.from, e)) 
-              } else {
-                Object.entries(data.edges).forEach(kv => edgesymap.set(kv[0], kv[1]))
-              } 
-              // let curedges = infomap.get('edges');
-              // if(!curedges) {
-              //   curedges = new Y.Map();
-              //   infomap.set('edges', curedges);
-              // }
-              // data.edges.forEach(e => curedges.set(e.to + "__" + e.from, e));
-            }
-          })
-
+        current.getMap().set("id", id)
+        setMapFromGraph(current.getMap(), data)
         updateSimple(id)
-
         return simpleYMap.get(id)
+      }
     }
   }
 
   const updateSimple = id => {
     // simpleYDoc.transact(() => {
       // debugger;
-    if(id && ymap.get(id).isLoaded) {
+    if(id && ymap.get(id)?.getMap()?.get("id")) {
       simpleYMap.set(id, ymap.get(id).getMap().toJSON())
       nolib.no.runtime.publish('graphchange', simpleYMap.get(id), {...nolib, ...hlib}) 
     } else {
@@ -1953,10 +1964,16 @@ const ydocStore = async (persist = false, update = undefined) => {
       if(!refIdbs[sd.guid]) {
         refIdbs[sd.guid] = new IndexeddbPersistence(`${persist}-subdocs-${sd.guid}`, sd)
         refIdbs[sd.guid].whenSynced.then(() => {
+          if(!sdmap.get("id")){
+            return;
+          }
+
+          sd.emit('load', [sd])
+
           console.log(`indexeddb ${sdmap.get("id")}`)
           if(sdmap.get("id")?.includes("/")) {
             debugger;
-            ymap.remove(sdmap.get("id"))
+            ymap.delete(sdmap.get("id"))
             sd.destroy();
             refIdbs[sd.guid].clearData();
             return;
@@ -1965,7 +1982,6 @@ const ydocStore = async (persist = false, update = undefined) => {
           if(sdmap.get("id")) {
             simpleYMap.set(sdmap.get("id"), ymap.get(sdmap.get("id")).getMap().toJSON())
           }
-          sd.emit('load', [sd])
             // new WebsocketProvider(`nodysseus${rtcroom}_`+sd.getMap().get("id"), sd, {signaling: [url.url]})
             // new WebsocketProvider(url.baseUrl, "", /*`nodysseus${rtcroom}_${sd.getMap().get("id")}`*/ sd, {
             //   WebSocketPolyfill: NodyWS,

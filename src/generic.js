@@ -5970,9 +5970,9 @@ const generic = {
       ],
       "out": "0g1zopd"
     },
-    "deleteref": {
-      "id": "deleteref",
-      "name": "deleteref",
+    "delete_ref": {
+      "id": "delete_ref",
+      "name": "delete_ref",
       "out": "main/out",
       "nodes": {
         "args": {
@@ -6020,7 +6020,7 @@ const generic = {
         },
         "dd6st1b": {
           "id": "dd6st1b",
-          "value": "element.id",
+          "value": "element",
           "ref": "arg"
         },
         "2yur4h7": {
@@ -6076,7 +6076,7 @@ const generic = {
         },
         "main/out": {
           "id": "main/out",
-          "name": "deleteref",
+          "name": "delete_ref",
           "ref": "return"
         },
         "8dy573e": {

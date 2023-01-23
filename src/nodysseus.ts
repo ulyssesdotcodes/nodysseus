@@ -811,8 +811,8 @@ const nolib = {
       };
 
       const change_graph = (graph: Graph, lib: Lib, addToStore = true) => {
-        const old_graph = nodysseus.graphs.get(graph.id);
-        nodysseus.graphs.add(graph.id, graph)
+        // const old_graph = nodysseus.graphs.get(graph.id);
+        // nodysseus.graphs.add(graph.id, graph)
 
         // if (old_graph) {
         //   for (const n of Object.keys(old_graph.nodes)) {
@@ -851,9 +851,6 @@ const nolib = {
       };
 
       const get_ref = (id, otherwise) => {
-        if(id.startsWith("testnew")) {
-          // debugger;
-        }
         return generic.nodes[id] ?? nodysseus.refs.get(id, otherwise && {...otherwise, id, nodes: {...otherwise.nodes, [otherwise.out ?? "out"]: {...otherwise.nodes[otherwise.out ?? "out"], name: id}}})
       }
       const add_ref = (graph: Node) => {
