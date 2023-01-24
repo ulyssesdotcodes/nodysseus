@@ -21,7 +21,7 @@ import generic from "./generic"
 import { isRunnable } from "./types";
 import extend from "just-extend";
 
-const EXAMPLES = ["threejs_example", "hydra_example"];
+const EXAMPLES = ["threejs_example", "threejs_update_geo", "hydra_example"];
 
 class NodyWS extends WebSocket {
   constructor(url) {

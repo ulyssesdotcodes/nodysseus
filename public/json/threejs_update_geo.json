@@ -1,0 +1,315 @@
+[
+  {
+    "id": "threejs_update_geo",
+    "out": "out",
+    "nodes": {
+      "args": {
+        "id": "args"
+      },
+      "8dy573e": {
+        "id": "8dy573e",
+        "ref": "html_element"
+      },
+      "output_val": {
+        "id": "output_val",
+        "value": "some output"
+      },
+      "tmj66vh": {
+        "id": "tmj66vh",
+        "ref": "import_json"
+      },
+      "d6hbagr": {
+        "id": "d6hbagr",
+        "value": "json/three.json"
+      },
+      "uzfo5bm": {
+        "id": "uzfo5bm",
+        "ref": "if"
+      },
+      "72wzn5d": {
+        "id": "72wzn5d",
+        "ref": "@three.setup"
+      },
+      "dbxyytc": {
+        "id": "dbxyytc"
+      },
+      "bbhzt03": {
+        "id": "bbhzt03"
+      },
+      "vj5dpbv": {
+        "id": "vj5dpbv",
+        "ref": "cache"
+      },
+      "hw5uzay": {
+        "id": "hw5uzay",
+        "value": "https://unpkg.com/three@latest/build/three.module.js",
+        "ref": "import_module"
+      },
+      "2g581fl": {
+        "id": "2g581fl",
+        "value": "threejsrender"
+      },
+      "7c54921": {
+        "id": "7c54921",
+        "value": "threejsrender"
+      },
+      "akna0ig": {
+        "id": "akna0ig",
+        "value": "return !!_lib.no.runtime.get_ref(\"@three.setup\")",
+        "ref": "script"
+      },
+      "out": {
+        "id": "out",
+        "name": "threejs_update_geo",
+        "ref": "return"
+      },
+      "qplqs03": {
+        "id": "qplqs03",
+        "ref": "array"
+      },
+      "p0z4xxk": {
+        "id": "p0z4xxk",
+        "ref": "cache"
+      },
+      "uqln0ee": {
+        "id": "uqln0ee",
+        "value": "return new _lib.THREE.HemisphereLight( 0xffffff, 0x080820, 1 );",
+        "ref": "script"
+      },
+      "8wmlat1": {
+        "id": "8wmlat1",
+        "ref": "canvas_behind_editor"
+      },
+      "t2oo2w2": {
+        "id": "t2oo2w2",
+        "value": "position",
+        "ref": "@three.modify_attribute"
+      },
+      "lqp7o13": {
+        "id": "lqp7o13",
+        "ref": "runnable"
+      },
+      "56vngd9": {
+        "id": "56vngd9",
+        "value": "pd.position[0] += pd.velocity[0];\npd.position[1] += pd.velocity[1];\npd.position[2] += pd.velocity[2];",
+        "ref": "script"
+      },
+      "iq70jau": {
+        "id": "iq70jau",
+        "value": "point_data",
+        "ref": "arg"
+      },
+      "yww2wir": {
+        "id": "yww2wir"
+      },
+      "gv4m9ja": {
+        "id": "gv4m9ja"
+      },
+      "95pfm3w": {
+        "id": "95pfm3w",
+        "ref": "cache"
+      },
+      "k7mz3vw": {
+        "id": "k7mz3vw",
+        "value": "return new _lib.THREE.TorusGeometry();",
+        "ref": "script"
+      },
+      "2v9xqw8": {
+        "id": "2v9xqw8",
+        "ref": "@three.mesh"
+      },
+      "zgs0g4u": {
+        "id": "zgs0g4u",
+        "value": "velocity",
+        "ref": "@three.modify_attribute"
+      },
+      "obukz9r": {
+        "id": "obukz9r",
+        "ref": "runnable"
+      },
+      "qu3ww11": {
+        "id": "qu3ww11",
+        "value": "point_data",
+        "ref": "arg"
+      },
+      "7atfanm": {
+        "id": "7atfanm"
+      },
+      "2tgiw3e": {
+        "id": "2tgiw3e"
+      },
+      "7e4fzxv": {
+        "id": "7e4fzxv",
+        "value": "pd.velocity.set([0.01 * (Math.random() - 0.5), 0.01  * (Math.random() - 0.6), 0.01  * (Math.random() - 0.5)])",
+        "ref": "script"
+      }
+    },
+    "edges": {
+      "8dy573e": {
+        "from": "8dy573e",
+        "to": "out",
+        "as": "display"
+      },
+      "args": {
+        "from": "args",
+        "to": "out",
+        "as": "args"
+      },
+      "output_val": {
+        "from": "output_val",
+        "to": "tmj66vh",
+        "as": "arg0"
+      },
+      "d6hbagr": {
+        "from": "d6hbagr",
+        "to": "tmj66vh",
+        "as": "url"
+      },
+      "uzfo5bm": {
+        "from": "uzfo5bm",
+        "to": "out",
+        "as": "value"
+      },
+      "akna0ig": {
+        "from": "akna0ig",
+        "to": "uzfo5bm",
+        "as": "pred"
+      },
+      "tmj66vh": {
+        "from": "tmj66vh",
+        "to": "uzfo5bm",
+        "as": "false"
+      },
+      "72wzn5d": {
+        "from": "72wzn5d",
+        "to": "uzfo5bm",
+        "as": "true"
+      },
+      "dbxyytc": {
+        "from": "dbxyytc",
+        "to": "72wzn5d",
+        "as": "objs"
+      },
+      "bbhzt03": {
+        "from": "bbhzt03",
+        "to": "out",
+        "as": "lib"
+      },
+      "vj5dpbv": {
+        "from": "vj5dpbv",
+        "to": "bbhzt03",
+        "as": "THREE"
+      },
+      "hw5uzay": {
+        "from": "hw5uzay",
+        "to": "vj5dpbv",
+        "as": "value"
+      },
+      "2g581fl": {
+        "from": "2g581fl",
+        "to": "72wzn5d",
+        "as": "canvas_id"
+      },
+      "7c54921": {
+        "from": "7c54921",
+        "to": "8wmlat1",
+        "as": "canvas_id"
+      },
+      "qplqs03": {
+        "from": "qplqs03",
+        "to": "8dy573e",
+        "as": "children"
+      },
+      "8wmlat1": {
+        "from": "8wmlat1",
+        "to": "qplqs03",
+        "as": "arg0"
+      },
+      "p0z4xxk": {
+        "from": "p0z4xxk",
+        "to": "dbxyytc",
+        "as": "light"
+      },
+      "uqln0ee": {
+        "from": "uqln0ee",
+        "to": "p0z4xxk",
+        "as": "value"
+      },
+      "lqp7o13": {
+        "from": "lqp7o13",
+        "to": "t2oo2w2",
+        "as": "fn"
+      },
+      "yww2wir": {
+        "from": "yww2wir",
+        "to": "lqp7o13",
+        "as": "args"
+      },
+      "56vngd9": {
+        "from": "56vngd9",
+        "to": "lqp7o13",
+        "as": "fn"
+      },
+      "iq70jau": {
+        "from": "iq70jau",
+        "to": "56vngd9",
+        "as": "pd"
+      },
+      "gv4m9ja": {
+        "from": "gv4m9ja",
+        "to": "yww2wir",
+        "as": "point_data"
+      },
+      "t2oo2w2": {
+        "from": "t2oo2w2",
+        "to": "2v9xqw8",
+        "as": "geometry"
+      },
+      "k7mz3vw": {
+        "from": "k7mz3vw",
+        "to": "95pfm3w",
+        "as": "value"
+      },
+      "95pfm3w": {
+        "from": "95pfm3w",
+        "to": "zgs0g4u",
+        "as": "geo"
+      },
+      "2v9xqw8": {
+        "from": "2v9xqw8",
+        "to": "dbxyytc",
+        "as": "cube"
+      },
+      "zgs0g4u": {
+        "from": "zgs0g4u",
+        "to": "t2oo2w2",
+        "as": "geo"
+      },
+      "obukz9r": {
+        "from": "obukz9r",
+        "to": "zgs0g4u",
+        "as": "fn"
+      },
+      "qu3ww11": {
+        "from": "qu3ww11",
+        "to": "7e4fzxv",
+        "as": "pd"
+      },
+      "7atfanm": {
+        "from": "7atfanm",
+        "to": "obukz9r",
+        "as": "args"
+      },
+      "2tgiw3e": {
+        "from": "2tgiw3e",
+        "to": "7atfanm",
+        "as": "point_data"
+      },
+      "7e4fzxv": {
+        "from": "7e4fzxv",
+        "to": "obukz9r",
+        "as": "fn"
+      }
+    }
+  }
+]
