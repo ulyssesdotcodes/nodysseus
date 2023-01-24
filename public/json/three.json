@@ -925,7 +925,7 @@
       },
       "iwzvdj8": {
         "id": "iwzvdj8",
-        "value": "const item_size = 3;\n\n// Object.entries(inputgeo.attributes)\n//   .forEach(kv => {\n//     initgeo.setAttribute(kv[0], kv[0] === attribute ? inputgeo.getAttribute(kv[0]).clone() : inputgeo.getAttribute(kv[0]));\n//     });\nif(!feedback || initgeo.getAttribute(\"position\")?.count === 0) {\n  initgeo.copy(inputgeo);\n}\n\nif(!initgeo.hasAttribute(attribute) || initgeo.getAttribute(attribute)?.count !== inputgeo.getAttribute(\"position\")?.count) {\n  initbuffer.buffer = new _lib.THREE.BufferAttribute(new Float32Array(inputgeo.getAttribute(\"position\").count * item_size), item_size);\n}\n\nif(!inputgeo.hasAttribute(attribute)) {\n  initgeo.setAttribute(attribute, initbuffer.buffer.clone());\n}\n\nconst attrs = Object.keys(initgeo.attributes);\nconst count = initgeo.getAttribute(\"position\").count;\nconst point_data = {};\n\nfor(let i = 0; i < count; i++){\n  attrs.map(attr => {\n  point_data[attr] = initgeo.getAttribute(attr).array.subarray(i * item_size, (i + 1) * item_size);\n    })\n  fn({point_data, index: i})\n}\n\ninitgeo.getAttribute(attribute).needsUpdate = true;\n\n//console.log(inputgeo);\n//console.log(initgeo);\n\nreturn initgeo;",
+        "value": "const item_size = 3;\n\n// Object.entries(inputgeo.attributes)\n//   .forEach(kv => {\n//     initgeo.setAttribute(kv[0], kv[0] === attribute ? inputgeo.getAttribute(kv[0]).clone() : inputgeo.getAttribute(kv[0]));\n//     });\nif(!feedback || initgeo.getAttribute(\"position\")?.count === 0) {\n  initgeo.copy(inputgeo);\n}\n\nif(!initgeo.hasAttribute(attribute) || initgeo.getAttribute(attribute)?.count !== inputgeo.getAttribute(\"position\")?.count) {\n  initbuffer.buffer = new _lib.THREE.BufferAttribute(new Float32Array(inputgeo.getAttribute(\"position\").count * item_size), item_size);\n}\n\nif(!inputgeo.hasAttribute(attribute)) {\n  initgeo.setAttribute(attribute, initbuffer.buffer.clone());\n}\n\nconst attrs = Object.keys(initgeo.attributes);\nconst count = initgeo.getAttribute(\"position\").count;\nconst point_data = {};\n\nif (feedback) {\n  attrs.forEach(attr => {\n    if (attr !== attribute) {\n      initgeo.getAttribute(attr)\n          .copy(inputgeo.getAttribute(attr))\n    }\n  })\n}\n\n\nfor(let i = 0; i < count; i++){\n  attrs.forEach(attr => {\n  point_data[attr] = initgeo.getAttribute(attr).array.subarray(i * item_size, (i + 1) * item_size);\n    })\n  fn({point_data, index: i})\n}\n\ninitgeo.getAttribute(attribute).needsUpdate = true;\n\n//console.log(inputgeo);\n//console.log(initgeo);\n\nreturn initgeo;",
         "ref": "script"
       },
       "ph7ugf6": {
@@ -974,7 +974,7 @@
       },
       "8uiwk65": {
         "id": "8uiwk65",
-        "value": "feedback.set",
+        "value": "_feedback.set",
         "ref": "arg"
       },
       "1eft9yl": {
@@ -985,9 +985,23 @@
         "value": "event.target.checked",
         "ref": "arg"
       },
-      "tkmxaye": {
-        "id": "tkmxaye",
-        "value": "feedback.state",
+      "vkwxqas": {
+        "id": "vkwxqas",
+        "value": "_feedback.state",
+        "ref": "arg"
+      },
+      "sxj40l7": {
+        "id": "sxj40l7",
+        "ref": "default"
+      },
+      "vc8bnz3": {
+        "id": "vc8bnz3",
+        "value": "feedback",
+        "ref": "arg"
+      },
+      "dmibl2m": {
+        "id": "dmibl2m",
+        "value": "_feedback.state",
         "ref": "arg"
       }
     },
@@ -1138,7 +1152,7 @@
       "st1qot0": {
         "from": "st1qot0",
         "to": "args",
-        "as": "feedback"
+        "as": "_feedback"
       },
       "ha9sbe6": {
         "from": "ha9sbe6",
@@ -1175,10 +1189,25 @@
         "to": "1eft9yl",
         "as": "value"
       },
-      "tkmxaye": {
-        "from": "tkmxaye",
+      "vkwxqas": {
+        "from": "vkwxqas",
+        "to": "1oskoai",
+        "as": "checked"
+      },
+      "sxj40l7": {
+        "from": "sxj40l7",
         "to": "iwzvdj8",
         "as": "feedback"
+      },
+      "vc8bnz3": {
+        "from": "vc8bnz3",
+        "to": "sxj40l7",
+        "as": "otherwise"
+      },
+      "dmibl2m": {
+        "from": "dmibl2m",
+        "to": "sxj40l7",
+        "as": "value"
       }
     }
   },
@@ -1487,6 +1516,190 @@
         "from": "jdoak4g",
         "to": "ibmy4bt",
         "as": "fn"
+      }
+    }
+  },
+  {
+    "id": "@three.mesh",
+    "out": "out",
+    "nodes": {
+      "args": {
+        "id": "args"
+      },
+      "output_val": {
+        "id": "output_val",
+        "ref": "if"
+      },
+      "out": {
+        "id": "out",
+        "ref": "return",
+        "name": "@three.mesh"
+      },
+      "euzoog2": {
+        "id": "euzoog2",
+        "value": "geometry",
+        "ref": "arg"
+      },
+      "husdoy4": {
+        "id": "husdoy4",
+        "ref": "cache"
+      },
+      "5nudo40": {
+        "id": "5nudo40",
+        "value": "THREE.Mesh",
+        "ref": "new"
+      },
+      "h9a5ot3": {
+        "id": "h9a5ot3",
+        "ref": "array"
+      },
+      "r9ngnn4": {
+        "id": "r9ngnn4",
+        "value": "geometry",
+        "ref": "arg"
+      },
+      "xuoy9bd": {
+        "id": "xuoy9bd",
+        "value": "material",
+        "ref": "arg"
+      }
+    },
+    "edges": {
+      "output_val": {
+        "from": "output_val",
+        "to": "out",
+        "as": "value"
+      },
+      "args": {
+        "from": "args",
+        "to": "out",
+        "as": "args"
+      },
+      "euzoog2": {
+        "from": "euzoog2",
+        "to": "output_val",
+        "as": "pred"
+      },
+      "husdoy4": {
+        "from": "husdoy4",
+        "to": "output_val",
+        "as": "true"
+      },
+      "5nudo40": {
+        "from": "5nudo40",
+        "to": "husdoy4",
+        "as": "value"
+      },
+      "h9a5ot3": {
+        "from": "h9a5ot3",
+        "to": "5nudo40",
+        "as": "args"
+      },
+      "r9ngnn4": {
+        "from": "r9ngnn4",
+        "to": "h9a5ot3",
+        "as": "arg0"
+      },
+      "xuoy9bd": {
+        "from": "xuoy9bd",
+        "to": "h9a5ot3",
+        "as": "arg1"
+      }
+    }
+  },
+  {
+    "id": "@three.update_position",
+    "name": "@three.update_position",
+    "out": "85ca6kk",
+    "nodes": {
+      "85ca6kk": {
+        "id": "85ca6kk",
+        "name": "@three.update_position",
+        "ref": "return"
+      },
+      "t2oo2w2": {
+        "id": "t2oo2w2",
+        "value": "position",
+        "ref": "@three.modify_attribute"
+      },
+      "pu6r1wt": {
+        "id": "pu6r1wt"
+      },
+      "lqp7o13": {
+        "id": "lqp7o13",
+        "ref": "runnable"
+      },
+      "5xsve23": {
+        "id": "5xsve23",
+        "value": "geo",
+        "ref": "arg"
+      },
+      "uqnka6f": {
+        "id": "uqnka6f",
+        "value": "true"
+      },
+      "yww2wir": {
+        "id": "yww2wir"
+      },
+      "56vngd9": {
+        "id": "56vngd9",
+        "value": "pd.position[0] += pd.velocity[0];\npd.position[1] += pd.velocity[1];\npd.position[2] += pd.velocity[2];",
+        "ref": "script"
+      },
+      "gv4m9ja": {
+        "id": "gv4m9ja"
+      },
+      "iq70jau": {
+        "id": "iq70jau",
+        "value": "point_data",
+        "ref": "arg"
+      }
+    },
+    "edges": {
+      "t2oo2w2": {
+        "from": "t2oo2w2",
+        "to": "85ca6kk",
+        "as": "value"
+      },
+      "pu6r1wt": {
+        "from": "pu6r1wt",
+        "to": "85ca6kk",
+        "as": "args"
+      },
+      "lqp7o13": {
+        "from": "lqp7o13",
+        "to": "t2oo2w2",
+        "as": "fn"
+      },
+      "5xsve23": {
+        "from": "5xsve23",
+        "to": "t2oo2w2",
+        "as": "geo"
+      },
+      "uqnka6f": {
+        "from": "uqnka6f",
+        "to": "t2oo2w2",
+        "as": "feedback"
+      },
+      "yww2wir": {
+        "from": "yww2wir",
+        "to": "lqp7o13",
+        "as": "args"
+      },
+      "56vngd9": {
+        "from": "56vngd9",
+        "to": "lqp7o13",
+        "as": "fn"
+      },
+      "gv4m9ja": {
+        "from": "gv4m9ja",
+        "to": "yww2wir",
+        "as": "point_data"
+      },
+      "iq70jau": {
+        "from": "iq70jau",
+        "to": "56vngd9",
+        "as": "pd"
       }
     }
   }
