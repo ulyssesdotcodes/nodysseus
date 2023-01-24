@@ -623,15 +623,6 @@
       "args": {
         "id": "args"
       },
-      "vjfgmrl": {
-        "id": "vjfgmrl",
-        "value": "return import(\"https://unpkg.com/three@latest/build/three.module.js\")",
-        "ref": "script"
-      },
-      "n79e1ca": {
-        "id": "n79e1ca",
-        "ref": "cache"
-      },
       "qvf3y0y": {
         "id": "qvf3y0y",
         "value": "return window.innerWidth",
@@ -671,11 +662,6 @@
         "to": "main/out",
         "as": "args"
       },
-      "vjfgmrl": {
-        "from": "vjfgmrl",
-        "to": "n79e1ca",
-        "as": "value"
-      },
       "x4zdk2w": {
         "from": "x4zdk2w",
         "to": "ojdupq6",
@@ -690,11 +676,6 @@
         "from": "11u8kd6",
         "to": "x4zdk2w",
         "as": "height"
-      },
-      "n79e1ca": {
-        "from": "n79e1ca",
-        "to": "args",
-        "as": "THREE"
       },
       "bfr8z38": {
         "from": "bfr8z38",
