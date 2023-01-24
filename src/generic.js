@@ -1820,7 +1820,7 @@ const generic = {
         {
           "id": "set_state_val",
           "ref": "script",
-          "value": "value && _lib.no.runtime.update_args(graphid, {[path]: value}); return value"
+          "value": "value !== undefined && _lib.no.runtime.update_args(graphid, {[path]: value}); return value"
         },
         {
           "id": "set_state_val_runnable_args",
