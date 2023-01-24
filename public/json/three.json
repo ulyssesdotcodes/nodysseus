@@ -1,249 +1,5 @@
 [
   {
-    "id": "@three.renderer",
-    "out": "main/out",
-    "nodes": {
-      "cwl59lh": {
-        "id": "cwl59lh",
-        "value": "canvas",
-        "name": "",
-        "ref": "arg"
-      },
-      "bfr8z38": {
-        "id": "bfr8z38",
-        "value": "_lib.THREE",
-        "ref": "arg"
-      },
-      "main/out": {
-        "id": "main/out",
-        "name": "@three.renderer",
-        "ref": "return",
-        "__isnodysseus": true
-      },
-      "x4zdk2w": {
-        "id": "x4zdk2w",
-        "value": "console.log(\"creating renderer\")\nconsole.log(canvas)\nreturn new THREE.WebGLRenderer({canvas})",
-        "ref": "script"
-      },
-      "lihjkfp": {
-        "id": "lihjkfp",
-        "ref": "if"
-      },
-      "eyftv46": {
-        "id": "eyftv46",
-        "value": "canvas",
-        "ref": "arg"
-      }
-    },
-    "edges": {
-      "bfr8z38": {
-        "from": "bfr8z38",
-        "to": "x4zdk2w",
-        "as": "THREE"
-      },
-      "cwl59lh": {
-        "from": "cwl59lh",
-        "to": "x4zdk2w",
-        "as": "canvas"
-      },
-      "x4zdk2w": {
-        "from": "x4zdk2w",
-        "to": "lihjkfp",
-        "as": "true"
-      },
-      "lihjkfp": {
-        "from": "lihjkfp",
-        "to": "main/out",
-        "as": "value"
-      },
-      "eyftv46": {
-        "from": "eyftv46",
-        "to": "lihjkfp",
-        "as": "pred"
-      }
-    }
-  },
-  {
-    "id": "@three.camera",
-    "out": "main/out",
-    "nodes": {
-      "args": {
-        "id": "args"
-      },
-      "vjfgmrl": {
-        "id": "vjfgmrl",
-        "value": "return import(\"https://unpkg.com/three@latest/build/three.module.js\")",
-        "ref": "script"
-      },
-      "n79e1ca": {
-        "id": "n79e1ca",
-        "ref": "cache"
-      },
-      "qvf3y0y": {
-        "id": "qvf3y0y",
-        "value": "return window.innerWidth",
-        "ref": "script"
-      },
-      "11u8kd6": {
-        "id": "11u8kd6",
-        "value": "return window.innerHeight",
-        "ref": "script"
-      },
-      "ojdupq6": {
-        "id": "ojdupq6",
-        "value": "camera",
-        "ref": "log"
-      },
-      "x4zdk2w": {
-        "id": "x4zdk2w",
-        "value": "return new THREE.PerspectiveCamera( 75, width / height, 0.1, 1000 );",
-        "ref": "script"
-      },
-      "bfr8z38": {
-        "id": "bfr8z38",
-        "value": "_lib.THREE",
-        "ref": "arg",
-        "__isnodysseus": true
-      },
-      "main/out": {
-        "id": "main/out",
-        "name": "@three.camera",
-        "ref": "return",
-        "__isnodysseus": true
-      }
-    },
-    "edges": {
-      "args": {
-        "from": "args",
-        "to": "main/out",
-        "as": "args"
-      },
-      "vjfgmrl": {
-        "from": "vjfgmrl",
-        "to": "n79e1ca",
-        "as": "value"
-      },
-      "x4zdk2w": {
-        "from": "x4zdk2w",
-        "to": "ojdupq6",
-        "as": "value"
-      },
-      "qvf3y0y": {
-        "from": "qvf3y0y",
-        "to": "x4zdk2w",
-        "as": "width"
-      },
-      "11u8kd6": {
-        "from": "11u8kd6",
-        "to": "x4zdk2w",
-        "as": "height"
-      },
-      "n79e1ca": {
-        "from": "n79e1ca",
-        "to": "args",
-        "as": "THREE"
-      },
-      "bfr8z38": {
-        "from": "bfr8z38",
-        "to": "x4zdk2w",
-        "as": "THREE"
-      },
-      "ojdupq6": {
-        "from": "ojdupq6",
-        "to": "main/out",
-        "as": "value"
-      }
-    }
-  },
-  {
-    "id": "@three.hemispherelight",
-    "out": "main/out",
-    "nodes": {
-      "x4zdk2w": {
-        "id": "x4zdk2w",
-        "value": "return new THREE.HemisphereLight( 0x443333, 0x222233, 4 );",
-        "ref": "script"
-      },
-      "ojdupq6": {
-        "id": "ojdupq6",
-        "value": "light",
-        "ref": "log"
-      },
-      "bfr8z38": {
-        "id": "bfr8z38",
-        "value": "_lib.THREE",
-        "ref": "arg"
-      },
-      "main/out": {
-        "id": "main/out",
-        "name": "@three.hemispherelight",
-        "ref": "return",
-        "__isnodysseus": true
-      }
-    },
-    "edges": {
-      "x4zdk2w": {
-        "from": "x4zdk2w",
-        "to": "ojdupq6",
-        "as": "value"
-      },
-      "bfr8z38": {
-        "from": "bfr8z38",
-        "to": "x4zdk2w",
-        "as": "THREE"
-      },
-      "ojdupq6": {
-        "from": "ojdupq6",
-        "to": "main/out",
-        "as": "value"
-      }
-    }
-  },
-  {
-    "id": "@three.scene",
-    "out": "main/out",
-    "nodes": {
-      "x4zdk2w": {
-        "id": "x4zdk2w",
-        "value": "console.log(\"starting scene\")\nconsole.log(THREE)\nconsole.log(_lib)\nreturn new THREE.Scene()",
-        "ref": "script"
-      },
-      "ojdupq6": {
-        "id": "ojdupq6",
-        "value": "scene",
-        "ref": "log"
-      },
-      "bfr8z38": {
-        "id": "bfr8z38",
-        "value": "_lib.THREE",
-        "ref": "arg"
-      },
-      "main/out": {
-        "id": "main/out",
-        "name": "@three.scene",
-        "ref": "return",
-        "__isnodysseus": true
-      }
-    },
-    "edges": {
-      "x4zdk2w": {
-        "from": "x4zdk2w",
-        "to": "ojdupq6",
-        "as": "value"
-      },
-      "bfr8z38": {
-        "from": "bfr8z38",
-        "to": "x4zdk2w",
-        "as": "THREE"
-      },
-      "ojdupq6": {
-        "from": "ojdupq6",
-        "to": "main/out",
-        "as": "value"
-      }
-    }
-  },
-  {
     "id": "@three.setup",
     "name": "three.setup",
     "out": "8m5muxn/8m5muxn",
@@ -355,13 +111,8 @@
       },
       "8m5muxn/ud4p5ey": {
         "id": "8m5muxn/ud4p5ey",
-        "value": "if(name !== '_needsresolve' && obj){ scene.add( obj ); }\nconsole.log(obj);\nreturn scene;",
+        "value": "const existingObj = scene.getObjectByName(name);\nif(obj && existingObj !== obj){\n  if(existingObj) {\n    scene.remove(existingObj);\n    existingObj.geometry.dispose();\n    existingObj.material.dispose();\n  }\n  obj.name = name;\n  scene.add(obj); \n}\nreturn scene;",
         "name": "",
-        "ref": "script"
-      },
-      "zfeakzj": {
-        "id": "zfeakzj",
-        "value": "console.log(value.position.z);\n  return value;",
         "ref": "script"
       },
       "c6eig78": {
@@ -402,11 +153,6 @@
         "id": "mh5ikoc",
         "value": "onupdate",
         "ref": "arg"
-      },
-      "p3c1hnd": {
-        "id": "p3c1hnd",
-        "value": "onupdate",
-        "ref": "log"
       },
       "ptak9t2": {
         "id": "ptak9t2",
@@ -645,15 +391,10 @@
         "to": "vrevjmh",
         "as": "object"
       },
-      "zfeakzj": {
-        "from": "zfeakzj",
-        "to": "8m5muxn/hlqmo48",
-        "as": "camera"
-      },
       "8m5muxn/7in78pu": {
         "from": "8m5muxn/7in78pu",
-        "to": "zfeakzj",
-        "as": "value"
+        "to": "8m5muxn/hlqmo48",
+        "as": "camera"
       },
       "zs7iowa": {
         "from": "zs7iowa",
@@ -695,15 +436,10 @@
         "to": "z552097",
         "as": "fn"
       },
-      "p3c1hnd": {
-        "from": "p3c1hnd",
-        "to": "rmqxb31",
-        "as": "pred"
-      },
       "mh5ikoc": {
         "from": "mh5ikoc",
-        "to": "p3c1hnd",
-        "as": "value"
+        "to": "rmqxb31",
+        "as": "pred"
       },
       "z552097": {
         "from": "z552097",
@@ -784,6 +520,299 @@
         "from": "cwrlosg",
         "to": "e9d6mmx",
         "as": "run"
+      }
+    }
+  },
+  {
+    "id": "@three.setup_hydra",
+    "out": "out",
+    "nodes": {
+      "args": {
+        "id": "args"
+      },
+      "qgbinm2": {
+        "id": "qgbinm2",
+        "value": "Hello, world!",
+        "ref": "html_text"
+      },
+      "8dy573e": {
+        "id": "8dy573e",
+        "ref": "html_element"
+      },
+      "output_val": {
+        "id": "output_val",
+        "value": "some output"
+      },
+      "out": {
+        "id": "out",
+        "ref": "return",
+        "name": "@three.setup_hydra"
+      }
+    },
+    "edges": {
+      "qgbinm2": {
+        "from": "qgbinm2",
+        "to": "8dy573e",
+        "as": "children"
+      },
+      "8dy573e": {
+        "from": "8dy573e",
+        "to": "out",
+        "as": "display"
+      },
+      "output_val": {
+        "from": "output_val",
+        "to": "out",
+        "as": "value"
+      },
+      "args": {
+        "from": "args",
+        "to": "out",
+        "as": "args"
+      }
+    }
+  },
+  {
+    "id": "@three.scene",
+    "out": "main/out",
+    "nodes": {
+      "x4zdk2w": {
+        "id": "x4zdk2w",
+        "value": "console.log(\"starting scene\")\nconsole.log(THREE)\nconsole.log(_lib)\nreturn new THREE.Scene()",
+        "ref": "script"
+      },
+      "ojdupq6": {
+        "id": "ojdupq6",
+        "value": "scene",
+        "ref": "log"
+      },
+      "bfr8z38": {
+        "id": "bfr8z38",
+        "value": "_lib.THREE",
+        "ref": "arg"
+      },
+      "main/out": {
+        "id": "main/out",
+        "name": "@three.scene",
+        "ref": "return",
+        "__isnodysseus": true
+      }
+    },
+    "edges": {
+      "x4zdk2w": {
+        "from": "x4zdk2w",
+        "to": "ojdupq6",
+        "as": "value"
+      },
+      "bfr8z38": {
+        "from": "bfr8z38",
+        "to": "x4zdk2w",
+        "as": "THREE"
+      },
+      "ojdupq6": {
+        "from": "ojdupq6",
+        "to": "main/out",
+        "as": "value"
+      }
+    }
+  },
+  {
+    "id": "@three.camera",
+    "out": "main/out",
+    "nodes": {
+      "args": {
+        "id": "args"
+      },
+      "vjfgmrl": {
+        "id": "vjfgmrl",
+        "value": "return import(\"https://unpkg.com/three@latest/build/three.module.js\")",
+        "ref": "script"
+      },
+      "n79e1ca": {
+        "id": "n79e1ca",
+        "ref": "cache"
+      },
+      "qvf3y0y": {
+        "id": "qvf3y0y",
+        "value": "return window.innerWidth",
+        "ref": "script"
+      },
+      "11u8kd6": {
+        "id": "11u8kd6",
+        "value": "return window.innerHeight",
+        "ref": "script"
+      },
+      "ojdupq6": {
+        "id": "ojdupq6",
+        "value": "camera",
+        "ref": "log"
+      },
+      "x4zdk2w": {
+        "id": "x4zdk2w",
+        "value": "return new THREE.PerspectiveCamera( 75, width / height, 0.1, 1000 );",
+        "ref": "script"
+      },
+      "bfr8z38": {
+        "id": "bfr8z38",
+        "value": "_lib.THREE",
+        "ref": "arg",
+        "__isnodysseus": true
+      },
+      "main/out": {
+        "id": "main/out",
+        "name": "@three.camera",
+        "ref": "return",
+        "__isnodysseus": true
+      }
+    },
+    "edges": {
+      "args": {
+        "from": "args",
+        "to": "main/out",
+        "as": "args"
+      },
+      "vjfgmrl": {
+        "from": "vjfgmrl",
+        "to": "n79e1ca",
+        "as": "value"
+      },
+      "x4zdk2w": {
+        "from": "x4zdk2w",
+        "to": "ojdupq6",
+        "as": "value"
+      },
+      "qvf3y0y": {
+        "from": "qvf3y0y",
+        "to": "x4zdk2w",
+        "as": "width"
+      },
+      "11u8kd6": {
+        "from": "11u8kd6",
+        "to": "x4zdk2w",
+        "as": "height"
+      },
+      "n79e1ca": {
+        "from": "n79e1ca",
+        "to": "args",
+        "as": "THREE"
+      },
+      "bfr8z38": {
+        "from": "bfr8z38",
+        "to": "x4zdk2w",
+        "as": "THREE"
+      },
+      "ojdupq6": {
+        "from": "ojdupq6",
+        "to": "main/out",
+        "as": "value"
+      }
+    }
+  },
+  {
+    "id": "@three.renderer",
+    "out": "main/out",
+    "nodes": {
+      "cwl59lh": {
+        "id": "cwl59lh",
+        "value": "canvas",
+        "name": "",
+        "ref": "arg"
+      },
+      "bfr8z38": {
+        "id": "bfr8z38",
+        "value": "_lib.THREE",
+        "ref": "arg"
+      },
+      "main/out": {
+        "id": "main/out",
+        "name": "@three.renderer",
+        "ref": "return",
+        "__isnodysseus": true
+      },
+      "x4zdk2w": {
+        "id": "x4zdk2w",
+        "value": "console.log(\"creating renderer\")\nconsole.log(canvas)\nreturn new THREE.WebGLRenderer({canvas})",
+        "ref": "script"
+      },
+      "lihjkfp": {
+        "id": "lihjkfp",
+        "ref": "if"
+      },
+      "eyftv46": {
+        "id": "eyftv46",
+        "value": "canvas",
+        "ref": "arg"
+      }
+    },
+    "edges": {
+      "bfr8z38": {
+        "from": "bfr8z38",
+        "to": "x4zdk2w",
+        "as": "THREE"
+      },
+      "cwl59lh": {
+        "from": "cwl59lh",
+        "to": "x4zdk2w",
+        "as": "canvas"
+      },
+      "x4zdk2w": {
+        "from": "x4zdk2w",
+        "to": "lihjkfp",
+        "as": "true"
+      },
+      "lihjkfp": {
+        "from": "lihjkfp",
+        "to": "main/out",
+        "as": "value"
+      },
+      "eyftv46": {
+        "from": "eyftv46",
+        "to": "lihjkfp",
+        "as": "pred"
+      }
+    }
+  },
+  {
+    "id": "@three.hemispherelight",
+    "out": "main/out",
+    "nodes": {
+      "x4zdk2w": {
+        "id": "x4zdk2w",
+        "value": "return new THREE.HemisphereLight( 0x443333, 0x222233, 4 );",
+        "ref": "script"
+      },
+      "ojdupq6": {
+        "id": "ojdupq6",
+        "value": "light",
+        "ref": "log"
+      },
+      "bfr8z38": {
+        "id": "bfr8z38",
+        "value": "_lib.THREE",
+        "ref": "arg"
+      },
+      "main/out": {
+        "id": "main/out",
+        "name": "@three.hemispherelight",
+        "ref": "return",
+        "__isnodysseus": true
+      }
+    },
+    "edges": {
+      "x4zdk2w": {
+        "from": "x4zdk2w",
+        "to": "ojdupq6",
+        "as": "value"
+      },
+      "bfr8z38": {
+        "from": "bfr8z38",
+        "to": "x4zdk2w",
+        "as": "THREE"
+      },
+      "ojdupq6": {
+        "from": "ojdupq6",
+        "to": "main/out",
+        "as": "value"
       }
     }
   },

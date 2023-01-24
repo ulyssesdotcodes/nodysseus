@@ -806,7 +806,7 @@ const ChangeDisplayGraphId = (dispatch, {id, select_out, display_graph_id}) => {
     requestAnimationFrame(() => {
         const graphPromise = wrapPromise(
           EXAMPLES.includes(id) && !nolib.no.runtime.refs().includes(id) 
-          ? fetch(`json/${id}.json`).then(res => res.json()).then(g => nolib.no.runtime.add_ref(g))
+          ? fetch((console.log(`fetching ${id}`), `json/${id}.json`)).then(res => res.json()).then(g => nolib.no.runtime.add_ref(g))
           : nolib.no.runtime.get_ref(id, display_graph_id && nolib.no.runtime.get_ref(display_graph_id))
         )
 

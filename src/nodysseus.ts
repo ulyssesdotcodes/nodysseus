@@ -854,9 +854,11 @@ const nolib = {
         return generic.nodes[id] ?? nodysseus.refs.get(id, otherwise && {...otherwise, id, nodes: {...otherwise.nodes, [otherwise.out ?? "out"]: {...otherwise.nodes[otherwise.out ?? "out"], name: id}}})
       }
       const add_ref = (graph: Node) => {
-        if(!generic.nodes[graph.id]) {
-          return nodysseus.refs.add(graph.id, graph)
-        }
+        return (Array.isArray(graph) ? graph : [graph]).map(graph => {
+          if(!generic.nodes[graph.id]) {
+            return nodysseus.refs.add(graph.id, graph)
+          }
+        })[0]
       }
       const remove_ref = nodysseus.refs.remove
 
