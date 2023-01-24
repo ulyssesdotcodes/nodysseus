@@ -1053,14 +1053,14 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
                     // onchange: (state, event) => [UpdateNode, {node, property: "ref", value: event.target.value}],
                     disabled: node.id === graph_out
                 }), {nodevalue: node.value, nodeid: node.id}),
-                link_out && link_out.source && input_el({
+                link_out && link_out.source && ha.memo(link_out => input_el({
                     label: "edge", 
                     value: link_out.as, 
                     property: "edge",
                     inputs,
                     options: node_args(nolib, display_graph_id, link_out.to).map(na => na.name),
                     onchange: (state, payload) => [UpdateEdge, {edge: {from: link_out.from, to: link_out.to, as: link_out.as}, as: payload.target.value}]
-                }),
+                }), link_out),
             ]),
             description && ha.h('div', {class: "description"}, ha.text(description)),
             ha.h('div', {
