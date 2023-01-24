@@ -1077,7 +1077,7 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
                     class: "action", 
                     onclick: [ExpandContract, {node_id: node.node_id}]
                 }, [ha.h('ion-icon', {name: Object.keys(node.nodes ?? {}).length > 0 ? "expand" : "contract"}), ha.text(Object.keys(node.nodes ?? {}).length > 0 ? "expand" : "collapse")]),
-                node.nodes?.length > 0 && node.name !== '' && ha.h('div', {class: 'action', onclick: [CreateRef, {node}]}, ha.text("make ref")),
+                Object.keys(node.nodes ?? {}).length > 0 && node.name !== '' && ha.h('div', {class: 'action', onclick: [CreateRef, {node}]}, ha.text("make ref")),
                 ha.h('div', {
                     class: "action", 
                     onclick: [Copy, {cut: false, as: link_out.as}],
