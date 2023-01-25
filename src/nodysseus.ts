@@ -465,7 +465,7 @@ const run_node = (node: Node | Runnable, nodeArgs: Record<string, ConstRunnable>
           }
           if(node_ref.nodes) {
               lib.data.no.runtime.set_parent(newgraphid, graphid); // before so that change/update has the parent id
-              lib.data.no.runtime.update_graph(newgraphid)
+              // lib.data.no.runtime.update_graph(newgraphid)
           }
 
           return run_node(node_ref, node.value ? {...nodeArgs, __graph_value: lib.data.no.of(node.value)} : nodeArgs, newGraphArgs, lib)
@@ -522,7 +522,7 @@ const run_graph = (graph: Graph | (Graph & {nodes: Array<Node>, edges: Array<Edg
         }
         if(e instanceof NodysseusError) {
             lib.data.no.runtime.publish("grapherror", e)
-            return;
+            return e;
         }
         const parentest = lib.data.no.runtime.get_parentest(graph)
         let error_node = parentest ? graph : node;
@@ -788,6 +788,7 @@ const nolib = {
 
       };
 
+      console.log(animationerrors)
       // Adding a listener to listen for errors during animationframe. If there are errors, don't keep running.
       add_listener('grapherror', "__animationerrors", e => animationerrors.push(e));
       add_listener('graphchange', "__animationerrors", e => animationerrors.splice(0, animationerrors.length));
@@ -1123,18 +1124,24 @@ const nolib = {
                       const errorlistener = (error) => errored = true;
 
                       // TODO: rethink. Too costly for now
-                      // lib.data.no.runtime.add_listener('grapherror', fnrunnable.graph.id, errorlistener)
+                      // lib.data.no.runtime.add_listener('grapherror', fnrunnable.graph.id + "/" + fnrunnable.fn, errorlistener)
 
                       const ret = mapobjarr(
                         objectvalue,
                         (previousValue, currentValue) =>
                           !errored && wrapPromise(previousValue).then(prevVal => run_runnable(fnrunnable, lib,
                             {previousValue: lib.data.no.of(prevVal), currentValue: lib.data.no.of(currentValue)},
-                          )).then(rv => rv.value).value,
+                          )).then(rv => {
+                            const nextValue = rv.value;
+                            if(nextValue instanceof Error) {
+                              errored = true;
+                            }
+                            return nextValue;
+                          }).value,
                         initial
                       );
 
-                      // lib.data.no.runtime.remove_listener('grapherror', fnrunnable.graph.id, errorlistener)
+                      // lib.data.no.runtime.remove_listener('grapherror', fnrunnable.graph.id + "/" + fnrunnable.fn, errorlistener)
 
                       return lib.data.no.of(ret);
                     })))
