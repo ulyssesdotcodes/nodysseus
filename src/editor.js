@@ -1027,34 +1027,34 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
                           : [CreateNode, {node: {id: randid}, child: node.id, child_as: n.name}]
                     }, [ha.text(n.exists ? n.name : `+${n.name}`)]))),
             ha.h('div', {class: "inputs"}, [
-                ha.memo(({nodeid, nodename}) => input_el({
+                ha.memo(node => input_el({
                     label: "name", 
-                    value: nodename, 
+                    value: node.name, 
                     property: "name", 
                     inputs,
                     onchange: (state, payload) => [
                         state,
-                        (nodeid !== graph_out && nodeid !== "out") && [d => d(UpdateNode, {node, property: "name", value: payload.target.value})],
-                        (nodeid === graph_out || nodeid === "out") && [ChangeDisplayGraphId, {id: payload.target.value, select_out: true, display_graph_id}]
+                        (node.id !== graph_out && node.id !== "out") && [d => d(UpdateNode, {node, property: "name", value: payload.target.value})],
+                        (node.id === graph_out || node.id === "out") && [ChangeDisplayGraphId, {id: payload.target.value, select_out: true, display_graph_id}]
                     ],
-                    options: (nodeid === graph_out || node.id === "out") && ref_graphs
-                }), {nodeid: node.id, nodename: node.name}),
-                ha.memo(({nodevalue, nodeid}) => input_el({
+                    options: (node.id === graph_out || node.id === "out") && ref_graphs
+                }), node),
+                ha.memo(node => input_el({
                     label: "value", 
-                    value: nodevalue, 
+                    value: node.value, 
                     property: "value", 
                     inputs,
                     onchange: (state, payload) => [UpdateNode, {node, property: "value", value: payload.target.value}]}),
-                  {nodevalue: node.value, nodeid: node.id}),
-                ha.memo(({nodeid, noderef}) => input_el({
+                  node),
+                ha.memo(node => input_el({
                     label: 'ref',
-                    value: noderef,
+                    value: node.ref,
                     property: 'ref',
                     inputs,
                     // onchange: (state, event) => [UpdateNode, {node, property: "ref", value: event.target.value}],
                     onkeydown: (state, event) => event.code === "Tab" ? [UpdateNode, {node, property: "ref", value: event.target.value}] : state,
-                    disabled: nodeid === graph_out
-                }), {nodeid: node.id, noderef: node.ref}),
+                    disabled: node.id === graph_out
+                }), node),
                 link_out && link_out.source && ha.memo(link_out => input_el({
                     label: "edge", 
                     value: link_out.as, 
