@@ -981,7 +981,7 @@ const insert_node_el = ({link, randid, node_el_width}) => ha.h('svg', {
     ha.h('path', {d: "M256 176v160M336 256H176", class: "add"}, [])
 ])
 
-const input_el = ({label, property, value, onchange, options, inputs, disabled}) => ha.h(
+const input_el = ({label, property, value, onchange, oninput, onkeydown, options, inputs, disabled}) => ha.h(
     'div',
     {
         class: 'value-input', 
@@ -996,6 +996,7 @@ const input_el = ({label, property, value, onchange, options, inputs, disabled})
             disabled,
             list: options && options.length > 0 ? `edit-text-list-${property}` : undefined,
             oninput: oninput && ((s, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: e.target.value})}]), 
+            onkeydown: onkeydown,
             onchange: onchange && ((s, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: undefined})}, [dispatch => dispatch(onchange, e)]]),
             onfocus: (state, event) => [{...state, focused: event.target.id}],
             onblur: (state, event) => [{...state, focused: false}],
@@ -1026,33 +1027,34 @@ const info_el = ({node, hidden, edges_in, link_out, display_graph_id, randid, re
                           : [CreateNode, {node: {id: randid}, child: node.id, child_as: n.name}]
                     }, [ha.text(n.exists ? n.name : `+${n.name}`)]))),
             ha.h('div', {class: "inputs"}, [
-                ha.memo(({nodevalue, nodeid}) => input_el({
-                    label: "value", 
-                    value: node.value, 
-                    property: "value", 
-                    inputs,
-                    onchange: (state, payload) => [UpdateNode, {node, property: "value", value: payload.target.value}]}),
-                  {nodevalue: node.value, nodeid: node.id}),
-                ha.memo(({nodevalue, nodeid}) => input_el({
+                ha.memo(({nodeid, nodename}) => input_el({
                     label: "name", 
-                    value: node.name, 
+                    value: nodename, 
                     property: "name", 
                     inputs,
                     onchange: (state, payload) => [
                         state,
-                        (node.id !== graph_out && node.id !== "out") && [d => d(UpdateNode, {node, property: "name", value: payload.target.value})],
-                        (node.id === graph_out || node.id === "out") && [ChangeDisplayGraphId, {id: payload.target.value, select_out: true, display_graph_id}]
+                        (nodeid !== graph_out && nodeid !== "out") && [d => d(UpdateNode, {node, property: "name", value: payload.target.value})],
+                        (nodeid === graph_out || nodeid === "out") && [ChangeDisplayGraphId, {id: payload.target.value, select_out: true, display_graph_id}]
                     ],
-                    options: (node.id === graph_out || node.id === "out") && ref_graphs
-                }), {nodevalue: node.value, nodeid: node.id}),
+                    options: (nodeid === graph_out || node.id === "out") && ref_graphs
+                }), {nodeid: node.id, nodename: node.name}),
                 ha.memo(({nodevalue, nodeid}) => input_el({
+                    label: "value", 
+                    value: nodevalue, 
+                    property: "value", 
+                    inputs,
+                    onchange: (state, payload) => [UpdateNode, {node, property: "value", value: payload.target.value}]}),
+                  {nodevalue: node.value, nodeid: node.id}),
+                ha.memo(({nodeid, noderef}) => input_el({
                     label: 'ref',
-                    value: node.ref,
+                    value: noderef,
                     property: 'ref',
                     inputs,
                     // onchange: (state, event) => [UpdateNode, {node, property: "ref", value: event.target.value}],
-                    disabled: node.id === graph_out
-                }), {nodevalue: node.value, nodeid: node.id}),
+                    onkeydown: (state, event) => event.code === "Tab" ? [UpdateNode, {node, property: "ref", value: event.target.value}] : state,
+                    disabled: nodeid === graph_out
+                }), {nodeid: node.id, noderef: node.ref}),
                 link_out && link_out.source && ha.memo(link_out => input_el({
                     label: "edge", 
                     value: link_out.as, 
@@ -1263,7 +1265,6 @@ const runapp = (init, load_graph, _lib) => {
         [init_code_editor, {html_id: init.html_id}],
         [(dispatch) => requestAnimationFrame(() => autocomplete({
           input: document.getElementById("edit-text-ref"),
-          emptyMsg: "not found",
           minLength: 0,
           fetch: (text, update) => {
             const refs = nolib.no.runtime.refs().map(r => ({id: r}));
@@ -1872,7 +1873,16 @@ const ydocStore = async (persist = false, update = undefined) => {
       rdoc = new Y.Doc({autoLoad: true})
       rootDoc.getMap().set("rdoc", rdoc)
 
-      const rdocrtc = new WebrtcProvider(`nodysseus${rtcroom}_subdocs`, rdoc, {signaling: ["wss://ws.nodysseus.io"]})
+      const rdocrtc = new WebrtcProvider(`nodysseus${rtcroom}_subdocs`, rdoc, {
+        signaling: ["wss://ws.nodysseus.io"],
+        peerOpts: {
+          config: {
+            iceServers: [
+              {urls: "stun:ws.nodysseus.io:5349"}
+            ]
+          }
+        }
+      })
 
       rdoc.getMap().observe(evts => {
         // console.log("rdoc obs")
@@ -1882,7 +1892,17 @@ const ydocStore = async (persist = false, update = undefined) => {
           // console.log(`creating first graph provider ${id}`)
           // console.log(rdoc.getMap().get(id).getMap().toJSON())
             // refRtcs[id] = new WebsocketProvider("wss://ws.nodysseus.io", `nodysseus${rtcroom}_${sd.getMap().get("id")}`, rdoc.getMap().get(id))
-          refRtcs[id] = new WebrtcProvider(`nodysseus${rtcroom}_${id}`, sd, {signaling: ["wss://ws.nodysseus.io"], filterBcConns: false})
+          refRtcs[id] = new WebrtcProvider(`nodysseus${rtcroom}_${id}`, sd, {
+            signaling: ["wss://ws.nodysseus.io"],
+            peerOpts: {
+              config: {
+                iceServers: [
+                  {urls: "stun:ws.nodysseus.io:5349"}
+                ]
+              }
+            }
+          });
+
           if(!rdoc.getMap().has(id)) {
             // console.log(`setting rdoc ${id} to ${sd.guid}`)
             rdoc.getMap().set(id, sd.guid)
