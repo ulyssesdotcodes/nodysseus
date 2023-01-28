@@ -1878,7 +1878,7 @@ const ydocStore = async (persist = false, update = undefined) => {
         peerOpts: {
           config: {
             iceServers: [
-              {urls: "stun:ws.nodysseus.io:5349"}
+              {urls: "stun:ws.nodysseus.io:3478"}
             ]
           }
         }
@@ -1897,7 +1897,7 @@ const ydocStore = async (persist = false, update = undefined) => {
             peerOpts: {
               config: {
                 iceServers: [
-                  {urls: "stun:ws.nodysseus.io:5349"}
+                  {urls: "stun:ws.nodysseus.io:3478"}
                 ]
               }
             }
