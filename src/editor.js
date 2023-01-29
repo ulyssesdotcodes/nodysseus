@@ -4,7 +4,7 @@ import panzoom from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 import Fuse from "fuse.js";
 import { basicSetup, EditorView } from "codemirror";
-import { EditorState, Compartment } from "@codemirror/state"
+import { EditorState, Compartment, StateField, StateEffect } from "@codemirror/state"
 import { language } from "@codemirror/language"
 import { javascript, javascriptLanguage } from "@codemirror/lang-javascript";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
@@ -885,7 +885,7 @@ const UpdateNode = (state, {node, property, value, display_graph}) => [
     [UpdateNodeEffect, {
         display_graph: display_graph ?? state.display_graph,
         node: Object.fromEntries(Object.entries(Object.assign({}, 
-            base_node(node ?? nolib.no.runtime.get_node(state.display_graph, state.selected[0])), 
+            base_node(typeof node === "string" ? (display_graph ?? state.display_graph).nodes[node] : node), 
             {[property]: value === "" ? undefined : value})).filter(kv => kv[1] !== undefined))
     }]
 ]
@@ -1130,8 +1130,11 @@ const update_info_display = ({fn, graph, args, lib}, graphChanged = true) => {
     const update_info_display_fn = display => info_display_dispatch && requestAnimationFrame(() => {
       info_display_dispatch(UpdateResultDisplay, {el: display?.dom_type ? display : ha.h('div', {})})
       requestAnimationFrame(() => {
-        if(graphChanged && window.getComputedStyle(document.getElementById("node-editor-code-editor")).getPropertyValue("display") !== "none") {
-          code_editor.dispatch({changes:{from: 0, to: code_editor.state.doc.length, insert: node.script ?? node.value}})
+        if(graphChanged&& window.getComputedStyle(document.getElementById("node-editor-code-editor")).getPropertyValue("display") !== "none") {
+          code_editor.dispatch({
+            changes:{from: 0, to: code_editor.state.doc.length, insert: node.script ?? node.value},
+            effects: [code_editor_nodeid.of(node.id)]
+          })
         }
       });
 
@@ -1198,6 +1201,7 @@ let result_display_dispatch;
 let info_display_dispatch;
 let custom_editor_display_dispatch;
 let code_editor;
+let code_editor_nodeid;
 
 const init_code_editor = (dispatch, {html_id}) => {
     requestAnimationFrame(() => {
@@ -1213,6 +1217,12 @@ const init_code_editor = (dispatch, {html_id}) => {
         })
         const background = "#111";
         const highlightBackground = "#00000033";
+        const code_editor_nodeid_field = StateField.define({
+              create() { return "" },
+              update(value, transaction) { return transaction.effects.filter(e => e.is(code_editor_nodeid))?.[0]?.value ?? value; }
+            })
+        code_editor_nodeid = StateEffect.define("");
+
         code_editor = new EditorView({extensions: [
             basicSetup, 
             EditorView.theme({
@@ -1240,8 +1250,15 @@ const init_code_editor = (dispatch, {html_id}) => {
             }, {dark: true}),
             languageConf.of(javascript()),
             autoLanguage,
+            code_editor_nodeid_field,
             EditorView.domEventHandlers({
-                "blur": () => dispatch(UpdateNode, {property: "value", value: code_editor.state.doc.sliceString(0, code_editor.state.doc.length, "\n")})
+                "blur": () => {
+                  dispatch(UpdateNode, {
+                    node: code_editor.state.field(code_editor_nodeid_field),
+                    property: "value", 
+                    value: code_editor.state.doc.sliceString(0, code_editor.state.doc.length, "\n")
+                  })
+                }
             })
         ], parent: document.getElementById(`${html_id}-code-editor`)});
     })
