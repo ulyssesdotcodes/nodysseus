@@ -1270,9 +1270,9 @@ const runapp = (init, load_graph, _lib) => {
           input: document.getElementById("edit-text-ref"),
           minLength: 0,
           fetch: (text, update) => {
-            const refs = nolib.no.runtime.refs().map(r => ({id: r}));
+            const refs = nolib.no.runtime.refs().map(r => generic.nodes[r] ? generic.nodes[r] : {id: r});
             update(text === "" ? refs 
-              : new Fuse(refs, {keys: ["id"], distance: 80, threshold: 0.4}).search(text)
+              : new Fuse(refs, {keys: ["id", "category"], distance: 80, threshold: 0.4}).search(text)
                   .map(searchResult => ({label: searchResult.item.id, value: searchResult.item.id})))
           },
           className: "ref-autocomplete-list",
