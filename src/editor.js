@@ -885,7 +885,7 @@ const UpdateNode = (state, {node, property, value, display_graph}) => [
     [UpdateNodeEffect, {
         display_graph: display_graph ?? state.display_graph,
         node: Object.fromEntries(Object.entries(Object.assign({}, 
-            base_node(typeof node === "string" ? (display_graph ?? state.display_graph).nodes[node] : node), 
+            base_node(typeof node === "string" ? (display_graph ?? state.display_graph).nodes[node] : node ? node : state.display_graph.nodes[state.selected[0]]), 
             {[property]: value === "" ? undefined : value})).filter(kv => kv[1] !== undefined))
     }]
 ]
@@ -1287,8 +1287,8 @@ const runapp = (init, load_graph, _lib) => {
           input: document.getElementById("edit-text-ref"),
           minLength: 0,
           fetch: (text, update) => {
-            const refs = nolib.no.runtime.refs().map(r => generic.nodes[r] ? generic.nodes[r] : {id: r});
-            update(text === "" ? refs 
+            const refs = nolib.no.runtime.refs().filter(r => r).map(r => generic.nodes[r] ? generic.nodes[r] : {id: r});
+            update(text === "" ? refs.map(r => ({label: r.id, value: r.id})) 
               : new Fuse(refs, {keys: ["id", "category"], distance: 80, threshold: 0.4}).search(text)
                   .map(searchResult => ({label: searchResult.item.id, value: searchResult.item.id})))
           },
