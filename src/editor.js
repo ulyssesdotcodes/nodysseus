@@ -652,11 +652,15 @@ const SimulationToHyperapp = (state, payload) => [{
 
 const FocusEffect = (_, {selector}) => setTimeout(() => {
     const el = document.querySelector(selector);
-    if(!el) return
+    if(!el){
+      console.log(`couldn't find ${selector}`)
+      return
+    } 
+
 
     el.focus();
     if(el instanceof HTMLInputElement && el.type === "text") {
-        el.select()
+      el.select();
     }
 }, 100);
 
@@ -902,8 +906,8 @@ const Undo = state => [
 
 const fill_rect_el = () =>ha.h('rect', {class: 'fill', width: '48', 'height': '48'}, [])
 const node_text_el = ({node_id, primary, focus_primary, secondary}) =>ha.h('text', {x: 48, y: 12}, [
-   ha.h('tspan', {class: "primary", dy: ".6em", x: "48", onclick: [SelectNode, {node_id, focus_property: focus_primary}]}, ha.text(primary)),
-   ha.h('tspan', {class: "secondary", dy: "1.2em", x: "48", onclick: [SelectNode, {node_id, focus_property: "ref"}]}, ha.text(secondary))
+   ha.h('tspan', {class: "primary", dy: ".6em", x: "48", onpointerdown: [SelectNode, {node_id, focus_property: focus_primary}]}, ha.text(primary)),
+   ha.h('tspan', {class: "secondary", dy: "1.2em", x: "48", onpointerdown: [SelectNode, {node_id, focus_property: "ref"}]}, ha.text(secondary))
 ])
 
 const defs = () =>ha.h('defs', {}, [
@@ -918,8 +922,7 @@ const defs = () =>ha.h('defs', {}, [
 
 const radius = 24;
 const node_el = ({html_id, selected, error, selected_distance, node_id, node_ref, node_name, node_value, has_nodes, nested_edge_count, nested_node_count}) =>ha.h('svg', {
-    onclick: [SelectNode, {node_id}],  
-    ontouchstart: [SelectNode, {node_id}], 
+    onpointerdown: [SelectNode, {node_id}],  
     width: '256', 
     height: '64', 
     key: html_id + '-' + node_id, 
