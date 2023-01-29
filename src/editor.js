@@ -1772,7 +1772,7 @@ const ydocStore = async (persist = false, update = undefined) => {
   const remove_node = (graphId, node) => {
     if(generic.nodes[graphId]) return;
 
-    ydoc.transact(() => {
+    ymap.get(graphId).transact(() => {
       ymap.get(graphId).getMap().get("nodes").delete(typeof node === "string" ? node : node.id)
     })
 
@@ -1782,7 +1782,7 @@ const ydocStore = async (persist = false, update = undefined) => {
   const add_edge = (graphId, edge) => {
     if(generic.nodes[graphId]) return;
 
-    ydoc.transact(() => {
+    ymap.get(graphId).transact(() => {
       ymap.get(graphId).getMap().get("edges").set(edge.from, edge)
     })
 
@@ -1790,7 +1790,7 @@ const ydocStore = async (persist = false, update = undefined) => {
   }
 
   const remove_edge = (graphId, edge) => {
-    ydoc.transact(() => {
+    ymap.get(graphId).transact(() => {
       ymap.get(graphId).getMap().get("edges").delete(edge.from)
     })
 
@@ -1924,7 +1924,16 @@ const ydocStore = async (persist = false, update = undefined) => {
 
           if(!refRtcs[k]) {
             console.log(`syncing existing rtc graph ${k}`)
-            refRtcs[k] = new WebrtcProvider(`nodysseus${rtcroom}_${k}`, ymap.get(k), {signaling: ["wss://ws.nodysseus.io"], filterBcConns: false})
+            refRtcs[k] = new WebrtcProvider(`nodysseus${rtcroom}_${k}`, ymap.get(k), {
+              signaling: ["wss://ws.nodysseus.io"], 
+              peerOpts: {
+                config: {
+                  iceServers: [
+                    {urls: "stun:ws.nodysseus.io:3478"}
+                  ]
+                }
+              }
+            })
           }
         })
         // evts.forEach(evt => [...evt.keysChanged].filter(k => !(k === "custom_editor" || k === "keybindings")).forEach(k => {
