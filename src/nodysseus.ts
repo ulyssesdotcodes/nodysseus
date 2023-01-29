@@ -1183,7 +1183,7 @@ const nolib = {
         "value",
         "display",
         "subscribe",
-        "argslist",
+        "metadata",
         "args",
         "lib",
         "_node",
@@ -1195,7 +1195,7 @@ const nolib = {
         value,
         display,
         subscribe,
-        argslist,
+        metadata,
         argsfn,
         lib,
         _node,
@@ -1204,7 +1204,7 @@ const nolib = {
         _lib: Lib
       ) => {
         const output = _args._output;
-        const edgemap = { value, display, subscribe, argslist, lib };
+        const edgemap = { value, display, subscribe, metadata, lib };
         const runedge = output && output === display ? display : edgemap[output] ? output : "value";
 
         const return_result = (_lib: Lib, args) => {

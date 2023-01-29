@@ -1271,7 +1271,9 @@ const runapp = (init, load_graph, _lib) => {
           minLength: 0,
           fetch: (text, update) => {
             const refs = nolib.no.runtime.refs().map(r => ({id: r}));
-            update(text === "" ? refs : new Fuse(refs, {keys: ["id"], distance: 80, threshold: 0.4}).search(text).map(searchResult => ({label: searchResult.item.id, value: searchResult.item.id})))
+            update(text === "" ? refs 
+              : new Fuse(refs, {keys: ["id"], distance: 80, threshold: 0.4}).search(text)
+                  .map(searchResult => ({label: searchResult.item.id, value: searchResult.item.id})))
           },
           className: "ref-autocomplete-list",
           showOnFocus: true,
@@ -2146,7 +2148,7 @@ const yNodyStore = async () => {
     graphs: lokidbToStore(graphsdb),
     state: lokidbToStore(statedb),
     fns: lokidbToStore(fnsdb),
-    assets: {
+    ssets: {
       get: (id) => nodysseusidb.get('assets', id),
       add: (id, blob) => nodysseusidb.put('assets', blob, id),
       remove: id => nodysseusidb.delete('assets', id),

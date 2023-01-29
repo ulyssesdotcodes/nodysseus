@@ -24,9 +24,9 @@ When the `return` node is the output node of a graph, the `display` input is sho
 
 ## Advanced input edges
 
-### `argslist` edge
+### `metadata` edge
 
-By default, without an `argslist`, the UI will find all `arg` nodes and show their values in the node info window as named arguments. `argslist` is a helper input to indicate to the UI which named inputs are expected and will take precedence over parsing the `arg` nodes.
+The `metadata` edge should contain an object with metadata about the graph. The valid object fields are `argslist`, and `category`. By default, without an `argslist`, the UI will find all `arg` nodes and show their values in the node info window as named arguments. `argslist` is a helper input to indicate to the UI which named inputs are expected and will take precedence over parsing the `arg` nodes.
 
 ### `publish` edge
 
