@@ -15,7 +15,7 @@ self.addEventListener('install', e => {
     }))
 });
 
-const network = r => fetch(r).then(d => d.ok ? caches.open(assetCacheName).then(c => c.put(r, d.clone()).then(_ => d)) : d);
+const network = r => fetch(r).then(d => d.ok ? caches.open(assetCacheName).then(c => (console.log(`caching ${r.url}`), c.put(r, d.clone())).then(_ => d)) : d);
 
 self.addEventListener('fetch', (e) => {
   if(!(e.request.url.startsWith("http"))) {
