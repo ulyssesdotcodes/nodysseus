@@ -119,17 +119,27 @@ svg {
 .ref-autocomplete-list {
   position: relative;
   z-index: 999;
-  overflow: hidden;
-  background: #111;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  background: #000;
 }
 
 .autocomplete-item {
   line-height: 1.2em;
   padding: .2em;
+  padding-left: .4em;
 }
 
 .autocomplete-item.selected {
   background: #333;
+}
+
+.autocomplete-group {
+  line-height: 1.4em;
+  padding: .2em;
+  font-weight: bold;
+  padding-top: .4em;
+  border-top: 1px solid #111;
 }
 
 .edit-value .input {
