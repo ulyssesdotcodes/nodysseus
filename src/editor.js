@@ -1288,9 +1288,12 @@ const runapp = (init, load_graph, _lib) => {
           minLength: 0,
           fetch: (text, update) => {
             const refs = nolib.no.runtime.refs().filter(r => r).map(r => generic.nodes[r] ? generic.nodes[r] : {id: r});
-            update(text === "" ? refs.map(r => ({label: r.id, value: r.id})) 
-              : new Fuse(refs, {keys: ["id", "category"], distance: 80, threshold: 0.4}).search(text)
-                  .map(searchResult => ({label: searchResult.item.id, value: searchResult.item.id})))
+            update(text === "" ? refs.map(r => ({label: r.id, value: r.id, group: r.category})) 
+              : [...(new Fuse(refs, {keys: ["id", "category"], distance: 80, threshold: 0.4}).search(text)
+                  .map(searchResult => ({label: searchResult.item.id, value: searchResult.item.id, group: searchResult.item.category ?? "custom"}))
+                  .reduce((acc, item) => (acc.set(item.group, (acc.get(item.group) ?? []).concat([item]))), new Map())
+                  .values())].flat()
+            )
           },
           className: "ref-autocomplete-list",
           showOnFocus: true,
@@ -1305,6 +1308,12 @@ const runapp = (init, load_graph, _lib) => {
             itemEl.className = "autocomplete-item"
             itemEl.textContent = item.value;
             return itemEl;
+          },
+          renderGroup: (name, currentValue) => {
+            const groupEl = document.createElement("div")
+            groupEl.className = "autocomplete-group";
+            groupEl.textContent = name;
+            return groupEl;
           }
         }))]
     ],
