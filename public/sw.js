@@ -15,7 +15,7 @@ self.addEventListener('install', e => {
     }))
 });
 
-const network = r => fetch(r).then(d => d.ok ? caches.open(assetCacheName).then(c => (console.log(`caching ${r.url}`), caches.delete(r).then(() => c.put(r, d.clone()))).then(_ => d)) : d);
+const network = r => fetch(r).then(d => d.ok ? caches.open(assetCacheName).then(c => c.delete(r).then(() => c.put(r, d.clone())).then(_ => d)) : d);
 
 self.addEventListener('fetch', (e) => {
   if(!(e.request.url.startsWith("http"))) {
@@ -24,7 +24,7 @@ self.addEventListener('fetch', (e) => {
   console.log(`[Service Worker] Fetching resource ${e.request.url}`);
   e.respondWith(
      (navigator.onLine ? network(e.request)
-        .catch(ne => (console.log("[Service Worker] Network request failed, trying cache"), caches.match(e.request))) : caches.match(e.request))
+        .catch(ne => (console.log("[Service Worker] Network request failed, trying cache"), caches.match(e.request))) : caches.open(assetCacheName).then(c => c.match(e.request)))
         .catch(ce => (console.log("[Service Worker] Request failed"), console.error(ne), console.error(ce))));
 });
 
