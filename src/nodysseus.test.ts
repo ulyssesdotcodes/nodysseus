@@ -13,8 +13,11 @@ test('returning a single value', () => {
     },
     edges: {
       value: {from: "value", to: "out", as: "value"}
-    }
+    },
+    edges_in: {}
   }
+
+  graph.edges_in = Object.values(graph.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
   
   expect(run({graph, fn: "out"})).toEqual(val)
 })
@@ -55,8 +58,11 @@ test('running a fn arg in sequence', () => {
       finalval: {from: "finalval", to: "setval", as: "value"},
       setval: {from: "setval", to: "runnablefn", as: "fn"},
       runnablefn: {from: "runnablefn", to: "out", as: "value"},
-    }
+    },
+    edges_in: {}
   }
+
+  ret_fn.edges_in = Object.values(ret_fn.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
 
   const run_fn = {
     id: expect.getState().currentTestName,
@@ -85,8 +91,11 @@ test('running a fn arg in sequence', () => {
       apseqinput: {from: "apseqinput", to: "apseqargs", as: "input"},
       apseqargs: {from: "apseqargs", to: "apseq", as: "args"},
       apseq: {from: "apseq", to: "out", as: "value"},
-    }
+    },
+    edges_in: {}
   }
+
+  run_fn.edges_in = Object.values(run_fn.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
 
   const inval = {x: "A"}
   nolib.no.runtime?.add_ref(ret_fn);
@@ -127,8 +136,11 @@ test('applying an fn twice', () => {
       ap2fnrun: {from: "ap2fnrun", to: "ap2fn", as: "run"},
       ap2fnargs: {from: "ap2fnargs", to: "ap2fn", as: "args"},
       ap2fn: {from: "ap2fn", to: "out", as: "value"},
-    }
+    },
+    edges_in: {}
   }
+
+  run_fn.edges_in = Object.values(run_fn.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
 
   const inval = {x: "A"}
   run({graph: run_fn, fn: "out"}, {"input": inval});
@@ -162,8 +174,11 @@ test('applying a fn once', () => {
       apfnargs: {from: "apfnargs", to: "apfn", as: "args"},
       apfnrun: {from: "apfnrun", to: "apfn", as: "run"},
       apfn: {from: "apfn", to: "out", as: "value"},
-    }
+    },
+    edges_in: {}
   }
+
+  run_fn.edges_in = Object.values(run_fn.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
 
   const inval = {x: "A"}
   console.log(run({graph: run_fn, fn: "out"}, newEnv({"input": inval})));

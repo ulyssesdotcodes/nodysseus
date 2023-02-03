@@ -822,6 +822,10 @@ const ChangeDisplayGraphId = (dispatch, {id, select_out, display_graph_id}) => {
                 requestAnimationFrame(() => {
                     update_graph_list(id)
                     const new_graph = graph ?? Object.assign({}, base_graph(state.display_graph), {id});
+                    if(!new_graph.edges_in) {
+                        new_graph.edges_in = Object.values(new_graph.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
+                    }
+                    
                     nolib.no.runtime.change_graph(new_graph, hlib);
                     nolib.no.runtime.remove_graph_listeners(state.display_graph_id);
                     dispatch(s => {
@@ -1535,6 +1539,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
     nodysseusStore = await yNodyStore();
     initStore(nodysseusStore)
     const simple = await resfetch("json/simple.json").then(r => r.json());
+    simple.edges_in = Object.values(simple.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
     // TODO: clean this up it's just used for side effect of initializing the db
     // run(simple);
     const url_params = new URLSearchParams(document.location.search);
@@ -1661,7 +1666,9 @@ const ydocStore = async (persist = false, update = undefined) => {
       simpleYDoc.transact(() => {
         for(let k of event.keysChanged) {
           if(k && ymap.get(k)?.isLoaded) {
-            simpleYMap.set(k, ymap.get(k)?.getMap().toJSON())
+            const graph = ymap.get(k)?.getMap().toJSON();
+            graph.edges_in = Object.values(graph.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
+            simpleYMap.set(k, graph)
           }
         }
       })
@@ -1746,6 +1753,7 @@ const ydocStore = async (persist = false, update = undefined) => {
 
   const add = (id, data) => {
     if(generic.nodes[id]) {
+      generic.nodes[id].edges_in = Object.values(generic.nodes[id].edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
       simpleYMap.set(id, generic.nodes[id])
       return generic.nodes[id];
     } else if(id && !id.startsWith("_") && Object.keys(data).length > 0) {
@@ -1777,7 +1785,9 @@ const ydocStore = async (persist = false, update = undefined) => {
     // simpleYDoc.transact(() => {
       // debugger;
     if(id && ymap.get(id)?.getMap()?.get("id")) {
-      simpleYMap.set(id, ymap.get(id).getMap().toJSON())
+      const graph = ymap.get(id)?.getMap().toJSON();
+      graph.edges_in = Object.values(graph.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
+      simpleYMap.set(id, graph)
       nolib.no.runtime.publish('graphchange', simpleYMap.get(id), {...nolib, ...hlib}) 
     } else {
       console.log(`not loaded ${id}`)
@@ -1916,8 +1926,8 @@ const ydocStore = async (persist = false, update = undefined) => {
       })
 
       rdoc.getMap().observe(evts => {
-        // console.log("rdoc obs")
-        // console.log(evts)
+        console.log("rdoc obs")
+        console.log(evts)
 
         if(!refRtcs[id]) {
           // console.log(`creating first graph provider ${id}`)
@@ -2034,8 +2044,9 @@ const ydocStore = async (persist = false, update = undefined) => {
           }
 
           if(sdmap.get("id")) {
-            simpleYMap.set(sdmap.get("id"), ymap.get(sdmap.get("id")).getMap().toJSON())
+            updateSimple(sdmap.get("id"))
           }
+
             // new WebsocketProvider(`nodysseus${rtcroom}_`+sd.getMap().get("id"), sd, {signaling: [url.url]})
             // new WebsocketProvider(url.baseUrl, "", /*`nodysseus${rtcroom}_${sd.getMap().get("id")}`*/ sd, {
             //   WebSocketPolyfill: NodyWS,
@@ -2071,7 +2082,9 @@ const ydocStore = async (persist = false, update = undefined) => {
             })
         })
       } else if (sdmap.get("id")) {
-        simpleYMap.set(sdmap.get("id"), sdmap.toJSON())
+        debugger;
+        updateSimple(sdmap.get("id"))
+        // simpleYMap.set(sdmap.get("id"), sdmap.toJSON())
       }
 
     })
@@ -2105,16 +2118,28 @@ const ydocStore = async (persist = false, update = undefined) => {
       // debugger;
     // }
     const genericGraph = generic.nodes[id];
+    const simpleValue = (simpleYMap.get(id)?.id || ymap.get(id)?.isLoaded) && simpleYMap.get(id);
+    const ymapvalue = !simpleValue && (ymap.get(id)?.load(), ymap.get(id)?.whenLoaded); 
+    ymapvalue && (console.log(id), console.log(ymap.get(id)))
     return genericGraph ?? mapMaybePromise(simpleYMap.get(id)?.id || ymap.get(id)?.isLoaded 
-      ? simpleYMap.get(id) 
-      : (ymap.get(id)?.load(), ymap.get(id)?.whenLoaded)?.then(d => d.getMap().toJSON()), res => {
-      if((!res || Object.keys(res).length === 0) && otherwise) {
-        console.log("creating new " + id)
-        return add(id, otherwise)
-      }
+      ? simpleValue
+      : ymapvalue?.then(d => d.getMap().toJSON()), res => {
+        if((!res || Object.keys(res).length === 0) && otherwise) {
+          console.log("creating new " + id)
+          return add(id, otherwise)
+        }
 
-      return res;
-    });
+        if(res && !res.id) {
+          res.id = id;
+        }
+
+        if(!simpleValue) {
+          updateSimple(id);
+          simpleValue = simpleYMap.get(id);
+        }
+
+        return simpleValue ?? res;
+      });
   }
 
   return {

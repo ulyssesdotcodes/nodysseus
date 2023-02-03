@@ -15,7 +15,8 @@ describe('create_fn', () => {
         nodes: {
           set: {id: "set", ref: "script", value: "return 1 + 1"}
         },
-        edges: {}
+        edges: {},
+        edges_in: {}
       }, 
       env: newEnv({}),
       lib: newLib(nolib)
@@ -38,7 +39,8 @@ describe('create_fn', () => {
         },
         edges: {
           inval: {from: "inval", to: "ret", as: "inval"}
-        }
+        },
+        edges_in: {}
       },
       env: newEnv({}),
       lib: newLib(nolib)
@@ -63,7 +65,8 @@ describe('create_fn', () => {
         edges: {
           inval: {from: "inval", to: "setval", as: "target"},
           newval: {from: "newval", to: "setval", as: "value"}
-        }
+        },
+        edges_in: {}
       },
       env: newEnv({}),
       lib: newLib(nolib)

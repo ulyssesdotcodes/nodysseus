@@ -593,7 +593,7 @@ const getorset = (map, id, value_fn=undefined) => {
 }
 
 const base_node = node => node.ref || node.extern ? ({id: node.id, value: node.value, name: node.name, ref: node.ref}) : base_graph(node);
-const base_graph = graph => ({id: graph.id, value: graph.value, name: graph.name, nodes: graph.nodes, edges: graph.edges, out: graph.out})
+const base_graph = graph => ({id: graph.id, value: graph.value, name: graph.name, nodes: graph.nodes, edges: graph.edges, edges_in: graph.edges_in, out: graph.out})
 
 export const run = (node: Runnable | InputRunnable, args: Record<string, any> = {}, lib: Lib | undefined = undefined, store: NodysseusStore = nodysseus) => {
   initStore(store);
@@ -694,6 +694,18 @@ const nolib = {
     runtimefn: (function () {
 
       const polyfillRequestAnimationFrame = typeof window !== "undefined" ? window.requestAnimationFrame : (fn => setTimeout(fn, 16))
+
+      Object.values(generic.nodes).forEach(graph => {
+        if(isNodeGraph(graph)) {
+          graph.edges_in = Object.values(graph.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
+          // graph.edges_in = Object.values(graph.edges).reduce((acc, edge) => {
+          //   console.log(edge);
+          //   acc[edge.to] = {...(acc[edge.to] ?? {}), [edge.from]: edge}
+          //   return acc;
+          // }, {})
+          console.log(graph.edges_in)
+        }
+      })
 
       const event_listeners = new Map();
       const event_listeners_by_graph = new Map();
@@ -866,7 +878,7 @@ const nolib = {
       const get_node = (graph: Graph, id: string) => wrapPromise(get_graph(graph)).then(g => g?.nodes[id]).value
       const get_edge = (graph, from) => wrapPromise(get_graph(graph)).then(g => g?.edges[from]).value
       const get_edges_in = (graph, id) => wrapPromise(get_graph(graph))
-        .then(g => Object.values(g.edges).filter((e: Edge) => e.to === id)).value
+        .then(g => g.edges_in[id] ? Object.values(g.edges_in[id]) : []).value
       const get_edge_out = get_edge
       const get_args = (graph) => nodysseus.state.get(typeof graph === "string" ? graph : graph.id) ?? {};
       const get_graph = (graph: string | Graph): Graph | Promise<Graph> | undefined => wrapPromise(
