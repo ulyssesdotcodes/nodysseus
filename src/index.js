@@ -1,4 +1,4 @@
-import { editor, run} from './editor.js'
+import { editor, run} from './editor/editor.ts'
 
 if('serviceWorker' in navigator) {
   console.log("installing serviceworker")

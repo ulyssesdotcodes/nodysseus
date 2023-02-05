@@ -1,7 +1,7 @@
 import set from "just-safe-set";
 import loki from "lokijs";
-import { ancestor_graph, ispromise, isWrappedPromise, mapMaybePromise, node_args, WrappedPromise, wrapPromise, wrapPromiseAll } from "./util"
-import { isNodeGraph, Graph, LokiT, Node, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib } from "./types"
+import { ancestor_graph, ispromise, isWrappedPromise, mapMaybePromise, node_args, WrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node } from "./util"
+import { isNodeGraph, Graph, LokiT, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib } from "./types"
 import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util"
 import generic from "./generic.js";
 import { create_fn, expect, now } from "./externs";
@@ -12,7 +12,7 @@ const Nodysseus = (): NodysseusStore => {
     env: isBrowser ? "BROWSER" : "NODEJS",
     persistenceMethod: "memory",
   })
-  const refsdb = persistdb.addCollection<LokiT<Node>>("refs", {unique: ["id"]});
+  const refsdb = persistdb.addCollection<LokiT<NodysseusNode>>("refs", {unique: ["id"]});
 
   const db = new loki("nodysseus.db", {
     env: isBrowser ? "BROWSER" : "NODEJS",
@@ -48,7 +48,7 @@ const Nodysseus = (): NodysseusStore => {
   }
 }
 
-export const lokidbToStore = <T>(collection: loki.Collection<LokiT<T>>) => ({
+export const lokidbToStore = <T>(collection: loki.Collection<LokiT<T>>): Store<T> => ({
   add: (id: string, data: T) => {
     const existing = collection.by("id", id);
     if (existing) {
@@ -65,14 +65,14 @@ export const lokidbToStore = <T>(collection: loki.Collection<LokiT<T>>) => ({
     }
   },
   removeAll: () => collection.clear(),
-  all: () => collection.where(_ => true).map(v => v.data),
+  all: () => collection.where(_ => true).map(v => v.id),
   addMany: gs => gs.map(([id, data]) => collection.insert({id, data}))
 })
 
 let nodysseus: NodysseusStore;
 
 let resfetch = typeof fetch !== "undefined" ? fetch : 
-    (urlstr, params) => import('node:https').then(https => new Promise((resolve, reject) => {
+    (urlstr, params?) => import('node:https').then(https => new Promise<string | Response>((resolve, reject) => {
         const url = new URL(urlstr);
         const req = https.request({
             hostname: url.hostname,
@@ -429,7 +429,7 @@ const run_runnable = (runnable: Runnable, lib: Lib, args: Record<string, any> = 
 
 
 // graph, node, symtable, parent symtable, lib
-const run_node = (node: Node | Runnable, nodeArgs: Record<string, ConstRunnable>, graphArgs: Env, lib: Lib): Result | Promise<Result> => {
+const run_node = (node: NodysseusNode | Runnable, nodeArgs: Record<string, ConstRunnable>, graphArgs: Env, lib: Lib): Result | Promise<Result> => {
     if (isRunnable(node)){
       if(isValue(node)) {
         return node
@@ -512,7 +512,7 @@ const create_data = (node_id, graph, graphArgs: Env, lib: Lib): Record<string, C
 }
 
 // handles graph things like edges
-const run_graph = (graph: Graph | (Graph & {nodes: Array<Node>, edges: Array<Edge>}), node_id: string, env: Env, lib: Lib): Result | Promise<Result> => {
+const run_graph = (graph: Graph | (Graph & {nodes: Array<NodysseusNode>, edges: Array<Edge>}), node_id: string, env: Env, lib: Lib): Result | Promise<Result> => {
   const handleError = e => {
         console.log(`error in node`);
         if (e instanceof AggregateError) {
@@ -571,7 +571,7 @@ const run_ap_runnable = (runnable: ApRunnable, args: Record<string, any>, lib: L
       runnable.lib,
       execArgs?.value ? Object.fromEntries(Object.entries(execArgs.value).map(kv => [kv[0], lib.data.no.of(kv[1])])) : {}, 
     ))
-    return Array.isArray(runnable.fn) ? wrapPromiseAll(ret.map(wrapPromise)) : wrapPromise(ret[0]);
+    return Array.isArray(runnable.fn) ? wrapPromiseAll(ret.map(v => wrapPromise(v))) : wrapPromise(ret[0]);
   }
   return wrapPromise(computedArgs).then(execute).then(v => v?.value).value;
 }
@@ -592,8 +592,17 @@ const getorset = (map, id, value_fn=undefined) => {
     }
 }
 
-const base_node = node => node.ref || node.extern ? ({id: node.id, value: node.value, name: node.name, ref: node.ref}) : base_graph(node);
-const base_graph = graph => ({id: graph.id, value: graph.value, name: graph.name, nodes: graph.nodes, edges: graph.edges, edges_in: graph.edges_in, out: graph.out})
+const initStore = (store: NodysseusStore | undefined = undefined) => {
+  if(store) {
+    nodysseus = store;
+  } else if(!nodysseus) {
+    nodysseus = Nodysseus();
+  }
+
+  if(!nolib.no.runtime) {
+    nolib.no.runtime = nolib.no.runtimefn()
+  }
+}
 
 export const run = (node: Runnable | InputRunnable, args: Record<string, any> = {}, lib: Lib | undefined = undefined, store: NodysseusStore = nodysseus) => {
   initStore(store);
@@ -617,18 +626,6 @@ export const run = (node: Runnable | InputRunnable, args: Record<string, any> = 
       }, 
     _lib, args);
   return wrapPromise(res).then(r => r?.value).value;
-}
-
-const initStore = (store: NodysseusStore | undefined = undefined) => {
-  if(store) {
-    nodysseus = store;
-  } else if(!nodysseus) {
-    nodysseus = Nodysseus();
-  }
-
-  if(!nolib.no.runtime) {
-    nolib.no.runtime = nolib.no.runtimefn()
-  }
 }
 
 const nolib = {
@@ -974,7 +971,7 @@ const nolib = {
           }
           change_graph(nodysseus.refs.get(graphId) as Graph, lib);
         },
-        add_node: (graph: Graph, node: Node, lib: Lib) => {
+        add_node: (graph: Graph, node: NodysseusNode, lib: Lib) => {
           if (!(node && typeof node === "object" && node.id)) {
             throw new Error(`Invalid node: ${JSON.stringify(node)}`);
           }
@@ -1664,4 +1661,4 @@ const nolib = {
   // THREE
 };
 
-export {nolib, initStore, compare, hashcode, ispromise, NodysseusError, base_graph, base_node, resfetch };
+export {nolib, initStore, compare, hashcode, ispromise, NodysseusError, resfetch };

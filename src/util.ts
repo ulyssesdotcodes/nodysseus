@@ -1,5 +1,4 @@
-import { ForceLink, SimulationLinkDatum, SimulationNodeDatum } from "d3-force";
-import { d3Link, d3Node, Edge, Graph, GraphNode, Node, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable, isEnv, isRunnable, isValue, Lib, isLib, Env } from "./types";
+import { Edge, Graph, GraphNode, NodysseusNode, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable, isEnv, isRunnable, isValue, Lib, isLib, Env } from "./types";
 import extend from "just-extend";
 
 export const ispromise = <T>(a: any): a is Promise<T> => a && typeof a.then === 'function' && !isWrappedPromise(a);
@@ -9,16 +8,27 @@ export const isgraph = g => g && g.out !== undefined && g.nodes !== undefined &&
 export type WrappedPromise<T> = {
   __kind: "wrapped"
   then: <S>(fn: (t: FlattenPromise<T>) => S) => WrappedPromise<S>,
-  value: T
+  value: T,
 }
 
 type FlattenWrappedPromise<T> = T extends WrappedPromise<infer Item> ? Item : T
 
-export const wrapPromise = <T>(t: T): WrappedPromise<FlattenWrappedPromise<T>> => 
+const tryCatch = (fn, t, c) => {
+  try {
+    return fn(t)
+  } catch(e) {
+    return wrapPromise(c(e))
+  }
+}
+
+export const wrapPromise = <T>(t: T, c?: <E extends Error, S>(fn: (e?: E) => S) => S): WrappedPromise<FlattenWrappedPromise<T>> => 
   (isWrappedPromise(t) ? t
     : {
       __kind: "wrapped",
-      then: <S>(fn: (t: FlattenPromise<T>) => S) => wrapPromise(ispromise(t) ? t.then(fn as (value: unknown) => S | PromiseLike<S>) : fn(t as FlattenPromise<T>)),
+      then: <S>(fn: (t: FlattenPromise<T>) => S) => wrapPromise(ispromise(t) 
+        ? c ? t.then(fn as (value: unknown) => S | PromiseLike<S>).catch(c)
+          : t.then(fn as (value: unknown) => S | PromiseLike<S>) 
+        : tryCatch(fn, t, c)),
       value: t
     }) as WrappedPromise<FlattenWrappedPromise<T>>
 
@@ -37,15 +47,18 @@ export type IfPromise<T, S> = T extends Promise<infer _> ? S : Promise<S>;
 export type FlattenPromise<T> = T extends Promise<infer Item> ? Item : T;
 export const mapMaybePromise = <T, S>(a: T, fn: (t: FlattenPromise<T>) => S): IfPromise<T, S> => (ispromise(a) ? a.then(fn as (value: unknown) => S | PromiseLike<S>) : (fn(a as FlattenPromise<T>))) as IfPromise<T, S>
 
+export const base_node = node => node.ref || node.extern ? ({id: node.id, value: node.value, name: node.name, ref: node.ref}) : base_graph(node);
+export const base_graph = graph => ({id: graph.id, value: graph.value, name: graph.name, nodes: graph.nodes, edges: graph.edges, edges_in: graph.edges_in, out: graph.out})
+
 export const create_randid = () => Math.random().toString(36).substring(2, 9);
-type FlattenedGraph = {flat_nodes: Record<string, Node>, flat_edges: Record<string, Edge>};
-const isFlattenedGraph = (g: Node | FlattenedGraph): g is FlattenedGraph => !!(g as FlattenedGraph).flat_nodes;
-export const flattenNode = (graph: Node, levels = -1): FlattenedGraph | Node =>
+type FlattenedGraph = {flat_nodes: Record<string, NodysseusNode>, flat_edges: Record<string, Edge>};
+const isFlattenedGraph = (g: NodysseusNode | FlattenedGraph): g is FlattenedGraph => !!(g as FlattenedGraph).flat_nodes;
+export const flattenNode = (graph: NodysseusNode, levels = -1): FlattenedGraph | NodysseusNode =>
     !isNodeGraph(graph) || !graph.nodes || levels <= 0
     ? graph
     : Object.values(graph.nodes)
         .map(g => flattenNode(g as GraphNode, levels - 1))
-        .reduce((acc: {flat_nodes: Record<string, Node>, flat_edges: Record<string, Edge>}, n) => isFlattenedGraph(n) ? Object.assign({}, acc, {
+        .reduce((acc: {flat_nodes: Record<string, NodysseusNode>, flat_edges: Record<string, Edge>}, n) => isFlattenedGraph(n) ? Object.assign({}, acc, {
             flat_nodes: Object.assign(acc.flat_nodes, Object.fromEntries(Object.values(n.flat_nodes).map(fn => {
                 // adjust for easy graph renaming
                 if ((fn.id === (graph.out || "out")) && graph.name) {
@@ -63,7 +76,7 @@ export const flattenNode = (graph: Node, levels = -1): FlattenedGraph | Node =>
 export const expand_node = (data: {nolib: Record<string, any>, node_id: string, display_graph: Graph}): {display_graph: Graph, selected: Array<string>} => {
     const nolib = data.nolib;
     const node_id = data.node_id;
-    const node: Node = data.display_graph.nodes[node_id]
+    const node: NodysseusNode = data.display_graph.nodes[node_id]
 
     if (!isNodeGraph(node)) {
         console.log('no nodes?');
@@ -88,7 +101,7 @@ export const contract_node = (data: {display_graph: Graph, node_id: string, noli
     const node = data.display_graph.nodes[data.node_id];
     const node_id = data.node_id;
     if (!isNodeGraph(node)) {
-        const inside_nodes: Array<Node> = [Object.assign({}, node)];
+        const inside_nodes: Array<NodysseusNode> = [Object.assign({}, node)];
         const inside_node_map = new Map();
         inside_node_map.set(inside_nodes[0].id, inside_nodes[0]);
         const inside_edges = new Set<Edge>();
@@ -191,57 +204,6 @@ export const contract_node = (data: {display_graph: Graph, node_id: string, noli
 }
 
 
-export const findViewBox = (nodes: Array<d3Node>, links: Array<d3Link>, selected: string, node_el_width: number, htmlid: string, dimensions: {x: number, y: number}) => {
-    const visible_nodes: Array<{x: number, y: number}> = [];
-    const visible_node_set = new Set();
-    let selected_pos;
-    links.forEach(l => {
-        const el = document.getElementById(`link-${(l.source as d3Node).node_id}`);
-        const info_el = document.getElementById(`edge-info-${(l.source as d3Node).node_id}`);
-        if(el && info_el && l.source && l.target) {
-            const source = {x: (l.source as d3Node).x - node_el_width * 0.5, y: (l.source as d3Node).y};
-            const target = {x: (l.target as d3Node).x - node_el_width * 0.5, y: (l.target as d3Node).y};
-
-            if ((l.source as d3Node).node_id === selected) {
-                visible_nodes.push({x: target.x, y: target.y});
-                visible_node_set.add((l.target as d3Node).node_id);
-            } else if ((l.target as d3Node).node_id === selected) {
-                visible_nodes.push({x: source.x, y: source.y});
-                visible_node_set.add((l.source as d3Node).node_id);
-            }
-        }
-    });
-
-    links.forEach(l => {
-        if(visible_node_set.has((l.target as d3Node).node_id) && !visible_node_set.has((l.source as d3Node).node_id)) {
-            const source = {x: (l.source as d3Node).x - node_el_width * 0.5, y: (l.source as d3Node).y};
-            visible_nodes.push({x: source.x, y: source.y});
-        }
-    });
-
-    nodes.forEach(n => {
-        const el = document.getElementById(`${htmlid}-${n.node_id}`);
-        if(el) {
-            const x = n.x - node_el_width * 0.5;
-            const y = n.y ;
-
-            if(n.node_id === selected) {
-                visible_nodes.push({x, y})
-                selected_pos = {x, y};
-            }
-        }
-    });
-
-    const nodes_box = visible_nodes.reduce(
-      (acc: {min: {x: number, y: number}, max: {x: number, y: number}}, n) => 
-        ({min: {x: Math.min(acc.min.x, n.x - 24), y: Math.min(acc.min.y, n.y - 24)}, max: {x: Math.max(acc.max.x, n.x + node_el_width * 0.5 - 24), y: Math.max(acc.max.y, n.y + 24)}}), 
-        {min: {x: selected_pos ? (selected_pos.x - 96) : dimensions.x , y: selected_pos ? (selected_pos.y - 256) : dimensions.y}, max: {x: selected_pos ? (selected_pos.x + 96) : -dimensions.x, y: selected_pos ? (selected_pos.y + 128) : -dimensions.y}})
-    const nodes_box_center = {x: (nodes_box.max.x + nodes_box.min.x) * 0.5, y: (nodes_box.max.y + nodes_box.min.y) * 0.5}; 
-    const nodes_box_dimensions = {x: Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))), y: Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y)))}
-    const center = !selected_pos ? nodes_box_center : {x: (selected_pos.x + nodes_box_center.x * 3) * 0.25, y: (selected_pos.y + nodes_box_center.y * 3) * 0.25}
-
-    return {nodes_box_dimensions, center};
-}
 
 export const ancestor_graph = (node_id: string, from_graph: Graph, nolib: Record<string, any>): Graph => {
     let edges_in;
@@ -301,104 +263,6 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Ar
         .concat(node_out_args ? node_out_args : []))
     ].map((a: string) => ({exists: !!edges_in.find(e => e.as === a), name: a}))
 }
-
-
-export const bfs = (graph: Graph, fn) => {
-    const visited = new Set();
-    const iter = (id, level) => {
-        if (visited.has(id)) {
-            return;
-        }
-
-        fn(id, level);
-
-        visited.add(id);
-
-        for (const e of Object.values(graph.edges)) {
-            if (e.to === id) {
-                iter(e.from, level + 1);
-            }
-        }
-    }
-
-    return iter;
-}
-
-
-export const calculateLevels = (nodes: Array<d3Node>, links: Array<d3Link>, graph: Graph, selected: string) => {
-    const find_childest = n => {
-        const e = graph.edges[n];
-        if (e) {
-            return find_childest(e.to);
-        } else {
-            return n;
-        }
-    }
-    selected = selected[0];
-    const top = find_childest(selected);
-
-    const levels = new Map();
-    bfs(graph, (id, level) => levels.set(id, Math.min(levels.get(id) || Number.MAX_SAFE_INTEGER, level)))(top, 0);
-
-    const parents = new Map(
-      nodes.map(n => [
-        n.node_id, 
-        links.filter(l => typeof l.target == "object" ? l.target.node_id : l.target === n.node_id)
-        .map(l => typeof l.source === "object" ? l.source.node_id : String(l.source))
-      ]));
-
-    [...parents.values()].forEach(nps => {
-        nps.sort((a, b) => parents.get(b).length - parents.get(a).length);
-        for (let i = 0; i < nps.length * 0.5; i++) {
-            if (i % 2 === 1) {
-                const tmp = nps[i];
-                const endidx = nps.length - 1 - Math.floor(i / 2)
-                nps[i] = nps[endidx];
-                nps[endidx] = tmp;
-            }
-        }
-    })
-
-    const children = new Map(nodes
-        .map(n => [n.node_id,
-        links.filter(l => (typeof l.source === "object" ? l.source.node_id : l.source) === n.node_id)
-            .map(l => typeof l.target === "object" ? l.target.node_id : String(l.target))
-        ]));
-    const siblings = new Map(nodes.map(n => [n.node_id, [...(new Set(children.has(n.node_id)? children.get(n.node_id).flatMap(c => parents.get(c) || []) : [])).values()]]))
-    const distance_from_selected = new Map();
-
-    const connected_vertices = new Map();
-
-    const calculate_selected_graph = (s, i) => {
-        const id = s;
-        if (distance_from_selected.get(id) <= i) {
-            return;
-        }
-
-        distance_from_selected.set(id, i);
-        if(parents.has(s)) {
-            parents.get(s).forEach(p => { calculate_selected_graph(p, i + 1); });
-        }
-        if(children.has(s)){
-            children.get(s).forEach(c => { calculate_selected_graph(c, i + 1); });
-        }
-    }
-
-    calculate_selected_graph(selected, 0);
-
-    return {
-        level_by_node: levels,
-        parents,
-        children,
-        siblings,
-        distance_from_selected,
-        min: Math.min(...levels.values()),
-        max: Math.max(...levels.values()),
-        nodes_by_level: [...levels.entries()].reduce((acc, [n, l]) => (acc[l] ? acc[l].push(n) : acc[l] = [n], acc), {}),
-        connected_vertices
-    }
-}
-
 
 
 /*
