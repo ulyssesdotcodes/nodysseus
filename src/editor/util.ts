@@ -250,10 +250,7 @@ export const CreateNode: ha.Action<HyperappState, {node: NodysseusNode, child: s
 ];
 
 export const DeleteNode = (state, {node_id}) => [
-    {
-        ...state, 
-        history: state.history.concat([{action: 'delete_node', node_id}]) 
-    },
+    state,
     [(dispatch, {node_id}) => dispatch(SelectNode, {node_id}), {node_id: nolib.no.runtime.get_edge_out(state.display_graph, node_id).to}],
     [() => requestAnimationFrame(() => nolib.no.runtime.delete_node(state.display_graph, node_id, hlib))]
 ]
@@ -464,6 +461,7 @@ export const result_subscription = (dispatch, {display_graph_id, norun}) => {
             info_display_dispatch = s.info_display_dispatch;
             code_editor = s.code_editor;
             code_editor_nodeid = s.code_editor_nodeid;
+            result_display_dispatch = s.result_display_dispatch;
           }])
         }
 
