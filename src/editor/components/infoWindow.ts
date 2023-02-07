@@ -20,7 +20,7 @@ export const infoInput = ({label, property, value, onchange, oninput, onkeydown,
   inputs: Record<string, string>,
   disabled?: boolean,
   options?: string[]
-  onchange?: ha.Action<HyperappState, Event>,
+  onchange?: ha.Action<HyperappState, {value: string}>,
   oninput?: ha.Action<HyperappState, Event>
   onkeydown?: ha.Action<HyperappState, Event>
 }) => ha.h(
@@ -30,23 +30,72 @@ export const infoInput = ({label, property, value, onchange, oninput, onkeydown,
     },
     [
         ha.h('label', {for: `edit-text-${property}`}, [ha.text(label)]),
-        ha.h('input', {
+        ha.h('autocomplete-list', {
             class: property, 
             id: `edit-text-${property}`, 
             key: `edit-text-${property}`, 
             name: `edit-text-${property}`, 
-            disabled,
-            list: options && options.length > 0 ? `edit-text-list-${property}` : undefined,
-            oninput: oninput && ((s: any, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: (e.target as HTMLInputElement).value})}]), 
-            onkeydown: onkeydown,
-            onchange: onchange && ((s, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: undefined})}, [dispatch => dispatch(onchange, e)]]),
-            onfocus: (state, event) => [{...state, focused: (event.target as HTMLInputElement).id}],
-            onblur: (state, event) => [{...state, focused: false}],
-            value: inputs[`edit-text-${property}`] ?? value
-        }),
-        options && options.length > 0 && ha.h('datalist', {id: `edit-text-list-${property}`}, options.map(o => ha.h('option', {value: o}))) 
+            value: inputs[`edit-text-${property}`] ?? value ?? "",
+            onselect: (state: HyperappState, payload: CustomEvent) => [{...state, inputs: Object.assign(state.inputs, {[`edit-text-${property}`]: undefined})}, dispatch => dispatch(onchange, {value: payload.detail})],
+            // onkeydown: onkeydown,
+            oninput: (s: any, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: (e.target as HTMLInputElement).value})}], 
+            // onfocus: (state: HyperappState, event: FocusEvent) => [{...state, focused: (event.target as HTMLInputElement).id}],
+            onblur: (state: HyperappState, event) => [{...state, focused: false}],
+          },
+          // ha.h('ul', {}, 
+          options && options.length > 0 && options.map(o => ha.h('option', {class: `autocomplete-item`, value: o}, ha.text(o))))
+        // ha.h('input', {
+        //     class: property, 
+        //     id: `edit-text-${property}`, 
+        //     key: `edit-text-${property}`, 
+        //     name: `edit-text-${property}`, 
+        //     disabled,
+        //     list: options && options.length > 0 ? `edit-text-list-${property}` : undefined,
+        //     oninput: oninput && ((s: any, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: (e.target as HTMLInputElement).value})}]), 
+        //     onkeydown: onkeydown,
+        //     onchange: onchange && ((s, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: undefined})}, [dispatch => dispatch(onchange, e)]]),
+        //     onfocus: (state, event) => [{...state, focused: (event.target as HTMLInputElement).id}],
+        //     onblur: (state, event) => [{...state, focused: false}],
+        //     value: inputs[`edit-text-${property}`] ?? value
+        // }),
+        // options && options.length > 0 && ha.h('div', {class: `autocomplete-list`}, 
+        //   options.map(o => ha.h('div', {class: `autocomplete-item`}, ha.text(o))))
     ]
 )
+
+// export const autocompleteSubscription = [dispatch => autocomplete({
+//   input: document.getElementById("edit-text-ref") as HTMLInputElement,
+//   minLength: 0,
+//   fetch: (text, update) => {
+//     const refs = nolib.no.runtime.refs().filter(r => r).map(r => generic.nodes[r] ? generic.nodes[r] : {id: r});
+//     update(text === "" ? refs.map(r => ({label: r.id, value: r.id, group: r.category})) 
+//       : [...(new Fuse<NodysseusNode>(refs, {keys: ["id", "category"], distance: 80, threshold: 0.4}).search(text)
+//           .map(searchResult => ({label: searchResult.item.id, value: searchResult.item.id, group: searchResult.item.category ?? "custom"}))
+//           .reduce((acc, item) => (acc.set(item.group, (acc.get(item.group) ?? []).concat([item]))), new Map())
+//           .values())].flat()
+//     )
+//   },
+//   className: "ref-autocomplete-list",
+//   showOnFocus: true,
+//   onSelect: (item: AutocompleteItem) => {
+//     (document.getElementById("edit-text-ref") as HTMLInputElement).value = item.label;
+//     requestAnimationFrame(() => {
+//       dispatch([UpdateNode, {property: "ref", value: item.label}])
+//     })
+//   },
+//   render: item => {
+//     const itemEl = document.createElement("div")
+//     itemEl.className = "autocomplete-item"
+//     itemEl.textContent = item.label;
+//     return itemEl;
+//   },
+//   renderGroup: (name, currentValue) => {
+//     const groupEl = document.createElement("div")
+//     groupEl.className = "autocomplete-group";
+//     groupEl.textContent = name;
+//     return groupEl;
+//   }
+// }), ]
 
 export const infoWindow = ({node, hidden, edges_in, link_out, display_graph_id, randid, ref_graphs, html_id, copied_graph, inputs, graph_out, editing})=> {
     //const s.display_graph.id === s.display_graph_id && nolib.no.runtime.get_node(s.display_graph, s.selected[0]) && 
@@ -74,10 +123,10 @@ export const infoWindow = ({node, hidden, edges_in, link_out, display_graph_id, 
                     value: node.name, 
                     property: "name", 
                     inputs,
-                    onchange: (state, payload) =>
+                    onchange: (state, value) =>
                         (node.id !== graph_out && node.id !== "out") 
-                        ? [UpdateNode, {node, property: "name", value: (payload.target as HTMLInputElement).value}]
-                        : [state, [ChangeDisplayGraphId, {id: (payload.target as HTMLInputElement).value, select_out: true, display_graph_id}]],
+                        ? [UpdateNode, {node, property: "name", value}]
+                        : [state, [ChangeDisplayGraphId, {id: value, select_out: true, display_graph_id}]],
                     options: (node.id === graph_out || node.id === "out") && ref_graphs
                 }), node),
                 ha.memo(node => infoInput({
@@ -85,15 +134,15 @@ export const infoWindow = ({node, hidden, edges_in, link_out, display_graph_id, 
                     value: node.value, 
                     property: "value", 
                     inputs,
-                    onchange: (state, payload) => [UpdateNode, {node, property: "value", value: (payload.target as HTMLInputElement).value}]}),
+                    onchange: (state, {value}) => [UpdateNode, {node, property: "value", value: (console.log(value), value) }]}),
                   node),
                 ha.memo(node => infoInput({
                     label: 'ref',
                     value: node.ref,
                     property: 'ref',
                     inputs,
-                    // onchange: (state, event) => [UpdateNode, {node, property: "ref", value: event.target.value}],
-                    onkeydown: (state, event) => (event as KeyboardEvent).code === "Tab" ? [UpdateNode, {node, property: "ref", value: (event.target as HTMLInputElement).value}] : state,
+                    options: nolib.no.runtime.refs(),
+                    onchange: (state, {value}) => [UpdateNode, {node, property: "ref", value}],
                     disabled: node.id === graph_out
                 }), node),
                 link_out && link_out.source && ha.memo(link_out => infoInput({
@@ -102,7 +151,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, display_graph_id, 
                     property: "edge",
                     inputs,
                     options: node_args(nolib, display_graph_id, link_out.to).map(na => na.name),
-                    onchange: (state, payload) => [UpdateEdge, {edge: {from: link_out.from, to: link_out.to, as: link_out.as}, as: (payload.target as HTMLInputElement).value}]
+                    onchange: (state, {value}) => [UpdateEdge, {edge: {from: link_out.from, to: link_out.to, as: link_out.as}, as: value}]
                 }), link_out),
             ]),
             description && ha.h('div', {class: "description"}, ha.text(description)),

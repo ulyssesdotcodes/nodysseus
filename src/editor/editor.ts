@@ -16,8 +16,10 @@ import { init_code_editor } from "./components/codeEditor";
 import { d3Node, HyperappState } from "./types";
 import { yNodyStore } from "./store";
 import { d3subscription, insert_node_el, link_el, node_el, UpdateSimulation } from "./components/graphDisplay";
+import Autocomplete from "./autocomplete"
 
 
+customElements.define("autocomplete-list", Autocomplete)
 
 const SimulationToHyperapp = (state, payload) => [{
     ...state,
@@ -163,40 +165,7 @@ const runapp = (init, load_graph, _lib) => {
         })],
         [ChangeDisplayGraphId, {id: load_graph, select_out: true, display_graph_id: undefined}],
         [UpdateSimulation, {...init, action: SimulationToHyperapp}],
-        [init_code_editor, {html_id: init.html_id}],
-        [(dispatch) => requestAnimationFrame(() => autocomplete({
-          input: document.getElementById("edit-text-ref") as HTMLInputElement,
-          minLength: 0,
-          fetch: (text, update) => {
-            const refs = nolib.no.runtime.refs().filter(r => r).map(r => generic.nodes[r] ? generic.nodes[r] : {id: r});
-            update(text === "" ? refs.map(r => ({label: r.id, value: r.id, group: r.category})) 
-              : [...(new Fuse<NodysseusNode>(refs, {keys: ["id", "category"], distance: 80, threshold: 0.4}).search(text)
-                  .map(searchResult => ({label: searchResult.item.id, value: searchResult.item.id, group: searchResult.item.category ?? "custom"}))
-                  .reduce((acc, item) => (acc.set(item.group, (acc.get(item.group) ?? []).concat([item]))), new Map())
-                  .values())].flat()
-            )
-          },
-          className: "ref-autocomplete-list",
-          showOnFocus: true,
-          onSelect: (item: AutocompleteItem) => {
-            (document.getElementById("edit-text-ref") as HTMLInputElement).value = item.label;
-            requestAnimationFrame(() => {
-              dispatch([UpdateNode, {property: "ref", value: item.label}])
-            })
-          },
-          render: item => {
-            const itemEl = document.createElement("div")
-            itemEl.className = "autocomplete-item"
-            itemEl.textContent = item.label;
-            return itemEl;
-          },
-          renderGroup: (name, currentValue) => {
-            const groupEl = document.createElement("div")
-            groupEl.className = "autocomplete-group";
-            groupEl.textContent = name;
-            return groupEl;
-          }
-        }))]
+        [init_code_editor, {html_id: init.html_id}]
     ],
     dispatch: middleware,
     view: (s: HyperappState) => ha.h('div', {id: s.html_id}, [

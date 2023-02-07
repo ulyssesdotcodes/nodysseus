@@ -116,7 +116,7 @@ svg {
     left: 0;
 }
 
-.ref-autocomplete-list {
+.autocomplete-list {
   position: relative;
   z-index: 999;
   overflow-y: scroll;

@@ -206,22 +206,11 @@ export const ydocStore = async (persist: false | string = false, update = undefi
     const prevdoc = new Y.Doc();
 
     const indexeddbProvider = new IndexeddbPersistence(`${persist}-subdocs`, ydoc)
-    await indexeddbProvider.whenSynced.then(val => {
-      console.log(ydoc)
-      // const runcustom = () => {
-      //   if(!nolib.no.runtime){
-      //     requestAnimationFrame(runcustom);
-      //     return;
-      //   }
-      // }
-      //
-      // requestAnimationFrame(runcustom)
-    })
-
+    await indexeddbProvider.whenSynced
     const prevIndexeddbProvider = new IndexeddbPersistence(`${persist}`, prevdoc)
     prevIndexeddbProvider.whenSynced.then(val => {
       Promise.all([...prevdoc.getMap().keys()].map(k => {
-        console.log(`prevdoc ${k}`);
+        // console.log(`prevdoc ${k}`);
         // if(prevdoc.getMap().get(k).guid) {
         //   return;
         // }

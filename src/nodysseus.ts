@@ -417,7 +417,6 @@ const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, args:
 }
 
 const run_runnable = (runnable: Runnable, lib: Lib, args: Record<string, any> = {}): Result | Promise<Result> =>  {
-  // isConstRunnable(runnable) && (console.log("three"), console.log(runnable.lib.data.THREE))
     return isConstRunnable(runnable)
     ? run_graph(runnable.graph, runnable.fn, mergeEnv(args, runnable.env), runnable.lib)
     : isApRunnable(runnable)
@@ -695,12 +694,6 @@ const nolib = {
       Object.values(generic.nodes).forEach(graph => {
         if(isNodeGraph(graph)) {
           graph.edges_in = Object.values(graph.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
-          // graph.edges_in = Object.values(graph.edges).reduce((acc, edge) => {
-          //   console.log(edge);
-          //   acc[edge.to] = {...(acc[edge.to] ?? {}), [edge.from]: edge}
-          //   return acc;
-          // }, {})
-          console.log(graph.edges_in)
         }
       })
 
@@ -797,7 +790,6 @@ const nolib = {
 
       };
 
-      console.log(animationerrors)
       // Adding a listener to listen for errors during animationframe. If there are errors, don't keep running.
       add_listener('grapherror', "__animationerrors", e => animationerrors.push(e));
       add_listener('graphchange', "__animationerrors", e => animationerrors.splice(0, animationerrors.length));
