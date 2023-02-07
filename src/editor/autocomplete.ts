@@ -124,7 +124,7 @@ export default class AutocompleteList extends HTMLElement {
       this.listEl.removeChild(this.listEl.firstChild);
     }
 
-    (this.shownOptions?.map(so => this.options[so]) ?? Object.values(this.options)).forEach(option => {
+    (this.shownOptions?.map(so => this.options[so]) ?? Object.values(this.options)).filter(o => o).forEach(option => {
       const itemEl = document.createElement('li');
       itemEl.classList.add("autocomplete-item")
       itemEl.textContent = option.value;
