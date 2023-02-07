@@ -17,7 +17,11 @@ const tryCatch = (fn, t, c) => {
   try {
     return fn(t)
   } catch(e) {
-    return wrapPromise(c(e))
+    if(c){
+      return wrapPromise(c(e))
+    }
+    
+    throw e;
   }
 }
 
