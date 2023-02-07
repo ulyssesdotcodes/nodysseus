@@ -123,11 +123,11 @@ export const infoWindow = ({node, hidden, edges_in, link_out, display_graph_id, 
                     value: node.name, 
                     property: "name", 
                     inputs,
-                    onchange: (state, value) =>
+                    onchange: (state, {value}) =>
                         (node.id !== graph_out && node.id !== "out") 
                         ? [UpdateNode, {node, property: "name", value}]
                         : [state, [ChangeDisplayGraphId, {id: value, select_out: true, display_graph_id}]],
-                    options: (node.id === graph_out || node.id === "out") && ref_graphs
+                    options: (graph_out ? node.id === graph_out : node.id === "out") ? ref_graphs : []
                 }), node),
                 ha.memo(node => infoInput({
                     label: "value", 

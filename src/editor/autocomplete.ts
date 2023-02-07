@@ -1,6 +1,17 @@
+import Fuse from "fuse.js";
+
+type Option = {
+  value: string;
+}
+
+
 export default class AutocompleteList extends HTMLElement {
   listEl: HTMLUListElement;
   inputEl: HTMLInputElement;
+  options: Record<string, Option>;
+  shownOptions: Array<string> | undefined;
+  optionEls: Record<string, HTMLLIElement>;
+  fuse: Fuse<Option>;
 
   constructor() {
     super()
@@ -27,7 +38,6 @@ export default class AutocompleteList extends HTMLElement {
       }
 
       .autocomplete-item {
-        display: none;
         line-height: 1.2em;
         padding: .2em;
         padding-left: .4em;
@@ -49,12 +59,25 @@ export default class AutocompleteList extends HTMLElement {
     this.inputEl = document.createElement('input')
     this.inputEl.onkeydown = (evt: KeyboardEvent) => {
       if(evt.key === "Tab") {
+        evt.stopPropagation();
         this.dispatchEvent(new CustomEvent('select', {detail: this.inputEl.value}))
       }
     }
+    this.inputEl.onkeyup = (evt: KeyboardEvent) => {
+      if(this.inputEl.value) {
+        this.shownOptions = this.fuse.search(this.inputEl.value).map(result => result.item.value);
+      } else {
+        this.shownOptions = undefined;
+      }
+
+      this.populateOptions();
+    }
 
     wrapper.addEventListener('focusin', (evt: FocusEvent) => {
-      this.listEl.classList.remove("hidden")
+      if(this.listEl.classList.contains("hidden")) {
+        this.listEl.classList.remove("hidden")
+        this.populateOptions()
+      }
     })
 
     wrapper.addEventListener('focusout', (evt: FocusEvent) => {
@@ -84,19 +107,33 @@ export default class AutocompleteList extends HTMLElement {
   connectedCallback() {
     this.inputEl.value = this.getAttribute("value");
 
-    const options = Array.from(this.querySelectorAll('option'))
+    this.optionEls = {};
+
+    this.populateOptions();
+  }
+
+  populateOptions() {
+    this.options = Object.fromEntries([...this.querySelectorAll('option')].map(el => [el.textContent, {value: el.textContent}]));
+    this.fuse = new Fuse<Option>(Object.values(this.options), {keys: ["value"], distance: 40, threshold: 0.4})
 
     const handleClick = evt => {
       this.dispatchEvent(new CustomEvent('select', {detail: evt.target.getAttribute('value')}))
     }
 
-    options.forEach(option => {
+    while(this.listEl.firstChild) {
+      this.listEl.removeChild(this.listEl.firstChild);
+    }
+
+    (this.shownOptions?.map(so => this.options[so]) ?? Object.values(this.options)).forEach(option => {
       const itemEl = document.createElement('li');
-      itemEl.textContent = option.textContent;
+      itemEl.classList.add("autocomplete-item")
+      itemEl.textContent = option.value;
       itemEl.setAttribute("value", option.value);
       itemEl.setAttribute("tabIndex", "-1")
       this.listEl.appendChild(itemEl)
       itemEl.onclick = handleClick;
+
+      this.optionEls[option.value] = itemEl;
     })
   }
 }
