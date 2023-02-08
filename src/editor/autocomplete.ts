@@ -18,7 +18,7 @@ export default class AutocompleteList extends HTMLElement {
   constructor() {
     super()
 
-    this.attachShadow({mode: "open"})
+    this.attachShadow({mode: "open", delegatesFocus: true})
 
     const wrapper = document.createElement('div');
     wrapper.classList.add("autocomplete-list")
@@ -98,7 +98,7 @@ export default class AutocompleteList extends HTMLElement {
     wrapper.addEventListener('focusout', (evt: FocusEvent) => {
       if(!wrapper.contains(evt.relatedTarget as HTMLElement)) {
         this.listEl.classList.add("hidden")
-        this.select(this.inputEl.value)
+        this.selectOption(this.inputEl.value)
       }
     })
 
@@ -130,8 +130,16 @@ export default class AutocompleteList extends HTMLElement {
     this.populateOptions();
   }
 
-  select(value: string) {
+  selectOption(value: string) {
     this.dispatchEvent(new CustomEvent('select', {detail: value}))
+  }
+
+  focus() {
+    this.inputEl.focus();
+  }
+
+  select() {
+    this.inputEl.select();
   }
 
   populateOptions() {
@@ -166,7 +174,7 @@ export default class AutocompleteList extends HTMLElement {
       itemEl.setAttribute("tabIndex", "-1")
       this.listEl.appendChild(itemEl)
       if(option.kind === "value") {
-        itemEl.onclick = evt => this.select((evt.target as HTMLElement).getAttribute('value'))
+        itemEl.onclick = evt => this.selectOption((evt.target as HTMLElement).getAttribute('value'))
 
         itemIdx++;
         if(itemIdx === countSelectedIndex) {

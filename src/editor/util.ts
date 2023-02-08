@@ -6,6 +6,7 @@ import panzoom, * as pz from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 import { d3Link, d3Node, HyperappState, Levels, Property } from "./types";
 import { UpdateGraphDisplay, UpdateSimulation, d3subscription, updateSimulationNodes } from "./components/graphDisplay";
+import AutocompleteList from "./autocomplete";
 
 export const EXAMPLES = ["threejs_example", "threejs_update_geo", "hydra_example"];
 
@@ -325,7 +326,7 @@ export const SelectNode: ha.Action<HyperappState, {
     !state.show_all && [pzobj.effect, {...state, node_id: node_id}],
     [UpdateGraphDisplay, {...state, selected: [node_id]}],
     (state.show_all || state.selected[0] !== node_id) && [pzobj.effect, {...state, node_id}],
-    focus_property && [FocusEffect, {selector: `.node-info input.${focus_property}`}],
+    focus_property && [FocusEffect, {selector: `.node-info .${focus_property}`}],
     state.nodes.find(n => n.node_id === node_id) && [SetSelectedPositionStyleEffect, {node: state.nodes.find(n => n.node_id === node_id), svg_offset: pzobj.getTransform(), dimensions: state.dimensions}],
     node_id === state.display_graph.out 
         ? [dispatch => state.info_display_dispatch({el: {dom_type: "div", props: {}, children: [
@@ -353,17 +354,16 @@ export const CustomDOMEvent = (_, payload) => document.getElementById(`${payload
 
 export const FocusEffect: ha.Effecter<HyperappState, {selector: string}> = (_, {selector}) => {
   setTimeout(() => {
-      const el = document.querySelector(selector);
-      if(!el){
-        console.log(`couldn't find ${selector}`)
-        return
-      } 
+    const el: HTMLInputElement | AutocompleteList = document.querySelector(selector);
+    if(!el){
+      console.log(`couldn't find ${selector}`)
+      return
+    } 
 
-
-      (el as HTMLElement).focus();
-      if(el instanceof HTMLInputElement && el.type === "text") {
-        el.select();
-      }
+    el.focus();
+    if((el instanceof HTMLInputElement && el.type === "text") || el instanceof AutocompleteList) {
+      el.select();
+    }
   }, 100);
 }
 
