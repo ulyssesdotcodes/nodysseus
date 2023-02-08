@@ -331,14 +331,6 @@ svg {
     text-decoration: underline dotted;
 }
 
-.node-info input {
-    color: white;
-    font-family: consolas;
-    margin: 0;
-    border: none;
-    background-color: #000;
-}
-
 .node-info .inputs {
     display: flex;
     flex-direction: column;
@@ -357,6 +349,10 @@ svg {
 
 .node-info .value-input input {
     flex-grow: 1;
+}
+
+.node-info autocomplete-list {
+  flex-grow: 1;
 }
 
 #node-editor-code-editor {

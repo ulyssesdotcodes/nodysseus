@@ -1,4 +1,5 @@
 import * as ha from "hyperapp"
+import generic from "../../generic";
 import {nolib} from "../../nodysseus"
 import { node_args } from "../../util";
 import { HyperappState } from "../types";
@@ -19,7 +20,7 @@ export const infoInput = ({label, property, value, onchange, oninput, onkeydown,
   value: string,
   inputs: Record<string, string>,
   disabled?: boolean,
-  options?: string[]
+  options?: Array<string | {value: string, category?: string}>
   onchange?: ha.Action<HyperappState, {value: string}>,
   oninput?: ha.Action<HyperappState, Event>
   onkeydown?: ha.Action<HyperappState, Event>
@@ -43,7 +44,7 @@ export const infoInput = ({label, property, value, onchange, oninput, onkeydown,
             onblur: (state: HyperappState, event) => [{...state, focused: false}],
           },
           // ha.h('ul', {}, 
-          options && options.length > 0 && options.map(o => ha.h('option', {class: `autocomplete-item`, value: o}, ha.text(o))))
+          options && options.length > 0 && options.map(o => ha.h('option', {class: `autocomplete-item`, value: typeof o === "string" ? o : o.value, "data-category": typeof o === "string" ? undefined : o.category }, ha.text(typeof o === "string" ? o : o.value))))
         // ha.h('input', {
         //     class: property, 
         //     id: `edit-text-${property}`, 
@@ -134,14 +135,14 @@ export const infoWindow = ({node, hidden, edges_in, link_out, display_graph_id, 
                     value: node.value, 
                     property: "value", 
                     inputs,
-                    onchange: (state, {value}) => [UpdateNode, {node, property: "value", value: (console.log(value), value) }]}),
+                    onchange: (state, {value}) => [UpdateNode, {node, property: "value", value: value }]}),
                   node),
                 ha.memo(node => infoInput({
                     label: 'ref',
                     value: node.ref,
                     property: 'ref',
                     inputs,
-                    options: nolib.no.runtime.refs(),
+                    options: nolib.no.runtime.refs().map(r => generic.nodes[r] ? {value: r, category: generic.nodes[r].category} : {value: r, category: "custom"}),
                     onchange: (state, {value}) => [UpdateNode, {node, property: "ref", value}],
                     disabled: node.id === graph_out
                 }), node),

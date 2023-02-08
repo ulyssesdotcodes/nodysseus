@@ -2,6 +2,7 @@ import Fuse from "fuse.js";
 
 type Option = {
   value: string;
+  category: string;
 }
 
 
@@ -9,9 +10,10 @@ export default class AutocompleteList extends HTMLElement {
   listEl: HTMLUListElement;
   inputEl: HTMLInputElement;
   options: Record<string, Option>;
-  shownOptions: Array<string> | undefined;
+  shownOptions: Array<{kind: "value" | "category", value: string}> | undefined;
   optionEls: Record<string, HTMLLIElement>;
   fuse: Fuse<Option>;
+  selectedIndex: number | undefined;
 
   constructor() {
     super()
@@ -27,23 +29,35 @@ export default class AutocompleteList extends HTMLElement {
         display: none;
       }
 
+      input {
+          color: white;
+          font-family: consolas;
+          margin: 0;
+          border: none;
+          background-color: #000;
+      }
+
       .autocomplete-list ul {
-        list-style-type: none;
         position: absolute;
+        margin: 0;
+        padding: 0;
         z-index: 999;
-        overflow-y: scroll;
+        list-style-type: none;
+        overflow-y: auto;
         overflow-x: hidden;
         background: #000;
         max-height: 16em;
+        width: 100%;
       }
 
       .autocomplete-item {
         line-height: 1.2em;
         padding: .2em;
-        padding-left: .4em;
+        padding-left: 0.4em;
+        width: 100%;
       }
 
-      .autocomplete-item.selected {
+      .autocomplete-item.selected, .autocomplete-item:hover {
         background: #333;
       }
 
@@ -61,14 +75,15 @@ export default class AutocompleteList extends HTMLElement {
       if(evt.key === "Tab") {
         evt.stopPropagation();
         this.dispatchEvent(new CustomEvent('select', {detail: this.inputEl.value}))
+      } else if (evt.key === "ArrowDown") {
+        evt.stopPropagation();
+        this.selectedIndex = this.selectedIndex === undefined ? 0 : (this.selectedIndex + 1);
+      } else if (evt.key === "ArrowUp") {
+        evt.stopPropagation();
+        this.selectedIndex = this.selectedIndex === undefined ? -1 : (this.selectedIndex - 1);
       }
     }
     this.inputEl.onkeyup = (evt: KeyboardEvent) => {
-      if(this.inputEl.value) {
-        this.shownOptions = this.fuse.search(this.inputEl.value).map(result => result.item.value);
-      } else {
-        this.shownOptions = undefined;
-      }
 
       this.populateOptions();
     }
@@ -83,6 +98,7 @@ export default class AutocompleteList extends HTMLElement {
     wrapper.addEventListener('focusout', (evt: FocusEvent) => {
       if(!wrapper.contains(evt.relatedTarget as HTMLElement)) {
         this.listEl.classList.add("hidden")
+        this.select(this.inputEl.value)
       }
     })
 
@@ -101,6 +117,8 @@ export default class AutocompleteList extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if(name === "value") {
       this.inputEl.value = newValue;
+      this.optionEls = {};
+      this.populateOptions();
     }
   }
 
@@ -112,26 +130,49 @@ export default class AutocompleteList extends HTMLElement {
     this.populateOptions();
   }
 
+  select(value: string) {
+    this.dispatchEvent(new CustomEvent('select', {detail: value}))
+  }
+
   populateOptions() {
-    this.options = Object.fromEntries([...this.querySelectorAll('option')].map(el => [el.textContent, {value: el.textContent}]));
+    this.options = Object.fromEntries([...this.querySelectorAll('option')].map(el => [el.textContent, {value: el.textContent, category: el.dataset.category}]));
     this.fuse = new Fuse<Option>(Object.values(this.options), {keys: ["value"], distance: 40, threshold: 0.4})
 
-    const handleClick = evt => {
-      this.dispatchEvent(new CustomEvent('select', {detail: evt.target.getAttribute('value')}))
+    const optionsByCategory = (options: Array<Option>) => 
+        [...options.reduce((acc, option) => acc.set(
+          option.category ?? "custom", 
+          (acc.get(option.category ?? "custom") ?? [])
+            .concat([option.category && !acc.has(option.category) ? {kind: "category", value: option.category} : undefined, {kind: "value", value: option.value}])
+        ), new Map()).values()].flat().filter(o => o);
+
+    if(this.inputEl.value) {
+      this.shownOptions = optionsByCategory(this.fuse.search(this.inputEl.value).map(searchResult => searchResult.item))
+    } else {
+      this.shownOptions = optionsByCategory(Object.values(this.options));
     }
 
     while(this.listEl.firstChild) {
       this.listEl.removeChild(this.listEl.firstChild);
     }
 
-    (this.shownOptions?.map(so => this.options[so]) ?? Object.values(this.options)).filter(o => o).forEach(option => {
+    let itemIdx = -1;
+    const count = this.shownOptions.filter(o => o.kind === "value").length;
+    const countSelectedIndex = ((this.selectedIndex % count) + count) % count;
+    this.shownOptions?.forEach(option => {
       const itemEl = document.createElement('li');
-      itemEl.classList.add("autocomplete-item")
+      itemEl.classList.add(option.kind === "value" ? "autocomplete-item" : "autocomplete-group")
       itemEl.textContent = option.value;
       itemEl.setAttribute("value", option.value);
       itemEl.setAttribute("tabIndex", "-1")
       this.listEl.appendChild(itemEl)
-      itemEl.onclick = handleClick;
+      if(option.kind === "value") {
+        itemEl.onclick = evt => this.select((evt.target as HTMLElement).getAttribute('value'))
+
+        itemIdx++;
+        if(itemIdx === countSelectedIndex) {
+          itemEl.classList.add("selected")
+        }
+      }
 
       this.optionEls[option.value] = itemEl;
     })
