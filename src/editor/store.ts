@@ -504,7 +504,6 @@ export const ydocStore = async (persist: false | string = false, update = undefi
     const genericGraph = generic.nodes[id];
     let simpleValue = ((simpleYMap.get(id) as any)?.id || ymap.get(id)?.isLoaded) && simpleYMap.get(id);
     const ymapvalue = !simpleValue && (ymap.get(id)?.load(), ymap.get(id)?.whenLoaded); 
-    ymapvalue && (console.log(id), console.log(ymap.get(id)))
     return genericGraph ?? mapMaybePromise((simpleYMap.get(id) as any)?.id || ymap.get(id)?.isLoaded 
       ? simpleValue
       : ymapvalue?.then(d => d.getMap().toJSON()), (res: {id?: string}) => {
