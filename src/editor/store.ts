@@ -26,12 +26,6 @@ export const ydocStore = async (persist: false | string = false, update = undefi
         update(event)
       }
 
-      // for(let k of event.keysChanged) {
-      //   if(ymap.get(k)?._map && !generic.nodes[k]) {
-      //     add(k, ymap.get(k).toJSON())
-      //   }
-      // }
-
       simpleYDoc.transact(() => {
         for(let k of event.keysChanged) {
           if(k && ymap.get(k)?.isLoaded) {
@@ -83,12 +77,6 @@ export const ydocStore = async (persist: false | string = false, update = undefi
           } else {
             Object.entries(data.nodes).forEach(kv => nodesymap.set(kv[0], kv[1]))
           } 
-          // let curnodes = infomap.get('nodes');
-          // if(!curnodes) {
-          //   curnodes = new Y.Map();
-          //   infomap.set('nodes', curnodes);
-          // }
-          // data.nodes.forEach(n => curnodes.set(n.id, n))
         }
 
         if(data.edges) {
@@ -110,12 +98,6 @@ export const ydocStore = async (persist: false | string = false, update = undefi
           } else {
             Object.entries(data.edges).forEach(kv => edgesymap.set(kv[0], kv[1]))
           } 
-          // let curedges = infomap.get('edges');
-          // if(!curedges) {
-          //   curedges = new Y.Map();
-          //   infomap.set('edges', curedges);
-          // }
-          // data.edges.forEach(e => curedges.set(e.to + "__" + e.from, e));
         }
     })
   }
@@ -138,9 +120,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
 
       } else {
         console.log("creating new ydoc")
-        // debugger;
         current = new Y.Doc();
-        // current.getMap().set("id", id)
         ymap.set(id, current);
         current.getMap().set("id", id)
         setMapFromGraph(current.getMap(), data)
@@ -151,8 +131,6 @@ export const ydocStore = async (persist: false | string = false, update = undefi
   }
 
   const updateSimple = id => {
-    // simpleYDoc.transact(() => {
-      // debugger;
     if(id && ymap.get(id)?.getMap()?.get("id")) {
       const graph = ymap.get(id)?.getMap().toJSON();
       graph.edges_in = Object.values(graph.edges).reduce((acc: EdgesIn, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
@@ -161,7 +139,6 @@ export const ydocStore = async (persist: false | string = false, update = undefi
     } else {
       console.log(`not loaded ${id}`)
     }
-    // })
   }
 
   const add_node = (graphId, node) => {
@@ -210,11 +187,6 @@ export const ydocStore = async (persist: false | string = false, update = undefi
     const prevIndexeddbProvider = new IndexeddbPersistence(`${persist}`, prevdoc)
     prevIndexeddbProvider.whenSynced.then(val => {
       Promise.all([...prevdoc.getMap().keys()].map(k => {
-        // console.log(`prevdoc ${k}`);
-        // if(prevdoc.getMap().get(k).guid) {
-        //   return;
-        // }
-        // console.log(ymap.get(k))
         const addedkey = `__${k}__added_5`
         const prevdocmap = prevdoc.getMap().get(k) as YMap<any>;
         if(k.startsWith("_") || k === "" || generic.nodes[k] || prevdoc.getMap().get(addedkey)) {
@@ -245,26 +217,12 @@ export const ydocStore = async (persist: false | string = false, update = undefi
 
     undoManager = new Y.UndoManager(ymap)
     undoManager.on('stack-item-popped', i => console.log(i))
-
-    // const url = await fetch("http://localhost:7071/api/Negotiate?userId=me").then(r => r.json())
-    // console.log("syncing on ")
-    // console.log(url.url)
-    // const wsurl = new URL(url.url)
-
-    // const wsprovider = new WebsocketProvider('wss://nodysseus.webpubsub.azure.com/client/hubs', 'collaboration', ydoc, {
-    //   WebSocketPolyfill: NodyWS,
-    //   params: {access_token: wsurl.searchParams.get('access_token')}
-    // })
-    //
-    // const oldonmessage= wsprovider.ws.onmessage;
-    // wsprovider.ws.onmessage = (v) => {
-    //   oldonmessage(v)
-    // }
   }
 
   // if(false) {
   const refIdbs = {};
   const refRtcs = {};
+  let rdocrtc;
   let rdoc;
 
   const setuprtc = (rtcroom, sd, id) => {
@@ -273,11 +231,11 @@ export const ydocStore = async (persist: false | string = false, update = undefi
       rdoc = new Y.Doc({autoLoad: true})
       rootDoc.getMap().set("rdoc", rdoc)
 
-      const rdocrtc = new WebrtcProvider(`nodysseus${rtcroom}_subdocs`, rdoc, {
+      rdocrtc = new WebrtcProvider(`nodysseus${rtcroom}_subdocs`, rdoc, {
         signaling: ["wss://ws.nodysseus.io"],
         password: undefined,
         awareness: undefined,
-        filterBcConns: false,
+        filterBcConns: true,
         maxConns: undefined,
         peerOpts: {
           config: {
@@ -288,19 +246,25 @@ export const ydocStore = async (persist: false | string = false, update = undefi
         }
       })
 
+      rdocrtc.awareness.on("change", changes => {
+        console.log(Array.from(rdocrtc.awareness.getStates().values()))
+      })
+
       rdoc.getMap().observe(evts => {
         console.log("rdoc obs")
         console.log(evts)
 
+        rdocrtc.awareness.setLocalStateField("user", {
+          name: "test",
+          keysChanged: Array.from(evts.keysChanged.values()),
+        })
+
         if(!refRtcs[id]) {
-          // console.log(`creating first graph provider ${id}`)
-          // console.log(rdoc.getMap().get(id).getMap().toJSON())
-            // refRtcs[id] = new WebsocketProvider("wss://ws.nodysseus.io", `nodysseus${rtcroom}_${sd.getMap().get("id")}`, rdoc.getMap().get(id))
           refRtcs[id] = new WebrtcProvider(`nodysseus${rtcroom}_${id}`, sd, {
             signaling: ["wss://ws.nodysseus.io"],
             password: undefined,
             awareness: undefined,
-            filterBcConns: false,
+            filterBcConns: true,
             maxConns: undefined,
             peerOpts: {
               config: {
@@ -312,7 +276,6 @@ export const ydocStore = async (persist: false | string = false, update = undefi
           });
 
           if(!rdoc.getMap().has(id)) {
-            // console.log(`setting rdoc ${id} to ${sd.guid}`)
             rdoc.getMap().set(id, sd.guid)
           }
         }
@@ -331,7 +294,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
               signaling: ["wss://ws.nodysseus.io"], 
               password: undefined,
               awareness: undefined,
-              filterBcConns: false,
+              filterBcConns: true,
               maxConns: undefined,
               peerOpts: {
                 config: {
@@ -343,29 +306,6 @@ export const ydocStore = async (persist: false | string = false, update = undefi
             })
           }
         })
-        // evts.forEach(evt => [...evt.keysChanged].filter(k => !(k === "custom_editor" || k === "keybindings")).forEach(k => {
-          // console.log(rdoc.getMap().get(k))
-          //
-          // if(!refRtcs[k]) {
-          //   console.log(`getting rtc provider ${k}`)
-          //   const doc = ymap.get(k) ?? new Y.Doc();
-          //   refRtcs[k] = new WebrtcProvider(`nodysseus${rtcroom}_${k}`, doc, {signaling: ["wss://ws.nodysseus.io"]})
-          //   doc.load();
-          //   console.log(doc);
-          //   doc.whenLoaded.then(() => {
-          //     console.log(`whenloaded ${k}`)
-          //     console.log(doc.getMap().toJSON())
-          //     ymap.set(k, doc)
-          //   })
-          // }
-
-          // rdoc.getMap().get(k).load();
-          // rdoc.getMap().get(k).whenLoaded.then(load => {
-          //   console.log(`rdoc loaded ${k}`)
-          //   console.log(rdoc.getMap().get(k).getMap().toJSON())
-          // })
-          // console.log(rdoc.getMap().get(k).getMap().toJSON())
-        // }))
       })
 
       rdoc.on('update', evt => console.log(evt))
@@ -373,11 +313,9 @@ export const ydocStore = async (persist: false | string = false, update = undefi
       if(id && !rdoc.getMap().has(id)) {
         if(!refRtcs[id]) {
           console.log(`creating rtc provider ${id}`)
-          // console.log(rdoc.getMap().get(id).getMap().toJSON())
-            // refRtcs[id] = new WebsocketProvider("wss://ws.nodysseus.io", `nodysseus${rtcroom}_${sd.getMap().get("id")}`, rdoc.getMap().get(id))
             refRtcs[id] = new WebrtcProvider(`nodysseus${rtcroom}_${id}`, sd, {
               signaling: ["wss://ws.nodysseus.io"], 
-              filterBcConns: false,
+              filterBcConns: true,
               password: undefined,
               awareness: undefined,
               maxConns: undefined,
@@ -392,19 +330,11 @@ export const ydocStore = async (persist: false | string = false, update = undefi
         }
         console.log(`setting rdoc ${id} to ${sd.guid}`)
         rdoc.getMap().set(id, sd.guid)
-        // if(!refRtcs[sd.guid]) {
-        //   console.log(`creating rtc provider ${id}`)
-        //   console.log(rdoc.getMap().get(id).getMap().toJSON())
-        //     // refRtcs[id] = new WebsocketProvider("wss://ws.nodysseus.io", `nodysseus${rtcroom}_${sd.getMap().get("id")}`, rdoc.getMap().get(id))
-        //     refRtcs[sd.guid] = new WebrtcProvider(`nodysseus${rtcroom}_${sd.guid}`, rdoc.getMap().get(id), {signaling: ["wss://ws.nodysseus.io"]})
-        // }
       }
     }
-
   }
 
   ydoc.on('subdocs', e => {
-        // console.log(url)
     console.log("subdocs")
     console.log(e);
     e.loaded.forEach(sd => {
@@ -431,12 +361,6 @@ export const ydocStore = async (persist: false | string = false, update = undefi
             updateSimple(sdmap.get("id"))
           }
 
-            // new WebsocketProvider(`nodysseus${rtcroom}_`+sd.getMap().get("id"), sd, {signaling: [url.url]})
-            // new WebsocketProvider(url.baseUrl, "", /*`nodysseus${rtcroom}_${sd.getMap().get("id")}`*/ sd, {
-            //   WebSocketPolyfill: NodyWS,
-            //   params: {access_token: url.accessToken}
-            // })
-            //
           if(!(sdmap.get("id") === "custom_editor" || sdmap.get("id") === "keybindings")) {
             const custom_editor_res = nolib.no.runtime.get_ref("custom_editor");
             mapMaybePromise(custom_editor_res, custom_editor => {
@@ -454,10 +378,6 @@ export const ydocStore = async (persist: false | string = false, update = undefi
               }
             })
           }
-          sd.on('update', evt => {
-            // console.log("got update")
-            // console.log(sd.getMap().get("id"))
-          })
             sd.on('synced', event => {
               console.log("synced")
               console.log(event);
@@ -468,7 +388,6 @@ export const ydocStore = async (persist: false | string = false, update = undefi
       } else if (sdmap.get("id")) {
         debugger;
         updateSimple(sdmap.get("id"))
-        // simpleYMap.set(sdmap.get("id"), sdmap.toJSON())
       }
 
     })
@@ -477,30 +396,6 @@ export const ydocStore = async (persist: false | string = false, update = undefi
   // }
 
   const get = (id, otherwise) => {
-    // console.log(`getting ${id}`)
-    // if(ymap.get(id).getMap && !ymap.get(id)._map) {
-    //   add(id, ymap.get(id))
-    // }
-
-    // ymap.get(id).load()
-    // const frommap = ymap.get(id)?.toJSON();
-    // const res = frommap?.nodes && frommap?.edges ? {...frommap, nodes: frommap.nodes, edges: frommap.edges} : frommap;
-    // const ymapRes = ymap.get(id);
-    // if(!ymapRes.isLoaded) {
-    //   ymapRes.load();
-    // }
-    // const res = simpleYMap.get(id)
-      // console.log(`loaded (?)`)
-     //frommap;
-
-    // console.log(id);
-    // console.log(res);
-    // ymap.get(id).on('synced', evt => {
-    //   debugger;
-    // })
-    // if(id === "simple") {
-      // debugger;
-    // }
     const genericGraph = generic.nodes[id];
     let simpleValue = ((simpleYMap.get(id) as any)?.id || ymap.get(id)?.isLoaded) && simpleYMap.get(id);
     const ymapvalue = !simpleValue && (ymap.get(id)?.load(), ymap.get(id)?.whenLoaded); 
@@ -545,7 +440,6 @@ export const ydocStore = async (persist: false | string = false, update = undefi
     removeAll: () => {},
     all: () => {
       const keys = [...ymap.keys(), ...Object.keys(generic.nodes)];
-      // keys.forEach(k => (k.match(/^[a-z0-9]{7}$/) || k.match(/^run_[a-z]{7}.*/)) && k !== 'default' && k !== 'resolve' && k !== 'changed' && ymap.delete(k))
       return keys//.map(v => get(v))
     },
     undo: persist && (() => undoManager.undo()),

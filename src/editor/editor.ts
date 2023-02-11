@@ -1,16 +1,9 @@
-import { resfetch, hashcode, nolib, run, ispromise, initStore } from "../nodysseus";
+import { resfetch, nolib, run, initStore } from "../nodysseus";
 import * as ha from "hyperapp";
 import Fuse from "fuse.js";
-import { ancestor_graph, contract_node, create_randid, expand_node, node_args, mapMaybePromise, wrapPromise, base_graph } from "../util";
-import loki from "lokijs";
-import {openDB } from "idb"
-import { WebsocketProvider } from "y-websocket";
-// import { WebrtcProvider } from "./nod-y-webrtc";
-import autocomplete, { AutocompleteItem } from "autocompleter";
-import generic from "../generic"
-import { Edge, GraphNode, isNodeGraph, isNodeRef, isNodeValue, isRunnable, NodysseusNode } from "../types";
-import extend from "just-extend";
-import { calculateLevels, ChangeDisplayGraphId, Copy, CustomDOMEvent, DeleteNode, ExpandContract, FocusEffect, graph_subscription, hlib, keydownSubscription, listen, middleware, Paste, pzobj, refresh_graph, result_subscription, run_h, SaveGraph, save_graph, SelectNode, select_node_subscription, UpdateNode, UpdateNodeEffect } from "./util";
+import { create_randid, wrapPromise, base_graph } from "../util";
+import { Edge, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode } from "../types";
+import { calculateLevels, ChangeDisplayGraphId, Copy, CustomDOMEvent, DeleteNode, ExpandContract, FocusEffect, graph_subscription, hlib, keydownSubscription, listen, middleware, Paste, pzobj, result_subscription, run_h, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect } from "./util";
 import { info_display, infoWindow } from "./components/infoWindow";
 import { init_code_editor } from "./components/codeEditor";
 import { d3Node, HyperappState } from "./types";
@@ -30,9 +23,6 @@ const SimulationToHyperapp = (state, payload) => [{
 }, 
     [CustomDOMEvent, {html_id: state.html_id, event: 'updategraph', detail: {graph: state.display_graph}}]
 ];
-
-
-const StopPropagation = (state, payload) => [state, [() => payload.stopPropagation()]];
 
 
 
@@ -57,16 +47,6 @@ const Search = (state, {payload, nodes}) => {
         }, search_results.length > 0 && [dispatch => requestAnimationFrame(() => dispatch(SelectNode, {node_id: search_results[search_index].item.id}))]
     ]
 }
-
-
-const OpenMenu = state => [{...state, menu: true}]
-
-const Undo = state => [
-    { ...state, history: state.history.slice(0, -1) },
-    state.history[0]?.action === "update_node"
-    ? [UpdateNodeEffect, {display_graph: state.history[0].display_graph, node: state.history[0].node}]
-    : []
-]
 
 
 const search_el = ({search}) => ha.h('div', {id: "search"}, [
@@ -379,23 +359,14 @@ const runapp = (init, load_graph, _lib) => {
 }
 
 const editor = async function(html_id, display_graph, lib, norun) {
-    // nodysseusStore = await createStore();
     let nodysseusStore = await yNodyStore();
     initStore(nodysseusStore)
     const simple = await resfetch("json/simple.json").then(r => typeof r === "string" ? JSON.parse(r) : r.json());
     simple.edges_in = Object.values(simple.edges).reduce((acc: Record<string, Record<string, Edge>>, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
-    // TODO: clean this up it's just used for side effect of initializing the db
-    // run(simple);
     const url_params = new URLSearchParams(document.location.search);
     const graph_list = JSON.parse(localStorage.getItem("graph_list")) ?? [];
     const hash_graph = window.location.hash.substring(1);
     const keybindings = await resfetch("json/keybindings.json").then(r => typeof r === "string" ? JSON.parse(r) : r.json()).then(kb => (nolib.no.runtime.add_ref(kb), kb))
-
-    // let stored_graph = JSON.parse(localStorage.getItem(hash_graph ?? graph_list?.[0]));
-    // stored_graph = stored_graph ? base_graph(stored_graph) : undefined
-    // await Promise.all(graph_list.map(id => localStorage.getItem(id)).filter(g => g).map(graph => JSON.parse(graph)).map(graph => Promise.resolve(nolib.no.runtime.add_ref(base_graph(graph)))))
-    // Promise.resolve(stored_graph ?? (hash_graph ? resfetch(`json/${hash_graph}.json`).then(r => r.status !== 200 ? simple : r.json()).catch(_ => simple) : simple))
-        // .then(display_graph => {
 
         const init: HyperappState = { 
             keybindings,
@@ -429,9 +400,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
             randid: create_randid()
         };
 
-        const main_app_dispatch = runapp(init,  hash_graph && hash_graph !== "" ? hash_graph : graph_list?.[0] ?? 'simple', lib)
-
-    // })
+        runapp(init,  hash_graph && hash_graph !== "" ? hash_graph : graph_list?.[0] ?? 'simple', lib)
 }
 
 
