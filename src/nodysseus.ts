@@ -867,7 +867,7 @@ const nolib = {
       const get_node = (graph: Graph, id: string) => wrapPromise(get_graph(graph)).then(g => g?.nodes[id]).value
       const get_edge = (graph, from) => wrapPromise(get_graph(graph)).then(g => g?.edges[from]).value
       const get_edges_in = (graph, id) => wrapPromise(get_graph(graph))
-        .then(g => g.edges_in[id] ? Object.values(g.edges_in[id]) : []).value
+        .then(g => g.edges_in ? g.edges_in[id] ? Object.values(g.edges_in[id]) : [] : Object.values(g.edges).filter(e => e.to === id)).value
       const get_edge_out = get_edge
       const get_args = (graph) => nodysseus.state.get(typeof graph === "string" ? graph : graph.id) ?? {};
       const get_graph = (graph: string | Graph): Graph | Promise<Graph> | undefined => wrapPromise(

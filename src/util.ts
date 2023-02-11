@@ -236,7 +236,7 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Ar
     const node_out_args = node_out?.ref === "runnable" && 
       Object.values(ancestor_graph(node_out.id, graph, nolib).nodes).filter(isNodeRef).filter(n => n.ref === "arg").map(a => a.value?.includes(".") ? a.value?.substring(0, a.value?.indexOf(".")) : a.value);
 
-    const argslist_path = node_ref?.nodes && nolib.no.runtime.get_path(node_ref, "argslist");
+    // const argslist_path = node_ref?.nodes && nolib.no.runtime.get_path(node_ref, "argslist");
 
     const nextIndexedArg = "arg" + ((
         edges_in?.filter(l => l.as?.startsWith("arg") && new RegExp("[0-9]+").test(l.as.substring(3)))
@@ -244,7 +244,7 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Ar
             .reduce((acc, i) => acc > i ? acc : i + 1, 0))
     
     const externfn = node_ref?.ref === "extern" && nolib.extern.get.fn({}, nolib, node_ref?.value, undefined, undefined, nolib)
-    const baseargs = !argslist_path && externfn
+    const baseargs = externfn
             ? externfn.args
               ? externfn.args
               : ['args']
@@ -255,7 +255,7 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Ar
                 .map(n => n.value).filter(a => a) ?? []
             : []
 
-    return [...new Set(argslist_path ? nolib.no.runGraph(node_ref, argslist_path) : baseargs
+    return [...new Set(baseargs
         .filter(a => !a.includes('.') && !a.startsWith("_"))
         .concat(edges_in?.map(e => e.as) ?? [])
         .concat(
