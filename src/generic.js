@@ -2277,11 +2277,6 @@ const generic = {
           "value": "fn"
         },
         {
-          "id": "element",
-          "ref": "arg",
-          "value": "element"
-        },
-        {
           "id": "map_fn_args"
         },
         {
@@ -2300,6 +2295,11 @@ const generic = {
         },
         {
           "id": "previousValue",
+          "ref": "arg",
+          "value": "previousValue"
+        },
+        {
+          "id": "previousValue_map_fn",
           "ref": "arg",
           "value": "previousValue"
         },
@@ -2340,6 +2340,11 @@ const generic = {
           "from": "currentValue",
           "to": "map_fn_args",
           "as": "element"
+        },
+        {
+          "from": "previousValue_map_fn",
+          "to": "map_fn_args",
+          "as": "array"
         },
         {
           "from": "map_fn_args",
