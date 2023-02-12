@@ -1,7 +1,7 @@
 import set from "just-safe-set";
 import loki from "lokijs";
 import { ancestor_graph, ispromise, isWrappedPromise, mapMaybePromise, node_args, WrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node } from "./util"
-import { isNodeGraph, Graph, LokiT, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib } from "./types"
+import { isNodeGraph, Graph, LokiT, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib, Args, isArgs, ResolvedArgs } from "./types"
 import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util"
 import generic from "./generic.js";
 import { create_fn, expect, now } from "./externs";
@@ -94,30 +94,36 @@ let resfetch = typeof fetch !== "undefined" ? fetch :
         req.end();
     }));
 
-export const nodysseus_get = (obj: Record<string, any>, propsArg: string, lib: Lib, defaultValue=undefined) => {
+export const nodysseus_get = (obj: Record<string, any> | Args | Env, propsArg: string, lib: Lib, defaultValue=undefined, props: Array<string>=[]) => {
     let objArg = obj;
     obj = isEnv(obj) ? obj.data : obj
     let level = 0;
   if (!obj) {
     return defaultValue;
   }
-  const naive = obj[propsArg];
-  if(naive) {
+  const naive = isArgs(obj) ? obj.get(propsArg) : obj[propsArg];
+  if(naive !== undefined) {
     return naive;
   }
-  var props, prop;
-  if (Array.isArray(propsArg)) {
-    props = propsArg.slice(0);
+
+  var prop;
+  if (props.length === 0) {
+    if(typeof propsArg == 'string') {
+      if(/\./.test(propsArg)){
+        props = propsArg.split('.')
+      } else {
+        props.push(propsArg)
+      }
+    }
+    if (typeof propsArg == 'symbol' || typeof propsArg === 'number') {
+      props.push(propsArg)
+    }
   }
-  if (typeof propsArg == 'string') {
-    props = /\./.test(propsArg) ? propsArg.split('.') : [propsArg];
-  }
-  if (typeof propsArg == 'symbol' || typeof propsArg === 'number') {
-    props = [propsArg];
-  }
+
   if (!Array.isArray(props)) {
     throw new Error('props arg must be an array, a string or a symbol');
   }
+
   while (props.length) {
     if(obj && isRunnable(obj)) {
         const ran = run_runnable(obj, lib)
@@ -131,18 +137,20 @@ export const nodysseus_get = (obj: Record<string, any>, propsArg: string, lib: L
     }
 
     if(obj && ispromise(obj)){
-        return obj.then(r => props.length > 0 ? nodysseus_get(r, props.join('.'), lib, defaultValue) : r)
+        return obj.then(r => props.length > 0 ? nodysseus_get(r, propsArg, lib, defaultValue, props) : r)
     }
 
     prop = props.length == 0 ? props[0] : props.shift();
-    if((obj === undefined || typeof obj !== 'object' || (obj[prop] === undefined && !(obj.hasOwnProperty && obj.hasOwnProperty(prop))))){
-        return isEnv(objArg) ? nodysseus_get(objArg.env, propsArg, lib, defaultValue) : defaultValue;
+    if((obj === undefined || typeof obj !== 'object' || 
+        !(isArgs(obj) ? obj.has(prop) : obj[prop] !== undefined || (obj.hasOwnProperty && obj.hasOwnProperty(prop))))){
+        props.unshift(prop)
+        return isEnv(objArg) ? nodysseus_get(objArg.env, propsArg, lib, defaultValue, props) : defaultValue;
     }
 
-    obj = obj[prop];
+    obj = isArgs(obj) ? obj.get(prop) : obj[prop];
 
     if(obj && ispromise(obj)){
-        return obj.then(r => props.length > 0 ? nodysseus_get(r, props.join('.'), lib, defaultValue) : r)
+        return obj.then(r => props.length > 0 ? nodysseus_get(r, propsArg, lib, defaultValue, props) : r)
     }
 
 
@@ -319,13 +327,13 @@ const node_nodes = (node, node_id, data, graph_input_value: Env, lib: Lib) => {
     return run_graph(node, node_id, combineEnv(data, graph_input_value, "nodenodes" + node_id, graph_input_value._output), lib)
 }
 
-const node_script = (node, nodeArgs: Record<string, ConstRunnable>, lib: Lib): Result | Promise<Result> => {
+const node_script = (node, nodeArgs: Args, lib: Lib): Result | Promise<Result> => {
     let orderedargs = "";
     const data = {};
-    for(let i of Object.keys(nodeArgs)) {
+    for(let i of nodeArgs.keys()) {
         orderedargs += ", " + i;
-        if(nodeArgs[i] !== undefined){
-            const graphval = wrapPromise(run_runnable(nodeArgs[i], lib)).then(gv => gv?.value);
+        if(nodeArgs.has(i)){
+            const graphval = wrapPromise(run_runnable(nodeArgs.get(i), lib)).then(gv => gv?.value);
             data[i] = graphval;
         }
     }
@@ -337,7 +345,7 @@ const node_script = (node, nodeArgs: Record<string, ConstRunnable>, lib: Lib): R
       .then(promisedData => lib.data.no.of(fn.apply(null, [lib.data, node, data, ...promisedData]))).value
 }
 
-const node_extern = (node: RefNode, data: Record<string, ConstRunnable>, graphArgs: Env, lib: Lib) => {
+const node_extern = (node: RefNode, data: Args, graphArgs: Env, lib: Lib) => {
     const extern = nodysseus_get(lib.data, node.value, lib);
     let argspromise = false;
     const args = typeof extern === 'function' ?  resolve_args(data, lib) :  extern.args.map(arg => {
@@ -354,7 +362,7 @@ const node_extern = (node: RefNode, data: Record<string, ConstRunnable>, graphAr
         } else if (arg == '__graphid') {
             newval = nodysseus_get(graphArgs, "__graphid", lib);
         } else {
-            newval = extern.rawArgs ? data[arg] : run_runnable(data[arg], lib, {})
+            newval = extern.rawArgs ? data.get(arg) : run_runnable(data.get(arg), lib, new Map())
             newval = ispromise(newval) ? newval.then((v: Result) => v?.value) : newval && !extern.rawArgs ? newval.value : newval;
         }
 
@@ -375,13 +383,13 @@ const node_extern = (node: RefNode, data: Record<string, ConstRunnable>, graphAr
     }
 }
 
-const resolve_args = (data: Record<string, ConstRunnable>, lib: Lib): Result | Promise<Result> => {
+const resolve_args = (data: Args, lib: Lib): Result | Promise<Result> => {
     let is_promise = false;
     const result = {}
-    Object.entries(data).forEach(kv => {
+    for(let kv of data.entries()){
       result[kv[0]] = run_runnable(kv[1], lib);
       is_promise = is_promise || !!kv[1] && ispromise(result[kv[0]]);
-    })
+    }
 
     if (is_promise) {
         const promises = [];
@@ -400,7 +408,7 @@ const resolve_args = (data: Record<string, ConstRunnable>, lib: Lib): Result | P
 }
 
 const node_data = (nodeArgs, graphArgs, lib) => {
-  return Object.keys(nodeArgs).length === 0 ? lib.data.no.of(undefined) : resolve_args(nodeArgs, lib);
+  return nodeArgs.size === 0 ? lib.data.no.of(undefined) : resolve_args(nodeArgs, lib);
 }
 
 const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, args: ConstRunnable, lib): FunctorRunnable | Promise<FunctorRunnable> => {
@@ -416,7 +424,7 @@ const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, args:
   return ret;
 }
 
-const run_runnable = (runnable: Runnable, lib: Lib, args: Record<string, any> = {}): Result | Promise<Result> =>  {
+const run_runnable = (runnable: Runnable, lib: Lib, args: Map<string, any> = new Map()): Result | Promise<Result> =>  {
     return isConstRunnable(runnable)
     ? run_graph(runnable.graph, runnable.fn, mergeEnv(args, runnable.env), runnable.lib)
     : isApRunnable(runnable)
@@ -428,7 +436,7 @@ const run_runnable = (runnable: Runnable, lib: Lib, args: Record<string, any> = 
 
 
 // graph, node, symtable, parent symtable, lib
-const run_node = (node: NodysseusNode | Runnable, nodeArgs: Record<string, ConstRunnable>, graphArgs: Env, lib: Lib): Result | Promise<Result> => {
+const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRunnable>, graphArgs: Env, lib: Lib): Result | Promise<Result> => {
     if (isRunnable(node)){
       if(isValue(node)) {
         return node
@@ -436,8 +444,8 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Record<string, Const
         throw new Error("Unexpected node")
       } else {
         const graphid = nodysseus_get(graphArgs, "__graphid", lib)?.value;
-        const nodegraphargs: Env = node.env ?? newEnv({}, graphArgs._output)
-        nodegraphargs.data.__graphid = graphid ?? lib.data.no.of(node.graph.id);
+        const nodegraphargs: Env = node.env ?? newEnv(new Map(), graphArgs._output)
+        nodegraphargs.data.set("__graphid", graphid ?? lib.data.no.of(node.graph.id));
         lib = mergeLib(node.lib, lib)
 
         return node_nodes(node.graph, node.fn, nodeArgs, nodegraphargs, lib)
@@ -455,8 +463,8 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Record<string, Const
 
 
         const graphid = nodysseus_get(graphArgs, "__graphid", lib).value;
-        const newgraphid = (graphid + "/") + node.id
-        const newGraphArgs = newEnv({__graphid: lib.data.no.of(newgraphid)}, graphArgs._output);
+        const newgraphid = `${graphid}/${node.id}`
+        const newGraphArgs = newEnv(new Map().set("__graphid", lib.data.no.of(newgraphid)), graphArgs._output);
 
         return wrapPromise(lib.data.no.runtime.get_ref(node.ref)).then(node_ref => {
           if (!node_ref) {
@@ -467,7 +475,7 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Record<string, Const
               // lib.data.no.runtime.update_graph(newgraphid)
           }
 
-          return run_node(node_ref, node.value ? {...nodeArgs, __graph_value: lib.data.no.of(node.value)} : nodeArgs, newGraphArgs, lib)
+          return run_node(node_ref, node.value ? new Map(nodeArgs).set("__graph_value", lib.data.no.of(node.value)) : nodeArgs, newGraphArgs, lib)
         }).value
     } else if (isNodeGraph(node)) {
         return node_nodes(node, node.out ?? "out", nodeArgs, graphArgs, lib)
@@ -481,12 +489,12 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Record<string, Const
 }
 
 // derives data from the args symbolic table
-const create_data = (node_id, graph, graphArgs: Env, lib: Lib): Record<string, ConstRunnable> => {
+const create_data = (node_id, graph, graphArgs: Env, lib: Lib): Map<string, ConstRunnable> => {
     const inputs = lib.data.no.runtime.get_edges_in(graph, node_id);
-    const data: Record<string, ConstRunnable> = {};
+    const data: Map<string, ConstRunnable> = new Map();
     let input: Edge;
     //TODO: remove
-    const newgraphargs = graphArgs._output ? mergeEnv({_output: undefined}, graphArgs) : graphArgs;
+    const newgraphargs = graphArgs._output ? mergeEnv(new Map().set("_output", undefined), graphArgs) : graphArgs;
     // delete newgraphargs._output
 
     // grab inputs from state
@@ -495,7 +503,7 @@ const create_data = (node_id, graph, graphArgs: Env, lib: Lib): Record<string, C
 
         const val: ConstRunnable = {__kind: "const", graph, fn: input.from, env: newgraphargs, lib}
         // Check for duplicates
-        if(data[input.as]) {
+        if(data.has(input.as)) {
             const as_set = new Set()
             inputs.forEach(e => {
                 if (as_set.has(e.as)) {
@@ -504,7 +512,7 @@ const create_data = (node_id, graph, graphArgs: Env, lib: Lib): Record<string, C
                 as_set.add(e.as)
             })
         }
-        data[input.as] = val;
+        data.set(input.as, val);
     }
 
     return data;
@@ -549,11 +557,11 @@ const run_graph = (graph: Graph | (Graph & {nodes: Array<NodysseusNode>, edges: 
     }
 }
 
-const run_functor_runnable = (runnable: FunctorRunnable, args: Record<string, unknown>, lib: Lib): Result | Promise<Result> => {
-  const execArgs = Object.fromEntries(runnable.fnargs?.map(k => [k, nodysseus_get({...args, lib: runnable.lib}, k, lib, runnable.fnargs[k])]) ?? []);
+const run_functor_runnable = (runnable: FunctorRunnable, args: Args, lib: Lib): Result | Promise<Result> => {
+  const execArgs: Args = new Map(runnable.fnargs?.map(k => [k, nodysseus_get(args, k, lib)]) ?? []);
   const newRunnable: ConstRunnable = {
     __kind: "const",
-    env: combineEnv(execArgs ?? {}, runnable.env, "functor runnable" + runnable.fn),
+    env: combineEnv(execArgs ?? new Map(), runnable.env, "functor runnable" + runnable.fn),
     fn: runnable.fn,
     graph: runnable.graph,
     lib: runnable.lib
@@ -561,14 +569,14 @@ const run_functor_runnable = (runnable: FunctorRunnable, args: Record<string, un
   return run_runnable(newRunnable, lib)
 }
 
-const run_ap_runnable = (runnable: ApRunnable, args: Record<string, any>, lib: Lib): Result | Promise<Result> => {
+const run_ap_runnable = (runnable: ApRunnable, args: Args, lib: Lib): Result | Promise<Result> => {
   const computedArgs = runnable.args && run_runnable({...runnable.args, lib: runnable.lib}, lib, args);
   const execute = (execArgs): WrappedPromise<any> => {
     const ret = (Array.isArray(runnable.fn) ? runnable.fn : [runnable.fn])
     .map(rfn => run_runnable(
       rfn,
       runnable.lib,
-      execArgs?.value ? Object.fromEntries(Object.entries(execArgs.value).map(kv => [kv[0], lib.data.no.of(kv[1])])) : {}, 
+      execArgs?.value ? new Map(Object.entries(execArgs.value).map(kv => [kv[0], lib.data.no.of(kv[1])])) : new Map(), 
     ))
     return Array.isArray(runnable.fn) ? wrapPromiseAll(ret.map(v => wrapPromise(v))) : wrapPromise(ret[0]);
   }
@@ -603,7 +611,7 @@ const initStore = (store: NodysseusStore | undefined = undefined) => {
   }
 }
 
-export const run = (node: Runnable | InputRunnable, args: Record<string, any> = {}, lib: Lib | undefined = undefined, store: NodysseusStore = nodysseus) => {
+export const run = (node: Runnable | InputRunnable, args: ResolvedArgs = new Map(), lib: Lib | undefined = undefined, store: NodysseusStore = nodysseus) => {
   initStore(store);
 
   let _lib: Lib = mergeLib(lib, newLib(nolib))
@@ -617,14 +625,14 @@ export const run = (node: Runnable | InputRunnable, args: Record<string, any> = 
   const res = run_runnable(
     isRunnable(node) 
       ? {...node, lib: node.lib ? mergeLib(node.lib, _lib) :  _lib}
-      : {...node, __kind: "const", env: node.env ?? newEnv({__graphid: _lib.data.no.of(node.graph.id)}), lib: mergeLib(node.lib, _lib)
+      : {...node, __kind: "const", env: node.env ?? newEnv(new Map().set("__graphid", _lib.data.no.of(node.graph.id))), lib: mergeLib(node.lib, _lib)
         // mergeEnv(
         //   Object.fromEntries(Object.entries(args ?? {}).map(e => [e[0], _lib.data.no.of(e[1])])), 
         //   node.env ?? newEnv({__graphid: _lib.data.no.of(node.graph.id)})
         // )
       }, 
     _lib, args);
-  return wrapPromise(res).then(r => r?.value).value;
+  return wrapPromise(res).then(r => r?.value).then(v => isArgs(v) ? Object.fromEntries(v) : v).value;
 }
 
 const nolib = {
@@ -639,15 +647,24 @@ const nolib = {
       } else {
         nodevalue = value;
       }
+
       const newtarget = () => {
-        const newt = Object.assign({}, target.data);
-        Object.keys(newt).forEach(k => k.startsWith("_") && delete newt[k])
+        const newt = new Map(target.data);
+        for(let k in newt) {
+          if(k.startsWith("_")) {
+            newt.delete(k)
+          }
+        }
         return newt;
       };
 
       const parenttarget = () => {
-        const newt = Object.assign({}, target.env.data);
-        Object.keys(newt).forEach(k => k.startsWith("_") && delete newt[k])
+        const newt = new Map(target.env.data);
+        for(let k in newt) {
+          if(k.startsWith("_")) {
+            newt.delete(k)
+          }
+        }
         return newt;
       };
 
@@ -1086,17 +1103,17 @@ const nolib = {
     switch: {
       rawArgs: true,
       args: ["input", "_node_args", "_lib"],
-      fn: (input, args, lib: Lib) => {
+      fn: (input, args: Args, lib: Lib) => {
         const inputval = run_runnable(input, lib);
         return ispromise(inputval) 
-          ? inputval.then(ival => run_runnable(args[ival?.value], lib)) 
-          : run_runnable(args[inputval?.value], lib);
+          ? inputval.then(ival => run_runnable(isArgs(args) ? args.get(ival?.value) : args[ival?.value], lib)) 
+          : run_runnable(args.get(inputval?.value), lib);
       },
     },
     resolve: {
         rawArgs: false,
         args: ['object', '_lib'],
-        fn: (object: Record<string, Runnable>, lib) => {
+        fn: (object: Args, lib) => {
             return Object.fromEntries(Object.entries(object).map(e => [e[0], run_runnable(e[1], lib)]));
         }
     },
@@ -1119,7 +1136,7 @@ const nolib = {
                           ? mapobj.reduce(mapfn, mapinit)
                           : Object.entries(mapobj).sort((a, b) => a[0].localeCompare(b[0])).reduce(mapfn, mapinit);
 
-                      initial = initial ?? (Array.isArray(objectvalue) ? [] : {});
+                      initial = initial ?? (typeof objectvalue.reduce === "function" ? [] : {});
 
                       let errored = false;
                       const errorlistener = (error) => errored = true;
@@ -1130,9 +1147,11 @@ const nolib = {
                       const ret = mapobjarr(
                         objectvalue,
                         (previousValue, currentValue) =>
-                          !errored && wrapPromise(previousValue).then(prevVal => run_runnable(fnrunnable, lib,
-                            {previousValue: lib.data.no.of(prevVal), currentValue: lib.data.no.of(currentValue)},
-                          )).then(rv => {
+                          !errored && wrapPromise(previousValue).then(prevVal => {
+                            const args = new Map().set("previousValue", lib.data.no.of(prevVal)).set("currentValue", lib.data.no.of(currentValue))
+                            return run_runnable(fnrunnable, lib,
+                            args,
+                          )}).then(rv => {
                             const nextValue = rv.value;
                             if(nextValue instanceof Error) {
                               errored = true;
@@ -1208,7 +1227,8 @@ const nolib = {
         const edgemap = { value, display, subscribe, metadata, lib };
         const runedge = output && output === display ? display : edgemap[output] ? output : "value";
 
-        const return_result = (_lib: Lib, args) => {
+        const return_result = (_lib: Lib, args: Args) => {
+          args = args && !isArgs(args) ? new Map(Object.entries(args)) : args;
           const runnable = edgemap[runedge] ? {...edgemap[runedge]} : runedge === "value" && !value && display ? display : _lib.data.no.of(undefined);
           if(isRunnable(runnable) && !isValue(runnable) && !isApRunnable(runnable)) {
             runnable.env = combineEnv(runnable.env.data, newEnv(args, _lib.data.no.of(runedge === "display" ? "display" : "value"), runnable.env))
@@ -1231,13 +1251,13 @@ const nolib = {
             const graphid = nodysseus_get(subscribe.env, "__graphid", _lib).value;
             const newgraphid = graphid + "/" + _node.id;
 
+
             wrapPromise(run_runnable(
               edgemap.subscribe,
               _lib,
               args,
             )).then(subscriptions => subscriptions.value)
-            .then(subscriptions =>
-              Object.entries(subscriptions)
+            .then(subscriptions => Object.entries(subscriptions)
                 .filter(kv => kv[1])
                 .forEach(([k, v]) => 
                   _lib.data.no.runtime.add_listener(k, 'subscribe-' + newgraphid, v, false, 
@@ -1263,10 +1283,10 @@ const nolib = {
       args: ["_graph", "target", "path", "def", "graphval", "_lib"],
       fn: (graph, target, path, def, graph_value, lib: Lib) => {
         return nodysseus_get(
-          target && target._Proxy ? target._value : target,
-          path && path._Proxy ? path._value : graph_value || path,
+          target,
+          graph_value || path,
           lib, 
-          def && def._Proxy ? def._value : def
+          def
         );
       },
     },
@@ -1645,7 +1665,7 @@ const nolib = {
       fn: (target, nodeargs, lib: Lib) => {
         Object.entries(nodeargs)
         .filter(kv => kv[0] !== "target")
-        .forEach(([k, fn]: [string, Runnable]) => target[k] = event => fn && run_runnable(fn, lib, {event}))
+        .forEach(([k, fn]: [string, Runnable]) => target[k] = event => fn && run_runnable(fn, lib, new Map().set("event", event)))
         return target;
       }
     }

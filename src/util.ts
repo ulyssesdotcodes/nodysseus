@@ -1,4 +1,4 @@
-import { Edge, Graph, GraphNode, NodysseusNode, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable, isEnv, isRunnable, isValue, Lib, isLib, Env } from "./types";
+import { Edge, Graph, GraphNode, NodysseusNode, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable, isEnv, isRunnable, isValue, Lib, isLib, Env, Args, ValueNode, Result, isArgs } from "./types";
 import extend from "just-extend";
 
 export const ispromise = <T>(a: any): a is Promise<T> => a && typeof a.then === 'function' && !isWrappedPromise(a);
@@ -273,28 +273,29 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Ar
  * Type utils
  */
 
-export const newEnv = (data, _output?, env?: Env): Env => ({__kind: "env", data: env ? {...env.data, ...data} : data, _output, env: env?.env})
-export const combineEnv = (data, env: Env, node_id?: string, _output?: string): Env => {
+export const newEnv = (data: Args, _output?, env?: Env): Env => ({__kind: "env", data: data?.size > 0 ? env?.data?.size ? new Map([...env.data, ...data]) : data : new Map(), _output, env: env?.env})
+export const combineEnv = (data: Args, env: Env, node_id?: string, _output?: string): Env => {
   if(isEnv(data)) {
     throw new Error("Can't create an env with env data")
   }
   return ({__kind: "env", data, env, node_id, _output})
 }
-export const mergeEnv = (data, env: Env): Env => {
+
+export const mergeEnv = (data: Args, env: Env): Env => {
   if(isRunnable(data)) {
     throw new Error("Can't merge a runnable")
   }
 
-  return {
+  return data.size > 0 ? {
   __kind: "env", 
-    data: {...env.data, ...data, _output: undefined}, 
+    data: env?.data?.size > 0 ? new Map([...env.data, ...data, ["_output", undefined]]) : env.data, 
     env: env.env, 
-    _output: Object.hasOwn(data, "_output") ? isValue(data._output) ? data._output.value : data._output : env._output
-  }
+    _output: data.has("_output") ? isValue(data.get("_output")) ? (data.get("_output") as Result).value : data.get("_output") : env._output
+  } : env;
 }
 
 export const newLib = (data): Lib => ({__kind: "lib", data})
 export const mergeLib = (a: Record<string, any> | Lib, b: Lib): Lib => (a ? {
   __kind: "lib",
-  data: Object.assign({}, isLib(a) ? a.data : a, b.data)
+  data: Object.assign({}, isLib(a) ? isArgs(a.data) ? Object.fromEntries(a.data) : a.data : isArgs(a) ? Object.fromEntries(a) : a, b.data)
 }: b)

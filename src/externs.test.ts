@@ -18,7 +18,7 @@ describe('create_fn', () => {
         edges: {},
         edges_in: {}
       }, 
-      env: newEnv({}),
+      env: newEnv(new Map()),
       lib: newLib(nolib)
     }, newLib(nolib))
 
@@ -42,7 +42,7 @@ describe('create_fn', () => {
         },
         edges_in: {}
       },
-      env: newEnv({}),
+      env: newEnv(new Map()),
       lib: newLib(nolib)
     }, newLib(nolib))
 
@@ -68,7 +68,7 @@ describe('create_fn', () => {
         },
         edges_in: {}
       },
-      env: newEnv({}),
+      env: newEnv(new Map()),
       lib: newLib(nolib)
     }, newLib(nolib))
 

@@ -111,15 +111,19 @@ export const isLib = (lib: any) => lib?.__kind === "lib";
 
 export type Env = {
   __kind: "env",
-  data: Record<string, unknown>,
+  data: Args,
   _output?: string, 
   env?: Env,
   node_id?: string,
 }
 
-export const isEnv = (env: any) => env?.__kind === "env"
+export const isEnv = (env: any): env is Env => env?.__kind === "env"
 
 
 //export const isApRunnable = (r: Runnable): r is ApRunnable => isGraphRunnable((r as ApRunnable).fn)
 
 export type NodeArg = { exists: boolean, name: string }
+
+export type Args = Map<string, ConstRunnable | Result>;
+export type ResolvedArgs = Map<string, unknown>;
+export const isArgs = (args: any): args is Args => typeof args?.get === "function"

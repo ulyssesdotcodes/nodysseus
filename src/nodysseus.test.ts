@@ -143,7 +143,7 @@ test('applying an fn twice', () => {
   run_fn.edges_in = Object.values(run_fn.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
 
   const inval = {x: "A"}
-  run({graph: run_fn, fn: "out"}, {"input": inval});
+  run({graph: run_fn, fn: "out"}, new Map(Object.entries({"input": inval})));
   expect(inval.x).toBe("B")
 })
 
@@ -181,7 +181,7 @@ test('applying a fn once', () => {
   run_fn.edges_in = Object.values(run_fn.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
 
   const inval = {x: "A"}
-  console.log(run({graph: run_fn, fn: "out"}, newEnv({"input": inval})));
+  console.log(run({graph: run_fn, fn: "out"}, new Map([["input", inval]])));
   expect(inval.x).toBe("B")
 })
 

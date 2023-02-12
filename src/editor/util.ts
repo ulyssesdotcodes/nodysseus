@@ -1,6 +1,6 @@
 import * as ha from "hyperapp"
 import { initStore, nodysseus_get, nolib, run } from "../nodysseus";
-import { Edge, Graph, isRunnable, NodysseusNode } from "../types";
+import { Edge, Graph, isArgs, isRunnable, NodysseusNode } from "../types";
 import { base_node, base_graph, ispromise, wrapPromise, node_args, expand_node, contract_node, ancestor_graph, create_randid } from "../util";
 import panzoom, * as pz from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
@@ -741,7 +741,7 @@ export const hlib = {
     get_asset: (id, b, nodysseusStore) => id && nodysseusStore.assets.get(id),
     remove_asset: (id, nodysseusStore) => nodysseusStore.assets.remove(id),
     panzoom: pzobj,
-    run: (graph, fn, args?, lib?) => run({graph, fn, lib: lib ? {...hlib, ...lib} : hlib}, args),
+    run: (graph, fn, args?, lib?) => run({graph, fn, lib: lib ? {...hlib, ...lib} : hlib}, isArgs(args) ? args : args ? new Map(Object.entries(args)) : new Map()),
     run_runnable: (runnable, args?) => run(runnable, args),
     initStore: (nodysseusStore) => initStore(nodysseusStore),
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX }
