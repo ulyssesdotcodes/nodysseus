@@ -1115,7 +1115,7 @@ const nolib = {
                     .then(initial => initial.value)
                     .then(initial => {
                       const mapobjarr = (mapobj, mapfn, mapinit) =>
-                        Array.isArray(mapobj)
+                        typeof mapobj.reduce === "function"
                           ? mapobj.reduce(mapfn, mapinit)
                           : Object.entries(mapobj).sort((a, b) => a[0].localeCompare(b[0])).reduce(mapfn, mapinit);
 
