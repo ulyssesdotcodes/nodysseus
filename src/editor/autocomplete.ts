@@ -10,6 +10,7 @@ export default class AutocompleteList extends HTMLElement {
   listEl: HTMLUListElement;
   inputEl: HTMLInputElement;
   options: Record<string, Option>;
+  fuseOptions: Array<Option>;
   shownOptions: Array<{kind: "value" | "category", value: string}> | undefined;
   optionEls: Record<string, HTMLLIElement>;
   fuse: Fuse<Option>;
@@ -83,7 +84,12 @@ export default class AutocompleteList extends HTMLElement {
         this.selectedIndex = this.selectedIndex === undefined ? -1 : (this.selectedIndex - 1);
       } else if (evt.key === "Enter") {
         evt.stopPropagation();
-        this.inputEl.value = this.shownOptions[this.selectedIndex].value;
+
+        if(this.selectedIndex !== undefined && this.fuseOptions.length > 0) {
+          const count = this.fuseOptions.length;
+          this.inputEl.value = this.fuseOptions[((this.selectedIndex % count) + count) % count].value;
+        }
+
         this.selectOption(this.inputEl.value)
       }
     }
@@ -135,6 +141,7 @@ export default class AutocompleteList extends HTMLElement {
   }
 
   selectOption(value: string) {
+    this.selectedIndex = undefined;
     this.dispatchEvent(new CustomEvent('select', {detail: value}))
   }
 
@@ -158,7 +165,8 @@ export default class AutocompleteList extends HTMLElement {
         ), new Map()).values()].flat().filter(o => o);
 
     if(this.inputEl.value) {
-      this.shownOptions = optionsByCategory(this.fuse.search(this.inputEl.value).map(searchResult => searchResult.item))
+      this.fuseOptions = this.fuse.search(this.inputEl.value).map(searchResult => searchResult.item);
+      this.shownOptions = optionsByCategory(this.fuseOptions)
     } else {
       this.shownOptions = optionsByCategory(Object.values(this.options));
     }
