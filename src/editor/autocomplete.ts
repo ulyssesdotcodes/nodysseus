@@ -74,13 +74,17 @@ export default class AutocompleteList extends HTMLElement {
     this.inputEl.onkeydown = (evt: KeyboardEvent) => {
       if(evt.key === "Tab") {
         evt.stopPropagation();
-        this.dispatchEvent(new CustomEvent('select', {detail: this.inputEl.value}))
+        this.selectOption(this.inputEl.value)
       } else if (evt.key === "ArrowDown") {
         evt.stopPropagation();
         this.selectedIndex = this.selectedIndex === undefined ? 0 : (this.selectedIndex + 1);
       } else if (evt.key === "ArrowUp") {
         evt.stopPropagation();
         this.selectedIndex = this.selectedIndex === undefined ? -1 : (this.selectedIndex - 1);
+      } else if (evt.key === "Enter") {
+        evt.stopPropagation();
+        this.inputEl.value = this.shownOptions[this.selectedIndex].value;
+        this.selectOption(this.inputEl.value)
       }
     }
     this.inputEl.onkeyup = (evt: KeyboardEvent) => {
