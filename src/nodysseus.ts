@@ -140,12 +140,13 @@ export const nodysseus_get = (obj: Record<string, any> | Args | Env, propsArg: s
         return obj.then(r => props.length > 0 ? nodysseus_get(r, propsArg, lib, defaultValue, props) : r)
     }
 
-    prop = props.length == 0 ? props[0] : props.shift();
+    prop = props[0];
     if((obj === undefined || typeof obj !== 'object' || 
         !(isArgs(obj) ? obj.has(prop) : obj[prop] !== undefined || (obj.hasOwnProperty && obj.hasOwnProperty(prop))))){
-        props.unshift(prop)
         return isEnv(objArg) ? nodysseus_get(objArg.env, propsArg, lib, defaultValue, props) : defaultValue;
     }
+
+    props.shift();
 
     obj = isArgs(obj) ? obj.get(prop) : obj[prop];
 
