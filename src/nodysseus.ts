@@ -721,41 +721,43 @@ const nolib = {
       const getorsetgraph = (graph, id) => nodysseus.graphs.get(id) ?? (nodysseus.graphs.add(id, graph), graph)
       let animationframe;
       let animationerrors = [];
+
+      const runpublish = (data, event, lib) => {
+        event_data.set(event, data);
+
+        const listeners = getorset(event_listeners, event, () => new Map());
+        for (let l of listeners.values()) {
+          if (typeof l === "function") {
+            l(data);
+          } else if (typeof l === "object" && l.fn && l.graph) {
+            run_graph(
+              l.graph,
+              l.fn,
+              Object.assign({}, l.args || {}, { data }),
+              mergeLib(l.lib, lib)
+            );
+          }
+        }
+
+        if (
+          event === "animationframe" &&
+          listeners.size > 0 && // the 1 is for the animationerrors stuff below
+          !animationframe &&
+          animationerrors.length == 0
+        ) {
+          animationframe = polyfillRequestAnimationFrame(() => {
+            animationframe = false;
+            publish("animationframe", undefined, lib);
+          });
+        }
+      };
+
       const publish = (event, data, lib: Lib) => {
-        const runpublish = (data) => {
-          event_data.set(event, data);
-
-          const listeners = getorset(event_listeners, event, () => new Map());
-          for (let l of listeners.values()) {
-            if (typeof l === "function") {
-              l(data);
-            } else if (typeof l === "object" && l.fn && l.graph) {
-              run_graph(
-                l.graph,
-                l.fn,
-                Object.assign({}, l.args || {}, { data }),
-                mergeLib(l.lib, lib)
-              );
-            }
-          }
-
-          if (
-            event === "animationframe" &&
-            listeners.size > 0 && // the 1 is for the animationerrors stuff below
-            !animationframe &&
-            animationerrors.length == 0
-          ) {
-            animationframe = polyfillRequestAnimationFrame(() => {
-              animationframe = false;
-              publish("animationframe", {}, lib);
-            });
-          }
-        };
 
         if (typeof data === "object" && ispromise(data)) {
-          data.then(runpublish);
+          data.then(d => runpublish(d, event, lib));
         } else {
-          runpublish(data);
+          runpublish(data, event, lib);
         }
 
         return data;
@@ -794,6 +796,10 @@ const nolib = {
             );
             graph_id_listeners.set(event, listener_id);
           }
+
+          if (event === "animationframe") {
+            polyfillRequestAnimationFrame(() => publish(event, undefined, lib));
+          }
         }
 
         if (remove) {
@@ -801,10 +807,6 @@ const nolib = {
         }
 
         listeners.set(listener_id, fn);
-
-        if (event === "animationframe") {
-          polyfillRequestAnimationFrame(() => publish(event, {}, lib));
-        }
 
       };
 
@@ -885,7 +887,14 @@ const nolib = {
       const get_node = (graph: Graph, id: string) => wrapPromise(get_graph(graph)).then(g => g?.nodes[id]).value
       const get_edge = (graph, from) => wrapPromise(get_graph(graph)).then(g => g?.edges[from]).value
       const get_edges_in = (graph, id) => wrapPromise(get_graph(graph))
-        .then(g => g.edges_in ? g.edges_in[id] ? Object.values(g.edges_in[id]) : [] : Object.values(g.edges).filter(e => e.to === id)).value
+        .then(g => {
+          if(g.edges_in === undefined) {
+            return Object.values(g.edges).filter(e => e.to === id)
+          } else if(g.edges_in[id] !== undefined) {
+            return Object.values(g.edges_in[id])
+          }
+          return []
+        }).value
       const get_edge_out = get_edge
       const get_args = (graph) => nodysseus.state.get(typeof graph === "string" ? graph : graph.id) ?? {};
       const get_graph = (graph: string | Graph): Graph | Promise<Graph> | undefined => wrapPromise(
@@ -1054,7 +1063,7 @@ const nolib = {
         },
         remove_listener,
         remove_graph_listeners,
-        publish: (event, data, lib: Lib) => publish(event, data, lib),
+        publish,
         set_parent: (graph, parent) => {
           const graphid = graph;
           const parentid = parent;
@@ -1257,11 +1266,11 @@ const nolib = {
               edgemap.subscribe,
               _lib,
               args,
-            )).then(subscriptions => subscriptions.value)
+            ))
+            .then(subscriptions => subscriptions.value)
             .then(subscriptions => Object.entries(subscriptions)
-                .filter(kv => kv[1])
-                .forEach(([k, v]) => 
-                  _lib.data.no.runtime.add_listener(k, 'subscribe-' + newgraphid, v, false, 
+                .forEach(kv => kv[1] &&
+                  _lib.data.no.runtime.add_listener(kv[0], 'subscribe-' + newgraphid, kv[1], false, 
                     graphid, true, _lib)))
           }
 
