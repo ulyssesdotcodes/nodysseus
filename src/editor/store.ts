@@ -136,8 +136,6 @@ export const ydocStore = async (persist: false | string = false, update = undefi
       graph.edges_in = Object.values(graph.edges).reduce((acc: EdgesIn, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
       simpleYMap.set(id, graph)
       nolib.no.runtime.publish('graphchange', simpleYMap.get(id), {...nolib, ...hlib}) 
-    } else {
-      console.log(`not loaded ${id}`)
     }
   }
 
