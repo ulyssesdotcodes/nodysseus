@@ -127,3 +127,8 @@ export type NodeArg = { exists: boolean, name: string }
 export type Args = Map<string, ConstRunnable | Result>;
 export type ResolvedArgs = Map<string, unknown>;
 export const isArgs = (args: any): args is Args => typeof args?.get === "function"
+
+
+export type RunOptions = {
+  profile?: boolean
+}

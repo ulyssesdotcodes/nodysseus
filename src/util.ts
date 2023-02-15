@@ -1,4 +1,4 @@
-import { Edge, Graph, GraphNode, NodysseusNode, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable, isEnv, isRunnable, isValue, Lib, isLib, Env, Args, ValueNode, Result, isArgs } from "./types";
+import { Edge, Graph, GraphNode, NodysseusNode, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable, isEnv, isRunnable, isValue, Lib, isLib, Env, Args, ValueNode, Result, isArgs, isConstRunnable, isApRunnable } from "./types";
 import extend from "just-extend";
 
 export const ispromise = <T>(a: any): a is Promise<T> => a && typeof a.then === 'function' && !isWrappedPromise(a);
@@ -299,3 +299,5 @@ export const mergeLib = (a: Record<string, any> | Lib, b: Lib): Lib => (a ? {
   __kind: "lib",
   data: Object.assign({}, isLib(a) ? isArgs(a.data) ? Object.fromEntries(a.data) : a.data : isArgs(a) ? Object.fromEntries(a) : a, b.data)
 }: b)
+
+export const runnableId = (runnable: Runnable) => isConstRunnable(runnable) ? `${runnable.graph.id}/${runnable.fn}` : false;

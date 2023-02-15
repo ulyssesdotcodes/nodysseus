@@ -201,7 +201,7 @@ const runapp = (init, load_graph, _lib) => {
                     name: 'sync-outline', 
                     onclick: (s: HyperappState) => [s, [dispatch => { 
                             nolib.no.runtime.delete_cache(); 
-                            hlib.run(s.display_graph, s.display_graph.out ?? "out", {_output: "value"});  
+                            hlib.run(s.display_graph, s.display_graph.out ?? "out", {_output: "value"}, {profile: false});  
                             refresh_custom_editor()
                             requestAnimationFrame(() =>  dispatch(s => [s, [() => {
                                 s.simulation.alpha(1); 

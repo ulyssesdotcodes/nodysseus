@@ -161,7 +161,7 @@ export const update_info_display = ({fn, graph, args, lib}, info_display_dispatc
     const node_ref = node && (node.ref && nolib.no.runtime.get_ref(node.ref)) || node;
     const out_ref = node && (node.nodes && nolib.no.runtime.get_node(node, node.out)) || (node_ref?.nodes && nolib.no.runtime.get_node(node_ref, node_ref.out));
     const node_display_el = (node.ref === "return" || (out_ref && out_ref.ref === "return")) 
-        && hlib.run(graph, fn, {...args, _output: "display"}, lib);
+        && hlib.run(graph, fn, {...args, _output: "display"}, lib, {profile: false});
     const update_info_display_fn = display => info_display_dispatch && requestAnimationFrame(() => {
       info_display_dispatch(UpdateResultDisplay, {el: display?.dom_type ? display : ha.h('div', {})})
       requestAnimationFrame(() => {
@@ -417,10 +417,10 @@ export const refresh_graph = (dispatch, {graph, graphChanged, norun, result_disp
       return
     }
     dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
-    const result = hlib.run(graph, graph.out ?? "out", {_output: "value"});
+    const result = hlib.run(graph, graph.out ?? "out", {_output: "value"}, undefined, {profile: false});
     const reslib = hlib.run(graph, graph.out ?? "out", {_output: "lib"})
     // const result = hlib.run(graph, graph.out, {});
-    const display_fn = result => hlib.run(graph, graph.out ?? "out", {_output: "display"});
+    const display_fn = result => hlib.run(graph, graph.out ?? "out", {_output: "display"}, {profile: false});
     // const display_fn = result => hlib.run(graph, graph.out, {}, "display");
     const update_result_display_fn = display => result_display_dispatch(UpdateResultDisplay, {el: display && display.dom_type ? display : {dom_type: 'div', props: {}, children: []}})
     const update_info_display_fn = () => dispatch(s => [s, s.selected[0] !== s.display_graph.out 
@@ -741,8 +741,8 @@ export const hlib = {
     get_asset: (id, b, nodysseusStore) => id && nodysseusStore.assets.get(id),
     remove_asset: (id, nodysseusStore) => nodysseusStore.assets.remove(id),
     panzoom: pzobj,
-    run: (graph, fn, args?, lib?) => run({graph, fn, lib: lib ? {...hlib, ...lib} : hlib}, isArgs(args) ? args : args ? new Map(Object.entries(args)) : new Map()),
-    run_runnable: (runnable, args?) => run(runnable, args),
+    run: (graph, fn, args?, lib?, options?) => run({graph, fn, lib: lib ? {...hlib, ...lib} : hlib}, isArgs(args) ? args : args ? new Map(Object.entries(args)) : new Map(), options),
+    run_runnable: (runnable, args?, options?) => run(runnable, args, options),
     initStore: (nodysseusStore) => initStore(nodysseusStore),
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX }
 }
