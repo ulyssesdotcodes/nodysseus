@@ -94,9 +94,9 @@ const custom_editor_display = html_id => ha.app({
 const refresh_custom_editor = () => {
     if(nolib.no.runtime.get_ref("custom_editor")) {
         // TODO: combine with update_info
-        // const graph = nolib.no.runtime.get_ref("custom_editor");
-        // const result = hlib.run({graph, fn: graph.out}, {_output: "display"});
-        // custom_editor_display_dispatch(() => ({el: result}))
+        const graph = nolib.no.runtime.get_ref("custom_editor");
+        wrapPromise(graph).then(graph => hlib.run(graph, graph.out, {_output: "display"}))
+          .then(result => custom_editor_display_dispatch(() => ({el: result})))
     } else {
         custom_editor_display_dispatch(() => ({el: {dom_type: "div", props: {}, children: []}}))
     }
@@ -143,6 +143,7 @@ const runapp = (init, load_graph, _lib) => {
               }]
             ]);
         })],
+        [dispatch => wrapPromise(nolib.no.runtime.get_graph("custom_editor")).then(graph => hlib.run(graph, "out")).then(custom_editor_result => dispatch(s => ({...s, custom_editor_result})))],
         [ChangeDisplayGraphId, {id: load_graph, select_out: true, display_graph_id: undefined}],
         [UpdateSimulation, {...init, action: SimulationToHyperapp}],
         [init_code_editor, {html_id: init.html_id}]
@@ -397,7 +398,8 @@ const editor = async function(html_id, display_graph, lib, norun) {
             levels: false,
             error: false,
             inputs: {},
-            randid: create_randid()
+            randid: create_randid(),
+            custom_editor_result: {}
         };
 
         runapp(init,  hash_graph && hash_graph !== "" ? hash_graph : graph_list?.[0] ?? 'simple', lib)

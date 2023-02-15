@@ -42,7 +42,8 @@ export type HyperappState = {
   result_display_dispatch?: Function,
   custom_editor_display_dispatch?: Function,
   code_editor?: any,
-  code_editor_nodeid?: any
+  code_editor_nodeid?: any,
+  custom_editor_result: {}
 }
 
 export type Levels = {
