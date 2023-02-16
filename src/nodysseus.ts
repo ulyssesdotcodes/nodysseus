@@ -1329,7 +1329,10 @@ const nolib = {
         return ret;
       },
     },
-    compare,
+    compare: {
+      args: ["__node_args"],
+      fn: (args) => compare(args[0], args[1])
+    },
     eq: ({ a, b }) => a === b,
     get: {
       args: ["_graph", "target", "path", "def", "graphval", "_lib"],

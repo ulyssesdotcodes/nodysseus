@@ -504,6 +504,8 @@ const generic = {
         }
       ]
     },
+    "switch": {"id": "switch", "ref": "extern", "value": "extern.switch"},
+    "compare": {"id": "compare", "ref": "extern", "value": "compare"},
     "if": {
       "id": "if",
       "out": "out",
