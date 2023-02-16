@@ -645,7 +645,7 @@ const initStore = (store: NodysseusStore | undefined = undefined) => {
   }
 }
 
-export const run = (node: Runnable | InputRunnable, args: ResolvedArgs = new Map(), options: {lib?: Lib, store?: NodysseusStore, profile?: boolean} = {}) => {
+export const run = (node: Runnable | InputRunnable, args: ResolvedArgs | Record<string, unknown> = new Map(), options: {lib?: Lib, store?: NodysseusStore, profile?: boolean} = {}) => {
   initStore(options.store ?? nodysseus);
 
   let _lib: Lib = mergeLib(options.lib, newLib(nolib))
@@ -655,6 +655,10 @@ export const run = (node: Runnable | InputRunnable, args: ResolvedArgs = new Map
 
   isRunnable(node) && isFunctorRunnable(node) && !_lib.data.no.runtime.get_ref(node.graph.id) && _lib.data.no.runtime.change_graph(node.graph)
   isRunnable(node) && isFunctorRunnable(node) && _lib.data.no.runtime.update_graph(node.graph, _lib);
+
+  if(!(args instanceof Map)) {
+    args = new Map(Object.entries(args));
+  }
 
   const res = run_runnable(
     isRunnable(node) 
