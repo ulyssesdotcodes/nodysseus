@@ -74,7 +74,7 @@ const generic = {
           "id": "out",
           "args": [],
           "ref": "script",
-          "value": "graph_value && console.log(graph_value); console.log(value); return value"
+          "value": "graph_value ? console.log(graph_value, value) : console.log(value); return value"
         }
       ],
       "edges": [
