@@ -378,9 +378,13 @@ export const UpdateNodeEffect = (_, {display_graph, node}) => {
   nolib.no.runtime.add_node( display_graph, node, hlib)
   const edges_in = nolib.no.runtime.get_edges_in(display_graph, node.id);
   const nodeargs = node_args(nolib, display_graph, node.id);
-  if(edges_in.length === 1 && nodeargs.length === 2) {
-    nolib.no.runtime.update_edges(display_graph, [{...edges_in[0], as: nodeargs[0].name}], [], hlib)
-  }
+  if(edges_in.length === 1){ 
+    if(nodeargs.length === 2) {
+      nolib.no.runtime.update_edges(display_graph, [{...edges_in[0], as: nodeargs[0].name}], [], hlib)
+    } else if(nodeargs.find(a => a.name.split(": ")[1] === "default")) {
+      nolib.no.runtime.update_edges(display_graph, [{...edges_in[0], as: nodeargs.map(a => a.name.split(": ")).find(e => e[1] === "default")[0]}], [], hlib)
+    }
+  } 
 }
 
 export const UpdateNode: ha.Action<HyperappState, {node: NodysseusNode, property: string, value: string, display_graph: Graph}> = (state, {node, property, value, display_graph}) => [

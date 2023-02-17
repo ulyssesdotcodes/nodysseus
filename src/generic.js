@@ -1278,7 +1278,7 @@ const generic = {
         {
           "id": "ap_cache_value",
           "ref": "arg",
-          "value": "value"
+          "value": "value: default"
         },
         {
           "id": "ap_cache_args"
