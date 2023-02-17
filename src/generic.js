@@ -893,7 +893,7 @@ const generic = {
         {
           "id": "target",
           "ref": "arg",
-          "value": "target"
+          "value": "target: default"
         },
         {
           "id": "path",

@@ -1346,7 +1346,7 @@ const nolib = {
       },
     },
     set: {
-      args: ["target", "path", "value", "__graph_value", "_graph_input_value"],
+      args: ["target: default", "path", "value", "__graph_value", "_graph_input_value"],
       fn: (target, path, value, nodevalue, _args) => {
         const keys = (nodevalue || path).split(".");
         const check = (o, v, k) =>
@@ -1431,7 +1431,7 @@ const nolib = {
     },
     call: {
       resolve: true,
-      args: ["__graph_value", "self", "fn", "args", "_graph_input_value", "_lib"],
+      args: ["__graph_value", "self: default", "fn", "args", "_graph_input_value", "_lib"],
       fn: (nodevalue, self, fn, args, _args, lib: Lib) => {
         const runfn = (args) => {
           if (typeof self === "function") {
