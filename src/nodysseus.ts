@@ -1330,7 +1330,7 @@ const nolib = {
       },
     },
     compare: {
-      args: ["__node_args"],
+      args: ["_node_args"],
       fn: (args) => compare(args[0], args[1])
     },
     eq: ({ a, b }) => a === b,
