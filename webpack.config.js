@@ -20,6 +20,11 @@ export default {
   resolve: {
     extensions: ['.ts', '.js']
   },
+  devServer: {
+    headers: {
+      "Cache-Control": "no-cache"
+    }
+  },
   module: {
     rules: [
       {

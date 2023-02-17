@@ -347,6 +347,7 @@ const node_extern = (node: RefNode, data: Args, graphArgs: Env, lib: Lib, option
     const extern = nodysseus_get(lib.data, node.value, lib);
     let argspromise = false;
     const args = typeof extern === 'function' ?  resolve_args(data, lib, options) :  extern.args.map(arg => {
+        arg = arg.split(": ")[0]
         let newval;
         if (arg === '_node') {
             newval = node 
@@ -896,6 +897,7 @@ const nolib = {
         }
       };
 
+      let updatepublish = {};
       const update_args = (graph, args, lib: Lib) => {
         const graphid = typeof graph === "string" ? graph : graph.id;
         let prevargs = nodysseus.state.get(graphid);
@@ -907,7 +909,14 @@ const nolib = {
 
         if (!compareObjects(args, prevargs, true)) {
           Object.assign(prevargs, args);
-          publish("graphupdate", get_parentest(graphid) ?? get_graph(graphid), lib);
+          const updatedgraph = get_parentest(graphid) ?? get_graph(graphid);
+          if(!ispromise(updatedgraph) && !updatepublish[updatedgraph.id]) {
+            updatepublish[updatedgraph.id] = true;
+            requestAnimationFrame(() => {
+              publish("graphupdate", updatedgraph, lib);
+              updatepublish[updatedgraph.id] = false;
+            })
+          }
         }
       };
 

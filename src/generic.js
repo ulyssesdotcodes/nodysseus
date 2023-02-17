@@ -1273,7 +1273,7 @@ const generic = {
         {
           "id": "pred_cache_state",
           "ref": "script",
-          "value": "return (cachevaluestate === undefined || cachevaluestate === null) || (recache !== false && recache !== undefined && (typeof recache !== 'object' || Object.keys(recache).length > 0))"
+          "value": "return recache === undefined ? (cachevaluestate === undefined || cachevaluestate === null) : (recache !== false && (typeof recache !== 'object' || Object.keys(recache).length > 0))"
         },
         {
           "id": "ap_cache_value",
@@ -2841,10 +2841,6 @@ const generic = {
           "ref": "filter"
         },
         {
-          "id": "tkd4tqn",
-          "name": "in"
-        },
-        {
           "id": "hfexsuu",
           "ref": "script",
           "value": "return !key?.startsWith('_');"
@@ -2874,12 +2870,6 @@ const generic = {
         }
       ],
       "edges": [
-        {
-          "from": "tkd4tqn",
-          "to": "j8c79uf",
-          "as": "_",
-          "type": "ref"
-        },
         {
           "from": "runnable_args",
           "to": "runnable",

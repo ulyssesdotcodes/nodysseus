@@ -102,7 +102,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, display_graph_id, 
     //const s.display_graph.id === s.display_graph_id && nolib.no.runtime.get_node(s.display_graph, s.selected[0]) && 
     const node_ref = node && node.ref ? nolib.no.runtime.get_ref(node.ref) : node;
     const description =  node_ref?.description;
-    const node_arg_labels = node?.id ? node_args(nolib, display_graph_id, node.id) : [];
+    const node_arg_labels = node?.id ? node_args(nolib, display_graph_id, node.id).map(a => ({...a, name: a.name.split(": ")[0]})) : [];
     return ha.h('div', {id: "node-info-wrapper"}, [ha.h('div', {class: "spacer before"}, []), ha.h(
         'div',
         { 
@@ -151,7 +151,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, display_graph_id, 
                     value: link_out.as, 
                     property: "edge",
                     inputs,
-                    options: node_args(nolib, display_graph_id, link_out.to).map(na => na.name),
+                    options: node_args(nolib, display_graph_id, link_out.to).map(na => na.name.split(": ")[0]),
                     onchange: (state, {value}) => [UpdateEdge, {edge: {from: link_out.from, to: link_out.to, as: link_out.as}, as: value}]
                 }), link_out),
             ]),

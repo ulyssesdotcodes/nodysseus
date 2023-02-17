@@ -288,7 +288,7 @@ export const mergeEnv = (data: Args, env: Env): Env => {
 
   return data.size > 0 ? {
   __kind: "env", 
-    data: env?.data?.size > 0 ? new Map([...env.data, ...data, ["_output", undefined]]) : env.data, 
+    data: env?.data?.size > 0 ? new Map([...env.data, ...data, ["_output", undefined]]) : data, 
     env: env.env, 
     _output: data.has("_output") ? isValue(data.get("_output")) ? (data.get("_output") as Result).value : data.get("_output") : env._output
   } : env;
