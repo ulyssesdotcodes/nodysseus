@@ -1,4 +1,4 @@
-import { Edge, Graph, GraphNode, NodysseusNode, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable, isEnv, isRunnable, isValue, Lib, isLib, Env, Args, ValueNode, Result, isArgs, isConstRunnable, isApRunnable, isError } from "./types";
+import { Edge, Graph, GraphNode, NodysseusNode, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable, isEnv, isRunnable, isValue, Lib, isLib, Env, Args, ValueNode, Result, isArgs, isConstRunnable, isApRunnable, isError, ConstRunnable } from "./types";
 
 export const WRAPPED_KIND = "wrapped";
 type WrappedKind = "wrapped";
@@ -276,7 +276,8 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Ar
  * Type utils
  */
 
-export const newEnv = (data: Args, _output?, env?: Env): Env => ({__kind: "env", data: data?.size > 0 ? env?.data?.size ? new Map([...env.data, ...data]) : data : new Map(), _output, env: env?.env})
+export const newEnv = (data: Args, _output?, env?: Env): Env => 
+  ({__kind: "env", data: data?.size > 0 ? env?.data?.size ? new Map([...env.data, ...data]) : data : new Map(), _output, env: env?.env})
 export const combineEnv = (data: Args, env: Env, node_id?: string, _output?: string): Env => {
   if(isEnv(data)) {
     throw new Error("Can't create an env with env data")
@@ -292,13 +293,14 @@ export const mergeEnv = (data: Args, env: Env): Env => {
     throw new Error("Can't merge a runnable")
   }
 
-  const _output = data.get("_output")
+  // Has to be .has because we want to preserve "_output" being set to undefined
+  const _output: false | Result | ConstRunnable = data.has("_output") ? data.get("_output") : false;
 
   return data.size > 0 ? {
   __kind: "env", 
-    data: env?.data?.size > 0 ? new Map([...env.data, ...data, ["_output", undefined]]) : data, 
+    data: env?.data?.size > 0 ? new Map([...env.data, ...data, ["_output", undefined]]) : data.has("_output") ? new Map([...data]) : data, 
     env: env.env, 
-    _output: _output ? isValue(_output) ? _output.value : data.get("_output") : env._output
+    _output: _output === false ? env._output : isValue(_output) ? _output.value : data.get("_output")
   } : env;
 }
 
