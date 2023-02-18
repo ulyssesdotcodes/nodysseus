@@ -879,7 +879,7 @@ const nolib = {
       add_listener('grapherror', "__animationerrors", e => animationerrors.push(e));
       add_listener('graphchange', "__animationerrors", e => {
         if(animationerrors.length > 0) {
-          event_listeners.get("animationframe").clear();
+          event_listeners.get("animationframe")?.clear();
         }
         animationerrors.splice(0, animationerrors.length)
       });
@@ -927,6 +927,7 @@ const nolib = {
       let updatepublish = {};
       const update_args = (graph, args, lib: Lib) => {
         const graphid = typeof graph === "string" ? graph : graph.id;
+        console.log("update", graphid, args)
         let prevargs = nodysseus.state.get(graphid);
 
         if (prevargs === undefined) {
@@ -972,7 +973,7 @@ const nolib = {
           return []
         }).value
       const get_edge_out = get_edge
-      const get_args = (graph) => nodysseus.state.get(typeof graph === "string" ? graph : graph.id) ?? {};
+      const get_args = (graph) => (console.log("get", typeof graph === "string" ? graph : graph.id, nodysseus.state.get(typeof graph === "string" ? graph : graph.id)), nodysseus.state.get(typeof graph === "string" ? graph : graph.id)) ?? {};
       const get_graph = (graph: string | Graph): Graph | Promise<Graph> | undefined => wrapPromise(
         nodysseus.refs.get(typeof graph === "string" ? graph : graph.id))
           .then(g => {
@@ -1320,6 +1321,7 @@ const nolib = {
         const return_result = (_lib: Lib, args: Args) => {
           args = args && !isArgs(args) ? new Map(Object.entries(args)) : args;
           const runnable = edgemap[runedge] ? {...edgemap[runedge]} : runedge === "value" && !value && display ? display : _lib.data.no.of(undefined);
+          args && console.log(runnable.env.data.get("__graphid").value, args)
           if(isRunnable(runnable) && !isError(runnable) && !isValue(runnable) && !isApRunnable(runnable)) {
             runnable.env = combineEnv(runnable.env.data, newEnv(args, _lib.data.no.of(runedge === "display" ? "display" : "value"), runnable.env))
           }
