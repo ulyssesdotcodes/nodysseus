@@ -483,9 +483,6 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
         const graphid = (graphArgs.data.get("__graphid") as {value: string}).value;
         const newgraphid = `${graphid}/${node.id}`
         const newGraphArgs = newEnv(new Map().set("__graphid", lib.data.no.of(newgraphid)), graphArgs._output);
-        if(newGraphArgs.data.get("__graphid") === undefined) {
-          debugger;
-        }
 
         return wrapPromise(lib.data.no.runtime.get_ref(node.ref)).then(node_ref => {
           if (!node_ref) {
@@ -521,9 +518,6 @@ const create_data = (node_id, graph, graphArgs: Env, lib: Lib, options: RunOptio
     const newgraphargs = graphArgs._output ? mergeEnv(new Map().set("_output", undefined), graphArgs) : graphArgs;
     // delete newgraphargs._output
     //
-    if((newgraphargs.data.get("__graphid") as {value: string})?.value === undefined) {
-      debugger;
-    }
 
     // grab inputs from state
     for (let i = 0; i < inputs.length; i++) {
@@ -927,7 +921,6 @@ const nolib = {
       let updatepublish = {};
       const update_args = (graph, args, lib: Lib) => {
         const graphid = typeof graph === "string" ? graph : graph.id;
-        console.log("update", graphid, args)
         let prevargs = nodysseus.state.get(graphid);
 
         if (prevargs === undefined) {
@@ -973,7 +966,8 @@ const nolib = {
           return []
         }).value
       const get_edge_out = get_edge
-      const get_args = (graph) => (console.log("get", typeof graph === "string" ? graph : graph.id, nodysseus.state.get(typeof graph === "string" ? graph : graph.id)), nodysseus.state.get(typeof graph === "string" ? graph : graph.id)) ?? {};
+
+      const get_args = (graph) => nodysseus.state.get(typeof graph === "string" ? graph : graph.id) ?? {};
       const get_graph = (graph: string | Graph): Graph | Promise<Graph> | undefined => wrapPromise(
         nodysseus.refs.get(typeof graph === "string" ? graph : graph.id))
           .then(g => {
@@ -1321,7 +1315,6 @@ const nolib = {
         const return_result = (_lib: Lib, args: Args) => {
           args = args && !isArgs(args) ? new Map(Object.entries(args)) : args;
           const runnable = edgemap[runedge] ? {...edgemap[runedge]} : runedge === "value" && !value && display ? display : _lib.data.no.of(undefined);
-          args && console.log(runnable.env.data.get("__graphid").value, args)
           if(isRunnable(runnable) && !isError(runnable) && !isValue(runnable) && !isApRunnable(runnable)) {
             runnable.env = combineEnv(runnable.env.data, newEnv(args, _lib.data.no.of(runedge === "display" ? "display" : "value"), runnable.env))
           }
