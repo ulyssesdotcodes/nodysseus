@@ -282,7 +282,7 @@ export const combineEnv = (data: Args, env: Env, node_id?: string, _output?: str
   if(isEnv(data)) {
     throw new Error("Can't create an env with env data")
   }
-  if(!data.has("__graphid")) {
+  if(!data?.has("__graphid")) {
     data.set("__graphid", env.data.get("__graphid"))
   }
   return ({__kind: "env", data, env, node_id, _output})
@@ -294,7 +294,7 @@ export const mergeEnv = (data: Args, env: Env): Env => {
   }
 
   // Has to be .has because we want to preserve "_output" being set to undefined
-  const _output: false | Result | ConstRunnable = data.has("_output") ? data.get("_output") : false;
+  const _output: false | Result | ConstRunnable = isArgs(data) && data.has("_output") ? data.get("_output") : false;
 
   return data.size > 0 ? {
   __kind: "env", 
