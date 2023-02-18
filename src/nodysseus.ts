@@ -1,10 +1,12 @@
 import set from "just-safe-set";
 import loki from "lokijs";
 import { ancestor_graph, ispromise, isWrappedPromise, mapMaybePromise, node_args, WrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node, runnableId } from "./util"
-import { isNodeGraph, Graph, LokiT, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib, Args, isArgs, ResolvedArgs, RunOptions, isError } from "./types"
+import { isNodeGraph, Graph, LokiT, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP } from "./types"
 import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util"
 import generic from "./generic.js";
 import { create_fn, expect, now } from "./externs";
+
+const generic_nodes = generic.nodes;
 
 const Nodysseus = (): NodysseusStore => {
   const isBrowser = typeof window !== 'undefined';
@@ -60,7 +62,7 @@ export const lokidbToStore = <T>(collection: loki.Collection<LokiT<T>>): Store<T
   get: (id: string) => collection.by("id", id)?.data,
   remove: (id: string) => {
     const existing = collection.by("id", id)
-    if(existing){
+    if(existing !== undefined){
       collection.remove(existing);
     }
   },
@@ -109,7 +111,7 @@ export const nodysseus_get = (obj: Record<string, any> | Args | Env, propsArg: s
   var prop;
   if (props.length === 0) {
     if(typeof propsArg == 'string') {
-      if(/\./.test(propsArg)){
+      if(propsArg.includes(".")){
         props = propsArg.split('.')
       } else {
         props.push(propsArg)
@@ -337,38 +339,41 @@ const node_script = (node, nodeArgs: Args, lib: Lib, options: RunOptions): Resul
     }
 
     const name = node.name ? node.name.replace(/\W/g, "_") : node.id;
-    const fn = lib.data.no.runtime.get_fn(node.id, name, `_lib, _node, _graph_input_value${orderedargs}`, node.script ?? node.value);
+    const fn = lib.data.no.runtime.get_fn(node.id, name, orderedargs, node.script ?? node.value);
 
     return wrapPromiseAll(Object.values(data))
       .then(promisedData => lib.data.no.of(fn.apply(null, [lib.data, node, data, ...promisedData]))).value
 }
 
 const node_extern = (node: RefNode, data: Args, graphArgs: Env, lib: Lib, options: RunOptions) => {
-    const extern = nodysseus_get(lib.data, node.value, lib);
+    const libExternFn = node.value.startsWith("extern.") && node.value.substring(7);
+    const extern = libExternFn ? lib.data.extern[libExternFn] : nodysseus_get(lib.data, node.value, lib);
     let argspromise = false;
+    let argColonIdx;
     const args = typeof extern === 'function' ?  resolve_args(data, lib, options) :  extern.args.map(arg => {
-        arg = arg.split(": ")[0]
-        let newval;
-        if (arg === '_node') {
-            newval = node 
-        } else if (arg === '_node_args') {
-          newval = extern.rawArgs ? data : resolve_args(data, lib, options)
-          newval = ispromise(newval) ? newval.then((v: Result | undefined) => isError(v) ? v : v?.value)  : extern.rawArgs ? newval : newval.value
-        } else if (arg == '_lib') {
-            newval = lib;
-        } else if (arg == '_graph_input_value') {
-            newval = graphArgs;
-        } else if (arg == '_runoptions') {
-            newval = options;
-        } else if (arg == '__graphid') {
-            newval = nodysseus_get(graphArgs, "__graphid", lib);
-        } else {
-            newval = extern.rawArgs ? data.get(arg) : run_runnable(data.get(arg), lib, new Map(), options)
-            newval = ispromise(newval) ? newval.then((v: Result) => isError(v) ? v : v?.value) : newval && !extern.rawArgs ? newval.value : newval;
-        }
+      argColonIdx = arg.indexOf(":")
+      arg = argColonIdx >= 0 ? arg.substring(0, argColonIdx) : arg;
+      let newval;
+      if (arg === '_node') {
+          newval = node 
+      } else if (arg === '_node_args') {
+        newval = extern.rawArgs ? data : resolve_args(data, lib, options)
+        newval = ispromise(newval) ? newval.then((v: Result | undefined) => isError(v) ? v : v?.value)  : extern.rawArgs ? newval : newval.value
+      } else if (arg == '_lib') {
+          newval = lib;
+      } else if (arg == '_graph_input_value') {
+          newval = graphArgs;
+      } else if (arg == '_runoptions') {
+          newval = options;
+      } else if (arg == '__graphid') {
+          newval = (graphArgs.data.get("__graphid") as {value: string}).value;
+      } else {
+          newval = extern.rawArgs ? data.get(arg) : run_runnable(data.get(arg), lib, new Map(), options)
+          newval = ispromise(newval) ? newval.then((v: Result) => isError(v) ? v : v?.value) : newval && !extern.rawArgs ? newval.value : newval;
+      }
 
-        argspromise ||= ispromise(newval);
-        return newval;
+      argspromise ||= ispromise(newval);
+      return newval;
     });
 
     argspromise ||= ispromise(args)
@@ -418,7 +423,7 @@ const node_data = (nodeArgs, graphArgs, lib, options) => {
 const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, args: ConstRunnable, lib, options: RunOptions): FunctorRunnable | Promise<FunctorRunnable> => {
   const argsval = args && run_runnable(args, lib, undefined, options)
   const ret = fn && mapMaybePromise(argsval, args => isError(args) ? args : lib.data.no.of({
-    __kind: "functor",
+    __kind: FUNCTOR,
     fnargs: args ? [...new Set(args.value ? Object.keys(args.value).map(k => k.includes(".") ? k.substring(0, k.indexOf('.')) : k) : [])] : [],
     env: fn.env,
     graph: fn.graph,
@@ -428,17 +433,21 @@ const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, args:
   return ret;
 }
 
-const run_runnable = (runnable: Runnable, lib: Lib, args: Map<string, any> = new Map(), options: RunOptions = {}): Result | Promise<Result> =>  {
-  const result = isConstRunnable(runnable)
-    ? run_graph(runnable.graph, runnable.fn, mergeEnv(args, runnable.env), runnable.lib, options)
-    : isApRunnable(runnable)
-    ? run_ap_runnable(runnable, args, lib)
-    : isFunctorRunnable(runnable)
-    ? run_functor_runnable(runnable, args, lib, options)
-    : runnable
+const run_runnable = (runnable: Runnable | undefined, lib: Lib, args: Map<string, any> = new Map(), options: RunOptions = {}): Result | Promise<Result> | undefined =>  {
+  if(runnable === undefined || isError(runnable)) {
+    return runnable as Result;
+  }
 
+  switch(runnable.__kind){
+    case CONST:
+      return run_graph((runnable as ConstRunnable).graph, runnable.fn, mergeEnv(args, runnable.env), runnable.lib, options);
+    case AP:
+      return run_ap_runnable(runnable, args, lib)
+    case FUNCTOR:
+      return run_functor_runnable(runnable, args, lib, options)
+  }
 
-  return result;
+  return runnable;
 }
 
 
@@ -452,7 +461,7 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
       } else if (isApRunnable(node)) {
         throw new Error("Unexpected node")
       } else {
-        const graphid = nodysseus_get(graphArgs, "__graphid", lib)?.value;
+        const graphid = (graphArgs.data.get("__graphid") as {value: string}).value;
         const nodegraphargs: Env = node.env ?? newEnv(new Map(), graphArgs._output)
         nodegraphargs.data.set("__graphid", graphid ?? lib.data.no.of(node.graph.id));
         lib = mergeLib(node.lib, lib)
@@ -471,9 +480,12 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
         }
 
 
-        const graphid = nodysseus_get(graphArgs, "__graphid", lib).value;
+        const graphid = (graphArgs.data.get("__graphid") as {value: string}).value;
         const newgraphid = `${graphid}/${node.id}`
         const newGraphArgs = newEnv(new Map().set("__graphid", lib.data.no.of(newgraphid)), graphArgs._output);
+        if(newGraphArgs.data.get("__graphid") === undefined) {
+          debugger;
+        }
 
         return wrapPromise(lib.data.no.runtime.get_ref(node.ref)).then(node_ref => {
           if (!node_ref) {
@@ -508,12 +520,16 @@ const create_data = (node_id, graph, graphArgs: Env, lib: Lib, options: RunOptio
     //TODO: remove
     const newgraphargs = graphArgs._output ? mergeEnv(new Map().set("_output", undefined), graphArgs) : graphArgs;
     // delete newgraphargs._output
+    //
+    if((newgraphargs.data.get("__graphid") as {value: string})?.value === undefined) {
+      debugger;
+    }
 
     // grab inputs from state
     for (let i = 0; i < inputs.length; i++) {
         input = inputs[i];
 
-        const val: ConstRunnable = {__kind: "const", graph, fn: input.from, env: newgraphargs, lib}
+        const val: ConstRunnable = {__kind: CONST, graph, fn: input.from, env: newgraphargs, lib}
         // Check for duplicates
         if(data.has(input.as)) {
             const as_set = new Set()
@@ -562,10 +578,10 @@ const run_graph = (graph: Graph | (Graph & {nodes: Array<NodysseusNode>, edges: 
 
           const data = create_data(node_id, newgraph, env, lib, options);
 
-          if(options.profile && !nolib.no.runtime.get_parentest(nodysseus_get(env, "__graphid", lib).value)) {
+          if(options.profile && !nolib.no.runtime.get_parentest((env.data.get("__graphid") as {value: string}).value)) {
             const edgePath = edge => graph.edges[edge] ? [graph.edges[edge].as].concat(edgePath(graph.edges[edge].to)) : []
             let path = edgePath(node_id).join(" -> ");
-            const id = `${nodysseus_get(env, "__graphid", lib).value}/${node.id} (${node.ref}) - ${path}`;
+            const id = `${(env.data.get("__graphid") as {value: string}).value}/${node.id} (${node.ref}) - ${path}`;
             if(options?.profile && id) {
               console.time(id)
               performance.mark(`${id} - begin`)
@@ -599,8 +615,8 @@ const run_graph = (graph: Graph | (Graph & {nodes: Array<NodysseusNode>, edges: 
 const run_functor_runnable = (runnable: FunctorRunnable, args: Args, lib: Lib, options: RunOptions): Result | Promise<Result> => {
   const execArgs: Args = new Map(runnable.fnargs?.map(k => [k, nodysseus_get(args, k, lib)]) ?? []);
   const newRunnable: ConstRunnable = {
-    __kind: "const",
-    env: combineEnv(execArgs ?? new Map(), runnable.env, "functor runnable" + runnable.fn),
+    __kind: CONST,
+    env: combineEnv((execArgs ?? new Map()).set("__graphid", runnable.env.data.get("__graphid")), runnable.env, "functor runnable" + runnable.fn),
     fn: runnable.fn,
     graph: runnable.graph,
     lib: runnable.lib
@@ -615,7 +631,7 @@ const run_ap_runnable = (runnable: ApRunnable, args: Args, lib: Lib): Result | P
     .map(rfn => run_runnable(
       rfn,
       runnable.lib,
-      execArgs?.value ? new Map(Object.entries(execArgs.value).map(kv => [kv[0], lib.data.no.of(kv[1])])) : new Map(),
+      (execArgs?.value ? new Map(Object.entries(execArgs.value).map(kv => [kv[0], lib.data.no.of(kv[1])])) : new Map()).set("__graphid", rfn.env.data.get("__graphid")),
       {}
     ))
     return Array.isArray(runnable.fn) ? wrapPromiseAll(ret.map(v => wrapPromise(v))) : wrapPromise(ret[0]);
@@ -640,7 +656,7 @@ const getorset = (map, id, value_fn=undefined) => {
 }
 
 const initStore = (store: NodysseusStore | undefined = undefined) => {
-  if(store) {
+  if(store !== undefined) {
     nodysseus = store;
   } else if(!nodysseus) {
     nodysseus = Nodysseus();
@@ -673,7 +689,7 @@ export const run = (node: Runnable | InputRunnable, args: ResolvedArgs | Record<
   const res = run_runnable(
     isRunnable(node) 
       ? {...node, lib: node.lib ? mergeLib(node.lib, _lib) :  _lib}
-      : {...node, __kind: "const", env: node.env ?? newEnv(new Map().set("__graphid", _lib.data.no.of(node.graph.id))), lib: mergeLib(node.lib, _lib)
+      : {...node, __kind: CONST, env: node.env ?? newEnv(new Map().set("__graphid", _lib.data.no.of(node.graph.id))), lib: mergeLib(node.lib, _lib)
         // mergeEnv(
         //   Object.fromEntries(Object.entries(args ?? {}).map(e => [e[0], _lib.data.no.of(e[1])])), 
         //   node.env ?? newEnv({__graphid: _lib.data.no.of(node.graph.id)})
@@ -688,10 +704,10 @@ const nolib = {
     of: <T>(value): Result | Promise<Runnable> => ispromise(value) ? value.then(nolib.no.of) : isValue(value) ? value : { __kind: "result", value: value},
     arg: (node, target: Env, lib: Lib, value, options: RunOptions) => {
       let valuetype, nodevalue;
-      if(value.includes(": ")) {
-        const typedvalue = value.split(": ");
-        nodevalue = typedvalue[0];
-        valuetype = typedvalue[1];
+      let colonIdx = value.indexOf(":")
+      if(colonIdx >= 0) {
+        nodevalue = value.substring(0, colonIdx);
+        valuetype = value.substring(colonIdx + 2)
       } else {
         nodevalue = value;
       }
@@ -721,7 +737,7 @@ const nolib = {
         : nodevalue === "_node"
         ? node
         : nodevalue.startsWith("_node.")
-        ? nodysseus_get(node, nodevalue.substring("_node.".length), lib)
+        ? node[nodevalue.substring("_node.".length)]
         : nodevalue.startsWith("_lib.")
         ? nodysseus_get(lib.data, nodevalue.substring("_lib.".length), lib)
         : nodevalue === "_args"
@@ -756,7 +772,7 @@ const nolib = {
 
       const polyfillRequestAnimationFrame = typeof window !== "undefined" ? window.requestAnimationFrame : (fn => setTimeout(fn, 16))
 
-      Object.values(generic.nodes).forEach(graph => {
+      Object.values(generic_nodes).forEach(graph => {
         if(isNodeGraph(graph)) {
           graph.edges_in = Object.values(graph.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
         }
@@ -903,9 +919,6 @@ const nolib = {
         if (parent) {
           lib.data.no.runtime.update_graph(parent, lib);
         } else {
-          if(addToStore) {
-            // nodysseus.refs.add(graph.id, graph)
-          }
           publish("graphchange", graph, lib);
           publish("graphupdate", graph, lib);
         }
@@ -935,11 +948,11 @@ const nolib = {
       };
 
       const get_ref = (id, otherwise) => {
-        return generic.nodes[id] ?? nodysseus.refs.get(id, otherwise && {...otherwise, id, nodes: {...otherwise.nodes, [otherwise.out ?? "out"]: {...otherwise.nodes[otherwise.out ?? "out"], name: id}}})
+        return generic_nodes[id] ?? nodysseus.refs.get(id, otherwise && {...otherwise, id, nodes: {...otherwise.nodes, [otherwise.out ?? "out"]: {...otherwise.nodes[otherwise.out ?? "out"], name: id}}})
       }
       const add_ref = (graph: Node) => {
         return (Array.isArray(graph) ? graph : [graph]).map(graph => {
-          if(!generic.nodes[graph.id]) {
+          if(generic_nodes[graph.id] === undefined) {
             return nodysseus.refs.add(graph.id, graph)
           }
         })[0]
@@ -950,10 +963,11 @@ const nolib = {
       const get_edge = (graph, from) => wrapPromise(get_graph(graph)).then(g => g?.edges[from]).value
       const get_edges_in = (graph, id) => wrapPromise(get_graph(graph))
         .then(g => {
-          if(g.edges_in === undefined) {
+          const idEdgesIn = g.edges_in?.[id];
+          if(idEdgesIn !== undefined) {
+            return Object.values(idEdgesIn)
+          } else if(g.edges_in === undefined) {
             return Object.values(g.edges).filter(e => e.to === id)
-          } else if(g.edges_in[id] !== undefined) {
-            return Object.values(g.edges_in[id])
           }
           return []
         }).value
@@ -1020,7 +1034,7 @@ const nolib = {
               fn: new Function( `return function _${name.replace(
                   /(\s|\/)/g,
                   "_"
-                )}(${orderedargs}){${script}}`
+                )}(_lib, _node, _graph_input_value${orderedargs}){${script}}`
               )(),
               // ` this comment is here because my syntax highlighter is not well
             });
@@ -1099,7 +1113,7 @@ const nolib = {
             delete newnodes[id]
 
             nodysseus.refs.remove_node(graphId, id)
-            if(changeEdges) {
+            if(changeEdges !== undefined) {
               child_edges.map(e => nodysseus.refs.remove_edge(graphId, e))
               nodysseus.refs.remove_edge(graphId, parent_edge)
               new_child_edges.map(e => nodysseus.refs.add_edge(graphId, e))
@@ -1155,7 +1169,7 @@ const nolib = {
             .then(r => resolveRunnable(isError(r) ? r : r.value)) : wrapPromise(runnable)
 
         const apRunnable = (fnRunnable: FunctorRunnable | Array<FunctorRunnable>): ApRunnable => ({
-            __kind: "ap",
+            __kind: AP,
             fn: Array.isArray(fnRunnable) ? fnRunnable.filter(v => v) : fnRunnable,
             args,
             lib
@@ -1310,7 +1324,7 @@ const nolib = {
             runnable.env = combineEnv(runnable.env.data, newEnv(args, _lib.data.no.of(runedge === "display" ? "display" : "value"), runnable.env))
           }
 
-          if(lib) {
+          if(lib !== undefined) {
             runnable.lib = _lib;
           }
 
@@ -1324,7 +1338,7 @@ const nolib = {
             // : _lib.data.no.of(undefined)
 
           if (edgemap.subscribe) {
-            const graphid = nodysseus_get(subscribe.env, "__graphid", _lib).value;
+            const graphid = (subscribe.env.data.get("__graphid") as {value: string}).value;
             const newgraphid = graphid + "/" + _node.id;
 
 

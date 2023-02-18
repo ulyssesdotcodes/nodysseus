@@ -149,6 +149,9 @@ export const pzobj: {
                 currentEvent = false
             })
             hlib.panzoom.instance.moveTo(window.innerWidth * 0, window.innerHeight * 0.5);
+            hlib.panzoom.instance.on('transform', (e) => {
+
+            })
         });
         return () => { cancelAnimationFrame(init); (hlib.panzoom.instance as pz.PanZoom)?.dispose(); }
     }
@@ -478,25 +481,28 @@ export const result_subscription = (dispatch, {display_graph_id, norun}) => {
     const animframes = {}
 
     const noderun_listener = (data) => {
-        if (data.graph.id === display_graph_id && !timeouts[data.node_id]) {
+        if (data.graph.id === display_graph_id){
+          const node_id = data.node_id;
+          const timeout = timeouts[node_id]
+          const nodeanimframe = animframes[node_id];
+          if(!timeout && !nodeanimframe) {
             const el = document.querySelector(`#node-editor-${data.node_id.replaceAll("/", "_")} .shape`)
             if(el) {
-                timeouts[data.node_id] && clearTimeout(timeouts[data.node_id])
-                animframes[data.node_id] && cancelAnimationFrame(animframes[data.node_id])
-                el.classList.remove("flash-transition-out");
-                el.classList.add("flash-transition")
-                animframes[data.node_id] = requestAnimationFrame(() => {
-                    animframes[data.node_id] = false;
-                    if(timeouts[data.node_id]) {
-                        el.classList.add("flash-transition-out")
-                        el.classList.remove("flash-transition")
-                    }
-                })
-                timeouts[data.node_id] = setTimeout(() => {
-                    timeouts[data.node_id] = false
-                    el.classList.remove("flash-transition-out");
-                }, 1000)
+              el.classList.remove("flash-transition-out");
+              el.classList.add("flash-transition")
+              animframes[node_id] = requestAnimationFrame(() => {
+                  animframes[node_id] = false;
+                  if(timeouts[node_id]) {
+                      el.classList.add("flash-transition-out")
+                      el.classList.remove("flash-transition")
+                  }
+              })
+              timeouts[node_id] = setTimeout(() => {
+                  timeouts[node_id] = false
+                  el.classList.remove("flash-transition-out");
+              }, 1000)
             }
+          }
         }
     }
 

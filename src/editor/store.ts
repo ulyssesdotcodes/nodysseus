@@ -10,6 +10,9 @@ import { mapMaybePromise, wrapPromise } from "../util";
 import { hlib } from "./util";
 import Loki from "lokijs"
 
+const generic_nodes = generic.nodes;
+const generic_node_ids = new Set(Object.keys(generic_nodes));
+
 export const ydocStore = async (persist: false | string = false, update = undefined) => {
   const rootDoc = new Y.Doc();
   const ydoc = new Y.Doc();
@@ -19,7 +22,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
   const simpleYMap = simpleYDoc.getMap();
 
 
-  if(update) {
+  if(update !== undefined) {
     ymap.observeDeep(events =>{
       events.forEach((event: Y.YMapEvent<typeof ymap>) => {
       if(!event.transaction.local || event.transaction.origin === undoManager) {
@@ -103,16 +106,16 @@ export const ydocStore = async (persist: false | string = false, update = undefi
   }
 
   const add = (id, data) => {
-    if(generic.nodes[id]) {
-      generic.nodes[id].edges_in = Object.values(generic.nodes[id].edges).reduce((acc: EdgesIn, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
-      simpleYMap.set(id, generic.nodes[id])
-      return generic.nodes[id];
+    if(generic_node_ids.has(id)) {
+      generic_nodes[id].edges_in = Object.values(generic_nodes[id].edges).reduce((acc: EdgesIn, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
+      simpleYMap.set(id, generic_nodes[id])
+      return generic_nodes[id];
     } else if(id && !id.startsWith("_") && Object.keys(data).length > 0) {
       let current = ymap.get(id);
       let found = !!current?.guid; // && !!current.getMap().get("id");
-      if(found) {
+      if(found !== undefined) {
         return wrapPromise(current.isLoaded ? true : (current.load(), current.whenLoaded)).then(_ => {
-          const infomap = generic.nodes[id] ? current : current.getMap();
+          const infomap = generic_nodes[id] ? current : current.getMap();
           setMapFromGraph(infomap, data)
           updateSimple(id)
           return simpleYMap.get(id)
@@ -140,7 +143,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
   }
 
   const add_node = (graphId, node) => {
-    if(generic.nodes[graphId]) return;
+    if(generic_node_ids.has(graphId)) return;
 
     ymap.get(graphId).transact(() => {
       (ymap.get(graphId).getMap().get("nodes") as YMap<any>).set(node.id, node)
@@ -150,7 +153,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
   }
 
   const remove_node = (graphId, node) => {
-    if(generic.nodes[graphId]) return;
+    if(generic_node_ids.has(graphId)) return;
 
     ymap.get(graphId).transact(() => {
       (ymap.get(graphId).getMap().get("nodes") as YMap<any>).delete(typeof node === "string" ? node : node.id)
@@ -160,7 +163,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
   }
 
   const add_edge = (graphId, edge) => {
-    if(generic.nodes[graphId]) return;
+    if(generic_nodes[graphId]) return;
 
     ymap.get(graphId).transact(() => {
       (ymap.get(graphId).getMap().get("edges") as YMap<any>).set(edge.from, edge)
@@ -177,7 +180,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
     updateSimple(graphId)
   }
 
-  if(persist) {
+  if(persist !== undefined) {
     const prevdoc = new Y.Doc();
 
     const indexeddbProvider = new IndexeddbPersistence(`${persist}-subdocs`, ydoc)
@@ -187,7 +190,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
       Promise.all([...prevdoc.getMap().keys()].map(k => {
         const addedkey = `__${k}__added_5`
         const prevdocmap = prevdoc.getMap().get(k) as YMap<any>;
-        if(k.startsWith("_") || k === "" || generic.nodes[k] || prevdoc.getMap().get(addedkey)) {
+        if(k.startsWith("_") || k === "" || generic_nodes[k] || prevdoc.getMap().get(addedkey)) {
         } else if ((prevdoc.getMap().get(k) as Graph).id) {
           // convert old maps to ymap
           console.log(`old maps ${k}`)
@@ -217,7 +220,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
     undoManager.on('stack-item-popped', i => console.log(i))
   }
 
-  // if(false) {
+  // if(false !== undefined) {
   const refIdbs = {};
   const refRtcs = {};
   let rdocrtc;
@@ -394,10 +397,14 @@ export const ydocStore = async (persist: false | string = false, update = undefi
   // }
 
   const get = (id, otherwise) => {
-    const genericGraph = generic.nodes[id];
-    let simpleValue = ((simpleYMap.get(id) as any)?.id || ymap.get(id)?.isLoaded) && simpleYMap.get(id);
-    const ymapvalue = !simpleValue && (ymap.get(id)?.load(), ymap.get(id)?.whenLoaded); 
-    return genericGraph ?? mapMaybePromise((simpleYMap.get(id) as any)?.id || ymap.get(id)?.isLoaded 
+    if(generic_node_ids.has(id)) {
+      return generic_nodes[id];
+    }
+
+    let simpleValue: Graph | undefined = ((simpleYMap.get(id) as any)?.id || ymap.get(id)?.isLoaded) && simpleYMap.get(id) as Graph;
+    const isYMapLoaded = !simpleValue && ymap.get(id)?.isLoaded;
+    const ymapvalue = !simpleValue && !isYMapLoaded && (ymap.get(id)?.load(), ymap.get(id)?.whenLoaded); 
+    return mapMaybePromise(simpleValue?.id || isYMapLoaded
       ? simpleValue
       : ymapvalue?.then(d => d.getMap().toJSON()), (res: {id?: string}) => {
         if((!res || Object.keys(res).length === 0) && otherwise) {
@@ -411,7 +418,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
 
         if(!simpleValue) {
           updateSimple(id);
-          simpleValue = simpleYMap.get(id);
+          simpleValue = simpleYMap.get(id) as Graph;
         }
 
         return simpleValue ?? res;
@@ -437,7 +444,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
     },
     removeAll: () => {},
     all: () => {
-      const keys = [...ymap.keys(), ...Object.keys(generic.nodes)];
+      const keys = [...ymap.keys(), ...Object.keys(generic_nodes)];
       return keys//.map(v => get(v))
     },
     undo: persist && (() => undoManager.undo()),
@@ -472,7 +479,7 @@ export const yNodyStore = async (): Promise<NodysseusStore> => {
       }
 
       const updatedgraph = id ?? event.currentTarget.get("id");
-      if(updatedgraph) {
+      if(updatedgraph !== undefined) {
         requestAnimationFrame(() =>  {
           console.log(updatedgraph);
           console.log(nolib.no.runtime.get_ref(updatedgraph))

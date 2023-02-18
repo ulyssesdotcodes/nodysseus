@@ -1,12 +1,15 @@
 import { Edge, Graph, GraphNode, NodysseusNode, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable, isEnv, isRunnable, isValue, Lib, isLib, Env, Args, ValueNode, Result, isArgs, isConstRunnable, isApRunnable, isError } from "./types";
-import extend from "just-extend";
+
+export const WRAPPED_KIND = "wrapped";
+type WrappedKind = "wrapped";
 
 export const ispromise = <T>(a: any): a is Promise<T> => a && typeof a.then === 'function' && !isWrappedPromise(a);
-export const isWrappedPromise = <T>(a: any): a is WrappedPromise<T> => a && a.__kind === "wrapped";
+export const isWrappedPromise = <T>(a: any): a is WrappedPromise<T> => a && a.__kind === WRAPPED_KIND;
 export const isgraph = g => g && g.out !== undefined && g.nodes !== undefined && g.edges !== undefined
 
+
 export type WrappedPromise<T> = {
-  __kind: "wrapped"
+  __kind: WrappedKind,
   then: <S>(fn: (t: FlattenPromise<T>) => S) => WrappedPromise<S>,
   value: T,
 }
@@ -28,7 +31,7 @@ const tryCatch = (fn, t, c) => {
 export const wrapPromise = <T>(t: T, c?: <E extends Error, S>(fn: (e?: E) => S) => S): WrappedPromise<FlattenWrappedPromise<T>> => 
   (isWrappedPromise(t) ? t
     : {
-      __kind: "wrapped",
+      __kind: WRAPPED_KIND,
       then: <S>(fn: (t: FlattenPromise<T>) => S) => wrapPromise(ispromise(t) 
         ? c ? t.then(fn as (value: unknown) => S | PromiseLike<S>).catch(c)
           : t.then(fn as (value: unknown) => S | PromiseLike<S>) 
@@ -277,6 +280,9 @@ export const newEnv = (data: Args, _output?, env?: Env): Env => ({__kind: "env",
 export const combineEnv = (data: Args, env: Env, node_id?: string, _output?: string): Env => {
   if(isEnv(data)) {
     throw new Error("Can't create an env with env data")
+  }
+  if(!data.has("__graphid")) {
+    data.set("__graphid", env.data.get("__graphid"))
   }
   return ({__kind: "env", data, env, node_id, _output})
 }

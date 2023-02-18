@@ -79,6 +79,7 @@ export type InputRunnable = Omit<BaseRunnable, "__kind" | "env" | "lib"> & {
   lib?: Lib
 };
 
+export const AP = "ap"
 export type ApRunnable = {
   __kind: "ap",
   fn: FunctorRunnable | Array<FunctorRunnable>,
@@ -86,10 +87,12 @@ export type ApRunnable = {
   lib: Lib
 }
 
+export const CONST = "const"
 export type ConstRunnable = BaseRunnable & {
   __kind: "const"
 }
 
+export const FUNCTOR = "functor"
 export type FunctorRunnable = BaseRunnable & {
   __kind: "functor",
   fnargs: Array<string>
@@ -104,9 +107,9 @@ export const isValue = (r: Runnable): r is NonErrorResult => {
   const result = r as Result;
   return !isError(result) && (result)?.__kind === "result";
 }
-export const isConstRunnable = (r: Runnable): r is ConstRunnable => !(r instanceof Error) && r?.__kind === "const";
-export const isApRunnable = (r: Runnable): r is ApRunnable => !(r instanceof Error) && r?.__kind === "ap";
-export const isFunctorRunnable = (r: Runnable): r is FunctorRunnable => !(r instanceof Error) && r?.__kind === "functor";
+export const isConstRunnable = (r: Runnable): r is ConstRunnable => !(r instanceof Error) && r?.__kind == CONST;
+export const isApRunnable = (r: Runnable): r is ApRunnable => !(r instanceof Error) && r?.__kind == AP;
+export const isFunctorRunnable = (r: Runnable): r is FunctorRunnable => !(r instanceof Error) && r?.__kind == FUNCTOR;
 export const isInputRunnable = (r: Runnable | InputRunnable) => !Object.hasOwn(r, "__kind") && Object.hasOwn(r, "fn") && Object.hasOwn(r, "graph")
 
 export type Lib = {
