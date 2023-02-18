@@ -631,7 +631,7 @@ const run_ap_runnable = (runnable: ApRunnable, args: Args, lib: Lib): Result | P
     .map(rfn => run_runnable(
       rfn,
       runnable.lib,
-      (execArgs?.value ? new Map(Object.entries(execArgs.value).map(kv => [kv[0], lib.data.no.of(kv[1])])) : new Map()).set("__graphid", rfn.env.data.get("__graphid")),
+      execArgs?.value ? new Map(Object.entries(execArgs.value).filter(kv => kv[0] !== "__graphid").map(kv => [kv[0], lib.data.no.of(kv[1])])) : new Map(),
       {}
     ))
     return Array.isArray(runnable.fn) ? wrapPromiseAll(ret.map(v => wrapPromise(v))) : wrapPromise(ret[0]);

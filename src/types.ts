@@ -82,7 +82,7 @@ export type InputRunnable = Omit<BaseRunnable, "__kind" | "env" | "lib"> & {
 export const AP = "ap"
 export type ApRunnable = {
   __kind: "ap",
-  fn: FunctorRunnable | Array<FunctorRunnable>,
+  fn: FunctorRunnable | ApRunnable | Array<FunctorRunnable | ApRunnable>,
   args: ConstRunnable,
   lib: Lib
 }
