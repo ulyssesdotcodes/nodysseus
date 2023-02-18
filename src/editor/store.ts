@@ -113,7 +113,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
     } else if(id && !id.startsWith("_") && Object.keys(data).length > 0) {
       let current = ymap.get(id);
       let found = !!current?.guid; // && !!current.getMap().get("id");
-      if(found !== undefined) {
+      if(found !== false) {
         return wrapPromise(current.isLoaded ? true : (current.load(), current.whenLoaded)).then(_ => {
           const infomap = generic_nodes[id] ? current : current.getMap();
           setMapFromGraph(infomap, data)
