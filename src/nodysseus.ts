@@ -1,7 +1,7 @@
 import set from "just-safe-set";
 import loki from "lokijs";
 import { ancestor_graph, ispromise, isWrappedPromise, mapMaybePromise, node_args, WrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node, runnableId } from "./util"
-import { isNodeGraph, Graph, LokiT, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib, Args, isArgs, ResolvedArgs, RunOptions } from "./types"
+import { isNodeGraph, Graph, LokiT, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib, Args, isArgs, ResolvedArgs, RunOptions, isError } from "./types"
 import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util"
 import generic from "./generic.js";
 import { create_fn, expect, now } from "./externs";
@@ -331,7 +331,7 @@ const node_script = (node, nodeArgs: Args, lib: Lib, options: RunOptions): Resul
     for(let i of nodeArgs.keys()) {
         orderedargs += ", " + i;
         if(nodeArgs.has(i)){
-            const graphval = wrapPromise(run_runnable(nodeArgs.get(i), lib, undefined, options)).then(gv => gv?.value);
+            const graphval = wrapPromise(run_runnable(nodeArgs.get(i), lib, undefined, options)).then(gv => isError(gv) ? gv : gv?.value);
             data[i] = graphval;
         }
     }
@@ -353,7 +353,7 @@ const node_extern = (node: RefNode, data: Args, graphArgs: Env, lib: Lib, option
             newval = node 
         } else if (arg === '_node_args') {
           newval = extern.rawArgs ? data : resolve_args(data, lib, options)
-          newval = ispromise(newval) ? newval.then((v: Result | undefined) => v?.value)  : extern.rawArgs ? newval : newval.value
+          newval = ispromise(newval) ? newval.then((v: Result | undefined) => isError(v) ? v : v?.value)  : extern.rawArgs ? newval : newval.value
         } else if (arg == '_lib') {
             newval = lib;
         } else if (arg == '_graph_input_value') {
@@ -364,7 +364,7 @@ const node_extern = (node: RefNode, data: Args, graphArgs: Env, lib: Lib, option
             newval = nodysseus_get(graphArgs, "__graphid", lib);
         } else {
             newval = extern.rawArgs ? data.get(arg) : run_runnable(data.get(arg), lib, new Map(), options)
-            newval = ispromise(newval) ? newval.then((v: Result) => v?.value) : newval && !extern.rawArgs ? newval.value : newval;
+            newval = ispromise(newval) ? newval.then((v: Result) => isError(v) ? v : v?.value) : newval && !extern.rawArgs ? newval.value : newval;
         }
 
         argspromise ||= ispromise(newval);
@@ -389,13 +389,16 @@ const resolve_args = (data: Args, lib: Lib, options: RunOptions): Result | Promi
     const result = {}
     for(let kv of data.entries()){
       result[kv[0]] = run_runnable(kv[1], lib, undefined, options);
+      if(result[kv[0]] instanceof Error) {
+        return result[kv[0]]
+      }
       is_promise = is_promise || !!kv[1] && ispromise(result[kv[0]]);
     }
 
     if (is_promise) {
         const promises = [];
         Object.entries(result).forEach(kv => {
-            promises.push(Promise.resolve(kv[1]).then(pv => [kv[0], (pv as Result)?.value]))
+            promises.push(Promise.resolve(kv[1]).then((pv: Result) => isError(pv) ? pv : [kv[0], pv?.value]))
         })
         return Promise.all(promises).then(Object.fromEntries).then(v => lib.data.no.of(v));
     }
@@ -403,7 +406,7 @@ const resolve_args = (data: Args, lib: Lib, options: RunOptions): Result | Promi
     return lib.data.no.of(Object.fromEntries(
         Object.entries(result)
             .filter(d => !d[0].startsWith("__")) // filter out private variables
-            .map(e => [e[0], (e[1] as Result)?.value])
+            .map((e: [string, Result]) => [e[0], isError(e[1]) ? e[1] : e[1].value])
     ));
 
 }
@@ -414,7 +417,7 @@ const node_data = (nodeArgs, graphArgs, lib, options) => {
 
 const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, args: ConstRunnable, lib, options: RunOptions): FunctorRunnable | Promise<FunctorRunnable> => {
   const argsval = args && run_runnable(args, lib, undefined, options)
-  const ret = fn && mapMaybePromise(argsval, args => lib.data.no.of({
+  const ret = fn && mapMaybePromise(argsval, args => isError(args) ? args : lib.data.no.of({
     __kind: "functor",
     fnargs: args ? [...new Set(args.value ? Object.keys(args.value).map(k => k.includes(".") ? k.substring(0, k.indexOf('.')) : k) : [])] : [],
     env: fn.env,
@@ -442,7 +445,9 @@ const run_runnable = (runnable: Runnable, lib: Lib, args: Map<string, any> = new
 // graph, node, symtable, parent symtable, lib
 const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRunnable>, graphArgs: Env, lib: Lib, options: RunOptions): Result | Promise<Result> => {
     if (isRunnable(node)){
-      if(isValue(node)) {
+      if(isError(node)) {
+        return node;
+      } else if(isValue(node)) {
         return node
       } else if (isApRunnable(node)) {
         throw new Error("Unexpected node")
@@ -650,8 +655,12 @@ export const run = (node: Runnable | InputRunnable, args: ResolvedArgs | Record<
   initStore(options.store ?? nodysseus);
 
   let _lib: Lib = mergeLib(options.lib, newLib(nolib))
-  if(isRunnable(node) && isValue(node)) {
-    return node.value;
+  if(isRunnable(node)) {
+    if(isValue(node)) {
+      return node.value;
+    } else if (isError(node)) {
+      return node;
+    }
   }
 
   isRunnable(node) && isFunctorRunnable(node) && !_lib.data.no.runtime.get_ref(node.graph.id) && _lib.data.no.runtime.change_graph(node.graph)
@@ -671,7 +680,7 @@ export const run = (node: Runnable | InputRunnable, args: ResolvedArgs | Record<
         // )
       }, 
     _lib, args, options);
-  return wrapPromise(res).then(r => r?.value).then(v => isArgs(v) ? Object.fromEntries(v) : v).value;
+  return wrapPromise(res).then(r =>!isError(r) && r?.value).then(v => isArgs(v) ? Object.fromEntries(v) : v).value;
 }
 
 const nolib = {
@@ -736,7 +745,7 @@ const nolib = {
       // }
 
       const retrun = isConstRunnable(ret) && valuetype !== "raw" ? run_runnable(ret, lib, undefined, options) : undefined;
-      const r = ispromise(retrun) ? retrun.then(v => v?.value) : retrun ? isValue(retrun) || isWrappedPromise(retrun) ? retrun?.value : retrun : ret;
+      const r = ispromise(retrun) ? retrun.then(v => isError(v) ? v : v?.value) : retrun ? isValue(retrun) || isWrappedPromise(retrun) ? retrun?.value : retrun : ret;
       return r
     },
     base_graph,
@@ -753,7 +762,7 @@ const nolib = {
         }
       })
 
-      const event_listeners = new Map();
+      const event_listeners = new Map<string, Map<string, Function | Runnable>>();
       const event_listeners_by_graph = new Map();
       const event_data = new Map(); // TODO: get rid of this
       const getorsetgraph = (graph, id) => nodysseus.graphs.get(id) ?? (nodysseus.graphs.add(id, graph), graph)
@@ -852,7 +861,12 @@ const nolib = {
 
       // Adding a listener to listen for errors during animationframe. If there are errors, don't keep running.
       add_listener('grapherror', "__animationerrors", e => animationerrors.push(e));
-      add_listener('graphchange', "__animationerrors", e => animationerrors.splice(0, animationerrors.length));
+      add_listener('graphchange', "__animationerrors", e => {
+        if(animationerrors.length > 0) {
+          event_listeners.get("animationframe").clear();
+        }
+        animationerrors.splice(0, animationerrors.length)
+      });
 
       const remove_listener = (event, listener_id) => {
         if (event === "*") {
@@ -1138,7 +1152,7 @@ const nolib = {
 
         const resolveRunnable = (runnable) => isRunnable(runnable) && isConstRunnable(runnable) ? 
           wrapPromise(run_runnable(runnable, lib))
-            .then(r => resolveRunnable(r.value)) : wrapPromise(runnable)
+            .then(r => resolveRunnable(isError(r) ? r : r.value)) : wrapPromise(runnable)
 
         const apRunnable = (fnRunnable: FunctorRunnable | Array<FunctorRunnable>): ApRunnable => ({
             __kind: "ap",
@@ -1148,7 +1162,7 @@ const nolib = {
           })
 
         return fnResult
-          .then(fnr => Array.isArray(fnr.value) ? fnr.value.map(fnrv => resolveRunnable(fnrv).value) :  resolveRunnable(fnr.value).value)
+          .then(fnr => isError(fnr) ? fnr : Array.isArray(fnr.value) ? fnr.value.map(fnrv => resolveRunnable(fnrv).value) :  resolveRunnable(fnr.value).value)
           .then(fnr => apRunnable(fnr))
           .then(apfn => run ? run_runnable(apfn, lib) : apfn)
           .then(res => lib.data.no.of(res)).value
@@ -1164,7 +1178,9 @@ const nolib = {
       fn: (input, args: Args, lib: Lib, options) => {
         const inputval = run_runnable(input, lib, undefined, options);
         return ispromise(inputval) 
-          ? inputval.then(ival => run_runnable(isArgs(args) ? args.get(ival?.value) : args[ival?.value], lib, undefined, options)) 
+          ? inputval.then(ival => isError(ival) ? ival : run_runnable(isArgs(args) ? args.get(ival?.value) : args[ival?.value], lib, undefined, options)) 
+          : isError(inputval)
+          ? inputval
           : run_runnable(args.get(inputval?.value), lib, undefined, options);
       },
     },
@@ -1180,14 +1196,14 @@ const nolib = {
       args: ["fn", "object", "initial", "_lib", "_runoptions"],
       fn: (fn, object, initial, lib: Lib, options) =>
         wrapPromise(run_runnable(object, lib, undefined, options))
-          .then(ov => ov.value)
+          .then(ov => isError(ov) ? ov : ov.value)
           .then(objectvalue => 
             objectvalue === undefined ? undefined 
             : wrapPromise(run_runnable(fn, lib, undefined, options))
-                .then(fnr => fnr.value)
+                .then(fnr => isError(fnr) ? fnr : fnr.value)
                 .then(fnrunnable =>
                   wrapPromise(run_runnable(initial, lib, undefined, options))
-                    .then(initial => initial.value)
+                    .then(initial => isError(initial) ? initial : initial.value)
                     .then(initial => {
                       const mapobjarr = (mapobj, mapfn, mapinit) =>
                         typeof mapobj.reduce === "function"
@@ -1210,11 +1226,11 @@ const nolib = {
                             return run_runnable(fnrunnable, lib,
                             args, options
                           )}).then(rv => {
-                            const nextValue = rv.value;
-                            if(nextValue instanceof Error) {
+                            if(isError(rv)) {
                               errored = true;
+                              return rv;
                             }
-                            return nextValue;
+                            return rv.value;
                           }).value,
                         initial
                       );
@@ -1290,7 +1306,7 @@ const nolib = {
         const return_result = (_lib: Lib, args: Args) => {
           args = args && !isArgs(args) ? new Map(Object.entries(args)) : args;
           const runnable = edgemap[runedge] ? {...edgemap[runedge]} : runedge === "value" && !value && display ? display : _lib.data.no.of(undefined);
-          if(isRunnable(runnable) && !isValue(runnable) && !isApRunnable(runnable)) {
+          if(isRunnable(runnable) && !isError(runnable) && !isValue(runnable) && !isApRunnable(runnable)) {
             runnable.env = combineEnv(runnable.env.data, newEnv(args, _lib.data.no.of(runedge === "display" ? "display" : "value"), runnable.env))
           }
 
@@ -1318,7 +1334,7 @@ const nolib = {
               args,
               options
             ))
-            .then(subscriptions => subscriptions.value)
+            .then(subscriptions => isError(subscriptions) ? subscriptions : subscriptions.value)
             .then(subscriptions => Object.entries(subscriptions)
                 .forEach(kv => kv[1] &&
                   _lib.data.no.runtime.add_listener(kv[0], 'subscribe-' + newgraphid, kv[1], false, 
@@ -1329,12 +1345,12 @@ const nolib = {
         }
 
         const ret = wrapPromise(run_runnable(lib, _lib, undefined, options))
-            .then(lib => lib?.value)
+            .then(lib => isError(lib) ? lib : lib?.value)
             .then(lib => wrapPromise(argsfn ? run_runnable({
                 ...argsfn,
                 lib: mergeLib(lib, _lib)
               }, _lib, undefined, options) : undefined)
-              .then(args => return_result(mergeLib(lib, _lib), args?.value))).value
+              .then(args => return_result(mergeLib(lib, _lib), isError(args) ? args : args?.value))).value
         return ret;
       },
     },

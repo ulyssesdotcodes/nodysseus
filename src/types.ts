@@ -62,7 +62,9 @@ export type LokiT<T> = {
   data: T
 }
 
-export type Result = { __kind: "result", value: any }
+type NonErrorResult = { __kind: "result", value: any };
+
+export type Result = NonErrorResult | Error
 
 export type BaseRunnable = {
   __kind: unknown,
@@ -95,11 +97,16 @@ export type FunctorRunnable = BaseRunnable & {
 
 export type Runnable =  Result | ApRunnable | FunctorRunnable | ConstRunnable
 
+
 export const isRunnable = (r: any): r is Runnable => isValue(r as Runnable) || isConstRunnable(r as Runnable) || isApRunnable(r as Runnable) || isFunctorRunnable(r as Runnable);
-export const isValue = (r: Runnable): r is Result => (r as Result)?.__kind === "result";
-export const isConstRunnable = (r: Runnable): r is ConstRunnable => r?.__kind === "const";
-export const isApRunnable = (r: Runnable): r is ApRunnable => r?.__kind === "ap";
-export const isFunctorRunnable = (r: Runnable): r is FunctorRunnable => r?.__kind === "functor";
+export const isError = (r: Runnable): r is Error => r instanceof Error;
+export const isValue = (r: Runnable): r is NonErrorResult => {
+  const result = r as Result;
+  return !isError(result) && (result)?.__kind === "result";
+}
+export const isConstRunnable = (r: Runnable): r is ConstRunnable => !(r instanceof Error) && r?.__kind === "const";
+export const isApRunnable = (r: Runnable): r is ApRunnable => !(r instanceof Error) && r?.__kind === "ap";
+export const isFunctorRunnable = (r: Runnable): r is FunctorRunnable => !(r instanceof Error) && r?.__kind === "functor";
 export const isInputRunnable = (r: Runnable | InputRunnable) => !Object.hasOwn(r, "__kind") && Object.hasOwn(r, "fn") && Object.hasOwn(r, "graph")
 
 export type Lib = {

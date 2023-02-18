@@ -1,4 +1,4 @@
-import { Edge, Graph, GraphNode, NodysseusNode, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable, isEnv, isRunnable, isValue, Lib, isLib, Env, Args, ValueNode, Result, isArgs, isConstRunnable, isApRunnable } from "./types";
+import { Edge, Graph, GraphNode, NodysseusNode, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable, isEnv, isRunnable, isValue, Lib, isLib, Env, Args, ValueNode, Result, isArgs, isConstRunnable, isApRunnable, isError } from "./types";
 import extend from "just-extend";
 
 export const ispromise = <T>(a: any): a is Promise<T> => a && typeof a.then === 'function' && !isWrappedPromise(a);
@@ -286,11 +286,13 @@ export const mergeEnv = (data: Args, env: Env): Env => {
     throw new Error("Can't merge a runnable")
   }
 
+  const _output = data.get("_output")
+
   return data.size > 0 ? {
   __kind: "env", 
     data: env?.data?.size > 0 ? new Map([...env.data, ...data, ["_output", undefined]]) : data, 
     env: env.env, 
-    _output: data.has("_output") ? isValue(data.get("_output")) ? (data.get("_output") as Result).value : data.get("_output") : env._output
+    _output: _output ? isValue(_output) ? _output.value : data.get("_output") : env._output
   } : env;
 }
 
