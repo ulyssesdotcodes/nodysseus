@@ -70,24 +70,27 @@ export const ydocStore = async (persist: false | string = false, update = undefi
         }
 
         if(data.nodes)  {
-          let nodesymap = infomap.get("nodes")
+          let nodesymap: YMap<Node> = infomap.get("nodes")
           if(!infomap.get("nodes")?.set) {
             nodesymap = new Y.Map();
             infomap.set("nodes", nodesymap)
           }
           if(Array.isArray(data.nodes)){
+            nodesymap.clear();
             data.nodes.map(n => nodesymap.set(n.id, n)) 
           } else {
-            Object.entries(data.nodes).forEach(kv => nodesymap.set(kv[0], kv[1]))
+            Object.entries(data.nodes).forEach((kv: [string, Node]) => nodesymap.set(kv[0], kv[1]))
           } 
         }
 
         if(data.edges) {
-          let edgesymap = infomap.get("edges")
+          let edgesymap: YMap<Edge> = infomap.get("edges")
           if(!infomap.get("edges")?.set) {
             edgesymap = new Y.Map();
             infomap.set("edges", edgesymap)
           }
+
+          edgesymap.clear();
 
           if(Array.isArray(data.edges)){
             const edgeset = new Set(data.edges.map(e => e.from))
@@ -99,7 +102,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
             }
             data.edges.map(e => edgesymap.set(e.from, e)) 
           } else {
-            Object.entries(data.edges).forEach(kv => edgesymap.set(kv[0], kv[1]))
+            Object.entries(data.edges).forEach((kv: [string, Edge]) => edgesymap.set(kv[0], kv[1]))
           } 
         }
     })
