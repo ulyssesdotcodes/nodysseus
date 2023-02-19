@@ -393,7 +393,7 @@ const resolve_args = (data: Args, lib: Lib, options: RunOptions): Result | Promi
     let is_promise = false;
     const result = {}
     for(let kv of data.entries()){
-      result[kv[0]] = run_runnable(kv[1], lib, undefined, options);
+      result[kv[0]] =  kv[1] && run_runnable(kv[1], lib, undefined, options);
       if(result[kv[0]] instanceof Error) {
         return result[kv[0]]
       }
