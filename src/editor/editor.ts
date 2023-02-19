@@ -221,6 +221,7 @@ const runapp = (init, load_graph, _lib) => {
         [graph_subscription, {display_graph_id: s.display_graph_id, norun: s.norun}],
         [select_node_subscription, {}],
         result_display_dispatch && [result_subscription, {display_graph_id: s.display_graph_id, norun: s.norun}],
+        listen("hashchange", (state, evt) => state.display_graph_id === evt.newURL.substring(evt.newURL.indexOf("#") + 1) ? state : [state, [ChangeDisplayGraphId, {id: evt.newURL.substring(evt.newURL.indexOf("#") + 1), display_graph_id: state.display_graph_id}]]),
         [keydownSubscription, {action: (state: HyperappState, payload) => {
             if(document.getElementById("node-editor-result").contains(payload.target)) {
                 return [state];

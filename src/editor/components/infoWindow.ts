@@ -171,6 +171,11 @@ export const infoWindow = ({node, hidden, edges_in, link_out, display_graph_id, 
                     onclick: [ExpandContract, {node_id: node.node_id}]
                 }, [ha.h('ion-icon', {name: Object.keys(node.nodes ?? {}).length > 0 ? "expand" : "contract"}), ha.text(Object.keys(node.nodes ?? {}).length > 0 ? "expand" : "collapse")]),
                 Object.keys(node.nodes ?? {}).length > 0 && node.name !== '' && ha.h('div', {class: 'action', onclick: [CreateRef, {node}]}, ha.text("make ref")),
+                node.ref && ha.h('div', {
+                    class: "action", 
+                    onclick: state => [state, [ChangeDisplayGraphId, {id: node.ref, display_graph_id}]],
+                    key: "open-ref-action"
+                }, [ha.h('ion-icon', {name: 'code-outline'}), ha.text("open")]),
                 ha.h('div', {
                     class: "action", 
                     onclick: [Copy, {cut: false, as: link_out.as}],

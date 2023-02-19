@@ -554,7 +554,7 @@ export const select_node_subscription = (dispatch, props) => {
 export const listen = (type, action): ha.Subscription<HyperappState, any>  => [listenToEvent, {type, action}]
 
 export const listenToEvent = (dispatch, props): (() => void) => {
-    const listener = (event) => requestAnimationFrame(() => dispatch(props.action, event.detail))
+    const listener = (event) => requestAnimationFrame(() => dispatch(props.action, event))
 
     requestAnimationFrame(() => addEventListener(props.type, listener));
     return () => removeEventListener(props.type, listener);
