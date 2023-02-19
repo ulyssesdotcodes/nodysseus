@@ -71,7 +71,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
 
             main_node_map.set(node, node);
 
-            parents_map.get(node).forEach(p => {
+            parents_map.get(node)?.forEach(p => {
                 needsupdate ||= simulation_link_data.has(`${p}_${node}`)
                 queue.push(p)
             })
