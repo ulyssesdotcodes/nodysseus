@@ -1037,6 +1037,7 @@ const generic = {
           "value": "button",
           "ref": "html_element"
         },
+        {"id": "label", "ref": "arg", "value": "__graph_value"},
         {
           "id": "9fogdzn",
           "value": "signal",
@@ -1131,6 +1132,7 @@ const generic = {
           "to": "out",
           "as": "args"
         },
+        {"from": "label", "to": "9fogdzn", "as": "text"},
         {
           "from": "9fogdzn",
           "to": "qgbinm2",
@@ -1193,7 +1195,7 @@ const generic = {
         },
         {
           "from": "lgx7u5i",
-          "to": "hbo5tmq",
+          "to": "_hbo5tmq",
           "as": "arg2"
         },
         {

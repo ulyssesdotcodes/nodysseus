@@ -1172,8 +1172,7 @@ const nolib = {
 
         return fnResult
           .then(fnr => isError(fnr) ? fnr : Array.isArray(fnr.value) ? fnr.value.map(fnrv => resolveRunnable(fnrv).value) :  resolveRunnable(fnr.value).value)
-          .then(fnr => apRunnable(fnr))
-          .then(apfn => run ? run_runnable(apfn, lib) : apfn)
+          .then(fnr => run ? run_runnable(apRunnable(fnr), lib) : apRunnable(fnr))
           .then(res => lib.data.no.of(res)).value
       }
     },
