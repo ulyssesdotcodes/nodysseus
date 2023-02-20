@@ -285,7 +285,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
         }
 
         evts.keysChanged.forEach(k => {
-          const kguid = rdoc.getMap().get(k);
+          const kguid = rdoc.getMap().get(k) as string;
           if(!ymap.has(k)) {
             // console.log(`got new graph ${k}`)
             const rsd = new Y.Doc({guid: kguid})
