@@ -328,21 +328,25 @@ const node_nodes = (node, node_id, data, graph_input_value: Env, lib: Lib, optio
 }
 
 const node_script = (node, nodeArgs: Args, lib: Lib, options: RunOptions): Result | Promise<Result> => {
-    let orderedargs = "";
-    const data = {};
-    for(let i of nodeArgs.keys()) {
-        orderedargs += ", " + i;
-        if(nodeArgs.has(i)){
-            const graphval = wrapPromise(run_runnable(nodeArgs.get(i), lib, undefined, options)).then(gv => isError(gv) ? gv : gv?.value);
-            data[i] = graphval;
-        }
-    }
+    let orderedargs = ["", ...nodeArgs.keys()].join(", ");
+    // const data = {};
+    const data = resolve_args(nodeArgs, lib, options);
+    // for(let i of nodeArgs.keys()) {
+    //     orderedargs += ", " + i;
+    //     if(nodeArgs.has(i)){
+    //         let graphval;
+    //         while(isConstRunnable(graphval)) {
+    //           graphval = wrapPromise(run_runnable(graphval ?? nodeArgs.get(i), lib, undefined, options)).then(gv => isError(gv) ? gv : gv?.value);
+    //         }
+    //         data[i] = graphval;
+    //     }
+    // }
 
     const name = node.name ? node.name.replace(/\W/g, "_") : node.id;
     const fn = lib.data.no.runtime.get_fn(node.id, name, orderedargs, node.script ?? node.value);
 
-    return wrapPromiseAll(Object.values(data))
-      .then(promisedData => lib.data.no.of(fn.apply(null, [lib.data, node, data, ...promisedData]))).value
+    return wrapPromise(data)//wrapPromiseAll(Object.values(data))
+      .then(promisedData => lib.data.no.of(fn.apply(null, [lib.data, node, data, ...Object.values(isError(promisedData) ? promisedData : promisedData?.value ?? {})]))).value
 }
 
 const node_extern = (node: RefNode, data: Args, graphArgs: Env, lib: Lib, options: RunOptions) => {
@@ -393,7 +397,10 @@ const resolve_args = (data: Args, lib: Lib, options: RunOptions): Result | Promi
     let is_promise = false;
     const result = {}
     for(let kv of data.entries()){
-      result[kv[0]] =  kv[1] && run_runnable(kv[1], lib, undefined, options);
+      result[kv[0]] = kv[1] 
+      while(isConstRunnable(result[kv[0]])) {
+        result[kv[0]] = wrapPromise(result[kv[0]]).then(runnable => run_runnable(runnable, lib, undefined, options)).value;
+      }
       if(result[kv[0]] instanceof Error) {
         return result[kv[0]]
       }
@@ -411,13 +418,13 @@ const resolve_args = (data: Args, lib: Lib, options: RunOptions): Result | Promi
     return lib.data.no.of(Object.fromEntries(
         Object.entries(result)
             .filter(d => !d[0].startsWith("__")) // filter out private variables
-            .map((e: [string, Result]) => [e[0], isError(e[1]) ? e[1] : e[1].value])
+            .map((e: [string, Result]) => [e[0], isValue(e[1]) ? e[1].value : e[1]])
     ));
 
 }
 
 const node_data = (nodeArgs, graphArgs, lib, options) => {
-  return nodeArgs.size === 0 ? lib.data.no.of(undefined) : resolve_args(nodeArgs, lib, options);
+  return nodeArgs.size === 0 ? lib.data.no.of(undefined) : options.isNoResolve ? nodeArgs : resolve_args(nodeArgs, lib, options);
 }
 
 const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, args: ConstRunnable, lib, options: RunOptions): FunctorRunnable | Promise<FunctorRunnable> => {
@@ -1359,8 +1366,8 @@ const nolib = {
             .then(lib => wrapPromise(argsfn ? run_runnable({
                 ...argsfn,
                 lib: mergeLib(lib, _lib)
-              }, _lib, undefined, options) : undefined)
-              .then(args => return_result(mergeLib(lib, _lib), isError(args) ? args : args?.value))).value
+              }, _lib, undefined, {...options, isNoResolve: true}) : undefined)
+              .then(args => return_result(mergeLib(lib, _lib), isValue(args) ? args?.value : args))).value
         return ret;
       },
     },
@@ -1764,4 +1771,4 @@ const nolib = {
   // THREE
 };
 
-export {nolib, initStore, compare, hashcode, ispromise, NodysseusError, resfetch };
+export {nolib, initStore, compare, hashcode, ispromise, NodysseusError, resfetch, resolve_args };

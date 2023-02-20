@@ -1,16 +1,17 @@
 import * as util from "./util"
-import {nodysseus_get} from "./nodysseus"
+import {nodysseus_get, resolve_args} from "./nodysseus"
 import { ConstRunnable, isNodeRef, isNodeScript, Lib, RefNode, Runnable } from "./types";
 
  export const create_fn = (runnable: ConstRunnable, lib: Lib) => {
-        const graph = util.ancestor_graph(runnable.fn, runnable.graph, lib.data);
-        graph.id = runnable.fn + "-fn";
-        const graphArgs = new Set(Object.values(graph.nodes).filter<RefNode>(isNodeRef).filter(n => n.ref === "arg").map(a => a.value));
+    const graph = util.ancestor_graph(runnable.fn, runnable.graph, lib.data);
+  const graphArgs = new Set(Object.values(graph.nodes).filter<RefNode>(isNodeRef).filter(n => n.ref === "arg").map(a => a.value));
 
-        const baseArgs = {};
-        for(const arg of graphArgs) {
-          baseArgs[arg] = nodysseus_get(runnable.env, arg, lib)
-        }
+   const baseArgs = resolve_args(new Map([...graphArgs].map(a => [a, nodysseus_get(runnable.env, a, lib)])), lib, {});
+   const create = ({value: baseArgs}) => {
+        graph.id = runnable.fn + "-fn";
+        // for(const arg of graphArgs) {
+        //   baseArgs[arg] = nodysseus_get(runnable.env, arg, lib)
+        // }
 
         let text = "";
         const _extern_args = {};
@@ -65,6 +66,9 @@ import { ConstRunnable, isNodeRef, isNodeScript, Lib, RefNode, Runnable } from "
 
         return (args={}) => fn(args, baseArgs, _extern_args, util, lib.data);
       }
+
+    return util.wrapPromise(baseArgs).then(create).value
+ }
 
 export const now = (scale?: number) => performance.now() * (scale ?? 1)
 
