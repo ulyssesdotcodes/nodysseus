@@ -3453,7 +3453,7 @@ const generic = {
         {
           "id": "bgi2g37",
           "ref": "script",
-          "value": "return Object.entries(obj)"
+          "value": "return obj instanceof Map ? [...obj.entries()] : Object.entries(obj)"
         },
         {
           "id": "7gqcw0o",
