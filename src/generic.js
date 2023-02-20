@@ -7963,257 +7963,499 @@ const generic = {
     "switch_inputs": {
       "id": "switch_inputs",
       "category": "nodysseus",
-      "nodes": [
-        {
+      "out": "out",
+      "nodes": {
+        "args": {
           "id": "args"
         },
-        {
+        "8dy573e": {
           "id": "8dy573e",
           "ref": "html_element"
         },
-        {
+        "out": {
           "id": "out",
           "name": "switch_inputs",
           "ref": "return"
         },
-        {
+        "lvin35y": {
           "id": "lvin35y",
           "ref": "object_entries"
         },
-        {
+        "6280gtl": {
           "id": "6280gtl",
           "ref": "get"
         },
-        {
+        "53zzzsq": {
           "id": "53zzzsq",
           "value": "1"
         },
-        {
+        "76ck9e4": {
           "id": "76ck9e4",
           "value": "length",
           "ref": "get"
         },
-        {
-          "id": "hsgpgti",
-          "ref": "input_value"
-        },
-        {
+        "ofy30nx": {
           "id": "ofy30nx",
           "ref": "object_entries"
         },
-        {
+        "wp85v73": {
           "id": "wp85v73",
           "value": "0"
         },
-        {
+        "1cudll9": {
           "id": "1cudll9",
-          "value": "el",
+          "value": "_el",
           "ref": "arg"
         },
-        {
+        "output_val": {
           "id": "output_val",
           "value": "_args",
           "ref": "arg"
         },
-        {
+        "4szp976": {
           "id": "4szp976",
           "value": "_args",
           "ref": "arg"
         },
-        {
+        "vh955iv": {
           "id": "vh955iv",
           "ref": "filter"
         },
-        {
+        "v6ewxxa": {
           "id": "v6ewxxa",
           "ref": "runnable"
         },
-        {
+        "nxekknh": {
           "id": "nxekknh",
           "value": "element.0",
           "ref": "arg"
         },
-        {
+        "tksr4z4": {
           "id": "tksr4z4",
-          "value": "return arg0 !== 'el'",
+          "value": "return arg0 !== '_el'",
           "ref": "script"
         },
-        {
+        "o2ov639": {
           "id": "o2ov639",
           "ref": "add"
         },
-        {
+        "go1erqv": {
           "id": "go1erqv",
           "value": "-1"
         },
-        {
+        "qxd792w": {
           "id": "qxd792w",
-          "value": "el.value",
+          "value": "_el.value",
           "ref": "arg"
         },
-        {
+        "b2lg0f8": {
           "id": "b2lg0f8",
           "value": "return name + \".1\"",
           "ref": "script"
         },
-        {
+        "m8szb7c": {
           "id": "m8szb7c",
           "ref": "ap"
         },
-        {
+        "p124xyx": {
           "id": "p124xyx",
           "value": "true"
         },
-        {
+        "un0m73e": {
           "id": "un0m73e",
-          "value": "arr.sort((a, b) => a[0].localeCompare(b[0]))\nconsole.log('switch inputs')\nconsole.log(arr);\nreturn arr",
+          "value": "arr.sort((a, b) => a[0].localeCompare(b[0]))\nreturn arr",
           "ref": "script"
         },
-        {
+        "85v75zq": {
           "id": "85v75zq"
         },
-        {
+        "p5fs58p": {
           "id": "p5fs58p"
         },
-        {
+        "178thpd": {
           "id": "178thpd",
           "value": "Input",
           "ref": "slider"
+        },
+        "rx65dza": {
+          "id": "rx65dza",
+          "ref": "filter"
+        },
+        "qxueq51": {
+          "id": "qxueq51",
+          "ref": "runnable"
+        },
+        "9n6aloh": {
+          "id": "9n6aloh",
+          "value": "element.0",
+          "ref": "arg"
+        },
+        "ofkngzi": {
+          "id": "ofkngzi",
+          "value": "return !name.startsWith(\"_\")",
+          "ref": "script"
+        },
+        "1cjmeed": {
+          "id": "1cjmeed"
+        },
+        "kkvjh7c": {
+          "id": "kkvjh7c"
         }
-      ],
-      "edges": [
-        {
+      },
+      "edges": {
+        "8dy573e": {
           "from": "8dy573e",
           "to": "out",
           "as": "display"
         },
-        {
+        "args": {
           "from": "args",
           "to": "out",
           "as": "args"
         },
-        {
+        "wp85v73": {
           "from": "wp85v73",
           "to": "178thpd",
           "as": "min"
         },
-        {
+        "53zzzsq": {
           "from": "53zzzsq",
           "to": "178thpd",
           "as": "step"
         },
-        {
-          "from": "hsgpgti",
-          "to": "76ck9e4",
-          "as": "target"
-        },
-        {
+        "ofy30nx": {
           "from": "ofy30nx",
-          "to": "hsgpgti",
-          "as": "value"
+          "to": "rx65dza",
+          "as": "array"
         },
-        {
+        "4szp976": {
           "from": "4szp976",
           "to": "ofy30nx",
           "as": "object"
         },
-        {
+        "178thpd": {
           "from": "178thpd",
           "to": "args",
-          "as": "el"
+          "as": "_el"
         },
-        {
+        "1cudll9": {
           "from": "1cudll9",
           "to": "8dy573e",
           "as": "children"
         },
-        {
+        "output_val": {
           "from": "output_val",
           "to": "lvin35y",
           "as": "object"
         },
-        {
+        "vh955iv": {
           "from": "vh955iv",
           "to": "6280gtl",
           "as": "target"
         },
-        {
+        "v6ewxxa": {
           "from": "v6ewxxa",
           "to": "vh955iv",
           "as": "fn"
         },
-        {
+        "tksr4z4": {
           "from": "tksr4z4",
           "to": "v6ewxxa",
           "as": "fn"
         },
-        {
+        "o2ov639": {
           "from": "o2ov639",
           "to": "178thpd",
           "as": "max"
         },
-        {
+        "76ck9e4": {
           "from": "76ck9e4",
           "to": "o2ov639",
           "as": "arg0"
         },
-        {
+        "go1erqv": {
           "from": "go1erqv",
           "to": "o2ov639",
           "as": "arg1"
         },
-        {
+        "b2lg0f8": {
           "from": "b2lg0f8",
           "to": "6280gtl",
           "as": "path"
         },
-        {
+        "qxd792w": {
           "from": "qxd792w",
           "to": "b2lg0f8",
           "as": "name"
         },
-        {
+        "un0m73e": {
           "from": "un0m73e",
           "to": "vh955iv",
           "as": "array"
         },
-        {
+        "m8szb7c": {
           "from": "m8szb7c",
           "to": "out",
           "as": "value"
         },
-        {
+        "p124xyx": {
           "from": "p124xyx",
           "to": "m8szb7c",
           "as": "run"
         },
-        {
+        "lvin35y": {
           "from": "lvin35y",
           "to": "un0m73e",
           "as": "arr"
         },
-        {
+        "85v75zq": {
           "from": "85v75zq",
           "to": "v6ewxxa",
           "as": "args"
         },
-        {
+        "p5fs58p": {
           "from": "p5fs58p",
           "to": "85v75zq",
           "as": "element"
         },
-        {
+        "6280gtl": {
           "from": "6280gtl",
           "to": "m8szb7c",
           "as": "fn"
         },
-        {
+        "nxekknh": {
           "from": "nxekknh",
           "to": "tksr4z4",
           "as": "arg0"
+        },
+        "rx65dza": {
+          "from": "rx65dza",
+          "to": "76ck9e4",
+          "as": "target"
+        },
+        "qxueq51": {
+          "from": "qxueq51",
+          "to": "rx65dza",
+          "as": "fn"
+        },
+        "9n6aloh": {
+          "from": "9n6aloh",
+          "to": "ofkngzi",
+          "as": "name"
+        },
+        "ofkngzi": {
+          "from": "ofkngzi",
+          "to": "qxueq51",
+          "as": "fn"
+        },
+        "1cjmeed": {
+          "from": "1cjmeed",
+          "to": "qxueq51",
+          "as": "args"
+        },
+        "kkvjh7c": {
+          "from": "kkvjh7c",
+          "to": "1cjmeed",
+          "as": "element"
         }
-      ],
-      "out": "out"
+      },
+      "edges_in": {
+        "out": {
+          "8dy573e": {
+            "from": "8dy573e",
+            "to": "out",
+            "as": "display"
+          },
+          "args": {
+            "from": "args",
+            "to": "out",
+            "as": "args"
+          },
+          "m8szb7c": {
+            "from": "m8szb7c",
+            "to": "out",
+            "as": "value"
+          }
+        },
+        "178thpd": {
+          "wp85v73": {
+            "from": "wp85v73",
+            "to": "178thpd",
+            "as": "min"
+          },
+          "53zzzsq": {
+            "from": "53zzzsq",
+            "to": "178thpd",
+            "as": "step"
+          },
+          "o2ov639": {
+            "from": "o2ov639",
+            "to": "178thpd",
+            "as": "max"
+          }
+        },
+        "rx65dza": {
+          "ofy30nx": {
+            "from": "ofy30nx",
+            "to": "rx65dza",
+            "as": "array"
+          },
+          "qxueq51": {
+            "from": "qxueq51",
+            "to": "rx65dza",
+            "as": "fn"
+          }
+        },
+        "ofy30nx": {
+          "4szp976": {
+            "from": "4szp976",
+            "to": "ofy30nx",
+            "as": "object"
+          }
+        },
+        "args": {
+          "178thpd": {
+            "from": "178thpd",
+            "to": "args",
+            "as": "_el"
+          }
+        },
+        "8dy573e": {
+          "1cudll9": {
+            "from": "1cudll9",
+            "to": "8dy573e",
+            "as": "children"
+          }
+        },
+        "lvin35y": {
+          "output_val": {
+            "from": "output_val",
+            "to": "lvin35y",
+            "as": "object"
+          }
+        },
+        "6280gtl": {
+          "vh955iv": {
+            "from": "vh955iv",
+            "to": "6280gtl",
+            "as": "target"
+          },
+          "b2lg0f8": {
+            "from": "b2lg0f8",
+            "to": "6280gtl",
+            "as": "path"
+          }
+        },
+        "vh955iv": {
+          "v6ewxxa": {
+            "from": "v6ewxxa",
+            "to": "vh955iv",
+            "as": "fn"
+          },
+          "un0m73e": {
+            "from": "un0m73e",
+            "to": "vh955iv",
+            "as": "array"
+          }
+        },
+        "v6ewxxa": {
+          "tksr4z4": {
+            "from": "tksr4z4",
+            "to": "v6ewxxa",
+            "as": "fn"
+          },
+          "85v75zq": {
+            "from": "85v75zq",
+            "to": "v6ewxxa",
+            "as": "args"
+          }
+        },
+        "o2ov639": {
+          "76ck9e4": {
+            "from": "76ck9e4",
+            "to": "o2ov639",
+            "as": "arg0"
+          },
+          "go1erqv": {
+            "from": "go1erqv",
+            "to": "o2ov639",
+            "as": "arg1"
+          }
+        },
+        "b2lg0f8": {
+          "qxd792w": {
+            "from": "qxd792w",
+            "to": "b2lg0f8",
+            "as": "name"
+          }
+        },
+        "m8szb7c": {
+          "p124xyx": {
+            "from": "p124xyx",
+            "to": "m8szb7c",
+            "as": "run"
+          },
+          "6280gtl": {
+            "from": "6280gtl",
+            "to": "m8szb7c",
+            "as": "fn"
+          }
+        },
+        "un0m73e": {
+          "lvin35y": {
+            "from": "lvin35y",
+            "to": "un0m73e",
+            "as": "arr"
+          }
+        },
+        "85v75zq": {
+          "p5fs58p": {
+            "from": "p5fs58p",
+            "to": "85v75zq",
+            "as": "element"
+          }
+        },
+        "tksr4z4": {
+          "nxekknh": {
+            "from": "nxekknh",
+            "to": "tksr4z4",
+            "as": "arg0"
+          }
+        },
+        "76ck9e4": {
+          "rx65dza": {
+            "from": "rx65dza",
+            "to": "76ck9e4",
+            "as": "target"
+          }
+        },
+        "ofkngzi": {
+          "9n6aloh": {
+            "from": "9n6aloh",
+            "to": "ofkngzi",
+            "as": "name"
+          }
+        },
+        "qxueq51": {
+          "ofkngzi": {
+            "from": "ofkngzi",
+            "to": "qxueq51",
+            "as": "fn"
+          },
+          "1cjmeed": {
+            "from": "1cjmeed",
+            "to": "qxueq51",
+            "as": "args"
+          }
+        },
+        "1cjmeed": {
+          "kkvjh7c": {
+            "from": "kkvjh7c",
+            "to": "1cjmeed",
+            "as": "element"
+          }
+        }
+      }
     },
     "store_file": {
       "id": "store_file",
