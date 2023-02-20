@@ -15,6 +15,7 @@ export default class AutocompleteList extends HTMLElement {
   optionEls: Record<string, HTMLLIElement>;
   fuse: Fuse<Option>;
   selectedIndex: number | undefined;
+  initialOption: string;
 
   constructor() {
     super()
@@ -99,6 +100,7 @@ export default class AutocompleteList extends HTMLElement {
     }
 
     wrapper.addEventListener('focusin', (evt: FocusEvent) => {
+      this.initialOption = this.inputEl.value;
       if(this.listEl.classList.contains("hidden")) {
         this.listEl.classList.remove("hidden")
         this.populateOptions()
@@ -142,7 +144,9 @@ export default class AutocompleteList extends HTMLElement {
 
   selectOption(value: string) {
     this.selectedIndex = undefined;
-    this.dispatchEvent(new CustomEvent('select', {detail: value}))
+    if(this.initialOption !== this.inputEl.value) {
+      this.dispatchEvent(new CustomEvent('select', {detail: value}))
+    }
   }
 
   focus() {
