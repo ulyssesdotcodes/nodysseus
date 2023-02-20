@@ -144,7 +144,7 @@ export default class AutocompleteList extends HTMLElement {
 
   selectOption(value: string) {
     this.selectedIndex = undefined;
-    if(this.initialOption !== this.inputEl.value) {
+    if(this.initialOption !== value) {
       this.dispatchEvent(new CustomEvent('select', {detail: value}))
     }
   }
