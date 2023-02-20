@@ -1165,7 +1165,7 @@ const nolib = {
           wrapPromise(run_runnable(runnable, lib))
             .then(r => resolveRunnable(isError(r) ? r : r.value)) : wrapPromise(runnable)
 
-        const apRunnable = (fnRunnable: FunctorRunnable | Array<FunctorRunnable>): ApRunnable => ({
+        const apRunnable = (fnRunnable: FunctorRunnable | ApRunnable | Array<FunctorRunnable | ApRunnable>): ApRunnable => ({
             __kind: AP,
             fn: Array.isArray(fnRunnable) ? fnRunnable.filter(v => v) : fnRunnable,
             args,
@@ -1174,7 +1174,7 @@ const nolib = {
 
         return fnResult
           .then(fnr => isError(fnr) ? fnr : Array.isArray(fnr.value) ? fnr.value.map(fnrv => resolveRunnable(fnrv).value) :  resolveRunnable(fnr.value).value)
-          .then(fnr => run ? run_runnable(apRunnable(fnr), lib) : apRunnable(fnr))
+          .then(fnr => !((Array.isArray(fnr) ? fnr : [fnr]).every(fnrv => isApRunnable(fnrv) || isFunctorRunnable(fnrv))) ? fnr : run ? run_runnable(apRunnable(fnr as FunctorRunnable), lib) : apRunnable(fnr))
           .then(res => lib.data.no.of(res)).value
       }
     },
