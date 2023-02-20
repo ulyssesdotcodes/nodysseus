@@ -410,7 +410,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
     return mapMaybePromise(simpleValue?.id || isYMapLoaded
       ? simpleValue
       : ymapvalue?.then(d => d.getMap().toJSON()), (res: {id?: string}) => {
-        if((!res || Object.keys(res).length === 0) && otherwise && !rdoc.getMap().has(res.id)) {
+        if((!res || Object.keys(res).length === 0) && otherwise && !rdoc.getMap().has(id)) {
           console.log("creating new " + id)
           return add(id, otherwise)
         }
