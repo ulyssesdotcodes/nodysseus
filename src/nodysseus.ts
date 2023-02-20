@@ -1148,6 +1148,8 @@ const nolib = {
           };
           nodysseus.parents.add(graphid, new_parent)
         },
+        undo: () => nodysseus.refs.undo && nodysseus.refs.undo(),
+        redo: () => nodysseus.refs.redo && nodysseus.refs.redo(),
       };
     }),
   },
