@@ -1174,7 +1174,7 @@ const nolib = {
 
         return fnResult
           .then(fnr => isError(fnr) ? fnr : Array.isArray(fnr.value) ? fnr.value.map(fnrv => resolveRunnable(fnrv).value) :  resolveRunnable(fnr.value).value)
-          .then(fnr => !((Array.isArray(fnr) ? fnr : [fnr]).every(fnrv => isApRunnable(fnrv) || isFunctorRunnable(fnrv))) ? fnr : run ? run_runnable(apRunnable(fnr as FunctorRunnable), lib) : apRunnable(fnr))
+          .then(fnr => !((Array.isArray(fnr) ? fnr : [fnr]).filter(fnrv => fnrv).every(fnrv => isApRunnable(fnrv) || isFunctorRunnable(fnrv))) ? fnr : run ? run_runnable(apRunnable(fnr as FunctorRunnable), lib) : apRunnable(fnr))
           .then(res => lib.data.no.of(res)).value
       }
     },
