@@ -1,6 +1,6 @@
 import * as util from "./util"
 import {nodysseus_get, resolve_args} from "./nodysseus"
-import { ConstRunnable, isNodeRef, isNodeScript, Lib, RefNode, Runnable } from "./types";
+import { ConstRunnable, isError, isNodeRef, isNodeScript, Lib, RefNode, Runnable } from "./types";
 
  export const create_fn = (runnable: ConstRunnable, lib: Lib) => {
     const graph = util.ancestor_graph(runnable.fn, runnable.graph, lib.data);
@@ -67,7 +67,7 @@ import { ConstRunnable, isNodeRef, isNodeScript, Lib, RefNode, Runnable } from "
         return (args={}) => fn(args, baseArgs, _extern_args, util, lib.data);
       }
 
-    return util.wrapPromise(baseArgs).then(create).value
+    return util.wrapPromise(baseArgs).then(r => isError(r) ? r : create(r)).value
  }
 
 export const now = (scale?: number) => performance.now() * (scale ?? 1)

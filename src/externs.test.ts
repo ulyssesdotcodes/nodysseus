@@ -22,7 +22,7 @@ describe('create_fn', () => {
       lib: newLib(nolib)
     }, newLib(nolib))
 
-    expect(fn()).toEqual(2);
+    expect((fn as Function)()).toEqual(2);
   })
 
   test('using an argument', async () => {
@@ -46,7 +46,7 @@ describe('create_fn', () => {
       lib: newLib(nolib)
     }, newLib(nolib))
 
-    expect(fn({value: 2})).toEqual(3);
+    expect((fn as Function)({value: 2})).toEqual(3);
   })
 
   test('setting a value', async () => {
@@ -72,7 +72,7 @@ describe('create_fn', () => {
       lib: newLib(nolib)
     }, newLib(nolib))
 
-    expect(fn({value: {x: 0}}).x).toEqual(3);
+    expect((fn as Function)({value: {x: 0}}).x).toEqual(3);
   })
 
 })
