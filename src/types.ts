@@ -140,5 +140,6 @@ export const isArgs = (args: any): args is Args => typeof args?.get === "functio
 
 
 export type RunOptions = {
-  profile?: boolean
+  profile?: boolean,
+  resolvePromises?: boolean
 }

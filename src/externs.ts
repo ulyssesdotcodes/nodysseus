@@ -6,7 +6,7 @@ import { ConstRunnable, isError, isNodeRef, isNodeScript, Lib, RefNode, Runnable
     const graph = util.ancestor_graph(runnable.fn, runnable.graph, lib.data);
   const graphArgs = new Set(Object.values(graph.nodes).filter<RefNode>(isNodeRef).filter(n => n.ref === "arg").map(a => a.value));
 
-   const baseArgs = resolve_args(new Map([...graphArgs].map(a => [a, nodysseus_get(runnable.env, a, lib)])), lib, {});
+   const baseArgs = resolve_args(new Map([...graphArgs].map(a => [a, nodysseus_get(runnable.env, a, lib)])), lib, {resolvePromises: true});
    const create = ({value: baseArgs}) => {
         graph.id = runnable.fn + "-fn";
         // for(const arg of graphArgs) {

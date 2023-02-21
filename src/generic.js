@@ -1272,7 +1272,7 @@ const generic = {
       },
       "pred_cache_state": {
         "id": "pred_cache_state",
-        "value": "return _reset || (recache === undefined ? (cachevaluestate === undefined || cachevaluestate === null) : (recache !== false && (typeof recache !== 'object' || Object.keys(recache).length > 0)))",
+        "value": "const docache = _isrunning.value ? false : _reset || (recache === undefined ? (cachevaluestate === undefined || cachevaluestate === null) : (recache !== false && (typeof recache !== 'object' || Object.keys(recache).length > 0)))\n\nif(docache) {\n  _isrunning.value = true;\n}\n\nreturn docache;",
         "ref": "script"
       },
       "ap_cache_value": {
@@ -1394,12 +1394,31 @@ const generic = {
         "id": "wa4gr84",
         "value": "_reset.set",
         "ref": "arg"
+      },
+      "c8r9x38": {
+        "id": "c8r9x38",
+        "ref": "refval"
+      },
+      "8shc9ct": {
+        "id": "8shc9ct",
+        "value": "_isrunning",
+        "ref": "arg"
+      },
+      "x165dr6": {
+        "id": "x165dr6",
+        "value": "_isrunning.value = false;\n\nreturn value;",
+        "ref": "script"
+      },
+      "ieg16nd": {
+        "id": "ieg16nd",
+        "value": "_isrunning",
+        "ref": "arg"
       }
     },
     "edges": {
       "ap_cache_value": {
         "from": "ap_cache_value",
-        "to": "ap_cache_args",
+        "to": "x165dr6",
         "as": "value"
       },
       "ap_cache_args": {
@@ -1556,200 +1575,610 @@ const generic = {
         "from": "wa4gr84",
         "to": "w7nd0t8",
         "as": "fn"
+      },
+      "c8r9x38": {
+        "from": "c8r9x38",
+        "to": "cache_return_args",
+        "as": "_isrunning"
+      },
+      "8shc9ct": {
+        "from": "8shc9ct",
+        "to": "pred_cache_state",
+        "as": "_isrunning"
+      },
+      "x165dr6": {
+        "from": "x165dr6",
+        "to": "ap_cache_args",
+        "as": "value"
+      },
+      "ieg16nd": {
+        "from": "ieg16nd",
+        "to": "x165dr6",
+        "as": "_isrunning"
       }
-    }
-  },
-    "cache": {
-      "id": "cache",
-      "category": "data",
-      "description": "Stores the first value that's `!== undefined` and returns that value whenever called. If used within a `map`, `filter`, or `reduce` node, each iteration's value will be cached separately.",
-      "out": "out",
-      "nodes": [
-        {
-          "id": "value",
-          "ref": "arg",
-          "value": "value"
-        },
-        {
-          "id": "graphid",
-          "ref": "arg",
-          "value": "__graphid"
-        },
-        {
-          "id": "recache",
-          "ref": "arg",
-          "value": "recache"
-        },
-        {
-          "id": "cachevalue_state",
-          "ref": "arg",
-          "value": "cachevalue.state"
-        },
-        {
-          "id": "pred_cachevalue_state",
-          "ref": "arg",
-          "value": "cachevalue.state"
-        },
-        {
-          "id": "pred_cache_state",
-          "ref": "script",
-          "value": "return recache === undefined ? (cachevaluestate === undefined || cachevaluestate === null) : (recache !== false && (typeof recache !== 'object' || Object.keys(recache).length > 0))"
-        },
-        {
-          "id": "ap_cache_value",
-          "ref": "arg",
-          "value": "value: default"
-        },
-        {
-          "id": "ap_cache_args"
-        },
-        {
-          "id": "ap_cache_run",
-          "value": "true"
-        },
-        {
-          "id": "ap_cache_fn",
-          "ref": "arg",
-          "value": "cachevalue.set"
-        },
-        {
-          "id": "cache",
-          "ref": "ap"
-        },
-        {
-          "id": "if_cache_state",
-          "ref": "if"
-        },
-        {
-          "id": "cache_state",
-          "ref": "state"
-        },
-        {
-          "id": "cache_return_args"
-        },
-        {
-          "id": "cache_return",
-          "ref": "return"
-        },
-        {
-          "id": "recache_button_fn",
-          "ref": "arg",
-          "value": "cachevalue.set"
-        },
-        {
-          "id": "recache_button_fn_args"
-        },
-        {
-          "id": "recache_button_fn_value",
-          "ref": "arg",
-          "value": "value"
-        },
-        {
-          "id": "recache_button_ap",
-          "ref": "ap"
-        },
-        {
-          "id": "recache_button",
-          "ref": "tapbutton"
-        },
-        {
-          "id": "out",
-          "ref": "return"
-        }
-      ],
-      "edges": [
-        {
+    },
+    "edges_in": {
+      "x165dr6": {
+        "ap_cache_value": {
           "from": "ap_cache_value",
-          "to": "ap_cache_args",
+          "to": "x165dr6",
           "as": "value"
         },
-        {
+        "ieg16nd": {
+          "from": "ieg16nd",
+          "to": "x165dr6",
+          "as": "_isrunning"
+        }
+      },
+      "cache": {
+        "ap_cache_args": {
           "from": "ap_cache_args",
           "to": "cache",
           "as": "args"
         },
-        {
-          "from": "ap_cache_run",
-          "to": "cache",
-          "as": "run"
-        },
-        {
+        "ap_cache_fn": {
           "from": "ap_cache_fn",
           "to": "cache",
           "as": "fn"
         },
-        {
+        "xbhq0f0": {
+          "from": "xbhq0f0",
+          "to": "cache",
+          "as": "run"
+        }
+      },
+      "pred_cache_state": {
+        "pred_cachevalue_state": {
           "from": "pred_cachevalue_state",
           "to": "pred_cache_state",
           "as": "cachevaluestate"
         },
-        {
+        "recache": {
           "from": "recache",
           "to": "pred_cache_state",
           "as": "recache"
         },
-        {
+        "h56r87n": {
+          "from": "h56r87n",
+          "to": "pred_cache_state",
+          "as": "_reset"
+        },
+        "8shc9ct": {
+          "from": "8shc9ct",
+          "to": "pred_cache_state",
+          "as": "_isrunning"
+        }
+      },
+      "if_cache_state": {
+        "cachevalue_state": {
           "from": "cachevalue_state",
           "to": "if_cache_state",
           "as": "false"
         },
-        {
-          "from": "cache",
-          "to": "if_cache_state",
-          "as": "true"
-        },
-        {
+        "pred_cache_state": {
           "from": "pred_cache_state",
           "to": "if_cache_state",
           "as": "pred"
         },
-        {
+        "9w2cqoc": {
+          "from": "9w2cqoc",
+          "to": "if_cache_state",
+          "as": "true"
+        }
+      },
+      "kqnga6d": {
+        "cache": {
+          "from": "cache",
+          "to": "kqnga6d",
+          "as": "arg0"
+        },
+        "w7nd0t8": {
+          "from": "w7nd0t8",
+          "to": "kqnga6d",
+          "as": "arg1"
+        }
+      },
+      "cache_return": {
+        "if_cache_state": {
           "from": "if_cache_state",
           "to": "cache_return",
           "as": "value"
-        },
-        {
+        }
+      },
+      "cache_return_args": {
+        "cache_state": {
           "from": "cache_state",
           "to": "cache_return_args",
-          "as": "cachevalue"
+          "as": "_cachevalue"
         },
-        {
+        "wx3yoem": {
+          "from": "wx3yoem",
+          "to": "cache_return_args",
+          "as": "_reset"
+        },
+        "c8r9x38": {
+          "from": "c8r9x38",
+          "to": "cache_return_args",
+          "as": "_isrunning"
+        }
+      },
+      "out": {
+        "cache_return_args": {
           "from": "cache_return_args",
           "to": "out",
           "as": "args"
         },
-        {
+        "cache_return": {
           "from": "cache_return",
           "to": "out",
           "as": "value"
         },
-        {
+        "recache_button": {
+          "from": "recache_button",
+          "to": "out",
+          "as": "display"
+        },
+        "fy9ee3e": {
+          "from": "fy9ee3e",
+          "to": "out",
+          "as": "subscribe"
+        }
+      },
+      "recache_button_fn_args": {
+        "recache_button_fn_value": {
           "from": "recache_button_fn_value",
           "to": "recache_button_fn_args",
           "as": "value"
-        },
-        {
+        }
+      },
+      "recache_button_ap": {
+        "recache_button_fn_args": {
           "from": "recache_button_fn_args",
           "to": "recache_button_ap",
           "as": "args"
         },
-        {
+        "recache_button_fn": {
           "from": "recache_button_fn",
           "to": "recache_button_ap",
           "as": "fn"
-        },
-        {
+        }
+      },
+      "recache_button": {
+        "recache_button_ap": {
           "from": "recache_button_ap",
           "to": "recache_button",
           "as": "ontap"
+        }
+      },
+      "fy9ee3e": {
+        "7rk5v07": {
+          "from": "7rk5v07",
+          "to": "fy9ee3e",
+          "as": "graphchange"
+        }
+      },
+      "7rk5v07": {
+        "gecwhp1": {
+          "from": "gecwhp1",
+          "to": "7rk5v07",
+          "as": "fn"
         },
-        {
+        "uwfswa7": {
+          "from": "uwfswa7",
+          "to": "7rk5v07",
+          "as": "args"
+        }
+      },
+      "uwfswa7": {
+        "eh9nyb7": {
+          "from": "eh9nyb7",
+          "to": "uwfswa7",
+          "as": "value"
+        }
+      },
+      "9w2cqoc": {
+        "kqnga6d": {
+          "from": "kqnga6d",
+          "to": "9w2cqoc",
+          "as": "target"
+        }
+      },
+      "w7nd0t8": {
+        "mixjulh": {
+          "from": "mixjulh",
+          "to": "w7nd0t8",
+          "as": "run"
+        },
+        "5647gh5": {
+          "from": "5647gh5",
+          "to": "w7nd0t8",
+          "as": "args"
+        },
+        "wa4gr84": {
+          "from": "wa4gr84",
+          "to": "w7nd0t8",
+          "as": "fn"
+        }
+      },
+      "5647gh5": {
+        "atqq2qu": {
+          "from": "atqq2qu",
+          "to": "5647gh5",
+          "as": "value"
+        }
+      },
+      "ap_cache_args": {
+        "x165dr6": {
+          "from": "x165dr6",
+          "to": "ap_cache_args",
+          "as": "value"
+        }
+      }
+    }
+  },
+    "cache": {
+    "id": "cache",
+    "out": "out",
+    "nodes": {
+      "value": {
+        "id": "value",
+        "ref": "arg",
+        "value": "value"
+      },
+      "graphid": {
+        "id": "graphid",
+        "ref": "arg",
+        "value": "__graphid"
+      },
+      "recache": {
+        "id": "recache",
+        "ref": "arg",
+        "value": "recache"
+      },
+      "cachevalue_state": {
+        "id": "cachevalue_state",
+        "ref": "arg",
+        "value": "cachevalue.state"
+      },
+      "pred_cachevalue_state": {
+        "id": "pred_cachevalue_state",
+        "ref": "arg",
+        "value": "cachevalue.state"
+      },
+      "pred_cache_state": {
+        "id": "pred_cache_state",
+        "value": "const docache = isrunning.value ? false : recache === undefined ? (cachevaluestate === undefined || cachevaluestate === null) : (recache !== false && (typeof recache !== 'object' || Object.keys(recache).length > 0));\n\nif(docache) {\n  isrunning.value = true;\n}\n\nreturn docache;",
+        "ref": "script"
+      },
+      "ap_cache_value": {
+        "id": "ap_cache_value",
+        "ref": "arg",
+        "value": "value: default"
+      },
+      "ap_cache_args": {
+        "id": "ap_cache_args"
+      },
+      "ap_cache_run": {
+        "id": "ap_cache_run",
+        "value": "true"
+      },
+      "ap_cache_fn": {
+        "id": "ap_cache_fn",
+        "ref": "arg",
+        "value": "cachevalue.set"
+      },
+      "cache": {
+        "id": "cache",
+        "ref": "ap"
+      },
+      "if_cache_state": {
+        "id": "if_cache_state",
+        "ref": "if"
+      },
+      "cache_state": {
+        "id": "cache_state",
+        "ref": "state"
+      },
+      "cache_return_args": {
+        "id": "cache_return_args"
+      },
+      "cache_return": {
+        "id": "cache_return",
+        "ref": "return"
+      },
+      "recache_button_fn": {
+        "id": "recache_button_fn",
+        "ref": "arg",
+        "value": "cachevalue.set"
+      },
+      "recache_button_fn_args": {
+        "id": "recache_button_fn_args"
+      },
+      "recache_button_fn_value": {
+        "id": "recache_button_fn_value",
+        "ref": "arg",
+        "value": "value"
+      },
+      "recache_button_ap": {
+        "id": "recache_button_ap",
+        "ref": "ap"
+      },
+      "recache_button": {
+        "id": "recache_button",
+        "ref": "tapbutton"
+      },
+      "out": {
+        "id": "out",
+        "ref": "return",
+        "name": "cache"
+      },
+      "jb9ua5s": {
+        "id": "jb9ua5s",
+        "ref": "refval"
+      },
+      "3s0n7mj": {
+        "id": "3s0n7mj",
+        "value": "isrunning",
+        "ref": "arg"
+      },
+      "vviqt6a": {
+        "id": "vviqt6a",
+        "value": "isrunning.value = false;\nreturn value;",
+        "ref": "script"
+      },
+      "vz70gvz": {
+        "id": "vz70gvz",
+        "value": "isrunning",
+        "ref": "arg"
+      }
+    },
+    "edges": {
+      "ap_cache_value": {
+        "from": "ap_cache_value",
+        "to": "vviqt6a",
+        "as": "value"
+      },
+      "ap_cache_args": {
+        "from": "ap_cache_args",
+        "to": "cache",
+        "as": "args"
+      },
+      "ap_cache_run": {
+        "from": "ap_cache_run",
+        "to": "cache",
+        "as": "run"
+      },
+      "ap_cache_fn": {
+        "from": "ap_cache_fn",
+        "to": "cache",
+        "as": "fn"
+      },
+      "pred_cachevalue_state": {
+        "from": "pred_cachevalue_state",
+        "to": "pred_cache_state",
+        "as": "cachevaluestate"
+      },
+      "recache": {
+        "from": "recache",
+        "to": "pred_cache_state",
+        "as": "recache"
+      },
+      "cachevalue_state": {
+        "from": "cachevalue_state",
+        "to": "if_cache_state",
+        "as": "false"
+      },
+      "cache": {
+        "from": "cache",
+        "to": "if_cache_state",
+        "as": "true"
+      },
+      "pred_cache_state": {
+        "from": "pred_cache_state",
+        "to": "if_cache_state",
+        "as": "pred"
+      },
+      "if_cache_state": {
+        "from": "if_cache_state",
+        "to": "cache_return",
+        "as": "value"
+      },
+      "cache_state": {
+        "from": "cache_state",
+        "to": "cache_return_args",
+        "as": "cachevalue"
+      },
+      "cache_return_args": {
+        "from": "cache_return_args",
+        "to": "out",
+        "as": "args"
+      },
+      "cache_return": {
+        "from": "cache_return",
+        "to": "out",
+        "as": "value"
+      },
+      "recache_button_fn_value": {
+        "from": "recache_button_fn_value",
+        "to": "recache_button_fn_args",
+        "as": "value"
+      },
+      "recache_button_fn_args": {
+        "from": "recache_button_fn_args",
+        "to": "recache_button_ap",
+        "as": "args"
+      },
+      "recache_button_fn": {
+        "from": "recache_button_fn",
+        "to": "recache_button_ap",
+        "as": "fn"
+      },
+      "recache_button_ap": {
+        "from": "recache_button_ap",
+        "to": "recache_button",
+        "as": "ontap"
+      },
+      "recache_button": {
+        "from": "recache_button",
+        "to": "out",
+        "as": "display"
+      },
+      "jb9ua5s": {
+        "from": "jb9ua5s",
+        "to": "cache_return_args",
+        "as": "isrunning"
+      },
+      "3s0n7mj": {
+        "from": "3s0n7mj",
+        "to": "pred_cache_state",
+        "as": "isrunning"
+      },
+      "vviqt6a": {
+        "from": "vviqt6a",
+        "to": "ap_cache_args",
+        "as": "value"
+      },
+      "vz70gvz": {
+        "from": "vz70gvz",
+        "to": "vviqt6a",
+        "as": "isrunning"
+      }
+    },
+    "edges_in": {
+      "vviqt6a": {
+        "ap_cache_value": {
+          "from": "ap_cache_value",
+          "to": "vviqt6a",
+          "as": "value"
+        },
+        "vz70gvz": {
+          "from": "vz70gvz",
+          "to": "vviqt6a",
+          "as": "isrunning"
+        }
+      },
+      "cache": {
+        "ap_cache_args": {
+          "from": "ap_cache_args",
+          "to": "cache",
+          "as": "args"
+        },
+        "ap_cache_run": {
+          "from": "ap_cache_run",
+          "to": "cache",
+          "as": "run"
+        },
+        "ap_cache_fn": {
+          "from": "ap_cache_fn",
+          "to": "cache",
+          "as": "fn"
+        }
+      },
+      "pred_cache_state": {
+        "pred_cachevalue_state": {
+          "from": "pred_cachevalue_state",
+          "to": "pred_cache_state",
+          "as": "cachevaluestate"
+        },
+        "recache": {
+          "from": "recache",
+          "to": "pred_cache_state",
+          "as": "recache"
+        },
+        "3s0n7mj": {
+          "from": "3s0n7mj",
+          "to": "pred_cache_state",
+          "as": "isrunning"
+        }
+      },
+      "if_cache_state": {
+        "cachevalue_state": {
+          "from": "cachevalue_state",
+          "to": "if_cache_state",
+          "as": "false"
+        },
+        "cache": {
+          "from": "cache",
+          "to": "if_cache_state",
+          "as": "true"
+        },
+        "pred_cache_state": {
+          "from": "pred_cache_state",
+          "to": "if_cache_state",
+          "as": "pred"
+        }
+      },
+      "cache_return": {
+        "if_cache_state": {
+          "from": "if_cache_state",
+          "to": "cache_return",
+          "as": "value"
+        }
+      },
+      "cache_return_args": {
+        "cache_state": {
+          "from": "cache_state",
+          "to": "cache_return_args",
+          "as": "cachevalue"
+        },
+        "jb9ua5s": {
+          "from": "jb9ua5s",
+          "to": "cache_return_args",
+          "as": "isrunning"
+        }
+      },
+      "out": {
+        "cache_return_args": {
+          "from": "cache_return_args",
+          "to": "out",
+          "as": "args"
+        },
+        "cache_return": {
+          "from": "cache_return",
+          "to": "out",
+          "as": "value"
+        },
+        "recache_button": {
           "from": "recache_button",
           "to": "out",
           "as": "display"
         }
-      ]
-    },
+      },
+      "recache_button_fn_args": {
+        "recache_button_fn_value": {
+          "from": "recache_button_fn_value",
+          "to": "recache_button_fn_args",
+          "as": "value"
+        }
+      },
+      "recache_button_ap": {
+        "recache_button_fn_args": {
+          "from": "recache_button_fn_args",
+          "to": "recache_button_ap",
+          "as": "args"
+        },
+        "recache_button_fn": {
+          "from": "recache_button_fn",
+          "to": "recache_button_ap",
+          "as": "fn"
+        }
+      },
+      "recache_button": {
+        "recache_button_ap": {
+          "from": "recache_button_ap",
+          "to": "recache_button",
+          "as": "ontap"
+        }
+      },
+      "ap_cache_args": {
+        "vviqt6a": {
+          "from": "vviqt6a",
+          "to": "ap_cache_args",
+          "as": "value"
+        }
+      }
+    }
+  },
     "isunchanged": {
       "id": "isunchanged",
       "category": "data",
@@ -1868,183 +2297,394 @@ const generic = {
       ]
     },
     "refval": {
-      "id": "refval",
-      "out": "out",
-      "nodes": {
-        "path_text": {
-          "id": "path_text",
-          "value": "_ref.value",
-          "ref": "arg"
-        },
-        "display_text": {
-          "id": "display_text",
-          "ref": "html_text"
-        },
-        "display": {
-          "id": "display",
-          "ref": "html_element"
-        },
-        "out_atom": {
-          "id": "out_atom",
-          "value": "set",
-          "ref": "set_mutable"
-        },
-        "out": {
-          "id": "out",
-          "name": "refval",
-          "ref": "return"
-        },
-        "d2paurd": {
-          "id": "d2paurd"
-        },
-        "29wb1n1": {
-          "id": "29wb1n1",
-          "ref": "cache"
-        },
-        "h9rv0lt": {
-          "id": "h9rv0lt"
-        },
-        "k2ezrys": {
-          "id": "k2ezrys",
-          "value": "0"
-        },
-        "ggdfgm1": {
-          "id": "ggdfgm1",
-          "value": "_ref",
-          "ref": "arg"
-        },
-        "826gizx": {
-          "id": "826gizx",
-          "ref": "return"
-        },
-        "pv1njne": {
-          "id": "pv1njne"
-        },
-        "27k1xuw": {
-          "id": "27k1xuw",
-          "ref": "runnable"
-        },
-        "miswsup": {
-          "id": "miswsup",
-          "value": "if(value !== undefined) {\n  _ref.value = value;\n}\nreturn value",
-          "ref": "script"
-        },
-        "12y4v2j": {
-          "id": "12y4v2j",
-          "ref": "arg",
-          "value": "value"
-        },
-        "sfutvvr": {
-          "id": "sfutvvr",
-          "value": "_ref",
-          "ref": "arg"
-        },
-        "ozs94yx": {
-          "id": "ozs94yx"
-        },
-        "8jg1uvz": {
-          "id": "8jg1uvz"
-        },
-        "z8oo627": {
-          "id": "z8oo627",
-          "value": "set",
-          "ref": "arg"
-        },
-        "xvwr56e": {
-          "id": "xvwr56e"
-        },
-        "bceqpks": {
-          "id": "bceqpks",
-          "ref": "ap"
-        },
-        "kedy2mx": {
-          "id": "kedy2mx",
-          "value": "set",
-          "ref": "arg"
-        },
-        "qj9latb": {
-          "id": "qj9latb",
-          "ref": "if"
-        },
-        "484tq9a": {
-          "id": "484tq9a",
-          "value": "onframe",
-          "ref": "arg"
-        },
-        "d89vgr1": {
-          "id": "d89vgr1"
-        },
-        "x5va6dz": {
-          "id": "x5va6dz",
-          "ref": "ap"
-        },
-        "ltldy42": {
-          "id": "ltldy42",
-          "value": "onframe",
-          "ref": "arg"
-        },
-        "3kj1w1a": {
-          "id": "3kj1w1a",
-          "value": "true"
-        },
-        "mue8w9r": {
-          "id": "mue8w9r"
-        },
-        "7jg7rr8": {
-          "id": "7jg7rr8",
-          "value": "_ref",
-          "ref": "arg"
-        }
+    "id": "refval",
+    "out": "out",
+    "nodes": {
+      "path_text": {
+        "id": "path_text",
+        "value": "_ref.value",
+        "ref": "arg"
       },
-      "edges": {
+      "display_text": {
+        "id": "display_text",
+        "ref": "html_text"
+      },
+      "display": {
+        "id": "display",
+        "ref": "html_element"
+      },
+      "out_atom": {
+        "id": "out_atom",
+        "value": "set",
+        "ref": "set_mutable"
+      },
+      "out": {
+        "id": "out",
+        "name": "refval",
+        "ref": "return"
+      },
+      "d2paurd": {
+        "id": "d2paurd"
+      },
+      "29wb1n1": {
+        "id": "29wb1n1",
+        "value": "_lib.no.runtime.update_args(graphid, {mutableref});\n\nreturn mutableref",
+        "ref": "script"
+      },
+      "h9rv0lt": {
+        "id": "h9rv0lt"
+      },
+      "k2ezrys": {
+        "id": "k2ezrys",
+        "value": "0"
+      },
+      "ggdfgm1": {
+        "id": "ggdfgm1",
+        "value": "_ref",
+        "ref": "arg"
+      },
+      "826gizx": {
+        "id": "826gizx",
+        "ref": "return"
+      },
+      "pv1njne": {
+        "id": "pv1njne"
+      },
+      "27k1xuw": {
+        "id": "27k1xuw",
+        "ref": "runnable"
+      },
+      "miswsup": {
+        "id": "miswsup",
+        "value": "if(value !== undefined) {\n  _ref.value = value;\n}\nreturn value",
+        "ref": "script"
+      },
+      "12y4v2j": {
+        "id": "12y4v2j",
+        "ref": "arg",
+        "value": "value"
+      },
+      "sfutvvr": {
+        "id": "sfutvvr",
+        "value": "_ref",
+        "ref": "arg"
+      },
+      "ozs94yx": {
+        "id": "ozs94yx"
+      },
+      "8jg1uvz": {
+        "id": "8jg1uvz"
+      },
+      "z8oo627": {
+        "id": "z8oo627",
+        "value": "set",
+        "ref": "arg"
+      },
+      "xvwr56e": {
+        "id": "xvwr56e"
+      },
+      "bceqpks": {
+        "id": "bceqpks",
+        "ref": "ap"
+      },
+      "kedy2mx": {
+        "id": "kedy2mx",
+        "value": "set",
+        "ref": "arg"
+      },
+      "qj9latb": {
+        "id": "qj9latb",
+        "ref": "if"
+      },
+      "484tq9a": {
+        "id": "484tq9a",
+        "value": "onframe",
+        "ref": "arg"
+      },
+      "d89vgr1": {
+        "id": "d89vgr1"
+      },
+      "x5va6dz": {
+        "id": "x5va6dz",
+        "ref": "ap"
+      },
+      "ltldy42": {
+        "id": "ltldy42",
+        "value": "onframe",
+        "ref": "arg"
+      },
+      "3kj1w1a": {
+        "id": "3kj1w1a",
+        "value": "true"
+      },
+      "mue8w9r": {
+        "id": "mue8w9r"
+      },
+      "7jg7rr8": {
+        "id": "7jg7rr8",
+        "value": "_ref",
+        "ref": "arg"
+      },
+      "1mu7unt": {
+        "id": "1mu7unt",
+        "value": "__graphid",
+        "ref": "arg"
+      },
+      "wvpeonf": {
+        "id": "wvpeonf",
+        "ref": "return"
+      },
+      "1r14v3m": {
+        "id": "1r14v3m"
+      },
+      "0xlqgi2": {
+        "id": "0xlqgi2",
+        "value": "return _lib.no.runtime.get_args(graphid).mutableref;",
+        "ref": "script"
+      },
+      "o689p4w": {
+        "id": "o689p4w",
+        "ref": "if"
+      },
+      "gfxlod4": {
+        "id": "gfxlod4",
+        "value": "current",
+        "ref": "arg"
+      },
+      "bb9h44j": {
+        "id": "bb9h44j",
+        "value": "current",
+        "ref": "arg"
+      },
+      "bi3dbrg": {
+        "id": "bi3dbrg",
+        "value": "__graphid",
+        "ref": "arg"
+      }
+    },
+    "edges": {
+      "path_text": {
+        "from": "path_text",
+        "to": "display_text",
+        "as": "text"
+      },
+      "display_text": {
+        "from": "display_text",
+        "to": "display",
+        "as": "children"
+      },
+      "display": {
+        "from": "display",
+        "to": "out",
+        "as": "display"
+      },
+      "out_atom": {
+        "from": "out_atom",
+        "to": "826gizx",
+        "as": "value"
+      },
+      "d2paurd": {
+        "from": "d2paurd",
+        "to": "out",
+        "as": "args"
+      },
+      "29wb1n1": {
+        "from": "29wb1n1",
+        "to": "o689p4w",
+        "as": "false"
+      },
+      "h9rv0lt": {
+        "from": "h9rv0lt",
+        "to": "29wb1n1",
+        "as": "mutableref"
+      },
+      "k2ezrys": {
+        "from": "k2ezrys",
+        "to": "h9rv0lt",
+        "as": "value"
+      },
+      "ggdfgm1": {
+        "from": "ggdfgm1",
+        "to": "out_atom",
+        "as": "target"
+      },
+      "826gizx": {
+        "from": "826gizx",
+        "to": "out",
+        "as": "value"
+      },
+      "pv1njne": {
+        "from": "pv1njne",
+        "to": "826gizx",
+        "as": "args"
+      },
+      "ozs94yx": {
+        "from": "ozs94yx",
+        "to": "27k1xuw",
+        "as": "args"
+      },
+      "miswsup": {
+        "from": "miswsup",
+        "to": "27k1xuw",
+        "as": "fn"
+      },
+      "sfutvvr": {
+        "from": "sfutvvr",
+        "to": "miswsup",
+        "as": "_ref"
+      },
+      "12y4v2j": {
+        "from": "12y4v2j",
+        "to": "miswsup",
+        "as": "value"
+      },
+      "8jg1uvz": {
+        "from": "8jg1uvz",
+        "to": "ozs94yx",
+        "as": "value"
+      },
+      "27k1xuw": {
+        "from": "27k1xuw",
+        "to": "pv1njne",
+        "as": "set"
+      },
+      "z8oo627": {
+        "from": "z8oo627",
+        "to": "out_atom",
+        "as": "value"
+      },
+      "xvwr56e": {
+        "from": "xvwr56e",
+        "to": "826gizx",
+        "as": "subscribe"
+      },
+      "bceqpks": {
+        "from": "bceqpks",
+        "to": "qj9latb",
+        "as": "true"
+      },
+      "kedy2mx": {
+        "from": "kedy2mx",
+        "to": "bceqpks",
+        "as": "fn"
+      },
+      "qj9latb": {
+        "from": "qj9latb",
+        "to": "xvwr56e",
+        "as": "animationframe"
+      },
+      "484tq9a": {
+        "from": "484tq9a",
+        "to": "qj9latb",
+        "as": "pred"
+      },
+      "d89vgr1": {
+        "from": "d89vgr1",
+        "to": "bceqpks",
+        "as": "args"
+      },
+      "x5va6dz": {
+        "from": "x5va6dz",
+        "to": "d89vgr1",
+        "as": "value"
+      },
+      "ltldy42": {
+        "from": "ltldy42",
+        "to": "x5va6dz",
+        "as": "fn"
+      },
+      "3kj1w1a": {
+        "from": "3kj1w1a",
+        "to": "x5va6dz",
+        "as": "run"
+      },
+      "mue8w9r": {
+        "from": "mue8w9r",
+        "to": "x5va6dz",
+        "as": "args"
+      },
+      "7jg7rr8": {
+        "from": "7jg7rr8",
+        "to": "mue8w9r",
+        "as": "ref"
+      },
+      "1mu7unt": {
+        "from": "1mu7unt",
+        "to": "29wb1n1",
+        "as": "graphid"
+      },
+      "wvpeonf": {
+        "from": "wvpeonf",
+        "to": "d2paurd",
+        "as": "_ref"
+      },
+      "1r14v3m": {
+        "from": "1r14v3m",
+        "to": "wvpeonf",
+        "as": "args"
+      },
+      "0xlqgi2": {
+        "from": "0xlqgi2",
+        "to": "1r14v3m",
+        "as": "current"
+      },
+      "o689p4w": {
+        "from": "o689p4w",
+        "to": "wvpeonf",
+        "as": "value"
+      },
+      "gfxlod4": {
+        "from": "gfxlod4",
+        "to": "o689p4w",
+        "as": "pred"
+      },
+      "bb9h44j": {
+        "from": "bb9h44j",
+        "to": "o689p4w",
+        "as": "true"
+      },
+      "bi3dbrg": {
+        "from": "bi3dbrg",
+        "to": "0xlqgi2",
+        "as": "graphid"
+      }
+    },
+    "edges_in": {
+      "display_text": {
         "path_text": {
           "from": "path_text",
           "to": "display_text",
           "as": "text"
-        },
+        }
+      },
+      "display": {
         "display_text": {
           "from": "display_text",
           "to": "display",
           "as": "children"
-        },
+        }
+      },
+      "out": {
         "display": {
           "from": "display",
           "to": "out",
           "as": "display"
-        },
-        "out_atom": {
-          "from": "out_atom",
-          "to": "826gizx",
-          "as": "value"
         },
         "d2paurd": {
           "from": "d2paurd",
           "to": "out",
           "as": "args"
         },
-        "29wb1n1": {
-          "from": "29wb1n1",
-          "to": "d2paurd",
-          "as": "_ref"
-        },
-        "h9rv0lt": {
-          "from": "h9rv0lt",
-          "to": "29wb1n1",
-          "as": "value"
-        },
-        "k2ezrys": {
-          "from": "k2ezrys",
-          "to": "h9rv0lt",
-          "as": "value"
-        },
-        "ggdfgm1": {
-          "from": "ggdfgm1",
-          "to": "out_atom",
-          "as": "target"
-        },
         "826gizx": {
           "from": "826gizx",
           "to": "out",
+          "as": "value"
+        }
+      },
+      "826gizx": {
+        "out_atom": {
+          "from": "out_atom",
+          "to": "826gizx",
           "as": "value"
         },
         "pv1njne": {
@@ -2052,6 +2692,61 @@ const generic = {
           "to": "826gizx",
           "as": "args"
         },
+        "xvwr56e": {
+          "from": "xvwr56e",
+          "to": "826gizx",
+          "as": "subscribe"
+        }
+      },
+      "o689p4w": {
+        "29wb1n1": {
+          "from": "29wb1n1",
+          "to": "o689p4w",
+          "as": "false"
+        },
+        "gfxlod4": {
+          "from": "gfxlod4",
+          "to": "o689p4w",
+          "as": "pred"
+        },
+        "bb9h44j": {
+          "from": "bb9h44j",
+          "to": "o689p4w",
+          "as": "true"
+        }
+      },
+      "29wb1n1": {
+        "h9rv0lt": {
+          "from": "h9rv0lt",
+          "to": "29wb1n1",
+          "as": "mutableref"
+        },
+        "1mu7unt": {
+          "from": "1mu7unt",
+          "to": "29wb1n1",
+          "as": "graphid"
+        }
+      },
+      "h9rv0lt": {
+        "k2ezrys": {
+          "from": "k2ezrys",
+          "to": "h9rv0lt",
+          "as": "value"
+        }
+      },
+      "out_atom": {
+        "ggdfgm1": {
+          "from": "ggdfgm1",
+          "to": "out_atom",
+          "as": "target"
+        },
+        "z8oo627": {
+          "from": "z8oo627",
+          "to": "out_atom",
+          "as": "value"
+        }
+      },
+      "27k1xuw": {
         "ozs94yx": {
           "from": "ozs94yx",
           "to": "27k1xuw",
@@ -2061,7 +2756,9 @@ const generic = {
           "from": "miswsup",
           "to": "27k1xuw",
           "as": "fn"
-        },
+        }
+      },
+      "miswsup": {
         "sfutvvr": {
           "from": "sfutvvr",
           "to": "miswsup",
@@ -2071,57 +2768,61 @@ const generic = {
           "from": "12y4v2j",
           "to": "miswsup",
           "as": "value"
-        },
+        }
+      },
+      "ozs94yx": {
         "8jg1uvz": {
           "from": "8jg1uvz",
           "to": "ozs94yx",
           "as": "value"
-        },
+        }
+      },
+      "pv1njne": {
         "27k1xuw": {
           "from": "27k1xuw",
           "to": "pv1njne",
           "as": "set"
-        },
-        "z8oo627": {
-          "from": "z8oo627",
-          "to": "out_atom",
-          "as": "value"
-        },
-        "xvwr56e": {
-          "from": "xvwr56e",
-          "to": "826gizx",
-          "as": "subscribe"
-        },
+        }
+      },
+      "qj9latb": {
         "bceqpks": {
           "from": "bceqpks",
           "to": "qj9latb",
           "as": "true"
         },
+        "484tq9a": {
+          "from": "484tq9a",
+          "to": "qj9latb",
+          "as": "pred"
+        }
+      },
+      "bceqpks": {
         "kedy2mx": {
           "from": "kedy2mx",
           "to": "bceqpks",
           "as": "fn"
         },
-        "qj9latb": {
-          "from": "qj9latb",
-          "to": "xvwr56e",
-          "as": "animationframe"
-        },
-        "484tq9a": {
-          "from": "484tq9a",
-          "to": "qj9latb",
-          "as": "pred"
-        },
         "d89vgr1": {
           "from": "d89vgr1",
           "to": "bceqpks",
           "as": "args"
-        },
+        }
+      },
+      "xvwr56e": {
+        "qj9latb": {
+          "from": "qj9latb",
+          "to": "xvwr56e",
+          "as": "animationframe"
+        }
+      },
+      "d89vgr1": {
         "x5va6dz": {
           "from": "x5va6dz",
           "to": "d89vgr1",
           "as": "value"
-        },
+        }
+      },
+      "x5va6dz": {
         "ltldy42": {
           "from": "ltldy42",
           "to": "x5va6dz",
@@ -2136,16 +2837,53 @@ const generic = {
           "from": "mue8w9r",
           "to": "x5va6dz",
           "as": "args"
-        },
+        }
+      },
+      "mue8w9r": {
         "7jg7rr8": {
           "from": "7jg7rr8",
           "to": "mue8w9r",
           "as": "ref"
         }
       },
-    },
+      "d2paurd": {
+        "wvpeonf": {
+          "from": "wvpeonf",
+          "to": "d2paurd",
+          "as": "_ref"
+        }
+      },
+      "wvpeonf": {
+        "1r14v3m": {
+          "from": "1r14v3m",
+          "to": "wvpeonf",
+          "as": "args"
+        },
+        "o689p4w": {
+          "from": "o689p4w",
+          "to": "wvpeonf",
+          "as": "value"
+        }
+      },
+      "1r14v3m": {
+        "0xlqgi2": {
+          "from": "0xlqgi2",
+          "to": "1r14v3m",
+          "as": "current"
+        }
+      },
+      "0xlqgi2": {
+        "bi3dbrg": {
+          "from": "bi3dbrg",
+          "to": "0xlqgi2",
+          "as": "graphid"
+        }
+      }
+    }
+  },
     "state": {
       "id": "state",
+      "name": "state",
       "out": "out",
       "category": "data",
       "nodes": [
@@ -2203,8 +2941,9 @@ const generic = {
         },
         {
           "id": "set_state_val",
-          "ref": "script",
-          "value": "value !== undefined && _lib.no.runtime.update_args(graphid, {[path]: value}); return value"
+          "ref": "extern",
+          "value": "extern.update_args",
+          "_value": "value !== undefined && _lib.no.runtime.update_args(graphid, {[path]: value}); return value"
         },
         {
           "id": "set_state_val_runnable_args",
@@ -2230,7 +2969,8 @@ const generic = {
         },
         {
           "id": "out",
-          "ref": "return"
+          "ref": "return",
+          "name": "state"
         }
       ],
       "edges": [
