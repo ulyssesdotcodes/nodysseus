@@ -467,7 +467,7 @@ export const yNodyStore = async (): Promise<NodysseusStore> => {
   const parentsdb = db.addCollection<{id: string, data: {parentest:string, parent: string}}>("parents", { unique: ["id"] });
   let nodysseusidb;
 
-  openDB("nodysseus", 2, {
+  await openDB("nodysseus", 2, {
     upgrade(db) {
       db.createObjectStore("assets")
     }
@@ -499,7 +499,7 @@ export const yNodyStore = async (): Promise<NodysseusStore> => {
       add: (id, blob) => nodysseusidb.put('assets', blob, id),
       remove: id => nodysseusidb.delete('assets', id),
       removeAll: () => nodysseusidb.clear('assets'),
-      all: () => nodysseusidb.getAll(),
+      all: () => nodysseusidb.getAllKeys('assets'),
       addMany: bs => bs.map(([id, b]) => nodysseusidb.add('assets', b, id))
     }
   }

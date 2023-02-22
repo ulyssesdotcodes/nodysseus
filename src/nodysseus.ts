@@ -1167,6 +1167,7 @@ const nolib = {
         },
         undo: () => nodysseus.refs.undo && nodysseus.refs.undo(),
         redo: () => nodysseus.refs.redo && nodysseus.refs.redo(),
+        store: nodysseus
       };
     }),
   },
