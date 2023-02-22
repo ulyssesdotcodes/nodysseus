@@ -329,6 +329,7 @@ const node_nodes = (node, node_id, data, graph_input_value: Env, lib: Lib, optio
 
 const node_script = (node, nodeArgs: Args, lib: Lib, options: RunOptions): Result | Promise<Result> => {
     let orderedargs = ["", ...nodeArgs.keys()].join(", ");
+
     // const data = {};
     const data = resolve_args(nodeArgs, lib, {...options, resolvePromises: true});
     // for(let i of nodeArgs.keys()) {
@@ -428,7 +429,7 @@ const resolve_args = (data: Args, lib: Lib, options: RunOptions): Result | Promi
 }
 
 const node_data = (nodeArgs, graphArgs, lib, options) => {
-  return nodeArgs.size === 0 ? lib.data.no.of(undefined) : options.isNoResolve ? nodeArgs : resolve_args(nodeArgs, lib, options);
+  return nodeArgs.size === 0 ? lib.data.no.of(undefined) : resolve_args(nodeArgs, lib, options);
 }
 
 const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, args: ConstRunnable, lib, options: RunOptions): FunctorRunnable | Promise<FunctorRunnable> => {
