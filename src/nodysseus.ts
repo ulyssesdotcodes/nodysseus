@@ -1446,26 +1446,8 @@ const nolib = {
     },
     new_array: {
       args: ["_node_args", "__graph_value"],
-      fn: (args, nodevalue) => {
-        if (nodevalue) {
-          return nodevalue.split(/,\s+/);
-        }
-        const argskeys = Object.keys(args);
-        const arr =
-          args && argskeys.length > 0
-            ? argskeys
-                .filter(k => !k.startsWith("__"))
-                .sort()
-                .reduce(
-                  (acc, k) => [
-                    acc[0].concat([args[k]]),
-                    acc[1] || ispromise(args[k]),
-                  ] as [Array<any>, boolean],
-                  [[], false] as [Array<any>, boolean]
-                )
-            : JSON.parse("[" + nodevalue + "]");
-        return arr[1] ? Promise.all(arr[0]) : arr[0];
-      },
+      fn: (args, nodevalue) => nodevalue ? nodevalue.split(/,\s+/)
+        : wrapPromiseAll(Object.entries(args).sort((akv, bkv) => akv[0].localeCompare(bkv[0])).map((kv: [string, any]) => wrapPromise(kv[1]))).then(r => r.map(rv => isValue(rv) ? rv.value : rv)).value
     },
     fetch: {
       resolve: true,
