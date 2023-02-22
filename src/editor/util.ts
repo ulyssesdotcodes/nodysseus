@@ -241,15 +241,16 @@ export const ChangeDisplayGraphId: ha.Effecter<HyperappState, {id: string, selec
 export const CreateNode: ha.Action<HyperappState, {node: NodysseusNode, child: string, child_as: string, parent: Edge }> = (state, {node, child, child_as, parent}) => [
     state,
     dispatch => {
-        nolib.no.runtime.add_node(state.display_graph, node, hlib)
-        nolib.no.runtime.update_edges(state.display_graph, 
-            parent 
-                ? [{from: node.id, to: child, as: parent.as}, {from: parent.from, to: node.id, as: 'arg0'}] 
-                : [{from: node.id, to: child, as: child_as}], 
-            parent ? [{from: parent.from, to: child}] : []
-        , hlib)
-        // Hacky - have to wait until the node is finished adding and the graph callback takes place before updating selected node.
-        setTimeout(() => requestAnimationFrame(() => dispatch(SelectNode, {node_id: node.id})), 50);
+      console.log(node);
+      nolib.no.runtime.add_node(state.display_graph, node, hlib)
+      nolib.no.runtime.update_edges(state.display_graph, 
+          parent 
+              ? [{from: node.id, to: child, as: parent.as}, {from: parent.from, to: node.id, as: 'arg0'}] 
+              : [{from: node.id, to: child, as: child_as}], 
+          parent ? [{from: parent.from, to: child}] : []
+      , hlib)
+      // Hacky - have to wait until the node is finished adding and the graph callback takes place before updating selected node.
+      setTimeout(() => requestAnimationFrame(() => dispatch(SelectNode, {node_id: node.id})), 50);
     }
 ];
 

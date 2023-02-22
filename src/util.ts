@@ -1,4 +1,4 @@
-import { Edge, Graph, GraphNode, NodysseusNode, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable, isEnv, isRunnable, isValue, Lib, isLib, Env, Args, ValueNode, Result, isArgs, isConstRunnable, isApRunnable, isError, ConstRunnable } from "./types";
+import { Edge, Graph, GraphNode, NodysseusNode, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable, isEnv, isRunnable, isValue, Lib, isLib, Env, Args, ValueNode, Result, isArgs, isConstRunnable, isApRunnable, isError, ConstRunnable, TypedArg } from "./types";
 
 export const WRAPPED_KIND = "wrapped";
 type WrappedKind = "wrapped";
@@ -236,8 +236,8 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Ar
     const edges_in = node_ref && nolib.no.runtime.get_edges_in(graph, node_id);
     const edge_out = nolib.no.runtime.get_edge_out(graph, node_id)
     const node_out = edge_out && edge_out.as === "args" && nolib.no.runtime.get_node(graph, edge_out.to);
-    const node_out_args = node_out?.ref === "runnable" && 
-      Object.values(ancestor_graph(node_out.id, graph, nolib).nodes).filter(isNodeRef).filter(n => n.ref === "arg").map(a => a.value?.includes(".") ? a.value?.substring(0, a.value?.indexOf(".")) : a.value);
+    const node_out_args: Array<[string, string]> = node_out?.ref === "runnable" && 
+      Object.values(ancestor_graph(node_out.id, graph, nolib).nodes).filter(isNodeRef).filter(n => n.ref === "arg").map(a => a.value?.includes(".") ? a.value?.substring(0, a.value?.indexOf(".")) : a.value).map(a => [a, "any"]);
 
     // const argslist_path = node_ref?.nodes && nolib.no.runtime.get_path(node_ref, "argslist");
 
@@ -247,28 +247,33 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Ar
             .reduce((acc, i) => acc > i ? acc : i + 1, 0))
     
     const externfn = node_ref?.ref === "extern" && nolib.extern.get.fn({}, nolib, node_ref?.value, undefined, undefined, nolib)
-    const baseargs = externfn
-            ? externfn.args
-              ? externfn.args
+    const externArgs = externfn && (Array.isArray(externfn.args) ? externfn.args.map(a => {
+      const argColonIdx = a.indexOf(":")
+      return [argColonIdx >= 0 ? a.substring(0, argColonIdx) : a, "any"]
+    }) : Object.entries(externfn.args));
+    const baseargs: Array<[string ,TypedArg]> = externfn
+            ? externArgs
+              ? externArgs
               : ['args']
             : isNodeGraph(node_ref)
             ? Object.values(node_ref?.nodes).filter(isNodeRef).filter(n => 
                 n.ref === "arg" 
                 && !n.value?.split(":")[1]?.toLowerCase()?.includes("internal"))
-                .map(n => n.value).filter(a => a) ?? []
+                .map(n => n.value).filter(a => a).map(a => [a, "any"]) ?? []
             : []
 
-    return [...new Set(baseargs
-        .filter(a => !a.includes('.') && !a.startsWith("_"))
-        .concat(edges_in?.map(e => e.as) ?? [])
+    const typedArgsMap = new Map(baseargs
+        .filter(a => !a.includes('.') && !a[0].startsWith("_"))
         .concat(
-            (externfn?.args?.includes("_node_args") || baseargs.includes("_args"))
+            (externArgs && externArgs.map(a => a[0]).includes("_node_args") || baseargs.map(a => a[0]).includes("_args"))
             || (node.ref === undefined && !node.value)
-            ? [nextIndexedArg]
+            ? [[nextIndexedArg, "any"]]
             : []
         )
         .concat(node_out_args ? node_out_args : []))
-    ].map((a: string) => ({exists: !!edges_in.find(e => e.as === a), name: a}))
+
+
+    return [...typedArgsMap].concat(edges_in?.filter(e => !typedArgsMap.has(e.as)).map(e => [e.as, "any"])).map((a: [string, TypedArg]) => ({exists: !!edges_in.find(e => e.as === a[0]), name: a[0], ...(typeof a[1] === "object" ? a[1] : {type: a[1]})}))
 }
 
 

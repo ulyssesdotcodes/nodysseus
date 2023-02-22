@@ -1272,7 +1272,7 @@ const generic = {
       },
       "pred_cache_state": {
         "id": "pred_cache_state",
-        "value": "const docache = _isrunning.value ? false : _reset || (recache === undefined ? (cachevaluestate === undefined || cachevaluestate === null) : (recache !== false && (typeof recache !== 'object' || Object.keys(recache).length > 0)))\n\nif(docache) {\n  _isrunning.value = true;\n}\n\nreturn docache;",
+        "value": "const docache = _reset || (recache === undefined ? (cachevaluestate === undefined || cachevaluestate === null) : (recache !== false && (typeof recache !== 'object' || Object.keys(recache).length > 0)))\n\nreturn docache;",
         "ref": "script"
       },
       "ap_cache_value": {

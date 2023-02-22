@@ -132,8 +132,8 @@ export const isEnv = (env: any): env is Env => env?.__kind === "env"
 
 //export const isApRunnable = (r: Runnable): r is ApRunnable => isGraphRunnable((r as ApRunnable).fn)
 
-export type NodeArg = { exists: boolean, name: string }
-
+export type NodeArg = { exists: boolean, name: string } & Partial<FullyTypedArg>
+ 
 export type Args = Map<string, ConstRunnable | Result>;
 export type ResolvedArgs = Map<string, unknown>;
 export const isArgs = (args: any): args is Args => typeof args?.get === "function"
@@ -143,3 +143,6 @@ export type RunOptions = {
   profile?: boolean,
   resolvePromises?: boolean
 }
+
+type FullyTypedArg = { type: string, default?: boolean}
+export type TypedArg = string | FullyTypedArg

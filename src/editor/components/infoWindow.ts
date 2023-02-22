@@ -116,7 +116,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, display_graph_id, 
                     .map(n => ha.h('span', {
                         class: "clickable", 
                         onclick: n.exists ? edges_in.filter(l => l.as === n.name).map(l => [SelectNode, {node_id: l.from}])[0]
-                          : [CreateNode, {node: {id: randid}, child: node.id, child_as: n.name}]
+                          : [CreateNode, {node: {id: randid, ref: n.type && n.type !== "any" ?  n.type : undefined}, child: node.id, child_as: n.name}]
                     }, [ha.text(n.exists ? n.name : `+${n.name}`)]))),
             ha.h('div', {class: "inputs"}, [
                 ha.memo(node => infoInput({
