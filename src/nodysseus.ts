@@ -1,7 +1,7 @@
 import set from "just-safe-set";
 import loki from "lokijs";
 import { ancestor_graph, ispromise, isWrappedPromise, mapMaybePromise, node_args, WrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node, runnableId } from "./util"
-import { isNodeGraph, Graph, LokiT, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP } from "./types"
+import { isNodeGraph, Graph, LokiT, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg } from "./types"
 import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util"
 import generic from "./generic.js";
 import { create_fn, expect, now } from "./externs";
@@ -355,9 +355,12 @@ const node_extern = (node: RefNode, data: Args, graphArgs: Env, lib: Lib, option
     const extern = libExternFn ? lib.data.extern[libExternFn] : nodysseus_get(lib.data, node.value, lib);
     let argspromise = false;
     let argColonIdx;
-    const args = typeof extern === 'function' ?  resolve_args(data, lib, options) :  extern.args.map(arg => {
-      argColonIdx = arg.indexOf(":")
-      arg = argColonIdx >= 0 ? arg.substring(0, argColonIdx) : arg;
+    const isArgsArray = Array.isArray(extern.args);
+    const externArgs: Array<[string, TypedArg]>  = isArgsArray ? extern.args.map(a => {
+      argColonIdx = a.indexOf(":")
+      return [argColonIdx >= 0 ? a.substring(0, argColonIdx) : a, "any"]
+    }) : Object.entries(extern.args);
+    const args = typeof extern === 'function' ?  resolve_args(data, lib, options) :  externArgs.map(([arg, argType]) => {
       let newval;
       if (arg === '_node') {
           newval = node 
@@ -378,18 +381,19 @@ const node_extern = (node: RefNode, data: Args, graphArgs: Env, lib: Lib, option
       }
 
       argspromise ||= ispromise(newval);
-      return newval;
+      return newval
     });
 
     argspromise ||= ispromise(args)
 
     if (argspromise && !extern.promiseArgs) {
-        return (Array.isArray(args) ? Promise.all(args) : args.then(v => v?.value.args)).then(as => {
-            const res = (typeof extern === 'function' ? extern :  extern.fn).apply(null, as);
+        return (Array.isArray(args) ? Promise.all(args) : (args as Promise<Result>).then(v => isValue(v) ? v.value.args : v)).then(as => {
+            const res = (typeof extern === 'function' ? extern :  extern.fn).apply(null, isArgsArray ? as : [Object.fromEntries(externArgs.map((a, idx) => [a[0], as[idx]]))]);
             return mapMaybePromise(res, res => extern.rawArgs ? res : lib.data.no.of(res));
         })
-    } else {
-        const res = (typeof extern === 'function' ? extern :  extern.fn).apply(null, Array.isArray(args) ? args : args?.value.args);
+    } else if(!ispromise(args)) {
+        const resArgs = Array.isArray(args) ? args : isValue(args) ? args.value.args : args;
+        const res = (typeof extern === 'function' ? extern :  extern.fn).apply(null, isArgsArray ? resArgs : [Object.fromEntries(externArgs.map((a, idx) => [a[0], resArgs[idx]]))]);
         return mapMaybePromise(res, res => extern.rawArgs ? res : lib.data.no.of(res));
     }
 }
@@ -1054,6 +1058,7 @@ const nolib = {
         change_graph,
         update_graph: (graphid, lib: Lib) => publish('graphupdate', {graphid}, lib),
         update_args,
+        delete_cache: () => nodysseus.state.removeAll(),
         get_graph,
         get_args,
         get_path,
@@ -1480,8 +1485,8 @@ const nolib = {
     },
     call: {
       resolve: true,
-      args: ["__graph_value", "self: default", "fn", "args", "_graph_input_value", "_lib"],
-      fn: (nodevalue, self, fn, args, _args, lib: Lib) => {
+      args: {"__graph_value": "system", "self": {type: "any", default: true}, "fn": "value", "args": "array", "_lib": "lib"},
+      fn: ({nodevalue, self, fn, args, _lib}) => {
         const runfn = (args) => {
           if (typeof self === "function") {
             return Array.isArray(args)
@@ -1501,7 +1506,7 @@ const nolib = {
                 )
               : self(args === undefined ? [] : args);
           } else {
-            const ng_fn = nodysseus_get(self ?? lib.data, fn || nodevalue, lib);
+            const ng_fn = nodysseus_get(self ?? _lib.data, fn || nodevalue, _lib);
             const fnargs = Array.isArray(args)
               ? (args || [])
                   .reverse()
@@ -1518,7 +1523,7 @@ const nolib = {
               : args === undefined
               ? []
               : [args];
-            const ret = lib.data.no.of(ispromise(ng_fn)
+            const ret = _lib.data.no.of(ispromise(ng_fn)
               ? ng_fn.then((f: any) => f.apply(fnargs))
               : ng_fn.apply(self, fnargs));
               return ret;
