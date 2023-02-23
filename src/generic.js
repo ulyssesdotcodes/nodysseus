@@ -1896,8 +1896,7 @@ const generic = {
       },
       "recache_button_fn_value": {
         "id": "recache_button_fn_value",
-        "ref": "arg",
-        "value": "value"
+        "value": "undefined"
       },
       "recache_button_ap": {
         "id": "recache_button_ap",
@@ -1905,6 +1904,7 @@ const generic = {
       },
       "recache_button": {
         "id": "recache_button",
+        "value": "recache",
         "ref": "tapbutton"
       },
       "out": {
