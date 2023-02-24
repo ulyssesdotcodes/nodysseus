@@ -267,7 +267,7 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Ar
         .concat(
             (externArgs && externArgs.map(a => a[0]).includes("_node_args") || baseargs.map(a => a[0]).includes("_args"))
             || (node.ref === undefined && !node.value)
-            ? [[nextIndexedArg, "any"]]
+            ? [[nextIndexedArg, {type: "any", additionalArg: true}]]
             : []
         )
         .concat(node_out_args ? node_out_args : []))

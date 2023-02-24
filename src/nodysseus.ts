@@ -331,7 +331,7 @@ const node_script = (node, nodeArgs: Args, lib: Lib, options: RunOptions): Resul
     let orderedargs = ["", ...nodeArgs.keys()].join(", ");
 
     // const data = {};
-    const data = resolve_args(nodeArgs, lib, {...options, resolvePromises: true});
+    const data = resolve_args(nodeArgs, lib, options.resolvePromises ? options : {...options, resolvePromises: true});
     // for(let i of nodeArgs.keys()) {
     //     orderedargs += ", " + i;
     //     if(nodeArgs.has(i)){
@@ -404,7 +404,7 @@ const resolve_args = (data: Args, lib: Lib, options: RunOptions): Result | Promi
     for(let kv of data.entries()){
       result[kv[0]] = kv[1] 
       while(isConstRunnable(result[kv[0]])) {
-        result[kv[0]] = wrapPromise(result[kv[0]]).then(runnable => run_runnable(runnable, lib, undefined, {...options, resolvePromises: false})).value;
+        result[kv[0]] = wrapPromise(result[kv[0]]).then(runnable => run_runnable(runnable, lib, undefined, options)).value;
       }
       if(result[kv[0]] instanceof Error) {
         return result[kv[0]]
@@ -413,11 +413,11 @@ const resolve_args = (data: Args, lib: Lib, options: RunOptions): Result | Promi
     }
 
     if (is_promise && options.resolvePromises) {
-        const promises = [];
-        Object.entries(result).forEach(kv => {
-            promises.push(Promise.resolve(kv[1]).then((pv: Result) => isError(pv) ? pv : [kv[0], pv?.value]))
-        })
-        return Promise.all(promises).then(Object.fromEntries).then(v => lib.data.no.of(v));
+      const promises = [];
+      Object.entries(result).forEach(kv => {
+          promises.push(Promise.resolve(kv[1]).then((pv: Result) => isError(pv) ? pv : [kv[0], pv?.value]))
+      })
+      return Promise.all(promises).then(Object.fromEntries).then(v => lib.data.no.of(v));
     }
 
     // if(!options.resolvePromises && is_promise) {
@@ -1487,7 +1487,8 @@ const nolib = {
     call: {
       resolve: true,
       args: {"__graph_value": "system", "self": {type: "any", default: true}, "fn": "value", "args": "array", "_lib": "lib"},
-      fn: ({nodevalue, self, fn, args, _lib}) => {
+      fn: ({__graph_value, self, fn, args, _lib}) => {
+        let nodevalue = __graph_value;
         const runfn = (args) => {
           if (typeof self === "function") {
             return Array.isArray(args)

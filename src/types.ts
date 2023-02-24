@@ -141,8 +141,12 @@ export const isArgs = (args: any): args is Args => typeof args?.get === "functio
 
 export type RunOptions = {
   profile?: boolean,
-  resolvePromises?: boolean
+  resolvePromises?: boolean,
 }
 
-type FullyTypedArg = { type: string, default?: boolean}
+type FullyTypedArg = { 
+  type: string, 
+  default?: boolean
+  additionalArg?: boolean
+}
 export type TypedArg = string | FullyTypedArg
