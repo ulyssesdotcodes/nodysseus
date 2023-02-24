@@ -383,8 +383,8 @@ export const UpdateNodeEffect = (_, {display_graph, node}) => {
   const edges_in = nolib.no.runtime.get_edges_in(display_graph, node.id);
   const nodeargs = node_args(nolib, display_graph, node.id);
   if(edges_in.length === 1){ 
-    if(nodeargs.length === 1) {
-      nolib.no.runtime.update_edges(display_graph, [{...edges_in[0], as: nodeargs[0].name}], [], hlib)
+    if(nodeargs.length === 2) {
+      nolib.no.runtime.update_edges(display_graph, [{...edges_in[0], as: nodeargs.find(a => !a.additionalArg).name}], [], hlib)
     } else if(nodeargs.find(a => a.name.split(": ")[1] === "default")) {
       nolib.no.runtime.update_edges(display_graph, [{...edges_in[0], as: nodeargs.map(a => a.name.split(": ")).find(e => e[1] === "default")[0]}], [], hlib)
     }
