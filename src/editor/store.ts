@@ -2,7 +2,6 @@ import { openDB } from "idb";
 import { IndexeddbPersistence } from "y-indexeddb";
 import { WebrtcProvider } from "y-webrtc";
 import * as Y from "yjs"
-import { YMap } from "yjs/dist/src/internals";
 import generic from "../generic";
 import { lokidbToStore, nolib } from "../nodysseus";
 import { Edge, EdgesIn, Graph, NodysseusStore } from "../types";
@@ -17,7 +16,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
   const rootDoc = new Y.Doc();
   const ydoc = new Y.Doc();
   rootDoc.getMap().set("ydoc", ydoc);
-  const ymap: YMap<Y.Doc> = ydoc.getMap();
+  const ymap: Y.Map<Y.Doc> = ydoc.getMap();
   const simpleYDoc = new Y.Doc();
   const simpleYMap = simpleYDoc.getMap();
 
@@ -70,7 +69,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
         }
 
         if(data.nodes)  {
-          let nodesymap: YMap<Node> = infomap.get("nodes")
+          let nodesymap: Y.Map<Node> = infomap.get("nodes")
           if(!infomap.get("nodes")?.set) {
             nodesymap = new Y.Map();
             infomap.set("nodes", nodesymap)
@@ -84,7 +83,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
         }
 
         if(data.edges) {
-          let edgesymap: YMap<Edge> = infomap.get("edges")
+          let edgesymap: Y.Map<Edge> = infomap.get("edges")
           if(!infomap.get("edges")?.set) {
             edgesymap = new Y.Map();
             infomap.set("edges", edgesymap)
@@ -149,7 +148,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
     if(generic_node_ids.has(graphId)) return;
 
     ymap.get(graphId).transact(() => {
-      (ymap.get(graphId).getMap().get("nodes") as YMap<any>).set(node.id, node)
+      (ymap.get(graphId).getMap().get("nodes") as Y.Map<any>).set(node.id, node)
     })
 
     updateSimple(graphId)
@@ -159,9 +158,8 @@ export const ydocStore = async (persist: false | string = false, update = undefi
     if(generic_node_ids.has(graphId)) return;
 
     ymap.get(graphId).transact(() => {
-      (ymap.get(graphId).getMap().get("nodes") as YMap<any>).delete(typeof node === "string" ? node : node.id);
-      // also delete the edge leading out as it is invalid
-      (ymap.get(graphId).getMap().get("edges") as YMap<any>).delete(typeof node === "string" ? node : node.id);
+      (ymap.get(graphId).getMap().get("nodes") as Y.Map<any>).delete(typeof node === "string" ? node : node.id);
+      (ymap.get(graphId).getMap().get("edges") as Y.Map<any>).delete(typeof node === "string" ? node : node.id);
     })
 
     updateSimple(graphId)
@@ -171,7 +169,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
     if(generic_nodes[graphId]) return;
 
     ymap.get(graphId).transact(() => {
-      (ymap.get(graphId).getMap().get("edges") as YMap<any>).set(edge.from, edge)
+      (ymap.get(graphId).getMap().get("edges") as Y.Map<any>).set(edge.from, edge)
     })
 
     updateSimple(graphId)
@@ -179,7 +177,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
 
   const remove_edge = (graphId, edge) => {
     ymap.get(graphId).transact(() => {
-      (ymap.get(graphId).getMap().get("edges") as YMap<any>).delete(edge.from)
+      (ymap.get(graphId).getMap().get("edges") as Y.Map<any>).delete(edge.from)
     })
 
     updateSimple(graphId)
@@ -194,15 +192,15 @@ export const ydocStore = async (persist: false | string = false, update = undefi
     prevIndexeddbProvider.whenSynced.then(val => {
       Promise.all([...prevdoc.getMap().keys()].map(k => {
         const addedkey = `__${k}__added_5`
-        const prevdocmap = prevdoc.getMap().get(k) as YMap<any>;
+        const prevdocmap = prevdoc.getMap().get(k) as Y.Map<any>;
         if(k.startsWith("_") || k === "" || generic_nodes[k] || prevdoc.getMap().get(addedkey)) {
         } else if ((prevdoc.getMap().get(k) as Graph).id) {
           // convert old maps to ymap
           console.log(`old maps ${k}`)
           return add(k, prevdoc.getMap().get(k))
-        } else if (Array.isArray((prevdoc.getMap().get(k) as YMap<any>).get("nodes"))) {
+        } else if (Array.isArray((prevdoc.getMap().get(k) as Y.Map<any>).get("nodes"))) {
           console.log(`old nodes ${k}`)
-          const graph: YMap<any> = prevdocmap;
+          const graph: Y.Map<any> = prevdocmap;
           const nodes = graph.get("nodes");
           const edges = graph.get("edges");
           const updatedNodes = new Y.Map();
