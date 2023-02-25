@@ -404,28 +404,58 @@ export const ydocStore = async (persist: false | string = false, update = undefi
       return generic_nodes[id];
     }
 
-    let simpleValue: Graph | undefined = ((simpleYMap.get(id) as any)?.id || ymap.get(id)?.isLoaded) && simpleYMap.get(id) as Graph;
-    const isYMapLoaded = !simpleValue && ymap.get(id)?.isLoaded;
-    const ymapvalue = !simpleValue && !isYMapLoaded && (ymap.get(id)?.load(), ymap.get(id)?.whenLoaded); 
-    return mapMaybePromise(simpleValue?.id || isYMapLoaded
-      ? simpleValue
-      : ymapvalue?.then(d => d.getMap().toJSON()), (res: {id?: string}) => {
-        if((!res || Object.keys(res).length === 0) && otherwise && !(rdoc && rdoc.getMap().has(id))) {
-          console.log("creating new " + id)
-          return add(id, otherwise)
-        }
+    let simpleValue: Graph | undefined = simpleYMap.get(id) as Graph;
+    if(simpleValue) {
+      return simpleValue
+    }
 
-        if(res && !res.id) {
-          res.id = id;
-        }
+    if(ymap.has(id)) {
+      console.log("loading " + id)
+      ymap.get(id)?.load()
+      return ymap.get(id).whenLoaded.then((doc: Y.Doc) => {
+        console.log(doc)
+        doc.transact(() => {
+          // Sanitization and transforming from old to new
+          const edgeReplaceMap = new Map<string, Map<string, string>>();
+          let updateEdges = false;
+          const docmap = doc.getMap();
+          const docnodes: Y.Map<Node> = docmap.get("nodes") as Y.Map<Node>;
+          (docmap.get("edges") as (Y.Map<Edge> | Y.Map<Y.Map<string>>)).forEach((e: Edge | Y.Map<string>, key: string) => {
+            let edge = e as Edge
+            if(edge.from && edge.to) {
+              updateEdges = true;
+              if(docnodes.has(edge.from) && docnodes.has(edge.to)) {
+                if(!edgeReplaceMap.has(edge.to)) {
+                  edgeReplaceMap.set(edge.to, new Map())
+                }
 
-        if(!simpleValue) {
-          updateSimple(id);
-          simpleValue = simpleYMap.get(id) as Graph;
-        }
+                edgeReplaceMap.get(edge.to).set(edge.as, edge.from)
+              }
+            } else {
+              (e as Y.Map<string>).forEach((as, from) => {
+                if(!(docnodes.has(key) && docnodes.has(from))) {
+                  throw new Error(`invalid edge ${from} to ${key} as ${as}`)
+                }
+              })
+            }
+          })
 
-        return simpleValue ?? res;
-      });
+
+          if(updateEdges) {
+            console.log("would update", edgeReplaceMap)
+          }
+        })
+        updateSimple(id);
+        return simpleYMap.get(id);
+      })
+    }
+
+    if(!(rdoc && rdoc.getMap().has(id)) && otherwise) {
+      console.log("creating new " + id)
+      return add(id, otherwise)
+    }
+
+    // TODO: if rdoc has it and it's not synced, what then?
   }
 
   return {

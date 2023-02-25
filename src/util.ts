@@ -172,8 +172,8 @@ export const contract_node = (data: {display_graph: Graph, node_id: string, noli
 
         const edgesToRemove: Array<Edge> = [];
         const edgesToAdd: Array<Edge> = [
-          {...nolib.no.runtime.get_edge_out(data.node_id), from: final_node_id}, 
-          ...nolib.no.runtime.get_edges_in(args_node_id).map(e => ({...e, to: final_node_id}))
+          {...nolib.no.runtime.get_edge_out(data.display_graph, data.node_id), from: final_node_id}, 
+          ...nolib.no.runtime.get_edges_in(data.display_graph, args_node_id).map(e => ({...e, to: final_node_id}))
         ];
 
         // Iterate inside nodes to find edges

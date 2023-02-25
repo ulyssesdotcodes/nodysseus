@@ -588,7 +588,7 @@ const run_graph = (graph: Graph | (Graph & {nodes: Array<NodysseusNode>, edges: 
           const data = create_data(node_id, newgraph, env, lib, options);
 
           if(options.profile && !nolib.no.runtime.get_parentest((env.data.get("__graphid") as {value: string}).value)) {
-            const edgePath = edge => nolib.no.runtime.get_edge_out(edge) ? [nolib.no.runtime.get_edge_out(edge).as].concat(edgePath(nolib.no.runtime.get_edge_out(edge).to)) : []
+            const edgePath = edge => nolib.no.runtime.get_edge_out(newgraph, edge) ? [nolib.no.runtime.get_edge_out(newgraph, edge).as].concat(edgePath(nolib.no.runtime.get_edge_out(newgraph, edge).to)) : []
             let path = edgePath(node_id).join(" -> ");
             const id = `${(env.data.get("__graphid") as {value: string}).value}/${node.id} (${node.ref}) - ${path}`;
             if(options?.profile && id) {
@@ -926,7 +926,7 @@ const nolib = {
 
         const parent = get_parentest(graph);
         if (parent) {
-          lib.data.no.runtime.update_graph(parent, lib);
+          (lib.data ?? lib).no.runtime.update_graph(parent, lib);
         } else {
           publish("graphchange", graph, lib);
           publish("graphupdate", graph, lib);
@@ -1099,10 +1099,10 @@ const nolib = {
           wrapPromise(get_graph(graph)).then(graph => {
             const graphId = typeof graph === "string" ? graph : graph.id;
 
-            const parent_edge = lib.data.no.runtime.get_edge_out(id);
-            const child_edges = lib.data.no.runtime.get_edges_in(id);
+            const parent_edge = (lib.data ?? lib).no.runtime.get_edge_out(graphId, id);
+            const child_edges = (lib.data ?? lib).no.runtime.get_edges_in(graphId, id);
 
-            const current_child_edges = lib.data.no.runtime.get_edges_in(parent_edge.to);
+            const current_child_edges = (lib.data ?? lib).no.runtime.get_edges_in(graphId, parent_edge.to);
             const new_child_edges = child_edges.map((e, i) => ({
               ...e,
               to: parent_edge.to,
