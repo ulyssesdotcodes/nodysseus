@@ -986,7 +986,7 @@ const nolib = {
       const get_graph = (graph: string | Graph): Graph | Promise<Graph> | undefined => wrapPromise(
         nodysseus.refs.get(typeof graph === "string" ? graph : graph.id))
           .then(g => {
-            return (isNodeGraph(g) ? g : undefined)
+            return isNodeGraph(g) ? g : typeof graph !== "string" && isNodeGraph(graph) ? graph : undefined
           }).value
       const get_parent = (graph) => {
         const parent = nodysseus.parents.get(
