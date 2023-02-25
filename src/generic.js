@@ -5348,7 +5348,7 @@ const generic = {
         {
           "id": "wrapped_children",
           "ref": "script",
-          "value": "return Array.isArray(children) ? children : [children]"
+          "value": "return Array.isArray(children) ? children : children !== undefined ? [children] : []"
         },
         {
           "id": "filter_children",
