@@ -1,6 +1,6 @@
 import * as ha from "hyperapp"
 import { initStore, nodysseus_get, nolib, run } from "../nodysseus";
-import { Edge, Graph, isArgs, isRunnable, NodysseusNode } from "../types";
+import { Edge, Graph, isArgs, isRunnable, Lib, NodysseusNode } from "../types";
 import { base_node, base_graph, ispromise, wrapPromise, node_args, expand_node, contract_node, ancestor_graph, create_randid } from "../util";
 import panzoom, * as pz from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
@@ -645,9 +645,9 @@ export const bfs = (graph: Graph, fn) => {
 }
 
 
-export const calculateLevels = (nodes: Array<d3Node>, links: Array<d3Link>, graph: Graph, selected: string): Levels => {
+export const calculateLevels = (nodes: Array<d3Node>, links: Array<d3Link>, graph: Graph, selected: string, lib: Lib): Levels => {
     const find_childest = n => {
-        const e = graph.edges[n];
+        const e = lib.data.no.runtime.get_edge_out(graph, n);
         if (e) {
             return find_childest(e.to);
         } else {

@@ -578,8 +578,7 @@ const run_graph = (graph: Graph | (Graph & {nodes: Array<NodysseusNode>, edges: 
 
         return e;
   }
-  // TODO: remove old graph notation
-    const newgraph = Array.isArray(graph.nodes) && Array.isArray(graph.edges) ? {...graph, nodes: Object.fromEntries(graph.nodes.map(n => [n.id, n])), edges: Object.fromEntries(graph.edges.map(e => [e.from, e]))} : graph;
+    const newgraph = graph;
     const node = lib.data.no.runtime.get_node(newgraph, node_id);
 
     try {
@@ -589,7 +588,7 @@ const run_graph = (graph: Graph | (Graph & {nodes: Array<NodysseusNode>, edges: 
           const data = create_data(node_id, newgraph, env, lib, options);
 
           if(options.profile && !nolib.no.runtime.get_parentest((env.data.get("__graphid") as {value: string}).value)) {
-            const edgePath = edge => graph.edges[edge] ? [graph.edges[edge].as].concat(edgePath(graph.edges[edge].to)) : []
+            const edgePath = edge => nolib.no.runtime.get_edge_out(edge) ? [nolib.no.runtime.get_edge_out(edge).as].concat(edgePath(nolib.no.runtime.get_edge_out(edge).to)) : []
             let path = edgePath(node_id).join(" -> ");
             const id = `${(env.data.get("__graphid") as {value: string}).value}/${node.id} (${node.ref}) - ${path}`;
             if(options?.profile && id) {
@@ -1100,12 +1099,10 @@ const nolib = {
           wrapPromise(get_graph(graph)).then(graph => {
             const graphId = typeof graph === "string" ? graph : graph.id;
 
-            const parent_edge = graph.edges[id]
-            const child_edges = Object.values(graph.edges).filter((e) => e.to === id);
+            const parent_edge = lib.data.no.runtime.get_edge_out(id);
+            const child_edges = lib.data.no.runtime.get_edges_in(id);
 
-            const current_child_edges = Object.values(graph.edges).filter(
-              (e) => e.to === parent_edge.to
-            );
+            const current_child_edges = lib.data.no.runtime.get_edges_in(parent_edge.to);
             const new_child_edges = child_edges.map((e, i) => ({
               ...e,
               to: parent_edge.to,

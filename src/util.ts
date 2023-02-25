@@ -171,17 +171,17 @@ export const contract_node = (data: {display_graph: Graph, node_id: string, noli
         }
 
         const edgesToRemove: Array<Edge> = [];
-        const edgesToAdd: Array<Edge> = [];
+        const edgesToAdd: Array<Edge> = [
+          {...nolib.no.runtime.get_edge_out(data.node_id), from: final_node_id}, 
+          ...nolib.no.runtime.get_edges_in(args_node_id).map(e => ({...e, to: final_node_id}))
+        ];
 
-        Object.values(data.display_graph.edges).forEach(e => {
-            if(inside_node_map.has(e.from) && inside_node_map.has(e.to)) {
-              edgesToRemove.push(e)
-            } else if(e.from === data.node_id) {
-              edgesToAdd.push({...e, from: final_node_id})
-            } else if (e.to === args_node_id) {
-              edgesToAdd.push({...e, to: final_node_id})
-            }
-        })
+        // Iterate inside nodes to find edges
+        for(let newn of inside_node_map.keys()) {
+          nolib.no.runtime.get_edges_in(data.display_graph, newn)
+            .filter(e => inside_node_map.has(e.from))
+            .forEach(e => edgesToRemove.push(e))
+        }
 
         for(const newn of inside_node_map.keys()) {
           nolib.no.runtime.delete_node(data.display_graph.id, newn, nolib, false)

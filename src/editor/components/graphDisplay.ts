@@ -46,7 +46,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
 
     const node_map = new Map(Object.entries(data.display_graph.nodes));
     const children_map = new Map(Object.values(data.display_graph.nodes).map(n => [n.id, 
-        [data.display_graph.edges[n.id]?.to].filter(e => e)
+        [nolib.no.runtime.get_edge_out(data.display_graph, n)].filter(e => e)
     ]));
 
     const order = [];
