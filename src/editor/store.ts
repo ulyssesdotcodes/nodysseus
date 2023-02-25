@@ -159,7 +159,9 @@ export const ydocStore = async (persist: false | string = false, update = undefi
     if(generic_node_ids.has(graphId)) return;
 
     ymap.get(graphId).transact(() => {
-      (ymap.get(graphId).getMap().get("nodes") as YMap<any>).delete(typeof node === "string" ? node : node.id)
+      (ymap.get(graphId).getMap().get("nodes") as YMap<any>).delete(typeof node === "string" ? node : node.id);
+      // also delete the edge leading out as it is invalid
+      (ymap.get(graphId).getMap().get("edges") as YMap<any>).delete(typeof node === "string" ? node : node.id);
     })
 
     updateSimple(graphId)

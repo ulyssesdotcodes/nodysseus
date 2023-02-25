@@ -170,11 +170,18 @@ export const contract_node = (data: {display_graph: Graph, node_id: string, noli
             };
         }
 
-        const new_display_graph = {
-          ...data.display_graph,
-            nodes: data.display_graph.nodes,
-            edges: data.display_graph.edges
-        };
+        const edgesToRemove: Array<Edge> = [];
+        const edgesToAdd: Array<Edge> = [];
+
+        Object.values(data.display_graph.edges).forEach(e => {
+            if(inside_node_map.has(e.from) && inside_node_map.has(e.to)) {
+              edgesToRemove.push(e)
+            } else if(e.from === data.node_id) {
+              edgesToAdd.push({...e, from: final_node_id})
+            } else if (e.to === args_node_id) {
+              edgesToAdd.push({...e, to: final_node_id})
+            }
+        })
 
         for(const newn of inside_node_map.keys()) {
           nolib.no.runtime.delete_node(data.display_graph.id, newn, nolib, false)
@@ -191,22 +198,10 @@ export const contract_node = (data: {display_graph: Graph, node_id: string, noli
             edges
         })
 
-        const edgesToRemove: Array<Edge> = [];
-        const edgesToAdd: Array<Edge> = [];
-
-        Object.values(data.display_graph.edges).forEach(e => {
-            if(inside_node_map.has(e.from) && inside_node_map.has(e.to)) {
-              edgesToRemove.push(e)
-            } else if(e.from === data.node_id) {
-              edgesToAdd.push({...e, from: final_node_id})
-            } else if (e.to === args_node_id) {
-              edgesToAdd.push({...e, to: final_node_id})
-            }
-        })
 
         nolib.no.runtime.update_edges(data.display_graph.id, edgesToAdd, edgesToRemove, nolib)
 
-        return { display_graph: { ...data.display_graph, ...new_display_graph }, selected: [final_node_id] };
+        return { selected: [final_node_id] };
     }
 }
 

@@ -987,7 +987,7 @@ const nolib = {
       const get_graph = (graph: string | Graph): Graph | Promise<Graph> | undefined => wrapPromise(
         nodysseus.refs.get(typeof graph === "string" ? graph : graph.id))
           .then(g => {
-            return (isNodeGraph(g) ? g : undefined) ?? (graph as Graph)
+            return (isNodeGraph(g) ? g : undefined)
           }).value
       const get_parent = (graph) => {
         const parent = nodysseus.parents.get(
@@ -1127,7 +1127,6 @@ const nolib = {
             nodysseus.refs.remove_node(graphId, id)
             if(changeEdges !== undefined) {
               child_edges.map(e => nodysseus.refs.remove_edge(graphId, e))
-              nodysseus.refs.remove_edge(graphId, parent_edge)
               new_child_edges.map(e => nodysseus.refs.add_edge(graphId, e))
               change_graph(nodysseus.refs.get(graphId) as Graph, lib);
             }
