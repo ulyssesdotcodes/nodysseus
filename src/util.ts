@@ -233,7 +233,7 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Ar
         return []
     }
     const node_ref = node?.ref ? nolib.no.runtime.get_ref(node.ref) : node;
-    const edges_in = node_ref && nolib.no.runtime.get_edges_in(graph, node_id);
+    const edges_in = nolib.no.runtime.get_edges_in(graph, node_id);
     const edge_out = nolib.no.runtime.get_edge_out(graph, node_id)
     const node_out = edge_out && edge_out.as === "args" && nolib.no.runtime.get_node(graph, edge_out.to);
     const node_out_args: Array<[string, string]> = node_out?.ref === "runnable" && 
