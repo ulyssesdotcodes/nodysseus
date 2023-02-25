@@ -60,19 +60,13 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
         )))
       .then(kvs => new Map(kvs as Array<[string, Array<string>]>))
       .then(parents_map => {
-      
-
-        let needsupdate = false;
         while(queue.length > 0) {
             const node = queue.shift();
             order.push(node);
 
-            needsupdate ||= !simulation_node_data.has(node)
-
             main_node_map.set(node, node);
 
             parents_map.get(node)?.forEach(p => {
-                needsupdate ||= simulation_link_data.has(`${p}_${node}`)
                 queue.push(p)
             })
         }
@@ -89,16 +83,6 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
                 ? (simulation_node_data.get(main_node_map.get(a))?.hash ?? hashcode(a)) - (simulation_node_data.get(main_node_map.get(b)) ?? hashcode(b))
                 : ((i++ % 2) * 2 - 1) * (parents_map.get(b).length - parents_map.get(a).length))
         }
-        //// pushes all root nodes, not just display_graph.out
-        // data.display_graph.nodes.forEach(n => {
-        //     const children = children_map.get(n.id);
-        //     const node_id = children.length > 0 ? n.id + "_" + children[0] : n.id;
-        //     main_node_map.set(n.id, node_id);
-
-            // if(children_map.get(n.id).length === 0) {
-            //     queue.push(n.id);
-            // }
-        // });
         
 
         const nodes = order.flatMap(nid => {
