@@ -273,7 +273,7 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Ar
         .concat(node_out_args ? node_out_args : []))
 
 
-    return [...typedArgsMap].concat(edges_in?.filter(e => !typedArgsMap.has(e.as)).map(e => [e.as, "any"])).map((a: [string, TypedArg]) => ({exists: !!edges_in.find(e => e.as === a[0]), name: a[0], ...(typeof a[1] === "object" ? a[1] : {type: a[1]})}))
+    return [...typedArgsMap].concat(edges_in?.filter(e => !typedArgsMap.has(e.as)).map(e => [e.as, "any"])).map((a: [string, TypedArg]) => ({exists: !!edges_in?.find(e => e.as === a[0]), name: a[0], ...(typeof a[1] === "object" ? a[1] : {type: a[1]})}))
 }
 
 
