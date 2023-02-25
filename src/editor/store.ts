@@ -413,7 +413,6 @@ export const ydocStore = async (persist: false | string = false, update = undefi
       console.log("loading " + id)
       ymap.get(id)?.load()
       return ymap.get(id).whenLoaded.then((doc: Y.Doc) => {
-        console.log(doc)
         doc.transact(() => {
           // Sanitization and transforming from old to new
           const edgeReplaceMap = new Map<string, Map<string, string>>();
@@ -446,7 +445,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
 
 
           if(updateEdges) {
-            console.log("would update", edgeReplaceMap)
+            // console.log("would update", edgeReplaceMap)
           }
         })
         updateSimple(id);

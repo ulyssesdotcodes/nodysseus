@@ -283,8 +283,8 @@ export const d3subscription = (dispatch, props) => {
                 if(el) {
                     const x = n.x - node_el_width * 0.5;
                     const y = n.y ;
-                    el.setAttribute('x', (x - 20).toFixed());
-                    el.setAttribute('y', (y - 20).toFixed());
+
+                    el.setAttribute('transform', `translate(${(x - 20).toFixed()}px, ${(y - 20).toFixed()}px)`)
 
                     if(n.node_id === selected) {
                         visible_nodes.push({x, y})
@@ -314,8 +314,7 @@ export const d3subscription = (dispatch, props) => {
                     const max_edge_label_dist = Math.min(64 / Math.abs(target.y - source.y), 0.5);
                     const edge_label_dist = Math.min(max_edge_label_dist, Math.max(min_edge_label_dist, 0.125));
 
-                    edge_label_el.setAttribute('x', ((target.x - source.x) * edge_label_dist + source.x + 16).toFixed())
-                    edge_label_el.setAttribute('y', ((target.y - source.y) * edge_label_dist + source.y).toFixed());
+                    edge_label_el.setAttribute('transform', `translate(${((target.x - source.x) * edge_label_dist + source.x + 16).toFixed()}, ${((target.y - source.y) * edge_label_dist + source.y).toFixed()})`);
 
                     if(insert_el) {
                         insert_el.setAttribute('x', (Math.floor((source.x + target.x) * 0.5 - 16)).toFixed())
