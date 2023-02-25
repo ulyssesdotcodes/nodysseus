@@ -4,7 +4,7 @@ import { WebrtcProvider } from "y-webrtc";
 import * as Y from "yjs"
 import generic from "../generic";
 import { lokidbToStore, nolib } from "../nodysseus";
-import { Edge, EdgesIn, Graph, NodysseusStore } from "../types";
+import { Edge, EdgesIn, Graph, NodysseusNode, NodysseusStore } from "../types";
 import { mapMaybePromise, wrapPromise } from "../util";
 import { hlib } from "./util";
 import Loki from "lokijs"
@@ -419,7 +419,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
           const edgeReplaceMap = new Map<string, Map<string, string>>();
           let updateEdges = false;
           const docmap = doc.getMap();
-          const docnodes: Y.Map<Node> = docmap.get("nodes") as Y.Map<Node>;
+          const docnodes: Y.Map<NodysseusNode> = docmap.get("nodes") as Y.Map<NodysseusNode>;
           (docmap.get("edges") as (Y.Map<Edge> | Y.Map<Y.Map<string>>)).forEach((e: Edge | Y.Map<string>, key: string) => {
             let edge = e as Edge
             if(edge.from && edge.to) {
@@ -430,6 +430,10 @@ export const ydocStore = async (persist: false | string = false, update = undefi
                 }
 
                 edgeReplaceMap.get(edge.to).set(edge.as, edge.from)
+              } else if(!docnodes.has(edge.from)) {
+                docnodes.set(edge.from, {id: edge.from})
+              } else if(!docnodes.has(edge.to)) {
+                docnodes.set(edge.to, {id: edge.to})
               }
             } else {
               (e as Y.Map<string>).forEach((as, from) => {
