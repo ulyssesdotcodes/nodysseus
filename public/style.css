@@ -158,6 +158,7 @@ svg {
 
 .node {
     cursor: pointer;
+    transform: translate(var(--tx), var(--ty))
 }
 
 .node:hover {

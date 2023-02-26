@@ -284,7 +284,9 @@ export const d3subscription = (dispatch, props) => {
                     const x = n.x - node_el_width * 0.5;
                     const y = n.y ;
 
-                    el.setAttribute('transform', `translate(${(x - 20).toFixed()}px, ${(y - 20).toFixed()}px)`)
+                    el.style.setProperty('--tx', `${(x - 20).toFixed()}px`);
+                    el.style.setProperty('--ty', `${(y - 20).toFixed()}px`);
+                    // el.setAttribute('transform', `translate(${(x - 20).toFixed()}px, ${(y - 20).toFixed()}px)`)
 
                     if(n.node_id === selected) {
                         visible_nodes.push({x, y})
@@ -309,12 +311,14 @@ export const d3subscription = (dispatch, props) => {
                     el.setAttribute('y1', Math.floor(source.y + (target.y - source.y) * lerp_length / length).toFixed());
                     el.setAttribute('x2', Math.floor(source.x + (target.x - source.x) * (1 - lerp_length / length)).toFixed());
                     el.setAttribute('y2', Math.floor(source.y + (target.y - source.y) * (1 - lerp_length / length)).toFixed());
+                    // edge_label_el.setAttribute('transform', `translate(${((target.x - source.x) * edge_label_dist + source.x + 16).toFixed()}, ${((target.y - source.y) * edge_label_dist + source.y).toFixed()})`);
 
                     const min_edge_label_dist = 32 / Math.abs(target.y - source.y);
                     const max_edge_label_dist = Math.min(64 / Math.abs(target.y - source.y), 0.5);
                     const edge_label_dist = Math.min(max_edge_label_dist, Math.max(min_edge_label_dist, 0.125));
 
-                    edge_label_el.setAttribute('transform', `translate(${((target.x - source.x) * edge_label_dist + source.x + 16).toFixed()}, ${((target.y - source.y) * edge_label_dist + source.y).toFixed()})`);
+                    edge_label_el.setAttribute('x', ((target.x - source.x) * edge_label_dist + source.x + 16).toFixed())
+                    edge_label_el.setAttribute('y', ((target.y - source.y) * edge_label_dist + source.y).toFixed());
 
                     if(insert_el) {
                         insert_el.setAttribute('x', (Math.floor((source.x + target.x) * 0.5 - 16)).toFixed())
@@ -375,14 +379,14 @@ export const d3subscription = (dispatch, props) => {
 }
 
 const fill_rect_el = () =>ha.h('rect', {class: 'fill', width: '48', 'height': '48'}, [])
-const node_text_el = ({node_id, primary, focus_primary, secondary}) =>ha.h('text', {x: 48, y: 12}, [
+const node_text_el = ({node_id, primary, focus_primary, secondary}) =>ha.h('text', {"clip-path": 'polygon(0 0, 128 0, 128 64, 0 64)', x: 48, y: 12}, [
    ha.h('tspan', {class: "primary", dy: ".6em", x: "48", onpointerdown: [SelectNode, {node_id, focus_property: focus_primary}]}, ha.text(primary)),
-   ha.h('tspan', {class: "secondary", dy: "1.2em", x: "48", onpointerdown: [SelectNode, {node_id, focus_property: "ref"}]}, ha.text(secondary))
+   ha.h('tspan', {class: "secondary",  dy: "1.2em", x: "48", onpointerdown: [SelectNode, {node_id, focus_property: "ref"}]}, ha.text(secondary))
 ])
 
 
 const radius = 24;
-export const node_el = ({html_id, selected, error, selected_distance, node_id, node_ref, node_name, node_value, has_nodes, nested_edge_count, nested_node_count}) =>ha.h('svg', {
+export const node_el = ({html_id, selected, error, selected_distance, node_id, node_ref, node_name, node_value, has_nodes, nested_edge_count, nested_node_count}) =>ha.h('g', {
     onpointerdown: [SelectNode, {node_id}],  
     width: '256', 
     height: '64', 

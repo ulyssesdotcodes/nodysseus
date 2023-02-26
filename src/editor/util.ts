@@ -168,7 +168,7 @@ export const update_info_display = ({fn, graph, args, lib}, info_display_dispatc
     const update_info_display_fn = display => info_display_dispatch && requestAnimationFrame(() => {
       info_display_dispatch(UpdateResultDisplay, {el: display?.dom_type ? display : ha.h('div', {})})
       requestAnimationFrame(() => {
-        if(graphChanged && window.getComputedStyle(document.getElementById("node-editor-code-editor")).getPropertyValue("display") !== "none") {
+        if(graphChanged) {
           console.log("changing code")
           code_editor.dispatch({
             changes:{from: 0, to: code_editor.state.doc.length, insert: node.script ?? node.value},
