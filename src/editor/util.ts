@@ -107,7 +107,7 @@ export const pzobj: {
         }
     },
     getTransform: function() {
-        const ret = (hlib?.panzoom?.instance as pz.PanZoom)?.getTransform?.();nebo dot grid page background
+        const ret = (hlib?.panzoom?.instance as pz.PanZoom)?.getTransform?.();
         // if(ret){
           // console.log("pzxy", ret.x, ret.y);
         // }
