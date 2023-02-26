@@ -3,8 +3,8 @@ import * as ha from "hyperapp"
 import { hashcode, nolib } from "../../nodysseus";
 import { Graph, isNodeGraph } from "../../types";
 import { wrapPromise } from "../../util";
-import { HyperappState, NodysseusForceLink, NodysseusSimulation, d3Link, d3Node } from "../types";
-import { calculateLevels, CreateNode, hlib, SelectNode } from "../util";
+import { HyperappState, NodysseusForceLink, NodysseusSimulation, d3Link, d3Node, Vector2 } from "../types";
+import { calculateLevels, CreateNode, findViewBox, hlib, pzobj, SelectNode } from "../util";
 
 
 export const UpdateSimulation: ha.Effecter<HyperappState, any>  = (dispatch, payload) => payload ? !(payload.simulation || payload.static) ? undefined : updateSimulationNodes(dispatch, payload) : dispatch(state => [state, [() => !(state.simulation) ? undefined : updateSimulationNodes(dispatch, state), undefined]])
@@ -211,6 +211,7 @@ const idFromNode = (node: d3Node | string | number): string => typeof node === "
 // Creates the simulation, updates the node elements when the simulation changes, and runs an action when the nodes have settled.
 // This is probably doing too much.
 export const d3subscription = (dispatch, props) => {
+  console.log("d3 called again")
     const simulation: NodysseusSimulation = hlib.d3.forceSimulation<d3Node>()
         .force('charge', hlib.d3.forceManyBody().strength(-1024).distanceMax(1024).distanceMin(64))
         .force('collide', hlib.d3.forceCollide(64))
@@ -232,53 +233,105 @@ export const d3subscription = (dispatch, props) => {
     let htmlid;
     let stopped = false;
     let selected;
+    let show_all = false;
+    let selectedOffset: false | {x: number, y: number} = false;
     const node_el_width = 256;
+    const centerObjectFn = center => obj => ({ ...obj, x: Math.floor(obj.x - center.x), y: Math.floor(obj.y - center.y) })
+    const calcBoundingRect = nodes => {
+      const rect = nodes.reduce(
+            (rect, node) => {
+              rect.x0 = Math.min(rect.x0, node.x);
+              rect.y0 = Math.min(rect.y0, node.y);
+              rect.x1 = Math.max(rect.x1, node.x);
+              rect.y1 = Math.max(rect.y1, node.y);
+              return rect;
+            }
+          , {x0: Number.MAX_VALUE, y0: Number.MAX_VALUE, x1: Number.MIN_VALUE, y1: Number.MIN_VALUE});
+      const center = {x: (rect.x1 + rect.x0) * 0.5, y: (rect.y1 + rect.y0) * 0.5};
+      return {rect, center}
+    }
+    let initBounding: Vector2 | false = false;
+    let lastAlpha;
+    let currentSelectedOffset: false | Vector2;
+
     const tick = () => {
         if(simulation.nodes().length === 0) {
             requestAnimationFrame(() => dispatch(s => [(htmlid = s.html_id, {...s, simulation}), [props.update, s]]));
         }
+        let isReset = simulation.alpha() > lastAlpha;
+        lastAlpha = simulation.alpha();
+
+        currentSelectedOffset = isReset || selected !== pzobj.centered ? false : (currentSelectedOffset ?? selectedOffset);
 
         if (simulation.alpha() > simulation.alphaMin()) {
+          currentSelectedOffset = selectedOffset;
+
+          if(simulation.nodes().length > 0 && selected === pzobj.centered && (initBounding === false || isReset)) {
+            initBounding = calcBoundingRect(simulation.nodes()).center;
+            simulation.nodes().forEach(n => {
+              if(n.node_id === selected && initBounding) {
+                selectedOffset = {x: n.x - initBounding.x, y: n.y - initBounding.y}
+              }
+            })
+          }
+
+          const boundingRect = calcBoundingRect(simulation.nodes())
+          if(selected === pzobj.centered && initBounding) {
+            simulation.nodes().forEach(n => {
+              if(n.node_id === selected && initBounding) {
+                currentSelectedOffset = {x: n.x - boundingRect.center.x, y: n.y - boundingRect.center.y}
+              }
+            })
+          }
+
+          const centerObject = obj => ({
+            ...obj,
+            x: obj.x - (initBounding ? (boundingRect.center.x - initBounding.x) : 0) - (currentSelectedOffset && selectedOffset ? currentSelectedOffset.x - selectedOffset.x : 0),
+            y: obj.y - (initBounding ? (boundingRect.center.y - initBounding.y) : 0) - (currentSelectedOffset && selectedOffset ? currentSelectedOffset.y - selectedOffset.y : 0)
+          });
             const data = {
-                nodes: simulation.nodes().map(n => {
-                    return ({ ...n, x: ( Math.floor(n.x)), y: Math.floor(n.y) })
-                }),
+                nodes: simulation.nodes().map(centerObject),
                 links: (simulation.force('links') as ForceLink<d3Node, d3Link>).links().map(l => ({
                     ...l,
                     as: l.edge.as,
-                    source: ({
+                    source: centerObject({
                         node_id: idFromNode(l.source),
-                        x: Math.floor((l.source as d3Node).x),
-                        y: Math.floor((l.source as d3Node).y)
+                        x: (l.source as d3Node).x,
+                        y: (l.source as d3Node).y
                     }),
-                    target: ({
+                    target: centerObject({
                         node_id: idFromNode(l.target),
-                        x: Math.floor((l.target as d3Node).x),
-                        y: Math.floor((l.target as d3Node).y)
+                        x: (l.target as d3Node).x,
+                        y: (l.target as d3Node).y
                     })
                 }))};
             const ids = simulation.nodes().map(n => n.node_id).join(',');
             stopped = false;
             simulation.tick();
-            dispatch([s => (selected = s.selected[0],
-                s.nodes.map(n => n.node_id).join(',') !== ids ? [props.action, data] 
-                    : [{...s, stopped}, 
+            dispatch([s => (
+              selected = s.selected[0],
+              show_all = s.show_all,
+              s.nodes.map(n => n.node_id).join(',') !== ids 
+                ? [props.action, data] 
+                : s.stopped 
+                  ? [{...s, stopped}, 
                         !s.noautozoom && [
                             hlib.panzoom.effect, {
                                 ...s, 
-                                nodes: simulation.nodes().map(n => ({...n, x: n.x - 8, y: n.y})), 
-                                links: (simulation.force('links') as NodysseusForceLink).links(), 
+                                nodes: data.nodes.map(n => ({...n, x: n.x - 8, y: n.y})), 
+                                links: data.links,
                                 prevent_dispatch: true, 
                                 node_id: s.selected[0]
                             }
                         ]
-                    ])]);
+                  ]
+                  : s
+            )]);
 
             const visible_nodes = [];
             const visible_node_set = new Set();
-            let selected_pos;
 
-            simulation.nodes().map(n => {
+            simulation.nodes().map(centerObject).map(n => {
                 const el = document.getElementById(`${htmlid}-${n.node_id.replaceAll("/", "_")}`);
                 if(el) {
                     const x = n.x - node_el_width * 0.5;
@@ -290,7 +343,7 @@ export const d3subscription = (dispatch, props) => {
 
                     if(n.node_id === selected) {
                         visible_nodes.push({x, y})
-                        selected_pos = {x, y};
+                        // selectedPos = {x, y};
                     }
                 }
             });
@@ -300,8 +353,8 @@ export const d3subscription = (dispatch, props) => {
                 const edge_label_el = document.getElementById(`edge-info-${idFromNode(l.source)}`);
                 const insert_el = document.getElementById(`insert-${idFromNode(l.source)}`);
                 if(el && edge_label_el) {
-                    const source = {x: (l.source as d3Node).x - node_el_width * 0.5, y: (l.source as d3Node).y};
-                    const target = {x: (l.target as d3Node).x - node_el_width * 0.5, y: (l.target as d3Node).y};
+                    const source = centerObject({x: (l.source as d3Node).x - node_el_width * 0.5, y: (l.source as d3Node).y});
+                    const target = centerObject({x: (l.target as d3Node).x - node_el_width * 0.5, y: (l.target as d3Node).y});
                     const length_x = Math.abs(source.x - target.x); 
                     const length_y = Math.abs(source.y - target.y); 
                     const length = Math.sqrt(length_x * length_x + length_y * length_y); 
@@ -343,19 +396,31 @@ export const d3subscription = (dispatch, props) => {
                 }
             })
         } else if(!stopped) {
+          const boundingRect = calcBoundingRect(simulation.nodes())
+          if(selected === pzobj.centered && initBounding) {
+            simulation.nodes().forEach(n => {
+              if(n.node_id === selected && initBounding) {
+                currentSelectedOffset = {x: n.x - boundingRect.center.x, y: n.y - boundingRect.center.y}
+              }
+            })
+          }
+          const centerObject = centerObjectFn({
+            x: (initBounding ? (boundingRect.center.x - initBounding.x) : 0) + (currentSelectedOffset && selectedOffset ? currentSelectedOffset.x - selectedOffset.x : 0),
+            y: (initBounding ? (boundingRect.center.y - initBounding.y) : 0) + (currentSelectedOffset && selectedOffset ? currentSelectedOffset.y - selectedOffset.y : 0)
+          });
             const data = {
                 nodes: simulation.nodes().map(n => {
-                    return ({ ...n, x: ( Math.floor(n.x)), y: Math.floor(n.y) })
+                    return centerObject({ ...n, x: ( Math.floor(n.x)), y: Math.floor(n.y) })
                 }),
                 links: (simulation.force('links') as NodysseusForceLink).links().map(l => ({
                     ...l,
                     as: l.edge.as,
-                    source: ({
+                    source: centerObject({
                         node_id: idFromNode(l.source),
                         x: Math.floor((l.source as d3Node).x),
                         y: Math.floor((l.source as d3Node).y)
                     }),
-                    target: ({
+                    target: centerObject({
                         node_id: idFromNode(l.target),
                         x: Math.floor((l.target as d3Node).x),
                         y: Math.floor((l.target as d3Node).y)
@@ -363,8 +428,10 @@ export const d3subscription = (dispatch, props) => {
                 }))};
             stopped = true; 
             requestAnimationFrame(() => {
+              initBounding = false;
                 dispatch([props.action, data])
-                dispatch(s => [{...s, noautozoom: false, stopped}, !s.noautozoom && [hlib.panzoom.effect, {...s, node_id: s.selected[0]}]])
+                dispatch(s => [{...s, noautozoom: false, stopped}])
+                // dispatch(s => [{...s, noautozoom: false, stopped}, !s.noautozoom && [hlib.panzoom.effect, {...s, node_id: s.selected[0]}]])
             });
         }
 
@@ -379,9 +446,9 @@ export const d3subscription = (dispatch, props) => {
 }
 
 const fill_rect_el = () =>ha.h('rect', {class: 'fill', width: '48', 'height': '48'}, [])
-const node_text_el = ({node_id, primary, focus_primary, secondary}) =>ha.h('text', {"clip-path": 'polygon(0 0, 128 0, 128 64, 0 64)', x: 48, y: 12}, [
-   ha.h('tspan', {class: "primary", dy: ".6em", x: "48", onpointerdown: [SelectNode, {node_id, focus_property: focus_primary}]}, ha.text(primary)),
-   ha.h('tspan', {class: "secondary",  dy: "1.2em", x: "48", onpointerdown: [SelectNode, {node_id, focus_property: "ref"}]}, ha.text(secondary))
+const node_text_el = ({node_id, primary, focus_primary, secondary}) =>ha.h('text', {x: 48, y: 12}, [
+   ha.h('tspan', {class: "primary", dy: ".6em", x: "48", onpointerdown: [SelectNode, {node_id, focus_property: focus_primary}]}, ha.text(primary.substring(0, 24))),
+   ha.h('tspan', {class: "secondary",  dy: "1.2em", x: "48", onpointerdown: [SelectNode, {node_id, focus_property: "ref"}]}, ha.text(secondary.substring(0, 24)))
 ])
 
 

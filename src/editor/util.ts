@@ -61,15 +61,23 @@ export const pzobj: {
   instance: false | pz.PanZoom,
   lastpanzoom: false | number;
   animationframe: false | number;
+  centered: false | string;
   effect: (dispatch, payload) => void;
   getTransform: () => pz.Transform;
   init: (dispatch, sub_payload) => (() => void);
 } = {
+    centered: false,
     instance: false,
     lastpanzoom: false,
     animationframe: false,
     effect: function(dispatch, payload){
-        if(!hlib.panzoom.instance || !payload.node_id){ return; }
+        if(!hlib.panzoom.instance || !payload.node_id){ 
+          pzobj.centered = false;
+          return; 
+        }
+
+        pzobj.centered = payload.node_id
+
         pzobj.lastpanzoom = performance.now();
         const viewbox = findViewBox(
             payload.nodes, 
@@ -99,7 +107,12 @@ export const pzobj: {
         }
     },
     getTransform: function() {
-        return (hlib.panzoom.instance as pz.PanZoom).getTransform()
+        const ret = (hlib?.panzoom?.instance as pz.PanZoom)?.getTransform?.();nebo dot grid page background
+        // if(ret){
+          // console.log("pzxy", ret.x, ret.y);
+        // }
+
+        return ret;
     },
     init: function (dispatch, sub_payload) {
         hlib.panzoom.lastpanzoom = 0;
@@ -121,7 +134,7 @@ export const pzobj: {
                 },
                 beforeMouseDown: (e) => {
                     const should_zoom  = e.buttons == 4 || e.altKey;
-                    if(!should_zoom && (e.target as HTMLElement).id.endsWith("-editor") && hlib.panzoom.lastpanzoom && performance.now() - hlib.panzoom.lastpanzoom > 100){
+                    if(!should_zoom && (e.target as HTMLElement).id.endsWith("-editor")){
                         dispatch(sub_payload.action, {event: 'panstart', transform: (hlib.panzoom.instance as pz.PanZoom).getTransform(), noautozoom: true}) 
                     }
                     return should_zoom;
@@ -150,7 +163,6 @@ export const pzobj: {
             })
             hlib.panzoom.instance.moveTo(window.innerWidth * 0, window.innerHeight * 0.5);
             hlib.panzoom.instance.on('transform', (e) => {
-
             })
         });
         return () => { cancelAnimationFrame(init); (hlib.panzoom.instance as pz.PanZoom)?.dispose(); }
@@ -169,7 +181,6 @@ export const update_info_display = ({fn, graph, args, lib}, info_display_dispatc
       info_display_dispatch(UpdateResultDisplay, {el: display?.dom_type ? display : ha.h('div', {})})
       requestAnimationFrame(() => {
         if(graphChanged) {
-          console.log("changing code")
           code_editor.dispatch({
             changes:{from: 0, to: code_editor.state.doc.length, insert: node.script ?? node.value},
             effects: [code_editor_nodeid.of(node.id)]
@@ -218,7 +229,9 @@ export const ChangeDisplayGraphId: ha.Effecter<HyperappState, {id: string, selec
                     nolib.no.runtime.remove_graph_listeners(state.display_graph_id);
                     dispatch(s => {
                         const news = {...s, display_graph: new_graph, selected: [new_graph.out], display_graph_id: new_graph.id}
-                        return [news, [UpdateSimulation, {...news, clear_simulation_cache: true}]]
+                        return [news, [UpdateSimulation, {...news, clear_simulation_cache: true}], select_out && [() => {setTimeout(() => {
+                          dispatch(SelectNode, {node_id: new_graph.out ?? "out"})
+                        }, 100)}, {}]]
                     })
                     if(!graph) {
                         wrapPromise(nolib.no.runtime.get_node(new_graph, new_graph.out))
@@ -231,7 +244,6 @@ export const ChangeDisplayGraphId: ha.Effecter<HyperappState, {id: string, selec
                             })
                           })
                     }
-                    select_out && dispatch(SelectNode, {node_id: new_graph.out ?? "out"})
                 })
             }, {}],
         ]))
@@ -326,7 +338,8 @@ export const SelectNode: ha.Action<HyperappState, {
       ...state, 
       selected: [node_id], 
       inputs: {},
-      selected_edges_in: nolib.no.runtime.get_edges_in(state.display_graph, node_id)
+      selected_edges_in: nolib.no.runtime.get_edges_in(state.display_graph, node_id),
+      noautozoom: false
     },
     !state.show_all && [pzobj.effect, {...state, node_id: node_id}],
     [UpdateGraphDisplay, {...state, selected: [node_id]}],

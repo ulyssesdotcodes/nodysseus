@@ -418,6 +418,10 @@ svg.edge-info.selected rect {
     fill: red;
 }
 
+.insert-node {
+  transform: translate(var(--tx), var(--ty))
+}
+
 .insert-node,
 #dummy-add-node {
     cursor: pointer;
