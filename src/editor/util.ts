@@ -492,7 +492,7 @@ export const result_subscription = (dispatch, {display_graph_id, norun}) => {
     }
 
     nolib.no.runtime.add_listener('graphupdate', 'clear_hyperapp_error', change_listener);
-    const timeouts = {}
+    const timeouts: Record<string, false | {id: ReturnType<typeof setTimeout>, timestamp: number}>  = {}
     const animframes = {}
 
     const noderun_listener = (data) => {
@@ -500,22 +500,22 @@ export const result_subscription = (dispatch, {display_graph_id, norun}) => {
           const node_id = data.node_id;
           const timeout = timeouts[node_id]
           const nodeanimframe = animframes[node_id];
-          if(!timeout && !nodeanimframe) {
-            const el = document.querySelector(`#node-editor-${data.node_id.replaceAll("/", "_")} .shape`)
-            if(el) {
-              el.classList.remove("flash-transition-out");
-              el.classList.add("flash-transition")
-              animframes[node_id] = requestAnimationFrame(() => {
-                  animframes[node_id] = false;
-                  if(timeouts[node_id]) {
-                      el.classList.add("flash-transition-out")
-                      el.classList.remove("flash-transition")
-                  }
-              })
-              timeouts[node_id] = setTimeout(() => {
+          if(!timeout) {
+              const el = document.querySelector(`#node-editor-${data.node_id.replaceAll("/", "_")} .shape`)
+              el?.classList.add("flash")
+          }
+
+          if(!timeout || performance.now() - timeout.timestamp > 950) {
+            if(timeout) {
+              clearTimeout(timeout.id);
+            }
+            timeouts[node_id] = {
+              id: setTimeout(() => {
+                  const el = document.querySelector(`#node-editor-${data.node_id.replaceAll("/", "_")} .shape`)
                   timeouts[node_id] = false
-                  el.classList.remove("flash-transition-out");
-              }, 1000)
+                  el?.classList.remove("flash");
+              }, 1000),
+              timestamp: performance.now()
             }
           }
         }

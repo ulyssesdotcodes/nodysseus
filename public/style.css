@@ -193,7 +193,7 @@ svg {
 }
 
 .node .shape.flash {
-    animation: 1s flash 1 ease-out;
+  animation: 1s ease-out infinite flash;
 }
 
 .node .shape.flash-transition, 
