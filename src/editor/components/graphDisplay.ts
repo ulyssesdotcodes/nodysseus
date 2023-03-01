@@ -81,7 +81,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
         for(let ps of parents_map.values()) {
             let i = 0;
             ps.sort((a, b) => parents_map.get(a).length === parents_map.get(b).length 
-                ? (simulation_node_data.get(main_node_map.get(a))?.hash ?? hashcode(a)) - (simulation_node_data.get(main_node_map.get(b)) ?? hashcode(b))
+                ? (simulation_node_data.get(main_node_map.get(a))?.hash ?? hashcode(a)) - (simulation_node_data.get(main_node_map.get(b))?.hash ?? hashcode(b))
                 : ((i++ % 2) * 2 - 1) * (parents_map.get(b).length - parents_map.get(a).length))
         }
         
@@ -155,7 +155,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
               const cnode = simulation_node_data.get(child);
               const B: [number, number] = [cnode.x, cnode.y];
               for(let compnode of simulation_node_data.values()) {
-                if(compnode && compnode.id !== nid && compnode.id !== child) {
+                if(compnode && compnode.id !== nid && compnode.id !== child && parents_map.has(compnode.id)) {
                   const C: [number, number] = [compnode.x, compnode.y];
                   for(let compp of parents_map.get(compnode.id)) {
                     const comppnode = simulation_node_data.get(compp);
