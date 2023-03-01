@@ -163,7 +163,9 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
                       const D: [number, number] = [comppnode.x, comppnode.y];
 
                       if(ccw(A, C, D) !== ccw(B, C, D) && ccw(A, B, C) !== ccw(A, B, D)) {
-                        simnode.x += (comppnode.x - simnode.x) * 2;
+                        const newsimnodex = comppnode.x;
+                        comppnode.x = simnode.x;
+                        simnode.x = newsimnodex;
                       }
                     }
                   }
