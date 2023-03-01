@@ -1,10 +1,11 @@
 import { ForceCenter, ForceCollide, ForceLink, ForceY } from "d3-force";
 import * as ha from "hyperapp"
 import { hashcode, nolib } from "../../nodysseus";
-import { Graph, isNodeGraph } from "../../types";
+import { Graph, isNodeGraph, NodysseusNode } from "../../types";
 import { wrapPromise } from "../../util";
 import { HyperappState, NodysseusForceLink, NodysseusSimulation, d3Link, d3Node, Vector2 } from "../types";
 import { calculateLevels, CreateNode, findViewBox, hlib, pzobj, SelectNode } from "../util";
+import {KDTree} from "mnemonist";
 
 
 export const UpdateSimulation: ha.Effecter<HyperappState, any>  = (dispatch, payload) => payload ? !(payload.simulation || payload.static) ? undefined : updateSimulationNodes(dispatch, payload) : dispatch(state => [state, [() => !(state.simulation) ? undefined : updateSimulationNodes(dispatch, state), undefined]])
@@ -21,7 +22,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
   display_graph: Graph,
   clear_simulation_cache?: boolean
 }> = (dispatch, data) => {
-    const simulation_node_data = new Map();
+    const simulation_node_data = new Map<string, d3Node>();
     if(!data.clear_simulation_cache){
         data.simulation.nodes().forEach(n => {
             simulation_node_data.set(n.node_id, n)
@@ -84,6 +85,8 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
                 : ((i++ % 2) * 2 - 1) * (parents_map.get(b).length - parents_map.get(a).length))
         }
         
+        const ccw = ([ax, ay]: [number, number], [bx, by]: [number, number], [cx, cy]: [number, number]) => 
+          (cy - ay) * (bx - ax) > (by - ay) * (cx - ax) ;
 
         const nodes = order.flatMap(nid => {
             let n = node_map.get(nid);
@@ -145,6 +148,28 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
                     )
                     ?? Math.floor(window.innerHeight * (randpos.y * .5 + .25)))
             }));
+
+            const simnode = calculated_nodes[0];
+            const A: [number, number] = [simnode.x, simnode.y];
+            children.forEach(child => {
+              const cnode = simulation_node_data.get(child);
+              const B: [number, number] = [cnode.x, cnode.y];
+              for(let compnode of simulation_node_data.values()) {
+                if(compnode && compnode.id !== nid && compnode.id !== child) {
+                  const C: [number, number] = [compnode.x, compnode.y];
+                  for(let compp of parents_map.get(compnode.id)) {
+                    const comppnode = simulation_node_data.get(compp);
+                    if(comppnode) {
+                      const D: [number, number] = [comppnode.x, comppnode.y];
+
+                      if(ccw(A, C, D) !== ccw(B, C, D) && ccw(A, B, C) !== ccw(A, B, D)) {
+                        simnode.x += (comppnode.x - simnode.x) * 2;
+                      }
+                    }
+                  }
+                }
+              }
+            })
 
             calculated_nodes.map(n => simulation_node_data.set(n.node_id, n));
 

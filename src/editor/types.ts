@@ -60,7 +60,8 @@ export type Levels = {
 export type d3Node = SimulationNodeDatum & {
   node_id: string,
   nested_edge_count: number,
-  nested_node_count: number
+  nested_node_count: number,
+  hash?: number
 } & NodysseusNode
 
 export type d3Link = SimulationLinkDatum<d3Node> & {
