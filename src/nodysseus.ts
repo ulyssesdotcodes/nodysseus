@@ -401,15 +401,16 @@ const node_extern = (node: RefNode, data: Args, graphArgs: Env, lib: Lib, option
 const resolve_args = (data: Args, lib: Lib, options: RunOptions): Result | Promise<Result> => {
     let is_promise = false;
     const result = {}
-    for(let kv of data.entries()){
-      result[kv[0]] = kv[1] 
-      while(isConstRunnable(result[kv[0]])) {
-        result[kv[0]] = wrapPromise(result[kv[0]]).then(runnable => run_runnable(runnable, lib, undefined, options)).value;
+    for(let k of data.keys()){
+      let val: Result | ConstRunnable | Promise<Result> = data.get(k);
+      while(isConstRunnable(val as Runnable)) {
+        val = wrapPromise(val).then(runnable => run_runnable(runnable, lib, undefined, options)).value;
       }
-      if(result[kv[0]] instanceof Error) {
-        return result[kv[0]]
+      if(val instanceof Error) {
+        return val
       }
-      is_promise = is_promise || !!kv[1] && ispromise(result[kv[0]]);
+      is_promise = is_promise || !!val && ispromise(val);
+      result[k] = val;
     }
 
     if (is_promise && options.resolvePromises) {
@@ -423,12 +424,15 @@ const resolve_args = (data: Args, lib: Lib, options: RunOptions): Result | Promi
     // if(!options.resolvePromises && is_promise) {
     //   debugger;
     // }
+    for(let k of Object.keys(result)) {
+      if(k.startsWith("__")){
+        delete result[k]
+      } else if(isValue(result[k])) {
+        result[k] = result[k].value;
+      }
+    }
 
-    return lib.data.no.of(Object.fromEntries(
-        Object.entries(result)
-            .filter(d => !d[0].startsWith("__")) // filter out private variables
-            .map((e: [string, Result]) => [e[0], isValue(e[1]) ? e[1].value : e[1]])
-    ));
+    return lib.data.no.of(result);
 
 }
 
