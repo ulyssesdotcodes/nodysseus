@@ -95,7 +95,7 @@ export type ConstRunnable = BaseRunnable & {
 export const FUNCTOR = "functor"
 export type FunctorRunnable = BaseRunnable & {
   __kind: "functor",
-  fnargs: Array<string>
+  parameters: Array<string>
 }
 
 export type Runnable =  Result | ApRunnable | FunctorRunnable | ConstRunnable

@@ -284,7 +284,7 @@
         "description": "Creates a function from the `fn` input.",
         "nodes": [
           {"id": "runnable", "ref": "arg", "value": "runnable"},
-          {"id": "out", "ref": "script", "value":"return (fnargs) => _lib.no.run(runnable.graph, runnable.fn, {...runnable.args, fnargs}, _lib)"}
+          {"id": "out", "ref": "script", "value":"return (paramters) => _lib.no.run(runnable.graph, runnable.fn, {...runnable.args, paramters}, _lib)"}
         ],
         "edges": [
           {"from": "runnable", "to": "out", "as": "runnable"}

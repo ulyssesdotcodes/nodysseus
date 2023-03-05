@@ -440,11 +440,11 @@ const node_data = (nodeArgs, graphArgs, lib, options) => {
   return nodeArgs.size === 0 ? lib.data.no.of(undefined) : resolve_args(nodeArgs, lib, options);
 }
 
-const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, args: ConstRunnable, lib, options: RunOptions): FunctorRunnable | Promise<FunctorRunnable> => {
-  const argsval = args && run_runnable(args, lib, undefined, options)
+const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, parameters: ConstRunnable, lib, options: RunOptions): FunctorRunnable | Promise<FunctorRunnable> => {
+  const argsval = parameters && run_runnable(parameters, lib, undefined, options)
   const ret = fn && mapMaybePromise(argsval, args => isError(args) ? args : lib.data.no.of({
     __kind: FUNCTOR,
-    fnargs: args ? [...new Set(args.value ? Object.keys(args.value).map(k => k.includes(".") ? k.substring(0, k.indexOf('.')) : k) : [])] : [],
+    parameters: args ? [...new Set(args.value ? Object.keys(args.value).map(k => k.includes(".") ? k.substring(0, k.indexOf('.')) : k) : [])] : [],
     env: fn.env,
     graph: fn.graph,
     fn: fn.fn,
@@ -626,7 +626,7 @@ const run_graph = (graph: Graph | (Graph & {nodes: Array<NodysseusNode>, edges: 
 }
 
 const run_functor_runnable = (runnable: FunctorRunnable, args: Args, lib: Lib, options: RunOptions): Result | Promise<Result> => {
-  const execArgs: Args = new Map(runnable.fnargs?.map(k => [k, nodysseus_get(args, k, lib)]) ?? []);
+  const execArgs: Args = new Map(runnable.parameters?.map(k => [k, nodysseus_get(args, k, lib)]) ?? []);
   const newRunnable: ConstRunnable = {
     __kind: CONST,
     env: combineEnv((execArgs ?? new Map()).set("__graphid", runnable.env.data.get("__graphid")), runnable.env, "functor runnable" + runnable.fn),
@@ -1279,7 +1279,7 @@ const nolib = {
     },
     runnable: {
       rawArgs: true,
-      args: ["fn", "args", "_lib", "_runoptions"],
+      args: ["fn", "parameters", "_lib", "_runoptions"],
       fn: createFunctorRunnable
     },
     expect: {
