@@ -173,6 +173,10 @@ export const pzobj: {
 export const update_info_display = ({fn, graph, args, lib}, info_display_dispatch, code_editor, code_editor_nodeid, graphChanged = true) => {
     const node = nolib.no.runtime.get_node(graph, fn);
 
+    if(!node) {
+      return;
+    }
+
     const node_ref = node && (node.ref && nolib.no.runtime.get_ref(node.ref)) || node;
     const out_ref = node && (node.nodes && nolib.no.runtime.get_node(node, node.out)) || (node_ref?.nodes && nolib.no.runtime.get_node(node_ref, node_ref.out));
     const node_display_el = (node.ref === "return" || (out_ref && out_ref.ref === "return")) 

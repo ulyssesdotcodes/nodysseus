@@ -144,6 +144,20 @@ export const ydocStore = async (persist: false | string = false, update = undefi
     }
   }
 
+  const add_nodes_edges = (graphId, nodes, edges, remove_edges, remove_nodes) => {
+    if(generic_node_ids.has(graphId)) return;
+
+    ymap.get(graphId).transact(() => {
+      remove_nodes.forEach(node => (ymap.get(graphId).getMap().get("nodes") as Y.Map<any>).delete(typeof node === "string" ? node : node.id));
+      remove_edges.forEach(edge => (ymap.get(graphId).getMap().get("edges") as Y.Map<any>).delete(edge.from));
+      nodes.forEach(node => (ymap.get(graphId).getMap().get("nodes") as Y.Map<any>).set(node.id, node));
+      edges.forEach(edge => (ymap.get(graphId).getMap().get("edges") as Y.Map<any>).set(edge.from, edge));
+    })
+
+    updateSimple(graphId)
+
+  }
+
   const add_node = (graphId, node) => {
     if(generic_node_ids.has(graphId)) return;
 
@@ -468,6 +482,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
     add,
     add_node,
     remove_node,
+    add_nodes_edges,
     add_edge,
     remove_edge,
     addMany: (datas) => {

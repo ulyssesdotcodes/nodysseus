@@ -97,8 +97,7 @@ export const expand_node = (data: {nolib: Record<string, any>, node_id: string, 
 
     const new_id_map = isFlattenedGraph(flattened) ? Object.values(flattened.flat_nodes).reduce((acc, n) => nolib.no.runtime.get_node(data.display_graph, n.id) ? (acc[n.id] = create_randid(), acc) : n, {} as Record<string, any>) : flattened
 
-    isFlattenedGraph(flattened) && Object.values(flattened.flat_nodes).forEach(n => nolib.no.runtime.add_node(data.display_graph, n, nolib))
-    isFlattenedGraph(flattened) && nolib.no.runtime.update_edges(data.display_graph, Object.values(flattened.flat_edges).concat(in_edges.map((e: Edge) => ({...e, to: args_node}))), in_edges)
+    isFlattenedGraph(flattened) && nolib.no.runtime.add_nodes_edges(data.display_graph.id, Object.values(flattened.flat_nodes).map(n => ({...n, id: new_id_map[n.id] ?? n.id})), Object.values(flattened.flat_edges).concat(in_edges.map((e: Edge) => ({...e, to: new_id_map[args_node] ?? args_node}))).concat([{...data.display_graph.edges[node_id], from: node.out}]).map(e => ({...e, from: new_id_map[e.from] ?? e.from, to: new_id_map[e.to] ?? e.to})), in_edges.concat([data.display_graph.edges[node_id]]), [node_id], nolib)
 
     return { display_graph: data.display_graph, selected: [new_id_map[node.out ?? "out"] ?? node.out ?? 'out'] };
 }

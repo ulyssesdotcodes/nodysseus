@@ -31,6 +31,7 @@ const Nodysseus = (): NodysseusStore => {
     refs: {
       ...lokidbToStore(refsdb), 
       add_node: () => {}, 
+      add_nodes_edges: () => {}, 
       remove_edge: () => {},
       add_edge: () => {},
       remove_node: () => {},
@@ -1097,6 +1098,11 @@ const nolib = {
           // delete_cache(graph)
           const graphId = typeof graph === "string" ? graph : graph.id;
           nodysseus.refs.add_node(graphId, node)
+          change_graph(nodysseus.refs.get(graphId) as Graph, lib);
+        },
+        add_nodes_edges: (graph, nodes: [NodysseusNode], edges: [Edge], remove_edges: [Edge], remove_nodes: [NodysseusNode], lib: Lib) => {
+          const graphId = typeof graph === "string" ? graph : graph.id;
+          nodysseus.refs.add_nodes_edges(graphId, nodes, edges, remove_edges, remove_nodes)
           change_graph(nodysseus.refs.get(graphId) as Graph, lib);
         },
         delete_node: (graph: Graph, id, lib: Lib, changeEdges=true) => {
