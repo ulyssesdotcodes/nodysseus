@@ -434,6 +434,8 @@ export const ydocStore = async (persist: false | string = false, update = undefi
               } else if(!docnodes.has(edge.to)) {
                 docnodes.set(edge.to, {id: edge.to})
               }
+            } else if(edge.from || edge.to) {
+              remove_edge(id, edge);
             } else {
               (e as Y.Map<string>).forEach((as, from) => {
                 if(!(docnodes.has(key) && docnodes.has(from))) {
