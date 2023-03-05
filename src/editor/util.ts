@@ -333,7 +333,7 @@ export const Paste = state => [
 export const SelectNode: ha.Action<HyperappState, {
   node_id: string,
   focus_property?: Property,
-}> = (state, {node_id, focus_property}) => [
+}> = (state, {node_id, focus_property}) => state.display_graph.nodes[node_id] ? [
     state.selected[0] === node_id ? state : {
       ...state, 
       selected: [node_id], 
@@ -366,7 +366,7 @@ export const SelectNode: ha.Action<HyperappState, {
           lib: {...hlib, ...nolib, ...hlib.run(state.display_graph, state.display_graph.out ?? "out", {_output: "lib"})}
         }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, true), {}],
     state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: node_id}), {}]
-]
+] : state;
 
 export const CustomDOMEvent = (_, payload) => document.getElementById(`${payload.html_id}`)?.dispatchEvent(new CustomEvent(payload.event, {detail: payload.detail}))
 
