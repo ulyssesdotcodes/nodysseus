@@ -1431,7 +1431,9 @@ const nolib = {
     set_mutable: {
       args: ["target", "path", "value", "__graph_value"],
       fn: (target, path, value, nodevalue) => {
-        set(target, nodevalue || path, value);
+        if(target && (nodevalue || path)) {
+          set(target, nodevalue || path, value);
+        }
         return target;
       },
     },
