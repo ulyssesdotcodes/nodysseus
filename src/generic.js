@@ -3255,87 +3255,224 @@ const generic = {
       ]
     },
     "input_value": {
-      "id": "input_value",
-      "category": "debug",
-      "description": "Displays the last `value` received. Will display \"undefined\" if this node has not been run.",
-      "out": "out",
-      "nodes": [
-        {
-          "id": "out",
-          "name": "input_value",
-          "ref": "return"
-        },
-        {
-          "id": "cfuymky",
-          "value": "{\"a\": 1, \"b\": {\"c\": 2, \"d\": 3}}"
-        },
-        {
-          "id": "4d8qcss",
-          "ref": "html_text"
-        },
-        {
-          "id": "rpys4rr",
-          "value": "value",
-          "ref": "arg"
-        },
-        {
-          "id": "1znvqbi",
-          "value": "value",
-          "ref": "arg"
-        },
-        {
-          "id": "qwz3ftj",
-          "ref": "script",
-          "value": "return typeof object !== 'object' || Array.isArray(object) || Object.getPrototypeOf(object) === Object.prototype ? JSON.stringify(object) : Object.getPrototypeOf(object) ? Object.getPrototypeOf(object).constructor.name : `${object}`"
-        },
-        {
-          "id": "5a6pljw",
-          "value": "pre",
-          "ref": "html_element"
-        },
-        {
-          "id": "17pcf8z",
-          "value": "2"
-        }
-      ],
-      "edges": [
-        {
+    "id": "input_value",
+    "out": "out",
+    "nodes": {
+      "out": {
+        "id": "out",
+        "name": "input_value",
+        "ref": "return"
+      },
+      "cfuymky": {
+        "id": "cfuymky",
+        "value": "{\"a\": 1, \"b\": {\"c\": 2, \"d\": 3}}"
+      },
+      "4d8qcss": {
+        "id": "4d8qcss",
+        "ref": "html_text"
+      },
+      "rpys4rr": {
+        "id": "rpys4rr",
+        "value": "value",
+        "ref": "arg"
+      },
+      "1znvqbi": {
+        "id": "1znvqbi",
+        "value": "_stored.value",
+        "ref": "arg"
+      },
+      "qwz3ftj": {
+        "id": "qwz3ftj",
+        "ref": "script",
+        "value": "return typeof object !== 'object' || Array.isArray(object) || Object.getPrototypeOf(object) === Object.prototype ? JSON.stringify(object) : Object.getPrototypeOf(object) ? Object.getPrototypeOf(object).constructor.name : `${object}`"
+      },
+      "5a6pljw": {
+        "id": "5a6pljw",
+        "value": "pre",
+        "ref": "html_element"
+      },
+      "17pcf8z": {
+        "id": "17pcf8z",
+        "value": "2"
+      },
+      "hm2lkjh": {
+        "id": "hm2lkjh"
+      },
+      "9ukj84k": {
+        "id": "9ukj84k",
+        "ref": "refval"
+      },
+      "1c4vbjw": {
+        "id": "1c4vbjw",
+        "ref": "ap"
+      },
+      "dqau7vz": {
+        "id": "dqau7vz",
+        "value": "_stored.set",
+        "ref": "arg"
+      },
+      "wo0j48j": {
+        "id": "wo0j48j"
+      },
+      "rg59xbc": {
+        "id": "rg59xbc",
+        "value": "true"
+      },
+      "args": {
+        "id": "args"
+      }
+    },
+    "edges": {
+      "5a6pljw": {
+        "from": "5a6pljw",
+        "to": "out",
+        "as": "display"
+      },
+      "cfuymky": {
+        "from": "cfuymky",
+        "to": "args",
+        "as": "value"
+      },
+      "4d8qcss": {
+        "from": "4d8qcss",
+        "to": "5a6pljw",
+        "as": "children"
+      },
+      "1znvqbi": {
+        "from": "1znvqbi",
+        "to": "qwz3ftj",
+        "as": "object"
+      },
+      "17pcf8z": {
+        "from": "17pcf8z",
+        "to": "qwz3ftj",
+        "as": "spacer"
+      },
+      "qwz3ftj": {
+        "from": "qwz3ftj",
+        "to": "4d8qcss",
+        "as": "text"
+      },
+      "rpys4rr": {
+        "from": "rpys4rr",
+        "to": "wo0j48j",
+        "as": "value"
+      },
+      "hm2lkjh": {
+        "from": "hm2lkjh",
+        "to": "out",
+        "as": "args"
+      },
+      "9ukj84k": {
+        "from": "9ukj84k",
+        "to": "hm2lkjh",
+        "as": "_stored"
+      },
+      "1c4vbjw": {
+        "from": "1c4vbjw",
+        "to": "out",
+        "as": "value"
+      },
+      "dqau7vz": {
+        "from": "dqau7vz",
+        "to": "1c4vbjw",
+        "as": "fn"
+      },
+      "wo0j48j": {
+        "from": "wo0j48j",
+        "to": "1c4vbjw",
+        "as": "args"
+      },
+      "rg59xbc": {
+        "from": "rg59xbc",
+        "to": "1c4vbjw",
+        "as": "run"
+      }
+    },
+    "edges_in": {
+      "out": {
+        "5a6pljw": {
           "from": "5a6pljw",
           "to": "out",
           "as": "display"
         },
-        {
+        "hm2lkjh": {
+          "from": "hm2lkjh",
+          "to": "out",
+          "as": "args"
+        },
+        "1c4vbjw": {
+          "from": "1c4vbjw",
+          "to": "out",
+          "as": "value"
+        }
+      },
+      "args": {
+        "cfuymky": {
           "from": "cfuymky",
           "to": "args",
           "as": "value"
-        },
-        {
+        }
+      },
+      "5a6pljw": {
+        "4d8qcss": {
           "from": "4d8qcss",
           "to": "5a6pljw",
           "as": "children"
-        },
-        {
+        }
+      },
+      "qwz3ftj": {
+        "1znvqbi": {
           "from": "1znvqbi",
           "to": "qwz3ftj",
           "as": "object"
         },
-        {
+        "17pcf8z": {
           "from": "17pcf8z",
           "to": "qwz3ftj",
           "as": "spacer"
-        },
-        {
+        }
+      },
+      "4d8qcss": {
+        "qwz3ftj": {
           "from": "qwz3ftj",
           "to": "4d8qcss",
           "as": "text"
-        },
-        {
+        }
+      },
+      "wo0j48j": {
+        "rpys4rr": {
           "from": "rpys4rr",
-          "to": "out",
+          "to": "wo0j48j",
           "as": "value"
         }
-      ]
-    },
+      },
+      "hm2lkjh": {
+        "9ukj84k": {
+          "from": "9ukj84k",
+          "to": "hm2lkjh",
+          "as": "_stored"
+        }
+      },
+      "1c4vbjw": {
+        "dqau7vz": {
+          "from": "dqau7vz",
+          "to": "1c4vbjw",
+          "as": "fn"
+        },
+        "wo0j48j": {
+          "from": "wo0j48j",
+          "to": "1c4vbjw",
+          "as": "args"
+        },
+        "rg59xbc": {
+          "from": "rg59xbc",
+          "to": "1c4vbjw",
+          "as": "run"
+        }
+      }
+    }
+  },
     "event_subscriber": {
       "id": "event_subscriber",
       "category": "events",
@@ -7727,427 +7864,1113 @@ const generic = {
       "out": "ld37qq4"
     },
     "slider": {
-      "id": "slider",
-      "category": "html",
-      "nodes": [
-        {
-          "id": "5mog0bc",
-          "value": "input",
-          "ref": "html_element"
-        },
-        {
-          "id": "24q0egm"
-        },
-        {
-          "id": "mpbvtrq",
-          "value": "range"
-        },
-        {
-          "id": "y407zfo",
-          "ref": "html_element"
-        },
-        {
-          "id": "sb9qdgy",
-          "ref": "array"
-        },
-        {
-          "id": "kyu6h8m",
-          "ref": "html_text"
-        },
-        {
-          "id": "a4y3jfa",
-          "value": "1.0"
-        },
-        {
-          "id": "yv0o41n",
-          "ref": "default"
-        },
-        {
-          "id": "z3jopgg",
-          "value": "step",
-          "ref": "arg"
-        },
-        {
-          "id": "racg3p7",
-          "value": "label",
-          "ref": "arg"
-        },
-        {
-          "id": "0i85qjj"
-        },
-        {
-          "id": "u4k2auv",
-          "value": "Slider"
-        },
-        {
-          "id": "a6rdag9"
-        },
-        {
-          "id": "sxjhepz"
-        },
-        {
-          "id": "93rx3ru",
-          "value": "flex"
-        },
-        {
-          "id": "q8ugbch",
-          "value": "row"
-        },
-        {
-          "id": "wnr7m0u",
-          "value": "__graph_value",
-          "ref": "arg"
-        },
-        {
-          "id": "doz740g",
-          "ref": "html_text"
-        },
-        {
-          "id": "20w95l2",
-          "value": "test"
-        },
-        {
-          "id": "gibdj45",
-          "value": "event.target.value",
-          "ref": "arg"
-        },
-        {
-          "id": "parseval",
-          "ref": "script",
-          "value": "return parseFloat(val)"
-        },
-        {
-          "id": "q09a315",
-          "value": "0.01",
-          "ref": ""
-        },
-        {
-          "id": "qi4odll",
-          "value": "return value || otherwise",
-          "ref": "script"
-        },
-        {
-          "id": "16b092x",
-          "ref": "default"
-        },
-        {
-          "id": "9fk784a",
-          "value": "max",
-          "ref": "arg"
-        },
-        {
-          "id": "7c2vt3d",
-          "ref": "default"
-        },
-        {
-          "id": "fd7yax9",
-          "value": "min",
-          "ref": "arg"
-        },
-        {
-          "id": "r1ah7g2",
-          "value": "0.0"
-        },
-        {
-          "id": "bts7694",
-          "value": "result",
-          "ref": "arg"
-        },
-        {
-          "id": "t1deznd",
-          "ref": "state"
-        },
-        {
-          "id": "ewycyaq",
-          "ref": "default"
-        },
-        {
-          "id": "old0t0c",
-          "ref": "ap"
-        },
-        {
-          "id": "ezx9hxj"
-        },
-        {
-          "id": "l5bzesi",
-          "value": "_sliderval.set",
-          "ref": "arg"
-        },
-        {
-          "id": "vgishln",
-          "value": "_sliderval.state",
-          "ref": "arg"
-        },
-        {
-          "id": "sv49nso",
-          "value": "_sliderval.state",
-          "ref": "arg"
-        },
-        {
-          "id": "7hff44y",
-          "ref": "default"
-        },
-        {
-          "id": "n4i4t17",
-          "value": "_sliderval.state",
-          "ref": "arg"
-        },
-        {
-          "id": "zs6k9cd",
-          "ref": "default"
-        },
-        {
-          "id": "fbc9r4j",
-          "value": "max",
-          "ref": "arg"
-        },
-        {
-          "id": "d68tdna",
-          "value": "1.0"
-        },
-        {
-          "id": "out",
-          "name": "slider",
-          "ref": "return"
-        },
-        {
-          "id": "j219svq",
-          "value": "{}"
-        },
-        {
-          "id": "2wp8ffd",
-          "ref": "array"
-        },
-        {
-          "id": "4dh6wzn",
-          "value": "oninput",
-          "ref": "arg"
-        }
-      ],
-      "edges": [
-        {
+    "id": "slider",
+    "out": "out",
+    "nodes": {
+      "5mog0bc": {
+        "id": "5mog0bc",
+        "value": "input",
+        "ref": "html_element"
+      },
+      "24q0egm": {
+        "id": "24q0egm"
+      },
+      "mpbvtrq": {
+        "id": "mpbvtrq",
+        "value": "range"
+      },
+      "y407zfo": {
+        "id": "y407zfo",
+        "ref": "html_element"
+      },
+      "sb9qdgy": {
+        "id": "sb9qdgy",
+        "ref": "array"
+      },
+      "kyu6h8m": {
+        "id": "kyu6h8m",
+        "ref": "html_text"
+      },
+      "a4y3jfa": {
+        "id": "a4y3jfa",
+        "value": "1.0"
+      },
+      "yv0o41n": {
+        "id": "yv0o41n",
+        "ref": "default"
+      },
+      "z3jopgg": {
+        "id": "z3jopgg",
+        "value": "step",
+        "ref": "arg"
+      },
+      "racg3p7": {
+        "id": "racg3p7",
+        "value": "label",
+        "ref": "arg"
+      },
+      "0i85qjj": {
+        "id": "0i85qjj"
+      },
+      "u4k2auv": {
+        "id": "u4k2auv",
+        "value": "Slider"
+      },
+      "a6rdag9": {
+        "id": "a6rdag9"
+      },
+      "sxjhepz": {
+        "id": "sxjhepz"
+      },
+      "93rx3ru": {
+        "id": "93rx3ru",
+        "value": "flex"
+      },
+      "q8ugbch": {
+        "id": "q8ugbch",
+        "value": "row"
+      },
+      "doz740g": {
+        "id": "doz740g",
+        "ref": "html_text"
+      },
+      "gibdj45": {
+        "id": "gibdj45",
+        "value": "event.target.value",
+        "ref": "arg"
+      },
+      "parseval": {
+        "id": "parseval",
+        "ref": "script",
+        "value": "return parseFloat(val)"
+      },
+      "q09a315": {
+        "id": "q09a315",
+        "value": "0.01",
+        "ref": ""
+      },
+      "16b092x": {
+        "id": "16b092x",
+        "ref": "default"
+      },
+      "9fk784a": {
+        "id": "9fk784a",
+        "value": "max",
+        "ref": "arg"
+      },
+      "7c2vt3d": {
+        "id": "7c2vt3d",
+        "ref": "default"
+      },
+      "fd7yax9": {
+        "id": "fd7yax9",
+        "value": "min",
+        "ref": "arg"
+      },
+      "r1ah7g2": {
+        "id": "r1ah7g2",
+        "value": "0.0"
+      },
+      "t1deznd": {
+        "id": "t1deznd",
+        "ref": "state"
+      },
+      "ewycyaq": {
+        "id": "ewycyaq",
+        "ref": "default"
+      },
+      "old0t0c": {
+        "id": "old0t0c",
+        "ref": "ap"
+      },
+      "ezx9hxj": {
+        "id": "ezx9hxj"
+      },
+      "l5bzesi": {
+        "id": "l5bzesi",
+        "value": "_sliderval.set",
+        "ref": "arg"
+      },
+      "vgishln": {
+        "id": "vgishln",
+        "value": "_sliderval.state",
+        "ref": "arg"
+      },
+      "sv49nso": {
+        "id": "sv49nso",
+        "value": "_sliderval.state",
+        "ref": "arg"
+      },
+      "7hff44y": {
+        "id": "7hff44y",
+        "ref": "default"
+      },
+      "n4i4t17": {
+        "id": "n4i4t17",
+        "value": "_sliderval.state",
+        "ref": "arg"
+      },
+      "out": {
+        "id": "out",
+        "name": "slider",
+        "ref": "return"
+      },
+      "j219svq": {
+        "id": "j219svq",
+        "value": "{}"
+      },
+      "2wp8ffd": {
+        "id": "2wp8ffd",
+        "ref": "array"
+      },
+      "4dh6wzn": {
+        "id": "4dh6wzn",
+        "value": "oninput",
+        "ref": "arg"
+      },
+      "c74vowk": {
+        "id": "c74vowk",
+        "ref": "default"
+      },
+      "blapbo4": {
+        "id": "blapbo4",
+        "value": "return (max + min) * 0.5;",
+        "ref": "script"
+      },
+      "fn7qsxi": {
+        "id": "fn7qsxi",
+        "ref": "default"
+      },
+      "8tugpnc": {
+        "id": "8tugpnc",
+        "value": "1.0"
+      },
+      "k51obwl": {
+        "id": "k51obwl",
+        "ref": "default"
+      },
+      "fohdjl3": {
+        "id": "fohdjl3",
+        "value": "min",
+        "ref": "arg"
+      },
+      "rxad35l": {
+        "id": "rxad35l",
+        "value": "0.0"
+      },
+      "avvpzh5": {
+        "id": "avvpzh5",
+        "value": "return (max + min) * 0.5;",
+        "ref": "script"
+      },
+      "ygxb70y": {
+        "id": "ygxb70y",
+        "ref": "default"
+      },
+      "kb6l0sn": {
+        "id": "kb6l0sn",
+        "value": "min",
+        "ref": "arg"
+      },
+      "yo8jarp": {
+        "id": "yo8jarp",
+        "value": "0.0"
+      },
+      "h6f5dw0": {
+        "id": "h6f5dw0",
+        "ref": "default"
+      },
+      "v5bj4o0": {
+        "id": "v5bj4o0",
+        "value": "max",
+        "ref": "arg"
+      },
+      "2rjv9by": {
+        "id": "2rjv9by",
+        "value": "1.0"
+      },
+      "7135lyp": {
+        "id": "7135lyp",
+        "ref": "default"
+      },
+      "gfcxpmm": {
+        "id": "gfcxpmm",
+        "value": "return (max + min) * 0.5;",
+        "ref": "script"
+      },
+      "ecvb67i": {
+        "id": "ecvb67i",
+        "ref": "default"
+      },
+      "069irt7": {
+        "id": "069irt7",
+        "value": "min",
+        "ref": "arg"
+      },
+      "hbbs5nk": {
+        "id": "hbbs5nk",
+        "value": "0.0"
+      },
+      "d0lq01a": {
+        "id": "d0lq01a",
+        "ref": "default"
+      },
+      "90buk8f": {
+        "id": "90buk8f",
+        "ref": "default"
+      },
+      "kxuzh9y": {
+        "id": "kxuzh9y",
+        "value": "max",
+        "ref": "arg"
+      },
+      "54kj5rw": {
+        "id": "54kj5rw",
+        "value": "1.0"
+      },
+      "39pwh53": {
+        "id": "39pwh53",
+        "ref": "default"
+      },
+      "cpb7sy3": {
+        "id": "cpb7sy3",
+        "ref": "default"
+      },
+      "auybq8d": {
+        "id": "auybq8d",
+        "value": "__graph_value",
+        "ref": "arg"
+      },
+      "8nwncub": {
+        "id": "8nwncub",
+        "value": "max",
+        "ref": "arg"
+      },
+      "8ujztxk": {
+        "id": "8ujztxk",
+        "value": "return parseFloat(inpt);",
+        "ref": "script"
+      },
+      "sy3nn9u": {
+        "id": "sy3nn9u",
+        "value": "return parseFloat(inpt);",
+        "ref": "script"
+      },
+      "n1h98h3": {
+        "id": "n1h98h3",
+        "value": "__graph_value",
+        "ref": "arg"
+      },
+      "o0rpwm4": {
+        "id": "o0rpwm4",
+        "value": "return parseFloat(inpt);",
+        "ref": "script"
+      },
+      "ze5bcmv": {
+        "id": "ze5bcmv",
+        "value": "__graph_value",
+        "ref": "arg"
+      },
+      "b0pgnet": {
+        "id": "b0pgnet",
+        "value": "return parseFloat(inpt);",
+        "ref": "script"
+      },
+      "9ecvhcn": {
+        "id": "9ecvhcn",
+        "value": "__graph_value",
+        "ref": "arg"
+      }
+    },
+    "edges": {
+      "j219svq": {
+        "from": "j219svq",
+        "to": "out",
+        "as": "subscribe"
+      },
+      "24q0egm": {
+        "from": "24q0egm",
+        "to": "5mog0bc",
+        "as": "props"
+      },
+      "mpbvtrq": {
+        "from": "mpbvtrq",
+        "to": "24q0egm",
+        "as": "type"
+      },
+      "sb9qdgy": {
+        "from": "sb9qdgy",
+        "to": "y407zfo",
+        "as": "children"
+      },
+      "yv0o41n": {
+        "from": "yv0o41n",
+        "to": "24q0egm",
+        "as": "step"
+      },
+      "q09a315": {
+        "from": "q09a315",
+        "to": "yv0o41n",
+        "as": "otherwise"
+      },
+      "z3jopgg": {
+        "from": "z3jopgg",
+        "to": "yv0o41n",
+        "as": "value"
+      },
+      "5mog0bc": {
+        "from": "5mog0bc",
+        "to": "sb9qdgy",
+        "as": "arg1"
+      },
+      "0i85qjj": {
+        "from": "0i85qjj",
+        "to": "out",
+        "as": "args"
+      },
+      "u4k2auv": {
+        "from": "u4k2auv",
+        "to": "0i85qjj",
+        "as": "label"
+      },
+      "a6rdag9": {
+        "from": "a6rdag9",
+        "to": "y407zfo",
+        "as": "props"
+      },
+      "sxjhepz": {
+        "from": "sxjhepz",
+        "to": "a6rdag9",
+        "as": "style"
+      },
+      "93rx3ru": {
+        "from": "93rx3ru",
+        "to": "sxjhepz",
+        "as": "display"
+      },
+      "q8ugbch": {
+        "from": "q8ugbch",
+        "to": "sxjhepz",
+        "as": "flex-direction"
+      },
+      "doz740g": {
+        "from": "doz740g",
+        "to": "sb9qdgy",
+        "as": "arg0"
+      },
+      "kyu6h8m": {
+        "from": "kyu6h8m",
+        "to": "sb9qdgy",
+        "as": "arg2"
+      },
+      "racg3p7": {
+        "from": "racg3p7",
+        "to": "doz740g",
+        "as": "text"
+      },
+      "ewycyaq": {
+        "from": "ewycyaq",
+        "to": "kyu6h8m",
+        "as": "text"
+      },
+      "16b092x": {
+        "from": "16b092x",
+        "to": "24q0egm",
+        "as": "max"
+      },
+      "a4y3jfa": {
+        "from": "a4y3jfa",
+        "to": "16b092x",
+        "as": "otherwise"
+      },
+      "9fk784a": {
+        "from": "9fk784a",
+        "to": "39pwh53",
+        "as": "value"
+      },
+      "r1ah7g2": {
+        "from": "r1ah7g2",
+        "to": "7c2vt3d",
+        "as": "otherwise"
+      },
+      "fd7yax9": {
+        "from": "fd7yax9",
+        "to": "7c2vt3d",
+        "as": "value"
+      },
+      "7c2vt3d": {
+        "from": "7c2vt3d",
+        "to": "24q0egm",
+        "as": "min"
+      },
+      "t1deznd": {
+        "from": "t1deznd",
+        "to": "0i85qjj",
+        "as": "_sliderval"
+      },
+      "sv49nso": {
+        "from": "sv49nso",
+        "to": "c74vowk",
+        "as": "value"
+      },
+      "ezx9hxj": {
+        "from": "ezx9hxj",
+        "to": "old0t0c",
+        "as": "args"
+      },
+      "old0t0c": {
+        "from": "old0t0c",
+        "to": "24q0egm",
+        "as": "oninput"
+      },
+      "vgishln": {
+        "from": "vgishln",
+        "to": "ewycyaq",
+        "as": "value"
+      },
+      "gibdj45": {
+        "from": "gibdj45",
+        "to": "parseval",
+        "as": "val"
+      },
+      "parseval": {
+        "from": "parseval",
+        "to": "ezx9hxj",
+        "as": "value"
+      },
+      "n4i4t17": {
+        "from": "n4i4t17",
+        "to": "7hff44y",
+        "as": "value"
+      },
+      "7hff44y": {
+        "from": "7hff44y",
+        "to": "y407zfo",
+        "as": "value"
+      },
+      "y407zfo": {
+        "from": "y407zfo",
+        "to": "out",
+        "as": "value"
+      },
+      "2wp8ffd": {
+        "from": "2wp8ffd",
+        "to": "old0t0c",
+        "as": "fn"
+      },
+      "l5bzesi": {
+        "from": "l5bzesi",
+        "to": "2wp8ffd",
+        "as": "arg0"
+      },
+      "4dh6wzn": {
+        "from": "4dh6wzn",
+        "to": "2wp8ffd",
+        "as": "arg1"
+      },
+      "c74vowk": {
+        "from": "c74vowk",
+        "to": "24q0egm",
+        "as": "value"
+      },
+      "blapbo4": {
+        "from": "blapbo4",
+        "to": "c74vowk",
+        "as": "otherwise"
+      },
+      "8tugpnc": {
+        "from": "8tugpnc",
+        "to": "fn7qsxi",
+        "as": "otherwise"
+      },
+      "fn7qsxi": {
+        "from": "fn7qsxi",
+        "to": "blapbo4",
+        "as": "max"
+      },
+      "rxad35l": {
+        "from": "rxad35l",
+        "to": "k51obwl",
+        "as": "otherwise"
+      },
+      "fohdjl3": {
+        "from": "fohdjl3",
+        "to": "k51obwl",
+        "as": "value"
+      },
+      "k51obwl": {
+        "from": "k51obwl",
+        "to": "blapbo4",
+        "as": "min"
+      },
+      "h6f5dw0": {
+        "from": "h6f5dw0",
+        "to": "avvpzh5",
+        "as": "max"
+      },
+      "ygxb70y": {
+        "from": "ygxb70y",
+        "to": "avvpzh5",
+        "as": "min"
+      },
+      "yo8jarp": {
+        "from": "yo8jarp",
+        "to": "ygxb70y",
+        "as": "otherwise"
+      },
+      "kb6l0sn": {
+        "from": "kb6l0sn",
+        "to": "ygxb70y",
+        "as": "value"
+      },
+      "2rjv9by": {
+        "from": "2rjv9by",
+        "to": "h6f5dw0",
+        "as": "otherwise"
+      },
+      "v5bj4o0": {
+        "from": "v5bj4o0",
+        "to": "7135lyp",
+        "as": "value"
+      },
+      "avvpzh5": {
+        "from": "avvpzh5",
+        "to": "7hff44y",
+        "as": "otherwise"
+      },
+      "7135lyp": {
+        "from": "7135lyp",
+        "to": "h6f5dw0",
+        "as": "value"
+      },
+      "d0lq01a": {
+        "from": "d0lq01a",
+        "to": "gfcxpmm",
+        "as": "max"
+      },
+      "ecvb67i": {
+        "from": "ecvb67i",
+        "to": "gfcxpmm",
+        "as": "min"
+      },
+      "hbbs5nk": {
+        "from": "hbbs5nk",
+        "to": "ecvb67i",
+        "as": "otherwise"
+      },
+      "069irt7": {
+        "from": "069irt7",
+        "to": "ecvb67i",
+        "as": "value"
+      },
+      "54kj5rw": {
+        "from": "54kj5rw",
+        "to": "d0lq01a",
+        "as": "otherwise"
+      },
+      "90buk8f": {
+        "from": "90buk8f",
+        "to": "d0lq01a",
+        "as": "value"
+      },
+      "kxuzh9y": {
+        "from": "kxuzh9y",
+        "to": "90buk8f",
+        "as": "value"
+      },
+      "gfcxpmm": {
+        "from": "gfcxpmm",
+        "to": "ewycyaq",
+        "as": "otherwise"
+      },
+      "39pwh53": {
+        "from": "39pwh53",
+        "to": "16b092x",
+        "as": "value"
+      },
+      "8nwncub": {
+        "from": "8nwncub",
+        "to": "cpb7sy3",
+        "as": "value"
+      },
+      "auybq8d": {
+        "from": "auybq8d",
+        "to": "8ujztxk",
+        "as": "inpt"
+      },
+      "cpb7sy3": {
+        "from": "cpb7sy3",
+        "to": "fn7qsxi",
+        "as": "value"
+      },
+      "8ujztxk": {
+        "from": "8ujztxk",
+        "to": "cpb7sy3",
+        "as": "otherwise"
+      },
+      "n1h98h3": {
+        "from": "n1h98h3",
+        "to": "sy3nn9u",
+        "as": "inpt"
+      },
+      "sy3nn9u": {
+        "from": "sy3nn9u",
+        "to": "90buk8f",
+        "as": "otherwise"
+      },
+      "ze5bcmv": {
+        "from": "ze5bcmv",
+        "to": "o0rpwm4",
+        "as": "inpt"
+      },
+      "o0rpwm4": {
+        "from": "o0rpwm4",
+        "to": "39pwh53",
+        "as": "otherwise"
+      },
+      "9ecvhcn": {
+        "from": "9ecvhcn",
+        "to": "b0pgnet",
+        "as": "inpt"
+      },
+      "b0pgnet": {
+        "from": "b0pgnet",
+        "to": "7135lyp",
+        "as": "otherwise"
+      }
+    },
+    "edges_in": {
+      "out": {
+        "j219svq": {
           "from": "j219svq",
           "to": "out",
           "as": "subscribe"
         },
-        {
-          "from": "24q0egm",
-          "to": "5mog0bc",
-          "as": "props"
-        },
-        {
-          "from": "mpbvtrq",
-          "to": "24q0egm",
-          "as": "type"
-        },
-        {
-          "from": "sb9qdgy",
-          "to": "y407zfo",
-          "as": "children"
-        },
-        {
-          "from": "yv0o41n",
-          "to": "24q0egm",
-          "as": "step"
-        },
-        {
-          "from": "q09a315",
-          "to": "yv0o41n",
-          "as": "otherwise"
-        },
-        {
-          "from": "z3jopgg",
-          "to": "yv0o41n",
-          "as": "value"
-        },
-        {
-          "from": "5mog0bc",
-          "to": "sb9qdgy",
-          "as": "arg1"
-        },
-        {
+        "0i85qjj": {
           "from": "0i85qjj",
           "to": "out",
           "as": "args"
         },
-        {
-          "from": "u4k2auv",
-          "to": "0i85qjj",
-          "as": "label"
-        },
-        {
-          "from": "a6rdag9",
-          "to": "y407zfo",
-          "as": "props"
-        },
-        {
-          "from": "sxjhepz",
-          "to": "a6rdag9",
-          "as": "style"
-        },
-        {
-          "from": "93rx3ru",
-          "to": "sxjhepz",
-          "as": "display"
-        },
-        {
-          "from": "q8ugbch",
-          "to": "sxjhepz",
-          "as": "flex-direction"
-        },
-        {
-          "from": "wnr7m0u",
-          "to": "qi4odll",
+        "y407zfo": {
+          "from": "y407zfo",
+          "to": "out",
           "as": "value"
+        }
+      },
+      "5mog0bc": {
+        "24q0egm": {
+          "from": "24q0egm",
+          "to": "5mog0bc",
+          "as": "props"
+        }
+      },
+      "24q0egm": {
+        "mpbvtrq": {
+          "from": "mpbvtrq",
+          "to": "24q0egm",
+          "as": "type"
         },
-        {
-          "from": "doz740g",
-          "to": "sb9qdgy",
-          "as": "arg0"
+        "yv0o41n": {
+          "from": "yv0o41n",
+          "to": "24q0egm",
+          "as": "step"
         },
-        {
-          "from": "qi4odll",
-          "to": "doz740g",
-          "as": "text"
-        },
-        {
-          "from": "kyu6h8m",
-          "to": "sb9qdgy",
-          "as": "arg2"
-        },
-        {
-          "from": "racg3p7",
-          "to": "qi4odll",
-          "as": "otherwise"
-        },
-        {
-          "from": "20w95l2",
-          "to": "0i85qjj",
-          "as": "key"
-        },
-        {
-          "from": "ewycyaq",
-          "to": "kyu6h8m",
-          "as": "text"
-        },
-        {
+        "16b092x": {
           "from": "16b092x",
           "to": "24q0egm",
           "as": "max"
         },
-        {
-          "from": "a4y3jfa",
-          "to": "16b092x",
-          "as": "otherwise"
-        },
-        {
-          "from": "9fk784a",
-          "to": "16b092x",
-          "as": "value"
-        },
-        {
-          "from": "r1ah7g2",
-          "to": "7c2vt3d",
-          "as": "otherwise"
-        },
-        {
-          "from": "fd7yax9",
-          "to": "7c2vt3d",
-          "as": "value"
-        },
-        {
+        "7c2vt3d": {
           "from": "7c2vt3d",
           "to": "24q0egm",
           "as": "min"
         },
-        {
-          "from": "bts7694",
-          "to": "ewycyaq",
-          "as": "otherwise"
-        },
-        {
-          "from": "t1deznd",
-          "to": "0i85qjj",
-          "as": "_sliderval"
-        },
-        {
-          "from": "sv49nso",
-          "to": "24q0egm",
-          "as": "value"
-        },
-        {
-          "from": "ezx9hxj",
-          "to": "old0t0c",
-          "as": "args"
-        },
-        {
+        "old0t0c": {
           "from": "old0t0c",
           "to": "24q0egm",
           "as": "oninput"
         },
-        {
+        "c74vowk": {
+          "from": "c74vowk",
+          "to": "24q0egm",
+          "as": "value"
+        }
+      },
+      "y407zfo": {
+        "sb9qdgy": {
+          "from": "sb9qdgy",
+          "to": "y407zfo",
+          "as": "children"
+        },
+        "a6rdag9": {
+          "from": "a6rdag9",
+          "to": "y407zfo",
+          "as": "props"
+        },
+        "7hff44y": {
+          "from": "7hff44y",
+          "to": "y407zfo",
+          "as": "value"
+        }
+      },
+      "yv0o41n": {
+        "q09a315": {
+          "from": "q09a315",
+          "to": "yv0o41n",
+          "as": "otherwise"
+        },
+        "z3jopgg": {
+          "from": "z3jopgg",
+          "to": "yv0o41n",
+          "as": "value"
+        }
+      },
+      "sb9qdgy": {
+        "5mog0bc": {
+          "from": "5mog0bc",
+          "to": "sb9qdgy",
+          "as": "arg1"
+        },
+        "doz740g": {
+          "from": "doz740g",
+          "to": "sb9qdgy",
+          "as": "arg0"
+        },
+        "kyu6h8m": {
+          "from": "kyu6h8m",
+          "to": "sb9qdgy",
+          "as": "arg2"
+        }
+      },
+      "0i85qjj": {
+        "u4k2auv": {
+          "from": "u4k2auv",
+          "to": "0i85qjj",
+          "as": "label"
+        },
+        "t1deznd": {
+          "from": "t1deznd",
+          "to": "0i85qjj",
+          "as": "_sliderval"
+        }
+      },
+      "a6rdag9": {
+        "sxjhepz": {
+          "from": "sxjhepz",
+          "to": "a6rdag9",
+          "as": "style"
+        }
+      },
+      "sxjhepz": {
+        "93rx3ru": {
+          "from": "93rx3ru",
+          "to": "sxjhepz",
+          "as": "display"
+        },
+        "q8ugbch": {
+          "from": "q8ugbch",
+          "to": "sxjhepz",
+          "as": "flex-direction"
+        }
+      },
+      "doz740g": {
+        "racg3p7": {
+          "from": "racg3p7",
+          "to": "doz740g",
+          "as": "text"
+        }
+      },
+      "kyu6h8m": {
+        "ewycyaq": {
+          "from": "ewycyaq",
+          "to": "kyu6h8m",
+          "as": "text"
+        }
+      },
+      "16b092x": {
+        "a4y3jfa": {
+          "from": "a4y3jfa",
+          "to": "16b092x",
+          "as": "otherwise"
+        },
+        "39pwh53": {
+          "from": "39pwh53",
+          "to": "16b092x",
+          "as": "value"
+        }
+      },
+      "39pwh53": {
+        "9fk784a": {
+          "from": "9fk784a",
+          "to": "39pwh53",
+          "as": "value"
+        },
+        "o0rpwm4": {
+          "from": "o0rpwm4",
+          "to": "39pwh53",
+          "as": "otherwise"
+        }
+      },
+      "7c2vt3d": {
+        "r1ah7g2": {
+          "from": "r1ah7g2",
+          "to": "7c2vt3d",
+          "as": "otherwise"
+        },
+        "fd7yax9": {
+          "from": "fd7yax9",
+          "to": "7c2vt3d",
+          "as": "value"
+        }
+      },
+      "c74vowk": {
+        "sv49nso": {
+          "from": "sv49nso",
+          "to": "c74vowk",
+          "as": "value"
+        },
+        "blapbo4": {
+          "from": "blapbo4",
+          "to": "c74vowk",
+          "as": "otherwise"
+        }
+      },
+      "old0t0c": {
+        "ezx9hxj": {
+          "from": "ezx9hxj",
+          "to": "old0t0c",
+          "as": "args"
+        },
+        "2wp8ffd": {
+          "from": "2wp8ffd",
+          "to": "old0t0c",
+          "as": "fn"
+        }
+      },
+      "ewycyaq": {
+        "vgishln": {
           "from": "vgishln",
           "to": "ewycyaq",
           "as": "value"
         },
-        {
+        "gfcxpmm": {
+          "from": "gfcxpmm",
+          "to": "ewycyaq",
+          "as": "otherwise"
+        }
+      },
+      "parseval": {
+        "gibdj45": {
           "from": "gibdj45",
           "to": "parseval",
           "as": "val"
-        },
-        {
+        }
+      },
+      "ezx9hxj": {
+        "parseval": {
           "from": "parseval",
           "to": "ezx9hxj",
           "as": "value"
-        },
-        {
-          "from": "zs6k9cd",
-          "to": "7hff44y",
-          "as": "otherwise"
-        },
-        {
+        }
+      },
+      "7hff44y": {
+        "n4i4t17": {
           "from": "n4i4t17",
           "to": "7hff44y",
           "as": "value"
         },
-        {
-          "from": "d68tdna",
-          "to": "zs6k9cd",
+        "avvpzh5": {
+          "from": "avvpzh5",
+          "to": "7hff44y",
           "as": "otherwise"
-        },
-        {
-          "from": "fbc9r4j",
-          "to": "zs6k9cd",
-          "as": "value"
-        },
-        {
-          "from": "7hff44y",
-          "to": "y407zfo",
-          "as": "value"
-        },
-        {
-          "from": "y407zfo",
-          "to": "out",
-          "as": "value"
-        },
-        {
-          "from": "2wp8ffd",
-          "to": "old0t0c",
-          "as": "fn"
-        },
-        {
+        }
+      },
+      "2wp8ffd": {
+        "l5bzesi": {
           "from": "l5bzesi",
           "to": "2wp8ffd",
           "as": "arg0"
         },
-        {
+        "4dh6wzn": {
           "from": "4dh6wzn",
           "to": "2wp8ffd",
           "as": "arg1"
         }
-      ],
-      "out": "out"
-    },
+      },
+      "fn7qsxi": {
+        "8tugpnc": {
+          "from": "8tugpnc",
+          "to": "fn7qsxi",
+          "as": "otherwise"
+        },
+        "cpb7sy3": {
+          "from": "cpb7sy3",
+          "to": "fn7qsxi",
+          "as": "value"
+        }
+      },
+      "blapbo4": {
+        "fn7qsxi": {
+          "from": "fn7qsxi",
+          "to": "blapbo4",
+          "as": "max"
+        },
+        "k51obwl": {
+          "from": "k51obwl",
+          "to": "blapbo4",
+          "as": "min"
+        }
+      },
+      "k51obwl": {
+        "rxad35l": {
+          "from": "rxad35l",
+          "to": "k51obwl",
+          "as": "otherwise"
+        },
+        "fohdjl3": {
+          "from": "fohdjl3",
+          "to": "k51obwl",
+          "as": "value"
+        }
+      },
+      "avvpzh5": {
+        "h6f5dw0": {
+          "from": "h6f5dw0",
+          "to": "avvpzh5",
+          "as": "max"
+        },
+        "ygxb70y": {
+          "from": "ygxb70y",
+          "to": "avvpzh5",
+          "as": "min"
+        }
+      },
+      "ygxb70y": {
+        "yo8jarp": {
+          "from": "yo8jarp",
+          "to": "ygxb70y",
+          "as": "otherwise"
+        },
+        "kb6l0sn": {
+          "from": "kb6l0sn",
+          "to": "ygxb70y",
+          "as": "value"
+        }
+      },
+      "h6f5dw0": {
+        "2rjv9by": {
+          "from": "2rjv9by",
+          "to": "h6f5dw0",
+          "as": "otherwise"
+        },
+        "7135lyp": {
+          "from": "7135lyp",
+          "to": "h6f5dw0",
+          "as": "value"
+        }
+      },
+      "7135lyp": {
+        "v5bj4o0": {
+          "from": "v5bj4o0",
+          "to": "7135lyp",
+          "as": "value"
+        },
+        "b0pgnet": {
+          "from": "b0pgnet",
+          "to": "7135lyp",
+          "as": "otherwise"
+        }
+      },
+      "gfcxpmm": {
+        "d0lq01a": {
+          "from": "d0lq01a",
+          "to": "gfcxpmm",
+          "as": "max"
+        },
+        "ecvb67i": {
+          "from": "ecvb67i",
+          "to": "gfcxpmm",
+          "as": "min"
+        }
+      },
+      "ecvb67i": {
+        "hbbs5nk": {
+          "from": "hbbs5nk",
+          "to": "ecvb67i",
+          "as": "otherwise"
+        },
+        "069irt7": {
+          "from": "069irt7",
+          "to": "ecvb67i",
+          "as": "value"
+        }
+      },
+      "d0lq01a": {
+        "54kj5rw": {
+          "from": "54kj5rw",
+          "to": "d0lq01a",
+          "as": "otherwise"
+        },
+        "90buk8f": {
+          "from": "90buk8f",
+          "to": "d0lq01a",
+          "as": "value"
+        }
+      },
+      "90buk8f": {
+        "kxuzh9y": {
+          "from": "kxuzh9y",
+          "to": "90buk8f",
+          "as": "value"
+        },
+        "sy3nn9u": {
+          "from": "sy3nn9u",
+          "to": "90buk8f",
+          "as": "otherwise"
+        }
+      },
+      "cpb7sy3": {
+        "8nwncub": {
+          "from": "8nwncub",
+          "to": "cpb7sy3",
+          "as": "value"
+        },
+        "8ujztxk": {
+          "from": "8ujztxk",
+          "to": "cpb7sy3",
+          "as": "otherwise"
+        }
+      },
+      "8ujztxk": {
+        "auybq8d": {
+          "from": "auybq8d",
+          "to": "8ujztxk",
+          "as": "inpt"
+        }
+      },
+      "sy3nn9u": {
+        "n1h98h3": {
+          "from": "n1h98h3",
+          "to": "sy3nn9u",
+          "as": "inpt"
+        }
+      },
+      "o0rpwm4": {
+        "ze5bcmv": {
+          "from": "ze5bcmv",
+          "to": "o0rpwm4",
+          "as": "inpt"
+        }
+      },
+      "b0pgnet": {
+        "9ecvhcn": {
+          "from": "9ecvhcn",
+          "to": "b0pgnet",
+          "as": "inpt"
+        }
+      }
+    }
+  },
 "export": {
     "id": "export",
     "out": "main/out",
