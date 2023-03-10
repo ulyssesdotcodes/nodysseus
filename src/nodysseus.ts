@@ -798,23 +798,27 @@ const nolib = {
       const getorsetgraph = (graph, id) => nodysseus.graphs.get(id) ?? (nodysseus.graphs.add(id, graph), graph)
       let animationframe;
       let animationerrors = [];
+      let pause = false;
 
       const runpublish = (data, event, lib, options: RunOptions = {}) => {
         event_data.set(event, data);
-
         const listeners = getorset(event_listeners, event, () => new Map());
-        for (let l of listeners.values()) {
-          if (typeof l === "function") {
-            l(data);
-          } else if (typeof l === "object" && l.fn && l.graph) {
-            run_graph(
-              l.graph,
-              l.fn,
-              Object.assign({}, l.args || {}, { data }),
-              mergeLib(l.lib, lib),
-              options
-            );
+
+        if(!pause) {
+          for (let l of listeners.values()) {
+            if (typeof l === "function") {
+              l(data);
+            } else if (typeof l === "object" && l.fn && l.graph) {
+              run_graph(
+                l.graph,
+                l.fn,
+                Object.assign({}, l.args || {}, { data }),
+                mergeLib(l.lib, lib),
+                options
+              );
+            }
           }
+
         }
 
         if (
@@ -907,7 +911,7 @@ const nolib = {
         }
       };
 
-      const remove_graph_listeners = (graph_id) => {
+      const remove_graph_listeners = (graph_id, event) => {
         const graph_listeners = (graph_id === "*" ? [...event_listeners_by_graph.values()] : [event_listeners_by_graph.get(graph_id)])
           .filter(gl => gl)
           .map(gl => [...gl.entries()])
@@ -1160,6 +1164,7 @@ const nolib = {
         },
         remove_listener,
         remove_graph_listeners,
+        togglePause: (newPause: boolean) => pause = newPause,
         publish,
         set_parent: (graph, parent) => {
           const graphid = graph;

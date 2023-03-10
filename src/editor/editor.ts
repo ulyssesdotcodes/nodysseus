@@ -201,7 +201,7 @@ const runapp = (init, load_graph, _lib) => {
               name: s.norun ? 'play-outline' : 'pause-outline',
               onclick: (s: HyperappState) => [
                 {...s, norun: !s.norun}, 
-                () => { nolib.no.runtime.remove_graph_listeners("*") },
+                () => { nolib.no.runtime.togglePause(!s.norun) },
                 s.norun && [refresh_graph, {
                   graph: s.display_graph,
                   norun: !s.norun,
