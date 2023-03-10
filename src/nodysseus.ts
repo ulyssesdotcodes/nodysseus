@@ -1343,6 +1343,11 @@ const nolib = {
       ) => {
         const output = _args._output;
         const edgemap = { value, display, subscribe, metadata, lib };
+
+        if(output === "display" && !edgemap[output]) {
+          return;
+        }
+
         const runedge = output && output === display ? display : edgemap[output] ? output : "value";
 
         const return_result = (_lib: Lib, args: Args) => {

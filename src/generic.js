@@ -8351,7 +8351,7 @@ const generic = {
       "y407zfo": {
         "from": "y407zfo",
         "to": "out",
-        "as": "value"
+        "as": "display"
       },
       "2wp8ffd": {
         "from": "2wp8ffd",
