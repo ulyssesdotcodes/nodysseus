@@ -171,18 +171,15 @@ svg {
 
 @keyframes flash {
     0% {
-        stroke-width: 2;
-        stroke: #66ccff;
+      transform: scale(1);
     }
 
     2% { 
-        stroke-width: 6;
-        stroke: #ef02fc;
+      transform: scale(1.15);
     }
 
     100% {
-        stroke-width: 2;
-        stroke: #66ccff;
+      transform: scale(1);
     }
 }
 
@@ -199,14 +196,7 @@ svg {
 .node .shape.flash-transition, 
 .node .shape.none.flash-transition, 
 .node .shape.script.flash-transition {
-    stroke: #ef02fc;
-    stroke-width: 6;
-}
-
-.node .shape.flash-transition-out, 
-.node .shape.none.flash-transition-out, 
-.node .shape.script.flash-transition-out {
-    transition: stroke 1s ease-out, stroke-width 1s ease-out;
+  transform-origin: center;
 }
 
 .node:hover .shape {
