@@ -908,9 +908,12 @@ const nolib = {
       };
 
       const remove_graph_listeners = (graph_id) => {
-        const graph_listeners = event_listeners_by_graph.get(graph_id);
+        const graph_listeners = (graph_id === "*" ? [...event_listeners_by_graph.values()] : [event_listeners_by_graph.get(graph_id)])
+          .filter(gl => gl)
+          .map(gl => [...gl.entries()])
+          .flat();
         if (graph_listeners) {
-          for (const evt of graph_listeners.entries()) {
+          for (const evt of graph_listeners) {
             getorset(event_listeners, evt[0])?.delete(evt[1]);
           }
         }

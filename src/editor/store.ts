@@ -265,7 +265,7 @@ export const ydocStore = async (persist: false | string = false, update = undefi
       })
 
       rdocrtc.awareness.on("change", changes => {
-        console.log(Array.from(rdocrtc.awareness.getStates().values()))
+        // console.log(Array.from(rdocrtc.awareness.getStates().values()))
       })
 
       rdoc.getMap().observe(evts => {

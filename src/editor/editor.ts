@@ -3,7 +3,7 @@ import * as ha from "hyperapp";
 import Fuse from "fuse.js";
 import { create_randid, wrapPromise, base_graph } from "../util";
 import { Edge, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode } from "../types";
-import { calculateLevels, ChangeDisplayGraphId, Copy, CustomDOMEvent, DeleteNode, ExpandContract, FocusEffect, graph_subscription, hlib, keydownSubscription, listen, middleware, Paste, pzobj, result_subscription, run_h, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect } from "./util";
+import { calculateLevels, ChangeDisplayGraphId, Copy, CustomDOMEvent, DeleteNode, ExpandContract, FocusEffect, graph_subscription, hlib, keydownSubscription, listen, middleware, Paste, pzobj, refresh_graph, result_subscription, run_h, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect } from "./util";
 import { info_display, infoWindow } from "./components/infoWindow";
 import { init_code_editor } from "./components/codeEditor";
 import { d3Node, HyperappState } from "./types";
@@ -198,6 +198,22 @@ const runapp = (init, load_graph, _lib) => {
         ha.h('div', {id: "graph-actions"}, [
             search_el({search: s.search}),
             ha.h('ion-icon', {
+              name: s.norun ? 'play-outline' : 'pause-outline',
+              onclick: (s: HyperappState) => [
+                {...s, norun: !s.norun}, 
+                () => { nolib.no.runtime.remove_graph_listeners("*") },
+                s.norun && [refresh_graph, {
+                  graph: s.display_graph,
+                  norun: !s.norun,
+                  graphChanged: false,
+                  result_display_dispatch: s.result_display_dispatch,
+                  info_display_dispatch: s.info_display_dispatch,
+                  code_editor: s.code_editor,
+                  code_editor_nodeid: s.code_editor_nodeid
+                }]
+              ]
+            }),
+            ha.h('ion-icon', {
                     name: 'sync-outline', 
                     onclick: (s: HyperappState) => [s, [dispatch => { 
                             nolib.no.runtime.delete_cache(); 
@@ -366,6 +382,7 @@ const editor = async function(html_id, display_graph, lib, norun) {
     const simple = await resfetch("json/simple.json").then(r => typeof r === "string" ? JSON.parse(r) : r.json());
     simple.edges_in = Object.values(simple.edges).reduce((acc: Record<string, Record<string, Edge>>, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
     const url_params = new URLSearchParams(document.location.search);
+    console.log(url_params)
     const graph_list = JSON.parse(localStorage.getItem("graph_list")) ?? [];
     const hash_graph = window.location.hash.substring(1);
     const keybindings = await resfetch("json/keybindings.json").then(r => typeof r === "string" ? JSON.parse(r) : r.json()).then(kb => (nolib.no.runtime.add_ref(kb), kb))
