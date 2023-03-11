@@ -428,7 +428,7 @@ const generic = {
         {
           "id": "is_otherwise",
           "ref": "script",
-          "value": "return otherwise !== undefined"
+          "value": "return otherwise !== undefined && otherwise !== null"
         },
         {
           "id": "if_otherwise",
