@@ -439,10 +439,12 @@ export const keydownSubscription = (dispatch, options) => {
 }
 
 export const refresh_graph = (dispatch, {graph, graphChanged, norun, result_display_dispatch, info_display_dispatch, code_editor, code_editor_nodeid}) => {
+    dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
+
     if(norun ?? false) {
       return
     }
-    dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
+
     const result = hlib.run(graph, graph.out ?? "out", {_output: "value"}, undefined, {profile: false});
     const reslib = hlib.run(graph, graph.out ?? "out", {_output: "lib"})
     // const result = hlib.run(graph, graph.out, {});
@@ -767,10 +769,6 @@ export const hlib = {
             el.setAttribute("top", `${y * (svg_offset?.scale ?? 1) + (svg_offset?.y ?? 0) + 32}px`);
         }
     },
-    add_asset: (id, b) => nolib.no.runtime.store.assets.add(id, b),
-    get_asset: (id, b) => id && nolib.no.runtime.store.assets.get(id),
-    list_assets: () => nolib.no.runtime.store.assets.all(),
-    remove_asset: (id) => nolib.no.runtime.store.assets.remove(id),
     panzoom: pzobj,
     run: (graph, fn, args?, lib?, options?) => run({graph, fn, lib: lib ? {...hlib, ...lib} : hlib}, isArgs(args) ? args : args ? new Map(Object.entries(args)) : new Map(), options),
     run_runnable: (runnable, args?, options?) => run(runnable, args, options),

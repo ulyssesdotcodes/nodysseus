@@ -279,8 +279,8 @@ export const ydocStore = async (persist: false | string = false, useRtc = false,
       })
 
       rdoc.getMap().observe(evts => {
-        console.log("rdoc obs")
-        console.log(evts)
+        // console.log("rdoc obs")
+        // console.log(evts)
 
         rdocrtc.awareness.setLocalStateField("user", {
           name: "test",
@@ -336,7 +336,7 @@ export const ydocStore = async (persist: false | string = false, useRtc = false,
         })
       })
 
-      rdoc.on('update', evt => console.log(evt))
+      // rdoc.on('update', evt => console.log(evt))
     } else {
       if(id && !rdoc.getMap().has(id)) {
         if(!refRtcs[id]) {
@@ -363,8 +363,8 @@ export const ydocStore = async (persist: false | string = false, useRtc = false,
   }
 
   ydoc.on('subdocs', e => {
-    console.log("subdocs")
-    console.log(e);
+    // console.log("subdocs")
+    // console.log(e);
     e.loaded.forEach(sd => {
       const sdmap = sd.getMap();
       if(!refIdbs[sd.guid]) {
@@ -434,7 +434,7 @@ export const ydocStore = async (persist: false | string = false, useRtc = false,
     }
 
     if(ymap.has(id)) {
-      console.log("loading " + id)
+      // console.log("loading " + id)
       ymap.get(id)?.load()
       return ymap.get(id).whenLoaded.then((doc: Y.Doc) => {
         doc.transact(() => {
@@ -535,8 +535,8 @@ export const yNodyStore = async (useRtc: boolean = false): Promise<NodysseusStor
 
   return {
     refs: await ydocStore('refs', useRtc, (event, id) => {
-      console.log(`update event`)
-      console.log(event);
+      // console.log(`update event`)
+      // console.log(event);
       if(!id && event.keysChanged.size > 1) {
         return;
       }
@@ -544,8 +544,8 @@ export const yNodyStore = async (useRtc: boolean = false): Promise<NodysseusStor
       const updatedgraph = id ?? event.currentTarget.get("id");
       if(updatedgraph !== undefined) {
         requestAnimationFrame(() =>  {
-          console.log(updatedgraph);
-          console.log(nolib.no.runtime.get_ref(updatedgraph))
+          // console.log(updatedgraph);
+          // console.log(nolib.no.runtime.get_ref(updatedgraph))
           nolib.no.runtime.change_graph(nolib.no.runtime.get_ref(updatedgraph), {...nolib, ...hlib}, event.transaction.local)
         }) 
       }

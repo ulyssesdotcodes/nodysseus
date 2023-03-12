@@ -1070,6 +1070,10 @@ const nolib = {
         get_graph,
         get_args,
         get_path,
+        add_asset: (id, b) => nolib.no.runtime.store.assets.add(id, b),
+        get_asset: (id, b) => id && nolib.no.runtime.store.assets.get(id),
+        list_assets: () => nolib.no.runtime.store.assets.all(),
+        remove_asset: (id) => nolib.no.runtime.store.assets.remove(id),
         refs: () => nodysseus.refs.all(),
         ref_graphs: () => nodysseus.refs.all(),
         update_edges: (graph: string | Graph, add: Array<Edge>, remove: Array<Edge> = [], lib: Lib, dryRun = false): void => {
@@ -1786,7 +1790,7 @@ const nolib = {
     construct: {
       args: ["args", "__graph_value", "_lib"],
       fn: (args, nodevalue, _lib) => new (Function.prototype.bind.apply(
-        nodysseus_get(_lib.data, nodevalue, _lib, window[nodevalue]), 
+        nodysseus_get(_lib.data, nodevalue, _lib, typeof window !== "undefined" ? window[nodevalue] : self[nodevalue]), 
         [null, ...(args === undefined ? [] : Array.isArray(args) ? args : [args])])
       )
     },

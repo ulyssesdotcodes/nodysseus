@@ -4,15 +4,14 @@ import {yNodyStore} from "./editor/store"
 function posterror(graph, error){
     if(error instanceof NodysseusError) {
         self.postMessage({type: 'error', error: {node_id: error.node_id, message: error.message}, graph});
-    } else {
-        self.postMessage({type: 'error', error: error.message, graph});
+    } else if(error) {
+        self.postMessage({type: 'error', error: error?.message, graph});
     }
 }
 
 yNodyStore().then(initStore).then(() => {
   onmessage = function(e) {
       try{
-        console.log("got runnable", e)
           // nolib.no.runtime.add_listener(run_graph, 'graphrun', 'worker-rungraph', (g, result) => {
               // this.postMessage({type: 'result', result, graph: e.data.graph})
           // });
@@ -29,8 +28,6 @@ yNodyStore().then(initStore).then(() => {
               }
 
           });
-
-          console.log(e.data.args);
 
           run(e.data);
       } catch (e) { console.error(e) }
