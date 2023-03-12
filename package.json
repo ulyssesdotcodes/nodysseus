@@ -19,7 +19,7 @@
   },
   "homepage": "https://gitlab.com/ulysses.codes/nodysseus#readme",
   "scripts": {
-    "package": "esbuild ./src/index.js ./src/worker.js --bundle --outfile=public/index.bundle.js --sourcemap --target=es2020 --external:node:https ",
+    "package": "esbuild index.bundle=./src/index.js worker=./src/worker.js --bundle --outdir=public --sourcemap --target=es2020 --external:node:https ",
     "watch": "concurrently --raw \"npm run run:esbuild\" \"http-server -s -c-1\" \"tsc --watch --noEmit\"",
     "test": "node node_modules/jest/bin/jest.js",
     "test:watch": "node node_modules/jest/bin/jest.js --watch",
