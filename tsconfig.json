@@ -6,7 +6,12 @@
     "moduleResolution": "node",
     "module": "es2022",
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "y-webrtc-ulysses": ["node_modules/y-webrtc-ulysses/src"],
+      "y-webrtc-ulysses/*": ["node_modules/y-webrtc-ulysses/src/*"]
+    }
   },
   "include": ["**/*.ts"],
   "exclude": ["node_modules"]

@@ -19,11 +19,11 @@
   },
   "homepage": "https://gitlab.com/ulysses.codes/nodysseus#readme",
   "scripts": {
-    "package": "esbuild ./src/index.js --bundle --outfile=public/index.bundle.js --sourcemap --target=es2020 --external:node:https ",
+    "package": "esbuild ./src/index.js ./src/worker.js --bundle --outfile=public/index.bundle.js --sourcemap --target=es2020 --external:node:https ",
     "watch": "concurrently --raw \"npm run run:esbuild\" \"http-server -s -c-1\" \"tsc --watch --noEmit\"",
     "test": "node node_modules/jest/bin/jest.js",
     "test:watch": "node node_modules/jest/bin/jest.js --watch",
-    "run:esbuild": "esbuild ./src/index.js --bundle --outfile=public/index.bundle.js --sourcemap --target=es2020 --external:node:https --external:three --watch --format=esm"
+    "run:esbuild": "esbuild index.bundle=./src/index.js worker=./src/worker.js --bundle --outdir=public --sourcemap --target=es2020 --external:node:https --external:three --watch --format=esm"
   },
   "dependencies": {
     "@codemirror/lang-javascript": "^6.0.1",
@@ -50,12 +50,9 @@
     "y-indexeddb": "^9.0.9",
     "y-webrtc": "^10.2.3",
     "y-websocket": "^1.4.5",
-    "yjs": "^13.5.43"
+    "yjs": "^13.5.44"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^23.0.3",
-    "@rollup/plugin-json": "^5.0.2",
-    "@rollup/plugin-node-resolve": "^15.0.1",
     "@swc/jest": "^0.2.23",
     "@types/d3-force": "^3.0.3",
     "@types/lokijs": "^1.5.7",
@@ -65,13 +62,6 @@
     "esbuild-jest": "^0.5.0",
     "http-server": "^14.1.1",
     "jest": "^29.3.1",
-    "rollup": "^3.5.0",
-    "rollup-plugin-copy": "^3.4.0",
-    "rollup-plugin-node-builtins": "^2.1.2",
-    "rollup-plugin-node-globals": "^1.4.0",
-    "rollup-plugin-sourcemaps": "^0.6.3",
-    "rollup-plugin-swc": "^0.2.1",
-    "rollup-plugin-typescript": "^1.0.1",
     "sourcemap-codec": "^1.4.8",
     "swc-loader": "^0.2.3",
     "ts-loader": "^9.4.1",

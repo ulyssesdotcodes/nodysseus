@@ -1,18 +1,18 @@
 import { openDB } from "idb";
 import { IndexeddbPersistence } from "y-indexeddb";
-import { WebrtcProvider } from "y-webrtc";
 import * as Y from "yjs"
 import generic from "../generic";
-import { lokidbToStore, nolib } from "../nodysseus";
+import { compare, lokidbToStore, nolib } from "../nodysseus";
 import { Edge, EdgesIn, Graph, NodysseusNode, NodysseusStore } from "../types";
 import { mapMaybePromise, wrapPromise } from "../util";
 import { hlib } from "./util";
 import Loki from "lokijs"
+import {WebrtcProvider} from "y-webrtc";
 
 const generic_nodes = generic.nodes;
 const generic_node_ids = new Set(Object.keys(generic_nodes));
 
-export const ydocStore = async (persist: false | string = false, update = undefined) => {
+export const ydocStore = async (persist: false | string = false, useRtc = false, update = undefined) => {
   const rootDoc = new Y.Doc();
   const ydoc = new Y.Doc();
   rootDoc.getMap().set("ydoc", ydoc);
@@ -78,7 +78,12 @@ export const ydocStore = async (persist: false | string = false, update = undefi
             nodesymap.clear();
             data.nodes.map(n => nodesymap.set(n.id, n)) 
           } else {
-            Object.entries(data.nodes).forEach((kv: [string, Node]) => nodesymap.set(kv[0], kv[1]))
+            Object.entries(data.nodes).forEach((kv: [string, Node]) => !compare(nodesymap.get(kv[0]), kv[1]) && nodesymap.set(kv[0], kv[1]))
+            nodesymap.forEach((node, key) => {
+              if(!data.nodes[key]) {
+                nodesymap.delete(key)
+              }
+            })
           } 
         }
 
@@ -101,7 +106,12 @@ export const ydocStore = async (persist: false | string = false, update = undefi
             }
             data.edges.map(e => edgesymap.set(e.from, e)) 
           } else {
-            Object.entries(data.edges).forEach((kv: [string, Edge]) => edgesymap.set(kv[0], kv[1]))
+            Object.entries(data.edges).forEach((kv: [string, Edge]) => !compare(edgesymap.get(kv[0]), kv[1]) && edgesymap.set(kv[0], kv[1]))
+            edgesymap.forEach((edge, key) => {
+              if(!data.edges[key]) {
+                edgesymap.delete(key)
+              }
+            })
           } 
         }
     })
@@ -383,8 +393,8 @@ export const ydocStore = async (persist: false | string = false, update = undefi
             const custom_editor_res = nolib.no.runtime.get_ref("custom_editor");
             mapMaybePromise(custom_editor_res, custom_editor => {
               const rtcroom = params.get("rtcroom") ?? (custom_editor && hlib.run(custom_editor, custom_editor.out ?? "out")?.rtcroom);
+              console.log("rtcroom", rtcroom);
               if(rtcroom && sdmap.get("id")) {
-
                 setuprtc(rtcroom, sd, sd.getMap().get("id"));
               }
             })
@@ -505,11 +515,11 @@ export const ydocStore = async (persist: false | string = false, update = undefi
   }
 }
 
-export const yNodyStore = async (): Promise<NodysseusStore> => {
-    const db = new Loki("nodysseus.db", {
-      env: "BROWSER",
-      persistenceMethod: "memory",
-    });
+export const yNodyStore = async (useRtc: boolean = false): Promise<NodysseusStore> => {
+  const db = new Loki("nodysseus.db", {
+    env: "BROWSER",
+    persistenceMethod: "memory",
+  });
 
   const graphsdb = db.addCollection<{id: string, data: Graph}>("graphs", { unique: ["id"] });
   const statedb = db.addCollection<{id: string, data: Record<string, any>}>("state", { unique: ["id"] });
@@ -524,7 +534,7 @@ export const yNodyStore = async (): Promise<NodysseusStore> => {
   }).then(db => { nodysseusidb = db })
 
   return {
-    refs: await ydocStore('refs', (event, id) => {
+    refs: await ydocStore('refs', useRtc, (event, id) => {
       console.log(`update event`)
       console.log(event);
       if(!id && event.keysChanged.size > 1) {

@@ -376,9 +376,10 @@ const runapp = (init, load_graph, _lib) => {
 });
 }
 
-const editor = async function(html_id, display_graph, lib, norun) {
-    let nodysseusStore = await yNodyStore();
+const editor = async function(html_id, worker, display_graph, lib, norun) {
+    let nodysseusStore = await yNodyStore(true);
     initStore(nodysseusStore)
+    hlib.worker = worker;
     const simple = await resfetch("json/simple.json").then(r => typeof r === "string" ? JSON.parse(r) : r.json());
     simple.edges_in = Object.values(simple.edges).reduce((acc: Record<string, Record<string, Edge>>, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
     const url_params = new URLSearchParams(document.location.search);

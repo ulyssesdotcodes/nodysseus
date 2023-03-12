@@ -5,8 +5,6 @@ import { Graph, isNodeGraph, NodysseusNode } from "../../types";
 import { wrapPromise } from "../../util";
 import { HyperappState, NodysseusForceLink, NodysseusSimulation, d3Link, d3Node, Vector2 } from "../types";
 import { calculateLevels, CreateNode, findViewBox, hlib, pzobj, SelectNode } from "../util";
-import {KDTree} from "mnemonist";
-
 
 export const UpdateSimulation: ha.Effecter<HyperappState, any>  = (dispatch, payload) => payload ? !(payload.simulation || payload.static) ? undefined : updateSimulationNodes(dispatch, payload) : dispatch(state => [state, [() => !(state.simulation) ? undefined : updateSimulationNodes(dispatch, state), undefined]])
 

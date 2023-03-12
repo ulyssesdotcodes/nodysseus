@@ -775,6 +775,7 @@ export const hlib = {
     run: (graph, fn, args?, lib?, options?) => run({graph, fn, lib: lib ? {...hlib, ...lib} : hlib}, isArgs(args) ? args : args ? new Map(Object.entries(args)) : new Map(), options),
     run_runnable: (runnable, args?, options?) => run(runnable, args, options),
     initStore: (nodysseusStore) => initStore(nodysseusStore),
-    d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX }
+    d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
+    worker: undefined
 }
 

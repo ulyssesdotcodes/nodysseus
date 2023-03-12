@@ -1,4 +1,5 @@
-import { nolib, NodysseusError } from "./nodysseus";
+import { nolib, NodysseusError, initStore, run } from "./nodysseus";
+import {yNodyStore} from "./editor/store"
 
 function posterror(graph, error){
     if(error instanceof NodysseusError) {
@@ -8,14 +9,16 @@ function posterror(graph, error){
     }
 }
 
+yNodyStore().then(initStore)
+
 onmessage = function(e) {
     try{
-        const run_graph = {...e.data.graph, out: e.data.fn};
-        nolib.no.runtime.add_listener(run_graph, 'graphrun', 'worker-rungraph', (g, result) => {
+      console.log("got runnable", e)
+        // nolib.no.runtime.add_listener(run_graph, 'graphrun', 'worker-rungraph', (g, result) => {
             // this.postMessage({type: 'result', result, graph: e.data.graph})
-        });
+        // });
 
-        nolib.no.runtime.add_listener(run_graph, 'grapherror', 'worker-grapherror', (g, error) => {
+        nolib.no.runtime.add_listener('grapherror', 'worker-grapherror', (g, error) => {
             if(error instanceof AggregateError) {
                 error.errors.forEach(ae => {
                     console.error(ae)
@@ -30,6 +33,6 @@ onmessage = function(e) {
 
         console.log(e.data.args);
 
-        nolib.no.runtime.update_graph(run_graph, e.data.args);
+        run(e.data);
     } catch (e) { console.error(e) }
 }
