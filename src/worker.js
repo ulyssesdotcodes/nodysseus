@@ -9,30 +9,30 @@ function posterror(graph, error){
     }
 }
 
-yNodyStore().then(initStore)
+yNodyStore().then(initStore).then(() => {
+  onmessage = function(e) {
+      try{
+        console.log("got runnable", e)
+          // nolib.no.runtime.add_listener(run_graph, 'graphrun', 'worker-rungraph', (g, result) => {
+              // this.postMessage({type: 'result', result, graph: e.data.graph})
+          // });
 
-onmessage = function(e) {
-    try{
-      console.log("got runnable", e)
-        // nolib.no.runtime.add_listener(run_graph, 'graphrun', 'worker-rungraph', (g, result) => {
-            // this.postMessage({type: 'result', result, graph: e.data.graph})
-        // });
+          nolib.no.runtime.add_listener('grapherror', 'worker-grapherror', (g, error) => {
+              if(error instanceof AggregateError) {
+                  error.errors.forEach(ae => {
+                      console.error(ae)
+                      posterror(e.data.graph, ae);
+                  });
+              } else {
+                  console.error(error);
+                  posterror(e.data.graph, error);
+              }
 
-        nolib.no.runtime.add_listener('grapherror', 'worker-grapherror', (g, error) => {
-            if(error instanceof AggregateError) {
-                error.errors.forEach(ae => {
-                    console.error(ae)
-                    posterror(e.data.graph, ae);
-                });
-            } else {
-                console.error(error);
-                posterror(e.data.graph, error);
-            }
+          });
 
-        });
+          console.log(e.data.args);
 
-        console.log(e.data.args);
-
-        run(e.data);
-    } catch (e) { console.error(e) }
-}
+          run(e.data);
+      } catch (e) { console.error(e) }
+  }
+})
