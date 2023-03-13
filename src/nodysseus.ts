@@ -500,7 +500,6 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
             return node_script(node, nodeArgs, lib, options)
         }
 
-
         const graphid = (graphArgs.data.get("__graphid") as {value: string}).value;
         const newgraphid = `${graphid}/${node.id}`
         const newGraphArgs = newEnv(new Map().set("__graphid", lib.data.no.of(newgraphid)), graphArgs._output);
@@ -588,7 +587,10 @@ const run_graph = (graph: Graph | (Graph & {nodes: Array<NodysseusNode>, edges: 
 
     try {
         return wrapPromise(node).then(node => {
-          lib.data.no.runtime.publish('noderun', {graph: newgraph, node_id})
+          const graphid = (env.data.get("__graphid") as {value: string}).value;
+          if(!graphid.includes('/')) {
+            lib.data.no.runtime.publish('noderun', {graph: newgraph, node_id})
+          }
 
           const data = create_data(node_id, newgraph, env, lib, options);
 
@@ -800,7 +802,32 @@ const nolib = {
       let animationerrors = [];
       let pause = false;
 
+      let eventsBroadcastChannel = new BroadcastChannel("events");
+      let clientUuid = crypto.randomUUID();
+
+      eventsBroadcastChannel.onmessage = (message) => {
+        runpublish(message.data.data, message.data.event, nolib)
+      }
+
       const runpublish = (data, event, lib, options: RunOptions = {}) => {
+        // if(!isArgs(data)) {
+        //   data = data ? new Map(Object.entries(data)) : {};
+        // }
+        if(event.startsWith("bc")) {
+          event = event.substring(3);
+        } else if(event !== "noderun" && !event.startsWith("graph") && event !== "animationframe" && event !== "show_all") {
+          try {
+            if(typeof window !== "undefined") {
+              eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data });
+            }
+          } catch(e){
+            // If it's not serializable, that's fine
+            console.error(e);
+          }
+        }
+
+
+
         event_data.set(event, data);
         const listeners = getorset(event_listeners, event, () => new Map());
 
@@ -809,16 +836,13 @@ const nolib = {
             if (typeof l === "function") {
               l(data);
             } else if (typeof l === "object" && l.fn && l.graph) {
-              run_graph(
-                l.graph,
-                l.fn,
+              run(
+                l,
                 Object.assign({}, l.args || {}, { data }),
-                mergeLib(l.lib, lib),
-                options
+                {...options, lib: mergeLib(l.lib, lib)}
               );
             }
           }
-
         }
 
         if (
@@ -835,7 +859,6 @@ const nolib = {
       };
 
       const publish = (event, data, lib: Lib, options: RunOptions = {}) => {
-
         if (typeof data === "object" && ispromise(data)) {
           data.then(d => runpublish(d, event, lib, options));
         } else {
@@ -860,7 +883,7 @@ const nolib = {
           typeof input_fn === "function"
             ? input_fn
             : (args) => {
-                run_runnable(input_fn, mergeLib(input_fn.lib, lib), args, options);
+                run(input_fn, args, {...options, lib: mergeLib(input_fn.lib, lib)});
               };
         if (!listeners.has(listener_id)) {
           if (!prevent_initial_trigger) {

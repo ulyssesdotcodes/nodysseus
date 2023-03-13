@@ -3577,9 +3577,14 @@ const generic = {
           "ref": "sequence"
         },
         {
-          "id": "out",
+          "id": "setup_bc",
           "ref": "script",
           "value": "const bc = new BroadcastChannel('events'); bc.onmessage = e => { _lib.no.run(onmessage.graph, onmessage.fn, {message: e}, _lib); }; return bc;"
+        },
+        {
+          "id": "out",
+          "ref": "return",
+          "name": "events_broadcast_channel"
         }
       ],
       "edges": [
@@ -3610,8 +3615,13 @@ const generic = {
         },
         {
           "from": "onmessageseq",
-          "to": "out",
+          "to": "setup_bc",
           "as": "onmessage"
+        },
+        {
+          "from": "setup_bc",
+          "to": "out",
+          "as": "value"
         }
       ]
     },
