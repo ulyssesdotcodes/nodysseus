@@ -1,6 +1,1019 @@
 [
   {
-    "id": "@three.setup",
+    "id": "@three.copy_geometry",
+    "out": "out",
+    "nodes": {
+      "args": {
+        "id": "args"
+      },
+      "output_val": {
+        "id": "output_val",
+        "ref": "if"
+      },
+      "out": {
+        "id": "out",
+        "ref": "return",
+        "name": "@three.copy_geometry"
+      },
+      "euzoog2": {
+        "id": "euzoog2",
+        "value": "geometry",
+        "ref": "arg"
+      },
+      "husdoy4": {
+        "id": "husdoy4",
+        "ref": "cache"
+      },
+      "5nudo40": {
+        "id": "5nudo40",
+        "value": "THREE.InstancedMesh",
+        "ref": "new"
+      },
+      "h9a5ot3": {
+        "id": "h9a5ot3",
+        "ref": "array"
+      },
+      "r9ngnn4": {
+        "id": "r9ngnn4",
+        "value": "geometry",
+        "ref": "arg"
+      },
+      "xuoy9bd": {
+        "id": "xuoy9bd",
+        "value": "material",
+        "ref": "arg"
+      }
+    },
+    "edges": {
+      "output_val": {
+        "from": "output_val",
+        "to": "out",
+        "as": "value"
+      },
+      "args": {
+        "from": "args",
+        "to": "out",
+        "as": "args"
+      },
+      "euzoog2": {
+        "from": "euzoog2",
+        "to": "output_val",
+        "as": "pred"
+      },
+      "husdoy4": {
+        "from": "husdoy4",
+        "to": "output_val",
+        "as": "true"
+      },
+      "5nudo40": {
+        "from": "5nudo40",
+        "to": "husdoy4",
+        "as": "value"
+      },
+      "h9a5ot3": {
+        "from": "h9a5ot3",
+        "to": "5nudo40",
+        "as": "args"
+      },
+      "r9ngnn4": {
+        "from": "r9ngnn4",
+        "to": "h9a5ot3",
+        "as": "arg0"
+      },
+      "xuoy9bd": {
+        "from": "xuoy9bd",
+        "to": "h9a5ot3",
+        "as": "arg1"
+      }
+    },
+    "edges_in": {
+      "out": {
+        "output_val": {
+          "from": "output_val",
+          "to": "out",
+          "as": "value"
+        },
+        "args": {
+          "from": "args",
+          "to": "out",
+          "as": "args"
+        }
+      },
+      "output_val": {
+        "euzoog2": {
+          "from": "euzoog2",
+          "to": "output_val",
+          "as": "pred"
+        },
+        "husdoy4": {
+          "from": "husdoy4",
+          "to": "output_val",
+          "as": "true"
+        }
+      },
+      "husdoy4": {
+        "5nudo40": {
+          "from": "5nudo40",
+          "to": "husdoy4",
+          "as": "value"
+        }
+      },
+      "5nudo40": {
+        "h9a5ot3": {
+          "from": "h9a5ot3",
+          "to": "5nudo40",
+          "as": "args"
+        }
+      },
+      "h9a5ot3": {
+        "r9ngnn4": {
+          "from": "r9ngnn4",
+          "to": "h9a5ot3",
+          "as": "arg0"
+        },
+        "xuoy9bd": {
+          "from": "xuoy9bd",
+          "to": "h9a5ot3",
+          "as": "arg1"
+        }
+      }
+    }
+  },
+  {
+    "id": "@three.subdivide_lines",
+    "out": "out",
+    "nodes": {
+      "args": {
+        "id": "args"
+      },
+      "8dy573e": {
+        "id": "8dy573e",
+        "ref": "html_element"
+      },
+      "yai4q6q": {
+        "id": "yai4q6q",
+        "ref": "array"
+      },
+      "out": {
+        "id": "out",
+        "name": "@three.subdivide_lines",
+        "ref": "return"
+      },
+      "u36qh21": {
+        "id": "u36qh21",
+        "ref": "cache"
+      },
+      "scte9zo": {
+        "id": "scte9zo"
+      },
+      "cisb6j6": {
+        "id": "cisb6j6",
+        "value": "return {};",
+        "ref": "script"
+      },
+      "3viy8mt": {
+        "id": "3viy8mt",
+        "ref": "cache"
+      },
+      "buoyv1q": {
+        "id": "buoyv1q",
+        "value": "geo",
+        "ref": "arg"
+      },
+      "e7gu67v": {
+        "id": "e7gu67v",
+        "value": "const geo = new _lib.THREE.BufferGeometry();\ngeo.setAttribute('position', new _lib.THREE.BufferAttribute( new Float32Array( [\n] ), 3));\ngeo.computeVertexNormals();\n\nreturn geo",
+        "ref": "script"
+      },
+      "iwzvdj8": {
+        "id": "iwzvdj8",
+        "value": "const item_size = 3;\n\n// Object.entries(inputgeo.attributes)\n//   .forEach(kv => {\n//     initgeo.setAttribute(kv[0], kv[0] === attribute ? inputgeo.getAttribute(kv[0]).clone() : inputgeo.getAttribute(kv[0]));\n//     });\n\ninitgeo.copy(inputgeo);\n\ninitgeo.setAttribute(\"position\", new _lib.THREE.BufferAttribute(new Float32Array(inputgeo.getAttribute(\"position\").count * item_size * 4), item_size));\n\nconst inputPos = inputgeo.getAttribute(\"position\");\nconst initPos = initgeo.getAttribute(\"position\");\nconst count = initPos.count;\nlet origIdx = 0;\nlet origPosition0 = new _lib.THREE.Vector3();\nlet origPosition1 = new _lib.THREE.Vector3();\n\nfor(let i = 0; i < count; i++){\n  origIdx = Math.floor(i / 4);\n  origPosition0.fromBufferAttribute(inputPos, origIdx);\n  origPosition1.fromBufferAttribute(inputPos, (origIdx + 1) % inputPos.count)\n  if(isNaN(origPosition1.x) || isNaN(origPosition0.x)) {\n    throw new Error(\"invalid pos\")\n  }\n  origPosition0.lerp(origPosition1, (i / 4) % 1)\n  initPos.setXYZ(i, origPosition0.x, origPosition0.y, origPosition0.z)\n}\n\ninitPos.needsUpdate = true;\n\n//console.log(inputgeo);\n//console.log(initgeo);\n\nreturn initgeo;",
+        "ref": "script"
+      },
+      "nd6zslm": {
+        "id": "nd6zslm",
+        "value": "_initgeo: internal",
+        "ref": "arg"
+      },
+      "st1qot0": {
+        "id": "st1qot0",
+        "ref": "state"
+      },
+      "ha9sbe6": {
+        "id": "ha9sbe6",
+        "value": "input",
+        "ref": "html_element"
+      },
+      "1oskoai": {
+        "id": "1oskoai"
+      },
+      "qapcl0i": {
+        "id": "qapcl0i",
+        "value": "checkbox"
+      },
+      "dtp36mu": {
+        "id": "dtp36mu",
+        "ref": "ap"
+      },
+      "8uiwk65": {
+        "id": "8uiwk65",
+        "value": "feedback.set",
+        "ref": "arg"
+      },
+      "1eft9yl": {
+        "id": "1eft9yl"
+      },
+      "mrpotq6": {
+        "id": "mrpotq6",
+        "value": "event.target.checked",
+        "ref": "arg"
+      },
+      "tkmxaye": {
+        "id": "tkmxaye",
+        "value": "feedback.state",
+        "ref": "arg"
+      }
+    },
+    "edges": {
+      "8dy573e": {
+        "from": "8dy573e",
+        "to": "out",
+        "as": "display"
+      },
+      "args": {
+        "from": "args",
+        "to": "out",
+        "as": "args"
+      },
+      "yai4q6q": {
+        "from": "yai4q6q",
+        "to": "8dy573e",
+        "as": "children"
+      },
+      "nd6zslm": {
+        "from": "nd6zslm",
+        "to": "iwzvdj8",
+        "as": "initgeo"
+      },
+      "u36qh21": {
+        "from": "u36qh21",
+        "to": "iwzvdj8",
+        "as": "initbuffer"
+      },
+      "scte9zo": {
+        "from": "scte9zo",
+        "to": "u36qh21",
+        "as": "value"
+      },
+      "cisb6j6": {
+        "from": "cisb6j6",
+        "to": "scte9zo",
+        "as": "buffer"
+      },
+      "e7gu67v": {
+        "from": "e7gu67v",
+        "to": "3viy8mt",
+        "as": "value"
+      },
+      "iwzvdj8": {
+        "from": "iwzvdj8",
+        "to": "out",
+        "as": "value"
+      },
+      "buoyv1q": {
+        "from": "buoyv1q",
+        "to": "iwzvdj8",
+        "as": "inputgeo"
+      },
+      "3viy8mt": {
+        "from": "3viy8mt",
+        "to": "args",
+        "as": "_initgeo"
+      },
+      "st1qot0": {
+        "from": "st1qot0",
+        "to": "args",
+        "as": "feedback"
+      },
+      "ha9sbe6": {
+        "from": "ha9sbe6",
+        "to": "yai4q6q",
+        "as": "arg0"
+      },
+      "1oskoai": {
+        "from": "1oskoai",
+        "to": "ha9sbe6",
+        "as": "props"
+      },
+      "qapcl0i": {
+        "from": "qapcl0i",
+        "to": "1oskoai",
+        "as": "type"
+      },
+      "dtp36mu": {
+        "from": "dtp36mu",
+        "to": "1oskoai",
+        "as": "onchange"
+      },
+      "8uiwk65": {
+        "from": "8uiwk65",
+        "to": "dtp36mu",
+        "as": "fn"
+      },
+      "1eft9yl": {
+        "from": "1eft9yl",
+        "to": "dtp36mu",
+        "as": "args"
+      },
+      "mrpotq6": {
+        "from": "mrpotq6",
+        "to": "1eft9yl",
+        "as": "value"
+      },
+      "tkmxaye": {
+        "from": "tkmxaye",
+        "to": "iwzvdj8",
+        "as": "feedback"
+      }
+    },
+    "edges_in": {
+      "out": {
+        "8dy573e": {
+          "from": "8dy573e",
+          "to": "out",
+          "as": "display"
+        },
+        "args": {
+          "from": "args",
+          "to": "out",
+          "as": "args"
+        },
+        "iwzvdj8": {
+          "from": "iwzvdj8",
+          "to": "out",
+          "as": "value"
+        }
+      },
+      "8dy573e": {
+        "yai4q6q": {
+          "from": "yai4q6q",
+          "to": "8dy573e",
+          "as": "children"
+        }
+      },
+      "iwzvdj8": {
+        "nd6zslm": {
+          "from": "nd6zslm",
+          "to": "iwzvdj8",
+          "as": "initgeo"
+        },
+        "u36qh21": {
+          "from": "u36qh21",
+          "to": "iwzvdj8",
+          "as": "initbuffer"
+        },
+        "buoyv1q": {
+          "from": "buoyv1q",
+          "to": "iwzvdj8",
+          "as": "inputgeo"
+        },
+        "tkmxaye": {
+          "from": "tkmxaye",
+          "to": "iwzvdj8",
+          "as": "feedback"
+        }
+      },
+      "u36qh21": {
+        "scte9zo": {
+          "from": "scte9zo",
+          "to": "u36qh21",
+          "as": "value"
+        }
+      },
+      "scte9zo": {
+        "cisb6j6": {
+          "from": "cisb6j6",
+          "to": "scte9zo",
+          "as": "buffer"
+        }
+      },
+      "3viy8mt": {
+        "e7gu67v": {
+          "from": "e7gu67v",
+          "to": "3viy8mt",
+          "as": "value"
+        }
+      },
+      "args": {
+        "3viy8mt": {
+          "from": "3viy8mt",
+          "to": "args",
+          "as": "_initgeo"
+        },
+        "st1qot0": {
+          "from": "st1qot0",
+          "to": "args",
+          "as": "feedback"
+        }
+      },
+      "yai4q6q": {
+        "ha9sbe6": {
+          "from": "ha9sbe6",
+          "to": "yai4q6q",
+          "as": "arg0"
+        }
+      },
+      "ha9sbe6": {
+        "1oskoai": {
+          "from": "1oskoai",
+          "to": "ha9sbe6",
+          "as": "props"
+        }
+      },
+      "1oskoai": {
+        "qapcl0i": {
+          "from": "qapcl0i",
+          "to": "1oskoai",
+          "as": "type"
+        },
+        "dtp36mu": {
+          "from": "dtp36mu",
+          "to": "1oskoai",
+          "as": "onchange"
+        }
+      },
+      "dtp36mu": {
+        "8uiwk65": {
+          "from": "8uiwk65",
+          "to": "dtp36mu",
+          "as": "fn"
+        },
+        "1eft9yl": {
+          "from": "1eft9yl",
+          "to": "dtp36mu",
+          "as": "args"
+        }
+      },
+      "1eft9yl": {
+        "mrpotq6": {
+          "from": "mrpotq6",
+          "to": "1eft9yl",
+          "as": "value"
+        }
+      }
+    }
+  },
+  {
+    "id": "@three.loader",
+    "name": "@three.geometry_loader",
+    "out": "r3wy7qr",
+    "nodes": {
+      "r3wy7qr": {
+        "id": "r3wy7qr",
+        "name": "@three.loader",
+        "ref": "return"
+      },
+      "py60aki": {
+        "id": "py60aki"
+      },
+      "8ug5ygt": {
+        "id": "8ug5ygt",
+        "value": "_manager",
+        "ref": "arg"
+      },
+      "ddhuoh2": {
+        "id": "ddhuoh2",
+        "ref": "switch"
+      },
+      "z9cjc2k": {
+        "id": "z9cjc2k",
+        "ref": "state"
+      },
+      "v4zu63j": {
+        "id": "v4zu63j",
+        "ref": "assetmanager"
+      },
+      "pdbinbg": {
+        "id": "pdbinbg",
+        "value": "assetname",
+        "ref": "arg"
+      },
+      "6owogjm": {
+        "id": "6owogjm",
+        "ref": "return"
+      },
+      "cmrjgyv": {
+        "id": "cmrjgyv"
+      },
+      "78983lz": {
+        "id": "78983lz",
+        "value": "return !file ? false : (file.type === \"application/json\" ? file.text() : file.arrayBuffer()).then(data => ({data, name: file.name, type: file.type}));",
+        "ref": "script"
+      },
+      "kfyzav1": {
+        "id": "kfyzav1",
+        "value": "file",
+        "ref": "get"
+      },
+      "ju0gq9n": {
+        "id": "ju0gq9n",
+        "value": "_manager",
+        "ref": "arg"
+      },
+      "nzdbmwo": {
+        "id": "nzdbmwo",
+        "value": "return new Promise((res, rej) =>  gltfLoader.parse(file.data, \"\", l => res(l.scene.children), e => rej(e)));",
+        "ref": "script"
+      },
+      "6mnggoe": {
+        "id": "6mnggoe",
+        "value": "file",
+        "ref": "arg"
+      },
+      "n3lcnwc": {
+        "id": "n3lcnwc",
+        "ref": "cache"
+      },
+      "rxalntn": {
+        "id": "rxalntn",
+        "value": "https://cdn.jsdelivr.net/npm/three/examples/jsm/loaders/GLTFLoader.js",
+        "ref": "import_module"
+      },
+      "65bdnhk": {
+        "id": "65bdnhk",
+        "value": "GLTFLoader",
+        "ref": "get"
+      },
+      "mtjltoq": {
+        "id": "mtjltoq",
+        "value": "const geo  = buffergeoLoader.parse(JSON.parse(file.data));\n\ngeo.computeVertexNormals();\nreturn geo;",
+        "ref": "script"
+      },
+      "ckl1s1u": {
+        "id": "ckl1s1u",
+        "value": "file",
+        "ref": "arg"
+      },
+      "cgya4cs": {
+        "id": "cgya4cs",
+        "value": "return file.type === \"application/json\" ? \"buffergeo\" : file.name.endsWith(\"glb\") ? \"gltf\" : undefined;",
+        "ref": "script"
+      },
+      "aqxr41s": {
+        "id": "aqxr41s",
+        "value": "file",
+        "ref": "arg"
+      },
+      "cnqbqcm": {
+        "id": "cnqbqcm",
+        "value": "THREE.BufferGeometryLoader",
+        "ref": "new"
+      },
+      "xmyi1yi": {
+        "id": "xmyi1yi",
+        "value": "return new GLTFLoader();",
+        "ref": "script"
+      },
+      "0xucdak": {
+        "id": "0xucdak",
+        "ref": "if"
+      },
+      "b9wjaqz": {
+        "id": "b9wjaqz",
+        "value": "file",
+        "ref": "arg"
+      }
+    },
+    "edges": {
+      "py60aki": {
+        "from": "py60aki",
+        "to": "r3wy7qr",
+        "as": "args"
+      },
+      "8ug5ygt": {
+        "from": "8ug5ygt",
+        "to": "r3wy7qr",
+        "as": "display"
+      },
+      "ddhuoh2": {
+        "from": "ddhuoh2",
+        "to": "0xucdak",
+        "as": "true"
+      },
+      "z9cjc2k": {
+        "from": "z9cjc2k",
+        "to": "py60aki",
+        "as": "_assetstate"
+      },
+      "v4zu63j": {
+        "from": "v4zu63j",
+        "to": "py60aki",
+        "as": "_manager"
+      },
+      "pdbinbg": {
+        "from": "pdbinbg",
+        "to": "v4zu63j",
+        "as": "assetname"
+      },
+      "6owogjm": {
+        "from": "6owogjm",
+        "to": "r3wy7qr",
+        "as": "value"
+      },
+      "cmrjgyv": {
+        "from": "cmrjgyv",
+        "to": "6owogjm",
+        "as": "args"
+      },
+      "kfyzav1": {
+        "from": "kfyzav1",
+        "to": "78983lz",
+        "as": "file"
+      },
+      "ju0gq9n": {
+        "from": "ju0gq9n",
+        "to": "kfyzav1",
+        "as": "target"
+      },
+      "78983lz": {
+        "from": "78983lz",
+        "to": "cmrjgyv",
+        "as": "file"
+      },
+      "nzdbmwo": {
+        "from": "nzdbmwo",
+        "to": "ddhuoh2",
+        "as": "gltf"
+      },
+      "6mnggoe": {
+        "from": "6mnggoe",
+        "to": "nzdbmwo",
+        "as": "file"
+      },
+      "n3lcnwc": {
+        "from": "n3lcnwc",
+        "to": "nzdbmwo",
+        "as": "gltfLoader"
+      },
+      "rxalntn": {
+        "from": "rxalntn",
+        "to": "65bdnhk",
+        "as": "target"
+      },
+      "65bdnhk": {
+        "from": "65bdnhk",
+        "to": "xmyi1yi",
+        "as": "GLTFLoader"
+      },
+      "mtjltoq": {
+        "from": "mtjltoq",
+        "to": "ddhuoh2",
+        "as": "buffergeo"
+      },
+      "ckl1s1u": {
+        "from": "ckl1s1u",
+        "to": "mtjltoq",
+        "as": "file"
+      },
+      "cgya4cs": {
+        "from": "cgya4cs",
+        "to": "ddhuoh2",
+        "as": "input"
+      },
+      "aqxr41s": {
+        "from": "aqxr41s",
+        "to": "cgya4cs",
+        "as": "file"
+      },
+      "cnqbqcm": {
+        "from": "cnqbqcm",
+        "to": "mtjltoq",
+        "as": "buffergeoLoader"
+      },
+      "xmyi1yi": {
+        "from": "xmyi1yi",
+        "to": "n3lcnwc",
+        "as": "value"
+      },
+      "0xucdak": {
+        "from": "0xucdak",
+        "to": "6owogjm",
+        "as": "value"
+      },
+      "b9wjaqz": {
+        "from": "b9wjaqz",
+        "to": "0xucdak",
+        "as": "pred"
+      }
+    },
+    "edges_in": {
+      "r3wy7qr": {
+        "py60aki": {
+          "from": "py60aki",
+          "to": "r3wy7qr",
+          "as": "args"
+        },
+        "8ug5ygt": {
+          "from": "8ug5ygt",
+          "to": "r3wy7qr",
+          "as": "display"
+        },
+        "6owogjm": {
+          "from": "6owogjm",
+          "to": "r3wy7qr",
+          "as": "value"
+        }
+      },
+      "0xucdak": {
+        "ddhuoh2": {
+          "from": "ddhuoh2",
+          "to": "0xucdak",
+          "as": "true"
+        },
+        "b9wjaqz": {
+          "from": "b9wjaqz",
+          "to": "0xucdak",
+          "as": "pred"
+        }
+      },
+      "py60aki": {
+        "z9cjc2k": {
+          "from": "z9cjc2k",
+          "to": "py60aki",
+          "as": "_assetstate"
+        },
+        "v4zu63j": {
+          "from": "v4zu63j",
+          "to": "py60aki",
+          "as": "_manager"
+        }
+      },
+      "v4zu63j": {
+        "pdbinbg": {
+          "from": "pdbinbg",
+          "to": "v4zu63j",
+          "as": "assetname"
+        }
+      },
+      "6owogjm": {
+        "cmrjgyv": {
+          "from": "cmrjgyv",
+          "to": "6owogjm",
+          "as": "args"
+        },
+        "0xucdak": {
+          "from": "0xucdak",
+          "to": "6owogjm",
+          "as": "value"
+        }
+      },
+      "78983lz": {
+        "kfyzav1": {
+          "from": "kfyzav1",
+          "to": "78983lz",
+          "as": "file"
+        }
+      },
+      "kfyzav1": {
+        "ju0gq9n": {
+          "from": "ju0gq9n",
+          "to": "kfyzav1",
+          "as": "target"
+        }
+      },
+      "cmrjgyv": {
+        "78983lz": {
+          "from": "78983lz",
+          "to": "cmrjgyv",
+          "as": "file"
+        }
+      },
+      "ddhuoh2": {
+        "nzdbmwo": {
+          "from": "nzdbmwo",
+          "to": "ddhuoh2",
+          "as": "gltf"
+        },
+        "mtjltoq": {
+          "from": "mtjltoq",
+          "to": "ddhuoh2",
+          "as": "buffergeo"
+        },
+        "cgya4cs": {
+          "from": "cgya4cs",
+          "to": "ddhuoh2",
+          "as": "input"
+        }
+      },
+      "nzdbmwo": {
+        "6mnggoe": {
+          "from": "6mnggoe",
+          "to": "nzdbmwo",
+          "as": "file"
+        },
+        "n3lcnwc": {
+          "from": "n3lcnwc",
+          "to": "nzdbmwo",
+          "as": "gltfLoader"
+        }
+      },
+      "65bdnhk": {
+        "rxalntn": {
+          "from": "rxalntn",
+          "to": "65bdnhk",
+          "as": "target"
+        }
+      },
+      "xmyi1yi": {
+        "65bdnhk": {
+          "from": "65bdnhk",
+          "to": "xmyi1yi",
+          "as": "GLTFLoader"
+        }
+      },
+      "mtjltoq": {
+        "ckl1s1u": {
+          "from": "ckl1s1u",
+          "to": "mtjltoq",
+          "as": "file"
+        },
+        "cnqbqcm": {
+          "from": "cnqbqcm",
+          "to": "mtjltoq",
+          "as": "buffergeoLoader"
+        }
+      },
+      "cgya4cs": {
+        "aqxr41s": {
+          "from": "aqxr41s",
+          "to": "cgya4cs",
+          "as": "file"
+        }
+      },
+      "n3lcnwc": {
+        "xmyi1yi": {
+          "from": "xmyi1yi",
+          "to": "n3lcnwc",
+          "as": "value"
+        }
+      }
+    }
+  },
+  {
+    "id": "@three.update_position",
+    "name": "@three.update_position",
+    "out": "85ca6kk",
+    "nodes": {
+      "85ca6kk": {
+        "id": "85ca6kk",
+        "name": "@three.update_position",
+        "ref": "return"
+      },
+      "t2oo2w2": {
+        "id": "t2oo2w2",
+        "value": "position",
+        "ref": "@three.modify_attribute"
+      },
+      "pu6r1wt": {
+        "id": "pu6r1wt"
+      },
+      "lqp7o13": {
+        "id": "lqp7o13",
+        "ref": "runnable"
+      },
+      "5xsve23": {
+        "id": "5xsve23",
+        "value": "geo",
+        "ref": "arg"
+      },
+      "uqnka6f": {
+        "id": "uqnka6f",
+        "value": "true"
+      },
+      "yww2wir": {
+        "id": "yww2wir"
+      },
+      "56vngd9": {
+        "id": "56vngd9",
+        "value": "pd.position[0] += pd.velocity[0];\npd.position[1] += pd.velocity[1];\npd.position[2] += pd.velocity[2];",
+        "ref": "script"
+      },
+      "gv4m9ja": {
+        "id": "gv4m9ja"
+      },
+      "iq70jau": {
+        "id": "iq70jau",
+        "value": "point_data",
+        "ref": "arg"
+      }
+    },
+    "edges": {
+      "t2oo2w2": {
+        "from": "t2oo2w2",
+        "to": "85ca6kk",
+        "as": "value"
+      },
+      "pu6r1wt": {
+        "from": "pu6r1wt",
+        "to": "85ca6kk",
+        "as": "args"
+      },
+      "lqp7o13": {
+        "from": "lqp7o13",
+        "to": "t2oo2w2",
+        "as": "fn"
+      },
+      "5xsve23": {
+        "from": "5xsve23",
+        "to": "t2oo2w2",
+        "as": "geo"
+      },
+      "uqnka6f": {
+        "from": "uqnka6f",
+        "to": "t2oo2w2",
+        "as": "feedback"
+      },
+      "yww2wir": {
+        "from": "yww2wir",
+        "to": "lqp7o13",
+        "as": "parameters"
+      },
+      "56vngd9": {
+        "from": "56vngd9",
+        "to": "lqp7o13",
+        "as": "fn"
+      },
+      "gv4m9ja": {
+        "from": "gv4m9ja",
+        "to": "yww2wir",
+        "as": "point_data"
+      },
+      "iq70jau": {
+        "from": "iq70jau",
+        "to": "56vngd9",
+        "as": "pd"
+      }
+    },
+    "edges_in": {
+      "85ca6kk": {
+        "t2oo2w2": {
+          "from": "t2oo2w2",
+          "to": "85ca6kk",
+          "as": "value"
+        },
+        "pu6r1wt": {
+          "from": "pu6r1wt",
+          "to": "85ca6kk",
+          "as": "args"
+        }
+      },
+      "t2oo2w2": {
+        "lqp7o13": {
+          "from": "lqp7o13",
+          "to": "t2oo2w2",
+          "as": "fn"
+        },
+        "5xsve23": {
+          "from": "5xsve23",
+          "to": "t2oo2w2",
+          "as": "geo"
+        },
+        "uqnka6f": {
+          "from": "uqnka6f",
+          "to": "t2oo2w2",
+          "as": "feedback"
+        }
+      },
+      "lqp7o13": {
+        "yww2wir": {
+          "from": "yww2wir",
+          "to": "lqp7o13",
+          "as": "parameters"
+        },
+        "56vngd9": {
+          "from": "56vngd9",
+          "to": "lqp7o13",
+          "as": "fn"
+        }
+      },
+      "yww2wir": {
+        "gv4m9ja": {
+          "from": "gv4m9ja",
+          "to": "yww2wir",
+          "as": "point_data"
+        }
+      },
+      "56vngd9": {
+        "iq70jau": {
+          "from": "iq70jau",
+          "to": "56vngd9",
+          "as": "pd"
+        }
+      }
+    }
+  },
+  {
+    "id": "@three.setup_hydraf",
     "name": "three.setup",
     "out": "8m5muxn/8m5muxn",
     "nodes": {
@@ -79,7 +1092,7 @@
       "8m5muxn/8m5muxn": {
         "id": "8m5muxn/8m5muxn",
         "value": "if(renderer) {\n  renderer.render(scene, camera);\n}",
-        "name": "@three.setup",
+        "name": "@three.setup_hydraf",
         "ref": "return"
       },
       "8m5muxn/gwavfrm": {
@@ -101,7 +1114,7 @@
       },
       "xgl6r05": {
         "id": "xgl6r05",
-        "value": "objs: internal",
+        "value": "objs",
         "ref": "arg"
       },
       "8m5muxn/8p7y4uk": {
@@ -241,20 +1254,9 @@
         "value": "canvas_id",
         "ref": "arg"
       },
-      "79ssn2g": {
-        "id": "79ssn2g",
-        "value": "cached renderer",
-        "ref": "log"
-      },
       "e9d6mmx": {
         "id": "e9d6mmx",
         "ref": "ap"
-      },
-      "03e1mff": {
-        "id": "03e1mff",
-        "value": "renderer",
-        "ref": "log",
-        "__isnodysseus": true
       },
       "hsytqp3": {
         "id": "hsytqp3",
@@ -264,12 +1266,7 @@
       },
       "8lmqrt8": {
         "id": "8lmqrt8",
-        "value": "console.log(\"getting canvas\")\nconsole.log(canvasid);\nconsole.log(document.getElementById(canvasid))\nreturn document.getElementById(canvasid);",
-        "ref": "script"
-      },
-      "1j95u16": {
-        "id": "1j95u16",
-        "value": "canvas_id",
+        "value": "canvas",
         "ref": "arg"
       },
       "jjmvxjj": {
@@ -283,6 +1280,20 @@
       "cwrlosg": {
         "id": "cwrlosg",
         "value": "true"
+      },
+      "n9jdueg": {
+        "id": "n9jdueg",
+        "ref": "cache"
+      },
+      "h2cm9d9": {
+        "id": "h2cm9d9",
+        "value": "const canvas = document.getElementById(canvas_id);\n\nreturn canvas?.transferControlToOffscreen ? canvas.transferControlToOffscreen() : canvas; ",
+        "ref": "script"
+      },
+      "ivz9te5": {
+        "id": "ivz9te5",
+        "value": "canvas_id",
+        "ref": "arg"
       }
     },
     "edges": {
@@ -414,7 +1425,7 @@
       "wa794xa": {
         "from": "wa794xa",
         "to": "sq9t0ix",
-        "as": "args"
+        "as": "parameters"
       },
       "s7mw857": {
         "from": "s7mw857",
@@ -478,33 +1489,18 @@
       },
       "e9d6mmx": {
         "from": "e9d6mmx",
-        "to": "79ssn2g",
-        "as": "value"
-      },
-      "03e1mff": {
-        "from": "03e1mff",
-        "to": "0wp18c9",
-        "as": "value"
+        "to": "cvop6x9",
+        "as": "otherwise"
       },
       "hsytqp3": {
         "from": "hsytqp3",
-        "to": "03e1mff",
+        "to": "0wp18c9",
         "as": "value"
       },
       "8lmqrt8": {
         "from": "8lmqrt8",
         "to": "hsytqp3",
         "as": "canvas"
-      },
-      "1j95u16": {
-        "from": "1j95u16",
-        "to": "8lmqrt8",
-        "as": "canvasid"
-      },
-      "79ssn2g": {
-        "from": "79ssn2g",
-        "to": "cvop6x9",
-        "as": "otherwise"
       },
       "jjmvxjj": {
         "from": "jjmvxjj",
@@ -520,13 +1516,2000 @@
         "from": "cwrlosg",
         "to": "e9d6mmx",
         "as": "run"
+      },
+      "h2cm9d9": {
+        "from": "h2cm9d9",
+        "to": "n9jdueg",
+        "as": "value"
+      },
+      "ivz9te5": {
+        "from": "ivz9te5",
+        "to": "h2cm9d9",
+        "as": "canvas_id"
+      },
+      "n9jdueg": {
+        "from": "n9jdueg",
+        "to": "8m5muxn/hlqmo48",
+        "as": "canvas"
+      }
+    },
+    "edges_in": {
+      "8m5muxn/8m5muxn": {
+        "8m5muxn/39ivise": {
+          "from": "8m5muxn/39ivise",
+          "to": "8m5muxn/8m5muxn",
+          "as": "args"
+        },
+        "8m5muxn/njzfcz8": {
+          "from": "8m5muxn/njzfcz8",
+          "to": "8m5muxn/8m5muxn",
+          "as": "value"
+        }
+      },
+      "8m5muxn/njzfcz8": {
+        "8m5muxn/hlqmo48": {
+          "from": "8m5muxn/hlqmo48",
+          "to": "8m5muxn/njzfcz8",
+          "as": "args"
+        },
+        "8m5muxn/vyr07ts": {
+          "from": "8m5muxn/vyr07ts",
+          "to": "8m5muxn/njzfcz8",
+          "as": "subscribe"
+        },
+        "jiobf52": {
+          "from": "jiobf52",
+          "to": "8m5muxn/njzfcz8",
+          "as": "value"
+        }
+      },
+      "8m5muxn/hlqmo48": {
+        "8m5muxn/inq87j9": {
+          "from": "8m5muxn/inq87j9",
+          "to": "8m5muxn/hlqmo48",
+          "as": "scene"
+        },
+        "8m5muxn/7in78pu": {
+          "from": "8m5muxn/7in78pu",
+          "to": "8m5muxn/hlqmo48",
+          "as": "camera"
+        },
+        "n9jdueg": {
+          "from": "n9jdueg",
+          "to": "8m5muxn/hlqmo48",
+          "as": "canvas"
+        }
+      },
+      "8m5muxn/vyr07ts": {
+        "ptak9t2": {
+          "from": "ptak9t2",
+          "to": "8m5muxn/vyr07ts",
+          "as": "animationframe"
+        }
+      },
+      "m4cr3fk": {
+        "sq9t0ix": {
+          "from": "sq9t0ix",
+          "to": "m4cr3fk",
+          "as": "fn"
+        },
+        "vrevjmh": {
+          "from": "vrevjmh",
+          "to": "m4cr3fk",
+          "as": "array"
+        }
+      },
+      "8m5muxn/inq87j9": {
+        "8m5muxn/gwavfrm": {
+          "from": "8m5muxn/gwavfrm",
+          "to": "8m5muxn/inq87j9",
+          "as": "value"
+        }
+      },
+      "8m5muxn/7in78pu": {
+        "8m5muxn/33kmaec": {
+          "from": "8m5muxn/33kmaec",
+          "to": "8m5muxn/7in78pu",
+          "as": "target"
+        },
+        "8m5muxn/v1nqvl7": {
+          "from": "8m5muxn/v1nqvl7",
+          "to": "8m5muxn/7in78pu",
+          "as": "value"
+        }
+      },
+      "sq9t0ix": {
+        "8m5muxn/ud4p5ey": {
+          "from": "8m5muxn/ud4p5ey",
+          "to": "sq9t0ix",
+          "as": "fn"
+        },
+        "wa794xa": {
+          "from": "wa794xa",
+          "to": "sq9t0ix",
+          "as": "parameters"
+        }
+      },
+      "8m5muxn/33kmaec": {
+        "8m5muxn/zci8apj": {
+          "from": "8m5muxn/zci8apj",
+          "to": "8m5muxn/33kmaec",
+          "as": "value"
+        }
+      },
+      "8m5muxn/ud4p5ey": {
+        "8m5muxn/8p7y4uk": {
+          "from": "8m5muxn/8p7y4uk",
+          "to": "8m5muxn/ud4p5ey",
+          "as": "scene"
+        },
+        "elimy7s": {
+          "from": "elimy7s",
+          "to": "8m5muxn/ud4p5ey",
+          "as": "obj"
+        },
+        "kgvzbaz": {
+          "from": "kgvzbaz",
+          "to": "8m5muxn/ud4p5ey",
+          "as": "name"
+        }
+      },
+      "b2z2580": {
+        "wcnk2sw": {
+          "from": "wcnk2sw",
+          "to": "b2z2580",
+          "as": "fn"
+        },
+        "m291v0o": {
+          "from": "m291v0o",
+          "to": "b2z2580",
+          "as": "args"
+        }
+      },
+      "m291v0o": {
+        "xgl6r05": {
+          "from": "xgl6r05",
+          "to": "m291v0o",
+          "as": "objs"
+        },
+        "y2f8gog": {
+          "from": "y2f8gog",
+          "to": "m291v0o",
+          "as": "camera"
+        }
+      },
+      "vrevjmh": {
+        "f7krd8u": {
+          "from": "f7krd8u",
+          "to": "vrevjmh",
+          "as": "object"
+        }
+      },
+      "cvop6x9": {
+        "zs7iowa": {
+          "from": "zs7iowa",
+          "to": "cvop6x9",
+          "as": "value"
+        },
+        "e9d6mmx": {
+          "from": "e9d6mmx",
+          "to": "cvop6x9",
+          "as": "otherwise"
+        }
+      },
+      "dyst9ju": {
+        "cha35wd": {
+          "from": "cha35wd",
+          "to": "dyst9ju",
+          "as": "scene"
+        },
+        "1js087x": {
+          "from": "1js087x",
+          "to": "dyst9ju",
+          "as": "camera"
+        },
+        "cvop6x9": {
+          "from": "cvop6x9",
+          "to": "dyst9ju",
+          "as": "renderer"
+        }
+      },
+      "wa794xa": {
+        "s7mw857": {
+          "from": "s7mw857",
+          "to": "wa794xa",
+          "as": "element"
+        }
+      },
+      "ptak9t2": {
+        "c6eig78": {
+          "from": "c6eig78",
+          "to": "ptak9t2",
+          "as": "fn"
+        }
+      },
+      "c6eig78": {
+        "rmqxb31": {
+          "from": "rmqxb31",
+          "to": "c6eig78",
+          "as": "arg0"
+        },
+        "z552097": {
+          "from": "z552097",
+          "to": "c6eig78",
+          "as": "arg1"
+        }
+      },
+      "z552097": {
+        "dyst9ju": {
+          "from": "dyst9ju",
+          "to": "z552097",
+          "as": "fn"
+        }
+      },
+      "rmqxb31": {
+        "mh5ikoc": {
+          "from": "mh5ikoc",
+          "to": "rmqxb31",
+          "as": "pred"
+        },
+        "b2z2580": {
+          "from": "b2z2580",
+          "to": "rmqxb31",
+          "as": "true"
+        }
+      },
+      "jiobf52": {
+        "m4cr3fk": {
+          "from": "m4cr3fk",
+          "to": "jiobf52",
+          "as": "objs"
+        },
+        "slwyovm": {
+          "from": "slwyovm",
+          "to": "jiobf52",
+          "as": "renderer"
+        }
+      },
+      "8m5muxn/39ivise": {
+        "40aw44l": {
+          "from": "40aw44l",
+          "to": "8m5muxn/39ivise",
+          "as": "renderer"
+        }
+      },
+      "0wp18c9": {
+        "hsytqp3": {
+          "from": "hsytqp3",
+          "to": "0wp18c9",
+          "as": "value"
+        }
+      },
+      "hsytqp3": {
+        "8lmqrt8": {
+          "from": "8lmqrt8",
+          "to": "hsytqp3",
+          "as": "canvas"
+        }
+      },
+      "e9d6mmx": {
+        "jjmvxjj": {
+          "from": "jjmvxjj",
+          "to": "e9d6mmx",
+          "as": "fn"
+        },
+        "0wp18c9": {
+          "from": "0wp18c9",
+          "to": "e9d6mmx",
+          "as": "args"
+        },
+        "cwrlosg": {
+          "from": "cwrlosg",
+          "to": "e9d6mmx",
+          "as": "run"
+        }
+      },
+      "n9jdueg": {
+        "h2cm9d9": {
+          "from": "h2cm9d9",
+          "to": "n9jdueg",
+          "as": "value"
+        }
+      },
+      "h2cm9d9": {
+        "ivz9te5": {
+          "from": "ivz9te5",
+          "to": "h2cm9d9",
+          "as": "canvas_id"
+        }
+      }
+    }
+  },
+  {
+    "id": "@three.setup",
+    "name": "three.setup",
+    "out": "8m5muxn/8m5muxn",
+    "nodes": {
+      "vwa13pj": {
+        "id": "vwa13pj"
+      },
+      "gap7au7": {
+        "id": "gap7au7",
+        "value": "_lib.EffectComposer",
+        "ref": "arg"
+      },
+      "8m5muxn/njzfcz8": {
+        "id": "8m5muxn/njzfcz8",
+        "name": "",
+        "ref": "return"
+      },
+      "8m5muxn/39ivise": {
+        "id": "8m5muxn/39ivise"
+      },
+      "8m5muxn/hlqmo48": {
+        "id": "8m5muxn/hlqmo48"
+      },
+      "8m5muxn/vyr07ts": {
+        "id": "8m5muxn/vyr07ts",
+        "name": ""
+      },
+      "8m5muxn/inq87j9": {
+        "id": "8m5muxn/inq87j9",
+        "name": "",
+        "ref": "cache"
+      },
+      "8m5muxn/7in78pu": {
+        "id": "8m5muxn/7in78pu",
+        "value": "position.z",
+        "ref": "set_mutable"
+      },
+      "8m5muxn/33kmaec": {
+        "id": "8m5muxn/33kmaec",
+        "ref": "cache"
+      },
+      "8m5muxn/v1nqvl7": {
+        "id": "8m5muxn/v1nqvl7",
+        "value": "5"
+      },
+      "f7krd8u": {
+        "id": "f7krd8u",
+        "value": "objs",
+        "ref": "arg"
+      },
+      "wcnk2sw": {
+        "id": "wcnk2sw",
+        "value": "onupdate",
+        "ref": "arg"
+      },
+      "b2z2580": {
+        "id": "b2z2580",
+        "ref": "ap"
+      },
+      "m291v0o": {
+        "id": "m291v0o"
+      },
+      "8m5muxn/8m5muxn": {
+        "id": "8m5muxn/8m5muxn",
+        "name": "@three.setup",
+        "ref": "return"
+      },
+      "8m5muxn/gwavfrm": {
+        "id": "8m5muxn/gwavfrm",
+        "value": "",
+        "ref": "@three.scene",
+        "__isnodysseus": true
+      },
+      "8m5muxn/zci8apj": {
+        "id": "8m5muxn/zci8apj",
+        "value": "",
+        "ref": "@three.camera",
+        "__isnodysseus": true
+      },
+      "y2f8gog": {
+        "id": "y2f8gog",
+        "value": "_camera: internal",
+        "ref": "arg"
+      },
+      "xgl6r05": {
+        "id": "xgl6r05",
+        "value": "objs: internal",
+        "ref": "arg"
+      },
+      "c6eig78": {
+        "id": "c6eig78",
+        "ref": "array"
+      },
+      "1js087x": {
+        "id": "1js087x",
+        "value": "_camera: internal",
+        "ref": "arg"
+      },
+      "cha35wd": {
+        "id": "cha35wd",
+        "value": "_scene: internal",
+        "ref": "arg"
+      },
+      "zs7iowa": {
+        "id": "zs7iowa",
+        "value": "_renderer.state",
+        "ref": "arg"
+      },
+      "dyst9ju": {
+        "id": "dyst9ju",
+        "value": "if(renderer) {\n  renderer.render(scene, camera);\n  //renderer.render();\n}",
+        "ref": "script"
+      },
+      "rmqxb31": {
+        "id": "rmqxb31",
+        "ref": "if"
+      },
+      "mh5ikoc": {
+        "id": "mh5ikoc",
+        "value": "onupdate",
+        "ref": "arg"
+      },
+      "ptak9t2": {
+        "id": "ptak9t2",
+        "name": "",
+        "ref": "ap"
+      },
+      "z552097": {
+        "id": "z552097",
+        "ref": "runnable"
+      },
+      "jiobf52": {
+        "id": "jiobf52"
+      },
+      "slwyovm": {
+        "id": "slwyovm",
+        "value": "_renderer.state",
+        "ref": "arg"
+      },
+      "40aw44l": {
+        "id": "40aw44l",
+        "ref": "state"
+      },
+      "cvop6x9": {
+        "id": "cvop6x9",
+        "ref": "default"
+      },
+      "z8fj6c2": {
+        "id": "z8fj6c2",
+        "value": "cached renderer",
+        "ref": "log"
+      },
+      "07n9ekk": {
+        "id": "07n9ekk",
+        "ref": "cache"
+      },
+      "4dll59e": {
+        "id": "4dll59e",
+        "value": "renderer",
+        "ref": "log",
+        "__isnodysseus": true
+      },
+      "5s8nfmm": {
+        "id": "5s8nfmm",
+        "name": "",
+        "ref": "@three.renderer",
+        "__isnodysseus": true
+      },
+      "l8jka3p": {
+        "id": "l8jka3p",
+        "value": "console.log(\"getting canvas\")\nconsole.log(document.getElementById(canvasid))\nreturn document.getElementById(canvasid);",
+        "ref": "script"
+      },
+      "r8fh0s5": {
+        "id": "r8fh0s5",
+        "value": "canvas_id",
+        "ref": "arg"
+      },
+      "3zxizlg": {
+        "id": "3zxizlg",
+        "value": "cached renderer",
+        "ref": "log"
+      },
+      "rktckcv": {
+        "id": "rktckcv",
+        "ref": "cache"
+      },
+      "hb31wpa": {
+        "id": "hb31wpa",
+        "value": "renderer",
+        "ref": "log",
+        "__isnodysseus": true
+      },
+      "u442czm": {
+        "id": "u442czm",
+        "name": "",
+        "ref": "@three.renderer",
+        "__isnodysseus": true
+      },
+      "m1wf6yk": {
+        "id": "m1wf6yk",
+        "value": "console.log(\"getting canvas\")\nconsole.log(document.getElementById(canvasid))\nreturn document.getElementById(canvasid);",
+        "ref": "script"
+      },
+      "jmb1j98": {
+        "id": "jmb1j98",
+        "value": "canvas_id",
+        "ref": "arg"
+      },
+      "e9d6mmx": {
+        "id": "e9d6mmx",
+        "ref": "ap"
+      },
+      "hsytqp3": {
+        "id": "hsytqp3",
+        "name": "",
+        "ref": "@three.renderer",
+        "__isnodysseus": true
+      },
+      "1j95u16": {
+        "id": "1j95u16",
+        "value": "canvas",
+        "ref": "arg"
+      },
+      "jjmvxjj": {
+        "id": "jjmvxjj",
+        "value": "_renderer.set",
+        "ref": "arg"
+      },
+      "0wp18c9": {
+        "id": "0wp18c9"
+      },
+      "cwrlosg": {
+        "id": "cwrlosg",
+        "value": "true"
+      },
+      "lugpx4o": {
+        "id": "lugpx4o",
+        "value": "if(!renderer){\n  return;\n}\n/*\nconst fxcomposer = new fx.EffectComposer(renderer)\nconst renderpass = new fx.RenderPass(scene, camera);\nfxcomposer.setSize(window.innerWidth, window.innerHeight);\nfxcomposer.addPass(renderpass);\nif(MotionBlur) {\n  const pass = new MotionBlur(scene, camera, { samples: 32, expandgeometry: 0.4 });\n  fxcomposer.addPass(pass);\n  pass.renderToScreen = true;\n}\nreturn fxcomposer;\n*/\n\nreturn renderer;",
+        "ref": "script"
+      },
+      "pnszphc": {
+        "id": "pnszphc",
+        "ref": "map"
+      },
+      "kgsdo8c": {
+        "id": "kgsdo8c",
+        "ref": "object_entries"
+      },
+      "qjadhr5": {
+        "id": "qjadhr5",
+        "value": "objs",
+        "ref": "arg"
+      },
+      "grsb8qa": {
+        "id": "grsb8qa",
+        "ref": "runnable"
+      },
+      "5ljysw7": {
+        "id": "5ljysw7"
+      },
+      "0zs05z2": {
+        "id": "0zs05z2"
+      },
+      "49o12hh": {
+        "id": "49o12hh",
+        "value": "const existingObj = scene.getObjectByName(name);\nif(obj && existingObj !== obj){\n  if(existingObj) {\n    console.log(\"removing\", existingObj);\n    scene.remove(existingObj);\n    existingObj.geometry?.dispose();\n    existingObj.material?.dispose();\n  }\n  console.log(\"adding\", obj);\n  obj.name = name;\n  scene.add(obj); \n}\nreturn name;",
+        "name": "",
+        "ref": "script"
+      },
+      "4fhebr7": {
+        "id": "4fhebr7",
+        "value": "element.0",
+        "ref": "arg"
+      },
+      "b3j4v9i": {
+        "id": "b3j4v9i",
+        "value": "element.1",
+        "ref": "arg"
+      },
+      "ad6qpuc": {
+        "id": "ad6qpuc",
+        "value": "scene: internal",
+        "ref": "arg"
+      },
+      "o9mcda1": {
+        "id": "o9mcda1",
+        "ref": "runnable"
+      },
+      "eamyj81": {
+        "id": "eamyj81",
+        "value": "_scene: internal",
+        "ref": "arg"
+      },
+      "6s18wo7": {
+        "id": "6s18wo7",
+        "value": "_camera: internal",
+        "ref": "arg"
+      },
+      "7c7zppx": {
+        "id": "7c7zppx",
+        "ref": "runnable"
+      },
+      "5m99dxg": {
+        "id": "5m99dxg",
+        "value": "fx?.forEach((pass, idx) => {\n  // +1 for renderpass\n  if(renderer.passes[idx + 1] !== pass) {\n    if(renderer.passes.length > idx + 1) {\n      console.log(\"removing\", idx)  \n      renderer.removePass(renderer.passes[idx + 1]);\n    }\n    console.log(\"adding fx \", pass)\n    renderer.insertPass(pass, idx + 1);\n  }\n});\n\nif(fx && renderer.passes.length > fx?.length + 1) {\n  renderer.passes.splice(fx.length, renderer.passes.length)\n}",
+        "ref": "script"
+      },
+      "4fxcgml": {
+        "id": "4fxcgml",
+        "value": "_renderer.state",
+        "ref": "arg"
+      },
+      "fznso76": {
+        "id": "fznso76",
+        "value": "fx",
+        "ref": "arg"
+      },
+      "oi495no": {
+        "id": "oi495no",
+        "ref": "if"
+      },
+      "qj1vsle": {
+        "id": "qj1vsle",
+        "value": "fx",
+        "ref": "arg"
+      },
+      "lxc9txq": {
+        "id": "lxc9txq",
+        "ref": "and"
+      },
+      "fsl3xyg": {
+        "id": "fsl3xyg",
+        "value": "renderer.state",
+        "ref": "arg"
+      },
+      "vc0quhz": {
+        "id": "vc0quhz",
+        "ref": "cache"
+      },
+      "x7qaxpz": {
+        "id": "x7qaxpz",
+        "value": "canvas",
+        "ref": "log"
+      },
+      "rwn5gts": {
+        "id": "rwn5gts",
+        "value": "background",
+        "ref": "set_mutable"
+      },
+      "qioaglu": {
+        "id": "qioaglu"
+      },
+      "fzf3k5e": {
+        "id": "fzf3k5e",
+        "value": "_lib.RenderPass",
+        "ref": "arg"
+      },
+      "4n3yk4e": {
+        "id": "4n3yk4e",
+        "value": "scene.children.forEach(c => {\n  if(!argobjnames.includes(c.name)){\n    scene.remove(c);\n  }\n})\n\nreturn scene;",
+        "ref": "script"
+      },
+      "a23wspb": {
+        "id": "a23wspb",
+        "value": "scene: internal",
+        "ref": "arg"
+      },
+      "ow0x0vh": {
+        "id": "ow0x0vh",
+        "value": "0x666666"
+      },
+      "lsf5igz": {
+        "id": "lsf5igz",
+        "ref": "if"
+      },
+      "ploozds": {
+        "id": "ploozds",
+        "value": "_scene",
+        "ref": "arg"
+      },
+      "85ch7ft": {
+        "id": "85ch7ft",
+        "value": "THREE.Color",
+        "ref": "new"
+      },
+      "iaa28z8": {
+        "id": "iaa28z8"
+      },
+      "0j1jtnu": {
+        "id": "0j1jtnu",
+        "ref": "cache"
+      },
+      "868gyxt": {
+        "id": "868gyxt",
+        "value": "https://cdn.jsdelivr.net/npm/three/examples/jsm/postprocessing/EffectComposer.js",
+        "ref": "import_module"
+      },
+      "0jbuaw0": {
+        "id": "0jbuaw0",
+        "ref": "map"
+      },
+      "y5h896q": {
+        "id": "y5h896q",
+        "ref": "object_entries"
+      },
+      "iqv0r6w": {
+        "id": "iqv0r6w",
+        "value": "objs",
+        "ref": "arg"
+      },
+      "5bt6ftb": {
+        "id": "5bt6ftb",
+        "ref": "runnable"
+      },
+      "bmu67sv": {
+        "id": "bmu67sv"
+      },
+      "fd0idks": {
+        "id": "fd0idks"
+      },
+      "vqm7da8": {
+        "id": "vqm7da8",
+        "value": "const existingObj = scene.getObjectByName(name);\nif(obj && existingObj !== obj){\n  if(existingObj) {\n    scene.remove(existingObj);\n    existingObj.geometry.dispose();\n    existingObj.material.dispose();\n  }\n  obj.name = name;\n  scene.add(obj); \n}\nreturn scene;",
+        "name": "",
+        "ref": "script"
+      },
+      "lqc9zjk": {
+        "id": "lqc9zjk",
+        "value": "element.0",
+        "ref": "arg"
+      },
+      "oko6ilg": {
+        "id": "oko6ilg",
+        "value": "element.1",
+        "ref": "arg"
+      },
+      "we37o4h": {
+        "id": "we37o4h",
+        "value": "scene: internal",
+        "ref": "arg"
+      },
+      "gi5mm16": {
+        "id": "gi5mm16",
+        "ref": "runnable"
+      },
+      "wzgnncm": {
+        "id": "wzgnncm"
+      },
+      "zxqt40g": {
+        "id": "zxqt40g",
+        "value": "scene: internal",
+        "ref": "arg"
+      },
+      "mlc5qr1": {
+        "id": "mlc5qr1",
+        "value": "scene: internal",
+        "ref": "arg"
+      },
+      "2veqlq1": {
+        "id": "2veqlq1",
+        "value": "_scene",
+        "ref": "arg"
+      },
+      "aqfc51v": {
+        "id": "aqfc51v",
+        "ref": "if"
+      },
+      "x638fhv": {
+        "id": "x638fhv",
+        "ref": "and"
+      },
+      "xel6go6": {
+        "id": "xel6go6",
+        "value": "_renderer.state",
+        "ref": "arg"
+      },
+      "xmd2fqb": {
+        "id": "xmd2fqb",
+        "value": "fx",
+        "ref": "arg"
+      },
+      "vzmvbqh": {
+        "id": "vzmvbqh",
+        "ref": "if"
+      },
+      "23ppkmp": {
+        "id": "23ppkmp",
+        "value": "motionBlur",
+        "ref": "arg"
+      },
+      "3876w2f": {
+        "id": "3876w2f",
+        "value": "return module.MotionBlurPass;",
+        "ref": "script"
+      },
+      "ya36a1r": {
+        "id": "ya36a1r",
+        "value": "https://cdn.jsdelivr.net/gh/ulyssesdotcodes/threejs-sandbox@94c68f4/motionBlurPass/src/MotionBlurPass.js",
+        "ref": "import_module"
+      },
+      "tkxqh5a": {
+        "id": "tkxqh5a",
+        "ref": "@three.update_children"
+      },
+      "zz2yk2z": {
+        "id": "zz2yk2z",
+        "value": "_scene",
+        "ref": "arg"
+      },
+      "sfzzxee": {
+        "id": "sfzzxee"
+      },
+      "wgn4yl2": {
+        "id": "wgn4yl2"
+      },
+      "by4m1fr": {
+        "id": "by4m1fr",
+        "value": "objs",
+        "ref": "arg"
+      },
+      "reop6t4": {
+        "id": "reop6t4",
+        "ref": "object_entries"
+      },
+      "z51c26o": {
+        "id": "z51c26o",
+        "ref": "map"
+      },
+      "ryjjzqr": {
+        "id": "ryjjzqr",
+        "ref": "runnable"
+      },
+      "dq4u9ji": {
+        "id": "dq4u9ji",
+        "value": "element.1",
+        "ref": "arg"
+      },
+      "4j2wgr9": {
+        "id": "4j2wgr9",
+        "value": "name",
+        "ref": "set_mutable"
+      },
+      "s208cfn": {
+        "id": "s208cfn",
+        "value": "element.0",
+        "ref": "arg"
+      },
+      "2pqimov": {
+        "id": "2pqimov",
+        "value": "children",
+        "ref": "log"
+      },
+      "3jf8mf5": {
+        "id": "3jf8mf5",
+        "value": "scene",
+        "ref": "log"
+      },
+      "t8adnxm": {
+        "id": "t8adnxm",
+        "value": "canvas",
+        "ref": "arg"
+      }
+    },
+    "edges": {
+      "gap7au7": {
+        "from": "gap7au7",
+        "to": "vwa13pj",
+        "as": "EffectComposer"
+      },
+      "vwa13pj": {
+        "from": "vwa13pj",
+        "to": "lugpx4o",
+        "as": "fx"
+      },
+      "lugpx4o": {
+        "from": "lugpx4o",
+        "to": "vc0quhz",
+        "as": "value"
+      },
+      "8m5muxn/39ivise": {
+        "from": "8m5muxn/39ivise",
+        "to": "8m5muxn/8m5muxn",
+        "as": "args"
+      },
+      "8m5muxn/hlqmo48": {
+        "from": "8m5muxn/hlqmo48",
+        "to": "8m5muxn/njzfcz8",
+        "as": "args"
+      },
+      "8m5muxn/vyr07ts": {
+        "from": "8m5muxn/vyr07ts",
+        "to": "8m5muxn/njzfcz8",
+        "as": "subscribe"
+      },
+      "8m5muxn/inq87j9": {
+        "from": "8m5muxn/inq87j9",
+        "to": "8m5muxn/hlqmo48",
+        "as": "_scene"
+      },
+      "ptak9t2": {
+        "from": "ptak9t2",
+        "to": "8m5muxn/vyr07ts",
+        "as": "animationframe"
+      },
+      "8m5muxn/gwavfrm": {
+        "from": "8m5muxn/gwavfrm",
+        "to": "rwn5gts",
+        "as": "target"
+      },
+      "8m5muxn/33kmaec": {
+        "from": "8m5muxn/33kmaec",
+        "to": "8m5muxn/7in78pu",
+        "as": "target"
+      },
+      "8m5muxn/v1nqvl7": {
+        "from": "8m5muxn/v1nqvl7",
+        "to": "8m5muxn/7in78pu",
+        "as": "value"
+      },
+      "8m5muxn/zci8apj": {
+        "from": "8m5muxn/zci8apj",
+        "to": "8m5muxn/33kmaec",
+        "as": "value"
+      },
+      "8m5muxn/njzfcz8": {
+        "from": "8m5muxn/njzfcz8",
+        "to": "8m5muxn/8m5muxn",
+        "as": "value"
+      },
+      "wcnk2sw": {
+        "from": "wcnk2sw",
+        "to": "b2z2580",
+        "as": "fn"
+      },
+      "m291v0o": {
+        "from": "m291v0o",
+        "to": "b2z2580",
+        "as": "args"
+      },
+      "xgl6r05": {
+        "from": "xgl6r05",
+        "to": "m291v0o",
+        "as": "objs"
+      },
+      "y2f8gog": {
+        "from": "y2f8gog",
+        "to": "m291v0o",
+        "as": "camera"
+      },
+      "f7krd8u": {
+        "from": "f7krd8u",
+        "to": "jiobf52",
+        "as": "objs"
+      },
+      "8m5muxn/7in78pu": {
+        "from": "8m5muxn/7in78pu",
+        "to": "8m5muxn/hlqmo48",
+        "as": "_camera"
+      },
+      "zs7iowa": {
+        "from": "zs7iowa",
+        "to": "cvop6x9",
+        "as": "value"
+      },
+      "cha35wd": {
+        "from": "cha35wd",
+        "to": "dyst9ju",
+        "as": "scene"
+      },
+      "1js087x": {
+        "from": "1js087x",
+        "to": "dyst9ju",
+        "as": "camera"
+      },
+      "c6eig78": {
+        "from": "c6eig78",
+        "to": "ptak9t2",
+        "as": "fn"
+      },
+      "rmqxb31": {
+        "from": "rmqxb31",
+        "to": "c6eig78",
+        "as": "arg4"
+      },
+      "dyst9ju": {
+        "from": "dyst9ju",
+        "to": "z552097",
+        "as": "fn"
+      },
+      "mh5ikoc": {
+        "from": "mh5ikoc",
+        "to": "rmqxb31",
+        "as": "pred"
+      },
+      "z552097": {
+        "from": "z552097",
+        "to": "c6eig78",
+        "as": "arg5"
+      },
+      "b2z2580": {
+        "from": "b2z2580",
+        "to": "rmqxb31",
+        "as": "true"
+      },
+      "jiobf52": {
+        "from": "jiobf52",
+        "to": "8m5muxn/njzfcz8",
+        "as": "value"
+      },
+      "slwyovm": {
+        "from": "slwyovm",
+        "to": "jiobf52",
+        "as": "renderer"
+      },
+      "40aw44l": {
+        "from": "40aw44l",
+        "to": "8m5muxn/39ivise",
+        "as": "_renderer"
+      },
+      "cvop6x9": {
+        "from": "cvop6x9",
+        "to": "dyst9ju",
+        "as": "renderer"
+      },
+      "e9d6mmx": {
+        "from": "e9d6mmx",
+        "to": "cvop6x9",
+        "as": "otherwise"
+      },
+      "hsytqp3": {
+        "from": "hsytqp3",
+        "to": "lugpx4o",
+        "as": "renderer"
+      },
+      "1j95u16": {
+        "from": "1j95u16",
+        "to": "x7qaxpz",
+        "as": "value"
+      },
+      "jjmvxjj": {
+        "from": "jjmvxjj",
+        "to": "e9d6mmx",
+        "as": "fn"
+      },
+      "0wp18c9": {
+        "from": "0wp18c9",
+        "to": "e9d6mmx",
+        "as": "args"
+      },
+      "cwrlosg": {
+        "from": "cwrlosg",
+        "to": "e9d6mmx",
+        "as": "run"
+      },
+      "o9mcda1": {
+        "from": "o9mcda1",
+        "to": "c6eig78",
+        "as": "arg1"
+      },
+      "eamyj81": {
+        "from": "eamyj81",
+        "to": "lugpx4o",
+        "as": "scene"
+      },
+      "6s18wo7": {
+        "from": "6s18wo7",
+        "to": "lugpx4o",
+        "as": "camera"
+      },
+      "7c7zppx": {
+        "from": "7c7zppx",
+        "to": "c6eig78",
+        "as": "arg2"
+      },
+      "5m99dxg": {
+        "from": "5m99dxg",
+        "to": "aqfc51v",
+        "as": "true"
+      },
+      "4fxcgml": {
+        "from": "4fxcgml",
+        "to": "5m99dxg",
+        "as": "renderer"
+      },
+      "fznso76": {
+        "from": "fznso76",
+        "to": "5m99dxg",
+        "as": "fx"
+      },
+      "vc0quhz": {
+        "from": "vc0quhz",
+        "to": "0wp18c9",
+        "as": "value"
+      },
+      "x7qaxpz": {
+        "from": "x7qaxpz",
+        "to": "hsytqp3",
+        "as": "canvas"
+      },
+      "rwn5gts": {
+        "from": "rwn5gts",
+        "to": "8m5muxn/inq87j9",
+        "as": "value"
+      },
+      "qioaglu": {
+        "from": "qioaglu",
+        "to": "8m5muxn/8m5muxn",
+        "as": "lib"
+      },
+      "fzf3k5e": {
+        "from": "fzf3k5e",
+        "to": "vwa13pj",
+        "as": "RenderPass"
+      },
+      "ow0x0vh": {
+        "from": "ow0x0vh",
+        "to": "85ch7ft",
+        "as": "args"
+      },
+      "lsf5igz": {
+        "from": "lsf5igz",
+        "to": "o9mcda1",
+        "as": "fn"
+      },
+      "ploozds": {
+        "from": "ploozds",
+        "to": "lsf5igz",
+        "as": "pred"
+      },
+      "85ch7ft": {
+        "from": "85ch7ft",
+        "to": "rwn5gts",
+        "as": "value"
+      },
+      "2veqlq1": {
+        "from": "2veqlq1",
+        "to": "m291v0o",
+        "as": "scene"
+      },
+      "aqfc51v": {
+        "from": "aqfc51v",
+        "to": "7c7zppx",
+        "as": "fn"
+      },
+      "x638fhv": {
+        "from": "x638fhv",
+        "to": "aqfc51v",
+        "as": "pred"
+      },
+      "xel6go6": {
+        "from": "xel6go6",
+        "to": "x638fhv",
+        "as": "arg0"
+      },
+      "xmd2fqb": {
+        "from": "xmd2fqb",
+        "to": "x638fhv",
+        "as": "arg1"
+      },
+      "vzmvbqh": {
+        "from": "vzmvbqh",
+        "to": "lugpx4o",
+        "as": "MotionBlur"
+      },
+      "23ppkmp": {
+        "from": "23ppkmp",
+        "to": "vzmvbqh",
+        "as": "pred"
+      },
+      "ya36a1r": {
+        "from": "ya36a1r",
+        "to": "3876w2f",
+        "as": "module"
+      },
+      "3876w2f": {
+        "from": "3876w2f",
+        "to": "vzmvbqh",
+        "as": "true"
+      },
+      "tkxqh5a": {
+        "from": "tkxqh5a",
+        "to": "lsf5igz",
+        "as": "true"
+      },
+      "zz2yk2z": {
+        "from": "zz2yk2z",
+        "to": "tkxqh5a",
+        "as": "parent"
+      },
+      "sfzzxee": {
+        "from": "sfzzxee",
+        "to": "ryjjzqr",
+        "as": "parameters"
+      },
+      "wgn4yl2": {
+        "from": "wgn4yl2",
+        "to": "sfzzxee",
+        "as": "element"
+      },
+      "by4m1fr": {
+        "from": "by4m1fr",
+        "to": "reop6t4",
+        "as": "object"
+      },
+      "reop6t4": {
+        "from": "reop6t4",
+        "to": "z51c26o",
+        "as": "array"
+      },
+      "z51c26o": {
+        "from": "z51c26o",
+        "to": "tkxqh5a",
+        "as": "children"
+      },
+      "ryjjzqr": {
+        "from": "ryjjzqr",
+        "to": "z51c26o",
+        "as": "fn"
+      },
+      "dq4u9ji": {
+        "from": "dq4u9ji",
+        "to": "4j2wgr9",
+        "as": "target"
+      },
+      "4j2wgr9": {
+        "from": "4j2wgr9",
+        "to": "ryjjzqr",
+        "as": "fn"
+      },
+      "s208cfn": {
+        "from": "s208cfn",
+        "to": "4j2wgr9",
+        "as": "value"
+      },
+      "t8adnxm": {
+        "from": "t8adnxm",
+        "to": "8m5muxn/zci8apj",
+        "as": "canvas"
+      }
+    },
+    "edges_in": {
+      "vwa13pj": {
+        "gap7au7": {
+          "from": "gap7au7",
+          "to": "vwa13pj",
+          "as": "EffectComposer"
+        },
+        "fzf3k5e": {
+          "from": "fzf3k5e",
+          "to": "vwa13pj",
+          "as": "RenderPass"
+        }
+      },
+      "lugpx4o": {
+        "vwa13pj": {
+          "from": "vwa13pj",
+          "to": "lugpx4o",
+          "as": "fx"
+        },
+        "hsytqp3": {
+          "from": "hsytqp3",
+          "to": "lugpx4o",
+          "as": "renderer"
+        },
+        "eamyj81": {
+          "from": "eamyj81",
+          "to": "lugpx4o",
+          "as": "scene"
+        },
+        "6s18wo7": {
+          "from": "6s18wo7",
+          "to": "lugpx4o",
+          "as": "camera"
+        },
+        "vzmvbqh": {
+          "from": "vzmvbqh",
+          "to": "lugpx4o",
+          "as": "MotionBlur"
+        }
+      },
+      "vc0quhz": {
+        "lugpx4o": {
+          "from": "lugpx4o",
+          "to": "vc0quhz",
+          "as": "value"
+        }
+      },
+      "8m5muxn/8m5muxn": {
+        "8m5muxn/39ivise": {
+          "from": "8m5muxn/39ivise",
+          "to": "8m5muxn/8m5muxn",
+          "as": "args"
+        },
+        "8m5muxn/njzfcz8": {
+          "from": "8m5muxn/njzfcz8",
+          "to": "8m5muxn/8m5muxn",
+          "as": "value"
+        },
+        "qioaglu": {
+          "from": "qioaglu",
+          "to": "8m5muxn/8m5muxn",
+          "as": "lib"
+        }
+      },
+      "8m5muxn/njzfcz8": {
+        "8m5muxn/hlqmo48": {
+          "from": "8m5muxn/hlqmo48",
+          "to": "8m5muxn/njzfcz8",
+          "as": "args"
+        },
+        "8m5muxn/vyr07ts": {
+          "from": "8m5muxn/vyr07ts",
+          "to": "8m5muxn/njzfcz8",
+          "as": "subscribe"
+        },
+        "jiobf52": {
+          "from": "jiobf52",
+          "to": "8m5muxn/njzfcz8",
+          "as": "value"
+        }
+      },
+      "8m5muxn/hlqmo48": {
+        "8m5muxn/inq87j9": {
+          "from": "8m5muxn/inq87j9",
+          "to": "8m5muxn/hlqmo48",
+          "as": "_scene"
+        },
+        "8m5muxn/7in78pu": {
+          "from": "8m5muxn/7in78pu",
+          "to": "8m5muxn/hlqmo48",
+          "as": "_camera"
+        }
+      },
+      "8m5muxn/vyr07ts": {
+        "ptak9t2": {
+          "from": "ptak9t2",
+          "to": "8m5muxn/vyr07ts",
+          "as": "animationframe"
+        }
+      },
+      "rwn5gts": {
+        "8m5muxn/gwavfrm": {
+          "from": "8m5muxn/gwavfrm",
+          "to": "rwn5gts",
+          "as": "target"
+        },
+        "85ch7ft": {
+          "from": "85ch7ft",
+          "to": "rwn5gts",
+          "as": "value"
+        }
+      },
+      "8m5muxn/7in78pu": {
+        "8m5muxn/33kmaec": {
+          "from": "8m5muxn/33kmaec",
+          "to": "8m5muxn/7in78pu",
+          "as": "target"
+        },
+        "8m5muxn/v1nqvl7": {
+          "from": "8m5muxn/v1nqvl7",
+          "to": "8m5muxn/7in78pu",
+          "as": "value"
+        }
+      },
+      "8m5muxn/33kmaec": {
+        "8m5muxn/zci8apj": {
+          "from": "8m5muxn/zci8apj",
+          "to": "8m5muxn/33kmaec",
+          "as": "value"
+        }
+      },
+      "b2z2580": {
+        "wcnk2sw": {
+          "from": "wcnk2sw",
+          "to": "b2z2580",
+          "as": "fn"
+        },
+        "m291v0o": {
+          "from": "m291v0o",
+          "to": "b2z2580",
+          "as": "args"
+        }
+      },
+      "m291v0o": {
+        "xgl6r05": {
+          "from": "xgl6r05",
+          "to": "m291v0o",
+          "as": "objs"
+        },
+        "y2f8gog": {
+          "from": "y2f8gog",
+          "to": "m291v0o",
+          "as": "camera"
+        },
+        "2veqlq1": {
+          "from": "2veqlq1",
+          "to": "m291v0o",
+          "as": "scene"
+        }
+      },
+      "jiobf52": {
+        "f7krd8u": {
+          "from": "f7krd8u",
+          "to": "jiobf52",
+          "as": "objs"
+        },
+        "slwyovm": {
+          "from": "slwyovm",
+          "to": "jiobf52",
+          "as": "renderer"
+        }
+      },
+      "cvop6x9": {
+        "zs7iowa": {
+          "from": "zs7iowa",
+          "to": "cvop6x9",
+          "as": "value"
+        },
+        "e9d6mmx": {
+          "from": "e9d6mmx",
+          "to": "cvop6x9",
+          "as": "otherwise"
+        }
+      },
+      "dyst9ju": {
+        "cha35wd": {
+          "from": "cha35wd",
+          "to": "dyst9ju",
+          "as": "scene"
+        },
+        "1js087x": {
+          "from": "1js087x",
+          "to": "dyst9ju",
+          "as": "camera"
+        },
+        "cvop6x9": {
+          "from": "cvop6x9",
+          "to": "dyst9ju",
+          "as": "renderer"
+        }
+      },
+      "ptak9t2": {
+        "c6eig78": {
+          "from": "c6eig78",
+          "to": "ptak9t2",
+          "as": "fn"
+        }
+      },
+      "c6eig78": {
+        "rmqxb31": {
+          "from": "rmqxb31",
+          "to": "c6eig78",
+          "as": "arg4"
+        },
+        "z552097": {
+          "from": "z552097",
+          "to": "c6eig78",
+          "as": "arg5"
+        },
+        "o9mcda1": {
+          "from": "o9mcda1",
+          "to": "c6eig78",
+          "as": "arg1"
+        },
+        "7c7zppx": {
+          "from": "7c7zppx",
+          "to": "c6eig78",
+          "as": "arg2"
+        }
+      },
+      "z552097": {
+        "dyst9ju": {
+          "from": "dyst9ju",
+          "to": "z552097",
+          "as": "fn"
+        }
+      },
+      "rmqxb31": {
+        "mh5ikoc": {
+          "from": "mh5ikoc",
+          "to": "rmqxb31",
+          "as": "pred"
+        },
+        "b2z2580": {
+          "from": "b2z2580",
+          "to": "rmqxb31",
+          "as": "true"
+        }
+      },
+      "8m5muxn/39ivise": {
+        "40aw44l": {
+          "from": "40aw44l",
+          "to": "8m5muxn/39ivise",
+          "as": "_renderer"
+        }
+      },
+      "x7qaxpz": {
+        "1j95u16": {
+          "from": "1j95u16",
+          "to": "x7qaxpz",
+          "as": "value"
+        }
+      },
+      "e9d6mmx": {
+        "jjmvxjj": {
+          "from": "jjmvxjj",
+          "to": "e9d6mmx",
+          "as": "fn"
+        },
+        "0wp18c9": {
+          "from": "0wp18c9",
+          "to": "e9d6mmx",
+          "as": "args"
+        },
+        "cwrlosg": {
+          "from": "cwrlosg",
+          "to": "e9d6mmx",
+          "as": "run"
+        }
+      },
+      "aqfc51v": {
+        "5m99dxg": {
+          "from": "5m99dxg",
+          "to": "aqfc51v",
+          "as": "true"
+        },
+        "x638fhv": {
+          "from": "x638fhv",
+          "to": "aqfc51v",
+          "as": "pred"
+        }
+      },
+      "5m99dxg": {
+        "4fxcgml": {
+          "from": "4fxcgml",
+          "to": "5m99dxg",
+          "as": "renderer"
+        },
+        "fznso76": {
+          "from": "fznso76",
+          "to": "5m99dxg",
+          "as": "fx"
+        }
+      },
+      "0wp18c9": {
+        "vc0quhz": {
+          "from": "vc0quhz",
+          "to": "0wp18c9",
+          "as": "value"
+        }
+      },
+      "hsytqp3": {
+        "x7qaxpz": {
+          "from": "x7qaxpz",
+          "to": "hsytqp3",
+          "as": "canvas"
+        }
+      },
+      "8m5muxn/inq87j9": {
+        "rwn5gts": {
+          "from": "rwn5gts",
+          "to": "8m5muxn/inq87j9",
+          "as": "value"
+        }
+      },
+      "85ch7ft": {
+        "ow0x0vh": {
+          "from": "ow0x0vh",
+          "to": "85ch7ft",
+          "as": "args"
+        }
+      },
+      "o9mcda1": {
+        "lsf5igz": {
+          "from": "lsf5igz",
+          "to": "o9mcda1",
+          "as": "fn"
+        }
+      },
+      "lsf5igz": {
+        "ploozds": {
+          "from": "ploozds",
+          "to": "lsf5igz",
+          "as": "pred"
+        },
+        "tkxqh5a": {
+          "from": "tkxqh5a",
+          "to": "lsf5igz",
+          "as": "true"
+        }
+      },
+      "7c7zppx": {
+        "aqfc51v": {
+          "from": "aqfc51v",
+          "to": "7c7zppx",
+          "as": "fn"
+        }
+      },
+      "x638fhv": {
+        "xel6go6": {
+          "from": "xel6go6",
+          "to": "x638fhv",
+          "as": "arg0"
+        },
+        "xmd2fqb": {
+          "from": "xmd2fqb",
+          "to": "x638fhv",
+          "as": "arg1"
+        }
+      },
+      "vzmvbqh": {
+        "23ppkmp": {
+          "from": "23ppkmp",
+          "to": "vzmvbqh",
+          "as": "pred"
+        },
+        "3876w2f": {
+          "from": "3876w2f",
+          "to": "vzmvbqh",
+          "as": "true"
+        }
+      },
+      "3876w2f": {
+        "ya36a1r": {
+          "from": "ya36a1r",
+          "to": "3876w2f",
+          "as": "module"
+        }
+      },
+      "tkxqh5a": {
+        "zz2yk2z": {
+          "from": "zz2yk2z",
+          "to": "tkxqh5a",
+          "as": "parent"
+        },
+        "z51c26o": {
+          "from": "z51c26o",
+          "to": "tkxqh5a",
+          "as": "children"
+        }
+      },
+      "ryjjzqr": {
+        "sfzzxee": {
+          "from": "sfzzxee",
+          "to": "ryjjzqr",
+          "as": "parameters"
+        },
+        "4j2wgr9": {
+          "from": "4j2wgr9",
+          "to": "ryjjzqr",
+          "as": "fn"
+        }
+      },
+      "sfzzxee": {
+        "wgn4yl2": {
+          "from": "wgn4yl2",
+          "to": "sfzzxee",
+          "as": "element"
+        }
+      },
+      "reop6t4": {
+        "by4m1fr": {
+          "from": "by4m1fr",
+          "to": "reop6t4",
+          "as": "object"
+        }
+      },
+      "z51c26o": {
+        "reop6t4": {
+          "from": "reop6t4",
+          "to": "z51c26o",
+          "as": "array"
+        },
+        "ryjjzqr": {
+          "from": "ryjjzqr",
+          "to": "z51c26o",
+          "as": "fn"
+        }
+      },
+      "4j2wgr9": {
+        "dq4u9ji": {
+          "from": "dq4u9ji",
+          "to": "4j2wgr9",
+          "as": "target"
+        },
+        "s208cfn": {
+          "from": "s208cfn",
+          "to": "4j2wgr9",
+          "as": "value"
+        }
+      },
+      "8m5muxn/zci8apj": {
+        "t8adnxm": {
+          "from": "t8adnxm",
+          "to": "8m5muxn/zci8apj",
+          "as": "canvas"
+        }
       }
     }
   },
   {
     "id": "@three.setup_hydra",
-    "out": "out",
+    "name": "three.setup",
+    "out": "8m5muxn/8m5muxn",
     "nodes": {
+      "8m5muxn/njzfcz8": {
+        "id": "8m5muxn/njzfcz8",
+        "name": "",
+        "ref": "return"
+      },
+      "8m5muxn/39ivise": {
+        "id": "8m5muxn/39ivise"
+      },
+      "8m5muxn/hlqmo48": {
+        "id": "8m5muxn/hlqmo48"
+      },
+      "8m5muxn/vyr07ts": {
+        "id": "8m5muxn/vyr07ts",
+        "name": ""
+      },
+      "m4cr3fk": {
+        "id": "m4cr3fk",
+        "ref": "map"
+      },
+      "8m5muxn/inq87j9": {
+        "id": "8m5muxn/inq87j9",
+        "name": "",
+        "ref": "cache"
+      },
+      "8m5muxn/7in78pu": {
+        "id": "8m5muxn/7in78pu",
+        "value": "position.z",
+        "ref": "set_mutable"
+      },
+      "sq9t0ix": {
+        "id": "sq9t0ix",
+        "ref": "runnable"
+      },
+      "vrevjmh": {
+        "id": "vrevjmh",
+        "ref": "object_entries"
+      },
+      "8m5muxn/33kmaec": {
+        "id": "8m5muxn/33kmaec",
+        "ref": "cache"
+      },
+      "8m5muxn/v1nqvl7": {
+        "id": "8m5muxn/v1nqvl7",
+        "value": "5"
+      },
+      "f7krd8u": {
+        "id": "f7krd8u",
+        "value": "objs",
+        "ref": "arg"
+      },
+      "wcnk2sw": {
+        "id": "wcnk2sw",
+        "value": "onupdate",
+        "ref": "arg"
+      },
+      "elimy7s": {
+        "id": "elimy7s",
+        "value": "element.1",
+        "ref": "arg"
+      },
+      "kgvzbaz": {
+        "id": "kgvzbaz",
+        "value": "element.0",
+        "ref": "arg"
+      },
+      "b2z2580": {
+        "id": "b2z2580",
+        "ref": "ap"
+      },
+      "m291v0o": {
+        "id": "m291v0o"
+      },
+      "8m5muxn/8m5muxn": {
+        "id": "8m5muxn/8m5muxn",
+        "value": "if(renderer) {\n  renderer.render(scene, camera);\n}",
+        "name": "@three.setup_hydra",
+        "ref": "return"
+      },
+      "8m5muxn/gwavfrm": {
+        "id": "8m5muxn/gwavfrm",
+        "value": "",
+        "ref": "@three.scene",
+        "__isnodysseus": true
+      },
+      "8m5muxn/zci8apj": {
+        "id": "8m5muxn/zci8apj",
+        "value": "",
+        "ref": "@three.camera",
+        "__isnodysseus": true
+      },
+      "y2f8gog": {
+        "id": "y2f8gog",
+        "value": "camera: internal",
+        "ref": "arg"
+      },
+      "xgl6r05": {
+        "id": "xgl6r05",
+        "value": "objs",
+        "ref": "arg"
+      },
+      "8m5muxn/8p7y4uk": {
+        "id": "8m5muxn/8p7y4uk",
+        "value": "scene: internal",
+        "ref": "arg"
+      },
+      "8m5muxn/ud4p5ey": {
+        "id": "8m5muxn/ud4p5ey",
+        "value": "const existingObj = scene.getObjectByName(name);\nif(obj && existingObj !== obj){\n  if(existingObj) {\n    scene.remove(existingObj);\n    existingObj.geometry.dispose();\n    existingObj.material.dispose();\n  }\n  obj.name = name;\n  scene.add(obj); \n}\nreturn scene;",
+        "name": "",
+        "ref": "script"
+      },
+      "c6eig78": {
+        "id": "c6eig78",
+        "ref": "array"
+      },
+      "1js087x": {
+        "id": "1js087x",
+        "value": "camera: internal",
+        "ref": "arg"
+      },
+      "cha35wd": {
+        "id": "cha35wd",
+        "value": "scene: internal",
+        "ref": "arg"
+      },
+      "zs7iowa": {
+        "id": "zs7iowa",
+        "value": "renderer.state",
+        "ref": "arg"
+      },
+      "dyst9ju": {
+        "id": "dyst9ju",
+        "value": "if(renderer) {\n  renderer.render(scene, camera);\n}",
+        "ref": "script"
+      },
+      "wa794xa": {
+        "id": "wa794xa"
+      },
+      "s7mw857": {
+        "id": "s7mw857"
+      },
+      "rmqxb31": {
+        "id": "rmqxb31",
+        "ref": "if"
+      },
+      "mh5ikoc": {
+        "id": "mh5ikoc",
+        "value": "onupdate",
+        "ref": "arg"
+      },
+      "ptak9t2": {
+        "id": "ptak9t2",
+        "name": "",
+        "ref": "ap"
+      },
+      "z552097": {
+        "id": "z552097",
+        "ref": "runnable"
+      },
+      "jiobf52": {
+        "id": "jiobf52"
+      },
+      "slwyovm": {
+        "id": "slwyovm",
+        "value": "renderer.state",
+        "ref": "arg"
+      },
+      "40aw44l": {
+        "id": "40aw44l",
+        "ref": "state"
+      },
+      "cvop6x9": {
+        "id": "cvop6x9",
+        "ref": "default"
+      },
+      "z8fj6c2": {
+        "id": "z8fj6c2",
+        "value": "cached renderer",
+        "ref": "log"
+      },
+      "07n9ekk": {
+        "id": "07n9ekk",
+        "ref": "cache"
+      },
+      "4dll59e": {
+        "id": "4dll59e",
+        "value": "renderer",
+        "ref": "log",
+        "__isnodysseus": true
+      },
+      "5s8nfmm": {
+        "id": "5s8nfmm",
+        "name": "",
+        "ref": "@three.renderer",
+        "__isnodysseus": true
+      },
+      "l8jka3p": {
+        "id": "l8jka3p",
+        "value": "console.log(\"getting canvas\")\nconsole.log(document.getElementById(canvasid))\nreturn document.getElementById(canvasid);",
+        "ref": "script"
+      },
+      "r8fh0s5": {
+        "id": "r8fh0s5",
+        "value": "canvas_id",
+        "ref": "arg"
+      },
+      "3zxizlg": {
+        "id": "3zxizlg",
+        "value": "cached renderer",
+        "ref": "log"
+      },
+      "rktckcv": {
+        "id": "rktckcv",
+        "ref": "cache"
+      },
+      "hb31wpa": {
+        "id": "hb31wpa",
+        "value": "renderer",
+        "ref": "log",
+        "__isnodysseus": true
+      },
+      "u442czm": {
+        "id": "u442czm",
+        "name": "",
+        "ref": "@three.renderer",
+        "__isnodysseus": true
+      },
+      "m1wf6yk": {
+        "id": "m1wf6yk",
+        "value": "console.log(\"getting canvas\")\nconsole.log(document.getElementById(canvasid))\nreturn document.getElementById(canvasid);",
+        "ref": "script"
+      },
+      "jmb1j98": {
+        "id": "jmb1j98",
+        "value": "canvas_id",
+        "ref": "arg"
+      },
+      "e9d6mmx": {
+        "id": "e9d6mmx",
+        "ref": "ap"
+      },
+      "hsytqp3": {
+        "id": "hsytqp3",
+        "name": "",
+        "ref": "@three.renderer",
+        "__isnodysseus": true
+      },
+      "8lmqrt8": {
+        "id": "8lmqrt8",
+        "value": "canvas",
+        "ref": "arg"
+      },
+      "jjmvxjj": {
+        "id": "jjmvxjj",
+        "value": "renderer.set",
+        "ref": "arg"
+      },
+      "0wp18c9": {
+        "id": "0wp18c9"
+      },
+      "cwrlosg": {
+        "id": "cwrlosg",
+        "value": "true"
+      },
+      "n9jdueg": {
+        "id": "n9jdueg",
+        "ref": "cache"
+      },
+      "h2cm9d9": {
+        "id": "h2cm9d9",
+        "value": "const canvas = document.getElementById(canvas_id);\n\nreturn canvas?.transferControlToOffscreen ? canvas.transferControlToOffscreen() : canvas; ",
+        "ref": "script"
+      },
+      "ivz9te5": {
+        "id": "ivz9te5",
+        "value": "canvas_id",
+        "ref": "arg"
+      },
       "args": {
         "id": "args"
       },
@@ -550,16 +3533,2918 @@
       }
     },
     "edges": {
-      "qgbinm2": {
-        "from": "qgbinm2",
-        "to": "8dy573e",
-        "as": "children"
+      "8m5muxn/39ivise": {
+        "from": "8m5muxn/39ivise",
+        "to": "8m5muxn/8m5muxn",
+        "as": "args"
       },
-      "8dy573e": {
-        "from": "8dy573e",
-        "to": "out",
+      "8m5muxn/hlqmo48": {
+        "from": "8m5muxn/hlqmo48",
+        "to": "8m5muxn/njzfcz8",
+        "as": "args"
+      },
+      "8m5muxn/vyr07ts": {
+        "from": "8m5muxn/vyr07ts",
+        "to": "8m5muxn/njzfcz8",
+        "as": "subscribe"
+      },
+      "8m5muxn/inq87j9": {
+        "from": "8m5muxn/inq87j9",
+        "to": "8m5muxn/hlqmo48",
+        "as": "scene"
+      },
+      "ptak9t2": {
+        "from": "ptak9t2",
+        "to": "8m5muxn/vyr07ts",
+        "as": "animationframe"
+      },
+      "sq9t0ix": {
+        "from": "sq9t0ix",
+        "to": "m4cr3fk",
+        "as": "fn"
+      },
+      "vrevjmh": {
+        "from": "vrevjmh",
+        "to": "m4cr3fk",
+        "as": "array"
+      },
+      "8m5muxn/gwavfrm": {
+        "from": "8m5muxn/gwavfrm",
+        "to": "8m5muxn/inq87j9",
+        "as": "value"
+      },
+      "8m5muxn/33kmaec": {
+        "from": "8m5muxn/33kmaec",
+        "to": "8m5muxn/7in78pu",
+        "as": "target"
+      },
+      "8m5muxn/v1nqvl7": {
+        "from": "8m5muxn/v1nqvl7",
+        "to": "8m5muxn/7in78pu",
+        "as": "value"
+      },
+      "8m5muxn/ud4p5ey": {
+        "from": "8m5muxn/ud4p5ey",
+        "to": "sq9t0ix",
+        "as": "fn"
+      },
+      "8m5muxn/zci8apj": {
+        "from": "8m5muxn/zci8apj",
+        "to": "8m5muxn/33kmaec",
+        "as": "value"
+      },
+      "8m5muxn/8p7y4uk": {
+        "from": "8m5muxn/8p7y4uk",
+        "to": "8m5muxn/ud4p5ey",
+        "as": "scene"
+      },
+      "elimy7s": {
+        "from": "elimy7s",
+        "to": "8m5muxn/ud4p5ey",
+        "as": "obj"
+      },
+      "kgvzbaz": {
+        "from": "kgvzbaz",
+        "to": "8m5muxn/ud4p5ey",
+        "as": "name"
+      },
+      "8m5muxn/njzfcz8": {
+        "from": "8m5muxn/njzfcz8",
+        "to": "8m5muxn/8m5muxn",
+        "as": "value"
+      },
+      "wcnk2sw": {
+        "from": "wcnk2sw",
+        "to": "b2z2580",
+        "as": "fn"
+      },
+      "m291v0o": {
+        "from": "m291v0o",
+        "to": "b2z2580",
+        "as": "args"
+      },
+      "xgl6r05": {
+        "from": "xgl6r05",
+        "to": "m291v0o",
+        "as": "objs"
+      },
+      "y2f8gog": {
+        "from": "y2f8gog",
+        "to": "m291v0o",
+        "as": "camera"
+      },
+      "f7krd8u": {
+        "from": "f7krd8u",
+        "to": "vrevjmh",
+        "as": "object"
+      },
+      "8m5muxn/7in78pu": {
+        "from": "8m5muxn/7in78pu",
+        "to": "8m5muxn/hlqmo48",
+        "as": "camera"
+      },
+      "zs7iowa": {
+        "from": "zs7iowa",
+        "to": "cvop6x9",
+        "as": "value"
+      },
+      "cha35wd": {
+        "from": "cha35wd",
+        "to": "dyst9ju",
+        "as": "scene"
+      },
+      "1js087x": {
+        "from": "1js087x",
+        "to": "dyst9ju",
+        "as": "camera"
+      },
+      "wa794xa": {
+        "from": "wa794xa",
+        "to": "sq9t0ix",
+        "as": "parameters"
+      },
+      "s7mw857": {
+        "from": "s7mw857",
+        "to": "wa794xa",
+        "as": "element"
+      },
+      "c6eig78": {
+        "from": "c6eig78",
+        "to": "ptak9t2",
+        "as": "fn"
+      },
+      "rmqxb31": {
+        "from": "rmqxb31",
+        "to": "c6eig78",
+        "as": "arg0"
+      },
+      "dyst9ju": {
+        "from": "dyst9ju",
+        "to": "z552097",
+        "as": "fn"
+      },
+      "mh5ikoc": {
+        "from": "mh5ikoc",
+        "to": "rmqxb31",
+        "as": "pred"
+      },
+      "z552097": {
+        "from": "z552097",
+        "to": "c6eig78",
+        "as": "arg1"
+      },
+      "b2z2580": {
+        "from": "b2z2580",
+        "to": "rmqxb31",
+        "as": "true"
+      },
+      "jiobf52": {
+        "from": "jiobf52",
+        "to": "8m5muxn/njzfcz8",
+        "as": "value"
+      },
+      "m4cr3fk": {
+        "from": "m4cr3fk",
+        "to": "jiobf52",
+        "as": "objs"
+      },
+      "slwyovm": {
+        "from": "slwyovm",
+        "to": "jiobf52",
+        "as": "renderer"
+      },
+      "40aw44l": {
+        "from": "40aw44l",
+        "to": "8m5muxn/39ivise",
+        "as": "renderer"
+      },
+      "cvop6x9": {
+        "from": "cvop6x9",
+        "to": "dyst9ju",
+        "as": "renderer"
+      },
+      "e9d6mmx": {
+        "from": "e9d6mmx",
+        "to": "cvop6x9",
+        "as": "otherwise"
+      },
+      "hsytqp3": {
+        "from": "hsytqp3",
+        "to": "0wp18c9",
+        "as": "value"
+      },
+      "8lmqrt8": {
+        "from": "8lmqrt8",
+        "to": "hsytqp3",
+        "as": "canvas"
+      },
+      "jjmvxjj": {
+        "from": "jjmvxjj",
+        "to": "e9d6mmx",
+        "as": "fn"
+      },
+      "0wp18c9": {
+        "from": "0wp18c9",
+        "to": "e9d6mmx",
+        "as": "args"
+      },
+      "cwrlosg": {
+        "from": "cwrlosg",
+        "to": "e9d6mmx",
+        "as": "run"
+      },
+      "h2cm9d9": {
+        "from": "h2cm9d9",
+        "to": "n9jdueg",
+        "as": "value"
+      },
+      "ivz9te5": {
+        "from": "ivz9te5",
+        "to": "h2cm9d9",
+        "as": "canvas_id"
+      },
+      "n9jdueg": {
+        "from": "n9jdueg",
+        "to": "8m5muxn/hlqmo48",
+        "as": "canvas"
+      }
+    },
+    "edges_in": {
+      "8m5muxn/8m5muxn": {
+        "8m5muxn/39ivise": {
+          "from": "8m5muxn/39ivise",
+          "to": "8m5muxn/8m5muxn",
+          "as": "args"
+        },
+        "8m5muxn/njzfcz8": {
+          "from": "8m5muxn/njzfcz8",
+          "to": "8m5muxn/8m5muxn",
+          "as": "value"
+        }
+      },
+      "8m5muxn/njzfcz8": {
+        "8m5muxn/hlqmo48": {
+          "from": "8m5muxn/hlqmo48",
+          "to": "8m5muxn/njzfcz8",
+          "as": "args"
+        },
+        "8m5muxn/vyr07ts": {
+          "from": "8m5muxn/vyr07ts",
+          "to": "8m5muxn/njzfcz8",
+          "as": "subscribe"
+        },
+        "jiobf52": {
+          "from": "jiobf52",
+          "to": "8m5muxn/njzfcz8",
+          "as": "value"
+        }
+      },
+      "8m5muxn/hlqmo48": {
+        "8m5muxn/inq87j9": {
+          "from": "8m5muxn/inq87j9",
+          "to": "8m5muxn/hlqmo48",
+          "as": "scene"
+        },
+        "8m5muxn/7in78pu": {
+          "from": "8m5muxn/7in78pu",
+          "to": "8m5muxn/hlqmo48",
+          "as": "camera"
+        },
+        "n9jdueg": {
+          "from": "n9jdueg",
+          "to": "8m5muxn/hlqmo48",
+          "as": "canvas"
+        }
+      },
+      "8m5muxn/vyr07ts": {
+        "ptak9t2": {
+          "from": "ptak9t2",
+          "to": "8m5muxn/vyr07ts",
+          "as": "animationframe"
+        }
+      },
+      "m4cr3fk": {
+        "sq9t0ix": {
+          "from": "sq9t0ix",
+          "to": "m4cr3fk",
+          "as": "fn"
+        },
+        "vrevjmh": {
+          "from": "vrevjmh",
+          "to": "m4cr3fk",
+          "as": "array"
+        }
+      },
+      "8m5muxn/inq87j9": {
+        "8m5muxn/gwavfrm": {
+          "from": "8m5muxn/gwavfrm",
+          "to": "8m5muxn/inq87j9",
+          "as": "value"
+        }
+      },
+      "8m5muxn/7in78pu": {
+        "8m5muxn/33kmaec": {
+          "from": "8m5muxn/33kmaec",
+          "to": "8m5muxn/7in78pu",
+          "as": "target"
+        },
+        "8m5muxn/v1nqvl7": {
+          "from": "8m5muxn/v1nqvl7",
+          "to": "8m5muxn/7in78pu",
+          "as": "value"
+        }
+      },
+      "sq9t0ix": {
+        "8m5muxn/ud4p5ey": {
+          "from": "8m5muxn/ud4p5ey",
+          "to": "sq9t0ix",
+          "as": "fn"
+        },
+        "wa794xa": {
+          "from": "wa794xa",
+          "to": "sq9t0ix",
+          "as": "parameters"
+        }
+      },
+      "8m5muxn/33kmaec": {
+        "8m5muxn/zci8apj": {
+          "from": "8m5muxn/zci8apj",
+          "to": "8m5muxn/33kmaec",
+          "as": "value"
+        }
+      },
+      "8m5muxn/ud4p5ey": {
+        "8m5muxn/8p7y4uk": {
+          "from": "8m5muxn/8p7y4uk",
+          "to": "8m5muxn/ud4p5ey",
+          "as": "scene"
+        },
+        "elimy7s": {
+          "from": "elimy7s",
+          "to": "8m5muxn/ud4p5ey",
+          "as": "obj"
+        },
+        "kgvzbaz": {
+          "from": "kgvzbaz",
+          "to": "8m5muxn/ud4p5ey",
+          "as": "name"
+        }
+      },
+      "b2z2580": {
+        "wcnk2sw": {
+          "from": "wcnk2sw",
+          "to": "b2z2580",
+          "as": "fn"
+        },
+        "m291v0o": {
+          "from": "m291v0o",
+          "to": "b2z2580",
+          "as": "args"
+        }
+      },
+      "m291v0o": {
+        "xgl6r05": {
+          "from": "xgl6r05",
+          "to": "m291v0o",
+          "as": "objs"
+        },
+        "y2f8gog": {
+          "from": "y2f8gog",
+          "to": "m291v0o",
+          "as": "camera"
+        }
+      },
+      "vrevjmh": {
+        "f7krd8u": {
+          "from": "f7krd8u",
+          "to": "vrevjmh",
+          "as": "object"
+        }
+      },
+      "cvop6x9": {
+        "zs7iowa": {
+          "from": "zs7iowa",
+          "to": "cvop6x9",
+          "as": "value"
+        },
+        "e9d6mmx": {
+          "from": "e9d6mmx",
+          "to": "cvop6x9",
+          "as": "otherwise"
+        }
+      },
+      "dyst9ju": {
+        "cha35wd": {
+          "from": "cha35wd",
+          "to": "dyst9ju",
+          "as": "scene"
+        },
+        "1js087x": {
+          "from": "1js087x",
+          "to": "dyst9ju",
+          "as": "camera"
+        },
+        "cvop6x9": {
+          "from": "cvop6x9",
+          "to": "dyst9ju",
+          "as": "renderer"
+        }
+      },
+      "wa794xa": {
+        "s7mw857": {
+          "from": "s7mw857",
+          "to": "wa794xa",
+          "as": "element"
+        }
+      },
+      "ptak9t2": {
+        "c6eig78": {
+          "from": "c6eig78",
+          "to": "ptak9t2",
+          "as": "fn"
+        }
+      },
+      "c6eig78": {
+        "rmqxb31": {
+          "from": "rmqxb31",
+          "to": "c6eig78",
+          "as": "arg0"
+        },
+        "z552097": {
+          "from": "z552097",
+          "to": "c6eig78",
+          "as": "arg1"
+        }
+      },
+      "z552097": {
+        "dyst9ju": {
+          "from": "dyst9ju",
+          "to": "z552097",
+          "as": "fn"
+        }
+      },
+      "rmqxb31": {
+        "mh5ikoc": {
+          "from": "mh5ikoc",
+          "to": "rmqxb31",
+          "as": "pred"
+        },
+        "b2z2580": {
+          "from": "b2z2580",
+          "to": "rmqxb31",
+          "as": "true"
+        }
+      },
+      "jiobf52": {
+        "m4cr3fk": {
+          "from": "m4cr3fk",
+          "to": "jiobf52",
+          "as": "objs"
+        },
+        "slwyovm": {
+          "from": "slwyovm",
+          "to": "jiobf52",
+          "as": "renderer"
+        }
+      },
+      "8m5muxn/39ivise": {
+        "40aw44l": {
+          "from": "40aw44l",
+          "to": "8m5muxn/39ivise",
+          "as": "renderer"
+        }
+      },
+      "0wp18c9": {
+        "hsytqp3": {
+          "from": "hsytqp3",
+          "to": "0wp18c9",
+          "as": "value"
+        }
+      },
+      "hsytqp3": {
+        "8lmqrt8": {
+          "from": "8lmqrt8",
+          "to": "hsytqp3",
+          "as": "canvas"
+        }
+      },
+      "e9d6mmx": {
+        "jjmvxjj": {
+          "from": "jjmvxjj",
+          "to": "e9d6mmx",
+          "as": "fn"
+        },
+        "0wp18c9": {
+          "from": "0wp18c9",
+          "to": "e9d6mmx",
+          "as": "args"
+        },
+        "cwrlosg": {
+          "from": "cwrlosg",
+          "to": "e9d6mmx",
+          "as": "run"
+        }
+      },
+      "n9jdueg": {
+        "h2cm9d9": {
+          "from": "h2cm9d9",
+          "to": "n9jdueg",
+          "as": "value"
+        }
+      },
+      "h2cm9d9": {
+        "ivz9te5": {
+          "from": "ivz9te5",
+          "to": "h2cm9d9",
+          "as": "canvas_id"
+        }
+      }
+    }
+  },
+  {
+    "id": "@three.fx_shader_pass",
+    "name": "FxPass",
+    "out": "t2wl30j",
+    "nodes": {
+      "t2wl30j": {
+        "id": "t2wl30j",
+        "name": "@three.fx_shader_pass",
+        "ref": "return"
+      },
+      "q4tskdl": {
+        "id": "q4tskdl"
+      },
+      "id8jixz": {
+        "id": "id8jixz",
+        "value": "return new Pass(shader);",
+        "ref": "script"
+      },
+      "stp926h": {
+        "id": "stp926h",
+        "value": "ShaderPass",
+        "ref": "get"
+      },
+      "k02afe9": {
+        "id": "k02afe9"
+      },
+      "r5a95d2": {
+        "id": "r5a95d2",
+        "ref": "import_module"
+      },
+      "ztsrxfz": {
+        "id": "ztsrxfz",
+        "value": "vertexShader",
+        "ref": "arg"
+      },
+      "y6p5j3a": {
+        "id": "y6p5j3a",
+        "value": "return `https://cdn.jsdelivr.net/npm/three/examples/jsm/postprocessing/${name}.js`",
+        "ref": "script"
+      },
+      "wonswm4": {
+        "id": "wonswm4",
+        "value": "ShaderPass"
+      },
+      "20oh4kr": {
+        "id": "20oh4kr",
+        "value": "name",
+        "ref": "arg"
+      },
+      "d4kcr9g": {
+        "id": "d4kcr9g",
+        "ref": "default"
+      },
+      "ji51v7a": {
+        "id": "ji51v7a",
+        "value": "__graph_value",
+        "ref": "arg"
+      },
+      "pkc7ahm": {
+        "id": "pkc7ahm",
+        "ref": "default"
+      },
+      "j6vdmp8": {
+        "id": "j6vdmp8",
+        "value": "return `\n\t\t\tattribute vec4 color;\n\n   varying vec2 vUv;\n\n\n\t\t\tvoid main()\t{\n\n\tvUv = uv;\n    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n\n\t\t\t}\n\n`",
+        "ref": "script"
+      },
+      "w21kxjr": {
+        "id": "w21kxjr",
+        "value": "fragmentShader",
+        "ref": "arg"
+      },
+      "8ku3swe": {
+        "id": "8ku3swe",
+        "value": "uniforms",
+        "ref": "arg"
+      },
+      "lbnpwro": {
+        "id": "lbnpwro",
+        "value": "console.log(uniforms);\nconst ret =  Object.fromEntries(Object.entries(uniforms ?? {}).map(e => [e[0], typeof e[1] === \"object\" && Object.hasOwn(e[1], \"value\") ? e[1] : {value: e[1]}]))\nconsole.log(ret);\nreturn ret;",
+        "ref": "script"
+      },
+      "q3dfbvj": {
+        "id": "q3dfbvj",
+        "ref": "cache"
+      },
+      "na3d3gk": {
+        "id": "na3d3gk",
+        "value": "shaderval",
+        "ref": "log"
+      },
+      "020skie": {
+        "id": "020skie",
+        "ref": "return"
+      },
+      "qq4228z": {
+        "id": "qq4228z"
+      },
+      "vhc6af0": {
+        "id": "vhc6af0",
+        "ref": "graphchangecache"
+      },
+      "7a8p5tc": {
+        "id": "7a8p5tc",
+        "value": "shader",
+        "ref": "arg"
+      },
+      "p5ybna1": {
+        "id": "p5ybna1"
+      },
+      "nzl1k7m": {
+        "id": "nzl1k7m",
+        "ref": "runnable"
+      },
+      "ubre7xk": {
+        "id": "ubre7xk",
+        "value": "shader.uniforms",
+        "ref": "arg"
+      },
+      "wpipqoa": {
+        "id": "wpipqoa",
+        "value": "arguniforms && shaderuniforms && Object.keys(arguniforms).forEach(k => shaderuniforms[k].value = typeof  arguniforms[k] === \"object\" && Object.hasOwn(arguniforms[k], \"value\") ? arguniforms[k].value : arguniforms[k]);",
+        "ref": "script"
+      },
+      "csbvqhk": {
+        "id": "csbvqhk",
+        "value": "uniforms",
+        "ref": "arg"
+      },
+      "xz1by66": {
+        "id": "xz1by66",
+        "ref": "graphchangecache"
+      },
+      "om4ffw5": {
+        "id": "om4ffw5",
+        "value": "newshaderpass",
+        "ref": "log"
+      }
+    },
+    "edges": {
+      "q4tskdl": {
+        "from": "q4tskdl",
+        "to": "t2wl30j",
+        "as": "args"
+      },
+      "id8jixz": {
+        "from": "id8jixz",
+        "to": "vhc6af0",
+        "as": "value"
+      },
+      "stp926h": {
+        "from": "stp926h",
+        "to": "q3dfbvj",
+        "as": "value"
+      },
+      "k02afe9": {
+        "from": "k02afe9",
+        "to": "na3d3gk",
+        "as": "value"
+      },
+      "r5a95d2": {
+        "from": "r5a95d2",
+        "to": "stp926h",
+        "as": "target"
+      },
+      "ztsrxfz": {
+        "from": "ztsrxfz",
+        "to": "pkc7ahm",
+        "as": "value"
+      },
+      "y6p5j3a": {
+        "from": "y6p5j3a",
+        "to": "r5a95d2",
+        "as": "url"
+      },
+      "wonswm4": {
+        "from": "wonswm4",
+        "to": "y6p5j3a",
+        "as": "name"
+      },
+      "20oh4kr": {
+        "from": "20oh4kr",
+        "to": "d4kcr9g",
+        "as": "value"
+      },
+      "d4kcr9g": {
+        "from": "d4kcr9g",
+        "to": "q4tskdl",
+        "as": "name"
+      },
+      "ji51v7a": {
+        "from": "ji51v7a",
+        "to": "d4kcr9g",
+        "as": "otherwise"
+      },
+      "pkc7ahm": {
+        "from": "pkc7ahm",
+        "to": "k02afe9",
+        "as": "vertexShader"
+      },
+      "j6vdmp8": {
+        "from": "j6vdmp8",
+        "to": "pkc7ahm",
+        "as": "otherwise"
+      },
+      "w21kxjr": {
+        "from": "w21kxjr",
+        "to": "k02afe9",
+        "as": "fragmentShader"
+      },
+      "8ku3swe": {
+        "from": "8ku3swe",
+        "to": "lbnpwro",
+        "as": "uniforms"
+      },
+      "lbnpwro": {
+        "from": "lbnpwro",
+        "to": "k02afe9",
+        "as": "uniforms"
+      },
+      "q3dfbvj": {
+        "from": "q3dfbvj",
+        "to": "id8jixz",
+        "as": "Pass"
+      },
+      "na3d3gk": {
+        "from": "na3d3gk",
+        "to": "id8jixz",
+        "as": "shader"
+      },
+      "020skie": {
+        "from": "020skie",
+        "to": "t2wl30j",
+        "as": "value"
+      },
+      "qq4228z": {
+        "from": "qq4228z",
+        "to": "020skie",
+        "as": "args"
+      },
+      "vhc6af0": {
+        "from": "vhc6af0",
+        "to": "qq4228z",
+        "as": "shader"
+      },
+      "7a8p5tc": {
+        "from": "7a8p5tc",
+        "to": "020skie",
+        "as": "value"
+      },
+      "nzl1k7m": {
+        "from": "nzl1k7m",
+        "to": "p5ybna1",
+        "as": "animationframe"
+      },
+      "ubre7xk": {
+        "from": "ubre7xk",
+        "to": "xz1by66",
+        "as": "value"
+      },
+      "p5ybna1": {
+        "from": "p5ybna1",
+        "to": "020skie",
+        "as": "subscribe"
+      },
+      "wpipqoa": {
+        "from": "wpipqoa",
+        "to": "nzl1k7m",
+        "as": "fn"
+      },
+      "csbvqhk": {
+        "from": "csbvqhk",
+        "to": "wpipqoa",
+        "as": "arguniforms"
+      },
+      "xz1by66": {
+        "from": "xz1by66",
+        "to": "wpipqoa",
+        "as": "shaderuniforms"
+      }
+    },
+    "edges_in": {
+      "t2wl30j": {
+        "q4tskdl": {
+          "from": "q4tskdl",
+          "to": "t2wl30j",
+          "as": "args"
+        },
+        "020skie": {
+          "from": "020skie",
+          "to": "t2wl30j",
+          "as": "value"
+        }
+      },
+      "vhc6af0": {
+        "id8jixz": {
+          "from": "id8jixz",
+          "to": "vhc6af0",
+          "as": "value"
+        }
+      },
+      "q3dfbvj": {
+        "stp926h": {
+          "from": "stp926h",
+          "to": "q3dfbvj",
+          "as": "value"
+        }
+      },
+      "na3d3gk": {
+        "k02afe9": {
+          "from": "k02afe9",
+          "to": "na3d3gk",
+          "as": "value"
+        }
+      },
+      "stp926h": {
+        "r5a95d2": {
+          "from": "r5a95d2",
+          "to": "stp926h",
+          "as": "target"
+        }
+      },
+      "pkc7ahm": {
+        "ztsrxfz": {
+          "from": "ztsrxfz",
+          "to": "pkc7ahm",
+          "as": "value"
+        },
+        "j6vdmp8": {
+          "from": "j6vdmp8",
+          "to": "pkc7ahm",
+          "as": "otherwise"
+        }
+      },
+      "r5a95d2": {
+        "y6p5j3a": {
+          "from": "y6p5j3a",
+          "to": "r5a95d2",
+          "as": "url"
+        }
+      },
+      "y6p5j3a": {
+        "wonswm4": {
+          "from": "wonswm4",
+          "to": "y6p5j3a",
+          "as": "name"
+        }
+      },
+      "d4kcr9g": {
+        "20oh4kr": {
+          "from": "20oh4kr",
+          "to": "d4kcr9g",
+          "as": "value"
+        },
+        "ji51v7a": {
+          "from": "ji51v7a",
+          "to": "d4kcr9g",
+          "as": "otherwise"
+        }
+      },
+      "q4tskdl": {
+        "d4kcr9g": {
+          "from": "d4kcr9g",
+          "to": "q4tskdl",
+          "as": "name"
+        }
+      },
+      "k02afe9": {
+        "pkc7ahm": {
+          "from": "pkc7ahm",
+          "to": "k02afe9",
+          "as": "vertexShader"
+        },
+        "w21kxjr": {
+          "from": "w21kxjr",
+          "to": "k02afe9",
+          "as": "fragmentShader"
+        },
+        "lbnpwro": {
+          "from": "lbnpwro",
+          "to": "k02afe9",
+          "as": "uniforms"
+        }
+      },
+      "lbnpwro": {
+        "8ku3swe": {
+          "from": "8ku3swe",
+          "to": "lbnpwro",
+          "as": "uniforms"
+        }
+      },
+      "id8jixz": {
+        "q3dfbvj": {
+          "from": "q3dfbvj",
+          "to": "id8jixz",
+          "as": "Pass"
+        },
+        "na3d3gk": {
+          "from": "na3d3gk",
+          "to": "id8jixz",
+          "as": "shader"
+        }
+      },
+      "020skie": {
+        "qq4228z": {
+          "from": "qq4228z",
+          "to": "020skie",
+          "as": "args"
+        },
+        "7a8p5tc": {
+          "from": "7a8p5tc",
+          "to": "020skie",
+          "as": "value"
+        },
+        "p5ybna1": {
+          "from": "p5ybna1",
+          "to": "020skie",
+          "as": "subscribe"
+        }
+      },
+      "qq4228z": {
+        "vhc6af0": {
+          "from": "vhc6af0",
+          "to": "qq4228z",
+          "as": "shader"
+        }
+      },
+      "p5ybna1": {
+        "nzl1k7m": {
+          "from": "nzl1k7m",
+          "to": "p5ybna1",
+          "as": "animationframe"
+        }
+      },
+      "xz1by66": {
+        "ubre7xk": {
+          "from": "ubre7xk",
+          "to": "xz1by66",
+          "as": "value"
+        }
+      },
+      "nzl1k7m": {
+        "wpipqoa": {
+          "from": "wpipqoa",
+          "to": "nzl1k7m",
+          "as": "fn"
+        }
+      },
+      "wpipqoa": {
+        "csbvqhk": {
+          "from": "csbvqhk",
+          "to": "wpipqoa",
+          "as": "arguniforms"
+        },
+        "xz1by66": {
+          "from": "xz1by66",
+          "to": "wpipqoa",
+          "as": "shaderuniforms"
+        }
+      }
+    }
+  },
+  {
+    "id": "@three.fx_pass",
+    "name": "FxPass",
+    "out": "t2wl30j",
+    "nodes": {
+      "t2wl30j": {
+        "id": "t2wl30j",
+        "name": "@three.fx_pass",
+        "ref": "return"
+      },
+      "cknmtsk": {
+        "id": "cknmtsk",
+        "ref": "graphchangecache"
+      },
+      "q4tskdl": {
+        "id": "q4tskdl"
+      },
+      "id8jixz": {
+        "id": "id8jixz",
+        "value": "return new Pass(...args);",
+        "ref": "script"
+      },
+      "stp926h": {
+        "id": "stp926h",
+        "ref": "get"
+      },
+      "k02afe9": {
+        "id": "k02afe9",
+        "ref": "default"
+      },
+      "r5a95d2": {
+        "id": "r5a95d2",
+        "value": "https://cdn.jsdelivr.net/npm/three/examples/jsm/postprocessing/AfterimagePass.js",
+        "ref": "import_module"
+      },
+      "2tffpiq": {
+        "id": "2tffpiq",
+        "value": "name",
+        "ref": "arg"
+      },
+      "ztsrxfz": {
+        "id": "ztsrxfz",
+        "value": "args",
+        "ref": "arg"
+      },
+      "gp1qalc": {
+        "id": "gp1qalc",
+        "value": "[]"
+      },
+      "y6p5j3a": {
+        "id": "y6p5j3a",
+        "value": "return `https://cdn.jsdelivr.net/npm/three/examples/jsm/postprocessing/${name}.js`",
+        "ref": "script"
+      },
+      "wonswm4": {
+        "id": "wonswm4",
+        "value": "name",
+        "ref": "arg"
+      },
+      "20oh4kr": {
+        "id": "20oh4kr",
+        "value": "name",
+        "ref": "arg"
+      },
+      "d4kcr9g": {
+        "id": "d4kcr9g",
+        "ref": "default"
+      },
+      "ji51v7a": {
+        "id": "ji51v7a",
+        "value": "__graph_value",
+        "ref": "arg"
+      }
+    },
+    "edges": {
+      "cknmtsk": {
+        "from": "cknmtsk",
+        "to": "t2wl30j",
+        "as": "value"
+      },
+      "q4tskdl": {
+        "from": "q4tskdl",
+        "to": "t2wl30j",
+        "as": "args"
+      },
+      "id8jixz": {
+        "from": "id8jixz",
+        "to": "cknmtsk",
+        "as": "value"
+      },
+      "stp926h": {
+        "from": "stp926h",
+        "to": "id8jixz",
+        "as": "Pass"
+      },
+      "k02afe9": {
+        "from": "k02afe9",
+        "to": "id8jixz",
+        "as": "args"
+      },
+      "r5a95d2": {
+        "from": "r5a95d2",
+        "to": "stp926h",
+        "as": "target"
+      },
+      "2tffpiq": {
+        "from": "2tffpiq",
+        "to": "stp926h",
+        "as": "path"
+      },
+      "ztsrxfz": {
+        "from": "ztsrxfz",
+        "to": "k02afe9",
+        "as": "value"
+      },
+      "gp1qalc": {
+        "from": "gp1qalc",
+        "to": "k02afe9",
+        "as": "otherwise"
+      },
+      "y6p5j3a": {
+        "from": "y6p5j3a",
+        "to": "r5a95d2",
+        "as": "url"
+      },
+      "wonswm4": {
+        "from": "wonswm4",
+        "to": "y6p5j3a",
+        "as": "name"
+      },
+      "20oh4kr": {
+        "from": "20oh4kr",
+        "to": "d4kcr9g",
+        "as": "value"
+      },
+      "d4kcr9g": {
+        "from": "d4kcr9g",
+        "to": "q4tskdl",
+        "as": "name"
+      },
+      "ji51v7a": {
+        "from": "ji51v7a",
+        "to": "d4kcr9g",
+        "as": "otherwise"
+      }
+    },
+    "edges_in": {
+      "t2wl30j": {
+        "cknmtsk": {
+          "from": "cknmtsk",
+          "to": "t2wl30j",
+          "as": "value"
+        },
+        "q4tskdl": {
+          "from": "q4tskdl",
+          "to": "t2wl30j",
+          "as": "args"
+        }
+      },
+      "cknmtsk": {
+        "id8jixz": {
+          "from": "id8jixz",
+          "to": "cknmtsk",
+          "as": "value"
+        }
+      },
+      "id8jixz": {
+        "stp926h": {
+          "from": "stp926h",
+          "to": "id8jixz",
+          "as": "Pass"
+        },
+        "k02afe9": {
+          "from": "k02afe9",
+          "to": "id8jixz",
+          "as": "args"
+        }
+      },
+      "stp926h": {
+        "r5a95d2": {
+          "from": "r5a95d2",
+          "to": "stp926h",
+          "as": "target"
+        },
+        "2tffpiq": {
+          "from": "2tffpiq",
+          "to": "stp926h",
+          "as": "path"
+        }
+      },
+      "k02afe9": {
+        "ztsrxfz": {
+          "from": "ztsrxfz",
+          "to": "k02afe9",
+          "as": "value"
+        },
+        "gp1qalc": {
+          "from": "gp1qalc",
+          "to": "k02afe9",
+          "as": "otherwise"
+        }
+      },
+      "r5a95d2": {
+        "y6p5j3a": {
+          "from": "y6p5j3a",
+          "to": "r5a95d2",
+          "as": "url"
+        }
+      },
+      "y6p5j3a": {
+        "wonswm4": {
+          "from": "wonswm4",
+          "to": "y6p5j3a",
+          "as": "name"
+        }
+      },
+      "d4kcr9g": {
+        "20oh4kr": {
+          "from": "20oh4kr",
+          "to": "d4kcr9g",
+          "as": "value"
+        },
+        "ji51v7a": {
+          "from": "ji51v7a",
+          "to": "d4kcr9g",
+          "as": "otherwise"
+        }
+      },
+      "q4tskdl": {
+        "d4kcr9g": {
+          "from": "d4kcr9g",
+          "to": "q4tskdl",
+          "as": "name"
+        }
+      }
+    }
+  },
+  {
+    "id": "@three.geometry_loader",
+    "name": "@three.geometry_loader",
+    "out": "r3wy7qr",
+    "nodes": {
+      "r3wy7qr": {
+        "id": "r3wy7qr",
+        "name": "@three.geometry_loader",
+        "ref": "return"
+      },
+      "py60aki": {
+        "id": "py60aki"
+      },
+      "8ug5ygt": {
+        "id": "8ug5ygt",
+        "value": "_manager",
+        "ref": "arg"
+      },
+      "ddhuoh2": {
+        "id": "ddhuoh2",
+        "ref": "switch"
+      },
+      "z9cjc2k": {
+        "id": "z9cjc2k",
+        "ref": "state"
+      },
+      "v4zu63j": {
+        "id": "v4zu63j",
+        "ref": "assetmanager"
+      },
+      "pdbinbg": {
+        "id": "pdbinbg",
+        "value": "assetname",
+        "ref": "arg"
+      },
+      "6owogjm": {
+        "id": "6owogjm",
+        "ref": "return"
+      },
+      "cmrjgyv": {
+        "id": "cmrjgyv"
+      },
+      "78983lz": {
+        "id": "78983lz",
+        "value": "return !file ? false : (file.type === \"application/json\" ? file.text() : file.arrayBuffer()).then(data => ({data, name: file.name, type: file.type}));",
+        "ref": "script"
+      },
+      "kfyzav1": {
+        "id": "kfyzav1",
+        "value": "file",
+        "ref": "get"
+      },
+      "ju0gq9n": {
+        "id": "ju0gq9n",
+        "value": "_manager",
+        "ref": "arg"
+      },
+      "nzdbmwo": {
+        "id": "nzdbmwo",
+        "value": "return new Promise((res, rej) =>  gltfLoader.parse(file.data, \"\", l => res(l.scene.children), e => rej(e)));",
+        "ref": "script"
+      },
+      "6mnggoe": {
+        "id": "6mnggoe",
+        "value": "file",
+        "ref": "arg"
+      },
+      "n3lcnwc": {
+        "id": "n3lcnwc",
+        "ref": "cache"
+      },
+      "rxalntn": {
+        "id": "rxalntn",
+        "value": "https://cdn.jsdelivr.net/npm/three/examples/jsm/loaders/GLTFLoader.js",
+        "ref": "import_module"
+      },
+      "65bdnhk": {
+        "id": "65bdnhk",
+        "value": "GLTFLoader",
+        "ref": "get"
+      },
+      "mtjltoq": {
+        "id": "mtjltoq",
+        "value": "const geo  = buffergeoLoader.parse(JSON.parse(file.data));\n\ngeo.computeVertexNormals();\nreturn geo;",
+        "ref": "script"
+      },
+      "ckl1s1u": {
+        "id": "ckl1s1u",
+        "value": "file",
+        "ref": "arg"
+      },
+      "cgya4cs": {
+        "id": "cgya4cs",
+        "value": "return file.type === \"application/json\" ? \"buffergeo\" : file.name.endsWith(\"glb\") ? \"gltf\" : undefined;",
+        "ref": "script"
+      },
+      "aqxr41s": {
+        "id": "aqxr41s",
+        "value": "file",
+        "ref": "arg"
+      },
+      "cnqbqcm": {
+        "id": "cnqbqcm",
+        "value": "THREE.BufferGeometryLoader",
+        "ref": "new"
+      },
+      "xmyi1yi": {
+        "id": "xmyi1yi",
+        "value": "return new GLTFLoader();",
+        "ref": "script"
+      },
+      "0xucdak": {
+        "id": "0xucdak",
+        "ref": "if"
+      },
+      "b9wjaqz": {
+        "id": "b9wjaqz",
+        "value": "file",
+        "ref": "arg"
+      }
+    },
+    "edges": {
+      "py60aki": {
+        "from": "py60aki",
+        "to": "r3wy7qr",
+        "as": "args"
+      },
+      "8ug5ygt": {
+        "from": "8ug5ygt",
+        "to": "r3wy7qr",
         "as": "display"
       },
+      "ddhuoh2": {
+        "from": "ddhuoh2",
+        "to": "0xucdak",
+        "as": "true"
+      },
+      "z9cjc2k": {
+        "from": "z9cjc2k",
+        "to": "py60aki",
+        "as": "_assetstate"
+      },
+      "v4zu63j": {
+        "from": "v4zu63j",
+        "to": "py60aki",
+        "as": "_manager"
+      },
+      "pdbinbg": {
+        "from": "pdbinbg",
+        "to": "v4zu63j",
+        "as": "assetname"
+      },
+      "6owogjm": {
+        "from": "6owogjm",
+        "to": "r3wy7qr",
+        "as": "value"
+      },
+      "cmrjgyv": {
+        "from": "cmrjgyv",
+        "to": "6owogjm",
+        "as": "args"
+      },
+      "kfyzav1": {
+        "from": "kfyzav1",
+        "to": "78983lz",
+        "as": "file"
+      },
+      "ju0gq9n": {
+        "from": "ju0gq9n",
+        "to": "kfyzav1",
+        "as": "target"
+      },
+      "78983lz": {
+        "from": "78983lz",
+        "to": "cmrjgyv",
+        "as": "file"
+      },
+      "nzdbmwo": {
+        "from": "nzdbmwo",
+        "to": "ddhuoh2",
+        "as": "gltf"
+      },
+      "6mnggoe": {
+        "from": "6mnggoe",
+        "to": "nzdbmwo",
+        "as": "file"
+      },
+      "n3lcnwc": {
+        "from": "n3lcnwc",
+        "to": "nzdbmwo",
+        "as": "gltfLoader"
+      },
+      "rxalntn": {
+        "from": "rxalntn",
+        "to": "65bdnhk",
+        "as": "target"
+      },
+      "65bdnhk": {
+        "from": "65bdnhk",
+        "to": "xmyi1yi",
+        "as": "GLTFLoader"
+      },
+      "mtjltoq": {
+        "from": "mtjltoq",
+        "to": "ddhuoh2",
+        "as": "buffergeo"
+      },
+      "ckl1s1u": {
+        "from": "ckl1s1u",
+        "to": "mtjltoq",
+        "as": "file"
+      },
+      "cgya4cs": {
+        "from": "cgya4cs",
+        "to": "ddhuoh2",
+        "as": "input"
+      },
+      "aqxr41s": {
+        "from": "aqxr41s",
+        "to": "cgya4cs",
+        "as": "file"
+      },
+      "cnqbqcm": {
+        "from": "cnqbqcm",
+        "to": "mtjltoq",
+        "as": "buffergeoLoader"
+      },
+      "xmyi1yi": {
+        "from": "xmyi1yi",
+        "to": "n3lcnwc",
+        "as": "value"
+      },
+      "0xucdak": {
+        "from": "0xucdak",
+        "to": "6owogjm",
+        "as": "value"
+      },
+      "b9wjaqz": {
+        "from": "b9wjaqz",
+        "to": "0xucdak",
+        "as": "pred"
+      }
+    },
+    "edges_in": {
+      "r3wy7qr": {
+        "py60aki": {
+          "from": "py60aki",
+          "to": "r3wy7qr",
+          "as": "args"
+        },
+        "8ug5ygt": {
+          "from": "8ug5ygt",
+          "to": "r3wy7qr",
+          "as": "display"
+        },
+        "6owogjm": {
+          "from": "6owogjm",
+          "to": "r3wy7qr",
+          "as": "value"
+        }
+      },
+      "0xucdak": {
+        "ddhuoh2": {
+          "from": "ddhuoh2",
+          "to": "0xucdak",
+          "as": "true"
+        },
+        "b9wjaqz": {
+          "from": "b9wjaqz",
+          "to": "0xucdak",
+          "as": "pred"
+        }
+      },
+      "py60aki": {
+        "z9cjc2k": {
+          "from": "z9cjc2k",
+          "to": "py60aki",
+          "as": "_assetstate"
+        },
+        "v4zu63j": {
+          "from": "v4zu63j",
+          "to": "py60aki",
+          "as": "_manager"
+        }
+      },
+      "v4zu63j": {
+        "pdbinbg": {
+          "from": "pdbinbg",
+          "to": "v4zu63j",
+          "as": "assetname"
+        }
+      },
+      "6owogjm": {
+        "cmrjgyv": {
+          "from": "cmrjgyv",
+          "to": "6owogjm",
+          "as": "args"
+        },
+        "0xucdak": {
+          "from": "0xucdak",
+          "to": "6owogjm",
+          "as": "value"
+        }
+      },
+      "78983lz": {
+        "kfyzav1": {
+          "from": "kfyzav1",
+          "to": "78983lz",
+          "as": "file"
+        }
+      },
+      "kfyzav1": {
+        "ju0gq9n": {
+          "from": "ju0gq9n",
+          "to": "kfyzav1",
+          "as": "target"
+        }
+      },
+      "cmrjgyv": {
+        "78983lz": {
+          "from": "78983lz",
+          "to": "cmrjgyv",
+          "as": "file"
+        }
+      },
+      "ddhuoh2": {
+        "nzdbmwo": {
+          "from": "nzdbmwo",
+          "to": "ddhuoh2",
+          "as": "gltf"
+        },
+        "mtjltoq": {
+          "from": "mtjltoq",
+          "to": "ddhuoh2",
+          "as": "buffergeo"
+        },
+        "cgya4cs": {
+          "from": "cgya4cs",
+          "to": "ddhuoh2",
+          "as": "input"
+        }
+      },
+      "nzdbmwo": {
+        "6mnggoe": {
+          "from": "6mnggoe",
+          "to": "nzdbmwo",
+          "as": "file"
+        },
+        "n3lcnwc": {
+          "from": "n3lcnwc",
+          "to": "nzdbmwo",
+          "as": "gltfLoader"
+        }
+      },
+      "65bdnhk": {
+        "rxalntn": {
+          "from": "rxalntn",
+          "to": "65bdnhk",
+          "as": "target"
+        }
+      },
+      "xmyi1yi": {
+        "65bdnhk": {
+          "from": "65bdnhk",
+          "to": "xmyi1yi",
+          "as": "GLTFLoader"
+        }
+      },
+      "mtjltoq": {
+        "ckl1s1u": {
+          "from": "ckl1s1u",
+          "to": "mtjltoq",
+          "as": "file"
+        },
+        "cnqbqcm": {
+          "from": "cnqbqcm",
+          "to": "mtjltoq",
+          "as": "buffergeoLoader"
+        }
+      },
+      "cgya4cs": {
+        "aqxr41s": {
+          "from": "aqxr41s",
+          "to": "cgya4cs",
+          "as": "file"
+        }
+      },
+      "n3lcnwc": {
+        "xmyi1yi": {
+          "from": "xmyi1yi",
+          "to": "n3lcnwc",
+          "as": "value"
+        }
+      }
+    }
+  },
+  {
+    "id": "@three.update_children",
+    "name": "@three.update_children",
+    "out": "tkxqh5a",
+    "nodes": {
+      "tkxqh5a": {
+        "id": "tkxqh5a",
+        "name": "@three.update_children",
+        "ref": "return"
+      },
+      "4n3yk4e": {
+        "id": "4n3yk4e",
+        "value": "parent.children.forEach(c => {\n  if(!argobjnames.includes(c.name)){\n    parent.remove(c);\n  }\n})\n\nreturn parent;",
+        "ref": "script"
+      },
+      "zlyzyjv": {
+        "id": "zlyzyjv"
+      },
+      "pnszphc": {
+        "id": "pnszphc",
+        "ref": "map"
+      },
+      "a23wspb": {
+        "id": "a23wspb",
+        "value": "parent",
+        "ref": "arg"
+      },
+      "grsb8qa": {
+        "id": "grsb8qa",
+        "ref": "runnable"
+      },
+      "49o12hh": {
+        "id": "49o12hh",
+        "value": "const existingObj = parent.getObjectByName(obj.name);\nif(obj && existingObj !== obj){\n  if(existingObj) {\n    parent.remove(existingObj);\n    existingObj.geometry?.dispose();\n    existingObj.material?.dispose();\n  }\n  parent.add(obj); \n}\nreturn obj.name;",
+        "name": "",
+        "ref": "script"
+      },
+      "5ljysw7": {
+        "id": "5ljysw7"
+      },
+      "qjadhr5": {
+        "id": "qjadhr5",
+        "value": "children",
+        "ref": "arg"
+      },
+      "ad6qpuc": {
+        "id": "ad6qpuc",
+        "value": "parent",
+        "ref": "arg"
+      },
+      "b3j4v9i": {
+        "id": "b3j4v9i",
+        "value": "element",
+        "ref": "arg"
+      },
+      "0zs05z2": {
+        "id": "0zs05z2"
+      }
+    },
+    "edges": {
+      "4n3yk4e": {
+        "from": "4n3yk4e",
+        "to": "tkxqh5a",
+        "as": "value"
+      },
+      "zlyzyjv": {
+        "from": "zlyzyjv",
+        "to": "tkxqh5a",
+        "as": "args"
+      },
+      "pnszphc": {
+        "from": "pnszphc",
+        "to": "4n3yk4e",
+        "as": "argobjnames"
+      },
+      "a23wspb": {
+        "from": "a23wspb",
+        "to": "4n3yk4e",
+        "as": "parent"
+      },
+      "grsb8qa": {
+        "from": "grsb8qa",
+        "to": "pnszphc",
+        "as": "fn"
+      },
+      "49o12hh": {
+        "from": "49o12hh",
+        "to": "grsb8qa",
+        "as": "fn"
+      },
+      "5ljysw7": {
+        "from": "5ljysw7",
+        "to": "grsb8qa",
+        "as": "parameters"
+      },
+      "qjadhr5": {
+        "from": "qjadhr5",
+        "to": "pnszphc",
+        "as": "array"
+      },
+      "ad6qpuc": {
+        "from": "ad6qpuc",
+        "to": "49o12hh",
+        "as": "parent"
+      },
+      "b3j4v9i": {
+        "from": "b3j4v9i",
+        "to": "49o12hh",
+        "as": "obj"
+      },
+      "0zs05z2": {
+        "from": "0zs05z2",
+        "to": "5ljysw7",
+        "as": "element"
+      }
+    },
+    "edges_in": {
+      "tkxqh5a": {
+        "4n3yk4e": {
+          "from": "4n3yk4e",
+          "to": "tkxqh5a",
+          "as": "value"
+        },
+        "zlyzyjv": {
+          "from": "zlyzyjv",
+          "to": "tkxqh5a",
+          "as": "args"
+        }
+      },
+      "4n3yk4e": {
+        "pnszphc": {
+          "from": "pnszphc",
+          "to": "4n3yk4e",
+          "as": "argobjnames"
+        },
+        "a23wspb": {
+          "from": "a23wspb",
+          "to": "4n3yk4e",
+          "as": "parent"
+        }
+      },
+      "pnszphc": {
+        "grsb8qa": {
+          "from": "grsb8qa",
+          "to": "pnszphc",
+          "as": "fn"
+        },
+        "qjadhr5": {
+          "from": "qjadhr5",
+          "to": "pnszphc",
+          "as": "array"
+        }
+      },
+      "grsb8qa": {
+        "49o12hh": {
+          "from": "49o12hh",
+          "to": "grsb8qa",
+          "as": "fn"
+        },
+        "5ljysw7": {
+          "from": "5ljysw7",
+          "to": "grsb8qa",
+          "as": "parameters"
+        }
+      },
+      "49o12hh": {
+        "ad6qpuc": {
+          "from": "ad6qpuc",
+          "to": "49o12hh",
+          "as": "parent"
+        },
+        "b3j4v9i": {
+          "from": "b3j4v9i",
+          "to": "49o12hh",
+          "as": "obj"
+        }
+      },
+      "5ljysw7": {
+        "0zs05z2": {
+          "from": "0zs05z2",
+          "to": "5ljysw7",
+          "as": "element"
+        }
+      }
+    }
+  },
+  {
+    "id": "@three.rigidbodysimulation",
+    "name": "@three.rigidbodysimulation",
+    "out": "frntsqg",
+    "nodes": {
+      "frntsqg": {
+        "id": "frntsqg",
+        "ref": "return",
+        "name": "@three.rigidbodysimulation"
+      },
+      "83lkbju": {
+        "id": "83lkbju"
+      },
+      "gvu1q6y": {
+        "id": "gvu1q6y",
+        "ref": "return"
+      },
+      "6hi7rw0": {
+        "id": "6hi7rw0",
+        "ref": "return"
+      },
+      "mwc8rm0": {
+        "id": "mwc8rm0",
+        "value": "geometry",
+        "ref": "arg"
+      },
+      "ozhnlv4": {
+        "id": "ozhnlv4"
+      },
+      "zeduey1": {
+        "id": "zeduey1"
+      },
+      "7pjdjwe": {
+        "id": "7pjdjwe"
+      },
+      "ao5fl0s": {
+        "id": "ao5fl0s",
+        "ref": "ap"
+      },
+      "ywzlpf4": {
+        "id": "ywzlpf4",
+        "ref": "cache"
+      },
+      "owjqtfn": {
+        "id": "owjqtfn",
+        "ref": "map"
+      },
+      "sjiatdj": {
+        "id": "sjiatdj",
+        "value": "world",
+        "ref": "arg"
+      },
+      "1i4pnz3": {
+        "id": "1i4pnz3",
+        "ref": "array"
+      },
+      "lh6scy9": {
+        "id": "lh6scy9",
+        "value": "let groundColliderDesc = _lib.rapier.ColliderDesc.cuboid(10.0, 0, 10.0);\n\nworld.createCollider(groundColliderDesc);\n\nreturn world;",
+        "ref": "script"
+      },
+      "8djx49x": {
+        "id": "8djx49x",
+        "ref": "runnable"
+      },
+      "69hpngq": {
+        "id": "69hpngq",
+        "value": "geometry",
+        "ref": "arg"
+      },
+      "s5oytwl": {
+        "id": "s5oytwl",
+        "ref": "runnable"
+      },
+      "8bs2khl": {
+        "id": "8bs2khl",
+        "ref": "runnable"
+      },
+      "w3zhyyl": {
+        "id": "w3zhyyl",
+        "value": "rapier.World",
+        "ref": "new"
+      },
+      "vqn95sa": {
+        "id": "vqn95sa"
+      },
+      "0fgeyce": {
+        "id": "0fgeyce",
+        "ref": "if"
+      },
+      "21wgox5": {
+        "id": "21wgox5",
+        "value": "step",
+        "ref": "call"
+      },
+      "d4ucj9i": {
+        "id": "d4ucj9i"
+      },
+      "anh8wqs": {
+        "id": "anh8wqs",
+        "ref": "map"
+      },
+      "m3ijsxk": {
+        "id": "m3ijsxk",
+        "ref": "array"
+      },
+      "qy3jq77": {
+        "id": "qy3jq77"
+      },
+      "sfuqrow": {
+        "id": "sfuqrow",
+        "value": "if(geometry){\nconst body =  geometry.userData?.kinematic ? _lib.rapier.RigidBodyDesc.kinematicPositionBased() :  _lib.rapier.RigidBodyDesc.dynamic()\n  .setLinearDamping(0.2);\nconst rb = world.createRigidBody(body);\nrb.setTranslation(geometry.position);\n\n  world.createCollider(collider, rb);\ngeometry.userData.rigidbodyHandle = rb.handle;\nreturn rb\n}",
+        "ref": "script"
+      },
+      "7ov8tko": {
+        "id": "7ov8tko",
+        "value": "return world.getRigidBody(rbhandle);",
+        "ref": "script"
+      },
+      "nru6wao": {
+        "id": "nru6wao",
+        "value": "element.userData.rigidbodyHandle",
+        "ref": "arg"
+      },
+      "rlibzs1": {
+        "id": "rlibzs1",
+        "value": "world",
+        "ref": "arg"
+      },
+      "dngwpkm": {
+        "id": "dngwpkm"
+      },
+      "ot9c6mz": {
+        "id": "ot9c6mz",
+        "ref": "runnable"
+      },
+      "jw9pl8x": {
+        "id": "jw9pl8x",
+        "value": "return objs.map((obj, i) => [obj, rbs[i]])",
+        "ref": "script"
+      },
+      "4wzidla": {
+        "id": "4wzidla"
+      },
+      "blrtm8w": {
+        "id": "blrtm8w",
+        "value": "world",
+        "ref": "arg"
+      },
+      "54em49h": {
+        "id": "54em49h",
+        "value": "element",
+        "ref": "arg"
+      },
+      "3zm5bbp": {
+        "id": "3zm5bbp",
+        "value": "const name = geoType.constructor.name;\nif(name && colliderTypeMap[name] && colliderParmMap[name]) {\nreturn _lib.rapier.ColliderDesc[colliderTypeMap[name]](...colliderParmMap[name]).setMass(mass);\n} else {\n  const pos = geo.getAttribute(\"position\");\n  const points = new Array(pos.count).fill(0).map((_, idx) => (new _lib.THREE.Vector3()).fromBufferAttribute(pos, idx));\n  return _lib.rapier.ColliderDesc. convexHull(pos.array).setMass(mass)\n}",
+        "ref": "script"
+      },
+      "g57d43u": {
+        "id": "g57d43u",
+        "value": "element.userData.rigidbodyHandle",
+        "ref": "arg"
+      },
+      "fts63kg": {
+        "id": "fts63kg",
+        "value": "world",
+        "ref": "arg"
+      },
+      "ixzjghn": {
+        "id": "ixzjghn",
+        "value": "const cube = crb[0]\nconst rb = crb[1]\n\nif(cube.userData.kinematic){  rb.setNextKinematicTranslation(cube.position);\n  rb.setNextKinematicRotation(cube.rotation);\n} else {\n  const pos = {...rb.translation()};\ncube.position.copy(pos);\n  cube.quaternion.copy(rb.rotation());\n\nrb.resetForces(true);\n\nif(force) {\nrb.addForce(force, true)\n}\n}\n ",
+        "ref": "script"
+      },
+      "5po9uvs": {
+        "id": "5po9uvs"
+      },
+      "jzjdu4d": {
+        "id": "jzjdu4d",
+        "value": "geometry",
+        "ref": "arg"
+      },
+      "c8a4hfm": {
+        "id": "c8a4hfm",
+        "value": "rbs",
+        "ref": "arg"
+      },
+      "03ns8ge": {
+        "id": "03ns8ge",
+        "value": "-9.81"
+      },
+      "u0a24rg": {
+        "id": "u0a24rg",
+        "value": "0"
+      },
+      "qt6lu54": {
+        "id": "qt6lu54",
+        "value": "0"
+      },
+      "8pky31m": {
+        "id": "8pky31m"
+      },
+      "enazdqb": {
+        "id": "enazdqb"
+      },
+      "e35ur0l": {
+        "id": "e35ur0l",
+        "value": "element.geometry",
+        "ref": "arg"
+      },
+      "73h3umc": {
+        "id": "73h3umc",
+        "value": "0.05"
+      },
+      "omfoh9h": {
+        "id": "omfoh9h",
+        "value": "world",
+        "ref": "arg"
+      },
+      "5ko6kz5": {
+        "id": "5ko6kz5",
+        "value": "element",
+        "ref": "arg"
+      },
+      "bgtr7ba": {
+        "id": "bgtr7ba",
+        "ref": "ap"
+      },
+      "ay63j9f": {
+        "id": "ay63j9f"
+      },
+      "ip2bi2m": {
+        "id": "ip2bi2m",
+        "value": "if(parms){\nreturn [parms.width * 0.5, parms.height * 0.5, parms.depth * 0.5];\n}",
+        "ref": "script"
+      },
+      "fkv7ias": {
+        "id": "fkv7ias",
+        "ref": "array"
+      },
+      "qf3uf1n": {
+        "id": "qf3uf1n",
+        "value": "if(parms){\nreturn [parms.height * 0.5, parms.radius];\n}",
+        "ref": "script"
+      },
+      "6cpx2wx": {
+        "id": "6cpx2wx",
+        "value": "ball"
+      },
+      "9ll3fkp": {
+        "id": "9ll3fkp",
+        "value": "cuboid"
+      },
+      "e1j2ta4": {
+        "id": "e1j2ta4",
+        "value": "cone"
+      },
+      "gzxbs76": {
+        "id": "gzxbs76",
+        "value": "updateForce",
+        "ref": "arg"
+      },
+      "i01a19a": {
+        "id": "i01a19a"
+      },
+      "83hzvsj": {
+        "id": "83hzvsj",
+        "value": "true"
+      },
+      "g54m47e": {
+        "id": "g54m47e",
+        "value": "element.geometry.parameters",
+        "ref": "arg"
+      },
+      "q106l34": {
+        "id": "q106l34",
+        "value": "element.geometry.parameters.radius",
+        "ref": "arg"
+      },
+      "qg0st8d": {
+        "id": "qg0st8d",
+        "value": "element.geometry.parameters",
+        "ref": "arg"
+      },
+      "iuggec5": {
+        "id": "iuggec5",
+        "value": "element.0",
+        "ref": "arg"
+      },
+      "5sy92ah": {
+        "id": "5sy92ah",
+        "value": "element.1",
+        "ref": "arg"
+      },
+      "t76ww4p": {
+        "id": "t76ww4p",
+        "value": "element.geometry",
+        "ref": "arg"
+      }
+    },
+    "edges": {
+      "83lkbju": {
+        "from": "83lkbju",
+        "to": "frntsqg",
+        "as": "args"
+      },
+      "gvu1q6y": {
+        "from": "gvu1q6y",
+        "to": "frntsqg",
+        "as": "value"
+      },
+      "6hi7rw0": {
+        "from": "6hi7rw0",
+        "to": "gvu1q6y",
+        "as": "args"
+      },
+      "mwc8rm0": {
+        "from": "mwc8rm0",
+        "to": "gvu1q6y",
+        "as": "value"
+      },
+      "ozhnlv4": {
+        "from": "ozhnlv4",
+        "to": "gvu1q6y",
+        "as": "subscribe"
+      },
+      "zeduey1": {
+        "from": "zeduey1",
+        "to": "6hi7rw0",
+        "as": "args"
+      },
+      "7pjdjwe": {
+        "from": "7pjdjwe",
+        "to": "6hi7rw0",
+        "as": "value"
+      },
+      "ao5fl0s": {
+        "from": "ao5fl0s",
+        "to": "ozhnlv4",
+        "as": "animationframe"
+      },
+      "ywzlpf4": {
+        "from": "ywzlpf4",
+        "to": "zeduey1",
+        "as": "world"
+      },
+      "owjqtfn": {
+        "from": "owjqtfn",
+        "to": "7pjdjwe",
+        "as": "rbs"
+      },
+      "sjiatdj": {
+        "from": "sjiatdj",
+        "to": "7pjdjwe",
+        "as": "world"
+      },
+      "1i4pnz3": {
+        "from": "1i4pnz3",
+        "to": "ao5fl0s",
+        "as": "fn"
+      },
+      "lh6scy9": {
+        "from": "lh6scy9",
+        "to": "ywzlpf4",
+        "as": "value"
+      },
+      "8djx49x": {
+        "from": "8djx49x",
+        "to": "owjqtfn",
+        "as": "fn"
+      },
+      "69hpngq": {
+        "from": "69hpngq",
+        "to": "owjqtfn",
+        "as": "array"
+      },
+      "s5oytwl": {
+        "from": "s5oytwl",
+        "to": "1i4pnz3",
+        "as": "arg1"
+      },
+      "8bs2khl": {
+        "from": "8bs2khl",
+        "to": "1i4pnz3",
+        "as": "arg3"
+      },
+      "w3zhyyl": {
+        "from": "w3zhyyl",
+        "to": "lh6scy9",
+        "as": "world"
+      },
+      "vqn95sa": {
+        "from": "vqn95sa",
+        "to": "8djx49x",
+        "as": "parameters"
+      },
+      "0fgeyce": {
+        "from": "0fgeyce",
+        "to": "8djx49x",
+        "as": "fn"
+      },
+      "21wgox5": {
+        "from": "21wgox5",
+        "to": "s5oytwl",
+        "as": "fn"
+      },
+      "d4ucj9i": {
+        "from": "d4ucj9i",
+        "to": "8bs2khl",
+        "as": "parameters"
+      },
+      "anh8wqs": {
+        "from": "anh8wqs",
+        "to": "8bs2khl",
+        "as": "fn"
+      },
+      "m3ijsxk": {
+        "from": "m3ijsxk",
+        "to": "w3zhyyl",
+        "as": "args"
+      },
+      "qy3jq77": {
+        "from": "qy3jq77",
+        "to": "vqn95sa",
+        "as": "element"
+      },
+      "sfuqrow": {
+        "from": "sfuqrow",
+        "to": "0fgeyce",
+        "as": "false"
+      },
+      "7ov8tko": {
+        "from": "7ov8tko",
+        "to": "0fgeyce",
+        "as": "true"
+      },
+      "nru6wao": {
+        "from": "nru6wao",
+        "to": "0fgeyce",
+        "as": "pred"
+      },
+      "rlibzs1": {
+        "from": "rlibzs1",
+        "to": "21wgox5",
+        "as": "self"
+      },
+      "dngwpkm": {
+        "from": "dngwpkm",
+        "to": "d4ucj9i",
+        "as": "objs"
+      },
+      "ot9c6mz": {
+        "from": "ot9c6mz",
+        "to": "anh8wqs",
+        "as": "fn"
+      },
+      "jw9pl8x": {
+        "from": "jw9pl8x",
+        "to": "anh8wqs",
+        "as": "array"
+      },
+      "4wzidla": {
+        "from": "4wzidla",
+        "to": "m3ijsxk",
+        "as": "arg0"
+      },
+      "blrtm8w": {
+        "from": "blrtm8w",
+        "to": "sfuqrow",
+        "as": "world"
+      },
+      "54em49h": {
+        "from": "54em49h",
+        "to": "sfuqrow",
+        "as": "geometry"
+      },
+      "3zm5bbp": {
+        "from": "3zm5bbp",
+        "to": "sfuqrow",
+        "as": "collider"
+      },
+      "g57d43u": {
+        "from": "g57d43u",
+        "to": "7ov8tko",
+        "as": "rbhandle"
+      },
+      "fts63kg": {
+        "from": "fts63kg",
+        "to": "7ov8tko",
+        "as": "world"
+      },
+      "ixzjghn": {
+        "from": "ixzjghn",
+        "to": "ot9c6mz",
+        "as": "fn"
+      },
+      "5po9uvs": {
+        "from": "5po9uvs",
+        "to": "ot9c6mz",
+        "as": "parameters"
+      },
+      "jzjdu4d": {
+        "from": "jzjdu4d",
+        "to": "jw9pl8x",
+        "as": "objs"
+      },
+      "c8a4hfm": {
+        "from": "c8a4hfm",
+        "to": "jw9pl8x",
+        "as": "rbs"
+      },
+      "03ns8ge": {
+        "from": "03ns8ge",
+        "to": "4wzidla",
+        "as": "y"
+      },
+      "u0a24rg": {
+        "from": "u0a24rg",
+        "to": "4wzidla",
+        "as": "x"
+      },
+      "qt6lu54": {
+        "from": "qt6lu54",
+        "to": "4wzidla",
+        "as": "z"
+      },
+      "8pky31m": {
+        "from": "8pky31m",
+        "to": "3zm5bbp",
+        "as": "colliderParmMap"
+      },
+      "enazdqb": {
+        "from": "enazdqb",
+        "to": "3zm5bbp",
+        "as": "colliderTypeMap"
+      },
+      "e35ur0l": {
+        "from": "e35ur0l",
+        "to": "3zm5bbp",
+        "as": "geoType"
+      },
+      "73h3umc": {
+        "from": "73h3umc",
+        "to": "3zm5bbp",
+        "as": "mass"
+      },
+      "omfoh9h": {
+        "from": "omfoh9h",
+        "to": "ixzjghn",
+        "as": "world"
+      },
+      "5ko6kz5": {
+        "from": "5ko6kz5",
+        "to": "ixzjghn",
+        "as": "crb"
+      },
+      "bgtr7ba": {
+        "from": "bgtr7ba",
+        "to": "ixzjghn",
+        "as": "force"
+      },
+      "ay63j9f": {
+        "from": "ay63j9f",
+        "to": "5po9uvs",
+        "as": "element"
+      },
+      "ip2bi2m": {
+        "from": "ip2bi2m",
+        "to": "8pky31m",
+        "as": "BoxGeometry"
+      },
+      "fkv7ias": {
+        "from": "fkv7ias",
+        "to": "8pky31m",
+        "as": "SphereGeometry"
+      },
+      "qf3uf1n": {
+        "from": "qf3uf1n",
+        "to": "8pky31m",
+        "as": "ConeGeometry"
+      },
+      "6cpx2wx": {
+        "from": "6cpx2wx",
+        "to": "enazdqb",
+        "as": "SphereGeometry"
+      },
+      "9ll3fkp": {
+        "from": "9ll3fkp",
+        "to": "enazdqb",
+        "as": "BoxGeometry"
+      },
+      "e1j2ta4": {
+        "from": "e1j2ta4",
+        "to": "enazdqb",
+        "as": "ConeGeometry"
+      },
+      "gzxbs76": {
+        "from": "gzxbs76",
+        "to": "bgtr7ba",
+        "as": "fn"
+      },
+      "i01a19a": {
+        "from": "i01a19a",
+        "to": "bgtr7ba",
+        "as": "args"
+      },
+      "83hzvsj": {
+        "from": "83hzvsj",
+        "to": "bgtr7ba",
+        "as": "run"
+      },
+      "g54m47e": {
+        "from": "g54m47e",
+        "to": "ip2bi2m",
+        "as": "parms"
+      },
+      "q106l34": {
+        "from": "q106l34",
+        "to": "fkv7ias",
+        "as": "parms"
+      },
+      "qg0st8d": {
+        "from": "qg0st8d",
+        "to": "qf3uf1n",
+        "as": "parms"
+      },
+      "iuggec5": {
+        "from": "iuggec5",
+        "to": "i01a19a",
+        "as": "object3d"
+      },
+      "5sy92ah": {
+        "from": "5sy92ah",
+        "to": "i01a19a",
+        "as": "rigidbody"
+      },
+      "t76ww4p": {
+        "from": "t76ww4p",
+        "to": "3zm5bbp",
+        "as": "geo"
+      }
+    },
+    "edges_in": {
+      "frntsqg": {
+        "83lkbju": {
+          "from": "83lkbju",
+          "to": "frntsqg",
+          "as": "args"
+        },
+        "gvu1q6y": {
+          "from": "gvu1q6y",
+          "to": "frntsqg",
+          "as": "value"
+        }
+      },
+      "gvu1q6y": {
+        "6hi7rw0": {
+          "from": "6hi7rw0",
+          "to": "gvu1q6y",
+          "as": "args"
+        },
+        "mwc8rm0": {
+          "from": "mwc8rm0",
+          "to": "gvu1q6y",
+          "as": "value"
+        },
+        "ozhnlv4": {
+          "from": "ozhnlv4",
+          "to": "gvu1q6y",
+          "as": "subscribe"
+        }
+      },
+      "6hi7rw0": {
+        "zeduey1": {
+          "from": "zeduey1",
+          "to": "6hi7rw0",
+          "as": "args"
+        },
+        "7pjdjwe": {
+          "from": "7pjdjwe",
+          "to": "6hi7rw0",
+          "as": "value"
+        }
+      },
+      "ozhnlv4": {
+        "ao5fl0s": {
+          "from": "ao5fl0s",
+          "to": "ozhnlv4",
+          "as": "animationframe"
+        }
+      },
+      "zeduey1": {
+        "ywzlpf4": {
+          "from": "ywzlpf4",
+          "to": "zeduey1",
+          "as": "world"
+        }
+      },
+      "7pjdjwe": {
+        "owjqtfn": {
+          "from": "owjqtfn",
+          "to": "7pjdjwe",
+          "as": "rbs"
+        },
+        "sjiatdj": {
+          "from": "sjiatdj",
+          "to": "7pjdjwe",
+          "as": "world"
+        }
+      },
+      "ao5fl0s": {
+        "1i4pnz3": {
+          "from": "1i4pnz3",
+          "to": "ao5fl0s",
+          "as": "fn"
+        }
+      },
+      "ywzlpf4": {
+        "lh6scy9": {
+          "from": "lh6scy9",
+          "to": "ywzlpf4",
+          "as": "value"
+        }
+      },
+      "owjqtfn": {
+        "8djx49x": {
+          "from": "8djx49x",
+          "to": "owjqtfn",
+          "as": "fn"
+        },
+        "69hpngq": {
+          "from": "69hpngq",
+          "to": "owjqtfn",
+          "as": "array"
+        }
+      },
+      "1i4pnz3": {
+        "s5oytwl": {
+          "from": "s5oytwl",
+          "to": "1i4pnz3",
+          "as": "arg1"
+        },
+        "8bs2khl": {
+          "from": "8bs2khl",
+          "to": "1i4pnz3",
+          "as": "arg3"
+        }
+      },
+      "lh6scy9": {
+        "w3zhyyl": {
+          "from": "w3zhyyl",
+          "to": "lh6scy9",
+          "as": "world"
+        }
+      },
+      "8djx49x": {
+        "vqn95sa": {
+          "from": "vqn95sa",
+          "to": "8djx49x",
+          "as": "parameters"
+        },
+        "0fgeyce": {
+          "from": "0fgeyce",
+          "to": "8djx49x",
+          "as": "fn"
+        }
+      },
+      "s5oytwl": {
+        "21wgox5": {
+          "from": "21wgox5",
+          "to": "s5oytwl",
+          "as": "fn"
+        }
+      },
+      "8bs2khl": {
+        "d4ucj9i": {
+          "from": "d4ucj9i",
+          "to": "8bs2khl",
+          "as": "parameters"
+        },
+        "anh8wqs": {
+          "from": "anh8wqs",
+          "to": "8bs2khl",
+          "as": "fn"
+        }
+      },
+      "w3zhyyl": {
+        "m3ijsxk": {
+          "from": "m3ijsxk",
+          "to": "w3zhyyl",
+          "as": "args"
+        }
+      },
+      "vqn95sa": {
+        "qy3jq77": {
+          "from": "qy3jq77",
+          "to": "vqn95sa",
+          "as": "element"
+        }
+      },
+      "0fgeyce": {
+        "sfuqrow": {
+          "from": "sfuqrow",
+          "to": "0fgeyce",
+          "as": "false"
+        },
+        "7ov8tko": {
+          "from": "7ov8tko",
+          "to": "0fgeyce",
+          "as": "true"
+        },
+        "nru6wao": {
+          "from": "nru6wao",
+          "to": "0fgeyce",
+          "as": "pred"
+        }
+      },
+      "21wgox5": {
+        "rlibzs1": {
+          "from": "rlibzs1",
+          "to": "21wgox5",
+          "as": "self"
+        }
+      },
+      "d4ucj9i": {
+        "dngwpkm": {
+          "from": "dngwpkm",
+          "to": "d4ucj9i",
+          "as": "objs"
+        }
+      },
+      "anh8wqs": {
+        "ot9c6mz": {
+          "from": "ot9c6mz",
+          "to": "anh8wqs",
+          "as": "fn"
+        },
+        "jw9pl8x": {
+          "from": "jw9pl8x",
+          "to": "anh8wqs",
+          "as": "array"
+        }
+      },
+      "m3ijsxk": {
+        "4wzidla": {
+          "from": "4wzidla",
+          "to": "m3ijsxk",
+          "as": "arg0"
+        }
+      },
+      "sfuqrow": {
+        "blrtm8w": {
+          "from": "blrtm8w",
+          "to": "sfuqrow",
+          "as": "world"
+        },
+        "54em49h": {
+          "from": "54em49h",
+          "to": "sfuqrow",
+          "as": "geometry"
+        },
+        "3zm5bbp": {
+          "from": "3zm5bbp",
+          "to": "sfuqrow",
+          "as": "collider"
+        }
+      },
+      "7ov8tko": {
+        "g57d43u": {
+          "from": "g57d43u",
+          "to": "7ov8tko",
+          "as": "rbhandle"
+        },
+        "fts63kg": {
+          "from": "fts63kg",
+          "to": "7ov8tko",
+          "as": "world"
+        }
+      },
+      "ot9c6mz": {
+        "ixzjghn": {
+          "from": "ixzjghn",
+          "to": "ot9c6mz",
+          "as": "fn"
+        },
+        "5po9uvs": {
+          "from": "5po9uvs",
+          "to": "ot9c6mz",
+          "as": "parameters"
+        }
+      },
+      "jw9pl8x": {
+        "jzjdu4d": {
+          "from": "jzjdu4d",
+          "to": "jw9pl8x",
+          "as": "objs"
+        },
+        "c8a4hfm": {
+          "from": "c8a4hfm",
+          "to": "jw9pl8x",
+          "as": "rbs"
+        }
+      },
+      "4wzidla": {
+        "03ns8ge": {
+          "from": "03ns8ge",
+          "to": "4wzidla",
+          "as": "y"
+        },
+        "u0a24rg": {
+          "from": "u0a24rg",
+          "to": "4wzidla",
+          "as": "x"
+        },
+        "qt6lu54": {
+          "from": "qt6lu54",
+          "to": "4wzidla",
+          "as": "z"
+        }
+      },
+      "3zm5bbp": {
+        "8pky31m": {
+          "from": "8pky31m",
+          "to": "3zm5bbp",
+          "as": "colliderParmMap"
+        },
+        "enazdqb": {
+          "from": "enazdqb",
+          "to": "3zm5bbp",
+          "as": "colliderTypeMap"
+        },
+        "e35ur0l": {
+          "from": "e35ur0l",
+          "to": "3zm5bbp",
+          "as": "geoType"
+        },
+        "73h3umc": {
+          "from": "73h3umc",
+          "to": "3zm5bbp",
+          "as": "mass"
+        },
+        "t76ww4p": {
+          "from": "t76ww4p",
+          "to": "3zm5bbp",
+          "as": "geo"
+        }
+      },
+      "ixzjghn": {
+        "omfoh9h": {
+          "from": "omfoh9h",
+          "to": "ixzjghn",
+          "as": "world"
+        },
+        "5ko6kz5": {
+          "from": "5ko6kz5",
+          "to": "ixzjghn",
+          "as": "crb"
+        },
+        "bgtr7ba": {
+          "from": "bgtr7ba",
+          "to": "ixzjghn",
+          "as": "force"
+        }
+      },
+      "5po9uvs": {
+        "ay63j9f": {
+          "from": "ay63j9f",
+          "to": "5po9uvs",
+          "as": "element"
+        }
+      },
+      "8pky31m": {
+        "ip2bi2m": {
+          "from": "ip2bi2m",
+          "to": "8pky31m",
+          "as": "BoxGeometry"
+        },
+        "fkv7ias": {
+          "from": "fkv7ias",
+          "to": "8pky31m",
+          "as": "SphereGeometry"
+        },
+        "qf3uf1n": {
+          "from": "qf3uf1n",
+          "to": "8pky31m",
+          "as": "ConeGeometry"
+        }
+      },
+      "enazdqb": {
+        "6cpx2wx": {
+          "from": "6cpx2wx",
+          "to": "enazdqb",
+          "as": "SphereGeometry"
+        },
+        "9ll3fkp": {
+          "from": "9ll3fkp",
+          "to": "enazdqb",
+          "as": "BoxGeometry"
+        },
+        "e1j2ta4": {
+          "from": "e1j2ta4",
+          "to": "enazdqb",
+          "as": "ConeGeometry"
+        }
+      },
+      "bgtr7ba": {
+        "gzxbs76": {
+          "from": "gzxbs76",
+          "to": "bgtr7ba",
+          "as": "fn"
+        },
+        "i01a19a": {
+          "from": "i01a19a",
+          "to": "bgtr7ba",
+          "as": "args"
+        },
+        "83hzvsj": {
+          "from": "83hzvsj",
+          "to": "bgtr7ba",
+          "as": "run"
+        }
+      },
+      "ip2bi2m": {
+        "g54m47e": {
+          "from": "g54m47e",
+          "to": "ip2bi2m",
+          "as": "parms"
+        }
+      },
+      "fkv7ias": {
+        "q106l34": {
+          "from": "q106l34",
+          "to": "fkv7ias",
+          "as": "parms"
+        }
+      },
+      "qf3uf1n": {
+        "qg0st8d": {
+          "from": "qg0st8d",
+          "to": "qf3uf1n",
+          "as": "parms"
+        }
+      },
+      "i01a19a": {
+        "iuggec5": {
+          "from": "iuggec5",
+          "to": "i01a19a",
+          "as": "object3d"
+        },
+        "5sy92ah": {
+          "from": "5sy92ah",
+          "to": "i01a19a",
+          "as": "rigidbody"
+        }
+      }
+    }
+  },
+  {
+    "id": "@three.mesh",
+    "out": "out",
+    "nodes": {
+      "args": {
+        "id": "args"
+      },
+      "output_val": {
+        "id": "output_val",
+        "ref": "if"
+      },
+      "out": {
+        "id": "out",
+        "ref": "return",
+        "name": "@three.mesh"
+      },
+      "euzoog2": {
+        "id": "euzoog2",
+        "value": "geometry",
+        "ref": "arg"
+      },
+      "husdoy4": {
+        "id": "husdoy4",
+        "ref": "cache"
+      },
+      "5nudo40": {
+        "id": "5nudo40",
+        "value": "THREE.Mesh",
+        "ref": "new"
+      },
+      "h9a5ot3": {
+        "id": "h9a5ot3",
+        "ref": "array"
+      },
+      "r9ngnn4": {
+        "id": "r9ngnn4",
+        "value": "geometry",
+        "ref": "arg"
+      },
+      "xuoy9bd": {
+        "id": "xuoy9bd",
+        "value": "material",
+        "ref": "arg"
+      }
+    },
+    "edges": {
       "output_val": {
         "from": "output_val",
         "to": "out",
@@ -569,6 +6454,76 @@
         "from": "args",
         "to": "out",
         "as": "args"
+      },
+      "euzoog2": {
+        "from": "euzoog2",
+        "to": "output_val",
+        "as": "pred"
+      },
+      "5nudo40": {
+        "from": "5nudo40",
+        "to": "output_val",
+        "as": "true"
+      },
+      "h9a5ot3": {
+        "from": "h9a5ot3",
+        "to": "5nudo40",
+        "as": "args"
+      },
+      "r9ngnn4": {
+        "from": "r9ngnn4",
+        "to": "h9a5ot3",
+        "as": "arg0"
+      },
+      "xuoy9bd": {
+        "from": "xuoy9bd",
+        "to": "h9a5ot3",
+        "as": "arg1"
+      }
+    },
+    "edges_in": {
+      "out": {
+        "output_val": {
+          "from": "output_val",
+          "to": "out",
+          "as": "value"
+        },
+        "args": {
+          "from": "args",
+          "to": "out",
+          "as": "args"
+        }
+      },
+      "output_val": {
+        "euzoog2": {
+          "from": "euzoog2",
+          "to": "output_val",
+          "as": "pred"
+        },
+        "5nudo40": {
+          "from": "5nudo40",
+          "to": "output_val",
+          "as": "true"
+        }
+      },
+      "5nudo40": {
+        "h9a5ot3": {
+          "from": "h9a5ot3",
+          "to": "5nudo40",
+          "as": "args"
+        }
+      },
+      "h9a5ot3": {
+        "r9ngnn4": {
+          "from": "r9ngnn4",
+          "to": "h9a5ot3",
+          "as": "arg0"
+        },
+        "xuoy9bd": {
+          "from": "xuoy9bd",
+          "to": "h9a5ot3",
+          "as": "arg1"
+        }
       }
     }
   },
@@ -614,6 +6569,29 @@
         "to": "main/out",
         "as": "value"
       }
+    },
+    "edges_in": {
+      "ojdupq6": {
+        "x4zdk2w": {
+          "from": "x4zdk2w",
+          "to": "ojdupq6",
+          "as": "value"
+        }
+      },
+      "x4zdk2w": {
+        "bfr8z38": {
+          "from": "bfr8z38",
+          "to": "x4zdk2w",
+          "as": "THREE"
+        }
+      },
+      "main/out": {
+        "ojdupq6": {
+          "from": "ojdupq6",
+          "to": "main/out",
+          "as": "value"
+        }
+      }
     }
   },
   {
@@ -623,15 +6601,24 @@
       "args": {
         "id": "args"
       },
+      "vjfgmrl": {
+        "id": "vjfgmrl",
+        "value": "https://cdn.jsdelivr.net/npm/three/build/three.module.js",
+        "ref": "import_module"
+      },
+      "n79e1ca": {
+        "id": "n79e1ca",
+        "ref": "cache"
+      },
       "qvf3y0y": {
         "id": "qvf3y0y",
-        "value": "return window.innerWidth",
-        "ref": "script"
+        "value": "canvas.width",
+        "ref": "arg"
       },
       "11u8kd6": {
         "id": "11u8kd6",
-        "value": "return window.innerHeight",
-        "ref": "script"
+        "value": "canvas.height",
+        "ref": "arg"
       },
       "ojdupq6": {
         "id": "ojdupq6",
@@ -640,7 +6627,7 @@
       },
       "x4zdk2w": {
         "id": "x4zdk2w",
-        "value": "return new THREE.PerspectiveCamera( 75, width / height, 0.1, 1000 );",
+        "value": "return new _lib.THREE.PerspectiveCamera( 75, width / height, 0.1, 1000 );",
         "ref": "script"
       },
       "bfr8z38": {
@@ -662,6 +6649,11 @@
         "to": "main/out",
         "as": "args"
       },
+      "vjfgmrl": {
+        "from": "vjfgmrl",
+        "to": "n79e1ca",
+        "as": "value"
+      },
       "x4zdk2w": {
         "from": "x4zdk2w",
         "to": "ojdupq6",
@@ -677,15 +6669,62 @@
         "to": "x4zdk2w",
         "as": "height"
       },
-      "bfr8z38": {
-        "from": "bfr8z38",
-        "to": "x4zdk2w",
+      "n79e1ca": {
+        "from": "n79e1ca",
+        "to": "args",
         "as": "THREE"
       },
       "ojdupq6": {
         "from": "ojdupq6",
         "to": "main/out",
         "as": "value"
+      }
+    },
+    "edges_in": {
+      "main/out": {
+        "args": {
+          "from": "args",
+          "to": "main/out",
+          "as": "args"
+        },
+        "ojdupq6": {
+          "from": "ojdupq6",
+          "to": "main/out",
+          "as": "value"
+        }
+      },
+      "n79e1ca": {
+        "vjfgmrl": {
+          "from": "vjfgmrl",
+          "to": "n79e1ca",
+          "as": "value"
+        }
+      },
+      "ojdupq6": {
+        "x4zdk2w": {
+          "from": "x4zdk2w",
+          "to": "ojdupq6",
+          "as": "value"
+        }
+      },
+      "x4zdk2w": {
+        "qvf3y0y": {
+          "from": "qvf3y0y",
+          "to": "x4zdk2w",
+          "as": "width"
+        },
+        "11u8kd6": {
+          "from": "11u8kd6",
+          "to": "x4zdk2w",
+          "as": "height"
+        }
+      },
+      "args": {
+        "n79e1ca": {
+          "from": "n79e1ca",
+          "to": "args",
+          "as": "THREE"
+        }
       }
     }
   },
@@ -712,7 +6751,7 @@
       },
       "x4zdk2w": {
         "id": "x4zdk2w",
-        "value": "console.log(\"creating renderer\")\nconsole.log(canvas)\nreturn new THREE.WebGLRenderer({canvas})",
+        "value": "const renderer = new _lib.THREE.WebGLRenderer({canvas});\nrenderer.shadowMap.enabled = true;\nrenderer.shadowMap.type = _lib.THREE.PCFSoftShadowMap\nconsole.log(\"created renderer\", renderer)\nreturn renderer",
         "ref": "script"
       },
       "lihjkfp": {
@@ -726,11 +6765,6 @@
       }
     },
     "edges": {
-      "bfr8z38": {
-        "from": "bfr8z38",
-        "to": "x4zdk2w",
-        "as": "THREE"
-      },
       "cwl59lh": {
         "from": "cwl59lh",
         "to": "x4zdk2w",
@@ -750,6 +6784,34 @@
         "from": "eyftv46",
         "to": "lihjkfp",
         "as": "pred"
+      }
+    },
+    "edges_in": {
+      "x4zdk2w": {
+        "cwl59lh": {
+          "from": "cwl59lh",
+          "to": "x4zdk2w",
+          "as": "canvas"
+        }
+      },
+      "lihjkfp": {
+        "x4zdk2w": {
+          "from": "x4zdk2w",
+          "to": "lihjkfp",
+          "as": "true"
+        },
+        "eyftv46": {
+          "from": "eyftv46",
+          "to": "lihjkfp",
+          "as": "pred"
+        }
+      },
+      "main/out": {
+        "lihjkfp": {
+          "from": "lihjkfp",
+          "to": "main/out",
+          "as": "value"
+        }
       }
     }
   },
@@ -794,6 +6856,29 @@
         "from": "ojdupq6",
         "to": "main/out",
         "as": "value"
+      }
+    },
+    "edges_in": {
+      "ojdupq6": {
+        "x4zdk2w": {
+          "from": "x4zdk2w",
+          "to": "ojdupq6",
+          "as": "value"
+        }
+      },
+      "x4zdk2w": {
+        "bfr8z38": {
+          "from": "bfr8z38",
+          "to": "x4zdk2w",
+          "as": "THREE"
+        }
+      },
+      "main/out": {
+        "ojdupq6": {
+          "from": "ojdupq6",
+          "to": "main/out",
+          "as": "value"
+        }
       }
     }
   },
@@ -905,9 +6990,7 @@
         "ref": "script"
       },
       "iwzvdj8": {
-        "id": "iwzvdj8",
-        "value": "const item_size = 3;\n\n// Object.entries(inputgeo.attributes)\n//   .forEach(kv => {\n//     initgeo.setAttribute(kv[0], kv[0] === attribute ? inputgeo.getAttribute(kv[0]).clone() : inputgeo.getAttribute(kv[0]));\n//     });\nif(!feedback || initgeo.getAttribute(\"position\")?.count === 0) {\n  initgeo.copy(inputgeo);\n}\n\nif(!initgeo.hasAttribute(attribute) || initgeo.getAttribute(attribute)?.count !== inputgeo.getAttribute(\"position\")?.count) {\n  initbuffer.buffer = new _lib.THREE.BufferAttribute(new Float32Array(inputgeo.getAttribute(\"position\").count * item_size), item_size);\n}\n\nif(!inputgeo.hasAttribute(attribute)) {\n  initgeo.setAttribute(attribute, initbuffer.buffer.clone());\n}\n\nconst attrs = Object.keys(initgeo.attributes);\nconst count = initgeo.getAttribute(\"position\").count;\nconst point_data = {};\n\nif (feedback) {\n  attrs.forEach(attr => {\n    if (attr !== attribute) {\n      initgeo.getAttribute(attr)\n          .copy(inputgeo.getAttribute(attr))\n    }\n  })\n}\n\n\nfor(let i = 0; i < count; i++){\n  attrs.forEach(attr => {\n  point_data[attr] = initgeo.getAttribute(attr).array.subarray(i * item_size, (i + 1) * item_size);\n    })\n  fn({point_data, index: i})\n}\n\ninitgeo.getAttribute(attribute).needsUpdate = true;\n\n//console.log(inputgeo);\n//console.log(initgeo);\n\nreturn initgeo;",
-        "ref": "script"
+        "id": "iwzvdj8"
       },
       "ph7ugf6": {
         "id": "ph7ugf6",
@@ -984,6 +7067,181 @@
         "id": "dmibl2m",
         "value": "_feedback.state",
         "ref": "arg"
+      },
+      "y6jnnhr": {
+        "id": "y6jnnhr",
+        "value": "feedback",
+        "ref": "html_text"
+      },
+      "16s251p": {
+        "id": "16s251p",
+        "ref": "html_element"
+      },
+      "ril0xrx": {
+        "id": "ril0xrx",
+        "ref": "array"
+      },
+      "apdh5jc": {
+        "id": "apdh5jc",
+        "ref": "html_element"
+      },
+      "aygb0oi": {
+        "id": "aygb0oi",
+        "ref": "array"
+      },
+      "302jicy": {
+        "id": "302jicy",
+        "value": "input",
+        "ref": "html_element"
+      },
+      "pk1bbc4": {
+        "id": "pk1bbc4"
+      },
+      "t9zciub": {
+        "id": "t9zciub",
+        "value": "_animframe.state",
+        "ref": "arg"
+      },
+      "0tgg4sp": {
+        "id": "0tgg4sp",
+        "ref": "ap"
+      },
+      "43bg3g9": {
+        "id": "43bg3g9"
+      },
+      "nxcfe4q": {
+        "id": "nxcfe4q",
+        "value": "event.target.checked",
+        "ref": "arg"
+      },
+      "5bfpjjf": {
+        "id": "5bfpjjf",
+        "value": "_animframe.set",
+        "ref": "arg"
+      },
+      "aj17mw0": {
+        "id": "aj17mw0",
+        "value": "checkbox"
+      },
+      "1tx5wnh": {
+        "id": "1tx5wnh",
+        "value": "update",
+        "ref": "html_text"
+      },
+      "lsmnhra": {
+        "id": "lsmnhra",
+        "ref": "state"
+      },
+      "rob86ty": {
+        "id": "rob86ty",
+        "ref": "return"
+      },
+      "7rukx50": {
+        "id": "7rukx50",
+        "ref": "create_fn"
+      },
+      "na5dq7p": {
+        "id": "na5dq7p",
+        "ref": "runnable"
+      },
+      "l59yoji": {
+        "id": "l59yoji",
+        "value": "const item_size = 3;\n\n// Object.entries(inputgeo.attributes)\n//   .forEach(kv => {\n//     initgeo.setAttribute(kv[0], kv[0] === attribute ? inputgeo.getAttribute(kv[0]).clone() : inputgeo.getAttribute(kv[0]));\n//     });\nif(!feedback || initgeo.getAttribute(\"position\")?.count === 0) {\n  initgeo.copy(inputgeo);\n}\n\nif(!initgeo.hasAttribute(attribute) || initgeo.getAttribute(attribute)?.count !== inputgeo.getAttribute(\"position\")?.count) {\n  initbuffer.buffer = new _lib.THREE.BufferAttribute(new Float32Array(inputgeo.getAttribute(\"position\").count * item_size), item_size);\n}\n\nif(!inputgeo.hasAttribute(attribute)) {\n  initgeo.setAttribute(attribute, initbuffer.buffer.clone());\n}\n\nconst attrs = Object.keys(initgeo.attributes);\nconst count = initgeo.getAttribute(\"position\").count;\nconst point_data = {};\n\nif (feedback) {\n  attrs.forEach(attr => {\n    if (attr !== attribute) {\n      initgeo.getAttribute(attr)\n          .copy(inputgeo.getAttribute(attr))\n    }\n  })\n}\n\n\nfor(let i = 0; i < count; i++){\n  attrs.forEach(attr => {\n  point_data[attr] = initgeo.getAttribute(attr).array.subarray(i * item_size, (i + 1) * item_size);\n    })\n  fn({point_data, index: i})\n}\n\ninitgeo.getAttribute(attribute).needsUpdate = true;\n\n//console.log(inputgeo);\n//console.log(initgeo);\n\nreturn initgeo;",
+        "ref": "script"
+      },
+      "x442pdq": {
+        "id": "x442pdq",
+        "value": "_fn",
+        "ref": "arg"
+      },
+      "9y9ya6h": {
+        "id": "9y9ya6h",
+        "value": "inputgeo",
+        "ref": "arg"
+      },
+      "sj0uocl": {
+        "id": "sj0uocl",
+        "value": "attribute",
+        "ref": "arg"
+      },
+      "mdgsecr": {
+        "id": "mdgsecr",
+        "value": "feedback",
+        "ref": "arg"
+      },
+      "pbkuqjb": {
+        "id": "pbkuqjb",
+        "value": "initgeo",
+        "ref": "arg"
+      },
+      "2kxm8s0": {
+        "id": "2kxm8s0",
+        "value": "initbuffer",
+        "ref": "arg"
+      },
+      "x47a409": {
+        "id": "x47a409",
+        "ref": "state"
+      },
+      "r6wokll": {
+        "id": "r6wokll",
+        "ref": "return"
+      },
+      "t2sphn1": {
+        "id": "t2sphn1"
+      },
+      "o7qw0bz": {
+        "id": "o7qw0bz",
+        "value": "return inputgeo && inputgeostate !== inputgeo;",
+        "ref": "script"
+      },
+      "u4r1p4a": {
+        "id": "u4r1p4a",
+        "value": "_inputgeostate.state",
+        "ref": "arg"
+      },
+      "it63myc": {
+        "id": "it63myc",
+        "value": "inputgeo",
+        "ref": "arg"
+      },
+      "axr72nd": {
+        "id": "axr72nd",
+        "value": "return arg0;",
+        "ref": "script"
+      },
+      "vn2sh9e": {
+        "id": "vn2sh9e",
+        "ref": "return"
+      },
+      "1bqfz6p": {
+        "id": "1bqfz6p"
+      },
+      "dzvblfn": {
+        "id": "dzvblfn"
+      },
+      "8dy8qvc": {
+        "id": "8dy8qvc",
+        "ref": "runnable"
+      },
+      "s710e67": {
+        "id": "s710e67",
+        "value": "_initgeo",
+        "ref": "arg"
+      },
+      "8itq35i": {
+        "id": "8itq35i",
+        "value": "update();",
+        "ref": "script"
+      },
+      "16witq1": {
+        "id": "16witq1",
+        "value": "_updatefn",
+        "ref": "arg"
+      },
+      "d05t5pf": {
+        "id": "d05t5pf",
+        "ref": "graphchangecache"
       }
     },
     "edges": {
@@ -1002,17 +7260,9 @@
         "to": "p9plj5n",
         "as": "text"
       },
-      "p9plj5n": {
-        "from": "p9plj5n",
-        "as": "arg0"
-      },
-      "ffp87am": {
-        "from": "ffp87am",
-        "as": "arg1"
-      },
       "yai4q6q": {
         "from": "yai4q6q",
-        "to": "8dy573e",
+        "to": "16s251p",
         "as": "children"
       },
       "cgtq1da": {
@@ -1067,8 +7317,8 @@
       },
       "iwzvdj8": {
         "from": "iwzvdj8",
-        "to": "out",
-        "as": "value"
+        "to": "rob86ty",
+        "as": "args"
       },
       "buoyv1q": {
         "from": "buoyv1q",
@@ -1103,7 +7353,7 @@
       "ph7ugf6": {
         "from": "ph7ugf6",
         "to": "iwzvdj8",
-        "as": "fn"
+        "as": "_fn"
       },
       "ai1ckv5": {
         "from": "ai1ckv5",
@@ -1189,6 +7439,691 @@
         "from": "dmibl2m",
         "to": "sxj40l7",
         "as": "value"
+      },
+      "y6jnnhr": {
+        "from": "y6jnnhr",
+        "to": "yai4q6q",
+        "as": "arg1"
+      },
+      "16s251p": {
+        "from": "16s251p",
+        "to": "ril0xrx",
+        "as": "arg0"
+      },
+      "ril0xrx": {
+        "from": "ril0xrx",
+        "to": "8dy573e",
+        "as": "children"
+      },
+      "apdh5jc": {
+        "from": "apdh5jc",
+        "to": "ril0xrx",
+        "as": "arg1"
+      },
+      "aygb0oi": {
+        "from": "aygb0oi",
+        "to": "apdh5jc",
+        "as": "children"
+      },
+      "pk1bbc4": {
+        "from": "pk1bbc4",
+        "to": "302jicy",
+        "as": "props"
+      },
+      "aj17mw0": {
+        "from": "aj17mw0",
+        "to": "pk1bbc4",
+        "as": "type"
+      },
+      "0tgg4sp": {
+        "from": "0tgg4sp",
+        "to": "pk1bbc4",
+        "as": "onchange"
+      },
+      "t9zciub": {
+        "from": "t9zciub",
+        "to": "pk1bbc4",
+        "as": "checked"
+      },
+      "5bfpjjf": {
+        "from": "5bfpjjf",
+        "to": "0tgg4sp",
+        "as": "fn"
+      },
+      "43bg3g9": {
+        "from": "43bg3g9",
+        "to": "0tgg4sp",
+        "as": "args"
+      },
+      "nxcfe4q": {
+        "from": "nxcfe4q",
+        "to": "43bg3g9",
+        "as": "value"
+      },
+      "302jicy": {
+        "from": "302jicy",
+        "to": "aygb0oi",
+        "as": "arg0"
+      },
+      "1tx5wnh": {
+        "from": "1tx5wnh",
+        "to": "aygb0oi",
+        "as": "arg1"
+      },
+      "lsmnhra": {
+        "from": "lsmnhra",
+        "to": "args",
+        "as": "_animframe"
+      },
+      "rob86ty": {
+        "from": "rob86ty",
+        "to": "dzvblfn",
+        "as": "_updatefn"
+      },
+      "7rukx50": {
+        "from": "7rukx50",
+        "to": "axr72nd",
+        "as": "arg0"
+      },
+      "na5dq7p": {
+        "from": "na5dq7p",
+        "to": "7rukx50",
+        "as": "runnable"
+      },
+      "l59yoji": {
+        "from": "l59yoji",
+        "to": "na5dq7p",
+        "as": "fn"
+      },
+      "x442pdq": {
+        "from": "x442pdq",
+        "to": "l59yoji",
+        "as": "fn"
+      },
+      "9y9ya6h": {
+        "from": "9y9ya6h",
+        "to": "l59yoji",
+        "as": "inputgeo"
+      },
+      "sj0uocl": {
+        "from": "sj0uocl",
+        "to": "l59yoji",
+        "as": "attribute"
+      },
+      "mdgsecr": {
+        "from": "mdgsecr",
+        "to": "l59yoji",
+        "as": "feedback"
+      },
+      "pbkuqjb": {
+        "from": "pbkuqjb",
+        "to": "l59yoji",
+        "as": "initgeo"
+      },
+      "2kxm8s0": {
+        "from": "2kxm8s0",
+        "to": "l59yoji",
+        "as": "initbuffer"
+      },
+      "x47a409": {
+        "from": "x47a409",
+        "to": "iwzvdj8",
+        "as": "_inputgeostate"
+      },
+      "r6wokll": {
+        "from": "r6wokll",
+        "to": "rob86ty",
+        "as": "value"
+      },
+      "t2sphn1": {
+        "from": "t2sphn1",
+        "to": "r6wokll",
+        "as": "args"
+      },
+      "it63myc": {
+        "from": "it63myc",
+        "to": "o7qw0bz",
+        "as": "inputgeo"
+      },
+      "u4r1p4a": {
+        "from": "u4r1p4a",
+        "to": "o7qw0bz",
+        "as": "inputgeostate"
+      },
+      "o7qw0bz": {
+        "from": "o7qw0bz",
+        "to": "t2sphn1",
+        "as": "recache"
+      },
+      "axr72nd": {
+        "from": "axr72nd",
+        "to": "r6wokll",
+        "as": "value"
+      },
+      "vn2sh9e": {
+        "from": "vn2sh9e",
+        "to": "out",
+        "as": "value"
+      },
+      "1bqfz6p": {
+        "from": "1bqfz6p",
+        "to": "vn2sh9e",
+        "as": "subscribe"
+      },
+      "dzvblfn": {
+        "from": "dzvblfn",
+        "to": "vn2sh9e",
+        "as": "args"
+      },
+      "8dy8qvc": {
+        "from": "8dy8qvc",
+        "to": "1bqfz6p",
+        "as": "animationframe"
+      },
+      "s710e67": {
+        "from": "s710e67",
+        "to": "vn2sh9e",
+        "as": "value"
+      },
+      "8itq35i": {
+        "from": "8itq35i",
+        "to": "8dy8qvc",
+        "as": "fn"
+      },
+      "16witq1": {
+        "from": "16witq1",
+        "to": "d05t5pf",
+        "as": "value"
+      },
+      "d05t5pf": {
+        "from": "d05t5pf",
+        "to": "8itq35i",
+        "as": "update"
+      }
+    },
+    "edges_in": {
+      "out": {
+        "8dy573e": {
+          "from": "8dy573e",
+          "to": "out",
+          "as": "display"
+        },
+        "args": {
+          "from": "args",
+          "to": "out",
+          "as": "args"
+        },
+        "vn2sh9e": {
+          "from": "vn2sh9e",
+          "to": "out",
+          "as": "value"
+        }
+      },
+      "p9plj5n": {
+        "wc64ttm": {
+          "from": "wc64ttm",
+          "to": "p9plj5n",
+          "as": "text"
+        }
+      },
+      "16s251p": {
+        "yai4q6q": {
+          "from": "yai4q6q",
+          "to": "16s251p",
+          "as": "children"
+        }
+      },
+      "ffp87am": {
+        "cgtq1da": {
+          "from": "cgtq1da",
+          "to": "ffp87am",
+          "as": "onchange"
+        }
+      },
+      "cgtq1da": {
+        "rr0o319": {
+          "from": "rr0o319",
+          "to": "cgtq1da",
+          "as": "fn"
+        },
+        "o47d2kv": {
+          "from": "o47d2kv",
+          "to": "cgtq1da",
+          "as": "args"
+        }
+      },
+      "o47d2kv": {
+        "gljdsjo": {
+          "from": "gljdsjo",
+          "to": "o47d2kv",
+          "as": "value"
+        }
+      },
+      "iwzvdj8": {
+        "nd6zslm": {
+          "from": "nd6zslm",
+          "to": "iwzvdj8",
+          "as": "initgeo"
+        },
+        "u36qh21": {
+          "from": "u36qh21",
+          "to": "iwzvdj8",
+          "as": "initbuffer"
+        },
+        "buoyv1q": {
+          "from": "buoyv1q",
+          "to": "iwzvdj8",
+          "as": "inputgeo"
+        },
+        "ay1mgi1": {
+          "from": "ay1mgi1",
+          "to": "iwzvdj8",
+          "as": "attribute"
+        },
+        "ph7ugf6": {
+          "from": "ph7ugf6",
+          "to": "iwzvdj8",
+          "as": "_fn"
+        },
+        "sxj40l7": {
+          "from": "sxj40l7",
+          "to": "iwzvdj8",
+          "as": "feedback"
+        },
+        "x47a409": {
+          "from": "x47a409",
+          "to": "iwzvdj8",
+          "as": "_inputgeostate"
+        }
+      },
+      "u36qh21": {
+        "scte9zo": {
+          "from": "scte9zo",
+          "to": "u36qh21",
+          "as": "value"
+        }
+      },
+      "scte9zo": {
+        "cisb6j6": {
+          "from": "cisb6j6",
+          "to": "scte9zo",
+          "as": "buffer"
+        }
+      },
+      "my9677p": {
+        "gjr14z1": {
+          "from": "gjr14z1",
+          "to": "my9677p",
+          "as": "runnable"
+        }
+      },
+      "3viy8mt": {
+        "e7gu67v": {
+          "from": "e7gu67v",
+          "to": "3viy8mt",
+          "as": "value"
+        }
+      },
+      "rob86ty": {
+        "iwzvdj8": {
+          "from": "iwzvdj8",
+          "to": "rob86ty",
+          "as": "args"
+        },
+        "r6wokll": {
+          "from": "r6wokll",
+          "to": "rob86ty",
+          "as": "value"
+        }
+      },
+      "ay1mgi1": {
+        "vio1bz1": {
+          "from": "vio1bz1",
+          "to": "ay1mgi1",
+          "as": "otherwise"
+        },
+        "orkrdzx": {
+          "from": "orkrdzx",
+          "to": "ay1mgi1",
+          "as": "value"
+        }
+      },
+      "vio1bz1": {
+        "y2ley4r": {
+          "from": "y2ley4r",
+          "to": "vio1bz1",
+          "as": "value"
+        },
+        "b9gexfo": {
+          "from": "b9gexfo",
+          "to": "vio1bz1",
+          "as": "otherwise"
+        }
+      },
+      "ph7ugf6": {
+        "ai1ckv5": {
+          "from": "ai1ckv5",
+          "to": "ph7ugf6",
+          "as": "pred"
+        },
+        "my9677p": {
+          "from": "my9677p",
+          "to": "ph7ugf6",
+          "as": "false"
+        },
+        "h923zl1": {
+          "from": "h923zl1",
+          "to": "ph7ugf6",
+          "as": "true"
+        }
+      },
+      "ai1ckv5": {
+        "9nre5m4": {
+          "from": "9nre5m4",
+          "to": "ai1ckv5",
+          "as": "fn"
+        }
+      },
+      "args": {
+        "3viy8mt": {
+          "from": "3viy8mt",
+          "to": "args",
+          "as": "_initgeo"
+        },
+        "st1qot0": {
+          "from": "st1qot0",
+          "to": "args",
+          "as": "_feedback"
+        },
+        "lsmnhra": {
+          "from": "lsmnhra",
+          "to": "args",
+          "as": "_animframe"
+        }
+      },
+      "yai4q6q": {
+        "ha9sbe6": {
+          "from": "ha9sbe6",
+          "to": "yai4q6q",
+          "as": "arg0"
+        },
+        "y6jnnhr": {
+          "from": "y6jnnhr",
+          "to": "yai4q6q",
+          "as": "arg1"
+        }
+      },
+      "ha9sbe6": {
+        "1oskoai": {
+          "from": "1oskoai",
+          "to": "ha9sbe6",
+          "as": "props"
+        }
+      },
+      "1oskoai": {
+        "qapcl0i": {
+          "from": "qapcl0i",
+          "to": "1oskoai",
+          "as": "type"
+        },
+        "dtp36mu": {
+          "from": "dtp36mu",
+          "to": "1oskoai",
+          "as": "onchange"
+        },
+        "vkwxqas": {
+          "from": "vkwxqas",
+          "to": "1oskoai",
+          "as": "checked"
+        }
+      },
+      "dtp36mu": {
+        "8uiwk65": {
+          "from": "8uiwk65",
+          "to": "dtp36mu",
+          "as": "fn"
+        },
+        "1eft9yl": {
+          "from": "1eft9yl",
+          "to": "dtp36mu",
+          "as": "args"
+        }
+      },
+      "1eft9yl": {
+        "mrpotq6": {
+          "from": "mrpotq6",
+          "to": "1eft9yl",
+          "as": "value"
+        }
+      },
+      "sxj40l7": {
+        "vc8bnz3": {
+          "from": "vc8bnz3",
+          "to": "sxj40l7",
+          "as": "otherwise"
+        },
+        "dmibl2m": {
+          "from": "dmibl2m",
+          "to": "sxj40l7",
+          "as": "value"
+        }
+      },
+      "ril0xrx": {
+        "16s251p": {
+          "from": "16s251p",
+          "to": "ril0xrx",
+          "as": "arg0"
+        },
+        "apdh5jc": {
+          "from": "apdh5jc",
+          "to": "ril0xrx",
+          "as": "arg1"
+        }
+      },
+      "8dy573e": {
+        "ril0xrx": {
+          "from": "ril0xrx",
+          "to": "8dy573e",
+          "as": "children"
+        }
+      },
+      "apdh5jc": {
+        "aygb0oi": {
+          "from": "aygb0oi",
+          "to": "apdh5jc",
+          "as": "children"
+        }
+      },
+      "302jicy": {
+        "pk1bbc4": {
+          "from": "pk1bbc4",
+          "to": "302jicy",
+          "as": "props"
+        }
+      },
+      "pk1bbc4": {
+        "aj17mw0": {
+          "from": "aj17mw0",
+          "to": "pk1bbc4",
+          "as": "type"
+        },
+        "0tgg4sp": {
+          "from": "0tgg4sp",
+          "to": "pk1bbc4",
+          "as": "onchange"
+        },
+        "t9zciub": {
+          "from": "t9zciub",
+          "to": "pk1bbc4",
+          "as": "checked"
+        }
+      },
+      "0tgg4sp": {
+        "5bfpjjf": {
+          "from": "5bfpjjf",
+          "to": "0tgg4sp",
+          "as": "fn"
+        },
+        "43bg3g9": {
+          "from": "43bg3g9",
+          "to": "0tgg4sp",
+          "as": "args"
+        }
+      },
+      "43bg3g9": {
+        "nxcfe4q": {
+          "from": "nxcfe4q",
+          "to": "43bg3g9",
+          "as": "value"
+        }
+      },
+      "aygb0oi": {
+        "302jicy": {
+          "from": "302jicy",
+          "to": "aygb0oi",
+          "as": "arg0"
+        },
+        "1tx5wnh": {
+          "from": "1tx5wnh",
+          "to": "aygb0oi",
+          "as": "arg1"
+        }
+      },
+      "dzvblfn": {
+        "rob86ty": {
+          "from": "rob86ty",
+          "to": "dzvblfn",
+          "as": "_updatefn"
+        }
+      },
+      "axr72nd": {
+        "7rukx50": {
+          "from": "7rukx50",
+          "to": "axr72nd",
+          "as": "arg0"
+        }
+      },
+      "7rukx50": {
+        "na5dq7p": {
+          "from": "na5dq7p",
+          "to": "7rukx50",
+          "as": "runnable"
+        }
+      },
+      "na5dq7p": {
+        "l59yoji": {
+          "from": "l59yoji",
+          "to": "na5dq7p",
+          "as": "fn"
+        }
+      },
+      "l59yoji": {
+        "x442pdq": {
+          "from": "x442pdq",
+          "to": "l59yoji",
+          "as": "fn"
+        },
+        "9y9ya6h": {
+          "from": "9y9ya6h",
+          "to": "l59yoji",
+          "as": "inputgeo"
+        },
+        "sj0uocl": {
+          "from": "sj0uocl",
+          "to": "l59yoji",
+          "as": "attribute"
+        },
+        "mdgsecr": {
+          "from": "mdgsecr",
+          "to": "l59yoji",
+          "as": "feedback"
+        },
+        "pbkuqjb": {
+          "from": "pbkuqjb",
+          "to": "l59yoji",
+          "as": "initgeo"
+        },
+        "2kxm8s0": {
+          "from": "2kxm8s0",
+          "to": "l59yoji",
+          "as": "initbuffer"
+        }
+      },
+      "r6wokll": {
+        "t2sphn1": {
+          "from": "t2sphn1",
+          "to": "r6wokll",
+          "as": "args"
+        },
+        "axr72nd": {
+          "from": "axr72nd",
+          "to": "r6wokll",
+          "as": "value"
+        }
+      },
+      "o7qw0bz": {
+        "it63myc": {
+          "from": "it63myc",
+          "to": "o7qw0bz",
+          "as": "inputgeo"
+        },
+        "u4r1p4a": {
+          "from": "u4r1p4a",
+          "to": "o7qw0bz",
+          "as": "inputgeostate"
+        }
+      },
+      "t2sphn1": {
+        "o7qw0bz": {
+          "from": "o7qw0bz",
+          "to": "t2sphn1",
+          "as": "recache"
+        }
+      },
+      "vn2sh9e": {
+        "1bqfz6p": {
+          "from": "1bqfz6p",
+          "to": "vn2sh9e",
+          "as": "subscribe"
+        },
+        "dzvblfn": {
+          "from": "dzvblfn",
+          "to": "vn2sh9e",
+          "as": "args"
+        },
+        "s710e67": {
+          "from": "s710e67",
+          "to": "vn2sh9e",
+          "as": "value"
+        }
+      },
+      "1bqfz6p": {
+        "8dy8qvc": {
+          "from": "8dy8qvc",
+          "to": "1bqfz6p",
+          "as": "animationframe"
+        }
+      },
+      "8dy8qvc": {
+        "8itq35i": {
+          "from": "8itq35i",
+          "to": "8dy8qvc",
+          "as": "fn"
+        }
+      },
+      "d05t5pf": {
+        "16witq1": {
+          "from": "16witq1",
+          "to": "d05t5pf",
+          "as": "value"
+        }
+      },
+      "8itq35i": {
+        "d05t5pf": {
+          "from": "d05t5pf",
+          "to": "8itq35i",
+          "as": "update"
+        }
       }
     }
   },
@@ -1498,10 +8433,202 @@
         "to": "ibmy4bt",
         "as": "fn"
       }
+    },
+    "edges_in": {
+      "main/out": {
+        "args": {
+          "from": "args",
+          "to": "main/out",
+          "as": "args"
+        },
+        "jklqh38": {
+          "from": "jklqh38",
+          "to": "main/out",
+          "as": "display"
+        }
+      },
+      "8dy573e": {
+        "n7aaoju": {
+          "from": "n7aaoju",
+          "to": "8dy573e",
+          "as": "children"
+        },
+        "zihm1kd": {
+          "from": "zihm1kd",
+          "to": "8dy573e",
+          "as": "props"
+        }
+      },
+      "jklqh38": {
+        "6qkew20": {
+          "from": "6qkew20",
+          "to": "jklqh38",
+          "as": "children"
+        }
+      },
+      "args": {
+        "tad7830": {
+          "from": "tad7830",
+          "to": "args",
+          "as": "namespace"
+        },
+        "3b7bnzm": {
+          "from": "3b7bnzm",
+          "to": "args",
+          "as": "hrefstate"
+        }
+      },
+      "jdoak4g": {
+        "jdufmth": {
+          "from": "jdufmth",
+          "to": "jdoak4g",
+          "as": "ns"
+        }
+      },
+      "6qkew20": {
+        "pcx97n4": {
+          "from": "pcx97n4",
+          "to": "6qkew20",
+          "as": "arg2"
+        },
+        "3y8pyc2": {
+          "from": "3y8pyc2",
+          "to": "6qkew20",
+          "as": "arg3"
+        },
+        "8dy573e": {
+          "from": "8dy573e",
+          "to": "6qkew20",
+          "as": "arg4"
+        }
+      },
+      "pcx97n4": {
+        "rk7hcxc": {
+          "from": "rk7hcxc",
+          "to": "pcx97n4",
+          "as": "props"
+        }
+      },
+      "rk7hcxc": {
+        "b8wohxv": {
+          "from": "b8wohxv",
+          "to": "rk7hcxc",
+          "as": "type"
+        },
+        "x200f4j": {
+          "from": "x200f4j",
+          "to": "rk7hcxc",
+          "as": "list"
+        },
+        "91lhfar": {
+          "from": "91lhfar",
+          "to": "rk7hcxc",
+          "as": "onchange"
+        }
+      },
+      "3y8pyc2": {
+        "et5g0m1": {
+          "from": "et5g0m1",
+          "to": "3y8pyc2",
+          "as": "children"
+        },
+        "xdot36k": {
+          "from": "xdot36k",
+          "to": "3y8pyc2",
+          "as": "props"
+        }
+      },
+      "et5g0m1": {
+        "9tv13iq": {
+          "from": "9tv13iq",
+          "to": "et5g0m1",
+          "as": "array"
+        },
+        "2yur4h7": {
+          "from": "2yur4h7",
+          "to": "et5g0m1",
+          "as": "fn"
+        }
+      },
+      "xp4pv1h": {
+        "dd6st1b": {
+          "from": "dd6st1b",
+          "to": "xp4pv1h",
+          "as": "element"
+        }
+      },
+      "2yur4h7": {
+        "1edrrwq": {
+          "from": "1edrrwq",
+          "to": "2yur4h7",
+          "as": "fn"
+        }
+      },
+      "1edrrwq": {
+        "skqnl08": {
+          "from": "skqnl08",
+          "to": "1edrrwq",
+          "as": "children"
+        }
+      },
+      "skqnl08": {
+        "xp4pv1h": {
+          "from": "xp4pv1h",
+          "to": "skqnl08",
+          "as": "text"
+        }
+      },
+      "xdot36k": {
+        "tfwqhqf": {
+          "from": "tfwqhqf",
+          "to": "xdot36k",
+          "as": "id"
+        }
+      },
+      "91lhfar": {
+        "898n6f7": {
+          "from": "898n6f7",
+          "to": "91lhfar",
+          "as": "arg0"
+        }
+      },
+      "898n6f7": {
+        "9jvfgj1": {
+          "from": "9jvfgj1",
+          "to": "898n6f7",
+          "as": "fn"
+        },
+        "j2c518b": {
+          "from": "j2c518b",
+          "to": "898n6f7",
+          "as": "args"
+        }
+      },
+      "j2c518b": {
+        "qpiqhgp": {
+          "from": "qpiqhgp",
+          "to": "j2c518b",
+          "as": "value"
+        }
+      },
+      "zihm1kd": {
+        "ibmy4bt": {
+          "from": "ibmy4bt",
+          "to": "zihm1kd",
+          "as": "onclick"
+        }
+      },
+      "ibmy4bt": {
+        "jdoak4g": {
+          "from": "jdoak4g",
+          "to": "ibmy4bt",
+          "as": "fn"
+        }
+      }
     }
   },
   {
-    "id": "@three.mesh",
+    "id": "@three.instanced_mesh",
     "out": "out",
     "nodes": {
       "args": {
@@ -1514,35 +8641,181 @@
       "out": {
         "id": "out",
         "ref": "return",
-        "name": "@three.mesh"
+        "name": "@three.instanced_mesh"
       },
       "euzoog2": {
         "id": "euzoog2",
         "value": "geometry",
         "ref": "arg"
       },
-      "husdoy4": {
-        "id": "husdoy4",
+      "xhfqi8j": {
+        "id": "xhfqi8j",
+        "value": "const position = pointGeo.getAttribute(\"position\");\nconst scale = pointGeo.getAttribute(\"scale\");\nconst rotation = pointGeo.getAttribute(\"rotation\");\n\n\nconst m = new _lib.THREE.Matrix4();\nconst p = new _lib.THREE.Vector3();\nconst s = new _lib.THREE.Vector3(1, 1, 1);\nconst e = new _lib.THREE.Euler();\nconst r = new _lib.THREE.Quaternion();\n\nfor(let i = 0; i < position.count; i++) {\n  p.fromBufferAttribute(position, i)\n  if(scale) {\n    if(scale.itemSize === 3) {\n      if(scale.getY(i) === 0 && scale.getZ(i) === 0) {\n        s.set(scale.getX(i), scale.getX(i), scale.getX(i));\n      } else {\n        s.fromBufferAttribute(scale, i);\n      }\n    } else if (scale.itemSize === 1) {\n      s.set(scale.getX(i), scale.getX(i), scale.getX(i));\n    }\n  }\n\n  if (rotation) {\n    if(rotation.itemSize === 3) {\n      e.set(rotation.getX(i), rotation.getY(i), rotation.getZ(i), 'XYZ');\n      r.setFromEuler(e)\n    } else if(rotation.itemSize === 4) {\n      r.fromBufferAttribute(rotation, i);\n    }\n  }\n  \n  m.compose(p, r, s);\n  instancedMesh.setMatrixAt(i, m);\n}\n\ninstancedMesh.instanceMatrix.needsUpdate = true;\n\nreturn instancedMesh;",
+        "ref": "script"
+      },
+      "gx1pkou": {
+        "id": "gx1pkou",
+        "value": "points_geometry",
+        "ref": "arg"
+      },
+      "01519ne": {
+        "id": "01519ne",
+        "value": "return geo && pgeo?.getAttribute(\"position\")?.count",
+        "ref": "script"
+      },
+      "pnvtdew": {
+        "id": "pnvtdew",
+        "value": "points_geometry",
+        "ref": "arg"
+      },
+      "eupgmhq": {
+        "id": "eupgmhq",
+        "ref": "return"
+      },
+      "tikoz6d": {
+        "id": "tikoz6d"
+      },
+      "8tspg8g": {
+        "id": "8tspg8g",
+        "ref": "runnable"
+      },
+      "igjfrk8": {
+        "id": "igjfrk8"
+      },
+      "9xjhsf2": {
+        "id": "9xjhsf2",
         "ref": "cache"
       },
-      "5nudo40": {
-        "id": "5nudo40",
-        "value": "THREE.Mesh",
+      "vqnjrq1": {
+        "id": "vqnjrq1",
+        "value": "THREE.InstancedMesh",
         "ref": "new"
       },
-      "h9a5ot3": {
-        "id": "h9a5ot3",
+      "u4bko6w": {
+        "id": "u4bko6w",
         "ref": "array"
       },
-      "r9ngnn4": {
-        "id": "r9ngnn4",
+      "dp2azrs": {
+        "id": "dp2azrs",
+        "value": "count",
+        "ref": "get"
+      },
+      "smi1t6k": {
+        "id": "smi1t6k",
+        "value": "getAttribute",
+        "ref": "call"
+      },
+      "63aq975": {
+        "id": "63aq975",
+        "ref": "array"
+      },
+      "9fi1zj6": {
+        "id": "9fi1zj6",
+        "value": "position"
+      },
+      "auq55xm": {
+        "id": "auq55xm",
+        "value": "points_geometry",
+        "ref": "arg"
+      },
+      "w9ba3wm": {
+        "id": "w9ba3wm",
+        "value": "material",
+        "ref": "arg"
+      },
+      "bq7aqpk": {
+        "id": "bq7aqpk",
         "value": "geometry",
         "ref": "arg"
       },
-      "xuoy9bd": {
-        "id": "xuoy9bd",
+      "30rflcf": {
+        "id": "30rflcf",
+        "value": "instancedMesh",
+        "ref": "arg"
+      },
+      "6eoi6m8": {
+        "id": "6eoi6m8",
+        "value": "instancedMesh",
+        "ref": "arg"
+      },
+      "cm6n3xo": {
+        "id": "cm6n3xo",
+        "ref": "return"
+      },
+      "dhw9f6u": {
+        "id": "dhw9f6u"
+      },
+      "onvagyp": {
+        "id": "onvagyp",
+        "ref": "graphchangecachelocal"
+      },
+      "sfxguax": {
+        "id": "sfxguax",
+        "value": "THREE.InstancedMesh",
+        "ref": "new"
+      },
+      "frzt9qp": {
+        "id": "frzt9qp",
+        "ref": "array"
+      },
+      "ccadeww": {
+        "id": "ccadeww",
         "value": "material",
         "ref": "arg"
+      },
+      "vb31opk": {
+        "id": "vb31opk",
+        "value": "geometry",
+        "ref": "arg"
+      },
+      "ymz9ufc": {
+        "id": "ymz9ufc",
+        "value": "count",
+        "ref": "get"
+      },
+      "4r33hl3": {
+        "id": "4r33hl3",
+        "value": "getAttribute",
+        "ref": "call"
+      },
+      "j93x0er": {
+        "id": "j93x0er",
+        "ref": "array"
+      },
+      "v1y2tr4": {
+        "id": "v1y2tr4",
+        "value": "position"
+      },
+      "5200xg9": {
+        "id": "5200xg9",
+        "value": "pgeo",
+        "ref": "arg"
+      },
+      "dffqzdm": {
+        "id": "dffqzdm"
+      },
+      "2cu5t1i": {
+        "id": "2cu5t1i",
+        "ref": "runnable"
+      },
+      "4we6p9h": {
+        "id": "4we6p9h",
+        "value": "instancedMesh",
+        "ref": "arg"
+      },
+      "clb02f6": {
+        "id": "clb02f6",
+        "value": "instancedMesh",
+        "ref": "arg"
+      },
+      "1kid3zd": {
+        "id": "1kid3zd",
+        "value": "points_geometry",
+        "ref": "arg"
+      },
+      "f8ysyb5": {
+        "id": "f8ysyb5",
+        "ref": "graphchangecachelocal"
       }
     },
     "edges": {
@@ -1558,129 +8831,253 @@
       },
       "euzoog2": {
         "from": "euzoog2",
+        "to": "01519ne",
+        "as": "geo"
+      },
+      "xhfqi8j": {
+        "from": "xhfqi8j",
+        "to": "8tspg8g",
+        "as": "fn"
+      },
+      "gx1pkou": {
+        "from": "gx1pkou",
+        "to": "xhfqi8j",
+        "as": "pointGeo"
+      },
+      "01519ne": {
+        "from": "01519ne",
         "to": "output_val",
         "as": "pred"
       },
-      "husdoy4": {
-        "from": "husdoy4",
+      "pnvtdew": {
+        "from": "pnvtdew",
+        "to": "01519ne",
+        "as": "pgeo"
+      },
+      "eupgmhq": {
+        "from": "eupgmhq",
         "to": "output_val",
         "as": "true"
       },
-      "5nudo40": {
-        "from": "5nudo40",
-        "to": "husdoy4",
-        "as": "value"
+      "tikoz6d": {
+        "from": "tikoz6d",
+        "to": "eupgmhq",
+        "as": "subscribe"
       },
-      "h9a5ot3": {
-        "from": "h9a5ot3",
-        "to": "5nudo40",
+      "8tspg8g": {
+        "from": "8tspg8g",
+        "to": "tikoz6d",
+        "as": "animationframe"
+      },
+      "igjfrk8": {
+        "from": "igjfrk8",
+        "to": "eupgmhq",
         "as": "args"
       },
-      "r9ngnn4": {
-        "from": "r9ngnn4",
-        "to": "h9a5ot3",
+      "vqnjrq1": {
+        "from": "vqnjrq1",
+        "to": "9xjhsf2",
+        "as": "value"
+      },
+      "u4bko6w": {
+        "from": "u4bko6w",
+        "to": "vqnjrq1",
+        "as": "args"
+      },
+      "bq7aqpk": {
+        "from": "bq7aqpk",
+        "to": "u4bko6w",
         "as": "arg0"
       },
-      "xuoy9bd": {
-        "from": "xuoy9bd",
-        "to": "h9a5ot3",
+      "w9ba3wm": {
+        "from": "w9ba3wm",
+        "to": "u4bko6w",
         "as": "arg1"
-      }
-    }
-  },
-  {
-    "id": "@three.update_position",
-    "name": "@three.update_position",
-    "out": "85ca6kk",
-    "nodes": {
-      "85ca6kk": {
-        "id": "85ca6kk",
-        "name": "@three.update_position",
-        "ref": "return"
       },
-      "t2oo2w2": {
-        "id": "t2oo2w2",
-        "value": "position",
-        "ref": "@three.modify_attribute"
+      "dp2azrs": {
+        "from": "dp2azrs",
+        "to": "u4bko6w",
+        "as": "arg2"
       },
-      "pu6r1wt": {
-        "id": "pu6r1wt"
+      "smi1t6k": {
+        "from": "smi1t6k",
+        "to": "dp2azrs",
+        "as": "target"
       },
-      "lqp7o13": {
-        "id": "lqp7o13",
-        "ref": "runnable"
+      "auq55xm": {
+        "from": "auq55xm",
+        "to": "smi1t6k",
+        "as": "self"
       },
-      "5xsve23": {
-        "id": "5xsve23",
-        "value": "geo",
-        "ref": "arg"
+      "63aq975": {
+        "from": "63aq975",
+        "to": "smi1t6k",
+        "as": "args"
       },
-      "uqnka6f": {
-        "id": "uqnka6f",
-        "value": "true"
+      "9fi1zj6": {
+        "from": "9fi1zj6",
+        "to": "63aq975",
+        "as": "arg0"
       },
-      "yww2wir": {
-        "id": "yww2wir"
+      "9xjhsf2": {
+        "from": "9xjhsf2",
+        "to": "igjfrk8",
+        "as": "instancedMesh"
       },
-      "56vngd9": {
-        "id": "56vngd9",
-        "value": "pd.position[0] += pd.velocity[0];\npd.position[1] += pd.velocity[1];\npd.position[2] += pd.velocity[2];",
-        "ref": "script"
+      "30rflcf": {
+        "from": "30rflcf",
+        "to": "xhfqi8j",
+        "as": "instancedMesh"
       },
-      "gv4m9ja": {
-        "id": "gv4m9ja"
-      },
-      "iq70jau": {
-        "id": "iq70jau",
-        "value": "point_data",
-        "ref": "arg"
+      "6eoi6m8": {
+        "from": "6eoi6m8",
+        "to": "eupgmhq",
+        "as": "value"
       }
     },
-    "edges": {
-      "t2oo2w2": {
-        "from": "t2oo2w2",
-        "to": "85ca6kk",
-        "as": "value"
+    "edges_in": {
+      "out": {
+        "output_val": {
+          "from": "output_val",
+          "to": "out",
+          "as": "value"
+        },
+        "args": {
+          "from": "args",
+          "to": "out",
+          "as": "args"
+        }
       },
-      "pu6r1wt": {
-        "from": "pu6r1wt",
-        "to": "85ca6kk",
-        "as": "args"
+      "01519ne": {
+        "euzoog2": {
+          "from": "euzoog2",
+          "to": "01519ne",
+          "as": "geo"
+        },
+        "pnvtdew": {
+          "from": "pnvtdew",
+          "to": "01519ne",
+          "as": "pgeo"
+        }
       },
-      "lqp7o13": {
-        "from": "lqp7o13",
-        "to": "t2oo2w2",
-        "as": "fn"
+      "8tspg8g": {
+        "xhfqi8j": {
+          "from": "xhfqi8j",
+          "to": "8tspg8g",
+          "as": "fn"
+        }
       },
-      "5xsve23": {
-        "from": "5xsve23",
-        "to": "t2oo2w2",
-        "as": "geo"
+      "xhfqi8j": {
+        "gx1pkou": {
+          "from": "gx1pkou",
+          "to": "xhfqi8j",
+          "as": "pointGeo"
+        },
+        "30rflcf": {
+          "from": "30rflcf",
+          "to": "xhfqi8j",
+          "as": "instancedMesh"
+        }
       },
-      "uqnka6f": {
-        "from": "uqnka6f",
-        "to": "t2oo2w2",
-        "as": "feedback"
+      "output_val": {
+        "01519ne": {
+          "from": "01519ne",
+          "to": "output_val",
+          "as": "pred"
+        },
+        "eupgmhq": {
+          "from": "eupgmhq",
+          "to": "output_val",
+          "as": "true"
+        }
       },
-      "yww2wir": {
-        "from": "yww2wir",
-        "to": "lqp7o13",
-        "as": "args"
+      "eupgmhq": {
+        "tikoz6d": {
+          "from": "tikoz6d",
+          "to": "eupgmhq",
+          "as": "subscribe"
+        },
+        "igjfrk8": {
+          "from": "igjfrk8",
+          "to": "eupgmhq",
+          "as": "args"
+        },
+        "6eoi6m8": {
+          "from": "6eoi6m8",
+          "to": "eupgmhq",
+          "as": "value"
+        }
       },
-      "56vngd9": {
-        "from": "56vngd9",
-        "to": "lqp7o13",
-        "as": "fn"
+      "tikoz6d": {
+        "8tspg8g": {
+          "from": "8tspg8g",
+          "to": "tikoz6d",
+          "as": "animationframe"
+        }
       },
-      "gv4m9ja": {
-        "from": "gv4m9ja",
-        "to": "yww2wir",
-        "as": "point_data"
+      "9xjhsf2": {
+        "vqnjrq1": {
+          "from": "vqnjrq1",
+          "to": "9xjhsf2",
+          "as": "value"
+        }
       },
-      "iq70jau": {
-        "from": "iq70jau",
-        "to": "56vngd9",
-        "as": "pd"
+      "vqnjrq1": {
+        "u4bko6w": {
+          "from": "u4bko6w",
+          "to": "vqnjrq1",
+          "as": "args"
+        }
+      },
+      "u4bko6w": {
+        "bq7aqpk": {
+          "from": "bq7aqpk",
+          "to": "u4bko6w",
+          "as": "arg0"
+        },
+        "w9ba3wm": {
+          "from": "w9ba3wm",
+          "to": "u4bko6w",
+          "as": "arg1"
+        },
+        "dp2azrs": {
+          "from": "dp2azrs",
+          "to": "u4bko6w",
+          "as": "arg2"
+        }
+      },
+      "dp2azrs": {
+        "smi1t6k": {
+          "from": "smi1t6k",
+          "to": "dp2azrs",
+          "as": "target"
+        }
+      },
+      "smi1t6k": {
+        "auq55xm": {
+          "from": "auq55xm",
+          "to": "smi1t6k",
+          "as": "self"
+        },
+        "63aq975": {
+          "from": "63aq975",
+          "to": "smi1t6k",
+          "as": "args"
+        }
+      },
+      "63aq975": {
+        "9fi1zj6": {
+          "from": "9fi1zj6",
+          "to": "63aq975",
+          "as": "arg0"
+        }
+      },
+      "igjfrk8": {
+        "9xjhsf2": {
+          "from": "9xjhsf2",
+          "to": "igjfrk8",
+          "as": "instancedMesh"
+        }
       }
     }
   }

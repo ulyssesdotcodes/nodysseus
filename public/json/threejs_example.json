@@ -1,4 +1,5 @@
-[{
+[
+  {
     "id": "threejs_example",
     "nodes": [
       {
@@ -48,6 +49,10 @@
         "value": "threejsrender"
       },
       {
+        "id": "8wmlat1",
+        "ref": "canvas_behind_editor"
+      },
+      {
         "id": "7c54921",
         "value": "threejsrender"
       },
@@ -84,6 +89,11 @@
         "ref": "script"
       },
       {
+        "id": "c3ytyv3",
+        "value": "cube.rotation.x += 0.01;\ncube.rotation.z += 0.01;",
+        "ref": "script"
+      },
+      {
         "id": "p0z4xxk",
         "ref": "cache"
       },
@@ -91,21 +101,6 @@
         "id": "uqln0ee",
         "value": "return new _lib.THREE.HemisphereLight( 0xffffff, 0x080820, 1 );",
         "ref": "script"
-      },
-      {
-        "id": "crys2ve"
-      },
-      {
-        "id": "hq8y4zl"
-      },
-      {
-        "id": "c3ytyv3",
-        "value": "cube.rotation.x += 0.01;\ncube.rotation.z += 0.01;",
-        "ref": "script"
-      },
-      {
-        "id": "8wmlat1",
-        "ref": "canvas_behind_editor"
       }
     ],
     "edges": [
@@ -180,6 +175,11 @@
         "as": "canvas_id"
       },
       {
+        "from": "ko0wprz",
+        "to": "c3ytyv3",
+        "as": "cube"
+      },
+      {
         "from": "qplqs03",
         "to": "8dy573e",
         "as": "children"
@@ -218,21 +218,6 @@
         "from": "uqln0ee",
         "to": "p0z4xxk",
         "as": "value"
-      },
-      {
-        "from": "crys2ve",
-        "to": "0r7134k",
-        "as": "args"
-      },
-      {
-        "from": "hq8y4zl",
-        "to": "crys2ve",
-        "as": "objs"
-      },
-      {
-        "from": "ko0wprz",
-        "to": "c3ytyv3",
-        "as": "cube"
       }
     ],
     "out": "out"
