@@ -1516,7 +1516,7 @@ const nolib = {
       fn: (path, value, graphid, lib) => {
         const pathresult = run_runnable(path, lib) as Result;
         path = isValue(pathresult) ? pathresult.value : pathresult;
-        const result = run_runnable(value, lib);
+        const result = value === undefined || value === null ? undefined : run_runnable(value, lib);
 
         if(isError(pathresult)) {
           throw pathresult;

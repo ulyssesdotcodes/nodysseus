@@ -317,7 +317,6 @@ export const ydocStore = async (persist: false | string = false, useRtc = false,
           }
 
           if(!refRtcs[k]) {
-            console.log(`syncing existing rtc graph ${k}`)
             refRtcs[k] = new WebrtcProvider(`nodysseus${rtcroom}_${k}`, ymap.get(k), {
               signaling: ["wss://ws.nodysseus.io"], 
               password: undefined,
@@ -340,7 +339,6 @@ export const ydocStore = async (persist: false | string = false, useRtc = false,
     } else {
       if(id && !rdoc.getMap().has(id)) {
         if(!refRtcs[id]) {
-          console.log(`creating rtc provider ${id}`)
             refRtcs[id] = new WebrtcProvider(`nodysseus${rtcroom}_${id}`, sd, {
               signaling: ["wss://ws.nodysseus.io"], 
               filterBcConns: true,
@@ -356,15 +354,12 @@ export const ydocStore = async (persist: false | string = false, useRtc = false,
               }
             })
         }
-        console.log(`setting rdoc ${id} to ${sd.guid}`)
         rdoc.getMap().set(id, sd.guid)
       }
     }
   }
 
   ydoc.on('subdocs', e => {
-    // console.log("subdocs")
-    // console.log(e);
     e.loaded.forEach(sd => {
       const sdmap = sd.getMap();
       if(!refIdbs[sd.guid]) {
@@ -376,7 +371,6 @@ export const ydocStore = async (persist: false | string = false, useRtc = false,
             return;
           }
 
-          console.log(`indexeddb ${sdmap.get("id")}`)
           if(sdmap.get("id")?.includes("/")) {
             debugger;
             ymap.delete(sdmap.get("id"))

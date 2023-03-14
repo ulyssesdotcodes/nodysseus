@@ -143,7 +143,7 @@ const runapp = (init, load_graph, _lib) => {
               }]
             ]);
         })],
-        [dispatch => wrapPromise(nolib.no.runtime.get_graph("custom_editor")).then(graph => hlib.run(graph, "out")).then(custom_editor_result => dispatch(s => ({...s, custom_editor_result})))],
+        [dispatch => wrapPromise(nolib.no.runtime.get_graph("custom_editor")).then(graph => graph && hlib.run(graph, "out")).then(custom_editor_result => custom_editor_result && dispatch(s => ({...s, custom_editor_result})))],
         [ChangeDisplayGraphId, {id: load_graph, select_out: true, display_graph_id: undefined}],
         [UpdateSimulation, {...init, action: SimulationToHyperapp}],
         [init_code_editor, {html_id: init.html_id}]
