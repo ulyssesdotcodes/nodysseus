@@ -25,7 +25,7 @@ self.addEventListener('fetch', (e) => {
      (navigator.onLine ? network(e.request)
         .catch(ne => (console.log("[Service Worker] Network request failed, trying cache"), caches.match(e.request))) : caches.open(assetCacheName).then(c => c.match(e.request)))
         .catch(ce => (console.log("[Service Worker] Request failed"), console.error(ne), console.error(ce)))
-    .then(resp => resp.url.startsWith("https://cdn.jsdelivr.net/npm/three/examples/") ? resp.text().then(rtext => [rtext, resp]) : resp)
+    .then(resp => resp.url.startsWith("https://cdn.jsdelivr.net/npm/three/examples/") || resp.url.startsWith("https://cdn.jsdelivr.net/gh/ulyssesdotcodes/") ? (console.log("hijacking three from", resp.url), resp).text().then(rtext => [rtext, resp]) : resp)
     .then(r => Array.isArray(r) ? new Response(r[0].replaceAll("from 'three'", "from 'https://cdn.jsdelivr.net/npm/three/build/three.module.js'"), {
       headers: r[1].headers
     }) : r)
