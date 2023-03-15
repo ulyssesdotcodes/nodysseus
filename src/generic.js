@@ -175,6 +175,234 @@ const generic = {
       "category": "math",
       "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_AND'>&& operator</a>"
     },
+    "random": {
+      "id": "random",
+      "description": "Returns a function that returns a different random number whenever called. An optional seed makes this sequence deterministic.",
+      "out": "out",
+      "nodes": {
+        "args": {
+          "id": "args"
+        },
+        "output_val": {
+          "id": "output_val",
+          "value": "return function() {\n        var t = b << 9, r = a * 5; r = (r << 7 | r >>> 25) * 9;\n        c ^= a; d ^= b;\n        b ^= c; a ^= d; c ^= t;\n        d = d << 11 | d >>> 21;\n        return (r >>> 0) / 4294967296;\n    }",
+          "ref": "script"
+        },
+        "out": {
+          "id": "out",
+          "ref": "return",
+          "name": "random"
+        },
+        "2a5n0mp": {
+          "id": "2a5n0mp",
+          "name": "128"
+        },
+        "4twtzbr": {
+          "id": "4twtzbr",
+          "value": "seed",
+          "ref": "arg"
+        },
+        "t9tt2mz": {
+          "id": "t9tt2mz",
+          "name": "4"
+        },
+        "x0wph6o": {
+          "id": "x0wph6o",
+          "value": "seedb",
+          "ref": "arg"
+        },
+        "95fj04c": {
+          "id": "95fj04c",
+          "ref": "default"
+        },
+        "srhd9iq": {
+          "id": "srhd9iq",
+          "value": "0"
+        },
+        "xge647g": {
+          "id": "xge647g",
+          "ref": "default"
+        },
+        "kplcozz": {
+          "id": "kplcozz",
+          "value": "0"
+        },
+        "33tvjok": {
+          "id": "33tvjok",
+          "value": "seedc",
+          "ref": "arg"
+        },
+        "ucxkozy": {
+          "id": "ucxkozy",
+          "ref": "default"
+        },
+        "lyzm9a3": {
+          "id": "lyzm9a3",
+          "value": "0"
+        },
+        "ku4v2h1": {
+          "id": "ku4v2h1",
+          "value": "seedd",
+          "ref": "arg"
+        }
+      },
+      "edges": {
+        "output_val": {
+          "from": "output_val",
+          "to": "out",
+          "as": "value"
+        },
+        "args": {
+          "from": "args",
+          "to": "out",
+          "as": "args"
+        },
+        "2a5n0mp": {
+          "from": "2a5n0mp",
+          "to": "args",
+          "as": "seed"
+        },
+        "4twtzbr": {
+          "from": "4twtzbr",
+          "to": "output_val",
+          "as": "a"
+        },
+        "t9tt2mz": {
+          "from": "t9tt2mz",
+          "to": "args",
+          "as": "seedb"
+        },
+        "x0wph6o": {
+          "from": "x0wph6o",
+          "to": "95fj04c",
+          "as": "value"
+        },
+        "95fj04c": {
+          "from": "95fj04c",
+          "to": "output_val",
+          "as": "b"
+        },
+        "srhd9iq": {
+          "from": "srhd9iq",
+          "to": "95fj04c",
+          "as": "otherwise"
+        },
+        "33tvjok": {
+          "from": "33tvjok",
+          "to": "xge647g",
+          "as": "value"
+        },
+        "kplcozz": {
+          "from": "kplcozz",
+          "to": "xge647g",
+          "as": "otherwise"
+        },
+        "xge647g": {
+          "from": "xge647g",
+          "to": "output_val",
+          "as": "c"
+        },
+        "ku4v2h1": {
+          "from": "ku4v2h1",
+          "to": "ucxkozy",
+          "as": "value"
+        },
+        "lyzm9a3": {
+          "from": "lyzm9a3",
+          "to": "ucxkozy",
+          "as": "otherwise"
+        },
+        "ucxkozy": {
+          "from": "ucxkozy",
+          "to": "output_val",
+          "as": "d"
+        }
+      },
+      "edges_in": {
+        "out": {
+          "output_val": {
+            "from": "output_val",
+            "to": "out",
+            "as": "value"
+          },
+          "args": {
+            "from": "args",
+            "to": "out",
+            "as": "args"
+          }
+        },
+        "args": {
+          "2a5n0mp": {
+            "from": "2a5n0mp",
+            "to": "args",
+            "as": "seed"
+          },
+          "t9tt2mz": {
+            "from": "t9tt2mz",
+            "to": "args",
+            "as": "seedb"
+          }
+        },
+        "output_val": {
+          "4twtzbr": {
+            "from": "4twtzbr",
+            "to": "output_val",
+            "as": "a"
+          },
+          "95fj04c": {
+            "from": "95fj04c",
+            "to": "output_val",
+            "as": "b"
+          },
+          "xge647g": {
+            "from": "xge647g",
+            "to": "output_val",
+            "as": "c"
+          },
+          "ucxkozy": {
+            "from": "ucxkozy",
+            "to": "output_val",
+            "as": "d"
+          }
+        },
+        "95fj04c": {
+          "x0wph6o": {
+            "from": "x0wph6o",
+            "to": "95fj04c",
+            "as": "value"
+          },
+          "srhd9iq": {
+            "from": "srhd9iq",
+            "to": "95fj04c",
+            "as": "otherwise"
+          }
+        },
+        "xge647g": {
+          "33tvjok": {
+            "from": "33tvjok",
+            "to": "xge647g",
+            "as": "value"
+          },
+          "kplcozz": {
+            "from": "kplcozz",
+            "to": "xge647g",
+            "as": "otherwise"
+          }
+        },
+        "ucxkozy": {
+          "ku4v2h1": {
+            "from": "ku4v2h1",
+            "to": "ucxkozy",
+            "as": "value"
+          },
+          "lyzm9a3": {
+            "from": "lyzm9a3",
+            "to": "ucxkozy",
+            "as": "otherwise"
+          }
+        }
+      }
+    },
     "liftarraypromise": {
       "id": "liftarraypromise",
       "ref": "extern",
@@ -9522,6 +9750,850 @@ const generic = {
         "from": "8zvzwb5",
         "to": "x8ik3x4",
         "as": "ref"
+      }
+    }
+  },
+  "assetmanager": {
+    "id": "assetmanager",
+    "out": "out",
+    "nodes": {
+      "args": {
+        "id": "args"
+      },
+      "qgbinm2": {
+        "id": "qgbinm2",
+        "value": "input",
+        "ref": "html_element"
+      },
+      "8dy573e": {
+        "id": "8dy573e",
+        "ref": "html_element"
+      },
+      "output_val": {
+        "id": "output_val",
+        "value": "some output"
+      },
+      "out": {
+        "id": "out",
+        "ref": "return",
+        "name": "assetmanager"
+      },
+      "46kgw03": {
+        "id": "46kgw03",
+        "value": "\nconsole.log(_lib);\n\nreturn _lib.list_assets();",
+        "ref": "script"
+      },
+      "4nx9x10": {
+        "id": "4nx9x10",
+        "ref": "log"
+      },
+      "rrgshuq": {
+        "id": "rrgshuq",
+        "value": "select",
+        "ref": "html_element"
+      },
+      "chkprox": {
+        "id": "chkprox",
+        "ref": "map"
+      },
+      "5hesw9s": {
+        "id": "5hesw9s",
+        "value": "return _lib.no.runtime.list_assets()",
+        "ref": "script"
+      },
+      "49od031": {
+        "id": "49od031",
+        "ref": "runnable"
+      },
+      "h1z2zqq": {
+        "id": "h1z2zqq",
+        "value": "element",
+        "ref": "arg"
+      },
+      "znw0jq1": {
+        "id": "znw0jq1",
+        "value": "option",
+        "ref": "html_element"
+      },
+      "xiv2pw0": {
+        "id": "xiv2pw0"
+      },
+      "yx1sv0e": {
+        "id": "yx1sv0e"
+      },
+      "zk03lef": {
+        "id": "zk03lef"
+      },
+      "23vrr6n": {
+        "id": "23vrr6n",
+        "value": "element",
+        "ref": "arg"
+      },
+      "md80upr": {
+        "id": "md80upr"
+      },
+      "zhoffc7": {
+        "id": "zhoffc7",
+        "ref": "array"
+      },
+      "4zueto7": {
+        "id": "4zueto7"
+      },
+      "5ndg5og": {
+        "id": "5ndg5og",
+        "value": "file"
+      },
+      "10ozygd": {
+        "id": "10ozygd",
+        "ref": "runnable"
+      },
+      "6zb4hho": {
+        "id": "6zb4hho",
+        "value": "event.target.files",
+        "ref": "arg"
+      },
+      "6c04ryh": {
+        "id": "6c04ryh",
+        "value": "_lib.no.runtime.add_asset(name, files[0])",
+        "ref": "script"
+      },
+      "d4sx4ej": {
+        "id": "d4sx4ej",
+        "value": "assetname",
+        "ref": "arg"
+      },
+      "drkjew9": {
+        "id": "drkjew9"
+      },
+      "12i36ht": {
+        "id": "12i36ht",
+        "ref": "state"
+      },
+      "gwslf7p": {
+        "id": "gwslf7p"
+      },
+      "g6loz00": {
+        "id": "g6loz00",
+        "ref": "ap"
+      },
+      "7ny91r3": {
+        "id": "7ny91r3",
+        "value": "event.target.value",
+        "ref": "arg"
+      },
+      "vg773lv": {
+        "id": "vg773lv",
+        "value": "return _lib.no.runtime.get_asset(asset);",
+        "ref": "script"
+      },
+      "jhyu5pk": {
+        "id": "jhyu5pk"
+      },
+      "gnuhmpf": {
+        "id": "gnuhmpf",
+        "value": "_asset.set",
+        "ref": "arg"
+      },
+      "dh814lx": {
+        "id": "dh814lx",
+        "value": "_asset.state",
+        "ref": "arg"
+      },
+      "mhqejl5": {
+        "id": "mhqejl5",
+        "value": "file",
+        "ref": "set"
+      },
+      "1090db5": {
+        "id": "1090db5",
+        "ref": "if"
+      },
+      "xuyat95": {
+        "id": "xuyat95",
+        "ref": "if"
+      },
+      "mk4gru0": {
+        "id": "mk4gru0",
+        "value": "assetname",
+        "ref": "arg"
+      },
+      "9ucfrui": {
+        "id": "9ucfrui",
+        "ref": "ap"
+      },
+      "1ts2j8n": {
+        "id": "1ts2j8n"
+      },
+      "gzki6r1": {
+        "id": "gzki6r1",
+        "value": "return _lib.no.runtime.get_asset(asset);",
+        "ref": "script"
+      },
+      "l7ahauw": {
+        "id": "l7ahauw",
+        "value": "assetname",
+        "ref": "arg"
+      },
+      "nhruqy5": {
+        "id": "nhruqy5",
+        "value": "true"
+      },
+      "g7ew1lp": {
+        "id": "g7ew1lp",
+        "value": "_asset.set",
+        "ref": "arg"
+      },
+      "riqk7hm": {
+        "id": "riqk7hm",
+        "value": "_asset.state",
+        "ref": "arg"
+      },
+      "b9gbfro": {
+        "id": "b9gbfro",
+        "value": "_asset.state",
+        "ref": "arg"
+      }
+    },
+    "edges": {
+      "qgbinm2": {
+        "from": "qgbinm2",
+        "to": "zhoffc7",
+        "as": "arg2"
+      },
+      "8dy573e": {
+        "from": "8dy573e",
+        "to": "mhqejl5",
+        "as": "target"
+      },
+      "args": {
+        "from": "args",
+        "to": "out",
+        "as": "args"
+      },
+      "rrgshuq": {
+        "from": "rrgshuq",
+        "to": "zhoffc7",
+        "as": "arg3"
+      },
+      "chkprox": {
+        "from": "chkprox",
+        "to": "rrgshuq",
+        "as": "children"
+      },
+      "5hesw9s": {
+        "from": "5hesw9s",
+        "to": "chkprox",
+        "as": "array"
+      },
+      "49od031": {
+        "from": "49od031",
+        "to": "chkprox",
+        "as": "fn"
+      },
+      "h1z2zqq": {
+        "from": "h1z2zqq",
+        "to": "xiv2pw0",
+        "as": "value"
+      },
+      "znw0jq1": {
+        "from": "znw0jq1",
+        "to": "49od031",
+        "as": "fn"
+      },
+      "xiv2pw0": {
+        "from": "xiv2pw0",
+        "to": "znw0jq1",
+        "as": "props"
+      },
+      "yx1sv0e": {
+        "from": "yx1sv0e",
+        "to": "49od031",
+        "as": "parameters"
+      },
+      "zk03lef": {
+        "from": "zk03lef",
+        "to": "yx1sv0e",
+        "as": "element"
+      },
+      "23vrr6n": {
+        "from": "23vrr6n",
+        "to": "znw0jq1",
+        "as": "children"
+      },
+      "md80upr": {
+        "from": "md80upr",
+        "to": "drkjew9",
+        "as": "event"
+      },
+      "zhoffc7": {
+        "from": "zhoffc7",
+        "to": "8dy573e",
+        "as": "children"
+      },
+      "4zueto7": {
+        "from": "4zueto7",
+        "to": "qgbinm2",
+        "as": "props"
+      },
+      "5ndg5og": {
+        "from": "5ndg5og",
+        "to": "4zueto7",
+        "as": "type"
+      },
+      "10ozygd": {
+        "from": "10ozygd",
+        "to": "4zueto7",
+        "as": "onchange"
+      },
+      "6zb4hho": {
+        "from": "6zb4hho",
+        "to": "6c04ryh",
+        "as": "files"
+      },
+      "6c04ryh": {
+        "from": "6c04ryh",
+        "to": "10ozygd",
+        "as": "fn"
+      },
+      "d4sx4ej": {
+        "from": "d4sx4ej",
+        "to": "6c04ryh",
+        "as": "name"
+      },
+      "drkjew9": {
+        "from": "drkjew9",
+        "to": "10ozygd",
+        "as": "parameters"
+      },
+      "12i36ht": {
+        "from": "12i36ht",
+        "to": "args",
+        "as": "_asset"
+      },
+      "gwslf7p": {
+        "from": "gwslf7p",
+        "to": "rrgshuq",
+        "as": "props"
+      },
+      "g6loz00": {
+        "from": "g6loz00",
+        "to": "gwslf7p",
+        "as": "onchange"
+      },
+      "7ny91r3": {
+        "from": "7ny91r3",
+        "to": "vg773lv",
+        "as": "asset"
+      },
+      "vg773lv": {
+        "from": "vg773lv",
+        "to": "jhyu5pk",
+        "as": "value"
+      },
+      "jhyu5pk": {
+        "from": "jhyu5pk",
+        "to": "g6loz00",
+        "as": "args"
+      },
+      "gnuhmpf": {
+        "from": "gnuhmpf",
+        "to": "g6loz00",
+        "as": "fn"
+      },
+      "dh814lx": {
+        "from": "dh814lx",
+        "to": "gwslf7p",
+        "as": "value"
+      },
+      "mhqejl5": {
+        "from": "mhqejl5",
+        "to": "out",
+        "as": "value"
+      },
+      "b9gbfro": {
+        "from": "b9gbfro",
+        "to": "1090db5",
+        "as": "true"
+      },
+      "riqk7hm": {
+        "from": "riqk7hm",
+        "to": "1090db5",
+        "as": "pred"
+      },
+      "xuyat95": {
+        "from": "xuyat95",
+        "to": "1090db5",
+        "as": "false"
+      },
+      "9ucfrui": {
+        "from": "9ucfrui",
+        "to": "xuyat95",
+        "as": "true"
+      },
+      "mk4gru0": {
+        "from": "mk4gru0",
+        "to": "xuyat95",
+        "as": "pred"
+      },
+      "g7ew1lp": {
+        "from": "g7ew1lp",
+        "to": "9ucfrui",
+        "as": "fn"
+      },
+      "nhruqy5": {
+        "from": "nhruqy5",
+        "to": "9ucfrui",
+        "as": "run"
+      },
+      "1ts2j8n": {
+        "from": "1ts2j8n",
+        "to": "9ucfrui",
+        "as": "args"
+      },
+      "gzki6r1": {
+        "from": "gzki6r1",
+        "to": "1ts2j8n",
+        "as": "value"
+      },
+      "l7ahauw": {
+        "from": "l7ahauw",
+        "to": "gzki6r1",
+        "as": "asset"
+      },
+      "1090db5": {
+        "from": "1090db5",
+        "to": "mhqejl5",
+        "as": "value"
+      }
+    },
+    "edges_in": {
+      "zhoffc7": {
+        "qgbinm2": {
+          "from": "qgbinm2",
+          "to": "zhoffc7",
+          "as": "arg2"
+        },
+        "rrgshuq": {
+          "from": "rrgshuq",
+          "to": "zhoffc7",
+          "as": "arg3"
+        }
+      },
+      "mhqejl5": {
+        "8dy573e": {
+          "from": "8dy573e",
+          "to": "mhqejl5",
+          "as": "target"
+        },
+        "1090db5": {
+          "from": "1090db5",
+          "to": "mhqejl5",
+          "as": "value"
+        }
+      },
+      "out": {
+        "args": {
+          "from": "args",
+          "to": "out",
+          "as": "args"
+        },
+        "mhqejl5": {
+          "from": "mhqejl5",
+          "to": "out",
+          "as": "value"
+        }
+      },
+      "rrgshuq": {
+        "chkprox": {
+          "from": "chkprox",
+          "to": "rrgshuq",
+          "as": "children"
+        },
+        "gwslf7p": {
+          "from": "gwslf7p",
+          "to": "rrgshuq",
+          "as": "props"
+        }
+      },
+      "chkprox": {
+        "5hesw9s": {
+          "from": "5hesw9s",
+          "to": "chkprox",
+          "as": "array"
+        },
+        "49od031": {
+          "from": "49od031",
+          "to": "chkprox",
+          "as": "fn"
+        }
+      },
+      "xiv2pw0": {
+        "h1z2zqq": {
+          "from": "h1z2zqq",
+          "to": "xiv2pw0",
+          "as": "value"
+        }
+      },
+      "49od031": {
+        "znw0jq1": {
+          "from": "znw0jq1",
+          "to": "49od031",
+          "as": "fn"
+        },
+        "yx1sv0e": {
+          "from": "yx1sv0e",
+          "to": "49od031",
+          "as": "parameters"
+        }
+      },
+      "znw0jq1": {
+        "xiv2pw0": {
+          "from": "xiv2pw0",
+          "to": "znw0jq1",
+          "as": "props"
+        },
+        "23vrr6n": {
+          "from": "23vrr6n",
+          "to": "znw0jq1",
+          "as": "children"
+        }
+      },
+      "yx1sv0e": {
+        "zk03lef": {
+          "from": "zk03lef",
+          "to": "yx1sv0e",
+          "as": "element"
+        }
+      },
+      "drkjew9": {
+        "md80upr": {
+          "from": "md80upr",
+          "to": "drkjew9",
+          "as": "event"
+        }
+      },
+      "8dy573e": {
+        "zhoffc7": {
+          "from": "zhoffc7",
+          "to": "8dy573e",
+          "as": "children"
+        }
+      },
+      "qgbinm2": {
+        "4zueto7": {
+          "from": "4zueto7",
+          "to": "qgbinm2",
+          "as": "props"
+        }
+      },
+      "4zueto7": {
+        "5ndg5og": {
+          "from": "5ndg5og",
+          "to": "4zueto7",
+          "as": "type"
+        },
+        "10ozygd": {
+          "from": "10ozygd",
+          "to": "4zueto7",
+          "as": "onchange"
+        }
+      },
+      "6c04ryh": {
+        "6zb4hho": {
+          "from": "6zb4hho",
+          "to": "6c04ryh",
+          "as": "files"
+        },
+        "d4sx4ej": {
+          "from": "d4sx4ej",
+          "to": "6c04ryh",
+          "as": "name"
+        }
+      },
+      "10ozygd": {
+        "6c04ryh": {
+          "from": "6c04ryh",
+          "to": "10ozygd",
+          "as": "fn"
+        },
+        "drkjew9": {
+          "from": "drkjew9",
+          "to": "10ozygd",
+          "as": "parameters"
+        }
+      },
+      "args": {
+        "12i36ht": {
+          "from": "12i36ht",
+          "to": "args",
+          "as": "_asset"
+        }
+      },
+      "gwslf7p": {
+        "g6loz00": {
+          "from": "g6loz00",
+          "to": "gwslf7p",
+          "as": "onchange"
+        },
+        "dh814lx": {
+          "from": "dh814lx",
+          "to": "gwslf7p",
+          "as": "value"
+        }
+      },
+      "vg773lv": {
+        "7ny91r3": {
+          "from": "7ny91r3",
+          "to": "vg773lv",
+          "as": "asset"
+        }
+      },
+      "jhyu5pk": {
+        "vg773lv": {
+          "from": "vg773lv",
+          "to": "jhyu5pk",
+          "as": "value"
+        }
+      },
+      "g6loz00": {
+        "jhyu5pk": {
+          "from": "jhyu5pk",
+          "to": "g6loz00",
+          "as": "args"
+        },
+        "gnuhmpf": {
+          "from": "gnuhmpf",
+          "to": "g6loz00",
+          "as": "fn"
+        }
+      },
+      "1090db5": {
+        "b9gbfro": {
+          "from": "b9gbfro",
+          "to": "1090db5",
+          "as": "true"
+        },
+        "riqk7hm": {
+          "from": "riqk7hm",
+          "to": "1090db5",
+          "as": "pred"
+        },
+        "xuyat95": {
+          "from": "xuyat95",
+          "to": "1090db5",
+          "as": "false"
+        }
+      },
+      "xuyat95": {
+        "9ucfrui": {
+          "from": "9ucfrui",
+          "to": "xuyat95",
+          "as": "true"
+        },
+        "mk4gru0": {
+          "from": "mk4gru0",
+          "to": "xuyat95",
+          "as": "pred"
+        }
+      },
+      "9ucfrui": {
+        "g7ew1lp": {
+          "from": "g7ew1lp",
+          "to": "9ucfrui",
+          "as": "fn"
+        },
+        "nhruqy5": {
+          "from": "nhruqy5",
+          "to": "9ucfrui",
+          "as": "run"
+        },
+        "1ts2j8n": {
+          "from": "1ts2j8n",
+          "to": "9ucfrui",
+          "as": "args"
+        }
+      },
+      "1ts2j8n": {
+        "gzki6r1": {
+          "from": "gzki6r1",
+          "to": "1ts2j8n",
+          "as": "value"
+        }
+      },
+      "gzki6r1": {
+        "l7ahauw": {
+          "from": "l7ahauw",
+          "to": "gzki6r1",
+          "as": "asset"
+        }
+      }
+    }
+  },
+  "fit": {
+    "id": "fit",
+    "out": "out",
+    "nodes": {
+      "args": {
+        "id": "args"
+      },
+      "qgbinm2": {
+        "id": "qgbinm2",
+        "value": "Hello, world!",
+        "ref": "html_text"
+      },
+      "8dy573e": {
+        "id": "8dy573e",
+        "ref": "html_element"
+      },
+      "output_val": {
+        "id": "output_val",
+        "value": "const ap0 = a0 === undefined ? 0 : a0;\nconst bp0 = b0 === undefined ? 1 : b0;\nconst lerp = (x - ap0) / (bp0 - ap0);\nconst result = a1 + lerp * (b1 - a1);\nreturn clamp ? Math.min(Math.max(result, Math.min(a1, b1)), Math.max(a1, b1)) : result",
+        "ref": "script"
+      },
+      "out": {
+        "id": "out",
+        "name": "fit",
+        "ref": "return"
+      },
+      "5locpe3": {
+        "id": "5locpe3",
+        "value": "oldLow",
+        "ref": "arg"
+      },
+      "a8kr545": {
+        "id": "a8kr545",
+        "value": "oldHigh",
+        "ref": "arg"
+      },
+      "s9mrg9v": {
+        "id": "s9mrg9v",
+        "value": "newLow",
+        "ref": "arg"
+      },
+      "y1hnt8t": {
+        "id": "y1hnt8t",
+        "value": "newHigh",
+        "ref": "arg"
+      },
+      "fma0geo": {
+        "id": "fma0geo",
+        "value": "value",
+        "ref": "arg"
+      },
+      "s351p91": {
+        "id": "s351p91",
+        "value": "clamp",
+        "ref": "arg"
+      }
+    },
+    "edges": {
+      "qgbinm2": {
+        "from": "qgbinm2",
+        "to": "8dy573e",
+        "as": "children"
+      },
+      "8dy573e": {
+        "from": "8dy573e",
+        "to": "out",
+        "as": "display"
+      },
+      "output_val": {
+        "from": "output_val",
+        "to": "out",
+        "as": "value"
+      },
+      "args": {
+        "from": "args",
+        "to": "out",
+        "as": "args"
+      },
+      "5locpe3": {
+        "from": "5locpe3",
+        "to": "output_val",
+        "as": "a0"
+      },
+      "a8kr545": {
+        "from": "a8kr545",
+        "to": "output_val",
+        "as": "b0"
+      },
+      "s9mrg9v": {
+        "from": "s9mrg9v",
+        "to": "output_val",
+        "as": "a1"
+      },
+      "y1hnt8t": {
+        "from": "y1hnt8t",
+        "to": "output_val",
+        "as": "b1"
+      },
+      "fma0geo": {
+        "from": "fma0geo",
+        "to": "output_val",
+        "as": "x"
+      },
+      "s351p91": {
+        "from": "s351p91",
+        "to": "output_val",
+        "as": "clamp"
+      }
+    },
+    "edges_in": {
+      "8dy573e": {
+        "qgbinm2": {
+          "from": "qgbinm2",
+          "to": "8dy573e",
+          "as": "children"
+        }
+      },
+      "out": {
+        "8dy573e": {
+          "from": "8dy573e",
+          "to": "out",
+          "as": "display"
+        },
+        "output_val": {
+          "from": "output_val",
+          "to": "out",
+          "as": "value"
+        },
+        "args": {
+          "from": "args",
+          "to": "out",
+          "as": "args"
+        }
+      },
+      "output_val": {
+        "5locpe3": {
+          "from": "5locpe3",
+          "to": "output_val",
+          "as": "a0"
+        },
+        "a8kr545": {
+          "from": "a8kr545",
+          "to": "output_val",
+          "as": "b0"
+        },
+        "s9mrg9v": {
+          "from": "s9mrg9v",
+          "to": "output_val",
+          "as": "a1"
+        },
+        "y1hnt8t": {
+          "from": "y1hnt8t",
+          "to": "output_val",
+          "as": "b1"
+        },
+        "fma0geo": {
+          "from": "fma0geo",
+          "to": "output_val",
+          "as": "x"
+        },
+        "s351p91": {
+          "from": "s351p91",
+          "to": "output_val",
+          "as": "clamp"
+        }
       }
     }
   },

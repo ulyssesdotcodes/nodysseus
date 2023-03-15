@@ -29,7 +29,7 @@ yNodyStore().then(initStore).then(() => {
 
           });
 
-          run(e.data);
+          run(e.data, undefined, {profile: false && this.performance.now() > 4000});
       } catch (e) { console.error(e) }
   }
 })

@@ -596,11 +596,15 @@ const run_graph = (graph: Graph | (Graph & {nodes: Array<NodysseusNode>, edges: 
 
           if(options.profile && !nolib.no.runtime.get_parentest((env.data.get("__graphid") as {value: string}).value)) {
             const edgePath = edge => nolib.no.runtime.get_edge_out(newgraph, edge) ? [nolib.no.runtime.get_edge_out(newgraph, edge).as].concat(edgePath(nolib.no.runtime.get_edge_out(newgraph, edge).to)) : []
-            let path = edgePath(node_id).join(" -> ");
-            const id = `${(env.data.get("__graphid") as {value: string}).value}/${node.id} (${node.ref}) - ${path}`;
-            if(options?.profile && id) {
-              console.time(id)
-              performance.mark(`${id} - begin`)
+            let path = edgePath(node_id).reverse().join(" -> ");
+            let start = performance.now();
+            const id = `${path} - ${(env.data.get("__graphid") as {value: string}).value}/${node.id} (${node.ref})`;
+            // if(options?.profile && id) {
+            //   console.time(id)
+            //   performance.mark(`${id} - begin`)
+            // }
+            if(!options.timings) {
+              options.timings = {};
             }
 
             const result = run_node(node, data, env, lib, options);
@@ -608,15 +612,17 @@ const run_graph = (graph: Graph | (Graph & {nodes: Array<NodysseusNode>, edges: 
             const isResPromise = ispromise(result);
 
             if(!ispromise(result) && options?.profile && id) {
-              console.timeEnd(id)
-              performance.mark(`${id} - end`);
-              performance.measure(`${id}`, `${id} - begin`, `${id} - end`)
+              // console.timeEnd(id)
+              // performance.mark(`${id} - end`);
+              // performance.measure(`${id}`, `${id} - begin`, `${id} - end`)
+              options.timings[id] = (options.timings[id] ?? 0) + (performance.now() - start)
             }
 
             return isResPromise && options.profile && id ? result.then(v => {
-                console.timeEnd(id)
-                performance.mark(`${id} - end`);
-                performance.measure(id, `${id} - begin`, `${id} - end`);
+                // console.timeEnd(id)
+                // performance.mark(`${id} - end`);
+                // performance.measure(id, `${id} - begin`, `${id} - end`);
+                options.timings[id] = (options.timings[id] ?? 0) + (performance.now() - start)
                 return v;
               }) : result
           } else {
@@ -644,7 +650,7 @@ const run_ap_runnable = (runnable: ApRunnable, args: Args, lib: Lib): Result | P
   const computedArgs = runnable.args && run_runnable({...runnable.args, lib: runnable.lib}, lib, args, {});
   const execute = (execArgs): WrappedPromise<any> => {
     const ret = (Array.isArray(runnable.fn) ? runnable.fn : [runnable.fn])
-    .map(rfn => run_runnable(
+    .map(rfn => typeof rfn === "function" ? lib.data.no.of(rfn(execArgs?.value ? execArgs.value : {})) : run_runnable(
       rfn,
       runnable.lib,
       execArgs?.value ? new Map(Object.entries(execArgs.value).filter(kv => kv[0] !== "__graphid").map(kv => [kv[0], lib.data.no.of(kv[1])])) : new Map(),
@@ -683,8 +689,9 @@ const initStore = (store: NodysseusStore | undefined = undefined) => {
   }
 }
 
-export const run = (node: Runnable | InputRunnable, args: ResolvedArgs | Record<string, unknown> = new Map(), options: {lib?: Lib, store?: NodysseusStore, profile?: boolean} = {}) => {
+export const run = (node: Runnable | InputRunnable, args: ResolvedArgs | Record<string, unknown> = new Map(), options: {lib?: Lib, store?: NodysseusStore} & RunOptions = {}) => {
   initStore(options.store ?? nodysseus);
+
 
   let _lib: Lib = mergeLib(options.lib, newLib(nolib))
   if(isRunnable(node)) {
@@ -712,7 +719,7 @@ export const run = (node: Runnable | InputRunnable, args: ResolvedArgs | Record<
         // )
       }, 
     _lib, args, options);
-  return wrapPromise(res).then(r =>!isError(r) && r?.value).then(v => isArgs(v) ? Object.fromEntries(v) : v).value;
+  return wrapPromise(res).then(r =>!isError(r) && r?.value).then(v => (options.profile && console.log(options.timings), isArgs(v) ? Object.fromEntries(v) : v)).value;
 }
 
 const nolib = {
@@ -1221,7 +1228,7 @@ const nolib = {
           wrapPromise(run_runnable(runnable, lib))
             .then(r => resolveRunnable(isError(r) ? r : r.value)) : wrapPromise(runnable)
 
-        const apRunnable = (fnRunnable: FunctorRunnable | ApRunnable | Array<FunctorRunnable | ApRunnable>): ApRunnable => ({
+        const apRunnable = (fnRunnable: FunctorRunnable | ApRunnable | Function | Array<FunctorRunnable | ApRunnable | Function>): ApRunnable => ({
             __kind: AP,
             fn: Array.isArray(fnRunnable) ? fnRunnable.filter(v => v) : fnRunnable,
             args,
@@ -1230,7 +1237,7 @@ const nolib = {
 
         return fnResult
           .then(fnr => isError(fnr) ? fnr : Array.isArray(fnr.value) ? fnr.value.map(fnrv => resolveRunnable(fnrv).value) :  resolveRunnable(fnr.value).value)
-          .then(fnr => !((Array.isArray(fnr) ? fnr : [fnr]).filter(fnrv => fnrv).every(fnrv => isApRunnable(fnrv) || isFunctorRunnable(fnrv))) ? fnr : run ? run_runnable(apRunnable(fnr as FunctorRunnable), lib) : apRunnable(fnr))
+          .then(fnr => !((Array.isArray(fnr) ? fnr : [fnr]).filter(fnrv => fnrv).every(fnrv => isApRunnable(fnrv) || isFunctorRunnable(fnrv) ||typeof fnrv === "function")) ? fnr : run ? run_runnable(apRunnable(fnr as FunctorRunnable), lib) : apRunnable(fnr))
           .then(res => lib.data.no.of(res)).value
       }
     },
@@ -1289,7 +1296,7 @@ const nolib = {
                         (previousValue, currentValue) =>
                           !errored && wrapPromise(previousValue).then(prevVal => {
                             const args = new Map().set("previousValue", lib.data.no.of(prevVal)).set("currentValue", lib.data.no.of(currentValue))
-                            return run_runnable(fnrunnable, lib,
+                            return typeof fnrunnable === "function" ? (console.log("fnr", fnrunnable), fnrunnable(args)) : run_runnable(fnrunnable, lib,
                             args, options
                           )}).then(rv => {
                             if(isError(rv)) {
@@ -1468,6 +1475,37 @@ const nolib = {
     set_mutable: {
       args: ["target", "path", "value", "__graph_value"],
       fn: (target, path, value, nodevalue) => {
+        function set(obj, propsArg, value) {
+          var props, lastProp;
+          if (Array.isArray(propsArg)) {
+            props = propsArg.slice(0);
+          }
+          if (typeof propsArg == 'string') {
+            props = propsArg.split('.');
+          }
+          if (typeof propsArg == 'symbol') {
+            props = [propsArg];
+          }
+          if (!Array.isArray(props)) {
+            throw new Error('props arg must be an array, a string or a symbol');
+          }
+          lastProp = props.pop();
+          if (!lastProp) {
+            return false;
+          }
+          var thisProp;
+          while ((thisProp = props.shift())) {
+            if (typeof obj[thisProp] == 'undefined') {
+              obj[thisProp] = {};
+            }
+            obj = obj[thisProp];
+            if (!obj || typeof obj != 'object') {
+              return false;
+            }
+          }
+          obj[lastProp] = value;
+          return true;
+        }
         if(target && (nodevalue || path)) {
           set(target, nodevalue || path, value);
         }

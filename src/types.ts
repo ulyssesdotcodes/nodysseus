@@ -83,7 +83,7 @@ export type InputRunnable = Omit<BaseRunnable, "__kind" | "env" | "lib"> & {
 export const AP = "ap"
 export type ApRunnable = {
   __kind: "ap",
-  fn: FunctorRunnable | ApRunnable | Array<FunctorRunnable | ApRunnable>,
+  fn: FunctorRunnable | ApRunnable | Function | Array<FunctorRunnable | ApRunnable | Function>,
   args: ConstRunnable,
   lib: Lib
 }
@@ -143,6 +143,7 @@ export const isArgs = (args: any): args is Args => typeof args?.get === "functio
 export type RunOptions = {
   profile?: boolean,
   resolvePromises?: boolean,
+  timings?: Record<string, number>;
 }
 
 type FullyTypedArg = { 
