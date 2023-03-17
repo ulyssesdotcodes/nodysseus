@@ -1,7 +1,7 @@
 import set from "just-safe-set";
 import loki from "lokijs";
 import { ancestor_graph, ispromise, isWrappedPromise, mapMaybePromise, node_args, WrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node, runnableId } from "./util"
-import { isNodeGraph, Graph, LokiT, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg } from "./types"
+import { isNodeGraph, Graph, LokiT, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike } from "./types"
 import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util"
 import generic from "./generic.js";
 import { create_fn, expect, now } from "./externs";
@@ -351,11 +351,9 @@ const node_script = (node, nodeArgs: Args, lib: Lib, options: RunOptions): Resul
       .then(promisedData => lib.data.no.of(fn.apply(null, [lib.data, node, data, ...Object.values(isError(promisedData) ? promisedData : promisedData?.value ?? {})]))).value
 }
 
-const node_extern = (node: RefNode, data: Args, graphArgs: Env, lib: Lib, options: RunOptions) => {
-    const libExternFn = node.value.startsWith("extern.") && node.value.substring(7);
-    const extern = libExternFn ? lib.data.extern[libExternFn] : nodysseus_get(lib.data, node.value, lib);
-    let argspromise = false;
+const run_extern = (extern: ApFunction, data: Args, lib: Lib, options: RunOptions, node?: NodysseusNode, graphArgs?: Env) => {
     let argColonIdx;
+    let argspromise = false;
     const isArgsArray = Array.isArray(extern.args);
     const externArgs: Array<[string, TypedArg]>  = isArgsArray ? extern.args.map(a => {
       argColonIdx = a.indexOf(":")
@@ -378,6 +376,9 @@ const node_extern = (node: RefNode, data: Args, graphArgs: Env, lib: Lib, option
           newval = (graphArgs.data.get("__graphid") as {value: string}).value;
       } else {
           newval = extern.rawArgs ? data.get(arg) : run_runnable(data.get(arg), lib, new Map(), options)
+          while(isConstRunnable(newval) && !extern.rawArgs) {
+            newval = run_runnable(newval, lib, new Map(), options)
+          }
           newval = ispromise(newval) ? newval.then((v: Result) => isError(v) ? v : v?.value) : newval && !extern.rawArgs ? newval.value : newval;
       }
 
@@ -397,6 +398,12 @@ const node_extern = (node: RefNode, data: Args, graphArgs: Env, lib: Lib, option
         const res = (typeof extern === 'function' ? extern :  extern.fn).apply(null, isArgsArray ? resArgs : [Object.fromEntries(externArgs.map((a, idx) => [a[0], resArgs[idx]]))]);
         return mapMaybePromise(res, res => extern.rawArgs ? res : lib.data.no.of(res));
     }
+
+}
+
+const node_extern = (node: RefNode, data: Args, graphArgs: Env, lib: Lib, options: RunOptions) => {
+    const libExternFn = node.value.startsWith("extern.") && node.value.substring(7);
+    return run_extern(libExternFn ? lib.data.extern[libExternFn] : nodysseus_get(lib.data, node.value, lib), data, lib, options, node, graphArgs);
 }
 
 const resolve_args = (data: Args, lib: Lib, options: RunOptions): Result | Promise<Result> => {
@@ -404,9 +411,14 @@ const resolve_args = (data: Args, lib: Lib, options: RunOptions): Result | Promi
     const result = {}
     for(let k of data.keys()){
       let val: Result | ConstRunnable | Promise<Result> = data.get(k);
-      while(isConstRunnable(val as Runnable)) {
-        val = wrapPromise(val).then(runnable => run_runnable(runnable, lib, undefined, options)).value;
-      }
+      // console.log(`start ${k}`, val)
+      const resarg = (argval) => wrapPromise(isValue(argval) ? argval.value : argval).then(runnable => isConstRunnable(runnable) ? resarg(run_runnable(runnable, lib, undefined, options)) : runnable).value;
+      val = resarg(val);
+      // while(isConstRunnable(val as Runnable)) {
+      //   val = wrapPromise(val).then(runnable => run_runnable(runnable, lib, undefined, options)).value;
+      // }
+
+      // console.log(`end ${k}`, val);
       if(val instanceof Error) {
         return val
       }
@@ -417,7 +429,7 @@ const resolve_args = (data: Args, lib: Lib, options: RunOptions): Result | Promi
     if (is_promise && options.resolvePromises) {
       const promises = [];
       Object.entries(result).forEach(kv => {
-          promises.push(Promise.resolve(kv[1]).then((pv: Result) => isError(pv) ? pv : [kv[0], pv?.value]))
+          promises.push(Promise.resolve(kv[1]).then((pv: Result) => isError(pv) ? pv : [kv[0], isValue(pv) ? pv?.value : pv]))
       })
       return Promise.all(promises).then(Object.fromEntries).then(v => lib.data.no.of(v));
     }
@@ -463,7 +475,7 @@ const run_runnable = (runnable: Runnable | undefined, lib: Lib, args: Map<string
     case CONST:
       return run_graph((runnable as ConstRunnable).graph, runnable.fn, mergeEnv(args, runnable.env), runnable.lib, options);
     case AP:
-      return run_ap_runnable(runnable, args, lib)
+      return run_ap_runnable(runnable, args, lib, options)
     case FUNCTOR:
       return run_functor_runnable(runnable, args, lib, options)
   }
@@ -508,10 +520,10 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
           if (!node_ref) {
               throw new Error(`Unable to find ref ${node.ref} for node ${node.name || node.id}`)
           }
-          if(node_ref.nodes) {
-              lib.data.no.runtime.set_parent(newgraphid, graphid); // before so that change/update has the parent id
-              // lib.data.no.runtime.update_graph(newgraphid)
-          }
+
+          // before so that change/update has the parent id
+          // change both nodes with nested graphs and non-
+          lib.data.no.runtime.set_parent(newgraphid, graphid); 
 
           const result = run_node(node_ref, node.value ? new Map(nodeArgs).set("__graph_value", lib.data.no.of(node.value)) : nodeArgs, newGraphArgs, lib, options)
           return result;
@@ -638,7 +650,7 @@ const run_functor_runnable = (runnable: FunctorRunnable, args: Args, lib: Lib, o
   const execArgs: Args = new Map(runnable.parameters?.map(k => [k, nodysseus_get(args, k, lib)]) ?? []);
   const newRunnable: ConstRunnable = {
     __kind: CONST,
-    env: combineEnv((execArgs ?? new Map()).set("__graphid", runnable.env.data.get("__graphid")), runnable.env, "functor runnable" + runnable.fn),
+    env: combineEnv((execArgs ?? new Map()).set("__graphid", runnable.env.data.get("__graphid")), runnable.env, runnable.fn),
     fn: runnable.fn,
     graph: runnable.graph,
     lib: runnable.lib
@@ -646,19 +658,49 @@ const run_functor_runnable = (runnable: FunctorRunnable, args: Args, lib: Lib, o
   return run_runnable(newRunnable, lib, undefined, options)
 }
 
-const run_ap_runnable = (runnable: ApRunnable, args: Args, lib: Lib): Result | Promise<Result> => {
-  const computedArgs = runnable.args && run_runnable({...runnable.args, lib: runnable.lib}, lib, args, {});
-  const execute = (execArgs): WrappedPromise<any> => {
-    const ret = (Array.isArray(runnable.fn) ? runnable.fn : [runnable.fn])
-    .map(rfn => typeof rfn === "function" ? lib.data.no.of(rfn(execArgs?.value ? execArgs.value : {})) : run_runnable(
-      rfn,
-      runnable.lib,
-      execArgs?.value ? new Map(Object.entries(execArgs.value).filter(kv => kv[0] !== "__graphid").map(kv => [kv[0], lib.data.no.of(kv[1])])) : new Map(),
-      {}
-    ))
-    return Array.isArray(runnable.fn) ? wrapPromiseAll(ret.map(v => wrapPromise(v))) : wrapPromise(ret[0]);
-  }
-  return wrapPromise(computedArgs).then(execute).then(v => v?.value).value;
+const run_ap_runnable = (runnable: ApRunnable, args: Args, lib: Lib, options: RunOptions): Result | Promise<Result> => {
+  // const computedArgs = 
+  // console.log(runnable.fn);
+  // const runnablefns = Array.isArray(runnable.fn) ? runnable.fn : [runnable.fn];
+  // const apfns = runnablefns.filter(isApFunction);
+  // const apfnresults = runnablefns.map(fn => isApFunction(fn) && run_extern(fn, args, lib, options))
+
+  //return apfns.length === runnablefns.length 
+    // ? apfnresults 
+    // :
+  // console.log("aprun", runnable, args)
+  // return wrapPromise(runnable.args ? run_runnable({...runnable.args, lib}, lib, args, options) : lib.data.no.of(new Map()))
+  return wrapPromise(runnable.args ? create_data(runnable.args.fn, runnable.args.graph, runnable.args.env,  lib, options) : new Map())
+        .then(execArgs => {
+          const ret = (Array.isArray(runnable.fn) ? runnable.fn : [runnable.fn])
+          .map(rfn => {
+            return typeof rfn === "function" 
+            // ? rfn(new Map([...Object.entries(execArgs.value)].filter(kv => kv[0] !== "__graphid").map(kv => [kv[0], lib.data.no.of(kv[1])]))).then(r => lib.data.no.of(r)).value 
+            ? wrapPromise(resolve_args(execArgs, lib, options)).then(args => isValue(args) ? rfn(args.value) : args)
+                .then(r => lib.data.no.of(r)).value 
+            : isApFunction(rfn)
+            // ? run_extern(rfn, new Map([...Object.entries(execArgs.value)].filter(kv => kv[0] !== "__graphid").map(kv => [kv[0], lib.data.no.of(kv[1])])), lib, options)
+            ? wrapPromise(resolve_args(execArgs, lib, {...options, resolvePromises: !rfn.promiseArgs})).then(args => isValue(args) ? args.value : args)
+              .then(args => run_extern(rfn, 
+              new Map([...Object.entries(args)].filter(kv => kv[0] !== "__graphid").map(kv => [kv[0], lib.data.no.of(kv[1])])),
+              lib, options))
+            // : run_runnable(
+            //   rfn as Runnable,
+            //   runnable.lib,
+            //   new Map([...Object.entries(execArgs.value)].filter(kv => kv[0] !== "__graphid").map(kv => [kv[0], lib.data.no.of(kv[1])])),
+            //   options
+            // )
+            : wrapPromise(resolve_args(execArgs, lib, options)).then(args => isValue(args) ? run_runnable(
+              rfn as Runnable,
+              runnable.lib,
+              new Map([...Object.entries(args.value)].filter(kv => kv[0] !== "__graphid").map(kv => [kv[0], lib.data.no.of(kv[1])])),
+              {}
+            ) : args)
+          })
+          return Array.isArray(runnable.fn) ? wrapPromiseAll(ret.map(v => wrapPromise(v))) : wrapPromise(ret[0]);
+        }).then(v => {
+          return isError(v) ? v : v?.value
+        }).value;
 }
 
 const getmap = (map, id) => {
@@ -726,6 +768,7 @@ const nolib = {
   no: {
     of: <T>(value): Result | Promise<Runnable> => ispromise(value) ? value.then(nolib.no.of) : isValue(value) ? value : { __kind: "result", value: value},
     arg: (node, target: Env, lib: Lib, value, options: RunOptions) => {
+      value = node.value;
       let valuetype, nodevalue;
       let colonIdx = value.indexOf(":")
       if(colonIdx >= 0) {
@@ -779,18 +822,29 @@ const nolib = {
           );
 
       // let retrun = run_runnable(ret, lib);
-      // while(retrun?.isArg && valuetype !== "raw") {
-      //   retrun = run_runnable(ret, lib)
+      // let resolveret = (rr) => {
+      //   const retrun = isValue(rr) && isConstRunnable(rr.value) && valuetype !== "raw" ? run_runnable(rr, lib, undefined, options) : undefined
+      //   return  ispromise(retrun) ? retrun.then(v => isError(v) ? v : v?.value) : retrun ? isValue(retrun) || isWrappedPromise(retrun) ? retrun?.value : retrun : rr;
       // }
+      let resolveret = (rr) =>
+        wrapPromise(rr)
+          .then(rrr => isValue(rrr) ? rrr.value : rrr)
+          .then(rrr => isConstRunnable(rrr) && valuetype !== "raw" ? resolveret(run_runnable(rrr, lib, new Map(), options)) : rrr).value
+          
 
-      const retrun = isConstRunnable(ret) && valuetype !== "raw" ? run_runnable(ret, lib, undefined, options) : undefined;
-      const r = ispromise(retrun) ? retrun.then(v => isError(v) ? v : v?.value) : retrun ? isValue(retrun) || isWrappedPromise(retrun) ? retrun?.value : retrun : ret;
-      return r
+        // (console.log("start", rr), ispromise)(rr) 
+        // ? rr.then(resolveret)
+        // : isValue(rr) && isConstRunnable(rr.value) && valuetype !== "raw"
+        // ? resolveret(run_runnable(ret, lib))
+        // : (console.log("end", rr), rr)
+
+      return resolveret(ret)
     },
     base_graph,
     base_node,
     NodysseusError,
     runtime: undefined,
+    wrapPromise,
     runtimefn: (function () {
 
       const polyfillRequestAnimationFrame = typeof window !== "undefined" ? window.requestAnimationFrame : (fn => setTimeout(fn, 16))
@@ -1228,7 +1282,7 @@ const nolib = {
           wrapPromise(run_runnable(runnable, lib))
             .then(r => resolveRunnable(isError(r) ? r : r.value)) : wrapPromise(runnable)
 
-        const apRunnable = (fnRunnable: FunctorRunnable | ApRunnable | Function | Array<FunctorRunnable | ApRunnable | Function>): ApRunnable => ({
+        const apRunnable = (fnRunnable: ApFunctorLike | Array<ApFunctorLike>): ApRunnable => ({
             __kind: AP,
             fn: Array.isArray(fnRunnable) ? fnRunnable.filter(v => v) : fnRunnable,
             args,
@@ -1237,7 +1291,12 @@ const nolib = {
 
         return fnResult
           .then(fnr => isError(fnr) ? fnr : Array.isArray(fnr.value) ? fnr.value.map(fnrv => resolveRunnable(fnrv).value) :  resolveRunnable(fnr.value).value)
-          .then(fnr => !((Array.isArray(fnr) ? fnr : [fnr]).filter(fnrv => fnrv).every(fnrv => isApRunnable(fnrv) || isFunctorRunnable(fnrv) ||typeof fnrv === "function")) ? fnr : run ? run_runnable(apRunnable(fnr as FunctorRunnable), lib) : apRunnable(fnr))
+          .then(fnr => !((Array.isArray(fnr) ? fnr : [fnr])
+                         .filter(fnrv => fnrv).every(isApFunctorLike)) 
+                        ? fnr 
+                        : run 
+                        ? run_runnable(apRunnable(fnr), lib) 
+                        : apRunnable(fnr))
           .then(res => lib.data.no.of(res)).value
       }
     },
@@ -1296,7 +1355,7 @@ const nolib = {
                         (previousValue, currentValue) =>
                           !errored && wrapPromise(previousValue).then(prevVal => {
                             const args = new Map().set("previousValue", lib.data.no.of(prevVal)).set("currentValue", lib.data.no.of(currentValue))
-                            return typeof fnrunnable === "function" ? (console.log("fnr", fnrunnable), fnrunnable(args)) : run_runnable(fnrunnable, lib,
+                            return typeof fnrunnable === "function" ? fnrunnable(args) : run_runnable(fnrunnable, lib,
                             args, options
                           )}).then(rv => {
                             if(isError(rv)) {
@@ -1342,6 +1401,52 @@ const nolib = {
       fn: (entries) => {
         return Object.fromEntries(entries);
       },
+    },
+    state: {
+      args: ["_lib", "__graphid"],
+      fn: (lib, graphid) => {
+        const rawstate = lib.data.no.runtime.get_args(graphid)["state"]
+        // lib.data.no.runtime.update_args(graphid, {pending: true})
+        return wrapPromise(rawstate).then(st => isValue(st) ? st.value : st).then(state => ({
+          graphid,
+          set: {
+            __kind: "apFunction",
+            promiseArgs: true,
+            fn: (value) => {
+              const result = value === undefined || value === null ? undefined : run_runnable(value, lib);
+              const promiseresult = ispromise(result) ? result.then(r => isValue(r) ? r.value : r) : isValue(result) ? result.value : result;
+
+              lib.data.no.runtime.update_args(graphid, {state: promiseresult});
+
+              return ispromise(promiseresult) ? promiseresult.then(pr => {
+                lib.data.no.runtime.update_args(graphid, {state: pr})
+                return pr;
+              }) : promiseresult;
+            //
+            //   console.log('start the thing', args)
+            // const ret = wrapPromise(args.value).then(val => {
+            //   console.log('still in the thing?', val.value)
+            //   lib.data.no.runtime.update_args(graphid, {state: val.value})
+            //   return args.value
+            // }).value
+
+            // console.log('ret', isValue(ret) ? ret.value : ret)
+            //
+            //
+            // return lib.data.no.of({value: ret});
+            // },
+            },
+              // wrapPromise(args.value)
+              //   .then(value => {lib.data.no.runtime.update_args(graphid, {state: (console.log('adding', value), value)}); return value})
+              // lib.data.no.wrapPromise(nodysseus_get(args, "value", lib)).then(state => {
+              //   lib.data.no.runtime.update_args(graphid, {state})
+              //   return state
+              // }).value,
+            args: ['value']
+          },
+          state: state
+        })).value
+      }
     },
     return: {
       resolve: false,
@@ -1413,7 +1518,7 @@ const nolib = {
               options
             ))
             .then(subscriptions => isError(subscriptions) ? subscriptions : subscriptions.value)
-            .then(subscriptions => Object.entries(subscriptions)
+            .then(subscriptions => subscriptions && Object.entries(subscriptions)
                 .forEach(kv => kv[1] &&
                   _lib.data.no.runtime.add_listener(kv[0], 'subscribe-' + newgraphid, kv[1], false, 
                     graphid, true, _lib, options)))
@@ -1449,8 +1554,8 @@ const nolib = {
       },
     },
     set: {
-      args: ["target: default", "path", "value", "__graph_value", "_graph_input_value"],
-      fn: (target, path, value, nodevalue, _args) => {
+      args: ["target: default", "path", "value", "__graph_value"],
+      fn: (target, path, value, nodevalue) => {
         const keys = (nodevalue || path).split(".");
         const check = (o, v, k) =>
           k.length === 1
@@ -1524,8 +1629,8 @@ const nolib = {
       },
     },
     script: {
-      args: ["_node", "_node_args", "_graph", "_lib", "_graph_input_value", "_runoptions"],
-      fn: (node, node_inputs, graph, _lib, _graph_input_value, options) =>
+      args: ["_node", "_node_args", "_graph", "_lib", "_runoptions"],
+      fn: (node, node_inputs, graph, _lib, options) =>
         node_script(
           node,
           node_inputs,
@@ -1704,15 +1809,6 @@ const nolib = {
       args: ["_node_args"],
       resolve: true,
       fn: (args) => Object.values(args).reduce((acc: any, v: any) => acc / v, 1),
-    },
-    unwrap_proxy: {
-      args: ["proxy"],
-      resolve: false,
-      fn: (proxy) => ({
-        fn: proxy._value._nodeid,
-        graph: proxy._value._graphid,
-        args: proxy._value._graph_input_value,
-      }),
     },
     modify: {
       args: ["target", "path", "fn", "_node", "_lib", "_graph_input_value", "_runoptions"],

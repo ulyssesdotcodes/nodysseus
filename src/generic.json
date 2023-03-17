@@ -279,17 +279,6 @@
         "ref": "extern",
         "value": "extern.ap"
       },
-      {
-        "id": "function", 
-        "description": "Creates a function from the `fn` input.",
-        "nodes": [
-          {"id": "runnable", "ref": "arg", "value": "runnable"},
-          {"id": "out", "ref": "script", "value":"return (paramters) => _lib.no.run(runnable.graph, runnable.fn, {...runnable.args, paramters}, _lib)"}
-        ],
-        "edges": [
-          {"from": "runnable", "to": "out", "as": "runnable"}
-        ]
-      },
       {"id": "script", "description": "Runs this as a javascript function. `return` is needed at the end of the script to return anything.", "ref": "extern", "value": "extern.script"},
       {"id": "extern", "description": "Uses a function from the nodysseus extern library directly"},
       {

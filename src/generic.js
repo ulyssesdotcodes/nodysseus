@@ -1614,31 +1614,12 @@ const generic = {
         "id": "wa4gr84",
         "value": "_reset.set",
         "ref": "arg"
-      },
-      "c8r9x38": {
-        "id": "c8r9x38",
-        "ref": "refval"
-      },
-      "8shc9ct": {
-        "id": "8shc9ct",
-        "value": "_isrunning",
-        "ref": "arg"
-      },
-      "x165dr6": {
-        "id": "x165dr6",
-        "value": "_isrunning.value = false;\n\nreturn value;",
-        "ref": "script"
-      },
-      "ieg16nd": {
-        "id": "ieg16nd",
-        "value": "_isrunning",
-        "ref": "arg"
       }
     },
     "edges": {
       "ap_cache_value": {
         "from": "ap_cache_value",
-        "to": "x165dr6",
+        "to": "ap_cache_args",
         "as": "value"
       },
       "ap_cache_args": {
@@ -1795,244 +1776,6 @@ const generic = {
         "from": "wa4gr84",
         "to": "w7nd0t8",
         "as": "fn"
-      },
-      "c8r9x38": {
-        "from": "c8r9x38",
-        "to": "cache_return_args",
-        "as": "_isrunning"
-      },
-      "8shc9ct": {
-        "from": "8shc9ct",
-        "to": "pred_cache_state",
-        "as": "_isrunning"
-      },
-      "x165dr6": {
-        "from": "x165dr6",
-        "to": "ap_cache_args",
-        "as": "value"
-      },
-      "ieg16nd": {
-        "from": "ieg16nd",
-        "to": "x165dr6",
-        "as": "_isrunning"
-      }
-    },
-    "edges_in": {
-      "x165dr6": {
-        "ap_cache_value": {
-          "from": "ap_cache_value",
-          "to": "x165dr6",
-          "as": "value"
-        },
-        "ieg16nd": {
-          "from": "ieg16nd",
-          "to": "x165dr6",
-          "as": "_isrunning"
-        }
-      },
-      "cache": {
-        "ap_cache_args": {
-          "from": "ap_cache_args",
-          "to": "cache",
-          "as": "args"
-        },
-        "ap_cache_fn": {
-          "from": "ap_cache_fn",
-          "to": "cache",
-          "as": "fn"
-        },
-        "xbhq0f0": {
-          "from": "xbhq0f0",
-          "to": "cache",
-          "as": "run"
-        }
-      },
-      "pred_cache_state": {
-        "pred_cachevalue_state": {
-          "from": "pred_cachevalue_state",
-          "to": "pred_cache_state",
-          "as": "cachevaluestate"
-        },
-        "recache": {
-          "from": "recache",
-          "to": "pred_cache_state",
-          "as": "recache"
-        },
-        "h56r87n": {
-          "from": "h56r87n",
-          "to": "pred_cache_state",
-          "as": "_reset"
-        },
-        "8shc9ct": {
-          "from": "8shc9ct",
-          "to": "pred_cache_state",
-          "as": "_isrunning"
-        }
-      },
-      "if_cache_state": {
-        "cachevalue_state": {
-          "from": "cachevalue_state",
-          "to": "if_cache_state",
-          "as": "false"
-        },
-        "pred_cache_state": {
-          "from": "pred_cache_state",
-          "to": "if_cache_state",
-          "as": "pred"
-        },
-        "9w2cqoc": {
-          "from": "9w2cqoc",
-          "to": "if_cache_state",
-          "as": "true"
-        }
-      },
-      "kqnga6d": {
-        "cache": {
-          "from": "cache",
-          "to": "kqnga6d",
-          "as": "arg0"
-        },
-        "w7nd0t8": {
-          "from": "w7nd0t8",
-          "to": "kqnga6d",
-          "as": "arg1"
-        }
-      },
-      "cache_return": {
-        "if_cache_state": {
-          "from": "if_cache_state",
-          "to": "cache_return",
-          "as": "value"
-        }
-      },
-      "cache_return_args": {
-        "cache_state": {
-          "from": "cache_state",
-          "to": "cache_return_args",
-          "as": "_cachevalue"
-        },
-        "wx3yoem": {
-          "from": "wx3yoem",
-          "to": "cache_return_args",
-          "as": "_reset"
-        },
-        "c8r9x38": {
-          "from": "c8r9x38",
-          "to": "cache_return_args",
-          "as": "_isrunning"
-        }
-      },
-      "out": {
-        "cache_return_args": {
-          "from": "cache_return_args",
-          "to": "out",
-          "as": "args"
-        },
-        "cache_return": {
-          "from": "cache_return",
-          "to": "out",
-          "as": "value"
-        },
-        "recache_button": {
-          "from": "recache_button",
-          "to": "out",
-          "as": "display"
-        },
-        "fy9ee3e": {
-          "from": "fy9ee3e",
-          "to": "out",
-          "as": "subscribe"
-        }
-      },
-      "recache_button_fn_args": {
-        "recache_button_fn_value": {
-          "from": "recache_button_fn_value",
-          "to": "recache_button_fn_args",
-          "as": "value"
-        }
-      },
-      "recache_button_ap": {
-        "recache_button_fn_args": {
-          "from": "recache_button_fn_args",
-          "to": "recache_button_ap",
-          "as": "args"
-        },
-        "recache_button_fn": {
-          "from": "recache_button_fn",
-          "to": "recache_button_ap",
-          "as": "fn"
-        }
-      },
-      "recache_button": {
-        "recache_button_ap": {
-          "from": "recache_button_ap",
-          "to": "recache_button",
-          "as": "ontap"
-        }
-      },
-      "fy9ee3e": {
-        "7rk5v07": {
-          "from": "7rk5v07",
-          "to": "fy9ee3e",
-          "as": "graphchange"
-        }
-      },
-      "7rk5v07": {
-        "gecwhp1": {
-          "from": "gecwhp1",
-          "to": "7rk5v07",
-          "as": "fn"
-        },
-        "uwfswa7": {
-          "from": "uwfswa7",
-          "to": "7rk5v07",
-          "as": "args"
-        }
-      },
-      "uwfswa7": {
-        "eh9nyb7": {
-          "from": "eh9nyb7",
-          "to": "uwfswa7",
-          "as": "value"
-        }
-      },
-      "9w2cqoc": {
-        "kqnga6d": {
-          "from": "kqnga6d",
-          "to": "9w2cqoc",
-          "as": "target"
-        }
-      },
-      "w7nd0t8": {
-        "mixjulh": {
-          "from": "mixjulh",
-          "to": "w7nd0t8",
-          "as": "run"
-        },
-        "5647gh5": {
-          "from": "5647gh5",
-          "to": "w7nd0t8",
-          "as": "args"
-        },
-        "wa4gr84": {
-          "from": "wa4gr84",
-          "to": "w7nd0t8",
-          "as": "fn"
-        }
-      },
-      "5647gh5": {
-        "atqq2qu": {
-          "from": "atqq2qu",
-          "to": "5647gh5",
-          "as": "value"
-        }
-      },
-      "ap_cache_args": {
-        "x165dr6": {
-          "from": "x165dr6",
-          "to": "ap_cache_args",
-          "as": "value"
-        }
       }
     }
   },
@@ -2057,17 +1800,22 @@ const generic = {
       },
       "cachevalue_state": {
         "id": "cachevalue_state",
-        "ref": "arg",
-        "value": "cachevalue.state"
+        "value": "_cachevalue.state",
+        "ref": "arg"
       },
       "pred_cachevalue_state": {
         "id": "pred_cachevalue_state",
-        "ref": "arg",
-        "value": "cachevalue.state"
+        "value": "_cachevalue.state",
+        "ref": "arg"
+      },
+      "pred_cachevalue": {
+        "id": "pred_cachevalue",
+        "value": "_cachevalue",
+        "ref": "arg"
       },
       "pred_cache_state": {
         "id": "pred_cache_state",
-        "value": "const docache = isrunning.value ? false : recache === undefined ? (cachevaluestate === undefined || cachevaluestate === null) : (recache !== false && (typeof recache !== 'object' || Object.keys(recache).length > 0));\n\nif(docache) {\n  isrunning.value = true;\n}\n\nreturn docache;",
+        "value": "const docache = recache === undefined ? (cachevaluestate === undefined || cachevaluestate === null) : (recache !== false && (typeof recache !== 'object' || Object.keys(recache).length > 0));\n\nreturn docache;",
         "ref": "script"
       },
       "ap_cache_value": {
@@ -2084,8 +1832,8 @@ const generic = {
       },
       "ap_cache_fn": {
         "id": "ap_cache_fn",
-        "ref": "arg",
-        "value": "cachevalue.set"
+        "value": "_cachevalue.set",
+        "ref": "arg"
       },
       "cache": {
         "id": "cache",
@@ -2094,6 +1842,11 @@ const generic = {
       "if_cache_state": {
         "id": "if_cache_state",
         "ref": "if"
+      },
+      "cache_state_input_val": {
+        "id": "cache_state_input_val",
+        "ref": "arg",
+        "value": "value"
       },
       "cache_state": {
         "id": "cache_state",
@@ -2108,8 +1861,8 @@ const generic = {
       },
       "recache_button_fn": {
         "id": "recache_button_fn",
-        "ref": "arg",
-        "value": "cachevalue.set"
+        "value": "_cachevalue.set",
+        "ref": "arg"
       },
       "recache_button_fn_args": {
         "id": "recache_button_fn_args"
@@ -2135,27 +1888,12 @@ const generic = {
       "jb9ua5s": {
         "id": "jb9ua5s",
         "ref": "refval"
-      },
-      "3s0n7mj": {
-        "id": "3s0n7mj",
-        "value": "isrunning",
-        "ref": "arg"
-      },
-      "vviqt6a": {
-        "id": "vviqt6a",
-        "value": "isrunning.value = false;\nreturn value;",
-        "ref": "script"
-      },
-      "vz70gvz": {
-        "id": "vz70gvz",
-        "value": "isrunning",
-        "ref": "arg"
       }
     },
     "edges": {
       "ap_cache_value": {
         "from": "ap_cache_value",
-        "to": "vviqt6a",
+        "to": "ap_cache_args",
         "as": "value"
       },
       "ap_cache_args": {
@@ -2193,6 +1931,11 @@ const generic = {
         "to": "if_cache_state",
         "as": "true"
       },
+      "pred_cachevalue": {
+        "from": "pred_cachevalue",
+        "to": "pred_cache_state",
+        "as": "cachevalue"
+      },
       "pred_cache_state": {
         "from": "pred_cache_state",
         "to": "if_cache_state",
@@ -2203,10 +1946,15 @@ const generic = {
         "to": "cache_return",
         "as": "value"
       },
+      "cache_state_input_val": {
+        "from": "cache_state_input_val",
+        "to": "cache_state",
+        "as": "_value"
+      },
       "cache_state": {
         "from": "cache_state",
         "to": "cache_return_args",
-        "as": "cachevalue"
+        "as": "_cachevalue"
       },
       "cache_return_args": {
         "from": "cache_return_args",
@@ -2242,162 +1990,8 @@ const generic = {
         "from": "recache_button",
         "to": "out",
         "as": "display"
-      },
-      "jb9ua5s": {
-        "from": "jb9ua5s",
-        "to": "cache_return_args",
-        "as": "isrunning"
-      },
-      "3s0n7mj": {
-        "from": "3s0n7mj",
-        "to": "pred_cache_state",
-        "as": "isrunning"
-      },
-      "vviqt6a": {
-        "from": "vviqt6a",
-        "to": "ap_cache_args",
-        "as": "value"
-      },
-      "vz70gvz": {
-        "from": "vz70gvz",
-        "to": "vviqt6a",
-        "as": "isrunning"
       }
     },
-    "edges_in": {
-      "vviqt6a": {
-        "ap_cache_value": {
-          "from": "ap_cache_value",
-          "to": "vviqt6a",
-          "as": "value"
-        },
-        "vz70gvz": {
-          "from": "vz70gvz",
-          "to": "vviqt6a",
-          "as": "isrunning"
-        }
-      },
-      "cache": {
-        "ap_cache_args": {
-          "from": "ap_cache_args",
-          "to": "cache",
-          "as": "args"
-        },
-        "ap_cache_run": {
-          "from": "ap_cache_run",
-          "to": "cache",
-          "as": "run"
-        },
-        "ap_cache_fn": {
-          "from": "ap_cache_fn",
-          "to": "cache",
-          "as": "fn"
-        }
-      },
-      "pred_cache_state": {
-        "pred_cachevalue_state": {
-          "from": "pred_cachevalue_state",
-          "to": "pred_cache_state",
-          "as": "cachevaluestate"
-        },
-        "recache": {
-          "from": "recache",
-          "to": "pred_cache_state",
-          "as": "recache"
-        },
-        "3s0n7mj": {
-          "from": "3s0n7mj",
-          "to": "pred_cache_state",
-          "as": "isrunning"
-        }
-      },
-      "if_cache_state": {
-        "cachevalue_state": {
-          "from": "cachevalue_state",
-          "to": "if_cache_state",
-          "as": "false"
-        },
-        "cache": {
-          "from": "cache",
-          "to": "if_cache_state",
-          "as": "true"
-        },
-        "pred_cache_state": {
-          "from": "pred_cache_state",
-          "to": "if_cache_state",
-          "as": "pred"
-        }
-      },
-      "cache_return": {
-        "if_cache_state": {
-          "from": "if_cache_state",
-          "to": "cache_return",
-          "as": "value"
-        }
-      },
-      "cache_return_args": {
-        "cache_state": {
-          "from": "cache_state",
-          "to": "cache_return_args",
-          "as": "cachevalue"
-        },
-        "jb9ua5s": {
-          "from": "jb9ua5s",
-          "to": "cache_return_args",
-          "as": "isrunning"
-        }
-      },
-      "out": {
-        "cache_return_args": {
-          "from": "cache_return_args",
-          "to": "out",
-          "as": "args"
-        },
-        "cache_return": {
-          "from": "cache_return",
-          "to": "out",
-          "as": "value"
-        },
-        "recache_button": {
-          "from": "recache_button",
-          "to": "out",
-          "as": "display"
-        }
-      },
-      "recache_button_fn_args": {
-        "recache_button_fn_value": {
-          "from": "recache_button_fn_value",
-          "to": "recache_button_fn_args",
-          "as": "value"
-        }
-      },
-      "recache_button_ap": {
-        "recache_button_fn_args": {
-          "from": "recache_button_fn_args",
-          "to": "recache_button_ap",
-          "as": "args"
-        },
-        "recache_button_fn": {
-          "from": "recache_button_fn",
-          "to": "recache_button_ap",
-          "as": "fn"
-        }
-      },
-      "recache_button": {
-        "recache_button_ap": {
-          "from": "recache_button_ap",
-          "to": "recache_button",
-          "as": "ontap"
-        }
-      },
-      "ap_cache_args": {
-        "vviqt6a": {
-          "from": "vviqt6a",
-          "to": "ap_cache_args",
-          "as": "value"
-        }
-      }
-    }
   },
     "isunchanged": {
       "id": "isunchanged",
@@ -3106,7 +2700,9 @@ const generic = {
       "name": "state",
       "out": "out",
       "category": "data",
-      "nodes": [
+      "ref": "extern",
+      "value": "extern.state",
+      "_nodes": [
         {
           "id": "graphid_text",
           "ref": "arg",
@@ -3119,6 +2715,11 @@ const generic = {
         },
         {
           "id": "set_state_val_graphid",
+          "ref": "arg",
+          "value": "__graphid"
+        },
+        {
+          "id": "set_state_val_runnable_graphid",
           "ref": "arg",
           "value": "__graphid"
         },
@@ -3171,7 +2772,9 @@ const generic = {
         },
         {
           "id": "set_state_val_runnable",
-          "ref": "runnable"
+          "_ref": "runnable",
+          "ref": "script",
+          "value": "return (value) => _lib.no.wrapPromise(value.value).then(value => {_lib.no.runtime.update_args(graphid, {state: (console.log('adding', value), value)}); return value})"
         },
         {"id": "store_runnable", "ref": "script", "value": "_lib.no.runtime.update_args(graphid, {_runnable: value}); return value"},
         {"id": "runnable_atom", "ref": "script", "value": "return _lib.no.runtime.get_args(graphid)._runnable"},
@@ -3193,7 +2796,7 @@ const generic = {
           "name": "state"
         }
       ],
-      "edges": [
+      "_edges": [
         {
           "from": "graphid_atom",
           "to": "state_val_atom",
@@ -3245,6 +2848,11 @@ const generic = {
           "as": "fn"
         },
         {
+          "from": "set_state_val_runnable_graphid",
+          "to": "set_state_val_runnable",
+          "as": "graphid"
+        },
+        {
           "from": "runnable_atom",
           "to": "if_runnable",
           "as": "value"
@@ -3265,7 +2873,7 @@ const generic = {
           "as": "otherwise"
         },
         {
-          "from": "if_runnable",
+          "from": "set_state_val_runnable",
           "to": "out_atom",
           "as": "set"
         },

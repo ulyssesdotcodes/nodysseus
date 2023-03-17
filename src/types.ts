@@ -81,12 +81,26 @@ export type InputRunnable = Omit<BaseRunnable, "__kind" | "env" | "lib"> & {
 };
 
 export const AP = "ap"
+export type ApFunction = {
+  __kind: "apFunction",
+  fn: Function,
+  args: Array<string>,
+  promiseArgs?: boolean,
+  rawArgs?: boolean
+}
+export const isApFunction = (a: any): a is ApFunction => a && (a as ApFunction).__kind === "apFunction";
+
+export type ApFunctorLike = FunctorRunnable | ApRunnable | ApFunction | Function;
+
+export const isApFunctorLike = (a: any) => !!a && (typeof a === "function" || isApFunction(a) || isApRunnable(a) || isFunctorRunnable(a))
+
 export type ApRunnable = {
   __kind: "ap",
-  fn: FunctorRunnable | ApRunnable | Function | Array<FunctorRunnable | ApRunnable | Function>,
+  fn: ApFunctorLike | Array<ApFunctorLike>
   args: ConstRunnable,
   lib: Lib
 }
+
 
 export const CONST = "const"
 export type ConstRunnable = BaseRunnable & {
@@ -103,7 +117,7 @@ export type Runnable =  Result | ApRunnable | FunctorRunnable | ConstRunnable
 
 
 export const isRunnable = (r: any): r is Runnable => isValue(r as Runnable) || isConstRunnable(r as Runnable) || isApRunnable(r as Runnable) || isFunctorRunnable(r as Runnable);
-export const isError = (r: Runnable): r is Error => r instanceof Error;
+export const isError = (r: any): r is Error => r instanceof Error;
 export const isValue = (r: Runnable): r is NonErrorResult => {
   const result = r as Result;
   return !isError(result) && (result)?.__kind === "result";

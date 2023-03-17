@@ -29,6 +29,7 @@ yNodyStore().then(initStore).then(() => {
 
           });
 
+        console.log("got data", e.data);
           run(e.data, undefined, {profile: false && this.performance.now() > 4000});
       } catch (e) { console.error(e) }
   }
