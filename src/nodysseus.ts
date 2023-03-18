@@ -1404,11 +1404,34 @@ const nolib = {
         return Object.fromEntries(entries);
       },
     },
+    refval: {
+      args: ["onframe", "_lib", "__graphid"],
+      fn: (onframe, lib, graphid) => {
+        const args = lib.data.no.runtime.get_args(graphid);
+
+        let store = args["store"] ?? {
+          graphid,
+          set: {
+            __kind: "apFunction",
+            fn: (value) => {
+              store.value = value;
+            },
+            args: ['value']
+          },
+          value: undefined,
+        }
+
+        if(!args["store"]) {
+          lib.data.no.runtime.update_args(graphid, {store})
+        }
+
+        return store
+      }
+    },
     state: {
       args: ["_lib", "__graphid"],
       fn: (lib, graphid) => {
         const rawstate = lib.data.no.runtime.get_args(graphid)["state"]
-        // lib.data.no.runtime.update_args(graphid, {pending: true})
         return wrapPromise(rawstate).then(st => isValue(st) ? st.value : st).then(state => ({
           graphid,
           set: {
@@ -1424,26 +1447,7 @@ const nolib = {
                 lib.data.no.runtime.update_args(graphid, {state: pr})
                 return pr;
               }) : promiseresult;
-            //
-            //   console.log('start the thing', args)
-            // const ret = wrapPromise(args.value).then(val => {
-            //   console.log('still in the thing?', val.value)
-            //   lib.data.no.runtime.update_args(graphid, {state: val.value})
-            //   return args.value
-            // }).value
-
-            // console.log('ret', isValue(ret) ? ret.value : ret)
-            //
-            //
-            // return lib.data.no.of({value: ret});
-            // },
             },
-              // wrapPromise(args.value)
-              //   .then(value => {lib.data.no.runtime.update_args(graphid, {state: (console.log('adding', value), value)}); return value})
-              // lib.data.no.wrapPromise(nodysseus_get(args, "value", lib)).then(state => {
-              //   lib.data.no.runtime.update_args(graphid, {state})
-              //   return state
-              // }).value,
             args: ['value']
           },
           state: state

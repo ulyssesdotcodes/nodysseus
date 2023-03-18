@@ -2110,7 +2110,12 @@ const generic = {
         }
       ]
     },
-    "refval": {
+  "refval": {
+    "id": "refval",
+    "ref": "extern",
+    "value": "extern.refval"
+  },
+    "refval_old": {
     "id": "refval",
     "out": "out",
     "nodes": {
