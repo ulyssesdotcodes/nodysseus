@@ -876,9 +876,11 @@ const nolib = {
         // }
         if(event.startsWith("bc")) {
           event = event.substring(3);
-        } else if(event !== "noderun" && !event.startsWith("graph") && event !== "animationframe" && event !== "show_all") {
+        } else if(event !== "noderun" && event !== "animationframe" && event !== "show_all") {
           try {
-            if(typeof window !== "undefined") {
+            if(typeof window !== "undefined" && !event.startsWith("graph")) {
+              eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data });
+            } else if (event === "grapherror") {
               eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data });
             }
           } catch(e){

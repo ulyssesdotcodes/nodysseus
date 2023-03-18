@@ -1,5 +1,5 @@
 import * as ha from "hyperapp"
-import { initStore, nodysseus_get, nolib, run } from "../nodysseus";
+import { initStore, nodysseus_get, nolib, run, NodysseusError } from "../nodysseus";
 import { Edge, Graph, isArgs, isRunnable, Lib, NodysseusNode } from "../types";
 import { base_node, base_graph, ispromise, wrapPromise, node_args, expand_node, contract_node, ancestor_graph, create_randid } from "../util";
 import panzoom, * as pz from "panzoom";
@@ -169,6 +169,8 @@ export const pzobj: {
     }
 }
 
+// Errors from the worker don't keep instanceof
+export const isNodysseusError = (e: Error) => e && (e instanceof nolib.no.NodysseusError || (e as NodysseusError).node_id)
 
 export const update_info_display = ({fn, graph, args, lib}, info_display_dispatch, code_editor, code_editor_nodeid, graphChanged = true) => {
     const node = nolib.no.runtime.get_node(graph, fn);
@@ -465,6 +467,7 @@ export const result_subscription = (dispatch, {display_graph_id, norun}) => {
 
     const error_listener = (error) =>
         requestAnimationFrame(() => {
+          console.log("got error", error)
             dispatch(s => Object.assign({}, s, {error: s.error ? s.error.concat([error]) : [error]}))
         });
 

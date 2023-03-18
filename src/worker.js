@@ -1,8 +1,9 @@
 import { nolib, NodysseusError, initStore, run } from "./nodysseus";
 import {yNodyStore} from "./editor/store"
+import {isNodysseusError} from "./editor/util"
 
 function posterror(graph, error){
-    if(error instanceof NodysseusError) {
+    if(isNodysseusError(error)) {
         self.postMessage({type: 'error', error: {node_id: error.node_id, message: error.message}, graph});
     } else if(error) {
         self.postMessage({type: 'error', error: error?.message, graph});

@@ -1,9 +1,9 @@
-import { resfetch, nolib, run, initStore } from "../nodysseus";
+import { resfetch, nolib, run, initStore, NodysseusError } from "../nodysseus";
 import * as ha from "hyperapp";
 import Fuse from "fuse.js";
 import { create_randid, wrapPromise, base_graph } from "../util";
 import { Edge, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode } from "../types";
-import { calculateLevels, ChangeDisplayGraphId, Copy, CustomDOMEvent, DeleteNode, ExpandContract, FocusEffect, graph_subscription, hlib, keydownSubscription, listen, middleware, Paste, pzobj, refresh_graph, result_subscription, run_h, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect } from "./util";
+import { calculateLevels, ChangeDisplayGraphId, Copy, CustomDOMEvent, DeleteNode, ExpandContract, FocusEffect, graph_subscription, hlib, isNodysseusError, keydownSubscription, listen, middleware, Paste, pzobj, refresh_graph, result_subscription, run_h, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect } from "./util";
 import { info_display, infoWindow } from "./components/infoWindow";
 import { init_code_editor } from "./components/codeEditor";
 import { d3Node, HyperappState } from "./types";
@@ -141,11 +141,12 @@ const mutationObserverSubscription = (dispatch, {id}) => {
 }
 
 
-const error_nodes = (error) => error instanceof AggregateError || Array.isArray(error)
+const error_nodes = (error) => error instanceof AggregateError || Array.isArray(error) || (error as AggregateError)?.errors
     ? (Array.isArray(error) ? error : error.errors)
-        .map(e => e instanceof nolib.no.NodysseusError ? e.node_id : false).filter(n => n) 
-    : error instanceof nolib.no.NodysseusError 
+        .map(e => isNodysseusError(e) ? e.node_id : false).filter(n => n) 
+    : isNodysseusError(error)
     ? [error.node_id] : []; 
+
 const runapp = (init, load_graph, _lib) => {
         // return () => requestAnimationFrame(() => dispatch.dispatch(s => undefined));
     return ha.app({
