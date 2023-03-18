@@ -441,8 +441,6 @@ export const keydownSubscription = (dispatch, options) => {
 }
 
 export const refresh_graph = (dispatch, {graph, graphChanged, norun, result_display_dispatch, info_display_dispatch, code_editor, code_editor_nodeid}) => {
-    dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
-
     if(norun ?? false) {
       return
     }
@@ -543,6 +541,7 @@ export const graph_subscription = (dispatch, props) => {
     let animframe: false | number = false;
     const listener = (graph) => {
         if(props.display_graph_id === graph.id) {
+          dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
           if(animframe){
             cancelAnimationFrame(animframe)
           }
