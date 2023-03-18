@@ -467,7 +467,6 @@ export const result_subscription = (dispatch, {display_graph_id, norun}) => {
 
     const error_listener = (error) =>
         requestAnimationFrame(() => {
-          console.log("got error", error)
             dispatch(s => Object.assign({}, s, {error: s.error ? s.error.concat([error]) : [error]}))
         });
 

@@ -881,7 +881,7 @@ const nolib = {
             if(typeof window !== "undefined" && !event.startsWith("graph")) {
               eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data });
             } else if (event === "grapherror") {
-              eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data });
+              eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data: {message: data.message, node_id: data.node_id, stack: data.stack } });
             }
           } catch(e){
             // If it's not serializable, that's fine
