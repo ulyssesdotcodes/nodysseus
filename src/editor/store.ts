@@ -106,7 +106,6 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
   const ymap: Y.Map<Y.Doc> = ydoc.getMap();
   const getLocalGraphYMap = (id: string) => ymap.get(id).getMap()
   ydoc.on('subdocs', e => {
-    console.log(e);
     e.loaded.forEach((sd: Y.Doc) => {
         sd.emit('load', [sd])
         //
@@ -130,12 +129,11 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
 
   // Add a graph
   const set = (id: string, data: Graph): Promise<Graph> => {
-    console.log("setting", id, data)
     if(generic_node_ids.has(id)) {
       generic_nodes[id].edges_in = Object.values(generic_nodes[id].edges).reduce((acc: EdgesIn, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
       return generic_nodes[id];
     } else if(id && !id.startsWith("_") && Object.keys(data).length > 0) {
-      return Promise.resolve(wrapPromise(updateSyncedGraph(id, data)).then(sg => (console.log("sg", id, sg), sg).graph).value);
+      return Promise.resolve(wrapPromise(updateSyncedGraph(id, data)).then(sg => sg.graph).value);
     }
   }
 
@@ -200,13 +198,8 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
 
   const updateSyncedGraph = (id: string, graph?: Graph): {graph: undefined} | SyncedGraph | Promise<SyncedGraph> => 
     wrapPromise(id !== "custom_editor" && id !== "keybindings" && rtcroom)
-    .then(rtcroom => {
-      return wrapPromise(syncedGraphs.get((console.log("updating", id, syncedGraphs.get(id)), id)))
-        .then(existing => ({existing, rtcroom})).value
-
-    }
-     ).then(({existing, rtcroom}) => {
-      const syncedGraph: {graph: undefined} | SyncedGraph | Promise<SyncedGraph> = wrapPromise(id).then(() => {
+    .then(rtcroom => wrapPromise(syncedGraphs.get(id)).then(existing => ({existing, rtcroom})).value)
+    .then(({existing, rtcroom}) => {
       let preloadDoc = ymap.get(id);
 
       if(!existing && !preloadDoc && !graph && !rmap.has(id)) {
@@ -232,9 +225,9 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
         preloadDoc.load();
       }
 
-        return (preloadDoc.isLoaded && existing ? wrapPromise(preloadDoc)
-          : wrapPromise(new IndexeddbPersistence(`${persist}-subdocs-${preloadDoc.guid}`, preloadDoc).whenSynced
-                        .then(() =>{
+      const syncedGraph: {graph: undefined} | SyncedGraph | Promise<SyncedGraph> = (preloadDoc.isLoaded && existing ? wrapPromise(preloadDoc)
+          : wrapPromise(existing ? existing : Promise.resolve(existing))
+            .then(() => new IndexeddbPersistence(`${persist}-subdocs-${preloadDoc.guid}`, preloadDoc).whenSynced.then(() =>{
               preloadDoc.transact(() => {
                 // Sanitization and transforming from old to new
                 const edgeReplaceMap = new Map<string, Map<string, string>>();
@@ -277,13 +270,14 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
               const undoManager = new Y.UndoManager(preloadDoc.getMap());
               getLocalGraphYMap(id).observeDeep(events => events.forEach(event => {
                 if(event.transaction.local === false || event.transaction.origin === undoManager) {
-                  update(event[0] as Y.YMapEvent<YMap<Y.Doc>>, id)
+                  update(event as Y.YMapEvent<YMap<Y.Doc>>, id)
                   updateSyncedGraph(id)
                 }
               }))
 
               return preloadDoc
             })))
+
             .then((localDoc) => {
               if(graph) {
                   graph.edges_in = Object.values(graph.edges).reduce((acc: EdgesIn, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
@@ -317,13 +311,10 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
                 }
               }
             }).then(sg => {
-              console.log("setting", id, sg)
               syncedGraphs.set(id, sg)
               return sg;
             }).value
-      }).value
 
-        console.log("setting", id, syncedGraph)
         if(ispromise(syncedGraph) || syncedGraph.graph) {
           syncedGraphs.set(id, syncedGraph as SyncedGraph)
         }
@@ -356,7 +347,7 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
 
         rdoc.getMap().observe(evts => {
           evts.keysChanged.forEach(k => {
-            updateSyncedGraph(k)
+            requestAnimationFrame(() => updateSyncedGraph(k))
           })
         })
       }
@@ -379,7 +370,6 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
   }
 
   const get = (id) => {
-    console.log(id);
     if(generic_node_ids.has(id)) {
       return generic_nodes[id];
     }
@@ -417,15 +407,6 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
 }
 
 export const yNodyStore = async (useRtc: boolean = false): Promise<NodysseusStore> => {
-  // const db = new Loki("nodysseus.db", {
-  //   env: "BROWSER",
-  //   persistenceMethod: "memory",
-  // });
-  //
-  // const statedb = db.addCollection<{id: string, data: Record<string, any>}>("state", { unique: ["id"] });
-  // const fnsdb = db.addCollection<{id: string, data: { script: string, fn: Function}}>("fns", { unique: ["id"] });
-  // const parentsdb = db.addCollection<{id: string, data: {parentest:string, parent: string}}>("parents", { unique: ["id"] });
-
   const statedb = mapStore<{id: string, data: Record<string, any>}>();
 
   let nodysseusidb;

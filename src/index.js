@@ -5,4 +5,4 @@ if('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js');
 }
 
-editor('node-editor')//, new Worker("./worker.js", {type: "module"}))
+editor('node-editor', new Worker("./worker.js", {type: "module"}))
