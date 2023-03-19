@@ -200,120 +200,133 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
     wrapPromise(id !== "custom_editor" && id !== "keybindings" && rtcroom)
     .then(rtcroom => wrapPromise(syncedGraphs.get(id)).then(existing => ({existing, rtcroom})).value)
     .then(({existing, rtcroom}) => {
-      let preloadDoc = ymap.get(id);
+      const syncedGraph: {graph: undefined} | SyncedGraph | Promise<SyncedGraph> = wrapPromise(existing && ymap.has(id) ? existing : Promise.resolve(existing)).then(() => {
+        let preloadDoc = ymap.get(id);
 
-      if(!existing && !preloadDoc && !graph && !rmap.has(id)) {
-        return {graph: undefined}
-      }
-
-      if(!preloadDoc) {
-        preloadDoc = new Y.Doc( rmap.has(id) ? {guid: rmap.get(id)} : undefined);
-        preloadDoc.getMap().set("id", id)
-        setMapFromGraph(preloadDoc.getMap(), graph)
-        ymap.set(id, preloadDoc);
-      }
-      
-      if(rmap.has(id)) {
-        if(ymap.has(id) && rmap.get(id) !== ymap.get(id).guid) {
-          throw new Error("Incorrect rmap guid")
+        if(!existing && !preloadDoc && !graph && !rmap.has(id)) {
+          return {graph: undefined}
         }
-      } else if(rtcroom && preloadDoc) {
-        rmap.set(id, preloadDoc.guid)
-      }
 
-      if(!preloadDoc.isLoaded) {
-        preloadDoc.load();
-      }
+        let unloadedRdoc = false;
 
-      const syncedGraph: {graph: undefined} | SyncedGraph | Promise<SyncedGraph> = (preloadDoc.isLoaded && existing ? wrapPromise(preloadDoc)
-          : wrapPromise(existing ? existing : Promise.resolve(existing))
-            .then(() => new IndexeddbPersistence(`${persist}-subdocs-${preloadDoc.guid}`, preloadDoc).whenSynced.then(() =>{
-              preloadDoc.transact(() => {
-                // Sanitization and transforming from old to new
-                const edgeReplaceMap = new Map<string, Map<string, string>>();
-                let updateEdges = false;
-                const docmap = preloadDoc.getMap();
-                const docnodes: Y.Map<NodysseusNode> = docmap.get("nodes") as Y.Map<NodysseusNode>;
-                (docmap.get("edges") as (Y.Map<Edge> | Y.Map<Y.Map<string>>)).forEach((e: Edge | Y.Map<string>, key: string) => {
-                  let edge = e as Edge
-                  if(edge.from && edge.to) {
-                    updateEdges = true;
-                    if(docnodes.has(edge.from) && docnodes.has(edge.to)) {
-                      if(!edgeReplaceMap.has(edge.to)) {
-                        edgeReplaceMap.set(edge.to, new Map())
-                      }
+        if(!preloadDoc) {
+          preloadDoc = new Y.Doc( rmap.has(id) ? {guid: rmap.get(id)} : undefined);
+          preloadDoc.getMap().set("id", id)
+          if(graph) {
+            setMapFromGraph(preloadDoc.getMap(), graph)
+          } else {
+            unloadedRdoc = true;
+          }
+          ymap.set(id, preloadDoc);
+        }
+        
+        if(rmap.has(id)) {
+          if(ymap.has(id) && rmap.get(id) !== ymap.get(id).guid) {
+            throw new Error("Incorrect rmap guid")
+          }
+        } else if(rtcroom && preloadDoc) {
+          rmap.set(id, preloadDoc.guid)
+        }
 
-                      edgeReplaceMap.get(edge.to).set(edge.as, edge.from)
-                    } else if(!docnodes.has(edge.from)) {
-                      docnodes.set(edge.from, {id: edge.from})
-                    } else if(!docnodes.has(edge.to)) {
-                      docnodes.set(edge.to, {id: edge.to})
-                    }
-                  } else if(edge.from || edge.to) {
-                    // remove_edge(id, edge);
-                  } else {
-                    (e as Y.Map<string>).forEach((as, from) => {
-                      if(!(docnodes.has(key) && docnodes.has(from))) {
-                        throw new Error(`invalid edge ${from} to ${key} as ${as}`)
+        if(!preloadDoc.isLoaded) {
+          preloadDoc.load();
+        }
+
+
+        return (preloadDoc.isLoaded && existing ? wrapPromise(preloadDoc)
+            : wrapPromise(existing && !unloadedRdoc ? existing : Promise.resolve(existing))
+              .then(() => new IndexeddbPersistence(`${persist}-subdocs-${preloadDoc.guid}`, preloadDoc).whenSynced.then(() =>{
+                if(preloadDoc.getMap().get("nodes")) {
+                  preloadDoc.transact(() => {
+                    // Sanitization and transforming from old to new
+                    const edgeReplaceMap = new Map<string, Map<string, string>>();
+                    let updateEdges = false;
+                    const docmap = preloadDoc.getMap();
+                    const docnodes: Y.Map<NodysseusNode> = docmap.get("nodes") as Y.Map<NodysseusNode>;
+                    (docmap.get("edges") as (Y.Map<Edge> | Y.Map<Y.Map<string>>)).forEach((e: Edge | Y.Map<string>, key: string) => {
+                      let edge = e as Edge
+                      if(edge.from && edge.to) {
+                        updateEdges = true;
+                        if(docnodes.has(edge.from) && docnodes.has(edge.to)) {
+                          if(!edgeReplaceMap.has(edge.to)) {
+                            edgeReplaceMap.set(edge.to, new Map())
+                          }
+
+                          edgeReplaceMap.get(edge.to).set(edge.as, edge.from)
+                        } else if(!docnodes.has(edge.from)) {
+                          docnodes.set(edge.from, {id: edge.from})
+                        } else if(!docnodes.has(edge.to)) {
+                          docnodes.set(edge.to, {id: edge.to})
+                        }
+                      } else if(edge.from || edge.to) {
+                        // remove_edge(id, edge);
+                      } else {
+                        (e as Y.Map<string>).forEach((as, from) => {
+                          if(!(docnodes.has(key) && docnodes.has(from))) {
+                            throw new Error(`invalid edge ${from} to ${key} as ${as}`)
+                          }
+                        })
                       }
                     })
+
+
+                    if(updateEdges) {
+                      // console.log("would update", edgeReplaceMap)
+                    }
+                  })
+                }
+
+                // Hook undoManager invisibly to persistence
+                const undoManager = new Y.UndoManager(preloadDoc.getMap());
+                getLocalGraphYMap(id).observeDeep(events => events.forEach(event => {
+                  if(event.transaction.local === false || event.transaction.origin === undoManager) {
+                    update(event as Y.YMapEvent<YMap<Y.Doc>>, id)
+                    updateSyncedGraph(id)
                   }
-                })
+                }))
 
+                return preloadDoc
+              })))
 
-                if(updateEdges) {
-                  // console.log("would update", edgeReplaceMap)
-                }
-              })
+              .then((localDoc) => {
+                if(graph) {
+                    graph.edges_in = Object.values(graph.edges).reduce((acc: EdgesIn, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
 
-              // Hook undoManager invisibly to persistence
-              const undoManager = new Y.UndoManager(preloadDoc.getMap());
-              getLocalGraphYMap(id).observeDeep(events => events.forEach(event => {
-                if(event.transaction.local === false || event.transaction.origin === undoManager) {
-                  update(event as Y.YMapEvent<YMap<Y.Doc>>, id)
-                  updateSyncedGraph(id)
-                }
-              }))
+                    if(!(existing?.graph && compareObjects(graph, existing.graph))) {
+                      syncedGraphs.set(id, {...existing, graph})
+                      nolib.no.runtime.publish('graphchange', graph, {...nolib, ...hlib}) 
+                    }
 
-              return preloadDoc
-            })))
-
-            .then((localDoc) => {
-              if(graph) {
-                  graph.edges_in = Object.values(graph.edges).reduce((acc: EdgesIn, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
-
-                  if(!(existing?.graph && compareObjects(graph, existing.graph))) {
-                    syncedGraphs.set(id, {...existing, graph})
+                    return syncedGraphs.get(id);
+                } else {
+                  const graph = localDoc.getMap().toJSON() as Graph;
+                  if(graph.nodes) {
+                    graph.edges_in = Object.values(graph.edges).reduce((acc: EdgesIn, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
                     nolib.no.runtime.publish('graphchange', graph, {...nolib, ...hlib}) 
                   }
-
-                  return syncedGraphs.get(id);
-              } else {
-                const graph = localDoc.getMap().toJSON() as Graph;
-                graph.edges_in = Object.values(graph.edges).reduce((acc: EdgesIn, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
-                nolib.no.runtime.publish('graphchange', graph, {...nolib, ...hlib}) 
-                return {
-                  graph,
-                  remoteProvider: rtcroom && (existing?.remoteProvider ?? new WebrtcProvider(`nodysseus${rtcroom}_${id}`, localDoc, {
-                    signaling: ["wss://ws.nodysseus.io"], 
-                    filterBcConns: true,
-                    password: undefined,
-                    awareness: undefined,
-                    maxConns: undefined,
-                    peerOpts: {
-                      config: {
-                        iceServers: [
-                          {urls: "stun:ws.nodysseus.io:3478"}
-                        ]
+                  return {
+                    graph,
+                    remoteProvider: rtcroom && (existing?.remoteProvider ?? new WebrtcProvider(`nodysseus${rtcroom}_${id}`, localDoc, {
+                      signaling: ["wss://ws.nodysseus.io"], 
+                      filterBcConns: true,
+                      password: undefined,
+                      awareness: undefined,
+                      maxConns: undefined,
+                      peerOpts: {
+                        config: {
+                          iceServers: [
+                            {urls: "stun:ws.nodysseus.io:3478"}
+                          ]
+                        }
                       }
-                    }
-                  }))
+                    }))
+                  }
                 }
-              }
-            }).then(sg => {
-              syncedGraphs.set(id, sg)
-              return sg;
-            }).value
+              }).then(sg => {
+                syncedGraphs.set(id, sg)
+                return sg;
+              }).value
+        }).value;
 
         if(ispromise(syncedGraph) || syncedGraph.graph) {
           syncedGraphs.set(id, syncedGraph as SyncedGraph)
