@@ -310,3 +310,31 @@ export const mergeLib = (a: Record<string, any> | Lib, b: Lib): Lib => (a ? {
 }: b)
 
 export const runnableId = (runnable: Runnable) => isConstRunnable(runnable) ? `${runnable.graph.id}/${runnable.fn}` : false;
+
+
+export function compareObjects(value1, value2, isUpdate = false) {
+    if (value1._needsresolve || value2._needsresolve) {
+        return false;
+    }
+
+    const keys1 = Object.keys(value1);
+    const keys2 = !isUpdate && Object.keys(value2);
+
+    if (!isUpdate && keys1.length !== keys2.length) {
+        return false;
+    }
+
+    for (let key of keys1) {
+        if(key === "__args"){
+            continue;
+        }
+        if (value1[key] === value2[key]) {
+            continue;
+        }
+
+        return false
+    }
+
+    return true;
+}
+

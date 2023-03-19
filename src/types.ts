@@ -30,15 +30,13 @@ export type Edge = {
 }
 
 export type Store<T> = {
-  add: (id: string, data: T) => void;
-  remove: (id: string) => void;
-  get: (id: string, otherwise?: T) => T | undefined;
-  removeAll: () => void;
-  all: () => string[];
+  get: (id: string) => T | undefined;
+  set: (id: string, data: T) => void;
+  delete: (id: string) => void;
+  clear: () => void;
+  keys: () => Array<string>;
   undo?: false | (() => void);
   redo?: false | (() => void);
-  startListening?: false | (() => void);
-  addMany?: (datas: Array<[string, any]>) => void;
 }
 
 export type RefStore = Store<NodysseusNode | Promise<NodysseusNode>> & {
@@ -52,7 +50,6 @@ export type RefStore = Store<NodysseusNode | Promise<NodysseusNode>> & {
 export type NodysseusStore = {
   refs: RefStore,
   parents: Store<{parent: string, parentest: string}>,
-  graphs: Store<Graph>,
   state: Store<any>,
   fns: Store<{script: string, fn: Function}>,
   assets: Store<Blob>
@@ -165,4 +162,5 @@ type FullyTypedArg = {
   default?: boolean
   additionalArg?: boolean
 }
+
 export type TypedArg = string | FullyTypedArg

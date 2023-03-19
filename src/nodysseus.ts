@@ -1,6 +1,6 @@
 import set from "just-safe-set";
 import loki from "lokijs";
-import { ancestor_graph, ispromise, isWrappedPromise, mapMaybePromise, node_args, WrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node, runnableId } from "./util"
+import { ancestor_graph, ispromise, isWrappedPromise, mapMaybePromise, node_args, WrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node, runnableId, compareObjects } from "./util"
 import { isNodeGraph, Graph, LokiT, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike } from "./types"
 import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util"
 import generic from "./generic.js";
@@ -22,10 +22,10 @@ const Nodysseus = (): NodysseusStore => {
   });
 
 
-  const graphsdb = db.addCollection<LokiT<Graph>>("nodes", { unique: ["id"] });
-  const statedb = db.addCollection<LokiT<any>>("state", { unique: ["id"] });
-  const fnsdb = db.addCollection<LokiT<{script: string, fn: Function}>>("fns", { unique: ["id"] });
-  const parentsdb = db.addCollection<LokiT<{parent: string, parentest: string}>>("parents", { unique: ["id"] });
+  // const graphsdb = db.addCollection<LokiT<Graph>>("nodes", { unique: ["id"] });
+  // const statedb = db.addCollection<LokiT<any>>("state", { unique: ["id"] });
+  // const fnsdb = db.addCollection<LokiT<{script: string, fn: Function}>>("fns", { unique: ["id"] });
+  // const parentsdb = db.addCollection<LokiT<{parent: string, parentest: string}>>("parents", { unique: ["id"] });
 
   return {
     refs: {
@@ -36,23 +36,33 @@ const Nodysseus = (): NodysseusStore => {
       add_edge: () => {},
       remove_node: () => {},
     },
-    parents: lokidbToStore(parentsdb),
-    graphs: lokidbToStore(graphsdb),
-    state: lokidbToStore(statedb),
-    fns: lokidbToStore(fnsdb),
+    parents: mapStore(),
+    state: mapStore(),
+    fns: mapStore(),
     assets: {
       get: id => { throw new Error("not implemented")},
-      add: (id, value) => { throw new Error("not implemented")},
-      remove: id => { throw new Error("not implemented")},
-      removeAll: () => { throw new Error("not implemented")},
-      all: () => {  throw new Error("not implemented")},
-      addMany: bs => { throw new Error("not implemented")}
+      set: (id, value) => { throw new Error("not implemented")},
+      delete: id => { throw new Error("not implemented")},
+      clear: () => { throw new Error("not implemented")},
+      keys: () => {  throw new Error("not implemented")}
     }
   }
 }
 
+export const mapStore = <T>(): Store<T> => {
+  const map = new Map<string, T>();
+
+  return {
+    get: id => map.get(id),
+    set: (id, data: T) => map.set(id, data),
+    delete: id => map.delete(id),
+    clear: () => map.clear(),
+    keys: () => [...map.keys()]
+  }
+}
+
 export const lokidbToStore = <T>(collection: loki.Collection<LokiT<T>>): Store<T> => ({
-  add: (id: string, data: T) => {
+  set: (id: string, data: T) => {
     const existing = collection.by("id", id);
     if (existing) {
       collection.update(Object.assign(existing, {data}));
@@ -61,15 +71,14 @@ export const lokidbToStore = <T>(collection: loki.Collection<LokiT<T>>): Store<T
     }
   },
   get: (id: string) => collection.by("id", id)?.data,
-  remove: (id: string) => {
+  delete: (id: string) => {
     const existing = collection.by("id", id)
     if(existing !== undefined){
       collection.remove(existing);
     }
   },
-  removeAll: () => collection.clear(),
-  all: () => collection.where(_ => true).map(v => v.id),
-  addMany: gs => gs.map(([id, data]) => collection.insert({id, data}))
+  clear: () => collection.clear(),
+  keys: () => collection.where(_ => true).map(v => v.id),
 })
 
 let nodysseus: NodysseusStore;
@@ -226,31 +235,6 @@ function compareArrays(value1, value2) {
     return alike;
 }
 
-function compareObjects(value1, value2, isUpdate = false) {
-    if (value1._needsresolve || value2._needsresolve) {
-        return false;
-    }
-
-    const keys1 = Object.keys(value1);
-    const keys2 = !isUpdate && Object.keys(value2);
-
-    if (!isUpdate && keys1.length !== keys2.length) {
-        return false;
-    }
-
-    for (let key of keys1) {
-        if(key === "__args"){
-            continue;
-        }
-        if (value1[key] === value2[key]) {
-            continue;
-        }
-
-        return false
-    }
-
-    return true;
-}
 
 const hashcode = function (str, seed = 0) {
     let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
@@ -543,7 +527,7 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
 
 // derives data from the args symbolic table
 const create_data = (node_id, graph, graphArgs: Env, lib: Lib, options: RunOptions): Map<string, ConstRunnable> => {
-    const inputs = lib.data.no.runtime.get_edges_in(graph, node_id);
+    return wrapPromise(lib.data.no.runtime.get_edges_in(graph, node_id)).then(inputs => {
     const data: Map<string, ConstRunnable> = new Map();
     let input: Edge;
     //TODO: remove
@@ -570,6 +554,7 @@ const create_data = (node_id, graph, graphArgs: Env, lib: Lib, options: RunOptio
     }
 
     return data;
+    }).value;
 }
 
 // handles graph things like edges
@@ -851,7 +836,6 @@ const nolib = {
       const event_listeners = new Map<string, Map<string, Function | Runnable>>();
       const event_listeners_by_graph = new Map();
       const event_data = new Map(); // TODO: get rid of this
-      const getorsetgraph = (graph, id) => nodysseus.graphs.get(id) ?? (nodysseus.graphs.add(id, graph), graph)
       let animationframe;
       let animationerrors = [];
       let pause = false;
@@ -1003,18 +987,6 @@ const nolib = {
       };
 
       const change_graph = (graph: Graph, lib: Lib, addToStore = true) => {
-        // const old_graph = nodysseus.graphs.get(graph.id);
-        // nodysseus.graphs.add(graph.id, graph)
-
-        // if (old_graph) {
-        //   for (const n of Object.keys(old_graph.nodes)) {
-        //     if (graph[n] !== n) {
-        //       const nodegraphid = graph.id + "/" + n;
-        //       nodysseus.graphs.remove(graph.id + "/" + n)
-        //     }
-        //   }
-        // }
-
         const parent = get_parentest(graph);
         if (parent) {
           (lib.data ?? lib).no.runtime.update_graph(parent, lib);
@@ -1031,7 +1003,7 @@ const nolib = {
 
         if (prevargs === undefined) {
           prevargs = {};
-          nodysseus.state.add(graphid, prevargs);
+          nodysseus.state.set(graphid, prevargs);
         }
 
         if (!compareObjects(args, prevargs, true)) {
@@ -1048,16 +1020,18 @@ const nolib = {
       };
 
       const get_ref = (id, otherwise) => {
-        return generic_nodes[id] ?? nodysseus.refs.get(id, otherwise && {...otherwise, id, nodes: {...otherwise.nodes, [otherwise.out ?? "out"]: {...otherwise.nodes[otherwise.out ?? "out"], name: id}}})
+        return wrapPromise(generic_nodes[id] ?? nodysseus.refs.get(id)).then(graph => {
+          return graph ?? nodysseus.refs.set(id, otherwise && {...otherwise, id, nodes: {...otherwise.nodes, [otherwise.out ?? "out"]: {...otherwise.nodes[otherwise.out ?? "out"], name: id}}})
+        }).value;
       }
       const add_ref = (graph: Node) => {
         return (Array.isArray(graph) ? graph : [graph]).map(graph => {
           if(generic_nodes[graph.id] === undefined) {
-            return nodysseus.refs.add(graph.id, graph)
+            return nodysseus.refs.set(graph.id, graph)
           }
         })[0]
       }
-      const remove_ref = nodysseus.refs.remove
+      const remove_ref = nodysseus.refs.delete
 
       const get_node = (graph: Graph, id: string) => wrapPromise(get_graph(graph)).then(g => g?.nodes[id]).value
       const get_edge = (graph, from) => wrapPromise(get_graph(graph)).then(g => g?.edges[from]).value
@@ -1103,17 +1077,11 @@ const nolib = {
         return node;
       };
 
-      // nodysseus.refs.addMany(Object.values((generic as Graph).nodes).map(n => [n.id, n]));
-
-      if(nodysseus.refs.startListening) {
-        nodysseus.refs.startListening()
-      }
-
       return {
         run: run,
         get_ref,
         add_ref,
-        add_refs: (gs) => nodysseus.refs.addMany(gs.map(g => [g.id, g])),
+        add_refs: (gs) => gs.forEach(g => nodysseus.refs.set(g.id, g)),
         remove_ref,
         get_node,
         get_edge,
@@ -1137,7 +1105,7 @@ const nolib = {
               // ` this comment is here because my syntax highlighter is not well
             });
 
-            nodysseus.fns.add(fnid + orderedargs, fn)
+            nodysseus.fns.set(fnid + orderedargs, fn)
           }
 
           return fn.fn;
@@ -1145,7 +1113,7 @@ const nolib = {
         change_graph,
         update_graph: (graphid, lib: Lib) => publish('graphupdate', {graphid}, lib),
         update_args,
-        delete_cache: () => nodysseus.state.removeAll(),
+        delete_cache: () => nodysseus.state.clear(),
         get_graph,
         get_args,
         get_path,
@@ -1153,8 +1121,8 @@ const nolib = {
         get_asset: (id, b) => id && nolib.no.runtime.store.assets.get(id),
         list_assets: () => nolib.no.runtime.store.assets.all(),
         remove_asset: (id) => nolib.no.runtime.store.assets.remove(id),
-        refs: () => nodysseus.refs.all(),
-        ref_graphs: () => nodysseus.refs.all(),
+        refs: () => nodysseus.refs.keys(),
+        ref_graphs: () => nodysseus.refs.keys(),
         update_edges: (graph: string | Graph, add: Array<Edge>, remove: Array<Edge> = [], lib: Lib, dryRun = false): void => {
           const graphId = typeof graph === "string" ? graph : graph.id;
           if(Array.isArray(remove)) {
@@ -1257,7 +1225,7 @@ const nolib = {
             parent: parentid,
             parentest,
           };
-          nodysseus.parents.add(graphid, new_parent)
+          nodysseus.parents.set(graphid, new_parent)
         },
         undo: () => nodysseus.refs.undo && nodysseus.refs.undo(),
         redo: () => nodysseus.refs.redo && nodysseus.refs.redo(),
