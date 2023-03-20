@@ -1297,7 +1297,7 @@ const nolib = {
               .then(fnr => isError(fnr) ? fnr : fnr.value)
               .then(fnr => isApFunctorLike(fnr)
                    ? lib.data.no.of(arr.map((element, index) =>
-                      typeof fnr === "function" ? fnr(new Map([["element", lib.data.no.of(element)], ["index", lib.data.no.of(index)]]))
+                      typeof fnr === "function" ? fnr(mergeEnv(new Map([["element", lib.data.no.of(element)], ["index", lib.data.no.of(index)]]), fn.env))
                       : run_runnable(fnr, lib, new Map([["element", lib.data.no.of(element)], ["index", lib.data.no.of(index)]]), options)
                      ).map(v => isValue(v) ? v.value : v))
                    : isError(fnr) ? fnr
