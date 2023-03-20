@@ -1296,13 +1296,13 @@ const nolib = {
             ? wrapPromise(run_runnable(fn, lib, undefined, options))
               .then(fnr => isError(fnr) ? fnr : fnr.value)
               .then(fnr => isApFunctorLike(fnr)
-                   ? lib.data.no.of(arr.map((element, index) =>
-                      typeof fnr === "function" ? fnr(mergeEnv(new Map([["element", lib.data.no.of(element)], ["index", lib.data.no.of(index)]]), fn.env))
+                   ? wrapPromiseAll(arr.map((element, index) =>
+                      typeof fnr === "function" ? (fnr(mergeEnv(new Map([["element", lib.data.no.of(element)], ["index", lib.data.no.of(index)]]), fn.env)) as Result | Promise<Result>)
                       : run_runnable(fnr, lib, new Map([["element", lib.data.no.of(element)], ["index", lib.data.no.of(index)]]), options)
-                     ).map(v => isValue(v) ? v.value : v))
+                     ).map(v => wrapPromise(v).then(v => isValue(v) ? v.value : v))).then(vs => lib.data.no.of(vs)).value
                    : isError(fnr) ? fnr
                    : arr)
-            : arr)
+            : arr).value
     },
     fold: {
       rawArgs: true,
