@@ -1291,7 +1291,7 @@ const nolib = {
       args: ["fn", "array", "_lib", "_runoptions"],
       fn: (fn, array, lib, options) =>
         wrapPromise(run_runnable(array, lib, undefined, options))
-          .then(arr => isError(arr) ? arr : arr.value)
+          .then(arr => isValue(arr) ? arr.value : arr)
           .then(arr => Array.isArray(arr) 
             ? wrapPromise(run_runnable(fn, lib, undefined, options))
               .then(fnr => isError(fnr) ? fnr : fnr.value)
@@ -1299,7 +1299,7 @@ const nolib = {
                    ? wrapPromiseAll(arr.map((element, index) =>
                       typeof fnr === "function" ? (fnr(mergeEnv(new Map([["element", lib.data.no.of(element)], ["index", lib.data.no.of(index)]]), fn.env)) as Result | Promise<Result>)
                       : run_runnable(fnr, lib, new Map([["element", lib.data.no.of(element)], ["index", lib.data.no.of(index)]]), options)
-                     ).map(v => wrapPromise(v).then(v => isValue(v) ? v.value : v))).then(vs => lib.data.no.of(vs)).value
+                     ).map(v => wrapPromise(v).then(v => isValue(v) ? v.value : v))).then(vs => lib.data.no.of(vs))
                    : isError(fnr) ? fnr
                    : arr)
             : arr).value
