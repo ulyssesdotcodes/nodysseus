@@ -1,7 +1,7 @@
 import set from "just-safe-set";
 import loki from "lokijs";
 import { ancestor_graph, ispromise, isWrappedPromise, mapMaybePromise, node_args, WrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node, runnableId, compareObjects } from "./util"
-import { isNodeGraph, Graph, LokiT, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike } from "./types"
+import { isNodeGraph, Graph, LokiT, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike, EdgesIn } from "./types"
 import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util"
 import generic from "./generic.js";
 import { create_fn, expect, now } from "./externs";
@@ -309,7 +309,7 @@ const node_value = (node) => {
 }
 
 const node_nodes = (node, node_id, data, graph_input_value: Env, lib: Lib, options: RunOptions) => {
-    return run_graph(node, node_id, combineEnv(data, graph_input_value, "nodenodes" + node_id, graph_input_value._output), lib, options)
+    return run_graph(node, node_id, combineEnv(data, graph_input_value, node_id, graph_input_value._output), lib, options)
 }
 
 const node_script = (node, nodeArgs: Args, lib: Lib, options: RunOptions): Result | Promise<Result> => {
@@ -434,7 +434,7 @@ const resolve_args = (data: Args, lib: Lib, options: RunOptions): Result | Promi
 }
 
 const node_data = (nodeArgs, graphArgs, lib, options) => {
-  return nodeArgs.size === 0 ? lib.data.no.of(undefined) : resolve_args(nodeArgs, lib, options.resolvePromises ?  options : {...options, resolvePromises: true});
+  return nodeArgs.size === 0 ? lib.data.no.of(undefined) : resolve_args(nodeArgs, lib, options);
 }
 
 const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, parameters: ConstRunnable, lib, options: RunOptions): FunctorRunnable | Promise<FunctorRunnable> => {
@@ -644,7 +644,7 @@ const run_functor_runnable = (runnable: FunctorRunnable, args: Args, lib: Lib, o
 }
 
 const run_ap_runnable = (runnable: ApRunnable, args: Args, lib: Lib, options: RunOptions): Result | Promise<Result> => {
-  return wrapPromise(runnable.args && run_runnable(runnable.args, lib, args, options))
+  return wrapPromise(runnable.args && run_runnable(runnable.args, lib, args, {...options, resolvePromises: false}))
         .then(ranArgs => {
           const execArgs = isValue(ranArgs) ? ranArgs.value : new Map();
           const ret = (Array.isArray(runnable.fn) ? runnable.fn : [runnable.fn])
@@ -918,6 +918,10 @@ const nolib = {
         lib: Lib = {__kind: "lib", data: nolib},
         options: RunOptions = {}
       ) => {
+        if(ispromise(input_fn)) {
+          return input_fn.then(fn => add_listener(event, listener_id, fn, remove, graph_id, prevent_initial_trigger, lib, options))
+        }
+
         const listeners = getorset(event_listeners, event, () => new Map());
         const fn =
           typeof input_fn === "function"
@@ -1037,6 +1041,10 @@ const nolib = {
       const get_edge = (graph, from) => wrapPromise(get_graph(graph)).then(g => g?.edges[from]).value
       const get_edges_in = (graph, id) => wrapPromise(get_graph(graph))
         .then(g => {
+          if(!g.edges_in) {
+            g.edges_in = Object.values(g.edges).reduce((acc: EdgesIn, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
+          }
+
           const idEdgesIn = g.edges_in?.[id];
           if(idEdgesIn !== undefined) {
             return Object.values(idEdgesIn)
@@ -1237,13 +1245,12 @@ const nolib = {
     // runGraph: F<A> => A
     ap: {
       rawArgs: true,
+      promiseArgs: true,
       args: ["fn", "args", "run", "_lib"],
       fn: (fn, args, run, lib: Lib) => {
-        const fnResult = wrapPromise(run_runnable(fn, lib));
-
-        const resolveRunnable = (runnable) => isRunnable(runnable) && isConstRunnable(runnable) ? 
+        const resolveRunnable = (runnable) => (isRunnable(runnable) && isConstRunnable(runnable) ? 
           wrapPromise(run_runnable(runnable, lib))
-            .then(r => resolveRunnable(isError(r) ? r : r.value)) : wrapPromise(runnable)
+            .then(r => resolveRunnable(isValue(r) ? r.value : r)) : wrapPromise(runnable)).then(r => isValue(r) ? r.value : r).value
 
         const apRunnable = (fnRunnable: ApFunctorLike | Array<ApFunctorLike>): ApRunnable => ({
             __kind: AP,
@@ -1252,8 +1259,8 @@ const nolib = {
             lib
           })
 
-        return fnResult
-          .then(fnr => isError(fnr) ? fnr : Array.isArray(fnr.value) ? fnr.value.map(fnrv => resolveRunnable(fnrv).value) :  resolveRunnable(fnr.value).value)
+        return wrapPromise(run_runnable(fn, lib))
+          .then(fnr => isValue(fnr) ? Array.isArray(fnr.value) ? fnr.value.map(fnrv => resolveRunnable(fnrv)) :  resolveRunnable(fnr) : fnr)
           .then(fnr => !((Array.isArray(fnr) ? fnr : [fnr])
                          .filter(fnrv => fnrv).every(isApFunctorLike)) 
                         ? fnr 
@@ -1418,7 +1425,7 @@ const nolib = {
             __kind: "apFunction",
             promiseArgs: true,
             fn: (value) => {
-              const result = value === undefined || value === null ? undefined : run_runnable(value, lib);
+              const result = value === undefined || value === null ? undefined : run_runnable(value, lib, undefined, {resolvePromises: false});
               const promiseresult = ispromise(result) ? result.then(r => isValue(r) ? r.value : r) : isValue(result) ? result.value : result;
 
               lib.data.no.runtime.update_args(graphid, {state: promiseresult});
@@ -1437,6 +1444,7 @@ const nolib = {
     return: {
       resolve: false,
       rawArgs: true,
+      promiseArgs: true,
       args: [
         "value",
         "display",
@@ -1501,9 +1509,9 @@ const nolib = {
               edgemap.subscribe,
               _lib,
               args,
-              options
+              {...options, resolvePromises: true}
             ))
-            .then(subscriptions => isError(subscriptions) ? subscriptions : subscriptions.value)
+            .then(subscriptions => isValue(subscriptions) ? subscriptions.value : subscriptions)
             .then(subscriptions => subscriptions && Object.entries(subscriptions)
                 .forEach(kv => kv[1] &&
                   _lib.data.no.runtime.add_listener(kv[0], 'subscribe-' + newgraphid, kv[1], false, 

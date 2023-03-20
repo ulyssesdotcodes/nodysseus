@@ -1843,11 +1843,6 @@ const generic = {
         "id": "if_cache_state",
         "ref": "if"
       },
-      "cache_state_input_val": {
-        "id": "cache_state_input_val",
-        "ref": "arg",
-        "value": "value"
-      },
       "cache_state": {
         "id": "cache_state",
         "ref": "state"
@@ -1945,11 +1940,6 @@ const generic = {
         "from": "if_cache_state",
         "to": "cache_return",
         "as": "value"
-      },
-      "cache_state_input_val": {
-        "from": "cache_state_input_val",
-        "to": "cache_state",
-        "as": "_value"
       },
       "cache_state": {
         "from": "cache_state",
