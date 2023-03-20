@@ -434,7 +434,7 @@ const resolve_args = (data: Args, lib: Lib, options: RunOptions): Result | Promi
 }
 
 const node_data = (nodeArgs, graphArgs, lib, options) => {
-  return nodeArgs.size === 0 ? lib.data.no.of(undefined) : resolve_args(nodeArgs, lib, options);
+  return nodeArgs.size === 0 ? lib.data.no.of(undefined) : resolve_args(nodeArgs, lib, options.resolvePromises ?  options : {...options, resolvePromises: true});
 }
 
 const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, parameters: ConstRunnable, lib, options: RunOptions): FunctorRunnable | Promise<FunctorRunnable> => {
@@ -526,35 +526,35 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
 }
 
 // derives data from the args symbolic table
-const create_data = (node_id, graph, graphArgs: Env, lib: Lib, options: RunOptions): Map<string, ConstRunnable> => {
+const create_data = (node_id, graph, graphArgs: Env, lib: Lib, options: RunOptions): Map<string, ConstRunnable> | Promise<Map<string, ConstRunnable>> => {
     return wrapPromise(lib.data.no.runtime.get_edges_in(graph, node_id)).then(inputs => {
-    const data: Map<string, ConstRunnable> = new Map();
-    let input: Edge;
-    //TODO: remove
-    const newgraphargs = graphArgs._output ? mergeEnv(new Map().set("_output", undefined), graphArgs) : graphArgs;
-    // delete newgraphargs._output
-    //
+        const data: Map<string, ConstRunnable> = new Map();
+        let input: Edge;
+        //TODO: remove
+        const newgraphargs = graphArgs._output ? mergeEnv(new Map().set("_output", undefined), graphArgs) : graphArgs;
+        // delete newgraphargs._output
+        //
 
-    // grab inputs from state
-    for (let i = 0; i < inputs.length; i++) {
-        input = inputs[i];
+        // grab inputs from state
+        for (let i = 0; i < inputs.length; i++) {
+            input = inputs[i];
 
-        const val: ConstRunnable = {__kind: CONST, graph, fn: input.from, env: newgraphargs, lib}
-        // Check for duplicates
-        if(data.has(input.as)) {
-            const as_set = new Set()
-            inputs.forEach(e => {
-                if (as_set.has(e.as)) {
-                    throw new NodysseusError(nodysseus_get(graphArgs, "__graphid", lib, undefined, undefined, options).value + "/" + node_id, `Multiple input edges have the same label "${e.as}"`)
-                }
-                as_set.add(e.as)
-            })
+            const val: ConstRunnable = {__kind: CONST, graph, fn: input.from, env: newgraphargs, lib}
+            // Check for duplicates
+            if(data.has(input.as)) {
+                const as_set = new Set()
+                inputs.forEach(e => {
+                    if (as_set.has(e.as)) {
+                        throw new NodysseusError(nodysseus_get(graphArgs, "__graphid", lib, undefined, undefined, options).value + "/" + node_id, `Multiple input edges have the same label "${e.as}"`)
+                    }
+                    as_set.add(e.as)
+                })
+            }
+            data.set(input.as, val);
         }
-        data.set(input.as, val);
-    }
 
-    return data;
-    }).value;
+        return data;
+      }).value;
 }
 
 // handles graph things like edges
@@ -583,49 +583,49 @@ const run_graph = (graph: Graph | (Graph & {nodes: Array<NodysseusNode>, edges: 
     const node = lib.data.no.runtime.get_node(newgraph, node_id);
 
     try {
-        return wrapPromise(node).then(node => {
-          const graphid = (env.data.get("__graphid") as {value: string}).value;
-          if(!graphid.includes('/')) {
-            lib.data.no.runtime.publish('noderun', {graph: newgraph, node_id})
-          }
-
-          const data = create_data(node_id, newgraph, env, lib, options);
-
-          if(options.profile && !nolib.no.runtime.get_parentest((env.data.get("__graphid") as {value: string}).value)) {
-            const edgePath = edge => nolib.no.runtime.get_edge_out(newgraph, edge) ? [nolib.no.runtime.get_edge_out(newgraph, edge).as].concat(edgePath(nolib.no.runtime.get_edge_out(newgraph, edge).to)) : []
-            let path = edgePath(node_id).reverse().join(" -> ");
-            let start = performance.now();
-            const id = `${path} - ${(env.data.get("__graphid") as {value: string}).value}/${node.id} (${node.ref})`;
-            // if(options?.profile && id) {
-            //   console.time(id)
-            //   performance.mark(`${id} - begin`)
-            // }
-            if(!options.timings) {
-              options.timings = {};
+        return wrapPromise(node).then(node => wrapPromise(create_data(node_id, newgraph, env, lib, options)).then(data => ({node, data})).value)
+          .then(({node, data}) => {
+            const graphid = (env.data.get("__graphid") as {value: string}).value;
+            if(!graphid.includes('/')) {
+              lib.data.no.runtime.publish('noderun', {graph: newgraph, node_id})
             }
 
-            const result = run_node(node, data, env, lib, options);
 
-            const isResPromise = ispromise(result);
+            if(options.profile && !nolib.no.runtime.get_parentest((env.data.get("__graphid") as {value: string}).value)) {
+              const edgePath = edge => nolib.no.runtime.get_edge_out(newgraph, edge) ? [nolib.no.runtime.get_edge_out(newgraph, edge).as].concat(edgePath(nolib.no.runtime.get_edge_out(newgraph, edge).to)) : []
+              let path = edgePath(node_id).reverse().join(" -> ");
+              let start = performance.now();
+              const id = `${path} - ${(env.data.get("__graphid") as {value: string}).value}/${node.id} (${node.ref})`;
+              // if(options?.profile && id) {
+              //   console.time(id)
+              //   performance.mark(`${id} - begin`)
+              // }
+              if(!options.timings) {
+                options.timings = {};
+              }
 
-            if(!ispromise(result) && options?.profile && id) {
-              // console.timeEnd(id)
-              // performance.mark(`${id} - end`);
-              // performance.measure(`${id}`, `${id} - begin`, `${id} - end`)
-              options.timings[id] = (options.timings[id] ?? 0) + (performance.now() - start)
-            }
+              const result = run_node(node, data, env, lib, options);
 
-            return isResPromise && options.profile && id ? result.then(v => {
+              const isResPromise = ispromise(result);
+
+              if(!ispromise(result) && options?.profile && id) {
                 // console.timeEnd(id)
                 // performance.mark(`${id} - end`);
-                // performance.measure(id, `${id} - begin`, `${id} - end`);
+                // performance.measure(`${id}`, `${id} - begin`, `${id} - end`)
                 options.timings[id] = (options.timings[id] ?? 0) + (performance.now() - start)
-                return v;
-              }) : result
-          } else {
-            return run_node(node, data, env, lib, options);
-          }
-        }).value
+              }
+
+              return isResPromise && options.profile && id ? result.then(v => {
+                  // console.timeEnd(id)
+                  // performance.mark(`${id} - end`);
+                  // performance.measure(id, `${id} - begin`, `${id} - end`);
+                  options.timings[id] = (options.timings[id] ?? 0) + (performance.now() - start)
+                  return v;
+                }) : result
+            } else {
+              return run_node(node, data, env, lib, options);
+            }
+          }).value
     } catch (e) {
       return handleError(e)
     }
