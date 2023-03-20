@@ -376,7 +376,10 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
         }
 
         for(let k of event.keysChanged) {
-          updateSyncedGraph(k);
+          // Don't readd deleted things
+          if(event.target.get(k)) {
+            updateSyncedGraph(k);
+          }
         }
       })
     })
