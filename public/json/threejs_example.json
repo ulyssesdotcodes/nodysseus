@@ -1,6 +1,7 @@
 [
   {
     "id": "threejs_example",
+    "out": "out",
     "nodes": {
       "8dy573e": {
         "id": "8dy573e",
@@ -39,7 +40,7 @@
       },
       "akna0ig": {
         "id": "akna0ig",
-        "value": "return !!_lib.no.runtime.get_ref(\"@three.setup\")",
+        "value": "return !!_lib.no.runtime.refs().includes(\"@three.setup\")",
         "ref": "script"
       },
       "ko0wprz": {
@@ -139,6 +140,11 @@
       "eg4o3m3": {
         "id": "eg4o3m3",
         "ref": "runnable"
+      },
+      "ow93fev": {
+        "id": "ow93fev",
+        "value": "threeRunnable",
+        "ref": "arg"
       }
     },
     "edges": {
@@ -306,6 +312,11 @@
         "from": "eg4o3m3",
         "to": "tbxemm2",
         "as": "threeRunnable"
+      },
+      "ow93fev": {
+        "from": "ow93fev",
+        "to": "0209mcq",
+        "as": "graphchange"
       }
     },
     "edges_in": {
@@ -507,6 +518,11 @@
           "from": "8ke4eq0",
           "to": "0209mcq",
           "as": "domnodeadded"
+        },
+        "ow93fev": {
+          "from": "ow93fev",
+          "to": "0209mcq",
+          "as": "graphchange"
         }
       },
       "tbxemm2": {
@@ -516,7 +532,6 @@
           "as": "threeRunnable"
         }
       }
-    },
-    "out": "out"
+    }
   }
 ]

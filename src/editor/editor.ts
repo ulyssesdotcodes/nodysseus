@@ -2,7 +2,7 @@ import { resfetch, nolib, run, initStore, NodysseusError } from "../nodysseus";
 import * as ha from "hyperapp";
 import Fuse from "fuse.js";
 import { create_randid, wrapPromise, base_graph } from "../util";
-import { Edge, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode } from "../types";
+import { Edge, Graph, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode } from "../types";
 import { calculateLevels, ChangeDisplayGraphId, Copy, CustomDOMEvent, DeleteNode, ExpandContract, FocusEffect, graph_subscription, hlib, isNodysseusError, keydownSubscription, listen, middleware, Paste, pzobj, refresh_graph, result_subscription, run_h, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect } from "./util";
 import { info_display, infoWindow } from "./components/infoWindow";
 import { init_code_editor } from "./components/codeEditor";
@@ -10,6 +10,7 @@ import { d3Node, HyperappState } from "./types";
 import { yNodyStore } from "./store";
 import { d3subscription, insert_node_el, link_el, node_el, UpdateSimulation } from "./components/graphDisplay";
 import Autocomplete from "./autocomplete"
+import generic from "src/generic";
 
 
 customElements.define("autocomplete-list", Autocomplete)
@@ -403,10 +404,9 @@ const editor = async function(html_id, worker, display_graph, lib, norun) {
     let nodysseusStore = await yNodyStore(true);
     initStore(nodysseusStore)
     hlib.worker = worker;
-    const simple = await resfetch("json/simple.json").then(r => typeof r === "string" ? JSON.parse(r) : r.json());
+    const simple = generic.nodes["simple"] as unknown as Graph;
     simple.edges_in = Object.values(simple.edges).reduce((acc: Record<string, Record<string, Edge>>, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
     const url_params = new URLSearchParams(document.location.search);
-    console.log(url_params)
     const graph_list = JSON.parse(localStorage.getItem("graph_list")) ?? [];
     const hash_graph = window.location.hash.substring(1);
     const keybindings = await resfetch("json/keybindings.json").then(r => typeof r === "string" ? JSON.parse(r) : r.json()).then(kb => (nolib.no.runtime.add_ref(kb), kb))

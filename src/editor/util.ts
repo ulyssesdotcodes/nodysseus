@@ -215,7 +215,12 @@ export const ChangeDisplayGraphId: ha.Effecter<HyperappState, {id: string, selec
     requestAnimationFrame(() => {
         const graphPromise = wrapPromise(
           EXAMPLES.includes(id) && !nolib.no.runtime.refs().includes(id) 
-          ? fetch((console.log(`fetching ${id}`), `json/${id}.json`)).then(res => res.json()).then(g => nolib.no.runtime.add_ref(g))
+          ? fetch((console.log(`fetching ${id}`), `json/${id}.json`)).then(res => res.json()).then(g => {
+            return nolib.no.runtime.add_ref(g[0])
+          }).then(g => {
+            nolib.no.runtime.change_graph(g, hlib);
+            return g
+          })
           : nolib.no.runtime.get_ref(id, display_graph_id && nolib.no.runtime.get_ref(display_graph_id))
         )
 

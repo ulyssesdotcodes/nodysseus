@@ -1038,7 +1038,14 @@ const nolib = {
           }
         })[0]
       }
-      const remove_ref = nodysseus.refs.delete
+      const remove_ref = (id) => {
+        if(nodysseus.refs.keys().includes(id)) {
+          nodysseus.refs.delete(id);
+        } else {
+          nodysseus.refs.keys().filter(k => k.startsWith(`@${id}`))
+            .forEach(k => nodysseus.refs.delete(k))
+        }
+      }
 
       const get_node = (graph: Graph, id: string) => wrapPromise(get_graph(graph)).then(g => g?.nodes[id]).value
       const get_edge = (graph, from) => wrapPromise(get_graph(graph)).then(g => g?.edges[from]).value

@@ -5575,16 +5575,13 @@ const generic = {
         },
         "semslq4": {
           "id": "semslq4",
-          "value": "console.log(namespace);\nconst ref = _lib.no.runtime.get_ref(namespace);\nref?.then ? ref.then(console.log) : console.log(ref)\nreturn _lib.no.runtime.get_ref(namespace)",
+          "value": "console.log(namespace);\nconst ref = _lib.no.runtime.refs().find(r => r === namespace);\nreturn ref",
           "ref": "script"
         },
         "vffalrt": {
           "id": "vffalrt",
           "value": "namespace.state",
           "ref": "arg"
-        },
-        "7yg0tro": {
-          "id": "7yg0tro"
         },
         "vqk5ztl": {
           "id": "vqk5ztl"
@@ -5714,8 +5711,8 @@ const generic = {
         },
         "dd6st1b": {
           "from": "dd6st1b",
-          "to": "7yg0tro",
-          "as": "value"
+          "to": "skqnl08",
+          "as": "text"
         },
         "xdot36k": {
           "from": "xdot36k",
@@ -5806,11 +5803,6 @@ const generic = {
           "from": "vffalrt",
           "to": "semslq4",
           "as": "namespace"
-        },
-        "7yg0tro": {
-          "from": "7yg0tro",
-          "to": "skqnl08",
-          "as": "text"
         },
         "vqk5ztl": {
           "from": "vqk5ztl",

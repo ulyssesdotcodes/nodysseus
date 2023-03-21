@@ -13,6 +13,7 @@ import { YMap } from "yjs/dist/src/internals";
 
 type SyncedGraph = {
   remoteProvider: WebrtcProvider,
+  idb: IndexeddbPersistence,
   graph: Graph
 }
 
@@ -208,8 +209,12 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
         }
 
         let unloadedRdoc = false;
+        // Need to create indexeddbpersistence even if the preloaddoc is generated
+        let createdPreload = false;
 
+        // create the preloaddoc before syncing with rtcroom
         if(!preloadDoc) {
+          createdPreload = true;
           preloadDoc = new Y.Doc( rmap.has(id) ? {guid: rmap.get(id)} : undefined);
           preloadDoc.getMap().set("id", id)
           if(graph) {
@@ -233,10 +238,11 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
         }
 
 
-        return (preloadDoc.isLoaded && existing ? wrapPromise(preloadDoc)
+        // see note above createdPreload
+        return (!createdPreload && preloadDoc.isLoaded && existing ? wrapPromise({localDoc: preloadDoc, idb: undefined})
             : wrapPromise(existing && !unloadedRdoc ? existing : Promise.resolve(existing))
-              .then(() => new IndexeddbPersistence(`${persist}-subdocs-${preloadDoc.guid}`, preloadDoc).whenSynced.then(() =>{
-                if(preloadDoc.getMap().get("nodes")) {
+              .then(() => new IndexeddbPersistence(`${persist}-subdocs-${preloadDoc.guid}`, preloadDoc).whenSynced.then(idb =>{
+                if(preloadDoc.getMap().get("nodes") && !createdPreload) {
                   preloadDoc.transact(() => {
                     // Sanitization and transforming from old to new
                     const edgeReplaceMap = new Map<string, Map<string, string>>();
@@ -285,10 +291,10 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
                   }
                 }))
 
-                return preloadDoc
+                return {localDoc: preloadDoc, idb}
               })))
 
-              .then((localDoc) => {
+              .then(({localDoc, idb}) => {
                 if(graph) {
                     graph.edges_in = Object.values(graph.edges).reduce((acc: EdgesIn, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
 
@@ -306,6 +312,7 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
                   }
                   return {
                     graph,
+                    idb: idb ?? existing?.idb,
                     remoteProvider: rtcroom && (existing?.remoteProvider ?? new WebrtcProvider(`nodysseus${rtcroom}_${id}`, localDoc, {
                       signaling: ["wss://ws.nodysseus.io"], 
                       filterBcConns: true,
@@ -340,7 +347,7 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
     .then(sg => sg.graph)
     .then(custom_editor => !!custom_editor && hlib.run(custom_editor, custom_editor.out ?? "out"))
     .then(custom_editor_result => {
-      rtcroom = custom_editor_result?.rtcroom;
+      rtcroom = custom_editor_result?.rtcroom || false;
 
       if(rtcroom) {
         new WebrtcProvider(`nodysseus${rtcroom}_subdocs`, rdoc, {
@@ -366,7 +373,7 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
       }
 
       return rtcroom;
-    })
+    }).value
 
   if(update !== undefined) {
     ymap.observeDeep(events =>{
@@ -407,8 +414,14 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
     remove_edge,
     delete: id => {
       console.log(`removing ${id}`)
-      syncedGraphs.delete(id);
-      ymap.delete(id)
+      return wrapPromise(syncedGraphs.get(id))
+        .then(syncedGraph => {
+          syncedGraph?.idb?.clearData();
+          syncedGraphs.delete(id);
+          ymap.get(id)?.destroy();
+          ymap.delete(id);
+          rmap.delete(id);
+        }).value
     },
     clear: () => {
       throw new Error("Can't remove all refs")
