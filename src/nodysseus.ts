@@ -1023,8 +1023,11 @@ const nolib = {
         }
       };
 
-      const get_ref = (id, otherwise) => {
+      const get_ref = (id, otherwise?) => {
         return wrapPromise(generic_nodes[id] ?? nodysseus.refs.get(id)).then(graph => {
+          if(!graph && !otherwise) {
+            otherwise = get_ref("simple");
+          }
           return graph ?? nodysseus.refs.set(id, otherwise && {...otherwise, id, nodes: {...otherwise.nodes, [otherwise.out ?? "out"]: {...otherwise.nodes[otherwise.out ?? "out"], name: id}}})
         }).value;
       }

@@ -1936,7 +1936,7 @@
       },
       "dyst9ju": {
         "id": "dyst9ju",
-        "value": "if(renderer) {\n  renderer.render(scene, camera);\n  //renderer.render();\n}",
+        "value": "if(renderer) {\n  //renderer.render(scene, camera);\n  renderer.render();\n}",
         "ref": "script"
       },
       "rmqxb31": {
@@ -2064,7 +2064,7 @@
       },
       "lugpx4o": {
         "id": "lugpx4o",
-        "value": "if(!renderer){\n  return;\n}\n/*\nconst fxcomposer = new fx.EffectComposer(renderer)\nconst renderpass = new fx.RenderPass(scene, camera);\nfxcomposer.setSize(window.innerWidth, window.innerHeight);\nfxcomposer.addPass(renderpass);\nif(MotionBlur) {\n  const pass = new MotionBlur(scene, camera, { samples: 32, expandgeometry: 0.4 });\n  fxcomposer.addPass(pass);\n  pass.renderToScreen = true;\n}\nreturn fxcomposer;\n*/\n\nreturn renderer;",
+        "value": "if(!renderer){\n  return;\n}\nconst fxcomposer = new fx.EffectComposer(renderer)\nconst renderpass = new fx.RenderPass(scene, camera);\nfxcomposer.setSize(canvas.width, canvas.height);\nfxcomposer.addPass(renderpass);\nif(MotionBlur) {\n  const pass = new MotionBlur(scene, camera, { samples: 32, expandgeometry: 0.4 });\n  fxcomposer.addPass(pass);\n  pass.renderToScreen = true;\n}\nreturn fxcomposer;",
         "ref": "script"
       },
       "pnszphc": {
@@ -2162,13 +2162,27 @@
         "value": "renderer.state",
         "ref": "arg"
       },
-      "vc0quhz": {
-        "id": "vc0quhz",
-        "ref": "cache"
+      "2pqimov": {
+        "id": "2pqimov",
+        "value": "children",
+        "ref": "log"
       },
-      "x7qaxpz": {
-        "id": "x7qaxpz",
-        "value": "canvas",
+      "by4m1fr": {
+        "id": "by4m1fr",
+        "value": "objs",
+        "ref": "arg"
+      },
+      "reop6t4": {
+        "id": "reop6t4",
+        "ref": "object_entries"
+      },
+      "z51c26o": {
+        "id": "z51c26o",
+        "ref": "map"
+      },
+      "3jf8mf5": {
+        "id": "3jf8mf5",
+        "value": "scene",
         "ref": "log"
       },
       "rwn5gts": {
@@ -2290,22 +2304,13 @@
         "value": "_scene",
         "ref": "arg"
       },
-      "aqfc51v": {
-        "id": "aqfc51v",
-        "ref": "if"
+      "tkxqh5a": {
+        "id": "tkxqh5a",
+        "ref": "@three.update_children"
       },
-      "x638fhv": {
-        "id": "x638fhv",
-        "ref": "and"
-      },
-      "xel6go6": {
-        "id": "xel6go6",
-        "value": "_renderer.state",
-        "ref": "arg"
-      },
-      "xmd2fqb": {
-        "id": "xmd2fqb",
-        "value": "fx",
+      "zz2yk2z": {
+        "id": "zz2yk2z",
+        "value": "_scene",
         "ref": "arg"
       },
       "vzmvbqh": {
@@ -2327,13 +2332,26 @@
         "value": "https://cdn.jsdelivr.net/gh/ulyssesdotcodes/threejs-sandbox@94c68f4/motionBlurPass/src/MotionBlurPass.js",
         "ref": "import_module"
       },
-      "tkxqh5a": {
-        "id": "tkxqh5a",
-        "ref": "@three.update_children"
+      "vc0quhz": {
+        "id": "vc0quhz",
+        "ref": "cache"
       },
-      "zz2yk2z": {
-        "id": "zz2yk2z",
-        "value": "_scene",
+      "aqfc51v": {
+        "id": "aqfc51v",
+        "ref": "if"
+      },
+      "x638fhv": {
+        "id": "x638fhv",
+        "ref": "and"
+      },
+      "xel6go6": {
+        "id": "xel6go6",
+        "value": "_renderer.state",
+        "ref": "arg"
+      },
+      "xmd2fqb": {
+        "id": "xmd2fqb",
+        "value": "fx",
         "ref": "arg"
       },
       "sfzzxee": {
@@ -2342,26 +2360,13 @@
       "wgn4yl2": {
         "id": "wgn4yl2"
       },
-      "by4m1fr": {
-        "id": "by4m1fr",
-        "value": "objs",
-        "ref": "arg"
-      },
-      "reop6t4": {
-        "id": "reop6t4",
-        "ref": "object_entries"
-      },
-      "z51c26o": {
-        "id": "z51c26o",
-        "ref": "map"
-      },
       "ryjjzqr": {
         "id": "ryjjzqr",
         "ref": "runnable"
       },
       "dq4u9ji": {
         "id": "dq4u9ji",
-        "value": "element.1",
+        "value": "element",
         "ref": "arg"
       },
       "4j2wgr9": {
@@ -2371,21 +2376,63 @@
       },
       "s208cfn": {
         "id": "s208cfn",
-        "value": "element.0",
+        "value": "element",
         "ref": "arg"
-      },
-      "2pqimov": {
-        "id": "2pqimov",
-        "value": "children",
-        "ref": "log"
-      },
-      "3jf8mf5": {
-        "id": "3jf8mf5",
-        "value": "scene",
-        "ref": "log"
       },
       "t8adnxm": {
         "id": "t8adnxm",
+        "value": "canvas",
+        "ref": "arg"
+      },
+      "l98p3to": {
+        "id": "l98p3to",
+        "value": "0",
+        "ref": "get"
+      },
+      "ek93m5o": {
+        "id": "ek93m5o",
+        "value": "1",
+        "ref": "get"
+      },
+      "d8w679k": {
+        "id": "d8w679k",
+        "value": "return entries.filter(e => e[1])",
+        "ref": "script"
+      },
+      "eoks97e": {
+        "id": "eoks97e",
+        "ref": "cache"
+      },
+      "lm0iyoq": {
+        "id": "lm0iyoq",
+        "value": "https://cdn.jsdelivr.net/npm/three/examples/jsm/postprocessing/EffectComposer.js",
+        "ref": "import_module"
+      },
+      "x7oyebe": {
+        "id": "x7oyebe",
+        "value": "EffectComposer",
+        "ref": "get"
+      },
+      "vl4foaa": {
+        "id": "vl4foaa",
+        "ref": "cache"
+      },
+      "7peak26": {
+        "id": "7peak26",
+        "value": "RenderPass",
+        "ref": "get"
+      },
+      "slle0cq": {
+        "id": "slle0cq",
+        "value": "https://cdn.jsdelivr.net/npm/three/examples/jsm/postprocessing/RenderPass.js",
+        "ref": "import_module"
+      },
+      "tgacxe5": {
+        "id": "tgacxe5",
+        "ref": "cache"
+      },
+      "svcshll": {
+        "id": "svcshll",
         "value": "canvas",
         "ref": "arg"
       }
@@ -2558,13 +2605,13 @@
       },
       "hsytqp3": {
         "from": "hsytqp3",
-        "to": "lugpx4o",
-        "as": "renderer"
+        "to": "tgacxe5",
+        "as": "value"
       },
       "1j95u16": {
         "from": "1j95u16",
-        "to": "x7qaxpz",
-        "as": "value"
+        "to": "hsytqp3",
+        "as": "canvas"
       },
       "jjmvxjj": {
         "from": "jjmvxjj",
@@ -2616,15 +2663,20 @@
         "to": "5m99dxg",
         "as": "fx"
       },
-      "vc0quhz": {
-        "from": "vc0quhz",
-        "to": "0wp18c9",
-        "as": "value"
+      "by4m1fr": {
+        "from": "by4m1fr",
+        "to": "reop6t4",
+        "as": "object"
       },
-      "x7qaxpz": {
-        "from": "x7qaxpz",
-        "to": "hsytqp3",
-        "as": "canvas"
+      "reop6t4": {
+        "from": "reop6t4",
+        "to": "d8w679k",
+        "as": "entries"
+      },
+      "z51c26o": {
+        "from": "z51c26o",
+        "to": "tkxqh5a",
+        "as": "children"
       },
       "rwn5gts": {
         "from": "rwn5gts",
@@ -2666,25 +2718,15 @@
         "to": "m291v0o",
         "as": "scene"
       },
-      "aqfc51v": {
-        "from": "aqfc51v",
-        "to": "7c7zppx",
-        "as": "fn"
+      "tkxqh5a": {
+        "from": "tkxqh5a",
+        "to": "lsf5igz",
+        "as": "true"
       },
-      "x638fhv": {
-        "from": "x638fhv",
-        "to": "aqfc51v",
-        "as": "pred"
-      },
-      "xel6go6": {
-        "from": "xel6go6",
-        "to": "x638fhv",
-        "as": "arg0"
-      },
-      "xmd2fqb": {
-        "from": "xmd2fqb",
-        "to": "x638fhv",
-        "as": "arg1"
+      "zz2yk2z": {
+        "from": "zz2yk2z",
+        "to": "tkxqh5a",
+        "as": "parent"
       },
       "vzmvbqh": {
         "from": "vzmvbqh",
@@ -2706,40 +2748,35 @@
         "to": "vzmvbqh",
         "as": "true"
       },
-      "tkxqh5a": {
-        "from": "tkxqh5a",
-        "to": "lsf5igz",
-        "as": "true"
+      "vc0quhz": {
+        "from": "vc0quhz",
+        "to": "0wp18c9",
+        "as": "value"
       },
-      "zz2yk2z": {
-        "from": "zz2yk2z",
-        "to": "tkxqh5a",
-        "as": "parent"
+      "aqfc51v": {
+        "from": "aqfc51v",
+        "to": "7c7zppx",
+        "as": "fn"
+      },
+      "x638fhv": {
+        "from": "x638fhv",
+        "to": "aqfc51v",
+        "as": "pred"
+      },
+      "xel6go6": {
+        "from": "xel6go6",
+        "to": "x638fhv",
+        "as": "arg0"
+      },
+      "xmd2fqb": {
+        "from": "xmd2fqb",
+        "to": "x638fhv",
+        "as": "arg1"
       },
       "sfzzxee": {
         "from": "sfzzxee",
         "to": "ryjjzqr",
         "as": "parameters"
-      },
-      "wgn4yl2": {
-        "from": "wgn4yl2",
-        "to": "sfzzxee",
-        "as": "element"
-      },
-      "by4m1fr": {
-        "from": "by4m1fr",
-        "to": "reop6t4",
-        "as": "object"
-      },
-      "reop6t4": {
-        "from": "reop6t4",
-        "to": "z51c26o",
-        "as": "array"
-      },
-      "z51c26o": {
-        "from": "z51c26o",
-        "to": "tkxqh5a",
-        "as": "children"
       },
       "ryjjzqr": {
         "from": "ryjjzqr",
@@ -2748,7 +2785,7 @@
       },
       "dq4u9ji": {
         "from": "dq4u9ji",
-        "to": "4j2wgr9",
+        "to": "ek93m5o",
         "as": "target"
       },
       "4j2wgr9": {
@@ -2758,12 +2795,72 @@
       },
       "s208cfn": {
         "from": "s208cfn",
-        "to": "4j2wgr9",
-        "as": "value"
+        "to": "l98p3to",
+        "as": "target"
+      },
+      "wgn4yl2": {
+        "from": "wgn4yl2",
+        "to": "sfzzxee",
+        "as": "element"
       },
       "t8adnxm": {
         "from": "t8adnxm",
         "to": "8m5muxn/zci8apj",
+        "as": "canvas"
+      },
+      "l98p3to": {
+        "from": "l98p3to",
+        "to": "4j2wgr9",
+        "as": "value"
+      },
+      "ek93m5o": {
+        "from": "ek93m5o",
+        "to": "4j2wgr9",
+        "as": "target"
+      },
+      "d8w679k": {
+        "from": "d8w679k",
+        "to": "z51c26o",
+        "as": "array"
+      },
+      "lm0iyoq": {
+        "from": "lm0iyoq",
+        "to": "x7oyebe",
+        "as": "target"
+      },
+      "eoks97e": {
+        "from": "eoks97e",
+        "to": "qioaglu",
+        "as": "EffectComposer"
+      },
+      "x7oyebe": {
+        "from": "x7oyebe",
+        "to": "eoks97e",
+        "as": "value"
+      },
+      "7peak26": {
+        "from": "7peak26",
+        "to": "vl4foaa",
+        "as": "value"
+      },
+      "slle0cq": {
+        "from": "slle0cq",
+        "to": "7peak26",
+        "as": "target"
+      },
+      "vl4foaa": {
+        "from": "vl4foaa",
+        "to": "qioaglu",
+        "as": "RenderPass"
+      },
+      "tgacxe5": {
+        "from": "tgacxe5",
+        "to": "lugpx4o",
+        "as": "renderer"
+      },
+      "svcshll": {
+        "from": "svcshll",
+        "to": "lugpx4o",
         "as": "canvas"
       }
     },
@@ -2786,11 +2883,6 @@
           "to": "lugpx4o",
           "as": "fx"
         },
-        "hsytqp3": {
-          "from": "hsytqp3",
-          "to": "lugpx4o",
-          "as": "renderer"
-        },
         "eamyj81": {
           "from": "eamyj81",
           "to": "lugpx4o",
@@ -2805,6 +2897,16 @@
           "from": "vzmvbqh",
           "to": "lugpx4o",
           "as": "MotionBlur"
+        },
+        "tgacxe5": {
+          "from": "tgacxe5",
+          "to": "lugpx4o",
+          "as": "renderer"
+        },
+        "svcshll": {
+          "from": "svcshll",
+          "to": "lugpx4o",
+          "as": "canvas"
         }
       },
       "vc0quhz": {
@@ -3023,11 +3125,18 @@
           "as": "_renderer"
         }
       },
-      "x7qaxpz": {
+      "tgacxe5": {
+        "hsytqp3": {
+          "from": "hsytqp3",
+          "to": "tgacxe5",
+          "as": "value"
+        }
+      },
+      "hsytqp3": {
         "1j95u16": {
           "from": "1j95u16",
-          "to": "x7qaxpz",
-          "as": "value"
+          "to": "hsytqp3",
+          "as": "canvas"
         }
       },
       "e9d6mmx": {
@@ -3071,18 +3180,30 @@
           "as": "fx"
         }
       },
-      "0wp18c9": {
-        "vc0quhz": {
-          "from": "vc0quhz",
-          "to": "0wp18c9",
-          "as": "value"
+      "reop6t4": {
+        "by4m1fr": {
+          "from": "by4m1fr",
+          "to": "reop6t4",
+          "as": "object"
         }
       },
-      "hsytqp3": {
-        "x7qaxpz": {
-          "from": "x7qaxpz",
-          "to": "hsytqp3",
-          "as": "canvas"
+      "d8w679k": {
+        "reop6t4": {
+          "from": "reop6t4",
+          "to": "d8w679k",
+          "as": "entries"
+        }
+      },
+      "tkxqh5a": {
+        "z51c26o": {
+          "from": "z51c26o",
+          "to": "tkxqh5a",
+          "as": "children"
+        },
+        "zz2yk2z": {
+          "from": "zz2yk2z",
+          "to": "tkxqh5a",
+          "as": "parent"
         }
       },
       "8m5muxn/inq87j9": {
@@ -3118,25 +3239,6 @@
           "as": "true"
         }
       },
-      "7c7zppx": {
-        "aqfc51v": {
-          "from": "aqfc51v",
-          "to": "7c7zppx",
-          "as": "fn"
-        }
-      },
-      "x638fhv": {
-        "xel6go6": {
-          "from": "xel6go6",
-          "to": "x638fhv",
-          "as": "arg0"
-        },
-        "xmd2fqb": {
-          "from": "xmd2fqb",
-          "to": "x638fhv",
-          "as": "arg1"
-        }
-      },
       "vzmvbqh": {
         "23ppkmp": {
           "from": "23ppkmp",
@@ -3156,16 +3258,30 @@
           "as": "module"
         }
       },
-      "tkxqh5a": {
-        "zz2yk2z": {
-          "from": "zz2yk2z",
-          "to": "tkxqh5a",
-          "as": "parent"
+      "0wp18c9": {
+        "vc0quhz": {
+          "from": "vc0quhz",
+          "to": "0wp18c9",
+          "as": "value"
+        }
+      },
+      "7c7zppx": {
+        "aqfc51v": {
+          "from": "aqfc51v",
+          "to": "7c7zppx",
+          "as": "fn"
+        }
+      },
+      "x638fhv": {
+        "xel6go6": {
+          "from": "xel6go6",
+          "to": "x638fhv",
+          "as": "arg0"
         },
-        "z51c26o": {
-          "from": "z51c26o",
-          "to": "tkxqh5a",
-          "as": "children"
+        "xmd2fqb": {
+          "from": "xmd2fqb",
+          "to": "x638fhv",
+          "as": "arg1"
         }
       },
       "ryjjzqr": {
@@ -3180,6 +3296,32 @@
           "as": "fn"
         }
       },
+      "z51c26o": {
+        "ryjjzqr": {
+          "from": "ryjjzqr",
+          "to": "z51c26o",
+          "as": "fn"
+        },
+        "d8w679k": {
+          "from": "d8w679k",
+          "to": "z51c26o",
+          "as": "array"
+        }
+      },
+      "ek93m5o": {
+        "dq4u9ji": {
+          "from": "dq4u9ji",
+          "to": "ek93m5o",
+          "as": "target"
+        }
+      },
+      "l98p3to": {
+        "s208cfn": {
+          "from": "s208cfn",
+          "to": "l98p3to",
+          "as": "target"
+        }
+      },
       "sfzzxee": {
         "wgn4yl2": {
           "from": "wgn4yl2",
@@ -3187,42 +3329,63 @@
           "as": "element"
         }
       },
-      "reop6t4": {
-        "by4m1fr": {
-          "from": "by4m1fr",
-          "to": "reop6t4",
-          "as": "object"
-        }
-      },
-      "z51c26o": {
-        "reop6t4": {
-          "from": "reop6t4",
-          "to": "z51c26o",
-          "as": "array"
-        },
-        "ryjjzqr": {
-          "from": "ryjjzqr",
-          "to": "z51c26o",
-          "as": "fn"
-        }
-      },
-      "4j2wgr9": {
-        "dq4u9ji": {
-          "from": "dq4u9ji",
-          "to": "4j2wgr9",
-          "as": "target"
-        },
-        "s208cfn": {
-          "from": "s208cfn",
-          "to": "4j2wgr9",
-          "as": "value"
-        }
-      },
       "8m5muxn/zci8apj": {
         "t8adnxm": {
           "from": "t8adnxm",
           "to": "8m5muxn/zci8apj",
           "as": "canvas"
+        }
+      },
+      "4j2wgr9": {
+        "l98p3to": {
+          "from": "l98p3to",
+          "to": "4j2wgr9",
+          "as": "value"
+        },
+        "ek93m5o": {
+          "from": "ek93m5o",
+          "to": "4j2wgr9",
+          "as": "target"
+        }
+      },
+      "x7oyebe": {
+        "lm0iyoq": {
+          "from": "lm0iyoq",
+          "to": "x7oyebe",
+          "as": "target"
+        }
+      },
+      "qioaglu": {
+        "eoks97e": {
+          "from": "eoks97e",
+          "to": "qioaglu",
+          "as": "EffectComposer"
+        },
+        "vl4foaa": {
+          "from": "vl4foaa",
+          "to": "qioaglu",
+          "as": "RenderPass"
+        }
+      },
+      "eoks97e": {
+        "x7oyebe": {
+          "from": "x7oyebe",
+          "to": "eoks97e",
+          "as": "value"
+        }
+      },
+      "vl4foaa": {
+        "7peak26": {
+          "from": "7peak26",
+          "to": "vl4foaa",
+          "as": "value"
+        }
+      },
+      "7peak26": {
+        "slle0cq": {
+          "from": "slle0cq",
+          "to": "7peak26",
+          "as": "target"
         }
       }
     }
@@ -6533,18 +6696,8 @@
     "nodes": {
       "x4zdk2w": {
         "id": "x4zdk2w",
-        "value": "console.log(\"starting scene\")\nconsole.log(THREE)\nconsole.log(_lib)\nreturn new THREE.Scene()",
-        "ref": "script"
-      },
-      "ojdupq6": {
-        "id": "ojdupq6",
-        "value": "scene",
-        "ref": "log"
-      },
-      "bfr8z38": {
-        "id": "bfr8z38",
-        "value": "_lib.THREE",
-        "ref": "arg"
+        "value": "THREE.Scene",
+        "ref": "new"
       },
       "main/out": {
         "id": "main/out",
@@ -6556,38 +6709,14 @@
     "edges": {
       "x4zdk2w": {
         "from": "x4zdk2w",
-        "to": "ojdupq6",
-        "as": "value"
-      },
-      "bfr8z38": {
-        "from": "bfr8z38",
-        "to": "x4zdk2w",
-        "as": "THREE"
-      },
-      "ojdupq6": {
-        "from": "ojdupq6",
         "to": "main/out",
         "as": "value"
       }
     },
     "edges_in": {
-      "ojdupq6": {
+      "main/out": {
         "x4zdk2w": {
           "from": "x4zdk2w",
-          "to": "ojdupq6",
-          "as": "value"
-        }
-      },
-      "x4zdk2w": {
-        "bfr8z38": {
-          "from": "bfr8z38",
-          "to": "x4zdk2w",
-          "as": "THREE"
-        }
-      },
-      "main/out": {
-        "ojdupq6": {
-          "from": "ojdupq6",
           "to": "main/out",
           "as": "value"
         }
@@ -6600,15 +6729,6 @@
     "nodes": {
       "args": {
         "id": "args"
-      },
-      "vjfgmrl": {
-        "id": "vjfgmrl",
-        "value": "https://cdn.jsdelivr.net/npm/three/build/three.module.js",
-        "ref": "import_module"
-      },
-      "n79e1ca": {
-        "id": "n79e1ca",
-        "ref": "cache"
       },
       "qvf3y0y": {
         "id": "qvf3y0y",
@@ -6641,6 +6761,15 @@
         "name": "@three.camera",
         "ref": "return",
         "__isnodysseus": true
+      },
+      "vjfgmrl": {
+        "id": "vjfgmrl",
+        "value": "https://cdn.jsdelivr.net/npm/three/build/three.module.js",
+        "ref": "import_module"
+      },
+      "n79e1ca": {
+        "id": "n79e1ca",
+        "ref": "cache"
       }
     },
     "edges": {
@@ -6648,11 +6777,6 @@
         "from": "args",
         "to": "main/out",
         "as": "args"
-      },
-      "vjfgmrl": {
-        "from": "vjfgmrl",
-        "to": "n79e1ca",
-        "as": "value"
       },
       "x4zdk2w": {
         "from": "x4zdk2w",
@@ -6669,15 +6793,20 @@
         "to": "x4zdk2w",
         "as": "height"
       },
-      "n79e1ca": {
-        "from": "n79e1ca",
-        "to": "args",
-        "as": "THREE"
-      },
       "ojdupq6": {
         "from": "ojdupq6",
         "to": "main/out",
         "as": "value"
+      },
+      "vjfgmrl": {
+        "from": "vjfgmrl",
+        "to": "n79e1ca",
+        "as": "value"
+      },
+      "n79e1ca": {
+        "from": "n79e1ca",
+        "to": "args",
+        "as": "THREE"
       }
     },
     "edges_in": {
@@ -6690,13 +6819,6 @@
         "ojdupq6": {
           "from": "ojdupq6",
           "to": "main/out",
-          "as": "value"
-        }
-      },
-      "n79e1ca": {
-        "vjfgmrl": {
-          "from": "vjfgmrl",
-          "to": "n79e1ca",
           "as": "value"
         }
       },
@@ -6717,6 +6839,13 @@
           "from": "11u8kd6",
           "to": "x4zdk2w",
           "as": "height"
+        }
+      },
+      "n79e1ca": {
+        "vjfgmrl": {
+          "from": "vjfgmrl",
+          "to": "n79e1ca",
+          "as": "value"
         }
       },
       "args": {
