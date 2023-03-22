@@ -106,6 +106,38 @@ let resfetch = typeof fetch !== "undefined" ? fetch :
         req.end();
     }));
 
+function set_mutable(obj, propsArg, value) {
+  var props, lastProp;
+  if (Array.isArray(propsArg)) {
+    props = propsArg.slice(0);
+  }
+  if (typeof propsArg == 'string') {
+    props = propsArg.split('.');
+  }
+  if (typeof propsArg == 'symbol') {
+    props = [propsArg];
+  }
+  if (!Array.isArray(props)) {
+    throw new Error('props arg must be an array, a string or a symbol');
+  }
+  lastProp = props.pop();
+  if (!lastProp) {
+    return false;
+  }
+  var thisProp;
+  while ((thisProp = props.shift())) {
+    if (typeof obj[thisProp] == 'undefined') {
+      obj[thisProp] = {};
+    }
+    obj = obj[thisProp];
+    if (!obj || typeof obj != 'object') {
+      return false;
+    }
+  }
+  obj[lastProp] = value;
+  return true;
+}
+
 export const nodysseus_get = (obj: Record<string, any> | Args | Env, propsArg: string, lib: Lib, defaultValue=undefined, props: Array<string>=[], options: RunOptions = {}) => {
     let objArg = obj;
     obj = isEnv(obj) ? obj.data : obj
@@ -847,13 +879,13 @@ const nolib = {
         runpublish(message.data.data, message.data.event, nolib)
       }
 
-      const runpublish = (data, event, lib, options: RunOptions = {}) => {
+      const runpublish = (data, event, lib, options: RunOptions = {}, broadcast = true) => {
         // if(!isArgs(data)) {
         //   data = data ? new Map(Object.entries(data)) : {};
         // }
         if(event.startsWith("bc")) {
           event = event.substring(3);
-        } else if(event !== "noderun" && event !== "animationframe" && event !== "show_all") {
+        } else if(broadcast && event !== "noderun" && event !== "animationframe" && event !== "show_all") {
           try {
             if(typeof window !== "undefined" && !event.startsWith("graph")) {
               eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data });
@@ -874,7 +906,7 @@ const nolib = {
         if(!pause) {
           for (let l of listeners.values()) {
             if (typeof l === "function") {
-              l(data);
+              l(data, lib, options);
             } else if (typeof l === "object" && l.fn && l.graph) {
               run(
                 l,
@@ -898,11 +930,11 @@ const nolib = {
         }
       };
 
-      const publish = (event, data, lib: Lib, options: RunOptions = {}) => {
+      const publish = (event, data, lib: Lib, options: RunOptions = {}, broadcast = true) => {
         if (typeof data === "object" && ispromise(data)) {
-          data.then(d => runpublish(d, event, lib, options));
+          data.then(d => runpublish(d, event, lib, options, broadcast));
         } else {
-          runpublish(data, event, lib, options);
+          runpublish(data, event, lib, options, broadcast);
         }
 
         return data;
@@ -968,6 +1000,15 @@ const nolib = {
         }
         animationerrors.splice(0, animationerrors.length)
       });
+
+      add_listener('argsupdate', '__argsupdate', ({graphid, changes, mutate}, lib, options) => {
+        if(mutate) {
+          const current = nolib.no.runtime.get_args(graphid);
+          changes.forEach(change => set_mutable(current, change[0], change[1]))
+        } else {
+          update_args(graphid, changes, lib)
+        }
+      })
 
       const remove_listener = (event, listener_id) => {
         if (event === "*") {
@@ -1402,8 +1443,8 @@ const nolib = {
       },
     },
     refval: {
-      args: ["onframe", "_lib", "__graphid"],
-      fn: (onframe, lib, graphid) => {
+      args: ["onframe", "_lib", "__graphid", "_runoptions"],
+      fn: (onframe, lib, graphid, options) => {
         const args = lib.data.no.runtime.get_args(graphid);
 
         let store = args["store"] ?? {
@@ -1411,7 +1452,7 @@ const nolib = {
           set: {
             __kind: "apFunction",
             fn: (value) => {
-              store.value = value;
+              lib.data.no.runtime.publish("argsupdate", {graphid, changes: [['store.value', value]], mutate: true}, lib, options)
             },
             args: ['value']
           },
@@ -1419,16 +1460,21 @@ const nolib = {
         }
 
         if(!args["store"]) {
-          lib.data.no.runtime.update_args(graphid, {store})
+          lib.data.no.runtime.update_args(graphid, {store}, lib)
         }
 
         return store
       }
     },
     state: {
-      args: ["_lib", "__graphid"],
-      fn: (lib, graphid) => {
+      rawArgs: true,
+      args: ["value", "_lib", "__graphid", "_runoptions"],
+      fn: (value, lib, graphid, options) => {
         const rawstate = lib.data.no.runtime.get_args(graphid)["state"]
+        if(value && (rawstate === undefined || rawstate === null)) {
+          wrapPromise(run_runnable(value, lib, undefined, options))
+            .then(state => lib.data.no.runtime.publish("argsupdate", {graphid, changes: {state}, mutate: false}, lib, options, true))
+        }
         return wrapPromise(rawstate).then(st => isValue(st) ? st.value : st).then(state => ({
           graphid,
           set: {
@@ -1438,10 +1484,10 @@ const nolib = {
               const result = value === undefined || value === null ? undefined : run_runnable(value, lib, undefined, {resolvePromises: false});
               const promiseresult = ispromise(result) ? result.then(r => isValue(r) ? r.value : r) : isValue(result) ? result.value : result;
 
-              lib.data.no.runtime.update_args(graphid, {state: promiseresult});
+              lib.data.no.runtime.update_args(graphid, {state: promiseresult}, lib)
 
               return ispromise(promiseresult) ? promiseresult.then(pr => {
-                lib.data.no.runtime.update_args(graphid, {state: pr})
+                lib.data.no.runtime.update_args(graphid, {state: pr}, lib)
                 return pr;
               }) : promiseresult;
             },
