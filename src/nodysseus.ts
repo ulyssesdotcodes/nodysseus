@@ -1483,7 +1483,7 @@ const nolib = {
               .then(persist => ({publish, persist})).value)
           .then(rawstate !== undefined ? (v => v) : ({publish, persist}) => {
             if (persist && rawstate === undefined) {
-              const persistedState = localStorage.getItem(graphid);
+              const persistedState = JSON.parse(localStorage.getItem(graphid));
               if(persistedState !== undefined) {
                 if(publish) {
                   lib.data.no.runtime.publish("argsupdate", {graphid, changes: {state: persistedState}, mutate: false}, lib, options, true)
