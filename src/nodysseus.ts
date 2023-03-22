@@ -390,6 +390,8 @@ const run_extern = (extern: ApFunction, data: Args, lib: Lib, options: RunOption
           newval = options;
       } else if (arg == '__graphid') {
           newval = (graphArgs.data.get("__graphid") as {value: string}).value;
+      } else if (arg == '_output') {
+          newval = graphArgs._output;
       } else {
           newval = extern.rawArgs ? data.get(arg) : run_runnable(data.get(arg), lib, new Map(), options)
           while(isConstRunnable(newval) && !extern.rawArgs) {
@@ -1443,8 +1445,8 @@ const nolib = {
       },
     },
     refval: {
-      args: ["onframe", "_lib", "__graphid", "_runoptions"],
-      fn: (onframe, lib, graphid, options) => {
+      args: ["onframe", "_lib", "__graphid", "_runoptions", "_output"],
+      fn: (onframe, lib, graphid, options, output) => {
         const args = lib.data.no.runtime.get_args(graphid);
 
         let store = args["store"] ?? {
@@ -1464,54 +1466,78 @@ const nolib = {
           lib.data.no.runtime.update_args(graphid, {store}, lib)
         }
 
-        return store
+        return output === "display" ? {dom_type: 'div', props: {}, children: [{dom_type: "text_value", text: JSON.stringify(store.value)}]} : store
       }
     },
     state: {
       rawArgs: true,
-      args: ["value", "_lib", "__graphid", "_runoptions"],
-      fn: (value, lib, graphid, options) => {
+      args: ["value", "_lib", "__graphid", "_runoptions", "_output", "persist"],
+      fn: (value, lib, graphid, options, output, persist) => {
         let rawstate = lib.data.no.runtime.get_args(graphid)["state"]
 
-        if(value && (rawstate === undefined || rawstate === null)) {
-          const state = wrapPromise(run_runnable(value, lib, undefined, options))
-            .then(result => isValue(result) ? result.value : result)
-            .then(state => {
-              lib.data.no.runtime.publish("argsupdate", {graphid, changes: {state}, mutate: false}, lib, options, true)
-              return state;
-            }).value
-          lib.data.no.runtime.update_args(graphid, {state})
-          if(ispromise(state)) {
-            state.then(sr => {
-              if(lib.data.no.runtime.get_args(graphid)["state"] === state) {
-                lib.data.no.runtime.update_args(graphid, {state: sr})
+        return wrapPromise(typeof localStorage !== "undefined" && run_runnable(persist, lib, undefined, options))
+          .then(persist => isValue(persist) ? persist.value : persist)
+          .then(persist => {
+
+            if (persist && rawstate === undefined) {
+              const persistedState = localStorage.getItem(graphid);
+              if(persistedState !== undefined) {
+                lib.data.no.runtime.update_args(graphid, {state: JSON.parse(persistedState)})
+                rawstate = persistedState
               }
-            })
-          }
+            } else if(value && (rawstate === undefined || rawstate === null)) {
+              const state = wrapPromise(run_runnable(value, lib, undefined, options))
+                .then(result => isValue(result) ? result.value : result)
+                .then(state => {
+                  lib.data.no.runtime.publish("argsupdate", {graphid, changes: {state}, mutate: false}, lib, options, true)
+                  return state;
+                }).value
+              lib.data.no.runtime.update_args(graphid, {state})
+              if(ispromise(state)) {
+                state.then(sr => {
+                  if(lib.data.no.runtime.get_args(graphid)["state"] === state) {
+                    lib.data.no.runtime.update_args(graphid, {state: sr})
+                  }
+                })
+              }
 
-          rawstate = state;
-        }
+              rawstate = state;
+            }
+            return persist
+          })
+          .then(persist => wrapPromise(rawstate)
+                .then(st => isValue(st) ? st.value : st)
+                .then(state => output === "display" 
+                  ? lib.data.no.of({dom_type: 'div', props: {}, children: [{dom_type: 'text_value', text: JSON.stringify(state)}]}) 
+                  : ({
+                    graphid,
+                    set: {
+                      __kind: "apFunction",
+                      promiseArgs: true,
+                      fn: (value) => {
+                        const result = value === undefined || value === null ? undefined : run_runnable(value, lib, undefined, {resolvePromises: false});
+                        const promiseresult = ispromise(result) ? result.then(r => isValue(r) ? r.value : r) : isValue(result) ? result.value : result;
+                        const isresultpromise = ispromise(promiseresult);
 
-        return wrapPromise(rawstate).then(st => isValue(st) ? st.value : st).then(state => ({
-          graphid,
-          set: {
-            __kind: "apFunction",
-            promiseArgs: true,
-            fn: (value) => {
-              const result = value === undefined || value === null ? undefined : run_runnable(value, lib, undefined, {resolvePromises: false});
-              const promiseresult = ispromise(result) ? result.then(r => isValue(r) ? r.value : r) : isValue(result) ? result.value : result;
+                        lib.data.no.runtime.update_args(graphid, {state: promiseresult}, lib)
 
-              lib.data.no.runtime.update_args(graphid, {state: promiseresult}, lib)
+                        if(!isresultpromise && persist && typeof localStorage !== "undefined") {
+                          localStorage.setItem(graphid, JSON.stringify(promiseresult))
+                        }
 
-              return ispromise(promiseresult) ? promiseresult.then(pr => {
-                lib.data.no.runtime.update_args(graphid, {state: pr}, lib)
-                return pr;
-              }) : promiseresult;
-            },
-            args: ['value']
-          },
-          state: state
-        })).value
+                        return isresultpromise ? promiseresult.then(pr => {
+                          if(persist && typeof localStorage !== "undefined") {
+                            localStorage.setItem(graphid, JSON.stringify(pr))
+                          }
+                          lib.data.no.runtime.update_args(graphid, {state: pr}, lib)
+                          return pr;
+                        }) : promiseresult;
+                      },
+                      args: ['value']
+                    },
+                    state: state,
+                  })).value
+        ).value
       }
     },
     return: {
@@ -1555,7 +1581,7 @@ const nolib = {
 
         const return_result = (_lib: Lib, args: Args) => {
           args = args && !isArgs(args) ? new Map(Object.entries(args)) : args;
-          const runnable = edgemap[runedge] ? {...edgemap[runedge]} : runedge === "value" && !value && display ? display : _lib.data.no.of(undefined);
+          const runnable = edgemap[runedge] ? edgemap[runedge] : runedge === "value" && !value && display ? display : _lib.data.no.of(undefined);
           if(isRunnable(runnable) && !isError(runnable) && !isValue(runnable) && !isApRunnable(runnable)) {
             runnable.env = combineEnv(runnable.env.data, newEnv(args, _lib.data.no.of(runedge === "display" ? "display" : "value"), runnable.env))
           }
