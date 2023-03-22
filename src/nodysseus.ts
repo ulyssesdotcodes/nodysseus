@@ -1453,6 +1453,7 @@ const nolib = {
             __kind: "apFunction",
             fn: (value) => {
               lib.data.no.runtime.publish("argsupdate", {graphid, changes: [['store.value', value]], mutate: true}, lib, options)
+              return value;
             },
             args: ['value']
           },
