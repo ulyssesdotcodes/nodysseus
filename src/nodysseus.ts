@@ -873,7 +873,7 @@ const nolib = {
       let pause = false;
 
       let eventsBroadcastChannel = new BroadcastChannel("events");
-      let clientUuid = crypto.randomUUID();
+      let clientUuid = typeof crypto === "undefined" ? Math.random().toFixed(4).substring(2) : crypto.randomUUID();
 
       eventsBroadcastChannel.onmessage = (message) => {
         runpublish(message.data.data, message.data.event, nolib)
