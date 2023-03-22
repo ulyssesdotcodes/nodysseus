@@ -10,28 +10,40 @@ function posterror(graph, error){
     }
 }
 
-yNodyStore().then(initStore).then(() => {
-  onmessage = function(e) {
-      try{
-          // nolib.no.runtime.add_listener(run_graph, 'graphrun', 'worker-rungraph', (g, result) => {
-              // this.postMessage({type: 'result', result, graph: e.data.graph})
-          // });
+let initQueue = [];
 
-          nolib.no.runtime.add_listener('grapherror', 'worker-grapherror', (g, error) => {
-              if(error instanceof AggregateError) {
-                  error.errors.forEach(ae => {
-                      console.error(ae)
-                      posterror(e.data.graph, ae);
-                  });
-              } else {
-                  console.error(error);
-                  posterror(e.data.graph, error);
-              }
+const processMessage = e => {
+    try{
+        // nolib.no.runtime.add_listener(run_graph, 'graphrun', 'worker-rungraph', (g, result) => {
+            // this.postMessage({type: 'result', result, graph: e.data.graph})
+        // });
 
-          });
+        nolib.no.runtime.add_listener('grapherror', 'worker-grapherror', (g, error) => {
+            if(error instanceof AggregateError) {
+                error.errors.forEach(ae => {
+                    console.error(ae)
+                    posterror(e.data.graph, ae);
+                });
+            } else {
+                console.error(error);
+                posterror(e.data.graph, error);
+            }
 
-        console.log("got data", e.data);
-          run(e.data, undefined, {profile: false && this.performance.now() > 4000});
-      } catch (e) { console.error(e) }
-  }
-})
+        });
+
+      console.log("got data", e.data);
+        run(e.data, undefined, {profile: false && this.performance.now() > 4000});
+    } catch (e) { console.error(e) }
+}
+
+onmessage = e => initQueue ? initQueue.push(e) : processMessage(e);
+
+yNodyStore()
+  .then(initStore)
+  .then(() => {
+    console.log("init queue length", initQueue.length)
+    while(initQueue.length > 0){
+      processMessage(initQueue.shift())
+    }
+    initQueue = false;
+  })

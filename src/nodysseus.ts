@@ -1445,8 +1445,8 @@ const nolib = {
       },
     },
     refval: {
-      args: ["onframe", "_lib", "__graphid", "_runoptions", "_output"],
-      fn: (onframe, lib, graphid, options, output) => {
+      args: ["onframe", "_lib", "__graphid", "_runoptions", "_output", "value"],
+      fn: (onframe, lib, graphid, options, output, value) => {
         const args = lib.data.no.runtime.get_args(graphid);
 
         let store = args["store"] ?? {
@@ -1471,73 +1471,79 @@ const nolib = {
     },
     state: {
       rawArgs: true,
-      args: ["value", "_lib", "__graphid", "_runoptions", "_output", "persist"],
-      fn: (value, lib, graphid, options, output, persist) => {
+      args: ["value", "_lib", "__graphid", "_runoptions", "_output", "persist", "publish"],
+      fn: (value, lib, graphid, options, output, persist, publish) => {
         let rawstate = lib.data.no.runtime.get_args(graphid)["state"]
 
-        return wrapPromise(typeof localStorage !== "undefined" && run_runnable(persist, lib, undefined, options))
-          .then(persist => isValue(persist) ? persist.value : persist)
-          .then(persist => {
-
+        return wrapPromise(publish && run_runnable(publish, lib, undefined, options))
+          .then(publish => isValue(publish) ? publish.value : publish)
+          .then(publish =>
+            wrapPromise(typeof localStorage !== "undefined" && persist && run_runnable(persist, lib, undefined, options))
+              .then(persist => isValue(persist) ? persist.value : persist)
+              .then(persist => ({publish, persist})).value)
+          .then(rawstate !== undefined ? (v => v) : ({publish, persist}) => {
             if (persist && rawstate === undefined) {
               const persistedState = localStorage.getItem(graphid);
               if(persistedState !== undefined) {
-                lib.data.no.runtime.update_args(graphid, {state: JSON.parse(persistedState)})
+                if(publish) {
+                  lib.data.no.runtime.publish("argsupdate", {graphid, changes: {state: persistedState}, mutate: false}, lib, options, true)
+                } else {
+                  lib.data.no.runtime.update_args(graphid, {state: persistedState})
+                }
                 rawstate = persistedState
               }
             } else if(value && (rawstate === undefined || rawstate === null)) {
               const state = wrapPromise(run_runnable(value, lib, undefined, options))
                 .then(result => isValue(result) ? result.value : result)
                 .then(state => {
-                  lib.data.no.runtime.publish("argsupdate", {graphid, changes: {state}, mutate: false}, lib, options, true)
+                  if(publish) {
+                    lib.data.no.runtime.publish("argsupdate", {graphid, changes: {state}, mutate: false}, lib, options, true)
+                  } else {
+                    lib.data.no.runtime.update_args(graphid, {state})
+                  }
                   return state;
                 }).value
+
               lib.data.no.runtime.update_args(graphid, {state})
-              if(ispromise(state)) {
-                state.then(sr => {
-                  if(lib.data.no.runtime.get_args(graphid)["state"] === state) {
-                    lib.data.no.runtime.update_args(graphid, {state: sr})
-                  }
-                })
-              }
 
               rawstate = state;
             }
-            return persist
+            return {persist, publish}
           })
-          .then(persist => wrapPromise(rawstate)
-                .then(st => isValue(st) ? st.value : st)
-                .then(state => output === "display" 
-                  ? lib.data.no.of({dom_type: 'div', props: {}, children: [{dom_type: 'text_value', text: JSON.stringify(state)}]}) 
-                  : ({
-                    graphid,
-                    set: {
-                      __kind: "apFunction",
-                      promiseArgs: true,
-                      fn: (value) => {
-                        const result = value === undefined || value === null ? undefined : run_runnable(value, lib, undefined, {resolvePromises: false});
-                        const promiseresult = ispromise(result) ? result.then(r => isValue(r) ? r.value : r) : isValue(result) ? result.value : result;
-                        const isresultpromise = ispromise(promiseresult);
+          .then(({persist, publish}) => 
+            wrapPromise(rawstate)
+              .then(rawstate => isValue(rawstate) ? rawstate.value : rawstate)
+              .then(rawstate => ({publish, persist, state: rawstate})).value)
+          .then(({persist, publish, state}) => output === "display" 
+            ? lib.data.no.of({dom_type: 'div', props: {}, children: [{dom_type: 'text_value', text: JSON.stringify(state)}]}) 
+            : ({
+              graphid,
+              set: {
+                __kind: "apFunction",
+                promiseArgs: true,
+                fn: (value) => {
+                  const result = value === undefined || value === null ? undefined : run_runnable(value, lib, undefined, {resolvePromises: false});
+                  const promiseresult = ispromise(result) ? result.then(r => isValue(r) ? r.value : r) : isValue(result) ? result.value : result;
+                  const isresultpromise = ispromise(promiseresult);
 
-                        lib.data.no.runtime.update_args(graphid, {state: promiseresult}, lib)
+                  lib.data.no.runtime.update_args(graphid, {state: promiseresult}, lib)
 
-                        if(!isresultpromise && persist && typeof localStorage !== "undefined") {
-                          localStorage.setItem(graphid, JSON.stringify(promiseresult))
-                        }
+                  if(!isresultpromise && persist && typeof localStorage !== "undefined") {
+                    localStorage.setItem(graphid, JSON.stringify(promiseresult))
+                  }
 
-                        return isresultpromise ? promiseresult.then(pr => {
-                          if(persist && typeof localStorage !== "undefined") {
-                            localStorage.setItem(graphid, JSON.stringify(pr))
-                          }
-                          lib.data.no.runtime.update_args(graphid, {state: pr}, lib)
-                          return pr;
-                        }) : promiseresult;
-                      },
-                      args: ['value']
-                    },
-                    state: state,
-                  })).value
-        ).value
+                  return isresultpromise ? promiseresult.then(pr => {
+                    if(persist && typeof localStorage !== "undefined") {
+                      localStorage.setItem(graphid, JSON.stringify(pr))
+                    }
+                    lib.data.no.runtime.update_args(graphid, {state: pr}, lib)
+                    return pr;
+                  }) : promiseresult;
+                },
+                args: ['value']
+              },
+              state: state,
+            })).value
       }
     },
     return: {
