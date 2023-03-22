@@ -400,10 +400,15 @@ const runapp = (init, load_graph, _lib) => {
 });
 }
 
-const editor = async function(html_id, worker, display_graph, lib, norun) {
+const editor = async function(html_id, display_graph, lib, norun) {
     let nodysseusStore = await yNodyStore(true);
+    let worker;
     initStore(nodysseusStore)
-    hlib.worker = worker;
+    hlib.worker = () => {
+      worker = worker ?? new Worker("./worker.js", {type: "module"})
+      return worker;
+    }
+
     const simple = generic.nodes["simple"] as unknown as Graph;
     simple.edges_in = Object.values(simple.edges).reduce((acc: Record<string, Record<string, Edge>>, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
     const url_params = new URLSearchParams(document.location.search);
