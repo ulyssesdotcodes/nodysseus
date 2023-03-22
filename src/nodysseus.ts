@@ -1471,11 +1471,27 @@ const nolib = {
       rawArgs: true,
       args: ["value", "_lib", "__graphid", "_runoptions"],
       fn: (value, lib, graphid, options) => {
-        const rawstate = lib.data.no.runtime.get_args(graphid)["state"]
+        let rawstate = lib.data.no.runtime.get_args(graphid)["state"]
+
         if(value && (rawstate === undefined || rawstate === null)) {
-          wrapPromise(run_runnable(value, lib, undefined, options))
-            .then(state => lib.data.no.runtime.publish("argsupdate", {graphid, changes: {state}, mutate: false}, lib, options, true))
+          const state = wrapPromise(run_runnable(value, lib, undefined, options))
+            .then(result => isValue(result) ? result.value : result)
+            .then(state => {
+              lib.data.no.runtime.publish("argsupdate", {graphid, changes: {state}, mutate: false}, lib, options, true)
+              return state;
+            }).value
+          lib.data.no.runtime.update_args(graphid, {state})
+          if(ispromise(state)) {
+            state.then(sr => {
+              if(lib.data.no.runtime.get_args(graphid)["state"] === state) {
+                lib.data.no.runtime.update_args(graphid, {state: sr})
+              }
+            })
+          }
+
+          rawstate = state;
         }
+
         return wrapPromise(rawstate).then(st => isValue(st) ? st.value : st).then(state => ({
           graphid,
           set: {
