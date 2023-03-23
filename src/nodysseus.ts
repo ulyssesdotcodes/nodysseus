@@ -1482,12 +1482,13 @@ const nolib = {
               .then(persist => isValue(persist) ? persist.value : persist)
               .then(persist => ({publish, persist})).value)
           .then(rawstate !== undefined ? (v => v) : ({publish, persist}) => {
-            const persistedState = persist && rawstate === undefined && JSON.parse(localStorage.getItem(graphid));
+            const persistedState = persist && rawstate === undefined && localStorage.getItem(graphid);
             if (persistedState) {
+              const parsedState = JSON.parse(persistedState)
               if(publish) {
-                lib.data.no.runtime.publish("argsupdate", {graphid, changes: {state: persistedState}, mutate: false}, lib, options, true)
+                lib.data.no.runtime.publish("argsupdate", {graphid, changes: {state: parsedState}, mutate: false}, lib, options, true)
               } else {
-                lib.data.no.runtime.update_args(graphid, {state: persistedState})
+                lib.data.no.runtime.update_args(graphid, {state: parsedState})
               }
               rawstate = persistedState
             } else if(value && (rawstate === undefined || rawstate === null)) {
