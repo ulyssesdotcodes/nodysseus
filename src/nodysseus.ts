@@ -1808,6 +1808,9 @@ const nolib = {
               : self(args === undefined ? [] : args);
           } else {
             const ng_fn = nodysseus_get(self ?? _lib.data, fn || nodevalue, _lib);
+            const ng_self = (fn || nodevalue).includes('.') 
+              ? nodysseus_get(self, (fn || nodevalue).substring(0, self.lastIndexOf('.')), _lib) 
+              : self;
             const fnargs = Array.isArray(args)
               ? (args || [])
                   .reverse()
@@ -1826,7 +1829,7 @@ const nolib = {
               : [args];
             const ret = _lib.data.no.of(ispromise(ng_fn)
               ? ng_fn.then((f: any) => f.apply(fnargs))
-              : ng_fn.apply(self, fnargs));
+              : ng_fn.apply(ng_self, fnargs));
               return ret;
           }
         }
