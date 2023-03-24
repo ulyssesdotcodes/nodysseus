@@ -16,6 +16,7 @@ export default class AutocompleteList extends HTMLElement {
   fuse: Fuse<Option>;
   selectedIndex: number | undefined;
   initialOption: string;
+  focused: boolean;
 
   constructor() {
     super()
@@ -100,7 +101,11 @@ export default class AutocompleteList extends HTMLElement {
     }
 
     wrapper.addEventListener('focusin', (evt: FocusEvent) => {
-      this.initialOption = this.inputEl.value;
+      if(!this.focused) {
+      console.log("settinginitial fin")
+        this.initialOption = this.inputEl.value;
+      }
+      this.focused = true;
       if(this.listEl.classList.contains("hidden")) {
         this.listEl.classList.remove("hidden")
         this.populateOptions()
@@ -111,6 +116,9 @@ export default class AutocompleteList extends HTMLElement {
       if(!wrapper.contains(evt.relatedTarget as HTMLElement)) {
         this.listEl.classList.add("hidden")
         this.selectOption(this.inputEl.value)
+        this.focused = false;
+      } else {
+        this.focused = true;
       }
     })
 
@@ -127,7 +135,7 @@ export default class AutocompleteList extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    if(name === "value") {
+    if(name === "value" && !this.focused) {
       this.inputEl.value = newValue;
       this.optionEls = {};
       this.populateOptions();
@@ -136,20 +144,22 @@ export default class AutocompleteList extends HTMLElement {
 
   connectedCallback() {
     this.inputEl.value = this.getAttribute("value");
-
     this.optionEls = {};
-
     this.populateOptions();
   }
 
   selectOption(value: string) {
     this.selectedIndex = undefined;
     if(this.initialOption !== value) {
+      this.inputEl.value = value;
       this.dispatchEvent(new CustomEvent('select', {detail: value}))
     }
   }
 
   focus() {
+    this.focused = true;
+    console.log("settinginitial")
+    this.initialOption = this.inputEl.value;
     this.inputEl.focus();
   }
 
