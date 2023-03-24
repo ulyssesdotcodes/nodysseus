@@ -1461,7 +1461,6 @@ const nolib = {
             args: ['value']
           },
           value: undefined
-          value: 
         }
 
         if(!args["store"]) {
