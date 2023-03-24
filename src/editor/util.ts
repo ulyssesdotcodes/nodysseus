@@ -1,7 +1,7 @@
 import * as ha from "hyperapp"
 import { initStore, nodysseus_get, nolib, run, NodysseusError } from "../nodysseus";
 import { Edge, Graph, isArgs, isRunnable, Lib, NodysseusNode } from "../types";
-import { base_node, base_graph, ispromise, wrapPromise, node_args, expand_node, contract_node, ancestor_graph, create_randid } from "../util";
+import { base_node, base_graph, ispromise, wrapPromise, node_args, expand_node, contract_node, ancestor_graph, create_randid, compareObjects } from "../util";
 import panzoom, * as pz from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 import { d3Link, d3Node, HyperappState, Levels, Property } from "./types";
@@ -397,10 +397,14 @@ export const FocusEffect: ha.Effecter<HyperappState, {selector: string}> = (_, {
 
 export const SaveGraph = (dispatch, payload) => save_graph(payload.display_graph)
 
-export const UpdateResultDisplay = (state, el) => ({
+export const UpdateResultDisplay = (state, resel) => {
+  const el = resel.el ?? resel;
+
+  return compareObjects(el, state.el) ? state : {
     ...state,
-    el: el.el ? {...el.el} : {...el}
-})
+    el
+  }
+}
 
 export const UpdateNodeEffect = (_, {display_graph, node}) => {
   nolib.no.runtime.add_node( display_graph, node, hlib)
