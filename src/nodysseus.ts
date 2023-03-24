@@ -1460,16 +1460,19 @@ const nolib = {
             },
             args: ['value']
           },
-          value: initial &&
+          value: undefined
+          value: 
+        }
+
+        if(!args["store"]) {
+          lib.data.no.runtime.update_args(graphid, {store}, lib)
+          if(initial) {
             wrapPromise(run_runnable(initial, lib, undefined, options))
               .then(res => isValue(res) ? res.value : res)
               .then(value => {
                 store.value = value
               }).value
-        }
-
-        if(!args["store"]) {
-          lib.data.no.runtime.update_args(graphid, {store}, lib)
+          }
         }
 
         return output === "display" ? {dom_type: 'div', props: {}, children: [{dom_type: "text_value", text: JSON.stringify(store.value)}]} : store
