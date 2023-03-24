@@ -227,7 +227,7 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
         
         if(rmap.has(id)) {
           if(ymap.has(id) && rmap.get(id) !== ymap.get(id).guid) {
-            throw new Error("Incorrect rmap guid")
+            throw new Error(`Incorrect rmap guid for ${id}`)
           }
         } else if(rtcroom && preloadDoc) {
           rmap.set(id, preloadDoc.guid)
