@@ -1445,8 +1445,9 @@ const nolib = {
       },
     },
     refval: {
-      args: ["onframe", "_lib", "__graphid", "_runoptions", "_output", "value"],
-      fn: (onframe, lib, graphid, options, output, value) => {
+      rawArgs: true,
+      args: ["onframe", "_lib", "__graphid", "_runoptions", "_output", "initial"],
+      fn: (onframe, lib, graphid, options, output, initial) => {
         const args = lib.data.no.runtime.get_args(graphid);
 
         let store = args["store"] ?? {
@@ -1459,7 +1460,12 @@ const nolib = {
             },
             args: ['value']
           },
-          value: undefined,
+          value: initial &&
+            wrapPromise(run_runnable(initial, lib, undefined, options))
+              .then(res => isValue(res) ? res.value : res)
+              .then(value => {
+                store.value = value
+              }).value
         }
 
         if(!args["store"]) {
