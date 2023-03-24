@@ -491,11 +491,16 @@ const run_runnable = (runnable: Runnable | undefined, lib: Lib, args: Map<string
 
   switch(runnable.__kind){
     case CONST:
-      return run_graph((runnable as ConstRunnable).graph, runnable.fn, mergeEnv(args, runnable.env), runnable.lib, options);
+      return wrapPromise(
+        run_graph((runnable as ConstRunnable).graph, runnable.fn, mergeEnv(args, runnable.env), runnable.lib, options), 
+        e => handleError(e, lib, runnable.env, runnable.graph, runnable.fn)).value;
     case AP:
       return run_ap_runnable(runnable, args, lib, options)
     case FUNCTOR:
-      return run_functor_runnable(runnable, args, lib, options)
+      return wrapPromise(
+        run_functor_runnable(runnable, args, lib, options),
+        e => handleError(e, lib, runnable.env, runnable.graph, runnable.fn)
+      ).value;
   }
 
   return runnable;
@@ -534,7 +539,7 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
         const newgraphid = `${graphid}/${node.id}`
         const newGraphArgs = newEnv(new Map().set("__graphid", lib.data.no.of(newgraphid)), graphArgs._output);
 
-        return wrapPromise(lib.data.no.runtime.get_ref(node.ref)).then(node_ref => {
+        return wrapPromise(lib.data.no.runtime.get_ref(node.ref), e => handleError(e, lib, graphArgs, graphid, node)).then(node_ref => {
           if (!node_ref) {
               throw new Error(`Unable to find ref ${node.ref} for node ${node.name || node.id}`)
           }
@@ -591,9 +596,7 @@ const create_data = (node_id, graph, graphArgs: Env, lib: Lib, options: RunOptio
       }).value;
 }
 
-// handles graph things like edges
-const run_graph = (graph: Graph | (Graph & {nodes: Array<NodysseusNode>, edges: Array<Edge>}), node_id: string, env: Env, lib: Lib, options: RunOptions): Result | Promise<Result> => {
-  const handleError = e => {
+  const handleError = (e, lib, env, graph, node) => {
         console.log(`error in node`);
         if (e instanceof AggregateError) {
             e.errors.map(console.error)
@@ -613,6 +616,9 @@ const run_graph = (graph: Graph | (Graph & {nodes: Array<NodysseusNode>, edges: 
 
         return e;
   }
+
+// handles graph things like edges
+const run_graph = (graph: Graph | (Graph & {nodes: Array<NodysseusNode>, edges: Array<Edge>}), node_id: string, env: Env, lib: Lib, options: RunOptions): Result | Promise<Result> => {
     const newgraph = graph;
     const node = lib.data.no.runtime.get_node(newgraph, node_id);
 
@@ -661,7 +667,7 @@ const run_graph = (graph: Graph | (Graph & {nodes: Array<NodysseusNode>, edges: 
             }
           }).value
     } catch (e) {
-      return handleError(e)
+      return handleError(e, lib, env, graph, node)
     }
 }
 
@@ -773,7 +779,9 @@ export const run = (node: Runnable | InputRunnable, args: ResolvedArgs | Record<
         // )
       }, 
     _lib, args, options);
-  return wrapPromise(res).then(r =>!isError(r) && r?.value).then(v => (options.profile && console.log(options.timings), isArgs(v) ? Object.fromEntries(v) : v)).value;
+  return wrapPromise(res)
+    .then(r => isValue(r) ? r?.value : r)
+    .then(v => (options.profile && console.log(options.timings), isArgs(v) ? Object.fromEntries(v) : v)).value;
 }
 
 const nolib = {
@@ -1068,10 +1076,7 @@ const nolib = {
 
       const get_ref = (id, otherwise?) => {
         return wrapPromise(generic_nodes[id] ?? nodysseus.refs.get(id)).then(graph => {
-          if(!graph && !otherwise) {
-            otherwise = get_ref("simple");
-          }
-          return graph ?? nodysseus.refs.set(id, otherwise && {...otherwise, id, nodes: {...otherwise.nodes, [otherwise.out ?? "out"]: {...otherwise.nodes[otherwise.out ?? "out"], name: id}}})
+          return graph ?? (otherwise && nodysseus.refs.set(id, {...otherwise, id, nodes: {...otherwise.nodes, [otherwise.out ?? "out"]: {...otherwise.nodes[otherwise.out ?? "out"], name: id}}}))
         }).value;
       }
       const add_ref = (graph: Node) => {
