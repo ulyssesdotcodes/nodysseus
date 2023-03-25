@@ -8,8 +8,10 @@ export type Property = 'ref' | 'value' | 'name' | 'edge';
 
 export type HyperappState = {
   keybindings: Graph,
-  display_graph_id: string,
-  display_graph: Graph,
+  editingGraphId: string,
+  editingGraph: Graph,
+  displayGraphId: string | false,
+  displayGraph: Graph | false,
   hash: string,
   url_params: URLSearchParams,
   html_id: string,

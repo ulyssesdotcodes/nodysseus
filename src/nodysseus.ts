@@ -368,54 +368,58 @@ const node_script = (node, nodeArgs: Args, lib: Lib, options: RunOptions): Resul
 }
 
 const run_extern = (extern: ApFunction, data: Args, lib: Lib, options: RunOptions, node?: NodysseusNode, graphArgs?: Env) => {
-    let argColonIdx;
-    let argspromise = false;
-    const isArgsArray = Array.isArray(extern.args);
-    const externArgs: Array<[string, TypedArg]>  = isArgsArray ? extern.args.map(a => {
-      argColonIdx = a.indexOf(":")
-      return [argColonIdx >= 0 ? a.substring(0, argColonIdx) : a, "any"]
-    }) : Object.entries(extern.args);
-    const args = typeof extern === 'function' ?  resolve_args(data, lib, options) :  externArgs.map(([arg, argType]) => {
-      let newval;
-      if (arg === '_node') {
-          newval = node 
-      } else if (arg === '_node_args') {
-        newval = extern.rawArgs ? data : resolve_args(data, lib, options)
-        newval = ispromise(newval) ? newval.then((v: Result | undefined) => isError(v) ? v : v?.value)  : extern.rawArgs ? newval : newval.value
-      } else if (arg == '_lib') {
-          newval = lib;
-      } else if (arg == '_graph_input_value') {
-          newval = graphArgs;
-      } else if (arg == '_runoptions') {
-          newval = options;
-      } else if (arg == '__graphid') {
-          newval = (graphArgs.data.get("__graphid") as {value: string}).value;
-      } else if (arg == '_output') {
-          newval = graphArgs._output;
-      } else {
-          newval = extern.rawArgs ? data.get(arg) : run_runnable(data.get(arg), lib, new Map(), options)
-          while(isConstRunnable(newval) && !extern.rawArgs) {
-            newval = run_runnable(newval, lib, new Map(), options)
-          }
-          newval = ispromise(newval) ? newval.then((v: Result) => isError(v) ? v : v?.value) : newval && !extern.rawArgs ? newval.value : newval;
-      }
+  // if(graphArgs._output !== "value" && !extern.outputs?.[graphArgs._output]) {
+  //   return undefined
+  // }
 
-      argspromise ||= ispromise(newval);
-      return newval
-    });
-
-    argspromise ||= ispromise(args)
-
-    if (argspromise && !extern.promiseArgs) {
-        return (Array.isArray(args) ? Promise.all(args) : (args as Promise<Result>).then(v => isValue(v) ? v.value.args : v)).then(as => {
-            const res = (typeof extern === 'function' ? extern :  extern.fn).apply(null, isArgsArray ? as : [Object.fromEntries(externArgs.map((a, idx) => [a[0], as[idx]]))]);
-            return mapMaybePromise(res, res => extern.rawArgs ? res : lib.data.no.of(res));
-        })
-    } else if(!ispromise(args)) {
-        const resArgs = Array.isArray(args) ? args : isValue(args) ? args.value.args : args;
-        const res = (typeof extern === 'function' ? extern :  extern.fn).apply(null, isArgsArray ? resArgs : [Object.fromEntries(externArgs.map((a, idx) => [a[0], resArgs[idx]]))]);
-        return mapMaybePromise(res, res => extern.rawArgs ? res : lib.data.no.of(res));
+  let argColonIdx;
+  let argspromise = false;
+  const isArgsArray = Array.isArray(extern.args);
+  const externArgs: Array<[string, TypedArg]>  = isArgsArray ? extern.args.map(a => {
+    argColonIdx = a.indexOf(":")
+    return [argColonIdx >= 0 ? a.substring(0, argColonIdx) : a, "any"]
+  }) : Object.entries(extern.args);
+  const args = typeof extern === 'function' ?  resolve_args(data, lib, options) :  externArgs.map(([arg, argType]) => {
+    let newval;
+    if (arg === '_node') {
+        newval = node 
+    } else if (arg === '_node_args') {
+      newval = extern.rawArgs ? data : resolve_args(data, lib, options)
+      newval = ispromise(newval) ? newval.then((v: Result | undefined) => isError(v) ? v : v?.value)  : extern.rawArgs ? newval : newval.value
+    } else if (arg == '_lib') {
+        newval = lib;
+    } else if (arg == '_graph_input_value') {
+        newval = graphArgs;
+    } else if (arg == '_runoptions') {
+        newval = options;
+    } else if (arg == '__graphid') {
+        newval = (graphArgs.data.get("__graphid") as {value: string}).value;
+    } else if (arg == '_output') {
+        newval = graphArgs._output;
+    } else {
+        newval = extern.rawArgs ? data.get(arg) : run_runnable(data.get(arg), lib, new Map(), options)
+        while(isConstRunnable(newval) && !extern.rawArgs) {
+          newval = run_runnable(newval, lib, new Map(), options)
+        }
+        newval = ispromise(newval) ? newval.then((v: Result) => isError(v) ? v : v?.value) : newval && !extern.rawArgs ? newval.value : newval;
     }
+
+    argspromise ||= ispromise(newval);
+    return newval
+  });
+
+  argspromise ||= ispromise(args)
+
+  if (argspromise && !extern.promiseArgs) {
+      return (Array.isArray(args) ? Promise.all(args) : (args as Promise<Result>).then(v => isValue(v) ? v.value.args : v)).then(as => {
+          const res = (typeof extern === 'function' ? extern :  extern.fn).apply(null, isArgsArray ? as : [Object.fromEntries(externArgs.map((a, idx) => [a[0], as[idx]]))]);
+          return mapMaybePromise(res, res => extern.rawArgs ? res : lib.data.no.of(res));
+      })
+  } else if(!ispromise(args)) {
+      const resArgs = Array.isArray(args) ? args : isValue(args) ? args.value.args : args;
+      const res = (typeof extern === 'function' ? extern :  extern.fn).apply(null, isArgsArray ? resArgs : [Object.fromEntries(externArgs.map((a, idx) => [a[0], resArgs[idx]]))]);
+      return mapMaybePromise(res, res => extern.rawArgs ? res : lib.data.no.of(res));
+  }
 
 }
 
@@ -532,7 +536,8 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
         } else if (node.ref === "extern") {
             return node_extern(node, nodeArgs, graphArgs, lib, options)
         } else if (node.ref === "script") {
-            return node_script(node, nodeArgs, lib, options)
+            // return node_script(node, nodeArgs, lib, options)
+            return (graphArgs._output === undefined || graphArgs._output === "value") && node_script(node, nodeArgs, lib, options)
         }
 
         const graphid = (graphArgs.data.get("__graphid") as {value: string}).value;
@@ -1451,6 +1456,9 @@ const nolib = {
     },
     refval: {
       rawArgs: true,
+      outputs: {
+        display: true
+      },
       args: ["onframe", "_lib", "__graphid", "_runoptions", "_output", "initial"],
       fn: (onframe, lib, graphid, options, output, initial) => {
         const args = lib.data.no.runtime.get_args(graphid);
@@ -1484,6 +1492,9 @@ const nolib = {
     },
     state: {
       rawArgs: true,
+      outputs: {
+        display: true
+      },
       args: ["value", "_lib", "__graphid", "_runoptions", "_output", "persist", "publish"],
       fn: (value, lib, graphid, options, output, persist, publish) => {
         let rawstate = lib.data.no.runtime.get_args(graphid)["state"]
@@ -1559,6 +1570,10 @@ const nolib = {
       }
     },
     return: {
+      outputs: {
+        display: true,
+        lib: true
+      },
       resolve: false,
       rawArgs: true,
       promiseArgs: true,
@@ -1740,8 +1755,8 @@ const nolib = {
       },
     },
     script: {
-      args: ["_node", "_node_args", "_graph", "_lib", "_runoptions"],
-      fn: (node, node_inputs, graph, _lib, options) =>
+      args: ["_node", "_node_args", "_graph", "_lib", "_runoptions", "_output"],
+      fn: (node, node_inputs, graph, _lib, options, _output) =>
         node_script(
           node,
           node_inputs,

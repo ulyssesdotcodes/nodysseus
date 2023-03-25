@@ -84,6 +84,10 @@ export type ApFunction = {
   args: Array<string>,
   promiseArgs?: boolean,
   rawArgs?: boolean
+  outputs: {
+    lib?: boolean,
+    display?: boolean,
+  }
 }
 export const isApFunction = (a: any): a is ApFunction => a && (a as ApFunction).__kind === "apFunction";
 

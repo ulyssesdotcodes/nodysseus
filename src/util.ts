@@ -80,31 +80,31 @@ export const flattenNode = (graph: NodysseusNode, levels = -1): FlattenedGraph |
         });
 
 
-export const expand_node = (data: {nolib: Record<string, any>, node_id: string, display_graph: Graph}): {display_graph: Graph, selected: Array<string>} => {
+export const expand_node = (data: {nolib: Record<string, any>, node_id: string, editingGraph: Graph}): {editingGraph: Graph, selected: Array<string>} => {
     const nolib = data.nolib;
     const node_id = data.node_id;
-    const node: NodysseusNode = data.display_graph.nodes[node_id]
+    const node: NodysseusNode = data.editingGraph.nodes[node_id]
 
     if (!isNodeGraph(node)) {
         console.log('no nodes?');
-        return { display_graph: data.display_graph, selected: [data.node_id] };
+        return { editingGraph: data.editingGraph, selected: [data.node_id] };
     }
 
     const args_node = Object.values(node.edges).find(e => e.to === node.out && e.as === "args")?.from;
-    const in_edges = nolib.no.runtime.get_edges_in(data.display_graph.id, node_id);
+    const in_edges = nolib.no.runtime.get_edges_in(data.editingGraph.id, node_id);
 
     const flattened = flattenNode(node, 1);
 
-    const new_id_map = isFlattenedGraph(flattened) ? Object.values(flattened.flat_nodes).reduce((acc, n) => nolib.no.runtime.get_node(data.display_graph, n.id) ? (acc[n.id] = create_randid(), acc) : n, {} as Record<string, any>) : flattened
+    const new_id_map = isFlattenedGraph(flattened) ? Object.values(flattened.flat_nodes).reduce((acc, n) => nolib.no.runtime.get_node(data.editingGraph, n.id) ? (acc[n.id] = create_randid(), acc) : n, {} as Record<string, any>) : flattened
 
-    isFlattenedGraph(flattened) && nolib.no.runtime.add_nodes_edges(data.display_graph.id, Object.values(flattened.flat_nodes).map(n => ({...n, id: new_id_map[n.id] ?? n.id})), Object.values(flattened.flat_edges).concat(in_edges.map((e: Edge) => ({...e, to: new_id_map[args_node] ?? args_node}))).concat([{...data.display_graph.edges[node_id], from: node.out}]).map(e => ({...e, from: new_id_map[e.from] ?? e.from, to: new_id_map[e.to] ?? e.to})), in_edges.concat([data.display_graph.edges[node_id]]), [node_id], nolib)
+    isFlattenedGraph(flattened) && nolib.no.runtime.add_nodes_edges(data.editingGraph.id, Object.values(flattened.flat_nodes).map(n => ({...n, id: new_id_map[n.id] ?? n.id})), Object.values(flattened.flat_edges).concat(in_edges.map((e: Edge) => ({...e, to: new_id_map[args_node] ?? args_node}))).concat([{...data.editingGraph.edges[node_id], from: node.out}]).map(e => ({...e, from: new_id_map[e.from] ?? e.from, to: new_id_map[e.to] ?? e.to})), in_edges.concat([data.editingGraph.edges[node_id]]), [node_id], nolib)
 
-    return { display_graph: data.display_graph, selected: [new_id_map[node.out ?? "out"] ?? node.out ?? 'out'] };
+    return { editingGraph: data.editingGraph, selected: [new_id_map[node.out ?? "out"] ?? node.out ?? 'out'] };
 }
 
-export const contract_node = (data: {display_graph: Graph, node_id: string, nolib: any}, keep_expanded = false) => {
+export const contract_node = (data: {editingGraph: Graph, node_id: string, nolib: any}, keep_expanded = false) => {
     const nolib = data.nolib;
-    const node = data.display_graph.nodes[data.node_id];
+    const node = data.editingGraph.nodes[data.node_id];
     const node_id = data.node_id;
     if (!isNodeGraph(node)) {
         const inside_nodes: Array<NodysseusNode> = [Object.assign({}, node)];
@@ -112,7 +112,7 @@ export const contract_node = (data: {display_graph: Graph, node_id: string, noli
         inside_node_map.set(inside_nodes[0].id, inside_nodes[0]);
         const inside_edges = new Set<Edge>();
 
-        const q = nolib.no.runtime.get_edges_in(data.display_graph.id, inside_nodes[0].id)
+        const q = nolib.no.runtime.get_edges_in(data.editingGraph.id, inside_nodes[0].id)
 
         let in_edge: Array<Edge> = [];
         let args_edge;
@@ -130,7 +130,7 @@ export const contract_node = (data: {display_graph: Graph, node_id: string, noli
             in_edge = in_edge.filter(ie => ie.from !== e.from);
 
             const old_node = inside_nodes.find(i => e.from === i.id);
-            let inside_node = old_node || Object.assign({}, data.display_graph.nodes[e.from]);
+            let inside_node = old_node || Object.assign({}, data.editingGraph.nodes[e.from]);
 
             inside_node_map.set(inside_node.id, inside_node);
             inside_edges.add(e);
@@ -139,7 +139,7 @@ export const contract_node = (data: {display_graph: Graph, node_id: string, noli
             }
 
             if (!args_edge || e.from !== args_edge.from) {
-                nolib.no.runtime.get_edges_in(data.display_graph, e.from).forEach((de: Edge) => q.push(de));
+                nolib.no.runtime.get_edges_in(data.editingGraph, e.from).forEach((de: Edge) => q.push(de));
             }
         }
 
@@ -147,12 +147,12 @@ export const contract_node = (data: {display_graph: Graph, node_id: string, noli
 
         // just return the original graph if it's a single node 
         if (in_edge.find(ie => ie.to !== args_node_id) || inside_nodes.length < 2) {
-            return { display_graph: data.display_graph, selected: [data.node_id] };
+            return { editingGraph: data.editingGraph, selected: [data.node_id] };
         }
 
         const out_node_id = data.node_id;
 
-        let node_id_count = data.display_graph.nodes[node_id] ? 1 : 0;
+        let node_id_count = data.editingGraph.nodes[node_id] ? 1 : 0;
         let final_node_id = node_id_count === 1 ? node_id : `${node_id}_${node_id_count}`
 
         const edges: Record<string, Edge> = {};
@@ -171,22 +171,22 @@ export const contract_node = (data: {display_graph: Graph, node_id: string, noli
 
         const edgesToRemove: Array<Edge> = [];
         const edgesToAdd: Array<Edge> = [
-          {...nolib.no.runtime.get_edge_out(data.display_graph, data.node_id), from: final_node_id}, 
-          ...nolib.no.runtime.get_edges_in(data.display_graph, args_node_id).map(e => ({...e, to: final_node_id}))
+          {...nolib.no.runtime.get_edge_out(data.editingGraph, data.node_id), from: final_node_id}, 
+          ...nolib.no.runtime.get_edges_in(data.editingGraph, args_node_id).map(e => ({...e, to: final_node_id}))
         ];
 
         // Iterate inside nodes to find edges
         for(let newn of inside_node_map.keys()) {
-          nolib.no.runtime.get_edges_in(data.display_graph, newn)
+          nolib.no.runtime.get_edges_in(data.editingGraph, newn)
             .filter(e => inside_node_map.has(e.from))
             .forEach(e => edgesToRemove.push(e))
         }
 
         for(const newn of inside_node_map.keys()) {
-          nolib.no.runtime.delete_node(data.display_graph.id, newn, nolib, false)
+          nolib.no.runtime.delete_node(data.editingGraph.id, newn, nolib, false)
         }
 
-        nolib.no.runtime.add_node(data.display_graph.id, {
+        nolib.no.runtime.add_node(data.editingGraph.id, {
             id: final_node_id,
             name: node.name ?? (isNodeValue(node) ? node.value : undefined),
             out: out_node_id.startsWith(node_id + '/') ? out_node_id.substring(node_id.length + 1) : out_node_id,
@@ -198,7 +198,7 @@ export const contract_node = (data: {display_graph: Graph, node_id: string, noli
         })
 
 
-        nolib.no.runtime.update_edges(data.display_graph.id, edgesToAdd, edgesToRemove, nolib)
+        nolib.no.runtime.update_edges(data.editingGraph.id, edgesToAdd, edgesToRemove, nolib)
 
         return { selected: [final_node_id] };
     }

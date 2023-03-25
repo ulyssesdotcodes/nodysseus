@@ -11,13 +11,13 @@ export const UpdateSimulation: ha.Effecter<HyperappState, any>  = (dispatch, pay
 export const UpdateGraphDisplay: ha.Effecter<HyperappState, any>  = (dispatch, payload) => {
     requestAnimationFrame(() => dispatch(s => [{
       ...s,
-      levels: calculateLevels(payload.nodes, payload.links, payload.display_graph, payload.selected)
+      levels: calculateLevels(payload.nodes, payload.links, payload.editingGraph, payload.selected)
   }]))
 }
 
 export const updateSimulationNodes: ha.Effecter<HyperappState, {
   simulation?: NodysseusSimulation, 
-  display_graph: Graph,
+  editingGraph: Graph,
   clear_simulation_cache?: boolean
 }> = (dispatch, data) => {
     const simulation_node_data = new Map<string, d3Node>();
@@ -43,18 +43,18 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
 
     const main_node_map = new Map();
 
-    const node_map = new Map(Object.entries(data.display_graph.nodes));
-    const children_map = new Map(Object.values(data.display_graph.nodes).map(n => [n.id, 
-        [nolib.no.runtime.get_edge_out(data.display_graph, n.id)?.to].filter(e => e)
+    const node_map = new Map(Object.entries(data.editingGraph.nodes));
+    const children_map = new Map(Object.values(data.editingGraph.nodes).map(n => [n.id, 
+        [nolib.no.runtime.get_edge_out(data.editingGraph, n.id)?.to].filter(e => e)
     ]));
 
     const order = [];
-    const queue = [data.display_graph.out ?? "out"];
+    const queue = [data.editingGraph.out ?? "out"];
 
     const parents_map = 
-      wrapPromise(Promise.all(Object.values(data.display_graph.nodes)
+      wrapPromise(Promise.all(Object.values(data.editingGraph.nodes)
         .map(n => 
-          wrapPromise(nolib.no.runtime.get_edges_in(data.display_graph, n.id))
+          wrapPromise(nolib.no.runtime.get_edges_in(data.editingGraph, n.id))
             .then(edges => [n.id, edges.map(e => e.from)]).value
         )))
       .then(kvs => new Map(kvs as Array<[string, Array<string>]>))
@@ -176,7 +176,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
             return calculated_nodes;
         })
 
-        const links = Object.values(data.display_graph.edges)
+        const links = Object.values(data.editingGraph.edges)
             .filter(e => main_node_map.has(e.from) && main_node_map.has(e.to))
             .map(e => {
                 const l = simulation_link_data.get(`${e.from}__${e.to}`);

@@ -3,7 +3,7 @@ import generic from "../../generic";
 import {nolib} from "../../nodysseus"
 import { node_args } from "../../util";
 import { HyperappState } from "../types";
-import { ChangeDisplayGraphId, Copy, CreateNode, CreateRef, DeleteNode, ExpandContract, middleware, Paste, run_h, SaveGraph, SelectNode, UpdateEdge, UpdateNode, UpdateNodeEffect } from "../util";
+import { ChangeEditingGraphId, Copy, CreateNode, CreateRef, DeleteNode, ExpandContract, middleware, Paste, run_h, SaveGraph, SelectNode, UpdateEdge, UpdateNode, UpdateNodeEffect } from "../util";
 
 export const info_display = html_id => ha.app({
     init: {el: {dom_type: 'div', props: {}, children: []}},
@@ -98,11 +98,11 @@ export const infoInput = ({label, property, value, onchange, oninput, onkeydown,
 //   }
 // }), ]
 
-export const infoWindow = ({node, hidden, edges_in, link_out, display_graph_id, randid, ref_graphs, html_id, copied_graph, inputs, graph_out, editing})=> {
-    //const s.display_graph.id === s.display_graph_id && nolib.no.runtime.get_node(s.display_graph, s.selected[0]) && 
+export const infoWindow = ({node, hidden, edges_in, link_out, editingGraphId, randid, ref_graphs, html_id, copied_graph, inputs, graph_out, editing})=> {
+    //const s.editingGraph.id === s.editingGraphId && nolib.no.runtime.get_node(s.editingGraph, s.selected[0]) && 
     const node_ref = node && node.ref ? nolib.no.runtime.get_ref(node.ref) : node;
     const description =  node_ref?.description;
-    const node_arg_labels = node?.id ? node_args(nolib, display_graph_id, node.id).map(a => ({...a, name: a.name.split(": ")[0]})) : [];
+    const node_arg_labels = node?.id ? node_args(nolib, editingGraphId, node.id).map(a => ({...a, name: a.name.split(": ")[0]})) : [];
     return ha.h('div', {id: "node-info-wrapper"}, [ha.h('div', {class: "spacer before"}, []), ha.h(
         'div',
         { 
@@ -127,7 +127,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, display_graph_id, 
                     onchange: (state, {value}) =>
                         (node.id !== graph_out && node.id !== "out") 
                         ? [UpdateNode, {node, property: "name", value}]
-                        : [state, [ChangeDisplayGraphId, {id: value, select_out: true, display_graph_id}]],
+                        : [state, [ChangeEditingGraphId, {id: value, select_out: true, editingGraphId}]],
                     options: (graph_out ? node.id === graph_out : node.id === "out") ? ref_graphs : []
                 }), node),
                 ha.memo(node => infoInput({
@@ -151,7 +151,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, display_graph_id, 
                     value: link_out.as, 
                     property: "edge",
                     inputs,
-                    options: node_args(nolib, display_graph_id, link_out.to).map(na => na.name.split(": ")[0]),
+                    options: node_args(nolib, editingGraphId, link_out.to).map(na => na.name.split(": ")[0]),
                     onchange: (state, {value}) => [UpdateEdge, {edge: {from: link_out.from, to: link_out.to, as: link_out.as}, as: value}]
                 }), link_out),
             ]),

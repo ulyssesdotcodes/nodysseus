@@ -210,7 +210,7 @@ export const SetSelectedPositionStyleEffect = (_, {node, svg_offset, dimensions}
     rt.style.setProperty('--nodey',  `${node.y * (svg_offset?.scale ?? 1) + (svg_offset?.y ?? 0) + 32}px`);
 }
 
-export const ChangeDisplayGraphId: ha.Effecter<HyperappState, {id: string, select_out: boolean, display_graph_id: string}> = (dispatch, {id, select_out, display_graph_id}) => {
+export const ChangeEditingGraphId: ha.Effecter<HyperappState, {id: string, select_out: boolean, editingGraphId: string}> = (dispatch, {id, select_out, editingGraphId}) => {
     requestAnimationFrame(() => {
         const graphPromise = wrapPromise(
           EXAMPLES.includes(id) && !nolib.no.runtime.refs().includes(id) 
@@ -220,25 +220,25 @@ export const ChangeDisplayGraphId: ha.Effecter<HyperappState, {id: string, selec
             nolib.no.runtime.change_graph(g, hlib);
             return g
           })
-          : nolib.no.runtime.get_ref(id, display_graph_id && nolib.no.runtime.get_ref(display_graph_id))
+          : nolib.no.runtime.get_ref(id, editingGraphId && nolib.no.runtime.get_ref(editingGraphId))
         )
 
         window.location.hash = '#' + id; 
         graphPromise
           .then(graph => dispatch(state => [
-            {...state, display_graph_id: id},
+            {...state, editingGraphId: id},
             [dispatch => {
                 requestAnimationFrame(() => {
                     update_graph_list(id)
-                    const new_graph = graph ?? Object.assign({}, base_graph(state.display_graph), {id});
+                    const new_graph = graph ?? Object.assign({}, base_graph(state.editingGraph), {id});
                     if(!new_graph.edges_in) {
                         new_graph.edges_in = Object.values(new_graph.edges).reduce((acc: any, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
                     }
                     
                     nolib.no.runtime.change_graph(new_graph, hlib);
-                    nolib.no.runtime.remove_graph_listeners(state.display_graph_id);
+                    nolib.no.runtime.remove_graph_listeners(state.editingGraphId);
                     dispatch(s => {
-                        const news = {...s, display_graph: new_graph, selected: [new_graph.out], display_graph_id: new_graph.id}
+                        const news = {...s, editingGraph: new_graph, selected: [new_graph.out], editingGraphId: new_graph.id}
                         return [news, [UpdateSimulation, {...news, clear_simulation_cache: true}], select_out && [() => {setTimeout(() => {
                           dispatch(SelectNode, {node_id: new_graph.out ?? "out"})
                         }, 100)}, {}]]
@@ -250,7 +250,7 @@ export const ChangeDisplayGraphId: ha.Effecter<HyperappState, {id: string, selec
                                 node, 
                                 property: "name", 
                                 value: id,
-                                display_graph: new_graph
+                                editingGraph: new_graph
                             })
                           })
                     }
@@ -265,8 +265,8 @@ export const CreateNode: ha.Action<HyperappState, {node: NodysseusNode, child: s
     state,
     dispatch => {
       console.log(node);
-      nolib.no.runtime.add_node(state.display_graph, node, hlib)
-      nolib.no.runtime.update_edges(state.display_graph, 
+      nolib.no.runtime.add_node(state.editingGraph, node, hlib)
+      nolib.no.runtime.update_edges(state.editingGraph, 
           parent 
               ? [{from: node.id, to: child, as: parent.as}, {from: parent.from, to: node.id, as: 'arg0'}] 
               : [{from: node.id, to: child, as: child_as}], 
@@ -279,15 +279,15 @@ export const CreateNode: ha.Action<HyperappState, {node: NodysseusNode, child: s
 
 export const DeleteNode = (state, {node_id}) => [
     state,
-    [(dispatch, {node_id}) => dispatch(SelectNode, {node_id}), {node_id: nolib.no.runtime.get_edge_out(state.display_graph, node_id).to}],
-    [() => requestAnimationFrame(() => nolib.no.runtime.delete_node(state.display_graph, node_id, hlib))]
+    [(dispatch, {node_id}) => dispatch(SelectNode, {node_id}), {node_id: nolib.no.runtime.get_edge_out(state.editingGraph, node_id).to}],
+    [() => requestAnimationFrame(() => nolib.no.runtime.delete_node(state.editingGraph, node_id, hlib))]
 ]
 
 export const ExpandContract = (state, {node_id}) => {
-    const node = state.display_graph.nodes[node_id]
+    const node = state.editingGraph.nodes[node_id]
     const update = node.nodes 
-            ? expand_node({nolib, node_id, display_graph: state.display_graph})
-            : contract_node({nolib, node_id, display_graph: state.display_graph});
+            ? expand_node({nolib, node_id, editingGraph: state.editingGraph})
+            : contract_node({nolib, node_id, editingGraph: state.editingGraph});
     
     return [
         state,
@@ -306,7 +306,7 @@ export const CreateRef = (state, {node}) => [
         const graph = {...base_graph(node), id: node.name, value: undefined};
         nolib.no.runtime.change_graph(base_graph(graph), hlib);
         save_graph(graph);
-        nolib.no.runtime.add_node(state.display_graph, {
+        nolib.no.runtime.add_node(state.editingGraph, {
             id: node.id,
             value: node.value,
             ref: node.name,
@@ -316,7 +316,7 @@ export const CreateRef = (state, {node}) => [
 ]
 
 export const Copy = (state, {cut, as}) => {
-    return {...state, copied: {graph: ancestor_graph(state.selected[0], state.display_graph, nolib), root: state.selected[0], as}};
+    return {...state, copied: {graph: ancestor_graph(state.selected[0], state.editingGraph, nolib), root: state.selected[0], as}};
 }
 
 export const Paste = state => [
@@ -326,10 +326,10 @@ export const Paste = state => [
         Object.values(state.copied.graph.nodes).forEach((n: NodysseusNode) => {
             const new_id = create_randid();
             node_id_map[n.id] = new_id;
-            nolib.no.runtime.add_node(state.display_graph, {...n, id: new_id}, hlib)
+            nolib.no.runtime.add_node(state.editingGraph, {...n, id: new_id}, hlib)
         });
         nolib.no.runtime.update_edges(
-            state.display_graph, 
+            state.editingGraph, 
             Object.values(state.copied.graph.edges)
                 .map((e: any) => ({...e, from: node_id_map[e.from], to: node_id_map[e.to]}))
                 .concat([{from: node_id_map[state.copied.root], to: state.selected[0], as: state.copied.as}]),
@@ -343,12 +343,12 @@ export const Paste = state => [
 export const SelectNode: ha.Action<HyperappState, {
   node_id: string,
   focus_property?: Property,
-}> = (state, {node_id, focus_property}) => state.display_graph.nodes[node_id] ? [
+}> = (state, {node_id, focus_property}) => state.editingGraph.nodes[node_id] ? [
     state.selected[0] === node_id ? state : {
       ...state, 
       selected: [node_id], 
       inputs: {},
-      selected_edges_in: nolib.no.runtime.get_edges_in(state.display_graph, node_id),
+      selected_edges_in: nolib.no.runtime.get_edges_in(state.editingGraph, node_id),
       noautozoom: false
     },
     !state.show_all && [pzobj.effect, {...state, node_id: node_id}],
@@ -356,14 +356,14 @@ export const SelectNode: ha.Action<HyperappState, {
     (state.show_all || state.selected[0] !== node_id) && [pzobj.effect, {...state, node_id}],
     focus_property && [FocusEffect, {selector: `.node-info .${focus_property}`}],
     state.nodes.find(n => n.node_id === node_id) && [SetSelectedPositionStyleEffect, {node: state.nodes.find(n => n.node_id === node_id), svg_offset: pzobj.getTransform(), dimensions: state.dimensions}],
-    node_id === state.display_graph.out 
+    node_id === state.editingGraph.out 
         ? [dispatch => state.info_display_dispatch({el: {dom_type: "div", props: {}, children: [
             {dom_type: "text_value", text: "Most recent graphs"},
             { dom_type: "ul", props: {}, children: localStorage.getItem("graph_list") 
                 ? JSON.parse(localStorage.getItem("graph_list")).slice(0, 10).map(gid => ({dom_type: "li", props: {}, children: [
                     {
                         dom_type: "a", 
-                        props: { href: "#", onclick: s => [s, [() => dispatch(ms => [ms, [ChangeDisplayGraphId, {id: gid, display_graph_id: state.display_graph_id}]])]]}, 
+                        props: { href: "#", onclick: s => [s, [() => dispatch(ms => [ms, [ChangeEditingGraphId, {id: gid, editingGraphId: state.editingGraphId}]])]]}, 
                         children: [{dom_type: "text_value", text: gid}]}
                 ]}))
                 : []
@@ -371,9 +371,9 @@ export const SelectNode: ha.Action<HyperappState, {
         ]}}), {}]
         : [() => update_info_display({
           fn: node_id, 
-          graph: state.display_graph, 
+          graph: state.editingGraph, 
           args: {}, 
-          lib: {...hlib, ...nolib, ...hlib.run(state.display_graph, state.display_graph.out ?? "out", {_output: "lib"})}
+          lib: {...hlib, ...nolib, ...hlib.run(state.editingGraph, state.editingGraph.out ?? "out", {_output: "lib"})}
         }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== node_id), {}],
     state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: node_id}), {}]
 ] : state;
@@ -395,7 +395,7 @@ export const FocusEffect: ha.Effecter<HyperappState, {selector: string}> = (_, {
   }, 100);
 }
 
-export const SaveGraph = (dispatch, payload) => save_graph(payload.display_graph)
+export const SaveGraph = (dispatch, payload) => save_graph(payload.editingGraph)
 
 export const UpdateResultDisplay = (state, resel) => {
   const el = resel.el ?? resel;
@@ -406,32 +406,32 @@ export const UpdateResultDisplay = (state, resel) => {
   }
 }
 
-export const UpdateNodeEffect = (_, {display_graph, node}) => {
-  nolib.no.runtime.add_node( display_graph, node, hlib)
-  const edges_in = nolib.no.runtime.get_edges_in(display_graph, node.id);
-  const nodeargs = node_args(nolib, display_graph, node.id);
+export const UpdateNodeEffect = (_, {editingGraph, node}) => {
+  nolib.no.runtime.add_node( editingGraph, node, hlib)
+  const edges_in = nolib.no.runtime.get_edges_in(editingGraph, node.id);
+  const nodeargs = node_args(nolib, editingGraph, node.id);
   if(edges_in.length === 1){ 
     if(nodeargs.length === 2) {
-      nolib.no.runtime.update_edges(display_graph, [{...edges_in[0], as: nodeargs.find(a => !a.additionalArg).name}], [], hlib)
+      nolib.no.runtime.update_edges(editingGraph, [{...edges_in[0], as: nodeargs.find(a => !a.additionalArg).name}], [], hlib)
     } else if(nodeargs.find(a => a.name.split(": ")[1] === "default")) {
-      nolib.no.runtime.update_edges(display_graph, [{...edges_in[0], as: nodeargs.map(a => a.name.split(": ")).find(e => e[1] === "default")[0]}], [], hlib)
+      nolib.no.runtime.update_edges(editingGraph, [{...edges_in[0], as: nodeargs.map(a => a.name.split(": ")).find(e => e[1] === "default")[0]}], [], hlib)
     }
   } 
 }
 
-export const UpdateNode: ha.Action<HyperappState, {node: NodysseusNode, property: string, value: string, display_graph: Graph}> = (state, {node, property, value, display_graph}) => [
+export const UpdateNode: ha.Action<HyperappState, {node: NodysseusNode, property: string, value: string, editingGraph: Graph}> = (state, {node, property, value, editingGraph}) => [
     state,
     [UpdateNodeEffect, {
-        display_graph: display_graph ?? state.display_graph,
+        editingGraph: editingGraph ?? state.editingGraph,
         node: Object.fromEntries(Object.entries(Object.assign({}, 
-            base_node(typeof node === "string" ? (display_graph ?? state.display_graph).nodes[node] : node ? node : state.display_graph.nodes[state.selected[0]]), 
+            base_node(typeof node === "string" ? (editingGraph ?? state.editingGraph).nodes[node] : node ? node : state.editingGraph.nodes[state.selected[0]]), 
             {[property]: value === "" ? undefined : value})).filter(kv => kv[1] !== undefined))
     }]
 ]
 
 export const UpdateEdge: ha.Action<HyperappState, {edge: Edge, as: string}> = (state, {edge, as}) => [
     state,
-    [() => nolib.no.runtime.update_edges(state.display_graph, {...edge, as}, edge, hlib), {}]
+    [() => nolib.no.runtime.update_edges(state.editingGraph, {...edge, as}, edge, hlib), {}]
 ]
 
 export const keydownSubscription = (dispatch, options) => {
@@ -449,6 +449,7 @@ export const keydownSubscription = (dispatch, options) => {
 }
 
 export const refresh_graph = (dispatch, {graph, graphChanged, norun, result_display_dispatch, info_display_dispatch, code_editor, code_editor_nodeid}) => {
+  console.log("refreshing graph", graph)
     if(norun ?? false) {
       return
     }
@@ -459,8 +460,8 @@ export const refresh_graph = (dispatch, {graph, graphChanged, norun, result_disp
     const display_fn = result => hlib.run(graph, graph.out ?? "out", {_output: "display"}, {profile: false});
     // const display_fn = result => hlib.run(graph, graph.out, {}, "display");
     const update_result_display_fn = display => result_display_dispatch(UpdateResultDisplay, {el: display && display.dom_type ? display : {dom_type: 'div', props: {}, children: []}})
-    const update_info_display_fn = () => dispatch(s => [s, s.selected[0] !== s.display_graph.out 
-        && !s.show_all && [() => update_info_display({fn: s.selected[0], graph: s.display_graph, args: {}, lib: {...hlib, ...nolib, ...reslib}}, info_display_dispatch, code_editor, code_editor_nodeid, graphChanged)]])
+    const update_info_display_fn = () => dispatch(s => [s, s.selected[0] !== s.editingGraph.out 
+        && !s.show_all && [() => update_info_display({fn: s.selected[0], graph: s.editingGraph, args: {}, lib: {...hlib, ...nolib, ...reslib}}, info_display_dispatch, code_editor, code_editor_nodeid, graphChanged)]])
     wrapPromise(result)
       .then(display_fn)
       .then(update_result_display_fn)
@@ -468,7 +469,7 @@ export const refresh_graph = (dispatch, {graph, graphChanged, norun, result_disp
     return result
 }
 
-export const result_subscription = (dispatch, {display_graph_id, norun}) => {
+export const result_subscription = (dispatch, {editingGraphId, displayGraphId, norun}) => {
     let animrun: false | number = false;
 
     const error_listener = (error) =>
@@ -481,28 +482,25 @@ export const result_subscription = (dispatch, {display_graph_id, norun}) => {
     let info_display_dispatch, code_editor, code_editor_nodeid, result_display_dispatch;
 
     const change_listener = graph => {
-        if(animrun) {
-            cancelAnimationFrame(animrun)
-        }
+      if(animrun) {
+          cancelAnimationFrame(animrun)
+      }
 
-        if(info_display_dispatch && code_editor && code_editor_nodeid && result_display_dispatch) {
-          animrun = requestAnimationFrame(() => {
-              const result = refresh_graph(dispatch, {graph: nolib.no.runtime.get_ref(display_graph_id), graphChanged: false, norun, info_display_dispatch, code_editor, code_editor_nodeid, result_display_dispatch})
-              const reset_animrun = () => animrun = false;
-              wrapPromise(result, reset_animrun as () => any).then(reset_animrun)
-          })
-        } else {
-          // TODO: hacky change this
-          dispatch(s => [s, () => {
-            info_display_dispatch = s.info_display_dispatch;
-            code_editor = s.code_editor;
-            code_editor_nodeid = s.code_editor_nodeid;
-            result_display_dispatch = s.result_display_dispatch;
-          }])
-        }
-
-
-        
+      if(info_display_dispatch && code_editor && code_editor_nodeid && result_display_dispatch) {
+        animrun = requestAnimationFrame(() => {
+            const result = refresh_graph(dispatch, {graph: nolib.no.runtime.get_ref(displayGraphId || editingGraphId), graphChanged: false, norun, info_display_dispatch, code_editor, code_editor_nodeid, result_display_dispatch})
+            const reset_animrun = () => animrun = false;
+            wrapPromise(result, reset_animrun as () => any).then(reset_animrun)
+        })
+      } else {
+        // TODO: hacky change this
+        dispatch(s => [s, () => {
+          info_display_dispatch = s.info_display_dispatch;
+          code_editor = s.code_editor;
+          code_editor_nodeid = s.code_editor_nodeid;
+          result_display_dispatch = s.result_display_dispatch;
+        }])
+      }
     }
 
     nolib.no.runtime.add_listener('graphupdate', 'clear_hyperapp_error', change_listener);
@@ -510,7 +508,7 @@ export const result_subscription = (dispatch, {display_graph_id, norun}) => {
     const animframes = {}
 
     const noderun_listener = (data) => {
-        if (data.graph.id === display_graph_id){
+        if (data.graph.id === editingGraphId){
           const node_id = data.node_id;
           const timeout = timeouts[node_id]
           const nodeanimframe = animframes[node_id];
@@ -548,15 +546,15 @@ export const result_subscription = (dispatch, {display_graph_id, norun}) => {
 export const graph_subscription = (dispatch, props) => {
     let animframe: false | number = false;
     const listener = (graph) => {
-        if(props.display_graph_id === graph.id) {
+        if(props.editingGraphId === graph.id) {
           dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
           if(animframe){
             cancelAnimationFrame(animframe)
           }
           animframe = requestAnimationFrame(() =>  {
               animframe = false;
-              dispatch((s: HyperappState) => [{...s, display_graph: graph}, [UpdateSimulation], [refresh_graph, {
-                graph, 
+              dispatch((s: HyperappState) => [{...s, editingGraph: graph}, [UpdateSimulation], [refresh_graph, {
+                graph: s.displayGraph || graph, 
                 norun: props.norun, 
                 graphChanged: true, 
                 result_display_dispatch: s.result_display_dispatch,

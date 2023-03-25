@@ -3,7 +3,7 @@ import * as ha from "hyperapp";
 import Fuse from "fuse.js";
 import { create_randid, wrapPromise, base_graph } from "../util";
 import { Edge, Graph, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode } from "../types";
-import { calculateLevels, ChangeDisplayGraphId, Copy, CustomDOMEvent, DeleteNode, ExpandContract, FocusEffect, graph_subscription, hlib, isNodysseusError, keydownSubscription, listen, middleware, Paste, pzobj, refresh_graph, result_subscription, run_h, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect } from "./util";
+import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, ExpandContract, FocusEffect, graph_subscription, hlib, isNodysseusError, keydownSubscription, listen, middleware, Paste, pzobj, refresh_graph, result_subscription, run_h, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect } from "./util";
 import { info_display, infoWindow } from "./components/infoWindow";
 import { init_code_editor } from "./components/codeEditor";
 import { d3Node, HyperappState } from "./types";
@@ -11,18 +11,19 @@ import { yNodyStore } from "./store";
 import { d3subscription, insert_node_el, link_el, node_el, UpdateSimulation } from "./components/graphDisplay";
 import Autocomplete from "./autocomplete"
 import generic from "src/generic";
+import { SimulationNodeDatum } from "d3-force";
 
 
 customElements.define("autocomplete-list", Autocomplete)
 
 const SimulationToHyperapp = (state, payload) => [{
     ...state,
-    levels: calculateLevels(payload.nodes, payload.links, state.display_graph, state.selected),
+    levels: calculateLevels(payload.nodes, payload.links, state.editingGraph, state.selected),
     nodes: payload.nodes,
     links: payload.links,
     randid: create_randid(),
 }, 
-    [CustomDOMEvent, {html_id: state.html_id, event: 'updategraph', detail: {graph: state.display_graph}}]
+    [CustomDOMEvent, {html_id: state.html_id, event: 'updategraph', detail: {graph: state.editingGraph}}]
 ];
 
 
@@ -35,8 +36,8 @@ const Search = (state, {payload, nodes}) => {
     const direction = payload.key === "Enter" ? payload.shiftKey ? -1 : 1 : 0; 
     const search_results = new Fuse<NodysseusNode>(
         nodes.map(n => Object.assign({}, n, 
-            nolib.no.runtime.get_node(state.display_graph, n.node_id), 
-            nolib.no.runtime.get_edge_out(state.display_graph, n.node_id))), 
+            nolib.no.runtime.get_node(state.editingGraph, n.node_id), 
+            nolib.no.runtime.get_edge_out(state.editingGraph, n.node_id))), 
         {keys: ['name', 'ref', 'value', 'as']}
     ).search(payload.target.value);
     const search_index = search_results.length > 0 ? (search_results.length + (state.search_index ?? 0) + direction) % search_results.length : 0; 
@@ -52,9 +53,8 @@ const Search = (state, {payload, nodes}) => {
 
 const search_el = ({search}) => ha.h('div', {id: "search"}, [
     typeof search === "string" && ha.h('input', {type: "text", onkeydown: (state: any, payload) => [Search,  {payload, nodes: state.nodes}], onblur: (state, payload) => [{...state, search: false}]}, []),
-    typeof search !== "string" && ha.h('ion-icon', {name: 'search', onclick: (s: any) => [{...s, search: ""}, [FocusEffect, {selector: "#search input"}]]}, [ha.text('search')]),
+    typeof search !== "string" && ha.h('span', {class: 'material-icons-outlined graph-action', onclick: (s: any) => [{...s, search: ""}, [FocusEffect, {selector: "#search input"}]]}, [ha.text('search')]),
 ])
-
 
 
 const show_error = (e, t) => ({
@@ -161,13 +161,13 @@ const runapp = (init, load_graph, _lib) => {
               [() => {
                 requestAnimationFrame(() =>  {
                   refresh_custom_editor()
-                  nolib.no.runtime.change_graph(base_graph(init.display_graph), hlib)
+                  nolib.no.runtime.change_graph(base_graph(init.editingGraph), hlib)
                 });
               }]
             ]);
         })],
         [dispatch => wrapPromise(nolib.no.runtime.get_graph("custom_editor")).then(graph => graph && hlib.run(graph, "out")).then(custom_editor_result => custom_editor_result && dispatch(s => ({...s, custom_editor_result})))],
-        [ChangeDisplayGraphId, {id: load_graph, select_out: true, display_graph_id: undefined}],
+        [ChangeEditingGraphId, {id: load_graph, select_out: true, editingGraphId: undefined}],
         [UpdateSimulation, {...init, action: SimulationToHyperapp}],
         [init_code_editor, {html_id: init.html_id}]
     ],
@@ -177,11 +177,11 @@ const runapp = (init, load_graph, _lib) => {
             ha.h('g', {id: `${s.html_id}-editor-panzoom`}, 
                 [ha.memo(defs, {})].concat(
                     s.nodes?.map(node => {
-                        const newnode = Object.assign({}, node, s.display_graph.nodes[node.node_id])
+                        const newnode = Object.assign({}, node, s.editingGraph.nodes[node.node_id])
                         return ha.memo(node_el, ({
                             html_id: s.html_id, 
                             selected: s.selected[0] === node.node_id, 
-                            error: !!error_nodes(s.error).find(e => e && e.startsWith(s.display_graph.id + "/" + node.node_id)), 
+                            error: !!error_nodes(s.error).find(e => e && e.startsWith(s.editingGraph.id + "/" + node.node_id)), 
                             selected_distance: s.show_all || !s.levels ? 0 : s.levels.distance_from_selected.get(node.node_id) > 3 ? 'far' : s.levels.distance_from_selected.get(node.node_id),
                             node_id: node.node_id,
                             node_name: newnode.name,
@@ -194,7 +194,7 @@ const runapp = (init, load_graph, _lib) => {
                 }) ?? []
                 ).concat(
                     s.links?.map(link => ha.memo(link_el, {
-                        link: Object.assign({}, link, s.display_graph.edges[(link.source as d3Node).node_id]),
+                        link: Object.assign({}, link, s.editingGraph.edges[(link.source as d3Node).node_id]),
                         selected_distance: s.show_all || !s.levels ? 0 : s.levels.distance_from_selected.get((link.source as d3Node).node_id) > 3 ? 'far' : s.levels.distance_from_selected.get((link.source as d3Node).node_id),
                     })) ?? []
                 ).concat(
@@ -204,29 +204,41 @@ const runapp = (init, load_graph, _lib) => {
             ),
         ]),
         infoWindow({
-            node: Object.assign({}, s.nodes.find(n => n.node_id === s.selected[0]), s.display_graph.nodes[s.selected[0]]),
+            node: Object.assign({}, s.nodes.find(n => n.node_id === s.selected[0]), s.editingGraph.nodes[s.selected[0]]),
             hidden: s.show_all,
             edges_in: s.selected_edges_in,
-            link_out: Object.assign({}, s.links.find(l => (l.source as d3Node).node_id === s.selected[0]), s.display_graph.edges[s.selected[0]]),
-            display_graph_id: s.display_graph.id,
+            link_out: Object.assign({}, s.links.find(l => (l.source as d3Node).node_id === s.selected[0]), s.editingGraph.edges[s.selected[0]]),
+            editingGraphId: s.editingGraph.id,
             randid: s.randid,
             editing: s.editing,
             ref_graphs: nolib.no.runtime.ref_graphs(),
             html_id: s.html_id,
             copied_graph: s.copied?.graph,
             inputs: s.inputs,
-            graph_out: s.display_graph.out
+            graph_out: s.editingGraph.out
         }),
         ha.h('div', {id: `${init.html_id}-custom-editor-display`}),
         ha.h('div', {id: "graph-actions"}, [
             search_el({search: s.search}),
-            ha.h('ion-icon', {
-              name: s.norun ? 'play-outline' : 'pause-outline',
+            ha.h('span', {
+              class: 'material-icons-outlined graph-action',
+              style: {
+                transformOrigin: 'center',
+                transform: `rotate(${s.displayGraphId ? '0' : '45'}deg)`
+              },
+              onclick: (s: HyperappState) => ({
+                ...s, 
+                displayGraph: s.displayGraph ? false : s.editingGraph, 
+                displayGraphId: s.displayGraphId ? false : s.editingGraphId
+              })
+            }, [ha.text('push_pin')]),
+            ha.h('span', {
+              class: 'material-icons-outlined graph-action',
               onclick: (s: HyperappState) => [
                 {...s, norun: !s.norun}, 
                 () => { nolib.no.runtime.togglePause(!s.norun) },
                 s.norun && [refresh_graph, {
-                  graph: s.display_graph,
+                  graph: s.displayGraph ?? s.editingGraph,
                   norun: !s.norun,
                   graphChanged: false,
                   result_display_dispatch: s.result_display_dispatch,
@@ -235,21 +247,20 @@ const runapp = (init, load_graph, _lib) => {
                   code_editor_nodeid: s.code_editor_nodeid
                 }]
               ]
-            }),
-            ha.h('ion-icon', {
-                    name: 'sync-outline', 
-                    onclick: (s: HyperappState) => [s, [dispatch => { 
-                            nolib.no.runtime.delete_cache(); 
-                            hlib.run(s.display_graph, s.display_graph.out ?? "out", {_output: "value"}, {profile: false});  
-                            refresh_custom_editor()
-                            requestAnimationFrame(() =>  dispatch(s => [s, [() => {
-                                s.simulation.alpha(1); 
-                                s.simulation.nodes([]); 
-                            }, {}], [UpdateSimulation, {}]])) 
-                        }, {}]]
-                }, 
-                [ha.text('refresh')]
-            )
+            }, [ha.text(s.norun ? 'play_arrow' : 'pause')]),
+            ha.h('span', {
+              class: 'material-icons-outlined graph-action',
+              name: 'sync-outline', 
+              onclick: (s: HyperappState) => [s, [dispatch => { 
+                      nolib.no.runtime.delete_cache(); 
+                      hlib.run(s.editingGraph, s.editingGraph.out ?? "out", {_output: "value"}, {profile: false});  
+                      refresh_custom_editor()
+                      requestAnimationFrame(() =>  dispatch(s => [s, [() => {
+                          s.simulation.alpha(1); 
+                          s.simulation.nodes([]); 
+                      }, {}], [UpdateSimulation, {}]])) 
+                  }, {}]]
+            }, [ha.text('refresh')]),
         ]),
         ha.h('div', {id: `${init.html_id}-result`}),
         s.error && ha.h('div', {id: 'node-editor-error'}, run_h(show_error(s.error, s.error.node_id)))
@@ -258,10 +269,10 @@ const runapp = (init, load_graph, _lib) => {
     subscriptions: s => [
         document.getElementById(`${init.html_id}-result`) && [mutationObserverSubscription, {id: `${init.html_id}-result`}],
         [d3subscription, {action: SimulationToHyperapp, update: UpdateSimulation}], 
-        [graph_subscription, {display_graph_id: s.display_graph_id, norun: s.norun}],
+        [graph_subscription, {editingGraphId: s.editingGraphId, norun: s.norun}],
         [select_node_subscription, {}],
-        result_display_dispatch && [result_subscription, {display_graph_id: s.display_graph_id, norun: s.norun}],
-        listen("hashchange", (state, evt) => state.display_graph_id === evt.newURL.substring(evt.newURL.indexOf("#") + 1) || evt.newURL.substring(evt.newURL.indexOf("#") + 1).length === 0 ? state : [state, [ChangeDisplayGraphId, {id: evt.newURL.substring(evt.newURL.indexOf("#") + 1), display_graph_id: state.display_graph_id}]]),
+        result_display_dispatch && [result_subscription, {editingGraphId: s.editingGraphId, displayGraphId: s.displayGraphId, norun: s.norun}],
+        listen("hashchange", (state, evt) => state.editingGraphId === evt.newURL.substring(evt.newURL.indexOf("#") + 1) || evt.newURL.substring(evt.newURL.indexOf("#") + 1).length === 0 ? state : [state, [ChangeEditingGraphId, {id: evt.newURL.substring(evt.newURL.indexOf("#") + 1), editingGraphId: state.editingGraphId}]]),
         [keydownSubscription, {action: (state: HyperappState, payload) => {
             if(document.getElementById("node-editor-result").contains(payload.target)) {
                 return [state];
@@ -394,7 +405,7 @@ const runapp = (init, load_graph, _lib) => {
 });
 }
 
-const editor = async function(html_id, display_graph, lib, norun) {
+const editor = async function(html_id, editingGraph, lib, norun) {
     let nodysseusStore = await yNodyStore(true);
     let worker;
     initStore(nodysseusStore)
@@ -412,8 +423,10 @@ const editor = async function(html_id, display_graph, lib, norun) {
 
         const init: HyperappState = { 
             keybindings,
-            display_graph_id: 'simple',
-            display_graph: simple,
+            editingGraphId: 'simple',
+            editingGraph: simple,
+            displayGraph: false,
+            displayGraphId: false,
             hash: window.location.hash ?? "",
             url_params,
             html_id,
