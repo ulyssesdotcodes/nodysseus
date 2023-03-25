@@ -271,109 +271,103 @@ const runapp = (init, load_graph, _lib) => {
             let action;
             let effects = [];
             const selected = state.selected[0];
-            switch(key_input) {
-                case "ctrl_o": {
-                    action = [SelectNode, {node_id: state.display_graph.out, focus_property: 'name'}]
+            switch(`${mode}_${key_input}`) {
+                case "editing_ctrl_o": 
+                case "searching_ctrl_o": 
+                case "graph_ctrl_o": {
+                    action = [SelectNode, {node_id: state.editingGraph.out, focus_property: 'name'}]
                     payload.stopPropagation();
                     payload.preventDefault();
                     break;
                 }
+                case "graph_arrowup": {
+                    const parent_edges = nolib.no.runtime.get_edges_in(state.editingGraph, selected);
+                    const node_id = parent_edges?.[Math.ceil(parent_edges.length / 2) - 1]?.from
+                    action = node_id ? [SelectNode, {node_id}] : [state]
+                    break;
+                }
+                case "graph_arrowdown": {
+                    const child_edge = Object.values(state.editingGraph.edges).find(e => e.from === selected);
+                    const node_id = child_edge?.to
+                    action = node_id ? [SelectNode, {node_id}] : [state]
+                    break;
+                }
+                case "graph_arrowleft": 
+                case "graph_arrowright": {
+                    const dirmult = key_input === "arrowleft" ? 1 : -1;
+                    const current_node = nolib.no.runtime.get_node(state.editingGraph, selected)
+                    if(state.levels) {
+                      const siblings = state.levels.siblings.get(selected); 
+                      const node_id = siblings.reduce((dist, sibling) => { 
+                          const sibling_node = state.nodes.find(n => n.node_id === sibling); 
+                          if(!sibling_node){ return dist } 
+                          const xdist = Math.abs(sibling_node.x - current_node.x); 
+                          dist = (dirmult * (sibling_node.x - current_node.x) < 0) && xdist < dist[0] ? [xdist, sibling_node] : dist; 
+                          return dist
+                      }, [state.dimensions.x, undefined] as [number, d3Node | undefined])?.[1]?.node_id; 
+                      action = node_id ? [SelectNode, {node_id}] : [state]
+                    }
+                    break;
+                }
+                case "graph_ctrl_s": {
+                    effects.push([SaveGraph, state])
+                    break;
+                }
+                case "graph_ctrl_c": {
+                    action = [Copy, {as: nolib.no.runtime.get_edge_out(state.editingGraph, state.selected[0]).as}];
+                    break;
+                }
+                case "graph_ctrl_v": {
+                    action = [Paste];
+                    break;
+                }
+                case "graph_f": {
+                    action = s => [{...s, search: ""}, [FocusEffect, {selector: "#search input"}]]; 
+                    break;
+                }
+                case "graph_shift_enter": {
+                    action = [ExpandContract, {node_id: state.selected[0]}];
+                    break;
+                }
+                case "graph_x": {
+                    action = [DeleteNode, {
+                        node_id: state.selected[0]
+                    }]
+                    break;
+                }
+                case "graph_n": {
+                    action = [SelectNode, { node_id: state.selected[0], focus_property: "name" }]
+                    break;
+                }
+                case "graph_v": {
+                    action = [SelectNode, { node_id: state.selected[0], focus_property: "value" }]
+                    break;
+                }
+                case "graph_r": {
+                    action = [SelectNode, { node_id: state.selected[0], focus_property: "ref" }]
+                    break;
+                }
+                case "graph_e": {
+                    action = [SelectNode, { node_id: state.selected[0], focus_property: "edge" }]
+                    break;
+                }
+                case "graph_esc": {
+                    action = [state => [
+                        {...state, show_all: true, focused: false, editing: false},
+                        [() => requestAnimationFrame(() => nolib.no.runtime.publish('show_all', {data: true}))]
+                    ]]
+                    break;
+                }
+                case "graph_ctrl_z": {
+                  nolib.no.runtime.undo()
+                  break;
+                }
+                case "graph_ctrl_y": {
+                  nolib.no.runtime.redo()
+                  break;
+                }
                 default: {
-                  const kbres = hlib.run(init.keybindings, "out");
-                    wrapPromise(kbres).then(kb => {
-                      const result = kb[mode][key_input];
-                      switch(result){
-                          case "up": {
-                              const parent_edges = nolib.no.runtime.get_edges_in(state.display_graph, selected);
-                              const node_id = parent_edges?.[Math.ceil(parent_edges.length / 2) - 1]?.from
-                              action = node_id ? [SelectNode, {node_id}] : [state]
-                              break;
-                          }
-                          case "down": {
-                              const child_edge = Object.values(state.display_graph.edges).find(e => e.from === selected);
-                              const node_id = child_edge?.to
-                              action = node_id ? [SelectNode, {node_id}] : [state]
-                              break;
-                          }
-                          case "left": 
-                          // case "right": {
-                          //     const dirmult = result === "left" ? 1 : -1;
-                          //     const current_node = nolib.no.runtime.get_node(state.display_graph, selected)
-                          //     const siblings = state.levels.siblings.get(selected); 
-                          //     const node_id = siblings.reduce((dist, sibling) => { 
-                          //         const sibling_node = state.nodes.find(n => n.node_id === sibling); 
-                          //         if(!sibling_node){ return dist } 
-                          //         const xdist = Math.abs(sibling_node.x - current_node.x); 
-                          //         dist = (dirmult * (sibling_node.x - current_node.x) < 0) && xdist < dist[0] ? [xdist, sibling_node] : dist; return dist 
-                          //     }, [state.dimensions.x])?.[1]?.node_id; 
-                          //     action = node_id ? [SelectNode, {node_id}] : [state]
-                          //     break;
-                          // }
-                          case "save": {
-                              effects.push([SaveGraph, state])
-                              break;
-                          }
-                          case "copy": {
-                              action = [Copy, {as: nolib.no.runtime.get_edge_out(state.display_graph, state.selected[0]).as}];
-                              break;
-                          }
-                          case "paste": {
-                              action = [Paste];
-                              break;
-                          }
-                          case "find": {
-                              action = s => [{...s, search: ""}, [FocusEffect, {selector: "#search input"}]]; 
-                              break;
-                          }
-                          case "expand_contract": {
-                              action = [ExpandContract, {node_id: state.selected[0]}];
-                              break;
-                          }
-                          case "delete_node": {
-                              action = [DeleteNode, {
-                                  node_id: state.selected[0]
-                              }]
-                              break;
-                          }
-                          case "edit_name": {
-                              action = [SelectNode, { node_id: state.selected[0], focus_property: "name" }]
-                              break;
-                          }
-                          case "edit_value": {
-                              action = [SelectNode, { node_id: state.selected[0], focus_property: "value" }]
-                              break;
-                          }
-                          case "edit_ref": {
-                              action = [SelectNode, { node_id: state.selected[0], focus_property: "ref" }]
-                              break;
-                          }
-                          case "edit_edge": {
-                              action = [SelectNode, { node_id: state.selected[0], focus_property: "edge" }]
-                              break;
-                          }
-                          case "end_editing": {
-                              action = [state => [
-                                  {...state, show_all: true, focused: false, editing: false},
-                                  [() => requestAnimationFrame(() => nolib.no.runtime.publish('show_all', {data: true}))]
-                              ]]
-                              break;
-                          }
-                          case "undo": {
-                            nolib.no.runtime.undo()
-                            break;
-                          }
-                          case "redo": {
-                            nolib.no.runtime.redo()
-                            break;
-                          }
-                          default: {
-                              if(result !== undefined) {
-                                  console.log(`Not implemented ${result}`)
-                              }
-                              nolib.no.runtime.publish('keydown', {data: key_input})
-                          }
-                      }
-                  })
+                    nolib.no.runtime.publish('keydown', {data: key_input})
                 }
             }
 
