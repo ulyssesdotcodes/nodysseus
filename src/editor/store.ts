@@ -225,11 +225,7 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
           ymap.set(id, preloadDoc);
         }
         
-        if(rmap.has(id)) {
-          if(ymap.has(id) && rmap.get(id) !== ymap.get(id).guid) {
-            throw new Error(`Incorrect rmap guid for ${id}`)
-          }
-        } else if(rtcroom && preloadDoc) {
+        if(rtcroom && preloadDoc && !rmap.has(id)) {
           rmap.set(id, preloadDoc.guid)
         }
 
@@ -310,10 +306,11 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
                     graph.edges_in = Object.values(graph.edges).reduce((acc: EdgesIn, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
                     nolib.no.runtime.publish('graphchange', graph, {...nolib, ...hlib}) 
                   }
+                  const updatedExisting = syncedGraphs.get(id);
                   return {
                     graph,
                     idb: idb ?? existing?.idb,
-                    remoteProvider: rtcroom && (existing?.remoteProvider ?? new WebrtcProvider(`nodysseus${rtcroom}_${id}`, localDoc, {
+                    remoteProvider: rtcroom && (existing?.remoteProvider ?? (updatedExisting as SyncedGraph)?.remoteProvider ?? new WebrtcProvider(`nodysseus${rtcroom}_${localDoc.guid}`, localDoc, {
                       signaling: ["wss://ws.nodysseus.io"], 
                       filterBcConns: true,
                       password: undefined,
