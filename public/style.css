@@ -1,3 +1,6 @@
+@import 'material-icons/iconfont/outlined.css'
+
+
 :root {
     --nodex: 0px;
     --nodey: 0px;
@@ -362,10 +365,18 @@ svg {
 .action {
   display: flex;
   cursor: pointer;
-  text-decoration: underline dotted;
   flex-direction: row;
   gap: .4em;
   align-items: center;
+}
+
+.action span {
+  text-decoration: underline dotted;
+}
+
+.action span.material-icons-outlined {
+  text-decoration: none;
+  font-size: 1em;
 }
 
 /* result props */
@@ -505,7 +516,7 @@ svg.edge-info.selected rect {
     z-index: 6;
 }
 
-#graph-actions ion-icon {
-    width: 1.5em;
-    height: 1.5em;
+#graph-actions .graph-action {
+    font-size: 2em;
+    user-select: none;
 }
