@@ -7,12 +7,14 @@ import { Edge, EdgesIn, Graph, NodysseusNode, NodysseusStore, Store } from "../t
 import { compareObjects, ispromise, mapMaybePromise, wrapPromise } from "../util";
 import { hlib } from "./util";
 import Loki from "lokijs"
-import {WebrtcProvider} from "y-webrtc";
+import {WebsocketProvider} from "y-websocket";
 import { YMap } from "yjs/dist/src/internals";
+import wrtcPolyfill from 'worker-webrtc/worker.js';
 
 
 type SyncedGraph = {
-  remoteProvider: WebrtcProvider,
+  remoteProvider: WebsocketProvider,
+  // remoteProvider: WebrtcProvider,
   idb: IndexeddbPersistence,
   graph: Graph,
   undoManager: Y.UndoManager
@@ -312,19 +314,8 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
                     graph,
                     idb: idb ?? existing?.idb,
                     undoManager: undoManager ?? existing.undoManager,
-                    remoteProvider: rtcroom && (existing?.remoteProvider ?? (updatedExisting as SyncedGraph)?.remoteProvider ?? new WebrtcProvider(`nodysseus${rtcroom}_${localDoc.guid}`, localDoc, {
-                      signaling: ["wss://ws.nodysseus.io"], 
-                      filterBcConns: true,
-                      password: undefined,
+                    remoteProvider: rtcroom && (existing?.remoteProvider ?? (updatedExisting as SyncedGraph)?.remoteProvider ?? new WebsocketProvider("wss://ws.nodysseus.io", `nodysseus${rtcroom}_${localDoc.guid}`, localDoc, {
                       awareness: undefined,
-                      maxConns: undefined,
-                      peerOpts: {
-                        config: {
-                          iceServers: [
-                            {urls: "stun:ws.nodysseus.io:3478"}
-                          ]
-                        }
-                      }
                     }))
                   }
                 }
@@ -349,20 +340,21 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
       rtcroom = custom_editor_result?.rtcroom || false;
 
       if(rtcroom) {
-        new WebrtcProvider(`nodysseus${rtcroom}_subdocs`, rdoc, {
-          signaling: ["wss://ws.nodysseus.io"],
-          password: undefined,
-          awareness: undefined,
-          filterBcConns: true,
-          maxConns: undefined,
-          peerOpts: {
-            config: {
-              iceServers: [
-                {urls: "stun:ws.nodysseus.io:3478"}
-              ]
-            }
-          }
-        })
+        // new WebrtcProvider(`nodysseus${rtcroom}_subdocs`, rdoc, {
+        //   signaling: ["wss://ws.nodysseus.io"],
+        //   password: undefined,
+        //   awareness: undefined,
+        //   filterBcConns: true,
+        //   maxConns: undefined,
+        //   peerOpts: {
+        //     config: {
+        //       iceServers: [
+        //         {urls: "stun:ws.nodysseus.io:3478"}
+        //       ]
+        //     }
+        //   }
+        // })
+        new WebsocketProvider("wss://ws.nodysseus.io", `nodysseus${rtcroom}_subdocs`, rdoc)
 
         rdoc.getMap().observe(evts => {
           evts.keysChanged.forEach(k => {
