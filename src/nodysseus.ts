@@ -1499,16 +1499,16 @@ const nolib = {
               return value;
             },
             args: ['value'],
-            publish: wrapPromise(run_runnable(publish, lib, undefined, options))
-              .then(p => isValue(p) ? p.value : p)
-              .then(p => {
-                const args = lib.data.no.runtime.get_args(graphid)["store"]
-                if(args) {
-                  args["publish"] = p;
-                }
-                return p
-              }).value
           },
+          publish: wrapPromise(run_runnable(publish, lib, undefined, options))
+            .then(p => isValue(p) ? p.value : p)
+            .then(p => {
+              const args = lib.data.no.runtime.get_args(graphid)["store"]
+              if(args) {
+                args["publish"] = p;
+              }
+              return p
+            }).value,
           value: undefined
         }
 
