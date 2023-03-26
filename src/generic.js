@@ -5029,7 +5029,7 @@ const generic = {
       },
       "cixrltc": {
         "id": "cixrltc",
-        "value": "_lib.no.runtime.change_graph(graph); return graph;",
+        "value": "_lib.no.runtime.add_ref(graph); return graph;",
         "ref": "script"
       },
       "sl7qlmj": {
