@@ -6864,6 +6864,10 @@ const generic = {
         "value": "_sliderstate.state",
         "ref": "arg"
       },
+      "slidervalpublish": {
+        "id": "slidervalpublish",
+        "value": "true"
+      },
       "t1deznd": {
         "id": "t1deznd",
         "ref": "refval"
@@ -7106,6 +7110,11 @@ const generic = {
         "from": "t1deznd",
         "to": "0i85qjj",
         "as": "_sliderval"
+      },
+      "slidervalpublish": {
+        "from": "slidervalpublish",
+        "to": "t1deznd",
+        "as": "publish"
       },
       "sv49nso": {
         "from": "sv49nso",
@@ -7371,6 +7380,13 @@ const generic = {
           "from": "gvk9hec",
           "to": "0i85qjj",
           "as": "_sliderstate"
+        }
+      },
+      "t1deznd": {
+        "slidervalpublish": {
+          "from": "slidervalpublish",
+          "to": "t1deznd",
+          "as": "publish"
         }
       },
       "a6rdag9": {

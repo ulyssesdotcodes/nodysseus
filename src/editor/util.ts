@@ -375,7 +375,7 @@ export const SelectNode: ha.Action<HyperappState, {
           args: {}, 
           lib: {...hlib, ...nolib, ...hlib.run(state.editingGraph, state.editingGraph.out ?? "out", {_output: "lib"})}
         }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== node_id), {}],
-    state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: node_id}), {}]
+    state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: {nodeId: node_id, graphId: state.editingGraphId}}), {}]
 ] : state;
 
 export const CustomDOMEvent = (_, payload) => document.getElementById(`${payload.html_id}`)?.dispatchEvent(new CustomEvent(payload.event, {detail: payload.detail}))
@@ -487,9 +487,13 @@ export const result_subscription = (dispatch, {editingGraphId, displayGraphId, n
 
       if(info_display_dispatch && code_editor && code_editor_nodeid && result_display_dispatch) {
         animrun = requestAnimationFrame(() => {
+          if(graph.id === (displayGraphId || editingGraphId)) {
             const result = refresh_graph(dispatch, {graph: nolib.no.runtime.get_ref(displayGraphId || editingGraphId), graphChanged: false, norun, info_display_dispatch, code_editor, code_editor_nodeid, result_display_dispatch})
             const reset_animrun = () => animrun = false;
             wrapPromise(result, reset_animrun as () => any).then(reset_animrun)
+          } else {
+            hlib.run(graph, graph.out ?? "out")
+          }
         })
       } else {
         // TODO: hacky change this
