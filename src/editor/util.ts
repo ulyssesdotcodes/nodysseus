@@ -449,7 +449,6 @@ export const keydownSubscription = (dispatch, options) => {
 }
 
 export const refresh_graph = (dispatch, {graph, graphChanged, norun, result_display_dispatch, info_display_dispatch, code_editor, code_editor_nodeid}) => {
-  console.log("refreshing graph", graph)
     if(norun ?? false) {
       return
     }
