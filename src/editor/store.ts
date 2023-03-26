@@ -9,8 +9,6 @@ import { hlib } from "./util";
 import Loki from "lokijs"
 import {WebsocketProvider} from "y-websocket";
 import { YMap } from "yjs/dist/src/internals";
-import wrtcPolyfill from 'worker-webrtc/worker.js';
-
 
 type SyncedGraph = {
   remoteProvider: WebsocketProvider,
