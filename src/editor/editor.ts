@@ -60,10 +60,12 @@ const search_el = ({search}) => ha.h('div', {id: "search"}, [
 const show_error = (e, t) => ({
     dom_type: 'div', 
     props: {}, 
-    children: [
-        {dom_type: 'text_value', text: `Error: ${e}`}, 
-        {dom_type: 'pre', props: {}, children: [{dom_type: 'text_value', text: t}]}
-    ]})
+    children: (Array.isArray(e) ? e : [e]).flatMap(e => [
+        {dom_type: 'text_value', text: `Error: ${e.message}`}, 
+        {dom_type: 'pre', props: {}, children: [{dom_type: 'text_value', text: e.stack}]},
+        t && {dom_type: 'pre', props: {}, children: [{dom_type: 'text_value', text: t}]},
+    ].filter(c => c))
+})
 
 const result_display = html_id => ha.app({
     init: {el: {dom_type: 'div', props: {}, children: []}},
@@ -252,6 +254,7 @@ const runapp = (init, load_graph, _lib) => {
               name: 'sync-outline', 
               onclick: (s: HyperappState) => [s, [dispatch => { 
                       nolib.no.runtime.delete_cache(); 
+                      // nolib.no.runtime.clearListeners();
                       hlib.run(s.editingGraph, s.editingGraph.out ?? "out", {_output: "value"}, {profile: false});  
                       refresh_custom_editor()
                       requestAnimationFrame(() =>  dispatch(s => [s, [() => {
@@ -421,6 +424,7 @@ const editor = async function(html_id, editingGraph, lib, norun) {
     initStore(nodysseusStore)
     hlib.worker = () => {
       worker = worker ?? new Worker("./worker.js", {type: "module"})
+
       return worker;
     }
 

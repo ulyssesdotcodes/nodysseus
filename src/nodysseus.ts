@@ -772,7 +772,7 @@ export const run = (node: Runnable | InputRunnable, args: ResolvedArgs | Record<
   }
 
   isRunnable(node) && isFunctorRunnable(node) && !_lib.data.no.runtime.get_ref(node.graph.id) && _lib.data.no.runtime.change_graph(node.graph)
-  isRunnable(node) && isFunctorRunnable(node) && _lib.data.no.runtime.update_graph(node.graph, _lib);
+  // isRunnable(node) && isFunctorRunnable(node) && _lib.data.no.runtime.update_graph(node.graph, _lib);
 
   if(!(args instanceof Map)) {
     args = new Map(Object.entries(args));
@@ -876,7 +876,7 @@ const nolib = {
     wrapPromise,
     runtimefn: (function () {
 
-      const polyfillRequestAnimationFrame = typeof window !== "undefined" ? window.requestAnimationFrame : (fn => setTimeout(fn, 16))
+      const polyfillRequestAnimationFrame = requestAnimationFrame  //typeof window !== "undefined" ? window.requestAnimationFrame : (fn => setTimeout(fn, 16))
 
       Object.values(generic_nodes).forEach(graph => {
         if(isNodeGraph(graph)) {
@@ -1012,15 +1012,15 @@ const nolib = {
       };
 
       // Adding a listener to listen for errors during animationframe. If there are errors, don't keep running.
-      add_listener('grapherror', "__animationerrors", e => animationerrors.push(e));
-      add_listener('graphchange', "__animationerrors", e => {
+      add_listener('grapherror', "__system", e => animationerrors.push(e));
+      add_listener('graphchange', "__system", e => {
         if(animationerrors.length > 0) {
           event_listeners.get("animationframe")?.clear();
         }
         animationerrors.splice(0, animationerrors.length)
       });
 
-      add_listener('argsupdate', '__argsupdate', ({graphid, changes, mutate}, lib, options) => {
+      add_listener('argsupdate', '__system', ({graphid, changes, mutate}, lib, options) => {
         if(mutate) {
           const current = nolib.no.runtime.get_args(graphid);
           changes.forEach(change => set_mutable(current, change[0], change[1]))
@@ -1028,6 +1028,20 @@ const nolib = {
           update_args(graphid, changes, lib)
         }
       })
+
+      add_listener('cachedelete', "__system", e => {
+        nodysseus.state.clear()
+      });
+
+      add_listener('listenersclear', "__system", e => {
+        for(let eventListener of event_listeners.entries()) {
+          if(eventListener[0] !== "__system") {
+            eventListener[1].clear()
+          }
+        }
+
+        event_listeners_by_graph.clear();
+      });
 
       const remove_listener = (event, listener_id) => {
         if (event === "*") {
@@ -1073,11 +1087,11 @@ const nolib = {
         if (!compareObjects(args, prevargs, true)) {
           Object.assign(prevargs, args);
           const updatedgraph = get_parentest(graphid) ?? get_graph(graphid);
-          if(!ispromise(updatedgraph) && !updatepublish[updatedgraph.id]) {
-            updatepublish[updatedgraph.id] = true;
+          if(!ispromise(updatedgraph) && (!updatepublish[updatedgraph.id] || updatepublish[updatedgraph.id] + 16 < performance.now())) {
+            updatepublish[updatedgraph.id] = performance.now();
             requestAnimationFrame(() => {
-              publish("graphupdate", updatedgraph, lib);
               updatepublish[updatedgraph.id] = false;
+              publish("graphupdate", updatedgraph, lib);
             })
           }
         }
@@ -1188,7 +1202,12 @@ const nolib = {
         change_graph,
         update_graph: (graphid, lib: Lib) => publish('graphupdate', {graphid}, lib),
         update_args,
-        delete_cache: () => nodysseus.state.clear(),
+        delete_cache: () => {
+          publish("cachedelete", {}, newLib(nolib))
+        },
+        clearListeners: () => {
+          publish("listenersclear", {}, newLib(nolib))
+        },
         get_graph,
         get_args,
         get_path,
@@ -1463,8 +1482,8 @@ const nolib = {
       outputs: {
         display: true
       },
-      args: ["onframe", "_lib", "__graphid", "_runoptions", "_output", "initial"],
-      fn: (onframe, lib, graphid, options, output, initial) => {
+      args: ["onframe", "_lib", "__graphid", "_runoptions", "_output", "initial", "publish"],
+      fn: (onframe, lib, graphid, options, output, initial, publish) => {
         const args = lib.data.no.runtime.get_args(graphid);
 
         let store = args["store"] ?? {
@@ -1472,10 +1491,23 @@ const nolib = {
           set: {
             __kind: "apFunction",
             fn: (value) => {
-              lib.data.no.runtime.publish("argsupdate", {graphid, changes: [['store.value', value]], mutate: true}, lib, options)
+              if(store["publish"]) {
+                lib.data.no.runtime.publish("argsupdate", {graphid, changes: [['store.value', value]], mutate: true}, lib, options)
+              } else {
+                store["value"] = value;
+              }
               return value;
             },
-            args: ['value']
+            args: ['value'],
+            publish: wrapPromise(run_runnable(publish, lib, undefined, options))
+              .then(p => isValue(p) ? p.value : p)
+              .then(p => {
+                const args = lib.data.no.runtime.get_args(graphid)["store"]
+                if(args) {
+                  args["publish"] = p;
+                }
+                return p
+              }).value
           },
           value: undefined
         }
@@ -1531,7 +1563,11 @@ const nolib = {
                   return state;
                 }).value
 
-              lib.data.no.runtime.update_args(graphid, {state})
+              if(publish) {
+                lib.data.no.runtime.publish("argsupdate", {graphid, changes: {state}, mutate: false}, lib, options, true)
+              } else {
+                lib.data.no.runtime.update_args(graphid, {state})
+              }
 
               rawstate = state;
             }
@@ -1553,7 +1589,11 @@ const nolib = {
                   const promiseresult = ispromise(result) ? result.then(r => isValue(r) ? r.value : r) : isValue(result) ? result.value : result;
                   const isresultpromise = ispromise(promiseresult);
 
-                  lib.data.no.runtime.update_args(graphid, {state: promiseresult}, lib)
+                  if(publish) {
+                    lib.data.no.runtime.publish("argsupdate", {graphid, changes: {state: promiseresult}, mutate: false}, lib, options, true)
+                  } else {
+                    lib.data.no.runtime.update_args(graphid, {state: promiseresult}, lib)
+                  }
 
                   if(!isresultpromise && persist && typeof localStorage !== "undefined") {
                     localStorage.setItem(graphid, JSON.stringify(promiseresult))
@@ -1563,7 +1603,11 @@ const nolib = {
                     if(persist && typeof localStorage !== "undefined") {
                       localStorage.setItem(graphid, JSON.stringify(pr))
                     }
-                    lib.data.no.runtime.update_args(graphid, {state: pr}, lib)
+                    if(publish) {
+                      lib.data.no.runtime.publish("argsupdate", {graphid, changes: {state: pr}, mutate: false}, lib, options, true)
+                    } else {
+                      lib.data.no.runtime.update_args(graphid, {state: pr}, lib)
+                    }
                     return pr;
                   }) : promiseresult;
                 },

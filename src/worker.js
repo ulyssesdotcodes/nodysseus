@@ -12,6 +12,8 @@ function posterror(graph, error){
 
 let initQueue = [];
 
+const runningGraphs = new Map();
+
 const processMessage = e => {
     try{
         // nolib.no.runtime.add_listener(run_graph, 'graphrun', 'worker-rungraph', (g, result) => {
@@ -31,8 +33,14 @@ const processMessage = e => {
 
         });
 
-      console.log("got data", e.data);
+        nolib.no.runtime.add_listener('graphupdate', 'worker-graphupdate', (graph) => {
+          if(runningGraphs.has(graph.id)) {
+            run(runningGraphs.get(graph.id), undefined, {profile: false});
+          }
+        });
+
         run(e.data, undefined, {profile: false && this.performance.now() > 4000});
+      runningGraphs.set(e.data.graph.id, e.data)
     } catch (e) { console.error(e) }
 }
 
