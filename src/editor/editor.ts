@@ -126,7 +126,6 @@ const mutationObserverSubscription = (dispatch, {id}) => {
     const publishel = (addedel) => {
       if(addedel instanceof HTMLElement){
         if(addedel.id){
-          console.log("added", addedel.id)
           nolib.no.runtime.publish("domnodeadded", {id: addedel.id})
         }
         for(let child of addedel.children) {
@@ -370,11 +369,22 @@ const runapp = (init, load_graph, _lib) => {
                     break;
                 }
                 case "graph_ctrl_z": {
-                  nolib.no.runtime.undo()
+                  const child_edge = Object.values(state.editingGraph.edges).find(e => e.from === selected);
+                  const node_id = child_edge?.to
+
+                  nolib.no.runtime.undo(state.editingGraphId)
+                  effects.push(dispatch => requestAnimationFrame(() => dispatch(s => {
+                    return ({...s, selected: nolib.no.runtime.get_ref(state.editingGraphId).nodes[s.selected[0]] ? s.selected : [node_id]})
+                  })))
                   break;
                 }
                 case "graph_ctrl_y": {
-                  nolib.no.runtime.redo()
+                  const child_edge = Object.values(state.editingGraph.edges).find(e => e.from === selected);
+                  const node_id = child_edge?.to
+                  nolib.no.runtime.redo(state.editingGraphId)
+                  effects.push(dispatch => requestAnimationFrame(() => dispatch(s => {
+                    return ({...s, selected: nolib.no.runtime.get_ref(state.editingGraphId).nodes[s.selected[0]] ? s.selected : [node_id]})
+                  })))
                   break;
                 }
                 default: {

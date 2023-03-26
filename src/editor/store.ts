@@ -14,7 +14,8 @@ import { YMap } from "yjs/dist/src/internals";
 type SyncedGraph = {
   remoteProvider: WebrtcProvider,
   idb: IndexeddbPersistence,
-  graph: Graph
+  graph: Graph,
+  undoManager: Y.UndoManager
 }
 
 
@@ -287,10 +288,10 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
                   }
                 }))
 
-                return {localDoc: preloadDoc, idb}
+                return {localDoc: preloadDoc, idb, undoManager}
               })))
 
-              .then(({localDoc, idb}) => {
+              .then(({localDoc, idb, undoManager}) => {
                 if(graph) {
                     graph.edges_in = Object.values(graph.edges).reduce((acc: EdgesIn, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
 
@@ -310,6 +311,7 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
                   return {
                     graph,
                     idb: idb ?? existing?.idb,
+                    undoManager: undoManager ?? existing.undoManager,
                     remoteProvider: rtcroom && (existing?.remoteProvider ?? (updatedExisting as SyncedGraph)?.remoteProvider ?? new WebrtcProvider(`nodysseus${rtcroom}_${localDoc.guid}`, localDoc, {
                       signaling: ["wss://ws.nodysseus.io"], 
                       filterBcConns: true,
@@ -427,8 +429,8 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
       const keys = [...ymap.keys(), ...Object.keys(generic_nodes)];
       return keys//.map(v => get(v))
     },
-    undo: persist && (() => undoManager.undo()),
-    redo: persist && (() => undoManager.redo()),
+    undo: persist && ((id: string) => wrapPromise(syncedGraphs.get(id)).then(syncedGraph => syncedGraph?.undoManager?.undo())),
+    redo: persist && ((id: string) => wrapPromise(syncedGraphs.get(id)).then(syncedGraph => syncedGraph?.undoManager?.redo())),
   }
 }
 

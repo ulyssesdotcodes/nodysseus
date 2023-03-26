@@ -1302,8 +1302,8 @@ const nolib = {
           };
           nodysseus.parents.set(graphid, new_parent)
         },
-        undo: () => nodysseus.refs.undo && nodysseus.refs.undo(),
-        redo: () => nodysseus.refs.redo && nodysseus.refs.redo(),
+        undo: (id: string) => nodysseus.refs.undo && nodysseus.refs.undo(id),
+        redo: (id: string) => nodysseus.refs.redo && nodysseus.refs.redo(id),
         store: nodysseus
       };
     }),

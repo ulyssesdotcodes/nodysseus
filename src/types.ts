@@ -35,8 +35,8 @@ export type Store<T> = {
   delete: (id: string) => void;
   clear: () => void;
   keys: () => Array<string>;
-  undo?: false | (() => void);
-  redo?: false | (() => void);
+  undo?: false | ((id: string) => void);
+  redo?: false | ((id: string) => void);
 }
 
 export type RefStore = Store<NodysseusNode | Promise<NodysseusNode>> & {
