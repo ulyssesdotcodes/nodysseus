@@ -1829,7 +1829,7 @@ const nolib = {
           } else {
             const ng_fn = nodysseus_get(self ?? _lib.data, fn || nodevalue, _lib);
             const ng_self = (fn || nodevalue).includes('.') 
-              ? nodysseus_get(self, (fn || nodevalue).substring(0, self.lastIndexOf('.')), _lib) 
+              ? nodysseus_get(self, (fn || nodevalue).substring(0, (fn || nodevalue).lastIndexOf('.')), _lib) 
               : self;
             const fnargs = Array.isArray(args)
               ? (args || [])
