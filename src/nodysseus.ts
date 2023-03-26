@@ -627,6 +627,11 @@ const run_graph = (graph: Graph | (Graph & {nodes: Array<NodysseusNode>, edges: 
     const newgraph = graph;
     const node = lib.data.no.runtime.get_node(newgraph, node_id);
 
+    if(!node) {
+      // If a runnable is called after its fn is deleted but before it's recalculated, the ndoe won't exist. Instead of erroring, just return undefined.
+      return;
+    }
+
     try {
         return wrapPromise(node).then(node => wrapPromise(create_data(node_id, newgraph, env, lib, options)).then(data => ({node, data})).value)
           .then(({node, data}) => {
