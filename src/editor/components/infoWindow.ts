@@ -195,7 +195,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraphId, ra
                     onclick: [DeleteNode, {
                         node_id: node.node_id
                     }]
-                }, [ha.h('span', {class: 'material-icons-outlined'}, ha.text("delete")), ha.h('span', {}, ha.text('open'))]),
+                }, [ha.h('span', {class: 'material-icons-outlined'}, ha.text("delete")), ha.h('span', {}, ha.text('delete'))]),
             ]),
         ]
     ), ha.h('div', {class: "spacer after"}, [])])
