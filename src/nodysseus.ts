@@ -368,9 +368,9 @@ const node_script = (node, nodeArgs: Args, lib: Lib, options: RunOptions): Resul
 }
 
 const run_extern = (extern: ApFunction, data: Args, lib: Lib, options: RunOptions, node?: NodysseusNode, graphArgs?: Env) => {
-  // if(graphArgs._output !== "value" && !extern.outputs?.[graphArgs._output]) {
-  //   return undefined
-  // }
+  if(graphArgs?._output && graphArgs._output !== "value" && !extern.outputs?.[graphArgs._output]) {
+    return undefined
+  }
 
   let argColonIdx;
   let argspromise = false;
@@ -536,7 +536,6 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
         } else if (node.ref === "extern") {
             return node_extern(node, nodeArgs, graphArgs, lib, options)
         } else if (node.ref === "script") {
-            // return node_script(node, nodeArgs, lib, options)
             return (graphArgs._output === undefined || graphArgs._output === "value") && node_script(node, nodeArgs, lib, options)
         }
 
