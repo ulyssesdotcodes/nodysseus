@@ -1,0 +1,13 @@
+# Args
+
+Arguments are passed in to `return` and `ap` nodes on the `args` edge and retrieved using an `arg` node. The `args` input will usually be an object node (a node without a `ref` or `value`), but any node can be used so long as it outputs an object. The returned object's properties can be accessed by any of the other `return` node's edges, or inside the `runnable` that is referenced by `ap`. For example, if args is an object node, then inputs to that node can be referenced using their edge label as an `arg` node's value.
+
+## Uses
+
+### Multiple output
+
+A node's result can be used multiple times by creating a `return` node with an `args` input and multiple corresponding `arg` nodes. 
+
+### Passing arguments to runnables
+
+Using `ap`, a runnable can be passed arguments not known in the part of the graph a runnable is created. For example, `ap` can be used to update a `state` when a text input is changed. The inputs's `onchange` runnable receives `event` as an argument. Connecting the `state.set` runnable as `fn` to an `ap` node and `event.target.value` as `value` to the `args` object of the `ap` node will pass the value through to the runnable and change the state to the input's value.

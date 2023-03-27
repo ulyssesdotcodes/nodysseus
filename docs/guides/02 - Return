@@ -1,10 +1,9 @@
 # Return
 
-The `return` node is the building block of everything in Nodysseus. They are the square nodes. It is roughly equivalent to a function in most programming languages. It's purpose is to receive inputs and return an output. Like a normal function, its inputs are named arguments, and it's output is the value along the `value` edge. It has some additional features that a normal function does not have. It can output a `display` and an `argslist` which are used to populate the info popup of the return and nodes referencing the return's graph. `publish` and `subscribe` are used for sending and handling events between different `return` and `event_subscriber` nodes across the application. `lib` is a utility for broadcasting libraries to all connected nodes and sub-nodes.
+The `return` node is the building block of everything in Nodysseus. They are the square nodes. It is roughly equivalent to a function in most programming languages. Its purpose is to receive inputs and return an output. Like a normal function, its inputs are named arguments, and its output is the value along the `value` edge. It has some additional features that a normal function does not have. It can output a `display` which is used to populate the info popup of the return and nodes referencing the return's graph. `publish` and `subscribe` are used for sending and handling events between different `return` and `event_subscriber` nodes across the application. `lib` is a utility for broadcasting libraries to all connected nodes and sub-nodes.
 
 Graphs are required to have a `return` node as the last node in the graph, but `return` can also be used elsewhere for publishing and subscribing to events, or for using a node's output as input for multiple nodes.
 
-Suggested reading for beginners: Basic input edges
 
 ## Basic input edges
 
@@ -27,12 +26,6 @@ When the `return` node is the output node of a graph, the `display` input is sho
 ### `metadata` edge
 
 The `metadata` edge should contain an object with metadata about the graph. The valid object fields are `argslist`, and `category`. By default, without an `argslist`, the UI will find all `arg` nodes and show their values in the node info window as named arguments. `argslist` is a helper input to indicate to the UI which named inputs are expected and will take precedence over parsing the `arg` nodes.
-
-### `publish` edge
-
-The `publish` edge publishes app-wide events. It should be an object with the event names as keys, and the event data as values. In practical terms, this means that it should be an object node with named inputs corresponding to events.
-
-Any `return` node anywhere in the graph can publish events this way.
 
 ### `subscribe` edge
 

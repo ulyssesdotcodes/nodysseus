@@ -1,6 +1,6 @@
 # log
 
-Prints value to console.log
+Prints input value to console.log labeled with node's value.
 
 
 # fetch
@@ -10,7 +10,7 @@ Uses the <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/A
 
 # call
 
-Calls `self.fn` with `args`. If `self is not found, uses the node's context.
+Calls `self.fn` with `args`. If `self` is not found, uses the node's context (i.e. window or lib). If there's no fn input, uses the node's value.
 
 
 # stringify
