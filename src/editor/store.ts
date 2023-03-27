@@ -224,6 +224,8 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
             unloadedRdoc = true;
           }
           ymap.set(id, preloadDoc);
+        } else if(graph) {
+          setMapFromGraph(preloadDoc.getMap(), graph)
         }
         
         if(rtcroom && preloadDoc && !rmap.has(id)) {
