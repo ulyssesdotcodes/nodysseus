@@ -700,36 +700,29 @@ const run_functor_runnable = (runnable: FunctorRunnable, args: Args, lib: Lib, o
 }
 
 const run_ap_runnable = (runnable: ApRunnable, args: Args, lib: Lib, options: RunOptions): Result | Promise<Result> => {
-  return wrapPromise(runnable.args && run_runnable(runnable.args, lib, args, {...options, resolvePromises: false}))
+  return wrapPromise(isRunnable(runnable.args) 
+    ? run_runnable(runnable.args, lib, args, {...options, resolvePromises: false}) 
+    : lib.data.no.of(runnable.args?.data ?? args))
         .then(ranArgs => {
-          const execArgs = isValue(ranArgs) ? ranArgs.value : new Map();
+          const execArgs = isValue(ranArgs) 
+            ? ranArgs.value instanceof Map 
+              ? ranArgs.value 
+              : new Map([...Object.entries(ranArgs.value)].filter(kv => kv[0] !== "__graphid").map(kv => [kv[0], lib.data.no.of(kv[1])])) 
+            : ranArgs instanceof Map
+            ? ranArgs
+            : new Map();
           const ret = (Array.isArray(runnable.fn) ? runnable.fn : [runnable.fn])
           .map(rfn => {
             return typeof rfn === "function" 
-            ? rfn(new Map([...Object.entries(execArgs)].filter(kv => kv[0] !== "__graphid").map(kv => [kv[0], lib.data.no.of(kv[1])]))).then(r => lib.data.no.of(r)).value 
-            // ? wrapPromise(resolve_args(execArgs, lib, options)).then(args => isValue(args) ? rfn(args.value) : args)
-            //     .then(r => lib.data.no.of(r)).value 
+            ? rfn(execArgs).then(r => lib.data.no.of(r)).value 
             : isApFunction(rfn)
-            ? run_extern(rfn, new Map([...Object.entries(execArgs)].filter(kv => kv[0] !== "__graphid").map(kv => [kv[0], lib.data.no.of(kv[1])])), lib, options)
-            // ? run_extern(rfn, 
-            //   execArgs,
-            //   lib, options)
-            // ? wrapPromise(resolve_args(execArgs, lib, {...options, resolvePromises: !rfn.promiseArgs})).then(args => isValue(args) ? args.value : args)
-            //   .then(args => run_extern(rfn, 
-            //   new Map([...Object.entries(args)].filter(kv => kv[0] !== "__graphid").map(kv => [kv[0], lib.data.no.of(kv[1])])),
-            //   lib, options))
+            ? run_extern(rfn, execArgs, lib, options)
             : run_runnable(
               rfn as Runnable,
               runnable.lib,
-              new Map([...Object.entries(execArgs)].filter(kv => kv[0] !== "__graphid").map(kv => [kv[0], lib.data.no.of(kv[1])])),
+              execArgs,
               options
             )
-            // : wrapPromise(resolve_args(execArgs, lib, options)).then(args => isValue(args) ? run_runnable(
-            //   rfn as Runnable,
-            //   runnable.lib,
-            //   new Map([...Object.entries(args.value)].filter(kv => kv[0] !== "__graphid").map(kv => [kv[0], lib.data.no.of(kv[1])])),
-            //   {}
-            // ) : args)
           })
           return Array.isArray(runnable.fn) ? wrapPromiseAll(ret.map(v => wrapPromise(v))) : wrapPromise(ret[0]);
         }).then(v => {
@@ -1345,10 +1338,10 @@ const nolib = {
           wrapPromise(run_runnable(runnable, lib))
             .then(r => resolveRunnable(isValue(r) ? r.value : r)) : wrapPromise(runnable)).then(r => isValue(r) ? r.value : r).value
 
-        const apRunnable = (fnRunnable: ApFunctorLike | Array<ApFunctorLike>): ApRunnable => ({
+        const apRunnable = (fnRunnable: ApFunctorLike | Array<ApFunctorLike>, run: boolean): ApRunnable => ({
             __kind: AP,
             fn: Array.isArray(fnRunnable) ? fnRunnable.filter(v => v) : fnRunnable,
-            args,
+            args: args ?? (run ? fn.env : undefined),
             lib
           })
 
@@ -1358,8 +1351,8 @@ const nolib = {
                          .filter(fnrv => fnrv).every(isApFunctorLike)) 
                         ? fnr 
                         : run 
-                        ? run_runnable(apRunnable(fnr), lib) 
-                        : apRunnable(fnr))
+                        ? run_runnable(apRunnable(fnr, run), lib) 
+                        : apRunnable(fnr, run))
           .then(res => lib.data.no.of(res)).value
       }
     },

@@ -99,7 +99,7 @@ export const isApFunctorLike = (a: any) => !!a && (typeof a === "function" || is
 export type ApRunnable = {
   __kind: "ap",
   fn: ApFunctorLike | Array<ApFunctorLike>
-  args: ConstRunnable,
+  args: ConstRunnable | Env,
   lib: Lib
 }
 
