@@ -45,6 +45,13 @@ const Nodysseus = (): NodysseusStore => {
       delete: id => { throw new Error("not implemented")},
       clear: () => { throw new Error("not implemented")},
       keys: () => {  throw new Error("not implemented")}
+    },
+    persist: {
+      get: id => { throw new Error("not implemented")},
+      set: (id, value) => { throw new Error("not implemented")},
+      delete: id => { throw new Error("not implemented")},
+      clear: () => { throw new Error("not implemented")},
+      keys: () => {  throw new Error("not implemented")}
     }
   }
 }
@@ -1538,40 +1545,26 @@ const nolib = {
         return wrapPromise(publish && run_runnable(publish, lib, undefined, options))
           .then(publish => isValue(publish) ? publish.value : publish)
           .then(publish =>
-            wrapPromise(typeof localStorage !== "undefined" && persist && run_runnable(persist, lib, undefined, options))
+            wrapPromise(persist && run_runnable(persist, lib, undefined, options))
               .then(persist => isValue(persist) ? persist.value : persist)
               .then(persist => ({publish, persist})).value)
           .then(rawstate !== undefined ? (v => v) : ({publish, persist}) => {
-            const persistedState = persist && rawstate === undefined && localStorage.getItem(graphid);
-            if (persistedState) {
-              const parsedState = JSON.parse(persistedState)
-              if(publish) {
-                lib.data.no.runtime.publish("argsupdate", {graphid, changes: {state: parsedState}, mutate: false}, lib, options, true)
-              } else {
-                lib.data.no.runtime.update_args(graphid, {state: parsedState})
-              }
-              rawstate = persistedState
-            } else if(value && (rawstate === undefined || rawstate === null)) {
-              const state = wrapPromise(run_runnable(value, lib, undefined, options))
-                .then(result => isValue(result) ? result.value : result)
-                .then(state => {
-                  if(publish) {
-                    lib.data.no.runtime.publish("argsupdate", {graphid, changes: {state}, mutate: false}, lib, options, true)
-                  } else {
-                    lib.data.no.runtime.update_args(graphid, {state})
-                  }
-                  return state;
-                }).value
-
-              if(publish) {
-                lib.data.no.runtime.publish("argsupdate", {graphid, changes: {state}, mutate: false}, lib, options, true)
-              } else {
-                lib.data.no.runtime.update_args(graphid, {state})
-              }
-
-              rawstate = state;
-            }
-            return {persist, publish}
+            const persistedState = persist && rawstate === undefined && nodysseus.persist.get(graphid);
+            const initialState = wrapPromise(persistedState)
+              .then(ps => ps ? JSON.parse(ps)
+               : value && (rawstate === undefined || rawstate === null)
+               ? wrapPromise(run_runnable(value, lib, undefined, options))
+                  .then(result => isValue(result) ? result.value : result)
+              : undefined);
+            return initialState ? initialState
+              .then(initial => {
+                if(publish) {
+                  lib.data.no.runtime.publish("argsupdate", {graphid, changes: {state: initial}, mutate: false}, lib, options, true)
+                } else {
+                  lib.data.no.runtime.update_args(graphid, {state: initial})
+                }
+              }).then(() => ({publish, persist})).value 
+              : {publish, persist}
           })
           .then(({persist, publish}) => 
             wrapPromise(rawstate)
@@ -1595,13 +1588,13 @@ const nolib = {
                     lib.data.no.runtime.update_args(graphid, {state: promiseresult}, lib)
                   }
 
-                  if(!isresultpromise && persist && typeof localStorage !== "undefined") {
-                    localStorage.setItem(graphid, JSON.stringify(promiseresult))
+                  if(!isresultpromise && persist) {
+                    nodysseus.persist.set(graphid, JSON.stringify(promiseresult))
                   }
 
                   return isresultpromise ? promiseresult.then(pr => {
-                    if(persist && typeof localStorage !== "undefined") {
-                      localStorage.setItem(graphid, JSON.stringify(pr))
+                    if(persist) {
+                      nodysseus.persist.set(graphid, JSON.stringify(pr))
                     }
                     if(publish) {
                       lib.data.no.runtime.publish("argsupdate", {graphid, changes: {state: pr}, mutate: false}, lib, options, true)

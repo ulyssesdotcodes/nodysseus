@@ -51,6 +51,7 @@ export type NodysseusStore = {
   refs: RefStore,
   parents: Store<{parent: string, parentest: string}>,
   state: Store<any>,
+  persist: Store<any>,
   fns: Store<{script: string, fn: Function}>,
   assets: Store<Blob>
 }

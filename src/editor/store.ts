@@ -429,9 +429,15 @@ export const yNodyStore = async (useRtc: boolean = false): Promise<NodysseusStor
 
   let nodysseusidb;
 
-  await openDB("nodysseus", 2, {
-    upgrade(db) {
-      db.createObjectStore("assets")
+  await openDB("nodysseus", 3, {
+    upgrade(db, oldVersion, newVersion) {
+      if(oldVersion < 2) {
+        db.createObjectStore("assets")
+      } 
+
+      if(oldVersion < 3) {
+        db.createObjectStore("persist")
+      }
     }
   }).then(db => { nodysseusidb = db })
 
@@ -465,6 +471,13 @@ export const yNodyStore = async (useRtc: boolean = false): Promise<NodysseusStor
       delete: id => nodysseusidb.delete('assets', id),
       clear: () => nodysseusidb.clear('assets'),
       keys: () => nodysseusidb.getAllKeys('assets')
+    },
+    persist: {
+      get: (id) => nodysseusidb.get('persist', id),
+      set: (id, str) => nodysseusidb.put('persist', str, id),
+      delete: id => nodysseusidb.delete('persist', id),
+      clear: () => nodysseusidb.clear('persist'),
+      keys: () => nodysseusidb.getAllKeys('persist')
     }
   }
 }
