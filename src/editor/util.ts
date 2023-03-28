@@ -491,8 +491,6 @@ export const result_subscription = (dispatch, {editingGraphId, displayGraphId, n
             const result = refresh_graph(dispatch, {graph: nolib.no.runtime.get_ref(displayGraphId || editingGraphId), graphChanged: false, norun, info_display_dispatch, code_editor, code_editor_nodeid, result_display_dispatch})
             const reset_animrun = () => animrun = false;
             wrapPromise(result, reset_animrun as () => any).then(reset_animrun)
-          } else {
-            hlib.run(graph, graph.out ?? "out")
           }
         })
       } else {
