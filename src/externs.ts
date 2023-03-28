@@ -1,6 +1,6 @@
 import * as util from "./util"
 import {nodysseus_get, resolve_args} from "./nodysseus"
-import { ConstRunnable, Env, isError, isNodeRef, isNodeScript, Lib, RefNode, Result, Runnable } from "./types";
+import { Args, ConstRunnable, Env, isArgs, isEnv, isError, isNodeRef, isNodeScript, Lib, RefNode, Result, Runnable } from "./types";
 
  export const create_fn = (runnable: ConstRunnable, lib: Lib) => {
     const graph = util.ancestor_graph(runnable.fn, runnable.graph, lib.data);
@@ -65,7 +65,7 @@ import { ConstRunnable, Env, isError, isNodeRef, isNodeScript, Lib, RefNode, Res
         text += `return fn_${runnable.fn}()`//({${[...fninputs].map(rinput => `${rinput.as}: fnargs.${graph.nodes.find(n => n.id === rinput.from).value}`).join(",")}})`
         const fn = new Function("fnargs", "baseArgs", "_extern_args", "import_util", "_lib", text);
 
-        return (args: Env) => fn((resolve_args(args.data, lib, {}) as {value: any}).value, baseArgs, _extern_args, util, lib.data);
+        return (args: Env | Args | Record<string, unknown>) => fn(args ? isArgs(args) ? (resolve_args(args, lib, {}) as {value: any}).value : isEnv(args) ? (resolve_args(args.data, lib, {}) as {value: any}).value : args : {}, baseArgs, _extern_args, util, lib.data);
       }
 
     return util.wrapPromise(baseArgs).then(r => isError(r) ? r : create(r)).value
