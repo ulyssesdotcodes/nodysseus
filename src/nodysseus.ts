@@ -1942,7 +1942,7 @@ const nolib = {
     math: {
       args: ["__graph_value", "_node_args"],
       resolve: true,
-      fn: (graph_value, args) => Math[graph_value](...Object.entries(args).sort((a, b) => a[0].localeCompare(b[0])).map(kv => kv[1]))
+      fn: (graph_value, args) => Math[graph_value](...Object.entries(args).filter(kv => kv[0] !== "__graph_value").sort((a, b) => a[0].localeCompare(b[0])).map(kv => kv[1]))
     },
     add: {
       args: ["_node_args"],
