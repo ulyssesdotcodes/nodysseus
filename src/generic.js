@@ -4544,11 +4544,11 @@ const generic = {
         {
           "id": "c2sko9c",
           "ref": "html_element",
-          "name": "ionicon"
+          "name": "icon"
         },
         {
           "id": "2lr3ihi",
-          "value": "ion-icon"
+          "value": "span"
         },
         {
           "id": "empty_obj",
@@ -4564,6 +4564,7 @@ const generic = {
           "ref": "arg",
           "value": "props"
         },
+        {"id": "iconclass", "value": "material-icons-outlined"},
         {
           "id": "defined_props",
           "ref": "if"
@@ -4574,7 +4575,8 @@ const generic = {
         },
         {
           "id": "a0jb5es",
-          "ref": "set"
+          "ref": "set",
+          "value": "class"
         },
         {
           "id": "s5x2r1f",
@@ -4608,11 +4610,7 @@ const generic = {
           "to": "a0jb5es",
           "as": "target"
         },
-        {
-          "from": "name_path",
-          "to": "a0jb5es",
-          "as": "path"
-        },
+        {"from": "iconclass", "to": "a0jb5es", "as": "value"},
         {
           "from": "a0jb5es",
           "to": "c2sko9c",
@@ -4620,8 +4618,8 @@ const generic = {
         },
         {
           "from": "s5x2r1f",
-          "to": "a0jb5es",
-          "as": "value"
+          "to": "c2sko9c",
+          "as": "children"
         }
       ]
     },
@@ -5563,7 +5561,7 @@ const generic = {
         },
         "9cwkm4z": {
           "id": "9cwkm4z",
-          "value": "trash-outline"
+          "value": "delete"
         },
         "h10oho6": {
           "id": "h10oho6",
@@ -5571,7 +5569,7 @@ const generic = {
         },
         "2r1dra9": {
           "id": "2r1dra9",
-          "value": "checkmark-outline"
+          "value": "check"
         },
         "semslq4": {
           "id": "semslq4",
