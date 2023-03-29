@@ -719,7 +719,7 @@ const run_ap_runnable = (runnable: ApRunnable, args: Args, lib: Lib, options: Ru
           const ret = (Array.isArray(runnable.fn) ? runnable.fn : [runnable.fn])
           .map(rfn => {
             return typeof rfn === "function" 
-            ? rfn(execArgs).then(r => lib.data.no.of(r)).value 
+            ? wrapPromise(rfn(execArgs)).then(r => lib.data.no.of(r)).value 
             : isApFunction(rfn)
             ? run_extern(rfn, execArgs, lib, options)
             : run_runnable(
