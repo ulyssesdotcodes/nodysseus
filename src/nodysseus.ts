@@ -648,7 +648,12 @@ const run_graph = (graph: Graph | (Graph & {nodes: Array<NodysseusNode>, edges: 
 
 
             if(options.profile && !nolib.no.runtime.get_parentest((env.data.get("__graphid") as {value: string}).value)) {
-              const edgePath = edge => nolib.no.runtime.get_edge_out(newgraph, edge) ? [nolib.no.runtime.get_edge_out(newgraph, edge).as].concat(edgePath(nolib.no.runtime.get_edge_out(newgraph, edge).to)) : []
+              const edgePath = edge => {
+                const edgeout = nolib.no.runtime.get_edge_out(newgraph, edge)
+                return edgeout && !ispromise(edgeout) ? [nolib.no.runtime.get_edge_out(newgraph, edge).as]
+                  .concat(edgePath(nolib.no.runtime.get_edge_out(newgraph, edge).to)) 
+                : ["promise"]
+              }
               let path = edgePath(node_id).reverse().join(" -> ");
               let start = performance.now();
               const id = `${path} - ${(env.data.get("__graphid") as {value: string}).value}/${node.id} (${node.ref})`;
@@ -790,7 +795,7 @@ export const run = (node: Runnable | InputRunnable, args: ResolvedArgs | Record<
     _lib, args, options);
   return wrapPromise(res)
     .then(r => isValue(r) ? r?.value : r)
-    .then(v => (options.profile && console.log(options.timings), isArgs(v) ? Object.fromEntries(v) : v)).value;
+    .then(v => (options.profile && console.log(JSON.stringify(options.timings, null, 2)), isArgs(v) ? Object.fromEntries(v) : v)).value;
 }
 
 const nolib = {
@@ -925,7 +930,7 @@ const nolib = {
         if(!pause) {
           for (let l of listeners.values()) {
             if (typeof l === "function") {
-              l(data, lib, options);
+              l(data, lib, {...options, timings: {}});
             } else if (typeof l === "object" && l.fn && l.graph) {
               run(
                 l,
