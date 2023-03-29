@@ -102,7 +102,6 @@ export default class AutocompleteList extends HTMLElement {
 
     wrapper.addEventListener('focusin', (evt: FocusEvent) => {
       if(!this.focused) {
-      console.log("settinginitial fin")
         this.initialOption = this.inputEl.value;
       }
       this.focused = true;
