@@ -7,7 +7,7 @@ import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode
 import { info_display, infoWindow } from "./components/infoWindow";
 import { init_code_editor } from "./components/codeEditor";
 import { d3Node, HyperappState } from "./types";
-import { yNodyStore, rxdbStore } from "./store";
+import { yNodyStore } from "./store";
 import { d3subscription, insert_node_el, link_el, node_el, UpdateSimulation } from "./components/graphDisplay";
 import Autocomplete from "./autocomplete"
 import generic from "src/generic";

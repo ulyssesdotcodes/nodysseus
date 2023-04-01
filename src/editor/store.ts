@@ -9,8 +9,8 @@ import { hlib } from "./util";
 import Loki from "lokijs"
 import {WebrtcProvider} from "y-webrtc";
 import { YMap } from "yjs/dist/src/internals";
-import {createRxDatabase} from "rxdb"
-import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
+// import {createRxDatabase} from "rxdb"
+// import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
 import { ConstructorDeclaration } from "typescript";
 
 type SyncedGraph = {
@@ -502,131 +502,131 @@ export const yNodyStore = async (rtcpolyfill?: any): Promise<NodysseusStore> => 
 }
 
 
-export const rxdbStore = async (): Promise<NodysseusStore> => {
-  const statedb = mapStore<{id: string, data: Record<string, any>}>();
-
-  let nodysseusidb;
-
-  await openDB("nodysseus", 3, {
-    upgrade(db, oldVersion, newVersion) {
-      if(oldVersion < 2) {
-        db.createObjectStore("assets")
-      } 
-
-      if(oldVersion < 3) {
-        db.createObjectStore("persist")
-      }
-    }
-  }).then(db => { nodysseusidb = db })
-
-  const refsdb = await createRxDatabase({
-    name: 'testdb',
-    storage: getRxStorageMemory()
-  })
-
-  const refschema = {
-    title: 'refs schema',
-    version: 0,
-    primaryKey: 'id',
-    type: 'object',
-    required: ['id', 'nodes', 'edges'],
-    properties: {
-      id: {
-        type: 'string',
-        maxLength: 32
-      },
-      out: {
-        type: 'string'
-      },
-      name: {
-        type: 'string'
-      },
-      nodes: {
-        type: 'object',
-        properties: {
-          additionalProperties: {
-            type: "object",
-            additionalProperties: true
-          }
-        }
-      },
-      edges: {
-        type: 'object',
-        properties: {
-          additionalProperties: {
-            type: 'object',
-            properties: {
-              to: {type: 'string'},
-              from: {type: 'string'},
-              ad: {type: 'string'}
-            }
-          }
-        }
-      },
-      edges_in: {
-        type: 'object',
-        properties: {
-          additionalProperties: {
-            type: 'object',
-            properties: {
-              additionalProperties: {
-                type: 'object',
-                properties: {
-                  to: {type: 'string'},
-                  from: {type: 'string'},
-                  ad: {type: 'string'}
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  await refsdb.addCollections({
-    refs: {
-      schema: refschema
-    }
-  })
-  const refs = {
-      get: (id) => refsdb.refs.findOne(id).exec(),
-      set: (id, graph) => refsdb.refs.upsert(graph),
-      delete: (id) => {throw new Error("not implemented")},
-      clear: () => {throw new Error("not implemented")},
-      keys: () => {return []},
-      undo: () => {throw new Error("not implemented")},
-      redo: () => {throw new Error("not implemented")},
-      add_node: (id, node) => refs.get(id).then(d => d.modify(g => {g.nodes[node.id] = node; return g})),
-      add_nodes_edges: (id, nodes) => {throw new Error("not implemented")},
-      remove_node: (id, node) => refs.get(id).then(d => d.modify(g => {delete g.nodes[node.id]; return g})),
-      add_edge: (id, edge) => refs.get(id).then(d => d.modify(g => {g.edges[edge.from] = edge; g.edges_in[edge.to][edge.from] = edge; return g})),
-      remove_edge: (id, edge) => refs.get(id).then(d => d.modify(g => {delete g.edges[edge.id]; return g})),
-    }
-  refs.get("custom_editor").then(ce => {
-    if (!ce) {
-      refs.set("custom_editor", generic.nodes["simple"])
-    }
-  })
-
-  return {
-    refs,
-    parents: mapStore(),
-    state: mapStore(),
-    fns: mapStore(),
-    assets: {
-      get: (id) => nodysseusidb.get('assets', id),
-      set: (id, blob) => nodysseusidb.put('assets', blob, id),
-      delete: id => nodysseusidb.delete('assets', id),
-      clear: () => nodysseusidb.clear('assets'),
-      keys: () => nodysseusidb.getAllKeys('assets')
-    },
-    persist: {
-      get: (id) => nodysseusidb.get('persist', id),
-      set: (id, str) => nodysseusidb.put('persist', str, id),
-      delete: id => nodysseusidb.delete('persist', id),
-      clear: () => nodysseusidb.clear('persist'),
-      keys: () => nodysseusidb.getAllKeys('persist')
-    }
-  }
-}
+// export const rxdbStore = async (): Promise<NodysseusStore> => {
+//   const statedb = mapStore<{id: string, data: Record<string, any>}>();
+//
+//   let nodysseusidb;
+//
+//   await openDB("nodysseus", 3, {
+//     upgrade(db, oldVersion, newVersion) {
+//       if(oldVersion < 2) {
+//         db.createObjectStore("assets")
+//       } 
+//
+//       if(oldVersion < 3) {
+//         db.createObjectStore("persist")
+//       }
+//     }
+//   }).then(db => { nodysseusidb = db })
+//
+//   const refsdb = await createRxDatabase({
+//     name: 'testdb',
+//     storage: getRxStorageMemory()
+//   })
+//
+//   const refschema = {
+//     title: 'refs schema',
+//     version: 0,
+//     primaryKey: 'id',
+//     type: 'object',
+//     required: ['id', 'nodes', 'edges'],
+//     properties: {
+//       id: {
+//         type: 'string',
+//         maxLength: 32
+//       },
+//       out: {
+//         type: 'string'
+//       },
+//       name: {
+//         type: 'string'
+//       },
+//       nodes: {
+//         type: 'object',
+//         properties: {
+//           additionalProperties: {
+//             type: "object",
+//             additionalProperties: true
+//           }
+//         }
+//       },
+//       edges: {
+//         type: 'object',
+//         properties: {
+//           additionalProperties: {
+//             type: 'object',
+//             properties: {
+//               to: {type: 'string'},
+//               from: {type: 'string'},
+//               ad: {type: 'string'}
+//             }
+//           }
+//         }
+//       },
+//       edges_in: {
+//         type: 'object',
+//         properties: {
+//           additionalProperties: {
+//             type: 'object',
+//             properties: {
+//               additionalProperties: {
+//                 type: 'object',
+//                 properties: {
+//                   to: {type: 'string'},
+//                   from: {type: 'string'},
+//                   ad: {type: 'string'}
+//                 }
+//               }
+//             }
+//           }
+//         }
+//       }
+//     }
+//   }
+//
+//   await refsdb.addCollections({
+//     refs: {
+//       schema: refschema
+//     }
+//   })
+//   const refs = {
+//       get: (id) => refsdb.refs.findOne(id).exec(),
+//       set: (id, graph) => refsdb.refs.upsert(graph),
+//       delete: (id) => {throw new Error("not implemented")},
+//       clear: () => {throw new Error("not implemented")},
+//       keys: () => {return []},
+//       undo: () => {throw new Error("not implemented")},
+//       redo: () => {throw new Error("not implemented")},
+//       add_node: (id, node) => refs.get(id).then(d => d.modify(g => {g.nodes[node.id] = node; return g})),
+//       add_nodes_edges: (id, nodes) => {throw new Error("not implemented")},
+//       remove_node: (id, node) => refs.get(id).then(d => d.modify(g => {delete g.nodes[node.id]; return g})),
+//       add_edge: (id, edge) => refs.get(id).then(d => d.modify(g => {g.edges[edge.from] = edge; g.edges_in[edge.to][edge.from] = edge; return g})),
+//       remove_edge: (id, edge) => refs.get(id).then(d => d.modify(g => {delete g.edges[edge.id]; return g})),
+//     }
+//   refs.get("custom_editor").then(ce => {
+//     if (!ce) {
+//       refs.set("custom_editor", generic.nodes["simple"])
+//     }
+//   })
+//
+//   return {
+//     refs,
+//     parents: mapStore(),
+//     state: mapStore(),
+//     fns: mapStore(),
+//     assets: {
+//       get: (id) => nodysseusidb.get('assets', id),
+//       set: (id, blob) => nodysseusidb.put('assets', blob, id),
+//       delete: id => nodysseusidb.delete('assets', id),
+//       clear: () => nodysseusidb.clear('assets'),
+//       keys: () => nodysseusidb.getAllKeys('assets')
+//     },
+//     persist: {
+//       get: (id) => nodysseusidb.get('persist', id),
+//       set: (id, str) => nodysseusidb.put('persist', str, id),
+//       delete: id => nodysseusidb.delete('persist', id),
+//       clear: () => nodysseusidb.clear('persist'),
+//       keys: () => nodysseusidb.getAllKeys('persist')
+//     }
+//   }
+// }
