@@ -102,7 +102,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraphId, ra
     //const s.editingGraph.id === s.editingGraphId && nolib.no.runtime.get_node(s.editingGraph, s.selected[0]) && 
     const node_ref = node && node.ref ? nolib.no.runtime.get_ref(node.ref) : node;
     const description =  node_ref?.description;
-    const node_arg_labels = node?.id ? node_args(nolib, editingGraphId, node.id).map(a => ({...a, name: a.name.split(": ")[0]})) : [];
+    const node_arg_labels = [] //node?.id ? node_args(nolib, editingGraphId, node.id).map(a => ({...a, name: a.name.split(": ")[0]})) : [];
     return ha.h('div', {id: "node-info-wrapper"}, [ha.h('div', {class: "spacer before"}, []), ha.h(
         'div',
         { 

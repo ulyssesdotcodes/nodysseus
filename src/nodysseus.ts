@@ -1567,7 +1567,7 @@ const nolib = {
           .then(({persist, publish}) => 
             wrapPromise(rawstate)
               .then(rawstate => isValue(rawstate) ? rawstate.value : rawstate)
-              .then(rawstate => ({publish, persist, state: rawstate})).value)
+              .then(state => ({publish, persist, state})).value)
           .then(({persist, publish, state}) => output === "display" 
             ? lib.data.no.of({dom_type: 'div', props: {}, children: [{dom_type: 'text_value', text: JSON.stringify(state)}]}) 
             : ({
@@ -1604,7 +1604,7 @@ const nolib = {
                 },
                 args: ['value']
               },
-              state: state,
+              state,
             })).value
       }
     },

@@ -46,6 +46,8 @@
     "just-safe-set": "^4.0.1",
     "lokijs": "^1.5.12",
     "panzoom": "^9.4.2",
+    "rxdb": "^14.6.0",
+    "rxjs": "^7.8.0",
     "typescript": "4.8",
     "y-indexeddb": "^9.0.9",
     "y-webrtc": "^10.2.3",
