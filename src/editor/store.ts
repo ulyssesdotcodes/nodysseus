@@ -371,7 +371,6 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
         // new WebsocketProvider("wss://ws.nodysseus.io", `nodysseus${rtcroom}_subdocs`, rdoc)
 
         rdoc.getMap().observe(evts => {
-          console.log("rdoc evts", evts)
           evts.keysChanged.forEach(k => {
             requestAnimationFrame(() => updateSyncedGraph(k))
           })
