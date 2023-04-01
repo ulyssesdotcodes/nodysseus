@@ -7,16 +7,17 @@ import { Edge, EdgesIn, Graph, NodysseusNode, NodysseusStore, Store } from "../t
 import { compareObjects, ispromise, mapMaybePromise, wrapPromise } from "../util";
 import { hlib } from "./util";
 import Loki from "lokijs"
-// import {WebrtcProvider} from "y-webrtc";
-import {WebsocketProvider} from "y-websocket";
+import {WebrtcProvider} from "y-webrtc";
 import { YMap } from "yjs/dist/src/internals";
 // import {createRxDatabase} from "rxdb"
 // import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
 import { ConstructorDeclaration } from "typescript";
+import * as Automerge from "@automerge/automerge";
+import * as wasm from "@automerge/automerge"
 
 type SyncedGraph = {
+  remoteProvider: WebrtcProvider,
   // remoteProvider: WebrtcProvider,
-  remoteProvider: WebsocketProvider,
   idb: IndexeddbPersistence,
   graph: Graph,
   undoManager: Y.UndoManager
@@ -203,7 +204,7 @@ export const ydocStore = async ({ persist = false, rtcpolyfill = undefined, upda
 
 
   const updateSyncedGraph = (id: string, graph?: Graph): {graph: undefined} | SyncedGraph | Promise<SyncedGraph> => 
-    wrapPromise(id !== "custom_editor" && rtcroom)
+    wrapPromise(id !== "custom_editor" && id !== "keybindings" && rtcroom)
     .then(rtcroom => wrapPromise(syncedGraphs.get(id)).then(existing => ({existing, rtcroom})).value)
     .then(({existing, rtcroom}) => {
       const syncedGraph: {graph: undefined} | SyncedGraph | Promise<SyncedGraph> = wrapPromise(existing && ymap.has(id) ? existing : Promise.resolve(existing)).then(() => {
@@ -303,7 +304,7 @@ export const ydocStore = async ({ persist = false, rtcpolyfill = undefined, upda
 
                     if(!(existing?.graph && compareObjects(graph, existing.graph))) {
                       syncedGraphs.set(id, {...existing, graph})
-                      nolib.no.runtime.publish('graphchange', {graph}, {...nolib, ...hlib}) 
+                      nolib.no.runtime.publish('graphchange', graph, {...nolib, ...hlib}) 
                     }
 
                     return syncedGraphs.get(id);
@@ -311,31 +312,28 @@ export const ydocStore = async ({ persist = false, rtcpolyfill = undefined, upda
                   const graph = localDoc.getMap().toJSON() as Graph;
                   if(graph.nodes) {
                     graph.edges_in = Object.values(graph.edges).reduce((acc: EdgesIn, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
-                    nolib.no.runtime.publish('graphchange', {graph}, {...nolib, ...hlib}) 
+                    nolib.no.runtime.publish('graphchange', graph, {...nolib, ...hlib}) 
                   }
                   const updatedExisting = syncedGraphs.get(id);
                   return {
                     graph,
                     idb: idb ?? existing?.idb,
                     undoManager: undoManager ?? existing.undoManager,
-                    remoteProvider: rtcroom && (existing?.remoteProvider ?? (updatedExisting as SyncedGraph)?.remoteProvider 
-                      ?? new WebsocketProvider("wss://ws.nodysseus.io", `nodysseus${rtcroom}_${localDoc.guid}`, localDoc, {
-                        awareness: undefined
-
-                     // ?? new WebrtcProvider(`nodysseus${rtcroom}_${localDoc.guid}`, localDoc, {
-                     //  signaling: ["wss://ws.nodysseus.io"],
-                     //  filterBcConns: true,
-                     //  password: undefined,
-                     //  awareness: undefined,
-                     //  maxConns: undefined,
-                     //  peerOpts: {
-                     //    config: {
-                     //      iceServers: [
-                     //        {urls: "stun:ws.nodysseus.io:3478"}
-                     //      ]
-                     //    },
-                     //    wrtc: rtcpolyfill
-                     //  }
+                 remoteProvider: rtcroom && (existing?.remoteProvider ?? (updatedExisting as SyncedGraph)?.remoteProvider 
+                     ?? new WebrtcProvider(`nodysseus${rtcroom}_${localDoc.guid}`, localDoc, {
+                      signaling: ["wss://ws.nodysseus.io"],
+                      filterBcConns: true,
+                      password: undefined,
+                      awareness: undefined,
+                      maxConns: undefined,
+                      peerOpts: {
+                        config: {
+                          iceServers: [
+                            {urls: "stun:ws.nodysseus.io:3478"}
+                          ]
+                        },
+                        wrtc: rtcpolyfill
+                      }
                         }))
                   }
                 }
@@ -360,22 +358,22 @@ export const ydocStore = async ({ persist = false, rtcpolyfill = undefined, upda
       rtcroom = custom_editor_result?.rtcroom || false;
 
       if(rtcroom) {
-        // new WebrtcProvider(`nodysseus${rtcroom}_subdocs`, rdoc, {
-        //   signaling: ["wss://ws.nodysseus.io"],
-        //   password: undefined,
-        //   awareness: undefined,
-        //   filterBcConns: true,
-        //   maxConns: undefined,
-        //   peerOpts: {
-        //     config: {
-        //       iceServers: [
-        //         {urls: "stun:ws.nodysseus.io:3478"}
-        //       ]
-        //     },
-        //     wrtc: rtcpolyfill
-        //   }
-        // })
-        new WebsocketProvider("wss://ws.nodysseus.io", `nodysseus${rtcroom}_subdocs`, rdoc)
+        new WebrtcProvider(`nodysseus${rtcroom}_subdocs`, rdoc, {
+          signaling: ["wss://ws.nodysseus.io"],
+          password: undefined,
+          awareness: undefined,
+          filterBcConns: true,
+          maxConns: undefined,
+          peerOpts: {
+            config: {
+              iceServers: [
+                {urls: "stun:ws.nodysseus.io:3478"}
+              ]
+            },
+            wrtc: rtcpolyfill
+          }
+        })
+        // new WebsocketProvider("wss://ws.nodysseus.io", `nodysseus${rtcroom}_subdocs`, rdoc)
 
         rdoc.getMap().observe(evts => {
           evts.keysChanged.forEach(k => {
@@ -634,3 +632,78 @@ export const yNodyStore = async (rtcpolyfill?: any): Promise<NodysseusStore> => 
 //     }
 //   }
 // }
+
+
+export const automergeStore = async (): Promise<NodysseusStore> => {
+  const statedb = mapStore<{id: string, data: Record<string, any>}>();
+
+  let nodysseusidb;
+
+  await openDB("nodysseus", 3, {
+    upgrade(db, oldVersion, newVersion) {
+      if(oldVersion < 2) {
+        db.createObjectStore("assets")
+      } 
+
+      if(oldVersion < 3) {
+        db.createObjectStore("persist")
+      }
+    }
+  }).then(db => { nodysseusidb = db })
+
+  const refsmap = new Map<string, Automerge.Doc<Graph>>();
+
+  const refs = {
+      get: (id) => refsmap.get(id),
+      set: (id, graph) => refsmap.set(id, Automerge.change(Automerge.init(), doc => {
+        Object.entries(graph).map(e => doc[e[0]] = e[1]);
+      })),
+      delete: (id) => {throw new Error("not implemented")},
+      clear: () => {throw new Error("not implemented")},
+      keys: () => {return [...refsmap.keys()]},
+      undo: () => {throw new Error("not implemented")},
+      redo: () => {throw new Error("not implemented")},
+      add_node: (id, node) => Automerge.change(refs.get(id), doc => {
+        doc.nodes[node.id] = node;
+      }),
+      add_nodes_edges: (id, nodes, edges) => {throw new Error("not implemented")},
+      remove_node: (id, node) => Automerge.change(refsmap.get(id),doc => {
+        delete doc.nodes[node.id];
+      }),
+      add_edge: (id, edge) => Automerge.change(refs.get(id), g => {
+        g.edges[edge.from] = edge; 
+        g.edges_in[edge.to][edge.from] = edge;
+      }),
+      remove_edge: (id, edge) => Automerge.change(refs.get(id), g => {
+        delete g.edges[edge.id]; 
+      }),
+    }
+
+
+
+  if(!refs.get("custom_editor")){
+    refs.set("custom_editor", generic.nodes["simple"])
+  }
+
+  return {
+    refs,
+    parents: mapStore(),
+    state: mapStore(),
+    fns: mapStore(),
+    assets: {
+      get: (id) => nodysseusidb.get('assets', id),
+      set: (id, blob) => nodysseusidb.put('assets', blob, id),
+      delete: id => nodysseusidb.delete('assets', id),
+      clear: () => nodysseusidb.clear('assets'),
+      keys: () => nodysseusidb.getAllKeys('assets')
+    },
+    persist: {
+      get: (id) => nodysseusidb.get('persist', id),
+      set: (id, str) => nodysseusidb.put('persist', str, id),
+      delete: id => nodysseusidb.delete('persist', id),
+      clear: () => nodysseusidb.clear('persist'),
+      keys: () => nodysseusidb.getAllKeys('persist')
+    }
+  }
+}
+
