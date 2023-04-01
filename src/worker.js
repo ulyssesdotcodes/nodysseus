@@ -51,7 +51,13 @@ const processMessage = e => {
 
 onmessage = e => initQueue ? initQueue.push(e) : processMessage(e);
 
-yNodyStore()
+const rtcpoly = {
+  RTCPeerConnection,
+  RTCSessionDescription,
+  RTCIceCandidate
+}
+
+yNodyStore(rtcpoly)
   .then(initStore)
   .then(() => {
     console.log("init queue length", initQueue.length)

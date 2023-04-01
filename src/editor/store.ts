@@ -11,6 +11,7 @@ import {WebrtcProvider} from "y-webrtc";
 import { YMap } from "yjs/dist/src/internals";
 import {createRxDatabase} from "rxdb"
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
+import { ConstructorDeclaration } from "typescript";
 
 type SyncedGraph = {
   remoteProvider: WebrtcProvider,
@@ -96,9 +97,9 @@ const setMapFromGraph = (infomap, data) => {
   })
 }
 
-export const ydocStore = async ({ persist = false, useRtc = false, update = undefined }: {
+export const ydocStore = async ({ persist = false, rtcpolyfill = undefined, update = undefined }: {
   persist: false | string,
-  useRtc: boolean,
+  rtcpolyfill: any,
   update: undefined | ((evt: Y.YMapEvent<Y.Map<Y.Doc>>, id?: string) => void)
 }) => {
   // Stores ydoc (local) and rdoc (remote) so that documents live in the same document tree
@@ -328,7 +329,8 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
                           iceServers: [
                             {urls: "stun:ws.nodysseus.io:3478"}
                           ]
-                        }
+                        },
+                        wrtc: rtcpolyfill
                       }
                         }))
                   }
@@ -365,7 +367,8 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
               iceServers: [
                 {urls: "stun:ws.nodysseus.io:3478"}
               ]
-            }
+            },
+            wrtc: rtcpolyfill
           }
         })
         // new WebsocketProvider("wss://ws.nodysseus.io", `nodysseus${rtcroom}_subdocs`, rdoc)
@@ -440,7 +443,7 @@ export const ydocStore = async ({ persist = false, useRtc = false, update = unde
   }
 }
 
-export const yNodyStore = async (useRtc: boolean = false): Promise<NodysseusStore> => {
+export const yNodyStore = async (rtcpolyfill?: any): Promise<NodysseusStore> => {
   const statedb = mapStore<{id: string, data: Record<string, any>}>();
 
   let nodysseusidb;
@@ -460,7 +463,7 @@ export const yNodyStore = async (useRtc: boolean = false): Promise<NodysseusStor
   return {
     refs: await ydocStore({
       persist: 'refs', 
-      useRtc, 
+      rtcpolyfill, 
       update: (event, id) => {
         // console.log(`update event`)
         // console.log(event);
