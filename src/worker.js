@@ -1,6 +1,11 @@
 import { nolib, NodysseusError, initStore, run } from "./nodysseus";
 import {yNodyStore} from "./editor/store"
 import {isNodysseusError} from "./editor/util"
+import {
+  RTCPeerConnection,
+  RTCSessionDescription,
+  RTCIceCandidate
+} from 'worker-webrtc/worker.js';
 
 function posterror(graph, error){
     if(isNodysseusError(error)) {

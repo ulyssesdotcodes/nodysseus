@@ -12,6 +12,7 @@ import { d3subscription, insert_node_el, link_el, node_el, UpdateSimulation } fr
 import Autocomplete from "./autocomplete"
 import generic from "src/generic";
 import { SimulationNodeDatum } from "d3-force";
+import workerRTC from 'worker-webrtc/window.js';
 
 
 customElements.define("autocomplete-list", Autocomplete)
@@ -423,7 +424,10 @@ const editor = async function(html_id, editingGraph, lib, norun) {
     let worker;
     initStore(nodysseusStore)
     hlib.worker = () => {
-      worker = worker ?? new Worker("./worker.js", {type: "module"})
+      if(!worker) {
+        worker = new Worker("./worker.js", {type: "module"})
+        workerRTC(worker);
+      }
 
       return worker;
     }

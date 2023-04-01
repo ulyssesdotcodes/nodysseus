@@ -10,7 +10,7 @@ import Loki from "lokijs"
 import {WebrtcProvider} from "y-webrtc";
 import { YMap } from "yjs/dist/src/internals";
 import {createRxDatabase} from "rxdb"
-import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
+import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
 
 type SyncedGraph = {
   remoteProvider: WebrtcProvider,
@@ -518,7 +518,7 @@ export const rxdbStore = async (): Promise<NodysseusStore> => {
 
   const refsdb = await createRxDatabase({
     name: 'testdb',
-    storage: getRxStorageDexie()
+    storage: getRxStorageMemory()
   })
 
   const refschema = {
