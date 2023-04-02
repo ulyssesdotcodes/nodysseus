@@ -1,0 +1,48 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`create_fn snapshot 1`] = `
+{
+  "children": [
+    {
+      "children": [
+        {
+          "dom_type": "text_value",
+          "text": undefined,
+        },
+      ],
+      "dom_type": "div",
+      "memo": undefined,
+      "props": {},
+      "value": undefined,
+    },
+    {
+      "children": [
+        {
+          "dom_type": "text_value",
+          "text": "#node-editor-result{z-index: 0;
+left: 0;
+top: 0;}
+target{position: absolute;
+z-index: unset;}
+#node-info-wrapper, #graph-actions{z-index: 64;}
+#node-editor-editor{z-index: 32;
+position: relative;}
+#node-editor-error{z-index: 4;}",
+        },
+      ],
+      "dom_type": "style",
+      "memo": undefined,
+      "props": {
+        "key": "result-view",
+      },
+      "value": undefined,
+    },
+  ],
+  "dom_type": "div",
+  "memo": undefined,
+  "props": {
+    "style": undefined,
+  },
+  "value": undefined,
+}
+`;

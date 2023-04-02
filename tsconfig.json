@@ -7,6 +7,7 @@
     "module": "es2022",
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
       "y-webrtc-ulysses": ["node_modules/y-webrtc-ulysses/src"],
@@ -14,5 +15,5 @@
     }
   },
   "include": ["**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "**/*.test.ts"]
 }

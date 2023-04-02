@@ -1,5 +1,5 @@
 import {describe, expect, test} from "@jest/globals"
-import {initStore, nolib} from "./nodysseus"
+import {initStore, nolib, run} from "./nodysseus"
 import { create_fn } from "./externs"
 import { newEnv, newLib } from "./util"
 
@@ -89,6 +89,12 @@ describe('create_fn', () => {
     // fn.edges_in = Object.values(fn.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
 
     expect((fn as Function)({value: {x: 0}}).x).toEqual(3);
+  })
+
+  test('snapshot', async () => {
+    initStore()
+
+    expect(run({graph: testTapBeat, fn: "out"})).toMatchSnapshot();
   })
 
 })

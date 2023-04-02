@@ -1718,6 +1718,7 @@ const nolib = {
     set: {
       args: ["target: default", "path", "value", "__graph_value"],
       fn: (target, path, value, nodevalue) => {
+        const ispromise = <T>(a: any): a is Promise<T> => a && typeof a.then === 'function' && !isWrappedPromise(a);
         const keys = (nodevalue || path).split(".");
         const check = (o, v, k) =>
           k.length === 1
