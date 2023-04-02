@@ -17,7 +17,9 @@ import { Args, ConstRunnable, Env, isArgs, isEnv, isError, isNodeRef, isNodeScri
         let text = "";
         const _extern_args = {};
 
+
         Object.values(graph.nodes).forEach(n => {
+          const args = util.node_args(lib.data, graph, n.id)
           if(isNodeRef(n) && n.ref === "arg") {
             return;
           }
@@ -63,6 +65,7 @@ import { Args, ConstRunnable, Env, isArgs, isEnv, isError, isNodeRef, isNodeScri
         // for now just assumeing everything is an arg of the last node out
         // TODO: tree walk
         text += `return fn_${runnable.fn}()`//({${[...fninputs].map(rinput => `${rinput.as}: fnargs.${graph.nodes.find(n => n.id === rinput.from).value}`).join(",")}})`
+        console.log(text);
         const fn = new Function("fnargs", "baseArgs", "_extern_args", "import_util", "_lib", text);
 
         return (args: Env | Args | Record<string, unknown>) => fn(args ? isArgs(args) ? (resolve_args(args, lib, {}) as {value: any}).value : isEnv(args) ? (resolve_args(args.data, lib, {}) as {value: any}).value : args : {}, baseArgs, _extern_args, util, lib.data);

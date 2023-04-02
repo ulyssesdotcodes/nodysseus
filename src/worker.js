@@ -40,11 +40,11 @@ const processMessage = e => {
 
         nolib.no.runtime.add_listener('graphupdate', 'worker-graphupdate', (graph) => {
           if(runningGraphs.has(graph.id)) {
-            run(runningGraphs.get(graph.id), undefined, {profile: false});
+            run(runningGraphs.get(graph.id), undefined, {profile: false && performance.now() > 4000});
           }
         });
 
-        run(e.data, undefined, {profile: false && this.performance.now() > 4000});
+        run(e.data, undefined, {profile: false && performance.now() > 4000});
       runningGraphs.set(e.data.graph.id, e.data)
     } catch (e) { console.error(e) }
 }

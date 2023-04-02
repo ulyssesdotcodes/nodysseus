@@ -3,11 +3,13 @@ import {initStore, nolib} from "./nodysseus"
 import { create_fn } from "./externs"
 import { newEnv, newLib } from "./util"
 
+import testTapBeat from "../scripts/testtapbeat.json"
+
 describe('create_fn', () => {
   test('parsing a single script', async () => {
     initStore()
 
-    const fn = create_fn({
+    const graph = {
       __kind: "const",
       fn: 'set',
       graph: {
@@ -20,7 +22,12 @@ describe('create_fn', () => {
       }, 
       env: newEnv(new Map()),
       lib: newLib(nolib)
-    }, newLib(nolib))
+    }
+
+    graph.graph.edges_in = Object.values(graph.graph.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
+
+    const fn = create_fn(graph, newLib(nolib))
+
 
     expect((fn as Function)()).toEqual(2);
   })
@@ -28,7 +35,7 @@ describe('create_fn', () => {
   test('using an argument', async () => {
     initStore()
 
-    const fn = create_fn({
+    const graph = {
       __kind: "const",
       fn: 'ret',
       graph: {
@@ -44,7 +51,11 @@ describe('create_fn', () => {
       },
       env: newEnv(new Map()),
       lib: newLib(nolib)
-    }, newLib(nolib))
+    }
+    graph.graph.edges_in = Object.values(graph.graph.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
+    const fn = create_fn(graph, newLib(nolib))
+
+    // fn.edges_in = Object.values(fn.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
 
     expect((fn as Function)({value: 2})).toEqual(3);
   })
@@ -52,7 +63,7 @@ describe('create_fn', () => {
   test('setting a value', async () => {
     initStore()
 
-    const fn = create_fn({
+    const graph = {
       __kind: "const",
       fn: 'setval',
       graph: {
@@ -70,7 +81,12 @@ describe('create_fn', () => {
       },
       env: newEnv(new Map()),
       lib: newLib(nolib)
-    }, newLib(nolib))
+    }
+
+    graph.graph.edges_in = Object.values(graph.graph.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
+    const fn = create_fn(graph, newLib(nolib))
+
+    // fn.edges_in = Object.values(fn.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
 
     expect((fn as Function)({value: {x: 0}}).x).toEqual(3);
   })

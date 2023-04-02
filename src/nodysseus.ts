@@ -881,7 +881,7 @@ const nolib = {
     wrapPromise,
     runtimefn: (function () {
 
-      const polyfillRequestAnimationFrame = requestAnimationFrame  //typeof window !== "undefined" ? window.requestAnimationFrame : (fn => setTimeout(fn, 16))
+      const hasRequestAnimationFrame = typeof requestAnimationFrame !== "undefined";
 
       Object.values(generic_nodes).forEach(graph => {
         if(isNodeGraph(graph)) {
@@ -945,9 +945,10 @@ const nolib = {
           event === "animationframe" &&
           listeners.size > 0 && // the 1 is for the animationerrors stuff below
           !animationframe &&
-          animationerrors.length == 0
+          animationerrors.length == 0 &&
+          hasRequestAnimationFrame
         ) {
-          animationframe = polyfillRequestAnimationFrame(() => {
+          animationframe = requestAnimationFrame(() => {
             animationframe = false;
             publish("animationframe", undefined, lib, options);
           });
@@ -986,12 +987,8 @@ const nolib = {
                 run(input_fn, args, {...options, lib: mergeLib(input_fn.lib, lib)});
               };
         if (!listeners.has(listener_id)) {
-          if (!prevent_initial_trigger) {
-            polyfillRequestAnimationFrame(() => {
-              if (event_data.has(event)) {
-                fn(event_data.get(event));
-              }
-            });
+          if (!prevent_initial_trigger && event_data.has(event)) {
+            fn(event_data.get(event));
           }
 
           if (graph_id) {
@@ -1003,8 +1000,8 @@ const nolib = {
             graph_id_listeners.set(event, listener_id);
           }
 
-          if (event === "animationframe") {
-            polyfillRequestAnimationFrame(() => publish(event, undefined, lib, options));
+          if (event === "animationframe" && hasRequestAnimationFrame) {
+            requestAnimationFrame(() => publish(event, undefined, lib, options));
           }
         }
 
