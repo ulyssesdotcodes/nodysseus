@@ -2719,7 +2719,6 @@ const generic = {
     },
     "input_value": {
     "id": "input_value",
-    "out": "out",
     "nodes": {
       "out": {
         "id": "out",
@@ -2746,8 +2745,8 @@ const generic = {
       },
       "qwz3ftj": {
         "id": "qwz3ftj",
-        "ref": "script",
-        "value": "return typeof object !== 'object' || Array.isArray(object) || Object.getPrototypeOf(object) === Object.prototype ? JSON.stringify(object) : Object.getPrototypeOf(object) ? Object.getPrototypeOf(object).constructor.name : `${object}`"
+        "value": "\nreturn JSON.stringify(object, (key, value) =>  typeof value === 'object' && value && !Array.isArray(value) && Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) ? Object.getPrototypeOf(value).constructor.name : value, 2)",
+        "ref": "script"
       },
       "5a6pljw": {
         "id": "5a6pljw",
@@ -2783,6 +2782,10 @@ const generic = {
       },
       "args": {
         "id": "args"
+      },
+      "imj1mux": {
+        "id": "imj1mux",
+        "value": "true"
       }
     },
     "edges": {
@@ -2850,6 +2853,11 @@ const generic = {
         "from": "rg59xbc",
         "to": "1c4vbjw",
         "as": "run"
+      },
+      "imj1mux": {
+        "from": "imj1mux",
+        "to": "9ukj84k",
+        "as": "publish"
       }
     },
     "edges_in": {
@@ -2933,8 +2941,16 @@ const generic = {
           "to": "1c4vbjw",
           "as": "run"
         }
+      },
+      "9ukj84k": {
+        "imj1mux": {
+          "from": "imj1mux",
+          "to": "9ukj84k",
+          "as": "publish"
+        }
       }
-    }
+    },
+    "out": "out"
   },
     "event_subscriber": {
       "id": "event_subscriber",
