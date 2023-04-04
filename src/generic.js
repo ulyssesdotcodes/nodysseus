@@ -2719,6 +2719,7 @@ const generic = {
     },
     "input_value": {
     "id": "input_value",
+    "out": "out",
     "nodes": {
       "out": {
         "id": "out",
@@ -2733,29 +2734,15 @@ const generic = {
         "id": "4d8qcss",
         "ref": "html_text"
       },
-      "rpys4rr": {
-        "id": "rpys4rr",
-        "value": "value",
-        "ref": "arg"
-      },
       "1znvqbi": {
         "id": "1znvqbi",
         "value": "_stored.value",
         "ref": "arg"
       },
-      "qwz3ftj": {
-        "id": "qwz3ftj",
-        "value": "\nreturn JSON.stringify(object, (key, value) =>  typeof value === 'object' && value && !Array.isArray(value) && Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) ? Object.getPrototypeOf(value).constructor.name : value, 2)",
-        "ref": "script"
-      },
       "5a6pljw": {
         "id": "5a6pljw",
         "value": "pre",
         "ref": "html_element"
-      },
-      "17pcf8z": {
-        "id": "17pcf8z",
-        "value": "2"
       },
       "hm2lkjh": {
         "id": "hm2lkjh"
@@ -2783,9 +2770,37 @@ const generic = {
       "args": {
         "id": "args"
       },
-      "imj1mux": {
-        "id": "imj1mux",
+      "3t822sr": {
+        "id": "3t822sr",
+        "ref": "refval"
+      },
+      "punkxje": {
+        "id": "punkxje",
         "value": "true"
+      },
+      "psog7hu": {
+        "id": "psog7hu",
+        "value": "\nreturn JSON.stringify(object, (key, value) =>  typeof value === 'object' && value && !Array.isArray(value) && Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) ? Object.getPrototypeOf(value).constructor.name : value, 2)",
+        "ref": "script"
+      },
+      "a8nnxeo": {
+        "id": "a8nnxeo",
+        "value": "2"
+      },
+      "xm523y9": {
+        "id": "xm523y9",
+        "value": "value",
+        "ref": "arg"
+      },
+      "bi1dbsb": {
+        "id": "bi1dbsb",
+        "value": "return value",
+        "ref": "script"
+      },
+      "3jphobh": {
+        "id": "3jphobh",
+        "value": "value",
+        "ref": "arg"
       }
     },
     "edges": {
@@ -2806,23 +2821,8 @@ const generic = {
       },
       "1znvqbi": {
         "from": "1znvqbi",
-        "to": "qwz3ftj",
-        "as": "object"
-      },
-      "17pcf8z": {
-        "from": "17pcf8z",
-        "to": "qwz3ftj",
-        "as": "spacer"
-      },
-      "qwz3ftj": {
-        "from": "qwz3ftj",
         "to": "4d8qcss",
         "as": "text"
-      },
-      "rpys4rr": {
-        "from": "rpys4rr",
-        "to": "wo0j48j",
-        "as": "value"
       },
       "hm2lkjh": {
         "from": "hm2lkjh",
@@ -2836,8 +2836,8 @@ const generic = {
       },
       "1c4vbjw": {
         "from": "1c4vbjw",
-        "to": "out",
-        "as": "value"
+        "to": "bi1dbsb",
+        "as": "arg0"
       },
       "dqau7vz": {
         "from": "dqau7vz",
@@ -2854,10 +2854,40 @@ const generic = {
         "to": "1c4vbjw",
         "as": "run"
       },
-      "imj1mux": {
-        "from": "imj1mux",
-        "to": "9ukj84k",
+      "3t822sr": {
+        "from": "3t822sr",
+        "to": "hm2lkjh",
+        "as": "_json"
+      },
+      "punkxje": {
+        "from": "punkxje",
+        "to": "3t822sr",
         "as": "publish"
+      },
+      "xm523y9": {
+        "from": "xm523y9",
+        "to": "psog7hu",
+        "as": "object"
+      },
+      "a8nnxeo": {
+        "from": "a8nnxeo",
+        "to": "psog7hu",
+        "as": "spacer"
+      },
+      "psog7hu": {
+        "from": "psog7hu",
+        "to": "wo0j48j",
+        "as": "value"
+      },
+      "bi1dbsb": {
+        "from": "bi1dbsb",
+        "to": "out",
+        "as": "value"
+      },
+      "3jphobh": {
+        "from": "3jphobh",
+        "to": "bi1dbsb",
+        "as": "value"
       }
     },
     "edges_in": {
@@ -2872,8 +2902,8 @@ const generic = {
           "to": "out",
           "as": "args"
         },
-        "1c4vbjw": {
-          "from": "1c4vbjw",
+        "bi1dbsb": {
+          "from": "bi1dbsb",
           "to": "out",
           "as": "value"
         }
@@ -2892,30 +2922,11 @@ const generic = {
           "as": "children"
         }
       },
-      "qwz3ftj": {
+      "4d8qcss": {
         "1znvqbi": {
           "from": "1znvqbi",
-          "to": "qwz3ftj",
-          "as": "object"
-        },
-        "17pcf8z": {
-          "from": "17pcf8z",
-          "to": "qwz3ftj",
-          "as": "spacer"
-        }
-      },
-      "4d8qcss": {
-        "qwz3ftj": {
-          "from": "qwz3ftj",
           "to": "4d8qcss",
           "as": "text"
-        }
-      },
-      "wo0j48j": {
-        "rpys4rr": {
-          "from": "rpys4rr",
-          "to": "wo0j48j",
-          "as": "value"
         }
       },
       "hm2lkjh": {
@@ -2923,6 +2934,23 @@ const generic = {
           "from": "9ukj84k",
           "to": "hm2lkjh",
           "as": "_stored"
+        },
+        "3t822sr": {
+          "from": "3t822sr",
+          "to": "hm2lkjh",
+          "as": "_json"
+        }
+      },
+      "bi1dbsb": {
+        "1c4vbjw": {
+          "from": "1c4vbjw",
+          "to": "bi1dbsb",
+          "as": "arg0"
+        },
+        "3jphobh": {
+          "from": "3jphobh",
+          "to": "bi1dbsb",
+          "as": "value"
         }
       },
       "1c4vbjw": {
@@ -2942,15 +2970,33 @@ const generic = {
           "as": "run"
         }
       },
-      "9ukj84k": {
-        "imj1mux": {
-          "from": "imj1mux",
-          "to": "9ukj84k",
+      "3t822sr": {
+        "punkxje": {
+          "from": "punkxje",
+          "to": "3t822sr",
           "as": "publish"
         }
+      },
+      "psog7hu": {
+        "xm523y9": {
+          "from": "xm523y9",
+          "to": "psog7hu",
+          "as": "object"
+        },
+        "a8nnxeo": {
+          "from": "a8nnxeo",
+          "to": "psog7hu",
+          "as": "spacer"
+        }
+      },
+      "wo0j48j": {
+        "psog7hu": {
+          "from": "psog7hu",
+          "to": "wo0j48j",
+          "as": "value"
+        }
       }
-    },
-    "out": "out"
+    }
   },
     "event_subscriber": {
       "id": "event_subscriber",
