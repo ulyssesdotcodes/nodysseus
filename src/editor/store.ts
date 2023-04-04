@@ -303,7 +303,7 @@ export const ydocStore = async ({ persist = false, rtcpolyfill = undefined, upda
 
                     if(!(existing?.graph && compareObjects(graph, existing.graph))) {
                       syncedGraphs.set(id, {...existing, graph})
-                      nolib.no.runtime.publish('graphchange', graph, {...nolib, ...hlib}) 
+                      nolib.no.runtime.publish('graphchange', {graph}, {...nolib, ...hlib}) 
                     }
 
                     return syncedGraphs.get(id);
@@ -311,7 +311,7 @@ export const ydocStore = async ({ persist = false, rtcpolyfill = undefined, upda
                   const graph = localDoc.getMap().toJSON() as Graph;
                   if(graph.nodes) {
                     graph.edges_in = Object.values(graph.edges).reduce((acc: EdgesIn, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
-                    nolib.no.runtime.publish('graphchange', graph, {...nolib, ...hlib}) 
+                    nolib.no.runtime.publish('graphchange', {graph}, {...nolib, ...hlib}) 
                   }
                   const updatedExisting = syncedGraphs.get(id);
                   return {

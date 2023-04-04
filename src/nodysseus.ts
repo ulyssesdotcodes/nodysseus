@@ -1,6 +1,6 @@
 import set from "just-safe-set";
 import loki from "lokijs";
-import { ancestor_graph, ispromise, isWrappedPromise, mapMaybePromise, node_args, WrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node, runnableId, compareObjects } from "./util"
+import { ancestor_graph, ispromise, isWrappedPromise, mapMaybePromise, node_args, WrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node, runnableId, compareObjects, descendantGraph } from "./util"
 import { isNodeGraph, Graph, LokiT, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike, EdgesIn } from "./types"
 import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util"
 import generic from "./generic.js";
@@ -478,8 +478,8 @@ const resolve_args = (data: Args, lib: Lib, options: RunOptions): Result | Promi
 
 }
 
-const node_data = (nodeArgs, graphArgs, lib, options) => {
-  return nodeArgs.size === 0 ? lib.data.no.of(undefined) : resolve_args(nodeArgs, lib, options);
+const node_data = (nodeArgs, graphArgs: Env, lib, options) => {
+  return nodeArgs.size === 0 || graphArgs._output === "display" ? lib.data.no.of(undefined) : resolve_args(nodeArgs, lib, options);
 }
 
 const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, parameters: ConstRunnable, lib, options: RunOptions): FunctorRunnable | Promise<FunctorRunnable> => {
@@ -911,7 +911,7 @@ const nolib = {
           event = event.substring(3);
         } else if(broadcast && event !== "noderun" && event !== "animationframe" && event !== "show_all") {
           try {
-            if(typeof window !== "undefined" && !event.startsWith("graph")) {
+            if(typeof window !== "undefined") {
               eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data });
             } else if (event === "grapherror") {
               eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data: {message: data.message, node_id: data.node_id, stack: data.stack } });
@@ -1066,12 +1066,13 @@ const nolib = {
         }
       };
 
-      const change_graph = (graph: Graph, lib: Lib, addToStore = true) => {
+      const change_graph = (graph: Graph, lib: Lib, changedNodes: Array<string>, addToStore = true) => {
         const parent = get_parentest(graph);
         if (parent) {
           (lib.data ?? lib).no.runtime.update_graph(parent, lib);
         } else {
-          publish("graphchange", graph, lib);
+          const startNode = changedNodes?.[0];
+          publish("graphchange", {graph, dirtyNodes: startNode && Object.keys(descendantGraph(startNode, graph, lib).nodes)}, lib);
           publish("graphupdate", graph, lib);
         }
       };
@@ -1231,7 +1232,7 @@ const nolib = {
           } else if (typeof add === "object") {
             nodysseus.refs.add_edge(graphId, add)
           }
-          change_graph(nodysseus.refs.get(graphId) as Graph, lib);
+          change_graph(nodysseus.refs.get(graphId) as Graph, lib, add.flatMap(e => [e.from, e.to]));
         },
         add_node: (graph: Graph, node: NodysseusNode, lib: Lib) => {
           if (!(node && typeof node === "object" && node.id)) {
@@ -1249,12 +1250,12 @@ const nolib = {
           // delete_cache(graph)
           const graphId = typeof graph === "string" ? graph : graph.id;
           nodysseus.refs.add_node(graphId, node)
-          change_graph(nodysseus.refs.get(graphId) as Graph, lib);
+          change_graph(nodysseus.refs.get(graphId) as Graph, lib, [node.id]);
         },
         add_nodes_edges: (graph, nodes: [NodysseusNode], edges: [Edge], remove_edges: [Edge], remove_nodes: [NodysseusNode], lib: Lib) => {
           const graphId = typeof graph === "string" ? graph : graph.id;
           nodysseus.refs.add_nodes_edges(graphId, nodes, edges, remove_edges, remove_nodes)
-          change_graph(nodysseus.refs.get(graphId) as Graph, lib);
+          change_graph(nodysseus.refs.get(graphId) as Graph, lib, nodes.concat(remove_nodes).map(n => n.id).concat(edges.concat(remove_edges).flatMap(e => [e.to, e.from])));
         },
         delete_node: (graph: Graph, id, lib: Lib, changeEdges=true) => {
           wrapPromise(get_graph(graph)).then(graph => {
@@ -1286,7 +1287,7 @@ const nolib = {
             if(changeEdges !== undefined) {
               child_edges.map(e => nodysseus.refs.remove_edge(graphId, e))
               new_child_edges.map(e => nodysseus.refs.add_edge(graphId, e))
-              change_graph(nodysseus.refs.get(graphId) as Graph, lib);
+              change_graph(nodysseus.refs.get(graphId) as Graph, lib, [id]);
             }
 
 
@@ -1325,7 +1326,8 @@ const nolib = {
         },
         undo: (id: string) => nodysseus.refs.undo && nodysseus.refs.undo(id),
         redo: (id: string) => nodysseus.refs.redo && nodysseus.refs.redo(id),
-        store: nodysseus
+        store: nodysseus,
+        ancestor_graph
       };
     }),
   },

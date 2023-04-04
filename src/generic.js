@@ -1492,13 +1492,13 @@ const generic = {
       },
       "pred_cache_state": {
         "id": "pred_cache_state",
-        "value": "const docache = _reset || (recache === undefined ? (cachevaluestate === undefined || cachevaluestate === null) : (recache !== false && (typeof recache !== 'object' || Object.keys(recache).length > 0)))\n\nreturn docache;",
+        "value": "const docache = recache === undefined ? (cachevaluestate === undefined || cachevaluestate === null) : (recache !== false && (typeof recache !== 'object' || Object.keys(recache).length > 0))\n\nreturn docache;",
         "ref": "script"
       },
       "ap_cache_value": {
         "id": "ap_cache_value",
-        "ref": "arg",
-        "value": "value: default"
+        "value": "value: default",
+        "ref": "arg"
       },
       "ap_cache_args": {
         "id": "ap_cache_args"
@@ -1523,10 +1523,6 @@ const generic = {
       "cache_return_args": {
         "id": "cache_return_args"
       },
-      "cache_return": {
-        "id": "cache_return",
-        "ref": "return"
-      },
       "recache_button_fn": {
         "id": "recache_button_fn",
         "value": "_cachevalue.set",
@@ -1536,9 +1532,7 @@ const generic = {
         "id": "recache_button_fn_args"
       },
       "recache_button_fn_value": {
-        "id": "recache_button_fn_value",
-        "ref": "arg",
-        "value": "value"
+        "id": "recache_button_fn_value"
       },
       "recache_button_ap": {
         "id": "recache_button_ap",
@@ -1551,7 +1545,7 @@ const generic = {
       },
       "out": {
         "id": "out",
-        "name": "graphchangecache",
+        "name": "graphchangecache_ancestor",
         "ref": "return"
       },
       "fy9ee3e": {
@@ -1559,23 +1553,18 @@ const generic = {
       },
       "7rk5v07": {
         "id": "7rk5v07",
-        "ref": "ap"
+        "ref": "runnable"
       },
       "gecwhp1": {
         "id": "gecwhp1",
-        "value": "_reset.set",
+        "value": "_cachevalue.set",
         "ref": "arg"
       },
       "uwfswa7": {
         "id": "uwfswa7"
       },
       "eh9nyb7": {
-        "id": "eh9nyb7",
-        "value": "true"
-      },
-      "wx3yoem": {
-        "id": "wx3yoem",
-        "ref": "state"
+        "id": "eh9nyb7"
       },
       "h56r87n": {
         "id": "h56r87n",
@@ -1595,28 +1584,111 @@ const generic = {
         "value": "0",
         "ref": "get"
       },
-      "w7nd0t8": {
-        "id": "w7nd0t8",
+      "hznmgir": {
+        "id": "hznmgir",
+        "ref": "array"
+      },
+      "jmvzfm1": {
+        "id": "jmvzfm1"
+      },
+      "99ld3d7": {
+        "id": "99ld3d7"
+      },
+      "tebglqx": {
+        "id": "tebglqx",
+        "ref": "runnable"
+      },
+      "2nhroiv": {
+        "id": "2nhroiv"
+      },
+      "dtfbfdm": {
+        "id": "dtfbfdm"
+      },
+      "bxacisq": {
+        "id": "bxacisq",
+        "value": "dirtyNodes",
+        "ref": "arg"
+      },
+      "ju4ukmm": {
+        "id": "ju4ukmm",
+        "ref": "runnable"
+      },
+      "j0kbk5p": {
+        "id": "j0kbk5p",
+        "value": "dirtyNodes",
+        "ref": "arg"
+      },
+      "sl7nd5i": {
+        "id": "sl7nd5i",
+        "value": "dirty",
+        "ref": "log"
+      },
+      "h0dsw4x": {
+        "id": "h0dsw4x"
+      },
+      "mz04kx8": {
+        "id": "mz04kx8"
+      },
+      "o8a1a0o": {
+        "id": "o8a1a0o",
+        "value": "dirtyNodes",
+        "ref": "arg"
+      },
+      "zan0upq": {
+        "id": "zan0upq",
+        "value": "const ret =  dirtyNodes && !dirtyNodes.every(n => !graphid.includes(n));\nreturn ret;",
+        "ref": "script"
+      },
+      "jonwhso": {
+        "id": "jonwhso",
+        "value": "__graphid",
+        "ref": "arg"
+      },
+      "ockphl3": {
+        "id": "ockphl3",
+        "ref": "if"
+      },
+      "ehb5iz5": {
+        "id": "ehb5iz5",
         "ref": "ap"
       },
-      "mixjulh": {
-        "id": "mixjulh",
+      "4w9hxjv": {
+        "id": "4w9hxjv",
+        "value": "_cachevalue.set",
+        "ref": "arg"
+      },
+      "fr8wvzt": {
+        "id": "fr8wvzt",
         "value": "true"
       },
-      "5647gh5": {
-        "id": "5647gh5"
+      "affc4bs": {
+        "id": "affc4bs"
       },
-      "atqq2qu": {
-        "id": "atqq2qu",
-        "value": "false"
+      "y4c3klu": {
+        "id": "y4c3klu"
       },
-      "wa4gr84": {
-        "id": "wa4gr84",
-        "value": "_reset.set",
-        "ref": "arg"
+      "sc3gf99": {
+        "id": "sc3gf99"
+      },
+      "juhzde2": {
+        "id": "juhzde2"
+      },
+      "g7fudn7": {
+        "id": "g7fudn7"
+      },
+      "z5jrs71": {
+        "id": "z5jrs71"
+      },
+      "crkuagp": {
+        "id": "crkuagp"
       }
     },
     "edges": {
+      "hznmgir": {
+        "from": "hznmgir",
+        "to": "7rk5v07",
+        "as": "fn"
+      },
       "ap_cache_value": {
         "from": "ap_cache_value",
         "to": "ap_cache_args",
@@ -1659,7 +1731,7 @@ const generic = {
       },
       "if_cache_state": {
         "from": "if_cache_state",
-        "to": "cache_return",
+        "to": "out",
         "as": "value"
       },
       "cache_state": {
@@ -1671,11 +1743,6 @@ const generic = {
         "from": "cache_return_args",
         "to": "out",
         "as": "args"
-      },
-      "cache_return": {
-        "from": "cache_return",
-        "to": "out",
-        "as": "value"
       },
       "recache_button_fn_value": {
         "from": "recache_button_fn_value",
@@ -1710,12 +1777,12 @@ const generic = {
       "7rk5v07": {
         "from": "7rk5v07",
         "to": "fy9ee3e",
-        "as": "graphchange"
+        "as": "_graphchange"
       },
       "gecwhp1": {
         "from": "gecwhp1",
-        "to": "7rk5v07",
-        "as": "fn"
+        "to": "hznmgir",
+        "as": "arg0"
       },
       "uwfswa7": {
         "from": "uwfswa7",
@@ -1725,12 +1792,7 @@ const generic = {
       "eh9nyb7": {
         "from": "eh9nyb7",
         "to": "uwfswa7",
-        "as": "value"
-      },
-      "wx3yoem": {
-        "from": "wx3yoem",
-        "to": "cache_return_args",
-        "as": "_reset"
+        "as": "data"
       },
       "h56r87n": {
         "from": "h56r87n",
@@ -1752,33 +1814,389 @@ const generic = {
         "to": "if_cache_state",
         "as": "true"
       },
-      "w7nd0t8": {
-        "from": "w7nd0t8",
-        "to": "kqnga6d",
+      "2nhroiv": {
+        "from": "2nhroiv",
+        "to": "tebglqx",
+        "as": "parameters"
+      },
+      "dtfbfdm": {
+        "from": "dtfbfdm",
+        "to": "2nhroiv",
+        "as": "dirtyNodes"
+      },
+      "bxacisq": {
+        "from": "bxacisq",
+        "to": "zan0upq",
+        "as": "dirtyNodes"
+      },
+      "tebglqx": {
+        "from": "tebglqx",
+        "to": "fy9ee3e",
+        "as": "graphchange"
+      },
+      "ju4ukmm": {
+        "from": "ju4ukmm",
+        "to": "hznmgir",
         "as": "arg1"
       },
-      "mixjulh": {
-        "from": "mixjulh",
-        "to": "w7nd0t8",
-        "as": "run"
-      },
-      "5647gh5": {
-        "from": "5647gh5",
-        "to": "w7nd0t8",
-        "as": "args"
-      },
-      "atqq2qu": {
-        "from": "atqq2qu",
-        "to": "5647gh5",
+      "j0kbk5p": {
+        "from": "j0kbk5p",
+        "to": "sl7nd5i",
         "as": "value"
       },
-      "wa4gr84": {
-        "from": "wa4gr84",
-        "to": "w7nd0t8",
+      "sl7nd5i": {
+        "from": "sl7nd5i",
+        "to": "ju4ukmm",
         "as": "fn"
+      },
+      "h0dsw4x": {
+        "from": "h0dsw4x",
+        "to": "ju4ukmm",
+        "as": "parameters"
+      },
+      "mz04kx8": {
+        "from": "mz04kx8",
+        "to": "h0dsw4x",
+        "as": "dirtyNodes"
+      },
+      "o8a1a0o": {
+        "from": "o8a1a0o",
+        "to": "uwfswa7",
+        "as": "dirtyNodes"
+      },
+      "zan0upq": {
+        "from": "zan0upq",
+        "to": "ockphl3",
+        "as": "pred"
+      },
+      "jonwhso": {
+        "from": "jonwhso",
+        "to": "zan0upq",
+        "as": "graphid"
+      },
+      "ockphl3": {
+        "from": "ockphl3",
+        "to": "tebglqx",
+        "as": "fn"
+      },
+      "ehb5iz5": {
+        "from": "ehb5iz5",
+        "to": "ockphl3",
+        "as": "true"
+      },
+      "4w9hxjv": {
+        "from": "4w9hxjv",
+        "to": "ehb5iz5",
+        "as": "fn"
+      },
+      "fr8wvzt": {
+        "from": "fr8wvzt",
+        "to": "ehb5iz5",
+        "as": "run"
+      },
+      "affc4bs": {
+        "from": "affc4bs",
+        "to": "ehb5iz5",
+        "as": "args"
+      },
+      "y4c3klu": {
+        "from": "y4c3klu",
+        "to": "affc4bs",
+        "as": "value"
+      },
+      "sc3gf99": {
+        "from": "sc3gf99",
+        "to": "2nhroiv",
+        "as": "data"
+      },
+      "juhzde2": {
+        "from": "juhzde2",
+        "to": "2nhroiv",
+        "as": "graph"
+      }
+    },
+    "edges_in": {
+      "7rk5v07": {
+        "hznmgir": {
+          "from": "hznmgir",
+          "to": "7rk5v07",
+          "as": "fn"
+        },
+        "uwfswa7": {
+          "from": "uwfswa7",
+          "to": "7rk5v07",
+          "as": "args"
+        }
+      },
+      "ap_cache_args": {
+        "ap_cache_value": {
+          "from": "ap_cache_value",
+          "to": "ap_cache_args",
+          "as": "value"
+        }
+      },
+      "cache": {
+        "ap_cache_args": {
+          "from": "ap_cache_args",
+          "to": "cache",
+          "as": "args"
+        },
+        "ap_cache_fn": {
+          "from": "ap_cache_fn",
+          "to": "cache",
+          "as": "fn"
+        },
+        "xbhq0f0": {
+          "from": "xbhq0f0",
+          "to": "cache",
+          "as": "run"
+        }
+      },
+      "pred_cache_state": {
+        "pred_cachevalue_state": {
+          "from": "pred_cachevalue_state",
+          "to": "pred_cache_state",
+          "as": "cachevaluestate"
+        },
+        "recache": {
+          "from": "recache",
+          "to": "pred_cache_state",
+          "as": "recache"
+        },
+        "h56r87n": {
+          "from": "h56r87n",
+          "to": "pred_cache_state",
+          "as": "_reset"
+        }
+      },
+      "if_cache_state": {
+        "cachevalue_state": {
+          "from": "cachevalue_state",
+          "to": "if_cache_state",
+          "as": "false"
+        },
+        "pred_cache_state": {
+          "from": "pred_cache_state",
+          "to": "if_cache_state",
+          "as": "pred"
+        },
+        "9w2cqoc": {
+          "from": "9w2cqoc",
+          "to": "if_cache_state",
+          "as": "true"
+        }
+      },
+      "kqnga6d": {
+        "cache": {
+          "from": "cache",
+          "to": "kqnga6d",
+          "as": "arg0"
+        }
+      },
+      "out": {
+        "if_cache_state": {
+          "from": "if_cache_state",
+          "to": "out",
+          "as": "value"
+        },
+        "cache_return_args": {
+          "from": "cache_return_args",
+          "to": "out",
+          "as": "args"
+        },
+        "recache_button": {
+          "from": "recache_button",
+          "to": "out",
+          "as": "display"
+        },
+        "fy9ee3e": {
+          "from": "fy9ee3e",
+          "to": "out",
+          "as": "subscribe"
+        }
+      },
+      "cache_return_args": {
+        "cache_state": {
+          "from": "cache_state",
+          "to": "cache_return_args",
+          "as": "_cachevalue"
+        }
+      },
+      "recache_button_fn_args": {
+        "recache_button_fn_value": {
+          "from": "recache_button_fn_value",
+          "to": "recache_button_fn_args",
+          "as": "value"
+        }
+      },
+      "recache_button_ap": {
+        "recache_button_fn_args": {
+          "from": "recache_button_fn_args",
+          "to": "recache_button_ap",
+          "as": "args"
+        },
+        "recache_button_fn": {
+          "from": "recache_button_fn",
+          "to": "recache_button_ap",
+          "as": "fn"
+        }
+      },
+      "recache_button": {
+        "recache_button_ap": {
+          "from": "recache_button_ap",
+          "to": "recache_button",
+          "as": "ontap"
+        }
+      },
+      "fy9ee3e": {
+        "7rk5v07": {
+          "from": "7rk5v07",
+          "to": "fy9ee3e",
+          "as": "_graphchange"
+        },
+        "tebglqx": {
+          "from": "tebglqx",
+          "to": "fy9ee3e",
+          "as": "graphchange"
+        }
+      },
+      "hznmgir": {
+        "gecwhp1": {
+          "from": "gecwhp1",
+          "to": "hznmgir",
+          "as": "arg0"
+        },
+        "ju4ukmm": {
+          "from": "ju4ukmm",
+          "to": "hznmgir",
+          "as": "arg1"
+        }
+      },
+      "uwfswa7": {
+        "eh9nyb7": {
+          "from": "eh9nyb7",
+          "to": "uwfswa7",
+          "as": "data"
+        },
+        "o8a1a0o": {
+          "from": "o8a1a0o",
+          "to": "uwfswa7",
+          "as": "dirtyNodes"
+        }
+      },
+      "9w2cqoc": {
+        "kqnga6d": {
+          "from": "kqnga6d",
+          "to": "9w2cqoc",
+          "as": "target"
+        }
+      },
+      "tebglqx": {
+        "2nhroiv": {
+          "from": "2nhroiv",
+          "to": "tebglqx",
+          "as": "parameters"
+        },
+        "ockphl3": {
+          "from": "ockphl3",
+          "to": "tebglqx",
+          "as": "fn"
+        }
+      },
+      "2nhroiv": {
+        "dtfbfdm": {
+          "from": "dtfbfdm",
+          "to": "2nhroiv",
+          "as": "dirtyNodes"
+        },
+        "sc3gf99": {
+          "from": "sc3gf99",
+          "to": "2nhroiv",
+          "as": "data"
+        },
+        "juhzde2": {
+          "from": "juhzde2",
+          "to": "2nhroiv",
+          "as": "graph"
+        }
+      },
+      "zan0upq": {
+        "bxacisq": {
+          "from": "bxacisq",
+          "to": "zan0upq",
+          "as": "dirtyNodes"
+        },
+        "jonwhso": {
+          "from": "jonwhso",
+          "to": "zan0upq",
+          "as": "graphid"
+        }
+      },
+      "sl7nd5i": {
+        "j0kbk5p": {
+          "from": "j0kbk5p",
+          "to": "sl7nd5i",
+          "as": "value"
+        }
+      },
+      "ju4ukmm": {
+        "sl7nd5i": {
+          "from": "sl7nd5i",
+          "to": "ju4ukmm",
+          "as": "fn"
+        },
+        "h0dsw4x": {
+          "from": "h0dsw4x",
+          "to": "ju4ukmm",
+          "as": "parameters"
+        }
+      },
+      "h0dsw4x": {
+        "mz04kx8": {
+          "from": "mz04kx8",
+          "to": "h0dsw4x",
+          "as": "dirtyNodes"
+        }
+      },
+      "ockphl3": {
+        "zan0upq": {
+          "from": "zan0upq",
+          "to": "ockphl3",
+          "as": "pred"
+        },
+        "ehb5iz5": {
+          "from": "ehb5iz5",
+          "to": "ockphl3",
+          "as": "true"
+        }
+      },
+      "ehb5iz5": {
+        "4w9hxjv": {
+          "from": "4w9hxjv",
+          "to": "ehb5iz5",
+          "as": "fn"
+        },
+        "fr8wvzt": {
+          "from": "fr8wvzt",
+          "to": "ehb5iz5",
+          "as": "run"
+        },
+        "affc4bs": {
+          "from": "affc4bs",
+          "to": "ehb5iz5",
+          "as": "args"
+        }
+      },
+      "affc4bs": {
+        "y4c3klu": {
+          "from": "y4c3klu",
+          "to": "affc4bs",
+          "as": "value"
+        }
       }
     }
-  },
+  }
+    ,
     "cache": {
     "id": "cache",
     "out": "out",

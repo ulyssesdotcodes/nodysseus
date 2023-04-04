@@ -220,6 +220,16 @@ export const ancestor_graph = (node_id: string, from_graph: Graph, nolib: Record
     return graph;
 }
 
+export const descendantGraph = (nodeId: string, graph: Graph, nolib: Record<string, any>): Graph => {
+  const outGraph: Graph = {...graph, nodes: {}};
+  while(nodeId) {
+    outGraph.nodes[nodeId] = graph.nodes[nodeId];
+    nodeId = graph.edges[nodeId]?.to;
+  }
+
+  return outGraph;
+}
+
 export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Array<NodeArg> => {
     const node = nolib.no.runtime.get_node(graph, node_id);
     if(!node) {

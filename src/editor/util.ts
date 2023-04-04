@@ -546,7 +546,7 @@ export const result_subscription = (dispatch, {editingGraphId, displayGraphId, n
 
 export const graph_subscription = (dispatch, props) => {
     let animframe: false | number = false;
-    const listener = (graph) => {
+    const listener = ({graph}) => {
         if(props.editingGraphId === graph.id) {
           dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
           if(animframe){
