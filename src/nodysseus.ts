@@ -1389,7 +1389,7 @@ const nolib = {
       fn: (fn, array, lib, options) =>
         wrapPromise(run_runnable(array, lib, undefined, options))
           .then(arr => isValue(arr) ? arr.value : arr)
-          .then(arr => Array.isArray(arr) 
+          .then(arr => Array.isArray(arr) || typeof arr?.map === "function"
             ? wrapPromise(run_runnable(fn, lib, undefined, options))
               .then(fnr => isError(fnr) ? fnr : fnr.value)
               .then(fnr => isApFunctorLike(fnr)
