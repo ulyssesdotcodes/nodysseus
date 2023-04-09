@@ -63,7 +63,6 @@ const show_error = (e, t) => ({
     props: {}, 
     children: (Array.isArray(e) ? e : [e]).flatMap(e => [
         {dom_type: 'text_value', text: `Error: ${e.message}`}, 
-        {dom_type: 'pre', props: {}, children: [{dom_type: 'text_value', text: e.stack}]},
         t && {dom_type: 'pre', props: {}, children: [{dom_type: 'text_value', text: t}]},
     ].filter(c => c))
 })
