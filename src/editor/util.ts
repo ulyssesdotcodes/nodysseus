@@ -676,7 +676,7 @@ export const bfs = (graph: Graph, fn) => {
 export const calculateLevels = (nodes: Array<d3Node>, links: Array<d3Link>, graph: Graph, selected: string): Levels => {
     const find_childest = n => {
         const e = hlib.no.runtime.get_edge_out(graph, n);
-        if (e) {
+        if (e && !ispromise(e)) {
             return find_childest(e.to);
         } else {
             return n;
