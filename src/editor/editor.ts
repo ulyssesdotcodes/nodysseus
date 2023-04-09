@@ -61,8 +61,8 @@ const search_el = ({search}) => ha.h('div', {id: "search"}, [
 const show_error = (e, t) => ({
     dom_type: 'div', 
     props: {}, 
-    children: (Array.isArray(e) ? e : [e]).flatMap(e => [
-        {dom_type: 'text_value', text: `Error: ${e.message}\n\n`}, 
+    children: (Array.isArray(e) ? [...(new Set(e.map(se => se.message).filter(em => em)))] : [e.message]).flatMap(e => [
+        {dom_type: 'text_value', text: `${e}\n\n`}, 
         t && {dom_type: 'pre', props: {}, children: [{dom_type: 'text_value', text: t}]},
     ].filter(c => c))
 })
