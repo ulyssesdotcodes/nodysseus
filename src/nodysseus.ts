@@ -909,7 +909,7 @@ const nolib = {
         // }
         if(event.startsWith("bc")) {
           event = event.substring(3);
-        } else if(broadcast && event !== "noderun" && event !== "animationframe" && event !== "show_all") {
+        } else if(broadcast && event !== "noderun" && event !== "animationframe" && event !== "show_all" && !ispromise(data)) {
           try {
             if(typeof window !== "undefined") {
               eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data });
