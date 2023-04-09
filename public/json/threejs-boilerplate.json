@@ -1,4 +1,4 @@
-{
+[{
     "id": "threejs_boilerplate",
     "out": "out",
     "nodes": {
@@ -419,3 +419,4 @@
       }
     }
   }
+]
