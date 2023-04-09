@@ -436,10 +436,8 @@ const editor = async function(html_id, editingGraph, lib, norun) {
     const url_params = new URLSearchParams(document.location.search);
     const graph_list = JSON.parse(localStorage.getItem("graph_list")) ?? [];
     const hash_graph = window.location.hash.substring(1);
-    const keybindings = await resfetch("json/keybindings.json").then(r => typeof r === "string" ? JSON.parse(r) : r.json()).then(kb => (nolib.no.runtime.add_ref(kb), kb))
 
         const init: HyperappState = { 
-            keybindings,
             editingGraphId: 'simple',
             editingGraph: simple,
             displayGraph: false,

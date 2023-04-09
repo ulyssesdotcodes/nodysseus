@@ -203,7 +203,7 @@ export const ydocStore = async ({ persist = false, rtcpolyfill = undefined, upda
 
 
   const updateSyncedGraph = (id: string, graph?: Graph): {graph: undefined} | SyncedGraph | Promise<SyncedGraph> => 
-    wrapPromise(id !== "custom_editor" && id !== "keybindings" && rtcroom)
+    wrapPromise(id !== "custom_editor" && rtcroom)
     .then(rtcroom => wrapPromise(syncedGraphs.get(id)).then(existing => ({existing, rtcroom})).value)
     .then(({existing, rtcroom}) => {
       const syncedGraph: {graph: undefined} | SyncedGraph | Promise<SyncedGraph> = wrapPromise(existing && ymap.has(id) ? existing : Promise.resolve(existing)).then(() => {

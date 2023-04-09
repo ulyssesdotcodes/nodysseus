@@ -8,7 +8,7 @@ import { d3Link, d3Node, HyperappState, Levels, Property } from "./types";
 import { UpdateGraphDisplay, UpdateSimulation, d3subscription, updateSimulationNodes } from "./components/graphDisplay";
 import AutocompleteList from "./autocomplete";
 
-export const EXAMPLES = ["threejs_example", "threejs_update_geo", "hydra_example"];
+export const EXAMPLES = ["threejs_example", "threejs_update_geo", "hydra_example", "threejs_boilerplate"];
 
 export const middleware = dispatch => (ha_action, ha_payload) => {
     const is_action_array_payload = Array.isArray(ha_action) 
@@ -214,7 +214,7 @@ export const ChangeEditingGraphId: ha.Effecter<HyperappState, {id: string, selec
     requestAnimationFrame(() => {
         const graphPromise = wrapPromise(
           EXAMPLES.includes(id) && !nolib.no.runtime.refs().includes(id) 
-          ? fetch((console.log(`fetching ${id}`), `json/${id}.json`)).then(res => res.json()).then(g => {
+          ? fetch((console.log(`fetching ${id}`), `json/${id.replaceAll("_", "-")}.json`)).then(res => res.json()).then(g => {
             return nolib.no.runtime.add_ref(g[0])
           }).then(g => {
             nolib.no.runtime.change_graph(g, hlib);

@@ -7,7 +7,6 @@ export type Vector2 = {x: number, y: number}
 export type Property = 'ref' | 'value' | 'name' | 'edge';
 
 export type HyperappState = {
-  keybindings: Graph,
   editingGraphId: string,
   editingGraph: Graph,
   displayGraphId: string | false,
