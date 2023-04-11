@@ -2231,7 +2231,7 @@ const generic = {
       },
       "pred_cache_state": {
         "id": "pred_cache_state",
-        "value": "const docache = recache === undefined ? (cachevaluestate === undefined || cachevaluestate === null) : (recache !== false && (typeof recache !== 'object' || Object.keys(recache).length > 0));\n\nreturn docache;",
+        "value": "const docache = recache === true || cachevaluestate === undefined || cachevaluestate === null;\n\nreturn docache;",
         "ref": "script"
       },
       "ap_cache_value": {
@@ -2265,10 +2265,6 @@ const generic = {
       },
       "cache_return_args": {
         "id": "cache_return_args"
-      },
-      "cache_return": {
-        "id": "cache_return",
-        "ref": "return"
       },
       "recache_button_fn": {
         "id": "recache_button_fn",
@@ -2354,7 +2350,7 @@ const generic = {
       },
       "if_cache_state": {
         "from": "if_cache_state",
-        "to": "cache_return",
+        "to": "out",
         "as": "value"
       },
       "cache_state": {
@@ -2366,11 +2362,6 @@ const generic = {
         "from": "cache_return_args",
         "to": "out",
         "as": "args"
-      },
-      "cache_return": {
-        "from": "cache_return",
-        "to": "out",
-        "as": "value"
       },
       "recache_button_fn_value": {
         "from": "recache_button_fn_value",
@@ -2398,6 +2389,116 @@ const generic = {
         "as": "display"
       }
     },
+    "edges_in": {
+      "ap_cache_args": {
+        "ap_cache_value": {
+          "from": "ap_cache_value",
+          "to": "ap_cache_args",
+          "as": "value"
+        }
+      },
+      "cache": {
+        "ap_cache_args": {
+          "from": "ap_cache_args",
+          "to": "cache",
+          "as": "args"
+        },
+        "ap_cache_run": {
+          "from": "ap_cache_run",
+          "to": "cache",
+          "as": "run"
+        },
+        "ap_cache_fn": {
+          "from": "ap_cache_fn",
+          "to": "cache",
+          "as": "fn"
+        }
+      },
+      "pred_cache_state": {
+        "pred_cachevalue_state": {
+          "from": "pred_cachevalue_state",
+          "to": "pred_cache_state",
+          "as": "cachevaluestate"
+        },
+        "recache": {
+          "from": "recache",
+          "to": "pred_cache_state",
+          "as": "recache"
+        },
+        "pred_cachevalue": {
+          "from": "pred_cachevalue",
+          "to": "pred_cache_state",
+          "as": "cachevalue"
+        }
+      },
+      "if_cache_state": {
+        "cachevalue_state": {
+          "from": "cachevalue_state",
+          "to": "if_cache_state",
+          "as": "false"
+        },
+        "cache": {
+          "from": "cache",
+          "to": "if_cache_state",
+          "as": "true"
+        },
+        "pred_cache_state": {
+          "from": "pred_cache_state",
+          "to": "if_cache_state",
+          "as": "pred"
+        }
+      },
+      "out": {
+        "if_cache_state": {
+          "from": "if_cache_state",
+          "to": "out",
+          "as": "value"
+        },
+        "cache_return_args": {
+          "from": "cache_return_args",
+          "to": "out",
+          "as": "args"
+        },
+        "recache_button": {
+          "from": "recache_button",
+          "to": "out",
+          "as": "display"
+        }
+      },
+      "cache_return_args": {
+        "cache_state": {
+          "from": "cache_state",
+          "to": "cache_return_args",
+          "as": "_cachevalue"
+        }
+      },
+      "recache_button_fn_args": {
+        "recache_button_fn_value": {
+          "from": "recache_button_fn_value",
+          "to": "recache_button_fn_args",
+          "as": "value"
+        }
+      },
+      "recache_button_ap": {
+        "recache_button_fn_args": {
+          "from": "recache_button_fn_args",
+          "to": "recache_button_ap",
+          "as": "args"
+        },
+        "recache_button_fn": {
+          "from": "recache_button_fn",
+          "to": "recache_button_ap",
+          "as": "fn"
+        }
+      },
+      "recache_button": {
+        "recache_button_ap": {
+          "from": "recache_button_ap",
+          "to": "recache_button",
+          "as": "ontap"
+        }
+      }
+    }
   },
     "isunchanged": {
       "id": "isunchanged",
