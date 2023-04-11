@@ -8,7 +8,8 @@ const nodefn = (node) => isNodeRef(node) && node.ref === "arg" ? createArg(node.
 const createArg = (name) => `fnargs["${argToProperties(name)}"] ?? baseArgs["${argToProperties(name)}"]` 
 const argToProperties = (arg: string) => arg.includes('.') ? arg.split('.').join('"]?.["') : arg;
 
- export const create_fn = (runnable: ConstRunnable, lib: Lib) => {
+
+const graphToFnBody = (runnable: ConstRunnable, lib: Lib) => {
     const graph = util.ancestor_graph(runnable.fn, runnable.graph, lib.data);
     const graphArgs = new Set(Object.values(graph.nodes).filter<RefNode>(isNodeRef).filter(n => n.ref === "arg").map(a => a.value));
 
@@ -18,9 +19,6 @@ const argToProperties = (arg: string) => arg.includes('.') ? arg.split('.').join
         if(!isValue(result)) return;
         const baseArgs = result.value;
         graph.id = runnable.fn + "-fn";
-        // for(const arg of graphArgs) {
-        //   baseArgs[arg] = nodysseus_get(runnable.env, arg, lib)
-        // }
 
         let text = "";
         const _extern_args = {};
@@ -87,25 +85,49 @@ function fn_${n.id}(){
             let inputs = Object.values(graph.edges_in[n.id] ?? []).map(edge => ({edge, node: Object.values(graph.nodes).find(n => n.id === edge.from)}));
             text += `
 function fn_${n.id}(){
-  ${inputs.map(input => `let ${input.edge.as} = ${isNodeRef(input.node) && input.node.ref === "arg" ? input.node.value === '_lib' ? '_lib' : `(fnargs["${argToProperties(input.node.value)}"] ?? baseArgs.${input.node.value})` : `fn_${input.node.id}()`};`).join("\n")}
+  ${inputs
+    .map(input => `let ${input.edge.as} = ${isNodeRef(input.node) && input.node.ref === "arg" && input.node.value === '_lib' ? '_lib' : nodefn(input.node)}`)
+    .join("\n")}
   return target["${argToProperties(isNodeRef(n) ? n.value : 'undefined')}"]
 }
 
 `
+          }  else if (isNodeRef(n)) {
+            const inputs = nodeinputs(n, graph);
+            text += `
+function fn_${n.id}() {
+  ${inputs.map(input => 
+    `let ${input.edge.as} = ${nodefn(input.node)};`
+  ).join("\n")}
+  
+  ${graphToFnBody({
+    __kind: "const",
+    fn: noderef.out ?? "out",
+    graph: noderef,
+    env: runnable.env,
+    lib: runnable.lib
+  }, lib)}
+}
+            `
           } else {
+
             text += `function fn_${n.id}(){\nreturn ${noderef.value}}\n\n`
           }
         })
 
-        const fninputs = graph.edges_in[runnable.fn];
 
-        // for now just assumeing everything is an arg of the last node out
-        // TODO: tree walk
-        text += `return fn_${runnable.fn}()`//({${[...fninputs].map(rinput => `${rinput.as}: fnargs.${graph.nodes.find(n => n.id === rinput.from).value}`).join(",")}})`
+        // for now just assuming everything is an arg of the last node out
+        text += `return fn_${runnable.fn}()`
+
+      return {baseArgs, text, _extern_args};
+  }).value;
+}
+
+ export const create_fn = (runnable: ConstRunnable, lib: Lib) => {
+   const {baseArgs, text, _extern_args} = graphToFnBody(runnable, lib);
         const fn = new Function("fnargs", "baseArgs", "_extern_args", "import_util", "_lib", text);
 
         return (args: Env | Args | Record<string, unknown>) => fn(args ? isArgs(args) ? (resolve_args(args, lib, {}) as {value: any}).value : isEnv(args) ? (resolve_args(args.data, lib, {}) as {value: any}).value : args : {}, baseArgs, _extern_args, util, lib.data);
-      }).value;
  }
 
 export const now = (scale?: number) => performance.now() * (scale ?? 1)
