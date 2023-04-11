@@ -7225,11 +7225,6 @@
       "scte9zo": {
         "id": "scte9zo"
       },
-      "cisb6j6": {
-        "id": "cisb6j6",
-        "value": "return {};",
-        "ref": "script"
-      },
       "my9677p": {
         "id": "my9677p",
         "ref": "create_fn"
@@ -7272,7 +7267,7 @@
       },
       "e7gu67v": {
         "id": "e7gu67v",
-        "value": "const geo = new _lib.THREE.BufferGeometry();\ngeo.setAttribute('position', new _lib.THREE.BufferAttribute( new Float32Array( [\n] ), 3));\ngeo.computeVertexNormals();\n\nreturn geo",
+        "value": "const geo = new _lib.THREE.BufferGeometry();\ngeo.setAttribute('position', new _lib.THREE.BufferAttribute( new Float32Array( [] ), 3));\ngeo.computeVertexNormals();\n\nreturn geo",
         "ref": "script"
       },
       "iwzvdj8": {
@@ -7299,7 +7294,7 @@
       },
       "nd6zslm": {
         "id": "nd6zslm",
-        "value": "_initgeo: internal",
+        "value": "_initgeo",
         "ref": "arg"
       },
       "st1qot0": {
@@ -7418,7 +7413,7 @@
       },
       "l59yoji": {
         "id": "l59yoji",
-        "value": "const item_size = 3;\n\n// Object.entries(inputgeo.attributes)\n//   .forEach(kv => {\n//     initgeo.setAttribute(kv[0], kv[0] === attribute ? inputgeo.getAttribute(kv[0]).clone() : inputgeo.getAttribute(kv[0]));\n//     });\nif(!feedback || initgeo.getAttribute(\"position\")?.count === 0) {\n  initgeo.copy(inputgeo);\n}\n\nif(!initgeo.hasAttribute(attribute) || initgeo.getAttribute(attribute)?.count !== inputgeo.getAttribute(\"position\")?.count) {\n  initbuffer.buffer = new _lib.THREE.BufferAttribute(new Float32Array(inputgeo.getAttribute(\"position\").count * item_size), item_size);\n  initgeo.setAttribute(attribute, initbuffer.buffer.clone());\n}\n\nif(!inputgeo.hasAttribute(attribute) && !feedback) {\n  initgeo.setAttribute(attribute, initbuffer.buffer.clone());\n}\n\nconst attrs = Object.keys(initgeo.attributes);\nconst count = initgeo.getAttribute(\"position\").count;\nconst point_data = {};\n\nif (feedback) {\n  attrs.forEach(attr => {\n    if (attr !== attribute) {\n      initgeo.getAttribute(attr)\n          .copy(inputgeo.getAttribute(attr))\n    }\n  })\n}\n\n\nfor(let i = 0; i < count; i++){\n  attrs.forEach(attr => {\n  point_data[attr] = initgeo.getAttribute(attr).array.subarray(i * item_size, (i + 1) * item_size);\n    })\n  fn({point_data, index: i})\n}\n\ninitgeo.getAttribute(attribute).needsUpdate = true;\n\n//console.log(inputgeo);\n//console.log(initgeo);\n\nreturn initgeo;",
+        "value": "const item_size = 3;\n\nconst count = inputgeo.getAttribute(\"position\").count;\n\nif(!feedback || initgeo.getAttribute(\"position\")?.count === 0) {\n  initgeo.copy(inputgeo);\n}\n\nif(!initbuffer.buffer || initbuffer.buffer.length !== count * item_size) {\n  initbuffer.buffer = new _lib.THREE.BufferAttribute(new Float32Array(count * item_size), item_size);\n}\n\nif((feedback ?  !initgeo.hasAttribute(attribute) : !inputgeo.hasAttribute(attribute)) || initgeo.getAttribute(attribute)?.count !== count) {\n  initgeo.setAttribute(attribute, initbuffer.buffer.clone());\n}\n\n\nconst attrs = Object.keys(initgeo.attributes);\n\nif (feedback) {\n  attrs.forEach(attr => {\n    if (attr !== attribute && inputgeo.hasAttribute(attr)) {\n      initgeo.getAttribute(attr)\n          .copy(inputgeo.getAttribute(attr))\n    }\n  })\n}\n\nconst currentAttr = (feedback || !inputgeo.hasAttribute(attribute) ? initgeo : inputgeo).getAttribute(attribute);\nconst targetAttr = initgeo.getAttribute(attribute);\nconst point_data = {};\n\n\nconst newVals = new Float32Array(item_size).fill(0)\n\nfor(let i = 0; i < count; i++){\n  newVals.set(currentAttr.array\n    .subarray(i * item_size, (i + 1) * item_size));\n  \n  attrs.forEach(attr => {\n    point_data[attr] = attr === attribute ? newVals : initgeo.getAttribute(attr).array\n    .subarray(i * item_size, (i + 1) * item_size)\n  })\n  \n  fn({point_data, index: i})\n  \n  if(lag) {\n    if(newVals[0] !== undefined) {\n    newVals[0] *= (1 - lag)\n    newVals[0] += lag * targetAttr.getX(i);\n    }\n    if(newVals[1] !== undefined) {\n    newVals[1] *= (1 - lag)\n    newVals[1] += lag * targetAttr.getY(i);\n    }\n    if(newVals[2] !== undefined) {\n    newVals[2] *= (1 - lag)\n    newVals[2] += lag * targetAttr.getZ(i);\n    }\n  }\n  \n  targetAttr.array.set(newVals, i * item_size)\n}\n\ntargetAttr.needsUpdate = true;\n\nreturn initgeo;",
         "ref": "script"
       },
       "x442pdq": {
@@ -7433,17 +7428,17 @@
       },
       "sj0uocl": {
         "id": "sj0uocl",
-        "value": "attribute",
+        "value": "_attribute",
         "ref": "arg"
       },
       "mdgsecr": {
         "id": "mdgsecr",
-        "value": "feedback",
+        "value": "_fb",
         "ref": "arg"
       },
       "pbkuqjb": {
         "id": "pbkuqjb",
-        "value": "_initgeo",
+        "value": "_initgeofn",
         "ref": "arg"
       },
       "2kxm8s0": {
@@ -7480,23 +7475,23 @@
         "value": "_updatefn",
         "ref": "arg"
       },
-      "vu6jg2d": {
-        "id": "vu6jg2d",
-        "ref": "refval"
-      },
-      "nz280l8": {
-        "id": "nz280l8",
-        "ref": "html_text"
-      },
-      "vyunhtt": {
-        "id": "vyunhtt",
-        "value": "updatetime.value",
-        "ref": "arg"
-      },
       "p6jad9v": {
         "id": "p6jad9v",
         "value": "feedback",
         "ref": "arg"
+      },
+      "mb30fup": {
+        "id": "mb30fup",
+        "value": "lag",
+        "ref": "arg"
+      },
+      "o81ty2k": {
+        "id": "o81ty2k",
+        "value": "_lag",
+        "ref": "arg"
+      },
+      "grcbu5k": {
+        "id": "grcbu5k"
       }
     },
     "edges": {
@@ -7543,7 +7538,7 @@
       "nd6zslm": {
         "from": "nd6zslm",
         "to": "iwzvdj8",
-        "as": "_initgeo"
+        "as": "_initgeofn"
       },
       "u36qh21": {
         "from": "u36qh21",
@@ -7554,11 +7549,6 @@
         "from": "scte9zo",
         "to": "u36qh21",
         "as": "value"
-      },
-      "cisb6j6": {
-        "from": "cisb6j6",
-        "to": "scte9zo",
-        "as": "buffer"
       },
       "gjr14z1": {
         "from": "gjr14z1",
@@ -7583,7 +7573,7 @@
       "ay1mgi1": {
         "from": "ay1mgi1",
         "to": "iwzvdj8",
-        "as": "attribute"
+        "as": "_attribute"
       },
       "vio1bz1": {
         "from": "vio1bz1",
@@ -7683,7 +7673,7 @@
       "dmibl2m": {
         "from": "dmibl2m",
         "to": "iwzvdj8",
-        "as": "feedback"
+        "as": "_fb"
       },
       "y6jnnhr": {
         "from": "y6jnnhr",
@@ -7845,25 +7835,25 @@
         "to": "8itq35i",
         "as": "update"
       },
-      "vu6jg2d": {
-        "from": "vu6jg2d",
-        "to": "args",
-        "as": "updatetime"
-      },
-      "nz280l8": {
-        "from": "nz280l8",
-        "to": "ril0xrx",
-        "as": "arg2"
-      },
-      "vyunhtt": {
-        "from": "vyunhtt",
-        "to": "nz280l8",
-        "as": "text"
-      },
       "p6jad9v": {
         "from": "p6jad9v",
         "to": "st1qot0",
         "as": "value"
+      },
+      "mb30fup": {
+        "from": "mb30fup",
+        "to": "iwzvdj8",
+        "as": "_lag"
+      },
+      "o81ty2k": {
+        "from": "o81ty2k",
+        "to": "l59yoji",
+        "as": "lag"
+      },
+      "grcbu5k": {
+        "from": "grcbu5k",
+        "to": "scte9zo",
+        "as": "buffer"
       }
     },
     "edges_in": {
@@ -7928,7 +7918,7 @@
         "nd6zslm": {
           "from": "nd6zslm",
           "to": "iwzvdj8",
-          "as": "_initgeo"
+          "as": "_initgeofn"
         },
         "u36qh21": {
           "from": "u36qh21",
@@ -7943,7 +7933,7 @@
         "ay1mgi1": {
           "from": "ay1mgi1",
           "to": "iwzvdj8",
-          "as": "attribute"
+          "as": "_attribute"
         },
         "ph7ugf6": {
           "from": "ph7ugf6",
@@ -7953,7 +7943,12 @@
         "dmibl2m": {
           "from": "dmibl2m",
           "to": "iwzvdj8",
-          "as": "feedback"
+          "as": "_fb"
+        },
+        "mb30fup": {
+          "from": "mb30fup",
+          "to": "iwzvdj8",
+          "as": "_lag"
         }
       },
       "u36qh21": {
@@ -7961,13 +7956,6 @@
           "from": "scte9zo",
           "to": "u36qh21",
           "as": "value"
-        }
-      },
-      "scte9zo": {
-        "cisb6j6": {
-          "from": "cisb6j6",
-          "to": "scte9zo",
-          "as": "buffer"
         }
       },
       "my9677p": {
@@ -8059,11 +8047,6 @@
           "from": "lsmnhra",
           "to": "args",
           "as": "_animframe"
-        },
-        "vu6jg2d": {
-          "from": "vu6jg2d",
-          "to": "args",
-          "as": "updatetime"
         }
       },
       "yai4q6q": {
@@ -8131,11 +8114,6 @@
           "from": "apdh5jc",
           "to": "ril0xrx",
           "as": "arg1"
-        },
-        "nz280l8": {
-          "from": "nz280l8",
-          "to": "ril0xrx",
-          "as": "arg2"
         }
       },
       "8dy573e": {
@@ -8258,6 +8236,11 @@
           "from": "2kxm8s0",
           "to": "l59yoji",
           "as": "initbuffer"
+        },
+        "o81ty2k": {
+          "from": "o81ty2k",
+          "to": "l59yoji",
+          "as": "lag"
         }
       },
       "vn2sh9e": {
@@ -8298,18 +8281,18 @@
           "as": "update"
         }
       },
-      "nz280l8": {
-        "vyunhtt": {
-          "from": "vyunhtt",
-          "to": "nz280l8",
-          "as": "text"
-        }
-      },
       "st1qot0": {
         "p6jad9v": {
           "from": "p6jad9v",
           "to": "st1qot0",
           "as": "value"
+        }
+      },
+      "scte9zo": {
+        "grcbu5k": {
+          "from": "grcbu5k",
+          "to": "scte9zo",
+          "as": "buffer"
         }
       }
     }
@@ -8837,7 +8820,7 @@
       },
       "xhfqi8j": {
         "id": "xhfqi8j",
-        "value": "const position = pointGeo.getAttribute(\"position\");\nconst scale = pointGeo.getAttribute(\"scale\");\nconst rotation = pointGeo.getAttribute(\"rotation\");\n\n\nconst m = new _lib.THREE.Matrix4();\nconst p = new _lib.THREE.Vector3();\nconst s = new _lib.THREE.Vector3(1, 1, 1);\nconst e = new _lib.THREE.Euler();\nconst r = new _lib.THREE.Quaternion();\n\nfor(let i = 0; i < position.count; i++) {\n  p.fromBufferAttribute(position, i)\n  if(scale) {\n    if(scale.itemSize === 3) {\n      if(scale.getY(i) === 0 && scale.getZ(i) === 0) {\n        s.set(scale.getX(i), scale.getX(i), scale.getX(i));\n      } else {\n        s.fromBufferAttribute(scale, i);\n      }\n    } else if (scale.itemSize === 1) {\n      s.set(scale.getX(i), scale.getX(i), scale.getX(i));\n    }\n  }\n\n  if (rotation) {\n    if(rotation.itemSize === 3) {\n      e.set(rotation.getX(i), rotation.getY(i), rotation.getZ(i), 'XYZ');\n      r.setFromEuler(e)\n    } else if(rotation.itemSize === 4) {\n      r.fromBufferAttribute(rotation, i);\n    }\n  }\n  \n  m.compose(p, r, s);\n  instancedMesh.setMatrixAt(i, m);\n}\n\ninstancedMesh.instanceMatrix.needsUpdate = true;\n\nreturn instancedMesh;",
+        "value": "\nconst position = pointGeo.getAttribute(\"position\");\nconst scale = pointGeo.getAttribute(\"scale\");\nconst rotation = pointGeo.getAttribute(\"rotation\");\nconst color = pointGeo.getAttribute(\"color\");\n\n\nconst p = new _lib.THREE.Vector3();\nconst s = new _lib.THREE.Vector3(1, 1, 1);\nconst e = new _lib.THREE.Euler();\n\nfor(let i = 0; i < position.count; i++) {\n  p.fromBufferAttribute(position, i)\n  if(scale) {\n    if(scale.itemSize === 3) {\n      if(scale.getY(i) === 0 && scale.getZ(i) === 0) {\n        s.set(scale.getX(i), scale.getX(i), scale.getX(i));\n      } else {\n        s.fromBufferAttribute(scale, i);\n      }\n    } else if (scale.itemSize === 1) {\n      s.set(scale.getX(i), scale.getX(i), scale.getX(i));\n    }\n  }\n\n  if (rotation) {\n    if(rotation.itemSize === 3) {\n      e.set(rotation.getX(i), rotation.getY(i), rotation.getZ(i), 'XYZ');\n      r.setFromEuler(e)\n    } else if(rotation.itemSize === 4) {\n      r.fromBufferAttribute(rotation, i);\n    }\n  }\n  \n  m.compose(p, r, s);\n  instancedMesh.setMatrixAt(i, m);\n\n  if(color) {\n    c.setHSL(color.getX(i), color.getY(i), color.getZ(i));\n    instancedMesh.setColorAt(i, c);\n    instancedMesh.instanceColor.needsUpdate = true;\n  }\n}\n\ninstancedMesh.instanceMatrix.needsUpdate = true;\n\n\nreturn instancedMesh;",
         "ref": "script"
       },
       "gx1pkou": {
@@ -8847,7 +8830,7 @@
       },
       "01519ne": {
         "id": "01519ne",
-        "value": "return geo && pgeo?.getAttribute(\"position\")?.count",
+        "value": "//return !!geo && !!pgeo\nreturn geo && pgeo?.getAttribute(\"position\")?.count > 0",
         "ref": "script"
       },
       "pnvtdew": {
@@ -8917,12 +8900,12 @@
       },
       "30rflcf": {
         "id": "30rflcf",
-        "value": "instancedMesh",
+        "value": "_instancedMesh",
         "ref": "arg"
       },
       "6eoi6m8": {
         "id": "6eoi6m8",
-        "value": "instancedMesh",
+        "value": "_instancedMesh",
         "ref": "arg"
       },
       "cm6n3xo": {
@@ -9003,6 +8986,33 @@
       "f8ysyb5": {
         "id": "f8ysyb5",
         "ref": "graphchangecachelocal"
+      },
+      "hy04icp": {
+        "id": "hy04icp",
+        "value": "THREE.Matrix4",
+        "ref": "new"
+      },
+      "uoktt66": {
+        "id": "uoktt66",
+        "ref": "cache"
+      },
+      "sfdqg0s": {
+        "id": "sfdqg0s",
+        "ref": "cache"
+      },
+      "53bzipt": {
+        "id": "53bzipt",
+        "value": "THREE.Quaternion",
+        "ref": "new"
+      },
+      "oth92z1": {
+        "id": "oth92z1",
+        "ref": "cache"
+      },
+      "il8qvek": {
+        "id": "il8qvek",
+        "value": "THREE.Color",
+        "ref": "new"
       }
     },
     "edges": {
@@ -9109,7 +9119,7 @@
       "9xjhsf2": {
         "from": "9xjhsf2",
         "to": "igjfrk8",
-        "as": "instancedMesh"
+        "as": "_instancedMesh"
       },
       "30rflcf": {
         "from": "30rflcf",
@@ -9119,6 +9129,36 @@
       "6eoi6m8": {
         "from": "6eoi6m8",
         "to": "eupgmhq",
+        "as": "value"
+      },
+      "hy04icp": {
+        "from": "hy04icp",
+        "to": "uoktt66",
+        "as": "value"
+      },
+      "uoktt66": {
+        "from": "uoktt66",
+        "to": "xhfqi8j",
+        "as": "m"
+      },
+      "53bzipt": {
+        "from": "53bzipt",
+        "to": "sfdqg0s",
+        "as": "value"
+      },
+      "sfdqg0s": {
+        "from": "sfdqg0s",
+        "to": "xhfqi8j",
+        "as": "r"
+      },
+      "oth92z1": {
+        "from": "oth92z1",
+        "to": "xhfqi8j",
+        "as": "c"
+      },
+      "il8qvek": {
+        "from": "il8qvek",
+        "to": "oth92z1",
         "as": "value"
       }
     },
@@ -9164,6 +9204,21 @@
           "from": "30rflcf",
           "to": "xhfqi8j",
           "as": "instancedMesh"
+        },
+        "uoktt66": {
+          "from": "uoktt66",
+          "to": "xhfqi8j",
+          "as": "m"
+        },
+        "sfdqg0s": {
+          "from": "sfdqg0s",
+          "to": "xhfqi8j",
+          "as": "r"
+        },
+        "oth92z1": {
+          "from": "oth92z1",
+          "to": "xhfqi8j",
+          "as": "c"
         }
       },
       "output_val": {
@@ -9263,7 +9318,28 @@
         "9xjhsf2": {
           "from": "9xjhsf2",
           "to": "igjfrk8",
-          "as": "instancedMesh"
+          "as": "_instancedMesh"
+        }
+      },
+      "uoktt66": {
+        "hy04icp": {
+          "from": "hy04icp",
+          "to": "uoktt66",
+          "as": "value"
+        }
+      },
+      "sfdqg0s": {
+        "53bzipt": {
+          "from": "53bzipt",
+          "to": "sfdqg0s",
+          "as": "value"
+        }
+      },
+      "oth92z1": {
+        "il8qvek": {
+          "from": "il8qvek",
+          "to": "oth92z1",
+          "as": "value"
         }
       }
     }
@@ -10323,11 +10399,6 @@
         "id": "q039pey",
         "value": "opd",
         "ref": "log"
-      },
-      "vo1fj4c": {
-        "id": "vo1fj4c",
-        "value": "resetval",
-        "ref": "log"
       }
     },
     "edges": {
@@ -10448,8 +10519,8 @@
       },
       "ph6kqoj": {
         "from": "ph6kqoj",
-        "to": "vo1fj4c",
-        "as": "value"
+        "to": "h54ggah",
+        "as": "reset"
       },
       "0r6tegq": {
         "from": "0r6tegq",
@@ -10570,11 +10641,6 @@
         "from": "q039pey",
         "to": "uy2lf6r",
         "as": "value"
-      },
-      "vo1fj4c": {
-        "from": "vo1fj4c",
-        "to": "h54ggah",
-        "as": "reset"
       }
     },
     "edges_in": {
@@ -10741,11 +10807,11 @@
           "as": "false"
         }
       },
-      "vo1fj4c": {
+      "h54ggah": {
         "ph6kqoj": {
           "from": "ph6kqoj",
-          "to": "vo1fj4c",
-          "as": "value"
+          "to": "h54ggah",
+          "as": "reset"
         }
       },
       "ybchlmp": {
@@ -10875,12 +10941,2484 @@
           "to": "uy2lf6r",
           "as": "value"
         }
+      }
+    }
+  },
+  {
+    "id": "@three.randomizeAttribute",
+    "name": "@three.randomizeAttribute",
+    "out": "ojnm60e",
+    "nodes": {
+      "ojnm60e": {
+        "id": "ojnm60e",
+        "name": "@three.randomizeAttribute",
+        "ref": "return"
       },
-      "h54ggah": {
-        "vo1fj4c": {
-          "from": "vo1fj4c",
-          "to": "h54ggah",
-          "as": "reset"
+      "7h0jtuu": {
+        "id": "7h0jtuu"
+      },
+      "zqoy0ns": {
+        "id": "zqoy0ns",
+        "ref": "@three.modify_attribute"
+      },
+      "ka9kj3m": {
+        "id": "ka9kj3m",
+        "value": "_attribute",
+        "ref": "arg"
+      },
+      "8w4dr8z": {
+        "id": "8w4dr8z",
+        "value": "geo",
+        "ref": "arg"
+      },
+      "jmrf097": {
+        "id": "jmrf097",
+        "ref": "return"
+      },
+      "77oy5ui": {
+        "id": "77oy5ui",
+        "ref": "create_fn"
+      },
+      "gga6vxe": {
+        "id": "gga6vxe"
+      },
+      "fumqk1i": {
+        "id": "fumqk1i",
+        "ref": "runnable"
+      },
+      "hlpaehv": {
+        "id": "hlpaehv",
+        "ref": "@math.random"
+      },
+      "j7h7k36": {
+        "id": "j7h7k36",
+        "value": "if(pd[attribute]){\n  pd[attribute][0] = rand();\n}",
+        "ref": "script"
+      },
+      "speyvvr": {
+        "id": "speyvvr"
+      },
+      "4u70a4f": {
+        "id": "4u70a4f",
+        "value": "point_data",
+        "ref": "arg"
+      },
+      "xdx395l": {
+        "id": "xdx395l",
+        "value": "_rand",
+        "ref": "arg"
+      },
+      "tfcak1h": {
+        "id": "tfcak1h",
+        "value": "_attr",
+        "ref": "arg"
+      },
+      "7f9x6vd": {
+        "id": "7f9x6vd"
+      },
+      "it2r6xy": {
+        "id": "it2r6xy",
+        "value": "lag",
+        "ref": "arg"
+      },
+      "tu2qo0y": {
+        "id": "tu2qo0y",
+        "ref": "default"
+      },
+      "au6fgxu": {
+        "id": "au6fgxu",
+        "value": "attribute",
+        "ref": "arg"
+      },
+      "t1a0zc0": {
+        "id": "t1a0zc0",
+        "ref": "default"
+      },
+      "0h50cp9": {
+        "id": "0h50cp9",
+        "value": "position"
+      },
+      "gvyw0za": {
+        "id": "gvyw0za",
+        "value": "__graph_value",
+        "ref": "arg"
+      },
+      "7p23im9": {
+        "id": "7p23im9",
+        "value": "lag",
+        "ref": "arg"
+      },
+      "aei1g0u": {
+        "id": "aei1g0u",
+        "value": "_attribute",
+        "ref": "arg"
+      },
+      "7nv64y5": {
+        "id": "7nv64y5",
+        "value": "seed",
+        "ref": "arg"
+      }
+    },
+    "edges": {
+      "7h0jtuu": {
+        "from": "7h0jtuu",
+        "to": "ojnm60e",
+        "as": "args"
+      },
+      "zqoy0ns": {
+        "from": "zqoy0ns",
+        "to": "ojnm60e",
+        "as": "value"
+      },
+      "ka9kj3m": {
+        "from": "ka9kj3m",
+        "to": "zqoy0ns",
+        "as": "attribute"
+      },
+      "8w4dr8z": {
+        "from": "8w4dr8z",
+        "to": "zqoy0ns",
+        "as": "geo"
+      },
+      "jmrf097": {
+        "from": "jmrf097",
+        "to": "zqoy0ns",
+        "as": "fn"
+      },
+      "77oy5ui": {
+        "from": "77oy5ui",
+        "to": "jmrf097",
+        "as": "value"
+      },
+      "gga6vxe": {
+        "from": "gga6vxe",
+        "to": "jmrf097",
+        "as": "args"
+      },
+      "fumqk1i": {
+        "from": "fumqk1i",
+        "to": "77oy5ui",
+        "as": "runnable"
+      },
+      "hlpaehv": {
+        "from": "hlpaehv",
+        "to": "gga6vxe",
+        "as": "_rand"
+      },
+      "it2r6xy": {
+        "from": "it2r6xy",
+        "to": "zqoy0ns",
+        "as": "feedback"
+      },
+      "j7h7k36": {
+        "from": "j7h7k36",
+        "to": "fumqk1i",
+        "as": "fn"
+      },
+      "speyvvr": {
+        "from": "speyvvr",
+        "to": "fumqk1i",
+        "as": "parameters"
+      },
+      "4u70a4f": {
+        "from": "4u70a4f",
+        "to": "j7h7k36",
+        "as": "pd"
+      },
+      "xdx395l": {
+        "from": "xdx395l",
+        "to": "j7h7k36",
+        "as": "rand"
+      },
+      "tfcak1h": {
+        "from": "tfcak1h",
+        "to": "j7h7k36",
+        "as": "attribute"
+      },
+      "7f9x6vd": {
+        "from": "7f9x6vd",
+        "to": "speyvvr",
+        "as": "point_data"
+      },
+      "t1a0zc0": {
+        "from": "t1a0zc0",
+        "to": "tu2qo0y",
+        "as": "otherwise"
+      },
+      "au6fgxu": {
+        "from": "au6fgxu",
+        "to": "tu2qo0y",
+        "as": "value"
+      },
+      "gvyw0za": {
+        "from": "gvyw0za",
+        "to": "t1a0zc0",
+        "as": "value"
+      },
+      "0h50cp9": {
+        "from": "0h50cp9",
+        "to": "t1a0zc0",
+        "as": "otherwise"
+      },
+      "tu2qo0y": {
+        "from": "tu2qo0y",
+        "to": "7h0jtuu",
+        "as": "_attribute"
+      },
+      "7p23im9": {
+        "from": "7p23im9",
+        "to": "zqoy0ns",
+        "as": "lag"
+      },
+      "aei1g0u": {
+        "from": "aei1g0u",
+        "to": "gga6vxe",
+        "as": "_attr"
+      },
+      "7nv64y5": {
+        "from": "7nv64y5",
+        "to": "hlpaehv",
+        "as": "seed"
+      }
+    },
+    "edges_in": {
+      "ojnm60e": {
+        "7h0jtuu": {
+          "from": "7h0jtuu",
+          "to": "ojnm60e",
+          "as": "args"
+        },
+        "zqoy0ns": {
+          "from": "zqoy0ns",
+          "to": "ojnm60e",
+          "as": "value"
+        }
+      },
+      "zqoy0ns": {
+        "ka9kj3m": {
+          "from": "ka9kj3m",
+          "to": "zqoy0ns",
+          "as": "attribute"
+        },
+        "8w4dr8z": {
+          "from": "8w4dr8z",
+          "to": "zqoy0ns",
+          "as": "geo"
+        },
+        "jmrf097": {
+          "from": "jmrf097",
+          "to": "zqoy0ns",
+          "as": "fn"
+        },
+        "it2r6xy": {
+          "from": "it2r6xy",
+          "to": "zqoy0ns",
+          "as": "feedback"
+        },
+        "7p23im9": {
+          "from": "7p23im9",
+          "to": "zqoy0ns",
+          "as": "lag"
+        }
+      },
+      "jmrf097": {
+        "77oy5ui": {
+          "from": "77oy5ui",
+          "to": "jmrf097",
+          "as": "value"
+        },
+        "gga6vxe": {
+          "from": "gga6vxe",
+          "to": "jmrf097",
+          "as": "args"
+        }
+      },
+      "77oy5ui": {
+        "fumqk1i": {
+          "from": "fumqk1i",
+          "to": "77oy5ui",
+          "as": "runnable"
+        }
+      },
+      "gga6vxe": {
+        "hlpaehv": {
+          "from": "hlpaehv",
+          "to": "gga6vxe",
+          "as": "_rand"
+        },
+        "aei1g0u": {
+          "from": "aei1g0u",
+          "to": "gga6vxe",
+          "as": "_attr"
+        }
+      },
+      "fumqk1i": {
+        "j7h7k36": {
+          "from": "j7h7k36",
+          "to": "fumqk1i",
+          "as": "fn"
+        },
+        "speyvvr": {
+          "from": "speyvvr",
+          "to": "fumqk1i",
+          "as": "parameters"
+        }
+      },
+      "j7h7k36": {
+        "4u70a4f": {
+          "from": "4u70a4f",
+          "to": "j7h7k36",
+          "as": "pd"
+        },
+        "xdx395l": {
+          "from": "xdx395l",
+          "to": "j7h7k36",
+          "as": "rand"
+        },
+        "tfcak1h": {
+          "from": "tfcak1h",
+          "to": "j7h7k36",
+          "as": "attribute"
+        }
+      },
+      "speyvvr": {
+        "7f9x6vd": {
+          "from": "7f9x6vd",
+          "to": "speyvvr",
+          "as": "point_data"
+        }
+      },
+      "tu2qo0y": {
+        "t1a0zc0": {
+          "from": "t1a0zc0",
+          "to": "tu2qo0y",
+          "as": "otherwise"
+        },
+        "au6fgxu": {
+          "from": "au6fgxu",
+          "to": "tu2qo0y",
+          "as": "value"
+        }
+      },
+      "t1a0zc0": {
+        "gvyw0za": {
+          "from": "gvyw0za",
+          "to": "t1a0zc0",
+          "as": "value"
+        },
+        "0h50cp9": {
+          "from": "0h50cp9",
+          "to": "t1a0zc0",
+          "as": "otherwise"
+        }
+      },
+      "7h0jtuu": {
+        "tu2qo0y": {
+          "from": "tu2qo0y",
+          "to": "7h0jtuu",
+          "as": "_attribute"
+        }
+      },
+      "hlpaehv": {
+        "7nv64y5": {
+          "from": "7nv64y5",
+          "to": "hlpaehv",
+          "as": "seed"
+        }
+      }
+    }
+  },
+  {
+    "id": "@three.hsl",
+    "name": "test123",
+    "out": "out",
+    "nodes": {
+      "pdxnxt8": {
+        "id": "pdxnxt8",
+        "ref": "ap"
+      },
+      "xdaowcs": {
+        "id": "xdaowcs"
+      },
+      "fqrnpby": {
+        "id": "fqrnpby",
+        "value": "value",
+        "ref": "arg"
+      },
+      "aph70wf": {
+        "id": "aph70wf",
+        "ref": "array"
+      },
+      "t75wi18": {
+        "id": "t75wi18",
+        "ref": "ap"
+      },
+      "jzmwx97": {
+        "id": "jzmwx97"
+      },
+      "kmas7e1": {
+        "id": "kmas7e1",
+        "value": "value",
+        "ref": "arg"
+      },
+      "aerb29c": {
+        "id": "aerb29c",
+        "value": "_hsl.set",
+        "ref": "arg"
+      },
+      "u0e41te": {
+        "id": "u0e41te",
+        "ref": "ap"
+      },
+      "30cyatd": {
+        "id": "30cyatd"
+      },
+      "rlgdflv": {
+        "id": "rlgdflv",
+        "value": "_hsl",
+        "ref": "arg"
+      },
+      "jxmwo4d": {
+        "id": "jxmwo4d",
+        "value": "onchange",
+        "ref": "arg"
+      },
+      "args": {
+        "id": "args"
+      },
+      "8dy573e": {
+        "id": "8dy573e",
+        "ref": "html_element"
+      },
+      "out": {
+        "id": "out",
+        "ref": "return",
+        "name": "@three.hsl"
+      },
+      "w86v20w": {
+        "id": "w86v20w",
+        "ref": "sliderlocal"
+      },
+      "hulvghk": {
+        "id": "hulvghk",
+        "ref": "ap"
+      },
+      "vk8axwx": {
+        "id": "vk8axwx"
+      },
+      "ji48x6d": {
+        "id": "ji48x6d",
+        "value": "value",
+        "ref": "arg"
+      },
+      "omunkbu": {
+        "id": "omunkbu",
+        "ref": "array"
+      },
+      "kpyuy53": {
+        "id": "kpyuy53",
+        "ref": "sliderlocal"
+      },
+      "4xncneb": {
+        "id": "4xncneb",
+        "value": "Hue"
+      },
+      "cuc1ej8": {
+        "id": "cuc1ej8",
+        "value": "Saturation"
+      },
+      "iw4e6c2": {
+        "id": "iw4e6c2",
+        "ref": "html_element"
+      },
+      "c1dvldn": {
+        "id": "c1dvldn",
+        "ref": "array"
+      },
+      "pg12g2d": {
+        "id": "pg12g2d",
+        "ref": "html_element"
+      },
+      "emu0880": {
+        "id": "emu0880"
+      },
+      "7ea5jgx": {
+        "id": "7ea5jgx"
+      },
+      "rw9u87w": {
+        "id": "rw9u87w",
+        "value": "32px"
+      },
+      "at9191c": {
+        "id": "at9191c",
+        "value": "32px"
+      },
+      "ylzx8qo": {
+        "id": "ylzx8qo",
+        "value": "return `hsl(${hue * 360}, ${saturation * 100}%, ${lightness * 100}%)`",
+        "ref": "script"
+      },
+      "81ujf8j": {
+        "id": "81ujf8j",
+        "value": "_hsl.value.hue",
+        "ref": "arg"
+      },
+      "8odywaq": {
+        "id": "8odywaq",
+        "value": "_hsl.value.saturation",
+        "ref": "arg"
+      },
+      "t08jw63": {
+        "id": "t08jw63",
+        "value": "_hsl.value.lightness",
+        "ref": "arg"
+      },
+      "ra6vf6a": {
+        "id": "ra6vf6a",
+        "ref": "refval"
+      },
+      "hqg5vir": {
+        "id": "hqg5vir",
+        "ref": "sliderlocal"
+      },
+      "69anwc1": {
+        "id": "69anwc1",
+        "ref": "ap"
+      },
+      "f3crhnx": {
+        "id": "f3crhnx",
+        "value": "Lightness"
+      },
+      "4xemugi": {
+        "id": "4xemugi"
+      },
+      "s66b66h": {
+        "id": "s66b66h",
+        "value": "value",
+        "ref": "arg"
+      },
+      "e3cf0y2": {
+        "id": "e3cf0y2",
+        "value": "_hsl",
+        "ref": "arg"
+      },
+      "owmjxju": {
+        "id": "owmjxju",
+        "value": "_hsl.value",
+        "ref": "arg"
+      },
+      "gyagyco": {
+        "id": "gyagyco",
+        "value": "hue",
+        "ref": "set"
+      },
+      "bw3pisc": {
+        "id": "bw3pisc",
+        "value": "_hsl.value",
+        "ref": "arg"
+      },
+      "tsx0nxa": {
+        "id": "tsx0nxa",
+        "ref": "array"
+      },
+      "7213y6o": {
+        "id": "7213y6o",
+        "ref": "ap"
+      },
+      "3b75109": {
+        "id": "3b75109"
+      },
+      "zr406fh": {
+        "id": "zr406fh",
+        "value": "lightness",
+        "ref": "set"
+      },
+      "cl3mg4a": {
+        "id": "cl3mg4a",
+        "value": "_hsl.value",
+        "ref": "arg"
+      },
+      "yvtcxp1": {
+        "id": "yvtcxp1",
+        "value": "value",
+        "ref": "arg"
+      },
+      "leyos8o": {
+        "id": "leyos8o",
+        "value": "_hsl.set",
+        "ref": "arg"
+      },
+      "cpgoj68": {
+        "id": "cpgoj68",
+        "ref": "ap"
+      },
+      "kaf9jnh": {
+        "id": "kaf9jnh"
+      },
+      "9p76jo8": {
+        "id": "9p76jo8",
+        "value": "_hsl",
+        "ref": "arg"
+      },
+      "8anrcgd": {
+        "id": "8anrcgd",
+        "value": "onchange",
+        "ref": "arg"
+      },
+      "j98njyt": {
+        "id": "j98njyt",
+        "ref": "array"
+      },
+      "l7b87re": {
+        "id": "l7b87re",
+        "ref": "ap"
+      },
+      "vme9fb1": {
+        "id": "vme9fb1"
+      },
+      "75i11sr": {
+        "id": "75i11sr",
+        "value": "saturation",
+        "ref": "set"
+      },
+      "ssbwghd": {
+        "id": "ssbwghd",
+        "value": "_hsl.value",
+        "ref": "arg"
+      },
+      "2bfvr5l": {
+        "id": "2bfvr5l",
+        "value": "value",
+        "ref": "arg"
+      },
+      "dgjskzi": {
+        "id": "dgjskzi",
+        "value": "_hsl.set",
+        "ref": "arg"
+      },
+      "ejqrswg": {
+        "id": "ejqrswg",
+        "ref": "ap"
+      },
+      "cyz42is": {
+        "id": "cyz42is"
+      },
+      "x3ga548": {
+        "id": "x3ga548",
+        "value": "_hsl",
+        "ref": "arg"
+      },
+      "ig6y3zd": {
+        "id": "ig6y3zd",
+        "value": "onchange",
+        "ref": "arg"
+      },
+      "74cf180": {
+        "id": "74cf180",
+        "value": "if(hsl){\n color.setHSL(hsl.hue, hsl.saturation, hsl.lightness)\n}\nreturn color;",
+        "ref": "script"
+      },
+      "hf7kwe4": {
+        "id": "hf7kwe4",
+        "ref": "cache"
+      },
+      "fybv1nj": {
+        "id": "fybv1nj",
+        "value": "THREE.Color",
+        "ref": "new"
+      }
+    },
+    "edges": {
+      "aph70wf": {
+        "from": "aph70wf",
+        "to": "pdxnxt8",
+        "as": "fn"
+      },
+      "xdaowcs": {
+        "from": "xdaowcs",
+        "to": "pdxnxt8",
+        "as": "args"
+      },
+      "fqrnpby": {
+        "from": "fqrnpby",
+        "to": "xdaowcs",
+        "as": "value"
+      },
+      "u0e41te": {
+        "from": "u0e41te",
+        "to": "aph70wf",
+        "as": "arg1"
+      },
+      "t75wi18": {
+        "from": "t75wi18",
+        "to": "aph70wf",
+        "as": "arg0"
+      },
+      "aerb29c": {
+        "from": "aerb29c",
+        "to": "t75wi18",
+        "as": "fn"
+      },
+      "jzmwx97": {
+        "from": "jzmwx97",
+        "to": "t75wi18",
+        "as": "args"
+      },
+      "kmas7e1": {
+        "from": "kmas7e1",
+        "to": "gyagyco",
+        "as": "value"
+      },
+      "jxmwo4d": {
+        "from": "jxmwo4d",
+        "to": "u0e41te",
+        "as": "fn"
+      },
+      "30cyatd": {
+        "from": "30cyatd",
+        "to": "u0e41te",
+        "as": "args"
+      },
+      "rlgdflv": {
+        "from": "rlgdflv",
+        "to": "30cyatd",
+        "as": "value"
+      },
+      "pdxnxt8": {
+        "from": "pdxnxt8",
+        "to": "w86v20w",
+        "as": "oninput"
+      },
+      "vk8axwx": {
+        "from": "vk8axwx",
+        "to": "hulvghk",
+        "as": "args"
+      },
+      "ji48x6d": {
+        "from": "ji48x6d",
+        "to": "vk8axwx",
+        "as": "value"
+      },
+      "hulvghk": {
+        "from": "hulvghk",
+        "to": "kpyuy53",
+        "as": "oninput"
+      },
+      "8dy573e": {
+        "from": "8dy573e",
+        "to": "out",
+        "as": "display"
+      },
+      "omunkbu": {
+        "from": "omunkbu",
+        "to": "iw4e6c2",
+        "as": "children"
+      },
+      "args": {
+        "from": "args",
+        "to": "out",
+        "as": "args"
+      },
+      "w86v20w": {
+        "from": "w86v20w",
+        "to": "omunkbu",
+        "as": "arg0"
+      },
+      "kpyuy53": {
+        "from": "kpyuy53",
+        "to": "omunkbu",
+        "as": "arg1"
+      },
+      "4xncneb": {
+        "from": "4xncneb",
+        "to": "w86v20w",
+        "as": "label"
+      },
+      "cuc1ej8": {
+        "from": "cuc1ej8",
+        "to": "kpyuy53",
+        "as": "label"
+      },
+      "iw4e6c2": {
+        "from": "iw4e6c2",
+        "to": "c1dvldn",
+        "as": "arg0"
+      },
+      "c1dvldn": {
+        "from": "c1dvldn",
+        "to": "8dy573e",
+        "as": "children"
+      },
+      "pg12g2d": {
+        "from": "pg12g2d",
+        "to": "c1dvldn",
+        "as": "arg1"
+      },
+      "emu0880": {
+        "from": "emu0880",
+        "to": "pg12g2d",
+        "as": "props"
+      },
+      "7ea5jgx": {
+        "from": "7ea5jgx",
+        "to": "emu0880",
+        "as": "style"
+      },
+      "rw9u87w": {
+        "from": "rw9u87w",
+        "to": "7ea5jgx",
+        "as": "width"
+      },
+      "at9191c": {
+        "from": "at9191c",
+        "to": "7ea5jgx",
+        "as": "height"
+      },
+      "ylzx8qo": {
+        "from": "ylzx8qo",
+        "to": "7ea5jgx",
+        "as": "backgroundColor"
+      },
+      "81ujf8j": {
+        "from": "81ujf8j",
+        "to": "ylzx8qo",
+        "as": "hue"
+      },
+      "8odywaq": {
+        "from": "8odywaq",
+        "to": "ylzx8qo",
+        "as": "saturation"
+      },
+      "t08jw63": {
+        "from": "t08jw63",
+        "to": "ylzx8qo",
+        "as": "lightness"
+      },
+      "ra6vf6a": {
+        "from": "ra6vf6a",
+        "to": "args",
+        "as": "_hsl"
+      },
+      "f3crhnx": {
+        "from": "f3crhnx",
+        "to": "hqg5vir",
+        "as": "label"
+      },
+      "69anwc1": {
+        "from": "69anwc1",
+        "to": "hqg5vir",
+        "as": "oninput"
+      },
+      "hqg5vir": {
+        "from": "hqg5vir",
+        "to": "omunkbu",
+        "as": "arg2"
+      },
+      "4xemugi": {
+        "from": "4xemugi",
+        "to": "69anwc1",
+        "as": "args"
+      },
+      "s66b66h": {
+        "from": "s66b66h",
+        "to": "4xemugi",
+        "as": "value"
+      },
+      "e3cf0y2": {
+        "from": "e3cf0y2",
+        "to": "8dy573e",
+        "as": "value"
+      },
+      "owmjxju": {
+        "from": "owmjxju",
+        "to": "74cf180",
+        "as": "hsl"
+      },
+      "gyagyco": {
+        "from": "gyagyco",
+        "to": "jzmwx97",
+        "as": "value"
+      },
+      "bw3pisc": {
+        "from": "bw3pisc",
+        "to": "gyagyco",
+        "as": "target"
+      },
+      "cpgoj68": {
+        "from": "cpgoj68",
+        "to": "tsx0nxa",
+        "as": "arg1"
+      },
+      "7213y6o": {
+        "from": "7213y6o",
+        "to": "tsx0nxa",
+        "as": "arg0"
+      },
+      "leyos8o": {
+        "from": "leyos8o",
+        "to": "7213y6o",
+        "as": "fn"
+      },
+      "3b75109": {
+        "from": "3b75109",
+        "to": "7213y6o",
+        "as": "args"
+      },
+      "zr406fh": {
+        "from": "zr406fh",
+        "to": "3b75109",
+        "as": "value"
+      },
+      "yvtcxp1": {
+        "from": "yvtcxp1",
+        "to": "zr406fh",
+        "as": "value"
+      },
+      "cl3mg4a": {
+        "from": "cl3mg4a",
+        "to": "zr406fh",
+        "as": "target"
+      },
+      "8anrcgd": {
+        "from": "8anrcgd",
+        "to": "cpgoj68",
+        "as": "fn"
+      },
+      "kaf9jnh": {
+        "from": "kaf9jnh",
+        "to": "cpgoj68",
+        "as": "args"
+      },
+      "9p76jo8": {
+        "from": "9p76jo8",
+        "to": "kaf9jnh",
+        "as": "value"
+      },
+      "tsx0nxa": {
+        "from": "tsx0nxa",
+        "to": "69anwc1",
+        "as": "fn"
+      },
+      "ejqrswg": {
+        "from": "ejqrswg",
+        "to": "j98njyt",
+        "as": "arg1"
+      },
+      "l7b87re": {
+        "from": "l7b87re",
+        "to": "j98njyt",
+        "as": "arg0"
+      },
+      "dgjskzi": {
+        "from": "dgjskzi",
+        "to": "l7b87re",
+        "as": "fn"
+      },
+      "vme9fb1": {
+        "from": "vme9fb1",
+        "to": "l7b87re",
+        "as": "args"
+      },
+      "75i11sr": {
+        "from": "75i11sr",
+        "to": "vme9fb1",
+        "as": "value"
+      },
+      "2bfvr5l": {
+        "from": "2bfvr5l",
+        "to": "75i11sr",
+        "as": "value"
+      },
+      "ssbwghd": {
+        "from": "ssbwghd",
+        "to": "75i11sr",
+        "as": "target"
+      },
+      "ig6y3zd": {
+        "from": "ig6y3zd",
+        "to": "ejqrswg",
+        "as": "fn"
+      },
+      "cyz42is": {
+        "from": "cyz42is",
+        "to": "ejqrswg",
+        "as": "args"
+      },
+      "x3ga548": {
+        "from": "x3ga548",
+        "to": "cyz42is",
+        "as": "value"
+      },
+      "j98njyt": {
+        "from": "j98njyt",
+        "to": "hulvghk",
+        "as": "fn"
+      },
+      "74cf180": {
+        "from": "74cf180",
+        "to": "out",
+        "as": "value"
+      },
+      "hf7kwe4": {
+        "from": "hf7kwe4",
+        "to": "74cf180",
+        "as": "color"
+      },
+      "fybv1nj": {
+        "from": "fybv1nj",
+        "to": "hf7kwe4",
+        "as": "value"
+      }
+    },
+    "edges_in": {
+      "pdxnxt8": {
+        "aph70wf": {
+          "from": "aph70wf",
+          "to": "pdxnxt8",
+          "as": "fn"
+        },
+        "xdaowcs": {
+          "from": "xdaowcs",
+          "to": "pdxnxt8",
+          "as": "args"
+        }
+      },
+      "xdaowcs": {
+        "fqrnpby": {
+          "from": "fqrnpby",
+          "to": "xdaowcs",
+          "as": "value"
+        }
+      },
+      "aph70wf": {
+        "u0e41te": {
+          "from": "u0e41te",
+          "to": "aph70wf",
+          "as": "arg1"
+        },
+        "t75wi18": {
+          "from": "t75wi18",
+          "to": "aph70wf",
+          "as": "arg0"
+        }
+      },
+      "t75wi18": {
+        "aerb29c": {
+          "from": "aerb29c",
+          "to": "t75wi18",
+          "as": "fn"
+        },
+        "jzmwx97": {
+          "from": "jzmwx97",
+          "to": "t75wi18",
+          "as": "args"
+        }
+      },
+      "gyagyco": {
+        "kmas7e1": {
+          "from": "kmas7e1",
+          "to": "gyagyco",
+          "as": "value"
+        },
+        "bw3pisc": {
+          "from": "bw3pisc",
+          "to": "gyagyco",
+          "as": "target"
+        }
+      },
+      "u0e41te": {
+        "jxmwo4d": {
+          "from": "jxmwo4d",
+          "to": "u0e41te",
+          "as": "fn"
+        },
+        "30cyatd": {
+          "from": "30cyatd",
+          "to": "u0e41te",
+          "as": "args"
+        }
+      },
+      "30cyatd": {
+        "rlgdflv": {
+          "from": "rlgdflv",
+          "to": "30cyatd",
+          "as": "value"
+        }
+      },
+      "w86v20w": {
+        "pdxnxt8": {
+          "from": "pdxnxt8",
+          "to": "w86v20w",
+          "as": "oninput"
+        },
+        "4xncneb": {
+          "from": "4xncneb",
+          "to": "w86v20w",
+          "as": "label"
+        }
+      },
+      "hulvghk": {
+        "vk8axwx": {
+          "from": "vk8axwx",
+          "to": "hulvghk",
+          "as": "args"
+        },
+        "j98njyt": {
+          "from": "j98njyt",
+          "to": "hulvghk",
+          "as": "fn"
+        }
+      },
+      "vk8axwx": {
+        "ji48x6d": {
+          "from": "ji48x6d",
+          "to": "vk8axwx",
+          "as": "value"
+        }
+      },
+      "kpyuy53": {
+        "hulvghk": {
+          "from": "hulvghk",
+          "to": "kpyuy53",
+          "as": "oninput"
+        },
+        "cuc1ej8": {
+          "from": "cuc1ej8",
+          "to": "kpyuy53",
+          "as": "label"
+        }
+      },
+      "out": {
+        "8dy573e": {
+          "from": "8dy573e",
+          "to": "out",
+          "as": "display"
+        },
+        "args": {
+          "from": "args",
+          "to": "out",
+          "as": "args"
+        },
+        "74cf180": {
+          "from": "74cf180",
+          "to": "out",
+          "as": "value"
+        }
+      },
+      "iw4e6c2": {
+        "omunkbu": {
+          "from": "omunkbu",
+          "to": "iw4e6c2",
+          "as": "children"
+        }
+      },
+      "omunkbu": {
+        "w86v20w": {
+          "from": "w86v20w",
+          "to": "omunkbu",
+          "as": "arg0"
+        },
+        "kpyuy53": {
+          "from": "kpyuy53",
+          "to": "omunkbu",
+          "as": "arg1"
+        },
+        "hqg5vir": {
+          "from": "hqg5vir",
+          "to": "omunkbu",
+          "as": "arg2"
+        }
+      },
+      "c1dvldn": {
+        "iw4e6c2": {
+          "from": "iw4e6c2",
+          "to": "c1dvldn",
+          "as": "arg0"
+        },
+        "pg12g2d": {
+          "from": "pg12g2d",
+          "to": "c1dvldn",
+          "as": "arg1"
+        }
+      },
+      "8dy573e": {
+        "c1dvldn": {
+          "from": "c1dvldn",
+          "to": "8dy573e",
+          "as": "children"
+        },
+        "e3cf0y2": {
+          "from": "e3cf0y2",
+          "to": "8dy573e",
+          "as": "value"
+        }
+      },
+      "pg12g2d": {
+        "emu0880": {
+          "from": "emu0880",
+          "to": "pg12g2d",
+          "as": "props"
+        }
+      },
+      "emu0880": {
+        "7ea5jgx": {
+          "from": "7ea5jgx",
+          "to": "emu0880",
+          "as": "style"
+        }
+      },
+      "7ea5jgx": {
+        "rw9u87w": {
+          "from": "rw9u87w",
+          "to": "7ea5jgx",
+          "as": "width"
+        },
+        "at9191c": {
+          "from": "at9191c",
+          "to": "7ea5jgx",
+          "as": "height"
+        },
+        "ylzx8qo": {
+          "from": "ylzx8qo",
+          "to": "7ea5jgx",
+          "as": "backgroundColor"
+        }
+      },
+      "ylzx8qo": {
+        "81ujf8j": {
+          "from": "81ujf8j",
+          "to": "ylzx8qo",
+          "as": "hue"
+        },
+        "8odywaq": {
+          "from": "8odywaq",
+          "to": "ylzx8qo",
+          "as": "saturation"
+        },
+        "t08jw63": {
+          "from": "t08jw63",
+          "to": "ylzx8qo",
+          "as": "lightness"
+        }
+      },
+      "args": {
+        "ra6vf6a": {
+          "from": "ra6vf6a",
+          "to": "args",
+          "as": "_hsl"
+        }
+      },
+      "hqg5vir": {
+        "f3crhnx": {
+          "from": "f3crhnx",
+          "to": "hqg5vir",
+          "as": "label"
+        },
+        "69anwc1": {
+          "from": "69anwc1",
+          "to": "hqg5vir",
+          "as": "oninput"
+        }
+      },
+      "69anwc1": {
+        "4xemugi": {
+          "from": "4xemugi",
+          "to": "69anwc1",
+          "as": "args"
+        },
+        "tsx0nxa": {
+          "from": "tsx0nxa",
+          "to": "69anwc1",
+          "as": "fn"
+        }
+      },
+      "4xemugi": {
+        "s66b66h": {
+          "from": "s66b66h",
+          "to": "4xemugi",
+          "as": "value"
+        }
+      },
+      "74cf180": {
+        "owmjxju": {
+          "from": "owmjxju",
+          "to": "74cf180",
+          "as": "hsl"
+        },
+        "hf7kwe4": {
+          "from": "hf7kwe4",
+          "to": "74cf180",
+          "as": "color"
+        }
+      },
+      "jzmwx97": {
+        "gyagyco": {
+          "from": "gyagyco",
+          "to": "jzmwx97",
+          "as": "value"
+        }
+      },
+      "tsx0nxa": {
+        "cpgoj68": {
+          "from": "cpgoj68",
+          "to": "tsx0nxa",
+          "as": "arg1"
+        },
+        "7213y6o": {
+          "from": "7213y6o",
+          "to": "tsx0nxa",
+          "as": "arg0"
+        }
+      },
+      "7213y6o": {
+        "leyos8o": {
+          "from": "leyos8o",
+          "to": "7213y6o",
+          "as": "fn"
+        },
+        "3b75109": {
+          "from": "3b75109",
+          "to": "7213y6o",
+          "as": "args"
+        }
+      },
+      "3b75109": {
+        "zr406fh": {
+          "from": "zr406fh",
+          "to": "3b75109",
+          "as": "value"
+        }
+      },
+      "zr406fh": {
+        "yvtcxp1": {
+          "from": "yvtcxp1",
+          "to": "zr406fh",
+          "as": "value"
+        },
+        "cl3mg4a": {
+          "from": "cl3mg4a",
+          "to": "zr406fh",
+          "as": "target"
+        }
+      },
+      "cpgoj68": {
+        "8anrcgd": {
+          "from": "8anrcgd",
+          "to": "cpgoj68",
+          "as": "fn"
+        },
+        "kaf9jnh": {
+          "from": "kaf9jnh",
+          "to": "cpgoj68",
+          "as": "args"
+        }
+      },
+      "kaf9jnh": {
+        "9p76jo8": {
+          "from": "9p76jo8",
+          "to": "kaf9jnh",
+          "as": "value"
+        }
+      },
+      "j98njyt": {
+        "ejqrswg": {
+          "from": "ejqrswg",
+          "to": "j98njyt",
+          "as": "arg1"
+        },
+        "l7b87re": {
+          "from": "l7b87re",
+          "to": "j98njyt",
+          "as": "arg0"
+        }
+      },
+      "l7b87re": {
+        "dgjskzi": {
+          "from": "dgjskzi",
+          "to": "l7b87re",
+          "as": "fn"
+        },
+        "vme9fb1": {
+          "from": "vme9fb1",
+          "to": "l7b87re",
+          "as": "args"
+        }
+      },
+      "vme9fb1": {
+        "75i11sr": {
+          "from": "75i11sr",
+          "to": "vme9fb1",
+          "as": "value"
+        }
+      },
+      "75i11sr": {
+        "2bfvr5l": {
+          "from": "2bfvr5l",
+          "to": "75i11sr",
+          "as": "value"
+        },
+        "ssbwghd": {
+          "from": "ssbwghd",
+          "to": "75i11sr",
+          "as": "target"
+        }
+      },
+      "ejqrswg": {
+        "ig6y3zd": {
+          "from": "ig6y3zd",
+          "to": "ejqrswg",
+          "as": "fn"
+        },
+        "cyz42is": {
+          "from": "cyz42is",
+          "to": "ejqrswg",
+          "as": "args"
+        }
+      },
+      "cyz42is": {
+        "x3ga548": {
+          "from": "x3ga548",
+          "to": "cyz42is",
+          "as": "value"
+        }
+      },
+      "hf7kwe4": {
+        "fybv1nj": {
+          "from": "fybv1nj",
+          "to": "hf7kwe4",
+          "as": "value"
+        }
+      }
+    }
+  },
+  {
+    "id": "@three.hsv",
+    "name": "test123",
+    "out": "out",
+    "nodes": {
+      "pdxnxt8": {
+        "id": "pdxnxt8",
+        "ref": "ap"
+      },
+      "xdaowcs": {
+        "id": "xdaowcs"
+      },
+      "fqrnpby": {
+        "id": "fqrnpby",
+        "value": "value",
+        "ref": "arg"
+      },
+      "aph70wf": {
+        "id": "aph70wf",
+        "ref": "array"
+      },
+      "t75wi18": {
+        "id": "t75wi18",
+        "ref": "ap"
+      },
+      "jzmwx97": {
+        "id": "jzmwx97"
+      },
+      "kmas7e1": {
+        "id": "kmas7e1",
+        "value": "value",
+        "ref": "arg"
+      },
+      "aerb29c": {
+        "id": "aerb29c",
+        "value": "_hsv.set",
+        "ref": "arg"
+      },
+      "u0e41te": {
+        "id": "u0e41te",
+        "ref": "ap"
+      },
+      "30cyatd": {
+        "id": "30cyatd"
+      },
+      "rlgdflv": {
+        "id": "rlgdflv",
+        "value": "_hsv",
+        "ref": "arg"
+      },
+      "jxmwo4d": {
+        "id": "jxmwo4d",
+        "value": "onchange",
+        "ref": "arg"
+      },
+      "args": {
+        "id": "args"
+      },
+      "8dy573e": {
+        "id": "8dy573e",
+        "ref": "html_element"
+      },
+      "out": {
+        "id": "out",
+        "ref": "return",
+        "name": "@three.hsv"
+      },
+      "w86v20w": {
+        "id": "w86v20w",
+        "ref": "sliderlocal"
+      },
+      "hulvghk": {
+        "id": "hulvghk",
+        "ref": "ap"
+      },
+      "vk8axwx": {
+        "id": "vk8axwx"
+      },
+      "ji48x6d": {
+        "id": "ji48x6d",
+        "value": "value",
+        "ref": "arg"
+      },
+      "omunkbu": {
+        "id": "omunkbu",
+        "ref": "array"
+      },
+      "kpyuy53": {
+        "id": "kpyuy53",
+        "ref": "sliderlocal"
+      },
+      "4xncneb": {
+        "id": "4xncneb",
+        "value": "Hue"
+      },
+      "cuc1ej8": {
+        "id": "cuc1ej8",
+        "value": "Saturation"
+      },
+      "iw4e6c2": {
+        "id": "iw4e6c2",
+        "ref": "html_element"
+      },
+      "c1dvldn": {
+        "id": "c1dvldn",
+        "ref": "array"
+      },
+      "pg12g2d": {
+        "id": "pg12g2d",
+        "ref": "html_element"
+      },
+      "emu0880": {
+        "id": "emu0880"
+      },
+      "7ea5jgx": {
+        "id": "7ea5jgx"
+      },
+      "rw9u87w": {
+        "id": "rw9u87w",
+        "value": "32px"
+      },
+      "at9191c": {
+        "id": "at9191c",
+        "value": "32px"
+      },
+      "ylzx8qo": {
+        "id": "ylzx8qo",
+        "value": "return `hsl(${hue * 360}, ${saturation * 100}%, ${value * 100}%)`",
+        "ref": "script"
+      },
+      "81ujf8j": {
+        "id": "81ujf8j",
+        "value": "_hsv.value.hue",
+        "ref": "arg"
+      },
+      "8odywaq": {
+        "id": "8odywaq",
+        "value": "_hsv.value.saturation",
+        "ref": "arg"
+      },
+      "t08jw63": {
+        "id": "t08jw63",
+        "value": "_hsv.value.value",
+        "ref": "arg"
+      },
+      "ra6vf6a": {
+        "id": "ra6vf6a",
+        "ref": "refval"
+      },
+      "hqg5vir": {
+        "id": "hqg5vir",
+        "ref": "sliderlocal"
+      },
+      "69anwc1": {
+        "id": "69anwc1",
+        "ref": "ap"
+      },
+      "f3crhnx": {
+        "id": "f3crhnx",
+        "value": "Value"
+      },
+      "4xemugi": {
+        "id": "4xemugi"
+      },
+      "s66b66h": {
+        "id": "s66b66h",
+        "value": "value",
+        "ref": "arg"
+      },
+      "e3cf0y2": {
+        "id": "e3cf0y2",
+        "value": "_hsv",
+        "ref": "arg"
+      },
+      "owmjxju": {
+        "id": "owmjxju",
+        "value": "_hsv",
+        "ref": "arg"
+      },
+      "gyagyco": {
+        "id": "gyagyco",
+        "value": "hue",
+        "ref": "set"
+      },
+      "bw3pisc": {
+        "id": "bw3pisc",
+        "value": "_hsv.value",
+        "ref": "arg"
+      },
+      "tsx0nxa": {
+        "id": "tsx0nxa",
+        "ref": "array"
+      },
+      "7213y6o": {
+        "id": "7213y6o",
+        "ref": "ap"
+      },
+      "3b75109": {
+        "id": "3b75109"
+      },
+      "zr406fh": {
+        "id": "zr406fh",
+        "value": "value",
+        "ref": "set"
+      },
+      "cl3mg4a": {
+        "id": "cl3mg4a",
+        "value": "_hsv.value",
+        "ref": "arg"
+      },
+      "yvtcxp1": {
+        "id": "yvtcxp1",
+        "value": "value",
+        "ref": "arg"
+      },
+      "leyos8o": {
+        "id": "leyos8o",
+        "value": "_hsv.set",
+        "ref": "arg"
+      },
+      "cpgoj68": {
+        "id": "cpgoj68",
+        "ref": "ap"
+      },
+      "kaf9jnh": {
+        "id": "kaf9jnh"
+      },
+      "9p76jo8": {
+        "id": "9p76jo8",
+        "value": "_hsv",
+        "ref": "arg"
+      },
+      "8anrcgd": {
+        "id": "8anrcgd",
+        "value": "onchange",
+        "ref": "arg"
+      },
+      "j98njyt": {
+        "id": "j98njyt",
+        "ref": "array"
+      },
+      "l7b87re": {
+        "id": "l7b87re",
+        "ref": "ap"
+      },
+      "vme9fb1": {
+        "id": "vme9fb1"
+      },
+      "75i11sr": {
+        "id": "75i11sr",
+        "value": "saturation",
+        "ref": "set"
+      },
+      "ssbwghd": {
+        "id": "ssbwghd",
+        "value": "_hsv.value",
+        "ref": "arg"
+      },
+      "2bfvr5l": {
+        "id": "2bfvr5l",
+        "value": "value",
+        "ref": "arg"
+      },
+      "dgjskzi": {
+        "id": "dgjskzi",
+        "value": "_hsv.set",
+        "ref": "arg"
+      },
+      "ejqrswg": {
+        "id": "ejqrswg",
+        "ref": "ap"
+      },
+      "cyz42is": {
+        "id": "cyz42is"
+      },
+      "x3ga548": {
+        "id": "x3ga548",
+        "value": "_hsv",
+        "ref": "arg"
+      },
+      "ig6y3zd": {
+        "id": "ig6y3zd",
+        "value": "onchange",
+        "ref": "arg"
+      },
+      "t2tbr2z": {
+        "id": "t2tbr2z",
+        "value": "return `hsl(${(hsl?.hue ?? 0) * 360}, ${(hsl?.saturation ?? 0) * 100}%, ${(hsl?.value ?? 0) * 100}%)`",
+        "ref": "script"
+      }
+    },
+    "edges": {
+      "aph70wf": {
+        "from": "aph70wf",
+        "to": "pdxnxt8",
+        "as": "fn"
+      },
+      "xdaowcs": {
+        "from": "xdaowcs",
+        "to": "pdxnxt8",
+        "as": "args"
+      },
+      "fqrnpby": {
+        "from": "fqrnpby",
+        "to": "xdaowcs",
+        "as": "value"
+      },
+      "u0e41te": {
+        "from": "u0e41te",
+        "to": "aph70wf",
+        "as": "arg1"
+      },
+      "t75wi18": {
+        "from": "t75wi18",
+        "to": "aph70wf",
+        "as": "arg0"
+      },
+      "aerb29c": {
+        "from": "aerb29c",
+        "to": "t75wi18",
+        "as": "fn"
+      },
+      "jzmwx97": {
+        "from": "jzmwx97",
+        "to": "t75wi18",
+        "as": "args"
+      },
+      "kmas7e1": {
+        "from": "kmas7e1",
+        "to": "gyagyco",
+        "as": "value"
+      },
+      "jxmwo4d": {
+        "from": "jxmwo4d",
+        "to": "u0e41te",
+        "as": "fn"
+      },
+      "30cyatd": {
+        "from": "30cyatd",
+        "to": "u0e41te",
+        "as": "args"
+      },
+      "rlgdflv": {
+        "from": "rlgdflv",
+        "to": "30cyatd",
+        "as": "value"
+      },
+      "pdxnxt8": {
+        "from": "pdxnxt8",
+        "to": "w86v20w",
+        "as": "oninput"
+      },
+      "vk8axwx": {
+        "from": "vk8axwx",
+        "to": "hulvghk",
+        "as": "args"
+      },
+      "ji48x6d": {
+        "from": "ji48x6d",
+        "to": "vk8axwx",
+        "as": "value"
+      },
+      "hulvghk": {
+        "from": "hulvghk",
+        "to": "kpyuy53",
+        "as": "oninput"
+      },
+      "8dy573e": {
+        "from": "8dy573e",
+        "to": "out",
+        "as": "display"
+      },
+      "omunkbu": {
+        "from": "omunkbu",
+        "to": "iw4e6c2",
+        "as": "children"
+      },
+      "args": {
+        "from": "args",
+        "to": "out",
+        "as": "args"
+      },
+      "w86v20w": {
+        "from": "w86v20w",
+        "to": "omunkbu",
+        "as": "arg0"
+      },
+      "kpyuy53": {
+        "from": "kpyuy53",
+        "to": "omunkbu",
+        "as": "arg1"
+      },
+      "4xncneb": {
+        "from": "4xncneb",
+        "to": "w86v20w",
+        "as": "label"
+      },
+      "cuc1ej8": {
+        "from": "cuc1ej8",
+        "to": "kpyuy53",
+        "as": "label"
+      },
+      "iw4e6c2": {
+        "from": "iw4e6c2",
+        "to": "c1dvldn",
+        "as": "arg0"
+      },
+      "c1dvldn": {
+        "from": "c1dvldn",
+        "to": "8dy573e",
+        "as": "children"
+      },
+      "pg12g2d": {
+        "from": "pg12g2d",
+        "to": "c1dvldn",
+        "as": "arg1"
+      },
+      "emu0880": {
+        "from": "emu0880",
+        "to": "pg12g2d",
+        "as": "props"
+      },
+      "7ea5jgx": {
+        "from": "7ea5jgx",
+        "to": "emu0880",
+        "as": "style"
+      },
+      "rw9u87w": {
+        "from": "rw9u87w",
+        "to": "7ea5jgx",
+        "as": "width"
+      },
+      "at9191c": {
+        "from": "at9191c",
+        "to": "7ea5jgx",
+        "as": "height"
+      },
+      "ylzx8qo": {
+        "from": "ylzx8qo",
+        "to": "7ea5jgx",
+        "as": "backgroundColor"
+      },
+      "81ujf8j": {
+        "from": "81ujf8j",
+        "to": "ylzx8qo",
+        "as": "hue"
+      },
+      "8odywaq": {
+        "from": "8odywaq",
+        "to": "ylzx8qo",
+        "as": "saturation"
+      },
+      "t08jw63": {
+        "from": "t08jw63",
+        "to": "ylzx8qo",
+        "as": "value"
+      },
+      "ra6vf6a": {
+        "from": "ra6vf6a",
+        "to": "t2tbr2z",
+        "as": "hsl"
+      },
+      "f3crhnx": {
+        "from": "f3crhnx",
+        "to": "hqg5vir",
+        "as": "label"
+      },
+      "69anwc1": {
+        "from": "69anwc1",
+        "to": "hqg5vir",
+        "as": "oninput"
+      },
+      "hqg5vir": {
+        "from": "hqg5vir",
+        "to": "omunkbu",
+        "as": "arg2"
+      },
+      "4xemugi": {
+        "from": "4xemugi",
+        "to": "69anwc1",
+        "as": "args"
+      },
+      "s66b66h": {
+        "from": "s66b66h",
+        "to": "4xemugi",
+        "as": "value"
+      },
+      "e3cf0y2": {
+        "from": "e3cf0y2",
+        "to": "8dy573e",
+        "as": "value"
+      },
+      "owmjxju": {
+        "from": "owmjxju",
+        "to": "out",
+        "as": "value"
+      },
+      "gyagyco": {
+        "from": "gyagyco",
+        "to": "jzmwx97",
+        "as": "value"
+      },
+      "bw3pisc": {
+        "from": "bw3pisc",
+        "to": "gyagyco",
+        "as": "target"
+      },
+      "cpgoj68": {
+        "from": "cpgoj68",
+        "to": "tsx0nxa",
+        "as": "arg1"
+      },
+      "7213y6o": {
+        "from": "7213y6o",
+        "to": "tsx0nxa",
+        "as": "arg0"
+      },
+      "leyos8o": {
+        "from": "leyos8o",
+        "to": "7213y6o",
+        "as": "fn"
+      },
+      "3b75109": {
+        "from": "3b75109",
+        "to": "7213y6o",
+        "as": "args"
+      },
+      "zr406fh": {
+        "from": "zr406fh",
+        "to": "3b75109",
+        "as": "value"
+      },
+      "yvtcxp1": {
+        "from": "yvtcxp1",
+        "to": "zr406fh",
+        "as": "value"
+      },
+      "cl3mg4a": {
+        "from": "cl3mg4a",
+        "to": "zr406fh",
+        "as": "target"
+      },
+      "8anrcgd": {
+        "from": "8anrcgd",
+        "to": "cpgoj68",
+        "as": "fn"
+      },
+      "kaf9jnh": {
+        "from": "kaf9jnh",
+        "to": "cpgoj68",
+        "as": "args"
+      },
+      "9p76jo8": {
+        "from": "9p76jo8",
+        "to": "kaf9jnh",
+        "as": "value"
+      },
+      "tsx0nxa": {
+        "from": "tsx0nxa",
+        "to": "69anwc1",
+        "as": "fn"
+      },
+      "ejqrswg": {
+        "from": "ejqrswg",
+        "to": "j98njyt",
+        "as": "arg1"
+      },
+      "l7b87re": {
+        "from": "l7b87re",
+        "to": "j98njyt",
+        "as": "arg0"
+      },
+      "dgjskzi": {
+        "from": "dgjskzi",
+        "to": "l7b87re",
+        "as": "fn"
+      },
+      "vme9fb1": {
+        "from": "vme9fb1",
+        "to": "l7b87re",
+        "as": "args"
+      },
+      "75i11sr": {
+        "from": "75i11sr",
+        "to": "vme9fb1",
+        "as": "value"
+      },
+      "2bfvr5l": {
+        "from": "2bfvr5l",
+        "to": "75i11sr",
+        "as": "value"
+      },
+      "ssbwghd": {
+        "from": "ssbwghd",
+        "to": "75i11sr",
+        "as": "target"
+      },
+      "ig6y3zd": {
+        "from": "ig6y3zd",
+        "to": "ejqrswg",
+        "as": "fn"
+      },
+      "cyz42is": {
+        "from": "cyz42is",
+        "to": "ejqrswg",
+        "as": "args"
+      },
+      "x3ga548": {
+        "from": "x3ga548",
+        "to": "cyz42is",
+        "as": "value"
+      },
+      "j98njyt": {
+        "from": "j98njyt",
+        "to": "hulvghk",
+        "as": "fn"
+      },
+      "t2tbr2z": {
+        "from": "t2tbr2z",
+        "to": "args",
+        "as": "_hsv"
+      }
+    },
+    "edges_in": {
+      "pdxnxt8": {
+        "aph70wf": {
+          "from": "aph70wf",
+          "to": "pdxnxt8",
+          "as": "fn"
+        },
+        "xdaowcs": {
+          "from": "xdaowcs",
+          "to": "pdxnxt8",
+          "as": "args"
+        }
+      },
+      "xdaowcs": {
+        "fqrnpby": {
+          "from": "fqrnpby",
+          "to": "xdaowcs",
+          "as": "value"
+        }
+      },
+      "aph70wf": {
+        "u0e41te": {
+          "from": "u0e41te",
+          "to": "aph70wf",
+          "as": "arg1"
+        },
+        "t75wi18": {
+          "from": "t75wi18",
+          "to": "aph70wf",
+          "as": "arg0"
+        }
+      },
+      "t75wi18": {
+        "aerb29c": {
+          "from": "aerb29c",
+          "to": "t75wi18",
+          "as": "fn"
+        },
+        "jzmwx97": {
+          "from": "jzmwx97",
+          "to": "t75wi18",
+          "as": "args"
+        }
+      },
+      "gyagyco": {
+        "kmas7e1": {
+          "from": "kmas7e1",
+          "to": "gyagyco",
+          "as": "value"
+        },
+        "bw3pisc": {
+          "from": "bw3pisc",
+          "to": "gyagyco",
+          "as": "target"
+        }
+      },
+      "u0e41te": {
+        "jxmwo4d": {
+          "from": "jxmwo4d",
+          "to": "u0e41te",
+          "as": "fn"
+        },
+        "30cyatd": {
+          "from": "30cyatd",
+          "to": "u0e41te",
+          "as": "args"
+        }
+      },
+      "30cyatd": {
+        "rlgdflv": {
+          "from": "rlgdflv",
+          "to": "30cyatd",
+          "as": "value"
+        }
+      },
+      "w86v20w": {
+        "pdxnxt8": {
+          "from": "pdxnxt8",
+          "to": "w86v20w",
+          "as": "oninput"
+        },
+        "4xncneb": {
+          "from": "4xncneb",
+          "to": "w86v20w",
+          "as": "label"
+        }
+      },
+      "hulvghk": {
+        "vk8axwx": {
+          "from": "vk8axwx",
+          "to": "hulvghk",
+          "as": "args"
+        },
+        "j98njyt": {
+          "from": "j98njyt",
+          "to": "hulvghk",
+          "as": "fn"
+        }
+      },
+      "vk8axwx": {
+        "ji48x6d": {
+          "from": "ji48x6d",
+          "to": "vk8axwx",
+          "as": "value"
+        }
+      },
+      "kpyuy53": {
+        "hulvghk": {
+          "from": "hulvghk",
+          "to": "kpyuy53",
+          "as": "oninput"
+        },
+        "cuc1ej8": {
+          "from": "cuc1ej8",
+          "to": "kpyuy53",
+          "as": "label"
+        }
+      },
+      "out": {
+        "8dy573e": {
+          "from": "8dy573e",
+          "to": "out",
+          "as": "display"
+        },
+        "args": {
+          "from": "args",
+          "to": "out",
+          "as": "args"
+        },
+        "owmjxju": {
+          "from": "owmjxju",
+          "to": "out",
+          "as": "value"
+        }
+      },
+      "iw4e6c2": {
+        "omunkbu": {
+          "from": "omunkbu",
+          "to": "iw4e6c2",
+          "as": "children"
+        }
+      },
+      "omunkbu": {
+        "w86v20w": {
+          "from": "w86v20w",
+          "to": "omunkbu",
+          "as": "arg0"
+        },
+        "kpyuy53": {
+          "from": "kpyuy53",
+          "to": "omunkbu",
+          "as": "arg1"
+        },
+        "hqg5vir": {
+          "from": "hqg5vir",
+          "to": "omunkbu",
+          "as": "arg2"
+        }
+      },
+      "c1dvldn": {
+        "iw4e6c2": {
+          "from": "iw4e6c2",
+          "to": "c1dvldn",
+          "as": "arg0"
+        },
+        "pg12g2d": {
+          "from": "pg12g2d",
+          "to": "c1dvldn",
+          "as": "arg1"
+        }
+      },
+      "8dy573e": {
+        "c1dvldn": {
+          "from": "c1dvldn",
+          "to": "8dy573e",
+          "as": "children"
+        },
+        "e3cf0y2": {
+          "from": "e3cf0y2",
+          "to": "8dy573e",
+          "as": "value"
+        }
+      },
+      "pg12g2d": {
+        "emu0880": {
+          "from": "emu0880",
+          "to": "pg12g2d",
+          "as": "props"
+        }
+      },
+      "emu0880": {
+        "7ea5jgx": {
+          "from": "7ea5jgx",
+          "to": "emu0880",
+          "as": "style"
+        }
+      },
+      "7ea5jgx": {
+        "rw9u87w": {
+          "from": "rw9u87w",
+          "to": "7ea5jgx",
+          "as": "width"
+        },
+        "at9191c": {
+          "from": "at9191c",
+          "to": "7ea5jgx",
+          "as": "height"
+        },
+        "ylzx8qo": {
+          "from": "ylzx8qo",
+          "to": "7ea5jgx",
+          "as": "backgroundColor"
+        }
+      },
+      "ylzx8qo": {
+        "81ujf8j": {
+          "from": "81ujf8j",
+          "to": "ylzx8qo",
+          "as": "hue"
+        },
+        "8odywaq": {
+          "from": "8odywaq",
+          "to": "ylzx8qo",
+          "as": "saturation"
+        },
+        "t08jw63": {
+          "from": "t08jw63",
+          "to": "ylzx8qo",
+          "as": "value"
+        }
+      },
+      "t2tbr2z": {
+        "ra6vf6a": {
+          "from": "ra6vf6a",
+          "to": "t2tbr2z",
+          "as": "hsl"
+        }
+      },
+      "hqg5vir": {
+        "f3crhnx": {
+          "from": "f3crhnx",
+          "to": "hqg5vir",
+          "as": "label"
+        },
+        "69anwc1": {
+          "from": "69anwc1",
+          "to": "hqg5vir",
+          "as": "oninput"
+        }
+      },
+      "69anwc1": {
+        "4xemugi": {
+          "from": "4xemugi",
+          "to": "69anwc1",
+          "as": "args"
+        },
+        "tsx0nxa": {
+          "from": "tsx0nxa",
+          "to": "69anwc1",
+          "as": "fn"
+        }
+      },
+      "4xemugi": {
+        "s66b66h": {
+          "from": "s66b66h",
+          "to": "4xemugi",
+          "as": "value"
+        }
+      },
+      "jzmwx97": {
+        "gyagyco": {
+          "from": "gyagyco",
+          "to": "jzmwx97",
+          "as": "value"
+        }
+      },
+      "tsx0nxa": {
+        "cpgoj68": {
+          "from": "cpgoj68",
+          "to": "tsx0nxa",
+          "as": "arg1"
+        },
+        "7213y6o": {
+          "from": "7213y6o",
+          "to": "tsx0nxa",
+          "as": "arg0"
+        }
+      },
+      "7213y6o": {
+        "leyos8o": {
+          "from": "leyos8o",
+          "to": "7213y6o",
+          "as": "fn"
+        },
+        "3b75109": {
+          "from": "3b75109",
+          "to": "7213y6o",
+          "as": "args"
+        }
+      },
+      "3b75109": {
+        "zr406fh": {
+          "from": "zr406fh",
+          "to": "3b75109",
+          "as": "value"
+        }
+      },
+      "zr406fh": {
+        "yvtcxp1": {
+          "from": "yvtcxp1",
+          "to": "zr406fh",
+          "as": "value"
+        },
+        "cl3mg4a": {
+          "from": "cl3mg4a",
+          "to": "zr406fh",
+          "as": "target"
+        }
+      },
+      "cpgoj68": {
+        "8anrcgd": {
+          "from": "8anrcgd",
+          "to": "cpgoj68",
+          "as": "fn"
+        },
+        "kaf9jnh": {
+          "from": "kaf9jnh",
+          "to": "cpgoj68",
+          "as": "args"
+        }
+      },
+      "kaf9jnh": {
+        "9p76jo8": {
+          "from": "9p76jo8",
+          "to": "kaf9jnh",
+          "as": "value"
+        }
+      },
+      "j98njyt": {
+        "ejqrswg": {
+          "from": "ejqrswg",
+          "to": "j98njyt",
+          "as": "arg1"
+        },
+        "l7b87re": {
+          "from": "l7b87re",
+          "to": "j98njyt",
+          "as": "arg0"
+        }
+      },
+      "l7b87re": {
+        "dgjskzi": {
+          "from": "dgjskzi",
+          "to": "l7b87re",
+          "as": "fn"
+        },
+        "vme9fb1": {
+          "from": "vme9fb1",
+          "to": "l7b87re",
+          "as": "args"
+        }
+      },
+      "vme9fb1": {
+        "75i11sr": {
+          "from": "75i11sr",
+          "to": "vme9fb1",
+          "as": "value"
+        }
+      },
+      "75i11sr": {
+        "2bfvr5l": {
+          "from": "2bfvr5l",
+          "to": "75i11sr",
+          "as": "value"
+        },
+        "ssbwghd": {
+          "from": "ssbwghd",
+          "to": "75i11sr",
+          "as": "target"
+        }
+      },
+      "ejqrswg": {
+        "ig6y3zd": {
+          "from": "ig6y3zd",
+          "to": "ejqrswg",
+          "as": "fn"
+        },
+        "cyz42is": {
+          "from": "cyz42is",
+          "to": "ejqrswg",
+          "as": "args"
+        }
+      },
+      "cyz42is": {
+        "x3ga548": {
+          "from": "x3ga548",
+          "to": "cyz42is",
+          "as": "value"
+        }
+      },
+      "args": {
+        "t2tbr2z": {
+          "from": "t2tbr2z",
+          "to": "args",
+          "as": "_hsv"
         }
       }
     }
