@@ -10534,7 +10534,254 @@ const generic = {
         }
       ],
       "out": "out"
+    },
+    "ischanged": {
+    "id": "ischanged",
+    "nodes": {
+      "in": {
+        "id": "in"
+      },
+      "eq_fn_value": {
+        "id": "eq_fn_value",
+        "ref": "arg",
+        "value": "value"
+      },
+      "eq_fn_if": {
+        "id": "eq_fn_if",
+        "ref": "arg",
+        "value": "eq_fn"
+      },
+      "fn": {
+        "id": "fn",
+        "ref": "arg",
+        "value": "fn"
+      },
+      "cached": {
+        "id": "cached",
+        "ref": "arg",
+        "value": "cached",
+        "type": "internal"
+      },
+      "eq_default": {
+        "id": "eq_default",
+        "ref": "eq"
+      },
+      "eq_runnable": {
+        "id": "eq_runnable",
+        "ref": "runnable"
+      },
+      "fn_runnable": {
+        "id": "fn_runnable",
+        "ref": "default"
+      },
+      "eq_fn_runnable": {
+        "id": "eq_fn_runnable",
+        "ref": "script",
+        "value": "return {...fn, args: {...(fn.args ?? {}), a, b}}"
+      },
+      "eq_fn": {
+        "id": "eq_fn",
+        "ref": "run"
+      },
+      "eq_fn_return_args": {
+        "id": "eq_fn_return_args"
+      },
+      "if_eq_fn": {
+        "id": "if_eq_fn",
+        "ref": "if"
+      },
+      "out": {
+        "id": "out",
+        "ref": "return",
+        "name": "ischanged"
+      },
+      "yp2q57b": {
+        "id": "yp2q57b"
+      },
+      "tpe5t4z": {
+        "id": "tpe5t4z",
+        "ref": "refval"
+      },
+      "cy1tm8s": {
+        "id": "cy1tm8s",
+        "value": "const iseq = saved.value === value;\n\nif(!iseq) {\n  saved.set.fn(value);\n}\n\nreturn !iseq;",
+        "ref": "script"
+      },
+      "khdzxds": {
+        "id": "khdzxds",
+        "value": "_saved",
+        "ref": "arg"
+      },
+      "lv2gcpk": {
+        "id": "lv2gcpk",
+        "value": "value",
+        "ref": "arg"
+      }
+    },
+    "edges": {
+      "eq_default": {
+        "from": "eq_default",
+        "to": "eq_runnable",
+        "as": "fn"
+      },
+      "eq_runnable": {
+        "from": "eq_runnable",
+        "to": "fn_runnable",
+        "as": "otherwise"
+      },
+      "fn": {
+        "from": "fn",
+        "to": "fn_runnable",
+        "as": "value"
+      },
+      "fn_runnable": {
+        "from": "fn_runnable",
+        "to": "eq_fn_runnable",
+        "as": "fn"
+      },
+      "eq_fn_value": {
+        "from": "eq_fn_value",
+        "to": "eq_fn_runnable",
+        "as": "a"
+      },
+      "cached": {
+        "from": "cached",
+        "to": "eq_fn_runnable",
+        "as": "b"
+      },
+      "eq_fn_runnable": {
+        "from": "eq_fn_runnable",
+        "to": "eq_fn",
+        "as": "runnable"
+      },
+      "eq_fn_if": {
+        "from": "eq_fn_if",
+        "to": "if_eq_fn",
+        "as": "pred"
+      },
+      "eq_fn": {
+        "from": "eq_fn",
+        "to": "eq_fn_return_args",
+        "as": "eq_fn"
+      },
+      "yp2q57b": {
+        "from": "yp2q57b",
+        "to": "out",
+        "as": "args"
+      },
+      "tpe5t4z": {
+        "from": "tpe5t4z",
+        "to": "yp2q57b",
+        "as": "_saved"
+      },
+      "cy1tm8s": {
+        "from": "cy1tm8s",
+        "to": "out",
+        "as": "value"
+      },
+      "khdzxds": {
+        "from": "khdzxds",
+        "to": "cy1tm8s",
+        "as": "saved"
+      },
+      "lv2gcpk": {
+        "from": "lv2gcpk",
+        "to": "cy1tm8s",
+        "as": "value"
+      }
+    },
+    "edges_in": {
+      "eq_runnable": {
+        "eq_default": {
+          "from": "eq_default",
+          "to": "eq_runnable",
+          "as": "fn"
+        }
+      },
+      "fn_runnable": {
+        "eq_runnable": {
+          "from": "eq_runnable",
+          "to": "fn_runnable",
+          "as": "otherwise"
+        },
+        "fn": {
+          "from": "fn",
+          "to": "fn_runnable",
+          "as": "value"
+        }
+      },
+      "eq_fn_runnable": {
+        "fn_runnable": {
+          "from": "fn_runnable",
+          "to": "eq_fn_runnable",
+          "as": "fn"
+        },
+        "eq_fn_value": {
+          "from": "eq_fn_value",
+          "to": "eq_fn_runnable",
+          "as": "a"
+        },
+        "cached": {
+          "from": "cached",
+          "to": "eq_fn_runnable",
+          "as": "b"
+        }
+      },
+      "eq_fn": {
+        "eq_fn_runnable": {
+          "from": "eq_fn_runnable",
+          "to": "eq_fn",
+          "as": "runnable"
+        }
+      },
+      "if_eq_fn": {
+        "eq_fn_if": {
+          "from": "eq_fn_if",
+          "to": "if_eq_fn",
+          "as": "pred"
+        }
+      },
+      "eq_fn_return_args": {
+        "eq_fn": {
+          "from": "eq_fn",
+          "to": "eq_fn_return_args",
+          "as": "eq_fn"
+        }
+      },
+      "out": {
+        "yp2q57b": {
+          "from": "yp2q57b",
+          "to": "out",
+          "as": "args"
+        },
+        "cy1tm8s": {
+          "from": "cy1tm8s",
+          "to": "out",
+          "as": "value"
+        }
+      },
+      "yp2q57b": {
+        "tpe5t4z": {
+          "from": "tpe5t4z",
+          "to": "yp2q57b",
+          "as": "_saved"
+        }
+      },
+      "cy1tm8s": {
+        "khdzxds": {
+          "from": "khdzxds",
+          "to": "cy1tm8s",
+          "as": "saved"
+        },
+        "lv2gcpk": {
+          "from": "lv2gcpk",
+          "to": "cy1tm8s",
+          "as": "value"
+        }
+      }
     }
+  }
+
   },
   "edges": {
   }
