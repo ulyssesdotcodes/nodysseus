@@ -1461,7 +1461,7 @@ const generic = {
       ],
       "out": "out"
     },
-    "graphchangecache": {
+    "graphchangecache":{
     "id": "graphchangecache",
     "out": "out",
     "nodes": {
@@ -1545,7 +1545,7 @@ const generic = {
       },
       "out": {
         "id": "out",
-        "name": "graphchangecache_ancestor",
+        "name": "graphchangecache",
         "ref": "return"
       },
       "fy9ee3e": {
@@ -1618,11 +1618,6 @@ const generic = {
         "value": "dirtyNodes",
         "ref": "arg"
       },
-      "sl7nd5i": {
-        "id": "sl7nd5i",
-        "value": "dirty",
-        "ref": "log"
-      },
       "h0dsw4x": {
         "id": "h0dsw4x"
       },
@@ -1636,7 +1631,7 @@ const generic = {
       },
       "zan0upq": {
         "id": "zan0upq",
-        "value": "const ret =  dirtyNodes && !dirtyNodes.every(n => !graphid.includes(n));\nreturn ret;",
+        "value": "const ret =  dirtyNodes && !dirtyNodes.every(n => !graphid.includes(n));\nreturn ret || state === undefined;",
         "ref": "script"
       },
       "jonwhso": {
@@ -1681,6 +1676,11 @@ const generic = {
       },
       "crkuagp": {
         "id": "crkuagp"
+      },
+      "g1lb9hq": {
+        "id": "g1lb9hq",
+        "value": "_cachevalue.state",
+        "ref": "arg"
       }
     },
     "edges": {
@@ -1841,13 +1841,13 @@ const generic = {
       },
       "j0kbk5p": {
         "from": "j0kbk5p",
-        "to": "sl7nd5i",
-        "as": "value"
-      },
-      "sl7nd5i": {
-        "from": "sl7nd5i",
         "to": "ju4ukmm",
         "as": "fn"
+      },
+      "g1lb9hq": {
+        "from": "g1lb9hq",
+        "to": "zan0upq",
+        "as": "state"
       },
       "h0dsw4x": {
         "from": "h0dsw4x",
@@ -2126,22 +2126,20 @@ const generic = {
           "to": "zan0upq",
           "as": "dirtyNodes"
         },
+        "g1lb9hq": {
+          "from": "g1lb9hq",
+          "to": "zan0upq",
+          "as": "state"
+        },
         "jonwhso": {
           "from": "jonwhso",
           "to": "zan0upq",
           "as": "graphid"
         }
       },
-      "sl7nd5i": {
+      "ju4ukmm": {
         "j0kbk5p": {
           "from": "j0kbk5p",
-          "to": "sl7nd5i",
-          "as": "value"
-        }
-      },
-      "ju4ukmm": {
-        "sl7nd5i": {
-          "from": "sl7nd5i",
           "to": "ju4ukmm",
           "as": "fn"
         },
@@ -2195,7 +2193,7 @@ const generic = {
         }
       }
     }
-  }
+  } 
     ,
     "cache": {
     "id": "cache",
@@ -2532,100 +2530,144 @@ const generic = {
       "value": "extern.state",
     },
     "publish_event": {
-      "id": "publish_event",
-      "category": "events",
-      "description": "Publishes a `name` (or this node's value) event with the data `value`.",
-      "out": "out",
-      "nodes": [
-        {
-          "id": "value",
-          "ref": "arg",
-          "value": "data"
-        },
-        {
-          "id": "arg_name",
-          "ref": "arg",
-          "value": "name"
-        },
-        {
-          "id": "graph_value",
-          "ref": "arg",
-          "value": "__graph_value"
-        },
-        {
-          "id": "update_event",
-          "ref": "arg",
-          "value": "name"
-        },
-        {
-          "id": "update_data",
-          "ref": "arg",
-          "value": "data"
-        },
-        {
-          "id": "name",
-          "ref": "default"
-        },
-        {
-          "id": "update",
-          "ref": "script",
-          "value": "return _lib.no.runtime.publish(event_name, event_data)"
-        },
-        {
-          "id": "ap_args"
-        },
-        {
-          "id": "update_runnable",
-          "ref": "runnable"
-        },
-        {
-          "id": "out",
-          "ref": "ap"
+    "id": "publish_event",
+    "out": "out",
+    "nodes": {
+      "output_val": {
+        "id": "output_val",
+        "ref": "runnable"
+      },
+      "out": {
+        "id": "out",
+        "ref": "return",
+        "name": "publish_event"
+      },
+      "i5m8bp1": {
+        "id": "i5m8bp1",
+        "value": "_lib.no.runtime.publish(name, {data})",
+        "ref": "script"
+      },
+      "3pnfu3c": {
+        "id": "3pnfu3c",
+        "ref": "default"
+      },
+      "smopce2": {
+        "id": "smopce2",
+        "value": "event",
+        "ref": "arg"
+      },
+      "mz8rw6m": {
+        "id": "mz8rw6m",
+        "value": "__graph_value",
+        "ref": "arg"
+      },
+      "6sffwk9": {
+        "id": "6sffwk9",
+        "value": "data",
+        "ref": "arg"
+      },
+      "xiqo1q0": {
+        "id": "xiqo1q0"
+      },
+      "k36to2l": {
+        "id": "k36to2l"
+      }
+    },
+    "edges": {
+      "output_val": {
+        "from": "output_val",
+        "to": "out",
+        "as": "value"
+      },
+      "i5m8bp1": {
+        "from": "i5m8bp1",
+        "to": "output_val",
+        "as": "fn"
+      },
+      "3pnfu3c": {
+        "from": "3pnfu3c",
+        "to": "i5m8bp1",
+        "as": "name"
+      },
+      "smopce2": {
+        "from": "smopce2",
+        "to": "3pnfu3c",
+        "as": "value"
+      },
+      "mz8rw6m": {
+        "from": "mz8rw6m",
+        "to": "3pnfu3c",
+        "as": "otherwise"
+      },
+      "6sffwk9": {
+        "from": "6sffwk9",
+        "to": "i5m8bp1",
+        "as": "data"
+      },
+      "xiqo1q0": {
+        "from": "xiqo1q0",
+        "to": "output_val",
+        "as": "parameters"
+      },
+      "k36to2l": {
+        "from": "k36to2l",
+        "to": "xiqo1q0",
+        "as": "data"
+      }
+    },
+    "edges_in": {
+      "out": {
+        "output_val": {
+          "from": "output_val",
+          "to": "out",
+          "as": "value"
         }
-      ],
-      "edges": [
-        {
-          "from": "arg_name",
-          "to": "name",
+      },
+      "output_val": {
+        "i5m8bp1": {
+          "from": "i5m8bp1",
+          "to": "output_val",
+          "as": "fn"
+        },
+        "xiqo1q0": {
+          "from": "xiqo1q0",
+          "to": "output_val",
+          "as": "parameters"
+        }
+      },
+      "i5m8bp1": {
+        "3pnfu3c": {
+          "from": "3pnfu3c",
+          "to": "i5m8bp1",
+          "as": "name"
+        },
+        "6sffwk9": {
+          "from": "6sffwk9",
+          "to": "i5m8bp1",
+          "as": "data"
+        }
+      },
+      "3pnfu3c": {
+        "smopce2": {
+          "from": "smopce2",
+          "to": "3pnfu3c",
           "as": "value"
         },
-        {
-          "from": "graph_value",
-          "to": "name",
+        "mz8rw6m": {
+          "from": "mz8rw6m",
+          "to": "3pnfu3c",
           "as": "otherwise"
-        },
-        {
-          "from": "name",
-          "to": "update",
-          "as": "event_name"
-        },
-        {
-          "from": "value",
-          "to": "ap_args",
-          "as": "event_data"
-        },
-        {
-          "from": "update_data",
-          "to": "update",
-          "as": "event_data"
-        },
-        {
-          "from": "update",
-          "to": "update_runnable",
-          "as": "fn"
-        },
-        {
-          "from": "update_runnable",
-          "to": "out",
-          "as": "fn"
-        },
-        {
-          "from": "ap_args",
-          "to": "out",
-          "as": "args"
         }
-      ]
-    },
+      },
+      "xiqo1q0": {
+        "k36to2l": {
+          "from": "k36to2l",
+          "to": "xiqo1q0",
+          "as": "data"
+        }
+      }
+    }
+  },
     "event_publisher_onchange": {
       "id": "event_publisher_onchange",
       "category": "events",
