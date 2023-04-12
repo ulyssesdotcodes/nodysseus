@@ -909,7 +909,7 @@ const nolib = {
         // }
         if(event.startsWith("bc")) {
           event = event.substring(3);
-        } else if(broadcast && event !== "noderun" && event !== "animationframe" && event !== "show_all" && !ispromise(data)) {
+        } else if(broadcast && event !== "noderun" && event !== "animationframe" && event !== "show_all") {
           try {
             if(typeof window !== "undefined") {
               eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data });
@@ -1389,16 +1389,14 @@ const nolib = {
       fn: (fn, array, lib, options) =>
         wrapPromise(run_runnable(array, lib, undefined, options))
           .then(arr => isValue(arr) ? arr.value : arr)
-          .then(arr => Array.isArray(arr) || typeof arr?.map === "function"
+          .then(arr => Array.isArray(arr) 
             ? wrapPromise(run_runnable(fn, lib, undefined, options))
               .then(fnr => isError(fnr) ? fnr : fnr.value)
               .then(fnr => isApFunctorLike(fnr)
-                   ? (Array.isArray(arr) ? wrapPromiseAll : wrapPromise)(arr.map((element, index) =>
+                   ? wrapPromiseAll(arr.map((element, index) =>
                       typeof fnr === "function" ? (fnr(mergeEnv(new Map([["element", lib.data.no.of(element)], ["index", lib.data.no.of(index)]]), fn.env)) as Result | Promise<Result>)
-                      : Array.isArray(arr)
-                        ? run_runnable(fnr, lib, new Map([["element", lib.data.no.of(element)], ["index", lib.data.no.of(index)]]), options)
-                        : (run_runnable(fnr, lib, new Map([["element", lib.data.no.of(element)], ["index", lib.data.no.of(index)]]), options) as {value: number}).value
-                     ).map(v => Array.isArray(arr) ? wrapPromise(v).then(v => isValue(v) ? v.value : v) : v)).then(vs => lib.data.no.of(vs))
+                      : run_runnable(fnr, lib, new Map([["element", lib.data.no.of(element)], ["index", lib.data.no.of(index)]]), options)
+                     ).map(v => wrapPromise(v).then(v => isValue(v) ? v.value : v))).then(vs => lib.data.no.of(vs))
                    : isError(fnr) ? fnr
                    : arr)
             : arr).value
@@ -2135,3 +2133,5 @@ const nolib = {
 };
 
 export {nolib, initStore, compare, hashcode, ispromise, NodysseusError, resfetch, resolve_args };
+
+

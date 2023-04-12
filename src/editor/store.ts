@@ -652,14 +652,47 @@ export const automergeStore = async (): Promise<NodysseusStore> => {
   }).then(db => { nodysseusidb = db })
 
   const syncBroadcast = new BroadcastChannel("refssync");
+  const syncStates = {};
+
+  const peerId = crypto.randomUUID();
+
+  syncBroadcast.postMessage({type: "syncstart", peerId})
+
+  syncBroadcast.addEventListener("message", v => {
+    if(v.data.type === "syncstart") {
+      syncStates[v.data.peerId] = {};
+    } else if (v.data.type === "syncgraph") {
+      const id = v.data.id;
+      const [nextDoc, nextSyncState, patch] = Automerge.receiveSyncMessage(refsmap.get(id), syncStates[v.data.peerId]?.[id] || Automerge.initSyncState(), v.data.syncMessage);
+      refsmap.set(id, nextDoc);
+      syncStates[v.data.peerId] = {...syncStates[v.data.peerId], [id]: nextSyncState};
+
+      refs.get(id);
+
+      updatePeers(id);
+    }
+  })
+
+  const updatePeers = (id) => {
+    Object.entries(syncStates).forEach(([peer, syncState]) => {
+      const [nextSyncState, syncMessage] = Automerge.generateSyncMessage(
+        refsmap.get(id),
+        syncState[id] || Automerge.initSyncState()
+      )
+      syncStates[peer] = {...syncStates[peer], [id]: nextSyncState};
+      if(syncMessage) {
+        syncBroadcast.postMessage({type: "syncgraph", id, peerId, target: peer, syncMessage});
+      }
+    })
+  }
+
 
   const changeDoc = (id, fn) => {
     wrapPromise(refs.get(id)).then(graph => {
-      console.log(graph);
       const doc = Automerge.change<Graph>(graph ?? Automerge.init(), fn);
       nodysseusidb.put("persist", Automerge.save(doc), id)
       refsmap.set(id, doc).get(id);
-      console.log(doc);
+      updatePeers(id);
       return doc;
     }).value
   }
@@ -678,10 +711,12 @@ export const automergeStore = async (): Promise<NodysseusStore> => {
               if(persisted) {
                 let doc = Automerge.load<Graph>(persisted)
                 refsmap.set(id, doc);
+                updatePeers(id);
                 return doc;
               }
             })
         }
+
 
         return refsmap.get(id)
       },
