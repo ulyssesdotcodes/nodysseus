@@ -94,17 +94,20 @@ const custom_editor_display = html_id => ha.app({
     }
 });
 
-const refresh_custom_editor = () => {
-    if(nolib.no.runtime.get_ref("custom_editor")) {
+const refresh_custom_editor = () =>
+  wrapPromise(nolib.no.runtime.get_ref("custom_editor")).then(graph => {
+    console.log(graph);
+    if(graph) {
         // TODO: combine with update_info
         const graph = nolib.no.runtime.get_ref("custom_editor");
         wrapPromise(graph).then(graph => hlib.run(graph, graph.out, {_output: "display"}))
           .then(result => custom_editor_display_dispatch(() => ({el: result})))
     } else {
+      console.log("should dispatch?")
         custom_editor_display_dispatch(() => ({el: {dom_type: "div", props: {}, children: []}}))
     }
     custom_editor_display_dispatch(() => ({el: {dom_type: "div", props: {}, children: []}}))
-}
+}).value
 
 const defs = () =>ha.h('defs', {}, [
    ha.h('filter', {id: "flood-background", width: 1.2, height: 1.1, x: 0, y: 0}, [

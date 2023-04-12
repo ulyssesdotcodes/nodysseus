@@ -190,7 +190,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
                     source: e.from,
                     target: main_node_map.get(e.to),
                     sibling_index_normalized: simulation_node_data.get(e.from).sibling_index_normalized,
-                    strength: 2 * (1.5 - Math.abs(simulation_node_data.get(e.from).sibling_index_normalized - 0.5)) / (1 + 2 * Math.min(4, proximal)),
+                    strength: 2 * (1.5 - (Math.abs(simulation_node_data.get(e.from).sibling_index_normalized ?? 0) - 0.5)) / (1 + 2 * Math.min(4, proximal)),
                     distance: 32 + 4 * (Math.min(8, proximal)) 
                 };
             }).filter(l => !!l);

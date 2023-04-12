@@ -264,7 +264,6 @@ export const ChangeEditingGraphId: ha.Effecter<HyperappState, {id: string, selec
 export const CreateNode: ha.Action<HyperappState, {node: NodysseusNode, child: string, child_as: string, parent: Edge }> = (state, {node, child, child_as, parent}) => [
     state,
     dispatch => {
-      console.log(node);
       nolib.no.runtime.add_node(state.editingGraph, node, hlib)
       nolib.no.runtime.update_edges(state.editingGraph, 
           parent 

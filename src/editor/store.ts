@@ -651,32 +651,69 @@ export const automergeStore = async (): Promise<NodysseusStore> => {
     }
   }).then(db => { nodysseusidb = db })
 
+  const syncBroadcast = new BroadcastChannel("refssync");
+
+  const changeDoc = (id, fn) => {
+    wrapPromise(refs.get(id)).then(graph => {
+      console.log(graph);
+      const doc = Automerge.change<Graph>(graph ?? Automerge.init(), fn);
+      nodysseusidb.put("persist", Automerge.save(doc), id)
+      refsmap.set(id, doc).get(id);
+      console.log(doc);
+      return doc;
+    }).value
+  }
+
   const refsmap = new Map<string, Automerge.Doc<Graph>>();
 
   const refs = {
-      get: (id) => refsmap.get(id),
-      set: (id, graph) => refsmap.set(id, Automerge.change(Automerge.init(), doc => {
-        Object.entries(graph).map(e => doc[e[0]] = e[1]);
-      })),
+      get: (id) => {
+        if(generic_node_ids.has(id)) {
+          return generic_nodes[id];
+        }
+
+        if(!refsmap.get(id)) {
+          return nodysseusidb.get("persist", id)
+            .then(persisted => {
+              if(persisted) {
+                let doc = Automerge.load<Graph>(persisted)
+                refsmap.set(id, doc);
+                return doc;
+              }
+            })
+        }
+
+        return refsmap.get(id)
+      },
+      set: (id, graph) => changeDoc(id, doc => Object.entries(structuredClone(graph)).forEach(e => doc[e[0]] = e[1])),
       delete: (id) => {throw new Error("not implemented")},
       clear: () => {throw new Error("not implemented")},
       keys: () => {return [...refsmap.keys()]},
       undo: () => {throw new Error("not implemented")},
       redo: () => {throw new Error("not implemented")},
-      add_node: (id, node) => Automerge.change(refs.get(id), doc => {
+      add_node: (id, node) => changeDoc(id, doc => {
+        if(node.ref === undefined) delete node.ref;
         doc.nodes[node.id] = node;
       }),
       add_nodes_edges: (id, nodes, edges) => {throw new Error("not implemented")},
-      remove_node: (id, node) => Automerge.change(refsmap.get(id),doc => {
-        delete doc.nodes[node.id];
+      remove_node: (id, node) => changeDoc(id, doc => {
+        const nodeid = typeof node === "string" ? node : node.id;
+        delete doc.nodes[nodeid];
+        delete doc.edges[nodeid];
+        Object.values(doc.edges_in).forEach(ein => {
+          if(ein[nodeid]) {
+            delete ein[nodeid]
+          }
+        })
       }),
-      add_edge: (id, edge) => Automerge.change(refs.get(id), g => {
+      add_edge: (id, edge) => changeDoc(id, g => {
         g.edges[edge.from] = edge; 
+        if(g.edges_in[edge.to] === undefined) g.edges_in[edge.to] = {};
         g.edges_in[edge.to][edge.from] = edge;
       }),
-      remove_edge: (id, edge) => Automerge.change(refs.get(id), g => {
+      remove_edge: (id, edge) => changeDoc(id, g => {
         delete g.edges[edge.id]; 
-      }),
+      })
     }
 
 
