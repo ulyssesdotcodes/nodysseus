@@ -651,24 +651,34 @@ export const automergeStore = async (): Promise<NodysseusStore> => {
     }
   }).then(db => { nodysseusidb = db })
 
-  const syncBroadcast = new BroadcastChannel("refssync");
+  const syncMessageTypes = {
+    0: "syncstart",
+    1: "syncgraph"
+  }
+
+  const syncBroadcast = new WebSocket("ws://192.168.50.116:4444/");
   const syncStates = {};
 
   const peerId = crypto.randomUUID();
 
-  syncBroadcast.postMessage({type: "syncstart", peerId})
+  syncBroadcast.addEventListener("open", () => {
+    syncBroadcast.send(JSON.stringify({type: "syncstart", peerId}))
+  })
 
-  syncBroadcast.addEventListener("message", v => {
-    if(v.data.type === "syncstart") {
-      syncStates[v.data.peerId] = {};
-    } else if (v.data.type === "syncgraph") {
-      const id = v.data.id;
-      const [nextDoc, nextSyncState, patch] = Automerge.receiveSyncMessage(refsmap.get(id), syncStates[v.data.peerId]?.[id] || Automerge.initSyncState(), v.data.syncMessage);
+  syncBroadcast.addEventListener("message", (ev: MessageEvent) => {
+    const data = JSON.parse(ev.data)
+    if(data.type === "syncstart") {
+      syncStates[data.peerId] = {};
+    } else if (data.type === "syncgraph") {
+      data.syncMessage = Uint8Array.from(Object.values(data.syncMessage))
+      const id = data.id;
+      const [nextDoc, nextSyncState, patch] = Automerge.receiveSyncMessage(refsmap.get(id) ?? Automerge.init<Graph>(), syncStates[data.peerId]?.[id] || Automerge.initSyncState(), data.syncMessage);
       refsmap.set(id, nextDoc);
-      syncStates[v.data.peerId] = {...syncStates[v.data.peerId], [id]: nextSyncState};
+      syncStates[data.peerId] = {...syncStates[data.peerId], [id]: nextSyncState};
 
-      refs.get(id);
+      const graph = refs.get(id);
 
+      nolib.no.runtime.publish('graphchange', {graph}, {...nolib, ...hlib}) 
       updatePeers(id);
     }
   })
@@ -681,7 +691,7 @@ export const automergeStore = async (): Promise<NodysseusStore> => {
       )
       syncStates[peer] = {...syncStates[peer], [id]: nextSyncState};
       if(syncMessage) {
-        syncBroadcast.postMessage({type: "syncgraph", id, peerId, target: peer, syncMessage});
+        syncBroadcast.send(JSON.stringify({type: "syncgraph", id, peerId, target: peer, syncMessage}));
       }
     })
   }
