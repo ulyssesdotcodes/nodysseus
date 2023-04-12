@@ -1089,14 +1089,17 @@ const nolib = {
 
         if (!compareObjects(args, prevargs, true)) {
           Object.assign(prevargs, args);
-          const updatedgraph = get_parentest(graphid) ?? get_graph(graphid);
-          if(!ispromise(updatedgraph) && (!updatepublish[updatedgraph.id] || updatepublish[updatedgraph.id] + 16 < performance.now())) {
-            updatepublish[updatedgraph.id] = performance.now();
-            requestAnimationFrame(() => {
-              updatepublish[updatedgraph.id] = false;
-              publish("graphupdate", updatedgraph, lib);
-            })
-          }
+          wrapPromise(get_parentest(graphid))
+            .then(parent => parent ?? get_graph(graphid))
+            .then(updatedgraph => {
+              if(!ispromise(updatedgraph) && (!updatepublish[updatedgraph.id] || updatepublish[updatedgraph.id] + 16 < performance.now())) {
+                updatepublish[updatedgraph.id] = performance.now();
+                requestAnimationFrame(() => {
+                  updatepublish[updatedgraph.id] = false;
+                  publish("graphupdate", updatedgraph, lib);
+                })
+              }
+            }).value
         }
       };
 
@@ -1112,14 +1115,15 @@ const nolib = {
           }
         })[0]
       }
-      const remove_ref = (id) => {
-        if(nodysseus.refs.keys().includes(id)) {
-          nodysseus.refs.delete(id);
-        } else {
-          nodysseus.refs.keys().filter(k => k.startsWith(`@${id}`))
-            .forEach(k => nodysseus.refs.delete(k))
-        }
-      }
+      const remove_ref = (id) => 
+        wrapPromise(nodysseus.refs.keys()).then(keys => {
+          if(keys.includes(id)) {
+            nodysseus.refs.delete(id);
+          } else {
+            keys.filter(k => k.startsWith(`@${id}`))
+              .forEach(k => nodysseus.refs.delete(k))
+          }
+        }).value
 
       const get_node = (graph: Graph, id: string) => wrapPromise(get_graph(graph)).then(g => g?.nodes[id]).value
       const get_edge = (graph, from) => wrapPromise(get_graph(graph)).then(g => g?.edges[from]).value
@@ -1142,20 +1146,20 @@ const nolib = {
       const get_args = (graph) => nodysseus.state.get(typeof graph === "string" ? graph : graph.id) ?? {};
       const get_graph = (graph: string | Graph): Graph | Promise<Graph> | undefined => wrapPromise(
         nodysseus.refs.get(typeof graph === "string" ? graph : graph.id))
-          .then(g => {
+          .then((g: NodysseusNode) => {
             return isNodeGraph(g) ? g : typeof graph !== "string" && isNodeGraph(graph) ? graph : undefined
           }).value
       const get_parent = (graph) => {
         const parent = nodysseus.parents.get(
           typeof graph === "string" ? graph : graph.id
         );
-        return parent ? get_graph(parent.parent) : undefined;
+        return wrapPromise(parent).then(parent => parent && get_graph(parent.parent)).value;
       };
       const get_parentest = (graph) => {
        const parent = nodysseus.parents.get(
           typeof graph === "string" ? graph : graph.id
         );
-        return parent && parent.parentest && get_graph(parent.parentest);
+        return wrapPromise(parent).then(parent => parent && parent.parentest && get_graph(parent.parentest)).value;
       };
       const get_path = (graph, path) => {
         graph = get_graph(graph);
@@ -1183,7 +1187,7 @@ const nolib = {
         get_parentest,
         get_fn: (id, name, orderedargs, script): Function => {
           const fnid = id;
-          let fn = nodysseus.fns.get(fnid + orderedargs);
+          return wrapPromise(nodysseus.fns.get(fnid + orderedargs)).then(fn => {
           if (!fn || fn.script !== script) {
             const update = !!fn;
 
@@ -1201,6 +1205,7 @@ const nolib = {
           }
 
           return fn.fn;
+        }).value
         },
         change_graph,
         update_graph: (graphid, lib: Lib) => publish('graphupdate', {graphid}, lib),
@@ -1314,15 +1319,16 @@ const nolib = {
         set_parent: (graph, parent) => {
           const graphid = graph;
           const parentid = parent;
-          const parent_parent = nodysseus.parents.get(parentid);
-          const parentest =
-            (parent_parent ? parent_parent.parentest : false) || parentid;
-          const new_parent = {
-            id: graphid,
-            parent: parentid,
-            parentest,
-          };
-          nodysseus.parents.set(graphid, new_parent)
+          return wrapPromise(nodysseus.parents.get(parentid)).then(parent_parent => {
+            const parentest =
+              (parent_parent ? parent_parent.parentest : false) || parentid;
+            const new_parent = {
+              id: graphid,
+              parent: parentid,
+              parentest,
+            };
+            nodysseus.parents.set(graphid, new_parent)
+          }).value;
         },
         undo: (id: string) => nodysseus.refs.undo && nodysseus.refs.undo(id),
         redo: (id: string) => nodysseus.refs.redo && nodysseus.refs.redo(id),

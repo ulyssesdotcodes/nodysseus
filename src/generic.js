@@ -3752,7 +3752,7 @@ const generic = {
         {
           "id": "lapeojg",
           "ref": "script",
-          "value": "import_graph.forEach(_lib.no.runtime.add_ref); _lib.no.runtime.change_graph(_lib.no.runtime.get_graph(graphid))",
+          "value": "import_graph.forEach(_lib.no.runtime.add_ref); _lib.no.runtime.change_graph(_lib.no.runtime.get_graph(0, graphid.substring(graphid.firstIndexOf('/'))))",
           "name": "out"
         },
         {

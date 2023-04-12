@@ -1,4 +1,4 @@
-import { openDB, wrap } from "idb";
+import { IDBPDatabase, openDB, wrap } from "idb";
 import { IndexeddbPersistence } from "y-indexeddb";
 import * as Y from "yjs"
 import generic from "../generic";
@@ -637,9 +637,7 @@ export const yNodyStore = async (rtcpolyfill?: any): Promise<NodysseusStore> => 
 export const automergeStore = async (): Promise<NodysseusStore> => {
   const statedb = mapStore<{id: string, data: Record<string, any>}>();
 
-  let nodysseusidb;
-
-  await openDB("nodysseus", 3, {
+  const nodysseusidb = await openDB("nodysseus", 4, {
     upgrade(db, oldVersion, newVersion) {
       if(oldVersion < 2) {
         db.createObjectStore("assets")
@@ -648,8 +646,13 @@ export const automergeStore = async (): Promise<NodysseusStore> => {
       if(oldVersion < 3) {
         db.createObjectStore("persist")
       }
+
+      if(oldVersion < 4) {
+        db.createObjectStore("refs")
+      }
     }
-  }).then(db => { nodysseusidb = db })
+  })
+  const refsset = new Set(await nodysseusidb.getAllKeys("refs").then(ks => ks.map(k => k.toString())));
 
   const syncMessageTypes = {
     0: "syncstart",
@@ -674,6 +677,7 @@ export const automergeStore = async (): Promise<NodysseusStore> => {
       const id = data.id;
       const [nextDoc, nextSyncState, patch] = Automerge.receiveSyncMessage(refsmap.get(id) ?? Automerge.init<Graph>(), syncStates[data.peerId]?.[id] || Automerge.initSyncState(), data.syncMessage);
       refsmap.set(id, nextDoc);
+      nodysseusidb.put("refs", Automerge.save(nextDoc), id)
       syncStates[data.peerId] = {...syncStates[data.peerId], [id]: nextSyncState};
 
       const graph = refs.get(id);
@@ -700,8 +704,9 @@ export const automergeStore = async (): Promise<NodysseusStore> => {
   const changeDoc = (id, fn) => {
     wrapPromise(refs.get(id)).then(graph => {
       const doc = Automerge.change<Graph>(graph ?? Automerge.init(), fn);
-      nodysseusidb.put("persist", Automerge.save(doc), id)
+      nodysseusidb.put("refs", Automerge.save(doc), id)
       refsmap.set(id, doc).get(id);
+      refsset.add(id);
       updatePeers(id);
       return doc;
     }).value
@@ -716,7 +721,7 @@ export const automergeStore = async (): Promise<NodysseusStore> => {
         }
 
         if(!refsmap.get(id)) {
-          return nodysseusidb.get("persist", id)
+          return nodysseusidb.get("refs", id)
             .then(persisted => {
               if(persisted) {
                 let doc = Automerge.load<Graph>(persisted)
@@ -733,7 +738,7 @@ export const automergeStore = async (): Promise<NodysseusStore> => {
       set: (id, graph) => changeDoc(id, doc => Object.entries(structuredClone(graph)).forEach(e => doc[e[0]] = e[1])),
       delete: (id) => {throw new Error("not implemented")},
       clear: () => {throw new Error("not implemented")},
-      keys: () => {return [...refsmap.keys()]},
+      keys: () => {return [...refsset.keys()]},
       undo: () => {throw new Error("not implemented")},
       redo: () => {throw new Error("not implemented")},
       add_node: (id, node) => changeDoc(id, doc => {
@@ -777,14 +782,14 @@ export const automergeStore = async (): Promise<NodysseusStore> => {
       set: (id, blob) => nodysseusidb.put('assets', blob, id),
       delete: id => nodysseusidb.delete('assets', id),
       clear: () => nodysseusidb.clear('assets'),
-      keys: () => nodysseusidb.getAllKeys('assets')
+      keys: () => nodysseusidb.getAllKeys('assets').then(ks => ks.map(k => k.toString()))
     },
     persist: {
       get: (id) => nodysseusidb.get('persist', id),
       set: (id, str) => nodysseusidb.put('persist', str, id),
       delete: id => nodysseusidb.delete('persist', id),
       clear: () => nodysseusidb.clear('persist'),
-      keys: () => nodysseusidb.getAllKeys('persist')
+      keys: () => nodysseusidb.getAllKeys('persist').then(ks => ks.map(k => k.toString()))
     }
   }
 }

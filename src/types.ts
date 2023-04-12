@@ -30,11 +30,11 @@ export type Edge = {
 }
 
 export type Store<T> = {
-  get: (id: string) => T | undefined;
+  get: (id: string) => T | undefined | Promise<T | undefined>;
   set: (id: string, data: T) => void;
   delete: (id: string) => void;
   clear: () => void;
-  keys: () => Array<string>;
+  keys: () => Array<string> | Promise<Array<string>>;
   undo?: false | ((id: string) => void);
   redo?: false | ((id: string) => void);
 }
