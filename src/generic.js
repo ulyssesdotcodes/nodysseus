@@ -175,234 +175,66 @@ const generic = {
       "category": "math",
       "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_AND'>&& operator</a>"
     },
-    "random": {
-      "id": "random",
-      "description": "Returns a function that returns a different random number whenever called. An optional seed makes this sequence deterministic.",
-      "out": "out",
-      "nodes": {
-        "args": {
-          "id": "args"
-        },
-        "output_val": {
-          "id": "output_val",
-          "value": "return function() {\n        var t = b << 9, r = a * 5; r = (r << 7 | r >>> 25) * 9;\n        c ^= a; d ^= b;\n        b ^= c; a ^= d; c ^= t;\n        d = d << 11 | d >>> 21;\n        return (r >>> 0) / 4294967296;\n    }",
-          "ref": "script"
-        },
-        "out": {
-          "id": "out",
-          "ref": "return",
-          "name": "random"
-        },
-        "2a5n0mp": {
-          "id": "2a5n0mp",
-          "name": "128"
-        },
-        "4twtzbr": {
-          "id": "4twtzbr",
-          "value": "seed",
-          "ref": "arg"
-        },
-        "t9tt2mz": {
-          "id": "t9tt2mz",
-          "name": "4"
-        },
-        "x0wph6o": {
-          "id": "x0wph6o",
-          "value": "seedb",
-          "ref": "arg"
-        },
-        "95fj04c": {
-          "id": "95fj04c",
-          "ref": "default"
-        },
-        "srhd9iq": {
-          "id": "srhd9iq",
-          "value": "0"
-        },
-        "xge647g": {
-          "id": "xge647g",
-          "ref": "default"
-        },
-        "kplcozz": {
-          "id": "kplcozz",
-          "value": "0"
-        },
-        "33tvjok": {
-          "id": "33tvjok",
-          "value": "seedc",
-          "ref": "arg"
-        },
-        "ucxkozy": {
-          "id": "ucxkozy",
-          "ref": "default"
-        },
-        "lyzm9a3": {
-          "id": "lyzm9a3",
-          "value": "0"
-        },
-        "ku4v2h1": {
-          "id": "ku4v2h1",
-          "value": "seedd",
-          "ref": "arg"
-        }
+    "@math.random": {
+    "id": "@math.random",
+    "category": "math",
+    "out": "out",
+    "nodes": {
+      "args": {
+        "id": "args"
       },
-      "edges": {
-        "output_val": {
-          "from": "output_val",
-          "to": "out",
-          "as": "value"
-        },
-        "args": {
-          "from": "args",
-          "to": "out",
-          "as": "args"
-        },
-        "2a5n0mp": {
-          "from": "2a5n0mp",
-          "to": "args",
-          "as": "seed"
-        },
-        "4twtzbr": {
-          "from": "4twtzbr",
-          "to": "output_val",
-          "as": "a"
-        },
-        "t9tt2mz": {
-          "from": "t9tt2mz",
-          "to": "args",
-          "as": "seedb"
-        },
-        "x0wph6o": {
-          "from": "x0wph6o",
-          "to": "95fj04c",
-          "as": "value"
-        },
-        "95fj04c": {
-          "from": "95fj04c",
-          "to": "output_val",
-          "as": "b"
-        },
-        "srhd9iq": {
-          "from": "srhd9iq",
-          "to": "95fj04c",
-          "as": "otherwise"
-        },
-        "33tvjok": {
-          "from": "33tvjok",
-          "to": "xge647g",
-          "as": "value"
-        },
-        "kplcozz": {
-          "from": "kplcozz",
-          "to": "xge647g",
-          "as": "otherwise"
-        },
-        "xge647g": {
-          "from": "xge647g",
-          "to": "output_val",
-          "as": "c"
-        },
-        "ku4v2h1": {
-          "from": "ku4v2h1",
-          "to": "ucxkozy",
-          "as": "value"
-        },
-        "lyzm9a3": {
-          "from": "lyzm9a3",
-          "to": "ucxkozy",
-          "as": "otherwise"
-        },
-        "ucxkozy": {
-          "from": "ucxkozy",
-          "to": "output_val",
-          "as": "d"
-        }
+      "output_val": {
+        "id": "output_val",
+        "value": "\n    return function() {\n      var t = a += 0x6D2B79F5;\n      t = Math.imul(t ^ t >>> 15, t | 1);\n      t ^= t + Math.imul(t ^ t >>> 7, t | 61);\n      return ((t ^ t >>> 14) >>> 0) / 4294967296;\n    }\n",
+        "ref": "script"
       },
-      "edges_in": {
-        "out": {
-          "output_val": {
-            "from": "output_val",
-            "to": "out",
-            "as": "value"
-          },
-          "args": {
-            "from": "args",
-            "to": "out",
-            "as": "args"
-          }
-        },
-        "args": {
-          "2a5n0mp": {
-            "from": "2a5n0mp",
-            "to": "args",
-            "as": "seed"
-          },
-          "t9tt2mz": {
-            "from": "t9tt2mz",
-            "to": "args",
-            "as": "seedb"
-          }
-        },
-        "output_val": {
-          "4twtzbr": {
-            "from": "4twtzbr",
-            "to": "output_val",
-            "as": "a"
-          },
-          "95fj04c": {
-            "from": "95fj04c",
-            "to": "output_val",
-            "as": "b"
-          },
-          "xge647g": {
-            "from": "xge647g",
-            "to": "output_val",
-            "as": "c"
-          },
-          "ucxkozy": {
-            "from": "ucxkozy",
-            "to": "output_val",
-            "as": "d"
-          }
-        },
-        "95fj04c": {
-          "x0wph6o": {
-            "from": "x0wph6o",
-            "to": "95fj04c",
-            "as": "value"
-          },
-          "srhd9iq": {
-            "from": "srhd9iq",
-            "to": "95fj04c",
-            "as": "otherwise"
-          }
-        },
-        "xge647g": {
-          "33tvjok": {
-            "from": "33tvjok",
-            "to": "xge647g",
-            "as": "value"
-          },
-          "kplcozz": {
-            "from": "kplcozz",
-            "to": "xge647g",
-            "as": "otherwise"
-          }
-        },
-        "ucxkozy": {
-          "ku4v2h1": {
-            "from": "ku4v2h1",
-            "to": "ucxkozy",
-            "as": "value"
-          },
-          "lyzm9a3": {
-            "from": "lyzm9a3",
-            "to": "ucxkozy",
-            "as": "otherwise"
-          }
-        }
+      "out": {
+        "id": "out",
+        "ref": "return",
+        "name": "@math.random"
+      },
+      "2a5n0mp": {
+        "id": "2a5n0mp",
+        "name": "128"
+      },
+      "4twtzbr": {
+        "id": "4twtzbr",
+        "value": "seed",
+        "ref": "arg"
+      },
+      "t9tt2mz": {
+        "id": "t9tt2mz",
+        "name": "4"
       }
     },
+    "edges": {
+      "output_val": {
+        "from": "output_val",
+        "to": "out",
+        "as": "value"
+      },
+      "args": {
+        "from": "args",
+        "to": "out",
+        "as": "args"
+      },
+      "2a5n0mp": {
+        "from": "2a5n0mp",
+        "to": "args",
+        "as": "seed"
+      },
+      "4twtzbr": {
+        "from": "4twtzbr",
+        "to": "output_val",
+        "as": "a"
+      },
+      "t9tt2mz": {
+        "from": "t9tt2mz",
+        "to": "args",
+        "as": "seedb"
+      }
+    }
+  },
     "liftarraypromise": {
       "id": "liftarraypromise",
       "ref": "extern",
@@ -3752,7 +3584,7 @@ const generic = {
         {
           "id": "lapeojg",
           "ref": "script",
-          "value": "import_graph.forEach(_lib.no.runtime.add_ref); _lib.no.runtime.change_graph(_lib.no.runtime.get_graph(0, graphid.substring(graphid.firstIndexOf('/'))))",
+          "value": "import_graph.forEach(_lib.no.runtime.add_ref); _lib.no.runtime.change_graph(_lib.no.runtime.get_graph(graphid.substring(0, graphid.indexOf('/'))))",
           "name": "out"
         },
         {

@@ -1,5 +1,5 @@
 import { nolib, NodysseusError, initStore, run } from "./nodysseus";
-import {yNodyStore} from "./editor/store"
+import {automergeStore} from "./editor/store"
 import {isNodysseusError} from "./editor/util"
 import {
   RTCPeerConnection,
@@ -57,7 +57,7 @@ const rtcpoly = {
   RTCIceCandidate
 }
 
-yNodyStore(rtcpoly)
+automergeStore()
   .then(initStore)
   .then(() => {
     console.log("init queue length", initQueue.length)

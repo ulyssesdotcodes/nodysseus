@@ -18,7 +18,7 @@ export type Graph = {
   name?: string,
   nodes: Record<string, NodysseusNode>,
   edges: Record<string, Edge>,
-  edges_in: Record<string, Record<string, Edge>>
+  edges_in?: Record<string, Record<string, Edge>>
 }
 
 export type EdgesIn = Record<string, Record<string, Edge>>;
@@ -39,7 +39,7 @@ export type Store<T> = {
   redo?: false | ((id: string) => void);
 }
 
-export type RefStore = Store<NodysseusNode | Promise<NodysseusNode>> & {
+export type RefStore = Store<Graph> & {
   add_node: (graphId: string, node: NodysseusNode) => void;
   add_nodes_edges: (graphId: string, nodes: [NodysseusNode], edges: [Edge], remove_edges: [Edge], remove_nodes: [NodysseusNode]) => void;
   remove_node: (graphId: string, node: NodysseusNode) => void;

@@ -214,7 +214,7 @@ export const ancestor_graph = (node_id: string, from_graph: Graph, nolib: Record
         let node_id = queue.pop();
         graph.nodes[node_id] = ({...nolib.no.runtime.get_node(from_graph, node_id)})
         edges_in = nolib.no.runtime.get_edges_in(from_graph, node_id);
-        graph.edges = Object.assign(graph.edges, Object.fromEntries(edges_in.map(e => [e.from, e])));
+        graph.edges = Object.assign(graph.edges, Object.fromEntries(edges_in.filter(e => graph.nodes[e.from]).map(e => [e.from, e])));
         edges_in.forEach(e => queue.push(e.from));
     }
     return graph;

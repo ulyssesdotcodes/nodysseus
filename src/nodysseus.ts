@@ -14,7 +14,7 @@ const Nodysseus = (): NodysseusStore => {
     env: isBrowser ? "BROWSER" : "NODEJS",
     persistenceMethod: "memory",
   })
-  const refsdb = persistdb.addCollection<LokiT<NodysseusNode>>("refs", {unique: ["id"]});
+  const refsdb = persistdb.addCollection<LokiT<Graph>>("refs", {unique: ["id"]});
 
   const db = new loki("nodysseus.db", {
     env: isBrowser ? "BROWSER" : "NODEJS",
@@ -29,7 +29,7 @@ const Nodysseus = (): NodysseusStore => {
 
   return {
     refs: {
-      ...lokidbToStore(refsdb), 
+      ...lokidbToStore<Graph>(refsdb), 
       add_node: () => {}, 
       add_nodes_edges: () => {}, 
       remove_edge: () => {},
@@ -1092,7 +1092,7 @@ const nolib = {
           wrapPromise(get_parentest(graphid))
             .then(parent => parent ?? get_graph(graphid))
             .then(updatedgraph => {
-              if(!ispromise(updatedgraph) && (!updatepublish[updatedgraph.id] || updatepublish[updatedgraph.id] + 16 < performance.now())) {
+              if(updatedgraph && !ispromise(updatedgraph) && (!updatepublish[updatedgraph.id] || updatepublish[updatedgraph.id] + 16 < performance.now())) {
                 updatepublish[updatedgraph.id] = performance.now();
                 requestAnimationFrame(() => {
                   updatepublish[updatedgraph.id] = false;

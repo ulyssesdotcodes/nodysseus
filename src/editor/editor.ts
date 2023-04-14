@@ -7,7 +7,7 @@ import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode
 import { info_display, infoWindow } from "./components/infoWindow";
 import { init_code_editor } from "./components/codeEditor";
 import { d3Node, HyperappState } from "./types";
-import { automergeStore, yNodyStore } from "./store";
+import { automergeStore } from "./store";
 import { d3subscription, insert_node_el, link_el, node_el, UpdateSimulation } from "./components/graphDisplay";
 import Autocomplete from "./autocomplete"
 import generic from "src/generic";
@@ -422,12 +422,12 @@ const runapp = (init, load_graph, _lib) => {
 }
 
 const editor = async function(html_id, editingGraph, lib, norun) {
-    let nodysseusStore = await automergeStore();
+    let nodysseusStore = await automergeStore({persist: true});
     let worker;
     initStore(nodysseusStore)
     hlib.worker = () => {
       if(!worker) {
-        worker = new Worker("./worker.js", {type: "module"})
+        worker = new Worker("./worker.js?2", {type: "module"})
         workerRTC(worker);
       }
 

@@ -430,7 +430,7 @@ export const UpdateNode: ha.Action<HyperappState, {node: NodysseusNode, property
 
 export const UpdateEdge: ha.Action<HyperappState, {edge: Edge, as: string}> = (state, {edge, as}) => [
     state,
-    [() => nolib.no.runtime.update_edges(state.editingGraph, {...edge, as}, edge, hlib), {}]
+    [() => nolib.no.runtime.update_edges(state.editingGraph, [{...edge, as}], [edge], hlib), {}]
 ]
 
 export const keydownSubscription = (dispatch, options) => {
