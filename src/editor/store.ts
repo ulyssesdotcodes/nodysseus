@@ -883,7 +883,7 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
     .then(rtcroom => {
       if(!rtcroom) return;
 
-    syncWS = new WebSocket(`ws://192.168.50.116:4444/${rtcroom}`);
+    syncWS = new WebSocket(`ws://ws.nodysseus.io:4444/${rtcroom}`);
     syncWS.addEventListener("open", () => {
       syncWS.send(new Blob([Uint8Array.of(syncMessageTypesRev["syncstart"]), uuidparse(peerId)]))
     })

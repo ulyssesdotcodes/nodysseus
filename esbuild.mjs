@@ -56,8 +56,6 @@ import { wasmLoader } from 'esbuild-plugin-wasm';
 // }
 
 
-console.log(wasmLoader)
-
 const ctx = await esbuild.context({
   entryPoints: [
     {in: 'src/index.js', out: 'index.bundle'},
