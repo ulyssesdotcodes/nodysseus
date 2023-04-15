@@ -740,6 +740,24 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
       return doc;
     }).value
 
+  const removeNodeFn = node => doc => {
+        const nodeid = typeof node === "string" ? node : node.id;
+        delete doc.nodes[nodeid];
+        delete doc.edges[nodeid];
+        if(doc.edges_in) {
+          Object.values(doc.edges_in).forEach(ein => {
+            if(ein[nodeid]) {
+              delete ein[nodeid]
+            }
+          })
+        }
+  }
+
+  const removeEdgeFn = edge => g => {
+    delete g.edges[edge.from]; 
+    delete g.edges_in[edge.to][edge.from]
+  }
+
 
   const refs: RefStore = {
       get: (id) => {
@@ -772,13 +790,19 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
       undo: () => {throw new Error("not implemented")},
       redo: () => {throw new Error("not implemented")},
       add_node: (id, node) => changeDoc(id, doc => {
-        if((node as RefNode).ref === undefined) delete (node as RefNode).ref;
+        Object.entries(node).forEach(kv => kv[1] === undefined && delete node[kv[0]])
         doc.nodes[node.id] = node;
       }),
-      add_nodes_edges: (id, nodes, edges) => changeDoc(id, graph => {
-        nodes.forEach(n => {
-          graph.nodes[n.id] = n
+      add_nodes_edges: (id, nodes, edges, remove_edges, remove_nodes) => changeDoc(id, graph => {
+        remove_nodes?.forEach(node => removeNodeFn(node)(graph));
+        remove_edges?.forEach(edge => removeEdgeFn(edge)(graph));
+
+        
+        nodes.forEach(node => {
+          Object.entries(node).forEach(kv => kv[1] === undefined && delete node[kv[0]])
+          graph.nodes[node.id] = node
         })
+
         edges.forEach(edge => {
           graph.edges[edge.from] = edge;
           if(graph.edges_in[edge.to] ) {
@@ -787,20 +811,9 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
             graph.edges_in[edge.to] = {[edge.from]: {...edge}}
           }
         })
+
       }),
-      remove_node: (id, node) => changeDoc(id, doc => {
-        console.log('removing', id, node, doc)
-        const nodeid = typeof node === "string" ? node : node.id;
-        delete doc.nodes[nodeid];
-        delete doc.edges[nodeid];
-        if(doc.edges_in) {
-          Object.values(doc.edges_in).forEach(ein => {
-            if(ein[nodeid]) {
-              delete ein[nodeid]
-            }
-          })
-        }
-      }),
+      remove_node: (id, node) => changeDoc(id, removeNodeFn(node)),
       add_edge: (id, edge) => changeDoc(id, g => {
         g.edges[edge.from] = edge; 
         if(!g.edges_in) {
@@ -816,10 +829,7 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
         if(g.edges_in[edge.to] === undefined) g.edges_in[edge.to] = {};
         g.edges_in[edge.to][edge.from] = edge;
       }),
-      remove_edge: (id, edge) => changeDoc(id, g => {
-        delete g.edges[edge.from]; 
-        delete g.edges_in[edge.to][edge.from]
-      })
+      remove_edge: (id, edge) => changeDoc(id, removeEdgeFn(edge))
     }
 
   /////

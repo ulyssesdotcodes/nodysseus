@@ -2,7 +2,7 @@ import { ForceCenter, ForceCollide, ForceLink, ForceY } from "d3-force";
 import * as ha from "hyperapp"
 import { hashcode, nolib } from "../../nodysseus";
 import { Graph, isNodeGraph, NodysseusNode } from "../../types";
-import { wrapPromise } from "../../util";
+import { ispromise, wrapPromise } from "../../util";
 import { HyperappState, NodysseusForceLink, NodysseusSimulation, d3Link, d3Node, Vector2 } from "../types";
 import { calculateLevels, CreateNode, findViewBox, hlib, pzobj, SelectNode } from "../util";
 
@@ -51,14 +51,16 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
     const order = [];
     const queue = [data.editingGraph.out ?? "out"];
 
-    const parents_map = 
-      wrapPromise(Promise.all(Object.values(data.editingGraph.nodes)
+    const parentsMapEntries: Array<[string, Array<string>]> = Object.values(data.editingGraph.nodes)
         .map(n => 
-          wrapPromise(nolib.no.runtime.get_edges_in(data.editingGraph, n.id))
-            .then(edges => [n.id, edges.map(e => e.from)]).value
-        )))
-      .then(kvs => new Map(kvs as Array<[string, Array<string>]>))
-      .then(parents_map => {
+          [n.id, nolib.no.runtime.get_edges_in(data.editingGraph, n.id).map(e => e.from)]
+        );
+    const hasPromise = !parentsMapEntries.every(e => !ispromise(e[1]))
+    
+    // Just skip if there's a pending promise
+    if(hasPromise) return;
+    const parents_map = new Map<string, Array<string>>(parentsMapEntries)
+
         while(queue.length > 0) {
             const node = queue.shift();
             order.push(node);
@@ -228,7 +230,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
 
         (data.simulation.force('collide') as ForceCollide<d3Node>).radius(96);
     // data.simulation.force('center').strength(n => (levels.parents_map.get(n.node_id)?.length ?? 0) * 0.25 + (levels.children_map.get(n.node_id)?.length ?? 0) * 0.25)
-    })
+    // })
 }
 
 const idFromNode = (node: d3Node | string | number): string => typeof node === "object" ? node.node_id : typeof node === "number" ? node.toFixed() : node;

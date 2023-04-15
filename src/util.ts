@@ -182,11 +182,7 @@ export const contract_node = (data: {editingGraph: Graph, node_id: string, nolib
             .forEach(e => edgesToRemove.push(e))
         }
 
-        for(const newn of inside_node_map.keys()) {
-          nolib.no.runtime.delete_node(data.editingGraph.id, newn, nolib, false)
-        }
-
-        nolib.no.runtime.add_node(data.editingGraph.id, {
+        nolib.no.runtime.add_nodes_edges(data.editingGraph.id, [{
             id: final_node_id,
             name: node.name ?? (isNodeValue(node) ? node.value : undefined),
             out: out_node_id.startsWith(node_id + '/') ? out_node_id.substring(node_id.length + 1) : out_node_id,
@@ -195,10 +191,7 @@ export const contract_node = (data: {editingGraph: Graph, node_id: string, nolib
                 id: n.id.startsWith(node_id + "/") ? n.id.substring(node_id.length + 1) : n.id
             }])),
             edges
-        })
-
-
-        nolib.no.runtime.update_edges(data.editingGraph.id, edgesToAdd, edgesToRemove, nolib)
+        }], edgesToAdd, edgesToRemove, [...inside_node_map.values()])
 
         return { selected: [final_node_id] };
     }
