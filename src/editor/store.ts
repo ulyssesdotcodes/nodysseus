@@ -761,7 +761,6 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
             })
         }
 
-
         return refsmap.get(id)
       },
       set: (id, graph) => changeDoc(id, doc => Object.entries(structuredClone(graph)).forEach(e => e[1] !== undefined && (doc[e[0]] = e[1]))),
@@ -771,7 +770,7 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
         return nodysseusidb.delete("refs", id);
       },
       clear: () => {throw new Error("not implemented")},
-      keys: () => {return [...refsset.keys()]},
+      keys: () => {return [...refsset.keys(), ...generic_node_ids]},
       undo: () => {throw new Error("not implemented")},
       redo: () => {throw new Error("not implemented")},
       add_node: (id, node) => changeDoc(id, doc => {
