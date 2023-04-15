@@ -1,19 +1,17 @@
 import { IDBPDatabase, openDB, wrap } from "idb";
-import { IndexeddbPersistence } from "y-indexeddb";
-import * as Y from "yjs"
+// import { IndexeddbPersistence } from "y-indexeddb";
+// import * as Y from "yjs"
 import generic from "../generic";
-import { compare, lokidbToStore, mapStore, nolib } from "../nodysseus";
+import { compare, mapStore, nolib } from "../nodysseus";
 import { Edge, EdgesIn, Graph, GraphNode, NodysseusNode, NodysseusStore, RefNode, RefStore, Store } from "../types";
 import { compareObjects, ispromise, mapMaybePromise, wrapPromise } from "../util";
 import { hlib } from "./util";
-import Loki from "lokijs"
+// import Loki from "lokijs"
 // import {WebrtcProvider} from "y-webrtc";
-import { YMap } from "yjs/dist/src/internals";
+// import { YMap } from "yjs/dist/src/internals";
 // import {createRxDatabase} from "rxdb"
 // import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
-import { ConstructorDeclaration } from "typescript";
 import * as Automerge from "@automerge/automerge";
-import * as wasm from "@automerge/automerge"
 import {v4 as uuid, parse as uuidparse, stringify as uuidstringify} from "uuid";
 
 // type SyncedGraph = {
@@ -28,77 +26,77 @@ import {v4 as uuid, parse as uuidparse, stringify as uuidstringify} from "uuid";
 const generic_nodes = generic.nodes;
 const generic_node_ids = new Set(Object.keys(generic_nodes));
 
-const setMapFromGraph = (infomap, data) => {
-  infomap.doc.transact(() => {
-      if(infomap.get("name") !== data.name) {
-        infomap.set("name", data.name);
-      }
-      if(data.ref && data.ref !== infomap.get("ref")){
-        infomap.set("ref", data?.ref);
-      } else if(infomap.has('ref') && !data.ref) {
-        infomap.delete('ref')
-      }
-
-      if(data.value && data.value !== infomap.get("value")){
-        infomap.set("value", data?.value);
-      } else if(infomap.has('value') && !data.value) {
-        infomap.delete('value')
-      }
-
-      if(data.out && data.out !== infomap.get("out")){
-        infomap.set("out", data?.out);
-      } else if(infomap.has('out') && !data.out) {
-        infomap.delete('out')
-      }
-
-      if(data.nodes)  {
-        let nodesymap: Y.Map<Node> = infomap.get("nodes")
-        if(!infomap.get("nodes")?.set) {
-          nodesymap = new Y.Map();
-          infomap.set("nodes", nodesymap)
-        }
-        if(Array.isArray(data.nodes)){
-          nodesymap.clear();
-          data.nodes.map(n => nodesymap.set(n.id, n)) 
-        } else {
-          Object.entries(data.nodes).forEach((kv: [string, Node]) => !compare(nodesymap.get(kv[0]), kv[1]) && nodesymap.set(kv[0], kv[1]))
-          nodesymap.forEach((node, key) => {
-            if(!data.nodes[key]) {
-              nodesymap.delete(key)
-            }
-          })
-        } 
-      }
-
-      if(data.edges) {
-        let edgesymap: Y.Map<Edge> = infomap.get("edges")
-        if(!infomap.get("edges")?.set) {
-          edgesymap = new Y.Map();
-          infomap.set("edges", edgesymap)
-        }
-
-        edgesymap.clear();
-
-        if(Array.isArray(data.edges)){
-          const edgeset = new Set(data.edges.map(e => e.from))
-          if(edgeset.size !== data.edges.length) {
-            console.log(`invalid edges for ${data.id}`)
-            console.log(data.edges.filter(e => {
-              edgeset.has(e.from) ? edgeset.delete(e.from) : console.log(e.from)
-            }))
-          }
-          data.edges.map(e => edgesymap.set(e.from, e)) 
-        } else {
-          Object.entries(data.edges).forEach((kv: [string, Edge]) => !compare(edgesymap.get(kv[0]), kv[1]) && edgesymap.set(kv[0], kv[1]))
-          edgesymap.forEach((edge, key) => {
-            if(!data.edges[key]) {
-              edgesymap.delete(key)
-            }
-          })
-        } 
-      }
-  })
-}
+// const setMapFromGraph = (infomap, data) => {
+//   infomap.doc.transact(() => {
+//       if(infomap.get("name") !== data.name) {
+//         infomap.set("name", data.name);
+//       }
+//       if(data.ref && data.ref !== infomap.get("ref")){
+//         infomap.set("ref", data?.ref);
+//       } else if(infomap.has('ref') && !data.ref) {
+//         infomap.delete('ref')
+//       }
+//
+//       if(data.value && data.value !== infomap.get("value")){
+//         infomap.set("value", data?.value);
+//       } else if(infomap.has('value') && !data.value) {
+//         infomap.delete('value')
+//       }
+//
+//       if(data.out && data.out !== infomap.get("out")){
+//         infomap.set("out", data?.out);
+//       } else if(infomap.has('out') && !data.out) {
+//         infomap.delete('out')
+//       }
+//
+//       if(data.nodes)  {
+//         let nodesymap: Y.Map<Node> = infomap.get("nodes")
+//         if(!infomap.get("nodes")?.set) {
+//           nodesymap = new Y.Map();
+//           infomap.set("nodes", nodesymap)
+//         }
+//         if(Array.isArray(data.nodes)){
+//           nodesymap.clear();
+//           data.nodes.map(n => nodesymap.set(n.id, n)) 
+//         } else {
+//           Object.entries(data.nodes).forEach((kv: [string, Node]) => !compare(nodesymap.get(kv[0]), kv[1]) && nodesymap.set(kv[0], kv[1]))
+//           nodesymap.forEach((node, key) => {
+//             if(!data.nodes[key]) {
+//               nodesymap.delete(key)
+//             }
+//           })
+//         } 
+//       }
+//
+//       if(data.edges) {
+//         let edgesymap: Y.Map<Edge> = infomap.get("edges")
+//         if(!infomap.get("edges")?.set) {
+//           edgesymap = new Y.Map();
+//           infomap.set("edges", edgesymap)
+//         }
+//
+//         edgesymap.clear();
+//
+//         if(Array.isArray(data.edges)){
+//           const edgeset = new Set(data.edges.map(e => e.from))
+//           if(edgeset.size !== data.edges.length) {
+//             console.log(`invalid edges for ${data.id}`)
+//             console.log(data.edges.filter(e => {
+//               edgeset.has(e.from) ? edgeset.delete(e.from) : console.log(e.from)
+//             }))
+//           }
+//           data.edges.map(e => edgesymap.set(e.from, e)) 
+//         } else {
+//           Object.entries(data.edges).forEach((kv: [string, Edge]) => !compare(edgesymap.get(kv[0]), kv[1]) && edgesymap.set(kv[0], kv[1]))
+//           edgesymap.forEach((edge, key) => {
+//             if(!data.edges[key]) {
+//               edgesymap.delete(key)
+//             }
+//           })
+//         } 
+//       }
+//   })
+// }
 
 // export const ydocStore = async ({ persist = false, rtcpolyfill = undefined, update = undefined }: {
 //   persist: false | string,
@@ -777,7 +775,19 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
         if((node as RefNode).ref === undefined) delete (node as RefNode).ref;
         doc.nodes[node.id] = node;
       }),
-      add_nodes_edges: (id, nodes, edges) => {throw new Error("not implemented")},
+      add_nodes_edges: (id, nodes, edges) => changeDoc(id, graph => {
+        nodes.forEach(n => {
+          graph.nodes[n.id] = n
+        })
+        edges.forEach(edge => {
+          graph.edges[edge.from] = edge;
+          if(graph.edges_in[edge.to] ) {
+            graph.edges_in[edge.to][edge.from] = {...edge};
+          } else {
+            graph.edges_in[edge.to] = {[edge.from]: {...edge}}
+          }
+        })
+      }),
       remove_node: (id, node) => changeDoc(id, doc => {
         console.log('removing', id, node, doc)
         const nodeid = typeof node === "string" ? node : node.id;
@@ -786,7 +796,6 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
         if(doc.edges_in) {
           Object.values(doc.edges_in).forEach(ein => {
             if(ein[nodeid]) {
-              console.log("delete line", nodeid, ein)
               delete ein[nodeid]
             }
           })
@@ -855,9 +864,15 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
           syncStates[data.peerId]?.[id] || Automerge.initSyncState(), 
           data.syncMessage
         , {
-          patchCallback: (patch, before, after) => {
-            if(patch.path[0] === "nodes") {
-                nolib.no.runtime.change_graph(after, {...nolib, ...hlib}, [patch.path[1]]) 
+          patchCallback: (patches, before, after) => {
+            const nodes = []
+            patches.forEach(patch => {
+              if(patch.path[0] === "nodes") {
+                nodes.push(patch.path[1])
+              }
+            })
+            if(nodes.length > 0) {
+              nolib.no.runtime.change_graph(after, {...nolib, ...hlib}, []) 
             }
           }
         });
@@ -906,10 +921,16 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
         wrapPromise(refs.get(id)).then(current => {
           data.syncMessage = Uint8Array.from(Object.values(data.syncMessage))
           const [nextDoc, nextSyncState, patch] = Automerge.receiveSyncMessage(current ?? Automerge.init<Graph>(), syncStates[data.peerId]?.[id] || Automerge.initSyncState(), data.syncMessage, {
-            patchCallback: (patch, before, after) => {
+            patchCallback: (patches, before, after) => {
+            const nodes = []
+            patches.forEach(patch => {
               if(patch.path[0] === "nodes") {
-                nolib.no.runtime.change_graph(after, {...nolib, ...hlib}, [patch.path[1]]) 
+                nodes.push(patch.path[1])
               }
+            })
+            if(nodes.length > 0) {
+              nolib.no.runtime.change_graph(after, {...nolib, ...hlib}, []) 
+            }
             }
           });
           refsmap.set(id, nextDoc);

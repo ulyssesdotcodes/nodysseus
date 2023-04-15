@@ -8,11 +8,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "baseUrl": ".",
-    "paths": {
-      "y-webrtc-ulysses": ["node_modules/y-webrtc-ulysses/src"],
-      "y-webrtc-ulysses/*": ["node_modules/y-webrtc-ulysses/src/*"]
-    }
+    "baseUrl": "."
   },
   "include": ["**/*.ts"],
   "exclude": ["node_modules", "**/*.test.ts"]

@@ -1,61 +1,11 @@
-import set from "just-safe-set";
-import loki from "lokijs";
 import { ancestor_graph, ispromise, isWrappedPromise, mapMaybePromise, node_args, WrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node, runnableId, compareObjects, descendantGraph } from "./util"
-import { isNodeGraph, Graph, LokiT, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike, EdgesIn } from "./types"
+import { isNodeGraph, Graph, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike, EdgesIn } from "./types"
 import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util"
 import generic from "./generic.js";
 import { create_fn, expect, now } from "./externs";
 import { v4 as uuid } from "uuid";
 
 const generic_nodes = generic.nodes;
-
-const Nodysseus = (): NodysseusStore => {
-  const isBrowser = typeof window !== 'undefined';
-  const persistdb = new loki("nodysseus_persist.db", {
-    env: isBrowser ? "BROWSER" : "NODEJS",
-    persistenceMethod: "memory",
-  })
-  const refsdb = persistdb.addCollection<LokiT<Graph>>("refs", {unique: ["id"]});
-
-  const db = new loki("nodysseus.db", {
-    env: isBrowser ? "BROWSER" : "NODEJS",
-    persistenceMethod: "memory",
-  });
-
-
-  // const graphsdb = db.addCollection<LokiT<Graph>>("nodes", { unique: ["id"] });
-  // const statedb = db.addCollection<LokiT<any>>("state", { unique: ["id"] });
-  // const fnsdb = db.addCollection<LokiT<{script: string, fn: Function}>>("fns", { unique: ["id"] });
-  // const parentsdb = db.addCollection<LokiT<{parent: string, parentest: string}>>("parents", { unique: ["id"] });
-
-  return {
-    refs: {
-      ...lokidbToStore<Graph>(refsdb), 
-      add_node: () => {}, 
-      add_nodes_edges: () => {}, 
-      remove_edge: () => {},
-      add_edge: () => {},
-      remove_node: () => {},
-    },
-    parents: mapStore(),
-    state: mapStore(),
-    fns: mapStore(),
-    assets: {
-      get: id => { throw new Error("not implemented")},
-      set: (id, value) => { throw new Error("not implemented")},
-      delete: id => { throw new Error("not implemented")},
-      clear: () => { throw new Error("not implemented")},
-      keys: () => {  throw new Error("not implemented")}
-    },
-    persist: {
-      get: id => { throw new Error("not implemented")},
-      set: (id, value) => { throw new Error("not implemented")},
-      delete: id => { throw new Error("not implemented")},
-      clear: () => { throw new Error("not implemented")},
-      keys: () => {  throw new Error("not implemented")}
-    }
-  }
-}
 
 export const mapStore = <T>(): Store<T> => {
   const map = new Map<string, T>();
@@ -69,25 +19,6 @@ export const mapStore = <T>(): Store<T> => {
   }
 }
 
-export const lokidbToStore = <T>(collection: loki.Collection<LokiT<T>>): Store<T> => ({
-  set: (id: string, data: T) => {
-    const existing = collection.by("id", id);
-    if (existing) {
-      collection.update(Object.assign(existing, {data}));
-    } else {
-      collection.insert({ id,  data});
-    }
-  },
-  get: (id: string) => collection.by("id", id)?.data,
-  delete: (id: string) => {
-    const existing = collection.by("id", id)
-    if(existing !== undefined){
-      collection.remove(existing);
-    }
-  },
-  clear: () => collection.clear(),
-  keys: () => collection.where(_ => true).map(v => v.id),
-})
 
 let nodysseus: NodysseusStore;
 
@@ -755,8 +686,6 @@ const getorset = (map, id, value_fn=undefined) => {
 const initStore = (store: NodysseusStore | undefined = undefined) => {
   if(store !== undefined) {
     nodysseus = store;
-  } else if(!nodysseus) {
-    nodysseus = Nodysseus();
   }
 
   if(!nolib.no.runtime) {

@@ -1,16 +1,20 @@
 import * as esbuild from 'esbuild'
 import { wasmLoader } from 'esbuild-plugin-wasm';
+import fs from "node:fs";
 
-await esbuild.build({
+const result = await esbuild.build({
   entryPoints: [
     {in: 'src/index.js', out: 'index.bundle'},
     {in: 'src/worker.js', out: 'worker'}
   ],
+  metafile: true,
+  minify: true,
   bundle: true,
   outdir: 'public',
   plugins: [wasmLoader()],
   external: ['node:https'],
-  sourcemap: true,
   target: 'es2022',
   format: 'esm'
 })
+
+fs.writeFileSync('meta.json', JSON.stringify(result.metafile))

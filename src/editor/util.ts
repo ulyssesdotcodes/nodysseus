@@ -322,19 +322,31 @@ export const Paste = state => [
     {...state},
     [dispatch => {
         const node_id_map = {};
-        Object.values(state.copied.graph.nodes).forEach((n: NodysseusNode) => {
-            const new_id = create_randid();
-            node_id_map[n.id] = new_id;
-            nolib.no.runtime.add_node(state.editingGraph, {...n, id: new_id}, hlib)
-        });
-        nolib.no.runtime.update_edges(
-            state.editingGraph, 
-            Object.values(state.copied.graph.edges)
-                .map((e: any) => ({...e, from: node_id_map[e.from], to: node_id_map[e.to]}))
-                .concat([{from: node_id_map[state.copied.root], to: state.selected[0], as: state.copied.as}]),
+        debugger;
+        nolib.no.runtime.add_nodes_edges(
+          state.editingGraph, 
+          Object.values(state.copied.graph.nodes as Array<NodysseusNode>)
+            .map(n => ({...n, id: (node_id_map[n.id] = create_randid(), node_id_map[n.id])})),
+          Object.values(state.copied.graph.edges as Array<Edge>)
+            .map(e => ({...e, from: node_id_map[e.from], to: node_id_map[e.to]}))
+            .concat([{from: node_id_map[state.copied.root], to: state.selected[0], as: state.copied.as}]),
+          [],
           [],
           hlib
-            );
+        )
+        // Object.values(state.copied.graph.nodes).forEach((n: NodysseusNode) => {
+        //     const new_id = create_randid();
+        //     node_id_map[n.id] = new_id;
+        //     nolib.no.runtime.add_node(state.editingGraph, {...n, id: new_id}, hlib)
+        // });
+        // nolib.no.runtime.update_edges(
+        //     state.editingGraph, 
+        //     Object.values(state.copied.graph.edges)
+        //         .map((e: any) => ({...e, from: node_id_map[e.from], to: node_id_map[e.to]}))
+        //         .concat([{from: node_id_map[state.copied.root], to: state.selected[0], as: state.copied.as}]),
+        //   [],
+        //   hlib
+        //     );
         requestAnimationFrame(() => dispatch(SelectNode, {node_id: node_id_map[state.copied.root], focus_property: 'edge'}))
     }]
 ]
