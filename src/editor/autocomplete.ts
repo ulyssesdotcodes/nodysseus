@@ -40,6 +40,10 @@ export default class AutocompleteList extends HTMLElement {
         background-color: #000;
       }
 
+      input:disabled {
+        color: #666;
+      }
+
       .autocomplete-list ul {
         position: absolute;
         margin: 0;
@@ -95,8 +99,8 @@ export default class AutocompleteList extends HTMLElement {
         this.selectOption(this.inputEl.value)
       }
     }
-    this.inputEl.onkeyup = (evt: KeyboardEvent) => {
 
+    this.inputEl.onkeyup = (evt: KeyboardEvent) => {
       this.populateOptions();
     }
 
@@ -130,7 +134,7 @@ export default class AutocompleteList extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ['value']
+    return ['value', 'disabled']
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -138,6 +142,8 @@ export default class AutocompleteList extends HTMLElement {
       this.inputEl.value = newValue;
       this.optionEls = {};
       this.populateOptions();
+    } if (name === "disabled") {
+      this.inputEl.disabled = newValue;
     }
   }
 
@@ -157,7 +163,6 @@ export default class AutocompleteList extends HTMLElement {
 
   focus() {
     this.focused = true;
-    console.log("settinginitial")
     this.initialOption = this.inputEl.value;
     this.inputEl.focus();
   }
