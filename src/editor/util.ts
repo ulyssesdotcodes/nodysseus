@@ -322,7 +322,6 @@ export const Paste = state => [
     {...state},
     [dispatch => {
         const node_id_map = {};
-        debugger;
         nolib.no.runtime.add_nodes_edges(
           state.editingGraph, 
           Object.values(state.copied.graph.nodes as Array<NodysseusNode>)
