@@ -422,11 +422,24 @@ const runapp = (init, load_graph, _lib) => {
 
 const editor = async function(html_id, editingGraph, lib, norun) {
     let nodysseusStore = await automergeStore({persist: true});
-    let worker;
+    let worker, workerPromise;
     initStore(nodysseusStore)
     hlib.worker = () => {
       if(!worker) {
-        worker = new Worker("./worker.js", {type: "module"})
+        worker = new Worker("./worker.js?3", {type: "module"})
+        workerPromise = new Promise((res, rej) => {
+          worker.addEventListener("message", msg => {
+            if(msg.data.type === "started") {
+              workerPromise = false;
+              res(worker);
+            }
+          })
+
+        })
+      }
+
+      if(workerPromise) {
+        return workerPromise;
       }
 
       return worker;

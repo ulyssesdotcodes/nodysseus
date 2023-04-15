@@ -1,6 +1,8 @@
 import { nolib, NodysseusError, initStore, run } from "./nodysseus";
 import {automergeStore} from "./editor/store"
 import {isNodysseusError} from "./editor/util"
+import { wrapPromise } from "./util";
+
 
 function posterror(graph, error){
     if(isNodysseusError(error)) {
@@ -39,18 +41,25 @@ const processMessage = e => {
           }
         });
 
-        run(e.data, undefined, {profile: false && performance.now() > 4000});
-      runningGraphs.set(e.data.graph.id, e.data)
+      
+      wrapPromise(typeof e.data.graph === "string" 
+        ? nolib.no.runtime.get_ref(e.data.graph)
+        : e.data.graph).then(graph => {
+          runningGraphs.set(graph.id, {...e.data, graph})
+          run({...e.data, graph}, undefined, {profile: false && performance.now() > 4000})
+        })
     } catch (e) { console.error(e) }
 }
 
 onmessage = e => initQueue ? initQueue.push(e) : processMessage(e);
+self.postMessage({type: 'started'});
 
-const rtcpoly = {
-  RTCPeerConnection,
-  RTCSessionDescription,
-  RTCIceCandidate
-}
+
+// const rtcpoly = {
+//   RTCPeerConnection,
+//   RTCSessionDescription,
+//   RTCIceCandidate
+// }
 
 automergeStore()
   .then(initStore)
