@@ -2,6 +2,7 @@ node_modules
 .vscode/
 log.txt
 public/*.bundle.js
+public/*.wasm
 public/index.js
 public/worker.js
 *.js.map

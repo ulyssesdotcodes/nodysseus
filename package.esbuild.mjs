@@ -7,6 +7,9 @@ const result = await esbuild.build({
     {in: 'src/index.js', out: 'index.bundle'},
     {in: 'src/worker.js', out: 'worker'}
   ],
+  mangleProps: /_[a-zA-Z]*$/,
+  mangleQuoted: true,
+  drop: ["debugger"],
   metafile: true,
   minify: true,
   bundle: true,
