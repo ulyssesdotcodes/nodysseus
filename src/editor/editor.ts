@@ -95,7 +95,6 @@ const custom_editor_display = html_id => ha.app({
 
 const refresh_custom_editor = () =>
   wrapPromise(nolib.no.runtime.get_ref("custom_editor")).then(graph => {
-    console.log(graph);
     if(graph) {
         // TODO: combine with update_info
         const graph = nolib.no.runtime.get_ref("custom_editor");
@@ -211,6 +210,7 @@ const runapp = (init, load_graph, _lib) => {
             hidden: s.show_all,
             edges_in: s.selected_edges_in,
             link_out: Object.assign({}, s.links.find(l => (l.source as d3Node).node_id === s.selected[0]), s.editingGraph.edges[s.selected[0]]),
+            editingGraph: s.editingGraph,
             editingGraphId: s.editingGraph.id,
             randid: s.randid,
             editing: s.editing,

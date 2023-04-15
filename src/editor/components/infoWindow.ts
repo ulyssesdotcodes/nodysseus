@@ -1,8 +1,9 @@
 import * as ha from "hyperapp"
+import { Edge, Graph, isNodeGraph, isNodeRef, NodysseusNode, RefNode, ValueNode } from "src/types";
 import generic from "../../generic";
 import {nolib} from "../../nodysseus"
 import { node_args } from "../../util";
-import { HyperappState } from "../types";
+import { d3Link, d3Node, HyperappState } from "../types";
 import { ChangeEditingGraphId, Copy, CreateNode, CreateRef, DeleteNode, ExpandContract, middleware, Paste, run_h, SaveGraph, SelectNode, UpdateEdge, UpdateNode, UpdateNodeEffect } from "../util";
 
 export const info_display = html_id => ha.app({
@@ -99,15 +100,29 @@ export const infoInput = ({label, property, value, onchange, oninput, onkeydown,
 //   }
 // }), ]
 
-export const infoWindow = ({node, hidden, edges_in, link_out, editingGraphId, randid, ref_graphs, html_id, copied_graph, inputs, graph_out, editing})=> {
+export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, editingGraphId, randid, ref_graphs, html_id, copied_graph, inputs, graph_out, editing}: {
+  node: d3Node,
+  hidden: boolean,
+  edges_in: Array<Edge>,
+  link_out: Edge & d3Link,
+  editingGraph: Graph,
+  editingGraphId: string,
+  randid: string,
+  ref_graphs: Array<string>,
+  html_id: string,
+  copied_graph: Graph,
+  inputs: Record<string, string>,
+  graph_out: string,
+  editing: boolean,
+})=> {
     //const s.editingGraph.id === s.editingGraphId && nolib.no.runtime.get_node(s.editingGraph, s.selected[0]) && 
-    const node_ref = node && node.ref ? nolib.no.runtime.get_ref(node.ref) : node;
+    const node_ref = node && isNodeRef(node) ? nolib.no.runtime.get_ref(node.ref) : node;
     const description =  node_ref?.description;
-    const node_arg_labels = node?.id ? node_args(nolib, editingGraphId, node.id).map(a => ({...a, name: a.name.split(": ")[0]})) : [];
+    const node_arg_labels = node?.id ? node_args(nolib, editingGraph, node.id).map(a => ({...a, name: a.name.split(": ")[0]})) : [];
     return ha.h('div', {id: "node-info-wrapper"}, [ha.h('div', {class: "spacer before"}, []), ha.h(
         'div',
         { 
-            class: {'node-info': true, hidden, editing, [node.ref]: !!node.ref}, 
+            class: {'node-info': true, hidden, editing, [isNodeRef(node) && node.ref]: isNodeRef(node) }, 
             onfocusin: (state: any) => [{...state, editing: true}], 
             onblurout: (state: any) => [{...state, editing: false}] 
         },
@@ -116,7 +131,8 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraphId, ra
                 node_arg_labels
                     .map(n => ha.h('span', {
                         class: "clickable", 
-                        onclick: n.exists ? edges_in.filter(l => l.as === n.name).map(l => [SelectNode, {node_id: l.from}])[0]
+                        onclick: n.exists 
+                          ? [SelectNode, {node_id: edges_in.find(l => l.as === n.name)?.from}]
                           : [CreateNode, {node: {id: randid, ref: n.type && n.type !== "any" ?  n.type : undefined}, child: node.id, child_as: n.name}]
                     }, [ha.text(n.exists ? n.name : `+${n.name}`)]))),
             ha.h('div', {class: "inputs"}, [
@@ -133,14 +149,14 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraphId, ra
                 }), node),
                 ha.memo(node => infoInput({
                     label: "value", 
-                    value: node.value, 
+                    value: (node as ValueNode).value, 
                     property: "value", 
                     inputs,
                     onchange: (state, {value}) => [UpdateNode, {node, property: "value", value: value }]}),
                   node),
                 ha.memo(node => infoInput({
                     label: 'ref',
-                    value: node.ref,
+                    value: (node as RefNode).ref,
                     property: 'ref',
                     inputs,
                     options: nolib.no.runtime.refs().map(r => generic.nodes[r] ? {value: r, category: generic.nodes[r].category} : {value: r, category: "custom"}),
@@ -152,7 +168,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraphId, ra
                     value: link_out.as, 
                     property: "edge",
                     inputs,
-                    options: node_args(nolib, editingGraphId, link_out.to).map(na => na.name.split(": ")[0]),
+                    options: node_args(nolib, editingGraph, link_out.to).map(na => na.name.split(": ")[0]),
                     onchange: (state, {value}) => [UpdateEdge, {edge: {from: link_out.from, to: link_out.to, as: link_out.as}, as: value}]
                 }), link_out),
             ]),
@@ -170,9 +186,13 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraphId, ra
                 node.node_id !== graph_out && ha.h('div', {
                     class: "action", 
                     onclick: [ExpandContract, {node_id: node.node_id}]
-                }, [ha.h('span', {class: 'material-icons-outlined'}, ha.text(Object.keys(node.nodes ?? {}).length > 0 ? "unfold_more" : "unfold_less")), ha.h('span', {}, ha.text(Object.keys(node.nodes ?? {}).length > 0 ? "expand" : "collapse"))]),
-                Object.keys(node.nodes ?? {}).length > 0 && node.name !== '' && ha.h('div', {class: 'action', onclick: [CreateRef, {node}]}, ha.text("make ref")),
-                node.ref && ha.h('div', {
+                }, [
+                  ha.h('span', {class: 'material-icons-outlined'}, 
+                  ha.text(isNodeGraph(node) ? "unfold_more" : "unfold_less")), 
+                  ha.h('span', {}, ha.text(isNodeGraph(node) ? "expand" : "collapse"))
+                ]),
+                isNodeGraph(node) && node.name !== '' && ha.h('div', {class: 'action', onclick: [CreateRef, {node}]}, ha.text("make ref")),
+                isNodeRef(node) && ha.h('div', {
                     class: "action", 
                     onclick: state => [state, [ChangeEditingGraphId, {id: node.ref, editingGraphId}]],
                     key: "open-ref-action"
