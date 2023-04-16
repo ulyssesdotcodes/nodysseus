@@ -713,7 +713,7 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
             if(syncStates[peer]._syncType === "broadcast") {
               syncBroadcast.postMessage({type: "syncgraph", id, peerId, target: peer, syncMessage});
             } else if(syncStates[peer]._syncType === "ws") {
-              syncWS.send(new Blob([Uint8Array.of(syncMessageTypesRev["syncgraph"]), uuidparse(peerId), uuidparse(peer), id.padEnd(128, " "), syncMessage]))
+              syncWS.send(new Blob([Uint8Array.of(syncMessageTypesRev["syncgraph"]), uuidparse(peerId), uuidparse(peer), id.padEnd(64, " "), syncMessage]))
             }
           }
         })
