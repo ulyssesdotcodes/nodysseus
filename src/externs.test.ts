@@ -2,12 +2,13 @@ import {describe, expect, test} from "@jest/globals"
 import {initStore, nolib, run} from "./nodysseus"
 import { create_fn } from "./externs"
 import { newEnv, newLib } from "./util"
+import {lokiStore} from "./store"
 
 import testTapBeat from "../scripts/testtapbeat.json"
 
 describe('create_fn', () => {
   test('parsing a single script', async () => {
-    initStore()
+    initStore(lokiStore())
 
     const graph = {
       __kind: "const",
@@ -33,7 +34,7 @@ describe('create_fn', () => {
   })
 
   test('using an argument', async () => {
-    initStore()
+    initStore(lokiStore())
 
     const graph = {
       __kind: "const",
@@ -61,7 +62,7 @@ describe('create_fn', () => {
   })
 
   test('setting a value', async () => {
-    initStore()
+    initStore(lokiStore())
 
     const graph = {
       __kind: "const",
@@ -92,7 +93,7 @@ describe('create_fn', () => {
   })
 
   test('snapshot', async () => {
-    initStore()
+    initStore(lokiStore())
 
     expect(run({graph: testTapBeat, fn: "out"})).toMatchSnapshot();
   })

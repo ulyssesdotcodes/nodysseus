@@ -2,8 +2,10 @@ import { initStore, nolib, run } from "./nodysseus"
 import {expect, test} from "@jest/globals"
 import {Graph} from "./types"
 import {newEnv} from "./util"
+import { lokiStore } from "./store"
 
 test('returning a single value', () => {
+    initStore(lokiStore())
   const val = {A: "x"};
   const graph = {
     id: expect.getState().currentTestName,
@@ -106,7 +108,7 @@ test('returning a single value', () => {
 // })
 
 test('applying an fn twice', () => {
-  initStore()
+    initStore(lokiStore())
   const run_fn = {
     id: expect.getState().currentTestName,
     out: "out",
@@ -150,7 +152,7 @@ test('applying an fn twice', () => {
 })
 
 test('applying a fn once', () => {
-  initStore()
+    initStore(lokiStore())
   const run_fn = {
     id: expect.getState().currentTestName,
     out: "out",
