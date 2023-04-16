@@ -4,7 +4,7 @@ import { IDBPDatabase, openDB, wrap } from "idb";
 import generic from "../generic";
 import { compare, mapStore, nolib } from "../nodysseus";
 import { Edge, EdgesIn, Graph, GraphNode, NodysseusNode, NodysseusStore, RefNode, RefStore, Store } from "../types";
-import { compareObjects, ispromise, mapMaybePromise, wrapPromise } from "../util";
+import { ancestor_graph, compareObjects, ispromise, mapMaybePromise, wrapPromise } from "../util";
 import { hlib } from "./util";
 // import Loki from "lokijs"
 // import {WebrtcProvider} from "y-webrtc";
@@ -13,6 +13,7 @@ import { hlib } from "./util";
 // import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
 import * as Automerge from "@automerge/automerge";
 import {v4 as uuid, parse as uuidparse, stringify as uuidstringify} from "uuid";
+import { javascript } from "@codemirror/lang-javascript";
 
 // type SyncedGraph = {
 //   remoteProvider: WebrtcProvider,
@@ -684,7 +685,9 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
       }
     }
   })
+
   const refsmap = new Map<string, Automerge.Doc<Graph>>();
+  const structuredCloneMap = new Map<string, Graph>();
   const refsset = new Set(await nodysseusidb.getAllKeys("refs").then(ks => ks.map(k => k.toString())));
 
 
@@ -695,8 +698,8 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
   const updatePeers = (id: string) => {
     if(id === "custom_editor") return;
 
-    if(updatePeersDebounces[id]) cancelAnimationFrame(updatePeersDebounces[id])
-    updatePeersDebounces[id] = requestAnimationFrame(() => {
+    if(updatePeersDebounces[id]) clearTimeout(updatePeersDebounces[id])
+    updatePeersDebounces[id] = setTimeout(() => {
       wrapPromise(refsmap.get(id)).then(current => {
         updatePeersDebounces[id] = false;
         Object.entries(syncStates).forEach(([peer, syncState]) => {
@@ -714,31 +717,58 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
           }
         })
       })
-    })
-
+    }, 100)
   }
 
-  const changeDoc = (id, fn) =>
-    wrapPromise(refs.get(id)).then(graph => {
-      let doc = Automerge.change<Graph>(graph ?? Automerge.init<Graph>(), fn);
-      if(!doc.edges_in) {
-        doc = Automerge.change<Graph>(doc, d => {
-          d.edges_in = {};
-          Object.values(d.edges).forEach(edge => {
-            if(d.edges_in[edge.to] ) {
-              d.edges_in[edge.to][edge.from] = {...edge};
-            } else {
-              d.edges_in[edge.to] = {[edge.from]: {...edge}}
-            }
-          }) 
+  // Gets the actual automerge doc - for this store only
+  // For any outside interaction, do a structured clone.
+  const getDoc = id => {
+    if(!refsmap.get(id) && refsset.has(id)) {
+      return nodysseusidb.get("refs", id)
+        .then(persisted => {
+          if(persisted) {
+            let doc = Automerge.load<Graph>(persisted)
+            refsmap.set(id, doc);
+            structuredCloneMap.set(id, structuredClone(doc));
+            updatePeers(id);
+            return doc;
+            // TODO: validate graphs on load - this doesn't work because the automerge docs change.
+            // const filteredGraph = ancestor_graph(doc.out, doc, nolib);
+            // return refs.set(id, filteredGraph);
+          }
         })
-      }
-      persist && nodysseusidb.put("refs", Automerge.save(doc), id)
-      refsmap.set(id, doc).get(id);
-      refsset.add(id);
-      updatePeers(id);
-      return doc;
-    }).value
+    }
+
+    // console.log(Automerge.getHeads(refsmap.get(id)))
+
+    return refsmap.get(id);
+  }
+
+
+  const changeDoc = (id, fn) =>
+    wrapPromise(getDoc(id))
+      .then(graph => {
+        let doc = Automerge.change<Graph>(graph ?? Automerge.init<Graph>(), fn);
+        if(!doc.edges_in) {
+          doc = Automerge.change<Graph>(doc, d => {
+            d.edges_in = {};
+            Object.values(d.edges).forEach(edge => {
+              if(d.edges_in[edge.to] ) {
+                d.edges_in[edge.to][edge.from] = {...edge};
+              } else {
+                d.edges_in[edge.to] = {[edge.from]: {...edge}}
+              }
+            }) 
+          })
+        }
+        persist && nodysseusidb.put("refs", Automerge.save(doc), id)
+        refsmap.set(id, doc);
+        refsset.add(id);
+        updatePeers(id);
+        const scd = structuredClone(doc);
+        structuredCloneMap.set(id, scd)
+        return scd;
+      }).value
 
   const removeNodeFn = node => doc => {
         const nodeid = typeof node === "string" ? node : node.id;
@@ -761,23 +791,14 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
 
   const refs: RefStore = {
       get: (id) => {
-        if(generic_node_ids.has(id)) {
-          return generic_nodes[id];
-        }
-
-        if(!refsmap.get(id) && refsset.has(id)) {
-          return nodysseusidb.get("refs", id)
-            .then(persisted => {
-              if(persisted) {
-                let doc = Automerge.load<Graph>(persisted)
-                refsmap.set(id, doc);
-                updatePeers(id);
-                return doc;
-              }
-            })
-        }
-
-        return refsmap.get(id)
+        return generic_nodes[id] ?? structuredCloneMap.has(id) 
+          ? structuredCloneMap.get(id) 
+          : wrapPromise(getDoc(id))
+            .then(d => {
+              const scd = structuredClone(d);
+              structuredCloneMap.set(id, scd);
+              return scd;
+            }).value;
       },
       set: (id, graph) => changeDoc(id, doc => Object.entries(structuredClone(graph)).forEach(e => e[1] !== undefined && (doc[e[0]] = e[1]))),
       delete: (id) => {
@@ -866,7 +887,7 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
       syncStates[data.peerId] = {_syncType: "broadcast"};
       syncBroadcast.postMessage({type: "syncstart", peerId})
     } else if (data.type === "syncgraph" && data.target === peerId) {
-      wrapPromise(refs.get(data.id)).then(currentDoc => {
+      wrapPromise(getDoc(data.id)).then(currentDoc => {
         const id = data.id;
         currentDoc = currentDoc ?? Automerge.init<Graph>();
         const [nextDoc, nextSyncState, patch] = Automerge.receiveSyncMessage<Graph>(
@@ -889,11 +910,12 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
         refsset.add(id);
         refsmap.set(id, nextDoc);
         persist && nodysseusidb.put("refs", Automerge.save(nextDoc), id)
+        structuredCloneMap.set(id, structuredClone(nextDoc));
         syncStates[data.peerId] = {...syncStates[data.peerId], [id]: nextSyncState};
 
         const graph = refs.get(id);
 
-        
+        nolib.no.runtime.publish('graphchange', {graph}, {...nolib, ...hlib}) 
         updatePeers(id);
       })
     }
@@ -901,7 +923,7 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
 
   let syncWS;
 
-  wrapPromise(refs.get("custom_editor"))
+  wrapPromise(getDoc("custom_editor"))
     .then(ce => hlib.run(ce, ce.out ?? "out"))
     .then(cer => cer.rtcroom )
     .then(rtcroom => {
@@ -928,7 +950,7 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
         syncWS.send(new Blob([Uint8Array.of(syncMessageTypesRev["syncstart"]), uuidparse(peerId)]))
       } else if (data.type === "syncgraph" && data.target === peerId) {
         const id = data.id;
-        wrapPromise(refs.get(id)).then(current => {
+        wrapPromise(getDoc(id)).then(current => {
           data.syncMessage = Uint8Array.from(Object.values(data.syncMessage))
           const [nextDoc, nextSyncState, patch] = Automerge.receiveSyncMessage(current ?? Automerge.init<Graph>(), syncStates[data.peerId]?.[id] || Automerge.initSyncState(), data.syncMessage, {
             patchCallback: (patches, before, after) => {
@@ -946,6 +968,7 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
           refsmap.set(id, nextDoc);
           refsset.add(id);
           persist && nodysseusidb.put("refs", Automerge.save(nextDoc), id)
+          structuredCloneMap.set(id, structuredClone(nextDoc));
           syncStates[data.peerId] = {...syncStates[data.peerId], [id]: nextSyncState};
 
           const graph = refs.get(id);

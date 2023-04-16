@@ -1059,15 +1059,13 @@ const nolib = {
       const get_edge = (graph, from) => wrapPromise(get_graph(graph)).then(g => g?.edges[from]).value
       const get_edges_in = (graph, id) => wrapPromise(get_graph(graph))
         .then(g => {
-          if(!g.edges_in) {
-            g.edges_in = Object.values(g.edges).reduce((acc: EdgesIn, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
+          if(g.edges_in === undefined) {
+            return Object.values(g.edges).filter(e => e.to === id);
           }
 
           const idEdgesIn = g.edges_in?.[id];
           if(idEdgesIn !== undefined) {
             return Object.values(idEdgesIn)
-          } else if(g.edges_in === undefined) {
-            return Object.values(g.edges).filter(e => e.to === id)
           }
           return []
         }).value

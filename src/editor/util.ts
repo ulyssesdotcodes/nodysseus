@@ -243,17 +243,17 @@ export const ChangeEditingGraphId: ha.Effecter<HyperappState, {id: string, selec
                           dispatch(SelectNode, {node_id: new_graph.out ?? "out"})
                         }, 100)}, {}]]
                     })
-                    if(!graph) {
-                        wrapPromise(nolib.no.runtime.get_node(new_graph, new_graph.out))
-                          .then(node =>{
-                            dispatch(UpdateNode, {
-                                node, 
-                                property: "name", 
-                                value: id,
-                                editingGraph: new_graph
-                            })
-                          })
-                    }
+                    // if(!graph) {
+                    //     wrapPromise(nolib.no.runtime.get_node(new_graph, new_graph.out))
+                    //       .then(node =>{
+                    //         dispatch(UpdateNode, {
+                    //             node, 
+                    //             property: "name", 
+                    //             value: id,
+                    //             editingGraph: new_graph
+                    //         })
+                    //       })
+                    // }
                 })
             }, {}],
         ]))
