@@ -1,4 +1,5 @@
 import { IDBPDatabase, openDB, wrap } from "idb";
+import custom_editor from "../custom_editor.json"
 // import { IndexeddbPersistence } from "y-indexeddb";
 // import * as Y from "yjs"
 import generic from "../generic";
@@ -712,7 +713,7 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
             if(syncStates[peer]._syncType === "broadcast") {
               syncBroadcast.postMessage({type: "syncgraph", id, peerId, target: peer, syncMessage});
             } else if(syncStates[peer]._syncType === "ws") {
-              syncWS.send(new Blob([Uint8Array.of(syncMessageTypesRev["syncgraph"]), uuidparse(peerId), uuidparse(peer), id.padEnd(16, " "), syncMessage]))
+              syncWS.send(new Blob([Uint8Array.of(syncMessageTypesRev["syncgraph"]), uuidparse(peerId), uuidparse(peer), id.padEnd(128, " "), syncMessage]))
             }
           }
         })
@@ -791,14 +792,14 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
 
   const refs: RefStore = {
       get: (id) => {
-        return generic_nodes[id] ?? structuredCloneMap.has(id) 
+        return generic_nodes[id] ?? (structuredCloneMap.has(id) 
           ? structuredCloneMap.get(id) 
           : wrapPromise(getDoc(id))
             .then(d => {
               const scd = structuredClone(d);
               structuredCloneMap.set(id, scd);
               return scd;
-            }).value;
+            }).value);
       },
       set: (id, graph) => changeDoc(id, doc => Object.entries(structuredClone(graph)).forEach(e => e[1] !== undefined && (doc[e[0]] = e[1]))),
       delete: (id) => {
@@ -859,7 +860,6 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
 
 
   if(!refs.get("custom_editor")){
-    const custom_editor: Graph = {...generic.nodes["simple"], id: "custom_editor", nodes: {...generic.nodes["simple"].nodes, [generic.nodes["simple"].out ?? "out"]: {...generic.nodes["simple"].nodes[generic.nodes["simple"].out ?? "out"], name: "custom_editor"}}};
     refs.set("custom_editor", custom_editor)
   }
 
@@ -942,8 +942,8 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
         type: messageType,
         peerId: uuidstringify(uintbuffer.subarray(1, 17)),
         target: messageType === "syncgraph" && uuidstringify(uintbuffer.subarray(17, 33)),
-        id: new TextDecoder().decode(uintbuffer.subarray(33, 49)).trimEnd(),
-        syncMessage: messageType === "syncgraph" && uintbuffer.subarray(49),
+        id: new TextDecoder().decode(uintbuffer.subarray(33, 161)).trimEnd(),
+        syncMessage: messageType === "syncgraph" && uintbuffer.subarray(161),
       };
       if(data.type === "syncstart" && !syncStates[data.peerId] && data.peerId !== peerId) {
         syncStates[data.peerId] = {_syncType: "ws"};
