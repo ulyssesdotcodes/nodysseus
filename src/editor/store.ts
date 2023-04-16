@@ -942,8 +942,8 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
         type: messageType,
         peerId: uuidstringify(uintbuffer.subarray(1, 17)),
         target: messageType === "syncgraph" && uuidstringify(uintbuffer.subarray(17, 33)),
-        id: new TextDecoder().decode(uintbuffer.subarray(33, 161)).trimEnd(),
-        syncMessage: messageType === "syncgraph" && uintbuffer.subarray(161),
+        id: new TextDecoder().decode(uintbuffer.subarray(33, 97)).trimEnd(),
+        syncMessage: messageType === "syncgraph" && uintbuffer.subarray(97),
       };
       if(data.type === "syncstart" && !syncStates[data.peerId] && data.peerId !== peerId) {
         syncStates[data.peerId] = {_syncType: "ws"};
