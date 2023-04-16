@@ -698,8 +698,8 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
   const updatePeers = (id: string) => {
     if(id === "custom_editor") return;
 
-    if(updatePeersDebounces[id]) clearTimeout(updatePeersDebounces[id])
-    updatePeersDebounces[id] = setTimeout(() => {
+    if(updatePeersDebounces[id]) cancelAnimationFrame(updatePeersDebounces[id])
+    updatePeersDebounces[id] = requestAnimationFrame(() => {
       wrapPromise(refsmap.get(id)).then(current => {
         updatePeersDebounces[id] = false;
         Object.entries(syncStates).forEach(([peer, syncState]) => {
@@ -717,7 +717,7 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
           }
         })
       })
-    }, 100)
+    })
   }
 
   // Gets the actual automerge doc - for this store only
