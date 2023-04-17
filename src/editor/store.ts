@@ -4,7 +4,7 @@ import custom_editor from "../custom_editor.json"
 // import * as Y from "yjs"
 import generic from "../generic";
 import { compare, mapStore, nolib } from "../nodysseus";
-import { Edge, EdgesIn, Graph, GraphNode, NodysseusNode, NodysseusStore, RefNode, RefStore, Store, ValueNode } from "../types";
+import { Edge, EdgesIn, Graph, GraphNode, isNodeRef, NodysseusNode, NodysseusStore, RefNode, RefStore, Store, ValueNode } from "../types";
 import { ancestor_graph, compareObjects, ispromise, mapMaybePromise, wrapPromise } from "../util";
 import { hlib } from "./util";
 // import Loki from "lokijs"
@@ -16,6 +16,8 @@ import * as Automerge from "@automerge/automerge";
 import {v4 as uuid, parse as uuidparse, stringify as uuidstringify} from "uuid";
 import { javascript } from "@codemirror/lang-javascript";
 import { PatchCallback } from "@automerge/automerge";
+
+import categoryChanges from "../../public/categoryChanges.json"
 
 // type SyncedGraph = {
 //   remoteProvider: WebrtcProvider,
@@ -669,6 +671,16 @@ const generic_node_ids = new Set(Object.keys(generic_nodes));
 //   }
 //
 // }
+//
+const migrateCategories = (doc: Automerge.Doc<Graph>) => {
+  Object.entries(doc.nodes).forEach(([k, n]) => {
+    if(isNodeRef(doc.nodes[k]) && categoryChanges[(doc.nodes[k] as RefNode).ref] ) {
+      const ref = (doc.nodes[k] as RefNode).ref;
+      console.log("changing", ref, `@${categoryChanges[ref]}.${ref}`);
+      (doc.nodes[k] as RefNode).ref =  `@${categoryChanges[ref]}.${ref}`;
+    }
+  })
+}
 
 
 export const automergeStore = async ({persist} = { persist: false }): Promise<NodysseusStore> => {
@@ -741,6 +753,7 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
       ? nodysseusidb.get("refs", id)
         .then(persisted => {
             let doc = Automerge.load<Graph>(persisted)
+            doc = Automerge.change(doc, migrateCategories);
             refsmap.set(id, doc);
             let scd = structuredClone(doc);
             structuredCloneMap.set(id, scd);
@@ -759,8 +772,11 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
         })
       : undefined
 
-  const changeDoc = (id, fn): Graph | Promise<Graph> =>
-    wrapPromise(getDoc(id))
+  const changeDoc = (id, fn): Graph | Promise<Graph> => {
+    if(generic_node_ids.has(id)) {
+      nolib.no.runtime.publish("grapherror", new Error("Cannot edit default nodes"))
+    }
+    return wrapPromise(getDoc(id))
       .then(graph => {
         let doc = Automerge.change<Graph>(graph ?? Automerge.init<Graph>(), {patchCallback: graphNodePatchCallback}, fn);
         if(!doc.edges_in) {
@@ -785,6 +801,7 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
         nolib.no.runtime.change_graph(scd, {...nolib, ...hlib}, []) 
         return scd;
       }).value
+  }
 
   const removeNodeFn = node => doc => {
         const nodeid = typeof node === "string" ? node : node.id;
@@ -832,17 +849,22 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
       redo: () => {throw new Error("not implemented")},
       add_node: (id, node) => changeDoc(id, doc => {
         // TODO: try to fix by making the values texts instead of just strings
-        Object.entries(node).forEach(kv => kv[1] === undefined && delete node[kv[0]])
         if(doc.nodes[node.id]) {
-          Object.entries(node).forEach(kv => { 
-            if(doc.nodes[node.id][kv[0]] !== kv[1]) {
-              doc.nodes[node.id][kv[0]] = kv[1];
-            }
-          })
+          Object.keys(node).concat(Object.keys(doc.nodes[node.id]))
+            .forEach(k => { 
+              if(doc.nodes[node.id][k] !== node[k]) {
+                if(node[k] === undefined) {
+                  delete doc.nodes[node.id][k]
+                } else {
+                  doc.nodes[node.id][k] = node[k];
+                }
+              }
+            })
           // console.log(node)
           // console.log(doc.nodes[node.id])
           // console.log(doc.nodes[node.id].value)
         } else {
+          Object.entries(node).forEach(kv => kv[1] === undefined && delete node[kv[0]])
           doc.nodes[node.id] = node;
         }
       }),

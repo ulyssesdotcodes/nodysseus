@@ -495,7 +495,7 @@ export const node_el = ({html_id, selected, error, selected_distance, node_id, n
    ha.h<HyperappState, any>(
         (node_value !== undefined && !(node_ref && node_ref !== "arg")) 
           || (node_value === undefined && node_ref === undefined) ? 'polygon' 
-        : node_ref === 'return' ? 'rect'
+        : node_ref === "return" ? 'rect'
         : 'circle', 
         node_value !== undefined && !(node_ref && node_ref !== "arg") 
           || (node_value === undefined && node_ref === undefined)

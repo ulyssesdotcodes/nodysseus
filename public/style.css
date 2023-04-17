@@ -520,3 +520,14 @@ svg.edge-info.selected rect {
     font-size: 2em;
     user-select: none;
 }
+
+a, a:visited {
+  color: white;
+}
+
+.help-window {
+  position: fixed;
+  z-index: 128;
+  width: 512px;
+  height: 512px;
+}

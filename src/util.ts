@@ -1,3 +1,4 @@
+import { nodysseus_get } from "./nodysseus";
 import { Edge, Graph, GraphNode, NodysseusNode, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable, isEnv, isRunnable, isValue, Lib, isLib, Env, Args, ValueNode, Result, isArgs, isConstRunnable, isApRunnable, isError, ConstRunnable, TypedArg } from "./types";
 
 export const WRAPPED_KIND = "wrapped";
@@ -250,7 +251,7 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Ar
                 .map(l => parseInt(l.as.substring(3))) ?? [])
             .reduce((acc, i) => acc > i ? acc : i + 1, 0))
     
-    const externfn = node_ref?.ref === "extern" && nolib.extern.get.fn({}, nolib, node_ref?.value, undefined, undefined, nolib)
+    const externfn = node_ref?.ref === "extern" && nodysseus_get(nolib.data, node_ref?.value, newLib(nolib))
     const externArgs = externfn && (Array.isArray(externfn.args) ? externfn.args.map(a => {
       const argColonIdx = a.indexOf(":")
       return [argColonIdx >= 0 ? a.substring(0, argColonIdx) : a, "any"]

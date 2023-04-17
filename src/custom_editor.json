@@ -34,7 +34,7 @@
       "out": {
         "id": "out",
         "name": "custom_editor",
-        "ref": "return"
+        "ref": "@flow.return"
       },
       "output_val": {
         "id": "output_val"

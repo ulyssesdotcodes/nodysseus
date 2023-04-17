@@ -36,7 +36,7 @@ export type HyperappState = {
   inputs: Record<string, string>,
   copied?: {
     graph: Graph
-  }
+  },
   simulation?: NodysseusSimulation,
   clear_simulation_cache?: boolean,
   info_display_dispatch?: Function,
@@ -44,7 +44,8 @@ export type HyperappState = {
   custom_editor_display_dispatch?: Function,
   code_editor?: any,
   code_editor_nodeid?: any,
-  custom_editor_result: {}
+  custom_editor_result: {},
+  showHelp: boolean,
 }
 
 export type Levels = {

@@ -474,7 +474,7 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
             return wrapPromise(resval).then(resval => resval && typeof resval === 'object' && isValue(resval) ? resval : lib.data.no.of(resval)).value;
         } else if (node.ref === "extern") {
             return node_extern(node, nodeArgs, graphArgs, lib, options)
-        } else if (node.ref === "script") {
+        } else if (node.ref === "@js.script") {
             return (graphArgs._output === undefined || graphArgs._output === "value") && node_script(node, nodeArgs, lib, options)
         }
 
@@ -806,6 +806,7 @@ const nolib = {
     },
     base_graph,
     base_node,
+    nodysseus_get,
     NodysseusError,
     runtime: undefined,
     wrapPromise,
@@ -852,21 +853,23 @@ const nolib = {
           }
         }
 
-
-
         event_data.set(event, data);
         const listeners = getorset(event_listeners, event, () => new Map());
 
         if(!pause) {
           for (let l of listeners.values()) {
-            if (typeof l === "function") {
-              l(data, lib, {...options, timings: {}});
-            } else if (typeof l === "object" && l.fn && l.graph) {
-              run(
-                l,
-                Object.assign({}, l.args || {}, { data }),
-                {...options, lib: mergeLib(l.lib, lib)}
-              );
+            try {
+              if (typeof l === "function") {
+                l(data, lib, {...options, timings: {}});
+              } else if (typeof l === "object" && l.fn && l.graph) {
+                run(
+                  l,
+                  Object.assign({}, l.args || {}, { data }),
+                  {...options, lib: mergeLib(l.lib, lib)}
+                );
+              }
+            } catch(e) {
+              console.error(e);
             }
           }
         }
@@ -918,7 +921,9 @@ const nolib = {
               };
         if (!listeners.has(listener_id)) {
           if (!prevent_initial_trigger && event_data.has(event)) {
-            fn(event_data.get(event));
+            try{
+              fn(event_data.get(event));
+            } catch(e){}
           }
 
           if (graph_id) {
@@ -1425,6 +1430,7 @@ const nolib = {
         const args = lib.data.no.runtime.get_args(graphid);
 
         let store = args["store"] ?? {
+          __kind: "refval",
           graphid,
           set: {
             __kind: "apFunction",
@@ -1504,6 +1510,7 @@ const nolib = {
           .then(({persist, publish, state}) => output === "display" 
             ? lib.data.no.of({dom_type: 'div', props: {}, children: [{dom_type: 'text_value', text: JSON.stringify(state)}]}) 
             : ({
+              __kind: "state",
               graphid,
               set: {
                 __kind: "apFunction",
@@ -1540,6 +1547,10 @@ const nolib = {
               state,
             })).value
       }
+    },
+    unwrapValue: {
+      args: ["value"],
+      fn: (value) => value?.__kind === "state" ? value.state : value?.__kind === "refval" ? value.value : value
     },
     return: {
       outputs: {
@@ -1641,9 +1652,9 @@ const nolib = {
     },
     eq: ({ a, b }) => a === b,
     get: {
-      args: ["_graph", "target", "path", "def", "graphval", "_lib"],
-      fn: (graph, target, path, def, graph_value, lib: Lib) => {
-        return nodysseus_get(
+      args: ["target: default", "path", "def", "__graph_value", "_lib"],
+      fn: (target, path, def, graph_value, lib: Lib) => {
+        return lib.data.no.nodysseus_get(
           target,
           graph_value || path,
           lib, 
@@ -1831,7 +1842,7 @@ const nolib = {
         const keys = Object.keys(args).filter(k => k !== "target").sort();
         const resolved = {};
         keys.forEach(
-          (k) => (resolved[k] = args[k]?.value ? args[k].value : args[k])
+          (k) => (resolved[k] = isValue(args[k]) ? args[k].value : args[k])
         );
         const promise = keys.reduce(
           (acc, k) => acc || ispromise(resolved[k]),
@@ -1848,11 +1859,7 @@ const nolib = {
           : Object.assign(
               target,
               ...keys
-                .map((k) =>
-                  resolved[k] && resolved[k]?.value
-                    ? resolved[k].value
-                    : resolved[k]
-                )
+                .map((k) => resolved[k])
                 .filter((a) => a && typeof a === "object")
             );
       }

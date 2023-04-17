@@ -11,7 +11,7 @@ test('returning a single value', () => {
     id: expect.getState().currentTestName,
     nodes: {
       value: {id: "value", value: JSON.stringify(val)},
-      out: {id: "out", ref: "return"}
+      out: {id: "out", ref: "@flow.return"}
     },
     edges: {
       value: {from: "value", to: "out", as: "value"}
@@ -114,7 +114,7 @@ test('applying an fn twice', () => {
     out: "out",
     nodes: {
       input: {id: "input", ref: "arg", value: "input"},
-      setval: {id: "setval", ref: "script", value: "target.x = value;"},
+      setval: {id: "setval", ref: "@js.script", value: "target.x = value;"},
       finalval: {id: "finalval", value: "B"},
       runnablefn: {id: "runnablefn", ref: "runnable"},
 
@@ -122,11 +122,11 @@ test('applying an fn twice', () => {
       // apfn: {id: "apfn", ref: "script", value: "console.log('hi'); return {}"},
       apfnargs: {id: "apfnargs"},
       apfninput: {id: "apfninput", ref: "arg", value: "input"},
-      ap2fn: {id: "ap2fn", ref: "ap"},
+      ap2fn: {id: "ap2fn", ref: "@flow.ap"},
       ap2fnrun: {id: "ap2fnrun", value: "true"},
       ap2fninput: {id: "ap2fninput", ref: "arg", value: "input"},
       ap2fnargs: {id: "ap2fnargs"},
-      out: {id: "out", ref: "return"}
+      out: {id: "out", ref: "@flow.return"}
     },
     edges: {
       input: {from: "input", to: "setval", as: "target"},
@@ -158,16 +158,16 @@ test('applying a fn once', () => {
     out: "out",
     nodes: {
       input: {id: "input", ref: "arg", value: "input"},
-      setval: {id: "setval", ref: "script", value: "target.x = value;"},
+      setval: {id: "setval", ref: "@js.script", value: "target.x = value;"},
       finalval: {id: "finalval", value: "B"},
-      runnablefn: {id: "runnablefn", ref: "runnable"},
+      runnablefn: {id: "runnablefn", ref: "@flow.runnable"},
 
-      apfn: {id: "apfn", ref: "ap"},
+      apfn: {id: "apfn", ref: "@flow.ap"},
       // apfn: {id: "apfn", ref: "script", value: "console.log('hi'); return {}"},
       apfnargs: {id: "apfnargs"},
       apfninput: {id: "apfninput", ref: "arg", value: "input"},
       apfnrun: {id: "apfnrun", value: "true"},
-      out: {id: "out", ref: "return"}
+      out: {id: "out", ref: "@flow.return"}
     },
     edges: {
       input: {from: "input", to: "setval", as: "target"},

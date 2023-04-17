@@ -30,7 +30,7 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib) => {
             return;
           }
           const noderef = isNodeRef(n) ? lib.data.no.runtime.get_ref(n.ref) : n;
-          if(isNodeScript(n) || (isNodeRef(n) && n.ref === "script")) {
+          if(isNodeScript(n) || (isNodeRef(n) && n.ref === "@js.script")) {
             let inputs = nodeinputs(n, graph)
             text += `
 function fn_${n.id}(){
@@ -41,6 +41,17 @@ function fn_${n.id}(){
 
 ${isNodeScript(n) ? n.script : n.value}
 
+}
+
+`
+          } else if (noderef.id === "@data.get"){
+            let inputs = Object.values(graph.edges_in[n.id] ?? []).map(edge => ({edge, node: Object.values(graph.nodes).find(n => n.id === edge.from)}));
+            text += `
+function fn_${n.id}(){
+  ${inputs
+    .map(input => `let ${input.edge.as} = ${isNodeRef(input.node) && input.node.ref === "arg" && input.node.value === '_lib' ? '_lib' : nodefn(input.node)}`)
+    .join("\n")}
+  return target["${argToProperties(isNodeRef(n) ? n.value : 'undefined')}"]
 }
 
 `
@@ -78,17 +89,6 @@ let ${a} = ${nodefn(inputNode)};
 function fn_${n.id}(){
   ${varset.join("\n")}
   return (${extern.fn.toString()})(${extern.args.map(rawa => rawa.includes(':') ? rawa.substring(0, rawa.indexOf(':')) : rawa).join(", ")})
-}
-
-`
-          } else if (noderef.id === "get"){
-            let inputs = Object.values(graph.edges_in[n.id] ?? []).map(edge => ({edge, node: Object.values(graph.nodes).find(n => n.id === edge.from)}));
-            text += `
-function fn_${n.id}(){
-  ${inputs
-    .map(input => `let ${input.edge.as} = ${isNodeRef(input.node) && input.node.ref === "arg" && input.node.value === '_lib' ? '_lib' : nodefn(input.node)}`)
-    .join("\n")}
-  return target["${argToProperties(isNodeRef(n) ? n.value : 'undefined')}"]
 }
 
 `

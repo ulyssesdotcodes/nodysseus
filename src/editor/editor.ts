@@ -265,17 +265,16 @@ const runapp = (init, load_graph, _lib) => {
                       }, {}], [UpdateSimulation, {}]])) 
                   }, {}]]
             }, [ha.text('refresh')]),
-            ha.h('a',{
-                src: 'https://gitlab.com/ulysses.codes/nodysseus/-/tree/main/docs/guides'
-              }, [
                 ha.h('span', {
                   class: 'material-icons-outlined graph-action',
                   name: 'help', 
+                  onclick: (s: HyperappState) => ({...s, showHelp: true})
                 }, [ha.text('question_mark')])
-              ]
-            )
         ]),
         ha.h('div', {id: `${init.html_id}-result`}),
+        s.showHelp && ha.h('div', { class: 'help-window' }, [
+          ha.h('div', {}, ha.text("help"))
+        ]),
         s.error && ha.h('div', {id: 'node-editor-error'}, run_h(show_error(s.error, s.error.node_id)))
     ]),
     node: document.getElementById(init.html_id),
@@ -454,7 +453,7 @@ const editor = async function(html_id, editingGraph, lib, norun) {
       return worker;
     }
 
-    const simple = generic.nodes["simple"] as unknown as Graph;
+    const simple = generic.nodes["@templates.simple"] as unknown as Graph;
     simple.edges_in = Object.values(simple.edges).reduce((acc: Record<string, Record<string, Edge>>, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
     const url_params = new URLSearchParams(document.location.search);
     const graph_list = JSON.parse(localStorage.getItem("graph_list")) ?? [];
@@ -491,7 +490,8 @@ const editor = async function(html_id, editingGraph, lib, norun) {
             error: false,
             inputs: {},
             randid: create_randid(),
-            custom_editor_result: {}
+            custom_editor_result: {},
+            showHelp: false
         };
 
         runapp(init,  hash_graph && hash_graph !== "" ? hash_graph : graph_list?.[0] ?? 'simple', lib)
