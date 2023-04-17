@@ -202,14 +202,16 @@ export const contract_node = (data: {editingGraph: Graph, node_id: string, nolib
 export const ancestor_graph = (node_id: string, from_graph: Graph, nolib: Record<string, any>): Graph => {
     let edges_in;
     let queue = [node_id];
-    const graph: Graph = {...from_graph, nodes: {}, edges: {}};
+    const graph: Graph = {...from_graph, nodes: {}, edges: {}, edges_in: {}};
     while(queue.length > 0) {
         let node_id = queue.pop();
         graph.nodes[node_id] = {...from_graph.nodes[node_id]}
-        edges_in = from_graph.edges_in[node_id] 
+        edges_in = (from_graph.edges_in[node_id] 
           ? Object.values(from_graph.edges_in[node_id]) 
-          : Object.values(from_graph.edges).filter(e => e.to === node_id)
-        graph.edges = Object.assign(graph.edges, Object.fromEntries(edges_in.filter(e => from_graph.nodes[e.from]).map(e => [e.from, e])));
+          : Object.values(from_graph.edges).filter(e => e.to === node_id))
+            .filter(e => from_graph.nodes[e.from] && !graph.nodes[e.from])
+        graph.edges = Object.assign(graph.edges, Object.fromEntries(edges_in.map(e => [e.from, e])));
+        graph.edges_in[node_id] = Object.fromEntries(edges_in.map(e => [e.from, e]));
         edges_in.forEach(e => queue.push(e.from));
     }
     return graph;

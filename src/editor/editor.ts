@@ -265,6 +265,15 @@ const runapp = (init, load_graph, _lib) => {
                       }, {}], [UpdateSimulation, {}]])) 
                   }, {}]]
             }, [ha.text('refresh')]),
+            ha.h('a',{
+                src: 'https://gitlab.com/ulysses.codes/nodysseus/-/tree/main/docs/guides'
+              }, [
+                ha.h('span', {
+                  class: 'material-icons-outlined graph-action',
+                  name: 'help', 
+                }, [ha.text('question_mark')])
+              ]
+            )
         ]),
         ha.h('div', {id: `${init.html_id}-result`}),
         s.error && ha.h('div', {id: 'node-editor-error'}, run_h(show_error(s.error, s.error.node_id)))
@@ -426,7 +435,7 @@ const editor = async function(html_id, editingGraph, lib, norun) {
     initStore(nodysseusStore)
     hlib.worker = () => {
       if(!worker) {
-        worker = new Worker("./worker.js?3", {type: "module"})
+        worker = new Worker("./worker.js", {type: "module"})
         workerPromise = new Promise((res, rej) => {
           worker.addEventListener("message", msg => {
             if(msg.data.type === "started") {
