@@ -168,7 +168,7 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
   }
 
   const setFromGraph = (graph: Graph) => (doc: Graph) =>  {
-    Object.entries(doc).forEach(e => delete doc[e[0]])
+    Object.entries(doc).forEach(e => !Object.hasOwn(graph, e[0]) && delete doc[e[0]])
     Object.entries(structuredClone(graph)).forEach(e => {
       if(graph[e[0]] === undefined) {
         delete doc[e[0]]
