@@ -6167,7 +6167,7 @@ const generic = {
     "out": "ld37qq4",
     "category": "event"
   },
-  "@html.slider":{
+  "@html.slider": {
     "edges": {
       "0i85qjj": {
         "as": "args",
@@ -6189,11 +6189,6 @@ const generic = {
         "from": "2wp8ffd",
         "to": "old0t0c"
       },
-      "3ly9mja": {
-        "as": "min",
-        "from": "3ly9mja",
-        "to": "av63lw9"
-      },
       "4dh6wzn": {
         "as": "arg1",
         "from": "4dh6wzn",
@@ -6213,11 +6208,6 @@ const generic = {
         "as": "min",
         "from": "7c2vt3d",
         "to": "24q0egm"
-      },
-      "7teuk40": {
-        "as": "graphval",
-        "from": "7teuk40",
-        "to": "lpyxle5"
       },
       "8f3izp7": {
         "as": "arg1",
@@ -6314,20 +6304,10 @@ const generic = {
         "from": "l5bzesi",
         "to": "2wp8ffd"
       },
-      "lpyxle5": {
-        "as": "max",
-        "from": "lpyxle5",
-        "to": "av63lw9"
-      },
       "mpbvtrq": {
         "as": "type",
         "from": "mpbvtrq",
         "to": "24q0egm"
-      },
-      "my1s2km": {
-        "as": "argmax",
-        "from": "my1s2km",
-        "to": "lpyxle5"
       },
       "n4i4t17": {
         "as": "val",
@@ -6448,6 +6428,31 @@ const generic = {
         "as": "val",
         "from": "z8c7kcy",
         "to": "nrhhdip"
+      },
+      "r0fsdrm": {
+        "from": "r0fsdrm",
+        "to": "gvk9hec",
+        "as": "value"
+      },
+      "e996mm5": {
+        "from": "e996mm5",
+        "to": "r0fsdrm",
+        "as": "min"
+      },
+      "on0cfjb": {
+        "as": "graphval",
+        "from": "on0cfjb",
+        "to": "34k9xvb"
+      },
+      "x4fmyaa": {
+        "as": "argmax",
+        "from": "x4fmyaa",
+        "to": "34k9xvb"
+      },
+      "34k9xvb": {
+        "from": "34k9xvb",
+        "to": "r0fsdrm",
+        "as": "max"
       }
     },
     "id": "@html.slider",
@@ -6466,11 +6471,6 @@ const generic = {
       "2wp8ffd": {
         "id": "2wp8ffd",
         "ref": "@data.array"
-      },
-      "3ly9mja": {
-        "id": "3ly9mja",
-        "ref": "arg",
-        "value": "min"
       },
       "4dh6wzn": {
         "id": "4dh6wzn",
@@ -6491,11 +6491,6 @@ const generic = {
         "id": "7c2vt3d",
         "ref": "@flow.default"
       },
-      "7teuk40": {
-        "id": "7teuk40",
-        "ref": "arg",
-        "value": "__graph_value"
-      },
       "8f3izp7": {
         "id": "8f3izp7",
         "ref": "arg",
@@ -6511,7 +6506,7 @@ const generic = {
       "av63lw9": {
         "id": "av63lw9",
         "ref": "@js.script",
-        "value": "if (state.state === undefined){\n  state.set.fn(0.5 * ((max ?? 1) - (min ?? 0)) + (min ?? 0));\n} else if(val.value === undefined) {\n  val.set.fn(state.state)\n}\n\nreturn val;"
+        "value": "if (state.state !== undefined && val.value === undefined) {\n  val.set.fn(state.state)\n}\n\nreturn val;"
       },
       "bts7694": {
         "id": "bts7694",
@@ -6579,19 +6574,9 @@ const generic = {
         "ref": "arg",
         "value": "_sliderval.set"
       },
-      "lpyxle5": {
-        "id": "lpyxle5",
-        "ref": "@js.script",
-        "value": "return !isNaN(argmax) ? argmax : !isNaN(graphval) ? graphval : 1.0"
-      },
       "mpbvtrq": {
         "id": "mpbvtrq",
         "value": "range"
-      },
-      "my1s2km": {
-        "id": "my1s2km",
-        "ref": "arg",
-        "value": "max"
       },
       "n4i4t17": {
         "id": "n4i4t17",
@@ -6702,10 +6687,35 @@ const generic = {
         "id": "z8c7kcy",
         "ref": "arg",
         "value": "event.target.value"
+      },
+      "r0fsdrm": {
+        "id": "r0fsdrm",
+        "ref": "@js.script",
+        "value": "return 0.5 * ((max ?? 1) - (min ?? 0)) + (min ?? 0)"
+      },
+      "e996mm5": {
+        "id": "e996mm5",
+        "ref": "arg",
+        "value": "min"
+      },
+      "34k9xvb": {
+        "id": "34k9xvb",
+        "ref": "@js.script",
+        "value": "return !isNaN(argmax) ? argmax : !isNaN(graphval) ? graphval : 1.0"
+      },
+      "x4fmyaa": {
+        "id": "x4fmyaa",
+        "ref": "arg",
+        "value": "max"
+      },
+      "on0cfjb": {
+        "id": "on0cfjb",
+        "ref": "arg",
+        "value": "__graph_value"
       }
     },
     "out": "out"
-  } ,
+  },
   "@nodysseus.export": {
     "id": "@nodysseus.export",
     "out": "main/out",
