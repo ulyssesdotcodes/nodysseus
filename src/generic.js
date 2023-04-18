@@ -1835,8 +1835,8 @@ const generic = {
     "ref": "extern",
     "value": "extern.unwrapValue"
   },
-  "publish_event": {
-    "id": "publish_event",
+  "@event.publish_event": {
+    "id": "@event.publish_event",
     "out": "out",
     "nodes": {
       "output_val": {
@@ -1846,7 +1846,7 @@ const generic = {
       "out": {
         "id": "out",
         "ref": "return",
-        "name": "publish_event"
+        "name": "@event.publish_event"
       },
       "i5m8bp1": {
         "id": "i5m8bp1",
@@ -4955,7 +4955,7 @@ const generic = {
       "pdox5d1": {
         "id": "pdox5d1",
         "value": "graphupdate",
-        "ref": "publish_event"
+        "ref": "@event.publish_event"
       },
       "qvl4qif": {
         "id": "qvl4qif",
@@ -4972,7 +4972,7 @@ const generic = {
       "00fj2qe": {
         "id": "00fj2qe",
         "value": "graphupdate",
-        "ref": "publish_event"
+        "ref": "@event.publish_event"
       },
       "rgoguh4": {
         "id": "rgoguh4"
