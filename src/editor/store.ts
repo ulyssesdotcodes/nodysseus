@@ -9,7 +9,6 @@ import { ancestor_graph, compareObjects, ispromise, mapMaybePromise, wrapPromise
 import { hlib } from "./util";
 import * as Automerge from "@automerge/automerge";
 import {v4 as uuid, parse as uuidparse, stringify as uuidstringify} from "uuid";
-import { javascript } from "@codemirror/lang-javascript";
 import { PatchCallback } from "@automerge/automerge";
 
 import categoryChanges from "../../public/categoryChanges.json"
@@ -166,8 +165,22 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
     delete g.edges_in[edge.to][edge.from]
   }
 
-  const setFromGraph = (graph: Graph) => (doc: Automerge.Doc<Graph>) => 
-    Object.entries(structuredClone(graph)).forEach(e => e[1] !== undefined && (doc[e[0]] = e[1]))
+  const setFromGraph = (graph: Graph) => (doc: Graph) =>  {
+    Object.entries(doc).forEach(e => delete doc[e[0]])
+    Object.entries(structuredClone(graph)).forEach(e => {
+      if(graph[e[0]] === undefined) {
+        delete doc[e[0]]
+      } else if(e[1] !== undefined){
+        if(e[0] === "nodes" && Array.isArray(e[1])) {
+          doc[e[0]] = Object.fromEntries(e[1].map(n => [n.id, n]))
+        } else if(e[0] === "edges" && Array.isArray(e[1])) {
+          doc[e[0]] = Object.fromEntries(e[1].map(e => [e.from, e]))
+        } else {
+          doc[e[0]] = e[1]
+        }
+      }
+    })
+  }
 
 
   const refs: RefStore = {
