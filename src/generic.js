@@ -47,7 +47,7 @@ const generic = {
       "out": {
         "id": "out",
         "ref": "return",
-        "name": "simple"
+        "name": "@templates.simple"
       }
     }
   },
@@ -74,7 +74,8 @@ const generic = {
         "id": "out",
         "args": [],
         "ref": "@js.script",
-        "value": "graph_value ? console.log(graph_value, value) : console.log(value); return value"
+        "value": "graph_value ? console.log(graph_value, value) : console.log(value); return value",
+        "name": "@debug.log"
       }
     },
     "edges": [
@@ -278,7 +279,8 @@ const generic = {
       "out": {
         "id": "out",
         "ref": "@js.script",
-        "value": "const parents = (id) => (graph ?? _graph).edges.filter(e => e.to === id).flatMap(e => parents(e.from)).concat([id]); return parents(node ?? graph.out ?? 'out')"
+        "value": "const parents = (id) => (graph ?? _graph).edges.filter(e => e.to === id).flatMap(e => parents(e.from)).concat([id]); return parents(node ?? graph.out ?? 'out')",
+        "name": "@graph.ancestors"
       }
     },
     "edges": [
@@ -321,7 +323,8 @@ const generic = {
       "out": {
         "id": "out",
         "ref": "@js.script",
-        "value": "return array.concat(Array.isArray(item) ? item : [item])"
+        "value": "return array.concat(Array.isArray(item) ? item : [item])",
+        "name": "@data.append"
       }
     },
     "edges": [
@@ -365,7 +368,8 @@ const generic = {
           "array"
         ],
         "ref": "@js.script",
-        "value": "return (array ?? []).concat(items ?? [])"
+        "value": "return (array ?? []).concat(items ?? [])",
+        "name": "@data.concat"
       }
     },
     "edges": [
@@ -391,7 +395,7 @@ const generic = {
       "lahq5z4": {
         "id": "lahq5z4",
         "args": [],
-        "name": "filter/out",
+        "name": "filter_eq",
         "ref": "@js.script",
         "value": "return arr.filter(v => v[key] === value)"
       },
@@ -498,7 +502,8 @@ const generic = {
       },
       "out": {
         "id": "out",
-        "ref": "return"
+        "ref": "return",
+        "name": "@flow.default"
       }
     },
     "edges": [
@@ -590,7 +595,8 @@ const generic = {
       "out": {
         "id": "out",
         "ref": "extern",
-        "value": "extern.switch"
+        "value": "extern.switch",
+        "name": "@flow.if"
       }
     },
     "edges": [
@@ -647,7 +653,8 @@ const generic = {
       },
       "out": {
         "id": "out",
-        "ref": "@html.html_element"
+        "ref": "@html.html_element",
+        "name": "@html.svg_text"
       }
     },
     "edges": [
@@ -791,7 +798,8 @@ const generic = {
       },
       "out": {
         "id": "out",
-        "ref": "@flow.runnable"
+        "ref": "@flow.runnable",
+        "name": "runnable_return"
       }
     },
     "edges": [
@@ -1030,7 +1038,7 @@ const generic = {
       },
       "out": {
         "id": "out",
-        "name": "tapbutton",
+        "name": "@html.tapbutton",
         "ref": "return"
       },
       "qgbinm2": {
@@ -1334,7 +1342,7 @@ const generic = {
       },
       "out": {
         "id": "out",
-        "name": "graphchangecache",
+        "name": "@memory.graphchangecache",
         "ref": "return"
       },
       "fy9ee3e": {
@@ -1801,7 +1809,7 @@ const generic = {
       "out": {
         "id": "out",
         "ref": "return",
-        "name": "cache"
+        "name": "@memory.cache"
       },
       "jb9ua5s": {
         "id": "jb9ua5s",
@@ -1960,7 +1968,7 @@ const generic = {
       "out": {
         "id": "out",
         "ref": "return",
-        "name": "isunchanged"
+        "name": "@data.isunchanged"
       },
       "yp2q57b": {
         "id": "yp2q57b"
@@ -2210,7 +2218,8 @@ const generic = {
       },
       "out": {
         "id": "out",
-        "ref": "@flow.if"
+        "ref": "@flow.if",
+        "name": "@event.event_publisher_onchange"
       }
     },
     "edges": [
@@ -2262,7 +2271,7 @@ const generic = {
     "nodes": {
       "out": {
         "id": "out",
-        "name": "input_value",
+        "name": "@debug.input_value",
         "ref": "return"
       },
       "cfuymky": {
@@ -2470,7 +2479,8 @@ const generic = {
       },
       "out": {
         "id": "out",
-        "ref": "@flow.default"
+        "ref": "@flow.default",
+        "name": "event_subscriber"
       }
     },
     "edges": [
@@ -2594,7 +2604,7 @@ const generic = {
       "tgurdpo": {
         "id": "tgurdpo",
         "ref": "@js.call",
-        "name": "out"
+        "name": "@data.reduce"
       },
       "key": {
         "id": "key",
@@ -2771,7 +2781,8 @@ const generic = {
       },
       "out": {
         "id": "out",
-        "ref": "return"
+        "ref": "return",
+        "name": "filter"
       }
     },
     "edges": [
@@ -2857,7 +2868,8 @@ const generic = {
       },
       "out": {
         "id": "out",
-        "ref": "return"
+        "ref": "return",
+        "name": "@nodysseus.import_json"
       },
       "3zfjt1h": {
         "id": "3zfjt1h",
@@ -2935,7 +2947,7 @@ const generic = {
     "out": "j8c79uf",
     "nodes": {
       "j8c79uf": {
-        "name": "out",
+        "name": "@data.object_entries",
         "id": "j8c79uf",
         "ref": "filter"
       },
@@ -3012,7 +3024,7 @@ const generic = {
       "out": {
         "id": "out",
         "ref": "return",
-        "name": "css_styles"
+        "name": "@html.css_styles"
       },
       "5yxmxua": {
         "id": "5yxmxua",
@@ -3582,7 +3594,7 @@ const generic = {
     "out": "spy9h48",
     "nodes": {
       "spy9h48": {
-        "name": "out",
+        "name": "@html.css_anim",
         "id": "spy9h48",
         "ref": "@js.script",
         "value": "return Object.fromEntries((Array.isArray(arr[0]) ? arr[0] : arr).map((v, i, a) => [Math.floor((i / a.length)*100) + \"%\", v]))"
@@ -3773,7 +3785,7 @@ const generic = {
             "as": "props"
           }
         ],
-        "name": "out"
+        "name": "@html.input"
       },
       "gvkhkfw": {
         "id": "gvkhkfw",
@@ -3996,7 +4008,8 @@ const generic = {
         "value": "text_value"
       },
       "out": {
-        "id": "out"
+        "id": "out",
+        "name": "@html.html_text"
       }
     },
     "edges": [
@@ -4136,7 +4149,8 @@ const generic = {
       },
       "out_ret": {
         "id": "out_ret",
-        "ref": "return"
+        "ref": "return",
+        "name": "@html.html_element"
       }
     },
     "edges": [
@@ -4267,7 +4281,7 @@ const generic = {
       "c2sko9c": {
         "id": "c2sko9c",
         "ref": "@html.html_element",
-        "name": "icon"
+        "name": "@html.icon"
       },
       "2lr3ihi": {
         "id": "2lr3ihi",
@@ -4498,7 +4512,7 @@ const generic = {
       },
       "out": {
         "id": "out",
-        "name": "canvas_behind_editor",
+        "name": "@html.canvas_behind_editor",
         "ref": "return"
       },
       "hzvlwu7": {
@@ -4704,7 +4718,7 @@ const generic = {
       },
       "out": {
         "id": "out",
-        "name": "import",
+        "name": "@nodysseus.import",
         "ref": "return"
       },
       "arcnyff": {
@@ -5041,7 +5055,7 @@ const generic = {
     "nodes": {
       "0g1zopd": {
         "id": "0g1zopd",
-        "name": "create-offscreen-canvas",
+        "name": "offscreen-canvas",
         "ref": "return"
       },
       "ein7naf": {
@@ -5614,7 +5628,7 @@ const generic = {
     "nodes": {
       "p8v5ed5": {
         "id": "p8v5ed5",
-        "name": "changed",
+        "name": "@data.changed",
         "ref": "return"
       },
       "14mzqe3": {
@@ -5865,7 +5879,7 @@ const generic = {
       },
       "out": {
         "id": "out",
-        "name": "webgl",
+        "name": "@graphics.webgl",
         "ref": "return"
       },
       "ng2kjpd": {
@@ -6200,7 +6214,7 @@ const generic = {
       },
       "bu3m3jq": {
         "id": "bu3m3jq",
-        "name": "export",
+        "name": "@graphics.load_shader",
         "ref": "return"
       }
     },
@@ -6239,7 +6253,7 @@ const generic = {
     "nodes": {
       "ld37qq4": {
         "id": "ld37qq4",
-        "name": "subscribe_many",
+        "name": "@event.subscribe_many",
         "ref": "return"
       },
       "ndna6vl": {
@@ -6651,7 +6665,7 @@ const generic = {
       },
       "out": {
         "id": "out",
-        "name": "slider",
+        "name": "@html.slider",
         "ref": "return"
       },
       "2wp8ffd": {
@@ -7021,7 +7035,7 @@ const generic = {
       },
       "main/out": {
         "id": "main/out",
-        "name": "export",
+        "name": "@nodysseus.export",
         "ref": "return"
       },
       "jklqh38": {
@@ -7578,7 +7592,7 @@ const generic = {
       "out": {
         "id": "out",
         "ref": "return",
-        "name": "assetmanager"
+        "name": "@memory.assetmanager"
       },
       "46kgw03": {
         "id": "46kgw03",
@@ -7993,7 +8007,7 @@ const generic = {
       },
       "out": {
         "id": "out",
-        "name": "fit",
+        "name": "@math.fit",
         "ref": "return"
       },
       "5locpe3": {
@@ -8094,7 +8108,7 @@ const generic = {
       },
       "out": {
         "id": "out",
-        "name": "switch_inputs_local",
+        "name": "@flow.switch_inputs",
         "ref": "return"
       },
       "6280gtl": {
@@ -8426,7 +8440,7 @@ const generic = {
       },
       "out": {
         "id": "out",
-        "name": "store_file",
+        "name": "@memory.store_file",
         "ref": "return"
       },
       "1672j69": {
@@ -8866,7 +8880,7 @@ const generic = {
       "out": {
         "id": "out",
         "ref": "return",
-        "name": "ischanged"
+        "name": "@data.ischanged"
       },
       "yp2q57b": {
         "id": "yp2q57b"
@@ -8984,7 +8998,7 @@ const generic = {
       },
       "out": {
         "id": "out",
-        "name": "tapbeat",
+        "name": "@audio.tapbeat",
         "ref": "return"
       },
       "9fogdzn": {
