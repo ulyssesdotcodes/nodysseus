@@ -54,7 +54,8 @@ export const initListeners = () => {
     event_data.set(event, data);
     const listeners = getorset(event_listeners, event, () => new Map());
 
-    if(!pause) {
+    // When paused allow graphchange and grapherror so the graph shows
+    if(!pause || event === "graphchange" || event === "grapherror") {
       for (let l of listeners.values()) {
         try {
           if (typeof l === "function") {
