@@ -562,7 +562,6 @@ export const graph_subscription = (dispatch, props) => {
           if(animframe){
             cancelAnimationFrame(animframe)
           }
-          console.log(graph);
           animframe = requestAnimationFrame(() =>  {
               animframe = false;
               dispatch((s: HyperappState) => [{...s, editingGraph: graph}, [UpdateSimulation], [refresh_graph, {
