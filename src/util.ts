@@ -241,7 +241,7 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Ar
       return []
     }
     const node_out = edge_out && edge_out.as === "parameters" && nolib.no.runtime.get_node(graph, edge_out.to);
-    const node_out_args: Array<[string, string]> = node_out?.ref === "runnable" && 
+    const node_out_args: Array<[string, string]> = node_out?.ref === "@flow.runnable" && 
       Object.values(ancestor_graph(node_out.id, graph, nolib).nodes).filter(isNodeRef).filter(n => n.ref === "arg").map(a => a.value?.includes(".") ? a.value?.substring(0, a.value?.indexOf(".")) : a.value).map(a => [a, "any"]);
 
     // const argslist_path = node_ref?.nodes && nolib.no.runtime.get_path(node_ref, "argslist");

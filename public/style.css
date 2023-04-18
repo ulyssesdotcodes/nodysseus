@@ -506,7 +506,7 @@ svg.edge-info.selected rect {
 
 /* search */
 
-#graph-actions {
+.actions {
     position: absolute;
     right: 2em;
     top: 2em;
@@ -525,9 +525,21 @@ a, a:visited {
   color: white;
 }
 
-.help-window {
+.overlay {
   position: fixed;
+  width: 100%;
+  height: 100%;
   z-index: 128;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#help-window {
+  position: fixed;
   width: 512px;
   height: 512px;
+  background: #000000EE;
+  padding: 2em;
 }

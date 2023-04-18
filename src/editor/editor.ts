@@ -150,6 +150,12 @@ const error_nodes = (error) => error instanceof AggregateError || Array.isArray(
     : isNodysseusError(error)
     ? [error.node_id] : []; 
 
+// generated using markdown node and help.md
+const helpmd = run_h(
+{"dom_type":"div","props":{"innerHTML":"<h2 id=\"welcome-to-nodysseus\">Welcome to Nodysseus!</h2>\n<p>To get started, checkout:</p>\n<ul>\n<li>the <a href=\"https://gitlab.com/ulysses.codes/nodysseus/-/tree/main/docs/guides\" target=\"_blank\" >guides</a></li>\n<li>youtube <a href=\"https://www.youtube.com/playlist?list=PLNf6veBQIZNohZk_htvTvPCB2UnEl3Tlh\" target=\"_blank\" >tutorials</a> and <a href=\"https://www.youtube.com/playlist?list=PLNf6veBQIZNpd8Djjie5W2lo70BkLZotv\" target=\"_blank\" >videos</a></li>\n<li>a reference for all the <a href=\"https://gitlab.com/ulysses.codes/nodysseus/-/blob/main/docs/reference/nodes.md\" target=\"_blank\" >nodes</a></li>\n</ul>\n<p>Handy example files and boilerplates</p>\n<ul>\n<li><a href=\"https://nodysseus.io/#threejs_boilerplate\" target=\"_blank\" >threejs boilerplate</a>: the simplest threejs code without any objects</li>\n<li><a href=\"https://nodysseus.io/#threejs_boilerplate\" target=\"_blank\" >threejs example</a>: a rotating cube</li>\n</ul>\n"},"children":[]}
+)
+
+
 const runapp = (init, load_graph, _lib) => {
         // return () => requestAnimationFrame(() => dispatch.dispatch(s => undefined));
     return ha.app({
@@ -223,7 +229,7 @@ const runapp = (init, load_graph, _lib) => {
             graph_out: s.editingGraph.out
         }),
         ha.h('div', {id: `${init.html_id}-custom-editor-display`}),
-        ha.h('div', {id: "graph-actions"}, [
+        ha.h('div', {id: "graph-actions", class: "actions"}, [
             search_el({search: s.search}),
             ha.h('span', {
               class: 'material-icons-outlined graph-action',
@@ -274,9 +280,16 @@ const runapp = (init, load_graph, _lib) => {
                 }, [ha.text('question_mark')])
         ]),
         ha.h('div', {id: `${init.html_id}-result`}),
-        s.showHelp && ha.h('div', { class: 'help-window' }, [
-          ha.h('div', {class: "help"}, ha.text("help"))
-        ]),
+        s.showHelp && 
+          ha.h('div', { class: 'overlay' }, [
+            ha.h('div', {id: "help-window"}, [
+              ha.h('div', {class: "help-actions actions"}, ha.h('span', {
+                class: "material-icons-outlined graph-action",
+                onclick: (s: HyperappState) => ({...s, showHelp: false})
+              }, ha.text("close"))),
+              helpmd
+            ])
+          ]),
         s.error && ha.h('div', {id: 'node-editor-error'}, run_h(show_error(s.error, s.error.node_id)))
     ]),
     node: document.getElementById(init.html_id),

@@ -71,5 +71,6 @@
 "assetmanager": "memory",
 "fit": "math",
 "switch_inputs": "flow",
-"store_file": "memory"
+"store_file": "memory",
+"filter": "data"
 }
