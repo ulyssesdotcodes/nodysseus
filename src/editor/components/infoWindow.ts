@@ -92,7 +92,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                         (node.id !== graph_out && node.id !== "out") 
                         ? [UpdateNode, {node, property: "name", value}]
                         : [state, [ChangeEditingGraphId, {id: value, select_out: true, editingGraphId}]],
-                    options: (graph_out ? node.id === graph_out : node.id === "out") ? ref_graphs.filter(g => generic.nodes[g] ? generic.nodes[g].nodes?.[generic.nodes[g] ?? "out"]?.ref === "return" : true) : []
+                    options: (graph_out ? node.id === graph_out : node.id === "out") ? ref_graphs.filter(g => generic.nodes[g] ? generic.nodes[g].nodes?.[generic.nodes[g].out ?? "out"]?.ref === "return" : true) : []
                 }), node),
                 ha.memo(node => infoInput({
                     label: "value", 
