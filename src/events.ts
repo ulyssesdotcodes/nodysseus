@@ -40,7 +40,7 @@ export const initListeners = () => {
       event = event.substring(3);
     } else if(broadcast && event !== "noderun" && event !== "animationframe" && event !== "show_all") {
       try {
-        if(typeof window !== "undefined") {
+        if(typeof window !== "undefined" || (event !== "graphchange" && event !== "graphupdate")) {
           eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data });
         } else if (event === "grapherror") {
           eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data: {message: data.message, node_id: data.node_id, stack: data.stack } });
