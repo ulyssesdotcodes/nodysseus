@@ -2466,7 +2466,7 @@ const generic = {
       "add_listener": {
         "id": "add_listener",
         "ref": "@js.script",
-        "value": "_lib.no.runtime.addListener(event ?? __graph_value, 'evt-listener-' + _graph.id, (data) => { let update = true; if(onevent){ update = _lib.no.run(onevent.graph, onevent.fn, {...onevent.args, data, prev}); } if(update){ _lib.no.runtime.update_args(_graph, {_data: data.data}) } }, false); return _lib.no.runtime.get_args(_graph)['_data'];"
+        "value": "_lib.no.runtime.add_listener(event ?? __graph_value, 'evt-listener-' + _graph.id, (data) => { let update = true; if(onevent){ update = _lib.no.run(onevent.graph, onevent.fn, {...onevent.args, data, prev}); } if(update){ _lib.no.runtime.update_args(_graph, {_data: data.data}) } }, false); return _lib.no.runtime.get_args(_graph)['_data'];"
       },
       "out": {
         "id": "out",
@@ -10847,10 +10847,8 @@ const generic = {
         "as": "publish"
       }
     }
-  },
-
-
-  },
+  }
+},
   "edges": {
   }
 }

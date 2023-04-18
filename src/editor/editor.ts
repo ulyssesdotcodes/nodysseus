@@ -89,7 +89,7 @@ const custom_editor_display = html_id => ha.app({
     node: document.getElementById(html_id + "-custom-editor-display"),
     dispatch: middleware,
     view: s => {
-        return run_h(s.el, ['script'])
+        return run_h(s.el, ["@js.script"])
     }
 });
 
@@ -207,7 +207,7 @@ const runapp = (init, load_graph, _lib) => {
                 )
             ),
         ]),
-        infoWindow({
+        ha.memo(infoWindow, {
             node: Object.assign({}, s.nodes.find(n => n.node_id === s.selected[0]), s.editingGraph.nodes[s.selected[0]]),
             hidden: s.show_all,
             edges_in: s.selected_edges_in,

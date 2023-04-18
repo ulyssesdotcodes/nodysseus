@@ -11,7 +11,7 @@ export const info_display = html_id => ha.app({
     node: document.getElementById(html_id + "-info-display"),
     dispatch: middleware,
     view: s => {
-        return run_h(s.el, ['script'])
+        return run_h(s.el, ["@js.script"])
     }
 });
 
@@ -40,65 +40,12 @@ export const infoInput = ({label, property, value, onchange, oninput, onkeydown,
             value: inputs[`edit-text-${property}`] ?? value ?? "",
             disabled,
             onselect: (state: HyperappState, payload: CustomEvent) => [{...state, inputs: Object.assign(state.inputs, {[`edit-text-${property}`]: undefined})}, dispatch => dispatch(onchange, {value: payload.detail})],
-            // onkeydown: onkeydown,
             oninput: (s: any, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: (e.target as HTMLInputElement).value})}], 
-            // onfocus: (state: HyperappState, event: FocusEvent) => [{...state, focused: (event.target as HTMLInputElement).id}],
             onblur: (state: HyperappState, event) => [{...state, focused: false}],
           },
-          // ha.h('ul', {}, 
           options && options.length > 0 && options.map(o => ha.h('option', {class: `autocomplete-item`, value: typeof o === "string" ? o : o.value, "data-category": typeof o === "string" ? undefined : o.category }, ha.text(typeof o === "string" ? o : o.value))))
-        // ha.h('input', {
-        //     class: property, 
-        //     id: `edit-text-${property}`, 
-        //     key: `edit-text-${property}`, 
-        //     name: `edit-text-${property}`, 
-        //     disabled,
-        //     list: options && options.length > 0 ? `edit-text-list-${property}` : undefined,
-        //     oninput: oninput && ((s: any, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: (e.target as HTMLInputElement).value})}]), 
-        //     onkeydown: onkeydown,
-        //     onchange: onchange && ((s, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: undefined})}, [dispatch => dispatch(onchange, e)]]),
-        //     onfocus: (state, event) => [{...state, focused: (event.target as HTMLInputElement).id}],
-        //     onblur: (state, event) => [{...state, focused: false}],
-        //     value: inputs[`edit-text-${property}`] ?? value
-        // }),
-        // options && options.length > 0 && ha.h('div', {class: `autocomplete-list`}, 
-        //   options.map(o => ha.h('div', {class: `autocomplete-item`}, ha.text(o))))
     ]
 )
-
-// export const autocompleteSubscription = [dispatch => autocomplete({
-//   input: document.getElementById("edit-text-ref") as HTMLInputElement,
-//   minLength: 0,
-//   fetch: (text, update) => {
-//     const refs = nolib.no.runtime.refs().filter(r => r).map(r => generic.nodes[r] ? generic.nodes[r] : {id: r});
-//     update(text === "" ? refs.map(r => ({label: r.id, value: r.id, group: r.category})) 
-//       : [...(new Fuse<NodysseusNode>(refs, {keys: ["id", "category"], distance: 80, threshold: 0.4}).search(text)
-//           .map(searchResult => ({label: searchResult.item.id, value: searchResult.item.id, group: searchResult.item.category ?? "custom"}))
-//           .reduce((acc, item) => (acc.set(item.group, (acc.get(item.group) ?? []).concat([item]))), new Map())
-//           .values())].flat()
-//     )
-//   },
-//   className: "ref-autocomplete-list",
-//   showOnFocus: true,
-//   onSelect: (item: AutocompleteItem) => {
-//     (document.getElementById("edit-text-ref") as HTMLInputElement).value = item.label;
-//     requestAnimationFrame(() => {
-//       dispatch([UpdateNode, {property: "ref", value: item.label}])
-//     })
-//   },
-//   render: item => {
-//     const itemEl = document.createElement("div")
-//     itemEl.className = "autocomplete-item"
-//     itemEl.textContent = item.label;
-//     return itemEl;
-//   },
-//   renderGroup: (name, currentValue) => {
-//     const groupEl = document.createElement("div")
-//     groupEl.className = "autocomplete-group";
-//     groupEl.textContent = name;
-//     return groupEl;
-//   }
-// }), ]
 
 export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, editingGraphId, randid, ref_graphs, html_id, copied_graph, inputs, graph_out, editing}: {
   node: d3Node,
@@ -116,13 +63,13 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
   editing: boolean,
 })=> {
     //const s.editingGraph.id === s.editingGraphId && nolib.no.runtime.get_node(s.editingGraph, s.selected[0]) && 
-    const node_ref = node && isNodeRef(node) ? nolib.no.runtime.get_ref(node.ref) : node;
-    const description =  node_ref?.description;
-    const node_arg_labels = node?.id ? node_args(nolib, editingGraph, node.id).map(a => ({...a, name: a.name.split(": ")[0]})) : [];
+    const node_ref = !hidden && node && isNodeRef(node) ? nolib.no.runtime.get_ref(node.ref) : node;
+    const description =  !hidden && node_ref?.description;
+    const node_arg_labels = !hidden && node?.id ? node_args(nolib, editingGraph, node.id).map(a => ({...a, name: a.name.split(": ")[0]})) : [];
     return ha.h('div', {id: "node-info-wrapper"}, [ha.h('div', {class: "spacer before"}, []), ha.h(
         'div',
         { 
-            class: {'node-info': true, hidden, editing, [isNodeRef(node) && node.ref]: isNodeRef(node) }, 
+            class: {'node-info': true, hidden, editing, [isNodeRef(node) && node.ref.replace("@", "").replace(".", "-")]: isNodeRef(node) }, 
             onfocusin: (state: any) => [{...state, editing: true}], 
             onblurout: (state: any) => [{...state, editing: false}] 
         },

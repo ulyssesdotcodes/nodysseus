@@ -198,7 +198,7 @@ svg {
 
 .node .shape.flash-transition, 
 .node .shape.none.flash-transition, 
-.node .shape.script.flash-transition {
+.node .shape.js-script.flash-transition {
   transform-origin: center;
 }
 
@@ -211,7 +211,7 @@ svg {
     fill: #fcc;
 }
 
-.node .shape.script {
+.node .shape.js-script {
     transform-box: fill-box;
     transform-origin: 50% 50%;
     transform: rotate(45deg);
@@ -220,7 +220,7 @@ svg {
     stroke: #66ccff;
 }
 
-.node.selected .shape.script {
+.node.selected .shape.js-script {
     stroke: #fcc;
 }
 
@@ -353,7 +353,7 @@ svg {
   display: none;
 }
 
-.script #node-editor-code-editor {
+.js-script #node-editor-code-editor {
   display: block;
 }
 
