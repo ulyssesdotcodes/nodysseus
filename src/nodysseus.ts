@@ -4,6 +4,7 @@ import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util"
 import generic from "./generic.js";
 import { create_fn, expect, now } from "./externs";
 import { v4 as uuid } from "uuid";
+import { initListeners } from "./events";
 
 const generic_nodes = generic.nodes;
 
@@ -44,38 +45,6 @@ let resfetch = typeof fetch !== "undefined" ? fetch :
         }
         req.end();
     }));
-
-function set_mutable(obj, propsArg, value) {
-  var props, lastProp;
-  if (Array.isArray(propsArg)) {
-    props = propsArg.slice(0);
-  }
-  if (typeof propsArg == 'string') {
-    props = propsArg.split('.');
-  }
-  if (typeof propsArg == 'symbol') {
-    props = [propsArg];
-  }
-  if (!Array.isArray(props)) {
-    throw new Error('props arg must be an array, a string or a symbol');
-  }
-  lastProp = props.pop();
-  if (!lastProp) {
-    return false;
-  }
-  var thisProp;
-  while ((thisProp = props.shift())) {
-    if (typeof obj[thisProp] == 'undefined') {
-      obj[thisProp] = {};
-    }
-    obj = obj[thisProp];
-    if (!obj || typeof obj != 'object') {
-      return false;
-    }
-  }
-  obj[lastProp] = value;
-  return true;
-}
 
 export const nodysseus_get = (obj: Record<string, any> | Args | Env, propsArg: string, lib: Lib, defaultValue=undefined, props: Array<string>=[], options: RunOptions = {}) => {
     let objArg = obj;
@@ -670,18 +639,6 @@ const run_ap_runnable = (runnable: ApRunnable, args: Args, lib: Lib, options: Ru
 const getmap = (map, id) => {
     return id ? map.get(id) : id;
 }
-const getorset = (map, id, value_fn=undefined) => {
-    let val = map.get(id);
-    if (val) {
-        return val;
-    } else {
-        let val = value_fn();
-        if (val !== undefined) {
-            map.set(id, val);
-        }
-        return val
-    }
-}
 
 const initStore = (store: NodysseusStore | undefined = undefined) => {
   if(store !== undefined) {
@@ -812,7 +769,6 @@ const nolib = {
     wrapPromise,
     runtimefn: (function () {
 
-      const hasRequestAnimationFrame = typeof requestAnimationFrame !== "undefined";
 
       Object.values(generic_nodes).forEach(graph => {
         if(isNodeGraph(graph)) {
@@ -820,186 +776,7 @@ const nolib = {
         }
       })
 
-      const event_listeners = new Map<string, Map<string, Function | Runnable>>();
-      const event_listeners_by_graph = new Map();
-      const event_data = new Map(); // TODO: get rid of this
-      let animationframe;
-      let animationerrors = [];
-      let pause = false;
-
-      let eventsBroadcastChannel = new BroadcastChannel("events");
-      let clientUuid = uuid();
-
-      eventsBroadcastChannel.onmessage = (message) => {
-        runpublish(message.data.data, message.data.event, nolib)
-      }
-
-      const runpublish = (data, event, lib, options: RunOptions = {}, broadcast = true) => {
-        // if(!isArgs(data)) {
-        //   data = data ? new Map(Object.entries(data)) : {};
-        // }
-        if(event.startsWith("bc")) {
-          event = event.substring(3);
-        } else if(broadcast && event !== "noderun" && event !== "animationframe" && event !== "show_all") {
-          try {
-            if(typeof window !== "undefined") {
-              eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data });
-            } else if (event === "grapherror") {
-              eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data: {message: data.message, node_id: data.node_id, stack: data.stack } });
-            }
-          } catch(e){
-            // If it's not serializable, that's fine
-            console.error(e);
-          }
-        }
-
-        event_data.set(event, data);
-        const listeners = getorset(event_listeners, event, () => new Map());
-
-        if(!pause) {
-          for (let l of listeners.values()) {
-            try {
-              if (typeof l === "function") {
-                l(data, lib, {...options, timings: {}});
-              } else if (typeof l === "object" && l.fn && l.graph) {
-                run(
-                  l,
-                  Object.assign({}, l.args || {}, { data }),
-                  {...options, lib: mergeLib(l.lib, lib)}
-                );
-              }
-            } catch(e) {
-              console.error(e);
-            }
-          }
-        }
-
-        if (
-          event === "animationframe" &&
-          listeners.size > 0 && // the 1 is for the animationerrors stuff below
-          !animationframe &&
-          animationerrors.length == 0 &&
-          hasRequestAnimationFrame
-        ) {
-          animationframe = requestAnimationFrame(() => {
-            animationframe = false;
-            publish("animationframe", undefined, lib, options);
-          });
-        }
-      };
-
-      const publish = (event, data, lib: Lib, options: RunOptions = {}, broadcast = true) => {
-        if (typeof data === "object" && ispromise(data)) {
-          data.then(d => runpublish(d, event, lib, options, broadcast));
-        } else {
-          runpublish(data, event, lib, options, broadcast);
-        }
-
-        return data;
-      };
-
-      const add_listener = (
-        event,
-        listener_id,
-        input_fn,
-        remove = false,
-        graph_id = false,
-        prevent_initial_trigger = false,
-        lib: Lib = {__kind: "lib", data: nolib},
-        options: RunOptions = {}
-      ) => {
-        if(ispromise(input_fn)) {
-          return input_fn.then(fn => add_listener(event, listener_id, fn, remove, graph_id, prevent_initial_trigger, lib, options))
-        }
-
-        const listeners = getorset(event_listeners, event, () => new Map());
-        const fn =
-          typeof input_fn === "function"
-            ? input_fn
-            : (args) => {
-                run(input_fn, args, {...options, lib: mergeLib(input_fn.lib, lib)});
-              };
-        if (!listeners.has(listener_id)) {
-          if (!prevent_initial_trigger && event_data.has(event)) {
-            try{
-              fn(event_data.get(event));
-            } catch(e){}
-          }
-
-          if (graph_id) {
-            const graph_id_listeners = getorset(
-              event_listeners_by_graph,
-              graph_id,
-              () => new Map()
-            );
-            graph_id_listeners.set(event, listener_id);
-          }
-
-          if (event === "animationframe" && hasRequestAnimationFrame) {
-            requestAnimationFrame(() => publish(event, undefined, lib, options));
-          }
-        }
-
-        if (remove) {
-          remove_listener(event, listener_id);
-        }
-
-        listeners.set(listener_id, fn);
-
-      };
-
-      // Adding a listener to listen for errors during animationframe. If there are errors, don't keep running.
-      add_listener('grapherror', "__system", e => animationerrors.push(e));
-      add_listener('graphchange', "__system", e => {
-        if(animationerrors.length > 0) {
-          event_listeners.get("animationframe")?.clear();
-        }
-        animationerrors.splice(0, animationerrors.length)
-      });
-
-      add_listener('argsupdate', '__system', ({graphid, changes, mutate}, lib, options) => {
-        if(mutate) {
-          const current = nolib.no.runtime.get_args(graphid);
-          changes.forEach(change => set_mutable(current, change[0], change[1]))
-        } else {
-          update_args(graphid, changes, lib)
-        }
-      })
-
-      add_listener('cachedelete', "__system", e => {
-        nodysseus.state.clear()
-      });
-
-      add_listener('listenersclear', "__system", e => {
-        for(let eventListener of event_listeners.entries()) {
-          if(eventListener[0] !== "__system") {
-            eventListener[1].clear()
-          }
-        }
-
-        event_listeners_by_graph.clear();
-      });
-
-      const remove_listener = (event, listener_id) => {
-        if (event === "*") {
-          [...event_listeners.values()].forEach((e) => e.delete(listener_id));
-        } else {
-          const listeners = getorset(event_listeners, event, () => new Map());
-          listeners.delete(listener_id);
-        }
-      };
-
-      const remove_graph_listeners = (graph_id, event) => {
-        const graph_listeners = (graph_id === "*" ? [...event_listeners_by_graph.values()] : [event_listeners_by_graph.get(graph_id)])
-          .filter(gl => gl)
-          .map(gl => [...gl.entries()])
-          .flat();
-        if (graph_listeners) {
-          for (const evt of graph_listeners) {
-            getorset(event_listeners, evt[0])?.delete(evt[1]);
-          }
-        }
-      };
+      const {publish, addListener, removeListener, removeGraphListeners, togglePause} = initListeners();
 
       const change_graph = (graph: Graph, lib: Lib, changedNodes: Array<string>, addToStore = true) => {
         const parent = get_parentest(graph);
@@ -1143,6 +920,7 @@ const nolib = {
         change_graph,
         update_graph: (graphid, lib: Lib) => publish('graphupdate', {graphid}, lib),
         update_args,
+        clearState: () => nodysseus.state.clear(),
         delete_cache: () => {
           publish("cachedelete", {}, newLib(nolib))
         },
@@ -1218,14 +996,11 @@ const nolib = {
                   : e.as,
             }));
 
-            const newnodes = {...graph.nodes}
-            delete newnodes[id]
 
-            nodysseus.refs.remove_node(graphId, id)
-            if(changeEdges !== undefined) {
-              child_edges.map(e => nodysseus.refs.remove_edge(graphId, e))
-              new_child_edges.map(e => nodysseus.refs.add_edge(graphId, e))
-              change_graph(nodysseus.refs.get(graphId) as Graph, lib, [id]);
+            if(changeEdges === undefined) {
+              nodysseus.refs.remove_node(graphId, id)
+            } else {
+              nodysseus.refs.add_nodes_edges(graphId, [], new_child_edges, child_edges, [graph.nodes[id]])
             }
 
 
@@ -1240,14 +1015,14 @@ const nolib = {
             // change_graph(new_graph, lib);
           })
         },
-        add_listener,
-        add_listener_extern: {
+        addListener,
+        addListener_extern: {
           args: ["event", "listener_id", "fn"],
-          add_listener,
+          addListener,
         },
-        remove_listener,
-        remove_graph_listeners,
-        togglePause: (newPause: boolean) => pause = newPause,
+        removeListener,
+        removeGraphListeners,
+        togglePause,
         publish,
         set_parent: (graph, parent) => {
           const graphid = graph;
@@ -1366,7 +1141,7 @@ const nolib = {
                       const errorlistener = (error) => errored = true;
 
                       // TODO: rethink. Too costly for now
-                      // lib.data.no.runtime.add_listener('grapherror', fnrunnable.graph.id + "/" + fnrunnable.fn, errorlistener)
+                      // lib.data.no.runtime.addListener('grapherror', fnrunnable.graph.id + "/" + fnrunnable.fn, errorlistener)
 
                       const ret = mapobjarr(
                         objectvalue,
@@ -1385,7 +1160,7 @@ const nolib = {
                         initial
                       );
 
-                      // lib.data.no.runtime.remove_listener('grapherror', fnrunnable.graph.id + "/" + fnrunnable.fn, errorlistener)
+                      // lib.data.no.runtime.removeListener('grapherror', fnrunnable.graph.id + "/" + fnrunnable.fn, errorlistener)
 
                       return lib.data.no.of(ret);
                     })))
@@ -1629,7 +1404,7 @@ const nolib = {
             .then(subscriptions => isValue(subscriptions) ? subscriptions.value : subscriptions)
             .then(subscriptions => subscriptions && Object.entries(subscriptions)
                 .forEach(kv => kv[1] &&
-                  _lib.data.no.runtime.add_listener(kv[0], 'subscribe-' + newgraphid, kv[1], false, 
+                  _lib.data.no.runtime.addListener(kv[0], 'subscribe-' + newgraphid, kv[1], false, 
                     graphid, true, _lib, options)))
           }
 

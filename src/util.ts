@@ -251,7 +251,7 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Ar
                 .map(l => parseInt(l.as.substring(3))) ?? [])
             .reduce((acc, i) => acc > i ? acc : i + 1, 0))
     
-    const externfn = node_ref?.ref === "extern" && nodysseus_get(nolib.data, node_ref?.value, newLib(nolib))
+    const externfn = node_ref?.ref === "extern" && nodysseus_get(nolib, node_ref?.value, newLib(nolib))
     const externArgs = externfn && (Array.isArray(externfn.args) ? externfn.args.map(a => {
       const argColonIdx = a.indexOf(":")
       return [argColonIdx >= 0 ? a.substring(0, argColonIdx) : a, "any"]
@@ -349,3 +349,34 @@ export function compareObjects(value1, value2, isUpdate = false) {
     return true;
 }
 
+export function set_mutable(obj, propsArg, value) {
+  var props, lastProp;
+  if (Array.isArray(propsArg)) {
+    props = propsArg.slice(0);
+  }
+  if (typeof propsArg == 'string') {
+    props = propsArg.split('.');
+  }
+  if (typeof propsArg == 'symbol') {
+    props = [propsArg];
+  }
+  if (!Array.isArray(props)) {
+    throw new Error('props arg must be an array, a string or a symbol');
+  }
+  lastProp = props.pop();
+  if (!lastProp) {
+    return false;
+  }
+  var thisProp;
+  while ((thisProp = props.shift())) {
+    if (typeof obj[thisProp] == 'undefined') {
+      obj[thisProp] = {};
+    }
+    obj = obj[thisProp];
+    if (!obj || typeof obj != 'object') {
+      return false;
+    }
+  }
+  obj[lastProp] = value;
+  return true;
+}

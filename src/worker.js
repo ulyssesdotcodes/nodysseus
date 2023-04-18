@@ -18,11 +18,11 @@ const runningGraphs = new Map();
 
 const processMessage = e => {
     try{
-        // nolib.no.runtime.add_listener(run_graph, 'graphrun', 'worker-rungraph', (g, result) => {
+        // nolib.no.runtime.addListener(run_graph, 'graphrun', 'worker-rungraph', (g, result) => {
             // this.postMessage({type: 'result', result, graph: e.data.graph})
         // });
 
-        nolib.no.runtime.add_listener('grapherror', 'worker-grapherror', (g, error) => {
+        nolib.no.runtime.addListener('grapherror', 'worker-grapherror', (g, error) => {
             if(error instanceof AggregateError) {
                 error.errors.forEach(ae => {
                     console.error(ae)
@@ -35,7 +35,7 @@ const processMessage = e => {
 
         });
 
-        nolib.no.runtime.add_listener('graphupdate', 'worker-graphupdate', (graph) => {
+        nolib.no.runtime.addListener('graphupdate', 'worker-graphupdate', (graph) => {
           if(runningGraphs.has(graph.id)) {
             run(runningGraphs.get(graph.id), undefined, {profile: false && performance.now() > 4000});
           }

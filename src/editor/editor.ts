@@ -168,7 +168,9 @@ const runapp = (init, load_graph, _lib) => {
               }]
             ]);
         })],
-        [dispatch => wrapPromise(nolib.no.runtime.get_graph("custom_editor")).then(graph => graph && hlib.run(graph, "out")).then(custom_editor_result => custom_editor_result && dispatch(s => ({...s, custom_editor_result})))],
+        [dispatch => wrapPromise(nolib.no.runtime.get_graph("custom_editor"))
+          .then(graph => graph && hlib.run(graph, "out"))
+          .then(custom_editor_result => custom_editor_result && dispatch(s => ({...s, custom_editor_result})))],
         [ChangeEditingGraphId, {id: load_graph, select_out: true, editingGraphId: undefined}],
         [UpdateSimulation, {...init, action: SimulationToHyperapp}],
         [init_code_editor, {html_id: init.html_id}]
@@ -273,7 +275,7 @@ const runapp = (init, load_graph, _lib) => {
         ]),
         ha.h('div', {id: `${init.html_id}-result`}),
         s.showHelp && ha.h('div', { class: 'help-window' }, [
-          ha.h('div', {}, ha.text("help"))
+          ha.h('div', {class: "help"}, ha.text("help"))
         ]),
         s.error && ha.h('div', {id: 'node-editor-error'}, run_h(show_error(s.error, s.error.node_id)))
     ]),

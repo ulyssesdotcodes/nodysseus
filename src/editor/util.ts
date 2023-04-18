@@ -236,7 +236,7 @@ export const ChangeEditingGraphId: ha.Effecter<HyperappState, {id: string, selec
                     }
                     
                     nolib.no.runtime.change_graph(new_graph, hlib);
-                    nolib.no.runtime.remove_graph_listeners(state.editingGraphId);
+                    nolib.no.runtime.removeGraphListeners(state.editingGraphId);
                     dispatch(s => {
                         const news = {...s, editingGraph: new_graph, selected: [new_graph.out], editingGraphId: new_graph.id}
                         return [news, [UpdateSimulation, {...news, clear_simulation_cache: true}], select_out && [() => {setTimeout(() => {
@@ -486,7 +486,7 @@ export const result_subscription = (dispatch, {editingGraphId, displayGraphId, n
             dispatch(s => Object.assign({}, s, {error: s.error ? s.error.concat([error]) : [error]}))
         });
 
-    nolib.no.runtime.add_listener('grapherror', 'update_hyperapp_error', error_listener);
+    nolib.no.runtime.addListener('grapherror', 'update_hyperapp_error', error_listener);
 
     let info_display_dispatch, code_editor, code_editor_nodeid, result_display_dispatch;
 
@@ -514,7 +514,7 @@ export const result_subscription = (dispatch, {editingGraphId, displayGraphId, n
       }
     }
 
-    nolib.no.runtime.add_listener('graphupdate', 'clear_hyperapp_error', change_listener);
+    nolib.no.runtime.addListener('graphupdate', 'clear_hyperapp_error', change_listener);
     const timeouts: Record<string, false | {id: ReturnType<typeof setTimeout>, timestamp: number}>  = {}
     const animframes = {}
 
@@ -544,11 +544,11 @@ export const result_subscription = (dispatch, {editingGraphId, displayGraphId, n
         }
     }
 
-    nolib.no.runtime.add_listener('noderun', 'update_hyperapp_error', noderun_listener);
+    nolib.no.runtime.addListener('noderun', 'update_hyperapp_error', noderun_listener);
 
     return () => (
-        nolib.no.runtime.remove_listener('graphupdate', 'clear_hyperapp_error', change_listener),
-        nolib.no.runtime.remove_listener('grapherror', 'update_hyperapp_error', error_listener)
+        nolib.no.runtime.removeListener('graphupdate', 'clear_hyperapp_error', change_listener),
+        nolib.no.runtime.removeListener('grapherror', 'update_hyperapp_error', error_listener)
     );
 }
 
@@ -562,6 +562,7 @@ export const graph_subscription = (dispatch, props) => {
           if(animframe){
             cancelAnimationFrame(animframe)
           }
+          console.log(graph);
           animframe = requestAnimationFrame(() =>  {
               animframe = false;
               dispatch((s: HyperappState) => [{...s, editingGraph: graph}, [UpdateSimulation], [refresh_graph, {
@@ -577,8 +578,8 @@ export const graph_subscription = (dispatch, props) => {
         }
     };
 
-    nolib.no.runtime.add_listener('graphchange', 'update_hyperapp', listener);
-    return () => nolib.no.runtime.remove_listener('graphchange', 'update_hyperapp');
+    nolib.no.runtime.addListener('graphchange', 'update_hyperapp', listener);
+    return () => nolib.no.runtime.removeListener('graphchange', 'update_hyperapp');
 }
 
 export const select_node_subscription = (dispatch, props) => {
@@ -586,8 +587,8 @@ export const select_node_subscription = (dispatch, props) => {
         dispatch(SelectNode, { node_id: data.data.substring(data.data.indexOf("/") + 1) })
     }
 
-    nolib.no.runtime.add_listener("selectnode", 'hyperapp', listener);
-    return () => nolib.no.runtime.remove_listener('selectnode', 'hyperapp');
+    nolib.no.runtime.addListener("selectnode", 'hyperapp', listener);
+    return () => nolib.no.runtime.removeListener('selectnode', 'hyperapp');
 }
 
 export const listen = (type, action): ha.Subscription<HyperappState, any>  => [listenToEvent, {type, action}]
@@ -788,7 +789,18 @@ export const hlib = {
         }
     },
     panzoom: pzobj,
-    run: (graph, fn, args?, lib?, options?) => run({graph, fn, lib: lib ? {...hlib, ...lib} : hlib}, isArgs(args) ? args : args ? new Map(Object.entries(args)) : new Map(), options),
+    run: (graph, fn, args?, lib?, options?) => {
+      try{
+        const result = run({graph, fn, lib: lib ? {...hlib, ...lib} : hlib}, isArgs(args) ? args : args ? new Map(Object.entries(args)) : new Map(), options)
+        if(ispromise(result)){
+          return result.catch(e => console.error(e));
+        }
+
+        return result;
+      } catch(e) {
+        console.error(e);
+      }
+    },
     run_runnable: (runnable, args?, options?) => run(runnable, args, options),
     initStore: (nodysseusStore) => initStore(nodysseusStore),
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
