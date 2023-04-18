@@ -2016,7 +2016,6 @@ const generic = {
   },
   "@debug.input_value": {
     "id": "@debug.input_value",
-    "out": "out",
     "nodes": {
       "out": {
         "id": "out",
@@ -2067,14 +2066,6 @@ const generic = {
       "args": {
         "id": "args"
       },
-      "3t822sr": {
-        "id": "3t822sr",
-        "ref": "@memory.refval"
-      },
-      "punkxje": {
-        "id": "punkxje",
-        "value": "true"
-      },
       "psog7hu": {
         "id": "psog7hu",
         "value": "\nreturn JSON.stringify(object, (key, value) =>  typeof value === 'object' && value && !Array.isArray(value) && Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) ? Object.getPrototypeOf(value).constructor.name : value, 2)",
@@ -2098,6 +2089,28 @@ const generic = {
         "id": "3jphobh",
         "value": "value",
         "ref": "arg"
+      },
+      "h8q885n": {
+        "id": "h8q885n",
+        "value": "true"
+      },
+      "ut9zq8n": {
+        "id": "ut9zq8n",
+        "ref": "@flow.if"
+      },
+      "1ovmmn3": {
+        "id": "1ovmmn3",
+        "ref": "arg",
+        "value": "value"
+      },
+      "zfl3aqg": {
+        "id": "zfl3aqg",
+        "ref": "@data.ischanged"
+      },
+      "73asljg": {
+        "id": "73asljg",
+        "ref": "arg",
+        "value": "value"
       }
     },
     "edges": {
@@ -2151,16 +2164,6 @@ const generic = {
         "to": "1c4vbjw",
         "as": "run"
       },
-      "3t822sr": {
-        "from": "3t822sr",
-        "to": "hm2lkjh",
-        "as": "_json"
-      },
-      "punkxje": {
-        "from": "punkxje",
-        "to": "3t822sr",
-        "as": "publish"
-      },
       "xm523y9": {
         "from": "xm523y9",
         "to": "psog7hu",
@@ -2176,18 +2179,170 @@ const generic = {
         "to": "wo0j48j",
         "as": "value"
       },
-      "bi1dbsb": {
-        "from": "bi1dbsb",
-        "to": "out",
-        "as": "value"
-      },
       "3jphobh": {
         "from": "3jphobh",
         "to": "bi1dbsb",
         "as": "value"
+      },
+      "h8q885n": {
+        "from": "h8q885n",
+        "to": "9ukj84k",
+        "as": "publish"
+      },
+      "ut9zq8n": {
+        "from": "ut9zq8n",
+        "to": "out",
+        "as": "value"
+      },
+      "zfl3aqg": {
+        "from": "zfl3aqg",
+        "to": "ut9zq8n",
+        "as": "pred"
+      },
+      "1ovmmn3": {
+        "from": "1ovmmn3",
+        "to": "zfl3aqg",
+        "as": "arg0"
+      },
+      "bi1dbsb": {
+        "from": "bi1dbsb",
+        "to": "ut9zq8n",
+        "as": "true"
+      },
+      "73asljg": {
+        "from": "73asljg",
+        "to": "ut9zq8n",
+        "as": "false"
       }
     },
-    "category": "debug"
+    "edges_in": {
+      "out": {
+        "5a6pljw": {
+          "from": "5a6pljw",
+          "to": "out",
+          "as": "display"
+        },
+        "hm2lkjh": {
+          "from": "hm2lkjh",
+          "to": "out",
+          "as": "args"
+        },
+        "ut9zq8n": {
+          "from": "ut9zq8n",
+          "to": "out",
+          "as": "value"
+        }
+      },
+      "args": {
+        "cfuymky": {
+          "from": "cfuymky",
+          "to": "args",
+          "as": "value"
+        }
+      },
+      "5a6pljw": {
+        "4d8qcss": {
+          "from": "4d8qcss",
+          "to": "5a6pljw",
+          "as": "children"
+        }
+      },
+      "4d8qcss": {
+        "1znvqbi": {
+          "from": "1znvqbi",
+          "to": "4d8qcss",
+          "as": "text"
+        }
+      },
+      "hm2lkjh": {
+        "9ukj84k": {
+          "from": "9ukj84k",
+          "to": "hm2lkjh",
+          "as": "_stored"
+        }
+      },
+      "bi1dbsb": {
+        "1c4vbjw": {
+          "from": "1c4vbjw",
+          "to": "bi1dbsb",
+          "as": "arg0"
+        },
+        "3jphobh": {
+          "from": "3jphobh",
+          "to": "bi1dbsb",
+          "as": "value"
+        }
+      },
+      "1c4vbjw": {
+        "dqau7vz": {
+          "from": "dqau7vz",
+          "to": "1c4vbjw",
+          "as": "fn"
+        },
+        "wo0j48j": {
+          "from": "wo0j48j",
+          "to": "1c4vbjw",
+          "as": "args"
+        },
+        "rg59xbc": {
+          "from": "rg59xbc",
+          "to": "1c4vbjw",
+          "as": "run"
+        }
+      },
+      "3t822sr": {},
+      "psog7hu": {
+        "xm523y9": {
+          "from": "xm523y9",
+          "to": "psog7hu",
+          "as": "object"
+        },
+        "a8nnxeo": {
+          "from": "a8nnxeo",
+          "to": "psog7hu",
+          "as": "spacer"
+        }
+      },
+      "wo0j48j": {
+        "psog7hu": {
+          "from": "psog7hu",
+          "to": "wo0j48j",
+          "as": "value"
+        }
+      },
+      "9ukj84k": {
+        "h8q885n": {
+          "from": "h8q885n",
+          "to": "9ukj84k",
+          "as": "publish"
+        }
+      },
+      "ut9zq8n": {
+        "zfl3aqg": {
+          "from": "zfl3aqg",
+          "to": "ut9zq8n",
+          "as": "pred"
+        },
+        "bi1dbsb": {
+          "from": "bi1dbsb",
+          "to": "ut9zq8n",
+          "as": "true"
+        },
+        "73asljg": {
+          "from": "73asljg",
+          "to": "ut9zq8n",
+          "as": "false"
+        }
+      },
+      "zfl3aqg": {
+        "1ovmmn3": {
+          "from": "1ovmmn3",
+          "to": "zfl3aqg",
+          "as": "arg0"
+        }
+      }
+    },
+    "out": "out"
   },
   "@data.reduce": {
     "id": "@data.reduce",
