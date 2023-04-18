@@ -1445,7 +1445,7 @@ const nolib = {
         const check = (o, v, k) =>
           k.length === 1
             ? { ...o, [k[0]]: v }
-            : o?.hasOwn?.(k[0])
+            : o && typeof o === "object" && Object.hasOwn(o, k[0])
             ? {
                 ...o,
                 [k[0]]: check(o[k[0]], v, k.slice(1)),
@@ -1712,7 +1712,7 @@ const nolib = {
                 }, _lib, options),
                 _needsresolve: true,
               }
-            : o?.hasOwn?.(k[0])
+            : o && typeof o === "object" && Object.hasOwn(o, k[0])
             ? {
                 ...o,
                 [k[0]]: check(o[k[0]], fn, k.slice(1)),
