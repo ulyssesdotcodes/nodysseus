@@ -72,5 +72,7 @@
 "fit": "math",
 "switch_inputs": "flow",
 "store_file": "memory",
-"filter": "data"
+"filter": "data",
+"noise": "math",
+"curlnoise": "math"
 }

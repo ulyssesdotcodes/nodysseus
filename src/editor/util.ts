@@ -8,7 +8,7 @@ import { d3Link, d3Node, HyperappState, Levels, Property } from "./types";
 import { UpdateGraphDisplay, UpdateSimulation, d3subscription, updateSimulationNodes } from "./components/graphDisplay";
 import AutocompleteList from "./autocomplete";
 
-export const EXAMPLES = ["threejs_example", "threejs_update_geo", "hydra_example", "threejs_boilerplate"];
+export const EXAMPLES = ["threejs_example", "threejs_update_geo", "hydra_example", "threejs_boilerplate", "threejs_noise_force_example"];
 
 export const middleware = dispatch => (ha_action, ha_payload) => {
     const is_action_array_payload = Array.isArray(ha_action) 

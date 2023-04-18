@@ -10552,8 +10552,597 @@ const generic = {
         "as": "publish"
       }
     }
+  },
+"@math.noise": {
+    "edges": {
+      "18ft0o0": {
+        "as": "random",
+        "from": "18ft0o0",
+        "to": "gna5hrg"
+      },
+      "1es7qrh": {
+        "as": "array",
+        "from": "1es7qrh",
+        "to": "caxm792"
+      },
+      "2838i98": {
+        "as": "lib",
+        "from": "2838i98",
+        "to": "qljoa2f"
+      },
+      "2zfxujb": {
+        "as": "dim",
+        "from": "2zfxujb",
+        "to": "dl8tqbw"
+      },
+      "3fqdnh3": {
+        "as": "dims",
+        "from": "3fqdnh3",
+        "to": "1es7qrh"
+      },
+      "4qnsrir": {
+        "as": "simplexNoise",
+        "from": "4qnsrir",
+        "to": "2838i98"
+      },
+      "5p3hf1e": {
+        "as": "false",
+        "from": "5p3hf1e",
+        "to": "d1mxhrc"
+      },
+      "5suk5mt": {
+        "as": "_random",
+        "from": "5suk5mt",
+        "to": "l4denbs"
+      },
+      "76mvyzz": {
+        "as": "noiseFn",
+        "from": "76mvyzz",
+        "to": "gna5hrg"
+      },
+      "9dwbuh4": {
+        "as": "fn",
+        "from": "9dwbuh4",
+        "to": "caxm792"
+      },
+      "c14vq1u": {
+        "as": "self",
+        "from": "c14vq1u",
+        "to": "i4vkq75"
+      },
+      "caxm792": {
+        "as": "true",
+        "from": "caxm792",
+        "to": "d1mxhrc"
+      },
+      "d1mxhrc": {
+        "as": "value",
+        "from": "d1mxhrc",
+        "to": "qljoa2f"
+      },
+      "dl8tqbw": {
+        "as": "_noiseFn",
+        "from": "dl8tqbw",
+        "to": "l4denbs"
+      },
+      "gna5hrg": {
+        "as": "fn",
+        "from": "gna5hrg",
+        "to": "9dwbuh4"
+      },
+      "i4vkq75": {
+        "as": "seed",
+        "from": "i4vkq75",
+        "to": "5suk5mt"
+      },
+      "iodmksr": {
+        "as": "random",
+        "from": "iodmksr",
+        "to": "5p3hf1e"
+      },
+      "k4il51d": {
+        "as": "rand",
+        "from": "k4il51d",
+        "to": "zzpqc3t"
+      },
+      "l4denbs": {
+        "as": "args",
+        "from": "l4denbs",
+        "to": "qljoa2f"
+      },
+      "nzzp1an": {
+        "as": "rand",
+        "from": "nzzp1an",
+        "to": "qm6xfhw"
+      },
+      "q6kbpnl": {
+        "as": "pred",
+        "from": "q6kbpnl",
+        "to": "d1mxhrc"
+      },
+      "qm6xfhw": {
+        "as": "seed",
+        "from": "qm6xfhw",
+        "to": "iodmksr"
+      },
+      "rcjsw21": {
+        "as": "noiseFn",
+        "from": "rcjsw21",
+        "to": "5p3hf1e"
+      },
+      "un9yhxm": {
+        "as": "sn",
+        "from": "un9yhxm",
+        "to": "dl8tqbw"
+      },
+      "zxk2uuu": {
+        "as": "value",
+        "from": "zxk2uuu",
+        "to": "4qnsrir"
+      },
+      "zzpqc3t": {
+        "as": "seed",
+        "from": "zzpqc3t",
+        "to": "18ft0o0"
+      }
+    },
+    "id": "@math.noise",
+    "name": "@math.noise",
+    "nodes": {
+      "18ft0o0": {
+        "id": "18ft0o0",
+        "ref": "@math.random"
+      },
+      "1es7qrh": {
+        "id": "1es7qrh",
+        "ref": "@js.script",
+        "value": "return new Array(dims).fill(0)"
+      },
+      "2838i98": {
+        "id": "2838i98"
+      },
+      "2zfxujb": {
+        "id": "2zfxujb",
+        "ref": "arg",
+        "value": "dimensionsIn"
+      },
+      "3fqdnh3": {
+        "id": "3fqdnh3",
+        "ref": "arg",
+        "value": "dimensionsOut"
+      },
+      "4qnsrir": {
+        "id": "4qnsrir",
+        "ref": "@memory.cache"
+      },
+      "5p3hf1e": {
+        "id": "5p3hf1e",
+        "ref": "@js.script",
+        "value": "return noiseFn(random)"
+      },
+      "5suk5mt": {
+        "id": "5suk5mt",
+        "ref": "@math.random"
+      },
+      "76mvyzz": {
+        "id": "76mvyzz",
+        "ref": "arg",
+        "value": "_noiseFn"
+      },
+      "9dwbuh4": {
+        "id": "9dwbuh4",
+        "ref": "@flow.runnable"
+      },
+      "c14vq1u": {
+        "id": "c14vq1u",
+        "ref": "arg",
+        "value": "seed"
+      },
+      "caxm792": {
+        "id": "caxm792",
+        "ref": "@data.map"
+      },
+      "d1mxhrc": {
+        "id": "d1mxhrc",
+        "ref": "@flow.if"
+      },
+      "dl8tqbw": {
+        "id": "dl8tqbw",
+        "ref": "@js.script",
+        "value": "return dim === 2 ? sn.createNoise2D : dim === 3 ? sn.createNoise3D : sn.createNoise4D"
+      },
+      "gna5hrg": {
+        "id": "gna5hrg",
+        "ref": "@js.script",
+        "value": "return noiseFn(random)"
+      },
+      "i4vkq75": {
+        "id": "i4vkq75",
+        "ref": "@js.script",
+        "value": "return !isNaN(self) ? self : typeof self === \"function\" ? self() : 108"
+      },
+      "iodmksr": {
+        "id": "iodmksr",
+        "ref": "@math.random"
+      },
+      "k4il51d": {
+        "id": "k4il51d",
+        "ref": "arg",
+        "value": "_random"
+      },
+      "l4denbs": {
+        "id": "l4denbs"
+      },
+      "nzzp1an": {
+        "id": "nzzp1an",
+        "ref": "arg",
+        "value": "_random"
+      },
+      "q6kbpnl": {
+        "id": "q6kbpnl",
+        "ref": "arg",
+        "value": "dimensionsOut"
+      },
+      "qljoa2f": {
+        "id": "qljoa2f",
+        "name": "@math.noise",
+        "ref": "return"
+      },
+      "qm6xfhw": {
+        "id": "qm6xfhw",
+        "ref": "@js.script",
+        "value": "return rand() * Number.MAX_SAFE_INTEGER"
+      },
+      "rcjsw21": {
+        "id": "rcjsw21",
+        "ref": "arg",
+        "value": "_noiseFn"
+      },
+      "un9yhxm": {
+        "id": "un9yhxm",
+        "ref": "arg",
+        "value": "_lib.simplexNoise"
+      },
+      "zxk2uuu": {
+        "id": "zxk2uuu",
+        "ref": "@js.import_module",
+        "value": "https://cdn.skypack.dev/simplex-noise"
+      },
+      "zzpqc3t": {
+        "id": "zzpqc3t",
+        "ref": "@js.script",
+        "value": "return rand() * Number.MAX_SAFE_INTEGER"
+      }
+    },
+    "out": "qljoa2f"
   }
 },
+"@math.curlnoise": {
+    "edges": {
+      "0f3yvkt": {
+        "as": "dimensionsOut",
+        "from": "0f3yvkt",
+        "to": "dy65zb2"
+      },
+      "0wye9gb": {
+        "as": "z",
+        "from": "0wye9gb",
+        "to": "xrxh9ci"
+      },
+      "1dfm7ji": {
+        "as": "elscale",
+        "from": "1dfm7ji",
+        "to": "v3ucnvc"
+      },
+      "1qvyjit": {
+        "as": "value",
+        "from": "1qvyjit",
+        "to": "sal16lj"
+      },
+      "3w2mjzs": {
+        "as": "args",
+        "from": "3w2mjzs",
+        "to": "r4iac0v"
+      },
+      "4rfdldl": {
+        "as": "otherwise",
+        "from": "4rfdldl",
+        "to": "bp1jp8w"
+      },
+      "4y0zvwy": {
+        "as": "runnable",
+        "from": "4y0zvwy",
+        "to": "xbort73"
+      },
+      "5iuypo6": {
+        "as": "elementScale",
+        "from": "5iuypo6",
+        "to": "args"
+      },
+      "7ddyvg5": {
+        "as": "y",
+        "from": "7ddyvg5",
+        "to": "v3ucnvc"
+      },
+      "7pazm63": {
+        "as": "value",
+        "from": "7pazm63",
+        "to": "h5rpf0o"
+      },
+      "9z5zasc": {
+        "as": "x",
+        "from": "9z5zasc",
+        "to": "v3ucnvc"
+      },
+      "args": {
+        "as": "args",
+        "from": "args",
+        "to": "out"
+      },
+      "bp1jp8w": {
+        "as": "seed",
+        "from": "bp1jp8w",
+        "to": "dy65zb2"
+      },
+      "coz46jt": {
+        "as": "dimensionsIn",
+        "from": "coz46jt",
+        "to": "dy65zb2"
+      },
+      "cy3xmxj": {
+        "as": "_dimY",
+        "from": "cy3xmxj",
+        "to": "3w2mjzs"
+      },
+      "dy65zb2": {
+        "as": "_noise",
+        "from": "dy65zb2",
+        "to": "3w2mjzs"
+      },
+      "gw4y5bs": {
+        "as": "y",
+        "from": "gw4y5bs",
+        "to": "xrxh9ci"
+      },
+      "h5rpf0o": {
+        "as": "_dimX",
+        "from": "h5rpf0o",
+        "to": "3w2mjzs"
+      },
+      "kf6fscw": {
+        "as": "x",
+        "from": "kf6fscw",
+        "to": "xrxh9ci"
+      },
+      "nk91iof": {
+        "as": "time",
+        "from": "nk91iof",
+        "to": "xrxh9ci"
+      },
+      "prsoiok": {
+        "as": "noise",
+        "from": "prsoiok",
+        "to": "v3ucnvc"
+      },
+      "r4iac0v": {
+        "as": "value",
+        "from": "r4iac0v",
+        "to": "out"
+      },
+      "ra9d520": {
+        "as": "w",
+        "from": "ra9d520",
+        "to": "v3ucnvc"
+      },
+      "sal16lj": {
+        "as": "_dimZ",
+        "from": "sal16lj",
+        "to": "3w2mjzs"
+      },
+      "tk5fa45": {
+        "as": "dimZ",
+        "from": "tk5fa45",
+        "to": "v3ucnvc"
+      },
+      "tuw52lr": {
+        "as": "dimY",
+        "from": "tuw52lr",
+        "to": "v3ucnvc"
+      },
+      "v3ucnvc": {
+        "as": "fn",
+        "from": "v3ucnvc",
+        "to": "4y0zvwy"
+      },
+      "vktr3na": {
+        "as": "z",
+        "from": "vktr3na",
+        "to": "v3ucnvc"
+      },
+      "wim2g5q": {
+        "as": "dimX",
+        "from": "wim2g5q",
+        "to": "v3ucnvc"
+      },
+      "xbort73": {
+        "as": "value",
+        "from": "xbort73",
+        "to": "r4iac0v"
+      },
+      "xrxh9ci": {
+        "as": "parameters",
+        "from": "xrxh9ci",
+        "to": "4y0zvwy"
+      },
+      "ywvf7t4": {
+        "as": "value",
+        "from": "ywvf7t4",
+        "to": "cy3xmxj"
+      },
+      "zaqgks3": {
+        "as": "value",
+        "from": "zaqgks3",
+        "to": "bp1jp8w"
+      },
+      "zlojnd4": {
+        "as": "elementScale",
+        "from": "zlojnd4",
+        "to": "xrxh9ci"
+      }
+    },
+    "id": "@math.curlnoise",
+    "nodes": {
+      "0f3yvkt": {
+        "id": "0f3yvkt",
+        "value": "3"
+      },
+      "0wye9gb": {
+        "id": "0wye9gb"
+      },
+      "1dfm7ji": {
+        "id": "1dfm7ji",
+        "ref": "arg",
+        "value": "elementScale"
+      },
+      "1qvyjit": {
+        "id": "1qvyjit",
+        "value": "0"
+      },
+      "3w2mjzs": {
+        "id": "3w2mjzs"
+      },
+      "4rfdldl": {
+        "id": "4rfdldl",
+        "value": "4"
+      },
+      "4y0zvwy": {
+        "id": "4y0zvwy",
+        "ref": "@flow.runnable"
+      },
+      "5iuypo6": {
+        "id": "5iuypo6",
+        "value": "1"
+      },
+      "7ddyvg5": {
+        "id": "7ddyvg5",
+        "ref": "arg",
+        "value": "y"
+      },
+      "7pazm63": {
+        "id": "7pazm63",
+        "value": "0"
+      },
+      "9z5zasc": {
+        "id": "9z5zasc",
+        "ref": "arg",
+        "value": "x"
+      },
+      "args": {
+        "id": "args"
+      },
+      "bp1jp8w": {
+        "id": "bp1jp8w",
+        "ref": "@flow.default"
+      },
+      "coz46jt": {
+        "id": "coz46jt",
+        "value": "4"
+      },
+      "cy3xmxj": {
+        "id": "cy3xmxj",
+        "ref": "@memory.cache"
+      },
+      "dy65zb2": {
+        "id": "dy65zb2",
+        "ref": "@math.noise"
+      },
+      "gw4y5bs": {
+        "id": "gw4y5bs"
+      },
+      "h5rpf0o": {
+        "id": "h5rpf0o",
+        "ref": "@memory.cache"
+      },
+      "jnnnm7v": {
+        "id": "jnnnm7v",
+        "value": "0"
+      },
+      "kf6fscw": {
+        "id": "kf6fscw"
+      },
+      "nk91iof": {
+        "id": "nk91iof"
+      },
+      "out": {
+        "id": "out",
+        "name": "@math.curlnoise",
+        "ref": "return"
+      },
+      "prsoiok": {
+        "id": "prsoiok",
+        "ref": "arg",
+        "value": "_noise"
+      },
+      "r4iac0v": {
+        "id": "r4iac0v",
+        "ref": "return"
+      },
+      "ra9d520": {
+        "id": "ra9d520",
+        "ref": "arg",
+        "value": "time"
+      },
+      "sal16lj": {
+        "id": "sal16lj",
+        "ref": "@memory.cache"
+      },
+      "tk5fa45": {
+        "id": "tk5fa45",
+        "ref": "arg",
+        "value": "_dimZ"
+      },
+      "tuw52lr": {
+        "id": "tuw52lr",
+        "ref": "arg",
+        "value": "_dimY"
+      },
+      "v3ucnvc": {
+        "id": "v3ucnvc",
+        "ref": "@js.script",
+        "value": "const delta = 0.0001;\nelscale = Math.max(elscale ?? 1, 0.001);\n\nconst sample3D = (x, y, z, w) => noise.map(nfn => nfn(x / elscale, y / elscale, z / elscale, w))\n\nconst slope = (dim) => {\n  if(dim === 0) {\n    dimX = 1;\n    dimY = 0;\n    dimZ = 0;\n  }\n  \n  if(dim === 1) {\n    dimX = 0;\n    dimY = 1;\n    dimZ = 0;\n  }\n  \n  if(dim === 2) {\n    dimX = 0;\n    dimY = 0;\n    dimZ = 1;\n  }\n  \n  const n1 = sample3D(x - delta * dimX, y - delta * dimY, z - delta * dimZ, w);\n  const n2 = sample3D(x + delta * dimX, y + delta * dimY, z + delta * dimZ, w);\n\n  return [n1[0] - n2[0], n1[1] - n2[1], n1[2] - n2[2]]\n}\n\nconst dx = slope(0);\nconst dy = slope(1);\nconst dz = slope(2);\n\nconst grad = [slope(noise, 0), slope(noise, 1), slope(noise, 2)]\n\nconst curl = [(dy[2] - dz[1]) / (2 * delta), (dz[0] - dx[2]) / (2 * delta), (dx[1] - dy[0]) / (2 * delta)]\n\nconst sum = Math.sqrt(curl[0] * curl[0] + curl[1] * curl[1] + curl[2] * curl[2]);\nreturn curl.map(cv => cv / sum)"
+      },
+      "vktr3na": {
+        "id": "vktr3na",
+        "ref": "arg",
+        "value": "z"
+      },
+      "wim2g5q": {
+        "id": "wim2g5q",
+        "ref": "arg",
+        "value": "_dimX"
+      },
+      "xbort73": {
+        "id": "xbort73",
+        "ref": "@js.create_fn"
+      },
+      "xrxh9ci": {
+        "id": "xrxh9ci"
+      },
+      "ywvf7t4": {
+        "id": "ywvf7t4",
+        "value": "0"
+      },
+      "zaqgks3": {
+        "id": "zaqgks3",
+        "ref": "arg",
+        "value": "seed"
+      },
+      "zlojnd4": {
+        "id": "zlojnd4"
+      }
+    },
+    "out": "out"
+  }
   "edges": {
   }
 }
