@@ -315,20 +315,30 @@ export const CreateRef = (state, {node}) => [
 ]
 
 export const Copy = (state, {cut, as}) => {
-    return {...state, copied: {graph: ancestor_graph(state.selected[0], state.editingGraph, nolib), root: state.selected[0], as}};
+  const graph = ancestor_graph(state.selected[0], state.editingGraph, nolib);
+  const copied = {graph, root: state.selected[0], as};
+  navigator?.clipboard?.writeText(JSON.stringify(copied))
+  return {...state, copied};
 }
 
 export const Paste = state => [
     {...state},
     [dispatch => {
+      navigator.clipboard.readText().then(clipboardContents => {
+        let copied;
+        try {
+          copied = JSON.parse(clipboardContents)
+        } catch (e) {
+          copied = state.copied;
+        }
         const node_id_map = {};
         nolib.no.runtime.add_nodes_edges(
           state.editingGraph, 
-          Object.values(state.copied.graph.nodes as Array<NodysseusNode>)
+          Object.values(copied.graph.nodes as Array<NodysseusNode>)
             .map(n => ({...n, id: (node_id_map[n.id] = create_randid(), node_id_map[n.id])})),
-          Object.values(state.copied.graph.edges as Array<Edge>)
+          Object.values(copied.graph.edges as Array<Edge>)
             .map(e => ({...e, from: node_id_map[e.from], to: node_id_map[e.to]}))
-            .concat([{from: node_id_map[state.copied.root], to: state.selected[0], as: state.copied.as}]),
+            .concat([{from: node_id_map[copied.root], to: state.selected[0], as: copied.as}]),
           [],
           [],
           hlib
@@ -347,6 +357,7 @@ export const Paste = state => [
         //   hlib
         //     );
         requestAnimationFrame(() => dispatch(SelectNode, {node_id: node_id_map[state.copied.root], focus_property: 'edge'}))
+      })
     }]
 ]
 
