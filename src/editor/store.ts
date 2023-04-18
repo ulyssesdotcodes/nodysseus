@@ -17,6 +17,8 @@ const generic_nodes = generic.nodes;
 const generic_node_ids = new Set(Object.keys(generic_nodes));
 
 const migrateCategories = (doc: Automerge.Doc<Graph>) => {
+  if(!doc.nodes) return;
+
   Object.entries(doc.nodes).forEach(([k, n]) => {
     if(isNodeRef(doc.nodes[k]) && categoryChanges[(doc.nodes[k] as RefNode).ref] ) {
       const ref = (doc.nodes[k] as RefNode).ref;
