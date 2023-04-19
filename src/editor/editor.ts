@@ -6,7 +6,7 @@ import { Edge, Graph, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode } from 
 import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, ExpandContract, FocusEffect, graph_subscription, hlib, isNodysseusError, keydownSubscription, listen, middleware, Paste, pzobj, refresh_graph, result_subscription, run_h, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect } from "./util";
 import { info_display, infoWindow } from "./components/infoWindow";
 import { init_code_editor } from "./components/codeEditor";
-import { d3Node, HyperappState } from "./types";
+import { d3Node, HyperappState, Levels } from "./types";
 import { automergeStore } from "./store";
 import { d3subscription, insert_node_el, link_el, node_el, UpdateSimulation } from "./components/graphDisplay";
 import Autocomplete from "./autocomplete"
@@ -199,7 +199,8 @@ const runapp = (init, load_graph, _lib) => {
                             node_value: isNodeValue(newnode) ? newnode.value : undefined,
                             has_nodes: isNodeGraph(newnode) ? newnode.nodes : undefined,
                             nested_edge_count: newnode.nested_edge_count,
-                            nested_node_count: newnode.nested_node_count
+                            nested_node_count: newnode.nested_node_count,
+                            node_parents: (s.levels as Levels).parents.get(node.node_id)
                         }))
                 }) ?? []
                 ).concat(

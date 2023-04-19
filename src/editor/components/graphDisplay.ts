@@ -480,7 +480,7 @@ const node_text_el = ({node_id, primary, focus_primary, secondary}) =>ha.h('text
 
 
 const radius = 24;
-export const node_el = ({html_id, selected, error, selected_distance, node_id, node_ref, node_name, node_value, has_nodes, nested_edge_count, nested_node_count}) =>ha.h('g', {
+export const node_el = ({html_id, selected, error, selected_distance, node_id, node_ref, node_name, node_value, has_nodes, nested_edge_count, nested_node_count, node_parents}) =>ha.h('g', {
     onpointerdown: [SelectNode, {node_id}],  
     width: '256', 
     height: '64', 
@@ -508,7 +508,7 @@ export const node_el = ({html_id, selected, error, selected_distance, node_id, n
         node_id: node_id,
         primary: node_name ? node_name : node_value ? node_value : '', 
         focus_primary: node_name ? "name" : "value",
-        secondary: node_ref ? node_ref : has_nodes ? `graph (${nested_node_count}, ${nested_edge_count})` : node_value !== undefined ? 'value' : 0 > 0 ? 'object' : 'undefined'
+        secondary: node_ref ? node_ref : has_nodes ? `graph (${nested_node_count}, ${nested_edge_count})` : node_value !== undefined ? 'value' : node_parents.length > 0 ? 'object' : 'undefined'
     }),
     ha.memo(fill_rect_el, {})
 ])

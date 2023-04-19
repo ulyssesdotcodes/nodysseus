@@ -711,8 +711,8 @@ export const calculateLevels = (nodes: Array<d3Node>, links: Array<d3Link>, grap
     const parents = new Map(
       nodes.map(n => [
         n.node_id, 
-        links.filter(l => typeof l.target == "object" ? l.target.node_id : l.target === n.node_id)
-        .map(l => typeof l.source === "object" ? l.source.node_id : String(l.source))
+        links.filter(l => typeof l.target == "object" ? l.target.node_id === n.node_id : l.target === n.node_id)
+        .map(l => typeof l.source === "object" ? l.source.node_id  : String(l.source))
       ]));
 
     [...parents.values()].forEach(nps => {
