@@ -8,7 +8,6 @@ const result = await esbuild.build({
     {in: 'src/worker.js', out: 'worker'}
   ],
   metafile: true,
-  minify: true,
   bundle: true,
   outdir: 'public',
   plugins: [wasmLoader()],
