@@ -11142,7 +11142,7 @@ const generic = {
       }
     },
     "out": "out"
-  }
+  },
   "edges": {
   }
 }

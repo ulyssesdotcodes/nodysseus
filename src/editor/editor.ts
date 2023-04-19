@@ -281,11 +281,17 @@ const runapp = (init, load_graph, _lib) => {
         ]),
         ha.h('div', {id: `${init.html_id}-result`}),
         s.showHelp && 
-          ha.h('div', { class: 'overlay' }, [
-            ha.h('div', {id: "help-window"}, [
+          ha.h('div', { 
+          class: 'overlay' ,
+          onclick: (s: HyperappState) => ({...s, showHelp: false})
+        }, [
+            ha.h('div', {
+              id: "help-window",
+              onclick: (s: HyperappState, e) => (e.stopPropagation(), s)
+            }, [
               ha.h('div', {class: "help-actions actions"}, ha.h('span', {
                 class: "material-icons-outlined graph-action",
-                onclick: (s: HyperappState) => ({...s, showHelp: false})
+                onclick: (s: HyperappState, event) => ({...s, showHelp: false})
               }, ha.text("close"))),
               helpmd
             ])

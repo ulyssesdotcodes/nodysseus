@@ -538,8 +538,14 @@ a, a:visited {
 
 #help-window {
   position: fixed;
-  width: 512px;
-  height: 512px;
   background: #000000EE;
   padding: 2em;
+  width: 50vw;
+  box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+    #help-window {
+      width: 100vw;
+    }
 }
