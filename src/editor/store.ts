@@ -306,8 +306,7 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
         const [nextDoc, nextSyncState, patch] = Automerge.receiveSyncMessage<Graph>(
           currentDoc, 
           syncStates[data.peerId]?.[id] || Automerge.initSyncState(), 
-          data.syncMessage
-        , {
+          data.syncMessage, {
           patchCallback: graphNodePatchCallback
         });
         persist && nodysseusidb.put("refs", Automerge.save(nextDoc), id)
@@ -352,12 +351,16 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
         const id = data.id;
         wrapPromise(getDoc(id)).then(current => {
           data.syncMessage = Uint8Array.from(Object.values(data.syncMessage))
-          const [nextDoc, nextSyncState, patch] = Automerge.receiveSyncMessage(current ?? Automerge.init<Graph>(), syncStates[data.peerId]?.[id] || Automerge.initSyncState(), data.syncMessage, {
+          current = current ?? Automerge.init<Graph>();
+          const [nextDoc, nextSyncState, patch] = Automerge.receiveSyncMessage(
+            current, 
+            syncStates[data.peerId]?.[id] || Automerge.initSyncState(), 
+            data.syncMessage, {
             patchCallback: graphNodePatchCallback
           });
           persist && nodysseusidb.put("refs", Automerge.save(nextDoc), id)
-          refsmap.set(id, nextDoc);
           refsset.add(id);
+          refsmap.set(id, nextDoc);
           structuredCloneMap.set(id, structuredClone(nextDoc));
           syncStates[data.peerId] = {...syncStates[data.peerId], [id]: nextSyncState};
 
