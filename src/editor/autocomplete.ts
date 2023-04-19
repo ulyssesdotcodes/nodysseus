@@ -155,9 +155,10 @@ export default class AutocompleteList extends HTMLElement {
 
   selectOption(value: string) {
     this.selectedIndex = undefined;
+    this.inputEl.value = value;
     if(this.initialOption !== value) {
-      this.inputEl.value = value;
       this.dispatchEvent(new CustomEvent('select', {detail: value}))
+      this.initialOption = value;
     }
   }
 
