@@ -1,263 +1,252 @@
-{
+[{
+    "edges": {
+      "0dxoi5w": {
+        "as": "true",
+        "from": "0dxoi5w",
+        "to": "lj5o68q"
+      },
+      "0g1zopd": {
+        "as": "arg4",
+        "from": "0g1zopd",
+        "to": "5a6pljw/af7ncbh"
+      },
+      "34pzvn4": {
+        "as": "pred",
+        "from": "34pzvn4",
+        "to": "ee7261e"
+      },
+      "4igiepn": {
+        "as": "canvas_id",
+        "from": "4igiepn",
+        "to": "0g1zopd"
+      },
+      "5a6pljw/5a6pljw": {
+        "as": "display",
+        "from": "5a6pljw/5a6pljw",
+        "to": "out"
+      },
+      "5a6pljw/af7ncbh": {
+        "as": "children",
+        "from": "5a6pljw/af7ncbh",
+        "to": "5a6pljw/5a6pljw"
+      },
+      "7nz84ut": {
+        "as": "lib",
+        "from": "7nz84ut",
+        "to": "out"
+      },
+      "98olw8f": {
+        "as": "fn_args",
+        "from": "98olw8f",
+        "to": "ysash4u"
+      },
+      "9vdzs2b": {
+        "as": "url",
+        "from": "9vdzs2b",
+        "to": "bc9c7g4"
+      },
+      "bc9c7g4": {
+        "as": "value",
+        "from": "bc9c7g4",
+        "to": "uptw8ed"
+      },
+      "cqt5z8y": {
+        "as": "hydra",
+        "from": "cqt5z8y",
+        "to": "7nz84ut"
+      },
+      "ee7261e": {
+        "as": "value",
+        "from": "ee7261e",
+        "to": "cqt5z8y"
+      },
+      "i1qonbc": {
+        "as": "canvas_id",
+        "from": "i1qonbc",
+        "to": "pu58ta7"
+      },
+      "k85r3d8": {
+        "as": "hydra",
+        "from": "k85r3d8",
+        "to": "0dxoi5w"
+      },
+      "lj5o68q": {
+        "as": "value",
+        "from": "lj5o68q",
+        "to": "out"
+      },
+      "pu58ta7": {
+        "as": "true",
+        "from": "pu58ta7",
+        "to": "ee7261e"
+      },
+      "rd2ji0i": {
+        "as": "canvas_id",
+        "from": "rd2ji0i",
+        "to": "rptqdrs"
+      },
+      "rh6n8sn": {
+        "as": "value",
+        "from": "rh6n8sn",
+        "to": "ymyfmh8"
+      },
+      "rptqdrs": {
+        "as": "arg3",
+        "from": "rptqdrs",
+        "to": "5a6pljw/af7ncbh"
+      },
+      "sv92oa5": {
+        "as": "arg0",
+        "from": "sv92oa5",
+        "to": "98olw8f"
+      },
+      "ui2b86i": {
+        "as": "pred",
+        "from": "ui2b86i",
+        "to": "lj5o68q"
+      },
+      "ulki2ii": {
+        "as": "self",
+        "from": "ulki2ii",
+        "to": "ysash4u"
+      },
+      "uptw8ed": {
+        "as": "false",
+        "from": "uptw8ed",
+        "to": "ee7261e"
+      },
+      "ymyfmh8": {
+        "as": "self",
+        "from": "ymyfmh8",
+        "to": "ulki2ii"
+      },
+      "ysash4u": {
+        "as": "self",
+        "from": "ysash4u",
+        "to": "0dxoi5w"
+      }
+    },
     "id": "hydra_example",
-    "nodes": [
-      {
-        "id": "5a6pljw/5a6pljw",
-        "name": "display",
-        "ref": "html_element"
-      },
-      {
-        "id": "5a6pljw/af7ncbh",
-        "ref": "array"
-      },
-      {
-        "id": "rptqdrs",
-        "ref": "canvas_behind_editor"
-      },
-      {
-        "id": "rd2ji0i",
-        "value": "hydra_canvas"
-      },
-      {
-        "id": "ymyfmh8",
-        "ref": "cache"
-      },
-      {
-        "id": "7nz84ut",
-        "name": ""
-      },
-      {
-        "id": "m8sgasc",
-        "value": "kaleid",
-        "ref": "@hydra.node"
-      },
-      {
-        "id": "i1qonbc",
-        "value": "hydra_canvas"
-      },
-      {
+    "nodes": {
+      "0dxoi5w": {
         "id": "0dxoi5w",
-        "value": "self.out(hydra.o0); return false;",
         "name": "",
-        "ref": "script"
+        "ref": "@js.script",
+        "value": "self.out(hydra.o0); return false;"
       },
-      {
-        "id": "ulki2ii",
-        "value": "noise",
-        "ref": "@hydra.node"
+      "0g1zopd": {
+        "id": "0g1zopd",
+        "ref": "@graphics.offscreenCanvas"
       },
-      {
-        "id": "z9hrjui",
-        "value": "colorama",
-        "ref": "@hydra.node"
+      "34pzvn4": {
+        "id": "34pzvn4",
+        "ref": "@js.script",
+        "value": "return !!_lib.no.runtime.get_ref('@hydra.setup') && !!_lib.no.runtime.get_ref('@hydra.node')"
       },
-      {
-        "id": "uxm6lm2",
-        "value": "2"
-      },
-      {
-        "id": "pu58ta7",
-        "ref": "@hydra.setup"
-      },
-      {
+      "4igiepn": {
         "id": "4igiepn",
         "value": "hydra-offscreencanvas"
       },
-      {
-        "id": "0g1zopd",
-        "ref": "offscreen-canvas"
+      "5a6pljw/5a6pljw": {
+        "id": "5a6pljw/5a6pljw",
+        "name": "displayy",
+        "ref": "@html.html_element"
       },
-      {
-        "id": "ysash4u",
-        "value": "repeatX",
-        "name": "",
-        "ref": "@hydra.node"
+      "5a6pljw/af7ncbh": {
+        "id": "5a6pljw/af7ncbh",
+        "ref": "@data.array"
       },
-      {
-        "id": "sv92oa5",
-        "value": "4"
+      "7nz84ut": {
+        "id": "7nz84ut",
+        "name": ""
       },
-      {
+      "98olw8f": {
+        "id": "98olw8f",
+        "ref": "@data.array"
+      },
+      "9vdzs2b": {
+        "id": "9vdzs2b",
+        "value": "/json/hydra.json"
+      },
+      "bc9c7g4": {
+        "id": "bc9c7g4",
+        "ref": "@nodysseus.import_json"
+      },
+      "cqt5z8y": {
+        "id": "cqt5z8y",
+        "ref": "@memory.cache"
+      },
+      "ee7261e": {
+        "id": "ee7261e",
+        "ref": "@flow.if"
+      },
+      "i1qonbc": {
+        "id": "i1qonbc",
+        "value": "hydra_canvas"
+      },
+      "k85r3d8": {
+        "id": "k85r3d8",
+        "ref": "arg",
+        "value": "_lib.hydra.synth"
+      },
+      "lj5o68q": {
         "id": "lj5o68q",
         "name": "",
-        "ref": "if"
+        "ref": "@flow.if"
       },
-      {
-        "id": "ee7261e",
-        "ref": "if"
-      },
-      {
-        "id": "34pzvn4",
-        "value": "return !!_lib.no.runtime.get_ref('@hydra.setup') && !!_lib.no.runtime.get_ref('@hydra.node')",
-        "ref": "script"
-      },
-      {
+      "out": {
         "id": "out",
-        "value": "",
         "name": "hydra_example",
-        "ref": "return"
+        "ref": "return",
+        "value": ""
       },
-      {
+      "pu58ta7": {
+        "id": "pu58ta7",
+        "ref": "@hydra.setup"
+      },
+      "rd2ji0i": {
+        "id": "rd2ji0i",
+        "value": "hydra_canvas"
+      },
+      "rh6n8sn": {
+        "id": "rh6n8sn",
+        "ref": "arg",
+        "value": "_lib.hydra.synth"
+      },
+      "rptqdrs": {
+        "id": "rptqdrs",
+        "ref": "@html.canvas_behind_editor"
+      },
+      "sv92oa5": {
+        "id": "sv92oa5",
+        "value": "8"
+      },
+      "ui2b86i": {
+        "id": "ui2b86i",
+        "name": "",
+        "ref": "arg",
+        "value": "_lib.hydra"
+      },
+      "ulki2ii": {
+        "id": "ulki2ii",
+        "ref": "@hydra.node",
+        "value": "noise"
+      },
+      "uptw8ed": {
         "id": "uptw8ed",
         "name": "import_hydra_nodes",
         "ref": "return"
       },
-      {
-        "id": "bc9c7g4",
-        "ref": "import_json"
+      "ymyfmh8": {
+        "id": "ymyfmh8",
+        "ref": "@memory.cache"
       },
-      {
-        "id": "9vdzs2b",
-        "value": "/json/hydra.json"
-      },
-      {
-        "id": "k85r3d8",
-        "value": "_lib.hydra.synth",
-        "ref": "arg"
-      },
-      {
-        "id": "ui2b86i",
-        "value": "_lib.hydra",
+      "ysash4u": {
+        "id": "ysash4u",
         "name": "",
-        "ref": "arg"
-      },
-      {
-        "id": "rh6n8sn",
-        "value": "_lib.hydra.synth",
-        "ref": "arg"
+        "ref": "@hydra.node",
+        "value": "repeatX"
       }
-    ],
-    "edges": [
-      {
-        "from": "5a6pljw/5a6pljw",
-        "to": "out",
-        "as": "display"
-      },
-      {
-        "from": "5a6pljw/af7ncbh",
-        "to": "5a6pljw/5a6pljw",
-        "as": "children"
-      },
-      {
-        "from": "rd2ji0i",
-        "to": "rptqdrs",
-        "as": "canvas_id"
-      },
-      {
-        "from": "rh6n8sn",
-        "to": "ymyfmh8",
-        "as": "value"
-      },
-      {
-        "from": "m8sgasc",
-        "to": "0dxoi5w",
-        "as": "self"
-      },
-      {
-        "from": "ysash4u",
-        "to": "z9hrjui",
-        "as": "self"
-      },
-      {
-        "from": "0dxoi5w",
-        "to": "lj5o68q",
-        "as": "true"
-      },
-      {
-        "from": "4igiepn",
-        "to": "0g1zopd",
-        "as": "canvas_id"
-      },
-      {
-        "from": "ulki2ii",
-        "to": "ysash4u",
-        "as": "self"
-      },
-      {
-        "from": "sv92oa5",
-        "to": "ysash4u",
-        "as": "arg0"
-      },
-      {
-        "from": "i1qonbc",
-        "to": "pu58ta7",
-        "as": "canvas_id"
-      },
-      {
-        "from": "uxm6lm2",
-        "to": "z9hrjui",
-        "as": "arg0"
-      },
-      {
-        "from": "ee7261e",
-        "to": "7nz84ut",
-        "as": "hydra"
-      },
-      {
-        "from": "34pzvn4",
-        "to": "ee7261e",
-        "as": "pred"
-      },
-      {
-        "from": "uptw8ed",
-        "to": "ee7261e",
-        "as": "false"
-      },
-      {
-        "from": "lj5o68q",
-        "to": "out",
-        "as": "value"
-      },
-      {
-        "from": "bc9c7g4",
-        "to": "uptw8ed",
-        "as": "value"
-      },
-      {
-        "from": "9vdzs2b",
-        "to": "bc9c7g4",
-        "as": "url"
-      },
-      {
-        "from": "7nz84ut",
-        "to": "out",
-        "as": "lib"
-      },
-      {
-        "from": "z9hrjui",
-        "to": "m8sgasc",
-        "as": "self"
-      },
-      {
-        "from": "ui2b86i",
-        "to": "lj5o68q",
-        "as": "pred"
-      },
-      {
-        "from": "rptqdrs",
-        "to": "5a6pljw/af7ncbh",
-        "as": "arg3"
-      },
-      {
-        "from": "pu58ta7",
-        "to": "ee7261e",
-        "as": "true"
-      },
-      {
-        "from": "0g1zopd",
-        "to": "5a6pljw/af7ncbh",
-        "as": "arg4"
-      },
-      {
-        "from": "k85r3d8",
-        "to": "0dxoi5w",
-        "as": "hydra"
-      },
-      {
-        "from": "ymyfmh8",
-        "to": "ulki2ii",
-        "as": "self"
-      }
-    ],
+    },
     "out": "out"
-  }
+  }]

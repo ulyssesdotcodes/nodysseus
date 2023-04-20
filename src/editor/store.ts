@@ -56,6 +56,8 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
   /////
   // Fns
   //
+  
+  const createDoc = () => Automerge.applyChanges(Automerge.init<Graph>(), [initgraph])[0];
 
   const updatePeers = (id: string) => {
     if(id === "custom_editor") return;
@@ -83,6 +85,7 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
   }
 
   const graphNodePatchCallback: PatchCallback<Graph> = (patches, before, after) => {
+    console.log("patches", patches)
     const changedNodes = new Set()
     patches.forEach(patch => patch.path[0] === "nodes" && changedNodes.add(patch.path[1]));
 
@@ -120,7 +123,7 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
         })
       : undefined
 
-  const changeDoc = (id, fn): Graph | Promise<Graph> => {
+  const changeDoc = (id, fn, changedNodes = []): Graph | Promise<Graph> => {
     if(generic_node_ids.has(id)) {
       nolib.no.runtime.publish("grapherror", new Error("Cannot edit default nodes"))
     }
@@ -146,7 +149,7 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
         const scd = structuredClone(doc);
         structuredCloneMap.set(id, scd)
         // nolib.no.runtime.publish('graphchange', {graph: scd}, {...nolib, ...hlib}) 
-        nolib.no.runtime.change_graph(scd, {...nolib, ...hlib}, []) 
+        // nolib.no.runtime.change_graph(scd, {...nolib, ...hlib}, changedNodes) 
         return scd;
       }).value
   }
@@ -229,7 +232,7 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
           Object.entries(node).forEach(kv => kv[1] === undefined && delete node[kv[0]])
           doc.nodes[node.id] = node;
         }
-      }),
+      }, [node.id]),
       add_nodes_edges: (id, nodes, edges, remove_edges, remove_nodes) => changeDoc(id, graph => {
         remove_nodes?.forEach(node => removeNodeFn(node)(graph));
         remove_edges?.forEach(edge => removeEdgeFn(edge)(graph));
@@ -249,8 +252,8 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
           }
         })
 
-      }),
-      remove_node: (id, node) => changeDoc(id, removeNodeFn(node)),
+      }, nodes.map(n => n.id)),
+      remove_node: (id, node) => changeDoc(id, removeNodeFn(node), [node.id]),
       add_edge: (id, edge) => changeDoc(id, g => {
         g.edges[edge.from] = edge; 
         if(!g.edges_in) {
@@ -293,7 +296,6 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
 
   const peerId = uuid();
 
-
   syncBroadcast.postMessage({type: "syncstart", peerId})
 
   syncBroadcast.addEventListener("message", v => {
@@ -323,56 +325,59 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
   })
 
   let syncWS;
-  
-  const createDoc = () => Automerge.applyChanges(Automerge.init<Graph>(), [initgraph])[0];
 
-  wrapPromise(getDoc("custom_editor"))
-    .then(ce => hlib.run(ce, ce.out ?? "out"))
-    .then(cer => cer.rtcroom )
-    .then(rtcroom => {
-      if(!rtcroom) return;
+  // Wrap run in requestAnimationFrame so nodysseus has time to init
+  requestAnimationFrame(() => {
+    wrapPromise(getDoc("custom_editor"))
+      .then(ce => hlib.run(ce, ce.out ?? "out"))
+      .then(cer => cer.rtcroom )
+      .then(rtcroom => {
+        if(!rtcroom) return;
 
-    syncWS = new WebSocket(`wss://ws.nodysseus.io/${rtcroom}`);
-    syncWS.addEventListener("open", () => {
-      syncWS.send(new Blob([Uint8Array.of(syncMessageTypesRev["syncstart"]), uuidparse(peerId)]))
-    })
+      syncWS = new WebSocket(`wss://ws.nodysseus.io/${rtcroom}`);
+      syncWS.addEventListener("open", () => {
+        syncWS.send(new Blob([Uint8Array.of(syncMessageTypesRev["syncstart"]), uuidparse(peerId)]))
+      })
 
-    syncWS.addEventListener("message", (ev: MessageEvent) => {
-      ev.data.arrayBuffer().then(evbuffer => {
-        const uintbuffer = new Uint8Array(evbuffer);
-        const messageType = syncMessageTypes[uintbuffer[0]];
-        const data = {
-          type: messageType,
-          peerId: uuidstringify(uintbuffer.subarray(1, 17)),
-          target: messageType === "syncgraph" && uuidstringify(uintbuffer.subarray(17, 33)),
-          id: new TextDecoder().decode(uintbuffer.subarray(33, 97)).trimEnd(),
-          syncMessage: messageType === "syncgraph" && uintbuffer.subarray(97),
-        };
-        if(data.type === "syncstart" && !syncStates[data.peerId] && data.peerId !== peerId) {
-          syncStates[data.peerId] = {_syncType: "ws"};
-          syncWS.send(new Blob([Uint8Array.of(syncMessageTypesRev["syncstart"]), uuidparse(peerId)]))
-        } else if (data.type === "syncgraph" && data.target === peerId) {
-          const id = data.id;
-          wrapPromise(getDoc(id)).then(current => {
-            data.syncMessage = Uint8Array.from(Object.values(data.syncMessage))
-            current = current ?? createDoc();
-            const [nextDoc, nextSyncState, patch] = Automerge.receiveSyncMessage(
-              current, 
-              syncStates[data.peerId]?.[id] || Automerge.initSyncState(), 
-              data.syncMessage, {
-              patchCallback: graphNodePatchCallback
-            });
-            persist && nodysseusidb.put("refs", Automerge.save(nextDoc), id)
-            refsset.add(id);
-            refsmap.set(id, nextDoc);
-            structuredCloneMap.set(id, structuredClone(nextDoc));
-            syncStates[data.peerId] = {...syncStates[data.peerId], [id]: nextSyncState};
+      syncWS.addEventListener("message", (ev: MessageEvent) => {
+        ev.data.arrayBuffer().then(evbuffer => {
+          const uintbuffer = new Uint8Array(evbuffer);
+          const messageType = syncMessageTypes[uintbuffer[0]];
+          const data = {
+            type: messageType,
+            peerId: uuidstringify(uintbuffer.subarray(1, 17)),
+            target: messageType === "syncgraph" && uuidstringify(uintbuffer.subarray(17, 33)),
+            id: new TextDecoder().decode(uintbuffer.subarray(33, 97)).trimEnd(),
+            syncMessage: messageType === "syncgraph" && uintbuffer.subarray(97),
+          };
+          if(data.type === "syncstart" && !syncStates[data.peerId] && data.peerId !== peerId) {
+            syncStates[data.peerId] = {_syncType: "ws"};
+            syncWS.send(new Blob([Uint8Array.of(syncMessageTypesRev["syncstart"]), uuidparse(peerId)]))
+          } else if (data.type === "syncgraph" && data.target === peerId) {
+            const id = data.id;
+            wrapPromise(getDoc(id)).then(current => {
+              data.syncMessage = Uint8Array.from(Object.values(data.syncMessage))
+              current = current ?? createDoc();
+              const [nextDoc, nextSyncState, patch] = Automerge.receiveSyncMessage(
+                current, 
+                syncStates[data.peerId]?.[id] || Automerge.initSyncState(), 
+                data.syncMessage, {
+                patchCallback: graphNodePatchCallback
+              });
+              console.log(Automerge.getChanges(current, nextDoc).map(change => Automerge.decodeChange(change).ops.map(op => Automerge.unstable.getBackend(current).materialize(op.obj))));
+              persist && nodysseusidb.put("refs", Automerge.save(nextDoc), id)
+              refsset.add(id);
+              refsmap.set(id, nextDoc);
+              structuredCloneMap.set(id, structuredClone(nextDoc));
+              syncStates[data.peerId] = {...syncStates[data.peerId], [id]: nextSyncState};
 
-            updatePeers(id);
-          })
-        }
+              updatePeers(id);
+            })
+          }
+        })
       })
     })
+
   })
 
   let updatePeersDebounces = {};

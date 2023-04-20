@@ -8,4 +8,5 @@ To get started, checkout:
 
 Handy example files and boilerplates
 - [threejs boilerplate](https://nodysseus.io/#threejs_boilerplate): the simplest threejs code without any objects
-- [threejs example](https://nodysseus.io/#threejs_boilerplate): a rotating cube
+- [threejs example](https://nodysseus.io/#threejs_example): a rotating cube
+- [hydra example](https://nodysseus.io/#hydra_example): hydra synth

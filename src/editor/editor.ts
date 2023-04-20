@@ -482,7 +482,7 @@ const editor = async function(html_id, editingGraph, lib, norun) {
     const hash_graph = window.location.hash.substring(1);
 
         const init: HyperappState = { 
-            editingGraphId: 'simple',
+            editingGraphId: '@templates.simple',
             editingGraph: simple,
             displayGraph: false,
             displayGraphId: false,
@@ -516,7 +516,7 @@ const editor = async function(html_id, editingGraph, lib, norun) {
             showHelp: false
         };
 
-        runapp(init,  hash_graph && hash_graph !== "" ? hash_graph : graph_list?.[0] ?? 'simple', lib)
+        runapp(init,  hash_graph && hash_graph !== "" ? hash_graph : graph_list?.[0] ?? '@templates.simple', lib)
 }
 
 
