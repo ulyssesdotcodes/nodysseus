@@ -59,11 +59,14 @@ const search_el = ({search}) => ha.h('div', {id: "search"}, [
 
 const show_error = (e, t) => ({
     dom_type: 'div', 
-    props: {}, 
-    children: (Array.isArray(e) ? [...(new Set(e.map(se => se.message).filter(em => em)))] : [e.message]).flatMap(e => [
-        {dom_type: 'text_value', text: `${e}\n\n`}, 
+    props: {class: "errors"}, 
+    children: ((Array.isArray(e) ? [...(new Set(e.map(se => se).filter(em => em)))] : [e]).flatMap((e: NodysseusError) => [
+        {dom_type: 'pre', props: {class: "message"}, children: [
+          {dom_type: 'text_value', text: `${e.message}\n\n`},
+          {dom_type: 'span', props: { class: "goto", onclick: [SelectNode, {node_id: e.node_id.substring(e.node_id.indexOf('/') + 1)}] }, children: [{dom_type: "text_value", text: '>>'}]}
+        ]}, 
         t && {dom_type: 'pre', props: {}, children: [{dom_type: 'text_value', text: t}]},
-    ].filter(c => c))
+    ].filter(c => c)))
 })
 
 const result_display = html_id => ha.app({

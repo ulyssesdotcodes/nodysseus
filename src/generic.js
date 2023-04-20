@@ -1964,8 +1964,8 @@ const generic = {
     "ref": "extern",
     "value": "extern.state"
   },
-  "unwrapValue": {
-    "id": "unwrapValue",
+  "@memory.unwrap": {
+    "id": "@memory.unwrap",
     "ref": "extern",
     "value": "extern.unwrapValue"
   },
@@ -11449,6 +11449,39 @@ const generic = {
     },
     "out": "out"
   },
+"@browser.writeClipboard": {
+    "edges": {
+      "output_val": {
+        "as": "value",
+        "from": "output_val",
+        "to": "out"
+      },
+      "u9vcri1": {
+        "as": "text",
+        "from": "u9vcri1",
+        "to": "output_val"
+      }
+    },
+    "id": "@browser.writeClipboard",
+    "nodes": {
+      "out": {
+        "id": "out",
+        "name": "@browser.writeClipboard",
+        "ref": "return"
+      },
+      "output_val": {
+        "id": "output_val",
+        "ref": "@js.script",
+        "value": "navigator.clipboard.writeText(typeof text === \"string\" ? text : JSON.stringify(text));\nreturn text;"
+      },
+      "u9vcri1": {
+        "id": "u9vcri1",
+        "ref": "arg",
+        "value": "text"
+      }
+    },
+    "out": "out"
+  }
 },
   "edges": {
   }

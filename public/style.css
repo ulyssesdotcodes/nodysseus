@@ -394,12 +394,23 @@ svg {
 
 /* error window */
 #node-editor-error {
-    position: absolute;
+    position: static;
     top: 0;
     left: 0;
-    z-index: 0;
     width: 50vw;
     height: 50vh;
+}
+
+#node-editor-error .message {
+  display: flex;
+  flex-direction: row;
+  gap: .5em;
+}
+
+#node-editor-error .goto {
+  text-decoration: underline;
+  cursor: pointer;
+  z-index: 12;
 }
 
 text {
