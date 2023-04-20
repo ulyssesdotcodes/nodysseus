@@ -24,7 +24,6 @@ const migrateCategories = (doc: Automerge.Doc<Graph>) => {
   Object.entries(doc.nodes).forEach(([k, n]) => {
     if(isNodeRef(doc.nodes[k]) && categoryChanges[(doc.nodes[k] as RefNode).ref] ) {
       const ref = (doc.nodes[k] as RefNode).ref;
-      console.log("changing", ref, `@${categoryChanges[ref]}.${ref}`);
       (doc.nodes[k] as RefNode).ref =  `@${categoryChanges[ref]}.${ref}`;
     }
   })
@@ -51,6 +50,7 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
   const refsmap = new Map<string, Automerge.Doc<Graph>>();
   const structuredCloneMap = new Map<string, Graph>();
   const refsset = new Set(await nodysseusidb.getAllKeys("refs").then(ks => ks.map(k => k.toString())));
+  const syncedSet = new Set<string>()
 
 
   /////
@@ -59,14 +59,16 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
   
   const createDoc = () => Automerge.applyChanges(Automerge.init<Graph>(), [initgraph])[0];
 
-  const updatePeers = (id: string) => {
+  const updatePeers = (id: string, peerId?: string) => {
     if(id === "custom_editor") return;
+
+    syncedSet.add(id);
 
     if(updatePeersDebounces[id]) cancelAnimationFrame(updatePeersDebounces[id])
     updatePeersDebounces[id] = requestAnimationFrame(() => {
       wrapPromise(refsmap.get(id)).then(current => {
         updatePeersDebounces[id] = false;
-        Object.entries(syncStates).forEach(([peer, syncState]) => {
+        (peerId ? [[peerId, syncStates[peerId]]] : Object.entries(syncStates)).forEach(([peer, syncState]) => {
           const [nextSyncState, syncMessage] = Automerge.generateSyncMessage(
             current,
             syncState[id] || Automerge.initSyncState()
@@ -85,7 +87,6 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
   }
 
   const graphNodePatchCallback: PatchCallback<Graph> = (patches, before, after) => {
-    console.log("patches", patches)
     const changedNodes = new Set()
     patches.forEach(patch => patch.path[0] === "nodes" && changedNodes.add(patch.path[1]));
 
@@ -225,9 +226,6 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
                 }
               }
             })
-          // console.log(node)
-          // console.log(doc.nodes[node.id])
-          // console.log(doc.nodes[node.id].value)
         } else {
           Object.entries(node).forEach(kv => kv[1] === undefined && delete node[kv[0]])
           doc.nodes[node.id] = node;
@@ -302,7 +300,10 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
     const data = v.data;
     if(data.type === "syncstart" && syncStates[data.peerId]?._syncType !== "broadcast" && data.peerId !== peerId) {
       syncStates[data.peerId] = {_syncType: "broadcast"};
-      syncBroadcast.postMessage({type: "syncstart", peerId})
+      !data.target && syncBroadcast.postMessage({type: "syncstart", peerId, target: data.peerId})
+      for(const graphId of syncedSet.values()) {
+        updatePeers(graphId, data.peerId);
+      }
     } else if (data.type === "syncgraph" && data.target === peerId) {
       wrapPromise(getDoc(data.id)).then(currentDoc => {
         const id = data.id;
@@ -346,13 +347,16 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
           const data = {
             type: messageType,
             peerId: uuidstringify(uintbuffer.subarray(1, 17)),
-            target: messageType === "syncgraph" && uuidstringify(uintbuffer.subarray(17, 33)),
+            target: uintbuffer.length > 18 && uuidstringify(uintbuffer.subarray(17, 33)),
             id: new TextDecoder().decode(uintbuffer.subarray(33, 97)).trimEnd(),
             syncMessage: messageType === "syncgraph" && uintbuffer.subarray(97),
           };
           if(data.type === "syncstart" && !syncStates[data.peerId] && data.peerId !== peerId) {
             syncStates[data.peerId] = {_syncType: "ws"};
-            syncWS.send(new Blob([Uint8Array.of(syncMessageTypesRev["syncstart"]), uuidparse(peerId)]))
+            !data.target && syncWS.send(new Blob([Uint8Array.of(syncMessageTypesRev["syncstart"]), uuidparse(peerId), uuidparse(data.peerId)]))
+            for(const graphId of syncedSet.values()) {
+              updatePeers(graphId, data.peerId);
+            }
           } else if (data.type === "syncgraph" && data.target === peerId) {
             const id = data.id;
             wrapPromise(getDoc(id)).then(current => {
@@ -364,7 +368,6 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
                 data.syncMessage, {
                 patchCallback: graphNodePatchCallback
               });
-              console.log(Automerge.getChanges(current, nextDoc).map(change => Automerge.decodeChange(change).ops.map(op => Automerge.unstable.getBackend(current).materialize(op.obj))));
               persist && nodysseusidb.put("refs", Automerge.save(nextDoc), id)
               refsset.add(id);
               refsmap.set(id, nextDoc);
