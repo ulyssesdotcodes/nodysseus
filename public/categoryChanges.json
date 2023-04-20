@@ -43,7 +43,7 @@
 "ischanged": "data",
 "refval": "memory",
 "state": "memory",
-"publishevent": "event",
+"publish_event": "event",
 "event_publisher_onchange": "event",
 "input_value": "debug",
 "reduce": "data",
