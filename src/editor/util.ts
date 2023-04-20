@@ -170,7 +170,7 @@ export const pzobj: {
 }
 
 // Errors from the worker don't keep instanceof
-export const isNodysseusError = (e: Error) => e && (e instanceof nolib.no.NodysseusError || (e as NodysseusError).node_id)
+export const isNodysseusError = (e: Error) => e && (e instanceof nolib.no.NodysseusError || (e as NodysseusError).cause.node_id)
 
 export const update_info_display = ({fn, graph, args}, info_display_dispatch, code_editor, code_editor_nodeid, graphChanged = true) => {
     const node = nolib.no.runtime.get_node(graph, fn);

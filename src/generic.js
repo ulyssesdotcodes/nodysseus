@@ -4284,7 +4284,11 @@ const generic = {
       },
       "tok49em": {
         "id": "tok49em",
-        "value": "4"
+        "value": "12"
+      },
+      "tok49eq": {
+        "id": "tok49eq",
+        "value": "relative"
       },
       "out": {
         "id": "out",
@@ -4453,12 +4457,17 @@ const generic = {
       "z54r0bl": {
         "from": "z54r0bl",
         "to": "45uuwjl",
-        "as": "#node-editor-error"
+        "as": "#node-editor-error .message"
       },
       "tok49em": {
         "from": "tok49em",
         "to": "z54r0bl",
         "as": "z-index"
+      },
+      "tok49eq": {
+        "from": "tok49eq",
+        "to": "z54r0bl",
+        "as": "position"
       },
       "hzvlwu7": {
         "from": "hzvlwu7",

@@ -193,7 +193,7 @@ const hashcode = function (str, seed = 0) {
 const keywords = new Set(["break", "case", "catch", "continue", "debugger", "default", "delete", "do", "else", "finally", "for", "function", "if", "in", "instanceof", "new", "return", "switch", "this", "throw", "try", "typeof", "var", "void", "while", "with"])
 
 class NodysseusError extends Error {
-  node_id: string;
+  cause: {node_id: string}
     constructor(node_id, ...params) {
         super(...params);
 
@@ -201,7 +201,7 @@ class NodysseusError extends Error {
             Error.captureStackTrace(this, NodysseusError);
         }
 
-        this.node_id = node_id;
+        this.cause = {node_id};
     }
 }
 

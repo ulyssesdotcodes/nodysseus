@@ -4,9 +4,9 @@ import {isNodysseusError} from "./editor/util"
 import { wrapPromise } from "./util";
 
 
-function posterror(graph, error){
+function posterror(error, graph){
     if(isNodysseusError(error)) {
-        self.postMessage({type: 'error', error: {node_id: error.node_id, message: error.message}, graph});
+        self.postMessage({type: 'error', error: {node_id: error.cause.node_id, message: error.message}, graph});
     } else if(error) {
         self.postMessage({type: 'error', error: error?.message, graph});
     }
@@ -21,19 +21,20 @@ const processMessage = e => {
         // nolib.no.runtime.addListener(run_graph, 'graphrun', 'worker-rungraph', (g, result) => {
             // this.postMessage({type: 'result', result, graph: e.data.graph})
         // });
+        const graph = e.data.graph;
 
-        nolib.no.runtime.addListener('grapherror', 'worker-grapherror', (g, error) => {
-            if(error instanceof AggregateError) {
-                error.errors.forEach(ae => {
-                    console.error(ae)
-                    posterror(e.data.graph, ae);
-                });
-            } else {
-                console.error(error);
-                posterror(e.data.graph, error);
-            }
-
-        });
+        // nolib.no.runtime.addListener('grapherror', 'worker-grapherror', (error) => {
+        //     if(error instanceof AggregateError) {
+        //         error.errors.forEach(ae => {
+        //             console.error(ae)
+        //             posterror(ae, graph);
+        //         });
+        //     } else {
+        //         console.error(error);
+        //         posterror(error, graph);
+        //     }
+        //
+        // });
 
         nolib.no.runtime.addListener('graphupdate', 'worker-graphupdate', (graph) => {
           if(runningGraphs.has(graph.id)) {

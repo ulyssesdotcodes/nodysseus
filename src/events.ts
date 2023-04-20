@@ -33,9 +33,6 @@ export const initListeners = () => {
   }
 
   const runpublish = (data, event, lib, options: RunOptions = {}, broadcast = true) => {
-    // if(!isArgs(data)) {
-    //   data = data ? new Map(Object.entries(data)) : {};
-    // }
     if(event.startsWith("bc")) {
       event = event.substring(3);
     } else if(broadcast && event !== "noderun" && event !== "animationframe" && event !== "show_all") {
@@ -43,6 +40,7 @@ export const initListeners = () => {
         if(typeof window !== "undefined" || (event !== "graphchange" && event !== "graphupdate")) {
           eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data });
         } else if (event === "grapherror") {
+          debugger;
           eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data: {message: data.message, node_id: data.node_id, stack: data.stack } });
         }
       } catch(e){
@@ -159,6 +157,7 @@ export const initListeners = () => {
   addListener('argsupdate', '__system', ({graphid, changes, mutate}, lib, options) => {
     if(mutate) {
       const current = nolib.no.runtime.get_args(graphid);
+      console.log("making changes", graphid, changes, current)
       changes.forEach(change => set_mutable(current, change[0], change[1]))
     } else {
       nolib.no.runtime.update_args(graphid, changes, lib)

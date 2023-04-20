@@ -57,15 +57,14 @@ const search_el = ({search}) => ha.h('div', {id: "search"}, [
 ])
 
 
-const show_error = (e, t) => ({
+const show_error = (e, t?) => ({
     dom_type: 'div', 
     props: {class: "errors"}, 
     children: ((Array.isArray(e) ? [...(new Set(e.map(se => se).filter(em => em)))] : [e]).flatMap((e: NodysseusError) => [
-        {dom_type: 'pre', props: {class: "message"}, children: [
-          {dom_type: 'text_value', text: `${e.message}\n\n`},
-          {dom_type: 'span', props: { class: "goto", onclick: [SelectNode, {node_id: e.node_id.substring(e.node_id.indexOf('/') + 1)}] }, children: [{dom_type: "text_value", text: '>>'}]}
-        ]}, 
-        t && {dom_type: 'pre', props: {}, children: [{dom_type: 'text_value', text: t}]},
+        {dom_type: 'pre', props: {}, children: [
+          {dom_type: 'span', props: {class: "message"}, children: [{dom_type: 'text_value', text: `${e.message}\n\n`}]},
+          {dom_type: 'span', props: { class: "goto", onclick: [SelectNode, {node_id: (e.cause as {node_id: string}).node_id.substring((e.cause as {node_id: string}).node_id.indexOf('/') + 1)}] }, children: [{dom_type: "text_value", text: '>>'}]}
+        ]}
     ].filter(c => c)))
 })
 
@@ -151,7 +150,7 @@ const error_nodes = (error) => error instanceof AggregateError || Array.isArray(
     ? (Array.isArray(error) ? error : error.errors)
         .map(e => isNodysseusError(e) ? e.node_id : false).filter(n => n) 
     : isNodysseusError(error)
-    ? [error.node_id] : []; 
+    ? [error.cause.node_id] : []; 
 
 // generated using markdown node and help.md
 const helpmd = run_h(
@@ -300,7 +299,7 @@ const runapp = (init, load_graph, _lib) => {
               helpmd
             ])
           ]),
-        s.error && ha.h('div', {id: 'node-editor-error'}, run_h(show_error(s.error, s.error.node_id)))
+        s.error && ha.h('div', {id: 'node-editor-error'}, run_h(show_error(s.error)))
     ]),
     node: document.getElementById(init.html_id),
     subscriptions: s => [
