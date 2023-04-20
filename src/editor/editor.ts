@@ -3,7 +3,7 @@ import * as ha from "hyperapp";
 import Fuse from "fuse.js";
 import { create_randid, wrapPromise, base_graph } from "../util";
 import { Edge, Graph, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode } from "../types";
-import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, ExpandContract, FocusEffect, graph_subscription, hlib, isNodysseusError, keydownSubscription, listen, middleware, Paste, pzobj, refresh_graph, result_subscription, run_h, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect } from "./util";
+import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, isNodysseusError, keydownSubscription, listen, middleware, Paste, pzobj, refresh_graph, result_subscription, run_h, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect } from "./util";
 import { info_display, infoWindow } from "./components/infoWindow";
 import { init_code_editor } from "./components/codeEditor";
 import { d3Node, HyperappState, Levels } from "./types";
@@ -223,7 +223,7 @@ const runapp = (init, load_graph, _lib) => {
             editingGraphId: s.editingGraph.id,
             randid: s.randid,
             editing: s.editing,
-            ref_graphs: nolib.no.runtime.ref_graphs(),
+            ref_graphs: nolib.no.runtime.ref_graphs().concat(EXAMPLES),
             html_id: s.html_id,
             copied_graph: s.copied?.graph,
             inputs: s.inputs,

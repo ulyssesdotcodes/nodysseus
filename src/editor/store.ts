@@ -6,7 +6,7 @@ import generic from "../generic";
 import { compare, mapStore, nolib } from "../nodysseus";
 import { Edge, EdgesIn, Graph, GraphNode, isNodeRef, NodysseusNode, NodysseusStore, RefNode, RefStore, Store, ValueNode } from "../types";
 import { ancestor_graph, compareObjects, ispromise, mapMaybePromise, wrapPromise } from "../util";
-import { hlib } from "./util";
+import { hlib, EXAMPLES } from "./util";
 import * as Automerge from "@automerge/automerge";
 import {v4 as uuid, parse as uuidparse, stringify as uuidstringify} from "uuid";
 import { PatchCallback } from "@automerge/automerge";

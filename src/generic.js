@@ -11122,9 +11122,8 @@ const generic = {
       }
     },
     "out": "qljoa2f"
-  }
-},
-"@math.curlnoise": {
+  },
+  "@math.curlnoise": {
     "edges": {
       "0f3yvkt": {
         "as": "dimensionsOut",
@@ -11450,6 +11449,7 @@ const generic = {
     },
     "out": "out"
   },
+},
   "edges": {
   }
 }
