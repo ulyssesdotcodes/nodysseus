@@ -59,7 +59,7 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
   
   const createDoc = () => Automerge.applyChanges(Automerge.init<Graph>(), [initgraph])[0];
 
-  const updatePeers = (id: string, peerId?: string) => {
+  const updatePeers = (id: string, target?: string) => {
     if(id === "custom_editor") return;
 
     syncedSet.add(id);
@@ -68,7 +68,7 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
     updatePeersDebounces[id] = requestAnimationFrame(() => {
       wrapPromise(refsmap.get(id)).then(current => {
         updatePeersDebounces[id] = false;
-        (peerId ? [[peerId, syncStates[peerId]]] : Object.entries(syncStates)).forEach(([peer, syncState]) => {
+        (target ? [[target, syncStates[target]]] : Object.entries(syncStates)).forEach(([peer, syncState]) => {
           const [nextSyncState, syncMessage] = Automerge.generateSyncMessage(
             current,
             syncState[id] || Automerge.initSyncState()
