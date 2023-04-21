@@ -1,5 +1,7 @@
 # Tour of Nodysseus
 
+[UI Overview Tutorial](https://www.youtube.com/watch?v=K-oUsrV3n6s&list=PLNf6veBQIZNohZk_htvTvPCB2UnEl3Tlh) main points below
+
 1. Overall interface
 	1. Center - node graph
 	   Shows the open graph. Programming happens here. E.g. this is showing the `tutorial` graph
