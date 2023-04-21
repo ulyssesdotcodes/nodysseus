@@ -9,7 +9,7 @@ import { UpdateGraphDisplay, UpdateSimulation, d3subscription, updateSimulationN
 import AutocompleteList from "./autocomplete";
 import { uuid } from "@automerge/automerge";
 
-export const EXAMPLES = ["threejs_example", "threejs_update_geo", "hydra_example", "threejs_boilerplate", "threejs_noise_force_example"];
+export const EXAMPLES = ["threejs_example", "threejs_update_geo", "hydra_example", "threejs_boilerplate", "threejs_force_attribute_example"];
 
 export const middleware = dispatch => (ha_action, ha_payload) => {
     const is_action_array_payload = Array.isArray(ha_action) 
