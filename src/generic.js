@@ -9429,7 +9429,7 @@ const generic = {
       },
       "1fuixnh": {
         "id": "1fuixnh",
-        "ref": "publish_event",
+        "ref": "@event.publish_event",
         "value": "tapbeatbeat"
       },
       "1qcwz4u": {
@@ -9439,7 +9439,7 @@ const generic = {
       },
       "1t3aqnb": {
         "id": "1t3aqnb",
-        "ref": "publish_event",
+        "ref": "@event.publish_event",
         "value": "tapbeatbpmchange"
       },
       "1zhv7p5": {
@@ -9789,7 +9789,7 @@ const generic = {
       },
       "okonci6": {
         "id": "okonci6",
-        "ref": "publish_event",
+        "ref": "@event.publish_event",
         "value": "tapbeattap"
       },
       "out": {
