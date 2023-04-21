@@ -157,7 +157,6 @@ export const initListeners = () => {
   addListener('argsupdate', '__system', ({graphid, changes, mutate}, lib, options) => {
     if(mutate) {
       const current = nolib.no.runtime.get_args(graphid);
-      console.log("making changes", graphid, changes, current)
       changes.forEach(change => set_mutable(current, change[0], change[1]))
     } else {
       nolib.no.runtime.update_args(graphid, changes, lib)
