@@ -106,7 +106,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                     value: (node as RefNode).ref,
                     property: 'ref',
                     inputs,
-                    options: nolib.no.runtime.refs().map(r => generic.nodes[r] ? {value: r, category: generic.nodes[r].category} : {value: r, category: "custom"}),
+                    options: nolib.no.runtime.refs().map(r => generic.nodes[r] ? {value: r, category: generic.nodes[r].category} : {value: r, category: r.startsWith("@") ? r.substring(1, r.indexOf('.')) : "custom"}),
                     onchange: (state, {value}) => [UpdateNode, {node, property: "ref", value}],
                     disabled: node.id === graph_out
                 }), node),

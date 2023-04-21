@@ -175,11 +175,11 @@ export default class AutocompleteList extends HTMLElement {
 
   populateOptions() {
     this.options = Object.fromEntries([...this.querySelectorAll('option')].map(el => [el.textContent, {value: el.textContent, category: el.dataset.category}]));
-    this.fuse = new Fuse<Option>(Object.values(this.options), {keys: ["value"], distance: 40, threshold: 0.4})
+    this.fuse = new Fuse<Option>(Object.values(this.options), {keys: ["value"], ignoreLocation: true, minMatchCharLength: 2, threshold: 0.3})
 
     const optionsByCategory = (options: Array<Option>) => 
         [...options.reduce((acc, option) => acc.set(
-          option.category ?? "custom", 
+          option.category ?? "custom",
           (acc.get(option.category ?? "custom") ?? [])
             .concat([option.category && !acc.has(option.category) ? {kind: "category", value: option.category} : undefined, {kind: "value", value: option.value}])
         ), new Map()).values()].flat().filter(o => o);
