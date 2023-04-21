@@ -207,7 +207,7 @@ export const ancestor_graph = (node_id: string, from_graph: Graph, nolib: Record
     while(queue.length > 0) {
         let node_id = queue.pop();
         graph.nodes[node_id] = {...from_graph.nodes[node_id]}
-        edges_in = (from_graph.edges_in[node_id] 
+        edges_in = (from_graph?.edges_in[node_id] 
           ? Object.values(from_graph.edges_in[node_id]) 
           : Object.values(from_graph.edges).filter(e => e.to === node_id))
             .filter(e => from_graph.nodes[e.from] && !graph.nodes[e.from])
