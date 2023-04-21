@@ -63,8 +63,13 @@ const show_error = (e, t?) => ({
     children: ((Array.isArray(e) ? [...(new Set(e.map(se => se).filter(em => em)))] : [e]).flatMap((e: NodysseusError) => [
         {dom_type: 'pre', props: {}, children: [
           {dom_type: 'span', props: {class: "message"}, children: [{dom_type: 'text_value', text: `${e.message}\n\n`}]},
-          {dom_type: 'span', props: { class: "goto", onclick: [SelectNode, {node_id: (e.cause as {node_id: string}).node_id.substring((e.cause as {node_id: string}).node_id.indexOf('/') + 1)}] }, children: [{dom_type: "text_value", text: '>>'}]}
-        ]}
+          e.cause?.node_id && {
+            dom_type: 'span', props: { 
+            class: "goto", 
+            onclick: [SelectNode, {node_id: e.cause.node_id.split('/')[1]}] }, 
+            children: [{dom_type: "text_value", text: '>>'}]
+          }
+        ].filter(c => c)}
     ].filter(c => c)))
 })
 

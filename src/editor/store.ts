@@ -127,6 +127,7 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
   const changeDoc = (id, fn, changedNodes = []): Graph | Promise<Graph> => {
     if(generic_node_ids.has(id)) {
       nolib.no.runtime.publish("grapherror", new Error("Cannot edit default nodes"))
+      return;
     }
     return wrapPromise(getDoc(id))
       .then(graph => {

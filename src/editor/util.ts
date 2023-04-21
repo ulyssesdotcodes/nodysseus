@@ -7,6 +7,7 @@ import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, fo
 import { d3Link, d3Node, HyperappState, Levels, Property } from "./types";
 import { UpdateGraphDisplay, UpdateSimulation, d3subscription, updateSimulationNodes } from "./components/graphDisplay";
 import AutocompleteList from "./autocomplete";
+import { uuid } from "@automerge/automerge";
 
 export const EXAMPLES = ["threejs_example", "threejs_update_geo", "hydra_example", "threejs_boilerplate", "threejs_noise_force_example"];
 
@@ -170,7 +171,7 @@ export const pzobj: {
 }
 
 // Errors from the worker don't keep instanceof
-export const isNodysseusError = (e: Error) => e && (e instanceof nolib.no.NodysseusError || (e as NodysseusError).cause.node_id)
+export const isNodysseusError = (e: Error) => e && (e instanceof nolib.no.NodysseusError || (e as NodysseusError).cause?.node_id)
 
 export const update_info_display = ({fn, graph, args}, info_display_dispatch, code_editor, code_editor_nodeid, graphChanged = true) => {
     const node = nolib.no.runtime.get_node(graph, fn);
@@ -493,7 +494,7 @@ export const result_subscription = (dispatch, {editingGraphId, displayGraphId, n
 
     const error_listener = (error) =>
         requestAnimationFrame(() => {
-            dispatch(s => Object.assign({}, s, {error: s.error ? s.error.concat([error]) : [error]}))
+            dispatch(s => Object.assign({}, s, {error: s.error ? [...new Map(s.error.concat([error]).map(e => [e.cause?.node_id ? e.cause?.node_id?.split('/')[1] : uuid(), e])).values()] : [error]}))
         });
 
     nolib.no.runtime.addListener('grapherror', 'update_hyperapp_error', error_listener);
