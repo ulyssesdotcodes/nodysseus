@@ -1275,13 +1275,15 @@ const nolib = {
                 } else {
                   lib.data.no.runtime.update_args(graphid, {state: initial})
                 }
-              }).then(() => ({publish, persist})).value 
+
+                return initial
+              }).then(initial => ({publish, persist, initial})).value 
               : {publish, persist}
           })
-          .then(({persist, publish}) => 
+          .then(({persist, publish, initial}: {persist, publish, initial?}) => 
             wrapPromise(rawstate)
               .then(rawstate => isValue(rawstate) ? rawstate.value : rawstate)
-              .then(state => ({publish, persist, state})).value)
+              .then(state => ({publish, persist, state: state ?? initial})).value)
           .then(({persist, publish, state}) => output === "display" 
             ? lib.data.no.of({dom_type: 'div', props: {}, children: [{dom_type: 'text_value', text: JSON.stringify(state)}]}) 
             : ({
