@@ -17,7 +17,7 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib) => {
     return util.wrapPromise(resolve_args(new Map([...graphArgs].map(a => [a, nodysseus_get(runnable.env, a, lib)])), lib, {resolvePromises: true}))
       .then(result => {
         if(!isValue(result)) return;
-        const baseArgs = result.value?.includes(".") ? result.value.substring(0, result.value.indexOf(".")) : result.value;
+        const baseArgs = typeof result.value?.includes === "function" && result.value.includes(".") ? result.value.substring(0, result.value.indexOf(".")) : result.value;
         graph.id = runnable.fn + "-fn";
 
         let text = "";
