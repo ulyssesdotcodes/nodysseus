@@ -1234,10 +1234,11 @@ const nolib = {
         if(!args["store"]) {
           lib.data.no.runtime.update_args(graphid, {store}, lib)
           if(initial) {
-            wrapPromise(run_runnable(initial, lib, undefined, options))
+            return wrapPromise(run_runnable(initial, lib, undefined, options))
               .then(res => isValue(res) ? res.value : res)
               .then(value => {
                 store.value = value
+                return store;
               }).value
           }
         }
