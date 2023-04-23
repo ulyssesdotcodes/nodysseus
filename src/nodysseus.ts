@@ -1539,10 +1539,12 @@ const nolib = {
     import_module: {
       args: ["url", "__graph_value", "_lib"],
       fn: (url, graphvalue, lib) => {
-        const stateid = `__jsimport:${url}`;
+        const urlval = url || graphvalue;
+        if(!urlval) return;
+        const stateid = `__jsimport:${urlval}`;
         const existing = nodysseus.state.get(stateid);
         if(existing) return existing;
-        const promise = (url || graphvalue) && import(url || graphvalue).then(jsmodule => (nodysseus.state.set(stateid, jsmodule), jsmodule));
+        const promise = import(urlval).then(jsmodule => (nodysseus.state.set(stateid, jsmodule), jsmodule));
         nodysseus.state.set(stateid, promise);
         return promise;
       }
