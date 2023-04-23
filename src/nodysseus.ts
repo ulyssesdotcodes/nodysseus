@@ -1,5 +1,5 @@
 import { ancestor_graph, ispromise, isWrappedPromise, mapMaybePromise, node_args, WrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node, runnableId, compareObjects, descendantGraph } from "./util"
-import { isNodeGraph, Graph, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike, EdgesIn } from "./types"
+import { isNodeGraph, Graph, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike, EdgesIn, Extern } from "./types"
 import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util"
 import generic from "./generic.js";
 import * as externs from "./externs";
@@ -1428,7 +1428,10 @@ const nolib = {
       args: ["_node_args"],
       fn: (args) => compare(args[0], args[1])
     },
-    eq: ({ a, b }) => a === b,
+    eq: {
+      args: ["_node_args"],
+      fn: (args: Array<any>) => args.every(v => v === args[0])
+    },
     get: {
       args: ["target: default", "path", "def", "__graph_value", "_lib"],
       fn: (target, path, def, graph_value, lib: Lib) => {
@@ -1734,93 +1737,6 @@ const nolib = {
         return check(target, fn, keys);
       },
     },
-    properties: {
-      getOwnEnumerables: function (obj) {
-        return this._getPropertyNames(obj, true, false, this._enumerable);
-        // Or could use for..in filtered with hasOwnProperty or just this: return Object.keys(obj);
-      },
-      getOwnNonenumerables: function (obj) {
-        return this._getPropertyNames(obj, true, false, this._notEnumerable);
-      },
-      getOwnEnumerablesAndNonenumerables: function (obj) {
-        return this._getPropertyNames(
-          obj,
-          true,
-          false,
-          this._enumerableAndNotEnumerable
-        );
-        // Or just use: return Object.getOwnPropertyNames(obj);
-      },
-      getPrototypeEnumerables: function (obj) {
-        return this._getPropertyNames(obj, false, true, this._enumerable);
-      },
-      getPrototypeNonenumerables: function (obj) {
-        return this._getPropertyNames(obj, false, true, this._notEnumerable);
-      },
-      getPrototypeEnumerablesAndNonenumerables: function (obj) {
-        return this._getPropertyNames(
-          obj,
-          false,
-          true,
-          this._enumerableAndNotEnumerable
-        );
-      },
-      getOwnAndPrototypeEnumerables: function (obj) {
-        return this._getPropertyNames(obj, true, true, this._enumerable);
-        // Or could use unfiltered for..in
-      },
-      getOwnAndPrototypeNonenumerables: function (obj) {
-        return this._getPropertyNames(obj, true, true, this._notEnumerable);
-      },
-      getOwnAndPrototypeEnumerablesAndNonenumerables: function (
-        obj,
-        includeArgs
-      ) {
-        return this._getPropertyNames(
-          obj,
-          true,
-          true,
-          this._enumerableAndNotEnumerable,
-          includeArgs
-        );
-      },
-      // Private static property checker callbacks
-      _enumerable: function (obj, prop) {
-        return obj.propertyIsEnumerable(prop);
-      },
-      _notEnumerable: function (obj, prop) {
-        return !obj.propertyIsEnumerable(prop);
-      },
-      _enumerableAndNotEnumerable: function (obj, prop) {
-        return true;
-      },
-      // Inspired by http://stackoverflow.com/a/8024294/271577
-      _getPropertyNames: function getAllPropertyNames(
-        obj,
-        iterateSelfBool,
-        iteratePrototypeBool,
-        includePropCb,
-        includeArgs
-      ) {
-        var props = [];
-
-        do {
-          if (iterateSelfBool) {
-            Object.getOwnPropertyNames(obj).forEach(function (prop) {
-              if (props.indexOf(prop) === -1 && includePropCb(obj, prop)) {
-                props.push(prop);
-              }
-            });
-          }
-          if (!iteratePrototypeBool) {
-            break;
-          }
-          iterateSelfBool = true;
-        } while ((obj = Object.getPrototypeOf(obj)));
-
-        return props;
-      },
-    },
     stringify: {
       args: ["object", "spacer"],
       resolve: true,
@@ -1856,7 +1772,7 @@ const nolib = {
         return target;
       }
     }
-  },
+  } as Record<string, Extern>,
   // THREE
 };
 

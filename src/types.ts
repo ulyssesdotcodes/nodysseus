@@ -149,7 +149,15 @@ export const isEnv = (env: any): env is Env => env?.__kind === "env"
 
 //export const isApRunnable = (r: Runnable): r is ApRunnable => isGraphRunnable((r as ApRunnable).fn)
 
-export type NodeArg = { exists: boolean, name: string } & Partial<FullyTypedArg>
+// TODO: type this better
+export type Extern = {
+  args: Array<string | FullyTypedArg> | Record<string, string | FullyTypedArg>,
+  fn: Function
+}
+export type NodeArg = { 
+  exists: boolean, 
+  name: string 
+} & Partial<FullyTypedArg>
  
 export type Args = Map<string, ConstRunnable | Result>;
 export type ResolvedArgs = Map<string, unknown>;
