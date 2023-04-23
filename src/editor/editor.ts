@@ -153,7 +153,7 @@ const mutationObserverSubscription = (dispatch, {id}) => {
 
 const error_nodes = (error) => error instanceof AggregateError || Array.isArray(error) || (error as AggregateError)?.errors
     ? (Array.isArray(error) ? error : error.errors)
-        .map(e => isNodysseusError(e) ? e.node_id : false).filter(n => n) 
+        .map(e => isNodysseusError(e) ? e.cause.node_id : false).filter(n => n) 
     : isNodysseusError(error)
     ? [error.cause.node_id] : []; 
 
