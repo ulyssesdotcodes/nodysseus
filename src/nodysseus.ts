@@ -2,7 +2,7 @@ import { ancestor_graph, ispromise, isWrappedPromise, mapMaybePromise, node_args
 import { isNodeGraph, Graph, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike, EdgesIn } from "./types"
 import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util"
 import generic from "./generic.js";
-import { create_fn, expect, now } from "./externs";
+import * as externs from "./externs";
 import { v4 as uuid } from "uuid";
 import { initListeners } from "./events";
 
@@ -1076,7 +1076,7 @@ const nolib = {
     },
     create_fn: {
       args: ["runnable", "_lib"],
-      fn: create_fn
+      fn: externs.create_fn
     },
     switch: {
       rawArgs: true,
@@ -1181,7 +1181,7 @@ const nolib = {
     },
     expect: {
       args: ["a", "b", "__graph_value"],
-      fn: expect
+      fn: externs.expect
     },
     entries: {
       args: ["object"],
@@ -1537,8 +1537,15 @@ const nolib = {
       fn: (nodevalue, url, params) => resfetch(url || nodevalue, params),
     },
     import_module: {
-      args: ["url", "__graph_value"],
-      fn: (url, graphvalue) => (url || graphvalue) && import(url || graphvalue),
+      args: ["url", "__graph_value", "_lib"],
+      fn: (url, graphvalue, lib) => {
+        const stateid = `__jsimport:${url}`;
+        const existing = nodysseus.state.get(stateid);
+        if(existing) return existing;
+        const promise = (url || graphvalue) && import(url || graphvalue).then(jsmodule => (nodysseus.state.set(stateid, jsmodule), jsmodule));
+        nodysseus.state.set(stateid, promise);
+        return promise;
+      }
     },
     update_args: {
       promiseArgs: true,
@@ -1661,7 +1668,7 @@ const nolib = {
     },
     now: {
       args: ["scale"],
-      fn: now
+      fn: externs.now
     },
     math: {
       args: ["__graph_value", "_node_args"],

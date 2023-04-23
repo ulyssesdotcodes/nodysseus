@@ -240,7 +240,7 @@ const generic = {
     "id": "@js.typeof",
     "ref": "extern",
     "category": "js",
-    "value": "extern.typeof",
+    "value": "extern.typeofvalue",
     "description": "javascript typeof operator"
   },
   "@js.new": {
