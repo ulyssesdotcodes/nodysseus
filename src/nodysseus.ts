@@ -1080,14 +1080,16 @@ const nolib = {
     },
     switch: {
       rawArgs: true,
-      args: ["input", "_node_args", "_lib", "_runoptions"],
-      fn: (input, args: Args, lib: Lib, options) => {
+      args: ["input", "_node_args", "_lib", "_runoptions", "otherwise"],
+      fn: (input, args: Args, lib: Lib, options, otherwise) => {
         const inputval = run_runnable(input, lib, undefined, options);
         return ispromise(inputval) 
           ? inputval.then(ival => isError(ival) ? ival : run_runnable(isArgs(args) ? args.get(ival?.value) : args[ival?.value], lib, undefined, options)) 
           : isError(inputval)
           ? inputval
-          : run_runnable(args.get(inputval?.value), lib, undefined, options);
+          : args.has(inputval?.value)
+          ? run_runnable(args.get(inputval?.value), lib, undefined, options)
+          : run_runnable(otherwise, lib, undefined, options);
       },
     },
     resolve: {
