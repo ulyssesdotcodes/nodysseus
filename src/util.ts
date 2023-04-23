@@ -1,3 +1,4 @@
+import { parser } from "@lezer/javascript";
 import { nodysseus_get } from "./nodysseus";
 import { Edge, Graph, GraphNode, NodysseusNode, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable, isEnv, isRunnable, isValue, Lib, isLib, Env, Args, ValueNode, Result, isArgs, isConstRunnable, isApRunnable, isError, ConstRunnable, TypedArg } from "./types";
 
@@ -282,8 +283,31 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Ar
         )
         .concat(node_out_args ? node_out_args : []))
 
+    const scriptVarNames = node.ref === "@js.script" && new Set<string>();
+    if(node.ref === "@js.script" ) {
+      const scriptVarDecs = node.ref === "@js.script" && new Set<string>();
+      parser.parse(node.value).iterate({
+        enter: syntaxNode => syntaxNode.name === "VariableName" 
+          ? !!scriptVarNames.add(node.value.substring(syntaxNode.from, syntaxNode.to))
+          : syntaxNode.name === "VariableDeclaration" && syntaxNode.node.getChild("VariableDefinition")
+          ? !!scriptVarDecs.add(node.value.substring(
+            syntaxNode.node.getChild("VariableDefinition").from,
+            syntaxNode.node.getChild("VariableDefinition").to
+          ))
+          : undefined
+      })
+      scriptVarDecs.forEach(dec => scriptVarNames.delete(dec));
+    }
 
-    return [...typedArgsMap].concat(edges_in?.filter(e => !typedArgsMap.has(e.as)).map(e => [e.as, "any"])).map((a: [string, TypedArg]) => ({exists: !!edges_in?.find(e => e.as === a[0]), name: a[0], ...(typeof a[1] === "object" ? a[1] : {type: a[1]})}))
+    return [...typedArgsMap]
+    .concat(
+      edges_in?.filter(e => !typedArgsMap.has(e.as))
+        .map(e => [e.as, "any"]))
+    .concat(scriptVarNames ? [...scriptVarNames].map(n => [n, "any"]) : [])
+    .map((a: [string, TypedArg]) => ({
+      exists: !!edges_in?.find(e => e.as === a[0]), 
+      name: a[0], ...(typeof a[1] === "object" ? a[1] : {type: a[1]})
+    }))
 }
 
 
