@@ -32,7 +32,9 @@ self.addEventListener('fetch', (e) => {
         resp.url.startsWith("https://cdn.jsdelivr.net/npm/three/examples/") 
         || resp.url.startsWith("https://cdn.jsdelivr.net/gh/ulyssesdotcodes/")
       ) ? resp.text().then(rtext => [rtext, resp]) : resp)
-    .then(r => Array.isArray(r) ? new Response(r[0].replaceAll("from 'three'", "from 'https://cdn.jsdelivr.net/npm/three/build/three.module.js'"), {
+    .then(r => Array.isArray(r) ? new Response(r[0]
+      .replaceAll("from 'three'", "from 'https://cdn.jsdelivr.net/npm/three/build/three.module.js'")
+      .replaceAll("from 'three/nodes'", "from 'https://cdn.jsdelivr.net/npm/three/examples/jsm/nodes/Nodes.js'"), {
       headers: r[1].headers
     }) : r)
   );
