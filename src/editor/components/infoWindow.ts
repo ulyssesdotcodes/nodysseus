@@ -139,7 +139,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                   ha.h('span', {}, ha.text(isNodeGraph(node) ? "expand" : "collapse"))
                 ]),
                 isNodeGraph(node) && node.name !== '' && ha.h('div', {class: 'action', onclick: [CreateRef, {node}]}, ha.text("make ref")),
-                isNodeRef(node) && ha.h('div', {
+                isNodeRef(node) && (!generic.nodes[node.ref] || generic.nodes[node.ref].nodes?.[generic.nodes[node.ref].out]?.ref === "return") && ha.h('div', {
                     class: "action", 
                     onclick: state => [state, [ChangeEditingGraphId, {id: node.ref, editingGraphId}]],
                     key: "open-ref-action"
