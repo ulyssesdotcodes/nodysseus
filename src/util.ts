@@ -284,7 +284,7 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Ar
         .concat(node_out_args ? node_out_args : []))
 
     const scriptVarNames = node.ref === "@js.script" && new Set<string>();
-    if(node.ref === "@js.script" ) {
+    if(node.ref === "@js.script" && typeof node.value === "string") {
       const scriptVarDecs = node.ref === "@js.script" && new Set<string>();
       parser.parse(node.value).iterate({
         enter: syntaxNode => syntaxNode.name === "VariableName" 
