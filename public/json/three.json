@@ -9381,7 +9381,6 @@
     "out": "main/out"
   },
   {
-    "description": "Creates a basic three.js scene with a camera, renderer, and scene. The `objects` input has the objects of the scene, evaluated every frame - make sure to cache. The `onupdate` input is a runnable with parameters `objects`, `camera`, and `scene` which is run every frame - keep. The `fx` input has effects for an EffectComposer.",
     "edges": {
       "0wp18c9": {
         "as": "args",
@@ -9417,6 +9416,11 @@
         "as": "_renderer",
         "from": "40aw44l",
         "to": "8m5muxn/39ivise"
+      },
+      "4a9zo9a": {
+        "as": "value",
+        "from": "4a9zo9a",
+        "to": "kipwn58"
       },
       "4fxcgml": {
         "as": "renderer",
@@ -9579,7 +9583,7 @@
         "to": "4j2wgr9"
       },
       "eoks97e": {
-        "as": "EffectComposer",
+        "as": "nodeFrame",
         "from": "eoks97e",
         "to": "qioaglu"
       },
@@ -9613,6 +9617,11 @@
         "from": "hsytqp3",
         "to": "tgacxe5"
       },
+      "i39y0i3": {
+        "as": "target",
+        "from": "i39y0i3",
+        "to": "4a9zo9a"
+      },
       "jiobf52": {
         "as": "value",
         "from": "jiobf52",
@@ -9622,6 +9631,11 @@
         "as": "fn",
         "from": "jjmvxjj",
         "to": "e9d6mmx"
+      },
+      "kipwn58": {
+        "as": "EffectComposer",
+        "from": "kipwn58",
+        "to": "qioaglu"
       },
       "l98p3to": {
         "as": "value",
@@ -9824,548 +9838,6 @@
         "to": "tkxqh5a"
       }
     },
-    "edges_in": {
-      "0wp18c9": {
-        "vc0quhz": {
-          "as": "value",
-          "from": "vc0quhz",
-          "to": "0wp18c9"
-        }
-      },
-      "3876w2f": {
-        "ya36a1r": {
-          "as": "module",
-          "from": "ya36a1r",
-          "to": "3876w2f"
-        }
-      },
-      "4j2wgr9": {
-        "ek93m5o": {
-          "as": "target",
-          "from": "ek93m5o",
-          "to": "4j2wgr9"
-        },
-        "l98p3to": {
-          "as": "value",
-          "from": "l98p3to",
-          "to": "4j2wgr9"
-        }
-      },
-      "5gt2zai": {
-        "ryjjzqr": {
-          "as": "runnable",
-          "from": "ryjjzqr",
-          "to": "5gt2zai"
-        }
-      },
-      "5m99dxg": {
-        "4fxcgml": {
-          "as": "renderer",
-          "from": "4fxcgml",
-          "to": "5m99dxg"
-        },
-        "fznso76": {
-          "as": "fx",
-          "from": "fznso76",
-          "to": "5m99dxg"
-        }
-      },
-      "7c7zppx": {
-        "aqfc51v": {
-          "as": "fn",
-          "from": "aqfc51v",
-          "to": "7c7zppx"
-        }
-      },
-      "7peak26": {
-        "slle0cq": {
-          "as": "target",
-          "from": "slle0cq",
-          "to": "7peak26"
-        }
-      },
-      "8m5muxn/33kmaec": {
-        "8m5muxn/zci8apj": {
-          "as": "value",
-          "from": "8m5muxn/zci8apj",
-          "to": "8m5muxn/33kmaec"
-        }
-      },
-      "8m5muxn/39ivise": {
-        "40aw44l": {
-          "as": "_renderer",
-          "from": "40aw44l",
-          "to": "8m5muxn/39ivise"
-        }
-      },
-      "8m5muxn/7in78pu": {
-        "8m5muxn/33kmaec": {
-          "as": "target",
-          "from": "8m5muxn/33kmaec",
-          "to": "8m5muxn/7in78pu"
-        },
-        "8m5muxn/v1nqvl7": {
-          "as": "value",
-          "from": "8m5muxn/v1nqvl7",
-          "to": "8m5muxn/7in78pu"
-        }
-      },
-      "8m5muxn/8m5muxn": {
-        "8m5muxn/39ivise": {
-          "as": "args",
-          "from": "8m5muxn/39ivise",
-          "to": "8m5muxn/8m5muxn"
-        },
-        "8m5muxn/njzfcz8": {
-          "as": "value",
-          "from": "8m5muxn/njzfcz8",
-          "to": "8m5muxn/8m5muxn"
-        },
-        "qioaglu": {
-          "as": "lib",
-          "from": "qioaglu",
-          "to": "8m5muxn/8m5muxn"
-        }
-      },
-      "8m5muxn/hlqmo48": {
-        "8m5muxn/7in78pu": {
-          "as": "_camera",
-          "from": "8m5muxn/7in78pu",
-          "to": "8m5muxn/hlqmo48"
-        },
-        "8m5muxn/inq87j9": {
-          "as": "_scene",
-          "from": "8m5muxn/inq87j9",
-          "to": "8m5muxn/hlqmo48"
-        }
-      },
-      "8m5muxn/inq87j9": {
-        "8m5muxn/gwavfrm": {
-          "as": "value",
-          "from": "8m5muxn/gwavfrm",
-          "to": "8m5muxn/inq87j9"
-        }
-      },
-      "8m5muxn/njzfcz8": {
-        "8m5muxn/hlqmo48": {
-          "as": "args",
-          "from": "8m5muxn/hlqmo48",
-          "to": "8m5muxn/njzfcz8"
-        },
-        "8m5muxn/vyr07ts": {
-          "as": "subscribe",
-          "from": "8m5muxn/vyr07ts",
-          "to": "8m5muxn/njzfcz8"
-        },
-        "jiobf52": {
-          "as": "value",
-          "from": "jiobf52",
-          "to": "8m5muxn/njzfcz8"
-        }
-      },
-      "8m5muxn/vyr07ts": {
-        "ptak9t2": {
-          "as": "animationframe",
-          "from": "ptak9t2",
-          "to": "8m5muxn/vyr07ts"
-        }
-      },
-      "8m5muxn/zci8apj": {
-        "t8adnxm": {
-          "as": "canvas",
-          "from": "t8adnxm",
-          "to": "8m5muxn/zci8apj"
-        }
-      },
-      "aqfc51v": {
-        "5m99dxg": {
-          "as": "true",
-          "from": "5m99dxg",
-          "to": "aqfc51v"
-        },
-        "x638fhv": {
-          "as": "pred",
-          "from": "x638fhv",
-          "to": "aqfc51v"
-        }
-      },
-      "b2z2580": {
-        "m291v0o": {
-          "as": "args",
-          "from": "m291v0o",
-          "to": "b2z2580"
-        },
-        "wcnk2sw": {
-          "as": "fn",
-          "from": "wcnk2sw",
-          "to": "b2z2580"
-        }
-      },
-      "bgi56zl": {
-        "by4m1fr": {
-          "as": "value",
-          "from": "by4m1fr",
-          "to": "bgi56zl"
-        },
-        "u0f4b37": {
-          "as": "otherwise",
-          "from": "u0f4b37",
-          "to": "bgi56zl"
-        }
-      },
-      "c6eig78": {
-        "7c7zppx": {
-          "as": "arg2",
-          "from": "7c7zppx",
-          "to": "c6eig78"
-        },
-        "o9mcda1": {
-          "as": "arg1",
-          "from": "o9mcda1",
-          "to": "c6eig78"
-        },
-        "rmqxb31": {
-          "as": "arg4",
-          "from": "rmqxb31",
-          "to": "c6eig78"
-        },
-        "z552097": {
-          "as": "arg5",
-          "from": "z552097",
-          "to": "c6eig78"
-        }
-      },
-      "cvop6x9": {
-        "e9d6mmx": {
-          "as": "otherwise",
-          "from": "e9d6mmx",
-          "to": "cvop6x9"
-        },
-        "zs7iowa": {
-          "as": "value",
-          "from": "zs7iowa",
-          "to": "cvop6x9"
-        }
-      },
-      "d8w679k": {
-        "reop6t4": {
-          "as": "entries",
-          "from": "reop6t4",
-          "to": "d8w679k"
-        }
-      },
-      "dyst9ju": {
-        "1js087x": {
-          "as": "camera",
-          "from": "1js087x",
-          "to": "dyst9ju"
-        },
-        "cha35wd": {
-          "as": "scene",
-          "from": "cha35wd",
-          "to": "dyst9ju"
-        },
-        "cvop6x9": {
-          "as": "renderer",
-          "from": "cvop6x9",
-          "to": "dyst9ju"
-        }
-      },
-      "e9d6mmx": {
-        "0wp18c9": {
-          "as": "args",
-          "from": "0wp18c9",
-          "to": "e9d6mmx"
-        },
-        "cwrlosg": {
-          "as": "run",
-          "from": "cwrlosg",
-          "to": "e9d6mmx"
-        },
-        "jjmvxjj": {
-          "as": "fn",
-          "from": "jjmvxjj",
-          "to": "e9d6mmx"
-        }
-      },
-      "ek93m5o": {
-        "dq4u9ji": {
-          "as": "target",
-          "from": "dq4u9ji",
-          "to": "ek93m5o"
-        }
-      },
-      "eoks97e": {
-        "x7oyebe": {
-          "as": "value",
-          "from": "x7oyebe",
-          "to": "eoks97e"
-        }
-      },
-      "hsytqp3": {
-        "1j95u16": {
-          "as": "canvas",
-          "from": "1j95u16",
-          "to": "hsytqp3"
-        }
-      },
-      "jiobf52": {
-        "f7krd8u": {
-          "as": "objects",
-          "from": "f7krd8u",
-          "to": "jiobf52"
-        },
-        "slwyovm": {
-          "as": "renderer",
-          "from": "slwyovm",
-          "to": "jiobf52"
-        }
-      },
-      "l98p3to": {
-        "s208cfn": {
-          "as": "target",
-          "from": "s208cfn",
-          "to": "l98p3to"
-        }
-      },
-      "lsf5igz": {
-        "ploozds": {
-          "as": "pred",
-          "from": "ploozds",
-          "to": "lsf5igz"
-        },
-        "tkxqh5a": {
-          "as": "true",
-          "from": "tkxqh5a",
-          "to": "lsf5igz"
-        }
-      },
-      "lugpx4o": {
-        "6s18wo7": {
-          "as": "camera",
-          "from": "6s18wo7",
-          "to": "lugpx4o"
-        },
-        "eamyj81": {
-          "as": "scene",
-          "from": "eamyj81",
-          "to": "lugpx4o"
-        },
-        "svcshll": {
-          "as": "canvas",
-          "from": "svcshll",
-          "to": "lugpx4o"
-        },
-        "tgacxe5": {
-          "as": "renderer",
-          "from": "tgacxe5",
-          "to": "lugpx4o"
-        },
-        "vwa13pj": {
-          "as": "fx",
-          "from": "vwa13pj",
-          "to": "lugpx4o"
-        },
-        "vzmvbqh": {
-          "as": "MotionBlur",
-          "from": "vzmvbqh",
-          "to": "lugpx4o"
-        }
-      },
-      "m291v0o": {
-        "2veqlq1": {
-          "as": "scene",
-          "from": "2veqlq1",
-          "to": "m291v0o"
-        },
-        "xgl6r05": {
-          "as": "objects",
-          "from": "xgl6r05",
-          "to": "m291v0o"
-        },
-        "y2f8gog": {
-          "as": "camera",
-          "from": "y2f8gog",
-          "to": "m291v0o"
-        }
-      },
-      "na6fxum": {
-        "8ivgw9u": {
-          "as": "false",
-          "from": "8ivgw9u",
-          "to": "na6fxum"
-        },
-        "d8w679k": {
-          "as": "true",
-          "from": "d8w679k",
-          "to": "na6fxum"
-        },
-        "f288n1z": {
-          "as": "pred",
-          "from": "f288n1z",
-          "to": "na6fxum"
-        }
-      },
-      "o9mcda1": {
-        "lsf5igz": {
-          "as": "fn",
-          "from": "lsf5igz",
-          "to": "o9mcda1"
-        }
-      },
-      "ptak9t2": {
-        "c6eig78": {
-          "as": "fn",
-          "from": "c6eig78",
-          "to": "ptak9t2"
-        }
-      },
-      "qioaglu": {
-        "eoks97e": {
-          "as": "EffectComposer",
-          "from": "eoks97e",
-          "to": "qioaglu"
-        },
-        "vl4foaa": {
-          "as": "RenderPass",
-          "from": "vl4foaa",
-          "to": "qioaglu"
-        }
-      },
-      "reop6t4": {
-        "bgi56zl": {
-          "as": "object",
-          "from": "bgi56zl",
-          "to": "reop6t4"
-        }
-      },
-      "rmqxb31": {
-        "b2z2580": {
-          "as": "true",
-          "from": "b2z2580",
-          "to": "rmqxb31"
-        },
-        "mh5ikoc": {
-          "as": "pred",
-          "from": "mh5ikoc",
-          "to": "rmqxb31"
-        }
-      },
-      "ryjjzqr": {
-        "4j2wgr9": {
-          "as": "fn",
-          "from": "4j2wgr9",
-          "to": "ryjjzqr"
-        },
-        "sfzzxee": {
-          "as": "parameters",
-          "from": "sfzzxee",
-          "to": "ryjjzqr"
-        }
-      },
-      "sfzzxee": {
-        "wgn4yl2": {
-          "as": "element",
-          "from": "wgn4yl2",
-          "to": "sfzzxee"
-        }
-      },
-      "tgacxe5": {
-        "hsytqp3": {
-          "as": "value",
-          "from": "hsytqp3",
-          "to": "tgacxe5"
-        }
-      },
-      "tkxqh5a": {
-        "z51c26o": {
-          "as": "children",
-          "from": "z51c26o",
-          "to": "tkxqh5a"
-        },
-        "zz2yk2z": {
-          "as": "parent",
-          "from": "zz2yk2z",
-          "to": "tkxqh5a"
-        }
-      },
-      "vc0quhz": {
-        "lugpx4o": {
-          "as": "value",
-          "from": "lugpx4o",
-          "to": "vc0quhz"
-        }
-      },
-      "vl4foaa": {
-        "7peak26": {
-          "as": "value",
-          "from": "7peak26",
-          "to": "vl4foaa"
-        }
-      },
-      "vwa13pj": {
-        "fzf3k5e": {
-          "as": "RenderPass",
-          "from": "fzf3k5e",
-          "to": "vwa13pj"
-        },
-        "gap7au7": {
-          "as": "EffectComposer",
-          "from": "gap7au7",
-          "to": "vwa13pj"
-        }
-      },
-      "vzmvbqh": {
-        "23ppkmp": {
-          "as": "pred",
-          "from": "23ppkmp",
-          "to": "vzmvbqh"
-        },
-        "3876w2f": {
-          "as": "true",
-          "from": "3876w2f",
-          "to": "vzmvbqh"
-        }
-      },
-      "x638fhv": {
-        "xel6go6": {
-          "as": "arg0",
-          "from": "xel6go6",
-          "to": "x638fhv"
-        },
-        "xmd2fqb": {
-          "as": "arg1",
-          "from": "xmd2fqb",
-          "to": "x638fhv"
-        }
-      },
-      "x7oyebe": {
-        "lm0iyoq": {
-          "as": "target",
-          "from": "lm0iyoq",
-          "to": "x7oyebe"
-        }
-      },
-      "z51c26o": {
-        "5gt2zai": {
-          "as": "fn",
-          "from": "5gt2zai",
-          "to": "z51c26o"
-        },
-        "na6fxum": {
-          "as": "array",
-          "from": "na6fxum",
-          "to": "z51c26o"
-        }
-      },
-      "z552097": {
-        "dyst9ju": {
-          "as": "fn",
-          "from": "dyst9ju",
-          "to": "z552097"
-        }
-      }
-    },
     "id": "@three.setup",
     "name": "three.setup",
     "nodes": {
@@ -10436,6 +9908,11 @@
         "name": "",
         "ref": "@js.script",
         "value": "const existingObj = scene.getObjectByName(name);\nif(obj && existingObj !== obj){\n  if(existingObj) {\n    console.log(\"removing\", existingObj);\n    scene.remove(existingObj);\n    existingObj.geometry?.dispose();\n    existingObj.material?.dispose();\n  }\n  console.log(\"adding\", obj);\n  obj.name = name;\n  scene.add(obj); \n}\nreturn name;"
+      },
+      "4a9zo9a": {
+        "id": "4a9zo9a",
+        "ref": "@data.get",
+        "value": "EffectComposer"
       },
       "4dll59e": {
         "__isnodysseus": true,
@@ -10623,7 +10100,7 @@
       "dyst9ju": {
         "id": "dyst9ju",
         "ref": "@js.script",
-        "value": "if(renderer) {\n  //renderer.render(scene, camera);\n  renderer.render();\n}"
+        "value": "if(renderer) {\n  //renderer.render(scene, camera);\n  _lib.nodeFrame.update();\n  renderer.render();\n}"
       },
       "e9d6mmx": {
         "id": "e9d6mmx",
@@ -10696,6 +10173,11 @@
         "name": "",
         "ref": "@three.renderer"
       },
+      "i39y0i3": {
+        "id": "i39y0i3",
+        "ref": "@js.import_module",
+        "value": "https://cdn.jsdelivr.net/npm/three/examples/jsm/postprocessing/EffectComposer.js"
+      },
       "iaa28z8": {
         "id": "iaa28z8"
       },
@@ -10721,6 +10203,10 @@
         "id": "kgsdo8c",
         "ref": "@data.object_entries"
       },
+      "kipwn58": {
+        "id": "kipwn58",
+        "ref": "@memory.cache"
+      },
       "l8jka3p": {
         "id": "l8jka3p",
         "ref": "@js.script",
@@ -10734,7 +10220,7 @@
       "lm0iyoq": {
         "id": "lm0iyoq",
         "ref": "@js.import_module",
-        "value": "https://cdn.jsdelivr.net/npm/three/examples/jsm/postprocessing/EffectComposer.js"
+        "value": "https://cdn.jsdelivr.net/npm/three/examples/jsm/renderers/webgl/nodes/WebGLNodes.js"
       },
       "lqc9zjk": {
         "id": "lqc9zjk",
@@ -10928,7 +10414,7 @@
       "x7oyebe": {
         "id": "x7oyebe",
         "ref": "@data.get",
-        "value": "EffectComposer"
+        "value": "nodeFrame"
       },
       "xel6go6": {
         "id": "xel6go6",
@@ -10988,7 +10474,8 @@
         "value": "_scene"
       }
     },
-    "out": "8m5muxn/8m5muxn"
+    "out": "8m5muxn/8m5muxn",
+    "description": "Creates a basic three.js scene with a camera, renderer, and scene. The `objects` input has the objects of the scene, evaluated every frame - make sure to cache. The `onupdate` input is a runnable with parameters `objects`, `camera`, and `scene` which is run every frame - keep. The `fx` input has effects for an EffectComposer."
   },
   {
     "edges": {
