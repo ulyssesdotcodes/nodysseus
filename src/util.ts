@@ -57,7 +57,7 @@ export type FlattenPromise<T> = T extends Promise<infer Item> ? Item : T;
 export const mapMaybePromise = <T, S>(a: T, fn: (t: FlattenPromise<T>) => S): IfPromise<T, S> => (ispromise(a) ? a.then(fn as (value: unknown) => S | PromiseLike<S>) : (fn(a as FlattenPromise<T>))) as IfPromise<T, S>
 
 export const base_node = node => node.ref || node.extern ? ({id: node.id, value: node.value, name: node.name, ref: node.ref}) : base_graph(node);
-export const base_graph = graph => ({id: graph.id, value: graph.value, name: graph.name, nodes: graph.nodes, edges: graph.edges, edges_in: graph.edges_in, out: graph.out})
+export const base_graph = graph => ({id: graph.id, value: graph.value, name: graph.name, nodes: graph.nodes, edges: graph.edges, edges_in: graph.edges_in, out: graph.out, description: graph.description})
 
 export const create_randid = () => Math.random().toString(36).substring(2, 9);
 type FlattenedGraph = {flat_nodes: Record<string, NodysseusNode>, flat_edges: Record<string, Edge>};

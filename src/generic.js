@@ -4576,11 +4576,6 @@ const generic = {
         "value": "_lib.no.runtime.add_ref(graph); return graph;",
         "ref": "@js.script"
       },
-      "sl7qlmj": {
-        "id": "sl7qlmj",
-        "value": "scripts.save_graph",
-        "ref": "@js.call"
-      },
       "ukrwz7a": {
         "id": "ukrwz7a"
       },
@@ -4680,15 +4675,10 @@ const generic = {
         "to": "cixrltc",
         "as": "graph"
       },
-      "sl7qlmj": {
-        "from": "sl7qlmj",
-        "to": "yu0e7mk",
-        "as": "fn"
-      },
       "cixrltc": {
         "from": "cixrltc",
-        "to": "sl7qlmj",
-        "as": "args"
+        "to": "yu0e7mk",
+        "as": "fn"
       },
       "ukrwz7a": {
         "from": "ukrwz7a",

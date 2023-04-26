@@ -193,16 +193,15 @@ export const automergeStore = async ({persist} = { persist: false }): Promise<No
 
 
   const refs: RefStore = {
-      get: (id) => {
-        return generic_nodes[id] ?? (structuredCloneMap.has(id) 
+      get: (id) => generic_nodes[id] ?? (structuredCloneMap.has(id) 
           ? structuredCloneMap.get(id) 
           : wrapPromise(getDoc(id))
             .then(d => {
               const scd = structuredClone(d);
               structuredCloneMap.set(id, scd);
               return scd;
-            }).value);
-      },
+            }).value)
+      ,
       set: (id, graph) => changeDoc(id, setFromGraph(graph)),
       delete: (id) => {
         refsmap.delete(id);
