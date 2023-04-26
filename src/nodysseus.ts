@@ -1629,31 +1629,24 @@ const nolib = {
       },
     },
     merge_objects_mutable: {
-      args: ["target", "_node_args"],
-      fn: (target, args) => {
+      args: ["target", "_node_args", "_lib", "_runoptions"],
+      fn: (target, args, lib, options) => {
         const keys = Object.keys(args).filter(k => k !== "target").sort();
-        const resolved = {};
-        keys.forEach(
-          (k) => (resolved[k] = isValue(args[k]) ? args[k].value : args[k])
-        );
-        const promise = keys.reduce(
-          (acc, k) => acc || ispromise(resolved[k]),
-          false
-        );
-        return promise
-          ? Promise.all(keys.map((k) => Promise.resolve(resolved[k]))).then(
-              (es) =>
-                Object.assign(
-                  {},
-                  ...es.filter((a) => a && typeof a === "object")
+        return wrapPromiseAll(keys.map(k => [k, isRunnable(args[k]) ? run_runnable(args[k], lib) : args[k]]))
+          .then(inputs => wrapPromiseAll(inputs
+                  .map(kv => [kv[0], isValue(kv[1]) ? kv[1].value : kv[1]])
+                  .map(kv => [kv[0], isArgs(kv[1]) ? resolve_args(kv[1], lib, options) : kv[1]]))
+                .then(kvs => Object.fromEntries(kvs.map(kv => [kv[0], isValue(kv[1]) ? kv[1].value : kv[1]]))).value
+           )
+          .then(resolved =>
+              Object.assign(
+                  target,
+                  ...keys
+                    .map((k) => resolved[k])
+                    .map(a => isArgs(a) ? Object.fromEntries(a.entries()) : a)
+                    .filter((a) => a && typeof a === "object")
                 )
-            )
-          : Object.assign(
-              target,
-              ...keys
-                .map((k) => resolved[k])
-                .filter((a) => a && typeof a === "object")
-            );
+           ).value
       }
     },
     merge_objects: {

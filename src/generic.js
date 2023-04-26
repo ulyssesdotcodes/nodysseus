@@ -4564,7 +4564,7 @@ const generic = {
       },
       "ij46kiv": {
         "id": "ij46kiv",
-        "value": "return ({id: graph.id, value: graph.value, name: graph.name, nodes: graph.nodes, edges: graph.edges, out: graph.out})",
+        "value": "return ({id: graph.id, value: graph.value, name: graph.name, nodes: graph.nodes, edges: graph.edges, out: graph.out, description: graph.description})",
         "ref": "@js.script"
       },
       "hcp6xds": {

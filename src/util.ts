@@ -41,10 +41,10 @@ export const wrapPromise = <T>(t: T, c?: <E extends Error, S>(fn: (e?: E) => S) 
       value: t
     }) as WrappedPromise<FlattenWrappedPromise<T>>
 
-export const wrapPromiseAll = (wrappedPromises: Array<WrappedPromise<any>>): WrappedPromise<Array<any> | Promise<Array<any>>> => {
-  const hasPromise = wrappedPromises.reduce((acc, wrappedPromise) => acc || ispromise(wrappedPromise.value), false)
-  return wrapPromise(hasPromise ? Promise.all(wrappedPromises.map(wp => Promise.resolve(wp.value)))
-    : wrappedPromises.map(wp => wp.value));
+export const wrapPromiseAll = <T>(wrappedPromises: Array<WrappedPromise<T> | T>): WrappedPromise<Array<any> | Promise<Array<any>>> => {
+  const hasPromise = wrappedPromises.reduce((acc, wrappedPromise) => acc || ispromise(isWrappedPromise(wrappedPromise) ? wrappedPromise.value : wrappedPromise), false)
+  return wrapPromise(hasPromise ? Promise.all(wrappedPromises.map(wp => Promise.resolve(isWrappedPromise(wp) ? wp.value : wp)))
+    : wrappedPromises.map(wp => isWrappedPromise(wp) ? wp.value : wp));
 }
 
 // type MaybePromiseFn<T, S> = T extends Promise<infer Item> ? ((i: Item) => S) : ((i: T) => S);
