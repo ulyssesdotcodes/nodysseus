@@ -7265,8 +7265,13 @@
   {
     "edges": {
       "000f5nd": {
-        "as": "name",
+        "as": "_name",
         "from": "000f5nd",
+        "to": "q4tskdl"
+      },
+      "0okmkrx": {
+        "as": "name",
+        "from": "0okmkrx",
         "to": "q4tskdl"
       },
       "20oh4kr": {
@@ -7283,6 +7288,11 @@
         "as": "vec4",
         "from": "32bvp2b",
         "to": "000f5nd"
+      },
+      "4j9lqoh": {
+        "as": "returnFn",
+        "from": "4j9lqoh",
+        "to": "id8jixz"
       },
       "5h3tni4": {
         "as": "file",
@@ -7309,6 +7319,11 @@
         "from": "7a4ey4g",
         "to": "000f5nd"
       },
+      "ca5hqn9": {
+        "as": "otherwise",
+        "from": "ca5hqn9",
+        "to": "0okmkrx"
+      },
       "cknmtsk": {
         "as": "value",
         "from": "cknmtsk",
@@ -7324,15 +7339,20 @@
         "from": "ey4gvl8",
         "to": "000f5nd"
       },
+      "gnzn1uk": {
+        "as": "value",
+        "from": "gnzn1uk",
+        "to": "0okmkrx"
+      },
       "gp1qalc": {
         "as": "otherwise",
         "from": "gp1qalc",
         "to": "k02afe9"
       },
       "id8jixz": {
-        "as": "value",
+        "as": "target",
         "from": "id8jixz",
-        "to": "6ix2nl8"
+        "to": "t6qdmmq"
       },
       "ji51v7a": {
         "as": "otherwise",
@@ -7360,7 +7380,7 @@
         "to": "stp926h"
       },
       "req05n5": {
-        "as": "args",
+        "as": "_args",
         "from": "req05n5",
         "to": "6ix2nl8"
       },
@@ -7368,6 +7388,11 @@
         "as": "Node",
         "from": "stp926h",
         "to": "id8jixz"
+      },
+      "t6qdmmq": {
+        "as": "value",
+        "from": "t6qdmmq",
+        "to": "6ix2nl8"
       },
       "vy3uvh7": {
         "as": "float",
@@ -7393,6 +7418,11 @@
         "as": "url",
         "from": "y6p5j3a",
         "to": "r5a95d2"
+      },
+      "yvybdi8": {
+        "as": "arg0",
+        "from": "yvybdi8",
+        "to": "t6qdmmq"
       },
       "ztsrxfz": {
         "as": "value",
@@ -7438,6 +7468,18 @@
           "to": "000f5nd"
         }
       },
+      "0okmkrx": {
+        "ca5hqn9": {
+          "as": "otherwise",
+          "from": "ca5hqn9",
+          "to": "0okmkrx"
+        },
+        "gnzn1uk": {
+          "as": "value",
+          "from": "gnzn1uk",
+          "to": "0okmkrx"
+        }
+      },
       "5h3tni4": {
         "6uwm50y": {
           "as": "name",
@@ -7446,14 +7488,14 @@
         }
       },
       "6ix2nl8": {
-        "id8jixz": {
-          "as": "value",
-          "from": "id8jixz",
+        "req05n5": {
+          "as": "_args",
+          "from": "req05n5",
           "to": "6ix2nl8"
         },
-        "req05n5": {
-          "as": "args",
-          "from": "req05n5",
+        "t6qdmmq": {
+          "as": "value",
+          "from": "t6qdmmq",
           "to": "6ix2nl8"
         }
       },
@@ -7477,6 +7519,11 @@
         }
       },
       "id8jixz": {
+        "4j9lqoh": {
+          "as": "returnFn",
+          "from": "4j9lqoh",
+          "to": "id8jixz"
+        },
         "k02afe9": {
           "as": "args",
           "from": "k02afe9",
@@ -7502,8 +7549,13 @@
       },
       "q4tskdl": {
         "000f5nd": {
-          "as": "name",
+          "as": "_name",
           "from": "000f5nd",
+          "to": "q4tskdl"
+        },
+        "0okmkrx": {
+          "as": "name",
+          "from": "0okmkrx",
           "to": "q4tskdl"
         }
       },
@@ -7557,6 +7609,18 @@
           "to": "t2wl30j"
         }
       },
+      "t6qdmmq": {
+        "id8jixz": {
+          "as": "target",
+          "from": "id8jixz",
+          "to": "t6qdmmq"
+        },
+        "yvybdi8": {
+          "as": "arg0",
+          "from": "yvybdi8",
+          "to": "t6qdmmq"
+        }
+      },
       "y6p5j3a": {
         "wonswm4": {
           "as": "name",
@@ -7566,11 +7630,15 @@
       }
     },
     "id": "@three.node",
-    "name": "FxPass",
+    "name": "@three.node",
     "nodes": {
       "000f5nd": {
         "id": "000f5nd",
         "ref": "@flow.switch"
+      },
+      "0okmkrx": {
+        "id": "0okmkrx",
+        "ref": "@flow.default"
       },
       "20oh4kr": {
         "id": "20oh4kr",
@@ -7580,11 +7648,16 @@
       "2tffpiq": {
         "id": "2tffpiq",
         "ref": "arg",
-        "value": "exprt"
+        "value": "name"
       },
       "32bvp2b": {
         "id": "32bvp2b",
         "value": "shadernode/ShaderNode.vec4"
+      },
+      "4j9lqoh": {
+        "id": "4j9lqoh",
+        "ref": "arg",
+        "value": "returnFn"
       },
       "5h3tni4": {
         "id": "5h3tni4",
@@ -7609,6 +7682,11 @@
         "id": "7a4ey4g",
         "value": "shadernode/ShaderNode.string"
       },
+      "ca5hqn9": {
+        "id": "ca5hqn9",
+        "ref": "arg",
+        "value": "__graph_value"
+      },
       "cknmtsk": {
         "id": "cknmtsk",
         "ref": "@memory.graphchangecache"
@@ -7621,6 +7699,11 @@
         "id": "ey4gvl8",
         "value": "shadernode/ShaderNode.int"
       },
+      "gnzn1uk": {
+        "id": "gnzn1uk",
+        "ref": "arg",
+        "value": "name"
+      },
       "gp1qalc": {
         "id": "gp1qalc",
         "value": "[]"
@@ -7628,7 +7711,7 @@
       "id8jixz": {
         "id": "id8jixz",
         "ref": "@js.script",
-        "value": "console.log(\"node\", Node);\nreturn Node(...(Array.isArray(args) ? args : [args]));"
+        "value": "if(returnFn) return Node;\n\nconst argArr = (Array.isArray(args) ? args : [args]);\ntry {\n  return new Node(...argArr)\n}catch(e){}\nreturn typeof Node === \"function\" ?  Node(...argArr) : Node;"
       },
       "ji51v7a": {
         "id": "ji51v7a",
@@ -7649,8 +7732,7 @@
       },
       "r5a95d2": {
         "id": "r5a95d2",
-        "ref": "@js.import_module",
-        "value": "https://cdn.jsdelivr.net/npm/three/examples/jsm/postprocessing/AfterimagePass.js"
+        "ref": "@js.import_module"
       },
       "req05n5": {
         "id": "req05n5"
@@ -7663,6 +7745,10 @@
         "id": "t2wl30j",
         "name": "@three.node",
         "ref": "return"
+      },
+      "t6qdmmq": {
+        "id": "t6qdmmq",
+        "ref": "@data.merge_objects_mutable"
       },
       "vy3uvh7": {
         "id": "vy3uvh7",
@@ -7684,7 +7770,12 @@
       "y6p5j3a": {
         "id": "y6p5j3a",
         "ref": "@js.script",
-        "value": "return `https://cdn.jsdelivr.net/npm/three/examples/jsm/nodes/${name}.js`"
+        "value": "return `https://cdn.jsdelivr.net/npm/three/examples/jsm/nodes/Nodes.js`"
+      },
+      "yvybdi8": {
+        "id": "yvybdi8",
+        "ref": "arg",
+        "value": "_args"
       },
       "ztsrxfz": {
         "id": "ztsrxfz",
