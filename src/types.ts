@@ -171,9 +171,10 @@ export type RunOptions = {
 }
 
 type FullyTypedArg = { 
-  type: string, 
+  type: string
   default?: boolean
   additionalArg?: boolean
+  local?: boolean
 }
 
 export type TypedArg = string | FullyTypedArg

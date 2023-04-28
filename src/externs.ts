@@ -25,7 +25,6 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib) => {
 
 
         Object.values(graph.nodes).forEach(n => {
-          const args = util.node_args(lib.data, graph, n.id)
           if(isNodeRef(n) && n.ref === "arg") {
             return;
           }

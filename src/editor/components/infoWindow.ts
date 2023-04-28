@@ -2,9 +2,8 @@ import * as ha from "hyperapp"
 import { Edge, Graph, isNodeGraph, isNodeRef, NodysseusNode, RefNode, ValueNode } from "src/types";
 import generic from "../../generic";
 import {nolib} from "../../nodysseus"
-import { node_args } from "../../util";
 import { d3Link, d3Node, HyperappState } from "../types";
-import { ChangeEditingGraphId, Copy, CreateNode, CreateRef, DeleteNode, ExpandContract, middleware, Paste, run_h, SaveGraph, SelectNode, UpdateEdge, UpdateNode, UpdateNodeEffect } from "../util";
+import { ChangeEditingGraphId, Copy, CreateNode, CreateRef, DeleteNode, ExpandContract, middleware, node_args, Paste, run_h, SaveGraph, SelectNode, UpdateEdge, UpdateNode, UpdateNodeEffect } from "../util";
 
 export const info_display = html_id => ha.app({
     init: {el: {dom_type: 'div', props: {}, children: []}},

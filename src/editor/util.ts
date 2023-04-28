@@ -1,13 +1,14 @@
 import * as ha from "hyperapp"
 import { initStore, nodysseus_get, nolib, run, NodysseusError } from "../nodysseus";
-import { Edge, Graph, isArgs, isRunnable, Lib, NodysseusNode } from "../types";
-import { base_node, base_graph, ispromise, wrapPromise, node_args, expand_node, contract_node, ancestor_graph, create_randid, compareObjects } from "../util";
+import { Edge, Graph, isArgs, isNodeGraph, isNodeRef, isRunnable, Lib, NodeArg, NodysseusNode, TypedArg } from "../types";
+import { base_node, base_graph, ispromise, wrapPromise, expand_node, contract_node, ancestor_graph, create_randid, compareObjects, newLib } from "../util";
 import panzoom, * as pz from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 import { d3Link, d3Node, HyperappState, Levels, Property } from "./types";
 import { UpdateGraphDisplay, UpdateSimulation, d3subscription, updateSimulationNodes } from "./components/graphDisplay";
 import AutocompleteList from "./autocomplete";
 import { uuid } from "@automerge/automerge";
+import { parser } from "@lezer/javascript";
 
 export const EXAMPLES = ["threejs_example", "hydra_example", "threejs_boilerplate", "threejs_force_attribute_example"];
 
@@ -764,6 +765,102 @@ export const calculateLevels = (nodes: Array<d3Node>, links: Array<d3Link>, grap
         nodes_by_level: [...levels.entries()].reduce((acc, [n, l]) => (acc[l] ? acc[l].push(n) : acc[l] = [n], acc), {}),
     }
 }
+
+const parseTypedArg = (value: string): TypedArg => {
+  const argColon = value.includes(":") && [value.substring(0, value.indexOf(":")), value.substring(value.indexOf(":") + 1)];
+  if(!argColon) return value
+  if(argColon[1] === "internal") return {type: "any", local: true}
+  try {
+    return JSON.parse(argColon[1])
+  }catch(e){
+    console.error("Error parsing arg type", e)
+  }
+
+  return argColon[0]
+}
+
+export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Array<NodeArg> => {
+    const node = nolib.no.runtime.get_node(graph, node_id);
+    if(!node) {
+        // between graph update and simulation update it's possible links are bad
+        return []
+    }
+    const node_ref = node?.ref ? nolib.no.runtime.get_ref(node.ref) : node;
+    const edges_in = nolib.no.runtime.get_edges_in(graph, node_id);
+    const edge_out = nolib.no.runtime.get_edge_out(graph, node_id)
+    if(ispromise(edges_in) || ispromise(edge_out)) {
+      return []
+    }
+    const node_out = edge_out && edge_out.as === "parameters" && nolib.no.runtime.get_node(graph, edge_out.to);
+    const node_out_args: Array<[string, string]> = node_out?.ref === "@flow.runnable" && 
+      Object.values(ancestor_graph(node_out.id, graph, nolib).nodes)
+        .filter(isNodeRef)
+        .filter(n => n.ref === "arg")
+        .map(a => a.value?.includes(".") 
+          ? a.value?.substring(0, a.value?.indexOf(".")) : a.value)
+        .map(a => [a, "any"]);
+
+    // const argslist_path = node_ref?.nodes && nolib.no.runtime.get_path(node_ref, "argslist");
+
+    const nextIndexedArg = "arg" + ((
+        edges_in?.filter(l => l.as?.startsWith("arg") && new RegExp("[0-9]+").test(l.as.substring(3)))
+                .map(l => parseInt(l.as.substring(3))) ?? [])
+            .reduce((acc, i) => acc > i ? acc : i + 1, 0))
+    
+    const externfn = node_ref?.ref === "extern" && nodysseus_get(nolib, node_ref?.value, newLib(nolib))
+    const externArgs = externfn && (Array.isArray(externfn.args) ? externfn.args.map(a => {
+      const argColonIdx = a.indexOf(":")
+      return [argColonIdx >= 0 ? a.substring(0, argColonIdx) : a, "any"]
+    }) : Object.entries(externfn.args));
+    const baseargs: Array<[string ,TypedArg]> = externfn
+            ? externArgs
+              ? externArgs
+              : ['args']
+            : isNodeGraph(node_ref)
+            ? Object.values(node_ref?.nodes)
+                .filter(isNodeRef)
+                .filter(n => n.ref === "arg")
+                .map<[string, TypedArg]>(n => [n.value.split(".")[0], parseTypedArg(n.value)])
+                .filter(a => typeof a[1] === "string" || !a[1].local)?? []
+            : []
+
+    const typedArgsMap = new Map(baseargs
+        .filter(a => !a[0].includes('.') && !a[0].startsWith("_"))
+        .concat(
+            (externArgs && externArgs.map(a => a[0]).includes("_node_args") || baseargs.map(a => a[0]).includes("_args"))
+            || (node.ref === undefined && !node.value)
+            ? [[nextIndexedArg, {type: "any", additionalArg: true}]]
+            : []
+        )
+        .concat(node_out_args ? node_out_args : []))
+
+    const scriptVarNames = node.ref === "@js.script" && new Set<string>();
+    if(node.ref === "@js.script" && typeof node.value === "string") {
+      const scriptVarDecs = node.ref === "@js.script" && new Set<string>();
+      parser.parse(node.value).iterate({
+        enter: syntaxNode => syntaxNode.name === "VariableName" 
+          ? !!scriptVarNames.add(node.value.substring(syntaxNode.from, syntaxNode.to))
+          : syntaxNode.name === "VariableDeclaration" && syntaxNode.node.getChild("VariableDefinition")
+          ? !!scriptVarDecs.add(node.value.substring(
+            syntaxNode.node.getChild("VariableDefinition").from,
+            syntaxNode.node.getChild("VariableDefinition").to
+          ))
+          : undefined
+      })
+      scriptVarDecs.forEach(dec => scriptVarNames.delete(dec));
+    }
+
+    return [...typedArgsMap]
+    .concat(
+      edges_in?.filter(e => !typedArgsMap.has(e.as))
+        .map(e => [e.as, "any"]))
+    .concat(scriptVarNames ? [...scriptVarNames].map(n => [n, "any"]) : [])
+    .map((a: [string, TypedArg]) => ({
+      exists: !!edges_in?.find(e => e.as === a[0]), 
+      name: a[0], ...(typeof a[1] === "object" ? a[1] : {type: a[1]})
+    }))
+}
+
 
 
 
