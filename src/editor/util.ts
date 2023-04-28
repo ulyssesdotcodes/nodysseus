@@ -824,21 +824,11 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Ar
                 .filter(a => typeof a[1] === "string" || !a[1].local)?? []
             : []
 
-    const typedArgsMap = new Map(baseargs
-        .filter(a => !a[0].includes('.') && !a[0].startsWith("_"))
-        .concat(
-            (externArgs && externArgs.map(a => a[0]).includes("_node_args") || baseargs.map(a => a[0]).includes("_args"))
-            || (node.ref === undefined && !node.value)
-            ? [[nextIndexedArg, {type: "any", additionalArg: true}]]
-            : []
-        )
-        .concat(node_out_args ? node_out_args : []))
-
     const scriptVarNames = node.ref === "@js.script" && new Set<string>();
     if(node.ref === "@js.script" && typeof node.value === "string") {
       const scriptVarDecs = node.ref === "@js.script" && new Set<string>();
       parser.parse(node.value).iterate({
-        enter: syntaxNode => syntaxNode.name === "VariableName" 
+        enter: syntaxNode => syntaxNode.name === "VariableName" && !window[node.value.substring(syntaxNode.from, syntaxNode.to)]
           ? !!scriptVarNames.add(node.value.substring(syntaxNode.from, syntaxNode.to))
           : syntaxNode.name === "VariableDeclaration" && syntaxNode.node.getChild("VariableDefinition")
           ? !!scriptVarDecs.add(node.value.substring(
@@ -850,15 +840,24 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Ar
       scriptVarDecs.forEach(dec => scriptVarNames.delete(dec));
     }
 
+    const typedArgsMap = new Map(
+      edges_in?.map(e => [e.as, "any"])
+        .concat(baseargs)
+        .filter(a => !a[0].includes('.') && !a[0].startsWith("_"))
+        .concat(
+            (externArgs && externArgs.map(a => a[0]).includes("_node_args") || baseargs.map(a => a[0]).includes("_args"))
+            || (node.ref === undefined && !node.value)
+            ? [[nextIndexedArg, {type: "any", additionalArg: true}]]
+            : []
+        )
+        .concat(node_out_args ? node_out_args : [])
+        .concat(scriptVarNames ? [...scriptVarNames].map(n => [n, "any"]) : []))
+
     return [...typedArgsMap]
-    .concat(
-      edges_in?.filter(e => !typedArgsMap.has(e.as))
-        .map(e => [e.as, "any"]))
-    .concat(scriptVarNames ? [...scriptVarNames].map(n => [n, "any"]) : [])
-    .map((a: [string, TypedArg]) => ({
-      exists: !!edges_in?.find(e => e.as === a[0]), 
-      name: a[0], ...(typeof a[1] === "object" ? a[1] : {type: a[1]})
-    }))
+      .map((a: [string, TypedArg]) => ({
+        exists: !!edges_in?.find(e => e.as === a[0]), 
+        name: a[0], ...(typeof a[1] === "object" ? a[1] : {type: a[1]})
+      }))
 }
 
 
