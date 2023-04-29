@@ -765,18 +765,19 @@ export const calculateLevels = (nodes: Array<d3Node>, links: Array<d3Link>, grap
     }
 }
 
-const parseTypedArg = (value: string): TypedArg => {
+const parseTypedArg = (value: string): [string, TypedArg] => {
   const argColon = value.includes(":") && [value.substring(0, value.indexOf(":")), value.substring(value.indexOf(":") + 1)].map(v => v.trim());
-  if(!argColon) return value
-  if(argColon[1] === "internal") return {type: "any", local: true}
-  if(argColon[1] === "default") return {type: "any", default: true}
+  const outName = (argColon[0] ?? value).includes('.') ? (argColon[0] ?? value).split('.')[0] : (argColon[0] ?? value);
+  if(!argColon) return [outName, "any"]
+  if(argColon[1] === "internal") return [outName, {type: "any", local: true}]
+  if(argColon[1] === "default") return [outName, {type: "any", default: true}]
   try {
-    return JSON.parse(argColon[1])
+    return [outName, JSON.parse(argColon[1])]
   }catch(e){
     console.error("Error parsing arg type", e)
   }
 
-  return argColon[0]
+  return [outName, "any"]
 }
 
 export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Array<NodeArg> => {
@@ -820,7 +821,7 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Ar
             ? Object.values(node_ref?.nodes)
                 .filter(isNodeRef)
                 .filter(n => n.ref === "arg")
-                .map<[string, TypedArg]>(n => [n.value.split(".")[0], parseTypedArg(n.value)])
+                .map<[string, TypedArg]>(n => parseTypedArg(n.value))
                 .filter(a => typeof a[1] === "string" || !a[1].local)?? []
             : []
 
