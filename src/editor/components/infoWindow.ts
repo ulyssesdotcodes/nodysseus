@@ -85,15 +85,13 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                     }, [ha.text(n.exists ? n.name : `+${n.name}`)]))),
             ha.h('div', {class: "inputs"}, [
                 ha.memo(node => infoInput({
-                    label: isNodeRef(node) && node.ref === "return" ? "name" : "comment", 
-                    value: node.name, 
-                    property: "name", 
+                    label: 'graph',
+                    value: (node as RefNode).ref,
+                    property: 'ref',
                     inputs,
-                    onchange: (state, {value}) =>
-                        isOut 
-                        ? [state, [ChangeEditingGraphId, {id: value, select_out: true, editingGraphId}]]
-                        : [UpdateNode, {node, property: "name", value}],
-                    options: isOut ? ref_graphs.filter(g => generic.nodes[g] ? generic.nodes[g].nodes?.[generic.nodes[g].out ?? "out"]?.ref === "return" : true) : []
+                    options: nolib.no.runtime.refs().map(r => generic.nodes[r] ? {value: r, category: generic.nodes[r].category} : {value: r, category: r.startsWith("@") ? r.substring(1, r.indexOf('.')) : "custom"}),
+                    onchange: (state, {value}) => [UpdateNode, {node, property: "ref", value}],
+                    disabled: isOut 
                 }), node),
                 ha.memo(node => infoInput({
                     label: "value", 
@@ -103,13 +101,15 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                     onchange: (state, {value}) => [UpdateNode, {node, property: "value", value: value }]}),
                   node),
                 ha.memo(node => infoInput({
-                    label: 'graph',
-                    value: (node as RefNode).ref,
-                    property: 'ref',
+                    label: isNodeRef(node) && node.ref === "return" ? "name" : "comment", 
+                    value: node.name, 
+                    property: "name", 
                     inputs,
-                    options: nolib.no.runtime.refs().map(r => generic.nodes[r] ? {value: r, category: generic.nodes[r].category} : {value: r, category: r.startsWith("@") ? r.substring(1, r.indexOf('.')) : "custom"}),
-                    onchange: (state, {value}) => [UpdateNode, {node, property: "ref", value}],
-                    disabled: isOut 
+                    onchange: (state, {value}) =>
+                        isOut 
+                        ? [state, [ChangeEditingGraphId, {id: value, select_out: true, editingGraphId}]]
+                        : [UpdateNode, {node, property: "name", value}],
+                    options: isOut ? ref_graphs.filter(g => generic.nodes[g] ? generic.nodes[g].nodes?.[generic.nodes[g].out ?? "out"]?.ref === "return" : true) : []
                 }), node),
                 link_out && link_out.source && ha.memo(link_out => infoInput({
                     label: "edge", 

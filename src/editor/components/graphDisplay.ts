@@ -474,8 +474,8 @@ export const d3subscription = (dispatch, props) => {
 
 const fill_rect_el = () =>ha.h('rect', {class: 'fill', width: '48', 'height': '48'}, [])
 const node_text_el = ({node_id, primary, focus_primary, secondary}) =>ha.h('text', {x: 48, y: 12}, [
-   ha.h('tspan', {class: "primary", dy: ".6em", x: "48", onpointerdown: [SelectNode, {node_id, focus_property: focus_primary}]}, ha.text(primary.substring(0, 24))),
-   ha.h('tspan', {class: "secondary",  dy: "1.2em", x: "48", onpointerdown: [SelectNode, {node_id, focus_property: "ref"}]}, ha.text(secondary.substring(0, 24)))
+   ha.h('tspan', {class: "secondary",  dy: "0.6em", x: "48", onpointerdown: [SelectNode, {node_id, focus_property: "ref"}]}, ha.text(secondary.substring(0, 24))),
+   ha.h('tspan', {class: "primary", dy: "1.2em", x: "48", onpointerdown: [SelectNode, {node_id, focus_property: focus_primary}]}, ha.text(primary.substring(0, 24)))
 ])
 
 
