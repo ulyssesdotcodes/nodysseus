@@ -1,5 +1,6 @@
 import * as ha from "hyperapp"
 import { Edge, Graph, isNodeGraph, isNodeRef, NodysseusNode, RefNode, ValueNode } from "src/types";
+import { isNonNullChain } from "typescript";
 import generic from "../../generic";
 import {nolib} from "../../nodysseus"
 import { d3Link, d3Node, HyperappState } from "../types";
@@ -65,6 +66,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
     const node_ref = !hidden && node && isNodeRef(node) ? nolib.no.runtime.get_ref(node.ref) : node;
     const description =  !hidden && node_ref?.description;
     const node_arg_labels = !hidden && node?.id ? node_args(nolib, editingGraph, node.id).map(a => ({...a, name: a.name.split(": ")[0]})) : [];
+    const isOut = node.id === graph_out
     return ha.h('div', {id: "node-info-wrapper"}, [ha.h('div', {class: "spacer before"}, []), ha.h(
         'div',
         { 
@@ -83,15 +85,15 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                     }, [ha.text(n.exists ? n.name : `+${n.name}`)]))),
             ha.h('div', {class: "inputs"}, [
                 ha.memo(node => infoInput({
-                    label: "name", 
+                    label: isNodeRef(node) && node.ref === "return" ? "name" : "comment", 
                     value: node.name, 
                     property: "name", 
                     inputs,
                     onchange: (state, {value}) =>
-                        (node.id !== graph_out && node.id !== "out") 
-                        ? [UpdateNode, {node, property: "name", value}]
-                        : [state, [ChangeEditingGraphId, {id: value, select_out: true, editingGraphId}]],
-                    options: (graph_out ? node.id === graph_out : node.id === "out") ? ref_graphs.filter(g => generic.nodes[g] ? generic.nodes[g].nodes?.[generic.nodes[g].out ?? "out"]?.ref === "return" : true) : []
+                        isOut 
+                        ? [state, [ChangeEditingGraphId, {id: value, select_out: true, editingGraphId}]]
+                        : [UpdateNode, {node, property: "name", value}],
+                    options: isOut ? ref_graphs.filter(g => generic.nodes[g] ? generic.nodes[g].nodes?.[generic.nodes[g].out ?? "out"]?.ref === "return" : true) : []
                 }), node),
                 ha.memo(node => infoInput({
                     label: "value", 
@@ -101,13 +103,13 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                     onchange: (state, {value}) => [UpdateNode, {node, property: "value", value: value }]}),
                   node),
                 ha.memo(node => infoInput({
-                    label: 'ref',
+                    label: 'graph',
                     value: (node as RefNode).ref,
                     property: 'ref',
                     inputs,
                     options: nolib.no.runtime.refs().map(r => generic.nodes[r] ? {value: r, category: generic.nodes[r].category} : {value: r, category: r.startsWith("@") ? r.substring(1, r.indexOf('.')) : "custom"}),
                     onchange: (state, {value}) => [UpdateNode, {node, property: "ref", value}],
-                    disabled: node.id === graph_out
+                    disabled: isOut 
                 }), node),
                 link_out && link_out.source && ha.memo(link_out => infoInput({
                     label: "edge", 
@@ -129,7 +131,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
             }, []),
             ha.h('div', {id: `${html_id}-info-display`}),
             ha.h('div', {class: "buttons"}, [
-                node.node_id !== graph_out && ha.h('div', {
+                !isOut && ((isNodeRef(node) && node.ref === "return") || isNodeGraph(node)) && ha.h('div', {
                     class: "action", 
                     onclick: [ExpandContract, {node_id: node.node_id}]
                 }, [

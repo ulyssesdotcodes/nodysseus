@@ -844,7 +844,7 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Ar
     if(
       isNodeGraph(node_ref) 
       && (node_ref.nodes[node_ref.out ?? "out"] as RefNode).ref === "return" 
-      && Object.values(node_ref.edges_in[node_ref.out ?? "out"]).find(e => e.as === "metadata")
+      && Object.values(node_ref.edges_in ? node_ref.edges_in[node_ref.out ?? "out"] : Object.values(node_ref.edges).filter(e => e.to === node_ref.out ?? "out")).find(e => e.as === "metadata")
     ) {
       const metadata = hlib.run(graph, node_id, {_output: "metadata"})
       if(metadata.parameters) {

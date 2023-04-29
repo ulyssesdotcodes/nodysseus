@@ -7675,7 +7675,7 @@
       "ra5i4nx": {
         "id": "ra5i4nx",
         "ref": "@js.script",
-        "value": "const bannedKeys = [\"uuid\", \"name\", \"side\", \"isMaterial\"]\nconst keys = Array.from(Object.keys(node)).filter(k => !k.startsWith(\"_\") && !bannedKeys.includes(k) && k.endsWith(\"Node\"))\nreturn Object.fromEntries(keys.map(k => [k, {type: \"@three.node\"}]));"
+        "value": "const keys = Array.from(Object.keys(node)).filter(k => !k.startsWith(\"_\") && !k.startsWith(\"is\") && k.endsWith(\"Node\"))\nreturn Object.fromEntries(keys.map(k => [k, {type: \"@three.node\"}]));"
       },
       "rt1utdp": {
         "id": "rt1utdp",
