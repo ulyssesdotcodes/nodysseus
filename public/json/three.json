@@ -7264,210 +7264,134 @@
   },
   {
     "edges": {
-      "000f5nd": {
-        "as": "_name",
-        "from": "000f5nd",
-        "to": "q4tskdl"
-      },
       "0okmkrx": {
         "as": "name",
         "from": "0okmkrx",
         "to": "q4tskdl"
       },
-      "20oh4kr": {
+      "1vdqyt6": {
         "as": "value",
-        "from": "20oh4kr",
-        "to": "d4kcr9g"
+        "from": "1vdqyt6",
+        "to": "f1wqp7p"
       },
-      "2tffpiq": {
+      "20zj22n": {
+        "as": "url",
+        "from": "20zj22n",
+        "to": "fzpv502"
+      },
+      "3gnkfqm": {
+        "as": "otherwise",
+        "from": "3gnkfqm",
+        "to": "v8x1w01"
+      },
+      "3rdanfa": {
+        "as": "node",
+        "from": "3rdanfa",
+        "to": "ra5i4nx"
+      },
+      "4skly0x": {
+        "as": "target",
+        "from": "4skly0x",
+        "to": "e4rdngl"
+      },
+      "63itvqs": {
+        "as": "value",
+        "from": "63itvqs",
+        "to": "hafko00"
+      },
+      "6dpj05t": {
         "as": "path",
-        "from": "2tffpiq",
-        "to": "stp926h"
+        "from": "6dpj05t",
+        "to": "qc5yhrk"
       },
-      "32bvp2b": {
-        "as": "vec4",
-        "from": "32bvp2b",
-        "to": "000f5nd"
-      },
-      "4j9lqoh": {
-        "as": "returnFn",
-        "from": "4j9lqoh",
-        "to": "id8jixz"
-      },
-      "5h3tni4": {
-        "as": "file",
-        "from": "5h3tni4",
-        "to": "req05n5"
-      },
-      "63bribo": {
-        "as": "name",
-        "from": "63bribo",
-        "to": "r4d7iag"
-      },
-      "6ix2nl8": {
-        "as": "value",
-        "from": "6ix2nl8",
-        "to": "cknmtsk"
-      },
-      "6uwm50y": {
-        "as": "name",
-        "from": "6uwm50y",
-        "to": "5h3tni4"
-      },
-      "7a4ey4g": {
-        "as": "string",
-        "from": "7a4ey4g",
-        "to": "000f5nd"
+      "75msy7x": {
+        "as": "arg0",
+        "from": "75msy7x",
+        "to": "e4rdngl"
       },
       "ca5hqn9": {
         "as": "otherwise",
         "from": "ca5hqn9",
         "to": "0okmkrx"
       },
-      "cknmtsk": {
+      "e4rdngl": {
         "as": "value",
-        "from": "cknmtsk",
-        "to": "t2wl30j"
+        "from": "e4rdngl",
+        "to": "63itvqs"
       },
-      "d4kcr9g": {
-        "as": "input",
-        "from": "d4kcr9g",
-        "to": "000f5nd"
+      "f1wqp7p": {
+        "as": "args",
+        "from": "f1wqp7p",
+        "to": "4skly0x"
       },
-      "ey4gvl8": {
-        "as": "int",
-        "from": "ey4gvl8",
-        "to": "000f5nd"
+      "fzpv502": {
+        "as": "target",
+        "from": "fzpv502",
+        "to": "qc5yhrk"
       },
       "gnzn1uk": {
         "as": "value",
         "from": "gnzn1uk",
         "to": "0okmkrx"
       },
-      "gp1qalc": {
-        "as": "otherwise",
-        "from": "gp1qalc",
-        "to": "k02afe9"
+      "hafko00": {
+        "as": "node",
+        "from": "hafko00",
+        "to": "q4tskdl"
       },
-      "id8jixz": {
-        "as": "target",
-        "from": "id8jixz",
-        "to": "t6qdmmq"
-      },
-      "ji51v7a": {
-        "as": "otherwise",
-        "from": "ji51v7a",
-        "to": "d4kcr9g"
-      },
-      "k02afe9": {
-        "as": "args",
-        "from": "k02afe9",
-        "to": "id8jixz"
+      "q4hk4bw": {
+        "as": "value",
+        "from": "q4hk4bw",
+        "to": "t2wl30j"
       },
       "q4tskdl": {
         "as": "args",
         "from": "q4tskdl",
         "to": "t2wl30j"
       },
-      "r4d7iag": {
-        "as": "exprt",
-        "from": "r4d7iag",
-        "to": "req05n5"
-      },
-      "r5a95d2": {
-        "as": "target",
-        "from": "r5a95d2",
-        "to": "stp926h"
-      },
-      "req05n5": {
-        "as": "_args",
-        "from": "req05n5",
-        "to": "6ix2nl8"
-      },
-      "stp926h": {
+      "qc5yhrk": {
         "as": "Node",
-        "from": "stp926h",
-        "to": "id8jixz"
+        "from": "qc5yhrk",
+        "to": "4skly0x"
       },
-      "t6qdmmq": {
+      "r1c4ero": {
+        "as": "metadata",
+        "from": "r1c4ero",
+        "to": "t2wl30j"
+      },
+      "ra5i4nx": {
+        "as": "parameters",
+        "from": "ra5i4nx",
+        "to": "r1c4ero"
+      },
+      "rt1utdp": {
         "as": "value",
-        "from": "t6qdmmq",
-        "to": "6ix2nl8"
+        "from": "rt1utdp",
+        "to": "v8x1w01"
       },
-      "vy3uvh7": {
-        "as": "float",
-        "from": "vy3uvh7",
-        "to": "000f5nd"
+      "t90v2ws": {
+        "as": "returnFn",
+        "from": "t90v2ws",
+        "to": "4skly0x"
       },
-      "wonswm4": {
+      "v8x1w01": {
         "as": "name",
-        "from": "wonswm4",
-        "to": "y6p5j3a"
+        "from": "v8x1w01",
+        "to": "wkm9i8b"
       },
-      "xtcxte5": {
-        "as": "vec3",
-        "from": "xtcxte5",
-        "to": "000f5nd"
+      "wkm9i8b": {
+        "as": "args",
+        "from": "wkm9i8b",
+        "to": "hafko00"
       },
-      "y6ecnvr": {
-        "as": "color",
-        "from": "y6ecnvr",
-        "to": "000f5nd"
-      },
-      "y6p5j3a": {
-        "as": "url",
-        "from": "y6p5j3a",
-        "to": "r5a95d2"
-      },
-      "yvybdi8": {
-        "as": "arg0",
-        "from": "yvybdi8",
-        "to": "t6qdmmq"
-      },
-      "ztsrxfz": {
-        "as": "value",
-        "from": "ztsrxfz",
-        "to": "k02afe9"
+      "wm6hu13": {
+        "as": "otherwise",
+        "from": "wm6hu13",
+        "to": "f1wqp7p"
       }
     },
     "edges_in": {
-      "000f5nd": {
-        "32bvp2b": {
-          "as": "vec4",
-          "from": "32bvp2b",
-          "to": "000f5nd"
-        },
-        "7a4ey4g": {
-          "as": "string",
-          "from": "7a4ey4g",
-          "to": "000f5nd"
-        },
-        "d4kcr9g": {
-          "as": "input",
-          "from": "d4kcr9g",
-          "to": "000f5nd"
-        },
-        "ey4gvl8": {
-          "as": "int",
-          "from": "ey4gvl8",
-          "to": "000f5nd"
-        },
-        "vy3uvh7": {
-          "as": "float",
-          "from": "vy3uvh7",
-          "to": "000f5nd"
-        },
-        "xtcxte5": {
-          "as": "vec3",
-          "from": "xtcxte5",
-          "to": "000f5nd"
-        },
-        "y6ecnvr": {
-          "as": "color",
-          "from": "y6ecnvr",
-          "to": "000f5nd"
-        }
-      },
+      "000f5nd": {},
       "0okmkrx": {
         "ca5hqn9": {
           "as": "otherwise",
@@ -7480,307 +7404,304 @@
           "to": "0okmkrx"
         }
       },
-      "5h3tni4": {
-        "6uwm50y": {
-          "as": "name",
-          "from": "6uwm50y",
-          "to": "5h3tni4"
-        }
-      },
-      "6ix2nl8": {
-        "req05n5": {
-          "as": "_args",
-          "from": "req05n5",
-          "to": "6ix2nl8"
-        },
-        "t6qdmmq": {
-          "as": "value",
-          "from": "t6qdmmq",
-          "to": "6ix2nl8"
-        }
-      },
-      "cknmtsk": {
-        "6ix2nl8": {
-          "as": "value",
-          "from": "6ix2nl8",
-          "to": "cknmtsk"
-        }
-      },
-      "d4kcr9g": {
-        "20oh4kr": {
-          "as": "value",
-          "from": "20oh4kr",
-          "to": "d4kcr9g"
-        },
-        "ji51v7a": {
-          "as": "otherwise",
-          "from": "ji51v7a",
-          "to": "d4kcr9g"
-        }
-      },
-      "id8jixz": {
-        "4j9lqoh": {
-          "as": "returnFn",
-          "from": "4j9lqoh",
-          "to": "id8jixz"
-        },
-        "k02afe9": {
+      "190qzlv": {},
+      "3rdanfa": {},
+      "4skly0x": {
+        "f1wqp7p": {
           "as": "args",
-          "from": "k02afe9",
-          "to": "id8jixz"
+          "from": "f1wqp7p",
+          "to": "4skly0x"
         },
-        "stp926h": {
+        "qc5yhrk": {
           "as": "Node",
-          "from": "stp926h",
-          "to": "id8jixz"
+          "from": "qc5yhrk",
+          "to": "4skly0x"
+        },
+        "t90v2ws": {
+          "as": "returnFn",
+          "from": "t90v2ws",
+          "to": "4skly0x"
         }
       },
-      "k02afe9": {
-        "gp1qalc": {
-          "as": "otherwise",
-          "from": "gp1qalc",
-          "to": "k02afe9"
-        },
-        "ztsrxfz": {
+      "4u1rdp0": {},
+      "5h3tni4": {},
+      "63itvqs": {
+        "e4rdngl": {
           "as": "value",
-          "from": "ztsrxfz",
-          "to": "k02afe9"
+          "from": "e4rdngl",
+          "to": "63itvqs"
         }
       },
-      "q4tskdl": {
-        "000f5nd": {
-          "as": "_name",
-          "from": "000f5nd",
-          "to": "q4tskdl"
+      "6ix2nl8": {},
+      "80vpjfq": {},
+      "8l7dskf": {},
+      "8p4l1qz": {},
+      "amck4jy": {},
+      "bab1sfx": {},
+      "bn3iflw": {},
+      "chgjh2y": {},
+      "cknmtsk": {},
+      "d4kcr9g": {},
+      "dydf76q": {},
+      "e4rdngl": {
+        "4skly0x": {
+          "as": "target",
+          "from": "4skly0x",
+          "to": "e4rdngl"
         },
+        "75msy7x": {
+          "as": "arg0",
+          "from": "75msy7x",
+          "to": "e4rdngl"
+        }
+      },
+      "eq14mby": {},
+      "f1wqp7p": {
+        "1vdqyt6": {
+          "as": "value",
+          "from": "1vdqyt6",
+          "to": "f1wqp7p"
+        },
+        "wm6hu13": {
+          "as": "otherwise",
+          "from": "wm6hu13",
+          "to": "f1wqp7p"
+        }
+      },
+      "fkvp4xu": {},
+      "fzpv502": {
+        "20zj22n": {
+          "as": "url",
+          "from": "20zj22n",
+          "to": "fzpv502"
+        }
+      },
+      "hafko00": {
+        "63itvqs": {
+          "as": "value",
+          "from": "63itvqs",
+          "to": "hafko00"
+        },
+        "wkm9i8b": {
+          "as": "args",
+          "from": "wkm9i8b",
+          "to": "hafko00"
+        }
+      },
+      "id8jixz": {},
+      "jk61iv8": {},
+      "k02afe9": {},
+      "lwk57fs": {},
+      "n688cqr": {},
+      "n6y5gvk": {},
+      "o2bv6s3": {},
+      "opqw7e8": {},
+      "pq2272o": {},
+      "q4tskdl": {
         "0okmkrx": {
           "as": "name",
           "from": "0okmkrx",
           "to": "q4tskdl"
-        }
-      },
-      "r4d7iag": {
-        "63bribo": {
-          "as": "name",
-          "from": "63bribo",
-          "to": "r4d7iag"
-        }
-      },
-      "r5a95d2": {
-        "y6p5j3a": {
-          "as": "url",
-          "from": "y6p5j3a",
-          "to": "r5a95d2"
-        }
-      },
-      "req05n5": {
-        "5h3tni4": {
-          "as": "file",
-          "from": "5h3tni4",
-          "to": "req05n5"
         },
-        "r4d7iag": {
-          "as": "exprt",
-          "from": "r4d7iag",
-          "to": "req05n5"
+        "hafko00": {
+          "as": "node",
+          "from": "hafko00",
+          "to": "q4tskdl"
         }
       },
-      "stp926h": {
-        "2tffpiq": {
+      "qc5yhrk": {
+        "6dpj05t": {
           "as": "path",
-          "from": "2tffpiq",
-          "to": "stp926h"
+          "from": "6dpj05t",
+          "to": "qc5yhrk"
         },
-        "r5a95d2": {
+        "fzpv502": {
           "as": "target",
-          "from": "r5a95d2",
-          "to": "stp926h"
+          "from": "fzpv502",
+          "to": "qc5yhrk"
         }
       },
+      "qw1o5ge": {},
+      "r1c4ero": {
+        "ra5i4nx": {
+          "as": "parameters",
+          "from": "ra5i4nx",
+          "to": "r1c4ero"
+        }
+      },
+      "r4d7iag": {},
+      "r5a95d2": {},
+      "ra5i4nx": {
+        "3rdanfa": {
+          "as": "node",
+          "from": "3rdanfa",
+          "to": "ra5i4nx"
+        }
+      },
+      "rb3h8k4": {},
+      "req05n5": {},
+      "stp926h": {},
       "t2wl30j": {
-        "cknmtsk": {
+        "q4hk4bw": {
           "as": "value",
-          "from": "cknmtsk",
+          "from": "q4hk4bw",
           "to": "t2wl30j"
         },
         "q4tskdl": {
           "as": "args",
           "from": "q4tskdl",
           "to": "t2wl30j"
-        }
-      },
-      "t6qdmmq": {
-        "id8jixz": {
-          "as": "target",
-          "from": "id8jixz",
-          "to": "t6qdmmq"
         },
-        "yvybdi8": {
-          "as": "arg0",
-          "from": "yvybdi8",
-          "to": "t6qdmmq"
+        "r1c4ero": {
+          "as": "metadata",
+          "from": "r1c4ero",
+          "to": "t2wl30j"
         }
       },
-      "y6p5j3a": {
-        "wonswm4": {
-          "as": "name",
-          "from": "wonswm4",
-          "to": "y6p5j3a"
+      "t6qdmmq": {},
+      "v8x1w01": {
+        "3gnkfqm": {
+          "as": "otherwise",
+          "from": "3gnkfqm",
+          "to": "v8x1w01"
+        },
+        "rt1utdp": {
+          "as": "value",
+          "from": "rt1utdp",
+          "to": "v8x1w01"
         }
-      }
+      },
+      "vjvjh7s": {},
+      "wkm9i8b": {
+        "v8x1w01": {
+          "as": "name",
+          "from": "v8x1w01",
+          "to": "wkm9i8b"
+        }
+      },
+      "wujf81e": {},
+      "y6p5j3a": {},
+      "y845njp": {},
+      "ys5705z": {},
+      "zajhaq4": {}
     },
     "id": "@three.node",
-    "name": "@three.node",
+    "name": "FxPass",
     "nodes": {
-      "000f5nd": {
-        "id": "000f5nd",
-        "ref": "@flow.switch"
-      },
       "0okmkrx": {
         "id": "0okmkrx",
         "ref": "@flow.default"
       },
-      "20oh4kr": {
-        "id": "20oh4kr",
+      "1vdqyt6": {
+        "id": "1vdqyt6",
         "ref": "arg",
-        "value": "name"
+        "value": "args"
       },
-      "2tffpiq": {
-        "id": "2tffpiq",
-        "ref": "arg",
-        "value": "name"
-      },
-      "32bvp2b": {
-        "id": "32bvp2b",
-        "value": "shadernode/ShaderNode.vec4"
-      },
-      "4j9lqoh": {
-        "id": "4j9lqoh",
-        "ref": "arg",
-        "value": "returnFn"
-      },
-      "5h3tni4": {
-        "id": "5h3tni4",
+      "20zj22n": {
+        "id": "20zj22n",
         "ref": "@js.script",
-        "value": "const accessorIndex = name.indexOf('.');\nreturn accessorIndex > 0 ? name.substring(0, accessorIndex) : name;"
+        "value": "\nreturn `https://cdn.jsdelivr.net/npm/three/examples/jsm/nodes/Nodes.js`"
       },
-      "63bribo": {
-        "id": "63bribo",
+      "3gnkfqm": {
+        "id": "3gnkfqm",
+        "ref": "arg",
+        "value": "__graph_value"
+      },
+      "3rdanfa": {
+        "id": "3rdanfa",
+        "ref": "arg",
+        "value": "node"
+      },
+      "4skly0x": {
+        "id": "4skly0x",
+        "ref": "@js.script",
+        "value": "if(returnFn) return Node;\n\nconst argArr = (Array.isArray(args) ? args : [args]);\ntry {\n  return new Node(...argArr)\n}catch(e){}\nreturn typeof Node === \"function\" ?  Node(...argArr) : Node;"
+      },
+      "63itvqs": {
+        "id": "63itvqs",
+        "ref": "@memory.graphchangecache"
+      },
+      "6dpj05t": {
+        "id": "6dpj05t",
         "ref": "arg",
         "value": "name"
       },
-      "6ix2nl8": {
-        "id": "6ix2nl8",
-        "ref": "return"
-      },
-      "6uwm50y": {
-        "id": "6uwm50y",
+      "75msy7x": {
+        "id": "75msy7x",
         "ref": "arg",
-        "value": "name"
-      },
-      "7a4ey4g": {
-        "id": "7a4ey4g",
-        "value": "shadernode/ShaderNode.string"
+        "value": "_args"
       },
       "ca5hqn9": {
         "id": "ca5hqn9",
         "ref": "arg",
         "value": "__graph_value"
       },
-      "cknmtsk": {
-        "id": "cknmtsk",
-        "ref": "@memory.graphchangecache"
+      "e4rdngl": {
+        "id": "e4rdngl",
+        "ref": "@data.merge_objects_mutable"
       },
-      "d4kcr9g": {
-        "id": "d4kcr9g",
+      "f1wqp7p": {
+        "id": "f1wqp7p",
         "ref": "@flow.default"
       },
-      "ey4gvl8": {
-        "id": "ey4gvl8",
-        "value": "shadernode/ShaderNode.int"
+      "fzpv502": {
+        "id": "fzpv502",
+        "ref": "@js.import_module"
       },
       "gnzn1uk": {
         "id": "gnzn1uk",
         "ref": "arg",
         "value": "name"
       },
-      "gp1qalc": {
-        "id": "gp1qalc",
-        "value": "[]"
+      "hafko00": {
+        "id": "hafko00",
+        "ref": "return"
       },
-      "id8jixz": {
-        "id": "id8jixz",
-        "ref": "@js.script",
-        "value": "if(returnFn) return Node;\n\nconst argArr = (Array.isArray(args) ? args : [args]);\ntry {\n  return new Node(...argArr)\n}catch(e){}\nreturn typeof Node === \"function\" ?  Node(...argArr) : Node;"
-      },
-      "ji51v7a": {
-        "id": "ji51v7a",
+      "q4hk4bw": {
+        "id": "q4hk4bw",
         "ref": "arg",
-        "value": "__graph_value"
-      },
-      "k02afe9": {
-        "id": "k02afe9",
-        "ref": "@flow.default"
+        "value": "node"
       },
       "q4tskdl": {
         "id": "q4tskdl"
       },
-      "r4d7iag": {
-        "id": "r4d7iag",
-        "ref": "@js.script",
-        "value": "const accessorIndex = name.indexOf('.');\nconsole.log(name.substring(accessorIndex))\nreturn accessorIndex > 0 ? name.substring(accessorIndex + 1) : \"default\";"
-      },
-      "r5a95d2": {
-        "id": "r5a95d2",
-        "ref": "@js.import_module"
-      },
-      "req05n5": {
-        "id": "req05n5"
-      },
-      "stp926h": {
-        "id": "stp926h",
+      "qc5yhrk": {
+        "id": "qc5yhrk",
         "ref": "@data.get"
+      },
+      "r1c4ero": {
+        "id": "r1c4ero"
+      },
+      "ra5i4nx": {
+        "id": "ra5i4nx",
+        "ref": "@js.script",
+        "value": "const bannedKeys = [\"uuid\", \"name\", \"side\", \"isMaterial\"]\nconst keys = Array.from(Object.keys(node)).filter(k => !k.startsWith(\"_\") && !bannedKeys.includes(k) && k.endsWith(\"Node\"))\nreturn Object.fromEntries(keys.map(k => [k, {type: \"@three.node\"}]));"
+      },
+      "rt1utdp": {
+        "id": "rt1utdp",
+        "ref": "arg",
+        "value": "name"
       },
       "t2wl30j": {
         "id": "t2wl30j",
         "name": "@three.node",
         "ref": "return"
       },
-      "t6qdmmq": {
-        "id": "t6qdmmq",
-        "ref": "@data.merge_objects_mutable"
-      },
-      "vy3uvh7": {
-        "id": "vy3uvh7",
-        "value": "shadernode/ShaderNode.float"
-      },
-      "wonswm4": {
-        "id": "wonswm4",
+      "t90v2ws": {
+        "id": "t90v2ws",
         "ref": "arg",
-        "value": "file"
+        "value": "returnFn"
       },
-      "xtcxte5": {
-        "id": "xtcxte5",
-        "value": "shadernode/ShaderNode.vec3"
+      "v8x1w01": {
+        "id": "v8x1w01",
+        "ref": "@flow.default"
       },
-      "y6ecnvr": {
-        "id": "y6ecnvr",
-        "value": "shadernode/ShaderNode.color"
+      "wkm9i8b": {
+        "id": "wkm9i8b"
       },
-      "y6p5j3a": {
-        "id": "y6p5j3a",
-        "ref": "@js.script",
-        "value": "return `https://cdn.jsdelivr.net/npm/three/examples/jsm/nodes/Nodes.js`"
-      },
-      "yvybdi8": {
-        "id": "yvybdi8",
-        "ref": "arg",
-        "value": "_args"
-      },
-      "ztsrxfz": {
-        "id": "ztsrxfz",
-        "ref": "arg",
-        "value": "args"
+      "wm6hu13": {
+        "id": "wm6hu13",
+        "value": "[]"
       }
     },
     "out": "t2wl30j"
@@ -9472,6 +9393,7 @@
     "out": "main/out"
   },
   {
+    "description": "Creates a basic three.js scene with a camera, renderer, and scene. The `objects` input has the objects of the scene, evaluated every frame - make sure to cache. The `onupdate` input is a runnable with parameters `objects`, `camera`, and `scene` which is run every frame - keep. The `fx` input has effects for an EffectComposer.",
     "edges": {
       "0wp18c9": {
         "as": "args",
@@ -9618,6 +9540,11 @@
         "from": "bgi56zl",
         "to": "reop6t4"
       },
+      "bqpkucx": {
+        "as": "target",
+        "from": "bqpkucx",
+        "to": "dt9q1m5"
+      },
       "by4m1fr": {
         "as": "value",
         "from": "by4m1fr",
@@ -9653,6 +9580,11 @@
         "from": "dq4u9ji",
         "to": "ek93m5o"
       },
+      "dt9q1m5": {
+        "as": "value",
+        "from": "dt9q1m5",
+        "to": "yt5ewda"
+      },
       "dyst9ju": {
         "as": "fn",
         "from": "dyst9ju",
@@ -9672,11 +9604,6 @@
         "as": "target",
         "from": "ek93m5o",
         "to": "4j2wgr9"
-      },
-      "eoks97e": {
-        "as": "nodeFrame",
-        "from": "eoks97e",
-        "to": "qioaglu"
       },
       "f288n1z": {
         "as": "pred",
@@ -9732,11 +9659,6 @@
         "as": "value",
         "from": "l98p3to",
         "to": "4j2wgr9"
-      },
-      "lm0iyoq": {
-        "as": "target",
-        "from": "lm0iyoq",
-        "to": "x7oyebe"
       },
       "lsf5igz": {
         "as": "fn",
@@ -9878,11 +9800,6 @@
         "from": "x638fhv",
         "to": "aqfc51v"
       },
-      "x7oyebe": {
-        "as": "value",
-        "from": "x7oyebe",
-        "to": "eoks97e"
-      },
       "xel6go6": {
         "as": "arg0",
         "from": "xel6go6",
@@ -9908,6 +9825,11 @@
         "from": "ya36a1r",
         "to": "3876w2f"
       },
+      "yt5ewda": {
+        "as": "nodeFrame",
+        "from": "yt5ewda",
+        "to": "qioaglu"
+      },
       "z51c26o": {
         "as": "children",
         "from": "z51c26o",
@@ -9927,6 +9849,570 @@
         "as": "parent",
         "from": "zz2yk2z",
         "to": "tkxqh5a"
+      }
+    },
+    "edges_in": {
+      "0wp18c9": {
+        "vc0quhz": {
+          "as": "value",
+          "from": "vc0quhz",
+          "to": "0wp18c9"
+        }
+      },
+      "3876w2f": {
+        "ya36a1r": {
+          "as": "module",
+          "from": "ya36a1r",
+          "to": "3876w2f"
+        }
+      },
+      "4a9zo9a": {
+        "i39y0i3": {
+          "as": "target",
+          "from": "i39y0i3",
+          "to": "4a9zo9a"
+        }
+      },
+      "4j2wgr9": {
+        "ek93m5o": {
+          "as": "target",
+          "from": "ek93m5o",
+          "to": "4j2wgr9"
+        },
+        "l98p3to": {
+          "as": "value",
+          "from": "l98p3to",
+          "to": "4j2wgr9"
+        }
+      },
+      "5gt2zai": {
+        "ryjjzqr": {
+          "as": "runnable",
+          "from": "ryjjzqr",
+          "to": "5gt2zai"
+        }
+      },
+      "5m99dxg": {
+        "4fxcgml": {
+          "as": "renderer",
+          "from": "4fxcgml",
+          "to": "5m99dxg"
+        },
+        "fznso76": {
+          "as": "fx",
+          "from": "fznso76",
+          "to": "5m99dxg"
+        }
+      },
+      "7c7zppx": {
+        "aqfc51v": {
+          "as": "fn",
+          "from": "aqfc51v",
+          "to": "7c7zppx"
+        }
+      },
+      "7peak26": {
+        "slle0cq": {
+          "as": "target",
+          "from": "slle0cq",
+          "to": "7peak26"
+        }
+      },
+      "8m5muxn/33kmaec": {
+        "8m5muxn/zci8apj": {
+          "as": "value",
+          "from": "8m5muxn/zci8apj",
+          "to": "8m5muxn/33kmaec"
+        }
+      },
+      "8m5muxn/39ivise": {
+        "40aw44l": {
+          "as": "_renderer",
+          "from": "40aw44l",
+          "to": "8m5muxn/39ivise"
+        }
+      },
+      "8m5muxn/7in78pu": {
+        "8m5muxn/33kmaec": {
+          "as": "target",
+          "from": "8m5muxn/33kmaec",
+          "to": "8m5muxn/7in78pu"
+        },
+        "8m5muxn/v1nqvl7": {
+          "as": "value",
+          "from": "8m5muxn/v1nqvl7",
+          "to": "8m5muxn/7in78pu"
+        }
+      },
+      "8m5muxn/8m5muxn": {
+        "8m5muxn/39ivise": {
+          "as": "args",
+          "from": "8m5muxn/39ivise",
+          "to": "8m5muxn/8m5muxn"
+        },
+        "8m5muxn/njzfcz8": {
+          "as": "value",
+          "from": "8m5muxn/njzfcz8",
+          "to": "8m5muxn/8m5muxn"
+        },
+        "qioaglu": {
+          "as": "lib",
+          "from": "qioaglu",
+          "to": "8m5muxn/8m5muxn"
+        }
+      },
+      "8m5muxn/hlqmo48": {
+        "8m5muxn/7in78pu": {
+          "as": "_camera",
+          "from": "8m5muxn/7in78pu",
+          "to": "8m5muxn/hlqmo48"
+        },
+        "8m5muxn/inq87j9": {
+          "as": "_scene",
+          "from": "8m5muxn/inq87j9",
+          "to": "8m5muxn/hlqmo48"
+        }
+      },
+      "8m5muxn/inq87j9": {
+        "8m5muxn/gwavfrm": {
+          "as": "value",
+          "from": "8m5muxn/gwavfrm",
+          "to": "8m5muxn/inq87j9"
+        }
+      },
+      "8m5muxn/njzfcz8": {
+        "8m5muxn/hlqmo48": {
+          "as": "args",
+          "from": "8m5muxn/hlqmo48",
+          "to": "8m5muxn/njzfcz8"
+        },
+        "8m5muxn/vyr07ts": {
+          "as": "subscribe",
+          "from": "8m5muxn/vyr07ts",
+          "to": "8m5muxn/njzfcz8"
+        },
+        "jiobf52": {
+          "as": "value",
+          "from": "jiobf52",
+          "to": "8m5muxn/njzfcz8"
+        }
+      },
+      "8m5muxn/vyr07ts": {
+        "ptak9t2": {
+          "as": "animationframe",
+          "from": "ptak9t2",
+          "to": "8m5muxn/vyr07ts"
+        }
+      },
+      "8m5muxn/zci8apj": {
+        "t8adnxm": {
+          "as": "canvas",
+          "from": "t8adnxm",
+          "to": "8m5muxn/zci8apj"
+        }
+      },
+      "aqfc51v": {
+        "5m99dxg": {
+          "as": "true",
+          "from": "5m99dxg",
+          "to": "aqfc51v"
+        },
+        "x638fhv": {
+          "as": "pred",
+          "from": "x638fhv",
+          "to": "aqfc51v"
+        }
+      },
+      "b2z2580": {
+        "m291v0o": {
+          "as": "args",
+          "from": "m291v0o",
+          "to": "b2z2580"
+        },
+        "wcnk2sw": {
+          "as": "fn",
+          "from": "wcnk2sw",
+          "to": "b2z2580"
+        }
+      },
+      "bgi56zl": {
+        "by4m1fr": {
+          "as": "value",
+          "from": "by4m1fr",
+          "to": "bgi56zl"
+        },
+        "u0f4b37": {
+          "as": "otherwise",
+          "from": "u0f4b37",
+          "to": "bgi56zl"
+        }
+      },
+      "c6eig78": {
+        "7c7zppx": {
+          "as": "arg2",
+          "from": "7c7zppx",
+          "to": "c6eig78"
+        },
+        "o9mcda1": {
+          "as": "arg1",
+          "from": "o9mcda1",
+          "to": "c6eig78"
+        },
+        "rmqxb31": {
+          "as": "arg4",
+          "from": "rmqxb31",
+          "to": "c6eig78"
+        },
+        "z552097": {
+          "as": "arg5",
+          "from": "z552097",
+          "to": "c6eig78"
+        }
+      },
+      "cvop6x9": {
+        "e9d6mmx": {
+          "as": "otherwise",
+          "from": "e9d6mmx",
+          "to": "cvop6x9"
+        },
+        "zs7iowa": {
+          "as": "value",
+          "from": "zs7iowa",
+          "to": "cvop6x9"
+        }
+      },
+      "d8w679k": {
+        "reop6t4": {
+          "as": "entries",
+          "from": "reop6t4",
+          "to": "d8w679k"
+        }
+      },
+      "dt9q1m5": {
+        "bqpkucx": {
+          "as": "target",
+          "from": "bqpkucx",
+          "to": "dt9q1m5"
+        }
+      },
+      "dyst9ju": {
+        "1js087x": {
+          "as": "camera",
+          "from": "1js087x",
+          "to": "dyst9ju"
+        },
+        "cha35wd": {
+          "as": "scene",
+          "from": "cha35wd",
+          "to": "dyst9ju"
+        },
+        "cvop6x9": {
+          "as": "renderer",
+          "from": "cvop6x9",
+          "to": "dyst9ju"
+        }
+      },
+      "e9d6mmx": {
+        "0wp18c9": {
+          "as": "args",
+          "from": "0wp18c9",
+          "to": "e9d6mmx"
+        },
+        "cwrlosg": {
+          "as": "run",
+          "from": "cwrlosg",
+          "to": "e9d6mmx"
+        },
+        "jjmvxjj": {
+          "as": "fn",
+          "from": "jjmvxjj",
+          "to": "e9d6mmx"
+        }
+      },
+      "ek93m5o": {
+        "dq4u9ji": {
+          "as": "target",
+          "from": "dq4u9ji",
+          "to": "ek93m5o"
+        }
+      },
+      "eoks97e": {},
+      "hsytqp3": {
+        "1j95u16": {
+          "as": "canvas",
+          "from": "1j95u16",
+          "to": "hsytqp3"
+        }
+      },
+      "jiobf52": {
+        "f7krd8u": {
+          "as": "objects",
+          "from": "f7krd8u",
+          "to": "jiobf52"
+        },
+        "slwyovm": {
+          "as": "renderer",
+          "from": "slwyovm",
+          "to": "jiobf52"
+        }
+      },
+      "kipwn58": {
+        "4a9zo9a": {
+          "as": "value",
+          "from": "4a9zo9a",
+          "to": "kipwn58"
+        }
+      },
+      "l98p3to": {
+        "s208cfn": {
+          "as": "target",
+          "from": "s208cfn",
+          "to": "l98p3to"
+        }
+      },
+      "lsf5igz": {
+        "ploozds": {
+          "as": "pred",
+          "from": "ploozds",
+          "to": "lsf5igz"
+        },
+        "tkxqh5a": {
+          "as": "true",
+          "from": "tkxqh5a",
+          "to": "lsf5igz"
+        }
+      },
+      "lugpx4o": {
+        "6s18wo7": {
+          "as": "camera",
+          "from": "6s18wo7",
+          "to": "lugpx4o"
+        },
+        "eamyj81": {
+          "as": "scene",
+          "from": "eamyj81",
+          "to": "lugpx4o"
+        },
+        "svcshll": {
+          "as": "canvas",
+          "from": "svcshll",
+          "to": "lugpx4o"
+        },
+        "tgacxe5": {
+          "as": "renderer",
+          "from": "tgacxe5",
+          "to": "lugpx4o"
+        },
+        "vwa13pj": {
+          "as": "fx",
+          "from": "vwa13pj",
+          "to": "lugpx4o"
+        },
+        "vzmvbqh": {
+          "as": "MotionBlur",
+          "from": "vzmvbqh",
+          "to": "lugpx4o"
+        }
+      },
+      "m291v0o": {
+        "2veqlq1": {
+          "as": "scene",
+          "from": "2veqlq1",
+          "to": "m291v0o"
+        },
+        "xgl6r05": {
+          "as": "objects",
+          "from": "xgl6r05",
+          "to": "m291v0o"
+        },
+        "y2f8gog": {
+          "as": "camera",
+          "from": "y2f8gog",
+          "to": "m291v0o"
+        }
+      },
+      "na6fxum": {
+        "8ivgw9u": {
+          "as": "false",
+          "from": "8ivgw9u",
+          "to": "na6fxum"
+        },
+        "d8w679k": {
+          "as": "true",
+          "from": "d8w679k",
+          "to": "na6fxum"
+        },
+        "f288n1z": {
+          "as": "pred",
+          "from": "f288n1z",
+          "to": "na6fxum"
+        }
+      },
+      "o9mcda1": {
+        "lsf5igz": {
+          "as": "fn",
+          "from": "lsf5igz",
+          "to": "o9mcda1"
+        }
+      },
+      "ptak9t2": {
+        "c6eig78": {
+          "as": "fn",
+          "from": "c6eig78",
+          "to": "ptak9t2"
+        }
+      },
+      "qioaglu": {
+        "kipwn58": {
+          "as": "EffectComposer",
+          "from": "kipwn58",
+          "to": "qioaglu"
+        },
+        "vl4foaa": {
+          "as": "RenderPass",
+          "from": "vl4foaa",
+          "to": "qioaglu"
+        },
+        "yt5ewda": {
+          "as": "nodeFrame",
+          "from": "yt5ewda",
+          "to": "qioaglu"
+        }
+      },
+      "reop6t4": {
+        "bgi56zl": {
+          "as": "object",
+          "from": "bgi56zl",
+          "to": "reop6t4"
+        }
+      },
+      "rmqxb31": {
+        "b2z2580": {
+          "as": "true",
+          "from": "b2z2580",
+          "to": "rmqxb31"
+        },
+        "mh5ikoc": {
+          "as": "pred",
+          "from": "mh5ikoc",
+          "to": "rmqxb31"
+        }
+      },
+      "ryjjzqr": {
+        "4j2wgr9": {
+          "as": "fn",
+          "from": "4j2wgr9",
+          "to": "ryjjzqr"
+        },
+        "sfzzxee": {
+          "as": "parameters",
+          "from": "sfzzxee",
+          "to": "ryjjzqr"
+        }
+      },
+      "sfzzxee": {
+        "wgn4yl2": {
+          "as": "element",
+          "from": "wgn4yl2",
+          "to": "sfzzxee"
+        }
+      },
+      "tgacxe5": {
+        "hsytqp3": {
+          "as": "value",
+          "from": "hsytqp3",
+          "to": "tgacxe5"
+        }
+      },
+      "tkxqh5a": {
+        "z51c26o": {
+          "as": "children",
+          "from": "z51c26o",
+          "to": "tkxqh5a"
+        },
+        "zz2yk2z": {
+          "as": "parent",
+          "from": "zz2yk2z",
+          "to": "tkxqh5a"
+        }
+      },
+      "vc0quhz": {
+        "lugpx4o": {
+          "as": "value",
+          "from": "lugpx4o",
+          "to": "vc0quhz"
+        }
+      },
+      "vl4foaa": {
+        "7peak26": {
+          "as": "value",
+          "from": "7peak26",
+          "to": "vl4foaa"
+        }
+      },
+      "vwa13pj": {
+        "fzf3k5e": {
+          "as": "RenderPass",
+          "from": "fzf3k5e",
+          "to": "vwa13pj"
+        },
+        "gap7au7": {
+          "as": "EffectComposer",
+          "from": "gap7au7",
+          "to": "vwa13pj"
+        }
+      },
+      "vzmvbqh": {
+        "23ppkmp": {
+          "as": "pred",
+          "from": "23ppkmp",
+          "to": "vzmvbqh"
+        },
+        "3876w2f": {
+          "as": "true",
+          "from": "3876w2f",
+          "to": "vzmvbqh"
+        }
+      },
+      "x40t2m2": {},
+      "x638fhv": {
+        "xel6go6": {
+          "as": "arg0",
+          "from": "xel6go6",
+          "to": "x638fhv"
+        },
+        "xmd2fqb": {
+          "as": "arg1",
+          "from": "xmd2fqb",
+          "to": "x638fhv"
+        }
+      },
+      "x7oyebe": {},
+      "yt5ewda": {
+        "dt9q1m5": {
+          "as": "value",
+          "from": "dt9q1m5",
+          "to": "yt5ewda"
+        }
+      },
+      "z51c26o": {
+        "5gt2zai": {
+          "as": "fn",
+          "from": "5gt2zai",
+          "to": "z51c26o"
+        },
+        "na6fxum": {
+          "as": "array",
+          "from": "na6fxum",
+          "to": "z51c26o"
+        }
+      },
+      "z552097": {
+        "dyst9ju": {
+          "as": "fn",
+          "from": "dyst9ju",
+          "to": "z552097"
+        }
       }
     },
     "id": "@three.setup",
@@ -10156,6 +10642,11 @@
       "bmu67sv": {
         "id": "bmu67sv"
       },
+      "bqpkucx": {
+        "id": "bqpkucx",
+        "ref": "@js.import_module",
+        "value": "https://cdn.jsdelivr.net/npm/three/examples/jsm/renderers/webgl/nodes/WebGLNodes.js"
+      },
       "by4m1fr": {
         "id": "by4m1fr",
         "ref": "arg",
@@ -10188,6 +10679,11 @@
         "ref": "arg",
         "value": "element"
       },
+      "dt9q1m5": {
+        "id": "dt9q1m5",
+        "ref": "@data.get",
+        "value": "nodeFrame"
+      },
       "dyst9ju": {
         "id": "dyst9ju",
         "ref": "@js.script",
@@ -10206,10 +10702,6 @@
         "id": "ek93m5o",
         "ref": "@data.get",
         "value": "1"
-      },
-      "eoks97e": {
-        "id": "eoks97e",
-        "ref": "@memory.cache"
       },
       "f288n1z": {
         "id": "f288n1z",
@@ -10308,11 +10800,6 @@
         "ref": "@data.get",
         "value": "0"
       },
-      "lm0iyoq": {
-        "id": "lm0iyoq",
-        "ref": "@js.import_module",
-        "value": "https://cdn.jsdelivr.net/npm/three/examples/jsm/renderers/webgl/nodes/WebGLNodes.js"
-      },
       "lqc9zjk": {
         "id": "lqc9zjk",
         "ref": "arg",
@@ -10324,7 +10811,6 @@
       },
       "lugpx4o": {
         "id": "lugpx4o",
-        "name": "g",
         "ref": "@js.script",
         "value": "if(!renderer){\n  return;\n}\nconst fxcomposer = new fx.EffectComposer(renderer)\nconst renderpass = new fx.RenderPass(scene, camera);\nfxcomposer.setSize(canvas.width, canvas.height);\nfxcomposer.addPass(renderpass);\nif(MotionBlur) {\n  const pass = new MotionBlur(scene, camera, { samples: 32, expandgeometry: 0.4 });\n  fxcomposer.addPass(pass);\n  pass.renderToScreen = true;\n}\nreturn fxcomposer;"
       },
@@ -10502,11 +10988,6 @@
         "id": "x638fhv",
         "ref": "@math.and"
       },
-      "x7oyebe": {
-        "id": "x7oyebe",
-        "ref": "@data.get",
-        "value": "nodeFrame"
-      },
       "xel6go6": {
         "id": "xel6go6",
         "ref": "arg",
@@ -10535,6 +11016,10 @@
         "id": "ya36a1r",
         "ref": "@js.import_module",
         "value": "https://cdn.jsdelivr.net/gh/ulyssesdotcodes/threejs-sandbox@94c68f4/motionBlurPass/src/MotionBlurPass.js"
+      },
+      "yt5ewda": {
+        "id": "yt5ewda",
+        "ref": "@memory.cache"
       },
       "z51c26o": {
         "id": "z51c26o",
@@ -10565,8 +11050,7 @@
         "value": "_scene"
       }
     },
-    "out": "8m5muxn/8m5muxn",
-    "description": "Creates a basic three.js scene with a camera, renderer, and scene. The `objects` input has the objects of the scene, evaluated every frame - make sure to cache. The `onupdate` input is a runnable with parameters `objects`, `camera`, and `scene` which is run every frame - keep. The `fx` input has effects for an EffectComposer."
+    "out": "8m5muxn/8m5muxn"
   },
   {
     "edges": {

@@ -178,3 +178,4 @@ type FullyTypedArg = {
 }
 
 export type TypedArg = string | FullyTypedArg
+export const isTypedArg = (a: any): a is TypedArg => a && (typeof a === "string" || typeof a.type === "string");

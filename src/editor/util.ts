@@ -1,6 +1,6 @@
 import * as ha from "hyperapp"
 import { initStore, nodysseus_get, nolib, run, NodysseusError } from "../nodysseus";
-import { Edge, Graph, isArgs, isNodeGraph, isNodeRef, isRunnable, Lib, NodeArg, NodysseusNode, TypedArg } from "../types";
+import { Edge, Graph, isArgs, isNodeGraph, isNodeRef, isRunnable, isTypedArg, Lib, NodeArg, NodysseusNode, RefNode, TypedArg } from "../types";
 import { base_node, base_graph, ispromise, wrapPromise, expand_node, contract_node, ancestor_graph, create_randid, compareObjects, newLib } from "../util";
 import panzoom, * as pz from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
@@ -476,7 +476,6 @@ export const refresh_graph = (dispatch, {graph, graphChanged, norun, result_disp
     }
 
     const result = hlib.run(graph, graph.out ?? "out", {_output: "value"}, undefined, {profile: false});
-    const reslib = hlib.run(graph, graph.out ?? "out", {_output: "lib"})
     // const result = hlib.run(graph, graph.out, {});
     const display_fn = result => hlib.run(graph, graph.out ?? "out", {_output: "display"}, {profile: false});
     // const display_fn = result => hlib.run(graph, graph.out, {}, "display");
@@ -839,6 +838,17 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Ar
           : undefined
       })
       scriptVarDecs.forEach(dec => scriptVarNames.delete(dec));
+    }
+
+    if(
+      isNodeGraph(node_ref) 
+      && (node_ref.nodes[node_ref.out ?? "out"] as RefNode).ref === "return" 
+      && Object.values(node_ref.edges_in[node_ref.out ?? "out"]).find(e => e.as === "metadata")
+    ) {
+      const metadata = hlib.run(graph, node_id, {_output: "metadata"})
+      if(metadata.parameters) {
+        Object.entries(metadata.parameters).forEach(pe => baseargs.push([pe[0], isTypedArg(pe[1]) ? pe[1] : "any"]))
+      }
     }
 
     const typedArgsMap = new Map(

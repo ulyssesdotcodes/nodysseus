@@ -670,6 +670,12 @@ export const run = (node: Runnable | InputRunnable, args: ResolvedArgs | Record<
     args = new Map(Object.entries(args));
   }
 
+  for(let k of args.keys()) {
+    if(!isValue(args.get(k) as Runnable)) {
+      args.set(k, nolib.no.of(args.get(k)))
+    }
+  }
+
   const res = run_runnable(
     isRunnable(node) 
       ? {...node, lib: node.lib ? mergeLib(node.lib, _lib) :  _lib}
@@ -1335,7 +1341,8 @@ const nolib = {
     return: {
       outputs: {
         display: true,
-        lib: true
+        lib: true,
+        metadata: true
       },
       resolve: false,
       rawArgs: true,
@@ -1395,7 +1402,7 @@ const nolib = {
             // ? run_runnable(display, _lib, args)
             // : _lib.data.no.of(undefined)
 
-          if (edgemap.subscribe) {
+          if (edgemap.subscribe && (runedge === "display" || runedge === "value")) {
             const graphid = (subscribe.env.data.get("__graphid") as {value: string}).value;
             const newgraphid = graphid + "/" + _node.id;
 
@@ -1576,7 +1583,7 @@ const nolib = {
     },
     call: {
       resolve: true,
-      args: {"__graph_value": "system", "self": {type: "any", default: true}, "fn": "value", "args": "array", "_lib": "lib"},
+      args: {"__graph_value": "system", "self": {type: "any", default: true}, "fn": "value", "args": "@data.array", "_lib": "lib"},
       fn: ({__graph_value, self, fn, args, _lib}) => {
         let nodevalue = __graph_value;
         const runfn = (args) => {
