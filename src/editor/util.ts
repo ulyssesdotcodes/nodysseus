@@ -767,9 +767,10 @@ export const calculateLevels = (nodes: Array<d3Node>, links: Array<d3Link>, grap
 }
 
 const parseTypedArg = (value: string): TypedArg => {
-  const argColon = value.includes(":") && [value.substring(0, value.indexOf(":")), value.substring(value.indexOf(":") + 1)];
+  const argColon = value.includes(":") && [value.substring(0, value.indexOf(":")), value.substring(value.indexOf(":") + 1)].map(v => v.trim());
   if(!argColon) return value
   if(argColon[1] === "internal") return {type: "any", local: true}
+  if(argColon[1] === "default") return {type: "any", default: true}
   try {
     return JSON.parse(argColon[1])
   }catch(e){
