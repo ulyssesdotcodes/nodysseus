@@ -7071,7 +7071,7 @@ const generic = {
       },
       "x8ik3x4": {
         "id": "x8ik3x4",
-        "value": "const graph = {...ref};\ndelete graph._nodes_old;\ndelete graph._edges_old;\nreturn graph;",
+        "value": "const graph = {...ref};\ndelete graph._nodes_old;\ndelete graph._edges_old;\ndelete graph.edges_in;\nreturn graph;",
         "ref": "@js.script"
       },
       "6ag8lnc": {
