@@ -128,6 +128,7 @@ export const isConstRunnable = (r: Runnable): r is ConstRunnable => !(r instance
 export const isApRunnable = (r: Runnable): r is ApRunnable => !(r instanceof Error) && r?.__kind == AP;
 export const isFunctorRunnable = (r: Runnable): r is FunctorRunnable => !(r instanceof Error) && r?.__kind == FUNCTOR;
 export const isInputRunnable = (r: Runnable | InputRunnable) => !Object.hasOwn(r, "__kind") && Object.hasOwn(r, "fn") && Object.hasOwn(r, "graph")
+export const getRunnableGraph = (r: Runnable | InputRunnable) => (r as BaseRunnable).graph;
 
 export type Lib = {
   __kind: "lib",
@@ -179,3 +180,8 @@ type FullyTypedArg = {
 
 export type TypedArg = string | FullyTypedArg
 export const isTypedArg = (a: any): a is TypedArg => a && (typeof a === "string" || typeof a.type === "string");
+
+export type NodeMetadata = {
+  parameters?: Array<string>,
+  values?: Array<string>
+}

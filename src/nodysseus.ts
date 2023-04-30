@@ -1,5 +1,5 @@
 import { ancestor_graph, ispromise, isWrappedPromise, mapMaybePromise, WrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node, runnableId, compareObjects, descendantGraph } from "./util"
-import { isNodeGraph, Graph, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike, EdgesIn, Extern } from "./types"
+import { isNodeGraph, Graph, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike, EdgesIn, Extern, getRunnableGraph } from "./types"
 import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util"
 import generic from "./generic.js";
 import * as externs from "./externs";
@@ -653,8 +653,11 @@ const initStore = (store: NodysseusStore | undefined = undefined) => {
 export const run = (node: Runnable | InputRunnable, args: ResolvedArgs | Record<string, unknown> = new Map(), options: {lib?: Lib, store?: NodysseusStore} & RunOptions = {}) => {
   initStore(options.store ?? nodysseus);
 
-
   let _lib: Lib = mergeLib(options.lib, newLib(nolib))
+  const cachedGraphLib = getRunnableGraph(node) && nodysseus.state.get(`${getRunnableGraph(node).id}-lib`);
+  if(cachedGraphLib) {
+    _lib = mergeLib(cachedGraphLib, _lib);
+  }
   if(isRunnable(node)) {
     if(isValue(node)) {
       return node.value;
@@ -1354,11 +1357,10 @@ const nolib = {
         "metadata",
         "args",
         "lib",
-        "_node",
-        "_graph",
         "_graph_input_value",
         "_lib",
-        "_runoptions"
+        "_runoptions",
+        "__graphid"
       ],
       fn: (
         value,
@@ -1367,11 +1369,10 @@ const nolib = {
         metadata,
         argsfn,
         lib,
-        _node,
-        _graph,
         _args,
         _lib: Lib,
-        options
+        options,
+        graphid
       ) => {
         const output = _args._output;
         const edgemap = { value, display, subscribe, metadata, lib };
@@ -1403,9 +1404,9 @@ const nolib = {
             // : _lib.data.no.of(undefined)
 
           if (edgemap.subscribe && (runedge === "display" || runedge === "value")) {
-            const graphid = (subscribe.env.data.get("__graphid") as {value: string}).value;
-            const newgraphid = graphid + "/" + _node.id;
-
+            // const graphid = (subscribe.env.data.get("__graphid") as {value: string}).value;
+            // const newgraphid = graphid + "/" + _node.id;
+            const newgraphid = graphid;
 
             wrapPromise(run_runnable(
               edgemap.subscribe,
@@ -1424,12 +1425,13 @@ const nolib = {
         }
 
         const ret = wrapPromise(run_runnable(lib, _lib, undefined, {...options, resolvePromises: true}))
-            .then(lib => isError(lib) ? lib : lib?.value)
-            .then(lib => wrapPromise(argsfn ? run_runnable({
+            .then(libr => isError(libr) ? libr : libr?.value)
+            .then(libr => (libr && `${lib.graph.id}/${lib.graph.out ?? "out"}` === graphid && nodysseus.state.set(`${lib.graph.id}-lib`, libr), libr))
+            .then(libr => wrapPromise(argsfn ? run_runnable({
                 ...argsfn,
-                lib: mergeLib(lib, _lib)
+                lib: mergeLib(libr, _lib)
               }, _lib, undefined, {...options, isNoResolve: true, resolvePromises: true}) : undefined)
-              .then(args => return_result(mergeLib(lib, _lib), isValue(args) ? args?.value : args))).value
+              .then(args => return_result(mergeLib(libr, _lib), isValue(args) ? args?.value : args))).value
         return ret;
       },
     },
@@ -1759,9 +1761,9 @@ const nolib = {
       fn: (value) => typeof value
     },
     construct: {
-      args: ["args", "__graph_value", "_lib"],
-      fn: (args, nodevalue, _lib) => new (Function.prototype.bind.apply(
-        nodysseus_get(_lib.data, nodevalue, _lib, typeof window !== "undefined" ? window[nodevalue] : self[nodevalue]), 
+      args: ["args", "name", "__graph_value", "_lib"],
+      fn: (args, name, nodevalue, _lib) => new (Function.prototype.bind.apply(
+        nodysseus_get(_lib.data, name || nodevalue, _lib, typeof window !== "undefined" ? window[nodevalue] : self[nodevalue]), 
         [null, ...(args === undefined ? [] : Array.isArray(args) ? args : [args])])
       )
     },

@@ -1,6 +1,6 @@
 import * as ha from "hyperapp"
 import { initStore, nodysseus_get, nolib, run, NodysseusError } from "../nodysseus";
-import { Edge, Graph, isArgs, isNodeGraph, isNodeRef, isRunnable, isTypedArg, Lib, NodeArg, NodysseusNode, RefNode, TypedArg } from "../types";
+import { Edge, Graph, isArgs, isNodeGraph, isNodeRef, isRunnable, isTypedArg, Lib, NodeArg, NodeMetadata, NodysseusNode, RefNode, TypedArg } from "../types";
 import { base_node, base_graph, ispromise, wrapPromise, expand_node, contract_node, ancestor_graph, create_randid, compareObjects, newLib } from "../util";
 import panzoom, * as pz from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
@@ -428,14 +428,14 @@ export const UpdateResultDisplay = (state, resel) => {
   }
 }
 
-export const UpdateNodeEffect = (_, {editingGraph, node}) => {
+export const UpdateNodeEffect = (_, {editingGraph, node}: {editingGraph: Graph, node: NodysseusNode}) => {
   nolib.no.runtime.add_node(editingGraph, node, hlib)
   const edges_in = nolib.no.runtime.get_edges_in(editingGraph, node.id);
-  const nodeargs = node_args(nolib, editingGraph, node.id);
+  const nodeargs = node_args(nolib, editingGraph, node.id, hlib.run(editingGraph, node.id, {_output: "metadata"}));
   if(edges_in.length === 1){ 
     if(nodeargs.length === 2) {
       nolib.no.runtime.update_edges(editingGraph, [{...edges_in[0], as: nodeargs.find(a => !a.additionalArg).name}], [], hlib)
-    } else if(nodeargs.find(a => a.name.split(": ")[1] === "default")) {
+    } else if(nodeargs.find(a => a.default)) {
       nolib.no.runtime.update_edges(editingGraph, [{...edges_in[0], as: nodeargs.map(a => a.name.split(": ")).find(e => e[1] === "default")[0]}], [], hlib)
     }
   } 
@@ -780,7 +780,7 @@ const parseTypedArg = (value: string): [string, TypedArg] => {
   return [outName, "any"]
 }
 
-export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Array<NodeArg> => {
+export const node_args = (nolib: Record<string, any>, graph: Graph, node_id: string, metadata: NodeMetadata): Array<NodeArg> => {
     const node = nolib.no.runtime.get_node(graph, node_id);
     if(!node) {
         // between graph update and simulation update it's possible links are bad
@@ -846,7 +846,6 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id): Ar
       && (node_ref.nodes[node_ref.out ?? "out"] as RefNode).ref === "return" 
       && Object.values(node_ref.edges_in ? node_ref.edges_in[node_ref.out ?? "out"] : Object.values(node_ref.edges).filter(e => e.to === node_ref.out ?? "out")).find(e => e.as === "metadata")
     ) {
-      const metadata = hlib.run(graph, node_id, {_output: "metadata"})
       if(metadata.parameters) {
         Object.entries(metadata.parameters).forEach(pe => baseargs.push([pe[0], isTypedArg(pe[1]) ? pe[1] : "any"]))
       }

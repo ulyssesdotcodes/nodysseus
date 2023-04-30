@@ -1,10 +1,10 @@
 import * as ha from "hyperapp"
-import { Edge, Graph, isNodeGraph, isNodeRef, NodysseusNode, RefNode, ValueNode } from "src/types";
+import { Edge, Graph, isNodeGraph, isNodeRef, NodeMetadata, NodysseusNode, RefNode, ValueNode } from "src/types";
 import { isNonNullChain } from "typescript";
 import generic from "../../generic";
-import {nolib} from "../../nodysseus"
+import {NodysseusError, nolib} from "../../nodysseus"
 import { d3Link, d3Node, HyperappState } from "../types";
-import { ChangeEditingGraphId, Copy, CreateNode, CreateRef, DeleteNode, ExpandContract, middleware, node_args, Paste, run_h, SaveGraph, SelectNode, UpdateEdge, UpdateNode, UpdateNodeEffect } from "../util";
+import { ChangeEditingGraphId, Copy, CreateNode, CreateRef, DeleteNode, ExpandContract, hlib, middleware, node_args, Paste, run_h, SaveGraph, SelectNode, UpdateEdge, UpdateNode, UpdateNodeEffect } from "../util";
 
 export const info_display = html_id => ha.app({
     init: {el: {dom_type: 'div', props: {}, children: []}},
@@ -47,7 +47,7 @@ export const infoInput = ({label, property, value, onchange, oninput, onkeydown,
     ]
 )
 
-export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, editingGraphId, randid, ref_graphs, html_id, copied_graph, inputs, graph_out, editing}: {
+export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, editingGraphId, randid, ref_graphs, html_id, copied_graph, inputs, graph_out, editing, error}: {
   node: d3Node,
   hidden: boolean,
   edges_in: Array<Edge>,
@@ -61,12 +61,15 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
   inputs: Record<string, string>,
   graph_out: string,
   editing: boolean,
+  error: false | NodysseusError
 })=> {
     //const s.editingGraph.id === s.editingGraphId && nolib.no.runtime.get_node(s.editingGraph, s.selected[0]) && 
     const node_ref = !hidden && node && isNodeRef(node) ? nolib.no.runtime.get_ref(node.ref) : node;
     const description =  !hidden && node_ref?.description;
-    const node_arg_labels = !hidden && node?.id ? node_args(nolib, editingGraph, node.id).map(a => ({...a, name: a.name.split(": ")[0]})) : [];
+    const metadata: NodeMetadata | undefined = !error && hlib.run(editingGraph, node.node_id, {_output: "metadata"});
+    const node_arg_labels = !hidden && node?.id ? node_args(nolib, editingGraph, node.id, metadata) : [];
     const isOut = node.id === graph_out
+
     return ha.h('div', {id: "node-info-wrapper"}, [ha.h('div', {class: "spacer before"}, []), ha.h(
         'div',
         { 
@@ -96,6 +99,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                 ha.memo(node => infoInput({
                     label: "value", 
                     value: (node as ValueNode).value, 
+                    options: metadata?.values ?? [],
                     property: "value", 
                     inputs,
                     onchange: (state, {value}) => [UpdateNode, {node, property: "value", value: value }]}),
@@ -116,7 +120,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                     value: link_out.as, 
                     property: "edge",
                     inputs,
-                    options: node_args(nolib, editingGraph, link_out.to).map(na => na.name.split(": ")[0]),
+                    options: node_args(nolib, editingGraph, link_out.to, !error && hlib.run(editingGraph, link_out.to, {_output: "metadata"})).map(na => na.name),
                     onchange: (state, {value}) => [UpdateEdge, {edge: {from: link_out.from, to: link_out.to, as: link_out.as}, as: value}]
                 }), link_out),
             ]),

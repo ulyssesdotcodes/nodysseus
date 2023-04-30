@@ -234,7 +234,8 @@ const runapp = (init, load_graph, _lib) => {
             html_id: s.html_id,
             copied_graph: s.copied?.graph,
             inputs: s.inputs,
-            graph_out: s.editingGraph.out
+            graph_out: s.editingGraph.out,
+            error: s.error
         }),
         ha.h('div', {id: `${init.html_id}-custom-editor-display`}),
         ha.h('div', {id: "graph-actions", class: "actions"}, [
@@ -401,6 +402,10 @@ const runapp = (init, load_graph, _lib) => {
                 }
                 case "graph_e": {
                     action = [SelectNode, { node_id: state.selected[0], focus_property: "edge" }]
+                    break;
+                }
+                case "graph_i": {
+                    //TODO: type out inputs
                     break;
                 }
                 case "graph_esc": {
