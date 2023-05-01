@@ -434,7 +434,7 @@ export const UpdateNodeEffect = (_, {editingGraph, node}: {editingGraph: Graph, 
   const nodeargs = node_args(nolib, editingGraph, node.id, hlib.run(editingGraph, node.id, {_output: "metadata"}));
   if(edges_in.length === 1){ 
     if(nodeargs.filter(na => !na.additionalArg).length === 1) {
-      nolib.no.runtime.update_edges(editingGraph, [{...edges_in[0], as: nodeargs.find(a => !a.additionalArg && !a.exists).name}], [], hlib)
+      nolib.no.runtime.update_edges(editingGraph, [{...edges_in[0], as: nodeargs.find(a => !a.additionalArg).name}], [], hlib)
     } else if(nodeargs.find(a => a.default)) {
       nolib.no.runtime.update_edges(editingGraph, [{...edges_in[0], as: nodeargs.map(a => a.name.split(": ")).find(e => e[1] === "default")[0]}], [], hlib)
     }
