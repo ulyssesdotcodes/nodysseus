@@ -1,7 +1,8 @@
-import { Lib, Runnable, RunOptions } from "./types";
+import { ApFunctorLike, Graph, isApFunction, isApRunnable, isError, isValue, Lib, NodysseusNode, Runnable, RunOptions } from "./types";
 import { v4 as uuid } from "uuid";
 import { ispromise, nolib, run } from "./nodysseus";
 import { mergeLib, set_mutable } from "./util";
+import { listen } from "./editor/util";
 
 const getorset = (map, id, value_fn=undefined) => {
     let val = map.get(id);
@@ -19,7 +20,7 @@ const getorset = (map, id, value_fn=undefined) => {
 export const initListeners = () => {
   const hasRequestAnimationFrame = typeof requestAnimationFrame !== "undefined";
   const event_listeners = new Map<string, Map<string, Function | Runnable>>();
-  const event_listeners_by_graph = new Map();
+  const event_listeners_by_graph = new Map<string, Map<string, string>>();
   const event_data = new Map(); // TODO: get rid of this
   let animationframe;
   let animationerrors = [];
@@ -40,7 +41,6 @@ export const initListeners = () => {
         if(typeof window !== "undefined" || (event !== "graphchange" && event !== "graphupdate")) {
           eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data });
         } else if (event === "grapherror") {
-          debugger;
           eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data: {message: data.message, node_id: data.node_id, stack: data.stack } });
         }
       } catch(e){
@@ -49,31 +49,42 @@ export const initListeners = () => {
       }
     }
 
+
     event_data.set(event, data);
-    const listeners = getorset(event_listeners, event, () => new Map());
+    const listenerMap: ReturnType<(typeof event_listeners)["get"]> = getorset(event_listeners, event, () => new Map());
+    const listeners = [...listenerMap.entries()]
+
+    const runlistener = l => {
+      try {
+        if (typeof l === "function") {
+          l(data, lib, {...options, timings: {}});
+        } else if (typeof l === "object" && l.fn && l.graph) {
+          run(
+            l,
+            Object.assign({}, l.args || {}, { data }),
+            {...options, lib: mergeLib(l.lib, lib)}
+          );
+        }
+      } catch(e) {
+        console.error(e);
+      }
+    }
+
+    if(listenerMap.has("__system")) {
+      runlistener(listenerMap.get("__system"))
+    }
 
     // When paused allow graphchange and grapherror so the graph shows
     if(!pause || event === "graphchange" || event === "grapherror") {
-      for (let l of listeners.values()) {
-        try {
-          if (typeof l === "function") {
-            l(data, lib, {...options, timings: {}});
-          } else if (typeof l === "object" && l.fn && l.graph) {
-            run(
-              l,
-              Object.assign({}, l.args || {}, { data }),
-              {...options, lib: mergeLib(l.lib, lib)}
-            );
-          }
-        } catch(e) {
-          console.error(e);
-        }
+      for (let l of listeners) {
+        if(l[0] !== "__system") runlistener(l[1])
+        // runlistener(l)
       }
     }
 
     if (
       event === "animationframe" &&
-      listeners.size > 0 && // the 1 is for the animationerrors stuff below
+      listenerMap.size > 0 && // the 1 is for the animationerrors stuff below
       !animationframe &&
       animationerrors.length == 0 &&
       hasRequestAnimationFrame
@@ -110,19 +121,20 @@ export const initListeners = () => {
     }
 
     const listeners = getorset(event_listeners, event, () => new Map());
+    const replaceGraphs = (runnable: Runnable | ApFunctorLike) =>
+      isApFunction(runnable) || typeof runnable === "function" || isValue(runnable) || isError(runnable) || runnable === undefined
+        ? runnable
+        : isApRunnable(runnable) 
+        ? {...runnable, fn: Array.isArray(runnable.fn) ? runnable.fn.map(replaceGraphs) : replaceGraphs(runnable.fn)}
+        : {...runnable, graph: lib.data.no.runtime.get_ref(runnable.graph.id)}
+
     const fn =
       typeof input_fn === "function"
         ? input_fn
         : (args) => {
-            run(input_fn, args, {...options, lib: mergeLib(input_fn.lib, lib)});
+            run(replaceGraphs(input_fn), args, {...options, lib: mergeLib(input_fn.lib, lib)});
           };
     if (!listeners.has(listener_id)) {
-      if (!prevent_initial_trigger && event_data.has(event)) {
-        try{
-          fn(event_data.get(event));
-        } catch(e){}
-      }
-
       if (graph_id) {
         const graph_id_listeners = getorset(
           event_listeners_by_graph,
@@ -147,11 +159,13 @@ export const initListeners = () => {
 
   // Adding a listener to listen for errors during animationframe. If there are errors, don't keep running.
   addListener('grapherror', "__system", e => animationerrors.push(e));
-  addListener('graphchange', "__system", e => {
+  addListener('graphchange', "__system", ({graph, dirtyNodes}: {graph: Graph, dirtyNodes: Array<NodysseusNode>}) => {
     if(animationerrors.length > 0) {
       event_listeners.get("animationframe")?.clear();
     }
     animationerrors.splice(0, animationerrors.length)
+
+    dirtyNodes?.forEach(n => removeGraphListeners(`${graph.id}/${n}`))
   });
 
   addListener('argsupdate', '__system', ({graphid, changes, mutate}, lib, options) => {
@@ -184,17 +198,25 @@ export const initListeners = () => {
     }
   };
 
-  const removeGraphListeners = (graph_id, event) => {
-    const graph_listeners = (graph_id === "*" ? [...event_listeners_by_graph.values()] : [event_listeners_by_graph.get(graph_id)])
+  const removeGraphListeners = (graph_id: string) => {
+    (graph_id === "*" 
+      ? [...event_listeners_by_graph.values()] 
+      : [...event_listeners_by_graph.entries()]
+        .filter(kv => kv[0].startsWith(graph_id))
+        .map(kv => kv[1]))
       .filter(gl => gl)
-      .map(gl => [...gl.entries()])
-      .flat();
-    if (graph_listeners) {
-      for (const evt of graph_listeners) {
-        getorset(event_listeners, evt[0])?.delete(evt[1]);
-      }
+      .map(gl => [...gl.entries()].filter(gle => gle[0] !== "graphchange")
+           .forEach(gle => {
+            event_listeners.get(gle[0])?.delete(gle[1]);
+            event_listeners_by_graph.get(gl[0])?.delete(gle[0]);
+            if(event_listeners_by_graph.get(gl[0])?.size === 0) {
+              event_listeners_by_graph.delete(gl[0])
+            }
+           }))
     }
-  };
 
-  return {publish, addListener, removeGraphListeners, removeListener, togglePause: (newPause: boolean) => pause = newPause}
+  const isGraphidListened = (graphId: string) => event_listeners_by_graph.has(graphId);
+  const isListened = (event: string, listenerId: string) => event_listeners.get(event)?.has(listenerId);
+
+  return {publish, addListener, removeGraphListeners, removeListener, isGraphidListened, isListened, togglePause: (newPause: boolean) => pause = newPause }
 }

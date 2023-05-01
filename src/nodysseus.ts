@@ -785,9 +785,10 @@ const nolib = {
         }
       })
 
-      const {publish, addListener, removeListener, removeGraphListeners, togglePause} = initListeners();
+      const {publish, addListener, removeListener, removeGraphListeners, togglePause, isGraphidListened, isListened} = initListeners();
 
       const change_graph = (graph: Graph, lib: Lib, changedNodes: Array<string>, addToStore = true) => {
+        console.log("chagned", graph)
         const parent = get_parentest(graph);
         if (parent) {
           (lib.data ?? lib).no.runtime.update_graph(parent, lib);
@@ -945,17 +946,18 @@ const nolib = {
         remove_asset: (id) => nolib.no.runtime.store.assets.remove(id),
         refs: () => nodysseus.refs.keys(),
         ref_graphs: () => nodysseus.refs.keys(),
-        update_edges: (graph: string | Graph, add: Array<Edge>, remove: Array<Edge> = [], lib: Lib, dryRun = false): void => {
+        update_edges: async (graph: string | Graph, add: Array<Edge>, remove: Array<Edge> = [], lib: Lib, dryRun = false): Promise<void> => {
           const graphId = typeof graph === "string" ? graph : graph.id;
+          await Promise.resolve(nodysseus.refs.add_nodes_edges(graphId, [], add, remove, []))
           if(Array.isArray(remove)) {
-            remove.map(e => nodysseus.refs.remove_edge(graphId, e))
+            await Promise.all(remove.map(e => nodysseus.refs.remove_edge(graphId, e)))
           } else if (typeof remove === "object") {
-            nodysseus.refs.remove_edge(graphId, remove)
+            await Promise.resolve(nodysseus.refs.remove_edge(graphId, remove))
           }
           if(Array.isArray(add)) {
-            add.map(e => nodysseus.refs.add_edge(graphId, e))
+            await Promise.all(add.map(e => nodysseus.refs.add_edge(graphId, e)))
           } else if (typeof add === "object") {
-            nodysseus.refs.add_edge(graphId, add)
+            await Promise.resolve(nodysseus.refs.add_edge(graphId, add))
           }
           change_graph(nodysseus.refs.get(graphId) as Graph, lib, add.flatMap(e => [e.from, e.to]));
         },
@@ -1031,6 +1033,8 @@ const nolib = {
         },
         removeListener,
         removeGraphListeners,
+        isGraphidListened,
+        isListened,
         togglePause,
         publish,
         set_parent: (graph, parent) => {
@@ -1377,11 +1381,13 @@ const nolib = {
         const output = _args._output;
         const edgemap = { value, display, subscribe, metadata, lib };
 
-        if(output === "display" && !edgemap[output]) {
+        if((output === "display" || output === "metadata" || output === "parameters") && !edgemap[output]) {
           return;
         }
 
         const runedge = output && output === display ? display : edgemap[output] ? output : "value";
+
+        // _lib.data.no.runtime.removeAncestorListeners(graphid)
 
         const return_result = (_lib: Lib, args: Args) => {
           args = args && !isArgs(args) ? new Map(Object.entries(args)) : args;
@@ -1403,7 +1409,11 @@ const nolib = {
             // ? run_runnable(display, _lib, args)
             // : _lib.data.no.of(undefined)
 
+            // if(_lib.data.no.runtime.isGraphidListened(graphid)) {
+            //   console.log(`canceled subscribe-${graphid}`, _lib.data.no.runtime.isGraphidListened(graphid));
+            // }
           if (edgemap.subscribe && (runedge === "display" || runedge === "value")) {
+            // console.log(`subscribing for ${graphid}`)
             // const graphid = (subscribe.env.data.get("__graphid") as {value: string}).value;
             // const newgraphid = graphid + "/" + _node.id;
             const newgraphid = graphid;
@@ -1417,7 +1427,8 @@ const nolib = {
             .then(subscriptions => isValue(subscriptions) ? subscriptions.value : subscriptions)
             .then(subscriptions => subscriptions && Object.entries(subscriptions)
                 .forEach(kv => kv[1] &&
-                  _lib.data.no.runtime.addListener(kv[0], 'subscribe-' + newgraphid, kv[1], false, 
+                  !_lib.data.no.runtime.isListened(kv[0], 'subscribe-' + newgraphid) 
+                  && _lib.data.no.runtime.addListener(kv[0], 'subscribe-' + newgraphid, kv[1], false, 
                     graphid, true, _lib, options)))
           }
 
