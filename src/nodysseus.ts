@@ -1713,6 +1713,16 @@ const nolib = {
       resolve: true,
       fn: (args) => Object.values(args).reduce((acc: any, v: any) => acc / v, 1),
     },
+    convertAngle: {
+      args: ["degrees", "radians"],
+      fn: (degrees, radians) => {
+        if(degrees && radians) {
+          throw new Error("Got both degrees and radians!")
+        }
+
+        return degrees ? degrees * Math.PI / 180 : radians * 180 / Math.PI;
+      }
+    },
     modify: {
       args: ["target", "path", "fn", "_node", "_lib", "_graph_input_value", "_runoptions"],
       resolve: false,

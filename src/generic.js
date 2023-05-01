@@ -176,6 +176,13 @@ const generic = {
     "category": "math",
     "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_AND'>&& operator</a>"
   },
+  "@math.convertAngle": {
+    "id": "@math.and",
+    "ref": "extern",
+    "value": "extern.convertAngle",
+    "category": "math",
+    "description": "Convert either degrees or radians to the other one."
+  },
   "@math.random": {
     "id": "@math.random",
     "category": "math",
