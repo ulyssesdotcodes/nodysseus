@@ -508,7 +508,7 @@ export const node_el = ({html_id, selected, error, selected_distance, node_id, n
         node_id: node_id,
         primary: node_name ? node_name : node_value ? node_value : '', 
         focus_primary: node_name ? "name" : "value",
-        secondary: node_ref ? node_ref : has_nodes ? `graph (${nested_node_count}, ${nested_edge_count})` : node_value !== undefined ? 'value' : node_parents.length > 0 ? 'object' : 'undefined'
+        secondary: node_ref ? node_ref : has_nodes ? `graph (${nested_node_count}, ${nested_edge_count})` : node_value !== undefined ? 'value' : node_parents?.length > 0 ? 'object' : 'undefined'
     }),
     ha.memo(fill_rect_el, {})
 ])
