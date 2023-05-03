@@ -785,7 +785,7 @@ const nolib = {
         }
       })
 
-      const {publish, addListener, removeListener, removeGraphListeners, togglePause, isGraphidListened, isListened} = initListeners();
+      const {publish, addListener, removeListener, pauseGraphListeners, togglePause, isGraphidListened, isListened} = initListeners();
 
       const change_graph = (graph: Graph, lib: Lib, changedNodes: Array<string>, addToStore = true) => {
         const parent = get_parentest(graph);
@@ -1035,7 +1035,7 @@ const nolib = {
           addListener,
         },
         removeListener,
-        removeGraphListeners,
+        pauseGraphListeners,
         isGraphidListened,
         isListened,
         togglePause,
@@ -1096,16 +1096,39 @@ const nolib = {
     },
     switch: {
       rawArgs: true,
-      args: ["input", "_node_args", "_lib", "_runoptions", "otherwise"],
-      fn: (input, args: Args, lib: Lib, options, otherwise) => {
-        const inputval = run_runnable(input, lib, undefined, options);
-        return ispromise(inputval) 
-          ? inputval.then(ival => isError(ival) ? ival : run_runnable(isArgs(args) ? args.get(ival?.value) : args[ival?.value], lib, undefined, options)) 
-          : isError(inputval)
-          ? inputval
-          : args.has(inputval?.value)
-          ? run_runnable(args.get(inputval?.value), lib, undefined, options)
-          : run_runnable(otherwise, lib, undefined, options);
+      args: ["input", "args", "_node_args", "_lib", "_runoptions", "otherwise", "removeSubscriptions", "__graphid"],
+      fn: (input, args, node_args: Args, lib: Lib, options, otherwise, removeSubscriptions, graphid) => {
+        return wrapPromiseAll([
+          run_runnable(input, lib, undefined, options), 
+          run_runnable(args, lib, undefined, options),
+          run_runnable(removeSubscriptions, lib, undefined, options)
+        ])
+        .then(([inputval, runargs, removeSubscriptions]) => [
+          isValue(inputval) ? inputval.value : inputval, 
+          (isValue(runargs) ? runargs.value : runargs) ?? node_args,
+          isValue(removeSubscriptions) ? removeSubscriptions.value : false
+        ])
+        .then(([ival, args, removeSubscriptions]) => {
+          if(removeSubscriptions && lib.data.no.runtime.get_args(graphid).value !== ival){
+              removeSubscriptions && (isArgs(args) ? [...args.entries()] : Object.entries(args))
+             .filter(e => !e[0].startsWith("__"))
+             .flatMap((runnableEntry: [string, ConstRunnable]) => Object.values(ancestor_graph(runnableEntry[1].fn, runnableEntry[1].graph, lib).nodes).map(n => [runnableEntry[0], runnableEntry[1].graph, n]))
+             .forEach(([inputid, graph, node]: [string, Graph, NodysseusNode]) => lib.data.no.runtime.pauseGraphListeners(`${graph.id}/${node.id}`, ival !== inputid));
+             lib.data.no.runtime.update_args(graphid, {value: ival})
+          }
+
+          return isError(ival)
+            ? ival 
+            : run_runnable(
+                 isArgs(args) 
+                  ? args.get(ival) 
+                  : args[ival], 
+                lib, undefined, options)
+            ?? run_runnable(otherwise, lib, undefined, options)
+        })
+          .then(res => {
+            return res;
+          });
       },
     },
     resolve: {
@@ -1430,8 +1453,8 @@ const nolib = {
             .then(subscriptions => isValue(subscriptions) ? subscriptions.value : subscriptions)
             .then(subscriptions => subscriptions && Object.entries(subscriptions)
                 .forEach(kv => kv[1] &&
-                  !_lib.data.no.runtime.isListened(kv[0], 'subscribe-' + newgraphid) 
-                  && _lib.data.no.runtime.addListener(kv[0], 'subscribe-' + newgraphid, kv[1], false, 
+                  !_lib.data.no.runtime.isListened(kv[0], newgraphid) 
+                  && _lib.data.no.runtime.addListener(kv[0], newgraphid, kv[1], false, 
                     graphid, true, _lib, options)))
           }
 

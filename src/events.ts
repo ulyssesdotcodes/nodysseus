@@ -1,4 +1,4 @@
-import { ApFunctorLike, Graph, isApFunction, isApRunnable, isError, isValue, Lib, NodysseusNode, Runnable, RunOptions } from "./types";
+import { ApFunctorLike, Graph, isApFunction, isApRunnable, isConstRunnable, isError, isValue, Lib, NodysseusNode, Runnable, RunOptions } from "./types";
 import { v4 as uuid } from "uuid";
 import { ispromise, nolib, run } from "./nodysseus";
 import { mergeLib, set_mutable } from "./util";
@@ -19,8 +19,9 @@ const getorset = (map, id, value_fn=undefined) => {
 
 export const initListeners = () => {
   const hasRequestAnimationFrame = typeof requestAnimationFrame !== "undefined";
-  const event_listeners = new Map<string, Map<string, Function | Runnable>>();
+  const event_listeners = new Map<string, Map<string, {fn: Function | Runnable, graphid?: string}>>();
   const event_listeners_by_graph = new Map<string, Map<string, string>>();
+  const pausedGraphIds = new Set<string>();
   const event_data = new Map(); // TODO: get rid of this
   let animationframe;
   let animationerrors = [];
@@ -54,14 +55,14 @@ export const initListeners = () => {
     const listenerMap: ReturnType<(typeof event_listeners)["get"]> = getorset(event_listeners, event, () => new Map());
     const listeners = [...listenerMap.entries()]
 
-    const runlistener = l => {
+    const runlistener = (l: Function | Runnable) => {
       try {
         if (typeof l === "function") {
           l(data, lib, {...options, timings: {}});
-        } else if (typeof l === "object" && l.fn && l.graph) {
+        } else if (typeof l === "object" && !isValue(l) && !isError(l)) {
           run(
             l,
-            Object.assign({}, l.args || {}, { data }),
+            Object.assign({}, isApRunnable(l) ? l.args : {}, { data }),
             {...options, lib: mergeLib(l.lib, lib)}
           );
         }
@@ -71,13 +72,13 @@ export const initListeners = () => {
     }
 
     if(listenerMap.has("__system")) {
-      runlistener(listenerMap.get("__system"))
+      runlistener(listenerMap.get("__system").fn)
     }
 
     // When paused allow graphchange and grapherror so the graph shows
     if(!pause || event === "graphchange" || event === "grapherror") {
       for (let l of listeners) {
-        if(l[0] !== "__system") runlistener(l[1])
+        if(l[0] !== "__system" && !(l[1].graphid && [...pausedGraphIds.keys()].find(k => l[1].graphid.startsWith(k)))) runlistener(l[1].fn)
         // runlistener(l)
       }
     }
@@ -154,8 +155,7 @@ export const initListeners = () => {
       removeListener(event, listener_id);
     }
 
-    listeners.set(listener_id, fn);
-
+    listeners.set(listener_id, {fn, graphid: graph_id});
   };
 
   // Adding a listener to listen for errors during animationframe. If there are errors, don't keep running.
@@ -169,9 +169,9 @@ export const initListeners = () => {
 
     animationerrors.splice(0, animationerrors.length)
 
-    dirtyNodes?.forEach(n => {
-      removeGraphListeners(`${graph.id}/${n}`);
-    })
+    // dirtyNodes?.forEach(n => {
+    //   pauseGraphListeners(`${graph.id}/${n}`);
+    // })
   }
   addListener('graphchange', "__system", systemgraphchangelistener);
   addListener('graphupdate', "__system", systemgraphchangelistener);
@@ -206,27 +206,11 @@ export const initListeners = () => {
     }
   };
 
-  const removeGraphListeners = (graph_id: string) => {
-    (graph_id === "*" 
-      ? [...event_listeners_by_graph.values()] 
-      : [...event_listeners_by_graph.entries()]
-        .filter(kv => kv[0].startsWith(graph_id))
-        .map(kv => kv[1]))
-      .filter(gl => gl)
-      .map(gl => [...gl.entries()].filter(gle => gle[0] !== "graphchange" && gle[0] !== "graphupdate")
-           .forEach(gle => {
-            event_listeners.get(gle[0])?.delete(gle[1]);
-            console.log(`removing event listener`, gle)
-            event_listeners_by_graph.get(gl[0])?.delete(gle[0]);
-            if(event_listeners_by_graph.get(gl[0])?.size === 0) {
-              console.log("removing all listeners", gl[0])
-              event_listeners_by_graph.delete(gl[0])
-            }
-           }))
-    }
+  const pauseGraphListeners = (graph_id: string, paused: boolean) => 
+    paused ? pausedGraphIds.add(graph_id) : pausedGraphIds.delete(graph_id)
 
   const isGraphidListened = (graphId: string) => event_listeners_by_graph.has(graphId);
   const isListened = (event: string, listenerId: string) => event_listeners.get(event)?.has(listenerId);
 
-  return {publish, addListener, removeGraphListeners, removeListener, isGraphidListened, isListened, togglePause: (newPause: boolean) => pause = newPause }
+  return {publish, addListener, pauseGraphListeners, removeListener, isGraphidListened, isListened, togglePause: (newPause: boolean) => pause = newPause }
 }

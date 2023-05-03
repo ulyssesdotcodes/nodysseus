@@ -238,7 +238,7 @@ export const ChangeEditingGraphId: ha.Effecter<HyperappState, {id: string, selec
                     }
                     
                     nolib.no.runtime.change_graph(new_graph, hlib);
-                    nolib.no.runtime.removeGraphListeners(state.editingGraphId);
+                    // nolib.no.runtime.removeGraphListeners(state.editingGraphId);
                     dispatch(s => {
                         const news = {...s, editingGraph: new_graph, selected: [new_graph.out], editingGraphId: new_graph.id}
                         return [news, [UpdateSimulation, {...news, clear_simulation_cache: true}], select_out && [() => {setTimeout(() => {
