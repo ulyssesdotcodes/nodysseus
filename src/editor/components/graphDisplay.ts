@@ -238,7 +238,6 @@ const idFromNode = (node: d3Node | string | number): string => typeof node === "
 // Creates the simulation, updates the node elements when the simulation changes, and runs an action when the nodes have settled.
 // This is probably doing too much.
 export const d3subscription = (dispatch, props) => {
-  console.log("d3 called again")
     const simulation: NodysseusSimulation = hlib.d3.forceSimulation<d3Node>()
         .force('charge', hlib.d3.forceManyBody().strength(-1024).distanceMax(1024).distanceMin(64))
         .force('collide', hlib.d3.forceCollide(64))

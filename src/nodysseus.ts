@@ -788,14 +788,13 @@ const nolib = {
       const {publish, addListener, removeListener, removeGraphListeners, togglePause, isGraphidListened, isListened} = initListeners();
 
       const change_graph = (graph: Graph, lib: Lib, changedNodes: Array<string>, addToStore = true) => {
-        console.log("chagned", graph)
         const parent = get_parentest(graph);
         if (parent) {
           (lib.data ?? lib).no.runtime.update_graph(parent, lib);
         } else {
           const startNode = changedNodes?.[0];
           publish("graphchange", {graph, dirtyNodes: startNode && Object.keys(descendantGraph(startNode, graph, lib).nodes)}, lib);
-          publish("graphupdate", graph, lib);
+          publish("graphupdate", {graph, dirtyNodes: startNode && Object.keys(descendantGraph(startNode, graph, lib).nodes)}, lib);
         }
       };
 
@@ -818,7 +817,11 @@ const nolib = {
                 updatepublish[updatedgraph.id] = performance.now();
                 requestAnimationFrame(() => {
                   updatepublish[updatedgraph.id] = false;
-                  publish("graphupdate", updatedgraph, lib);
+                  // TODO: fix the use of / here
+                  let node_id = graph.split(updatedgraph.id)[1].substring(1);
+                  node_id = node_id.indexOf('/') > 0 ? node_id.substring(0, node_id.indexOf('/')) : node_id;
+
+                  publish("graphupdate", {graph: updatedgraph, dirtyNodes: node_id && Object.keys(descendantGraph(node_id, updatedgraph, lib).nodes)}, lib);
                 })
               }
             }).value
@@ -928,7 +931,7 @@ const nolib = {
         }).value
         },
         change_graph,
-        update_graph: (graphid, lib: Lib) => publish('graphupdate', {graphid}, lib),
+        update_graph: (graphid, lib: Lib) => publish('graphupdate', {graph: graphid}, lib),
         update_args,
         clearState: () => nodysseus.state.clear(),
         delete_cache: () => {

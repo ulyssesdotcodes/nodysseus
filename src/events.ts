@@ -116,6 +116,7 @@ export const initListeners = () => {
     lib: Lib = {__kind: "lib", data: nolib},
     options: RunOptions = {}
   ) => {
+    console.log("adding listener", event, listener_id, input_fn)
     if(ispromise(input_fn)) {
       return input_fn.then(fn => addListener(event, listener_id, fn, remove, graph_id, prevent_initial_trigger, lib, options))
     }
@@ -159,14 +160,21 @@ export const initListeners = () => {
 
   // Adding a listener to listen for errors during animationframe. If there are errors, don't keep running.
   addListener('grapherror', "__system", e => animationerrors.push(e));
-  addListener('graphchange', "__system", ({graph, dirtyNodes}: {graph: Graph, dirtyNodes: Array<NodysseusNode>}) => {
+
+  
+  const systemgraphchangelistener = ({graph, dirtyNodes}: {graph: Graph, dirtyNodes: Array<NodysseusNode>}) => {
     if(animationerrors.length > 0) {
       event_listeners.get("animationframe")?.clear();
     }
+
     animationerrors.splice(0, animationerrors.length)
 
-    dirtyNodes?.forEach(n => removeGraphListeners(`${graph.id}/${n}`))
-  });
+    dirtyNodes?.forEach(n => {
+      removeGraphListeners(`${graph.id}/${n}`);
+    })
+  }
+  addListener('graphchange', "__system", systemgraphchangelistener);
+  addListener('graphupdate', "__system", systemgraphchangelistener);
 
   addListener('argsupdate', '__system', ({graphid, changes, mutate}, lib, options) => {
     if(mutate) {
@@ -205,11 +213,13 @@ export const initListeners = () => {
         .filter(kv => kv[0].startsWith(graph_id))
         .map(kv => kv[1]))
       .filter(gl => gl)
-      .map(gl => [...gl.entries()].filter(gle => gle[0] !== "graphchange")
+      .map(gl => [...gl.entries()].filter(gle => gle[0] !== "graphchange" && gle[0] !== "graphupdate")
            .forEach(gle => {
             event_listeners.get(gle[0])?.delete(gle[1]);
+            console.log(`removing event listener`, gle)
             event_listeners_by_graph.get(gl[0])?.delete(gle[0]);
             if(event_listeners_by_graph.get(gl[0])?.size === 0) {
+              console.log("removing all listeners", gl[0])
               event_listeners_by_graph.delete(gl[0])
             }
            }))

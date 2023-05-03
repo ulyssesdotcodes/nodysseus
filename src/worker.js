@@ -36,7 +36,7 @@ const processMessage = e => {
         //
         // });
 
-        nolib.no.runtime.addListener('graphupdate', 'worker-graphupdate', (graph) => {
+        nolib.no.runtime.addListener('graphupdate', 'worker-graphupdate', ({graph}) => {
           if(runningGraphs.has(graph.id)) {
             run(runningGraphs.get(graph.id), undefined, {profile: false && performance.now() > 4000});
           }

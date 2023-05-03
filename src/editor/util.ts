@@ -507,7 +507,7 @@ export const result_subscription = (dispatch, {editingGraphId, displayGraphId, n
 
     let info_display_dispatch, code_editor, code_editor_nodeid, result_display_dispatch;
 
-    const change_listener = graph => {
+    const change_listener = ({graph}) => {
       if(animrun) {
           cancelAnimationFrame(animrun)
       }
