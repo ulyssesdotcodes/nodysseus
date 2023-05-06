@@ -47,6 +47,9 @@ export type RefStore = Store<Graph> & {
   remove_edge: (graphId: string, edge: Edge) => void;
 }
 
+export type StoreType<T extends Store<any>> = Exclude<ReturnType<T["get"]>, undefined | Promise<any>>;
+export type NodysseusStoreTypes = {[k in keyof NodysseusStore]: StoreType<NodysseusStore[k]>}
+
 export type NodysseusStore = {
   refs: RefStore,
   parents: Store<{parent: string, parentest: string}>,

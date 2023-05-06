@@ -280,7 +280,7 @@ export const CreateNode: ha.Action<HyperappState, {node: NodysseusNode, child: s
 
 export const DeleteNode = (state, {node_id}) => [
     state,
-    [(dispatch, {node_id}) => dispatch(SelectNode, {node_id}), {node_id: nolib.no.runtime.get_edge_out(state.editingGraph, node_id).to}],
+    [(dispatch, {node_id}) => dispatch(SelectNode, {node_id}), {node_id: graphEdgeOut(state.editingGraph, node_id).to}],
     [() => requestAnimationFrame(() => nolib.no.runtime.delete_node(state.editingGraph, node_id, hlib))]
 ]
 
@@ -371,7 +371,7 @@ export const SelectNode: ha.Action<HyperappState, {
       ...state, 
       selected: [node_id], 
       inputs: {},
-      selected_edges_in: nolib.no.runtime.get_edges_in(state.editingGraph, node_id),
+      selected_edges_in: graphEdgesIn(state.editingGraph, node_id),
       noautozoom: false
     },
     !state.show_all && [pzobj.effect, {...state, node_id: node_id}],
@@ -430,7 +430,7 @@ export const UpdateResultDisplay = (state, resel) => {
 
 export const UpdateNodeEffect = (_, {editingGraph, node}: {editingGraph: Graph, node: NodysseusNode}) => {
   nolib.no.runtime.add_node(editingGraph, node, hlib)
-  const edges_in = nolib.no.runtime.get_edges_in(editingGraph, node.id);
+  const edges_in = graphEdgesIn(editingGraph, node.id);
   const nodeargs = node_args(nolib, editingGraph, node.id, hlib.run(editingGraph, node.id, {_output: "metadata"}));
   if(edges_in.length === 1){ 
     if(nodeargs.filter(na => !na.additionalArg).length === 1) {
@@ -702,7 +702,7 @@ export const bfs = (graph: Graph, fn) => {
 
 export const calculateLevels = (nodes: Array<d3Node>, links: Array<d3Link>, graph: Graph, selected: string): Levels => {
     const find_childest = n => {
-        const e = hlib.no.runtime.get_edge_out(graph, n);
+        const e = graphEdgeOut(graph, n);
         if (e && !ispromise(e)) {
             return find_childest(e.to);
         } else {
@@ -793,8 +793,8 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id: str
         return []
     }
     const node_ref = node?.ref ? nolib.no.runtime.get_ref(node.ref) : node;
-    const edges_in = nolib.no.runtime.get_edges_in(graph, node_id);
-    const edge_out = nolib.no.runtime.get_edge_out(graph, node_id)
+    const edges_in = graphEdgesIn(graph, node_id);
+    const edge_out = graphEdgeOut(graph, node_id)
     if(ispromise(edges_in) || ispromise(edge_out)) {
       return []
     }
@@ -858,9 +858,9 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id: str
     }
 
     const typedArgsMap = new Map(
-      edges_in?.map(e => [e.as, {type: "any", additionalArg: !baseargs.map(a => a[0]).includes(e.as)}])
+      edges_in?.map<[string, TypedArg]>(e => [e.as, {type: "any", additionalArg: !baseargs.map(a => a[0]).includes(e.as)}])
         .concat(baseargs)
-        .filter(a => !a[0].includes('.') && !a[0].startsWith("_"))
+        .filter((a: [string, TypedArg]) => !a[0].includes('.') && !a[0].startsWith("_"))
         .concat(
             (externArgs && externArgs.map(a => a[0]).includes("_node_args") || baseargs.map(a => a[0]).includes("_args"))
             || (node.ref === undefined && !node.value)
@@ -877,15 +877,23 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id: str
       }))
 }
 
-
-
-
 export const save_graph = graph => {
   graph = base_graph(graph);
   const graphstr = JSON.stringify(base_graph(graph)); 
   // localStorage.setItem(graph.id, graphstr); 
   nolib.no.runtime.add_ref(graph);
 }
+
+
+// Graph helpers - these are here to operate on graph objects instead of nolib which uses the store
+
+export const graphEdgeOut = (graph: Graph, node: string) => graph.edges[node];
+export const graphEdgesIn = (graph: Graph, node: string) => 
+  Object.hasOwn(graph, "edges_in")
+    ? Object.hasOwn(graph.edges_in, "node")
+      ? Object.values(graph.edges_in[node])
+      : []
+    : Object.values(graph.edges).filter(e => e.to === node);
 
 
 export const hlib = {

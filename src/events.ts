@@ -117,7 +117,6 @@ export const initListeners = () => {
     lib: Lib = {__kind: "lib", data: nolib},
     options: RunOptions = {}
   ) => {
-    console.log("adding listener", event, listener_id, input_fn)
     if(ispromise(input_fn)) {
       return input_fn.then(fn => addListener(event, listener_id, fn, remove, graph_id, prevent_initial_trigger, lib, options))
     }

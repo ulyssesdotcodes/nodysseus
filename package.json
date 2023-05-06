@@ -55,6 +55,7 @@
     "@swc/jest": "^0.2.23",
     "@types/d3-force": "^3.0.3",
     "@types/lokijs": "^1.5.7",
+    "@types/sharedworker": "^0.0.96",
     "@types/uuid": "^9.0.1",
     "brace-expansion": "^2.0.1",
     "concurrently": "^7.3.0",

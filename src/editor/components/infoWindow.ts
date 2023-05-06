@@ -24,7 +24,7 @@ export const infoInput = ({label, property, value, onchange, oninput, onkeydown,
   options?: Array<string | {value: string, category?: string}>
   onchange?: ha.Action<HyperappState, {value: string}>,
   oninput?: ha.Action<HyperappState, Event>
-  onkeydown?: ha.Action<HyperappState, Event>
+  onkeydown?: ha.Action<HyperappState, Event>,
 }) => ha.h(
     'div',
     {
@@ -47,7 +47,7 @@ export const infoInput = ({label, property, value, onchange, oninput, onkeydown,
     ]
 )
 
-export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, editingGraphId, randid, ref_graphs, html_id, copied_graph, inputs, graph_out, editing, error}: {
+export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, editingGraphId, randid, ref_graphs, html_id, copied_graph, inputs, graph_out, editing, error, refGraphs}: {
   node: d3Node,
   hidden: boolean,
   edges_in: Array<Edge>,
@@ -61,7 +61,8 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
   inputs: Record<string, string>,
   graph_out: string,
   editing: boolean,
-  error: false | NodysseusError
+  error: false | NodysseusError,
+  refGraphs: Array<string>
 })=> {
     //const s.editingGraph.id === s.editingGraphId && nolib.no.runtime.get_node(s.editingGraph, s.selected[0]) && 
     const node_ref = !hidden && node && isNodeRef(node) ? nolib.no.runtime.get_ref(node.ref) : node;
@@ -92,7 +93,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                     value: (node as RefNode).ref,
                     property: 'ref',
                     inputs,
-                    options: nolib.no.runtime.refs().map(r => generic.nodes[r] ? {value: r, category: generic.nodes[r].category} : {value: r, category: r.startsWith("@") ? r.substring(1, r.indexOf('.')) : "custom"}),
+                    options: refGraphs.map(r => generic.nodes[r] ? {value: r, category: generic.nodes[r].category} : {value: r, category: r.startsWith("@") ? r.substring(1, r.indexOf('.')) : "custom"}),
                     onchange: (state, {value}) => [UpdateNode, {node, property: "ref", value}],
                     disabled: isOut 
                 }), node),

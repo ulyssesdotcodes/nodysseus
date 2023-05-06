@@ -59,7 +59,8 @@ import { wasmLoader } from 'esbuild-plugin-wasm';
 const ctx = await esbuild.context({
   entryPoints: [
     {in: 'src/index.js', out: 'index.bundle'},
-    {in: 'src/worker.js', out: 'worker'}
+    {in: 'src/worker.js', out: 'worker'},
+    {in: 'src/sharedWorker.js', out: 'sharedWorker'}
   ],
   bundle: true,
   outdir: 'public',

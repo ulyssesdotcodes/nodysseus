@@ -201,7 +201,7 @@ export const contract_node = (data: {editingGraph: Graph, node_id: string, nolib
 
 
 
-export const ancestor_graph = (node_id: string, from_graph: Graph, nolib: Record<string, any>): Graph => {
+export const ancestor_graph = (node_id: string, from_graph: Graph, nolib?: Record<string, any>): Graph => {
     let edges_in;
     let queue = [node_id];
     const graph: Graph = {...from_graph, nodes: {}, edges: {}, edges_in: {}};
@@ -219,7 +219,7 @@ export const ancestor_graph = (node_id: string, from_graph: Graph, nolib: Record
     return graph;
 }
 
-export const descendantGraph = (nodeId: string, graph: Graph, nolib: Record<string, any>): Graph => {
+export const descendantGraph = (nodeId: string, graph: Graph, nolib?: Record<string, any>): Graph => {
   const outGraph: Graph = {...graph, nodes: {}};
   while(nodeId) {
     outGraph.nodes[nodeId] = graph.nodes[nodeId];

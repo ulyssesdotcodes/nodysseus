@@ -4,7 +4,7 @@ import { hashcode, nolib } from "../../nodysseus";
 import { Graph, isNodeGraph, NodysseusNode } from "../../types";
 import { ispromise, wrapPromise } from "../../util";
 import { HyperappState, NodysseusForceLink, NodysseusSimulation, d3Link, d3Node, Vector2 } from "../types";
-import { calculateLevels, CreateNode, findViewBox, hlib, pzobj, SelectNode } from "../util";
+import { calculateLevels, CreateNode, findViewBox, hlib, pzobj, SelectNode, graphEdgeOut, graphEdgesIn } from "../util";
 
 export const UpdateSimulation: ha.Effecter<HyperappState, any>  = (dispatch, payload) => payload ? !(payload.simulation || payload.static) ? undefined : updateSimulationNodes(dispatch, payload) : dispatch(state => [state, [() => !(state.simulation) ? undefined : updateSimulationNodes(dispatch, state), undefined]])
 
@@ -45,7 +45,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
 
     const node_map = new Map(Object.entries(data.editingGraph.nodes));
     const children_map = new Map(Object.values(data.editingGraph.nodes).map(n => [n.id, 
-        [nolib.no.runtime.get_edge_out(data.editingGraph, n.id)?.to].filter(e => e)
+        [graphEdgeOut(data.editingGraph, n.id)?.to].filter(e => e)
     ]));
 
     const order = [];
@@ -53,7 +53,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
 
     const parentsMapEntries: Array<[string, Array<string>]> = Object.values(data.editingGraph.nodes)
         .map(n => 
-          [n.id, nolib.no.runtime.get_edges_in(data.editingGraph, n.id).map(e => e.from)]
+          [n.id, graphEdgesIn(data.editingGraph, n.id).map(e => e.from)]
         );
     const hasPromise = !parentsMapEntries.every(e => !ispromise(e[1]))
     

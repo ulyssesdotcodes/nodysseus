@@ -7,7 +7,7 @@ import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode
 import { info_display, infoWindow } from "./components/infoWindow";
 import { init_code_editor } from "./components/codeEditor";
 import { d3Node, HyperappState, Levels } from "./types";
-import { automergeStore } from "./store";
+import { webClientStore } from "./store";
 import { d3subscription, insert_node_el, link_el, node_el, UpdateSimulation } from "./components/graphDisplay";
 import Autocomplete from "./autocomplete"
 import generic from "src/generic";
@@ -186,7 +186,8 @@ const runapp = (init, load_graph, _lib) => {
           .then(custom_editor_result => custom_editor_result && dispatch(s => ({...s, custom_editor_result})))],
         [ChangeEditingGraphId, {id: load_graph, select_out: true, editingGraphId: undefined}],
         [UpdateSimulation, {...init, action: SimulationToHyperapp}],
-        [init_code_editor, {html_id: init.html_id}]
+        [init_code_editor, {html_id: init.html_id}],
+        [dispatch => wrapPromise(nolib.no.runtime.ref_graphs()).then(rgs => dispatch(s => ({...s, refGraphs: rgs.concat(EXAMPLES)})))]
     ],
     dispatch: middleware,
     view: (s: HyperappState) => ha.h('div', {id: s.html_id}, [
@@ -230,12 +231,13 @@ const runapp = (init, load_graph, _lib) => {
             editingGraphId: s.editingGraph.id,
             randid: s.randid,
             editing: s.editing,
-            ref_graphs: nolib.no.runtime.ref_graphs().concat(EXAMPLES),
+            ref_graphs: s.refGraphs,
             html_id: s.html_id,
             copied_graph: s.copied?.graph,
             inputs: s.inputs,
             graph_out: s.editingGraph.out,
-            error: s.error
+            error: s.error,
+            refGraphs: s.refGraphs
         }),
         ha.h('div', {id: `${init.html_id}-custom-editor-display`}),
         ha.h('div', {id: "graph-actions", class: "actions"}, [
@@ -463,7 +465,7 @@ const runapp = (init, load_graph, _lib) => {
 }
 
 const editor = async function(html_id, editingGraph, lib, norun) {
-    let nodysseusStore = await automergeStore({persist: true});
+    let nodysseusStore = await webClientStore();
     let worker, workerPromise;
     initStore(nodysseusStore)
     hlib.worker = () => {
@@ -525,7 +527,8 @@ const editor = async function(html_id, editingGraph, lib, norun) {
             inputs: {},
             randid: create_randid(),
             custom_editor_result: {},
-            showHelp: false
+            showHelp: false,
+            refGraphs: []
         };
 
         runapp(init,  hash_graph && hash_graph !== "" ? hash_graph : graph_list?.[0] ?? '@templates.simple', lib)

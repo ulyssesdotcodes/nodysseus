@@ -1,5 +1,5 @@
 import { nolib, NodysseusError, initStore, run } from "./nodysseus";
-import {automergeStore} from "./editor/store"
+import {automergeRefStore} from "./editor/store"
 import {isNodysseusError} from "./editor/util"
 import { wrapPromise } from "./util";
 

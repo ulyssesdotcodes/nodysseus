@@ -46,6 +46,7 @@ export type HyperappState = {
   code_editor_nodeid?: any,
   custom_editor_result: {},
   showHelp: boolean,
+  refGraphs: Array<string>
 }
 
 export type Levels = {
