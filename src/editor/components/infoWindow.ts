@@ -67,7 +67,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
     //const s.editingGraph.id === s.editingGraphId && nolib.no.runtime.get_node(s.editingGraph, s.selected[0]) && 
     const node_ref = !hidden && node && isNodeRef(node) ? nolib.no.runtime.get_ref(node.ref) : node;
     const description =  !hidden && node_ref?.description;
-    const metadata: NodeMetadata | undefined = !error && hlib.run(editingGraph, node.node_id, {_output: "metadata"});
+    const metadata: NodeMetadata | undefined = !error && hlib.run(editingGraph, node.id, {_output: "metadata"});
     const node_arg_labels = !hidden && node?.id ? node_args(nolib, editingGraph, node.id, metadata) : [];
     const isOut = node.id === graph_out
 

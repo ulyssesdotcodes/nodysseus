@@ -62,6 +62,9 @@ const ctx = await esbuild.context({
     {in: 'src/worker.js', out: 'worker'},
     {in: 'src/sharedWorker.js', out: 'sharedWorker'}
   ],
+  loader: {
+    '.wasm': 'file'
+  },
   bundle: true,
   outdir: 'public',
   plugins: [wasmLoader()],

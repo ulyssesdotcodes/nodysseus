@@ -106,7 +106,7 @@ const refresh_custom_editor = () =>
         // TODO: combine with update_info
         const graph = nolib.no.runtime.get_ref("custom_editor");
         wrapPromise(graph).then(graph => hlib.run(graph, graph.out, {_output: "display"}))
-          .then(result => custom_editor_display_dispatch(() => ({el: result})))
+          .then(result => result && custom_editor_display_dispatch(() => ({el: result})))
     } else {
       console.log("should dispatch?")
         custom_editor_display_dispatch(() => ({el: {dom_type: "div", props: {}, children: []}}))

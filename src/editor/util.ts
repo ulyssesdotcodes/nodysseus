@@ -890,7 +890,7 @@ export const save_graph = graph => {
 export const graphEdgeOut = (graph: Graph, node: string) => graph.edges[node];
 export const graphEdgesIn = (graph: Graph, node: string) => 
   Object.hasOwn(graph, "edges_in")
-    ? Object.hasOwn(graph.edges_in, "node")
+    ? Object.hasOwn(graph.edges_in, node)
       ? Object.values(graph.edges_in[node])
       : []
     : Object.values(graph.edges).filter(e => e.to === node);

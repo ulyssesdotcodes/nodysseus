@@ -1,6 +1,6 @@
 // import {initStore} from "./nodysseus"
-import {automergeRefStore, openNodysseusDB, webClientStore} from "./editor/store"
-import { Graph, NodysseusStore } from "./types";
+// import {automergeRefStore, openNodysseusDB, webClientStore} from "./editor/store"
+// import { Graph, NodysseusStore } from "./types";
 import { wrapPromise } from "./util";
 
 // TODO: get/set have ids to give responses. whenever a graph is updated, send update to all clients
@@ -11,6 +11,7 @@ let store;
 let initQueue = [];
 
 const processMessage = (port, m) => {
+  console.log("processing", m)
   if(m.kind === "get") {
     wrapPromise(store.refs.get(m.graphid))
       .then(graph => port.postMessage({kind: "get", id: m.id, graph}))
@@ -22,12 +23,12 @@ const processMessage = (port, m) => {
 
 self.onerror = e => console.error("sharedworker error", e)
 
-self.onconnect = (e: MessageEvent) => {
+self.onconnect = (e) => {
   console.log("connect!", e)
   const port = e.ports[0];
 
   port.addEventListener("message", (e) => {
-    console.log("shared worker message", e)
+    console.log("shared worker message", e.data)
 
     if(store) {
       processMessage(port, e.data)
@@ -41,12 +42,12 @@ self.onconnect = (e: MessageEvent) => {
   port.postMessage({kind: "connect"})
 };
 
-console.log(await new Promise(res => setTimeout(() => res("promises work"), 100)))
-
-webClientStore(nodysseusidb => automergeRefStore({nodysseusidb, persist: true}))
-  .then(resStore => {
-    console.log("got store", resStore)
-    store = resStore;
-    // initStore(store);
-    initQueue.forEach(e => processMessage(...e));
-  })
+import("./editor/store").then(({automergeRefStore, webClientStore}) => {
+  webClientStore(nodysseusidb => automergeRefStore({nodysseusidb, persist: true}))
+    .then(resStore => {
+      console.log("got store", resStore)
+      store = resStore;
+      // initStore(store);
+      initQueue.forEach(e => processMessage(...e));
+    })
+})
