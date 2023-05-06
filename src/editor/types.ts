@@ -1,6 +1,6 @@
 import { ForceLink, Simulation, SimulationLinkDatum, SimulationNodeDatum } from "d3-force";
 import { NodysseusError } from "../nodysseus";
-import {Graph, Edge, NodysseusNode} from "../types"
+import {Graph, Edge, NodysseusNode, RefStore} from "../types"
 
 export type Vector2 = {x: number, y: number}
 
@@ -75,3 +75,113 @@ export type d3Link = SimulationLinkDatum<d3Node> & {
 export type NodysseusSimulation = Simulation<d3Node, d3Link>
 export type NodysseusForceLink = ForceLink<d3Node, d3Link>
 
+// SharedWorker messages
+
+type _SharedWorkerMessages = {
+  get: {
+    to: {graphId: string},
+    from: {graph: Graph}
+  },
+  set: {
+    to: {graph: Graph}
+  },
+  delete: {
+    to: {graphId: string}
+  },
+  clear: {
+    to: {}
+  },
+  keys: {
+    to: {},
+    from: {keys: Array<string>}
+  }
+  undo: {
+    to: {},
+    from: {graph: Graph}
+  },
+  redo: {
+    to: {},
+    from: {graph: Graph}
+  },
+  add_node: {
+    to: {graphId: string, node: NodysseusNode},
+  },
+  remove_node: {
+    to: {graphId: string, node: string}
+  },
+  add_edge: {
+    to: {graphId: string, edge: Edge}
+  },
+  remove_edge: {
+    to: {graphId: string, edgeTo: string}
+  },
+  add_nodes_edges: {
+    to: {
+      graphId: string, 
+      addedNodes: Array<NodysseusNode>, 
+      addedEdges: Array<Edge>
+      removedNodes: Array<NodysseusNode>, 
+      removedEdges: Array<Edge>
+    },
+  },
+  connect: {
+    from: {}
+  }
+}
+
+type _SharedWorkerMessageKind = keyof _SharedWorkerMessages;
+export type SharedWorkerMessageKind = _SharedWorkerMessageKind;
+
+type _SharedWorkerMessageId<T> = {messageId: string}
+  // T extends _SharedWorkerMessageKind
+  //   ? _TSharedWorkerMessageFrom<T> extends _SharedWorkerMessageFrom
+  //     ? _TSharedWorkerMessageTo<T> extends _SharedWorkerMessageTo
+  //       ? {messageId: string}
+  //       : {}
+  //     : {}
+  //   : {};
+
+type _SharedWorkerMessage<T> = 
+  T extends _SharedWorkerMessageKind 
+    ? _SharedWorkerMessages[T]
+    : never;
+
+export type TSharedWorkerMessage<T> = _SharedWorkerMessage<T> & _SharedWorkerMessageId<T>
+export type SharedWorkerMessage = TSharedWorkerMessage<_SharedWorkerMessageKind>;
+
+type _TSharedWorkerMessageTo<T> =
+  T extends _SharedWorkerMessageKind
+    ? _SharedWorkerMessage<T> extends {to: any}
+      ? _SharedWorkerMessage<T>["to"] & {kind: T}
+      : never
+    : never;     
+export type TSharedWorkerMessageToData<T> = _TSharedWorkerMessageTo<T>
+
+export type TSharedWorkerMessageTo<T> = _TSharedWorkerMessageTo<T> & _SharedWorkerMessageId<T>
+
+type _SharedWorkerMessageTo = _TSharedWorkerMessageTo<_SharedWorkerMessageKind>;
+export type SharedWorkerMessageTo = TSharedWorkerMessageTo<_SharedWorkerMessageKind>;
+
+type _TSharedWorkerMessageFrom<T> =
+  T extends _SharedWorkerMessageKind
+    ? _SharedWorkerMessage<T> extends {from: any}
+      ? _SharedWorkerMessage<T>["from"] & {kind: T} 
+      : never
+    : never;     
+export type TSharedWorkerMessageFrom<T> = _TSharedWorkerMessageFrom<T> & _SharedWorkerMessageId<T>
+
+type _SharedWorkerMessageFrom = _TSharedWorkerMessageFrom<_SharedWorkerMessageKind>;
+export type SharedWorkerMessageFrom = TSharedWorkerMessageFrom<_SharedWorkerMessageKind>;
+
+// const test = <T extends SharedWorkerMessageKind>(m: Omit<TSharedWorkerMessageTo<T>, "messageId">) => {};
+
+// export type NodysseusStoreMessageData = 
+//   { kind: "get", graphid: string }
+//   | { kind: "keys" }
+
+// export type NodysseusStoreMessage = {id: string} & NodysseusStoreMessageData
+
+// export type NodysseusStoreResponseMessage = 
+//   { kind: "get", id: string, graph: Graph }
+//   | { kind: "keys", id: string, keys: Array<string> }
+//   | { kind: "connect" }

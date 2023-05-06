@@ -35,8 +35,6 @@ export type Store<T> = {
   delete: (id: string) => void;
   clear: () => void;
   keys: () => Array<string> | Promise<Array<string>>;
-  undo?: false | ((id: string) => void);
-  redo?: false | ((id: string) => void);
 }
 
 export type RefStore = Store<Graph> & {
@@ -45,6 +43,8 @@ export type RefStore = Store<Graph> & {
   remove_node: (graphId: string, node: NodysseusNode) => void;
   add_edge: (graphId: string, edge: Edge) => void;
   remove_edge: (graphId: string, edge: Edge) => void;
+  undo?: false | ((id: string) => void);
+  redo?: false | ((id: string) => void);
 }
 
 export type StoreType<T extends Store<any>> = Exclude<ReturnType<T["get"]>, undefined | Promise<any>>;

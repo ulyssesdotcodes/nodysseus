@@ -1,6 +1,6 @@
 import * as esbuild from 'esbuild'
 import path from 'node:path'
-import fs from 'node:fs'
+import fs fom 'node:fs'
 import { wasmLoader } from 'esbuild-plugin-wasm';
 
 // let wasmPlugin = {
@@ -60,7 +60,7 @@ const ctx = await esbuild.context({
   entryPoints: [
     {in: 'src/index.js', out: 'index.bundle'},
     {in: 'src/worker.js', out: 'worker'},
-    {in: 'src/sharedWorker.js', out: 'sharedWorker'}
+    {in: 'src/sharedWorker.ts', out: 'sharedWorker'}
   ],
   loader: {
     '.wasm': 'file'

@@ -1,6 +1,7 @@
 // import {initStore} from "./nodysseus"
 // import {automergeRefStore, openNodysseusDB, webClientStore} from "./editor/store"
 // import { Graph, NodysseusStore } from "./types";
+import { SharedWorkerMessageTo } from "./editor/types";
 import { wrapPromise } from "./util";
 
 // TODO: get/set have ids to give responses. whenever a graph is updated, send update to all clients
@@ -10,14 +11,14 @@ let store;
 
 let initQueue = [];
 
-const processMessage = (port, m) => {
+const processMessage = (port: MessagePort, m: SharedWorkerMessageTo) => {
   console.log("processing", m)
   if(m.kind === "get") {
-    wrapPromise(store.refs.get(m.graphid))
-      .then(graph => port.postMessage({kind: "get", id: m.id, graph}))
+    wrapPromise(store.refs.get(m.graphId))
+      .then(graph => port.postMessage({kind: "get", messageId: m.messageId, graph}))
   } else if (m.kind === "keys") {
     wrapPromise(store.refs.keys())
-      .then(keys => port.postMessage({kind: "keys", id: m.id, keys}))
+      .then(keys => port.postMessage({kind: "keys", messageId: m.messageId, keys}))
   }
 }
 
@@ -45,9 +46,9 @@ self.onconnect = (e) => {
 import("./editor/store").then(({automergeRefStore, webClientStore}) => {
   webClientStore(nodysseusidb => automergeRefStore({nodysseusidb, persist: true}))
     .then(resStore => {
-      console.log("got store", resStore)
+      console.log("got store ts", resStore)
       store = resStore;
       // initStore(store);
-      initQueue.forEach(e => processMessage(...e));
+      initQueue.forEach(e => processMessage(e[0], e[1]));
     })
 })

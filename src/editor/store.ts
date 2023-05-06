@@ -14,17 +14,7 @@ import { PatchCallback } from "@automerge/automerge";
 import categoryChanges from "../../public/categoryChanges.json"
 import { initgraph } from "./initgraph";
 import { createDo } from "typescript";
-
-export type NodysseusStoreMessageData = 
-  { kind: "get", graphid: string }
-  | { kind: "keys" } 
-
-export type NodysseusStoreMessage= {id: string} & NodysseusStoreMessageData
-
-export type NodysseusStoreResponseMessage = 
-  { kind: "get", id: string, graph: Graph }
-  | { kind: "keys", id: string, keys: Array<string> }
-  | { kind: "connect" }
+import {  SharedWorkerMessageFrom, SharedWorkerMessageKind, SharedWorkerMessageTo, TSharedWorkerMessageFrom, TSharedWorkerMessageTo, TSharedWorkerMessageToData } from "./types";
 
 const generic_nodes = generic.nodes;
 const generic_node_ids = new Set(Object.keys(generic_nodes));
@@ -197,7 +187,7 @@ export const automergeRefStore = async ({nodysseusidb, persist = false} : {persi
               return scd;
             }).value)
       ,
-      set: (id, graph) => {},//changeDoc(id, setFromGraph(graph)),
+      set: (id, graph) => {console.log("would set", id, graph)},//changeDoc(id, setFromGraph(graph)),
       delete: (id) => {
         refsmap.delete(id);
         refsset.delete(id);
@@ -208,7 +198,7 @@ export const automergeRefStore = async ({nodysseusidb, persist = false} : {persi
       keys: () => {return [...refsset.keys(), ...generic_node_ids]},
       undo: () => {throw new Error("not implemented")},
       redo: () => {throw new Error("not implemented")},
-      add_node: (id, node) => {},
+      add_node: (id, node) => {console.log("would add node", id, node)},
       // changeDoc(id, doc => {
       //   // TODO: try to fix by making the values texts instead of just strings
       //   if(doc.nodes[node.id]) {
@@ -391,41 +381,41 @@ export const automergeRefStore = async ({nodysseusidb, persist = false} : {persi
 
 
 export const sharedWorkerRefStore = async (): Promise<RefStore> => {
-  const inflightRequests = new Map<string, (e: NodysseusStoreResponseMessage) => void>();
+  const inflightRequests = new Map<string, (e: SharedWorkerMessageFrom) => void>();
   const sharedWorker = new SharedWorker("../sharedWorker.js?3", {type: "module"})
   let connectres;
   const connectPromise = new Promise((res, rej) => connectres = res);
   sharedWorker.port.onmessageerror = e => console.error("shared worker error", e);
   sharedWorker.onerror = e => console.error("shared worker error", e);
-  sharedWorker.port.addEventListener('message', (e: MessageEvent<NodysseusStoreResponseMessage>) =>
+  sharedWorker.port.addEventListener('message', (e: MessageEvent<SharedWorkerMessageFrom>) =>
     (console.log("received", e.data), e).data.kind === "connect" ? connectres()
-    : inflightRequests.get(e.data.id)(e.data))
+    : inflightRequests.get(e.data.messageId)(e.data))
   sharedWorker.port.start();
 
   await connectPromise;
 
-  const messagePromise = (request: NodysseusStoreMessageData): Promise<NodysseusStoreResponseMessage> => {
-    const message = {id: performance.now().toFixed(), ...request}
+  const messagePromise = <T extends SharedWorkerMessageKind>(request: TSharedWorkerMessageToData<T>): Promise<TSharedWorkerMessageFrom<T>> => {
+    const message: TSharedWorkerMessageTo<T> = {messageId: performance.now().toFixed(), ...request}
     console.log("posting", message)
     sharedWorker.port.postMessage(message)
     return new Promise((res, rej) => {
-      inflightRequests.set(message.id, e => res(e));
+      inflightRequests.set(message.messageId, e => res(e as TSharedWorkerMessageFrom<T>));
     })
   }
 
   const contextGraphCache = new Map<string, Graph>();
 
   return {
-      get: graphid => generic_nodes[graphid] ?? 
-        contextGraphCache.get(graphid) ??
-        messagePromise({kind: "get", graphid})
-          .then(e => (e as { kind: "get", id: string, graph: Graph }).graph)
-          .then(graph => (contextGraphCache.set(graphid, graph), graph))
+      get: graphId => generic_nodes[graphId] ?? 
+        contextGraphCache.get(graphId) ??
+        messagePromise({kind: "get", graphId})
+          .then(e => e.graph)
+          .then(graph => (contextGraphCache.set(graphId, graph), graph))
       ,
       set: (k, g) => {throw new Error("not implemented")},
       delete: (k) => {throw new Error("not implemented")},
       clear: () => {throw new Error("not implemented")},
-      keys: () => messagePromise({kind: "keys"}).then(e => (e as { kind: "keys", id: string, keys: Array<string> }) .keys),
+      keys: () => messagePromise({kind: "keys"}).then(e => e.keys),
       add_edge: () => {throw new Error("not implemented")},
       remove_edge: () => {throw new Error("not implemented")},
       add_node: () => {throw new Error("not implemented")},
