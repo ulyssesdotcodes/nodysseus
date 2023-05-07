@@ -117,7 +117,7 @@ export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore>
   await connectPromise;
 
   const sendMessage = (message: SharedWorkerMessageTo) =>
-    port.postMessage(message)
+  {if(typeof (message as {graphId: any}).graphId === "object"){ debugger; } port.postMessage(message)}
   const messagePromise = <T extends SharedWorkerMessageKind>(request: RespondableSharedWorkerMessageData & TSharedWorkerMessageToData<T>): Promise<TSharedWorkerMessageFrom<T>> => {
     const message: TSharedWorkerMessageTo<T> & TRespondableSharedWorkerMessage<T> = {
       messageId: performance.now().toFixed(), 

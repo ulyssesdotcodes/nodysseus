@@ -10,116 +10,120 @@ const argToProperties = (arg: string) => arg.includes('.') ? arg.split('.').join
 
 
 const graphToFnBody = (runnable: ConstRunnable, lib: Lib) => {
-    const graph = util.ancestor_graph(runnable.fn, runnable.graph, lib.data);
-    const graphArgs = new Set(Object.values(graph.nodes).filter<RefNode>(isNodeRef).filter(n => n.ref === "arg").map(a => a.value));
 
 
-    return util.wrapPromise(resolve_args(new Map([...graphArgs].map(a => [a, nodysseus_get(runnable.env, a, lib)])), lib, {resolvePromises: true}))
-      .then(result => {
-        if(!isValue(result)) return;
-        const baseArgs = typeof result.value?.includes === "function" && result.value.includes(".") ? result.value.substring(0, result.value.indexOf(".")) : result.value;
-        graph.id = runnable.fn + "-fn";
+    return util.wrapPromise(lib.data.no.runtime.get_ref(runnable.graph))
+    .then(fromGraph => {
+      const graph = util.ancestor_graph(runnable.fn, fromGraph, lib.data);
+      const graphArgs = new Set(Object.values(graph.nodes).filter<RefNode>(isNodeRef).filter(n => n.ref === "arg").map(a => a.value));
+      return {graph,graphArgs}
+      }).then(({graph, graphArgs}: {graph: Graph, graphArgs: Set<string>}) =>
+        util.wrapPromise(resolve_args(new Map([...graphArgs].map(a => [a, nodysseus_get(runnable.env, a, lib)])), lib, {resolvePromises: true}))
+        .then(result => {
+          if(!isValue(result)) return;
+          const baseArgs = typeof result.value?.includes === "function" && result.value.includes(".") ? result.value.substring(0, result.value.indexOf(".")) : result.value;
+          graph.id = runnable.fn + "-fn";
 
-        let text = "";
-        const _extern_args = {};
+          let text = "";
+          const _extern_args = {};
 
 
-        Object.values(graph.nodes).forEach(n => {
-          if(isNodeRef(n) && n.ref === "arg") {
-            return;
-          }
-          const noderef = isNodeRef(n) ? lib.data.no.runtime.get_ref(n.ref) : n;
-          if(isNodeScript(n) || (isNodeRef(n) && n.ref === "@js.script")) {
-            let inputs = nodeinputs(n, graph)
-            text += `
-function fn_${n.id}(){
-  ${inputs.map(input => 
-    `let ${input.edge.as} = ${nodefn(input.node)};`
-  ).join("\n")
-}
+          Object.values(graph.nodes).forEach(n => {
+            if(isNodeRef(n) && n.ref === "arg") {
+              return;
+            }
+            const noderef = isNodeRef(n) ? lib.data.no.runtime.get_ref(n.ref) : n;
+            if(isNodeScript(n) || (isNodeRef(n) && n.ref === "@js.script")) {
+              let inputs = nodeinputs(n, graph)
+              text += `
+  function fn_${n.id}(){
+    ${inputs.map(input => 
+      `let ${input.edge.as} = ${nodefn(input.node)};`
+    ).join("\n")
+  }
 
-${isNodeScript(n) ? n.script : n.value}
+  ${isNodeScript(n) ? n.script : n.value}
 
-}
+  }
 
-`
-          } else if (noderef.id === "@data.get"){
-            let inputs = Object.values(graph.edges_in[n.id] ?? []).map(edge => ({edge, node: Object.values(graph.nodes).find(n => n.id === edge.from)}));
-            text += `
-function fn_${n.id}(){
-  ${inputs
-    .map(input => `let ${input.edge.as} = ${isNodeRef(input.node) && input.node.ref === "arg" && input.node.value === '_lib' ? '_lib' : nodefn(input.node)}`)
-    .join("\n")}
-  return target["${argToProperties(isNodeRef(n) ? n.value : 'undefined')}"]
-}
+  `
+            } else if (noderef.id === "@data.get"){
+              let inputs = Object.values(graph.edges_in[n.id] ?? []).map(edge => ({edge, node: Object.values(graph.nodes).find(n => n.id === edge.from)}));
+              text += `
+  function fn_${n.id}(){
+    ${inputs
+      .map(input => `let ${input.edge.as} = ${isNodeRef(input.node) && input.node.ref === "arg" && input.node.value === '_lib' ? '_lib' : nodefn(input.node)}`)
+      .join("\n")}
+    return target["${argToProperties(isNodeRef(n) ? n.value : 'undefined')}"]
+  }
 
-`
-          } else if(noderef.ref == "extern") {
-            _extern_args[n.id] = {};
-            const extern = nodysseus_get(lib.data, noderef.value, lib)
-            let inputs = nodeinputs(n, graph)
-            const varset = []
-            extern.args.map(rawa => {
-              const a = rawa.includes(':') ? rawa.substring(0, rawa.indexOf(':')) : rawa;
-              if(a === "__graph_value" || a === "_node") {
-                _extern_args[n.id][a] = a === "__graph_value" ? !isNodeScript(n) ? n.value : undefined
-                  : "_node" ? n
-                  : undefined;
-                varset.push(`let ${a} = _extern_args["${n.id}"]["${a}"];`)
-              } else if (a === "_node_args") {
-                varset.push(`
-let ${a} = {
-  ${inputs.map(input => 
-    `${input.edge.as}: ${nodefn(input.node)}`).join(",\n")}
-};`);
-              } else {
-                const input = inputs.find(i => i.edge.as === a);
-                if(!input){
-                  varset.push(`let ${a} = undefined;`)
-                } else {
-                  const inputNode = Object.values(graph.nodes).find(n => n.id === input.edge.from);
+  `
+            } else if(noderef.ref == "extern") {
+              _extern_args[n.id] = {};
+              const extern = nodysseus_get(lib.data, noderef.value, lib)
+              let inputs = nodeinputs(n, graph)
+              const varset = []
+              extern.args.map(rawa => {
+                const a = rawa.includes(':') ? rawa.substring(0, rawa.indexOf(':')) : rawa;
+                if(a === "__graph_value" || a === "_node") {
+                  _extern_args[n.id][a] = a === "__graph_value" ? !isNodeScript(n) ? n.value : undefined
+                    : "_node" ? n
+                    : undefined;
+                  varset.push(`let ${a} = _extern_args["${n.id}"]["${a}"];`)
+                } else if (a === "_node_args") {
                   varset.push(`
-let ${a} = ${nodefn(inputNode)};
-`)
+  let ${a} = {
+    ${inputs.map(input => 
+      `${input.edge.as}: ${nodefn(input.node)}`).join(",\n")}
+  };`);
+                } else {
+                  const input = inputs.find(i => i.edge.as === a);
+                  if(!input){
+                    varset.push(`let ${a} = undefined;`)
+                  } else {
+                    const inputNode = Object.values(graph.nodes).find(n => n.id === input.edge.from);
+                    varset.push(`
+  let ${a} = ${nodefn(inputNode)};
+  `)
+                  }
                 }
-              }
-            })
-            text += `
-function fn_${n.id}(){
-  ${varset.join("\n")}
-  return (${extern.fn.toString()})(${extern.args.map(rawa => rawa.includes(':') ? rawa.substring(0, rawa.indexOf(':')) : rawa).join(", ")})
-}
+              })
+              text += `
+  function fn_${n.id}(){
+    ${varset.join("\n")}
+    return (${extern.fn.toString()})(${extern.args.map(rawa => rawa.includes(':') ? rawa.substring(0, rawa.indexOf(':')) : rawa).join(", ")})
+  }
 
-`
-          }  else if (isNodeRef(n)) {
-            const inputs = nodeinputs(n, graph);
-            text += `
-function fn_${n.id}() {
-  ${inputs.map(input => 
-    `let ${input.edge.as} = ${nodefn(input.node)};`
-  ).join("\n")}
-  
-  ${graphToFnBody({
-    __kind: "const",
-    fn: noderef.out ?? "out",
-    graph: noderef,
-    env: runnable.env,
-    lib: runnable.lib
-  }, lib)}
-}
-            `
-          } else {
+  `
+            }  else if (isNodeRef(n)) {
+              const inputs = nodeinputs(n, graph);
+              text += `
+  function fn_${n.id}() {
+    ${inputs.map(input => 
+      `let ${input.edge.as} = ${nodefn(input.node)};`
+    ).join("\n")}
+    
+    ${graphToFnBody({
+      __kind: "const",
+      fn: noderef.out ?? "out",
+      graph: noderef,
+      env: runnable.env,
+      lib: runnable.lib
+    }, lib)}
+  }
+              `
+            } else {
 
-            text += `function fn_${n.id}(){\nreturn ${noderef.value}}\n\n`
-          }
-        })
+              text += `function fn_${n.id}(){\nreturn ${noderef.value}}\n\n`
+            }
+          })
 
 
-        // for now just assuming everything is an arg of the last node out
-        text += `return fn_${runnable.fn}()`
+          // for now just assuming everything is an arg of the last node out
+          text += `return fn_${runnable.fn}()`
 
-      return {baseArgs, text, _extern_args};
-  }).value;
+        return {baseArgs, text, _extern_args};
+  }).value).value;
 }
 
  export const create_fn = (runnable: ConstRunnable, lib: Lib) => {

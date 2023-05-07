@@ -389,7 +389,7 @@ const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, param
     __kind: FUNCTOR,
     parameters: args ? [...new Set(args.value ? Object.keys(args.value).map(k => k.includes(".") ? k.substring(0, k.indexOf('.')) : k) : [])] : [],
     env: fn.env,
-    graph: fn.graph,
+    graph: typeof fn.graph === "string" ? fn.graph : fn.graph.id,
     fn: fn.fn,
     lib: fn.lib
   }))
@@ -404,7 +404,7 @@ const run_runnable = (runnable: Runnable | undefined, lib: Lib, args: Map<string
   switch(runnable.__kind){
     case CONST:
       return wrapPromise(
-        run_graph((runnable as ConstRunnable).graph, runnable.fn, mergeEnv(args, runnable.env), runnable.lib, options), 
+        run_graph(getRunnableGraph(runnable, lib), runnable.fn, mergeEnv(args, runnable.env), runnable.lib, options), 
         e => handleError(e, lib, runnable.env, runnable.graph, runnable.fn)).value;
     case AP:
       return run_ap_runnable(runnable, args, lib, options)
@@ -431,7 +431,7 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
       } else {
         const graphid = (graphArgs.data.get("__graphid") as {value: string}).value;
         const nodegraphargs: Env = node.env ?? newEnv(new Map(), graphArgs._output)
-        nodegraphargs.data.set("__graphid", graphid ?? lib.data.no.of(node.graph.id));
+        nodegraphargs.data.set("__graphid", graphid ?? lib.data.no.of(node.graph));
         lib = mergeLib(node.lib, lib)
 
         return node_nodes(node.graph, node.fn, nodeArgs, nodegraphargs, lib, options)
@@ -478,7 +478,7 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
 }
 
 // derives data from the args symbolic table
-const create_data = (node_id, graph, graphArgs: Env, lib: Lib, options: RunOptions): Map<string, ConstRunnable> | Promise<Map<string, ConstRunnable>> => {
+const create_data = (node_id: string, graph: Graph, graphArgs: Env, lib: Lib, options: RunOptions): Map<string, ConstRunnable> | Promise<Map<string, ConstRunnable>> => {
     return wrapPromise(lib.data.no.runtime.get_edges_in(graph, node_id)).then(inputs => {
         const data: Map<string, ConstRunnable> = new Map();
         let input: Edge;
@@ -491,7 +491,7 @@ const create_data = (node_id, graph, graphArgs: Env, lib: Lib, options: RunOptio
         for (let i = 0; i < inputs.length; i++) {
             input = inputs[i];
 
-            const val: ConstRunnable = {__kind: CONST, graph, fn: input.from, env: newgraphargs, lib}
+            const val: ConstRunnable = {__kind: CONST, graph: graph.id, fn: input.from, env: newgraphargs, lib}
             // Check for duplicates
             if(data.has(input.as)) {
                 const as_set = new Set()
@@ -531,7 +531,7 @@ const create_data = (node_id, graph, graphArgs: Env, lib: Lib, options: RunOptio
   }
 
 // handles graph things like edges
-const run_graph = (graph: Graph | (Graph & {nodes: Array<NodysseusNode>, edges: Array<Edge>}), node_id: string, env: Env, lib: Lib, options: RunOptions): Result | Promise<Result> => {
+const run_graph = (graph: Graph, node_id: string, env: Env, lib: Lib, options: RunOptions): Result | Promise<Result> => {
     const newgraph = graph;
     const node = lib.data.no.runtime.get_node(newgraph, node_id);
 
@@ -656,7 +656,8 @@ export const run = (node: Runnable | InputRunnable, args: ResolvedArgs | Record<
   initStore(options.store ?? nodysseus);
 
   let _lib: Lib = mergeLib(options.lib, newLib(nolib))
-  const cachedGraphLib = getRunnableGraph(node) && nodysseus.state.get(`${getRunnableGraph(node).id}-lib`);
+  const nodeGraph = getRunnableGraph(node, _lib);
+  const cachedGraphLib = nodeGraph && nodysseus.state.get(`${nodeGraph.id}-lib`);
   if(cachedGraphLib) {
     _lib = mergeLib(cachedGraphLib, _lib);
   }
@@ -668,7 +669,7 @@ export const run = (node: Runnable | InputRunnable, args: ResolvedArgs | Record<
     }
   }
 
-  isRunnable(node) && isFunctorRunnable(node) && !_lib.data.no.runtime.get_ref(node.graph.id) && _lib.data.no.runtime.change_graph(node.graph)
+  // isRunnable(node) && isFunctorRunnable(node) && getRunnableGraph(node, _lib) && _lib.data.no.runtime.change_graph(node.graph)
   // isRunnable(node) && isFunctorRunnable(node) && _lib.data.no.runtime.update_graph(node.graph, _lib);
 
   if(!(args instanceof Map)) {
@@ -681,14 +682,10 @@ export const run = (node: Runnable | InputRunnable, args: ResolvedArgs | Record<
     }
   }
 
-  if(isRunnable(node) && !isApRunnable(node)) {
-    node.graph = _lib.data.no.runtime.get_ref(node.graph.id)
-  }
-
   const res = run_runnable(
     isRunnable(node) 
       ? {...node, lib: node.lib ? mergeLib(node.lib, _lib) :  _lib}
-      : {...node, __kind: CONST, env: node.env ?? newEnv(new Map().set("__graphid", _lib.data.no.of(node.graph.id))), lib: mergeLib(node.lib, _lib)
+      : {...node, __kind: CONST, env: node.env ?? newEnv(new Map().set("__graphid", _lib.data.no.of(node.graph))), lib: mergeLib(node.lib, _lib)
         // mergeEnv(
         //   Object.fromEntries(Object.entries(args ?? {}).map(e => [e[0], _lib.data.no.of(e[1])])), 
         //   node.env ?? newEnv({__graphid: _lib.data.no.of(node.graph.id)})
@@ -1143,7 +1140,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
           if(removeSubscriptions && lib.data.no.runtime.get_args(graphid).value !== ival){
               removeSubscriptions && (isArgs(args) ? [...args.entries()] : Object.entries(args))
              .filter(e => !e[0].startsWith("__"))
-             .flatMap((runnableEntry: [string, ConstRunnable]) => Object.values(ancestor_graph(runnableEntry[1].fn, runnableEntry[1].graph, lib).nodes).map(n => [runnableEntry[0], runnableEntry[1].graph, n]))
+             .flatMap((runnableEntry: [string, ConstRunnable]) => Object.values(ancestor_graph(runnableEntry[1].fn, lib.data.no.runtime.get_ref(runnableEntry[1].graph), lib).nodes).map(n => [runnableEntry[0], runnableEntry[1].graph, n]))
              .forEach(([inputid, graph, node]: [string, Graph, NodysseusNode]) => lib.data.no.runtime.pauseGraphListeners(`${graph.id}/${node.id}`, ival !== inputid));
              lib.data.no.runtime.update_args(graphid, {value: ival})
           }

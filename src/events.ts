@@ -125,7 +125,7 @@ export const initListeners = () => {
         ? runnable
         : isApRunnable(runnable) 
         ? {...runnable, fn: Array.isArray(runnable.fn) ? runnable.fn.map(replaceGraphs) : replaceGraphs(runnable.fn)}
-        : {...runnable, graph: lib.data.no.runtime.get_ref(runnable.graph.id)}
+        : {...runnable, graph: lib.data.no.runtime.get_ref(runnable.graph)}
 
     const fn =
       typeof input_fn === "function"

@@ -1,6 +1,6 @@
 import * as ha from "hyperapp"
 import { initStore, nodysseus_get, nolib, run, NodysseusError, nolibLib } from "../nodysseus";
-import { Edge, Graph, isArgs, isNodeGraph, isNodeRef, isNodeScript, isRunnable, isTypedArg, Lib, NodeArg, NodeMetadata, NodysseusNode, RefNode, TypedArg } from "../types";
+import { Edge, FunctorRunnable, getRunnableGraph, getRunnableGraphId, Graph, isArgs, isNodeGraph, isNodeRef, isNodeScript, isRunnable, isTypedArg, Lib, NodeArg, NodeMetadata, NodysseusNode, RefNode, Runnable, TypedArg } from "../types";
 import { base_node, base_graph, ispromise, wrapPromise, expand_node, contract_node, ancestor_graph, create_randid, compareObjects, newLib } from "../util";
 import panzoom, * as pz from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
@@ -956,7 +956,7 @@ export const hlib = {
     panzoom: pzobj,
     run: (graph, fn, args?, lib?, options?) => {
       try{
-        const result = run({graph, fn, lib: lib ? {...hlib, ...lib} : hlib}, isArgs(args) ? args : args ? new Map(Object.entries(args)) : new Map(), options)
+        const result = run({graph: typeof graph === "string" ? graph : graph.id, fn, lib: lib ? {...hlib, ...lib} : hlib}, isArgs(args) ? args : args ? new Map(Object.entries(args)) : new Map(), options)
         if(ispromise(result)){
           return result.catch(e => console.error(e));
         }
@@ -969,7 +969,14 @@ export const hlib = {
     run_runnable: (runnable, args?, options?) => run(runnable, args, options),
     initStore: (nodysseusStore) => initStore(nodysseusStore),
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
-    worker: undefined
+    worker: undefined,
+    workerPostMessage: (runnable: FunctorRunnable, args: Map<string, any>, transferrableObjects?: Array<any>) => {
+      wrapPromise(hlib.worker()).then(worker => worker.postMessage({
+        graph: getRunnableGraphId(runnable, hlibLib), 
+        fn: runnable.fn, 
+        env: {data: args}
+      }, transferrableObjects));
+    }
 }
 
 export const hlibLib = newLib(hlib);

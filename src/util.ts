@@ -268,7 +268,7 @@ export const mergeLib = (a: Record<string, any> | Lib, b: Lib): Lib => (a ? {
   data: Object.assign({}, isLib(a) ? isArgs(a.data) ? Object.fromEntries(a.data) : a.data : isArgs(a) ? Object.fromEntries(a) : a, b.data)
 }: b)
 
-export const runnableId = (runnable: Runnable) => isConstRunnable(runnable) ? `${runnable.graph.id}/${runnable.fn}` : false;
+export const runnableId = (runnable: Runnable) => isConstRunnable(runnable) ? `${runnable.graph}/${runnable.fn}` : false;
 
 
 export function compareObjects(value1, value2, isUpdate = false) {

@@ -78,7 +78,7 @@ export type Result = NonErrorResult | Error
 export type BaseRunnable = {
   __kind: unknown,
   fn: string,
-  graph: Graph,
+  graph: string | Graph,
   env: Env,
   lib: Lib,
 }
@@ -138,7 +138,8 @@ export const isConstRunnable = (r: Runnable): r is ConstRunnable => !(r instance
 export const isApRunnable = (r: Runnable): r is ApRunnable => !(r instanceof Error) && r?.__kind == AP;
 export const isFunctorRunnable = (r: Runnable): r is FunctorRunnable => !(r instanceof Error) && r?.__kind == FUNCTOR;
 export const isInputRunnable = (r: Runnable | InputRunnable) => !Object.hasOwn(r, "__kind") && Object.hasOwn(r, "fn") && Object.hasOwn(r, "graph")
-export const getRunnableGraph = (r: Runnable | InputRunnable) => (r as BaseRunnable).graph;
+export const getRunnableGraph = (r: Runnable | InputRunnable, lib: Lib): Graph => typeof (r as BaseRunnable).graph === "string" ? lib.data.no.runtime.get_ref((r as BaseRunnable).graph) : (r as BaseRunnable).graph;
+export const getRunnableGraphId = (r: Runnable | InputRunnable, lib: Lib): string => typeof (r as BaseRunnable).graph === "string" ? ((r as BaseRunnable).graph as string) : ((r as BaseRunnable).graph as Graph).id; 
 
 export type Lib = {
   __kind: "lib",
