@@ -74,7 +74,6 @@ export const removeEdge = edge => g => {
 }
 
 export const addNodesEdges = (graph: Graph, addedNodes: Array<NodysseusNode> = [], addedEdges: Array<Edge> = [], removedNodes: Array<NodysseusNode> = [], removedEdges: Array<EdgeNoAs> = []) => {
-  console.log("updategraph", addedNodes, addedEdges, removedNodes, removedEdges)
   removedNodes?.forEach(node => removeNode(node)(graph));
   removedEdges?.forEach(edge => removeEdge(edge)(graph));
 
@@ -106,7 +105,7 @@ export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore>
   port.onmessageerror = e => console.error("shared worker error", e);
   onerror = e => console.error("shared worker error", e);
   port.addEventListener('message', (e: MessageEvent<SharedWorkerMessageFrom>) =>
-    (console.log("received", e.data), e).data.kind === "connect" 
+    e.data.kind === "connect" 
     ? connectres()
     : e.data.kind === "update"
     ? (nolib.no.runtime.change_graph(e.data.graph, nolibLib), contextGraphCache.set(e.data.graph.id, e.data.graph))
@@ -123,7 +122,6 @@ export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore>
       messageId: performance.now().toFixed(), 
       ...request
     }
-    console.log("posting", message)
     sendMessage(message);
     return new Promise((res, rej) => {
       inflightRequests.set(message.messageId, e => res(e as TSharedWorkerMessageFrom<T>));
@@ -135,7 +133,6 @@ export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore>
   setTimeout(() =>
     nolib.no.runtime.addListener("graphchange", "__system-store", ({graph, source}) => {
       if(source === "automergeStore") {
-        console.log("got automerge change", graph)
         contextGraphCache.set(graph.id, graph)
       }
     })
@@ -161,14 +158,12 @@ export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore>
         sendMessage({kind: "add_node", graphId, node})
         const graphClone = structuredClone(contextGraphCache.get(graphId));
         contextGraphCache.set(graphId, addNode(graphClone, node));
-        console.log("addnode", contextGraphCache.get(graphId))
       },
       remove_node: () => {throw new Error("not implemented")},
       add_nodes_edges: ({graphId, addedNodes, addedEdges, removedEdges, removedNodes}) => {
         sendMessage({kind: "add_nodes_edges", graphId, addedNodes, addedEdges, removedNodes, removedEdges})
         const graphClone = structuredClone(contextGraphCache.get(graphId));
         contextGraphCache.set(graphId, addNodesEdges(graphClone, addedNodes, addedEdges, removedNodes, removedEdges));
-        console.log("addnodesedges", contextGraphCache.get(graphId))
       }
   }
 }

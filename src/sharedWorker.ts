@@ -51,8 +51,6 @@ const initPort = (port: MessagePort) => {
   ports.push(port);
 
   port.addEventListener("message", (e) => {
-    console.log("shared worker message", e.data)
-
     if(store) {
       processMessage(port, e.data)
     } else {
@@ -74,7 +72,6 @@ self.onconnect = (e) => initPort(e.ports[0])
 Promise.all([import("./editor/store"), import("./editor/automergeStore")]).then(([{webClientStore}, {automergeRefStore}]) => {
   webClientStore(nodysseusidb => automergeRefStore({nodysseusidb, persist: true}))
     .then(resStore => {
-      console.log("got store ts", resStore)
       store = resStore;
       initStore(store);
       initQueue.forEach(e => processMessage(e[0], e[1]));

@@ -647,7 +647,6 @@ const initStore = (store: NodysseusStore | undefined = undefined) => {
   }
 
   if(!nolib.no.runtime) {
-    console.log("starting store")
     nolib.no.runtime = nolib.no.runtimefn()
   }
 }
@@ -707,7 +706,6 @@ const runtimefn = () => {
       const {publish, addListener, removeListener, pauseGraphListeners, togglePause, isGraphidListened, isListened} = initListeners();
 
       const change_graph = (graph: Graph, lib: Lib, changedNodes: Array<string> = [], broadcast = false, source?) => {
-        console.log("change_graph", graph, changedNodes, broadcast, source)
         const parent = get_parentest(graph);
         if (parent) {
           (lib.data ?? lib).no.runtime.update_graph(parent, lib);
