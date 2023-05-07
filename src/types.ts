@@ -23,10 +23,11 @@ export type Graph = {
 
 export type EdgesIn = Record<string, Record<string, Edge>>;
 
-export type Edge = {
+export type Edge = EdgeNoAs & {as: string}
+
+export type EdgeNoAs = {
   to: string,
-  from: string,
-  as: string
+  from: string
 }
 
 export type Store<T> = {
@@ -39,7 +40,13 @@ export type Store<T> = {
 
 export type RefStore = Store<Graph> & {
   add_node: (graphId: string, node: NodysseusNode) => void;
-  add_nodes_edges: (graphId: string, nodes: NodysseusNode[], edges: Edge[], remove_edges: Edge[], remove_nodes: NodysseusNode[]) => void;
+  add_nodes_edges: (updates: {
+    graphId: string, 
+    addedNodes?: NodysseusNode[], 
+    addedEdges?: Edge[], 
+    removedNodes?: NodysseusNode[], 
+    removedEdges?: Array<{[k in Exclude<keyof Edge, "as">]: Edge[k]}>
+  }) => void;
   remove_node: (graphId: string, node: NodysseusNode) => void;
   add_edge: (graphId: string, edge: Edge) => void;
   remove_edge: (graphId: string, edge: Edge) => void;

@@ -5,4 +5,5 @@ public/*.bundle.js
 public/*.wasm
 public/index.js
 public/worker.js
+public/sharedWorker.js
 *.js.map

@@ -93,7 +93,7 @@ export const expand_node = (data: {nolib: Record<string, any>, node_id: string, 
     }
 
     const args_node = Object.values(node.edges).find(e => e.to === node.out && e.as === "args")?.from;
-    const in_edges = nolib.no.runtime.get_edges_in(data.editingGraph.id, node_id);
+    const in_edges = nolib.no.runtime.get_edges_in(data.editingGraph, node_id);
 
     const flattened = flattenNode(node, 1);
 
@@ -114,7 +114,7 @@ export const contract_node = (data: {editingGraph: Graph, node_id: string, nolib
         inside_node_map.set(inside_nodes[0].id, inside_nodes[0]);
         const inside_edges = new Set<Edge>();
 
-        const q = nolib.no.runtime.get_edges_in(data.editingGraph.id, inside_nodes[0].id)
+        const q = nolib.no.runtime.get_edges_in(data.editingGraph, inside_nodes[0].id)
 
         let in_edge: Array<Edge> = [];
         let args_edge;

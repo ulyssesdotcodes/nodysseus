@@ -1,14 +1,14 @@
 import * as ha from "hyperapp"
-import { initStore, nodysseus_get, nolib, run, NodysseusError } from "../nodysseus";
-import { Edge, Graph, isArgs, isNodeGraph, isNodeRef, isRunnable, isTypedArg, Lib, NodeArg, NodeMetadata, NodysseusNode, RefNode, TypedArg } from "../types";
+import { initStore, nodysseus_get, nolib, run, NodysseusError, nolibLib } from "../nodysseus";
+import { Edge, Graph, isArgs, isNodeGraph, isNodeRef, isNodeScript, isRunnable, isTypedArg, Lib, NodeArg, NodeMetadata, NodysseusNode, RefNode, TypedArg } from "../types";
 import { base_node, base_graph, ispromise, wrapPromise, expand_node, contract_node, ancestor_graph, create_randid, compareObjects, newLib } from "../util";
 import panzoom, * as pz from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 import { d3Link, d3Node, HyperappState, Levels, Property } from "./types";
 import { UpdateGraphDisplay, UpdateSimulation, d3subscription, updateSimulationNodes } from "./components/graphDisplay";
 import AutocompleteList from "./autocomplete";
-import { uuid } from "@automerge/automerge";
 import { parser } from "@lezer/javascript";
+import {v4 as uuid, parse as uuidparse, stringify as uuidstringify} from "uuid";
 
 export const EXAMPLES = ["threejs_example", "hydra_example", "threejs_boilerplate", "threejs_force_attribute_example"];
 
@@ -103,7 +103,7 @@ export const pzobj: {
               pzobj.animationframe = false;
               dispatch((s, p) => [ 
                   { ...s, show_all: false, },
-                  [() => requestAnimationFrame(() => nolib.no.runtime.publish('show_all', {data: false}))]
+                  [() => requestAnimationFrame(() => nolib.no.runtime.publish('show_all', {data: false}, nolibLib))]
               ])
             });
         }
@@ -181,15 +181,15 @@ export const update_info_display = ({fn, graph, args}, info_display_dispatch, co
       return;
     }
 
-    const node_ref = node && (node.ref && nolib.no.runtime.get_ref(node.ref)) || node;
-    const out_ref = node && (node.nodes && nolib.no.runtime.get_node(node, node.out)) || (node_ref?.nodes && nolib.no.runtime.get_node(node_ref, node_ref.out));
+    const node_ref = node && (isNodeRef(node) && nolib.no.runtime.get_ref(node.ref)) || node;
+    const out_ref = node && (isNodeGraph(node) && nolib.no.runtime.get_node(node, node.out)) || (node_ref?.nodes && nolib.no.runtime.get_node(node_ref, node_ref.out));
     const node_display_el = hlib.run(graph, fn, {...args, _output: "display"}, {profile: false});
     const update_info_display_fn = display => info_display_dispatch && requestAnimationFrame(() => {
       info_display_dispatch(UpdateResultDisplay, {el: display?.dom_type ? display : ha.h('div', {})})
       requestAnimationFrame(() => {
         if(graphChanged) {
           code_editor.dispatch({
-            changes:{from: 0, to: code_editor.state.doc.length, insert: node.script ?? node.value},
+            changes:{from: 0, to: code_editor.state.doc.length, insert: isNodeScript(node) ? node.script : node.value},
             effects: [code_editor_nodeid.of(node.id)]
           })
         }
@@ -214,14 +214,16 @@ export const SetSelectedPositionStyleEffect = (_, {node, svg_offset, dimensions}
 
 export const ChangeEditingGraphId: ha.Effecter<HyperappState, {id: string, select_out: boolean, editingGraphId: string}> = (dispatch, {id, select_out, editingGraphId}) => {
     requestAnimationFrame(() => {
-        const graphPromise = wrapPromise(
-          EXAMPLES.includes(id) && !nolib.no.runtime.refs().includes(id) 
-          ? fetch((console.log(`fetching ${id}`), `json/${id.replaceAll("_", "-")}.json`)).then(res => res.json()).then(g => {
-            return nolib.no.runtime.add_ref(g[0])
-          }).then(g => {
-            nolib.no.runtime.change_graph(g, hlib);
-            return g
-          })
+        const graphPromise = wrapPromise(nolib.no.runtime.refs()).then(refs => 
+          EXAMPLES.includes(id) && !refs.includes(id) 
+          ? fetch((console.log(`fetching ${id}`), `json/${id.replaceAll("_", "-")}.json`))
+            .then(res => res.json())
+            .then((g: Graph) => {
+              return nolib.no.runtime.add_ref(g[0])
+            }).then(g => {
+              nolib.no.runtime.change_graph(g, hlibLib, []);
+              return g
+            })
           : nolib.no.runtime.get_ref(id, editingGraphId && nolib.no.runtime.get_ref(editingGraphId))
         )
 
@@ -237,7 +239,7 @@ export const ChangeEditingGraphId: ha.Effecter<HyperappState, {id: string, selec
                         new_graph.edges_in = Object.values(new_graph.edges).reduce((acc: any, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
                     }
                     
-                    nolib.no.runtime.change_graph(new_graph, hlib);
+                    nolib.no.runtime.change_graph(new_graph, hlibLib);
                     // nolib.no.runtime.removeGraphListeners(state.editingGraphId);
                     dispatch(s => {
                         const news = {...s, editingGraph: new_graph, selected: [new_graph.out], editingGraphId: new_graph.id}
@@ -266,13 +268,16 @@ export const ChangeEditingGraphId: ha.Effecter<HyperappState, {id: string, selec
 export const CreateNode: ha.Action<HyperappState, {node: NodysseusNode, child: string, child_as: string, parent?: Edge }> = (state, {node, child, child_as, parent}) => [
     state,
     dispatch => {
-      nolib.no.runtime.add_node(state.editingGraph, node, hlib)
-      nolib.no.runtime.update_edges(state.editingGraph, 
+      nolib.no.runtime.updateGraph({
+        graph: state.editingGraph, 
+        addedNodes: [node],
+        addedEdges:
           parent 
               ? [{from: node.id, to: child, as: parent.as}, {from: parent.from, to: node.id, as: 'arg0'}] 
               : [{from: node.id, to: child, as: child_as}], 
-          parent ? [{from: parent.from, to: child}] : []
-      , hlib)
+        removedEdges: parent ? [{from: parent.from, to: child}] : [] , 
+        lib: hlibLib
+      })
       // Hacky - have to wait until the node is finished adding and the graph callback takes place before updating selected node.
       setTimeout(() => requestAnimationFrame(() => dispatch(SelectNode, {node_id: node.id})), 50);
     }
@@ -281,7 +286,7 @@ export const CreateNode: ha.Action<HyperappState, {node: NodysseusNode, child: s
 export const DeleteNode = (state, {node_id}) => [
     state,
     [(dispatch, {node_id}) => dispatch(SelectNode, {node_id}), {node_id: graphEdgeOut(state.editingGraph, node_id).to}],
-    [() => requestAnimationFrame(() => nolib.no.runtime.delete_node(state.editingGraph, node_id, hlib))]
+    [() => requestAnimationFrame(() => nolib.no.runtime.delete_node(state.editingGraph, node_id, hlibLib))]
 ]
 
 export const ExpandContract = (state, {node_id}) => {
@@ -305,14 +310,14 @@ export const CreateRef = (state, {node}) => [
     state,
     [dispatch => {
         const graph = {...base_graph(node), id: node.name, value: undefined};
-        nolib.no.runtime.change_graph(base_graph(graph), hlib);
+        nolib.no.runtime.change_graph(base_graph(graph), hlibLib);
         save_graph(graph);
         nolib.no.runtime.add_node(state.editingGraph, {
             id: node.id,
             value: node.value,
             ref: node.name,
             name: undefined,
-        }, hlib);
+        }, hlibLib);
     }]
 ]
 
@@ -343,7 +348,7 @@ export const Paste = state => [
             .concat([{from: node_id_map[copied.root], to: state.selected[0], as: copied.as}]),
           [],
           [],
-          hlib
+          hlibLib
         )
         // Object.values(state.copied.graph.nodes).forEach((n: NodysseusNode) => {
         //     const new_id = create_randid();
@@ -397,7 +402,7 @@ export const SelectNode: ha.Action<HyperappState, {
           graph: state.editingGraph, 
           args: {}
         }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== node_id), {}],
-    state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: {nodeId: node_id, graphId: state.editingGraphId}}), {}]
+    state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: {nodeId: node_id, graphId: state.editingGraphId}}, nolibLib), {}]
 ] : state;
 
 export const CustomDOMEvent = (_, payload) => document.getElementById(`${payload.html_id}`)?.dispatchEvent(new CustomEvent(payload.event, {detail: payload.detail}))
@@ -429,19 +434,28 @@ export const UpdateResultDisplay = (state, resel) => {
 }
 
 export const UpdateNodeEffect = (_, {editingGraph, node}: {editingGraph: Graph, node: NodysseusNode}) => {
-  nolib.no.runtime.add_node(editingGraph, node, hlib)
+  nolib.no.runtime.add_node(editingGraph, node, hlibLib)
   const edges_in = graphEdgesIn(editingGraph, node.id);
   const nodeargs = node_args(nolib, editingGraph, node.id, hlib.run(editingGraph, node.id, {_output: "metadata"}));
+  nolib.no.runtime.updateGraph({graph: editingGraph, addedNodes: [node], lib: nolibLib})
   if(edges_in.length === 1){ 
     if(nodeargs.filter(na => !na.additionalArg).length === 1) {
       const newAs = nodeargs.find(a => !a.additionalArg).name;
       if(newAs !== edges_in[0].as) {
-        nolib.no.runtime.update_edges(editingGraph, [{...edges_in[0], as: newAs}], [], hlib)
+        nolib.no.runtime.updateGraph({
+          graph: editingGraph, 
+          addedEdges: [{...edges_in[0], as: newAs}], 
+          lib: hlibLib
+        })
       }
     } else if(nodeargs.find(a => a.default)) {
       const newAs = nodeargs.map(a => a.name.split(": ")).find(e => e[1] === "default")?.[0]
       if(newAs) {
-        nolib.no.runtime.update_edges(editingGraph, [{...edges_in[0], as: newAs}], [], hlib)
+        nolib.no.runtime.updateGraph({
+          graph: editingGraph, 
+          addedEdges: [{...edges_in[0], as: newAs}], 
+          lib: hlibLib
+        })
       }
     }
   } 
@@ -459,7 +473,12 @@ export const UpdateNode: ha.Action<HyperappState, {node: NodysseusNode, property
 
 export const UpdateEdge: ha.Action<HyperappState, {edge: Edge, as: string}> = (state, {edge, as}) => [
     state,
-    [() => nolib.no.runtime.update_edges(state.editingGraph, [{...edge, as}], [edge], hlib), {}]
+    [() => nolib.no.runtime.updateGraph({
+      graph: state.editingGraph, 
+      addedEdges: [{...edge, as}], 
+      removedEdges: [edge], 
+      lib: hlibLib
+    }), {}]
 ]
 
 export const keydownSubscription = (dispatch, options) => {
@@ -564,8 +583,8 @@ export const result_subscription = (dispatch, {editingGraphId, displayGraphId, n
     nolib.no.runtime.addListener('noderun', 'update_hyperapp_error', noderun_listener);
 
     return () => (
-        nolib.no.runtime.removeListener('graphupdate', 'clear_hyperapp_error', change_listener),
-        nolib.no.runtime.removeListener('grapherror', 'update_hyperapp_error', error_listener)
+        nolib.no.runtime.removeListener('graphupdate', 'clear_hyperapp_error'),
+        nolib.no.runtime.removeListener('grapherror', 'update_hyperapp_error')
     );
 }
 
@@ -574,8 +593,8 @@ export const result_subscription = (dispatch, {editingGraphId, displayGraphId, n
 export const graph_subscription = (dispatch, props) => {
     let animframe: false | number = false;
     const listener = ({graph}) => {
+        dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
         if(props.editingGraphId === graph.id) {
-          dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
           if(animframe){
             cancelAnimationFrame(animframe)
           }
@@ -591,6 +610,21 @@ export const graph_subscription = (dispatch, props) => {
                 code_editor_nodeid: s.code_editor_nodeid
               }]])
           })
+        } else {
+          // Have to keep this so that other tabs updating graphs makes changes
+          animframe = requestAnimationFrame(() =>  {
+              animframe = false;
+              dispatch((s: HyperappState) => [s, [UpdateSimulation], [refresh_graph, {
+                graph: s.displayGraph || s.editingGraph, 
+                norun: props.norun, 
+                graphChanged: true, 
+                result_display_dispatch: s.result_display_dispatch,
+                info_display_dispatch: s.info_display_dispatch,
+                code_editor: s.code_editor,
+                code_editor_nodeid: s.code_editor_nodeid
+              }]])
+          })
+
         }
     };
 
@@ -937,4 +971,6 @@ export const hlib = {
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
     worker: undefined
 }
+
+export const hlibLib = newLib(hlib);
 

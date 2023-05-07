@@ -39,10 +39,10 @@ export const initListeners = () => {
       event = event.substring(3);
     } else if(broadcast && event !== "noderun" && event !== "animationframe" && event !== "show_all") {
       try {
-        if(typeof window !== "undefined" || (event !== "graphchange" && event !== "graphupdate")) {
-          eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data });
-        } else if (event === "grapherror") {
+        if (event === "grapherror") {
           eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data: {message: data.message, node_id: data.node_id, stack: data.stack } });
+        } else {
+          eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data });
         }
       } catch(e){
         // If it's not serializable, that's fine
@@ -71,14 +71,12 @@ export const initListeners = () => {
       }
     }
 
-    if(listenerMap.has("__system")) {
-      runlistener(listenerMap.get("__system").fn)
-    }
+    listeners.filter(l => l[0].startsWith("__system")).forEach(l => runlistener(l[1].fn))
 
     // When paused allow graphchange and grapherror so the graph shows
     if(!pause || event === "graphchange" || event === "grapherror") {
       for (let l of listeners) {
-        if(l[0] !== "__system" && !(l[1].graphid && [...pausedGraphIds.keys()].find(k => l[1].graphid.startsWith(k)))) runlistener(l[1].fn)
+        if(!l[0].startsWith("__system") && !(l[1].graphid && [...pausedGraphIds.keys()].find(k => l[1].graphid.startsWith(k)))) runlistener(l[1].fn)
         // runlistener(l)
       }
     }
@@ -188,7 +186,7 @@ export const initListeners = () => {
 
   addListener('listenersclear', "__system", e => {
     for(let eventListener of event_listeners.entries()) {
-      if(eventListener[0] !== "__system") {
+      if(eventListener[0].startsWith("__system")) {
         eventListener[1].clear()
       }
     }

@@ -1,6 +1,4 @@
 import * as esbuild from 'esbuild'
-import path from 'node:path'
-import fs fom 'node:fs'
 import { wasmLoader } from 'esbuild-plugin-wasm';
 
 // let wasmPlugin = {

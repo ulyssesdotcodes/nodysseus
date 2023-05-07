@@ -1,6 +1,6 @@
 import { ForceLink, Simulation, SimulationLinkDatum, SimulationNodeDatum } from "d3-force";
 import { NodysseusError } from "../nodysseus";
-import {Graph, Edge, NodysseusNode, RefStore} from "../types"
+import {Graph, Edge, NodysseusNode, RefStore, EdgeNoAs} from "../types"
 
 export type Vector2 = {x: number, y: number}
 
@@ -78,6 +78,9 @@ export type NodysseusForceLink = ForceLink<d3Node, d3Link>
 // SharedWorker messages
 
 type _SharedWorkerMessages = {
+  addPort: {
+    to: {port: MessagePort}
+  },
   get: {
     to: {graphId: string},
     from: {graph: Graph}
@@ -96,11 +99,11 @@ type _SharedWorkerMessages = {
     from: {keys: Array<string>}
   }
   undo: {
-    to: {},
+    to: {graphId: string},
     from: {graph: Graph}
   },
   redo: {
-    to: {},
+    to: {graphId: string},
     from: {graph: Graph}
   },
   add_node: {
@@ -121,25 +124,35 @@ type _SharedWorkerMessages = {
       addedNodes: Array<NodysseusNode>, 
       addedEdges: Array<Edge>
       removedNodes: Array<NodysseusNode>, 
-      removedEdges: Array<Edge>
+      removedEdges: Array<EdgeNoAs>
     },
   },
   connect: {
     from: {}
+  },
+  update: {
+    from: { graph: Graph }
   }
 }
 
 type _SharedWorkerMessageKind = keyof _SharedWorkerMessages;
 export type SharedWorkerMessageKind = _SharedWorkerMessageKind;
 
-type _SharedWorkerMessageId<T> = {messageId: string}
-  // T extends _SharedWorkerMessageKind
-  //   ? _TSharedWorkerMessageFrom<T> extends _SharedWorkerMessageFrom
-  //     ? _TSharedWorkerMessageTo<T> extends _SharedWorkerMessageTo
-  //       ? {messageId: string}
-  //       : {}
-  //     : {}
-  //   : {};
+export type TRespondableSharedWorkerMessage<T> = T extends _SharedWorkerMessageKind
+  ? _SharedWorkerMessages[T] extends {to: any, from: any}
+    ? TSharedWorkerMessageTo<T> | TSharedWorkerMessageFrom<T>
+    : never
+  : never;
+
+export type RespondableSharedWorkerMessage = TRespondableSharedWorkerMessage<SharedWorkerMessageKind>
+export type RespondableSharedWorkerMessageData = Omit<RespondableSharedWorkerMessage, "messageId">
+
+type _SharedWorkerMessageId<T> =
+  T extends _SharedWorkerMessageKind
+    ? _SharedWorkerMessages[T] extends {to: any, from: any}
+      ? {messageId: string}
+      : {}
+    : never;
 
 type _SharedWorkerMessage<T> = 
   T extends _SharedWorkerMessageKind 
@@ -157,7 +170,12 @@ type _TSharedWorkerMessageTo<T> =
     : never;     
 export type TSharedWorkerMessageToData<T> = _TSharedWorkerMessageTo<T>
 
-export type TSharedWorkerMessageTo<T> = _TSharedWorkerMessageTo<T> & _SharedWorkerMessageId<T>
+export type TSharedWorkerMessageTo<T> = 
+  T extends _SharedWorkerMessageKind
+    ? _SharedWorkerMessages[T] extends {to: any, from: any}
+      ? _TSharedWorkerMessageTo<T> & {messageId: string}
+      : _TSharedWorkerMessageTo<T> 
+    : never;
 
 type _SharedWorkerMessageTo = _TSharedWorkerMessageTo<_SharedWorkerMessageKind>;
 export type SharedWorkerMessageTo = TSharedWorkerMessageTo<_SharedWorkerMessageKind>;
@@ -168,10 +186,17 @@ type _TSharedWorkerMessageFrom<T> =
       ? _SharedWorkerMessage<T>["from"] & {kind: T} 
       : never
     : never;     
-export type TSharedWorkerMessageFrom<T> = _TSharedWorkerMessageFrom<T> & _SharedWorkerMessageId<T>
+export type TSharedWorkerMessageFrom<T> = 
+  T extends _SharedWorkerMessageKind
+    ? _SharedWorkerMessages[T] extends {to: any, from: any}
+      ? _TSharedWorkerMessageFrom<T> & {messageId: string}
+      : _TSharedWorkerMessageFrom<T> 
+    : never;
 
 type _SharedWorkerMessageFrom = _TSharedWorkerMessageFrom<_SharedWorkerMessageKind>;
 export type SharedWorkerMessageFrom = TSharedWorkerMessageFrom<_SharedWorkerMessageKind>;
+
+export const expectSharedWorkerMessageResponse = <T extends _SharedWorkerMessageKind>(m: SharedWorkerMessageTo | SharedWorkerMessageFrom): m is TRespondableSharedWorkerMessage<T> => !!(m as TRespondableSharedWorkerMessage<T>).messageId
 
 // const test = <T extends SharedWorkerMessageKind>(m: Omit<TSharedWorkerMessageTo<T>, "messageId">) => {};
 

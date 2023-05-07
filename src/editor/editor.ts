@@ -1,13 +1,13 @@
-import { resfetch, nolib, run, initStore, NodysseusError } from "../nodysseus";
+import { resfetch, nolib, run, initStore, NodysseusError, nolibLib } from "../nodysseus";
 import * as ha from "hyperapp";
 import Fuse from "fuse.js";
 import { create_randid, wrapPromise, base_graph } from "../util";
 import { Edge, Graph, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode } from "../types";
-import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, isNodysseusError, keydownSubscription, listen, middleware, Paste, pzobj, refresh_graph, result_subscription, run_h, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect } from "./util";
+import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, middleware, Paste, pzobj, refresh_graph, result_subscription, run_h, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect } from "./util";
 import { info_display, infoWindow } from "./components/infoWindow";
 import { init_code_editor } from "./components/codeEditor";
 import { d3Node, HyperappState, Levels } from "./types";
-import { webClientStore } from "./store";
+import { sharedWorkerRefStore, webClientStore } from "./store";
 import { d3subscription, insert_node_el, link_el, node_el, UpdateSimulation } from "./components/graphDisplay";
 import Autocomplete from "./autocomplete"
 import generic from "src/generic";
@@ -136,7 +136,7 @@ const mutationObserverSubscription = (dispatch, {id}) => {
     const publishel = (addedel) => {
       if(addedel instanceof HTMLElement){
         if(addedel.id){
-          nolib.no.runtime.publish("domnodeadded", {id: addedel.id})
+          nolib.no.runtime.publish("domnodeadded", {id: addedel.id}, nolibLib)
         }
         for(let child of addedel.children) {
           publishel(child);
@@ -176,7 +176,7 @@ const runapp = (init, load_graph, _lib) => {
               [() => {
                 requestAnimationFrame(() =>  {
                   refresh_custom_editor()
-                  nolib.no.runtime.change_graph(base_graph(init.editingGraph), hlib)
+                  nolib.no.runtime.change_graph(base_graph(init.editingGraph), hlibLib)
                 });
               }]
             ]);
@@ -350,7 +350,7 @@ const runapp = (init, load_graph, _lib) => {
                 case "graph_arrowleft": 
                 case "graph_arrowright": {
                     const dirmult = key_input === "arrowleft" ? 1 : -1;
-                    const current_node = nolib.no.runtime.get_node(state.editingGraph, selected)
+                    const current_node = state.nodes.find(n => n.node_id === selected);
                     if(state.levels) {
                       const siblings = state.levels.siblings.get(selected); 
                       const node_id = siblings.reduce((dist, sibling) => { 
@@ -413,7 +413,7 @@ const runapp = (init, load_graph, _lib) => {
                 case "graph_esc": {
                     action = [state => [
                         {...state, show_all: true, focused: false, editing: false},
-                        [() => requestAnimationFrame(() => nolib.no.runtime.publish('show_all', {data: true}))]
+                        [() => requestAnimationFrame(() => nolib.no.runtime.publish('show_all', {data: true}, hlibLib))]
                     ]]
                     break;
                 }
@@ -437,7 +437,7 @@ const runapp = (init, load_graph, _lib) => {
                   break;
                 }
                 default: {
-                    nolib.no.runtime.publish('keydown', {data: key_input})
+                    nolib.no.runtime.publish('keydown', {data: key_input}, hlibLib)
                 }
             }
 
@@ -446,7 +446,7 @@ const runapp = (init, load_graph, _lib) => {
         listen('resize', s => [{
                 ...s, 
                 dimensions: {x: document.getElementById(init.html_id).clientWidth, y: document.getElementById(init.html_id).clientHeight}
-            }, false && [() => nolib.no.runtime.publish('resize', {x: document.getElementById(init.html_id).clientWidth, y: document.getElementById(init.html_id).clientHeight})]
+            }, false && [() => nolib.no.runtime.publish('resize', {x: document.getElementById(init.html_id).clientWidth, y: document.getElementById(init.html_id).clientHeight}, hlibLib)]
         ]),
         !!document.getElementById( `${init.html_id}-editor-panzoom`) && [pzobj.init, {
             id: `${init.html_id}-editor-panzoom`, 
@@ -457,7 +457,7 @@ const runapp = (init, load_graph, _lib) => {
                     focused: p.event === 'effect_transform' && s.focused, 
                     noautozoom: p.noautozoom && !s.stopped
                 },
-                [() => requestAnimationFrame(() => nolib.no.runtime.publish('show_all', {data: p.event !== 'effect_transform'}))]
+                [() => requestAnimationFrame(() => nolib.no.runtime.publish('show_all', {data: p.event !== 'effect_transform'}, hlibLib))]
             ]
         }]
     ], 
@@ -465,20 +465,23 @@ const runapp = (init, load_graph, _lib) => {
 }
 
 const editor = async function(html_id, editingGraph, lib, norun) {
-    let nodysseusStore = await webClientStore();
-    let worker, workerPromise;
+    const sharedWorker = new SharedWorker('./sharedWorker.js', {type: "module"})
+    let nodysseusStore = await webClientStore(() => sharedWorkerRefStore(sharedWorker.port));
+    let worker: Worker, workerPromise;
     initStore(nodysseusStore)
     hlib.worker = () => {
       if(!worker) {
+        const workerMessageChannel = new MessageChannel();
+        sharedWorker.port.postMessage({kind: "addPort", port: workerMessageChannel.port1}, [workerMessageChannel.port1])
         worker = new Worker("./worker.js", {type: "module"})
         workerPromise = new Promise((res, rej) => {
           worker.addEventListener("message", msg => {
             if(msg.data.type === "started") {
+              worker.postMessage({kind: "connect", port: workerMessageChannel.port2}, [workerMessageChannel.port2])
               workerPromise = false;
               res(worker);
             }
           })
-
         })
       }
 

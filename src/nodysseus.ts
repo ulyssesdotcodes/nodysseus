@@ -466,7 +466,8 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
 
         }).value
     } else if (isNodeGraph(node)) {
-        return node_nodes(node, node.out ?? "out", nodeArgs, graphArgs, lib, options)
+      node.edges_in = node.edges_in ?? Object.values(node.edges).reduce<Graph["edges_in"]>((acc, e) => ({...acc, [e.to]: {...(acc[e.to] ?? {}), [e.from]: e}}), {})
+      return node_nodes(node, node.out ?? "out", nodeArgs, graphArgs, lib, options)
     } else if (isNodeScript(node)){
         return node_script(node, nodeArgs, lib, options)
     } else if(Object.hasOwn(node, "value")) {
@@ -646,6 +647,7 @@ const initStore = (store: NodysseusStore | undefined = undefined) => {
   }
 
   if(!nolib.no.runtime) {
+    console.log("starting store")
     nolib.no.runtime = nolib.no.runtimefn()
   }
 }
@@ -679,6 +681,10 @@ export const run = (node: Runnable | InputRunnable, args: ResolvedArgs | Record<
     }
   }
 
+  if(isRunnable(node) && !isApRunnable(node)) {
+    node.graph = _lib.data.no.runtime.get_ref(node.graph.id)
+  }
+
   const res = run_runnable(
     isRunnable(node) 
       ? {...node, lib: node.lib ? mergeLib(node.lib, _lib) :  _lib}
@@ -694,91 +700,7 @@ export const run = (node: Runnable | InputRunnable, args: ResolvedArgs | Record<
     .then(v => (options.profile && console.log(JSON.stringify(options.timings, null, 2)), isArgs(v) ? Object.fromEntries(v) : v)).value;
 }
 
-const nolib = {
-  no: {
-    of: <T>(value): Result | Promise<Runnable> => ispromise(value) ? value.then(nolib.no.of) : isValue(value) ? value : { __kind: "result", value: value},
-    arg: (node, target: Env, lib: Lib, value, options: RunOptions) => {
-      value = node.value;
-      let valuetype, nodevalue;
-      let colonIdx = value.indexOf(":")
-      if(colonIdx >= 0) {
-        nodevalue = value.substring(0, colonIdx);
-        valuetype = value.substring(colonIdx + 2)
-      } else {
-        nodevalue = value;
-      }
-
-      const newtarget = () => {
-        const newt = new Map(target.data);
-        for(let k in newt) {
-          if(k.startsWith("_")) {
-            newt.delete(k)
-          }
-        }
-        return newt;
-      };
-
-      const parenttarget = () => {
-        const newt = new Map(target.env.data);
-        for(let k in newt) {
-          if(k.startsWith("_")) {
-            newt.delete(k)
-          }
-        }
-        return newt;
-      };
-
-      const ret = nodevalue === undefined || target === undefined
-        ? undefined
-        : nodevalue === "_node"
-        ? node
-        : nodevalue.startsWith("_node.")
-        ? node[nodevalue.substring("_node.".length)]
-        : nodevalue.startsWith("_lib.")
-        ? nodysseus_get(lib.data, nodevalue.substring("_lib.".length), lib)
-        : nodevalue === "_args"
-        ? newtarget()
-        : nodevalue === "__args"
-        ? parenttarget()
-          // lib.data.no.of(Object.fromEntries(Object.entries(parenttarget()).map(([key, value]: [string, any]) => [key, value?.isArg && valuetype !== "raw" ? run_runnable(value, lib)?.value : value])))
-        : nodysseus_get(
-            node.type === "local" || node.type?.includes?.("local")
-              ? newtarget()
-              : node.type === "parent" || node.type?.includes?.("parent")
-              ? target.env
-              : target,
-            nodevalue,
-            lib
-          );
-
-      // let retrun = run_runnable(ret, lib);
-      // let resolveret = (rr) => {
-      //   const retrun = isValue(rr) && isConstRunnable(rr.value) && valuetype !== "raw" ? run_runnable(rr, lib, undefined, options) : undefined
-      //   return  ispromise(retrun) ? retrun.then(v => isError(v) ? v : v?.value) : retrun ? isValue(retrun) || isWrappedPromise(retrun) ? retrun?.value : retrun : rr;
-      // }
-      let resolveret = (rr) =>
-        wrapPromise(rr)
-          .then(rrr => isValue(rrr) ? rrr.value : rrr)
-          .then(rrr => isConstRunnable(rrr) && valuetype !== "raw" ? resolveret(run_runnable(rrr, lib, new Map(), options)) : rrr).value
-          
-
-        // (console.log("start", rr), ispromise)(rr) 
-        // ? rr.then(resolveret)
-        // : isValue(rr) && isConstRunnable(rr.value) && valuetype !== "raw"
-        // ? resolveret(run_runnable(ret, lib))
-        // : (console.log("end", rr), rr)
-
-      return resolveret(ret)
-    },
-    base_graph,
-    base_node,
-    nodysseus_get,
-    NodysseusError,
-    runtime: undefined,
-    wrapPromise,
-    runtimefn: (function () {
-
-
+const runtimefn = () => {
       Object.values(generic_nodes).forEach(graph => {
         if(isNodeGraph(graph)) {
           graph.edges_in = Object.values(graph.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
@@ -787,14 +709,22 @@ const nolib = {
 
       const {publish, addListener, removeListener, pauseGraphListeners, togglePause, isGraphidListened, isListened} = initListeners();
 
-      const change_graph = (graph: Graph, lib: Lib, changedNodes: Array<string>, addToStore = true) => {
+      const change_graph = (graph: Graph, lib: Lib, changedNodes: Array<string> = [], broadcast = false, source?) => {
+        console.log("change_graph", graph, changedNodes, broadcast, source)
         const parent = get_parentest(graph);
         if (parent) {
           (lib.data ?? lib).no.runtime.update_graph(parent, lib);
         } else {
-          const startNode = changedNodes?.[0];
-          publish("graphchange", {graph, dirtyNodes: startNode && Object.keys(descendantGraph(startNode, graph, lib).nodes)}, lib);
-          publish("graphupdate", {graph, dirtyNodes: startNode && Object.keys(descendantGraph(startNode, graph, lib).nodes)}, lib);
+          const changedNodesSet = new Set()
+          while(changedNodes.length > 0) {
+            const node = changedNodes.pop();
+            if(!changedNodesSet.has(node)){
+              changedNodesSet.add(node);
+              Object.keys(descendantGraph(node, graph, lib).nodes).forEach(n => changedNodes.push(n));
+            }
+          }
+          publish("graphchange", {graph, dirtyNodes: [...changedNodesSet.keys()], source}, lib, {}, broadcast);
+          publish("graphupdate", {graph, dirtyNodes: [...changedNodesSet.keys()], source}, lib, {}, broadcast);
         }
       };
 
@@ -834,11 +764,13 @@ const nolib = {
         }).value;
       }
       const add_ref = (graph: Node) => {
-        return (Array.isArray(graph) ? graph : [graph]).map(graph => {
-          if(generic_nodes[graph.id] === undefined) {
-            return nodysseus.refs.set(graph.id, graph)
-          }
-        })[0]
+        return (Array.isArray(graph) ? graph : [graph])
+          .map(graph => {
+            if(generic_nodes[graph.id] === undefined) {
+              nodysseus.refs.set(graph.id, graph)
+              return graph;
+            }
+          })[0]
       }
       const remove_ref = (id) => 
         wrapPromise(nodysseus.refs.keys()).then(keys => {
@@ -850,20 +782,21 @@ const nolib = {
           }
         }).value
 
-      const get_node = (graph: Graph, id: string) => wrapPromise(get_graph(graph)).then(g => g?.nodes[id]).value
+      const get_node = (graph: Graph, id: string) => graph.nodes[id]
       const get_edge = (graph, from) => wrapPromise(get_graph(graph)).then(g => g?.edges[from]).value
-      const get_edges_in = (graph, id) => wrapPromise(get_graph(graph))
-        .then(g => {
-          if(g.edges_in === undefined) {
-            return Object.values(g.edges).filter(e => e.to === id);
-          }
-
-          const idEdgesIn = g.edges_in?.[id];
-          if(idEdgesIn !== undefined) {
-            return Object.values(idEdgesIn)
-          }
-          return []
-        }).value
+      const get_edges_in = (graph: Graph, id) => Object.hasOwn(graph.edges_in, id) ? Object.values(graph.edges_in[id]) : []
+      // wrapPromise(get_graph(graph))
+      //   .then(g => {
+      //     if(g.edges_in === undefined) {
+      //       return Object.values(g.edges).filter(e => e.to === id);
+      //     }
+      //
+      //     const idEdgesIn = g.edges_in?.[id];
+      //     if(idEdgesIn !== undefined) {
+      //       return Object.values(idEdgesIn)
+      //     }
+      //     return []
+      //   }).value
       const get_edge_out = get_edge
 
       const get_args = (graph) => nodysseus.state.get(typeof graph === "string" ? graph : graph.id) ?? {};
@@ -946,23 +879,31 @@ const nolib = {
         add_asset: (id, b) => nolib.no.runtime.store.assets.set(id, b),
         get_asset: (id, b) => id && nolib.no.runtime.store.assets.get(id),
         list_assets: () => nolib.no.runtime.store.assets.keys(),
-        remove_asset: (id) => nolib.no.runtime.store.assets.remove(id),
+        remove_asset: (id) => nolib.no.runtime.store.assets.delete(id),
         refs: () => nodysseus.refs.keys(),
         ref_graphs: () => nodysseus.refs.keys(),
-        update_edges: async (graph: string | Graph, add: Array<Edge>, remove: Array<Edge> = [], lib: Lib, dryRun = false): Promise<void> => {
+        updateGraph: async ({graph, addedNodes = [], addedEdges = [], removedNodes = [], removedEdges = [], lib, dryRun = false}: {
+          graph: string | Graph, 
+          addedEdges?: Array<Edge>, 
+          removedEdges?: Array<{[k in Exclude<keyof Edge, "as">]: Edge[k]}>, 
+          addedNodes?: Array<NodysseusNode>, 
+          removedNodes?: Array<NodysseusNode>, 
+          lib: Lib, 
+          dryRun?: boolean
+        }): Promise<void> => {
           const graphId = typeof graph === "string" ? graph : graph.id;
-          await Promise.resolve(nodysseus.refs.add_nodes_edges(graphId, [], add, remove, []))
-          if(Array.isArray(remove)) {
-            await Promise.all(remove.map(e => nodysseus.refs.remove_edge(graphId, e)))
-          } else if (typeof remove === "object") {
-            await Promise.resolve(nodysseus.refs.remove_edge(graphId, remove))
-          }
-          if(Array.isArray(add)) {
-            await Promise.all(add.map(e => nodysseus.refs.add_edge(graphId, e)))
-          } else if (typeof add === "object") {
-            await Promise.resolve(nodysseus.refs.add_edge(graphId, add))
-          }
-          change_graph(nodysseus.refs.get(graphId) as Graph, lib, add.flatMap(e => [e.from, e.to]));
+          await Promise.resolve(nodysseus.refs.add_nodes_edges({graphId, addedNodes, addedEdges, removedEdges, removedNodes}))
+          // if(Array.isArray(remove)) {
+          //   await Promise.all(remove.map(e => nodysseus.refs.remove_edge(graphId, e)))
+          // } else if (typeof remove === "object") {
+          //   await Promise.resolve(nodysseus.refs.remove_edge(graphId, remove))
+          // }
+          // if(Array.isArray(add)) {
+          //   await Promise.all(add.map(e => nodysseus.refs.add_edge(graphId, e)))
+          // } else if (typeof add === "object") {
+          //   await Promise.resolve(nodysseus.refs.add_edge(graphId, add))
+          // }
+          change_graph(nodysseus.refs.get(graphId) as Graph, lib, addedEdges.flatMap(e => [e.from, e.to]));
         },
         add_node: (graph: Graph, node: NodysseusNode, lib: Lib) => {
           if (!(node && typeof node === "object" && node.id)) {
@@ -982,19 +923,24 @@ const nolib = {
           nodysseus.refs.add_node(graphId, node)
           change_graph(nodysseus.refs.get(graphId) as Graph, lib, [node.id]);
         },
-        add_nodes_edges: (graph, nodes: [NodysseusNode], edges: [Edge], remove_edges: [Edge], remove_nodes: [NodysseusNode], lib: Lib) => {
+        add_nodes_edges: (graph, nodes: NodysseusNode[], edges: Edge[], remove_edges: Edge[], remove_nodes: NodysseusNode[], lib: Lib) => {
           const graphId = typeof graph === "string" ? graph : graph.id;
-          nodysseus.refs.add_nodes_edges(graphId, nodes, edges, remove_edges, remove_nodes)
-          change_graph(nodysseus.refs.get(graphId) as Graph, lib, nodes.concat(remove_nodes).map(n => n.id).concat(edges.concat(remove_edges).flatMap(e => [e.to, e.from])));
+          nodysseus.refs.add_nodes_edges({graphId, addedNodes: nodes, addedEdges: edges, removedEdges: remove_edges, removedNodes: remove_nodes})
+          change_graph(
+            nodysseus.refs.get(graphId) as Graph, 
+            lib, 
+            nodes.concat(remove_nodes)
+              .map(n => n.id)
+              .concat(edges.concat(remove_edges).flatMap(e => [e.to, e.from])));
         },
         delete_node: (graph: Graph, id, lib: Lib, changeEdges=true) => {
           wrapPromise(get_graph(graph)).then(graph => {
             const graphId = typeof graph === "string" ? graph : graph.id;
 
-            const parent_edge = (lib.data ?? lib).no.runtime.get_edge_out(graphId, id);
-            const child_edges = (lib.data ?? lib).no.runtime.get_edges_in(graphId, id);
+            const parent_edge = (lib.data ?? lib).no.runtime.get_edge_out(graph, id);
+            const child_edges = (lib.data ?? lib).no.runtime.get_edges_in(graph, id);
 
-            const current_child_edges = (lib.data ?? lib).no.runtime.get_edges_in(graphId, parent_edge.to);
+            const current_child_edges = (lib.data ?? lib).no.runtime.get_edges_in(graph, parent_edge.to);
             const new_child_edges = child_edges.map((e, i) => ({
               ...e,
               to: parent_edge.to,
@@ -1014,19 +960,17 @@ const nolib = {
             if(changeEdges === undefined) {
               nodysseus.refs.remove_node(graphId, id)
             } else {
-              nodysseus.refs.add_nodes_edges(graphId, [], new_child_edges, child_edges, [graph.nodes[id]])
+              nodysseus.refs.add_nodes_edges({
+                graphId, 
+                addedEdges: new_child_edges, 
+                removedEdges: child_edges, 
+                removedNodes: [graph.nodes[id]]
+              })
+              change_graph(
+                nodysseus.refs.get(graphId) as Graph, 
+                lib, 
+                current_child_edges.concat(new_child_edges).flatMap(e => [e.to, e.from]));
             }
-
-
-            // const new_graph = {
-            //   ...graph,
-            //   nodes: newnodes,
-            //   eages: Object.fromEntries(Object.entries(graph.edges)
-            //     .filter((e) => e[1] !== parent_edge && e[1].to !== id)
-            //     .concat(new_child_edges.map(e => [e.from, e]))),
-            // };
-
-            // change_graph(new_graph, lib);
           })
         },
         addListener,
@@ -1058,8 +1002,95 @@ const nolib = {
         redo: (id: string) => nodysseus.refs.redo && nodysseus.refs.redo(id),
         store: nodysseus,
         ancestor_graph
+      } as const;
+    }
+
+type Runtime = ReturnType<typeof runtimefn>;
+
+
+const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>} = {
+  no: {
+    of: <T>(value): Result | Promise<Runnable> => ispromise(value) ? value.then(nolib.no.of) : isValue(value) ? value : { __kind: "result", value: value},
+    arg: (node, target: Env, lib: Lib, value, options: RunOptions) => {
+      value = node.value;
+      let valuetype, nodevalue;
+      let colonIdx = value.indexOf(":")
+      if(colonIdx >= 0) {
+        nodevalue = value.substring(0, colonIdx);
+        valuetype = value.substring(colonIdx + 2)
+      } else {
+        nodevalue = value;
+      }
+
+      const newtarget = () => {
+        const newt = new Map(target.data);
+        for(let k in newt) {
+          if(k.startsWith("_")) {
+            newt.delete(k)
+          }
+        }
+        return newt;
       };
-    }),
+
+      const parenttarget = () => {
+        const newt = new Map(target.env.data);
+        for(let k in newt) {
+          if(k.startsWith("_")) {
+            newt.delete(k)
+          }
+        }
+        return newt;
+      };
+
+      const ret = nodevalue === undefined || target === undefined
+        ? undefined
+        : nodevalue === "_node"
+        ? node
+        : nodevalue.startsWith("_node.")
+        ? node[nodevalue.substring("_node.".length)]
+        : nodevalue.startsWith("_lib.")
+        ? nodysseus_get(lib.data, nodevalue.substring("_lib.".length), lib)
+        : nodevalue === "_args"
+        ? newtarget()
+        : nodevalue === "__args"
+        ? parenttarget()
+          // lib.data.no.of(Object.fromEntries(Object.entries(parenttarget()).map(([key, value]: [string, any]) => [key, value?.isArg && valuetype !== "raw" ? run_runnable(value, lib)?.value : value])))
+        : nodysseus_get(
+            node.type === "local" || node.type?.includes?.("local")
+              ? newtarget()
+              : node.type === "parent" || node.type?.includes?.("parent")
+              ? target.env
+              : target,
+            nodevalue,
+            lib
+          );
+
+      // let retrun = run_runnable(ret, lib);
+      // let resolveret = (rr) => {
+      //   const retrun = isValue(rr) && isConstRunnable(rr.value) && valuetype !== "raw" ? run_runnable(rr, lib, undefined, options) : undefined
+      //   return  ispromise(retrun) ? retrun.then(v => isError(v) ? v : v?.value) : retrun ? isValue(retrun) || isWrappedPromise(retrun) ? retrun?.value : retrun : rr;
+      // }
+      let resolveret = (rr) =>
+        wrapPromise(rr)
+          .then(rrr => isValue(rrr) ? rrr.value : rrr)
+          .then(rrr => isConstRunnable(rrr) && valuetype !== "raw" ? resolveret(run_runnable(rrr, lib, new Map(), options)) : rrr).value
+          
+
+        // (console.log("start", rr), ispromise)(rr) 
+        // ? rr.then(resolveret)
+        // : isValue(rr) && isConstRunnable(rr.value) && valuetype !== "raw"
+        // ? resolveret(run_runnable(ret, lib))
+        // : (console.log("end", rr), rr)
+
+      return resolveret(ret)
+    },
+    base_graph,
+    base_node,
+    nodysseus_get,
+    NodysseusError,
+    runtime: undefined,
+    wrapPromise,
+    runtimefn,
   },
   extern: {
     // runGraph: F<A> => A
@@ -1827,7 +1858,9 @@ const nolib = {
   // THREE
 };
 
-export {nolib, initStore, compare, hashcode, ispromise, NodysseusError, resfetch, resolve_args };
+const nolibLib = newLib(nolib);
+
+export {nolib, nolibLib, initStore, compare, hashcode, ispromise, NodysseusError, resfetch, resolve_args };
 
 
 

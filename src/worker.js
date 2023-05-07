@@ -1,5 +1,5 @@
 import { nolib, NodysseusError, initStore, run } from "./nodysseus";
-import {automergeRefStore} from "./editor/store"
+import {sharedWorkerRefStore, webClientStore} from "./editor/store"
 import {isNodysseusError} from "./editor/util"
 import { wrapPromise } from "./util";
 
@@ -52,7 +52,7 @@ const processMessage = e => {
     } catch (e) { console.error(e) }
 }
 
-onmessage = e => initQueue ? initQueue.push(e) : processMessage(e);
+onmessage = e => e.data.kind === "connect" ? createStore(e.data.port) : initQueue ? initQueue.push(e) : processMessage(e);
 self.postMessage({type: 'started'});
 
 
@@ -62,12 +62,13 @@ self.postMessage({type: 'started'});
 //   RTCIceCandidate
 // }
 
-automergeStore()
-  .then(initStore)
-  .then(() => {
-    console.log("init queue length", initQueue.length)
-    while(initQueue.length > 0){
-      processMessage(initQueue.shift())
-    }
-    initQueue = false;
-  })
+const createStore = (port) => 
+  webClientStore(() => sharedWorkerRefStore(port))
+    .then(initStore)
+    .then(() => {
+      console.log("init queue length", initQueue.length)
+      while(initQueue.length > 0){
+        processMessage(initQueue.shift())
+      }
+      initQueue = false;
+    })
