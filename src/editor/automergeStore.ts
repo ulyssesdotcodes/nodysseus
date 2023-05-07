@@ -10,6 +10,7 @@ import { nolib } from "src/nodysseus";
 import { hlibLib } from "./util";
 import {addNode, addNodesEdges, removeNode, removeEdge, addEdge} from "./store";
 import {v4 as uuid, parse as uuidparse, stringify as uuidstringify} from "uuid";
+import { SharedWorkerMessageFrom, SharedWorkerMessageTo } from "./types";
 
 const generic_nodes = generic.nodes;
 const generic_node_ids = new Set(Object.keys(generic_nodes));
@@ -27,7 +28,6 @@ const migrateCategories = (doc: Automerge.Doc<Graph>) => {
 
 export const automergeRefStore = async ({nodysseusidb, persist = false} : {persist: boolean, nodysseusidb: IDBPDatabase<NodysseusStoreTypes>}): Promise<RefStore> => {
 
-  console.log("starting automergestore")
   const refsmap = new Map<string, Automerge.Doc<Graph>>();
   const structuredCloneMap = new Map<string, Graph>();
   const refsset = new Set(await nodysseusidb.getAllKeys("refs").then(ks => ks.map(k => k.toString())));

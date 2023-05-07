@@ -7,11 +7,12 @@ import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode
 import { info_display, infoWindow } from "./components/infoWindow";
 import { init_code_editor } from "./components/codeEditor";
 import { d3Node, HyperappState, Levels } from "./types";
-import { sharedWorkerRefStore, webClientStore } from "./store";
+import { initPort, sharedWorkerRefStore, webClientStore } from "./store";
 import { d3subscription, insert_node_el, link_el, node_el, UpdateSimulation } from "./components/graphDisplay";
 import Autocomplete from "./autocomplete"
 import generic from "src/generic";
 import { SimulationNodeDatum } from "d3-force";
+import { automergeRefStore } from "./automergeStore";
 
 
 customElements.define("autocomplete-list", Autocomplete)
@@ -465,19 +466,33 @@ const runapp = (init, load_graph, _lib) => {
 }
 
 const editor = async function(html_id, editingGraph, lib, norun) {
-    const sharedWorker = new SharedWorker('./sharedWorker.js', {type: "module"})
-    let nodysseusStore = await webClientStore(() => sharedWorkerRefStore(sharedWorker.port));
+  // TODO: rewrite this shitty code that deals with shareworker not being defined
+  let sharedWorker, nodysseusStore, ports, initQueue;
+    if(typeof self.SharedWorker !== "undefined") {
+      sharedWorker = new SharedWorker('./sharedWorker.js', {type: "module"})
+      nodysseusStore = await webClientStore(() => sharedWorkerRefStore(sharedWorker.port));
+    } else {
+      ports = [];
+      initQueue = [];
+      nodysseusStore = await webClientStore(idb => automergeRefStore({nodysseusidb: idb, persist: true}));
+    }
     let worker: Worker, workerPromise;
     initStore(nodysseusStore)
     hlib.worker = () => {
       if(!worker) {
         const workerMessageChannel = new MessageChannel();
-        sharedWorker.port.postMessage({kind: "addPort", port: workerMessageChannel.port1}, [workerMessageChannel.port1])
+        if(sharedWorker){
+          sharedWorker.port.postMessage({kind: "addPort", port: workerMessageChannel.port1}, [workerMessageChannel.port1])
+        } else {
+          initPort({value: nodysseusStore.refs, initQueue}, ports, workerMessageChannel.port1)
+        }
         worker = new Worker("./worker.js", {type: "module"})
         workerPromise = new Promise((res, rej) => {
           worker.addEventListener("message", msg => {
             if(msg.data.type === "started") {
-              worker.postMessage({kind: "connect", port: workerMessageChannel.port2}, [workerMessageChannel.port2])
+              if(workerMessageChannel) {
+                worker.postMessage({kind: "connect", port: workerMessageChannel.port2}, [workerMessageChannel.port2])
+              }
               workerPromise = false;
               res(worker);
             }

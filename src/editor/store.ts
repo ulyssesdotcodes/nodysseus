@@ -96,7 +96,51 @@ export const addNodesEdges = (graph: Graph, addedNodes: Array<NodysseusNode> = [
 }
 
 
+const typedPostMessage = (port: MessagePort, m: SharedWorkerMessageFrom) => 
+  port.postMessage(m)
 
+export type SWState = {value: RefStore | undefined, initQueue: Array<[MessagePort, SharedWorkerMessageTo]>};
+export const initPort = (store: SWState, ports: MessagePort[], port: MessagePort) => {
+  ports.push(port);
+
+  port.addEventListener("message", (e) => {
+    console.log("got message", e)
+    if(store.value) {
+      processMessage(store.value, ports, port, e.data)
+    } else {
+      store.initQueue.push([port, e.data]);
+    }
+
+    if(e.data.kind === "disconnect") {
+      ports.splice(ports.indexOf(port), 1)
+    }
+  })
+
+  port.start();
+
+  port.postMessage({kind: "connect"})
+}
+
+export const processMessage = (store: RefStore, ports: MessagePort[], port: MessagePort, m: SharedWorkerMessageTo) =>
+  (m.kind === "addPort"
+    ? wrapPromise(initPort({value: store, initQueue: []}, ports, m.port))
+    : m.kind === "get"
+    ? wrapPromise(store.get(m.graphId))
+      .then(graph => typedPostMessage(port, {kind: "get", messageId: m.messageId, graph}))
+    : m.kind === "keys"
+    ? wrapPromise(store.keys())
+      .then(keys => typedPostMessage(port, {kind: "keys", messageId: m.messageId, keys}))
+    : m.kind === "add_node"
+    ? wrapPromise(store.add_node(m.graphId, m.node))
+    : m.kind === "add_edge"
+    ? wrapPromise(store.add_edge(m.graphId, m.edge))
+    : m.kind === "add_nodes_edges"
+    ? wrapPromise(store.add_nodes_edges(m))
+    : m.kind === "set"
+    ? wrapPromise(store.set(m.graph.id, m.graph))
+    : m.kind === "delete"
+    ? wrapPromise(store.delete(m.graphId))
+    : wrapPromise(false))
 
 export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore> => {
   const inflightRequests = new Map<string, (e: SharedWorkerMessageFrom) => void>();

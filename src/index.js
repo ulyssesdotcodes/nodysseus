@@ -3,6 +3,8 @@ import { editor, run} from './editor/editor.ts'
 if('serviceWorker' in navigator) {
   console.log("installing serviceworker")
   navigator.serviceWorker.register('./sw.js');
+} else {
+  console.log("couldn't install serviceworker")
 }
 
 editor('node-editor')
