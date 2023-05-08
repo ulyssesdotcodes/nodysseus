@@ -5,7 +5,8 @@ import fs from "node:fs";
 const result = await esbuild.build({
   entryPoints: [
     {in: 'src/index.js', out: 'index.bundle'},
-    {in: 'src/worker.js', out: 'worker'}
+    {in: 'src/worker.js', out: 'worker'},
+    {in: 'src/sharedWorker.js', out: 'sharedWorker'}
   ],
   metafile: true,
   bundle: true,
