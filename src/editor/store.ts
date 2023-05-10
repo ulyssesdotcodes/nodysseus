@@ -152,7 +152,7 @@ export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore>
     e.data.kind === "connect" 
     ? connectres()
     : e.data.kind === "update"
-    ? (nolib.no.runtime.change_graph(e.data.graph, nolibLib), contextGraphCache.set(e.data.graph.id, e.data.graph))
+    ? (nolib.no.runtime.change_graph(e.data.graph, nolibLib), contextKeysCache.add(e.data.graph.id), contextGraphCache.set(e.data.graph.id, e.data.graph))
     : expectSharedWorkerMessageResponse(e.data) && inflightRequests.get(e.data.messageId)(e.data))
   self.addEventListener('beforeunload', () => port.postMessage({kind: "disconnect"}));
   port.start();
@@ -172,6 +172,8 @@ export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore>
     })
   }
 
+  let hasSharedWorkerKeys = false;
+  const contextKeysCache = new Set<string>();
   const contextGraphCache = new Map<string, Graph>();
 
   setTimeout(() =>
@@ -187,7 +189,7 @@ export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore>
         contextGraphCache.get(graphId) ??
         messagePromise({kind: "get", graphId})
           .then(e => e.graph)
-          .then(graph => (contextGraphCache.set(graphId, graph), graph))
+          .then(graph => (contextGraphCache.set(graphId, graph), contextKeysCache.add(graphId), graph))
       ,
       set: (k, g) => {
         sendMessage({kind: "set", graph: g})
@@ -195,7 +197,9 @@ export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore>
       },
       delete: (k) => sendMessage({kind: "delete", graphId: k}),
       clear: () => {throw new Error("not implemented")},
-      keys: () => messagePromise({kind: "keys"}).then(e => e.keys),
+      keys: () => hasSharedWorkerKeys
+        ? [...contextKeysCache.values()]
+        : messagePromise({kind: "keys"}).then(e => (e.keys.forEach(k => contextKeysCache.add(k)), hasSharedWorkerKeys = true, e.keys)),
       add_edge: () => {throw new Error("not implemented")},
       remove_edge: () => {throw new Error("not implemented")},
       add_node: (graphId, node) => {
