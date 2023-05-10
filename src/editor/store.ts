@@ -1,14 +1,10 @@
 import { IDBPDatabase, openDB, wrap } from "idb";
-import custom_editor from "../custom_editor.json"
-// import { IndexeddbPersistence } from "y-indexeddb";
-// import * as Y from "yjs"
 import generic from "../generic";
-import { compare, mapStore, nolib, nolibLib} from "../nodysseus";
+import { mapStore, nolib, nolibLib} from "../nodysseus";
 import { Edge, EdgeNoAs, EdgesIn, Graph, GraphNode, isNodeRef, NodysseusNode, NodysseusStore, NodysseusStoreTypes, RefNode, RefStore, Store, ValueNode } from "../types";
-import { ancestor_graph, compareObjects, ispromise, mapMaybePromise, wrapPromise } from "../util";
-import { hlib, EXAMPLES, hlibLib } from "./util";
+import { wrapPromise } from "../util";
+import {v4 as uuid} from "uuid";
 
-import { createDo } from "typescript";
 import {  expectSharedWorkerMessageResponse, RespondableSharedWorkerMessage, RespondableSharedWorkerMessageData, SharedWorkerMessageFrom, SharedWorkerMessageKind, SharedWorkerMessageTo, TRespondableSharedWorkerMessage, TSharedWorkerMessageFrom, TSharedWorkerMessageTo, TSharedWorkerMessageToData } from "./types";
 
 const generic_nodes = generic.nodes;
@@ -163,7 +159,7 @@ export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore>
   {if(typeof (message as {graphId: any}).graphId === "object"){ debugger; } port.postMessage(message)}
   const messagePromise = <T extends SharedWorkerMessageKind>(request: RespondableSharedWorkerMessageData & TSharedWorkerMessageToData<T>): Promise<TSharedWorkerMessageFrom<T>> => {
     const message: TSharedWorkerMessageTo<T> & TRespondableSharedWorkerMessage<T> = {
-      messageId: performance.now().toFixed(), 
+      messageId: uuid(), 
       ...request
     }
     sendMessage(message);
