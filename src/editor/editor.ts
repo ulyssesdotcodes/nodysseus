@@ -186,7 +186,7 @@ const runapp = (init, _lib) => {
           .then(graph => graph && hlib.run(graph, "out"))
           .then(custom_editor_result => custom_editor_result && dispatch(s => ({...s, custom_editor_result})))],
         [UpdateSimulation, {...init, action: SimulationToHyperapp}],
-        [SelectNode, {node_id: init.selected[0]}],
+        [dispatch => requestAnimationFrame(() => dispatch(SelectNode, {node_id: init.selected[0]}))],
         [init_code_editor, {html_id: init.html_id}],
         [dispatch => wrapPromise(nolib.no.runtime.ref_graphs()).then(rgs => dispatch(s => ({...s, refGraphs: rgs.concat(EXAMPLES)})))]
     ],
