@@ -471,11 +471,11 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
       node.edges_in = node.edges_in ?? Object.values(node.edges).reduce<Graph["edges_in"]>((acc, e) => ({...acc, [e.to]: {...(acc[e.to] ?? {}), [e.from]: e}}), {})
       return node_nodes(node, node.out ?? "out", nodeArgs, graphArgs, lib, options)
     } else if (isNodeScript(node)){
-        return node_script(node, nodeArgs, lib, options)
+        return (graphArgs._output === undefined || graphArgs._output === "value") && node_script(node, nodeArgs, lib, options)
     } else if(Object.hasOwn(node, "value")) {
-        return lib.data.no.of(node_value(node));
+        return (graphArgs._output === undefined || graphArgs._output === "value") && lib.data.no.of(node_value(node));
     } else {
-        return node_data(nodeArgs, graphArgs, lib, options)
+        return (graphArgs._output === undefined || graphArgs._output === "value") && node_data(nodeArgs, graphArgs, lib, options)
     }
 }
 
