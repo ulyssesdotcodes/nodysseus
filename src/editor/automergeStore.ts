@@ -11,6 +11,7 @@ import { hlibLib } from "./util";
 import {addNode, addNodesEdges, removeNode, removeEdge, addEdge} from "./store";
 import {v4 as uuid, parse as uuidparse, stringify as uuidstringify} from "uuid";
 import { SharedWorkerMessageFrom, SharedWorkerMessageTo } from "./types";
+import custom_editor from "../custom_editor.json"
 
 const generic_nodes = generic.nodes;
 const generic_node_ids = new Set(Object.keys(generic_nodes));
@@ -195,12 +196,6 @@ export const automergeRefStore = async ({nodysseusidb, persist = false} : {persi
   // Stateful
 
 
-
-  // if(!refs.get("custom_editor")){
-  //   refs.set("custom_editor", custom_editor)
-  // }
-
-
   const syncMessageTypes = {
     0: "syncstart",
     1: "syncgraph"
@@ -251,7 +246,13 @@ export const automergeRefStore = async ({nodysseusidb, persist = false} : {persi
   // Wrap run in setTimeout so nodysseus has time to init
   setTimeout(() => {
     wrapPromise(getDoc("custom_editor"))
-      .then(ce => nolib.no.runtime.run({graph: ce.id, fn: ce.out ?? "out"}))
+      .then(ce => {
+        if(!ce){
+          refs.set("custom_editor", custom_editor)
+          ce = custom_editor;
+        }
+        return nolib.no.runtime.run({graph: ce.id, fn: ce.out ?? "out"})
+      })
       .then(cer => cer.rtcroom )
       .then(rtcroom => {
         if(!rtcroom) return;

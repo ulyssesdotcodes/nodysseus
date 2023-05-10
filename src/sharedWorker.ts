@@ -19,13 +19,12 @@ self.onerror = e => console.error("sharedworker error", e)
 let store: SWState = {value: undefined, initQueue: []};
 let ports: Array<MessagePort> = []
 
-self.onconnect = (e) => (console.log("connected", e), initPort)(store, ports, e.ports[0])
+self.onconnect = (e) => initPort(store, ports, e.ports[0])
 
 Promise.all([import("./editor/store"), import("./editor/automergeStore")]).then(([{webClientStore}, {automergeRefStore}]) => {
   webClientStore(nodysseusidb => automergeRefStore({nodysseusidb, persist: true}))
     .then(resStore => {
       store.value = resStore.refs;
-      console.log(store)
       initStore(resStore);
       store.initQueue.forEach(e => processMessage(store.value, ports, e[0], e[1]));
     })

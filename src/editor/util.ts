@@ -214,6 +214,7 @@ export const SetSelectedPositionStyleEffect = (_, {node, svg_offset, dimensions}
 
 export const ChangeEditingGraphId: ha.Effecter<HyperappState, {id: string, select_out: boolean, editingGraphId: string}> = (dispatch, {id, select_out, editingGraphId}) => {
     requestAnimationFrame(() => {
+      console.log("change editingGraphId", id, editingGraphId)
         const graphPromise = wrapPromise(nolib.no.runtime.refs()).then(refs => 
           EXAMPLES.includes(id) && !refs.includes(id) 
           ? fetch((console.log(`fetching ${id}`), `json/${id.replaceAll("_", "-")}.json`))
@@ -534,11 +535,14 @@ export const result_subscription = (dispatch, {editingGraphId, displayGraphId, n
       if(info_display_dispatch && code_editor && code_editor_nodeid && result_display_dispatch) {
         animrun = requestAnimationFrame(() => {
           if(graph.id === (displayGraphId || editingGraphId)) {
-            const result = refresh_graph(dispatch, {graph: nolib.no.runtime.get_ref(displayGraphId || editingGraphId), graphChanged: false, norun, info_display_dispatch, code_editor, code_editor_nodeid, result_display_dispatch})
-            const reset_animrun = () => animrun = false;
-            wrapPromise(result, reset_animrun as () => any).then(reset_animrun)
+          wrapPromise(nolib.no.runtime.get_ref(displayGraphId || editingGraphId))
+            .then(graph => {
+                const result = refresh_graph(dispatch, {graph, graphChanged: false, norun, info_display_dispatch, code_editor, code_editor_nodeid, result_display_dispatch})
+                const reset_animrun = () => animrun = false;
+                wrapPromise(result, reset_animrun as () => any).then(reset_animrun)
+              })
           }
-        })
+        });
       } else {
         // TODO: hacky change this
         dispatch(s => [s, () => {

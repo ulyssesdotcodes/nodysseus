@@ -403,9 +403,11 @@ const run_runnable = (runnable: Runnable | undefined, lib: Lib, args: Map<string
 
   switch(runnable.__kind){
     case CONST:
-      return wrapPromise(
-        run_graph(getRunnableGraph(runnable, lib), runnable.fn, mergeEnv(args, runnable.env), runnable.lib, options), 
-        e => handleError(e, lib, runnable.env, runnable.graph, runnable.fn)).value;
+      return wrapPromise(getRunnableGraph(runnable, lib))
+        .then(graph =>
+            wrapPromise(
+              run_graph(graph, runnable.fn, mergeEnv(args, runnable.env), runnable.lib, options), 
+              e => handleError(e, lib, runnable.env, runnable.graph, runnable.fn)).value).value;
     case AP:
       return run_ap_runnable(runnable, args, lib, options)
     case FUNCTOR:
@@ -758,7 +760,7 @@ const runtimefn = () => {
           return graph ?? (otherwise && nodysseus.refs.set(id, {...otherwise, id, nodes: {...otherwise.nodes, [otherwise.out ?? "out"]: {...otherwise.nodes[otherwise.out ?? "out"], name: id}}}))
         }).value;
       }
-      const add_ref = (graph: Node) => {
+      const add_ref = (graph: NodysseusNode) => {
         return (Array.isArray(graph) ? graph : [graph])
           .map(graph => {
             if(generic_nodes[graph.id] === undefined) {

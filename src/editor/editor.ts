@@ -13,6 +13,7 @@ import Autocomplete from "./autocomplete"
 import generic from "src/generic";
 import { SimulationNodeDatum } from "d3-force";
 import { automergeRefStore } from "./automergeStore";
+import helloWorld from "../initgraph.json"
 
 
 customElements.define("autocomplete-list", Autocomplete)
@@ -109,7 +110,6 @@ const refresh_custom_editor = () =>
         wrapPromise(graph).then(graph => hlib.run(graph, graph.out, {_output: "display"}))
           .then(result => result && custom_editor_display_dispatch(() => ({el: result})))
     } else {
-      console.log("should dispatch?")
         custom_editor_display_dispatch(() => ({el: {dom_type: "div", props: {}, children: []}}))
     }
     custom_editor_display_dispatch(() => ({el: {dom_type: "div", props: {}, children: []}}))
@@ -507,14 +507,14 @@ const editor = async function(html_id, editingGraph, lib, norun) {
       return worker;
     }
 
-    const simple = generic.nodes["@templates.simple"] as unknown as Graph;
+    const simple = helloWorld as unknown as Graph;
+    await hlib.no.runtime.add_ref(helloWorld)
     simple.edges_in = Object.values(simple.edges).reduce((acc: Record<string, Record<string, Edge>>, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
     const url_params = new URLSearchParams(document.location.search);
     const graph_list = JSON.parse(localStorage.getItem("graph_list")) ?? [];
     const hash_graph = window.location.hash.substring(1);
-
         const init: HyperappState = { 
-            editingGraphId: '@templates.simple',
+            editingGraphId: 'helloWorld',
             editingGraph: simple,
             displayGraph: false,
             displayGraphId: false,
@@ -549,7 +549,7 @@ const editor = async function(html_id, editingGraph, lib, norun) {
             refGraphs: []
         };
 
-        runapp(init,  hash_graph && hash_graph !== "" ? hash_graph : graph_list?.[0] ?? '@templates.simple', lib)
+        runapp(init,  hash_graph && hash_graph !== "" ? hash_graph : graph_list?.[0] ?? 'helloWorld', lib)
 }
 
 
