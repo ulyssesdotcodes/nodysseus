@@ -164,7 +164,7 @@ const helpmd = run_h(
 )
 
 
-const runapp = (init, load_graph, _lib) => {
+const runapp = (init, _lib) => {
         // return () => requestAnimationFrame(() => dispatch.dispatch(s => undefined));
     return ha.app({
     init: [init, 
@@ -185,8 +185,8 @@ const runapp = (init, load_graph, _lib) => {
         [dispatch => wrapPromise(nolib.no.runtime.get_graph("custom_editor"))
           .then(graph => graph && hlib.run(graph, "out"))
           .then(custom_editor_result => custom_editor_result && dispatch(s => ({...s, custom_editor_result})))],
-        [ChangeEditingGraphId, {id: load_graph, select_out: true, editingGraphId: undefined}],
         [UpdateSimulation, {...init, action: SimulationToHyperapp}],
+        [SelectNode, {node_id: init.selected[0]}],
         [init_code_editor, {html_id: init.html_id}],
         [dispatch => wrapPromise(nolib.no.runtime.ref_graphs()).then(rgs => dispatch(s => ({...s, refGraphs: rgs.concat(EXAMPLES)})))]
     ],
@@ -465,7 +465,7 @@ const runapp = (init, load_graph, _lib) => {
 });
 }
 
-const editor = async function(html_id, editingGraph, lib, norun) {
+const editor = async function(html_id, editingGraphId, lib, norun) {
   // TODO: rewrite this shitty code that deals with shareworker not being defined
   let sharedWorker, nodysseusStore, ports, initQueue;
     if(typeof self.SharedWorker !== "undefined") {
@@ -507,15 +507,17 @@ const editor = async function(html_id, editingGraph, lib, norun) {
       return worker;
     }
 
-    const simple = helloWorld as unknown as Graph;
-    await hlib.no.runtime.add_ref(helloWorld)
-    simple.edges_in = Object.values(simple.edges).reduce((acc: Record<string, Record<string, Edge>>, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
-    const url_params = new URLSearchParams(document.location.search);
     const graph_list = JSON.parse(localStorage.getItem("graph_list")) ?? [];
     const hash_graph = window.location.hash.substring(1);
+    const url_params = new URLSearchParams(document.location.search);
+    editingGraphId = editingGraphId ?? (hash_graph && hash_graph !== "" ? hash_graph : graph_list?.[0] ?? 'helloWorld');
+    let editingGraph: Graph = editingGraphId === "helloWorld"
+      ? ((helloWorld as Graph).edges_in = Object.values(helloWorld.edges).reduce((acc: Record<string, Record<string, Edge>>, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {}), await hlib.no.runtime.add_ref(helloWorld), helloWorld)
+      : await hlib.no.runtime.get_ref(editingGraphId)
+
         const init: HyperappState = { 
-            editingGraphId: 'helloWorld',
-            editingGraph: simple,
+            editingGraphId,
+            editingGraph,
             displayGraph: false,
             displayGraphId: false,
             hash: window.location.hash ?? "",
@@ -538,7 +540,7 @@ const editor = async function(html_id, editingGraph, lib, norun) {
             show_result: false,
             node_el_width: 256,
             args_display: false,
-            selected: ["out"],
+            selected: [editingGraph.out ?? "out"],
             selected_edges_in: [],
             levels: false,
             error: false,
@@ -549,7 +551,7 @@ const editor = async function(html_id, editingGraph, lib, norun) {
             refGraphs: []
         };
 
-        runapp(init,  hash_graph && hash_graph !== "" ? hash_graph : graph_list?.[0] ?? 'helloWorld', lib)
+        runapp(init, lib)
 }
 
 

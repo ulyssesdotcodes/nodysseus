@@ -6635,14 +6635,14 @@ const generic = {
   },
   "@nodysseus.export": {
     "id": "@nodysseus.export",
-    "out": "main/out",
+    "out": "out",
     "category": "nodysseus",
     "nodes": {
       "args": {
         "id": "args"
       },
-      "main/out": {
-        "id": "main/out",
+      "out": {
+        "id": "out",
         "name": "@nodysseus.export",
         "ref": "return"
       },
@@ -6793,7 +6793,12 @@ const generic = {
       },
       "l4o1umt": {
         "id": "l4o1umt",
-        "value": "return _lib.no.runtime.refs().then(refs => refs.filter(r => r.startsWith('@' + namespace + '.') || r === namespace))",
+        "value": "return refs.filter(r => r.startsWith('@' + namespace + '.') || r === namespace)",
+        "ref": "@js.script"
+      },
+      "refspromise": {
+        "id": "refspromise",
+        "value": "return _lib.no.runtime.refs()",
         "ref": "@js.script"
       },
       "w78q6vm": {
@@ -6892,7 +6897,7 @@ const generic = {
     "edges": {
       "args": {
         "from": "args",
-        "to": "main/out",
+        "to": "out",
         "as": "args"
       },
       "n7aaoju": {
@@ -6902,7 +6907,7 @@ const generic = {
       },
       "jklqh38": {
         "from": "jklqh38",
-        "to": "main/out",
+        "to": "out",
         "as": "display"
       },
       "6qkew20": {
@@ -7069,6 +7074,11 @@ const generic = {
         "from": "0pnyh3t",
         "to": "db0reg4",
         "as": "array"
+      },
+      "refspromise": {
+        "from": "refspromise",
+        "to": "l4o1umt",
+        "as": "refs"
       },
       "l4o1umt": {
         "from": "l4o1umt",
