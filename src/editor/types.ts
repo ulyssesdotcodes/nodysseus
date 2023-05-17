@@ -1,6 +1,6 @@
 import { ForceLink, Simulation, SimulationLinkDatum, SimulationNodeDatum } from "d3-force";
 import { NodysseusError } from "../nodysseus";
-import {Graph, Edge, NodysseusNode, RefStore, EdgeNoAs} from "../types"
+import {Graph, Edge, NodysseusNode, RefStore, EdgeNoAs, NodeMetadata} from "../types"
 
 export type Vector2 = {x: number, y: number}
 
@@ -46,7 +46,8 @@ export type HyperappState = {
   code_editor_nodeid?: any,
   custom_editor_result: {},
   showHelp: boolean,
-  refGraphs: Array<string>
+  refGraphs: Array<string>,
+  selectedMetadata?: NodeMetadata
 }
 
 export type Levels = {

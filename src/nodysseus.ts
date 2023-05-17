@@ -1650,8 +1650,11 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     },
     call: {
       resolve: true,
-      args: {"__graph_value": "system", "self": {type: "any", default: true}, "fn": "value", "args": "@data.array", "_lib": "lib"},
-      fn: ({__graph_value, self, fn, args, _lib}) => {
+      outputs: {
+        metadata: true
+      },
+      args: {"__graph_value": "system", "self": {type: "any", default: true}, "fn": "value", "args": "@data.array", "_lib": "lib", "_output": "system"},
+      fn: ({__graph_value, self, fn, args, _lib, _output}) => {
         let nodevalue = __graph_value;
         const runfn = (args) => {
           if (typeof self === "function") {
@@ -1672,6 +1675,11 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
                 )
               : self(args === undefined ? [] : args);
           } else {
+            if (_output === "metadata"){
+              return {
+                values: Object.keys(self)
+              }
+            }
             const ng_fn = nodysseus_get(self ?? _lib.data, fn || nodevalue, _lib);
             const ng_self = (fn || nodevalue).includes('.') 
               ? nodysseus_get(self, (fn || nodevalue).substring(0, (fn || nodevalue).lastIndexOf('.')), _lib) 

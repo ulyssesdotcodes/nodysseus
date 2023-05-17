@@ -1,5 +1,6 @@
 import * as ha from "hyperapp"
 import { Edge, Graph, isNodeGraph, isNodeRef, NodeMetadata, NodysseusNode, RefNode, ValueNode } from "src/types";
+import { wrapPromise } from "src/util";
 import { isNonNullChain } from "typescript";
 import generic from "../../generic";
 import {NodysseusError, nolib} from "../../nodysseus"
@@ -47,7 +48,7 @@ export const infoInput = ({label, property, value, onchange, oninput, onkeydown,
     ]
 )
 
-export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, editingGraphId, randid, ref_graphs, html_id, copied_graph, inputs, graph_out, editing, error, refGraphs}: {
+export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, editingGraphId, randid, ref_graphs, html_id, copied_graph, inputs, graph_out, editing, error, refGraphs, metadata}: {
   node: d3Node,
   hidden: boolean,
   edges_in: Array<Edge>,
@@ -62,12 +63,12 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
   graph_out: string,
   editing: boolean,
   error: false | NodysseusError,
-  refGraphs: Array<string>
+  refGraphs: Array<string>,
+  metadata: NodeMetadata
 })=> {
     //const s.editingGraph.id === s.editingGraphId && nolib.no.runtime.get_node(s.editingGraph, s.selected[0]) && 
     const node_ref = !hidden && node && isNodeRef(node) ? nolib.no.runtime.get_ref(node.ref) : node;
     const description =  !hidden && node_ref?.description;
-    const metadata: NodeMetadata | undefined = !error && hlib.run(editingGraph, node.id, {_output: "metadata"});
     const node_arg_labels = !hidden && node?.id ? node_args(nolib, editingGraph, node.id, metadata) : [];
     const isOut = node.id === graph_out
 
@@ -121,7 +122,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                     value: link_out.as, 
                     property: "edge",
                     inputs,
-                    options: node_args(nolib, editingGraph, link_out.to, !error && hlib.run(editingGraph, link_out.to, {_output: "metadata"})).map(na => na.name),
+                    options: node_args(nolib, editingGraph, link_out.to, wrapPromise(hlib.run(editingGraph, link_out.to, {_output: "metadata"})).value).map(na => na.name),
                     onchange: (state, {value}) => [UpdateEdge, {edge: {from: link_out.from, to: link_out.to, as: link_out.as}, as: value}]
                 }), link_out),
             ]),

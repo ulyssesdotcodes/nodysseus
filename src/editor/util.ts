@@ -378,7 +378,8 @@ export const SelectNode: ha.Action<HyperappState, {
       selected: [node_id], 
       inputs: {},
       selected_edges_in: graphEdgesIn(state.editingGraph, node_id),
-      noautozoom: false
+      noautozoom: false,
+      selectedMetadata: wrapPromise(hlib.run(state.editingGraph, node_id, {_output: "metadata"})).value
     },
     !state.show_all && [pzobj.effect, {...state, node_id: node_id}],
     [UpdateGraphDisplay, {...state, selected: [node_id]}],

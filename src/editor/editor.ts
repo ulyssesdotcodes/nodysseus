@@ -238,7 +238,8 @@ const runapp = (init, _lib) => {
             inputs: s.inputs,
             graph_out: s.editingGraph.out,
             error: s.error,
-            refGraphs: s.refGraphs
+            refGraphs: s.refGraphs,
+            metadata: s.selectedMetadata
         }),
         ha.h('div', {id: `${init.html_id}-custom-editor-display`}),
         ha.h('div', {id: "graph-actions", class: "actions"}, [
