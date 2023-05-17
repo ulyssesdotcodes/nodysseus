@@ -41,6 +41,11 @@
         "from": "4d0h7cj",
         "to": "sco3cx9"
       },
+      "4dzd94d": {
+        "as": "parameters",
+        "from": "4dzd94d",
+        "to": "pttbujz"
+      },
       "72wzn5d": {
         "as": "true",
         "from": "72wzn5d",
@@ -76,10 +81,10 @@
         "from": "a1pbajd",
         "to": "tbxemm2"
       },
-      "akna0ig": {
-        "as": "pred",
-        "from": "akna0ig",
-        "to": "uzfo5bm"
+      "c0ay50g": {
+        "as": "cube",
+        "from": "c0ay50g",
+        "to": "dz8ejk0"
       },
       "d6hbagr": {
         "as": "url",
@@ -91,6 +96,11 @@
         "from": "dbxyytc",
         "to": "72wzn5d"
       },
+      "dz8ejk0": {
+        "as": "fn",
+        "from": "dz8ejk0",
+        "to": "pttbujz"
+      },
       "eg4o3m3": {
         "as": "value",
         "from": "eg4o3m3",
@@ -100,6 +110,16 @@
         "as": "graphchange",
         "from": "ow93fev",
         "to": "0209mcq"
+      },
+      "p801291": {
+        "as": "cube",
+        "from": "p801291",
+        "to": "dbxyytc"
+      },
+      "pttbujz": {
+        "as": "onupdate",
+        "from": "pttbujz",
+        "to": "72wzn5d"
       },
       "pzdit8o": {
         "as": "canvas",
@@ -126,11 +146,6 @@
         "from": "tbxemm2",
         "to": "out"
       },
-      "tmj66vh": {
-        "as": "false",
-        "from": "tmj66vh",
-        "to": "uzfo5bm"
-      },
       "uzfo5bm": {
         "as": "fn",
         "from": "uzfo5bm",
@@ -146,40 +161,25 @@
         "from": "y663irb",
         "to": "pzdit8o"
       },
-      "ykansd6": {
-        "as": "arg0",
-        "from": "ykansd6",
-        "to": "akna0ig"
-      },
-      "pttbujz": {
-        "from": "pttbujz",
-        "to": "72wzn5d",
-        "as": "onupdate"
-      },
-      "4dzd94d": {
-        "from": "4dzd94d",
-        "to": "pttbujz",
-        "as": "parameters"
-      },
       "zm1b72j": {
+        "as": "objects",
         "from": "zm1b72j",
-        "to": "4dzd94d",
-        "as": "objects"
+        "to": "4dzd94d"
       },
-      "dz8ejk0": {
-        "from": "dz8ejk0",
-        "to": "pttbujz",
-        "as": "fn"
+      "tmj66vh": {
+        "from": "tmj66vh",
+        "to": "uzfo5bm",
+        "as": "_false"
       },
-      "c0ay50g": {
-        "from": "c0ay50g",
-        "to": "dz8ejk0",
-        "as": "cube"
+      "akna0ig": {
+        "from": "akna0ig",
+        "to": "va78wdx",
+        "as": "refs"
       },
-      "p801291": {
-        "from": "p801291",
-        "to": "dbxyytc",
-        "as": "cube"
+      "va78wdx": {
+        "from": "va78wdx",
+        "to": "uzfo5bm",
+        "as": "pred"
       }
     },
     "id": "threejs_example",
@@ -215,6 +215,9 @@
         "ref": "@js.import_module",
         "value": "https://cdn.jsdelivr.net/npm/three/build/three.module.js"
       },
+      "4dzd94d": {
+        "id": "4dzd94d"
+      },
       "72wzn5d": {
         "id": "72wzn5d",
         "ref": "@three.setup"
@@ -246,8 +249,13 @@
       },
       "akna0ig": {
         "id": "akna0ig",
-        "ref": "@js.script",
-        "value": "return !!_lib.no.runtime.refs().includes(\"@three.setup\")"
+        "value": "return _lib.no.runtime.refs()",
+        "ref": "@js.script"
+      },
+      "c0ay50g": {
+        "id": "c0ay50g",
+        "ref": "arg",
+        "value": "objects.cube"
       },
       "d6hbagr": {
         "id": "d6hbagr",
@@ -255,6 +263,11 @@
       },
       "dbxyytc": {
         "id": "dbxyytc"
+      },
+      "dz8ejk0": {
+        "id": "dz8ejk0",
+        "ref": "@js.script",
+        "value": "cube.rotation.x += 0.02;\ncube.rotation.z += 0.02;"
       },
       "eg4o3m3": {
         "id": "eg4o3m3",
@@ -273,6 +286,10 @@
       "p801291": {
         "id": "p801291",
         "ref": "@memory.cache"
+      },
+      "pttbujz": {
+        "id": "pttbujz",
+        "ref": "@flow.runnable"
       },
       "pzdit8o": {
         "id": "pzdit8o",
@@ -311,28 +328,13 @@
         "ref": "@js.script",
         "value": "return document.getElementById(canvas_id);"
       },
-      "ykansd6": {
-        "id": "ykansd6"
-      },
-      "pttbujz": {
-        "id": "pttbujz",
-        "ref": "@flow.runnable"
-      },
-      "c0ay50g": {
-        "id": "c0ay50g",
-        "ref": "arg",
-        "value": "objects.cube"
-      },
-      "4dzd94d": {
-        "id": "4dzd94d"
-      },
       "zm1b72j": {
         "id": "zm1b72j"
       },
-      "dz8ejk0": {
-        "id": "dz8ejk0",
-        "ref": "@js.script",
-        "value": "cube.rotation.x += 0.02;\ncube.rotation.z += 0.02;"
+      "va78wdx": {
+        "id": "va78wdx",
+        "value": "return refs.includes(\"@three.setup\")",
+        "ref": "@js.script"
       }
     },
     "out": "out"

@@ -6,20 +6,15 @@
         "from": "0209mcq",
         "to": "out"
       },
-      "0r7134k": {
-        "as": "onupdate",
-        "from": "0r7134k",
-        "to": "72wzn5d"
-      },
       "2g581fl": {
         "as": "canvas_id",
         "from": "2g581fl",
         "to": "y663irb"
       },
-      "3p1cxio": {
-        "as": "camera",
-        "from": "3p1cxio",
-        "to": "crys2ve"
+      "3mk2p29": {
+        "as": "light",
+        "from": "3mk2p29",
+        "to": "dbxyytc"
       },
       "3wnevku": {
         "as": "lib",
@@ -31,10 +26,10 @@
         "from": "4d0h7cj",
         "to": "sco3cx9"
       },
-      "4kqd8au": {
-        "as": "fn",
-        "from": "4kqd8au",
-        "to": "0r7134k"
+      "5md98ad": {
+        "as": "colorNode",
+        "from": "5md98ad",
+        "to": "tz1d0x0"
       },
       "72wzn5d": {
         "as": "true",
@@ -57,19 +52,24 @@
         "to": "0209mcq"
       },
       "8wmlat1": {
-        "as": "children",
+        "as": "arg0",
         "from": "8wmlat1",
-        "to": "8dy573e"
+        "to": "qplqs03"
+      },
+      "a1pbajd": {
+        "as": "threeRunnable",
+        "from": "a1pbajd",
+        "to": "tbxemm2"
       },
       "akna0ig": {
-        "as": "pred",
+        "as": "refs",
         "from": "akna0ig",
-        "to": "uzfo5bm"
+        "to": "oamtw5b"
       },
-      "crys2ve": {
-        "as": "parameters",
-        "from": "crys2ve",
-        "to": "0r7134k"
+      "cu5jtg0": {
+        "as": "value",
+        "from": "cu5jtg0",
+        "to": "p801291"
       },
       "d6hbagr": {
         "as": "url",
@@ -82,29 +82,39 @@
         "to": "72wzn5d"
       },
       "eg4o3m3": {
-        "as": "threeRunnable",
+        "as": "value",
         "from": "eg4o3m3",
-        "to": "tbxemm2"
+        "to": "a1pbajd"
       },
-      "hq8y4zl": {
-        "as": "objects",
-        "from": "hq8y4zl",
-        "to": "crys2ve"
-      },
-      "output_val": {
-        "as": "arg0",
-        "from": "output_val",
-        "to": "tmj66vh"
+      "oamtw5b": {
+        "as": "pred",
+        "from": "oamtw5b",
+        "to": "uzfo5bm"
       },
       "ow93fev": {
         "as": "graphchange",
         "from": "ow93fev",
         "to": "0209mcq"
       },
+      "p801291": {
+        "as": "target",
+        "from": "p801291",
+        "to": "dbxyytc"
+      },
       "pzdit8o": {
         "as": "canvas",
         "from": "pzdit8o",
         "to": "72wzn5d"
+      },
+      "qplqs03": {
+        "as": "children",
+        "from": "qplqs03",
+        "to": "8dy573e"
+      },
+      "qv3bmvd": {
+        "as": "value",
+        "from": "qv3bmvd",
+        "to": "3mk2p29"
       },
       "sco3cx9": {
         "as": "THREE",
@@ -121,6 +131,16 @@
         "from": "tmj66vh",
         "to": "uzfo5bm"
       },
+      "tz1d0x0": {
+        "as": "material",
+        "from": "tz1d0x0",
+        "to": "cu5jtg0"
+      },
+      "u6xx20t": {
+        "as": "geometry",
+        "from": "u6xx20t",
+        "to": "cu5jtg0"
+      },
       "uzfo5bm": {
         "as": "fn",
         "from": "uzfo5bm",
@@ -130,28 +150,20 @@
         "as": "value",
         "from": "y663irb",
         "to": "pzdit8o"
-      },
-      "ykansd6": {
-        "as": "refs",
-        "from": "ykansd6",
-        "to": "akna0ig"
       }
     },
-    "id": "threejs_boilerplate",
+    "id": "threejs_node_example",
     "nodes": {
       "0209mcq": {
         "id": "0209mcq"
-      },
-      "0r7134k": {
-        "id": "0r7134k",
-        "ref": "@flow.runnable"
       },
       "2g581fl": {
         "id": "2g581fl",
         "value": "threejsrender"
       },
-      "3p1cxio": {
-        "id": "3p1cxio"
+      "3mk2p29": {
+        "id": "3mk2p29",
+        "ref": "@memory.cache"
       },
       "3wnevku": {
         "id": "3wnevku"
@@ -161,8 +173,10 @@
         "ref": "@js.import_module",
         "value": "https://cdn.jsdelivr.net/npm/three/build/three.module.js"
       },
-      "4kqd8au": {
-        "id": "4kqd8au"
+      "5md98ad": {
+        "id": "5md98ad",
+        "ref": "@three.node",
+        "value": "mx_noise_vec3"
       },
       "72wzn5d": {
         "id": "72wzn5d",
@@ -185,13 +199,18 @@
         "id": "8wmlat1",
         "ref": "@html.canvas_behind_editor"
       },
+      "a1pbajd": {
+        "id": "a1pbajd",
+        "ref": "return"
+      },
       "akna0ig": {
         "id": "akna0ig",
         "ref": "@js.script",
-        "value": "return refs.includes(\"@three.setup\")"
+        "value": "return _lib.no.runtime.refs()"
       },
-      "crys2ve": {
-        "id": "crys2ve"
+      "cu5jtg0": {
+        "id": "cu5jtg0",
+        "ref": "@three.mesh"
       },
       "d6hbagr": {
         "id": "d6hbagr",
@@ -204,26 +223,36 @@
         "id": "eg4o3m3",
         "ref": "@flow.runnable"
       },
-      "hq8y4zl": {
-        "id": "hq8y4zl"
+      "oamtw5b": {
+        "id": "oamtw5b",
+        "ref": "@js.script",
+        "value": "return refs.includes('@three.setup')"
       },
       "out": {
         "id": "out",
-        "name": "threejs_boilerplate",
+        "name": "threejs_node_example",
         "ref": "return"
-      },
-      "output_val": {
-        "id": "output_val",
-        "value": "some output"
       },
       "ow93fev": {
         "id": "ow93fev",
         "ref": "arg",
         "value": "threeRunnable"
       },
+      "p801291": {
+        "id": "p801291",
+        "ref": "@memory.graphchangecache"
+      },
       "pzdit8o": {
         "id": "pzdit8o",
         "ref": "@memory.cache"
+      },
+      "qplqs03": {
+        "id": "qplqs03",
+        "ref": "@data.array"
+      },
+      "qv3bmvd": {
+        "id": "qv3bmvd",
+        "ref": "@three.hemispherelight"
       },
       "sco3cx9": {
         "id": "sco3cx9",
@@ -236,6 +265,16 @@
         "id": "tmj66vh",
         "ref": "@nodysseus.import_json"
       },
+      "tz1d0x0": {
+        "id": "tz1d0x0",
+        "ref": "@three.node",
+        "value": "MeshStandardNodeMaterial"
+      },
+      "u6xx20t": {
+        "id": "u6xx20t",
+        "ref": "@three.geometry",
+        "value": "TorusGeometry"
+      },
       "uzfo5bm": {
         "id": "uzfo5bm",
         "ref": "@flow.if"
@@ -244,11 +283,6 @@
         "id": "y663irb",
         "ref": "@js.script",
         "value": "return document.getElementById(canvas_id);"
-      },
-      "ykansd6": {
-        "id": "ykansd6",
-        "ref": "@js.script",
-        "value": "return _lib.no.runtime.refs()"
       }
     },
     "out": "out"
