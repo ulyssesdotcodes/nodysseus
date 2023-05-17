@@ -6,7 +6,7 @@ import { ancestor_graph, wrapPromise } from "src/util";
 import categoryChanges from "../../public/categoryChanges.json"
 import { initgraph } from "./initgraph";
 import generic from "../generic";
-import { nolib } from "src/nodysseus";
+import { nolib, nolibLib } from "src/nodysseus";
 import { hlibLib } from "./util";
 import {addNode, addNodesEdges, removeNode, removeEdge, addEdge} from "./store";
 import {v4 as uuid, parse as uuidparse, stringify as uuidstringify} from "uuid";
@@ -108,7 +108,7 @@ export const automergeRefStore = async ({nodysseusidb, persist = false} : {persi
 
   const changeDoc = (id, fn, changedNodes = []): Graph | Promise<Graph> => {
     if(generic_node_ids.has(id)) {
-      // nolib.no.runtime.publish("grapherror", new Error("Cannot edit default nodes"))
+      nolib.no.runtime.publish("grapherror", new Error("Cannot edit default nodes"), nolibLib)
       return;
     }
     return wrapPromise(getDoc(id))
@@ -157,6 +157,7 @@ export const automergeRefStore = async ({nodysseusidb, persist = false} : {persi
 
 
   const refs: RefStore = {
+    addFromUrl: url => fetch(url).then(res => res.json()).then(refsToAdd => refsToAdd.forEach((ref: Graph) => refs.set(ref.id, ref))),
       get: (id) => generic_nodes[id] ?? (structuredCloneMap.has(id) 
           ? structuredCloneMap.get(id) 
           : wrapPromise(getDoc(id))

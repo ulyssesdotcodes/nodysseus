@@ -100,7 +100,7 @@ export const initPort = (store: SWState, ports: MessagePort[], port: MessagePort
   ports.push(port);
 
   port.addEventListener("message", (e) => {
-    console.log("got message", e)
+    console.log("message", e.data)
     if(store.value) {
       processMessage(store.value, ports, port, e.data)
     } else {
@@ -136,6 +136,8 @@ export const processMessage = (store: RefStore, ports: MessagePort[], port: Mess
     ? wrapPromise(store.set(m.graph.id, m.graph))
     : m.kind === "delete"
     ? wrapPromise(store.delete(m.graphId))
+    : m.kind === "addFromUrl"
+    ? wrapPromise(store.addFromUrl(m.url))
     : wrapPromise(false))
 
 export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore> => {
@@ -187,6 +189,7 @@ export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore>
           .then(e => e.graph)
           .then(graph => (contextGraphCache.set(graphId, graph), contextKeysCache.add(graphId), graph))
       ,
+      addFromUrl: url => sendMessage({kind: "addFromUrl", url}),
       set: (k, g) => {
         sendMessage({kind: "set", graph: g})
         return g

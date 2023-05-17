@@ -2423,17 +2423,13 @@ const generic = {
       "lapeojg": {
         "id": "lapeojg",
         "ref": "@js.script",
-        "value": "import_graph.forEach(_lib.no.runtime.add_ref); _lib.no.runtime.change_graph(_lib.no.runtime.get_graph(graphid.substring(0, graphid.indexOf('/'))))",
+        "value": "_lib.no.runtime.addRefsFromUrl(url)",
         "name": "out"
       },
       "out": {
         "id": "out",
         "ref": "return",
         "name": "@nodysseus.import_json"
-      },
-      "3zfjt1h": {
-        "id": "3zfjt1h",
-        "ref": "@js.call"
       },
       "05eag47": {
         "id": "05eag47",
@@ -2445,15 +2441,6 @@ const generic = {
         "ref": "arg",
         "value": "__graphid"
       },
-      "2vtokcl": {
-        "id": "2vtokcl",
-        "ref": "@js.script",
-        "value": "return fetch(url);"
-      },
-      "i9x02is": {
-        "id": "i9x02is",
-        "value": "json"
-      },
       "irr99xz": {
         "id": "irr99xz",
         "ref": "arg",
@@ -2461,11 +2448,6 @@ const generic = {
       }
     },
     "edges": [
-      {
-        "as": "import_graph",
-        "from": "3zfjt1h",
-        "to": "lapeojg"
-      },
       {
         "from": "graphid",
         "to": "lapeojg",
@@ -2482,18 +2464,8 @@ const generic = {
         "as": "value"
       },
       {
-        "as": "self",
-        "from": "2vtokcl",
-        "to": "3zfjt1h"
-      },
-      {
-        "from": "i9x02is",
-        "to": "3zfjt1h",
-        "as": "fn"
-      },
-      {
         "from": "irr99xz",
-        "to": "2vtokcl",
+        "to": "lapeojg",
         "as": "url"
       }
     ]

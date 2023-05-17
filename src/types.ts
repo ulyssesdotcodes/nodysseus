@@ -39,6 +39,7 @@ export type Store<T> = {
 }
 
 export type RefStore = Store<Graph> & {
+  addFromUrl: (url: string) => void;
   add_node: (graphId: string, node: NodysseusNode) => void;
   add_nodes_edges: (updates: {
     graphId: string, 

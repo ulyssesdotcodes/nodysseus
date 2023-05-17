@@ -44,6 +44,7 @@ export const lokiStore = (): NodysseusStore => {
   return {
     refs: {
       ...lokidbToStore<Graph>(refsdb), 
+      addFromUrl: () => { throw new Error("not implemented")},
       add_node: () => {}, 
       add_nodes_edges: () => {}, 
       remove_edge: () => {},

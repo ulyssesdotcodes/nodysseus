@@ -831,6 +831,7 @@ const runtimefn = () => {
         get_ref,
         add_ref,
         add_refs: (gs) => gs.forEach(g => nodysseus.refs.set(g.id, g)),
+        addRefsFromUrl: (url: string) => nodysseus.refs.addFromUrl(url),
         remove_ref,
         get_node,
         get_edge,
