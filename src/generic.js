@@ -2423,8 +2423,13 @@ const generic = {
       "lapeojg": {
         "id": "lapeojg",
         "ref": "@js.script",
-        "value": "_lib.no.runtime.addRefsFromUrl(url)",
+        "value": "return _lib.no.runtime.addRefsFromUrl(url).then(gs => _lib.no.runtime.change_graph((console.log('changing', graphid), graphid), _lib))",
         "name": "out"
+      },
+      "graphid": {
+        "id": "graphid",
+        "ref": "arg",
+        "value": "__graphid"
       },
       "out": {
         "id": "out",
@@ -2435,11 +2440,6 @@ const generic = {
         "id": "05eag47",
         "ref": "arg",
         "value": "name"
-      },
-      "graphid": {
-        "id": "graphid",
-        "ref": "arg",
-        "value": "__graphid"
       },
       "irr99xz": {
         "id": "irr99xz",
@@ -2467,7 +2467,8 @@ const generic = {
         "from": "irr99xz",
         "to": "lapeojg",
         "as": "url"
-      }
+      },
+      {"from": "graphid", "to": "lapeojg", "as": "graphid"}
     ]
   },
   "@data.object_entries": {

@@ -150,6 +150,31 @@
         "as": "value",
         "from": "y663irb",
         "to": "pzdit8o"
+      },
+      "wgr2e72": {
+        "from": "wgr2e72",
+        "to": "5md98ad",
+        "as": "args"
+      },
+      "vgfnhaw": {
+        "from": "vgfnhaw",
+        "to": "nn38omj",
+        "as": "arg0"
+      },
+      "nn38omj": {
+        "from": "nn38omj",
+        "to": "wgr2e72",
+        "as": "args"
+      },
+      "v8mz9pe": {
+        "from": "v8mz9pe",
+        "to": "nn38omj",
+        "as": "arg1"
+      },
+      "fxm18j1": {
+        "from": "fxm18j1",
+        "to": "v8mz9pe",
+        "as": "args"
       }
     },
     "id": "threejs_node_example",
@@ -283,6 +308,29 @@
         "id": "y663irb",
         "ref": "@js.script",
         "value": "return document.getElementById(canvas_id);"
+      },
+      "vgfnhaw": {
+        "id": "vgfnhaw",
+        "value": "uv",
+        "ref": "@three.node"
+      },
+      "wgr2e72": {
+        "id": "wgr2e72",
+        "value": "mul",
+        "ref": "@three.node"
+      },
+      "nn38omj": {
+        "id": "nn38omj",
+        "ref": "@data.array"
+      },
+      "v8mz9pe": {
+        "id": "v8mz9pe",
+        "value": "float",
+        "ref": "@three.node"
+      },
+      "fxm18j1": {
+        "id": "fxm18j1",
+        "value": "8"
       }
     },
     "out": "out"

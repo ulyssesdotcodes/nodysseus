@@ -514,7 +514,10 @@ const editor = async function(html_id, editingGraphId, lib, norun) {
     editingGraphId = editingGraphId ?? (hash_graph && hash_graph !== "" ? hash_graph : graph_list?.[0] ?? 'helloWorld');
     let editingGraph: Graph = editingGraphId === "helloWorld"
       ? ((helloWorld as Graph).edges_in = Object.values(helloWorld.edges).reduce((acc: Record<string, Record<string, Edge>>, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {}), await hlib.no.runtime.add_ref(helloWorld), helloWorld)
-      : await hlib.no.runtime.get_ref(editingGraphId)
+      : (await hlib.no.runtime.get_ref(editingGraphId)
+      ?? (EXAMPLES.includes(editingGraphId) 
+      ? await fetch(`json/${editingGraphId.replaceAll("_", "-")}.json`).then(res => res.json()).then(g => nolib.no.runtime.add_ref(g[0])).then(() => nolib.no.runtime.get_ref(editingGraphId))
+      : helloWorld))
 
         const init: HyperappState = { 
             editingGraphId,

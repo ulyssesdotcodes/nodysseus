@@ -1,12 +1,12 @@
 import * as Automerge from "@automerge/automerge";
 import { PatchCallback } from "@automerge/automerge";
 import { IDBPDatabase } from "idb";
-import { Graph, isNodeRef, NodysseusStoreTypes, RefNode, RefStore } from "src/types";
+import { Graph, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode, NodysseusStoreTypes, RefNode, RefStore } from "src/types";
 import { ancestor_graph, wrapPromise } from "src/util";
 import categoryChanges from "../../public/categoryChanges.json"
 import { initgraph } from "./initgraph";
 import generic from "../generic";
-import { nolib, nolibLib } from "src/nodysseus";
+import { compare, nolib, nolibLib } from "src/nodysseus";
 import { hlibLib } from "./util";
 import {addNode, addNodesEdges, removeNode, removeEdge, addEdge} from "./store";
 import {v4 as uuid, parse as uuidparse, stringify as uuidstringify} from "uuid";
@@ -133,10 +133,23 @@ export const automergeRefStore = async ({nodysseusidb, persist = false} : {persi
         const scd = structuredClone(doc);
         structuredCloneMap.set(id, scd)
         // nolib.no.runtime.publish('graphchange', {graph: scd}, {...nolib, ...hlib}) 
-        nolib.no.runtime.change_graph(scd, hlibLib, changedNodes, true, "automergeStore") 
+        // nolib.no.runtime.change_graph(scd, hlibLib, changedNodes, true, "automergeStore") 
         return scd;
       }).value
   }
+
+  const nodeCompare = (a: NodysseusNode, b: NodysseusNode) =>
+    a.id === b.id && a.name === b.name &&
+      (!isNodeValue(a) || (isNodeValue(b) && b.value === a.value))
+      && (!isNodeRef(a) || (isNodeRef(b) && b.ref === a.ref))
+      && (!isNodeGraph(a) || (isNodeGraph(b) && graphCompare(a, b)))
+
+  const graphCompare = (a: Graph, b: Graph) => 
+    a.id === b.id
+    && Object.keys(a.nodes).length === Object.keys(b.nodes).length
+    && Object.entries(a.edges).every(e => b.edges[e[0]].as === e[1].as && b.edges[e[0]].to === e[1].to)
+    && Object.values(a.nodes).every(n => nodeCompare(n, b.nodes[n.id]))
+    && a.description === b.description
 
   const setFromGraph = (graph: Graph) => (doc: Graph) =>  {
     Object.entries(doc).forEach(e => !Object.hasOwn(graph, e[0]) && delete doc[e[0]])
@@ -157,41 +170,43 @@ export const automergeRefStore = async ({nodysseusidb, persist = false} : {persi
 
 
   const refs: RefStore = {
-    addFromUrl: url => fetch(url).then(res => res.json()).then(refsToAdd => refsToAdd.forEach((ref: Graph) => refs.set(ref.id, ref))),
-      get: (id) => generic_nodes[id] ?? (structuredCloneMap.has(id) 
-          ? structuredCloneMap.get(id) 
-          : wrapPromise(getDoc(id))
-            .then(d => {
-              const scd = structuredClone(d);
-              structuredCloneMap.set(id, scd);
-              return scd;
-            }).value)
-      ,
-      set: (id, graph) => changeDoc(id, setFromGraph(graph)),
-      delete: (id) => {
-        refsmap.delete(id);
-        refsset.delete(id);
-        structuredCloneMap.delete(id);
-        return nodysseusidb.delete("refs", id);
-      },
-      clear: () => {throw new Error("not implemented")},
-      keys: () => {return [...refsset.keys(), ...generic_node_ids]},
-      undo: () => {throw new Error("not implemented")},
-      redo: () => {throw new Error("not implemented")},
-      add_node: (id, node) => changeDoc(id, doc => {
-        // TODO: try to fix by making the values texts instead of just strings
-        addNode(doc, node)
-      }, [node.id]),
-      add_nodes_edges: ({graphId, addedNodes, addedEdges, removedEdges, removedNodes}) => {
-        changeDoc(graphId, graph => {
-          addNodesEdges(graph, addedNodes, addedEdges, removedNodes, removedEdges)
-        })
-      },
-      remove_node: (id, node) => {},
-      // changeDoc(id, removeNodeFn(node), [node.id]),
-      add_edge: (id, edge) => changeDoc(id, g => addEdge(g, edge)),
-      remove_edge: (id, edge) => changeDoc(id, removeEdge(edge))
-    }
+    addFromUrl: url => fetch(url)
+      .then(res => res.json())
+      .then(refsToAdd => Promise.all(refsToAdd.map((ref: Graph) => refs.set(ref.id, ref))).then(gs => gs)),
+    get: (id) => generic_nodes[id] ?? (structuredCloneMap.has(id) 
+        ? structuredCloneMap.get(id) 
+        : wrapPromise(getDoc(id))
+          .then(d => {
+            const scd = structuredClone(d);
+            structuredCloneMap.set(id, scd);
+            return scd;
+          }).value)
+    ,
+    set: (id, graph) => 
+      wrapPromise(refs.get(id))
+        .then(current => current && graphCompare(current, graph) ? (console.log("skipping", id), current): changeDoc(id, setFromGraph(graph)) ).value,
+    delete: (id) => {
+      refsmap.delete(id);
+      refsset.delete(id);
+      structuredCloneMap.delete(id);
+      return nodysseusidb.delete("refs", id);
+    },
+    clear: () => {throw new Error("not implemented")},
+    keys: () => {return [...refsset.keys(), ...generic_node_ids]},
+    undo: () => {throw new Error("not implemented")},
+    redo: () => {throw new Error("not implemented")},
+    add_node: (id, node) => changeDoc(id, doc => {
+      // TODO: try to fix by making the values texts instead of just strings
+      addNode(doc, node)
+    }, [node.id]),
+    add_nodes_edges: ({graphId, addedNodes, addedEdges, removedEdges, removedNodes}) =>
+      changeDoc(graphId, graph => {
+        addNodesEdges(graph, addedNodes, addedEdges, removedNodes, removedEdges)
+      }),
+    remove_node: (id, node) => changeDoc(id, removeNode(node), [node.id]),
+    add_edge: (id, edge) => changeDoc(id, g => addEdge(g, edge)),
+    remove_edge: (id, edge) => changeDoc(id, removeEdge(edge))
+  }
 
   /////
   // Stateful

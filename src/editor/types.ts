@@ -132,10 +132,11 @@ type _SharedWorkerMessages = {
     from: {}
   },
   update: {
-    from: { graph: Graph }
+    from: { graphs: Array<Graph> }
   },
   addFromUrl: {
-    to: {url: string}
+    to: {url: string},
+    from: {graphs: Array<Graph>}
   }
 }
 

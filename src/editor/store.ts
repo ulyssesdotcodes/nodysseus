@@ -117,6 +117,11 @@ export const initPort = (store: SWState, ports: MessagePort[], port: MessagePort
   port.postMessage({kind: "connect"})
 }
 
+const sendUpdateMessages = (ports: MessagePort[], originPort: MessagePort) => (graphs: Graph | Array<Graph>) => 
+  ports
+  .filter(p => p !== originPort)
+  .forEach(p => typedPostMessage(p, {kind: (console.log("sending update", graphs), "update"), graphs: Array.isArray(graphs) ? graphs : [graphs]}))
+
 export const processMessage = (store: RefStore, ports: MessagePort[], port: MessagePort, m: SharedWorkerMessageTo) =>
   (m.kind === "addPort"
     ? wrapPromise(initPort({value: store, initQueue: []}, ports, m.port))
@@ -127,17 +132,24 @@ export const processMessage = (store: RefStore, ports: MessagePort[], port: Mess
     ? wrapPromise(store.keys())
       .then(keys => typedPostMessage(port, {kind: "keys", messageId: m.messageId, keys}))
     : m.kind === "add_node"
-    ? wrapPromise(store.add_node(m.graphId, m.node))
+    ? wrapPromise(store.add_node(m.graphId, m.node)).then(sendUpdateMessages(ports, port))
     : m.kind === "add_edge"
-    ? wrapPromise(store.add_edge(m.graphId, m.edge))
+    ? wrapPromise(store.add_edge(m.graphId, m.edge)).then(sendUpdateMessages(ports, port))
+
     : m.kind === "add_nodes_edges"
-    ? wrapPromise(store.add_nodes_edges(m))
+    ? wrapPromise(store.add_nodes_edges(m)).then(sendUpdateMessages(ports, port))
+
     : m.kind === "set"
-    ? wrapPromise(store.set(m.graph.id, m.graph))
+    ? wrapPromise(store.set(m.graph.id, m.graph)).then(sendUpdateMessages(ports, port))
     : m.kind === "delete"
     ? wrapPromise(store.delete(m.graphId))
     : m.kind === "addFromUrl"
-    ? wrapPromise(store.addFromUrl(m.url))
+    ? wrapPromise(store.addFromUrl(m.url)).then(gs => {
+      console.log("resolved gs", gs);
+      typedPostMessage(port, {kind: "addFromUrl", messageId: m.messageId, graphs: gs})
+      sendUpdateMessages(ports, port)(gs)
+    })
+
     : wrapPromise(false))
 
 export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore> => {
@@ -150,7 +162,11 @@ export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore>
     e.data.kind === "connect" 
     ? connectres()
     : e.data.kind === "update"
-    ? (nolib.no.runtime.change_graph(e.data.graph, nolibLib), contextKeysCache.add(e.data.graph.id), contextGraphCache.set(e.data.graph.id, e.data.graph))
+    ? e.data.graphs.forEach(graph => {
+      nolib.no.runtime.change_graph(graph, nolibLib);
+      contextKeysCache.add(graph.id);
+      contextGraphCache.set(graph.id, graph);
+    })
     : expectSharedWorkerMessageResponse(e.data) && inflightRequests.get(e.data.messageId)(e.data))
   self.addEventListener('beforeunload', () => port.postMessage({kind: "disconnect"}));
   port.start();
@@ -189,7 +205,12 @@ export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore>
           .then(e => e.graph)
           .then(graph => (contextGraphCache.set(graphId, graph), contextKeysCache.add(graphId), graph))
       ,
-      addFromUrl: url => sendMessage({kind: "addFromUrl", url}),
+      addFromUrl: url => messagePromise({kind: "addFromUrl", url}).then(e => e.graphs)
+        .then(gs => gs.map(graph => {
+          contextGraphCache.set(graph.id, graph) 
+          contextKeysCache.add(graph.id)
+          return graph
+        })),
       set: (k, g) => {
         sendMessage({kind: "set", graph: g})
         return g
@@ -204,13 +225,17 @@ export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore>
       add_node: (graphId, node) => {
         sendMessage({kind: "add_node", graphId, node})
         const graphClone = structuredClone(contextGraphCache.get(graphId));
-        contextGraphCache.set(graphId, addNode(graphClone, node));
+        const graphAddedNode = addNode(graphClone, node);
+        contextGraphCache.set(graphId, graphAddedNode);
+        return graphAddedNode
       },
       remove_node: () => {throw new Error("not implemented")},
       add_nodes_edges: ({graphId, addedNodes, addedEdges, removedEdges, removedNodes}) => {
         sendMessage({kind: "add_nodes_edges", graphId, addedNodes, addedEdges, removedNodes, removedEdges})
         const graphClone = structuredClone(contextGraphCache.get(graphId));
-        contextGraphCache.set(graphId, addNodesEdges(graphClone, addedNodes, addedEdges, removedNodes, removedEdges));
+        const graphAddedNodesEdges = addNodesEdges(graphClone, addedNodes, addedEdges, removedNodes, removedEdges);
+        contextGraphCache.set(graphId, graphAddedNodesEdges);
+        return graphAddedNodesEdges
       }
   }
 }
@@ -241,7 +266,7 @@ export const webClientStore = async (refStore: (idb: IDBPDatabase<NodysseusStore
     fns: mapStore(),
     assets: {
       get: (id) => nodysseusidb.get('assets', id),
-      set: (id, blob) => nodysseusidb.put('assets', blob, id),
+      set: (id, blob) => (nodysseusidb.put('assets', blob, id), blob),
       delete: id => nodysseusidb.delete('assets', id),
       clear: () => nodysseusidb.clear('assets'),
       keys: () => nodysseusidb.getAllKeys('assets').then(ks => ks.map(k => k.toString()))

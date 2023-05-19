@@ -10,6 +10,7 @@ export const lokidbToStore = <T>(collection: loki.Collection<LokiT<T>>): Store<T
     } else {
       collection.insert({ id,  data});
     }
+    return data
   },
   get: (id: string) => collection.by("id", id)?.data,
   delete: (id: string) => {
@@ -45,11 +46,11 @@ export const lokiStore = (): NodysseusStore => {
     refs: {
       ...lokidbToStore<Graph>(refsdb), 
       addFromUrl: () => { throw new Error("not implemented")},
-      add_node: () => {}, 
-      add_nodes_edges: () => {}, 
-      remove_edge: () => {},
-      add_edge: () => {},
-      remove_node: () => {},
+      add_node: () => { throw new Error("not implemented")}, 
+      add_nodes_edges: () => { throw new Error("not implemented")}, 
+      remove_edge: () => { throw new Error("not implemented")},
+      add_edge: () => { throw new Error("not implemented")},
+      remove_node: () => { throw new Error("not implemented")},
     },
     parents: mapStore(),
     state: mapStore(),

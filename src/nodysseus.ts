@@ -5,6 +5,7 @@ import generic from "./generic.js";
 import * as externs from "./externs";
 import { v4 as uuid } from "uuid";
 import { initListeners } from "./events";
+import { wrap } from "idb";
 
 const generic_nodes = generic.nodes;
 
@@ -13,7 +14,7 @@ export const mapStore = <T>(): Store<T> => {
 
   return {
     get: id => map.get(id),
-    set: (id, data: T) => map.set(id, data),
+    set: (id, data: T) => (map.set(id, data), data),
     delete: id => map.delete(id),
     clear: () => map.clear(),
     keys: () => [...map.keys()]
@@ -707,23 +708,29 @@ const runtimefn = () => {
 
       const {publish, addListener, removeListener, pauseGraphListeners, togglePause, isGraphidListened, isListened} = initListeners();
 
-      const change_graph = (graph: Graph, lib: Lib, changedNodes: Array<string> = [], broadcast = false, source?) => {
-        const parent = get_parentest(graph);
-        if (parent) {
-          (lib.data ?? lib).no.runtime.update_graph(parent, lib);
-        } else {
-          const changedNodesSet = new Set()
-          while(changedNodes.length > 0) {
-            const node = changedNodes.pop();
-            if(!changedNodesSet.has(node)){
-              changedNodesSet.add(node);
-              Object.keys(descendantGraph(node, graph, lib).nodes).forEach(n => changedNodes.push(n));
-            }
+      const change_graph = (graph: Graph | string, lib: Lib, changedNodes: Array<string> = [], broadcast = false, source?) =>
+        wrapPromise(get_parentest(graph))
+          .then(parent => {
+          if (parent) {
+            console.log("got parent", parent);
+            (lib.data ?? lib).no.runtime.change_graph(parent, lib, [(typeof graph === "string" ? graph : graph.id).substring(parent.id.length + 1)]);
+          } else {
+            wrapPromise(typeof graph === "string" ? get_ref(graph) : graph)
+              .then(graph => {
+                console.log("graphchange", graph)
+                const changedNodesSet = new Set()
+                while(changedNodes.length > 0) {
+                  const node = changedNodes.pop();
+                  if(!changedNodesSet.has(node)){
+                    changedNodesSet.add(node);
+                    Object.keys(descendantGraph(node, graph, lib).nodes).forEach(n => changedNodes.push(n));
+                  }
+                }
+                publish("graphchange", {graph, dirtyNodes: [...changedNodesSet.keys()], source}, lib, {}, broadcast);
+                publish("graphupdate", {graph, dirtyNodes: [...changedNodesSet.keys()], source}, lib, {}, broadcast);
+              });
           }
-          publish("graphchange", {graph, dirtyNodes: [...changedNodesSet.keys()], source}, lib, {}, broadcast);
-          publish("graphupdate", {graph, dirtyNodes: [...changedNodesSet.keys()], source}, lib, {}, broadcast);
-        }
-      };
+        });
 
       let updatepublish = {};
       const update_args = (graph, args, lib: Lib) => {

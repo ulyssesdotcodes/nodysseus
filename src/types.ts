@@ -18,7 +18,8 @@ export type Graph = {
   name?: string,
   nodes: Record<string, NodysseusNode>,
   edges: Record<string, Edge>,
-  edges_in?: Record<string, Record<string, Edge>>
+  edges_in?: Record<string, Record<string, Edge>>,
+  description?: string
 }
 
 export type EdgesIn = Record<string, Record<string, Edge>>;
@@ -32,25 +33,25 @@ export type EdgeNoAs = {
 
 export type Store<T> = {
   get: (id: string) => T | undefined | Promise<T | undefined>;
-  set: (id: string, data: T) => void;
+  set: (id: string, data: T) => T | Promise<T>;
   delete: (id: string) => void;
   clear: () => void;
   keys: () => Array<string> | Promise<Array<string>>;
 }
 
 export type RefStore = Store<Graph> & {
-  addFromUrl: (url: string) => void;
-  add_node: (graphId: string, node: NodysseusNode) => void;
+  addFromUrl: (url: string) => Array<Graph> | Promise<Array<Graph>>;
+  add_node: (graphId: string, node: NodysseusNode) => Graph | Promise<Graph>;
   add_nodes_edges: (updates: {
     graphId: string, 
     addedNodes?: NodysseusNode[], 
     addedEdges?: Edge[], 
     removedNodes?: NodysseusNode[], 
     removedEdges?: Array<{[k in Exclude<keyof Edge, "as">]: Edge[k]}>
-  }) => void;
-  remove_node: (graphId: string, node: NodysseusNode) => void;
-  add_edge: (graphId: string, edge: Edge) => void;
-  remove_edge: (graphId: string, edge: Edge) => void;
+  }) => Graph | Promise<Graph>;
+  remove_node: (graphId: string, node: NodysseusNode) => Graph | Promise<Graph>;
+  add_edge: (graphId: string, edge: Edge) => Graph | Promise<Graph>;
+  remove_edge: (graphId: string, edge: Edge) => Graph | Promise<Graph>;
   undo?: false | ((id: string) => void);
   redo?: false | ((id: string) => void);
 }

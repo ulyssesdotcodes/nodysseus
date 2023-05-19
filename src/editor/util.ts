@@ -10,7 +10,7 @@ import AutocompleteList from "./autocomplete";
 import { parser } from "@lezer/javascript";
 import {v4 as uuid, parse as uuidparse, stringify as uuidstringify} from "uuid";
 
-export const EXAMPLES = ["threejs_example", "hydra_example", "threejs_boilerplate", "threejs_force_attribute_example"];
+export const EXAMPLES = ["threejs_example", "hydra_example", "threejs_boilerplate", "threejs_force_attribute_example", "threejs_node_example"];
 
 export const middleware = dispatch => (ha_action, ha_payload) => {
     const is_action_array_payload = Array.isArray(ha_action) 
