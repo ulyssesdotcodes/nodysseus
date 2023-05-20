@@ -3302,266 +3302,61 @@
   {
     "description": "Create a [Light](https://threejs.org/docs/?q=light#api/en/lights/Light) of the type specified in the dropdown. The `intensity` input is the light's intensity",
     "edges": {
-      "0b77ag7": {
-        "as": "value",
-        "from": "0b77ag7",
-        "to": "xdgv4dh"
-      },
-      "0n60ujv": {
-        "as": "fn",
-        "from": "0n60ujv",
-        "to": "gswna9l"
-      },
-      "0zkgovx": {
-        "as": "publish",
-        "from": "0zkgovx",
-        "to": "vp30uwr"
-      },
-      "1sisn0j": {
-        "as": "children",
-        "from": "1sisn0j",
-        "to": "8ikzz8c"
-      },
-      "3t395yl": {
-        "as": "props",
-        "from": "3t395yl",
-        "to": "1sisn0j"
-      },
-      "4epxz8h": {
-        "as": "fn",
-        "from": "4epxz8h",
-        "to": "s0yodqq"
-      },
-      "4ezxb2d": {
-        "as": "persist",
-        "from": "4ezxb2d",
-        "to": "vp30uwr"
-      },
-      "8ikzz8c": {
-        "as": "display",
-        "from": "8ikzz8c",
+      "38zagsq": {
+        "as": "metadata",
+        "from": "38zagsq",
         "to": "out"
       },
-      "9geujjj": {
-        "as": "array",
-        "from": "9geujjj",
-        "to": "s0yodqq"
-      },
-      "a61owpw": {
-        "as": "element",
-        "from": "a61owpw",
-        "to": "sc4nkva"
-      },
-      "bssnxb9": {
-        "as": "value",
-        "from": "bssnxb9",
-        "to": "vp30uwr"
-      },
-      "ccr5axr": {
-        "as": "children",
-        "from": "ccr5axr",
-        "to": "ocrevmu"
-      },
-      "d2q4ynv": {
-        "as": "selected",
-        "from": "d2q4ynv",
-        "to": "v4r5n4a"
-      },
-      "eizwmr8": {
+      "6c3y90j": {
         "as": "args",
-        "from": "eizwmr8",
-        "to": "gdue1va"
-      },
-      "fktz8ei": {
-        "as": "fn",
-        "from": "fktz8ei",
-        "to": "gdue1va"
-      },
-      "fn6zo3c": {
-        "as": "target",
-        "from": "fn6zo3c",
-        "to": "uwtxfad"
-      },
-      "gdue1va": {
-        "as": "arg0",
-        "from": "gdue1va",
+        "from": "6c3y90j",
         "to": "output_val"
       },
-      "gdzu62k": {
-        "as": "props",
-        "from": "gdzu62k",
-        "to": "ocrevmu"
-      },
-      "gswna9l": {
-        "as": "onchange",
-        "from": "gswna9l",
-        "to": "3t395yl"
-      },
-      "k6ifd8f": {
-        "as": "run",
-        "from": "k6ifd8f",
-        "to": "gdue1va"
-      },
-      "ocrevmu": {
-        "as": "fn",
-        "from": "ocrevmu",
-        "to": "4epxz8h"
+      "dn5axhu": {
+        "as": "THREE",
+        "from": "dn5axhu",
+        "to": "rgpu8gc"
       },
       "output_val": {
         "as": "value",
         "from": "output_val",
         "to": "out"
       },
-      "qlktntp": {
-        "as": "text",
-        "from": "qlktntp",
-        "to": "ccr5axr"
-      },
-      "s0yodqq": {
-        "as": "children",
-        "from": "s0yodqq",
-        "to": "1sisn0j"
-      },
-      "sc4nkva": {
-        "as": "parameters",
-        "from": "sc4nkva",
-        "to": "4epxz8h"
-      },
-      "ss8t20m": {
-        "as": "_keys",
-        "from": "ss8t20m",
-        "to": "x0jl3nm"
+      "rgpu8gc": {
+        "as": "lib",
+        "from": "rgpu8gc",
+        "to": "out"
       },
       "urjyf2e": {
         "as": "intensity",
         "from": "urjyf2e",
         "to": "output_val"
       },
-      "uwtxfad": {
-        "as": "value",
-        "from": "uwtxfad",
-        "to": "eizwmr8"
-      },
-      "v4r5n4a": {
-        "as": "selected",
-        "from": "v4r5n4a",
-        "to": "gdzu62k"
+      "vgloog2": {
+        "as": "values",
+        "from": "vgloog2",
+        "to": "38zagsq"
       },
       "vhuv19u": {
         "as": "selected",
         "from": "vhuv19u",
         "to": "output_val"
-      },
-      "vp30uwr": {
-        "as": "_selected",
-        "from": "vp30uwr",
-        "to": "x0jl3nm"
-      },
-      "x0jl3nm": {
-        "as": "args",
-        "from": "x0jl3nm",
-        "to": "out"
-      },
-      "xdgv4dh": {
-        "as": "args",
-        "from": "xdgv4dh",
-        "to": "gswna9l"
-      },
-      "y9fclrz": {
-        "as": "element",
-        "from": "y9fclrz",
-        "to": "v4r5n4a"
       }
     },
     "id": "@three.light",
     "nodes": {
-      "0b77ag7": {
-        "id": "0b77ag7",
+      "38zagsq": {
+        "id": "38zagsq"
+      },
+      "6c3y90j": {
+        "id": "6c3y90j",
         "ref": "arg",
-        "value": "event.target.value"
+        "value": "args"
       },
-      "0n60ujv": {
-        "id": "0n60ujv",
-        "ref": "arg",
-        "value": "_selected.set"
-      },
-      "0zkgovx": {
-        "id": "0zkgovx",
-        "value": "true"
-      },
-      "1sisn0j": {
-        "id": "1sisn0j",
-        "ref": "@html.html_element",
-        "value": "select"
-      },
-      "3t395yl": {
-        "id": "3t395yl"
-      },
-      "4epxz8h": {
-        "id": "4epxz8h",
-        "ref": "@flow.runnable"
-      },
-      "4ezxb2d": {
-        "id": "4ezxb2d",
-        "value": "true"
-      },
-      "8ikzz8c": {
-        "id": "8ikzz8c",
-        "ref": "@html.html_element"
-      },
-      "9geujjj": {
-        "id": "9geujjj",
-        "ref": "arg",
-        "value": "_keys.value"
-      },
-      "a61owpw": {
-        "id": "a61owpw"
-      },
-      "bssnxb9": {
-        "id": "bssnxb9",
-        "value": "PointLight"
-      },
-      "ccr5axr": {
-        "id": "ccr5axr",
-        "ref": "@html.html_text"
-      },
-      "d2q4ynv": {
-        "id": "d2q4ynv",
-        "ref": "arg",
-        "value": "_selected.state"
-      },
-      "eizwmr8": {
-        "id": "eizwmr8"
-      },
-      "fktz8ei": {
-        "id": "fktz8ei",
-        "ref": "arg",
-        "value": "_keys.set"
-      },
-      "fn6zo3c": {
-        "id": "fn6zo3c",
-        "ref": "arg",
-        "value": "_lib.THREE"
-      },
-      "gdue1va": {
-        "id": "gdue1va",
-        "ref": "@flow.ap"
-      },
-      "gdzu62k": {
-        "id": "gdzu62k"
-      },
-      "gswna9l": {
-        "id": "gswna9l",
-        "ref": "@flow.ap"
-      },
-      "k6ifd8f": {
-        "id": "k6ifd8f",
-        "value": "true"
-      },
-      "ocrevmu": {
-        "id": "ocrevmu",
-        "ref": "@html.html_element",
-        "value": "option"
+      "dn5axhu": {
+        "id": "dn5axhu",
+        "ref": "@js.import_module",
+        "value": "https://cdn.jsdelivr.net/npm/three/build/three.module.js"
       },
       "out": {
         "id": "out",
@@ -3571,58 +3366,25 @@
       "output_val": {
         "id": "output_val",
         "ref": "@js.script",
-        "value": "const light = selected && new _lib.THREE[selected]();\nif(light) {\n  if(intensity) light.intensity = intensity;\n}\n\nreturn light"
+        "value": "args = args ?? [];\nconst light = selected && new _lib.THREE[selected](...args);\nif(light) {\n  if(intensity) light.intensity = intensity;\n}\n\nreturn light"
       },
-      "qlktntp": {
-        "id": "qlktntp",
-        "ref": "arg",
-        "value": "element"
-      },
-      "s0yodqq": {
-        "id": "s0yodqq",
-        "ref": "@data.map"
-      },
-      "sc4nkva": {
-        "id": "sc4nkva"
-      },
-      "ss8t20m": {
-        "id": "ss8t20m",
-        "ref": "@memory.refval"
+      "rgpu8gc": {
+        "id": "rgpu8gc"
       },
       "urjyf2e": {
         "id": "urjyf2e",
         "ref": "arg",
         "value": "intensity"
       },
-      "uwtxfad": {
-        "id": "uwtxfad",
+      "vgloog2": {
+        "id": "vgloog2",
         "ref": "@js.script",
-        "value": "return Object.keys(target).filter(k => k.endsWith(\"Light\"))"
-      },
-      "v4r5n4a": {
-        "id": "v4r5n4a",
-        "ref": "@js.script",
-        "value": "return element === selected;"
+        "value": "console.log(\"threelib\", _lib.THREE)\nreturn _lib.THREE ? Object.keys(_lib.THREE).filter(k => k.endsWith(\"Light\")) : []"
       },
       "vhuv19u": {
         "id": "vhuv19u",
         "ref": "arg",
-        "value": "_selected.state"
-      },
-      "vp30uwr": {
-        "id": "vp30uwr",
-        "ref": "@memory.state"
-      },
-      "x0jl3nm": {
-        "id": "x0jl3nm"
-      },
-      "xdgv4dh": {
-        "id": "xdgv4dh"
-      },
-      "y9fclrz": {
-        "id": "y9fclrz",
-        "ref": "arg",
-        "value": "element"
+        "value": "__graph_value"
       }
     },
     "out": "out"

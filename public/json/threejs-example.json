@@ -11,6 +11,11 @@
         "from": "0vrcnea",
         "to": "a1pbajd"
       },
+      "1ceto35": {
+        "as": "checkRef",
+        "from": "1ceto35",
+        "to": "uzfo5bm"
+      },
       "1g6iwxm": {
         "as": "material",
         "from": "1g6iwxm",
@@ -47,7 +52,7 @@
         "to": "pttbujz"
       },
       "72wzn5d": {
-        "as": "true",
+        "as": "continue",
         "from": "72wzn5d",
         "to": "uzfo5bm"
       },
@@ -86,11 +91,6 @@
         "from": "c0ay50g",
         "to": "dz8ejk0"
       },
-      "d6hbagr": {
-        "as": "url",
-        "from": "d6hbagr",
-        "to": "tmj66vh"
-      },
       "dbxyytc": {
         "as": "objects",
         "from": "dbxyytc",
@@ -105,6 +105,11 @@
         "as": "value",
         "from": "eg4o3m3",
         "to": "a1pbajd"
+      },
+      "nqomz5x": {
+        "as": "arg1",
+        "from": "nqomz5x",
+        "to": "vp8xgix"
       },
       "ow93fev": {
         "as": "graphchange",
@@ -146,10 +151,25 @@
         "from": "tbxemm2",
         "to": "out"
       },
+      "u5yqkl3": {
+        "as": "intensity",
+        "from": "u5yqkl3",
+        "to": "qv3bmvd"
+      },
       "uzfo5bm": {
         "as": "fn",
         "from": "uzfo5bm",
         "to": "eg4o3m3"
+      },
+      "vp8xgix": {
+        "as": "args",
+        "from": "vp8xgix",
+        "to": "qv3bmvd"
+      },
+      "w5klqlj": {
+        "as": "arg0",
+        "from": "w5klqlj",
+        "to": "vp8xgix"
       },
       "xt3gta9": {
         "as": "geometry",
@@ -165,21 +185,6 @@
         "as": "objects",
         "from": "zm1b72j",
         "to": "4dzd94d"
-      },
-      "tmj66vh": {
-        "from": "tmj66vh",
-        "to": "uzfo5bm",
-        "as": "_false"
-      },
-      "akna0ig": {
-        "from": "akna0ig",
-        "to": "va78wdx",
-        "as": "refs"
-      },
-      "va78wdx": {
-        "from": "va78wdx",
-        "to": "uzfo5bm",
-        "as": "pred"
       }
     },
     "id": "threejs_example",
@@ -189,6 +194,10 @@
       },
       "0vrcnea": {
         "id": "0vrcnea"
+      },
+      "1ceto35": {
+        "id": "1ceto35",
+        "value": "@three.setup"
       },
       "1g6iwxm": {
         "id": "1g6iwxm",
@@ -247,19 +256,10 @@
         "id": "a1pbajd",
         "ref": "return"
       },
-      "akna0ig": {
-        "id": "akna0ig",
-        "value": "return _lib.no.runtime.refs()",
-        "ref": "@js.script"
-      },
       "c0ay50g": {
         "id": "c0ay50g",
         "ref": "arg",
         "value": "objects.cube"
-      },
-      "d6hbagr": {
-        "id": "d6hbagr",
-        "value": "json/three.json"
       },
       "dbxyytc": {
         "id": "dbxyytc"
@@ -271,7 +271,12 @@
       },
       "eg4o3m3": {
         "id": "eg4o3m3",
+        "name": "a",
         "ref": "@flow.runnable"
+      },
+      "nqomz5x": {
+        "id": "nqomz5x",
+        "value": "0x333333"
       },
       "out": {
         "id": "out",
@@ -301,7 +306,8 @@
       },
       "qv3bmvd": {
         "id": "qv3bmvd",
-        "ref": "@three.hemispherelight"
+        "ref": "@three.light",
+        "value": "HemisphereLight"
       },
       "sco3cx9": {
         "id": "sco3cx9",
@@ -310,13 +316,22 @@
       "tbxemm2": {
         "id": "tbxemm2"
       },
-      "tmj66vh": {
-        "id": "tmj66vh",
-        "ref": "@nodysseus.import_json"
+      "u5yqkl3": {
+        "id": "u5yqkl3",
+        "value": "0.2"
       },
       "uzfo5bm": {
         "id": "uzfo5bm",
-        "ref": "@flow.if"
+        "ref": "@nodysseus.checkRefImportJSON",
+        "value": "json/three.json"
+      },
+      "vp8xgix": {
+        "id": "vp8xgix",
+        "ref": "@data.array"
+      },
+      "w5klqlj": {
+        "id": "w5klqlj",
+        "value": "0xffffff"
       },
       "xt3gta9": {
         "id": "xt3gta9",
@@ -330,11 +345,6 @@
       },
       "zm1b72j": {
         "id": "zm1b72j"
-      },
-      "va78wdx": {
-        "id": "va78wdx",
-        "value": "return refs.includes(\"@three.setup\")",
-        "ref": "@js.script"
       }
     },
     "out": "out"
