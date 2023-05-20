@@ -11247,6 +11247,97 @@ const generic = {
       }
     },
     "out": "out"
+  },
+  "@nodysseus.checkRefImportJSON": {
+    "edges": {
+      "akna0ig": {
+        "as": "refs",
+        "from": "akna0ig",
+        "to": "va78wdx"
+      },
+      "d6hbagr": {
+        "as": "url",
+        "from": "d6hbagr",
+        "to": "tmj66vh"
+      },
+      "jmq5y9e": {
+        "as": "true",
+        "from": "jmq5y9e",
+        "to": "uzfo5bm"
+      },
+      "ldk168m": {
+        "as": "args",
+        "from": "ldk168m",
+        "to": "r5emxzc"
+      },
+      "tmj66vh": {
+        "as": "false",
+        "from": "tmj66vh",
+        "to": "uzfo5bm"
+      },
+      "uzfo5bm": {
+        "as": "value",
+        "from": "uzfo5bm",
+        "to": "r5emxzc"
+      },
+      "va78wdx": {
+        "as": "pred",
+        "from": "va78wdx",
+        "to": "uzfo5bm"
+      },
+      "y5x546d": {
+        "as": "checkRef",
+        "from": "y5x546d",
+        "to": "va78wdx"
+      }
+    },
+    "id": "@nodysseus.checkRefImportJSON",
+    "name": "@nodysseus.checkRefImportJSON",
+    "nodes": {
+      "akna0ig": {
+        "id": "akna0ig",
+        "ref": "@js.script",
+        "value": "return _lib.no.runtime.refs()"
+      },
+      "d6hbagr": {
+        "id": "d6hbagr",
+        "ref": "arg",
+        "value": "__graph_value"
+      },
+      "jmq5y9e": {
+        "id": "jmq5y9e",
+        "ref": "arg",
+        "value": "continue"
+      },
+      "ldk168m": {
+        "id": "ldk168m",
+        "name": "a"
+      },
+      "r5emxzc": {
+        "id": "r5emxzc",
+        "name": "@nodysseus.checkRefImportJSON",
+        "ref": "return"
+      },
+      "tmj66vh": {
+        "id": "tmj66vh",
+        "ref": "@nodysseus.import_json"
+      },
+      "uzfo5bm": {
+        "id": "uzfo5bm",
+        "ref": "@flow.if"
+      },
+      "va78wdx": {
+        "id": "va78wdx",
+        "ref": "@js.script",
+        "value": "return refs.includes(checkRef)"
+      },
+      "y5x546d": {
+        "id": "y5x546d",
+        "ref": "arg",
+        "value": "checkRef"
+      }
+    },
+    "out": "r5emxzc"
   }
 },
   "edges": {
