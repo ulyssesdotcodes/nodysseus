@@ -9,11 +9,6 @@ import { initPort, processMessage, SWState } from "./editor/store";
 
 // TODO: get/set have ids to give responses. whenever a graph is updated, send update to all clients
 
-    // .then(() => isModifyingMessage((console.log("checking", m, isModifyingMessage(m)), m)) 
-    //   && ports.forEach(p => p !== port 
-    //     && wrapPromise(store.refs.get(m.kind === "set" ? m.graph.id : m.graphId))
-    //         .then(graph => typedPostMessage(p, {kind: "update", graph}))))
-
 self.onerror = e => console.error("sharedworker error", e)
 
 let store: SWState = {value: undefined, initQueue: []};

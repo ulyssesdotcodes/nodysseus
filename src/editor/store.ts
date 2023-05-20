@@ -100,7 +100,6 @@ export const initPort = (store: SWState, ports: MessagePort[], port: MessagePort
   ports.push(port);
 
   port.addEventListener("message", (e) => {
-    console.log("message", e.data)
     if(store.value) {
       processMessage(store.value, ports, port, e.data)
     } else {
@@ -145,7 +144,6 @@ export const processMessage = (store: RefStore, ports: MessagePort[], port: Mess
     ? wrapPromise(store.delete(m.graphId))
     : m.kind === "addFromUrl"
     ? wrapPromise(store.addFromUrl(m.url)).then(gs => {
-      console.log("resolved gs", gs);
       typedPostMessage(port, {kind: "addFromUrl", messageId: m.messageId, graphs: gs})
       sendUpdateMessages(ports, port)(gs)
     })

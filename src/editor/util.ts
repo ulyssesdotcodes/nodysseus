@@ -214,7 +214,6 @@ export const SetSelectedPositionStyleEffect = (_, {node, svg_offset, dimensions}
 
 export const ChangeEditingGraphId: ha.Effecter<HyperappState, {id: string, select_out: boolean, editingGraphId: string}> = (dispatch, {id, select_out, editingGraphId}) => {
     requestAnimationFrame(() => {
-      console.log("change editingGraphId", id, editingGraphId)
         const graphPromise = wrapPromise(nolib.no.runtime.refs()).then(refs => 
           EXAMPLES.includes(id) && !refs.includes(id) 
           ? fetch((console.log(`fetching ${id}`), `json/${id.replaceAll("_", "-")}.json`))

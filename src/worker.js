@@ -66,7 +66,6 @@ const createStore = (port) =>
   webClientStore(() => sharedWorkerRefStore(port))
     .then(initStore)
     .then(() => {
-      console.log("init queue length", initQueue.length)
       while(initQueue.length > 0){
         processMessage(initQueue.shift())
       }

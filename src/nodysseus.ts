@@ -712,12 +712,10 @@ const runtimefn = () => {
         wrapPromise(get_parentest(graph))
           .then(parent => {
           if (parent) {
-            console.log("got parent", parent);
             (lib.data ?? lib).no.runtime.change_graph(parent, lib, [(typeof graph === "string" ? graph : graph.id).substring(parent.id.length + 1)]);
           } else {
             wrapPromise(typeof graph === "string" ? get_ref(graph) : graph)
               .then(graph => {
-                console.log("graphchange", graph)
                 const changedNodesSet = new Set()
                 while(changedNodes.length > 0) {
                   const node = changedNodes.pop();
