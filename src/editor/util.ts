@@ -4,8 +4,8 @@ import { Edge, FunctorRunnable, getRunnableGraph, getRunnableGraphId, Graph, isA
 import { base_node, base_graph, ispromise, wrapPromise, expand_node, contract_node, ancestor_graph, create_randid, compareObjects, newLib } from "../util";
 import panzoom, * as pz from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
-import { d3Link, d3Node, HyperappState, Levels, Property } from "./types";
-import { UpdateGraphDisplay, UpdateSimulation, d3subscription, updateSimulationNodes } from "./components/graphDisplay";
+import { d3Link, d3Node, HyperappState, Levels, NodysseusSimulation, Property, Vector2 } from "./types";
+import { UpdateGraphDisplay, UpdateSimulation, d3subscription, updateSimulationNodes, getNodes, getLinks } from "./components/graphDisplay";
 import AutocompleteList from "./autocomplete";
 import { parser } from "@lezer/javascript";
 import {v4 as uuid, parse as uuidparse, stringify as uuidstringify} from "uuid";
@@ -63,7 +63,7 @@ export const pzobj: {
   instance: false | pz.PanZoom,
   lastpanzoom: false | number;
   animationframe: false | number;
-  centered: false | string;
+  centered: false | {nodeId: string, position: Vector2, initialOffset: Vector2};
   effect: (dispatch, payload) => void;
   getTransform: () => pz.Transform;
   init: (dispatch, sub_payload) => (() => void);
@@ -72,28 +72,40 @@ export const pzobj: {
     instance: false,
     lastpanzoom: false,
     animationframe: false,
-    effect: function(dispatch, payload){
+    effect: function(dispatch, payload: Pick<HyperappState, "node_el_width" | "dimensions" | "html_id" | "simulation" | "nodeOffset"> & {node_id: string, prevent_dispatch?: boolean} ){
+      requestAnimationFrame(() => {
         if(!hlib.panzoom.instance || !payload.node_id){ 
           pzobj.centered = false;
           return; 
         }
 
-        pzobj.centered = payload.node_id
 
         pzobj.lastpanzoom = performance.now();
+        const nodes = getNodes(payload.simulation);
+        const selectedNode = nodes.find(n => n.node_id === payload.node_id);
+        const selectedNodePos = {
+          x: selectedNode?.x ?? 0,
+          y: selectedNode?.y ?? 0,
+        }
         const viewbox = findViewBox(
-            payload.nodes, 
-            payload.links, 
-            payload.node_id,
-            payload.node_el_width, 
-            payload.html_id,
-            payload.dimensions
+          nodes,
+          getLinks(payload.simulation),
+          payload.node_id,
+          payload.node_el_width, 
+          payload.html_id,
+          payload.dimensions
         );
         const x = payload.dimensions.x * 0.5 - viewbox.center.x;
-        const y = payload.dimensions.y * 0.5 - viewbox.center.y
+        const y = payload.dimensions.y * 0.5 - viewbox.center.y;
         const scale = hlib.panzoom.instance.getTransform().scale;
-        hlib.panzoom.instance.moveTo(x, y);
+        hlib.panzoom.instance.moveTo(x - (payload.simulation?.selectedOffset?.x  ?? 0) * scale, y - (payload?.simulation?.selectedOffset?.y ?? 0) * scale);
         hlib.panzoom.instance.zoomTo(x, y, 1 / scale)
+
+        pzobj.centered = {
+          nodeId: payload.node_id, 
+          position: {x, y},
+          initialOffset: payload?.simulation?.selectedOffset ?? {x: 0, y: 0}
+        }
 
         if(!payload.prevent_dispatch) {
             if(pzobj.animationframe) {
@@ -107,6 +119,8 @@ export const pzobj: {
               ])
             });
         }
+
+      })
     },
     getTransform: function() {
         const ret = (hlib?.panzoom?.instance as pz.PanZoom)?.getTransform?.();
@@ -206,10 +220,19 @@ export const update_graph_list = graph_id => {
 
 }
 
-export const SetSelectedPositionStyleEffect = (_, {node, svg_offset, dimensions}) => {
+type NodePositionArgs = {position: Vector2, simulation: NodysseusSimulation};
+
+        // const x = payload.dimensions.x * 0.5 - viewbox.center.x - payload.nodeOffset.x;
+export const setRootNodeXNodeY = ({position,  simulation}: NodePositionArgs) => {
+  if(pzobj.centered) {
     const rt = document.querySelector(':root') as HTMLElement;
-    rt.style.setProperty('--nodex',  `${Math.min(node.x * (svg_offset?.scale ?? 1) + (svg_offset?.x ?? 0) - 64, dimensions.x - 256)}px`);
-    rt.style.setProperty('--nodey',  `${node.y * (svg_offset?.scale ?? 1) + (svg_offset?.y ?? 0) + 32}px`);
+    rt.style.setProperty('--nodex',  `${Math.round(position.x + pzobj.centered.position.x - pzobj.centered.initialOffset.x + simulation.selectedOffset.x)}px`);
+    rt.style.setProperty('--nodey',  `${Math.round(position.y + pzobj.centered.position.y - pzobj.centered.initialOffset.y + simulation.selectedOffset.y + 64)}px`);
+  }
+}
+
+export const SetSelectedPositionStyleEffect = (_, payload: NodePositionArgs) => {
+  requestAnimationFrame(() => setRootNodeXNodeY(payload))
 }
 
 export const ChangeEditingGraphId: ha.Effecter<HyperappState, {id: string, select_out: boolean, editingGraphId: string}> = (dispatch, {id, select_out, editingGraphId}) => {
@@ -371,20 +394,28 @@ export const Paste = state => [
 export const SelectNode: ha.Action<HyperappState, {
   node_id: string,
   focus_property?: Property,
-}> = (state, {node_id, focus_property}) => state.editingGraph.nodes[node_id] ? [
-    state.selected[0] === node_id ? state : {
+  clearInitialLayout?: boolean
+}> = (state, {node_id, focus_property, clearInitialLayout}) => state.editingGraph.nodes[node_id] ? [
+    state.selected[0] === node_id ? clearInitialLayout && state.initialLayout ? {...state, initialLayout: false} : state : {
       ...state, 
       selected: [node_id], 
       inputs: {},
       selected_edges_in: graphEdgesIn(state.editingGraph, node_id),
       noautozoom: false,
-      selectedMetadata: wrapPromise(hlib.run(state.editingGraph, node_id, {_output: "metadata"})).value
+      selectedMetadata: wrapPromise(hlib.run(state.editingGraph, node_id, {_output: "metadata"})).value,
+      initialLayout: state.initialLayout && !clearInitialLayout
     },
-    !state.show_all && [pzobj.effect, {...state, node_id: node_id}],
+    [pzobj.effect, {...state, node_id: node_id}],
     [UpdateGraphDisplay, {...state, selected: [node_id]}],
-    (state.show_all || state.selected[0] !== node_id) && [pzobj.effect, {...state, node_id}],
     focus_property && [FocusEffect, {selector: `.node-info .${focus_property}`}],
-    state.nodes.find(n => n.node_id === node_id) && [SetSelectedPositionStyleEffect, {node: state.nodes.find(n => n.node_id === node_id), svg_offset: pzobj.getTransform(), dimensions: state.dimensions}],
+    getNodes(state.simulation).find(n => n.node_id === node_id) 
+      && [SetSelectedPositionStyleEffect, {
+        position: getNodes(state.simulation).find(n => n.node_id === node_id), 
+        nodeOffset: state.nodeOffset, 
+        dimensions: state.dimensions,
+        svg_offset: pzobj.getTransform(),
+        simulation: state.simulation
+      }],
     node_id === state.editingGraph.out 
         ? [dispatch => state.info_display_dispatch({el: {dom_type: "div", props: {}, children: [
             {dom_type: "text_value", text: "Most recent graphs"},
@@ -667,7 +698,7 @@ export const runh = el => el.d && el.p && el.c && ha.h(el.d, el.p, el.c);
 export const findViewBox = (nodes: Array<d3Node>, links: Array<d3Link>, selected: string, node_el_width: number, htmlid: string, dimensions: {x: number, y: number}) => {
     const visible_nodes: Array<{x: number, y: number}> = [];
     const visible_node_set = new Set();
-    let selected_pos;
+    let selected_pos: Vector2;
     links.forEach(l => {
         const el = document.getElementById(`link-${(l.source as d3Node).node_id}`);
         const info_el = document.getElementById(`edge-info-${(l.source as d3Node).node_id}`);
@@ -945,18 +976,6 @@ export const hlib = {
         text: {args: ['text'], fn: ha.text}
     },
     scripts: { d3subscription, updateSimulationNodes, keydownSubscription, calculateLevels, listen, graph_subscription, save_graph},
-    effects: {
-        position_by_selected: (id, selected, dimensions, nodes) => {
-            selected = Array.isArray(selected) ? selected[0] : selected;
-            const el = document.getElementById(id.replaceAll("/", "_"));
-            const node = nodes.find(n => n.id === selected);
-            const x = node.x;
-            const y = node.y;
-            const svg_offset = hlib.panzoom.getTransform();
-            el.setAttribute("left",  `${Math.min(x * (svg_offset?.scale ?? 1) + (svg_offset?.x ?? 0) - 64, dimensions.x - 256)}px`);
-            el.setAttribute("top", `${y * (svg_offset?.scale ?? 1) + (svg_offset?.y ?? 0) + 32}px`);
-        }
-    },
     panzoom: pzobj,
     run: (graph, fn, args?, lib?, options?) => {
       try{

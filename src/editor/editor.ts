@@ -8,7 +8,7 @@ import { info_display, infoWindow } from "./components/infoWindow";
 import { init_code_editor } from "./components/codeEditor";
 import { d3Node, HyperappState, Levels } from "./types";
 import { initPort, sharedWorkerRefStore, webClientStore } from "./store";
-import { d3subscription, insert_node_el, link_el, node_el, UpdateSimulation } from "./components/graphDisplay";
+import { d3subscription, getLinks, getNodes, insert_node_el, link_el, node_el, UpdateSimulation } from "./components/graphDisplay";
 import Autocomplete from "./autocomplete"
 import generic from "src/generic";
 import { SimulationNodeDatum } from "d3-force";
@@ -54,7 +54,7 @@ const Search = (state, {payload, nodes}) => {
 
 
 const search_el = ({search}) => ha.h('div', {id: "search"}, [
-    typeof search === "string" && ha.h('input', {type: "text", onkeydown: (state: any, payload) => [Search,  {payload, nodes: state.nodes}], onblur: (state, payload) => [{...state, search: false}]}, []),
+    typeof search === "string" && ha.h('input', {type: "text", onkeydown: (state: any, payload) => [Search,  {payload, nodes: getNodes(state.simulation)}], onblur: (state, payload) => [{...state, search: false}]}, []),
     typeof search !== "string" && ha.h('span', {class: 'material-icons-outlined graph-action', onclick: (s: any) => [{...s, search: ""}, [FocusEffect, {selector: "#search input"}]]}, [ha.text('search')]),
 ])
 
@@ -189,13 +189,13 @@ const runapp = (init, _lib) => {
         [dispatch => requestAnimationFrame(() => dispatch(SelectNode, {node_id: init.selected[0]}))],
         [init_code_editor, {html_id: init.html_id}],
         [dispatch => wrapPromise(nolib.no.runtime.ref_graphs()).then(rgs => dispatch(s => ({...s, refGraphs: rgs.concat(EXAMPLES)})))]
-    ],
+   ],
     dispatch: middleware,
-    view: (s: HyperappState) => ha.h('div', {id: s.html_id}, [
+    view: (s: HyperappState) => ha.h('div', { id: s.html_id }, [
         ha.h('svg', {id: `${s.html_id}-editor`, width: s.dimensions.x, height: s.dimensions.y}, [
             ha.h('g', {id: `${s.html_id}-editor-panzoom`}, 
                 [ha.memo(defs, {})].concat(
-                    s.nodes?.map(node => {
+                    getNodes(s.simulation).map(node => {
                         const newnode = Object.assign({}, node, s.editingGraph.nodes[node.node_id])
                         return ha.memo(node_el, ({
                             html_id: s.html_id, 
@@ -209,25 +209,26 @@ const runapp = (init, _lib) => {
                             has_nodes: isNodeGraph(newnode) ? newnode.nodes : undefined,
                             nested_edge_count: newnode.nested_edge_count,
                             nested_node_count: newnode.nested_node_count,
-                            node_parents: (s.levels as Levels).parents.get(node.node_id)
+                            node_parents: !s.levels ? [] : (s.levels as Levels).parents.get(node.node_id)
                         }))
                 }) ?? []
                 ).concat(
-                    s.links?.map(link => ha.memo(link_el, {
+                    getLinks(s.simulation).map(link => ha.memo(link_el, {
                         link: Object.assign({}, link, s.editingGraph.edges[(link.source as d3Node).node_id]),
                         selected_distance: s.show_all || !s.levels ? 0 : s.levels.distance_from_selected.get((link.source as d3Node).node_id) > 3 ? 'far' : s.levels.distance_from_selected.get((link.source as d3Node).node_id),
                     })) ?? []
                 ).concat(
-                    s.links?.filter(link => (link.source as d3Node).node_id == s.selected[0] || (link.target as d3Node).node_id === s.selected[0])
-                        .map(link => insert_node_el({link, randid: s.randid, node_el_width: s.node_el_width}))
+                    getLinks(s.simulation).filter(link => (link.source as d3Node).node_id == s.selected[0] || (link.target as d3Node).node_id === s.selected[0])
+                        .map(link => insert_node_el({link, randid: s.randid, node_el_width: s.node_el_width, nodeOffset: s.nodeOffset}))
                 )
             ),
         ]),
         ha.memo(infoWindow, {
-            node: Object.assign({}, s.nodes.find(n => n.node_id === s.selected[0]), s.editingGraph.nodes[s.selected[0]]),
+            node: Object.assign({}, getNodes(s.simulation).find(n => n.node_id === s.selected[0]), s.editingGraph.nodes[s.selected[0]]),
             hidden: s.show_all,
+            initialLayout: s.initialLayout,
             edges_in: s.selected_edges_in,
-            link_out: Object.assign({}, s.links.find(l => (l.source as d3Node).node_id === s.selected[0]), s.editingGraph.edges[s.selected[0]]),
+            link_out: Object.assign({}, getLinks(s.simulation).find(l => (l.source as d3Node).node_id === s.selected[0]), s.editingGraph.edges[s.selected[0]]),
             editingGraph: s.editingGraph,
             editingGraphId: s.editingGraph.id,
             randid: s.randid,
@@ -239,7 +240,8 @@ const runapp = (init, _lib) => {
             graph_out: s.editingGraph.out,
             error: s.error,
             refGraphs: s.refGraphs,
-            metadata: s.selectedMetadata
+            metadata: s.selectedMetadata,
+            nodeOffset: s.nodeOffset
         }),
         ha.h('div', {id: `${init.html_id}-custom-editor-display`}),
         ha.h('div', {id: "graph-actions", class: "actions"}, [
@@ -281,8 +283,8 @@ const runapp = (init, _lib) => {
                       hlib.run(s.editingGraph, s.editingGraph.out ?? "out", {_output: "value"}, {profile: false});  
                       refresh_custom_editor()
                       requestAnimationFrame(() =>  dispatch(s => [s, [() => {
-                          s.simulation.alpha(1); 
-                          s.simulation.nodes([]); 
+                          s.simulation.simulation.alpha(1); 
+                          s.simulation.simulation.nodes([]); 
                       }, {}], [UpdateSimulation, {}]])) 
                   }, {}]]
             }, [ha.text('refresh')]),
@@ -314,7 +316,7 @@ const runapp = (init, _lib) => {
     node: document.getElementById(init.html_id),
     subscriptions: s => [
         document.getElementById(`${init.html_id}-result`) && [mutationObserverSubscription, {id: `${init.html_id}-result`}],
-        [d3subscription, {action: SimulationToHyperapp, update: UpdateSimulation}], 
+        [d3subscription, {action: SimulationToHyperapp, update: UpdateSimulation, htmlid: init.html_id}], 
         [graph_subscription, {editingGraphId: s.editingGraphId, norun: s.norun}],
         [select_node_subscription, {}],
         result_display_dispatch && [result_subscription, {editingGraphId: s.editingGraphId, displayGraphId: s.displayGraphId, norun: s.norun}],
@@ -352,11 +354,11 @@ const runapp = (init, _lib) => {
                 case "graph_arrowleft": 
                 case "graph_arrowright": {
                     const dirmult = key_input === "arrowleft" ? 1 : -1;
-                    const current_node = state.nodes.find(n => n.node_id === selected);
+                    const current_node = getNodes(state.simulation).find(n => n.node_id === selected);
                     if(state.levels) {
                       const siblings = state.levels.siblings.get(selected); 
                       const node_id = siblings.reduce((dist, sibling) => { 
-                          const sibling_node = state.nodes.find(n => n.node_id === sibling); 
+                          const sibling_node = getNodes(state.simulation).find(n => n.node_id === sibling); 
                           if(!sibling_node){ return dist } 
                           const xdist = Math.abs(sibling_node.x - current_node.x); 
                           dist = (dirmult * (sibling_node.x - current_node.x) < 0) && xdist < dist[0] ? [xdist, sibling_node] : dist; 
@@ -457,7 +459,8 @@ const runapp = (init, _lib) => {
                     show_all: p.event !== 'effect_transform', 
                     editing: p.event === 'effect_transform' && s.editing, 
                     focused: p.event === 'effect_transform' && s.focused, 
-                    noautozoom: p.noautozoom && !s.stopped
+                    noautozoom: p.noautozoom && !s.stopped,
+                    initialLayout: false
                 },
                 [() => requestAnimationFrame(() => nolib.no.runtime.publish('show_all', {data: p.event !== 'effect_transform'}, hlibLib))]
             ]
@@ -535,12 +538,10 @@ const editor = async function(html_id, editingGraphId, lib, norun) {
             norun: norun || url_params.get("norun") !== null,
             hide_types: false,
             offset: {x: 0, y: 0},
-            nodes: [],
-            links: [],
             focused: false,
             editing: false,
             search: false,
-            show_all: false,
+            show_all: true,
             show_result: false,
             node_el_width: 256,
             args_display: false,
@@ -552,7 +553,11 @@ const editor = async function(html_id, editingGraphId, lib, norun) {
             randid: create_randid(),
             custom_editor_result: {},
             showHelp: false,
-            refGraphs: []
+            refGraphs: [],
+            stopped: false,
+            noautozoom: false,
+            nodeOffset: {x: 0, y: 0},
+            initialLayout: true
         };
 
         runapp(init, lib)

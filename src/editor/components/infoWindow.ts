@@ -4,7 +4,7 @@ import { wrapPromise } from "src/util";
 import { isNonNullChain } from "typescript";
 import generic from "../../generic";
 import {NodysseusError, nolib} from "../../nodysseus"
-import { d3Link, d3Node, HyperappState } from "../types";
+import { d3Link, d3Node, HyperappState, Vector2 } from "../types";
 import { ChangeEditingGraphId, Copy, CreateNode, CreateRef, DeleteNode, ExpandContract, hlib, middleware, node_args, Paste, run_h, SaveGraph, SelectNode, UpdateEdge, UpdateNode, UpdateNodeEffect } from "../util";
 
 export const info_display = html_id => ha.app({
@@ -48,9 +48,10 @@ export const infoInput = ({label, property, value, onchange, oninput, onkeydown,
     ]
 )
 
-export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, editingGraphId, randid, ref_graphs, html_id, copied_graph, inputs, graph_out, editing, error, refGraphs, metadata}: {
+export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, editingGraphId, randid, ref_graphs, html_id, copied_graph, inputs, graph_out, editing, error, refGraphs, metadata, initialLayout}: {
   node: d3Node,
   hidden: boolean,
+  initialLayout: boolean,
   edges_in: Array<Edge>,
   link_out: Edge & d3Link,
   editingGraph: Graph,
@@ -64,7 +65,8 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
   editing: boolean,
   error: false | NodysseusError,
   refGraphs: Array<string>,
-  metadata: NodeMetadata
+  metadata: NodeMetadata,
+  nodeOffset: Vector2
 })=> {
     //const s.editingGraph.id === s.editingGraphId && nolib.no.runtime.get_node(s.editingGraph, s.selected[0]) && 
     const node_ref = !hidden && node && isNodeRef(node) ? nolib.no.runtime.get_ref(node.ref) : node;
@@ -72,7 +74,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
     const node_arg_labels = !hidden && node?.id ? node_args(nolib, editingGraph, node.id, metadata) : [];
     const isOut = node.id === graph_out
 
-    return ha.h('div', {id: "node-info-wrapper"}, [ha.h('div', {class: "spacer before"}, []), ha.h(
+    return ha.h('div', {id: "node-info-wrapper", class: {"initial-layout": initialLayout}}, [ha.h('div', {class: "spacer before"}, []), ha.h(
         'div',
         { 
             class: {'node-info': true, hidden, editing, [isNodeRef(node) && node.ref.replace("@", "").replace(".", "-")]: isNodeRef(node) }, 

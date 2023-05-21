@@ -12,6 +12,8 @@ export type HyperappState = {
   displayGraphId: string | false,
   displayGraph: Graph | false,
   hash: string,
+  stopped: boolean,
+  noautozoom: boolean,
   url_params: URLSearchParams,
   html_id: string,
   dimensions: Vector2,
@@ -19,8 +21,6 @@ export type HyperappState = {
   norun: boolean,
   hide_types: boolean,
   offset: Vector2
-  nodes: Array<d3Node>,
-  links: Array<d3Link>,
   focused: boolean,
   editing: boolean,
   search: boolean,
@@ -38,6 +38,7 @@ export type HyperappState = {
     graph: Graph
   },
   simulation?: NodysseusSimulation,
+  nodeOffset: Vector2,
   clear_simulation_cache?: boolean,
   info_display_dispatch?: Function,
   result_display_dispatch?: Function,
@@ -47,7 +48,8 @@ export type HyperappState = {
   custom_editor_result: {},
   showHelp: boolean,
   refGraphs: Array<string>,
-  selectedMetadata?: NodeMetadata
+  selectedMetadata?: NodeMetadata,
+  initialLayout: boolean
 }
 
 export type Levels = {
@@ -73,7 +75,7 @@ export type d3Link = SimulationLinkDatum<d3Node> & {
   edge: Edge
 }
 
-export type NodysseusSimulation = Simulation<d3Node, d3Link>
+export type NodysseusSimulation = {selectedOffset: Vector2, simulation: Simulation<d3Node, d3Link>}
 export type NodysseusForceLink = ForceLink<d3Node, d3Link>
 
 // SharedWorker messages

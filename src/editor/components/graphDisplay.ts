@@ -4,16 +4,19 @@ import { hashcode, nolib } from "../../nodysseus";
 import { Graph, isNodeGraph, NodysseusNode } from "../../types";
 import { ispromise, wrapPromise } from "../../util";
 import { HyperappState, NodysseusForceLink, NodysseusSimulation, d3Link, d3Node, Vector2 } from "../types";
-import { calculateLevels, CreateNode, findViewBox, hlib, pzobj, SelectNode, graphEdgeOut, graphEdgesIn } from "../util";
+import { calculateLevels, CreateNode, findViewBox, hlib, pzobj, SelectNode, graphEdgeOut, graphEdgesIn, setRootNodeXNodeY } from "../util";
 
 export const UpdateSimulation: ha.Effecter<HyperappState, any>  = (dispatch, payload) => payload ? !(payload.simulation || payload.static) ? undefined : updateSimulationNodes(dispatch, payload) : dispatch(state => [state, [() => !(state.simulation) ? undefined : updateSimulationNodes(dispatch, state), undefined]])
 
 export const UpdateGraphDisplay: ha.Effecter<HyperappState, any>  = (dispatch, payload) => {
     requestAnimationFrame(() => dispatch(s => [{
       ...s,
-      levels: calculateLevels(payload.nodes, payload.links, payload.editingGraph, payload.selected)
+      levels: calculateLevels(getNodes(payload.simulation), getLinks(payload.simulation), payload.editingGraph, payload.selected)
   }]))
 }
+
+export const getLinks = (simulation: NodysseusSimulation): Array<d3Link> | undefined => simulation ? (simulation.simulation.force('links') as NodysseusForceLink).links() : []
+export const getNodes = (simulation: NodysseusSimulation): Array<d3Node> | undefined => simulation ? simulation.simulation.nodes() : [];
 
 export const updateSimulationNodes: ha.Effecter<HyperappState, {
   simulation?: NodysseusSimulation, 
@@ -22,7 +25,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
 }> = (dispatch, data) => {
     const simulation_node_data = new Map<string, d3Node>();
     if(!data.clear_simulation_cache){
-        data.simulation.nodes().forEach(n => {
+        data.simulation.simulation.nodes().forEach(n => {
             simulation_node_data.set(n.node_id, n)
         });
     }
@@ -31,7 +34,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
     
     const simulation_link_data = new Map();
     if(!data.clear_simulation_cache){
-        (data.simulation.force('links') as ForceLink<d3Node, d3Link>).links()
+        (data.simulation.simulation.force('links') as ForceLink<d3Node, d3Link>).links()
         .forEach(l => {
           if(typeof l.source === 'object' && typeof l.target === 'object') {
             simulation_link_data.set(`${idFromNode(l.source)}__${idFromNode(l.target)}`, l);
@@ -202,13 +205,13 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
             if (
                 simulation_node_data.size !== start_sim_node_size ||
                 simulation_link_data.size !== start_sim_link_size || 
-                data.simulation.nodes()?.length !== nodes.length ||
-                (data.simulation.force('links') as ForceLink<d3Node, d3Link>)?.links().length !== links.length) {
-                data.simulation.alpha(0.8);
+                data.simulation.simulation.nodes()?.length !== nodes.length ||
+                (data.simulation.simulation.force('links') as ForceLink<d3Node, d3Link>)?.links().length !== links.length) {
+                data.simulation.simulation.alpha(0.8);
             }
 
-            data.simulation.nodes(nodes);
-            (data.simulation.force('links') as ForceLink<d3Node, d3Link>).links(links);
+            data.simulation.simulation.nodes(nodes);
+            (data.simulation.simulation.force('links') as ForceLink<d3Node, d3Link>).links(links);
             // data.simulation.force('fuse_links').links(data.fuse_links);
         }
 
@@ -217,7 +220,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
         const avgparents = parentlengths.reduce((acc, v) => acc + v, 0) / nodes.length;
         const logmaxparents = maxparents === 1 ? nodes.length : Math.log(nodes.length) / Math.log(1 + avgparents);
 
-        (data.simulation.force('link_direction') as ForceY<d3Node>)
+        (data.simulation.simulation.force('link_direction') as ForceY<d3Node>)
             .y(n =>
                 (((parents_map.get(n.node_id)?.length > 0 ? 1 : 0)
                     + (children_map.get(n.node_id)?.length > 0 ? -1 : 0)
@@ -228,7 +231,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
                 || children_map.get(n.node_id)?.length > 0 ? .01 : 0);
 
 
-        (data.simulation.force('collide') as ForceCollide<d3Node>).radius(96);
+        (data.simulation.simulation.force('collide') as ForceCollide<d3Node>).radius(96);
     // data.simulation.force('center').strength(n => (levels.parents_map.get(n.node_id)?.length ?? 0) * 0.25 + (levels.children_map.get(n.node_id)?.length ?? 0) * 0.25)
     // })
 }
@@ -237,8 +240,10 @@ const idFromNode = (node: d3Node | string | number): string => typeof node === "
 
 // Creates the simulation, updates the node elements when the simulation changes, and runs an action when the nodes have settled.
 // This is probably doing too much.
-export const d3subscription = (dispatch, props) => {
-    const simulation: NodysseusSimulation = hlib.d3.forceSimulation<d3Node>()
+export const d3subscription = (dispatch: ha.Dispatch<HyperappState>, props) => {
+    const nodySim: NodysseusSimulation = {
+      selectedOffset: {x: 0, y: 0},
+      simulation: hlib.d3.forceSimulation<d3Node>()
         .force('charge', hlib.d3.forceManyBody().strength(-1024).distanceMax(1024).distanceMin(64))
         .force('collide', hlib.d3.forceCollide(64))
         .force('links', hlib.d3
@@ -252,107 +257,66 @@ export const d3subscription = (dispatch, props) => {
         // .force('link_siblings', lib.d3.forceX().strength(1))
         // .force('selected', lib.d3.forceRadial(0, window.innerWidth * 0.5, window.innerHeight * 0.5).strength(2))
         .velocityDecay(0.7)
-        .alphaMin(.25);
+        .alphaMin(.25)
+    };
+
+    const simulation = nodySim.simulation;
 
     const abort_signal = { stop: false };
     simulation.stop();
-    let htmlid;
-    let stopped = false;
+    let htmlid = props.htmlid;
+    let stopped = true;
     let selected;
-    let show_all = false;
-    let selectedOffset: false | {x: number, y: number} = false;
     const node_el_width = 256;
-    const centerObjectFn = center => obj => ({ ...obj, x: Math.floor(obj.x - center.x), y: Math.floor(obj.y - center.y) })
-    const calcBoundingRect = nodes => {
-      const rect = nodes.reduce(
-            (rect, node) => {
-              rect.x0 = Math.min(rect.x0, node.x);
-              rect.y0 = Math.min(rect.y0, node.y);
-              rect.x1 = Math.max(rect.x1, node.x);
-              rect.y1 = Math.max(rect.y1, node.y);
-              return rect;
-            }
-          , {x0: Number.MAX_VALUE, y0: Number.MAX_VALUE, x1: Number.MIN_VALUE, y1: Number.MIN_VALUE});
-      const center = {x: (rect.x1 + rect.x0) * 0.5, y: (rect.y1 + rect.y0) * 0.5};
-      return {rect, center}
-    }
-    let initBounding: Vector2 | false = false;
-    let lastAlpha;
-    let currentSelectedOffset: false | Vector2;
+    let selectedNode: d3Node | undefined;
 
     const tick = () => {
+        selected = pzobj.centered && pzobj.centered.nodeId;
         if(simulation.nodes().length === 0) {
-            requestAnimationFrame(() => dispatch(s => [(htmlid = s.html_id, {...s, simulation}), [props.update, s]]));
+            requestAnimationFrame(() => dispatch(s => [{...s, simulation: nodySim}, [props.update, s]]));
+            requestAnimationFrame(tick);
+            return () => { abort_signal.stop = true; }
         }
-        let isReset = simulation.alpha() > lastAlpha;
-        lastAlpha = simulation.alpha();
 
-        currentSelectedOffset = isReset || selected !== pzobj.centered ? false : (currentSelectedOffset ?? selectedOffset);
+        if(selected && selectedNode?.id !== selected?.[0]) {
+          selectedNode = simulation.nodes().find(n => n.node_id === selected);
+        }
 
         if (simulation.alpha() > simulation.alphaMin()) {
-          currentSelectedOffset = selectedOffset;
+          simulation.tick();
 
-          if(simulation.nodes().length > 0 && selected === pzobj.centered && (initBounding === false || isReset)) {
-            initBounding = calcBoundingRect(simulation.nodes()).center;
-            simulation.nodes().forEach(n => {
-              if(n.node_id === selected && initBounding) {
-                selectedOffset = {x: n.x - initBounding.x, y: n.y - initBounding.y}
-              }
-            })
+          if(selectedNode) {
+            nodySim.selectedOffset = {
+              x: -selectedNode.x,
+              y: -selectedNode.y,
+            }
           }
 
-          const boundingRect = calcBoundingRect(simulation.nodes())
-          if(selected === pzobj.centered && initBounding) {
-            simulation.nodes().forEach(n => {
-              if(n.node_id === selected && initBounding) {
-                currentSelectedOffset = {x: n.x - boundingRect.center.x, y: n.y - boundingRect.center.y}
-              }
-            })
-          }
+          let selectedOffset = selectedNode && nodySim.selectedOffset;
 
-          const centerObject = obj => ({
+
+          const centerObject = obj => selectedOffset ? {
             ...obj,
-            x: obj.x - (initBounding ? (boundingRect.center.x - initBounding.x) : 0) - (currentSelectedOffset && selectedOffset ? currentSelectedOffset.x - selectedOffset.x : 0),
-            y: obj.y - (initBounding ? (boundingRect.center.y - initBounding.y) : 0) - (currentSelectedOffset && selectedOffset ? currentSelectedOffset.y - selectedOffset.y : 0)
-          });
-            const data = {
-                nodes: simulation.nodes().map(centerObject),
-                links: (simulation.force('links') as ForceLink<d3Node, d3Link>).links().map(l => ({
-                    ...l,
-                    as: l.edge.as,
-                    source: centerObject({
-                        node_id: idFromNode(l.source),
-                        x: (l.source as d3Node).x,
-                        y: (l.source as d3Node).y
-                    }),
-                    target: centerObject({
-                        node_id: idFromNode(l.target),
-                        x: (l.target as d3Node).x,
-                        y: (l.target as d3Node).y
-                    })
-                }))};
+            x: obj.x + selectedOffset.x,
+            y: obj.y + selectedOffset.y
+          } : obj;
+
+          if(selectedOffset) {
+            setRootNodeXNodeY({
+              position: {x: selectedNode.x, y: selectedNode.y}, 
+              simulation: nodySim
+            })
+          }
             const ids = simulation.nodes().map(n => n.node_id).join(',');
+          // this is a reset
+          if(stopped) {
+            // do this after the simulation ticks so pzobj has the right info
+            dispatch(s => [
+              selectedOffset ? {...s, stopped: false, nodeOffset: selectedOffset} : s, 
+              [pzobj.effect, {...s, node_id: s.selected[0], nodeOffset: selectedOffset}] 
+            ])
+          }
             stopped = false;
-            simulation.tick();
-            dispatch([s => (
-              selected = s.selected[0],
-              show_all = s.show_all,
-              s.nodes.map(n => n.node_id).join(',') !== ids 
-                ? [props.action, data] 
-                : s.stopped 
-                  ? [{...s, stopped}, 
-                        !s.noautozoom && [
-                            hlib.panzoom.effect, {
-                                ...s, 
-                                nodes: data.nodes.map(n => ({...n, x: n.x - 8, y: n.y})), 
-                                links: data.links,
-                                prevent_dispatch: true, 
-                                node_id: s.selected[0]
-                            }
-                        ]
-                  ]
-                  : s
-            )]);
 
             const visible_nodes = [];
             const visible_node_set = new Set();
@@ -365,11 +329,9 @@ export const d3subscription = (dispatch, props) => {
 
                     el.style.setProperty('--tx', `${(x - 20).toFixed()}px`);
                     el.style.setProperty('--ty', `${(y - 20).toFixed()}px`);
-                    // el.setAttribute('transform', `translate(${(x - 20).toFixed()}px, ${(y - 20).toFixed()}px)`)
 
                     if(n.node_id === selected) {
                         visible_nodes.push({x, y})
-                        // selectedPos = {x, y};
                     }
                 }
             });
@@ -385,12 +347,10 @@ export const d3subscription = (dispatch, props) => {
                     const length_y = Math.abs(source.y - target.y); 
                     const length = Math.sqrt(length_x * length_x + length_y * length_y); 
                     const lerp_length = 24;
-                    // return {selected_distance, selected_edge, source: {...source, x: source.x + (target.x - source.x) * lerp_length / length, y: source.y + (target.y - source.y) * lerp_length / length}, target: {...target, x: source.x + (target.x - source.x) * (1 - (lerp_length / length)), y: source.y + (target.y - source.y) * (1 - (lerp_length / length))}}"
                     el.setAttribute('x1', Math.floor(source.x + (target.x - source.x) * lerp_length / length).toFixed());
                     el.setAttribute('y1', Math.floor(source.y + (target.y - source.y) * lerp_length / length).toFixed());
                     el.setAttribute('x2', Math.floor(source.x + (target.x - source.x) * (1 - lerp_length / length)).toFixed());
                     el.setAttribute('y2', Math.floor(source.y + (target.y - source.y) * (1 - lerp_length / length)).toFixed());
-                    // edge_label_el.setAttribute('transform', `translate(${((target.x - source.x) * edge_label_dist + source.x + 16).toFixed()}, ${((target.y - source.y) * edge_label_dist + source.y).toFixed()})`);
 
                     const min_edge_label_dist = 32 / Math.abs(target.y - source.y);
                     const max_edge_label_dist = Math.min(64 / Math.abs(target.y - source.y), 0.5);
@@ -422,42 +382,9 @@ export const d3subscription = (dispatch, props) => {
                 }
             })
         } else if(!stopped) {
-          const boundingRect = calcBoundingRect(simulation.nodes())
-          if(selected === pzobj.centered && initBounding) {
-            simulation.nodes().forEach(n => {
-              if(n.node_id === selected && initBounding) {
-                currentSelectedOffset = {x: n.x - boundingRect.center.x, y: n.y - boundingRect.center.y}
-              }
-            })
-          }
-          const centerObject = centerObjectFn({
-            x: (initBounding ? (boundingRect.center.x - initBounding.x) : 0) + (currentSelectedOffset && selectedOffset ? currentSelectedOffset.x - selectedOffset.x : 0),
-            y: (initBounding ? (boundingRect.center.y - initBounding.y) : 0) + (currentSelectedOffset && selectedOffset ? currentSelectedOffset.y - selectedOffset.y : 0)
-          });
-            const data = {
-                nodes: simulation.nodes().map(n => {
-                    return centerObject({ ...n, x: ( Math.floor(n.x)), y: Math.floor(n.y) })
-                }),
-                links: (simulation.force('links') as NodysseusForceLink).links().map(l => ({
-                    ...l,
-                    as: l.edge.as,
-                    source: centerObject({
-                        node_id: idFromNode(l.source),
-                        x: Math.floor((l.source as d3Node).x),
-                        y: Math.floor((l.source as d3Node).y)
-                    }),
-                    target: centerObject({
-                        node_id: idFromNode(l.target),
-                        x: Math.floor((l.target as d3Node).x),
-                        y: Math.floor((l.target as d3Node).y)
-                    })
-                }))};
             stopped = true; 
             requestAnimationFrame(() => {
-              initBounding = false;
-                dispatch([props.action, data])
-                dispatch(s => [{...s, noautozoom: false, stopped}])
-                // dispatch(s => [{...s, noautozoom: false, stopped}, !s.noautozoom && [hlib.panzoom.effect, {...s, node_id: s.selected[0]}]])
+                dispatch(s => ({...s, noautozoom: false, stopped, nodeOffset: nodySim.selectedOffset}))
             });
         }
 
@@ -480,7 +407,7 @@ const node_text_el = ({node_id, primary, focus_primary, secondary}) =>ha.h('text
 
 const radius = 24;
 export const node_el = ({html_id, selected, error, selected_distance, node_id, node_ref, node_name, node_value, has_nodes, nested_edge_count, nested_node_count, node_parents}) =>ha.h('g', {
-    onpointerdown: [SelectNode, {node_id}],  
+    onpointerdown: [SelectNode, {node_id, clearInitialLayout: true}],  
     width: '256', 
     height: '64', 
     key: html_id + '-' + node_id, 
@@ -525,14 +452,14 @@ export const link_el = ({link, selected_distance}) =>ha.h('g', {}, [
     ])
 ])
 
-export const insert_node_el = ({link, randid, node_el_width}) => ha.h('svg', {
+export const insert_node_el = ({link, randid, node_el_width, nodeOffset}) => ha.h('svg', {
     viewBox: "0 0 512 512",
     id: `insert-${link.source.node_id}`,
     key: `insert-${link.source.node_id}`,
     height: "32px",
     width: "32px",
-    x: Math.floor((link.source.x + link.target.x - node_el_width) * 0.5) - 16,
-    y: Math.floor((link.source.y + link.target.y) * 0.5) - 16,
+    x: Math.floor((link.source.x + link.target.x - node_el_width ) * 0.5 + nodeOffset.x) - 16,
+    y: Math.floor((link.source.y + link.target.y) * 0.5  + nodeOffset.y) - 16,
     class: 'insert-node',
     onclick: (s, p) => [CreateNode, {node: {id: randid}, child: link.target.node_id, parent: {from: link.source.node_id, to: link.target.node_id, as: link.as}}],
     ontouchstart: (s, p) => [CreateNode, {node: {id: randid}, child: link.target.node_id, parent: {from: link.source.node_id, to: link.target.node_id, as: link.as}}]

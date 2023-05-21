@@ -257,6 +257,10 @@ svg {
     opacity: 0.1;
 }
 
+#node-info-wrapper.initial-layout {
+  visibility: hidden;
+}
+
 #node-info-wrapper {
     position: absolute;
     left: var(--nodex);
