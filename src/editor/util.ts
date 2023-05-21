@@ -98,7 +98,10 @@ export const pzobj: {
         const x = payload.dimensions.x * 0.5 - viewbox.center.x;
         const y = payload.dimensions.y * 0.5 - viewbox.center.y;
         const scale = hlib.panzoom.instance.getTransform().scale;
-        hlib.panzoom.instance.moveTo(x - (payload.simulation?.selectedOffset?.x  ?? 0) * scale, y - (payload?.simulation?.selectedOffset?.y ?? 0) * scale);
+        hlib.panzoom.instance.moveTo(
+          x - (payload.simulation?.selectedOffset?.x  ?? 0) * scale, 
+          y - (payload?.simulation?.selectedOffset?.y ?? 0) * scale
+        );
         hlib.panzoom.instance.zoomTo(x, y, 1 / scale)
 
         pzobj.centered = {
