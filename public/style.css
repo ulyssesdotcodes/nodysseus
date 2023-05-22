@@ -258,15 +258,15 @@ svg {
 }
 
 #node-info-wrapper {
-    position: absolute;
-    left: var(--nodex);
-    top: 0;
-    bottom: 0;
+  position: absolute;
+  left: var(--nodex);
+  top: 0;
+  bottom: 0;
 
-    display: flex;
-    flex-flow: column nowrap;
-    pointer-events: none;
-    max-width: 400px;
+  display: flex;
+  flex-flow: column nowrap;
+  pointer-events: none;
+  max-width: 400px;
 }
 
 #node-info-wrapper .spacer {
@@ -294,15 +294,16 @@ svg {
 
 @media (max-width: 600px) {
   #node-info-wrapper {
-    left: calc(var(--nodex) - 128px);
+    left: max(min(25vw, calc(var(--nodex) - 75vw)), 0vw);
+    max-width: 75vw;
   }
 
     #node-info-wrapper:focus-within {
-        width: calc(100vw - 2px - .8em);
-        max-width: 100vw;
-        height: calc(100vh - 2px - .8em);
-        left: 0;
-        right: 0;
+      width: calc(100vw - 2px - .8em);
+      max-width: 100vw;
+      height: calc(100vh - 2px - .8em);
+      left: 0;
+      right: 0;
     }
 
     #node-info-wrapper:focus-within {
