@@ -747,14 +747,14 @@ const runtimefn = () => {
             .then(updatedgraph => {
               if(updatedgraph && !ispromise(updatedgraph) && (!updatepublish[updatedgraph.id] || updatepublish[updatedgraph.id] + 16 < performance.now())) {
                 updatepublish[updatedgraph.id] = performance.now();
-                requestAnimationFrame(() => {
+                setTimeout(() => {
                   updatepublish[updatedgraph.id] = false;
                   // TODO: fix the use of / here
                   let node_id = graph.split(updatedgraph.id)[1].substring(1);
                   node_id = node_id.indexOf('/') > 0 ? node_id.substring(0, node_id.indexOf('/')) : node_id;
 
                   publish("graphupdate", {graph: updatedgraph, dirtyNodes: node_id && Object.keys(descendantGraph(node_id, updatedgraph, lib).nodes)}, lib);
-                })
+                }, 16)
               }
             }).value
         }
