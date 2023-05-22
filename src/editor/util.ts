@@ -291,12 +291,13 @@ export const ChangeEditingGraphId: ha.Effecter<HyperappState, {id: string, selec
 }
 
 
-export const CreateNode: ha.Action<HyperappState, {node: NodysseusNode, child: string, child_as: string, parent?: Edge }> = (state, {node, child, child_as, parent}) => [
+export const CreateNode: ha.Action<HyperappState, {node: NodysseusNode & {id?: string}, child: string, child_as: string, parent?: Edge }> = (state, {node, child, child_as, parent}) => [
     state,
     dispatch => {
+      if(!node.id) node.id = create_randid(state.editingGraph)
       nolib.no.runtime.updateGraph({
         graph: state.editingGraph, 
-        addedNodes: [node],
+        addedNodes: [node as NodysseusNode],
         addedEdges:
           parent 
               ? [{from: node.id, to: child, as: parent.as}, {from: parent.from, to: node.id, as: 'arg0'}] 
@@ -368,7 +369,7 @@ export const Paste = state => [
         nolib.no.runtime.add_nodes_edges(
           state.editingGraph, 
           Object.values(copied.graph.nodes as Array<NodysseusNode>)
-            .map(n => ({...n, id: (node_id_map[n.id] = create_randid(), node_id_map[n.id])})),
+            .map(n => ({...n, id: (node_id_map[n.id] = create_randid(state.editingGraph), node_id_map[n.id])})),
           Object.values(copied.graph.edges as Array<Edge>)
             .map(e => ({...e, from: node_id_map[e.from], to: node_id_map[e.to]}))
             .concat([{from: node_id_map[copied.root], to: state.selected[0], as: copied.as}]),
@@ -961,7 +962,7 @@ export const save_graph = graph => {
 
 export const graphEdgeOut = (graph: Graph, node: string) => graph.edges[node];
 export const graphEdgesIn = (graph: Graph, node: string) => 
-  Object.hasOwn(graph, "edges_in")
+  graph["edges_in"]
     ? Object.hasOwn(graph.edges_in, node)
       ? Object.values(graph.edges_in[node])
       : []

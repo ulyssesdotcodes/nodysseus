@@ -1,6 +1,6 @@
 import { parser } from "@lezer/javascript";
 import { nodysseus_get } from "./nodysseus";
-import { Edge, Graph, GraphNode, NodysseusNode, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable, isEnv, isRunnable, isValue, Lib, isLib, Env, Args, ValueNode, Result, isArgs, isConstRunnable, isApRunnable, isError, ConstRunnable, TypedArg } from "./types";
+import { Edge, Graph, GraphNode, NodysseusNode, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable, isEnv, isRunnable, isValue, Lib, isLib, Env, Args, ValueNode, Result, isArgs, isConstRunnable, isApRunnable, isError, ConstRunnable, TypedArg, SavedGraph, isEdgesInGraph } from "./types";
 
 export const WRAPPED_KIND = "wrapped";
 type WrappedKind = "wrapped";
@@ -59,7 +59,17 @@ export const mapMaybePromise = <T, S>(a: T, fn: (t: FlattenPromise<T>) => S): If
 export const base_node = node => node.ref || node.extern ? ({id: node.id, value: node.value, name: node.name, ref: node.ref}) : base_graph(node);
 export const base_graph = graph => ({id: graph.id, value: graph.value, name: graph.name, nodes: graph.nodes, edges: graph.edges, edges_in: graph.edges_in, out: graph.out, description: graph.description})
 
-export const create_randid = () => Math.random().toString(36).substring(2, 9);
+export const create_randid = (graph: Graph) => {
+  const randstr = Math.random().toString(36);
+  let i = 2;
+  let randid;
+  do {
+    randid = randstr.substring(i, i + 7);
+  } while(graph.nodes[randid])
+
+  return randid;
+}
+
 type FlattenedGraph = {flat_nodes: Record<string, NodysseusNode>, flat_edges: Record<string, Edge>};
 const isFlattenedGraph = (g: NodysseusNode | FlattenedGraph): g is FlattenedGraph => !!(g as FlattenedGraph).flat_nodes;
 export const flattenNode = (graph: NodysseusNode, levels = -1): FlattenedGraph | NodysseusNode =>
@@ -97,7 +107,7 @@ export const expand_node = (data: {nolib: Record<string, any>, node_id: string, 
 
     const flattened = flattenNode(node, 1);
 
-    const new_id_map = isFlattenedGraph(flattened) ? Object.values(flattened.flat_nodes).reduce((acc, n) => nolib.no.runtime.get_node(data.editingGraph, n.id) ? (acc[n.id] = create_randid(), acc) : n, {} as Record<string, any>) : flattened
+    const new_id_map = isFlattenedGraph(flattened) ? Object.values(flattened.flat_nodes).reduce((acc, n) => nolib.no.runtime.get_node(data.editingGraph, n.id) ? (acc[n.id] = create_randid(data.editingGraph), acc) : n, {} as Record<string, any>) : flattened
 
     isFlattenedGraph(flattened) && nolib.no.runtime.add_nodes_edges(data.editingGraph.id, Object.values(flattened.flat_nodes).map(n => ({...n, id: new_id_map[n.id] ?? n.id})), Object.values(flattened.flat_edges).concat(in_edges.map((e: Edge) => ({...e, to: new_id_map[args_node] ?? args_node}))).concat([{...data.editingGraph.edges[node_id], from: node.out}]).map(e => ({...e, from: new_id_map[e.from] ?? e.from, to: new_id_map[e.to] ?? e.to})), in_edges.concat([data.editingGraph.edges[node_id]]), [node_id], nolib)
 
@@ -201,16 +211,17 @@ export const contract_node = (data: {editingGraph: Graph, node_id: string, nolib
 
 
 
-export const ancestor_graph = (node_id: string, from_graph: Graph, nolib?: Record<string, any>): Graph => {
-    let edges_in;
+export const ancestor_graph = (node_id: string, from_graph: Graph | SavedGraph, nolib?: Record<string, any>): Graph => {
+    let edges_in = [];
+    let fromGraphEdges = Object.values(from_graph.edges);
     let queue = [node_id];
     const graph: Graph = {...from_graph, nodes: {}, edges: {}, edges_in: {}};
     while(queue.length > 0) {
         let node_id = queue.pop();
         graph.nodes[node_id] = {...from_graph.nodes[node_id]}
-        edges_in = (from_graph.edges_in?.[node_id] 
-          ? Object.values(from_graph.edges_in[node_id]) 
-          : Object.values(from_graph.edges).filter(e => e.to === node_id))
+        edges_in = (isEdgesInGraph(from_graph) && from_graph.edges_in[node_id]
+          ? Object.values(from_graph.edges_in[node_id])
+          : fromGraphEdges.filter(e => e.to === node_id))
             .filter(e => from_graph.nodes[e.from] && !graph.nodes[e.from])
         graph.edges = Object.assign(graph.edges, Object.fromEntries(edges_in.map(e => [e.from, e])));
         graph.edges_in[node_id] = Object.fromEntries(edges_in.map(e => [e.from, e]));

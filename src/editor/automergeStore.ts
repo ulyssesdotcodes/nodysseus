@@ -27,7 +27,11 @@ const migrateCategories = (doc: Automerge.Doc<Graph>) => {
   })
 }
 
-export const automergeRefStore = async ({nodysseusidb, persist = false} : {persist: boolean, nodysseusidb: IDBPDatabase<NodysseusStoreTypes>}): Promise<RefStore> => {
+export const automergeRefStore = async ({nodysseusidb, persist = false, graphChangeCallback} : {
+  persist: boolean, 
+  nodysseusidb: IDBPDatabase<NodysseusStoreTypes>,
+  graphChangeCallback?: (graph: Graph, changedNodes: Array<string>) => void
+}): Promise<RefStore> => {
 
   const refsmap = new Map<string, Automerge.Doc<Graph>>();
   const structuredCloneMap = new Map<string, Graph>();
@@ -87,20 +91,17 @@ export const automergeRefStore = async ({nodysseusidb, persist = false} : {persi
       ? nodysseusidb.get("refs", id)
         .then(persisted => {
             let doc = Automerge.load<Graph>(persisted)
-            doc = Automerge.change(doc, migrateCategories);
             refsmap.set(id, doc);
-            let scd = structuredClone(doc);
-            structuredCloneMap.set(id, scd);
-            // return doc;
-            // TODO: validate graphs on load - this doesn't work because the automerge docs change.
+
             const filteredGraph = ancestor_graph(doc.out, doc);
-            if(!(filteredGraph.nodes.length === scd.nodes.length && Object.keys(filteredGraph.edges).length === Object.keys(scd.edges).length)) {
+            if(!graphCompare(doc, filteredGraph)) {
               doc = Automerge.change(doc, {patchCallback: graphNodePatchCallback}, setFromGraph(filteredGraph));
               persist && nodysseusidb.put("refs", Automerge.save(doc), id)
               refsmap.set(id, doc);
-              scd = structuredClone(doc)
-              structuredCloneMap.set(id, scd);
             }
+
+            let scd = structuredClone(filteredGraph);
+            structuredCloneMap.set(id, scd);
             updatePeers(id);
             return refsmap.get(id);
         })
@@ -114,26 +115,23 @@ export const automergeRefStore = async ({nodysseusidb, persist = false} : {persi
     return wrapPromise(getDoc(id))
       .then(graph => {
         let doc = Automerge.change<Graph>(graph ?? createDoc(), {patchCallback: graphNodePatchCallback}, fn);
-        if(!doc.edges_in) {
-          doc = Automerge.change<Graph>(doc, {patchCallback: graphNodePatchCallback}, d => {
-            d.edges_in = {};
-            Object.values(d.edges).forEach(edge => {
-              if(d.edges_in[edge.to] ) {
-                d.edges_in[edge.to][edge.from] = {...edge};
-              } else {
-                d.edges_in[edge.to] = {[edge.from]: {...edge}}
-              }
-            }) 
-          })
-        }
         persist && nodysseusidb.put("refs", Automerge.save(doc), id)
         refsmap.set(id, doc);
         refsset.add(id);
         updatePeers(id);
-        const scd = structuredClone(doc);
+        const scd: Graph = structuredClone(doc);
+        scd.edges_in = {};
+        Object.values(scd.edges).forEach(edge => {
+          if(scd.edges_in[edge.to] ) {
+            scd.edges_in[edge.to][edge.from] = {...edge};
+          } else {
+            scd.edges_in[edge.to] = {[edge.from]: {...edge}}
+          }
+        }) 
         structuredCloneMap.set(id, scd)
         // nolib.no.runtime.publish('graphchange', {graph: scd}, {...nolib, ...hlib}) 
         // nolib.no.runtime.change_graph(scd, hlibLib, changedNodes, true, "automergeStore") 
+        graphChangeCallback && graphChangeCallback(scd, [])
         return scd;
       }).value
   }
@@ -152,9 +150,12 @@ export const automergeRefStore = async ({nodysseusidb, persist = false} : {persi
     && a.description === b.description
 
   const setFromGraph = (graph: Graph) => (doc: Graph) =>  {
+    delete doc.edges_in;
     Object.entries(doc).forEach(e => !Object.hasOwn(graph, e[0]) && delete doc[e[0]])
     Object.entries(structuredClone(graph)).forEach(e => {
-      if(graph[e[0]] === undefined) {
+      if(e[0] === "edges_in"){
+        //noop
+      } else if(graph[e[0]] === undefined) {
         delete doc[e[0]]
       } else if(e[1] !== undefined){
         if(e[0] === "nodes" && Array.isArray(e[1])) {
@@ -177,9 +178,7 @@ export const automergeRefStore = async ({nodysseusidb, persist = false} : {persi
         ? structuredCloneMap.get(id) 
         : wrapPromise(getDoc(id))
           .then(d => {
-            const scd = structuredClone(d);
-            structuredCloneMap.set(id, scd);
-            return scd;
+            return structuredCloneMap.get(id);
           }).value)
     ,
     set: (id, graph) => 

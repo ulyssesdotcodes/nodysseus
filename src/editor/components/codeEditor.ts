@@ -19,7 +19,6 @@ class ExtractInputWidget extends WidgetType {
     let button = wrap.appendChild(document.createElement("button"))
     button.textContent = `Extract input ${this.name} = ${this.value}`;
     button.addEventListener('click', () => {
-      const randid = create_randid();
       const newText = view.state.doc.replace(this.from, this.to, Text.of([""]))
       this.dispatch(UpdateNode, {
         node: view.state.field(code_editor_nodeid_field),
@@ -27,7 +26,7 @@ class ExtractInputWidget extends WidgetType {
         value: newText.sliceString(0, newText.length, "\n")
       })
       this.dispatch(CreateNode, {
-        node: {id: randid, value: this.value},
+        node: {value: this.value},
         child: view.state.field(code_editor_nodeid_field),
         child_as: this.name
        })

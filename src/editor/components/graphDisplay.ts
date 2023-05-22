@@ -71,6 +71,9 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
             main_node_map.set(node, node);
 
             parents_map.get(node)?.forEach(p => {
+              if(queue.includes(p)){
+                debugger; 
+              }
                 queue.push(p)
             })
         }
@@ -307,7 +310,7 @@ export const d3subscription = (dispatch: ha.Dispatch<HyperappState>, props) => {
               simulation: nodySim
             })
           }
-            const ids = simulation.nodes().map(n => n.node_id).join(',');
+
           // this is a reset
           if(stopped) {
             // do this after the simulation ticks so pzobj has the right info

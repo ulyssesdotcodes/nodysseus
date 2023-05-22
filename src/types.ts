@@ -12,15 +12,20 @@ export const isNodeGraph = (n: NodysseusNode): n is GraphNode => n && !!(n as Gr
 export const isNodeScript = (n: NodysseusNode): n is ScriptNode => n && !!(n as ScriptNode)?.script;
 export const isNodeRef = (n: NodysseusNode): n is RefNode => n && !!(n as RefNode)?.ref;
 
-export type Graph = {
+export type SavedGraph = {
   id: string,
   out?: string,
   name?: string,
   nodes: Record<string, NodysseusNode>,
   edges: Record<string, Edge>,
-  edges_in?: Record<string, Record<string, Edge>>,
   description?: string
 }
+
+export type Graph = SavedGraph & {
+  edges_in?: Record<string, Record<string, Edge>>,
+}
+
+export const isEdgesInGraph = (graph: Graph | SavedGraph): graph is Graph => Object.hasOwn(graph, "edges_in")
 
 export type EdgesIn = Record<string, Record<string, Edge>>;
 

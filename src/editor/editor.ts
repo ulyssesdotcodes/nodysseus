@@ -23,7 +23,7 @@ const SimulationToHyperapp = (state, payload) => [{
     levels: calculateLevels(payload.nodes, payload.links, state.editingGraph, state.selected),
     nodes: payload.nodes,
     links: payload.links,
-    randid: create_randid(),
+    randid: create_randid(state.editingGraph),
 }, 
     [CustomDOMEvent, {html_id: state.html_id, event: 'updategraph', detail: {graph: state.editingGraph}}]
 ];
@@ -478,7 +478,11 @@ const editor = async function(html_id, editingGraphId, lib, norun) {
     } else {
       ports = [];
       initQueue = [];
-      nodysseusStore = await webClientStore(idb => automergeRefStore({nodysseusidb: idb, persist: true}));
+      nodysseusStore = await webClientStore(idb => automergeRefStore({
+        nodysseusidb: idb, 
+        persist: true,
+        graphChangeCallback: (graph, changedNodes) => nolib.no.runtime.change_graph(graph, nolibLib, changedNodes, true)
+      }));
     }
     let worker: Worker, workerPromise;
     initStore(nodysseusStore)
@@ -550,7 +554,7 @@ const editor = async function(html_id, editingGraphId, lib, norun) {
             levels: false,
             error: false,
             inputs: {},
-            randid: create_randid(),
+            randid: create_randid(editingGraph),
             custom_editor_result: {},
             showHelp: false,
             refGraphs: [],

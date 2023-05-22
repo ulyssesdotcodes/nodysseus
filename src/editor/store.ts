@@ -1,7 +1,7 @@
 import { IDBPDatabase, openDB, wrap } from "idb";
 import generic from "../generic";
 import { mapStore, nolib, nolibLib} from "../nodysseus";
-import { Edge, EdgeNoAs, EdgesIn, Graph, GraphNode, isNodeRef, NodysseusNode, NodysseusStore, NodysseusStoreTypes, RefNode, RefStore, Store, ValueNode } from "../types";
+import { Edge, EdgeNoAs, EdgesIn, Graph, GraphNode, isEdgesInGraph, isNodeRef, NodysseusNode, NodysseusStore, NodysseusStoreTypes, RefNode, RefStore, Store, ValueNode } from "../types";
 import { wrapPromise } from "../util";
 import {v4 as uuid} from "uuid";
 
@@ -81,10 +81,12 @@ export const addNodesEdges = (graph: Graph, addedNodes: Array<NodysseusNode> = [
 
   addedEdges.forEach(edge => {
     graph.edges[edge.from] = edge;
-    if(graph.edges_in[edge.to] ) {
-      graph.edges_in[edge.to][edge.from] = {...edge};
-    } else {
-      graph.edges_in[edge.to] = {[edge.from]: {...edge}}
+    if(isEdgesInGraph(graph)) {
+      if(graph.edges_in[edge.to] ) {
+        graph.edges_in[edge.to][edge.from] = {...edge};
+      } else {
+        graph.edges_in[edge.to] = {[edge.from]: {...edge}}
+      }
     }
   })
 
