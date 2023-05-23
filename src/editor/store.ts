@@ -66,7 +66,9 @@ export const addEdge = (g: Graph, edge: Edge) => {
 
 export const removeEdge = edge => g => {
   delete g.edges[edge.from]; 
-  delete g.edges_in[edge.to][edge.from]
+  if(Object.hasOwn(g, "edges_id")) {
+    delete g.edges_in[edge.to][edge.from]
+  }
 }
 
 export const addNodesEdges = (graph: Graph, addedNodes: Array<NodysseusNode> = [], addedEdges: Array<Edge> = [], removedNodes: Array<NodysseusNode> = [], removedEdges: Array<EdgeNoAs> = []) => {

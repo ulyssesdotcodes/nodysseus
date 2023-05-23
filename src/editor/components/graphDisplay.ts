@@ -464,8 +464,7 @@ export const insert_node_el = ({link, randid, node_el_width, nodeOffset}) => ha.
     x: Math.floor((link.source.x + link.target.x - node_el_width ) * 0.5 + nodeOffset.x) - 16,
     y: Math.floor((link.source.y + link.target.y) * 0.5  + nodeOffset.y) - 16,
     class: 'insert-node',
-    onclick: (s, p) => [CreateNode, {node: {}, child: link.target.node_id, parent: {from: link.source.node_id, to: link.target.node_id, as: link.as}}],
-    ontouchstart: (s, p) => [CreateNode, {node: {}, child: link.target.node_id, parent: {from: link.source.node_id, to: link.target.node_id, as: link.as}}]
+    onpointerdown: (s, p) => [CreateNode, {node: {}, child: link.target.node_id, parent: {from: link.source.node_id, to: link.target.node_id, as: link.as}}]
 }, [
     ha.h('path', {d: "M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192z", class: "circle" }, []),
     ha.h('path', {d: "M256 176v160M336 256H176", class: "add"}, [])
