@@ -627,17 +627,20 @@ export const result_subscription = (dispatch, {editingGraphId, displayGraphId, n
 
 
 
-export const graph_subscription = (dispatch, props) => {
+export const graph_subscription = (dispatch: ha.Dispatch<HyperappState>, props) => {
     let animframe: false | number = false;
     const listener = ({graph}) => {
         dispatch(s => s.error ? Object.assign({}, s, {error: false}) : s)
+        wrapPromise(nolib.no.runtime.refs())
+          .then(rgs => rgs.concat(EXAMPLES))
+          .then(refGraphs => dispatch(s => s.refGraphs.length !== refGraphs.length ? {...s, refGraphs} : s))
         if(props.editingGraphId === graph.id) {
           if(animframe){
             cancelAnimationFrame(animframe)
           }
           animframe = requestAnimationFrame(() =>  {
               animframe = false;
-              dispatch((s: HyperappState) => [{...s, editingGraph: graph}, [UpdateSimulation], [refresh_graph, {
+              dispatch((s: HyperappState) => [{...s, editingGraph: graph}, UpdateSimulation, [refresh_graph, {
                 graph: s.displayGraph || graph, 
                 norun: props.norun, 
                 graphChanged: true, 
@@ -651,7 +654,7 @@ export const graph_subscription = (dispatch, props) => {
           // Have to keep this so that other tabs updating graphs makes changes
           animframe = requestAnimationFrame(() =>  {
               animframe = false;
-              dispatch((s: HyperappState) => [s, [UpdateSimulation], [refresh_graph, {
+              dispatch((s: HyperappState) => [s, UpdateSimulation, [refresh_graph, {
                 graph: s.displayGraph || s.editingGraph, 
                 norun: props.norun, 
                 graphChanged: true, 
