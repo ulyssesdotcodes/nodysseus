@@ -304,9 +304,7 @@ export const CreateNode: ha.Action<HyperappState, {node: NodysseusNode & {id?: s
               : [{from: node.id, to: child, as: child_as}], 
         removedEdges: parent ? [{from: parent.from, to: child}] : [] , 
         lib: hlibLib
-      })
-      // Hacky - have to wait until the node is finished adding and the graph callback takes place before updating selected node.
-      setTimeout(() => requestAnimationFrame(() => dispatch(SelectNode, {node_id: node.id})), 50);
+      }).then(() => requestAnimationFrame(() => dispatch(SelectNode, {node_id: node.id})))
     }
 ];
 
