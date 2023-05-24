@@ -15,7 +15,10 @@ export const UpdateGraphDisplay: ha.Effecter<HyperappState, any>  = (dispatch, p
   }]))
 }
 
-export const getLinks = (simulation: NodysseusSimulation): Array<d3Link> | undefined => simulation ? (simulation.simulation.force('links') as NodysseusForceLink).links() : []
+export const getLinks = (simulation: NodysseusSimulation): Array<d3Link> | undefined => 
+  simulation ? (simulation.simulation.force('links') as NodysseusForceLink).links()
+    // need to sort so that the order remains consistent while nodes stay the same
+    .sort((a, b) => a.edge.from.localeCompare(b.edge.from)) : []
 export const getNodes = (simulation: NodysseusSimulation): Array<d3Node> | undefined => simulation ? simulation.simulation.nodes() : [];
 
 export const updateSimulationNodes: ha.Effecter<HyperappState, {
@@ -445,7 +448,7 @@ export const node_el = ({html_id, selected, error, selected_distance, node_id, n
 export const link_el = ({link, selected_distance}) =>ha.h('g', {}, [
    ha.h('line', {id: `link-${link.source.node_id}`, class: {"link": true, [`distance-${selected_distance}`]: true}, "marker-end": "url(#arrow)"}),
    ha.h('svg', {
-       id: `edge-info-${link.source.node_id}`, 
+       id: `edge-info-${link.source.node_id}`,
        class: {"edge-info": true, [`distance-${selected_distance}`]: true},
        onclick: [SelectNode, {node_id: link.source.node_id, focus_property: "edge"}],
        ontouchstart: [SelectNode, {node_id: link.source.node_id, focus_property: "edge"}]
