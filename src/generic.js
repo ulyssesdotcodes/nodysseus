@@ -1327,7 +1327,7 @@ const generic = {
       },
       "zan0upq": {
         "id": "zan0upq",
-        "value": "console.log('grachangecache', dirtyNodes, graphid); const ret =  dirtyNodes && !dirtyNodes.every(n => !graphid.includes(n));\nreturn ret || state === undefined;",
+        "value": "const ret =  dirtyNodes && !dirtyNodes.every(n => !graphid.includes(n));\nreturn ret || state === undefined;",
         "ref": "@js.script"
       },
       "jonwhso": {
