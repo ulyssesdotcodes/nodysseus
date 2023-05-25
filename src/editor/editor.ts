@@ -271,7 +271,8 @@ const runapp = (init, _lib) => {
                   info_display_dispatch: s.info_display_dispatch,
                   code_editor: s.code_editor,
                   code_editor_nodeid: s.code_editor_nodeid
-                }]
+                }],
+                () => {location.search = s.norun ? "" : "?norun=true" }
               ]
             }, [ha.text(s.norun ? 'play_arrow' : 'pause')]),
             ha.h('span', {
