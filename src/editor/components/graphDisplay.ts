@@ -47,17 +47,13 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
 
     const start_sim_link_size = simulation_link_data.size;
 
-    const main_node_map = new Map();
-
     const node_map = new Map(Object.entries(data.editingGraph.nodes));
-    const children_map = new Map(Object.values(data.editingGraph.nodes).map(n => [n.id, 
-        [graphEdgeOut(data.editingGraph, n.id)?.to].filter(e => e)
-    ]));
 
     const order = [];
     const queue = [data.editingGraph.out ?? "out"];
 
-    const parentsMapEntries: Array<[string, Array<string>]> = Object.values(data.editingGraph.nodes)
+    const parentsMapEntries: Array<[string, Array<string>]> = 
+      Object.values(data.editingGraph.nodes)
         .map(n => 
           [n.id, graphEdgesIn(data.editingGraph, n.id).map(e => e.from)]
         );
@@ -66,19 +62,17 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
     // Just skip if there's a pending promise
     if(hasPromise) return;
     const parents_map = new Map<string, Array<string>>(parentsMapEntries)
+    const children_map = new Map<string, string>();
 
         while(queue.length > 0) {
             const node = queue.shift();
             order.push(node);
 
-            main_node_map.set(node, node);
-
             parents_map.get(node)?.forEach(p => {
-              if(queue.includes(p)){
-                debugger; 
-              }
-                queue.push(p)
+              children_map.set(p, node)
+              queue.push(p)
             })
+            
         }
 
         const ancestor_count = new Map();
@@ -90,7 +84,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
         for(let ps of parents_map.values()) {
             let i = 0;
             ps.sort((a, b) => parents_map.get(a).length === parents_map.get(b).length 
-                ? (simulation_node_data.get(main_node_map.get(a))?.hash ?? hashcode(a)) - (simulation_node_data.get(main_node_map.get(b))?.hash ?? hashcode(b))
+                ? (simulation_node_data.get(a)?.hash ?? hashcode(a)) - (simulation_node_data.get(b)?.hash ?? hashcode(b))
                 : ((i++ % 2) * 2 - 1) * (parents_map.get(b).length - parents_map.get(a).length))
         }
         
@@ -99,9 +93,9 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
 
         const nodes = order.flatMap(nid => {
             let n = node_map.get(nid);
-            const children = children_map.get(n.id);
-            const node_id = main_node_map.get(n.id);
-            const stored_siblings = parents_map.get(children[0]);
+            const child = children_map.get(n.id);
+            const node_id = n.id;
+            const stored_siblings = parents_map.get(child);
             stored_siblings?.sort((a, b) => ancestor_count.get(a) - ancestor_count.get(b));
 
             const siblings = [];
@@ -123,44 +117,44 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
                 return a === undefined || b === undefined ? undefined : a + b
             }
 
-            const calculated_nodes = children.length === 0 ? [{
+            const calculated_nodes = !child ? [{
                 id: n.id,
                 node_id: n.id,
                 hash: simulation_node_data.get(node_id)?.hash ?? hashcode(n.id),
                 nested_node_count: isNodeGraph(n) ? Object.keys(n.nodes).length : undefined,
                 nested_edge_count: isNodeGraph(n) ? Object.keys(n.edges).length : undefined,
                 x: Math.floor(simulation_node_data.get(node_id)?.x 
-                    ?? simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.x
+                    ?? simulation_node_data.get(parents_map.get(n.id)?.[0])?.x
                     ?? Math.floor(window.innerWidth * (randpos.x * .5 + .25))),
                 y: Math.floor(simulation_node_data.get(node_id)?.y 
-                    ?? addorundefined(simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.y, 128)
+                    ?? addorundefined(simulation_node_data.get(parents_map.get(n.id)?.[0])?.y, 128)
                     ?? Math.floor(window.innerHeight * (randpos.y * .5 + .25)))
-            }] : children.map((c, i) => ({
+            }] : [{
                 id: n.id,
                 node_id: n.id,
                 hash: simulation_node_data.get(node_id)?.hash ?? hashcode(n.id),
-                sibling_index_normalized: parents_map.get(c).findIndex(p => p === n.id) / parents_map.get(c).length,
+                sibling_index_normalized: parents_map.get(child).findIndex(p => p === n.id) / parents_map.get(child).length,
                 nested_node_count: isNodeGraph(n) ? Object.keys(n.nodes).length : undefined,
                 nested_edge_count: isNodeGraph(n) ? Object.keys(n.edges).length : undefined,
                 x: Math.floor(simulation_node_data.get(node_id)?.x 
-                    ?? simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.x
+                    ?? simulation_node_data.get(parents_map.get(n.id)?.[0])?.x
                     ?? addorundefined(
-                        simulation_node_data.get(children[0])?.x, 
+                        simulation_node_data.get(child)?.x, 
                         sibling_mult * (256 + 32 * Math.log(Math.max(1, ancestor_count.get(n.id))/ Math.log(1.01)))
                     )
                     ?? Math.floor(window.innerWidth * (randpos.x * .5 + .25))),
                 y: Math.floor(simulation_node_data.get(node_id)?.y 
-                    ?? addorundefined(256, simulation_node_data.get(main_node_map.get(parents_map.get(n.id)?.[0]))?.y)
+                    ?? addorundefined(256, simulation_node_data.get(parents_map.get(n.id)?.[0])?.y)
                     ?? addorundefined(
-                        -(16 + 32 * Math.log(Math.max(1, ancestor_count.get(n.id) * 0.5 + parents_map.get(children_map.get(n.id)?.[0])?.length)) / Math.log(1.25)),
-                        simulation_node_data.get(main_node_map.get(children_map.get(n.id)?.[0]))?.y
+                        -(16 + 32 * Math.log(Math.max(1, ancestor_count.get(n.id) * 0.5 + parents_map.get(children_map.get(n.id))?.length)) / Math.log(1.25)),
+                        simulation_node_data.get(children_map.get(n.id))?.y
                     )
                     ?? Math.floor(window.innerHeight * (randpos.y * .5 + .25)))
-            }));
+            }];
 
-            const simnode = calculated_nodes[0];
-            const A: [number, number] = [simnode.x, simnode.y];
-            children.forEach(child => {
+            if(child) {
+              const simnode = calculated_nodes[0];
+              const A: [number, number] = [simnode.x, simnode.y];
               const cnode = simulation_node_data.get(child);
               const B: [number, number] = [cnode.x, cnode.y];
               for(let compnode of simulation_node_data.values()) {
@@ -180,7 +174,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
                   }
                 }
               }
-            })
+            }
 
             calculated_nodes.map(n => simulation_node_data.set(n.node_id, n));
 
@@ -188,18 +182,18 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
         })
 
         const links = Object.values(data.editingGraph.edges)
-            .filter(e => main_node_map.has(e.from) && main_node_map.has(e.to))
+            .filter(e => simulation_node_data.has(e.from) && simulation_node_data.has(e.to))
             .map(e => {
                 const l = simulation_link_data.get(`${e.from}__${e.to}`);
                 const proximal = (
-                    (parents_map.get(main_node_map.get(e.to))?.length ?? 0) + 
-                    (parents_map.get(children_map.get(main_node_map.get(e.to))[0])?.length ?? 0)
+                    (parents_map.get(e.to)?.length ?? 0) + 
+                    (parents_map.get(children_map.get(e.to))?.length ?? 0)
                 ) * 0.5;
                 return {
                     ...e,
                     edge: e,
                     source: e.from,
-                    target: main_node_map.get(e.to),
+                    target: e.to,
                     sibling_index_normalized: simulation_node_data.get(e.from).sibling_index_normalized,
                     strength: 2 * (1.5 - (Math.abs(simulation_node_data.get(e.from).sibling_index_normalized ?? 0) - 0.5)) / (1 + 2 * Math.min(4, proximal)),
                     distance: 32 + 4 * (Math.min(8, proximal)) 
@@ -229,11 +223,11 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
         (data.simulation.simulation.force('link_direction') as ForceY<d3Node>)
             .y(n =>
                 (((parents_map.get(n.node_id)?.length > 0 ? 1 : 0)
-                    + (children_map.get(n.node_id)?.length > 0 ? -1 : 0)
+                    + (children_map.has(n.node_id) ? -1 : 0)
                     // + (parents_map.get(children_map.get(main_node_map.get(n.to))[0])?.length ?? 0)
-                    + (children_map.get(n.node_id)?.length > 0 ? -1 : 0))
+                    + (children_map.has(n.node_id) ? -1 : 0))
                     * (logmaxparents + 3) + .5) * window.innerHeight)
-            .strength(n => (!!parents_map.get(n.node_id)?.length === !children_map.get(n.node_id)?.length)
+            .strength(n => (!!parents_map.get(n.node_id)?.length === !children_map.has(n.node_id))
                 || children_map.get(n.node_id)?.length > 0 ? .01 : 0);
 
 
