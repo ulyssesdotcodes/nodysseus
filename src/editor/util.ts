@@ -567,7 +567,7 @@ export const result_subscription = (dispatch, {editingGraphId, displayGraphId, n
 
       if(info_display_dispatch && code_editor && code_editor_nodeid && result_display_dispatch) {
         animrun = requestAnimationFrame(() => {
-          if(graph.id === (displayGraphId || editingGraphId)) {
+          if(graph?.id === (displayGraphId || editingGraphId)) {
           wrapPromise(nolib.no.runtime.get_ref(displayGraphId || editingGraphId))
             .then(graph => {
                 const result = refresh_graph(dispatch, {graph, graphChanged: false, norun, info_display_dispatch, code_editor, code_editor_nodeid, result_display_dispatch})
