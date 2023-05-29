@@ -1238,165 +1238,109 @@
   {
     "description": "Creates a BufferGeometry using the specified constructor and input nodes as arguments.",
     "edges": {
-      "4or2htn": {
-        "as": "values",
-        "from": "4or2htn",
-        "to": "7vhuixq"
-      },
-      "7jw4lsu": {
-        "as": "args",
-        "from": "7jw4lsu",
-        "to": "j819k9c"
-      },
       "7vhuixq": {
         "as": "metadata",
         "from": "7vhuixq",
         "to": "out"
-      },
-      "86qm2fw": {
-        "as": "value",
-        "from": "86qm2fw",
-        "to": "nyv9f1b"
-      },
-      "8w8gfzn": {
-        "as": "target",
-        "from": "8w8gfzn",
-        "to": "7jw4lsu"
-      },
-      "a3ljk0v": {
-        "as": "true",
-        "from": "a3ljk0v",
-        "to": "ccmvwyl"
-      },
-      "ccmvwyl": {
-        "as": "parameters",
-        "from": "ccmvwyl",
-        "to": "7vhuixq"
       },
       "e08m3vg": {
         "as": "args",
         "from": "e08m3vg",
         "to": "out"
       },
-      "es3j1s8": {
-        "as": "pred",
-        "from": "es3j1s8",
-        "to": "ccmvwyl"
-      },
-      "g2xpahw": {
-        "as": "name",
-        "from": "g2xpahw",
-        "to": "j819k9c"
-      },
-      "gl3wugl": {
+      "output_val": {
         "as": "value",
-        "from": "gl3wugl",
-        "to": "r8fus3z"
-      },
-      "j819k9c": {
-        "as": "true",
-        "from": "j819k9c",
-        "to": "kphtl0m"
+        "from": "output_val",
+        "to": "out"
       },
       "kphtl0m": {
         "as": "_geometry",
         "from": "kphtl0m",
         "to": "e08m3vg"
       },
+      "j819k9c": {
+        "as": "true",
+        "from": "j819k9c",
+        "to": "kphtl0m"
+      },
+      "z82dq3u": {
+        "as": "pred",
+        "from": "z82dq3u",
+        "to": "kphtl0m"
+      },
+      "7jw4lsu": {
+        "as": "args",
+        "from": "7jw4lsu",
+        "to": "j819k9c"
+      },
+      "g2xpahw": {
+        "as": "name",
+        "from": "g2xpahw",
+        "to": "j819k9c"
+      },
+      "8w8gfzn": {
+        "as": "target",
+        "from": "8w8gfzn",
+        "to": "7jw4lsu"
+      },
       "mrevz1i": {
         "as": "arg0",
         "from": "mrevz1i",
         "to": "7jw4lsu"
       },
-      "nyv9f1b": {
-        "as": "recache",
-        "from": "nyv9f1b",
-        "to": "r8fus3z"
+      "4or2htn": {
+        "as": "values",
+        "from": "4or2htn",
+        "to": "7vhuixq"
       },
-      "output_val": {
-        "as": "value",
-        "from": "output_val",
-        "to": "out"
+      "ccmvwyl": {
+        "as": "parameters",
+        "from": "ccmvwyl",
+        "to": "7vhuixq"
+      },
+      "a3ljk0v": {
+        "as": "true",
+        "from": "a3ljk0v",
+        "to": "ccmvwyl"
+      },
+      "es3j1s8": {
+        "as": "pred",
+        "from": "es3j1s8",
+        "to": "ccmvwyl"
       },
       "r8fus3z": {
         "as": "geometry",
         "from": "r8fus3z",
         "to": "a3ljk0v"
       },
-      "z82dq3u": {
-        "as": "pred",
-        "from": "z82dq3u",
-        "to": "kphtl0m"
+      "gl3wugl": {
+        "as": "value",
+        "from": "gl3wugl",
+        "to": "r8fus3z"
+      },
+      "nyv9f1b": {
+        "as": "recache",
+        "from": "nyv9f1b",
+        "to": "r8fus3z"
+      },
+      "86qm2fw": {
+        "as": "value",
+        "from": "86qm2fw",
+        "to": "nyv9f1b"
+      },
+      "tsd4zz1": {
+        "as": "THREE",
+        "from": "tsd4zz1",
+        "to": "wl24jbc"
+      },
+      "wl24jbc": {
+        "from": "wl24jbc",
+        "to": "out",
+        "as": "lib"
       }
     },
     "id": "@three.geometry",
     "nodes": {
-      "4or2htn": {
-        "id": "4or2htn",
-        "ref": "@js.script",
-        "value": "return _lib.THREE && Object.keys(_lib.THREE).filter(k => k.endsWith(\"Geometry\"))"
-      },
-      "7jw4lsu": {
-        "id": "7jw4lsu",
-        "ref": "@data.merge_objects_mutable"
-      },
-      "7vhuixq": {
-        "id": "7vhuixq"
-      },
-      "86qm2fw": {
-        "id": "86qm2fw",
-        "ref": "arg",
-        "value": "__graph_value"
-      },
-      "8w8gfzn": {
-        "id": "8w8gfzn",
-        "value": "{}"
-      },
-      "a3ljk0v": {
-        "id": "a3ljk0v",
-        "ref": "@js.script",
-        "value": "const keys = Array.from(Object.keys(geometry.parameters))\nreturn Object.fromEntries(keys.map(k => [k, \"any\"]));"
-      },
-      "ccmvwyl": {
-        "id": "ccmvwyl",
-        "ref": "@flow.if"
-      },
-      "e08m3vg": {
-        "id": "e08m3vg"
-      },
-      "es3j1s8": {
-        "id": "es3j1s8",
-        "ref": "arg",
-        "value": "__graph_value"
-      },
-      "g2xpahw": {
-        "id": "g2xpahw",
-        "ref": "arg",
-        "value": "__graph_value"
-      },
-      "gl3wugl": {
-        "id": "gl3wugl",
-        "ref": "arg",
-        "value": "_geometry"
-      },
-      "j819k9c": {
-        "id": "j819k9c",
-        "ref": "@js.script",
-        "value": "return _lib.THREE[name].fromJSON?.(args ?? {}) ?? new _lib.THREE[name](Object.values(args ?? {}));"
-      },
-      "kphtl0m": {
-        "id": "kphtl0m",
-        "ref": "@flow.if"
-      },
-      "mrevz1i": {
-        "id": "mrevz1i",
-        "ref": "arg",
-        "value": "_args"
-      },
-      "nyv9f1b": {
-        "id": "nyv9f1b",
-        "ref": "@data.ischanged"
-      },
       "out": {
         "id": "out",
         "name": "@three.geometry",
@@ -1407,14 +1351,88 @@
         "ref": "arg",
         "value": "_geometry"
       },
-      "r8fus3z": {
-        "id": "r8fus3z",
-        "ref": "@memory.cache"
+      "e08m3vg": {
+        "id": "e08m3vg"
+      },
+      "kphtl0m": {
+        "id": "kphtl0m",
+        "ref": "@flow.if"
       },
       "z82dq3u": {
         "id": "z82dq3u",
         "ref": "arg",
         "value": "__graph_value"
+      },
+      "j819k9c": {
+        "id": "j819k9c",
+        "ref": "@js.script",
+        "value": "return _lib.THREE[name].fromJSON?.(args ?? {}) ?? new _lib.THREE[name](Object.values(args ?? {}));"
+      },
+      "g2xpahw": {
+        "id": "g2xpahw",
+        "ref": "arg",
+        "value": "__graph_value"
+      },
+      "7jw4lsu": {
+        "id": "7jw4lsu",
+        "ref": "@data.merge_objects_mutable"
+      },
+      "mrevz1i": {
+        "id": "mrevz1i",
+        "ref": "arg",
+        "value": "_args"
+      },
+      "8w8gfzn": {
+        "id": "8w8gfzn",
+        "value": "{}"
+      },
+      "7vhuixq": {
+        "id": "7vhuixq"
+      },
+      "ccmvwyl": {
+        "id": "ccmvwyl",
+        "ref": "@flow.if"
+      },
+      "es3j1s8": {
+        "id": "es3j1s8",
+        "ref": "arg",
+        "value": "__graph_value"
+      },
+      "a3ljk0v": {
+        "id": "a3ljk0v",
+        "ref": "@js.script",
+        "value": "const keys = Array.from(Object.keys(geometry.parameters))\nreturn Object.fromEntries(keys.map(k => [k, \"any\"]));"
+      },
+      "r8fus3z": {
+        "id": "r8fus3z",
+        "ref": "@memory.cache"
+      },
+      "nyv9f1b": {
+        "id": "nyv9f1b",
+        "ref": "@data.ischanged"
+      },
+      "86qm2fw": {
+        "id": "86qm2fw",
+        "ref": "arg",
+        "value": "__graph_value"
+      },
+      "gl3wugl": {
+        "id": "gl3wugl",
+        "ref": "arg",
+        "value": "_geometry"
+      },
+      "4or2htn": {
+        "id": "4or2htn",
+        "ref": "@js.script",
+        "value": "return _lib.THREE && Object.keys(_lib.THREE).filter(k => k.endsWith(\"Geometry\"))"
+      },
+      "wl24jbc": {
+        "id": "wl24jbc"
+      },
+      "tsd4zz1": {
+        "id": "tsd4zz1",
+        "ref": "@js.import_module",
+        "value": "https://cdn.jsdelivr.net/npm/three/build/three.module.js"
       }
     },
     "out": "out"
