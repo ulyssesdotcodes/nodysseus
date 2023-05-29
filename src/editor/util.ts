@@ -467,32 +467,37 @@ export const UpdateResultDisplay = (state, resel) => {
   }
 }
 
-export const UpdateNodeEffect = (_, {editingGraph, node}: {editingGraph: Graph, node: NodysseusNode}) => {
-  nolib.no.runtime.add_node(editingGraph, node, hlibLib)
-  const edges_in = graphEdgesIn(editingGraph, node.id);
-  const nodeargs = node_args(nolib, editingGraph, node.id, hlib.run(editingGraph, node.id, {_output: "metadata"}));
+export const UpdateNodeEffect = (dispatch: ha.Dispatch<HyperappState>, {editingGraph, node}: {editingGraph: Graph, node: NodysseusNode}) => {
   nolib.no.runtime.updateGraph({graph: editingGraph, addedNodes: [node], lib: nolibLib})
-  if(edges_in.length === 1){ 
-    if(nodeargs.filter(na => !na.additionalArg).length === 1) {
-      const newAs = nodeargs.find(a => !a.additionalArg).name;
-      if(newAs !== edges_in[0].as) {
-        nolib.no.runtime.updateGraph({
-          graph: editingGraph, 
-          addedEdges: [{...edges_in[0], as: newAs}], 
-          lib: hlibLib
-        })
-      }
-    } else if(nodeargs.find(a => a.default)) {
-      const newAs = nodeargs.map(a => a.name.split(": ")).find(e => e[1] === "default")?.[0]
-      if(newAs) {
-        nolib.no.runtime.updateGraph({
-          graph: editingGraph, 
-          addedEdges: [{...edges_in[0], as: newAs}], 
-          lib: hlibLib
-        })
-      }
-    }
-  } 
+    .then(graph => {
+      const edges_in = graphEdgesIn(editingGraph, node.id);
+      const metadata = hlib.run(editingGraph, node.id, {_output: "metadata"})
+      const nodeargs = node_args(nolib, editingGraph, node.id, metadata);
+
+      dispatch(s => ({...s, selectedMetadata: metadata}))
+
+      if(edges_in.length === 1){ 
+        if(nodeargs.filter(na => !na.additionalArg).length === 1) {
+          const newAs = nodeargs.find(a => !a.additionalArg).name;
+          if(newAs !== edges_in[0].as) {
+            nolib.no.runtime.updateGraph({
+              graph: editingGraph, 
+              addedEdges: [{...edges_in[0], as: newAs}], 
+              lib: hlibLib
+            })
+          }
+        } else if(nodeargs.find(a => a.default)) {
+          const newAs = nodeargs.map(a => a.name.split(": ")).find(e => e[1] === "default")?.[0]
+          if(newAs) {
+            nolib.no.runtime.updateGraph({
+              graph: editingGraph, 
+              addedEdges: [{...edges_in[0], as: newAs}], 
+              lib: hlibLib
+            })
+          }
+        }
+      } 
+    })
 }
 
 export const UpdateNode: ha.Action<HyperappState, {node: NodysseusNode, property: string, value: string, editingGraph: Graph}> = (state, {node, property, value, editingGraph}) => [
