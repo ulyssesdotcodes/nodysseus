@@ -6,249 +6,212 @@
         "from": "0209mcq",
         "to": "out"
       },
-      "0r7134k": {
-        "as": "onupdate",
-        "from": "0r7134k",
-        "to": "72wzn5d"
-      },
-      "2g581fl": {
-        "as": "canvas_id",
-        "from": "2g581fl",
-        "to": "y663irb"
-      },
-      "3p1cxio": {
-        "as": "camera",
-        "from": "3p1cxio",
-        "to": "crys2ve"
-      },
       "3wnevku": {
         "as": "lib",
         "from": "3wnevku",
         "to": "out"
-      },
-      "4d0h7cj": {
-        "as": "value",
-        "from": "4d0h7cj",
-        "to": "sco3cx9"
-      },
-      "4kqd8au": {
-        "as": "fn",
-        "from": "4kqd8au",
-        "to": "0r7134k"
-      },
-      "72wzn5d": {
-        "as": "true",
-        "from": "72wzn5d",
-        "to": "uzfo5bm"
-      },
-      "7c54921": {
-        "as": "canvas_id",
-        "from": "7c54921",
-        "to": "8wmlat1"
       },
       "8dy573e": {
         "as": "display",
         "from": "8dy573e",
         "to": "out"
       },
-      "8ke4eq0": {
-        "as": "domnodeadded",
-        "from": "8ke4eq0",
-        "to": "0209mcq"
-      },
-      "8wmlat1": {
-        "as": "children",
-        "from": "8wmlat1",
-        "to": "8dy573e"
-      },
-      "akna0ig": {
-        "as": "pred",
-        "from": "akna0ig",
-        "to": "uzfo5bm"
-      },
-      "crys2ve": {
-        "as": "parameters",
-        "from": "crys2ve",
-        "to": "0r7134k"
-      },
-      "d6hbagr": {
-        "as": "url",
-        "from": "d6hbagr",
-        "to": "tmj66vh"
-      },
-      "dbxyytc": {
-        "as": "objects",
-        "from": "dbxyytc",
-        "to": "72wzn5d"
+      "tbxemm2": {
+        "as": "args",
+        "from": "tbxemm2",
+        "to": "out"
       },
       "eg4o3m3": {
         "as": "threeRunnable",
         "from": "eg4o3m3",
         "to": "tbxemm2"
       },
-      "hq8y4zl": {
+      "uzfo5bm": {
+        "as": "fn",
+        "from": "uzfo5bm",
+        "to": "eg4o3m3"
+      },
+      "72wzn5d": {
+        "as": "continue",
+        "from": "72wzn5d",
+        "to": "uzfo5bm"
+      },
+      "me4eykx": {
+        "as": "checkRef",
+        "from": "me4eykx",
+        "to": "uzfo5bm"
+      },
+      "0r7134k": {
+        "as": "onupdate",
+        "from": "0r7134k",
+        "to": "72wzn5d"
+      },
+      "dbxyytc": {
         "as": "objects",
-        "from": "hq8y4zl",
-        "to": "crys2ve"
-      },
-      "output_val": {
-        "as": "arg0",
-        "from": "output_val",
-        "to": "tmj66vh"
-      },
-      "ow93fev": {
-        "as": "graphchange",
-        "from": "ow93fev",
-        "to": "0209mcq"
+        "from": "dbxyytc",
+        "to": "72wzn5d"
       },
       "pzdit8o": {
         "as": "canvas",
         "from": "pzdit8o",
         "to": "72wzn5d"
       },
-      "sco3cx9": {
-        "as": "THREE",
-        "from": "sco3cx9",
-        "to": "3wnevku"
-      },
-      "tbxemm2": {
-        "as": "args",
-        "from": "tbxemm2",
-        "to": "out"
-      },
-      "tmj66vh": {
-        "as": "false",
-        "from": "tmj66vh",
-        "to": "uzfo5bm"
-      },
-      "uzfo5bm": {
-        "as": "fn",
-        "from": "uzfo5bm",
-        "to": "eg4o3m3"
-      },
       "y663irb": {
         "as": "value",
         "from": "y663irb",
         "to": "pzdit8o"
       },
-      "ykansd6": {
-        "as": "refs",
-        "from": "ykansd6",
-        "to": "akna0ig"
+      "2g581fl": {
+        "as": "canvas_id",
+        "from": "2g581fl",
+        "to": "y663irb"
+      },
+      "4kqd8au": {
+        "as": "fn",
+        "from": "4kqd8au",
+        "to": "0r7134k"
+      },
+      "crys2ve": {
+        "as": "parameters",
+        "from": "crys2ve",
+        "to": "0r7134k"
+      },
+      "3p1cxio": {
+        "as": "camera",
+        "from": "3p1cxio",
+        "to": "crys2ve"
+      },
+      "hq8y4zl": {
+        "as": "objects",
+        "from": "hq8y4zl",
+        "to": "crys2ve"
+      },
+      "8wmlat1": {
+        "as": "children",
+        "from": "8wmlat1",
+        "to": "8dy573e"
+      },
+      "7c54921": {
+        "as": "canvas_id",
+        "from": "7c54921",
+        "to": "8wmlat1"
+      },
+      "sco3cx9": {
+        "as": "THREE",
+        "from": "sco3cx9",
+        "to": "3wnevku"
+      },
+      "4d0h7cj": {
+        "as": "value",
+        "from": "4d0h7cj",
+        "to": "sco3cx9"
+      },
+      "8ke4eq0": {
+        "as": "domnodeadded",
+        "from": "8ke4eq0",
+        "to": "0209mcq"
+      },
+      "ow93fev": {
+        "as": "graphchange",
+        "from": "ow93fev",
+        "to": "0209mcq"
       }
     },
     "id": "threejs_boilerplate",
     "nodes": {
-      "0209mcq": {
-        "id": "0209mcq"
-      },
-      "0r7134k": {
-        "id": "0r7134k",
-        "ref": "@flow.runnable"
-      },
-      "2g581fl": {
-        "id": "2g581fl",
-        "value": "threejsrender"
-      },
-      "3p1cxio": {
-        "id": "3p1cxio"
-      },
-      "3wnevku": {
-        "id": "3wnevku"
-      },
-      "4d0h7cj": {
-        "id": "4d0h7cj",
-        "ref": "@js.import_module",
-        "value": "https://cdn.jsdelivr.net/npm/three/build/three.module.js"
-      },
-      "4kqd8au": {
-        "id": "4kqd8au"
-      },
-      "72wzn5d": {
-        "id": "72wzn5d",
-        "ref": "@three.setup"
-      },
-      "7c54921": {
-        "id": "7c54921",
-        "value": "threejsrender"
-      },
-      "8dy573e": {
-        "id": "8dy573e",
-        "ref": "@html.html_element"
-      },
-      "8ke4eq0": {
-        "id": "8ke4eq0",
-        "ref": "arg",
-        "value": "threeRunnable"
-      },
-      "8wmlat1": {
-        "id": "8wmlat1",
-        "ref": "@html.canvas_behind_editor"
-      },
-      "akna0ig": {
-        "id": "akna0ig",
-        "ref": "@js.script",
-        "value": "return refs.includes(\"@three.setup\")"
-      },
-      "crys2ve": {
-        "id": "crys2ve"
-      },
-      "d6hbagr": {
-        "id": "d6hbagr",
-        "value": "json/three.json"
-      },
-      "dbxyytc": {
-        "id": "dbxyytc"
-      },
-      "eg4o3m3": {
-        "id": "eg4o3m3",
-        "ref": "@flow.runnable"
-      },
-      "hq8y4zl": {
-        "id": "hq8y4zl"
-      },
       "out": {
         "id": "out",
         "name": "threejs_boilerplate",
         "ref": "return"
       },
-      "output_val": {
-        "id": "output_val",
-        "value": "some output"
+      "tbxemm2": {
+        "id": "tbxemm2"
       },
-      "ow93fev": {
-        "id": "ow93fev",
-        "ref": "arg",
-        "value": "threeRunnable"
+      "eg4o3m3": {
+        "id": "eg4o3m3",
+        "ref": "@flow.runnable"
+      },
+      "uzfo5bm": {
+        "id": "uzfo5bm",
+        "ref": "@nodysseus.checkRefImportJSON",
+        "value": "json/three.json"
+      },
+      "me4eykx": {
+        "id": "me4eykx",
+        "value": "@three.setup"
+      },
+      "72wzn5d": {
+        "id": "72wzn5d",
+        "ref": "@three.setup"
       },
       "pzdit8o": {
         "id": "pzdit8o",
         "ref": "@memory.cache"
-      },
-      "sco3cx9": {
-        "id": "sco3cx9",
-        "ref": "@memory.cache"
-      },
-      "tbxemm2": {
-        "id": "tbxemm2"
-      },
-      "tmj66vh": {
-        "id": "tmj66vh",
-        "ref": "@nodysseus.import_json"
-      },
-      "uzfo5bm": {
-        "id": "uzfo5bm",
-        "ref": "@flow.if"
       },
       "y663irb": {
         "id": "y663irb",
         "ref": "@js.script",
         "value": "return document.getElementById(canvas_id);"
       },
-      "ykansd6": {
-        "id": "ykansd6",
-        "ref": "@js.script",
-        "value": "return _lib.no.runtime.refs()"
+      "2g581fl": {
+        "id": "2g581fl",
+        "value": "threejsrender"
+      },
+      "dbxyytc": {
+        "id": "dbxyytc"
+      },
+      "0r7134k": {
+        "id": "0r7134k",
+        "ref": "@flow.runnable"
+      },
+      "crys2ve": {
+        "id": "crys2ve"
+      },
+      "hq8y4zl": {
+        "id": "hq8y4zl"
+      },
+      "3p1cxio": {
+        "id": "3p1cxio"
+      },
+      "4kqd8au": {
+        "id": "4kqd8au"
+      },
+      "8dy573e": {
+        "id": "8dy573e",
+        "ref": "@html.html_element"
+      },
+      "8wmlat1": {
+        "id": "8wmlat1",
+        "ref": "@html.canvas_behind_editor"
+      },
+      "7c54921": {
+        "id": "7c54921",
+        "value": "threejsrender"
+      },
+      "3wnevku": {
+        "id": "3wnevku"
+      },
+      "sco3cx9": {
+        "id": "sco3cx9",
+        "ref": "@memory.cache"
+      },
+      "4d0h7cj": {
+        "id": "4d0h7cj",
+        "ref": "@js.import_module",
+        "value": "https://cdn.jsdelivr.net/npm/three/build/three.module.js"
+      },
+      "0209mcq": {
+        "id": "0209mcq"
+      },
+      "ow93fev": {
+        "id": "ow93fev",
+        "ref": "arg",
+        "value": "threeRunnable"
+      },
+      "8ke4eq0": {
+        "id": "8ke4eq0",
+        "ref": "arg",
+        "value": "threeRunnable"
       }
     },
     "out": "out"

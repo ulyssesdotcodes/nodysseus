@@ -37,29 +37,14 @@
         "to": "eg4o3m3"
       },
       "72wzn5d": {
-        "as": "true",
+        "as": "continue",
         "from": "72wzn5d",
         "to": "uzfo5bm"
       },
-      "oamtw5b": {
-        "as": "pred",
-        "from": "oamtw5b",
+      "rmt44h7": {
+        "as": "checkRef",
+        "from": "rmt44h7",
         "to": "uzfo5bm"
-      },
-      "tmj66vh": {
-        "as": "false",
-        "from": "tmj66vh",
-        "to": "uzfo5bm"
-      },
-      "d6hbagr": {
-        "as": "url",
-        "from": "d6hbagr",
-        "to": "tmj66vh"
-      },
-      "akna0ig": {
-        "as": "refs",
-        "from": "akna0ig",
-        "to": "oamtw5b"
       },
       "dbxyytc": {
         "as": "objects",
@@ -106,10 +91,20 @@
         "from": "u6xx20t",
         "to": "cu5jtg0"
       },
+      "5md98ad": {
+        "as": "colorNode",
+        "from": "5md98ad",
+        "to": "tz1d0x0"
+      },
       "wgr2e72": {
         "as": "args",
         "from": "wgr2e72",
         "to": "5md98ad"
+      },
+      "nn38omj": {
+        "as": "args",
+        "from": "nn38omj",
+        "to": "wgr2e72"
       },
       "v8mz9pe": {
         "as": "arg1",
@@ -185,16 +180,6 @@
         "as": "graphchange",
         "from": "ow93fev",
         "to": "0209mcq"
-      },
-      "5md98ad": {
-        "from": "5md98ad",
-        "to": "tz1d0x0",
-        "as": "colorNode"
-      },
-      "nn38omj": {
-        "from": "nn38omj",
-        "to": "wgr2e72",
-        "as": "args"
       }
     },
     "id": "threejs_node_example",
@@ -217,25 +202,12 @@
       },
       "uzfo5bm": {
         "id": "uzfo5bm",
-        "ref": "@flow.if"
-      },
-      "tmj66vh": {
-        "id": "tmj66vh",
-        "ref": "@nodysseus.import_json"
-      },
-      "d6hbagr": {
-        "id": "d6hbagr",
+        "ref": "@nodysseus.checkRefImportJSON",
         "value": "json/three.json"
       },
-      "oamtw5b": {
-        "id": "oamtw5b",
-        "ref": "@js.script",
-        "value": "return refs.includes('@three.setup')"
-      },
-      "akna0ig": {
-        "id": "akna0ig",
-        "ref": "@js.script",
-        "value": "return _lib.no.runtime.refs()"
+      "rmt44h7": {
+        "id": "rmt44h7",
+        "value": "@three.setup"
       },
       "72wzn5d": {
         "id": "72wzn5d",
@@ -325,7 +297,8 @@
         "value": "0x333366"
       },
       "0xntp0m": {
-        "id": "0xntp0m"
+        "id": "0xntp0m",
+        "value": "0.8"
       },
       "8dy573e": {
         "id": "8dy573e",
