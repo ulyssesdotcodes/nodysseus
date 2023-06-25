@@ -43,7 +43,6 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib, graphid: string = "", 
 
                 const inputs = nodeinputs(n, graph);
                 if(isNodeScript(n) || (isNodeRef(n) && n.ref === "@js.script")) {
-                  console.log("got script", n)
                   text += `
       function fn_${graphid}${n.id}(){
         ${inputs.map(input => 
@@ -63,7 +62,7 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib, graphid: string = "", 
         ${inputs
           .map(input => `let ${input.edge.as} = ${isNodeRef(input.node) && input.node.ref === "arg" && input.node.value === '_lib' ? '_lib' : nodefn(input.node, graphid, args)}`)
           .join("\n")}
-        return target["${argToProperties(isNodeRef(n) ? n.value : 'undefined')}"]
+        return target["${argToProperties(isNodeRef(n) ? n.value : 'undefined')}"];
       }
 
       `
@@ -71,7 +70,7 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib, graphid: string = "", 
                   const valueinput = inputs.find(input => input.edge.as === "value");
                   text += `
                   function fn_${graphid}${n.id}() {
-                    return ${valueinput ? nodefn(valueinput.node, graphid, args) : "undefined"}
+                    return ${valueinput ? nodefn(valueinput.node, graphid, args) : "undefined"};
                   }
                   `
                 } else if(noderef.ref == "extern") {
@@ -106,7 +105,7 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib, graphid: string = "", 
                   text += `
       function fn_${graphid}${n.id}(){
         ${varset.join("\n")}
-        return (${extern.fn.toString()})(${extern.args.map((rawa: string): string => rawa.includes(':') ? rawa.substring(0, rawa.indexOf(':')) : rawa).join(", ")})
+        return (${extern.fn.toString()})(${extern.args.map((rawa: string): string => rawa.includes(':') ? rawa.substring(0, rawa.indexOf(':')) : rawa).join(", ")});
       }
 
       `
@@ -124,9 +123,9 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib, graphid: string = "", 
           function fn_${graphid}${n.id}() {
             ${inputs.map(input => 
               `let ${input.edge.as} = ${nodefn(input.node, graphid, args)};`
-            ).join("\n")}
+            ).join("\n")};
             
-            ${refBody.text}
+            ${refBody.text};
           }
                       `
                     })
@@ -135,10 +134,9 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib, graphid: string = "", 
                 }
 
                 // for now just assuming everything is an arg of the last node out
-                text += `return fn_${graphid}${runnable.fn}()`
+                text += `return fn_${graphid}${runnable.fn}();`
               }), util.wrapPromise(undefined))
           .then(() => {
-            console.log(text);
             return {baseArgs, text, _extern_args};
           })
       ).value;
@@ -208,3 +206,5 @@ export const expect = (a: any, b: any, value: string) => {
     throw new Error(`${value}: Value a does not match value b`)
   }
 }
+
+
