@@ -1,7 +1,7 @@
 import * as ha from "hyperapp"
 import { initStore, nodysseus_get, nolib, run, NodysseusError, nolibLib } from "../nodysseus";
 import { Edge, FunctorRunnable, getRunnableGraph, getRunnableGraphId, Graph, isArgs, isNodeGraph, isNodeRef, isNodeScript, isRunnable, isTypedArg, Lib, NodeArg, NodeMetadata, NodysseusNode, RefNode, Runnable, TypedArg } from "../types";
-import { base_node, base_graph, ispromise, wrapPromise, expand_node, contract_node, ancestor_graph, create_randid, compareObjects, newLib } from "../util";
+import { base_node, base_graph, ispromise, wrapPromise, expand_node, contract_node, ancestor_graph, create_randid, compareObjects, newLib, bfs } from "../util";
 import panzoom, * as pz from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 import { d3Link, d3Node, HyperappState, Levels, NodysseusSimulation, Property, Vector2 } from "./types";
@@ -756,28 +756,6 @@ export const findViewBox = (nodes: Array<d3Node>, links: Array<d3Link>, selected
 
     return {nodes_box_dimensions, center};
 }
-
-export const bfs = (graph: Graph, fn) => {
-    const visited = new Set();
-    const iter = (id, level) => {
-        if (visited.has(id)) {
-            return;
-        }
-
-        fn(id, level);
-
-        visited.add(id);
-
-        for (const e of Object.values(graph.edges)) {
-            if (e.to === id) {
-                iter(e.from, level + 1);
-            }
-        }
-    }
-
-    return iter;
-}
-
 
 export const calculateLevels = (nodes: Array<d3Node>, links: Array<d3Link>, graph: Graph, selected: string): Levels => {
     const find_childest = n => {

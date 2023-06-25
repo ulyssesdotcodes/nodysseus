@@ -339,3 +339,26 @@ export function set_mutable(obj, propsArg, value) {
   obj[lastProp] = value;
   return true;
 }
+
+export const bfs = (graph: Graph, fn) => {
+    const visited = new Set();
+    const iter = (id, level) => {
+        if (visited.has(id)) {
+            return;
+        }
+
+        fn(id, level);
+
+        visited.add(id);
+
+        for (const e of Object.values(graph.edges)) {
+            if (e.to === id) {
+                iter(e.from, level + 1);
+            }
+        }
+    }
+
+    return iter;
+}
+
+
