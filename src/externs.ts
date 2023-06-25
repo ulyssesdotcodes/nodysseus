@@ -9,10 +9,10 @@ const createArg = (name) => `fnargs["${argToProperties(name)}"] ?? baseArgs["${a
 const argToProperties = (arg: string) => arg.includes('.') ? arg.split('.').join('"]?.["') : arg;
 
 
-const graphToFnBody = (runnable: ConstRunnable, lib: Lib) => {
-
-
-    return util.wrapPromise(lib.data.no.runtime.get_ref(runnable.graph))
+const graphToFnBody = (runnable: ConstRunnable, lib: Lib) => 
+ !runnable ? undefined
+  : util
+    .wrapPromise(lib.data.no.runtime.get_ref(runnable.graph))
     .then(fromGraph => {
       const graph = util.ancestor_graph(runnable.fn, fromGraph, lib.data);
       const graphArgs = new Set(Object.values(graph.nodes).filter<RefNode>(isNodeRef).filter(n => n.ref === "arg").map(a => a.value));
@@ -95,7 +95,15 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib) => {
   }
 
   `
-            }  else if (isNodeRef(n)) {
+            } else if (noderef.id === "return") {
+              const inputs = nodeinputs(n, graph);
+              const valueinput = inputs.find(input => input.edge.as === "value");
+              text += `
+              function fn_${n.id}() {
+                return ${nodefn(valueinput.node)}
+              }
+              `
+            } else if (isNodeRef(n)) {
               const inputs = nodeinputs(n, graph);
               text += `
   function fn_${n.id}() {
@@ -114,7 +122,7 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib) => {
               `
             } else {
 
-              text += `function fn_${n.id}(){\nreturn ${noderef.value}}\n\n`
+              text += `function fn_${n.id}(){\nreturn _lib.extern.parseValue.fn(${JSON.stringify(noderef.value)})}\n\n`
             }
           })
 
@@ -124,13 +132,57 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib) => {
 
         return {baseArgs, text, _extern_args};
   }).value).value;
+
+export const parseValue = (value: any) => {
+    if (typeof value !== 'string') {
+        return value;
+    }
+
+    if(value === "undefined") {
+        return undefined;
+    }
+
+    if(typeof value === "string") {
+        if (value.startsWith('"') && value.endsWith('"')) {
+            return value.substring(1, value.length - 1)
+        }
+
+        if (value.startsWith('{') || value.startsWith('[')) {
+            try {
+                return JSON.parse(value.replaceAll("'", "\""));
+            } catch (e) { }
+        }
+
+        if(value.startsWith("0x")) {
+          const int = parseInt(value);
+          if(!isNaN(int)) {
+            return int;
+          }
+        }
+
+        if(value.match(/-?[0-9.]*/g)[0].length === value.length){
+            const float = parseFloat(value);
+            if (!isNaN(float)) {
+                return float;
+            }
+        }
+
+        if (value === 'false' || value === 'true') {
+            return value === 'true';
+        }
+
+    }
+
+    return value;
 }
 
- export const create_fn = (runnable: ConstRunnable, lib: Lib) => {
-   const {baseArgs, text, _extern_args} = graphToFnBody(runnable, lib);
-        const fn = new Function("fnargs", "baseArgs", "_extern_args", "import_util", "_lib", text);
 
-        return (args: Env | Args | Record<string, unknown>) => fn(args ? isArgs(args) ? (resolve_args(args, lib, {}) as {value: any}).value : isEnv(args) ? (resolve_args(args.data, lib, {}) as {value: any}).value : args : {}, baseArgs, _extern_args, util, lib.data);
+export const create_fn = (runnable: ConstRunnable, lib: Lib) => {
+  if(!runnable) return;
+  const {baseArgs, text, _extern_args} = graphToFnBody(runnable, lib);
+  const fn = new Function("fnargs", "baseArgs", "_extern_args", "import_util", "_lib", text);
+
+  return (args: Env | Args | Record<string, unknown>) => fn(args ? isArgs(args) ? (resolve_args(args, lib, {}) as {value: any}).value : isEnv(args) ? (resolve_args(args.data, lib, {}) as {value: any}).value : args : {}, baseArgs, _extern_args, util, lib.data);
  }
 
 export const now = (scale?: number) => performance.now() * (scale ?? 1)

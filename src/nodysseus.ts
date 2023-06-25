@@ -206,49 +206,7 @@ class NodysseusError extends Error {
     }
 }
 
-const node_value = (node) => {
-    if (typeof node.value !== 'string') {
-        return node.value;
-    }
-
-    if(node.value === "undefined") {
-        return undefined;
-    }
-
-    if(typeof node.value === "string") {
-        if (node.value.startsWith('"') && node.value.endsWith('"')) {
-            return node.value.substring(1, node.value.length - 1)
-        }
-
-        if (node.value.startsWith('{') || node.value.startsWith('[')) {
-            try {
-                return JSON.parse(node.value.replaceAll("'", "\""));
-            } catch (e) { }
-        }
-
-        if(node.value.startsWith("0x")) {
-          const int = parseInt(node.value);
-          if(!isNaN(int)) {
-            return int;
-          }
-        }
-
-        if(node.value.match(/-?[0-9.]*/g)[0].length === node.value.length){
-            const float = parseFloat(node.value);
-            if (!isNaN(float)) {
-                return float;
-            }
-        }
-
-        if (node.value === 'false' || node.value === 'true') {
-            return node.value === 'true';
-        }
-
-    }
-
-    return node.value;
-}
-
+const node_value = (node) => externs.parseValue(node.value);
 const node_nodes = (node, node_id, data, graph_input_value: Env, lib: Lib, options: RunOptions) => {
     return run_graph(node, node_id, combineEnv(data, graph_input_value, node_id, graph_input_value._output), lib, options)
 }
@@ -441,6 +399,19 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
       }
     } else if(isNodeRef(node)) {
         if (node.ref === "arg") {
+          if(graphArgs._output === "metadata") {
+            const keys = [];
+            let env = graphArgs;
+            do {
+              for(let k of env.data.keys()) {
+                keys.push(k);
+              }
+              env = env.env;
+            } while(env);
+            return lib.data.no.of({
+              values: keys
+            })
+          }
             const resval = nolib.no.arg(node, graphArgs, lib, node.value, options);
             // return resval && typeof resval === 'object' && isValue(resval) ? resval : lib.data.no.of(resval);
             return wrapPromise(resval).then(resval => resval && typeof resval === 'object' && isValue(resval) ? resval : lib.data.no.of(resval)).value;
@@ -1016,6 +987,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     of: <T>(value): Result | Promise<Runnable> => ispromise(value) ? value.then(nolib.no.of) : isValue(value) ? value : { __kind: "result", value: value},
     arg: (node, target: Env, lib: Lib, value, options: RunOptions) => {
       value = node.value;
+      if(!value) return;
       let valuetype, nodevalue;
       let colonIdx = value.indexOf(":")
       if(colonIdx >= 0) {
@@ -1127,6 +1099,10 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     create_fn: {
       args: ["runnable", "_lib"],
       fn: externs.create_fn
+    },
+    parseValue: {
+      args: ["value"],
+      fn: externs.parseValue
     },
     switch: {
       rawArgs: true,
