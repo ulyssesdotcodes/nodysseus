@@ -679,13 +679,13 @@ const runtimefn = () => {
 
       const {publish, addListener, removeListener, pauseGraphListeners, togglePause, isGraphidListened, isListened} = initListeners();
 
-      const change_graph = (graph: Graph | string, lib: Lib, changedNodes: Array<string> = [], broadcast = false, source?) =>
+      const change_graph = (graph: Graph | string, lib: Lib, changedNodes: Array<string> = [], broadcast = false, source?): Graph | Promise<Graph>=>
         wrapPromise(get_parentest(graph))
           .then(parent => {
           if (parent) {
-            (lib.data ?? lib).no.runtime.change_graph(parent, lib, [(typeof graph === "string" ? graph : graph.id).substring(parent.id.length + 1)]);
+            return (lib.data ?? lib).no.runtime.change_graph(parent, lib, [(typeof graph === "string" ? graph : graph.id).substring(parent.id.length + 1)]);
           } else {
-            wrapPromise(typeof graph === "string" ? get_ref(graph) : graph)
+            return wrapPromise(typeof graph === "string" ? get_ref(graph) : graph)
               .then(graph => {
                 const changedNodesSet = new Set()
                 while(changedNodes.length > 0) {
@@ -697,9 +697,10 @@ const runtimefn = () => {
                 }
                 publish("graphchange", {graph, dirtyNodes: [...changedNodesSet.keys()], source}, lib, {}, broadcast);
                 publish("graphupdate", {graph, dirtyNodes: [...changedNodesSet.keys()], source}, lib, {}, broadcast);
-              });
+                return graph;
+              }).value;
           }
-        });
+        }).value;
 
       let updatepublish = {};
       const update_args = (graph, args, lib: Lib) => {
@@ -864,7 +865,7 @@ const runtimefn = () => {
           removedNodes?: Array<NodysseusNode>, 
           lib: Lib, 
           dryRun?: boolean
-        }): Promise<void> => {
+        }): Promise<Graph> => {
           const graphId = typeof graph === "string" ? graph : graph.id;
           await Promise.resolve(nodysseus.refs.add_nodes_edges({graphId, addedNodes, addedEdges, removedEdges, removedNodes}))
           // if(Array.isArray(remove)) {
@@ -877,7 +878,7 @@ const runtimefn = () => {
           // } else if (typeof add === "object") {
           //   await Promise.resolve(nodysseus.refs.add_edge(graphId, add))
           // }
-          change_graph(nodysseus.refs.get(graphId) as Graph, lib, addedEdges.flatMap(e => [e.from, e.to]));
+          return change_graph(nodysseus.refs.get(graphId) as Graph, lib, addedEdges.flatMap(e => [e.from, e.to]));
         },
         add_node: (graph: Graph, node: NodysseusNode, lib: Lib) => {
           if (!(node && typeof node === "object" && node.id)) {

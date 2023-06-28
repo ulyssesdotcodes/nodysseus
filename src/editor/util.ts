@@ -470,9 +470,9 @@ export const UpdateResultDisplay = (state, resel) => {
 export const UpdateNodeEffect = (dispatch: ha.Dispatch<HyperappState>, {editingGraph, node}: {editingGraph: Graph, node: NodysseusNode}) => {
   nolib.no.runtime.updateGraph({graph: editingGraph, addedNodes: [node], lib: nolibLib})
     .then(graph => {
-      const edges_in = graphEdgesIn(editingGraph, node.id);
-      const metadata = hlib.run(editingGraph, node.id, {_output: "metadata"})
-      const nodeargs = node_args(nolib, editingGraph, node.id, metadata);
+      const edges_in = graphEdgesIn(graph, node.id);
+      const metadata = hlib.run(graph, node.id, {_output: "metadata"})
+      const nodeargs = node_args(nolib, graph, node.id, metadata);
 
       dispatch(s => ({...s, selectedMetadata: metadata}))
 
@@ -487,7 +487,7 @@ export const UpdateNodeEffect = (dispatch: ha.Dispatch<HyperappState>, {editingG
             })
           }
         } else if(nodeargs.find(a => a.default)) {
-          const newAs = nodeargs.map(a => a.name.split(": ")).find(e => e[1] === "default")?.[0]
+          const newAs = nodeargs.find(a => a.default).name;
           if(newAs) {
             nolib.no.runtime.updateGraph({
               graph: editingGraph, 
@@ -512,12 +512,12 @@ export const UpdateNode: ha.Action<HyperappState, {node: NodysseusNode, property
 
 export const UpdateEdge: ha.Action<HyperappState, {edge: Edge, as: string}> = (state, {edge, as}) => [
     state,
-    [() => nolib.no.runtime.updateGraph({
+    [() => { nolib.no.runtime.updateGraph({
       graph: state.editingGraph, 
       addedEdges: [{...edge, as}], 
       removedEdges: [edge], 
       lib: hlibLib
-    }), {}]
+    })}, {}]
 ]
 
 export const keydownSubscription = (dispatch, options) => {
