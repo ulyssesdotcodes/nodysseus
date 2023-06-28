@@ -6,6 +6,7 @@ import * as externs from "./externs";
 import { v4 as uuid } from "uuid";
 import { initListeners } from "./events";
 import { wrap } from "idb";
+import { parser } from "@lezer/javascript";
 
 const generic_nodes = generic.nodes;
 
@@ -416,7 +417,11 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
             // return resval && typeof resval === 'object' && isValue(resval) ? resval : lib.data.no.of(resval);
             return wrapPromise(resval).then(resval => resval && typeof resval === 'object' && isValue(resval) ? resval : lib.data.no.of(resval)).value;
         } else if (node.ref === "extern") {
-            return node_extern(node, nodeArgs, graphArgs, lib, options)
+            return graphArgs._output === "metadata" ? {
+              parameters: (node.value.startsWith("extern.")
+              ? lib.data.extern[node.value.substring(7)]
+              : nodysseus_get(lib.data, node.value, lib)).args
+            } : node_extern(node, nodeArgs, graphArgs, lib, options)
         } else if (node.ref === "@js.script") {
             return (graphArgs._output === undefined || graphArgs._output === "value") && node_script(node, nodeArgs, lib, options)
         }
@@ -1494,9 +1499,10 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     get: {
       args: ["target: default", "path", "def", "__graph_value", "_lib"],
       fn: (target, path, def, graph_value, lib: Lib) => {
+        const _path = graph_value || path;
         return lib.data.no.nodysseus_get(
-          target,
-          graph_value || path,
+          _path.startsWith("lib") ? lib.data : target,
+          _path.startsWith("lib") ? _path.substring(3) : _path,
           lib, 
           def
         );
@@ -1840,6 +1846,27 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
         .filter(kv => kv[0] !== "target")
         .forEach(([k, fn]: [string, Runnable]) => target[k] = event => fn && run_runnable(fn, lib, new Map().set("event", event)))
         return target;
+      }
+    },
+    functionParameters: {
+      args:["fn"],
+      fn: (fn) => {
+        const fnstring = fn.toString();
+        // hacky: return the first set of parameters we find
+        let foundParams = false, pastParams = false;
+        const args = [];
+        parser.parse(fnstring).iterate({
+          enter: syntaxNode => {
+            if(!pastParams && syntaxNode.matchContext(["ParamList"]) && syntaxNode.name === "VariableDefinition" && !syntaxNode.matchContext(["Arrow"])) {
+              foundParams = true;
+              args.push(fnstring.substring(syntaxNode.from, syntaxNode.to))
+            } else if (!pastParams && foundParams && !syntaxNode.matchContext(["ParamList"])) {
+              pastParams = true;
+            }
+          }
+        })
+        console.log(args);
+        return args;
       }
     }
   } as Record<string, Extern>,

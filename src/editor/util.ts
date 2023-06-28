@@ -871,7 +871,7 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id: str
                 .map(l => parseInt(l.as.substring(3))) ?? [])
             .reduce((acc, i) => acc > i ? acc : i + 1, 0))
     
-    const externfn = node_ref?.ref === "extern" && nodysseus_get(nolib, node_ref?.value, newLib(nolib))
+    const externfn = (node.ref === "extern" && nodysseus_get(nolib, node.value, newLib(nolib))) || (node_ref?.ref === "extern" && nodysseus_get(nolib, node_ref?.value, newLib(nolib)))
     const externArgs = externfn && (Array.isArray(externfn.args) ? externfn.args.map(a => {
       const argColonIdx = a.indexOf(":")
       return [argColonIdx >= 0 ? a.substring(0, argColonIdx) : a, "any"]
