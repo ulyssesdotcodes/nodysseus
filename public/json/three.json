@@ -1,446 +1,944 @@
 [
+{
+    "edges": {
+      "args": {
+        "as": "args",
+        "from": "args",
+        "to": "out"
+      },
+      "u41ekks": {
+        "as": "value",
+        "from": "u41ekks",
+        "to": "out"
+      },
+      "4bxn62i": {
+        "as": "false",
+        "from": "4bxn62i",
+        "to": "u41ekks"
+      },
+      "6nb9csb": {
+        "as": "pred",
+        "from": "6nb9csb",
+        "to": "u41ekks"
+      },
+      "vn2sh9e": {
+        "as": "true",
+        "from": "vn2sh9e",
+        "to": "u41ekks"
+      },
+      "1bqfz6p": {
+        "as": "subscribe",
+        "from": "1bqfz6p",
+        "to": "vn2sh9e"
+      },
+      "ohrirfq": {
+        "as": "args",
+        "from": "ohrirfq",
+        "to": "vn2sh9e"
+      },
+      "q0mclka": {
+        "as": "value",
+        "from": "q0mclka",
+        "to": "vn2sh9e"
+      },
+      "a10w5r5": {
+        "as": "_initgeo",
+        "from": "a10w5r5",
+        "to": "ohrirfq"
+      },
+      "vlxve1t": {
+        "as": "value",
+        "from": "vlxve1t",
+        "to": "a10w5r5"
+      },
+      "8dy8qvc": {
+        "as": "animationframe",
+        "from": "8dy8qvc",
+        "to": "1bqfz6p"
+      },
+      "atydp8q": {
+        "as": "fn",
+        "from": "atydp8q",
+        "to": "8dy8qvc"
+      },
+      "bp5douv": {
+        "as": "update",
+        "from": "bp5douv",
+        "to": "atydp8q"
+      },
+      "jxfl45g": {
+        "as": "recache",
+        "from": "jxfl45g",
+        "to": "bp5douv"
+      },
+      "keikzdc": {
+        "as": "value",
+        "from": "keikzdc",
+        "to": "bp5douv"
+      },
+      "8z68nb0": {
+        "as": "value",
+        "from": "8z68nb0",
+        "to": "keikzdc"
+      },
+      "9jx6qne": {
+        "as": "args",
+        "from": "9jx6qne",
+        "to": "keikzdc"
+      },
+      "7wxm2ed": {
+        "as": "_length",
+        "from": "7wxm2ed",
+        "to": "9jx6qne"
+      },
+      "8ko69y2": {
+        "as": "_start",
+        "from": "8ko69y2",
+        "to": "9jx6qne"
+      },
+      "bpgcslp": {
+        "as": "_initgeofn",
+        "from": "bpgcslp",
+        "to": "9jx6qne"
+      },
+      "er5ast6": {
+        "as": "_offset",
+        "from": "er5ast6",
+        "to": "9jx6qne"
+      },
+      "gryixka": {
+        "as": "_inputgeofn",
+        "from": "gryixka",
+        "to": "9jx6qne"
+      },
+      "9c6kw1t": {
+        "as": "value",
+        "from": "9c6kw1t",
+        "to": "er5ast6"
+      },
+      "vq7nrhj": {
+        "as": "value",
+        "from": "vq7nrhj",
+        "to": "9c6kw1t"
+      },
+      "pagi2lc": {
+        "as": "value",
+        "from": "pagi2lc",
+        "to": "8ko69y2"
+      },
+      "hpf94oh": {
+        "as": "value",
+        "from": "hpf94oh",
+        "to": "pagi2lc"
+      },
+      "hueqrpa": {
+        "as": "otherwise",
+        "from": "hueqrpa",
+        "to": "7wxm2ed"
+      },
+      "ofk68p4": {
+        "as": "value",
+        "from": "ofk68p4",
+        "to": "7wxm2ed"
+      },
+      "h1svwe3": {
+        "as": "graphvalue",
+        "from": "h1svwe3",
+        "to": "hueqrpa"
+      },
+      "181rx1y": {
+        "as": "runnable",
+        "from": "181rx1y",
+        "to": "8z68nb0"
+      },
+      "2a3e12z": {
+        "as": "fn",
+        "from": "2a3e12z",
+        "to": "181rx1y"
+      },
+      "31qgv2o": {
+        "as": "length",
+        "from": "31qgv2o",
+        "to": "2a3e12z"
+      },
+      "8r9pxsz": {
+        "as": "start",
+        "from": "8r9pxsz",
+        "to": "2a3e12z"
+      },
+      "9zsc4ld": {
+        "as": "inputgeo",
+        "from": "9zsc4ld",
+        "to": "2a3e12z"
+      },
+      "fovvogu": {
+        "as": "initgeo",
+        "from": "fovvogu",
+        "to": "2a3e12z"
+      },
+      "gwhbx7f": {
+        "as": "offset",
+        "from": "gwhbx7f",
+        "to": "2a3e12z"
+      },
+      "nb2tup9": {
+        "as": "attribute",
+        "from": "nb2tup9",
+        "to": "2a3e12z"
+      },
+      "m22uzk2": {
+        "as": "values",
+        "from": "m22uzk2",
+        "to": "jxfl45g"
+      },
+      "ee1op5b": {
+        "as": "arg1",
+        "from": "ee1op5b",
+        "to": "m22uzk2"
+      },
+      "npr0bse": {
+        "as": "arg2",
+        "from": "npr0bse",
+        "to": "m22uzk2"
+      },
+      "tt21f6z": {
+        "as": "arg0",
+        "from": "tt21f6z",
+        "to": "m22uzk2"
+      },
+      "jmyelqq": {
+        "as": "value",
+        "from": "jmyelqq",
+        "to": "tt21f6z"
+      },
+      "d5miekb": {
+        "as": "value",
+        "from": "d5miekb",
+        "to": "npr0bse"
+      },
+      "bot08g0": {
+        "as": "value",
+        "from": "bot08g0",
+        "to": "ee1op5b"
+      },
+      "lsmnhra": {
+        "as": "_animframe",
+        "from": "lsmnhra",
+        "to": "args"
+      },
+      "st1qot0": {
+        "as": "_feedback",
+        "from": "st1qot0",
+        "to": "args"
+      }
+    },
+    "id": "@three.trail",
+    "nodes": {
+      "out": {
+        "id": "out",
+        "name": "@three.trail",
+        "ref": "return"
+      },
+      "u41ekks": {
+        "id": "u41ekks",
+        "ref": "@flow.if"
+      },
+      "vn2sh9e": {
+        "id": "vn2sh9e",
+        "ref": "return"
+      },
+      "q0mclka": {
+        "id": "q0mclka",
+        "ref": "arg",
+        "value": "_initgeo"
+      },
+      "ohrirfq": {
+        "id": "ohrirfq"
+      },
+      "a10w5r5": {
+        "id": "a10w5r5",
+        "ref": "@memory.cache"
+      },
+      "vlxve1t": {
+        "id": "vlxve1t",
+        "ref": "@js.script",
+        "value": "const geo = new _lib.THREE.BufferGeometry();\ngeo.setAttribute('position', new _lib.THREE.BufferAttribute( new Float32Array( [] ), 3));\n\nreturn geo"
+      },
+      "1bqfz6p": {
+        "id": "1bqfz6p"
+      },
+      "8dy8qvc": {
+        "id": "8dy8qvc",
+        "ref": "@flow.runnable"
+      },
+      "atydp8q": {
+        "id": "atydp8q",
+        "ref": "@js.script",
+        "value": "update();"
+      },
+      "bp5douv": {
+        "id": "bp5douv",
+        "ref": "@memory.cache"
+      },
+      "keikzdc": {
+        "id": "keikzdc",
+        "ref": "return"
+      },
+      "9jx6qne": {
+        "id": "9jx6qne"
+      },
+      "gryixka": {
+        "id": "gryixka",
+        "ref": "arg",
+        "value": "geo"
+      },
+      "er5ast6": {
+        "id": "er5ast6",
+        "ref": "@memory.cache"
+      },
+      "9c6kw1t": {
+        "id": "9c6kw1t"
+      },
+      "vq7nrhj": {
+        "id": "vq7nrhj",
+        "value": "0"
+      },
+      "bpgcslp": {
+        "id": "bpgcslp",
+        "ref": "arg",
+        "value": "_initgeo"
+      },
+      "8ko69y2": {
+        "id": "8ko69y2",
+        "ref": "@memory.cache"
+      },
+      "pagi2lc": {
+        "id": "pagi2lc"
+      },
+      "hpf94oh": {
+        "id": "hpf94oh",
+        "value": "0"
+      },
+      "7wxm2ed": {
+        "id": "7wxm2ed",
+        "ref": "@flow.default"
+      },
+      "ofk68p4": {
+        "id": "ofk68p4",
+        "ref": "arg",
+        "value": "length"
+      },
+      "hueqrpa": {
+        "id": "hueqrpa",
+        "ref": "@js.script",
+        "value": "try {\nreturn parseInt(graphvalue);\n} catch(e) {\n  return 5;\n}"
+      },
+      "h1svwe3": {
+        "id": "h1svwe3",
+        "ref": "arg",
+        "value": "__graph_value"
+      },
+      "8z68nb0": {
+        "id": "8z68nb0",
+        "ref": "@js.create_fn"
+      },
+      "181rx1y": {
+        "id": "181rx1y",
+        "ref": "@flow.runnable"
+      },
+      "2a3e12z": {
+        "id": "2a3e12z",
+        "ref": "@js.script",
+        "value": "const item_size = 3;\nconst inputcount = inputgeo.getAttribute(\"position\").count;\nconst count = inputcount * length;\nconst initpos = initgeo.getAttribute(\"position\")\n\nconst currentlength = initpos.count / inputcount;\n\nstart.value = 0;\n\ninitgeo.setDrawRange(start.value * inputcount, count);\n\nconst attrs = Object.keys(inputgeo.attributes);\n\nattrs.forEach(attr => {\n    if (!initgeo.hasAttribute(attr) || initgeo.getAttribute(attr).count < count) {\n      initgeo.setAttribute(\n        attr, \n        new _lib.THREE.BufferAttribute(new Float32Array(count * item_size), item_size)\n)\n    }\n\n  const initbuffer = initgeo.getAttribute(attr);\n  const inputbuffer = inputgeo.getAttribute(attr);\n  offset.value %= length;\n  const offsetamt = (offset.value + start.value) * inputcount * item_size;\n  offset.value += 1;\n  initbuffer.array.set(inputbuffer.array, offsetamt);\n  \n  initbuffer.needsUpdate = true;\n})\n\nreturn initgeo;"
+      },
+      "nb2tup9": {
+        "id": "nb2tup9",
+        "ref": "arg",
+        "value": "_attribute"
+      },
+      "gwhbx7f": {
+        "id": "gwhbx7f",
+        "ref": "arg",
+        "value": "_offset"
+      },
+      "fovvogu": {
+        "id": "fovvogu",
+        "ref": "arg",
+        "value": "_initgeofn"
+      },
+      "9zsc4ld": {
+        "id": "9zsc4ld",
+        "ref": "arg",
+        "value": "_inputgeofn"
+      },
+      "8r9pxsz": {
+        "id": "8r9pxsz",
+        "ref": "arg",
+        "value": "_start"
+      },
+      "31qgv2o": {
+        "id": "31qgv2o",
+        "ref": "arg",
+        "value": "_length"
+      },
+      "jxfl45g": {
+        "id": "jxfl45g",
+        "ref": "@js.script",
+        "value": "return !values.every(v => !v);"
+      },
+      "m22uzk2": {
+        "id": "m22uzk2",
+        "ref": "@data.array"
+      },
+      "tt21f6z": {
+        "id": "tt21f6z",
+        "ref": "@data.ischanged"
+      },
+      "jmyelqq": {
+        "id": "jmyelqq",
+        "ref": "arg",
+        "value": "geo"
+      },
+      "npr0bse": {
+        "id": "npr0bse",
+        "ref": "@data.ischanged"
+      },
+      "d5miekb": {
+        "id": "d5miekb",
+        "ref": "arg",
+        "value": "length"
+      },
+      "ee1op5b": {
+        "id": "ee1op5b",
+        "ref": "@data.ischanged"
+      },
+      "bot08g0": {
+        "id": "bot08g0",
+        "ref": "arg",
+        "value": "__graph_value"
+      },
+      "6nb9csb": {
+        "id": "6nb9csb",
+        "ref": "arg",
+        "value": "geo"
+      },
+      "4bxn62i": {
+        "id": "4bxn62i",
+        "ref": "arg",
+        "value": "_initgeo"
+      },
+      "args": {
+        "id": "args"
+      },
+      "st1qot0": {
+        "id": "st1qot0",
+        "ref": "@memory.state"
+      },
+      "lsmnhra": {
+        "id": "lsmnhra",
+        "ref": "@memory.state"
+      }
+    },
+    "out": "out"
+  },
   {
     "description": "Applies an instantaneous force vector attribute to the velocity attribute. Then updates position based on velocity.",
     "edges": {
-      "075f1p2": {
-        "as": "parameters",
-        "from": "075f1p2",
-        "to": "x1qfkj5"
-      },
-      "0r6tegq": {
-        "as": "point_data",
-        "from": "0r6tegq",
-        "to": "ybchlmp"
-      },
-      "1ml8owh": {
-        "as": "geo",
-        "from": "1ml8owh",
-        "to": "mxtzrgw"
-      },
-      "1p4un67": {
-        "as": "pred",
-        "from": "1p4un67",
-        "to": "jbksi5w"
-      },
-      "4e7el0h": {
-        "as": "value",
-        "from": "4e7el0h",
-        "to": "wli26lm"
-      },
-      "4extjs8": {
-        "as": "props",
-        "from": "4extjs8",
-        "to": "sbvh6lz"
-      },
-      "4z88cxg": {
-        "as": "force",
-        "from": "4z88cxg",
-        "to": "l1vv7k7"
-      },
-      "58bh5c0": {
-        "as": "onpointerup",
-        "from": "58bh5c0",
-        "to": "4extjs8"
-      },
       "5e0bf11": {
         "as": "args",
         "from": "5e0bf11",
         "to": "glfw0eh"
-      },
-      "7w9wh4j": {
-        "as": "feedback",
-        "from": "7w9wh4j",
-        "to": "mxtzrgw"
-      },
-      "aqt67la": {
-        "as": "_reset",
-        "from": "aqt67la",
-        "to": "5e0bf11"
-      },
-      "cz9i2yg": {
-        "as": "damp",
-        "from": "cz9i2yg",
-        "to": "l1vv7k7"
-      },
-      "e20k3gp": {
-        "as": "fn",
-        "from": "e20k3gp",
-        "to": "gktb1wh"
-      },
-      "eml4hhq": {
-        "as": "false",
-        "from": "eml4hhq",
-        "to": "vkhfnnr"
-      },
-      "gktb1wh": {
-        "as": "onpointerdown",
-        "from": "gktb1wh",
-        "to": "4extjs8"
-      },
-      "gwwua2v": {
-        "as": "vel",
-        "from": "gwwua2v",
-        "to": "m8gbhg4"
-      },
-      "h54ggah": {
-        "as": "feedback",
-        "from": "h54ggah",
-        "to": "maa23w3"
-      },
-      "i24kuyf": {
-        "as": "point_data",
-        "from": "i24kuyf",
-        "to": "075f1p2"
-      },
-      "jbksi5w": {
-        "as": "geo",
-        "from": "jbksi5w",
-        "to": "maa23w3"
-      },
-      "l1kmaw2": {
-        "as": "geo",
-        "from": "l1kmaw2",
-        "to": "1p4un67"
-      },
-      "l1vv7k7": {
-        "as": "fn",
-        "from": "l1vv7k7",
-        "to": "x1qfkj5"
-      },
-      "m8gbhg4": {
-        "as": "fn",
-        "from": "m8gbhg4",
-        "to": "y2q8yw8"
-      },
-      "maa23w3": {
-        "as": "true",
-        "from": "maa23w3",
-        "to": "vkhfnnr"
-      },
-      "mxtzrgw": {
-        "as": "true",
-        "from": "mxtzrgw",
-        "to": "jbksi5w"
-      },
-      "nlvb6of": {
-        "as": "false",
-        "from": "nlvb6of",
-        "to": "jbksi5w"
-      },
-      "ohqi2xw": {
-        "as": "fn",
-        "from": "ohqi2xw",
-        "to": "mxtzrgw"
-      },
-      "pc0o532": {
-        "as": "value",
-        "from": "pc0o532",
-        "to": "q039pey"
-      },
-      "ph6kqoj": {
-        "as": "reset",
-        "from": "ph6kqoj",
-        "to": "h54ggah"
-      },
-      "q039pey": {
-        "as": "value",
-        "from": "q039pey",
-        "to": "uy2lf6r"
-      },
-      "q2qyjhl": {
-        "as": "v",
-        "from": "q2qyjhl",
-        "to": "l1vv7k7"
-      },
-      "qfl0o45": {
-        "as": "pos",
-        "from": "qfl0o45",
-        "to": "m8gbhg4"
-      },
-      "qqosk8y": {
-        "as": "children",
-        "from": "qqosk8y",
-        "to": "sbvh6lz"
-      },
-      "rw70t8y": {
-        "as": "geo",
-        "from": "rw70t8y",
-        "to": "wxtf2fm"
       },
       "sbvh6lz": {
         "as": "display",
         "from": "sbvh6lz",
         "to": "glfw0eh"
       },
-      "srnm0s1": {
-        "as": "fn",
-        "from": "srnm0s1",
-        "to": "58bh5c0"
-      },
-      "szm37b8": {
-        "as": "publish",
-        "from": "szm37b8",
-        "to": "aqt67la"
-      },
-      "u02akgh": {
-        "as": "fn",
-        "from": "u02akgh",
-        "to": "maa23w3"
-      },
-      "uy2lf6r": {
-        "as": "args",
-        "from": "uy2lf6r",
-        "to": "gktb1wh"
-      },
-      "v7tihvn": {
-        "as": "reset",
-        "from": "v7tihvn",
-        "to": "7w9wh4j"
-      },
       "vkhfnnr": {
         "as": "value",
         "from": "vkhfnnr",
         "to": "glfw0eh"
       },
-      "wli26lm": {
-        "as": "args",
-        "from": "wli26lm",
-        "to": "58bh5c0"
+      "5j0vv79": {
+        "as": "true",
+        "from": "5j0vv79",
+        "to": "vkhfnnr"
+      },
+      "eml4hhq": {
+        "as": "false",
+        "from": "eml4hhq",
+        "to": "vkhfnnr"
       },
       "wxtf2fm": {
         "as": "pred",
         "from": "wxtf2fm",
         "to": "vkhfnnr"
       },
-      "x1qfkj5": {
-        "as": "runnable",
-        "from": "x1qfkj5",
-        "to": "ohqi2xw"
+      "rw70t8y": {
+        "as": "geo",
+        "from": "rw70t8y",
+        "to": "wxtf2fm"
       },
-      "y2q8yw8": {
-        "as": "runnable",
-        "from": "y2q8yw8",
-        "to": "u02akgh"
+      "7jocdxh": {
+        "as": "fn",
+        "from": "7jocdxh",
+        "to": "5j0vv79"
       },
-      "ybchlmp": {
+      "t01cc47": {
+        "as": "feedback",
+        "from": "t01cc47",
+        "to": "5j0vv79"
+      },
+      "uirup9f": {
+        "as": "geo",
+        "from": "uirup9f",
+        "to": "5j0vv79"
+      },
+      "9tvyu43": {
+        "as": "recache",
+        "from": "9tvyu43",
+        "to": "7jocdxh"
+      },
+      "svoqvns": {
+        "as": "value",
+        "from": "svoqvns",
+        "to": "7jocdxh"
+      },
+      "2xgt521": {
+        "as": "value",
+        "from": "2xgt521",
+        "to": "svoqvns"
+      },
+      "xfqynqz": {
+        "as": "args",
+        "from": "xfqynqz",
+        "to": "svoqvns"
+      },
+      "0s25fmi": {
+        "as": "_prevpdcontainer",
+        "from": "0s25fmi",
+        "to": "xfqynqz"
+      },
+      "hkjxj2g": {
+        "as": "initial",
+        "from": "hkjxj2g",
+        "to": "0s25fmi"
+      },
+      "0dszhup": {
+        "as": "runnable",
+        "from": "0dszhup",
+        "to": "2xgt521"
+      },
+      "llnn91t": {
+        "as": "fn",
+        "from": "llnn91t",
+        "to": "0dszhup"
+      },
+      "qzq5mv5": {
         "as": "parameters",
-        "from": "ybchlmp",
-        "to": "y2q8yw8"
+        "from": "qzq5mv5",
+        "to": "0dszhup"
+      },
+      "9608hsp": {
+        "as": "point_data",
+        "from": "9608hsp",
+        "to": "qzq5mv5"
+      },
+      "1mse9kr": {
+        "as": "pos",
+        "from": "1mse9kr",
+        "to": "llnn91t"
+      },
+      "3uljew2": {
+        "as": "v",
+        "from": "3uljew2",
+        "to": "llnn91t"
+      },
+      "9097yho": {
+        "as": "forcefn",
+        "from": "9097yho",
+        "to": "llnn91t"
+      },
+      "ix1lvmn": {
+        "as": "point_data",
+        "from": "ix1lvmn",
+        "to": "llnn91t"
+      },
+      "jydwnyg": {
+        "as": "damp",
+        "from": "jydwnyg",
+        "to": "llnn91t"
+      },
+      "thc1wto": {
+        "as": "previous_point_data",
+        "from": "thc1wto",
+        "to": "llnn91t"
+      },
+      "xa3wutr": {
+        "as": "index",
+        "from": "xa3wutr",
+        "to": "llnn91t"
+      },
+      "yn15dgz": {
+        "as": "force",
+        "from": "yn15dgz",
+        "to": "llnn91t"
+      },
+      "g4prpop": {
+        "as": "point_data",
+        "from": "g4prpop",
+        "to": "thc1wto"
+      },
+      "jor67ih": {
+        "as": "prev",
+        "from": "jor67ih",
+        "to": "thc1wto"
+      },
+      "l7akjm7": {
+        "as": "container",
+        "from": "l7akjm7",
+        "to": "thc1wto"
+      },
+      "y0gre9d": {
+        "as": "index",
+        "from": "y0gre9d",
+        "to": "thc1wto"
+      },
+      "3i4d5hh": {
+        "as": "target",
+        "from": "3i4d5hh",
+        "to": "l7akjm7"
+      },
+      "5hu3q1j": {
+        "as": "target",
+        "from": "5hu3q1j",
+        "to": "jor67ih"
+      },
+      "ao0tpkm": {
+        "as": "values",
+        "from": "ao0tpkm",
+        "to": "9tvyu43"
+      },
+      "1ezb4fv": {
+        "as": "arg0",
+        "from": "1ezb4fv",
+        "to": "ao0tpkm"
+      },
+      "fs0z6w8": {
+        "as": "arg1",
+        "from": "fs0z6w8",
+        "to": "ao0tpkm"
+      },
+      "28wgjri": {
+        "as": "value",
+        "from": "28wgjri",
+        "to": "fs0z6w8"
+      },
+      "1bw79k6": {
+        "as": "value",
+        "from": "1bw79k6",
+        "to": "1ezb4fv"
+      },
+      "4extjs8": {
+        "as": "props",
+        "from": "4extjs8",
+        "to": "sbvh6lz"
+      },
+      "qqosk8y": {
+        "as": "children",
+        "from": "qqosk8y",
+        "to": "sbvh6lz"
+      },
+      "58bh5c0": {
+        "as": "onpointerup",
+        "from": "58bh5c0",
+        "to": "4extjs8"
+      },
+      "gktb1wh": {
+        "as": "onpointerdown",
+        "from": "gktb1wh",
+        "to": "4extjs8"
+      },
+      "e20k3gp": {
+        "as": "fn",
+        "from": "e20k3gp",
+        "to": "gktb1wh"
+      },
+      "uy2lf6r": {
+        "as": "args",
+        "from": "uy2lf6r",
+        "to": "gktb1wh"
+      },
+      "pc0o532": {
+        "as": "value",
+        "from": "pc0o532",
+        "to": "uy2lf6r"
+      },
+      "srnm0s1": {
+        "as": "fn",
+        "from": "srnm0s1",
+        "to": "58bh5c0"
+      },
+      "wli26lm": {
+        "as": "args",
+        "from": "wli26lm",
+        "to": "58bh5c0"
       },
       "yjgf8l3": {
         "as": "value",
         "from": "yjgf8l3",
-        "to": "4e7el0h"
+        "to": "wli26lm"
+      },
+      "9ibt0ds": {
+        "as": "_position",
+        "from": "9ibt0ds",
+        "to": "5e0bf11"
+      },
+      "aqt67la": {
+        "as": "_reset",
+        "from": "aqt67la",
+        "to": "5e0bf11"
+      },
+      "szm37b8": {
+        "as": "publish",
+        "from": "szm37b8",
+        "to": "aqt67la"
       }
     },
     "id": "@three.applyForce",
     "name": "@three.applyForce",
     "nodes": {
-      "075f1p2": {
-        "id": "075f1p2"
-      },
-      "0r6tegq": {
-        "id": "0r6tegq"
-      },
-      "1ml8owh": {
-        "id": "1ml8owh",
-        "ref": "arg",
-        "value": "geo"
-      },
-      "1p4un67": {
-        "id": "1p4un67",
-        "ref": "@js.script",
-        "value": "return geo.hasAttribute(\"force\")"
-      },
-      "4e7el0h": {
-        "id": "4e7el0h",
-        "ref": "@debug.log",
-        "value": "opu"
-      },
-      "4extjs8": {
-        "id": "4extjs8"
-      },
-      "4z88cxg": {
-        "id": "4z88cxg",
-        "ref": "arg",
-        "value": "point_data.force"
-      },
-      "58bh5c0": {
-        "id": "58bh5c0",
-        "ref": "@flow.ap"
-      },
-      "5e0bf11": {
-        "id": "5e0bf11"
-      },
-      "7w9wh4j": {
-        "id": "7w9wh4j",
-        "ref": "@js.script",
-        "value": "return !reset"
-      },
-      "aqt67la": {
-        "id": "aqt67la",
-        "ref": "@memory.state"
-      },
-      "cz9i2yg": {
-        "id": "cz9i2yg",
-        "ref": "arg",
-        "value": "damping"
-      },
-      "e20k3gp": {
-        "id": "e20k3gp",
-        "ref": "arg",
-        "value": "_reset.set"
-      },
-      "eml4hhq": {
-        "id": "eml4hhq",
-        "ref": "arg",
-        "value": "geo"
-      },
-      "gktb1wh": {
-        "id": "gktb1wh",
-        "ref": "@flow.ap"
-      },
       "glfw0eh": {
         "id": "glfw0eh",
         "name": "@three.applyForce",
         "ref": "return"
       },
-      "gwwua2v": {
-        "id": "gwwua2v",
-        "ref": "arg",
-        "value": "point_data.velocity"
-      },
-      "h54ggah": {
-        "id": "h54ggah",
-        "ref": "@js.script",
-        "value": "return !reset"
-      },
-      "i24kuyf": {
-        "id": "i24kuyf"
-      },
-      "jbksi5w": {
-        "id": "jbksi5w",
+      "vkhfnnr": {
+        "id": "vkhfnnr",
         "ref": "@flow.if"
       },
-      "l1kmaw2": {
-        "id": "l1kmaw2",
-        "ref": "arg",
-        "value": "geo"
-      },
-      "l1vv7k7": {
-        "id": "l1vv7k7",
+      "wxtf2fm": {
+        "id": "wxtf2fm",
         "ref": "@js.script",
-        "value": "force.forEach((f, i) => {\n  v[i] *= 1 - (damp ?? 0)\n  v[i] += f ?? 0;\n})"
-      },
-      "m8gbhg4": {
-        "id": "m8gbhg4",
-        "ref": "@js.script",
-        "value": "vel.forEach((v, i) => pos[i] += v)"
-      },
-      "maa23w3": {
-        "id": "maa23w3",
-        "ref": "@three.modify_attribute",
-        "value": "position"
-      },
-      "mxtzrgw": {
-        "id": "mxtzrgw",
-        "ref": "@three.modify_attribute",
-        "value": "velocity"
-      },
-      "nlvb6of": {
-        "id": "nlvb6of",
-        "ref": "arg",
-        "value": "geo"
-      },
-      "ohqi2xw": {
-        "id": "ohqi2xw",
-        "ref": "@js.create_fn"
-      },
-      "pc0o532": {
-        "id": "pc0o532",
-        "value": "true"
-      },
-      "ph6kqoj": {
-        "id": "ph6kqoj",
-        "ref": "arg",
-        "value": "_reset.state"
-      },
-      "q039pey": {
-        "id": "q039pey",
-        "ref": "@debug.log",
-        "value": "opd"
-      },
-      "q2qyjhl": {
-        "id": "q2qyjhl",
-        "ref": "arg",
-        "value": "point_data.velocity"
-      },
-      "qfl0o45": {
-        "id": "qfl0o45",
-        "ref": "arg",
-        "value": "point_data.position"
-      },
-      "qqosk8y": {
-        "id": "qqosk8y",
-        "value": "reset"
+        "value": "return !!geo"
       },
       "rw70t8y": {
         "id": "rw70t8y",
         "ref": "arg",
         "value": "geo"
       },
+      "eml4hhq": {
+        "id": "eml4hhq",
+        "ref": "arg",
+        "value": "geo"
+      },
+      "5j0vv79": {
+        "id": "5j0vv79",
+        "ref": "@three.modify_attribute",
+        "value": "force,position,velocity"
+      },
+      "uirup9f": {
+        "id": "uirup9f",
+        "ref": "arg",
+        "value": "geo"
+      },
+      "t01cc47": {
+        "id": "t01cc47",
+        "value": "true"
+      },
+      "7jocdxh": {
+        "id": "7jocdxh",
+        "ref": "@memory.cache"
+      },
+      "svoqvns": {
+        "id": "svoqvns",
+        "ref": "return"
+      },
+      "xfqynqz": {
+        "id": "xfqynqz"
+      },
+      "0s25fmi": {
+        "id": "0s25fmi",
+        "ref": "@memory.refval"
+      },
+      "hkjxj2g": {
+        "id": "hkjxj2g",
+        "value": "{}"
+      },
+      "2xgt521": {
+        "id": "2xgt521",
+        "ref": "@js.create_fn"
+      },
+      "0dszhup": {
+        "id": "0dszhup",
+        "ref": "@flow.runnable"
+      },
+      "qzq5mv5": {
+        "id": "qzq5mv5"
+      },
+      "9608hsp": {
+        "id": "9608hsp"
+      },
+      "llnn91t": {
+        "id": "llnn91t",
+        "ref": "@js.script",
+        "value": "if(forcefn) forcefn({point_data, previous_point_data, index});\n\nforce.forEach((f, i) => {\n  v[i] *= 1 - (damp ?? 0)\n  v[i] += f ?? 0;\n})\n\nv.forEach((vv, i) => pos[i] += vv)"
+      },
+      "yn15dgz": {
+        "id": "yn15dgz",
+        "ref": "arg",
+        "value": "point_data.force"
+      },
+      "xa3wutr": {
+        "id": "xa3wutr",
+        "ref": "arg",
+        "value": "index"
+      },
+      "thc1wto": {
+        "id": "thc1wto",
+        "ref": "@js.script",
+        "value": "if(!prev || prev.attributes.position.array.length === 0) return point_data;\nconst attrs = Object.keys(prev.attributes);\nlet attr;\nfor(let name of attrs){\n  attr = prev.getAttribute(name);\n  if(!container[name] || container[name].length !== attr.array.length) {\n    container[name] = new Float32Array(attr.itemSize)\n  }\n                         container[name].set(attr.array.subarray(index * attr.itemSize, (1 + index) * attr.itemSize));\n}\n\nreturn container;"
+      },
+      "y0gre9d": {
+        "id": "y0gre9d",
+        "ref": "arg",
+        "value": "index"
+      },
+      "l7akjm7": {
+        "id": "l7akjm7",
+        "ref": "@data.get",
+        "value": "value"
+      },
+      "3i4d5hh": {
+        "id": "3i4d5hh",
+        "ref": "arg",
+        "value": "_prevpdcontainer"
+      },
+      "jor67ih": {
+        "id": "jor67ih",
+        "ref": "@data.get",
+        "value": "value"
+      },
+      "5hu3q1j": {
+        "id": "5hu3q1j",
+        "ref": "arg",
+        "value": "_position"
+      },
+      "g4prpop": {
+        "id": "g4prpop",
+        "ref": "arg",
+        "value": "point_data"
+      },
+      "jydwnyg": {
+        "id": "jydwnyg",
+        "ref": "arg",
+        "value": "damping"
+      },
+      "ix1lvmn": {
+        "id": "ix1lvmn",
+        "ref": "arg",
+        "value": "point_data"
+      },
+      "9097yho": {
+        "id": "9097yho",
+        "ref": "arg",
+        "value": "forcefn"
+      },
+      "3uljew2": {
+        "id": "3uljew2",
+        "ref": "arg",
+        "value": "point_data.velocity"
+      },
+      "1mse9kr": {
+        "id": "1mse9kr",
+        "ref": "arg",
+        "value": "point_data.position"
+      },
+      "9tvyu43": {
+        "id": "9tvyu43",
+        "ref": "@js.script",
+        "value": "return !values.every(v => !v);"
+      },
+      "ao0tpkm": {
+        "id": "ao0tpkm",
+        "ref": "@data.array"
+      },
+      "fs0z6w8": {
+        "id": "fs0z6w8",
+        "ref": "@data.isunchanged"
+      },
+      "28wgjri": {
+        "id": "28wgjri",
+        "ref": "arg",
+        "value": "forcefn"
+      },
+      "1ezb4fv": {
+        "id": "1ezb4fv",
+        "ref": "@data.isunchanged"
+      },
+      "1bw79k6": {
+        "id": "1bw79k6",
+        "ref": "arg",
+        "value": "_position.value"
+      },
       "sbvh6lz": {
         "id": "sbvh6lz",
         "ref": "@html.html_element",
         "value": "button"
+      },
+      "qqosk8y": {
+        "id": "qqosk8y",
+        "value": "reset"
+      },
+      "4extjs8": {
+        "id": "4extjs8"
+      },
+      "gktb1wh": {
+        "id": "gktb1wh",
+        "ref": "@flow.ap"
+      },
+      "uy2lf6r": {
+        "id": "uy2lf6r"
+      },
+      "pc0o532": {
+        "id": "pc0o532",
+        "value": "true"
+      },
+      "e20k3gp": {
+        "id": "e20k3gp",
+        "ref": "arg",
+        "value": "_reset.set"
+      },
+      "58bh5c0": {
+        "id": "58bh5c0",
+        "ref": "@flow.ap"
+      },
+      "wli26lm": {
+        "id": "wli26lm"
+      },
+      "yjgf8l3": {
+        "id": "yjgf8l3",
+        "value": "false"
       },
       "srnm0s1": {
         "id": "srnm0s1",
         "ref": "arg",
         "value": "_reset.set"
       },
+      "5e0bf11": {
+        "id": "5e0bf11"
+      },
+      "aqt67la": {
+        "id": "aqt67la",
+        "ref": "@memory.state"
+      },
       "szm37b8": {
         "id": "szm37b8",
         "value": "true"
       },
-      "u02akgh": {
-        "id": "u02akgh",
-        "ref": "@js.create_fn"
-      },
-      "uy2lf6r": {
-        "id": "uy2lf6r"
-      },
-      "v7tihvn": {
-        "id": "v7tihvn",
-        "ref": "arg",
-        "value": "_reset.state"
-      },
-      "vkhfnnr": {
-        "id": "vkhfnnr",
-        "ref": "@flow.if"
-      },
-      "wli26lm": {
-        "id": "wli26lm"
-      },
-      "wxtf2fm": {
-        "id": "wxtf2fm",
-        "ref": "@js.script",
-        "value": "return geo.hasAttribute(\"force\") || geo.hasAttribute(\"velocity\")"
-      },
-      "x1qfkj5": {
-        "id": "x1qfkj5",
-        "ref": "@flow.runnable"
-      },
-      "y2q8yw8": {
-        "id": "y2q8yw8",
-        "ref": "@flow.runnable"
-      },
-      "ybchlmp": {
-        "id": "ybchlmp"
-      },
-      "yjgf8l3": {
-        "id": "yjgf8l3",
-        "value": "false"
+      "9ibt0ds": {
+        "id": "9ibt0ds",
+        "ref": "@memory.refval"
       }
     },
     "out": "glfw0eh"
@@ -3737,80 +4235,60 @@
   },
   {
     "edges": {
-      "0tgg4sp": {
-        "as": "onchange",
-        "from": "0tgg4sp",
-        "to": "pk1bbc4"
+      "8dy573e": {
+        "as": "display",
+        "from": "8dy573e",
+        "to": "out"
       },
-      "16s251p": {
-        "as": "arg0",
-        "from": "16s251p",
-        "to": "ril0xrx"
+      "args": {
+        "as": "args",
+        "from": "args",
+        "to": "out"
       },
-      "16witq1": {
-        "as": "update",
-        "from": "16witq1",
-        "to": "8itq35i"
+      "splq7ug": {
+        "as": "value",
+        "from": "splq7ug",
+        "to": "out"
+      },
+      "oh2v6pq": {
+        "as": "pred",
+        "from": "oh2v6pq",
+        "to": "splq7ug"
+      },
+      "vn2sh9e": {
+        "as": "true",
+        "from": "vn2sh9e",
+        "to": "splq7ug"
+      },
+      "y4gwi1o": {
+        "as": "false",
+        "from": "y4gwi1o",
+        "to": "splq7ug"
       },
       "1bqfz6p": {
         "as": "subscribe",
         "from": "1bqfz6p",
         "to": "vn2sh9e"
       },
-      "1eft9yl": {
+      "ohrirfq": {
         "as": "args",
-        "from": "1eft9yl",
-        "to": "dtp36mu"
+        "from": "ohrirfq",
+        "to": "vn2sh9e"
       },
-      "1oskoai": {
-        "as": "props",
-        "from": "1oskoai",
-        "to": "ha9sbe6"
+      "q0mclka": {
+        "as": "value",
+        "from": "q0mclka",
+        "to": "vn2sh9e"
       },
-      "1tx5wnh": {
-        "as": "arg1",
-        "from": "1tx5wnh",
-        "to": "aygb0oi"
-      },
-      "2kxm8s0": {
-        "as": "initbuffer",
-        "from": "2kxm8s0",
-        "to": "l59yoji"
-      },
-      "302jicy": {
-        "as": "arg0",
-        "from": "302jicy",
-        "to": "aygb0oi"
-      },
-      "3viy8mt": {
+      "a10w5r5": {
         "as": "_initgeo",
-        "from": "3viy8mt",
-        "to": "args"
+        "from": "a10w5r5",
+        "to": "ohrirfq"
       },
-      "43bg3g9": {
-        "as": "args",
-        "from": "43bg3g9",
-        "to": "0tgg4sp"
-      },
-      "4rmvxk1": {
+      "vlxve1t": {
         "as": "value",
-        "from": "4rmvxk1",
-        "to": "mfs79iq"
-      },
-      "5bfpjjf": {
-        "as": "fn",
-        "from": "5bfpjjf",
-        "to": "0tgg4sp"
-      },
-      "7rukx50": {
-        "as": "value",
-        "from": "7rukx50",
-        "to": "rob86ty"
-      },
-      "8dy573e": {
-        "as": "display",
-        "from": "8dy573e",
-        "to": "out"
+        "from": "vlxve1t",
+        "to": "a10w5r5"
       },
       "8dy8qvc": {
         "as": "animationframe",
@@ -3822,344 +4300,401 @@
         "from": "8itq35i",
         "to": "8dy8qvc"
       },
-      "8uiwk65": {
-        "as": "fn",
-        "from": "8uiwk65",
-        "to": "dtp36mu"
-      },
-      "93xxksx": {
-        "as": "_fn",
-        "from": "93xxksx",
-        "to": "9ysk4pe"
-      },
-      "9nh2xoa": {
-        "as": "_fn",
-        "from": "9nh2xoa",
+      "90q41gu": {
+        "as": "update",
+        "from": "90q41gu",
         "to": "8itq35i"
       },
-      "9nre5m4": {
-        "as": "fn",
-        "from": "9nre5m4",
-        "to": "ai1ckv5"
+      "9sqfffy": {
+        "as": "value",
+        "from": "9sqfffy",
+        "to": "90q41gu"
       },
-      "9y9ya6h": {
-        "as": "inputgeo",
-        "from": "9y9ya6h",
-        "to": "l59yoji"
+      "uplws96": {
+        "as": "recache",
+        "from": "uplws96",
+        "to": "90q41gu"
       },
-      "9ysk4pe": {
-        "as": "parameters",
-        "from": "9ysk4pe",
-        "to": "na5dq7p"
+      "1x4br4o": {
+        "as": "values",
+        "from": "1x4br4o",
+        "to": "uplws96"
       },
-      "ahl1omp": {
-        "as": "fn",
-        "from": "ahl1omp",
-        "to": "l59yoji"
-      },
-      "ai1ckv5": {
-        "as": "pred",
-        "from": "ai1ckv5",
-        "to": "ph7ugf6"
-      },
-      "aj17mw0": {
-        "as": "type",
-        "from": "aj17mw0",
-        "to": "pk1bbc4"
-      },
-      "apdh5jc": {
+      "c4rxcjv": {
         "as": "arg1",
-        "from": "apdh5jc",
-        "to": "ril0xrx"
+        "from": "c4rxcjv",
+        "to": "1x4br4o"
       },
-      "args": {
-        "as": "args",
-        "from": "args",
-        "to": "out"
-      },
-      "ay1mgi1": {
-        "as": "_attribute",
-        "from": "ay1mgi1",
-        "to": "iwzvdj8"
-      },
-      "aygb0oi": {
-        "as": "children",
-        "from": "aygb0oi",
-        "to": "apdh5jc"
-      },
-      "azhi5kp": {
-        "as": "value",
-        "from": "azhi5kp",
-        "to": "4rmvxk1"
-      },
-      "b9gexfo": {
-        "as": "otherwise",
-        "from": "b9gexfo",
-        "to": "vio1bz1"
-      },
-      "buoyv1q": {
-        "as": "_inputgeofn",
-        "from": "buoyv1q",
-        "to": "iwzvdj8"
-      },
-      "dmibl2m": {
-        "as": "otherwise",
-        "from": "dmibl2m",
-        "to": "mfs79iq"
-      },
-      "dtp36mu": {
-        "as": "onchange",
-        "from": "dtp36mu",
-        "to": "1oskoai"
-      },
-      "dzvblfn": {
-        "as": "args",
-        "from": "dzvblfn",
-        "to": "vn2sh9e"
-      },
-      "e7gu67v": {
-        "as": "value",
-        "from": "e7gu67v",
-        "to": "3viy8mt"
-      },
-      "gjr14z1": {
-        "as": "runnable",
-        "from": "gjr14z1",
-        "to": "my9677p"
-      },
-      "grcbu5k": {
-        "as": "buffer",
-        "from": "grcbu5k",
-        "to": "scte9zo"
-      },
-      "h923zl1": {
-        "as": "true",
-        "from": "h923zl1",
-        "to": "ph7ugf6"
-      },
-      "ha9sbe6": {
+      "wvj1p1r": {
         "as": "arg0",
-        "from": "ha9sbe6",
-        "to": "yai4q6q"
+        "from": "wvj1p1r",
+        "to": "1x4br4o"
       },
-      "iwzvdj8": {
+      "k5f4hu0": {
+        "as": "value",
+        "from": "k5f4hu0",
+        "to": "wvj1p1r"
+      },
+      "rd10d2x": {
+        "as": "value",
+        "from": "rd10d2x",
+        "to": "c4rxcjv"
+      },
+      "8g09muv": {
+        "as": "value",
+        "from": "8g09muv",
+        "to": "9sqfffy"
+      },
+      "rguemo9": {
         "as": "args",
-        "from": "iwzvdj8",
-        "to": "rob86ty"
+        "from": "rguemo9",
+        "to": "9sqfffy"
       },
-      "l59yoji": {
+      "3hu1ap0": {
+        "as": "_fn",
+        "from": "3hu1ap0",
+        "to": "rguemo9"
+      },
+      "9xa3tmr": {
+        "as": "_initbuffer",
+        "from": "9xa3tmr",
+        "to": "rguemo9"
+      },
+      "asaag3y": {
+        "as": "_inputgeofn",
+        "from": "asaag3y",
+        "to": "rguemo9"
+      },
+      "fasv291": {
+        "as": "_attributes",
+        "from": "fasv291",
+        "to": "rguemo9"
+      },
+      "gu5lz7s": {
+        "as": "_lag",
+        "from": "gu5lz7s",
+        "to": "rguemo9"
+      },
+      "ufnr75u": {
+        "as": "_fb",
+        "from": "ufnr75u",
+        "to": "rguemo9"
+      },
+      "x0s5rek": {
+        "as": "_initgeofn",
+        "from": "x0s5rek",
+        "to": "rguemo9"
+      },
+      "r094qmn": {
+        "as": "value",
+        "from": "r094qmn",
+        "to": "ufnr75u"
+      },
+      "vwfrg0o": {
+        "as": "otherwise",
+        "from": "vwfrg0o",
+        "to": "ufnr75u"
+      },
+      "03sh3lc": {
+        "as": "value",
+        "from": "03sh3lc",
+        "to": "r094qmn"
+      },
+      "uf0wi9m": {
+        "as": "attr",
+        "from": "uf0wi9m",
+        "to": "fasv291"
+      },
+      "3h860a0": {
+        "as": "value",
+        "from": "3h860a0",
+        "to": "uf0wi9m"
+      },
+      "jnmh0h3": {
+        "as": "otherwise",
+        "from": "jnmh0h3",
+        "to": "uf0wi9m"
+      },
+      "euaw78z": {
+        "as": "otherwise",
+        "from": "euaw78z",
+        "to": "jnmh0h3"
+      },
+      "qzupnpg": {
+        "as": "value",
+        "from": "qzupnpg",
+        "to": "jnmh0h3"
+      },
+      "osma418": {
+        "as": "value",
+        "from": "osma418",
+        "to": "9xa3tmr"
+      },
+      "1p3zq1m": {
+        "as": "buffer",
+        "from": "1p3zq1m",
+        "to": "osma418"
+      },
+      "7twfyoe": {
+        "as": "false",
+        "from": "7twfyoe",
+        "to": "3hu1ap0"
+      },
+      "jcuffnj": {
+        "as": "pred",
+        "from": "jcuffnj",
+        "to": "3hu1ap0"
+      },
+      "k1k5w8g": {
+        "as": "true",
+        "from": "k1k5w8g",
+        "to": "3hu1ap0"
+      },
+      "8ri2ijg": {
         "as": "fn",
-        "from": "l59yoji",
-        "to": "na5dq7p"
+        "from": "8ri2ijg",
+        "to": "jcuffnj"
+      },
+      "dza658p": {
+        "as": "runnable",
+        "from": "dza658p",
+        "to": "7twfyoe"
+      },
+      "l63qymv": {
+        "as": "runnable",
+        "from": "l63qymv",
+        "to": "8g09muv"
+      },
+      "wwnvi83": {
+        "as": "fn",
+        "from": "wwnvi83",
+        "to": "l63qymv"
+      },
+      "3w2rmuu": {
+        "as": "lag",
+        "from": "3w2rmuu",
+        "to": "wwnvi83"
+      },
+      "cfg6cwi": {
+        "as": "feedback",
+        "from": "cfg6cwi",
+        "to": "wwnvi83"
+      },
+      "hyvpcan": {
+        "as": "initbuffer",
+        "from": "hyvpcan",
+        "to": "wwnvi83"
+      },
+      "ron9hq7": {
+        "as": "fn",
+        "from": "ron9hq7",
+        "to": "wwnvi83"
+      },
+      "s61o3sv": {
+        "as": "inputgeo",
+        "from": "s61o3sv",
+        "to": "wwnvi83"
+      },
+      "x210zde": {
+        "as": "initgeo",
+        "from": "x210zde",
+        "to": "wwnvi83"
+      },
+      "zwgcvcc": {
+        "as": "attributes",
+        "from": "zwgcvcc",
+        "to": "wwnvi83"
+      },
+      "c272oro": {
+        "as": "values",
+        "from": "c272oro",
+        "to": "oh2v6pq"
+      },
+      "c2cadg0": {
+        "as": "arg1",
+        "from": "c2cadg0",
+        "to": "c272oro"
+      },
+      "tc49gqg": {
+        "as": "arg0",
+        "from": "tc49gqg",
+        "to": "c272oro"
+      },
+      "1huvnux": {
+        "as": "otherwise",
+        "from": "1huvnux",
+        "to": "tc49gqg"
+      },
+      "v2pdw1m": {
+        "as": "value",
+        "from": "v2pdw1m",
+        "to": "tc49gqg"
       },
       "lsmnhra": {
         "as": "_animframe",
         "from": "lsmnhra",
         "to": "args"
       },
-      "mb30fup": {
-        "as": "_lag",
-        "from": "mb30fup",
-        "to": "iwzvdj8"
-      },
-      "mdgsecr": {
-        "as": "feedback",
-        "from": "mdgsecr",
-        "to": "l59yoji"
-      },
-      "mfs79iq": {
-        "as": "_fb",
-        "from": "mfs79iq",
-        "to": "iwzvdj8"
-      },
-      "mrpotq6": {
-        "as": "value",
-        "from": "mrpotq6",
-        "to": "1eft9yl"
-      },
-      "my9677p": {
-        "as": "false",
-        "from": "my9677p",
-        "to": "ph7ugf6"
-      },
-      "na5dq7p": {
-        "as": "runnable",
-        "from": "na5dq7p",
-        "to": "7rukx50"
-      },
-      "nd6zslm": {
-        "as": "_initgeofn",
-        "from": "nd6zslm",
-        "to": "iwzvdj8"
-      },
-      "nxcfe4q": {
-        "as": "value",
-        "from": "nxcfe4q",
-        "to": "43bg3g9"
-      },
-      "o81ty2k": {
-        "as": "lag",
-        "from": "o81ty2k",
-        "to": "l59yoji"
-      },
-      "orkrdzx": {
-        "as": "value",
-        "from": "orkrdzx",
-        "to": "ay1mgi1"
-      },
-      "pbkuqjb": {
-        "as": "initgeo",
-        "from": "pbkuqjb",
-        "to": "l59yoji"
-      },
-      "ph7ugf6": {
-        "as": "_fn",
-        "from": "ph7ugf6",
-        "to": "iwzvdj8"
-      },
-      "pk1bbc4": {
-        "as": "props",
-        "from": "pk1bbc4",
-        "to": "302jicy"
-      },
-      "qapcl0i": {
-        "as": "type",
-        "from": "qapcl0i",
-        "to": "1oskoai"
+      "st1qot0": {
+        "as": "_feedback",
+        "from": "st1qot0",
+        "to": "args"
       },
       "ril0xrx": {
         "as": "children",
         "from": "ril0xrx",
         "to": "8dy573e"
       },
-      "rob86ty": {
-        "as": "_updatefn",
-        "from": "rob86ty",
-        "to": "dzvblfn"
+      "16s251p": {
+        "as": "arg0",
+        "from": "16s251p",
+        "to": "ril0xrx"
       },
-      "s710e67": {
-        "as": "value",
-        "from": "s710e67",
-        "to": "vn2sh9e"
+      "apdh5jc": {
+        "as": "arg1",
+        "from": "apdh5jc",
+        "to": "ril0xrx"
       },
-      "scte9zo": {
-        "as": "value",
-        "from": "scte9zo",
-        "to": "u36qh21"
+      "aygb0oi": {
+        "as": "children",
+        "from": "aygb0oi",
+        "to": "apdh5jc"
       },
-      "sj0uocl": {
-        "as": "attribute",
-        "from": "sj0uocl",
-        "to": "l59yoji"
+      "1tx5wnh": {
+        "as": "arg1",
+        "from": "1tx5wnh",
+        "to": "aygb0oi"
       },
-      "st1qot0": {
-        "as": "_feedback",
-        "from": "st1qot0",
-        "to": "args"
+      "302jicy": {
+        "as": "arg0",
+        "from": "302jicy",
+        "to": "aygb0oi"
+      },
+      "pk1bbc4": {
+        "as": "props",
+        "from": "pk1bbc4",
+        "to": "302jicy"
+      },
+      "0tgg4sp": {
+        "as": "onchange",
+        "from": "0tgg4sp",
+        "to": "pk1bbc4"
+      },
+      "aj17mw0": {
+        "as": "type",
+        "from": "aj17mw0",
+        "to": "pk1bbc4"
       },
       "t9zciub": {
         "as": "checked",
         "from": "t9zciub",
         "to": "pk1bbc4"
       },
-      "u36qh21": {
-        "as": "_initbuffer",
-        "from": "u36qh21",
-        "to": "iwzvdj8"
+      "43bg3g9": {
+        "as": "args",
+        "from": "43bg3g9",
+        "to": "0tgg4sp"
       },
-      "vio1bz1": {
-        "as": "otherwise",
-        "from": "vio1bz1",
-        "to": "ay1mgi1"
+      "5bfpjjf": {
+        "as": "fn",
+        "from": "5bfpjjf",
+        "to": "0tgg4sp"
       },
-      "vkwxqas": {
-        "as": "checked",
-        "from": "vkwxqas",
-        "to": "1oskoai"
-      },
-      "vn2sh9e": {
+      "nxcfe4q": {
         "as": "value",
-        "from": "vn2sh9e",
-        "to": "out"
+        "from": "nxcfe4q",
+        "to": "43bg3g9"
       },
-      "y2ley4r": {
-        "as": "value",
-        "from": "y2ley4r",
-        "to": "vio1bz1"
+      "yai4q6q": {
+        "as": "children",
+        "from": "yai4q6q",
+        "to": "16s251p"
+      },
+      "ha9sbe6": {
+        "as": "arg0",
+        "from": "ha9sbe6",
+        "to": "yai4q6q"
       },
       "y6jnnhr": {
         "as": "arg1",
         "from": "y6jnnhr",
         "to": "yai4q6q"
       },
-      "yai4q6q": {
-        "as": "children",
-        "from": "yai4q6q",
-        "to": "16s251p"
+      "1oskoai": {
+        "as": "props",
+        "from": "1oskoai",
+        "to": "ha9sbe6"
+      },
+      "dtp36mu": {
+        "as": "onchange",
+        "from": "dtp36mu",
+        "to": "1oskoai"
+      },
+      "qapcl0i": {
+        "as": "type",
+        "from": "qapcl0i",
+        "to": "1oskoai"
+      },
+      "vkwxqas": {
+        "as": "checked",
+        "from": "vkwxqas",
+        "to": "1oskoai"
+      },
+      "1eft9yl": {
+        "as": "args",
+        "from": "1eft9yl",
+        "to": "dtp36mu"
+      },
+      "8uiwk65": {
+        "as": "fn",
+        "from": "8uiwk65",
+        "to": "dtp36mu"
+      },
+      "mrpotq6": {
+        "as": "value",
+        "from": "mrpotq6",
+        "to": "1eft9yl"
       }
     },
     "id": "@three.modify_attribute",
     "nodes": {
-      "0tgg4sp": {
-        "id": "0tgg4sp",
-        "ref": "@flow.ap"
+      "out": {
+        "id": "out",
+        "name": "@three.modify_attribute",
+        "ref": "return"
       },
-      "16s251p": {
-        "id": "16s251p",
-        "ref": "@html.html_element"
+      "splq7ug": {
+        "id": "splq7ug",
+        "ref": "@flow.if"
       },
-      "16witq1": {
-        "id": "16witq1",
+      "y4gwi1o": {
+        "id": "y4gwi1o",
         "ref": "arg",
-        "value": "_updatefn"
+        "value": "geo"
+      },
+      "vn2sh9e": {
+        "id": "vn2sh9e",
+        "ref": "return"
+      },
+      "q0mclka": {
+        "id": "q0mclka",
+        "ref": "arg",
+        "value": "_initgeo"
+      },
+      "ohrirfq": {
+        "id": "ohrirfq"
+      },
+      "a10w5r5": {
+        "id": "a10w5r5",
+        "ref": "@memory.cache"
+      },
+      "vlxve1t": {
+        "id": "vlxve1t",
+        "ref": "@js.script",
+        "value": "const geo = new _lib.THREE.BufferGeometry();\ngeo.setAttribute('position', new _lib.THREE.BufferAttribute( new Float32Array( [] ), 3));\ngeo.computeVertexNormals();\n\nreturn geo"
       },
       "1bqfz6p": {
         "id": "1bqfz6p"
-      },
-      "1eft9yl": {
-        "id": "1eft9yl"
-      },
-      "1oskoai": {
-        "id": "1oskoai"
-      },
-      "1tx5wnh": {
-        "id": "1tx5wnh",
-        "ref": "@html.html_text",
-        "value": "update"
-      },
-      "2kxm8s0": {
-        "id": "2kxm8s0",
-        "ref": "arg",
-        "value": "_initbuffer"
-      },
-      "302jicy": {
-        "id": "302jicy",
-        "ref": "@html.html_element",
-        "value": "input"
-      },
-      "3viy8mt": {
-        "id": "3viy8mt",
-        "ref": "@memory.cache"
-      },
-      "43bg3g9": {
-        "id": "43bg3g9"
-      },
-      "4rmvxk1": {
-        "id": "4rmvxk1",
-        "ref": "@memory.unwrap"
-      },
-      "5bfpjjf": {
-        "id": "5bfpjjf",
-        "ref": "arg",
-        "value": "_animframe.set"
-      },
-      "7rukx50": {
-        "id": "7rukx50",
-        "ref": "@js.create_fn"
-      },
-      "8dy573e": {
-        "id": "8dy573e",
-        "ref": "@html.html_element"
       },
       "8dy8qvc": {
         "id": "8dy8qvc",
@@ -4168,252 +4703,332 @@
       "8itq35i": {
         "id": "8itq35i",
         "ref": "@js.script",
-        "value": "update({_fn});"
+        "value": "update();"
       },
-      "8uiwk65": {
-        "id": "8uiwk65",
+      "90q41gu": {
+        "id": "90q41gu",
+        "ref": "@memory.cache"
+      },
+      "uplws96": {
+        "id": "uplws96",
+        "ref": "@js.script",
+        "value": "//return values[0]\nreturn !values.every(v => !v);"
+      },
+      "1x4br4o": {
+        "id": "1x4br4o",
+        "ref": "@data.array"
+      },
+      "wvj1p1r": {
+        "id": "wvj1p1r",
+        "ref": "@data.ischanged"
+      },
+      "k5f4hu0": {
+        "id": "k5f4hu0",
         "ref": "arg",
-        "value": "_feedback.set"
+        "value": "geo"
       },
-      "93xxksx": {
-        "id": "93xxksx"
+      "c4rxcjv": {
+        "id": "c4rxcjv",
+        "ref": "@data.ischanged"
       },
-      "9nh2xoa": {
-        "id": "9nh2xoa",
+      "rd10d2x": {
+        "id": "rd10d2x",
         "ref": "arg",
         "value": "fn"
       },
-      "9nre5m4": {
-        "id": "9nre5m4",
+      "9sqfffy": {
+        "id": "9sqfffy",
+        "ref": "return"
+      },
+      "rguemo9": {
+        "id": "rguemo9"
+      },
+      "x0s5rek": {
+        "id": "x0s5rek",
+        "ref": "arg",
+        "value": "_initgeo"
+      },
+      "ufnr75u": {
+        "id": "ufnr75u",
+        "ref": "@flow.default"
+      },
+      "vwfrg0o": {
+        "id": "vwfrg0o",
+        "ref": "arg",
+        "value": "_feedback.state"
+      },
+      "r094qmn": {
+        "id": "r094qmn",
+        "ref": "@memory.unwrap"
+      },
+      "03sh3lc": {
+        "id": "03sh3lc",
+        "ref": "arg",
+        "value": "feedback"
+      },
+      "gu5lz7s": {
+        "id": "gu5lz7s",
+        "ref": "arg",
+        "value": "lag"
+      },
+      "fasv291": {
+        "id": "fasv291",
+        "ref": "@js.script",
+        "value": "\nreturn typeof attr === \"string\" ? attr.split(\",\") : attr;"
+      },
+      "uf0wi9m": {
+        "id": "uf0wi9m",
+        "ref": "@flow.default"
+      },
+      "jnmh0h3": {
+        "id": "jnmh0h3",
+        "ref": "@flow.default"
+      },
+      "qzupnpg": {
+        "id": "qzupnpg",
+        "ref": "arg",
+        "value": "__graph_value"
+      },
+      "euaw78z": {
+        "id": "euaw78z",
+        "value": "position"
+      },
+      "3h860a0": {
+        "id": "3h860a0",
+        "ref": "arg",
+        "value": "attribute"
+      },
+      "asaag3y": {
+        "id": "asaag3y",
+        "ref": "arg",
+        "value": "geo"
+      },
+      "9xa3tmr": {
+        "id": "9xa3tmr",
+        "ref": "@memory.cache"
+      },
+      "osma418": {
+        "id": "osma418"
+      },
+      "1p3zq1m": {
+        "id": "1p3zq1m"
+      },
+      "3hu1ap0": {
+        "id": "3hu1ap0",
+        "ref": "@flow.if"
+      },
+      "k1k5w8g": {
+        "id": "k1k5w8g",
         "ref": "arg",
         "value": "fn"
       },
-      "9y9ya6h": {
-        "id": "9y9ya6h",
-        "ref": "arg",
-        "value": "_inputgeofn"
-      },
-      "9ysk4pe": {
-        "id": "9ysk4pe"
-      },
-      "ahl1omp": {
-        "id": "ahl1omp",
-        "ref": "arg",
-        "value": "_fn"
-      },
-      "ai1ckv5": {
-        "id": "ai1ckv5",
+      "jcuffnj": {
+        "id": "jcuffnj",
         "ref": "@js.script",
         "value": "return typeof fn === \"function\";"
       },
-      "aj17mw0": {
-        "id": "aj17mw0",
-        "value": "checkbox"
+      "8ri2ijg": {
+        "id": "8ri2ijg",
+        "ref": "arg",
+        "value": "fn"
       },
-      "apdh5jc": {
-        "id": "apdh5jc",
-        "ref": "@html.html_element"
+      "7twfyoe": {
+        "id": "7twfyoe",
+        "ref": "@js.create_fn"
+      },
+      "dza658p": {
+        "id": "dza658p",
+        "ref": "arg",
+        "value": "fn"
+      },
+      "8g09muv": {
+        "id": "8g09muv",
+        "ref": "@js.create_fn"
+      },
+      "l63qymv": {
+        "id": "l63qymv",
+        "ref": "@flow.runnable"
+      },
+      "wwnvi83": {
+        "id": "wwnvi83",
+        "ref": "@js.script",
+        "value": "const item_size = 3;\n\nconst count = inputgeo.getAttribute(\"position\").count;\n\nif(!feedback || initgeo.getAttribute(\"position\")?.count === 0) {\n  initgeo.copy(inputgeo);\n}\n\nif(!initbuffer.buffer || initbuffer.buffer.array.length !== count * item_size) {\n  initbuffer.buffer = new _lib.THREE.BufferAttribute(new Float32Array(count * item_size), item_size);\n}\n\nfor(let attribute of attributes) {\n  if((feedback ?  !initgeo.hasAttribute(attribute) : !inputgeo.hasAttribute(attribute)) || initgeo.getAttribute(attribute)?.count !== count) {\n    initgeo.setAttribute(attribute, new _lib.THREE.BufferAttribute(new Float32Array(count * item_size), item_size));\n  }\n}\n\n\nconst attrs = Object.keys(initgeo.attributes);\n\nif (feedback) {\n  attrs.forEach(attr => {\n    if (!attributes.includes(attr) && inputgeo.hasAttribute(attr)) {\n      initgeo.getAttribute(attr)\n          .copy(inputgeo.getAttribute(attr))\n    }\n  })\n}\n\nconst currentAttrs = {};\nattributes.forEach(attribute => {\n  currentAttrs[attribute] = (feedback || !inputgeo.hasAttribute(attribute) ? initgeo : inputgeo).getAttribute(attribute)\n});\nconst targetAttrs = {};\nattributes.forEach(attribute => {\n  targetAttrs[attribute] = \ninitgeo.getAttribute(attribute);\n})\nconst point_data = {};\n\n\nconst newVals = {};\nattributes.forEach(attribute => {\n  newVals[attribute] = new Float32Array(item_size).fill(0);\n});\n\nfor(let i = 0; i < count; i++){\n  attributes.forEach(attribute => {\n    newVals[attribute].set(currentAttrs[attribute].array\n    .subarray(i * item_size, (i + 1) * item_size));\n  })\n  \n  attrs.forEach(attr => {\n    point_data[attr] = attributes.includes(attr) ? newVals[attr] : initgeo.getAttribute(attr).array\n    .subarray(i * item_size, (i + 1) * item_size)\n  })\n  \n  fn({point_data, index: i})\n  \n  if(lag) {\n    attributes.forEach(attribute => {\n    if(newVals[attribute][0] !== undefined) {\n    newVals[attribute][0] *= (1 - lag)\n    newVals[attribute][0] += lag * targetAttr.getX(i);\n    }\n    if(newVal[attribute][1] !== undefined) {\n    newVals[attribute][1] *= (1 - lag)\n    newVals[attribute][1] += lag * targetAttr.getY(i);\n    }\n    if(newVals[attribute][2] !== undefined) {\n    newVals[attribute][2] *= (1 - lag)\n    newVals[attribute][2] += lag * targetAttr.getZ(i);\n    }\n    })\n  }\n  attributes.map(attribute => {\ntargetAttrs[attribute].array.set(newVals[attribute], i * item_size)\n  })\n}\nattributes.forEach(attribute => {\ntargetAttrs[attribute].needsUpdate = true;\n})\n\nreturn initgeo;"
+      },
+      "zwgcvcc": {
+        "id": "zwgcvcc",
+        "ref": "arg",
+        "value": "_attributes"
+      },
+      "x210zde": {
+        "id": "x210zde",
+        "ref": "arg",
+        "value": "_initgeofn"
+      },
+      "s61o3sv": {
+        "id": "s61o3sv",
+        "ref": "arg",
+        "value": "_inputgeofn"
+      },
+      "ron9hq7": {
+        "id": "ron9hq7",
+        "ref": "arg",
+        "value": "_fn"
+      },
+      "hyvpcan": {
+        "id": "hyvpcan",
+        "ref": "arg",
+        "value": "_initbuffer"
+      },
+      "cfg6cwi": {
+        "id": "cfg6cwi",
+        "ref": "arg",
+        "value": "_fb"
+      },
+      "3w2rmuu": {
+        "id": "3w2rmuu",
+        "ref": "arg",
+        "value": "_lag"
+      },
+      "oh2v6pq": {
+        "id": "oh2v6pq",
+        "ref": "@js.script",
+        "value": "return values.every(v => v);"
+      },
+      "c272oro": {
+        "id": "c272oro",
+        "ref": "@data.array"
+      },
+      "tc49gqg": {
+        "id": "tc49gqg",
+        "ref": "@flow.default"
+      },
+      "v2pdw1m": {
+        "id": "v2pdw1m",
+        "ref": "arg",
+        "value": "__graph_value"
+      },
+      "1huvnux": {
+        "id": "1huvnux",
+        "ref": "arg",
+        "value": "attribute"
+      },
+      "c2cadg0": {
+        "id": "c2cadg0",
+        "ref": "arg",
+        "value": "fn"
       },
       "args": {
         "id": "args"
       },
-      "ay1mgi1": {
-        "id": "ay1mgi1",
-        "ref": "@flow.default"
-      },
-      "aygb0oi": {
-        "id": "aygb0oi",
-        "ref": "@data.array"
-      },
-      "azhi5kp": {
-        "id": "azhi5kp",
-        "ref": "arg",
-        "value": "feedback"
-      },
-      "b9gexfo": {
-        "id": "b9gexfo",
-        "value": "position"
-      },
-      "buoyv1q": {
-        "id": "buoyv1q",
-        "ref": "arg",
-        "value": "geo"
-      },
-      "dmibl2m": {
-        "id": "dmibl2m",
-        "ref": "arg",
-        "value": "_feedback.state"
-      },
-      "dtp36mu": {
-        "id": "dtp36mu",
-        "ref": "@flow.ap"
-      },
-      "dzvblfn": {
-        "id": "dzvblfn"
-      },
-      "e7gu67v": {
-        "id": "e7gu67v",
-        "ref": "@js.script",
-        "value": "const geo = new _lib.THREE.BufferGeometry();\ngeo.setAttribute('position', new _lib.THREE.BufferAttribute( new Float32Array( [] ), 3));\ngeo.computeVertexNormals();\n\nreturn geo"
-      },
-      "gjr14z1": {
-        "id": "gjr14z1",
-        "ref": "arg",
-        "value": "fn"
-      },
-      "grcbu5k": {
-        "id": "grcbu5k"
-      },
-      "h923zl1": {
-        "id": "h923zl1",
-        "ref": "arg",
-        "value": "fn"
-      },
-      "ha9sbe6": {
-        "id": "ha9sbe6",
-        "ref": "@html.html_element",
-        "value": "input"
-      },
-      "iwzvdj8": {
-        "id": "iwzvdj8"
-      },
-      "l59yoji": {
-        "id": "l59yoji",
-        "ref": "@js.script",
-        "value": "const item_size = 3;\n\nconst count = inputgeo.getAttribute(\"position\").count;\n\nif(!feedback || initgeo.getAttribute(\"position\")?.count === 0) {\n  initgeo.copy(inputgeo);\n}\n\nif(!initbuffer.buffer || initbuffer.buffer.length !== count * item_size) {\n  initbuffer.buffer = new _lib.THREE.BufferAttribute(new Float32Array(count * item_size), item_size);\n}\n\nif((feedback ?  !initgeo.hasAttribute(attribute) : !inputgeo.hasAttribute(attribute)) || initgeo.getAttribute(attribute)?.count !== count) {\n  initgeo.setAttribute(attribute, initbuffer.buffer.clone());\n}\n\n\nconst attrs = Object.keys(initgeo.attributes);\n\nif (feedback) {\n  attrs.forEach(attr => {\n    if (attr !== attribute && inputgeo.hasAttribute(attr)) {\n      initgeo.getAttribute(attr)\n          .copy(inputgeo.getAttribute(attr))\n    }\n  })\n}\n\nconst currentAttr = (feedback || !inputgeo.hasAttribute(attribute) ? initgeo : inputgeo).getAttribute(attribute);\nconst targetAttr = initgeo.getAttribute(attribute);\nconst point_data = {};\n\n\nconst newVals = new Float32Array(item_size).fill(0)\n\nfor(let i = 0; i < count; i++){\n  newVals.set(currentAttr.array\n    .subarray(i * item_size, (i + 1) * item_size));\n  \n  attrs.forEach(attr => {\n    point_data[attr] = attr === attribute ? newVals : initgeo.getAttribute(attr).array\n    .subarray(i * item_size, (i + 1) * item_size)\n  })\n  \n  fn({point_data, index: i})\n  \n  if(lag) {\n    if(newVals[0] !== undefined) {\n    newVals[0] *= (1 - lag)\n    newVals[0] += lag * targetAttr.getX(i);\n    }\n    if(newVals[1] !== undefined) {\n    newVals[1] *= (1 - lag)\n    newVals[1] += lag * targetAttr.getY(i);\n    }\n    if(newVals[2] !== undefined) {\n    newVals[2] *= (1 - lag)\n    newVals[2] += lag * targetAttr.getZ(i);\n    }\n  }\n  \n  targetAttr.array.set(newVals, i * item_size)\n}\n\ntargetAttr.needsUpdate = true;\n\nreturn initgeo;"
+      "st1qot0": {
+        "id": "st1qot0",
+        "ref": "@memory.state"
       },
       "lsmnhra": {
         "id": "lsmnhra",
         "ref": "@memory.state"
       },
-      "mb30fup": {
-        "id": "mb30fup",
-        "ref": "arg",
-        "value": "lag"
-      },
-      "mdgsecr": {
-        "id": "mdgsecr",
-        "ref": "arg",
-        "value": "_fb"
-      },
-      "mfs79iq": {
-        "id": "mfs79iq",
-        "ref": "@flow.default"
-      },
-      "mrpotq6": {
-        "id": "mrpotq6",
-        "ref": "arg",
-        "value": "event.target.checked"
-      },
-      "my9677p": {
-        "id": "my9677p",
-        "ref": "@js.create_fn"
-      },
-      "na5dq7p": {
-        "id": "na5dq7p",
-        "ref": "@flow.runnable"
-      },
-      "nd6zslm": {
-        "id": "nd6zslm",
-        "ref": "arg",
-        "value": "_initgeo"
-      },
-      "nxcfe4q": {
-        "id": "nxcfe4q",
-        "ref": "arg",
-        "value": "event.target.checked"
-      },
-      "o81ty2k": {
-        "id": "o81ty2k",
-        "ref": "arg",
-        "value": "_lag"
-      },
-      "orkrdzx": {
-        "id": "orkrdzx",
-        "ref": "arg",
-        "value": "attribute"
-      },
-      "out": {
-        "id": "out",
-        "name": "@three.modify_attribute",
-        "ref": "return"
-      },
-      "pbkuqjb": {
-        "id": "pbkuqjb",
-        "ref": "arg",
-        "value": "_initgeofn"
-      },
-      "ph7ugf6": {
-        "id": "ph7ugf6",
-        "ref": "@flow.if"
-      },
-      "pk1bbc4": {
-        "id": "pk1bbc4"
-      },
-      "qapcl0i": {
-        "id": "qapcl0i",
-        "value": "checkbox"
+      "8dy573e": {
+        "id": "8dy573e",
+        "ref": "@html.html_element"
       },
       "ril0xrx": {
         "id": "ril0xrx",
         "ref": "@data.array"
       },
-      "rob86ty": {
-        "id": "rob86ty",
-        "ref": "return"
+      "apdh5jc": {
+        "id": "apdh5jc",
+        "ref": "@html.html_element"
       },
-      "s710e67": {
-        "id": "s710e67",
-        "ref": "arg",
-        "value": "_initgeo"
+      "aygb0oi": {
+        "id": "aygb0oi",
+        "ref": "@data.array"
       },
-      "scte9zo": {
-        "id": "scte9zo"
+      "302jicy": {
+        "id": "302jicy",
+        "ref": "@html.html_element",
+        "value": "input"
       },
-      "sj0uocl": {
-        "id": "sj0uocl",
-        "ref": "arg",
-        "value": "_attribute"
-      },
-      "st1qot0": {
-        "id": "st1qot0",
-        "ref": "@memory.state"
+      "pk1bbc4": {
+        "id": "pk1bbc4"
       },
       "t9zciub": {
         "id": "t9zciub",
         "ref": "arg",
         "value": "_animframe.state"
       },
-      "u36qh21": {
-        "id": "u36qh21",
-        "ref": "@memory.cache"
+      "aj17mw0": {
+        "id": "aj17mw0",
+        "value": "checkbox"
       },
-      "vio1bz1": {
-        "id": "vio1bz1",
-        "ref": "@flow.default"
+      "0tgg4sp": {
+        "id": "0tgg4sp",
+        "ref": "@flow.ap"
       },
-      "vkwxqas": {
-        "id": "vkwxqas",
+      "5bfpjjf": {
+        "id": "5bfpjjf",
         "ref": "arg",
-        "value": "_feedback.state"
+        "value": "_animframe.set"
       },
-      "vn2sh9e": {
-        "id": "vn2sh9e",
-        "ref": "return"
+      "43bg3g9": {
+        "id": "43bg3g9"
       },
-      "y2ley4r": {
-        "id": "y2ley4r",
+      "nxcfe4q": {
+        "id": "nxcfe4q",
         "ref": "arg",
-        "value": "__graph_value"
+        "value": "event.target.checked"
+      },
+      "1tx5wnh": {
+        "id": "1tx5wnh",
+        "ref": "@html.html_text",
+        "value": "update"
+      },
+      "16s251p": {
+        "id": "16s251p",
+        "ref": "@html.html_element"
+      },
+      "yai4q6q": {
+        "id": "yai4q6q",
+        "ref": "@data.array"
       },
       "y6jnnhr": {
         "id": "y6jnnhr",
         "ref": "@html.html_text",
         "value": "feedback"
       },
-      "yai4q6q": {
-        "id": "yai4q6q",
-        "ref": "@data.array"
+      "ha9sbe6": {
+        "id": "ha9sbe6",
+        "ref": "@html.html_element",
+        "value": "input"
+      },
+      "1oskoai": {
+        "id": "1oskoai"
+      },
+      "vkwxqas": {
+        "id": "vkwxqas",
+        "ref": "arg",
+        "value": "_feedback.state"
+      },
+      "qapcl0i": {
+        "id": "qapcl0i",
+        "value": "checkbox"
+      },
+      "dtp36mu": {
+        "id": "dtp36mu",
+        "ref": "@flow.ap"
+      },
+      "8uiwk65": {
+        "id": "8uiwk65",
+        "ref": "arg",
+        "value": "_feedback.set"
+      },
+      "1eft9yl": {
+        "id": "1eft9yl"
+      },
+      "mrpotq6": {
+        "id": "mrpotq6",
+        "ref": "arg",
+        "value": "event.target.checked"
       }
     },
     "out": "out"
