@@ -417,11 +417,7 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
             // return resval && typeof resval === 'object' && isValue(resval) ? resval : lib.data.no.of(resval);
             return wrapPromise(resval).then(resval => resval && typeof resval === 'object' && isValue(resval) ? resval : lib.data.no.of(resval)).value;
         } else if (node.ref === "extern") {
-            return graphArgs._output === "metadata" ? {
-              parameters: (node.value.startsWith("extern.")
-              ? lib.data.extern[node.value.substring(7)]
-              : nodysseus_get(lib.data, node.value, lib)).args
-            } : node_extern(node, nodeArgs, graphArgs, lib, options)
+            return node_extern(node, nodeArgs, graphArgs, lib, options)
         } else if (node.ref === "@js.script") {
             return (graphArgs._output === undefined || graphArgs._output === "value") && node_script(node, nodeArgs, lib, options)
         }
@@ -1865,7 +1861,6 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
             }
           }
         })
-        console.log(args);
         return args;
       }
     }
