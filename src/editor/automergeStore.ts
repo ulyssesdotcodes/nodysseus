@@ -131,7 +131,7 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
         structuredCloneMap.set(id, scd)
         // nolib.no.runtime.publish('graphchange', {graph: scd}, {...nolib, ...hlib}) 
         // nolib.no.runtime.change_graph(scd, hlibLib, changedNodes, true, "automergeStore") 
-        graphChangeCallback && graphChangeCallback(scd, [])
+        // graphChangeCallback && graphChangeCallback(scd, [])
         return scd;
       }).value
   }
@@ -258,6 +258,7 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
 
   let syncWS;
 
+
   // Wrap run in setTimeout so nodysseus has time to init
   setTimeout(() => {
     wrapPromise(getDoc("custom_editor"))
@@ -308,10 +309,19 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
               persist && nodysseusidb.put("refs", Automerge.save(nextDoc), id)
               refsset.add(id);
               refsmap.set(id, nextDoc);
-              structuredCloneMap.set(id, structuredClone(nextDoc));
+              const scd: Graph = structuredClone(nextDoc);
+              scd.edges_in = {};
+              Object.values(scd.edges).forEach(edge => {
+                if(scd.edges_in[edge.to] ) {
+                  scd.edges_in[edge.to][edge.from] = {...edge};
+                } else {
+                  scd.edges_in[edge.to] = {[edge.from]: {...edge}}
+                }
+              }) 
+              structuredCloneMap.set(id, scd);
               syncStates[data.peerId] = {...syncStates[data.peerId], [id]: nextSyncState};
-
               updatePeers(id);
+              graphChangeCallback && graphChangeCallback(scd, [])
             })
           }
         })

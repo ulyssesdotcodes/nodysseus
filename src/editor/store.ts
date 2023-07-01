@@ -195,6 +195,7 @@ export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore>
   setTimeout(() =>
     nolib.no.runtime.addListener("graphchange", "__system-store", ({graph, source}) => {
       if(source === "automergeStore") {
+        contextKeysCache.add(graph.id);
         contextGraphCache.set(graph.id, graph)
       }
     })

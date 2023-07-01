@@ -17,7 +17,11 @@ let ports: Array<MessagePort> = []
 self.onconnect = (e) => initPort(store, ports, e.ports[0])
 
 Promise.all([import("./editor/store"), import("./editor/automergeStore")]).then(([{webClientStore}, {automergeRefStore}]) => {
-  webClientStore(nodysseusidb => automergeRefStore({nodysseusidb, persist: true}))
+  webClientStore(nodysseusidb => automergeRefStore({
+    nodysseusidb, 
+    persist: true, 
+    graphChangeCallback: (graph) => ports.forEach(p => p.postMessage({kind: "update", graphs: [graph]}))
+  }))
     .then(resStore => {
       store.value = resStore.refs;
       initStore(resStore);
