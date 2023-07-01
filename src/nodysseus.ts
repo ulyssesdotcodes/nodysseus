@@ -1493,15 +1493,28 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       fn: (args: Array<any>) => args.every(v => v === args[0])
     },
     get: {
-      args: ["target: default", "path", "def", "__graph_value", "_lib"],
-      fn: (target, path, def, graph_value, lib: Lib) => {
-        const _path = graph_value || path;
-        return lib.data.no.nodysseus_get(
-          _path.startsWith("lib") ? lib.data : target,
+      outputs: {
+        metadata: true
+      },
+      args: {"target": {type: "any", default: true}, "path": "any", "def": "any", "__graph_value": "system", "_lib": "system", "_output": "system"},
+      fn: ({target, path, def, __graph_value, _lib, _output}) => {
+        const getPrototypeNames = (obj) => 
+          obj && typeof obj === "object" && Object.getPrototypeOf(obj) ? Object.getOwnPropertyNames(obj)
+            .concat(getPrototypeNames(Object.getPrototypeOf(obj)))
+            : [];
+        if(_output === "metadata") {
+          return {
+            values: getPrototypeNames(target)
+          }
+        }
+        const _path = __graph_value || path;
+        console.log(target, _path);
+        return _path ? _lib.data.no.nodysseus_get(
+          _path.startsWith("lib") ? _lib.data : target,
           _path.startsWith("lib") ? _path.substring(3) : _path,
-          lib, 
+          _lib, 
           def
-        );
+        ) : target;
       },
     },
     set: {
@@ -1640,6 +1653,11 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       },
       args: {"__graph_value": "system", "self": {type: "any", default: true}, "fn": "value", "args": "@data.array", "_lib": "lib", "_output": "system"},
       fn: ({__graph_value, self, fn, args, _lib, _output}) => {
+        const getPrototypeChainMethods = (obj) => 
+          obj && typeof obj === "object" && Object.getPrototypeOf(obj) ? Object.getOwnPropertyNames(obj)
+            .filter(n => typeof obj[n] === "function")
+            .concat(getPrototypeChainMethods(Object.getPrototypeOf(obj)))
+            : [];
         let nodevalue = __graph_value;
         const runfn = (args) => {
           if (typeof self === "function") {
@@ -1660,15 +1678,17 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
                 )
               : self(args === undefined ? [] : args);
           } else {
-            if (_output === "metadata"){
-              return {
-                values: Object.keys(self)
-              }
-            }
             const ng_fn = nodysseus_get(self ?? _lib.data, fn || nodevalue, _lib);
-            const ng_self = (fn || nodevalue).includes('.') 
+            const ng_self = (fn || nodevalue)?.includes('.') 
               ? nodysseus_get(self, (fn || nodevalue).substring(0, (fn || nodevalue).lastIndexOf('.')), _lib) 
               : self;
+            const parameters = typeof ng_fn === "function" ? nolib.extern.functionParameters.fn(ng_fn) : []
+            if (_output === "metadata"){
+              return {
+                values: self && typeof self === "object" ? getPrototypeChainMethods(self) : [],
+                parameters
+              }
+            }
             const fnargs = Array.isArray(args)
               ? (args || [])
                   .reverse()
@@ -1687,7 +1707,9 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
               : [args];
             const ret = _lib.data.no.of(ispromise(ng_fn)
               ? ng_fn.then((f: any) => f.apply(fnargs))
-              : ng_fn.apply(ng_self, fnargs));
+              : typeof ng_fn === "function"
+              ? ng_fn.apply(ng_self, fnargs)
+              : ng_self);
               return ret;
           }
         }
@@ -1829,11 +1851,14 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       fn: (value) => typeof value
     },
     construct: {
-      args: ["args", "name", "__graph_value", "_lib"],
-      fn: (args, name, nodevalue, _lib) => new (Function.prototype.bind.apply(
-        nodysseus_get(_lib.data, name || nodevalue, _lib, typeof window !== "undefined" ? window[nodevalue] : self[nodevalue]), 
-        [null, ...(args === undefined ? [] : Array.isArray(args) ? args : [args])])
-      )
+      args: {"args": "@data.array", "name": "any", "__graph_value": "system", "_lib": "system"},
+      fn: ({args, name, nodevalue, _lib}) => {
+        const fn = nodysseus_get(_lib.data, name || nodevalue, _lib, typeof window !== "undefined" ? window[nodevalue] : self[nodevalue]);
+        return fn && typeof fn === "function" && new (Function.prototype.bind.apply(
+          fn,
+          [null, ...(args === undefined ? [] : Array.isArray(args) ? args : [args])])
+        )
+      }
     },
     addEventListeners: {
       args: ["target", "_node_args", "_lib"],
