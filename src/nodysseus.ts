@@ -1851,8 +1851,8 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     },
     construct: {
       args: {"args": "@data.array", "name": "any", "__graph_value": "system", "_lib": "system"},
-      fn: ({args, name, nodevalue, _lib}) => {
-        const fn = nodysseus_get(_lib.data, name || nodevalue, _lib, typeof window !== "undefined" ? window[nodevalue] : self[nodevalue]);
+      fn: ({args, name, __graph_value, _lib}) => {
+        const fn = nodysseus_get(_lib.data, name || __graph_value, _lib, typeof window !== "undefined" ? window[__graph_value] : self[__graph_value]);
         return fn && typeof fn === "function" && new (Function.prototype.bind.apply(
           fn,
           [null, ...(args === undefined ? [] : Array.isArray(args) ? args : [args])])
