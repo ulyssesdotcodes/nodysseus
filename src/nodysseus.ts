@@ -1508,7 +1508,6 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
           }
         }
         const _path = __graph_value || path;
-        console.log(target, _path);
         return _path ? _lib.data.no.nodysseus_get(
           _path.startsWith("lib") ? _lib.data : target,
           _path.startsWith("lib") ? _path.substring(3) : _path,
