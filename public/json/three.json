@@ -8489,5 +8489,1061 @@
       }
     },
     "out": "main/out"
+  },
+{
+    "description": "Creates a basic three.js scene with a camera, webGPU renderer, and scene. The `objects` input has the objects of the scene, evaluated every frame - make sure to cache. The `onupdate` input is a runnable with parameters `objects`, `camera`, and `scene` which is run every frame - keep. The `fx` input has effects for an EffectComposer.",
+    "edges": {
+      "8m5muxn/39ivise": {
+        "as": "args",
+        "from": "8m5muxn/39ivise",
+        "to": "8m5muxn/8m5muxn"
+      },
+      "8m5muxn/njzfcz8": {
+        "as": "value",
+        "from": "8m5muxn/njzfcz8",
+        "to": "8m5muxn/8m5muxn"
+      },
+      "qioaglu": {
+        "as": "lib",
+        "from": "qioaglu",
+        "to": "8m5muxn/8m5muxn"
+      },
+      "kipwn58": {
+        "as": "EffectComposer",
+        "from": "kipwn58",
+        "to": "qioaglu"
+      },
+      "vl4foaa": {
+        "as": "RenderPass",
+        "from": "vl4foaa",
+        "to": "qioaglu"
+      },
+      "yt5ewda": {
+        "as": "nodeFrame",
+        "from": "yt5ewda",
+        "to": "qioaglu"
+      },
+      "dt9q1m5": {
+        "as": "value",
+        "from": "dt9q1m5",
+        "to": "yt5ewda"
+      },
+      "bqpkucx": {
+        "as": "target",
+        "from": "bqpkucx",
+        "to": "dt9q1m5"
+      },
+      "7peak26": {
+        "as": "value",
+        "from": "7peak26",
+        "to": "vl4foaa"
+      },
+      "slle0cq": {
+        "as": "target",
+        "from": "slle0cq",
+        "to": "7peak26"
+      },
+      "4a9zo9a": {
+        "as": "value",
+        "from": "4a9zo9a",
+        "to": "kipwn58"
+      },
+      "i39y0i3": {
+        "as": "target",
+        "from": "i39y0i3",
+        "to": "4a9zo9a"
+      },
+      "8m5muxn/hlqmo48": {
+        "as": "args",
+        "from": "8m5muxn/hlqmo48",
+        "to": "8m5muxn/njzfcz8"
+      },
+      "8m5muxn/vyr07ts": {
+        "as": "subscribe",
+        "from": "8m5muxn/vyr07ts",
+        "to": "8m5muxn/njzfcz8"
+      },
+      "jiobf52": {
+        "as": "value",
+        "from": "jiobf52",
+        "to": "8m5muxn/njzfcz8"
+      },
+      "f7krd8u": {
+        "as": "objects",
+        "from": "f7krd8u",
+        "to": "jiobf52"
+      },
+      "slwyovm": {
+        "as": "renderer",
+        "from": "slwyovm",
+        "to": "jiobf52"
+      },
+      "ptak9t2": {
+        "as": "animationframe",
+        "from": "ptak9t2",
+        "to": "8m5muxn/vyr07ts"
+      },
+      "c6eig78": {
+        "as": "fn",
+        "from": "c6eig78",
+        "to": "ptak9t2"
+      },
+      "7c7zppx": {
+        "as": "arg2",
+        "from": "7c7zppx",
+        "to": "c6eig78"
+      },
+      "o9mcda1": {
+        "as": "arg1",
+        "from": "o9mcda1",
+        "to": "c6eig78"
+      },
+      "rmqxb31": {
+        "as": "arg4",
+        "from": "rmqxb31",
+        "to": "c6eig78"
+      },
+      "thz0uma": {
+        "as": "arg5",
+        "from": "thz0uma",
+        "to": "c6eig78"
+      },
+      "z552097": {
+        "as": "arg6",
+        "from": "z552097",
+        "to": "c6eig78"
+      },
+      "clc5p25": {
+        "as": "fn",
+        "from": "clc5p25",
+        "to": "z552097"
+      },
+      "dyst9ju": {
+        "as": "value",
+        "from": "dyst9ju",
+        "to": "clc5p25"
+      },
+      "1js087x": {
+        "as": "camera",
+        "from": "1js087x",
+        "to": "dyst9ju"
+      },
+      "8mgsspt": {
+        "as": "computeNode",
+        "from": "8mgsspt",
+        "to": "dyst9ju"
+      },
+      "cha35wd": {
+        "as": "scene",
+        "from": "cha35wd",
+        "to": "dyst9ju"
+      },
+      "cvop6x9": {
+        "as": "renderer",
+        "from": "cvop6x9",
+        "to": "dyst9ju"
+      },
+      "e9d6mmx": {
+        "as": "otherwise",
+        "from": "e9d6mmx",
+        "to": "cvop6x9"
+      },
+      "zs7iowa": {
+        "as": "value",
+        "from": "zs7iowa",
+        "to": "cvop6x9"
+      },
+      "0wp18c9": {
+        "as": "args",
+        "from": "0wp18c9",
+        "to": "e9d6mmx"
+      },
+      "cwrlosg": {
+        "as": "run",
+        "from": "cwrlosg",
+        "to": "e9d6mmx"
+      },
+      "jjmvxjj": {
+        "as": "fn",
+        "from": "jjmvxjj",
+        "to": "e9d6mmx"
+      },
+      "vc0quhz": {
+        "as": "value",
+        "from": "vc0quhz",
+        "to": "0wp18c9"
+      },
+      "lugpx4o": {
+        "as": "value",
+        "from": "lugpx4o",
+        "to": "vc0quhz"
+      },
+      "6s18wo7": {
+        "as": "camera",
+        "from": "6s18wo7",
+        "to": "lugpx4o"
+      },
+      "eamyj81": {
+        "as": "scene",
+        "from": "eamyj81",
+        "to": "lugpx4o"
+      },
+      "svcshll": {
+        "as": "canvas",
+        "from": "svcshll",
+        "to": "lugpx4o"
+      },
+      "tgacxe5": {
+        "as": "renderer",
+        "from": "tgacxe5",
+        "to": "lugpx4o"
+      },
+      "vwa13pj": {
+        "as": "fx",
+        "from": "vwa13pj",
+        "to": "lugpx4o"
+      },
+      "vzmvbqh": {
+        "as": "MotionBlur",
+        "from": "vzmvbqh",
+        "to": "lugpx4o"
+      },
+      "23ppkmp": {
+        "as": "pred",
+        "from": "23ppkmp",
+        "to": "vzmvbqh"
+      },
+      "3876w2f": {
+        "as": "true",
+        "from": "3876w2f",
+        "to": "vzmvbqh"
+      },
+      "ya36a1r": {
+        "as": "module",
+        "from": "ya36a1r",
+        "to": "3876w2f"
+      },
+      "fzf3k5e": {
+        "as": "RenderPass",
+        "from": "fzf3k5e",
+        "to": "vwa13pj"
+      },
+      "gap7au7": {
+        "as": "EffectComposer",
+        "from": "gap7au7",
+        "to": "vwa13pj"
+      },
+      "hsytqp3": {
+        "as": "value",
+        "from": "hsytqp3",
+        "to": "tgacxe5"
+      },
+      "1j95u16": {
+        "as": "canvas",
+        "from": "1j95u16",
+        "to": "hsytqp3"
+      },
+      "zzxmk3w": {
+        "as": "fn",
+        "from": "zzxmk3w",
+        "to": "thz0uma"
+      },
+      "ijd124m": {
+        "as": "_computeNode",
+        "from": "ijd124m",
+        "to": "zzxmk3w"
+      },
+      "iu537bz": {
+        "as": "computeNode",
+        "from": "iu537bz",
+        "to": "zzxmk3w"
+      },
+      "b2z2580": {
+        "as": "true",
+        "from": "b2z2580",
+        "to": "rmqxb31"
+      },
+      "mh5ikoc": {
+        "as": "pred",
+        "from": "mh5ikoc",
+        "to": "rmqxb31"
+      },
+      "m291v0o": {
+        "as": "args",
+        "from": "m291v0o",
+        "to": "b2z2580"
+      },
+      "wcnk2sw": {
+        "as": "fn",
+        "from": "wcnk2sw",
+        "to": "b2z2580"
+      },
+      "2veqlq1": {
+        "as": "scene",
+        "from": "2veqlq1",
+        "to": "m291v0o"
+      },
+      "xgl6r05": {
+        "as": "objects",
+        "from": "xgl6r05",
+        "to": "m291v0o"
+      },
+      "y2f8gog": {
+        "as": "camera",
+        "from": "y2f8gog",
+        "to": "m291v0o"
+      },
+      "lsf5igz": {
+        "as": "fn",
+        "from": "lsf5igz",
+        "to": "o9mcda1"
+      },
+      "ploozds": {
+        "as": "pred",
+        "from": "ploozds",
+        "to": "lsf5igz"
+      },
+      "tkxqh5a": {
+        "as": "true",
+        "from": "tkxqh5a",
+        "to": "lsf5igz"
+      },
+      "z51c26o": {
+        "as": "children",
+        "from": "z51c26o",
+        "to": "tkxqh5a"
+      },
+      "zz2yk2z": {
+        "as": "parent",
+        "from": "zz2yk2z",
+        "to": "tkxqh5a"
+      },
+      "5gt2zai": {
+        "as": "fn",
+        "from": "5gt2zai",
+        "to": "z51c26o"
+      },
+      "na6fxum": {
+        "as": "array",
+        "from": "na6fxum",
+        "to": "z51c26o"
+      },
+      "8ivgw9u": {
+        "as": "false",
+        "from": "8ivgw9u",
+        "to": "na6fxum"
+      },
+      "d8w679k": {
+        "as": "true",
+        "from": "d8w679k",
+        "to": "na6fxum"
+      },
+      "f288n1z": {
+        "as": "pred",
+        "from": "f288n1z",
+        "to": "na6fxum"
+      },
+      "reop6t4": {
+        "as": "entries",
+        "from": "reop6t4",
+        "to": "d8w679k"
+      },
+      "bgi56zl": {
+        "as": "object",
+        "from": "bgi56zl",
+        "to": "reop6t4"
+      },
+      "by4m1fr": {
+        "as": "value",
+        "from": "by4m1fr",
+        "to": "bgi56zl"
+      },
+      "u0f4b37": {
+        "as": "otherwise",
+        "from": "u0f4b37",
+        "to": "bgi56zl"
+      },
+      "ryjjzqr": {
+        "as": "runnable",
+        "from": "ryjjzqr",
+        "to": "5gt2zai"
+      },
+      "4j2wgr9": {
+        "as": "fn",
+        "from": "4j2wgr9",
+        "to": "ryjjzqr"
+      },
+      "sfzzxee": {
+        "as": "parameters",
+        "from": "sfzzxee",
+        "to": "ryjjzqr"
+      },
+      "wgn4yl2": {
+        "as": "element",
+        "from": "wgn4yl2",
+        "to": "sfzzxee"
+      },
+      "ek93m5o": {
+        "as": "target",
+        "from": "ek93m5o",
+        "to": "4j2wgr9"
+      },
+      "l98p3to": {
+        "as": "value",
+        "from": "l98p3to",
+        "to": "4j2wgr9"
+      },
+      "s208cfn": {
+        "as": "target",
+        "from": "s208cfn",
+        "to": "l98p3to"
+      },
+      "dq4u9ji": {
+        "as": "target",
+        "from": "dq4u9ji",
+        "to": "ek93m5o"
+      },
+      "aqfc51v": {
+        "as": "fn",
+        "from": "aqfc51v",
+        "to": "7c7zppx"
+      },
+      "5m99dxg": {
+        "as": "true",
+        "from": "5m99dxg",
+        "to": "aqfc51v"
+      },
+      "x638fhv": {
+        "as": "pred",
+        "from": "x638fhv",
+        "to": "aqfc51v"
+      },
+      "xel6go6": {
+        "as": "arg0",
+        "from": "xel6go6",
+        "to": "x638fhv"
+      },
+      "xmd2fqb": {
+        "as": "arg1",
+        "from": "xmd2fqb",
+        "to": "x638fhv"
+      },
+      "4fxcgml": {
+        "as": "renderer",
+        "from": "4fxcgml",
+        "to": "5m99dxg"
+      },
+      "fznso76": {
+        "as": "fx",
+        "from": "fznso76",
+        "to": "5m99dxg"
+      },
+      "8m5muxn/7in78pu": {
+        "as": "_camera",
+        "from": "8m5muxn/7in78pu",
+        "to": "8m5muxn/hlqmo48"
+      },
+      "8m5muxn/inq87j9": {
+        "as": "_scene",
+        "from": "8m5muxn/inq87j9",
+        "to": "8m5muxn/hlqmo48"
+      },
+      "8m5muxn/gwavfrm": {
+        "as": "value",
+        "from": "8m5muxn/gwavfrm",
+        "to": "8m5muxn/inq87j9"
+      },
+      "8m5muxn/33kmaec": {
+        "as": "target",
+        "from": "8m5muxn/33kmaec",
+        "to": "8m5muxn/7in78pu"
+      },
+      "8m5muxn/v1nqvl7": {
+        "as": "value",
+        "from": "8m5muxn/v1nqvl7",
+        "to": "8m5muxn/7in78pu"
+      },
+      "8m5muxn/zci8apj": {
+        "as": "value",
+        "from": "8m5muxn/zci8apj",
+        "to": "8m5muxn/33kmaec"
+      },
+      "t8adnxm": {
+        "as": "canvas",
+        "from": "t8adnxm",
+        "to": "8m5muxn/zci8apj"
+      },
+      "40aw44l": {
+        "as": "_renderer",
+        "from": "40aw44l",
+        "to": "8m5muxn/39ivise"
+      },
+      "y3r5oh9": {
+        "as": "_computeNode",
+        "from": "y3r5oh9",
+        "to": "8m5muxn/39ivise"
+      },
+      "a0fmzg4": {
+        "as": "initial",
+        "from": "a0fmzg4",
+        "to": "y3r5oh9"
+      }
+    },
+    "id": "@three.setupWebGPU",
+    "name": "three.setup",
+    "nodes": {
+      "8m5muxn/8m5muxn": {
+        "id": "8m5muxn/8m5muxn",
+        "name": "@three.setupWebGPU",
+        "ref": "return"
+      },
+      "qioaglu": {
+        "id": "qioaglu"
+      },
+      "yt5ewda": {
+        "id": "yt5ewda",
+        "ref": "@memory.cache"
+      },
+      "dt9q1m5": {
+        "id": "dt9q1m5",
+        "ref": "@data.get",
+        "value": "nodeFrame"
+      },
+      "bqpkucx": {
+        "id": "bqpkucx",
+        "ref": "@js.import_module",
+        "value": "https://cdn.jsdelivr.net/npm/three/examples/jsm/renderers/webgl/nodes/WebGLNodes.js"
+      },
+      "vl4foaa": {
+        "id": "vl4foaa",
+        "ref": "@memory.cache"
+      },
+      "7peak26": {
+        "id": "7peak26",
+        "ref": "@data.get",
+        "value": "RenderPass"
+      },
+      "slle0cq": {
+        "id": "slle0cq",
+        "ref": "@js.import_module",
+        "value": "https://cdn.jsdelivr.net/npm/three/examples/jsm/postprocessing/RenderPass.js"
+      },
+      "kipwn58": {
+        "id": "kipwn58",
+        "ref": "@memory.cache"
+      },
+      "4a9zo9a": {
+        "id": "4a9zo9a",
+        "ref": "@data.get",
+        "value": "EffectComposer"
+      },
+      "i39y0i3": {
+        "id": "i39y0i3",
+        "ref": "@js.import_module",
+        "value": "https://cdn.jsdelivr.net/npm/three/examples/jsm/postprocessing/EffectComposer.js"
+      },
+      "8m5muxn/njzfcz8": {
+        "id": "8m5muxn/njzfcz8",
+        "name": "",
+        "ref": "return"
+      },
+      "jiobf52": {
+        "id": "jiobf52"
+      },
+      "slwyovm": {
+        "id": "slwyovm",
+        "ref": "arg",
+        "value": "_renderer.state"
+      },
+      "f7krd8u": {
+        "id": "f7krd8u",
+        "ref": "arg",
+        "value": "objects"
+      },
+      "8m5muxn/vyr07ts": {
+        "id": "8m5muxn/vyr07ts",
+        "name": ""
+      },
+      "ptak9t2": {
+        "id": "ptak9t2",
+        "name": "",
+        "ref": "@flow.ap"
+      },
+      "c6eig78": {
+        "id": "c6eig78",
+        "ref": "@data.array"
+      },
+      "z552097": {
+        "id": "z552097",
+        "ref": "@flow.runnable"
+      },
+      "clc5p25": {
+        "id": "clc5p25",
+        "ref": "@memory.cache"
+      },
+      "dyst9ju": {
+        "id": "dyst9ju",
+        "ref": "@js.script",
+        "value": "if(renderer && scene && camera) {\n\n  //_lib.nodeFrame.update();\n  const animate = () => {\n    if(computeNode.value) {\n      renderer.compute(computeNode.value)\n    }\n    renderer.render(scene, camera);\n  }\n  // renderer.render();\n  renderer.setAnimationLoop(animate);\n\n  return true;\n}"
+      },
+      "cvop6x9": {
+        "id": "cvop6x9",
+        "ref": "@flow.default"
+      },
+      "zs7iowa": {
+        "id": "zs7iowa",
+        "ref": "arg",
+        "value": "_renderer.state"
+      },
+      "e9d6mmx": {
+        "id": "e9d6mmx",
+        "ref": "@flow.ap"
+      },
+      "jjmvxjj": {
+        "id": "jjmvxjj",
+        "ref": "arg",
+        "value": "_renderer.set"
+      },
+      "cwrlosg": {
+        "id": "cwrlosg",
+        "value": "true"
+      },
+      "0wp18c9": {
+        "id": "0wp18c9"
+      },
+      "vc0quhz": {
+        "id": "vc0quhz",
+        "ref": "@memory.cache"
+      },
+      "lugpx4o": {
+        "id": "lugpx4o",
+        "ref": "@js.script",
+        "value": "\nif(!renderer){\n  return;\n}\n//renderer.setPixelRatio( window.devicePixelRatio );\n//renderer.setSize(canvas.width, canvas.height)\nreturn renderer\nconst fxcomposer = new fx.EffectComposer(renderer)\nconst renderpass = new fx.RenderPass(scene, camera);\nfxcomposer.setSize(canvas.width, canvas.height);\nfxcomposer.addPass(renderpass);\nif(MotionBlur) {\n  const pass = new MotionBlur(scene, camera, { samples: 32, expandgeometry: 0.4 });\n  fxcomposer.addPass(pass);\n  pass.renderToScreen = true;\n}\nreturn fxcomposer;"
+      },
+      "vzmvbqh": {
+        "id": "vzmvbqh",
+        "ref": "@flow.if"
+      },
+      "3876w2f": {
+        "id": "3876w2f",
+        "ref": "@js.script",
+        "value": "return module.MotionBlurPass;"
+      },
+      "ya36a1r": {
+        "id": "ya36a1r",
+        "ref": "@js.import_module",
+        "value": "https://cdn.jsdelivr.net/gh/ulyssesdotcodes/threejs-sandbox@94c68f4/motionBlurPass/src/MotionBlurPass.js"
+      },
+      "23ppkmp": {
+        "id": "23ppkmp",
+        "ref": "arg",
+        "value": "motionBlur"
+      },
+      "vwa13pj": {
+        "id": "vwa13pj"
+      },
+      "gap7au7": {
+        "id": "gap7au7",
+        "ref": "arg",
+        "value": "_lib.EffectComposer"
+      },
+      "fzf3k5e": {
+        "id": "fzf3k5e",
+        "ref": "arg",
+        "value": "_lib.RenderPass"
+      },
+      "tgacxe5": {
+        "id": "tgacxe5",
+        "ref": "@memory.cache"
+      },
+      "hsytqp3": {
+        "id": "hsytqp3",
+        "name": "",
+        "ref": "@three.webgpuRenderer"
+      },
+      "1j95u16": {
+        "id": "1j95u16",
+        "ref": "arg",
+        "value": "canvas"
+      },
+      "svcshll": {
+        "id": "svcshll",
+        "ref": "arg",
+        "value": "canvas"
+      },
+      "eamyj81": {
+        "id": "eamyj81",
+        "ref": "arg",
+        "value": "_scene: internal"
+      },
+      "6s18wo7": {
+        "id": "6s18wo7",
+        "ref": "arg",
+        "value": "_camera: internal"
+      },
+      "cha35wd": {
+        "id": "cha35wd",
+        "ref": "arg",
+        "value": "_scene: internal"
+      },
+      "8mgsspt": {
+        "id": "8mgsspt",
+        "ref": "arg",
+        "value": "_computeNode"
+      },
+      "1js087x": {
+        "id": "1js087x",
+        "ref": "arg",
+        "value": "_camera: internal"
+      },
+      "thz0uma": {
+        "id": "thz0uma",
+        "ref": "@flow.runnable"
+      },
+      "zzxmk3w": {
+        "id": "zzxmk3w",
+        "ref": "@js.script",
+        "value": "_computeNode.value = computeNode;"
+      },
+      "iu537bz": {
+        "id": "iu537bz",
+        "ref": "arg",
+        "value": "computeNode"
+      },
+      "ijd124m": {
+        "id": "ijd124m",
+        "ref": "arg",
+        "value": "_computeNode"
+      },
+      "rmqxb31": {
+        "id": "rmqxb31",
+        "ref": "@flow.if"
+      },
+      "mh5ikoc": {
+        "id": "mh5ikoc",
+        "ref": "arg",
+        "value": "onupdate"
+      },
+      "b2z2580": {
+        "id": "b2z2580",
+        "ref": "@flow.ap"
+      },
+      "wcnk2sw": {
+        "id": "wcnk2sw",
+        "ref": "arg",
+        "value": "onupdate"
+      },
+      "m291v0o": {
+        "id": "m291v0o"
+      },
+      "y2f8gog": {
+        "id": "y2f8gog",
+        "ref": "arg",
+        "value": "_camera: internal"
+      },
+      "xgl6r05": {
+        "id": "xgl6r05",
+        "ref": "arg",
+        "value": "objects: internal"
+      },
+      "2veqlq1": {
+        "id": "2veqlq1",
+        "ref": "arg",
+        "value": "_scene"
+      },
+      "o9mcda1": {
+        "id": "o9mcda1",
+        "ref": "@flow.runnable"
+      },
+      "lsf5igz": {
+        "id": "lsf5igz",
+        "ref": "@flow.if"
+      },
+      "tkxqh5a": {
+        "id": "tkxqh5a",
+        "ref": "@three.update_children"
+      },
+      "zz2yk2z": {
+        "id": "zz2yk2z",
+        "ref": "arg",
+        "value": "_scene"
+      },
+      "z51c26o": {
+        "id": "z51c26o",
+        "ref": "@data.map"
+      },
+      "na6fxum": {
+        "id": "na6fxum",
+        "ref": "@flow.if"
+      },
+      "f288n1z": {
+        "id": "f288n1z",
+        "ref": "arg",
+        "value": "objects"
+      },
+      "d8w679k": {
+        "id": "d8w679k",
+        "ref": "@js.script",
+        "value": "return entries.filter(e => e[1])"
+      },
+      "reop6t4": {
+        "id": "reop6t4",
+        "ref": "@data.object_entries"
+      },
+      "bgi56zl": {
+        "id": "bgi56zl",
+        "ref": "@flow.default"
+      },
+      "u0f4b37": {
+        "id": "u0f4b37",
+        "value": "{}"
+      },
+      "by4m1fr": {
+        "id": "by4m1fr",
+        "ref": "arg",
+        "value": "objects"
+      },
+      "8ivgw9u": {
+        "id": "8ivgw9u",
+        "ref": "@data.array"
+      },
+      "5gt2zai": {
+        "id": "5gt2zai",
+        "ref": "@js.create_fn"
+      },
+      "ryjjzqr": {
+        "id": "ryjjzqr",
+        "ref": "@flow.runnable"
+      },
+      "sfzzxee": {
+        "id": "sfzzxee"
+      },
+      "wgn4yl2": {
+        "id": "wgn4yl2"
+      },
+      "4j2wgr9": {
+        "id": "4j2wgr9",
+        "ref": "@data.set_mutable",
+        "value": "name"
+      },
+      "l98p3to": {
+        "id": "l98p3to",
+        "ref": "@data.get",
+        "value": "0"
+      },
+      "s208cfn": {
+        "id": "s208cfn",
+        "ref": "arg",
+        "value": "element"
+      },
+      "ek93m5o": {
+        "id": "ek93m5o",
+        "ref": "@data.get",
+        "value": "1"
+      },
+      "dq4u9ji": {
+        "id": "dq4u9ji",
+        "ref": "arg",
+        "value": "element"
+      },
+      "ploozds": {
+        "id": "ploozds",
+        "ref": "arg",
+        "value": "_scene"
+      },
+      "7c7zppx": {
+        "id": "7c7zppx",
+        "ref": "@flow.runnable"
+      },
+      "aqfc51v": {
+        "id": "aqfc51v",
+        "ref": "@flow.if"
+      },
+      "x638fhv": {
+        "id": "x638fhv",
+        "ref": "@math.and"
+      },
+      "xmd2fqb": {
+        "id": "xmd2fqb",
+        "ref": "arg",
+        "value": "fx"
+      },
+      "xel6go6": {
+        "id": "xel6go6",
+        "ref": "arg",
+        "value": "_renderer.state"
+      },
+      "5m99dxg": {
+        "id": "5m99dxg",
+        "ref": "@js.script",
+        "value": "return false;\nfx?.forEach((pass, idx) => {\n  // +1 for renderpass\n  if(renderer.passes[idx + 1] !== pass) {\n    if(renderer.passes.length > idx + 1) {\n      console.log(\"removing\", idx)  \n      renderer.removePass(renderer.passes[idx + 1]);\n    }\n    console.log(\"adding fx \", pass)\n    renderer.insertPass(pass, idx + 1);\n  }\n});\n\nif(fx && renderer.passes.length > fx?.length + 1) {\n  renderer.passes.splice(fx.length, renderer.passes.length)\n}"
+      },
+      "fznso76": {
+        "id": "fznso76",
+        "ref": "arg",
+        "value": "fx"
+      },
+      "4fxcgml": {
+        "id": "4fxcgml",
+        "ref": "arg",
+        "value": "_renderer.state"
+      },
+      "8m5muxn/hlqmo48": {
+        "id": "8m5muxn/hlqmo48"
+      },
+      "8m5muxn/inq87j9": {
+        "id": "8m5muxn/inq87j9",
+        "name": "",
+        "ref": "@memory.cache"
+      },
+      "8m5muxn/gwavfrm": {
+        "__isnodysseus": true,
+        "id": "8m5muxn/gwavfrm",
+        "ref": "@three.scene",
+        "value": ""
+      },
+      "8m5muxn/7in78pu": {
+        "id": "8m5muxn/7in78pu",
+        "ref": "@data.set_mutable",
+        "value": "position.z"
+      },
+      "8m5muxn/v1nqvl7": {
+        "id": "8m5muxn/v1nqvl7",
+        "value": "5"
+      },
+      "8m5muxn/33kmaec": {
+        "id": "8m5muxn/33kmaec",
+        "ref": "@memory.cache"
+      },
+      "8m5muxn/zci8apj": {
+        "__isnodysseus": true,
+        "id": "8m5muxn/zci8apj",
+        "ref": "@three.camera",
+        "value": ""
+      },
+      "t8adnxm": {
+        "id": "t8adnxm",
+        "ref": "arg",
+        "value": "canvas"
+      },
+      "8m5muxn/39ivise": {
+        "id": "8m5muxn/39ivise"
+      },
+      "y3r5oh9": {
+        "id": "y3r5oh9",
+        "ref": "@memory.refval"
+      },
+      "a0fmzg4": {
+        "id": "a0fmzg4",
+        "ref": "arg",
+        "value": "computeNode"
+      },
+      "40aw44l": {
+        "id": "40aw44l",
+        "ref": "@memory.state"
+      }
+    },
+    "out": "8m5muxn/8m5muxn"
+  },
+{
+    "edges": {
+      "lihjkfp": {
+        "as": "value",
+        "from": "lihjkfp",
+        "to": "main/out"
+      },
+      "zo305fs": {
+        "as": "lib",
+        "from": "zo305fs",
+        "to": "main/out"
+      },
+      "tvnjxr9": {
+        "as": "webgpurenderer",
+        "from": "tvnjxr9",
+        "to": "zo305fs"
+      },
+      "ayw1t6o": {
+        "as": "value",
+        "from": "ayw1t6o",
+        "to": "tvnjxr9"
+      },
+      "56eh38m": {
+        "as": "target",
+        "from": "56eh38m",
+        "to": "ayw1t6o"
+      },
+      "fdgum4l": {
+        "as": "pred",
+        "from": "fdgum4l",
+        "to": "lihjkfp"
+      },
+      "x4zdk2w": {
+        "as": "true",
+        "from": "x4zdk2w",
+        "to": "lihjkfp"
+      },
+      "cwl59lh": {
+        "as": "canvas",
+        "from": "cwl59lh",
+        "to": "x4zdk2w"
+      },
+      "eyftv46": {
+        "as": "canvas",
+        "from": "eyftv46",
+        "to": "fdgum4l"
+      }
+    },
+    "id": "@three.webgpuRenderer",
+    "nodes": {
+      "main/out": {
+        "__isnodysseus": true,
+        "id": "main/out",
+        "name": "@three.webgpuRenderer",
+        "ref": "return"
+      },
+      "zo305fs": {
+        "id": "zo305fs"
+      },
+      "tvnjxr9": {
+        "id": "tvnjxr9",
+        "ref": "@memory.cache"
+      },
+      "ayw1t6o": {
+        "id": "ayw1t6o",
+        "ref": "@data.get",
+        "value": "default"
+      },
+      "56eh38m": {
+        "id": "56eh38m",
+        "ref": "@js.import_module",
+        "value": "https://cdn.jsdelivr.net/npm/three/examples/jsm/renderers/webgpu/WebGPURenderer.js"
+      },
+      "lihjkfp": {
+        "id": "lihjkfp",
+        "ref": "@flow.if"
+      },
+      "x4zdk2w": {
+        "id": "x4zdk2w",
+        "ref": "@js.script",
+        "value": "canvas = canvas\nconst renderer = new _lib.webgpurenderer({canvas});\nrenderer.setPixelRatio( window.devicePixelRatio );\nrenderer.setSize(canvas.width, canvas.height)\nreturn renderer"
+      },
+      "cwl59lh": {
+        "id": "cwl59lh",
+        "name": "",
+        "ref": "arg",
+        "value": "canvas"
+      },
+      "fdgum4l": {
+        "id": "fdgum4l",
+        "ref": "@js.script",
+        "value": "return canvas && _lib.webgpurenderer"
+      },
+      "eyftv46": {
+        "id": "eyftv46",
+        "ref": "arg",
+        "value": "canvas"
+      }
+    },
+    "out": "main/out"
   }
 ]
