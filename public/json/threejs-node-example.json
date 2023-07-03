@@ -96,26 +96,6 @@
         "from": "5md98ad",
         "to": "tz1d0x0"
       },
-      "wgr2e72": {
-        "as": "args",
-        "from": "wgr2e72",
-        "to": "5md98ad"
-      },
-      "nn38omj": {
-        "as": "args",
-        "from": "nn38omj",
-        "to": "wgr2e72"
-      },
-      "v8mz9pe": {
-        "as": "arg1",
-        "from": "v8mz9pe",
-        "to": "nn38omj"
-      },
-      "vgfnhaw": {
-        "as": "arg0",
-        "from": "vgfnhaw",
-        "to": "nn38omj"
-      },
       "fxm18j1": {
         "as": "args",
         "from": "fxm18j1",
@@ -180,6 +160,21 @@
         "as": "graphchange",
         "from": "ow93fev",
         "to": "0209mcq"
+      },
+      "v8mz9pe": {
+        "from": "v8mz9pe",
+        "to": "wgr2e72",
+        "as": "aNode"
+      },
+      "vgfnhaw": {
+        "from": "vgfnhaw",
+        "to": "wgr2e72",
+        "as": "bNode"
+      },
+      "wgr2e72": {
+        "from": "wgr2e72",
+        "to": "5md98ad",
+        "as": "texcoord"
       }
     },
     "id": "threejs_node_example",
@@ -257,10 +252,6 @@
         "ref": "@three.node",
         "value": "mul"
       },
-      "nn38omj": {
-        "id": "nn38omj",
-        "ref": "@data.array"
-      },
       "vgfnhaw": {
         "id": "vgfnhaw",
         "ref": "@three.node",
@@ -273,7 +264,7 @@
       },
       "fxm18j1": {
         "id": "fxm18j1",
-        "value": "8"
+        "value": "16"
       },
       "3mk2p29": {
         "id": "3mk2p29",

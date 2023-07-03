@@ -5290,19 +5290,49 @@
         "from": "txmw3pd",
         "to": "cb8yguh"
       },
+      "an8n9z9": {
+        "as": "arg0",
+        "from": "an8n9z9",
+        "to": "68j6hjq"
+      },
       "homn2x7": {
         "as": "target",
         "from": "homn2x7",
         "to": "68j6hjq"
       },
+      "okhx7t6": {
+        "as": "fnparms",
+        "from": "okhx7t6",
+        "to": "an8n9z9"
+      },
       "xsnh3pb": {
-        "as": "arg0",
+        "as": "args",
         "from": "xsnh3pb",
-        "to": "68j6hjq"
+        "to": "an8n9z9"
+      },
+      "uobnyvk": {
+        "as": "fn",
+        "from": "uobnyvk",
+        "to": "okhx7t6"
+      },
+      "m4yoq67": {
+        "as": "target",
+        "from": "m4yoq67",
+        "to": "uobnyvk"
+      },
+      "pw73t77": {
+        "as": "path",
+        "from": "pw73t77",
+        "to": "uobnyvk"
+      },
+      "t9olptl": {
+        "as": "url",
+        "from": "t9olptl",
+        "to": "m4yoq67"
       }
     },
     "id": "@three.node",
-    "name": "FxPass",
+    "name": "@three.node",
     "nodes": {
       "t2wl30j": {
         "id": "t2wl30j",
@@ -5431,8 +5461,8 @@
       },
       "4skly0x": {
         "id": "4skly0x",
-        "ref": "@js.script",
-        "value": "if(returnFn) return Node;\n\nlet created;\n\nconst isConst = Node.toString() == nodes.float.toString();\nif(isConst) {\n  return Node(nodeArgs[\"value\"] ?? (Array.isArray(args) ? args[0] : args));\n}\nconst argArr = [];\nfnparms?.forEach(p => p !== 'params' && p !== 'parameters' && argArr.push(nodeArgs[p]));\n(Array.isArray(args) ? args : [args]).forEach(v => argArr.push(v));\n\nconsole.log(name, argArr, fnparms, nodeArgs)\n\ntry {\n  created = new Node(...argArr)\n}catch(e){\n  created = typeof Node === \"function\" ?  Node(...argArr) : Node;\n}\n\nconsole.log(\"created\", created);\n\nreturn created"
+        "value": "if(returnFn) return Node;\n\nlet created;\n\nconst isConst = Node.toString() == nodes.float.toString();\nif(isConst) {\n  const parms = nodeArgs[\"value\"] ?? args;\n  return Node(...(Array.isArray(parms) ? parms : [parms]));\n}\nconst argArr = [];\nfnparms?.forEach(p => p !== 'params' && p !== 'parameters' && argArr.push(nodeArgs[p]));\n(Array.isArray(args) ? args : [args]).forEach(v => argArr.push(v));\n\ntry {\n  created = new Node(...argArr)\n}catch(e){\n  created = typeof Node === \"function\" ?  Node(...argArr) : Node;\n}\n\nreturn created",
+        "ref": "@js.script"
       },
       "xntibr1": {
         "id": "xntibr1",
@@ -5536,15 +5566,44 @@
         "id": "68j6hjq",
         "ref": "@data.merge_objects_mutable"
       },
+      "homn2x7": {
+        "id": "homn2x7",
+        "ref": "arg",
+        "value": "_nodeinstance"
+      },
+      "an8n9z9": {
+        "id": "an8n9z9",
+        "ref": "@js.script",
+        "value": "for(let parm of fnparms) {\n  args.delete(parm)\n}\nargs.delete(\"args\");\nreturn args;"
+      },
       "xsnh3pb": {
         "id": "xsnh3pb",
         "ref": "arg",
         "value": "_args"
       },
-      "homn2x7": {
-        "id": "homn2x7",
+      "okhx7t6": {
+        "id": "okhx7t6",
+        "ref": "extern",
+        "value": "extern.functionParameters"
+      },
+      "uobnyvk": {
+        "id": "uobnyvk",
+        "ref": "@data.get"
+      },
+      "pw73t77": {
+        "id": "pw73t77",
         "ref": "arg",
-        "value": "_nodeinstance"
+        "value": "_name"
+      },
+      "m4yoq67": {
+        "hafko00": "8f5duig",
+        "id": "m4yoq67",
+        "ref": "@js.import_module"
+      },
+      "t9olptl": {
+        "id": "t9olptl",
+        "ref": "@js.script",
+        "value": "\nreturn `https://cdn.jsdelivr.net/npm/three/examples/jsm/nodes/Nodes.js`"
       },
       "q4hk4bw": {
         "id": "q4hk4bw",
@@ -5856,7 +5915,7 @@
       "xsjuu4i": {
         "id": "xsjuu4i",
         "ref": "@js.script",
-        "value": "console.log(_lib.THREE)\nreturn _lib.THREE && canvas;"
+        "value": "return _lib.THREE && canvas;"
       }
     },
     "out": "main/out"
