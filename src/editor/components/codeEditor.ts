@@ -105,7 +105,6 @@ export const init_code_editor = (dispatch, {html_id}) => {
                             const varName = viewUpdate.state.sliceDoc(nameNode.from, nameNode.to);
                             const varValue = viewUpdate.state.sliceDoc(valueNode.from, valueNode.to);
                             
-                            console.log(`${varName} = ${varValue}`)
                             widgets.push(Decoration.widget({widget: new ExtractInputWidget(varName, varValue, node.from, node.to, dispatch)}).range(node.to))
                           }
                         }

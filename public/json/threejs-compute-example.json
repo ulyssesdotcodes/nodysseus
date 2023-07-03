@@ -76,15 +76,15 @@
         "from": "h7v2bim",
         "to": "t49uoc0"
       },
+      "oj9ce9z": {
+        "as": "value",
+        "from": "oj9ce9z",
+        "to": "h7v2bim"
+      },
       "s9aqeqq": {
         "as": "value",
         "from": "s9aqeqq",
-        "to": "h7v2bim"
-      },
-      "3m1ckw6": {
-        "as": "computeNode",
-        "from": "3m1ckw6",
-        "to": "s9aqeqq"
+        "to": "oj9ce9z"
       },
       "5u6dxjn": {
         "as": "count",
@@ -92,9 +92,9 @@
         "to": "s9aqeqq"
       },
       "oyt6m9s": {
-        "as": "value",
+        "as": "computeNode",
         "from": "oyt6m9s",
-        "to": "3m1ckw6"
+        "to": "s9aqeqq"
       },
       "1l3x29h": {
         "as": "aNode",
@@ -221,9 +221,9 @@
         "from": "jxl5b9q",
         "to": "qks31mw"
       },
-      "r9sriex": {
+      "trt880r": {
         "as": "self",
-        "from": "r9sriex",
+        "from": "trt880r",
         "to": "jxl5b9q"
       },
       "w884xfj": {
@@ -235,11 +235,6 @@
         "as": "arg0",
         "from": "xmgyy7o",
         "to": "w884xfj"
-      },
-      "trt880r": {
-        "as": "value",
-        "from": "trt880r",
-        "to": "r9sriex"
       },
       "ih9m2qq": {
         "as": "args",
@@ -316,40 +311,25 @@
         "from": "1u5mk0k",
         "to": "urflnbx"
       },
-      "ydpn43s": {
-        "as": "self",
-        "from": "ydpn43s",
-        "to": "urflnbx"
-      },
       "athfnqe": {
-        "as": "value",
+        "as": "self",
         "from": "athfnqe",
-        "to": "ydpn43s"
+        "to": "urflnbx"
       },
       "ykw4bk2": {
         "as": "arg0",
         "from": "ykw4bk2",
         "to": "1u5mk0k"
       },
-      "8yj1dat": {
-        "as": "position",
-        "from": "8yj1dat",
-        "to": "anpwan0"
-      },
       "1u1uask": {
-        "as": "value",
+        "as": "position",
         "from": "1u1uask",
-        "to": "8yj1dat"
-      },
-      "osux7ag": {
-        "as": "value",
-        "from": "osux7ag",
-        "to": "1u1uask"
+        "to": "anpwan0"
       },
       "f1fkzv6": {
         "as": "value",
         "from": "f1fkzv6",
-        "to": "osux7ag"
+        "to": "1u1uask"
       },
       "8ywsyyf": {
         "as": "value",
@@ -416,50 +396,15 @@
         "from": "2g581fl",
         "to": "y663irb"
       },
-      "3mk2p29": {
-        "as": "light",
-        "from": "3mk2p29",
-        "to": "dbxyytc"
-      },
       "p801291": {
         "as": "target",
         "from": "p801291",
         "to": "dbxyytc"
       },
-      "rk0or32": {
-        "as": "arg0",
-        "from": "rk0or32",
-        "to": "dbxyytc"
-      },
-      "bia0hn0": {
-        "as": "value",
-        "from": "bia0hn0",
-        "to": "rk0or32"
-      },
-      "6pwljr8": {
-        "as": "args",
-        "from": "6pwljr8",
-        "to": "bia0hn0"
-      },
-      "m063r1d": {
-        "as": "self",
-        "from": "m063r1d",
-        "to": "bia0hn0"
-      },
-      "s6v4t8z": {
-        "as": "geometry",
-        "from": "s6v4t8z",
-        "to": "m063r1d"
-      },
-      "59g5yvk": {
-        "as": "value",
-        "from": "59g5yvk",
-        "to": "p801291"
-      },
       "ayowfwe": {
         "as": "value",
         "from": "ayowfwe",
-        "to": "59g5yvk"
+        "to": "p801291"
       },
       "mk5f1ok": {
         "as": "value",
@@ -621,31 +566,6 @@
         "from": "7lgrqda",
         "to": "dftjmx5"
       },
-      "qv3bmvd": {
-        "as": "value",
-        "from": "qv3bmvd",
-        "to": "3mk2p29"
-      },
-      "0xntp0m": {
-        "as": "intensity",
-        "from": "0xntp0m",
-        "to": "qv3bmvd"
-      },
-      "2bwnbou": {
-        "as": "args",
-        "from": "2bwnbou",
-        "to": "qv3bmvd"
-      },
-      "0tlgxt4": {
-        "as": "arg1",
-        "from": "0tlgxt4",
-        "to": "2bwnbou"
-      },
-      "pwlspcx": {
-        "as": "arg0",
-        "from": "pwlspcx",
-        "to": "2bwnbou"
-      },
       "qplqs03": {
         "as": "children",
         "from": "qplqs03",
@@ -735,19 +655,15 @@
         "id": "h7v2bim",
         "ref": "@memory.graphchangecache"
       },
+      "oj9ce9z": {
+        "id": "oj9ce9z",
+        "ref": "@debug.log",
+        "value": "compute node"
+      },
       "s9aqeqq": {
         "id": "s9aqeqq",
         "ref": "@three.node",
         "value": "compute"
-      },
-      "5u6dxjn": {
-        "id": "5u6dxjn",
-        "value": "300000"
-      },
-      "3m1ckw6": {
-        "id": "3m1ckw6",
-        "ref": "@debug.log",
-        "value": "vec2node"
       },
       "oyt6m9s": {
         "id": "oyt6m9s",
@@ -789,8 +705,8 @@
       },
       "lur4887": {
         "id": "lur4887",
-        "ref": "@js.script",
-        "value": "let lastTime = 0, time = 0;\nconst animframe = (timestamp) => {\n  requestAnimationFrame(animframe);\n  time = performance.now();\n  timer.update({deltaTime: time - lastTime, time});\n  lastTime = time;\n}\n\nrequestAnimationFrame(animframe);\nreturn timer;"
+        "value": "let lastTime = 0, time = 0;\nconst animframe = (timestamp) => {\n  requestAnimationFrame(animframe);\n  time = performance.now();\n  timer.update({deltaTime: time - lastTime, time});\n  lastTime = time;\n}\n\nrequestAnimationFrame(animframe);\nreturn timer;",
+        "ref": "@js.script"
       },
       "yx8f9g0": {
         "id": "yx8f9g0",
@@ -869,11 +785,6 @@
         "id": "xmgyy7o",
         "ref": "@three.node",
         "value": "instanceIndex"
-      },
-      "r9sriex": {
-        "id": "r9sriex",
-        "ref": "@debug.log",
-        "value": "posarg"
       },
       "trt880r": {
         "id": "trt880r",
@@ -957,11 +868,6 @@
         "ref": "@js.call",
         "value": "element"
       },
-      "ydpn43s": {
-        "id": "ydpn43s",
-        "ref": "@debug.log",
-        "value": "posarg"
-      },
       "athfnqe": {
         "id": "athfnqe",
         "ref": "arg",
@@ -976,6 +882,10 @@
         "ref": "@three.node",
         "value": "instanceIndex"
       },
+      "5u6dxjn": {
+        "id": "5u6dxjn",
+        "value": "300000"
+      },
       "c43znwc": {
         "id": "c43znwc",
         "ref": "arg",
@@ -985,19 +895,9 @@
         "id": "anpwan0",
         "name": "b"
       },
-      "8yj1dat": {
-        "id": "8yj1dat",
-        "ref": "@debug.log",
-        "value": "posnode"
-      },
       "1u1uask": {
         "id": "1u1uask",
         "ref": "@memory.cache"
-      },
-      "osux7ag": {
-        "id": "osux7ag",
-        "ref": "@debug.log",
-        "value": "created storage"
       },
       "f1fkzv6": {
         "id": "f1fkzv6",
@@ -1063,35 +963,9 @@
       "dbxyytc": {
         "id": "dbxyytc"
       },
-      "rk0or32": {
-        "id": "rk0or32",
-        "ref": "@memory.cache"
-      },
-      "bia0hn0": {
-        "id": "bia0hn0",
-        "ref": "@js.call",
-        "value": "translateY"
-      },
-      "m063r1d": {
-        "id": "m063r1d",
-        "ref": "@three.mesh"
-      },
-      "s6v4t8z": {
-        "id": "s6v4t8z",
-        "ref": "@three.geometry",
-        "value": "BoxGeometry"
-      },
-      "6pwljr8": {
-        "id": "6pwljr8",
-        "value": "4"
-      },
       "p801291": {
         "id": "p801291",
         "ref": "@memory.graphchangecache"
-      },
-      "59g5yvk": {
-        "id": "59g5yvk",
-        "ref": "@debug.log"
       },
       "ayowfwe": {
         "id": "ayowfwe",
@@ -1237,31 +1111,6 @@
       "4l8fc5z": {
         "id": "4l8fc5z",
         "value": "true"
-      },
-      "3mk2p29": {
-        "id": "3mk2p29",
-        "ref": "@memory.cache"
-      },
-      "qv3bmvd": {
-        "id": "qv3bmvd",
-        "ref": "@three.light",
-        "value": "HemisphereLight"
-      },
-      "2bwnbou": {
-        "id": "2bwnbou",
-        "ref": "@data.array"
-      },
-      "pwlspcx": {
-        "id": "pwlspcx",
-        "value": "0xffffff"
-      },
-      "0tlgxt4": {
-        "id": "0tlgxt4",
-        "value": "0x333366"
-      },
-      "0xntp0m": {
-        "id": "0xntp0m",
-        "value": "0.8"
       },
       "8dy573e": {
         "id": "8dy573e",
