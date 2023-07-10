@@ -448,7 +448,8 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
     } else if(Object.hasOwn(node, "value")) {
         return (graphArgs._output === undefined || graphArgs._output === "value") && lib.data.no.of(node_value(node));
     } else {
-        return nodeArgs.size === 1 
+        // TODO: cleanup - hacky to rely on "arg"
+        return nodeArgs.size === 1 && nodeArgs.keys().next().value.startsWith("arg")
           ? nodeArgs.values().next().value
           : (graphArgs._output === undefined || graphArgs._output === "value") && node_data(nodeArgs, graphArgs, lib, options)
     }
