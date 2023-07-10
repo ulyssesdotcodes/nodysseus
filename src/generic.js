@@ -29,7 +29,9 @@ const generic = {
     },
     "nodes": {
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "qgbinm2": {
         "id": "qgbinm2",
@@ -189,7 +191,9 @@ const generic = {
     "out": "out",
     "nodes": {
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "output_val": {
         "id": "output_val",
@@ -786,7 +790,9 @@ const generic = {
     "category": "html",
     "nodes": {
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "8dy573e": {
         "id": "8dy573e",
@@ -1236,7 +1242,9 @@ const generic = {
         "ref": "arg"
       },
       "ap_cache_args": {
-        "id": "ap_cache_args"
+        "id": "ap_cache_args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "ap_cache_fn": {
         "id": "ap_cache_fn",
@@ -1256,7 +1264,9 @@ const generic = {
         "ref": "@memory.state"
       },
       "cache_return_args": {
-        "id": "cache_return_args"
+        "id": "cache_return_args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "recache_button_fn": {
         "id": "recache_button_fn",
@@ -1284,7 +1294,9 @@ const generic = {
         "ref": "return"
       },
       "fy9ee3e": {
-        "id": "fy9ee3e"
+        "id": "fy9ee3e",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "h56r87n": {
         "id": "h56r87n",
@@ -1426,7 +1438,9 @@ const generic = {
         "value": "value: default"
       },
       "ap_cache_args": {
-        "id": "ap_cache_args"
+        "id": "ap_cache_args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "ap_cache_run": {
         "id": "ap_cache_run",
@@ -1450,7 +1464,9 @@ const generic = {
         "ref": "@memory.state"
       },
       "cache_return_args": {
-        "id": "cache_return_args"
+        "id": "cache_return_args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "recache_button_fn": {
         "id": "recache_button_fn",
@@ -1791,7 +1807,9 @@ const generic = {
         "ref": "arg"
       },
       "xiqo1q0": {
-        "id": "xiqo1q0"
+        "id": "xiqo1q0",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "k36to2l": {
         "id": "k36to2l"
@@ -2571,7 +2589,9 @@ const generic = {
         "ref": "@html.html_text"
       },
       "jstjx7g": {
-        "id": "jstjx7g"
+        "id": "jstjx7g",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "h40e3j9": {
         "id": "h40e3j9",
@@ -3913,7 +3933,9 @@ const generic = {
     "out": "out",
     "nodes": {
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "5a6pljw": {
         "id": "5a6pljw",
@@ -4006,7 +4028,9 @@ const generic = {
         "value": "unset"
       },
       "3ucsio2": {
-        "id": "3ucsio2"
+        "id": "3ucsio2",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "jzduiha": {
         "id": "jzduiha",
@@ -4055,7 +4079,9 @@ const generic = {
         "ref": "return"
       },
       "hzvlwu7": {
-        "id": "hzvlwu7"
+        "id": "hzvlwu7",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "mcpndlx": {
         "id": "mcpndlx",
@@ -4254,7 +4280,9 @@ const generic = {
     "category": "nodysseus",
     "nodes": {
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "8dy573e": {
         "id": "8dy573e",
@@ -4725,7 +4753,9 @@ const generic = {
     "category": "nodysseus",
     "nodes": {
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "jklqh38": {
         "id": "jklqh38",
@@ -6614,7 +6644,9 @@ const generic = {
     "category": "nodysseus",
     "nodes": {
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "out": {
         "id": "out",
@@ -7167,7 +7199,9 @@ const generic = {
     "out": "out",
     "nodes": {
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "qgbinm2": {
         "id": "qgbinm2",
@@ -7582,7 +7616,9 @@ const generic = {
     "out": "out",
     "nodes": {
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "qgbinm2": {
         "id": "qgbinm2",
@@ -7693,7 +7729,9 @@ const generic = {
     "out": "out",
     "nodes": {
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "8dy573e": {
         "id": "8dy573e",
@@ -7995,7 +8033,9 @@ const generic = {
     "category": "memory",
     "nodes": {
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "8dy573e": {
         "id": "8dy573e",
@@ -9260,7 +9300,9 @@ const generic = {
         "value": "return Math.pow(2, isNaN(value) ? 0 : Math.floor(value));"
       },
       "6rtxmde": {
-        "id": "6rtxmde"
+        "id": "6rtxmde",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "70h3dpo": {
         "id": "70h3dpo"
@@ -9320,7 +9362,9 @@ const generic = {
         "value": "ontap"
       },
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "b4nhbtt": {
         "id": "b4nhbtt",
@@ -9484,7 +9528,9 @@ const generic = {
         "value": "120"
       },
       "l5h156b": {
-        "id": "l5h156b"
+        "id": "l5h156b",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "lex0hr5": {
         "id": "lex0hr5",
@@ -9501,13 +9547,19 @@ const generic = {
         "value": "taptime.state"
       },
       "lm86y5w": {
-        "id": "lm86y5w"
+        "id": "lm86y5w",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "lnpoih5": {
-        "id": "lnpoih5"
+        "id": "lnpoih5",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "lozphpd": {
-        "id": "lozphpd"
+        "id": "lozphpd",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "ls56kix": {
         "id": "ls56kix",
@@ -9540,7 +9592,9 @@ const generic = {
         "ref": "@flow.ap"
       },
       "numz8ak": {
-        "id": "numz8ak"
+        "id": "numz8ak",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "nva890x": {
         "id": "nva890x",
@@ -9618,7 +9672,9 @@ const generic = {
         "ref": "@flow.ap"
       },
       "wr1y755": {
-        "id": "wr1y755"
+        "id": "wr1y755",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "wrnn8a5": {
         "id": "wrnn8a5"
@@ -9674,7 +9730,9 @@ const generic = {
         "ref": "@js.script"
       },
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "qgbinm2": {
         "id": "qgbinm2",
@@ -11112,7 +11170,9 @@ const generic = {
         "value": "x"
       },
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "bp1jp8w": {
         "id": "bp1jp8w",

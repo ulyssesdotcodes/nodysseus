@@ -428,7 +428,9 @@
         "value": "_initgeo"
       },
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "st1qot0": {
         "id": "st1qot0",
@@ -985,7 +987,9 @@
         "value": "canvas.height"
       },
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "bfr8z38": {
         "__isnodysseus": true,
@@ -1272,7 +1276,9 @@
         "value": "{}"
       },
       "e08m3vg": {
-        "id": "e08m3vg"
+        "id": "e08m3vg",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "j819k9c": {
         "id": "j819k9c",
@@ -1850,7 +1856,9 @@
         "value": "_geometry"
       },
       "e08m3vg": {
-        "id": "e08m3vg"
+        "id": "e08m3vg",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "kphtl0m": {
         "id": "kphtl0m",
@@ -1925,7 +1933,9 @@
         "value": "return _lib.THREE && Object.keys(_lib.THREE).filter(k => k.endsWith(\"Geometry\"))"
       },
       "wl24jbc": {
-        "id": "wl24jbc"
+        "id": "wl24jbc",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "tsd4zz1": {
         "id": "tsd4zz1",
@@ -2600,7 +2610,9 @@
         "ref": "@data.array"
       },
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "at9191c": {
         "id": "at9191c",
@@ -3228,7 +3240,9 @@
         "ref": "@data.array"
       },
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "at9191c": {
         "id": "at9191c",
@@ -3660,7 +3674,9 @@
         "ref": "@memory.cache"
       },
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "auq55xm": {
         "id": "auq55xm",
@@ -3885,7 +3901,9 @@
         "value": "args = args ?? [];\nconst light = selected && new _lib.THREE[selected](...args);\nif(light) {\n  if(intensity) light.intensity = intensity;\n}\n\nreturn light"
       },
       "rgpu8gc": {
-        "id": "rgpu8gc"
+        "id": "rgpu8gc",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "urjyf2e": {
         "id": "urjyf2e",
@@ -4196,7 +4214,9 @@
         "value": "THREE.Mesh"
       },
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "euzoog2": {
         "id": "euzoog2",
@@ -4918,7 +4938,9 @@
         "value": "fn"
       },
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "st1qot0": {
         "id": "st1qot0",
@@ -5432,7 +5454,9 @@
         "ref": "return"
       },
       "wkm9i8b": {
-        "id": "wkm9i8b"
+        "id": "wkm9i8b",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "3gnkfqm": {
         "id": "3gnkfqm",
@@ -5457,7 +5481,9 @@
         "ref": "return"
       },
       "e4rdngl": {
-        "id": "e4rdngl"
+        "id": "e4rdngl",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "4skly0x": {
         "id": "4skly0x",
@@ -7137,7 +7163,9 @@
         "ref": "@data.map"
       },
       "0wp18c9": {
-        "id": "0wp18c9"
+        "id": "0wp18c9",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "0zs05z2": {
         "id": "0zs05z2"
@@ -7232,7 +7260,9 @@
         "ref": "@js.create_fn"
       },
       "5ljysw7": {
-        "id": "5ljysw7"
+        "id": "5ljysw7",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "5m99dxg": {
         "id": "5m99dxg",
@@ -7273,7 +7303,9 @@
         "ref": "@memory.cache"
       },
       "8m5muxn/39ivise": {
-        "id": "8m5muxn/39ivise"
+        "id": "8m5muxn/39ivise",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "8m5muxn/7in78pu": {
         "id": "8m5muxn/7in78pu",
@@ -7310,7 +7342,8 @@
       },
       "8m5muxn/vyr07ts": {
         "id": "8m5muxn/vyr07ts",
-        "name": ""
+        "ref": "extern",
+        "value": "extern.data"
       },
       "8m5muxn/zci8apj": {
         "__isnodysseus": true,
@@ -7612,7 +7645,9 @@
         "value": "element"
       },
       "sfzzxee": {
-        "id": "sfzzxee"
+        "id": "sfzzxee",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "slle0cq": {
         "id": "slle0cq",
@@ -7882,7 +7917,9 @@
         "value": "feedback.set"
       },
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "buoyv1q": {
         "id": "buoyv1q",
@@ -8031,7 +8068,9 @@
         "value": "parent.children.forEach(c => {\n  if(!argobjnames.includes(c.name)){\n    parent.remove(c);\n  }\n})\n\nreturn parent;"
       },
       "5ljysw7": {
-        "id": "5ljysw7"
+        "id": "5ljysw7",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "a23wspb": {
         "id": "a23wspb",
@@ -8449,7 +8488,9 @@
         "value": "return _lib.no.runtime.refs()"
       },
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "b8wohxv": {
         "__isnodysseus": true,
@@ -9121,7 +9162,8 @@
       },
       "8m5muxn/vyr07ts": {
         "id": "8m5muxn/vyr07ts",
-        "name": ""
+        "ref": "extern",
+        "value": "extern.data"
       },
       "ptak9t2": {
         "id": "ptak9t2",

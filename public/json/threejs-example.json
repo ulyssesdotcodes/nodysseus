@@ -193,7 +193,9 @@
         "id": "0209mcq"
       },
       "0vrcnea": {
-        "id": "0vrcnea"
+        "id": "0vrcnea",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "1ceto35": {
         "id": "1ceto35",
@@ -217,7 +219,9 @@
         "ref": "@memory.cache"
       },
       "3wnevku": {
-        "id": "3wnevku"
+        "id": "3wnevku",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "4d0h7cj": {
         "id": "4d0h7cj",
@@ -225,7 +229,9 @@
         "value": "https://cdn.jsdelivr.net/npm/three/build/three.module.js"
       },
       "4dzd94d": {
-        "id": "4dzd94d"
+        "id": "4dzd94d",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "72wzn5d": {
         "id": "72wzn5d",
@@ -314,7 +320,9 @@
         "ref": "@memory.cache"
       },
       "tbxemm2": {
-        "id": "tbxemm2"
+        "id": "tbxemm2",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "u5yqkl3": {
         "id": "u5yqkl3",

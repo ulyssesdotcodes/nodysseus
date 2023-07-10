@@ -174,7 +174,9 @@
         "ref": "script"
       },
       {
-        "id": "6t3n0sw"
+        "id": "6t3n0sw",
+        "ref": "extern",
+        "value": "extern.data"
       },
       {
         "id": "3oo2se6",

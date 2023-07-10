@@ -158,7 +158,8 @@
       },
       "7nz84ut": {
         "id": "7nz84ut",
-        "name": ""
+        "ref": "extern",
+        "value": "extern.data"
       },
       "98olw8f": {
         "id": "98olw8f",

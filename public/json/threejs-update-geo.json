@@ -34,7 +34,9 @@
         "id": "dbxyytc"
       },
       "bbhzt03": {
-        "id": "bbhzt03"
+        "id": "bbhzt03",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "vj5dpbv": {
         "id": "vj5dpbv",

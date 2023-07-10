@@ -1346,7 +1346,9 @@
         "ref": "state"
       },
       "cache_return_args": {
-        "id": "cache_return_args"
+        "id": "cache_return_args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "recache_button_fn": {
         "id": "recache_button_fn",

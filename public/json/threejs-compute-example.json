@@ -620,7 +620,9 @@
         "ref": "return"
       },
       "tbxemm2": {
-        "id": "tbxemm2"
+        "id": "tbxemm2",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "a1pbajd": {
         "id": "a1pbajd",
@@ -1129,7 +1131,9 @@
         "value": "threejsrender"
       },
       "3wnevku": {
-        "id": "3wnevku"
+        "id": "3wnevku",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "sco3cx9": {
         "id": "sco3cx9",
