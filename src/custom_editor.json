@@ -20,7 +20,9 @@
         "ref": "return"
       },
       "output_val": {
-        "id": "output_val"
+        "id": "output_val",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "rwy5gqu": {
         "id": "rwy5gqu"

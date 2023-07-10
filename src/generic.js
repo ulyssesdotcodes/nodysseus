@@ -2296,7 +2296,9 @@ const generic = {
         "value": "currentValue"
       },
       "pred_fn_args": {
-        "id": "pred_fn_args"
+        "id": "pred_fn_args",
+        "ref": "extern",
+        "value": "extern.data"
       },
       "run_pred": {
         "id": "run_pred",

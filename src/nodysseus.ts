@@ -448,7 +448,9 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
     } else if(Object.hasOwn(node, "value")) {
         return (graphArgs._output === undefined || graphArgs._output === "value") && lib.data.no.of(node_value(node));
     } else {
-        return (graphArgs._output === undefined || graphArgs._output === "value") && node_data(nodeArgs, graphArgs, lib, options)
+        return nodeArgs.size === 1 
+          ? nodeArgs.values().next().value
+          : (graphArgs._output === undefined || graphArgs._output === "value") && node_data(nodeArgs, graphArgs, lib, options)
     }
 }
 
@@ -1887,6 +1889,10 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
         })
         return args;
       }
+    },
+    data: {
+      args: ["_node_args"],
+      fn: (node_args) => node_args
     }
   } as Record<string, Extern>,
   // THREE
