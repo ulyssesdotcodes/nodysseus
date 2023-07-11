@@ -6,7 +6,7 @@ import { Edge, Graph, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode } from 
 import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, middleware, Paste, pzobj, refresh_graph, result_subscription, run_h, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect } from "./util";
 import { info_display, infoWindow } from "./components/infoWindow";
 import { init_code_editor } from "./components/codeEditor";
-import { d3Node, HyperappState, Levels } from "./types";
+import { d3Node, d3NodeNode, HyperappState, Levels } from "./types";
 import { initPort, sharedWorkerRefStore, webClientStore } from "./store";
 import { d3subscription, getLinks, getNodes, insert_node_el, link_el, node_el, UpdateSimulation } from "./components/graphDisplay";
 import Autocomplete from "./autocomplete"
@@ -214,11 +214,11 @@ const runapp = (init, _lib) => {
                 }) ?? []
                 ).concat(
                     getLinks(s.simulation).map(link => ha.memo(link_el, {
-                        link: Object.assign({}, link, s.editingGraph.edges[(link.source as d3Node).node_id]),
-                        selected_distance: s.show_all || !s.levels ? 0 : s.levels.distance_from_selected.get((link.source as d3Node).node_id) > 3 ? 'far' : s.levels.distance_from_selected.get((link.source as d3Node).node_id),
+                        link: Object.assign({}, link, s.editingGraph.edges[(link.source as d3NodeNode).node_id]),
+                        selected_distance: s.show_all || !s.levels ? 0 : s.levels.distance_from_selected.get((link.source as d3NodeNode).node_id) > 3 ? 'far' : s.levels.distance_from_selected.get((link.source as d3NodeNode).node_id),
                     })) ?? []
                 ).concat(
-                    getLinks(s.simulation).filter(link => (link.source as d3Node).node_id == s.selected[0] || (link.target as d3Node).node_id === s.selected[0])
+                    getLinks(s.simulation).filter(link => (link.source as d3NodeNode).node_id == s.selected[0] || (link.target as d3NodeNode).node_id === s.selected[0])
                         .map(link => insert_node_el({link, randid: s.randid, node_el_width: s.node_el_width, nodeOffset: s.nodeOffset}))
                 )
             ),
@@ -228,7 +228,7 @@ const runapp = (init, _lib) => {
             hidden: s.show_all,
             initialLayout: s.initialLayout,
             edges_in: s.selected_edges_in,
-            link_out: Object.assign({}, getLinks(s.simulation).find(l => (l.source as d3Node).node_id === s.selected[0]), s.editingGraph.edges[s.selected[0]]),
+            link_out: Object.assign({}, getLinks(s.simulation).find(l => (l.source as d3NodeNode).node_id === s.selected[0]), s.editingGraph.edges[s.selected[0]]),
             editingGraph: s.editingGraph,
             editingGraphId: s.editingGraph.id,
             randid: s.randid,
@@ -364,7 +364,7 @@ const runapp = (init, _lib) => {
                           const xdist = Math.abs(sibling_node.x - current_node.x); 
                           dist = (dirmult * (sibling_node.x - current_node.x) < 0) && xdist < dist[0] ? [xdist, sibling_node] : dist; 
                           return dist
-                      }, [state.dimensions.x, undefined] as [number, d3Node | undefined])?.[1]?.node_id; 
+                      }, [state.dimensions.x, undefined] as [number, d3NodeNode | undefined])?.[1]?.node_id; 
                       action = node_id ? [SelectNode, {node_id}] : [state]
                     }
                     break;

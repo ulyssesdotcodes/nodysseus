@@ -4,7 +4,7 @@ import { create_randid, wrapPromise } from "src/util";
 import { isNonNullChain } from "typescript";
 import generic from "../../generic";
 import {NodysseusError, nolib} from "../../nodysseus"
-import { d3Link, d3Node, HyperappState, Vector2 } from "../types";
+import { d3Link, d3Node, d3NodeNode, HyperappState, Vector2 } from "../types";
 import { ChangeEditingGraphId, Copy, CreateNode, CreateRef, DeleteNode, ExpandContract, hlib, middleware, node_args, Paste, run_h, SaveGraph, SelectNode, UpdateEdge, UpdateNode, UpdateNodeEffect } from "../util";
 
 export const info_display = html_id => ha.app({
@@ -49,7 +49,7 @@ export const infoInput = ({label, property, value, onchange, oninput, onkeydown,
 )
 
 export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, editingGraphId, randid, ref_graphs, html_id, copied_graph, inputs, graph_out, editing, error, refGraphs, metadata, initialLayout}: {
-  node: d3Node,
+  node: d3NodeNode,
   hidden: boolean,
   initialLayout: boolean,
   edges_in: Array<Edge>,
@@ -108,7 +108,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                     inputs,
                     onchange: (state, {value}) => [UpdateNode, {node, property: "value", value: value }]}),
                   node),
-                ha.memo(node => infoInput({
+                ha.memo((node: d3NodeNode) => infoInput({
                     label: isNodeRef(node) && node.ref === "return" ? "name" : "comment", 
                     value: node.name, 
                     property: "name", 

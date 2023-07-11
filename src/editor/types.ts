@@ -63,7 +63,7 @@ export type Levels = {
     nodes_by_level: Record<number, string>
 }
 
-export type d3Node = SimulationNodeDatum & {
+export type d3NodeNode = SimulationNodeDatum & {
   node_id: string,
   nested_edge_count: number,
   nested_node_count: number,
@@ -71,7 +71,16 @@ export type d3Node = SimulationNodeDatum & {
   sibling_index_normalized?: number
 } & NodysseusNode
 
-export type d3Link = SimulationLinkDatum<d3Node> & {
+export const isd3NodeNode = (n: d3Node): n is d3NodeNode => !!(n as d3NodeNode).node_id;
+
+export type d3LinkNode = SimulationNodeDatum & {
+  id: string;
+  edge: Edge;
+}
+
+export type d3Node = d3NodeNode | d3LinkNode;
+
+export type d3Link = SimulationLinkDatum<d3NodeNode> & {
   edge: Edge
 }
 

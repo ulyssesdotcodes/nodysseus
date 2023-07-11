@@ -4,7 +4,7 @@ import { Edge, FunctorRunnable, getRunnableGraph, getRunnableGraphId, Graph, isA
 import { base_node, base_graph, ispromise, wrapPromise, expand_node, contract_node, ancestor_graph, create_randid, compareObjects, newLib, bfs } from "../util";
 import panzoom, * as pz from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
-import { d3Link, d3Node, HyperappState, Levels, NodysseusSimulation, Property, Vector2 } from "./types";
+import { d3Link, d3Node, d3NodeNode, HyperappState, isd3NodeNode, Levels, NodysseusSimulation, Property, Vector2 } from "./types";
 import { UpdateGraphDisplay, UpdateSimulation, d3subscription, updateSimulationNodes, getNodes, getLinks } from "./components/graphDisplay";
 import AutocompleteList from "./autocomplete";
 import { parser } from "@lezer/javascript";
@@ -82,7 +82,7 @@ export const pzobj: {
 
         pzobj.lastpanzoom = performance.now();
         const nodes = getNodes(payload.simulation);
-        const selectedNode = nodes.find(n => n.node_id === payload.node_id);
+        const selectedNode = nodes.find(n => isd3NodeNode(n) && n.node_id === payload.node_id);
         const selectedNodePos = {
           x: selectedNode?.x ?? 0,
           y: selectedNode?.y ?? 0,
@@ -410,9 +410,9 @@ export const SelectNode: ha.Action<HyperappState, {
     [pzobj.effect, {...state, node_id: node_id}],
     [UpdateGraphDisplay, {...state, selected: [node_id]}],
     focus_property && [FocusEffect, {selector: `.node-info .${focus_property}`}],
-    getNodes(state.simulation).find(n => n.node_id === node_id) 
+    getNodes(state.simulation).find(n => isd3NodeNode(n) && n.node_id === node_id) 
       && [SetSelectedPositionStyleEffect, {
-        position: getNodes(state.simulation).find(n => n.node_id === node_id), 
+        position: getNodes(state.simulation).find(n => isd3NodeNode(n) && n.node_id === node_id), 
         nodeOffset: state.nodeOffset, 
         dimensions: state.dimensions,
         svg_offset: pzobj.getTransform(),
@@ -705,30 +705,30 @@ export const run_h = ({dom_type, props, children, text}: {dom_type: string, prop
 
 export const runh = el => el.d && el.p && el.c && ha.h(el.d, el.p, el.c);
 
-export const findViewBox = (nodes: Array<d3Node>, links: Array<d3Link>, selected: string, node_el_width: number, htmlid: string, dimensions: {x: number, y: number}) => {
+export const findViewBox = (nodes: Array<d3NodeNode>, links: Array<d3Link>, selected: string, node_el_width: number, htmlid: string, dimensions: {x: number, y: number}) => {
     const visible_nodes: Array<{x: number, y: number}> = [];
     const visible_node_set = new Set();
     let selected_pos: Vector2;
     links.forEach(l => {
-        const el = document.getElementById(`link-${(l.source as d3Node).node_id}`);
-        const info_el = document.getElementById(`edge-info-${(l.source as d3Node).node_id}`);
+        const el = document.getElementById(`link-${(l.source as d3NodeNode).node_id}`);
+        const info_el = document.getElementById(`edge-info-${(l.source as d3NodeNode).node_id}`);
         if(el && info_el && l.source && l.target) {
             const source = {x: (l.source as d3Node).x - node_el_width * 0.5, y: (l.source as d3Node).y};
             const target = {x: (l.target as d3Node).x - node_el_width * 0.5, y: (l.target as d3Node).y};
 
-            if ((l.source as d3Node).node_id === selected) {
+            if ((l.source as d3NodeNode).node_id === selected) {
                 visible_nodes.push({x: target.x, y: target.y});
-                visible_node_set.add((l.target as d3Node).node_id);
-            } else if ((l.target as d3Node).node_id === selected) {
+                visible_node_set.add((l.target as d3NodeNode).node_id);
+            } else if ((l.target as d3NodeNode).node_id === selected) {
                 visible_nodes.push({x: source.x, y: source.y});
-                visible_node_set.add((l.source as d3Node).node_id);
+                visible_node_set.add((l.source as d3NodeNode).node_id);
             }
         }
     });
 
     links.forEach(l => {
-        if(visible_node_set.has((l.target as d3Node).node_id) && !visible_node_set.has((l.source as d3Node).node_id)) {
-            const source = {x: (l.source as d3Node).x - node_el_width * 0.5, y: (l.source as d3Node).y};
+        if(visible_node_set.has((l.target as d3NodeNode).node_id) && !visible_node_set.has((l.source as d3NodeNode).node_id)) {
+            const source = {x: (l.source as d3NodeNode).x - node_el_width * 0.5, y: (l.source as d3Node).y};
             visible_nodes.push({x: source.x, y: source.y});
         }
     });
@@ -757,7 +757,7 @@ export const findViewBox = (nodes: Array<d3Node>, links: Array<d3Link>, selected
     return {nodes_box_dimensions, center};
 }
 
-export const calculateLevels = (nodes: Array<d3Node>, links: Array<d3Link>, graph: Graph, selected: string): Levels => {
+export const calculateLevels = (nodes: Array<d3NodeNode>, links: Array<d3Link>, graph: Graph, selected: string): Levels => {
     const find_childest = n => {
         const e = graphEdgeOut(graph, n);
         if (e && !ispromise(e)) {
@@ -775,8 +775,8 @@ export const calculateLevels = (nodes: Array<d3Node>, links: Array<d3Link>, grap
     const parents = new Map(
       nodes.map(n => [
         n.node_id, 
-        links.filter(l => typeof l.target == "object" ? l.target.node_id === n.node_id : l.target === n.node_id)
-        .map(l => typeof l.source === "object" ? l.source.node_id  : String(l.source))
+        links.filter(l => typeof l.target == "object" ? (l.target as d3NodeNode).node_id === n.node_id : l.target === n.node_id)
+        .map(l => typeof l.source === "object" ? (l.source as d3NodeNode).node_id  : String(l.source))
       ]));
 
     [...parents.values()].forEach(nps => {
@@ -793,8 +793,8 @@ export const calculateLevels = (nodes: Array<d3Node>, links: Array<d3Link>, grap
 
     const children = new Map(nodes
         .map(n => [n.node_id,
-        links.filter(l => (typeof l.source === "object" ? l.source.node_id : l.source) === n.node_id)
-            .map(l => typeof l.target === "object" ? l.target.node_id : String(l.target))
+        links.filter(l => (typeof l.source === "object" ? (l.source as d3NodeNode).node_id : l.source) === n.node_id)
+            .map(l => typeof l.target === "object" ? (l.target as d3NodeNode).node_id : String(l.target))
         ]));
     const siblings = new Map(nodes.map(n => [n.node_id, [...(new Set(children.has(n.node_id)? children.get(n.node_id).flatMap(c => parents.get(c) || []) : [])).values()]]))
     const distance_from_selected = new Map();

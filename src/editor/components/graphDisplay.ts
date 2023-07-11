@@ -3,7 +3,7 @@ import * as ha from "hyperapp"
 import { hashcode, nolib } from "../../nodysseus";
 import { Graph, isNodeGraph, NodysseusNode } from "../../types";
 import { ispromise, wrapPromise } from "../../util";
-import { HyperappState, NodysseusForceLink, NodysseusSimulation, d3Link, d3Node, Vector2 } from "../types";
+import { HyperappState, NodysseusForceLink, NodysseusSimulation, d3Link, d3Node, Vector2, isd3NodeNode, d3NodeNode, d3LinkNode } from "../types";
 import { calculateLevels, CreateNode, findViewBox, hlib, pzobj, SelectNode, graphEdgeOut, graphEdgesIn, setRootNodeXNodeY } from "../util";
 
 export const UpdateSimulation: ha.Effecter<HyperappState, any>  = (dispatch, payload) => payload ? !(payload.simulation || payload.static) ? undefined : updateSimulationNodes(dispatch, payload) : dispatch(state => [state, [() => !(state.simulation) ? undefined : updateSimulationNodes(dispatch, state), undefined]])
@@ -19,18 +19,20 @@ export const getLinks = (simulation: NodysseusSimulation): Array<d3Link> | undef
   simulation ? (simulation.simulation.force('links') as NodysseusForceLink).links()
     // need to sort so that the order remains consistent while nodes stay the same
     .sort((a, b) => a.edge.from.localeCompare(b.edge.from)) : []
-export const getNodes = (simulation: NodysseusSimulation): Array<d3Node> | undefined => simulation ? simulation.simulation.nodes() : [];
+export const getNodes = (simulation: NodysseusSimulation): Array<d3NodeNode> | undefined => simulation ? simulation.simulation.nodes().filter(isd3NodeNode) : [];
 
 export const updateSimulationNodes: ha.Effecter<HyperappState, {
   simulation?: NodysseusSimulation, 
   editingGraph: Graph,
   clear_simulation_cache?: boolean
 }> = (dispatch, data) => {
-    const simulation_node_data = new Map<string, d3Node>();
+    const simulation_node_data = new Map<string, d3NodeNode>();
     if(!data.clear_simulation_cache){
-        data.simulation.simulation.nodes().forEach(n => {
-            simulation_node_data.set(n.node_id, n)
-        });
+        data.simulation.simulation.nodes()
+          .filter(isd3NodeNode)
+          .forEach(n => {
+              simulation_node_data.set(n.id, n)
+          });
     }
 
     const start_sim_node_size = simulation_node_data.size;
@@ -40,7 +42,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
         (data.simulation.simulation.force('links') as ForceLink<d3Node, d3Link>).links()
         .forEach(l => {
           if(typeof l.source === 'object' && typeof l.target === 'object') {
-            simulation_link_data.set(`${idFromNode(l.source)}__${idFromNode(l.target)}`, l);
+            simulation_link_data.set(`${idFromNode(l.source as d3NodeNode)}__${idFromNode(l.target as d3NodeNode)}`, l);
           }
         })
     }
@@ -181,8 +183,8 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
             return calculated_nodes;
         })
 
-        const links = Object.values(data.editingGraph.edges)
-            .filter(e => simulation_node_data.has(e.from) && simulation_node_data.has(e.to))
+        const links: Array<d3Link> = Object.values(data.editingGraph.edges)
+            .filter(e => simulation_node_data.has(e.from) && simulation_node_data.has(e.to) && isd3NodeNode(simulation_node_data.get(e.from)))
             .map(e => {
                 const l = simulation_link_data.get(`${e.from}__${e.to}`);
                 const proximal = (
@@ -194,11 +196,18 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
                     edge: e,
                     source: e.from,
                     target: e.to,
-                    sibling_index_normalized: simulation_node_data.get(e.from).sibling_index_normalized,
-                    strength: 2 * (1.5 - (Math.abs(simulation_node_data.get(e.from).sibling_index_normalized ?? 0) - 0.5)) / (1 + 2 * Math.min(4, proximal)),
+                    sibling_index_normalized: (simulation_node_data.get(e.from) as d3NodeNode).sibling_index_normalized,
+                    strength: 2 * (1.5 - (Math.abs((simulation_node_data.get(e.from) as d3NodeNode).sibling_index_normalized ?? 0) - 0.5)) / (1 + 2 * Math.min(4, proximal)),
                     distance: 32 + 4 * (Math.min(8, proximal)) 
                 };
             }).filter(l => !!l);
+
+        const linkNameNodes: Array<d3LinkNode> = links.map(l => ({
+          ...l,
+          id: `${l.edge.from}_${l.edge.as}` ,
+          fx: (simulation_node_data.get(l.edge.to).x - simulation_node_data.get(l.edge.from).x) * 128 + simulation_node_data.get(l.edge.from).x + 16,
+          fy: (simulation_node_data.get(l.edge.to).y - simulation_node_data.get(l.edge.from).y) * 128 + simulation_node_data.get(l.edge.from).y + 16,
+        }))
 
 
         if (typeof (links?.[0]?.source) === "string") {
@@ -210,7 +219,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
                 data.simulation.simulation.alpha(0.8);
             }
 
-            data.simulation.simulation.nodes(nodes);
+            data.simulation.simulation.nodes((nodes as Array<d3Node>).concat(linkNameNodes));
             (data.simulation.simulation.force('links') as ForceLink<d3Node, d3Link>).links(links);
             // data.simulation.force('fuse_links').links(data.fuse_links);
         }
@@ -222,13 +231,19 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
 
         (data.simulation.simulation.force('link_direction') as ForceY<d3Node>)
             .y(n =>
-                (((parents_map.get(n.node_id)?.length > 0 ? 1 : 0)
+                isd3NodeNode(n) 
+                ? (((parents_map.get(n.node_id)?.length > 0 ? 1 : 0)
                     + (children_map.has(n.node_id) ? -1 : 0)
                     // + (parents_map.get(children_map.get(main_node_map.get(n.to))[0])?.length ?? 0)
                     + (children_map.has(n.node_id) ? -1 : 0))
-                    * (logmaxparents + 3) + .5) * window.innerHeight)
-            .strength(n => (!!parents_map.get(n.node_id)?.length === !children_map.has(n.node_id))
-                || children_map.get(n.node_id)?.length > 0 ? .01 : 0);
+                    * (logmaxparents + 3) + .5) * window.innerHeight
+                : 0)
+            .strength(n => 
+                isd3NodeNode(n)
+                ? (!!parents_map.get(n.node_id)?.length === !children_map.has(n.node_id))
+                  || children_map.get(n.node_id)?.length > 0 ? .01 : 0
+                : 0
+             );
 
 
         (data.simulation.simulation.force('collide') as ForceCollide<d3Node>).radius(96);
@@ -236,7 +251,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
     // })
 }
 
-const idFromNode = (node: d3Node | string | number): string => typeof node === "object" ? node.node_id : typeof node === "number" ? node.toFixed() : node;
+const idFromNode = (node: d3NodeNode | string | number): string => typeof node === "object" ? node.node_id : typeof node === "number" ? node.toFixed() : node;
 
 // Creates the simulation, updates the node elements when the simulation changes, and runs an action when the nodes have settled.
 // This is probably doing too much.
@@ -250,7 +265,7 @@ export const d3subscription = (dispatch: ha.Dispatch<HyperappState>, props) => {
             .forceLink([])
             .distance(l => l.distance ?? 128)
             .strength(l => l.strength)
-            .id((n: d3Node) => n.node_id))
+            .id((n: d3Node) => (n as d3NodeNode).node_id))
         .force('link_direction', hlib.d3.forceY().strength(.01))
         // .force('center', hlib.d3.forceCenter().strength(0.01))
         // .force('fuse_links', lib.d3.forceLink([]).distance(128).strength(.1).id(n => n.node_id))
@@ -279,7 +294,7 @@ export const d3subscription = (dispatch: ha.Dispatch<HyperappState>, props) => {
         }
 
         if(selected && selectedNode?.id !== selected?.[0]) {
-          selectedNode = simulation.nodes().find(n => n.node_id === selected);
+          selectedNode = simulation.nodes().find(n => isd3NodeNode(n) && n.node_id === selected);
         }
 
         if (simulation.alpha() > simulation.alphaMin()) {
@@ -321,7 +336,7 @@ export const d3subscription = (dispatch: ha.Dispatch<HyperappState>, props) => {
             const visible_nodes = [];
             const visible_node_set = new Set();
 
-            simulation.nodes().map(centerObject).map(n => {
+            simulation.nodes().filter(isd3NodeNode).map(centerObject).map(n => {
                 const el = document.getElementById(`${htmlid}-${n.node_id.replaceAll("/", "_")}`);
                 if(el) {
                     const x = n.x - node_el_width * 0.5;
@@ -336,7 +351,10 @@ export const d3subscription = (dispatch: ha.Dispatch<HyperappState>, props) => {
                 }
             });
 
+            const linkNameNodes = simulation.nodes().filter(n => !isd3NodeNode(n));
+
             (simulation.force('links') as NodysseusForceLink).links().map(l => {
+                const linkNameNode = linkNameNodes.find(n => n.id === `${l.edge.from}_${l.edge.as}`)
                 const el = document.getElementById(`link-${idFromNode(idFromNode(l.source))}`);
                 const edge_label_el = document.getElementById(`edge-info-${idFromNode(l.source)}`);
                 const insert_el = document.getElementById(`insert-${idFromNode(l.source)}`);
@@ -356,8 +374,13 @@ export const d3subscription = (dispatch: ha.Dispatch<HyperappState>, props) => {
                     const max_edge_label_dist = Math.min(64 / Math.abs(target.y - source.y), 0.5);
                     const edge_label_dist = Math.min(max_edge_label_dist, Math.max(min_edge_label_dist, 0.125));
 
-                    edge_label_el.setAttribute('x', ((target.x - source.x) * edge_label_dist + source.x + 16).toFixed())
-                    edge_label_el.setAttribute('y', ((target.y - source.y) * edge_label_dist + source.y).toFixed());
+                    const edgeLabelX = ((target.x - source.x) * edge_label_dist + source.x + 16).toFixed();
+                    const edgeLabelY = ((target.y - source.y) * edge_label_dist + source.y).toFixed();
+                    edge_label_el.setAttribute('x', edgeLabelX)
+                    edge_label_el.setAttribute('y', edgeLabelY);
+
+                    linkNameNode.fx = edgeLabelX;
+                    linkNameNode.fy = edgeLabelY;
 
                     if(insert_el) {
                         insert_el.setAttribute('x', (Math.floor((source.x + target.x) * 0.5 - 16)).toFixed())
@@ -448,6 +471,7 @@ export const link_el = ({link, selected_distance}) =>ha.h('g', {}, [
        ontouchstart: [SelectNode, {node_id: link.source.node_id, focus_property: "edge"}]
     }, [
        ha.h('rect', {}),
+       ha.h('circle', {}),
        ha.h('text', {fontSize: 14, y: 16}, [ha.text(link.as)])
     ])
 ])
