@@ -76,6 +76,8 @@ export const isd3NodeNode = (n: d3Node): n is d3NodeNode => !!(n as d3NodeNode).
 export type d3LinkNode = SimulationNodeDatum & {
   id: string;
   edge: Edge;
+  desiredX: number;
+  desiredY: number;
 }
 
 export type d3Node = d3NodeNode | d3LinkNode;

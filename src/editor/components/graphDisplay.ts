@@ -1,4 +1,4 @@
-import { ForceCenter, ForceCollide, ForceLink, ForceY } from "d3-force";
+import { ForceCenter, ForceCollide, ForceLink, ForceX, ForceY } from "d3-force";
 import * as ha from "hyperapp"
 import { hashcode, nolib } from "../../nodysseus";
 import { Graph, isNodeGraph, NodysseusNode } from "../../types";
@@ -205,8 +205,8 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
         const linkNameNodes: Array<d3LinkNode> = links.map(l => ({
           ...l,
           id: `${l.edge.from}_${l.edge.as}` ,
-          fx: (simulation_node_data.get(l.edge.to).x - simulation_node_data.get(l.edge.from).x) * 128 + simulation_node_data.get(l.edge.from).x + 16,
-          fy: (simulation_node_data.get(l.edge.to).y - simulation_node_data.get(l.edge.from).y) * 128 + simulation_node_data.get(l.edge.from).y + 16,
+          desiredX: (simulation_node_data.get(l.edge.to).x - simulation_node_data.get(l.edge.from).x) * 128 + simulation_node_data.get(l.edge.from).x + 16,
+          desiredY: (simulation_node_data.get(l.edge.to).y - simulation_node_data.get(l.edge.from).y) * 128 + simulation_node_data.get(l.edge.from).y + 16,
         }))
 
 
@@ -214,7 +214,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
             if (
                 simulation_node_data.size !== start_sim_node_size ||
                 simulation_link_data.size !== start_sim_link_size || 
-                data.simulation.simulation.nodes()?.length !== nodes.length ||
+                data.simulation.simulation.nodes()?.filter(n => isd3NodeNode(n)).length !== nodes.length ||
                 (data.simulation.simulation.force('links') as ForceLink<d3Node, d3Link>)?.links().length !== links.length) {
                 data.simulation.simulation.alpha(0.8);
             }
@@ -237,16 +237,19 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
                     // + (parents_map.get(children_map.get(main_node_map.get(n.to))[0])?.length ?? 0)
                     + (children_map.has(n.node_id) ? -1 : 0))
                     * (logmaxparents + 3) + .5) * window.innerHeight
-                : 0)
+                : n.desiredY)
             .strength(n => 
                 isd3NodeNode(n)
                 ? (!!parents_map.get(n.node_id)?.length === !children_map.has(n.node_id))
                   || children_map.get(n.node_id)?.length > 0 ? .01 : 0
-                : 0
+                : 0.01
              );
+        (data.simulation.simulation.force('link_label_x') as ForceX<d3Node>)
+          .x(n => isd3NodeNode(n) ? 0 : n.desiredX)
+          .strength(n => isd3NodeNode(n) ? 0 : 0.01);
 
 
-        (data.simulation.simulation.force('collide') as ForceCollide<d3Node>).radius(96);
+        (data.simulation.simulation.force('collide') as ForceCollide<d3Node>).radius(n => isd3NodeNode(n) ? 96 : 8).strength(4);
     // data.simulation.force('center').strength(n => (levels.parents_map.get(n.node_id)?.length ?? 0) * 0.25 + (levels.children_map.get(n.node_id)?.length ?? 0) * 0.25)
     // })
 }
@@ -267,6 +270,7 @@ export const d3subscription = (dispatch: ha.Dispatch<HyperappState>, props) => {
             .strength(l => l.strength)
             .id((n: d3Node) => (n as d3NodeNode).node_id))
         .force('link_direction', hlib.d3.forceY().strength(.01))
+        .force('link_label_x', hlib.d3.forceX())
         // .force('center', hlib.d3.forceCenter().strength(0.01))
         // .force('fuse_links', lib.d3.forceLink([]).distance(128).strength(.1).id(n => n.node_id))
         // .force('link_siblings', lib.d3.forceX().strength(1))
@@ -379,8 +383,8 @@ export const d3subscription = (dispatch: ha.Dispatch<HyperappState>, props) => {
                     edge_label_el.setAttribute('x', edgeLabelX)
                     edge_label_el.setAttribute('y', edgeLabelY);
 
-                    linkNameNode.fx = edgeLabelX;
-                    linkNameNode.fy = edgeLabelY;
+                    (linkNameNode as d3LinkNode).desiredX = edgeLabelX;
+                    (linkNameNode as d3LinkNode).desiredY = edgeLabelY;
 
                     if(insert_el) {
                         insert_el.setAttribute('x', (Math.floor((source.x + target.x) * 0.5 - 16)).toFixed())
