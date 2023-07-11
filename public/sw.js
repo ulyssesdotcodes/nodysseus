@@ -32,13 +32,11 @@ self.addEventListener('fetch', (e) => {
        ? network(e.request).catch(ne => (console.log("[Service Worker] Network request failed, trying cache"), caches.open(assetCacheName).then(cache => cache.match(e.request)))) 
        : caches.open(assetCacheName).then(c => c.match(e.request)))
         .catch(ce => (console.log("[Service Worker] Request failed"), console.error(ne), console.error(ce)))
-    .then(resp => resp && (
-        resp.url.startsWith("https://cdn.jsdelivr.net/npm/three/examples/") 
-        || resp.url.startsWith("https://cdn.jsdelivr.net/gh/ulyssesdotcodes/")
-      ) ? resp.text().then(rtext => [rtext, resp]) : resp)
+    .then(resp => resp && resp.url.endsWith(".js") ? resp.text().then(rtext => [rtext, resp]) : resp)
     .then(r => Array.isArray(r) ? new Response(r[0]
-      .replaceAll("from 'three'", "from 'https://cdn.jsdelivr.net/npm/three/build/three.module.js'")
-      .replaceAll("from 'three/nodes'", "from 'https://cdn.jsdelivr.net/npm/three/examples/jsm/nodes/Nodes.js'"), {
+      .replaceAll(/(from|import) ['"]three['"]/g, "$1 'https://cdn.jsdelivr.net/npm/three/build/three.module.js'")
+      .replaceAll(/(from|import) ['"]three\/nodes['"]/g, "$1 'https://cdn.jsdelivr.net/npm/three/examples/jsm/nodes/Nodes.js'"),
+      {
       headers: r[1].headers
     }) : r)
   );
