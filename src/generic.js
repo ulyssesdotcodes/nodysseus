@@ -102,6 +102,7 @@ const generic = {
   "@math.math": {
     "id": "@math.math",
     "category": "math",
+    "description": "JS <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math'>Math</a> functions.",
     "ref": "extern",
     "value": "extern.math"
   },
@@ -188,6 +189,7 @@ const generic = {
   "@math.random": {
     "id": "@math.random",
     "category": "math",
+    "description": "Returns a seeded random function",
     "out": "out",
     "nodes": {
       "args": {
@@ -508,13 +510,15 @@ const generic = {
     "id": "@flow.switch",
     "ref": "extern",
     "value": "extern.switch",
-    "category": "flow"
+    "category": "flow",
+    "description": "Returns the value of the input labeled the same as the 'input' input."
   },
   "@data.compare": {
     "id": "@data.compare",
     "ref": "extern",
     "value": "compare",
-    "category": "data"
+    "category": "data",
+    "description": "Returns true if the two inputs are the same"
   },
   "@flow.if": {
     "id": "@flow.if",
@@ -652,13 +656,15 @@ const generic = {
     "id": "@flow.runnable",
     "category": "flow",
     "ref": "extern",
-    "value": "extern.runnable"
+    "value": "extern.runnable",
+    "description": "Creates a 'runnable' object that runs the input graph. The 'parameters' input determines any inputs to the graph like 'event' for javascript event listeners."
   },
   "@flow.ap": {
     "id": "@flow.ap",
     "category": "flow",
     "ref": "extern",
-    "value": "extern.ap"
+    "value": "extern.ap",
+    "description": "Applies the runnable to args."
   },
   "@js.script": {
     "id": "@js.script",
