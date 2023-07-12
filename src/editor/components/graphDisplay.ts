@@ -249,7 +249,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
           .strength(n => isd3NodeNode(n) ? 0 : 0.01);
 
 
-        (data.simulation.simulation.force('collide') as ForceCollide<d3Node>).radius(n => isd3NodeNode(n) ? 96 : 8).strength(4);
+        (data.simulation.simulation.force('collide') as ForceCollide<d3Node>).radius(n => isd3NodeNode(n) ? 96 : 8);
     // data.simulation.force('center').strength(n => (levels.parents_map.get(n.node_id)?.length ?? 0) * 0.25 + (levels.children_map.get(n.node_id)?.length ?? 0) * 0.25)
     // })
 }
