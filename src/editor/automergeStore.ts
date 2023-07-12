@@ -16,6 +16,9 @@ import custom_editor from "../custom_editor.json"
 const generic_nodes = generic.nodes;
 const generic_node_ids = new Set(Object.keys(generic_nodes));
 
+// hacky global
+let syncWS;
+
 const migrateCategories = (doc: Automerge.Doc<Graph>) => {
   if(!doc.nodes) return;
 
@@ -223,7 +226,11 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
   const syncBroadcast = new BroadcastChannel("refssync");
   const syncStates = {};
 
-  const peerId = uuid();
+  let peerId = await nodysseusidb.get("sync", "peerId") 
+  if(!peerId) {
+    peerId = uuid();
+    nodysseusidb.put("sync", peerId, "peerId")
+  }
 
   syncBroadcast.postMessage({type: "syncstart", peerId})
 
@@ -256,7 +263,6 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
     }
   })
 
-  let syncWS;
 
 
   // Wrap run in setTimeout so nodysseus has time to init
@@ -273,7 +279,10 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
       .then(rtcroom => {
         if(!rtcroom) return;
 
-      syncWS = new WebSocket(`wss://ws.nodysseus.io/${rtcroom}`);
+      if(!syncWS) {
+        syncWS = new WebSocket(`ws://localhost:4444/${rtcroom}`);
+      }
+
       syncWS.addEventListener("open", () => {
         syncWS.send(new Blob([Uint8Array.of(syncMessageTypesRev["syncstart"]), uuidparse(peerId)]))
       })

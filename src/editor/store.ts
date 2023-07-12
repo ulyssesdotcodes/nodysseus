@@ -243,7 +243,7 @@ export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore>
   }
 }
 
-export const openNodysseusDB = () => openDB<NodysseusStoreTypes>("nodysseus", 4, {
+export const openNodysseusDB = () => openDB<NodysseusStoreTypes>("nodysseus", 5, {
     upgrade(db, oldVersion, newVersion) {
       if(oldVersion < 2) {
         db.createObjectStore("assets")
@@ -255,6 +255,10 @@ export const openNodysseusDB = () => openDB<NodysseusStoreTypes>("nodysseus", 4,
 
       if(oldVersion < 4) {
         db.createObjectStore("refs")
+      }
+
+      if(oldVersion < 5) {
+        db.createObjectStore("sync")
       }
     }
   })
