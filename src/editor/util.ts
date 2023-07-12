@@ -182,6 +182,7 @@ export const pzobj: {
             })
             hlib.panzoom.instance.moveTo(window.innerWidth * 0, window.innerHeight * 0.5);
             hlib.panzoom.instance.on('transform', (e) => {
+              document.getElementById("node-editor-editor").style.setProperty("--zoom-scale", (hlib.panzoom.instance as pz.PanZoom).getTransform().scale.toString())
             })
         });
         return () => { cancelAnimationFrame(init); (hlib.panzoom.instance as pz.PanZoom)?.dispose(); }

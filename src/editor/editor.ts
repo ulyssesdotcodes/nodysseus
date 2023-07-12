@@ -195,6 +195,14 @@ const runapp = (init, _lib) => {
         ha.h('svg', {id: `${s.html_id}-editor`, width: s.dimensions.x, height: s.dimensions.y}, [
             ha.h('g', {id: `${s.html_id}-editor-panzoom`}, 
                 [ha.memo(defs, {})].concat(
+                    getLinks(s.simulation).map(link => ha.memo(link_el, {
+                        link: Object.assign({}, link, s.editingGraph.edges[(link.source as d3NodeNode).node_id]),
+                        selected_distance: s.show_all || !s.levels ? 0 : s.levels.distance_from_selected.get((link.source as d3NodeNode).node_id) > 3 ? 'far' : s.levels.distance_from_selected.get((link.source as d3NodeNode).node_id),
+                    })) ?? []
+                ).concat(
+                    getLinks(s.simulation).filter(link => (link.source as d3NodeNode).node_id == s.selected[0] || (link.target as d3NodeNode).node_id === s.selected[0])
+                        .map(link => insert_node_el({link, randid: s.randid, node_el_width: s.node_el_width, nodeOffset: s.nodeOffset}))
+                ).concat(
                     getNodes(s.simulation).map(node => {
                         const newnode = Object.assign({}, node, s.editingGraph.nodes[node.node_id])
                         return ha.memo(node_el, ({
@@ -212,14 +220,6 @@ const runapp = (init, _lib) => {
                             node_parents: !s.levels ? [] : (s.levels as Levels).parents.get(node.node_id)
                         }))
                 }) ?? []
-                ).concat(
-                    getLinks(s.simulation).map(link => ha.memo(link_el, {
-                        link: Object.assign({}, link, s.editingGraph.edges[(link.source as d3NodeNode).node_id]),
-                        selected_distance: s.show_all || !s.levels ? 0 : s.levels.distance_from_selected.get((link.source as d3NodeNode).node_id) > 3 ? 'far' : s.levels.distance_from_selected.get((link.source as d3NodeNode).node_id),
-                    })) ?? []
-                ).concat(
-                    getLinks(s.simulation).filter(link => (link.source as d3NodeNode).node_id == s.selected[0] || (link.target as d3NodeNode).node_id === s.selected[0])
-                        .map(link => insert_node_el({link, randid: s.randid, node_el_width: s.node_el_width, nodeOffset: s.nodeOffset}))
                 )
             ),
         ]),

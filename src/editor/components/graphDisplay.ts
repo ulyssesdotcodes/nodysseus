@@ -3,7 +3,7 @@ import * as ha from "hyperapp"
 import { hashcode, nolib } from "../../nodysseus";
 import { Graph, isNodeGraph, NodysseusNode } from "../../types";
 import { ispromise, wrapPromise } from "../../util";
-import { HyperappState, NodysseusForceLink, NodysseusSimulation, d3Link, d3Node, Vector2, isd3NodeNode, d3NodeNode, d3LinkNode } from "../types";
+import { HyperappState, NodysseusForceLink, NodysseusSimulation, d3Link, d3Node, Vector2, isd3NodeNode, d3NodeNode, d3LinkNode, Property } from "../types";
 import { calculateLevels, CreateNode, findViewBox, hlib, pzobj, SelectNode, graphEdgeOut, graphEdgesIn, setRootNodeXNodeY } from "../util";
 
 export const UpdateSimulation: ha.Effecter<HyperappState, any>  = (dispatch, payload) => payload ? !(payload.simulation || payload.static) ? undefined : updateSimulationNodes(dispatch, payload) : dispatch(state => [state, [() => !(state.simulation) ? undefined : updateSimulationNodes(dispatch, state), undefined]])
@@ -426,9 +426,9 @@ export const d3subscription = (dispatch: ha.Dispatch<HyperappState>, props) => {
 }
 
 const fill_rect_el = () =>ha.h('rect', {class: 'fill', width: '48', 'height': '48'}, [])
-const node_text_el = ({node_id, primary, focus_primary, secondary}) =>ha.h('text', {x: 48, y: 12}, [
+const node_text_el = ({node_id, primary, focus_primary, secondary, primaryClass}: {node_id: string, focus_primary: Property, primary: string, secondary: string, primaryClass?: string}) =>ha.h('text', {x: 48, y: 12}, [
    ha.h('tspan', {class: "secondary",  dy: "0.6em", x: "48", onpointerdown: [SelectNode, {node_id, focus_property: "ref"}]}, ha.text(secondary.substring(0, 24))),
-   ha.h('tspan', {class: "primary", dy: "1.2em", x: "48", onpointerdown: [SelectNode, {node_id, focus_property: focus_primary}]}, ha.text(primary.substring(0, 24)))
+   ha.h('tspan', {class: {primary: true, [primaryClass]: !!primaryClass}, dy: "1.2em", x: "48", onpointerdown: [SelectNode, {node_id, focus_property: focus_primary}]}, ha.text(primary.substring(0, 24)))
 ])
 
 
@@ -460,6 +460,7 @@ export const node_el = ({html_id, selected, error, selected_distance, node_id, n
     ha.memo(node_text_el, {
         node_id: node_id,
         primary: node_name ? node_name : node_value ? node_value : '', 
+        primaryClass: node_name ? "node-name" : undefined,
         focus_primary: node_name ? "name" : "value",
         secondary: node_ref ? node_ref : has_nodes ? `graph (${nested_node_count}, ${nested_edge_count})` : node_value !== undefined ? 'value' : node_parents?.length > 0 ? 'object' : 'undefined'
     }),

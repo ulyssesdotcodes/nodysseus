@@ -465,6 +465,10 @@ svg.edge-info.selected rect {
     font-weight: bold;
 }
 
+.node text .node-name {
+  font-size: calc(1em / var(--zoom-scale));
+}
+
 .node text .secondary {
     font-style: italic;
 }
