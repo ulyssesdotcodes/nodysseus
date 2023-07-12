@@ -478,7 +478,7 @@ export const UpdateNodeEffect = (dispatch: ha.Dispatch<HyperappState>, {editingG
       dispatch(s => ({...s, selectedMetadata: metadata}))
 
       if(edges_in.length === 1){ 
-        if(nodeargs.filter(na => !na.additionalArg).length === 1) {
+        if(nodeargs.filter(na => !na.additionalArg && !na.name.startsWith("_")).length === 1) {
           const newAs = nodeargs.find(a => !a.additionalArg).name;
           if(newAs !== edges_in[0].as) {
             nolib.no.runtime.updateGraph({
