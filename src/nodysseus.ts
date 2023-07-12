@@ -1722,22 +1722,28 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     merge_objects_mutable: {
       args: ["target", "_node_args", "_lib", "_runoptions"],
       fn: (target, args, lib, options) => {
-        const keys = Object.keys(args).filter(k => k !== "target").sort();
-        return wrapPromiseAll(keys.map(k => [k, isRunnable(args[k]) ? run_runnable(args[k], lib) : args[k]]))
-          .then(inputs => wrapPromiseAll(inputs
+        const merge = (target = {}, value) =>
+          Object.entries(value)
+            .map(kv => isArgs(kv[1]) ? [kv[0], Object.fromEntries(kv[1].entries())] : kv)
+            .forEach(([k, v]: [string, unknown]) => {
+              if(typeof v === "object" && typeof target[k] === "object") {
+                merge(target[k], v)
+              } else {
+                target[k] = v;
+              }
+            });
+
+        return wrapPromiseAll(Object.keys(args).filter(k => k !== "target")
+                              .map(k => [k, isRunnable(args[k]) ? run_runnable(args[k], lib) : args[k]]))
+            .then(inputs => wrapPromiseAll(inputs
                   .map(kv => [kv[0], isValue(kv[1]) ? kv[1].value : kv[1]])
                   .map(kv => [kv[0], isArgs(kv[1]) ? resolve_args(kv[1], lib, options) : kv[1]]))
-                .then(kvs => Object.fromEntries(kvs.map(kv => [kv[0], isValue(kv[1]) ? kv[1].value : kv[1]]))).value
-           )
-          .then(resolved =>
-              Object.assign(
-                  target,
-                  ...keys
-                    .map((k) => resolved[k])
-                    .map(a => isArgs(a) ? Object.fromEntries(a.entries()) : a)
-                    .filter((a) => a && typeof a === "object")
-                )
-           ).value
+                  .then(kvs => Object.fromEntries(kvs.map(kv => [kv[0], isValue(kv[1]) ? kv[1].value : kv[1]]))).value
+             )
+             .then(resolved => {
+               Object.values(resolved).forEach(v => merge(target, v))
+               return target;
+             }).value
       }
     },
     merge_objects: {
