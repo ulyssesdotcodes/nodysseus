@@ -280,7 +280,7 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
         if(!rtcroom) return;
 
       if(!syncWS) {
-        syncWS = new WebSocket(`ws://localhost:4444/${rtcroom}`);
+        syncWS = new WebSocket(`wss://ws.nodysseus.io/${rtcroom}`);
       }
 
       syncWS.addEventListener("open", () => {
