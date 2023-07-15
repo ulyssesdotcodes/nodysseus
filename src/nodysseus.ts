@@ -1299,6 +1299,17 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
           }
         }
 
+        if(onframe) {
+          wrapPromise(run_runnable(onframe, lib))
+            .then(onframeRunnable => isValue(onframeRunnable) && nolib.no.runtime.addListener("animationframe", graphid, () => {
+              wrapPromise(run_runnable(onframeRunnable.value, lib)).then(frameresult => {
+                if(isValue(frameresult)){ 
+                  args["store"].value = frameresult.value
+                }
+              })
+            }))
+        }
+
         return output === "display" ? {dom_type: 'div', props: {}, children: [{dom_type: "text_value", text: JSON.stringify(store.value)}]} : store
       }
     },
@@ -1355,7 +1366,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
                   const isresultpromise = ispromise(promiseresult);
 
                   if(publish) {
-                    lib.data.no.runtime.publish("argsupdate", {graphid, changes: {state: promiseresult}, mutate: false}, lib, options, true)
+                    nolib.no.runtime.publish("argsupdate", {graphid, changes: {state: promiseresult}, mutate: false}, lib, options, true)
                   } else {
                     lib.data.no.runtime.update_args(graphid, {state: promiseresult}, lib)
                   }
