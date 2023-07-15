@@ -1,5 +1,5 @@
 import * as Automerge from "@automerge/automerge";
-import { PatchCallback } from "@automerge/automerge";
+import { decodeSyncState, encodeSyncState, PatchCallback } from "@automerge/automerge";
 import { IDBPDatabase } from "idb";
 import { Graph, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode, NodysseusStoreTypes, RefNode, RefStore } from "src/types";
 import { ancestor_graph, wrapPromise } from "src/util";
@@ -47,10 +47,23 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
   
   const createDoc = () => Automerge.applyChanges(Automerge.init<Graph>(), [initgraph])[0];
 
-  const updatePeers = (id: string, target?: string) => {
+  const updatePeers = async (id: string, target?: string) => {
     if(id === "custom_editor") return;
 
     syncedSet.add(id);
+
+    if(target && !syncStates[target]?.[id]) {
+
+      if(!syncStates[target]) {
+        syncStates[target] = {_syncType: "ws"};
+      }
+
+      const syncState = await nodysseusidb.get("sync",  `${target}-${id}`);
+      if(syncState) {
+        syncStates
+        syncStates[target][id] = decodeSyncState(syncState);
+      }
+    }
 
     if(updatePeersDebounces[id]) clearTimeout(updatePeersDebounces[id])
     updatePeersDebounces[id] = setTimeout(() => {
@@ -298,8 +311,10 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
             id: new TextDecoder().decode(uintbuffer.subarray(33, 97)).trimEnd(),
             syncMessage: messageType === "syncgraph" && uintbuffer.subarray(97),
           };
-          if(data.type === "syncstart" && !syncStates[data.peerId] && data.peerId !== peerId) {
-            syncStates[data.peerId] = {_syncType: "ws"};
+          if(data.type === "syncstart" && data.peerId !== peerId) {
+            if(!syncStates[data.peerId]) {
+              syncStates[data.peerId] = {_syncType: "ws"};
+            }
             !data.target && syncWS.send(new Blob([Uint8Array.of(syncMessageTypesRev["syncstart"]), uuidparse(peerId), uuidparse(data.peerId)]))
             for(const graphId of syncedSet.values()) {
               updatePeers(graphId, data.peerId);
@@ -329,6 +344,7 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
               }) 
               structuredCloneMap.set(id, scd);
               syncStates[data.peerId] = {...syncStates[data.peerId], [id]: nextSyncState};
+              nodysseusidb.put("sync", encodeSyncState(nextSyncState), `${data.peerId}-${id}`)
               updatePeers(id);
               graphChangeCallback && graphChangeCallback(scd, [])
             })
