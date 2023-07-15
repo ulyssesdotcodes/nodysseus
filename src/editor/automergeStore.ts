@@ -292,6 +292,8 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
       .then(rtcroom => {
         if(!rtcroom) return;
 
+        console.log("Using rtcroom: ", rtcroom);
+
       if(!syncWS) {
         syncWS = new WebSocket(`wss://ws.nodysseus.io/${rtcroom}`);
       }
