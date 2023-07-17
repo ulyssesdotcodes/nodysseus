@@ -1737,7 +1737,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
           Object.entries(value)
             .map(kv => isArgs(kv[1]) ? [kv[0], Object.fromEntries(kv[1].entries())] : kv)
             .forEach(([k, v]: [string, unknown]) => {
-              if(typeof v === "object" && typeof target[k] === "object") {
+              if(typeof v === "object" && typeof target[k] === "object" && target[k] !== null) {
                 merge(target[k], v)
               } else {
                 target[k] = v;
