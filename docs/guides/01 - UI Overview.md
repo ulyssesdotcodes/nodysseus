@@ -3,6 +3,7 @@
 ## Opening or creating a graph
 
 Click on the output node of the graph and change the name by typing and selecting an option or clicking away. If a graph with that names exists, the graph will open. 
+
 ![](images/new-graph.gif)
 
 If a graph with that name does not exist, then a new graph will be created. The new graph will be a copy of the old graph but with the new name. You can use the new name in the `graph` field of any node.
