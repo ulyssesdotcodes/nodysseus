@@ -1,3 +1,12 @@
+# Common operations
+
+## Creating a new graph
+
+To create a new graph, click on the output node of the graph and change the name. The new graph will be a copy of the old graph but with the new name. You can use the new name in the `graph` field of any node.
+
+![](images/new-graph.gif)
+
+
 # Tour of Nodysseus
 
 [UI Overview Tutorial](https://www.youtube.com/watch?v=K-oUsrV3n6s&list=PLNf6veBQIZNohZk_htvTvPCB2UnEl3Tlh) main points below
@@ -42,3 +51,4 @@
 		3. `paste` (if there's a copied node) - pastes the copied node-graph preserving the output edge
 		4. `delete` - deletes the node
 		5. `save` (if on the output node) - saves the current graph by its name. Nodes in any graph can use this name as a `ref`.
+
