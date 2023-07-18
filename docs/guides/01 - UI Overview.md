@@ -1,11 +1,22 @@
 # Common operations
 
-## Creating a new graph
+## Opening or creating a graph
 
-To create a new graph, click on the output node of the graph and change the name. The new graph will be a copy of the old graph but with the new name. You can use the new name in the `graph` field of any node.
-
+Click on the output node of the graph and change the name by typing and selecting an option or clicking away. If a graph with that names exists, the graph will open. 
 ![](images/new-graph.gif)
 
+If a graph with that name does not exist, then a new graph will be created. The new graph will be a copy of the old graph but with the new name. You can use the new name in the `graph` field of any node.
+
+![](images/change-graph.gif)
+
+
+
+
+## Updating a node
+
+Click on a node field to open the node info window and automatically highlight that field. Changes are automatically saved when you click away.
+
+## Importing a graph
 
 # Tour of Nodysseus
 
