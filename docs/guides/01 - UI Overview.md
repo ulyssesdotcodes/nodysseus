@@ -17,6 +17,9 @@ If a graph with that name does not exist, then a new graph will be created. The 
 
 Click on a node field to open the node info window and automatically highlight that field. Changes are automatically saved when you click away.
 
+![](images/update-node.gif)
+
+
 ## Importing a graph
 
 # Tour of Nodysseus
