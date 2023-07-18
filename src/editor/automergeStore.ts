@@ -128,6 +128,9 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
       nolib.no.runtime.publish("grapherror", new Error("Cannot edit default nodes"), nolibLib)
       return;
     }
+    if(id === undefined) {
+      return;
+    }
     return wrapPromise(getDoc(id))
       .then(graph => {
         let doc = Automerge.change<Graph>(graph ?? createDoc(), {patchCallback: graphNodePatchCallback}, fn);
