@@ -38,7 +38,7 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
 
   const refsmap = new Map<string, Automerge.Doc<Graph>>();
   const structuredCloneMap = new Map<string, Graph>();
-  const refsset = new Set(await nodysseusidb.getAllKeys("refs").then(ks => ks.map(k => k.toString())));
+  const refsset = new Set(await nodysseusidb.getAllKeys("refs").then(ks => ks.map(k => k.toString()).filter(k => k)));
   const syncedSet = new Set<string>()
 
   /////
