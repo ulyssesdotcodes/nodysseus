@@ -222,7 +222,7 @@ export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore>
       clear: () => {throw new Error("not implemented")},
       keys: () => hasSharedWorkerKeys
         ? [...contextKeysCache.values()]
-        : messagePromise({kind: "keys"}).then(e => (e.keys.forEach(k => contextKeysCache.add(k)), hasSharedWorkerKeys = true, e.keys)),
+        : messagePromise({kind: "keys"}).then(e => (e.keys.forEach(k => k && contextKeysCache.add(k)), hasSharedWorkerKeys = true, e.keys.filter(k => k))),
       add_edge: () => {throw new Error("not implemented")},
       remove_edge: () => {throw new Error("not implemented")},
       add_node: (graphId, node) => {
