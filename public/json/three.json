@@ -9627,5 +9627,125 @@
       }
     },
     "out": "syby7ze"
+  }, {
+    "description": "Extrudes a geometry using THREE.ExtrudeGeometry",
+    "edges": {
+      "e08m3vg": {
+        "as": "args",
+        "from": "e08m3vg",
+        "to": "out"
+      },
+      "output_val": {
+        "as": "value",
+        "from": "output_val",
+        "to": "out"
+      },
+      "j819k9c": {
+        "as": "_geometry",
+        "from": "j819k9c",
+        "to": "e08m3vg"
+      },
+      "7jw4lsu": {
+        "as": "options",
+        "from": "7jw4lsu",
+        "to": "j819k9c"
+      },
+      "ka77yfe": {
+        "as": "shape",
+        "from": "ka77yfe",
+        "to": "j819k9c"
+      },
+      "8w8gfzn": {
+        "as": "target",
+        "from": "8w8gfzn",
+        "to": "7jw4lsu"
+      },
+      "mrevz1i": {
+        "as": "arg0",
+        "from": "mrevz1i",
+        "to": "7jw4lsu"
+      }
+    },
+    "id": "@three.extrude",
+    "nodes": {
+      "out": {
+        "id": "out",
+        "name": "@three.extrude",
+        "ref": "return"
+      },
+      "output_val": {
+        "id": "output_val",
+        "ref": "arg",
+        "value": "_geometry"
+      },
+      "e08m3vg": {
+        "id": "e08m3vg"
+      },
+      "j819k9c": {
+        "id": "j819k9c",
+        "ref": "@js.script",
+        "value": "\nreturn new _lib.THREE.ExtrudeGeometry(shape, options);"
+      },
+      "ka77yfe": {
+        "id": "ka77yfe",
+        "ref": "arg",
+        "value": "shapes"
+      },
+      "7jw4lsu": {
+        "id": "7jw4lsu",
+        "ref": "@data.merge_objects_mutable"
+      },
+      "mrevz1i": {
+        "id": "mrevz1i",
+        "ref": "arg",
+        "value": "_args"
+      },
+      "8w8gfzn": {
+        "id": "8w8gfzn",
+        "value": "{}"
+      }
+    },
+    "out": "out"
+  }, {
+    "edges": {
+      "df314cg": {
+        "from": "df314cg",
+        "to": "ze9loi5",
+        "as": "args"
+      },
+      "rlaff85": {
+        "from": "rlaff85",
+        "to": "ze9loi5",
+        "as": "value"
+      },
+      "50dxh0h": {
+        "from": "50dxh0h",
+        "to": "rlaff85",
+        "as": "geometry"
+      }
+    },
+    "id": "@three.geometryShape",
+    "nodes": {
+      "ze9loi5": {
+        "id": "ze9loi5",
+        "name": "@three.geometryShape",
+        "ref": "return"
+      },
+      "df314cg": {
+        "id": "df314cg"
+      },
+      "rlaff85": {
+        "id": "rlaff85",
+        "value": "const points = [];\nconst pos = geometry.getAttribute(\"position\");\nfor(let i = 0; i < pos.count; i++) {\n  points[i] = new _lib.THREE.Vector2();\n  points[i].fromArray(pos.array, i * 3)\n}\n\nreturn new _lib.THREE.Shape(points)",
+        "ref": "@js.script"
+      },
+      "50dxh0h": {
+        "id": "50dxh0h",
+        "value": "geometry",
+        "ref": "arg"
+      }
+    },
+    "out": "ze9loi5",
+    "name": "@three.geometryShape"
   }
 ]
