@@ -9431,5 +9431,201 @@
       }
     },
     "out": "main/out"
+  },
+{
+    "edges": {
+      "d6mitl5": {
+        "as": "args",
+        "from": "d6mitl5",
+        "to": "syby7ze"
+      },
+      "fcen8hd": {
+        "as": "value",
+        "from": "fcen8hd",
+        "to": "syby7ze"
+      },
+      "js4cfe3": {
+        "as": "args",
+        "from": "js4cfe3",
+        "to": "fcen8hd"
+      },
+      "xt3gta9": {
+        "as": "self",
+        "from": "xt3gta9",
+        "to": "fcen8hd"
+      },
+      "6rrrrrm": {
+        "as": "arg0",
+        "from": "6rrrrrm",
+        "to": "js4cfe3"
+      },
+      "wlzn1yd": {
+        "as": "arg1",
+        "from": "wlzn1yd",
+        "to": "js4cfe3"
+      },
+      "6dihura": {
+        "as": "args",
+        "from": "6dihura",
+        "to": "wlzn1yd"
+      },
+      "0kxre2r": {
+        "as": "arg0",
+        "from": "0kxre2r",
+        "to": "6dihura"
+      },
+      "na38nz4": {
+        "as": "arg1",
+        "from": "na38nz4",
+        "to": "6dihura"
+      },
+      "bi8tc8g": {
+        "as": "true",
+        "from": "bi8tc8g",
+        "to": "0kxre2r"
+      },
+      "moy0qly": {
+        "as": "pred",
+        "from": "moy0qly",
+        "to": "0kxre2r"
+      },
+      "vn94dlh": {
+        "as": "false",
+        "from": "vn94dlh",
+        "to": "0kxre2r"
+      },
+      "5icpvna": {
+        "as": "count",
+        "from": "5icpvna",
+        "to": "vn94dlh"
+      },
+      "wfzykmf": {
+        "as": "rand",
+        "from": "wfzykmf",
+        "to": "vn94dlh"
+      },
+      "gxyxjkk": {
+        "as": "seed",
+        "from": "gxyxjkk",
+        "to": "wfzykmf"
+      },
+      "iwgr69a": {
+        "as": "count",
+        "from": "iwgr69a",
+        "to": "bi8tc8g"
+      },
+      "ot5qmfg": {
+        "as": "rand",
+        "from": "ot5qmfg",
+        "to": "bi8tc8g"
+      },
+      "z43up47": {
+        "as": "surface",
+        "from": "z43up47",
+        "to": "bi8tc8g"
+      },
+      "moqcovn": {
+        "as": "seed",
+        "from": "moqcovn",
+        "to": "ot5qmfg"
+      }
+    },
+    "id": "@three.pointsGeometry",
+    "name": "@three.pointsGeometry",
+    "nodes": {
+      "syby7ze": {
+        "id": "syby7ze",
+        "name": "@three.pointsGeometry",
+        "ref": "return"
+      },
+      "fcen8hd": {
+        "id": "fcen8hd",
+        "ref": "@js.call",
+        "value": "setAttribute"
+      },
+      "xt3gta9": {
+        "id": "xt3gta9",
+        "ref": "@js.new",
+        "value": "THREE.BufferGeometry"
+      },
+      "js4cfe3": {
+        "id": "js4cfe3",
+        "ref": "@data.array"
+      },
+      "wlzn1yd": {
+        "id": "wlzn1yd",
+        "ref": "@js.new",
+        "value": "THREE.BufferAttribute"
+      },
+      "6dihura": {
+        "id": "6dihura",
+        "ref": "@data.array"
+      },
+      "na38nz4": {
+        "id": "na38nz4",
+        "value": "3"
+      },
+      "0kxre2r": {
+        "id": "0kxre2r",
+        "ref": "@flow.if"
+      },
+      "vn94dlh": {
+        "id": "vn94dlh",
+        "ref": "@js.script",
+        "value": "return new Float32Array(count * 3).fill(0)\n  .map(v => rand())"
+      },
+      "wfzykmf": {
+        "id": "wfzykmf",
+        "ref": "@math.random"
+      },
+      "gxyxjkk": {
+        "id": "gxyxjkk",
+        "ref": "arg",
+        "value": "seed"
+      },
+      "5icpvna": {
+        "id": "5icpvna",
+        "ref": "arg",
+        "value": "count"
+      },
+      "moy0qly": {
+        "id": "moy0qly",
+        "ref": "arg",
+        "value": "surface"
+      },
+      "bi8tc8g": {
+        "id": "bi8tc8g",
+        "name": "tri points1",
+        "ref": "@js.script",
+        "value": "const pos = surface.getAttribute('position');\nconst idx = surface.index;\nconst vtxCount = idx?.count ?? pos.count;\nconst arr = new Float32Array(count * 3).fill(0);\nlet tri = new _lib.THREE.Triangle()\nlet pt = new _lib.THREE.Vector3()\nlet coord = new _lib.THREE.Vector3()\nlet sum;\nfor(let i = 0; i < count; i++){\n  let ti = Math.floor(rand() * vtxCount);\n  tri.setFromAttributeAndIndices(pos, idx?.array[ti] ?? ti, idx?.array[ti + 1] ?? (ti + 1), idx?.array[ti + 2] ?? (ti + 2));\n  coord.set(rand(), rand(), rand())\n  sum = coord.x + coord.y + coord.z;\n  coord.multiplyScalar(1 / sum);\n  \n  pt.set(0,0,0);\n  pt.addScaledVector(tri.a, coord.x)\n  pt.addScaledVector(tri.b, coord.y)\n  pt.addScaledVector(tri.c, coord.z)\n  \n  arr.set(pt.toArray(), 3 * i)\n}\n\nreturn arr"
+      },
+      "z43up47": {
+        "id": "z43up47",
+        "ref": "arg",
+        "value": "surface"
+      },
+      "ot5qmfg": {
+        "id": "ot5qmfg",
+        "ref": "@math.random"
+      },
+      "moqcovn": {
+        "id": "moqcovn",
+        "ref": "arg",
+        "value": "seed"
+      },
+      "iwgr69a": {
+        "id": "iwgr69a",
+        "ref": "arg",
+        "value": "count"
+      },
+      "6rrrrrm": {
+        "id": "6rrrrrm",
+        "value": "position"
+      },
+      "d6mitl5": {
+        "id": "d6mitl5"
+      }
+    },
+    "out": "syby7ze"
   }
 ]
