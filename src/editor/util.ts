@@ -876,7 +876,7 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id: str
     const externArgs = externfn && (Array.isArray(externfn.args) ? externfn.args.map(a => {
       const argColonIdx = a.indexOf(":")
       return [argColonIdx >= 0 ? a.substring(0, argColonIdx) : a, "any"]
-    }) : Object.entries(externfn.args));
+    }) : externfn?.args && typeof externfn.args === "object" ? Object.entries(externfn.args) : []);
     const baseargs: Array<[string ,TypedArg]> = externfn
             ? externArgs
               ? externArgs
