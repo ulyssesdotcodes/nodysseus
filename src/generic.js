@@ -6170,554 +6170,573 @@ const generic = {
     "category": "event"
   },
   "@html.slider": {
-    "edges": {
-      "0i85qjj": {
-        "as": "args",
-        "from": "0i85qjj",
-        "to": "out"
+      "edges": {
+        "0i85qjj": {
+          "as": "args",
+          "from": "0i85qjj",
+          "to": "out"
+        },
+        "1dhoyv2": {
+          "as": "max",
+          "from": "1dhoyv2",
+          "to": "24q0egm"
+        },
+        "24q0egm": {
+          "as": "props",
+          "from": "24q0egm",
+          "to": "5mog0bc"
+        },
+        "2wp8ffd": {
+          "as": "fn",
+          "from": "2wp8ffd",
+          "to": "old0t0c"
+        },
+        "34k9xvb": {
+          "as": "max",
+          "from": "34k9xvb",
+          "to": "r0fsdrm"
+        },
+        "4dh6wzn": {
+          "as": "arg1",
+          "from": "4dh6wzn",
+          "to": "2wp8ffd"
+        },
+        "4subc0j": {
+          "as": "graphval",
+          "from": "4subc0j",
+          "to": "1dhoyv2"
+        },
+        "5mog0bc": {
+          "as": "arg1",
+          "from": "5mog0bc",
+          "to": "sb9qdgy"
+        },
+        "7c2vt3d": {
+          "as": "min",
+          "from": "7c2vt3d",
+          "to": "24q0egm"
+        },
+        "8f3izp7": {
+          "as": "arg1",
+          "from": "8f3izp7",
+          "to": "d86emo2"
+        },
+        "93rx3ru": {
+          "as": "display",
+          "from": "93rx3ru",
+          "to": "sxjhepz"
+        },
+        "a6rdag9": {
+          "as": "props",
+          "from": "a6rdag9",
+          "to": "y407zfo"
+        },
+        "av63lw9": {
+          "as": "value",
+          "from": "av63lw9",
+          "to": "y407zfo"
+        },
+        "bts7694": {
+          "as": "otherwise",
+          "from": "bts7694",
+          "to": "ewycyaq"
+        },
+        "d1wcpk1": {
+          "as": "otherwise",
+          "from": "d1wcpk1",
+          "to": "tksk4wc"
+        },
+        "d86emo2": {
+          "as": "fn",
+          "from": "d86emo2",
+          "to": "v0qabyr"
+        },
+        "doz740g": {
+          "as": "arg0",
+          "from": "doz740g",
+          "to": "sb9qdgy"
+        },
+        "e996mm5": {
+          "as": "min",
+          "from": "e996mm5",
+          "to": "r0fsdrm"
+        },
+        "ewycyaq": {
+          "as": "text",
+          "from": "ewycyaq",
+          "to": "kyu6h8m"
+        },
+        "ezx9hxj": {
+          "as": "args",
+          "from": "ezx9hxj",
+          "to": "old0t0c"
+        },
+        "fd7yax9": {
+          "as": "value",
+          "from": "fd7yax9",
+          "to": "7c2vt3d"
+        },
+        "fgmcy0x": {
+          "as": "publish",
+          "from": "fgmcy0x",
+          "to": "gvk9hec"
+        },
+        "gibdj45": {
+          "as": "val",
+          "from": "gibdj45",
+          "to": "parseval"
+        },
+        "gtpf6x9": {
+          "as": "arg0",
+          "from": "gtpf6x9",
+          "to": "d86emo2"
+        },
+        "gvk9hec": {
+          "as": "_sliderstate",
+          "from": "gvk9hec",
+          "to": "0i85qjj"
+        },
+        "h19qe28": {
+          "as": "persist",
+          "from": "h19qe28",
+          "to": "gvk9hec"
+        },
+        "ku4l1v6": {
+          "as": "value",
+          "from": "ku4l1v6",
+          "to": "ewycyaq"
+        },
+        "kyu6h8m": {
+          "as": "arg2",
+          "from": "kyu6h8m",
+          "to": "sb9qdgy"
+        },
+        "l5bzesi": {
+          "as": "arg0",
+          "from": "l5bzesi",
+          "to": "2wp8ffd"
+        },
+        "lptf53h": {
+          "as": "statechanged",
+          "from": "lptf53h",
+          "to": "av63lw9"
+        },
+        "mpbvtrq": {
+          "as": "type",
+          "from": "mpbvtrq",
+          "to": "24q0egm"
+        },
+        "n4i4t17": {
+          "as": "val",
+          "from": "n4i4t17",
+          "to": "av63lw9"
+        },
+        "nrhhdip": {
+          "as": "value",
+          "from": "nrhhdip",
+          "to": "oqbuspj"
+        },
+        "obkkk9p": {
+          "as": "value",
+          "from": "obkkk9p",
+          "to": "lptf53h"
+        },
+        "old0t0c": {
+          "as": "oninput",
+          "from": "old0t0c",
+          "to": "24q0egm"
+        },
+        "on0cfjb": {
+          "as": "graphval",
+          "from": "on0cfjb",
+          "to": "34k9xvb"
+        },
+        "oqbuspj": {
+          "as": "args",
+          "from": "oqbuspj",
+          "to": "v0qabyr"
+        },
+        "parseval": {
+          "as": "value",
+          "from": "parseval",
+          "to": "ezx9hxj"
+        },
+        "q09a315": {
+          "as": "otherwise",
+          "from": "q09a315",
+          "to": "yv0o41n"
+        },
+        "q8ugbch": {
+          "as": "flex-direction",
+          "from": "q8ugbch",
+          "to": "sxjhepz"
+        },
+        "r0fsdrm": {
+          "as": "value",
+          "from": "r0fsdrm",
+          "to": "gvk9hec"
+        },
+        "r1ah7g2": {
+          "as": "otherwise",
+          "from": "r1ah7g2",
+          "to": "7c2vt3d"
+        },
+        "racg3p7": {
+          "as": "text",
+          "from": "racg3p7",
+          "to": "doz740g"
+        },
+        "sb9qdgy": {
+          "as": "children",
+          "from": "sb9qdgy",
+          "to": "y407zfo"
+        },
+        "slidervalpublish": {
+          "as": "publish",
+          "from": "slidervalpublish",
+          "to": "t1deznd"
+        },
+        "sv49nso": {
+          "as": "value",
+          "from": "sv49nso",
+          "to": "tksk4wc"
+        },
+        "sxjhepz": {
+          "as": "style",
+          "from": "sxjhepz",
+          "to": "a6rdag9"
+        },
+        "t1deznd": {
+          "as": "_sliderval",
+          "from": "t1deznd",
+          "to": "0i85qjj"
+        },
+        "tjzn9ne": {
+          "as": "state",
+          "from": "tjzn9ne",
+          "to": "av63lw9"
+        },
+        "tksk4wc": {
+          "as": "value",
+          "from": "tksk4wc",
+          "to": "24q0egm"
+        },
+        "u4k2auv": {
+          "as": "label",
+          "from": "u4k2auv",
+          "to": "0i85qjj"
+        },
+        "v0qabyr": {
+          "as": "onchange",
+          "from": "v0qabyr",
+          "to": "24q0egm"
+        },
+        "vgishln": {
+          "as": "target",
+          "from": "vgishln",
+          "to": "ku4l1v6"
+        },
+        "x4fmyaa": {
+          "as": "argmax",
+          "from": "x4fmyaa",
+          "to": "34k9xvb"
+        },
+        "x4vnm62": {
+          "as": "argmax",
+          "from": "x4vnm62",
+          "to": "1dhoyv2"
+        },
+        "y407zfo": {
+          "as": "display",
+          "from": "y407zfo",
+          "to": "out"
+        },
+        "yv0o41n": {
+          "as": "step",
+          "from": "yv0o41n",
+          "to": "24q0egm"
+        },
+        "z3jopgg": {
+          "as": "value",
+          "from": "z3jopgg",
+          "to": "yv0o41n"
+        },
+        "z8c7kcy": {
+          "as": "val",
+          "from": "z8c7kcy",
+          "to": "nrhhdip"
+        }
       },
-      "1dhoyv2": {
-        "as": "max",
-        "from": "1dhoyv2",
-        "to": "24q0egm"
+      "id": "@html.slider",
+      "nodes": {
+        "0i85qjj": {
+          "id": "0i85qjj"
+        },
+        "1dhoyv2": {
+          "id": "1dhoyv2",
+          "ref": "@js.script",
+          "value": "return !isNaN(argmax) ? argmax : !isNaN(graphval) ? graphval : 1.0"
+        },
+        "24q0egm": {
+          "id": "24q0egm"
+        },
+        "2wp8ffd": {
+          "id": "2wp8ffd",
+          "ref": "@data.array"
+        },
+        "34k9xvb": {
+          "id": "34k9xvb",
+          "ref": "@js.script",
+          "value": "return !isNaN(argmax) ? argmax : !isNaN(graphval) ? graphval : 1.0"
+        },
+        "4dh6wzn": {
+          "id": "4dh6wzn",
+          "ref": "arg",
+          "value": "oninput"
+        },
+        "4subc0j": {
+          "id": "4subc0j",
+          "ref": "arg",
+          "value": "__graph_value"
+        },
+        "5mog0bc": {
+          "id": "5mog0bc",
+          "ref": "@html.html_element",
+          "value": "input"
+        },
+        "7c2vt3d": {
+          "id": "7c2vt3d",
+          "ref": "@flow.default"
+        },
+        "8f3izp7": {
+          "id": "8f3izp7",
+          "ref": "arg",
+          "value": "onchange"
+        },
+        "93rx3ru": {
+          "id": "93rx3ru",
+          "value": "flex"
+        },
+        "a6rdag9": {
+          "id": "a6rdag9"
+        },
+        "av63lw9": {
+          "id": "av63lw9",
+          "value": "if (state.state !== undefined && (val.value === undefined || statechanged)) {\n  \n  val.set.fn(state.state)\n}\n\nreturn val;",
+          "ref": "@js.script"
+        },
+        "bts7694": {
+          "id": "bts7694",
+          "ref": "arg",
+          "value": "_sliderstate.state"
+        },
+        "d1wcpk1": {
+          "id": "d1wcpk1",
+          "ref": "arg",
+          "value": "_sliderstate.state"
+        },
+        "d86emo2": {
+          "id": "d86emo2",
+          "ref": "@data.array"
+        },
+        "doz740g": {
+          "id": "doz740g",
+          "ref": "@html.html_text"
+        },
+        "e996mm5": {
+          "id": "e996mm5",
+          "ref": "arg",
+          "value": "min"
+        },
+        "ewycyaq": {
+          "id": "ewycyaq",
+          "ref": "@flow.default"
+        },
+        "ezx9hxj": {
+          "id": "ezx9hxj"
+        },
+        "fd7yax9": {
+          "id": "fd7yax9",
+          "ref": "arg",
+          "value": "min"
+        },
+        "fgmcy0x": {
+          "id": "fgmcy0x",
+          "value": "true"
+        },
+        "gibdj45": {
+          "id": "gibdj45",
+          "ref": "arg",
+          "value": "event.target.value"
+        },
+        "gtpf6x9": {
+          "id": "gtpf6x9",
+          "ref": "arg",
+          "value": "_sliderstate.set"
+        },
+        "gvk9hec": {
+          "id": "gvk9hec",
+          "ref": "@memory.state"
+        },
+        "h19qe28": {
+          "id": "h19qe28",
+          "value": "true"
+        },
+        "ku4l1v6": {
+          "id": "ku4l1v6",
+          "ref": "@data.get",
+          "value": "value"
+        },
+        "kyu6h8m": {
+          "id": "kyu6h8m",
+          "ref": "@html.html_text"
+        },
+        "l5bzesi": {
+          "id": "l5bzesi",
+          "ref": "arg",
+          "value": "_sliderval.set"
+        },
+        "lptf53h": {
+          "id": "lptf53h",
+          "ref": "@data.ischanged"
+        },
+        "mpbvtrq": {
+          "id": "mpbvtrq",
+          "value": "range"
+        },
+        "n4i4t17": {
+          "id": "n4i4t17",
+          "ref": "arg",
+          "value": "_sliderval"
+        },
+        "nrhhdip": {
+          "id": "nrhhdip",
+          "ref": "@js.script",
+          "value": "return parseFloat(val)"
+        },
+        "obkkk9p": {
+          "id": "obkkk9p",
+          "ref": "arg",
+          "value": "_sliderstate.state"
+        },
+        "old0t0c": {
+          "id": "old0t0c",
+          "ref": "@flow.ap"
+        },
+        "on0cfjb": {
+          "id": "on0cfjb",
+          "ref": "arg",
+          "value": "__graph_value"
+        },
+        "oqbuspj": {
+          "id": "oqbuspj"
+        },
+        "out": {
+          "id": "out",
+          "name": "@html.slider",
+          "ref": "return"
+        },
+        "parseval": {
+          "id": "parseval",
+          "ref": "@js.script",
+          "value": "return parseFloat(val)"
+        },
+        "q09a315": {
+          "id": "q09a315",
+          "ref": "",
+          "value": "0.01"
+        },
+        "q8ugbch": {
+          "id": "q8ugbch",
+          "value": "row"
+        },
+        "r0fsdrm": {
+          "id": "r0fsdrm",
+          "ref": "@js.script",
+          "value": "return 0.5 * ((max ?? 1) - (min ?? 0)) + (min ?? 0)"
+        },
+        "r1ah7g2": {
+          "id": "r1ah7g2",
+          "value": "0.0"
+        },
+        "racg3p7": {
+          "id": "racg3p7",
+          "ref": "arg",
+          "value": "label"
+        },
+        "sb9qdgy": {
+          "id": "sb9qdgy",
+          "ref": "@data.array"
+        },
+        "slidervalpublish": {
+          "id": "slidervalpublish",
+          "value": "true"
+        },
+        "sv49nso": {
+          "id": "sv49nso",
+          "ref": "arg",
+          "value": "_sliderval.value"
+        },
+        "sxjhepz": {
+          "id": "sxjhepz"
+        },
+        "t1deznd": {
+          "id": "t1deznd",
+          "ref": "@memory.refval"
+        },
+        "tjzn9ne": {
+          "id": "tjzn9ne",
+          "ref": "arg",
+          "value": "_sliderstate"
+        },
+        "tksk4wc": {
+          "id": "tksk4wc",
+          "ref": "@flow.default"
+        },
+        "u4k2auv": {
+          "id": "u4k2auv",
+          "value": "Slider"
+        },
+        "v0qabyr": {
+          "id": "v0qabyr",
+          "ref": "@flow.ap"
+        },
+        "vgishln": {
+          "id": "vgishln",
+          "ref": "arg",
+          "value": "_sliderval"
+        },
+        "x4fmyaa": {
+          "id": "x4fmyaa",
+          "ref": "arg",
+          "value": "max"
+        },
+        "x4vnm62": {
+          "id": "x4vnm62",
+          "ref": "arg",
+          "value": "max"
+        },
+        "y407zfo": {
+          "id": "y407zfo",
+          "ref": "@html.html_element"
+        },
+        "yv0o41n": {
+          "id": "yv0o41n",
+          "ref": "@flow.default"
+        },
+        "z3jopgg": {
+          "id": "z3jopgg",
+          "ref": "arg",
+          "value": "step"
+        },
+        "z8c7kcy": {
+          "id": "z8c7kcy",
+          "ref": "arg",
+          "value": "event.target.value"
+        }
       },
-      "24q0egm": {
-        "as": "props",
-        "from": "24q0egm",
-        "to": "5mog0bc"
-      },
-      "2wp8ffd": {
-        "as": "fn",
-        "from": "2wp8ffd",
-        "to": "old0t0c"
-      },
-      "4dh6wzn": {
-        "as": "arg1",
-        "from": "4dh6wzn",
-        "to": "2wp8ffd"
-      },
-      "4subc0j": {
-        "as": "graphval",
-        "from": "4subc0j",
-        "to": "1dhoyv2"
-      },
-      "5mog0bc": {
-        "as": "arg1",
-        "from": "5mog0bc",
-        "to": "sb9qdgy"
-      },
-      "7c2vt3d": {
-        "as": "min",
-        "from": "7c2vt3d",
-        "to": "24q0egm"
-      },
-      "8f3izp7": {
-        "as": "arg1",
-        "from": "8f3izp7",
-        "to": "d86emo2"
-      },
-      "93rx3ru": {
-        "as": "display",
-        "from": "93rx3ru",
-        "to": "sxjhepz"
-      },
-      "a6rdag9": {
-        "as": "props",
-        "from": "a6rdag9",
-        "to": "y407zfo"
-      },
-      "av63lw9": {
-        "as": "value",
-        "from": "av63lw9",
-        "to": "y407zfo"
-      },
-      "bts7694": {
-        "as": "otherwise",
-        "from": "bts7694",
-        "to": "ewycyaq"
-      },
-      "d1wcpk1": {
-        "as": "otherwise",
-        "from": "d1wcpk1",
-        "to": "tksk4wc"
-      },
-      "d86emo2": {
-        "as": "fn",
-        "from": "d86emo2",
-        "to": "v0qabyr"
-      },
-      "doz740g": {
-        "as": "arg0",
-        "from": "doz740g",
-        "to": "sb9qdgy"
-      },
-      "ewycyaq": {
-        "as": "text",
-        "from": "ewycyaq",
-        "to": "kyu6h8m"
-      },
-      "ezx9hxj": {
-        "as": "args",
-        "from": "ezx9hxj",
-        "to": "old0t0c"
-      },
-      "fd7yax9": {
-        "as": "value",
-        "from": "fd7yax9",
-        "to": "7c2vt3d"
-      },
-      "fgmcy0x": {
-        "as": "publish",
-        "from": "fgmcy0x",
-        "to": "gvk9hec"
-      },
-      "gibdj45": {
-        "as": "val",
-        "from": "gibdj45",
-        "to": "parseval"
-      },
-      "gtpf6x9": {
-        "as": "arg0",
-        "from": "gtpf6x9",
-        "to": "d86emo2"
-      },
-      "gvk9hec": {
-        "as": "_sliderstate",
-        "from": "gvk9hec",
-        "to": "0i85qjj"
-      },
-      "h19qe28": {
-        "as": "persist",
-        "from": "h19qe28",
-        "to": "gvk9hec"
-      },
-      "ku4l1v6": {
-        "as": "value",
-        "from": "ku4l1v6",
-        "to": "ewycyaq"
-      },
-      "kyu6h8m": {
-        "as": "arg2",
-        "from": "kyu6h8m",
-        "to": "sb9qdgy"
-      },
-      "l5bzesi": {
-        "as": "arg0",
-        "from": "l5bzesi",
-        "to": "2wp8ffd"
-      },
-      "mpbvtrq": {
-        "as": "type",
-        "from": "mpbvtrq",
-        "to": "24q0egm"
-      },
-      "n4i4t17": {
-        "as": "val",
-        "from": "n4i4t17",
-        "to": "av63lw9"
-      },
-      "nrhhdip": {
-        "as": "value",
-        "from": "nrhhdip",
-        "to": "oqbuspj"
-      },
-      "old0t0c": {
-        "as": "oninput",
-        "from": "old0t0c",
-        "to": "24q0egm"
-      },
-      "oqbuspj": {
-        "as": "args",
-        "from": "oqbuspj",
-        "to": "v0qabyr"
-      },
-      "parseval": {
-        "as": "value",
-        "from": "parseval",
-        "to": "ezx9hxj"
-      },
-      "q09a315": {
-        "as": "otherwise",
-        "from": "q09a315",
-        "to": "yv0o41n"
-      },
-      "q8ugbch": {
-        "as": "flex-direction",
-        "from": "q8ugbch",
-        "to": "sxjhepz"
-      },
-      "r1ah7g2": {
-        "as": "otherwise",
-        "from": "r1ah7g2",
-        "to": "7c2vt3d"
-      },
-      "racg3p7": {
-        "as": "text",
-        "from": "racg3p7",
-        "to": "doz740g"
-      },
-      "sb9qdgy": {
-        "as": "children",
-        "from": "sb9qdgy",
-        "to": "y407zfo"
-      },
-      "slidervalpublish": {
-        "as": "publish",
-        "from": "slidervalpublish",
-        "to": "t1deznd"
-      },
-      "sv49nso": {
-        "as": "value",
-        "from": "sv49nso",
-        "to": "tksk4wc"
-      },
-      "sxjhepz": {
-        "as": "style",
-        "from": "sxjhepz",
-        "to": "a6rdag9"
-      },
-      "t1deznd": {
-        "as": "_sliderval",
-        "from": "t1deznd",
-        "to": "0i85qjj"
-      },
-      "tjzn9ne": {
-        "as": "state",
-        "from": "tjzn9ne",
-        "to": "av63lw9"
-      },
-      "tksk4wc": {
-        "as": "value",
-        "from": "tksk4wc",
-        "to": "24q0egm"
-      },
-      "u4k2auv": {
-        "as": "label",
-        "from": "u4k2auv",
-        "to": "0i85qjj"
-      },
-      "v0qabyr": {
-        "as": "onchange",
-        "from": "v0qabyr",
-        "to": "24q0egm"
-      },
-      "vgishln": {
-        "as": "target",
-        "from": "vgishln",
-        "to": "ku4l1v6"
-      },
-      "x4vnm62": {
-        "as": "argmax",
-        "from": "x4vnm62",
-        "to": "1dhoyv2"
-      },
-      "y407zfo": {
-        "as": "display",
-        "from": "y407zfo",
-        "to": "out"
-      },
-      "yv0o41n": {
-        "as": "step",
-        "from": "yv0o41n",
-        "to": "24q0egm"
-      },
-      "z3jopgg": {
-        "as": "value",
-        "from": "z3jopgg",
-        "to": "yv0o41n"
-      },
-      "z8c7kcy": {
-        "as": "val",
-        "from": "z8c7kcy",
-        "to": "nrhhdip"
-      },
-      "r0fsdrm": {
-        "from": "r0fsdrm",
-        "to": "gvk9hec",
-        "as": "value"
-      },
-      "e996mm5": {
-        "from": "e996mm5",
-        "to": "r0fsdrm",
-        "as": "min"
-      },
-      "on0cfjb": {
-        "as": "graphval",
-        "from": "on0cfjb",
-        "to": "34k9xvb"
-      },
-      "x4fmyaa": {
-        "as": "argmax",
-        "from": "x4fmyaa",
-        "to": "34k9xvb"
-      },
-      "34k9xvb": {
-        "from": "34k9xvb",
-        "to": "r0fsdrm",
-        "as": "max"
-      }
+      "out": "out"
     },
-    "id": "@html.slider",
-    "nodes": {
-      "0i85qjj": {
-        "id": "0i85qjj"
-      },
-      "1dhoyv2": {
-        "id": "1dhoyv2",
-        "ref": "@js.script",
-        "value": "return !isNaN(argmax) ? argmax : !isNaN(graphval) ? graphval : 1.0"
-      },
-      "24q0egm": {
-        "id": "24q0egm"
-      },
-      "2wp8ffd": {
-        "id": "2wp8ffd",
-        "ref": "@data.array"
-      },
-      "4dh6wzn": {
-        "id": "4dh6wzn",
-        "ref": "arg",
-        "value": "oninput"
-      },
-      "4subc0j": {
-        "id": "4subc0j",
-        "ref": "arg",
-        "value": "__graph_value"
-      },
-      "5mog0bc": {
-        "id": "5mog0bc",
-        "ref": "@html.html_element",
-        "value": "input"
-      },
-      "7c2vt3d": {
-        "id": "7c2vt3d",
-        "ref": "@flow.default"
-      },
-      "8f3izp7": {
-        "id": "8f3izp7",
-        "ref": "arg",
-        "value": "onchange"
-      },
-      "93rx3ru": {
-        "id": "93rx3ru",
-        "value": "flex"
-      },
-      "a6rdag9": {
-        "id": "a6rdag9"
-      },
-      "av63lw9": {
-        "id": "av63lw9",
-        "ref": "@js.script",
-        "value": "if (state.state !== undefined && val.value === undefined) {\n  val.set.fn(state.state)\n}\n\nreturn val;"
-      },
-      "bts7694": {
-        "id": "bts7694",
-        "ref": "arg",
-        "value": "_sliderstate.state"
-      },
-      "d1wcpk1": {
-        "id": "d1wcpk1",
-        "ref": "arg",
-        "value": "_sliderstate.state"
-      },
-      "d86emo2": {
-        "id": "d86emo2",
-        "ref": "@data.array"
-      },
-      "doz740g": {
-        "id": "doz740g",
-        "ref": "@html.html_text"
-      },
-      "ewycyaq": {
-        "id": "ewycyaq",
-        "ref": "@flow.default"
-      },
-      "ezx9hxj": {
-        "id": "ezx9hxj"
-      },
-      "fd7yax9": {
-        "id": "fd7yax9",
-        "ref": "arg",
-        "value": "min"
-      },
-      "fgmcy0x": {
-        "id": "fgmcy0x",
-        "value": "true"
-      },
-      "gibdj45": {
-        "id": "gibdj45",
-        "ref": "arg",
-        "value": "event.target.value"
-      },
-      "gtpf6x9": {
-        "id": "gtpf6x9",
-        "ref": "arg",
-        "value": "_sliderstate.set"
-      },
-      "gvk9hec": {
-        "id": "gvk9hec",
-        "ref": "@memory.state"
-      },
-      "h19qe28": {
-        "id": "h19qe28",
-        "value": "true"
-      },
-      "ku4l1v6": {
-        "id": "ku4l1v6",
-        "ref": "@data.get",
-        "value": "value"
-      },
-      "kyu6h8m": {
-        "id": "kyu6h8m",
-        "ref": "@html.html_text"
-      },
-      "l5bzesi": {
-        "id": "l5bzesi",
-        "ref": "arg",
-        "value": "_sliderval.set"
-      },
-      "mpbvtrq": {
-        "id": "mpbvtrq",
-        "value": "range"
-      },
-      "n4i4t17": {
-        "id": "n4i4t17",
-        "ref": "arg",
-        "value": "_sliderval"
-      },
-      "nrhhdip": {
-        "id": "nrhhdip",
-        "ref": "@js.script",
-        "value": "return parseFloat(val)"
-      },
-      "old0t0c": {
-        "id": "old0t0c",
-        "ref": "@flow.ap"
-      },
-      "oqbuspj": {
-        "id": "oqbuspj"
-      },
-      "out": {
-        "id": "out",
-        "name": "@html.slider",
-        "ref": "return"
-      },
-      "parseval": {
-        "id": "parseval",
-        "ref": "@js.script",
-        "value": "return parseFloat(val)"
-      },
-      "q09a315": {
-        "id": "q09a315",
-        "ref": "",
-        "value": "0.01"
-      },
-      "q8ugbch": {
-        "id": "q8ugbch",
-        "value": "row"
-      },
-      "r1ah7g2": {
-        "id": "r1ah7g2",
-        "value": "0.0"
-      },
-      "racg3p7": {
-        "id": "racg3p7",
-        "ref": "arg",
-        "value": "label"
-      },
-      "sb9qdgy": {
-        "id": "sb9qdgy",
-        "ref": "@data.array"
-      },
-      "slidervalpublish": {
-        "id": "slidervalpublish",
-        "value": "true"
-      },
-      "sv49nso": {
-        "id": "sv49nso",
-        "ref": "arg",
-        "value": "_sliderval.value"
-      },
-      "sxjhepz": {
-        "id": "sxjhepz"
-      },
-      "t1deznd": {
-        "id": "t1deznd",
-        "ref": "@memory.refval"
-      },
-      "tjzn9ne": {
-        "id": "tjzn9ne",
-        "ref": "arg",
-        "value": "_sliderstate"
-      },
-      "tksk4wc": {
-        "id": "tksk4wc",
-        "ref": "@flow.default"
-      },
-      "u4k2auv": {
-        "id": "u4k2auv",
-        "value": "Slider"
-      },
-      "v0qabyr": {
-        "id": "v0qabyr",
-        "ref": "@flow.ap"
-      },
-      "vgishln": {
-        "id": "vgishln",
-        "ref": "arg",
-        "value": "_sliderval"
-      },
-      "x4vnm62": {
-        "id": "x4vnm62",
-        "ref": "arg",
-        "value": "max"
-      },
-      "y407zfo": {
-        "id": "y407zfo",
-        "ref": "@html.html_element"
-      },
-      "yv0o41n": {
-        "id": "yv0o41n",
-        "ref": "@flow.default"
-      },
-      "z3jopgg": {
-        "id": "z3jopgg",
-        "ref": "arg",
-        "value": "step"
-      },
-      "z8c7kcy": {
-        "id": "z8c7kcy",
-        "ref": "arg",
-        "value": "event.target.value"
-      },
-      "r0fsdrm": {
-        "id": "r0fsdrm",
-        "ref": "@js.script",
-        "value": "return 0.5 * ((max ?? 1) - (min ?? 0)) + (min ?? 0)"
-      },
-      "e996mm5": {
-        "id": "e996mm5",
-        "ref": "arg",
-        "value": "min"
-      },
-      "34k9xvb": {
-        "id": "34k9xvb",
-        "ref": "@js.script",
-        "value": "return !isNaN(argmax) ? argmax : !isNaN(graphval) ? graphval : 1.0"
-      },
-      "x4fmyaa": {
-        "id": "x4fmyaa",
-        "ref": "arg",
-        "value": "max"
-      },
-      "on0cfjb": {
-        "id": "on0cfjb",
-        "ref": "arg",
-        "value": "__graph_value"
-      }
-    },
-    "out": "out"
-  },
   "@nodysseus.export": {
       "category": "nodysseus",
       "edges": {
