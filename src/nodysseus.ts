@@ -860,7 +860,13 @@ const runtimefn = () => {
         list_assets: () => nolib.no.runtime.store.assets.keys(),
         remove_asset: (id) => nolib.no.runtime.store.assets.delete(id),
         refs: () => nodysseus.refs.keys(),
-        ref_graphs: () => nodysseus.refs.keys(),
+        ref_graphs: async () => {
+          const keys = await nodysseus.refs.keys();
+          if(keys.includes(undefined)) {
+            debugger;
+          }
+          return keys;
+        },
         updateGraph: async ({graph, addedNodes = [], addedEdges = [], removedNodes = [], removedEdges = [], lib, dryRun = false}: {
           graph: string | Graph, 
           addedEdges?: Array<Edge>, 
@@ -1312,6 +1318,10 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
 
         return output === "display" ? {dom_type: 'div', props: {}, children: [{dom_type: "text_value", text: JSON.stringify(store.value)}]} : store
       }
+    },
+    persistState: {
+      args: ["kvs"],
+      fn: (kvs) => kvs && typeof kvs === "object" && wrapPromiseAll(Object.entries(kvs).map(kv => nodysseus.persist.set(...kv))).value
     },
     state: {
       rawArgs: true,
@@ -1911,6 +1921,19 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     data: {
       args: ["_node_args"],
       fn: (node_args) => node_args
+    },
+    graphState: {
+      args: ["graphid"],
+      fn: (graphid: string) => 
+        wrapPromise(nodysseus.persist.keys())
+          .then(
+            keys => 
+              wrapPromiseAll(
+                keys
+                  .filter(k => k.startsWith(graphid))
+                  .map(k => nodysseus.persist.get(k).then(v => [k, v])))
+                  .then(kvs => Object.fromEntries(kvs)).value)
+          .value
     }
   } as Record<string, Extern>,
   // THREE
