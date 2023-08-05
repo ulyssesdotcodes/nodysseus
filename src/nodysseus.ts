@@ -1079,6 +1079,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     wrapPromise,
     runtimefn,
   },
+  domTypes,
   extern: {
     // runGraph: F<A> => A
     ap: {
