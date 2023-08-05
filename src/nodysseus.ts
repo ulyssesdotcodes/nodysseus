@@ -1,5 +1,5 @@
-import { ancestor_graph, ispromise, isWrappedPromise, mapMaybePromise, WrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node, runnableId, compareObjects, descendantGraph } from "./util"
-import { isNodeGraph, Graph, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isFunctorRunnable, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, isInputRunnable, Lib, Env, isEnv, isLib, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike, EdgesIn, Extern, getRunnableGraph } from "./types"
+import { ancestor_graph, ispromise, isWrappedPromise, mapMaybePromise, wrapPromise, wrapPromiseAll, base_graph, base_node, compareObjects, descendantGraph } from "./util"
+import { isNodeGraph, Graph, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, Lib, Env, isEnv, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike, Extern, getRunnableGraph, isNodeValue, ValueNode } from "./types"
 import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util"
 import generic from "./generic.js";
 import * as externs from "./externs";
@@ -7,6 +7,7 @@ import { v4 as uuid } from "uuid";
 import { initListeners } from "./events";
 import { wrap } from "idb";
 import { parser } from "@lezer/javascript";
+import domTypes from "./html-dom-types.json";
 
 const generic_nodes = generic.nodes;
 
@@ -1416,34 +1417,42 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       resolve: false,
       rawArgs: true,
       promiseArgs: true,
-      args: [
-        "value",
-        "display",
-        "subscribe",
-        "metadata",
-        "args",
-        "lib",
-        "_graph_input_value",
-        "_lib",
-        "_runoptions",
-        "__graphid"
-      ],
-      fn: (
+      args: {
+        "value": "any",
+        "display": "@html.html_element",
+        "subscribe": "any",
+        "metadata": {
+          type: {
+            parameters: (graph: Graph, nodeId: string) => ({type: Object.fromEntries(Object.values(ancestor_graph(nodeId, graph).nodes).filter(n => isNodeRef(n) && n.ref === "arg" && n.value && !n.value.startsWith("_")).map((n: ValueNode & RefNode) => [n.value.includes('.') ? n.value.split('.')[0] : n.value, "any"]))}),
+            values: "any"
+          },
+        },
+        "args": "any",
+        "lib": "any",
+        "_output": "string",
+        "_lib": "any",
+        "_runoptions": "any",
+        "__graphid": "string"
+      },
+      fn: ({
         value,
         display,
         subscribe,
         metadata,
-        argsfn,
+        args,
         lib,
-        _args,
-        _lib: Lib,
-        options,
-        graphid
-      ) => {
-        const output = _args._output;
+        _output,
+        _lib,
+        _runoptions,
+        __graphid
+      }) => {
+        const output = _output;
+        const argsfn = args;
+        const graphid = __graphid;
+        const options = _runoptions;
         const edgemap = { value, display, subscribe, metadata, lib };
 
-        if((output === "display" || output === "metadata" || output === "parameters") && !edgemap[output]) {
+        if((output === "display" || output === "metadata") && !edgemap[output]) {
           return;
         }
 

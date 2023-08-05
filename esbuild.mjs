@@ -1,5 +1,42 @@
 import * as esbuild from 'esbuild'
 import { wasmLoader } from 'esbuild-plugin-wasm';
+import {listAll} from "@webref/elements";
+import {parseAll as idlParseAll} from '@webref/idl';
+import fs from "node:fs/promises";
+
+const idls = await idlParseAll();
+const asts = Object.fromEntries(idls["html"].map(e => [e.name, e]));
+const domasts = Object.fromEntries(idls["dom"].map(e => [e.name, e]));
+const defaultAttrs = [...new Set(asts["HTMLElement"].members.concat(domasts["Element"].members).filter(m => m.type === "attribute").map(m => m.name).filter(n => n && !n?.startsWith("get") && !n?.startsWith("set"))).values()];
+const output = {defaultAttrs};
+await listAll().then(all => {
+  // for (const [shortname, data] of Object.entries(all)) {
+    // console.log(data.spec.title);
+    for (const el of all.html.elements) {
+      if (el.interface) {
+        console.log(`- ${el.name} implements ${el.interface}`);
+        output[el.name] = asts[el.interface].members.map(m => m.name).filter(n => n && !n?.startsWith("get") && !n?.startsWith("set"));
+      }
+      else {
+        console.log(`- ${el.name} does not implement an interface`);
+      }
+    }
+  // }
+})
+
+const outputjson = JSON.stringify(output);
+await fs.writeFile("src/html-dom-types.json", outputjson)
+
+
+// const files = await idlParseAll();
+// for (const [shortname, ast] of Object.entries(files)) {
+//   // const text = await file.text();
+//   // const ast = await file.parse();
+//   // do something with text or ast
+//   if(shortname === "html") {
+//     console.log(ast)
+//   }
+// }
 
 // let wasmPlugin = {
 //   name: 'wasm',

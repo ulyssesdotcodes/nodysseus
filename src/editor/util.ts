@@ -1,6 +1,6 @@
 import * as ha from "hyperapp"
 import { initStore, nodysseus_get, nolib, run, NodysseusError, nolibLib } from "../nodysseus";
-import { Edge, FunctorRunnable, getRunnableGraph, getRunnableGraphId, Graph, isArgs, isNodeGraph, isNodeRef, isNodeScript, isRunnable, isTypedArg, Lib, NodeArg, NodeMetadata, NodysseusNode, RefNode, Runnable, TypedArg } from "../types";
+import { Edge, FullyTypedArg, FunctorRunnable, getRunnableGraphId, Graph, isArgs, isNodeGraph, isNodeRef, isNodeScript, isRunnable, isTypedArg, NodeArg, NodeMetadata, NodysseusNode, RefNode, TypedArg } from "../types";
 import { base_node, base_graph, ispromise, wrapPromise, expand_node, contract_node, ancestor_graph, create_randid, compareObjects, newLib, bfs } from "../util";
 import panzoom, * as pz from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
@@ -8,7 +8,7 @@ import { d3Link, d3Node, d3NodeNode, HyperappState, isd3NodeNode, Levels, Nodyss
 import { UpdateGraphDisplay, UpdateSimulation, d3subscription, updateSimulationNodes, getNodes, getLinks } from "./components/graphDisplay";
 import AutocompleteList from "./autocomplete";
 import { parser } from "@lezer/javascript";
-import {v4 as uuid, parse as uuidparse, stringify as uuidstringify} from "uuid";
+import {v4 as uuid} from "uuid";
 
 export const EXAMPLES = ["threejs_example", "hydra_example", "threejs_boilerplate", "threejs_force_attribute_example", "threejs_node_example", "threejs_compute_example"];
 
@@ -82,11 +82,6 @@ export const pzobj: {
 
         pzobj.lastpanzoom = performance.now();
         const nodes = getNodes(payload.simulation);
-        const selectedNode = nodes.find(n => isd3NodeNode(n) && n.node_id === payload.node_id);
-        const selectedNodePos = {
-          x: selectedNode?.x ?? 0,
-          y: selectedNode?.y ?? 0,
-        }
         const viewbox = findViewBox(
           nodes,
           getLinks(payload.simulation),
@@ -857,13 +852,18 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id: str
       return []
     }
     const node_out = edge_out && edge_out.as === "parameters" && nolib.no.runtime.get_node(graph, edge_out.to);
-    const node_out_args: Array<[string, string]> = node_out?.ref === "@flow.runnable" && 
+    const nodeOutNodeArgs = edge_out && node_args(nolib, graph, edge_out.to, undefined).find(a => a.name === edge_out.as);
+
+    const node_out_args: Array<[string, string | FullyTypedArg]> = node_out?.ref === "@flow.runnable" ? 
       Object.values(ancestor_graph(node_out.id, graph, nolib).nodes)
         .filter(isNodeRef)
         .filter(n => n.ref === "arg")
         .map(a => a.value?.includes(".") 
           ? a.value?.substring(0, a.value?.indexOf(".")) : a.value)
-        .map(a => [a, "any"]);
+        .map(a => [a, "any"])
+      : nodeOutNodeArgs?.type && typeof nodeOutNodeArgs.type === "object"
+      ? Object.entries(nodeOutNodeArgs.type).map<[string, string | FullyTypedArg]>(e => typeof e[1] === "function" ? [e[0], e[1](graph, edge_out.to)] : e as [string, string | FullyTypedArg])
+      : undefined
 
     // const argslist_path = node_ref?.nodes && nolib.no.runtime.get_path(node_ref, "argslist");
 
@@ -910,7 +910,7 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id: str
       && (node_ref.nodes[node_ref.out ?? "out"] as RefNode).ref === "return" 
       && Object.values(node_ref.edges_in ? node_ref.edges_in[node_ref.out ?? "out"] : Object.values(node_ref.edges).filter(e => e.to === node_ref.out ?? "out")).find(e => e.as === "metadata")
     ) {
-      if(metadata.parameters) {
+      if(metadata?.parameters) {
         Object.entries(metadata.parameters).forEach(pe => baseargs.push([pe[0], isTypedArg(pe[1]) ? pe[1] : "any"]))
       }
     }

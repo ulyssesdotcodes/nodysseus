@@ -3,8 +3,8 @@ export type NodysseusNode = GraphNode | ScriptNode | ValueNode | RefNode;
 type BaseNode = {id: string, name?: string, category?: string};
 export type GraphNode = Graph & {value?: any, category?: string};
 export type ScriptNode = BaseNode & {script: string};
-export type ValueNode = BaseNode & {value?: any};
-export type RefNode = BaseNode & {ref: string, value?: any}
+export type ValueNode = BaseNode & {value?: string};
+export type RefNode = BaseNode & {ref: string, value?: string}
 
 
 export const isNodeValue = (n: NodysseusNode): n is ValueNode => n && !!(n as ValueNode).value
@@ -189,8 +189,8 @@ export type RunOptions = {
   timings?: Record<string, number>;
 }
 
-type FullyTypedArg = { 
-  type: string
+export type FullyTypedArg = { 
+  type: string | Record<string, string | FullyTypedArg | ((graph: Graph, nodeId: string) => FullyTypedArg)>
   default?: boolean
   additionalArg?: boolean
   local?: boolean

@@ -88,7 +88,10 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                         class: "clickable", 
                         onclick: n.exists 
                           ? [SelectNode, {node_id: edges_in.find(l => l.as === n.name)?.from}]
-                          : [CreateNode, {node: {id: create_randid(editingGraph), ref: n.type && n.type !== "any" ?  n.type : undefined}, child: node.id, child_as: n.name}]
+                          : [CreateNode, {node: {
+                              id: create_randid(editingGraph), 
+                              ref: n.type && typeof n.type === "string" && n.type !== "any" ? n.type : undefined
+                          }, child: node.id, child_as: n.name}]
                     }, [ha.text(n.exists ? n.name : `+${n.name}`)]))),
             ha.h('div', {class: "inputs"}, [
                 ha.memo(node => infoInput({
