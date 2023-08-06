@@ -184,7 +184,7 @@ export default class AutocompleteList extends HTMLElement {
             .concat([option.category && !acc.has(option.category) ? {kind: "category", value: option.category} : undefined, {kind: "value", value: option.value}])
         ), new Map()).values()].flat().filter(o => o);
 
-    if(this.inputEl.value && this.inputEl.selectionEnd - this.inputEl.selectionStart < this.inputEl.value.length) {
+    if(this.focused && this.inputEl.value && this.inputEl.selectionEnd - this.inputEl.selectionStart < this.inputEl.value.length) {
       this.fuseOptions = this.fuse.search(this.inputEl.value).map(searchResult => searchResult.item);
       this.shownOptions = optionsByCategory(this.fuseOptions)
     } else {

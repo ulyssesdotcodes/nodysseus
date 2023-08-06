@@ -241,7 +241,9 @@ const runapp = (init, _lib) => {
             error: s.error,
             refGraphs: s.refGraphs,
             metadata: s.selectedMetadata,
-            nodeOffset: s.nodeOffset
+            nodeOffset: s.nodeOffset,
+            nodeArgs: !s.show_all && s.selectedNodeArgs ? s.selectedNodeArgs : [],
+            nodeEdgeLabels: s.selectedNodeEdgeLabels
         }),
         ha.h('div', {id: `${init.html_id}-custom-editor-display`}),
         ha.h('div', {id: "graph-actions", class: "actions"}, [

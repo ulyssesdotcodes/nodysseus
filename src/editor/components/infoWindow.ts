@@ -1,5 +1,5 @@
 import * as ha from "hyperapp"
-import { Edge, Graph, isNodeGraph, isNodeRef, NodeMetadata, NodysseusNode, RefNode, ValueNode } from "src/types";
+import { Edge, Graph, isNodeGraph, isNodeRef, NodeArg, NodeMetadata, NodysseusNode, RefNode, ValueNode } from "src/types";
 import { create_randid, wrapPromise } from "src/util";
 import { isNonNullChain } from "typescript";
 import generic from "../../generic";
@@ -48,7 +48,7 @@ export const infoInput = ({label, property, value, onchange, oninput, onkeydown,
     ]
 )
 
-export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, editingGraphId, randid, ref_graphs, html_id, copied_graph, inputs, graph_out, editing, error, refGraphs, metadata, initialLayout}: {
+export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, editingGraphId, randid, ref_graphs, html_id, copied_graph, inputs, graph_out, editing, error, refGraphs, metadata, initialLayout, nodeArgs, nodeEdgeLabels}: {
   node: d3NodeNode,
   hidden: boolean,
   initialLayout: boolean,
@@ -66,12 +66,13 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
   error: false | NodysseusError,
   refGraphs: Array<string>,
   metadata: NodeMetadata,
+  nodeArgs: Array<NodeArg>,
+  nodeEdgeLabels: Array<string>,
   nodeOffset: Vector2
 })=> {
     //const s.editingGraph.id === s.editingGraphId && nolib.no.runtime.get_node(s.editingGraph, s.selected[0]) && 
     const node_ref = !hidden && node && isNodeRef(node) ? nolib.no.runtime.get_ref(node.ref) : node;
     const description =  !hidden && node_ref?.description;
-    const node_arg_labels = !hidden && node?.id ? node_args(nolib, editingGraph, node.id, metadata) : [];
     const isOut = node.id === graph_out
 
     return ha.h('div', {id: "node-info-wrapper", class: {"initial-layout": initialLayout}}, [ha.h('div', {class: "spacer before"}, []), ha.h(
@@ -83,7 +84,8 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
         },
         [
             ha.h('div', {class: "args"}, 
-                node_arg_labels
+                nodeArgs
+                  .slice(0,16)
                     .map(n => ha.h('span', {
                         class: "clickable", 
                         onclick: n.exists 
@@ -92,7 +94,8 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                               id: create_randid(editingGraph), 
                               ref: n.type && typeof n.type === "string" && n.type !== "any" ? n.type : undefined
                           }, child: node.id, child_as: n.name}]
-                    }, [ha.text(n.exists ? n.name : `+${n.name}`)]))),
+                    }, [ha.text(n.exists ? n.name : `+${n.name}`)]))
+                    .concat(nodeArgs.length > 10 ? [ha.h("span", {}, ha.text("..." + nodeArgs.length + " more"))] : [])),
             ha.h('div', {class: "inputs"}, [
                 ha.memo(node => infoInput({
                     label: 'graph',
@@ -127,7 +130,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                     value: link_out.as, 
                     property: "edge",
                     inputs,
-                    options: node_args(nolib, editingGraph, link_out.to, wrapPromise(hlib.run(editingGraph, link_out.to, {_output: "metadata"})).value).map(na => na.name),
+                    options: nodeEdgeLabels,
                     onchange: (state, {value}) => [UpdateEdge, {edge: {from: link_out.from, to: link_out.to, as: link_out.as}, as: value}]
                 }), link_out),
             ]),

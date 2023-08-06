@@ -432,7 +432,8 @@ export const SelectNode: ha.Action<HyperappState, {
           graph: state.editingGraph, 
           args: {}
         }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== node_id), {}],
-    state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: {nodeId: node_id, graphId: state.editingGraphId}}, nolibLib), {}]
+    state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: {nodeId: node_id, graphId: state.editingGraphId}}, nolibLib), {}],
+    [CalculateSelectedNodeArgsEffect, {graph: state.editingGraph, node_id}]
 ] : state;
 
 export const CustomDOMEvent = (_, payload) => document.getElementById(`${payload.html_id}`)?.dispatchEvent(new CustomEvent(payload.event, {detail: payload.detail}))
@@ -463,36 +464,37 @@ export const UpdateResultDisplay = (state, resel) => {
   }
 }
 
-export const UpdateNodeEffect = (dispatch: ha.Dispatch<HyperappState>, {editingGraph, node}: {editingGraph: Graph, node: NodysseusNode}) => {
+export const UpdateNodeEffect: ha.Effecter<HyperappState, {editingGraph: Graph, node: NodysseusNode}> = (dispatch, {editingGraph, node}) => {
   nolib.no.runtime.updateGraph({graph: editingGraph, addedNodes: [node], lib: nolibLib})
     .then(graph => {
       const edges_in = graphEdgesIn(graph, node.id);
       const metadata = hlib.run(graph, node.id, {_output: "metadata"})
-      const nodeargs = node_args(nolib, graph, node.id, metadata);
+
+      wrapPromise(node_args(nolib, graph, node.id)).then(nodeargs => {
+        if(edges_in.length === 1){ 
+          if(nodeargs.nodeArgs.filter(na => !na.additionalArg && !na.name.startsWith("_")).length === 1) {
+            const newAs = nodeargs.nodeArgs.find(a => !a.additionalArg).name;
+            if(newAs !== edges_in[0].as) {
+              nolib.no.runtime.updateGraph({
+                graph: editingGraph, 
+                addedEdges: [{...edges_in[0], as: newAs}], 
+                lib: hlibLib
+              })
+            }
+          } else if(nodeargs.nodeArgs.find(a => a.default)) {
+            const newAs = nodeargs.nodeArgs.find(a => a.default).name;
+            if(newAs) {
+              nolib.no.runtime.updateGraph({
+                graph: editingGraph, 
+                addedEdges: [{...edges_in[0], as: newAs}], 
+                lib: hlibLib
+              })
+            }
+          }
+        } 
+      });
 
       dispatch(s => ({...s, selectedMetadata: metadata}))
-
-      if(edges_in.length === 1){ 
-        if(nodeargs.filter(na => !na.additionalArg && !na.name.startsWith("_")).length === 1) {
-          const newAs = nodeargs.find(a => !a.additionalArg).name;
-          if(newAs !== edges_in[0].as) {
-            nolib.no.runtime.updateGraph({
-              graph: editingGraph, 
-              addedEdges: [{...edges_in[0], as: newAs}], 
-              lib: hlibLib
-            })
-          }
-        } else if(nodeargs.find(a => a.default)) {
-          const newAs = nodeargs.find(a => a.default).name;
-          if(newAs) {
-            nolib.no.runtime.updateGraph({
-              graph: editingGraph, 
-              addedEdges: [{...edges_in[0], as: newAs}], 
-              lib: hlibLib
-            })
-          }
-        }
-      } 
     })
 }
 
@@ -839,100 +841,108 @@ const parseTypedArg = (value: string): [string, TypedArg] => {
   return [outName, "any"]
 }
 
-export const node_args = (nolib: Record<string, any>, graph: Graph, node_id: string, metadata: NodeMetadata): Array<NodeArg> => {
+export const CalculateSelectedNodeArgsEffect: ha.Effecter<HyperappState, {graph: Graph, node_id: string}> = 
+  (dispatch, {graph, node_id}) => wrapPromise(node_args(nolib, graph, node_id )).then(nodeArgs => dispatch(s => ({
+    ...s,
+    selectedNodeArgs: nodeArgs.nodeArgs,
+    selectedNodeEdgeLabels: nodeArgs.nodeOutArgs?.map(a => a.name) ?? []
+  }))).value
+
+export const node_args = (nolib: Record<string, any>, graph: Graph, node_id: string, cachedMetadata: Record<string, NodeMetadata> = {}): {nodeArgs: Array<NodeArg>, nodeOutArgs?: Array<NodeArg>} | Promise<{nodeArgs: Array<NodeArg>, nodeOutArgs?: Array<NodeArg>}> => {
     const node = nolib.no.runtime.get_node(graph, node_id);
     if(!node) {
         // between graph update and simulation update it's possible links are bad
-        return []
+        return Promise.resolve({nodeArgs: []})
     }
     const node_ref = node?.ref ? nolib.no.runtime.get_ref(node.ref) : node;
     const edges_in = graphEdgesIn(graph, node_id);
     const edge_out = graphEdgeOut(graph, node_id)
     if(ispromise(edges_in) || ispromise(edge_out)) {
-      return []
+      return Promise.resolve({nodeArgs: []})
     }
-    const node_out = edge_out && edge_out.as === "parameters" && nolib.no.runtime.get_node(graph, edge_out.to);
-    const nodeOutNodeArgs = edge_out && node_args(nolib, graph, edge_out.to, undefined).find(a => a.name === edge_out.as);
-
-    const node_out_args: Array<[string, string | FullyTypedArg]> = node_out?.ref === "@flow.runnable" ? 
-      Object.values(ancestor_graph(node_out.id, graph, nolib).nodes)
-        .filter(isNodeRef)
-        .filter(n => n.ref === "arg")
-        .map(a => a.value?.includes(".") 
-          ? a.value?.substring(0, a.value?.indexOf(".")) : a.value)
-        .map(a => [a, "any"])
-      : nodeOutNodeArgs?.type && typeof nodeOutNodeArgs.type === "object"
-      ? Object.entries(nodeOutNodeArgs.type).map<[string, string | FullyTypedArg]>(e => typeof e[1] === "function" ? [e[0], e[1](graph, edge_out.to)] : e as [string, string | FullyTypedArg])
-      : undefined
-
-    // const argslist_path = node_ref?.nodes && nolib.no.runtime.get_path(node_ref, "argslist");
-
-    const nextIndexedArg = "arg" + ((
-        edges_in?.filter(l => l.as?.startsWith("arg") && new RegExp("[0-9]+").test(l.as.substring(3)))
-                .map(l => parseInt(l.as.substring(3))) ?? [])
-            .reduce((acc, i) => acc > i ? acc : i + 1, 0))
-    
-    const externfn = (node.ref === "extern" && nodysseus_get(nolib, node.value, newLib(nolib))) || (node_ref?.ref === "extern" && nodysseus_get(nolib, node_ref?.value, newLib(nolib)))
-    const externArgs = externfn && (Array.isArray(externfn.args) ? externfn.args.map(a => {
-      const argColonIdx = a.indexOf(":")
-      return [argColonIdx >= 0 ? a.substring(0, argColonIdx) : a, "any"]
-    }) : externfn?.args && typeof externfn.args === "object" ? Object.entries(externfn.args) : []);
-    const baseargs: Array<[string ,TypedArg]> = externfn
-            ? externArgs
-              ? externArgs
-              : ['args']
-            : isNodeGraph(node_ref)
-            ? Object.values(node_ref?.nodes)
-                .filter(isNodeRef)
-                .filter(n => n.ref === "arg")
-                .map<[string, TypedArg]>(n => parseTypedArg(n.value))
-                .filter(a => typeof a[1] === "string" || !a[1].local)?? []
-            : []
-
-    const scriptVarNames = node.ref === "@js.script" && new Set<string>();
-    if(node.ref === "@js.script" && typeof node.value === "string") {
-      const scriptVarDecs = node.ref === "@js.script" && new Set<string>();
-      parser.parse(node.value).iterate({
-        enter: syntaxNode => syntaxNode.name === "VariableName" && !window[node.value.substring(syntaxNode.from, syntaxNode.to)]
-          ? !!scriptVarNames.add(node.value.substring(syntaxNode.from, syntaxNode.to))
-          : syntaxNode.name === "VariableDeclaration" && syntaxNode.node.getChild("VariableDefinition")
-          ? !!scriptVarDecs.add(node.value.substring(
-            syntaxNode.node.getChild("VariableDefinition").from,
-            syntaxNode.node.getChild("VariableDefinition").to
-          ))
+    const node_out = edge_out && nolib.no.runtime.get_node(graph, edge_out.to);
+    return wrapPromise(cachedMetadata[node_id] ?? hlib.run(graph, node_id, {_output: "metadata"}))
+    // NOTE: there's a mutation of cachedMetadata here
+    .then(metadata => wrapPromise(edge_out && node_args(nolib, graph, edge_out.to, (cachedMetadata[node_id] = metadata, cachedMetadata)))
+      .then(nodeOutNodeArgs => {
+        const nodeOutNodeArg = nodeOutNodeArgs?.nodeArgs.find(a => a.name === edge_out.as);
+        const node_out_args: Array<[string, string | FullyTypedArg]> = node_out?.ref === "@flow.runnable" ? 
+          Object.values(ancestor_graph(node_out.id, graph, nolib).nodes)
+            .filter(isNodeRef)
+            .filter(n => n.ref === "arg")
+            .map(a => a.value?.includes(".") 
+              ? a.value?.substring(0, a.value?.indexOf(".")) : a.value)
+            .map(a => [a, "any"])
+          : nodeOutNodeArg?.type && typeof nodeOutNodeArg.type === "object"
+          ? Object.entries(nodeOutNodeArg.type).map<[string, string | FullyTypedArg]>(e => typeof e[1] === "function" ? [e[0], e[1](graph, edge_out.to)] : e as [string, string | FullyTypedArg])
           : undefined
-      })
-      scriptVarDecs.forEach(dec => scriptVarNames.delete(dec));
-    }
 
-    if(
-      isNodeGraph(node_ref) 
-      && (node_ref.nodes[node_ref.out ?? "out"] as RefNode).ref === "return" 
-      && Object.values(node_ref.edges_in ? node_ref.edges_in[node_ref.out ?? "out"] : Object.values(node_ref.edges).filter(e => e.to === node_ref.out ?? "out")).find(e => e.as === "metadata")
-    ) {
-      if(metadata?.parameters) {
-        Object.entries(metadata.parameters).forEach(pe => baseargs.push([pe[0], isTypedArg(pe[1]) ? pe[1] : "any"]))
-      }
-    }
+        // const argslist_path = node_ref?.nodes && nolib.no.runtime.get_path(node_ref, "argslist");
 
-    const typedArgsMap = new Map(
-      edges_in?.map<[string, TypedArg]>(e => [e.as, {type: "any", additionalArg: !baseargs.map(a => a[0]).includes(e.as)}])
-        .concat(baseargs)
-        .filter((a: [string, TypedArg]) => !a[0].includes('.') && !a[0].startsWith("_"))
-        .concat(
-            (externArgs && externArgs.map(a => a[0]).includes("_node_args") || baseargs.map(a => a[0]).includes("_args"))
-            || (node.ref === undefined && !node.value)
-            ? [[nextIndexedArg, {type: "any", additionalArg: true}]]
-            : []
-        )
-        .concat(node_out_args ? node_out_args : [])
-        .concat(scriptVarNames ? [...scriptVarNames].map(n => [n, "any"]) : []))
+        const nextIndexedArg = "arg" + ((
+            edges_in?.filter(l => l.as?.startsWith("arg") && new RegExp("[0-9]+").test(l.as.substring(3)))
+                    .map(l => parseInt(l.as.substring(3))) ?? [])
+                .reduce((acc, i) => acc > i ? acc : i + 1, 0))
+        
+        const externfn = (node.ref === "extern" && nodysseus_get(nolib, node.value, newLib(nolib))) || (node_ref?.ref === "extern" && nodysseus_get(nolib, node_ref?.value, newLib(nolib)))
+        const externArgs = externfn && (Array.isArray(externfn.args) ? externfn.args.map(a => {
+          const argColonIdx = a.indexOf(":")
+          return [argColonIdx >= 0 ? a.substring(0, argColonIdx) : a, "any"]
+        }) : externfn?.args && typeof externfn.args === "object" ? Object.entries(externfn.args) : []);
+        const baseargs: Array<[string ,TypedArg]> = externfn
+                ? externArgs
+                  ? externArgs
+                  : ['args']
+                : isNodeGraph(node_ref)
+                ? Object.values(node_ref?.nodes)
+                    .filter(isNodeRef)
+                    .filter(n => n.ref === "arg")
+                    .map<[string, TypedArg]>(n => parseTypedArg(n.value))
+                    .filter(a => typeof a[1] === "string" || !a[1].local)?? []
+                : []
 
-    return [...typedArgsMap]
-      .map((a: [string, TypedArg]) => ({
-        exists: !!edges_in?.find(e => e.as === a[0]), 
-        name: a[0], ...(typeof a[1] === "object" ? a[1] : {type: a[1]})
-      }))
+        const scriptVarNames = node.ref === "@js.script" && new Set<string>();
+        if(node.ref === "@js.script" && typeof node.value === "string") {
+          const scriptVarDecs = node.ref === "@js.script" && new Set<string>();
+          parser.parse(node.value).iterate({
+            enter: syntaxNode => syntaxNode.name === "VariableName" && !window[node.value.substring(syntaxNode.from, syntaxNode.to)]
+              ? !!scriptVarNames.add(node.value.substring(syntaxNode.from, syntaxNode.to))
+              : syntaxNode.name === "VariableDeclaration" && syntaxNode.node.getChild("VariableDefinition")
+              ? !!scriptVarDecs.add(node.value.substring(
+                syntaxNode.node.getChild("VariableDefinition").from,
+                syntaxNode.node.getChild("VariableDefinition").to
+              ))
+              : undefined
+          })
+          scriptVarDecs.forEach(dec => scriptVarNames.delete(dec));
+        }
+
+        if(metadata?.parameters) {
+          Object.entries(metadata.parameters).forEach(pe => baseargs.push([pe[0], isTypedArg(pe[1]) ? pe[1] : "any"]))
+        }
+
+        const typedArgsMap = new Map(
+          edges_in?.map<[string, TypedArg]>(e => [e.as, {type: "any", additionalArg: !baseargs.map(a => a[0]).includes(e.as)}])
+            .concat(baseargs)
+            .filter((a: [string, TypedArg]) => !a[0].includes('.') && !a[0].startsWith("_"))
+            .concat(
+                (externArgs && externArgs.map(a => a[0]).includes("_node_args") || baseargs.map(a => a[0]).includes("_args"))
+                || (node.ref === undefined && !node.value)
+                ? [[nextIndexedArg, {type: "any", additionalArg: true}]]
+                : []
+            )
+            .concat(node_out_args ? node_out_args : [])
+            .concat(scriptVarNames ? [...scriptVarNames].map(n => [n, "any"]) : []))
+
+        return {
+          nodeArgs: [...typedArgsMap]
+          .map((a: [string, TypedArg]) => ({
+            exists: !!edges_in?.find(e => e.as === a[0]), 
+            name: a[0], ...(typeof a[1] === "object" ? a[1] : {type: a[1]})
+          })),
+          nodeOutArgs: nodeOutNodeArgs?.nodeArgs
+        }
+      }).value).value
 }
 
 export const save_graph = graph => {
