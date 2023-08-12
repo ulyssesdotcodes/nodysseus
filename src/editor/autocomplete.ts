@@ -93,7 +93,7 @@ export default class AutocompleteList extends HTMLElement {
 
         if(this.selectedIndex !== undefined && this.fuseOptions.length > 0) {
           const count = this.fuseOptions.length;
-          this.inputEl.value = this.fuseOptions[((this.selectedIndex % count) + count) % count].value;
+          this.inputEl.value = this.shownOptions.filter(o => o.kind === "value")[((this.selectedIndex % count) + count) % count].value;
         }
 
         this.selectOption(this.inputEl.value)
