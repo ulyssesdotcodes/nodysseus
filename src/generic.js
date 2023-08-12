@@ -3930,9 +3930,9 @@ const generic = {
   },
   "@data.not": {
     "id": "@data.not",
-    "ref": "@js.script",
+    "ref": "extern",
     "category": "data",
-    "value": "return !target"
+    "value": "extern.not"
   },
   "@html.canvas_behind_editor": {
     "id": "@html.canvas_behind_editor",

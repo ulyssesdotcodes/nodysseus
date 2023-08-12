@@ -1074,6 +1074,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     base_graph,
     base_node,
     nodysseus_get,
+    ispromise,
     NodysseusError,
     runtime: undefined,
     wrapPromise,
@@ -1688,7 +1689,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       fn: ({__graph_value, self, fn, args, _lib, _output}) => {
         const getPrototypeChainMethods = (obj) => 
           obj && typeof obj === "object" && Object.getPrototypeOf(obj) ? Object.getOwnPropertyNames(obj)
-            .filter(n => typeof obj[n] === "function")
+            .filter(n => typeof Object.getOwnPropertyDescriptor(obj, n).value === "function")
             .concat(getPrototypeChainMethods(Object.getPrototypeOf(obj)))
             : [];
         let nodevalue = __graph_value;
@@ -1711,11 +1712,11 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
                 )
               : self(args === undefined ? [] : args);
           } else {
-            const ng_fn = nodysseus_get(self ?? _lib.data, fn || nodevalue, _lib);
-            const ng_self = (fn || nodevalue)?.includes('.') 
-              ? nodysseus_get(self, (fn || nodevalue).substring(0, (fn || nodevalue).lastIndexOf('.')), _lib) 
+            const ng_fn = (_lib.data ?? _lib).no.nodysseus_get(self ?? (_lib.data ?? _lib), fn || nodevalue, (_lib.data ?? _lib));
+            const ng_self = (fn || nodevalue)?.includes('.')
+              ? (_lib.data ?? _lib).no.nodysseus_get(self, (fn || nodevalue).substring(0, (fn || nodevalue).lastIndexOf('.')), (_lib.data ?? _lib)) 
               : self;
-            const parameters = typeof ng_fn === "function" ? nolib.extern.functionParameters.fn(ng_fn) : []
+            const parameters = typeof ng_fn === "function" ? (_lib.data ?? _lib).extern.functionParameters.fn(ng_fn) : []
             if (_output === "metadata"){
               return {
                 values: self && typeof self === "object" ? getPrototypeChainMethods(self) : [],
@@ -1738,7 +1739,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
               : args === undefined
               ? []
               : [args];
-            const ret = _lib.data.no.of(ispromise(ng_fn)
+            const ret = (_lib.data ?? _lib).no.of((_lib.data ?? _lib).no.ispromise(ng_fn)
               ? ng_fn.then((f: any) => f.apply(fnargs))
               : typeof ng_fn === "function"
               ? ng_fn.apply(ng_self, fnargs)
@@ -1747,7 +1748,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
           }
         }
 
-        return ispromise(args) ? args.then(runfn) : runfn(args);
+        return (_lib.data ?? _lib).no.ispromise(args) ? args.then(runfn) : runfn(args);
       },
     },
     merge_objects_mutable: {
@@ -1797,6 +1798,10 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     now: {
       args: ["scale"],
       fn: externs.now
+    },
+    not: {
+      args: ["value"],
+      fn: value => !value
     },
     math: {
       args: ["__graph_value", "_node_args"],

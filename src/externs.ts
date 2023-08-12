@@ -1,6 +1,6 @@
 import * as util from "./util"
 import {nodysseus_get, resolve_args} from "./nodysseus"
-import { NodysseusNode, Graph, Args, ConstRunnable, Env, isArgs, isEnv, isError, isNodeRef, isNodeScript, isValue, Lib, RefNode, Result, Runnable, Edge } from "./types";
+import { NodysseusNode, Graph, Args, ConstRunnable, Env, isArgs, isEnv, isError, isNodeRef, isNodeScript, isValue, Lib, RefNode, Result, Runnable, Edge, TypedArg } from "./types";
 
 
 const nodeinputs = (node: NodysseusNode, graph: Graph) => Object.values(graph.edges_in[node.id] ?? []).map(edge => ({edge, node: graph.nodes[edge.from]}));
@@ -77,8 +77,10 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib, graphid: string = "", 
                   _extern_args[graphid + n.id] = {};
                   const extern = nodysseus_get(lib.data, noderef.value, lib)
                   const varset = []
-                  extern.args.map((rawa: string): void => {
-                    const a = rawa.includes(':') ? rawa.substring(0, rawa.indexOf(':')) : rawa;
+              const externArgs: Array<[string, TypedArg]>  = Array.isArray(extern.args) ? extern.args.map(rawa =>
+                rawa.includes(':') ? rawa.substring(0, rawa.indexOf(':')) : rawa) : 
+                  Object.entries(extern.args);
+              externArgs.forEach(([a, argType]: [string, TypedArg]): void => {
                     if(a === "__graph_value" || a === "_node") {
                       _extern_args[graphid + n.id][a] = a === "__graph_value" ? !isNodeScript(n) ? n.value : undefined
                         : "_node" ? n
@@ -92,7 +94,9 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib, graphid: string = "", 
       };`);
                     } else {
                       const input = inputs.find(i => i.edge.as === a);
-                      if(!input){
+                      if(a === "_lib") {
+                        // don't shadow _lib
+                      } else if(!input){
                         varset.push(`let ${a} = undefined;`)
                       } else {
                         const inputNode = Object.values(graph.nodes).find(n => n.id === input.edge.from);
@@ -102,10 +106,11 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib, graphid: string = "", 
                       }
                     }
                   })
+                  const argsString = externArgs.map((a: [string, TypedArg]): string => a[0]);
                   text += `
       function fn_${graphid}${n.id}(){
         ${varset.join("\n")}
-        return (${extern.fn.toString()})(${extern.args.map((rawa: string): string => rawa.includes(':') ? rawa.substring(0, rawa.indexOf(':')) : rawa).join(", ")});
+        return (${extern.fn.toString()})(${Array.isArray(extern.args) ? argsString : `{${argsString}}`});
       }
 
       `
@@ -191,7 +196,7 @@ export const create_fn = (runnable: ConstRunnable, lib: Lib) => {
   const {baseArgs, text, _extern_args} = graphToFnBody(runnable, lib);
   const fn = new Function("fnargs", "baseArgs", "_extern_args", "import_util", "_lib", text);
 
-  return (args: Env | Args | Record<string, unknown>) => fn(args ? isArgs(args) ? (resolve_args(args, lib, {}) as {value: any}).value : isEnv(args) ? (resolve_args(args.data, lib, {}) as {value: any}).value : args : {}, baseArgs, _extern_args, util, lib.data);
+  return (args: Env | Args | Record<string, unknown>, ...rest) => fn(args ? isArgs(args) ? (resolve_args(args, lib, {}) as {value: any}).value : isEnv(args) ? (resolve_args(args.data, lib, {}) as {value: any}).value : baseArgs.hasOwnProperty("args") ? {args: [args, ...rest]} : args : {}, baseArgs, _extern_args, util, lib.data);
  }
 
 export const now = (scale?: number) => performance.now() * (scale ?? 1)
