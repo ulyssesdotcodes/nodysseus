@@ -10,7 +10,7 @@ import AutocompleteList from "./autocomplete";
 import { parser } from "@lezer/javascript";
 import {v4 as uuid} from "uuid";
 
-export const EXAMPLES = ["threejs_example", "hydra_example", "threejs_boilerplate", "threejs_force_attribute_example", "threejs_node_example", "threejs_compute_example"];
+export const EXAMPLES = ["threejs_example", "hydra_example", "threejs_boilerplate", "threejs_force_attribute_example", "threejs_node_example", "threejs_compute_example", "strudel_example"];
 
 export const middleware = dispatch => (ha_action, ha_payload) => {
     const is_action_array_payload = Array.isArray(ha_action) 
@@ -240,11 +240,8 @@ export const ChangeEditingGraphId: ha.Effecter<HyperappState, {id: string, selec
           EXAMPLES.includes(id) && !refs.includes(id) 
           ? fetch((console.log(`fetching ${id}`), `json/${id.replaceAll("_", "-")}.json`))
             .then(res => res.json())
-            .then((g: Graph) => {
-              return nolib.no.runtime.add_ref(g[0])
-            }).then(g => {
-              nolib.no.runtime.change_graph(g, hlibLib, []);
-              return g
+            .then((g: Graph | Array<Graph> | {graph: Array<Graph>, state: Record<string, unknown>}) => {
+              return nolib.no.runtime.add_ref(g["graphs"] ? g["graphs"] : g)
             })
           : nolib.no.runtime.get_ref(id, editingGraphId && nolib.no.runtime.get_ref(editingGraphId))
         )
