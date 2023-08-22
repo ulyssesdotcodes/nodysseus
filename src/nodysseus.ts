@@ -1,4 +1,4 @@
-import { ancestor_graph, ispromise, isWrappedPromise, mapMaybePromise, wrapPromise, wrapPromiseAll, base_graph, base_node, compareObjects, descendantGraph } from "./util"
+import { ancestor_graph, ispromise, isWrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node, compareObjects, descendantGraph } from "./util"
 import { isNodeGraph, Graph, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, Lib, Env, isEnv, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike, Extern, getRunnableGraph, isNodeValue, ValueNode } from "./types"
 import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util"
 import generic from "./generic.js";
@@ -282,12 +282,12 @@ const run_extern = (extern: ApFunction, data: Args, lib: Lib, options: RunOption
   if (argspromise && !extern.promiseArgs) {
       return (Array.isArray(args) ? Promise.all(args) : (args as Promise<Result>).then(v => isValue(v) ? v.value.args : v)).then(as => {
           const res = (typeof extern === 'function' ? extern :  extern.fn).apply(null, isArgsArray ? as : [Object.fromEntries(externArgs.map((a, idx) => [a[0], as[idx]]))]);
-          return mapMaybePromise(res, res => extern.rawArgs ? res : lib.data.no.of(res));
+          return wrapPromise(res).then(res => extern.rawArgs ? res : lib.data.no.of(res)).value;
       })
   } else if(!ispromise(args)) {
       const resArgs = Array.isArray(args) ? args : isValue(args) ? args.value.args : args;
       const res = (typeof extern === 'function' ? extern :  extern.fn).apply(null, isArgsArray ? resArgs : [Object.fromEntries(externArgs.map((a, idx) => [a[0], resArgs[idx]]))]);
-      return mapMaybePromise(res, res => extern.rawArgs ? res : lib.data.no.of(res));
+      return wrapPromise(res).then(res => extern.rawArgs ? res : lib.data.no.of(res)).value;
   }
 
 }
@@ -344,18 +344,19 @@ const node_data = (nodeArgs, graphArgs: Env, lib, options) => {
   return nodeArgs.size === 0 || graphArgs._output === "display" ? lib.data.no.of(undefined) : resolve_args(nodeArgs, lib, options);
 }
 
-const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, parameters: ConstRunnable, lib, options: RunOptions): FunctorRunnable | Promise<FunctorRunnable> => {
-  const argsval = parameters && run_runnable(parameters, lib, undefined, options)
-  const ret = fn && mapMaybePromise(argsval, args => isError(args) ? args : lib.data.no.of({
-    __kind: FUNCTOR,
-    parameters: args ? [...new Set(args.value ? Object.keys(args.value).map(k => k.includes(".") ? k.substring(0, k.indexOf('.')) : k) : [])] : [],
-    env: fn.env,
-    graph: typeof fn.graph === "string" ? fn.graph : fn.graph.id,
-    fn: fn.fn,
-    lib: fn.lib
-  }))
-  return ret;
-}
+const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, parameters: ConstRunnable, lib, options: RunOptions): FunctorRunnable | Promise<FunctorRunnable> => 
+  fn && wrapPromiseAll([
+    parameters && run_runnable(parameters, lib, undefined, options),
+    nolib.no.runtime.refs()
+  ])
+    .then(([args, refs]: [Result, Array<string>]) => isError(args) ? args : lib.data.no.of({
+      __kind: FUNCTOR,
+      parameters: args ? [...new Set(args.value ? Object.keys(args.value).map(k => k.includes(".") ? k.substring(0, k.indexOf('.')) : k) : [])] : [],
+      env: fn.env,
+      graph: typeof fn.graph === "string" ? fn.graph : refs.includes(fn.graph.id) ? fn.graph.id : fn.graph,
+      fn: fn.fn,
+      lib: fn.lib
+    })).value
 
 const run_runnable = (runnable: Runnable | undefined, lib: Lib, args: Map<string, any> = new Map(), options: RunOptions = {}): Result | Promise<Result> | undefined =>  {
   if(runnable === undefined || isError(runnable)) {
@@ -443,7 +444,9 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
         }).value
     } else if (isNodeGraph(node)) {
       node.edges_in = node.edges_in ?? Object.values(node.edges).reduce<Graph["edges_in"]>((acc, e) => ({...acc, [e.to]: {...(acc[e.to] ?? {}), [e.from]: e}}), {})
-      return node_nodes(node, node.out ?? "out", nodeArgs, graphArgs, lib, options)
+      const graphid = graphArgs.data.get("__graphid")
+      const env = isError(graphid) || isConstRunnable(graphid) ? graphArgs : combineEnv(new Map([["__graphid", lib.data.no.of(`${graphid.value}/${node.id}`)]]), graphArgs);
+      return node_nodes(node, node.out ?? "out", nodeArgs, env, lib, options)
     } else if (isNodeScript(node)){
         return (graphArgs._output === undefined || graphArgs._output === "value") && node_script(node, nodeArgs, lib, options)
     } else if(Object.hasOwn(node, "value")) {
@@ -458,7 +461,8 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
 
 // derives data from the args symbolic table
 const create_data = (node_id: string, graph: Graph, graphArgs: Env, lib: Lib, options: RunOptions): Map<string, ConstRunnable> | Promise<Map<string, ConstRunnable>> => {
-    return wrapPromise(lib.data.no.runtime.get_edges_in(graph, node_id)).then(inputs => {
+    return wrapPromiseAll([nolib.no.runtime.get_edges_in(graph, node_id), nolib.no.runtime.refs()])
+      .then(([inputs, refs]: [Edge[], string[]]) => {
         const data: Map<string, ConstRunnable> = new Map();
         let input: Edge;
         //TODO: remove
@@ -470,7 +474,13 @@ const create_data = (node_id: string, graph: Graph, graphArgs: Env, lib: Lib, op
         for (let i = 0; i < inputs.length; i++) {
             input = inputs[i];
 
-            const val: ConstRunnable = {__kind: CONST, graph: graph.id, fn: input.from, env: newgraphargs, lib}
+            const val: ConstRunnable = {
+              __kind: CONST, 
+              graph: refs.includes(graph.id) ? graph.id : graph, 
+              fn: input.from, 
+              env: newgraphargs, 
+              lib
+            }
             // Check for duplicates
             if(data.has(input.as)) {
                 const as_set = new Set()
