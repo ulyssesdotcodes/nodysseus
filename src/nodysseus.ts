@@ -445,7 +445,7 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
     } else if (isNodeGraph(node)) {
       node.edges_in = node.edges_in ?? Object.values(node.edges).reduce<Graph["edges_in"]>((acc, e) => ({...acc, [e.to]: {...(acc[e.to] ?? {}), [e.from]: e}}), {})
       const graphid = graphArgs.data.get("__graphid")
-      const env = isError(graphid) || isConstRunnable(graphid) ? graphArgs : combineEnv(new Map([["__graphid", lib.data.no.of(`${graphid.value}/${node.id}`)]]), graphArgs);
+      const env = isError(graphid) || isConstRunnable(graphid) ? graphArgs : combineEnv(new Map([["__graphid", lib.data.no.of(`${graphid.value}/${node.id}`)]]), graphArgs, undefined, graphArgs._output);
       return node_nodes(node, node.out ?? "out", nodeArgs, env, lib, options)
     } else if (isNodeScript(node)){
         return (graphArgs._output === undefined || graphArgs._output === "value") && node_script(node, nodeArgs, lib, options)
@@ -1436,7 +1436,8 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
         "metadata": {
           type: {
             parameters: (graph: Graph, nodeId: string) => ({type: Object.fromEntries(Object.values(ancestor_graph(nodeId, graph).nodes).filter(n => isNodeRef(n) && n.ref === "arg" && n.value && !n.value.startsWith("_")).map((n: ValueNode & RefNode) => [n.value.includes('.') ? n.value.split('.')[0] : n.value, "any"]))}),
-            values: "any"
+            values: "any",
+            dataLabel: "any"
           },
         },
         "args": "any",
