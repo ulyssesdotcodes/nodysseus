@@ -16,13 +16,14 @@ export const info_display = html_id => ha.app({
     }
 });
 
-export const infoInput = ({label, property, value, onchange, oninput, onkeydown, options, inputs, disabled}: {
+export const infoInput = ({label, property, value, onchange, oninput, onkeydown, options, inputs, disabled, icon}: {
   label: string,
   property: string,
   value: string,
   inputs: Record<string, string>,
   disabled?: boolean,
   options?: Array<string | {value: string, category?: string}>
+  icon?: string,
   onchange?: ha.Action<HyperappState, {value: string}>,
   oninput?: ha.Action<HyperappState, Event>
   onkeydown?: ha.Action<HyperappState, Event>,
@@ -32,6 +33,7 @@ export const infoInput = ({label, property, value, onchange, oninput, onkeydown,
         class: 'value-input', 
     },
     [
+      icon && ha.h('span', {class: 'material-symbols-outlined'}, [ha.text(icon)]), 
         ha.h('label', {for: `edit-text-${property}`}, [ha.text(label)]),
         ha.h('autocomplete-list', {
             class: property, 
@@ -107,18 +109,21 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                     disabled: isOut 
                 }), node),
                 ha.memo(node => infoInput({
-                    label: "value", 
+                    label: metadata?.dataLabel ?? "data", 
                     value: (node as ValueNode).value, 
                     options: metadata?.values ?? [],
                     property: "value", 
                     inputs,
-                    onchange: (state, {value}) => [UpdateNode, {node, property: "value", value: value }]}),
+                    icon: "database",
+                    onchange: (state, {value}) => [UpdateNode, {node, property: "value", value: value }]
+                }),
                   node),
                 ha.memo((node: d3NodeNode) => infoInput({
                     label: isNodeRef(node) && node.ref === "return" ? "name" : "comment", 
                     value: node.name, 
                     property: "name", 
                     inputs,
+                    icon: "notes",
                     onchange: (state, {value}) =>
                         isOut 
                         ? [state, [ChangeEditingGraphId, {id: value, select_out: true, editingGraphId}]]
@@ -131,6 +136,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                     property: "edge",
                     inputs,
                     options: nodeEdgeLabels,
+                    icon: "arrow_downward",
                     onchange: (state, {value}) => [UpdateEdge, {edge: {from: link_out.from, to: link_out.to, as: link_out.as}, as: value}]
                 }), link_out),
             ]),
@@ -149,7 +155,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                     class: "action", 
                     onclick: [ExpandContract, {node_id: node.node_id}]
                 }, [
-                  ha.h('span', {class: 'material-icons-outlined'}, 
+                  ha.h('span', {class: 'material-symbols-outlined'}, 
                   ha.text(isNodeGraph(node) ? "unfold_more" : "unfold_less")), 
                   ha.h('span', {}, ha.text(isNodeGraph(node) ? "expand" : "collapse"))
                 ]),
@@ -158,27 +164,27 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                     class: "action", 
                     onclick: state => [state, [ChangeEditingGraphId, {id: node.ref, editingGraphId}]],
                     key: "open-ref-action"
-                }, [ha.h('span', {class: 'material-icons-outlined'}, ha.text('code')), ha.h('span', {}, ha.text('open'))]),
+                }, [ha.h('span', {class: 'material-symbols-outlined'}, ha.text('code')), ha.h('span', {}, ha.text('open'))]),
                 ha.h('div', {
                     class: "action", 
                     onclick: [Copy, {cut: false, as: link_out.as}],
                     key: "copy-action"
-                }, [ha.h('span', {class: 'material-icons-outlined'}, ha.text("copy")), ha.h('span', {}, ha.text("copy"))]),
+                }, [ha.h('span', {class: 'material-symbols-outlined'}, ha.text("content_copy")), ha.h('span', {}, ha.text("copy"))]),
                 copied_graph && ha.h('div', {
                     class: "action", 
                     onclick: [Paste, {}],
                     key: "paste-action"
-                }, [ha.h('span', {class: 'material-icons-outlined'}, ha.text("paste")), ha.h('span', {}, ha.text("paste"))]),
+                }, [ha.h('span', {class: 'material-symbols-outlined'}, ha.text("paste")), ha.h('span', {}, ha.text("paste"))]),
                 node.node_id == graph_out && ha.h('div', {
                     class: "action", 
                     onclick: (state, payload) => [state, [SaveGraph, state]]
-                }, [ha.h('span', {class: 'material-icons-outlined'}, ha.text("save")), ha.h('span', {}, ha.text('save'))]),
+                }, [ha.h('span', {class: 'material-symbols-outlined'}, ha.text("save")), ha.h('span', {}, ha.text('save'))]),
                 node.node_id !== graph_out && ha.h('div', {
                     class: "action", 
                     onclick: [DeleteNode, {
                         node_id: node.node_id
                     }]
-                }, [ha.h('span', {class: 'material-icons-outlined'}, ha.text("delete")), ha.h('span', {}, ha.text('delete'))]),
+                }, [ha.h('span', {class: 'material-symbols-outlined'}, ha.text("delete")), ha.h('span', {}, ha.text('delete'))]),
             ]),
         ]
     ), ha.h('div', {class: "spacer after"}, [])])

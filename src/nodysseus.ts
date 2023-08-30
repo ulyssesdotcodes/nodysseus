@@ -421,7 +421,11 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
         } else if (node.ref === "extern") {
             return node_extern(node, nodeArgs, graphArgs, lib, options)
         } else if (node.ref === "@js.script") {
-            return (graphArgs._output === undefined || graphArgs._output === "value") && node_script(node, nodeArgs, lib, options)
+            return (graphArgs._output === undefined || graphArgs._output === "value") 
+              ? node_script(node, nodeArgs, lib, options) 
+              : graphArgs._output === "metadata" 
+              ? lib.data.no.of({dataLabel: "script"})
+              : undefined
         }
 
         const graphid = (graphArgs.data.get("__graphid") as {value: string}).value;
@@ -1639,8 +1643,14 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       },
     },
     script: {
+      outputs: {
+        metadata: true
+      },
       args: ["_node", "_node_args", "_graph", "_lib", "_runoptions", "_output"],
       fn: (node, node_inputs, graph, _lib, options, _output) =>
+        (console.log("output", _output), _output) === "metadata" ? {
+          dataLabel: "script"
+        } : 
         node_script(
           node,
           node_inputs,

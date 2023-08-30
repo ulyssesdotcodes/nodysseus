@@ -426,14 +426,15 @@ export const d3subscription = (dispatch: ha.Dispatch<HyperappState>, props) => {
 }
 
 const fill_rect_el = () =>ha.h('rect', {class: 'fill', width: '48', 'height': '48'}, [])
-const node_text_el = ({node_id, primary, focus_primary, secondary, primaryClass}: {node_id: string, focus_primary: Property, primary: string, secondary: string, primaryClass?: string}) =>ha.h('text', {x: 48, y: 12}, [
-   ha.h('tspan', {class: "secondary",  dy: "0.6em", x: "48", onpointerdown: [SelectNode, {node_id, focus_property: "ref"}]}, ha.text(secondary.substring(0, 24))),
-   ha.h('tspan', {class: {primary: true, [primaryClass]: !!primaryClass}, dy: "1.2em", x: "48", onpointerdown: [SelectNode, {node_id, focus_property: focus_primary}]}, ha.text(primary.substring(0, 24)))
+const node_text_el = ({node_id, primary, focus_primary, secondary, primaryClass, edgeName}: {node_id: string, focus_primary: Property, primary: string, secondary: string, primaryClass?: string, edgeName: string}) =>ha.h('text', {x: 48, y: 12}, [
+   ha.h('tspan', {class: "secondary",  dy: "1em", x: "56", onpointerdown: [SelectNode, {node_id, focus_property: "ref"}]}, ha.text(secondary.substring(0, 24))),
+   ha.h('tspan', {class: {primary: true, [primaryClass]: !!primaryClass}, dy: "1.4em", x: "56", onpointerdown: [SelectNode, {node_id, focus_property: focus_primary}]}, ha.text(primary.substring(0, 24))),
+   ha.h('tspan', {class: "secondary",  dy: "1.4em", x: "56", onpointerdown: [SelectNode, {node_id, focus_property: "ref"}]}, ha.text(edgeName)),
 ])
 
 
 const radius = 24;
-export const node_el = ({html_id, selected, error, selected_distance, node_id, node_ref, node_name, node_value, has_nodes, nested_edge_count, nested_node_count, node_parents}) =>ha.h('g', {
+export const node_el = ({html_id, selected, error, selected_distance, node_id, node_ref, node_name, node_value, has_nodes, nested_edge_count, nested_node_count, node_parents, edgeName}) =>ha.h('g', {
     onpointerdown: [SelectNode, {node_id, clearInitialLayout: true}],  
     width: '256', 
     height: '64', 
@@ -445,24 +446,25 @@ export const node_el = ({html_id, selected, error, selected_distance, node_id, n
         [`distance-${selected_distance < 4 ? selected_distance : 'far'}`]: true
     }
 }, [
+    ha.h("rect", {
+      x: radius * 0.5 + 8,
+      y: 12,
+      width: 36,
+      height: radius,
+      fill: "black",
+      rx: 1
+    }),
    ha.h<HyperappState, any>(
-        (node_value !== undefined && !(node_ref && node_ref !== "arg")) 
-          || (node_value === undefined && node_ref === undefined) ? 'polygon' 
-        : node_ref === "return" ? 'rect'
-        : 'circle', 
-        node_value !== undefined && !(node_ref && node_ref !== "arg") 
-          || (node_value === undefined && node_ref === undefined)
-            ? {class: {shape: true, value: true, error}, points: `4,${4 + radius} ${4 + radius},${4 + radius} ${4 + radius * 0.5},4`} 
-            : node_ref === 'return'
-            ? {class:{shape: true, ref: true, error}, width: radius, height: radius, x: 10, y: 10}
-            : {class: {shape: true, none: true, error}, r: radius * 0.5 , cx: radius * 0.5 + 8, cy: radius * 0.5 + 8}
+        'circle', 
+        {class: {shape: true, none: true, error}, r: radius * 0.5 , cx: radius * 0.5 + 8, cy: radius * 0.5 + 12}
     ),
     ha.memo(node_text_el, {
         node_id: node_id,
         primary: node_name ? node_name : node_value ? node_value : '', 
         primaryClass: node_name ? "node-name" : undefined,
         focus_primary: node_name ? "name" : "value",
-        secondary: node_ref ? node_ref : has_nodes ? `graph (${nested_node_count}, ${nested_edge_count})` : node_value !== undefined ? 'value' : node_parents?.length > 0 ? 'object' : 'undefined'
+        secondary: node_ref ? node_ref : has_nodes ? `graph (${nested_node_count}, ${nested_edge_count})` : node_value !== undefined ? 'value' : node_parents?.length > 0 ? 'object' : 'undefined',
+        edgeName
     }),
     ha.memo(fill_rect_el, {})
 ])
@@ -477,7 +479,7 @@ export const link_el = ({link, selected_distance}) =>ha.h('g', {}, [
     }, [
        ha.h('rect', {}),
        ha.h('circle', {}),
-       ha.h('text', {fontSize: 14, y: 16}, [ha.text(link.as)])
+       // ha.h('text', {fontSize: 14, y: 16}, [ha.text(link.as)])
     ])
 ])
 

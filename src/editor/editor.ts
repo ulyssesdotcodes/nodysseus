@@ -55,7 +55,7 @@ const Search = (state, {payload, nodes}) => {
 
 const search_el = ({search}) => ha.h('div', {id: "search"}, [
     typeof search === "string" && ha.h('input', {type: "text", onkeydown: (state: any, payload) => [Search,  {payload, nodes: getNodes(state.simulation)}], onblur: (state, payload) => [{...state, search: false}]}, []),
-    typeof search !== "string" && ha.h('span', {class: 'material-icons-outlined graph-action', onclick: (s: any) => [{...s, search: ""}, [FocusEffect, {selector: "#search input"}]]}, [ha.text('search')]),
+    typeof search !== "string" && ha.h('span', {class: 'material-symbols-outlined graph-action', onclick: (s: any) => [{...s, search: ""}, [FocusEffect, {selector: "#search input"}]]}, [ha.text('search')]),
 ])
 
 
@@ -200,9 +200,6 @@ const runapp = (init, _lib) => {
                         selected_distance: s.show_all || !s.levels ? 0 : s.levels.distance_from_selected.get((link.source as d3NodeNode).node_id) > 3 ? 'far' : s.levels.distance_from_selected.get((link.source as d3NodeNode).node_id),
                     })) ?? []
                 ).concat(
-                    getLinks(s.simulation).filter(link => (link.source as d3NodeNode).node_id == s.selected[0] || (link.target as d3NodeNode).node_id === s.selected[0])
-                        .map(link => insert_node_el({link, randid: s.randid, node_el_width: s.node_el_width, nodeOffset: s.nodeOffset}))
-                ).concat(
                     getNodes(s.simulation).map(node => {
                         const newnode = Object.assign({}, node, s.editingGraph.nodes[node.node_id])
                         return ha.memo(node_el, ({
@@ -217,9 +214,13 @@ const runapp = (init, _lib) => {
                             has_nodes: isNodeGraph(newnode) ? newnode.nodes : undefined,
                             nested_edge_count: newnode.nested_edge_count,
                             nested_node_count: newnode.nested_node_count,
-                            node_parents: !s.levels ? [] : (s.levels as Levels).parents.get(node.node_id)
+                            node_parents: !s.levels ? [] : (s.levels as Levels).parents.get(node.node_id),
+                            edgeName: s.editingGraph.edges[node.node_id]?.as
                         }))
                 }) ?? []
+                ).concat(
+                    getLinks(s.simulation).filter(link => (link.source as d3NodeNode).node_id == s.selected[0] || (link.target as d3NodeNode).node_id === s.selected[0])
+                        .map(link => insert_node_el({link, randid: s.randid, node_el_width: s.node_el_width, nodeOffset: s.nodeOffset}))
                 )
             ),
         ]),
@@ -249,7 +250,7 @@ const runapp = (init, _lib) => {
         ha.h('div', {id: "graph-actions", class: "actions"}, [
             search_el({search: s.search}),
             ha.h('span', {
-              class: 'material-icons-outlined graph-action',
+              class: 'material-symbols-outlined graph-action',
               style: {
                 transformOrigin: 'center',
                 transform: `rotate(${s.displayGraphId ? '0' : '45'}deg)`
@@ -261,7 +262,7 @@ const runapp = (init, _lib) => {
               })
             }, [ha.text('push_pin')]),
             ha.h('span', {
-              class: 'material-icons-outlined graph-action',
+              class: 'material-symbols-outlined graph-action',
               onclick: (s: HyperappState) => [
                 {...s, norun: !s.norun}, 
                 () => { nolib.no.runtime.togglePause(!s.norun) },
@@ -278,7 +279,7 @@ const runapp = (init, _lib) => {
               ]
             }, [ha.text(s.norun ? 'play_arrow' : 'pause')]),
             ha.h('span', {
-              class: 'material-icons-outlined graph-action',
+              class: 'material-symbols-outlined graph-action',
               name: 'sync-outline', 
               onclick: (s: HyperappState) => [s, [dispatch => { 
                       nolib.no.runtime.delete_cache(); 
@@ -292,7 +293,7 @@ const runapp = (init, _lib) => {
                   }, {}]]
             }, [ha.text('refresh')]),
                 ha.h('span', {
-                  class: 'material-icons-outlined graph-action',
+                  class: 'material-symbols-outlined graph-action',
                   name: 'help', 
                   onclick: (s: HyperappState) => ({...s, showHelp: true})
                 }, [ha.text('question_mark')])
@@ -308,7 +309,7 @@ const runapp = (init, _lib) => {
               onclick: (s: HyperappState, e) => (e.stopPropagation(), s)
             }, [
               ha.h('div', {class: "help-actions actions"}, ha.h('span', {
-                class: "material-icons-outlined graph-action",
+                class: "material-symbols-outlined graph-action",
                 onclick: (s: HyperappState, event) => ({...s, showHelp: false})
               }, ha.text("close"))),
               helpmd

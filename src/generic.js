@@ -3864,7 +3864,7 @@ const generic = {
       },
       "iconclass": {
         "id": "iconclass",
-        "value": "material-icons-outlined"
+        "value": "material-symbols-outlined"
       },
       "defined_props": {
         "id": "defined_props",
