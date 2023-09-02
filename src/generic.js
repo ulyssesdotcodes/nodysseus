@@ -3597,241 +3597,342 @@ const generic = {
     ]
   },
   "@html.html_element": {
-    "id": "@html.html_element",
-    "category": "html",
-    "out": "out_ret",
-    "description": "An HTML Element. `children` is an array of html_element or html_text, `props` are the attributes for the html element as an object, `dom_type` (or this node's value) is the dom type, `memo` refers to <a target='_blank' href='https://github.com/jorgebucaran/hyperapp/blob/main/docs/api/memo.md'>hyperapp's memo</a>.",
-    "nodes": {
-      "children": {
-        "id": "children",
-        "ref": "arg",
-        "value": "children"
+      "category": "html",
+      "description": "An HTML Element. `children` is an array of html_element or html_text, `props` are the attributes for the html element as an object, `dom_type` (or this node's value) is the dom type, `memo` refers to <a target='_blank' href='https://github.com/jorgebucaran/hyperapp/blob/main/docs/api/memo.md'>hyperapp's memo</a>.",
+      "edges": {
+        "out": {
+          "as": "value",
+          "from": "out",
+          "to": "out_ret"
+        },
+        "qd8ol17": {
+          "as": "metadata",
+          "from": "qd8ol17",
+          "to": "out_ret"
+        },
+        "j9f9fql": {
+          "as": "parameters",
+          "from": "j9f9fql",
+          "to": "qd8ol17"
+        },
+        "p7ed8ee": {
+          "as": "values",
+          "from": "p7ed8ee",
+          "to": "qd8ol17"
+        },
+        "lzx5shl": {
+          "as": "props",
+          "from": "lzx5shl",
+          "to": "j9f9fql"
+        },
+        "nw9ms96": {
+          "as": "children",
+          "from": "nw9ms96",
+          "to": "j9f9fql"
+        },
+        "xtrwqpd": {
+          "as": "value",
+          "from": "xtrwqpd",
+          "to": "lzx5shl"
+        },
+        "4uumh6e": {
+          "as": "type",
+          "from": "4uumh6e",
+          "to": "xtrwqpd"
+        },
+        "hpjscg9": {
+          "as": "defaultAttrs",
+          "from": "hpjscg9",
+          "to": "4uumh6e"
+        },
+        "k81xrr8": {
+          "as": "el",
+          "from": "k81xrr8",
+          "to": "4uumh6e"
+        },
+        "hksj4z5": {
+          "as": "target",
+          "from": "hksj4z5",
+          "to": "k81xrr8"
+        },
+        "sz6itfq": {
+          "as": "path",
+          "from": "sz6itfq",
+          "to": "k81xrr8"
+        },
+        "dom_type_def": {
+          "as": "dom_type",
+          "from": "dom_type_def",
+          "to": "out"
+        },
+        "fill_props": {
+          "as": "props",
+          "from": "fill_props",
+          "to": "out"
+        },
+        "filter_children": {
+          "as": "children",
+          "from": "filter_children",
+          "to": "out"
+        },
+        "memo": {
+          "as": "memo",
+          "from": "memo",
+          "to": "out"
+        },
+        "value": {
+          "as": "value",
+          "from": "value",
+          "to": "out"
+        },
+        "fill_children": {
+          "as": "array",
+          "from": "fill_children",
+          "to": "filter_children"
+        },
+        "filter_children_fn_runnable": {
+          "as": "fn",
+          "from": "filter_children_fn_runnable",
+          "to": "filter_children"
+        },
+        "filter_children_fn": {
+          "as": "fn",
+          "from": "filter_children_fn",
+          "to": "filter_children_fn_runnable"
+        },
+        "filter_children_fn_runnable_args": {
+          "as": "parameters",
+          "from": "filter_children_fn_runnable_args",
+          "to": "filter_children_fn_runnable"
+        },
+        "element_dt": {
+          "as": "element_dt",
+          "from": "element_dt",
+          "to": "filter_children_fn"
+        },
+        "element_tv": {
+          "as": "element_tv",
+          "from": "element_tv",
+          "to": "filter_children_fn"
+        },
+        "fill_children_fn_runnable": {
+          "as": "fn",
+          "from": "fill_children_fn_runnable",
+          "to": "fill_children"
+        },
+        "wrapped_children": {
+          "as": "array",
+          "from": "wrapped_children",
+          "to": "fill_children"
+        },
+        "children": {
+          "as": "children",
+          "from": "children",
+          "to": "wrapped_children"
+        },
+        "fill_children_fn": {
+          "as": "fn",
+          "from": "fill_children_fn",
+          "to": "fill_children_fn_runnable"
+        },
+        "fill_children_fn_runnable_args": {
+          "as": "parameters",
+          "from": "fill_children_fn_runnable_args",
+          "to": "fill_children_fn_runnable"
+        },
+        "element": {
+          "as": "element",
+          "from": "element",
+          "to": "fill_children_fn"
+        },
+        "props": {
+          "as": "props",
+          "from": "props",
+          "to": "fill_props"
+        },
+        "dom_type": {
+          "as": "value",
+          "from": "dom_type",
+          "to": "dom_type_def"
+        },
+        "dom_type_value": {
+          "as": "otherwise",
+          "from": "dom_type_value",
+          "to": "dom_type_def"
+        },
+        "div": {
+          "as": "otherwise",
+          "from": "div",
+          "to": "dom_type_value"
+        },
+        "graph_value": {
+          "as": "value",
+          "from": "graph_value",
+          "to": "dom_type_value"
+        }
       },
-      "props": {
-        "id": "props",
-        "ref": "arg",
-        "value": "props"
+      "id": "@html.html_element",
+      "nodes": {
+        "out_ret": {
+          "id": "out_ret",
+          "name": "@html.html_element",
+          "ref": "return"
+        },
+        "qd8ol17": {
+          "id": "qd8ol17"
+        },
+        "p7ed8ee": {
+          "id": "p7ed8ee",
+          "ref": "@js.script",
+          "value": "return Object.keys(_lib.domTypes).filter(k => k !== \"defaults\")"
+        },
+        "j9f9fql": {
+          "id": "j9f9fql"
+        },
+        "nw9ms96": {
+          "id": "nw9ms96",
+          "value": "@html.html_element"
+        },
+        "lzx5shl": {
+          "id": "lzx5shl",
+          "ref": "@debug.input_value"
+        },
+        "xtrwqpd": {
+          "id": "xtrwqpd"
+        },
+        "4uumh6e": {
+          "id": "4uumh6e",
+          "ref": "@js.script",
+          "value": "return el.attrs && Object.fromEntries(el.attrs.concat(defaultAttrs[el.spec]).map(n => [n, {type:  \"any\"}]).concat([[\"style\", {type: Object.fromEntries(defaultAttrs[\"css\"].map(a => [a, \"any\"]))}]]));"
+        },
+        "k81xrr8": {
+          "id": "k81xrr8",
+          "ref": "@data.get"
+        },
+        "sz6itfq": {
+          "id": "sz6itfq",
+          "ref": "arg",
+          "value": "__graph_value"
+        },
+        "hksj4z5": {
+          "id": "hksj4z5",
+          "ref": "arg",
+          "value": "_lib.domTypes"
+        },
+        "hpjscg9": {
+          "id": "hpjscg9",
+          "ref": "arg",
+          "value": "_lib.domTypes.defaults"
+        },
+        "out": {
+          "id": "out",
+          "ref": "@js.script",
+          "value": "if(!(typeof dom_type === 'string' && typeof children === 'object')){ throw new Error('invalid element');} return {dom_type, props, children: children, memo, value}"
+        },
+        "value": {
+          "id": "value",
+          "ref": "arg",
+          "value": "value"
+        },
+        "memo": {
+          "id": "memo",
+          "ref": "arg",
+          "value": "memo"
+        },
+        "filter_children": {
+          "id": "filter_children",
+          "ref": "@data.filter"
+        },
+        "filter_children_fn_runnable": {
+          "id": "filter_children_fn_runnable",
+          "ref": "@flow.runnable"
+        },
+        "filter_children_fn_runnable_args": {
+          "id": "filter_children_fn_runnable_args",
+          "value": "{\"element\": \"undefined\"}"
+        },
+        "filter_children_fn": {
+          "id": "filter_children_fn",
+          "ref": "@js.script",
+          "value": "return !!(element_dt || element_tv)"
+        },
+        "element_tv": {
+          "id": "element_tv",
+          "ref": "arg",
+          "value": "element.text_value"
+        },
+        "element_dt": {
+          "id": "element_dt",
+          "ref": "arg",
+          "value": "element.dom_type"
+        },
+        "fill_children": {
+          "id": "fill_children",
+          "ref": "@data.map"
+        },
+        "wrapped_children": {
+          "id": "wrapped_children",
+          "ref": "@js.script",
+          "value": "return Array.isArray(children) ? children : children !== undefined ? [children] : []"
+        },
+        "children": {
+          "id": "children",
+          "ref": "arg",
+          "value": "children"
+        },
+        "fill_children_fn_runnable": {
+          "id": "fill_children_fn_runnable",
+          "ref": "@flow.runnable"
+        },
+        "fill_children_fn_runnable_args": {
+          "id": "fill_children_fn_runnable_args",
+          "value": "{\"element\": \"undefined\"}"
+        },
+        "fill_children_fn": {
+          "id": "fill_children_fn",
+          "ref": "@js.script",
+          "value": "return element?.el ?? typeof element === 'string' ? {dom_type: 'text_value', text: element} : element"
+        },
+        "element": {
+          "id": "element",
+          "ref": "arg",
+          "value": "element"
+        },
+        "fill_props": {
+          "id": "fill_props",
+          "ref": "@js.script",
+          "value": "return props ?? {}"
+        },
+        "props": {
+          "id": "props",
+          "ref": "arg",
+          "value": "props"
+        },
+        "dom_type_def": {
+          "id": "dom_type_def",
+          "ref": "@flow.default"
+        },
+        "dom_type_value": {
+          "id": "dom_type_value",
+          "ref": "@flow.default"
+        },
+        "graph_value": {
+          "id": "graph_value",
+          "ref": "arg",
+          "value": "__graph_value"
+        },
+        "div": {
+          "id": "div",
+          "value": "div"
+        },
+        "dom_type": {
+          "id": "dom_type",
+          "ref": "arg",
+          "value": "dom_type"
+        }
       },
-      "dom_type": {
-        "id": "dom_type",
-        "ref": "arg",
-        "value": "dom_type"
-      },
-      "memo": {
-        "id": "memo",
-        "ref": "arg",
-        "value": "memo"
-      },
-      "value": {
-        "id": "value",
-        "ref": "arg",
-        "value": "value"
-      },
-      "element_dt": {
-        "id": "element_dt",
-        "ref": "arg",
-        "value": "element.dom_type"
-      },
-      "element": {
-        "id": "element",
-        "ref": "arg",
-        "value": "element"
-      },
-      "element_tv": {
-        "id": "element_tv",
-        "ref": "arg",
-        "value": "element.text_value"
-      },
-      "div": {
-        "id": "div",
-        "value": "div"
-      },
-      "dom_type_value": {
-        "id": "dom_type_value",
-        "ref": "@flow.default"
-      },
-      "graph_value": {
-        "id": "graph_value",
-        "ref": "arg",
-        "value": "__graph_value"
-      },
-      "filter_children_fn": {
-        "id": "filter_children_fn",
-        "ref": "@js.script",
-        "value": "return !!(element_dt || element_tv)"
-      },
-      "filter_children_fn_runnable_args": {
-        "id": "filter_children_fn_runnable_args",
-        "value": "{\"element\": \"undefined\"}"
-      },
-      "filter_children_fn_runnable": {
-        "id": "filter_children_fn_runnable",
-        "ref": "@flow.runnable"
-      },
-      "fill_children_fn": {
-        "id": "fill_children_fn",
-        "ref": "@js.script",
-        "value": "return element?.el ?? typeof element === 'string' ? {dom_type: 'text_value', text: element} : element"
-      },
-      "fill_children_fn_runnable_args": {
-        "id": "fill_children_fn_runnable_args",
-        "value": "{\"element\": \"undefined\"}"
-      },
-      "fill_children_fn_runnable": {
-        "id": "fill_children_fn_runnable",
-        "ref": "@flow.runnable"
-      },
-      "wrapped_children": {
-        "id": "wrapped_children",
-        "ref": "@js.script",
-        "value": "return Array.isArray(children) ? children : children !== undefined ? [children] : []"
-      },
-      "filter_children": {
-        "id": "filter_children",
-        "ref": "@data.filter"
-      },
-      "fill_children": {
-        "id": "fill_children",
-        "ref": "@data.map"
-      },
-      "fill_props": {
-        "id": "fill_props",
-        "ref": "@js.script",
-        "value": "return props ?? {}"
-      },
-      "dom_type_def": {
-        "id": "dom_type_def",
-        "ref": "@flow.default"
-      },
-      "out": {
-        "id": "out",
-        "ref": "@js.script",
-        "value": "if(!(typeof dom_type === 'string' && typeof children === 'object')){ throw new Error('invalid element');} return {dom_type, props, children: children, memo, value}"
-      },
-      "out_ret": {
-        "id": "out_ret",
-        "ref": "return",
-        "name": "@html.html_element"
-      }
+      "out": "out_ret"
     },
-    "edges": [
-      {
-        "from": "children",
-        "to": "wrapped_children",
-        "as": "children"
-      },
-      {
-        "from": "wrapped_children",
-        "to": "fill_children",
-        "as": "array"
-      },
-      {
-        "from": "props",
-        "to": "fill_props",
-        "as": "props"
-      },
-      {
-        "from": "memo",
-        "to": "out",
-        "as": "memo"
-      },
-      {
-        "from": "element_dt",
-        "to": "filter_children_fn",
-        "as": "element_dt"
-      },
-      {
-        "from": "element_tv",
-        "to": "filter_children_fn",
-        "as": "element_tv"
-      },
-      {
-        "from": "filter_children_fn_runnable_args",
-        "to": "filter_children_fn_runnable",
-        "as": "parameters"
-      },
-      {
-        "from": "filter_children_fn",
-        "to": "filter_children_fn_runnable",
-        "as": "fn"
-      },
-      {
-        "from": "filter_children_fn_runnable",
-        "to": "filter_children",
-        "as": "fn"
-      },
-      {
-        "from": "element",
-        "to": "fill_children_fn",
-        "as": "element"
-      },
-      {
-        "from": "fill_children_fn_runnable_args",
-        "to": "fill_children_fn_runnable",
-        "as": "parameters"
-      },
-      {
-        "from": "fill_children_fn",
-        "to": "fill_children_fn_runnable",
-        "as": "fn"
-      },
-      {
-        "from": "fill_children_fn_runnable",
-        "to": "fill_children",
-        "as": "fn"
-      },
-      {
-        "from": "fill_children",
-        "to": "filter_children",
-        "as": "array"
-      },
-      {
-        "from": "filter_children",
-        "to": "out",
-        "as": "children"
-      },
-      {
-        "from": "value",
-        "to": "out",
-        "as": "value"
-      },
-      {
-        "from": "fill_props",
-        "to": "out",
-        "as": "props"
-      },
-      {
-        "from": "dom_type",
-        "to": "dom_type_def",
-        "as": "value"
-      },
-      {
-        "from": "div",
-        "to": "dom_type_value",
-        "as": "otherwise"
-      },
-      {
-        "from": "graph_value",
-        "to": "dom_type_value",
-        "as": "value"
-      },
-      {
-        "from": "dom_type_value",
-        "to": "dom_type_def",
-        "as": "otherwise"
-      },
-      {
-        "from": "dom_type_def",
-        "to": "out",
-        "as": "dom_type"
-      },
-      {
-        "from": "out",
-        "to": "out_ret",
-        "as": "value"
-      }
-    ]
-  },
   "@html.icon": {
     "id": "@html.icon",
     "description": "A ionicon in hyperapp format.",
