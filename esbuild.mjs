@@ -88,4 +88,5 @@ const ctx = await esbuild.context({
   format: 'esm'
 })
 
-await ctx.watch();
+ctx.watch();
+await ctx.serve({servedir: "public", port: 8080});

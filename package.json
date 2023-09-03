@@ -20,7 +20,7 @@
   "homepage": "https://gitlab.com/ulysses.codes/nodysseus#readme",
   "scripts": {
     "package": "node package.esbuild.mjs",
-    "watch": "concurrently --raw \"npm run run:esbuild\" \"http-server -s -c-1\" \"tsc --watch --noEmit\"",
+    "watch": "concurrently --raw \"npm run run:esbuild\" \"tsc --watch --noEmit\"",
     "test": "node node_modules/jest/bin/jest.js",
     "test:watch": "node node_modules/jest/bin/jest.js --watch",
     "run:esbuild": "node esbuild.mjs"
