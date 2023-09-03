@@ -104,6 +104,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                     value: (node as RefNode).ref,
                     property: 'ref',
                     inputs,
+                    icon: "arrow_circle_right",
                     options: refGraphs.map(r => generic.nodes[r] ? {value: r, category: generic.nodes[r].category} : {value: r, category: r.startsWith("@") ? r.substring(1, r.indexOf('.')) : "custom"}),
                     onchange: (state, {value}) => [UpdateNode, {node, property: "ref", value}],
                     disabled: isOut 
@@ -114,7 +115,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                     options: metadata?.values ?? [],
                     property: "value", 
                     inputs,
-                    icon: "database",
+                    icon: "data_object",
                     onchange: (state, {value}) => [UpdateNode, {node, property: "value", value: value }]
                 }),
                   node),
@@ -123,7 +124,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                     value: node.name, 
                     property: "name", 
                     inputs,
-                    icon: "notes",
+                    icon: isNodeRef(node) && node.ref === "return" || isNodeGraph(node) ? "arrow_circle_left" : "notes",
                     onchange: (state, {value}) =>
                         isOut 
                         ? [state, [ChangeEditingGraphId, {id: value, select_out: true, editingGraphId}]]
@@ -159,7 +160,10 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                   ha.text(isNodeGraph(node) ? "unfold_more" : "unfold_less")), 
                   ha.h('span', {}, ha.text(isNodeGraph(node) ? "expand" : "collapse"))
                 ]),
-                isNodeGraph(node) && node.name !== '' && ha.h('div', {class: 'action', onclick: [CreateRef, {node}]}, ha.text("make ref")),
+                isNodeGraph(node) && node.name !== '' && ha.h('div', {class: 'action', onclick: [CreateRef, {node}]}, [
+                  ha.h('span', {class: 'material-symbols-outlined'}, ha.text("arrow_circle_left")), 
+                  ha.h('span', {}, ha.text("make ref"))
+                ]),
                 isNodeRef(node) && (!generic.nodes[node.ref] || generic.nodes[node.ref].nodes?.[generic.nodes[node.ref].out]?.ref === "return") && ha.h('div', {
                     class: "action", 
                     onclick: state => [state, [ChangeEditingGraphId, {id: node.ref, editingGraphId}]],

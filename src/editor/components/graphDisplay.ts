@@ -427,9 +427,10 @@ export const d3subscription = (dispatch: ha.Dispatch<HyperappState>, props) => {
 
 const fill_rect_el = () =>ha.h('rect', {class: 'fill', width: '48', 'height': '48'}, [])
 const node_text_el = ({node_id, primary, focus_primary, secondary, primaryClass, edgeName}: {node_id: string, focus_primary: Property, primary: string, secondary: string, primaryClass?: string, edgeName: string}) =>ha.h('text', {x: 48, y: 12}, [
-   ha.h('tspan', {class: "secondary",  dy: "1em", x: "56", onpointerdown: [SelectNode, {node_id, focus_property: "ref"}]}, ha.text(secondary.substring(0, 24))),
-   ha.h('tspan', {class: {primary: true, [primaryClass]: !!primaryClass}, dy: "1.4em", x: "56", onpointerdown: [SelectNode, {node_id, focus_property: focus_primary}]}, ha.text(primary.substring(0, 24))),
-   ha.h('tspan', {class: "secondary",  dy: "1.4em", x: "56", onpointerdown: [SelectNode, {node_id, focus_property: "ref"}]}, ha.text(edgeName)),
+   ha.h('tspan', {class: "secondary",  dy: "1em", x: "56", onpointerdown: [SelectNode, {node_id, focus_property: "ref"}]}, [ha.h('tspan', {class: "material-symbols-outlined"}, ha.text("arrow_circle_right")), ha.h('tspan', {class: "label", dx: "0.4em"}, ha.text(secondary.substring(0, 24)))]),
+   ha.h('tspan', {class: {primary: true, [primaryClass]: !!primaryClass}, dy: "1.4em", x: "56", onpointerdown: [SelectNode, {node_id, focus_property: focus_primary}]}, [ha.h('tspan', {class: "material-symbols-outlined"}, primaryClass === "node-name" ? ha.text("arrow_circle_left") :  ha.text("data_object")), ha.h('tspan', {class: "label", dx: "0.4em"}, ha.text(primary.substring(0, 24)))]),
+   edgeName && ha.h('tspan', {class: "secondary",  dy: "1.4em", x: "56", onpointerdown: [SelectNode, {node_id, focus_property: "edge"}]}, [ha.h('tspan', {class: "material-symbols-outlined"}, ha.text("arrow_downward")), ha.h('tspan', {class: "label", dx: "0.4em"}, ha.text(edgeName))]),
+
 ])
 
 

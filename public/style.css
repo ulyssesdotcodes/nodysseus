@@ -467,6 +467,11 @@ svg.edge-info.selected rect {
 
 .node text tspan {
   stroke-width: 0;
+  dominant-baseline: central;
+}
+
+.node text tspan .label {
+  padding-left: 0.5em;
 }
 
 .node text .primary {
