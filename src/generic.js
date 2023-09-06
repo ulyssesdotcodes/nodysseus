@@ -657,6 +657,13 @@ const generic = {
     "category": "flow",
     "ref": "extern",
     "value": "extern.runnable",
+    "description": "Creates a 'runnable' object that runs the fn node. The 'parameters' input determines any inputs to the graph like 'event' for javascript event listeners."
+  },
+  "@flow.graphRunnable": {
+    "id": "@flow.graphRunnable",
+    "category": "flow",
+    "ref": "extern",
+    "value": "extern.graphRunnable",
     "description": "Creates a 'runnable' object that runs the input graph. The 'parameters' input determines any inputs to the graph like 'event' for javascript event listeners."
   },
   "@flow.ap": {

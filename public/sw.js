@@ -28,7 +28,9 @@ self.addEventListener('fetch', (e) => {
   }
   // console.log(`[Service Worker] Fetching resource ${e.request.url}`);
   e.respondWith(
-     (navigator.onLine || e.request.url.includes("localhost") 
+     (e.request.url.endsWith("/esbuild") 
+       ? fetch(e.request)
+       : navigator.onLine || e.request.url.includes("localhost")
        ? network(e.request).catch(ne => (console.log("[Service Worker] Network request failed, trying cache"), caches.open(assetCacheName).then(cache => cache.match(e.request)))) 
        : caches.open(assetCacheName).then(c => c.match(e.request)))
         .catch(ce => (console.log("[Service Worker] Request failed"), console.error(ne), console.error(ce)))

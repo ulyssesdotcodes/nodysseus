@@ -344,19 +344,38 @@ const node_data = (nodeArgs, graphArgs: Env, lib, options) => {
   return nodeArgs.size === 0 || graphArgs._output === "display" ? lib.data.no.of(undefined) : resolve_args(nodeArgs, lib, options);
 }
 
-const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, parameters: ConstRunnable, lib, options: RunOptions): FunctorRunnable | Promise<FunctorRunnable> => 
+const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, parameters: ConstRunnable, lib, options: RunOptions, output: ConstRunnable): FunctorRunnable | Promise<FunctorRunnable> => 
   fn && wrapPromiseAll([
     parameters && run_runnable(parameters, lib, undefined, options),
-    nolib.no.runtime.refs()
+    nolib.no.runtime.refs(),
+    output && run_runnable(output, lib, undefined, options)
   ])
-    .then(([args, refs]: [Result, Array<string>]) => isError(args) ? args : lib.data.no.of({
+    .then(([args, refs, output]: [Result, Array<string>, string]) => isError(args) ? args : lib.data.no.of({
       __kind: FUNCTOR,
       parameters: args ? [...new Set(args.value ? Object.keys(args.value).map(k => k.includes(".") ? k.substring(0, k.indexOf('.')) : k) : [])] : [],
-      env: fn.env,
+      env: mergeEnv(new Map([["_output", lib.data.no.of(output)]]), fn.env),
       graph: typeof fn.graph === "string" ? fn.graph : refs.includes(fn.graph.id) ? fn.graph.id : fn.graph,
       fn: fn.fn,
       lib: fn.lib
     })).value
+
+const createGraphFunctorRunnable = (graph: ConstRunnable, parameters: ConstRunnable, lib: Lib, options: RunOptions, output: ConstRunnable): FunctorRunnable | Promise<FunctorRunnable> => 
+  (console.log("graph", graph), graph) && wrapPromiseAll([
+    parameters && run_runnable(parameters, lib, undefined, options),
+    graph && run_runnable(graph, lib, undefined, options),
+    output && run_runnable(output, lib, undefined, options),
+  ]).then<FunctorRunnable>(([params, graph, output]: [Result, Result, string]) => isError(params) 
+    ? params 
+    : isError(graph)
+    ? graph
+    : lib.data.no.of({
+    __kind: FUNCTOR,
+    paramters: params ? [...new Set(params.value ? Object.keys(params.value).map(k => k.includes(".") ? k.substring(0, k.indexOf('.')) : k): [])] : [],
+    env: newEnv(new Map(), output),
+    graph: graph.value,
+    fn: graph.value.out ?? "out",
+    lib
+  })).value
 
 const run_runnable = (runnable: Runnable | undefined, lib: Lib, args: Map<string, any> = new Map(), options: RunOptions = {}): Result | Promise<Result> | undefined =>  {
   if(runnable === undefined || isError(runnable)) {
@@ -591,7 +610,7 @@ const run_functor_runnable = (runnable: FunctorRunnable, args: Args, lib: Lib, o
   const execArgs: Args = new Map(runnable.parameters?.map(k => [k, nodysseus_get(args, k, lib)]) ?? []);
   const newRunnable: ConstRunnable = {
     __kind: CONST,
-    env: combineEnv((execArgs ?? new Map()).set("__graphid", runnable.env.data.get("__graphid")), runnable.env, runnable.fn),
+    env: combineEnv((execArgs ?? new Map()).set("__graphid", runnable.env.data.get("__graphid")), runnable.env, runnable.fn, runnable.env._output),
     fn: runnable.fn,
     graph: runnable.graph,
     lib: runnable.lib
@@ -1104,7 +1123,8 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       fn: (fn, args, run, lib: Lib) => {
         const resolveRunnable = (runnable) => (isRunnable(runnable) && isConstRunnable(runnable) ? 
           wrapPromise(run_runnable(runnable, lib))
-            .then(r => resolveRunnable(isValue(r) ? r.value : r)) : wrapPromise(runnable)).then(r => isValue(r) ? r.value : r).value
+            .then(r => resolveRunnable(isValue(r) ? r.value : r)) 
+          : wrapPromise(runnable)).then(r => isValue(r) ? r.value : r).value
 
         const apRunnable = (fnRunnable: ApFunctorLike | Array<ApFunctorLike>, run: boolean): ApRunnable => ({
             __kind: AP,
@@ -1255,8 +1275,13 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     },
     runnable: {
       rawArgs: true,
-      args: ["fn", "parameters", "_lib", "_runoptions"],
+      args: ["fn", "parameters", "_lib", "_runoptions", "output"],
       fn: createFunctorRunnable
+    },
+    graphRunnable: {
+      rawArgs: true,
+      args: ["graph", "parameters", "_lib", "_runoptions", "output"],
+      fn: createGraphFunctorRunnable
     },
     expect: {
       args: ["a", "b", "__graph_value"],
@@ -1648,7 +1673,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       },
       args: ["_node", "_node_args", "_graph", "_lib", "_runoptions", "_output"],
       fn: (node, node_inputs, graph, _lib, options, _output) =>
-        (console.log("output", _output), _output) === "metadata" ? {
+        _output === "metadata" ? {
           dataLabel: "script"
         } : 
         node_script(
