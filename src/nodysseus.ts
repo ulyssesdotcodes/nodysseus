@@ -359,21 +359,23 @@ const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, param
       lib: fn.lib
     })).value
 
-const createGraphFunctorRunnable = (graph: ConstRunnable, parameters: ConstRunnable, lib: Lib, options: RunOptions, output: ConstRunnable): FunctorRunnable | Promise<FunctorRunnable> => 
+const createGraphFunctorRunnable = (graph: ConstRunnable, parameters: ConstRunnable, lib: Lib, options: RunOptions, output: ConstRunnable, graphid: string): FunctorRunnable | Promise<FunctorRunnable> => 
   (console.log("graph", graph), graph) && wrapPromiseAll([
     parameters && run_runnable(parameters, lib, undefined, options),
     graph && run_runnable(graph, lib, undefined, options),
     output && run_runnable(output, lib, undefined, options),
-  ]).then<FunctorRunnable>(([params, graph, output]: [Result, Result, string]) => isError(params) 
+  ]).then<FunctorRunnable>(([params, resultGraph, resultOutput]: [Result, Result, Result]) => isError(params) 
     ? params 
-    : isError(graph)
-    ? graph
+    : isError(resultGraph)
+    ? resultGraph
+    : isError(resultOutput)
+    ? resultOutput
     : lib.data.no.of({
     __kind: FUNCTOR,
     paramters: params ? [...new Set(params.value ? Object.keys(params.value).map(k => k.includes(".") ? k.substring(0, k.indexOf('.')) : k): [])] : [],
-    env: newEnv(new Map(), output),
-    graph: graph.value,
-    fn: graph.value.out ?? "out",
+    env: combineEnv(new Map(), graph.env, graphid, resultOutput.value),
+    graph: resultGraph.value,
+    fn: resultGraph.value.out ?? "out",
     lib
   })).value
 
@@ -876,6 +878,14 @@ const runtimefn = () => {
           return fn.fn;
         }).value
         },
+        graphExport: (graphid): Array<Graph> | Promise<Array<Graph>> => 
+        Object.keys(generic.nodes).includes(graphid) ? [] as Array<Graph>
+          : wrapPromise(get_graph(graphid))
+            .then(graph => 
+                  wrapPromiseAll(Object.values(graph.nodes)
+                    .map(node => isNodeRef(node) ? nolib.no.runtime.graphExport(node.ref) : []))
+                    .then(nodeGraphs => nodeGraphs.flat().concat([graph])).value
+                 ).value,
         change_graph,
         update_graph: (graphid, lib: Lib) => publish('graphupdate', {graph: graphid}, lib),
         update_args,
@@ -1280,7 +1290,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     },
     graphRunnable: {
       rawArgs: true,
-      args: ["graph", "parameters", "_lib", "_runoptions", "output"],
+      args: ["graph", "parameters", "_lib", "_runoptions", "output", "__graphid"],
       fn: createGraphFunctorRunnable
     },
     expect: {
