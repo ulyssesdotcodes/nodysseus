@@ -178,7 +178,7 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                     class: "action", 
                     onclick: [Paste, {}],
                     key: "paste-action"
-                }, [ha.h('span', {class: 'material-symbols-outlined'}, ha.text("paste")), ha.h('span', {}, ha.text("paste"))]),
+                }, [ha.h('span', {class: 'material-symbols-outlined'}, ha.text("content_paste")), ha.h('span', {}, ha.text("paste"))]),
                 node.node_id == graph_out && ha.h('div', {
                     class: "action", 
                     onclick: (state, payload) => [state, [SaveGraph, state]]
