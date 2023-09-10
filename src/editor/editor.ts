@@ -3,7 +3,7 @@ import * as ha from "hyperapp";
 import Fuse from "fuse.js";
 import { create_randid, wrapPromise, base_graph } from "../util";
 import { Edge, Graph, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode } from "../types";
-import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, middleware, Paste, pzobj, refresh_graph, result_subscription, run_h, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect } from "./util";
+import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, Paste, pzobj, refresh_graph, result_subscription, run_h, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect } from "./util";
 import { info_display, infoWindow } from "./components/infoWindow";
 import { init_code_editor } from "./components/codeEditor";
 import { d3Node, d3NodeNode, HyperappState, Levels } from "./types";
@@ -14,6 +14,7 @@ import generic from "src/generic";
 import { SimulationNodeDatum } from "d3-force";
 import { automergeRefStore } from "./automergeStore";
 import helloWorld from "../initgraph.json"
+import {middleware} from "./hyperapp"
 
 
 customElements.define("autocomplete-list", Autocomplete)
@@ -532,8 +533,8 @@ const editor = async function(html_id, editingGraphId, lib, norun) {
     const url_params = new URLSearchParams(document.location.search);
     editingGraphId = editingGraphId ?? (hash_graph && hash_graph !== "" ? hash_graph : graph_list?.[0] ?? 'helloWorld');
     let editingGraph: Graph = editingGraphId === "helloWorld"
-      ? ((helloWorld as Graph).edges_in = Object.values(helloWorld.edges).reduce((acc: Record<string, Record<string, Edge>>, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {}), await hlib.no.runtime.add_ref(helloWorld), helloWorld)
-      : (await hlib.no.runtime.get_ref(editingGraphId)
+      ? ((helloWorld as Graph).edges_in = Object.values(helloWorld.edges).reduce((acc: Record<string, Record<string, Edge>>, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {}), await hlibLib.data.no.runtime.add_ref(helloWorld), helloWorld)
+      : (await hlibLib.data.no.runtime.get_ref(editingGraphId)
       ?? (EXAMPLES.includes(editingGraphId) 
       ? await fetch(`json/${editingGraphId.replaceAll("_", "-")}.json`)
         .then(res => res.json())

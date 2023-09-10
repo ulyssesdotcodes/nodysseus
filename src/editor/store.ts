@@ -287,3 +287,24 @@ export const webClientStore = async (refStore: (idb: IDBPDatabase<NodysseusStore
     }
   }
 }
+
+export const objectRefStore = (graphs: Record<string, Graph>): Promise<RefStore> => {
+  return Promise.resolve({
+    get: graphId => generic_nodes[graphId] ?? graphs[graphId],
+    set: (id, data) => {
+      graphs[id] = data;
+      return data;
+    },
+    keys: () => Object.keys(generic_nodes).concat(Object.keys(graphs)),
+    delete: (id: string) => { throw new Error("not implemented") },
+    clear: () => {throw new Error("not implemented")},
+    addFromUrl: (url: string) => {throw new Error("not implemented")},
+    add_node: () => {throw new Error("not implemented")},
+    add_edge: () => {throw new Error("not implemented")},
+    remove_node: () => {throw new Error("not implemented")},
+    remove_edge: () => {throw new Error("not implemented")},
+    undo: () => {throw new Error("not implemented")},
+    redo: () => {throw new Error("not implemented")},
+    add_nodes_edges: () => {throw new Error("not implemented")},
+  })
+}

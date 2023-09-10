@@ -1,7 +1,7 @@
 import * as ha from "hyperapp"
 import { initStore, nodysseus_get, nolib, run, NodysseusError, nolibLib } from "../nodysseus";
 import { Edge, FullyTypedArg, FunctorRunnable, getRunnableGraphId, Graph, isArgs, isNodeGraph, isNodeRef, isNodeScript, isRunnable, isTypedArg, NodeArg, NodeMetadata, NodysseusNode, RefNode, TypedArg } from "../types";
-import { base_node, base_graph, ispromise, wrapPromise, expand_node, contract_node, ancestor_graph, create_randid, compareObjects, newLib, bfs } from "../util";
+import { base_node, base_graph, ispromise, wrapPromise, expand_node, contract_node, ancestor_graph, create_randid, compareObjects, newLib, bfs, mergeLib } from "../util";
 import panzoom, * as pz from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 import { d3Link, d3Node, d3NodeNode, HyperappState, isd3NodeNode, Levels, NodysseusSimulation, Property, Vector2 } from "./types";
@@ -9,55 +9,10 @@ import { UpdateGraphDisplay, UpdateSimulation, d3subscription, updateSimulationN
 import AutocompleteList from "./autocomplete";
 import { parser } from "@lezer/javascript";
 import {v4 as uuid} from "uuid";
+import { middleware, runh } from "./hyperapp";
 
 export const EXAMPLES = ["threejs_example", "hydra_example", "threejs_boilerplate", "threejs_force_attribute_example", "threejs_node_example", "threejs_compute_example", "strudel_example"];
 
-export const middleware = dispatch => (ha_action, ha_payload) => {
-    const is_action_array_payload = Array.isArray(ha_action) 
-        && ha_action.length === 2
-        && (typeof ha_action[0] === 'function' 
-                || (isRunnable(ha_action[0])));
-
-    const is_action_obj_payload = isRunnable(ha_action)
-    const action = is_action_array_payload ? ha_action[0] : ha_action;
-    const payload = is_action_array_payload ? ha_action[1] : is_action_obj_payload ? {event: ha_payload} : ha_payload;
-
-    return typeof action === 'object' && isRunnable(ha_action)
-        ? dispatch((state, payload) => {
-            try {
-                const result = action.stateonly 
-                    ? hlib.run_runnable(action, state)
-                    : hlib.run_runnable(action, {state, ...payload});
-
-                if(!result) {
-                    return state;
-                }
-
-                const effects = (result.effects ?? []).filter(e => e).map(e => {
-                    if(isRunnable(e)) {
-                        const effect_fn = hlib.run_runnable(e);
-                        // Object.defineProperty(effect_fn, 'name', {value: e.fn, writable: false})
-                        return effect_fn;
-                    }
-                    return e
-                });//.map(fx => ispromise(fx) ? fx.catch(e => dispatch(s => [{...s, error: e}])) : fx);
-
-                if (ispromise(result)) {
-                    // TODO: handle promises properly
-                    return state;
-                }
-
-                return result.hasOwnProperty("state")
-                    ? effects.length > 0 ? [result.state, ...effects] : result.state
-                    : result.hasOwnProperty("action") && result.hasOwnProperty("payload") 
-                    ? [result.action, result.payload]
-                    : state;
-            } catch(e) {
-                return {...state, error: e}
-            }
-        }, payload)
-        : dispatch(action, payload)
-}
 
 export const pzobj: {
   instance: false | pz.PanZoom,
@@ -698,8 +653,6 @@ export const run_h = ({dom_type, props, children, text}: {dom_type: string, prop
         : ha.h(dom_type, props, children?.map(c => c.el ?? c).filter(c => !!c && !exclude_tags.includes(c.dom_type)).map(c => run_h(c, exclude_tags)) ?? []) 
 }
 
-export const runh = el => el.d && el.p && el.c && ha.h(el.d, el.p, el.c);
-
 export const findViewBox = (nodes: Array<d3NodeNode>, links: Array<d3Link>, selected: string, node_el_width: number, htmlid: string, dimensions: {x: number, y: number}) => {
     const visible_nodes: Array<{x: number, y: number}> = [];
     const visible_node_set = new Set();
@@ -985,7 +938,6 @@ export const hlib = {
         console.error(e);
       }
     },
-    run_runnable: (runnable, args?, options?) => run(runnable, args, options),
     initStore: (nodysseusStore) => initStore(nodysseusStore),
     d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
     worker: undefined,

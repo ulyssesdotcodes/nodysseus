@@ -74,7 +74,8 @@ const ctx = await esbuild.context({
   entryPoints: [
     {in: 'src/index.js', out: 'index.bundle'},
     {in: 'src/worker.js', out: 'worker'},
-    {in: 'src/sharedWorker.ts', out: 'sharedWorker'}
+    {in: 'src/sharedWorker.ts', out: 'sharedWorker'},
+    {in: 'src/exported.js', out: 'export.bundle'}
   ],
   loader: {
     '.wasm': 'file'

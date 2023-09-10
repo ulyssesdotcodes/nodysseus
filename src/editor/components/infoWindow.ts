@@ -5,7 +5,8 @@ import { isNonNullChain } from "typescript";
 import generic from "../../generic";
 import {NodysseusError, nolib} from "../../nodysseus"
 import { d3Link, d3Node, d3NodeNode, HyperappState, Vector2 } from "../types";
-import { ChangeEditingGraphId, Copy, CreateNode, CreateRef, DeleteNode, ExpandContract, hlib, middleware, node_args, Paste, run_h, SaveGraph, SelectNode, UpdateEdge, UpdateNode, UpdateNodeEffect } from "../util";
+import { ChangeEditingGraphId, Copy, CreateNode, CreateRef, DeleteNode, ExpandContract, hlib, node_args, Paste, run_h, SaveGraph, SelectNode, UpdateEdge, UpdateNode, UpdateNodeEffect } from "../util";
+import { middleware } from "../hyperapp";
 
 export const info_display = html_id => ha.app({
     init: {el: {dom_type: 'div', props: {}, children: []}},

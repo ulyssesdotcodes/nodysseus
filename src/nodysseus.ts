@@ -1772,8 +1772,8 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
             const ng_self = (fn || nodevalue)?.includes('.')
               ? (_lib.data ?? _lib).no.nodysseus_get(self, (fn || nodevalue).substring(0, (fn || nodevalue).lastIndexOf('.')), (_lib.data ?? _lib)) 
               : self;
-            const parameters = typeof ng_fn === "function" ? (_lib.data ?? _lib).extern.functionParameters.fn(ng_fn) : []
             if (_output === "metadata"){
+              const parameters = typeof ng_fn === "function" ? (_lib.data ?? _lib).extern.functionParameters.fn(ng_fn) : []
               return {
                 values: self && typeof self === "object" ? getPrototypeChainMethods(self) : [],
                 parameters
