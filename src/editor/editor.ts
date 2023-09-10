@@ -275,7 +275,15 @@ const runapp = (init, _lib) => {
                   code_editor: s.code_editor,
                   code_editor_nodeid: s.code_editor_nodeid
                 }],
-                () => {location.search = s.norun ? "" : "?norun=true" }
+                () => {
+                  const params = new URLSearchParams(location.search);
+                  if(params.get("norun") === "true") {
+                    params.delete("norun");
+                  } else {
+                    params.set("norun", "true")
+                  }
+                  location.search = params.toString();
+                }
               ]
             }, [ha.text(s.norun ? 'play_arrow' : 'pause')]),
             ha.h('span', {

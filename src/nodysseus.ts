@@ -373,7 +373,7 @@ const createGraphFunctorRunnable = (graph: ConstRunnable, parameters: ConstRunna
     : lib.data.no.of({
     __kind: FUNCTOR,
     paramters: params ? [...new Set(params.value ? Object.keys(params.value).map(k => k.includes(".") ? k.substring(0, k.indexOf('.')) : k): [])] : [],
-    env: combineEnv(new Map(), graph.env, graphid, resultOutput.value),
+    env: newEnv(new Map([["__graphid", lib.data.no.of(resultGraph.value)]]), resultOutput.value),
     graph: resultGraph.value,
     fn: resultGraph.value.out ?? "out",
     lib
