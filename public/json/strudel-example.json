@@ -2,6 +2,187 @@
   "state": {},
   "graphs": [
     {
+      "edges": {
+        "oyvi131": {
+          "as": "value",
+          "from": "oyvi131",
+          "to": "gh0zhhd"
+        },
+        "6g7czys": {
+          "as": "value",
+          "from": "6g7czys",
+          "to": "oyvi131"
+        },
+        "cqgt8q8": {
+          "as": "webaudio",
+          "from": "cqgt8q8",
+          "to": "6g7czys"
+        },
+        "hrcfcz5": {
+          "as": "mini",
+          "from": "hrcfcz5",
+          "to": "6g7czys"
+        },
+        "nkw80ry": {
+          "as": "core",
+          "from": "nkw80ry",
+          "to": "6g7czys"
+        }
+      },
+      "id": "@strudel.lib",
+      "name": "@strudel.lib",
+      "nodes": {
+        "gh0zhhd": {
+          "id": "gh0zhhd",
+          "name": "@strudel.lib",
+          "ref": "return"
+        },
+        "oyvi131": {
+          "id": "oyvi131",
+          "ref": "@memory.cache"
+        },
+        "6g7czys": {
+          "id": "6g7czys",
+          "ref": "@js.script",
+          "value": "webaudio.registerSynthSounds();\nconst initAudio = webaudio.initAudioOnFirstClick();\nconst loadModules = core.evalScope(\n  core.controls, \n  core, \n  webaudio,\n  mini\n)\nconst ctx = webaudio.getAudioContext();\nwebaudio.samples('github:tidalcycles/Dirt-Samples/master')\nconst { scheduler } = core.repl({\n  defaultOutput: webaudio.webaudioOutput,\n  getTime: () => ctx.currentTime\n});\nreturn {loadModules, scheduler, core, initAudio, mini}"
+        },
+        "nkw80ry": {
+          "id": "nkw80ry",
+          "ref": "@js.import_module",
+          "value": "https://cdn.skypack.dev/@strudel.cycles/core"
+        },
+        "hrcfcz5": {
+          "id": "hrcfcz5",
+          "ref": "@js.import_module",
+          "value": "https://cdn.skypack.dev/@strudel.cycles/mini"
+        },
+        "cqgt8q8": {
+          "id": "cqgt8q8",
+          "ref": "@js.import_module",
+          "value": "https://cdn.skypack.dev/@strudel.cycles/webaudio"
+        }
+      },
+      "out": "gh0zhhd",
+      "edges_in": {
+        "gh0zhhd": {
+          "oyvi131": {
+            "as": "value",
+            "from": "oyvi131",
+            "to": "gh0zhhd"
+          }
+        },
+        "oyvi131": {
+          "6g7czys": {
+            "as": "value",
+            "from": "6g7czys",
+            "to": "oyvi131"
+          }
+        },
+        "6g7czys": {
+          "cqgt8q8": {
+            "as": "webaudio",
+            "from": "cqgt8q8",
+            "to": "6g7czys"
+          },
+          "hrcfcz5": {
+            "as": "mini",
+            "from": "hrcfcz5",
+            "to": "6g7czys"
+          },
+          "nkw80ry": {
+            "as": "core",
+            "from": "nkw80ry",
+            "to": "6g7czys"
+          }
+        },
+        "nkw80ry": {},
+        "hrcfcz5": {},
+        "cqgt8q8": {}
+      }
+    },
+    {
+      "category": "templates",
+      "edges": {
+        "d11fluo": {
+          "as": "value",
+          "from": "d11fluo",
+          "to": "out"
+        },
+        "np7ly3o": {
+          "as": "args",
+          "from": "np7ly3o",
+          "to": "d11fluo"
+        },
+        "output_val": {
+          "as": "self",
+          "from": "output_val",
+          "to": "d11fluo"
+        },
+        "h1g356p": {
+          "as": "arg0",
+          "from": "h1g356p",
+          "to": "np7ly3o"
+        }
+      },
+      "id": "@strudel.mini",
+      "nodes": {
+        "out": {
+          "id": "out",
+          "name": "@strudel.mini",
+          "ref": "return"
+        },
+        "d11fluo": {
+          "id": "d11fluo",
+          "ref": "@js.call"
+        },
+        "output_val": {
+          "id": "output_val",
+          "ref": "arg",
+          "value": "_lib.strudel.mini.mini"
+        },
+        "np7ly3o": {
+          "id": "np7ly3o",
+          "ref": "@data.array"
+        },
+        "h1g356p": {
+          "id": "h1g356p",
+          "ref": "arg",
+          "value": "__graph_value"
+        }
+      },
+      "out": "out",
+      "edges_in": {
+        "out": {
+          "d11fluo": {
+            "as": "value",
+            "from": "d11fluo",
+            "to": "out"
+          }
+        },
+        "d11fluo": {
+          "np7ly3o": {
+            "as": "args",
+            "from": "np7ly3o",
+            "to": "d11fluo"
+          },
+          "output_val": {
+            "as": "self",
+            "from": "output_val",
+            "to": "d11fluo"
+          }
+        },
+        "output_val": {},
+        "np7ly3o": {
+          "h1g356p": {
+            "as": "arg0",
+            "from": "h1g356p",
+            "to": "np7ly3o"
+          }
+        },
+        "h1g356p": {}
+      }
+    },
+    {
       "category": "templates",
       "edges": {
         "args": {
@@ -149,6 +330,199 @@
           "from": "ndgg4kq",
           "to": "5x217tf"
         }
+      },
+      "edges_in": {
+        "out": {
+          "args": {
+            "as": "args",
+            "from": "args",
+            "to": "out"
+          },
+          "n0pw8bg": {
+            "as": "lib",
+            "from": "n0pw8bg",
+            "to": "out"
+          },
+          "oacpf32": {
+            "as": "subscribe",
+            "from": "oacpf32",
+            "to": "out"
+          },
+          "tg5essa": {
+            "as": "display",
+            "from": "tg5essa",
+            "to": "out"
+          }
+        },
+        "tg5essa": {},
+        "oacpf32": {
+          "2vnduqy": {
+            "as": "graphchange",
+            "from": "2vnduqy",
+            "to": "oacpf32"
+          }
+        },
+        "2vnduqy": {},
+        "n0pw8bg": {
+          "gh0zhhd": {
+            "as": "strudel",
+            "from": "gh0zhhd",
+            "to": "n0pw8bg"
+          }
+        },
+        "gh0zhhd": {},
+        "args": {
+          "6nh2e2f": {
+            "as": "isPlaying",
+            "from": "6nh2e2f",
+            "to": "args"
+          },
+          "zu1315o": {
+            "as": "evalTidal",
+            "from": "zu1315o",
+            "to": "args"
+          }
+        },
+        "zu1315o": {
+          "8c3kr5m": {
+            "as": "fn",
+            "from": "8c3kr5m",
+            "to": "zu1315o"
+          }
+        },
+        "8c3kr5m": {
+          "09r0lic": {
+            "as": "scheduler",
+            "from": "09r0lic",
+            "to": "8c3kr5m"
+          },
+          "q7iogdh": {
+            "as": "pattern",
+            "from": "q7iogdh",
+            "to": "8c3kr5m"
+          }
+        },
+        "q7iogdh": {
+          "ib1o762": {
+            "as": "args",
+            "from": "ib1o762",
+            "to": "q7iogdh"
+          },
+          "zozybkk": {
+            "as": "self",
+            "from": "zozybkk",
+            "to": "q7iogdh"
+          }
+        },
+        "zozybkk": {
+          "a9nl4h4": {
+            "as": "args",
+            "from": "a9nl4h4",
+            "to": "zozybkk"
+          },
+          "bwo16lt": {
+            "as": "self",
+            "from": "bwo16lt",
+            "to": "zozybkk"
+          }
+        },
+        "bwo16lt": {
+          "5x217tf": {
+            "as": "args",
+            "from": "5x217tf",
+            "to": "bwo16lt"
+          },
+          "vdf5cue": {
+            "as": "self",
+            "from": "vdf5cue",
+            "to": "bwo16lt"
+          }
+        },
+        "vdf5cue": {
+          "0oi3mhn": {
+            "as": "args",
+            "from": "0oi3mhn",
+            "to": "vdf5cue"
+          },
+          "iswjcbp": {
+            "as": "self",
+            "from": "iswjcbp",
+            "to": "vdf5cue"
+          }
+        },
+        "iswjcbp": {
+          "1khcqlv": {
+            "as": "self",
+            "from": "1khcqlv",
+            "to": "iswjcbp"
+          },
+          "eo438fo": {
+            "as": "args",
+            "from": "eo438fo",
+            "to": "iswjcbp"
+          }
+        },
+        "eo438fo": {},
+        "1khcqlv": {
+          "3n4sqj3": {
+            "as": "args",
+            "from": "3n4sqj3",
+            "to": "1khcqlv"
+          },
+          "5e3sym3": {
+            "as": "self",
+            "from": "5e3sym3",
+            "to": "1khcqlv"
+          }
+        },
+        "5e3sym3": {
+          "pwa3cqd": {
+            "as": "args",
+            "from": "pwa3cqd",
+            "to": "5e3sym3"
+          },
+          "yb0g0u1": {
+            "as": "self",
+            "from": "yb0g0u1",
+            "to": "5e3sym3"
+          }
+        },
+        "yb0g0u1": {
+          "pxhi2ap": {
+            "as": "value",
+            "from": "pxhi2ap",
+            "to": "yb0g0u1"
+          }
+        },
+        "pxhi2ap": {},
+        "pwa3cqd": {},
+        "3n4sqj3": {},
+        "0oi3mhn": {
+          "fsohrh3": {
+            "as": "arg0",
+            "from": "fsohrh3",
+            "to": "0oi3mhn"
+          },
+          "ne4oux4": {
+            "as": "arg1",
+            "from": "ne4oux4",
+            "to": "0oi3mhn"
+          }
+        },
+        "ne4oux4": {},
+        "fsohrh3": {},
+        "5x217tf": {
+          "ndgg4kq": {
+            "as": "arg0",
+            "from": "ndgg4kq",
+            "to": "5x217tf"
+          }
+        },
+        "ndgg4kq": {},
+        "a9nl4h4": {},
+        "ib1o762": {},
+        "09r0lic": {},
+        "6nh2e2f": {}
       },
       "id": "strudel_example",
       "nodes": {
@@ -660,121 +1034,6 @@
         "6nh2e2f": {
           "id": "6nh2e2f",
           "ref": "@memory.refval"
-        }
-      },
-      "out": "out"
-    },
-    {
-      "edges": {
-        "oyvi131": {
-          "as": "value",
-          "from": "oyvi131",
-          "to": "gh0zhhd"
-        },
-        "6g7czys": {
-          "as": "value",
-          "from": "6g7czys",
-          "to": "oyvi131"
-        },
-        "cqgt8q8": {
-          "as": "webaudio",
-          "from": "cqgt8q8",
-          "to": "6g7czys"
-        },
-        "hrcfcz5": {
-          "as": "mini",
-          "from": "hrcfcz5",
-          "to": "6g7czys"
-        },
-        "nkw80ry": {
-          "as": "core",
-          "from": "nkw80ry",
-          "to": "6g7czys"
-        }
-      },
-      "id": "@strudel.lib",
-      "name": "@strudel.lib",
-      "nodes": {
-        "gh0zhhd": {
-          "id": "gh0zhhd",
-          "name": "@strudel.lib",
-          "ref": "return"
-        },
-        "oyvi131": {
-          "id": "oyvi131",
-          "ref": "@memory.cache"
-        },
-        "6g7czys": {
-          "id": "6g7czys",
-          "ref": "@js.script",
-          "value": "webaudio.registerSynthSounds();\nconst initAudio = webaudio.initAudioOnFirstClick();\nconst loadModules = core.evalScope(\n  core.controls, \n  core, \n  webaudio,\n  mini\n)\nconst ctx = webaudio.getAudioContext();\nwebaudio.samples('github:tidalcycles/Dirt-Samples/master')\nconst { scheduler } = core.repl({\n  defaultOutput: webaudio.webaudioOutput,\n  getTime: () => ctx.currentTime\n});\nreturn {loadModules, scheduler, core, initAudio, mini}"
-        },
-        "nkw80ry": {
-          "id": "nkw80ry",
-          "ref": "@js.import_module",
-          "value": "https://cdn.skypack.dev/@strudel.cycles/core"
-        },
-        "hrcfcz5": {
-          "id": "hrcfcz5",
-          "ref": "@js.import_module",
-          "value": "https://cdn.skypack.dev/@strudel.cycles/mini"
-        },
-        "cqgt8q8": {
-          "id": "cqgt8q8",
-          "ref": "@js.import_module",
-          "value": "https://cdn.skypack.dev/@strudel.cycles/webaudio"
-        }
-      },
-      "out": "gh0zhhd"
-    },
-    {
-      "category": "templates",
-      "edges": {
-        "d11fluo": {
-          "as": "value",
-          "from": "d11fluo",
-          "to": "out"
-        },
-        "np7ly3o": {
-          "as": "args",
-          "from": "np7ly3o",
-          "to": "d11fluo"
-        },
-        "output_val": {
-          "as": "self",
-          "from": "output_val",
-          "to": "d11fluo"
-        },
-        "h1g356p": {
-          "as": "arg0",
-          "from": "h1g356p",
-          "to": "np7ly3o"
-        }
-      },
-      "id": "@strudel.mini",
-      "nodes": {
-        "out": {
-          "id": "out",
-          "name": "@strudel.mini",
-          "ref": "return"
-        },
-        "d11fluo": {
-          "id": "d11fluo",
-          "ref": "@js.call"
-        },
-        "output_val": {
-          "id": "output_val",
-          "ref": "arg",
-          "value": "_lib.strudel.mini.mini"
-        },
-        "np7ly3o": {
-          "id": "np7ly3o",
-          "ref": "@data.array"
-        },
-        "h1g356p": {
-          "id": "h1g356p",
-          "ref": "arg",
-          "value": "__graph_value"
         }
       },
       "out": "out"
