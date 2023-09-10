@@ -78,7 +78,7 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib, graphid: string = "", 
                   const extern = nodysseus_get(lib.data, noderef.value, lib)
                   const varset = []
               const externArgs: Array<[string, TypedArg]>  = Array.isArray(extern.args) ? extern.args.map(rawa =>
-                rawa.includes(':') ? rawa.substring(0, rawa.indexOf(':')) : rawa) : 
+                [rawa.includes(':') ? rawa.substring(0, rawa.indexOf(':')) : rawa, "any"]) : 
                   Object.entries(extern.args);
               externArgs.forEach(([a, argType]: [string, TypedArg]): void => {
                     if(a === "__graph_value" || a === "_node") {
