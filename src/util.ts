@@ -273,8 +273,25 @@ export const mergeEnv = (data: Args, env: Env): Env => {
 export const newLib = (data): Lib => ({__kind: "lib", data})
 export const mergeLib = (a: Record<string, any> | Lib, b: Lib): Lib => (a ? {
   __kind: "lib",
-  data: Object.assign({}, isLib(a) ? isArgs(a.data) ? Object.fromEntries(a.data) : a.data : isArgs(a) ? Object.fromEntries(a) : a, b.data)
+  data: a.data && b.data ? mergeDeep(a.data, b.data) : a.data ?? b.data
 }: b)
+
+const MERGE_KEYS = ["extern"]
+
+const mergeDeep = (a: Record<string, unknown>, b: Record<string, unknown>) => {
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+
+  return aKeys.concat(bKeys).reduce((acc, key) => acc[key] 
+    ? acc 
+    : {...acc, [key]: 
+      MERGE_KEYS.includes(key) && typeof a[key] === "object" && typeof b[key] === "object" 
+      ? mergeDeep(a[key] as Record<string, unknown>, b[key] as Record<string, unknown>) 
+      : a[key] ?? b[key]
+    },
+    {}
+  )
+}
 
 export const runnableId = (runnable: Runnable) => isConstRunnable(runnable) ? `${runnable.graph}/${runnable.fn}` : false;
 

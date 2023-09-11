@@ -7,7 +7,6 @@ import { v4 as uuid } from "uuid";
 import { initListeners } from "./events";
 import { wrap } from "idb";
 import { parser } from "@lezer/javascript";
-import domTypes from "./html-dom-types.json";
 
 const generic_nodes = generic.nodes;
 
@@ -360,13 +359,13 @@ const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, param
     })).value
 
 const createGraphFunctorRunnable = (graph: ConstRunnable, parameters: ConstRunnable, lib: Lib, options: RunOptions, output: ConstRunnable, graphid: string): FunctorRunnable | Promise<FunctorRunnable> => 
-  (console.log("graph", graph), graph) && wrapPromiseAll([
+  graph && wrapPromiseAll([
     parameters && run_runnable(parameters, lib, undefined, options),
     graph && run_runnable(graph, lib, undefined, options),
     output && run_runnable(output, lib, undefined, options),
   ]).then<FunctorRunnable>(([params, resultGraph, resultOutput]: [Result, Result, Result]) => isError(params) 
     ? params 
-    : isError(resultGraph)
+    : isError(resultGraph) || !resultGraph.value
     ? resultGraph
     : isError(resultOutput)
     ? resultOutput
@@ -615,7 +614,7 @@ const run_functor_runnable = (runnable: FunctorRunnable, args: Args, lib: Lib, o
     env: combineEnv((execArgs ?? new Map()).set("__graphid", runnable.env.data.get("__graphid")), runnable.env, runnable.fn, runnable.env._output),
     fn: runnable.fn,
     graph: runnable.graph,
-    lib: runnable.lib
+    lib: mergeLib(runnable.lib, lib)
   }
   return run_runnable(newRunnable, lib, undefined, options)
 }
@@ -669,7 +668,7 @@ export const run = (node: Runnable | InputRunnable, args: ResolvedArgs | Record<
   initStore(options.store ?? nodysseus);
 
   let _lib: Lib = mergeLib(options.lib, newLib(nolib))
-  const nodeGraph = getRunnableGraph(node, _lib);
+  return wrapPromise(getRunnableGraph(node, _lib)).then(nodeGraph => {
   const cachedGraphLib = nodeGraph && nodysseus.state.get(`${nodeGraph.id}-lib`);
   if(cachedGraphLib) {
     _lib = mergeLib(cachedGraphLib, _lib);
@@ -708,6 +707,7 @@ export const run = (node: Runnable | InputRunnable, args: ResolvedArgs | Record<
   return wrapPromise(res)
     .then(r => isValue(r) ? r?.value : r)
     .then(v => (options.profile && console.log(JSON.stringify(options.timings, null, 2)), isArgs(v) ? Object.fromEntries(v) : v)).value;
+  }).value;
 }
 
 const runtimefn = () => {
@@ -1123,7 +1123,6 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     wrapPromise,
     runtimefn,
   },
-  domTypes,
   extern: {
     // runGraph: F<A> => A
     ap: {
@@ -1523,6 +1522,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
             runnable.lib = _lib;
           }
 
+
           const runedgeresult = run_runnable(runnable, _lib, undefined, options)
             // edgemap[runedge]
             // ? run_runnable(edgemap[runedge], _lib, Object.assign(
@@ -1563,9 +1563,9 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
             .then(libr => (libr && `${lib.graph.id}/${lib.graph.out ?? "out"}` === graphid && nodysseus.state.set(`${lib.graph.id}-lib`, libr), libr))
             .then(libr => wrapPromise(argsfn ? run_runnable({
                 ...argsfn,
-                lib: mergeLib(libr, _lib)
+                lib: mergeLib(newLib(libr), _lib)
               }, _lib, undefined, {...options, isNoResolve: true, resolvePromises: true}) : undefined)
-              .then(args => return_result(mergeLib(libr, _lib), isValue(args) ? args?.value : args))).value
+              .then(args => return_result(mergeLib(newLib(libr), _lib), isValue(args) ? args?.value : args))).value
         return ret;
       },
     },
@@ -1967,26 +1967,6 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
         .filter(kv => kv[0] !== "target")
         .forEach(([k, fn]: [string, Runnable]) => target[k] = event => fn && run_runnable(fn, lib, new Map().set("event", event)))
         return target;
-      }
-    },
-    functionParameters: {
-      args:["fn"],
-      fn: (fn) => {
-        const fnstring = fn.toString();
-        // hacky: return the first set of parameters we find
-        let foundParams = false, pastParams = false;
-        const args = [];
-        parser.parse(fnstring).iterate({
-          enter: syntaxNode => {
-            if(!pastParams && syntaxNode.matchContext(["ParamList"]) && syntaxNode.name === "VariableDefinition" && !syntaxNode.matchContext(["Arrow"])) {
-              foundParams = true;
-              args.push(fnstring.substring(syntaxNode.from, syntaxNode.to))
-            } else if (!pastParams && foundParams && !syntaxNode.matchContext(["ParamList"])) {
-              pastParams = true;
-            }
-          }
-        })
-        return args;
       }
     },
     data: {

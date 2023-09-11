@@ -261,7 +261,7 @@ const idFromNode = (node: d3NodeNode | string | number): string => typeof node =
 export const d3subscription = (dispatch: ha.Dispatch<HyperappState>, props) => {
     const nodySim: NodysseusSimulation = {
       selectedOffset: {x: 0, y: 0},
-      simulation: hlib.d3.forceSimulation<d3Node>()
+      simulation: hlib.d3.forceSimulation()
         .force('charge', hlib.d3.forceManyBody().strength(-1024).distanceMax(1024).distanceMin(64))
         .force('collide', hlib.d3.forceCollide(64))
         .force('links', hlib.d3

@@ -10,6 +10,8 @@ import AutocompleteList from "./autocomplete";
 import { parser } from "@lezer/javascript";
 import {v4 as uuid} from "uuid";
 import { middleware, runh } from "./hyperapp";
+import { merge } from "@automerge/automerge";
+import domTypes from "../html-dom-types.json";
 
 export const EXAMPLES = ["threejs_example", "hydra_example", "threejs_boilerplate", "threejs_force_attribute_example", "threejs_node_example", "threejs_compute_example", "strudel_example"];
 
@@ -914,8 +916,7 @@ export const graphEdgesIn = (graph: Graph, node: string) =>
     : Object.values(graph.edges).filter(e => e.to === node);
 
 
-export const hlib = {
-    ...nolib,
+export const hlibLib = mergeLib(nolibLib, newLib({
     ha: { 
         middleware, 
         h: {
@@ -928,7 +929,7 @@ export const hlib = {
     panzoom: pzobj,
     run: (graph, fn, args?, lib?, options?) => {
       try{
-        const result = run({graph: typeof graph === "string" ? graph : graph.id, fn, lib: lib ? {...hlib, ...lib} : hlib}, isArgs(args) ? args : args ? new Map(Object.entries(args)) : new Map(), options)
+        const result = run({graph: typeof graph === "string" ? graph : graph.id, fn, lib: mergeLib(newLib(lib), hlibLib)}, isArgs(args) ? args : args ? new Map(Object.entries(args)) : new Map(), options)
         if(ispromise(result)){
           return result.catch(e => console.error(e));
         }
@@ -947,8 +948,30 @@ export const hlib = {
         fn: runnable.fn, 
         env: {data: args}
       }, transferrableObjects));
+    },
+    domTypes,
+    extern: {
+      functionParameters: {
+        args:["fn"],
+        fn: (fn) => {
+          const fnstring = fn.toString();
+          // hacky: return the first set of parameters we find
+          let foundParams = false, pastParams = false;
+          const args = [];
+          parser.parse(fnstring).iterate({
+            enter: syntaxNode => {
+              if(!pastParams && syntaxNode.matchContext(["ParamList"]) && syntaxNode.name === "VariableDefinition" && !syntaxNode.matchContext(["Arrow"])) {
+                foundParams = true;
+                args.push(fnstring.substring(syntaxNode.from, syntaxNode.to))
+              } else if (!pastParams && foundParams && !syntaxNode.matchContext(["ParamList"])) {
+                pastParams = true;
+              }
+            }
+          })
+          return args;
+        }
+      }
     }
-}
+}));
 
-export const hlibLib = newLib(hlib);
-
+export const hlib = hlibLib.data;
