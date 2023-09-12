@@ -290,7 +290,21 @@ export const webClientStore = async (refStore: (idb: IDBPDatabase<NodysseusStore
 
 export const objectRefStore = (graphs: Record<string, Graph>): Promise<RefStore> => {
   return Promise.resolve({
-    get: graphId => generic_nodes[graphId] ?? graphs[graphId],
+    get: graphId => {
+      if(generic_nodes[graphId]) return generic_nodes[graphId];
+      const graph = graphs[graphId];
+      if(graph && !graph.edges_in) {
+        graph.edges_in = {};
+        Object.values(graph.edges).forEach(edge => {
+          if(graph.edges_in[edge.to] ) {
+            graph.edges_in[edge.to][edge.from] = {...edge};
+          } else {
+            graph.edges_in[edge.to] = {[edge.from]: {...edge}}
+          }
+        }) 
+      }
+      return graph;
+    },
     set: (id, data) => {
       graphs[id] = data;
       return data;
@@ -298,7 +312,12 @@ export const objectRefStore = (graphs: Record<string, Graph>): Promise<RefStore>
     keys: () => Object.keys(generic_nodes).concat(Object.keys(graphs)),
     delete: (id: string) => { throw new Error("not implemented") },
     clear: () => {throw new Error("not implemented")},
-    addFromUrl: (url: string) => {throw new Error("not implemented")},
+    addFromUrl: (url: string) => fetch(url)
+      .then(res => res.json())
+      .then(refsToAdd => Promise.all(refsToAdd.map((ref: Graph) => {
+        graphs[ref.id] = ref;
+        return ref;
+      })).then(gs => gs)),
     add_node: () => {throw new Error("not implemented")},
     add_edge: () => {throw new Error("not implemented")},
     remove_node: () => {throw new Error("not implemented")},

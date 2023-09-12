@@ -75,7 +75,7 @@ const ctx = await esbuild.context({
     {in: 'src/index.js', out: 'index.bundle'},
     {in: 'src/worker.js', out: 'worker'},
     {in: 'src/sharedWorker.ts', out: 'sharedWorker'},
-    {in: 'src/exported.js', out: 'export.bundle'}
+    {in: 'src/browser-esm.js', out: 'browser-esm'}
   ],
   loader: {
     '.wasm': 'file'
