@@ -448,7 +448,7 @@ export const UpdateNodeEffect: ha.Effecter<HyperappState, {editingGraph: Graph, 
         } 
       });
 
-      dispatch(s => ({...s, selectedMetadata: metadata}))
+      dispatch(s => [{...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: node.id}]])
     })
 }
 
@@ -796,7 +796,7 @@ const parseTypedArg = (value: string): [string, TypedArg] => {
 export const CalculateSelectedNodeArgsEffect: ha.Effecter<HyperappState, {graph: Graph, node_id: string}> = 
   (dispatch, {graph, node_id}) => wrapPromise(node_args(nolib, graph, node_id )).then(nodeArgs => dispatch(s => ({
     ...s,
-    selectedNodeArgs: nodeArgs.nodeArgs,
+    selectedNodeArgs: (console.log("calculating", nodeArgs.nodeArgs), nodeArgs.nodeArgs),
     selectedNodeEdgeLabels: nodeArgs.nodeOutArgs?.map(a => a.name) ?? []
   }))).value
 
