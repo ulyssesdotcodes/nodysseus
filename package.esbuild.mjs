@@ -4,10 +4,12 @@ import fs from "node:fs";
 
 const result = await esbuild.build({
   entryPoints: [
+    {in: 'src/nodysseus.ts', out: 'nodysseus'},
+    {in: 'src/editor/hyperapp.ts', out: 'graphDisplay'},
     {in: 'src/index.js', out: 'index.bundle'},
     {in: 'src/worker.js', out: 'worker'},
     {in: 'src/sharedWorker.js', out: 'sharedWorker'},
-    {in: 'src/exported.js', out: 'exported.bundle'}
+    {in: 'src/browser-esm.js', out: 'browser-esm'}
   ],
   metafile: true,
   bundle: true,
@@ -17,7 +19,8 @@ const result = await esbuild.build({
   target: 'es2022',
   format: 'esm',
   minify: true,
-  drop: ['console']
+  drop: ['console'],
+  splitting: true
 })
 
 fs.writeFileSync('meta.json', JSON.stringify(result.metafile))

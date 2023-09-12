@@ -3,6 +3,7 @@ node_modules
 log.txt
 public/*.bundle.js
 public/*.wasm
+public/*.js
 public/index.js
 public/worker.js
 public/sharedWorker.js

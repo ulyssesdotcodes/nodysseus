@@ -3,6 +3,12 @@
   "description": "A generic node-based editor. Built with hyperapp.",
   "version": "1.0.38",
   "type": "module",
+  "exports": {
+    ".": {
+      "import": "./public/nodysseus.js"
+    },
+    "./browser-esm.js": "./public/browser-esm.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+ssh://git@gitlab.com/ulysses.codes/nodysseus.git"
