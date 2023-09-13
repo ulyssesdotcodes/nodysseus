@@ -1,8 +1,8 @@
 import * as ha from "hyperapp"
-import { nolib, nolibLib, run } from "src/nodysseus";
+import { nolib, nolibLib, run } from "src/nodysseus.js";
 
-import { isRunnable } from "src/types";
-import { ispromise, mergeLib, newLib } from "src/util";
+import { isRunnable } from "src/types.js";
+import { ispromise, mergeLib, newLib } from "src/util.js";
 
 export const runh = el => el.d && el.p && el.c && ha.h(el.d, el.p, el.c);
 

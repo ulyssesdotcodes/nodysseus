@@ -1,6 +1,6 @@
 import loki from "lokijs";
-import { mapStore } from "./nodysseus";
-import { Graph, LokiT, NodysseusStore, Store } from "./types";
+import { mapStore } from "./nodysseus.js";
+import { Graph, LokiT, NodysseusStore, Store } from "./types.js";
 
 export const lokidbToStore = <T>(collection: loki.Collection<LokiT<T>>): Store<T> => ({
   set: (id: string, data: T) => {

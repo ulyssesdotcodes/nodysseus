@@ -1,16 +1,14 @@
 import * as Automerge from "@automerge/automerge";
 import { decodeSyncState, encodeSyncState, PatchCallback } from "@automerge/automerge";
 import { IDBPDatabase } from "idb";
-import { Graph, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode, NodysseusStoreTypes, RefNode, RefStore } from "src/types";
-import { ancestor_graph, wrapPromise } from "src/util";
-import categoryChanges from "../../public/categoryChanges.json"
-import { initgraph } from "./initgraph";
-import generic from "../generic";
-import { compare, nolib, nolibLib } from "src/nodysseus";
-import { hlibLib } from "./util";
-import {addNode, addNodesEdges, removeNode, removeEdge, addEdge} from "./store";
+import { Graph, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode, NodysseusStoreTypes, RefNode, RefStore } from "src/types.js";
+import { ancestor_graph, wrapPromise } from "src/util.js";
+import { initgraph } from "./initgraph.js";
+import generic from "../generic.js";
+import { compare, nolib, nolibLib } from "src/nodysseus.js";
+import { hlibLib } from "./util.js";
+import {addNode, addNodesEdges, removeNode, removeEdge, addEdge} from "./store.js";
 import {v4 as uuid, parse as uuidparse, stringify as uuidstringify} from "uuid";
-import { SharedWorkerMessageFrom, SharedWorkerMessageTo } from "./types";
 import custom_editor from "../custom_editor.json"
 
 const generic_nodes = generic.nodes;
@@ -18,17 +16,6 @@ const generic_node_ids = new Set(Object.keys(generic_nodes));
 
 // hacky global
 let syncWS: WebSocket;
-
-const migrateCategories = (doc: Automerge.Doc<Graph>) => {
-  if(!doc.nodes) return;
-
-  Object.entries(doc.nodes).forEach(([k, n]) => {
-    if(isNodeRef(doc.nodes[k]) && categoryChanges[(doc.nodes[k] as RefNode).ref] ) {
-      const ref = (doc.nodes[k] as RefNode).ref;
-      (doc.nodes[k] as RefNode).ref =  `@${categoryChanges[ref]}.${ref}`;
-    }
-  })
-}
 
 export const automergeRefStore = async ({nodysseusidb, persist = false, graphChangeCallback} : {
   persist: boolean, 

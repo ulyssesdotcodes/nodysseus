@@ -1,11 +1,11 @@
 import { IDBPDatabase, openDB, wrap } from "idb";
-import generic from "../generic";
-import { mapStore, nolib, nolibLib} from "../nodysseus";
-import { Edge, EdgeNoAs, EdgesIn, Graph, GraphNode, isEdgesInGraph, isNodeRef, NodysseusNode, NodysseusStore, NodysseusStoreTypes, RefNode, RefStore, Store, ValueNode } from "../types";
-import { wrapPromise } from "../util";
+import generic from "../generic.js";
+import { mapStore, nolib, nolibLib} from "../nodysseus.js";
+import { Edge, EdgeNoAs, EdgesIn, Graph, GraphNode, isEdgesInGraph, isNodeRef, NodysseusNode, NodysseusStore, NodysseusStoreTypes, RefNode, RefStore, Store, ValueNode } from "../types.js";
+import { wrapPromise } from "../util.js";
 import {v4 as uuid} from "uuid";
 
-import {  expectSharedWorkerMessageResponse, RespondableSharedWorkerMessage, RespondableSharedWorkerMessageData, SharedWorkerMessageFrom, SharedWorkerMessageKind, SharedWorkerMessageTo, TRespondableSharedWorkerMessage, TSharedWorkerMessageFrom, TSharedWorkerMessageTo, TSharedWorkerMessageToData } from "./types";
+import {  expectSharedWorkerMessageResponse, RespondableSharedWorkerMessage, RespondableSharedWorkerMessageData, SharedWorkerMessageFrom, SharedWorkerMessageKind, SharedWorkerMessageTo, TRespondableSharedWorkerMessage, TSharedWorkerMessageFrom, TSharedWorkerMessageTo, TSharedWorkerMessageToData } from "./types.js";
 
 const generic_nodes = generic.nodes;
 const generic_node_ids = new Set(Object.keys(generic_nodes));
@@ -288,8 +288,8 @@ export const webClientStore = async (refStore: (idb: IDBPDatabase<NodysseusStore
   }
 }
 
-export const objectRefStore = (graphs: Record<string, Graph>): Promise<RefStore> => {
-  return Promise.resolve({
+export const objectRefStore = (graphs: Record<string, Graph>): RefStore => {
+  return {
     get: graphId => {
       if(generic_nodes[graphId]) return generic_nodes[graphId];
       const graph = graphs[graphId];
@@ -325,5 +325,5 @@ export const objectRefStore = (graphs: Record<string, Graph>): Promise<RefStore>
     undo: () => {throw new Error("not implemented")},
     redo: () => {throw new Error("not implemented")},
     add_nodes_edges: () => {throw new Error("not implemented")},
-  })
+  }
 }

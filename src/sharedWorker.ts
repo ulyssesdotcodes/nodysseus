@@ -1,11 +1,5 @@
-import {initStore} from "./nodysseus"
-// import {automergeRefStore, openNodysseusDB, webClientStore} from "./editor/store"
-// import { Graph, NodysseusStore } from "./types";
-// import { wrap } from "idb";
-import { SharedWorkerMessage, SharedWorkerMessageFrom, SharedWorkerMessageKind, SharedWorkerMessageTo } from "./editor/types";
-import { NodysseusStore, RefStore } from "./types";
-import { wrapPromise } from "./util";
-import { initPort, processMessage, SWState } from "./editor/store";
+import {initStore} from "./nodysseus.js"
+import { initPort, processMessage, SWState } from "./editor/store.js";
 
 // TODO: get/set have ids to give responses. whenever a graph is updated, send update to all clients
 
@@ -16,7 +10,7 @@ let ports: Array<MessagePort> = []
 
 self.onconnect = (e) => initPort(store, ports, e.ports[0])
 
-Promise.all([import("./editor/store"), import("./editor/automergeStore")]).then(([{webClientStore}, {automergeRefStore}]) => {
+Promise.all([import("./editor/store.js"), import("./editor/automergeStore.js")]).then(([{webClientStore}, {automergeRefStore}]) => {
   webClientStore(nodysseusidb => automergeRefStore({
     nodysseusidb, 
     persist: true, 

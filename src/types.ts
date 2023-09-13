@@ -145,7 +145,7 @@ export const isValue = (r: Runnable): r is NonErrorResult => {
 export const isConstRunnable = (r: Runnable): r is ConstRunnable => !(r instanceof Error) && r?.__kind == CONST;
 export const isApRunnable = (r: Runnable): r is ApRunnable => !(r instanceof Error) && r?.__kind == AP;
 export const isFunctorRunnable = (r: Runnable): r is FunctorRunnable => !(r instanceof Error) && r?.__kind == FUNCTOR;
-export const isInputRunnable = (r: Runnable | InputRunnable) => !Object.hasOwn(r, "__kind") && Object.hasOwn(r, "fn") && Object.hasOwn(r, "graph")
+export const isInputRunnable = (r: Runnable | InputRunnable): r is InputRunnable => !Object.hasOwn(r, "__kind") && Object.hasOwn(r, "fn") && Object.hasOwn(r, "graph")
 export const getRunnableGraph = (r: Runnable | InputRunnable, lib: Lib): Graph => typeof (r as BaseRunnable).graph === "string" ? lib.data.no.runtime.get_ref((r as BaseRunnable).graph) : (r as BaseRunnable).graph;
 export const getRunnableGraphId = (r: Runnable | InputRunnable, lib: Lib): string => typeof (r as BaseRunnable).graph === "string" ? ((r as BaseRunnable).graph as string) : ((r as BaseRunnable).graph as Graph).id; 
 
@@ -154,7 +154,7 @@ export type Lib = {
   data: Record<string, any>
 }
 
-export const isLib = (lib: any) => lib?.__kind === "lib";
+export const isLib = (lib: any): lib is Lib => lib?.__kind === "lib";
 
 export type Env = {
   __kind: "env",

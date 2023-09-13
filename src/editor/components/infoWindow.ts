@@ -1,12 +1,12 @@
 import * as ha from "hyperapp"
-import { Edge, Graph, isNodeGraph, isNodeRef, NodeArg, NodeMetadata, NodysseusNode, RefNode, ValueNode } from "src/types";
-import { create_randid, wrapPromise } from "src/util";
+import { Edge, Graph, isNodeGraph, isNodeRef, NodeArg, NodeMetadata, NodysseusNode, RefNode, ValueNode } from "src/types.js";
+import { create_randid, wrapPromise } from "src/util.js";
 import { isNonNullChain } from "typescript";
-import generic from "../../generic";
-import {NodysseusError, nolib} from "../../nodysseus"
-import { d3Link, d3Node, d3NodeNode, HyperappState, Vector2 } from "../types";
-import { ChangeEditingGraphId, Copy, CreateNode, CreateRef, DeleteNode, ExpandContract, hlib, node_args, Paste, run_h, SaveGraph, SelectNode, UpdateEdge, UpdateNode, UpdateNodeEffect } from "../util";
-import { middleware } from "../hyperapp";
+import generic from "../../generic.js";
+import {NodysseusError, nolib} from "../../nodysseus.js"
+import { d3Link, d3Node, d3NodeNode, HyperappState, Vector2 } from "../types.js";
+import { ChangeEditingGraphId, Copy, CreateNode, CreateRef, DeleteNode, ExpandContract, hlib, node_args, Paste, run_h, SaveGraph, SelectNode, UpdateEdge, UpdateNode, UpdateNodeEffect } from "../util.js";
+import { middleware } from "../hyperapp.js";
 
 export const info_display = html_id => ha.app({
     init: {el: {dom_type: 'div', props: {}, children: []}},

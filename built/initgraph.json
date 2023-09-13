@@ -1,0 +1,50 @@
+{
+    "id": "helloWorld",
+    "out": "out",
+    "category": "templates",
+    "edges": {
+        "qgbinm2": {
+            "from": "qgbinm2",
+            "to": "8dy573e",
+            "as": "children"
+        },
+        "8dy573e": {
+            "from": "8dy573e",
+            "to": "out",
+            "as": "display"
+        },
+        "output_val": {
+            "from": "output_val",
+            "to": "out",
+            "as": "value"
+        },
+        "args": {
+            "from": "args",
+            "to": "out",
+            "as": "args"
+        }
+    },
+    "nodes": {
+        "args": {
+            "id": "args"
+        },
+        "qgbinm2": {
+            "id": "qgbinm2",
+            "value": "Hello, world!",
+            "ref": "@html.html_text"
+        },
+        "8dy573e": {
+            "id": "8dy573e",
+            "ref": "@html.html_element"
+        },
+        "output_val": {
+            "id": "output_val",
+            "value": "some output"
+        },
+        "out": {
+            "id": "out",
+            "ref": "return",
+            "name": "helloWorld"
+        }
+    }
+}

@@ -1,10 +1,10 @@
 import { ForceCenter, ForceCollide, ForceLink, ForceX, ForceY } from "d3-force";
 import * as ha from "hyperapp"
-import { hashcode, nolib } from "../../nodysseus";
-import { Graph, isNodeGraph, NodysseusNode } from "../../types";
-import { ispromise, wrapPromise } from "../../util";
-import { HyperappState, NodysseusForceLink, NodysseusSimulation, d3Link, d3Node, Vector2, isd3NodeNode, d3NodeNode, d3LinkNode, Property } from "../types";
-import { calculateLevels, CreateNode, findViewBox, hlib, pzobj, SelectNode, graphEdgeOut, graphEdgesIn, setRootNodeXNodeY } from "../util";
+import { hashcode, nolib } from "../../nodysseus.js";
+import { Graph, isNodeGraph, NodysseusNode } from "../../types.js";
+import { ispromise, wrapPromise } from "../../util.js";
+import { HyperappState, NodysseusForceLink, NodysseusSimulation, d3Link, d3Node, Vector2, isd3NodeNode, d3NodeNode, d3LinkNode, Property } from "../types.js";
+import { calculateLevels, CreateNode, findViewBox, hlib, pzobj, SelectNode, graphEdgeOut, graphEdgesIn, setRootNodeXNodeY } from "../util.js";
 
 export const UpdateSimulation: ha.Effecter<HyperappState, any>  = (dispatch, payload) => payload ? !(payload.simulation || payload.static) ? undefined : updateSimulationNodes(dispatch, payload) : dispatch(state => [state, [() => !(state.simulation) ? undefined : updateSimulationNodes(dispatch, state), undefined]])
 
@@ -230,14 +230,13 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
         const logmaxparents = maxparents === 1 ? nodes.length : Math.log(nodes.length) / Math.log(1 + avgparents);
 
         (data.simulation.simulation.force('link_direction') as ForceY<d3Node>)
-            .y(n =>
-                isd3NodeNode(n) 
-                ? (((parents_map.get(n.node_id)?.length > 0 ? 1 : 0)
+            .y((n: d3NodeNode) =>
+                (((parents_map.get(n.node_id)?.length > 0 ? 1 : 0)
                     + (children_map.has(n.node_id) ? -1 : 0)
                     // + (parents_map.get(children_map.get(main_node_map.get(n.to))[0])?.length ?? 0)
                     + (children_map.has(n.node_id) ? -1 : 0))
                     * (logmaxparents + 3) + .5) * window.innerHeight
-                : n.desiredY)
+                )
             .strength(n => 
                 isd3NodeNode(n)
                 ? (!!parents_map.get(n.node_id)?.length === !children_map.has(n.node_id))
@@ -245,7 +244,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
                 : 0.01
              );
         (data.simulation.simulation.force('link_label_x') as ForceX<d3Node>)
-          .x(n => isd3NodeNode(n) ? 0 : n.desiredX)
+          .x(n => 0)
           .strength(n => isd3NodeNode(n) ? 0 : 0.01);
 
 

@@ -6,7 +6,7 @@ import * as ha from "hyperapp";
 import { middleware, run_h } from "./editor/hyperapp";
 
 
-const store = await webClientStore(() => objectRefStore(Object.fromEntries(strudelExample.graphs.map(graph => [graph.id, graph]))))
+const store = await webClientStore(() => Promise.of(objectRefStore(Object.fromEntries(strudelExample.graphs.map(graph => [graph.id, graph])))))
 initStore(store);
 
 const display = await nolib.no.runtime.run({

@@ -32,8 +32,8 @@ self.addEventListener('fetch', (e) => {
        ? fetch(e.request)
        : navigator.onLine || e.request.url.includes("localhost")
        ? network(e.request).catch(ne => (console.log("[Service Worker] Network request failed, trying cache"), caches.open(assetCacheName).then(cache => cache.match(e.request)))) 
-       : caches.open(assetCacheName).then(c => c.match(e.request)))
-        .catch(ce => (console.log("[Service Worker] Request failed"), console.error(ne), console.error(ce)))
+       : caches.open(assetCacheName).then(c => c.match(e.request))
+        .catch(ce => (console.log("[Service Worker] Request failed"), console.error(ne), console.error(ce))))
     .then(resp => resp && resp.url.endsWith(".js") ? resp.text().then(rtext => [rtext, resp]) : resp)
     .then(r => Array.isArray(r) ? new Response(r[0]
       .replaceAll(/(from|import) ['"]three['"]/g, "$1 'https://cdn.jsdelivr.net/npm/three/build/three.module.js'")

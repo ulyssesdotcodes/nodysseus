@@ -1,20 +1,18 @@
-import { resfetch, nolib, run, initStore, NodysseusError, nolibLib } from "../nodysseus";
+import { resfetch, nolib, run, initStore, NodysseusError, nolibLib } from "../nodysseus.js";
 import * as ha from "hyperapp";
 import Fuse from "fuse.js";
-import { create_randid, wrapPromise, base_graph } from "../util";
-import { Edge, Graph, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode } from "../types";
-import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, Paste, pzobj, refresh_graph, result_subscription, run_h, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect } from "./util";
-import { info_display, infoWindow } from "./components/infoWindow";
-import { init_code_editor } from "./components/codeEditor";
-import { d3Node, d3NodeNode, HyperappState, Levels } from "./types";
-import { initPort, sharedWorkerRefStore, webClientStore } from "./store";
-import { d3subscription, getLinks, getNodes, insert_node_el, link_el, node_el, UpdateSimulation } from "./components/graphDisplay";
-import Autocomplete from "./autocomplete"
-import generic from "src/generic";
-import { SimulationNodeDatum } from "d3-force";
-import { automergeRefStore } from "./automergeStore";
+import { create_randid, wrapPromise, base_graph } from "../util.js";
+import { Edge, Graph, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode } from "../types.js";
+import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, Paste, pzobj, refresh_graph, result_subscription, run_h, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect } from "./util.js";
+import { info_display, infoWindow } from "./components/infoWindow.js";
+import { init_code_editor } from "./components/codeEditor.js";
+import { d3Node, d3NodeNode, HyperappState, Levels } from "./types.js";
+import { initPort, sharedWorkerRefStore, webClientStore } from "./store.js";
+import { d3subscription, getLinks, getNodes, insert_node_el, link_el, node_el, UpdateSimulation } from "./components/graphDisplay.js";
+import Autocomplete from "./autocomplete.js"
+import { automergeRefStore } from "./automergeStore.js";
 import helloWorld from "../initgraph.json"
-import {middleware} from "./hyperapp"
+import {middleware} from "./hyperapp.js"
 
 
 customElements.define("autocomplete-list", Autocomplete)
@@ -37,6 +35,7 @@ const Search = (state, {payload, nodes}) => {
     }
 
     const direction = payload.key === "Enter" ? payload.shiftKey ? -1 : 1 : 0; 
+    // @ts-ignore
     const search_results = new Fuse<NodysseusNode>(
         nodes.map(n => Object.assign({}, n, 
             nolib.no.runtime.get_node(state.editingGraph, n.node_id), 

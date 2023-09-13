@@ -1,6 +1,6 @@
 import { ForceLink, Simulation, SimulationLinkDatum, SimulationNodeDatum } from "d3-force";
-import { NodysseusError } from "../nodysseus";
-import {Graph, Edge, NodysseusNode, RefStore, EdgeNoAs, NodeMetadata, NodeArg} from "../types"
+import { NodysseusError } from "../nodysseus.js";
+import {Graph, Edge, NodysseusNode, RefStore, EdgeNoAs, NodeMetadata, NodeArg} from "../types.js"
 
 export type Vector2 = {x: number, y: number}
 

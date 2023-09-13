@@ -3,9 +3,8 @@ import { EditorState, Compartment, StateField, StateEffect, RangeSet, Range, Tex
 import { language, syntaxTree } from "@codemirror/language"
 import { javascript, javascriptLanguage } from "@codemirror/lang-javascript";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
-import {CreateNode, UpdateNode} from "../util"
+import {CreateNode, UpdateNode} from "../util.js"
 import { Decoration, DecorationSet, ViewPlugin, WidgetType } from "@codemirror/view";
-import { create_randid } from "../../util";
 
 class ExtractInputWidget extends WidgetType {
   constructor(readonly name: string, readonly value: string | number, readonly from: number, readonly to: number, readonly dispatch: Function) { super() }

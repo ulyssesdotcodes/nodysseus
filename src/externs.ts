@@ -1,6 +1,6 @@
-import * as util from "./util"
-import {nodysseus_get, resolve_args} from "./nodysseus"
-import { NodysseusNode, Graph, Args, ConstRunnable, Env, isArgs, isEnv, isError, isNodeRef, isNodeScript, isValue, Lib, RefNode, Result, Runnable, Edge, TypedArg } from "./types";
+import * as util from "./util.js"
+import {nodysseus_get, resolve_args} from "./nodysseus.js"
+import { NodysseusNode, Graph, Args, ConstRunnable, Env, isArgs, isEnv, isError, isNodeRef, isNodeScript, isValue, Lib, RefNode, Result, Runnable, Edge, TypedArg } from "./types.js";
 
 
 const nodeinputs = (node: NodysseusNode, graph: Graph) => Object.values(graph.edges_in[node.id] ?? []).map(edge => ({edge, node: graph.nodes[edge.from]}));

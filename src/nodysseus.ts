@@ -1,12 +1,13 @@
-import { ancestor_graph, ispromise, isWrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node, compareObjects, descendantGraph } from "./util"
-import { isNodeGraph, Graph, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, Lib, Env, isEnv, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike, Extern, getRunnableGraph, isNodeValue, ValueNode } from "./types"
-import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util"
+import { ancestor_graph, ispromise, isWrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node, compareObjects, descendantGraph } from "./util.js"
+import { isNodeGraph, Graph, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, Lib, Env, isEnv, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike, Extern, getRunnableGraph, isNodeValue, ValueNode, isLib, isFunctorRunnable, isGraph, isInputRunnable } from "./types.js"
+import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util.js"
 import generic from "./generic.js";
-import * as externs from "./externs";
+import * as externs from "./externs.js";
 import { v4 as uuid } from "uuid";
-import { initListeners } from "./events";
+import { initListeners } from "./events.js";
 import { wrap } from "idb";
 import { parser } from "@lezer/javascript";
+import { objectRefStore } from "./editor/store.js";
 
 const generic_nodes = generic.nodes;
 
@@ -343,7 +344,7 @@ const node_data = (nodeArgs, graphArgs: Env, lib, options) => {
   return nodeArgs.size === 0 || graphArgs._output === "display" ? lib.data.no.of(undefined) : resolve_args(nodeArgs, lib, options);
 }
 
-const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, parameters: ConstRunnable, lib, options: RunOptions, output: ConstRunnable): FunctorRunnable | Promise<FunctorRunnable> => 
+const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, parameters: ConstRunnable, lib, options: RunOptions, output: ConstRunnable, includeFullGraph: boolean = false): FunctorRunnable | Promise<FunctorRunnable> => 
   fn && wrapPromiseAll([
     parameters && run_runnable(parameters, lib, undefined, options),
     nolib.no.runtime.refs(),
@@ -353,7 +354,14 @@ const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, param
       __kind: FUNCTOR,
       parameters: args ? [...new Set(args.value ? Object.keys(args.value).map(k => k.includes(".") ? k.substring(0, k.indexOf('.')) : k) : [])] : [],
       env: mergeEnv(new Map([["_output", lib.data.no.of(output)]]), fn.env),
-      graph: typeof fn.graph === "string" ? fn.graph : refs.includes(fn.graph.id) ? fn.graph.id : fn.graph,
+      graph:  
+        includeFullGraph && typeof fn.graph === "string" 
+        ? lib.data.no.runtime.get_ref(fn.graph)
+        : typeof fn.graph === "string" 
+        ? fn.graph 
+        : refs.includes(fn.graph.id) 
+        ? fn.graph.id 
+        : fn.graph,
       fn: fn.fn,
       lib: fn.lib
     })).value
@@ -650,21 +658,28 @@ const run_ap_runnable = (runnable: ApRunnable, args: Args, lib: Lib, options: Ru
         }).value;
 }
 
-const getmap = (map, id) => {
-    return id ? map.get(id) : id;
-}
-
 const initStore = (store: NodysseusStore | undefined = undefined) => {
+  console.log("initing", store)
   if(store !== undefined) {
     nodysseus = store;
   }
 
   if(!nolib.no.runtime) {
     nolib.no.runtime = nolib.no.runtimefn()
+    console.log("set runtime", nolib.no.runtime)
   }
 }
 
 export const run = (node: Runnable | InputRunnable, args: ResolvedArgs | Record<string, unknown> = new Map(), options: {lib?: Lib, store?: NodysseusStore} & RunOptions = {}) => {
+  nodysseus = nodysseus ?? options.store ?? {
+    refs: objectRefStore((isInputRunnable(node) || isFunctorRunnable(node)) && isGraph(node.graph) ? {[node.graph.id]: node.graph} : {}),
+    persist: mapStore(),
+    state: mapStore(),
+    parents: mapStore(),
+    fns: mapStore(),
+    assets: mapStore(),
+  }
+
   initStore(options.store ?? nodysseus);
 
   let _lib: Lib = mergeLib(options.lib, newLib(nolib))
@@ -719,7 +734,7 @@ const runtimefn = () => {
 
       const {publish, addListener, removeListener, pauseGraphListeners, togglePause, isGraphidListened, isListened} = initListeners();
 
-      const change_graph = (graph: Graph | string, lib: Lib, changedNodes: Array<string> = [], broadcast = false, source?): Graph | Promise<Graph>=>
+      const change_graph = (graph: Graph | string, lib: Lib | Record<string, any>, changedNodes: Array<string> = [], broadcast = false, source?): Graph | Promise<Graph>=>
         wrapPromise(get_parentest(graph))
           .then(parent => {
           if (parent) {
@@ -735,8 +750,8 @@ const runtimefn = () => {
                     Object.keys(descendantGraph(node, graph, lib).nodes).forEach(n => changedNodes.push(n));
                   }
                 }
-                publish("graphchange", {graph, dirtyNodes: [...changedNodesSet.keys()], source}, lib, {}, broadcast);
-                publish("graphupdate", {graph, dirtyNodes: [...changedNodesSet.keys()], source}, lib, {}, broadcast);
+                publish("graphchange", {graph, dirtyNodes: [...changedNodesSet.keys()], source}, isLib(lib) ? lib : newLib(lib), {}, broadcast);
+                publish("graphupdate", {graph, dirtyNodes: [...changedNodesSet.keys()], source}, isLib(lib) ? lib : newLib(lib), {}, broadcast);
                 return graph;
               }).value;
           }
@@ -966,10 +981,10 @@ const runtimefn = () => {
           wrapPromise(get_graph(graph)).then(graph => {
             const graphId = typeof graph === "string" ? graph : graph.id;
 
-            const parent_edge = (lib.data ?? lib).no.runtime.get_edge_out(graph, id);
-            const child_edges = (lib.data ?? lib).no.runtime.get_edges_in(graph, id);
+            const parent_edge = lib.data.no.runtime.get_edge_out(graph, id);
+            const child_edges = lib.data.no.runtime.get_edges_in(graph, id);
 
-            const current_child_edges = (lib.data ?? lib).no.runtime.get_edges_in(graph, parent_edge.to);
+            const current_child_edges = lib.data.no.runtime.get_edges_in(graph, parent_edge.to);
             const new_child_edges = child_edges.map((e, i) => ({
               ...e,
               to: parent_edge.to,
@@ -1284,7 +1299,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     },
     runnable: {
       rawArgs: true,
-      args: ["fn", "parameters", "_lib", "_runoptions", "output"],
+      args: ["fn", "parameters", "_lib", "_runoptions", "output", "includeFullGraph"],
       fn: createFunctorRunnable
     },
     graphRunnable: {

@@ -1,8 +1,7 @@
-import { ApFunctorLike, Graph, isApFunction, isApRunnable, isConstRunnable, isError, isFunctorRunnable, isRunnable, isValue, Lib, NodysseusNode, Runnable, RunOptions } from "./types";
+import { ApFunctorLike, Graph, isApFunction, isApRunnable, isConstRunnable, isError, isFunctorRunnable, isRunnable, isValue, Lib, NodysseusNode, Runnable, RunOptions } from "./types.js";
 import { v4 as uuid } from "uuid";
-import { ispromise, nolib, run } from "./nodysseus";
-import { mergeLib, set_mutable, wrapPromise } from "./util";
-import { listen } from "./editor/util";
+import { ispromise, nolib, run } from "./nodysseus.js";
+import { mergeLib, set_mutable, wrapPromise } from "./util.js";
 
 const getorset = (map, id, value_fn=undefined) => {
     let val = map.get(id);
