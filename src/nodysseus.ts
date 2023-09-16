@@ -659,14 +659,12 @@ const run_ap_runnable = (runnable: ApRunnable, args: Args, lib: Lib, options: Ru
 }
 
 const initStore = (store: NodysseusStore | undefined = undefined) => {
-  console.log("initing", store)
   if(store !== undefined) {
     nodysseus = store;
   }
 
   if(!nolib.no.runtime) {
     nolib.no.runtime = nolib.no.runtimefn()
-    console.log("set runtime", nolib.no.runtime)
   }
 }
 

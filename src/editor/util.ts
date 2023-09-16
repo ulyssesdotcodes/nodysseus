@@ -194,7 +194,7 @@ export const ChangeEditingGraphId: ha.Effecter<HyperappState, {id: string, selec
     requestAnimationFrame(() => {
         const graphPromise = wrapPromise(nolib.no.runtime.refs()).then(refs => 
           EXAMPLES.includes(id) && !refs.includes(id) 
-          ? fetch((console.log(`fetching ${id}`), `json/${id.replaceAll("_", "-")}.json`))
+          ? fetch(`json/${id.replaceAll("_", "-")}.json`)
             .then(res => res.json())
             .then((g: Graph | Array<Graph> | {graph: Array<Graph>, state: Record<string, unknown>}) => {
               return nolib.no.runtime.add_ref(g["graphs"] ? g["graphs"] : g)
@@ -795,7 +795,7 @@ const parseTypedArg = (value: string): [string, TypedArg] => {
 export const CalculateSelectedNodeArgsEffect: ha.Effecter<HyperappState, {graph: Graph, node_id: string}> = 
   (dispatch, {graph, node_id}) => wrapPromise(node_args(nolib, graph, node_id )).then(nodeArgs => dispatch(s => ({
     ...s,
-    selectedNodeArgs: (console.log("calculating", nodeArgs.nodeArgs), nodeArgs.nodeArgs),
+    selectedNodeArgs: nodeArgs.nodeArgs,
     selectedNodeEdgeLabels: nodeArgs.nodeOutArgs?.map(a => a.name) ?? []
   }))).value
 
