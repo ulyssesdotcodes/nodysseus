@@ -18,7 +18,7 @@ self.addEventListener("activate", e => {
   e.waitUntil(clients.claim())
 })
 
-const network = r => fetch(r).then(d => d.ok 
+const network = r => fetch(r).then(d => d.ok && r.method.toLowerCase() === "get"
   ? caches.open(assetCacheName).then(c => c.delete(r).then(() => c.put(r, d.clone())).then(_ => d)) 
   : d);
 
