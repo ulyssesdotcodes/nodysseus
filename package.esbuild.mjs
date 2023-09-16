@@ -4,11 +4,9 @@ import fs from "node:fs";
 
 const result = await esbuild.build({
   entryPoints: [
-    {in: 'src/nodysseus.ts', out: 'nodysseus'},
-    {in: 'src/editor/hyperapp.ts', out: 'graphDisplay'},
     {in: 'src/index.js', out: 'index.bundle'},
     {in: 'src/worker.js', out: 'worker'},
-    {in: 'src/sharedWorker.js', out: 'sharedWorker'},
+    {in: 'src/sharedWorker.ts', out: 'sharedWorker'},
     {in: 'src/browser-esm.js', out: 'browser-esm'}
   ],
   metafile: true,
