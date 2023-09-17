@@ -1,6 +1,6 @@
 import * as ha from "hyperapp"
 import { initStore, nodysseus_get, nolib, run, NodysseusError, nolibLib } from "../nodysseus.js";
-import { Edge, FullyTypedArg, FunctorRunnable, getRunnableGraphId, Graph, isArgs, isNodeGraph, isNodeRef, isNodeScript, isRunnable, isTypedArg, NodeArg, NodeMetadata, NodysseusNode, RefNode, TypedArg } from "../types.js";
+import { Args, Edge, FullyTypedArg, FunctorRunnable, getRunnableGraphId, Graph, isArgs, isNodeGraph, isNodeRef, isNodeScript, isRunnable, isTypedArg, NodeArg, NodeMetadata, NodysseusNode, RefNode, TypedArg } from "../types.js";
 import { base_node, base_graph, ispromise, wrapPromise, expand_node, contract_node, ancestor_graph, create_randid, compareObjects, newLib, bfs, mergeLib } from "../util.js";
 import panzoom, * as pz from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
@@ -984,46 +984,136 @@ export const hlibLib = mergeLib(nolibLib, newLib({
         }
       },
       jsx: {
-        args: ["jsx", "__graph_value"],
-        fn: (jsx: string, graphvalue: string) => {
+        outputs: {
+          metadata: true
+        },
+        args: ["jsx", "__graph_value", "_args", "_output"],
+        fn: (jsx: string, graphvalue: string, _args: Args, _output: string) => {
           const nodes = JsxParser.parse(jsx ?? graphvalue, {ecmaVersion: "latest"}) as ESTreeNode;
           console.log(nodes)
+
+          const parameters = {};
+
+          console.log("output", _output)
+
+          if(_output === "metadata") {
+            visit(nodes, {
+              visitJSXIdentifier(path) {
+                return false;
+              },
+              visitIdentifier(path) {
+                parameters[path.node.name] = "any";
+                return false;
+              }
+            });
+            console.log("returning metadata", {parameters})
+            return {parameters}
+          }
+
           const outputPath = [];
           const output = {};
           visit(nodes, {
-            visitExpressionStatement(path) {
-              const node = path.node;
+            // visitExpressionStatement(path) {
+            //   const node = path.node;
+            //   this.traverse(path);
+            // },
+            // visitJSXIdentifier(path) {
+            //   this.traverse(path);
+            // },
+            // visitExpression(path) {
+            //   let pushArrayIdx = outputPath.at(-1) === "children" && typeof path.name === "number";
+            //   if(pushArrayIdx) {
+            //     outputPath.push(path.name);
+            //   }
+            //   this.traverse(path);
+            //   if(pushArrayIdx) {
+            //     outputPath.pop();
+            //   }
+            // },
+            visitLiteral(path) {
+              justSet(output, outputPath,  path.node.value);
+              outputPath.pop();
+              return false;
+            },
+            visitJSXIdentifier(path) {
+              if(path.name === "name" && path.parentPath.parentPath.name === "attributes") {
+                outputPath.push(path.node.name)
+              }
               this.traverse(path);
+            },
+            visitIdentifier(path) {
+              const argval = _args.get(path.node.name)
+              justSet(output, outputPath, !argval ? argval : Array.isArray(argval) ? [...argval] : typeof argval === "object" ? {...argval} : argval);
+              outputPath.pop();
+              return false;
+            },
+            visitJSXExpressionContainer(path) {
+              if(path.parentPath.name === "children") {
+                  if(path.name === 0) {
+                    outputPath.push("children");
+                  }
+
+                  outputPath.push(path.name)
+              }
+              this.traverse(path);
+              if(path.parentPath.name === "children") {
+                // popped by the identifier
+                //console.log("jsxexpression popped idx", outputPath.pop());
+                if(path.name === path.parent.node.children.length - 1) {
+                  outputPath.pop();
+                }
+              }
+            },
+            visitJSXOpeningElement(path) {
+              outputPath.push("props"),
+              this.traverse(path)
+              outputPath.pop();
+            },
+            visitJSXAttribute(path) {
+              this.traverse(path);
+              if(path.node.name.name === "style") {
+                const attrPath = outputPath.concat([path.node.name.name]);
+                const styleString = justGet(output, attrPath);
+                justSet(output, attrPath, Object.fromEntries(styleString.split(";").map(v => v.split(":").map(v => v.trim()))));
+              }
             },
             visitJSXElement(path) {
               const node = path.node;
-              let pushArrayIdx = outputPath.at(-1) === "children"
-              if(pushArrayIdx) {
-                outputPath.push(path.name);
+              if(path.parentPath.name === "children") {
+                  if(path.name === 0) {
+                    outputPath.push("children");
+                  }
+
+                  outputPath.push(path.name)
               }
+
               justSet(output, outputPath, {})
               justSet(output, outputPath.join(".") + ".dom_type", (node.openingElement.name as JSXIdentifierKind).name)
               const outputNode = justGet(output, outputPath)
-              outputPath.push("children");
+              outputNode.props = {};
               outputNode.children = [];
-              outputNode.props = Object.fromEntries(node.openingElement.attributes?.map(
-                (attr: JSXAttributeKind) => 
-                  attr.name.name === "style"
-                  ? [attr.name.name, Object.fromEntries((attr.value as StringLiteralKind).value.split(";").map(v => v.split(":").map(v => v.trim())))]
-                  : [attr.name.name, (attr.value as StringLiteralKind).value]));
-              this.traverse(path)
-              outputPath.pop()
-              if(pushArrayIdx) {
+              this.traverse(path);
+              if(path.parentPath.name === "children") {
                 outputPath.pop();
+                if(path.name === path.parent.node.children.length - 1) {
+                  outputPath.pop();
+                }
               }
             },
             visitJSXText(path) {
+              if(path.parentPath.name === "children" && path.name === 0) {
+                outputPath.push("children");
+              }
               const node = path.node;
               justSet(output, outputPath.join(".") + `.${path.name}`, {dom_type: "text_value", text: node.raw})
+              if(path.parentPath.name === "children") {
+                if(path.name === path.parent.node.children.length - 1) {
+                  outputPath.pop();
+                }
+              }
               return false
             }
           });
-          console.log(output);
           return output;
         }
       }

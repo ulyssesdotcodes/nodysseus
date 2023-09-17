@@ -254,6 +254,8 @@ const run_extern = (extern: ApFunction, data: Args, lib: Lib, options: RunOption
     } else if (arg === '_node_args') {
       newval = extern.rawArgs ? data : resolve_args(data, lib, options)
       newval = ispromise(newval) ? newval.then((v: Result | undefined) => isError(v) ? v : v?.value)  : extern.rawArgs ? newval : newval.value
+    } else if (arg === '_args') {
+      newval = extern.rawArgs ? data : wrapPromise(resolve_args(data, lib, options)).then(data => isError(data) ? data : data.value).then(args => new Map(Object.entries(args))).value;
     } else if (arg == '_lib') {
         newval = lib;
     } else if (arg == '_graph_input_value') {
