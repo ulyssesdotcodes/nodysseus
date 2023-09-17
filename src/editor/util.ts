@@ -1,7 +1,7 @@
 import * as ha from "hyperapp"
 import { initStore, nodysseus_get, nolib, run, NodysseusError, nolibLib } from "../nodysseus.js";
-import { Args, Edge, FullyTypedArg, FunctorRunnable, getRunnableGraphId, Graph, isArgs, isNodeGraph, isNodeRef, isNodeScript, isRunnable, isTypedArg, NodeArg, NodeMetadata, NodysseusNode, RefNode, TypedArg } from "../types.js";
-import { base_node, base_graph, ispromise, wrapPromise, expand_node, contract_node, ancestor_graph, create_randid, compareObjects, newLib, bfs, mergeLib } from "../util.js";
+import { Args, ConstRunnable, Edge, FullyTypedArg, FunctorRunnable, getRunnableGraphId, Graph, isArgs, isNodeGraph, isNodeRef, isNodeScript, isRunnable, isTypedArg, NodeArg, NodeMetadata, NodysseusNode, RefNode, TypedArg } from "../types.js";
+import { base_node, base_graph, ispromise, wrapPromise, expand_node, contract_node, ancestor_graph, create_randid, compareObjects, newLib, bfs, mergeLib, wrapPromiseAll } from "../util.js";
 import panzoom, * as pz from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 import { d3Link, d3Node, d3NodeNode, HyperappState, isd3NodeNode, Levels, NodysseusSimulation, Property, Vector2 } from "./types.js";
@@ -987,18 +987,18 @@ export const hlibLib = mergeLib(nolibLib, newLib({
         outputs: {
           metadata: true
         },
-        args: ["jsx", "__graph_value", "_args", "_output"],
-        fn: (jsx: string, graphvalue: string, _args: Args, _output: string) => {
+        args: ["jsx", "__graph_value", "_node_args", "_output"],
+        fn: (jsx: string, graphvalue: string, _node_args: Record<string, unknown>, _output: string) => {
           const nodes = JsxParser.parse(jsx ?? graphvalue, {ecmaVersion: "latest"}) as ESTreeNode;
-          console.log(nodes)
 
           const parameters = {};
-
-          console.log("output", _output)
 
           if(_output === "metadata") {
             visit(nodes, {
               visitJSXIdentifier(path) {
+                if(!Object.hasOwn(domTypes, path.node.name)) {
+                  parameters[path.node.name] = "@flow.runnable";
+                }
                 return false;
               },
               visitIdentifier(path) {
@@ -1006,30 +1006,16 @@ export const hlibLib = mergeLib(nolibLib, newLib({
                 return false;
               }
             });
-            console.log("returning metadata", {parameters})
             return {parameters}
           }
 
           const outputPath = [];
           const output = {};
+
+
+          const runnableEls: Record<string, FunctorRunnable> = {};
+
           visit(nodes, {
-            // visitExpressionStatement(path) {
-            //   const node = path.node;
-            //   this.traverse(path);
-            // },
-            // visitJSXIdentifier(path) {
-            //   this.traverse(path);
-            // },
-            // visitExpression(path) {
-            //   let pushArrayIdx = outputPath.at(-1) === "children" && typeof path.name === "number";
-            //   if(pushArrayIdx) {
-            //     outputPath.push(path.name);
-            //   }
-            //   this.traverse(path);
-            //   if(pushArrayIdx) {
-            //     outputPath.pop();
-            //   }
-            // },
             visitLiteral(path) {
               justSet(output, outputPath,  path.node.value);
               outputPath.pop();
@@ -1042,8 +1028,8 @@ export const hlibLib = mergeLib(nolibLib, newLib({
               this.traverse(path);
             },
             visitIdentifier(path) {
-              const argval = _args.get(path.node.name)
-              justSet(output, outputPath, !argval ? argval : Array.isArray(argval) ? [...argval] : typeof argval === "object" ? {...argval} : argval);
+              const argval = _node_args[path.node.name]
+              justSet(output, outputPath, !argval ? argval : Array.isArray(argval) ? [...argval] : typeof argval === "object" ? {...argval} : {dom_type: "text_value", text: `${argval}`});
               outputPath.pop();
               return false;
             },
@@ -1087,8 +1073,16 @@ export const hlibLib = mergeLib(nolibLib, newLib({
                   outputPath.push(path.name)
               }
 
+              const nodeName = (node.openingElement.name as JSXIdentifierKind).name;
+
               justSet(output, outputPath, {})
-              justSet(output, outputPath.join(".") + ".dom_type", (node.openingElement.name as JSXIdentifierKind).name)
+
+              if(!Object.hasOwn(domTypes, nodeName)) {
+                runnableEls[outputPath.join(".")] = _node_args[nodeName] as FunctorRunnable;
+              } else {
+                justSet(output, outputPath.join(".") + ".dom_type", nodeName)
+              }
+
               const outputNode = justGet(output, outputPath)
               outputNode.props = {};
               outputNode.children = [];
@@ -1114,7 +1108,10 @@ export const hlibLib = mergeLib(nolibLib, newLib({
               return false
             }
           });
-          return output;
+
+          return wrapPromiseAll(Object.entries(runnableEls).map(e => wrapPromise(nolib.no.runtime.run(e[1], justGet(output, e[0]).props)).then(el => el ? justSet(output, e[0], el) : justSet(output, e[0] + ".dom_type", "div"))))
+            .then(() => output)
+            .value
         }
       }
     }
