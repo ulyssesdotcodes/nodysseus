@@ -155,7 +155,7 @@ export const SetSelectedPositionStyleEffect = (_, payload) => {
 export const ChangeEditingGraphId = (dispatch, { id, select_out, editingGraphId }) => {
     requestAnimationFrame(() => {
         const graphPromise = wrapPromise(nolib.no.runtime.refs()).then(refs => EXAMPLES.includes(id) && !refs.includes(id)
-            ? fetch((console.log(`fetching ${id}`), `json/${id.replaceAll("_", "-")}.json`))
+            ? fetch(`json/${id.replaceAll("_", "-")}.json`)
                 .then(res => res.json())
                 .then((g) => {
                 return nolib.no.runtime.add_ref(g["graphs"] ? g["graphs"] : g);
@@ -681,7 +681,7 @@ const parseTypedArg = (value) => {
 };
 export const CalculateSelectedNodeArgsEffect = (dispatch, { graph, node_id }) => wrapPromise(node_args(nolib, graph, node_id)).then(nodeArgs => dispatch(s => ({
     ...s,
-    selectedNodeArgs: (console.log("calculating", nodeArgs.nodeArgs), nodeArgs.nodeArgs),
+    selectedNodeArgs: nodeArgs.nodeArgs,
     selectedNodeEdgeLabels: nodeArgs.nodeOutArgs?.map(a => a.name) ?? []
 }))).value;
 export const node_args = (nolib, graph, node_id, cachedMetadata = {}) => {

@@ -6,6 +6,7 @@ export default class AutocompleteList extends HTMLElement {
     fuseOptions;
     shownOptions;
     optionEls;
+    // @ts-ignore
     fuse;
     selectedIndex;
     initialOption;
@@ -154,7 +155,8 @@ export default class AutocompleteList extends HTMLElement {
     }
     populateOptions() {
         this.options = Object.fromEntries([...this.querySelectorAll('option')].map(el => [el.textContent, { value: el.textContent, category: el.dataset.category }]));
-        this.fuse = new Fuse.default(Object.values(this.options), { keys: ["value"], ignoreLocation: true, minMatchCharLength: 2, threshold: 0.3 });
+        //@ts-ignore
+        this.fuse = new Fuse(Object.values(this.options), { keys: ["value"], ignoreLocation: true, minMatchCharLength: 2, threshold: 0.3 });
         const optionsByCategory = (options) => [...options.reduce((acc, option) => acc.set(option.category ?? "custom", (acc.get(option.category ?? "custom") ?? [])
                 .concat([option.category && !acc.has(option.category) ? { kind: "category", value: option.category } : undefined, { kind: "value", value: option.value }])), new Map()).values()].flat().filter(o => o);
         if (this.focused && this.inputEl.value && this.inputEl.selectionEnd - this.inputEl.selectionStart < this.inputEl.value.length) {

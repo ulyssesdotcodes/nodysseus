@@ -582,13 +582,11 @@ const run_ap_runnable = (runnable, args, lib, options) => {
     }).value;
 };
 const initStore = (store = undefined) => {
-    console.log("initing", store);
     if (store !== undefined) {
         nodysseus = store;
     }
     if (!nolib.no.runtime) {
         nolib.no.runtime = nolib.no.runtimefn();
-        console.log("set runtime", nolib.no.runtime);
     }
 };
 export const run = (node, args = new Map(), options = {}) => {

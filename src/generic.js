@@ -3940,6 +3940,11 @@ const generic = {
       },
       "out": "out_ret"
     },
+  "@html.jsx" : {
+    "id": "@html.jsx",
+    "ref": "extern",
+    "value": "extern.jsx"
+  },
   "@html.icon": {
     "id": "@html.icon",
     "description": "A ionicon in hyperapp format.",

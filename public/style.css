@@ -370,6 +370,10 @@ svg {
   display: block;
 }
 
+.html-jsx #node-editor-code-editor {
+  display: block;
+}
+
 .buttons {
   flex-direction: column;
   line-height: 1.4;

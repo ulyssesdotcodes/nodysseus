@@ -22,6 +22,7 @@ export const middleware = dispatch => (ha_action, ha_payload) => {
                 const result = action.stateonly
                     ? hlib.data.run_runnable(action, state)
                     : hlib.data.run_runnable(action, { state, ...payload });
+                return state;
                 if (!result) {
                     return state;
                 }

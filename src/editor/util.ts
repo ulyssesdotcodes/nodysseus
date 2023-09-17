@@ -8,12 +8,25 @@ import { d3Link, d3Node, d3NodeNode, HyperappState, isd3NodeNode, Levels, Nodyss
 import { UpdateGraphDisplay, UpdateSimulation, d3subscription, updateSimulationNodes, getNodes, getLinks } from "./components/graphDisplay.js";
 import AutocompleteList from "./autocomplete.js";
 import { parser } from "@lezer/javascript";
+import jsx from "acorn-jsx";
+import * as acorn from "acorn";
 import {v4 as uuid} from "uuid";
 import { middleware, runh } from "./hyperapp.js";
 import domTypes from "../html-dom-types.json";
+import { ExpressionStatement, JsxChild, JsxElement, JsxExpression, isExpressionStatement, isJsxChild, isJsxElement, isJsxExpression, isJsxFragment } from "typescript";
+import {namedTypes as n, builders as b, visit} from "ast-types";
+import {walk} from "estree-walker"
+import {Node as ESTreeNode} from "estree";
+import { JSXIdentifierKind } from "ast-types/gen/kinds.js";
+import justGet from "just-safe-get";
+import justSet from "just-safe-set";
+
+
 
 export const EXAMPLES = ["threejs_example", "hydra_example", "threejs_boilerplate", "threejs_force_attribute_example", "threejs_node_example", "threejs_compute_example", "strudel_example"];
 
+
+const JsxParser = acorn.Parser.extend(jsx());
 
 export const pzobj: {
   instance: false | pz.PanZoom,
@@ -968,6 +981,44 @@ export const hlibLib = mergeLib(nolibLib, newLib({
             }
           })
           return args;
+        }
+      },
+      jsx: {
+        args: ["jsx", "__graph_value"],
+        fn: (jsx: string, graphvalue: string) => {
+          const nodes = JsxParser.parse(jsx ?? graphvalue, {ecmaVersion: "latest"}) as ESTreeNode;
+          const outputPath = [];
+          const output = {};
+          visit(nodes, {
+            visitExpressionStatement(path) {
+              const node = path.node;
+              this.traverse(path);
+            },
+            visitJSXElement(path) {
+              const node = path.node;
+              let pushArrayIdx = outputPath.at(-1) === "children"
+              if(pushArrayIdx) {
+                outputPath.push(path.name);
+              }
+              justSet(output, outputPath, {})
+              justSet(output, outputPath.join(".") + ".dom_type", (node.openingElement.name as JSXIdentifierKind).name)
+              const outputNode = justGet(output, outputPath)
+              outputPath.push("children");
+              outputNode.children = [];
+              outputNode.props = {};
+              this.traverse(path)
+              outputPath.pop()
+              if(pushArrayIdx) {
+                outputPath.pop();
+              }
+            },
+            visitJSXText(path) {
+              const node = path.node;
+              justSet(output, outputPath.join(".") + `.${path.name}`, {dom_type: "text_value", text: node.raw})
+              return false
+            }
+          });
+          return output;
         }
       }
     }

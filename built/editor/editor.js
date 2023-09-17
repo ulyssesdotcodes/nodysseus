@@ -27,7 +27,8 @@ const Search = (state, { payload, nodes }) => {
         return [{ ...state, search: false, search_index: 0 }, [dispatch => payload.target.value = ""]];
     }
     const direction = payload.key === "Enter" ? payload.shiftKey ? -1 : 1 : 0;
-    const search_results = new Fuse.default(nodes.map(n => Object.assign({}, n, nolib.no.runtime.get_node(state.editingGraph, n.node_id), nolib.no.runtime.get_edge_out(state.editingGraph, n.node_id))), { keys: ['name', 'ref', 'value', 'as'] }).search(payload.target.value);
+    // @ts-ignore
+    const search_results = new Fuse(nodes.map(n => Object.assign({}, n, nolib.no.runtime.get_node(state.editingGraph, n.node_id), nolib.no.runtime.get_edge_out(state.editingGraph, n.node_id))), { keys: ['name', 'ref', 'value', 'as'] }).search(payload.target.value);
     const search_index = search_results.length > 0 ? (search_results.length + (state.search_index ?? 0) + direction) % search_results.length : 0;
     return [{
             ...state,

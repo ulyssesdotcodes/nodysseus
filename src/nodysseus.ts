@@ -6,7 +6,6 @@ import * as externs from "./externs.js";
 import { v4 as uuid } from "uuid";
 import { initListeners } from "./events.js";
 import { wrap } from "idb";
-import { parser } from "@lezer/javascript";
 import { objectRefStore } from "./editor/store.js";
 
 const generic_nodes = generic.nodes;

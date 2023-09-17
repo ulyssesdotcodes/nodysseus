@@ -84,7 +84,7 @@ export const init_code_editor = (dispatch, {html_id}) => {
                   backgroundColor: "#233"
                 }
             }, {dark: true}),
-            languageConf.of(javascript()),
+            languageConf.of(javascript({jsx: true})),
             autoLanguage,
             ViewPlugin.define(view => {
               const viewfn = {

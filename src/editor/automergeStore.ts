@@ -74,7 +74,8 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
     }, 100)
   }
 
-  const graphNodePatchCallback: PatchCallback<Graph> = (patches, before, after) => {
+  const graphNodePatchCallback: PatchCallback<Graph> = (patches, {after}) => {
+    console.log(patches);
     const changedNodes = new Set<string>()
     patches.forEach(patch => patch.path[0] === "nodes" && changedNodes.add(patch.path[1] as string));
 
