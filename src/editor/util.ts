@@ -13,11 +13,11 @@ import * as acorn from "acorn";
 import {v4 as uuid} from "uuid";
 import { middleware, runh } from "./hyperapp.js";
 import domTypes from "../html-dom-types.json";
-import { ExpressionStatement, JsxChild, JsxElement, JsxExpression, isExpressionStatement, isJsxChild, isJsxElement, isJsxExpression, isJsxFragment } from "typescript";
+import { ExpressionStatement, JsxAttribute, JsxChild, JsxElement, JsxExpression, isExpressionStatement, isJsxChild, isJsxElement, isJsxExpression, isJsxFragment } from "typescript";
 import {namedTypes as n, builders as b, visit} from "ast-types";
 import {walk} from "estree-walker"
 import {Node as ESTreeNode} from "estree";
-import { JSXIdentifierKind } from "ast-types/gen/kinds.js";
+import { JSXAttributeKind, JSXIdentifierKind, StringLiteralKind } from "ast-types/gen/kinds.js";
 import justGet from "just-safe-get";
 import justSet from "just-safe-set";
 
@@ -987,6 +987,7 @@ export const hlibLib = mergeLib(nolibLib, newLib({
         args: ["jsx", "__graph_value"],
         fn: (jsx: string, graphvalue: string) => {
           const nodes = JsxParser.parse(jsx ?? graphvalue, {ecmaVersion: "latest"}) as ESTreeNode;
+          console.log(nodes)
           const outputPath = [];
           const output = {};
           visit(nodes, {
@@ -1005,7 +1006,11 @@ export const hlibLib = mergeLib(nolibLib, newLib({
               const outputNode = justGet(output, outputPath)
               outputPath.push("children");
               outputNode.children = [];
-              outputNode.props = {};
+              outputNode.props = Object.fromEntries(node.openingElement.attributes?.map(
+                (attr: JSXAttributeKind) => 
+                  attr.name.name === "style"
+                  ? [attr.name.name, Object.fromEntries((attr.value as StringLiteralKind).value.split(";").map(v => v.split(":").map(v => v.trim())))]
+                  : [attr.name.name, (attr.value as StringLiteralKind).value]));
               this.traverse(path)
               outputPath.pop()
               if(pushArrayIdx) {
@@ -1018,6 +1023,7 @@ export const hlibLib = mergeLib(nolibLib, newLib({
               return false
             }
           });
+          console.log(output);
           return output;
         }
       }
