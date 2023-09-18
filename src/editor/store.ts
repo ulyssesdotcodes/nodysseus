@@ -190,6 +190,7 @@ export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore>
 
   let hasSharedWorkerKeys = false;
   const contextKeysCache = new Set<string>();
+  const contextKeysArrayCache = [];
   const contextGraphCache = new Map<string, Graph>();
 
   setTimeout(() =>
@@ -221,7 +222,7 @@ export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore>
       delete: (k) => sendMessage({kind: "delete", graphId: k}),
       clear: () => {throw new Error("not implemented")},
       keys: () => hasSharedWorkerKeys
-        ? [...contextKeysCache.values()]
+        ? (contextKeysArrayCache.length !== contextKeysCache.size && contextKeysArrayCache.splice(0, contextKeysArrayCache.length, ...contextKeysCache.values()), contextKeysArrayCache)
         : messagePromise({kind: "keys"}).then(e => (e.keys.forEach(k => k && contextKeysCache.add(k)), hasSharedWorkerKeys = true, e.keys.filter(k => k))),
       add_edge: () => {throw new Error("not implemented")},
       remove_edge: () => {throw new Error("not implemented")},
