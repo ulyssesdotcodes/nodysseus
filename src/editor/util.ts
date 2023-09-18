@@ -405,7 +405,7 @@ export const CustomDOMEvent = (_, payload) => document.getElementById(`${payload
 
 export const FocusEffect: ha.Effecter<HyperappState, {selector: string}> = (_, {selector}) => {
   setTimeout(() => {
-    const el: HTMLElement = document.querySelector(selector);
+    const el: HTMLInputElement = document.querySelector(selector);
     if(!el){
       console.log(`couldn't find ${selector}`)
       return
@@ -1028,7 +1028,9 @@ export const hlibLib = mergeLib(nolibLib, newLib({
             },
             visitIdentifier(path) {
               const argval = _node_args[path.node.name]
-              justSet(output, outputPath, !argval ? argval : Array.isArray(argval) ? [...argval] : typeof argval === "object" ? {...argval} : {dom_type: "text_value", text: `${argval}`});
+              const propsIdx = outputPath.lastIndexOf('props');
+              const childrenIdx = outputPath.lastIndexOf('children');
+              justSet(output, outputPath, !argval ? argval : Array.isArray(argval) ? [...argval] : typeof argval === "object" ? {...argval} : childrenIdx > propsIdx ? {dom_type: "text_value", text: `${argval}`} : argval);
               outputPath.pop();
               return false;
             },
