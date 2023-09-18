@@ -6,7 +6,6 @@ import panzoom, * as pz from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
 import { d3Link, d3Node, d3NodeNode, HyperappState, isd3NodeNode, Levels, NodysseusSimulation, Property, Vector2 } from "./types.js";
 import { UpdateGraphDisplay, UpdateSimulation, d3subscription, updateSimulationNodes, getNodes, getLinks } from "./components/graphDisplay.js";
-import AutocompleteList from "./autocomplete.js";
 import { parser } from "@lezer/javascript";
 import jsx from "acorn-jsx";
 import * as acorn from "acorn";
@@ -406,14 +405,14 @@ export const CustomDOMEvent = (_, payload) => document.getElementById(`${payload
 
 export const FocusEffect: ha.Effecter<HyperappState, {selector: string}> = (_, {selector}) => {
   setTimeout(() => {
-    const el: HTMLInputElement | AutocompleteList = document.querySelector(selector);
+    const el: HTMLElement = document.querySelector(selector);
     if(!el){
       console.log(`couldn't find ${selector}`)
       return
     } 
 
     el.focus();
-    if((el instanceof HTMLInputElement && el.type === "text") || el instanceof AutocompleteList) {
+    if(Object.hasOwn(el, "select") && typeof el.select === "function") {
       el.select();
     }
   }, 100);

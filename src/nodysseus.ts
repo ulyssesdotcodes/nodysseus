@@ -617,7 +617,6 @@ const run_graph = (graph: Graph, node_id: string, env: Env, lib: Lib, options: R
 }
 
 const run_functor_runnable = (runnable: FunctorRunnable, args: Args, lib: Lib, options: RunOptions): Result | Promise<Result> => {
-  console.log("in function runnable", runnable, args)
   const execArgs: Args = new Map(runnable.parameters?.map(k => [k, nodysseus_get(args, k, lib)]) ?? []);
   const newRunnable: ConstRunnable = {
     __kind: CONST,

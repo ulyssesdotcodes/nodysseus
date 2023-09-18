@@ -531,6 +531,7 @@ const editor = async function(html_id, editingGraphId, lib, norun) {
     const hash_graph = window.location.hash.substring(1);
     const url_params = new URLSearchParams(document.location.search);
     editingGraphId = editingGraphId ?? (hash_graph && hash_graph !== "" ? hash_graph : graph_list?.[0] ?? 'helloWorld');
+    console.log(helloWorld);
     let editingGraph: Graph = editingGraphId === "helloWorld"
       ? ((helloWorld as Graph).edges_in = Object.values(helloWorld.edges).reduce((acc: Record<string, Record<string, Edge>>, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {}), await hlibLib.data.no.runtime.add_ref(helloWorld), helloWorld)
       : (await hlibLib.data.no.runtime.get_ref(editingGraphId)

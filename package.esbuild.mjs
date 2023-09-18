@@ -9,6 +9,12 @@ const result = await esbuild.build({
     {in: 'src/sharedWorker.ts', out: 'sharedWorker'},
     {in: 'src/browser-esm.js', out: 'browser-esm'}
   ],
+  loader: {
+    '.wasm': 'file'
+  },
+  define: {
+    "window.IS_PRODUCTION": "true"
+  },
   metafile: true,
   bundle: true,
   outdir: 'public',
@@ -16,8 +22,6 @@ const result = await esbuild.build({
   external: ['node:https'],
   target: 'es2022',
   format: 'esm',
-  minify: true,
-  drop: ['console'],
   splitting: true
 })
 
