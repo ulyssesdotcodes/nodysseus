@@ -47,7 +47,7 @@ export const infoInput = ({label, property, value, onchange, oninput, onkeydown,
             oninput: (s: any, e) => [{...s, inputs: Object.assign(s.inputs, {[`edit-text-${property}`]: (e.target as HTMLInputElement).value})}], 
             onblur: (state: HyperappState, event) => [{...state, focused: false}],
           },
-          options && options.length > 0 && options.map(o => ha.h('option', {class: `autocomplete-item`, value: typeof o === "string" ? o : o.value, "data-category": typeof o === "string" ? undefined : o.category }, ha.text(typeof o === "string" ? o : o.value))))
+          options && options.length > 0 && options.filter(o => o).map(o => ha.h('option', {class: `autocomplete-item`, value: typeof o === "string" ? o : o.value, "data-category": typeof o === "string" ? undefined : o.category }, ha.text(typeof o === "string" ? o : o.value))))
     ]
 )
 
