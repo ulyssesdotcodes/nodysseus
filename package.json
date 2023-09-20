@@ -1,7 +1,7 @@
 {
   "name": "nodysseus",
   "description": "A generic node-based editor. Built with hyperapp.",
-  "version": "1.0.41",
+  "version": "1.0.43",
   "type": "module",
   "exports": {
     ".": {

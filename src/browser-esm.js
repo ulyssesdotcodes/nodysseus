@@ -3,6 +3,6 @@ import {webClientStore, objectRefStore} from "./editor/store";
 import * as ha from "hyperapp";
 import { middleware, run_h } from "./editor/hyperapp";
 import { newEnv } from "./util";
-import { initStore } from "./nodysseus";
+import { run } from "./nodysseus";
 
-export {hlib, webClientStore, ha, middleware, run_h, newEnv, objectRefStore, initStore}
+export {run, hlib, webClientStore, ha, middleware, run_h, newEnv, objectRefStore}
