@@ -26,7 +26,7 @@ export const initListeners = () => {
   let animationerrors = [];
   let pause = false;
 
-  let eventsBroadcastChannel = new BroadcastChannel("events");
+  let eventsBroadcastChannel: false | BroadcastChannel = typeof window.BroadcastChannel !== "undefined" && new BroadcastChannel("events");
   let clientUuid = uuid();
 
   eventsBroadcastChannel.onmessage = (message) => {
@@ -39,9 +39,9 @@ export const initListeners = () => {
     } else if(broadcast && event !== "noderun" && event !== "animationframe" && event !== "show_all") {
       try {
         if (event === "grapherror") {
-          eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data: {message: data.message, node_id: data.node_id, stack: data.stack } });
+          eventsBroadcastChannel && eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data: {message: data.message, node_id: data.node_id, stack: data.stack } });
         } else {
-          eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data });
+          eventsBroadcastChannel && eventsBroadcastChannel.postMessage({source: clientUuid, event: `bc-${event}`, data });
         }
       } catch(e){
         // If it's not serializable, that's fine
