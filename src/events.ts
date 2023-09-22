@@ -3,6 +3,8 @@ import { v4 as uuid } from "uuid";
 import { ispromise, nolib, run } from "./nodysseus.js";
 import { mergeLib, set_mutable, wrapPromise } from "./util.js";
 
+const windowSelf = typeof window !== "undefined" ? window : typeof self !== "undefined" ? self : undefined;
+
 const getorset = (map, id, value_fn=undefined) => {
     let val = map.get(id);
     if (val) {
@@ -26,7 +28,7 @@ export const initListeners = () => {
   let animationerrors = [];
   let pause = false;
 
-  let eventsBroadcastChannel: false | BroadcastChannel = typeof window.BroadcastChannel !== "undefined" && new BroadcastChannel("events");
+  let eventsBroadcastChannel: false | BroadcastChannel = typeof windowSelf?.BroadcastChannel !== "undefined" && new BroadcastChannel("events");
   let clientUuid = uuid();
 
   eventsBroadcastChannel.onmessage = (message) => {
