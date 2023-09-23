@@ -9,3 +9,4 @@ public/worker.js
 public/sharedWorker.js
 *.js.map
 meta.json
+built/
