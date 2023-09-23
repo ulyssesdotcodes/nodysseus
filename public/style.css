@@ -215,6 +215,10 @@ svg {
     fill: #fff;
 }
 
+.node.search-result .shape {
+  fill: #1CBC83;
+}
+
 .node .shape.js-script {
     transform-box: fill-box;
     transform-origin: 50% 50%;

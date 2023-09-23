@@ -434,7 +434,7 @@ const node_text_el = ({node_id, primary, focus_primary, secondary, primaryClass,
 
 
 const radius = 24;
-export const node_el = ({html_id, selected, error, selected_distance, node_id, node_ref, node_name, node_value, has_nodes, nested_edge_count, nested_node_count, node_parents, edgeName}) =>ha.h('g', {
+export const node_el = ({html_id, selected, error, selected_distance, node_id, node_ref, node_name, node_value, has_nodes, nested_edge_count, nested_node_count, node_parents, edgeName, isSearchResult}) =>ha.h('g', {
     onpointerdown: [SelectNode, {node_id, clearInitialLayout: true}],  
     width: '256', 
     height: '64', 
@@ -443,7 +443,8 @@ export const node_el = ({html_id, selected, error, selected_distance, node_id, n
     class: {
         node: true, 
         selected, 
-        [`distance-${selected_distance < 4 ? selected_distance : 'far'}`]: true
+        [`distance-${selected_distance < 4 ? selected_distance : 'far'}`]: true,
+        "search-result": isSearchResult
     }
 }, [
     ha.h("rect", {

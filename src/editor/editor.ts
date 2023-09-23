@@ -48,13 +48,19 @@ const Search = (state, {payload, nodes}) => {
             ...state, 
             search: payload.target.value, 
             search_index,
+            searchResults: search_results.map(r => r.item.id)
         }, search_results.length > 0 && [dispatch => requestAnimationFrame(() => dispatch(SelectNode, {node_id: search_results[search_index].item.id}))]
     ]
 }
 
 
 const search_el = ({search}) => ha.h('div', {id: "search"}, [
-    typeof search === "string" && ha.h('input', {type: "text", onkeydown: (state: any, payload) => [Search,  {payload, nodes: getNodes(state.simulation)}], onblur: (state, payload) => [{...state, search: false}]}, []),
+    typeof search === "string" && ha.h('input', {
+      type: "text", 
+      onkeydown: (state: any, payload) => [Search,  {payload, nodes: getNodes(state.simulation)}], 
+      onblur: (state: HyperappState, payload: FocusEvent) => ({...state, searchFocused: false, search: (payload.target as HTMLInputElement).value || false}),
+      onfocus:  (state: HyperappState, payload) => ({...state, searchFocused: true}),
+    }, []),
     typeof search !== "string" && ha.h('span', {class: 'material-symbols-outlined graph-action', onclick: (s: any) => [{...s, search: ""}, [FocusEffect, {selector: "#search input"}]]}, [ha.text('search')]),
 ])
 
@@ -215,7 +221,8 @@ const runapp = (init, _lib) => {
                             nested_edge_count: newnode.nested_edge_count,
                             nested_node_count: newnode.nested_node_count,
                             node_parents: !s.levels ? [] : (s.levels as Levels).parents.get(node.node_id),
-                            edgeName: s.editingGraph.edges[node.node_id]?.as
+                            edgeName: s.editingGraph.edges[node.node_id]?.as,
+                            isSearchResult: s.searchResults?.includes(node.node_id)
                         }))
                 }) ?? []
                 ).concat(
@@ -337,7 +344,7 @@ const runapp = (init, _lib) => {
             if(document.getElementById("node-editor-result").contains(payload.target)) {
                 return [state];
             }
-            const mode = state.editing !== false ? 'editing' : state.search !== false ? 'searching' : 'graph';
+            const mode = state.editing !== false ? 'editing' : state.searchFocused ? 'searching' : 'graph';
             const key_input = (payload.ctrlKey ? 'ctrl_' : '') + (payload.shiftKey ? 'shift_' : '') + (payload.key === '?' ? 'questionmark' : payload.key.toLowerCase());
             let action;
             let effects = [];
@@ -393,7 +400,7 @@ const runapp = (init, _lib) => {
                     break;
                 }
                 case "graph_f": {
-                    action = s => [{...s, search: ""}, [FocusEffect, {selector: "#search input"}]]; 
+                    action = s => [{...s, search: "", searchFocused: true}, [FocusEffect, {selector: "#search input"}]]; 
                     break;
                 }
                 case "graph_shift_enter": {
@@ -531,7 +538,6 @@ const editor = async function(html_id, editingGraphId, lib, norun) {
     const hash_graph = window.location.hash.substring(1);
     const url_params = new URLSearchParams(document.location.search);
     editingGraphId = editingGraphId ?? (hash_graph && hash_graph !== "" ? hash_graph : graph_list?.[0] ?? 'helloWorld');
-    console.log(helloWorld);
     let editingGraph: Graph = editingGraphId === "helloWorld"
       ? ((helloWorld as Graph).edges_in = Object.values(helloWorld.edges).reduce((acc: Record<string, Record<string, Edge>>, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {}), await hlibLib.data.no.runtime.add_ref(helloWorld), helloWorld)
       : (await hlibLib.data.no.runtime.get_ref(editingGraphId)
@@ -563,6 +569,8 @@ const editor = async function(html_id, editingGraphId, lib, norun) {
             focused: false,
             editing: false,
             search: false,
+            searchResults: [],
+            searchFocused: false,
             show_all: true,
             show_result: false,
             node_el_width: 256,
@@ -579,7 +587,7 @@ const editor = async function(html_id, editingGraphId, lib, norun) {
             stopped: false,
             noautozoom: false,
             nodeOffset: {x: 0, y: 0},
-            initialLayout: true
+            initialLayout: true,
         };
 
         runapp(init, lib)

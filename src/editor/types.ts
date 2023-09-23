@@ -24,6 +24,8 @@ export type HyperappState = {
   focused: boolean,
   editing: boolean,
   search: boolean,
+  searchResults: Array<string>,
+  searchFocused: boolean,
   show_all: boolean,
   show_result: boolean,
   node_el_width: number,
