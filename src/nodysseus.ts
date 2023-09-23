@@ -1096,6 +1096,8 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
         ? nodysseus_get(lib.data, nodevalue.substring("_lib.".length), lib)
         : nodevalue === "_args"
         ? newtarget()
+        : nodevalue === "_argsdata"
+        ? resolve_args(newtarget(), lib, options)
         : nodevalue === "__args"
         ? parenttarget()
           // lib.data.no.of(Object.fromEntries(Object.entries(parenttarget()).map(([key, value]: [string, any]) => [key, value?.isArg && valuetype !== "raw" ? run_runnable(value, lib)?.value : value])))
@@ -1564,8 +1566,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
             .then(subscriptions => isValue(subscriptions) ? subscriptions.value : subscriptions)
             .then(subscriptions => subscriptions && Object.entries(subscriptions)
                 .forEach(kv => kv[1] &&
-                  !_lib.data.no.runtime.isListened(kv[0], newgraphid) 
-                  && _lib.data.no.runtime.addListener(kv[0], newgraphid, kv[1], false, 
+                  _lib.data.no.runtime.addListener(kv[0], newgraphid, kv[1], false, 
                     graphid, true, _lib, options)))
           }
 
@@ -1725,7 +1726,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
         const stateid = `__jsimport:${urlval}`;
         const existing = nodysseus.state.get(stateid);
         if(existing) return existing;
-        const promise = import(urlval).then(jsmodule => (nodysseus.state.set(stateid, jsmodule), jsmodule));
+        const promise = import(urlval).then(jsmodule => jsmodule.default ?? jsmodule).then(jsmodule => (nodysseus.state.set(stateid, jsmodule), jsmodule));
         nodysseus.state.set(stateid, promise);
         return promise;
       }
@@ -1773,7 +1774,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
                       (acc, v) => [
                         !acc[0] && v !== undefined,
                         acc[0] || v !== undefined
-                          ? acc[1].concat([v._Proxy ? v._value : v])
+                          ? acc[1].concat(v)
                           : acc[1],
                       ],
                       [false, []]
@@ -1800,7 +1801,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
                     (acc, v) => [
                       !acc[0] && v !== undefined,
                       acc[0] || v !== undefined
-                        ? acc[1].concat([v._Proxy ? v._value : v])
+                        ? acc[1].concat(v)
                         : acc[1],
                     ],
                     [false, []]
@@ -1857,7 +1858,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       args: ["target", "path"],
       resolve: false,
       fn: (target, path) => {
-        while (target && target._Proxy) {
+        while (target) {
           target = target._value;
         }
         const newval = Object.assign({}, target);
@@ -1921,9 +1922,6 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       args: ["target", "path", "fn", "_node", "_lib", "_graph_input_value", "_runoptions"],
       resolve: false,
       fn: (target, path, fn, node, _lib, args, options) => {
-        while (target?._Proxy) {
-          target = target._value;
-        }
         const keys = (node.value || path).split(".");
         const check = (o, fn, k) =>
           k.length === 1
@@ -1951,7 +1949,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       fn: (obj, spacer) =>
         JSON.stringify(
           obj,
-          (key, value) => (value?._Proxy ? value._value : value),
+          (key, value) => value,
           spacer
         ),
     },
