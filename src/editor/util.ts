@@ -401,9 +401,7 @@ export const FocusEffect: ha.Effecter<HyperappState, {selector: string}> = (_, {
     } 
 
     el.focus();
-    if(Object.hasOwn(el, "select") && typeof el.select === "function") {
-      el.select();
-    }
+    el.select();
   }, 100);
 }
 
