@@ -7,6 +7,11 @@ import { v4 as uuid } from "uuid";
 import { initListeners } from "./events.js";
 import { wrap } from "idb";
 import { objectRefStore } from "./editor/store.js";
+import * as acorn from "acorn";
+import jsx from "acorn-jsx";
+import { parser } from "@lezer/javascript";
+
+const JsxParser = acorn.Parser.extend(jsx());
 
 const generic_nodes = generic.nodes;
 
@@ -1997,7 +2002,27 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
                   .map(k => nodysseus.persist.get(k).then(v => [k, v])))
                   .then(kvs => Object.fromEntries(kvs)).value)
           .value
-    }
+    },
+    functionParameters: {
+      args:["fn"],
+      fn: (fn) => {
+        const fnstring = fn.toString();
+        // hacky: return the first set of parameters we find
+        let foundParams = false, pastParams = false;
+        const args = [];
+        parser.parse(fnstring).iterate({
+          enter: syntaxNode => {
+            if(!pastParams && syntaxNode.matchContext(["ParamList"]) && syntaxNode.name === "VariableDefinition" && !syntaxNode.matchContext(["Arrow"])) {
+              foundParams = true;
+              args.push(fnstring.substring(syntaxNode.from, syntaxNode.to))
+            } else if (!pastParams && foundParams && !syntaxNode.matchContext(["ParamList"])) {
+              pastParams = true;
+            }
+          }
+        })
+        return args;
+      }
+    },
   } as Record<string, Extern>,
   // THREE
 };

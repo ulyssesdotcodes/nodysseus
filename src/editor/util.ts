@@ -950,26 +950,6 @@ export const hlibLib = mergeLib(nolibLib, newLib({
     domTypes,
     extern: {
       ...hyperapplib.data.extern,
-      functionParameters: {
-        args:["fn"],
-        fn: (fn) => {
-          const fnstring = fn.toString();
-          // hacky: return the first set of parameters we find
-          let foundParams = false, pastParams = false;
-          const args = [];
-          parser.parse(fnstring).iterate({
-            enter: syntaxNode => {
-              if(!pastParams && syntaxNode.matchContext(["ParamList"]) && syntaxNode.name === "VariableDefinition" && !syntaxNode.matchContext(["Arrow"])) {
-                foundParams = true;
-                args.push(fnstring.substring(syntaxNode.from, syntaxNode.to))
-              } else if (!pastParams && foundParams && !syntaxNode.matchContext(["ParamList"])) {
-                pastParams = true;
-              }
-            }
-          })
-          return args;
-        }
-      },
     }
 }));
 
