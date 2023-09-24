@@ -2085,7 +2085,7 @@ const generic = {
       "1ovmmn3": {
         "id": "1ovmmn3",
         "ref": "arg",
-        "value": "value"
+        "value": "value: default"
       },
       "1znvqbi": {
         "id": "1znvqbi",
@@ -2095,7 +2095,7 @@ const generic = {
       "3jphobh": {
         "id": "3jphobh",
         "ref": "arg",
-        "value": "value"
+        "value": "value: default"
       },
       "4d8qcss": {
         "id": "4d8qcss",
@@ -2158,7 +2158,7 @@ const generic = {
       "s7kudco": {
         "id": "s7kudco",
         "ref": "arg",
-        "value": "value"
+        "value": "value: default"
       },
       "ut9zq8n": {
         "id": "ut9zq8n",
@@ -2170,7 +2170,7 @@ const generic = {
       "xm523y9": {
         "id": "xm523y9",
         "ref": "arg",
-        "value": "value"
+        "value": "value: default"
       },
       "xzbcdnj": {
         "id": "xzbcdnj",
@@ -2543,7 +2543,7 @@ const generic = {
       "kpakw50": {
         "id": "kpakw50",
         "ref": "arg",
-        "value": "object"
+        "value": "object: default"
       }
     },
     "edges": [

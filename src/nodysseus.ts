@@ -1642,7 +1642,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       },
     },
     set_mutable: {
-      args: ["target", "path", "value", "__graph_value"],
+      args: ["target: default", "path", "value", "__graph_value"],
       fn: (target, path, value, nodevalue) => {
         function set(obj, propsArg, value) {
           var props, lastProp;
@@ -1823,7 +1823,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       },
     },
     merge_objects_mutable: {
-      args: ["target", "_node_args", "_lib", "_runoptions"],
+      args: ["target: default", "_node_args", "_lib", "_runoptions"],
       fn: (target, args, lib, options) => {
         const merge = (target = {}, value) =>
           Object.entries(value)
