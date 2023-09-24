@@ -946,7 +946,7 @@ const runtimefn = () => {
           // } else if (typeof add === "object") {
           //   await Promise.resolve(nodysseus.refs.add_edge(graphId, add))
           // }
-          return change_graph(nodysseus.refs.get(graphId) as Graph, lib, addedEdges.flatMap(e => [e.from, e.to]));
+          return change_graph(nodysseus.refs.get(graphId) as Graph, lib, addedEdges.flatMap(e => [e.from, e.to]).concat(addedNodes.map(n => n.id)));
         },
         add_node: (graph: Graph, node: NodysseusNode, lib: Lib) => {
           if (!(node && typeof node === "object" && node.id)) {
