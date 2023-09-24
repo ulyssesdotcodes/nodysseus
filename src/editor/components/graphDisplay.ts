@@ -1,7 +1,7 @@
 import { ForceCenter, ForceCollide, ForceLink, ForceX, ForceY } from "d3-force";
 import * as ha from "hyperapp"
 import { hashcode, nolib } from "../../nodysseus.js";
-import { Graph, isNodeGraph, NodysseusNode } from "../../types.js";
+import { Graph, isNodeGraph, NodysseusNode, ValueNode } from "../../types.js";
 import { ispromise, wrapPromise } from "../../util.js";
 import { HyperappState, NodysseusForceLink, NodysseusSimulation, d3Link, d3Node, Vector2, isd3NodeNode, d3NodeNode, d3LinkNode, Property } from "../types.js";
 import { calculateLevels, CreateNode, findViewBox, hlib, pzobj, SelectNode, graphEdgeOut, graphEdgesIn, setRootNodeXNodeY } from "../util.js";
@@ -115,9 +115,11 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
             const sibling_idx = siblings?.findIndex(v => v === n.id);
             const sibling_mult = sibling_idx - (siblings?.length - 1) * 0.5;
 
+
             const addorundefined = (a, b) => {
                 return a === undefined || b === undefined ? undefined : a + b
             }
+
 
             const calculated_nodes = !child ? [{
                 id: n.id,
@@ -139,18 +141,19 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
                 nested_node_count: isNodeGraph(n) ? Object.keys(n.nodes).length : undefined,
                 nested_edge_count: isNodeGraph(n) ? Object.keys(n.edges).length : undefined,
                 x: Math.floor(simulation_node_data.get(node_id)?.x 
-                    ?? simulation_node_data.get(parents_map.get(n.id)?.[0])?.x
                     ?? addorundefined(
                         simulation_node_data.get(child)?.x, 
-                        sibling_mult * (256 + 32 * Math.log(Math.max(1, ancestor_count.get(n.id))/ Math.log(1.01)))
+                        sibling_mult * (256 + 16 * Math.log(Math.max(1, ancestor_count.get(n.id))/ Math.log(1.01)))
                     )
+                    ?? simulation_node_data.get(parents_map.get(n.id)?.[0])?.x
                     ?? Math.floor(window.innerWidth * (randpos.x * .5 + .25))),
                 y: Math.floor(simulation_node_data.get(node_id)?.y 
-                    ?? addorundefined(256, simulation_node_data.get(parents_map.get(n.id)?.[0])?.y)
                     ?? addorundefined(
-                        -(16 + 32 * Math.log(Math.max(1, ancestor_count.get(n.id) * 0.5 + parents_map.get(children_map.get(n.id))?.length)) / Math.log(1.25)),
+                        -(256 + 16 * Math.log(Math.max(1, ancestor_count.get(n.id) * 0.125 + siblings?.length * 4)) / Math.log(1.25)),
+                        // -(16 + 32 * (Math.max(1, siblings?.length * 2)) ),
                         simulation_node_data.get(children_map.get(n.id))?.y
                     )
+                    ?? addorundefined(256, simulation_node_data.get(parents_map.get(n.id)?.[0])?.y)
                     ?? Math.floor(window.innerHeight * (randpos.y * .5 + .25)))
             }];
 
@@ -189,7 +192,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
                 const l = simulation_link_data.get(`${e.from}__${e.to}`);
                 const proximal = (
                     (parents_map.get(e.to)?.length ?? 0) + 
-                    (parents_map.get(children_map.get(e.to))?.length ?? 0)
+                    ((parents_map.get(children_map.get(e.to))?.length ?? 0) * 1)
                 ) * 0.5;
                 return {
                     ...e,
@@ -197,8 +200,9 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
                     source: e.from,
                     target: e.to,
                     sibling_index_normalized: (simulation_node_data.get(e.from) as d3NodeNode).sibling_index_normalized,
-                    strength: 2 * (1.5 - (Math.abs((simulation_node_data.get(e.from) as d3NodeNode).sibling_index_normalized ?? 0) - 0.5)) / (1 + 2 * Math.min(4, proximal)),
-                    distance: 32 + 4 * (Math.min(8, proximal)) 
+                    strength: 4 * (1.5 - (Math.abs((simulation_node_data.get(e.from) as d3NodeNode).sibling_index_normalized ?? 0) - 0.5)) / (1 + 2 * Math.min(4, proximal)),
+                    // strength: 0.25 * (1.5 - (Math.abs((simulation_node_data.get(e.from) as d3NodeNode).sibling_index_normalized ?? 0) - 0.5)) / (1 + 2 * Math.min(8, proximal)),
+                    distance: 256 + 32 * (Math.log(proximal) / Math.log(1.25)) 
                 };
             }).filter(l => !!l);
 
@@ -234,18 +238,15 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
                 (((parents_map.get(n.node_id)?.length > 0 ? 1 : 0)
                     + (children_map.has(n.node_id) ? -1 : 0)
                     // + (parents_map.get(children_map.get(main_node_map.get(n.to))[0])?.length ?? 0)
-                    + (children_map.has(n.node_id) ? -1 : 0))
-                    * (logmaxparents + 3) + .5) * window.innerHeight
+                    )
+                    * (logmaxparents + 3) + .05) * 0.25 * window.innerHeight
                 )
-            .strength(n => 
+            .strength(n =>
                 isd3NodeNode(n)
                 ? (!!parents_map.get(n.node_id)?.length === !children_map.has(n.node_id))
                   || children_map.get(n.node_id)?.length > 0 ? .01 : 0
                 : 0.01
              );
-        (data.simulation.simulation.force('link_label_x') as ForceX<d3Node>)
-          .x(n => 0)
-          .strength(n => isd3NodeNode(n) ? 0 : 0.01);
 
 
         (data.simulation.simulation.force('collide') as ForceCollide<d3Node>).radius(n => isd3NodeNode(n) ? 96 : 8);
@@ -269,7 +270,7 @@ export const d3subscription = (dispatch: ha.Dispatch<HyperappState>, props) => {
             .strength(l => l.strength)
             .id((n: d3Node) => (n as d3NodeNode).node_id))
         .force('link_direction', hlib.d3.forceY().strength(.01))
-        .force('link_label_x', hlib.d3.forceX())
+        // .force('link_label_x', hlib.d3.forceX())
         // .force('center', hlib.d3.forceCenter().strength(0.01))
         // .force('fuse_links', lib.d3.forceLink([]).distance(128).strength(.1).id(n => n.node_id))
         // .force('link_siblings', lib.d3.forceX().strength(1))
