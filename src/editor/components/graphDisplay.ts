@@ -220,7 +220,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
                 simulation_link_data.size !== start_sim_link_size || 
                 data.simulation.simulation.nodes()?.filter(n => isd3NodeNode(n)).length !== nodes.length ||
                 (data.simulation.simulation.force('links') as ForceLink<d3Node, d3Link>)?.links().length !== links.length) {
-                data.simulation.simulation.alpha(0.8);
+                data.simulation.simulation.alpha(0.95);
             }
 
             data.simulation.simulation.nodes((nodes as Array<d3Node>).concat(linkNameNodes));
