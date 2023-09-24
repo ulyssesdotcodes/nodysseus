@@ -8,7 +8,7 @@ import { d3Link, d3Node, d3NodeNode, HyperappState, isd3NodeNode, Levels, Nodyss
 import { UpdateGraphDisplay, UpdateSimulation, d3subscription, updateSimulationNodes, getNodes, getLinks } from "./components/graphDisplay.js";
 import { parser } from "@lezer/javascript";
 import {v4 as uuid} from "uuid";
-import { middleware, runh } from "./hyperapp.js";
+import { middleware, runh, hlib as hyperapplib } from "./hyperapp.js";
 import domTypes from "../html-dom-types.json";
 
 
@@ -949,6 +949,7 @@ export const hlibLib = mergeLib(nolibLib, newLib({
     },
     domTypes,
     extern: {
+      ...hyperapplib.data.extern,
       functionParameters: {
         args:["fn"],
         fn: (fn) => {

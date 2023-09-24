@@ -273,7 +273,8 @@ export const mergeEnv = (data: Args, env: Env): Env => {
 export const newLib = (data): Lib => ({__kind: "lib", data})
 export const mergeLib = (a: Record<string, any> | Lib, b: Lib): Lib => (a ? {
   __kind: "lib",
-  data: a.data && b.data && a.data !== b.data ? mergeDeep(a.data, b.data) : a.data ?? b.data
+  // data: a.data && b.data && a.data !== b.data ? mergeDeep(a.data, b.data) : a.data ?? b.data
+  data: a.data && b.data && a.data !== b.data ? {...b.data, ...a.data, extern: {...a.data.extern, ...b.data.extern}} : a.data ?? b.data
 }: b)
 
 const MERGE_KEYS = ["extern"]
