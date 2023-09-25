@@ -67,7 +67,7 @@ export type NodysseusStoreTypes = {[k in keyof NodysseusStore]: StoreType<Nodyss
 
 export type NodysseusStore = {
   refs: RefStore,
-  parents: Store<{parent: string, parentest: string}>,
+  parents: Store<{parent: string, parentest: string, nodeRef?: string}>,
   state: Store<any>,
   persist: Store<any>,
   fns: Store<{script: string, fn: Function}>,

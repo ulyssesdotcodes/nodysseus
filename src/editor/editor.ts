@@ -392,7 +392,9 @@ const runapp = (init, _lib) => {
                     break;
                 }
                 case "graph_ctrl_c": {
-                    action = [Copy, {as: nolib.no.runtime.get_edge_out(state.editingGraph, state.selected[0]).as}];
+                    if(window.getSelection().isCollapsed) {
+                      action = [Copy, {as: nolib.no.runtime.get_edge_out(state.editingGraph, state.selected[0]).as}];
+                    }
                     break;
                 }
                 case "graph_ctrl_v": {

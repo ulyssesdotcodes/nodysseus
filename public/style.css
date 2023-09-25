@@ -348,17 +348,21 @@ svg {
     gap: .4em;
 }
 
-.node-info .value-input {
+.node-info .value-input, .node-info .id-display {
     display: flex;
     flex-direction: row;
     gap: .5em;
 }
 
 .node-info .value-input label {
-    flex-basis: 18em;
+    flex-basis: 4em;
 }
 
-.node-info .value-input input {
+.node-info .id-display .label {
+  flex-basis: 6em;
+}
+
+.node-info .value-input input, .node-info .id-display .id {
     flex-grow: 1;
 }
 

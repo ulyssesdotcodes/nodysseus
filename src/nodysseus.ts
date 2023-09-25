@@ -372,23 +372,35 @@ const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, param
       lib: fn.lib
     })).value
 
-const createGraphFunctorRunnable = (graph: ConstRunnable, parameters: ConstRunnable, lib: Lib, options: RunOptions, output: ConstRunnable, graphid: string): FunctorRunnable | Promise<FunctorRunnable> => 
+const createGraphFunctorRunnable = (graph: ConstRunnable, parameters: ConstRunnable, lib: Lib, options: RunOptions, output: ConstRunnable, graphid: ConstRunnable, env: ConstRunnable, out: ConstRunnable, __graphid: string): FunctorRunnable | Promise<FunctorRunnable> => 
   graph && wrapPromiseAll([
     parameters && run_runnable(parameters, lib, undefined, options),
     graph && run_runnable(graph, lib, undefined, options),
     output && run_runnable(output, lib, undefined, options),
-  ]).then<FunctorRunnable>(([params, resultGraph, resultOutput]: [Result, Result, Result]) => isError(params) 
+    graphid && run_runnable(graphid, lib, undefined, options),
+    env && run_runnable(env, lib, undefined, options),
+    out && run_runnable(out, lib, undefined, options),
+  ]).then<FunctorRunnable>(([params, resultGraph, resultOutput, graphid, env, out]: [Result, Result, Result, Result, Result, Result]) => isError(params) 
     ? params 
     : isError(resultGraph) || !resultGraph.value
     ? resultGraph
     : isError(resultOutput)
     ? resultOutput
+    : isError(graphid)
+    ? graphid
+    : isError(env)
+    ? env
+    : isError(out)
+    ? out
     : lib.data.no.of({
     __kind: FUNCTOR,
-    paramters: params ? [...new Set(params.value ? Object.keys(params.value).map(k => k.includes(".") ? k.substring(0, k.indexOf('.')) : k): [])] : [],
-    env: newEnv(new Map([["__graphid", lib.data.no.of(resultGraph.value)]]), resultOutput.value),
+    parameters: params ? [...new Set(params.value ? Object.keys(params.value).map(k => k.includes(".") ? k.substring(0, k.indexOf('.')) : k): [])] : [],
+    env: env && !isError(env) ? mergeEnv(
+      env.value,
+      newEnv(new Map([["__graphid", (graphid && !isError(graphid) && lib.data.no.of(graphid.value)) || lib.data.no.of(resultGraph.value)]]), resultOutput.value),
+    ) : newEnv(new Map([["__graphid", (graphid && !isError(graphid) && lib.data.no.of(graphid.value)) || lib.data.no.of(resultGraph.value)]]), resultOutput.value) ,
     graph: resultGraph.value,
-    fn: resultGraph.value.out ?? "out",
+    fn: out.value ?? resultGraph.value.out ?? "out",
     lib
   })).value
 
@@ -473,7 +485,7 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
 
           // before so that change/update has the parent id
           // change both nodes with nested graphs and non-
-          lib.data.no.runtime.set_parent(newgraphid, graphid); 
+          lib.data.no.runtime.set_parent(newgraphid, graphid, node.ref); 
 
           const result = run_node(node_ref, node.value ? new Map(nodeArgs).set("__graph_value", lib.data.no.of(node.value)) : nodeArgs, newGraphArgs, lib, options)
           return result;
@@ -483,7 +495,8 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
     } else if (isNodeGraph(node)) {
       node.edges_in = node.edges_in ?? Object.values(node.edges).reduce<Graph["edges_in"]>((acc, e) => ({...acc, [e.to]: {...(acc[e.to] ?? {}), [e.from]: e}}), {})
       const graphid = graphArgs.data.get("__graphid")
-      const env = isError(graphid) || isConstRunnable(graphid) ? graphArgs : combineEnv(new Map([["__graphid", lib.data.no.of(`${graphid.value}/${node.id}`)]]), graphArgs, undefined, graphArgs._output);
+      // const env = isError(graphid) || isConstRunnable(graphid) ? graphArgs : combineEnv(new Map([["__graphid", lib.data.no.of(`${graphid.value}/${node.id}`)]]), graphArgs, undefined, graphArgs._output);
+      const env = isError(graphid) || isConstRunnable(graphid) ? graphArgs : combineEnv(new Map([["__graphid", lib.data.no.of(`${graphid.value}`)]]), graphArgs, undefined, graphArgs._output);
       return node_nodes(node, node.out ?? "out", nodeArgs, env, lib, options)
     } else if (isNodeScript(node)){
         return (graphArgs._output === undefined || graphArgs._output === "value") && node_script(node, nodeArgs, lib, options)
@@ -646,8 +659,10 @@ const run_ap_runnable = (runnable: ApRunnable, args: Args, lib: Lib, options: Ru
             ? ranArgs
             : new Map();
           const ret = (Array.isArray(runnable.fn) ? runnable.fn : [runnable.fn])
-          .map(rfn => {
-            return typeof rfn === "function" 
+          .map(rfn => 
+            rfn === undefined || rfn === null
+            ? undefined
+            : typeof rfn === "function" 
             ? wrapPromise(rfn(execArgs)).then(r => lib.data.no.of(r)).value 
             : isApFunction(rfn)
             ? run_extern(rfn, execArgs, lib, options)
@@ -657,7 +672,7 @@ const run_ap_runnable = (runnable: ApRunnable, args: Args, lib: Lib, options: Ru
               execArgs,
               options
             )
-          })
+          )
           return Array.isArray(runnable.fn) ? wrapPromiseAll(ret.map(v => wrapPromise(v))) : wrapPromise(ret[0]);
         }).then(v => {
           return isError(v) ? v : v?.value
@@ -742,7 +757,7 @@ const runtimefn = () => {
         wrapPromise(get_parentest(graph))
           .then(parent => {
           if (parent) {
-            return (lib.data ?? lib).no.runtime.change_graph(parent, lib, [(typeof graph === "string" ? graph : graph.id).substring(parent.id.length + 1)]);
+            return (lib.data ?? lib).no.runtime.change_graph(parent, lib, [(typeof graph === "string" ? graph : graph.id).substring(parent.length + 1)]);
           } else {
             return wrapPromise(typeof graph === "string" ? get_ref(graph) : graph)
               .then(graph => {
@@ -762,26 +777,26 @@ const runtimefn = () => {
         }).value;
 
       let updatepublish = {};
-      const update_args = (graph, args, lib: Lib) => {
-        const graphid = typeof graph === "string" ? graph : graph.id;
-        let prevargs = nodysseus.state.get(graphid);
+      const update_args = (id, args, lib: Lib) => {
+        let prevargs = nodysseus.state.get(id);
+        const graphid = id.includes("#") ? id.split("#")[0] : id;
 
         if (prevargs === undefined) {
           prevargs = {};
-          nodysseus.state.set(graphid, prevargs);
+          nodysseus.state.set(id, prevargs);
         }
 
         if (!compareObjects(args, prevargs, true)) {
           Object.assign(prevargs, args);
           wrapPromise(get_parentest(graphid))
-            .then(parent => parent ?? get_graph(graphid))
+            .then(parent => get_graph(parent ?? graphid))
             .then(updatedgraph => {
               if(updatedgraph && !ispromise(updatedgraph) && (!updatepublish[updatedgraph.id] || updatepublish[updatedgraph.id] + 16 < performance.now())) {
                 updatepublish[updatedgraph.id] = performance.now();
                 setTimeout(() => {
                   updatepublish[updatedgraph.id] = false;
                   // TODO: fix the use of / here
-                  let node_id = graph.split(updatedgraph.id)[1].substring(1);
+                  let node_id = graphid.split(updatedgraph.id)[1].substring(1);
                   node_id = node_id.indexOf('/') > 0 ? node_id.substring(0, node_id.indexOf('/')) : node_id;
 
                   publish("graphupdate", {graph: updatedgraph, dirtyNodes: node_id && Object.keys(descendantGraph(node_id, updatedgraph, lib).nodes)}, lib);
@@ -839,16 +854,19 @@ const runtimefn = () => {
             return isNodeGraph(g) ? g : typeof graph !== "string" && isNodeGraph(graph) ? graph : undefined
           }).value
       const get_parent = (graph) => {
-        const parent = nodysseus.parents.get(
-          typeof graph === "string" ? graph : graph.id
+        return nodysseus.parents.get(
+          typeof graph === "string" ? graph : graph && graph.id
         );
-        return wrapPromise(parent).then(parent => parent && get_graph(parent.parent)).value;
+      };
+      const getGraphIdRef = (graphid) => {
+        return wrapPromise(nodysseus.parents.get(
+          typeof graphid
+        )).then(res => res?.nodeRef).value;
       };
       const get_parentest = (graph) => {
-       const parent = nodysseus.parents.get(
+        return wrapPromise(nodysseus.parents.get(
           typeof graph === "string" ? graph : graph.id
-        );
-        return wrapPromise(parent).then(parent => parent && parent.parentest && get_graph(parent.parentest)).value;
+        )).then(parent => parent && parent.parentest && get_graph(parent.parentest)).value;
       };
       const get_path = (graph, path) => {
         graph = get_graph(graph);
@@ -875,6 +893,7 @@ const runtimefn = () => {
         get_edge_out,
         get_parent,
         get_parentest,
+        getGraphIdRef,
         get_fn: (id, name, orderedargs, script): Function => {
           const fnid = id;
           return wrapPromise(nodysseus.fns.get(fnid + orderedargs)).then(fn => {
@@ -1032,7 +1051,7 @@ const runtimefn = () => {
         isListened,
         togglePause,
         publish,
-        set_parent: (graph, parent) => {
+        set_parent: (graph, parent, nodeRef?: string) => {
           const graphid = graph;
           const parentid = parent;
           return wrapPromise(nodysseus.parents.get(parentid)).then(parent_parent => {
@@ -1042,6 +1061,7 @@ const runtimefn = () => {
               id: graphid,
               parent: parentid,
               parentest,
+              nodeRef
             };
             nodysseus.parents.set(graphid, new_parent)
           }).value;
@@ -1310,7 +1330,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     },
     graphRunnable: {
       rawArgs: true,
-      args: ["graph", "parameters", "_lib", "_runoptions", "output", "__graphid"],
+      args: ["graph", "parameters", "_lib", "_runoptions", "output", "graphid", "env", "out", "__graphid"],
       fn: createGraphFunctorRunnable
     },
     expect: {
@@ -1335,60 +1355,63 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
         display: true
       },
       args: ["onframe", "_lib", "__graphid", "_runoptions", "_output", "initial", "publish"],
-      fn: (onframe, lib, graphid, options, output, initial, publish) => {
-        const args = lib.data.no.runtime.get_args(graphid);
+      fn: (onframe, lib, graphid, options, output, initial, publish, id) => {
+        return wrapPromiseAll([
+          publish && run_runnable(publish, lib, undefined, options),
+          id && run_runnable(id, lib, undefined, options)
+        ]).then(([publish, id]) => [
+          isValue(publish) ? publish.value : publish,
+          isValue(id) ? id.value : id,
+        ]).then(([publish, id]) => {
+          const stateId = id ? `${lib.data.no.runtime.get_parent(graphid)}#${id}` : graphid;
+          const args = lib.data.no.runtime.get_args(stateId);
 
-        let store = args["store"] ?? {
-          __kind: "refval",
-          graphid,
-          set: {
-            __kind: "apFunction",
-            fn: (value) => {
-              if(store["publish"]) {
-                lib.data.no.runtime.publish("argsupdate", {graphid, changes: [['store.value', value]], mutate: true}, lib, options)
-              } else {
-                store["value"] = value;
-              }
-              return value;
-            },
-            args: ['value'],
-          },
-          publish: wrapPromise(run_runnable(publish, lib, undefined, options))
-            .then(p => isValue(p) ? p.value : p)
-            .then(p => {
-              const args = lib.data.no.runtime.get_args(graphid)["store"]
-              if(args) {
-                args["publish"] = p;
-              }
-              return p
-            }).value,
-          value: undefined
-        }
-
-        if(!args["store"]) {
-          lib.data.no.runtime.update_args(graphid, {store}, lib)
-          if(initial) {
-            return wrapPromise(run_runnable(initial, lib, undefined, options))
-              .then(res => isValue(res) ? res.value : res)
-              .then(value => {
-                store.value = value
-                return store;
-              }).value
-          }
-        }
-
-        if(onframe) {
-          wrapPromise(run_runnable(onframe, lib))
-            .then(onframeRunnable => isValue(onframeRunnable) && nolib.no.runtime.addListener("animationframe", graphid, () => {
-              wrapPromise(run_runnable(onframeRunnable.value, lib)).then(frameresult => {
-                if(isValue(frameresult)){ 
-                  args["store"].value = frameresult.value
+          let store = args["store"] ?? {
+            __kind: "refval",
+            id: stateId,
+            set: {
+              __kind: "apFunction",
+              fn: (value) => {
+                if(store["publish"]) {
+                  lib.data.no.runtime.publish("argsupdate", {id: stateId, changes: [['store.value', value]], mutate: true}, lib, options)
+                } else {
+                  store["value"] = value;
                 }
-              })
-            }))
-        }
+                return value;
+              },
+              args: ['value'],
+            },
+            publish,
+            value: undefined
+          }
 
-        return output === "display" ? {dom_type: 'div', props: {}, children: [{dom_type: "text_value", text: JSON.stringify(store.value)}]} : store
+          if(!args["store"]) {
+            lib.data.no.runtime.update_args(stateId, {store}, lib)
+            if(initial) {
+              return wrapPromise(run_runnable(initial, lib, undefined, options))
+                .then(res => isValue(res) ? res.value : res)
+                .then(value => {
+                  store.value = value
+                  return store;
+                }).value
+            }
+          } else {
+            args["store"].publish = publish;
+          }
+
+          if(onframe) {
+            wrapPromise(run_runnable(onframe, lib))
+              .then(onframeRunnable => isValue(onframeRunnable) && nolib.no.runtime.addListener("animationframe", stateId, () => {
+                wrapPromise(run_runnable(onframeRunnable.value, lib)).then(frameresult => {
+                  if(isValue(frameresult)){ 
+                    args["store"].value = frameresult.value
+                  }
+                })
+              }))
+          }
+
+          return output === "display" ? {dom_type: 'div', props: {}, children: [{dom_type: "text_value", text: JSON.stringify(store.value)}]} : store
+        }).value
       }
     },
     persistState: {
@@ -1401,17 +1424,28 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
         display: true
       },
       args: ["value", "_lib", "__graphid", "_runoptions", "_output", "persist", "publish"],
-      fn: (value, lib, graphid, options, output, persist, publish) => {
-        let rawstate = lib.data.no.runtime.get_args(graphid)["state"]
-
-        return wrapPromise(publish && run_runnable(publish, lib, undefined, options))
-          .then(publish => isValue(publish) ? publish.value : publish)
-          .then(publish =>
-            wrapPromise(persist && run_runnable(persist, lib, undefined, options))
-              .then(persist => isValue(persist) ? persist.value : persist)
-              .then(persist => ({publish, persist})).value)
-          .then(rawstate !== undefined ? (v => v) : ({publish, persist}) => {
-            const persistedState = persist && rawstate === undefined && nodysseus.persist.get(graphid);
+      fn: (value, lib, graphid, options, output, persist, publish, id) => {
+        return wrapPromiseAll([
+          publish && run_runnable(publish, lib, undefined, options),
+          persist && run_runnable(persist, lib, undefined, options),
+          id && run_runnable(id, lib, undefined, options)
+        ]).then(([publish, persist, id]) => [
+          isValue(publish) ? publish.value : publish,
+          isValue(persist) ? persist.value : persist,
+          isValue(id) ? id.value : id,
+        ])
+        .then(([publish, persist, id]) => {
+          const stateId = id ? `${lib.data.no.runtime.get_parent(graphid)}#${id}` : graphid;
+          return {
+            publish,
+            persist,
+            stateId,  
+            rawstate: lib.data.no.runtime.get_args(stateId)["state"]
+          }
+        })
+        .then( ({publish, persist, stateId, rawstate}) => {
+            if(rawstate !== undefined) return {publish, persist, stateId, rawstate};
+            const persistedState = persist && rawstate === undefined && nodysseus.persist.get(stateId);
             const initialState = wrapPromise(persistedState)
               .then(ps => ps ? JSON.parse(ps)
                : value && (rawstate === undefined || rawstate === null)
@@ -1421,24 +1455,24 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
             return initialState ? initialState
               .then(initial => {
                 if(publish) {
-                  lib.data.no.runtime.publish("argsupdate", {graphid, changes: {state: initial}, mutate: false}, lib, options, true)
+                  lib.data.no.runtime.publish("argsupdate", {id: stateId, changes: {state: initial}, mutate: false}, lib, options, true)
                 } else {
-                  lib.data.no.runtime.update_args(graphid, {state: initial})
+                  lib.data.no.runtime.update_args(stateId, {state: initial})
                 }
 
                 return initial
-              }).then(initial => ({publish, persist, initial})).value 
-              : {publish, persist}
+              }).then(initial => ({publish, persist, initial, stateId})).value 
+              : {publish, persist, stateId}
           })
-          .then(({persist, publish, initial}: {persist, publish, initial?}) => 
+          .then(({persist, publish, initial, stateId, rawstate}: {persist, publish, stateId, rawstate, initial?}) => 
             wrapPromise(rawstate)
               .then(rawstate => isValue(rawstate) ? rawstate.value : rawstate)
-              .then(state => ({publish, persist, state: state ?? initial})).value)
-          .then(({persist, publish, state}) => output === "display" 
+              .then(state => ({publish, persist, state: state ?? initial, stateId})).value)
+          .then(({persist, publish, state, stateId}) => output === "display" 
             ? lib.data.no.of({dom_type: 'div', props: {}, children: [{dom_type: 'text_value', text: JSON.stringify(state)}]}) 
             : ({
               __kind: "state",
-              graphid,
+              id: stateId,
               set: {
                 __kind: "apFunction",
                 promiseArgs: true,
@@ -1448,23 +1482,23 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
                   const isresultpromise = ispromise(promiseresult);
 
                   if(publish) {
-                    nolib.no.runtime.publish("argsupdate", {graphid, changes: {state: promiseresult}, mutate: false}, lib, options, true)
+                    nolib.no.runtime.publish("argsupdate", {id: stateId, changes: {state: promiseresult}, mutate: false}, lib, options, true)
                   } else {
-                    lib.data.no.runtime.update_args(graphid, {state: promiseresult}, lib)
+                    lib.data.no.runtime.update_args(stateId, {state: promiseresult}, lib)
                   }
 
                   if(!isresultpromise && persist) {
-                    nodysseus.persist.set(graphid, JSON.stringify(promiseresult))
+                    nodysseus.persist.set(stateId, JSON.stringify(promiseresult))
                   }
 
                   return isresultpromise ? promiseresult.then(pr => {
                     if(persist) {
-                      nodysseus.persist.set(graphid, JSON.stringify(pr))
+                      nodysseus.persist.set(stateId, JSON.stringify(pr))
                     }
                     if(publish) {
-                      lib.data.no.runtime.publish("argsupdate", {graphid, changes: {state: pr}, mutate: false}, lib, options, true)
+                      lib.data.no.runtime.publish("argsupdate", {id: stateId, changes: {state: pr}, mutate: false}, lib, options, true)
                     } else {
-                      lib.data.no.runtime.update_args(graphid, {state: pr}, lib)
+                      lib.data.no.runtime.update_args(stateId, {state: pr}, lib)
                     }
                     return pr;
                   }) : promiseresult;
@@ -1575,12 +1609,17 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
                     graphid, true, _lib, options)))
           }
 
+          if(edgemap.display) {
+            const displayStateId = `${display.env.data.get("__graphid").value}/${display.fn}-display-runnable`;
+            nodysseus.state.set(displayStateId, display)
+          }
+
           return runedgeresult;
         }
 
         const ret = wrapPromise(run_runnable(lib, _lib, undefined, {...options, resolvePromises: true}))
             .then(libr => isError(libr) ? libr : libr?.value)
-            .then(libr => (libr && `${lib.graph.id}/${lib.graph.out ?? "out"}` === graphid && nodysseus.state.set(`${lib.graph.id}-lib`, libr), libr))
+            .then(libr => (libr && `${lib.graph.id}/${lib.graph.out ?? "out"}` === graphid && nodysseus.state.set(`${lib.graph.id ?? lib.graph}-lib`, libr), libr))
             .then(libr => wrapPromise(argsfn ? run_runnable({
                 ...argsfn,
                 lib: mergeLib(newLib(libr), _lib)

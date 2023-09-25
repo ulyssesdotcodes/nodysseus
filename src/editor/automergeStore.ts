@@ -290,12 +290,12 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
 
       if(!syncWS) {
         syncWS = new WebSocket(`wss://ws.nodysseus.io/${rtcroom}`);
-        nolib.no.runtime.addListener("argsupdate", "__websocket", ({graphid, changes, mutate, source}, lib) => {
+        nolib.no.runtime.addListener("argsupdate", "__websocket", ({id, changes, mutate, source}, lib) => {
           if(mutate) return;
-          const current = sentStates.get(graphid) ?? (sentStates.set(graphid, {}), sentStates.get(graphid));
+          const current = sentStates.get(id) ?? (sentStates.set(id, {}), sentStates.get(id));
           Object.entries(changes).forEach(kv => {
             if(kv[1] !== undefined && !compare(current[kv[0]], kv[1])) {
-              source !== "ws" && syncWS.send(new Blob([Uint8Array.of(syncMessageTypesRev["argsupdate"]), JSON.stringify({graphid, changes})]))
+              source !== "ws" && syncWS.send(new Blob([Uint8Array.of(syncMessageTypesRev["argsupdate"]), JSON.stringify({id, changes})]))
               current[kv[0]] = kv[1];
             }
           })

@@ -100,6 +100,10 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                     }, [ha.text(n.exists ? n.name : `+${n.name}`)]))
                     .concat(nodeArgs.length > 10 ? [ha.h("span", {}, ha.text("..." + nodeArgs.length + " more"))] : [])),
             ha.h('div', {class: "inputs"}, [
+                ha.h("div", {class: "id-display"}, [
+                  ha.h("span", {class: "label"}, [ha.text("id")]),
+                  ha.h("span", {class: "id"}, [ha.text(node.id)])
+                ]),
                 ha.memo(node => infoInput({
                     label: 'graph',
                     value: (node as RefNode).ref,
