@@ -859,9 +859,7 @@ const runtimefn = () => {
         );
       };
       const getGraphIdRef = (graphid) => {
-        return wrapPromise(nodysseus.parents.get(
-          typeof graphid
-        )).then(res => res?.nodeRef).value;
+        return wrapPromise(nodysseus.parents.get( graphid)).then(res => (console.log("parent", res), res)?.nodeRef).value;
       };
       const get_parentest = (graph) => {
         return wrapPromise(nodysseus.parents.get(
