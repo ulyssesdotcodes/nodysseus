@@ -132,6 +132,7 @@ const defs = () =>ha.h('defs', {}, [
 ])
 
 let result_display_dispatch;
+let result_background_display_dispatch;
 let info_display_dispatch;
 let custom_editor_display_dispatch;
 let code_editor;
@@ -176,10 +177,11 @@ const runapp = (init, _lib) => {
     init: [init, 
         [dispatch => requestAnimationFrame(() => {
             result_display_dispatch = result_display(init.html_id);
+            result_background_display_dispatch = result_display(init.html_id + "-background");
             info_display_dispatch = info_display(init.html_id);
             custom_editor_display_dispatch = custom_editor_display(init.html_id)
             dispatch(s => [
-              {...s, result_display_dispatch, info_display_dispatch, custom_editor_display_dispatch},
+              {...s, result_display_dispatch, info_display_dispatch, custom_editor_display_dispatch, result_background_display_dispatch},
               [() => {
                 requestAnimationFrame(() =>  {
                   refresh_custom_editor()
@@ -198,6 +200,7 @@ const runapp = (init, _lib) => {
    ],
     dispatch: middleware,
     view: (s: HyperappState) => ha.h('div', { id: s.html_id }, [
+        ha.h('div', {id: `${init.html_id}-background-result`}),
         ha.h('svg', {id: `${s.html_id}-editor`, width: s.dimensions.x, height: s.dimensions.y}, [
             ha.h('g', {id: `${s.html_id}-editor-panzoom`}, 
                 [ha.memo(defs, {})].concat(
@@ -278,6 +281,7 @@ const runapp = (init, _lib) => {
                   norun: !s.norun,
                   graphChanged: false,
                   result_display_dispatch: s.result_display_dispatch,
+                  result_background_display_dispatch: s.result_background_display_dispatch,
                   info_display_dispatch: s.info_display_dispatch,
                   code_editor: s.code_editor,
                   code_editor_nodeid: s.code_editor_nodeid
@@ -338,7 +342,7 @@ const runapp = (init, _lib) => {
         [d3subscription, {action: SimulationToHyperapp, update: UpdateSimulation, htmlid: init.html_id}], 
         [graph_subscription, {editingGraphId: s.editingGraphId, norun: s.norun}],
         [select_node_subscription, {}],
-        result_display_dispatch && [result_subscription, {editingGraphId: s.editingGraphId, displayGraphId: s.displayGraphId, norun: s.norun}],
+        result_display_dispatch && result_background_display_dispatch && [result_subscription, {editingGraphId: s.editingGraphId, displayGraphId: s.displayGraphId, norun: s.norun}],
         listen("hashchange", (state, evt) => state.editingGraphId === evt.newURL.substring(evt.newURL.indexOf("#") + 1) || evt.newURL.substring(evt.newURL.indexOf("#") + 1).length === 0 ? state : [state, [ChangeEditingGraphId, {id: evt.newURL.substring(evt.newURL.indexOf("#") + 1), editingGraphId: state.editingGraphId}]]),
         [keydownSubscription, {action: (state: HyperappState, payload) => {
             if(document.getElementById("node-editor-result").contains(payload.target)) {
@@ -394,6 +398,12 @@ const runapp = (init, _lib) => {
                 case "graph_ctrl_c": {
                     if(window.getSelection().isCollapsed) {
                       action = [Copy, {as: nolib.no.runtime.get_edge_out(state.editingGraph, state.selected[0]).as}];
+                    }
+                    break;
+                }
+                case "graph_ctrl_x": {
+                    if(window.getSelection().isCollapsed) {
+                      action = [Copy, {cut: true, as: nolib.no.runtime.get_edge_out(state.editingGraph, state.selected[0]).as}];
                     }
                     break;
                 }

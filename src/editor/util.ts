@@ -300,6 +300,18 @@ export const Copy = (state, {cut, as}) => {
   const graph = ancestor_graph(state.selected[0], state.editingGraph, nolib);
   const copied = {graph, root: state.selected[0], as};
   navigator?.clipboard?.writeText(JSON.stringify(copied))
+  if(cut) {
+    nolib.no.runtime.add_nodes_edges(
+      state.editingGraph,
+      [],
+      [],
+      Object.values(copied.graph.edges),
+      Object.values(graph.nodes),
+      hlibLib
+    )
+    const outEdge = state.editingGraph.edges[state.selected[0]];
+    return [{...state, copied}, [SelectNodeEffect, {node_id: outEdge.to}]];
+  }
   return {...state, copied};
 }
 
@@ -342,6 +354,12 @@ export const Paste = state => [
       })
     }]
 ]
+
+export const SelectNodeEffect: ha.Effecter<HyperappState, {
+  node_id: string, 
+  focus_property?: Property,
+  clearInitialLayout?: boolean
+}> = (dispatch, props) => dispatch([SelectNode, props])
 
 export const SelectNode: ha.Action<HyperappState, {
   node_id: string,
@@ -408,11 +426,13 @@ export const FocusEffect: ha.Effecter<HyperappState, {selector: string}> = (_, {
 export const SaveGraph = (dispatch, payload) => save_graph(payload.editingGraph)
 
 export const UpdateResultDisplay = (state, resel) => {
-  const el = resel.el ?? resel;
+  const el = resel.el;
+  const backgroundEl = resel.backgroundEl;
 
-  return compareObjects(el, state.el) ? state : {
+  return compareObjects(el, state.el) && (!state.backgroundEl || compareObjects(backgroundEl, state.backgroundEl)) ? state : {
     ...state,
-    el
+    el,
+    backgroundEl
   }
 }
 
@@ -484,7 +504,7 @@ export const keydownSubscription = (dispatch, options) => {
     return () => removeEventListener('keydown', handler);
 }
 
-export const refresh_graph = (dispatch, {graph, graphChanged, norun, result_display_dispatch, info_display_dispatch, code_editor, code_editor_nodeid}) => {
+export const refresh_graph = (dispatch, {graph, graphChanged, norun, result_display_dispatch, result_background_display_dispatch, info_display_dispatch, code_editor, code_editor_nodeid}) => {
     if(norun ?? false) {
       return
     }
@@ -493,7 +513,18 @@ export const refresh_graph = (dispatch, {graph, graphChanged, norun, result_disp
     // const result = hlib.run(graph, graph.out, {});
     const display_fn = result => hlib.run(graph, graph.out ?? "out", {_output: "display"}, {profile: false});
     // const display_fn = result => hlib.run(graph, graph.out, {}, "display");
-    const update_result_display_fn = display => result_display_dispatch(UpdateResultDisplay, {el: display && display.dom_type ? display : {dom_type: 'div', props: {}, children: []}})
+    const update_result_display_fn = display => {
+
+      console.log("should dispatch", display)
+
+      result_display_dispatch(UpdateResultDisplay, {
+        el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: 'div', props: {}, children: []},
+      })
+
+      display?.background && result_background_display_dispatch(UpdateResultDisplay, {
+        el: display.background
+      })
+    }
     const update_info_display_fn = () => dispatch(s => [s, s.selected[0] !== s.editingGraph.out 
         && !s.show_all && [() => update_info_display({fn: s.selected[0], graph: s.editingGraph, args: {}}, info_display_dispatch, code_editor, code_editor_nodeid, graphChanged)]])
     wrapPromise(result)
@@ -513,19 +544,19 @@ export const result_subscription = (dispatch, {editingGraphId, displayGraphId, n
 
     nolib.no.runtime.addListener('grapherror', 'update_hyperapp_error', error_listener);
 
-    let info_display_dispatch, code_editor, code_editor_nodeid, result_display_dispatch;
+    let info_display_dispatch, code_editor, code_editor_nodeid, result_display_dispatch, result_background_display_dispatch;
 
     const change_listener = ({graph}) => {
       if(animrun) {
           cancelAnimationFrame(animrun)
       }
 
-      if(info_display_dispatch && code_editor && code_editor_nodeid && result_display_dispatch) {
+      if(info_display_dispatch && code_editor && code_editor_nodeid && result_display_dispatch && result_background_display_dispatch) {
         animrun = requestAnimationFrame(() => {
           if(graph?.id === (displayGraphId || editingGraphId)) {
           wrapPromise(nolib.no.runtime.get_ref(displayGraphId || editingGraphId))
             .then(graph => {
-                const result = refresh_graph(dispatch, {graph, graphChanged: false, norun, info_display_dispatch, code_editor, code_editor_nodeid, result_display_dispatch})
+                const result = refresh_graph(dispatch, {graph, graphChanged: false, norun, info_display_dispatch, code_editor, code_editor_nodeid, result_background_display_dispatch, result_display_dispatch})
                 const reset_animrun = () => animrun = false;
                 wrapPromise(result, reset_animrun as () => any).then(reset_animrun)
               })
@@ -538,6 +569,7 @@ export const result_subscription = (dispatch, {editingGraphId, displayGraphId, n
           code_editor = s.code_editor;
           code_editor_nodeid = s.code_editor_nodeid;
           result_display_dispatch = s.result_display_dispatch;
+          result_background_display_dispatch = s.result_background_display_dispatch;
         }])
       }
     }
@@ -600,6 +632,7 @@ export const graph_subscription = (dispatch: ha.Dispatch<HyperappState>, props) 
                 norun: props.norun, 
                 graphChanged: true, 
                 result_display_dispatch: s.result_display_dispatch,
+                result_background_display_dispatch: s.result_background_display_dispatch,
                 info_display_dispatch: s.info_display_dispatch,
                 code_editor: s.code_editor,
                 code_editor_nodeid: s.code_editor_nodeid
@@ -614,6 +647,7 @@ export const graph_subscription = (dispatch: ha.Dispatch<HyperappState>, props) 
                 norun: props.norun, 
                 graphChanged: true, 
                 result_display_dispatch: s.result_display_dispatch,
+                result_background_display_dispatch: s.result_background_display_dispatch,
                 info_display_dispatch: s.info_display_dispatch,
                 code_editor: s.code_editor,
                 code_editor_nodeid: s.code_editor_nodeid

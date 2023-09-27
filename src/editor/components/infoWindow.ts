@@ -5,7 +5,7 @@ import { isNonNullChain } from "typescript";
 import generic from "../../generic.js";
 import {NodysseusError, nolib} from "../../nodysseus.js"
 import { d3Link, d3Node, d3NodeNode, HyperappState, Vector2 } from "../types.js";
-import { ChangeEditingGraphId, Copy, CreateNode, CreateRef, DeleteNode, ExpandContract, hlib, node_args, Paste, run_h, SaveGraph, SelectNode, UpdateEdge, UpdateNode, UpdateNodeEffect } from "../util.js";
+import { ChangeEditingGraphId, Copy, CreateNode, CreateRef, Cut, DeleteNode, ExpandContract, hlib, node_args, Paste, run_h, SaveGraph, SelectNode, UpdateEdge, UpdateNode, UpdateNodeEffect } from "../util.js";
 import { middleware } from "../hyperapp.js";
 
 export const info_display = html_id => ha.app({
@@ -179,6 +179,11 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                     onclick: [Copy, {cut: false, as: link_out.as}],
                     key: "copy-action"
                 }, [ha.h('span', {class: 'material-symbols-outlined'}, ha.text("content_copy")), ha.h('span', {}, ha.text("copy"))]),
+                ha.h('div', {
+                    class: "action", 
+                    onclick: [Copy, {cut: true, as: link_out.as}],
+                    key: "cut-action"
+                }, [ha.h('span', {class: 'material-symbols-outlined'}, ha.text("content_cut")), ha.h('span', {}, ha.text("cut"))]),
                 copied_graph && ha.h('div', {
                     class: "action", 
                     onclick: [Paste, {}],

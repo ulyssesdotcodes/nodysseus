@@ -1522,7 +1522,12 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       promiseArgs: true,
       args: {
         "value": "any",
-        "display": "@html.html_element",
+        "display": {
+          type: {
+            "background": "@html.html_element",
+            "resultPanel": "@html.html_element"
+          }
+        },
         "subscribe": "any",
         "metadata": {
           type: {
@@ -1973,13 +1978,11 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
                   ...args,
                   value: o[k[0]],
                 }, _lib, options),
-                _needsresolve: true,
               }
             : o && typeof o === "object" && Object.hasOwn(o, k[0])
             ? {
                 ...o,
                 [k[0]]: check(o[k[0]], fn, k.slice(1)),
-                _needsresolve: true,
               }
             : o;
         return check(target, fn, keys);

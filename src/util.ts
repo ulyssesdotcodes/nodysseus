@@ -300,10 +300,6 @@ export const runnableId = (runnable: Runnable) => isConstRunnable(runnable) ? `$
 
 
 export function compareObjects(value1, value2, isUpdate = false) {
-    if (value1._needsresolve || value2._needsresolve) {
-        return false;
-    }
-
     const keys1 = Object.keys(value1);
     const keys2 = !isUpdate && Object.keys(value2);
 

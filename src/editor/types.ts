@@ -44,6 +44,7 @@ export type HyperappState = {
   clear_simulation_cache?: boolean,
   info_display_dispatch?: Function,
   result_display_dispatch?: Function,
+  result_background_display_dispatch?: Function,
   custom_editor_display_dispatch?: Function,
   code_editor?: any,
   code_editor_nodeid?: any,
