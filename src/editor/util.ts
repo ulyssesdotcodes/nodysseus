@@ -515,8 +515,6 @@ export const refresh_graph = (dispatch, {graph, graphChanged, norun, result_disp
     // const display_fn = result => hlib.run(graph, graph.out, {}, "display");
     const update_result_display_fn = display => {
 
-      console.log("should dispatch", display)
-
       result_display_dispatch(UpdateResultDisplay, {
         el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: 'div', props: {}, children: []},
       })

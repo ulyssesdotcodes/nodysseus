@@ -1,5 +1,5 @@
 import { ancestor_graph, ispromise, isWrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node, compareObjects, descendantGraph } from "./util.js"
-import { isNodeGraph, Graph, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, Lib, Env, isEnv, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike, Extern, getRunnableGraph, isNodeValue, ValueNode, isLib, isFunctorRunnable, isGraph, isInputRunnable } from "./types.js"
+import { isNodeGraph, Graph, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, Lib, Env, isEnv, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike, Extern, getRunnableGraph, isNodeValue, ValueNode, isLib, isFunctorRunnable, isGraph, isInputRunnable, MemoryState, MemoryReference, isMemory, isResult } from "./types.js"
 import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util.js"
 import generic from "./generic.js";
 import * as externs from "./externs.js";
@@ -506,7 +506,7 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
         // TODO: cleanup - hacky to rely on "arg"
         return nodeArgs.size === 1 && nodeArgs.keys().next().value.startsWith("arg")
           ? nodeArgs.values().next().value
-          : (graphArgs._output === undefined || graphArgs._output === "value") && node_data(nodeArgs, graphArgs, lib, options)
+          : (graphArgs._output === undefined || graphArgs._output === "value" || graphArgs._output === "display") && node_data(nodeArgs, graphArgs, lib, {...options, resolvePromises: true})
     }
 }
 
@@ -859,7 +859,7 @@ const runtimefn = () => {
         );
       };
       const getGraphIdRef = (graphid) => {
-        return wrapPromise(nodysseus.parents.get( graphid)).then(res => (console.log("parent", res), res)?.nodeRef).value;
+        return wrapPromise(nodysseus.parents.get( graphid)).then(res => res?.nodeRef).value;
       };
       const get_parentest = (graph) => {
         return wrapPromise(nodysseus.parents.get(
@@ -1161,6 +1161,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     runtime: undefined,
     wrapPromise,
     runtimefn,
+    isMemory
   },
   extern: {
     // runGraph: F<A> => A
@@ -1347,7 +1348,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
         return Object.fromEntries(entries);
       },
     },
-    refval: {
+    reference: {
       rawArgs: true,
       outputs: {
         display: true
@@ -1365,7 +1366,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
           const args = lib.data.no.runtime.get_args(stateId);
 
           let store = args["store"] ?? {
-            __kind: "refval",
+            __kind: "reference",
             id: stateId,
             set: {
               __kind: "apFunction",
@@ -1381,7 +1382,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
             },
             publish,
             value: undefined
-          }
+          } as MemoryReference
 
           if(!args["store"]) {
             lib.data.no.runtime.update_args(stateId, {store}, lib)
@@ -1398,9 +1399,10 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
           }
 
           if(onframe) {
+            const onframeArgs = new Map([["reference", store]]);
             wrapPromise(run_runnable(onframe, lib))
               .then(onframeRunnable => isValue(onframeRunnable) && nolib.no.runtime.addListener("animationframe", stateId, () => {
-                wrapPromise(run_runnable(onframeRunnable.value, lib)).then(frameresult => {
+                wrapPromise(run_runnable(onframeRunnable.value, lib, onframeArgs)).then(frameresult => {
                   if(isValue(frameresult)){ 
                     args["store"].value = frameresult.value
                   }
@@ -1504,12 +1506,12 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
                 args: ['value']
               },
               state,
-            })).value
+            } as MemoryState)).value
       }
     },
-    unwrapValue: {
+    memoryUnwrap: {
       args: ["value"],
-      fn: (value) => value?.__kind === "state" ? value.state : value?.__kind === "refval" ? value.value : value
+      fn: externs.memoryUnwrap
     },
     return: {
       outputs: {
@@ -1618,7 +1620,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
           }
 
           return runedgeresult;
-        }
+       }
 
         const ret = wrapPromise(run_runnable(lib, _lib, undefined, {...options, resolvePromises: true}))
             .then(libr => isError(libr) ? libr : libr?.value)
@@ -1689,8 +1691,8 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       },
     },
     set_mutable: {
-      args: ["target: default", "path", "value", "__graph_value"],
-      fn: (target, path, value, nodevalue) => {
+      args: ["target: default", "path", "value", "__graph_value", "_lib"],
+      fn: (target, path, value, nodevalue, _lib) => {
         function set(obj, propsArg, value) {
           var props, lastProp;
           if (Array.isArray(propsArg)) {
@@ -1723,7 +1725,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
           return true;
         }
         if(target && (nodevalue || path)) {
-          set(target, nodevalue || path, value);
+          set(target, nodevalue || path, (_lib.data ?? _lib).no.isMemory(value) ? externs.memoryUnwrap(value) : value);
         }
         return target;
       },
@@ -1924,16 +1926,18 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     math: {
       args: ["__graph_value", "_node_args"],
       resolve: true,
-      fn: (graph_value, args) => Math[graph_value](...Object.entries(args).filter(kv => kv[0] !== "__graph_value").sort((a, b) => a[0].localeCompare(b[0])).map(kv => kv[1]))
+      fn: (graph_value, args) => Math[graph_value](...Object.entries(args).filter(kv => kv[0] !== "__graph_value").sort((a, b) => a[0].localeCompare(b[0])).map(kv => externs.memoryUnwrap(kv[1])))
     },
     add: {
       args: ["_node_args"],
       resolve: true,
       fn: (args) =>
-        Object.entries(args)
+        wrapPromiseAll(Object.entries(args)
           .sort((a, b) => a[0].localeCompare(b[0]))
-          .map(kv => kv[1])
-          .reduce((acc, v) => (acc as any) + (v as any)),
+          .map(kv => kv[1]))
+          .then(inputs => inputs.map(i => isResult(i) ? i.value : i)
+                .map(i => externs.memoryUnwrap(i))
+                .reduce((acc, v) => (acc as any) + externs.memoryUnwrap(v) as any)),
     },
     and: {
       args: ["_node_args"],
@@ -1943,7 +1947,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     mult: {
       args: ["_node_args"],
       resolve: true,
-      fn: (args) => Object.values(args).reduce((acc: any, v: any) => acc * v, 1),
+      fn: (args) => Object.values(args).reduce((acc: any, v: any) => acc * externs.memoryUnwrap(v), 1),
     },
     negate: {
       args: ["value"],
@@ -1953,7 +1957,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     divide: {
       args: ["_node_args"],
       resolve: true,
-      fn: (args) => Object.values(args).reduce((acc: any, v: any) => acc / v, 1),
+      fn: (args) => Object.values(args).reduce((acc: any, v: any) => acc / externs.memoryUnwrap(v), 1),
     },
     convertAngle: {
       args: ["degrees", "radians"],

@@ -715,7 +715,7 @@
       },
       "gnnw0f9": {
         "id": "gnnw0f9",
-        "ref": "@memory.refval"
+        "ref": "@memory.reference"
       },
       "hkv0w0c": {
         "id": "hkv0w0c",
@@ -738,7 +738,7 @@
       },
       "ikiv6o8": {
         "id": "ikiv6o8",
-        "ref": "@memory.refval"
+        "ref": "@memory.reference"
       },
       "iu22j3s": {
         "id": "iu22j3s",

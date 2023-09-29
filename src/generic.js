@@ -1509,7 +1509,7 @@ const generic = {
       },
       "jb9ua5s": {
         "id": "jb9ua5s",
-        "ref": "@memory.refval"
+        "ref": "@memory.reference"
       }
     },
     "edges": {
@@ -1671,7 +1671,7 @@ const generic = {
       },
       "tpe5t4z": {
         "id": "tpe5t4z",
-        "ref": "@memory.refval"
+        "ref": "@memory.reference"
       },
       "cy1tm8s": {
         "id": "cy1tm8s",
@@ -1763,10 +1763,10 @@ const generic = {
     },
     "category": "data"
   },
-  "@memory.refval": {
-    "id": "@memory.refval",
+  "@memory.reference": {
+    "id": "@memory.reference",
     "ref": "extern",
-    "value": "extern.refval",
+    "value": "extern.reference",
     "category": "memory"
   },
   "@memory.state": {
@@ -1780,7 +1780,7 @@ const generic = {
   "@memory.unwrap": {
     "id": "@memory.unwrap",
     "ref": "extern",
-    "value": "extern.unwrapValue"
+    "value": "extern.memoryUnwrap"
   },
   "@event.publish_event": {
     "id": "@event.publish_event",
@@ -2113,7 +2113,7 @@ const generic = {
       },
       "9ukj84k": {
         "id": "9ukj84k",
-        "ref": "@memory.refval"
+        "ref": "@memory.reference"
       },
       "a8nnxeo": {
         "id": "a8nnxeo",
@@ -6795,7 +6795,7 @@ const generic = {
         },
         "t1deznd": {
           "id": "t1deznd",
-          "ref": "@memory.refval"
+          "ref": "@memory.reference"
         },
         "tjzn9ne": {
           "id": "tjzn9ne",
@@ -8772,7 +8772,7 @@ const generic = {
       },
       "tpe5t4z": {
         "id": "tpe5t4z",
-        "ref": "@memory.refval"
+        "ref": "@memory.reference"
       },
       "cy1tm8s": {
         "id": "cy1tm8s",
@@ -9594,7 +9594,7 @@ const generic = {
       },
       "8ywgts7": {
         "id": "8ywgts7",
-        "ref": "@memory.refval"
+        "ref": "@memory.reference"
       },
       "9fogdzn": {
         "id": "9fogdzn",
@@ -9603,7 +9603,7 @@ const generic = {
       },
       "9ikgefi": {
         "id": "9ikgefi",
-        "ref": "@memory.refval"
+        "ref": "@memory.reference"
       },
       "9vqinsg": {
         "id": "9vqinsg"
@@ -9635,7 +9635,7 @@ const generic = {
       },
       "cnsnetw": {
         "id": "cnsnetw",
-        "ref": "@memory.refval"
+        "ref": "@memory.reference"
       },
       "cubknyo": {
         "id": "cubknyo",
@@ -10051,7 +10051,7 @@ const generic = {
       },
       "kcvpnbr": {
         "id": "kcvpnbr",
-        "ref": "@memory.refval"
+        "ref": "@memory.reference"
       },
       "ky27m6w": {
         "id": "ky27m6w"
@@ -10175,7 +10175,7 @@ const generic = {
       },
       "v7zp3ck": {
         "id": "v7zp3ck",
-        "ref": "@memory.refval"
+        "ref": "@memory.reference"
       },
       "2nk866r": {
         "id": "2nk866r",
@@ -10273,7 +10273,7 @@ const generic = {
       },
       "6isum4q": {
         "id": "6isum4q",
-        "ref": "@memory.refval"
+        "ref": "@memory.reference"
       },
       "8y1pfs1": {
         "id": "8y1pfs1",

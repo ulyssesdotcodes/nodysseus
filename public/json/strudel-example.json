@@ -1033,7 +1033,7 @@
         },
         "6nh2e2f": {
           "id": "6nh2e2f",
-          "ref": "@memory.refval"
+          "ref": "@memory.reference"
         }
       },
       "out": "out"

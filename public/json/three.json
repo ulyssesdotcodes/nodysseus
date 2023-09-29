@@ -761,7 +761,7 @@
       },
       "0s25fmi": {
         "id": "0s25fmi",
-        "ref": "@memory.refval"
+        "ref": "@memory.reference"
       },
       "hkjxj2g": {
         "id": "hkjxj2g",
@@ -940,7 +940,7 @@
       },
       "9ibt0ds": {
         "id": "9ibt0ds",
-        "ref": "@memory.refval"
+        "ref": "@memory.reference"
       }
     },
     "out": "glfw0eh"
@@ -2762,7 +2762,7 @@
       },
       "ra6vf6a": {
         "id": "ra6vf6a",
-        "ref": "@memory.refval"
+        "ref": "@memory.reference"
       },
       "rlgdflv": {
         "id": "rlgdflv",
@@ -3383,7 +3383,7 @@
       },
       "ra6vf6a": {
         "id": "ra6vf6a",
-        "ref": "@memory.refval"
+        "ref": "@memory.reference"
       },
       "rlgdflv": {
         "id": "rlgdflv",
@@ -7572,7 +7572,7 @@
       },
       "40aw44l": {
         "id": "40aw44l",
-        "ref": "@memory.refval"
+        "ref": "@memory.reference"
       }
     },
     "out": "8m5muxn/8m5muxn"
@@ -9317,7 +9317,7 @@
       },
       "y3r5oh9": {
         "id": "y3r5oh9",
-        "ref": "@memory.refval"
+        "ref": "@memory.reference"
       },
       "a0fmzg4": {
         "id": "a0fmzg4",

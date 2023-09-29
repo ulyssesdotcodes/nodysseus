@@ -138,8 +138,7 @@ let custom_editor_display_dispatch;
 let code_editor;
 let code_editor_nodeid;
 
-const mutationObserverSubscription = (dispatch, {id}) => {
-  const el = document.getElementById(id)
+const mutationObserverSubscription = (dispatch, {selector}) => {
   const mutobs = new MutationObserver(obs => requestAnimationFrame(() => obs.forEach(mutrec => mutrec.addedNodes.forEach(added => {
     const publishel = (addedel) => {
       if(addedel instanceof HTMLElement){
@@ -152,9 +151,10 @@ const mutationObserverSubscription = (dispatch, {id}) => {
       }
     }
 
-    publishel(el)
+    publishel(added)
   }))))
-  mutobs.observe(el, {childList: true, subtree: true})
+  const els = document.querySelectorAll(selector);
+  els.forEach(el => mutobs.observe(el, {childList: true, subtree: true}))
   return () => (console.log("disconnect"), mutobs).disconnect()
 }
 
@@ -338,7 +338,7 @@ const runapp = (init, _lib) => {
     ]),
     node: document.getElementById(init.html_id),
     subscriptions: s => [
-        document.getElementById(`${init.html_id}-result`) && [mutationObserverSubscription, {id: `${init.html_id}-result`}],
+        document.getElementById(`${init.html_id}-result`) && [mutationObserverSubscription, {selector: `#${init.html_id}-result, #${init.html_id}-background-result`}],
         [d3subscription, {action: SimulationToHyperapp, update: UpdateSimulation, htmlid: init.html_id}], 
         [graph_subscription, {editingGraphId: s.editingGraphId, norun: s.norun}],
         [select_node_subscription, {}],

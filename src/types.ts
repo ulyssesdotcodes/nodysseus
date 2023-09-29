@@ -82,6 +82,7 @@ export type LokiT<T> = {
 type NonErrorResult = { __kind: "result", value: any };
 
 export type Result = NonErrorResult | Error
+export const isResult = (r: any): r is NonErrorResult => r.__kind === "result";
 
 export type BaseRunnable = {
   __kind: unknown,
@@ -103,7 +104,7 @@ export type ApFunction = {
   args: Array<string>,
   promiseArgs?: boolean,
   rawArgs?: boolean
-  outputs: {
+  outputs?: {
     lib?: boolean,
     display?: boolean,
   }
@@ -205,3 +206,9 @@ export type NodeMetadata = {
   values?: Array<string>,
   dataLabel?: string
 }
+
+export type MemoryState = {__kind: "state", id: string, set: ApFunction, state: any}
+export type MemoryReference = {__kind: "reference", id: string, set: ApFunction, value: any}
+
+export type Memory = MemoryState | MemoryReference;
+export const isMemory = (v: any) => v && typeof v === "object" && (v.__kind === "state" || v.__kind === "reference")

@@ -212,4 +212,4 @@ export const expect = (a: any, b: any, value: string) => {
   }
 }
 
-
+export const memoryUnwrap = (value) => value?.__kind === "state" ? value.state : value?.__kind === "reference" ? value.value : value
