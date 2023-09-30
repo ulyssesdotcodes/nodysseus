@@ -146,7 +146,6 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
                     onchange: (state, {value}) => [UpdateEdge, {edge: {from: link_out.from, to: link_out.to, as: link_out.as}, as: value}]
                 }), link_out),
             ]),
-            description && ha.h('div', {class: "description"}, ha.text(description)),
             ha.h('div', {
                 id: `${html_id}-code-editor`, 
             }, []),

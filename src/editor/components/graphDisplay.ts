@@ -73,13 +73,15 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
             parents_map.get(node)?.forEach(p => {
               children_map.set(p, node)
               queue.push(p)
+              if(!simulation_node_data.has(node)) {
+                simulation_node_data.delete(p);
+              }
             })
-            
         }
 
         const ancestor_count = new Map();
         const reverse_order = [...order];
-        reverse_order.reverse();
+        // reverse_order.reverse();
 
         reverse_order.forEach(n => ancestor_count.set(n, parents_map.has(n) ? parents_map.get(n).reduce((acc, c) => acc + (ancestor_count.get(c) || 0) + 1, 0): 0));
 
