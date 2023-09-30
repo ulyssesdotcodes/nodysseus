@@ -58,8 +58,8 @@ export type RefStore = Store<Graph> & {
   remove_node: (graphId: string, node: NodysseusNode) => Graph | Promise<Graph>;
   add_edge: (graphId: string, edge: Edge) => Graph | Promise<Graph>;
   remove_edge: (graphId: string, edge: Edge) => Graph | Promise<Graph>;
-  undo?: false | ((id: string) => void);
-  redo?: false | ((id: string) => void);
+  undo?: false | ((id: string) => undefined | Graph | Promise<Graph>);
+  redo?: false | ((id: string) => undefined | Graph | Promise<Graph>);
 }
 
 export type StoreType<T extends Store<any>> = Exclude<ReturnType<T["get"]>, undefined | Promise<any>>;

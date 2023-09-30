@@ -146,6 +146,12 @@ export const processMessage = (store: RefStore, ports: MessagePort[], port: Mess
     ? wrapPromise(store.set(m.graph.id, m.graph)).then(sendUpdateMessages(ports, port))
     : m.kind === "delete"
     ? wrapPromise(store.delete(m.graphId))
+    : store.undo && m.kind === "undo"
+    ? wrapPromise(store.undo(m.graphId))
+      .then(graph => typedPostMessage(port, {kind: "undo", messageId: m.messageId, graph}))
+    : store.redo && m.kind === "redo"
+    ? wrapPromise(store.redo(m.graphId))
+      .then(graph => typedPostMessage(port, {kind: "redo", messageId: m.messageId, graph}))
     : m.kind === "addFromUrl"
     ? wrapPromise(store.addFromUrl(m.url)).then(gs => {
       typedPostMessage(port, {kind: "addFromUrl", messageId: m.messageId, graphs: gs})
@@ -240,7 +246,15 @@ export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore>
         const graphAddedNodesEdges = addNodesEdges(graphClone, addedNodes, addedEdges, removedNodes, removedEdges);
         contextGraphCache.set(graphId, graphAddedNodesEdges);
         return graphAddedNodesEdges
-      }
+      },
+      undo: (graphId) => messagePromise({kind: "undo", graphId})
+        .then(e => e?.graph)
+        .then(graph => graph && (contextGraphCache.set(graphId, graph), contextKeysCache.add(graphId), graph))
+        .then(graph => graph && nolib.no.runtime.publish("graphchange", {graph, dirtyNodes: [], source: "undo"}, nolibLib)),
+      redo: (graphId) => messagePromise({kind: "redo", graphId})
+        .then(e => e?.graph)
+        .then(graph => graph && (contextGraphCache.set(graphId, graph), contextKeysCache.add(graphId), graph))
+        .then(graph => graph && nolib.no.runtime.publish("graphchange", {graph, dirtyNodes: [], source: "undo"}, nolibLib)),
   }
 }
 

@@ -23,6 +23,9 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
   graphChangeCallback?: (graph: Graph, changedNodes: Array<string>) => void
 }): Promise<RefStore> => {
 
+  const undoHistory = new Map<string, Array<Automerge.Doc<Graph>>>();
+  const redoHistory = new Map<string, Array<Automerge.Doc<Graph>>>();
+
   const refsmap = new Map<string, Automerge.Doc<Graph>>();
   const structuredCloneMap = new Map<string, Graph>();
   const refsset = new Set(await nodysseusidb.getAllKeys("refs").then(ks => ks.map(k => k.toString()).filter(k => k)));
@@ -74,13 +77,23 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
     }, 100)
   }
 
-  const graphNodePatchCallback: PatchCallback<Graph> = (patches, {after}) => {
+  const graphNodePatchCallback: (addToHistory: boolean) => PatchCallback<Graph> = (addToHistory: boolean) => (patches, props) => {
+    if(!addToHistory) return;
+
+    if(!undoHistory.has(props.before.id)) {
+      undoHistory.set(props.before.id, []);
+    }
+
+
+    redoHistory.set(props.before.id, []);
+
     const changedNodes = new Set<string>()
     patches.forEach(patch => patch.path[0] === "nodes" && changedNodes.add(patch.path[1] as string));
 
     if(changedNodes.size > 0) {
+      undoHistory.get(props.before.id).push(props.before);
       setTimeout(() => {
-        wrapPromise(refs.get(after.id))
+        wrapPromise(refs.get(props.after.id))
         .then(after => nolib.no.runtime.change_graph(after, hlibLib, [...changedNodes])); 
       }, 16)
     }
@@ -98,7 +111,7 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
 
             const filteredGraph = ancestor_graph(doc.out, doc);
             if(!graphCompare(doc, filteredGraph)) {
-              doc = Automerge.change(doc, {patchCallback: graphNodePatchCallback}, setFromGraph(filteredGraph));
+              doc = Automerge.change(doc, {patchCallback: graphNodePatchCallback(true)}, setFromGraph(filteredGraph));
               persist && nodysseusidb.put("refs", Automerge.save(doc), id)
               refsmap.set(id, doc);
             }
@@ -110,7 +123,7 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
         })
       : undefined
 
-  const changeDoc = (id, fn, changedNodes = []): Graph | Promise<Graph> => {
+  const changeDoc = (id, fn, changedNodes = [], addToHistory = true): Graph | Promise<Graph> => {
     if(generic_node_ids.has(id)) {
       nolib.no.runtime.publish("grapherror", new Error("Cannot edit default nodes"), nolibLib)
       return;
@@ -120,7 +133,7 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
     }
     return wrapPromise(getDoc(id))
       .then(graph => {
-        let doc = Automerge.change<Graph>(graph ?? createDoc(), {patchCallback: graphNodePatchCallback}, fn);
+        let doc = Automerge.change<Graph>(graph ?? createDoc(), {patchCallback: graphNodePatchCallback(addToHistory)}, fn);
         persist && nodysseusidb.put("refs", Automerge.save(doc), id)
         refsmap.set(id, doc);
         refsset.add(id);
@@ -189,7 +202,7 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
     ,
     set: (id, graph) => 
       wrapPromise(refs.get(id))
-        .then(current => current && graphCompare(current, graph) ? (console.log("skipping", id), current): changeDoc(id, setFromGraph(graph)) ).value,
+        .then(current => current && graphCompare(current, graph) ? (console.info("skipping", id), current): changeDoc(id, setFromGraph(graph)) ).value,
     delete: (id) => {
       refsmap.delete(id);
       refsset.delete(id);
@@ -198,8 +211,22 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
     },
     clear: () => {throw new Error("not implemented")},
     keys: () => {return [...refsset.keys(), ...generic_node_ids]},
-    undo: () => {throw new Error("not implemented")},
-    redo: () => {throw new Error("not implemented")},
+    undo: (id: string) => {
+      if(undoHistory.has(id) && undoHistory.get(id).length > 0) {
+        const current = structuredCloneMap.get(id);
+        const graph = undoHistory.get(id).pop();
+        redoHistory.get(id).push(current);
+        return changeDoc(id, setFromGraph(graph), [], false)
+      }
+    },
+    redo: (id: string) => {
+      if(redoHistory.has(id) && redoHistory.get(id).length > 0) {
+        const current = structuredCloneMap.get(id);
+        const graph = redoHistory.get(id).pop();
+        undoHistory.get(id).push(current);
+        return changeDoc(id, setFromGraph(graph), [], false)
+      }
+    },
     add_node: (id, node) => changeDoc(id, doc => {
       // TODO: try to fix by making the values texts instead of just strings
       addNode(doc, node)
@@ -257,7 +284,7 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
           currentDoc, 
           syncStates[data.peerId]?.[id] || Automerge.initSyncState(), 
           data.syncMessage, {
-          patchCallback: graphNodePatchCallback
+          patchCallback: graphNodePatchCallback(true)
         });
         persist && nodysseusidb.put("refs", Automerge.save(nextDoc), id)
         refsset.add(id);
@@ -287,7 +314,7 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
       .then(rtcroom => {
         if(!rtcroom) return;
 
-        console.log("Using rtcroom: ", rtcroom);
+        console.info("Using rtcroom: ", rtcroom);
 
       if(!syncWS) {
         syncWS = new WebSocket(`wss://ws.nodysseus.io/${rtcroom}`);
@@ -336,7 +363,7 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
                   current, 
                   syncStates[data.peerId]?.[id] || Automerge.initSyncState(), 
                   data.syncMessage, {
-                  patchCallback: graphNodePatchCallback
+                  patchCallback: graphNodePatchCallback(true)
                 });
                 persist && nodysseusidb.put("refs", Automerge.save(nextDoc), id)
                 refsset.add(id);
