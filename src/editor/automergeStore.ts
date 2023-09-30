@@ -274,7 +274,8 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
 
   // Wrap run in setTimeout so nodysseus has time to init
   setTimeout(() => {
-    wrapPromise(getDoc("custom_editor"))
+    const urlParams = new URLSearchParams(location.search);
+    (urlParams.has("room") ? wrapPromise(urlParams.get("room")) : wrapPromise(getDoc("custom_editor"))
       .then(ce => {
         if(!ce){
           refs.set("custom_editor", custom_editor)
@@ -282,7 +283,7 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
         }
         return nolib.no.runtime.run({graph: ce.id, fn: ce.out ?? "out"})
       })
-      .then(cer => cer.rtcroom )
+      .then(cer => cer.room))
       .then(rtcroom => {
         if(!rtcroom) return;
 

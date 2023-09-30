@@ -9,7 +9,7 @@
       "rwy5gqu": {
         "from": "rwy5gqu",
         "to": "output_val",
-        "as": "rtcroom"
+        "as": "room"
       }
     },
     "id": "custom_editor",

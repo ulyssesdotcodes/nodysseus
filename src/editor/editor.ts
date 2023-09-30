@@ -504,7 +504,7 @@ const editor = async function(html_id, editingGraphId, lib, norun) {
   // TODO: rewrite this shitty code that deals with shareworker not being defined
   let sharedWorker, nodysseusStore, ports, initQueue;
     if(typeof self.SharedWorker !== "undefined") {
-      sharedWorker = new SharedWorker('./sharedWorker.js', {type: "module"})
+      sharedWorker = new SharedWorker('./sharedWorker.js' + location.search, {type: "module"})
       nodysseusStore = await webClientStore(() => sharedWorkerRefStore(sharedWorker.port));
     } else {
       ports = [];
