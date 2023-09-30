@@ -311,11 +311,21 @@ const runapp = (init, _lib) => {
                       }, {}], [UpdateSimulation, {}]])) 
                   }, {}]]
             }, [ha.text('refresh')]),
-                ha.h('span', {
-                  class: 'material-symbols-outlined graph-action',
-                  name: 'help', 
-                  onclick: (s: HyperappState) => ({...s, showHelp: true})
-                }, [ha.text('question_mark')])
+            ha.h('span', {
+              class: 'material-symbols-outlined graph-action',
+              name: 'undo', 
+              onclick: (s: HyperappState) => [s, dispatch => {nolib.no.runtime.undo(s.editingGraphId)}]
+            }, [ha.text('undo')]),
+            ha.h('span', {
+              class: 'material-symbols-outlined graph-action',
+              name: 'redo', 
+              onclick: (s: HyperappState) => [s, dispatch => {nolib.no.runtime.redo(s.editingGraphId)}]
+            }, [ha.text('redo')]),
+            ha.h('span', {
+              class: 'material-symbols-outlined graph-action',
+              name: 'help', 
+              onclick: (s: HyperappState) => ({...s, showHelp: true})
+            }, [ha.text('question_mark')])
         ]),
         ha.h('div', {id: `${init.html_id}-result`}),
         s.showHelp && 
