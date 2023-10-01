@@ -1,5 +1,5 @@
 import { ancestor_graph, ispromise, isWrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node, compareObjects, descendantGraph } from "./util.js"
-import { isNodeGraph, Graph, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, isNodeScript, InputRunnable, Lib, Env, isEnv, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike, Extern, getRunnableGraph, isNodeValue, ValueNode, isLib, isFunctorRunnable, isGraph, isInputRunnable, MemoryState, MemoryReference, isMemory, isResult } from "./types.js"
+import { isNodeGraph, Graph, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, InputRunnable, Lib, Env, isEnv, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike, Extern, getRunnableGraph, isNodeValue, ValueNode, isLib, isFunctorRunnable, isGraph, isInputRunnable, MemoryState, MemoryReference, isMemory, isResult, GraphNode } from "./types.js"
 import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util.js"
 import generic from "./generic.js";
 import * as externs from "./externs.js";
@@ -212,12 +212,12 @@ class NodysseusError extends Error {
     }
 }
 
-const node_value = (node) => externs.parseValue(node.value);
-const node_nodes = (node, node_id, data, graph_input_value: Env, lib: Lib, options: RunOptions) => {
-    return run_graph(node, node_id, combineEnv(data, graph_input_value, node_id, graph_input_value._output), lib, options)
+const node_value = (node: ValueNode | RefNode) => externs.parseValue(node.value);
+const node_nodes = (node: string | Graph, node_id: string, data, graph_input_value: Env, lib: Lib, options: RunOptions) => {
+    return wrapPromise(typeof node === "string" ? nolib.no.runtime.get_ref(node) : node).then(graph => run_graph(graph, node_id, combineEnv(data, graph_input_value, node_id, graph_input_value._output), lib, options)).value;
 }
 
-const node_script = (node, nodeArgs: Args, lib: Lib, options: RunOptions): Result | Promise<Result> => {
+const node_script = (node: RefNode, nodeArgs: Args, lib: Lib, options: RunOptions): Result | Promise<Result> => {
     let orderedargs = ["", ...nodeArgs.keys()].join(", ");
 
     // const data = {};
@@ -234,7 +234,7 @@ const node_script = (node, nodeArgs: Args, lib: Lib, options: RunOptions): Resul
     // }
 
     const name = node.name ? node.name.replace(/\W/g, "_") : node.id;
-    const fn = lib.data.no.runtime.get_fn(node.id, name, orderedargs, node.script ?? node.value);
+    const fn = lib.data.no.runtime.get_fn(node.id, name, orderedargs, node.value);
 
     return wrapPromise(data)//wrapPromiseAll(Object.values(data))
       .then(promisedData => lib.data.no.of(fn.apply(null, [lib.data, node, data, ...Object.values(isError(promisedData) ? promisedData : promisedData?.value ?? {})]))).value
@@ -430,7 +430,8 @@ const run_runnable = (runnable: Runnable | undefined, lib: Lib, args: Map<string
 
 
 // graph, node, symtable, parent symtable, lib
-const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRunnable>, graphArgs: Env, lib: Lib, options: RunOptions): Result | Promise<Result> => {
+const run_node = (node: {node: NodysseusNode, graph?: Graph} | Runnable, nodeArgs: Map<string, ConstRunnable>, graphArgs: Env, lib: Lib, options: RunOptions): Result | Promise<Result> => {
+  console.log("running", node)
     if (isRunnable(node)){
       if(isError(node)) {
         return node;
@@ -446,62 +447,57 @@ const run_node = (node: NodysseusNode | Runnable, nodeArgs: Map<string, ConstRun
 
         return node_nodes(node.graph, node.fn, nodeArgs, nodegraphargs, lib, options)
       }
-    } else if(isNodeRef(node)) {
-        if (node.ref === "arg") {
+    } else if(isNodeRef(node.node)) {
+        if (node.node.ref === "arg") {
           if(graphArgs._output === "metadata") {
-            const keys = [];
-            let env = graphArgs;
-            do {
-              for(let k of env.data.keys()) {
-                keys.push(k);
-              }
-              env = env.env;
-            } while(env);
+            const graphid = (graphArgs.data.get("__graphid") as {value: string}).value;
+            const keys = ["__node.value"];
+            const descGraph = descendantGraph(node.node.id, node.graph)
             return lib.data.no.of({
               values: keys
             })
           }
-            const resval = nolib.no.arg(node, graphArgs, lib, node.value, options);
+            const resval = nolib.no.arg(node.node, graphArgs, lib, node.node.value, options);
             // return resval && typeof resval === 'object' && isValue(resval) ? resval : lib.data.no.of(resval);
             return wrapPromise(resval).then(resval => resval && typeof resval === 'object' && isValue(resval) ? resval : lib.data.no.of(resval)).value;
-        } else if (node.ref === "extern") {
-            return node_extern(node, nodeArgs, graphArgs, lib, options)
-        } else if (node.ref === "@js.script") {
+        } else if (node.node.ref === "extern") {
+            return node_extern(node.node, nodeArgs, graphArgs, lib, options)
+        } else if (node.node.ref === "@js.script") {
             return (graphArgs._output === undefined || graphArgs._output === "value") 
-              ? node_script(node, nodeArgs, lib, options) 
+              ? node_script(node.node, nodeArgs, lib, options) 
               : graphArgs._output === "metadata" 
               ? lib.data.no.of({dataLabel: "script"})
               : undefined
         }
 
         const graphid = (graphArgs.data.get("__graphid") as {value: string}).value;
-        const newgraphid = `${graphid}/${node.id}`
+        const newgraphid = `${graphid}/${node.node.id}`
         const newGraphArgs = newEnv(new Map().set("__graphid", lib.data.no.of(newgraphid)), graphArgs._output);
 
-        return wrapPromise(lib.data.no.runtime.get_ref(node.ref), e => handleError(e, lib, graphArgs, graphid, node)).then(node_ref => {
+        return wrapPromise(lib.data.no.runtime.get_ref(node.node.ref), e => handleError(e, lib, graphArgs, graphid, node)).then(node_ref => {
           if (!node_ref) {
-              throw new Error(`Unable to find ref ${node.ref} for node ${node.name || node.id}`)
+              throw new Error(`Unable to find ref ${(node.node as RefNode).ref} for node ${node.node.name || node.node.id}`)
           }
 
           // before so that change/update has the parent id
           // change both nodes with nested graphs and non-
-          lib.data.no.runtime.set_parent(newgraphid, graphid, node.ref); 
+          lib.data.no.runtime.set_parent(newgraphid, graphid, (node.node as RefNode).ref); 
 
-          const result = run_node(node_ref, node.value ? new Map(nodeArgs).set("__graph_value", lib.data.no.of(node.value)) : nodeArgs, newGraphArgs, lib, options)
+          console.log("node ref?", node_ref);
+
+          const result = run_node({node: node_ref}, (node.node as RefNode).value ? new Map(nodeArgs).set("__graph_value", lib.data.no.of((node.node as RefNode).value)) : nodeArgs, newGraphArgs, lib, options)
           return result;
 
 
         }).value
-    } else if (isNodeGraph(node)) {
-      node.edges_in = node.edges_in ?? Object.values(node.edges).reduce<Graph["edges_in"]>((acc, e) => ({...acc, [e.to]: {...(acc[e.to] ?? {}), [e.from]: e}}), {})
+    } else if (isNodeGraph(node.node)) {
+      node.node.edges_in = node.node.edges_in ?? Object.values(node.node.edges).reduce<Graph["edges_in"]>((acc, e) => ({...acc, [e.to]: {...(acc[e.to] ?? {}), [e.from]: e}}), {})
       const graphid = graphArgs.data.get("__graphid")
       // const env = isError(graphid) || isConstRunnable(graphid) ? graphArgs : combineEnv(new Map([["__graphid", lib.data.no.of(`${graphid.value}/${node.id}`)]]), graphArgs, undefined, graphArgs._output);
       const env = isError(graphid) || isConstRunnable(graphid) ? graphArgs : combineEnv(new Map([["__graphid", lib.data.no.of(`${graphid.value}`)]]), graphArgs, undefined, graphArgs._output);
-      return node_nodes(node, node.out ?? "out", nodeArgs, env, lib, options)
-    } else if (isNodeScript(node)){
-        return (graphArgs._output === undefined || graphArgs._output === "value") && node_script(node, nodeArgs, lib, options)
-    } else if(Object.hasOwn(node, "value")) {
-        return (graphArgs._output === undefined || graphArgs._output === "value") && lib.data.no.of(node_value(node));
+      return node_nodes(node.node, node.node.out ?? "out", nodeArgs, env, lib, options)
+    } else if(Object.hasOwn(node.node, "value")) {
+        return (graphArgs._output === undefined || graphArgs._output === "value") && lib.data.no.of(node_value(node.node));
     } else {
         // TODO: cleanup - hacky to rely on "arg"
         return nodeArgs.size === 1 && nodeArgs.keys().next().value.startsWith("arg")
@@ -607,7 +603,7 @@ const run_graph = (graph: Graph, node_id: string, env: Env, lib: Lib, options: R
                 options.timings = {};
               }
 
-              const result = run_node(node, data, env, lib, options);
+              const result = run_node(isRunnable(node) ? node : {node, graph}, data, env, lib, options);
 
               const isResPromise = ispromise(result);
 
@@ -626,7 +622,7 @@ const run_graph = (graph: Graph, node_id: string, env: Env, lib: Lib, options: R
                   return v;
                 }) : result
             } else {
-              return run_node(node, data, env, lib, options);
+              return run_node(isRunnable(node) ? node : {node, graph}, data, env, lib, options);
             }
           }).value
     } catch (e) {
@@ -757,7 +753,7 @@ const runtimefn = () => {
         wrapPromise(get_parentest(graph))
           .then(parent => {
           if (parent) {
-            return (lib.data ?? lib).no.runtime.change_graph(parent, lib, [(typeof graph === "string" ? graph : graph.id).substring(parent.length + 1)]);
+            return (lib.data ?? lib).no.runtime.change_graph(parent, lib, [(typeof graph === "string" ? graph : graph.id).substring(parent.id.length + 1)]);
           } else {
             return wrapPromise(typeof graph === "string" ? get_ref(graph) : graph)
               .then(graph => {
@@ -1111,10 +1107,10 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
 
       const ret = nodevalue === undefined || target === undefined
         ? undefined
-        : nodevalue === "_node"
+        : nodevalue === "__node"
         ? node
-        : nodevalue.startsWith("_node.")
-        ? node[nodevalue.substring("_node.".length)]
+        : nodevalue.startsWith("__node.")
+        ? node[nodevalue.substring("__node.".length)]
         : nodevalue.startsWith("_lib.")
         ? nodysseus_get(lib.data, nodevalue.substring("_lib.".length), lib)
         : nodevalue === "_args"

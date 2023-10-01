@@ -3485,7 +3485,7 @@ const generic = {
           },
           {
             "id": "d60jwms",
-            "ref": "script",
+            "ref": "@js.script",
             "value": "payload.stopPropagation();"
           },
           {

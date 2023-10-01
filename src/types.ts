@@ -1,21 +1,18 @@
-export type NodysseusNode = GraphNode | ScriptNode | ValueNode | RefNode;
+export type NodysseusNode = GraphNode | ValueNode | RefNode;
 
 type BaseNode = {id: string, name?: string, category?: string};
 export type GraphNode = Graph & {value?: any, category?: string};
-export type ScriptNode = BaseNode & {script: string};
 export type ValueNode = BaseNode & {value?: string};
 export type RefNode = BaseNode & {ref: string, value?: string}
 
 
 export const isNodeValue = (n: NodysseusNode): n is ValueNode => n && !!(n as ValueNode).value
 export const isNodeGraph = (n: NodysseusNode): n is GraphNode => n && !!(n as GraphNode).nodes
-export const isNodeScript = (n: NodysseusNode): n is ScriptNode => n && !!(n as ScriptNode)?.script;
 export const isNodeRef = (n: NodysseusNode): n is RefNode => n && !!(n as RefNode)?.ref;
 
 export const compareNodes = (a: NodysseusNode, b: NodysseusNode) => (console.log(a, b), a).id === b.id && a.name === b.name && 
   ((isNodeRef(a) && isNodeRef(b) && a.ref === b.ref && a.value === b.value) 
     || (isNodeGraph(a) && isNodeGraph(b) && a.nodes === b.nodes) 
-    || (isNodeScript(a) && isNodeScript(b) && a.script === b.script)
     || (isNodeValue(a) && isNodeValue(b) && a.value === b.value)
   )
 
@@ -198,12 +195,22 @@ export type RunOptions = {
   timings?: Record<string, number>;
 }
 
-export type FullyTypedArg = { 
+type _BaseFullyTypedArg = { 
   type: string | Record<string, string | FullyTypedArg | ((graph: Graph, nodeId: string) => FullyTypedArg)>
   default?: boolean
   additionalArg?: boolean
   local?: boolean
 }
+
+type _RunnableTypedArg = _BaseFullyTypedArg & {
+  type: "@flow.runnable",
+  runnableParameters: Array<string>
+}
+
+
+export type FullyTypedArg = _BaseFullyTypedArg | _RunnableTypedArg;
+
+export const isRunnableTypedArg = (a: FullyTypedArg): a is _RunnableTypedArg => a.type === "@flow.runnable"
 
 export type TypedArg = string | FullyTypedArg
 export const isTypedArg = (a: any): a is TypedArg => a && (typeof a === "string" || typeof a.type === "string" || typeof a.type === "object");

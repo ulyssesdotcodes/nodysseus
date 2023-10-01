@@ -1,6 +1,6 @@
 import * as util from "./util.js"
 import {nodysseus_get, resolve_args} from "./nodysseus.js"
-import { NodysseusNode, Graph, Args, ConstRunnable, Env, isArgs, isEnv, isError, isNodeRef, isNodeScript, isValue, Lib, RefNode, Result, Runnable, Edge, TypedArg } from "./types.js";
+import { NodysseusNode, Graph, Args, ConstRunnable, Env, isArgs, isEnv, isError, isNodeRef, isValue, Lib, RefNode, Result, Runnable, Edge, TypedArg } from "./types.js";
 
 
 const nodeinputs = (node: NodysseusNode, graph: Graph) => Object.values(graph.edges_in[node.id] ?? []).map(edge => ({edge, node: graph.nodes[edge.from]}));
@@ -42,7 +42,7 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib, graphid: string = "", 
                 if(!noderef) return;
 
                 const inputs = nodeinputs(n, graph);
-                if(isNodeScript(n) || (isNodeRef(n) && n.ref === "@js.script")) {
+                if((isNodeRef(n) && n.ref === "@js.script")) {
                   text += `
       function fn_${graphid}${n.id}(){
         ${inputs.map(input => 
@@ -50,7 +50,7 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib, graphid: string = "", 
         ).join("\n")
       }
 
-      ${isNodeScript(n) ? n.script : n.value}
+      ${n.value}
 
       }
 
@@ -82,7 +82,7 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib, graphid: string = "", 
                   Object.entries(extern.args);
               externArgs.forEach(([a, argType]: [string, TypedArg]): void => {
                     if(a === "__graph_value" || a === "_node") {
-                      _extern_args[graphid + n.id][a] = a === "__graph_value" ? !isNodeScript(n) ? n.value : undefined
+                      _extern_args[graphid + n.id][a] = a === "__graph_value" ? n.value
                         : "_node" ? n
                         : undefined;
                       varset.push(`let ${a} = _extern_args["${graphid}${n.id}"]["${a}"];`)

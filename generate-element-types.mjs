@@ -2,7 +2,7 @@ import {listAll} from "@webref/elements";
 import {parseAll as idlParseAll} from '@webref/idl';
 import {listAll as  listAllCss} from "@webref/css";
 
-const ALLOWED_TYPES = ["DOMString", "SVGAnimatedLength", "long", "unsigned long", "unsigned short", "double", "float", "SVGNumber", "SVGLength", "SVGAnimatedLength", "SVGAngle", "SVGAnimatedAngle", "SVGAnimatedNumber"]
+const ALLOWED_TYPES = ["DOMString", "SVGAnimatedLength", "long", "unsigned long", "unsigned short", "double", "float", "SVGNumber", "SVGLength", "SVGAnimatedLength", "SVGAngle", "SVGAnimatedAngle", "SVGAnimatedNumber", "EventHandler"]
 
 const getIdlType = (m) => !m ? null : typeof m.idlType === "string" ? m.idlType : getIdlType(m.idlType);
 const getMembers = (el) => el?.members?.concat(el.inheritance && asts[el.inheritance] ? getMembers(asts[el.inheritance]) : []) ?? []
@@ -13,7 +13,13 @@ const domasts = Object.fromEntries(idls["dom"].map(e => [e.name, e]));
 
 const cssIdls = await listAllCss();
 
-const defaultHTMLAttrs = [...new Set(asts["HTMLElement"].members.concat(domasts["Element"].members).filter(m => ALLOWED_TYPES.includes(getIdlType(m))).map(m => m.name).filter(n => n && !n?.startsWith("get") && !n?.startsWith("set"))).values()];
+const defaultHTMLAttrs = [...new Set(asts["HTMLElement"].members
+  .concat(domasts["Element"].members)
+  .concat(asts["GlobalEventHandlers"].members)
+  .filter(m => ALLOWED_TYPES.includes(getIdlType(m)))
+  .filter(m => m.name && !m.name?.startsWith("get") && !m.name?.startsWith("set"))
+  .map(m => getIdlType(m) === "EventHandler" ? [m.name, {type: "@flow.runnable", runnableParameters: ["event"]}] : m.name)
+).values()];
 const defaultSVGAttrs = [...new Set(asts["SVGElement"].members.concat(domasts["Element"].members).filter(m => ALLOWED_TYPES.includes(getIdlType(m))).map(m => m.name).filter(n => n && !n?.startsWith("get") && !n?.startsWith("set"))).values()];
 const output = {defaults: {html: defaultHTMLAttrs, svg: defaultSVGAttrs, css: Object.values(cssIdls).flatMap(e => e.properties.map(p => p.name)).filter(n => typeof n === "string").sort((a, b) => a.startsWith("-") === b.startsWith("-") ? a.localeCompare(b) : a.startsWith("-") ? 1 : -1)}};
 const types = new Set();
@@ -25,9 +31,9 @@ await listAll().then(all => {
         // console.log(`- ${el.name} implements ${el.interface}`);
         output[el.name] = {
           spec: "html",
-          attrs: (asts[el.interface].members ?? [])
+          attrs: [...new Set((asts[el.interface].members ?? [])
             .filter(m => m.type === "attribute" && ALLOWED_TYPES.includes(getIdlType(m)))
-            .map(m => m.name)
+            .map(m => m.name))]
         }
       }
       else {
