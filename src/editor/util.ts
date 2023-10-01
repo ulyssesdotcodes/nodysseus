@@ -1,6 +1,6 @@
 import * as ha from "hyperapp"
 import { initStore, nodysseus_get, nolib, run, NodysseusError, nolibLib } from "../nodysseus.js";
-import { Args, ConstRunnable, Edge, FullyTypedArg, FunctorRunnable, getRunnableGraphId, Graph, isArgs, isNodeGraph, isNodeRef, isNodeScript, isRunnable, isTypedArg, NodeArg, NodeMetadata, NodysseusNode, RefNode, TypedArg } from "../types.js";
+import { Args, compareNodes, ConstRunnable, Edge, FullyTypedArg, FunctorRunnable, getRunnableGraphId, Graph, isArgs, isNodeGraph, isNodeRef, isNodeScript, isRunnable, isTypedArg, NodeArg, NodeMetadata, NodysseusNode, RefNode, TypedArg } from "../types.js";
 import { base_node, base_graph, ispromise, wrapPromise, expand_node, contract_node, ancestor_graph, create_randid, compareObjects, newLib, bfs, mergeLib, wrapPromiseAll } from "../util.js";
 import panzoom, * as pz from "panzoom";
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force";
@@ -157,7 +157,7 @@ export const update_info_display = ({fn, graph, args}, info_display_dispatch, co
     const update_info_display_fn = display => info_display_dispatch && requestAnimationFrame(() => {
       info_display_dispatch(UpdateResultDisplay, {el: display?.dom_type ? display : ha.h('div', {})})
       requestAnimationFrame(() => {
-        if(graphChanged) {
+        if(graphChanged && isNodeRef(node) && node.value !== code_editor.state.doc.toString()) {
           code_editor.dispatch({
             changes:{from: 0, to: code_editor.state.doc.length, insert: isNodeScript(node) ? node.script : node.value},
             effects: [code_editor_nodeid.of(node.id)]
@@ -472,12 +472,12 @@ export const UpdateNodeEffect: ha.Effecter<HyperappState, {editingGraph: Graph, 
 
 export const UpdateNode: ha.Action<HyperappState, {node: NodysseusNode, property: string, value: string, editingGraph: Graph}> = (state, {node, property, value, editingGraph}) => [
     state,
-    [UpdateNodeEffect, {
-        editingGraph: editingGraph ?? state.editingGraph,
-        node: Object.fromEntries(Object.entries(Object.assign({}, 
-            base_node(typeof node === "string" ? (editingGraph ?? state.editingGraph).nodes[node] : node ? node : state.editingGraph.nodes[state.selected[0]]), 
-            {[property]: value === "" ? undefined : value})).filter(kv => kv[1] !== undefined))
-    }]
+      [UpdateNodeEffect, {
+          editingGraph: editingGraph ?? state.editingGraph,
+          node: Object.fromEntries(Object.entries(Object.assign({}, 
+              base_node(typeof node === "string" ? (editingGraph ?? state.editingGraph).nodes[node] : node ? node : state.editingGraph.nodes[state.selected[0]]), 
+              {[property]: value === "" ? undefined : value})).filter(kv => kv[1] !== undefined))
+      }]
 ]
 
 export const UpdateEdge: ha.Action<HyperappState, {edge: Edge, as: string}> = (state, {edge, as}) => [

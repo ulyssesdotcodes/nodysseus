@@ -12,6 +12,13 @@ export const isNodeGraph = (n: NodysseusNode): n is GraphNode => n && !!(n as Gr
 export const isNodeScript = (n: NodysseusNode): n is ScriptNode => n && !!(n as ScriptNode)?.script;
 export const isNodeRef = (n: NodysseusNode): n is RefNode => n && !!(n as RefNode)?.ref;
 
+export const compareNodes = (a: NodysseusNode, b: NodysseusNode) => (console.log(a, b), a).id === b.id && a.name === b.name && 
+  ((isNodeRef(a) && isNodeRef(b) && a.ref === b.ref && a.value === b.value) 
+    || (isNodeGraph(a) && isNodeGraph(b) && a.nodes === b.nodes) 
+    || (isNodeScript(a) && isNodeScript(b) && a.script === b.script)
+    || (isNodeValue(a) && isNodeValue(b) && a.value === b.value)
+  )
+
 export type SavedGraph = {
   id: string,
   out?: string,
