@@ -3810,7 +3810,7 @@ const generic = {
         "4uumh6e": {
           "id": "4uumh6e",
           "ref": "@js.script",
-          "value": "return el.attrs && Object.fromEntries(el.attrs.concat(defaultAttrs[el.spec]).map(n => [n, {type:  \"any\"}]).concat([[\"style\", {type: Object.fromEntries(defaultAttrs[\"css\"].map(a => [a, \"any\"]))}]]));"
+          "value": "return el.attrs && Object.fromEntries(el.attrs.concat(defaultAttrs[el.spec]).map(n => Array.isArray(n) ? n : [n, \"any\"]).concat([[\"style\", {type: Object.fromEntries(defaultAttrs[\"css\"].map(a => Array.isArray(a) ? a : [a, \"any\"]))}]]));"
         },
         "k81xrr8": {
           "id": "k81xrr8",

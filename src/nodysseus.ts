@@ -308,14 +308,12 @@ const resolve_args = (data: Args, lib: Lib, options: RunOptions): Result | Promi
     const result = {}
     for(let k of data.keys()){
       let val: Result | ConstRunnable | Promise<Result> = data.get(k);
-      // console.log(`start ${k}`, val)
       const resarg = (argval) => wrapPromise(isValue(argval) ? argval.value : argval).then(runnable => isConstRunnable(runnable) ? resarg(run_runnable(runnable, lib, undefined, options)) : runnable).value;
       val = resarg(val);
       // while(isConstRunnable(val as Runnable)) {
       //   val = wrapPromise(val).then(runnable => run_runnable(runnable, lib, undefined, options)).value;
       // }
 
-      // console.log(`end ${k}`, val);
       if(val instanceof Error) {
         return val
       }
@@ -431,7 +429,6 @@ const run_runnable = (runnable: Runnable | undefined, lib: Lib, args: Map<string
 
 // graph, node, symtable, parent symtable, lib
 const run_node = (node: {node: NodysseusNode, graph?: Graph} | Runnable, nodeArgs: Map<string, ConstRunnable>, graphArgs: Env, lib: Lib, options: RunOptions): Result | Promise<Result> => {
-  console.log("running", node)
     if (isRunnable(node)){
       if(isError(node)) {
         return node;
@@ -482,8 +479,6 @@ const run_node = (node: {node: NodysseusNode, graph?: Graph} | Runnable, nodeArg
           // before so that change/update has the parent id
           // change both nodes with nested graphs and non-
           lib.data.no.runtime.set_parent(newgraphid, graphid, (node.node as RefNode).ref); 
-
-          console.log("node ref?", node_ref);
 
           const result = run_node({node: node_ref}, (node.node as RefNode).value ? new Map(nodeArgs).set("__graph_value", lib.data.no.of((node.node as RefNode).value)) : nodeArgs, newGraphArgs, lib, options)
           return result;
@@ -546,7 +541,7 @@ const create_data = (node_id: string, graph: Graph, graphArgs: Env, lib: Lib, op
 }
 
   const handleError = (e, lib, env, graph, node) => {
-        console.log(`error in node`);
+        console.error(`error in node`);
         if (e instanceof AggregateError) {
             e.errors.map(console.error)
         } else {
@@ -736,7 +731,7 @@ export const run = (node: Runnable | InputRunnable, args: ResolvedArgs | Record<
     _lib, args, options);
   return wrapPromise(res)
     .then(r => isValue(r) ? r?.value : r)
-    .then(v => (options.profile && console.log(JSON.stringify(options.timings, null, 2)), isArgs(v) ? Object.fromEntries(v) : v)).value;
+    .then(v => (options.profile && console.info(JSON.stringify(options.timings, null, 2)), isArgs(v) ? Object.fromEntries(v) : v)).value;
   }).value;
 }
 
@@ -1140,12 +1135,6 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
           .then(rrr => isValue(rrr) ? rrr.value : rrr)
           .then(rrr => isConstRunnable(rrr) && valuetype !== "raw" ? resolveret(run_runnable(rrr, lib, new Map(), options)) : rrr).value
           
-
-        // (console.log("start", rr), ispromise)(rr) 
-        // ? rr.then(resolveret)
-        // : isValue(rr) && isConstRunnable(rr.value) && valuetype !== "raw"
-        // ? resolveret(run_runnable(ret, lib))
-        // : (console.log("end", rr), rr)
 
       return resolveret(ret)
     },
@@ -1580,21 +1569,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
 
 
           const runedgeresult = run_runnable(runnable, _lib, undefined, options)
-            // edgemap[runedge]
-            // ? run_runnable(edgemap[runedge], _lib, Object.assign(
-            //   { _output: _lib.data.no.of(runedge === "display" ? "display" : "value") },
-            // ))
-            // : runedge === "value" && !value && display
-            // ? run_runnable(display, _lib, args)
-            // : _lib.data.no.of(undefined)
-
-            // if(_lib.data.no.runtime.isGraphidListened(graphid)) {
-            //   console.log(`canceled subscribe-${graphid}`, _lib.data.no.runtime.isGraphidListened(graphid));
-            // }
           if (edgemap.subscribe && (runedge === "display" || runedge === "value")) {
-            // console.log(`subscribing for ${graphid}`)
-            // const graphid = (subscribe.env.data.get("__graphid") as {value: string}).value;
-            // const newgraphid = graphid + "/" + _node.id;
             const newgraphid = graphid;
 
             wrapPromise(run_runnable(
