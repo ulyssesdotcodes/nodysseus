@@ -467,7 +467,7 @@ const run_node = (node: {node: NodysseusNode, graph?: Graph} | Runnable, nodeArg
                 : false;
 
               if(dataNode) {
-                if (node.graph.edges_in[dataNode.id] && !(isNodeRef(dataNode) && dataNode.value === undefined) || (isNodeRef(dataNode) && (dataNode.ref === "extern" && dataNode.value === "extern.data"))) {
+                if (node.graph.edges_in[dataNode.id] && !(isNodeRef(dataNode) && dataNode.value === undefined) || (isNodeRef(dataNode) && ((dataNode.ref === "extern" && dataNode.value === "extern.data") || dataNode.ref === "@data.object"))) {
                   Object.values(node.graph.edges_in[dataNode.id]).map(e => e.as).forEach(k => keys.push(k))
 
                 }
@@ -808,6 +808,7 @@ const runtimefn = () => {
           prevargs = {};
           nodysseus.state.set(id, prevargs);
         }
+
 
         if (!compareObjects(args, prevargs, true)) {
           Object.assign(prevargs, args);
@@ -1499,8 +1500,8 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
           .then(({persist, publish, initial, stateId, rawstate}: {persist, publish, stateId, rawstate, initial?}) => 
             wrapPromise(rawstate)
               .then(rawstate => isValue(rawstate) ? rawstate.value : rawstate)
-              .then(state => ({publish, persist, state: state ?? initial, stateId})).value)
-          .then(({persist, publish, state, stateId}) => output === "display" 
+              .then(state => ({publish, persist, state, stateId, initial})).value)
+          .then(({persist, publish, state, stateId, initial}) => output === "display" 
             ? lib.data.no.of({dom_type: 'div', props: {}, children: [{dom_type: 'text_value', text: JSON.stringify(state)}]}) 
             : ({
               __kind: "state",
@@ -1516,7 +1517,9 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
                   if(publish) {
                     nolib.no.runtime.publish("argsupdate", {id: stateId, changes: {state: promiseresult}, mutate: false}, lib, options, true)
                   } else {
-                    lib.data.no.runtime.update_args(stateId, {state: promiseresult}, lib)
+                    if(!(isresultpromise && state)) {
+                      lib.data.no.runtime.update_args(stateId, {state: promiseresult}, lib)
+                    }
                   }
 
                   if(!isresultpromise && persist) {
@@ -1527,6 +1530,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
                     if(persist) {
                       nodysseus.persist.set(stateId, JSON.stringify(pr))
                     }
+
                     if(publish) {
                       lib.data.no.runtime.publish("argsupdate", {id: stateId, changes: {state: pr}, mutate: false}, lib, options, true)
                     } else {
@@ -1537,7 +1541,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
                 },
                 args: ['value']
               },
-              state,
+              state: state ?? initial,
             } as MemoryState)).value
       }
     },

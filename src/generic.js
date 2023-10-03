@@ -30,8 +30,7 @@ const generic = {
     "nodes": {
       "args": {
         "id": "args",
-        "ref": "extern",
-        "value": "extern.data"
+        "ref": "@data.object"
       },
       "qgbinm2": {
         "id": "qgbinm2",
@@ -269,6 +268,13 @@ const generic = {
     "category": "js",
     "value": "extern.addEventListeners",
     "description": "add js event listeners to a target"
+  },
+  "@data.object": {
+    "id": "@data.object",
+    "ref": "extern",
+    "category": "js",
+    "value": "extern.data",
+    "description": "create an object from the inputs"
   },
   "@graph.ancestors": {
     "id": "@graph.ancestors",

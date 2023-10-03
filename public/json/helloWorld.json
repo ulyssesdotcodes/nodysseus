@@ -26,7 +26,8 @@
     },
     "nodes": {
       "args": {
-        "id": "args"
+        "id": "args",
+        "ref": "@data.object"
       },
       "qgbinm2": {
         "id": "qgbinm2",
