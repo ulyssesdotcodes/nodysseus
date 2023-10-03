@@ -1523,6 +1523,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
                   }
 
                   if(!isresultpromise && persist) {
+
                     nodysseus.persist.set(stateId, JSON.stringify(promiseresult))
                   }
 
