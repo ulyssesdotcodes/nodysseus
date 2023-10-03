@@ -145,13 +145,13 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
                 x: Math.floor(simulation_node_data.get(node_id)?.x 
                     ?? addorundefined(
                         simulation_node_data.get(child)?.x, 
-                        sibling_mult * (256 + 64 * Math.log(Math.max(1, ancestor_count.get(n.id) + siblings?.length - 1)/ Math.log(1.25)))
+                        sibling_mult * (256 + 32 * Math.log(Math.max(1, ancestor_count.get(n.id) + siblings?.length - 1) / Math.log(1.05)))
                     )
                     ?? simulation_node_data.get(parents_map.get(n.id)?.[0])?.x
                     ?? Math.floor(window.innerWidth * (randpos.x * .5 + .25))),
                 y: Math.floor(simulation_node_data.get(node_id)?.y 
                     ?? addorundefined(
-                        -(256 + 64 * Math.log(Math.max(1, ancestor_count.get(n.id) * 0.125 + (siblings?.length - 1) * 4)) / Math.log(1.25)),
+                        -(128 + 32 * Math.log(Math.max(1, ancestor_count.get(n.id) * 0.125 + (siblings?.length - 1) * 4)) / Math.log(1.25)),
                         // -(16 + 32 * (Math.max(1, siblings?.length * 2)) ),
                         simulation_node_data.get(children_map.get(n.id))?.y
                     )
@@ -202,9 +202,9 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
                     source: e.from,
                     target: e.to,
                     sibling_index_normalized: (simulation_node_data.get(e.from) as d3NodeNode).sibling_index_normalized,
-                    strength: 4 * (1.5 - (Math.abs((simulation_node_data.get(e.from) as d3NodeNode).sibling_index_normalized ?? 0) - 0.5)) / (1 + 2 * Math.min(4, proximal)),
+                    strength: 0.25 * (1.5 - (Math.abs((simulation_node_data.get(e.from) as d3NodeNode).sibling_index_normalized ?? 0) - 0.5)) / (1 + 2 * Math.min(4, proximal)),
                     // strength: 0.25 * (1.5 - (Math.abs((simulation_node_data.get(e.from) as d3NodeNode).sibling_index_normalized ?? 0) - 0.5)) / (1 + 2 * Math.min(8, proximal)),
-                    distance: 256 + 32 * (Math.log(proximal) / Math.log(1.25)) 
+                    distance: 128 + 32 * (Math.log(proximal) / Math.log(1.25)) 
                 };
             }).filter(l => !!l);
 

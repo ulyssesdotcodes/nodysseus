@@ -459,6 +459,19 @@ const run_node = (node: {node: NodysseusNode, graph?: Graph} | Runnable, nodeArg
               edgeChain.push(edge);
               const outEdgeChain = [...edgeChain];
               outEdgeChain.reverse();
+              const descNode = node.graph.nodes[nodeId];
+              const dataNode = nodeId && isNodeRef(descNode) && descNode.ref === "return" && edge.as !== "lib" && edge.as !== "args"
+                ? node.graph.nodes[Object.values(node.graph.edges_in[nodeId]).find(e => e.as === "args")?.from]
+                : nodeId && isNodeRef(descNode) && descNode.ref === "@flow.runnable"
+                ? node.graph.nodes[Object.values(node.graph.edges_in[nodeId]).find(e => e.as === "parameters")?.from]
+                : false;
+
+              if(dataNode) {
+                if (node.graph.edges_in[dataNode.id] && !(isNodeRef(dataNode) && dataNode.value === undefined) || (isNodeRef(dataNode) && (dataNode.ref === "extern" && dataNode.value === "extern.data"))) {
+                  Object.values(node.graph.edges_in[dataNode.id]).map(e => e.as).forEach(k => keys.push(k))
+
+                }
+              }
               return outEdgeChain;
             })
             
@@ -470,7 +483,7 @@ const run_node = (node: {node: NodysseusNode, graph?: Graph} | Runnable, nodeArg
             ).then(descgraphmetas => descgraphmetas.map(dgm => 
               dgm.inEdge.slice(1).reduce((acc, e) => !acc || Array.isArray(acc) ? acc : acc.type === "@flow.runnable" ? acc.runnableParameters : typeof acc.type === "object" ? acc.type[e.as] : acc, dgm.metadata?.parameters?.[dgm.inEdge[0].as])
             ).flat().filter(v => v))
-            .then(v => lib.data.no.of({ values: v }))
+            .then(v => lib.data.no.of({ values: keys.concat(v) }))
             .value;
           }
             const resval = nolib.no.arg(node.node, graphArgs, lib, node.node.value, options);
