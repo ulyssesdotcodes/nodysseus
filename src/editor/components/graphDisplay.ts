@@ -145,13 +145,13 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
                 x: Math.floor(simulation_node_data.get(node_id)?.x 
                     ?? addorundefined(
                         simulation_node_data.get(child)?.x, 
-                        sibling_mult * (256 + 16 * Math.log(Math.max(1, ancestor_count.get(n.id))/ Math.log(1.01)))
+                        sibling_mult * (256 + 64 * Math.log(Math.max(1, ancestor_count.get(n.id) + siblings?.length - 1)/ Math.log(1.25)))
                     )
                     ?? simulation_node_data.get(parents_map.get(n.id)?.[0])?.x
                     ?? Math.floor(window.innerWidth * (randpos.x * .5 + .25))),
                 y: Math.floor(simulation_node_data.get(node_id)?.y 
                     ?? addorundefined(
-                        -(256 + 16 * Math.log(Math.max(1, ancestor_count.get(n.id) * 0.125 + siblings?.length * 4)) / Math.log(1.25)),
+                        -(256 + 64 * Math.log(Math.max(1, ancestor_count.get(n.id) * 0.125 + (siblings?.length - 1) * 4)) / Math.log(1.25)),
                         // -(16 + 32 * (Math.max(1, siblings?.length * 2)) ),
                         simulation_node_data.get(children_map.get(n.id))?.y
                     )

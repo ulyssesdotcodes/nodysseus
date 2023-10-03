@@ -446,13 +446,32 @@ const run_node = (node: {node: NodysseusNode, graph?: Graph} | Runnable, nodeArg
       }
     } else if(isNodeRef(node.node)) {
         if (node.node.ref === "arg") {
+          if(node.node.id === "hq21ycp") {
+            debugger;
+          }
           if(graphArgs._output === "metadata") {
             const graphid = (graphArgs.data.get("__graphid") as {value: string}).value;
             const keys = ["__node.value"];
-            const descGraph = descendantGraph(node.node.id, node.graph)
-            return lib.data.no.of({
-              values: keys
+            const edgeChain = [];
+            const descGraph = descendantGraph(node.node.id, node.graph, (nodeId, edge) => {
+              const descendant = node.graph.nodes[nodeId];
+              // const includeParameters = isNodeRef(descendant) && ((descendant.ref === "@flow.runnable" && edge.as === "fn") || (descendant.ref === "@flow.ap" && edge.as === "args"));
+              edgeChain.push(edge);
+              const outEdgeChain = [...edgeChain];
+              outEdgeChain.reverse();
+              return outEdgeChain;
             })
+            
+            return wrapPromiseAll(
+              Object.entries(descGraph)
+                .filter(e => e[1])
+                .map(e => wrapPromise(run({graph: node.graph.id, fn: e[0], lib, args: newEnv(new Map([["output", lib.data.no.of("metadata")]]))}, graphArgs))
+                     .then(r => ({nodeId: e[0], inEdge: e[1], metadata: r})).value)
+            ).then(descgraphmetas => descgraphmetas.map(dgm => 
+              dgm.inEdge.slice(1).reduce((acc, e) => !acc || Array.isArray(acc) ? acc : acc.type === "@flow.runnable" ? acc.runnableParameters : typeof acc.type === "object" ? acc.type[e.as] : acc, dgm.metadata?.parameters?.[dgm.inEdge[0].as])
+            ).flat().filter(v => v))
+            .then(v => lib.data.no.of({ values: v }))
+            .value;
           }
             const resval = nolib.no.arg(node.node, graphArgs, lib, node.node.value, options);
             // return resval && typeof resval === 'object' && isValue(resval) ? resval : lib.data.no.of(resval);
@@ -757,7 +776,7 @@ const runtimefn = () => {
                   const node = changedNodes.pop();
                   if(!changedNodesSet.has(node)){
                     changedNodesSet.add(node);
-                    Object.keys(descendantGraph(node, graph, lib).nodes).forEach(n => changedNodes.push(n));
+                    Object.keys(descendantGraph(node, graph, (node, edge) => node)).forEach(n => changedNodes.push(n));
                   }
                 }
                 publish("graphchange", {graph, dirtyNodes: [...changedNodesSet.keys()], source}, isLib(lib) ? lib : newLib(lib), {}, broadcast);
@@ -790,7 +809,7 @@ const runtimefn = () => {
                   let node_id = graphid.split(updatedgraph.id)[1].substring(1);
                   node_id = node_id.indexOf('/') > 0 ? node_id.substring(0, node_id.indexOf('/')) : node_id;
 
-                  publish("graphupdate", {graph: updatedgraph, dirtyNodes: node_id && Object.keys(descendantGraph(node_id, updatedgraph, lib).nodes)}, lib);
+                  publish("graphupdate", {graph: updatedgraph, dirtyNodes: node_id && Object.keys(descendantGraph(node_id, updatedgraph, node => node))}, lib);
                 }, 16)
               }
             }).value
@@ -911,7 +930,7 @@ const runtimefn = () => {
             .then(graph => 
                   wrapPromiseAll(Object.values(graph.nodes)
                     .map(node => isNodeRef(node) ? nolib.no.runtime.graphExport(node.ref) : []))
-                    .then(nodeGraphs => nodeGraphs.flat().concat([graph])).value
+                    .then<Graph[]>(nodeGraphs => nodeGraphs.flat().concat([graph])).value
                  ).value,
         change_graph,
         update_graph: (graphid, lib: Lib) => publish('graphupdate', {graph: graphid}, lib),
@@ -1232,9 +1251,22 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     },
     map: {
       rawArgs: true,
-      args: ["fn", "array", "_lib", "_runoptions"],
-      fn: (fn, array, lib, options) =>
-        wrapPromise(run_runnable(array, lib, undefined, options))
+      outputs: {
+        metadata: true
+      },
+      args: ["fn", "array", "_lib", "_runoptions", "_output"],
+      fn: (fn, array, lib, options, _output) =>
+        _output === "metadata"
+        ? {
+            parameters: {
+              fn: {
+                type: "@flow.runnable",
+                runnableParameters: ["element", "index"]
+              },
+              array: "@data.array"
+            }
+          }
+        : wrapPromise(run_runnable(array, lib, undefined, options))
           .then(arr => isValue(arr) ? arr.value : arr)
           .then(arr => Array.isArray(arr) 
             ? wrapPromise(run_runnable(fn, lib, undefined, options))
@@ -1250,9 +1282,19 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     },
     fold: {
       rawArgs: true,
-      args: ["fn", "object", "initial", "_lib", "_runoptions"],
-      fn: (fn, object, initial, lib: Lib, options) =>
-        wrapPromise(run_runnable(object, lib, undefined, options))
+      args: ["fn", "object", "initial", "_lib", "_runoptions", "_output"],
+      fn: (fn, object, initial, lib: Lib, options, _output) =>
+        _output === "metadata"
+        ? {
+            parameters: {
+              fn: {
+                type: "@flow.runnable",
+                runnableParameters: ["element", "index"]
+              },
+              array: "@data.array"
+            }
+          }
+        : wrapPromise(run_runnable(object, lib, undefined, options))
           .then(ov => isError(ov) ? ov : ov.value)
           .then(objectvalue => 
             objectvalue === undefined ? undefined 
@@ -1298,14 +1340,6 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
                       return lib.data.no.of(ret);
                     })))
           .value,
-    },
-    _sequence: {
-      args: ["_node_args", "_lib", "__graphid"],
-      fn: (_args, lib: Lib, graphid) => {
-        // const fns = run_runnable({..._args, args: {graphid: graphid, ..._args.args}}, lib)
-        // return nolib.extern.ap.fn(lib.data.no.of(Object.entries(fns).filter(kv => !kv[0].startsWith("_")).map(kv => kv[1])), undefined, false, lib, {})
-        return lib.data.extern.ap.fn(lib.data.no.of(Object.values(_args)), undefined, lib.data.no.of(false), lib);
-      }
     },
     runnable: {
       rawArgs: true,
@@ -1558,6 +1592,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
 
         const return_result = (_lib: Lib, args: Args) => {
           args = args && !isArgs(args) ? new Map(Object.entries(args)) : args;
+
           const runnable = edgemap[runedge] ? edgemap[runedge] : runedge === "value" && !value && display ? display : _lib.data.no.of(undefined);
           if(isRunnable(runnable) && !isError(runnable) && !isValue(runnable) && !isApRunnable(runnable)) {
             runnable.env = combineEnv(runnable.env.data, newEnv(args, _lib.data.no.of(runedge === "display" ? "display" : "value"), runnable.env))
@@ -1906,7 +1941,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
         wrapPromiseAll(Object.entries(args)
           .sort((a, b) => a[0].localeCompare(b[0]))
           .map(kv => kv[1]))
-          .then(inputs => inputs.map(i => isResult(i) ? i.value : i)
+          .then(inputs => inputs.map(i => i && isResult(i) ? i.value : i)
                 .map(i => externs.memoryUnwrap(i))
                 .reduce((acc, v) => (acc as any) + externs.memoryUnwrap(v) as any)),
     },

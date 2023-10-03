@@ -227,16 +227,11 @@ export const ancestor_graph = (node_id: string, from_graph: Graph | SavedGraph, 
     return graph;
 }
 
-export const descendantGraph = (nodeId: string, graph: Graph, nolib?: Record<string, any>): Graph => {
-  const outGraph: Graph = {...graph, nodes: {}};
-  while(nodeId) {
-    outGraph.nodes[nodeId] = graph.nodes[nodeId];
-    nodeId = graph.edges[nodeId]?.to;
-  }
-
-  return outGraph;
-}
-
+export const descendantGraph = <T>(nodeId: string, graph: Graph, traverse: (nodeId: string, edgeIn: Edge) => T): Record<string, T> => 
+  graph.edges[nodeId] ? {
+    [graph.edges[nodeId].to]: traverse(graph.edges[nodeId].to, graph.edges[nodeId]), 
+    ...descendantGraph(graph.edges[nodeId].to, graph, traverse)
+  } : {};
 
 /*
  * Type utils

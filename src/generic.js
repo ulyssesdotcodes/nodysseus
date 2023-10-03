@@ -3885,7 +3885,7 @@ const generic = {
         "children": {
           "id": "children",
           "ref": "arg",
-          "value": "children"
+          "value": "children: default"
         },
         "fill_children_fn_runnable": {
           "id": "fill_children_fn_runnable",
