@@ -73,7 +73,9 @@ export type d3NodeNode = SimulationNodeDatum & {
   nested_edge_count: number,
   nested_node_count: number,
   hash?: number,
-  sibling_index_normalized?: number
+  sibling_index_normalized?: number,
+  calculatedX: number,
+  calculatedY: number,
 } & NodysseusNode
 
 export const isd3NodeNode = (n: d3Node): n is d3NodeNode => !!(n as d3NodeNode).node_id;

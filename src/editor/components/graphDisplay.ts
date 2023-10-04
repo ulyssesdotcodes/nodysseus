@@ -80,9 +80,11 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
         }
 
         const ancestor_count = new Map();
-        const reverse_order = [...order];
-        // reverse_order.reverse();
 
+
+        // only used for setting ancestor_count
+        const reverse_order = [...order];
+        reverse_order.reverse();
         reverse_order.forEach(n => ancestor_count.set(n, parents_map.has(n) ? parents_map.get(n).reduce((acc, c) => acc + (ancestor_count.get(c) || 0) + 1, 0): 0));
 
         for(let ps of parents_map.values()) {
@@ -122,6 +124,15 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
                 return a === undefined || b === undefined ? undefined : a + b
             }
 
+            const calculatedX = addorundefined(
+                        simulation_node_data.get(child)?.x, 
+                        sibling_mult * (256 + 32 * Math.log(Math.max(1, ancestor_count.get(n.id) * 0.25 + siblings?.length - 1) / Math.log(2)))
+                    );
+            const calculatedY = addorundefined(
+                        -(256 + 64 * Math.log(Math.max(1, ancestor_count.get(n.id) * 0.25 + (siblings?.length - 1) * 2)) / Math.log(2)),
+                        // -(16 + 32 * (Math.max(1, siblings?.length * 2)) ),
+                        simulation_node_data.get(children_map.get(n.id))?.y
+                    )
 
             const calculated_nodes = !child ? [{
                 id: n.id,
@@ -129,6 +140,8 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
                 hash: simulation_node_data.get(node_id)?.hash ?? hashcode(n.id),
                 nested_node_count: isNodeGraph(n) ? Object.keys(n.nodes).length : undefined,
                 nested_edge_count: isNodeGraph(n) ? Object.keys(n.edges).length : undefined,
+                calculatedX,
+                calculatedY,
                 x: Math.floor(simulation_node_data.get(node_id)?.x 
                     ?? simulation_node_data.get(parents_map.get(n.id)?.[0])?.x
                     ?? Math.floor(window.innerWidth * (randpos.x * .5 + .25))),
@@ -142,19 +155,14 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
                 sibling_index_normalized: parents_map.get(child).findIndex(p => p === n.id) / parents_map.get(child).length,
                 nested_node_count: isNodeGraph(n) ? Object.keys(n.nodes).length : undefined,
                 nested_edge_count: isNodeGraph(n) ? Object.keys(n.edges).length : undefined,
+                calculatedX,
+                calculatedY,
                 x: Math.floor(simulation_node_data.get(node_id)?.x 
-                    ?? addorundefined(
-                        simulation_node_data.get(child)?.x, 
-                        sibling_mult * (256 + 32 * Math.log(Math.max(1, ancestor_count.get(n.id) + siblings?.length - 1) / Math.log(1.05)))
-                    )
+                    ?? calculatedX
                     ?? simulation_node_data.get(parents_map.get(n.id)?.[0])?.x
                     ?? Math.floor(window.innerWidth * (randpos.x * .5 + .25))),
                 y: Math.floor(simulation_node_data.get(node_id)?.y 
-                    ?? addorundefined(
-                        -(128 + 32 * Math.log(Math.max(1, ancestor_count.get(n.id) * 0.125 + (siblings?.length - 1) * 4)) / Math.log(1.25)),
-                        // -(16 + 32 * (Math.max(1, siblings?.length * 2)) ),
-                        simulation_node_data.get(children_map.get(n.id))?.y
-                    )
+                    ?? calculatedY
                     ?? addorundefined(256, simulation_node_data.get(parents_map.get(n.id)?.[0])?.y)
                     ?? Math.floor(window.innerHeight * (randpos.y * .5 + .25)))
             }];
@@ -192,19 +200,22 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
             .filter(e => simulation_node_data.has(e.from) && simulation_node_data.has(e.to) && isd3NodeNode(simulation_node_data.get(e.from)))
             .map(e => {
                 const l = simulation_link_data.get(`${e.from}__${e.to}`);
+                const from = simulation_node_data.get(e.from);
+                const to = simulation_node_data.get(e.to);
                 const proximal = (
                     (parents_map.get(e.to)?.length ?? 0) + 
                     ((parents_map.get(children_map.get(e.to))?.length ?? 0) * 1)
                 ) * 0.5;
+
                 return {
                     ...e,
                     edge: e,
                     source: e.from,
                     target: e.to,
                     sibling_index_normalized: (simulation_node_data.get(e.from) as d3NodeNode).sibling_index_normalized,
-                    strength: 0.25 * (1.5 - (Math.abs((simulation_node_data.get(e.from) as d3NodeNode).sibling_index_normalized ?? 0) - 0.5)) / (1 + 2 * Math.min(4, proximal)),
-                    // strength: 0.25 * (1.5 - (Math.abs((simulation_node_data.get(e.from) as d3NodeNode).sibling_index_normalized ?? 0) - 0.5)) / (1 + 2 * Math.min(8, proximal)),
-                    distance: 128 + 32 * (Math.log(proximal) / Math.log(1.25)) 
+                    // strength: 0,
+                    strength: 0.25 * (1.5 - (Math.abs((simulation_node_data.get(e.from) as d3NodeNode).sibling_index_normalized ?? 0) - 0.5)) / (1 + 2 * Math.min(8, proximal)),
+                    distance: from.calculatedX && from.calculatedY && to.calculatedX && to.calculatedY ?  Math.sqrt(Math.pow(to.calculatedX - from.calculatedX, 2) + Math.pow(to.calculatedY - from.calculatedY, 2)) : 256 + 64 * (Math.log(proximal) / Math.log(2)) 
                 };
             }).filter(l => !!l);
 
@@ -246,8 +257,8 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
             .strength(n =>
                 isd3NodeNode(n)
                 ? (!!parents_map.get(n.node_id)?.length === !children_map.has(n.node_id))
-                  || children_map.get(n.node_id)?.length > 0 ? .01 : 0
-                : 0.01
+                  || children_map.get(n.node_id)?.length > 0 ? .001 : 0
+                : 0.001
              );
 
 
@@ -264,14 +275,14 @@ export const d3subscription = (dispatch: ha.Dispatch<HyperappState>, props) => {
     const nodySim: NodysseusSimulation = {
       selectedOffset: {x: 0, y: 0},
       simulation: hlib.d3.forceSimulation()
-        .force('charge', hlib.d3.forceManyBody().strength(-1024).distanceMax(1024).distanceMin(64))
+        .force('charge', hlib.d3.forceManyBody().strength(-64).distanceMax(1024))
         .force('collide', hlib.d3.forceCollide(64))
         .force('links', hlib.d3
             .forceLink([])
             .distance(l => l.distance ?? 128)
             .strength(l => l.strength)
             .id((n: d3Node) => (n as d3NodeNode).node_id))
-        .force('link_direction', hlib.d3.forceY().strength(.01))
+        .force('link_direction', hlib.d3.forceY().strength(0))
         // .force('link_label_x', hlib.d3.forceX())
         // .force('center', hlib.d3.forceCenter().strength(0.01))
         // .force('fuse_links', lib.d3.forceLink([]).distance(128).strength(.1).id(n => n.node_id))
