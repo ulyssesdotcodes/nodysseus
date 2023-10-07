@@ -10,6 +10,10 @@ import { parser } from "@lezer/javascript";
 import {v4 as uuid} from "uuid";
 import { middleware, runh, hlib as hyperapplib } from "./hyperapp.js";
 import domTypes from "../html-dom-types.json";
+import { Compartment } from "@codemirror/state";
+import { json, jsonParseLinter } from "@codemirror/lang-json";
+import { javascript } from "@codemirror/lang-javascript";
+import {linter, lintGutter} from "@codemirror/lint"
 
 
 
@@ -144,7 +148,7 @@ export const pzobj: {
 // Errors from the worker don't keep instanceof
 export const isNodysseusError = (e: Error) => e && (e instanceof nolib.no.NodysseusError || (e as NodysseusError).cause?.node_id)
 
-export const update_info_display = ({fn, graph, args}, info_display_dispatch, code_editor, code_editor_nodeid, graphChanged = true) => {
+export const update_info_display = ({fn, graph, args}, info_display_dispatch, code_editor, code_editor_nodeid, graphChanged = true, selectedMetadata: NodeMetadata, languageConf: Compartment) => {
     const node = nolib.no.runtime.get_node(graph, fn);
 
     if(!node) {
@@ -160,7 +164,10 @@ export const update_info_display = ({fn, graph, args}, info_display_dispatch, co
         if(graphChanged && isNodeRef(node) && node.value !== code_editor.state.doc.toString()) {
           code_editor.dispatch({
             changes:{from: 0, to: code_editor.state.doc.length, insert: node.value},
-            effects: [code_editor_nodeid.of(node.id)]
+            effects: [
+              code_editor_nodeid.of(node.id), 
+              languageConf.reconfigure(selectedMetadata?.language === "json" ? [json(), linter(jsonParseLinter()), lintGutter()] : javascript())
+            ]
           })
         }
       });
@@ -310,7 +317,7 @@ export const Copy = (state, {cut, as}) => {
       hlibLib
     )
     const outEdge = state.editingGraph.edges[state.selected[0]];
-    return [{...state, copied}, [SelectNodeEffect, {node_id: outEdge.to}]];
+    return [{...state, copied}, [selectNodeEffect, {node_id: outEdge.to}]];
   }
   return {...state, copied};
 }
@@ -355,11 +362,25 @@ export const Paste = state => [
     }]
 ]
 
-export const SelectNodeEffect: ha.Effecter<HyperappState, {
+export const selectNodeEffect: ha.Effecter<HyperappState, {
   node_id: string, 
   focus_property?: Property,
   clearInitialLayout?: boolean
 }> = (dispatch, props) => dispatch([SelectNode, props])
+
+export const updateSelectedMetadata: ha.Effecter<HyperappState, {
+  graph: Graph,
+  nodeId: string,
+}> = (dispatch, {graph, nodeId}) => 
+  wrapPromise(hlib.run(graph, nodeId, {_output: "metadata"})).then(selectedMetadata => dispatch(state => [
+    {...state, selectedMetadata}, 
+     state.selectedMetadata !== selectedMetadata && (selectedMetadata === undefined || state.selectedMetadata === undefined || !compareObjects(state.selectedMetadata, selectedMetadata)) &&
+      (() => update_info_display({
+                fn: nodeId, 
+                graph: state.editingGraph, 
+                args: {},
+              }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== nodeId, selectedMetadata, state.languageConf))
+  ])).value
 
 export const SelectNode: ha.Action<HyperappState, {
   node_id: string,
@@ -372,7 +393,6 @@ export const SelectNode: ha.Action<HyperappState, {
       inputs: {},
       selected_edges_in: graphEdgesIn(state.editingGraph, node_id),
       noautozoom: false,
-      selectedMetadata: wrapPromise(hlib.run(state.editingGraph, node_id, {_output: "metadata"})).value,
       initialLayout: state.initialLayout && !clearInitialLayout
     },
     [pzobj.effect, {...state, node_id: node_id}],
@@ -402,8 +422,9 @@ export const SelectNode: ha.Action<HyperappState, {
         : [() => update_info_display({
           fn: node_id, 
           graph: state.editingGraph, 
-          args: {}
-        }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== node_id), {}],
+          args: {},
+        }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== node_id, state.selectedMetadata, state.languageConf), {}],
+    [updateSelectedMetadata, {graph: state.editingGraph, nodeId: node_id}],
     state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: {nodeId: node_id, graphId: state.editingGraphId}}, nolibLib), {}],
     [CalculateSelectedNodeArgsEffect, {graph: state.editingGraph, node_id}]
 ] : state;
@@ -504,7 +525,7 @@ export const keydownSubscription = (dispatch, options) => {
     return () => removeEventListener('keydown', handler);
 }
 
-export const refresh_graph = (dispatch, {graph, graphChanged, norun, result_display_dispatch, result_background_display_dispatch, info_display_dispatch, code_editor, code_editor_nodeid}) => {
+export const refresh_graph: ha.Effecter<HyperappState, any> = (dispatch, {graph, graphChanged, norun, result_display_dispatch, result_background_display_dispatch, info_display_dispatch, code_editor, code_editor_nodeid}) => {
     if(norun ?? false) {
       return
     }
@@ -524,7 +545,14 @@ export const refresh_graph = (dispatch, {graph, graphChanged, norun, result_disp
       })
     }
     const update_info_display_fn = () => dispatch(s => [s, s.selected[0] !== s.editingGraph.out 
-        && !s.show_all && [() => update_info_display({fn: s.selected[0], graph: s.editingGraph, args: {}}, info_display_dispatch, code_editor, code_editor_nodeid, graphChanged)]])
+        && !s.show_all && ((dispatch, payload) => update_info_display({fn: s.selected[0], graph: s.editingGraph, args: {}}, 
+                                                                      info_display_dispatch, 
+        code_editor, 
+        code_editor_nodeid, 
+        graphChanged,
+        s.selectedMetadata,
+        s.languageConf
+                                                                     ))])
     wrapPromise(result)
       .then(display_fn)
       .then(update_result_display_fn)

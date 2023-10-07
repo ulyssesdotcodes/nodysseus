@@ -446,12 +446,9 @@ const run_node = (node: {node: NodysseusNode, graph?: Graph} | Runnable, nodeArg
       }
     } else if(isNodeRef(node.node)) {
         if (node.node.ref === "arg") {
-          if(node.node.id === "hq21ycp") {
-            debugger;
-          }
           if(graphArgs._output === "metadata") {
             const graphid = (graphArgs.data.get("__graphid") as {value: string}).value;
-            const keys = ["__node.value"];
+            const keys = ["__graph_value"];
             const edgeChain = [];
             const descGraph = descendantGraph(node.node.id, node.graph, (nodeId, edge) => {
               const descendant = node.graph.nodes[nodeId];
@@ -492,11 +489,12 @@ const run_node = (node: {node: NodysseusNode, graph?: Graph} | Runnable, nodeArg
         } else if (node.node.ref === "extern") {
             return node_extern(node.node, nodeArgs, graphArgs, lib, options)
         } else if (node.node.ref === "@js.script") {
-            return (graphArgs._output === undefined || graphArgs._output === "value") 
-              ? node_script(node.node, nodeArgs, lib, options) 
-              : graphArgs._output === "metadata" 
-              ? lib.data.no.of({dataLabel: "script"})
-              : undefined
+          
+          return (graphArgs._output === undefined || graphArgs._output === "value") 
+            ? node_script(node.node, nodeArgs, lib, options) 
+            : graphArgs._output === "metadata" 
+            ? lib.data.no.of({dataLabel: "script", language: "javascript"})
+            : undefined
         }
 
         const graphid = (graphArgs.data.get("__graphid") as {value: string}).value;
@@ -1572,7 +1570,8 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
           type: {
             parameters: (graph: Graph, nodeId: string) => ({type: Object.fromEntries(Object.values(ancestor_graph(nodeId, graph).nodes).filter(n => isNodeRef(n) && n.ref === "arg" && n.value && !n.value.startsWith("_")).map((n: ValueNode & RefNode) => [n.value.includes('.') ? n.value.split('.')[0] : n.value, "any"]))}),
             values: "any",
-            dataLabel: "any"
+            dataLabel: "any",
+            language: "any"
           },
         },
         "args": "any",
@@ -2090,7 +2089,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
         })
         return args;
       }
-    },
+    }
   } as Record<string, Extern>,
   // THREE
 };

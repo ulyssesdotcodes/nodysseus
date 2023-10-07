@@ -1,8 +1,10 @@
 import { basicSetup, EditorView } from "codemirror";
 import { EditorState, Compartment, StateField, StateEffect, RangeSet, Range, Text } from "@codemirror/state"
 import { language, syntaxTree } from "@codemirror/language"
-import { javascript, javascriptLanguage } from "@codemirror/lang-javascript";
+import { esLint, javascript, javascriptLanguage } from "@codemirror/lang-javascript";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
+import { json, jsonLanguage, jsonParseLinter } from "@codemirror/lang-json";
+import {linter, lintGutter} from "@codemirror/lint";
 import {CreateNode, UpdateNode} from "../util.js"
 import { Decoration, DecorationSet, ViewPlugin, WidgetType } from "@codemirror/view";
 
@@ -47,15 +49,6 @@ const code_editor_nodeid_field = StateField.define({
 export const init_code_editor = (dispatch, {html_id}) => {
     requestAnimationFrame(() => {
         const languageConf = new Compartment()
-        const autoLanguage = EditorState.transactionExtender.of(tr => {
-          if(!tr.docChanged) return null;
-          let docLang = document.getElementsByClassName("markdown").length > 0 ? 'markdown' : 'javascript';
-          let stateLang = tr.startState.facet(language) == markdownLanguage ? 'markdown' : 'javascript';
-          if(docLang === stateLang) return null;
-          return {
-            effects: languageConf.reconfigure(docLang === 'markdown' ? markdown() : javascript())
-          }
-        })
         const background = "#111";
         const highlightBackground = "#00000033";
 
@@ -85,7 +78,6 @@ export const init_code_editor = (dispatch, {html_id}) => {
                 }
             }, {dark: true}),
             languageConf.of(javascript({jsx: true})),
-            autoLanguage,
             ViewPlugin.define(view => {
               const viewfn = {
                 decorations: RangeSet.of<Decoration>([]),
@@ -132,6 +124,6 @@ export const init_code_editor = (dispatch, {html_id}) => {
             })
         ], parent: document.getElementById(`${html_id}-code-editor`)});
 
-        dispatch(s => ({...s, code_editor, code_editor_nodeid}))
+        dispatch(s => ({...s, code_editor, code_editor_nodeid, languageConf}))
     })
 }

@@ -1,6 +1,7 @@
 import { ForceLink, Simulation, SimulationLinkDatum, SimulationNodeDatum } from "d3-force";
 import { NodysseusError } from "../nodysseus.js";
 import {Graph, Edge, NodysseusNode, RefStore, EdgeNoAs, NodeMetadata, NodeArg} from "../types.js"
+import { Compartment } from "@codemirror/state";
 
 export type Vector2 = {x: number, y: number}
 
@@ -48,6 +49,7 @@ export type HyperappState = {
   custom_editor_display_dispatch?: Function,
   code_editor?: any,
   code_editor_nodeid?: any,
+  languageConf?: Compartment,
   custom_editor_result: {},
   showHelp: boolean,
   refGraphs: Array<string>,

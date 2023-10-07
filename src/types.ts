@@ -218,7 +218,8 @@ export const isTypedArg = (a: any): a is TypedArg => a && (typeof a === "string"
 export type NodeMetadata = {
   parameters?: Array<string>,
   values?: Array<string>,
-  dataLabel?: string
+  dataLabel?: string,
+  language?: "javascript" | "json" | "markdown" | false
 }
 
 export type MemoryState = {__kind: "state", id: string, set: ApFunction, state: any}
