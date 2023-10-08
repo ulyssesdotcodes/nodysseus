@@ -1,5 +1,5 @@
 import { ancestor_graph, ispromise, isWrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node, compareObjects, descendantGraph } from "./util.js"
-import { isNodeGraph, Graph, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, InputRunnable, Lib, Env, isEnv, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike, Extern, getRunnableGraph, isNodeValue, ValueNode, isLib, isFunctorRunnable, isGraph, isInputRunnable, MemoryState, MemoryReference, isMemory, isResult, GraphNode } from "./types.js"
+import { isNodeGraph, Graph, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, InputRunnable, Lib, Env, isEnv, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike, Extern, getRunnableGraph, isNodeValue, ValueNode, isLib, isFunctorRunnable, isGraph, isInputRunnable, MemoryState, MemoryReference, isMemory, isResult, GraphNode, NodeMetadata } from "./types.js"
 import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util.js"
 import generic from "./generic.js";
 import * as externs from "./externs.js";
@@ -493,7 +493,7 @@ const run_node = (node: {node: NodysseusNode, graph?: Graph} | Runnable, nodeArg
           return (graphArgs._output === undefined || graphArgs._output === "value") 
             ? node_script(node.node, nodeArgs, lib, options) 
             : graphArgs._output === "metadata" 
-            ? lib.data.no.of({dataLabel: "script", language: "javascript"})
+            ? lib.data.no.of({dataLabel: "script", codeEditor: {language: "javascript", editorText: node.node.value}} as NodeMetadata)
             : undefined
         }
 

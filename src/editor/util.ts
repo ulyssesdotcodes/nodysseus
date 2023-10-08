@@ -180,15 +180,21 @@ export const update_info_display = ({fn, graph, args}, info_display_dispatch, co
     const update_info_display_fn = display => info_display_dispatch && requestAnimationFrame(() => {
       info_display_dispatch(UpdateResultDisplay, {el: display?.dom_type ? display : ha.h('div', {})})
       requestAnimationFrame(() => {
-        if(isNodeRef(node) ) {
+        if(code_editor && isNodeRef(node) && selectedMetadata?.codeEditor) {
+          console.log(selectedMetadata)
           const jsonlang = json();
           requestAnimationFrame(() => {
             if(selectedMetadata?.codeEditor?.language === "json") {
               customFoldAll(code_editor)
             }
           })
+          const newText = selectedMetadata?.codeEditor?.editorText ?? node.value
           code_editor.dispatch({
-            changes:  graphChanged && node.value !== code_editor.state.doc.toString() && {from: 0, to: code_editor.state.doc.length, insert: node.value},
+            changes:  newText !== code_editor.state.doc.toString() && {
+              from: 0, 
+              to: code_editor.state.doc.length, 
+              insert: newText
+            },
             effects: [
               code_editor_nodeid.of(node.id), 
               !metadataChanged && codeEditorExtensions.reconfigure([
