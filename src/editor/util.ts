@@ -183,7 +183,9 @@ export const update_info_display = ({fn, graph, args}, info_display_dispatch, co
         if(isNodeRef(node) ) {
           const jsonlang = json();
           requestAnimationFrame(() => {
-            customFoldAll(code_editor)
+            if(selectedMetadata?.codeEditor?.language === "json") {
+              customFoldAll(code_editor)
+            }
           })
           code_editor.dispatch({
             changes:  graphChanged && node.value !== code_editor.state.doc.toString() && {from: 0, to: code_editor.state.doc.length, insert: node.value},
