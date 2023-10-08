@@ -14,6 +14,7 @@ import { Compartment } from "@codemirror/state";
 import { json, jsonParseLinter } from "@codemirror/lang-json";
 import { javascript } from "@codemirror/lang-javascript";
 import {linter, lintGutter} from "@codemirror/lint"
+import { EditorView } from "@codemirror/view"
 
 
 
@@ -148,7 +149,7 @@ export const pzobj: {
 // Errors from the worker don't keep instanceof
 export const isNodysseusError = (e: Error) => e && (e instanceof nolib.no.NodysseusError || (e as NodysseusError).cause?.node_id)
 
-export const update_info_display = ({fn, graph, args}, info_display_dispatch, code_editor, code_editor_nodeid, graphChanged = true, selectedMetadata: NodeMetadata, languageConf: Compartment) => {
+export const update_info_display = ({fn, graph, args}, info_display_dispatch, code_editor, code_editor_nodeid, graphChanged = true, selectedMetadata: NodeMetadata, codeEditorExtensions: Compartment, metadataChanged = false) => {
     const node = nolib.no.runtime.get_node(graph, fn);
 
     if(!node) {
@@ -161,13 +162,16 @@ export const update_info_display = ({fn, graph, args}, info_display_dispatch, co
     const update_info_display_fn = display => info_display_dispatch && requestAnimationFrame(() => {
       info_display_dispatch(UpdateResultDisplay, {el: display?.dom_type ? display : ha.h('div', {})})
       requestAnimationFrame(() => {
-        if(graphChanged && isNodeRef(node) && node.value !== code_editor.state.doc.toString()) {
+        if(isNodeRef(node) ) {
           code_editor.dispatch({
-            changes:{from: 0, to: code_editor.state.doc.length, insert: node.value},
+            changes:  graphChanged && node.value !== code_editor.state.doc.toString() && {from: 0, to: code_editor.state.doc.length, insert: node.value},
             effects: [
               code_editor_nodeid.of(node.id), 
-              languageConf.reconfigure(selectedMetadata?.language === "json" ? [json(), linter(jsonParseLinter()), lintGutter()] : javascript())
-            ]
+              !metadataChanged && codeEditorExtensions.reconfigure([
+                selectedMetadata?.codeEditor?.language === "json" ? [json(), linter(jsonParseLinter()), lintGutter()] : javascript(),
+                selectedMetadata?.codeEditor?.onChange && EditorView.updateListener.of((viewUpdate) => wrapPromise(nolib.no.runtime.run(selectedMetadata.codeEditor?.onChange, new Map([["editorText", viewUpdate.state.doc.toString()]]))))
+              ].filter(e => e).flat()),
+            ].filter(e => e)
           })
         }
       });
@@ -379,7 +383,7 @@ export const updateSelectedMetadata: ha.Effecter<HyperappState, {
                 fn: nodeId, 
                 graph: state.editingGraph, 
                 args: {},
-              }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== nodeId, selectedMetadata, state.languageConf))
+              }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== nodeId, selectedMetadata, state.codeEditorExtensions))
   ])).value
 
 export const SelectNode: ha.Action<HyperappState, {
@@ -423,7 +427,7 @@ export const SelectNode: ha.Action<HyperappState, {
           fn: node_id, 
           graph: state.editingGraph, 
           args: {},
-        }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== node_id, state.selectedMetadata, state.languageConf), {}],
+        }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== node_id, state.selectedMetadata, state.codeEditorExtensions), {}],
     [updateSelectedMetadata, {graph: state.editingGraph, nodeId: node_id}],
     state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: {nodeId: node_id, graphId: state.editingGraphId}}, nolibLib), {}],
     [CalculateSelectedNodeArgsEffect, {graph: state.editingGraph, node_id}]
@@ -551,7 +555,8 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = (dispatch, {graph,
         code_editor_nodeid, 
         graphChanged,
         s.selectedMetadata,
-        s.languageConf
+        s.codeEditorExtensions,
+        false
                                                                      ))])
     wrapPromise(result)
       .then(display_fn)

@@ -48,7 +48,7 @@ const code_editor_nodeid_field = StateField.define({
 
 export const init_code_editor = (dispatch, {html_id}) => {
     requestAnimationFrame(() => {
-        const languageConf = new Compartment()
+        const codeEditorExtensions = new Compartment()
         const background = "#111";
         const highlightBackground = "#00000033";
 
@@ -77,7 +77,7 @@ export const init_code_editor = (dispatch, {html_id}) => {
                   backgroundColor: "#233"
                 }
             }, {dark: true}),
-            languageConf.of(javascript({jsx: true})),
+            codeEditorExtensions.of(javascript({jsx: true})),
             ViewPlugin.define(view => {
               const viewfn = {
                 decorations: RangeSet.of<Decoration>([]),
@@ -124,6 +124,6 @@ export const init_code_editor = (dispatch, {html_id}) => {
             })
         ], parent: document.getElementById(`${html_id}-code-editor`)});
 
-        dispatch(s => ({...s, code_editor, code_editor_nodeid, languageConf}))
+        dispatch(s => ({...s, code_editor, code_editor_nodeid, codeEditorExtensions}))
     })
 }

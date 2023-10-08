@@ -219,7 +219,11 @@ export type NodeMetadata = {
   parameters?: Array<string>,
   values?: Array<string>,
   dataLabel?: string,
-  language?: "javascript" | "json" | "markdown" | false
+  codeEditor?: {
+    language?: "javascript" | "json" | "markdown" | false,
+    onChange?: ApRunnable | FunctorRunnable
+
+  }
 }
 
 export type MemoryState = {__kind: "state", id: string, set: ApFunction, state: any}

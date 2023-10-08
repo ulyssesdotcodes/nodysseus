@@ -49,7 +49,7 @@ export type HyperappState = {
   custom_editor_display_dispatch?: Function,
   code_editor?: any,
   code_editor_nodeid?: any,
-  languageConf?: Compartment,
+  codeEditorExtensions?: Compartment,
   custom_editor_result: {},
   showHelp: boolean,
   refGraphs: Array<string>,
