@@ -199,7 +199,9 @@ export const update_info_display = ({fn, graph, args}, info_display_dispatch, co
               code_editor_nodeid.of(node.id), 
               !metadataChanged && codeEditorExtensions.reconfigure([
                 selectedMetadata?.codeEditor?.language === "json" ? [jsonlang, linter(jsonParseLinter()), lintGutter()] : javascript(),
-                selectedMetadata?.codeEditor?.onChange && EditorView.updateListener.of((viewUpdate) => wrapPromise(nolib.no.runtime.run(selectedMetadata.codeEditor?.onChange, new Map([["editorText", viewUpdate.state.doc.toString()]]))))
+                selectedMetadata?.codeEditor?.onChange && 
+                  EditorView.updateListener.of(
+                    (viewUpdate) => viewUpdate.docChanged && wrapPromise(nolib.no.runtime.run(selectedMetadata.codeEditor?.onChange, new Map([["editorText", (console.log(viewUpdate.state.doc.toString()), viewUpdate.state.doc.toString())]]))))
               ].filter(e => e).flat()),
             ].filter(e => e)
           })
@@ -457,7 +459,7 @@ export const SelectNode: ha.Action<HyperappState, {
           fn: node_id, 
           graph: state.editingGraph, 
           args: {},
-        }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== node_id, state.selectedMetadata, state.codeEditorExtensions), {}],
+        }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== node_id, undefined, state.codeEditorExtensions), {}],
     [updateSelectedMetadata, {graph: state.editingGraph, nodeId: node_id}],
     state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: {nodeId: node_id, graphId: state.editingGraphId}}, nolibLib), {}],
     [CalculateSelectedNodeArgsEffect, {graph: state.editingGraph, node_id}]
