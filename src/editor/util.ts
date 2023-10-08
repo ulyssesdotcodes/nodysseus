@@ -10,12 +10,30 @@ import { parser } from "@lezer/javascript";
 import {v4 as uuid} from "uuid";
 import { middleware, runh, hlib as hyperapplib } from "./hyperapp.js";
 import domTypes from "../html-dom-types.json";
-import { Compartment } from "@codemirror/state";
+import { Compartment, EditorSelection } from "@codemirror/state";
 import { json, jsonParseLinter } from "@codemirror/lang-json";
 import { javascript } from "@codemirror/lang-javascript";
 import {linter, lintGutter} from "@codemirror/lint"
 import { EditorView } from "@codemirror/view"
+import { StateEffect } from "@codemirror/state"
+import { foldAll, unfoldCode, toggleFold, foldCode, foldInside, foldable, foldEffect, foldState, codeFolding } from "@codemirror/language"
 
+function maybeEnable(state, other) {
+    return state.field(foldState, false) ? other : other.concat(StateEffect.appendConfig.of(codeFolding()));
+}
+
+const customFoldAll = view => {
+    let { state } = view, effects = [];
+    for (let pos = 2; pos < state.doc.length;) {
+        let line = view.lineBlockAt(pos), range = foldable(state, line.from, line.to);
+        if (range)
+            effects.push(foldEffect.of(range));
+        pos = (range ? view.lineBlockAt(range.to) : line).to + 1;
+    }
+    if (effects.length)
+        view.dispatch({ effects: maybeEnable(view.state, effects) });
+    return !!effects.length;
+};
 
 
 export const EXAMPLES = ["threejs_example", "hydra_example", "threejs_boilerplate", "threejs_force_attribute_example", "threejs_node_example", "threejs_compute_example", "strudel_example"];
@@ -149,7 +167,7 @@ export const pzobj: {
 // Errors from the worker don't keep instanceof
 export const isNodysseusError = (e: Error) => e && (e instanceof nolib.no.NodysseusError || (e as NodysseusError).cause?.node_id)
 
-export const update_info_display = ({fn, graph, args}, info_display_dispatch, code_editor, code_editor_nodeid, graphChanged = true, selectedMetadata: NodeMetadata, codeEditorExtensions: Compartment, metadataChanged = false) => {
+export const update_info_display = ({fn, graph, args}, info_display_dispatch, code_editor: EditorView, code_editor_nodeid, graphChanged = true, selectedMetadata: NodeMetadata, codeEditorExtensions: Compartment, metadataChanged = false) => {
     const node = nolib.no.runtime.get_node(graph, fn);
 
     if(!node) {
@@ -163,12 +181,16 @@ export const update_info_display = ({fn, graph, args}, info_display_dispatch, co
       info_display_dispatch(UpdateResultDisplay, {el: display?.dom_type ? display : ha.h('div', {})})
       requestAnimationFrame(() => {
         if(isNodeRef(node) ) {
+          const jsonlang = json();
+          requestAnimationFrame(() => {
+            customFoldAll(code_editor)
+          })
           code_editor.dispatch({
             changes:  graphChanged && node.value !== code_editor.state.doc.toString() && {from: 0, to: code_editor.state.doc.length, insert: node.value},
             effects: [
               code_editor_nodeid.of(node.id), 
               !metadataChanged && codeEditorExtensions.reconfigure([
-                selectedMetadata?.codeEditor?.language === "json" ? [json(), linter(jsonParseLinter()), lintGutter()] : javascript(),
+                selectedMetadata?.codeEditor?.language === "json" ? [jsonlang, linter(jsonParseLinter()), lintGutter()] : javascript(),
                 selectedMetadata?.codeEditor?.onChange && EditorView.updateListener.of((viewUpdate) => wrapPromise(nolib.no.runtime.run(selectedMetadata.codeEditor?.onChange, new Map([["editorText", viewUpdate.state.doc.toString()]]))))
               ].filter(e => e).flat()),
             ].filter(e => e)
