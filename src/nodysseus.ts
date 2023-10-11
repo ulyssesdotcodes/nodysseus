@@ -1992,6 +1992,15 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
         return degrees ? degrees * Math.PI / 180 : radians * 180 / Math.PI;
       }
     },
+    random: {
+      args: ["seed"],
+      fn: (seed = 128) => () => {
+        var t = seed += 0x6D2B79F5;
+        t = Math.imul(t ^ t >>> 15, t | 1);
+        t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      }
+    },
     modify: {
       args: ["target", "path", "fn", "_node", "_lib", "_graph_input_value", "_runoptions"],
       resolve: false,

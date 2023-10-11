@@ -189,64 +189,9 @@ const generic = {
     "id": "@math.random",
     "category": "math",
     "description": "Returns a seeded random function",
-    "out": "out",
-    "nodes": {
-      "args": {
-        "id": "args",
-        "ref": "extern",
-        "value": "extern.data"
-      },
-      "output_val": {
-        "id": "output_val",
-        "value": "\n    return function() {\n      var t = a += 0x6D2B79F5;\n      t = Math.imul(t ^ t >>> 15, t | 1);\n      t ^= t + Math.imul(t ^ t >>> 7, t | 61);\n      return ((t ^ t >>> 14) >>> 0) / 4294967296;\n    }\n",
-        "ref": "@js.script"
-      },
-      "out": {
-        "id": "out",
-        "ref": "return",
-        "name": "@math.random"
-      },
-      "2a5n0mp": {
-        "id": "2a5n0mp",
-        "name": "128"
-      },
-      "4twtzbr": {
-        "id": "4twtzbr",
-        "value": "seed",
-        "ref": "arg"
-      },
-      "t9tt2mz": {
-        "id": "t9tt2mz",
-        "name": "4"
-      }
-    },
-    "edges": {
-      "output_val": {
-        "from": "output_val",
-        "to": "out",
-        "as": "value"
-      },
-      "args": {
-        "from": "args",
-        "to": "out",
-        "as": "args"
-      },
-      "2a5n0mp": {
-        "from": "2a5n0mp",
-        "to": "args",
-        "as": "seed"
-      },
-      "4twtzbr": {
-        "from": "4twtzbr",
-        "to": "output_val",
-        "as": "a"
-      },
-      "t9tt2mz": {
-        "from": "t9tt2mz",
-        "to": "args",
-        "as": "seedb"
-      }
-    }
+    "ref": "extern",
+    "value": "extern.random",
+    "category": "math"
   },
   "@js.typeof": {
     "id": "@js.typeof",
