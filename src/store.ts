@@ -1,14 +1,14 @@
-import loki from "lokijs";
-import { mapStore } from "./nodysseus.js";
-import { Graph, LokiT, NodysseusStore, Store } from "./types.js";
+import loki from "lokijs"
+import { mapStore } from "./nodysseus.js"
+import { Graph, LokiT, NodysseusStore, Store } from "./types.js"
 
 export const lokidbToStore = <T>(collection: loki.Collection<LokiT<T>>): Store<T> => ({
   set: (id: string, data: T) => {
-    const existing = collection.by("id", id);
+    const existing = collection.by("id", id)
     if (existing) {
-      collection.update(Object.assign(existing, {data}));
+      collection.update(Object.assign(existing, {data}))
     } else {
-      collection.insert({ id,  data});
+      collection.insert({ id,  data})
     }
     return data
   },
@@ -16,7 +16,7 @@ export const lokidbToStore = <T>(collection: loki.Collection<LokiT<T>>): Store<T
   delete: (id: string) => {
     const existing = collection.by("id", id)
     if(existing !== undefined){
-      collection.remove(existing);
+      collection.remove(existing)
     }
   },
   clear: () => collection.clear(),
@@ -24,17 +24,17 @@ export const lokidbToStore = <T>(collection: loki.Collection<LokiT<T>>): Store<T
 })
 
 export const lokiStore = (): NodysseusStore => {
-  const isBrowser = typeof window !== 'undefined';
+  const isBrowser = typeof window !== "undefined"
   const persistdb = new loki("nodysseus_persist.db", {
     env: isBrowser ? "BROWSER" : "NODEJS",
     persistenceMethod: "memory",
   })
-  const refsdb = persistdb.addCollection<LokiT<Graph>>("refs", {unique: ["id"]});
+  const refsdb = persistdb.addCollection<LokiT<Graph>>("refs", {unique: ["id"]})
 
   const db = new loki("nodysseus.db", {
     env: isBrowser ? "BROWSER" : "NODEJS",
     persistenceMethod: "memory",
-  });
+  })
 
 
   // const graphsdb = db.addCollection<LokiT<Graph>>("nodes", { unique: ["id"] });

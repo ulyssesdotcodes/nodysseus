@@ -1,12 +1,12 @@
-import { editor, run} from './editor/editor.ts'
+import { editor, run} from "./editor/editor.ts"
 
-if (!window.IS_PRODUCTION) new EventSource('/esbuild').addEventListener('change', () => location.reload())
+if (!window.IS_PRODUCTION) new EventSource("/esbuild").addEventListener("change", () => location.reload())
 
-if('serviceWorker' in navigator) {
+if("serviceWorker" in navigator) {
   console.log("installing serviceworker")
-  navigator.serviceWorker.register('./sw.js');
+  navigator.serviceWorker.register("./sw.js")
 } else {
   console.log("couldn't install serviceworker")
 }
 
-editor('node-editor')
+editor("node-editor")

@@ -1,4 +1,4 @@
-import Fuse from "fuse.js";
+import Fuse from "fuse.js"
 
 type Option = {
   value: string;
@@ -7,27 +7,27 @@ type Option = {
 
 
 export default class AutocompleteList extends HTMLElement {
-  listEl: HTMLUListElement;
-  inputEl: HTMLInputElement;
-  options: Record<string, Option>;
-  fuseOptions: Array<Option>;
-  shownOptions: Array<{kind: "value" | "category", value: string}> | undefined;
-  optionEls: Record<string, HTMLLIElement>;
+  listEl: HTMLUListElement
+  inputEl: HTMLInputElement
+  options: Record<string, Option>
+  fuseOptions: Array<Option>
+  shownOptions: Array<{kind: "value" | "category", value: string}> | undefined
+  optionEls: Record<string, HTMLLIElement>
   // @ts-ignore
-  fuse: Fuse.Fuse<Option>;
-  selectedIndex: number | undefined;
-  initialOption: string;
-  focused: boolean;
+  fuse: Fuse.Fuse<Option>
+  selectedIndex: number | undefined
+  initialOption: string
+  focused: boolean
 
   constructor() {
     super()
 
     this.attachShadow({mode: "open", delegatesFocus: true})
 
-    const wrapper = document.createElement('div');
+    const wrapper = document.createElement("div")
     wrapper.classList.add("autocomplete-list")
 
-    const style = document.createElement('style')
+    const style = document.createElement("style")
     style.textContent = `
       .hidden {
         display: none;
@@ -78,23 +78,23 @@ export default class AutocompleteList extends HTMLElement {
       }
     `
 
-    this.inputEl = document.createElement('input')
+    this.inputEl = document.createElement("input")
     this.inputEl.onkeydown = (evt: KeyboardEvent) => {
       if(evt.key === "Tab") {
-        evt.stopPropagation();
+        evt.stopPropagation()
         this.selectOption(this.inputEl.value)
       } else if (evt.key === "ArrowDown") {
-        evt.stopPropagation();
-        this.selectedIndex = this.selectedIndex === undefined ? 0 : (this.selectedIndex + 1);
+        evt.stopPropagation()
+        this.selectedIndex = this.selectedIndex === undefined ? 0 : (this.selectedIndex + 1)
       } else if (evt.key === "ArrowUp") {
-        evt.stopPropagation();
-        this.selectedIndex = this.selectedIndex === undefined ? -1 : (this.selectedIndex - 1);
+        evt.stopPropagation()
+        this.selectedIndex = this.selectedIndex === undefined ? -1 : (this.selectedIndex - 1)
       } else if (evt.key === "Enter") {
-        evt.stopPropagation();
+        evt.stopPropagation()
 
         if(this.selectedIndex !== undefined && this.fuseOptions.length > 0) {
-          const count = this.fuseOptions.length;
-          this.inputEl.value = this.shownOptions.filter(o => o.kind === "value")[((this.selectedIndex % count) + count) % count].value;
+          const count = this.fuseOptions.length
+          this.inputEl.value = this.shownOptions.filter(o => o.kind === "value")[((this.selectedIndex % count) + count) % count].value
         }
 
         this.selectOption(this.inputEl.value)
@@ -102,121 +102,121 @@ export default class AutocompleteList extends HTMLElement {
     }
 
     this.inputEl.onkeyup = (evt: KeyboardEvent) => {
-      this.populateOptions();
+      this.populateOptions()
     }
 
-    wrapper.addEventListener('focusin', (evt: FocusEvent) => {
+    wrapper.addEventListener("focusin", (evt: FocusEvent) => {
       if(!this.focused) {
-        this.initialOption = this.inputEl.value;
+        this.initialOption = this.inputEl.value
       }
-      this.focused = true;
+      this.focused = true
       if(this.listEl.classList.contains("hidden")) {
         this.listEl.classList.remove("hidden")
         this.populateOptions()
       }
     })
 
-    wrapper.addEventListener('focusout', (evt: FocusEvent) => {
+    wrapper.addEventListener("focusout", (evt: FocusEvent) => {
       if(!wrapper.contains(evt.relatedTarget as HTMLElement)) {
         this.listEl.classList.add("hidden")
         this.selectOption(this.inputEl.value)
-        this.focused = false;
+        this.focused = false
       } else {
-        this.focused = true;
+        this.focused = true
       }
     })
 
-    this.listEl = document.createElement('ul');
+    this.listEl = document.createElement("ul")
     this.listEl.classList.add("hidden")
 
     this.shadowRoot.append(style, wrapper)
     wrapper.appendChild(this.inputEl)
-    wrapper.appendChild(this.listEl);
+    wrapper.appendChild(this.listEl)
   }
 
   static get observedAttributes() {
-    return ['value', 'disabled']
+    return ["value", "disabled"]
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
     if(name === "value" && !this.focused) {
-      this.inputEl.value = newValue;
-      this.optionEls = {};
-      this.populateOptions();
+      this.inputEl.value = newValue
+      this.optionEls = {}
+      this.populateOptions()
     } if (name === "disabled") {
-      this.inputEl.disabled = newValue;
+      this.inputEl.disabled = newValue
     }
   }
 
   connectedCallback() {
-    this.inputEl.value = this.getAttribute("value");
-    this.optionEls = {};
-    this.populateOptions();
+    this.inputEl.value = this.getAttribute("value")
+    this.optionEls = {}
+    this.populateOptions()
   }
 
   selectOption(value: string) {
-    this.selectedIndex = undefined;
-    this.inputEl.value = value;
+    this.selectedIndex = undefined
+    this.inputEl.value = value
     if(this.initialOption !== value) {
-      this.dispatchEvent(new CustomEvent('select', {detail: value}))
-      this.initialOption = value;
+      this.dispatchEvent(new CustomEvent("select", {detail: value}))
+      this.initialOption = value
     }
   }
 
   focus() {
-    this.focused = true;
-    this.initialOption = this.inputEl.value;
-    this.inputEl.focus();
+    this.focused = true
+    this.initialOption = this.inputEl.value
+    this.inputEl.focus()
   }
 
   select() {
-    this.inputEl.select();
-    this.populateOptions();
+    this.inputEl.select()
+    this.populateOptions()
   }
 
   populateOptions() {
-    this.options = Object.fromEntries([...this.querySelectorAll('option')].map(el => [el.textContent, {value: el.textContent, category: el.dataset.category}]));
+    this.options = Object.fromEntries([...this.querySelectorAll("option")].map(el => [el.textContent, {value: el.textContent, category: el.dataset.category}]))
     //@ts-ignore
     this.fuse = new Fuse<Option>(Object.values(this.options), {keys: ["value"], ignoreLocation: true, minMatchCharLength: 2, threshold: 0.3})
 
     const optionsByCategory = (options: Array<Option>) => 
-        [...options.reduce((acc, option) => acc.set(
-          option.category ?? "custom",
-          (acc.get(option.category ?? "custom") ?? [])
-            .concat([option.category && !acc.has(option.category) ? {kind: "category", value: option.category} : undefined, {kind: "value", value: option.value}])
-        ), new Map()).values()].flat().filter(o => o);
+      [...options.reduce((acc, option) => acc.set(
+        option.category ?? "custom",
+        (acc.get(option.category ?? "custom") ?? [])
+          .concat([option.category && !acc.has(option.category) ? {kind: "category", value: option.category} : undefined, {kind: "value", value: option.value}])
+      ), new Map()).values()].flat().filter(o => o)
 
     if(this.focused && this.inputEl.value && this.inputEl.selectionEnd - this.inputEl.selectionStart < this.inputEl.value.length) {
-      this.fuseOptions = this.fuse.search(this.inputEl.value).map(searchResult => searchResult.item);
+      this.fuseOptions = this.fuse.search(this.inputEl.value).map(searchResult => searchResult.item)
       this.shownOptions = optionsByCategory(this.fuseOptions)
     } else {
-      this.shownOptions = optionsByCategory(Object.values(this.options));
+      this.shownOptions = optionsByCategory(Object.values(this.options))
     }
 
     while(this.listEl.firstChild) {
-      this.listEl.removeChild(this.listEl.firstChild);
+      this.listEl.removeChild(this.listEl.firstChild)
     }
 
-    let itemIdx = -1;
-    const count = this.shownOptions.filter(o => o.kind === "value").length;
-    const countSelectedIndex = ((this.selectedIndex % count) + count) % count;
+    let itemIdx = -1
+    const count = this.shownOptions.filter(o => o.kind === "value").length
+    const countSelectedIndex = ((this.selectedIndex % count) + count) % count
     this.shownOptions?.forEach(option => {
-      const itemEl = document.createElement('li');
+      const itemEl = document.createElement("li")
       itemEl.classList.add(option.kind === "value" ? "autocomplete-item" : "autocomplete-group")
-      itemEl.textContent = option.value;
-      itemEl.setAttribute("value", option.value);
+      itemEl.textContent = option.value
+      itemEl.setAttribute("value", option.value)
       itemEl.setAttribute("tabIndex", "-1")
       this.listEl.appendChild(itemEl)
       if(option.kind === "value") {
-        itemEl.onclick = evt => this.selectOption((evt.target as HTMLElement).getAttribute('value'))
+        itemEl.onclick = evt => this.selectOption((evt.target as HTMLElement).getAttribute("value"))
 
-        itemIdx++;
+        itemIdx++
         if(itemIdx === countSelectedIndex) {
           itemEl.classList.add("selected")
         }
       }
 
-      this.optionEls[option.value] = itemEl;
+      this.optionEls[option.value] = itemEl
     })
   }
 }

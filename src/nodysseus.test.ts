@@ -4,9 +4,9 @@ import {Graph} from "./types"
 import {newEnv} from "./util"
 import { lokiStore } from "./store"
 
-test('returning a single value', () => {
-    initStore(lokiStore())
-  const val = {A: "x"};
+test("returning a single value", () => {
+  initStore(lokiStore())
+  const val = {A: "x"}
   const graph = {
     id: expect.getState().currentTestName,
     nodes: {
@@ -107,8 +107,8 @@ test('returning a single value', () => {
 //   expect(inval.x).toBe("B")
 // })
 
-test('applying an fn twice', () => {
-    initStore(lokiStore())
+test("applying an fn twice", () => {
+  initStore(lokiStore())
   const run_fn = {
     id: expect.getState().currentTestName,
     out: "out",
@@ -147,12 +147,12 @@ test('applying an fn twice', () => {
   run_fn.edges_in = Object.values(run_fn.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
 
   const inval = {x: "A"}
-  run({graph: run_fn, fn: "out"}, new Map(Object.entries({"input": inval})));
+  run({graph: run_fn, fn: "out"}, new Map(Object.entries({"input": inval})))
   expect(inval.x).toBe("B")
 })
 
-test('applying a fn once', () => {
-    initStore(lokiStore())
+test("applying a fn once", () => {
+  initStore(lokiStore())
   const run_fn = {
     id: expect.getState().currentTestName,
     out: "out",
@@ -185,7 +185,7 @@ test('applying a fn once', () => {
   run_fn.edges_in = Object.values(run_fn.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
 
   const inval = {x: "A"}
-  console.log(run({graph: run_fn, fn: "out"}, new Map([["input", inval]])));
+  console.log(run({graph: run_fn, fn: "out"}, new Map([["input", inval]])))
   expect(inval.x).toBe("B")
 })
 

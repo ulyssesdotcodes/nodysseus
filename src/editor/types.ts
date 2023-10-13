@@ -1,11 +1,11 @@
-import { ForceLink, Simulation, SimulationLinkDatum, SimulationNodeDatum } from "d3-force";
-import { NodysseusError } from "../nodysseus.js";
+import { ForceLink, Simulation, SimulationLinkDatum, SimulationNodeDatum } from "d3-force"
+import { NodysseusError } from "../nodysseus.js"
 import {Graph, Edge, NodysseusNode, RefStore, EdgeNoAs, NodeMetadata, NodeArg} from "../types.js"
-import { Compartment } from "@codemirror/state";
+import { Compartment } from "@codemirror/state"
 
 export type Vector2 = {x: number, y: number}
 
-export type Property = 'ref' | 'value' | 'name' | 'edge';
+export type Property = "ref" | "value" | "name" | "edge";
 
 export type HyperappState = {
   editingGraphId: string,
@@ -60,14 +60,14 @@ export type HyperappState = {
 }
 
 export type Levels = {
-    level_by_node: Map<string, number>,
-    parents: Map<string, string[]>,
-    children: Map<string, string[]>,
-    siblings: Map<string, string[]>,
-    distance_from_selected: Map<string, number>,
-    min: number,
-    max: number,
-    nodes_by_level: Record<number, string>
+  level_by_node: Map<string, number>,
+  parents: Map<string, string[]>,
+  children: Map<string, string[]>,
+  siblings: Map<string, string[]>,
+  distance_from_selected: Map<string, number>,
+  min: number,
+  max: number,
+  nodes_by_level: Record<number, string>
 }
 
 export type d3NodeNode = SimulationNodeDatum & {
@@ -80,7 +80,7 @@ export type d3NodeNode = SimulationNodeDatum & {
   calculatedY: number,
 } & NodysseusNode
 
-export const isd3NodeNode = (n: d3Node): n is d3NodeNode => !!(n as d3NodeNode).node_id;
+export const isd3NodeNode = (n: d3Node): n is d3NodeNode => !!(n as d3NodeNode).node_id
 
 export type d3LinkNode = SimulationNodeDatum & {
   id: string;

@@ -8,7 +8,7 @@ export type RefNode = BaseNode & {ref: string, value?: string}
 
 export const isNodeValue = (n: NodysseusNode): n is ValueNode => n && !!(n as ValueNode).value
 export const isNodeGraph = (n: NodysseusNode): n is GraphNode => n && !!(n as GraphNode).nodes
-export const isNodeRef = (n: NodysseusNode): n is RefNode => n && !!(n as RefNode)?.ref;
+export const isNodeRef = (n: NodysseusNode): n is RefNode => n && !!(n as RefNode)?.ref
 
 export const compareNodes = (a: NodysseusNode, b: NodysseusNode) => (console.log(a, b), a).id === b.id && a.name === b.name && 
   ((isNodeRef(a) && isNodeRef(b) && a.ref === b.ref && a.value === b.value) 
@@ -86,7 +86,7 @@ export type LokiT<T> = {
 type NonErrorResult = { __kind: "result", value: any };
 
 export type Result = NonErrorResult | Error
-export const isResult = (r: any): r is NonErrorResult => r.__kind === "result";
+export const isResult = (r: any): r is NonErrorResult => r.__kind === "result"
 
 export type BaseRunnable = {
   __kind: unknown,
@@ -113,7 +113,7 @@ export type ApFunction = {
     display?: boolean,
   }
 }
-export const isApFunction = (a: any): a is ApFunction => a && (a as ApFunction).__kind === "apFunction";
+export const isApFunction = (a: any): a is ApFunction => a && (a as ApFunction).__kind === "apFunction"
 
 export type ApFunctorLike = FunctorRunnable | ApRunnable | ApFunction | Function;
 
@@ -141,25 +141,25 @@ export type FunctorRunnable = BaseRunnable & {
 export type Runnable =  Result | ApRunnable | FunctorRunnable | ConstRunnable
 
 
-export const isRunnable = (r: any): r is Runnable => isValue(r as Runnable) || isConstRunnable(r as Runnable) || isApRunnable(r as Runnable) || isFunctorRunnable(r as Runnable);
-export const isError = (r: any): r is Error => r instanceof Error;
+export const isRunnable = (r: any): r is Runnable => isValue(r as Runnable) || isConstRunnable(r as Runnable) || isApRunnable(r as Runnable) || isFunctorRunnable(r as Runnable)
+export const isError = (r: any): r is Error => r instanceof Error
 export const isValue = (r: Runnable): r is NonErrorResult => {
-  const result = r as Result;
-  return !isError(result) && (result)?.__kind === "result";
+  const result = r as Result
+  return !isError(result) && (result)?.__kind === "result"
 }
-export const isConstRunnable = (r: Runnable): r is ConstRunnable => !(r instanceof Error) && r?.__kind == CONST;
-export const isApRunnable = (r: Runnable): r is ApRunnable => !(r instanceof Error) && r?.__kind == AP;
-export const isFunctorRunnable = (r: Runnable): r is FunctorRunnable => !(r instanceof Error) && r?.__kind == FUNCTOR;
+export const isConstRunnable = (r: Runnable): r is ConstRunnable => !(r instanceof Error) && r?.__kind == CONST
+export const isApRunnable = (r: Runnable): r is ApRunnable => !(r instanceof Error) && r?.__kind == AP
+export const isFunctorRunnable = (r: Runnable): r is FunctorRunnable => !(r instanceof Error) && r?.__kind == FUNCTOR
 export const isInputRunnable = (r: Runnable | InputRunnable): r is InputRunnable => !Object.hasOwn(r, "__kind") && Object.hasOwn(r, "fn") && Object.hasOwn(r, "graph")
-export const getRunnableGraph = (r: Runnable | InputRunnable, lib: Lib): Graph => typeof (r as BaseRunnable).graph === "string" ? lib.data.no.runtime.get_ref((r as BaseRunnable).graph) : (r as BaseRunnable).graph;
-export const getRunnableGraphId = (r: Runnable | InputRunnable, lib: Lib): string => typeof (r as BaseRunnable).graph === "string" ? ((r as BaseRunnable).graph as string) : ((r as BaseRunnable).graph as Graph).id; 
+export const getRunnableGraph = (r: Runnable | InputRunnable, lib: Lib): Graph => typeof (r as BaseRunnable).graph === "string" ? lib.data.no.runtime.get_ref((r as BaseRunnable).graph) : (r as BaseRunnable).graph
+export const getRunnableGraphId = (r: Runnable | InputRunnable, lib: Lib): string => typeof (r as BaseRunnable).graph === "string" ? ((r as BaseRunnable).graph as string) : ((r as BaseRunnable).graph as Graph).id 
 
 export type Lib = {
   __kind: "lib",
   data: Record<string, any>
 }
 
-export const isLib = (lib: any): lib is Lib => lib?.__kind === "lib";
+export const isLib = (lib: any): lib is Lib => lib?.__kind === "lib"
 
 export type Env = {
   __kind: "env",
@@ -213,7 +213,7 @@ export type FullyTypedArg = _BaseFullyTypedArg | _RunnableTypedArg;
 export const isRunnableTypedArg = (a: FullyTypedArg): a is _RunnableTypedArg => a.type === "@flow.runnable"
 
 export type TypedArg = string | FullyTypedArg
-export const isTypedArg = (a: any): a is TypedArg => a && (typeof a === "string" || typeof a.type === "string" || typeof a.type === "object");
+export const isTypedArg = (a: any): a is TypedArg => a && (typeof a === "string" || typeof a.type === "string" || typeof a.type === "object")
 
 export type NodeMetadata = {
   parameters?: Array<string>,

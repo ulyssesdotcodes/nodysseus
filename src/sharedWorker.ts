@@ -1,12 +1,12 @@
 import {initStore} from "./nodysseus.js"
-import { initPort, processMessage, SWState } from "./editor/store.js";
+import { initPort, processMessage, SWState } from "./editor/store.js"
 
 // TODO: get/set have ids to give responses. whenever a graph is updated, send update to all clients
 
 self.onerror = e => console.error("sharedworker error", e)
 
-let store: SWState = {value: undefined, initQueue: []};
-let ports: Array<MessagePort> = []
+const store: SWState = {value: undefined, initQueue: []}
+const ports: Array<MessagePort> = []
 
 self.onconnect = (e) => initPort(store, ports, e.ports[0])
 
@@ -17,8 +17,8 @@ Promise.all([import("./editor/store.js"), import("./editor/automergeStore.js")])
     graphChangeCallback: (graph) => ports.forEach(p => p.postMessage({kind: "update", graphs: [graph]}))
   }))
     .then(resStore => {
-      store.value = resStore.refs;
-      initStore(resStore);
-      store.initQueue.forEach(e => processMessage(store.value, ports, e[0], e[1]));
+      store.value = resStore.refs
+      initStore(resStore)
+      store.initQueue.forEach(e => processMessage(store.value, ports, e[0], e[1]))
     })
 })

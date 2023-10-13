@@ -6,13 +6,13 @@ import {lokiStore} from "./store"
 
 import testTapBeat from "../scripts/testtapbeat.json"
 
-describe('create_fn', () => {
-  test('parsing a single script', async () => {
+describe("create_fn", () => {
+  test("parsing a single script", async () => {
     initStore(lokiStore())
 
     const graph = {
       __kind: "const",
-      fn: 'set',
+      fn: "set",
       graph: {
         id: expect.getState().currentTestName,
         nodes: {
@@ -30,15 +30,15 @@ describe('create_fn', () => {
     const fn = create_fn(graph, newLib(nolib))
 
 
-    expect((fn as Function)()).toEqual(2);
+    expect((fn as Function)()).toEqual(2)
   })
 
-  test('using an argument', async () => {
+  test("using an argument", async () => {
     initStore(lokiStore())
 
     const graph = {
       __kind: "const",
-      fn: 'ret',
+      fn: "ret",
       graph: {
         id: expect.getState().currentTestName,
         nodes: {
@@ -58,15 +58,15 @@ describe('create_fn', () => {
 
     // fn.edges_in = Object.values(fn.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
 
-    expect((fn as Function)({value: 2})).toEqual(3);
+    expect((fn as Function)({value: 2})).toEqual(3)
   })
 
-  test('setting a value', async () => {
+  test("setting a value", async () => {
     initStore(lokiStore())
 
     const graph = {
       __kind: "const",
-      fn: 'setval',
+      fn: "setval",
       graph: {
         id: expect.getState().currentTestName,
         nodes: {
@@ -89,13 +89,13 @@ describe('create_fn', () => {
 
     // fn.edges_in = Object.values(fn.edges).reduce((acc, edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {})
 
-    expect((fn as Function)({value: {x: 0}}).x).toEqual(3);
+    expect((fn as Function)({value: {x: 0}}).x).toEqual(3)
   })
 
-  test('snapshot', async () => {
+  test("snapshot", async () => {
     initStore(lokiStore())
 
-    expect(run({graph: testTapBeat, fn: "out"})).toMatchSnapshot();
+    expect(run({graph: testTapBeat, fn: "out"})).toMatchSnapshot()
   })
 
 })
