@@ -5,7 +5,7 @@ import { NodysseusNode, Graph, Args, ConstRunnable, Env, isArgs, isEnv, isError,
 
 const nodeinputs = (node: NodysseusNode, graph: Graph) => Object.values(graph.edges_in[node.id] ?? []).map(edge => ({edge, node: graph.nodes[edge.from]}))
 const nodefn = (node, graphid, args) => isNodeRef(node) && node.ref === "arg" ? args.has(node.value) ? args.get(node.value) : createArg(node.value) : `fn_${graphid}${node.id}()`
-const createArg = (name) => `fnargs["${argToProperties(name)}"] ?? baseArgs["${argToProperties(name)}"]` 
+const createArg = (name) => `fnargs["${argToProperties(name)}"] ?? baseArgs["${name}"]` 
 const argToProperties = (arg: string) => arg.includes(".") ? arg.split(".").join("\"]?.[\"") : arg
 
 

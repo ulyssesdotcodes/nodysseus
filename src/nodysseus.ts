@@ -489,7 +489,6 @@ const run_node = (node: {node: NodysseusNode, graph?: Graph} | Runnable, nodeArg
     } else if (node.node.ref === "extern") {
       return node_extern(node.node, nodeArgs, graphArgs, lib, options)
     } else if (node.node.ref === "@js.script") {
-          
       return (graphArgs._output === undefined || graphArgs._output === "value") 
         ? node_script(node.node, nodeArgs, lib, options) 
         : graphArgs._output === "metadata" 
@@ -1352,7 +1351,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     },
     runnable: {
       rawArgs: true,
-      args: ["fn", "parameters", "_lib", "_runoptions", "output", "includeFullGraph"],
+      args: ["fn: default", "parameters", "_lib", "_runoptions", "output", "includeFullGraph"],
       fn: createFunctorRunnable
     },
     graphRunnable: {
@@ -1542,7 +1541,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       }
     },
     memoryUnwrap: {
-      args: ["value"],
+      args: ["value: default"],
       fn: externs.memoryUnwrap
     },
     return: {
@@ -1555,7 +1554,10 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       rawArgs: true,
       promiseArgs: true,
       args: {
-        "value": "any",
+        "value": {
+          type: "any",
+          default: true
+        },
         "display": {
           type: {
             "background": "@html.html_element",
