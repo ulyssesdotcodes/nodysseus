@@ -1136,28 +1136,22 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
 
       const ret = nodevalue === undefined || target === undefined
         ? undefined
-        : nodevalue === "__node"
-          ? node
-          : nodevalue.startsWith("__node.")
-            ? node[nodevalue.substring("__node.".length)]
-            : nodevalue.startsWith("_lib.")
-              ? nodysseus_get(lib.data, nodevalue.substring("_lib.".length), lib)
-              : nodevalue === "_args"
-                ? newtarget()
-                : nodevalue === "_argsdata"
-                  ? resolve_args(newtarget(), lib, options)
-                  : nodevalue === "__args"
-                    ? parenttarget()
+        : nodevalue === "__node" ? node
+        : nodevalue.startsWith("__node.") ? node[nodevalue.substring("__node.".length)]
+        : nodevalue.startsWith("_lib.") ? nodysseus_get(lib.data, nodevalue.substring("_lib.".length), lib)
+        : nodevalue === "_args" ? newtarget()
+        : nodevalue === "_argsdata" ? resolve_args(newtarget(), lib, options)
+        : nodevalue === "__args" ? parenttarget()
                   // lib.data.no.of(Object.fromEntries(Object.entries(parenttarget()).map(([key, value]: [string, any]) => [key, value?.isArg && valuetype !== "raw" ? run_runnable(value, lib)?.value : value])))
-                    : nodysseus_get(
-                      node.type === "local" || node.type?.includes?.("local")
-                        ? newtarget()
-                        : node.type === "parent" || node.type?.includes?.("parent")
-                          ? target.env
-                          : target,
-                      nodevalue,
-                      lib
-                    )
+        : nodysseus_get(
+          node.type === "local" || node.type?.includes?.("local")
+            ? newtarget()
+            : node.type === "parent" || node.type?.includes?.("parent")
+              ? target.env
+              : target,
+          nodevalue,
+          lib
+        )
 
       // let retrun = run_runnable(ret, lib);
       // let resolveret = (rr) => {
