@@ -18,6 +18,11 @@
         "editorconfig"
     ],
     "rules": {
+      "indent": [
+        "error",
+        2,
+        {"flatTernaryExpressions": true}
+      ],
         "quotes": [
             "error",
             "double"

@@ -452,7 +452,7 @@ const runapp = (init, _lib) => {
             break
           }
           case "graph_i": {
-            //TODO: type out inputs
+          //TODO: type out inputs
             break
           }
           case "graph_esc": {
