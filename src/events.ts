@@ -31,8 +31,10 @@ export const initListeners = () => {
   let eventsBroadcastChannel: false | BroadcastChannel = typeof windowSelf?.BroadcastChannel !== "undefined" && new BroadcastChannel("events");
   let clientUuid = uuid();
 
-  eventsBroadcastChannel.onmessage = (message) => {
-    runpublish(message.data.data, message.data.event, nolib)
+  if(eventsBroadcastChannel) {
+    eventsBroadcastChannel.onmessage = (message) => {
+      runpublish(message.data.data, message.data.event, nolib)
+    }
   }
 
   const runpublish = (data, event, lib, options: RunOptions = {}, broadcast = true) => {

@@ -145,7 +145,7 @@ export const processMessage = (store: RefStore, ports: MessagePort[], port: Mess
     : m.kind === "set"
     ? wrapPromise(store.set(m.graph.id, m.graph)).then(sendUpdateMessages(ports, port))
     : m.kind === "delete"
-    ? wrapPromise(store.delete(m.graphId))
+    ? wrapPromise(store.delete(m.graphId)).then(() => typedPostMessage(port, {kind: "delete", messageId: m.messageId}))
     : store.undo && m.kind === "undo"
     ? wrapPromise(store.undo(m.graphId))
       .then(graph => typedPostMessage(port, {kind: "undo", messageId: m.messageId, graph}))
@@ -225,7 +225,10 @@ export const sharedWorkerRefStore = async (port: MessagePort): Promise<RefStore>
         sendMessage({kind: "set", graph: g})
         return g
       },
-      delete: (k) => sendMessage({kind: "delete", graphId: k}),
+      delete: (k) => messagePromise({kind: "delete", graphId: k}).then(() => {
+        contextGraphCache.delete(k);
+        contextKeysCache.delete(k);
+      }),
       clear: () => {throw new Error("not implemented")},
       keys: () => hasSharedWorkerKeys
         ? (contextKeysArrayCache.length !== contextKeysCache.size && contextKeysArrayCache.splice(0, contextKeysArrayCache.length, ...contextKeysCache.values()), contextKeysArrayCache)

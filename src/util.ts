@@ -10,7 +10,7 @@ export const isgraph = g => g && g.out !== undefined && g.nodes !== undefined &&
 
 export type WrappedPromise<T> = {
   __kind: WrappedKind,
-  then: <S>(fn: (t: FlattenPromise<T>) => S) => WrappedPromise<S>,
+  then: <S>(fn: (t: FlattenPromise<T>) => S | WrappedPromise<S>) => WrappedPromise<S>,
   value: T,
 }
 
@@ -32,9 +32,9 @@ export const wrapPromise = <T>(t: T, c?: <E extends Error, S>(fn: (e?: E) => S) 
   (isWrappedPromise(t) ? t
     : {
       __kind: WRAPPED_KIND,
-      then: <S>(fn: (t: FlattenPromise<T>) => S) => wrapPromise(ispromise(t) 
-        ? c ? t.then(fn as (value: unknown) => S | PromiseLike<S>).catch(c)
-          : t.then(fn as (value: unknown) => S | PromiseLike<S>) 
+      then: <S>(fn: (t: FlattenPromise<T>) => S | WrappedPromise<S>) => wrapPromise(ispromise(t) 
+        ? c ? t.then(fn as (value: unknown) => S | PromiseLike<S> | WrappedPromise<S>).then(v => isWrappedPromise(v) ? v.value : v).catch(c)
+          : t.then(fn as (value: unknown) => S | PromiseLike<S> | WrappedPromise<S>).then(v => isWrappedPromise(v) ? v.value : v)
         : tryCatch(fn, t, c)),
       value: t
     }) as WrappedPromise<FlattenWrappedPromise<T>>

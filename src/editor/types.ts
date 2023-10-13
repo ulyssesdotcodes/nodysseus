@@ -112,7 +112,8 @@ type _SharedWorkerMessages = {
     to: {graph: Graph}
   },
   delete: {
-    to: {graphId: string}
+    to: {graphId: string},
+    from: {}
   },
   clear: {
     to: {}

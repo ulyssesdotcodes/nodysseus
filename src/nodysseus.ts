@@ -1,4 +1,4 @@
-import { ancestor_graph, ispromise, isWrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node, compareObjects, descendantGraph } from "./util.js"
+import { ancestor_graph, ispromise, isWrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node, compareObjects, descendantGraph, WrappedPromise } from "./util.js"
 import { isNodeGraph, Graph, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, InputRunnable, Lib, Env, isEnv, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike, Extern, getRunnableGraph, isNodeValue, ValueNode, isLib, isFunctorRunnable, isGraph, isInputRunnable, MemoryState, MemoryReference, isMemory, isResult, GraphNode, NodeMetadata } from "./types.js"
 import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util.js"
 import generic from "./generic.js";
@@ -679,25 +679,27 @@ const run_ap_runnable = (runnable: ApRunnable, args: Args, lib: Lib, options: Ru
             : ranArgs instanceof Map
             ? ranArgs
             : new Map();
-          const ret = (Array.isArray(runnable.fn) ? runnable.fn : [runnable.fn])
-          .map(rfn => 
-            rfn === undefined || rfn === null
-            ? undefined
-            : typeof rfn === "function" 
-            ? wrapPromise(rfn(execArgs)).then(r => lib.data.no.of(r)).value 
-            : isApFunction(rfn)
-            ? run_extern(rfn, execArgs, lib, options)
-            : run_runnable(
-              rfn as Runnable,
-              runnable.lib,
-              execArgs,
-              options
-            )
-          )
-          return Array.isArray(runnable.fn) ? wrapPromiseAll(ret.map(v => wrapPromise(v))) : wrapPromise(ret[0]);
-        }).then(v => {
-          return isError(v) ? v : v?.value
-        }).value;
+          return (Array.isArray(runnable.fn) ? runnable.fn : [runnable.fn])
+            .reduce(
+              (acc, rfn) => 
+                acc.then(
+                  vrs => 
+                    (rfn === undefined || rfn === null
+                      ? wrapPromise(undefined)
+                    : typeof rfn === "function" 
+                    ? wrapPromise(rfn(execArgs)).then(r => lib.data.no.of(r))
+                    : isApFunction(rfn)
+                    ? wrapPromise(run_extern(rfn, execArgs, lib, options))
+                    : wrapPromise(run_runnable(
+                      rfn as Runnable,
+                      runnable.lib,
+                      execArgs,
+                      options
+                    )))
+                    .then(vr => vrs.concat([vr])))
+            , wrapPromise<Result[]>([]))
+            .then(r => Array.isArray(runnable.fn) ? r : r[0])
+}).value
 }
 
 const initStore = (store: NodysseusStore | undefined = undefined) => {
@@ -845,10 +847,11 @@ const runtimefn = () => {
       const remove_ref = (id) => 
         wrapPromise(nodysseus.refs.keys()).then(keys => {
           if(keys.includes(id)) {
-            nodysseus.refs.delete(id);
+            return nodysseus.refs.delete(id);
           } else {
-            keys.filter(k => k.startsWith(`@${id}`))
-              .forEach(k => nodysseus.refs.delete(k))
+            return Promise.all(
+              keys.filter(k => k.startsWith(`@${id}`))
+              .map(k => nodysseus.refs.delete(k)))
           }
         }).value
 

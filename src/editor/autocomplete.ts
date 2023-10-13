@@ -14,7 +14,7 @@ export default class AutocompleteList extends HTMLElement {
   shownOptions: Array<{kind: "value" | "category", value: string}> | undefined;
   optionEls: Record<string, HTMLLIElement>;
   // @ts-ignore
-  fuse: Fuse<Option>;
+  fuse: Fuse.Fuse<Option>;
   selectedIndex: number | undefined;
   initialOption: string;
   focused: boolean;

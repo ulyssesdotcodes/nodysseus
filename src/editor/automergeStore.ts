@@ -13,7 +13,6 @@ import custom_editor from "../custom_editor.json"
 
 const generic_nodes = generic.nodes;
 const generic_node_ids = new Set(Object.keys(generic_nodes));
-console.log(generic_node_ids)
 
 // hacky global
 let syncWS: WebSocket;
