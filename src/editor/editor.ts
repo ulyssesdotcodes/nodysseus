@@ -40,7 +40,7 @@ const Search = (state, {payload, nodes}) => {
     nodes.map(n => Object.assign({}, n, 
       nolib.no.runtime.get_node(state.editingGraph, n.node_id), 
       nolib.no.runtime.get_edge_out(state.editingGraph, n.node_id))), 
-    {keys: ["name", "ref", "value", "as"]}
+    {keys: ["name", "ref", "value", "as", "id"]}
   ).search(payload.target.value)
   const search_index = search_results.length > 0 ? (search_results.length + (state.search_index ?? 0) + direction) % search_results.length : 0 
 

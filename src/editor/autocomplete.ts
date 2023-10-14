@@ -118,9 +118,7 @@ export default class AutocompleteList extends HTMLElement {
 
     wrapper.addEventListener("focusout", (evt: FocusEvent) => {
       if(!wrapper.contains(evt.relatedTarget as HTMLElement)) {
-        this.listEl.classList.add("hidden")
         this.selectOption(this.inputEl.value)
-        this.focused = false
       } else {
         this.focused = true
       }
@@ -161,6 +159,8 @@ export default class AutocompleteList extends HTMLElement {
       this.dispatchEvent(new CustomEvent("select", {detail: value}))
       this.initialOption = value
     }
+    this.listEl.classList.add("hidden")
+    this.focused = false
   }
 
   focus() {

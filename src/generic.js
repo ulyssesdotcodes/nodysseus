@@ -8109,7 +8109,7 @@ const generic = {
         "eq_fn_value": {
           "id": "eq_fn_value",
           "ref": "arg",
-          "value": "value"
+          "value": "value: default"
         },
         "eq_fn_if": {
           "id": "eq_fn_if",
