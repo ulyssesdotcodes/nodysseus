@@ -366,126 +366,126 @@ const runapp = (init, _lib) => {
         const effects = []
         const selected = state.selected[0]
         switch(`${mode}_${key_input}`) {
-          case "editing_ctrl_o": 
-          case "searching_ctrl_o": 
-          case "graph_ctrl_o": {
-            action = [SelectNode, {node_id: state.editingGraph.out, focus_property: "name"}]
-            payload.stopPropagation()
-            payload.preventDefault()
-            break
-          }
-          case "graph_arrowup": {
-            const parent_edges = nolib.no.runtime.get_edges_in(state.editingGraph, selected)
-            const node_id = parent_edges?.[Math.ceil(parent_edges.length / 2) - 1]?.from
+        case "editing_ctrl_o": 
+        case "searching_ctrl_o": 
+        case "graph_ctrl_o": {
+          action = [SelectNode, {node_id: state.editingGraph.out, focus_property: "name"}]
+          payload.stopPropagation()
+          payload.preventDefault()
+          break
+        }
+        case "graph_arrowup": {
+          const parent_edges = nolib.no.runtime.get_edges_in(state.editingGraph, selected)
+          const node_id = parent_edges?.[Math.ceil(parent_edges.length / 2) - 1]?.from
+          action = node_id ? [SelectNode, {node_id}] : [state]
+          break
+        }
+        case "graph_arrowdown": {
+          const child_edge = Object.values(state.editingGraph.edges).find(e => e.from === selected)
+          const node_id = child_edge?.to
+          action = node_id ? [SelectNode, {node_id}] : [state]
+          break
+        }
+        case "graph_arrowleft": 
+        case "graph_arrowright": {
+          const dirmult = key_input === "arrowleft" ? 1 : -1
+          const current_node = getNodes(state.simulation).find(n => n.node_id === selected)
+          if(state.levels) {
+            const siblings = state.levels.siblings.get(selected) 
+            const node_id = siblings.reduce((dist, sibling) => { 
+              const sibling_node = getNodes(state.simulation).find(n => n.node_id === sibling) 
+              if(!sibling_node){ return dist } 
+              const xdist = Math.abs(sibling_node.x - current_node.x) 
+              dist = (dirmult * (sibling_node.x - current_node.x) < 0) && xdist < dist[0] ? [xdist, sibling_node] : dist 
+              return dist
+            }, [state.dimensions.x, undefined] as [number, d3NodeNode | undefined])?.[1]?.node_id 
             action = node_id ? [SelectNode, {node_id}] : [state]
-            break
           }
-          case "graph_arrowdown": {
-            const child_edge = Object.values(state.editingGraph.edges).find(e => e.from === selected)
-            const node_id = child_edge?.to
-            action = node_id ? [SelectNode, {node_id}] : [state]
-            break
+          break
+        }
+        case "graph_ctrl_s": {
+          effects.push([SaveGraph, state])
+          break
+        }
+        case "graph_ctrl_c": {
+          if(window.getSelection().isCollapsed) {
+            action = [Copy, {as: nolib.no.runtime.get_edge_out(state.editingGraph, state.selected[0]).as}]
           }
-          case "graph_arrowleft": 
-          case "graph_arrowright": {
-            const dirmult = key_input === "arrowleft" ? 1 : -1
-            const current_node = getNodes(state.simulation).find(n => n.node_id === selected)
-            if(state.levels) {
-              const siblings = state.levels.siblings.get(selected) 
-              const node_id = siblings.reduce((dist, sibling) => { 
-                const sibling_node = getNodes(state.simulation).find(n => n.node_id === sibling) 
-                if(!sibling_node){ return dist } 
-                const xdist = Math.abs(sibling_node.x - current_node.x) 
-                dist = (dirmult * (sibling_node.x - current_node.x) < 0) && xdist < dist[0] ? [xdist, sibling_node] : dist 
-                return dist
-              }, [state.dimensions.x, undefined] as [number, d3NodeNode | undefined])?.[1]?.node_id 
-              action = node_id ? [SelectNode, {node_id}] : [state]
-            }
-            break
+          break
+        }
+        case "graph_ctrl_x": {
+          if(window.getSelection().isCollapsed) {
+            action = [Copy, {cut: true, as: nolib.no.runtime.get_edge_out(state.editingGraph, state.selected[0]).as}]
           }
-          case "graph_ctrl_s": {
-            effects.push([SaveGraph, state])
-            break
-          }
-          case "graph_ctrl_c": {
-            if(window.getSelection().isCollapsed) {
-              action = [Copy, {as: nolib.no.runtime.get_edge_out(state.editingGraph, state.selected[0]).as}]
-            }
-            break
-          }
-          case "graph_ctrl_x": {
-            if(window.getSelection().isCollapsed) {
-              action = [Copy, {cut: true, as: nolib.no.runtime.get_edge_out(state.editingGraph, state.selected[0]).as}]
-            }
-            break
-          }
-          case "graph_ctrl_v": {
-            action = [Paste]
-            break
-          }
-          case "graph_f": {
-            action = s => [{...s, search: "", searchFocused: true}, [FocusEffect, {selector: "#search input"}]] 
-            break
-          }
-          case "graph_shift_enter": {
-            action = [ExpandContract, {node_id: state.selected[0]}]
-            break
-          }
-          case "graph_x": {
-            action = [DeleteNode, {
-              node_id: state.selected[0]
-            }]
-            break
-          }
-          case "graph_n": {
-            action = [SelectNode, { node_id: state.selected[0], focus_property: "name" }]
-            break
-          }
-          case "graph_v": {
-            action = [SelectNode, { node_id: state.selected[0], focus_property: "value" }]
-            break
-          }
-          case "graph_r": {
-            action = [SelectNode, { node_id: state.selected[0], focus_property: "ref" }]
-            break
-          }
-          case "graph_e": {
-            action = [SelectNode, { node_id: state.selected[0], focus_property: "edge" }]
-            break
-          }
-          case "graph_i": {
+          break
+        }
+        case "graph_ctrl_v": {
+          action = [Paste]
+          break
+        }
+        case "graph_f": {
+          action = s => [{...s, search: "", searchFocused: true}, [FocusEffect, {selector: "#search input"}]] 
+          break
+        }
+        case "graph_shift_enter": {
+          action = [ExpandContract, {node_id: state.selected[0]}]
+          break
+        }
+        case "graph_x": {
+          action = [DeleteNode, {
+            node_id: state.selected[0]
+          }]
+          break
+        }
+        case "graph_n": {
+          action = [SelectNode, { node_id: state.selected[0], focus_property: "name" }]
+          break
+        }
+        case "graph_v": {
+          action = [SelectNode, { node_id: state.selected[0], focus_property: "value" }]
+          break
+        }
+        case "graph_r": {
+          action = [SelectNode, { node_id: state.selected[0], focus_property: "ref" }]
+          break
+        }
+        case "graph_e": {
+          action = [SelectNode, { node_id: state.selected[0], focus_property: "edge" }]
+          break
+        }
+        case "graph_i": {
           //TODO: type out inputs
-            break
-          }
-          case "graph_esc": {
-            action = [state => [
-              {...state, show_all: true, focused: false, editing: false},
-              [() => requestAnimationFrame(() => nolib.no.runtime.publish("show_all", {data: true}, hlibLib))]
-            ]]
-            break
-          }
-          case "graph_ctrl_z": {
-            const child_edge = Object.values(state.editingGraph.edges).find(e => e.from === selected)
-            const node_id = child_edge?.to
+          break
+        }
+        case "graph_esc": {
+          action = [state => [
+            {...state, show_all: true, focused: false, editing: false},
+            [() => requestAnimationFrame(() => nolib.no.runtime.publish("show_all", {data: true}, hlibLib))]
+          ]]
+          break
+        }
+        case "graph_ctrl_z": {
+          const child_edge = Object.values(state.editingGraph.edges).find(e => e.from === selected)
+          const node_id = child_edge?.to
 
-            nolib.no.runtime.undo(state.editingGraphId)
-            effects.push(dispatch => requestAnimationFrame(() => dispatch(s => {
-              return ({...s, selected: nolib.no.runtime.get_ref(state.editingGraphId).nodes[s.selected[0]] ? s.selected : [node_id]})
-            })))
-            break
-          }
-          case "graph_ctrl_y": {
-            const child_edge = Object.values(state.editingGraph.edges).find(e => e.from === selected)
-            const node_id = child_edge?.to
-            nolib.no.runtime.redo(state.editingGraphId)
-            effects.push(dispatch => requestAnimationFrame(() => dispatch(s => {
-              return ({...s, selected: nolib.no.runtime.get_ref(state.editingGraphId).nodes[s.selected[0]] ? s.selected : [node_id]})
-            })))
-            break
-          }
-          default: {
-            nolib.no.runtime.publish("keydown", {data: key_input}, hlibLib)
-          }
+          nolib.no.runtime.undo(state.editingGraphId)
+          effects.push(dispatch => requestAnimationFrame(() => dispatch(s => {
+            return ({...s, selected: nolib.no.runtime.get_ref(state.editingGraphId).nodes[s.selected[0]] ? s.selected : [node_id]})
+          })))
+          break
+        }
+        case "graph_ctrl_y": {
+          const child_edge = Object.values(state.editingGraph.edges).find(e => e.from === selected)
+          const node_id = child_edge?.to
+          nolib.no.runtime.redo(state.editingGraphId)
+          effects.push(dispatch => requestAnimationFrame(() => dispatch(s => {
+            return ({...s, selected: nolib.no.runtime.get_ref(state.editingGraphId).nodes[s.selected[0]] ? s.selected : [node_id]})
+          })))
+          break
+        }
+        default: {
+          nolib.no.runtime.publish("keydown", {data: key_input}, hlibLib)
+        }
         }
 
         return action ? action : [state, ...effects]

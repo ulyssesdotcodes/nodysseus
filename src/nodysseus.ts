@@ -1486,6 +1486,9 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
             } as MemoryState)).value
       }
     },
+    // cache: {
+    //   args: ["value", "recache", ]
+    // },
     memoryUnwrap: {
       args: ["value: default"],
       fn: externs.memoryUnwrap

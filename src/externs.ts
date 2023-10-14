@@ -222,3 +222,5 @@ export const expect = (a: any, b: any, value: string) => {
 }
 
 export const memoryUnwrap = (value) => value?.__kind === "state" ? value.state : value?.__kind === "reference" ? value.value : value
+export const memoryCacheOf = (recache: MemoryCache["recache"], value: MemoryCache["value"]): MemoryCache => new MemoryCache(recache, value)
+export const bindMemoryCache = <T>(a: MemoryCache<T>) => <S>(fn: (a: T) => MemoryCache<S>): MemoryCache<S> => new MemoryCache(() => a.recache(), () => fn(a.value()).value())

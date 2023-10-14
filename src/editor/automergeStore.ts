@@ -103,25 +103,25 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
   // For any outside interaction, do a structured clone.
   const getDoc = (id: string): Automerge.Doc<Graph> | Promise<Automerge.Doc<Graph>> =>
     refsmap.has(id) ? refsmap.get(id) 
-      : refsset.has(id) 
-        ? nodysseusidb.get("refs", id)
-          .then(persisted => {
-            let doc = Automerge.load<Graph>(persisted)
+    : refsset.has(id) 
+      ? nodysseusidb.get("refs", id)
+        .then(persisted => {
+          let doc = Automerge.load<Graph>(persisted)
+          refsmap.set(id, doc)
+
+          const filteredGraph = ancestor_graph(doc.out, doc)
+          if(!graphCompare(doc, filteredGraph)) {
+            doc = Automerge.change(doc, {patchCallback: graphNodePatchCallback(true)}, setFromGraph(filteredGraph))
+            persist && nodysseusidb.put("refs", Automerge.save(doc), id)
             refsmap.set(id, doc)
+          }
 
-            const filteredGraph = ancestor_graph(doc.out, doc)
-            if(!graphCompare(doc, filteredGraph)) {
-              doc = Automerge.change(doc, {patchCallback: graphNodePatchCallback(true)}, setFromGraph(filteredGraph))
-              persist && nodysseusidb.put("refs", Automerge.save(doc), id)
-              refsmap.set(id, doc)
-            }
-
-            const scd = structuredClone(filteredGraph)
-            structuredCloneMap.set(id, scd)
-            updatePeers(id)
-            return refsmap.get(id)
-          })
-        : undefined
+          const scd = structuredClone(filteredGraph)
+          structuredCloneMap.set(id, scd)
+          updatePeers(id)
+          return refsmap.get(id)
+        })
+      : undefined
 
   const changeDoc = (id, fn, changedNodes = [], addToHistory = true): Graph | Promise<Graph> => {
     if(generic_node_ids.has(id)) {

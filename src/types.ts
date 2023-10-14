@@ -228,6 +228,21 @@ export type NodeMetadata = {
 
 export type MemoryState = {__kind: "state", id: string, set: ApFunction, state: any}
 export type MemoryReference = {__kind: "reference", id: string, set: ApFunction, value: any}
+// export type MemoryCache = {__kind: "cache", id: string, recache: (value: any) => boolean, value: () => any};
+export class MemoryCache<T = any> {
+  public __kind = "cache"
+  private cachedValue: T
+  constructor(private recacheFn: (value: T) => boolean, private valueFn: () => T){}
+  recache() {
+    return this.recacheFn(this.cachedValue)
+  }
+  value(){
+    if(this.recacheFn(this.cachedValue)) {
+      this.cachedValue = this.valueFn()
+    }
+    return this.cachedValue
+  }
+}
 
 export type Memory = MemoryState | MemoryReference;
 export const isMemory = (v: any) => v && typeof v === "object" && (v.__kind === "state" || v.__kind === "reference")
