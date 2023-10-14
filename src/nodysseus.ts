@@ -263,12 +263,12 @@ const run_extern = (extern: ApFunction, data: Args, lib: Lib, options: RunOption
 
   if (argspromise && !extern.promiseArgs) {
     return (Array.isArray(args) ? Promise.all(args) : (args as Promise<Result>).then(v => isValue(v) ? v.value.args : v)).then(as => {
-      const res = (typeof extern === "function" ? extern :  extern.fn)(isArgsArray ? as : [Object.fromEntries(externArgs.map((a, idx) => [a[0], as[idx]]))])
+      const res = (typeof extern === "function" ? extern :  extern.fn)(...(isArgsArray ? as : [Object.fromEntries(externArgs.map((a, idx) => [a[0], as[idx]]))]))
       return wrapPromise(res).then(res => extern.rawArgs ? res : lib.data.no.of(res)).value
     })
   } else if(!ispromise(args)) {
     const resArgs = Array.isArray(args) ? args : isValue(args) ? args.value.args : args
-    const res = (typeof extern === "function" ? extern :  extern.fn)(isArgsArray ? resArgs : [Object.fromEntries(externArgs.map((a, idx) => [a[0], resArgs[idx]]))])
+    const res = (typeof extern === "function" ? extern :  extern.fn)(...(isArgsArray ? resArgs : [Object.fromEntries(externArgs.map((a, idx) => [a[0], resArgs[idx]]))]))
     return wrapPromise(res).then(res => extern.rawArgs ? res : lib.data.no.of(res)).value
   }
 
@@ -1411,7 +1411,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
             const stateId = id ? `${lib.data.no.runtime.get_parent(graphid)}#${id}` : graphid
             return {
               publish,
-              persist,
+              persist: persist,
               stateId,  
               rawstate: lib.data.no.runtime.get_args(stateId)["state"]
             }

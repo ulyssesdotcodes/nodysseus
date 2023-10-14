@@ -1,6 +1,6 @@
 import * as util from "./util.js"
 import {NodysseusError, nodysseus_get, resolve_args} from "./nodysseus.js"
-import { NodysseusNode, Graph, Args, ConstRunnable, Env, isArgs, isEnv, isError, isNodeRef, isValue, Lib, RefNode, Result, Runnable, Edge, TypedArg } from "./types.js"
+import { NodysseusNode, Graph, Args, ConstRunnable, Env, isArgs, isEnv, isNodeRef, isValue, Lib, RefNode, Edge, TypedArg } from "./types.js"
 
 
 const nodeinputs = (node: NodysseusNode, graph: Graph) => Object.values(graph.edges_in[node.id] ?? []).map(edge => ({edge, node: graph.nodes[edge.from]}))
@@ -80,10 +80,10 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib, graphid: string = "", 
                   const externArgs: Array<[string, TypedArg]>  = Array.isArray(extern.args) ? extern.args.map(rawa =>
                     [rawa.includes(":") ? rawa.substring(0, rawa.indexOf(":")) : rawa, "any"]) : 
                     Object.entries(extern.args)
-                  externArgs.forEach(([a, argType]: [string, TypedArg]): void => {
+                  externArgs.forEach(([a]: [string, TypedArg]): void => {
                     if(a === "__graph_value" || a === "_node") {
                       _extern_args[graphid + n.id][a] = a === "__graph_value" ? n.value
-                        : "_node" ? n
+                        : a === "_node" ? n
                         : undefined
                       varset.push(`let ${a} = _extern_args["${graphid}${n.id}"]["${a}"];`)
                     } else if (a === "_node_args") {
@@ -164,7 +164,9 @@ export const parseValue = (value: any) => {
     if (value.startsWith("{") || value.startsWith("[")) {
       try {
         return JSON.parse(value.replaceAll("'", "\""))
-      } catch (e) { }
+      } catch (e) {
+        // non-empty
+      }
     }
 
     if(value.startsWith("0x")) {
@@ -198,9 +200,10 @@ export const create_fn = (runnable: ConstRunnable, lib: Lib) => {
 
   return (args: Env | Args | Record<string, unknown>, ...rest) => {
     try {
-      fn(args ? isArgs(args) ? (resolve_args(args, lib, {}) as {value: any}).value : isEnv(args) ? (resolve_args(args.data, lib, {}) as {value: any}).value : baseArgs.hasOwnProperty("args") ? {args: [args, ...rest]} : args : {}, baseArgs, _extern_args, util, lib.data)
+      return fn(args ? isArgs(args) ? (resolve_args(args, lib, {}) as {value: any}).value : isEnv(args) ? (resolve_args(args.data, lib, {}) as {value: any}).value : Object.hasOwn(baseArgs, "args") ? {args: [args, ...rest]} : args : {}, baseArgs, _extern_args, util, lib.data)
     } catch (e) {
-      throw new NodysseusError(nodysseus_get(runnable.env, "__graphid", lib).value + "/" + runnable.fn, `Multiple input edges have the same label "${e.as}"`)
+      console.error(e)
+      throw new NodysseusError(nodysseus_get(runnable.env, "__graphid", lib).value + "/" + runnable.fn, `Error in generated function ${text}`)
     }
   }
 }
