@@ -83,7 +83,7 @@ export type LokiT<T> = {
   data: T
 }
 
-type NonErrorResult = { __kind: "result", value: any };
+export type NonErrorResult = { __kind: "result", value: any };
 
 export type Result = NonErrorResult | Error
 export const isResult = (r: any): r is NonErrorResult => r.__kind === "result"

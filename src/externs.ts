@@ -1,5 +1,5 @@
 import * as util from "./util.js"
-import {nodysseus_get, resolve_args} from "./nodysseus.js"
+import {NodysseusError, nodysseus_get, resolve_args} from "./nodysseus.js"
 import { NodysseusNode, Graph, Args, ConstRunnable, Env, isArgs, isEnv, isError, isNodeRef, isValue, Lib, RefNode, Result, Runnable, Edge, TypedArg } from "./types.js"
 
 
@@ -196,7 +196,13 @@ export const create_fn = (runnable: ConstRunnable, lib: Lib) => {
   const {baseArgs, text, _extern_args} = graphToFnBody(runnable, lib)
   const fn = new Function("fnargs", "baseArgs", "_extern_args", "import_util", "_lib", text)
 
-  return (args: Env | Args | Record<string, unknown>, ...rest) => fn(args ? isArgs(args) ? (resolve_args(args, lib, {}) as {value: any}).value : isEnv(args) ? (resolve_args(args.data, lib, {}) as {value: any}).value : baseArgs.hasOwnProperty("args") ? {args: [args, ...rest]} : args : {}, baseArgs, _extern_args, util, lib.data)
+  return (args: Env | Args | Record<string, unknown>, ...rest) => {
+    try {
+      fn(args ? isArgs(args) ? (resolve_args(args, lib, {}) as {value: any}).value : isEnv(args) ? (resolve_args(args.data, lib, {}) as {value: any}).value : baseArgs.hasOwnProperty("args") ? {args: [args, ...rest]} : args : {}, baseArgs, _extern_args, util, lib.data)
+    } catch (e) {
+      throw new NodysseusError(nodysseus_get(runnable.env, "__graphid", lib).value + "/" + runnable.fn, `Multiple input edges have the same label "${e.as}"`)
+    }
+  }
 }
 
 export const now = (scale?: number) => performance.now() * (scale ?? 1)

@@ -53,6 +53,22 @@ export const wrapPromiseAll = <T>(wrappedPromises: Array<WrappedPromise<T> | T>)
 export type IfPromise<T, S> = T extends Promise<infer _> ? S : Promise<S>;
 export type FlattenPromise<T> = T extends Promise<infer Item> ? Item : T;
 
+
+
+export class NodysseusError extends Error {
+  cause: {node_id: string}
+  constructor(node_id, ...params) {
+    super(...params)
+
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, NodysseusError)
+    }
+
+    this.cause = {node_id}
+  }
+}
+
+
 export const base_node = node => node.ref || node.extern ? ({id: node.id, value: node.value, name: node.name, ref: node.ref}) : base_graph(node)
 export const base_graph = graph => ({id: graph.id, value: graph.value, name: graph.name, nodes: graph.nodes, edges: graph.edges, edges_in: graph.edges_in, out: graph.out, description: graph.description})
 
@@ -367,6 +383,29 @@ export const bfs = (graph: Graph, fn) => {
   }
 
   return iter
+}
+
+
+
+export const handleError = (e, lib, graph, node, graphid) => {
+  console.error("error in node")
+  if (e instanceof AggregateError) {
+    e.errors.map(console.error)
+  } else {
+    console.error(e)
+  }
+  if(e instanceof NodysseusError) {
+    lib.data.no.runtime.publish("grapherror", e)
+    return e
+  }
+  const parentest = lib.data.no.runtime.get_parentest(graph)
+  const error_node = parentest ? graph : node
+  lib.data.no.runtime.publish("grapherror", new NodysseusError(
+    graphid + "/" + error_node.id, 
+    e instanceof AggregateError ? "Error in node chain" : e
+  ))
+
+  return e
 }
 
 

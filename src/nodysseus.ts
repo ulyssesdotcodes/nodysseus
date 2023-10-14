@@ -1,17 +1,11 @@
-import { ancestor_graph, ispromise, isWrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node, compareObjects, descendantGraph, WrappedPromise } from "./util.js"
-import { isNodeGraph, Graph, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, InputRunnable, Lib, Env, isEnv, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike, Extern, getRunnableGraph, isNodeValue, ValueNode, isLib, isFunctorRunnable, isGraph, isInputRunnable, MemoryState, MemoryReference, isMemory, isResult, GraphNode, NodeMetadata } from "./types.js"
+import { ancestor_graph, ispromise, isWrappedPromise, wrapPromise, wrapPromiseAll, base_graph, base_node, compareObjects, descendantGraph, handleError, NodysseusError } from "./util.js"
+import { isNodeGraph, Graph, NodysseusNode, NodysseusStore, Store, Result, Runnable, isValue, isNodeRef, RefNode, Edge, isApRunnable, ApRunnable, FunctorRunnable, isConstRunnable, ConstRunnable, isRunnable, InputRunnable, Lib, Env, isEnv, Args, isArgs, ResolvedArgs, RunOptions, isError, FUNCTOR, CONST, AP, TypedArg, ApFunctorLike, ApFunction, isApFunction, isApFunctorLike, Extern, getRunnableGraph, ValueNode, isLib, isFunctorRunnable, isGraph, isInputRunnable, MemoryState, MemoryReference, isMemory, isResult, NodeMetadata, NonErrorResult } from "./types.js"
 import { combineEnv,  newLib, newEnv, mergeEnv, mergeLib, } from "./util.js"
 import generic from "./generic.js"
 import * as externs from "./externs.js"
-import { v4 as uuid } from "uuid"
 import { initListeners } from "./events.js"
-import { wrap } from "idb"
 import { objectRefStore } from "./editor/store.js"
-import * as acorn from "acorn"
-import jsx from "acorn-jsx"
 import { parser } from "@lezer/javascript"
-
-const JsxParser = acorn.Parser.extend(jsx())
 
 const generic_nodes = generic.nodes
 
@@ -31,7 +25,7 @@ export const mapStore = <T>(): Store<T> => {
 let nodysseus: NodysseusStore
 
 const resfetch = typeof fetch !== "undefined" ? fetch : 
-  (urlstr, params?) => import("node:https").then(https => new Promise<string | Response>((resolve, reject) => {
+  (urlstr, params?) => import("node:https").then(https => new Promise<string | Response>((resolve) => {
     const url = new URL(urlstr)
     const req = https.request({
       hostname: url.hostname,
@@ -53,10 +47,10 @@ const resfetch = typeof fetch !== "undefined" ? fetch :
     req.end()
   }))
 
+
 export const nodysseus_get = (obj: Record<string, any> | Args | Env, propsArg: string, lib: Lib, defaultValue=undefined, props: Array<string>=[], options: RunOptions = {}) => {
   const objArg = obj
   obj = isEnv(obj) ? obj.data : obj
-  let level = 0
   if (!obj) {
     return defaultValue
   }
@@ -101,7 +95,7 @@ export const nodysseus_get = (obj: Record<string, any> | Args | Env, propsArg: s
 
     prop = props[0]
     if((obj === undefined || typeof obj !== "object" || 
-        !(isArgs(obj) ? obj.has(prop) : obj[prop] !== undefined || (obj.hasOwnProperty && obj.hasOwnProperty(prop))))){
+        !(isArgs(obj) ? obj.has(prop) : obj[prop] !== undefined || (obj.hasOwnProperty && Object.hasOwn(obj, prop))))){
       return isEnv(objArg) ? nodysseus_get(objArg.env, propsArg, lib, defaultValue, props) : defaultValue
     }
 
@@ -112,9 +106,6 @@ export const nodysseus_get = (obj: Record<string, any> | Args | Env, propsArg: s
     if(obj && ispromise(obj)){
       return obj.then(r => props.length > 0 ? nodysseus_get(r, propsArg, lib, defaultValue, props) : r)
     }
-
-
-    level += 1
   }
   return obj
 }
@@ -197,21 +188,6 @@ const hashcode = function (str, seed = 0) {
   return 4294967296 * (2097151 & h2) + (h1 >>> 0)
 }
 
-const keywords = new Set(["break", "case", "catch", "continue", "debugger", "default", "delete", "do", "else", "finally", "for", "function", "if", "in", "instanceof", "new", "return", "switch", "this", "throw", "try", "typeof", "var", "void", "while", "with"])
-
-class NodysseusError extends Error {
-  cause: {node_id: string}
-  constructor(node_id, ...params) {
-    super(...params)
-
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, NodysseusError)
-    }
-
-    this.cause = {node_id}
-  }
-}
-
 const node_value = (node: ValueNode | RefNode) => externs.parseValue(node.value)
 const node_nodes = (node: string | Graph, node_id: string, data, graph_input_value: Env, lib: Lib, options: RunOptions) => {
   return wrapPromise(typeof node === "string" ? nolib.no.runtime.get_ref(node) : node).then(graph => run_graph(graph, node_id, combineEnv(data, graph_input_value, node_id, graph_input_value._output), lib, options)).value
@@ -252,7 +228,7 @@ const run_extern = (extern: ApFunction, data: Args, lib: Lib, options: RunOption
     argColonIdx = a.indexOf(":")
     return [argColonIdx >= 0 ? a.substring(0, argColonIdx) : a, "any"]
   }) : Object.entries(extern.args)
-  const args = typeof extern === "function" ?  resolve_args(data, lib, options) :  externArgs.map(([arg, argType]) => {
+  const args = typeof extern === "function" ?  resolve_args(data, lib, options) :  externArgs.map(([arg]) => {
     let newval
     if (arg === "_node") {
       newval = node 
@@ -287,12 +263,12 @@ const run_extern = (extern: ApFunction, data: Args, lib: Lib, options: RunOption
 
   if (argspromise && !extern.promiseArgs) {
     return (Array.isArray(args) ? Promise.all(args) : (args as Promise<Result>).then(v => isValue(v) ? v.value.args : v)).then(as => {
-      const res = (typeof extern === "function" ? extern :  extern.fn).apply(null, isArgsArray ? as : [Object.fromEntries(externArgs.map((a, idx) => [a[0], as[idx]]))])
+      const res = (typeof extern === "function" ? extern :  extern.fn)(isArgsArray ? as : [Object.fromEntries(externArgs.map((a, idx) => [a[0], as[idx]]))])
       return wrapPromise(res).then(res => extern.rawArgs ? res : lib.data.no.of(res)).value
     })
   } else if(!ispromise(args)) {
     const resArgs = Array.isArray(args) ? args : isValue(args) ? args.value.args : args
-    const res = (typeof extern === "function" ? extern :  extern.fn).apply(null, isArgsArray ? resArgs : [Object.fromEntries(externArgs.map((a, idx) => [a[0], resArgs[idx]]))])
+    const res = (typeof extern === "function" ? extern :  extern.fn)(isArgsArray ? resArgs : [Object.fromEntries(externArgs.map((a, idx) => [a[0], resArgs[idx]]))])
     return wrapPromise(res).then(res => extern.rawArgs ? res : lib.data.no.of(res)).value
   }
 
@@ -370,7 +346,7 @@ const createFunctorRunnable = (fn: Exclude<Runnable, Result | ApRunnable>, param
       lib: fn.lib
     })).value
 
-const createGraphFunctorRunnable = (graph: ConstRunnable, parameters: ConstRunnable, lib: Lib, options: RunOptions, output: ConstRunnable, graphid: ConstRunnable, env: ConstRunnable, out: ConstRunnable, __graphid: string): FunctorRunnable | Promise<FunctorRunnable> => 
+const createGraphFunctorRunnable = (graph: ConstRunnable, parameters: ConstRunnable, lib: Lib, options: RunOptions, output: ConstRunnable, graphid: ConstRunnable, env: ConstRunnable, out: ConstRunnable): FunctorRunnable | Promise<FunctorRunnable> => 
   graph && wrapPromiseAll([
     parameters && run_runnable(parameters, lib, undefined, options),
     graph && run_runnable(graph, lib, undefined, options),
@@ -407,20 +383,20 @@ const run_runnable = (runnable: Runnable | undefined, lib: Lib, args: Map<string
     return runnable as Result
   }
 
-  switch(runnable.__kind){
-    case CONST:
-      return wrapPromise(getRunnableGraph(runnable, lib))
-        .then(graph =>
-          wrapPromise(
-            run_graph(graph, runnable.fn, mergeEnv(args, runnable.env), runnable.lib, options), 
-            e => handleError(e, lib, runnable.env, runnable.graph, runnable.fn)).value).value
-    case AP:
-      return run_ap_runnable(runnable, args, lib, options)
-    case FUNCTOR:
-      return wrapPromise(
-        run_functor_runnable(runnable, args, lib, options),
-        e => handleError(e, lib, runnable.env, runnable.graph, runnable.fn)
-      ).value
+  switch (runnable.__kind) {
+  case CONST:
+    return wrapPromise(getRunnableGraph(runnable, lib))
+      .then(graph =>
+        wrapPromise(
+          run_graph(graph, runnable.fn, mergeEnv(args, runnable.env), runnable.lib, options), 
+          e => handleError(e, lib, runnable.graph, runnable.fn, (runnable.env.data.get("__graphid") as NonErrorResult).value)).value).value
+  case AP:
+    return run_ap_runnable(runnable, args, lib, options)
+  case FUNCTOR:
+    return wrapPromise(
+      run_functor_runnable(runnable, args, lib, options),
+      e => handleError(e, lib, runnable.env, runnable.graph, runnable.fn)
+    ).value
   }
 
   return runnable
@@ -447,12 +423,9 @@ const run_node = (node: {node: NodysseusNode, graph?: Graph} | Runnable, nodeArg
   } else if(isNodeRef(node.node)) {
     if (node.node.ref === "arg") {
       if(graphArgs._output === "metadata") {
-        const graphid = (graphArgs.data.get("__graphid") as {value: string}).value
         const keys = ["__graph_value"]
         const edgeChain = []
         const descGraph = descendantGraph(node.node.id, node.graph, (nodeId, edge) => {
-          const descendant = node.graph.nodes[nodeId]
-          // const includeParameters = isNodeRef(descendant) && ((descendant.ref === "@flow.runnable" && edge.as === "fn") || (descendant.ref === "@flow.ap" && edge.as === "args"));
           edgeChain.push(edge)
           const outEdgeChain = [...edgeChain]
           outEdgeChain.reverse()
@@ -567,27 +540,6 @@ const create_data = (node_id: string, graph: Graph, graphArgs: Env, lib: Lib, op
 
       return data
     }).value
-}
-
-const handleError = (e, lib, env, graph, node) => {
-  console.error("error in node")
-  if (e instanceof AggregateError) {
-    e.errors.map(console.error)
-  } else {
-    console.error(e)
-  }
-  if(e instanceof NodysseusError) {
-    lib.data.no.runtime.publish("grapherror", e)
-    return e
-  }
-  const parentest = lib.data.no.runtime.get_parentest(graph)
-  const error_node = parentest ? graph : node
-  lib.data.no.runtime.publish("grapherror", new NodysseusError(
-    nodysseus_get(env, "__graphid", lib)?.value + "/" + error_node.id, 
-    e instanceof AggregateError ? "Error in node chain" : e
-  ))
-
-  return e
 }
 
 // handles graph things like edges
@@ -788,7 +740,7 @@ const runtimefn = () => {
                 const node = changedNodes.pop()
                 if(!changedNodesSet.has(node)){
                   changedNodesSet.add(node)
-                  Object.keys(descendantGraph(node, graph, (node, edge) => node)).forEach(n => changedNodes.push(n))
+                  Object.keys(descendantGraph(node, graph, (node) => node)).forEach(n => changedNodes.push(n))
                 }
               }
               publish("graphchange", {graph, dirtyNodes: [...changedNodesSet.keys()], source}, isLib(lib) ? lib : newLib(lib), {}, broadcast)
@@ -920,8 +872,6 @@ const runtimefn = () => {
       const fnid = id
       return wrapPromise(nodysseus.fns.get(fnid + orderedargs)).then(fn => {
         if (!fn || fn.script !== script) {
-          const update = !!fn
-
           fn = Object.assign(fn ?? {}, {
             script,
             fn: new Function( `return function _${name.replace(
@@ -940,12 +890,12 @@ const runtimefn = () => {
     },
     graphExport: (graphid): Array<Graph> | Promise<Array<Graph>> => 
       Object.keys(generic.nodes).includes(graphid) ? [] as Array<Graph>
-        : wrapPromise(get_graph(graphid))
-          .then(graph => 
-            wrapPromiseAll(Object.values(graph.nodes)
-              .map(node => isNodeRef(node) ? nolib.no.runtime.graphExport(node.ref) : []))
-              .then<Graph[]>(nodeGraphs => nodeGraphs.flat().concat([graph])).value
-          ).value,
+      : wrapPromise(get_graph(graphid))
+        .then(graph => 
+          wrapPromiseAll(Object.values(graph.nodes)
+            .map(node => isNodeRef(node) ? nolib.no.runtime.graphExport(node.ref) : []))
+            .then<Graph[]>(nodeGraphs => nodeGraphs.flat().concat([graph])).value
+        ).value,
     change_graph,
     update_graph: (graphid, lib: Lib) => publish("graphupdate", {graph: graphid}, lib),
     update_args,
@@ -960,18 +910,15 @@ const runtimefn = () => {
     get_args,
     get_path,
     add_asset: (id, b) => nolib.no.runtime.store.assets.set(id, b),
-    get_asset: (id, b) => id && nolib.no.runtime.store.assets.get(id),
+    get_asset: (id) => id && nolib.no.runtime.store.assets.get(id),
     list_assets: () => nolib.no.runtime.store.assets.keys(),
     remove_asset: (id) => nolib.no.runtime.store.assets.delete(id),
     refs: () => nodysseus.refs.keys(),
     ref_graphs: async () => {
       const keys = await nodysseus.refs.keys()
-      if(keys.includes(undefined)) {
-        debugger
-      }
       return keys
     },
-    updateGraph: async ({graph, addedNodes = [], addedEdges = [], removedNodes = [], removedEdges = [], lib, dryRun = false}: {
+    updateGraph: async ({graph, addedNodes = [], addedEdges = [], removedNodes = [], removedEdges = [], lib}: {
       graph: string | Graph, 
       addedEdges?: Array<Edge>, 
       removedEdges?: Array<{[k in Exclude<keyof Edge, "as">]: Edge[k]}>, 
@@ -1100,7 +1047,7 @@ type Runtime = ReturnType<typeof runtimefn>;
 
 const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>} = {
   no: {
-    of: <T>(value): Result | Promise<Runnable> => ispromise(value) ? value.then(nolib.no.of) : isValue(value) ? value : { __kind: "result", value: value},
+    of: (value): Result | Promise<Runnable> => ispromise(value) ? value.then(nolib.no.of) : isValue(value) ? value : { __kind: "result", value: value},
     arg: (node, target: Env, lib: Lib, value, options: RunOptions) => {
       value = node.value
       if(!value) return
@@ -1141,7 +1088,6 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
         : nodevalue === "_args" ? newtarget()
         : nodevalue === "_argsdata" ? resolve_args(newtarget(), lib, options)
         : nodevalue === "__args" ? parenttarget()
-                  // lib.data.no.of(Object.fromEntries(Object.entries(parenttarget()).map(([key, value]: [string, any]) => [key, value?.isArg && valuetype !== "raw" ? run_runnable(value, lib)?.value : value])))
         : nodysseus_get(
           node.type === "local" || node.type?.includes?.("local")
             ? newtarget()
@@ -1282,10 +1228,10 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
                 .then(fnr => isApFunctorLike(fnr)
                   ? wrapPromiseAll(arr.map((element, index) =>
                     typeof fnr === "function" ? (fnr(mergeEnv(new Map([["element", lib.data.no.of(element)], ["index", lib.data.no.of(index)]]), fn.env)) as Result | Promise<Result>)
-                      : run_runnable(fnr, lib, new Map([["element", lib.data.no.of(element)], ["index", lib.data.no.of(index)]]), options)
+                    : run_runnable(fnr, lib, new Map([["element", lib.data.no.of(element)], ["index", lib.data.no.of(index)]]), options)
                   ).map(v => wrapPromise(v).then(v => isValue(v) ? v.value : v))).then(vs => lib.data.no.of(vs))
                   : isError(fnr) ? fnr
-                    : arr)
+                  : arr)
               : arr).value
     },
     fold: {
@@ -1306,47 +1252,47 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
             .then(ov => isError(ov) ? ov : ov.value)
             .then(objectvalue => 
               objectvalue === undefined ? undefined 
-                : isError(objectvalue) ? objectvalue
-                  : wrapPromise(run_runnable(fn, lib, undefined, options))
-                    .then(fnr => isError(fnr) ? fnr : fnr.value)
-                    .then(fnrunnable =>
-                      wrapPromise(run_runnable(initial, lib, undefined, options))
-                        .then(initial => isError(initial) ? initial : initial.value)
-                        .then(initial => {
-                          const mapobjarr = (mapobj, mapfn, mapinit) =>
-                            typeof mapobj.reduce === "function"
-                              ? mapobj.reduce(mapfn, mapinit)
-                              : Object.entries(mapobj).sort((a, b) => a[0].localeCompare(b[0])).reduce(mapfn, mapinit)
+              : isError(objectvalue) ? objectvalue
+              : wrapPromise(run_runnable(fn, lib, undefined, options))
+                .then(fnr => isError(fnr) ? fnr : fnr.value)
+                .then(fnrunnable =>
+                  wrapPromise(run_runnable(initial, lib, undefined, options))
+                    .then(initial => isError(initial) ? initial : initial.value)
+                    .then(initial => {
+                      const mapobjarr = (mapobj, mapfn, mapinit) =>
+                        typeof mapobj.reduce === "function"
+                          ? mapobj.reduce(mapfn, mapinit)
+                          : Object.entries(mapobj).sort((a, b) => a[0].localeCompare(b[0])).reduce(mapfn, mapinit)
 
-                          initial = initial ?? (typeof objectvalue.reduce === "function" ? [] : {})
+                      initial = initial ?? (typeof objectvalue.reduce === "function" ? [] : {})
 
-                          let errored = false
-                          const errorlistener = (error) => errored = true
+                      let errored = false
+                      // const errorlistener = (error) => errored = true
 
-                          // TODO: rethink. Too costly for now
-                          // lib.data.no.runtime.addListener('grapherror', fnrunnable.graph.id + "/" + fnrunnable.fn, errorlistener)
+                      // TODO: rethink. Too costly for now
+                      // lib.data.no.runtime.addListener('grapherror', fnrunnable.graph.id + "/" + fnrunnable.fn, errorlistener)
 
-                          const ret = mapobjarr(
-                            objectvalue,
-                            (previousValue, currentValue) =>
-                              !errored && wrapPromise(previousValue).then(prevVal => {
-                                const args = new Map().set("previousValue", lib.data.no.of(prevVal)).set("currentValue", lib.data.no.of(currentValue))
-                                return typeof fnrunnable === "function" ? fnrunnable(args) : run_runnable(fnrunnable, lib,
-                                  args, options
-                                )}).then(rv => {
-                                if(isError(rv)) {
-                                  errored = true
-                                  return rv
-                                }
-                                return rv.value
-                              }).value,
-                            initial
-                          )
+                      const ret = mapobjarr(
+                        objectvalue,
+                        (previousValue, currentValue) =>
+                          !errored && wrapPromise(previousValue).then(prevVal => {
+                            const args = new Map().set("previousValue", lib.data.no.of(prevVal)).set("currentValue", lib.data.no.of(currentValue))
+                            return typeof fnrunnable === "function" ? fnrunnable(args) : run_runnable(fnrunnable, lib,
+                              args, options
+                            )}).then(rv => {
+                            if(isError(rv)) {
+                              errored = true
+                              return rv
+                            }
+                            return rv.value
+                          }).value,
+                        initial
+                      )
 
-                          // lib.data.no.runtime.removeListener('grapherror', fnrunnable.graph.id + "/" + fnrunnable.fn, errorlistener)
+                      // lib.data.no.runtime.removeListener('grapherror', fnrunnable.graph.id + "/" + fnrunnable.fn, errorlistener)
 
-                          return lib.data.no.of(ret)
-                        })))
+                      return lib.data.no.of(ret)
+                    })))
             .value,
     },
     runnable: {
@@ -1475,10 +1421,10 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
             const persistedState = persist && rawstate === undefined && nodysseus.persist.get(stateId)
             const initialState = wrapPromise(persistedState)
               .then(ps => ps ? JSON.parse(ps)
-                : value && (rawstate === undefined || rawstate === null)
-                  ? wrapPromise(run_runnable(value, lib, undefined, options))
-                    .then(result => isValue(result) ? result.value : result)
-                  : undefined)
+              : value && (rawstate === undefined || rawstate === null)
+                ? wrapPromise(run_runnable(value, lib, undefined, options))
+                  .then(result => isValue(result) ? result.value : result)
+                : undefined)
             return initialState ? initialState
               .then(initial => {
                 if(publish) {
@@ -1672,7 +1618,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
         const getPrototypeNames = (obj) => 
           obj && typeof obj === "object" && Object.getPrototypeOf(obj) ? Object.getOwnPropertyNames(obj)
             .concat(getPrototypeNames(Object.getPrototypeOf(obj)))
-            : []
+          : []
         if(_output === "metadata") {
           return {
             values: getPrototypeNames(target)
@@ -1716,7 +1662,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       args: ["target: default", "path", "value", "__graph_value", "_lib"],
       fn: (target, path, value, nodevalue, _lib) => {
         function set(obj, propsArg, value) {
-          let props, lastProp
+          let props
           if (Array.isArray(propsArg)) {
             props = propsArg.slice(0)
           }
@@ -1729,7 +1675,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
           if (!Array.isArray(props)) {
             throw new Error("props arg must be an array, a string or a symbol")
           }
-          lastProp = props.pop()
+          const lastProp = props.pop()
           if (!lastProp) {
             return false
           }
@@ -1771,18 +1717,17 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       fn: (node, node_inputs, graph, _lib, options, _output) =>
         _output === "metadata" ? {
           dataLabel: "script"
-        } : 
-          node_script(
-            node,
-            node_inputs,
-            _lib,
-            options
-          ),
+        } : node_script(
+          node,
+          node_inputs,
+          _lib,
+          options
+        ),
     },
     new_array: {
       args: ["_node_args", "__graph_value"],
       fn: (args, nodevalue) => nodevalue ? nodevalue.split(/,\s+/)
-        : wrapPromiseAll(Object.entries(args).sort((akv, bkv) => akv[0].localeCompare(bkv[0])).map((kv: [string, any]) => wrapPromise(kv[1]))).then(r => r.map(rv => isValue(rv) ? rv.value : rv)).value
+      : wrapPromiseAll(Object.entries(args).sort((akv, bkv) => akv[0].localeCompare(bkv[0])).map((kv: [string, any]) => wrapPromise(kv[1]))).then(r => r.map(rv => isValue(rv) ? rv.value : rv)).value
     },
     fetch: {
       resolve: true,
@@ -1791,7 +1736,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     },
     import_module: {
       args: ["url", "__graph_value", "_lib"],
-      fn: (url, graphvalue, lib) => {
+      fn: (url, graphvalue) => {
         const urlval = url || graphvalue
         if(!urlval) return
         const stateid = `__jsimport:${urlval}`
@@ -1833,7 +1778,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
           obj && typeof obj === "object" && Object.getPrototypeOf(obj) ? Object.getOwnPropertyNames(obj)
             .filter(n => typeof Object.getOwnPropertyDescriptor(obj, n).value === "function")
             .concat(getPrototypeChainMethods(Object.getPrototypeOf(obj)))
-            : []
+          : []
         const nodevalue = __graph_value
         const runfn = (args) => {
           if (typeof self === "function") {
