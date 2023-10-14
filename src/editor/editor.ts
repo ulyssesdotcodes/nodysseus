@@ -257,75 +257,78 @@ const runapp = (init, _lib) => {
         nodeEdgeLabels: s.selectedNodeEdgeLabels
       }),
       ha.h("div", {id: `${init.html_id}-custom-editor-display`}),
-      ha.h("div", {id: "graph-actions", class: "actions"}, [
-        search_el({search: s.search}),
-        ha.h("span", {
-          class: "material-symbols-outlined graph-action",
-          style: {
-            transformOrigin: "center",
-            transform: `rotate(${s.displayGraphId ? "0" : "45"}deg)`
-          },
-          onclick: (s: HyperappState) => ({
-            ...s, 
-            displayGraph: s.displayGraph ? false : s.editingGraph, 
-            displayGraphId: s.displayGraphId ? false : s.editingGraphId
-          })
-        }, [ha.text("push_pin")]),
-        ha.h("span", {
-          class: "material-symbols-outlined graph-action",
-          onclick: (s: HyperappState) => [
-            {...s, norun: !s.norun}, 
-            () => { nolib.no.runtime.togglePause(!s.norun) },
-            s.norun && [refresh_graph, {
-              graph: s.displayGraph ?? s.editingGraph,
-              norun: !s.norun,
-              graphChanged: false,
-              result_display_dispatch: s.result_display_dispatch,
-              result_background_display_dispatch: s.result_background_display_dispatch,
-              info_display_dispatch: s.info_display_dispatch,
-              code_editor: s.code_editor,
-              code_editor_nodeid: s.code_editor_nodeid
-            }],
-            () => {
-              const params = new URLSearchParams(location.search)
-              if(params.get("norun") === "true") {
-                params.delete("norun")
-              } else {
-                params.set("norun", "true")
+      ha.h("div", {class: "top-bar"}, [
+        ha.h("div", {id: "node-editor-error"}, s.error && run_h(show_error(s.error))),
+        ha.h("div", {id: "graph-actions", class: "actions"}, [
+          search_el({search: s.search}),
+          ha.h("span", {
+            class: "material-symbols-outlined graph-action",
+            style: {
+              transformOrigin: "center",
+              transform: `rotate(${s.displayGraphId ? "0" : "45"}deg)`
+            },
+            onclick: (s: HyperappState) => ({
+              ...s, 
+              displayGraph: s.displayGraph ? false : s.editingGraph, 
+              displayGraphId: s.displayGraphId ? false : s.editingGraphId
+            })
+          }, [ha.text("push_pin")]),
+          ha.h("span", {
+            class: "material-symbols-outlined graph-action",
+            onclick: (s: HyperappState) => [
+              {...s, norun: !s.norun}, 
+              () => { nolib.no.runtime.togglePause(!s.norun) },
+              s.norun && [refresh_graph, {
+                graph: s.displayGraph ?? s.editingGraph,
+                norun: !s.norun,
+                graphChanged: false,
+                result_display_dispatch: s.result_display_dispatch,
+                result_background_display_dispatch: s.result_background_display_dispatch,
+                info_display_dispatch: s.info_display_dispatch,
+                code_editor: s.code_editor,
+                code_editor_nodeid: s.code_editor_nodeid
+              }],
+              () => {
+                const params = new URLSearchParams(location.search)
+                if(params.get("norun") === "true") {
+                  params.delete("norun")
+                } else {
+                  params.set("norun", "true")
+                }
+                location.search = params.toString()
               }
-              location.search = params.toString()
-            }
-          ]
-        }, [ha.text(s.norun ? "play_arrow" : "pause")]),
-        ha.h("span", {
-          class: "material-symbols-outlined graph-action",
-          name: "sync-outline", 
-          onclick: (s: HyperappState) => [s, [dispatch => { 
-            nolib.no.runtime.delete_cache() 
-            // nolib.no.runtime.clearListeners();
-            hlib.run(s.editingGraph, s.editingGraph.out ?? "out", {_output: "value"}, {profile: false})  
-            refresh_custom_editor()
-            requestAnimationFrame(() =>  dispatch(s => [s, [() => {
-              s.simulation.simulation.alpha(1) 
-              s.simulation.simulation.nodes([]) 
-            }, {}], [UpdateSimulation, {}]])) 
-          }, {}]]
-        }, [ha.text("refresh")]),
-        ha.h("span", {
-          class: "material-symbols-outlined graph-action",
-          name: "undo", 
-          onclick: (s: HyperappState) => [s, dispatch => {nolib.no.runtime.undo(s.editingGraphId)}]
-        }, [ha.text("undo")]),
-        ha.h("span", {
-          class: "material-symbols-outlined graph-action",
-          name: "redo", 
-          onclick: (s: HyperappState) => [s, dispatch => {nolib.no.runtime.redo(s.editingGraphId)}]
-        }, [ha.text("redo")]),
-        ha.h("span", {
-          class: "material-symbols-outlined graph-action",
-          name: "help", 
-          onclick: (s: HyperappState) => ({...s, showHelp: true})
-        }, [ha.text("question_mark")])
+            ]
+          }, [ha.text(s.norun ? "play_arrow" : "pause")]),
+          ha.h("span", {
+            class: "material-symbols-outlined graph-action",
+            name: "sync-outline", 
+            onclick: (s: HyperappState) => [s, [dispatch => { 
+              nolib.no.runtime.delete_cache() 
+              // nolib.no.runtime.clearListeners();
+              hlib.run(s.editingGraph, s.editingGraph.out ?? "out", {_output: "value"}, {profile: false})  
+              refresh_custom_editor()
+              requestAnimationFrame(() =>  dispatch(s => [s, [() => {
+                s.simulation.simulation.alpha(1) 
+                s.simulation.simulation.nodes([]) 
+              }, {}], [UpdateSimulation, {}]])) 
+            }, {}]]
+          }, [ha.text("refresh")]),
+          ha.h("span", {
+            class: "material-symbols-outlined graph-action",
+            name: "undo", 
+            onclick: (s: HyperappState) => [s, dispatch => {nolib.no.runtime.undo(s.editingGraphId)}]
+          }, [ha.text("undo")]),
+          ha.h("span", {
+            class: "material-symbols-outlined graph-action",
+            name: "redo", 
+            onclick: (s: HyperappState) => [s, dispatch => {nolib.no.runtime.redo(s.editingGraphId)}]
+          }, [ha.text("redo")]),
+          ha.h("span", {
+            class: "material-symbols-outlined graph-action",
+            name: "help", 
+            onclick: (s: HyperappState) => ({...s, showHelp: true})
+          }, [ha.text("question_mark")])
+        ]),
       ]),
       ha.h("div", {id: `${init.html_id}-result`}),
       s.showHelp && 
@@ -344,7 +347,6 @@ const runapp = (init, _lib) => {
               helpmd
             ])
           ]),
-      s.error && ha.h("div", {id: "node-editor-error"}, run_h(show_error(s.error)))
     ]),
     node: document.getElementById(init.html_id),
     subscriptions: s => [

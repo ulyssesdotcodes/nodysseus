@@ -389,22 +389,6 @@ svg {
   line-height: 1.4;
 }
 
-.action {
-  display: flex;
-  cursor: pointer;
-  flex-direction: row;
-  gap: .4em;
-  align-items: center;
-}
-
-.action span {
-  text-decoration: underline dotted;
-}
-
-.action span.material-symbols-outlined {
-  text-decoration: none;
-  font-size: 1em;
-}
 
 /* result props */
 #node-editor-result {
@@ -426,27 +410,6 @@ svg {
   height: 100%;
 }
 
-/* error window */
-#node-editor-error {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 50vw;
-    height: 50vh;
-}
-
-#node-editor-error pre {
-  display: flex;
-  flex-direction: row;
-  gap: .5em;
-}
-
-#node-editor-error .goto {
-  position: relative;
-  text-decoration: underline;
-  cursor: pointer;
-  z-index: 34;
-}
 
 text {
     user-select: none;
@@ -563,21 +526,75 @@ svg.edge-info.selected rect {
     background: #000000EE;
 }
 
-/* search */
+/* top bar */
+.top-bar {
+  width: 100vw;
+  top: 1em;
+  position: absolute;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap-reverse;
+  justify-content: space-between;
+}
+
+/* error window */
+#node-editor-error {
+  flex-grow: 1;
+}
+
+#node-editor-error pre {
+  display: flex;
+  flex-direction: row;
+  gap: .5em;
+  white-space: pre-wrap;
+}
+
+#node-editor-error .goto {
+  position: relative;
+  text-decoration: underline;
+  cursor: pointer;
+  z-index: 34;
+}
+
+/* actions */
 
 .actions {
-    position: absolute;
-    right: 2em;
-    top: 2em;
+    flex-basis: 20em;
+    padding-right: 1em;
     cursor: pointer;
     display: flex;
     gap: 1em;
     z-index: 6;
+    flex-direction: row;
+    flex-wrap: wrap;
 }
 
 #graph-actions .graph-action {
     font-size: 2em;
+    height: fit-content;
     user-select: none;
+}
+
+.actions .right-padding {
+  flex-basis: 2em;
+  flex-shrink: 1;
+}
+
+.action {
+  display: flex;
+  cursor: pointer;
+  flex-direction: row;
+  gap: .4em;
+  align-items: center;
+}
+
+.action span {
+  text-decoration: underline dotted;
+}
+
+.action span.material-symbols-outlined {
+  text-decoration: none;
+  font-size: 1em;
 }
 
 a, a:visited {
