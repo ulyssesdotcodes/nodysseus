@@ -779,6 +779,8 @@ const runtimefn = () => {
           }
         }).value
     }
+
+    return args
   }
 
   const get_ref = (id, otherwise?) => {
@@ -1489,6 +1491,22 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     // cache: {
     //   args: ["value", "recache", ]
     // },
+    frame: {
+      args: ["_lib", "__graphid"],
+      fn: (_lib, __graphid) => {
+        const current = _lib.data.no.runtime.get_args(__graphid)?.cache 
+        if(current) return current
+        let frame = 0
+        const updateFrame = () => {
+          frame += 1
+          requestAnimationFrame(updateFrame)
+        }
+        const cache = externs.memoryCacheOf(cachedFrame => cachedFrame !== frame, () => frame)
+        _lib.data.no.runtime.update_args(__graphid, {cache})
+        updateFrame()
+        return cache
+      }
+    },
     memoryUnwrap: {
       args: ["value: default"],
       fn: externs.memoryUnwrap
@@ -1906,8 +1924,14 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
           .sort((a, b) => a[0].localeCompare(b[0]))
           .map(kv => kv[1]))
           .then(inputs => inputs.map(i => i && isResult(i) ? i.value : i)
-            .map(i => externs.memoryUnwrap(i))
-            .reduce((acc, v) => (acc as any) + externs.memoryUnwrap(v) as any)),
+            .reduce((acc, v) => {
+              if(acc?.__kind === "cache" && v?.__kind !== "cache") {
+                return externs.bindMemoryCache(acc)(value => externs.memoryCacheOf(() => false, () => value + externs.memoryUnwrap(v)))
+              } else if(acc?.__kind !== "cache" && v?.__kind === "cache") {
+                return externs.bindMemoryCache(v)(value => externs.memoryCacheOf(() => false, () => value + externs.memoryUnwrap(acc)))
+              }
+              return (acc as any) + externs.memoryUnwrap(v) as any
+            })),
     },
     and: {
       args: ["_node_args"],
@@ -1917,7 +1941,20 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     mult: {
       args: ["_node_args"],
       resolve: true,
-      fn: (args) => Object.values(args).reduce((acc: any, v: any) => acc * externs.memoryUnwrap(v), 1),
+      fn: (args) =>
+        wrapPromiseAll(Object.entries(args)
+          .sort((a, b) => a[0].localeCompare(b[0]))
+          .map(kv => kv[1]))
+          .then(inputs => inputs.map(i => i && isResult(i) ? i.value : i)
+            .reduce((acc, v) => {
+              if(acc?.__kind === "cache" && v?.__kind !== "cache") {
+                const ret = externs.bindMemoryCache(acc)((value: number) => externs.memoryCacheOf(val => val === undefined, () => value * externs.memoryUnwrap(v)))
+                return ret;
+              } else if(acc?.__kind !== "cache" && v?.__kind === "cache") {
+                return externs.bindMemoryCache(v)((value: number) => externs.memoryCacheOf(val => val === undefined, () => value * externs.memoryUnwrap(acc)))
+              }
+              return (acc as any) + externs.memoryUnwrap(v) as any
+            })),
     },
     negate: {
       args: ["value"],

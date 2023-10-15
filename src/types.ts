@@ -10,7 +10,7 @@ export const isNodeValue = (n: NodysseusNode): n is ValueNode => n && !!(n as Va
 export const isNodeGraph = (n: NodysseusNode): n is GraphNode => n && !!(n as GraphNode).nodes
 export const isNodeRef = (n: NodysseusNode): n is RefNode => n && !!(n as RefNode)?.ref
 
-export const compareNodes = (a: NodysseusNode, b: NodysseusNode) => (console.log(a, b), a).id === b.id && a.name === b.name && 
+export const compareNodes = (a: NodysseusNode, b: NodysseusNode) => a.id === b.id && a.name === b.name && 
   ((isNodeRef(a) && isNodeRef(b) && a.ref === b.ref && a.value === b.value) 
     || (isNodeGraph(a) && isNodeGraph(b) && a.nodes === b.nodes) 
     || (isNodeValue(a) && isNodeValue(b) && a.value === b.value)
@@ -226,13 +226,15 @@ export type NodeMetadata = {
   }
 }
 
-export type MemoryState = {__kind: "state", id: string, set: ApFunction, state: any}
-export type MemoryReference = {__kind: "reference", id: string, set: ApFunction, value: any}
+export type MemoryState<T = any> = {__kind: "state", id: string, set: ApFunction, state: T}
+export type MemoryReference<T = any> = {__kind: "reference", id: string, set: ApFunction, value: T}
 // export type MemoryCache = {__kind: "cache", id: string, recache: (value: any) => boolean, value: () => any};
 export class MemoryCache<T = any> {
   public __kind = "cache"
   private cachedValue: T
-  constructor(private recacheFn: (value: T) => boolean, private valueFn: () => T){}
+  constructor(private recacheFn: (value: T) => boolean, private valueFn: () => T){
+    this.cachedValue = valueFn()
+  }
   recache() {
     return this.recacheFn(this.cachedValue)
   }
@@ -244,5 +246,5 @@ export class MemoryCache<T = any> {
   }
 }
 
-export type Memory = MemoryState | MemoryReference;
-export const isMemory = (v: any) => v && typeof v === "object" && (v.__kind === "state" || v.__kind === "reference")
+export type Memory<T> = MemoryState<T> | MemoryReference<T> | MemoryCache<T>;
+export const isMemory = (v: any) => v && typeof v === "object" && (v.__kind === "state" || v.__kind === "reference" || v.__kind === "cache")

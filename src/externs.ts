@@ -1,6 +1,6 @@
 import * as util from "./util.js"
 import {NodysseusError, nodysseus_get, resolve_args} from "./nodysseus.js"
-import { NodysseusNode, Graph, Args, ConstRunnable, Env, isArgs, isEnv, isNodeRef, isValue, Lib, RefNode, Edge, TypedArg } from "./types.js"
+import { NodysseusNode, Graph, Args, ConstRunnable, Env, isArgs, isEnv, isNodeRef, isValue, Lib, RefNode, Edge, TypedArg, MemoryCache, Memory } from "./types.js"
 
 
 const nodeinputs = (node: NodysseusNode, graph: Graph) => Object.values(graph.edges_in[node.id] ?? []).map(edge => ({edge, node: graph.nodes[edge.from]}))
@@ -221,6 +221,7 @@ export const expect = (a: any, b: any, value: string) => {
   }
 }
 
-export const memoryUnwrap = (value) => value?.__kind === "state" ? value.state : value?.__kind === "reference" ? value.value : value
-export const memoryCacheOf = (recache: MemoryCache["recache"], value: MemoryCache["value"]): MemoryCache => new MemoryCache(recache, value)
+export const memoryUnwrap = (value) => value?.__kind === "state" ? value.state : value?.__kind === "reference" ? value.value : value?.__kind === "cache" ? value.value() : value
+export const memoryCacheOf = (recache:  MemoryCache["recacheFn"], value: MemoryCache["value"]): MemoryCache => new MemoryCache(recache, value)
 export const bindMemoryCache = <T>(a: MemoryCache<T>) => <S>(fn: (a: T) => MemoryCache<S>): MemoryCache<S> => new MemoryCache(() => a.recache(), () => fn(a.value()).value())
+// export const bindMemory = <T, M extends Memory<T>>(a: M) => a.__kind === "cache" ? bindMemoryCache(a) : <S>(fn: (a: T) => Memory<S>) => fn(memoryUnwrap(a))
