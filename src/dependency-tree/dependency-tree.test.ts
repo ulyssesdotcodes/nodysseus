@@ -2,13 +2,22 @@ import {describe, expect, test, beforeAll} from "@jest/globals"
 import {IndependentNode, ioNode, staticNode, dependentNode, addInvalidation, NodysseusRuntime, DependencyTreeNode, fromNode} from "./dependency-tree";
 import generic from "../generic.js";
 import { Graph } from "../types";
-import { initStore } from "../nodysseus";
+import { objectRefStore, webClientStore } from "../editor/store";
+import { initStore, mapStore } from "../nodysseus";
 
 
 describe("dependency tree", () => {
   let store;
-  beforeAll(() => {
-    store = initStore();
+  beforeAll(async () => {
+    store = {
+      refs: objectRefStore({}),
+      persist: mapStore(),
+      state: mapStore(),
+      parents: mapStore(),
+      fns: mapStore(),
+      assets: mapStore(),
+    }
+    initStore(store);
   })
 
   test("connect nodes", () => {
@@ -300,8 +309,8 @@ describe("dependency tree", () => {
 
       const invalidationNode = addInvalidation(ioNode(() => {
         runCount++;
-        return {val3: 6}
-      }), inv => invalidate = inv)
+        return {val3: 6 + runCount}
+      }), inv => invalidate = () => inv())
 
       const add = {
         id: "testreturn",
@@ -360,23 +369,38 @@ describe("dependency tree", () => {
           }
         }
       }
-      addNode = addInvalidation(fromNode(add, "testfn", invalidationNode as any), inv => invalidate = inv);
+      addNode = addInvalidation(fromNode(add, "testfn", store, invalidationNode as any), inv => invalidate = inv);
+      runtime.add(addNode);
     });
 
     test("works", () => {
-      runtime.add(addNode);
-      expect(runtime.run(addNode.id)).toBe(10)
+      expect(runtime.run(addNode.id)).toBe(11)
     });
 
     test("caches", () => {
-      expect(runtime.run(addNode.id)).toBe(10)
+      expect(runtime.run(addNode.id)).toBe(11)
     });
 
     test("invalidates", () => {
       invalidate();
-      expect(runtime.run(addNode.id)).toBe(10)
+      expect(runtime.run(addNode.id)).toBe(12)
       expect(runCount).toBe(2);
     })
 
+  })
+
+  describe("html", () => {
+    let runtime
+    beforeAll(() => {
+      runtime = new NodysseusRuntime();
+    })
+
+    test("create html", () => {
+
+      const htmlNode = fromNode(generic.nodes["@templates.simple"], "out", store);
+      runtime.add(htmlNode);
+      const testres = runtime.run(htmlNode.id, {_output: "display"});
+      expect(testres).toBe({tag: "div", children: [{tag: "text_value", text: "Hello, world!"}]});
+    });
   })
 })

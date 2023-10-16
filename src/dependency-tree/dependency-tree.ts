@@ -13,7 +13,7 @@
 //   }
 // }
 
-import { ConstRunnable, Edge, Graph, NodysseusNode, NodysseusStore, Runnable, isNodeRef, isNodeValue } from "../types.js";
+import { ConstRunnable, Edge, Graph, NodysseusNode, NodysseusStore, Runnable, isGraph, isNodeRef, isNodeValue } from "../types.js";
 import { node_extern, node_value, nolib, nolibLib, run_extern } from "../nodysseus.js";
 import { v4 as uuid } from "uuid";
 import { newEnv, wrapPromise } from "../util.js";
@@ -77,50 +77,75 @@ export const addInvalidation = <T, R extends RUnknown>(node: DependencyTreeNode<
   invalidateOn
 });
 
-export const contextNode = (node: DependencyTreeNode<any, RUnknown>, env?: DependencyTreeNode<any, RUnknown>): DependencyTreeNode<any, RUnknown> => {
+export const contextNode = (node: DependencyTreeNode<any, RUnknown>) => {
   const context = new NodysseusRuntime();
   context.add(node);
-  return {
-    id: uuid(),
-    invalidateOn: () => {},
-    inputs: {env: env},
-    fn: ({env}) => context.run(node.id, env as any)
-  }
+  return {run: () => context.run(node.id)};
 }
 
-export const fromNode = (graph: Graph, nodeId: string, nodysseus: NodysseusStore, env?: DependencyTreeNode<any, RUnknown>): DependencyTreeNode<any, RUnknown> => {
+export const fromNode = (graph: Graph, nodeId: string, store: NodysseusStore, env?: DependencyTreeNode<any, RUnknown>): DependencyTreeNode<any, RUnknown> => {
   const node = graph.nodes[nodeId];
   const edgesIn: Edge[] = graph.edges_in?.[nodeId] ? Object.values(graph.edges_in?.[nodeId]) : Object.values(graph.edges).filter((e: Edge) => e.to === nodeId);
   const returnEnv = isNodeRef(node) && node.ref === "return" && edgesIn.find(e => e.as === "args") && dependentNode(Object.assign({
-    argsResult: fromNode(graph, edgesIn.find(e => e.as === "args").from, nodysseus),
+    argsResult: fromNode(graph, edgesIn.find(e => e.as === "args").from, store),
   }, env ? {parentEnv: env} : {}), ({argsResult, parentEnv}) => ({...(parentEnv as any), ...argsResult})
-  )|| env;
+  ) || env;
+
+
+  const createFn = (fnNode) => {
+    if(isNodeRef(fnNode)) {
+      if(fnNode.ref === "@js.script"){
+        const scriptFn = new Function(...edgesIn.map(e => e.as), node.value) as (...args: any[]) => any;
+        return (args) => scriptFn(...Object.values(args));
+      } else if (fnNode.ref === "return") {
+        return (args) =>{ 
+          console.log("running return", fnNode, args)
+          return args[args["_output"] ?? "value"];
+        }
+      } else if (fnNode.ref === "arg") {
+        return (args) => args["__env"][fnNode.value]
+      } else if(fnNode.ref === "extern") {
+        return (args) => {
+          const nodeArgs = new Map(Object.entries(args ?? {}).map(e => [e[0], nolib.no.of(e[1])]));
+          return node_extern(fnNode, nodeArgs, newEnv(new Map([["__graphid",nolib.no.of(node.id)]])), nolibLib, {}).value
+        };
+      } else {
+        const nodeRef = store.refs.get(fnNode.ref);
+        if(isGraph(nodeRef)) {
+          // TODO: clean - this is messy
+          let contextArgs = {}, invalidate;
+          const argsEnv = addInvalidation(ioNode(() => contextArgs), inv => {
+            invalidate = inv
+          });
+          const n = fromNode(nodeRef, nodeRef.out ?? "out", store, argsEnv);
+          const ctxRuntime = contextNode(n);
+          return (ctxArgs) => {
+            console.log("running ctx", fnNode, n, ctxArgs)
+            contextArgs = ctxArgs;
+            invalidate && invalidate();
+            const res = ctxRuntime.run()
+            console.log("got res", res)
+            return res;
+          }
+        } else {
+          return createFn(nodeRef)
+        }
+      }
+    } else if(isNodeValue(node)) {
+      return () => node_value(node);
+    } else {
+      return (args) => args;
+    }
+  }
+  
   let cachedFn;
   return {
     id: uuid(),
     invalidateOn: () => {},
-    inputs: Object.fromEntries(edgesIn.map(e => [e.as, fromNode(graph, e.from, nodysseus, returnEnv)]).concat(isNodeRef(node) && node.ref === "arg" ? [["__env", env]] : [])),
+    inputs: Object.fromEntries(edgesIn.map(e => [e.as, fromNode(graph, e.from, store, returnEnv)]).concat(isNodeRef(node) && node.ref === "arg" && env ? [["__env", env]] : [])),
     fn: (args) => {
       if(!cachedFn) {
-        if(isNodeRef(node)) {
-          if(node.ref === "@js.script"){
-            const scriptFn = new Function(...edgesIn.map(e => e.as), node.value) as (...args: any[]) => any;
-            cachedFn = (args) => scriptFn(...Object.values(args));
-          } else if (node.ref === "return") {
-            cachedFn = (args) => args.value;
-          } else if (node.ref === "arg") {
-            cachedFn = (args) => (console.log(args), args)["__env"][node.value]
-          } else if(node.ref === "extern") {
-            cachedFn = (args) => {
-              const nodeArgs = new Map(Object.entries(args ?? {}).map(e => [e[0], nolib.no.of(e[1])]));
-              return node_extern(node, nodeArgs, newEnv(new Map()), nolibLib, {}).value
-            };
-          }
-        } else if(isNodeValue(node)) {
-          cachedFn = () => node_value(node);
-        } else {
-          cachedFn = (args) => args;
-        }
+        cachedFn = createFn(node)
       }
       return cachedFn && cachedFn(args)
     }
@@ -143,7 +168,9 @@ export class NodysseusRuntime {
   }
   add(nodes: DependencyTreeNode<any, any> | Array<DependencyTreeNode<any, any>>) {
     (Array.isArray(nodes) ? nodes : [nodes]).forEach(node => {
-      this.nodeCache[node.id] = {...node, inputs: Object.fromEntries(Object.entries(node.inputs).map(e => [e[0], e[1].id]))};
+      this.nodeCache[node.id] = {...node, inputs: Object.fromEntries(Object.entries(node.inputs).map(e => {
+        return [e[0], e[1].id]
+      }))};
       node.invalidateOn(() => this.invalidate(node));
       this.invalidate(node);
       Object.values(node.inputs).forEach(i => {
@@ -157,7 +184,8 @@ export class NodysseusRuntime {
   }
   run<T, R extends {[k: string]: unknown | never}>(nodeId: string, args?: RUnknown): T{
     if(this.invalidCache[nodeId]) {
-      this.valueCache[nodeId] = this.nodeCache[nodeId].fn(Object.fromEntries(Object.entries(this.nodeCache[nodeId].inputs).map(e => [e[0], this.run(e[1], args)])) as R);
+      const nodeArgs = Object.fromEntries(Object.entries(this.nodeCache[nodeId].inputs).map(e => [e[0], this.run(e[1], args)])) as R
+      this.valueCache[nodeId] = this.nodeCache[nodeId].fn(Object.assign({}, args ? {__env: args} : {}, nodeArgs));
       this.invalidCache[nodeId] = false;
     }
     return this.valueCache[nodeId] as T;
