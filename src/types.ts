@@ -248,3 +248,4 @@ export class MemoryCache<T = any> {
 
 export type Memory<T> = MemoryState<T> | MemoryReference<T> | MemoryCache<T>;
 export const isMemory = (v: any) => v && typeof v === "object" && (v.__kind === "state" || v.__kind === "reference" || v.__kind === "cache")
+

@@ -29,7 +29,7 @@
           "double"
       ],
       "semi": [
-          "error",
+          "off",
           "never"
       ],
       "@typescript-eslint/indent": "off",
