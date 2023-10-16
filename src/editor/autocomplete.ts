@@ -79,6 +79,8 @@ export default class AutocompleteList extends HTMLElement {
     `
 
     this.inputEl = document.createElement("input")
+    this.inputEl.setAttribute("autocapitalize", "off")
+    this.inputEl.setAttribute("autocomplete", "off")
     this.inputEl.onkeydown = (evt: KeyboardEvent) => {
       if(evt.key === "Tab") {
         evt.stopPropagation()
