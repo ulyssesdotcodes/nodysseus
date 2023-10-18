@@ -21,6 +21,25 @@ import { javascript } from "@codemirror/lang-javascript";
 
 type RUnknown = Record<string, unknown>;
 
+export function compareObjectsNeq(value1, value2) {
+  const keys1 = Object.keys(value1)
+  const keys2 = Object.keys(value2)
+
+  if (keys1.length !== keys2.length) {
+    return true
+  }
+
+  for (const key of keys1) {
+    if (value1[key] === value2[key]) {
+      continue
+    }
+
+    return true
+  }
+
+  return false
+}
+
 // export type IndependentNode<T> = BaseNode<T> & {
 //   fn: () => T,
 // };
@@ -29,7 +48,7 @@ type RUnknown = Record<string, unknown>;
 const mapEntries = <T extends Record<string, unknown>, S extends Record<string, unknown>>(v: T, f: (e: [string, T["string"]]) => S[keyof S]): S =>
   Object.fromEntries(Object.entries(v).map((e: [string, unknown]) => [e[0], f(e as [string, T["string"]])])) as S;
 
-type NodeKind = "const" | "map" | "io";
+type NodeKind = "const" | "map" | "io" | "bind";
 type Nothing = {__kind: "nothing"}
 const isNothing = (a: any): a is Nothing => a && (a as Nothing).__kind === "nothing";
 const nothingOf = (): Nothing => ({__kind: "nothing"})
@@ -38,7 +57,7 @@ const chainNothing = <T, S>(a: Nothing | T, fn: (a: T) => S): Nothing | S => isN
 
 
 export class State<T> {
-  constructor(private value: T | Nothing = nothingValue){};
+  constructor(private value: T | Nothing = nothingValue){}
   write(value: T | Nothing){
     this.value = value;
   }
@@ -47,7 +66,14 @@ export class State<T> {
   }
 }
 
-export interface Node<K extends NodeKind, T = unknown> {
+export type WatchNode<T = unknown> = {
+  id: string;
+  watch: AsyncIterator<T>;
+}
+
+export type AnyNode<T> = Node<NodeKind, T>;
+
+export type Node<K extends NodeKind, T = unknown> = {
   /**
     * @param invalidate - call to invalidate this node in the dependency tree
     * @returns a cleanup function
@@ -57,61 +83,198 @@ export interface Node<K extends NodeKind, T = unknown> {
   value: State<T>;
 }
 
-export interface ConstNode<T> extends Node<"const", T> {
-}
+export type ConstNode<T> = Node<"const", T>;
 
-const isConstNode = <T>(a: Node<NodeKind, T>): a is ConstNode<T> => (a as ConstNode<T>)?.__kind === "const";
+const isConstNode = <T>(a: AnyNode<T>): a is ConstNode<T> => (a as ConstNode<T>)?.__kind === "const";
 
-export interface MapNode<T, S extends Record<string, unknown>, R extends (s: S) => T> extends Node<"map", T> {
-  fn: State<R>;
+export type MapNode<T, S extends Record<string, unknown>> = Node<"map", T> & {
+  fn: State<(s: S) => T>;
+  cachedInputs: State<S>;
+  isStale: (p: S, n: S) => boolean,
   inputs: Record<string, string>;
 }
-const isMapNode = <T ,S extends Record<string, unknown>, R extends (s: S) => T>(a: Node<NodeKind, T>): a is MapNode<T, S, R> => (a as MapNode<T, S, R>)?.__kind === "map";
+const isMapNode = <T ,S extends Record<string, unknown>>(a: AnyNode<T>): a is MapNode<T, S> => (a as MapNode<T, S>)?.__kind === "map";
 
-export interface IONode<T, F extends () => T> extends Node<"io", T>{
-  fn: State<F>;
+export type IONode<T> = Node<"io", T> & {
+  fn: State<() => T>;
 }
 
-const isIONode = <T, F extends () => T>(a: Node<NodeKind, T>): a is IONode<T, F> => a?.__kind === "io";
+const isIONode = <T>(a: AnyNode<T>): a is IONode<T> => a?.__kind === "io";
+
+export type BindNode<T, S extends Record<string, unknown>> = T extends AnyNode<infer R> ? Node<"bind", T> & {
+  isStale: (p: S, n: S) => boolean,
+  fn: (s: S) => T;
+  inputs: {[k in keyof S]: string};
+  cachedInputs: State<S>;
+} : never;
+
+const isBindNode = <T, S extends Record<string, unknown>>(a: AnyNode<T>): a is BindNode<T, S> => a?.__kind === "bind";
 
 class Scope {
   private nodes: Record<string, Node<NodeKind>> = {};
-  constructor(){};
-  node(id: string){
+  constructor(){}
+  add(node: Node<NodeKind>) {
+    this.nodes[node.id] = node;
+  }
+  get(id: string){
     return this.nodes[id];
   }
 }
-
-const runNode = <K extends NodeKind, T>(scope: Scope, node: Node<K, T>): Nothing | T => {
-  if(isConstNode(node)) {
-    return node.value.read();
-  } else if (isMapNode(node)) {
-    if(isNothing(node.value.read())) {
-      node.value.write(chainNothing(node.fn, fn => chainNothing(fn.read(), ffn => ffn(mapEntries(node.inputs, e => runNode(scope, scope.node(e[1])))))));
-    }
-
-    return node.value.read();
-  } else if(isIONode(node)) {
-    node.value.write(chainNothing(node.fn.read(), fn => fn()));
-    return node.value.read();
-  }
-}
-
 
 export const constNode = <T>(a: T): ConstNode<T> => ({
   __kind: "const",
   id: uuid(),
   value: new State(a),
-  inputs: {}
 })
 
-export const ioNode = <T, F extends () => T>(fn: F): IONode<T, F> => ({
+export const ioNode = <T>(fn: () => T): IONode<T> => ({
   __kind: "io",
   id: uuid(),
   value: new State(),
   fn: new State(fn),
-  inputs
 })
+
+export const mapNode = <T, S extends Record<string ,unknown>>(inputs: {[k in keyof S]: WatchNode<S[k]>}, fn: (s: S) => T, isStale: (previous: S, next: S) => boolean): MapNode<T, S> => ({
+  __kind: "map",
+  id: uuid(),
+  value: new State(),
+  fn: new State(fn),
+  cachedInputs: new State(),
+  isStale,
+  inputs: mapEntries(inputs, e => e[1].id)
+});
+
+export const bindNode = <R, T extends AnyNode<R>, S extends Record<string, unknown>>(inputs: {[k in keyof S]: WatchNode<S[k]>}, fn: (inputs: S) => T, isStale = compareObjectsNeq): BindNode<T, S> => ({
+  __kind: "bind",
+  id: uuid(),
+  value: new State(),
+  fn,
+  cachedInputs: new State(),
+  inputs: mapEntries(inputs, e => e[1].id),
+  isStale
+}) as BindNode<T, S>;
+
+
+export class NodysseusRuntime {
+  private scope: Scope;
+  private watches: Record<string, Array<(a: unknown) => void>>
+
+  constructor(){
+    this.scope = new Scope();
+  }
+
+  private createWatch<T>(nodeId: string){
+    return {
+      next: () => new Promise<IteratorResult<T>>((res) => {
+        if(!Object.hasOwn(this.watches, nodeId)) this.watches[nodeId] = [];
+        const watchfn = (a: T) => {
+          this.watches[nodeId].splice(this.watches[nodeId].indexOf(watchfn), 1);
+          res({value: a});
+        }
+        this.watches[nodeId].push(watchfn);
+      })
+    }
+  }
+
+  constNode<T>(v: T): WatchNode<T> {
+    const node = constNode(v);
+    this.scope.add(node);
+    return {
+      id: node.id,
+      watch: this.createWatch(node.id)
+    };
+  }
+
+  ioNode<T>(fn: () => T): WatchNode<T>{
+    const node = ioNode(fn);
+    this.scope.add(node);
+    return {
+      id: node.id,
+      watch: this.createWatch(node.id)
+    };
+  }
+
+  mapNode<T, S extends Record<string, unknown>>(inputs: {[k in keyof S]: WatchNode<S[k]>}, fn: (s: S) => T, isStale: (previous: S, next: S) => boolean = compareObjectsNeq): WatchNode<T>{
+    const node = mapNode(inputs, fn, isStale);
+    this.scope.add(node);
+    return {
+      id: node.id,
+      watch: this.createWatch(node.id)
+    };
+  }
+
+  /**
+    * Bind a function that creates a node to inputs. Inspired by monadic bind.
+    */
+
+  bindNode<R, T extends AnyNode<R>, S extends Record<string, unknown>>(inputs: {[k in keyof S]: WatchNode<S[k]>}, fn: (s: S) => T, isStale?: (previous: S, next: S) => boolean){
+    const node = bindNode<R, T, S>(inputs, fn, isStale);
+    this.scope.add(node);
+    return {
+      id: node.id,
+      watch: this.createWatch(node.id)
+    }
+  }
+
+  /**
+    * Uses bindNode to create a switch statement based on a key node
+    */
+  switchNode<T, S extends Record<string, T>>(key: WatchNode<string>, inputs: {[k in keyof S]: WatchNode<T>}){
+    const keyOptions: Record<string, WatchNode<AnyNode<T>>> = mapEntries(inputs, e => this.constNode(this.scope.get(e[1].id)) as WatchNode<AnyNode<T>>);
+    const binding: WatchNode<AnyNode<T>> = this.bindNode({key, ...keyOptions} as { key: WatchNode<string> } & {[k in keyof S]: WatchNode<AnyNode<T>> }, (args) => args[args.key] as AnyNode<T>) as WatchNode<AnyNode<T>>;
+    return this.mapNode({bound: binding}, ({bound}) => this.runNode(bound))
+  }
+
+  add(nodes: Node<any, any> | Array<Node<any, any>>) {
+    (Array.isArray(nodes) ? nodes : [nodes]).forEach(n => this.scope.add(n))
+  }
+
+  fromNode<T>(graph: Graph, nodeId: string, store: NodysseusStore): WatchNode<T> {
+    const node = graph.nodes[nodeId];
+    const edgesIn: Edge[] = graph.edges_in?.[nodeId] ? Object.values(graph.edges_in?.[nodeId]) : Object.values(graph.edges).filter((e: Edge) => e.to === nodeId);
+
+    if(isNodeRef(node)) {
+      if(node.ref === "@js.script") {
+        const scriptFn = new Function(...edgesIn.map(e => e.as), node.value) as (...args: any[]) => any;
+        return this.mapNode(Object.fromEntries(edgesIn.map(e => [e.as, this.fromNode(graph, e.from, store)])), (args) => scriptFn(...Object.values(args)));
+      }
+    }
+
+  }
+
+  private runNode<T>(node: AnyNode<T>, args?: RUnknown): T | Nothing{
+    if(isConstNode(node)) {
+      return node.value.read();
+    } else if (isMapNode(node)) {
+      const prev = node.cachedInputs.read();
+      const next = mapEntries(node.inputs, e => this.runNode(this.scope.get(e[1])));
+      if(isNothing(node.value.read()) || isNothing(prev) || node.isStale(prev, next)) {
+        node.value.write(chainNothing(node.fn, fn => chainNothing(fn.read(), ffn => ffn(next))));
+        node.cachedInputs.write(next);
+      }
+
+      return node.value.read();
+    } else if(isIONode(node)) {
+      node.value.write(chainNothing(node.fn.read(), fn => fn()));
+      return node.value.read();
+    } else if (isBindNode(node)) {
+      const prev = node.cachedInputs.read();
+      const next = mapEntries(node.inputs, e => this.runNode(this.scope.get(e[1])));
+      if(isNothing(node.value.read()) || isNothing(prev) || node.isStale(prev, next)) {
+        node.value.write(chainNothing(node.fn, fn => fn(next)));
+        node.cachedInputs.write(next);
+      }
+
+      const boundNode: Nothing | T = node.value.read();
+      if(!isNothing(boundNode)) this.scope.add(boundNode as AnyNode<unknown>);
+      return boundNode;
+    }
+  }
+
+  public run<T>(node: WatchNode<T>, args?: RUnknown) {
+    return this.runNode(this.scope.get(node.id) as AnyNode<T>)
+  }
+}
 
 
 //

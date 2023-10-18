@@ -17,7 +17,8 @@ const jestConfig: JestConfigWithTsJest = {
       },
     ],
   },
-  extensionsToTreatAsEsm: [".ts"]
+  extensionsToTreatAsEsm: [".ts"],
+  watchPathIgnorePatterns: ["<rootDir>/node_modules", "<rootDir>/.git", "<rootDir>/.*~"]
 }
 
 export default jestConfig;
