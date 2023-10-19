@@ -71,6 +71,10 @@ export type WatchNode<T = unknown> = {
   watch: AsyncIterator<T>;
 }
 
+export type VarNode<T> = WatchNode<T> & {
+  set: (t: T) => void;
+}
+
 export type AnyNode<T> = Node<NodeKind, T>;
 
 export type Node<K extends NodeKind, T = unknown> = {
@@ -225,22 +229,80 @@ export class NodysseusRuntime {
     return this.mapNode({bound: binding}, ({bound}) => this.runNode(bound))
   }
 
+  varNode<T>(initial?: T) {
+    let value: T = initial;
+    const node = this.ioNode(() => value);
+    return {
+      ...node,
+      set: (newValue: T) => value = newValue
+    }
+  }
+
   add(nodes: Node<any, any> | Array<Node<any, any>>) {
     (Array.isArray(nodes) ? nodes : [nodes]).forEach(n => this.scope.add(n))
   }
 
-  fromNode<T>(graph: Graph, nodeId: string, store: NodysseusStore): WatchNode<T> {
+  public fromNode<T, S extends Record<string, unknown>>(graph: Graph, nodeId: string, store: NodysseusStore, argsNode?: VarNode<S>): {args: VarNode<S>, result: WatchNode<T>} {
+    argsNode = argsNode ?? this.varNode<S>({} as S);
+    return {
+      args: argsNode,
+      result: this.fromNodeInternal<T, S>(graph, nodeId, store, argsNode).result
+    };
+  }
+
+  fromNodeInternal<T, S extends Record<string, unknown>>(graph: Graph, nodeId: string, store: NodysseusStore, argsNode?: WatchNode<S>): {args: VarNode<S> | WatchNode<S>, result: WatchNode<T>} {
     const node = graph.nodes[nodeId];
     const edgesIn: Edge[] = graph.edges_in?.[nodeId] ? Object.values(graph.edges_in?.[nodeId]) : Object.values(graph.edges).filter((e: Edge) => e.to === nodeId);
+
+    const calculateInputs = () => Object.fromEntries(edgesIn.map(e => [e.as, this.fromNodeInternal(graph, e.from, store, argsNode).result]));
 
     if(isNodeRef(node)) {
       if(node.ref === "@js.script") {
         const scriptFn = new Function(...edgesIn.map(e => e.as), node.value) as (...args: any[]) => any;
-        return this.mapNode(Object.fromEntries(edgesIn.map(e => [e.as, this.fromNode(graph, e.from, store)])), (args) => scriptFn(...Object.values(args)));
+        return {
+          args: argsNode,
+          result: this.mapNode(calculateInputs(), (args) => scriptFn(...Object.values(args)))
+        }
+      } else if (node.ref === "return") {
+        const argsEdge = edgesIn.find(e => e.as === "args");
+        const chainedArgsNode = argsEdge ? this.mapNode({env:argsNode, args: this.fromNodeInternal<Record<string, unknown>, S>(graph, argsEdge.from, store, argsNode).result}, ({env, args}) => ({...env, ...args})) : argsNode;
+
+        return {
+          args: argsNode,
+          result: this.mapNode(
+            Object.fromEntries(
+              edgesIn
+                .filter(e => e.as !== "args")
+                .map(e => [e.as, this.fromNodeInternal(graph, e.from, store, chainedArgsNode).result])
+            ),
+            args => args["value"] as T
+          )
+        }
+      } else if (node.ref === "extern") {
+        return {
+          args: argsNode,
+          result: this.mapNode(calculateInputs(), (nodeArgs) => node_extern(node, new Map(Object.entries(nodeArgs).map(e => [e[0], nolib.no.of(e[1])])), newEnv(new Map([["__graphid",nolib.no.of(node.id)]])), nolibLib, {}).value)
+        }
+      } else if(node.ref === "arg") {
+        return {
+          args: argsNode,
+          result: this.mapNode({args: argsNode}, ({args}) => args[node.value] as T)
+        }
+      }
+    } else if(isNodeValue(node)) {
+      return {
+        args: argsNode,
+        result: this.constNode(node_value(node))
+      }
+    } else {
+      return {
+        args: argsNode,
+        result: this.mapNode(calculateInputs(), args => args as T)
       }
     }
 
-  }
+    console.log("hit no path for", node)
+  } 
 
   private runNode<T>(node: AnyNode<T>, args?: RUnknown): T | Nothing{
     if(isConstNode(node)) {

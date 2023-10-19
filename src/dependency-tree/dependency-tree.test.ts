@@ -158,7 +158,7 @@ describe("dependency tree", () => {
       }
       const node = runtime.fromNode(graph, "testfn", store)
 
-      expect(runtime.run(node)).toBe(4);
+      expect(runtime.run(node.result)).toBe(4);
     });
 
     test("script inputs node", () => {
@@ -188,7 +188,7 @@ describe("dependency tree", () => {
         }
       }
       const node = runtime.fromNode(graph, "testinput", store);
-      expect(runtime.run(node)).toBe(6);
+      expect(runtime.run(node.result)).toBe(6);
     });
 
     test("return", () => {
@@ -216,117 +216,114 @@ describe("dependency tree", () => {
 
       const runtime = new NodysseusRuntime();
       const node = runtime.fromNode(graph, "testfn", store);
-      expect(runtime.run(node)).toBe(4);
+      expect(runtime.run(node.result)).toBe(4);
     })
-  //
-  //   test("return args", () => {
-  //     const graph = {
-  //       id: "testreturn",
-  //       out: "testfn",
-  //       nodes: {
-  //         "testfn": {
-  //           id: "testfn",
-  //           "ref": "return"
-  //         },
-  //         "valarg": {
-  //           id: "valarg",
-  //           ref: "arg",
-  //           value: "val"
-  //         },
-  //         "args": {id: "args"},
-  //         "val": {
-  //           id: "val",
-  //           value: "4"
-  //         }
-  //       },
-  //       edges: {
-  //         "val": {
-  //           to: "args",
-  //           from: "val",
-  //           as: "val"
-  //         },
-  //         "valarg": {
-  //           to: "testfn",
-  //           from: "valarg",
-  //           as: "value"
-  //         },
-  //         "args": {
-  //           to: "testfn",
-  //           from: "args",
-  //           as: "args"
-  //         }
-  //       }
-  //     }
-  //
-  //     const runtime = new NodysseusRuntime();
-  //     const node = fromNode(graph, "testfn", store);
-  //     runtime.add(node);
-  //     expect(runtime.run(node.id)).toBe(4);
-  //   })
+
+    test("return args", () => {
+      const graph = {
+        id: "testreturn",
+        out: "testfn",
+        nodes: {
+          "testfn": {
+            id: "testfn",
+            "ref": "return"
+          },
+          "valarg": {
+            id: "valarg",
+            ref: "arg",
+            value: "val"
+          },
+          "args": {id: "args"},
+          "val": {
+            id: "val",
+            value: "4"
+          }
+        },
+        edges: {
+          "val": {
+            to: "args",
+            from: "val",
+            as: "val"
+          },
+          "valarg": {
+            to: "testfn",
+            from: "valarg",
+            as: "value"
+          },
+          "args": {
+            to: "testfn",
+            from: "args",
+            as: "args"
+          }
+        }
+      }
+
+      const runtime = new NodysseusRuntime();
+      const node = runtime.fromNode(graph, "testfn", store);
+      expect(runtime.run(node.result)).toBe(4);
+    })
   })
-  //
-  // describe("extern", () => {
-  //   test("single extern", () => {
-  //     const runtime = new NodysseusRuntime();
-  //     const random = fromNode(generic, "@math.random", store);
-  //     runtime.add(random)
-  //     const randomFn: () => number = runtime.run(random.id);
-  //     expect(randomFn()).toBeGreaterThan(0)
-  //   })
-  //
-  //   describe("extern with args", () => {
-  //     let runtime, addNode, invalidate;
-  //     beforeAll(() => {
-  //       runtime = new NodysseusRuntime();
-  //
-  //       const add: Graph = {
-  //         id: "testadd",
-  //         nodes: {
-  //           "add": {
-  //             id: "add",
-  //             ref: "extern",
-  //             value: "extern.add"
-  //           },
-  //           "val1": {
-  //             id: "val1",
-  //             value: "4"
-  //           },
-  //           "val2": {
-  //             id: "val2",
-  //             value: "2"
-  //           }
-  //         },
-  //         edges: {
-  //           "val1": {
-  //             from: "val1",
-  //             to: "add",
-  //             as: "arg0"
-  //           },
-  //           "val2": {
-  //             from: "val2",
-  //             to: "add",
-  //             as: "arg1"
-  //           }
-  //         }
-  //       }
-  //       addNode = addInvalidation(fromNode(add, "add", store), inv => invalidate = inv);
-  //     });
-  //
-  //     test("works", () => {
-  //       runtime.add(addNode);
-  //       expect(runtime.run(addNode.id)).toBe(6)
-  //     });
-  //
-  //     test("caches", () => {
-  //       expect(runtime.run(addNode.id)).toBe(6)
-  //     });
-  //
-  //     test("invalidates", () => {
-  //       invalidate();
-  //       expect(runtime.run(addNode.id)).toBe(6)
-  //     })
-  //   })
-  // })
+
+  describe("extern", () => {
+    test("single extern", () => {
+      const runtime = new NodysseusRuntime();
+      const random = runtime.fromNode<() => number, Record<string, unknown>>(generic, "@math.random", store);
+      const randomFn = runtime.run(random.result);
+      expect(typeof randomFn === "function" && randomFn()).toBeGreaterThan(0)
+    })
+
+    describe("extern with args", () => {
+      let runtime, addNode, invalidate;
+      beforeAll(() => {
+        runtime = new NodysseusRuntime();
+
+        const add: Graph = {
+          id: "testadd",
+          nodes: {
+            "add": {
+              id: "add",
+              ref: "extern",
+              value: "extern.add"
+            },
+            "val1": {
+              id: "val1",
+              value: "4"
+            },
+            "val2": {
+              id: "val2",
+              value: "2"
+            }
+          },
+          edges: {
+            "val1": {
+              from: "val1",
+              to: "add",
+              as: "arg0"
+            },
+            "val2": {
+              from: "val2",
+              to: "add",
+              as: "arg1"
+            }
+          }
+        }
+        addNode = runtime.fromNode(add, "add", store);
+      });
+
+      test("works", () => {
+        expect(runtime.run(addNode)).toBe(6)
+      });
+
+      test("caches", () => {
+        expect(runtime.run(addNode)).toBe(6)
+      });
+
+      test("invalidates", () => {
+        invalidate();
+        expect(runtime.run(addNode)).toBe(6)
+      })
+    })
+  })
   //
   // describe("env", () => {
   //   let runtime, addNode, invalidate, runCount = 0;
