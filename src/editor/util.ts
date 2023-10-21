@@ -17,6 +17,7 @@ import {linter, lintGutter} from "@codemirror/lint"
 import { EditorView } from "@codemirror/view"
 import { StateEffect } from "@codemirror/state"
 import { foldAll, unfoldCode, toggleFold, foldCode, foldInside, foldable, foldEffect, foldState, codeFolding } from "@codemirror/language"
+import { NodysseusRuntime, WatchNode } from "src/dependency-tree/dependency-tree.js"
 
 function maybeEnable(state, other) {
   return state.field(foldState, false) ? other : other.concat(StateEffect.appendConfig.of(codeFolding()))
@@ -565,36 +566,54 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = (dispatch, {graph,
   if(norun ?? false) {
     return
   }
+  const runtime = hlib.runtime();
 
-  const result = hlib.run(graph, graph.out ?? "out", {_output: "value"}, undefined, {profile: false})
-  // const result = hlib.run(graph, graph.out, {});
-  const display_fn = result => hlib.run(graph, graph.out ?? "out", {_output: "display"}, {profile: false})
-  // const display_fn = result => hlib.run(graph, graph.out, {}, "display");
-  const update_result_display_fn = display => {
+  const argsNode = runtime.varNode({});
+  const runNode = runtime.fromNode(graph, graph.out ?? "out", argsNode) as WatchNode<unknown>;
+  argsNode.set({_output: "display"});
 
-    result_display_dispatch(UpdateResultDisplay, {
-      el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
-    })
-
-    display?.background && result_background_display_dispatch(UpdateResultDisplay, {
-      el: display.background
-    })
+  const updatePerFrame = () => {
+    wrapPromise(runtime.run(runNode))
+      .then(display => {
+        result_display_dispatch(UpdateResultDisplay, {
+          el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
+        })
+      })
+    requestAnimationFrame(updatePerFrame)
   }
-  const update_info_display_fn = () => dispatch(s => [s, s.selected[0] !== s.editingGraph.out 
-        && !s.show_all && ((dispatch, payload) => update_info_display({fn: s.selected[0], graph: s.editingGraph, args: {}}, 
-    info_display_dispatch, 
-    code_editor, 
-    code_editor_nodeid, 
-    graphChanged,
-    s.selectedMetadata,
-    s.codeEditorExtensions,
-    false
-  ))])
-  wrapPromise(result)
-    .then(display_fn)
-    .then(update_result_display_fn)
-  wrapPromise(result).then(update_info_display_fn)
-  return result
+
+  requestAnimationFrame(updatePerFrame)
+
+
+  // const result = hlib.run(graph, graph.out ?? "out", {_output: "value"}, undefined, {profile: false})
+  // const result = hlib.run(graph, graph.out, {});
+  // const display_fn = result => hlib.run(graph, graph.out ?? "out", {_output: "display"}, {profile: false})
+  // const display_fn = result => hlib.run(graph, graph.out, {}, "display");
+  // const update_result_display_fn = display => {
+  //
+  //   result_display_dispatch(UpdateResultDisplay, {
+  //     el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
+  //   })
+  //
+  //   display?.background && result_background_display_dispatch(UpdateResultDisplay, {
+  //     el: display.background
+  //   })
+  // }
+  // const update_info_display_fn = () => dispatch(s => [s, s.selected[0] !== s.editingGraph.out 
+  //       && !s.show_all && ((dispatch, payload) => update_info_display({fn: s.selected[0], graph: s.editingGraph, args: {}}, 
+  //   info_display_dispatch, 
+  //   code_editor, 
+  //   code_editor_nodeid, 
+  //   graphChanged,
+  //   s.selectedMetadata,
+  //   s.codeEditorExtensions,
+  //   false
+  // ))])
+  // wrapPromise(result)
+  //   .then(display_fn)
+  //   .then(update_result_display_fn)
+  // wrapPromise(result).then(update_info_display_fn)
+  // return result
 }
 
 export const result_subscription = (dispatch, {editingGraphId, displayGraphId, norun}) => {
@@ -1010,8 +1029,10 @@ export const graphEdgesIn = (graph: Graph, node: string) =>
       : []
     : Object.values(graph.edges).filter(e => e.to === node)
 
+let runtime: NodysseusRuntime;
 
 export const hlibLib = mergeLib(nolibLib, newLib({
+  runtime: () => runtime,
   ha: { 
     middleware, 
     h: {
@@ -1023,8 +1044,15 @@ export const hlibLib = mergeLib(nolibLib, newLib({
   scripts: { d3subscription, updateSimulationNodes, keydownSubscription, calculateLevels, listen, graph_subscription, save_graph},
   panzoom: pzobj,
   run: (graph, fn, args?, lib?, options?) => {
+    if(!runtime) {
+      console.log("no runtime", graph, fn)
+      return;
+    }
     try{
-      const result = run({graph: typeof graph === "string" ? graph : graph.id, fn, lib: mergeLib(newLib(lib), hlibLib)}, isArgs(args) ? args : args ? new Map(Object.entries(args)) : new Map(), options)
+      const argsNode = runtime.varNode({});
+      const runNode = runtime.fromNode(graph, fn, argsNode) as WatchNode<unknown>;
+      argsNode.set({_output: "display"});
+      const result = runtime.run(runNode);
       if(ispromise(result)){
         return result.catch(e => console.error(e))
       }
@@ -1034,7 +1062,10 @@ export const hlibLib = mergeLib(nolibLib, newLib({
       console.error(e)
     }
   },
-  initStore: (nodysseusStore) => initStore(nodysseusStore),
+  initStore: (nodysseusStore) => {
+    initStore(nodysseusStore);
+    runtime = new NodysseusRuntime(nodysseusStore);
+  },
   d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
   worker: undefined,
   workerPostMessage: (runnable: FunctorRunnable, args: Map<string, any>, transferrableObjects?: Array<any>) => {

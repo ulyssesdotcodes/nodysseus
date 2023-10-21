@@ -5,6 +5,7 @@ import generic from "../generic.js";
 import { Graph } from "../types";
 import { objectRefStore, webClientStore } from "../editor/store";
 import { initStore, mapStore } from "../nodysseus";
+import { Watch } from "typescript";
 
 
 describe("dependency tree", () => {
@@ -22,7 +23,7 @@ describe("dependency tree", () => {
   })
 
   test("connect nodes", () => {
-    const runtime = new NodysseusRuntime();
+    const runtime = new NodysseusRuntime(store);
 
     const node4 = runtime.constNode(4)
 
@@ -32,7 +33,7 @@ describe("dependency tree", () => {
   })
 
   test("connect 2 parents", () => {
-    const runtime = new NodysseusRuntime();
+    const runtime = new NodysseusRuntime(store);
 
     const node4 = runtime.constNode(4)
     const node2 = runtime.constNode(2)
@@ -42,7 +43,7 @@ describe("dependency tree", () => {
   });
 
   test("test caching", () => {
-    const runtime = new NodysseusRuntime();
+    const runtime = new NodysseusRuntime(store);
 
     let a = 0;
     const node2Cache = runtime.mapNode({}, () => {
@@ -56,7 +57,7 @@ describe("dependency tree", () => {
   });
 
   test("test invalidation", () => {
-    const runtime = new NodysseusRuntime();
+    const runtime = new NodysseusRuntime(store);
 
     let ioVal = 0, cachedRunCount = 0;
     const io = runtime.ioNode(() => {
@@ -82,7 +83,7 @@ describe("dependency tree", () => {
   // describe("test many", () => {
   //   let runtime, output, ioVal = 1, runcount = 0;
   //   beforeAll(() => {
-  //     runtime = new NodysseusRuntime();
+  //     runtime = new NodysseusRuntime(store);
   //   })
   //
   //   test("first run", () => {
@@ -111,7 +112,7 @@ describe("dependency tree", () => {
   // })
 
   test("bind node", () => {
-    const runtime = new NodysseusRuntime();
+    const runtime = new NodysseusRuntime(store);
     let key = "tNode";
     const predicate = runtime.ioNode(() => {
       return key
@@ -125,7 +126,7 @@ describe("dependency tree", () => {
   })
 
   // test("many bind node", () => {
-  //   const runtime = new NodysseusRuntime();
+  //   const runtime = new NodysseusRuntime(store);
   //   for(let i = 0; i < 10000; i++) {
   //     let key = "tNode";
   //     const predicate = runtime.ioNode(() => {
@@ -142,7 +143,7 @@ describe("dependency tree", () => {
 
   describe("test nodysseus", () => {
     test("script node", () => {
-      const runtime = new NodysseusRuntime();
+      const runtime = new NodysseusRuntime(store);
 
       const graph = {
         id: "testgraph",
@@ -156,13 +157,13 @@ describe("dependency tree", () => {
         },
         edges: {}
       }
-      const node = runtime.fromNode(graph, "testfn", store)
+      const node = runtime.fromNode(graph, "testfn", store) as WatchNode<unknown>
 
-      expect(runtime.run(node.result)).toBe(4);
+      expect(runtime.run(node)).toBe(4);
     });
 
     test("script inputs node", () => {
-      const runtime = new NodysseusRuntime();
+      const runtime = new NodysseusRuntime(store);
 
       const graph = {
         id: "testgraph",
@@ -187,8 +188,8 @@ describe("dependency tree", () => {
           }
         }
       }
-      const node = runtime.fromNode(graph, "testinput", store);
-      expect(runtime.run(node.result)).toBe(6);
+      const node = runtime.fromNode(graph, "testinput", store) as WatchNode<unknown>;
+      expect(runtime.run(node)).toBe(6);
     });
 
     test("return", () => {
@@ -214,9 +215,9 @@ describe("dependency tree", () => {
         }
       }
 
-      const runtime = new NodysseusRuntime();
-      const node = runtime.fromNode(graph, "testfn", store);
-      expect(runtime.run(node.result)).toBe(4);
+      const runtime = new NodysseusRuntime(store);
+      const node = runtime.fromNode(graph, "testfn", store) as WatchNode<unknown>;
+      expect(runtime.run(node)).toBe(4);
     })
 
     test("return args", () => {
@@ -258,24 +259,24 @@ describe("dependency tree", () => {
         }
       }
 
-      const runtime = new NodysseusRuntime();
-      const node = runtime.fromNode(graph, "testfn", store);
-      expect(runtime.run(node.result)).toBe(4);
+      const runtime = new NodysseusRuntime(store);
+      const node = runtime.fromNode(graph, "testfn", store) as WatchNode<unknown>;
+      expect(runtime.run(node)).toBe(4);
     })
   })
 
   describe("extern", () => {
     test("single extern", () => {
-      const runtime = new NodysseusRuntime();
-      const random = runtime.fromNode<() => number, Record<string, unknown>>(generic, "@math.random", store);
-      const randomFn = runtime.run(random.result);
+      const runtime = new NodysseusRuntime(store);
+      const random = runtime.fromNode<() => number, Record<string, unknown>>(generic, "@math.random", store) as WatchNode<unknown>;
+      const randomFn = runtime.run(random);
       expect(typeof randomFn === "function" && randomFn()).toBeGreaterThan(0)
     })
 
     describe("extern with args", () => {
-      let runtime, addNode, invalidate;
+      let runtime, addNode;
       beforeAll(() => {
-        runtime = new NodysseusRuntime();
+        runtime = new NodysseusRuntime(store);
 
         const add: Graph = {
           id: "testadd",
@@ -317,113 +318,171 @@ describe("dependency tree", () => {
       test("caches", () => {
         expect(runtime.run(addNode)).toBe(6)
       });
-
-      test("invalidates", () => {
-        invalidate();
-        expect(runtime.run(addNode)).toBe(6)
-      })
     })
   })
-  //
-  // describe("env", () => {
-  //   let runtime, addNode, invalidate, runCount = 0;
-  //   beforeAll(() => {
-  //     runtime = new NodysseusRuntime();
-  //
-  //     const invalidationNode = addInvalidation(ioNode(() => {
-  //       runCount++;
-  //       return {val3: 6 + runCount}
-  //     }), inv => invalidate = () => inv())
-  //
-  //     const add = {
-  //       id: "testreturn",
-  //       out: "testfn",
-  //       nodes: {
-  //         "testfn": {
-  //           id: "testfn",
-  //           ref: "return"
-  //         },
-  //         "add": {
-  //           id: "add",
-  //           ref: "extern",
-  //           value: "extern.add",
-  //         },
-  //         "valarg": {
-  //           id: "valarg",
-  //           ref: "arg",
-  //           value: "val"
-  //         },
-  //         "args": {id: "args"},
-  //         "val": {
-  //           id: "val",
-  //           value: "4"
-  //         },
-  //         "envarg": {
-  //           id: "envarg",
-  //           ref: "arg",
-  //           value: "val3"
-  //         }
-  //       },
-  //       edges: {
-  //         "val": {
-  //           to: "args",
-  //           from: "val",
-  //           as: "val"
-  //         },
-  //         "valarg": {
-  //           to: "add",
-  //           from: "valarg",
-  //           as: "arg0"
-  //         },
-  //         "envarg": {
-  //           to: "add",
-  //           from: "envarg",
-  //           as: "arg1"
-  //         },
-  //         "add": {
-  //           from: "add",
-  //           to: "testfn",
-  //           as: "value"
-  //         },
-  //         "args": {
-  //           to: "testfn",
-  //           from: "args",
-  //           as: "args"
-  //         }
-  //       }
-  //     }
-  //     addNode = addInvalidation(fromNode(add, "testfn", store, invalidationNode as any), inv => invalidate = inv);
-  //     runtime.add(addNode);
-  //   });
-  //
-  //   test("works", () => {
-  //     expect(runtime.run(addNode.id)).toBe(11)
-  //   });
-  //
-  //   test("caches", () => {
-  //     expect(runtime.run(addNode.id)).toBe(11)
-  //   });
-  //
-  //   test("invalidates", () => {
-  //     invalidate();
-  //     expect(runtime.run(addNode.id)).toBe(12)
-  //     expect(runCount).toBe(2);
-  //   })
-  //
-  // })
-  //
-  // describe("html", () => {
-  //   let runtime
-  //   beforeAll(() => {
-  //     runtime = new NodysseusRuntime();
-  //   })
-  //
-  //   test("create html", () => {
-  //
-  //     const htmlNode = fromNode(generic.nodes["@templates.simple"], "out", store);
-  //     runtime.add(htmlNode);
-  //     const testres = runtime.run(htmlNode.id, {_output: "display"});
-  //     expect(testres).toBe({tag: "div", children: [{tag: "text_value", text: "Hello, world!"}]});
-  //   });
-  // })
+
+  describe("env", () => {
+    let runtime, addNode, runCount = 0, internalVal = 1;
+    beforeAll(() => {
+      runtime = new NodysseusRuntime(store);
+
+      const argsNode = runtime.ioNode(() => {
+        runCount++;
+        return {val3: 6 + internalVal}
+      });
+
+      const add = {
+        id: "testreturn",
+        out: "testfn",
+        nodes: {
+          "testfn": {
+            id: "testfn",
+            ref: "return"
+          },
+          "add": {
+            id: "add",
+            ref: "extern",
+            value: "extern.add",
+          },
+          "valarg": {
+            id: "valarg",
+            ref: "arg",
+            value: "val"
+          },
+          "args": {id: "args"},
+          "val": {
+            id: "val",
+            value: "4"
+          },
+          "envarg": {
+            id: "envarg",
+            ref: "arg",
+            value: "val3"
+          }
+        },
+        edges: {
+          "val": {
+            to: "args",
+            from: "val",
+            as: "val"
+          },
+          "valarg": {
+            to: "add",
+            from: "valarg",
+            as: "arg0"
+          },
+          "envarg": {
+            to: "add",
+            from: "envarg",
+            as: "arg1"
+          },
+          "add": {
+            from: "add",
+            to: "testfn",
+            as: "value"
+          },
+          "args": {
+            to: "testfn",
+            from: "args",
+            as: "args"
+          }
+        }
+      }
+      addNode = runtime.fromNode(add, "testfn", store, argsNode)
+    });
+
+    test("works", () => {
+      expect(runtime.run(addNode)).toBe(11)
+    });
+
+    test("caches", () => {
+      expect(runtime.run(addNode)).toBe(11)
+    });
+
+    test("invalidates", () => {
+      internalVal = 2;
+      expect(runtime.run(addNode)).toBe(12)
+    })
+
+  })
+
+  describe("runnable", () => {
+    test("can run runnable", () => {
+      const run_fn = {
+        id: "runfn",
+        out: "out",
+        nodes: {
+          input: {id: "input", ref: "arg", value: "input"},
+          setval: {id: "setval", ref: "@js.script", value: "target.x = value;"},
+          finalval: {id: "finalval", value: "B"},
+          runnablefn: {id: "runnablefn", ref: "@flow.runnable"},
+
+          apfn: {id: "apfn", ref: "@flow.ap"},
+          apfnargs: {id: "apfnargs"},
+          apfninput: {id: "apfninput", ref: "arg", value: "input"},
+          apfnrun: {id: "apfnrun", value: "true"},
+          out: {id: "out", ref: "return"}
+        },
+        edges: {
+          input: {from: "input", to: "setval", as: "target"},
+          finalval: {from: "finalval", to: "setval", as: "value"},
+          setval: {from: "setval", to: "runnablefn", as: "fn"},
+          runnablefn: {from: "runnablefn", to: "apfn", as: "fn"},
+          apfninput: {from: "apfninput", to: "apfnargs", as: "input"},
+          apfnargs: {from: "apfnargs", to: "apfn", as: "args"},
+          apfnrun: {from: "apfnrun", to: "apfn", as: "run"},
+          apfn: {from: "apfn", to: "out", as: "value"},
+        },
+        edges_in: {}
+      }
+
+      const runtime = new NodysseusRuntime(store);
+
+      const inval = {x: "A"}
+      const closure = runtime.varNode({input: inval});
+      const result = runtime.fromNode(run_fn, "out", closure) as WatchNode<unknown>;
+      runtime.run(result)
+      expect(inval.x).toBe("B")
+    })
+  })
+
+  describe("html", () => {
+    let runtime, argsNode, htmlNode;
+    beforeAll(() => {
+      runtime = new NodysseusRuntime(store);
+      argsNode = runtime.varNode({_output: "value"})
+      htmlNode = runtime.fromNode(generic.nodes["@templates.simple"], "out", store, argsNode);
+    })
+
+    test("setup value", () => {
+      expect(runtime.run(htmlNode)).toBe("some output");
+    })
+
+    test("create html", () => {
+      argsNode.set({_output: "display"})
+      expect(runtime.run(htmlNode)).toMatchObject({
+        "dom_type": "div",
+        "props": {},
+        "children": [
+          {
+            "dom_type": "text_value",
+            "text": "Hello, world!"
+          }
+        ]
+      });
+    });
+
+    test("cache html", () => {
+      expect(runtime.run(htmlNode)).toMatchObject({
+        "dom_type": "div",
+        "props": {},
+        "children": [
+          {
+            "dom_type": "text_value",
+            "text": "Hello, world!"
+          }
+        ]
+      });
+    })
+  })
 })

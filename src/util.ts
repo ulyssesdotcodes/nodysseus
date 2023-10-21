@@ -1,4 +1,4 @@
-import { Edge, Graph, GraphNode, NodysseusNode, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable, isEnv, isRunnable, isValue, Lib, isLib, Env, Args, ValueNode, Result, isArgs, isConstRunnable, isApRunnable, isError, ConstRunnable, TypedArg, SavedGraph, isEdgesInGraph } from "./types.js"
+import { Edge, Graph, GraphNode, NodysseusNode, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable, isEnv, isRunnable, isValue, Lib, isLib, Env, Args, ValueNode, Result, isArgs, isConstRunnable, isApRunnable, isError, ConstRunnable, TypedArg, SavedGraph, isEdgesInGraph, FullyTypedArg } from "./types.js"
 
 export const WRAPPED_KIND = "wrapped"
 type WrappedKind = "wrapped";
@@ -222,6 +222,22 @@ export const contract_node = (data: {editingGraph: Graph, node_id: string, nolib
   }
 }
 
+
+export const parseArg = (arg: string): FullyTypedArg & {name: string} => {
+  let nodevalue, valuetype;
+  const colonIdx = arg.indexOf(":")
+  if(colonIdx >= 0) {
+    nodevalue = arg.substring(0, colonIdx)
+    valuetype = arg.substring(colonIdx + 2)
+  } else {
+    nodevalue = arg;
+  }
+  return {
+    type: valuetype !== "default" ? valuetype : "any",
+    name: nodevalue,
+    default: valuetype === "default",
+  }
+}
 
 
 export const ancestor_graph = (node_id: string, from_graph: Graph | SavedGraph, nolib?: Record<string, any>): Graph => {

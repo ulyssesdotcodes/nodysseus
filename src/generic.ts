@@ -2303,7 +2303,7 @@ const generic = {
         "pred_append": {
           "id": "pred_append",
           "ref": "@js.script",
-          "value": "if(pred !== false && pred !== undefined && pred !== null){ arr.push(value); } return arr;"
+          "value": "console.log('pred inside', pred, arr, value); if(pred !== false && pred !== undefined && pred !== null){ arr.push(value); } return arr;"
         },
         "pred_append_fn_args": {
           "id": "pred_append_fn_args",
@@ -3577,20 +3577,15 @@ const generic = {
           "from": "p7ed8ee",
           "to": "qd8ol17"
         },
-        "lzx5shl": {
-          "as": "props",
-          "from": "lzx5shl",
-          "to": "j9f9fql"
-        },
         "nw9ms96": {
           "as": "children",
           "from": "nw9ms96",
           "to": "j9f9fql"
         },
         "xtrwqpd": {
-          "as": "value",
+          "as": "props",
           "from": "xtrwqpd",
-          "to": "lzx5shl"
+          "to": "j9f9fql"
         },
         "4uumh6e": {
           "as": "type",
@@ -3749,10 +3744,6 @@ const generic = {
         "nw9ms96": {
           "id": "nw9ms96",
           "value": "@html.html_element"
-        },
-        "lzx5shl": {
-          "id": "lzx5shl",
-          "ref": "@debug.input_value"
         },
         "xtrwqpd": {
           "id": "xtrwqpd"

@@ -143,7 +143,7 @@ export type Runnable =  Result | ApRunnable | FunctorRunnable | ConstRunnable
 
 export const isRunnable = (r: any): r is Runnable => isValue(r as Runnable) || isConstRunnable(r as Runnable) || isApRunnable(r as Runnable) || isFunctorRunnable(r as Runnable)
 export const isError = (r: any): r is Error => r instanceof Error
-export const isValue = (r: Runnable): r is NonErrorResult => {
+export const isValue = (r: unknown): r is NonErrorResult => {
   const result = r as Result
   return !isError(result) && (result)?.__kind === "result"
 }
