@@ -336,7 +336,10 @@ export const objectRefStore = (graphs: Record<string, Graph>): RefStore => {
         graphs[ref.id] = ref
         return ref
       })).then(gs => gs)),
-    add_node: () => {throw new Error("not implemented")},
+    add_node: (graph, node) => {
+      graphs[graph].nodes[node.id] = node;
+      return graphs[graph];
+    },
     add_edge: () => {throw new Error("not implemented")},
     remove_node: () => {throw new Error("not implemented")},
     remove_edge: () => {throw new Error("not implemented")},

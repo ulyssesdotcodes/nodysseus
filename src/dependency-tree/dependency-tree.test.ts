@@ -1,10 +1,10 @@
 import {describe, expect, test, beforeAll} from "@jest/globals" 
 // import {IndependentNode, ioNode, staticNode, dependentNode, addInvalidation, NodysseusRuntime, ComputationNode, fromNode} from "./dependency-tree";
-import {ioNode, constNode, NodysseusRuntime, mapNode, WatchNode } from "./dependency-tree";
+import {ioNode, constNode, NodysseusRuntime, mapNode, AnyNode, compareObjectsNeq } from "./dependency-tree";
 import generic from "../generic.js";
 import { Graph } from "../types";
 import { objectRefStore, webClientStore } from "../editor/store";
-import { initStore, mapStore } from "../nodysseus";
+import { initStore, mapStore, nolib, nolibLib } from "../nodysseus";
 import { Watch } from "typescript";
 
 
@@ -49,7 +49,7 @@ describe("dependency tree", () => {
     const node2Cache = runtime.mapNode({}, () => {
       a += 1;
       return 2
-    });
+    }, (p, n) => compareObjectsNeq(p, n) );
 
     expect(runtime.run(node2Cache)).toBe(2);
     expect(runtime.run(node2Cache)).toBe(2);
@@ -66,7 +66,7 @@ describe("dependency tree", () => {
     const cachedNode = runtime.mapNode({a: io}, ({a}) => {
       cachedRunCount++;
       return a + 1;
-    });
+    }, (p, n) => compareObjectsNeq(p, n));
 
     expect(runtime.run(cachedNode)).toBe(1);
     expect(cachedRunCount).toBe(1);
@@ -87,9 +87,9 @@ describe("dependency tree", () => {
   //   })
   //
   //   test("first run", () => {
-  //     const startNode: WatchNode<number> = runtime.ioNode(() => ioVal);
-  //     const nodes = new Array(10000).fill(1).map<WatchNode<number>>(() => runtime.mapNode({a: startNode}, ({a}) => (runcount += 1, a)));
-  //     output = runtime.mapNode(Object.fromEntries(nodes.map((n, i) => [i, n])) as Record<string, WatchNode<number>>, (nums: Record<string, number>) => Object.values(nums).reduce((acc, n) => acc + n, 0));
+  //     const startNode: AnyNode<number> = runtime.ioNode(() => ioVal);
+  //     const nodes = new Array(10000).fill(1).map<AnyNode<number>>(() => runtime.mapNode({a: startNode}, ({a}) => (runcount += 1, a)));
+  //     output = runtime.mapNode(Object.fromEntries(nodes.map((n, i) => [i, n])) as Record<string, AnyNode<number>>, (nums: Record<string, number>) => Object.values(nums).reduce((acc, n) => acc + n, 0));
   //
   //     expect(runtime.run(output)).toBe(10000);
   //     expect(runcount).toBe(10000);
@@ -157,7 +157,7 @@ describe("dependency tree", () => {
         },
         edges: {}
       }
-      const node = runtime.fromNode(graph, "testfn", store) as WatchNode<unknown>
+      const node = runtime.fromNode(graph, "testfn", store) as AnyNode<unknown>
 
       expect(runtime.run(node)).toBe(4);
     });
@@ -188,7 +188,7 @@ describe("dependency tree", () => {
           }
         }
       }
-      const node = runtime.fromNode(graph, "testinput", store) as WatchNode<unknown>;
+      const node = runtime.fromNode(graph, "testinput", store) as AnyNode<unknown>;
       expect(runtime.run(node)).toBe(6);
     });
 
@@ -216,7 +216,7 @@ describe("dependency tree", () => {
       }
 
       const runtime = new NodysseusRuntime(store);
-      const node = runtime.fromNode(graph, "testfn", store) as WatchNode<unknown>;
+      const node = runtime.fromNode(graph, "testfn") as AnyNode<unknown>;
       expect(runtime.run(node)).toBe(4);
     })
 
@@ -260,7 +260,7 @@ describe("dependency tree", () => {
       }
 
       const runtime = new NodysseusRuntime(store);
-      const node = runtime.fromNode(graph, "testfn", store) as WatchNode<unknown>;
+      const node = runtime.fromNode(graph, "testfn") as AnyNode<unknown>;
       expect(runtime.run(node)).toBe(4);
     })
   })
@@ -268,7 +268,7 @@ describe("dependency tree", () => {
   describe("extern", () => {
     test("single extern", () => {
       const runtime = new NodysseusRuntime(store);
-      const random = runtime.fromNode<() => number, Record<string, unknown>>(generic, "@math.random", store) as WatchNode<unknown>;
+      const random = runtime.fromNode<() => number, Record<string, unknown>>(generic, "@math.random", store) as AnyNode<unknown>;
       const randomFn = runtime.run(random);
       expect(typeof randomFn === "function" && randomFn()).toBeGreaterThan(0)
     })
@@ -388,7 +388,7 @@ describe("dependency tree", () => {
           }
         }
       }
-      addNode = runtime.fromNode(add, "testfn", store, argsNode)
+      addNode = runtime.fromNode(add, "testfn", argsNode)
     });
 
     test("works", () => {
@@ -440,7 +440,7 @@ describe("dependency tree", () => {
 
       const inval = {x: "A"}
       const closure = runtime.varNode({input: inval});
-      const result = runtime.fromNode(run_fn, "out", closure) as WatchNode<unknown>;
+      const result = runtime.fromNode(run_fn, "out", closure) as AnyNode<unknown>;
       runtime.run(result)
       expect(inval.x).toBe("B")
     })
@@ -451,7 +451,7 @@ describe("dependency tree", () => {
     beforeAll(() => {
       runtime = new NodysseusRuntime(store);
       argsNode = runtime.varNode({_output: "value"})
-      htmlNode = runtime.fromNode(generic.nodes["@templates.simple"], "out", store, argsNode);
+      htmlNode = runtime.fromNode(generic.nodes["@templates.simple"], "out", argsNode);
     })
 
     test("setup value", () => {
@@ -480,6 +480,56 @@ describe("dependency tree", () => {
           {
             "dom_type": "text_value",
             "text": "Hello, world!"
+          }
+        ]
+      });
+    })
+  })
+
+  describe("graph updates", () => {
+    let runtime, argsNode, htmlNode, templateSimple;
+    beforeAll(() => {
+      runtime = new NodysseusRuntime(store);
+      argsNode = runtime.varNode({_output: "value"})
+      templateSimple = {
+        ...generic.nodes["@templates.simple"],
+        id: "testhtml"
+      }
+      nolib.no.runtime.add_ref(templateSimple)
+      htmlNode = runtime.fromNode(templateSimple, "out", argsNode);
+    })
+
+    test("setup value", () => {
+      expect(runtime.run(htmlNode)).toBe("some output");
+    })
+
+    test("create html", () => {
+      argsNode.set({_output: "display"})
+      expect(runtime.run(htmlNode)).toMatchObject({
+        "dom_type": "div",
+        "props": {},
+        "children": [
+          {
+            "dom_type": "text_value",
+            "text": "Hello, world!"
+          }
+        ]
+      });
+    });
+
+    test("update text node", () => {
+      nolib.no.runtime.add_node(templateSimple.id, {
+        "id": "qgbinm2",
+        "value": "Hello, again!",
+        "ref": "@html.html_text"
+      }, nolibLib)
+      expect(runtime.run(htmlNode)).toMatchObject({
+        "dom_type": "div",
+        "props": {},
+        "children": [
+          {
+            "dom_type": "text_value",
+            "text": "Hello, again!"
           }
         ]
       });
