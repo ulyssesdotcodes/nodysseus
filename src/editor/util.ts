@@ -572,18 +572,12 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = (dispatch, {graph,
   const runNode = runtime.fromNode(graph, graph.out ?? "out", argsNode) as WatchNode<unknown>;
   argsNode.set({_output: "display"});
 
-  const updatePerFrame = () => {
-    wrapPromise(runtime.run(runNode))
-      .then(display => {
-        result_display_dispatch(UpdateResultDisplay, {
-          el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
-        })
+  wrapPromise(runtime.run(runNode))
+    .then(display => {
+      result_display_dispatch(UpdateResultDisplay, {
+        el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
       })
-    requestAnimationFrame(updatePerFrame)
-  }
-
-  requestAnimationFrame(updatePerFrame)
-
+    })
 
   // const result = hlib.run(graph, graph.out ?? "out", {_output: "value"}, undefined, {profile: false})
   // const result = hlib.run(graph, graph.out, {});
@@ -638,9 +632,12 @@ export const result_subscription = (dispatch, {editingGraphId, displayGraphId, n
         if(graph?.id === (displayGraphId || editingGraphId)) {
           wrapPromise(nolib.no.runtime.get_ref(displayGraphId || editingGraphId))
             .then(graph => {
-              const result = refresh_graph(dispatch, {graph, graphChanged: false, norun, info_display_dispatch, code_editor, code_editor_nodeid, result_background_display_dispatch, result_display_dispatch})
-              const reset_animrun = () => animrun = false
-              wrapPromise(result, reset_animrun as () => any).then(reset_animrun)
+              let updateResult = () => {
+                animrun = requestAnimationFrame(updateResult);
+                refresh_graph(dispatch, {graph, graphChanged: false, norun, info_display_dispatch, code_editor, code_editor_nodeid, result_background_display_dispatch, result_display_dispatch})
+              }
+
+              animrun = requestAnimationFrame(updateResult)
             })
         }
       })
