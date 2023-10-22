@@ -424,4 +424,6 @@ export const handleError = (e, lib, graph, node, graphid) => {
   return e
 }
 
+export const appendGraphId = (graphId: string, nodeId: string) => `${graphId}/${nodeId}`
+
 
