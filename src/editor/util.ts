@@ -263,9 +263,13 @@ export const ChangeEditingGraphId: ha.Effecter<HyperappState, {id: string, selec
             // nolib.no.runtime.removeGraphListeners(state.editingGraphId);
             dispatch(s => {
               const news = {...s, editingGraph: new_graph, selected: [new_graph.out], editingGraphId: new_graph.id}
-              return [news, [UpdateSimulation, {...news, clear_simulation_cache: true}], select_out && [() => {setTimeout(() => {
-                dispatch(SelectNode, {node_id: new_graph.out ?? "out"})
-              }, 100)}, {}]]
+              return [news, 
+                [UpdateSimulation, {...news, clear_simulation_cache: true}], 
+                select_out && [() => {setTimeout(() => {
+                    dispatch(SelectNode, {node_id: new_graph.out ?? "out"})
+                  }, 100)}, {}],
+                [refresh_graph, {graph: new_graph}]
+              ]
             })
             // if(!graph) {
             //     wrapPromise(nolib.no.runtime.get_node(new_graph, new_graph.out))
@@ -568,16 +572,33 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = (dispatch, {graph,
   }
   const runtime = hlib.runtime();
 
-  const argsNode = runtime.varNode({});
-  const runNode = runtime.fromNode(graph, graph.out ?? "out", argsNode) as WatchNode<unknown>;
-  argsNode.set({_output: "display"});
+  const argsNode = {_output: runtime.varNode("display")};
 
-  wrapPromise(runtime.run(runNode))
-    .then(display => {
-      result_display_dispatch(UpdateResultDisplay, {
-        el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
+  const runNode = runtime.fromNode(graph, graph.out ?? "out", argsNode)
+  
+  const update = () => {
+  console.log("running graph", graph, argsNode)
+    wrapPromise(runtime.run(runNode))
+      .then(display => {
+        console.log(display)
+        result_display_dispatch(UpdateResultDisplay, {
+          el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
+        })
       })
-    })
+    const run = async () => {
+      for await(const display of runtime.createWatch(runNode)) {
+        console.log("got display", display)
+        result_display_dispatch(UpdateResultDisplay, {
+          el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
+        })
+      }
+    }
+    run();
+  }
+
+  if(runNode) {
+    requestAnimationFrame(update);
+  }
 
   // const result = hlib.run(graph, graph.out ?? "out", {_output: "value"}, undefined, {profile: false})
   // const result = hlib.run(graph, graph.out, {});
@@ -628,17 +649,22 @@ export const result_subscription = (dispatch, {editingGraphId, displayGraphId, n
     }
 
     if(info_display_dispatch && code_editor && code_editor_nodeid && result_display_dispatch && result_background_display_dispatch) {
+      const runtime = hlib.runtime();
+      const argsNode = runtime.varNode({});
+      const runNode = runtime.fromNode(graph, graph.out ?? "out", argsNode) as WatchNode<unknown>;
       animrun = requestAnimationFrame(() => {
         if(graph?.id === (displayGraphId || editingGraphId)) {
           wrapPromise(nolib.no.runtime.get_ref(displayGraphId || editingGraphId))
             .then(graph => {
-              let updateResult = () => {
-                animrun = requestAnimationFrame(updateResult);
-                refresh_graph(dispatch, {graph, graphChanged: false, norun, info_display_dispatch, code_editor, code_editor_nodeid, result_background_display_dispatch, result_display_dispatch})
-              }
-
-              animrun = requestAnimationFrame(updateResult)
-            })
+              dispatch(s => ({...s, editingGraph: graph, displayGraph: graph}))
+            });
+              // let updateResult = () => {
+              //   animrun = requestAnimationFrame(updateResult);
+              //   // refresh_graph(dispatch, {graph, graphChanged: false, norun, info_display_dispatch, code_editor, code_editor_nodeid, result_background_display_dispatch, result_display_dispatch, argsNode, runNode})
+              // }
+              //
+              // animrun = requestAnimationFrame(updateResult)
+            // })
         }
       })
     } else {
@@ -706,37 +732,42 @@ export const graph_subscription = (dispatch: ha.Dispatch<HyperappState>, props) 
       }
       animframe = requestAnimationFrame(() =>  {
         animframe = false
-        dispatch((s: HyperappState) => [{...s, editingGraph: graph}, UpdateSimulation, [refresh_graph, {
-          graph: s.displayGraph || graph, 
-          norun: props.norun, 
-          graphChanged: true, 
-          result_display_dispatch: s.result_display_dispatch,
-          result_background_display_dispatch: s.result_background_display_dispatch,
-          info_display_dispatch: s.info_display_dispatch,
-          code_editor: s.code_editor,
-          code_editor_nodeid: s.code_editor_nodeid
-        }]])
+        dispatch((s: HyperappState) => [{...s, editingGraph: graph}, UpdateSimulation, 
+                 s.displayGraph === false && [refresh_graph, {graph, result_display_dispatch: s.result_display_dispatch}]
+        // , [refresh_graph, {
+        //   graph: s.displayGraph || graph, 
+        //   norun: props.norun, 
+        //   graphChanged: true, 
+        //   result_display_dispatch: s.result_display_dispatch,
+        //   result_background_display_dispatch: s.result_background_display_dispatch,
+        //   info_display_dispatch: s.info_display_dispatch,
+        //   code_editor: s.code_editor,
+        //   code_editor_nodeid: s.code_editor_nodeid
+        // }]
+        ])
       })
     } else {
       // Have to keep this so that other tabs updating graphs makes changes
       animframe = requestAnimationFrame(() =>  {
         animframe = false
-        dispatch((s: HyperappState) => [s, UpdateSimulation, [refresh_graph, {
-          graph: s.displayGraph || s.editingGraph, 
-          norun: props.norun, 
-          graphChanged: true, 
-          result_display_dispatch: s.result_display_dispatch,
-          result_background_display_dispatch: s.result_background_display_dispatch,
-          info_display_dispatch: s.info_display_dispatch,
-          code_editor: s.code_editor,
-          code_editor_nodeid: s.code_editor_nodeid
-        }]])
+        dispatch((s: HyperappState) => [s, UpdateSimulation, 
+        //          [refresh_graph, {
+        //   graph: s.displayGraph || s.editingGraph, 
+        //   norun: props.norun, 
+        //   graphChanged: true, 
+        //   result_display_dispatch: s.result_display_dispatch,
+        //   result_background_display_dispatch: s.result_background_display_dispatch,
+        //   info_display_dispatch: s.info_display_dispatch,
+        //   code_editor: s.code_editor,
+        //   code_editor_nodeid: s.code_editor_nodeid
+        // }]
+        ])
       })
 
     }
   }
 
-  nolib.no.runtime.addListener("graphchange", "update_hyperapp", listener)
+  // nolib.no.runtime.addListener("graphchange", "update_hyperapp", listener)
   return () => nolib.no.runtime.removeListener("graphchange", "update_hyperapp")
 }
 

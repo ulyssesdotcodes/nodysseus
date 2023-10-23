@@ -187,7 +187,8 @@ const runapp = (init, _lib) => {
               refresh_custom_editor()
               nolib.no.runtime.change_graph(base_graph(init.editingGraph), hlibLib)
             })
-          }]
+          }],
+          [refresh_graph, {graph: init.editingGraph, result_display_dispatch}]
         ])
       })],
       [dispatch => wrapPromise(nolib.no.runtime.get_graph("custom_editor"))
@@ -196,7 +197,7 @@ const runapp = (init, _lib) => {
       [UpdateSimulation, {...init, action: SimulationToHyperapp}],
       [dispatch => requestAnimationFrame(() => dispatch(SelectNode, {node_id: init.selected[0]}))],
       [init_code_editor, {html_id: init.html_id}],
-      [dispatch => wrapPromise(nolib.no.runtime.ref_graphs()).then(rgs => dispatch(s => ({...s, refGraphs: rgs.concat(EXAMPLES)})))]
+      [dispatch => wrapPromise(nolib.no.runtime.ref_graphs()).then(rgs => dispatch(s => ({...s, refGraphs: rgs.concat(EXAMPLES)})))],
     ],
     dispatch: middleware,
     view: (s: HyperappState) => ha.h("div", { id: s.html_id }, [
@@ -278,16 +279,16 @@ const runapp = (init, _lib) => {
             onclick: (s: HyperappState) => [
               {...s, norun: !s.norun}, 
               () => { nolib.no.runtime.togglePause(!s.norun) },
-              s.norun && [refresh_graph, {
-                graph: s.displayGraph ?? s.editingGraph,
-                norun: !s.norun,
-                graphChanged: false,
-                result_display_dispatch: s.result_display_dispatch,
-                result_background_display_dispatch: s.result_background_display_dispatch,
-                info_display_dispatch: s.info_display_dispatch,
-                code_editor: s.code_editor,
-                code_editor_nodeid: s.code_editor_nodeid
-              }],
+              // s.norun && [refresh_graph, {
+              //   graph: s.displayGraph ?? s.editingGraph,
+              //   norun: !s.norun,
+              //   graphChanged: false,
+              //   result_display_dispatch: s.result_display_dispatch,
+              //   result_background_display_dispatch: s.result_background_display_dispatch,
+              //   info_display_dispatch: s.info_display_dispatch,
+              //   code_editor: s.code_editor,
+              //   code_editor_nodeid: s.code_editor_nodeid
+              // }],
               () => {
                 const params = new URLSearchParams(location.search)
                 if(params.get("norun") === "true") {

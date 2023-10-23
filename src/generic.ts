@@ -3775,7 +3775,7 @@ const generic = {
         "out": {
           "id": "out",
           "ref": "@js.script",
-          "value": "if(!(typeof dom_type === 'string' && typeof children === 'object')){ throw new Error('invalid element');} return {dom_type, props, children: children, memo, value}"
+          "value": "if(!(typeof dom_type === 'string' && typeof children === 'object')){ console.log(dom_type, children, props, memo, value); throw new Error('invalid element');} return {dom_type, props, children: children, memo, value}"
         },
         "value": {
           "id": "value",

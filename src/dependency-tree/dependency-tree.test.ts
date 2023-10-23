@@ -1,11 +1,12 @@
 import {describe, expect, test, beforeAll} from "@jest/globals" 
 // import {IndependentNode, ioNode, staticNode, dependentNode, addInvalidation, NodysseusRuntime, ComputationNode, fromNode} from "./dependency-tree";
-import {ioNode, constNode, NodysseusRuntime, mapNode, AnyNode, compareObjectsNeq } from "./dependency-tree";
+import {varNode, constNode, NodysseusRuntime, mapNode, AnyNode, compareObjectsNeq } from "./dependency-tree";
 import generic from "../generic.js";
 import { Graph } from "../types";
 import { objectRefStore, webClientStore } from "../editor/store";
 import { initStore, mapStore, nolib, nolibLib } from "../nodysseus";
 import { Watch } from "typescript";
+
 
 
 describe("dependency tree", () => {
@@ -59,10 +60,8 @@ describe("dependency tree", () => {
   test("test invalidation", () => {
     const runtime = new NodysseusRuntime(store);
 
-    let ioVal = 0, cachedRunCount = 0;
-    const io = runtime.ioNode(() => {
-      return ioVal;
-    })
+    let cachedRunCount = 0;
+    const io = runtime.varNode(0)
     const cachedNode = runtime.mapNode({a: io}, ({a}) => {
       cachedRunCount++;
       return a + 1;
@@ -74,7 +73,7 @@ describe("dependency tree", () => {
     expect(runtime.run(cachedNode)).toBe(1);
     expect(cachedRunCount).toBe(1);
 
-    ioVal = 2
+    io.set(2);
     expect(runtime.run(cachedNode)).toBe(3);
     expect(cachedRunCount).toBe(2);
   })
@@ -113,15 +112,12 @@ describe("dependency tree", () => {
 
   test("bind node", () => {
     const runtime = new NodysseusRuntime(store);
-    let key = "tNode";
-    const predicate = runtime.ioNode(() => {
-      return key
-    });
+    const predicate = runtime.varNode("tNode");
     const trueNode = runtime.constNode("tNodeValue");
     const falseNode = runtime.constNode("fNodeValue");
     const bindNode = runtime.switchNode(predicate, {tNode: trueNode, fNode: falseNode});
     expect(runtime.run(bindNode)).toBe("tNodeValue")
-    key = "fNode";
+    predicate.set("fNode");
     expect(runtime.run(bindNode)).toBe("fNodeValue")
   })
 
@@ -157,7 +153,7 @@ describe("dependency tree", () => {
         },
         edges: {}
       }
-      const node = runtime.fromNode(graph, "testfn", store) as AnyNode<unknown>
+      const node = runtime.fromNode(graph, "testfn") as AnyNode<unknown>
 
       expect(runtime.run(node)).toBe(4);
     });
@@ -188,7 +184,7 @@ describe("dependency tree", () => {
           }
         }
       }
-      const node = runtime.fromNode(graph, "testinput", store) as AnyNode<unknown>;
+      const node = runtime.fromNode(graph, "testinput") as AnyNode<unknown>;
       expect(runtime.run(node)).toBe(6);
     });
 
@@ -260,7 +256,9 @@ describe("dependency tree", () => {
       }
 
       const runtime = new NodysseusRuntime(store);
+      console.log("pre ret args")
       const node = runtime.fromNode(graph, "testfn") as AnyNode<unknown>;
+      console.log("post ret args")
       expect(runtime.run(node)).toBe(4);
     })
   })
@@ -268,7 +266,7 @@ describe("dependency tree", () => {
   describe("extern", () => {
     test("single extern", () => {
       const runtime = new NodysseusRuntime(store);
-      const random = runtime.fromNode<() => number, Record<string, unknown>>(generic, "@math.random", store) as AnyNode<unknown>;
+      const random = runtime.fromNode<() => number, Record<string, unknown>>(generic, "@math.random") as AnyNode<unknown>;
       const randomFn = runtime.run(random);
       expect(typeof randomFn === "function" && randomFn()).toBeGreaterThan(0)
     })
@@ -308,7 +306,7 @@ describe("dependency tree", () => {
             }
           }
         }
-        addNode = runtime.fromNode(add, "add", store);
+        addNode = runtime.fromNode(add, "add");
       });
 
       test("works", () => {
@@ -322,14 +320,11 @@ describe("dependency tree", () => {
   })
 
   describe("env", () => {
-    let runtime, addNode, runCount = 0, internalVal = 1;
+    let runtime, addNode, runCount = 0, internalVal = 1, argsNode;
     beforeAll(() => {
       runtime = new NodysseusRuntime(store);
 
-      const argsNode = runtime.ioNode(() => {
-        runCount++;
-        return {val3: 6 + internalVal}
-      });
+      argsNode = {val3: runtime.varNode(7)};
 
       const add = {
         id: "testreturn",
@@ -400,7 +395,7 @@ describe("dependency tree", () => {
     });
 
     test("invalidates", () => {
-      internalVal = 2;
+      argsNode.val3.set(8)
       expect(runtime.run(addNode)).toBe(12)
     })
 
@@ -439,18 +434,18 @@ describe("dependency tree", () => {
       const runtime = new NodysseusRuntime(store);
 
       const inval = {x: "A"}
-      const closure = runtime.varNode({input: inval});
+      const closure = {input: runtime.varNode(inval)};
       const result = runtime.fromNode(run_fn, "out", closure) as AnyNode<unknown>;
       runtime.run(result)
       expect(inval.x).toBe("B")
     })
   })
 
-  describe("html", () => {
+  describe("@templates.simple", () => {
     let runtime, argsNode, htmlNode;
     beforeAll(() => {
       runtime = new NodysseusRuntime(store);
-      argsNode = runtime.varNode({_output: "value"})
+      argsNode = {_output: runtime.varNode("value")};
       htmlNode = runtime.fromNode(generic.nodes["@templates.simple"], "out", argsNode);
     })
 
@@ -459,7 +454,8 @@ describe("dependency tree", () => {
     })
 
     test("create html", () => {
-      argsNode.set({_output: "display"})
+      console.log("setting out")
+      argsNode._output.set("display")
       expect(runtime.run(htmlNode)).toMatchObject({
         "dom_type": "div",
         "props": {},
@@ -473,6 +469,7 @@ describe("dependency tree", () => {
     });
 
     test("cache html", () => {
+      argsNode._output.set("display")
       expect(runtime.run(htmlNode)).toMatchObject({
         "dom_type": "div",
         "props": {},
@@ -490,7 +487,7 @@ describe("dependency tree", () => {
     let runtime, argsNode, htmlNode, templateSimple;
     beforeAll(() => {
       runtime = new NodysseusRuntime(store);
-      argsNode = runtime.varNode({_output: "value"})
+      argsNode = {_output: runtime.varNode("value")};
       templateSimple = {
         ...generic.nodes["@templates.simple"],
         id: "testhtml"
@@ -504,7 +501,7 @@ describe("dependency tree", () => {
     })
 
     test("create html", () => {
-      argsNode.set({_output: "display"})
+      argsNode._output.set("display")
       expect(runtime.run(htmlNode)).toMatchObject({
         "dom_type": "div",
         "props": {},
