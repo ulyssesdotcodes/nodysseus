@@ -3,7 +3,7 @@ import * as ha from "hyperapp"
 import Fuse from "fuse.js"
 import { create_randid, wrapPromise, base_graph } from "../util.js"
 import { Edge, Graph, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode } from "../types.js"
-import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, Paste, pzobj, refresh_graph, result_subscription, run_h, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect } from "./util.js"
+import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, Paste, pzobj, refresh_graph, result_subscription, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect } from "./util.js"
 import { info_display, infoWindow } from "./components/infoWindow.js"
 import { init_code_editor } from "./components/codeEditor.js"
 import { d3Node, d3NodeNode, HyperappState, Levels } from "./types.js"
@@ -12,7 +12,7 @@ import { d3subscription, getLinks, getNodes, insert_node_el, link_el, node_el, U
 import Autocomplete from "./autocomplete.js"
 import { automergeRefStore } from "./automergeStore.js"
 import helloWorld from "../initgraph.json"
-import {middleware} from "./hyperapp.js"
+import {middleware, run_h} from "./hyperapp.js"
 
 
 customElements.define("autocomplete-list", Autocomplete)
@@ -89,6 +89,7 @@ const result_display = html_id => ha.app({
     try{
       return run_h({dom_type: "div", props: {id: `${html_id}-result`}, children: [s.el]})
     } catch(e) {
+      console.error(e);
       try{
         return run_h({dom_type: "div", props: {id: `${html_id}-result`}, children: [show_error(e, JSON.stringify(s.el))]})
       } catch(e) {
@@ -188,7 +189,7 @@ const runapp = (init, _lib) => {
               nolib.no.runtime.change_graph(base_graph(init.editingGraph), hlibLib)
             })
           }],
-          [refresh_graph, {graph: init.editingGraph, result_display_dispatch}]
+          [refresh_graph, {...init, graph: init.editingGraph, result_display_dispatch}]
         ])
       })],
       [dispatch => wrapPromise(nolib.no.runtime.get_graph("custom_editor"))

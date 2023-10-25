@@ -2629,7 +2629,7 @@ const generic = {
         "o5ojdyc": {
           "id": "o5ojdyc",
           "ref": "@js.script",
-          "value": "return key.startsWith(\"@keyframes\")"
+          "value": "return key?.startsWith(\"@keyframes\")"
         },
         "1hpnid4": {
           "id": "1hpnid4",

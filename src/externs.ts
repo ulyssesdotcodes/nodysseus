@@ -31,7 +31,7 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib, graphid: string = "", 
           let text = ""
           const _extern_args = {}
 
-          return util.wrapPromise(
+          return util.wrapPromise<any>(
             Object.values(graph.nodes).reduce((acc, n) => 
               acc.then(() => {
                 if(isNodeRef(n) && n.ref === "arg") {

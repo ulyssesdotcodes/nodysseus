@@ -268,7 +268,7 @@ export const ChangeEditingGraphId: ha.Effecter<HyperappState, {id: string, selec
                 select_out && [() => {setTimeout(() => {
                     dispatch(SelectNode, {node_id: new_graph.out ?? "out"})
                   }, 100)}, {}],
-                [refresh_graph, {graph: new_graph}]
+                [refresh_graph, {...state, graph: new_graph}]
               ]
             })
             // if(!graph) {
@@ -572,28 +572,31 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = (dispatch, {graph,
   }
   const runtime = hlib.runtime();
 
-  const argsNode = {_output: runtime.varNode("display")};
+  const argsNode = {_output: runtime.varNode("value")};
 
-  const runNode = runtime.fromNode(graph, graph.out ?? "out", argsNode)
+
+  const runNode = runtime.fromNode(graph, graph.out ?? "out")
+
+  argsNode._output.set("display")
+  const run = async () => {
+    for await(const display of runtime.createWatch(runNode, "display")) {
+      // console.log("got display", display)
+      result_display_dispatch(UpdateResultDisplay, {
+        el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
+      })
+    }
+  }
+  run();
   
   const update = () => {
-  console.log("running graph", graph, argsNode)
-    wrapPromise(runtime.run(runNode))
+    console.log("running graph", graph, argsNode)
+    wrapPromise(runtime.run(runNode, "display"))
       .then(display => {
-        console.log(display)
+        // console.log(display)
         result_display_dispatch(UpdateResultDisplay, {
           el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
         })
       })
-    const run = async () => {
-      for await(const display of runtime.createWatch(runNode)) {
-        console.log("got display", display)
-        result_display_dispatch(UpdateResultDisplay, {
-          el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
-        })
-      }
-    }
-    run();
   }
 
   if(runNode) {
@@ -649,9 +652,9 @@ export const result_subscription = (dispatch, {editingGraphId, displayGraphId, n
     }
 
     if(info_display_dispatch && code_editor && code_editor_nodeid && result_display_dispatch && result_background_display_dispatch) {
-      const runtime = hlib.runtime();
-      const argsNode = runtime.varNode({});
-      const runNode = runtime.fromNode(graph, graph.out ?? "out", argsNode) as WatchNode<unknown>;
+      // const runtime = hlib.runtime();
+      // const argsNode = runtime.varNode({});
+      // const runNode = runtime.fromNode(graph, graph.out ?? "out", argsNode);
       animrun = requestAnimationFrame(() => {
         if(graph?.id === (displayGraphId || editingGraphId)) {
           wrapPromise(nolib.no.runtime.get_ref(displayGraphId || editingGraphId))
@@ -732,42 +735,19 @@ export const graph_subscription = (dispatch: ha.Dispatch<HyperappState>, props) 
       }
       animframe = requestAnimationFrame(() =>  {
         animframe = false
-        dispatch((s: HyperappState) => [{...s, editingGraph: graph}, UpdateSimulation, 
-                 s.displayGraph === false && [refresh_graph, {graph, result_display_dispatch: s.result_display_dispatch}]
-        // , [refresh_graph, {
-        //   graph: s.displayGraph || graph, 
-        //   norun: props.norun, 
-        //   graphChanged: true, 
-        //   result_display_dispatch: s.result_display_dispatch,
-        //   result_background_display_dispatch: s.result_background_display_dispatch,
-        //   info_display_dispatch: s.info_display_dispatch,
-        //   code_editor: s.code_editor,
-        //   code_editor_nodeid: s.code_editor_nodeid
-        // }]
-        ])
+        dispatch((s: HyperappState) => [{...s, editingGraph: graph}, UpdateSimulation])
       })
     } else {
       // Have to keep this so that other tabs updating graphs makes changes
       animframe = requestAnimationFrame(() =>  {
         animframe = false
-        dispatch((s: HyperappState) => [s, UpdateSimulation, 
-        //          [refresh_graph, {
-        //   graph: s.displayGraph || s.editingGraph, 
-        //   norun: props.norun, 
-        //   graphChanged: true, 
-        //   result_display_dispatch: s.result_display_dispatch,
-        //   result_background_display_dispatch: s.result_background_display_dispatch,
-        //   info_display_dispatch: s.info_display_dispatch,
-        //   code_editor: s.code_editor,
-        //   code_editor_nodeid: s.code_editor_nodeid
-        // }]
-        ])
+        dispatch((s: HyperappState) => [s, UpdateSimulation])
       })
 
     }
   }
 
-  // nolib.no.runtime.addListener("graphchange", "update_hyperapp", listener)
+  nolib.no.runtime.addListener("graphchange", "update_hyperapp", listener)
   return () => nolib.no.runtime.removeListener("graphchange", "update_hyperapp")
 }
 
@@ -790,12 +770,6 @@ export const listenToEvent = (dispatch, props): (() => void) => {
 }
 
 
-
-export const run_h = ({dom_type, props, children, text}: {dom_type: string, props: {}, children: Array<any>, text?: string}, exclude_tags=[]) => {
-  return dom_type === "text_value" 
-    ? ha.text(text) 
-    : ha.h(dom_type, props, children?.map(c => c.el ?? c).filter(c => !!c && !exclude_tags.includes(c.dom_type)).map(c => run_h(c, exclude_tags)) ?? []) 
-}
 
 export const findViewBox = (nodes: Array<d3NodeNode>, links: Array<d3Link>, selected: string, node_el_width: number, htmlid: string, dimensions: {x: number, y: number}) => {
   const visible_nodes: Array<{x: number, y: number}> = []
@@ -1077,15 +1051,13 @@ export const hlibLib = mergeLib(nolibLib, newLib({
       return;
     }
     try{
-      const argsNode = runtime.varNode({});
-      const runNode = runtime.fromNode(graph, fn, argsNode) as WatchNode<unknown>;
-      argsNode.set({_output: "display"});
-      const result = runtime.run(runNode);
-      if(ispromise(result)){
-        return result.catch(e => console.error(e))
-      }
-
-      return result
+      // const result = wrapPromise(runtime.fromNode(graph, fn)).then(runNode => runtime.run(runNode)).value;
+      // if(ispromise(result)){
+      //   return result.catch(e => console.error(e))
+      // }
+      //
+      // return result
+      return undefined;
     } catch(e) {
       console.error(e)
     }
