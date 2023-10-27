@@ -1359,7 +1359,9 @@ const generic = {
     "@memory.cache": {
       "id": "@memory.cache",
       "out": "out",
-      "nodes": {
+      "ref": "extern",
+      "value": "extern.cache",
+      "_nodes": {
         "value": {
           "id": "value",
           "ref": "arg",
@@ -1462,7 +1464,7 @@ const generic = {
           "ref": "@memory.reference"
         }
       },
-      "edges": {
+      "_edges": {
         "ap_cache_value": {
           "from": "ap_cache_value",
           "to": "ap_cache_args",
@@ -8160,7 +8162,7 @@ const generic = {
         },
         "cy1tm8s": {
           "id": "cy1tm8s",
-          "value": "const iseq = saved.value === value;\n\nif(!iseq) {\n  saved.set.fn(value);\n}\n\nreturn !iseq;",
+          "value": "const iseq = saved.value === value;\n\nif(!iseq) {\n  saved.set(value);\n}\n\nreturn !iseq;",
           "ref": "@js.script"
         },
         "khdzxds": {

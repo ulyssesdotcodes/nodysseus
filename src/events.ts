@@ -113,7 +113,7 @@ export const initListeners = () => {
     listener_id,
     input_fn,
     remove = false,
-    graph_id = false,
+    graph_id: false | string = false,
     prevent_initial_trigger = false,
     lib: Lib = {__kind: "lib", data: nolib},
     options: RunOptions = {}

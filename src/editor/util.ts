@@ -177,9 +177,9 @@ export const update_info_display = ({fn, graph, args}, info_display_dispatch, co
 
   const node_ref = node && (isNodeRef(node) && nolib.no.runtime.get_ref(node.ref)) || node
   const out_ref = node && (isNodeGraph(node) && nolib.no.runtime.get_node(node, node.out)) || (node_ref?.nodes && nolib.no.runtime.get_node(node_ref, node_ref.out))
-  const node_display_el = hlib.run(graph, fn, {...args, _output: "display"}, {profile: false})
+  const node_display_el = {}; // hlib.run(graph, fn, "display", {profile: false})
   const update_info_display_fn = display => info_display_dispatch && requestAnimationFrame(() => {
-    info_display_dispatch(UpdateResultDisplay, {el: display?.dom_type ? display : ha.h("div", {})})
+    info_display_dispatch(UpdateResultDisplay, {el: (graph.out ?? "out") !== fn && display?.dom_type ? display : ha.h("div", {})})
     requestAnimationFrame(() => {
       if(code_editor && isNodeRef(node) && selectedMetadata?.codeEditor) {
         console.log(selectedMetadata)
@@ -262,7 +262,7 @@ export const ChangeEditingGraphId: ha.Effecter<HyperappState, {id: string, selec
             nolib.no.runtime.change_graph(new_graph, hlibLib)
             // nolib.no.runtime.removeGraphListeners(state.editingGraphId);
             dispatch(s => {
-              const news = {...s, editingGraph: new_graph, selected: [new_graph.out], editingGraphId: new_graph.id}
+              const news = {...s, editingGraph: new_graph, selected: [new_graph.out], editingGraphId: new_graph.id, displayGraph: new_graph, displayGraphId: new_graph.id}
               return [news, 
                 [UpdateSimulation, {...news, clear_simulation_cache: true}], 
                 select_out && [() => {setTimeout(() => {
@@ -412,16 +412,16 @@ export const selectNodeEffect: ha.Effecter<HyperappState, {
 export const updateSelectedMetadata: ha.Effecter<HyperappState, {
   graph: Graph,
   nodeId: string,
-}> = (dispatch, {graph, nodeId}) => 
-  wrapPromise(hlib.run(graph, nodeId, {_output: "metadata"})).then(selectedMetadata => dispatch(state => [
-    {...state, selectedMetadata}, 
-    state.selectedMetadata !== selectedMetadata && (selectedMetadata === undefined || state.selectedMetadata === undefined || !compareObjects(state.selectedMetadata, selectedMetadata)) &&
-      (() => update_info_display({
-        fn: nodeId, 
-        graph: state.editingGraph, 
-        args: {},
-      }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== nodeId, selectedMetadata, state.codeEditorExtensions))
-  ])).value
+}> = (dispatch, {graph, nodeId}) => {};
+  // wrapPromise(hlib.run(graph, nodeId, "metadata")).then(selectedMetadata => (console.log("got metadta", selectedMetadata), dispatch)(state => [
+  //   {...state, selectedMetadata}, 
+  //   state.selectedMetadata !== selectedMetadata && (selectedMetadata === undefined || state.selectedMetadata === undefined || !compareObjects(state.selectedMetadata, selectedMetadata)) &&
+  //     (() => update_info_display({
+  //       fn: nodeId, 
+  //       graph: state.editingGraph, 
+  //       args: {},
+  //     }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== nodeId, selectedMetadata, state.codeEditorExtensions))
+  // ])).value
 
 export const SelectNode: ha.Action<HyperappState, {
   node_id: string,
@@ -454,7 +454,7 @@ export const SelectNode: ha.Action<HyperappState, {
         ? JSON.parse(localStorage.getItem("graph_list")).slice(0, 10).map(gid => ({dom_type: "li", props: {}, children: [
           {
             dom_type: "a", 
-            props: { href: "#", onclick: s => [s, [() => dispatch(ms => [ms, [ChangeEditingGraphId, {id: gid, editingGraphId: state.editingGraphId}]])]]}, 
+            props: { href: "#" + gid, onclick: s => [s, [() => dispatch(ms => [ms, [ChangeEditingGraphId, {id: gid, editingGraphId: state.editingGraphId}]])]]}, 
             children: [{dom_type: "text_value", text: gid}]}
         ]}))
         : []
@@ -488,13 +488,9 @@ export const FocusEffect: ha.Effecter<HyperappState, {selector: string}> = (_, {
 export const SaveGraph = (dispatch, payload) => save_graph(payload.editingGraph)
 
 export const UpdateResultDisplay = (state, resel) => {
-  const el = resel.el
-  const backgroundEl = resel.backgroundEl
-
-  return compareObjects(el, state.el) && (!state.backgroundEl || compareObjects(backgroundEl, state.backgroundEl)) ? state : {
+  return compareObjects(resel.el, state.el) ? state : {
     ...state,
-    el,
-    backgroundEl
+    el: resel.el
   }
 }
 
@@ -502,33 +498,33 @@ export const UpdateNodeEffect: ha.Effecter<HyperappState, {editingGraph: Graph, 
   nolib.no.runtime.updateGraph({graph: editingGraph, addedNodes: [node], lib: nolibLib})
     .then(graph => {
       const edges_in = graphEdgesIn(graph, node.id)
-      const metadata = hlib.run(graph, node.id, {_output: "metadata"})
+      // const metadata = hlib.run(graph, node.id, "metadata")
 
-      wrapPromise(node_args(nolib, graph, node.id)).then(nodeargs => {
-        if(edges_in.length === 1){ 
-          if(nodeargs.nodeArgs.filter(na => !na.additionalArg && !na.name.startsWith("_")).length === 1) {
-            const newAs = nodeargs.nodeArgs.find(a => !a.additionalArg).name
-            if(newAs !== edges_in[0].as) {
-              nolib.no.runtime.updateGraph({
-                graph: editingGraph, 
-                addedEdges: [{...edges_in[0], as: newAs}], 
-                lib: hlibLib
-              })
-            }
-          } else if(nodeargs.nodeArgs.find(a => a.default)) {
-            const newAs = nodeargs.nodeArgs.find(a => a.default).name
-            if(newAs) {
-              nolib.no.runtime.updateGraph({
-                graph: editingGraph, 
-                addedEdges: [{...edges_in[0], as: newAs}], 
-                lib: hlibLib
-              })
-            }
-          }
-        } 
-      })
+      // wrapPromise(node_args(nolib, graph, node.id)).then(nodeargs => {
+      //   if(edges_in.length === 1){ 
+      //     if(nodeargs.nodeArgs.filter(na => !na.additionalArg && !na.name.startsWith("_")).length === 1) {
+      //       const newAs = nodeargs.nodeArgs.find(a => !a.additionalArg).name
+      //       if(newAs !== edges_in[0].as) {
+      //         nolib.no.runtime.updateGraph({
+      //           graph: editingGraph, 
+      //           addedEdges: [{...edges_in[0], as: newAs}], 
+      //           lib: hlibLib
+      //         })
+      //       }
+      //     } else if(nodeargs.nodeArgs.find(a => a.default)) {
+      //       const newAs = nodeargs.nodeArgs.find(a => a.default).name
+      //       if(newAs) {
+      //         nolib.no.runtime.updateGraph({
+      //           graph: editingGraph, 
+      //           addedEdges: [{...edges_in[0], as: newAs}], 
+      //           lib: hlibLib
+      //         })
+      //       }
+      //     }
+      //   } 
+      // })
 
-      dispatch(s => [{...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: node.id}]])
+      dispatch(s => [{...s, selectedMetadata: {}}, [CalculateSelectedNodeArgsEffect, {graph, node_id: node.id}]])
     })
 }
 
@@ -572,31 +568,42 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = (dispatch, {graph,
   }
   const runtime = hlib.runtime();
 
-  const argsNode = {_output: runtime.varNode("value")};
-
 
   const runNode = runtime.fromNode(graph, graph.out ?? "out")
 
-  argsNode._output.set("display")
-  const run = async () => {
-    for await(const display of runtime.createWatch(runNode, "display")) {
-      // console.log("got display", display)
-      result_display_dispatch(UpdateResultDisplay, {
-        el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
-      })
+  const run = async (_output) => {
+    for await(const display of runtime.createWatch(runNode, _output)) {
+      console.log("got", _output, display)
+      if(_output === "display") {
+        display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
+          el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
+        })
+        display && display.background && result_background_display_dispatch({
+          el: display?.background ? display.background : {dom_type: "div", props: {}, children: []},
+        })
+      }
     }
   }
-  run();
   
   const update = () => {
-    console.log("running graph", graph, argsNode)
+    console.log("running graph", graph)
     wrapPromise(runtime.run(runNode, "display"))
       .then(display => {
+        run("display");
         // console.log(display)
         result_display_dispatch(UpdateResultDisplay, {
           el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
+          backgroundEl: display?.background ? display.background : {dom_type: "div", props: {}, children: []},
         })
       })
+
+
+    wrapPromise(runtime.run(runNode, "value"))
+      .then(value => {
+        run("value");
+        console.log("val?", value)
+      })
+
   }
 
   if(runNode) {
@@ -910,11 +917,12 @@ const parseTypedArg = (value: string): [string, TypedArg] => {
 }
 
 export const CalculateSelectedNodeArgsEffect: ha.Effecter<HyperappState, {graph: Graph, node_id: string}> = 
-  (dispatch, {graph, node_id}) => wrapPromise(node_args(nolib, graph, node_id )).then(nodeArgs => dispatch(s => ({
-    ...s,
-    selectedNodeArgs: nodeArgs.nodeArgs,
-    selectedNodeEdgeLabels: nodeArgs.nodeOutArgs?.map(a => a.name) ?? []
-  }))).value
+  (dispatch, {graph, node_id}) => {};
+// wrapPromise(node_args(nolib, graph, node_id )).then(nodeArgs => dispatch(s => ({
+//     ...s,
+//     selectedNodeArgs: nodeArgs.nodeArgs,
+//     selectedNodeEdgeLabels: nodeArgs.nodeOutArgs?.map(a => a.name) ?? []
+//   }))).value
 
 export const node_args = (nolib: Record<string, any>, graph: Graph, node_id: string, cachedMetadata: Record<string, NodeMetadata> = {}): {nodeArgs: Array<NodeArg>, nodeOutArgs?: Array<NodeArg>} | Promise<{nodeArgs: Array<NodeArg>, nodeOutArgs?: Array<NodeArg>}> => {
   const node = nolib.no.runtime.get_node(graph, node_id)
@@ -929,7 +937,7 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id: str
     return Promise.resolve({nodeArgs: []})
   }
   const node_out = edge_out && nolib.no.runtime.get_node(graph, edge_out.to)
-  return wrapPromise(cachedMetadata[node_id] ?? hlib.run(graph, node_id, {_output: "metadata"}))
+  return wrapPromise(cachedMetadata[node_id] ?? hlib.run(graph, node_id, "metadata"))
     // NOTE: there's a mutation of cachedMetadata here
     .then(metadata => wrapPromise(edge_out && node_args(nolib, graph, edge_out.to, (cachedMetadata[node_id] = metadata, cachedMetadata)))
       .then(nodeOutNodeArgs => {
@@ -1045,19 +1053,18 @@ export const hlibLib = mergeLib(nolibLib, newLib({
   },
   scripts: { d3subscription, updateSimulationNodes, keydownSubscription, calculateLevels, listen, graph_subscription, save_graph},
   panzoom: pzobj,
-  run: (graph, fn, args?, lib?, options?) => {
+  run: (graph, fn, _output) => {
     if(!runtime) {
       console.log("no runtime", graph, fn)
       return;
     }
     try{
-      // const result = wrapPromise(runtime.fromNode(graph, fn)).then(runNode => runtime.run(runNode)).value;
-      // if(ispromise(result)){
-      //   return result.catch(e => console.error(e))
-      // }
-      //
-      // return result
-      return undefined;
+      const result = wrapPromise(runtime.runGraphNode(graph, fn)).value;
+      if(ispromise(result)){
+        return result.catch(e => console.error(e))
+      }
+
+      return result
     } catch(e) {
       console.error(e)
     }

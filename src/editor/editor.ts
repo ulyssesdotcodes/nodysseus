@@ -114,7 +114,7 @@ const refresh_custom_editor = () =>
     if(graph) {
       // TODO: combine with update_info
       const graph = nolib.no.runtime.get_ref("custom_editor")
-      wrapPromise(graph).then(graph => hlib.run(graph, graph.out, {_output: "display"}))
+      wrapPromise(graph).then(graph => hlib.run(graph, graph.out, "display"))
         .then(result => result && custom_editor_display_dispatch(() => ({el: result})))
     } else {
       custom_editor_display_dispatch(() => ({el: {dom_type: "div", props: {}, children: []}}))
@@ -189,7 +189,7 @@ const runapp = (init, _lib) => {
               nolib.no.runtime.change_graph(base_graph(init.editingGraph), hlibLib)
             })
           }],
-          [refresh_graph, {...init, graph: init.editingGraph, result_display_dispatch}]
+          [refresh_graph, {...init, graph: init.editingGraph, result_display_dispatch, result_background_display_dispatch}]
         ])
       })],
       [dispatch => wrapPromise(nolib.no.runtime.get_graph("custom_editor"))
@@ -307,7 +307,7 @@ const runapp = (init, _lib) => {
             onclick: (s: HyperappState) => [s, [dispatch => { 
               nolib.no.runtime.delete_cache() 
               // nolib.no.runtime.clearListeners();
-              hlib.run(s.editingGraph, s.editingGraph.out ?? "out", {_output: "value"}, {profile: false})  
+              hlib.run(s.editingGraph, s.editingGraph.out ?? "out", "value")  
               refresh_custom_editor()
               requestAnimationFrame(() =>  dispatch(s => [s, [() => {
                 s.simulation.simulation.alpha(1) 

@@ -326,7 +326,8 @@ const mergeDeep = (a: Record<string, unknown>, b: Record<string, unknown>) => {
 export const runnableId = (runnable: Runnable) => isConstRunnable(runnable) ? `${runnable.graph}/${runnable.fn}` : false
 
 
-export function compareObjects(value1, value2, isUpdate = false) {
+const emptySet = new Set<string>();
+export function compareObjects(value1, value2, isUpdate = false, excludedFields: Set<string> = emptySet) {
   const keys1 = Object.keys(value1)
   const keys2 = !isUpdate && Object.keys(value2)
 
@@ -335,6 +336,8 @@ export function compareObjects(value1, value2, isUpdate = false) {
   }
 
   for (const key of keys1) {
+    if(excludedFields.has(key))
+      continue
     if(key === "__args"){
       continue
     }

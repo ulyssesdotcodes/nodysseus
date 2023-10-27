@@ -1758,6 +1758,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     import_module: {
       args: ["url", "__graph_value", "_lib"],
       fn: (url, graphvalue) => {
+        console.log("importing", url, graphvalue)
         const urlval = url || graphvalue
         if(!urlval) return
         const stateid = `__jsimport:${urlval}`

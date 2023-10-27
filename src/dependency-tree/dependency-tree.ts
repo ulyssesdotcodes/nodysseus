@@ -13,13 +13,15 @@
 //   }
 // }
 
-import { ConstRunnable, Edge, Graph, NodysseusNode, NodysseusStore, RefNode, Runnable, isGraph, isNodeRef, isNodeValue, isValue } from "../types.js";
+import { ConstRunnable, Edge, Graph, NodysseusNode, NodysseusStore, NonErrorResult, RefNode, Result, Runnable, isGraph, isNodeRef, isNodeValue, isValue } from "../types.js";
 import { initStore, node_extern, node_value, nolib, nolibLib, run_extern } from "../nodysseus.js";
 import { v4 as uuid } from "uuid";
-import { appendGraphId, compareObjects, ispromise, newEnv, parseArg, wrapPromise, wrapPromiseAll } from "../util.js";
+import { NodysseusError, appendGraphId, compareObjects, ispromise, newEnv, parseArg, wrapPromise, wrapPromiseAll } from "../util.js";
 import get from "just-safe-get";
 
 type RUnknown = Record<string, unknown>;
+
+const NAME_FIELD = new Set(["name"]);
 
 export function compareObjectsNeq(value1, value2) {
   const keys1 = Object.keys(value1)
@@ -46,7 +48,7 @@ export function compareObjectsNeq(value1, value2) {
 //
 
 const mapEntries = <T extends Record<string, unknown>, S extends Record<string, unknown>>(v: T, f: (e: [string, T["string"]]) => S[keyof S]): S =>
-  Object.fromEntries(Object.entries(v).map((e: [string, unknown]) => [e[0], f(e as [string, T["string"]])])) as S;
+  Object.fromEntries(Object.entries(v).filter(e => e[1]).map((e: [string, unknown]) => [e[0], f(e as [string, T["string"]])])) as S;
 
 type NodeKind = "const" | "map" | "var" | "bind";
 type Nothing = {__kind: "nothing"}
@@ -178,10 +180,11 @@ export const bindNode = <R, T extends AnyNode<R> | AnyNode<R>, S extends Record<
 export class NodysseusRuntime {
   private scope: Scope;
   private _outputReturns: Map<string, string> = new Map();
-  private watches: Record<string, {_output: "value" | "display", fn: Array<(a: unknown) => void>}> = {};
+  private watches: Record<string, Partial<Record<"display" | "value" | "metadata", Array<(a: unknown) => void>>>> = {};
   private outputs: Map<string, Set<string>> = new Map();
   private inputs: Map<string, Set<string>> = new Map();
   private rerun: Map<string, number> = new Map();
+  private lib: Record<string, any> = {};
 
   constructor(private store: NodysseusStore){
     this.scope = new Scope();
@@ -195,18 +198,24 @@ export class NodysseusRuntime {
     return {
       [Symbol.asyncIterator]: () => ({
         next: () => new Promise<IteratorResult<T>>((res) => {
-          if(!Object.hasOwn(this.watches, node.id)) this.watches[node.id] = {_output, fn: []};
+          if(!Object.hasOwn(this.watches, node.id)) this.watches[node.id] = {}
+          if(!Object.hasOwn(this.watches[node.id], _output)) this.watches[node.id][_output] = [];
           const watch = (a: T) => {
-            this.watches[node.id].fn.splice(this.watches[node.id].fn.indexOf(watch), 1);
+            console.log("watch result", a, _output, node.id)
+            this.watches[node.id][_output].splice(this.watches[node.id][_output].indexOf(watch), 1);
             res({value: a});
           }
-          this.watches[node.id].fn.push(watch);
+          this.watches[node.id][_output].push(watch);
+          console.log("added watch", node.id, _output, this.watches[node.id][_output])
         })
       })
     }
   }
 
   private resetOutputs(id: string, inputs?: Array<AnyNode<unknown>> | Record<string, AnyNode<unknown>>) {
+    if(id.includes("4sl7b8k")) {
+      console.log("got new osc")
+    }
     if(!this.outputs.has(id)) this.outputs.set(id, new Set());
     if(!this.inputs.has(id)) this.inputs.set(id, new Set());
     else this.dirty(id);
@@ -214,8 +223,10 @@ export class NodysseusRuntime {
     if(inputs) {
       let k;
       for(k in inputs) {
-        this.outputs.get(inputs[k].id).add(id)
-        this.inputs.get(id).add(inputs[k].id);
+        if(inputs[k]) {
+          this.outputs.get(inputs[k].id).add(id)
+          this.inputs.get(id).add(inputs[k].id);
+        }
       }
     }
   }
@@ -223,7 +234,9 @@ export class NodysseusRuntime {
   private dirty(id: string) {
     const node = this.scope.get(id);
     if(isMapNode(node) || isBindNode(node)) {
-      if(node.isDirty.read()) return;
+      if(node.isDirty.read()) {
+        return;
+      }
       node.isDirty.write(true);
     }
     let nid;
@@ -232,7 +245,10 @@ export class NodysseusRuntime {
       this.dirty(nid);
     }
     if(this.watches[id] && !this.rerun.has(id)) this.rerun.set(id, requestAnimationFrame(() => {
-      this.runNode(this.scope.get(node.id));
+      Object.entries(this.watches[id]).forEach(e => {
+        console.log("rerunning for watch", e[0])
+        this.runNode(this.scope.get(node.id), e[0] as "display" | "value" | "metadata");
+      });
       this.rerun.delete(id);
     }))
   }
@@ -244,10 +260,13 @@ export class NodysseusRuntime {
     return node;
   }
 
-  varNode<T>(initial?: T, compare?: (a: T, b: T) => boolean, id?: string) {
+  varNode<T>(initial?: T, compare?: (a: T, b: T) => boolean, id?: string, log = false) {
     const node = varNode((newValue: T) => {
       const currentValue = node.value.read()
       if(isNothing(currentValue) || !node.compare(currentValue, newValue)) {
+        if(log) {
+          console.log("varchanged", newValue, currentValue)
+        }
         node.value.write(newValue);
         this.dirty(node.id);
       }
@@ -277,13 +296,13 @@ export class NodysseusRuntime {
     // console.log("creating bind")
     const node = bindNode<R, T, S>(inputs, args => {
       const current = node.value.read();
-      return wrapPromise(fn(args))
-        .then(outNode => {
-          if(isNothing(outNode)) {
-            debugger;
-          }
+      return wrapPromiseAll([fn(args), current])
+        .then(([outNode, current]) => {
           if(current !== outNode && outNode) {
+            if(current && !isNothing(current))  this.outputs.get(node.id).forEach(oid => this.outputs.get(current.id).delete(oid))
+            // if(current && !isNothing(current)) this.outputs.get(current.id)?.delete(node.id)
             this.outputs.get(node.id).forEach(oid => this.outputs.get(outNode.id).add(oid));
+            // this.outputs.get(outNode.id).add(node.id)
             this.dirty(outNode.id)
           }
           return outNode
@@ -307,20 +326,20 @@ export class NodysseusRuntime {
       id && `${id}-bind`
     ) as AnyNode<AnyNode<T>>;
     return this.mapNode({bound: binding}, ({bound}) => {
-      const res = this.runNode(bound);
+      const res = this.runNode(this.scope.get(bound.id));
       return res && !isNothing(res) ? res : undefined;
     }, undefined, id)
   }
 
-  public fromNode<T, S extends Record<string, unknown>>(graph: Graph, nodeId: string, closure?: AnyNodeMap<S>): AnyNode<T> | Promise<AnyNode<T>> {
+  public fromNode<T, S extends Record<string, unknown>>(graph: Graph, nodeId: string, closure?: AnyNodeMap<S>): AnyNode<(output: string) => T> | Promise<AnyNode<(output?: string) => T>> {
     closure = closure ?? ({} as AnyNodeMap<S>);
     return wrapPromise(typeof graph === "string" ? this.store.refs.get(graph) : graph).then(graph =>
-      this.fromNodeInternal<T, S>(graph, nodeId, graph.id, closure && this.constNode(closure))
+      this.fromNodeInternal<T, S>(graph, nodeId, graph.id, closure && this.constNode(closure, appendGraphId(graph.id, nodeId) + "-outerargs"))
     ).value;
   }
 
   private calcNode<T, S extends Record<string, unknown>>(graph: Graph, node: NodysseusNode, graphId: string, nodeGraphId: string, closure: AnyNode<AnyNodeMap<S>>, edgesIn: Edge[]) {
-    const calculateInputs = () => Object.fromEntries(edgesIn.map(e => [e.as, this.fromNodeInternal(graph, e.from, graphId, closure)])) as AnyNodeMap<S>;
+    const calculateInputs = () => Object.fromEntries(edgesIn.map(e => [e.as, this.valueMap(this.fromNodeInternal(graph, e.from, graphId, closure), nodeGraphId + `-valmapinput${e.as}`)])) as AnyNodeMap<S>;
     // this.scope.removeAll(nodeGraphId)
     // console.log(this.scope.get(nodeGraphId))
     if(isNothing(node)) {
@@ -335,64 +354,114 @@ export class NodysseusRuntime {
     }
   }
 
+  private valueMap<T>(nodeFn: AnyNode<(output?: string) => T>, nodeGraphId) {
+    return this.mapNode({nodeFn}, ({nodeFn}) => {
+      const res = nodeFn();
+      return res;
+    }, undefined, nodeGraphId);
+  }
+
   private dereference<T, S extends Record<string, unknown>>(graph: Graph, node: RefNode, edgesIn: Edge[], graphId: string, nodeGraphId: string, closure: AnyNode<AnyNodeMap<S>>, calculateInputs: () => AnyNodeMap<S>, refNode = node): AnyNode<T> | PromiseLike<AnyNode<T>> {
     return wrapPromise(this.store.refs.get(refNode.ref) as Graph)
       .then((nodeRef): AnyNode<T> => {
         if(refNode.ref === "@js.script") {
-          const scriptFn = new Function(...edgesIn.map(e => e.as), refNode.value) as (...args: any[]) => any;
-          return this.mapNode(calculateInputs(), (args) => scriptFn(...Object.values(args)), undefined, nodeGraphId)
+          let scriptFn;
+          try{
+            scriptFn = new Function("_lib", "_node", "_node_args", ...edgesIn.map(e => e.as), refNode.value) as (...args: any[]) => any;
+          } catch(e) {
+            console.error(e);
+            const error = new NodysseusError(nodeGraphId, e);
+            nolib.no.runtime.publish("grapherror", error, nolibLib)
+            scriptFn = () => {};
+          }
+
+          return this.mapNode({...calculateInputs(), closure}, ({closure, ...args}) => {
+            if(closure._output?.value.read() === "metadata"){
+              return {dataLabel: "script", codeEditor: {language: "javascript", editorText: node.value}};
+            }
+            try {
+              return scriptFn(this.lib, node, args, ...Object.values(args))
+            } catch(e) {
+              console.error(e);
+              const error = new NodysseusError(nodeGraphId, e);
+              nolib.no.runtime.publish("grapherror", error, nolibLib)
+            }
+          }, undefined, nodeGraphId)
         } else if (refNode.ref === "return") {
           const argsEdge = edgesIn.find(e => e.as === "args");
           const chainedscope: AnyNode<AnyNodeMap<S>> = argsEdge ? this.mapNode({
             closure,
             args: this.fromNodeInternal<Record<string, unknown>, S>(graph, argsEdge.from, graphId, closure)
-          }, ({args, closure}) => ({
+          }, ({args, closure}) => {
+            return wrapPromise(args("value")).then(argsres => ({
             ...closure,
-            ...mapEntries(args, e => this.constNode(e[1], `${nodeGraphId}-${e[0]}-arg`) as S[keyof S]), 
-          }), undefined, nodeGraphId + "-returnchained") as AnyNode<AnyNodeMap<S>> 
-            : this.mapNode({closure}, ({closure}) => ({...closure, _output: undefined}), undefined, nodeGraphId + "-returnchained");
+            ...mapEntries(argsres, e => this.constNode(e[1], `${nodeGraphId}-${e[0]}-arg`) as S[keyof S]), 
+          })).value}, undefined, nodeGraphId + "-returnchained") as AnyNode<AnyNodeMap<S>> 
+            : closure;
 
           const inputs = Object.fromEntries(
             edgesIn
               .filter(e => e.as !== "args")
-              .map(e => [e.as, this.fromNodeInternal(graph, e.from, graphId, chainedscope)])
+              .map(e => [e.as, this.valueMap(this.fromNodeInternal(graph, e.from, graphId, chainedscope), nodeGraphId + `-argsvalmap-${e.as}`)])
           )
 
-          return this.switchNode(
-            this.mapNode({bound: this.bindNode(
-              {closure},
-              ({closure}) => closure?.["_output"],
-              undefined,
-              nodeGraphId + "-returnmap"
-            )}, ({bound}) => {
-              if(this._outputReturns.has(nodeGraphId)){
-                const _output = this._outputReturns.get(nodeGraphId);
-                this._outputReturns.delete(nodeGraphId);
-                return _output;
-              }
-              const res = bound && this.runNode(bound);
-              return res && typeof res === "string" ? res : "value"
-            }, undefined, nodeGraphId + "-bound_output"),
-            inputs as AnyNodeMap<S>,
-            nodeGraphId
-          ) as AnyNode<T>
+          const subscribeEdge = edgesIn.find(e => e.as === "subscribe");
+          const subscribe = subscribeEdge && this.valueMap(this.fromNodeInternal(graph, subscribeEdge.from, graphId, chainedscope), nodeGraphId + "-subvalmap");
+
+          return wrapPromise(edgesIn.find(e => e.as === "lib") ?
+            this.runNode(
+              this.mapNode({
+                lib: this.valueMap(this.fromNodeInternal(graph, edgesIn.find(e => e.as === "lib").from, graphId, closure), nodeGraphId + "-libvalmap")
+              }, ({lib}) => Object.assign(this.lib, lib))
+            ) : undefined).then(() => {
+
+            return this.switchNode(
+              this.mapNode({
+                bound: this.bindNode(
+                  {closure},
+                  ({closure}) => closure?.["_output"],
+                  undefined,
+                  nodeGraphId + "-returnmap"
+                ),
+                subscribe
+              }, ({bound, subscribe: subscriptions}) => {
+                subscriptions && Object.entries(subscriptions)
+                  .forEach(kv => kv[1] &&
+                    nolib.no.runtime.addListener(kv[0], nodeGraphId, kv[1], false, graphId, true, nolibLib))
+
+                const res = bound && this.runNode(bound);
+                return res && typeof res === "string" ? res : "value"
+              }, undefined, nodeGraphId + "-bound_output"),
+              inputs as AnyNodeMap<S>,
+              nodeGraphId
+            ) as AnyNode<T>
+          }).value
         } else if (refNode.ref === "extern") {
           if(refNode.value === "extern.switch") {
             const predEdge = edgesIn.find(e => e.as === "input");
             return this.switchNode(
-              this.fromNodeInternal(graph, predEdge.from, graphId, closure), 
+              this.valueMap(this.fromNodeInternal(graph, predEdge.from, graphId, closure), nodeGraphId + "-predvalmap"), 
               Object.fromEntries(
                 edgesIn.filter(e => e.as !== "input")
-                  .map(e => [e.as, this.fromNodeInternal(graph, e.from, graphId, closure)])
+                  .map(e => [e.as, this.valueMap(this.fromNodeInternal(graph, e.from, graphId, closure), nodeGraphId + `-valmap${e.as}`)])
               ), nodeGraphId) as AnyNode<T>;
           } else if(refNode.value === "extern.runnable") {
             const fnArgs = this.varNode<Record<string, unknown>>({}, undefined, nodeGraphId + "-fnargs")
-            const chainedClosure = this.mapNode({fnArgs, closure}, ({fnArgs, closure}) => ({...mapEntries(fnArgs, e => this.constNode(e[1], `${nodeGraphId}-${e[0]}-arg`) as S[keyof S]), ...closure}), undefined, nodeGraphId + "-runnablechained") as AnyNode<AnyNodeMap<S>>;
-            const fnNode = this.fromNodeInternal(graph, edgesIn.find(e => e.as === "fn").from, graphId, chainedClosure)
-            return this.constNode(((args) => {
-              fnArgs.set(args);
-              return this.run(fnNode);
-            }) as T, nodeGraphId + "-runnableconst");
+            const chainedClosure = this.mapNode({fnArgs, closure}, ({fnArgs, closure}) => ({...closure, ...mapEntries(fnArgs, e => this.constNode(e[1], `${nodeGraphId}-${e[0]}-arg`) as S[keyof S])}), undefined, nodeGraphId + "-runnablechained") as AnyNode<AnyNodeMap<S>>;
+
+            const parametersEdge = edgesIn.find(e => e.as === "parameters");
+            const parameters = parametersEdge && this.valueMap(this.fromNodeInternal(graph, parametersEdge.from, graphId, closure), nodeGraphId + "-parametersvalmap");
+
+            const fnNode = this.valueMap(this.fromNodeInternal(graph, edgesIn.find(e => e.as === "fn").from, graphId, chainedClosure), nodeGraphId + "-fnnodevalmap")
+            return this.mapNode({ parameters }, ({parameters}) => ((args) => {
+              if(parameters) {
+                const keys = new Set(Object.keys(parameters));
+                fnArgs.set(Object.fromEntries(Object.entries(args).filter(e => keys.has(e[0]))));
+              } else {
+                fnArgs.set({})
+              }
+              return this.runNode(fnNode);
+            }) as T, undefined, nodeGraphId);
           } else if(refNode.value === "extern.map") {
             return this.mapNode(calculateInputs() as {fn: AnyNode<(mapArgs: {element: unknown, index: number}) => unknown>, array: AnyNode<Array<unknown>>}, ({fn, array}) => array.map((element, index) => fn({element, index})), undefined, nodeGraphId) as AnyNode<T>
           } else if(refNode.value === "extern.fold") {
@@ -402,51 +471,69 @@ export class NodysseusRuntime {
                 object: AnyNode<Array<unknown>>, 
                 initial: AnyNode<T>
               }, ({fn, object, initial}) => 
+              object === undefined ? object :
                 Array.isArray(object) ? object : 
                 Object.entries(object).reduce<T>(
                   (previousValue, currentValue, index) => 
                     fn({previousValue, currentValue, index}), initial), undefined, nodeGraphId) as AnyNode<T>
           } else if(refNode.value === "extern.ap") {
-            const fn: AnyNode<Array<(mapArgs: Record<string, unknown>) => T>> = this.fromNodeInternal(graph, edgesIn.find(e => e.as === "fn").from, graphId, closure)
-            const run: AnyNode<boolean> = this.fromNodeInternal(graph, edgesIn.find(e => e.as === "fn").from, graphId, closure);
+            const fn: AnyNode<Array<(mapArgs: Record<string, unknown>) => T>> = this.valueMap(this.fromNodeInternal(graph, edgesIn.find(e => e.as === "fn").from, graphId, closure), nodeGraphId + "-fnvalmap")
+            const runEdge = edgesIn.find(e => e.as === "run")
+            const run: AnyNode<boolean> = runEdge && this.valueMap(this.fromNodeInternal(graph, runEdge.from, graphId, closure), nodeGraphId + "-runvalmap");
             const apArgs = this.varNode<Record<string, unknown>>({}, undefined, nodeGraphId + "-apapargs")
-            const chainedClosure = this.mapNode({apArgs, closure}, ({apArgs, closure}) => ({...mapEntries(apArgs, e => this.constNode(e[1], `${nodeGraphId}-${e[0]}-arg`) as S[keyof S]), ...closure}), undefined, nodeGraphId + "-runnablechained") as AnyNode<AnyNodeMap<S>>;
+            const chainedClosure = this.mapNode({apArgs, closure}, ({apArgs, closure}) => ({...mapEntries((console.log("apargs", apArgs), apArgs), e => this.constNode(e[1], `${nodeGraphId}-${e[0]}-arg`) as S[keyof S]), ...closure}), undefined, nodeGraphId + "-runnablechained") as AnyNode<AnyNodeMap<S>>;
             const argsEdge = edgesIn.find(e => e.as === "args")?.from;
             const args = argsEdge ? this.mapNode({
-              argsNode: this.fromNodeInternal(graph, argsEdge, graphId, chainedClosure) as AnyNode<Record<string, unknown>>
+              argsNode: this.valueMap(this.fromNodeInternal(graph, argsEdge, graphId, chainedClosure), nodeGraphId + "-argsvalmap") as AnyNode<Record<string, unknown>>
             }, ({argsNode}) => argsNode, undefined, nodeGraphId + "-apargs") : closure;
-            
+
             return this.mapNode({fn, run}, ({fn, run}) => {
               if(run) {
-                return wrapPromise(this.run(args)).then(args => (Array.isArray(fn) ? fn : [fn]).filter(f => typeof f === "function").map(ffn => ffn(args))).then(results => Array.isArray(results) ? results : results[0]).value;
+                return wrapPromise(this.runNode(args)).then(args => (Array.isArray(fn) ? fn : [fn]).filter(f => typeof f === "function").map(ffn => ffn(args))).then(results => Array.isArray(results) ? results : results[0]).value;
               } else {
                 return (args) => {
                   apArgs.set(args);
-                  return wrapPromise(this.run(apArgs) as Record<string, unknown>)
+                  return wrapPromise(this.runNode(apArgs) as Record<string, unknown>)
                     .then(args => (Array.isArray(fn) ? fn : [fn]).filter(f => typeof f === "function").map(ffn => ffn(args))).then(results => Array.isArray(results) ? results : results[0]).value;
                 }
               }
             }, undefined, nodeGraphId) as AnyNode<T>;
           } else if (refNode.value === "extern.reference") {
             const initialNode = edgesIn.find(e => e.as === "initial")?.from 
-              ? this.fromNodeInternal(graph, edgesIn.find(e => e.as === "initial").from, graphId, closure)
+              ? this.valueMap(this.fromNodeInternal(graph, edgesIn.find(e => e.as === "initial").from, graphId, closure), nodeGraphId + "-initialvalmap")
               : this.constNode(undefined, nodeGraphId + "-refconst");
             const setNode = this.varNode<T>(undefined, undefined, nodeGraphId + "-refset");
 
             return this.mapNode({initial: initialNode, set: setNode}, ({initial, set}) => ({
-              value: set ?? initial,
-              set: (t: T) => setNode.set(t)
+              value: set && !isNothing(set) ? set : initial,
+              set: (t: {value: T}) => {
+                setNode.set(t.value)
+              }
             }), undefined, nodeGraphId) as AnyNode<T>
           } else if (refNode.value === "extern.state") {
             const valueNode = edgesIn.find(e => e.as === "value")?.from 
-              ? this.fromNodeInternal(graph, edgesIn.find(e => e.as === "value").from, graphId, closure)
+              ? this.valueMap(this.fromNodeInternal(graph, edgesIn.find(e => e.as === "value").from, graphId, closure), nodeGraphId + "-valmapinitial")
               : this.constNode(undefined, nodeGraphId + "-stateconst");
             const setNode = this.varNode<T>(undefined, undefined, nodeGraphId + "-stateset");
 
             return this.mapNode({initial: valueNode, set: setNode}, ({initial, set}) => ({
-              value: set ?? initial,
-              set: (t: T) => setNode.set(t)
+              value: set && !isNothing(set) ? set : initial,
+              set: (t: {value: T}) => setNode.set(t.value)
             }), undefined, nodeGraphId) as AnyNode<T>
+          } else if(refNode.value === "extern.cache") {
+            const value = edgesIn.find(e => e.as === "value")?.from 
+              ? this.fromNodeInternal(graph, edgesIn.find(e => e.as === "value").from, graphId, closure)
+              : this.constNode(undefined, nodeGraphId + "-stateconst");
+
+            const recache = edgesIn.find(e => e.as === "recache")?.from 
+              ? this.fromNodeInternal(graph, edgesIn.find(e => e.as === "value").from, graphId, closure)
+              : this.constNode<false>(false, nodeGraphId + "-stateconst");
+
+            const outNode = this.mapNode({
+              recache, 
+              value: this.bindNode({}, () => value, undefined, nodeGraphId + "-value")
+            }, ({value}) => wrapPromise(this.runNode(value)).then(v => v()).value, ({recache: r1}, {recache}) => !!(recache && recache()) || isNothing(outNode.value.read()) || outNode.value.read() === undefined, nodeGraphId)
+            return outNode;
           } else if (refNode.value === "extern.frame") {
             const varNode: VarNode<T> = this.varNode(1 as T, undefined, nodeGraphId)
             const update = () => {
@@ -459,29 +546,57 @@ export class NodysseusRuntime {
             return varNode;
           } else {
             const inputs = calculateInputs()
+            const systemValues: Array<[string, Result]> = ([
+              ["__graphid", nolib.no.of(nodeGraphId)], 
+              ["__graph_value", nolib.no.of(node.value)],
+            ] as Array<[string, Result] | false>).filter((e): e is [string, Result] => e !== false);
             return this.mapNode(
-              inputs, 
-              (nodeArgs) => node_extern(
+              {...inputs}, 
+              (nodeArgs) => wrapPromise(node_extern(
                 refNode, 
-                new Map(Object.entries(nodeArgs).map(e => [e[0], nolib.no.of(e[1])])), 
-                newEnv(new Map([["__graphid", nolib.no.of(nodeGraphId)]])), nolibLib, {}
-              ).value,
+                new Map(Object.entries(nodeArgs).map(e => [e[0], nolib.no.of(e[1])]).concat(systemValues) as Array<[string, Result]>), 
+                newEnv(new Map()), nolibLib, {}
+              )).then(r => (r as NonErrorResult).value).value,
               undefined,
               nodeGraphId
             )
           }
         } else if(refNode.ref === "arg") {
-          return this.mapNode({bound: this.bindNode(
+          const argname = parseArg(refNode.value).name;
+          const isAccessor = argname.includes(".");
+          const allArgs = this.mapNode({bound: this.bindNode({closure}, ({closure: innerClosure}: {closure: AnyNodeMap<S>}) => 
+                                        (console.log("bind close", innerClosure), this).mapNode(innerClosure, (innerClosure) => (console.log("innerclose", innerClosure), innerClosure) as S[keyof S], undefined, nodeGraphId + "-allargsmap"), undefined, nodeGraphId + "-allargs")}, ({bound}) => this.runNode(bound), undefined, nodeGraphId + "-outerbind");
+          const libNode = this.constNode(this.lib, nodeGraphId + "-lib");
+          const graphIdNode = this.constNode(node.value, `${nodeGraphId}-internalnodegraphid`)
+          const mnode = this.mapNode({bound: this.bindNode(
             {closure},
-            ({closure}) => {
-              return closure[parseArg(refNode.value).name]
+            ({closure}): AnyNode<unknown> => {
+              if(argname === "_argsdata") {
+                console.log("argsdata close", allArgs)
+                // Object.values(closure).map(argnode => argnode && this.outputs.get(argnode.id).add(mnode.id))
+              }
+
+              return argname === "_argsdata"
+                ? allArgs
+                : argname.startsWith("_lib")
+                ? libNode
+                : argname === "__graphid"
+                ? graphIdNode
+                : isAccessor
+                ? closure[argname.substring(0, argname.indexOf("."))]
+                : closure[argname];
             },
             undefined,
             nodeGraphId + "-bind"
           )}, ({bound}) => {
-            const res = this.runNode(bound);
-            return (res && !isNothing(res) ? res : undefined) as T
-          }, undefined, nodeGraphId);
+            return wrapPromise(this.runNode(bound)).then(res => {
+            if(argname === "_argsdata") {
+              console.log("argsdata bound close", res, bound);
+            }
+            return (res && !isNothing(res) ? isAccessor ? get(res, argname.substring(argname.indexOf(".") + 1)) : res : undefined) as T
+          }).value}, undefined, nodeGraphId);
+
+          return mnode;
           // this.switchNode(
           //   this.constNode(parseArg(refNode.value).name), 
           //   closure);
@@ -493,16 +608,15 @@ export class NodysseusRuntime {
         } else if(isGraph(nodeRef)) { 
 
           return this.mapNode({
-          bound: this.bindNode({}, () => 
-            this.fromNodeInternal(
+          bound: this.bindNode({closure}, () => 
+            this.valueMap(this.fromNodeInternal(
               nodeRef, 
               nodeRef.out ?? "out", 
               nodeGraphId + nodeRef.id, 
               this.constNode({
                 ...calculateInputs(), 
-                _output: undefined,
                 __graph_value: this.constNode(node.value, `${nodeGraphId}-internalnodegraphvalue`)
-              }, nodeGraphId + "-args"))
+              }, nodeGraphId + "-args")), nodeGraphId + "-nestedvalmap")
           , undefined, nodeGraphId + "-graphoutbind")
           }, ({bound}) => this.runNode(bound) as T,
             undefined, nodeGraphId)
@@ -518,12 +632,14 @@ export class NodysseusRuntime {
   }
 
 
-  private fromNodeInternal<T, S extends Record<string, unknown>>(graph: Graph, nodeId: string, graphId: string, closure?: AnyNode<AnyNodeMap<S>>): AnyNode<T> {
+  private fromNodeInternal<T, S extends Record<string, unknown>>(graph: Graph, nodeId: string, graphId: string, closure?: AnyNode<AnyNodeMap<S>>): AnyNode<(output?: string) => T> {
     const node = graph.nodes[nodeId];
     const nodeGraphId =  appendGraphId(graphId, nodeId)
     const staticGraphId = graph.id;
     const current = this.scope.get(nodeGraphId + "-boundgraph")
-    if(current) return current as AnyNode<T>;
+    if(current) {
+      return current as AnyNode<(output: string) => T>;
+    }
 
     const graphNodeNode: VarNode<{node: NodysseusNode, edgesIn: Array<Edge>, graph: Graph}> = this.varNode({
       graph,
@@ -532,15 +648,24 @@ export class NodysseusRuntime {
         ? Object.values(graph.edges_in?.[node.id]) 
         : Object.values(graph.edges).filter((e: Edge) => e.to === node.id)
     }, ({node: nodeA, edgesIn: edgesInA, graph: graphA}, {node: nodeB, edgesIn: edgesInB, graph: graphB}) => {
-      if(!nodeB || !nodeA || !compareObjects(nodeA, nodeB) || edgesInA.length !== edgesInB.length) return false; 
+      if(!nodeB || !nodeA || !compareObjects(nodeA, nodeB, false, NAME_FIELD) || edgesInA.length !== edgesInB.length) return false; 
       const sortedEdgesA = edgesInA.sort((a, b) => a.as.localeCompare(b.as));
       const sortedEdgesB = edgesInB.sort((a, b) => a.as.localeCompare(b.as));
       return sortedEdgesA.every((e, i) => compareObjects(e, sortedEdgesB[i]))
-    }, nodeGraphId + "-graphnode");
+    }, nodeGraphId + "-graphnode", true);
     const calcedNode: AnyNode<AnyNode<T>> = this.bindNode({graphNodeNode}, ({graphNodeNode}) => {
+      console.log("got newnode", graphNodeNode)
       const newNode = this.calcNode(graphNodeNode.graph, graphNodeNode.node, graphId, nodeGraphId, closure, graphNodeNode.edgesIn);
       return newNode;
-    }, undefined, nodeGraphId + "-calcedNode");
+    }, undefined, nodeGraphId + "-value-calcedNode");
+    const calcedNodeDisplay: AnyNode<AnyNode<T>> = this.bindNode({graphNodeNode}, ({graphNodeNode}) => {
+      const newNode = this.calcNode(graphNodeNode.graph, graphNodeNode.node, graphId, nodeGraphId + "-display", this.mapNode({closure}, ({closure}) => ({...closure, _output: this.constNode("display", nodeGraphId + "-constdisplay")}), undefined, nodeGraphId + "-closuredisplay"), graphNodeNode.edgesIn);
+      return newNode;
+    }, undefined, nodeGraphId + "-display-calcedNode");
+    const calcedNodeMetadata: AnyNode<AnyNode<T>> = this.bindNode({graphNodeNode}, ({graphNodeNode}) => {
+      const newNode = this.calcNode(graphNodeNode.graph, graphNodeNode.node, graphId, nodeGraphId + "-metadata", this.mapNode({closure}, ({closure}) => ({...closure, _output: this.constNode("metadata", nodeGraphId + "-constmetadata")}), undefined, nodeGraphId + "-closuremetadata"), graphNodeNode.edgesIn);
+      return newNode;
+    }, undefined, nodeGraphId + "-metadata-calcedNode");
     // this.runNode(calcedNode);
 
     nolib.no.runtime.addListener("graphchange", nodeGraphId + "-nodelistener", ({graph}) => {
@@ -556,28 +681,50 @@ export class NodysseusRuntime {
       }
     })
 
-    return this.mapNode({
-      bound: calcedNode
-    }, ({bound}) => {
-      const res = this.runNode(bound) as T;
+    const retNode = this.mapNode({
+      boundValue: calcedNode,
+      boundDisplay: calcedNodeDisplay,
+      boundMetadata: calcedNodeMetadata,
+    }, ({boundValue, boundDisplay, boundMetadata}) => (output) => {
+      this.outputs.get(boundValue.id).add(retNode.id);
+      // console.log(output, boundValue, boundDisplay, boundMetadata)
+      const res = this.runNode(output === "display" ? boundDisplay : output === "metadata" ? boundMetadata : boundValue) as T;
       return res;
     }, undefined, nodeGraphId + "-boundgraph");
+    return retNode;
   } 
 
-  private runNode<T>(node: AnyNode<T> | Nothing, _output?: "display" | "value"): T | PromiseLike<T> | Nothing{
-    if(isNothing(node)) return node;
+  private running = new Set();
+
+  private runNode<T>(innode: AnyNode<T> | Nothing, _output?: "display" | "value" | "metadata"): T | PromiseLike<T> | Nothing{
+    if(isNothing(innode)) return innode;
+    const node: AnyNode<T> = this.scope.get(innode.id)! as AnyNode<T>;
+    if(node.id.startsWith("hydra_example/fxdvtj6")) {
+      requestAnimationFrame(() => {
+        const walk = (inputs) => {
+          inputs.forEach(input => {
+            const inpts = this.inputs.get(input);
+            console.log("inputs", input, inpts);
+            walk(inpts)
+          })
+        }
+        const inpts = this.inputs.get(node.id)
+        console.log("starting at", node.id, inpts)
+
+        walk(inpts)
+      })
+    }
     const current = node.value?.read();
     let result;
-    if(_output) {
-      this._outputReturns.set(node.id.substring(0, node.id.lastIndexOf("-")), _output)
-    }
-    if(this.watches[node.id]) {
-      this._outputReturns.set(node.id.substring(0, node.id.lastIndexOf("-")), this.watches[node.id]._output)
-    }
-    if(node && !isNothing(node) && (isVarNode(node) || isConstNode(node) || 
-       !(node as MapNode<T, Record<string, unknown>> | BindNode<T, Record<string, unknown>>).isDirty.read())) {
+    if(node && !isNothing(node) && (
+      isVarNode(node) || isConstNode(node) 
+      || (!(node as MapNode<T, Record<string, unknown>> | BindNode<T, Record<string, unknown>>).isDirty.read() && _output === undefined))) {
       result = node.value.read();
     } else if (isMapNode(node)) {
+      if(this.running.has(innode.id)) {
+        console.log("running simultaneously", innode.id)
+      }
+      this.running.add(innode.id)
       const prev = node.cachedInputs.read();
 
       const getPromises = () => {
@@ -587,8 +734,9 @@ export class NodysseusRuntime {
 
         for(const key in updatedNode.inputs) {
           const inputNode = this.scope.get(updatedNode.inputs[key]);
+          const res = this.runNode(inputNode);
           if(inputNode) {
-            inputPromises.push(wrapPromise(this.runNode(inputNode)).then(input => [key, input]))
+            inputPromises.push(wrapPromise(res).then(input => [key, input]))
           }
         }
 
@@ -604,31 +752,24 @@ export class NodysseusRuntime {
         if(!updatedNode) {
           return;
         }
-        // TODO: Comment in
-        // next["_output"] = _output;
-        if(_output === "display") {
-          next["value"] = next["display"];
-          const result = chainNothing(updatedNode.fn, fn => chainNothing(fn.read(), ffn => ffn(next)));
-          if(this.watches[updatedNode.id]) {
-            this.watches[updatedNode.id].fn.forEach(fn => fn(result));
-          }
-          updatedNode.isDirty.write(false);
-          return result
-        }
 
         if(isNothing(updatedNode.value.read()) || isNothing(prev) || updatedNode.isStale(prev, next)) {
-          const result = chainNothing(node.fn, fn => chainNothing(fn.read(), ffn => ffn(next)));
-          updatedNode.value.write(result);
+          updatedNode.value.write(chainNothing(node.fn, fn => chainNothing(fn.read(), ffn => ffn(next))));
           updatedNode.cachedInputs.write(next);
         }
 
         result = updatedNode.value.read();
+        if(node.id.startsWith("hydra_example/eiy4mmc")) {
+          console.log("writing dirty", node.id)
+        }
         updatedNode.isDirty.write(false);
 
         if(this.watches[node.id] && current !== result) {
-            this.watches[node.id].fn.forEach(fn => fn(result));
+          console.log("should watch result", node.id, _output, result, this.watches[node.id][_output])
+          this.watches[node.id][_output]?.forEach(fn => wrapPromise(result(_output)).then(fn));
         }
 
+        this.running.delete(node.id)
         return result;
         }).value
     } else if (isBindNode(node)) {
@@ -649,22 +790,28 @@ export class NodysseusRuntime {
         return wrapPromiseAll(inputPromises)
           .then(ips => compareObjects(updatedNode.inputs, (this.scope.get(node.id) as MapNode<T, any>).inputs) ? ips : getPromises()).value
       }
-      return wrapPromiseAll(getPromises()).then(inputs => {
+      return wrapPromise(getPromises()).then(promises => wrapPromiseAll(promises)).then(inputs => {
         const updatedNode = this.scope.get(node.id) as BindNode<T, any>;
+        updatedNode.isDirty.write(false);
         const next = Object.fromEntries(inputs);
         // TODO: Comment in
         // next["_output"] = _output;
 
         if(isNothing(updatedNode.value.read()) || isNothing(prev) || updatedNode.isStale(prev, next)) {
-          return wrapPromise(chainNothing(updatedNode.fn, fn => fn(next)) ?? nothingValue)
-            .then(n => {
-              updatedNode.value.write(n);
+          updatedNode.value.write(wrapPromise(chainNothing(updatedNode.fn, fn => fn(next)) ?? nothingValue).value)
+        if(node.id.startsWith("hydra_example/eiy4mmc")) {
+          console.log("writing dirty", node.id)
+        }
+          updatedNode.isDirty.write(false);
+          const res = updatedNode.value.read();
+          return wrapPromise(res).then(result => {
+              updatedNode.value.write(result);
 
               if(this.watches[node.id] && current !== result) {
-                this.watches[node.id].fn.forEach(fn => fn(result));
+                console.log("should watch result", node.id, _output, result)
+                this.watches[node.id][_output]?.forEach(fn => wrapPromise((result as Function)(_output)).then(fn));
               }
 
-              updatedNode.isDirty.write(false);
 
               const boundNode: Nothing | T = updatedNode.value.read();
               if(!isNothing(boundNode)) this.scope.add(boundNode as AnyNode<unknown>);
@@ -674,23 +821,44 @@ export class NodysseusRuntime {
           }).value
         }
 
+        if(node.id.startsWith("hydra_example/eiy4mmc")) {
+          console.log("writing dirty", node.id)
+        }
         updatedNode.isDirty.write(false);
 
         const boundNode: Nothing | T = updatedNode.value.read();
         if(!isNothing(boundNode)) this.scope.add(boundNode as AnyNode<unknown>);
+
+        this.running.delete(node.id)
         return boundNode;
       }).value;
     }
 
 
     if(this.watches[node.id] && current !== result) {
-      this.watches[node.id].fn.forEach(fn => fn(result));
+      console.log("should watch result", node.id, result)
+      this.watches[node.id][_output]?.forEach(fn => wrapPromise(result(_output)).then(fn));
     }
 
+    this.running.delete(node.id)
     return result;
   }
 
-  public run<T>(node: AnyNode<T>, _output?: "display" | "value") {
-    return this.runNode(this.scope.get(node.id) as AnyNode<T>, _output)
+  public runGraphNode<T>(graph: Graph, node: string, _output?: "display" | "value" | "metadata") {
+    const current = this.scope.get(appendGraphId(graph.id, node));
+    if(current) return this.runNode(current, _output);
+    return wrapPromise(this.fromNode(graph, node)).then(nodeNode => this.runNode(nodeNode, _output));
+  }
+
+  public run<T>(node: AnyNode<T> | string, _output?: "display" | "value" | "metadata") {
+    console.log("running", node)
+    const nodeid = (typeof node === "string" ? node : node.id);
+    const resolvedNode = this.scope.get(nodeid) as AnyNode<(output: string) => T>;
+    const res = resolvedNode && this.runNode(resolvedNode)
+
+    return res && !isNothing(res) && wrapPromise(res).then(resp => {
+      const ress = resp(_output);
+      return ress
+    }).value;
   }
 }
