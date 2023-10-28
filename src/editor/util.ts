@@ -413,15 +413,15 @@ export const updateSelectedMetadata: ha.Effecter<HyperappState, {
   graph: Graph,
   nodeId: string,
 }> = (dispatch, {graph, nodeId}) => {};
-  // wrapPromise(hlib.run(graph, nodeId, "metadata")).then(selectedMetadata => (console.log("got metadta", selectedMetadata), dispatch)(state => [
-  //   {...state, selectedMetadata}, 
-  //   state.selectedMetadata !== selectedMetadata && (selectedMetadata === undefined || state.selectedMetadata === undefined || !compareObjects(state.selectedMetadata, selectedMetadata)) &&
-  //     (() => update_info_display({
-  //       fn: nodeId, 
-  //       graph: state.editingGraph, 
-  //       args: {},
-  //     }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== nodeId, selectedMetadata, state.codeEditorExtensions))
-  // ])).value
+   wrapPromise(hlib.run(graph, nodeId, "metadata")).then(selectedMetadata => (console.log("got metadta", selectedMetadata), dispatch)(state => [
+     {...state, selectedMetadata}, 
+     state.selectedMetadata !== selectedMetadata && (selectedMetadata === undefined || state.selectedMetadata === undefined || !compareObjects(state.selectedMetadata, selectedMetadata)) &&
+       (() => update_info_display({
+         fn: nodeId, 
+         graph: state.editingGraph, 
+         args: {},
+       }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== nodeId, selectedMetadata, state.codeEditorExtensions))
+   ])).value
 
 export const SelectNode: ha.Action<HyperappState, {
   node_id: string,
@@ -498,31 +498,31 @@ export const UpdateNodeEffect: ha.Effecter<HyperappState, {editingGraph: Graph, 
   nolib.no.runtime.updateGraph({graph: editingGraph, addedNodes: [node], lib: nolibLib})
     .then(graph => {
       const edges_in = graphEdgesIn(graph, node.id)
-      // const metadata = hlib.run(graph, node.id, "metadata")
+      const metadata = hlib.run(graph, node.id, "metadata")
 
-      // wrapPromise(node_args(nolib, graph, node.id)).then(nodeargs => {
-      //   if(edges_in.length === 1){ 
-      //     if(nodeargs.nodeArgs.filter(na => !na.additionalArg && !na.name.startsWith("_")).length === 1) {
-      //       const newAs = nodeargs.nodeArgs.find(a => !a.additionalArg).name
-      //       if(newAs !== edges_in[0].as) {
-      //         nolib.no.runtime.updateGraph({
-      //           graph: editingGraph, 
-      //           addedEdges: [{...edges_in[0], as: newAs}], 
-      //           lib: hlibLib
-      //         })
-      //       }
-      //     } else if(nodeargs.nodeArgs.find(a => a.default)) {
-      //       const newAs = nodeargs.nodeArgs.find(a => a.default).name
-      //       if(newAs) {
-      //         nolib.no.runtime.updateGraph({
-      //           graph: editingGraph, 
-      //           addedEdges: [{...edges_in[0], as: newAs}], 
-      //           lib: hlibLib
-      //         })
-      //       }
-      //     }
-      //   } 
-      // })
+       wrapPromise(node_args(nolib, graph, node.id)).then(nodeargs => {
+         if(edges_in.length === 1){ 
+           if(nodeargs.nodeArgs.filter(na => !na.additionalArg && !na.name.startsWith("_")).length === 1) {
+             const newAs = nodeargs.nodeArgs.find(a => !a.additionalArg).name
+             if(newAs !== edges_in[0].as) {
+               nolib.no.runtime.updateGraph({
+                 graph: editingGraph, 
+                 addedEdges: [{...edges_in[0], as: newAs}], 
+                 lib: hlibLib
+               })
+             }
+           } else if(nodeargs.nodeArgs.find(a => a.default)) {
+             const newAs = nodeargs.nodeArgs.find(a => a.default).name
+             if(newAs) {
+               nolib.no.runtime.updateGraph({
+                 graph: editingGraph, 
+                 addedEdges: [{...edges_in[0], as: newAs}], 
+                 lib: hlibLib
+               })
+             }
+           }
+         } 
+       })
 
       dispatch(s => [{...s, selectedMetadata: {}}, [CalculateSelectedNodeArgsEffect, {graph, node_id: node.id}]])
     })
