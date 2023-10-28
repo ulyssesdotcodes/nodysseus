@@ -3,7 +3,7 @@ import * as ha from "hyperapp"
 import Fuse from "fuse.js"
 import { create_randid, wrapPromise, base_graph } from "../util.js"
 import { Edge, Graph, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode } from "../types.js"
-import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, Paste, pzobj, refresh_graph, result_subscription, run_h, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect } from "./util.js"
+import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, Paste, pzobj, refresh_graph, result_subscription, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect } from "./util.js"
 import { info_display, infoWindow } from "./components/infoWindow.js"
 import { init_code_editor } from "./components/codeEditor.js"
 import { d3Node, d3NodeNode, HyperappState, Levels } from "./types.js"
@@ -12,7 +12,7 @@ import { d3subscription, getLinks, getNodes, insert_node_el, link_el, node_el, U
 import Autocomplete from "./autocomplete.js"
 import { automergeRefStore } from "./automergeStore.js"
 import helloWorld from "../initgraph.json"
-import {middleware} from "./hyperapp.js"
+import {middleware, run_h} from "./hyperapp.js"
 
 
 customElements.define("autocomplete-list", Autocomplete)
@@ -89,6 +89,7 @@ const result_display = html_id => ha.app({
     try{
       return run_h({dom_type: "div", props: {id: `${html_id}-result`}, children: [s.el]})
     } catch(e) {
+      console.error(e);
       try{
         return run_h({dom_type: "div", props: {id: `${html_id}-result`}, children: [show_error(e, JSON.stringify(s.el))]})
       } catch(e) {
@@ -113,7 +114,7 @@ const refresh_custom_editor = () =>
     if(graph) {
       // TODO: combine with update_info
       const graph = nolib.no.runtime.get_ref("custom_editor")
-      wrapPromise(graph).then(graph => hlib.run(graph, graph.out, {_output: "display"}))
+      wrapPromise(graph).then(graph => hlib.run(graph, graph.out, "display"))
         .then(result => result && custom_editor_display_dispatch(() => ({el: result})))
     } else {
       custom_editor_display_dispatch(() => ({el: {dom_type: "div", props: {}, children: []}}))
@@ -187,7 +188,8 @@ const runapp = (init, _lib) => {
               refresh_custom_editor()
               nolib.no.runtime.change_graph(base_graph(init.editingGraph), hlibLib)
             })
-          }]
+          }],
+          [refresh_graph, {...init, graph: init.editingGraph, result_display_dispatch, result_background_display_dispatch}]
         ])
       })],
       [dispatch => wrapPromise(nolib.no.runtime.get_graph("custom_editor"))
@@ -196,7 +198,7 @@ const runapp = (init, _lib) => {
       [UpdateSimulation, {...init, action: SimulationToHyperapp}],
       [dispatch => requestAnimationFrame(() => dispatch(SelectNode, {node_id: init.selected[0]}))],
       [init_code_editor, {html_id: init.html_id}],
-      [dispatch => wrapPromise(nolib.no.runtime.ref_graphs()).then(rgs => dispatch(s => ({...s, refGraphs: rgs.concat(EXAMPLES)})))]
+      [dispatch => wrapPromise(nolib.no.runtime.ref_graphs()).then(rgs => dispatch(s => ({...s, refGraphs: rgs.concat(EXAMPLES)})))],
     ],
     dispatch: middleware,
     view: (s: HyperappState) => ha.h("div", { id: s.html_id }, [
@@ -278,16 +280,16 @@ const runapp = (init, _lib) => {
             onclick: (s: HyperappState) => [
               {...s, norun: !s.norun}, 
               () => { nolib.no.runtime.togglePause(!s.norun) },
-              s.norun && [refresh_graph, {
-                graph: s.displayGraph ?? s.editingGraph,
-                norun: !s.norun,
-                graphChanged: false,
-                result_display_dispatch: s.result_display_dispatch,
-                result_background_display_dispatch: s.result_background_display_dispatch,
-                info_display_dispatch: s.info_display_dispatch,
-                code_editor: s.code_editor,
-                code_editor_nodeid: s.code_editor_nodeid
-              }],
+              // s.norun && [refresh_graph, {
+              //   graph: s.displayGraph ?? s.editingGraph,
+              //   norun: !s.norun,
+              //   graphChanged: false,
+              //   result_display_dispatch: s.result_display_dispatch,
+              //   result_background_display_dispatch: s.result_background_display_dispatch,
+              //   info_display_dispatch: s.info_display_dispatch,
+              //   code_editor: s.code_editor,
+              //   code_editor_nodeid: s.code_editor_nodeid
+              // }],
               () => {
                 const params = new URLSearchParams(location.search)
                 if(params.get("norun") === "true") {
@@ -305,7 +307,7 @@ const runapp = (init, _lib) => {
             onclick: (s: HyperappState) => [s, [dispatch => { 
               nolib.no.runtime.delete_cache() 
               // nolib.no.runtime.clearListeners();
-              hlib.run(s.editingGraph, s.editingGraph.out ?? "out", {_output: "value"}, {profile: false})  
+              hlib.run(s.editingGraph, s.editingGraph.out ?? "out", "value")  
               refresh_custom_editor()
               requestAnimationFrame(() =>  dispatch(s => [s, [() => {
                 s.simulation.simulation.alpha(1) 
@@ -528,7 +530,7 @@ const editor = async function(html_id, editingGraphId, lib, norun) {
     }))
   }
   let worker: Worker, workerPromise
-  initStore(nodysseusStore)
+  hlib.initStore(nodysseusStore)
   hlib.worker = () => {
     if(!worker) {
       const workerMessageChannel = new MessageChannel()

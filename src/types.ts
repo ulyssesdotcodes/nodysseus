@@ -143,7 +143,7 @@ export type Runnable =  Result | ApRunnable | FunctorRunnable | ConstRunnable
 
 export const isRunnable = (r: any): r is Runnable => isValue(r as Runnable) || isConstRunnable(r as Runnable) || isApRunnable(r as Runnable) || isFunctorRunnable(r as Runnable)
 export const isError = (r: any): r is Error => r instanceof Error
-export const isValue = (r: Runnable): r is NonErrorResult => {
+export const isValue = (r: unknown): r is NonErrorResult => {
   const result = r as Result
   return !isError(result) && (result)?.__kind === "result"
 }
@@ -248,3 +248,4 @@ export class MemoryCache<T = any> {
 
 export type Memory<T> = MemoryState<T> | MemoryReference<T> | MemoryCache<T>;
 export const isMemory = (v: any) => v && typeof v === "object" && (v.__kind === "state" || v.__kind === "reference" || v.__kind === "cache")
+

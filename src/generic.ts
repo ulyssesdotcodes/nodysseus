@@ -1359,7 +1359,9 @@ const generic = {
     "@memory.cache": {
       "id": "@memory.cache",
       "out": "out",
-      "nodes": {
+      "ref": "extern",
+      "value": "extern.cache",
+      "_nodes": {
         "value": {
           "id": "value",
           "ref": "arg",
@@ -1462,7 +1464,7 @@ const generic = {
           "ref": "@memory.reference"
         }
       },
-      "edges": {
+      "_edges": {
         "ap_cache_value": {
           "from": "ap_cache_value",
           "to": "ap_cache_args",
@@ -2303,7 +2305,7 @@ const generic = {
         "pred_append": {
           "id": "pred_append",
           "ref": "@js.script",
-          "value": "if(pred !== false && pred !== undefined && pred !== null){ arr.push(value); } return arr;"
+          "value": "console.log('pred inside', pred, arr, value); if(pred !== false && pred !== undefined && pred !== null){ arr.push(value); } return arr;"
         },
         "pred_append_fn_args": {
           "id": "pred_append_fn_args",
@@ -2629,7 +2631,7 @@ const generic = {
         "o5ojdyc": {
           "id": "o5ojdyc",
           "ref": "@js.script",
-          "value": "return key.startsWith(\"@keyframes\")"
+          "value": "return key?.startsWith(\"@keyframes\")"
         },
         "1hpnid4": {
           "id": "1hpnid4",
@@ -3577,20 +3579,15 @@ const generic = {
           "from": "p7ed8ee",
           "to": "qd8ol17"
         },
-        "lzx5shl": {
-          "as": "props",
-          "from": "lzx5shl",
-          "to": "j9f9fql"
-        },
         "nw9ms96": {
           "as": "children",
           "from": "nw9ms96",
           "to": "j9f9fql"
         },
         "xtrwqpd": {
-          "as": "value",
+          "as": "props",
           "from": "xtrwqpd",
-          "to": "lzx5shl"
+          "to": "j9f9fql"
         },
         "4uumh6e": {
           "as": "type",
@@ -3750,10 +3747,6 @@ const generic = {
           "id": "nw9ms96",
           "value": "@html.html_element"
         },
-        "lzx5shl": {
-          "id": "lzx5shl",
-          "ref": "@debug.input_value"
-        },
         "xtrwqpd": {
           "id": "xtrwqpd"
         },
@@ -3784,7 +3777,7 @@ const generic = {
         "out": {
           "id": "out",
           "ref": "@js.script",
-          "value": "if(!(typeof dom_type === 'string' && typeof children === 'object')){ throw new Error('invalid element');} return {dom_type, props, children: children, memo, value}"
+          "value": "if(!(typeof dom_type === 'string' && typeof children === 'object')){ console.log(dom_type, children, props, memo, value); throw new Error('invalid element');} return {dom_type, props, children: children, memo, value}"
         },
         "value": {
           "id": "value",
@@ -8169,7 +8162,7 @@ const generic = {
         },
         "cy1tm8s": {
           "id": "cy1tm8s",
-          "value": "const iseq = saved.value === value;\n\nif(!iseq) {\n  saved.set.fn(value);\n}\n\nreturn !iseq;",
+          "value": "const iseq = saved.value === value;\n\nif(!iseq) {\n  saved.set(value);\n}\n\nreturn !iseq;",
           "ref": "@js.script"
         },
         "khdzxds": {
@@ -11347,12 +11340,5 @@ const generic = {
   "edges": {
   }
 }
-
-Object.values(generic.nodes).map(graph => {
-  if(graph.nodes && Array.isArray(graph.nodes)) {
-    graph.nodes = Object.fromEntries(graph.nodes.map(g => [g.id, g]))
-    graph.edges = Object.fromEntries(graph.edges.map(e => [e.from, e]))
-  }
-})
 
 export default generic

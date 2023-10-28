@@ -188,7 +188,7 @@ const hashcode = function (str, seed = 0) {
   return 4294967296 * (2097151 & h2) + (h1 >>> 0)
 }
 
-const node_value = (node: ValueNode | RefNode) => externs.parseValue(node.value)
+export const node_value = (node: ValueNode | RefNode) => externs.parseValue(node.value)
 const node_nodes = (node: string | Graph, node_id: string, data, graph_input_value: Env, lib: Lib, options: RunOptions) => {
   return wrapPromise(typeof node === "string" ? nolib.no.runtime.get_ref(node) : node).then(graph => run_graph(graph, node_id, combineEnv(data, graph_input_value, node_id, graph_input_value._output), lib, options)).value
 }
@@ -216,7 +216,7 @@ const node_script = (node: RefNode, nodeArgs: Args, lib: Lib, options: RunOption
     .then(promisedData => lib.data.no.of(fn.apply(null, [lib.data, node, data, ...Object.values(isError(promisedData) ? promisedData : promisedData?.value ?? {})]))).value
 }
 
-const run_extern = (extern: ApFunction, data: Args, lib: Lib, options: RunOptions, node?: NodysseusNode, graphArgs?: Env) => {
+export const run_extern = (extern: ApFunction, data: Args, lib: Lib, options: RunOptions, node?: NodysseusNode, graphArgs?: Env) => {
   if(graphArgs?._output && graphArgs._output !== "value" && !extern.outputs?.[graphArgs._output]) {
     return undefined
   }
@@ -274,7 +274,7 @@ const run_extern = (extern: ApFunction, data: Args, lib: Lib, options: RunOption
 
 }
 
-const node_extern = (node: RefNode, data: Args, graphArgs: Env, lib: Lib, options: RunOptions) => {
+export const node_extern = (node: RefNode, data: Args, graphArgs: Env, lib: Lib, options: RunOptions) => {
   const libExternFn = node.value.startsWith("extern.") && node.value.substring(7)
   return run_extern(libExternFn ? lib.data.extern[libExternFn] : nodysseus_get(lib.data, node.value, lib), data, lib, options, node, graphArgs)
 }
@@ -1758,6 +1758,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     import_module: {
       args: ["url", "__graph_value", "_lib"],
       fn: (url, graphvalue) => {
+        console.log("importing", url, graphvalue)
         const urlval = url || graphvalue
         if(!urlval) return
         const stateid = `__jsimport:${urlval}`

@@ -19,7 +19,7 @@
     ],
     "rules": {
       "indent": [
-        "error",
+        "warn",
         2,
         {"flatTernaryExpressions": true}
       ],
@@ -29,9 +29,11 @@
           "double"
       ],
       "semi": [
-          "error",
+          "off",
           "never"
       ],
+      "no-unused-vars": "warn",
+      "@typescript-eslint/no-unused-vars": "warn",
       "@typescript-eslint/indent": "off",
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/ban-types": [

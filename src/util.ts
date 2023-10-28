@@ -1,4 +1,4 @@
-import { Edge, Graph, GraphNode, NodysseusNode, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable, isEnv, isRunnable, isValue, Lib, isLib, Env, Args, ValueNode, Result, isArgs, isConstRunnable, isApRunnable, isError, ConstRunnable, TypedArg, SavedGraph, isEdgesInGraph } from "./types.js"
+import { Edge, Graph, GraphNode, NodysseusNode, isNodeRef, isNodeGraph, isNodeValue, NodeArg, Runnable, isEnv, isRunnable, isValue, Lib, isLib, Env, Args, ValueNode, Result, isArgs, isConstRunnable, isApRunnable, isError, ConstRunnable, TypedArg, SavedGraph, isEdgesInGraph, FullyTypedArg } from "./types.js"
 
 export const WRAPPED_KIND = "wrapped"
 type WrappedKind = "wrapped";
@@ -28,11 +28,11 @@ const tryCatch = (fn, t, c) => {
   }
 }
 
-export const wrapPromise = <T>(t: T, c?: <E extends Error, S>(fn: (e?: E) => S) => S): WrappedPromise<FlattenWrappedPromise<T>> => 
+export const wrapPromise = <T>(t: T | PromiseLike<T>, c?: <E extends Error, S>(fn: (e?: E) => S) => S): WrappedPromise<FlattenWrappedPromise<T>> => 
   (isWrappedPromise(t) ? t
   : {
     __kind: WRAPPED_KIND,
-    then: <S>(fn: (t: FlattenPromise<T>) => S | WrappedPromise<S>) => wrapPromise(ispromise(t) 
+    then: <S>(fn: (tt: FlattenPromise<typeof t>) => S | WrappedPromise<S>) => wrapPromise(ispromise(t) 
       ? c ? t.then(fn as (value: unknown) => S | PromiseLike<S> | WrappedPromise<S>).then(v => isWrappedPromise(v) ? v.value : v).catch(c)
       : t.then(fn as (value: unknown) => S | PromiseLike<S> | WrappedPromise<S>).then(v => isWrappedPromise(v) ? v.value : v)
       : tryCatch(fn, t, c)),
@@ -223,6 +223,22 @@ export const contract_node = (data: {editingGraph: Graph, node_id: string, nolib
 }
 
 
+export const parseArg = (arg: string): FullyTypedArg & {name: string} => {
+  let nodevalue, valuetype;
+  const colonIdx = arg.indexOf(":")
+  if(colonIdx >= 0) {
+    nodevalue = arg.substring(0, colonIdx)
+    valuetype = arg.substring(colonIdx + 2)
+  } else {
+    nodevalue = arg;
+  }
+  return {
+    type: valuetype !== "default" ? valuetype : "any",
+    name: nodevalue,
+    default: valuetype === "default",
+  }
+}
+
 
 export const ancestor_graph = (node_id: string, from_graph: Graph | SavedGraph, nolib?: Record<string, any>): Graph => {
   let edges_in = []
@@ -310,7 +326,8 @@ const mergeDeep = (a: Record<string, unknown>, b: Record<string, unknown>) => {
 export const runnableId = (runnable: Runnable) => isConstRunnable(runnable) ? `${runnable.graph}/${runnable.fn}` : false
 
 
-export function compareObjects(value1, value2, isUpdate = false) {
+const emptySet = new Set<string>();
+export function compareObjects(value1, value2, isUpdate = false, excludedFields: Set<string> = emptySet) {
   const keys1 = Object.keys(value1)
   const keys2 = !isUpdate && Object.keys(value2)
 
@@ -319,6 +336,8 @@ export function compareObjects(value1, value2, isUpdate = false) {
   }
 
   for (const key of keys1) {
+    if(excludedFields.has(key))
+      continue
     if(key === "__args"){
       continue
     }
@@ -407,5 +426,7 @@ export const handleError = (e, lib, graph, node, graphid) => {
 
   return e
 }
+
+export const appendGraphId = (graphId: string, nodeId: string) => `${graphId}/${nodeId}`
 
 
