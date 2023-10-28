@@ -917,12 +917,12 @@ const parseTypedArg = (value: string): [string, TypedArg] => {
 }
 
 export const CalculateSelectedNodeArgsEffect: ha.Effecter<HyperappState, {graph: Graph, node_id: string}> = 
-  (dispatch, {graph, node_id}) => {};
-// wrapPromise(node_args(nolib, graph, node_id )).then(nodeArgs => dispatch(s => ({
-//     ...s,
-//     selectedNodeArgs: nodeArgs.nodeArgs,
-//     selectedNodeEdgeLabels: nodeArgs.nodeOutArgs?.map(a => a.name) ?? []
-//   }))).value
+  (dispatch, {graph, node_id}) => 
+ wrapPromise(node_args(nolib, graph, node_id )).then(nodeArgs => dispatch(s => ({
+     ...s,
+     selectedNodeArgs: nodeArgs.nodeArgs,
+     selectedNodeEdgeLabels: nodeArgs.nodeOutArgs?.map(a => a.name) ?? []
+   }))).value
 
 export const node_args = (nolib: Record<string, any>, graph: Graph, node_id: string, cachedMetadata: Record<string, NodeMetadata> = {}): {nodeArgs: Array<NodeArg>, nodeOutArgs?: Array<NodeArg>} | Promise<{nodeArgs: Array<NodeArg>, nodeOutArgs?: Array<NodeArg>}> => {
   const node = nolib.no.runtime.get_node(graph, node_id)
