@@ -524,7 +524,7 @@ export const UpdateNodeEffect: ha.Effecter<HyperappState, {editingGraph: Graph, 
          } 
        })
 
-      dispatch(s => [{...s, selectedMetadata: {}}, [CalculateSelectedNodeArgsEffect, {graph, node_id: node.id}]])
+      dispatch(s => [{...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: node.id}]])
     })
 }
 
