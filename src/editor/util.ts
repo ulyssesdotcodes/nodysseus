@@ -412,7 +412,7 @@ export const selectNodeEffect: ha.Effecter<HyperappState, {
 export const updateSelectedMetadata: ha.Effecter<HyperappState, {
   graph: Graph,
   nodeId: string,
-}> = (dispatch, {graph, nodeId}) => {};
+}> = (dispatch, {graph, nodeId}) =>
    wrapPromise(hlib.run(graph, nodeId, "metadata")).then(selectedMetadata => (console.log("got metadta", selectedMetadata), dispatch)(state => [
      {...state, selectedMetadata}, 
      state.selectedMetadata !== selectedMetadata && (selectedMetadata === undefined || state.selectedMetadata === undefined || !compareObjects(state.selectedMetadata, selectedMetadata)) &&
