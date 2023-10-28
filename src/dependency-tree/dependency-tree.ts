@@ -326,7 +326,7 @@ export class NodysseusRuntime {
       id && `${id}-bind`
     ) as AnyNode<AnyNode<T>>;
     return this.mapNode({bound: binding}, ({bound}) => {
-      const res = this.runNode(this.scope.get(bound.id));
+      const res = !isNothing(bound) && this.runNode(this.scope.get(bound.id));
       return res && !isNothing(res) ? res : undefined;
     }, undefined, id)
   }
