@@ -177,12 +177,14 @@ export const update_info_display = ({fn, graph, args}, info_display_dispatch, co
 
   const node_ref = node && (isNodeRef(node) && nolib.no.runtime.get_ref(node.ref)) || node
   const out_ref = node && (isNodeGraph(node) && nolib.no.runtime.get_node(node, node.out)) || (node_ref?.nodes && nolib.no.runtime.get_node(node_ref, node_ref.out))
-  const node_display_el = {}; // hlib.run(graph, fn, "display", {profile: false})
+  const node_display_el = hlib.run(graph, fn, "display", {profile: false})
+  // console.log("got display", node_display_el)
   const update_info_display_fn = display => info_display_dispatch && requestAnimationFrame(() => {
+    console.log("got info display", display)
     info_display_dispatch(UpdateResultDisplay, {el: (graph.out ?? "out") !== fn && display?.dom_type ? display : ha.h("div", {})})
     requestAnimationFrame(() => {
       if(code_editor && isNodeRef(node) && selectedMetadata?.codeEditor) {
-        console.log(selectedMetadata)
+        // console.log(selectedMetadata)
         const jsonlang = json()
         requestAnimationFrame(() => {
           if(selectedMetadata?.codeEditor?.language === "json") {
@@ -566,6 +568,7 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = (dispatch, {graph,
   if(norun ?? false) {
     return
   }
+  // console.log("before run")
   const runtime = hlib.runtime();
 
 
@@ -573,7 +576,7 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = (dispatch, {graph,
 
   const run = async (_output) => {
     for await(const display of runtime.createWatch(runNode, _output)) {
-      console.log("got", _output, display)
+      // console.log("got", _output, display)
       if(_output === "display") {
         display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
           el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
@@ -586,11 +589,11 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = (dispatch, {graph,
   }
   
   const update = () => {
-    console.log("running graph", graph)
+    // console.log("running graph", graph)
     wrapPromise(runtime.run(runNode, "display"))
       .then(display => {
+        // console.log("ran display", display)
         run("display");
-        // console.log(display)
         result_display_dispatch(UpdateResultDisplay, {
           el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
           backgroundEl: display?.background ? display.background : {dom_type: "div", props: {}, children: []},
@@ -601,7 +604,7 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = (dispatch, {graph,
     wrapPromise(runtime.run(runNode, "value"))
       .then(value => {
         run("value");
-        console.log("val?", value)
+        // console.log("val?", value)
       })
 
   }
@@ -1059,7 +1062,7 @@ export const hlibLib = mergeLib(nolibLib, newLib({
       return;
     }
     try{
-      const result = wrapPromise(runtime.runGraphNode(graph, fn)).value;
+      const result = wrapPromise(runtime.runGraphNode(graph, fn, _output)).value;
       if(ispromise(result)){
         return result.catch(e => console.error(e))
       }
@@ -1071,7 +1074,7 @@ export const hlibLib = mergeLib(nolibLib, newLib({
   },
   initStore: (nodysseusStore) => {
     initStore(nodysseusStore);
-    runtime = new NodysseusRuntime(nodysseusStore);
+    runtime = new NodysseusRuntime(nodysseusStore, hlibLib);
   },
   d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
   worker: undefined,

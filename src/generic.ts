@@ -1749,7 +1749,7 @@ const generic = {
         },
         "i5m8bp1": {
           "id": "i5m8bp1",
-          "value": "_lib.no.runtime.publish(name, {data})",
+          "value": "_lib.runtime.publish(name, {data})",
           "ref": "@js.script"
         },
         "3pnfu3c": {
@@ -2408,7 +2408,7 @@ const generic = {
         "lapeojg": {
           "id": "lapeojg",
           "ref": "@js.script",
-          "value": "return _lib.no.runtime.addRefsFromUrl(url).then(gs => _lib.no.runtime.change_graph((console.log('changing', graphid), graphid), _lib))",
+          "value": "return _lib.runtime.addRefsFromUrl(url).then(gs => _lib.runtime.change_graph((console.log('changing', graphid), graphid), _lib))",
           "name": "out"
         },
         "graphid": {
@@ -3753,7 +3753,7 @@ const generic = {
         "4uumh6e": {
           "id": "4uumh6e",
           "ref": "@js.script",
-          "value": "return el.attrs && Object.fromEntries(el.attrs.concat(defaultAttrs[el.spec]).map(n => Array.isArray(n) ? n : [n, \"any\"]).concat([[\"style\", {type: Object.fromEntries(defaultAttrs[\"css\"].map(a => Array.isArray(a) ? a : [a, \"any\"]))}]]));"
+          "value": "return el?.attrs && Object.fromEntries(el.attrs.concat(defaultAttrs[el.spec]).map(n => Array.isArray(n) ? n : [n, \"any\"]).concat([[\"style\", {type: Object.fromEntries(defaultAttrs[\"css\"].map(a => Array.isArray(a) ? a : [a, \"any\"]))}]]));"
         },
         "k81xrr8": {
           "id": "k81xrr8",
@@ -4573,7 +4573,7 @@ const generic = {
         "cixrltc": {
           "id": "cixrltc",
           "ref": "@js.script",
-          "value": "_lib.no.runtime.add_ref(graph); return graph;"
+          "value": "_lib.runtime.add_ref(graph); return graph;"
         },
         "hcp6xds": {
           "id": "hcp6xds",
@@ -4762,7 +4762,7 @@ const generic = {
       ],
       "out": "0g1zopd"
     },
-    "@nodysseus.delete": {"category":"nodysseus","edges":{"args":{"as":"args","from":"args","to":"main/out"},"jklqh38":{"as":"display","from":"jklqh38","to":"main/out"},"6qkew20":{"as":"children","from":"6qkew20","to":"jklqh38"},"3y8pyc2":{"as":"arg3","from":"3y8pyc2","to":"6qkew20"},"8dy573e":{"as":"arg4","from":"8dy573e","to":"6qkew20"},"a32fufq":{"as":"arg5","from":"a32fufq","to":"6qkew20"},"pcx97n4":{"as":"arg2","from":"pcx97n4","to":"6qkew20"},"rk7hcxc":{"as":"props","from":"rk7hcxc","to":"pcx97n4"},"898n6f7":{"as":"onchange","from":"898n6f7","to":"rk7hcxc"},"b8wohxv":{"as":"type","from":"b8wohxv","to":"rk7hcxc"},"x200f4j":{"as":"list","from":"x200f4j","to":"rk7hcxc"},"7c6mxi9":{"as":"fn","from":"7c6mxi9","to":"898n6f7"},"j2c518b":{"as":"args","from":"j2c518b","to":"898n6f7"},"qpiqhgp":{"as":"value","from":"qpiqhgp","to":"j2c518b"},"00fj2qe":{"as":"arg1","from":"00fj2qe","to":"7c6mxi9"},"9jvfgj1":{"as":"arg0","from":"9jvfgj1","to":"7c6mxi9"},"rgoguh4":{"as":"data","from":"rgoguh4","to":"00fj2qe"},"o2uz727":{"as":"graphid","from":"o2uz727","to":"rgoguh4"},"h10oho6":{"as":"icon","from":"h10oho6","to":"a32fufq"},"pfmdyvv":{"as":"props","from":"pfmdyvv","to":"a32fufq"},"2r1dra9":{"as":"false","from":"2r1dra9","to":"h10oho6"},"9cwkm4z":{"as":"true","from":"9cwkm4z","to":"h10oho6"},"semslq4":{"as":"pred","from":"semslq4","to":"h10oho6"},"vffalrt":{"as":"namespace","from":"vffalrt","to":"semslq4"},"n7aaoju":{"as":"children","from":"n7aaoju","to":"8dy573e"},"zihm1kd":{"as":"props","from":"zihm1kd","to":"8dy573e"},"i153jv4":{"as":"onclick","from":"i153jv4","to":"zihm1kd"},"nxihxr3":{"as":"fn","from":"nxihxr3","to":"i153jv4"},"ibmy4bt":{"as":"arg0","from":"ibmy4bt","to":"nxihxr3"},"pdox5d1":{"as":"arg1","from":"pdox5d1","to":"nxihxr3"},"5tx7t1j":{"as":"args","from":"5tx7t1j","to":"pdox5d1"},"yn49zxm":{"as":"fn","from":"yn49zxm","to":"pdox5d1"},"quzmbw1":{"as":"value","from":"quzmbw1","to":"5tx7t1j"},"4s45xmu":{"as":"value","from":"4s45xmu","to":"quzmbw1"},"jx3vdc6":{"as":"fn","from":"jx3vdc6","to":"ibmy4bt"},"jdoak4g":{"as":"value","from":"jdoak4g","to":"jx3vdc6"},"jdufmth":{"as":"ns","from":"jdufmth","to":"jdoak4g"},"et5g0m1":{"as":"children","from":"et5g0m1","to":"3y8pyc2"},"xdot36k":{"as":"props","from":"xdot36k","to":"3y8pyc2"},"tfwqhqf":{"as":"id","from":"tfwqhqf","to":"xdot36k"},"2yur4h7":{"as":"fn","from":"2yur4h7","to":"et5g0m1"},"iih772m":{"as":"array","from":"iih772m","to":"et5g0m1"},"9tv13iq":{"as":"value","from":"9tv13iq","to":"iih772m"},"1edrrwq":{"as":"fn","from":"1edrrwq","to":"2yur4h7"},"vqk5ztl":{"as":"parameters","from":"vqk5ztl","to":"2yur4h7"},"ygewxjl":{"as":"element","from":"ygewxjl","to":"vqk5ztl"},"skqnl08":{"as":"children","from":"skqnl08","to":"1edrrwq"},"dd6st1b":{"as":"text","from":"dd6st1b","to":"skqnl08"},"3b7bnzm":{"as":"hrefstate","from":"3b7bnzm","to":"args"},"tad7830":{"as":"namespace","from":"tad7830","to":"args"},"wca9aaf":{"as":"keys","from":"wca9aaf","to":"args"},"hyvh19u":{"as":"value","from":"hyvh19u","to":"wca9aaf"}},"id":"@nodysseus.delete","name":"@nodysseus.delete_ref","nodes":{"main/out":{"id":"main/out","name":"@nodysseus.delete","ref":"return"},"jklqh38":{"id":"jklqh38","ref":"@html.html_element"},"6qkew20":{"id":"6qkew20","ref":"@data.array"},"pcx97n4":{"id":"pcx97n4","ref":"@html.html_element","value":"input"},"rk7hcxc":{"id":"rk7hcxc"},"x200f4j":{"id":"x200f4j","value":"export-list"},"b8wohxv":{"id":"b8wohxv","value":"select"},"898n6f7":{"id":"898n6f7","ref":"@flow.ap"},"j2c518b":{"id":"j2c518b"},"qpiqhgp":{"id":"qpiqhgp","ref":"arg","value":"event.target.value"},"7c6mxi9":{"id":"7c6mxi9","ref":"@data.array"},"9jvfgj1":{"id":"9jvfgj1","ref":"arg","value":"namespace.set"},"00fj2qe":{"id":"00fj2qe","ref":"@event.publish_event","value":"graphupdate"},"rgoguh4":{"id":"rgoguh4"},"o2uz727":{"id":"o2uz727","ref":"arg","value":"__graphid"},"a32fufq":{"id":"a32fufq","ref":"@html.icon"},"pfmdyvv":{"id":"pfmdyvv"},"h10oho6":{"id":"h10oho6","ref":"@flow.if"},"semslq4":{"id":"semslq4","ref":"@js.script","value":"console.log(namespace);\nconst ref = _lib.no.runtime.refs().find(r => r === namespace);\nreturn ref"},"vffalrt":{"id":"vffalrt","ref":"arg","value":"namespace.state"},"9cwkm4z":{"id":"9cwkm4z","value":"delete"},"2r1dra9":{"id":"2r1dra9","value":"check"},"8dy573e":{"id":"8dy573e","ref":"@html.html_element","value":"button"},"zihm1kd":{"id":"zihm1kd"},"i153jv4":{"id":"i153jv4","ref":"@flow.ap"},"nxihxr3":{"id":"nxihxr3","ref":"@data.array"},"pdox5d1":{"id":"pdox5d1","ref":"@flow.ap"},"yn49zxm":{"id":"yn49zxm","ref":"arg","value":"keys.set"},"5tx7t1j":{"id":"5tx7t1j"},"quzmbw1":{"id":"quzmbw1","ref":"@debug.log","value":"newkeys"},"4s45xmu":{"id":"4s45xmu","ref":"@js.script","value":"return _lib.no.runtime.refs()"},"ibmy4bt":{"id":"ibmy4bt","ref":"@flow.runnable"},"jx3vdc6":{"id":"jx3vdc6","ref":"@debug.log","value":"deleted"},"jdoak4g":{"id":"jdoak4g","ref":"@js.script","value":"localStorage.removeItem(ns);\nlocalStorage.setItem(\"graph_list\", JSON.stringify(JSON.parse(localStorage.getItem(\"graph_list\")).filter(g => g !== ns)))\nreturn _lib.no.runtime.remove_ref(ns);"},"jdufmth":{"id":"jdufmth","ref":"arg","value":"namespace.state"},"n7aaoju":{"id":"n7aaoju","ref":"@html.html_text","value":"delete"},"3y8pyc2":{"id":"3y8pyc2","ref":"@html.html_element","value":"datalist"},"xdot36k":{"id":"xdot36k"},"tfwqhqf":{"id":"tfwqhqf","value":"export-list"},"et5g0m1":{"id":"et5g0m1","ref":"@data.map"},"iih772m":{"id":"iih772m","ref":"@debug.log","value":"keystate"},"9tv13iq":{"id":"9tv13iq","ref":"arg","value":"keys.state"},"2yur4h7":{"id":"2yur4h7","ref":"@flow.runnable"},"vqk5ztl":{"id":"vqk5ztl"},"ygewxjl":{"id":"ygewxjl"},"1edrrwq":{"id":"1edrrwq","ref":"@html.html_element","value":"option"},"skqnl08":{"id":"skqnl08","ref":"@html.html_text"},"dd6st1b":{"id":"dd6st1b","ref":"arg","value":"element"},"args":{"id":"args","ref":"extern","value":"extern.data"},"wca9aaf":{"id":"wca9aaf","ref":"@memory.state"},"hyvh19u":{"id":"hyvh19u","ref":"@js.script","value":"return _lib.no.runtime.refs()"},"tad7830":{"id":"tad7830","ref":"@memory.state"},"3b7bnzm":{"id":"3b7bnzm","ref":"@memory.state"}},"out":"main/out"},
+    "@nodysseus.delete": {"category":"nodysseus","edges":{"args":{"as":"args","from":"args","to":"main/out"},"jklqh38":{"as":"display","from":"jklqh38","to":"main/out"},"6qkew20":{"as":"children","from":"6qkew20","to":"jklqh38"},"3y8pyc2":{"as":"arg3","from":"3y8pyc2","to":"6qkew20"},"8dy573e":{"as":"arg4","from":"8dy573e","to":"6qkew20"},"a32fufq":{"as":"arg5","from":"a32fufq","to":"6qkew20"},"pcx97n4":{"as":"arg2","from":"pcx97n4","to":"6qkew20"},"rk7hcxc":{"as":"props","from":"rk7hcxc","to":"pcx97n4"},"898n6f7":{"as":"onchange","from":"898n6f7","to":"rk7hcxc"},"b8wohxv":{"as":"type","from":"b8wohxv","to":"rk7hcxc"},"x200f4j":{"as":"list","from":"x200f4j","to":"rk7hcxc"},"7c6mxi9":{"as":"fn","from":"7c6mxi9","to":"898n6f7"},"j2c518b":{"as":"args","from":"j2c518b","to":"898n6f7"},"qpiqhgp":{"as":"value","from":"qpiqhgp","to":"j2c518b"},"00fj2qe":{"as":"arg1","from":"00fj2qe","to":"7c6mxi9"},"9jvfgj1":{"as":"arg0","from":"9jvfgj1","to":"7c6mxi9"},"rgoguh4":{"as":"data","from":"rgoguh4","to":"00fj2qe"},"o2uz727":{"as":"graphid","from":"o2uz727","to":"rgoguh4"},"h10oho6":{"as":"icon","from":"h10oho6","to":"a32fufq"},"pfmdyvv":{"as":"props","from":"pfmdyvv","to":"a32fufq"},"2r1dra9":{"as":"false","from":"2r1dra9","to":"h10oho6"},"9cwkm4z":{"as":"true","from":"9cwkm4z","to":"h10oho6"},"semslq4":{"as":"pred","from":"semslq4","to":"h10oho6"},"vffalrt":{"as":"namespace","from":"vffalrt","to":"semslq4"},"n7aaoju":{"as":"children","from":"n7aaoju","to":"8dy573e"},"zihm1kd":{"as":"props","from":"zihm1kd","to":"8dy573e"},"i153jv4":{"as":"onclick","from":"i153jv4","to":"zihm1kd"},"nxihxr3":{"as":"fn","from":"nxihxr3","to":"i153jv4"},"ibmy4bt":{"as":"arg0","from":"ibmy4bt","to":"nxihxr3"},"pdox5d1":{"as":"arg1","from":"pdox5d1","to":"nxihxr3"},"5tx7t1j":{"as":"args","from":"5tx7t1j","to":"pdox5d1"},"yn49zxm":{"as":"fn","from":"yn49zxm","to":"pdox5d1"},"quzmbw1":{"as":"value","from":"quzmbw1","to":"5tx7t1j"},"4s45xmu":{"as":"value","from":"4s45xmu","to":"quzmbw1"},"jx3vdc6":{"as":"fn","from":"jx3vdc6","to":"ibmy4bt"},"jdoak4g":{"as":"value","from":"jdoak4g","to":"jx3vdc6"},"jdufmth":{"as":"ns","from":"jdufmth","to":"jdoak4g"},"et5g0m1":{"as":"children","from":"et5g0m1","to":"3y8pyc2"},"xdot36k":{"as":"props","from":"xdot36k","to":"3y8pyc2"},"tfwqhqf":{"as":"id","from":"tfwqhqf","to":"xdot36k"},"2yur4h7":{"as":"fn","from":"2yur4h7","to":"et5g0m1"},"iih772m":{"as":"array","from":"iih772m","to":"et5g0m1"},"9tv13iq":{"as":"value","from":"9tv13iq","to":"iih772m"},"1edrrwq":{"as":"fn","from":"1edrrwq","to":"2yur4h7"},"vqk5ztl":{"as":"parameters","from":"vqk5ztl","to":"2yur4h7"},"ygewxjl":{"as":"element","from":"ygewxjl","to":"vqk5ztl"},"skqnl08":{"as":"children","from":"skqnl08","to":"1edrrwq"},"dd6st1b":{"as":"text","from":"dd6st1b","to":"skqnl08"},"3b7bnzm":{"as":"hrefstate","from":"3b7bnzm","to":"args"},"tad7830":{"as":"namespace","from":"tad7830","to":"args"},"wca9aaf":{"as":"keys","from":"wca9aaf","to":"args"},"hyvh19u":{"as":"value","from":"hyvh19u","to":"wca9aaf"}},"id":"@nodysseus.delete","name":"@nodysseus.delete_ref","nodes":{"main/out":{"id":"main/out","name":"@nodysseus.delete","ref":"return"},"jklqh38":{"id":"jklqh38","ref":"@html.html_element"},"6qkew20":{"id":"6qkew20","ref":"@data.array"},"pcx97n4":{"id":"pcx97n4","ref":"@html.html_element","value":"input"},"rk7hcxc":{"id":"rk7hcxc"},"x200f4j":{"id":"x200f4j","value":"export-list"},"b8wohxv":{"id":"b8wohxv","value":"select"},"898n6f7":{"id":"898n6f7","ref":"@flow.ap"},"j2c518b":{"id":"j2c518b"},"qpiqhgp":{"id":"qpiqhgp","ref":"arg","value":"event.target.value"},"7c6mxi9":{"id":"7c6mxi9","ref":"@data.array"},"9jvfgj1":{"id":"9jvfgj1","ref":"arg","value":"namespace.set"},"00fj2qe":{"id":"00fj2qe","ref":"@event.publish_event","value":"graphupdate"},"rgoguh4":{"id":"rgoguh4"},"o2uz727":{"id":"o2uz727","ref":"arg","value":"__graphid"},"a32fufq":{"id":"a32fufq","ref":"@html.icon"},"pfmdyvv":{"id":"pfmdyvv"},"h10oho6":{"id":"h10oho6","ref":"@flow.if"},"semslq4":{"id":"semslq4","ref":"@js.script","value":"console.log(namespace);\nconst ref = _lib.runtime.refs().find(r => r === namespace);\nreturn ref"},"vffalrt":{"id":"vffalrt","ref":"arg","value":"namespace.state"},"9cwkm4z":{"id":"9cwkm4z","value":"delete"},"2r1dra9":{"id":"2r1dra9","value":"check"},"8dy573e":{"id":"8dy573e","ref":"@html.html_element","value":"button"},"zihm1kd":{"id":"zihm1kd"},"i153jv4":{"id":"i153jv4","ref":"@flow.ap"},"nxihxr3":{"id":"nxihxr3","ref":"@data.array"},"pdox5d1":{"id":"pdox5d1","ref":"@flow.ap"},"yn49zxm":{"id":"yn49zxm","ref":"arg","value":"keys.set"},"5tx7t1j":{"id":"5tx7t1j"},"quzmbw1":{"id":"quzmbw1","ref":"@debug.log","value":"newkeys"},"4s45xmu":{"id":"4s45xmu","ref":"@js.script","value":"return _lib.runtime.refs()"},"ibmy4bt":{"id":"ibmy4bt","ref":"@flow.runnable"},"jx3vdc6":{"id":"jx3vdc6","ref":"@debug.log","value":"deleted"},"jdoak4g":{"id":"jdoak4g","ref":"@js.script","value":"localStorage.removeItem(ns);\nlocalStorage.setItem(\"graph_list\", JSON.stringify(JSON.parse(localStorage.getItem(\"graph_list\")).filter(g => g !== ns)))\nreturn _lib.runtime.remove_ref(ns);"},"jdufmth":{"id":"jdufmth","ref":"arg","value":"namespace.state"},"n7aaoju":{"id":"n7aaoju","ref":"@html.html_text","value":"delete"},"3y8pyc2":{"id":"3y8pyc2","ref":"@html.html_element","value":"datalist"},"xdot36k":{"id":"xdot36k"},"tfwqhqf":{"id":"tfwqhqf","value":"export-list"},"et5g0m1":{"id":"et5g0m1","ref":"@data.map"},"iih772m":{"id":"iih772m","ref":"@debug.log","value":"keystate"},"9tv13iq":{"id":"9tv13iq","ref":"arg","value":"keys.state"},"2yur4h7":{"id":"2yur4h7","ref":"@flow.runnable"},"vqk5ztl":{"id":"vqk5ztl"},"ygewxjl":{"id":"ygewxjl"},"1edrrwq":{"id":"1edrrwq","ref":"@html.html_element","value":"option"},"skqnl08":{"id":"skqnl08","ref":"@html.html_text"},"dd6st1b":{"id":"dd6st1b","ref":"arg","value":"element"},"args":{"id":"args","ref":"extern","value":"extern.data"},"wca9aaf":{"id":"wca9aaf","ref":"@memory.state"},"hyvh19u":{"id":"hyvh19u","ref":"@js.script","value":"return _lib.runtime.refs()"},"tad7830":{"id":"tad7830","ref":"@memory.state"},"3b7bnzm":{"id":"3b7bnzm","ref":"@memory.state"}},"out":"main/out"},
     "@data.changed": {
       "id": "@data.changed",
       "category": "data",
@@ -5668,574 +5668,7 @@ const generic = {
       "out": "ld37qq4",
       "category": "event"
     },
-    "@html.slider": {
-      "edges": {
-        "0i85qjj": {
-          "as": "args",
-          "from": "0i85qjj",
-          "to": "out"
-        },
-        "1dhoyv2": {
-          "as": "max",
-          "from": "1dhoyv2",
-          "to": "24q0egm"
-        },
-        "24q0egm": {
-          "as": "props",
-          "from": "24q0egm",
-          "to": "5mog0bc"
-        },
-        "2wp8ffd": {
-          "as": "fn",
-          "from": "2wp8ffd",
-          "to": "old0t0c"
-        },
-        "34k9xvb": {
-          "as": "max",
-          "from": "34k9xvb",
-          "to": "r0fsdrm"
-        },
-        "4dh6wzn": {
-          "as": "arg1",
-          "from": "4dh6wzn",
-          "to": "2wp8ffd"
-        },
-        "4subc0j": {
-          "as": "graphval",
-          "from": "4subc0j",
-          "to": "1dhoyv2"
-        },
-        "5mog0bc": {
-          "as": "arg1",
-          "from": "5mog0bc",
-          "to": "sb9qdgy"
-        },
-        "7c2vt3d": {
-          "as": "min",
-          "from": "7c2vt3d",
-          "to": "24q0egm"
-        },
-        "8f3izp7": {
-          "as": "arg1",
-          "from": "8f3izp7",
-          "to": "d86emo2"
-        },
-        "93rx3ru": {
-          "as": "display",
-          "from": "93rx3ru",
-          "to": "sxjhepz"
-        },
-        "a6rdag9": {
-          "as": "props",
-          "from": "a6rdag9",
-          "to": "y407zfo"
-        },
-        "av63lw9": {
-          "as": "value",
-          "from": "av63lw9",
-          "to": "y407zfo"
-        },
-        "bts7694": {
-          "as": "otherwise",
-          "from": "bts7694",
-          "to": "ewycyaq"
-        },
-        "d1wcpk1": {
-          "as": "otherwise",
-          "from": "d1wcpk1",
-          "to": "tksk4wc"
-        },
-        "d86emo2": {
-          "as": "fn",
-          "from": "d86emo2",
-          "to": "v0qabyr"
-        },
-        "doz740g": {
-          "as": "arg0",
-          "from": "doz740g",
-          "to": "sb9qdgy"
-        },
-        "e996mm5": {
-          "as": "min",
-          "from": "e996mm5",
-          "to": "r0fsdrm"
-        },
-        "ewycyaq": {
-          "as": "text",
-          "from": "ewycyaq",
-          "to": "kyu6h8m"
-        },
-        "ezx9hxj": {
-          "as": "args",
-          "from": "ezx9hxj",
-          "to": "old0t0c"
-        },
-        "fd7yax9": {
-          "as": "value",
-          "from": "fd7yax9",
-          "to": "7c2vt3d"
-        },
-        "fgmcy0x": {
-          "as": "publish",
-          "from": "fgmcy0x",
-          "to": "gvk9hec"
-        },
-        "gibdj45": {
-          "as": "val",
-          "from": "gibdj45",
-          "to": "parseval"
-        },
-        "gtpf6x9": {
-          "as": "arg0",
-          "from": "gtpf6x9",
-          "to": "d86emo2"
-        },
-        "gvk9hec": {
-          "as": "_sliderstate",
-          "from": "gvk9hec",
-          "to": "0i85qjj"
-        },
-        "h19qe28": {
-          "as": "persist",
-          "from": "h19qe28",
-          "to": "gvk9hec"
-        },
-        "ku4l1v6": {
-          "as": "value",
-          "from": "ku4l1v6",
-          "to": "ewycyaq"
-        },
-        "kyu6h8m": {
-          "as": "arg2",
-          "from": "kyu6h8m",
-          "to": "sb9qdgy"
-        },
-        "l5bzesi": {
-          "as": "arg0",
-          "from": "l5bzesi",
-          "to": "2wp8ffd"
-        },
-        "lptf53h": {
-          "as": "statechanged",
-          "from": "lptf53h",
-          "to": "av63lw9"
-        },
-        "mpbvtrq": {
-          "as": "type",
-          "from": "mpbvtrq",
-          "to": "24q0egm"
-        },
-        "n4i4t17": {
-          "as": "val",
-          "from": "n4i4t17",
-          "to": "av63lw9"
-        },
-        "nrhhdip": {
-          "as": "value",
-          "from": "nrhhdip",
-          "to": "oqbuspj"
-        },
-        "obkkk9p": {
-          "as": "value",
-          "from": "obkkk9p",
-          "to": "lptf53h"
-        },
-        "old0t0c": {
-          "as": "oninput",
-          "from": "old0t0c",
-          "to": "24q0egm"
-        },
-        "on0cfjb": {
-          "as": "graphval",
-          "from": "on0cfjb",
-          "to": "34k9xvb"
-        },
-        "oqbuspj": {
-          "as": "args",
-          "from": "oqbuspj",
-          "to": "v0qabyr"
-        },
-        "parseval": {
-          "as": "value",
-          "from": "parseval",
-          "to": "ezx9hxj"
-        },
-        "q09a315": {
-          "as": "otherwise",
-          "from": "q09a315",
-          "to": "yv0o41n"
-        },
-        "q8ugbch": {
-          "as": "flex-direction",
-          "from": "q8ugbch",
-          "to": "sxjhepz"
-        },
-        "r0fsdrm": {
-          "as": "value",
-          "from": "r0fsdrm",
-          "to": "gvk9hec"
-        },
-        "r1ah7g2": {
-          "as": "otherwise",
-          "from": "r1ah7g2",
-          "to": "7c2vt3d"
-        },
-        "racg3p7": {
-          "as": "text",
-          "from": "racg3p7",
-          "to": "doz740g"
-        },
-        "sb9qdgy": {
-          "as": "children",
-          "from": "sb9qdgy",
-          "to": "y407zfo"
-        },
-        "slidervalpublish": {
-          "as": "publish",
-          "from": "slidervalpublish",
-          "to": "t1deznd"
-        },
-        "sv49nso": {
-          "as": "value",
-          "from": "sv49nso",
-          "to": "tksk4wc"
-        },
-        "sxjhepz": {
-          "as": "style",
-          "from": "sxjhepz",
-          "to": "a6rdag9"
-        },
-        "t1deznd": {
-          "as": "_sliderval",
-          "from": "t1deznd",
-          "to": "0i85qjj"
-        },
-        "tjzn9ne": {
-          "as": "state",
-          "from": "tjzn9ne",
-          "to": "av63lw9"
-        },
-        "tksk4wc": {
-          "as": "value",
-          "from": "tksk4wc",
-          "to": "24q0egm"
-        },
-        "u4k2auv": {
-          "as": "label",
-          "from": "u4k2auv",
-          "to": "0i85qjj"
-        },
-        "v0qabyr": {
-          "as": "onchange",
-          "from": "v0qabyr",
-          "to": "24q0egm"
-        },
-        "vgishln": {
-          "as": "target",
-          "from": "vgishln",
-          "to": "ku4l1v6"
-        },
-        "x4fmyaa": {
-          "as": "argmax",
-          "from": "x4fmyaa",
-          "to": "34k9xvb"
-        },
-        "x4vnm62": {
-          "as": "argmax",
-          "from": "x4vnm62",
-          "to": "1dhoyv2"
-        },
-        "y407zfo": {
-          "as": "display",
-          "from": "y407zfo",
-          "to": "out"
-        },
-        "yv0o41n": {
-          "as": "step",
-          "from": "yv0o41n",
-          "to": "24q0egm"
-        },
-        "z3jopgg": {
-          "as": "value",
-          "from": "z3jopgg",
-          "to": "yv0o41n"
-        },
-        "z8c7kcy": {
-          "as": "val",
-          "from": "z8c7kcy",
-          "to": "nrhhdip"
-        }
-      },
-      "id": "@html.slider",
-      "nodes": {
-        "0i85qjj": {
-          "id": "0i85qjj"
-        },
-        "1dhoyv2": {
-          "id": "1dhoyv2",
-          "ref": "@js.script",
-          "value": "return !isNaN(argmax) ? argmax : !isNaN(graphval) ? graphval : 1.0"
-        },
-        "24q0egm": {
-          "id": "24q0egm"
-        },
-        "2wp8ffd": {
-          "id": "2wp8ffd",
-          "ref": "@data.array"
-        },
-        "34k9xvb": {
-          "id": "34k9xvb",
-          "ref": "@js.script",
-          "value": "return !isNaN(argmax) ? argmax : !isNaN(graphval) ? graphval : 1.0"
-        },
-        "4dh6wzn": {
-          "id": "4dh6wzn",
-          "ref": "arg",
-          "value": "oninput"
-        },
-        "4subc0j": {
-          "id": "4subc0j",
-          "ref": "arg",
-          "value": "__graph_value"
-        },
-        "5mog0bc": {
-          "id": "5mog0bc",
-          "ref": "@html.html_element",
-          "value": "input"
-        },
-        "7c2vt3d": {
-          "id": "7c2vt3d",
-          "ref": "@flow.default"
-        },
-        "8f3izp7": {
-          "id": "8f3izp7",
-          "ref": "arg",
-          "value": "onchange"
-        },
-        "93rx3ru": {
-          "id": "93rx3ru",
-          "value": "flex"
-        },
-        "a6rdag9": {
-          "id": "a6rdag9"
-        },
-        "av63lw9": {
-          "id": "av63lw9",
-          "value": "if (state.state !== undefined && (val.value === undefined || statechanged)) {\n  \n  val.set.fn(state.state)\n}\n\nreturn val;",
-          "ref": "@js.script"
-        },
-        "bts7694": {
-          "id": "bts7694",
-          "ref": "arg",
-          "value": "_sliderstate.state"
-        },
-        "d1wcpk1": {
-          "id": "d1wcpk1",
-          "ref": "arg",
-          "value": "_sliderstate.state"
-        },
-        "d86emo2": {
-          "id": "d86emo2",
-          "ref": "@data.array"
-        },
-        "doz740g": {
-          "id": "doz740g",
-          "ref": "@html.html_text"
-        },
-        "e996mm5": {
-          "id": "e996mm5",
-          "ref": "arg",
-          "value": "min"
-        },
-        "ewycyaq": {
-          "id": "ewycyaq",
-          "ref": "@flow.default"
-        },
-        "ezx9hxj": {
-          "id": "ezx9hxj"
-        },
-        "fd7yax9": {
-          "id": "fd7yax9",
-          "ref": "arg",
-          "value": "min"
-        },
-        "fgmcy0x": {
-          "id": "fgmcy0x",
-          "value": "true"
-        },
-        "gibdj45": {
-          "id": "gibdj45",
-          "ref": "arg",
-          "value": "event.target.value"
-        },
-        "gtpf6x9": {
-          "id": "gtpf6x9",
-          "ref": "arg",
-          "value": "_sliderstate.set"
-        },
-        "gvk9hec": {
-          "id": "gvk9hec",
-          "ref": "@memory.state"
-        },
-        "h19qe28": {
-          "id": "h19qe28",
-          "value": "true"
-        },
-        "ku4l1v6": {
-          "id": "ku4l1v6",
-          "ref": "@data.get",
-          "value": "value"
-        },
-        "kyu6h8m": {
-          "id": "kyu6h8m",
-          "ref": "@html.html_text"
-        },
-        "l5bzesi": {
-          "id": "l5bzesi",
-          "ref": "arg",
-          "value": "_sliderval.set"
-        },
-        "lptf53h": {
-          "id": "lptf53h",
-          "ref": "@data.ischanged"
-        },
-        "mpbvtrq": {
-          "id": "mpbvtrq",
-          "value": "range"
-        },
-        "n4i4t17": {
-          "id": "n4i4t17",
-          "ref": "arg",
-          "value": "_sliderval"
-        },
-        "nrhhdip": {
-          "id": "nrhhdip",
-          "ref": "@js.script",
-          "value": "return parseFloat(val)"
-        },
-        "obkkk9p": {
-          "id": "obkkk9p",
-          "ref": "arg",
-          "value": "_sliderstate.state"
-        },
-        "old0t0c": {
-          "id": "old0t0c",
-          "ref": "@flow.ap"
-        },
-        "on0cfjb": {
-          "id": "on0cfjb",
-          "ref": "arg",
-          "value": "__graph_value"
-        },
-        "oqbuspj": {
-          "id": "oqbuspj"
-        },
-        "out": {
-          "id": "out",
-          "name": "@html.slider",
-          "ref": "return"
-        },
-        "parseval": {
-          "id": "parseval",
-          "ref": "@js.script",
-          "value": "return parseFloat(val)"
-        },
-        "q09a315": {
-          "id": "q09a315",
-          "ref": "",
-          "value": "0.01"
-        },
-        "q8ugbch": {
-          "id": "q8ugbch",
-          "value": "row"
-        },
-        "r0fsdrm": {
-          "id": "r0fsdrm",
-          "ref": "@js.script",
-          "value": "return 0.5 * ((max ?? 1) - (min ?? 0)) + (min ?? 0)"
-        },
-        "r1ah7g2": {
-          "id": "r1ah7g2",
-          "value": "0.0"
-        },
-        "racg3p7": {
-          "id": "racg3p7",
-          "ref": "arg",
-          "value": "label"
-        },
-        "sb9qdgy": {
-          "id": "sb9qdgy",
-          "ref": "@data.array"
-        },
-        "slidervalpublish": {
-          "id": "slidervalpublish",
-          "value": "true"
-        },
-        "sv49nso": {
-          "id": "sv49nso",
-          "ref": "arg",
-          "value": "_sliderval.value"
-        },
-        "sxjhepz": {
-          "id": "sxjhepz"
-        },
-        "t1deznd": {
-          "id": "t1deznd",
-          "ref": "@memory.reference"
-        },
-        "tjzn9ne": {
-          "id": "tjzn9ne",
-          "ref": "arg",
-          "value": "_sliderstate"
-        },
-        "tksk4wc": {
-          "id": "tksk4wc",
-          "ref": "@flow.default"
-        },
-        "u4k2auv": {
-          "id": "u4k2auv",
-          "value": "Slider"
-        },
-        "v0qabyr": {
-          "id": "v0qabyr",
-          "ref": "@flow.ap"
-        },
-        "vgishln": {
-          "id": "vgishln",
-          "ref": "arg",
-          "value": "_sliderval"
-        },
-        "x4fmyaa": {
-          "id": "x4fmyaa",
-          "ref": "arg",
-          "value": "max"
-        },
-        "x4vnm62": {
-          "id": "x4vnm62",
-          "ref": "arg",
-          "value": "max"
-        },
-        "y407zfo": {
-          "id": "y407zfo",
-          "ref": "@html.html_element"
-        },
-        "yv0o41n": {
-          "id": "yv0o41n",
-          "ref": "@flow.default"
-        },
-        "z3jopgg": {
-          "id": "z3jopgg",
-          "ref": "arg",
-          "value": "step"
-        },
-        "z8c7kcy": {
-          "id": "z8c7kcy",
-          "ref": "arg",
-          "value": "event.target.value"
-        }
-      },
-      "out": "out"
-    },
+    "@html.slider": {"edges":{"0i85qjj":{"as":"args","from":"0i85qjj","to":"out"},"y407zfo":{"as":"display","from":"y407zfo","to":"out"},"a6rdag9":{"as":"props","from":"a6rdag9","to":"y407zfo"},"av63lw9":{"as":"value","from":"av63lw9","to":"y407zfo"},"sb9qdgy":{"as":"children","from":"sb9qdgy","to":"y407zfo"},"5mog0bc":{"as":"arg1","from":"5mog0bc","to":"sb9qdgy"},"doz740g":{"as":"arg0","from":"doz740g","to":"sb9qdgy"},"kyu6h8m":{"as":"arg2","from":"kyu6h8m","to":"sb9qdgy"},"ewycyaq":{"as":"text","from":"ewycyaq","to":"kyu6h8m"},"bts7694":{"as":"otherwise","from":"bts7694","to":"ewycyaq"},"vgishln":{"as":"value","from":"vgishln","to":"ewycyaq"},"racg3p7":{"as":"text","from":"racg3p7","to":"doz740g"},"24q0egm":{"as":"props","from":"24q0egm","to":"5mog0bc"},"1dhoyv2":{"as":"max","from":"1dhoyv2","to":"24q0egm"},"7c2vt3d":{"as":"min","from":"7c2vt3d","to":"24q0egm"},"mpbvtrq":{"as":"type","from":"mpbvtrq","to":"24q0egm"},"old0t0c":{"as":"oninput","from":"old0t0c","to":"24q0egm"},"tksk4wc":{"as":"value","from":"tksk4wc","to":"24q0egm"},"v0qabyr":{"as":"onchange","from":"v0qabyr","to":"24q0egm"},"yv0o41n":{"as":"step","from":"yv0o41n","to":"24q0egm"},"q09a315":{"as":"otherwise","from":"q09a315","to":"yv0o41n"},"z3jopgg":{"as":"value","from":"z3jopgg","to":"yv0o41n"},"d86emo2":{"as":"fn","from":"d86emo2","to":"v0qabyr"},"oqbuspj":{"as":"args","from":"oqbuspj","to":"v0qabyr"},"nrhhdip":{"as":"value","from":"nrhhdip","to":"oqbuspj"},"z8c7kcy":{"as":"val","from":"z8c7kcy","to":"nrhhdip"},"8f3izp7":{"as":"arg1","from":"8f3izp7","to":"d86emo2"},"gtpf6x9":{"as":"arg0","from":"gtpf6x9","to":"d86emo2"},"d1wcpk1":{"as":"otherwise","from":"d1wcpk1","to":"tksk4wc"},"sv49nso":{"as":"value","from":"sv49nso","to":"tksk4wc"},"2wp8ffd":{"as":"fn","from":"2wp8ffd","to":"old0t0c"},"ezx9hxj":{"as":"args","from":"ezx9hxj","to":"old0t0c"},"parseval":{"as":"value","from":"parseval","to":"ezx9hxj"},"gibdj45":{"as":"val","from":"gibdj45","to":"parseval"},"4dh6wzn":{"as":"arg1","from":"4dh6wzn","to":"2wp8ffd"},"l5bzesi":{"as":"arg0","from":"l5bzesi","to":"2wp8ffd"},"fd7yax9":{"as":"value","from":"fd7yax9","to":"7c2vt3d"},"r1ah7g2":{"as":"otherwise","from":"r1ah7g2","to":"7c2vt3d"},"4subc0j":{"as":"graphval","from":"4subc0j","to":"1dhoyv2"},"x4vnm62":{"as":"argmax","from":"x4vnm62","to":"1dhoyv2"},"n4i4t17":{"as":"val","from":"n4i4t17","to":"av63lw9"},"tjzn9ne":{"as":"state","from":"tjzn9ne","to":"av63lw9"},"vc1r73a":{"as":"statechanged","from":"vc1r73a","to":"av63lw9"},"yiyi4cq":{"as":"value","from":"yiyi4cq","to":"vc1r73a"},"sxjhepz":{"as":"style","from":"sxjhepz","to":"a6rdag9"},"93rx3ru":{"as":"display","from":"93rx3ru","to":"sxjhepz"},"q8ugbch":{"as":"flex-direction","from":"q8ugbch","to":"sxjhepz"},"gvk9hec":{"as":"_sliderstate","from":"gvk9hec","to":"0i85qjj"},"t1deznd":{"as":"_sliderval","from":"t1deznd","to":"0i85qjj"},"u4k2auv":{"as":"label","from":"u4k2auv","to":"0i85qjj"},"slidervalpublish":{"as":"publish","from":"slidervalpublish","to":"t1deznd"},"fgmcy0x":{"as":"publish","from":"fgmcy0x","to":"gvk9hec"},"h19qe28":{"as":"persist","from":"h19qe28","to":"gvk9hec"},"r0fsdrm":{"as":"value","from":"r0fsdrm","to":"gvk9hec"},"34k9xvb":{"as":"max","from":"34k9xvb","to":"r0fsdrm"},"e996mm5":{"as":"min","from":"e996mm5","to":"r0fsdrm"},"on0cfjb":{"as":"graphval","from":"on0cfjb","to":"34k9xvb"},"x4fmyaa":{"as":"argmax","from":"x4fmyaa","to":"34k9xvb"}},"id":"@html.slider","nodes":{"out":{"id":"out","name":"@html.slider","ref":"return"},"y407zfo":{"id":"y407zfo","ref":"@html.html_element"},"sb9qdgy":{"id":"sb9qdgy","ref":"@data.array"},"kyu6h8m":{"id":"kyu6h8m","ref":"@html.html_text"},"ewycyaq":{"id":"ewycyaq","ref":"@flow.default"},"vgishln":{"id":"vgishln","ref":"arg","value":"_sliderval.value"},"bts7694":{"id":"bts7694","ref":"arg","value":"_sliderstate.state"},"doz740g":{"id":"doz740g","ref":"@html.html_text"},"racg3p7":{"id":"racg3p7","ref":"arg","value":"label"},"5mog0bc":{"id":"5mog0bc","ref":"@html.html_element","value":"input"},"24q0egm":{"id":"24q0egm"},"yv0o41n":{"id":"yv0o41n","ref":"@flow.default"},"z3jopgg":{"id":"z3jopgg","ref":"arg","value":"step"},"q09a315":{"id":"q09a315","ref":"","value":"0.01"},"v0qabyr":{"id":"v0qabyr","ref":"@flow.ap"},"oqbuspj":{"id":"oqbuspj"},"nrhhdip":{"id":"nrhhdip","ref":"@js.script","value":"return parseFloat(val)"},"z8c7kcy":{"id":"z8c7kcy","ref":"arg","value":"event.target.value"},"d86emo2":{"id":"d86emo2","ref":"@data.array"},"gtpf6x9":{"id":"gtpf6x9","ref":"arg","value":"_sliderstate.set"},"8f3izp7":{"id":"8f3izp7","ref":"arg","value":"onchange"},"tksk4wc":{"id":"tksk4wc","ref":"@flow.default"},"sv49nso":{"id":"sv49nso","ref":"arg","value":"_sliderval.value"},"d1wcpk1":{"id":"d1wcpk1","ref":"arg","value":"_sliderstate.state"},"old0t0c":{"id":"old0t0c","ref":"@flow.ap"},"ezx9hxj":{"id":"ezx9hxj"},"parseval":{"id":"parseval","ref":"@js.script","value":"return parseFloat(val)"},"gibdj45":{"id":"gibdj45","ref":"arg","value":"event.target.value"},"2wp8ffd":{"id":"2wp8ffd","ref":"@data.array"},"l5bzesi":{"id":"l5bzesi","ref":"arg","value":"_sliderval.set"},"4dh6wzn":{"id":"4dh6wzn","ref":"arg","value":"oninput"},"mpbvtrq":{"id":"mpbvtrq","value":"range"},"7c2vt3d":{"id":"7c2vt3d","ref":"@flow.default"},"r1ah7g2":{"id":"r1ah7g2","value":"0.0"},"fd7yax9":{"id":"fd7yax9","ref":"arg","value":"min"},"1dhoyv2":{"id":"1dhoyv2","ref":"@js.script","value":"return !isNaN(argmax) ? argmax : !isNaN(graphval) ? graphval : 1.0"},"x4vnm62":{"id":"x4vnm62","ref":"arg","value":"max"},"4subc0j":{"id":"4subc0j","ref":"arg","value":"__graph_value"},"av63lw9":{"id":"av63lw9","ref":"@js.script","value":"if (state.state !== undefined && (val.value === undefined || statechanged)) {\n  \n  val.set(state.state)\n}\n\nreturn val;"},"vc1r73a":{"id":"vc1r73a","ref":"@data.ischanged"},"yiyi4cq":{"id":"yiyi4cq","ref":"arg","value":"_sliderstate.state"},"tjzn9ne":{"id":"tjzn9ne","ref":"arg","value":"_sliderstate"},"n4i4t17":{"id":"n4i4t17","ref":"arg","value":"_sliderval"},"a6rdag9":{"id":"a6rdag9"},"sxjhepz":{"id":"sxjhepz"},"q8ugbch":{"id":"q8ugbch","value":"row"},"93rx3ru":{"id":"93rx3ru","value":"flex"},"0i85qjj":{"id":"0i85qjj"},"u4k2auv":{"id":"u4k2auv","value":"Slider"},"t1deznd":{"id":"t1deznd","ref":"@memory.reference"},"slidervalpublish":{"id":"slidervalpublish","value":"true"},"gvk9hec":{"id":"gvk9hec","ref":"@memory.state"},"r0fsdrm":{"id":"r0fsdrm","ref":"@js.script","value":"return 0.5 * ((max ?? 1) - (min ?? 0)) + (min ?? 0)"},"e996mm5":{"id":"e996mm5","ref":"arg","value":"min"},"34k9xvb":{"id":"34k9xvb","ref":"@js.script","value":"return !isNaN(argmax) ? argmax : !isNaN(graphval) ? graphval : 1.0"},"x4fmyaa":{"id":"x4fmyaa","ref":"arg","value":"max"},"on0cfjb":{"id":"on0cfjb","ref":"arg","value":"__graph_value"},"h19qe28":{"id":"h19qe28","value":"true"},"fgmcy0x":{"id":"fgmcy0x","value":"true"}},"out":"out"},
     "@nodysseus.export": {
       "category": "nodysseus",
       "edges": {
@@ -6636,12 +6069,12 @@ const generic = {
         },
         "x8ik3x4": {
           "id": "x8ik3x4",
-          "value": "return graphs.map(ref => {const ret = {...ref}; delete ret['edges_in']; return ret;});",
+          "value": "console.log('graphs 1', graphs); return graphs.map(ref => {const ret = {...ref}; delete ret['edges_in']; return ret;});",
           "ref": "@js.script"
         },
         "8zvzwb5": {
           "id": "8zvzwb5",
-          "value": "return _lib.no.runtime.graphExport(ref)",
+          "value": "return _lib.runtime.graphExport(ref)",
           "ref": "@js.script"
         },
         "a1vqjzz": {
@@ -6678,7 +6111,7 @@ const generic = {
         "refspromise": {
           "id": "refspromise",
           "ref": "@js.script",
-          "value": "return _lib.no.runtime.refs()"
+          "value": "return _lib.runtime.refs()"
         },
         "aem1lk9": {
           "id": "aem1lk9",
@@ -6779,7 +6212,7 @@ const generic = {
         "9tv13iq": {
           "id": "9tv13iq",
           "ref": "@js.script",
-          "value": "return _lib.no.runtime.refs()"
+          "value": "return _lib.runtime.refs()"
         },
         "2yur4h7": {
           "id": "2yur4h7",
@@ -6825,13 +6258,13 @@ const generic = {
         },
         "o7cn2a9": {
           "id": "o7cn2a9",
-          "value": "return Object.values(graphs.flat().reduce((acc, graph) => acc[graph.id] ? acc : {...acc, [graph.id]: graph}, {}));",
+          "value": "console.log('graphs', graphs); return Object.values(graphs.flat().reduce((acc, graph) => acc[graph.id] ? acc : {...acc, [graph.id]: graph}, {}));",
           "ref": "@js.script"
         }
       },
       "out": "out"
     },
-    "@nodysseus.export_html": {"category":"nodysseus","edges":{"args":{"as":"args","from":"args","to":"out"},"jklqh38":{"as":"display","from":"jklqh38","to":"out"},"6qkew20":{"as":"children","from":"6qkew20","to":"jklqh38"},"3y8pyc2":{"as":"arg3","from":"3y8pyc2","to":"6qkew20"},"8dy573e":{"as":"arg0","from":"8dy573e","to":"6qkew20"},"pcx97n4":{"as":"arg2","from":"pcx97n4","to":"6qkew20"},"rk7hcxc":{"as":"props","from":"rk7hcxc","to":"pcx97n4"},"91lhfar":{"as":"onchange","from":"91lhfar","to":"rk7hcxc"},"b8wohxv":{"as":"type","from":"b8wohxv","to":"rk7hcxc"},"x200f4j":{"as":"list","from":"x200f4j","to":"rk7hcxc"},"91lhfar_arr":{"as":"fn","from":"91lhfar_arr","to":"91lhfar"},"zpv5bk2":{"as":"args","from":"zpv5bk2","to":"91lhfar"},"6dadrg0":{"as":"event","from":"6dadrg0","to":"zpv5bk2"},"898n6f7":{"as":"arg0","from":"898n6f7","to":"91lhfar_arr"},"i5wnhvh":{"as":"arg1","from":"i5wnhvh","to":"91lhfar_arr"},"mp0ce5t":{"as":"fn","from":"mp0ce5t","to":"i5wnhvh"},"zucq3k4":{"as":"args","from":"zucq3k4","to":"i5wnhvh"},"8470sfe":{"as":"value","from":"8470sfe","to":"zucq3k4"},"hke54sp":{"as":"file","from":"hke54sp","to":"8470sfe"},"4s3ayzq":{"as":"json","from":"4s3ayzq","to":"hke54sp"},"j7059cv":{"as":"graphId","from":"j7059cv","to":"4s3ayzq"},"syfso39":{"as":"json","from":"syfso39","to":"4s3ayzq"},"5ym155p":{"as":"object","from":"5ym155p","to":"syfso39"},"aem1lk9":{"as":"state","from":"aem1lk9","to":"5ym155p"},"kaiwusy":{"as":"graphs","from":"kaiwusy","to":"5ym155p"},"o7cn2a9":{"as":"value","from":"o7cn2a9","to":"kaiwusy"},"db0reg4":{"as":"graphs","from":"db0reg4","to":"o7cn2a9"},"0pnyh3t":{"as":"array","from":"0pnyh3t","to":"db0reg4"},"959i120":{"as":"fn","from":"959i120","to":"db0reg4"},"i60dlmh":{"as":"parameters","from":"i60dlmh","to":"959i120"},"x8ik3x4":{"as":"fn","from":"x8ik3x4","to":"959i120"},"8zvzwb5":{"as":"graphs","from":"8zvzwb5","to":"x8ik3x4"},"a1vqjzz":{"as":"ref","from":"a1vqjzz","to":"8zvzwb5"},"g7pa2bl":{"as":"element","from":"g7pa2bl","to":"i60dlmh"},"l4o1umt":{"as":"value","from":"l4o1umt","to":"0pnyh3t"},"refspromise":{"as":"refs","from":"refspromise","to":"l4o1umt"},"w78q6vm":{"as":"namespace","from":"w78q6vm","to":"l4o1umt"},"1axuplc":{"as":"value","from":"1axuplc","to":"w78q6vm"},"47sbfib":{"as":"value","from":"47sbfib","to":"aem1lk9"},"obg8j8v":{"as":"graphid","from":"obg8j8v","to":"47sbfib"},"690ivn1":{"as":"args","from":"690ivn1","to":"898n6f7"},"9jvfgj1":{"as":"fn","from":"9jvfgj1","to":"898n6f7"},"j2c518b":{"as":"value","from":"j2c518b","to":"690ivn1"},"qpiqhgp":{"as":"value","from":"qpiqhgp","to":"j2c518b"},"n7aaoju":{"as":"children","from":"n7aaoju","to":"8dy573e"},"zihm1kd":{"as":"props","from":"zihm1kd","to":"8dy573e"},"2dz33fg":{"as":"target","from":"2dz33fg","to":"zihm1kd"},"jdoak4g":{"as":"download","from":"jdoak4g","to":"zihm1kd"},"pni2xuu":{"as":"href","from":"pni2xuu","to":"zihm1kd"},"ug26ugw":{"as":"value","from":"ug26ugw","to":"pni2xuu"},"jdufmth":{"as":"ns","from":"jdufmth","to":"jdoak4g"},"et5g0m1":{"as":"children","from":"et5g0m1","to":"3y8pyc2"},"xdot36k":{"as":"props","from":"xdot36k","to":"3y8pyc2"},"tfwqhqf":{"as":"id","from":"tfwqhqf","to":"xdot36k"},"2yur4h7":{"as":"fn","from":"2yur4h7","to":"et5g0m1"},"9tv13iq":{"as":"array","from":"9tv13iq","to":"et5g0m1"},"1edrrwq":{"as":"fn","from":"1edrrwq","to":"2yur4h7"},"6ag8lnc":{"as":"parameters","from":"6ag8lnc","to":"2yur4h7"},"9rf8bds":{"as":"element","from":"9rf8bds","to":"6ag8lnc"},"skqnl08":{"as":"children","from":"skqnl08","to":"1edrrwq"},"xp4pv1h":{"as":"text","from":"xp4pv1h","to":"skqnl08"},"dd6st1b":{"as":"element","from":"dd6st1b","to":"xp4pv1h"},"3b7bnzm":{"as":"hrefstate","from":"3b7bnzm","to":"args"},"tad7830":{"as":"namespace","from":"tad7830","to":"args"}},"id":"@nodysseus.export_html","nodes":{"out":{"id":"out","name":"@nodysseus.export_html","ref":"return"},"jklqh38":{"id":"jklqh38","ref":"@html.html_element"},"6qkew20":{"id":"6qkew20","ref":"@data.array"},"pcx97n4":{"id":"pcx97n4","ref":"@html.html_element","value":"input"},"rk7hcxc":{"id":"rk7hcxc"},"x200f4j":{"id":"x200f4j","value":"export-list"},"b8wohxv":{"id":"b8wohxv","value":"select"},"91lhfar":{"id":"91lhfar","ref":"@flow.ap"},"zpv5bk2":{"id":"zpv5bk2"},"6dadrg0":{"id":"6dadrg0","ref":"arg","value":"event"},"91lhfar_arr":{"id":"91lhfar_arr","ref":"@data.array"},"i5wnhvh":{"id":"i5wnhvh","ref":"@flow.ap"},"zucq3k4":{"id":"zucq3k4"},"8470sfe":{"id":"8470sfe","ref":"@js.script","value":"return URL.createObjectURL(file)"},"hke54sp":{"id":"hke54sp","ref":"@js.script","value":"return new Blob([json], {type: \"application/html\"})"},"4s3ayzq":{"id":"4s3ayzq","value":"return `\n<!DOCTYPE html>\n<meta charset=utf8>\n<html>\n<head>\n  <title>Nodysseus</title>\n  <meta name=\"viewport\" content=\"width=device-width, height=device-height,  initial-scale=1.0, user-scalable=no, user-scalable=0\"/>\n  <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,200,0,0\" />\n</head>\n<body>\n    <div id=\"graph-display\"></div>\n  <script type=\"module\">\n    import {run, hlib, webClientStore, objectRefStore, newEnv, ha, middleware, run_h} from \"https://esm.run/nodysseus@latest/public/browser-esm.js\"\n\n\n    const exportedGraph = ${json};\n    webClientStore(() => Promise.resolve(objectRefStore(Object.fromEntries(exportedGraph.graphs.map(graph => [graph.id, graph]))))).then(store => {\n        const runnable = {\n          graph: \"${graphId}\", \n          env: newEnv(new Map([[\"__graphid\", hlib.data.no.of(\"${graphId}\")]]), \"display\"),\n          fn: exportedGraph.graphs.find(g => g.id === \"${graphId}\").out,\n          lib: hlib\n        }\n        \n        const app = ha.app({\n          dispatch: middleware,\n          init: {hDisplay: {dom_type: \"text_value\", text: \"\"}},\n          view: ({hDisplay}) => run_h(hDisplay),\n          node: document.getElementById(\"graph-display\")\n        });\n\n        const updateDisplay = () => {\n          const result = run(runnable, new Map(), {lib: hlib, store})\n\n          if(typeof result?.then === \"function\") {\n            result.then(hDisplay => app({hDisplay}))\n          } else {\n            app({hDisplay: result});\n          }\n        }\n\n        updateDisplay();\n        \n        hlib.data.no.runtime\n          .addListener(\"graphupdate\", \"rerun\", () => {\n          updateDisplay();\n        }, false, false, false, hlib)\n      })\n  </script>\n</body>\n</html>\n\n\n`","ref":"@js.script"},"syfso39":{"id":"syfso39","ref":"@data.stringify"},"5ym155p":{"id":"5ym155p"},"kaiwusy":{"id":"kaiwusy","ref":"@debug.log","value":"mapout"},"o7cn2a9":{"id":"o7cn2a9","ref":"@js.script","value":"return Object.values(graphs.flat().reduce((acc, graph) => acc[graph.id] ? acc : {...acc, [graph.id]: graph}, {}));"},"db0reg4":{"id":"db0reg4","ref":"@data.map"},"959i120":{"id":"959i120","ref":"@flow.runnable"},"x8ik3x4":{"id":"x8ik3x4","ref":"@js.script","value":"return graphs.map(ref => {const ret = {...ref}; delete ret['edges_in']; return ret;});"},"8zvzwb5":{"id":"8zvzwb5","ref":"@js.script","value":"return _lib.no.runtime.graphExport(ref)"},"a1vqjzz":{"id":"a1vqjzz","ref":"arg","value":"element"},"i60dlmh":{"id":"i60dlmh"},"g7pa2bl":{"id":"g7pa2bl"},"0pnyh3t":{"id":"0pnyh3t","ref":"@debug.log","value":"mapin"},"l4o1umt":{"id":"l4o1umt","ref":"@js.script","value":"return refs.filter(r => r.startsWith('@' + namespace + '.') || r === namespace)"},"w78q6vm":{"id":"w78q6vm","ref":"@debug.log","value":"ns"},"1axuplc":{"id":"1axuplc","ref":"arg","value":"event.target.value"},"refspromise":{"id":"refspromise","ref":"@js.script","value":"return _lib.no.runtime.refs()"},"aem1lk9":{"id":"aem1lk9","ref":"@debug.log","value":"state?"},"47sbfib":{"id":"47sbfib","ref":"extern","value":"extern.graphState"},"obg8j8v":{"id":"obg8j8v","ref":"arg","value":"event.target.value"},"j7059cv":{"id":"j7059cv","ref":"arg","value":"event.target.value"},"mp0ce5t":{"id":"mp0ce5t","ref":"arg","value":"hrefstate.set"},"898n6f7":{"id":"898n6f7","ref":"@flow.ap"},"9jvfgj1":{"id":"9jvfgj1","ref":"arg","value":"namespace.set"},"690ivn1":{"id":"690ivn1","ref":"@debug.log","value":"val"},"j2c518b":{"id":"j2c518b"},"qpiqhgp":{"id":"qpiqhgp","ref":"arg","value":"event.target.value"},"8dy573e":{"id":"8dy573e","ref":"@html.html_element","value":"a"},"zihm1kd":{"id":"zihm1kd"},"pni2xuu":{"id":"pni2xuu","ref":"@debug.log","value":"href"},"ug26ugw":{"id":"ug26ugw","name":"","ref":"arg","value":"hrefstate.state"},"jdoak4g":{"id":"jdoak4g","ref":"@js.script","value":"return ns + '.html';"},"jdufmth":{"id":"jdufmth","ref":"arg","value":"namespace.state"},"2dz33fg":{"id":"2dz33fg","value":"_new"},"n7aaoju":{"id":"n7aaoju","ref":"@html.html_text","value":"Export"},"3y8pyc2":{"id":"3y8pyc2","ref":"@html.html_element","value":"datalist"},"xdot36k":{"id":"xdot36k"},"tfwqhqf":{"id":"tfwqhqf","value":"export-list"},"et5g0m1":{"id":"et5g0m1","ref":"@data.map"},"9tv13iq":{"id":"9tv13iq","ref":"@js.script","value":"return _lib.no.runtime.refs()"},"2yur4h7":{"id":"2yur4h7","ref":"@flow.runnable"},"6ag8lnc":{"id":"6ag8lnc"},"9rf8bds":{"id":"9rf8bds"},"1edrrwq":{"id":"1edrrwq","ref":"@html.html_element","value":"option"},"skqnl08":{"id":"skqnl08","ref":"@html.html_text"},"xp4pv1h":{"id":"xp4pv1h","ref":"@js.script","value":"return element"},"dd6st1b":{"id":"dd6st1b","ref":"arg","value":"element"},"args":{"id":"args","ref":"extern","value":"extern.data"},"tad7830":{"id":"tad7830","ref":"@memory.state"},"3b7bnzm":{"id":"3b7bnzm","ref":"@memory.state"}},"out":"out"},
+    "@nodysseus.export_html": {"category":"nodysseus","edges":{"args":{"as":"args","from":"args","to":"out"},"jklqh38":{"as":"display","from":"jklqh38","to":"out"},"6qkew20":{"as":"children","from":"6qkew20","to":"jklqh38"},"3y8pyc2":{"as":"arg3","from":"3y8pyc2","to":"6qkew20"},"8dy573e":{"as":"arg0","from":"8dy573e","to":"6qkew20"},"pcx97n4":{"as":"arg2","from":"pcx97n4","to":"6qkew20"},"rk7hcxc":{"as":"props","from":"rk7hcxc","to":"pcx97n4"},"91lhfar":{"as":"onchange","from":"91lhfar","to":"rk7hcxc"},"b8wohxv":{"as":"type","from":"b8wohxv","to":"rk7hcxc"},"x200f4j":{"as":"list","from":"x200f4j","to":"rk7hcxc"},"91lhfar_arr":{"as":"fn","from":"91lhfar_arr","to":"91lhfar"},"zpv5bk2":{"as":"args","from":"zpv5bk2","to":"91lhfar"},"6dadrg0":{"as":"event","from":"6dadrg0","to":"zpv5bk2"},"898n6f7":{"as":"arg0","from":"898n6f7","to":"91lhfar_arr"},"i5wnhvh":{"as":"arg1","from":"i5wnhvh","to":"91lhfar_arr"},"mp0ce5t":{"as":"fn","from":"mp0ce5t","to":"i5wnhvh"},"zucq3k4":{"as":"args","from":"zucq3k4","to":"i5wnhvh"},"8470sfe":{"as":"value","from":"8470sfe","to":"zucq3k4"},"hke54sp":{"as":"file","from":"hke54sp","to":"8470sfe"},"4s3ayzq":{"as":"json","from":"4s3ayzq","to":"hke54sp"},"j7059cv":{"as":"graphId","from":"j7059cv","to":"4s3ayzq"},"syfso39":{"as":"json","from":"syfso39","to":"4s3ayzq"},"5ym155p":{"as":"object","from":"5ym155p","to":"syfso39"},"aem1lk9":{"as":"state","from":"aem1lk9","to":"5ym155p"},"kaiwusy":{"as":"graphs","from":"kaiwusy","to":"5ym155p"},"o7cn2a9":{"as":"value","from":"o7cn2a9","to":"kaiwusy"},"db0reg4":{"as":"graphs","from":"db0reg4","to":"o7cn2a9"},"0pnyh3t":{"as":"array","from":"0pnyh3t","to":"db0reg4"},"959i120":{"as":"fn","from":"959i120","to":"db0reg4"},"i60dlmh":{"as":"parameters","from":"i60dlmh","to":"959i120"},"x8ik3x4":{"as":"fn","from":"x8ik3x4","to":"959i120"},"8zvzwb5":{"as":"graphs","from":"8zvzwb5","to":"x8ik3x4"},"a1vqjzz":{"as":"ref","from":"a1vqjzz","to":"8zvzwb5"},"g7pa2bl":{"as":"element","from":"g7pa2bl","to":"i60dlmh"},"l4o1umt":{"as":"value","from":"l4o1umt","to":"0pnyh3t"},"refspromise":{"as":"refs","from":"refspromise","to":"l4o1umt"},"w78q6vm":{"as":"namespace","from":"w78q6vm","to":"l4o1umt"},"1axuplc":{"as":"value","from":"1axuplc","to":"w78q6vm"},"47sbfib":{"as":"value","from":"47sbfib","to":"aem1lk9"},"obg8j8v":{"as":"graphid","from":"obg8j8v","to":"47sbfib"},"690ivn1":{"as":"args","from":"690ivn1","to":"898n6f7"},"9jvfgj1":{"as":"fn","from":"9jvfgj1","to":"898n6f7"},"j2c518b":{"as":"value","from":"j2c518b","to":"690ivn1"},"qpiqhgp":{"as":"value","from":"qpiqhgp","to":"j2c518b"},"n7aaoju":{"as":"children","from":"n7aaoju","to":"8dy573e"},"zihm1kd":{"as":"props","from":"zihm1kd","to":"8dy573e"},"2dz33fg":{"as":"target","from":"2dz33fg","to":"zihm1kd"},"jdoak4g":{"as":"download","from":"jdoak4g","to":"zihm1kd"},"pni2xuu":{"as":"href","from":"pni2xuu","to":"zihm1kd"},"ug26ugw":{"as":"value","from":"ug26ugw","to":"pni2xuu"},"jdufmth":{"as":"ns","from":"jdufmth","to":"jdoak4g"},"et5g0m1":{"as":"children","from":"et5g0m1","to":"3y8pyc2"},"xdot36k":{"as":"props","from":"xdot36k","to":"3y8pyc2"},"tfwqhqf":{"as":"id","from":"tfwqhqf","to":"xdot36k"},"2yur4h7":{"as":"fn","from":"2yur4h7","to":"et5g0m1"},"9tv13iq":{"as":"array","from":"9tv13iq","to":"et5g0m1"},"1edrrwq":{"as":"fn","from":"1edrrwq","to":"2yur4h7"},"6ag8lnc":{"as":"parameters","from":"6ag8lnc","to":"2yur4h7"},"9rf8bds":{"as":"element","from":"9rf8bds","to":"6ag8lnc"},"skqnl08":{"as":"children","from":"skqnl08","to":"1edrrwq"},"xp4pv1h":{"as":"text","from":"xp4pv1h","to":"skqnl08"},"dd6st1b":{"as":"element","from":"dd6st1b","to":"xp4pv1h"},"3b7bnzm":{"as":"hrefstate","from":"3b7bnzm","to":"args"},"tad7830":{"as":"namespace","from":"tad7830","to":"args"}},"id":"@nodysseus.export_html","nodes":{"out":{"id":"out","name":"@nodysseus.export_html","ref":"return"},"jklqh38":{"id":"jklqh38","ref":"@html.html_element"},"6qkew20":{"id":"6qkew20","ref":"@data.array"},"pcx97n4":{"id":"pcx97n4","ref":"@html.html_element","value":"input"},"rk7hcxc":{"id":"rk7hcxc"},"x200f4j":{"id":"x200f4j","value":"export-list"},"b8wohxv":{"id":"b8wohxv","value":"select"},"91lhfar":{"id":"91lhfar","ref":"@flow.ap"},"zpv5bk2":{"id":"zpv5bk2"},"6dadrg0":{"id":"6dadrg0","ref":"arg","value":"event"},"91lhfar_arr":{"id":"91lhfar_arr","ref":"@data.array"},"i5wnhvh":{"id":"i5wnhvh","ref":"@flow.ap"},"zucq3k4":{"id":"zucq3k4"},"8470sfe":{"id":"8470sfe","ref":"@js.script","value":"return URL.createObjectURL(file)"},"hke54sp":{"id":"hke54sp","ref":"@js.script","value":"return new Blob([json], {type: \"application/html\"})"},"4s3ayzq":{"id":"4s3ayzq","value":"return `\n<!DOCTYPE html>\n<meta charset=utf8>\n<html>\n<head>\n  <title>Nodysseus</title>\n  <meta name=\"viewport\" content=\"width=device-width, height=device-height,  initial-scale=1.0, user-scalable=no, user-scalable=0\"/>\n  <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,200,0,0\" />\n</head>\n<body>\n    <div id=\"graph-display\"></div>\n  <script type=\"module\">\n    import {run, hlib, webClientStore, objectRefStore, newEnv, ha, middleware, run_h} from \"https://esm.run/nodysseus@latest/public/browser-esm.js\"\n\n\n    const exportedGraph = ${json};\n    webClientStore(() => Promise.resolve(objectRefStore(Object.fromEntries(exportedGraph.graphs.map(graph => [graph.id, graph]))))).then(store => {\n        const runnable = {\n          graph: \"${graphId}\", \n          env: newEnv(new Map([[\"__graphid\", hlib.data.no.of(\"${graphId}\")]]), \"display\"),\n          fn: exportedGraph.graphs.find(g => g.id === \"${graphId}\").out,\n          lib: hlib\n        }\n        \n        const app = ha.app({\n          dispatch: middleware,\n          init: {hDisplay: {dom_type: \"text_value\", text: \"\"}},\n          view: ({hDisplay}) => run_h(hDisplay),\n          node: document.getElementById(\"graph-display\")\n        });\n\n        const updateDisplay = () => {\n          const result = run(runnable, new Map(), {lib: hlib, store})\n\n          if(typeof result?.then === \"function\") {\n            result.then(hDisplay => app({hDisplay}))\n          } else {\n            app({hDisplay: result});\n          }\n        }\n\n        updateDisplay();\n        \n        hlib.data.no.runtime\n          .addListener(\"graphupdate\", \"rerun\", () => {\n          updateDisplay();\n        }, false, false, false, hlib)\n      })\n  </script>\n</body>\n</html>\n\n\n`","ref":"@js.script"},"syfso39":{"id":"syfso39","ref":"@data.stringify"},"5ym155p":{"id":"5ym155p"},"kaiwusy":{"id":"kaiwusy","ref":"@debug.log","value":"mapout"},"o7cn2a9":{"id":"o7cn2a9","ref":"@js.script","value":"return Object.values(graphs.flat().reduce((acc, graph) => acc[graph.id] ? acc : {...acc, [graph.id]: graph}, {}));"},"db0reg4":{"id":"db0reg4","ref":"@data.map"},"959i120":{"id":"959i120","ref":"@flow.runnable"},"x8ik3x4":{"id":"x8ik3x4","ref":"@js.script","value":"return graphs.map(ref => {const ret = {...ref}; delete ret['edges_in']; return ret;});"},"8zvzwb5":{"id":"8zvzwb5","ref":"@js.script","value":"return _lib.runtime.graphExport(ref)"},"a1vqjzz":{"id":"a1vqjzz","ref":"arg","value":"element"},"i60dlmh":{"id":"i60dlmh"},"g7pa2bl":{"id":"g7pa2bl"},"0pnyh3t":{"id":"0pnyh3t","ref":"@debug.log","value":"mapin"},"l4o1umt":{"id":"l4o1umt","ref":"@js.script","value":"return refs.filter(r => r.startsWith('@' + namespace + '.') || r === namespace)"},"w78q6vm":{"id":"w78q6vm","ref":"@debug.log","value":"ns"},"1axuplc":{"id":"1axuplc","ref":"arg","value":"event.target.value"},"refspromise":{"id":"refspromise","ref":"@js.script","value":"return _lib.runtime.refs()"},"aem1lk9":{"id":"aem1lk9","ref":"@debug.log","value":"state?"},"47sbfib":{"id":"47sbfib","ref":"extern","value":"extern.graphState"},"obg8j8v":{"id":"obg8j8v","ref":"arg","value":"event.target.value"},"j7059cv":{"id":"j7059cv","ref":"arg","value":"event.target.value"},"mp0ce5t":{"id":"mp0ce5t","ref":"arg","value":"hrefstate.set"},"898n6f7":{"id":"898n6f7","ref":"@flow.ap"},"9jvfgj1":{"id":"9jvfgj1","ref":"arg","value":"namespace.set"},"690ivn1":{"id":"690ivn1","ref":"@debug.log","value":"val"},"j2c518b":{"id":"j2c518b"},"qpiqhgp":{"id":"qpiqhgp","ref":"arg","value":"event.target.value"},"8dy573e":{"id":"8dy573e","ref":"@html.html_element","value":"a"},"zihm1kd":{"id":"zihm1kd"},"pni2xuu":{"id":"pni2xuu","ref":"@debug.log","value":"href"},"ug26ugw":{"id":"ug26ugw","name":"","ref":"arg","value":"hrefstate.state"},"jdoak4g":{"id":"jdoak4g","ref":"@js.script","value":"return ns + '.html';"},"jdufmth":{"id":"jdufmth","ref":"arg","value":"namespace.state"},"2dz33fg":{"id":"2dz33fg","value":"_new"},"n7aaoju":{"id":"n7aaoju","ref":"@html.html_text","value":"Export"},"3y8pyc2":{"id":"3y8pyc2","ref":"@html.html_element","value":"datalist"},"xdot36k":{"id":"xdot36k"},"tfwqhqf":{"id":"tfwqhqf","value":"export-list"},"et5g0m1":{"id":"et5g0m1","ref":"@data.map"},"9tv13iq":{"id":"9tv13iq","ref":"@js.script","value":"return _lib.runtime.refs()"},"2yur4h7":{"id":"2yur4h7","ref":"@flow.runnable"},"6ag8lnc":{"id":"6ag8lnc"},"9rf8bds":{"id":"9rf8bds"},"1edrrwq":{"id":"1edrrwq","ref":"@html.html_element","value":"option"},"skqnl08":{"id":"skqnl08","ref":"@html.html_text"},"xp4pv1h":{"id":"xp4pv1h","ref":"@js.script","value":"return element"},"dd6st1b":{"id":"dd6st1b","ref":"arg","value":"element"},"args":{"id":"args","ref":"extern","value":"extern.data"},"tad7830":{"id":"tad7830","ref":"@memory.state"},"3b7bnzm":{"id":"3b7bnzm","ref":"@memory.state"}},"out":"out"},
     "@memory.assetmanager": {
       "id": "@memory.assetmanager",
       "out": "out",
@@ -6879,7 +6312,7 @@ const generic = {
         },
         "5hesw9s": {
           "id": "5hesw9s",
-          "value": "return _lib.no.runtime.list_assets()",
+          "value": "return _lib.runtime.list_assets()",
           "ref": "@js.script"
         },
         "49od031": {
@@ -6935,7 +6368,7 @@ const generic = {
         },
         "6c04ryh": {
           "id": "6c04ryh",
-          "value": "_lib.no.runtime.add_asset(name, files[0])",
+          "value": "_lib.runtime.add_asset(name, files[0])",
           "ref": "@js.script"
         },
         "d4sx4ej": {
@@ -6964,7 +6397,7 @@ const generic = {
         },
         "vg773lv": {
           "id": "vg773lv",
-          "value": "return _lib.no.runtime.get_asset(asset);",
+          "value": "return _lib.runtime.get_asset(asset);",
           "ref": "@js.script"
         },
         "jhyu5pk": {
@@ -7007,7 +6440,7 @@ const generic = {
         },
         "gzki6r1": {
           "id": "gzki6r1",
-          "value": "return _lib.no.runtime.get_asset(asset);",
+          "value": "return _lib.runtime.get_asset(asset);",
           "ref": "@js.script"
         },
         "l7ahauw": {
@@ -10997,7 +10430,7 @@ const generic = {
         "akna0ig": {
           "id": "akna0ig",
           "ref": "@js.script",
-          "value": "return _lib.no.runtime.refs()"
+          "value": "return _lib.runtime.refs()"
         },
         "d6hbagr": {
           "id": "d6hbagr",
@@ -11334,7 +10767,7 @@ const generic = {
       },
       "out": "out"
     },
-    "@nodysseus.nodeDisplay":{"category":"nodysseus","edges":{"0tm58j9":{"as":"parent","from":"0tm58j9","to":"a4vqn33"},"0v2jux9":{"as":"graphid","from":"0v2jux9","to":"vnek089"},"0zot8g9":{"as":"nodeId","from":"0zot8g9","to":"a4vqn33"},"2ai4sjh":{"as":"otherwise","from":"2ai4sjh","to":"7wglw1p"},"3euqttl":{"as":"value","from":"3euqttl","to":"out"},"4sligcb":{"as":"children","from":"4sligcb","to":"5fh4bdy"},"5fh4bdy":{"as":"value","from":"5fh4bdy","to":"3euqttl"},"5yneigv":{"as":"output","from":"5yneigv","to":"2ai4sjh"},"678d6ki":{"as":"graph","from":"678d6ki","to":"a4vqn33"},"7tetc9c":{"as":"graphid","from":"7tetc9c","to":"bkjzo9f"},"7wglw1p":{"as":"fn","from":"7wglw1p","to":"r8nekwc"},"819x0bh":{"as":"args","from":"819x0bh","to":"3euqttl"},"a4vqn33":{"as":"value","from":"a4vqn33","to":"7wglw1p"},"bim9zhi":{"as":"otherwise","from":"bim9zhi","to":"fwsjsnu"},"bkjzo9f":{"as":"graphid","from":"bkjzo9f","to":"2ai4sjh"},"fwsjsnu":{"as":"_nodeId","from":"fwsjsnu","to":"819x0bh"},"g7tfor8":{"as":"value","from":"g7tfor8","to":"fwsjsnu"},"go8y9r6":{"as":"_graphref","from":"go8y9r6","to":"819x0bh"},"r8nekwc":{"as":"arg0","from":"r8nekwc","to":"4sligcb"},"vnek089":{"as":"graph","from":"vnek089","to":"2ai4sjh"},"vucpl3b":{"as":"_parent","from":"vucpl3b","to":"819x0bh"},"w58ugo7":{"as":"target","from":"w58ugo7","to":"vucpl3b"},"wz3fe9p":{"as":"run","from":"wz3fe9p","to":"r8nekwc"},"x5hnsaq":{"as":"parent","from":"x5hnsaq","to":"678d6ki"},"xo80unz":{"as":"graphid","from":"xo80unz","to":"go8y9r6"},"xqttsnb":{"as":"out","from":"xqttsnb","to":"2ai4sjh"},"y0xjosj":{"as":"nodeId","from":"y0xjosj","to":"678d6ki"},"yolz5rm":{"as":"graphid","from":"yolz5rm","to":"w58ugo7"}},"id":"@nodysseus.nodeDisplay","nodes":{"0tm58j9":{"id":"0tm58j9","ref":"arg","value":"_parent"},"0v2jux9":{"id":"0v2jux9","ref":"arg","value":"_parent"},"0zot8g9":{"id":"0zot8g9","ref":"arg","value":"_nodeId"},"2ai4sjh":{"id":"2ai4sjh","ref":"@flow.graphRunnable"},"3euqttl":{"id":"3euqttl","ref":"return"},"4sligcb":{"id":"4sligcb","ref":"@data.array"},"5fh4bdy":{"id":"5fh4bdy","ref":"@html.html_element"},"5yneigv":{"id":"5yneigv","value":"display"},"678d6ki":{"id":"678d6ki","ref":"@js.script","value":"return _lib.no.runtime.getGraphIdRef(`${parent}/${nodeId}`);"},"7tetc9c":{"id":"7tetc9c","ref":"arg","value":"_parent"},"7wglw1p":{"id":"7wglw1p","ref":"@flow.default"},"819x0bh":{"id":"819x0bh"},"a4vqn33":{"id":"a4vqn33","ref":"@js.script","value":"const fromargs = _lib.no.runtime.get_args(`${parent}/${nodeId}/${graph?.out ?? \"out\"}-display-runnable`);\nreturn fromargs.fn ? fromargs : undefined;"},"bim9zhi":{"id":"bim9zhi","ref":"arg","value":"nodeId"},"bkjzo9f":{"id":"bkjzo9f","ref":"@js.script","value":"//console.log(\"in env\", _lib.no.runtime.get_args(\"@nodysseus.nodeDisplay/68g6wbw/y407zfo-display-runnable\"))\n//return _lib.no.runtime.get_args(\"@nodysseus.nodeDisplay/68g6wbw/y407zfo-display-runnable\")\n\n//return {__kind: \"env\", data: {__graphid: graphid}}\nreturn graphid"},"fwsjsnu":{"id":"fwsjsnu","ref":"@flow.default"},"g7tfor8":{"id":"g7tfor8","ref":"arg","value":"__graph_value"},"go8y9r6":{"id":"go8y9r6","ref":"@js.script","value":"return _lib.no.runtime.getGraphIdRef(graphid);"},"out":{"id":"out","name":"@nodysseus.nodeDisplay","ref":"return"},"r8nekwc":{"id":"r8nekwc","ref":"@flow.ap"},"vnek089":{"id":"vnek089","ref":"@js.script","value":"//return graphid\nreturn _lib.no.runtime.get_parent(graphid) ?  _lib.no.runtime.getGraphIdRef(graphid) : graphid;"},"vucpl3b":{"id":"vucpl3b","ref":"@data.get","value":"parent"},"w58ugo7":{"id":"w58ugo7","ref":"@js.script","value":"return _lib.no.runtime.get_parent(graphid);"},"wz3fe9p":{"id":"wz3fe9p","value":"true"},"x5hnsaq":{"id":"x5hnsaq","ref":"arg","value":"_parent"},"xo80unz":{"id":"xo80unz","ref":"arg","value":"__graphid"},"xqttsnb":{"id":"xqttsnb","ref":"arg","value":"_nodeId"},"y0xjosj":{"id":"y0xjosj","ref":"arg","value":"_parent"},"yolz5rm":{"id":"yolz5rm","ref":"arg","value":"__graphid"}},"out":"out"},
+    "@nodysseus.nodeDisplay":{"category":"nodysseus","edges":{"0tm58j9":{"as":"parent","from":"0tm58j9","to":"a4vqn33"},"0v2jux9":{"as":"graphid","from":"0v2jux9","to":"vnek089"},"0zot8g9":{"as":"nodeId","from":"0zot8g9","to":"a4vqn33"},"2ai4sjh":{"as":"otherwise","from":"2ai4sjh","to":"7wglw1p"},"3euqttl":{"as":"value","from":"3euqttl","to":"out"},"4sligcb":{"as":"children","from":"4sligcb","to":"5fh4bdy"},"5fh4bdy":{"as":"value","from":"5fh4bdy","to":"3euqttl"},"5yneigv":{"as":"output","from":"5yneigv","to":"2ai4sjh"},"678d6ki":{"as":"graph","from":"678d6ki","to":"a4vqn33"},"7tetc9c":{"as":"graphid","from":"7tetc9c","to":"bkjzo9f"},"7wglw1p":{"as":"fn","from":"7wglw1p","to":"r8nekwc"},"819x0bh":{"as":"args","from":"819x0bh","to":"3euqttl"},"a4vqn33":{"as":"value","from":"a4vqn33","to":"7wglw1p"},"bim9zhi":{"as":"otherwise","from":"bim9zhi","to":"fwsjsnu"},"bkjzo9f":{"as":"graphid","from":"bkjzo9f","to":"2ai4sjh"},"fwsjsnu":{"as":"_nodeId","from":"fwsjsnu","to":"819x0bh"},"g7tfor8":{"as":"value","from":"g7tfor8","to":"fwsjsnu"},"go8y9r6":{"as":"_graphref","from":"go8y9r6","to":"819x0bh"},"r8nekwc":{"as":"arg0","from":"r8nekwc","to":"4sligcb"},"vnek089":{"as":"graph","from":"vnek089","to":"2ai4sjh"},"vucpl3b":{"as":"_parent","from":"vucpl3b","to":"819x0bh"},"w58ugo7":{"as":"target","from":"w58ugo7","to":"vucpl3b"},"wz3fe9p":{"as":"run","from":"wz3fe9p","to":"r8nekwc"},"x5hnsaq":{"as":"parent","from":"x5hnsaq","to":"678d6ki"},"xo80unz":{"as":"graphid","from":"xo80unz","to":"go8y9r6"},"xqttsnb":{"as":"out","from":"xqttsnb","to":"2ai4sjh"},"y0xjosj":{"as":"nodeId","from":"y0xjosj","to":"678d6ki"},"yolz5rm":{"as":"graphid","from":"yolz5rm","to":"w58ugo7"}},"id":"@nodysseus.nodeDisplay","nodes":{"0tm58j9":{"id":"0tm58j9","ref":"arg","value":"_parent"},"0v2jux9":{"id":"0v2jux9","ref":"arg","value":"_parent"},"0zot8g9":{"id":"0zot8g9","ref":"arg","value":"_nodeId"},"2ai4sjh":{"id":"2ai4sjh","ref":"@flow.graphRunnable"},"3euqttl":{"id":"3euqttl","ref":"return"},"4sligcb":{"id":"4sligcb","ref":"@data.array"},"5fh4bdy":{"id":"5fh4bdy","ref":"@html.html_element"},"5yneigv":{"id":"5yneigv","value":"display"},"678d6ki":{"id":"678d6ki","ref":"@js.script","value":"return _lib.runtime.getGraphIdRef(`${parent}/${nodeId}`);"},"7tetc9c":{"id":"7tetc9c","ref":"arg","value":"_parent"},"7wglw1p":{"id":"7wglw1p","ref":"@flow.default"},"819x0bh":{"id":"819x0bh"},"a4vqn33":{"id":"a4vqn33","ref":"@js.script","value":"const fromargs = _lib.runtime.get_args(`${parent}/${nodeId}/${graph?.out ?? \"out\"}-display-runnable`);\nreturn fromargs.fn ? fromargs : undefined;"},"bim9zhi":{"id":"bim9zhi","ref":"arg","value":"nodeId"},"bkjzo9f":{"id":"bkjzo9f","ref":"@js.script","value":"//console.log(\"in env\", _lib.runtime.get_args(\"@nodysseus.nodeDisplay/68g6wbw/y407zfo-display-runnable\"))\n//return _lib.runtime.get_args(\"@nodysseus.nodeDisplay/68g6wbw/y407zfo-display-runnable\")\n\n//return {__kind: \"env\", data: {__graphid: graphid}}\nreturn graphid"},"fwsjsnu":{"id":"fwsjsnu","ref":"@flow.default"},"g7tfor8":{"id":"g7tfor8","ref":"arg","value":"__graph_value"},"go8y9r6":{"id":"go8y9r6","ref":"@js.script","value":"return _lib.runtime.getGraphIdRef(graphid);"},"out":{"id":"out","name":"@nodysseus.nodeDisplay","ref":"return"},"r8nekwc":{"id":"r8nekwc","ref":"@flow.ap"},"vnek089":{"id":"vnek089","ref":"@js.script","value":"//return graphid\nreturn _lib.runtime.get_parent(graphid) ?  _lib.runtime.getGraphIdRef(graphid) : graphid;"},"vucpl3b":{"id":"vucpl3b","ref":"@data.get","value":"parent"},"w58ugo7":{"id":"w58ugo7","ref":"@js.script","value":"return _lib.runtime.get_parent(graphid);"},"wz3fe9p":{"id":"wz3fe9p","value":"true"},"x5hnsaq":{"id":"x5hnsaq","ref":"arg","value":"_parent"},"xo80unz":{"id":"xo80unz","ref":"arg","value":"__graphid"},"xqttsnb":{"id":"xqttsnb","ref":"arg","value":"_nodeId"},"y0xjosj":{"id":"y0xjosj","ref":"arg","value":"_parent"},"yolz5rm":{"id":"yolz5rm","ref":"arg","value":"__graphid"}},"out":"out"},
     "@debug.editValue": {"edges":{"5a6pljw":{"as":"display","from":"5a6pljw","to":"out"},"hm2lkjh":{"as":"args","from":"hm2lkjh","to":"out"},"tk1f7i6":{"as":"metadata","from":"tk1f7i6","to":"out"},"ut9zq8n":{"as":"value","from":"ut9zq8n","to":"out"},"73asljg":{"as":"false","from":"73asljg","to":"ut9zq8n"},"bi1dbsb":{"as":"true","from":"bi1dbsb","to":"ut9zq8n"},"xzbcdnj":{"as":"pred","from":"xzbcdnj","to":"ut9zq8n"},"n028q0n":{"as":"stored","from":"n028q0n","to":"xzbcdnj"},"s7kudco":{"as":"value","from":"s7kudco","to":"xzbcdnj"},"zfl3aqg":{"as":"ischanged","from":"zfl3aqg","to":"xzbcdnj"},"1ovmmn3":{"as":"value","from":"1ovmmn3","to":"zfl3aqg"},"1c4vbjw":{"as":"arg0","from":"1c4vbjw","to":"bi1dbsb"},"3jphobh":{"as":"value","from":"3jphobh","to":"bi1dbsb"},"iego3bj":{"as":"fn","from":"iego3bj","to":"1c4vbjw"},"rg59xbc":{"as":"run","from":"rg59xbc","to":"1c4vbjw"},"wo0j48j":{"as":"args","from":"wo0j48j","to":"1c4vbjw"},"psog7hu":{"as":"value","from":"psog7hu","to":"wo0j48j"},"a8nnxeo":{"as":"spacer","from":"a8nnxeo","to":"psog7hu"},"xm523y9":{"as":"object","from":"xm523y9","to":"psog7hu"},"dqau7vz":{"as":"arg0","from":"dqau7vz","to":"iego3bj"},"q5j3cy9":{"as":"arg1","from":"q5j3cy9","to":"iego3bj"},"43yf13g":{"as":"pred","from":"43yf13g","to":"q5j3cy9"},"5pahzbv":{"as":"true","from":"5pahzbv","to":"q5j3cy9"},"ht98k5w":{"as":"codeEditor","from":"ht98k5w","to":"tk1f7i6"},"0b9y6nq":{"as":"language","from":"0b9y6nq","to":"ht98k5w"},"9bdwb13":{"as":"editorText","from":"9bdwb13","to":"ht98k5w"},"tm7ex1d":{"as":"onChange","from":"tm7ex1d","to":"ht98k5w"},"40kas2g":{"as":"fn","from":"40kas2g","to":"tm7ex1d"},"dvmzz12":{"as":"args","from":"dvmzz12","to":"tm7ex1d"},"gj85ycd":{"as":"value","from":"gj85ycd","to":"dvmzz12"},"5f8nhay":{"as":"value","from":"5f8nhay","to":"9bdwb13"},"ley9nd1":{"as":"otherwise","from":"ley9nd1","to":"9bdwb13"},"06sxntx":{"as":"_edited","from":"06sxntx","to":"hm2lkjh"},"9ukj84k":{"as":"_stored","from":"9ukj84k","to":"hm2lkjh"},"h8q885n":{"as":"publish","from":"h8q885n","to":"9ukj84k"},"rxdid56":{"as":"publish","from":"rxdid56","to":"06sxntx"},"ene3c37":{"as":"children","from":"ene3c37","to":"5a6pljw"},"5nf35nr":{"as":"arg1","from":"5nf35nr","to":"ene3c37"},"iwo5mye":{"as":"css_object","from":"iwo5mye","to":"5nf35nr"},"f9dqxdj":{"as":"#node-editor-code-editor","from":"f9dqxdj","to":"iwo5mye"},"vll53jm":{"as":"display","from":"vll53jm","to":"f9dqxdj"}},"id":"@debug.editValue","nodes":{"out":{"id":"out","name":"@debug.editValue","ref":"return","value":"{\n  \"test\": 1,\n  \"test2\": \"abc\",\n  \"test3\": {\n      \"a\": \"A\"\n   },\n  \"j\": 54\n}"},"ut9zq8n":{"id":"ut9zq8n","ref":"@flow.if"},"xzbcdnj":{"id":"xzbcdnj","ref":"@js.script","value":"return stored === undefined || ischanged;"},"zfl3aqg":{"id":"zfl3aqg","ref":"@data.ischanged"},"1ovmmn3":{"id":"1ovmmn3","ref":"arg","value":"value: default"},"s7kudco":{"id":"s7kudco","ref":"arg","value":"value: default"},"n028q0n":{"id":"n028q0n","ref":"arg","value":"_stored.value"},"bi1dbsb":{"id":"bi1dbsb","ref":"@js.script","value":"return value"},"3jphobh":{"id":"3jphobh","ref":"arg","value":"value: default"},"1c4vbjw":{"id":"1c4vbjw","ref":"@flow.ap"},"wo0j48j":{"id":"wo0j48j"},"psog7hu":{"id":"psog7hu","ref":"@js.script","value":"\nreturn JSON.stringify(object, (key, value) =>  typeof value === 'object' && value && !Array.isArray(value) && Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) ? Object.getPrototypeOf(value).constructor.name : value, 2)"},"xm523y9":{"id":"xm523y9","ref":"arg","value":"value: default"},"a8nnxeo":{"id":"a8nnxeo","value":"2"},"rg59xbc":{"id":"rg59xbc","value":"true"},"iego3bj":{"id":"iego3bj","ref":"@data.array"},"q5j3cy9":{"id":"q5j3cy9","ref":"@flow.if"},"5pahzbv":{"id":"5pahzbv","ref":"arg","value":"_edited.set"},"43yf13g":{"id":"43yf13g","ref":"arg","value":"_edited.state"},"dqau7vz":{"id":"dqau7vz","ref":"arg","value":"_stored.set"},"73asljg":{"id":"73asljg","ref":"arg","value":"value"},"tk1f7i6":{"id":"tk1f7i6"},"ht98k5w":{"id":"ht98k5w"},"tm7ex1d":{"id":"tm7ex1d","ref":"@flow.ap"},"dvmzz12":{"id":"dvmzz12"},"gj85ycd":{"id":"gj85ycd","ref":"arg","value":"editorText"},"40kas2g":{"id":"40kas2g","ref":"arg","value":"_edited.set"},"9bdwb13":{"id":"9bdwb13","ref":"@flow.default"},"ley9nd1":{"id":"ley9nd1","ref":"arg","value":"_stored.value"},"5f8nhay":{"id":"5f8nhay","ref":"arg","value":"_edited.state"},"0b9y6nq":{"id":"0b9y6nq","value":"json"},"hm2lkjh":{"id":"hm2lkjh"},"9ukj84k":{"id":"9ukj84k","ref":"@memory.reference"},"h8q885n":{"id":"h8q885n","value":"true"},"06sxntx":{"id":"06sxntx","ref":"@memory.state"},"rxdid56":{"id":"rxdid56","value":"true"},"5a6pljw":{"id":"5a6pljw","ref":"@html.html_element","value":"pre"},"ene3c37":{"id":"ene3c37","ref":"@data.array"},"5nf35nr":{"id":"5nf35nr","ref":"@html.css_styles"},"iwo5mye":{"id":"iwo5mye"},"f9dqxdj":{"id":"f9dqxdj"},"vll53jm":{"id":"vll53jm","value":"block"}},"out":"out"},
   },
   "edges": {
