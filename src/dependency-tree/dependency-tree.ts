@@ -188,6 +188,8 @@ export class NodysseusRuntime {
   private inputs: Map<string, Set<string>> = new Map();
   private rerun: Map<string, number> = new Map();
   private lib: Record<string, any> = {runtime: this};
+  private eventQueue: Array<Function> = [];
+  private running: Map<string, number> = new Map();
 
   constructor(private store: NodysseusStore, lib?: Lib){
     this.scope = new Scope();
@@ -254,12 +256,9 @@ export class NodysseusRuntime {
   private checkWatch(id: string) {
     const node = this.scope.get(id);
     if(this.watches.has(id) && !this.rerun.has(id) && isMapNode(node) && node.isDirty.read()) this.rerun.set(id, requestAnimationFrame(() => {
-      console.log("got watch", id, this.watches.get(id))
       for(const output of outputs) {
-        console.log("should map watch", output, this.watches.get(id)[output])
         this.watches.get(id)[output]?.forEach(fn => {
-          console.log("running watch", id, output)
-          fn(this.runNode(this.scope.get(id), "display"));
+          fn(this.runNode(this.scope.get(id), output));
         });
       }
       this.rerun.delete(id);
@@ -273,10 +272,9 @@ export class NodysseusRuntime {
   }
 
   private dirty(id: string) {
-    // if(id.includes("gfcb17") || id.includes("pwjihk7") || id.includes("bkqbaux")) console.log("dirty", id)
-      if(id.includes("g1g0g8v") ){
-        // debugger;
-      }
+    // if(id.includes("em7kgrn")){
+      // console.log("dirty", id)
+    // }
     const node = this.scope.get(id);
     if(isMapNode(node) || isBindNode(node)) {
       // console.log("dirty", id);
@@ -418,6 +416,16 @@ export class NodysseusRuntime {
     }, undefined, nodeGraphId);
   }
 
+  private checkEvents() {
+    if(this.running.size > 0) {
+      // console.log(this.running)
+    }
+    if(this.running.size === 0 && this.eventQueue.length > 0) {
+      this.eventQueue.shift()?.()
+      this.checkEvents();
+    }
+  }
+
   private dereference<T, S extends Record<string, unknown>>(graph: Graph, node: RefNode, edgesIn: Edge[], graphId: string, nodeGraphId: string, closure: AnyNode<AnyNodeMap<S>>, calculateInputs: () => AnyNodeMap<S>, extraNodeGraphId: Output = "value", refNode = node): AnyNode<T> | PromiseLike<AnyNode<T>> {
     return wrapPromise(this.store.refs.get(refNode.ref) as Graph)
       .then((nodeRef): AnyNode<T> => {
@@ -468,11 +476,12 @@ export class NodysseusRuntime {
           const subscribe = subscribeEdge && this.valueMap(this.fromNodeInternal(graph, subscribeEdge.from, graphId, chainedscope), nodeGraphId + "-subvalmap");
 
 
-          return wrapPromise(edgesIn.find(e => e.as === "lib") ?
+          return wrapPromise( this.scope.get(nodeGraphId + "-libvalmap")?.value.read() ??
+            edgesIn.find(e => e.as === "lib") ?
             this.runNode(
               this.mapNode({
                 lib: this.valueMap(this.fromNodeInternal(graph, edgesIn.find(e => e.as === "lib").from, graphId, closure), nodeGraphId + "-libvalmap")
-              }, ({lib}) => Object.assign(this.lib, lib))
+              }, ({lib}) => (console.log("lib got", lib, this.lib), Object).assign(this.lib, lib))
             ) : undefined).then(() => {
               // this.mapNode({
               //   bound: this.bindNode(
@@ -503,7 +512,10 @@ export class NodysseusRuntime {
             }, ({result, subscribe: subscriptions}) => {
                 subscriptions && Object.entries(subscriptions)
                   .forEach(kv => kv[1] &&
-                    nolib.no.runtime.addListener(kv[0], nodeGraphId, kv[1], false, graphId, true, nolibLib))
+                    nolib.no.runtime.addListener(kv[0], nodeGraphId, payload => {
+                    if(this.running.size > 0) this.eventQueue.push(() => kv[1](payload))
+                    else kv[1](payload)
+                  }, false, graphId, true, nolibLib))
                 return result;
             }, undefined, nodeGraphId + extraNodeGraphId) as AnyNode<T>;
           }).value
@@ -560,14 +572,14 @@ export class NodysseusRuntime {
 
             return this.mapNode({fn, run, argsNode: this.bindNode({}, () => argsNode, undefined, nodeGraphId + "-argsnodebind")}, ({fn, run, argsNode}) => {
               if(run) {
-                return wrapPromise(this.runNode(argsNode)).then(args => (Array.isArray(fn) ? fn : [fn]).filter(f => typeof f === "function").map(ffn => ffn(args))).then(results => Array.isArray(results) ? results : results[0]).value;
+                return wrapPromise(this.runNode(argsNode)).then(args => (Array.isArray(fn) ? fn : [fn]).filter(f => typeof f === "function").map(ffn => ffn(args))).then(results => Array.isArray(fn) ? results : results[0]).value;
               } else {
                 return (args) => {
                   const runtimeApArgs = this.scope.get(apArgs.id) as VarNode<any>;
                   runtimeApArgs.set(args);
                   return wrapPromise(this.runNode(argsNode) as Record<string, unknown>)
                     .then(args => (Array.isArray(fn) ? fn : [fn]).filter(f => typeof f === "function").map(ffn => ffn(args)))
-                    .then(results => Array.isArray(results) ? results : results[0]).value;
+                    .then(results => Array.isArray(fn) ? results : results[0]).value;
                 }
               }
             }, undefined, nodeGraphId + extraNodeGraphId) as AnyNode<T>;
@@ -596,12 +608,15 @@ export class NodysseusRuntime {
                     },
                     set: (t: {value: T} | T) => {
                       if((t as {value:T})?.value !== undefined || t !== undefined) {
-                        const value :T  = (t as {value:T})?.value ?? t as T;
+                        const value :T  = typeof t === "object" && Object.hasOwn(t, "value") ? (t as {value: T}).value  : t as T;
                         (this.scope.get(nodeGraphId + "-refset") as VarNode<T>).set(value)
                         if(persist) {
                           this.store.persist.set(nodeGraphId, value);
                         }
+                        return value;
                       }
+
+                      return scope.get(nodeGraphId + "-refset").value.read();
                     }
                   }
             }).value, () => false, nodeGraphId + extraNodeGraphId) as AnyNode<T>
@@ -618,7 +633,7 @@ export class NodysseusRuntime {
 
             const outNode = this.mapNode({
               recache, 
-              value: this.bindNode({}, () => value, undefined, nodeGraphId + "-value")
+              value: this.bindNode({value}, () => value, undefined, nodeGraphId + "-value")
             }, ({value}) => wrapPromise(this.runNode(value)).then(v => v()).value, ({recache: r1}, {recache}) => !!(recache && recache()) || isNothing(outNode.value.read()) || outNode.value.read() === undefined, nodeGraphId + extraNodeGraphId)
             return outNode;
           } else if (refNode.value === "extern.frame") {
@@ -787,6 +802,11 @@ export class NodysseusRuntime {
     // if(node.id.includes("slider")) {
       // console.log("running", node.id)
     // }
+
+    if(node.id.includes("em7kgrn")){
+      console.log("run", node.id)
+    }
+
     const current = node.value?.read();
     let result;
     if(node && !isNothing(node) && (
@@ -794,6 +814,8 @@ export class NodysseusRuntime {
       || (!(node as MapNode<T, Record<string, unknown>> | BindNode<T, Record<string, unknown>>).isDirty.read() && _output === undefined))) {
       result = node.value.read();
     } else if (isMapNode(node)) {
+      if(!this.running.has(node.id)) this.running.set(node.id, 0);
+      this.running.set(node.id, this.running.get(node.id) + 1);
     // console.log("clean", node.id)
       const prev = node.cachedInputs.read();
 
@@ -842,6 +864,11 @@ export class NodysseusRuntime {
             if(this.watches.has(node.id) && current !== result) {
               this.watches.get(node.id)[_output]?.forEach(fn => wrapPromise((r as Function)(_output)).then(fn));
             }
+            if(this.running.get(node.id) === 1) {
+              this.running.delete(node.id)
+              this.checkEvents()
+            }
+            else this.running.set(node.id, this.running.get(node.id) - 1);
             return _output ? (r as Function)(_output) : r;
           }).value;
         }
@@ -853,9 +880,16 @@ export class NodysseusRuntime {
           this.watches.get(node.id)[_output]?.forEach(fn => wrapPromise(result(_output)).then(fn));
         }
 
+            if(this.running.get(node.id) === 1) {
+              this.running.delete(node.id)
+              this.checkEvents()
+            }
+            else this.running.set(node.id, this.running.get(node.id) - 1);
         return _output ? result(_output) : result;
         }).value
     } else if (isBindNode(node)) {
+      if(!this.running.has(node.id)) this.running.set(node.id, 0);
+      this.running.set(node.id, this.running.get(node.id) + 1);
       const current = node.value.read();
       const prev = node.cachedInputs.read();
       const getPromises = () => {
@@ -908,6 +942,11 @@ export class NodysseusRuntime {
               if(!isNothing(boundNode)) this.scope.add(boundNode as AnyNode<unknown>);
               updatedNode.cachedInputs.write(next);
 
+            if(this.running.get(node.id) === 1) {
+              this.running.delete(node.id)
+              this.checkEvents()
+            }
+            else this.running.set(node.id, this.running.get(node.id) - 1);
               return boundNode;
           }).value
         }
@@ -921,6 +960,11 @@ export class NodysseusRuntime {
         const boundNode: Nothing | T = updatedNode.value.read();
         if(!isNothing(boundNode)) this.scope.add(boundNode as AnyNode<unknown>);
 
+            if(this.running.get(node.id) === 1) {
+              this.running.delete(node.id)
+              this.checkEvents()
+            }
+            else this.running.set(node.id, this.running.get(node.id) - 1);
         return boundNode;
       }).value;
     }

@@ -576,7 +576,7 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = (dispatch, {graph,
 
   const run = async (_output) => {
     for await(const display of runtime.createWatch(runNode, _output)) {
-      console.log("got", _output, display)
+      // console.log("got", _output, display)
       if(_output === "display") {
         display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
           el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
