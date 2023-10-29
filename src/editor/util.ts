@@ -576,7 +576,7 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = (dispatch, {graph,
 
   const run = async (_output) => {
     for await(const display of runtime.createWatch(runNode, _output)) {
-      // console.log("got", _output, display)
+      console.log("got", _output, display)
       if(_output === "display") {
         display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
           el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
@@ -589,14 +589,16 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = (dispatch, {graph,
   }
   
   const update = () => {
-    // console.log("running graph", graph)
+    console.log("running graph", graph)
     wrapPromise(runtime.run(runNode, "display"))
       .then(display => {
-        // console.log("ran display", display)
+        console.log("ran display", display)
         run("display");
-        result_display_dispatch(UpdateResultDisplay, {
+        display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
           el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
-          backgroundEl: display?.background ? display.background : {dom_type: "div", props: {}, children: []},
+        })
+        display && display.background && result_background_display_dispatch({
+          el: display?.background ? display.background : {dom_type: "div", props: {}, children: []},
         })
       })
 
@@ -604,7 +606,7 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = (dispatch, {graph,
     wrapPromise(runtime.run(runNode, "value"))
       .then(value => {
         run("value");
-        // console.log("val?", value)
+        console.log("val output", value)
       })
 
   }
@@ -963,11 +965,13 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id: str
             .map(l => parseInt(l.as.substring(3))) ?? [])
           .reduce((acc, i) => acc > i ? acc : i + 1, 0))
         
+          console.log(nolib);
         const externfn = (node.ref === "extern" && nodysseus_get(nolib, node.value, newLib(nolib))) || (node_ref?.ref === "extern" && nodysseus_get(nolib, node_ref?.value, newLib(nolib)))
         const externArgs = externfn && (Array.isArray(externfn.args) ? externfn.args.map(a => {
           const argColonIdx = a.indexOf(":")
           return [argColonIdx >= 0 ? a.substring(0, argColonIdx) : a, "any"]
         }) : externfn?.args && typeof externfn.args === "object" ? Object.entries(externfn.args) : [])
+        console.log(externArgs)
         const baseargs: Array<[string ,TypedArg]> = externfn
           ? externArgs
             ? externArgs

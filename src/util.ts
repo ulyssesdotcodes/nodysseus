@@ -28,21 +28,21 @@ const tryCatch = (fn, t, c) => {
   }
 }
 
-export const wrapPromise = <T>(t: T | PromiseLike<T>, c?: <E extends Error, S>(fn: (e?: E) => S) => S): WrappedPromise<FlattenWrappedPromise<T>> => 
+export const wrapPromise = <T, S>(t: T | PromiseLike<T>, c?: <E extends Error>(e?: E) => S): WrappedPromise<FlattenWrappedPromise<T>> => 
   (isWrappedPromise(t) ? t
   : {
     __kind: WRAPPED_KIND,
     then: <S>(fn: (tt: FlattenPromise<typeof t>) => S | WrappedPromise<S>) => wrapPromise(ispromise(t) 
       ? c ? t.then(fn as (value: unknown) => S | PromiseLike<S> | WrappedPromise<S>).then(v => isWrappedPromise(v) ? v.value : v).catch(c)
       : t.then(fn as (value: unknown) => S | PromiseLike<S> | WrappedPromise<S>).then(v => isWrappedPromise(v) ? v.value : v)
-      : tryCatch(fn, t, c)),
+      : tryCatch(fn, t, c), c),
     value: t
   }) as WrappedPromise<FlattenWrappedPromise<T>>
 
-export const wrapPromiseAll = <T>(wrappedPromises: Array<WrappedPromise<T> | T>): WrappedPromise<Array<any> | Promise<Array<any>>> => {
+export const wrapPromiseAll = <T>(wrappedPromises: Array<WrappedPromise<T> | T>, c?: <E extends Error>(e: E) => T): WrappedPromise<Array<any> | Promise<Array<any>>> => {
   const hasPromise = wrappedPromises.reduce((acc, wrappedPromise) => acc || ispromise(isWrappedPromise(wrappedPromise) ? wrappedPromise.value : wrappedPromise), false)
   return wrapPromise(hasPromise ? Promise.all(wrappedPromises.map(wp => Promise.resolve(isWrappedPromise(wp) ? wp.value : wp)))
-    : wrappedPromises.map(wp => isWrappedPromise(wp) ? wp.value : wp))
+    : wrappedPromises.map(wp => isWrappedPromise(wp) ? wp.value : wp), c)
 }
 
 // type MaybePromiseFn<T, S> = T extends Promise<infer Item> ? ((i: Item) => S) : ((i: T) => S);

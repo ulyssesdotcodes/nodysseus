@@ -1,6 +1,9 @@
+import {nodes as htmlNodes}  from "./json/html.js";
+
 const generic = {
   "id": "generic",
   "nodes": {
+    ...Object.fromEntries(htmlNodes.map(node => [node.id, node])),
     "@templates.simple": {
       "id": "@templates.simple",
       "out": "out",
@@ -1722,12 +1725,17 @@ const generic = {
       "category": "memory"
     },
     "@memory.state": {
-      "id": "@memory.state",
-      "name": "state",
-      "out": "out",
-      "category": "memory",
+      "id": "@memory.reference",
       "ref": "extern",
-      "value": "extern.state"
+      "value": "extern.reference",
+      "category": "memory",
+      "description": "Deprecated: use @memory.reference"
+    },
+    "@memory.readReference": {
+      "id": "@memory.readReference",
+      "ref": "extern",
+      "value": "extern.readReference",
+      "category": "memory"
     },
     "@memory.unwrap": {
       "id": "@memory.unwrap",
@@ -5668,7 +5676,7 @@ const generic = {
       "out": "ld37qq4",
       "category": "event"
     },
-    "@html.slider": {"edges":{"0i85qjj":{"as":"args","from":"0i85qjj","to":"out"},"y407zfo":{"as":"display","from":"y407zfo","to":"out"},"a6rdag9":{"as":"props","from":"a6rdag9","to":"y407zfo"},"av63lw9":{"as":"value","from":"av63lw9","to":"y407zfo"},"sb9qdgy":{"as":"children","from":"sb9qdgy","to":"y407zfo"},"5mog0bc":{"as":"arg1","from":"5mog0bc","to":"sb9qdgy"},"doz740g":{"as":"arg0","from":"doz740g","to":"sb9qdgy"},"kyu6h8m":{"as":"arg2","from":"kyu6h8m","to":"sb9qdgy"},"ewycyaq":{"as":"text","from":"ewycyaq","to":"kyu6h8m"},"bts7694":{"as":"otherwise","from":"bts7694","to":"ewycyaq"},"vgishln":{"as":"value","from":"vgishln","to":"ewycyaq"},"racg3p7":{"as":"text","from":"racg3p7","to":"doz740g"},"24q0egm":{"as":"props","from":"24q0egm","to":"5mog0bc"},"1dhoyv2":{"as":"max","from":"1dhoyv2","to":"24q0egm"},"7c2vt3d":{"as":"min","from":"7c2vt3d","to":"24q0egm"},"mpbvtrq":{"as":"type","from":"mpbvtrq","to":"24q0egm"},"old0t0c":{"as":"oninput","from":"old0t0c","to":"24q0egm"},"tksk4wc":{"as":"value","from":"tksk4wc","to":"24q0egm"},"v0qabyr":{"as":"onchange","from":"v0qabyr","to":"24q0egm"},"yv0o41n":{"as":"step","from":"yv0o41n","to":"24q0egm"},"q09a315":{"as":"otherwise","from":"q09a315","to":"yv0o41n"},"z3jopgg":{"as":"value","from":"z3jopgg","to":"yv0o41n"},"d86emo2":{"as":"fn","from":"d86emo2","to":"v0qabyr"},"oqbuspj":{"as":"args","from":"oqbuspj","to":"v0qabyr"},"nrhhdip":{"as":"value","from":"nrhhdip","to":"oqbuspj"},"z8c7kcy":{"as":"val","from":"z8c7kcy","to":"nrhhdip"},"8f3izp7":{"as":"arg1","from":"8f3izp7","to":"d86emo2"},"gtpf6x9":{"as":"arg0","from":"gtpf6x9","to":"d86emo2"},"d1wcpk1":{"as":"otherwise","from":"d1wcpk1","to":"tksk4wc"},"sv49nso":{"as":"value","from":"sv49nso","to":"tksk4wc"},"2wp8ffd":{"as":"fn","from":"2wp8ffd","to":"old0t0c"},"ezx9hxj":{"as":"args","from":"ezx9hxj","to":"old0t0c"},"parseval":{"as":"value","from":"parseval","to":"ezx9hxj"},"gibdj45":{"as":"val","from":"gibdj45","to":"parseval"},"4dh6wzn":{"as":"arg1","from":"4dh6wzn","to":"2wp8ffd"},"l5bzesi":{"as":"arg0","from":"l5bzesi","to":"2wp8ffd"},"fd7yax9":{"as":"value","from":"fd7yax9","to":"7c2vt3d"},"r1ah7g2":{"as":"otherwise","from":"r1ah7g2","to":"7c2vt3d"},"4subc0j":{"as":"graphval","from":"4subc0j","to":"1dhoyv2"},"x4vnm62":{"as":"argmax","from":"x4vnm62","to":"1dhoyv2"},"n4i4t17":{"as":"val","from":"n4i4t17","to":"av63lw9"},"tjzn9ne":{"as":"state","from":"tjzn9ne","to":"av63lw9"},"vc1r73a":{"as":"statechanged","from":"vc1r73a","to":"av63lw9"},"yiyi4cq":{"as":"value","from":"yiyi4cq","to":"vc1r73a"},"sxjhepz":{"as":"style","from":"sxjhepz","to":"a6rdag9"},"93rx3ru":{"as":"display","from":"93rx3ru","to":"sxjhepz"},"q8ugbch":{"as":"flex-direction","from":"q8ugbch","to":"sxjhepz"},"gvk9hec":{"as":"_sliderstate","from":"gvk9hec","to":"0i85qjj"},"t1deznd":{"as":"_sliderval","from":"t1deznd","to":"0i85qjj"},"u4k2auv":{"as":"label","from":"u4k2auv","to":"0i85qjj"},"slidervalpublish":{"as":"publish","from":"slidervalpublish","to":"t1deznd"},"fgmcy0x":{"as":"publish","from":"fgmcy0x","to":"gvk9hec"},"h19qe28":{"as":"persist","from":"h19qe28","to":"gvk9hec"},"r0fsdrm":{"as":"value","from":"r0fsdrm","to":"gvk9hec"},"34k9xvb":{"as":"max","from":"34k9xvb","to":"r0fsdrm"},"e996mm5":{"as":"min","from":"e996mm5","to":"r0fsdrm"},"on0cfjb":{"as":"graphval","from":"on0cfjb","to":"34k9xvb"},"x4fmyaa":{"as":"argmax","from":"x4fmyaa","to":"34k9xvb"}},"id":"@html.slider","nodes":{"out":{"id":"out","name":"@html.slider","ref":"return"},"y407zfo":{"id":"y407zfo","ref":"@html.html_element"},"sb9qdgy":{"id":"sb9qdgy","ref":"@data.array"},"kyu6h8m":{"id":"kyu6h8m","ref":"@html.html_text"},"ewycyaq":{"id":"ewycyaq","ref":"@flow.default"},"vgishln":{"id":"vgishln","ref":"arg","value":"_sliderval.value"},"bts7694":{"id":"bts7694","ref":"arg","value":"_sliderstate.state"},"doz740g":{"id":"doz740g","ref":"@html.html_text"},"racg3p7":{"id":"racg3p7","ref":"arg","value":"label"},"5mog0bc":{"id":"5mog0bc","ref":"@html.html_element","value":"input"},"24q0egm":{"id":"24q0egm"},"yv0o41n":{"id":"yv0o41n","ref":"@flow.default"},"z3jopgg":{"id":"z3jopgg","ref":"arg","value":"step"},"q09a315":{"id":"q09a315","ref":"","value":"0.01"},"v0qabyr":{"id":"v0qabyr","ref":"@flow.ap"},"oqbuspj":{"id":"oqbuspj"},"nrhhdip":{"id":"nrhhdip","ref":"@js.script","value":"return parseFloat(val)"},"z8c7kcy":{"id":"z8c7kcy","ref":"arg","value":"event.target.value"},"d86emo2":{"id":"d86emo2","ref":"@data.array"},"gtpf6x9":{"id":"gtpf6x9","ref":"arg","value":"_sliderstate.set"},"8f3izp7":{"id":"8f3izp7","ref":"arg","value":"onchange"},"tksk4wc":{"id":"tksk4wc","ref":"@flow.default"},"sv49nso":{"id":"sv49nso","ref":"arg","value":"_sliderval.value"},"d1wcpk1":{"id":"d1wcpk1","ref":"arg","value":"_sliderstate.state"},"old0t0c":{"id":"old0t0c","ref":"@flow.ap"},"ezx9hxj":{"id":"ezx9hxj"},"parseval":{"id":"parseval","ref":"@js.script","value":"return parseFloat(val)"},"gibdj45":{"id":"gibdj45","ref":"arg","value":"event.target.value"},"2wp8ffd":{"id":"2wp8ffd","ref":"@data.array"},"l5bzesi":{"id":"l5bzesi","ref":"arg","value":"_sliderval.set"},"4dh6wzn":{"id":"4dh6wzn","ref":"arg","value":"oninput"},"mpbvtrq":{"id":"mpbvtrq","value":"range"},"7c2vt3d":{"id":"7c2vt3d","ref":"@flow.default"},"r1ah7g2":{"id":"r1ah7g2","value":"0.0"},"fd7yax9":{"id":"fd7yax9","ref":"arg","value":"min"},"1dhoyv2":{"id":"1dhoyv2","ref":"@js.script","value":"return !isNaN(argmax) ? argmax : !isNaN(graphval) ? graphval : 1.0"},"x4vnm62":{"id":"x4vnm62","ref":"arg","value":"max"},"4subc0j":{"id":"4subc0j","ref":"arg","value":"__graph_value"},"av63lw9":{"id":"av63lw9","ref":"@js.script","value":"if (state.state !== undefined && (val.value === undefined || statechanged)) {\n  \n  val.set(state.state)\n}\n\nreturn val;"},"vc1r73a":{"id":"vc1r73a","ref":"@data.ischanged"},"yiyi4cq":{"id":"yiyi4cq","ref":"arg","value":"_sliderstate.state"},"tjzn9ne":{"id":"tjzn9ne","ref":"arg","value":"_sliderstate"},"n4i4t17":{"id":"n4i4t17","ref":"arg","value":"_sliderval"},"a6rdag9":{"id":"a6rdag9"},"sxjhepz":{"id":"sxjhepz"},"q8ugbch":{"id":"q8ugbch","value":"row"},"93rx3ru":{"id":"93rx3ru","value":"flex"},"0i85qjj":{"id":"0i85qjj"},"u4k2auv":{"id":"u4k2auv","value":"Slider"},"t1deznd":{"id":"t1deznd","ref":"@memory.reference"},"slidervalpublish":{"id":"slidervalpublish","value":"true"},"gvk9hec":{"id":"gvk9hec","ref":"@memory.state"},"r0fsdrm":{"id":"r0fsdrm","ref":"@js.script","value":"return 0.5 * ((max ?? 1) - (min ?? 0)) + (min ?? 0)"},"e996mm5":{"id":"e996mm5","ref":"arg","value":"min"},"34k9xvb":{"id":"34k9xvb","ref":"@js.script","value":"return !isNaN(argmax) ? argmax : !isNaN(graphval) ? graphval : 1.0"},"x4fmyaa":{"id":"x4fmyaa","ref":"arg","value":"max"},"on0cfjb":{"id":"on0cfjb","ref":"arg","value":"__graph_value"},"h19qe28":{"id":"h19qe28","value":"true"},"fgmcy0x":{"id":"fgmcy0x","value":"true"}},"out":"out"},
+    // "@html.slider": ,
     "@nodysseus.export": {
       "category": "nodysseus",
       "edges": {
@@ -5888,14 +5896,24 @@ const generic = {
           "to": "zihm1kd"
         },
         "ug26ugw": {
-          "as": "value",
+          "as": "reference",
           "from": "ug26ugw",
+          "to": "hrefread"
+        },
+        "hrefread": {
+          "as": "value",
+          "from": "hrefread",
           "to": "pni2xuu"
         },
-        "jdufmth": {
+        "nsrefread": {
           "as": "ns",
-          "from": "jdufmth",
+          "from": "nsrefread",
           "to": "jdoak4g"
+        },
+        "jdufmth": {
+          "as": "reference",
+          "from": "jdufmth",
+          "to": "nsrefread"
         },
         "et5g0m1": {
           "as": "children",
@@ -6172,7 +6190,7 @@ const generic = {
           "id": "ug26ugw",
           "name": "",
           "ref": "arg",
-          "value": "hrefstate.state"
+          "value": "hrefstate"
         },
         "jdoak4g": {
           "id": "jdoak4g",
@@ -6182,7 +6200,15 @@ const generic = {
         "jdufmth": {
           "id": "jdufmth",
           "ref": "arg",
-          "value": "namespace.state"
+          "value": "namespace"
+        },
+        "nsrefread": {
+          "id": "nsrefread",
+          "ref": "@memory.readReference",
+        },
+        "hrefread": {
+          "id": "hrefread",
+          "ref": "@memory.readReference",
         },
         "2dz33fg": {
           "id": "2dz33fg",
@@ -6245,8 +6271,6 @@ const generic = {
         },
         "args": {
           "id": "args",
-          "ref": "extern",
-          "value": "extern.data"
         },
         "tad7830": {
           "id": "tad7830",
@@ -7595,7 +7619,7 @@ const generic = {
         },
         "cy1tm8s": {
           "id": "cy1tm8s",
-          "value": "const iseq = saved.value === value;\n\nif(!iseq) {\n  saved.set(value);\n}\n\nreturn !iseq;",
+          "value": "console.log('ischanged', saved);const iseq = saved.value === value;\n\nif(!iseq) {\n  saved.set({value});\n}\n\nreturn !iseq;",
           "ref": "@js.script"
         },
         "khdzxds": {

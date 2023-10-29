@@ -1323,6 +1323,12 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
         return Object.fromEntries(entries)
       },
     },
+    cache: {
+      args: ["value", "recache"]
+    },
+    readReference: {
+      args: ["reference"]
+    },
     reference: {
       rawArgs: true,
       outputs: {
