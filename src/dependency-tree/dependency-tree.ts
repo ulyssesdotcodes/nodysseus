@@ -272,12 +272,8 @@ export class NodysseusRuntime {
   }
 
   private dirty(id: string) {
-    // if(id.includes("em7kgrn")){
-      // console.log("dirty", id)
-    // }
     const node = this.scope.get(id);
     if(isMapNode(node) || isBindNode(node)) {
-      // console.log("dirty", id);
       if(node.isDirty.read()) {
         return;
       }
@@ -345,13 +341,8 @@ export class NodysseusRuntime {
             }
 
             if(current && !isNothing(current) && (current.__kind !== outNode.__kind || current.id !== outNode.id)) {
-              // requestAnimationFrame(() => {
-              // console.log("bind dirty", node.id, current, outNode)
                 this.dirty(outNode.id)
-              // })
             }
-            // if(current && !isNothing(current)) this.outputs.get(current.id)?.delete(node.id)
-            // this.outputs.get(outNode.id).add(node.id)
           }
           return outNode
         }).value as T | PromiseLike<T>
@@ -417,9 +408,6 @@ export class NodysseusRuntime {
   }
 
   private checkEvents() {
-    if(this.running.size > 0) {
-      // console.log(this.running)
-    }
     if(this.running.size === 0 && this.eventQueue.length > 0) {
       this.eventQueue.shift()?.()
       this.checkEvents();
@@ -441,7 +429,6 @@ export class NodysseusRuntime {
           }
 
           return this.mapNode({...calculateInputs(), closure}, ({closure, ...args}) => {
-            // console.log("script args", args)
             if(extraNodeGraphId === "metadata"){
               return {dataLabel: "script", codeEditor: {language: "javascript", editorText: node.value}};
             }
@@ -481,31 +468,8 @@ export class NodysseusRuntime {
             this.runNode(
               this.mapNode({
                 lib: this.valueMap(this.fromNodeInternal(graph, edgesIn.find(e => e.as === "lib").from, graphId, closure), nodeGraphId + "-libvalmap")
-              }, ({lib}) => (console.log("lib got", lib, this.lib), Object).assign(this.lib, lib))
+              }, ({lib}) => Object.assign(this.lib, lib))
             ) : undefined).then(() => {
-              // this.mapNode({
-              //   bound: this.bindNode(
-              //     {closure},
-              //     ({closure}) => closure?.["_output"],
-              //     undefined,
-              //     nodeGraphId + extraNodeGraphId + "-returnmap"
-              //   ),
-              //   subscribe
-              // }, ({bound, subscribe: subscriptions}) => {
-              //   subscriptions && Object.entries(subscriptions)
-              //     .forEach(kv => kv[1] &&
-              //       nolib.no.runtime.addListener(kv[0], nodeGraphId, kv[1], false, graphId, true, nolibLib))
-              //
-              //   console.log(extraNodeGraphId)
-              //
-              //
-              //   const res = bound && this.runNode(bound);
-              //   return res && typeof res === "string" ? res : "value"
-              // }, undefined, nodeGraphId + extraNodeGraphId + "-bound_output"),
-
-                if(nodeGraphId.includes("slider")) {
-                  // console.log("res", inputs[extraNodeGraphId] ?? (extraNodeGraphId === "value" && inputs["display"]))
-                }
             return this.mapNode({
               result: inputs[extraNodeGraphId] ?? (extraNodeGraphId === "value" && inputs["display"]),
               subscribe
@@ -695,14 +659,6 @@ export class NodysseusRuntime {
           }).value}, undefined, nodeGraphId + extraNodeGraphId);
 
           return mnode;
-          // this.switchNode(
-          //   this.constNode(parseArg(refNode.value).name), 
-          //   closure);
-          //                        ({closure}) => {
-          //   const ret = this.runNode(get(closure, parseArg(refNode.value).name))
-          //   console.log("got arg", get(closure, parseArg(refNode.value).name), ret);
-          //   return ret
-          // }, undefined, nodeGraphId)  as AnyNode<T>;
         } else if(isGraph(nodeRef)) { 
 
           const inputs = calculateInputs();
@@ -720,11 +676,6 @@ export class NodysseusRuntime {
           bound: this.bindNode({}, () => innerGraphNode, undefined, nodeGraphId + "-graphoutbind")
           }, ({bound}) => this.runNode(bound, extraNodeGraphId) as T,
             undefined, nodeGraphId + extraNodeGraphId)
-            // this.mapNode({}, () => ({
-            //   ...calculateInputs(),
-            //   _output: undefined,
-            //   __graph_value: this.constNode(node.value, `${nodeGraphId}-internalnodegraphid`)
-            // }), undefined, nodeGraphId + "-mappedclosure"))
         } else {
           return this.dereference(graph, node, edgesIn, graphId, nodeGraphId, closure, calculateInputs, extraNodeGraphId, nodeRef) as AnyNode<T>
         }
@@ -798,14 +749,6 @@ export class NodysseusRuntime {
   private runNode<T>(innode: AnyNode<T> | Nothing, _output?: "display" | "value" | "metadata"): T | PromiseLike<T> | Nothing{
     if(isNothing(innode)) return innode;
     const node: AnyNode<T> = this.scope.get(innode.id)! as AnyNode<T>;
-    // if(node.id.includes("gfcb17") || node.id.includes("pwjihk7") || node.id.includes("bkqbaux")) console.log("clean", node.id)
-    // if(node.id.includes("slider")) {
-      // console.log("running", node.id)
-    // }
-
-    if(node.id.includes("em7kgrn")){
-      console.log("run", node.id)
-    }
 
     const current = node.value?.read();
     let result;
@@ -816,7 +759,6 @@ export class NodysseusRuntime {
     } else if (isMapNode(node)) {
       if(!this.running.has(node.id)) this.running.set(node.id, 0);
       this.running.set(node.id, this.running.get(node.id) + 1);
-    // console.log("clean", node.id)
       const prev = node.cachedInputs.read();
 
       const getPromises = () => {
@@ -849,16 +791,10 @@ export class NodysseusRuntime {
         if(isNothing(updatedNode.value.read()) || isNothing(prev) || updatedNode.isStale(prev, next)) {
           const res = chainNothing(node.fn, fn => chainNothing(fn.read(), ffn => ffn(next)));
           updatedNode.value.write(res);
-          if(node.id.includes("slider")) {
-            // console.log("clean", node.id)
-          }
           updatedNode.isDirty.write(false);
           updatedNode.cachedInputs.write(next);
           return wrapPromise(res).then(r => {
             updatedNode.value.write(r as T);
-          if(node.id.includes("slider")) {
-            // console.log("clean", node.id)
-          }
             updatedNode.isDirty.write(false);
 
             if(this.watches.has(node.id) && current !== result) {
@@ -909,30 +845,16 @@ export class NodysseusRuntime {
       }
       return wrapPromise(getPromises(), e => console.error(e)).then(promises => wrapPromiseAll(promises)).then(inputs => {
         const updatedNode = this.scope.get(node.id) as BindNode<T, any>;
-    // console.log("clean", node.id)
         updatedNode.isDirty.write(false);
-          if(node.id.includes("slider")) {
-            // console.log("clean", node.id)
-          }
         const next = Object.fromEntries(inputs);
-        // TODO: Comment in
-        // next["_output"] = _output;
 
         if(isNothing(updatedNode.value.read()) || isNothing(prev) || updatedNode.isStale(prev, next)) {
           updatedNode.value.write(wrapPromise(chainNothing(updatedNode.fn, fn => fn(next)) ?? nothingValue).value)
-    // console.log("clean", node.id)
           updatedNode.isDirty.write(false);
-          if(node.id.includes("slider")) {
-            // console.log("clean", node.id)
-          }
           const res = updatedNode.value.read();
           return wrapPromise(res).then(result => {
               updatedNode.value.write(result);
-    // console.log("clean", node.id)
               updatedNode.isDirty.write(false);
-          if(node.id.includes("slider")) {
-            // console.log("clean", node.id)
-          }
 
         if(this.watches.has(node.id) && current !== result) {
           this.watches.get(node.id)[_output]?.forEach(fn => wrapPromise((result as Function)(_output)).then(fn));
