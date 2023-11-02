@@ -181,6 +181,13 @@ const generic = {
       "category": "math",
       "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_AND'>&& operator</a>"
     },
+    "@math.or": {
+      "id": "@math.and",
+      "ref": "extern",
+      "value": "extern.or",
+      "category": "math",
+      "description": "The javascript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_OR'>|| operator</a>"
+    },
     "@math.convertAngle": {
       "id": "@math.and",
       "ref": "extern",
@@ -7553,9 +7560,6 @@ const generic = {
     "@data.ischanged": {
       "id": "@data.ischanged",
       "nodes": {
-        "in": {
-          "id": "in"
-        },
         "eq_fn_value": {
           "id": "eq_fn_value",
           "ref": "arg",
@@ -7570,12 +7574,6 @@ const generic = {
           "id": "fn",
           "ref": "arg",
           "value": "fn"
-        },
-        "cached": {
-          "id": "cached",
-          "ref": "arg",
-          "value": "cached",
-          "type": "internal"
         },
         "eq_default": {
           "id": "eq_default",
@@ -7617,9 +7615,14 @@ const generic = {
           "id": "tpe5t4z",
           "ref": "@memory.reference"
         },
+        "savedArg": {
+          "id": "savedArg",
+          "ref": "arg",
+          "value": "_saved"
+        },
         "cy1tm8s": {
           "id": "cy1tm8s",
-          "value": "console.log('ischanged', saved);const iseq = saved.value === value;\n\nif(!iseq) {\n  saved.set({value});\n}\n\nreturn !iseq;",
+          "value": "const iseq = saved?.value?.value?.read() === value;\n\nif(!iseq) {\n  saved.set({value});\n}\nconsole.log('ischanged', saved, value, !iseq); \nreturn !iseq;",
           "ref": "@js.script"
         },
         "khdzxds": {
@@ -7696,6 +7699,11 @@ const generic = {
         },
         "khdzxds": {
           "from": "khdzxds",
+          "to": "cy1tm8s",
+          "as": "reference"
+        },
+        "savedArg": {
+          "from": "savedArg",
           "to": "cy1tm8s",
           "as": "saved"
         },

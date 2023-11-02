@@ -31,7 +31,7 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib, graphid: string = "", 
           let text = ""
           const _extern_args = {}
 
-          return util.wrapPromise<any>(
+          return util.wrapPromise<any, any>(
             Object.values(graph.nodes).reduce((acc, n) => 
               acc.then(() => {
                 if(isNodeRef(n) && n.ref === "arg") {
@@ -195,6 +195,7 @@ export const parseValue = (value: any) => {
 
 export const create_fn = (runnable: ConstRunnable, lib: Lib) => {
   if(!runnable) return
+  return runnable;
   const {baseArgs, text, _extern_args} = graphToFnBody(runnable, lib)
   const fn = new Function("fnargs", "baseArgs", "_extern_args", "import_util", "_lib", text)
 

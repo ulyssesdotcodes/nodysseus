@@ -648,7 +648,7 @@ const run_ap_runnable = (runnable: ApRunnable, args: Args, lib: Lib, options: Ru
                         options
                       )))
                   .then(vr => vrs.concat([vr])))
-          , wrapPromise<Result[]>([]))
+          , wrapPromise([]))
         .then(r => Array.isArray(runnable.fn) ? r : r[0])
     }).value
 }
@@ -1324,10 +1324,12 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       },
     },
     cache: {
-      args: ["value", "recache"]
+      args: ["value", "recache"],
+      fn: () => {}
     },
     readReference: {
-      args: ["reference"]
+      args: ["reference"],
+      fn: () => {}
     },
     reference: {
       rawArgs: true,
@@ -1944,6 +1946,11 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       args: ["_node_args"],
       resolve: true,
       fn: (args) => Object.values(args).reduce((acc, v) => acc && !!v, true),
+    },
+    or: {
+      args: ["_node_args"],
+      resolve: true,
+      fn: (args) => Object.values(args).reduce((acc, v) => acc || !!v, false),
     },
     mult: {
       args: ["_node_args"],
