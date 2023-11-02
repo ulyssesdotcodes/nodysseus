@@ -19,6 +19,7 @@ import { v4 as uuid } from "uuid";
 import { NodysseusError, appendGraphId, compareObjects, ispromise, mergeLib, newEnv, parseArg, wrapPromise, wrapPromiseAll } from "../util.js";
 import get from "just-safe-get";
 import generic from "../generic.js";
+import { json } from "@codemirror/lang-json";
 
 type RUnknown = Record<string, unknown>;
 
@@ -56,6 +57,7 @@ type Output = typeof outputs[number];
 type NodeKind = "const" | "map" | "var" | "bind";
 type Nothing = {__kind: "nothing"}
 const isNothing = (a: any): a is Nothing => a && (a as Nothing).__kind === "nothing";
+const isNothingOrUndefined = (a: any): a is Nothing => a === undefined || (a as Nothing).__kind === "nothing";
 const nothingOf = (): Nothing => ({__kind: "nothing"})
 const nothingValue: Nothing = {__kind: "nothing"};
 const chainNothing = <T, S>(a: Nothing | T, fn: (a: T) => S): Nothing | S => isNothing(a) ? a : fn(a);
@@ -498,18 +500,22 @@ export class NodysseusRuntime {
           const subscribeEdge = edgesIn.find(e => e.as === "subscribe");
           const subscribe = subscribeEdge && this.valueMap(this.fromNodeInternal(graph, subscribeEdge.from, graphId, subscribechainedscope), nodeGraphId + extraNodeGraphId + "-subvalmap");
 
+          const resultNode = inputs[extraNodeGraphId] ?? (extraNodeGraphId === "value" && inputs["display"]);
+
           const output = this.mapNode({
-              result: inputs[extraNodeGraphId] ?? (extraNodeGraphId === "value" && inputs["display"]),
+              result: inputs["dependencies"] ? undefined : resultNode,
+              dependencies: inputs["dependencies"],
               subscribe
-            }, ({result, subscribe: subscriptions}) => {
+            }, ({subscribe: subscriptions, dependencies}) => {
+              const result = resultNode && this.runNode(resultNode);
                 subscriptions && Object.entries(subscriptions)
                   .forEach(kv => kv[1] &&
                     nolib.no.runtime.addListener(kv[0], nodeGraphId, payload => {
                     if(this.running.size > 0) this.eventQueue.push(() => kv[1](payload))
                     else kv[1](payload)
                   }, false, graphId, true, nolibLib))
-                return result;
-            }, undefined, nodeGraphId + extraNodeGraphId) as AnyNode<T>;
+                return result
+            }, ({dependencies: previous}, {dependencies: next}) => (isNothingOrUndefined(previous) && isNothingOrUndefined(next)) || !compareObjects(previous, next), nodeGraphId + extraNodeGraphId) as AnyNode<T>;
 
           const libNode = edgesIn.find(e => e.as === "lib") && (this.scope.get(nodeGraphId + "-libnode") ?? this.mapNode({
                 lib: this.valueMap(this.fromNodeInternal(graph, edgesIn.find(e => e.as === "lib").from, graphId, closure), nodeGraphId + "-libvalmap")
@@ -724,14 +730,16 @@ export class NodysseusRuntime {
     const staticGraphId = graph.id;
 
     const graphNodeNode: VarNode<{node: NodysseusNode, edgesIn: Array<Edge>, graph: Graph}> = 
-      this.scope.get(nodeGraphId + "-graphnode") ??
+      this.scope.get(nodeGraphId + "-graphnode") as VarNode<{node: NodysseusNode, edgesIn: Array<Edge>, graph: Graph}> ??
       this.varNode({
-      graph,
-      node: graph.nodes[node.id], 
-      edgesIn: graph.edges_in?.[node.id] 
-        ? Object.values(graph.edges_in?.[node.id]) 
-        : Object.values(graph.edges).filter((e: Edge) => e.to === node.id)
-    }, ({node: nodeA, edgesIn: edgesInA, graph: graphA}, {node: nodeB, edgesIn: edgesInB, graph: graphB}) => {
+        graph,
+        node: graph.nodes[node.id], 
+        edgesIn: graph.edges_in?.[node.id] 
+          ? Object.values(graph.edges_in?.[node.id]) 
+          : Object.values(graph.edges).filter((e: Edge) => e.to === node.id)
+      }, (
+        {node: nodeA, edgesIn: edgesInA, graph: graphA}, 
+        {node: nodeB, edgesIn: edgesInB, graph: graphB}) => {
       if(!nodeB || !nodeA || !compareObjects(nodeA, nodeB, false, NAME_FIELD) || edgesInA.length !== edgesInB.length) return false; 
       const sortedEdgesA = edgesInA.sort((a, b) => a.as.localeCompare(b.as));
       const sortedEdgesB = edgesInB.sort((a, b) => a.as.localeCompare(b.as));
@@ -821,6 +829,7 @@ export class NodysseusRuntime {
           return;
         }
 
+        console.log("pre isStale", updatedNode.value.read(), prev, next)
         if(isNothing(updatedNode.value.read()) || isNothing(prev) || updatedNode.isStale(prev, next)) {
           const res = chainNothing(node.fn, fn => chainNothing(fn.read(), ffn => ffn(next)));
           updatedNode.value.write(res);
@@ -843,13 +852,13 @@ export class NodysseusRuntime {
         }
 
         result = updatedNode.value.read();
+        updatedNode.isDirty.write(false);
 
         if(this.watches.has(node.id) && current !== result) {
           this.watches.get(node.id)[_output]?.forEach(fn => wrapPromise(result).then(fn));
         }
 
             if(this.running.get(node.id) === 1) {
-              updatedNode.isDirty.write(false);
               this.running.delete(node.id)
               this.checkEvents()
             }
