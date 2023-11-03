@@ -1540,6 +1540,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
           }
         },
         "subscribe": "any",
+        "dependencies": "any",
         "metadata": {
           type: {
             parameters: (graph: Graph, nodeId: string) => ({type: Object.fromEntries(Object.values(ancestor_graph(nodeId, graph).nodes).filter(n => isNodeRef(n) && n.ref === "arg" && n.value && !n.value.startsWith("_")).map((n: ValueNode & RefNode) => [n.value.includes(".") ? n.value.split(".")[0] : n.value, "any"]))}),
