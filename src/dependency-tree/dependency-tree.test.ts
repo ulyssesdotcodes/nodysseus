@@ -63,7 +63,7 @@ describe("dependency tree", () => {
 
     let cachedRunCount = 0;
     const io = runtime.varNode(0)
-    const cachedNode = runtime.mapNode({a: io}, ({a}) => {
+    const cachedNode = runtime.mapNode({a: io}, ({a}: {a: number}) => {
       cachedRunCount++;
       return a + 1;
     }, (p, n) => compareObjectsNeq(p, n));
@@ -155,7 +155,7 @@ describe("dependency tree", () => {
         edges: {}
       }
 
-      const node = await wrapPromise(runtime.fromNode(graph, "testfn")).then(nodeOutput =>  nodeOutput.value);
+      const node = await wrapPromise(runtime.run(runtime.fromNode(graph, "testfn"))).then(nodeOutput =>  nodeOutput.value);
 
       expect(runtime.run(node)).toBe(4);
     });
@@ -186,7 +186,9 @@ describe("dependency tree", () => {
           }
         }
       }
-      const node = await wrapPromise(runtime.fromNode(graph, "testinput")).then(nodeOutput =>  nodeOutput.value);
+      const gnode = runtime.fromNode(graph, "testinput");
+      console.log("gnode", gnode)
+      const node = await wrapPromise(runtime.run(gnode)).then(nodeOutput =>  nodeOutput.value);
       expect(runtime.run(node)).toBe(6);
     });
 
@@ -214,7 +216,7 @@ describe("dependency tree", () => {
       }
 
       const runtime = new NodysseusRuntime(store, nolibLib);
-      const node = await wrapPromise(runtime.fromNode(graph, "testfn")).then(nodeOutput =>  nodeOutput.value);
+      const node = await wrapPromise(runtime.run(runtime.fromNode(graph, "testfn"))).then(nodeOutput =>  nodeOutput.value);
       expect(runtime.run(node)).toBe(4);
     })
 
@@ -259,8 +261,8 @@ describe("dependency tree", () => {
 
       const runtime = new NodysseusRuntime(store, nolibLib);
       console.log("pre ret args")
-      const node = await wrapPromise(runtime.fromNode(graph, "testfn")).then(nodeOutput =>  nodeOutput.value);
-      console.log("post ret args")
+      const node = await wrapPromise(runtime.run(runtime.fromNode(graph, "testfn"))).then(nodeOutput =>  nodeOutput.value);
+      console.log("post ret args", node)
       expect(runtime.run(node)).toBe(4);
     })
   })
@@ -268,7 +270,7 @@ describe("dependency tree", () => {
   describe("extern", () => {
     test("single extern", async () => {
       const runtime = new NodysseusRuntime(store, nolibLib);
-      const random = (await runtime.fromNode(generic, "@math.random")).value;
+      const random = (await runtime.run(await runtime.fromNode(generic, "@math.random"))).value;
       const randomFn = runtime.run(random);
       expect(typeof randomFn === "function" && randomFn()).toBeGreaterThan(0)
     })
@@ -308,7 +310,7 @@ describe("dependency tree", () => {
             }
           }
         }
-        addNode = (await runtime.fromNode(add, "add")).value;
+        addNode = (await runtime.run((await runtime.fromNode(add, "add")))).value;
       });
 
       test("works", () => {
@@ -385,7 +387,7 @@ describe("dependency tree", () => {
           }
         }
       }
-      addNode = (await runtime.fromNode(add, "testfn", argsNode)).value;
+      addNode = (await runtime.run(await runtime.fromNode(add, "testfn", argsNode))).value;
     });
 
     test("works", async () => {
@@ -437,7 +439,7 @@ describe("dependency tree", () => {
 
       const inval = {x: "A"}
       const closure = {input: runtime.varNode(inval)};
-      const result = (await runtime.fromNode(run_fn, "out", closure)).value;
+      const result = (await runtime.run(await runtime.fromNode(run_fn, "out", closure))).value;
       runtime.run(result)
       expect(inval.x).toBe("B")
     })
@@ -447,7 +449,8 @@ describe("dependency tree", () => {
     let runtime, argsNode, htmlNode;
     beforeAll(async () => {
       runtime = new NodysseusRuntime(store, nolibLib);
-      htmlNode = (await runtime.fromNode(generic.nodes["@templates.simple"], "out")).display;
+      htmlNode = (await runtime.run(await runtime.fromNode(generic.nodes["@templates.simple"], "out"))).display;
+      console.log(htmlNode);
     })
 
     // test("setup value", () => {
@@ -481,116 +484,116 @@ describe("dependency tree", () => {
     })
   })
 
-  // describe("graph updates", () => {
-  //   let runtime, argsNode, htmlNode, templateSimple;
-  //   beforeEach(() => {
-  //     runtime = new NodysseusRuntime(store, nolibLib);
-  //     argsNode = {_output: runtime.varNode("value")};
-  //     templateSimple = {
-  //       ...generic.nodes["@templates.simple"],
-  //       id: "testhtml"
-  //     }
-  //     nolib.no.runtime.add_ref(templateSimple)
-  //     htmlNode = runtime.fromNode(templateSimple, "out", argsNode);
-  //   })
-  //
-  //   test("setup value", () => {
-  //     expect(runtime.run(htmlNode)).toBe("some output");
-  //   })
-  //
-  //   test("create html", () => {
-  //     argsNode._output.set("display")
-  //     expect(runtime.run(htmlNode)).toMatchObject({
-  //       "dom_type": "div",
-  //       "props": {},
-  //       "children": [
-  //         {
-  //           "dom_type": "text_value",
-  //           "text": "Hello, world!"
-  //         }
-  //       ]
-  //     });
-  //   });
-  //
-  //   test("update text node", () => {
-  //     argsNode._output.set("display")
-  //     expect(runtime.run(htmlNode)).toMatchObject({
-  //       "dom_type": "div",
-  //       "props": {},
-  //       "children": [
-  //         {
-  //           "dom_type": "text_value",
-  //           "text": "Hello, world!"
-  //         }
-  //       ]
-  //     });
-  //     console.log("before update")
-  //     nolib.no.runtime.add_node(templateSimple.id, {
-  //       "id": "qgbinm2",
-  //       "value": "Hello, again!",
-  //       "ref": "@html.html_text"
-  //     }, nolibLib)
-  //     console.log("after update")
-  //     expect(runtime.run(htmlNode)).toMatchObject({
-  //       "dom_type": "div",
-  //       "props": {},
-  //       "children": [
-  //         {
-  //           "dom_type": "text_value",
-  //           "text": "Hello, again!"
-  //         }
-  //       ]
-  //     });
-  //   })
-  // })
-  //
-  // describe("@flow.default", () => {
-  //   let runtime, ifGraph, argsNode;
-  //   beforeAll(() => {
-  //     runtime = new NodysseusRuntime(store, nolibLib);
-  //     ifGraph = {
-  //       id: "testdefault",
-  //       nodes: {
-  //         "otherwise": {
-  //           id: "otherwise",
-  //           value: "someval"
-  //         },
-  //         "noval": {
-  //           id: "noval",
-  //           ref: "arg",
-  //           value: "nextval"
-  //         },
-  //         "outdefault": {
-  //           id: "outdefault",
-  //           ref: "@flow.default"
-  //         }
-  //       },
-  //       edges: {
-  //         "otherwise": {
-  //           from: "otherwise",
-  //           to: "outdefault",
-  //           as: "otherwise"
-  //         },
-  //         "noval": {
-  //           from: "noval",
-  //           to: "outdefault",
-  //           as: "value"
-  //         }
-  //       }
-  //     }
-  //
-  //     argsNode = {nextval: runtime.varNode("someotherval")};
-  //   })
-  //
-  //
-  //   test("change args", () => {
-  //     const runNode = runtime.fromNode(ifGraph, "outdefault", argsNode) as AnyNode<unknown>;
-  //     expect(runtime.run(runNode)).toBe("someotherval")
-  //     console.log("before change")
-  //
-  //     argsNode.nextval.set(undefined)
-  //     console.log("after change")
-  //     expect(runtime.run(runNode)).toBe("someval")
-  //   })
-  // })
+  describe("graph updates", () => {
+    let runtime, argsNode, htmlNode, templateSimple;
+    beforeEach(async () => {
+      runtime = new NodysseusRuntime(store, nolibLib);
+      argsNode = {_output: runtime.varNode("value")};
+      templateSimple = {
+        ...generic.nodes["@templates.simple"],
+        id: "testhtml"
+      }
+      nolib.no.runtime.add_ref(templateSimple)
+      htmlNode = (await runtime.run(await runtime.fromNode(templateSimple, "out", argsNode))).value;
+    })
+
+    test("setup value", () => {
+      expect(runtime.run(htmlNode)).toBe("some output");
+    })
+
+    test("create html", () => {
+      argsNode._output.set("display")
+      expect(runtime.run(htmlNode)).toMatchObject({
+        "dom_type": "div",
+        "props": {},
+        "children": [
+          {
+            "dom_type": "text_value",
+            "text": "Hello, world!"
+          }
+        ]
+      });
+    });
+
+    test("update text node", () => {
+      argsNode._output.set("display")
+      expect(runtime.run(htmlNode)).toMatchObject({
+        "dom_type": "div",
+        "props": {},
+        "children": [
+          {
+            "dom_type": "text_value",
+            "text": "Hello, world!"
+          }
+        ]
+      });
+      console.log("before update")
+      nolib.no.runtime.add_node(templateSimple.id, {
+        "id": "qgbinm2",
+        "value": "Hello, again!",
+        "ref": "@html.html_text"
+      }, nolibLib)
+      console.log("after update")
+      expect(runtime.run(htmlNode)).toMatchObject({
+        "dom_type": "div",
+        "props": {},
+        "children": [
+          {
+            "dom_type": "text_value",
+            "text": "Hello, again!"
+          }
+        ]
+      });
+    })
+  })
+
+  describe("@flow.default", () => {
+    let runtime, ifGraph, argsNode;
+    beforeAll(() => {
+      runtime = new NodysseusRuntime(store, nolibLib);
+      ifGraph = {
+        id: "testdefault",
+        nodes: {
+          "otherwise": {
+            id: "otherwise",
+            value: "someval"
+          },
+          "noval": {
+            id: "noval",
+            ref: "arg",
+            value: "nextval"
+          },
+          "outdefault": {
+            id: "outdefault",
+            ref: "@flow.default"
+          }
+        },
+        edges: {
+          "otherwise": {
+            from: "otherwise",
+            to: "outdefault",
+            as: "otherwise"
+          },
+          "noval": {
+            from: "noval",
+            to: "outdefault",
+            as: "value"
+          }
+        }
+      }
+
+      argsNode = {nextval: runtime.varNode("someotherval")};
+    })
+
+
+    test("change args", async () => {
+      const runNode = (await runtime.run(runtime.fromNode(ifGraph, "outdefault", argsNode))).value;
+      expect(runtime.run(runNode)).toBe("someotherval")
+      console.log("before change")
+
+      argsNode.nextval.set(undefined)
+      console.log("after change")
+      expect(runtime.run(runNode)).toBe("someval")
+    })
+  })
 })

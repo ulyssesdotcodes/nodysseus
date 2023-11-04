@@ -17,7 +17,7 @@ import {linter, lintGutter} from "@codemirror/lint"
 import { EditorView } from "@codemirror/view"
 import { StateEffect } from "@codemirror/state"
 import { foldAll, unfoldCode, toggleFold, foldCode, foldInside, foldable, foldEffect, foldState, codeFolding } from "@codemirror/language"
-import { NodysseusRuntime, WatchNode } from "src/dependency-tree/dependency-tree.js"
+import { NodysseusRuntime, VarNode, WatchNode } from "src/dependency-tree/dependency-tree.js"
 
 function maybeEnable(state, other) {
   return state.field(foldState, false) ? other : other.concat(StateEffect.appendConfig.of(codeFolding()))
@@ -212,7 +212,7 @@ export const update_info_display = ({fn, graph, args}, info_display_dispatch, co
     })
 
   })
-  wrapPromise(node_display_el).then(update_info_display_fn)
+  // wrapPromise(node_display_el).then(update_info_display_fn)
 }
 
 export const update_graph_list = graph_id => {
@@ -310,7 +310,7 @@ export const CreateNode: ha.Action<HyperappState, {node: NodysseusNode & {id?: s
 
 export const DeleteNode = (state, {node_id}) => [
   state,
-  [(dispatch, {node_id}) => dispatch(SelectNode, {node_id}), {node_id: graphEdgeOut(state.editingGraph, node_id).to}],
+  [(dispatch, {node_id}) => requestAnimationFrame(() => dispatch(SelectNode, {node_id})), {node_id: graphEdgeOut(state.editingGraph, node_id).to}],
   [() => requestAnimationFrame(() => nolib.no.runtime.delete_node(state.editingGraph, node_id, hlibLib))]
 ]
 
@@ -462,11 +462,11 @@ export const SelectNode: ha.Action<HyperappState, {
         : []
       }
     ]}}), {}]
-    : [() => update_info_display({
+    : [() => requestAnimationFrame(() => update_info_display({
       fn: node_id, 
       graph: state.editingGraph, 
       args: {},
-    }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== node_id, undefined, state.codeEditorExtensions), {}],
+    }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== node_id, undefined, state.codeEditorExtensions)), {}],
   [updateSelectedMetadata, {graph: state.editingGraph, nodeId: node_id}],
   state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: {nodeId: node_id, graphId: state.editingGraphId}}, nolibLib), {}],
   [CalculateSelectedNodeArgsEffect, {graph: state.editingGraph, node_id}]
@@ -572,7 +572,7 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = async (dispatch, {
   const runtime = hlib.runtime();
 
 
-  const runNode = await runtime.fromNode(graph, graph.out ?? "out")
+  const runNode = await runtime.runNode(await runtime.fromNode(graph, graph.out ?? "out"))
 
   const run = async (_output) => {
     for await(const display of runtime.createWatch(runNode[_output], _output)) {
@@ -592,7 +592,7 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = async (dispatch, {
     // console.log("running graph", graph)
     wrapPromise(runtime.run(runNode.display, "display"))
       .then(display => {
-        // console.log("ran display", display)
+        console.log("ran display", display)
         run("display");
         display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
           el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
@@ -606,9 +606,8 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = async (dispatch, {
     wrapPromise(runtime.run(runNode.value, "value"))
       .then(value => {
         run("value");
-        // console.log("val output", value)
+        console.log("val output", value)
       })
-
   }
 
   if(runNode) {
@@ -770,6 +769,48 @@ export const select_node_subscription = (dispatch, props) => {
 
   nolib.no.runtime.addListener("selectnode", "hyperapp", listener)
   return () => nolib.no.runtime.removeListener("selectnode", "hyperapp")
+}
+
+export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
+  selected, 
+  graph,
+  selectedVarNode,
+  info_display_dispatch
+}: {
+  selected: Array<string>, 
+  graph: string, 
+  selectedVarNode: VarNode<{graph: string, id: string}> | undefined,
+  info_display_dispatch: Function | undefined
+}) => {
+  if(!selectedVarNode && info_display_dispatch) {
+    const runtime = hlib.runtime();
+    selectedVarNode = runtime.varNode({graph, id: selected[0]}, undefined, "selectedVarNode");
+
+    const hadisplaymap =       runtime.mapNode({
+      bound: runtime.bindNode({
+        bound: runtime.bindNode(
+        {selectedVarNode}, 
+        ({selectedVarNode}) => 
+          wrapPromise(runtime.fromNode(selectedVarNode.graph, selectedVarNode.id))
+            .then(node => node).value, undefined, "hyperappselectedbind")
+      }, ({bound}) => wrapPromise(runtime.runNode(bound)).then(b => b.display).value, undefined, "hyperappdisplaybind")
+    }, ({bound}) => runtime.runNode(bound), undefined, "hyperappdisplaymap");
+
+    runtime.addWatchFn(hadisplaymap, display => {
+      info_display_dispatch({el: display?.dom_type ? display : display?.resultPanel?.dom_type ? display.resultPanel : {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: typeof display === "number" || typeof display === "string" ? display : ""}]}});
+    });
+
+    dispatch(s => ({
+      ...s,
+      selectedVarNode
+    }));
+  }
+
+  if(selectedVarNode) {
+    selectedVarNode.set({id: selected[0], graph})
+  }
+
+  return () => {};
 }
 
 export const listen = (type, action): ha.Subscription<HyperappState, any>  => [listenToEvent, {type, action}]

@@ -2,6 +2,7 @@ import { ForceLink, Simulation, SimulationLinkDatum, SimulationNodeDatum } from 
 import { NodysseusError } from "../nodysseus.js"
 import {Graph, Edge, NodysseusNode, RefStore, EdgeNoAs, NodeMetadata, NodeArg} from "../types.js"
 import { Compartment } from "@codemirror/state"
+import { VarNode } from "src/dependency-tree/dependency-tree.js"
 
 export type Vector2 = {x: number, y: number}
 
@@ -56,7 +57,8 @@ export type HyperappState = {
   selectedMetadata?: NodeMetadata,
   initialLayout: boolean,
   selectedNodeArgs?: Array<NodeArg>,
-  selectedNodeEdgeLabels?: Array<string>
+  selectedNodeEdgeLabels?: Array<string>,
+  selectedVarNode?: VarNode<{graph: string, id: string}>
 }
 
 export type Levels = {
