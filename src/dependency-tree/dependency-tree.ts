@@ -684,6 +684,9 @@ export class NodysseusRuntime {
           } else if (refNode.value === "extern.runNode") {
             const nodeNode = this.valueMap(this.fromNodeInternal(graph, edgesIn.find(e => e.as === "node").from, graphId, closure, useExisting), nodeGraphId + "-nodenode", useExisting) as AnyNode<AnyNode<T>>;
             return this.runNodeNode(nodeNode, nodeGraphId)
+          } else if (refNode.value === "extern.nodeDisplay") {
+            console.log("nodedisplay", graph.id, node.value)
+            return wrapPromise(this.fromNode(graph.id, node.value)).then(targetNode => this.accessor(targetNode, "display", nodeGraphId + "-accessnodedisplay", useExisting)).value as AnyNode<T>;
           } else {
             const inputs = calculateInputs()
             const systemValues: Array<[string, Result]> = ([

@@ -1523,6 +1523,10 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       args: ["node"],
       fn: () => {}
     },
+    nodeDisplay: {
+      args: ["__grph_value"],
+      fn: () => {}
+    },
     return: {
       outputs: {
         display: true,

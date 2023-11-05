@@ -797,8 +797,8 @@ export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
     }, ({bound}) => runtime.runNode(bound), undefined, "hyperappdisplaymap");
 
     runtime.addWatchFn(hadisplaymap, display => {
-      console.log("got display", display)
-      info_display_dispatch({el: display?.dom_type ? display : display?.resultPanel?.dom_type ? display.resultPanel : {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: typeof display === "number" || typeof display === "string" ? display : ""}]}});
+      wrapPromise(display).then(display => 
+      info_display_dispatch({el: display?.dom_type ? display : display?.resultPanel?.dom_type ? display.resultPanel : {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: typeof display === "number" || typeof display === "string" ? display : ""}]}}));
     });
 
     dispatch(s => ({
