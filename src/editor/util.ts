@@ -17,7 +17,7 @@ import {linter, lintGutter} from "@codemirror/lint"
 import { EditorView } from "@codemirror/view"
 import { StateEffect } from "@codemirror/state"
 import { foldAll, unfoldCode, toggleFold, foldCode, foldInside, foldable, foldEffect, foldState, codeFolding } from "@codemirror/language"
-import { NodysseusRuntime, VarNode, WatchNode } from "src/dependency-tree/dependency-tree.js"
+import { NodysseusRuntime, VarNode, WatchNode, isNothing } from "src/dependency-tree/dependency-tree.js"
 
 function maybeEnable(state, other) {
   return state.field(foldState, false) ? other : other.concat(StateEffect.appendConfig.of(codeFolding()))
@@ -168,7 +168,7 @@ export const pzobj: {
 // Errors from the worker don't keep instanceof
 export const isNodysseusError = (e: Error) => e && (e instanceof nolib.no.NodysseusError || (e as NodysseusError).cause?.node_id)
 
-export const update_info_display = ({fn, graph, args}, info_display_dispatch, code_editor: EditorView, code_editor_nodeid, graphChanged = true, selectedMetadata: NodeMetadata, codeEditorExtensions: Compartment, metadataChanged = false) => {
+export const update_info_display = ({fn, graph}, info_display_dispatch, code_editor: EditorView, code_editor_nodeid, graphChanged = true, selectedMetadata: NodeMetadata, codeEditorExtensions: Compartment, metadataChanged = false) => {
   const node = nolib.no.runtime.get_node(graph, fn)
 
   if(!node) {
@@ -411,19 +411,19 @@ export const selectNodeEffect: ha.Effecter<HyperappState, {
   clearInitialLayout?: boolean
 }> = (dispatch, props) => dispatch([SelectNode, props])
 
-export const updateSelectedMetadata: ha.Effecter<HyperappState, {
-  graph: Graph,
-  nodeId: string,
-}> = (dispatch, {graph, nodeId}) =>
-   wrapPromise(hlib.run(graph, nodeId, "metadata")).then(selectedMetadata => (console.log("got metadta", selectedMetadata), dispatch)(state => [
-     {...state, selectedMetadata}, 
-     state.selectedMetadata !== selectedMetadata && (selectedMetadata === undefined || state.selectedMetadata === undefined || !compareObjects(state.selectedMetadata, selectedMetadata)) &&
-       (() => update_info_display({
-         fn: nodeId, 
-         graph: state.editingGraph, 
-         args: {},
-       }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== nodeId, selectedMetadata, state.codeEditorExtensions))
-   ])).value
+// export const updateSelectedMetadata: ha.Effecter<HyperappState, {
+//   graph: Graph,
+//   nodeId: string,
+// }> = (dispatch, {graph, nodeId}) =>
+//    wrapPromise(hlib.run(graph, nodeId, "metadata")).then(selectedMetadata => (console.log("got metadta", selectedMetadata), dispatch)(state => [
+//      {...state, selectedMetadata}, 
+//      state.selectedMetadata !== selectedMetadata && (selectedMetadata === undefined || state.selectedMetadata === undefined || !compareObjects(state.selectedMetadata, selectedMetadata)) &&
+//        (() => update_info_display({
+//          fn: nodeId, 
+//          graph: state.editingGraph, 
+//          args: {},
+//        }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== nodeId, selectedMetadata, state.codeEditorExtensions))
+//    ])).value
 
 export const SelectNode: ha.Action<HyperappState, {
   node_id: string,
@@ -450,7 +450,7 @@ export const SelectNode: ha.Action<HyperappState, {
         simulation: state.simulation
       }],
   node_id === state.editingGraph.out 
-    ? [dispatch => state.info_display_dispatch({el: {dom_type: "div", props: {}, children: [
+    && [dispatch => state.info_display_dispatch({el: {dom_type: "div", props: {}, children: [
       {dom_type: "text_value", text: "Most recent graphs"},
       { dom_type: "ul", props: {}, children: localStorage.getItem("graph_list") 
         ? JSON.parse(localStorage.getItem("graph_list")).slice(0, 10).map(gid => ({dom_type: "li", props: {}, children: [
@@ -461,13 +461,13 @@ export const SelectNode: ha.Action<HyperappState, {
         ]}))
         : []
       }
-    ]}}), {}]
-    : [() => requestAnimationFrame(() => update_info_display({
-      fn: node_id, 
-      graph: state.editingGraph, 
-      args: {},
-    }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== node_id, undefined, state.codeEditorExtensions)), {}],
-  [updateSelectedMetadata, {graph: state.editingGraph, nodeId: node_id}],
+    ]}}), {}],
+    // : [() => requestAnimationFrame(() => update_info_display({
+    //   fn: node_id, 
+    //   graph: state.editingGraph, 
+    //   args: {},
+    // }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== node_id, undefined, state.codeEditorExtensions)), {}],
+  // [updateSelectedMetadata, {graph: state.editingGraph, nodeId: node_id}],
   state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: {nodeId: node_id, graphId: state.editingGraphId}}, nolibLib), {}],
   [CalculateSelectedNodeArgsEffect, {graph: state.editingGraph, node_id}]
 ] : state
@@ -775,24 +775,32 @@ export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
   selected, 
   graph,
   selectedVarNode,
-  info_display_dispatch
+  info_display_dispatch,
+  code_editor,
+  code_editor_nodeid,
+  codeEditorExtensions
 }: {
   selected: Array<string>, 
   graph: string, 
   selectedVarNode: VarNode<{graph: string, id: string}> | undefined,
   info_display_dispatch: Function | undefined
+  code_editor: any,
+  code_editor_nodeid: any
+  codeEditorExtensions
 }) => {
   if(!selectedVarNode && info_display_dispatch) {
     const runtime = hlib.runtime();
     selectedVarNode = runtime.varNode({graph, id: selected[0]}, undefined, "selectedVarNode");
 
-    const hadisplaymap =       runtime.mapNode({
-      bound: runtime.bindNode({
-        bound: runtime.bindNode(
+    const haselectedbind = runtime.bindNode(
         {selectedVarNode}, 
         ({selectedVarNode}) => 
-          (console.log("got selvar", selectedVarNode), wrapPromise)(runtime.fromNode(selectedVarNode.graph, selectedVarNode.id))
-            .then(node => node).value, undefined, "hyperappselectedbind")
+          wrapPromise(runtime.fromNode(selectedVarNode.graph, selectedVarNode.id))
+            .then(node => node).value, undefined, "hyperappselectedbind");
+
+    const hadisplaymap =       runtime.mapNode({
+      bound: runtime.bindNode({
+        bound: haselectedbind
       }, ({bound}) => wrapPromise(runtime.runNode(bound)).then(b => (console.log("got bound", b), b).display).value, undefined, "hyperappdisplaybind")
     }, ({bound}) => runtime.runNode(bound), undefined, "hyperappdisplaymap");
 
@@ -805,6 +813,60 @@ export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
       ...s,
       selectedVarNode
     }));
+
+    const hametadatamap =       
+      runtime.mapNode({
+      bound: runtime.bindNode({
+        bound: haselectedbind
+      }, ({bound}) => wrapPromise(runtime.runNode(bound)).then(b => (console.log("got bound", b), b).metadata).value, undefined, "hyperappmetadatabind")
+    }, ({bound}) => runtime.runNode(bound), undefined, "hyperappmetadatamap");
+
+    runtime.addWatchFn(hametadatamap, metadata => {
+      console.log("got metadata", metadata)
+      const selected = selectedVarNode.value.read();
+      if(!isNothing(selected)) {
+        wrapPromiseAll([
+          metadata,
+          runtime.store.refs.get(selected.graph)
+        ]).then(([metadata, graph]) => {
+          dispatch(s => ({...s, selectedMetadata: metadata}))
+            requestAnimationFrame(() => {
+              const node = graph.nodes[selected.id];
+              if(code_editor && isNodeRef(node) && metadata.codeEditor) {
+                // console.log(selectedMetadata)
+                const jsonlang = json()
+                requestAnimationFrame(() => {
+                  if(metadata?.codeEditor?.language === "json") {
+                    customFoldAll(code_editor)
+                  }
+                })
+                const newText = metadata?.codeEditor?.editorText ?? node.value
+                code_editor.dispatch({
+                  changes:  newText !== code_editor.state.doc.toString() && {
+                    from: 0, 
+                    to: code_editor.state.doc.length, 
+                    insert: newText
+                  },
+                  effects: [
+                    code_editor_nodeid.of(node.id), 
+                    codeEditorExtensions.reconfigure([
+                      metadata?.codeEditor?.language === "json" ? [jsonlang, linter(jsonParseLinter()), lintGutter()] : javascript(),
+                      metadata?.codeEditor?.onChange && 
+                          EditorView.updateListener.of(
+                            (viewUpdate) => viewUpdate.docChanged && wrapPromise(nolib.no.runtime.run(metadata.codeEditor?.onChange, new Map([["editorText", (console.log(viewUpdate.state.doc.toString()), viewUpdate.state.doc.toString())]]))))
+                    ].filter(e => e).flat()),
+                  ].filter(e => e)
+                })
+              }
+            })
+        })
+        }
+    });
+
+    // dispatch(s => ({
+    //   ...s,
+    //   selectedVarNode
+    // }));
   }
 
   if(selectedVarNode) {

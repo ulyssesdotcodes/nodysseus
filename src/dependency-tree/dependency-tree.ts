@@ -55,8 +55,8 @@ const outputs = ["display", "metadata", "value"] as const;
 type Output = typeof outputs[number];
 type NodeKind = "const" | "map" | "var" | "bind";
 type Nothing = {__kind: "nothing"}
-const isNothing = (a: any): a is Nothing => a && (a as Nothing).__kind === "nothing";
-const isNothingOrUndefined = (a: any): a is Nothing => a === undefined || (a as Nothing).__kind === "nothing";
+export const isNothing = (a: any): a is Nothing => a && (a as Nothing).__kind === "nothing";
+export const isNothingOrUndefined = (a: any): a is Nothing => a === undefined || (a as Nothing).__kind === "nothing";
 const nothingOf = (): Nothing => ({__kind: "nothing"})
 const nothingValue: Nothing = {__kind: "nothing"};
 const chainNothing = <T, S>(a: Nothing | T, fn: (a: T) => S): Nothing | S => isNothing(a) ? a : fn(a);
@@ -505,7 +505,7 @@ export class NodysseusRuntime {
             } catch(e) {
               handleError(e, nodeGraphId)
             }
-          }, undefined, nodeGraphId, useExisting)
+          }, undefined, nodeGraphId + extraNodeGraphId, useExisting)
         } else if (refNode.ref === "return") {
           const argsEdge = edgesIn.find(e => e.as === "args");
           const chainedscope: AnyNode<AnyNodeMap<S>> = argsEdge 
@@ -685,8 +685,7 @@ export class NodysseusRuntime {
             const nodeNode = this.valueMap(this.fromNodeInternal(graph, edgesIn.find(e => e.as === "node").from, graphId, closure, useExisting), nodeGraphId + "-nodenode", useExisting) as AnyNode<AnyNode<T>>;
             return this.runNodeNode(nodeNode, nodeGraphId)
           } else if (refNode.value === "extern.nodeDisplay") {
-            console.log("nodedisplay", graph.id, node.value)
-            return wrapPromise(this.fromNode(graph.id, node.value)).then(targetNode => this.accessor(targetNode, "display", nodeGraphId + "-accessnodedisplay", useExisting)).value as AnyNode<T>;
+            return wrapPromise(this.fromNode(graph.id, node.value), e => handleError(e, nodeGraphId)).then(targetNode => this.accessor(targetNode, "display", nodeGraphId + "-accessnodedisplay", useExisting)).value as AnyNode<T>;
           } else {
             const inputs = calculateInputs()
             const systemValues: Array<[string, Result]> = ([

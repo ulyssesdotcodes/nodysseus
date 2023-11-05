@@ -1336,7 +1336,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       outputs: {
         display: true
       },
-      args: ["onframe", "_lib", "__graphid", "_runoptions", "_output", "initial", "publish"],
+      args: ["onframe", "_lib", "__graphid", "_runoptions", "_output", "initial", "publish", "persist"],
       fn: (onframe, lib, graphid, options, output, initial, publish, id) => {
         return wrapPromiseAll([
           publish && run_runnable(publish, lib, undefined, options),

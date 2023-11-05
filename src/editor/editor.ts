@@ -354,7 +354,7 @@ const runapp = (init, _lib) => {
     subscriptions: s => [
       document.getElementById(`${init.html_id}-result`) && [mutationObserverSubscription, {selector: `#${init.html_id}-result, #${init.html_id}-background-result`}],
       [d3subscription, {action: SimulationToHyperapp, update: UpdateSimulation, htmlid: init.html_id}], 
-      [displaySubscription, {selected: s.selected, selectedVarNode: s.selectedVarNode, graph: s.displayGraph.id ?? s.editingGraph.id, info_display_dispatch: s.info_display_dispatch}],
+      [displaySubscription, {selected: s.selected, selectedVarNode: s.selectedVarNode, graph: s.displayGraph.id ?? s.editingGraph.id, info_display_dispatch: s.info_display_dispatch, code_editor: s.code_editor, code_editor_nodeid: s.code_editor_nodeid, codeEditorExtensions: s.codeEditorExtensions}],
       [graph_subscription, {editingGraphId: s.editingGraphId, norun: s.norun}],
       [select_node_subscription, {}],
       result_display_dispatch && result_background_display_dispatch && [result_subscription, {editingGraphId: s.editingGraphId, displayGraphId: s.displayGraphId, norun: s.norun}],
