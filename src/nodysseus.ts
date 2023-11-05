@@ -1519,6 +1519,10 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       args: ["value: default"],
       fn: externs.memoryUnwrap
     },
+    runNode: {
+      args: ["node"],
+      fn: () => {}
+    },
     return: {
       outputs: {
         display: true,

@@ -791,12 +791,13 @@ export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
         bound: runtime.bindNode(
         {selectedVarNode}, 
         ({selectedVarNode}) => 
-          wrapPromise(runtime.fromNode(selectedVarNode.graph, selectedVarNode.id))
+          (console.log("got selvar", selectedVarNode), wrapPromise)(runtime.fromNode(selectedVarNode.graph, selectedVarNode.id))
             .then(node => node).value, undefined, "hyperappselectedbind")
-      }, ({bound}) => wrapPromise(runtime.runNode(bound)).then(b => b.display).value, undefined, "hyperappdisplaybind")
+      }, ({bound}) => wrapPromise(runtime.runNode(bound)).then(b => (console.log("got bound", b), b).display).value, undefined, "hyperappdisplaybind")
     }, ({bound}) => runtime.runNode(bound), undefined, "hyperappdisplaymap");
 
     runtime.addWatchFn(hadisplaymap, display => {
+      console.log("got display", display)
       info_display_dispatch({el: display?.dom_type ? display : display?.resultPanel?.dom_type ? display.resultPanel : {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: typeof display === "number" || typeof display === "string" ? display : ""}]}});
     });
 
@@ -1105,7 +1106,7 @@ export const hlibLib = mergeLib(nolibLib, newLib({
       return;
     }
     try{
-      const result = wrapPromise(runtime.runGraphNode(graph, fn, _output)).value;
+      const result = wrapPromise(runtime.runGraphNode(graph, fn)).value;
       if(ispromise(result)){
         return result.catch(e => console.error(e))
       }
