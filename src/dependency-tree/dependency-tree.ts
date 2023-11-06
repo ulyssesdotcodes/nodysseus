@@ -455,9 +455,10 @@ export class NodysseusRuntime {
       return this.dereference(graph, node, edgesIn, graphId, nodeGraphId, closure, calculateInputs, extraNodeGraphId, useExisting);
     } else if(isNodeValue(node)) {
       return this.constNode(node_value(node), nodeGraphId, false);
+    } else if(isGraph(node)) {
+      return this.accessor(this.fromNodeInternal(node, node.out ?? "out", nodeGraphId, this.constNode(calculateInputs(), nodeGraphId + "-inputs"), useExisting), "value", nodeGraphId + "-accessor", useExisting);
     } else {
-      const outNode = this.mapNode(calculateInputs(), args => args, undefined, nodeGraphId, useExisting)
-      return outNode
+      return this.mapNode(calculateInputs(), args => args, undefined, nodeGraphId, useExisting)
     }
   }
 
@@ -685,7 +686,8 @@ export class NodysseusRuntime {
             const nodeNode = this.valueMap(this.fromNodeInternal(graph, edgesIn.find(e => e.as === "node").from, graphId, closure, useExisting), nodeGraphId + "-nodenode", useExisting) as AnyNode<AnyNode<T>>;
             return this.runNodeNode(nodeNode, nodeGraphId)
           } else if (refNode.value === "extern.nodeDisplay") {
-            return wrapPromise(this.fromNode(graph.id, node.value), e => handleError(e, nodeGraphId)).then(targetNode => this.accessor(targetNode, "display", nodeGraphId + "-accessnodedisplay", useExisting)).value as AnyNode<T>;
+            return wrapPromise(this.fromNodeInternal(graph, node.value, graphId, closure, true), e => handleError(e, nodeGraphId))
+              .then(targetNode => this.accessor(targetNode, "display", nodeGraphId + "-accessnodedisplay", useExisting)).value as AnyNode<T>;
           } else {
             const inputs = calculateInputs()
             const systemValues: Array<[string, Result]> = ([
@@ -744,12 +746,11 @@ export class NodysseusRuntime {
             this.accessor(this.fromNodeInternal(
               nodeRef, 
               nodeRef.out ?? "out", 
-              nodeGraphId + nodeRef.id,
+              nodeGraphId,
               this.constNode({
                 ...inputs, 
                 __graph_value: this.constNode(node.value, `${nodeGraphId}-internalnodegraphvalue`, false)
               }, nodeGraphId + "-args", false), false), extraNodeGraphId, nodeGraphId + "-innergraphnodeval", useExisting);
-
 
           return this.mapNode({
           bound: this.bindNode({}, () => innerGraphNode, undefined, nodeGraphId + extraNodeGraphId + "-graphoutbind", useExisting)
@@ -798,9 +799,9 @@ export class NodysseusRuntime {
     })
 
     return this.mapNode({graphNodeNode}, ({graphNodeNode}) => {
-      if(this.scope.has(nodeGraphId + "value")) {
-        this.scope.removeAll(nodeGraphId);
-      }
+      // if(this.scope.has(nodeGraphId + "value")) {
+      //   this.scope.removeAll(nodeGraphId);
+      // }
       return wrapPromise(this.calcNode(graphNodeNode.graph, graphNodeNode.node, graphId, nodeGraphId, closure, graphNodeNode.edgesIn, false))
         .then(value => wrapPromiseAll([
           this.calcNode(graphNodeNode.graph, graphNodeNode.node, graphId, nodeGraphId, closure, graphNodeNode.edgesIn, true, "display"),
