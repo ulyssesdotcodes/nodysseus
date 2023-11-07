@@ -576,7 +576,7 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = async (dispatch, {
 
   const run = async (_output) => {
     for await(const display of runtime.createWatch(runNode[_output], _output)) {
-      console.log("got", _output, display)
+      // console.log("got", _output, display)
       if(_output === "display") {
         display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
           el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
@@ -592,7 +592,7 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = async (dispatch, {
     // console.log("running graph", graph)
     wrapPromise(runtime.run(runNode.display, "display"))
       .then(display => {
-        console.log("ran display", display)
+        // console.log("ran display", display)
         run("display");
         display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
           el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
@@ -606,7 +606,7 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = async (dispatch, {
     wrapPromise(runtime.run(runNode.value, "value"))
       .then(value => {
         run("value");
-        console.log("val output", value)
+        // console.log("val output", value)
       })
   }
 
@@ -778,7 +778,8 @@ export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
   info_display_dispatch,
   code_editor,
   code_editor_nodeid,
-  codeEditorExtensions
+  codeEditorExtensions,
+  cachedMetadata
 }: {
   selected: Array<string>, 
   graph: string, 
@@ -786,7 +787,8 @@ export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
   info_display_dispatch: Function | undefined
   code_editor: any,
   code_editor_nodeid: any
-  codeEditorExtensions
+  codeEditorExtensions,
+  cachedMetadata: Record<string, NodeMetadata>
 }) => {
   if(!selectedVarNode && info_display_dispatch) {
     const runtime = hlib.runtime();
@@ -822,43 +824,45 @@ export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
     }, ({bound}) => runtime.runNode(bound), undefined, "hyperappmetadatamap");
 
     runtime.addWatchFn(hametadatamap, metadata => {
-      console.log("got metadata", metadata)
       const selected = selectedVarNode.value.read();
       if(!isNothing(selected)) {
         wrapPromiseAll([
           metadata,
           runtime.store.refs.get(selected.graph)
         ]).then(([metadata, graph]) => {
-          dispatch(s => ({...s, selectedMetadata: metadata}))
-            requestAnimationFrame(() => {
-              const node = graph.nodes[selected.id];
-              if(code_editor && isNodeRef(node) && metadata.codeEditor) {
-                // console.log(selectedMetadata)
-                const jsonlang = json()
-                requestAnimationFrame(() => {
-                  if(metadata?.codeEditor?.language === "json") {
-                    customFoldAll(code_editor)
-                  }
-                })
-                const newText = metadata?.codeEditor?.editorText ?? node.value
-                code_editor.dispatch({
-                  changes:  newText !== code_editor.state.doc.toString() && {
-                    from: 0, 
-                    to: code_editor.state.doc.length, 
-                    insert: newText
-                  },
-                  effects: [
-                    code_editor_nodeid.of(node.id), 
-                    codeEditorExtensions.reconfigure([
-                      metadata?.codeEditor?.language === "json" ? [jsonlang, linter(jsonParseLinter()), lintGutter()] : javascript(),
-                      metadata?.codeEditor?.onChange && 
-                          EditorView.updateListener.of(
-                            (viewUpdate) => viewUpdate.docChanged && wrapPromise(nolib.no.runtime.run(metadata.codeEditor?.onChange, new Map([["editorText", (console.log(viewUpdate.state.doc.toString()), viewUpdate.state.doc.toString())]]))))
-                    ].filter(e => e).flat()),
-                  ].filter(e => e)
-                })
-              }
-            })
+          console.log("got metadata", metadata)
+          cachedMetadata[selected.graph + "/" + selected.id] = metadata;
+          
+          dispatch(s => [{...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: selected.id, cachedMetadata}]])
+          requestAnimationFrame(() => {
+            const node = graph.nodes[selected.id];
+            if(code_editor && isNodeRef(node) && metadata.codeEditor) {
+              // console.log(selectedMetadata)
+              const jsonlang = json()
+              requestAnimationFrame(() => {
+                if(metadata?.codeEditor?.language === "json") {
+                  customFoldAll(code_editor)
+                }
+              })
+              const newText = metadata?.codeEditor?.editorText ?? node.value
+              code_editor.dispatch({
+                changes:  newText !== code_editor.state.doc.toString() && {
+                  from: 0, 
+                  to: code_editor.state.doc.length, 
+                  insert: newText
+                },
+                effects: [
+                  code_editor_nodeid.of(node.id), 
+                  codeEditorExtensions.reconfigure([
+                    metadata?.codeEditor?.language === "json" ? [jsonlang, linter(jsonParseLinter()), lintGutter()] : javascript(),
+                    metadata?.codeEditor?.onChange && 
+                        EditorView.updateListener.of(
+                          (viewUpdate) => viewUpdate.docChanged && wrapPromise(nolib.no.runtime.run(metadata.codeEditor?.onChange, new Map([["editorText", (console.log(viewUpdate.state.doc.toString()), viewUpdate.state.doc.toString())]]))))
+                  ].filter(e => e).flat()),
+                ].filter(e => e)
+              })
+            }
+          })
         })
         }
     });
@@ -1025,9 +1029,9 @@ const parseTypedArg = (value: string): [string, TypedArg] => {
   return [outName, "any"]
 }
 
-export const CalculateSelectedNodeArgsEffect: ha.Effecter<HyperappState, {graph: Graph, node_id: string}> = 
-  (dispatch, {graph, node_id}) => 
- wrapPromise(node_args(nolib, graph, node_id )).then(nodeArgs => dispatch(s => ({
+export const CalculateSelectedNodeArgsEffect: ha.Effecter<HyperappState, {graph: Graph, node_id: string, cachedMetadata: Record<string, NodeMetadata>}> = 
+  (dispatch, {graph, node_id, cachedMetadata}) => 
+   wrapPromise(node_args(nolib, graph, node_id, cachedMetadata)).then(nodeArgs => dispatch(s => ({
      ...s,
      selectedNodeArgs: nodeArgs.nodeArgs,
      selectedNodeEdgeLabels: nodeArgs.nodeOutArgs?.map(a => a.name) ?? []
@@ -1046,9 +1050,9 @@ export const node_args = (nolib: Record<string, any>, graph: Graph, node_id: str
     return Promise.resolve({nodeArgs: []})
   }
   const node_out = edge_out && nolib.no.runtime.get_node(graph, edge_out.to)
-  return wrapPromise(cachedMetadata[node_id] ?? hlib.run(graph, node_id, "metadata"))
+  return wrapPromise(cachedMetadata[graph.id + "/" + node_id])
     // NOTE: there's a mutation of cachedMetadata here
-    .then(metadata => wrapPromise(edge_out && node_args(nolib, graph, edge_out.to, (cachedMetadata[node_id] = metadata, cachedMetadata)))
+    .then(metadata => wrapPromise(edge_out && node_args(nolib, graph, edge_out.to, cachedMetadata))
       .then(nodeOutNodeArgs => {
         const nodeOutNodeArg = nodeOutNodeArgs?.nodeArgs.find(a => a.name === edge_out.as)
         const node_out_args: Array<[string, string | FullyTypedArg]> = node_out?.ref === "@flow.runnable" ? 

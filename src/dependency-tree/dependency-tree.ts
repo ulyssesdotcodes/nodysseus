@@ -799,9 +799,9 @@ export class NodysseusRuntime {
     })
 
     return this.mapNode({graphNodeNode}, ({graphNodeNode}) => {
-      // if(this.scope.has(nodeGraphId + "value")) {
-      //   this.scope.removeAll(nodeGraphId);
-      // }
+      if(this.scope.has(nodeGraphId + "value")) {
+        this.scope.removeAll(nodeGraphId);
+      }
       return wrapPromise(this.calcNode(graphNodeNode.graph, graphNodeNode.node, graphId, nodeGraphId, closure, graphNodeNode.edgesIn, false))
         .then(value => wrapPromiseAll([
           this.calcNode(graphNodeNode.graph, graphNodeNode.node, graphId, nodeGraphId, closure, graphNodeNode.edgesIn, true, "display"),

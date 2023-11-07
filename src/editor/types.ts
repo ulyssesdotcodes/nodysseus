@@ -55,6 +55,7 @@ export type HyperappState = {
   showHelp: boolean,
   refGraphs: Array<string>,
   selectedMetadata?: NodeMetadata,
+  cachedMetadata: Record<string, NodeMetadata>,
   initialLayout: boolean,
   selectedNodeArgs?: Array<NodeArg>,
   selectedNodeEdgeLabels?: Array<string>,
