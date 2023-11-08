@@ -519,7 +519,7 @@ export class NodysseusRuntime {
           const inputs = Object.fromEntries(
             edgesIn
               .filter(e => e.as !== "args" && e.as !== "subscribe")
-              .map(e => [e.as, this.valueMap(this.fromNodeInternal(graph, e.from, graphId, chainedscope, useExisting), nodeGraphId + `-argsvalmap-${e.as}`, useExisting)])
+              .map(e => [e.as, this.valueMap(this.fromNodeInternal(graph, e.from, graphId, chainedscope, useExisting), nodeGraphId + `-inputsvalmap-${e.as}`, useExisting)])
           )
 
           const subscribechainedscope: AnyNode<AnyNodeMap<S>> = argsEdge 
@@ -561,8 +561,8 @@ export class NodysseusRuntime {
               this.valueMap(this.fromNodeInternal(graph, inputEdge.from, graphId, closure, useExisting), nodeGraphId + "-predvalmap", useExisting), 
               Object.fromEntries(
                 edgesIn.filter(e => e.as !== "input")
-                  .map(e => [e.as, this.valueMap(this.fromNodeInternal(graph, e.from, graphId, closure, useExisting), nodeGraphId + `-valmap${e.as}`, useExisting)], useExisting)
-              ), nodeGraphId, useExisting) as AnyNode<T> : this.constNode(undefined, nodeGraphId + extraNodeGraphId, false);
+                  .map(e => [e.as, this.valueMap(this.fromNodeInternal(graph, e.from, graphId, closure, useExisting), nodeGraphId + `-switchvalmap${e.as}`, useExisting)], useExisting)
+              ), nodeGraphId, useExisting) as AnyNode<T> : this.constNode(undefined, nodeGraphId, false);
           } else if(refNode.value === "extern.runnable") {
             const fnArgs = this.varNode<Record<string, unknown>>({}, undefined, nodeGraphId + "-fnargs", useExisting)
             const chainedClosure = this.mergeClosure(closure, fnArgs, nodeGraphId + "-runnablechained", useExisting);
@@ -769,6 +769,15 @@ export class NodysseusRuntime {
     if(useExisting && this.scope.has(nodeGraphId + "-boundNode")) return this.scope.get(nodeGraphId + "-boundNode");
     const staticGraphId = graph.id;
 
+    const compareGraphNodes = (
+        {node: nodeA, edgesIn: edgesInA, graph: graphA}, 
+        {node: nodeB, edgesIn: edgesInB, graph: graphB}) => {
+      if(!nodeB || !nodeA || !compareObjects(nodeA, nodeB, false, NAME_FIELD) || edgesInA.length !== edgesInB.length) return false; 
+      const sortedEdgesA = edgesInA.sort((a, b) => a.as.localeCompare(b.as));
+      const sortedEdgesB = edgesInB.sort((a, b) => a.as.localeCompare(b.as));
+      return sortedEdgesA.every((e, i) => compareObjects(e, sortedEdgesB[i]))
+    }
+
     const graphNodeNode: VarNode<{node: NodysseusNode, edgesIn: Array<Edge>, graph: Graph}> = 
       this.varNode({
         graph,
@@ -776,14 +785,7 @@ export class NodysseusRuntime {
         edgesIn: graph.edges_in?.[node.id] 
           ? Object.values(graph.edges_in?.[node.id]) 
           : Object.values(graph.edges).filter((e: Edge) => e.to === node.id)
-      }, (
-        {node: nodeA, edgesIn: edgesInA, graph: graphA}, 
-        {node: nodeB, edgesIn: edgesInB, graph: graphB}) => {
-      if(!nodeB || !nodeA || !compareObjects(nodeA, nodeB, false, NAME_FIELD) || edgesInA.length !== edgesInB.length) return false; 
-      const sortedEdgesA = edgesInA.sort((a, b) => a.as.localeCompare(b.as));
-      const sortedEdgesB = edgesInB.sort((a, b) => a.as.localeCompare(b.as));
-      return sortedEdgesA.every((e, i) => compareObjects(e, sortedEdgesB[i]))
-    }, nodeGraphId + "-graphnode", true);
+      }, compareGraphNodes, nodeGraphId + "-graphnode", true);
 
     nolib.no.runtime.addListener("graphchange", nodeGraphId + "-nodelistener", ({graph}) => {
       if(graph.id === staticGraphId) {
@@ -799,9 +801,10 @@ export class NodysseusRuntime {
     })
 
     return this.mapNode({graphNodeNode}, ({graphNodeNode}) => {
-      if(this.scope.has(nodeGraphId + "value")) {
-        this.scope.removeAll(nodeGraphId);
-      }
+      // if(this.scope.has(nodeGraphId + "value")) {
+      //   console.log("removing and recreating", closure)
+      //   this.scope.removeAll(nodeGraphId);
+      // }
       return wrapPromise(this.calcNode(graphNodeNode.graph, graphNodeNode.node, graphId, nodeGraphId, closure, graphNodeNode.edgesIn, false))
         .then(value => wrapPromiseAll([
           this.calcNode(graphNodeNode.graph, graphNodeNode.node, graphId, nodeGraphId, closure, graphNodeNode.edgesIn, true, "display"),
@@ -820,7 +823,7 @@ export class NodysseusRuntime {
           display,
           metadata
         })).value).value
-    }, undefined, nodeGraphId + "-boundNode");
+    }, ({graphNodeNode: graphNodeA}, {graphNodeNode: graphNodeB}) => !compareGraphNodes(graphNodeA, graphNodeB), nodeGraphId + "-boundNode");
   } 
 
   private runNode<T>(innode: AnyNode<T> | Nothing, _output?: "display" | "value" | "metadata"): T | PromiseLike<T> | Nothing{
