@@ -1,6 +1,6 @@
 import * as ha from "hyperapp"
 import { initStore, nodysseus_get, nolib, run, NodysseusError, nolibLib } from "../nodysseus.js"
-import { Args, compareNodes, ConstRunnable, Edge, FullyTypedArg, FunctorRunnable, getRunnableGraphId, Graph, isArgs, isNodeGraph, isNodeRef, isRunnable, isTypedArg, NodeArg, NodeMetadata, NodysseusNode, RefNode, TypedArg } from "../types.js"
+import { Args, compareNodes, ConstRunnable, Edge, ExportedGraph, FullyTypedArg, FunctorRunnable, getRunnableGraphId, Graph, isArgs, isExportedGraph, isNodeGraph, isNodeRef, isRunnable, isTypedArg, NodeArg, NodeMetadata, NodysseusNode, RefNode, TypedArg } from "../types.js"
 import { base_node, base_graph, ispromise, wrapPromise, expand_node, contract_node, ancestor_graph, create_randid, compareObjects, newLib, bfs, mergeLib, wrapPromiseAll } from "../util.js"
 import panzoom, * as pz from "panzoom"
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceX, forceY, forceCollide } from "d3-force"
@@ -10,7 +10,7 @@ import { parser } from "@lezer/javascript"
 import {v4 as uuid} from "uuid"
 import { middleware, runh, hlib as hyperapplib } from "./hyperapp.js"
 import domTypes from "../html-dom-types.json"
-import { Compartment, EditorSelection } from "@codemirror/state"
+import { Compartment, EditorSelection, StateEffectType, StateField } from "@codemirror/state"
 import { json, jsonParseLinter } from "@codemirror/lang-json"
 import { javascript } from "@codemirror/lang-javascript"
 import {linter, lintGutter} from "@codemirror/lint"
@@ -37,7 +37,7 @@ const customFoldAll = view => {
 }
 
 
-export const EXAMPLES = ["threejs_example", "hydra_example", "threejs_boilerplate", "threejs_force_attribute_example", "threejs_node_example", "threejs_compute_example", "strudel_example"]
+export const EXAMPLES = ["threejs_example", "threejs_example_randomize", "hydra_example", "threejs_boilerplate", "threejs_force_attribute_example", "threejs_node_example", "threejs_compute_example", "strudel_example"]
 
 
 export const pzobj: {
@@ -237,15 +237,27 @@ export const SetSelectedPositionStyleEffect = (_, payload: NodePositionArgs) => 
   requestAnimationFrame(() => setRootNodeXNodeY(payload))
 }
 
+export const graphFromExample = (id: string): Promise<Graph> | Graph => 
+fetch(`json/${id.replaceAll("_", "-")}.json`)
+          .then(res => res.json())
+          .then((g: Graph | Array<Graph> | ExportedGraph) => {
+            return Promise.all(
+            isExportedGraph(g) ?
+              Object.entries(g.state)
+                .map(e => (console.log("setting state", e[0], e[1]), hlib).runtime().store.persist.set(e[0], e[1]))
+            : []).then(() => {
+              nolib.no.runtime.add_ref(g["graphs"] ? g["graphs"] : g)
+              console.log("got graph", g["graphs"], g["graphs"].find(g => g.id === id));
+              return g["graphs"].find(g => g.id === id)
+            })
+          })
+
+
 export const ChangeEditingGraphId: ha.Effecter<HyperappState, {id: string, select_out: boolean, editingGraphId: string}> = (dispatch, {id, select_out, editingGraphId}) => {
   requestAnimationFrame(() => {
     const graphPromise = wrapPromise(nolib.no.runtime.refs()).then(refs => 
       EXAMPLES.includes(id) && !refs.includes(id) 
-        ? fetch(`json/${id.replaceAll("_", "-")}.json`)
-          .then(res => res.json())
-          .then((g: Graph | Array<Graph> | {graph: Array<Graph>, state: Record<string, unknown>}) => {
-            return nolib.no.runtime.add_ref(g["graphs"] ? g["graphs"] : g)
-          })
+        ? graphFromExample(id)
         : nolib.no.runtime.get_ref(id, editingGraphId && nolib.no.runtime.get_ref(editingGraphId))
     )
 
@@ -778,6 +790,7 @@ export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
   info_display_dispatch,
   code_editor,
   code_editor_nodeid,
+  code_editor_nodeid_field,
   codeEditorExtensions,
   cachedMetadata
 }: {
@@ -786,7 +799,8 @@ export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
   selectedVarNode: VarNode<{graph: string, id: string}> | undefined,
   info_display_dispatch: Function | undefined
   code_editor: any,
-  code_editor_nodeid: any
+  code_editor_nodeid: StateEffectType<string>,
+  code_editor_nodeid_field: StateField<string>,
   codeEditorExtensions,
   cachedMetadata: Record<string, NodeMetadata>
 }) => {
@@ -830,7 +844,6 @@ export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
           metadata,
           runtime.store.refs.get(selected.graph)
         ]).then(([metadata, graph]) => {
-          console.log("got metadata", metadata)
           cachedMetadata[selected.graph + "/" + selected.id] = metadata;
           
           dispatch(s => [{...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: selected.id, cachedMetadata}]])
@@ -846,7 +859,8 @@ export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
               })
               const newText = metadata?.codeEditor?.editorText ?? node.value
               code_editor.dispatch({
-                changes:  newText !== code_editor.state.doc.toString() && {
+                changes: code_editor.state.field(code_editor_nodeid_field) !== node.id &&
+                  newText !== code_editor.state.doc.toString() && {
                   from: 0, 
                   to: code_editor.state.doc.length, 
                   insert: newText

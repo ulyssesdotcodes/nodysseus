@@ -1,9 +1,10 @@
 import { resfetch, nolib, run, initStore, NodysseusError, nolibLib } from "../nodysseus.js"
+ 
 import * as ha from "hyperapp"
 import Fuse from "fuse.js"
 import { create_randid, wrapPromise, base_graph } from "../util.js"
 import { Edge, Graph, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode } from "../types.js"
-import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, Paste, pzobj, refresh_graph, result_subscription, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect, displaySubscription } from "./util.js"
+import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, Paste, pzobj, refresh_graph, result_subscription, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect, displaySubscription, graphFromExample } from "./util.js"
 import { info_display, infoWindow } from "./components/infoWindow.js"
 import { init_code_editor } from "./components/codeEditor.js"
 import { d3Node, d3NodeNode, HyperappState, Levels } from "./types.js"
@@ -138,6 +139,7 @@ let info_display_dispatch
 let custom_editor_display_dispatch
 let code_editor
 let code_editor_nodeid
+let code_editor_nodeid_field
 
 const mutationObserverSubscription = (dispatch, {selector}) => {
   const mutobs = new MutationObserver(obs => requestAnimationFrame(() => obs.forEach(mutrec => mutrec.addedNodes.forEach(added => {
@@ -353,8 +355,9 @@ const runapp = (init, _lib) => {
     node: document.getElementById(init.html_id),
     subscriptions: s => [
       document.getElementById(`${init.html_id}-result`) && [mutationObserverSubscription, {selector: `#${init.html_id}-result, #${init.html_id}-background-result`}],
+      document.getElementById(`${init.html_id}-info-display`) && [mutationObserverSubscription, {selector: `#${init.html_id}-info-display`}],
       [d3subscription, {action: SimulationToHyperapp, update: UpdateSimulation, htmlid: init.html_id}], 
-      [displaySubscription, {selected: s.selected, selectedVarNode: s.selectedVarNode, graph: s.displayGraph.id ?? s.editingGraph.id, info_display_dispatch: s.info_display_dispatch, code_editor: s.code_editor, code_editor_nodeid: s.code_editor_nodeid, codeEditorExtensions: s.codeEditorExtensions, cachedMetadata: s.cachedMetadata}],
+      [displaySubscription, {selected: s.selected, selectedVarNode: s.selectedVarNode, graph: s.displayGraph.id ?? s.editingGraph.id, info_display_dispatch: s.info_display_dispatch, code_editor: s.code_editor, code_editor_nodeid: s.code_editor_nodeid, code_editor_nodeid_field: s.code_editor_nodeid_field, codeEditorExtensions: s.codeEditorExtensions, cachedMetadata: s.cachedMetadata}],
       [graph_subscription, {editingGraphId: s.editingGraphId, norun: s.norun}],
       [select_node_subscription, {}],
       result_display_dispatch && result_background_display_dispatch && [result_subscription, {editingGraphId: s.editingGraphId, displayGraphId: s.displayGraphId, norun: s.norun}],
@@ -569,12 +572,7 @@ const editor = async function(html_id, editingGraphId, lib, norun) {
     ? ((helloWorld as Graph).edges_in = Object.values(helloWorld.edges).reduce((acc: Record<string, Record<string, Edge>>, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {}), await hlibLib.data.no.runtime.add_ref(helloWorld), helloWorld)
     : (await hlibLib.data.no.runtime.get_ref(editingGraphId)
       ?? (EXAMPLES.includes(editingGraphId) 
-        ? await fetch(`json/${editingGraphId.replaceAll("_", "-")}.json`)
-          .then(res => res.json())
-          .then((g: Graph | Array<Graph> | {graph: Array<Graph>, state: Record<string, unknown>}) => {
-            return nolib.no.runtime.add_ref(g["graphs"] ? g["graphs"] : g)
-          })
-          .then(() => nolib.no.runtime.get_ref(editingGraphId))
+        ? await graphFromExample(editingGraphId)
         : helloWorld))
 
   const init: HyperappState = { 

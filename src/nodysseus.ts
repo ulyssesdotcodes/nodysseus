@@ -763,20 +763,17 @@ const runtimefn = () => {
 
     if (!compareObjects(args, prevargs, true)) {
       Object.assign(prevargs, args)
-      wrapPromise(get_parentest(graphid))
+      return wrapPromise(get_parentest(graphid))
         .then(parent => get_graph(parent ?? graphid))
         .then(updatedgraph => {
           if(updatedgraph && !ispromise(updatedgraph) && (!updatepublish[updatedgraph.id] || updatepublish[updatedgraph.id] + 16 < performance.now())) {
-            updatepublish[updatedgraph.id] = performance.now()
-            setTimeout(() => {
-              updatepublish[updatedgraph.id] = false
-              // TODO: fix the use of / here
-              let node_id = graphid.split(updatedgraph.id)[1].substring(1)
-              node_id = node_id.indexOf("/") > 0 ? node_id.substring(0, node_id.indexOf("/")) : node_id
+            // TODO: fix the use of / here
+            let node_id = graphid.split(updatedgraph.id)[1].substring(1)
+            node_id = node_id.indexOf("/") > 0 ? node_id.substring(0, node_id.indexOf("/")) : node_id
 
-              publish("graphupdate", {graph: updatedgraph, dirtyNodes: node_id && Object.keys(descendantGraph(node_id, updatedgraph, node => node))}, lib)
-            }, 16)
+            publish("graphupdate", {graph: updatedgraph, dirtyNodes: node_id && Object.keys(descendantGraph(node_id, updatedgraph, node => node))}, lib)
           }
+          return args;
         }).value
     }
 

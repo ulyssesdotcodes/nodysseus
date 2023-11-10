@@ -124,6 +124,6 @@ export const init_code_editor = (dispatch, {html_id}) => {
       })
     ], parent: document.getElementById(`${html_id}-code-editor`)})
 
-    dispatch(s => ({...s, code_editor, code_editor_nodeid, codeEditorExtensions}))
+    dispatch(s => ({...s, code_editor, code_editor_nodeid, codeEditorExtensions, code_editor_nodeid_field}))
   })
 }

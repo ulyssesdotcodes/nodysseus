@@ -29,8 +29,15 @@ export type Graph = SavedGraph & {
   edges_in?: Record<string, Record<string, Edge>>,
 }
 
+export type ExportedGraph = {
+  graphs: Array<Graph>,
+  state: Record<string, unknown>
+}
+
+
 export const isGraph = (graph: any): graph is Graph => graph && Object.hasOwn(graph, "nodes")
 export const isEdgesInGraph = (graph: Graph | SavedGraph): graph is Graph => Object.hasOwn(graph, "edges_in")
+export const isExportedGraph = (g: ExportedGraph | unknown): g is ExportedGraph => g && (g as ExportedGraph).graphs.length > 0;
 
 export type EdgesIn = Record<string, Record<string, Edge>>;
 
