@@ -16,7 +16,7 @@
 import { ConstRunnable, Edge, Graph, Lib, NodysseusNode, NodysseusStore, NonErrorResult, RefNode, Result, Runnable, isGraph, isNodeRef, isNodeValue, isValue } from "../types.js";
 import { compare, initStore, node_extern, node_value, nolib, nolibLib, run_extern } from "../nodysseus.js";
 import { v4 as uuid } from "uuid";
-import { NodysseusError, appendGraphId, compareObjects, ispromise, mergeLib, newEnv, parseArg, wrapPromise, wrapPromiseAll } from "../util.js";
+import { NodysseusError, appendGraphId, compareObjects, ispromise, mergeLib, newEnv, newLib, parseArg, wrapPromise, wrapPromiseAll } from "../util.js";
 import get from "just-safe-get";
 import generic from "../generic.js";
 
@@ -703,7 +703,7 @@ export class NodysseusRuntime {
               (nodeArgs) => wrapPromise(node_extern(
                 refNode, 
                 new Map(Object.entries(nodeArgs).map(e => [e[0], nolib.no.of(e[1])]).concat(systemValues) as Array<[string, Result]>), 
-                newEnv(new Map()), nolibLib, {}
+                newEnv(new Map()), newLib(this.lib), {}
               )).then(r => (r as NonErrorResult).value).value,
               undefined,
               nodeGraphId
