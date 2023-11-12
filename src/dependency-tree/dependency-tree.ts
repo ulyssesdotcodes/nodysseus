@@ -486,8 +486,11 @@ export class NodysseusRuntime {
   }
 
   private dereference<T, S extends Record<string, unknown>>(graph: Graph, node: RefNode, edgesIn: Edge[], graphId: string, nodeGraphId: string, closure: AnyNode<AnyNodeMap<S>>, calculateInputs: () => AnyNodeMap<S>, extraNodeGraphId: Output = "value", useExisting: boolean = true, refNode = node): AnyNode<T> | PromiseLike<AnyNode<T>> {
-    return wrapPromise(this.store.refs.get(refNode.ref) as Graph)
+    return wrapPromise(this.store.refs.get(refNode.ref) as Graph, e => handleError(e, nodeGraphId))
       .then((nodeRef): AnyNode<T> => {
+        if(nodeRef === undefined) {
+          throw new Error(`invalid node ref ${refNode.ref}`);
+        }
         if(refNode.ref === "@js.script") {
           let scriptFn;
           try{
