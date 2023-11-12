@@ -636,7 +636,6 @@ export class NodysseusRuntime {
               persistNode
             }, ({initialNode: initial, persistNode: persist}) =>  
              wrapPromise((persist && this.store.persist.get(nodeGraphId)) || initial).then(initial => {
-               console.log("initial state", nodeGraphId, initial, persist, this.store.persist.get(nodeGraphId))
               if(initial !== undefined) {
                 scope.get(nodeGraphId + "-refset").value.write(initial);
               }
