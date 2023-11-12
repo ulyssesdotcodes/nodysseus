@@ -2112,7 +2112,7 @@ const generic = {
         "pred_append": {
           "id": "pred_append",
           "ref": "@js.script",
-          "value": "console.log('pred inside', pred, arr, value); if(pred !== false && pred !== undefined && pred !== null){ arr.push(value); } return arr;"
+          "value": "if(pred !== false && pred !== undefined && pred !== null){ arr.push(value); } return arr;"
         },
         "pred_append_fn_args": {
           "id": "pred_append_fn_args",
@@ -2215,7 +2215,7 @@ const generic = {
         "lapeojg": {
           "id": "lapeojg",
           "ref": "@js.script",
-          "value": "return _lib.runtime.addRefsFromUrl(url).then(gs => _lib.runtime.change_graph((console.log('changing', graphid), graphid), _lib))",
+          "value": "return _lib.runtime.addRefsFromUrl(url).then(gs => _lib.runtime.change_graph(graphid, _lib))",
           "name": "out"
         },
         "graphid": {
@@ -5596,7 +5596,7 @@ const generic = {
         },
         "x8ik3x4": {
           "id": "x8ik3x4",
-          "value": "console.log('graphs 1', graphs); return graphs.map(ref => {const ret = {...ref}; delete ret['edges_in']; return ret;});",
+          "value": "return graphs.map(ref => {const ret = {...ref}; delete ret['edges_in']; return ret;});",
           "ref": "@js.script"
         },
         "8zvzwb5": {
@@ -5791,7 +5791,7 @@ const generic = {
         },
         "o7cn2a9": {
           "id": "o7cn2a9",
-          "value": "console.log('graphs', graphs); return Object.values(graphs.flat().reduce((acc, graph) => acc[graph.id] ? acc : {...acc, [graph.id]: graph}, {}));",
+          "value": "return Object.values(graphs.flat().reduce((acc, graph) => acc[graph.id] ? acc : {...acc, [graph.id]: graph}, {}));",
           "ref": "@js.script"
         }
       },
@@ -5827,7 +5827,7 @@ const generic = {
         },
         "46kgw03": {
           "id": "46kgw03",
-          "value": "\nconsole.log(_lib);\n\nreturn _lib.list_assets();",
+          "value": "\nreturn _lib.list_assets();",
           "ref": "@js.script"
         },
         "4nx9x10": {
@@ -6820,7 +6820,7 @@ const generic = {
         },
         "cy1tm8s": {
           "id": "cy1tm8s",
-          "value": "const iseq = saved?.value?.value?.read() === value;\n\nif(!iseq) {\n  saved.set({value});\n}\nconsole.log('ischanged', saved, value, !iseq); \nreturn !iseq;",
+          "value": "const iseq = saved?.value?.value?.read() === value;\n\nif(!iseq) {\n  saved.set({value});\n}\nreturn !iseq;",
           "ref": "@js.script"
         },
         "khdzxds": {
@@ -8085,7 +8085,7 @@ const generic = {
         },
         "hvkhebd": {
           "id": "hvkhebd",
-          "value": "const analyser = new AnalyserNode(audio.context, options);\nconsole.log(options);\naudio.source.connect(analyser)\nreturn {  ...audio,  analyser}",
+          "value": "const analyser = new AnalyserNode(audio.context, options);\naudio.source.connect(analyser)\nreturn {  ...audio,  analyser}",
           "ref": "@js.script"
         },
         "yi2ezh0": {
