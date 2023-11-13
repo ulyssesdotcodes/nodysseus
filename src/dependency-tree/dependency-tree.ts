@@ -494,7 +494,7 @@ export class NodysseusRuntime {
         if(refNode.ref === "@js.script") {
           let scriptFn;
           try{
-            scriptFn = new Function("_lib", "_node", "_node_args", ...edgesIn.map(e => e.as), refNode.value) as (...args: any[]) => any;
+            scriptFn = new Function("_lib", "_node", "_node_args", "wrapPromise", ...edgesIn.map(e => e.as), refNode.value) as (...args: any[]) => any;
           } catch(e) {
             handleError(e, nodeGraphId);
             scriptFn = () => {};
@@ -505,7 +505,7 @@ export class NodysseusRuntime {
               return {dataLabel: "script", codeEditor: {language: "javascript", editorText: node.value}};
             }
             try {
-              return scriptFn(this.lib, node, args, ...Object.values(args))
+              return scriptFn(this.lib, node, args, wrapPromise, ...Object.values(args))
             } catch(e) {
               handleError(e, nodeGraphId)
             }
