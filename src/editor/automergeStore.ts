@@ -150,7 +150,7 @@ export const automergeRefStore = async ({nodysseusidb, persist = false, graphCha
         structuredCloneMap.set(id, scd)
         // nolib.no.runtime.publish('graphchange', {graph: scd}, {...nolib, ...hlib}) 
         // nolib.no.runtime.change_graph(scd, hlibLib, changedNodes, true, "automergeStore") 
-        // graphChangeCallback && graphChangeCallback(scd, [])
+        graphChangeCallback && graphChangeCallback(scd, [])
         return scd
       }).value
   }
