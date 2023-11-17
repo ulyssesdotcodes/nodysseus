@@ -79,7 +79,7 @@ export type WatchNode<T = unknown> = {
   graphNode?: NodysseusNode;
 }
 
-export const isAnyNode = <T>(a: any): a is AnyNode<T> => a?.__kind === "watch";
+export const isWatchNode = <T>(a: any): a is AnyNode<T> => a?.__kind === "watch";
 
 export type AnyNode<T> = Node<NodeKind, T>;
 export type UnwrapNode<T> = T extends AnyNode<infer I> ? I : never;
@@ -125,7 +125,7 @@ const isBindNode = <T, S extends Record<string, unknown>>(a: AnyNode<T>): a is B
 const isNode = <T>(a: any): a is AnyNode<T> => (a?.__kind === "bind" || a?.__kind === "var" || a?.__kind === "const" || a?.__kind === "map");
 
 class Scope {
-  private nodes: Map<string, Node<NodeKind>> = new Map();
+  private nodes: Map<string, Node<NodeKind> | NodeOutputs<unknown, unknown, unknown>> = new Map();
   constructor(){}
   add(node: Node<NodeKind>) {
     this.nodes.set(node.id, node);
@@ -196,8 +196,17 @@ export const handleError = (e: Error, nodeGraphId: string) => {
 type NodeOutputs<T, D, M> = AnyNode<{
   value: AnyNode<T>,
   display: AnyNode<D>,
-  metadata: AnyNode<M>
-}>
+  metadata: AnyNode<M>,
+}> & {
+  graphId: string,
+  nodeId: string,
+};
+
+type NodeOutputsU = NodeOutputs<unknown, unknown, unknown>;
+
+const isNodeOutputs = (value: NodeOutputsU | AnyNode<unknown>): value is NodeOutputsU => 
+  isNode(value) && !!(value as NodeOutputsU).nodeId && !!(value as NodeOutputsU).graphId;
+
 
 export class NodysseusRuntime {
   private scope: Scope;
@@ -424,8 +433,13 @@ export class NodysseusRuntime {
     }, undefined, id, useExisting)
   }
 
-  private accessor<T, S extends Record<string, unknown>>(map: AnyNode<AnyNodeMap<S>>, key: string, id: string, useExisting: boolean): AnyNode<T>{
-    return this.mapNode({bound: this.bindNode({map: this.mapNode({map}, ({map}) => map, undefined, id + key + "-bindmap", useExisting)}, ({map}) => map[key], undefined, id + key + "-bind", useExisting)}, ({bound}) => this.runNode(bound), undefined, id + key + "-map", useExisting) as AnyNode<T>;
+  private accessor<T, S extends Record<string, unknown>>(map: AnyNode<AnyNodeMap<S>> | NodeOutputsU, key: string, id: string, useExisting: boolean, isNodeRun: boolean = false): AnyNode<T>{
+    return this.mapNode({bound: this.bindNode({map: this.mapNode({map}, ({map}) => map, undefined, id + key + "-bindmap", useExisting)}, ({map}) => map[key], undefined, id + key + "-bind", useExisting)}, ({bound}) => {
+      if(isNodeOutputs(map)) {
+        nolib.no.runtime.publish("noderun", {graphId: map.graphId, nodeId: map.nodeId}, nolibLib)
+      }
+      return this.runNode(bound)
+    }, undefined, id + key + "-map", useExisting) as AnyNode<T>;
   }
 
   private removeKey<T, S extends Record<string, unknown>>(map: AnyNode<AnyNodeMap<S>>, key: string, id: string): AnyNode<AnyNodeMap<S>> {
@@ -463,6 +477,13 @@ export class NodysseusRuntime {
   }
 
   private valueMap<T>(outputNode: NodeOutputs<T, unknown, unknown>, nodeGraphId, useExisting): AnyNode<T> {
+    // return this.mapNode({bound: this.bindNode({map: this.mapNode({map}, ({map}) => map, undefined, id + key + "-bindmap", useExisting)}, ({map}) => map[key], undefined, id + key + "-bind", useExisting)}, ({bound}) => {
+    //   if((map as NodeOutputs<unknown, unknown, unknown>).graphId) {
+    //     const nodeOutput = map as NodeOutputs<unknown, unknown, unknown>;
+    //     nolib.no.runtime.publish("noderun", {graph: nodeOutput.graphId, node_id: nodeOutput.nodeId}, nolibLib)
+    //   }
+    //   return this.runNode(bound)
+    // }, undefined, id + key + "-map", useExisting) as AnyNode<T>;
     return this.accessor(outputNode, "value", nodeGraphId, useExisting);
     // return outputNode["value"];
     // this.mapNode({bound: this.bindNode({value: outputNode.value}, ({value}) => value, undefined, nodeGraphId + "-bound")}, ({bound}) => this.runNode(bound) as T, undefined, nodeGraphId);
@@ -769,7 +790,7 @@ export class NodysseusRuntime {
   private fromNodeInternal<T, D, M, S extends Record<string, unknown>>(graph: Graph, nodeId: string, graphId: string, closure?: AnyNode<AnyNodeMap<S>>, useExisting: boolean = true): NodeOutputs<T, D, M> {
     const node = graph.nodes[nodeId];
     const nodeGraphId =  appendGraphId(graphId, nodeId)
-    if(useExisting && this.scope.has(nodeGraphId + "-boundNode")) return this.scope.get(nodeGraphId + "-boundNode");
+    if(useExisting && this.scope.has(nodeGraphId + "-boundNode")) return this.scope.get(nodeGraphId + "-boundNode") as NodeOutputs<T, D, M>;
     const staticGraphId = graph.id;
 
     const compareGraphNodes = (
@@ -803,7 +824,7 @@ export class NodysseusRuntime {
       }
     })
 
-    return this.mapNode({graphNodeNode}, ({graphNodeNode}) => {
+    const ret: NodeOutputs<T,D,M> = this.mapNode({graphNodeNode}, ({graphNodeNode}) => {
       // if(this.scope.has(nodeGraphId + "value")) {
       //   console.log("removing and recreating", closure)
       //   this.scope.removeAll(nodeGraphId);
@@ -824,9 +845,15 @@ export class NodysseusRuntime {
         ]).then(([display, metadata]) => ({
           value,
           display,
-          metadata
+          metadata,
         })).value).value
-    }, ({graphNodeNode: graphNodeA}, {graphNodeNode: graphNodeB}) => !compareGraphNodes(graphNodeA, graphNodeB), nodeGraphId + "-boundNode");
+    }, ({graphNodeNode: graphNodeA}, {graphNodeNode: graphNodeB}) => !compareGraphNodes(graphNodeA, graphNodeB), nodeGraphId + "-boundNode") as NodeOutputs<T, D, M>;
+
+
+    ret.graphId = staticGraphId;
+    ret.nodeId = nodeId;
+
+    return ret;
   } 
 
   private runNode<T>(innode: AnyNode<T> | Nothing, _output?: "display" | "value" | "metadata"): T | PromiseLike<T> | Nothing{

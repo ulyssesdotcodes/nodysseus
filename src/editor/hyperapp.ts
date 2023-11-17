@@ -11,7 +11,6 @@ import domTypes from "../html-dom-types.json"
 
 import { FunctorRunnable, isRunnable } from "src/types.js"
 import { ispromise, mergeLib, newLib, wrapPromise, wrapPromiseAll } from "src/util.js"
-import { isAnyNode } from "src/dependency-tree/dependency-tree.js"
 
 
 const JsxParser = acorn.Parser.extend(jsx())

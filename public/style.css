@@ -267,15 +267,26 @@ svg {
 
 #node-info-wrapper {
   position: absolute;
-  left: var(--nodex);
   top: 0;
   bottom: 0;
-  flex-grow: 1;
 
   display: flex;
-  flex-flow: column nowrap;
+  flex-flow: row nowrap;
   pointer-events: none;
+  width: 100%;
+}
+
+#node-info-inner-wrapper {
+  display: flex;
+  flex-flow: column nowrap;
   max-width: 400px;
+  width: fit-content;
+  flex-basis: fit-content;
+}
+
+#node-info-wrapper .spacer.inner {
+  flex-basis: var(--nodex);
+  flex-shrink: 1;
 }
 
 #node-info-wrapper .spacer {

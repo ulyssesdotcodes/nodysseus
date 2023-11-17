@@ -78,7 +78,9 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
   const description =  !hidden && node_ref?.description
   const isOut = node.id === graph_out
 
-  return ha.h("div", {id: "node-info-wrapper", class: {"initial-layout": initialLayout}}, [ha.h("div", {class: "spacer before"}, []), ha.h(
+  return ha.h("div", {id: "node-info-wrapper", class: {"initial-layout": initialLayout}}, [
+    ha.h("div", {class: "spacer inner"}, []), ha.h("div", {id: "node-info-inner-wrapper"}, [
+    ha.h("div", {class: "spacer before"}, []), ha.h(
     "div",
     { 
       class: {"node-info": true, hidden, editing, [isNodeRef(node) && node.ref.replace("@", "").replace(".", "-")]: isNodeRef(node) }, 
@@ -201,4 +203,5 @@ export const infoWindow = ({node, hidden, edges_in, link_out, editingGraph, edit
       ]),
     ]
   ), ha.h("div", {class: "spacer after"}, [])])
+    ])
 }

@@ -319,7 +319,7 @@ export const d3subscription = (dispatch: ha.Dispatch<HyperappState>, props) => {
 
       if(selectedNode) {
         nodySim.selectedOffset = {
-          x: -selectedNode.x,
+          x: -selectedNode.x - node_el_width,
           y: -selectedNode.y,
         }
       }

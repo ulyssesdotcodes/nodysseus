@@ -710,12 +710,13 @@ export const result_subscription = (dispatch, {editingGraphId, displayGraphId, n
   const animframes = {}
 
   const noderun_listener = (data) => {
-    if (data.graph.id === editingGraphId){
-      const node_id = data.node_id
-      const timeout = timeouts[node_id]
-      const nodeanimframe = animframes[node_id]
+    if (data.graphId === editingGraphId){
+      // console.log("noderun", data.graphId, data.nodeId)
+      const nodeId = data.nodeId
+      const timeout = timeouts[nodeId]
+      const nodeanimframe = animframes[nodeId]
       if(!timeout) {
-        const el = document.querySelector(`#node-editor-${data.node_id.replaceAll("/", "_")} .shape`)
+        const el = document.querySelector(`#node-editor-${nodeId.replaceAll("/", "_")} .shape`)
         el?.classList.add("flash")
       }
 
@@ -723,10 +724,10 @@ export const result_subscription = (dispatch, {editingGraphId, displayGraphId, n
         if(timeout) {
           clearTimeout(timeout.id)
         }
-        timeouts[node_id] = {
+        timeouts[nodeId] = {
           id: setTimeout(() => {
-            const el = document.querySelector(`#node-editor-${data.node_id.replaceAll("/", "_")} .shape`)
-            timeouts[node_id] = false
+            const el = document.querySelector(`#node-editor-${nodeId.replaceAll("/", "_")} .shape`)
+            timeouts[nodeId] = false
             el?.classList.remove("flash")
           }, 1000),
           timestamp: performance.now()
@@ -952,7 +953,11 @@ export const findViewBox = (nodes: Array<d3NodeNode>, links: Array<d3Link>, sele
     {min: {x: selected_pos ? (selected_pos.x - 96) : dimensions.x , y: selected_pos ? (selected_pos.y - 256) : dimensions.y}, max: {x: selected_pos ? (selected_pos.x + 96) : -dimensions.x, y: selected_pos ? (selected_pos.y + 128) : -dimensions.y}})
   const nodes_box_center = {x: (nodes_box.max.x + nodes_box.min.x) * 0.5, y: (nodes_box.max.y + nodes_box.min.y) * 0.5} 
   const nodes_box_dimensions = {x: Math.max(dimensions.x * 0.5, Math.min(dimensions.x, (nodes_box.max.x - nodes_box.min.x))), y: Math.max(dimensions.y * 0.5, Math.min(dimensions.y, (nodes_box.max.y - nodes_box.min.y)))}
-  const center = !selected_pos ? nodes_box_center : {x: (selected_pos.x + nodes_box_center.x * 3) * 0.25, y: (selected_pos.y + nodes_box_center.y * 3) * 0.25}
+  const center = !selected_pos ? nodes_box_center : {
+    x: (selected_pos.x + nodes_box_center.x * 3 + (nodes_box_center.x < selected_pos.x + node_el_width ? node_el_width * 2 : 0)) * 0.25, 
+    y: (selected_pos.y + nodes_box_center.y * 3 + Math.max(0, dimensions.y * 0.5 - node_el_width * 0)) * 0.25
+  }
+  console.log(selected_pos)
 
   return {nodes_box_dimensions, center}
 }
