@@ -58,6 +58,8 @@
     "fuse.js": "^6.6.2",
     "hyperapp": "^2.0.22",
     "idb": "^7.1.1",
+    "inferno": "^8.2.2",
+    "inferno-create-element": "^8.2.2",
     "just-extend": "^6.2.0",
     "just-safe-get": "^4.0.1",
     "just-safe-set": "^4.0.1",

@@ -3446,6 +3446,11 @@ const generic = {
           "from": "value",
           "to": "out"
         },
+        "lifecycle": {
+          "as": "lifecycle",
+          "from": "lifecycle",
+          "to": "out"
+        },
         "fill_children": {
           "as": "array",
           "from": "fill_children",
@@ -3584,12 +3589,17 @@ const generic = {
         "out": {
           "id": "out",
           "ref": "@js.script",
-          "value": "if(!(typeof dom_type === 'string' && typeof children === 'object')){ console.log(dom_type, children, props, memo, value); throw new Error('invalid element');} return {dom_type, props, children: children, memo, value}"
+          "value": "if(!(typeof dom_type === 'string' && typeof children === 'object')){ console.log(dom_type, children, props, memo, value); throw new Error('invalid element');} return {dom_type, props, children: children, memo, value, lifecycle}"
         },
         "value": {
           "id": "value",
           "ref": "arg",
           "value": "value"
+        },
+        "lifecycle": {
+          "id": "lifecycle",
+          "ref": "arg",
+          "value": "lifecycle"
         },
         "memo": {
           "id": "memo",

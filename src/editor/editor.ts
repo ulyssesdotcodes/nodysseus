@@ -1,6 +1,8 @@
 import { resfetch, nolib, run, initStore, NodysseusError, nolibLib } from "../nodysseus.js"
  
 import * as ha from "hyperapp"
+import {render} from "inferno";
+import {createElement} from "inferno-create-element"
 import Fuse from "fuse.js"
 import { create_randid, wrapPromise, base_graph } from "../util.js"
 import { Edge, Graph, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode } from "../types.js"
@@ -13,7 +15,7 @@ import { d3subscription, getLinks, getNodes, insert_node_el, link_el, node_el, U
 import Autocomplete from "./autocomplete.js"
 import { automergeRefStore } from "./automergeStore.js"
 import helloWorld from "../initgraph.json"
-import {middleware, run_h} from "./hyperapp.js"
+import {infernoView, middleware, run_h} from "./hyperapp.js"
 
 
 customElements.define("autocomplete-list", Autocomplete)
@@ -82,24 +84,45 @@ const show_error = (e, t?) => ({
   ].filter(c => c)))
 })
 
-const result_display = html_id => ha.app({
-  init: {el: {dom_type: "div", props: {}, children: []}},
-  node: document.getElementById(html_id + "-result"),
-  dispatch: middleware,
-  view: s => {
-    try{
-      return run_h({dom_type: "div", props: {id: `${html_id}-result`}, children: [s.el]})
-    } catch(e) {
-      console.error(e);
-      try{
-        return run_h({dom_type: "div", props: {id: `${html_id}-result`}, children: [show_error(e, JSON.stringify(s.el))]})
-      } catch(e) {
-        return run_h({dom_type: "div", props: {id: `${html_id}-result`}, children: [{dom_type: "text_value", text: "Could not show error"}]})
-      }
+const InfernoView = ({dom_type, props, children, text}: {dom_type: string, props: {}, children: Array<any>, text?: string}) => 
+  dom_type === "text_value"
+  ? createElement("span", null, text)
+  : createElement(dom_type, (console.log("props", props, children), props), children?.map(c => c.el ?? c).filter(c => !!c).map(c => createElement(InfernoView, c.lifecycle ? {...c, ...c.lifecycle} : c)) ?? [])
+
+
+let infernoState: {el: {dom_type: string, props: {}, children: Array<any>, text?: string, lifecycle?: Record<string, Function>}} = {el: {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: "loading..."}]}};
+const result_display = html_id => {
+  const el = document.getElementById(html_id + "-result");
+  return (evt, payload) => {
+    console.log("got result evt", evt, payload)
+    try {
+      infernoState = typeof evt === "function" ? evt(infernoState, payload) : evt;
+      const view = createElement(InfernoView, infernoState.el.lifecycle ? {...infernoState.el.lifecycle, ...infernoState.el} : infernoState.el)
+      // const view = createElement(Hello, {onComponentDidMount: (node) => console.log("got node", node)})
+      render(view, el);
+    } catch (e) {
+      console.error("Error rendering result view", e)
     }
   }
-})
-
+}
+// ha.app({
+//   init: {el: {dom_type: "div", props: {}, children: []}},
+//   node: document.getElementById(html_id + "-result"),
+//   dispatch: middleware,
+//   view: s => {
+//     try{
+//       return run_h({dom_type: "div", props: {id: `${html_id}-result`}, children: [s.el]})
+//     } catch(e) {
+//       console.error(e);
+//       try{
+//         return run_h({dom_type: "div", props: {id: `${html_id}-result`}, children: [show_error(e, JSON.stringify(s.el))]})
+//       } catch(e) {
+//         return run_h({dom_type: "div", props: {id: `${html_id}-result`}, children: [{dom_type: "text_value", text: "Could not show error"}]})
+//       }
+//     }
+//   }
+// })
+//
 
 const custom_editor_display = html_id => ha.app({
   init: {el: {dom_type: "div", props: {}, children: []}},
