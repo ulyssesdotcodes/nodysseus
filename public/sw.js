@@ -2,7 +2,8 @@ const assetCacheName = 'assets-v0.0.5';
 
 const assets = [
   "./index.html",
-  "https://cdn.jsdelivr.net/npm/material-icons@1.13.3/iconfont/material-icons.min.css"
+  "https://cdn.jsdelivr.net/npm/material-icons@1.13.3/iconfont/material-icons.min.css",
+  "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,200,0,0"
 ]
 
 self.addEventListener('install', e => {
