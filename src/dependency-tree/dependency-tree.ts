@@ -326,7 +326,7 @@ export class NodysseusRuntime {
     }
 
     if(this.watches.has(id) && !this.rerun.has(id) && isMapNode(node) && node.isDirty.read() && !this.running.has(id))  {
-      this.rerun.set(id, requestIdleCallback(runIfClean))
+      new Promise(() => runIfClean())
     }
   }
 
@@ -611,7 +611,7 @@ export class NodysseusRuntime {
             const parameters = parametersEdge && this.valueMap(this.fromNodeInternal(graph, parametersEdge.from, graphId, closure, useExisting), nodeGraphId + "-parametersvalmap", useExisting);
 
             const fnNode = this.valueMap(this.fromNodeInternal(graph, edgesIn.find(e => e.as === "fn").from, graphId, chainedClosure, useExisting), nodeGraphId + "-fnnodevalmap", useExisting)
-            return this.mapNode({ parameters, fnNode: this.bindNode({}, () => fnNode, undefined, nodeGraphId + "-fnnodebind")}, ({parameters, fnNode}) => ((args) => {
+            return this.mapNode({ parameters}, ({parameters}) => ((args) => {
               if(parameters) {
                 const keys = new Set(Object.keys(parameters));
                 (this.scope.get(fnArgs.id) as typeof fnArgs).set(Object.fromEntries(Object.entries(args).filter(e => keys.has(e[0]))));
@@ -739,6 +739,8 @@ export class NodysseusRuntime {
           } else if (refNode.value === "extern.nodeDisplay") {
             return wrapPromise(this.fromNodeInternal(graph, node.value, graphId, closure, true), e => handleError(e, nodeGraphId))
               .then(targetNode => this.accessor(targetNode, "display", nodeGraphId + "-accessnodedisplay", useExisting)).value as AnyNode<T>;
+          } else if (refNode.value === "extern.workerRunnable") {
+            return this.constNode({graph: graph.id, fn: edgesIn.find(e => e.as === "graph").from}, nodeGraphId, useExisting)
           } else {
             const inputs = calculateInputs()
             const systemValues: Array<[string, Result]> = ([

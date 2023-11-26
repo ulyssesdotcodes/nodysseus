@@ -1,7 +1,8 @@
-import { nolib, NodysseusError, initStore, run } from "./nodysseus"
+import { nolib, NodysseusError, initStore, run, nolibLib } from "./nodysseus"
 import {sharedWorkerRefStore, webClientStore} from "./editor/store"
 import {isNodysseusError} from "./editor/util"
 import { wrapPromise } from "./util"
+import { NodysseusRuntime,  isNothing } from "./dependency-tree/dependency-tree.js"
 
 
 function posterror(error, graph){
@@ -15,6 +16,8 @@ function posterror(error, graph){
 let initQueue = []
 
 const runningGraphs = new Map()
+
+let runtime;
 
 const processMessage = e => {
   try{
@@ -35,20 +38,25 @@ const processMessage = e => {
     //     }
     //
     // });
+    runtime.fromNode(graph, e.data.fn).then(nodeNode => runtime.runNode(nodeNode)).then(
+      runNode =>  {
 
-    nolib.no.runtime.addListener("graphupdate", "worker-graphupdate", ({graph}) => {
-      if(runningGraphs.has(graph.id)) {
-        run(runningGraphs.get(graph.id), undefined, {profile: false && performance.now() > 4000})
+        const run = async (_output) => {
+          for await(const value of runtime.createWatch(runNode[_output], _output)) {
+            const val = await value(e.data.env.data)
+            console.log("worker output", val);
+          }
+        }
+      console.log("run node", runNode)
+
+      wrapPromise(runtime.run(runNode.value))
+        .then(async value => {
+          
+          console.log("first worker value", await value(e.data.env.data));
+          run("value");
+        })
       }
-    })
-
-      
-    wrapPromise(typeof e.data.graph === "string" 
-      ? nolib.no.runtime.get_ref(e.data.graph)
-      : e.data.graph).then(graph => {
-      runningGraphs.set(graph.id, {...e.data, graph})
-      run({...e.data, graph}, undefined, {profile: false && performance.now() > 4000})
-    })
+    ).catch(e => console.error(e))
   } catch (e) { console.error(e) }
 }
 
@@ -64,7 +72,10 @@ self.postMessage({type: "started"})
 
 const createStore = (port) => 
   webClientStore(() => sharedWorkerRefStore(port))
-    .then(initStore)
+    .then(store => {
+      initStore(store);
+      runtime = new NodysseusRuntime(store, nolibLib);
+    })
     .then(() => {
       while(initQueue.length > 0){
         processMessage(initQueue.shift())

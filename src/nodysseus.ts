@@ -1299,6 +1299,9 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       args: ["fn: default", "parameters", "_lib", "_runoptions", "output", "includeFullGraph"],
       fn: createFunctorRunnable
     },
+    workerRunnable: {
+      args: ["graph"]
+    },
     graphRunnable: {
       rawArgs: true,
       args: ["graph", "parameters", "_lib", "_runoptions", "output", "graphid", "env", "out", "__graphid"],

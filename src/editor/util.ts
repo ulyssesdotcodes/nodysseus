@@ -583,7 +583,6 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = async (dispatch, {
   // console.log("before run")
   const runtime = hlib.runtime();
 
-
   const runNode = await runtime.runNode(await runtime.fromNode(graph, graph.out ?? "out"))
 
   const run = async (_output) => {
@@ -1207,12 +1206,16 @@ export const hlibLib = mergeLib(nolibLib, newLib({
   },
   d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
   worker: undefined,
-  workerPostMessage: (runnable: FunctorRunnable, args: Map<string, any>, transferrableObjects?: Array<any>) => {
+  workerPostMessage: {
+    args: ["runnable", "args", "transferrableObjects"],
+    fn: (runnable: FunctorRunnable, args: Map<string, any>, transferrableObjects?: Array<any>) => {
+    console.log("worker post message", {runnable, args, transferrableObjects})
     wrapPromise(hlib.worker()).then(worker => worker.postMessage({
-      graph: getRunnableGraphId(runnable, hlibLib), 
+      graph: runnable.graph, 
       fn: runnable.fn, 
       env: {data: args}
     }, transferrableObjects))
+    }
   },
   domTypes,
   extern: {
