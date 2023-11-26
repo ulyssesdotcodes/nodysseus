@@ -87,14 +87,13 @@ const show_error = (e, t?) => ({
 const InfernoView = ({dom_type, props, children, text}: {dom_type: string, props: {}, children: Array<any>, text?: string}) => 
   dom_type === "text_value"
   ? createElement("span", null, text)
-  : createElement(dom_type, (console.log("props", props, children), props), children?.map(c => c.el ?? c).filter(c => !!c).map(c => createElement(InfernoView, c.lifecycle ? {...c, ...c.lifecycle} : c)) ?? [])
+  : createElement(dom_type, Object.fromEntries(Object.entries(props).map(e => typeof e[1] === "function" ? [e[0], (event) => e[1]({event})] : e)), children?.map(c => c.el ?? c).filter(c => !!c).map(c => createElement(InfernoView, c.lifecycle ? {...c, ...c.lifecycle} : c)) ?? [])
 
 
 let infernoState: {el: {dom_type: string, props: {}, children: Array<any>, text?: string, lifecycle?: Record<string, Function>}} = {el: {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: "loading..."}]}};
 const result_display = html_id => {
   const el = document.getElementById(html_id + "-result");
   return (evt, payload) => {
-    console.log("got result evt", evt, payload)
     try {
       infernoState = typeof evt === "function" ? evt(infernoState, payload) : evt;
       const view = createElement(InfernoView, infernoState.el.lifecycle ? {...infernoState.el.lifecycle, ...infernoState.el} : infernoState.el)
