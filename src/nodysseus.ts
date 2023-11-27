@@ -1300,7 +1300,8 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       fn: createFunctorRunnable
     },
     workerRunnable: {
-      args: ["graph"]
+      args: ["graph"],
+      fn: () => {}
     },
     graphRunnable: {
       rawArgs: true,

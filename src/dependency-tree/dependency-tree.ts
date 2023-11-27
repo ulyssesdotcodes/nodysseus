@@ -16,7 +16,7 @@
 import { ConstRunnable, Edge, Graph, Lib, NodysseusNode, NodysseusStore, NonErrorResult, RefNode, Result, Runnable, isGraph, isNodeRef, isNodeValue, isValue } from "../types.js";
 import { compare, initStore, node_extern, node_value, nolib, nolibLib, run_extern } from "../nodysseus.js";
 import { v4 as uuid } from "uuid";
-import { NodysseusError, appendGraphId, compareObjects, ispromise, mergeLib, newEnv, newLib, parseArg, wrapPromise, wrapPromiseAll } from "../util.js";
+import { NodysseusError, ancestor_graph, appendGraphId, compareObjects, ispromise, mergeLib, newEnv, newLib, parseArg, wrapPromise, wrapPromiseAll } from "../util.js";
 import get from "just-safe-get";
 import generic from "../generic.js";
 
@@ -336,19 +336,20 @@ export class NodysseusRuntime {
     }
   }
 
-  private dirty(id: string) {
+  private dirty(id: string, limitToNodes: undefined | Array<string>) {
     // logAfterLoad("dirty", id);
     const node = this.scope.get(id);
+    if(limitToNodes && !limitToNodes.find(n => id.startsWith(n))) return;
     if(isMapNode(node) || isBindNode(node)) {
       if(node.isDirty.read()) {
-        // return;
+        return;
       }
       node.isDirty.write(true);
     }
     let nid;
     const nodeOuts = this.outputs.get(id);
     for(nid of nodeOuts) {
-      this.dirty(nid);
+      this.dirty(nid, limitToNodes);
     }
     this.checkWatch(id);
   }
@@ -361,13 +362,15 @@ export class NodysseusRuntime {
     return node;
   }
 
-  varNode<T>(initial?: T, compare?: (a: T, b: T) => boolean, id?: string, useExisting: boolean = true, log = false): VarNode<T> {
+  varNode<T>(initial?: T, compare?: (a: T, b: T) => boolean, id?: string, useExisting: boolean = true, dirty = true): VarNode<T> {
     if(useExisting && id && this.scope.has(id)) return this.scope.get(id) as VarNode<T>;
     const node = varNode((newValue: T) => {
       const currentValue = node.value.read()
       if(isNothing(currentValue) || !node.compare(currentValue, newValue)) {
         node.value.write(newValue);
-        this.dirty(node.id);
+        if(dirty) {
+          this.dirty(node.id);
+        }
       }
     }, compare, id);
     this.scope.add(node);
@@ -604,14 +607,19 @@ export class NodysseusRuntime {
                   .map(e => [e.as, this.valueMap(this.fromNodeInternal(graph, e.from, graphId, closure, useExisting), nodeGraphId + `-switchvalmap${e.as}`, useExisting)], useExisting)
               ), nodeGraphId, useExisting) as AnyNode<T> : this.constNode(undefined, nodeGraphId, false);
           } else if(refNode.value === "extern.runnable") {
-            const fnArgs = this.varNode<Record<string, unknown>>({}, undefined, nodeGraphId + "-fnargs", useExisting)
+            const fnArgs = this.varNode<Record<string, unknown>>({}, undefined, nodeGraphId + "-fnargs", useExisting, false)
             const chainedClosure = this.mergeClosure(closure, fnArgs, nodeGraphId + "-runnablechained", useExisting);
 
             const parametersEdge = edgesIn.find(e => e.as === "parameters");
             const parameters = parametersEdge && this.valueMap(this.fromNodeInternal(graph, parametersEdge.from, graphId, closure, useExisting), nodeGraphId + "-parametersvalmap", useExisting);
 
-            const fnNode = this.valueMap(this.fromNodeInternal(graph, edgesIn.find(e => e.as === "fn").from, graphId, chainedClosure, useExisting), nodeGraphId + "-fnnodevalmap", useExisting)
-            return this.mapNode({ parameters}, ({parameters}) => ((args) => {
+            const fnEdgeId = edgesIn.find(e => e.as === "fn")?.from
+            const fnNode = fnEdgeId && this.valueMap(this.fromNodeInternal(graph, fnEdgeId, graphId, chainedClosure, useExisting), nodeGraphId + "-fnnodevalmap", useExisting)
+            // 
+            return this.mapNode({ parameters, fnNode: fnNode && this.bindNode({}, () => (console.log("bound fnnode", nodeGraphId), fnNode), undefined, nodeGraphId + "-fnNodebindnode", useExisting)}, ({parameters, fnNode}) => ((args) => {
+              if(!fnNode) return;
+              const ancestorGraph = ancestor_graph(fnEdgeId, graph);
+              this.dirty(fnArgs.id, Object.keys(ancestorGraph.nodes).map(nid => appendGraphId(graphId, nid)).concat([fnNode.id, chainedClosure.id, fnArgs.id]))
               if(parameters) {
                 const keys = new Set(Object.keys(parameters));
                 (this.scope.get(fnArgs.id) as typeof fnArgs).set(Object.fromEntries(Object.entries(args).filter(e => keys.has(e[0]))));
@@ -740,7 +748,7 @@ export class NodysseusRuntime {
             return wrapPromise(this.fromNodeInternal(graph, node.value, graphId, closure, true), e => handleError(e, nodeGraphId))
               .then(targetNode => this.accessor(targetNode, "display", nodeGraphId + "-accessnodedisplay", useExisting)).value as AnyNode<T>;
           } else if (refNode.value === "extern.workerRunnable") {
-            return this.constNode({graph: graph.id, fn: edgesIn.find(e => e.as === "graph").from}, nodeGraphId, useExisting)
+            return this.constNode({graph: graph.id, fn: edgesIn.find(e => e.as === "graph").from}, nodeGraphId, useExisting) as AnyNode<T>
           } else {
             const inputs = calculateInputs()
             const systemValues: Array<[string, Result]> = ([
