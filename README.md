@@ -19,15 +19,8 @@ These rules are derived from a mixture of functional programming paradigms, desi
 ## Examples
 New nodes introduced in the example are included in parentheses.
 
-### Debugging and viewing data
-1. [Logging and viewing data (`input_value`, `log`)](https://nodysseus.ulysses.codes/#example_1_1) ([tutorial](https://gitlab.com/ulysses.codes/nodysseus/-/blob/main/docs/examples/1_1_viewing_data.md))
+[Three.js](https://nodysseus.ulysses.codes/#threejs_example) ([tutorial](https://gitlab.com/ulysses.codes/nodysseus/-/blob/main/docs/examples/1_1_viewing_data.md))
 
-### HTML
-1. [Text](https://nodysseus.ulysses.codes/#example_1_2_1) ([tutorial](https://gitlab.com/ulysses.codes/nodysseus/-/blob/main/docs/examples/1_2_1_html_text.md)) - `html_element`, `html_text`
-2. [Children](https://nodysseus.ulysses.codes/#example_1_2_2) ([tutorial](https://gitlab.com/ulysses.codes/nodysseus/-/blob/main/docs/examples/1_2_2_html_children.md)) - `array`, `dom_type`
-3. [CSS](https://nodysseus.ulysses.codes/#example_1_2_3) ([tutorial](https://gitlab.com/ulysses.codes/nodysseus/-/blob/main/docs/examples/1_2_3_css.md)) - `css_styles`, `props`
-4. [Using http requests](https://nodysseus.ulysses.codes/#example_1_2_4) ([tutorial](https://gitlab.com/ulysses.codes/nodysseus/-/blob/main/docs/examples/1_2_4_fetch.md)) - `fetch`, `call`, `cache`, Promise
-4. [Input response ](https://nodysseus.ulysses.codes/#example_1_2_5) ([tutorial](https://gitlab.com/ulysses.codes/nodysseus/-/blob/main/docs/examples/1_2_5_input.md)) - `runnable`, `event_subscriber`, `event_publisher`
 
 ## Reading a graph
 
