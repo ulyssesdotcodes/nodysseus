@@ -6,7 +6,7 @@ import {createElement} from "inferno-create-element"
 import Fuse from "fuse.js"
 import { create_randid, wrapPromise, base_graph } from "../util.js"
 import { Edge, Graph, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode } from "../types.js"
-import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, Paste, pzobj, refresh_graph, result_subscription, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect, displaySubscription, graphFromExample } from "./util.js"
+import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, Paste, pzobj, refresh_graph, result_subscription, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect, displaySubscription, graphFromExample, InfernoView } from "./util.js"
 import { info_display, infoWindow } from "./components/infoWindow.js"
 import { init_code_editor } from "./components/codeEditor.js"
 import { d3Node, d3NodeNode, HyperappState, Levels } from "./types.js"
@@ -15,7 +15,7 @@ import { d3subscription, getLinks, getNodes, insert_node_el, link_el, node_el, U
 import Autocomplete from "./autocomplete.js"
 import { automergeRefStore } from "./automergeStore.js"
 import helloWorld from "../initgraph.json"
-import {infernoView, middleware, run_h} from "./hyperapp.js"
+import { middleware, run_h} from "./hyperapp.js"
 
 
 customElements.define("autocomplete-list", Autocomplete)
@@ -84,14 +84,10 @@ const show_error = (e, t?) => ({
   ].filter(c => c)))
 })
 
-const InfernoView = ({dom_type, props, children, text}: {dom_type: string, props: {}, children: Array<any>, text?: string}) => 
-  dom_type === "text_value"
-  ? createElement("span", null, text)
-  : createElement(dom_type, Object.fromEntries(Object.entries(props).map(e => typeof e[1] === "function" ? [e[0], (event) => (e[1] as Function)({event})] : e)), children?.map(c => c.el ?? c).filter(c => !!c).map(c => createElement(InfernoView, c.lifecycle ? {...c, ...c.lifecycle} : c)) ?? [])
 
 
-let infernoState: {el: {dom_type: string, props: {}, children: Array<any>, text?: string, lifecycle?: Record<string, Function>}} = {el: {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: "loading..."}]}};
 const result_display = html_id => {
+  let infernoState: {el: {dom_type: string, props: {}, children: Array<any>, text?: string, lifecycle?: Record<string, Function>}} = {el: {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: "loading..."}]}};
   const el = document.getElementById(html_id + "-result");
   return (evt, payload) => {
     try {

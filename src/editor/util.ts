@@ -18,6 +18,7 @@ import { EditorView } from "@codemirror/view"
 import { StateEffect } from "@codemirror/state"
 import { foldAll, unfoldCode, toggleFold, foldCode, foldInside, foldable, foldEffect, foldState, codeFolding } from "@codemirror/language"
 import { NodysseusRuntime, VarNode, WatchNode, isNothing } from "src/dependency-tree/dependency-tree.js"
+import {createElement} from "inferno-create-element"
 
 function maybeEnable(state, other) {
   return state.field(foldState, false) ? other : other.concat(StateEffect.appendConfig.of(codeFolding()))
@@ -806,7 +807,7 @@ export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
 }) => {
   if(!selectedVarNode && info_display_dispatch) {
     const runtime = hlib.runtime();
-    selectedVarNode = runtime.varNode({graph, id: selected[0]}, undefined, "selectedVarNode");
+    selectedVarNode = runtime.varNode({graph, id: selected[0]}, undefined, "selectedVarNode", true, false);
 
     const haselectedbind = runtime.bindNode(
         {selectedVarNode}, 
@@ -888,7 +889,53 @@ export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
   }
 
   if(selectedVarNode) {
+    console.log("setting selected", selected[0])
     selectedVarNode.set({id: selected[0], graph})
+    wrapPromise(runtime.runGraphNode(graph, selected[0])).then((nodeOutputs: any) => {
+      wrapPromise(runtime.run(nodeOutputs.display)).then(display =>  {
+        wrapPromise(display).then((display: any) => 
+          info_display_dispatch({el: display?.dom_type ? display : display?.resultPanel?.dom_type ? display.resultPanel : {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: typeof display === "number" || typeof display === "string" ? display : ""}]}}))
+      });
+      wrapPromise(runtime.run(nodeOutputs.metadata)).then(metadata =>  {
+        wrapPromiseAll([
+          metadata,
+          runtime.store.refs.get(graph)
+        ]).then(([metadata, graph]) => {
+          cachedMetadata[graph + "/" + selected[0]] = metadata;
+          
+          requestAnimationFrame(() => {
+            const node = graph.nodes[selected[0]];
+            if(code_editor && isNodeRef(node) && metadata.codeEditor) {
+              // console.log(selectedMetadata)
+              const jsonlang = json()
+              requestAnimationFrame(() => {
+                if(metadata?.codeEditor?.language === "json") {
+                  customFoldAll(code_editor)
+                }
+              })
+              const newText = metadata?.codeEditor?.editorText ?? node.value
+              code_editor.dispatch({
+                changes: code_editor.state.field(code_editor_nodeid_field) !== node.id &&
+                  newText !== code_editor.state.doc.toString() && {
+                  from: 0, 
+                  to: code_editor.state.doc.length, 
+                  insert: newText
+                },
+                effects: [
+                  code_editor_nodeid.of(node.id), 
+                  codeEditorExtensions.reconfigure([
+                    metadata?.codeEditor?.language === "json" ? [jsonlang, linter(jsonParseLinter()), lintGutter()] : javascript(),
+                    metadata?.codeEditor?.onChange && 
+                        EditorView.updateListener.of(
+                          (viewUpdate) => viewUpdate.docChanged && wrapPromise(nolib.no.runtime.run(metadata.codeEditor?.onChange, new Map([["editorText", (console.log(viewUpdate.state.doc.toString()), viewUpdate.state.doc.toString())]]))))
+                  ].filter(e => e).flat()),
+                ].filter(e => e)
+              })
+            }
+          })
+        })
+      });
+    });
   }
 
   return () => {};
@@ -1169,6 +1216,11 @@ export const graphEdgesIn = (graph: Graph, node: string) =>
       ? Object.values(graph.edges_in[node])
       : []
     : Object.values(graph.edges).filter(e => e.to === node)
+
+export const InfernoView = ({dom_type, props, children, text}: {dom_type: string, props: {}, children: Array<any>, text?: string}) => 
+  dom_type === "text_value"
+  ? createElement("span", null, text)
+  : createElement(dom_type, Object.fromEntries(Object.entries(props).map(e => typeof e[1] === "function" ? [e[0], (event) => (e[1] as Function)({event})] : e)), children?.map(c => c.el ?? c).filter(c => !!c).map(c => createElement(InfernoView, c.lifecycle ? {...c, ...c.lifecycle} : c)) ?? [])
 
 let runtime: NodysseusRuntime;
 

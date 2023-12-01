@@ -211,7 +211,7 @@ const isNodeOutputs = (value: NodeOutputsU | AnyNode<unknown>): value is NodeOut
 
 
 export class NodysseusRuntime {
-  private scope: Scope;
+  public scope: Scope;
   private _outputReturns: Map<string, string> = new Map();
   private watches: Map<string, Array<(a: unknown) => void>> = new Map();
   private outputs: Map<string, Set<string>> = new Map();
@@ -336,7 +336,7 @@ export class NodysseusRuntime {
     }
   }
 
-  private dirty(id: string, limitToNodes: undefined | Array<string>) {
+  private dirty(id: string, limitToNodes?: Array<string>) {
     // logAfterLoad("dirty", id);
     const node = this.scope.get(id);
     if(limitToNodes && !limitToNodes.find(n => id.startsWith(n))) return;
@@ -1053,8 +1053,9 @@ export class NodysseusRuntime {
     return result;
   }
 
-  public runGraphNode<T>(graph: Graph, node: string): T | Promise<T> {
-    const current = this.scope.get(`${appendGraphId(graph.id, node)}-boundNode`) as AnyNode<T>;
+  public runGraphNode<T>(graph: Graph | string, node: string): T | Promise<T> {
+    const current = this.scope.get(`${appendGraphId(typeof graph === "string" ? graph : graph.id, node)}-boundNode`) as AnyNode<T>;
+    console.log("runGraphNode current", current)
     if(current) return this.runNode<T>(current) as T;
     return wrapPromise(this.fromNode(graph, node)).then(nodeNode => this.runNode(nodeNode)).value as Promise<T>;
   }

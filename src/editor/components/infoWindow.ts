@@ -5,17 +5,35 @@ import { isNonNullChain } from "typescript"
 import generic from "../../generic.js"
 import {NodysseusError, nolib} from "../../nodysseus.js"
 import { d3Link, d3Node, d3NodeNode, HyperappState, Vector2 } from "../types.js"
-import { ChangeEditingGraphId, Copy, CreateNode, CreateRef, DeleteNode, ExpandContract, hlib, node_args, Paste, SaveGraph, SelectNode, UpdateEdge, UpdateNode, UpdateNodeEffect } from "../util.js"
+import { ChangeEditingGraphId, Copy, CreateNode, CreateRef, DeleteNode, ExpandContract, hlib, InfernoView, node_args, Paste, SaveGraph, SelectNode, UpdateEdge, UpdateNode, UpdateNodeEffect } from "../util.js"
 import { middleware, run_h } from "../hyperapp.js"
+import {render} from "inferno";
+import {createElement} from "inferno-create-element"
 
-export const info_display = html_id => ha.app({
-  init: {el: {dom_type: "div", props: {}, children: []}},
-  node: document.getElementById(html_id + "-info-display"),
-  dispatch: middleware,
-  view: s => {
-    return run_h(s.el, ["@js.script"])
+// export const info_display = html_id => ha.app({
+//   init: {el: {dom_type: "div", props: {}, children: []}},
+//   node: document.getElementById(html_id + "-info-display"),
+//   dispatch: middleware,
+//   view: s => {
+//     return run_h(s.el, ["@js.script"])
+//   }
+// })
+
+export const info_display = html_id => {
+  let infernoState: {el: {dom_type: string, props: {}, children: Array<any>, text?: string, lifecycle?: Record<string, Function>}} = {el: {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: "loading..."}]}};
+  const el = document.getElementById(html_id + "-info-display");
+  return (evt, payload) => {
+    console.log("info display dispatch", evt, payload)
+    try {
+      infernoState = typeof evt === "function" ? evt(infernoState, payload) : evt;
+      const view = createElement(InfernoView, infernoState.el.lifecycle ? {...infernoState.el.lifecycle, ...infernoState.el} : infernoState.el)
+      // const view = createElement(Hello, {onComponentDidMount: (node) => console.log("got node", node)})
+      render(view, el);
+    } catch (e) {
+      console.error("Error rendering result view", e)
+    }
   }
-})
+}
 
 export const infoInput = ({label, property, value, onchange, oninput, onkeydown, options, inputs, disabled, icon}: {
   label: string,
