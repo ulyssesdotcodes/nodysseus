@@ -1221,7 +1221,6 @@ export const graphEdgesIn = (graph: Graph, node: string) =>
 
 export const HTMLView = ({stateSignal}) => createElement(HTMLComponent, stateSignal.value);
 export const HTMLComponent = ({dom_type, props, children, text}: {dom_type: string, props: {}, children: Array<any>, text?: string}) => {
-  console.log(dom_type, props, children, text)
   return dom_type === "text_value"
     ? createElement("span", null, text)
     : createElement(
@@ -1239,7 +1238,6 @@ export const embeddedHTMLView = htmlId => {
   return (evt, payload) => {
     try {
       displayState = typeof evt === "function" ? evt(displayState, payload) : evt;
-      console.log("new result displayState", displayState)
       stateSignal.value = displayState.el;
     } catch (e) {
       console.error("Error rendering result view", e)
