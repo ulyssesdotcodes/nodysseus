@@ -11,7 +11,6 @@ import domTypes from "../html-dom-types.json"
 
 import { FunctorRunnable, isRunnable } from "src/types.js"
 import { ispromise, mergeLib, newLib, wrapPromise, wrapPromiseAll } from "src/util.js"
-import { createElement } from "inferno-create-element"
 
 
 const JsxParser = acorn.Parser.extend(jsx())
@@ -37,13 +36,6 @@ export const run_h = ({dom_type, props, children, text}: {dom_type: string, prop
       Object.fromEntries(Object.entries(props).map(e => [e[0], typeof e[1] === "function" ? (state, payload) => ((e[1] as Function)({event: payload}), state) : e[1]])), 
       children?.map(c => c.el ?? c).filter(c => !!c && !exclude_tags.includes(c.dom_type)).map(c => run_h(c, exclude_tags)) ?? []) 
 }
-
-export const infernoView = ({dom_type, props, children, text}: {dom_type: string, props: {}, children: Array<any>, text?: string}) => 
-  dom_type === "text_value"
-  ? createElement("span", null, text)
-  : createElement(dom_type, (console.log("props", props), props), children?.map(c => c.el ?? c).filter(c => !!c).map(c => infernoView(c)) ?? [])
-
-
 
 export const middleware = dispatch => (ha_action, ha_payload) => {
   const is_action_array_payload = Array.isArray(ha_action) 

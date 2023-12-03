@@ -1,12 +1,14 @@
+import { render, createElement } from 'https://esm.sh/preact';
+import {signal} from 'https://esm.sh/@preact/signals';
+
+
 import { resfetch, nolib, run, initStore, NodysseusError, nolibLib } from "../nodysseus.js"
  
 import * as ha from "hyperapp"
-import {render} from "inferno";
-import {createElement} from "inferno-create-element"
 import Fuse from "fuse.js"
 import { create_randid, wrapPromise, base_graph } from "../util.js"
 import { Edge, Graph, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode } from "../types.js"
-import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, Paste, pzobj, refresh_graph, result_subscription, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect, displaySubscription, graphFromExample, InfernoView } from "./util.js"
+import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, Paste, pzobj, refresh_graph, result_subscription, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect, displaySubscription, graphFromExample, HTMLComponent, HTMLView, embeddedHTMLView } from "./util.js"
 import { info_display, infoWindow } from "./components/infoWindow.js"
 import { init_code_editor } from "./components/codeEditor.js"
 import { d3Node, d3NodeNode, HyperappState, Levels } from "./types.js"
@@ -16,6 +18,7 @@ import Autocomplete from "./autocomplete.js"
 import { automergeRefStore } from "./automergeStore.js"
 import helloWorld from "../initgraph.json"
 import { middleware, run_h} from "./hyperapp.js"
+import { embeddedHTMLView } from './util.js';
 
 
 customElements.define("autocomplete-list", Autocomplete)
@@ -29,7 +32,6 @@ const SimulationToHyperapp = (state, payload) => [{
 }, 
 [CustomDOMEvent, {html_id: state.html_id, event: "updategraph", detail: {graph: state.editingGraph}}]
 ]
-
 
 
 const Search = (state, {payload, nodes}) => {
@@ -85,21 +87,7 @@ const show_error = (e, t?) => ({
 })
 
 
-
-const result_display = html_id => {
-  let infernoState: {el: {dom_type: string, props: {}, children: Array<any>, text?: string, lifecycle?: Record<string, Function>}} = {el: {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: "loading..."}]}};
-  const el = document.getElementById(html_id + "-result");
-  return (evt, payload) => {
-    try {
-      infernoState = typeof evt === "function" ? evt(infernoState, payload) : evt;
-      const view = createElement(InfernoView, infernoState.el.lifecycle ? {...infernoState.el.lifecycle, ...infernoState.el} : infernoState.el)
-      // const view = createElement(Hello, {onComponentDidMount: (node) => console.log("got node", node)})
-      render(view, el);
-    } catch (e) {
-      console.error("Error rendering result view", e)
-    }
-  }
-}
+const result_display = html_id => embeddedHTMLView(html_id + "-result")
 // ha.app({
 //   init: {el: {dom_type: "div", props: {}, children: []}},
 //   node: document.getElementById(html_id + "-result"),

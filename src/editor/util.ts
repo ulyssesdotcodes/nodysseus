@@ -1,3 +1,6 @@
+import { render, createElement } from 'https://esm.sh/preact';
+import {signal} from 'https://esm.sh/@preact/signals';
+
 import * as ha from "hyperapp"
 import { initStore, nodysseus_get, nolib, run, NodysseusError, nolibLib } from "../nodysseus.js"
 import { Args, compareNodes, ConstRunnable, Edge, ExportedGraph, FullyTypedArg, FunctorRunnable, getRunnableGraphId, Graph, isArgs, isExportedGraph, isNodeGraph, isNodeRef, isRunnable, isTypedArg, NodeArg, NodeMetadata, NodysseusNode, RefNode, TypedArg } from "../types.js"
@@ -18,7 +21,6 @@ import { EditorView } from "@codemirror/view"
 import { StateEffect } from "@codemirror/state"
 import { foldAll, unfoldCode, toggleFold, foldCode, foldInside, foldable, foldEffect, foldState, codeFolding } from "@codemirror/language"
 import { NodysseusRuntime, VarNode, WatchNode, isNothing } from "src/dependency-tree/dependency-tree.js"
-import {createElement} from "inferno-create-element"
 
 function maybeEnable(state, other) {
   return state.field(foldState, false) ? other : other.concat(StateEffect.appendConfig.of(codeFolding()))
@@ -1217,10 +1219,33 @@ export const graphEdgesIn = (graph: Graph, node: string) =>
       : []
     : Object.values(graph.edges).filter(e => e.to === node)
 
-export const InfernoView = ({dom_type, props, children, text}: {dom_type: string, props: {}, children: Array<any>, text?: string}) => 
-  dom_type === "text_value"
-  ? createElement("span", null, text)
-  : createElement(dom_type, Object.fromEntries(Object.entries(props).map(e => typeof e[1] === "function" ? [e[0], (event) => (e[1] as Function)({event})] : e)), children?.map(c => c.el ?? c).filter(c => !!c).map(c => createElement(InfernoView, c.lifecycle ? {...c, ...c.lifecycle} : c)) ?? [])
+export const HTMLView = ({stateSignal}) => createElement(HTMLComponent, stateSignal.value);
+export const HTMLComponent = ({dom_type, props, children, text}: {dom_type: string, props: {}, children: Array<any>, text?: string}) => {
+  console.log(dom_type, props, children, text)
+  return dom_type === "text_value"
+    ? createElement("span", null, text)
+    : createElement(
+      dom_type, 
+      Object.fromEntries(Object.entries(props).map(e => typeof e[1] === "function" ? [e[0], (event) => (e[1] as Function)({event})] : e)), 
+      children?.map(c => c.el ?? c).filter(c => !!c).map(c => createElement(HTMLComponent, c)) ?? []
+    )
+}
+
+export const embeddedHTMLView = htmlId => {
+  let displayState: {el: {dom_type: string, props: {}, children: Array<any>, text?: string, lifecycle?: Record<string, Function>}} = {el: {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: "loading..."}]}};
+  let stateSignal = signal(displayState.el);
+  const el = document.getElementById(htmlId);
+  render(createElement(HTMLView, {stateSignal}), el)
+  return (evt, payload) => {
+    try {
+      displayState = typeof evt === "function" ? evt(displayState, payload) : evt;
+      console.log("new result displayState", displayState)
+      stateSignal.value = displayState.el;
+    } catch (e) {
+      console.error("Error rendering result view", e)
+    }
+  }
+}
 
 let runtime: NodysseusRuntime;
 
