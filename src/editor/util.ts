@@ -1232,7 +1232,7 @@ export const HTMLComponent = ({dom_type, props, children, text}: {dom_type: stri
 }
 
 export const embeddedHTMLView = htmlId => {
-  let displayState: {el: {dom_type: string, props: {}, children: Array<any>, text?: string, lifecycle?: Record<string, Function>}} = {el: {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: "loading..."}]}};
+  let displayState: {el: {dom_type: string, props: {}, children: Array<any>, text?: string, lifecycle?: Record<string, Function>}} = {el: {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: ""}]}};
   let stateSignal = signal(displayState.el);
   const el = document.getElementById(htmlId);
   render(createElement(HTMLView, {stateSignal}), el)
