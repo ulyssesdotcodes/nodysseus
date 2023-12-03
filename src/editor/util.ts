@@ -905,7 +905,7 @@ export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
           cachedMetadata[graph + "/" + selected[0]] = metadata;
 
           requestAnimationFrame(() => {
-            dispatch(s => [{...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: selected.id, cachedMetadata}]])
+            dispatch(s => [{...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: selected[0], cachedMetadata}]])
             const node = graph.nodes[selected[0]];
             if(code_editor && isNodeRef(node) && metadata.codeEditor) {
               // console.log(selectedMetadata)
