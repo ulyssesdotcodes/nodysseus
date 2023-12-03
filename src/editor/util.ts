@@ -187,7 +187,6 @@ export const update_info_display = ({fn, graph}, info_display_dispatch, code_edi
     info_display_dispatch(UpdateResultDisplay, {el: (graph.out ?? "out") !== fn && display?.dom_type ? display : ha.h("div", {})})
     requestAnimationFrame(() => {
       if(code_editor && isNodeRef(node) && selectedMetadata?.codeEditor) {
-        // console.log(selectedMetadata)
         const jsonlang = json()
         requestAnimationFrame(() => {
           if(selectedMetadata?.codeEditor?.language === "json") {
@@ -820,7 +819,7 @@ export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
     const hadisplaymap =       runtime.mapNode({
       bound: runtime.bindNode({
         bound: haselectedbind
-      }, ({bound}) => wrapPromise(runtime.runNode(bound)).then(b => (console.log("got bound", b), b).display).value, undefined, "hyperappdisplaybind")
+      }, ({bound}) => wrapPromise(runtime.runNode(bound)).then(b => b.display).value, undefined, "hyperappdisplaybind")
     }, ({bound}) => runtime.runNode(bound), undefined, "hyperappdisplaymap");
 
     runtime.addWatchFn(hadisplaymap, display => {
@@ -837,7 +836,7 @@ export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
       runtime.mapNode({
       bound: runtime.bindNode({
         bound: haselectedbind
-      }, ({bound}) => wrapPromise(runtime.runNode(bound)).then(b => (console.log("got bound", b), b).metadata).value, undefined, "hyperappmetadatabind")
+      }, ({bound}) => wrapPromise(runtime.runNode(bound)).then(b => b.metadata).value, undefined, "hyperappmetadatabind")
     }, ({bound}) => runtime.runNode(bound), undefined, "hyperappmetadatamap");
 
     runtime.addWatchFn(hametadatamap, metadata => {
@@ -874,7 +873,7 @@ export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
                     metadata?.codeEditor?.language === "json" ? [jsonlang, linter(jsonParseLinter()), lintGutter()] : javascript(),
                     metadata?.codeEditor?.onChange && 
                         EditorView.updateListener.of(
-                          (viewUpdate) => viewUpdate.docChanged && wrapPromise(nolib.no.runtime.run(metadata.codeEditor?.onChange, new Map([["editorText", (console.log(viewUpdate.state.doc.toString()), viewUpdate.state.doc.toString())]]))))
+                          (viewUpdate) => viewUpdate.docChanged && wrapPromise(nolib.no.runtime.run(metadata.codeEditor?.onChange, new Map([["editorText", viewUpdate.state.doc.toString()]]))))
                   ].filter(e => e).flat()),
                 ].filter(e => e)
               })
@@ -891,7 +890,6 @@ export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
   }
 
   if(selectedVarNode) {
-    console.log("setting selected", selected[0])
     selectedVarNode.set({id: selected[0], graph})
     wrapPromise(runtime.runGraphNode(graph, selected[0])).then((nodeOutputs: any) => {
       wrapPromise(runtime.run(nodeOutputs.display)).then(display =>  {
@@ -903,9 +901,11 @@ export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
           metadata,
           runtime.store.refs.get(graph)
         ]).then(([metadata, graph]) => {
-          cachedMetadata[graph + "/" + selected[0]] = metadata;
           
+          cachedMetadata[graph + "/" + selected[0]] = metadata;
+
           requestAnimationFrame(() => {
+            dispatch(s => [{...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: selected.id, cachedMetadata}]])
             const node = graph.nodes[selected[0]];
             if(code_editor && isNodeRef(node) && metadata.codeEditor) {
               // console.log(selectedMetadata)
