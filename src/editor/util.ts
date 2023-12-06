@@ -20,7 +20,7 @@ import {linter, lintGutter} from "@codemirror/lint"
 import { EditorView } from "@codemirror/view"
 import { StateEffect } from "@codemirror/state"
 import { foldAll, unfoldCode, toggleFold, foldCode, foldInside, foldable, foldEffect, foldState, codeFolding } from "@codemirror/language"
-import { NodysseusRuntime, VarNode, WatchNode, isNothing } from "src/dependency-tree/dependency-tree.js"
+import { NodysseusRuntime, VarNode, AnyNode, isNothing } from "src/dependency-tree/dependency-tree.js"
 
 function maybeEnable(state, other) {
   return state.field(foldState, false) ? other : other.concat(StateEffect.appendConfig.of(codeFolding()))
@@ -582,50 +582,55 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = async (dispatch, {
   if(norun ?? false) {
     return
   }
-  // console.log("before run")
-  const runtime = hlib.runtime();
 
-  const runNode = await runtime.runNode(await runtime.fromNode(graph, graph.out ?? "out"))
-
-  const run = async (_output) => {
-    for await(const display of runtime.createWatch(runNode[_output], _output)) {
-      // console.log("got", _output, display)
-      if(_output === "display") {
-        display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
-          el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
-        })
-        display && display.background && result_background_display_dispatch({
-          el: display?.background ? display.background : {dom_type: "div", props: {}, children: []},
-        })
-      }
-    }
-  }
-  
-  const update = () => {
-    // console.log("running graph", graph)
-    wrapPromise(runtime.run(runNode.display, "display"))
-      .then(display => {
-        // console.log("ran display", display)
-        run("display");
-        display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
-          el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
-        })
-        display && display.background && result_background_display_dispatch({
-          el: display?.background ? display.background : {dom_type: "div", props: {}, children: []},
-        })
-      })
+  selectedGraphOutputs(graph);
 
 
-    wrapPromise(runtime.run(runNode.value, "value"))
-      .then(value => {
-        run("value");
-        // console.log("val output", value)
-      })
-  }
-
-  if(runNode) {
-    requestAnimationFrame(update);
-  }
+  //
+  // // console.log("before run")
+  // const runtime = hlib.runtime();
+  //
+  // const runNode = await runtime.runNode(await runtime.fromNode(graph, graph.out ?? "out"))
+  //
+  // const run = async (_output) => {
+  //   for await(const display of runtime.createWatch(runNode[_output], _output)) {
+  //     // console.log("got", _output, display)
+  //     if(_output === "display") {
+  //       display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
+  //         el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
+  //       })
+  //       display && display.background && result_background_display_dispatch({
+  //         el: display?.background ? display.background : {dom_type: "div", props: {}, children: []},
+  //       })
+  //     }
+  //   }
+  // }
+  // 
+  // const update = () => {
+  //   // console.log("running graph", graph)
+  //   wrapPromise(runtime.run(runNode.display, "display"))
+  //     .then(display => {
+  //       // console.log("ran display", display)
+  //       run("display");
+  //       display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
+  //         el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
+  //       })
+  //       display && display.background && result_background_display_dispatch({
+  //         el: display?.background ? display.background : {dom_type: "div", props: {}, children: []},
+  //       })
+  //     })
+  //
+  //
+  //   wrapPromise(runtime.run(runNode.value, "value"))
+  //     .then(value => {
+  //       run("value");
+  //       // console.log("val output", value)
+  //     })
+  // }
+  //
+  // if(runNode) {
+  //   requestAnimationFrame(update);
+  // }
 
   // const result = hlib.run(graph, graph.out ?? "out", {_output: "value"}, undefined, {profile: false})
   // const result = hlib.run(graph, graph.out, {});
@@ -785,10 +790,89 @@ export const select_node_subscription = (dispatch, props) => {
   return () => nolib.no.runtime.removeListener("selectnode", "hyperapp")
 }
 
+export const setCodeEditorText = ({
+  codeEditor,
+  codeEditorNodeId,
+  codeEditorNodeIdField,
+  codeEditorExtensions,
+  metadata,
+  node
+}: {
+  codeEditor: EditorView, 
+  codeEditorNodeId: StateEffectType<string>,
+  codeEditorNodeIdField: StateField<string>,
+  codeEditorExtensions?: Compartment,
+  metadata: NodeMetadata, 
+  node: NodysseusNode
+}) => {
+  if(codeEditor && isNodeRef(node) && metadata.codeEditor) {
+    // console.log(selectedMetadata)
+    const jsonlang = json()
+    requestAnimationFrame(() => {
+      if(metadata?.codeEditor?.language === "json") {
+        customFoldAll(codeEditor)
+      }
+    })
+    const newText = metadata?.codeEditor?.editorText ?? node.value
+    codeEditor.dispatch({
+      changes: codeEditor.state.field(codeEditorNodeIdField) !== node.id &&
+        newText !== codeEditor.state.doc.toString() && {
+        from: 0, 
+        to: codeEditor.state.doc.length, 
+        insert: newText
+      },
+      effects: [
+        codeEditorNodeId.of(node.id), 
+        codeEditorExtensions.reconfigure([
+          metadata?.codeEditor?.language === "json" ? [jsonlang, linter(jsonParseLinter()), lintGutter()] : javascript(),
+          metadata?.codeEditor?.onChange && 
+              EditorView.updateListener.of(
+                (viewUpdate) => viewUpdate.docChanged && wrapPromise(nolib.no.runtime.run(metadata.codeEditor?.onChange, new Map([["editorText", viewUpdate.state.doc.toString()]]))))
+        ].filter(e => e).flat()),
+      ].filter(e => e)
+    })
+  }
+
+}
+
+export const watchNode = async <T>(node: AnyNode<T>, fn: (t: T) => void): Promise<void> => {
+  for await (const result of runtime.createWatch(node)){
+    fn(result);
+  }
+}
+
+export const selectedGraphOutputs = (graph: Graph, displayFn: (d: any) => void) => {
+  watchNodeOutputs(graph.id, graph.out ?? "out", "graphWatch", displayFn);
+}
+
+export const watchNodeOutputs = (graph: string, selected: string, watchId: string, displayFn: (d: any) => void, metadataFn?: (m: any) => void) => {
+  const nodeId = "selectedVarNode-" + watchId;
+  const runtime = hlib.runtime();
+  if(!runtime.scope.has(`selectedVarNode-${nodeId}`)) {
+    const selectedVarNode = runtime.varNode({graph, id: selected}, undefined, nodeId, true);
+    const selectedNode = runtime.runNodeNode(
+      runtime.bindNode(
+        {selectedVarNode}, 
+        ({selectedVarNode}) => 
+          wrapPromise(runtime.fromNode(selectedVarNode.graph, selectedVarNode.id))
+            .then(node => node).value, undefined, nodeId + "-bindGraphNode"), nodeId + "-mapBoundGraphNode");
+
+    if(displayFn){
+      watchNode(runtime.accessor(selectedNode, "display", nodeId + "-displayOutput", true), displayFn);
+    }
+
+    if(metadataFn) {
+      watchNode(runtime.accessor(selectedNode, "metadata", nodeId + "-metadataOutput", true), metadataFn);
+    }
+  } else {
+    runtime.varNode({graph, id: selected}, undefined, nodeId, true);
+  }
+}
+
 export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
   selected, 
   graph,
-  selectedVarNode,
+  // selectedVarNode,
   info_display_dispatch,
   code_editor,
   code_editor_nodeid,
@@ -798,7 +882,7 @@ export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
 }: {
   selected: Array<string>, 
   graph: string, 
-  selectedVarNode: VarNode<{graph: string, id: string}> | undefined,
+  // selectedVarNode: VarNode<{graph: string, id: string}> | undefined,
   info_display_dispatch: Function | undefined
   code_editor: any,
   code_editor_nodeid: StateEffectType<string>,
@@ -806,139 +890,117 @@ export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
   codeEditorExtensions,
   cachedMetadata: Record<string, NodeMetadata>
 }) => {
-  if(!selectedVarNode && info_display_dispatch) {
-    const runtime = hlib.runtime();
-    selectedVarNode = runtime.varNode({graph, id: selected[0]}, undefined, "selectedVarNode", true, false);
+  watchNodeOutputs(graph, selected[0], "nodeWatch", display =>
+    info_display_dispatch({el: display?.dom_type ? display : display?.resultPanel?.dom_type ? display.resultPanel : {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: typeof display === "number" || typeof display === "string" ? display : ""}]}})
+  , metadata => {
+    cachedMetadata[graph + "/" + selected[0]] = metadata;
+  });
+  // if(!selectedVarNode && info_display_dispatch) {
+  //   const runtime = hlib.runtime();
+  //   selectedVarNode = runtime.varNode({graph, id: selected[0]}, undefined, "selectedVarNode", true, false);
 
-    const haselectedbind = runtime.bindNode(
-        {selectedVarNode}, 
-        ({selectedVarNode}) => 
-          wrapPromise(runtime.fromNode(selectedVarNode.graph, selectedVarNode.id))
-            .then(node => node).value, undefined, "hyperappselectedbind");
+    // const haselectedbind = runtime.bindNode(
+        // {selectedVarNode}, 
+        // ({selectedVarNode}) => 
+        //   wrapPromise(runtime.fromNode(selectedVarNode.graph, selectedVarNode.id))
+        //     .then(node => node).value, undefined, "hyperappselectedbind");
 
-    const hadisplaymap =       runtime.mapNode({
-      bound: runtime.bindNode({
-        bound: haselectedbind
-      }, ({bound}) => wrapPromise(runtime.runNode(bound)).then(b => b.display).value, undefined, "hyperappdisplaybind")
-    }, ({bound}) => runtime.runNode(bound), undefined, "hyperappdisplaymap");
+    // const hadisplaymap =       runtime.mapNode({
+    //   bound: runtime.bindNode({
+    //     bound: haselectedbind
+    //   }, ({bound}) => wrapPromise(runtime.runNode(bound)).then(b => b.display).value, undefined, "hyperappdisplaybind")
+    // }, ({bound}) => runtime.runNode(bound), undefined, "hyperappdisplaymap");
 
-    runtime.addWatchFn(hadisplaymap, display => {
-      wrapPromise(display).then(display => 
-      info_display_dispatch({el: display?.dom_type ? display : display?.resultPanel?.dom_type ? display.resultPanel : {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: typeof display === "number" || typeof display === "string" ? display : ""}]}}));
-    });
-
-    dispatch(s => ({
-      ...s,
-      selectedVarNode
-    }));
-
-    const hametadatamap =       
-      runtime.mapNode({
-      bound: runtime.bindNode({
-        bound: haselectedbind
-      }, ({bound}) => wrapPromise(runtime.runNode(bound)).then(b => b.metadata).value, undefined, "hyperappmetadatabind")
-    }, ({bound}) => runtime.runNode(bound), undefined, "hyperappmetadatamap");
-
-    runtime.addWatchFn(hametadatamap, metadata => {
-      const selected = selectedVarNode.value.read();
-      if(!isNothing(selected)) {
-        wrapPromiseAll([
-          metadata,
-          runtime.store.refs.get(selected.graph)
-        ]).then(([metadata, graph]) => {
-          cachedMetadata[selected.graph + "/" + selected.id] = metadata;
-          
-          dispatch(s => [{...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: selected.id, cachedMetadata}]])
-          requestAnimationFrame(() => {
-            const node = graph.nodes[selected.id];
-            if(code_editor && isNodeRef(node) && metadata.codeEditor) {
-              // console.log(selectedMetadata)
-              const jsonlang = json()
-              requestAnimationFrame(() => {
-                if(metadata?.codeEditor?.language === "json") {
-                  customFoldAll(code_editor)
-                }
-              })
-              const newText = metadata?.codeEditor?.editorText ?? node.value
-              code_editor.dispatch({
-                changes: code_editor.state.field(code_editor_nodeid_field) !== node.id &&
-                  newText !== code_editor.state.doc.toString() && {
-                  from: 0, 
-                  to: code_editor.state.doc.length, 
-                  insert: newText
-                },
-                effects: [
-                  code_editor_nodeid.of(node.id), 
-                  codeEditorExtensions.reconfigure([
-                    metadata?.codeEditor?.language === "json" ? [jsonlang, linter(jsonParseLinter()), lintGutter()] : javascript(),
-                    metadata?.codeEditor?.onChange && 
-                        EditorView.updateListener.of(
-                          (viewUpdate) => viewUpdate.docChanged && wrapPromise(nolib.no.runtime.run(metadata.codeEditor?.onChange, new Map([["editorText", viewUpdate.state.doc.toString()]]))))
-                  ].filter(e => e).flat()),
-                ].filter(e => e)
-              })
-            }
-          })
-        })
-        }
-    });
+    // runtime.createWatch(hadisplaymap, display => {
+    //   wrapPromise(display).then(display => 
+    //   info_display_dispatch({el: display?.dom_type ? display : display?.resultPanel?.dom_type ? display.resultPanel : {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: typeof display === "number" || typeof display === "string" ? display : ""}]}}));
+    // });
+    //
+    // dispatch(s => ({
+    //   ...s,
+    //   selectedVarNode
+    // }));
+    //
+    // const hametadatamap =       
+    //   runtime.mapNode({
+    //   bound: runtime.bindNode({
+    //     bound: haselectedbind
+    //   }, ({bound}) => wrapPromise(runtime.runNode(bound)).then(b => b.metadata).value, undefined, "hyperappmetadatabind")
+    // }, ({bound}) => runtime.runNode(bound), undefined, "hyperappmetadatamap");
+    //
+    // runtime.addWatchFn(hametadatamap, metadata => {
+    //   const selected = selectedVarNode.value.read();
+    //   if(!isNothing(selected)) {
+    //     wrapPromiseAll([
+    //       metadata,
+    //       runtime.store.refs.get(selected.graph)
+    //     ]).then(([metadata, graph]) => {
+    //       cachedMetadata[selected.graph + "/" + selected.id] = metadata;
+    //       
+    //       dispatch(s => [{...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: selected.id, cachedMetadata}]])
+    //       requestAnimationFrame(() => {
+    //         const node = graph.nodes[selected.id];
+    //       })
+    //     })
+    //     }
+    // });
 
     // dispatch(s => ({
     //   ...s,
     //   selectedVarNode
     // }));
-  }
+  // }
 
-  if(selectedVarNode) {
-    selectedVarNode.set({id: selected[0], graph})
-    wrapPromise(runtime.runGraphNode(graph, selected[0])).then((nodeOutputs: any) => {
-      wrapPromise(runtime.run(nodeOutputs.display)).then(display =>  {
-        wrapPromise(display).then((display: any) => 
-          info_display_dispatch({el: display?.dom_type ? display : display?.resultPanel?.dom_type ? display.resultPanel : {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: typeof display === "number" || typeof display === "string" ? display : ""}]}}))
-      });
-      wrapPromise(runtime.run(nodeOutputs.metadata)).then(metadata =>  {
-        wrapPromiseAll([
-          metadata,
-          runtime.store.refs.get(graph)
-        ]).then(([metadata, graph]) => {
-          
-          cachedMetadata[graph + "/" + selected[0]] = metadata;
-
-          requestAnimationFrame(() => {
-            dispatch(s => [{...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: selected[0], cachedMetadata}]])
-            const node = graph.nodes[selected[0]];
-            if(code_editor && isNodeRef(node) && metadata.codeEditor) {
-              // console.log(selectedMetadata)
-              const jsonlang = json()
-              requestAnimationFrame(() => {
-                if(metadata?.codeEditor?.language === "json") {
-                  customFoldAll(code_editor)
-                }
-              })
-              const newText = metadata?.codeEditor?.editorText ?? node.value
-              code_editor.dispatch({
-                changes: code_editor.state.field(code_editor_nodeid_field) !== node.id &&
-                  newText !== code_editor.state.doc.toString() && {
-                  from: 0, 
-                  to: code_editor.state.doc.length, 
-                  insert: newText
-                },
-                effects: [
-                  code_editor_nodeid.of(node.id), 
-                  codeEditorExtensions.reconfigure([
-                    metadata?.codeEditor?.language === "json" ? [jsonlang, linter(jsonParseLinter()), lintGutter()] : javascript(),
-                    metadata?.codeEditor?.onChange && 
-                        EditorView.updateListener.of(
-                          (viewUpdate) => viewUpdate.docChanged && wrapPromise(nolib.no.runtime.run(metadata.codeEditor?.onChange, new Map([["editorText", (console.log(viewUpdate.state.doc.toString()), viewUpdate.state.doc.toString())]]))))
-                  ].filter(e => e).flat()),
-                ].filter(e => e)
-              })
-            }
-          })
-        })
-      });
-    });
-  }
+  // if(selectedVarNode) {
+  //   selectedVarNode.set({id: selected[0], graph})
+  //   wrapPromise(runtime.runGraphNode(graph, selected[0])).then((nodeOutputs: any) => {
+  //     wrapPromise(runtime.run(nodeOutputs.display)).then(display =>  {
+  //       wrapPromise(display).then((display: any) => 
+  //         info_display_dispatch({el: display?.dom_type ? display : display?.resultPanel?.dom_type ? display.resultPanel : {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: typeof display === "number" || typeof display === "string" ? display : ""}]}}))
+  //     });
+  //     wrapPromise(runtime.run(nodeOutputs.metadata)).then(metadata =>  {
+  //       wrapPromiseAll([
+  //         metadata,
+  //         runtime.store.refs.get(graph)
+  //       ]).then(([metadata, graph]) => {
+  //         
+  //         cachedMetadata[graph + "/" + selected[0]] = metadata;
+  //
+  //         requestAnimationFrame(() => {
+  //           dispatch(s => [{...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: selected[0], cachedMetadata}]])
+  //           const node = graph.nodes[selected[0]];
+  //           if(code_editor && isNodeRef(node) && metadata.codeEditor) {
+  //             // console.log(selectedMetadata)
+  //             const jsonlang = json()
+  //             requestAnimationFrame(() => {
+  //               if(metadata?.codeEditor?.language === "json") {
+  //                 customFoldAll(code_editor)
+  //               }
+  //             })
+  //             const newText = metadata?.codeEditor?.editorText ?? node.value
+  //             code_editor.dispatch({
+  //               changes: code_editor.state.field(code_editor_nodeid_field) !== node.id &&
+  //                 newText !== code_editor.state.doc.toString() && {
+  //                 from: 0, 
+  //                 to: code_editor.state.doc.length, 
+  //                 insert: newText
+  //               },
+  //               effects: [
+  //                 code_editor_nodeid.of(node.id), 
+  //                 codeEditorExtensions.reconfigure([
+  //                   metadata?.codeEditor?.language === "json" ? [jsonlang, linter(jsonParseLinter()), lintGutter()] : javascript(),
+  //                   metadata?.codeEditor?.onChange && 
+  //                       EditorView.updateListener.of(
+  //                         (viewUpdate) => viewUpdate.docChanged && wrapPromise(nolib.no.runtime.run(metadata.codeEditor?.onChange, new Map([["editorText", (console.log(viewUpdate.state.doc.toString()), viewUpdate.state.doc.toString())]]))))
+  //                 ].filter(e => e).flat()),
+  //               ].filter(e => e)
+  //             })
+  //           }
+  //         })
+  //       })
+  //     });
+  //   });
+  // }
 
   return () => {};
 }

@@ -252,7 +252,7 @@ export class NodysseusRuntime {
     this.scope.count();
   }
 
-  public createWatch<T>(node: AnyNode<T>, _output: "value" | "display"): AsyncIterable<T>{
+  public createWatch<T>(node: AnyNode<T>): AsyncIterable<T>{
     return {
       [Symbol.asyncIterator]: () => ({
         next: () => new Promise<IteratorResult<T>>((res) => {
@@ -272,7 +272,7 @@ export class NodysseusRuntime {
     }
   }
 
-  public addWatchFn<T>(node: AnyNode<T>, watch: (output: T) => void){
+  private addWatchFn<T>(node: AnyNode<T>, watch: (output: T) => void){
     if(!this.watches.has(node.id)) this.watches.set(node.id, []);
     this.watches.get(node.id).push(watch);
     this.checkWatch(node.id);
@@ -363,7 +363,11 @@ export class NodysseusRuntime {
   }
 
   varNode<T>(initial?: T, compare?: (a: T, b: T) => boolean, id?: string, useExisting: boolean = true, dirty = true): VarNode<T> {
-    if(useExisting && id && this.scope.has(id)) return this.scope.get(id) as VarNode<T>;
+    if(useExisting && id && this.scope.has(id)) {
+      const node = this.scope.get(id) as VarNode<T>;
+      node.set(initial);
+      return node;
+    }
     const node = varNode((newValue: T) => {
       const currentValue = node.value.read()
       if(isNothing(currentValue) || !node.compare(currentValue, newValue)) {
@@ -452,7 +456,7 @@ export class NodysseusRuntime {
     }, undefined, id, useExisting)
   }
 
-  private accessor<T, S extends Record<string, unknown>>(map: AnyNode<AnyNodeMap<S>> | NodeOutputsU, key: string, id: string, useExisting: boolean, isNodeRun: boolean = false): AnyNode<T>{
+  public accessor<T, S extends Record<string, unknown>>(map: AnyNode<AnyNodeMap<S>> | NodeOutputsU, key: string, id: string, useExisting: boolean, isNodeRun: boolean = false): AnyNode<T>{
     return this.mapNode({bound: this.bindNode({map: this.mapNode({map}, ({map}) => map, undefined, id + key + "-bindmap", useExisting)}, ({map}) => map[key], undefined, id + key + "-bind", useExisting)}, ({bound}) => {
       if(isNodeOutputs(map)) {
         nolib.no.runtime.publish("noderun", {graphId: map.graphId, nodeId: map.nodeId}, nolibLib)
@@ -465,7 +469,7 @@ export class NodysseusRuntime {
     return this.mapNode({map}, ({map}) => ({...map, [key]: undefined}), undefined, id);
   }
 
-  private runNodeNode<T>(node: AnyNode<AnyNode<T>>, nodeGraphId: string, useExisting = true): AnyNode<T> {
+  public runNodeNode<T>(node: AnyNode<AnyNode<T>>, nodeGraphId: string, useExisting = true): AnyNode<T> {
     return this.mapNode({bound: node}, ({bound}) => this.runNode(bound) as T, undefined, nodeGraphId, useExisting);
   }
 
