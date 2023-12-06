@@ -1,5 +1,5 @@
-import { render, createElement } from 'https://esm.sh/preact';
-import {signal} from 'https://esm.sh/@preact/signals';
+import { render, createElement } from 'preact';
+import {signal} from '@preact/signals';
 import * as ha from "hyperapp"
 import { Edge, Graph, isNodeGraph, isNodeRef, NodeArg, NodeMetadata, NodysseusNode, RefNode, ValueNode } from "src/types.js"
 import { create_randid, wrapPromise } from "src/util.js"

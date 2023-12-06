@@ -1,5 +1,5 @@
-import { render, createElement } from 'https://esm.sh/preact';
-import {signal} from 'https://esm.sh/@preact/signals';
+import { render, createElement } from 'preact';
+import {signal} from '@preact/signals';
 
 import * as ha from "hyperapp"
 import { initStore, nodysseus_get, nolib, run, NodysseusError, nolibLib } from "../nodysseus.js"
@@ -1220,7 +1220,7 @@ export const graphEdgesIn = (graph: Graph, node: string) =>
     : Object.values(graph.edges).filter(e => e.to === node)
 
 export const HTMLView = ({stateSignal}) => createElement(HTMLComponent, stateSignal.value);
-export const HTMLComponent = ({dom_type, props, children, text}: {dom_type: string, props: {}, children: Array<any>, text?: string}) => {
+export const HTMLComponent = ({dom_type, props, children, text, ref}: {dom_type: string, props: {}, children: Array<any>, text?: string, ref?: (ref: HTMLElement) => void}) => {
   return dom_type === "text_value"
     ? createElement("span", null, text)
     : createElement(

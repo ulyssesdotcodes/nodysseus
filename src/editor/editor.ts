@@ -1,5 +1,5 @@
-import { render, createElement } from 'https://esm.sh/preact';
-import {signal} from 'https://esm.sh/@preact/signals';
+import { render, createElement } from 'preact';
+import {signal} from '@preact/signals';
 
 
 import { resfetch, nolib, run, initStore, NodysseusError, nolibLib } from "../nodysseus.js"
@@ -18,7 +18,6 @@ import Autocomplete from "./autocomplete.js"
 import { automergeRefStore } from "./automergeStore.js"
 import helloWorld from "../initgraph.json"
 import { middleware, run_h} from "./hyperapp.js"
-import { embeddedHTMLView } from './util.js';
 
 
 customElements.define("autocomplete-list", Autocomplete)
