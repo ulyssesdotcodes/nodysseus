@@ -583,7 +583,15 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = async (dispatch, {
     return
   }
 
-  selectedGraphOutputs(graph);
+  selectedGraphOutputs(graph, display => {
+    console.log("got display", display)
+      display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
+        el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
+      })
+      display && display.background && result_background_display_dispatch({
+        el: display?.background ? display.background : {dom_type: "div", props: {}, children: []},
+      })
+  });
 
 
   //
@@ -842,10 +850,10 @@ export const watchNode = async <T>(node: AnyNode<T>, fn: (t: T) => void): Promis
 }
 
 export const selectedGraphOutputs = (graph: Graph, displayFn: (d: any) => void) => {
-  watchNodeOutputs(graph.id, graph.out ?? "out", "graphWatch", displayFn);
+  watchNodeDisplayOutput(graph.id, graph.out ?? "out", "graphWatch", displayFn);
 }
 
-export const watchNodeOutputs = (graph: string, selected: string, watchId: string, displayFn: (d: any) => void, metadataFn?: (m: any) => void) => {
+export const watchNodeDisplayOutput = (graph: string, selected: string, watchId: string, displayFn: (d: any) => void) => {
   const nodeId = "selectedVarNode-" + watchId;
   const runtime = hlib.runtime();
   if(!runtime.scope.has(`selectedVarNode-${nodeId}`)) {
@@ -859,10 +867,6 @@ export const watchNodeOutputs = (graph: string, selected: string, watchId: strin
 
     if(displayFn){
       watchNode(runtime.accessor(selectedNode, "display", nodeId + "-displayOutput", true), displayFn);
-    }
-
-    if(metadataFn) {
-      watchNode(runtime.accessor(selectedNode, "metadata", nodeId + "-metadataOutput", true), metadataFn);
     }
   } else {
     runtime.varNode({graph, id: selected}, undefined, nodeId, true);
@@ -890,11 +894,10 @@ export const displaySubscription = (dispatch: ha.Dispatch<HyperappState>, {
   codeEditorExtensions,
   cachedMetadata: Record<string, NodeMetadata>
 }) => {
-  watchNodeOutputs(graph, selected[0], "nodeWatch", display =>
-    info_display_dispatch({el: display?.dom_type ? display : display?.resultPanel?.dom_type ? display.resultPanel : {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: typeof display === "number" || typeof display === "string" ? display : ""}]}})
-  , metadata => {
-    cachedMetadata[graph + "/" + selected[0]] = metadata;
-  });
+  if(info_display_dispatch) {
+    watchNodeDisplayOutput(graph, selected[0], "nodeWatch", display =>
+      info_display_dispatch({el: display?.dom_type ? display : display?.resultPanel?.dom_type ? display.resultPanel : {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: typeof display === "number" || typeof display === "string" ? display : ""}]}}));
+  }
   // if(!selectedVarNode && info_display_dispatch) {
   //   const runtime = hlib.runtime();
   //   selectedVarNode = runtime.varNode({graph, id: selected[0]}, undefined, "selectedVarNode", true, false);
@@ -1287,7 +1290,7 @@ export const HTMLComponent = ({dom_type, props, children, text, ref}: {dom_type:
     ? createElement("span", null, text)
     : createElement(
       dom_type, 
-      Object.fromEntries(Object.entries(props).map(e => typeof e[1] === "function" ? [e[0], (event) => (e[1] as Function)({event})] : e)), 
+      Object.fromEntries(Object.entries(props ?? {}).map(e => typeof e[1] === "function" ? [e[0], (event) => (e[1] as Function)({event})] : e)), 
       children?.map(c => c.el ?? c).filter(c => !!c).map(c => createElement(HTMLComponent, c)) ?? []
     )
 }

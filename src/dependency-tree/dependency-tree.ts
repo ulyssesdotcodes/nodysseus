@@ -252,7 +252,8 @@ export class NodysseusRuntime {
     this.scope.count();
   }
 
-  public createWatch<T>(node: AnyNode<T>): AsyncIterable<T>{
+  public createWatch<T>(node: AnyNode<T>, id: string): AsyncIterable<T>{
+    console.log("watching node", node)
     return {
       [Symbol.asyncIterator]: () => ({
         next: () => new Promise<IteratorResult<T>>((res) => {
@@ -908,69 +909,78 @@ export class NodysseusRuntime {
       isVarNode(node) || isConstNode(node) 
       || (!(node as MapNode<T, Record<string, unknown>> | BindNode<T, Record<string, unknown>>).isDirty.read()))) {
       result = node.value.read();
-    } else if (isMapNode(node)) {
-      // node.isDirty.write(false);
+    } else if (isMapNode(node) || isBindNode(node)) {
       if(!this.running.has(node.id)) this.running.set(node.id, 0);
       this.running.set(node.id, this.running.get(node.id) + 1);
+
       const prev = node.cachedInputs.read();
 
-      const getPromises = () => {
+      const inputPromises = () => {
         const updatedNode = this.scope.get(node.id) as MapNode<T, any>;
 
-        const inputPromises = [];
+        const _inputPromises = [];
 
         for(const key in updatedNode.inputs) {
           const inputNode = this.scope.get(updatedNode.inputs[key]);
           const res = this.runNode(inputNode);
           if(inputNode) {
-            inputPromises.push(wrapPromise(res).then(input => [key, input]))
+            _inputPromises.push(wrapPromise(res).then(input => [key, input]))
           }
         }
 
-        return wrapPromiseAll(inputPromises)
-          .then(ips => !this.scope.get(node.id) || compareObjects(updatedNode.inputs, (this.scope.get(node.id) as MapNode<T, any>).inputs) ? ips : getPromises()).value
+        return wrapPromiseAll(_inputPromises)
+          .then(ips => !this.scope.get(node.id) || compareObjects(updatedNode.inputs, (this.scope.get(node.id) as MapNode<T, any>).inputs) ? ips : inputPromises()).value
       }
 
-
-      return wrapPromise(getPromises(), e => {console.error(e); return {};})
-        .then(allPromises => wrapPromiseAll(allPromises, e => (console.error(e), {})))
+      return wrapPromise(inputPromises(), e => (console.error(e), Object.entries(node.cachedInputs.read())))
+        .then(allPromises => wrapPromiseAll(allPromises, e => (console.error(e), Object.entries(node.cachedInputs.read()))))
         .then(inputs => {
-          // if(node.isDirty.read()) {
-          //   console.log("rerunning", node.id)
-          //   return this.runNode(node);
-          // }
-        const next = Object.fromEntries(inputs);
-        const updatedNode = this.scope.get(node.id) as MapNode<T, any>;
-        if(!updatedNode) {
-          return;
-        }
+          if(!Object.values(node.inputs).every(id => {
+            const inputNode = this.scope.get(id);
+            return !((isBindNode(inputNode) || isMapNode(inputNode)) && inputNode.isDirty.read())
+          })) {
+            console.log("rerunning", innode)
+            const result = this.runNode(innode);
+            this.running.set(node.id, this.running.get(node.id) - 1);
+            return result;
+          }
 
-        if(isNothing(updatedNode.value.read()) || isNothing(prev) || updatedNode.isStale(prev, next)) {
-          const res = chainNothing(node.fn, fn => chainNothing(fn.read(), ffn => ffn(next)));
-          updatedNode.value.write(res);
-            updatedNode.isDirty.write(false);
-          updatedNode.cachedInputs.write(next);
-          return wrapPromise(res).then(r => {
-            updatedNode.value.write(r as T);
-            updatedNode.isDirty.write(false);
+          const next = Object.fromEntries(inputs);
+          const updatedNode = this.scope.get(node.id) as MapNode<T, any>;
+          if(!updatedNode) {
+            return;
+          }
 
-            if(this.watches.has(node.id) && current !== result) {
-              this.watches.get(node.id).forEach(fn => wrapPromise(r).then(fn));
-            }
-            if(this.running.get(node.id) === 1) {
-              this.running.delete(node.id)
-              this.checkEvents()
-            }
-            else this.running.set(node.id, this.running.get(node.id) - 1);
-            return r;
-          }).value;
-        }
+          if(isNothing(updatedNode.value.read()) || isNothing(prev) || updatedNode.isStale(prev, next)) {
+            const res = isBindNode(node) 
+              ? chainNothing(updatedNode.fn, fn => fn(next)) ?? nothingValue 
+              : chainNothing(node.fn, fn => chainNothing(typeof fn === "function" ? fn : fn.read(), ffn => ffn(next)));
+            updatedNode.value.write(res);
+            updatedNode.cachedInputs.write(next);
+            return wrapPromise(res).then(r => {
 
-        result = updatedNode.value.read();
+              if(isBindNode(updatedNode) && !isNothing(res) && res) this.scope.add(res as AnyNode<unknown>);
 
-        if(this.watches.has(node.id) && current !== result) {
-          this.watches.get(node.id).forEach(fn => wrapPromise(result).then(fn));
-        }
+              updatedNode.value.write(r as T);
+              updatedNode.isDirty.write(false);
+
+              if(this.watches.has(node.id) && current !== result) {
+                this.watches.get(node.id).forEach(fn => wrapPromise(r).then(fn));
+              }
+              if(this.running.get(node.id) === 1) {
+                this.running.delete(node.id)
+                this.checkEvents()
+              }
+              else this.running.set(node.id, this.running.get(node.id) - 1);
+              return r;
+            }).value;
+          }
+
+          result = updatedNode.value.read();
+
+          if(this.watches.has(node.id) && current !== result) {
+            this.watches.get(node.id).forEach(fn => wrapPromise(result).then(fn));
+          }
 
             if(this.running.get(node.id) === 1) {
               updatedNode.isDirty.write(false);
