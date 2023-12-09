@@ -8,7 +8,7 @@ import * as ha from "hyperapp"
 import Fuse from "fuse.js"
 import { create_randid, wrapPromise, base_graph } from "../util.js"
 import { Edge, Graph, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode } from "../types.js"
-import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, Paste, pzobj, refresh_graph, result_subscription, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect, displaySubscription, graphFromExample, HTMLComponent, HTMLView, embeddedHTMLView } from "./util.js"
+import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, Paste, pzobj, refresh_graph, result_subscription, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect, displaySubscription, graphFromExample, HTMLComponent, HTMLView, embeddedHTMLView, infoWindowSubscription } from "./util.js"
 import { info_display, infoWindow } from "./components/infoWindow.js"
 import { init_code_editor } from "./components/codeEditor.js"
 import { d3Node, d3NodeNode, HyperappState, Levels } from "./types.js"
@@ -362,7 +362,7 @@ const runapp = (init, _lib) => {
       document.getElementById(`${init.html_id}-result`) && [mutationObserverSubscription, {selector: `#${init.html_id}-result, #${init.html_id}-background-result`}],
       document.getElementById(`${init.html_id}-info-display`) && [mutationObserverSubscription, {selector: `#${init.html_id}-info-display`}],
       [d3subscription, {action: SimulationToHyperapp, update: UpdateSimulation, htmlid: init.html_id}], 
-      [displaySubscription, {selected: s.selected, selectedVarNode: s.selectedVarNode, graph: s.displayGraph.id ?? s.editingGraph.id, info_display_dispatch: s.info_display_dispatch, code_editor: s.code_editor, code_editor_nodeid: s.code_editor_nodeid, code_editor_nodeid_field: s.code_editor_nodeid_field, codeEditorExtensions: s.codeEditorExtensions, cachedMetadata: s.cachedMetadata}],
+      [infoWindowSubscription, {selected: s.selected, selectedVarNode: s.selectedVarNode, graph: s.displayGraph.id ?? s.editingGraph.id, info_display_dispatch: s.info_display_dispatch, code_editor: s.code_editor, code_editor_nodeid: s.code_editor_nodeid, code_editor_nodeid_field: s.code_editor_nodeid_field, codeEditorExtensions: s.codeEditorExtensions, cachedMetadata: s.cachedMetadata}],
       [graph_subscription, {editingGraphId: s.editingGraphId, norun: s.norun}],
       [select_node_subscription, {}],
       result_display_dispatch && result_background_display_dispatch && [result_subscription, {editingGraphId: s.editingGraphId, displayGraphId: s.displayGraphId, norun: s.norun}],

@@ -338,9 +338,6 @@ export function compareObjects(value1, value2, isUpdate = false, excludedFields:
   for (const key of keys1) {
     if(excludedFields.has(key))
       continue
-    if(key === "__args"){
-      continue
-    }
     if (value1[key] === value2[key]) {
       continue
     }

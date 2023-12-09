@@ -44,15 +44,15 @@ const processMessage = e => {
         const run = async (_output) => {
           for await(const value of runtime.createWatch(runNode[_output], _output)) {
             const val = await value(e.data.env.data)
-            console.log("worker output", val);
+            // console.log("worker output", val);
           }
         }
-      console.log("run node", runNode)
+      // console.log("run node", runNode)
 
       wrapPromise(runtime.run(runNode.value))
         .then(async value => {
-          
-          console.log("first worker value", await value(e.data.env.data));
+          await value(e.data.env.data)
+          // console.log("first worker value", );
           run("value");
         })
       }
