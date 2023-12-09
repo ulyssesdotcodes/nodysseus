@@ -460,9 +460,9 @@ export class NodysseusRuntime {
 
   public accessor<T, S extends Record<string, unknown>>(map: AnyNode<AnyNodeMap<S>> | NodeOutputsU, key: string, id: string, useExisting: boolean, isNodeRun: boolean = false): AnyNode<T>{
     return this.mapNode({bound: this.bindNode({map: this.mapNode({map}, ({map}) => map, undefined, id + key + "-bindmap", useExisting)}, ({map}) => map[key], undefined, id + key + "-bind", useExisting)}, ({bound}) => {
-      if(isNodeOutputs(map)) {
-        nolib.no.runtime.publish("noderun", {graphId: map.graphId, nodeId: map.nodeId}, nolibLib)
-      }
+      // if(isNodeOutputs(map)) {
+      //   nolib.no.runtime.publish("noderun", {graphId: map.graphId, nodeId: map.nodeId}, nolibLib)
+      // }
       return this.runNode(bound)
     }, undefined, id + key + "-map", useExisting) as AnyNode<T>;
   }
@@ -624,7 +624,6 @@ export class NodysseusRuntime {
             // 
             return this.mapNode({ parameters, fnNode: fnNode && this.bindNode({}, () => fnNode, undefined, nodeGraphId + "-fnNodebindnode", useExisting)}, ({parameters, fnNode}) => ((args) => {
               if(!fnNode) return;
-              const ancestorGraph = ancestor_graph(fnEdgeId, graph);
               this.dirty(fnArgs.id, fnNode.id)
               if(parameters) {
                 const keys = new Set(Object.keys(parameters));
@@ -935,26 +934,23 @@ export class NodysseusRuntime {
         const _inputPromises = [];
         let output = {};
 
-        for(const key in updatedNode.inputs) {
+        // create keys array like this and use in object instead of kv pairs for performance
+        const keys = Object.keys(updatedNode.inputs);
+
+        for(const key of keys) {
           const inputNode = this.scope.get(updatedNode.inputs[key]);
           const res = this.runNode(inputNode);
           if(inputNode) {
-            _inputPromises.push(wrapPromise(res).then(input => {
-              if(output[key]) {
-                debugger;
-              }
-              output[key] = input;
-              return [key, input]
-            }))
+            _inputPromises.push(wrapPromise(res))
           }
         }
 
-        return wrapPromiseAll(_inputPromises).value
+        return wrapPromiseAll(_inputPromises).then(ips => ips.reduce((a, v, i) => (a[keys[i]] = v, a), {})).value
       }
 
       return wrapPromise(inputPromises(), e => (console.error(e), Object.entries(node.cachedInputs.read())))
         // .then(allPromises => wrapPromiseAll(allPromises, e => (console.error(e), Object.entries(node.cachedInputs.read()))))
-        .then(ips => {
+        .then(next => {
           if(!Object.values(node.inputs).every(id => {
             const inputNode = this.scope.get(id);
             return !((isBindNode(inputNode) || isMapNode(inputNode)) && inputNode.isDirty.read())
@@ -967,9 +963,6 @@ export class NodysseusRuntime {
             else this.running.set(node.id, this.running.get(node.id) - 1);
             return result;
           }
-
-          const next = Object.fromEntries(ips);
-          
 
           const updatedNode = this.scope.get(node.id) as MapNode<T, any>;
           if(!updatedNode) {
