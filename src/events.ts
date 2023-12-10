@@ -176,14 +176,14 @@ export const initListeners = () => {
   addListener("graphchange", "__system", systemgraphchangelistener)
   addListener("graphupdate", "__system", systemgraphchangelistener)
 
-  addListener("argsupdate", "__system", ({id, changes, mutate}, lib, options) => {
-    if(mutate) {
-      const current = nolib.no.runtime.get_args(id)
-      changes.forEach(change => set_mutable(current, change[0], change[1]))
-    } else {
-      nolib.no.runtime.update_args(id, changes, lib)
-    }
-  })
+  // addListener("argsupdate", "__system", ({id, changes, mutate}, lib, options) => {
+  //   if(mutate) {
+  //     const current = nolib.no.runtime.get_args(id)
+  //     changes.forEach(change => set_mutable(current, change[0], change[1]))
+  //   } else {
+  //     nolib.no.runtime.update_args(id, changes, lib)
+  //   }
+  // })
 
   addListener("cachedelete", "__system", e => nolib.no.runtime.clearState())
 

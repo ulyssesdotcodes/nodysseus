@@ -1330,7 +1330,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     },
     readReference: {
       args: ["reference"],
-      fn: () => {}
+      fn: (reference) => reference.value.value.read()
     },
     reference: {
       rawArgs: true,
@@ -1966,7 +1966,10 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     mult: {
       args: ["_node_args"],
       resolve: true,
-      fn: (args) =>
+      //TODO: change this back to wrapPromiseAll version
+      fn: (args) => Object.entries(args)
+          .reduce((acc, e) => acc * (e[1] as number), 1),
+      _fn: (args) =>
         wrapPromiseAll(Object.entries(args)
           .sort((a, b) => a[0].localeCompare(b[0]))
           .map(kv => kv[1]))

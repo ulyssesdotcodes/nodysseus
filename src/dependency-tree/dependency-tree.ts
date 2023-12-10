@@ -19,6 +19,7 @@ import { v4 as uuid } from "uuid";
 import { NodysseusError, ancestor_graph, appendGraphId, compareObjects, isWrappedPromise, ispromise, mergeLib, newEnv, newLib, parseArg, wrapPromise, wrapPromiseAll } from "../util.js";
 import get from "just-safe-get";
 import generic from "../generic.js";
+import { create_fn } from "src/externs.js";
 
 type RUnknown = Record<string, unknown>;
 
@@ -546,7 +547,7 @@ export class NodysseusRuntime {
             scriptFn = () => {};
           }
 
-          return this.mapNode({...calculateInputs()}, (args) => {
+          return this.mapNode(calculateInputs(), (args) => {
             if(extraNodeGraphId === "metadata"){
               return {dataLabel: "script", codeEditor: {language: "javascript", editorText: node.value}};
             }
@@ -767,6 +768,20 @@ export class NodysseusRuntime {
               .then(targetNode => this.accessor(targetNode, "display", nodeGraphId + "-accessnodedisplay", useExisting)).value as AnyNode<T>;
           } else if (refNode.value === "extern.workerRunnable") {
             return this.constNode({graph: graph.id, fn: edgesIn.find(e => e.as === "graph").from}, nodeGraphId, useExisting) as AnyNode<T>
+          } else if (refNode.value === "extern.create_fn") {
+            const idEdge = edgesIn.find(e => e.as === "fn")
+            return this.runNodeNode(
+              this.bindNode(
+                {closure} , 
+                ({closure}) => 
+                  this.mapNode(closure, closure => create_fn(graph, idEdge.from, nodeGraphId, closure, nolibLib), undefined, appendGraphId(nodeGraphId, "-generatedFn"), useExisting) as AnyNode<T>,
+                  undefined,
+                  appendGraphId(nodeGraphId, "-bindclosure"),
+                  useExisting
+              ), 
+              nodeGraphId, 
+              useExisting
+            ) as AnyNode<T>;
           } else {
             const inputs = calculateInputs()
             const systemValues: Array<[string, Result]> = ([

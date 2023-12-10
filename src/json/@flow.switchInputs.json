@@ -13,6 +13,7 @@
     "7uzzghh": { "as": "reference", "from": "7uzzghh", "to": "1te3y5h" },
     "65wrg0t": { "as": "_chosen", "from": "65wrg0t", "to": "args" },
     "v47w162": { "as": "persist", "from": "v47w162", "to": "65wrg0t" },
+    "publish": { "as": "publish", "from": "publish", "to": "65wrg0t" },
     "gqi2qi3": { "as": "children", "from": "gqi2qi3", "to": "8dy573e" },
     "3h30jbe": { "as": "children", "from": "3h30jbe", "to": "gqi2qi3" },
     "9r6mj9s": { "as": "props", "from": "9r6mj9s", "to": "gqi2qi3" },
@@ -56,6 +57,7 @@
     "args": { "id": "args" },
     "65wrg0t": { "id": "65wrg0t", "ref": "@memory.reference" },
     "v47w162": { "id": "v47w162", "value": "true" },
+    "publish": { "id": "publish", "value": "true" },
     "8dy573e": { "id": "8dy573e", "ref": "@html.html_element" },
     "gqi2qi3": {
       "id": "gqi2qi3",

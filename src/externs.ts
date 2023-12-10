@@ -1,31 +1,28 @@
 import * as util from "./util.js"
-import {NodysseusError, nodysseus_get, resolve_args} from "./nodysseus.js"
+import {NodysseusError, nodysseus_get, nolibLib, resolve_args} from "./nodysseus.js"
 import { NodysseusNode, Graph, Args, ConstRunnable, Env, isArgs, isEnv, isNodeRef, isValue, Lib, RefNode, Edge, TypedArg, MemoryCache, Memory } from "./types.js"
 
 
 const nodeinputs = (node: NodysseusNode, graph: Graph) => Object.values(graph.edges_in[node.id] ?? []).map(edge => ({edge, node: graph.nodes[edge.from]}))
-const nodefn = (node, graphid, args) => isNodeRef(node) && node.ref === "arg" ? args.has(node.value) ? args.get(node.value) : createArg(node.value) : `fn_${graphid}${node.id}()`
+const nodefn = (node, graphid, args) => isNodeRef(node) && node.ref === "arg" ? createArg(node.value) : `fn_${graphid}${node.id}()`
 const createArg = (name) => `fnargs["${argToProperties(name)}"] ?? baseArgs["${name}"]` 
 const argToProperties = (arg: string) => arg.includes(".") ? arg.split(".").join("\"]?.[\"") : arg
 
 
-const graphToFnBody = (runnable: ConstRunnable, lib: Lib, graphid: string = "", args: Map<string, string> = new Map()) => 
-  !runnable ? undefined
+const graphToFnBody = (graph: Graph, id: string, lib: Lib, graphid: string = "", args: Record<string, unknown>) => 
+  !graph || !id ? undefined
   : util
-    .wrapPromise(lib.data.no.runtime.get_ref(runnable.graph))
+    .wrapPromise(graph)
     .then(fromGraph => {
       // hack for return to only get "value" input
-      while(fromGraph.nodes[runnable.fn]?.ref === "return") {
-        runnable.fn = Object.values<Edge>(fromGraph.edges_in[runnable.fn]).find((e: Edge) => e.as === "value").from
+      while(fromGraph.nodes[id]?.ref === "return") {
+        id = Object.values<Edge>(fromGraph.edges_in[id]).find((e: Edge) => e.as === "value").from
       }
-      const graph = util.ancestor_graph(runnable.fn, fromGraph, lib.data)
+      const graph = util.ancestor_graph(id, fromGraph, lib.data)
       const graphArgs = new Set(Object.values(graph.nodes).filter<RefNode>(isNodeRef).filter(n => n.ref === "arg").map(a => a.value))
       return {graph,graphArgs}
-    }).then(({graph, graphArgs}: {graph: Graph, graphArgs: Set<string>}) =>
-      util.wrapPromise(resolve_args(new Map([...graphArgs].map(a => [a, nodysseus_get(runnable.env, a, lib)])), lib, {resolvePromises: true}))
-        .then(result => {
-          if(!isValue(result)) return
-          const baseArgs = typeof result.value?.includes === "function" && result.value.includes(".") ? result.value.substring(0, result.value.indexOf(".")) : result.value
+    }).then(({graph, graphArgs}: {graph: Graph, graphArgs: Set<string>}) => {
+          const baseArgs = args;
           // graph.id = runnable.fn + "-fn";
 
           let text = ""
@@ -46,7 +43,8 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib, graphid: string = "", 
                   text += `
       function fn_${graphid}${n.id}(){
         ${inputs.map(input => 
-    `let ${input.edge.as} = ${nodefn(input.node, graphid, args)};`
+                     // TODO: change this to return the arg from baseargs
+    `let ${input.edge.as} = ${(input.edge.as === "curl" && console.log("curl input", input, args, nodefn(input.node, graphid, args)), nodefn)(input.node, graphid, args)};`
   ).join("\n")
 }
 
@@ -115,13 +113,13 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib, graphid: string = "", 
 
       `
                 } else if (isNodeRef(n)) {
-                  return util.wrapPromise(graphToFnBody({
-                    __kind: "const",
-                    fn: noderef.out ?? "out",
-                    graph: noderef.id,
-                    env: runnable.env,
-                    lib: runnable.lib
-                  }, lib, `${graphid}__${n.id}__`, new Map(inputs.map(input => [input.edge.as, nodefn(input.node, graphid, args)]))))
+                  return util.wrapPromise(graphToFnBody(
+                    noderef,
+                    noderef.out ?? "out",
+                      nolibLib,
+                    `${graphid}__${n.id}__`,
+                    Object.fromEntries(inputs.map(input => [input.edge.as, nodefn(input.node, graphid, args)])),
+                    ))
                     .then(refBody => {
                       Object.entries(refBody._extern_args).forEach(e => _extern_args[`${graphid}${n.id}/ ${e[0]}`])
                       text += `
@@ -139,13 +137,13 @@ const graphToFnBody = (runnable: ConstRunnable, lib: Lib, graphid: string = "", 
                 }
 
                 // for now just assuming everything is an arg of the last node out
-                text += `return fn_${graphid}${runnable.fn}();`
+                text += `return fn_${graphid}${id}();`
               }), util.wrapPromise(undefined))
               .then(() => {
                 return {baseArgs, text, _extern_args}
               })
           ).value
-        }).value).value
+        }).value
 
 export const parseValue = (value: any) => {
   if (typeof value !== "string") {
@@ -193,10 +191,8 @@ export const parseValue = (value: any) => {
 }
 
 
-export const create_fn = (runnable: ConstRunnable, lib: Lib) => {
-  if(!runnable) return
-  return runnable;
-  const {baseArgs, text, _extern_args} = graphToFnBody(runnable, lib)
+export const create_fn = (graph: Graph, id: string, graphId: string,  args: Record<string, unknown>, lib: Lib) => {
+  const {baseArgs, text, _extern_args} = graphToFnBody(graph, id, lib, graphId.replaceAll("/", "_").replaceAll("@", "").replaceAll(".", "_"), args)
   const fn = new Function("fnargs", "baseArgs", "_extern_args", "import_util", "_lib", text)
 
   return (args: Env | Args | Record<string, unknown>, ...rest) => {
@@ -204,7 +200,7 @@ export const create_fn = (runnable: ConstRunnable, lib: Lib) => {
       return fn(args ? isArgs(args) ? (resolve_args(args, lib, {}) as {value: any}).value : isEnv(args) ? (resolve_args(args.data, lib, {}) as {value: any}).value : Object.hasOwn(baseArgs, "args") ? {args: [args, ...rest]} : args : {}, baseArgs, _extern_args, util, lib.data)
     } catch (e) {
       console.error(e)
-      throw new NodysseusError(nodysseus_get(runnable.env, "__graphid", lib).value + "/" + runnable.fn, `Error in generated function ${text}`)
+      throw new NodysseusError(nodysseus_get(args, "__graphid", lib).value + "/" + id, `Error in generated function ${e.message} ${text}`)
     }
   }
 }
