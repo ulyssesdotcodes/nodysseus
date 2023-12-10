@@ -8,7 +8,6 @@ const nodefn = (node, graphid, args) => isNodeRef(node) && node.ref === "arg" ? 
 const createArg = (name) => `fnargs["${argToProperties(name)}"] ?? baseArgs["${name}"]` 
 const argToProperties = (arg: string) => arg.includes(".") ? arg.split(".").join("\"]?.[\"") : arg
 
-
 const graphToFnBody = (graph: Graph, id: string, lib: Lib, graphid: string = "", args: Record<string, unknown>) => 
   !graph || !id ? undefined
   : util
@@ -44,7 +43,7 @@ const graphToFnBody = (graph: Graph, id: string, lib: Lib, graphid: string = "",
       function fn_${graphid}${n.id}(){
         ${inputs.map(input => 
                      // TODO: change this to return the arg from baseargs
-    `let ${input.edge.as} = ${(input.edge.as === "curl" && console.log("curl input", input, args, nodefn(input.node, graphid, args)), nodefn)(input.node, graphid, args)};`
+    `let ${input.edge.as} = ${nodefn(input.node, graphid, args)};`
   ).join("\n")
 }
 

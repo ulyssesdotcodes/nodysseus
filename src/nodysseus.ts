@@ -1330,7 +1330,12 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
     },
     readReference: {
       args: ["reference"],
-      fn: (reference) => reference.value.value.read()
+      fn: (reference) => {
+        const ret = reference.value.value.read();
+        if(ret && ret.__kind === "nodthing") {
+          return undefined;
+        }
+      }
     },
     reference: {
       rawArgs: true,

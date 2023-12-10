@@ -455,7 +455,7 @@ export const SelectNode: ha.Action<HyperappState, {
   },
   [pzobj.effect, {...state, node_id: node_id}],
   [UpdateGraphDisplay, {...state, selected: [node_id]}],
-   [UpdateCodeEditorEffect, remap(state, {
+   [UpdateSelectedNodeMetadataEffect, remap(state, {
      editingGraph: "graph",
    }, pick(state, ["code_editor", "code_editor_nodeid_field", "code_editor_nodeid", "codeEditorExtensions", "cachedMetadata"], {id: node_id}))],
   focus_property && [FocusEffect, {selector: `.node-info .${focus_property}`}],
@@ -487,7 +487,7 @@ export const SelectNode: ha.Action<HyperappState, {
     // }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== node_id, undefined, state.codeEditorExtensions)), {}],
   // [updateSelectedMetadata, {graph: state.editingGraph, nodeId: node_id}],
   state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: {nodeId: node_id, graphId: state.editingGraphId}}, nolibLib), {}],
-  [CalculateSelectedNodeArgsEffect, {graph: state.editingGraph, node_id}]
+  [CalculateSelectedNodeArgsEffect, {graph: state.editingGraph, node_id, cachedMetadata: state.cachedMetadata}]
 ] : state
 
 export const CustomDOMEvent = (_, payload) => document.getElementById(`${payload.html_id}`)?.dispatchEvent(new CustomEvent(payload.event, {detail: payload.detail}))
@@ -544,7 +544,7 @@ export const UpdateNodeEffect: ha.Effecter<HyperappState, {editingGraph: Graph, 
          } 
        })
 
-      dispatch(s => [{...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: node.id}]])
+      dispatch(s => [{...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: node.id, cachedMetadata: s.cachedMetadata}]])
     })
 }
 
@@ -802,7 +802,7 @@ export const select_node_subscription = (dispatch, props) => {
   return () => nolib.no.runtime.removeListener("selectnode", "hyperapp")
 }
 
-export const UpdateCodeEditorEffect = (dispatch, {graph, id, cachedMetadata, code_editor, code_editor_nodeid_field, code_editor_nodeid, codeEditorExtensions}: {
+export const UpdateSelectedNodeMetadataEffect = (dispatch, {graph, id, cachedMetadata, code_editor, code_editor_nodeid_field, code_editor_nodeid, codeEditorExtensions}: {
   graph: Graph, 
   id: string, 
   cachedMetadata: Record<string, NodeMetadata>, 
@@ -819,36 +819,11 @@ export const UpdateCodeEditorEffect = (dispatch, {graph, id, cachedMetadata, cod
         ]).then(([metadata]) => {
           
           cachedMetadata[graph.id + "/" + id] = metadata;
+          dispatch(s => [{...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: id, cachedMetadata}]])
 
           requestAnimationFrame(() => {
             const node = graph.nodes[id];
-            if(code_editor && isNodeRef(node) && metadata.codeEditor) {
-              // console.log(selectedMetadata)
-              const jsonlang = json()
-              requestAnimationFrame(() => {
-                if(metadata?.codeEditor?.language === "json") {
-                  customFoldAll(code_editor)
-                }
-              })
-              const newText = metadata?.codeEditor?.editorText ?? node.value
-              code_editor.dispatch({
-                changes: code_editor.state.field(code_editor_nodeid_field) !== node.id &&
-                  newText !== code_editor.state.doc.toString() && {
-                  from: 0, 
-                  to: code_editor.state.doc.length, 
-                  insert: newText
-                },
-                effects: [
-                  code_editor_nodeid.of(node.id), 
-                  codeEditorExtensions.reconfigure([
-                    metadata?.codeEditor?.language === "json" ? [jsonlang, linter(jsonParseLinter()), lintGutter()] : javascript(),
-                    metadata?.codeEditor?.onChange && 
-                        EditorView.updateListener.of(
-                          (viewUpdate) => viewUpdate.docChanged && wrapPromise(nolib.no.runtime.run(metadata.codeEditor?.onChange, new Map([["editorText", (console.log(viewUpdate.state.doc.toString()), viewUpdate.state.doc.toString())]]))))
-                  ].filter(e => e).flat()),
-                ].filter(e => e)
-              })
-            }
+            setCodeEditorText({codeEditor: code_editor, codeEditorNodeId: code_editor_nodeid, codeEditorNodeIdField: code_editor_nodeid_field, codeEditorExtensions, metadata, node})
           })
         })
       });
@@ -869,7 +844,7 @@ export const setCodeEditorText = ({
   metadata: NodeMetadata, 
   node: NodysseusNode
 }) => {
-  if(codeEditor && isNodeRef(node) && metadata.codeEditor) {
+  if(codeEditor && isNodeRef(node) && metadata && metadata.codeEditor) {
     // console.log(selectedMetadata)
     const jsonlang = json()
     requestAnimationFrame(() => {

@@ -550,6 +550,8 @@ export class NodysseusRuntime {
           return this.mapNode(calculateInputs(), (args) => {
             if(extraNodeGraphId === "metadata"){
               return {dataLabel: "script", codeEditor: {language: "javascript", editorText: node.value}};
+            } else if(extraNodeGraphId === "display") {
+              return {dom_type: "text_value", text: ""}
             }
             try {
               return scriptFn(this.lib, node, args, wrapPromise, ...Object.values(args))
