@@ -16,10 +16,16 @@ Nodysseus also aims to simplify the experience of node-based editing by changing
 
 These rules are derived from a mixture of functional programming paradigms, design decisions of the React library, and experimentation within the platform itself.
 
-## Examples
+## Getting started
+
+The most simple graph is the [helloWorld](https://nodysseus.io/#helloWorld) which just shows "Hello, world!" in the result display. Try editing the html_text node to put your name, or create a "text" input using the "+text" button on the node.
+
+A number of the basic nodes can be found in the references doc.
+
+### Examples
 New nodes introduced in the example are included in parentheses.
 
-[Three.js](https://nodysseus.ulysses.codes/#threejs_example) ([tutorial](https://gitlab.com/ulysses.codes/nodysseus/-/blob/main/docs/examples/1_1_viewing_data.md))
+[Three.js](https://nodysseus.ulysses.codes/#threejs_example)
 
 
 ## Reading a graph
@@ -28,7 +34,7 @@ New nodes introduced in the example are included in parentheses.
 - Edges (connections/lines) define the relationships between nodes. 
 - A node can have many parents, which pass data in, but only one child. 
 - A node can reference another hidden node to copy its functionality. By default, nodes have no reference and simply pass along input data to their child
-- If a node references `arg`, it will draw use it's `value` like a javascript variable or function argument
+- If a node references `arg`, it will use its `value` like a javascript variable or function argument
 
 ## Editing
 
@@ -37,51 +43,6 @@ You can edit a node by using keybindings or by clicking/tapping the selected nod
 You can edit an edge by using keybindings or clicking/tapping the edge name.
 
 You can edit the graph name by clicking the graph menu in the top right.
-
-## References
-
-Nodes that have something other than `object` or `value` in *italics* reference other hidden nodes. It's similar to calling a function with the input nodes as arguments. Using the node menu, you can copy the referenced node or create a reference from the node.
-
-Some common nodes and their Typescript function types:
-
-#### log
-`log: (value: any) => any` - `console.log`s the value and returns it. Useful for inserting logs into node chains.
-
-#### input_value
-`input_value: (value: any) => any` - uses the received value as the nodes `value` and shows it.
-
-#### if
-`if: (pred: boolean, true?: any, false?: any) => any` - if `pred` is true, returns `true` otherwise returns `false`
-
-#### default
-`default: (value: any, otherwise: any) => any` - if `value` is not `undefined`, returns `value`, otherwise returns `otherwise`
-
-#### switch
-`switch: (input: string, ...args) => any` - returns the value of the input edge labeled `input`
-
-#### html_element
-`html_element: (children: (html_element | html_text | (html_element|html_text)[], dom_type: string, props: any) => html_element` - use with `result_display` to add html to the page
-
-#### html_text
-`html_text: (text: string) => html_text` - use with `html_element` to create a [DOM text node](https://developer.mozilla.org/en-US/docs/Web/API/Text)
-
-#### css_styles
-`css_styles: (css_object: {[selector]: {[attribute]: value}}) => html_element` - creates a `style` element from the passed in css_object with the object keys as selectors and the object values as attribute/value objects.
-
-#### fetch
-`fetch: (url: string, params: any) => response` - calls `fetch` with the url and params given. Note that this returns a Promise, which Nodysseus should handle automatically.
-
-#### runnable
-`runnable: (fn: node, args?: any) => {fn: node.id, args}` - creates a reference to the input graph to be used in other places (e.g. html input events, a `run` node)
-
-#### event_publisher
-`event_publisher: (name: string, value: any) => void` - publishes `value` as a `name` event
-
-#### event_subscriber
-`event_subscriber: (name: string) => any` - subscribes to `name` events
-
-## Edge content
-An edge takes the return value from one node and feeds it into another node. The edge is labeled `as` something, which indicates what `reference` input it refers to, or what property it should be in an `object`.
 
 ## Graph execution
 
@@ -94,7 +55,7 @@ The graph is executed using a pull model - each node asks its parents (if it has
 
 ## Exporting
 
-Exporting can be done through the graph menu.
+Exporting can be done through the root node menu by opening the appropriate `@nodysseus.export` graph.
 
 ### JSON
 
@@ -107,6 +68,10 @@ Planned improvements:
 ### JS
 
 Downloads the graph as a runnable .js file. It uses `import "nodysseus"` so make sure wherever you're running it you have access to the [`nodysseus` npm package](https://www.npmjs.com/package/nodysseus).
+
+### HTML
+
+Downloads a html file which will show the graph display result without showing the graph itself. It uses the latest version of nodysseus from npmjs.
 
 
 ## NPM Package ([link](https://www.npmjs.com/package/nodysseus))

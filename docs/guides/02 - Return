@@ -19,13 +19,17 @@ A `return` node's arguments are set in a few different ways, but the primary one
 
 ### `display` edge
 
-When the `return` node is the output node of a graph, the `display` input is shown in the bottom right. Any nodes referencing the graph will show the `display` output in the node info popup. Elsewhere in the graph, the `display` output shows in the node info of the `return` node.
+When the `return` node is the output node of a graph, the `display` input is shown in the bottom right. Any nodes referencing the graph will show the `display` output in the node info popup. Elsewhere in the graph, the `display` output shows in the node info of the `return` node. The display can also be split into `background` and `resultPanel` inputs which will display appropriately. The `background` input is only displayed when the graph is the current graph - it will not show in the info window.
 
 ## Advanced input edges
 
 ### `metadata` edge
 
-The `metadata` edge should contain an object with metadata about the graph. The valid object fields are `argslist`, and `category`. By default, without an `argslist`, the UI will find all `arg` nodes and show their values in the node info window as named arguments. `argslist` is a helper input to indicate to the UI which named inputs are expected and will take precedence over parsing the `arg` nodes.
+The `metadata` edge should contain an object with metadata about the graph. The valid object fields are `values`, and `parameters`. 
+
+By default, without `parameters`, the UI will find all `arg` nodes and show their values in the node info window as named arguments. `parameters` is a helper input to indicate to the UI which named inputs are expected and will take precedence over parsing the `arg` nodes. 
+
+All the items in `values` will be available as autocomplete when using the graph.
 
 ### `subscribe` edge
 

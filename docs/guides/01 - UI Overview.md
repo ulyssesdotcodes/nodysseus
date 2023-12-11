@@ -29,10 +29,13 @@ Click on a node field to open the node info window and automatically highlight t
 1. Overall interface
 	1. Center - node graph
 	   Shows the open graph. Programming happens here. E.g. this is showing the `tutorial` graph
-	2. Bottom left - html display of graph
-	   The html output  created by the `display` input to the last node. E.g. the "Hello, world!" text from an `html_element` and `html_text`
+	2. Bottom left / background - html display of graph
+	   The html output  created by the `display` input to the last node. E.g. the "Hello, world!" text from an `html_element` and `html_text`. The display can be split up into `background` and `resultPanel` inputs if both a background and regular display are used (like in the [three.js example](https://nodysses.io/#threejs_example)).
 	3. Top right - controls
 	   Find: searches the open graph for text
+     Pin: pins the display to the current graph
+     Refresh: refreshes the graph layout
+     Undo/redo: undo / redo the most recent local changes
 	4. Popup - node info
 	   Change the node properties and interact with custom controls.
 
