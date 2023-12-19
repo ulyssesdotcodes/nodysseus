@@ -362,7 +362,7 @@ const runapp = (init, _lib) => {
       document.getElementById(`${init.html_id}-result`) && [mutationObserverSubscription, {selector: `#${init.html_id}-result, #${init.html_id}-background-result`}],
       document.getElementById(`${init.html_id}-info-display`) && [mutationObserverSubscription, {selector: `#${init.html_id}-info-display`}],
       [d3subscription, {action: SimulationToHyperapp, update: UpdateSimulation, htmlid: init.html_id}], 
-      [infoWindowSubscription, {selected: s.selected, selectedVarNode: s.selectedVarNode, graph: s.displayGraph.id ?? s.editingGraph.id, info_display_dispatch: s.info_display_dispatch, code_editor: s.code_editor, code_editor_nodeid: s.code_editor_nodeid, code_editor_nodeid_field: s.code_editor_nodeid_field, codeEditorExtensions: s.codeEditorExtensions, cachedMetadata: s.cachedMetadata}],
+      [infoWindowSubscription, {selected: s.selected, selectedVarNode: s.selectedVarNode, graph: s.displayGraph.id ?? s.editingGraph.id, info_display_dispatch: s.info_display_dispatch, code_editor: s.code_editor, code_editor_nodeid: s.code_editor_nodeid, code_editor_nodeid_field: s.code_editor_nodeid_field, codeEditorExtensions: s.codeEditorExtensions, cachedMetadata: s.cachedMetadata, norun: s.norun}],
       [graph_subscription, {editingGraphId: s.editingGraphId, norun: s.norun}],
       [select_node_subscription, {}],
       result_display_dispatch && result_background_display_dispatch && [result_subscription, {editingGraphId: s.editingGraphId, displayGraphId: s.displayGraphId, norun: s.norun}],

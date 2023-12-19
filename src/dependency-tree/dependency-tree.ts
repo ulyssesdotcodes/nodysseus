@@ -646,8 +646,8 @@ export class NodysseusRuntime {
                 initial: AnyNode<T>
               }, ({fn, object, initial}) => 
               object === undefined ? object :
-                Array.isArray(object) ? object : 
-                Object.entries(object).reduce<T>(
+                (Array.isArray(object) ? object : 
+                Object.entries(object)).reduce<T>(
                   (previousValue, currentValue, index) => 
                     fn({previousValue, currentValue, index}), initial), undefined, nodeGraphId, useExisting) as AnyNode<T>
           } else if(refNode.value === "extern.ap") {
