@@ -16,7 +16,7 @@
 import { ConstRunnable, Edge, Graph, Lib, NodysseusNode, NodysseusStore, NonErrorResult, RefNode, Result, Runnable, isGraph, isNodeRef, isNodeValue, isValue } from "../types.js";
 import { compare, initStore, node_extern, node_value, nolib, nolibLib, run_extern } from "../nodysseus.js";
 import { v4 as uuid } from "uuid";
-import { NodysseusError, ancestor_graph, appendGraphId, compareObjects, isWrappedPromise, ispromise, mergeLib, newEnv, newLib, parseArg, wrapPromise, wrapPromiseAll } from "../util.js";
+import { NodysseusError, ancestor_graph, appendGraphId, compareObjects, isWrappedPromise, ispromise, mergeLib, newEnv, newLib, parseArg, wrapPromise, wrapPromiseAll, wrapPromiseReduce } from "../util.js";
 import get from "just-safe-get";
 import generic from "../generic.js";
 import { create_fn } from "src/externs.js";
@@ -646,10 +646,12 @@ export class NodysseusRuntime {
                 initial: AnyNode<T>
               }, ({fn, object, initial}) => 
               object === undefined ? object :
-                (Array.isArray(object) ? object : 
-                Object.entries(object)).reduce<T>(
-                  (previousValue, currentValue, index) => 
-                    fn({previousValue, currentValue, index}), initial), undefined, nodeGraphId, useExisting) as AnyNode<T>
+                wrapPromiseReduce(
+                  initial, 
+                  Array.isArray(object) ? object : Object.entries(object),
+                  fn,
+                  0
+              ), undefined, nodeGraphId, useExisting) as AnyNode<T>
           } else if(refNode.value === "extern.ap") {
             const fn: AnyNode<Array<(mapArgs: Record<string, unknown>) => T>> = this.valueMap(this.fromNodeInternal(graph, edgesIn.find(e => e.as === "fn").from, graphId, closure, useExisting), nodeGraphId + "-fnvalmap", useExisting)
             const runEdge = edgesIn.find(e => e.as === "run")

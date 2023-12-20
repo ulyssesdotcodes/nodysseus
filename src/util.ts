@@ -45,6 +45,10 @@ export const wrapPromiseAll = <T>(wrappedPromises: Array<WrappedPromise<T> | T>,
     : wrappedPromises.map(wp => isWrappedPromise(wp) ? wp.value : wp), c)
 }
 
+export const wrapPromiseReduce = (previousValue, arr, fn, index) => 
+  wrapPromise(fn({previousValue, currentValue: arr[index], index}))
+    .then(acc => index < arr.length - 1 ? wrapPromiseReduce(acc, arr, fn, index + 1) : acc);
+
 // type MaybePromiseFn<T, S> = T extends Promise<infer Item> ? ((i: Item) => S) : ((i: T) => S);
 // export function mapMaybePromise<T, S>(a: Promise<T>, fn: (t: T) => S): Promise<S>;
 // export function mapMaybePromise<T, S>(a: T, fn: (t: T) => S): S;

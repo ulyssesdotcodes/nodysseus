@@ -2112,7 +2112,7 @@ const generic = {
         "pred_append": {
           "id": "pred_append",
           "ref": "@js.script",
-          "value": "if(pred !== false && pred !== undefined && pred !== null){ arr.push(value); } return arr;"
+          "value": "if(pred !== false && pred !== undefined && pred !== null){ return arr.concat([value]); } return arr;"
         },
         "pred_append_fn_args": {
           "id": "pred_append_fn_args",
