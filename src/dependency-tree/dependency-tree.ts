@@ -316,7 +316,7 @@ export class NodysseusRuntime {
     const node = this.scope.get(id);
 
     const runIfClean = () => {
-      if(!this.running.has(id)) {
+      if(this.running.size === 0) {
         for(const output of outputs) {
           this.watches.get(id)?.forEach(fn => {
             fn(this.runNode(this.scope.get(id), output));
@@ -749,11 +749,10 @@ export class NodysseusRuntime {
               ? this.valueMap(this.fromNodeInternal(graph, edgesIn.find(e => e.as === "recache").from, graphId, closure, useExisting), nodeGraphId + "-recachevalmap", useExisting)
               : this.constNode<false>(false, nodeGraphId + "-stateconst", useExisting);
 
-            const outNode = this.mapNode({
+            return this.mapNode({
               recache, 
               value: this.bindNode({value}, () => value, undefined, nodeGraphId + "-value", useExisting)
             }, ({value}) => wrapPromise(this.runNode(value)).value, ({recache: r1, value: previous}, {recache, value: next}) => !!recache || isNothing(outNode.value.read()) || outNode.value.read() === undefined, nodeGraphId + extraNodeGraphId)
-            return outNode;
           } else if (refNode.value === "extern.frame") {
             const varNode: VarNode<T> = this.varNode(1 as T, undefined, nodeGraphId, useExisting)
             const update = () => {
@@ -850,10 +849,12 @@ export class NodysseusRuntime {
                 __graph_value: this.constNode(node.value, `${nodeGraphId}-internalnodegraphvalue`, false)
               }, nodeGraphId + "-args", false), false), extraNodeGraphId, nodeGraphId + "-innergraphnodeval", useExisting);
 
-          return this.mapNode({
+
+          const res =  this.mapNode({
           bound: this.bindNode({}, () => innerGraphNode, undefined, nodeGraphId + extraNodeGraphId + "-graphoutbind", useExisting)
           }, ({bound}) => this.runNode(bound) as T,
             undefined, nodeGraphId + extraNodeGraphId, useExisting)
+          return res;
         } else {
           return this.dereference(graph, node, edgesIn, graphId, nodeGraphId, closure, calculateInputs, extraNodeGraphId, useExisting, nodeRef) as AnyNode<T>
         }
@@ -899,10 +900,9 @@ export class NodysseusRuntime {
     })
 
     const ret: NodeOutputs<T,D,M> = this.mapNode({graphNodeNode}, ({graphNodeNode}) => {
-      // if(this.scope.has(nodeGraphId + "value")) {
-      //   console.log("removing and recreating", closure)
-      //   this.scope.removeAll(nodeGraphId);
-      // }
+      if(this.scope.has(nodeGraphId + "value")) {
+        this.scope.removeAll(nodeGraphId);
+      }
       return wrapPromise(this.calcNode(graphNodeNode.graph, graphNodeNode.node, graphId, nodeGraphId, closure, graphNodeNode.edgesIn, false))
         .then(value => wrapPromiseAll([
           this.calcNode(graphNodeNode.graph, graphNodeNode.node, graphId, nodeGraphId, closure, graphNodeNode.edgesIn, true, "display"),
