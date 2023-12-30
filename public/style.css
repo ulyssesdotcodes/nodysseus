@@ -575,7 +575,7 @@ svg.edge-info.selected rect {
     cursor: pointer;
     display: flex;
     gap: 1em;
-    z-index: 6;
+    z-index: 32;
     flex-direction: row;
     flex-wrap: wrap;
 }
