@@ -813,6 +813,9 @@ export class NodysseusRuntime {
           if(extraNodeGraphId === "metadata") {
             const keys = ["__graph_value"]
             const edgeChain = []
+            const walkEdges = (edges: Edge[], ty: any) => {
+              return !ty || edges.length === 0 || ty.type === "@flow.runnable" ? ty : walkEdges(edges.slice(1), typeof ty.type === "object" ? ty.type[edges[0].as] : ty[edges[0].as]);
+            }
             const descGraph = descendantGraph(node.id, graph, (nodeId, edge) => {
               edgeChain.push(edge)
               const outEdgeChain = [...edgeChain]
@@ -839,10 +842,11 @@ export class NodysseusRuntime {
                      // all descendants will have been created already
                      [e[0], this.accessor(this.fromNode(graph.id, e[0]), "metadata", nodeGraphId + e[0] + "-metadata", true)]
                     )), (metadatas) => {
+                      // have to reduce to get all the inedge stuff
                       return {values: Object.entries(metadatas)
                           .map(metadataEntry => {
                             const inEdge = descGraph[metadataEntry[0]][0];
-                            const inEdgeType = metadataEntry[1]?.parameters?.[inEdge.as];
+                            const inEdgeType = walkEdges(descGraph[metadataEntry[0]], metadataEntry[1]?.parameters)
                             return inEdgeType?.type === "@flow.runnable" && inEdgeType.runnableParameters || []
                           })
                               .filter(v => v)
@@ -872,9 +876,8 @@ export class NodysseusRuntime {
             undefined,
             nodeGraphId + "-bind"
           , useExisting)}, ({bound}) => {
-            return wrapPromise(this.runNode(bound)).then(res => {
-            return (res !== undefined && !isNothing(res) ? isAccessor ? get(res, argname.substring(argname.indexOf(".") + 1)) : res : undefined) as T
-          }).value}, undefined, nodeGraphId, useExisting);
+            return wrapPromise(this.runNode(bound)).then(res => (res !== undefined && !isNothing(res) ? isAccessor ? get(res, argname.substring(argname.indexOf(".") + 1)) : res : undefined) as T
+          ).value}, undefined, nodeGraphId, useExisting);
 
           return mnode;
         } else if(isGraph(nodeRef)) { 
@@ -951,7 +954,6 @@ export class NodysseusRuntime {
         graphNodeNode.node.ref !== graphNodeNode.previous?.ref &&
         this.scope.has(nodeGraphId + "value")
       ) {
-        console.log("removing all", graphNodeNode)
         this.scope.removeAll(nodeGraphId);
       }
       return wrapPromise(this.calcNode(graphNodeNode.graph, graphNodeNode.node, graphId, nodeGraphId, closure, graphNodeNode.edgesIn, false))
