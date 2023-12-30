@@ -16,7 +16,7 @@
 import { ConstRunnable, Edge, Graph, Lib, NodysseusNode, NodysseusStore, NonErrorResult, RefNode, Result, Runnable, isGraph, isNodeRef, isNodeValue, isValue } from "../types.js";
 import { compare, initStore, node_extern, node_value, nolib, nolibLib, run_extern } from "../nodysseus.js";
 import { v4 as uuid } from "uuid";
-import { NodysseusError, ancestor_graph, appendGraphId, compareObjects, isWrappedPromise, ispromise, mergeLib, newEnv, newLib, parseArg, wrapPromise, wrapPromiseAll, wrapPromiseReduce } from "../util.js";
+import { NodysseusError, ancestor_graph, appendGraphId, compareObjects, descendantGraph, isWrappedPromise, ispromise, mergeLib, newEnv, newLib, parseArg, wrapPromise, wrapPromiseAll, wrapPromiseReduce } from "../util.js";
 import get from "just-safe-get";
 import generic from "../generic.js";
 import { create_fn } from "src/externs.js";
@@ -804,15 +804,55 @@ export class NodysseusRuntime {
             , useExisting)
           }
         } else if(refNode.ref === "arg") {
-          const argname = parseArg(refNode.value).name;
-          const isAccessor = argname.includes(".");
+          const argname = refNode.value && parseArg(refNode.value).name;
+          const isAccessor = argname?.includes(".");
           const argsdata = this.mapNode({bound: this.bindNode({closure}, ({closure: innerClosure}: {closure: AnyNodeMap<S>}) => 
                                         this.mapNode(innerClosure, (innerClosure) => innerClosure as S[keyof S], undefined, nodeGraphId + "-allargsmap", useExisting), undefined, nodeGraphId + "-allargs", useExisting)}, ({bound}) => this.runNode(bound), undefined, nodeGraphId + "-outerbind", useExisting);
           const libNode = this.constNode(this.lib, "runtime-lib", true);
           const graphIdNode = this.constNode(graphId, `${nodeGraphId}-internalnodegraphid`, false)
+          if(extraNodeGraphId === "metadata") {
+            const keys = ["__graph_value"]
+            const edgeChain = []
+            const descGraph = descendantGraph(node.id, graph, (nodeId, edge) => {
+              edgeChain.push(edge)
+              const outEdgeChain = [...edgeChain]
+              outEdgeChain.reverse()
+              const descNode = graph.nodes[nodeId]
+              const dataNode = nodeId && isNodeRef(descNode) && descNode.ref === "return" && edge.as !== "lib" && edge.as !== "args"
+                ? graph.nodes[Object.values(graph.edges_in[nodeId]).find(e => e.as === "args")?.from]
+                : nodeId && isNodeRef(descNode) && descNode.ref === "@flow.runnable"
+                  ? graph.nodes[Object.values(graph.edges_in[nodeId]).find(e => e.as === "parameters")?.from]
+                  : false
+
+              if(dataNode) {
+                if (graph.edges_in[dataNode.id] && !(isNodeRef(dataNode) && dataNode.value === undefined) || (isNodeRef(dataNode) && ((dataNode.ref === "extern" && dataNode.value === "extern.data") || dataNode.ref === "@data.object"))) {
+                  Object.values(graph.edges_in[dataNode.id]).map(e => e.as).forEach(k => keys.push(k))
+                }
+              }
+              return outEdgeChain
+            })
+
+            return this.mapNode(
+            Object.fromEntries(Object.entries(descGraph)
+                .filter(e => e[1])
+                .map(e => 
+                     // all descendants will have been created already
+                     [e[0], this.accessor(this.fromNode(graph.id, e[0]), "metadata", nodeGraphId + e[0] + "-metadata", true)]
+                    )), (metadatas) => {
+                      return {values: Object.entries(metadatas)
+                          .map(metadataEntry => {
+                            const inEdge = descGraph[metadataEntry[0]][0];
+                            const inEdgeType = metadataEntry[1]?.parameters?.[inEdge.as];
+                            return inEdgeType?.type === "@flow.runnable" && inEdgeType.runnableParameters || []
+                          })
+                              .filter(v => v)
+                              .flat()} as T
+                    }, undefined, nodeGraphId + extraNodeGraphId, useExisting);
+          }
           const mnode = this.mapNode({bound: this.bindNode(
             {closure},
             ({closure: innerClosure}): AnyNode<unknown> => {
+              if(!argname) return;
               if(argname === "_argsdata") {
                 // Object.values(closure).map(argnode => argnode && this.outputs.get(argnode.id).add(mnode.id))
               }

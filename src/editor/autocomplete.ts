@@ -55,14 +55,13 @@ export default class AutocompleteList extends HTMLElement {
         overflow-x: hidden;
         background: #000;
         max-height: 16em;
-        width: 100%;
+        width: 256px;
       }
 
       .autocomplete-item {
         line-height: 1.2em;
         padding: .2em;
         padding-left: 0.4em;
-        width: 100%;
       }
 
       .autocomplete-item.selected, .autocomplete-item:hover {
