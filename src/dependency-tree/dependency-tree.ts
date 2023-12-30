@@ -749,10 +749,11 @@ export class NodysseusRuntime {
               ? this.valueMap(this.fromNodeInternal(graph, edgesIn.find(e => e.as === "recache").from, graphId, closure, useExisting), nodeGraphId + "-recachevalmap", useExisting)
               : this.constNode<false>(false, nodeGraphId + "-stateconst", useExisting);
 
-            return this.mapNode({
+            const outNode = this.mapNode({
               recache, 
               value: this.bindNode({value}, () => value, undefined, nodeGraphId + "-value", useExisting)
             }, ({value}) => wrapPromise(this.runNode(value)).value, ({recache: r1, value: previous}, {recache, value: next}) => !!recache || isNothing(outNode.value.read()) || outNode.value.read() === undefined, nodeGraphId + extraNodeGraphId)
+            return outNode;
           } else if (refNode.value === "extern.frame") {
             const varNode: VarNode<T> = this.varNode(1 as T, undefined, nodeGraphId, useExisting)
             const update = () => {
@@ -877,7 +878,7 @@ export class NodysseusRuntime {
       return sortedEdgesA.every((e, i) => compareObjects(e, sortedEdgesB[i]))
     }
 
-    const graphNodeNode: VarNode<{node: NodysseusNode, edgesIn: Array<Edge>, graph: Graph}> = 
+    const graphNodeNode: VarNode<{node: NodysseusNode, edgesIn: Array<Edge>, graph: Graph, previous: NodysseusNode | undefined}> = 
       this.varNode({
         graph,
         node: graph.nodes[node.id], 
@@ -888,19 +889,29 @@ export class NodysseusRuntime {
 
     nolib.no.runtime.addListener("graphchange", nodeGraphId + "-nodelistener", ({graph}) => {
       if(graph.id === staticGraphId) {
+        const oldval = graphNodeNode.value.read();
         const newval: {graph: Graph, node: NodysseusNode, edgesIn: Array<Edge>} = {
           graph,
           node: graph.nodes[node.id],
           edgesIn: graph.edges_in?.[node.id] 
             ? Object.values(graph.edges_in?.[node.id]) 
-            : Object.values<Edge>(graph.edges).filter((e: Edge) => e.to === node.id)
+            : Object.values<Edge>(graph.edges).filter((e: Edge) => e.to === node.id),
+          previous:  isNothing(oldval) ? undefined : oldval.node
         }
         graphNodeNode.set(newval);
       }
     })
 
     const ret: NodeOutputs<T,D,M> = this.mapNode({graphNodeNode}, ({graphNodeNode}) => {
-      if(this.scope.has(nodeGraphId + "value")) {
+      // if ref has changed, remove all current graph nodes
+      if(
+        graphNodeNode.previous && 
+        isNodeRef(graphNodeNode.previous) && 
+        isNodeRef(graphNodeNode.node) && 
+        graphNodeNode.node.ref !== graphNodeNode.previous?.ref &&
+        this.scope.has(nodeGraphId + "value")
+      ) {
+        console.log("removing all", graphNodeNode)
         this.scope.removeAll(nodeGraphId);
       }
       return wrapPromise(this.calcNode(graphNodeNode.graph, graphNodeNode.node, graphId, nodeGraphId, closure, graphNodeNode.edgesIn, false))
