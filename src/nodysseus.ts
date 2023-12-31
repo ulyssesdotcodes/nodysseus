@@ -1973,7 +1973,7 @@ const nolib: Record<string, any> & {no: {runtime: Runtime} & Record<string, any>
       resolve: true,
       //TODO: change this back to wrapPromiseAll version
       fn: (args) => Object.entries(args)
-          .reduce((acc, e) => acc * (e[1] as number), 1),
+          .reduce((acc, e) => acc * (typeof e[1] === "number" ? e[1] : 1), 1),
       _fn: (args) =>
         wrapPromiseAll(Object.entries(args)
           .sort((a, b) => a[0].localeCompare(b[0]))

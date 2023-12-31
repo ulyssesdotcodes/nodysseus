@@ -129,7 +129,7 @@ export const updateSimulationNodes: ha.Effecter<HyperappState, {
       sibling_mult * (256 + 32 * Math.log(Math.max(1, ancestor_count.get(n.id) * 0.25 + siblings?.length - 1) / Math.log(2)))
     )
     const calculatedY = addorundefined(
-      -(256 + 64 * Math.log(Math.max(1, ancestor_count.get(n.id) * 0.25 + (siblings?.length - 1) * 2)) / Math.log(2)),
+      -(256 + 128 * Math.log(Math.max(1, ancestor_count.get(n.id) * 0.25 + (siblings?.length - 1) * 2)) / Math.log(2)),
       // -(16 + 32 * (Math.max(1, siblings?.length * 2)) ),
       simulation_node_data.get(children_map.get(n.id))?.y
     )
@@ -276,10 +276,10 @@ export const d3subscription = (dispatch: ha.Dispatch<HyperappState>, props) => {
     selectedOffset: {x: 0, y: 0},
     simulation: hlib.d3.forceSimulation()
       .force("charge", hlib.d3.forceManyBody().strength(-64).distanceMax(1024))
-      .force("collide", hlib.d3.forceCollide(64))
+      .force("collide", hlib.d3.forceCollide(128))
       .force("links", hlib.d3
         .forceLink([])
-        .distance(l => l.distance ?? 128)
+        .distance(l => l.distance ?? 256)
         .strength(l => l.strength)
         .id((n: d3Node) => (n as d3NodeNode).node_id))
       .force("link_direction", hlib.d3.forceY().strength(0))

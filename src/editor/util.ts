@@ -1191,11 +1191,12 @@ export const graphEdgesIn = (graph: Graph, node: string) =>
 
 export const HTMLView = ({stateSignal}) => createElement(HTMLComponent, stateSignal.value);
 export const HTMLComponent = ({dom_type, props, children, text, ref}: {dom_type: string, props: {}, children: Array<any>, text?: string, ref?: (ref: HTMLElement) => void}) => {
+  ref && console.log("has ref", ref)
   return dom_type === "text_value"
     ? createElement("span", null, text)
     : createElement(
       dom_type, 
-      Object.fromEntries(Object.entries(props ?? {}).map(e => typeof e[1] === "function" ? [e[0], (event) => (e[1] as Function)({event})] : e)), 
+      Object.fromEntries(Object.entries(props ?? {}).map(e => typeof e[1] === "function" ? [e[0], (event) => (e[1] as Function)({event})] : e).concat(ref ? ["ref", (val) => (console.log("set ref", ref), ref)({ref: val})] : [])), 
       children?.map(c => c.el ?? c).filter(c => !!c).map(c => createElement(HTMLComponent, c)) ?? []
     )
 }
@@ -1252,14 +1253,14 @@ export const hlibLib = mergeLib(nolibLib, newLib({
   d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
   worker: undefined,
   workerPostMessage: {
-    args: ["runnable", "args", "transferrableObjects"],
-    fn: (runnable: FunctorRunnable, args: Map<string, any>, transferrableObjects?: Array<any>) => {
-    console.log("worker post message", {runnable, args, transferrableObjects})
+    args: ["runnable", "args", "transferableObjects"],
+    fn: (runnable: FunctorRunnable, args: Map<string, any>, transferableObjects?: Array<any>) => {
+    console.log("worker post message", {runnable, args, transferableObjects})
     wrapPromise(hlib.worker()).then(worker => worker.postMessage({
       graph: runnable.graph, 
       fn: runnable.fn, 
       env: {data: args}
-    }, transferrableObjects))
+    }, transferableObjects))
     }
   },
   domTypes,

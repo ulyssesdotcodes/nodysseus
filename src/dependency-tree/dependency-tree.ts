@@ -149,7 +149,7 @@ class Scope {
   }
   removeAll(id: string) {
     for(const k of this.nodes.keys()) {
-      if(k.startsWith(id) && k !== id + "-graphnode" && k !== id + "-boundNode") {
+      if(k && k.startsWith(id) && k !== id + "-graphnode" && k !== id + "-boundNode") {
         this.nodes.delete(k);
       }
     }
@@ -291,7 +291,7 @@ export class NodysseusRuntime {
     if(inputs) {
       let k;
       for(k in inputs) {
-        if(inputs[k]) {
+        if(inputs[k] && this.outputs.has(inputs[k].id)) {
           if(!this.outputs.get(inputs[k].id).has(id)) {
             changed = true;
             this.outputs.get(inputs[k].id).add(id)
@@ -528,7 +528,7 @@ export class NodysseusRuntime {
             args
           }, ({args, closure}) => wrapPromise(args).then(argsres => ({
             ...closure,
-            ...mapEntries(argsres, e => this.constNode(e[1], `${id}-${e[0]}-arg`, false) as AnyNode<S[keyof S]>), 
+            ...(argsres && mapEntries(argsres, e => this.constNode(e[1], `${id}-${e[0]}-arg`, false) as AnyNode<S[keyof S]>)), 
           } as AnyNodeMap<S>)).value, undefined, id + "-returnchained", useExisting)
   }
 
@@ -637,7 +637,14 @@ export class NodysseusRuntime {
               return this.runNode(fnNode);
             }) as T, undefined, nodeGraphId, useExisting);
           } else if(refNode.value === "extern.map") {
-            return this.mapNode(calculateInputs() as {fn: AnyNode<(mapArgs: {element: unknown, index: number}) => unknown>, array: AnyNode<Array<unknown>>}, ({fn, array}) => wrapPromiseAll(array.map((element, index) => fn({element, index}))), undefined, nodeGraphId, useExisting) as AnyNode<T>
+            return this.mapNode(
+              calculateInputs() as {fn: AnyNode<(mapArgs: {element: unknown, index: number}) => unknown>, array: AnyNode<Array<unknown>>}, 
+              ({fn, array}) => 
+                wrapPromiseAll((ArrayBuffer.isView(array) ? Array.from(array) : array).map((element, index) => fn({element, index}))), 
+              undefined, 
+              nodeGraphId, 
+              useExisting
+            ) as AnyNode<T>
           } else if(refNode.value === "extern.fold") {
             return this.mapNode(
               calculateInputs() as { 
@@ -695,11 +702,10 @@ export class NodysseusRuntime {
             const setNode = this.varNode<T>(undefined, undefined, nodeGraphId + "-refset", true);
             const scope = this.scope;
 
-            return this.mapNode({
-              initialNode,
+            return  wrapPromise(initialNode.value && this.runNode(initialNode)).then(initial => this.mapNode({
               persistNode,
               publishNode
-            }, ({initialNode: initial, persistNode: persist, publishNode: publish}) =>  
+            }, ({persistNode: persist, publishNode: publish}) =>  
              wrapPromise((persist && this.store.persist.get(nodeGraphId)) || initial).then(initial => {
               if(initial !== undefined) {
                 scope.get(nodeGraphId + "-refset").value.write(initial);
@@ -733,7 +739,7 @@ export class NodysseusRuntime {
                       return scope.get(nodeGraphId + "-refset").value.read();
                     }
                   }
-            }).value, () => false, nodeGraphId + extraNodeGraphId, useExisting) as AnyNode<T>
+            }).value, () => false, nodeGraphId + extraNodeGraphId, useExisting) as AnyNode<T>).value
           } else if(refNode.value === "extern.readReference" || refNode.value === "extern.memoryUnwrap") {
             return this.mapNode({ref: this.bindNode({reference: calculateInputs()["reference"]}, ({reference}) => (reference as {value: AnyNode<T>})?.value, undefined, nodeGraphId + "-bindreadref", useExisting)}, ({ref}) => {
               const result = this.runNode(ref) as T;
@@ -786,8 +792,53 @@ export class NodysseusRuntime {
               nodeGraphId, 
               useExisting
             ) as AnyNode<T>;
+          } else if(refNode.value === "extern.html_element") {
+            if(extraNodeGraphId === "metadata" && this.lib.domTypes) {
+                const el = this.lib.domTypes[node.value ?? "div"];
+                const defaultAttrs = this.lib.domTypes.defaults;
+                return this.constNode({
+                  values: Object.keys(this.lib.domTypes).filter(k => k !== "defaults"),
+                  parameters: {
+                    children: "@html.html_element",
+                    ref: {
+                      type: "@flow.runnable",
+                      runnableParameters: ["ref"]
+                    },
+                    props: {
+                      type: el.attrs && Object.fromEntries(
+                        el.attrs.concat(defaultAttrs[el.spec])
+                          .map(n => Array.isArray(n) ? n : [n, "any"])
+                          .concat([["style", {
+                            type:
+                              Object.fromEntries(
+                                defaultAttrs["css"]
+                                  .map(a => Array.isArray(a) ? a : [a, "any"]))
+                          }]])
+                          .concat([["onref", {
+                            type: "@flow.runnable",
+                            runnableParameters: ["ref"]
+                          }]]))
+                    }
+                  }
+                }, nodeGraphId + extraNodeGraphId, useExisting)
+            }
+            return this.mapNode(calculateInputs(), ({
+              dom_type,
+              children,
+              props,
+              value
+            }) => {
+              return {
+                dom_type: dom_type ?? node.value ?? "div",
+                children: (Array.isArray(children) ? children : [children]).filter(v => v)
+                  .map(child => typeof child === "string" ? {dom_type: "text_value", text: child}: child),
+                props: props ?? {},
+                value,
+                ref: typeof props?.onref === "function" ? ref => props.onref({ref}) : undefined
+              }
+            }, undefined, nodeGraphId + extraNodeGraphId, useExisting)
           } else {
-            const inputs = calculateInputs()
+            const inputs = calculateInputs();
             const systemValues: Array<[string, Result]> = ([
               ["__graphid", nolib.no.of(graphId)], 
               ["__graph_value", nolib.no.of(node.value)],
