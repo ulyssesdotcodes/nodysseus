@@ -225,7 +225,7 @@ export class NodysseusRuntime {
   private running: Map<string, number> = new Map();
   private dirtying: Set<string> = new Set();
 
-  constructor(public store: NodysseusStore, lib?: Lib){
+  constructor(public store: NodysseusStore, lib?: Lib, private event = "graphchange"){
     this.scope = new Scope();
     Object.entries(lib.data).forEach(e => {
       if(e[0] !== "runtime") {
@@ -981,7 +981,7 @@ export class NodysseusRuntime {
           : Object.values(graph.edges).filter((e: Edge) => e.to === node.id)
       }, compareGraphNodes, nodeGraphId + "-graphnode", true);
 
-    nolib.no.runtime.addListener("graphchange", nodeGraphId + "-nodelistener", ({graph}) => {
+    nolib.no.runtime.addListener(this.event, nodeGraphId + "-nodelistener", ({graph}) => {
       if(graph.id === staticGraphId) {
         const oldval = graphNodeNode.value.read();
         const newval: {graph: Graph, node: NodysseusNode, edgesIn: Array<Edge>} = {

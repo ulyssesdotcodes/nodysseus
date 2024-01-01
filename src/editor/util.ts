@@ -201,7 +201,9 @@ fetch(`json/${id.replaceAll("_", "-")}.json`)
             return Promise.all(
             isExportedGraph(g) ?
               Object.entries(g.state)
-                .map(e => hlib.runtime().store.persist.set(e[0], e[1]))
+                .map(e => {
+                  hlib.runtime().store.persist.set(e[0], e[1])
+                })
             : []).then(() => {
               nolib.no.runtime.add_ref(g["graphs"] ? g["graphs"] : g)
               console.log("got graph", g["graphs"], g["graphs"].find(g => g.id === id));
@@ -738,19 +740,18 @@ export const setCodeEditorText = ({
 
 }
 
-export const watchNode = async <T>(node: AnyNode<T>, fn: (t: T) => void): Promise<void> => {
+export const watchNode = async <T>(runtime: NodysseusRuntime, node: AnyNode<T>, fn: (t: T) => void): Promise<void> => {
   for await (const result of runtime.createWatch(node)){
     fn(result);
   }
 }
 
 export const selectedGraphOutputs = (graph: Graph, displayFn: (d: any) => void) => {
-  watchNodeOutputs(graph.id, graph.out ?? "out", "graphWatch", {display: displayFn, value: value => {}});
+  watchNodeOutputs(hlib.runtime(), graph.id, graph.out ?? "out", "graphWatch", {display: displayFn, value: value => {}});
 }
 
-export const watchNodeOutputs = (graph: string, selected: string, watchId: string, fns: Partial<Record<"display" | "metadata" | "value", (v: any) => void>>) => {
+export const watchNodeOutputs = (runtime: NodysseusRuntime, graph: string, selected: string, watchId: string, fns: Partial<Record<"display" | "metadata" | "value", (v: any) => void>>) => {
   const nodeId = "selectedVarNode-" + watchId;
-  const runtime = hlib.runtime();
   if(!runtime.scope.has(`selectedVarNode-${nodeId}`)) {
     const selectedVarNode = runtime.varNode({graph, id: selected}, undefined, nodeId, true);
     const selectedNode = runtime.runNodeNode(
@@ -761,13 +762,13 @@ export const watchNodeOutputs = (graph: string, selected: string, watchId: strin
             .then(node => node).value, undefined, nodeId + "-bindGraphNode"), nodeId + "-mapBoundGraphNode");
 
     if(fns.display){
-      watchNode(runtime.accessor(selectedNode, "display", nodeId + "-displayOutput", true), fns.display);
+      watchNode(runtime, runtime.accessor(selectedNode, "display", nodeId + "-displayOutput", true), fns.display);
     }
     if(fns.metadata){
-      watchNode(runtime.accessor(selectedNode, "metadata", nodeId + "-metadataOutput", true), fns.metadata);
+      watchNode(runtime, runtime.accessor(selectedNode, "metadata", nodeId + "-metadataOutput", true), fns.metadata);
     }
     if(fns.value){
-      watchNode(runtime.accessor(selectedNode, "value", nodeId + "-valueOutput", true), fns.value);
+      watchNode(runtime, runtime.accessor(selectedNode, "value", nodeId + "-valueOutput", true), fns.value);
     }
   } else {
     runtime.varNode({graph, id: selected}, undefined, nodeId, true);
@@ -799,7 +800,7 @@ export const infoWindowSubscription = (dispatch: ha.Dispatch<HyperappState>, {
 }) => {
   if(norun) return () => {};
   if(info_display_dispatch) {
-    watchNodeOutputs(graph, selected[0], "nodeWatch", {
+    watchNodeOutputs(hlib.infoRuntime(), graph, selected[0], "nodeWatch", {
       display: display =>
       info_display_dispatch({el: display?.dom_type ? display : display?.resultPanel?.dom_type ? display.resultPanel : {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: typeof display === "number" || typeof display === "string" ? display : ""}]}}),
     });
@@ -1216,10 +1217,11 @@ export const embeddedHTMLView = htmlId => {
   }
 }
 
-let runtime: NodysseusRuntime;
+let runtime: NodysseusRuntime, infoRuntime : NodysseusRuntime;
 
 export const hlibLib = mergeLib(nolibLib, newLib({
   runtime: () => runtime,
+  infoRuntime: () => infoRuntime,
   ha: { 
     middleware, 
     h: {
@@ -1236,7 +1238,7 @@ export const hlibLib = mergeLib(nolibLib, newLib({
       return;
     }
     try{
-      const result = wrapPromise(runtime.runGraphNode(graph, fn)).value;
+      const result = wrapPromise(infoRuntime.runGraphNode(graph, fn)).value;
       if(ispromise(result)){
         return result.catch(e => console.error(e))
       }
@@ -1248,7 +1250,8 @@ export const hlibLib = mergeLib(nolibLib, newLib({
   },
   initStore: (nodysseusStore) => {
     initStore(nodysseusStore);
-    runtime = new NodysseusRuntime(nodysseusStore, hlibLib);
+    runtime = new NodysseusRuntime(nodysseusStore, hlibLib, "graphchangeready");
+    infoRuntime = new NodysseusRuntime(nodysseusStore, hlibLib, "graphchange");
   },
   d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
   worker: undefined,

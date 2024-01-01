@@ -498,6 +498,12 @@ const runapp = (init, _lib) => {
           })))
           break
         }
+        case "graph_ctrl_enter": {
+          action = s => {
+            nolib.no.runtime.publish("graphchangeready", {graph: nolib.no.runtime.get_ref(s.editingGraphId)}, nolib)
+            return s
+          }
+        }
         default: {
           nolib.no.runtime.publish("keydown", {data: key_input}, hlibLib)
         }
