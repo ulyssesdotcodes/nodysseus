@@ -1090,6 +1090,7 @@ export class NodysseusRuntime {
           const updatedNode = this.scope.get(node.id) as MapNode<T, any>;
           if(!updatedNode) {
             if(this.running.has(node.id)) this.running.delete(node.id);
+            this.checkEvents();
             return;
           }
 
