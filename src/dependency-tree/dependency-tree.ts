@@ -316,7 +316,7 @@ export class NodysseusRuntime {
     const node = this.scope.get(id);
 
     const runIfClean = () => {
-      if(this.running.size === 0) {
+      if(!this.running.has(id)) {
         for(const output of outputs) {
           this.watches.get(id)?.forEach(fn => {
             fn(this.runNode(this.scope.get(id), output));
