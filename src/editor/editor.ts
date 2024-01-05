@@ -315,7 +315,6 @@ const runapp = (init, _lib) => {
               dispatch => {
                 nolib.no.runtime.publish("graphchangeready", {graph: nolib.no.runtime.get_ref(s.editingGraphId)}, nolib)
                 wrapPromise(hlib.run(hlib.runtime(), s.editingGraph, s.editingGraph.out ?? "out", "display")).then(nodeOutputs => hlib.runtime().run(nodeOutputs.display)).then(display => {
-                  console.log("norun display", display)
                   display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
                     el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
                   })
@@ -517,6 +516,7 @@ const runapp = (init, _lib) => {
           })))
           break
         }
+        case "editing_ctrl_enter": 
         case "graph_ctrl_enter": {
           action = s => {
             nolib.no.runtime.publish("graphchangeready", {graph: nolib.no.runtime.get_ref(s.editingGraphId)}, nolib)
@@ -552,7 +552,10 @@ const runapp = (init, _lib) => {
   })
 }
 
-const editor = async function(html_id, editingGraphId, lib, norun) {
+const editor = async function(html_id, editingGraphId, lib, inputNorun) {
+  // Has to happen before runtime is started
+  const url_params = new URLSearchParams(document.location.search)
+  const norun = inputNorun || url_params.get("norun") !== null;
   // TODO: rewrite this shitty code that deals with shareworker not being defined
   let sharedWorker, nodysseusStore, ports, initQueue
   if(typeof self.SharedWorker !== "undefined") {
@@ -600,7 +603,6 @@ const editor = async function(html_id, editingGraphId, lib, norun) {
 
   const graph_list = JSON.parse(localStorage.getItem("graph_list")) ?? []
   const hash_graph = window.location.hash.substring(1)
-  const url_params = new URLSearchParams(document.location.search)
   editingGraphId = editingGraphId ?? (hash_graph && hash_graph !== "" ? hash_graph : graph_list?.[0] ?? "helloWorld")
   const editingGraph: Graph = editingGraphId === "helloWorld"
     ? ((helloWorld as Graph).edges_in = Object.values(helloWorld.edges).reduce((acc: Record<string, Record<string, Edge>>, edge: Edge) => ({...acc, [edge.to]: {...(acc[edge.to] ?? {}), [edge.from]: edge}}), {}), await hlibLib.data.no.runtime.add_ref(helloWorld), helloWorld)
@@ -622,7 +624,7 @@ const editor = async function(html_id, editingGraphId, lib, norun) {
       y: document.getElementById(html_id).clientHeight
     },
     readonly: false, 
-    norun: norun || url_params.get("norun") !== null,
+    norun,
     hide_types: false,
     offset: {x: 0, y: 0},
     focused: false,

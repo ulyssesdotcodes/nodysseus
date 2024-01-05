@@ -81,6 +81,14 @@ export default class AutocompleteList extends HTMLElement {
     this.inputEl.setAttribute("autocapitalize", "off")
     this.inputEl.setAttribute("autocomplete", "off")
     this.inputEl.onkeydown = (evt: KeyboardEvent) => {
+      if(evt.ctrlKey) {
+        // if ctrl key is pressed, let the event propagate
+        if(evt.key === "Enter") {
+          // but set the option if it's ctrl + enter
+          this.selectOption(this.inputEl.value)
+        }
+        return;
+      }
       if(evt.key === "Tab") {
         evt.stopPropagation()
         this.selectOption(this.inputEl.value)
