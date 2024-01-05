@@ -300,7 +300,7 @@ svg {
 
 .node-info {
     flex-shrink: 0; 
-    z-index: 10;
+    z-index: 16;
     border: 1px solid white;
     background: #111;
     padding: .4em;
@@ -565,7 +565,7 @@ svg.edge-info.selected rect {
   position: relative;
   text-decoration: underline;
   cursor: pointer;
-  z-index: 34;
+  z-index: 12;
 }
 
 /* actions */
@@ -576,7 +576,7 @@ svg.edge-info.selected rect {
     cursor: pointer;
     display: flex;
     gap: 1em;
-    z-index: 32;
+    z-index: 12;
     flex-direction: row;
     flex-wrap: wrap;
 }
