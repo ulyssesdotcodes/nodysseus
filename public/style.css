@@ -408,6 +408,7 @@ svg {
     left: 32px;
     max-width: 33%;
     z-index: 6;
+    touch-action: none;
 }
 
 .result.error {
