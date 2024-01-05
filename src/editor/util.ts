@@ -456,6 +456,13 @@ export const UpdateResultDisplay = (state, resel) => {
   }
 }
 
+export const UpdateNodeMetadata: ha.Effecter<HyperappState, {editingGraph: Graph, node: NodysseusNode}> = (dispatch, {editingGraph, node}) =>
+  wrapPromise(hlib.run(editingGraph, node.id, "metadata"))
+    .then(metadata => dispatch(s => [
+      {...s, selectedMetadata: metadata, cachedMetadata: {...s.cachedMetadata, [node.id]: metadata}}, 
+      [CalculateSelectedNodeArgsEffect, {graph: editingGraph, node_id: node.id, cachedMetadata: {...s.cachedMetadata, [node.id]: metadata}, }]
+    ])).value
+
 export const UpdateNodeEffect: ha.Effecter<HyperappState, {editingGraph: Graph, node: NodysseusNode, norun: boolean}> = (dispatch, {editingGraph, node, norun}) => {
   nolib.no.runtime.updateGraph({graph: editingGraph, addedNodes: [node], lib: nolibLib})
     .then(graph => {
@@ -486,7 +493,7 @@ export const UpdateNodeEffect: ha.Effecter<HyperappState, {editingGraph: Graph, 
          } 
        })
 
-      dispatch(s => [norun ? s : {...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: node.id, cachedMetadata: s.cachedMetadata}]])
+      dispatch(s => [{...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: node.id, cachedMetadata: s.cachedMetadata}]])
     })
 }
 
@@ -526,19 +533,19 @@ export const keydownSubscription = (dispatch, options) => {
 }
 
 export const refresh_graph: ha.Effecter<HyperappState, any> = async (dispatch, {graph, graphChanged, norun, result_display_dispatch, result_background_display_dispatch, info_display_dispatch, code_editor, code_editor_nodeid}) => {
-  if(norun ?? false) {
-    return
+  if(norun) {
+    // TODO: implement norun stuff
+  } else {
+    selectedGraphOutputs(graph, display => {
+      // console.log("got display", display)
+        display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
+          el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
+        })
+        display && display.background && result_background_display_dispatch({
+          el: display?.background ? display.background : {dom_type: "div", props: {}, children: []},
+        })
+    });
   }
-
-  selectedGraphOutputs(graph, display => {
-    // console.log("got display", display)
-      display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
-        el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
-      })
-      display && display.background && result_background_display_dispatch({
-        el: display?.background ? display.background : {dom_type: "div", props: {}, children: []},
-      })
-  });
 }
 
 export const result_subscription = (dispatch, {editingGraphId, displayGraphId, norun}) => {
@@ -798,7 +805,6 @@ export const infoWindowSubscription = (dispatch: ha.Dispatch<HyperappState>, {
   cachedMetadata: Record<string, NodeMetadata>,
   norun: boolean
 }) => {
-  if(norun) return () => {};
   if(info_display_dispatch) {
     watchNodeOutputs(hlib.infoRuntime(), graph, selected[0], "nodeWatch", {
       display: display =>
@@ -1248,9 +1254,9 @@ export const hlibLib = mergeLib(nolibLib, newLib({
       console.error(e)
     }
   },
-  initStore: (nodysseusStore) => {
+  initStore: (nodysseusStore, autorun) => {
     initStore(nodysseusStore);
-    runtime = new NodysseusRuntime(nodysseusStore, hlibLib, "graphchangeready");
+    runtime = new NodysseusRuntime(nodysseusStore, hlibLib, autorun ? "graphchange" : "graphchangeready");
     infoRuntime = new NodysseusRuntime(nodysseusStore, hlibLib, "graphchange");
   },
   d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },

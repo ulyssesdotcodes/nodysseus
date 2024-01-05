@@ -8,7 +8,7 @@ import * as ha from "hyperapp"
 import Fuse from "fuse.js"
 import { create_randid, wrapPromise, base_graph } from "../util.js"
 import { Edge, Graph, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode } from "../types.js"
-import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, Paste, pzobj, refresh_graph, result_subscription, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect, displaySubscription, graphFromExample, HTMLComponent, HTMLView, embeddedHTMLView, infoWindowSubscription } from "./util.js"
+import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, Paste, pzobj, refresh_graph, result_subscription, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect, displaySubscription, graphFromExample, HTMLComponent, HTMLView, embeddedHTMLView, infoWindowSubscription, UpdateNodeMetadata, UpdateResultDisplay } from "./util.js"
 import { info_display, infoWindow } from "./components/infoWindow.js"
 import { init_code_editor } from "./components/codeEditor.js"
 import { d3Node, d3NodeNode, HyperappState, Levels } from "./types.js"
@@ -308,6 +308,25 @@ const runapp = (init, _lib) => {
               }
             ]
           }, [ha.text(s.norun ? "play_arrow" : "pause")]),
+          s.norun && ha.h("span", {
+            class: "material-symbols-outlined graph-action",
+            onclick: (s: HyperappState) => [
+              s,
+              dispatch => {
+                nolib.no.runtime.publish("graphchangeready", {graph: nolib.no.runtime.get_ref(s.editingGraphId)}, nolib)
+                wrapPromise(hlib.run(s.editingGraph, s.editingGraph.out ?? "out", "display")).then(nodeOutputs => hlib.runtime().run(nodeOutputs.display)).then(display => {
+                  console.log("norun display", display)
+                  display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
+                    el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
+                  })
+                  display && display.background && result_background_display_dispatch({
+                    el: display?.background ? display.background : {dom_type: "div", props: {}, children: []},
+                  })
+                })
+              },
+              [UpdateNodeMetadata, {editingGraph: s.editingGraph, node: s.editingGraph.nodes[s.selected[0]]}]
+            ]
+          }, [ha.text("resume")]),
           ha.h("span", {
             class: "material-symbols-outlined graph-action",
             name: "sync-outline", 
@@ -549,7 +568,7 @@ const editor = async function(html_id, editingGraphId, lib, norun) {
     }))
   }
   let worker: Worker, workerPromise
-  hlib.initStore(nodysseusStore)
+  hlib.initStore(nodysseusStore, !norun);
   hlib.worker = () => {
     if(!worker) {
       const workerMessageChannel = new MessageChannel()
