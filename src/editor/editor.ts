@@ -120,7 +120,7 @@ const refresh_custom_editor = () =>
     if(graph) {
       // TODO: combine with update_info
       const graph = nolib.no.runtime.get_ref("custom_editor")
-      wrapPromise(graph).then(graph => hlib.run(graph, graph.out, "display"))
+      wrapPromise(graph).then(graph => hlib.run(hlib.runtime(), graph, graph.out, "display"))
         .then(result => result && custom_editor_display_dispatch(() => ({el: result})))
     } else {
       custom_editor_display_dispatch(() => ({el: {dom_type: "div", props: {}, children: []}}))
@@ -200,7 +200,7 @@ const runapp = (init, _lib) => {
         ])
       })],
       [dispatch => wrapPromise(nolib.no.runtime.get_graph("custom_editor"))
-        .then(graph => graph && hlib.run(graph, "out"))
+        .then(graph => graph && hlib.run(hlib.runtime(), graph, "out"))
         .then(custom_editor_result => custom_editor_result && dispatch(s => ({...s, custom_editor_result})))],
       [UpdateSimulation, {...init, action: SimulationToHyperapp}],
       [dispatch => requestAnimationFrame(() => dispatch(SelectNode, {node_id: init.selected[0]}))],
@@ -314,7 +314,7 @@ const runapp = (init, _lib) => {
               s,
               dispatch => {
                 nolib.no.runtime.publish("graphchangeready", {graph: nolib.no.runtime.get_ref(s.editingGraphId)}, nolib)
-                wrapPromise(hlib.run(s.editingGraph, s.editingGraph.out ?? "out", "display")).then(nodeOutputs => hlib.runtime().run(nodeOutputs.display)).then(display => {
+                wrapPromise(hlib.run(hlib.runtime(), s.editingGraph, s.editingGraph.out ?? "out", "display")).then(nodeOutputs => hlib.runtime().run(nodeOutputs.display)).then(display => {
                   console.log("norun display", display)
                   display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
                     el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
@@ -333,7 +333,7 @@ const runapp = (init, _lib) => {
             onclick: (s: HyperappState) => [s, [dispatch => { 
               nolib.no.runtime.delete_cache() 
               // nolib.no.runtime.clearListeners();
-              hlib.run(s.editingGraph, s.editingGraph.out ?? "out", "value")  
+              hlib.run(hlib.runtime(), s.editingGraph, s.editingGraph.out ?? "out", "value")  
               refresh_custom_editor()
               requestAnimationFrame(() =>  dispatch(s => [s, [() => {
                 s.simulation.simulation.alpha(1) 

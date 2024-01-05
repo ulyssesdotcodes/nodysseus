@@ -457,7 +457,7 @@ export const UpdateResultDisplay = (state, resel) => {
 }
 
 export const UpdateNodeMetadata: ha.Effecter<HyperappState, {editingGraph: Graph, node: NodysseusNode}> = (dispatch, {editingGraph, node}) =>
-  wrapPromise(hlib.run(editingGraph, node.id, "metadata"))
+  wrapPromise(hlib.run(hlib.infoRuntime(), editingGraph, node.id, "metadata"))
     .then(metadata => dispatch(s => [
       {...s, selectedMetadata: metadata, cachedMetadata: {...s.cachedMetadata, [node.id]: metadata}}, 
       [CalculateSelectedNodeArgsEffect, {graph: editingGraph, node_id: node.id, cachedMetadata: {...s.cachedMetadata, [node.id]: metadata}, }]
@@ -467,7 +467,7 @@ export const UpdateNodeEffect: ha.Effecter<HyperappState, {editingGraph: Graph, 
   nolib.no.runtime.updateGraph({graph: editingGraph, addedNodes: [node], lib: nolibLib})
     .then(graph => {
       const edges_in = graphEdgesIn(graph, node.id)
-      const metadata = !norun && hlib.run(graph, node.id, "metadata")
+      const metadata = !norun && hlib.run(hlib.runtime(), graph, node.id, "metadata")
 
        wrapPromise(node_args(nolib, graph, node.id)).then(nodeargs => {
          if(edges_in.length === 1){ 
@@ -537,7 +537,6 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = async (dispatch, {
     // TODO: implement norun stuff
   } else {
     selectedGraphOutputs(graph, display => {
-      // console.log("got display", display)
         display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
           el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
         })
@@ -1238,13 +1237,13 @@ export const hlibLib = mergeLib(nolibLib, newLib({
   },
   scripts: { d3subscription, updateSimulationNodes, keydownSubscription, calculateLevels, listen, graph_subscription, save_graph},
   panzoom: pzobj,
-  run: (graph, fn, _output) => {
-    if(!runtime) {
+  run: (targetRuntime, graph, fn, _output) => {
+    if(!targetRuntime) {
       console.log("no runtime", graph, fn)
       return;
     }
     try{
-      const result = wrapPromise(infoRuntime.runGraphNode(graph, fn)).value;
+      const result = wrapPromise(targetRuntime.runGraphNode(graph, fn)).value;
       if(ispromise(result)){
         return result.catch(e => console.error(e))
       }
@@ -1256,8 +1255,8 @@ export const hlibLib = mergeLib(nolibLib, newLib({
   },
   initStore: (nodysseusStore, autorun) => {
     initStore(nodysseusStore);
-    runtime = new NodysseusRuntime(nodysseusStore, hlibLib, autorun ? "graphchange" : "graphchangeready");
-    infoRuntime = new NodysseusRuntime(nodysseusStore, hlibLib, "graphchange");
+    runtime = new NodysseusRuntime("runtime", nodysseusStore, hlibLib, autorun ? "graphchange" : "graphchangeready");
+    infoRuntime = new NodysseusRuntime("infoRuntime", nodysseusStore, hlibLib, "graphchange");
   },
   d3: { forceSimulation, forceManyBody, forceCenter, forceLink, forceRadial, forceY, forceCollide, forceX },
   worker: undefined,

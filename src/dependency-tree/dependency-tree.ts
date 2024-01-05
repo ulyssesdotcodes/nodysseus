@@ -225,7 +225,8 @@ export class NodysseusRuntime {
   private running: Map<string, number> = new Map();
   private dirtying: Set<string> = new Set();
 
-  constructor(public store: NodysseusStore, lib?: Lib, private event = "graphchange"){
+  // id is used so addListener works for multiple runtimes
+  constructor(private id, public store: NodysseusStore, lib?: Lib, private event = "graphchange"){
     this.scope = new Scope();
     Object.entries(lib.data).forEach(e => {
       if(e[0] !== "runtime") {
@@ -593,7 +594,7 @@ export class NodysseusRuntime {
               const result = resultNode && this.runNode(resultNode);
               subscriptions && Object.entries(subscriptions)
                 .forEach(kv => kv[1] &&
-                  nolib.no.runtime.addListener(kv[0], nodeGraphId, payload => {
+                  nolib.no.runtime.addListener(kv[0], this.id + nodeGraphId, payload => {
                   if(this.running.size > 0) this.eventQueue.push(() => kv[1](payload))
                   else kv[1](payload)
                 }, false, graphId, true, nolibLib))
@@ -711,7 +712,7 @@ export class NodysseusRuntime {
                 scope.get(nodeGraphId + "-refset").value.write(initial);
               }
               if(publish) {
-                nolib.no.runtime.addListener("argsupdate", nodeGraphId, ({id, changes, sourceId}) => {
+                nolib.no.runtime.addListener("argsupdate", this.id + nodeGraphId, ({id, changes, sourceId}) => {
                   if(id === nodeGraphId && sourceId !== clientId) {
                     (scope.get(nodeGraphId + "-refset") as VarNode<T>).set(changes.state)
                   }
@@ -981,7 +982,7 @@ export class NodysseusRuntime {
           : Object.values(graph.edges).filter((e: Edge) => e.to === node.id)
       }, compareGraphNodes, nodeGraphId + "-graphnode", true);
 
-    nolib.no.runtime.addListener(this.event, nodeGraphId + "-nodelistener", ({graph}) => {
+    nolib.no.runtime.addListener(this.event, this.id + nodeGraphId + "-nodelistener", ({graph}) => {
       if(graph.id === staticGraphId) {
         const oldval = graphNodeNode.value.read();
         const newval: {graph: Graph, node: NodysseusNode, edgesIn: Array<Edge>} = {
