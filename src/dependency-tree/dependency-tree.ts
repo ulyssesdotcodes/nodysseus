@@ -2148,7 +2148,7 @@ export class NodysseusRuntime {
         const updatedNode = this.scope.get(node.id) as MapNode<T, any>;
 
         const _inputPromises = [];
-        let output = {};
+        const output = {};
 
         // create keys array like this and use in object instead of kv pairs for performance
         const keys = Object.keys(updatedNode.inputs);
