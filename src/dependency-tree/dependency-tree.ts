@@ -694,8 +694,8 @@ export class NodysseusRuntime {
             }, undefined, nodeGraphId, useExisting) as AnyNode<T>;
           } else if (refNode.value === "extern.reference" || refNode.value === "extern.state") {
             const initialNode = edgesIn.find(e => e.as === "initial" || e.as === "value")?.from 
-              ? this.valueMap(this.fromNodeInternal(graph, edgesIn.find(e => e.as === "initial" || e.as === "value").from, graphId, closure, useExisting), nodeGraphId + "-initialvalmap", useExisting)
-              : this.constNode(undefined, nodeGraphId + "-refconst");
+              && this.valueMap(this.fromNodeInternal(graph, edgesIn.find(e => e.as === "initial" || e.as === "value").from, graphId, closure, useExisting), nodeGraphId + "-initialvalmap", useExisting);
+              
             const persistEdge = edgesIn.find(e => e.as === "persist");
             const persistNode = persistEdge && this.valueMap(this.fromNodeInternal(graph, persistEdge.from, graphId, closure, useExisting), nodeGraphId + "valmappersist", useExisting);
             const publishEdge = edgesIn.find(e => e.as === "publish");
@@ -703,11 +703,13 @@ export class NodysseusRuntime {
             const setNode = this.varNode<T>(undefined, undefined, nodeGraphId + "-refset", true);
             const scope = this.scope;
 
-            return  wrapPromise(initialNode.value && this.runNode(initialNode)).then(initial => this.mapNode({
+            return this.mapNode({
               persistNode,
               publishNode
             }, ({persistNode: persist, publishNode: publish}) =>  
-             wrapPromise((persist && this.store.persist.get(nodeGraphId)) || initial).then(initial => {
+             wrapPromise((persist && this.store.persist.get(nodeGraphId)))
+             .then(persisted => persisted ??  wrapPromise(initialNode && this.runNode(initialNode)))
+             .then(initial => {
               if(initial !== undefined) {
                 scope.get(nodeGraphId + "-refset").value.write(initial);
               }
@@ -740,7 +742,7 @@ export class NodysseusRuntime {
                       return scope.get(nodeGraphId + "-refset").value.read();
                     }
                   }
-            }).value, () => false, nodeGraphId + extraNodeGraphId, useExisting) as AnyNode<T>).value
+            }).value, () => false, nodeGraphId + extraNodeGraphId, useExisting) as AnyNode<T>
           } else if(refNode.value === "extern.readReference" || refNode.value === "extern.memoryUnwrap") {
             return this.mapNode({ref: this.bindNode({reference: calculateInputs()["reference"]}, ({reference}) => (reference as {value: AnyNode<T>})?.value, undefined, nodeGraphId + "-bindreadref", useExisting)}, ({ref}) => {
               const result = this.runNode(ref) as T;
