@@ -15,6 +15,7 @@
 import {
   ConstRunnable,
   Edge,
+  GenericHTMLElement,
   Graph,
   Lib,
   NodysseusNode,
@@ -293,6 +294,8 @@ export const handleError = (e: Error, nodeGraphId: string) => {
   nolib.no.runtime.publish("grapherror", error, nolibLib);
 };
 
+
+
 type NodeOutputs<T, D, M> = AnyNode<{
   value: AnyNode<T>;
   display: AnyNode<D>;
@@ -302,7 +305,7 @@ type NodeOutputs<T, D, M> = AnyNode<{
   nodeId: string;
 };
 
-type NodeOutputsU = NodeOutputs<unknown, unknown, unknown>;
+export type NodeOutputsU = NodeOutputs<unknown, unknown, unknown>;
 
 const isNodeOutputs = (
   value: NodeOutputsU | AnyNode<unknown>,
@@ -464,6 +467,9 @@ export class NodysseusRuntime {
   }
 
   private dirty(id: string, breakOnNode?: string) {
+    if(this.running.has(id)) {
+      throw new Error("infinite loop at node " + id)
+    }
     // logAfterLoad("dirty", id);
     const node = this.scope.get(id);
     if (isMapNode(node) || isBindNode(node)) {
@@ -830,20 +836,21 @@ export class NodysseusRuntime {
         args,
       },
       ({ args, closure }) =>
-        wrapPromise(args).then(
-          (argsres) =>
-            ({
-              ...closure,
-              ...(argsres &&
-                mapEntries(
-                  argsres,
-                  (e) =>
-                    this.constNode(e[1], `${id}-${e[0]}-arg`, false) as AnyNode<
-                      S[keyof S]
-                    >,
-                )),
-            }) as AnyNodeMap<S>,
-        ).value,
+        wrapPromise(args)
+          .then(
+            (argsres) =>
+              ({
+                ...closure,
+                ...(argsres &&
+                  mapEntries(
+                    argsres,
+                    (e) =>
+                      this.constNode(e[1], `${id}-${e[0]}-arg`, false) as AnyNode<
+                        S[keyof S]
+                      >,
+                  )),
+              }) as AnyNodeMap<S>,
+          ).value,
       undefined,
       id + "-returnchained",
       useExisting,
@@ -1478,7 +1485,7 @@ export class NodysseusRuntime {
                                   mutate: false,
                                   sourceId: clientId,
                                 },
-                                nolib,
+                                nolibLib,
                                 {},
                                 true,
                               );
@@ -1648,7 +1655,7 @@ export class NodysseusRuntime {
           if (extraNodeGraphId === "metadata" && this.lib.domTypes) {
             const el = this.lib.domTypes[node.value ?? "div"];
             const defaultAttrs = this.lib.domTypes.defaults;
-            return this.constNode(
+            return this.constNode<T>(
               {
                 values: Object.keys(this.lib.domTypes).filter(
                   (k) => k !== "defaults",
@@ -1690,14 +1697,15 @@ export class NodysseusRuntime {
                       ),
                   },
                 },
-              },
+              } as T,
               nodeGraphId + extraNodeGraphId,
               useExisting,
             );
           }
           return this.mapNode(
             calculateInputs(),
-            ({ dom_type, children, props, value }) => {
+            (el) => {
+              const { dom_type, children, props, value } = el as unknown as GenericHTMLElement;
               return {
                 dom_type: dom_type ?? node.value ?? "div",
                 children: (Array.isArray(children) ? children : [children])
@@ -1713,7 +1721,7 @@ export class NodysseusRuntime {
                   typeof props?.onref === "function"
                     ? (ref) => props.onref({ ref })
                     : undefined,
-              };
+              } as T;
             },
             undefined,
             nodeGraphId + extraNodeGraphId,
@@ -1844,7 +1852,7 @@ export class NodysseusRuntime {
                   [
                     e[0],
                     this.accessor(
-                      this.fromNode(graph.id, e[0]),
+                      this.fromNode(graph.id, e[0]) as NodeOutputsU,
                       "metadata",
                       nodeGraphId + e[0] + "-metadata",
                       true,
@@ -1860,7 +1868,7 @@ export class NodysseusRuntime {
                     const inEdge = descGraph[metadataEntry[0]][0];
                     const inEdgeType = walkEdges(
                       descGraph[metadataEntry[0]],
-                      metadataEntry[1]?.parameters,
+                      (metadataEntry[1] as any)?.parameters,
                     );
                     return (
                       (inEdgeType?.type === "@flow.runnable" &&
@@ -1876,6 +1884,9 @@ export class NodysseusRuntime {
             nodeGraphId + extraNodeGraphId,
             useExisting,
           );
+        }
+        if(!argname) {
+          return this.constNode(undefined, nodeGraphId + extraNodeGraphId, useExisting)
         }
         const mnode = this.mapNode(
           {
@@ -2014,7 +2025,7 @@ export class NodysseusRuntime {
       node: NodysseusNode;
       edgesIn: Array<Edge>;
       graph: Graph;
-      previous: NodysseusNode | undefined;
+      previous?: NodysseusNode;
     }> = this.varNode(
       {
         graph,
@@ -2038,6 +2049,7 @@ export class NodysseusRuntime {
             graph: Graph;
             node: NodysseusNode;
             edgesIn: Array<Edge>;
+            previous?: NodysseusNode;
           } = {
             graph,
             node: graph.nodes[node.id],
@@ -2190,7 +2202,7 @@ export class NodysseusRuntime {
               return result;
             }
 
-            const updatedNode = this.scope.get(node.id) as MapNode<T, any>;
+            const updatedNode = this.scope.get(node.id) as MapNode<T, any> | BindNode<T, any>;
             if (!updatedNode) {
               if (this.running.has(node.id)) this.running.delete(node.id);
               this.checkEvents();
@@ -2203,7 +2215,7 @@ export class NodysseusRuntime {
               updatedNode.isStale(prev, next)
             ) {
               const res = isBindNode(node)
-                ? chainNothing(updatedNode.fn, (fn) => fn(next)) ?? nothingValue
+                ? chainNothing(updatedNode.fn, (fn) => (fn as (s: any) => T)(next)) ?? nothingValue
                 : chainNothing(node.fn, (fn) =>
                     chainNothing(
                       typeof fn === "function" ? fn : fn.read(),

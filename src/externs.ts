@@ -14,8 +14,10 @@ const graphToFnBody = (graph: Graph, id: string, lib: Lib, graphid: string = "",
     .wrapPromise(graph)
     .then(fromGraph => {
       // hack for return to only get "value" input
-      while(fromGraph.nodes[id]?.ref === "return") {
+      let node = fromGraph.nodes[id];
+      while(isNodeRef(node) && node.ref === "return") {
         id = Object.values<Edge>(fromGraph.edges_in[id]).find((e: Edge) => e.as === "value").from
+        node = fromGraph.nodes[id];
       }
       const graph = util.ancestor_graph(id, fromGraph, lib.data)
       const graphArgs = new Set(Object.values(graph.nodes).filter<RefNode>(isNodeRef).filter(n => n.ref === "arg").map(a => a.value))

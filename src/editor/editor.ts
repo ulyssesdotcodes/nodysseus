@@ -8,7 +8,7 @@ import * as ha from "hyperapp"
 import Fuse from "fuse.js"
 import { create_randid, wrapPromise, base_graph } from "../util.js"
 import { Edge, Graph, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode } from "../types.js"
-import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, Paste, pzobj, refresh_graph, result_subscription, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect, displaySubscription, graphFromExample, HTMLComponent, HTMLView, embeddedHTMLView, infoWindowSubscription, UpdateNodeMetadata, UpdateResultDisplay } from "./util.js"
+import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, Paste, pzobj, refresh_graph, result_subscription, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect, graphFromExample, HTMLComponent, HTMLView, embeddedHTMLView, infoWindowSubscription, UpdateNodeMetadata, UpdateResultDisplay } from "./util.js"
 import { info_display, infoWindow } from "./components/infoWindow.js"
 import { init_code_editor } from "./components/codeEditor.js"
 import { d3Node, d3NodeNode, HyperappState, Levels } from "./types.js"
@@ -313,7 +313,7 @@ const runapp = (init, _lib) => {
             onclick: (s: HyperappState) => [
               s,
               dispatch => {
-                nolib.no.runtime.publish("graphchangeready", {graph: nolib.no.runtime.get_ref(s.editingGraphId)}, nolib)
+                nolib.no.runtime.publish("graphchangeready", {graph: nolib.no.runtime.get_ref(s.editingGraphId)}, nolibLib)
                 wrapPromise(hlib.run(hlib.runtime(), s.editingGraph, s.editingGraph.out ?? "out", "display")).then(nodeOutputs => hlib.runtime().run(nodeOutputs.display)).then(display => {
                   display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
                     el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
@@ -519,7 +519,7 @@ const runapp = (init, _lib) => {
         case "editing_ctrl_enter": 
         case "graph_ctrl_enter": {
           action = s => {
-            nolib.no.runtime.publish("graphchangeready", {graph: nolib.no.runtime.get_ref(s.editingGraphId)}, nolib)
+            nolib.no.runtime.publish("graphchangeready", {graph: nolib.no.runtime.get_ref(s.editingGraphId)}, nolibLib)
             return s
           }
         }

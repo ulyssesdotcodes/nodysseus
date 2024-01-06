@@ -34,7 +34,6 @@ export type ExportedGraph = {
   state: Record<string, unknown>
 }
 
-
 export const isGraph = (graph: any): graph is Graph => graph && Object.hasOwn(graph, "nodes")
 export const isEdgesInGraph = (graph: Graph | SavedGraph): graph is Graph => Object.hasOwn(graph, "edges_in")
 export const isExportedGraph = (g: ExportedGraph | unknown): g is ExportedGraph => g && (g as ExportedGraph).graphs.length > 0;
@@ -256,3 +255,14 @@ export class MemoryCache<T = any> {
 export type Memory<T> = MemoryState<T> | MemoryReference<T> | MemoryCache<T>;
 export const isMemory = (v: any) => v && typeof v === "object" && (v.__kind === "state" || v.__kind === "reference" || v.__kind === "cache")
 
+
+export type GenericHTMLElement = {
+  dom_type: string,
+  children: Array<GenericHTMLElement>,
+  props: {
+    onref: (el: any) => void
+  } & Record<string, unknown>,
+  value: any
+};
+export type GenericHTMLText =  {dom_type: "text_value", text: string};
+export type GenericHTMLNode = GenericHTMLElement | GenericHTMLText;

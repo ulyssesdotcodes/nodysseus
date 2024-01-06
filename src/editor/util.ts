@@ -20,7 +20,7 @@ import {linter, lintGutter} from "@codemirror/lint"
 import { EditorView } from "@codemirror/view"
 import { StateEffect } from "@codemirror/state"
 import { foldAll, unfoldCode, toggleFold, foldCode, foldInside, foldable, foldEffect, foldState, codeFolding } from "@codemirror/language"
-import { NodysseusRuntime, VarNode, AnyNode, isNothing } from "src/dependency-tree/dependency-tree.js"
+import { NodysseusRuntime, VarNode, AnyNode, isNothing, NodeOutputsU, UnwrapNode } from "src/dependency-tree/dependency-tree.js"
 import { pick, remap } from "./fp-util.js";
 
 function maybeEnable(state, other) {
@@ -533,7 +533,7 @@ export const keydownSubscription = (dispatch, options) => {
 }
 
 export const refresh_graph: ha.Effecter<HyperappState, any> = async (dispatch, {graph, graphChanged, norun, result_display_dispatch, result_background_display_dispatch, info_display_dispatch, code_editor, code_editor_nodeid}) => {
-  selectedGraphOutputs(graph, display => {
+  !norun && selectedGraphOutputs(graph, display => {
     display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
       el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
     })
@@ -544,6 +544,7 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = async (dispatch, {
 }
 
 export const result_subscription = (dispatch, {editingGraphId, displayGraphId, norun}) => {
+  if(norun) return;
   let animrun: false | number = false
 
   const error_listener = (error) =>
@@ -679,7 +680,7 @@ export const UpdateSelectedNodeMetadataEffect = (dispatch, {graph, id, cachedMet
   code_editor_nodeid_field: StateField<string>
   codeEditorExtensions: Compartment,
 }) => {
-  wrapPromise(runtime.runGraphNode(graph, id))
+  wrapPromise(runtime.runGraphNode<UnwrapNode<NodeOutputsU>>(graph, id))
     .then(nodeOutputs => runtime.run(nodeOutputs.metadata))
     .then(metadata =>  {
       wrapPromiseAll([
@@ -800,6 +801,9 @@ export const infoWindowSubscription = (dispatch: ha.Dispatch<HyperappState>, {
   cachedMetadata: Record<string, NodeMetadata>,
   norun: boolean
 }) => {
+  if(norun) {
+    return;
+  }
   if(info_display_dispatch) {
     watchNodeOutputs(hlib.infoRuntime(), graph, selected[0], "nodeWatch", {
       display: display =>
@@ -1192,13 +1196,13 @@ export const graphEdgesIn = (graph: Graph, node: string) =>
     : Object.values(graph.edges).filter(e => e.to === node)
 
 export const HTMLView = ({stateSignal}) => createElement(HTMLComponent, stateSignal.value);
-export const HTMLComponent = ({dom_type, props, children, text, ref}: {dom_type: string, props: {}, children: Array<any>, text?: string, ref?: (ref: HTMLElement) => void}) => {
+export const HTMLComponent = ({dom_type, props, children, text, ref}: {dom_type: string, props: {}, children: Array<any>, text?: string, ref?: (ref: {ref: HTMLElement}) => void}) => {
   ref && console.log("has ref", ref)
   return dom_type === "text_value"
     ? createElement("span", null, text)
     : createElement(
       dom_type, 
-      Object.fromEntries(Object.entries(props ?? {}).map(e => typeof e[1] === "function" ? [e[0], (event) => (e[1] as Function)({event})] : e).concat(ref ? ["ref", (val) => (console.log("set ref", ref), ref)({ref: val})] : [])), 
+      Object.fromEntries(Object.entries(props ?? {}).map(e => typeof e[1] === "function" ? [e[0], (event) => (e[1] as Function)({event})] : e).concat(ref ? ["ref", (val) => ref({ref: val})] : [])), 
       children?.map(c => c.el ?? c).filter(c => !!c).map(c => createElement(HTMLComponent, c)) ?? []
     )
 }
