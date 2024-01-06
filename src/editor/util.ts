@@ -1,5 +1,5 @@
-import { render, createElement } from 'preact';
-import {signal} from '@preact/signals';
+import { render, createElement } from "preact";
+import {signal} from "@preact/signals";
 
 import * as ha from "hyperapp"
 import { initStore, nodysseus_get, nolib, run, NodysseusError, nolibLib } from "../nodysseus.js"
@@ -21,7 +21,7 @@ import { EditorView } from "@codemirror/view"
 import { StateEffect } from "@codemirror/state"
 import { foldAll, unfoldCode, toggleFold, foldCode, foldInside, foldable, foldEffect, foldState, codeFolding } from "@codemirror/language"
 import { NodysseusRuntime, VarNode, AnyNode, isNothing } from "src/dependency-tree/dependency-tree.js"
-import { pick, remap } from './fp-util.js';
+import { pick, remap } from "./fp-util.js";
 
 function maybeEnable(state, other) {
   return state.field(foldState, false) ? other : other.concat(StateEffect.appendConfig.of(codeFolding()))
@@ -195,21 +195,21 @@ export const SetSelectedPositionStyleEffect = (_, payload: NodePositionArgs) => 
 }
 
 export const graphFromExample = (id: string): Promise<Graph> | Graph => 
-fetch(`json/${id.replaceAll("_", "-")}.json`)
-          .then(res => res.json())
-          .then((g: Graph | Array<Graph> | ExportedGraph) => {
-            return Promise.all(
-            isExportedGraph(g) ?
-              Object.entries(g.state)
-                .map(e => {
-                  hlib.runtime().store.persist.set(e[0], e[1])
-                })
-            : []).then(() => {
-              nolib.no.runtime.add_ref(g["graphs"] ? g["graphs"] : g)
-              console.log("got graph", g["graphs"], g["graphs"].find(g => g.id === id));
-              return g["graphs"].find(g => g.id === id)
+  fetch(`json/${id.replaceAll("_", "-")}.json`)
+    .then(res => res.json())
+    .then((g: Graph | Array<Graph> | ExportedGraph) => {
+      return Promise.all(
+        isExportedGraph(g) ?
+          Object.entries(g.state)
+            .map(e => {
+              hlib.runtime().store.persist.set(e[0], e[1])
             })
-          })
+          : []).then(() => {
+        nolib.no.runtime.add_ref(g["graphs"] ? g["graphs"] : g)
+        console.log("got graph", g["graphs"], g["graphs"].find(g => g.id === id));
+        return g["graphs"].find(g => g.id === id)
+      })
+    })
 
 
 export const ChangeEditingGraphId: ha.Effecter<HyperappState, {id: string, select_out: boolean, editingGraphId: string}> = (dispatch, {id, select_out, editingGraphId}) => {
@@ -239,8 +239,8 @@ export const ChangeEditingGraphId: ha.Effecter<HyperappState, {id: string, selec
               return [news, 
                 [UpdateSimulation, {...news, clear_simulation_cache: true}], 
                 select_out && [() => {setTimeout(() => {
-                    dispatch(SelectNode, {node_id: new_graph.out ?? "out"})
-                  }, 100)}, {}],
+                  dispatch(SelectNode, {node_id: new_graph.out ?? "out"})
+                }, 100)}, {}],
                 [refresh_graph, {...state, graph: new_graph}]
               ]
             })
@@ -397,9 +397,9 @@ export const SelectNode: ha.Action<HyperappState, {
   },
   [pzobj.effect, {...state, node_id: node_id}],
   [UpdateGraphDisplay, {...state, selected: [node_id]}],
-   [UpdateSelectedNodeMetadataEffect, remap(state, {
-     editingGraph: "graph",
-   }, pick(state, ["code_editor", "code_editor_nodeid_field", "code_editor_nodeid", "codeEditorExtensions", "cachedMetadata"], {id: node_id}))],
+  [UpdateSelectedNodeMetadataEffect, remap(state, {
+    editingGraph: "graph",
+  }, pick(state, ["code_editor", "code_editor_nodeid_field", "code_editor_nodeid", "codeEditorExtensions", "cachedMetadata"], {id: node_id}))],
   focus_property && [FocusEffect, {selector: `.node-info .${focus_property}`}],
   getNodes(state.simulation).find(n => isd3NodeNode(n) && n.node_id === node_id) 
       && [SetSelectedPositionStyleEffect, {
@@ -422,11 +422,11 @@ export const SelectNode: ha.Action<HyperappState, {
         : []
       }
     ]}}), {}],
-    // : [() => requestAnimationFrame(() => update_info_display({
-    //   fn: node_id, 
-    //   graph: state.editingGraph, 
-    //   args: {},
-    // }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== node_id, undefined, state.codeEditorExtensions)), {}],
+  // : [() => requestAnimationFrame(() => update_info_display({
+  //   fn: node_id, 
+  //   graph: state.editingGraph, 
+  //   args: {},
+  // }, state.info_display_dispatch, state.code_editor, state.code_editor_nodeid, state.selected[0] !== node_id, undefined, state.codeEditorExtensions)), {}],
   // [updateSelectedMetadata, {graph: state.editingGraph, nodeId: node_id}],
   state.selected[0] !== node_id && [() => nolib.no.runtime.publish("nodeselect", {data: {nodeId: node_id, graphId: state.editingGraphId}}, nolibLib), {}],
   [CalculateSelectedNodeArgsEffect, {graph: state.editingGraph, node_id, cachedMetadata: state.cachedMetadata}]
@@ -469,29 +469,29 @@ export const UpdateNodeEffect: ha.Effecter<HyperappState, {editingGraph: Graph, 
       const edges_in = graphEdgesIn(graph, node.id)
       const metadata = !norun && hlib.run(hlib.runtime(), graph, node.id, "metadata")
 
-       wrapPromise(node_args(nolib, graph, node.id)).then(nodeargs => {
-         if(edges_in.length === 1){ 
-           if(nodeargs.nodeArgs.filter(na => !na.additionalArg && !na.name.startsWith("_")).length === 1) {
-             const newAs = nodeargs.nodeArgs.find(a => !a.additionalArg).name
-             if(newAs !== edges_in[0].as) {
-               nolib.no.runtime.updateGraph({
-                 graph: editingGraph, 
-                 addedEdges: [{...edges_in[0], as: newAs}], 
-                 lib: hlibLib
-               })
-             }
-           } else if(nodeargs.nodeArgs.find(a => a.default)) {
-             const newAs = nodeargs.nodeArgs.find(a => a.default).name
-             if(newAs) {
-               nolib.no.runtime.updateGraph({
-                 graph: editingGraph, 
-                 addedEdges: [{...edges_in[0], as: newAs}], 
-                 lib: hlibLib
-               })
-             }
-           }
-         } 
-       })
+      wrapPromise(node_args(nolib, graph, node.id)).then(nodeargs => {
+        if(edges_in.length === 1){ 
+          if(nodeargs.nodeArgs.filter(na => !na.additionalArg && !na.name.startsWith("_")).length === 1) {
+            const newAs = nodeargs.nodeArgs.find(a => !a.additionalArg).name
+            if(newAs !== edges_in[0].as) {
+              nolib.no.runtime.updateGraph({
+                graph: editingGraph, 
+                addedEdges: [{...edges_in[0], as: newAs}], 
+                lib: hlibLib
+              })
+            }
+          } else if(nodeargs.nodeArgs.find(a => a.default)) {
+            const newAs = nodeargs.nodeArgs.find(a => a.default).name
+            if(newAs) {
+              nolib.no.runtime.updateGraph({
+                graph: editingGraph, 
+                addedEdges: [{...edges_in[0], as: newAs}], 
+                lib: hlibLib
+              })
+            }
+          }
+        } 
+      })
 
       dispatch(s => [{...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: node.id, cachedMetadata: s.cachedMetadata}]])
     })
@@ -534,12 +534,12 @@ export const keydownSubscription = (dispatch, options) => {
 
 export const refresh_graph: ha.Effecter<HyperappState, any> = async (dispatch, {graph, graphChanged, norun, result_display_dispatch, result_background_display_dispatch, info_display_dispatch, code_editor, code_editor_nodeid}) => {
   selectedGraphOutputs(graph, display => {
-      display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
-        el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
-      })
-      display && display.background && result_background_display_dispatch({
-        el: display?.background ? display.background : {dom_type: "div", props: {}, children: []},
-      })
+    display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
+      el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
+    })
+    display && display.background && result_background_display_dispatch({
+      el: display?.background ? display.background : {dom_type: "div", props: {}, children: []},
+    })
   });
 }
 
@@ -570,13 +570,13 @@ export const result_subscription = (dispatch, {editingGraphId, displayGraphId, n
             .then(graph => {
               dispatch(s => ({...s, editingGraph: graph, displayGraph: graph}))
             });
-              // let updateResult = () => {
-              //   animrun = requestAnimationFrame(updateResult);
-              //   // refresh_graph(dispatch, {graph, graphChanged: false, norun, info_display_dispatch, code_editor, code_editor_nodeid, result_background_display_dispatch, result_display_dispatch, argsNode, runNode})
-              // }
-              //
-              // animrun = requestAnimationFrame(updateResult)
-            // })
+          // let updateResult = () => {
+          //   animrun = requestAnimationFrame(updateResult);
+          //   // refresh_graph(dispatch, {graph, graphChanged: false, norun, info_display_dispatch, code_editor, code_editor_nodeid, result_background_display_dispatch, result_display_dispatch, argsNode, runNode})
+          // }
+          //
+          // animrun = requestAnimationFrame(updateResult)
+          // })
         }
       })
     } else {
@@ -679,22 +679,22 @@ export const UpdateSelectedNodeMetadataEffect = (dispatch, {graph, id, cachedMet
   code_editor_nodeid_field: StateField<string>
   codeEditorExtensions: Compartment,
 }) => {
-      wrapPromise(runtime.runGraphNode(graph, id))
-      .then(nodeOutputs => runtime.run(nodeOutputs.metadata))
-      .then(metadata =>  {
-        wrapPromiseAll([
-          metadata
-        ]).then(([metadata]) => {
+  wrapPromise(runtime.runGraphNode(graph, id))
+    .then(nodeOutputs => runtime.run(nodeOutputs.metadata))
+    .then(metadata =>  {
+      wrapPromiseAll([
+        metadata
+      ]).then(([metadata]) => {
           
-          cachedMetadata[graph.id + "/" + id] = metadata;
-          dispatch(s => [{...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: id, cachedMetadata}]])
+        cachedMetadata[graph.id + "/" + id] = metadata;
+        dispatch(s => [{...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: id, cachedMetadata}]])
 
-          requestAnimationFrame(() => {
-            const node = graph.nodes[id];
-            setCodeEditorText({codeEditor: code_editor, codeEditorNodeId: code_editor_nodeid, codeEditorNodeIdField: code_editor_nodeid_field, codeEditorExtensions, metadata, node})
-          })
+        requestAnimationFrame(() => {
+          const node = graph.nodes[id];
+          setCodeEditorText({codeEditor: code_editor, codeEditorNodeId: code_editor_nodeid, codeEditorNodeIdField: code_editor_nodeid_field, codeEditorExtensions, metadata, node})
         })
-      });
+      })
+    });
 }
 
 export const setCodeEditorText = ({
@@ -803,63 +803,63 @@ export const infoWindowSubscription = (dispatch: ha.Dispatch<HyperappState>, {
   if(info_display_dispatch) {
     watchNodeOutputs(hlib.infoRuntime(), graph, selected[0], "nodeWatch", {
       display: display =>
-      info_display_dispatch({el: display?.dom_type ? display : display?.resultPanel?.dom_type ? display.resultPanel : {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: typeof display === "number" || typeof display === "string" ? display : ""}]}}),
+        info_display_dispatch({el: display?.dom_type ? display : display?.resultPanel?.dom_type ? display.resultPanel : {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: typeof display === "number" || typeof display === "string" ? display : ""}]}}),
     });
   }
   // if(!selectedVarNode && info_display_dispatch) {
   //   const runtime = hlib.runtime();
   //   selectedVarNode = runtime.varNode({graph, id: selected[0]}, undefined, "selectedVarNode", true, false);
 
-    // const haselectedbind = runtime.bindNode(
-        // {selectedVarNode}, 
-        // ({selectedVarNode}) => 
-        //   wrapPromise(runtime.fromNode(selectedVarNode.graph, selectedVarNode.id))
-        //     .then(node => node).value, undefined, "hyperappselectedbind");
+  // const haselectedbind = runtime.bindNode(
+  // {selectedVarNode}, 
+  // ({selectedVarNode}) => 
+  //   wrapPromise(runtime.fromNode(selectedVarNode.graph, selectedVarNode.id))
+  //     .then(node => node).value, undefined, "hyperappselectedbind");
 
-    // const hadisplaymap =       runtime.mapNode({
-    //   bound: runtime.bindNode({
-    //     bound: haselectedbind
-    //   }, ({bound}) => wrapPromise(runtime.runNode(bound)).then(b => b.display).value, undefined, "hyperappdisplaybind")
-    // }, ({bound}) => runtime.runNode(bound), undefined, "hyperappdisplaymap");
+  // const hadisplaymap =       runtime.mapNode({
+  //   bound: runtime.bindNode({
+  //     bound: haselectedbind
+  //   }, ({bound}) => wrapPromise(runtime.runNode(bound)).then(b => b.display).value, undefined, "hyperappdisplaybind")
+  // }, ({bound}) => runtime.runNode(bound), undefined, "hyperappdisplaymap");
 
-    // runtime.createWatch(hadisplaymap, display => {
-    //   wrapPromise(display).then(display => 
-    //   info_display_dispatch({el: display?.dom_type ? display : display?.resultPanel?.dom_type ? display.resultPanel : {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: typeof display === "number" || typeof display === "string" ? display : ""}]}}));
-    // });
-    //
-    // dispatch(s => ({
-    //   ...s,
-    //   selectedVarNode
-    // }));
-    //
-    // const hametadatamap =       
-    //   runtime.mapNode({
-    //   bound: runtime.bindNode({
-    //     bound: haselectedbind
-    //   }, ({bound}) => wrapPromise(runtime.runNode(bound)).then(b => b.metadata).value, undefined, "hyperappmetadatabind")
-    // }, ({bound}) => runtime.runNode(bound), undefined, "hyperappmetadatamap");
-    //
-    // runtime.addWatchFn(hametadatamap, metadata => {
-    //   const selected = selectedVarNode.value.read();
-    //   if(!isNothing(selected)) {
-    //     wrapPromiseAll([
-    //       metadata,
-    //       runtime.store.refs.get(selected.graph)
-    //     ]).then(([metadata, graph]) => {
-    //       cachedMetadata[selected.graph + "/" + selected.id] = metadata;
-    //       
-    //       dispatch(s => [{...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: selected.id, cachedMetadata}]])
-    //       requestAnimationFrame(() => {
-    //         const node = graph.nodes[selected.id];
-    //       })
-    //     })
-    //     }
-    // });
+  // runtime.createWatch(hadisplaymap, display => {
+  //   wrapPromise(display).then(display => 
+  //   info_display_dispatch({el: display?.dom_type ? display : display?.resultPanel?.dom_type ? display.resultPanel : {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: typeof display === "number" || typeof display === "string" ? display : ""}]}}));
+  // });
+  //
+  // dispatch(s => ({
+  //   ...s,
+  //   selectedVarNode
+  // }));
+  //
+  // const hametadatamap =       
+  //   runtime.mapNode({
+  //   bound: runtime.bindNode({
+  //     bound: haselectedbind
+  //   }, ({bound}) => wrapPromise(runtime.runNode(bound)).then(b => b.metadata).value, undefined, "hyperappmetadatabind")
+  // }, ({bound}) => runtime.runNode(bound), undefined, "hyperappmetadatamap");
+  //
+  // runtime.addWatchFn(hametadatamap, metadata => {
+  //   const selected = selectedVarNode.value.read();
+  //   if(!isNothing(selected)) {
+  //     wrapPromiseAll([
+  //       metadata,
+  //       runtime.store.refs.get(selected.graph)
+  //     ]).then(([metadata, graph]) => {
+  //       cachedMetadata[selected.graph + "/" + selected.id] = metadata;
+  //       
+  //       dispatch(s => [{...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: selected.id, cachedMetadata}]])
+  //       requestAnimationFrame(() => {
+  //         const node = graph.nodes[selected.id];
+  //       })
+  //     })
+  //     }
+  // });
 
-    // dispatch(s => ({
-    //   ...s,
-    //   selectedVarNode
-    // }));
+  // dispatch(s => ({
+  //   ...s,
+  //   selectedVarNode
+  // }));
   // }
 
   // if(selectedVarNode) {
@@ -1070,11 +1070,11 @@ const parseTypedArg = (value: string): [string, TypedArg] => {
 
 export const CalculateSelectedNodeArgsEffect: ha.Effecter<HyperappState, {graph: Graph, node_id: string, cachedMetadata: Record<string, NodeMetadata>}> = 
   (dispatch, {graph, node_id, cachedMetadata}) => 
-   wrapPromise(node_args(nolib, graph, node_id, cachedMetadata)).then(nodeArgs => dispatch(s => ({
-     ...s,
-     selectedNodeArgs: nodeArgs.nodeArgs,
-     selectedNodeEdgeLabels: nodeArgs.nodeOutArgs?.map(a => a.name) ?? []
-   }))).value
+    wrapPromise(node_args(nolib, graph, node_id, cachedMetadata)).then(nodeArgs => dispatch(s => ({
+      ...s,
+      selectedNodeArgs: nodeArgs.nodeArgs,
+      selectedNodeEdgeLabels: nodeArgs.nodeOutArgs?.map(a => a.name) ?? []
+    }))).value
 
 export const node_args = (nolib: Record<string, any>, graph: Graph, node_id: string, cachedMetadata: Record<string, NodeMetadata> = {}): {nodeArgs: Array<NodeArg>, nodeOutArgs?: Array<NodeArg>} | Promise<{nodeArgs: Array<NodeArg>, nodeOutArgs?: Array<NodeArg>}> => {
   const node = nolib.no.runtime.get_node(graph, node_id)
@@ -1205,7 +1205,7 @@ export const HTMLComponent = ({dom_type, props, children, text, ref}: {dom_type:
 
 export const embeddedHTMLView = htmlId => {
   let displayState: {el: {dom_type: string, props: {}, children: Array<any>, text?: string, lifecycle?: Record<string, Function>}} = {el: {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: ""}]}};
-  let stateSignal = signal(displayState.el);
+  const stateSignal = signal(displayState.el);
   const el = document.getElementById(htmlId);
   render(createElement(HTMLView, {stateSignal}), el)
   return (evt, payload) => {
@@ -1259,12 +1259,12 @@ export const hlibLib = mergeLib(nolibLib, newLib({
   workerPostMessage: {
     args: ["runnable", "args", "transferableObjects"],
     fn: (runnable: FunctorRunnable, args: Map<string, any>, transferableObjects?: Array<any>) => {
-    console.log("worker post message", {runnable, args, transferableObjects})
-    wrapPromise(hlib.worker()).then(worker => worker.postMessage({
-      graph: runnable.graph, 
-      fn: runnable.fn, 
-      env: {data: args}
-    }, transferableObjects))
+      console.log("worker post message", {runnable, args, transferableObjects})
+      wrapPromise(hlib.worker()).then(worker => worker.postMessage({
+        graph: runnable.graph, 
+        fn: runnable.fn, 
+        env: {data: args}
+      }, transferableObjects))
     }
   },
   domTypes,

@@ -47,14 +47,14 @@ const processMessage = e => {
             // console.log("worker output", val);
           }
         }
-      // console.log("run node", runNode)
+        // console.log("run node", runNode)
 
-      wrapPromise(runtime.run(runNode.value))
-        .then(async value => {
-          await value(e.data.env.data)
-          // console.log("first worker value", );
-          run("value");
-        })
+        wrapPromise(runtime.run(runNode.value))
+          .then(async value => {
+            await value(e.data.env.data)
+            // console.log("first worker value", );
+            run("value");
+          })
       }
     ).catch(e => console.error(e))
   } catch (e) { console.error(e) }

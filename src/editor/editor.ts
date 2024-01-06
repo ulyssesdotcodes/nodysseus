@@ -1,5 +1,5 @@
-import { render, createElement } from 'preact';
-import {signal} from '@preact/signals';
+import { render, createElement } from "preact";
+import {signal} from "@preact/signals";
 
 
 import { resfetch, nolib, run, initStore, NodysseusError, nolibLib } from "../nodysseus.js"
@@ -385,10 +385,10 @@ const runapp = (init, _lib) => {
       [select_node_subscription, {}],
       result_display_dispatch && result_background_display_dispatch && [result_subscription, {editingGraphId: s.editingGraphId, displayGraphId: s.displayGraphId, norun: s.norun}],
       listen("hashchange", (state, evt) => 
-            !evt.newURL.includes("#")
+        !evt.newURL.includes("#")
               || state.editingGraphId === evt.newURL.substring(evt.newURL.indexOf("#") + 1) 
               || evt.newURL.substring(evt.newURL.indexOf("#") + 1).length === 0 
-                 ? state : [state, [ChangeEditingGraphId, {id: evt.newURL.substring(evt.newURL.indexOf("#") + 1), editingGraphId: state.editingGraphId}]]),
+          ? state : [state, [ChangeEditingGraphId, {id: evt.newURL.substring(evt.newURL.indexOf("#") + 1), editingGraphId: state.editingGraphId}]]),
       [keydownSubscription, {action: (state: HyperappState, payload) => {
         if(document.getElementById("node-editor-result").contains(payload.target)) {
           return [state]
