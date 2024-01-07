@@ -533,7 +533,7 @@ export const keydownSubscription = (dispatch, options) => {
 }
 
 export const refresh_graph: ha.Effecter<HyperappState, any> = async (dispatch, {graph, graphChanged, norun, result_display_dispatch, result_background_display_dispatch, info_display_dispatch, code_editor, code_editor_nodeid}) => {
-  !norun && selectedGraphOutputs(graph, display => {
+  selectedGraphOutputs(graph, display => {
     display && (!display.background || display.resultPanel) && result_display_dispatch(UpdateResultDisplay, {
       el: display?.resultPanel ? display.resultPanel : display?.dom_type ? display : {dom_type: "div", props: {}, children: []},
     })
@@ -544,7 +544,6 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = async (dispatch, {
 }
 
 export const result_subscription = (dispatch, {editingGraphId, displayGraphId, norun}) => {
-  if(norun) return;
   let animrun: false | number = false
 
   const error_listener = (error) =>
@@ -801,9 +800,6 @@ export const infoWindowSubscription = (dispatch: ha.Dispatch<HyperappState>, {
   cachedMetadata: Record<string, NodeMetadata>,
   norun: boolean
 }) => {
-  if(norun) {
-    return;
-  }
   if(info_display_dispatch) {
     watchNodeOutputs(hlib.infoRuntime(), graph, selected[0], "nodeWatch", {
       display: display =>

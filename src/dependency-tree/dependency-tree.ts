@@ -467,9 +467,6 @@ export class NodysseusRuntime {
   }
 
   private dirty(id: string, breakOnNode?: string) {
-    if(this.running.has(id)) {
-      throw new Error("infinite loop at node " + id)
-    }
     // logAfterLoad("dirty", id);
     const node = this.scope.get(id);
     if (isMapNode(node) || isBindNode(node)) {
