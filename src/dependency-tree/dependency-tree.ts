@@ -1634,7 +1634,7 @@ export class NodysseusRuntime {
             this.bindNode(
               { closure, fn: fnNode },
               ({ closure, fn }) =>
-                (console.log("inside", fnNode), this).mapNode(
+                this.mapNode(
                   {...closure},
                   (closure) =>
                     create_fn(
