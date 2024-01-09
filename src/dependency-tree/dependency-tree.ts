@@ -1622,20 +1622,27 @@ export class NodysseusRuntime {
             useExisting,
           ) as AnyNode<T>;
         } else if (refNode.value === "extern.create_fn") {
-          const idEdge = edgesIn.find((e) => e.as === "fn");
+          const idEdge = edgesIn.find((e) => e.as === "function" || e.as === "runnable" || e.as === "fn");
+          const fnNode = this.fromNodeInternal(
+            graph,
+            idEdge.from,
+            graphId,
+            closure,
+            useExisting,
+          );
           return this.runNodeNode(
             this.bindNode(
-              { closure },
-              ({ closure }) =>
-                this.mapNode(
-                  closure,
+              { closure, fn: fnNode },
+              ({ closure, fn }) =>
+                (console.log("inside", fnNode), this).mapNode(
+                  {...closure},
                   (closure) =>
                     create_fn(
                       graph,
                       idEdge.from,
                       nodeGraphId,
                       closure,
-                      nolibLib,
+                      this.lib,
                     ),
                   undefined,
                   appendGraphId(nodeGraphId, "-generatedFn"),

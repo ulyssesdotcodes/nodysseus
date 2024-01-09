@@ -1903,7 +1903,7 @@ const nolib: Record<string, any> & {
       },
     },
     create_fn: {
-      args: ["runnable", "_lib"],
+      args: ["function", "_lib"],
       fn: externs.create_fn,
     },
     parseValue: {

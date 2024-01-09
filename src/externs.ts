@@ -1,6 +1,7 @@
 import * as util from "./util.js"
 import {NodysseusError, nodysseus_get, nolibLib, resolve_args} from "./nodysseus.js"
 import { NodysseusNode, Graph, Args, ConstRunnable, Env, isArgs, isEnv, isNodeRef, isValue, Lib, RefNode, Edge, TypedArg, MemoryCache, Memory } from "./types.js"
+import get from "just-safe-get"
 
 
 const nodeinputs = (node: NodysseusNode, graph: Graph) => Object.values(graph.edges_in[node.id] ?? []).map(edge => ({edge, node: graph.nodes[edge.from]}))
@@ -8,7 +9,7 @@ const nodefn = (node, graphid, args) => isNodeRef(node) && node.ref === "arg" ? 
 const createArg = (name) => `fnargs["${argToProperties(name)}"] ?? baseArgs["${name}"]` 
 const argToProperties = (arg: string) => arg.includes(".") ? arg.split(".").join("\"]?.[\"") : arg
 
-const graphToFnBody = (graph: Graph, id: string, lib: Lib, graphid: string = "", args: Record<string, unknown>) => 
+const graphToFnBody = (graph: Graph, id: string, lib: Record<string, any>, graphid: string = "", args: Record<string, unknown>) => 
   !graph || !id ? undefined
   : util
     .wrapPromise(graph)
@@ -19,7 +20,7 @@ const graphToFnBody = (graph: Graph, id: string, lib: Lib, graphid: string = "",
         id = Object.values<Edge>(fromGraph.edges_in[id]).find((e: Edge) => e.as === "value").from
         node = fromGraph.nodes[id];
       }
-      const graph = util.ancestor_graph(id, fromGraph, lib.data)
+      const graph = util.ancestor_graph(id, fromGraph, lib)
       const graphArgs = new Set(Object.values(graph.nodes).filter<RefNode>(isNodeRef).filter(n => n.ref === "arg").map(a => a.value))
       return {graph,graphArgs}
     }).then(({graph, graphArgs}: {graph: Graph, graphArgs: Set<string>}) => {
@@ -35,7 +36,7 @@ const graphToFnBody = (graph: Graph, id: string, lib: Lib, graphid: string = "",
             if(isNodeRef(n) && n.ref === "arg") {
               return
             }
-            return isNodeRef(n) ? lib.data.no.runtime.get_ref(n.ref) : n
+            return isNodeRef(n) ? lib.no.runtime.get_ref(n.ref) : n
           }).then(noderef => {
             if(!noderef) return
 
@@ -74,7 +75,7 @@ const graphToFnBody = (graph: Graph, id: string, lib: Lib, graphid: string = "",
                   `
             } else if(noderef.ref == "extern") {
               _extern_args[graphid + n.id] = {}
-              const extern = nodysseus_get(lib.data, noderef.value, lib)
+              const extern = get(lib, noderef.value)
               const varset = []
               const externArgs: Array<[string, TypedArg]>  = Array.isArray(extern.args) ? extern.args.map(rawa =>
                 [rawa.includes(":") ? rawa.substring(0, rawa.indexOf(":")) : rawa, "any"]) : 
@@ -192,16 +193,16 @@ export const parseValue = (value: any) => {
 }
 
 
-export const create_fn = (graph: Graph, id: string, graphId: string,  args: Record<string, unknown>, lib: Lib) => {
+export const create_fn = (graph: Graph, id: string, graphId: string,  args: Record<string, unknown>, lib: Record<string, any>) => {
   const {baseArgs, text, _extern_args} = graphToFnBody(graph, id, lib, graphId.replaceAll("/", "_").replaceAll("@", "").replaceAll(".", "_"), args)
   const fn = new Function("fnargs", "baseArgs", "_extern_args", "import_util", "_lib", text)
 
   return (args: Env | Args | Record<string, unknown>, ...rest) => {
     try {
-      return fn(args ? isArgs(args) ? (resolve_args(args, lib, {}) as {value: any}).value : isEnv(args) ? (resolve_args(args.data, lib, {}) as {value: any}).value : Object.hasOwn(baseArgs, "args") ? {args: [args, ...rest]} : args : {}, baseArgs, _extern_args, util, lib.data)
+      return fn(args ?? {}, baseArgs, _extern_args, util, lib)
     } catch (e) {
       console.error(e)
-      throw new NodysseusError(nodysseus_get(args, "__graphid", lib).value + "/" + id, `Error in generated function ${e.message} ${text}`)
+      throw new NodysseusError(nodysseus_get(args, "__graphid", util.newLib(lib)).value + "/" + id, `Error in generated function ${e.message} ${text}`)
     }
   }
 }

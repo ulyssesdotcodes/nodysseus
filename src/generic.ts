@@ -666,8 +666,8 @@ const generic = {
       "ref": "extern",
       "value": "extern.new_array"
     },
-    "@js.create_fn": {
-      "id": "@js.create_fn",
+    "@js.compileFunction": {
+      "id": "@js.compileFunction",
       "ref": "extern",
       "category": "js",
       "value": "extern.create_fn"
