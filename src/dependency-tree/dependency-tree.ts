@@ -1672,7 +1672,7 @@ export class NodysseusRuntime {
                   },
                   props: {
                     type:
-                      el.attrs &&
+                      el?.attrs &&
                       Object.fromEntries(
                         el.attrs
                           .concat(defaultAttrs[el.spec])
