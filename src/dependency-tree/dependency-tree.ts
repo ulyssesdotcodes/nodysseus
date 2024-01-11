@@ -947,7 +947,7 @@ export class NodysseusRuntime {
                   chainedscope,
                   true,
                 ),
-                nodeGraphId + `-inputsvalmap-${e.as}`,
+                nodeGraphId + `-inputsvalmap-${e.as}-${extraNodeGraphId}`,
                 useExisting,
               ),
             ]),
@@ -962,7 +962,7 @@ export class NodysseusRuntime {
                   argsEdge.from,
                   graphId,
                   closure,
-                  useExisting,
+                  true,
                 ),
                 nodeGraphId + "-subargsvalmap",
                 useExisting,
@@ -996,8 +996,11 @@ export class NodysseusRuntime {
             dependencies: inputs["dependencies"],
             subscribe,
           },
-          ({ subscribe: subscriptions, result }) => {
-            result = result ??  (resultNode && this.runNode(resultNode));
+          ({ subscribe: subscriptions, result, dependencies }) => {
+            result = inputs["dependencies"] ? resultNode && this.runNode(resultNode) : result;
+            if(dependencies) {
+              console.log("dependencies?", dependencies, result)
+            }
             subscriptions &&
               Object.entries(subscriptions).forEach(
                 (kv) =>
@@ -1020,7 +1023,7 @@ export class NodysseusRuntime {
           },
           ({ dependencies: previous }, { dependencies: next }) =>
             (isNothingOrUndefined(previous) && isNothingOrUndefined(next)) ||
-            !compareObjects(previous, next),
+            !((console.log("comp objs", previous, next, compareObjects(previous, next)), compareObjects)(previous, next)),
           nodeGraphId + extraNodeGraphId,
           useExisting,
         ) as AnyNode<T>;
@@ -2246,6 +2249,8 @@ export class NodysseusRuntime {
             }
 
             result = updatedNode.value.read();
+            return wrapPromise(result).then(result => {
+            updatedNode.isDirty.write(false);
 
             if (this.watches.has(node.id) && current !== result) {
               this.watches
@@ -2253,14 +2258,13 @@ export class NodysseusRuntime {
                 .forEach((fn) => wrapPromise(result).then(fn));
             }
 
-            updatedNode.isDirty.write(false);
-
             if (this.running.get(node.id) === 1) {
               this.running.delete(node.id);
               this.checkEvents();
             } else this.running.set(node.id, this.running.get(node.id) - 1);
 
             return result;
+            }).value;
           }).value
       );
     }
