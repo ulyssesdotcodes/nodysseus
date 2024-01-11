@@ -444,8 +444,6 @@ export class NodysseusRuntime {
           });
         }
         this.rerun.delete(id);
-      } else {
-        this.rerun.set(id, requestAnimationFrame(runIfClean));
       }
     };
 
@@ -751,7 +749,7 @@ export class NodysseusRuntime {
         edgesIn.map((e) => [
           e.as,
           this.valueMap(
-            this.fromNodeInternal(graph, e.from, graphId, closure, useExisting),
+            this.fromNodeInternal(graph, e.from, graphId, closure, true),
             nodeGraphId + `-valmapinput${e.as}`,
             useExisting,
           ),
@@ -947,7 +945,7 @@ export class NodysseusRuntime {
                   e.from,
                   graphId,
                   chainedscope,
-                  useExisting,
+                  true,
                 ),
                 nodeGraphId + `-inputsvalmap-${e.as}`,
                 useExisting,
@@ -994,12 +992,12 @@ export class NodysseusRuntime {
 
         const output = this.mapNode(
           {
-            result: inputs["dependencies"] ? undefined : resultNode,
+            result: resultNode,
             dependencies: inputs["dependencies"],
             subscribe,
           },
-          ({ subscribe: subscriptions, dependencies }) => {
-            const result = resultNode && this.runNode(resultNode);
+          ({ subscribe: subscriptions, result }) => {
+            result = result ??  (resultNode && this.runNode(resultNode));
             subscriptions &&
               Object.entries(subscriptions).forEach(
                 (kv) =>
@@ -1606,7 +1604,10 @@ export class NodysseusRuntime {
         } else if (refNode.value === "extern.nodeDisplay") {
           return wrapPromise(
             this.fromNodeInternal(graph, node.value, graphId, closure, true),
-            (e) => handleError(e, nodeGraphId),
+            (e) => {
+              console.log("error in nodeDisplay", e)
+              handleError(e, nodeGraphId)
+            },
           ).then((targetNode) =>
             this.accessor(
               targetNode,
@@ -1666,10 +1667,6 @@ export class NodysseusRuntime {
                 ),
                 parameters: {
                   children: "@html.html_element",
-                  ref: {
-                    type: "@flow.runnable",
-                    runnableParameters: ["ref"],
-                  },
                   props: {
                     type:
                       el?.attrs &&
@@ -2256,11 +2253,13 @@ export class NodysseusRuntime {
                 .forEach((fn) => wrapPromise(result).then(fn));
             }
 
+            updatedNode.isDirty.write(false);
+
             if (this.running.get(node.id) === 1) {
-              updatedNode.isDirty.write(false);
               this.running.delete(node.id);
               this.checkEvents();
             } else this.running.set(node.id, this.running.get(node.id) - 1);
+
             return result;
           }).value
       );

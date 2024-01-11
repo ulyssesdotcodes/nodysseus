@@ -8,7 +8,7 @@ import * as ha from "hyperapp"
 import Fuse from "fuse.js"
 import { create_randid, wrapPromise, base_graph } from "../util.js"
 import { Edge, Graph, isNodeGraph, isNodeRef, isNodeValue, NodysseusNode } from "../types.js"
-import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, Paste, pzobj, refresh_graph, result_subscription, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect, graphFromExample, HTMLComponent, HTMLView, embeddedHTMLView, infoWindowSubscription, UpdateNodeMetadata, UpdateResultDisplay } from "./util.js"
+import { calculateLevels, ChangeEditingGraphId, Copy, CustomDOMEvent, DeleteNode, EXAMPLES, ExpandContract, FocusEffect, graph_subscription, hlib, hlibLib, isNodysseusError, keydownSubscription, listen, Paste, pzobj, refresh_graph, result_subscription, SaveGraph, SelectNode, select_node_subscription, UpdateNodeEffect, graphFromExample, HTMLComponent, HTMLView, embeddedHTMLView, infoWindowSubscription, UpdateNodeMetadata, UpdateResultDisplay, CreateNode } from "./util.js"
 import { info_display, infoWindow } from "./components/infoWindow.js"
 import { init_code_editor } from "./components/codeEditor.js"
 import { d3Node, d3NodeNode, HyperappState, Levels } from "./types.js"
@@ -489,6 +489,11 @@ const runapp = (init, _lib) => {
         case "graph_i": {
           //TODO: type out inputs
           break
+        }
+        case "graph_o": {
+          const link = getLinks(s.simulation).filter(link => (link.source as d3NodeNode).node_id == s.selected[0] || (link.target as d3NodeNode).node_id === s.selected[0])[0];
+          action = link && [CreateNode, {node: {}, child: link.target.node_id, parent: {from: link.source.node_id, to: link.target.node_id, as: link.as}}]
+          break;
         }
         case "graph_esc": {
           action = [state => [
