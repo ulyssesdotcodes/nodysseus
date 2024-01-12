@@ -971,6 +971,7 @@ export class NodysseusRuntime {
               useExisting,
             )
           : closure;
+
         const subscribeEdge = edgesIn.find((e) => e.as === "subscribe");
         const subscribe =
           subscribeEdge &&
@@ -997,10 +998,6 @@ export class NodysseusRuntime {
             subscribe,
           },
           ({ subscribe: subscriptions, result, dependencies }) => {
-            result = inputs["dependencies"] ? resultNode && this.runNode(resultNode) : result;
-            if(dependencies) {
-              console.log("dependencies?", dependencies, result)
-            }
             subscriptions &&
               Object.entries(subscriptions).forEach(
                 (kv) =>
@@ -2235,7 +2232,7 @@ export class NodysseusRuntime {
                 updatedNode.value.write(r as T);
                 updatedNode.isDirty.write(false);
 
-                if (this.watches.has(node.id) && current !== result) {
+                if (this.watches.has(node.id)) {
                   this.watches
                     .get(node.id)
                     .forEach((fn) => wrapPromise(r).then(fn));
@@ -2250,20 +2247,14 @@ export class NodysseusRuntime {
 
             result = updatedNode.value.read();
             return wrapPromise(result).then(result => {
-            updatedNode.isDirty.write(false);
+              updatedNode.isDirty.write(false);
 
-            if (this.watches.has(node.id) && current !== result) {
-              this.watches
-                .get(node.id)
-                .forEach((fn) => wrapPromise(result).then(fn));
-            }
+              if (this.running.get(node.id) === 1) {
+                this.running.delete(node.id);
+                this.checkEvents();
+              } else this.running.set(node.id, this.running.get(node.id) - 1);
 
-            if (this.running.get(node.id) === 1) {
-              this.running.delete(node.id);
-              this.checkEvents();
-            } else this.running.set(node.id, this.running.get(node.id) - 1);
-
-            return result;
+              return result;
             }).value;
           }).value
       );
