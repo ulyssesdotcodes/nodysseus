@@ -17,7 +17,7 @@ import { d3subscription, getLinks, getNodes, insert_node_el, link_el, node_el, U
 import Autocomplete from "./autocomplete.js"
 import { automergeRefStore } from "./automergeStore.js"
 import helloWorld from "../initgraph.json"
-import { middleware, run_h} from "./hyperapp.js"
+import { run_h} from "./hyperapp.js"
 
 
 customElements.define("autocomplete-list", Autocomplete)
@@ -109,7 +109,6 @@ const result_display = html_id => embeddedHTMLView(html_id + "-result")
 const custom_editor_display = html_id => ha.app({
   init: {el: {dom_type: "div", props: {}, children: []}},
   node: document.getElementById(html_id + "-custom-editor-display"),
-  dispatch: middleware,
   view: s => {
     return run_h(s.el, ["@js.script"])
   }
@@ -207,7 +206,6 @@ const runapp = (init, _lib) => {
       [init_code_editor, {html_id: init.html_id}],
       [dispatch => wrapPromise(nolib.no.runtime.ref_graphs()).then(rgs => dispatch(s => ({...s, refGraphs: rgs.concat(EXAMPLES)})))],
     ],
-    dispatch: middleware,
     view: (s: HyperappState) => ha.h("div", { id: s.html_id }, [
       ha.h("div", {id: `${init.html_id}-background-result`}),
       ha.h("svg", {id: `${s.html_id}-editor`, width: s.dimensions.x, height: s.dimensions.y}, [

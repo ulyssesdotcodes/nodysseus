@@ -18,7 +18,6 @@ const display = await nolib.no.runtime.run({
 
 
 ha.app({
-  dispatch: middleware,
   init: {hDisplay: display},
   view: ({hDisplay}) => run_h(hDisplay),
   node: document.getElementById("graph-display")

@@ -2,6 +2,8 @@ import { render, createElement } from "preact";
 import {signal} from "@preact/signals";
 
 import * as ha from "hyperapp"
+import justGet from "just-safe-get"
+import justSet from "just-safe-set"
 import { initStore, nodysseus_get, nolib, run, NodysseusError, nolibLib } from "../nodysseus.js"
 import { Args, compareNodes, ConstRunnable, Edge, ExportedGraph, FullyTypedArg, FunctorRunnable, getRunnableGraphId, Graph, isArgs, isExportedGraph, isNodeGraph, isNodeRef, isRunnable, isTypedArg, NodeArg, NodeMetadata, NodysseusNode, RefNode, TypedArg } from "../types.js"
 import { base_node, base_graph, ispromise, wrapPromise, expand_node, contract_node, ancestor_graph, create_randid, compareObjects, newLib, bfs, mergeLib, wrapPromiseAll } from "../util.js"
@@ -11,7 +13,7 @@ import { d3Link, d3Node, d3NodeNode, HyperappState, isd3NodeNode, Levels, Nodyss
 import { UpdateGraphDisplay, UpdateSimulation, d3subscription, updateSimulationNodes, getNodes, getLinks } from "./components/graphDisplay.js"
 import { parser } from "@lezer/javascript"
 import {v4 as uuid} from "uuid"
-import { middleware, runh, hlib as hyperapplib } from "./hyperapp.js"
+import { runh } from "./hyperapp.js"
 import domTypes from "../html-dom-types.json"
 import { Compartment, EditorSelection, StateEffectType, StateField } from "@codemirror/state"
 import { json, jsonParseLinter } from "@codemirror/lang-json"
@@ -22,6 +24,13 @@ import { StateEffect } from "@codemirror/state"
 import { foldAll, unfoldCode, toggleFold, foldCode, foldInside, foldable, foldEffect, foldState, codeFolding } from "@codemirror/language"
 import { NodysseusRuntime, VarNode, AnyNode, isNothing, NodeOutputsU, UnwrapNode } from "src/dependency-tree/dependency-tree.js"
 import { pick, remap } from "./fp-util.js";
+import * as acorn from "acorn";
+import jsx from "acorn-jsx";
+import {Node as ESTreeNode} from "estree"
+import { visit } from "ast-types";
+import { JSXIdentifierKind } from "ast-types/gen/kinds.js";
+
+const JsxParser = acorn.Parser.extend(jsx())
 
 function maybeEnable(state, other) {
   return state.field(foldState, false) ? other : other.concat(StateEffect.appendConfig.of(codeFolding()))
@@ -1224,7 +1233,6 @@ export const hlibLib = mergeLib(nolibLib, newLib({
   runtime: () => runtime,
   infoRuntime: () => infoRuntime,
   ha: { 
-    middleware, 
     h: {
       args: ["dom_type", "props", "children", "memo"], 
       fn: (dom_type, props, children, usememo) => usememo ? ha.memo(runh, {d: dom_type, p: props, c: children}) : runh({d: dom_type, p: props, c: children})}, 
@@ -1269,7 +1277,150 @@ export const hlibLib = mergeLib(nolibLib, newLib({
   },
   domTypes,
   extern: {
-    ...hyperapplib.data.extern,
+    jsx: {
+      outputs: {
+        metadata: true
+      },
+      args: ["jsx", "__graph_value", "_node_args", "_output"],
+      fn: (jsx: string, graphvalue: string, _node_args: Record<string, unknown>, _output: string) => {
+        const nodes = JsxParser.parse(jsx ?? graphvalue, {ecmaVersion: "latest"}) as ESTreeNode
+
+        const parameters = {}
+
+        if(_output === "metadata") {
+          visit(nodes, {
+            visitJSXIdentifier(path) {
+              if(!Object.hasOwn(domTypes, path.node.name)) {
+                parameters[path.node.name] = "@flow.runnable"
+              }
+              return false
+            },
+            visitIdentifier(path) {
+              parameters[path.node.name] = "any"
+              return false
+            }
+          })
+          return {
+            parameters,
+            codeEditor: {
+              language: "javascript",
+              editorText: jsx ?? graphvalue
+            }
+          }
+        }
+
+        const outputPath = []
+        const output = {}
+
+
+        const runnableEls: Record<string, FunctorRunnable> = {}
+
+        visit(nodes, {
+          visitLiteral(path) {
+            justSet(output, outputPath,  path.node.value)
+            outputPath.pop()
+            return false
+          },
+          visitJSXIdentifier(path) {
+            if(path.name === "name" && path.parentPath.parentPath.name === "attributes") {
+              outputPath.push(path.node.name)
+            }
+            this.traverse(path)
+          },
+          visitIdentifier(path) {
+            const argval = _node_args[path.node.name]
+            const propsIdx = outputPath.lastIndexOf("props")
+            const childrenIdx = outputPath.lastIndexOf("children")
+            justSet(output, outputPath, !argval ? argval : Array.isArray(argval) ? [...argval] : typeof argval === "object" ? {...argval} : childrenIdx > propsIdx ? {dom_type: "text_value", text: `${argval}`} : argval)
+            outputPath.pop()
+            return false
+          },
+          visitJSXExpressionContainer(path) {
+            if(path.parentPath.name === "children") {
+              if(path.name === 0) {
+                outputPath.push("children")
+              }
+
+              outputPath.push(path.name)
+            }
+            this.traverse(path)
+            if(path.parentPath.name === "children") {
+              // popped by the identifier
+              //console.log("jsxexpression popped idx", outputPath.pop());
+              if(path.name === path.parent.node.children.length - 1) {
+                outputPath.pop()
+              }
+            }
+          },
+          visitJSXOpeningElement(path) {
+            outputPath.push("props"),
+            this.traverse(path)
+            outputPath.pop()
+          },
+          visitJSXAttribute(path) {
+            this.traverse(path)
+            if(path.node.name.name === "style") {
+              const attrPath = outputPath.concat([path.node.name.name])
+              const styleString = justGet(output, attrPath)
+              justSet(output, attrPath, Object.fromEntries(styleString.split(";").map(v => v.split(":").map(v => v.trim()))))
+            }
+          },
+          visitJSXElement(path) {
+            const node = path.node
+            if(path.parentPath.name === "children") {
+              if(path.name === 0) {
+                outputPath.push("children")
+              }
+
+              outputPath.push(path.name)
+            }
+
+            const nodeName = (node.openingElement.name as JSXIdentifierKind).name
+
+            justSet(output, outputPath, {})
+
+            if(Object.hasOwn(_node_args, nodeName)) {
+              runnableEls[outputPath.join(".")] = _node_args[nodeName] 
+            } else {
+              justSet(output, outputPath.join(".") + ".dom_type", nodeName)
+            }
+
+            const outputNode = justGet(output, outputPath)
+            outputNode.props = {}
+            outputNode.children = []
+            this.traverse(path)
+            if(path.parentPath.name === "children") {
+              outputPath.pop()
+              if(path.name === path.parent.node.children.length - 1) {
+                outputPath.pop()
+              }
+            }
+          },
+          visitJSXText(path) {
+            if(path.parentPath.name === "children" && path.name === 0) {
+              outputPath.push("children")
+            }
+            const node = path.node
+            justSet(output, outputPath.join(".") + `.${path.name}`, {dom_type: "text_value", text: node.raw})
+            if(path.parentPath.name === "children") {
+              if(path.name === path.parent.node.children.length - 1) {
+                outputPath.pop()
+              }
+            }
+            return false
+          }
+        })
+
+        return wrapPromiseAll(
+          Object.entries(runnableEls)
+            .map(e => wrapPromise(e[1](justGet(output, e[0]).props))
+                 .then(el => el 
+                   ? justSet(output, e[0], el) 
+                   : justSet(output, e[0] + ".dom_type", "div"))))
+          .then(() => (console.log("returning output", output), output))
+          .value
+      }
+    }
   }
 }))
 

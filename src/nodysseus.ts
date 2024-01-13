@@ -1860,7 +1860,7 @@ const nolib: Record<string, any> & {
     ap: {
       rawArgs: true,
       promiseArgs: true,
-      args: ["fn", "args", "run", "_lib"],
+      args: ["fn", "args", "run", "isScope", "_lib"],
       fn: (fn, args, run, lib: Lib) => {
         const resolveRunnable = (runnable) =>
           (isRunnable(runnable) && isConstRunnable(runnable)
@@ -2925,7 +2925,6 @@ const nolib: Record<string, any> & {
     import_module: {
       args: ["url", "__graph_value", "_lib"],
       fn: (url, graphvalue) => {
-        console.log("importing", url, graphvalue);
         const urlval = url || graphvalue;
         if (!urlval) return;
         const stateid = `__jsimport:${urlval}`;

@@ -58,6 +58,7 @@ import {
 import get from "just-safe-get";
 import generic from "../generic.js";
 import { create_fn } from "src/externs.js";
+import { json } from "@codemirror/lang-json";
 
 type RUnknown = Record<string, unknown>;
 
@@ -1103,6 +1104,7 @@ export class NodysseusRuntime {
             useExisting,
             false,
           );
+
           const chainedClosure = this.mergeClosure(
             closure,
             fnArgs,
@@ -1291,7 +1293,7 @@ export class NodysseusRuntime {
                 nodeGraphId + "-apargs",
                 useExisting,
               )
-            : closure;
+            : this.mapNode({chainedClosure}, ({chainedClosure}) => Object.fromEntries(Object.entries(chainedClosure).map(e => [e[0], e[1].value.read()])), undefined, nodeGraphId + "-apargs", useExisting);
 
           return this.mapNode(
             {
@@ -1747,13 +1749,13 @@ export class NodysseusRuntime {
                       .map((e) => [e[0], nolib.no.of(e[1])])
                       .concat(systemValues) as Array<[string, Result]>,
                   ),
-                  newEnv(new Map()),
+                  newEnv(new Map(), extraNodeGraphId),
                   newLib(this.lib),
                   {},
                 ),
               ).then((r) => (r as NonErrorResult).value).value,
             undefined,
-            nodeGraphId,
+            nodeGraphId + extraNodeGraphId,
             useExisting,
           );
         }
