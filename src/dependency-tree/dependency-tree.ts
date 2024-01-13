@@ -351,7 +351,7 @@ export class NodysseusRuntime {
   }
 
   public graphExport(graphid) {
-    return Object.keys(generic.nodes).includes(graphid)
+    return graphid === "arg" || Object.keys(generic.nodes).includes(graphid)
       ? ([] as Array<Graph>)
       : wrapPromise(this.store.refs.get(graphid)).then((graph) =>
           wrapPromiseAll(
