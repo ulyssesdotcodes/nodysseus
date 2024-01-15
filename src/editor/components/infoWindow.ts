@@ -363,6 +363,9 @@ export const infoWindow = ({
               "div",
               {
                 id: `${html_id}-code-editor`,
+                class: {
+                  "code-editor-displayed": !!metadata?.codeEditor
+                }
               },
               [],
             ),

@@ -387,11 +387,7 @@ svg {
   display: none;
 }
 
-.js-script #node-editor-code-editor {
-  display: block;
-}
-
-.html-jsx #node-editor-code-editor {
+#node-editor-code-editor.code-editor-displayed  {
   display: block;
 }
 

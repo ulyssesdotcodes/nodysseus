@@ -119,6 +119,7 @@ import jsx from "acorn-jsx";
 import { Node as ESTreeNode } from "estree";
 import { visit } from "ast-types";
 import { JSXIdentifierKind } from "ast-types/gen/kinds.js";
+import { markdown } from "@codemirror/lang-markdown";
 
 const JsxParser = acorn.Parser.extend(jsx());
 
@@ -1294,6 +1295,8 @@ export const setCodeEditorText = ({
           [
             metadata?.codeEditor?.language === "json"
               ? [jsonlang, linter(jsonParseLinter()), lintGutter()]
+              : metadata?.codeEditor?.language === "markdown"
+              ? markdown()
               : javascript(),
             metadata?.codeEditor?.onChange &&
               EditorView.updateListener.of(
