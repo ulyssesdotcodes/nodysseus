@@ -937,7 +937,7 @@ export class NodysseusRuntime {
 
         const inputs = Object.fromEntries(
           edgesIn
-            .filter((e) => e.as !== "args" && e.as !== "subscribe")
+            .filter((e) => e.as !== "args" && e.as !== "subscribe" && e.as !== "dependencies")
             .map((e) => [
               e.as,
               this.valueMap(
@@ -992,13 +992,29 @@ export class NodysseusRuntime {
           inputs[extraNodeGraphId] ??
           (extraNodeGraphId === "value" && inputs["display"]);
 
+        const dependenciesEdge = extraNodeGraphId === "value" && edgesIn.find((e) => e.as === "dependencies");
+        const dependencies =
+          dependenciesEdge &&
+          this.valueMap(
+            this.fromNodeInternal(
+              graph,
+              dependenciesEdge.from,
+              graphId,
+              chainedscope,
+              useExisting,
+            ),
+            nodeGraphId + extraNodeGraphId + "-depvalmap",
+            useExisting,
+          );
+
         const output = this.mapNode(
           {
-            result: resultNode,
-            dependencies: inputs["dependencies"],
+            result: dependencies ? undefined : resultNode,
+            dependencies: dependencies || undefined,
             subscribe,
           },
           ({ subscribe: subscriptions, result, dependencies }) => {
+            result = dependencies ? this.runNode(resultNode) : result;
             subscriptions &&
               Object.entries(subscriptions).forEach(
                 (kv) =>
@@ -1019,9 +1035,9 @@ export class NodysseusRuntime {
               );
             return result;
           },
-          ({ dependencies: previous }, { dependencies: next }) =>
+          extraNodeGraphId === "value" && dependencies ? (({ dependencies: previous }, { dependencies: next }) =>
             (isNothingOrUndefined(previous) && isNothingOrUndefined(next)) ||
-            !((console.log("comp objs", previous, next, compareObjects(previous, next)), compareObjects)(previous, next)),
+            !((console.log("comp objs", previous, next, compareObjects(previous, next)), compareObjects)(previous, next))) : undefined,
           nodeGraphId + extraNodeGraphId,
           useExisting,
         ) as AnyNode<T>;
@@ -1423,8 +1439,9 @@ export class NodysseusRuntime {
                     wrapPromise(initialNode && this.runNode(initialNode)),
                 )
                 .then((initial) => {
+                  const setNode = scope.get(nodeGraphId + "-refset");
                   if (initial !== undefined) {
-                    scope.get(nodeGraphId + "-refset").value.write(initial);
+                    setNode.value.write(initial);
                   }
                   if (publish) {
                     nolib.no.runtime.addListener(
@@ -1454,21 +1471,20 @@ export class NodysseusRuntime {
                       }
                     : {
                         get value() {
-                          return scope.get(
-                            nodeGraphId + "-refset",
-                          ) as VarNode<T>;
+                          return setNode as VarNode<T>;
                         },
                         set: (t: { value: T } | T) => {
                           if (
                             (t as { value: T })?.value !== undefined ||
                             t !== undefined
                           ) {
+                            const setNode = scope.get(nodeGraphId + "-refset");
                             const value: T =
                               typeof t === "object" && Object.hasOwn(t, "value")
                                 ? (t as { value: T }).value
                                 : (t as T);
                             (
-                              scope.get(nodeGraphId + "-refset") as VarNode<T>
+                              setNode as VarNode<T>
                             ).set(value);
                             if (persist) {
                               this.store.persist.set(nodeGraphId, value);

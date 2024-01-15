@@ -358,14 +358,6 @@ export const run_extern = (
   node?: NodysseusNode,
   graphArgs?: Env,
 ) => {
-  if (
-    graphArgs?._output &&
-    graphArgs._output !== "value" &&
-    !extern.outputs?.[graphArgs._output]
-  ) {
-    return undefined;
-  }
-
   let argColonIdx;
   let argspromise = false;
   const isArgsArray = Array.isArray(extern.args);
