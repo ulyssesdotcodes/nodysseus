@@ -1037,7 +1037,7 @@ export class NodysseusRuntime {
           },
           extraNodeGraphId === "value" && dependencies ? (({ dependencies: previous }, { dependencies: next }) =>
             (isNothingOrUndefined(previous) && isNothingOrUndefined(next)) ||
-            !((console.log("comp objs", previous, next, compareObjects(previous, next)), compareObjects)(previous, next))) : undefined,
+            !(compareObjects(previous, next))) : undefined,
           nodeGraphId + extraNodeGraphId,
           useExisting,
         ) as AnyNode<T>;
