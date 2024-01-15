@@ -1,0 +1,83 @@
+<html>
+  <head>
+    <script type="module">
+      import {hlib, webClientStore, objectRefStore, embeddedHTMLView} from "./browser-esm.js"
+
+      const graph = {
+  "id": "helloWorld",
+  "out": "out",
+  "category": "templates",
+  "edges": {
+    "qgbinm2": {
+      "from": "qgbinm2",
+      "to": "8dy573e",
+      "as": "children"
+    },
+    "8dy573e": {
+      "from": "8dy573e",
+      "to": "out",
+      "as": "display"
+    },
+    "output_val": {
+      "from": "output_val",
+      "to": "out",
+      "as": "value"
+    },
+    "args": {
+      "from": "args",
+      "to": "out",
+      "as": "args"
+    },
+    "frame": {
+      "from": "frame",
+      "to": "qgbinm2",
+      "as": "text"
+    }
+  },
+  "nodes": {
+    "args": {
+      "id": "args"
+    },
+    "qgbinm2": {
+      "id": "qgbinm2",
+      "ref": "@html.html_text"
+    },
+    "frame": {
+      "id": "frame",
+      "ref": "extern",
+      "value": "extern.frame"
+    },
+    "8dy573e": {
+      "id": "8dy573e",
+      "ref": "@html.html_element"
+    },
+    "output_val": {
+      "id": "output_val",
+      "value": "some output"
+    },
+    "out": {
+      "id": "out",
+      "ref": "return",
+      "name": "helloWorld"
+    }
+  }
+}
+
+      const dispatch = embeddedHTMLView("view")
+      webClientStore(() => objectRefStore()).then(async store => {
+
+      hlib.initStore(store)
+      const runtime = hlib.runtime();
+      const node = runtime.accessor(runtime.fromNode(graph, "out"), "display", "out-display");
+
+      for await (const result of runtime.createWatch(node)) {
+        dispatch(() => ({el: result}))
+      }
+      })
+
+    </script>
+  </head>
+
+  <div id="view"></div>
+
+</html>

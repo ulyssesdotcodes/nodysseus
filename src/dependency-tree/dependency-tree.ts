@@ -1838,7 +1838,7 @@ export class NodysseusRuntime {
                     dataNode.value === "extern.data") ||
                     dataNode.ref === "@data.object"))
               ) {
-                Object.values(graph.edges_in[dataNode.id])
+                Object.values(graph.edges_in[dataNode.id] ?? {})
                   .map((e) => e.as)
                   .forEach((k) => keys.push(k));
               }

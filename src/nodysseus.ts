@@ -800,7 +800,7 @@ const run_node = (
                     dataNode.value === "extern.data") ||
                     dataNode.ref === "@data.object"))
               ) {
-                Object.values(node.graph.edges_in[dataNode.id])
+                Object.values(node.graph.edges_in[dataNode.id] ?? {})
                   .map((e) => e.as)
                   .forEach((k) => keys.push(k));
               }

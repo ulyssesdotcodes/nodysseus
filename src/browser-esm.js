@@ -1,8 +1,4 @@
-import {hlib} from "./editor/util"
-import {webClientStore, objectRefStore} from "./editor/store"
-import * as ha from "hyperapp"
-import {  run_h } from "./editor/hyperapp"
-import { newEnv } from "./util"
-import { run } from "./nodysseus"
+import { webClientStore, objectRefStore } from "./editor/store"
+import { hlib, embeddedHTMLView } from "./editor/util"
 
-export {run, hlib, webClientStore, ha, run_h, newEnv, objectRefStore}
+export {hlib, webClientStore, objectRefStore, embeddedHTMLView}
