@@ -8,7 +8,6 @@ import generic from "../../generic.js"
 import {NodysseusError, nolib} from "../../nodysseus.js"
 import { d3Link, d3Node, d3NodeNode, HyperappState, Vector2 } from "../types.js"
 import { ChangeEditingGraphId, Copy, CreateNode, CreateRef, DeleteNode, ExpandContract, hlib, HTMLComponent, HTMLView, node_args, Paste, SaveGraph, SelectNode, UpdateEdge, UpdateNode, UpdateNodeEffect } from "../util.js"
-import { middleware, run_h } from "../hyperapp.js"
 import { embeddedHTMLView } from "../util.js";
 
 export const info_display = html_id => embeddedHTMLView(html_id + "-info-display");

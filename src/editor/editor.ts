@@ -490,7 +490,7 @@ const runapp = (init, _lib) => {
         }
         case "graph_o": {
           const link = getLinks(s.simulation).filter(link => (link.source as d3NodeNode).node_id == s.selected[0] || (link.target as d3NodeNode).node_id === s.selected[0])[0];
-          action = link && [CreateNode, {node: {}, child: link.target.node_id, parent: {from: link.source.node_id, to: link.target.node_id, as: link.as}}]
+          action = link && [CreateNode, {node: {}, child: (link.target as d3NodeNode).node_id, parent: {from: (link.source as d3NodeNode).node_id, to: (link.target as d3NodeNode).node_id, as: link.edge.as}}]
           break;
         }
         case "graph_esc": {

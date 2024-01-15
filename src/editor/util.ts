@@ -1313,7 +1313,7 @@ export const hlibLib = mergeLib(nolibLib, newLib({
         const output = {}
 
 
-        const runnableEls: Record<string, FunctorRunnable> = {}
+        const runnableEls: Record<string, Function> = {}
 
         visit(nodes, {
           visitLiteral(path) {
@@ -1380,7 +1380,7 @@ export const hlibLib = mergeLib(nolibLib, newLib({
             justSet(output, outputPath, {})
 
             if(Object.hasOwn(_node_args, nodeName)) {
-              runnableEls[outputPath.join(".")] = _node_args[nodeName] 
+              runnableEls[outputPath.join(".")] = _node_args[nodeName] as Function;
             } else {
               justSet(output, outputPath.join(".") + ".dom_type", nodeName)
             }
