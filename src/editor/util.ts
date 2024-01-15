@@ -855,6 +855,7 @@ export const UpdateNodeMetadata: ha.Effecter<
   wrapPromise(
     hlib.run(hlib.infoRuntime(), editingGraph, node.id, "metadata"),
   ).then((metadata) =>
+
     dispatch((s) => [
       {
         ...s,
@@ -2149,7 +2150,7 @@ export const hlibLib = mergeLib(
         return;
       }
       try {
-        const result = wrapPromise(targetRuntime.runGraphNode(graph, fn)).value;
+        const result = wrapPromise(targetRuntime.runGraphNode(graph, fn)).then(nodeOutput => targetRuntime.runNode(nodeOutput[_output])).value;
         if (ispromise(result)) {
           return result.catch((e) => console.error(e));
         }

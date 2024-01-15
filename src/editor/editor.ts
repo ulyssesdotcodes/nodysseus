@@ -540,7 +540,7 @@ const runapp = (init, _lib) => {
           graph_out: s.editingGraph.out,
           error: s.error,
           refGraphs: s.refGraphs,
-          metadata: s.selectedMetadata,
+          metadata: s.selectedMetadata ?? s.cachedMetadata[s.selected[0]],
           nodeOffset: s.nodeOffset,
           nodeArgs: !s.show_all && s.selectedNodeArgs ? s.selectedNodeArgs : [],
           nodeEdgeLabels: s.selectedNodeEdgeLabels,
