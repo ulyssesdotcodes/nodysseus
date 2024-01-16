@@ -2150,7 +2150,8 @@ export const hlibLib = mergeLib(
         return;
       }
       try {
-        const result = wrapPromise(targetRuntime.runGraphNode(graph, fn)).then(nodeOutput => targetRuntime.runNode(nodeOutput[_output])).value;
+        const result = wrapPromise(targetRuntime.runGraphNode(graph, fn))
+          .then(nodeOutput => targetRuntime.runNode(nodeOutput[_output ?? "value"])).value;
         if (ispromise(result)) {
           return result.catch((e) => console.error(e));
         }
