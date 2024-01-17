@@ -4,7 +4,8 @@ import { create_fn } from "./externs"
 import { newEnv, newLib } from "./util"
 import {lokiStore} from "./store"
 
-import testTapBeat from "../scripts/testtapbeat.json"
+import testTapBeat from "../scripts/testtapbeat.json" assert { type: "json" };
+
 
 describe("create_fn", () => {
   test("parsing a single script", async () => {

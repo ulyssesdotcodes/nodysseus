@@ -82,7 +82,7 @@ import {
 import { parser } from "@lezer/javascript";
 import { v4 as uuid } from "uuid";
 import { runh } from "./hyperapp.js";
-import domTypes from "../html-dom-types.json";
+import domTypes from "../html-dom-types.json" assert { type: "json" };
 import {
   Compartment,
   EditorSelection,
@@ -143,16 +143,8 @@ const customFoldAll = (view) => {
   return !!effects.length;
 };
 
-export const EXAMPLES = [
-  "threejs_example",
-  "threejs_example_randomize",
-  "hydra_example",
-  "threejs_boilerplate",
-  "threejs_force_attribute_example",
-  "threejs_node_example",
-  "threejs_compute_example",
-  "strudel_example",
-];
+const examplesUrl = typeof window === "undefined" ? "gahhh" : window.location.host === "https://nodysseus.io" ? "https://nodysseus.azurewebsites.net" : "http://localhost:7071";
+export const EXAMPLES = await fetch(`${examplesUrl}/api/graphs`, {mode: "cors"}).then(r => r.json()).then(r => r.graphs).catch(() => []);
 
 export const pzobj: {
   instance: false | pz.PanZoom;
@@ -395,24 +387,15 @@ export const SetSelectedPositionStyleEffect = (
 };
 
 export const graphFromExample = (id: string): Promise<Graph> | Graph =>
-  fetch(`json/${id.replaceAll("_", "-")}.json`)
+  fetch(`${examplesUrl}/api/graphs/${id}`, {mode: "cors"})
     .then((res) => res.json())
-    .then((g: Graph | Array<Graph> | ExportedGraph) => {
-      return Promise.all(
-        isExportedGraph(g)
-          ? Object.entries(g.state).map((e) => {
-              hlib.runtime().store.persist.set(e[0], e[1]);
-            })
-          : [],
-      ).then(() => {
-        nolib.no.runtime.add_ref(g["graphs"] ? g["graphs"] : g);
-        console.log(
-          "got graph",
-          g["graphs"],
-          g["graphs"].find((g) => g.id === id),
-        );
-        return g["graphs"].find((g) => g.id === id);
-      });
+    .then((g: Graph) => {
+      nolib.no.runtime.add_ref(g);
+      console.log(
+        "got graph",
+        g,
+      );
+      return g
     });
 
 export const ChangeEditingGraphId: ha.Effecter<
@@ -1303,14 +1286,7 @@ export const setCodeEditorText = ({
               EditorView.updateListener.of(
                 (viewUpdate) =>
                   viewUpdate.docChanged &&
-                  wrapPromise(
-                    nolib.no.runtime.run(
-                      metadata.codeEditor?.onChange,
-                      new Map([
-                        ["editorText", viewUpdate.state.doc.toString()],
-                      ]),
-                    ),
-                  ),
+                    metadata.codeEditor.onChange({editorText: viewUpdate.state.doc.toString()})
               ),
           ]
             .filter((e) => e)

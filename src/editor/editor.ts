@@ -68,7 +68,7 @@ import {
 } from "./components/graphDisplay.js";
 import Autocomplete from "./autocomplete.js";
 import { automergeRefStore } from "./automergeStore.js";
-import helloWorld from "../initgraph.json";
+import helloWorld from "../initgraph.json" assert { type: "json" };
 import { run_h } from "./hyperapp.js";
 
 customElements.define("autocomplete-list", Autocomplete);

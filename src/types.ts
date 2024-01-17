@@ -281,7 +281,7 @@ export type NodeMetadata = {
   dataLabel?: string;
   codeEditor?: {
     language?: "javascript" | "json" | "markdown" | false;
-    onChange?: ApRunnable | FunctorRunnable;
+    onChange?: Function;
     editorText?: string;
   };
 };

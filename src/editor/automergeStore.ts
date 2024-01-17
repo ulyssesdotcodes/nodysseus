@@ -32,7 +32,7 @@ import {
   parse as uuidparse,
   stringify as uuidstringify,
 } from "uuid";
-import custom_editor from "../custom_editor.json";
+import custom_editor from "../custom_editor.json" assert { type: "json" };
 
 const generic_nodes = generic.nodes;
 const generic_node_ids = new Set(Object.keys(generic_nodes));
