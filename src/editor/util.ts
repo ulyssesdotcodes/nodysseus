@@ -143,7 +143,7 @@ const customFoldAll = (view) => {
   return !!effects.length;
 };
 
-const examplesUrl = typeof window === "undefined" ? "gahhh" : window.location.host === "https://nodysseus.io" ? "https://nodysseus.azurewebsites.net" : "http://localhost:7071";
+const examplesUrl = typeof window === "undefined" || window.location.host === "nodysseus.io" ? "https://nodysseus.azurewebsites.net" : "http://localhost:7071";
 export const EXAMPLES = await fetch(`${examplesUrl}/api/graphs`, {mode: "cors"}).then(r => r.json()).then(r => r.graphs).catch(() => []);
 
 export const pzobj: {
