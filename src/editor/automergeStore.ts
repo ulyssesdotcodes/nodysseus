@@ -238,7 +238,7 @@ export const automergeRefStore = async ({
     a.id === b.id &&
     Object.keys(a.nodes).length === Object.keys(b.nodes).length &&
     Object.entries(a.edges).every(
-      (e) => b.edges[e[0]].as === e[1].as && b.edges[e[0]].to === e[1].to,
+      (e) => b.edges[e[0]]?.as === e[1].as && b.edges[e[0]]?.to === e[1].to,
     ) &&
     Object.values(a.nodes).every((n) => nodeCompare(n, b.nodes[n.id])) &&
     a.description === b.description;
