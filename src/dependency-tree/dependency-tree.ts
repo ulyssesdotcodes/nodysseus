@@ -464,6 +464,7 @@ export class NodysseusRuntime {
   }
 
   private dirty(id: string, breakOnNode?: string) {
+
     // logAfterLoad("dirty", id);
     const node = this.scope.get(id);
     if (isMapNode(node) || isBindNode(node)) {
@@ -1467,7 +1468,7 @@ export class NodysseusRuntime {
                       "argsupdate",
                       this.id + nodeGraphId,
                       ({ id, changes, sourceId }) => {
-                        if (id === nodeGraphId && sourceId !== clientId) {
+                        if (id === nodeGraphId && sourceId !== "syncWS_" + clientId) {
                           (
                             scope.get(nodeGraphId + "-refset") as VarNode<T>
                           ).set(changes.state);

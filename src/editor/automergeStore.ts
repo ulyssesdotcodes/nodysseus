@@ -282,12 +282,13 @@ export const automergeRefStore = async ({
         ? structuredCloneMap.get(id)
         : wrapPromise(getDoc(id)).then((d) => {
             return structuredCloneMap.get(id);
-          }).then(graph => graph || !fallbackKeys.includes(id) ? graph : fallbackRefStore.get(id)).value),
+          }).then(graph => graph || !fallbackKeys.includes(id) ? graph : wrapPromise(fallbackRefStore.get(id)).then(fallbackGraph => changeDoc(fallbackGraph.id, setFromGraph(fallbackGraph))).value).value),
     set: (id, graph) =>
-      wrapPromise(refs.get(id)).then((current) =>
-        current && graphCompare(current, graph)
-          ? (console.info("skipping", id), current)
-          : changeDoc(id, setFromGraph(graph)),
+      wrapPromise(refs.get(id))
+        .then((current) =>
+          current && graphCompare(current, graph)
+            ? (console.info("skipping", id), current)
+            : changeDoc(id, setFromGraph(graph)),
       ).value,
     delete: (id) => {
       refsmap.delete(id);
@@ -453,7 +454,7 @@ export const automergeRefStore = async ({
                   syncWS.send(
                     new Blob([
                       Uint8Array.of(syncMessageTypesRev["argsupdate"]),
-                      JSON.stringify({ id, changes }),
+                      JSON.stringify({ id, changes, sourceId: peerId }),
                     ]),
                   );
                 current[kv[0]] = kv[1];
@@ -552,12 +553,17 @@ export const automergeRefStore = async ({
               ev.data
                 .slice(1)
                 .text()
-                .then((dataText) =>
-                  nolib.no.runtime.publish(
-                    "argsupdate",
-                    { ...JSON.parse(dataText), mutate: false, source: "ws" },
-                    nolibLib,
-                  ),
+                .then((dataText) => {
+
+                  const  message = JSON.parse(dataText);
+                  if(message.sourceId !== peerId) {
+                    nolib.no.runtime.publish(
+                      "argsupdate",
+                      { ...JSON.parse(dataText), mutate: false},
+                      nolibLib,
+                    )
+                  }
+                }
                 );
             } catch (e) {
               console.error(e);
