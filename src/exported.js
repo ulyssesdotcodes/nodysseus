@@ -1,4 +1,4 @@
-import {objectRefStore, webClientStore} from "./editor/store"
+import {objectRefStore, webClientStore} from "./store"
 import strudelExample from "../public/json/strudel-example.json"
 import {nolib, nolibLib, initStore} from "./nodysseus"
 import { newEnv } from "./util"

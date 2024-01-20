@@ -44,10 +44,12 @@ export const automergeRefStore = async ({
   nodysseusidb,
   persist = false,
   graphChangeCallback,
+  fallbackRefStore
 }: {
   persist: boolean;
   nodysseusidb: IDBPDatabase<NodysseusStoreTypes>;
   graphChangeCallback?: (graph: Graph, changedNodes: Array<string>) => void;
+  fallbackRefStore?: RefStore;
 }): Promise<RefStore> => {
   const undoHistory = new Map<string, Array<Automerge.Doc<Graph>>>();
   const redoHistory = new Map<string, Array<Automerge.Doc<Graph>>>();
@@ -263,6 +265,8 @@ export const automergeRefStore = async ({
     });
   };
 
+  const fallbackKeys = await fallbackRefStore?.keys() ?? [];
+
   const refs: RefStore = {
     addFromUrl: (url) =>
       fetch(url)
@@ -278,7 +282,7 @@ export const automergeRefStore = async ({
         ? structuredCloneMap.get(id)
         : wrapPromise(getDoc(id)).then((d) => {
             return structuredCloneMap.get(id);
-          }).value),
+          }).then(graph => graph || !fallbackKeys.includes(id) ? graph : fallbackRefStore.get(id)).value),
     set: (id, graph) =>
       wrapPromise(refs.get(id)).then((current) =>
         current && graphCompare(current, graph)
@@ -295,7 +299,7 @@ export const automergeRefStore = async ({
       throw new Error("not implemented");
     },
     keys: () => {
-      return [...refsset.keys(), ...generic_node_ids];
+      return [...refsset.keys(), ...generic_node_ids, ...fallbackKeys];
     },
     undo: (id: string) => {
       if (undoHistory.has(id) && undoHistory.get(id).length > 0) {

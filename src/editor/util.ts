@@ -143,9 +143,6 @@ const customFoldAll = (view) => {
   return !!effects.length;
 };
 
-const examplesUrl = typeof window === "undefined" || window.location.host === "nodysseus.io" ? "https://nodysseus.azurewebsites.net" : "http://localhost:7071";
-export const EXAMPLES = await fetch(`${examplesUrl}/api/graphs`, {mode: "cors"}).then(r => r.json()).then(r => r.graphs).catch(() => []);
-
 export const pzobj: {
   instance: false | pz.PanZoom;
   lastpanzoom: false | number;
@@ -386,31 +383,16 @@ export const SetSelectedPositionStyleEffect = (
   requestAnimationFrame(() => setRootNodeXNodeY(payload));
 };
 
-export const graphFromExample = (id: string): Promise<Graph> | Graph =>
-  fetch(`${examplesUrl}/api/graphs/${id}`, {mode: "cors"})
-    .then((res) => res.json())
-    .then((g: Graph) => {
-      nolib.no.runtime.add_ref(g);
-      console.log(
-        "got graph",
-        g,
-      );
-      return g
-    });
-
 export const ChangeEditingGraphId: ha.Effecter<
   HyperappState,
   { id: string; select_out: boolean; editingGraphId: string }
 > = (dispatch, { id, select_out, editingGraphId }) => {
   requestAnimationFrame(() => {
     const graphPromise = wrapPromise(nolib.no.runtime.refs()).then((refs) =>
-      EXAMPLES.includes(id) && !refs.includes(id)
-        ? graphFromExample(id)
-        : nolib.no.runtime.get_ref(
+        nolib.no.runtime.get_ref(
             id,
             editingGraphId && nolib.no.runtime.get_ref(editingGraphId),
-          ),
-    );
+          ));
 
     window.location.hash = "#" + id;
     graphPromise.then((graph) =>
@@ -1152,7 +1134,6 @@ export const graph_subscription = (
   const listener = ({ graph }) => {
     dispatch((s) => (s.error ? Object.assign({}, s, { error: false }) : s));
     wrapPromise(nolib.no.runtime.refs())
-      .then((rgs) => rgs.concat(EXAMPLES))
       .then((refGraphs) =>
         dispatch((s) =>
           s.refGraphs.length !== refGraphs.length ? { ...s, refGraphs } : s,

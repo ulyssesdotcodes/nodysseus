@@ -3,7 +3,8 @@ import {describe, expect, test, beforeAll, beforeEach} from "@jest/globals"
 import {varNode, constNode, NodysseusRuntime, mapNode, AnyNode, compareObjectsNeq } from "./dependency-tree";
 import generic from "../generic.js";
 import { Graph } from "../types";
-import { objectRefStore, webClientStore } from "../editor/store";
+import { webClientStore } from "../editor/store";
+import { objectRefStore } from "./store"
 import { initStore, mapStore, nolib, nolibLib } from "../nodysseus";
 import { Watch } from "typescript";
 import { wrapPromise } from "../util";

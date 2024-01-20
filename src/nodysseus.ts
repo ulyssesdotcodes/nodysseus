@@ -64,7 +64,7 @@ import { combineEnv, newLib, newEnv, mergeEnv, mergeLib } from "./util.js";
 import generic from "./generic.js";
 import * as externs from "./externs.js";
 import { initListeners } from "./events.js";
-import { objectRefStore } from "./editor/store.js";
+import { objectRefStore } from "./store.js";
 import { parser } from "@lezer/javascript";
 
 const generic_nodes = generic.nodes;

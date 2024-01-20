@@ -27,7 +27,6 @@ import {
   Copy,
   CustomDOMEvent,
   DeleteNode,
-  EXAMPLES,
   ExpandContract,
   FocusEffect,
   graph_subscription,
@@ -44,7 +43,6 @@ import {
   SelectNode,
   select_node_subscription,
   UpdateNodeEffect,
-  graphFromExample,
   HTMLComponent,
   HTMLView,
   embeddedHTMLView,
@@ -70,6 +68,7 @@ import Autocomplete from "./autocomplete.js";
 import { automergeRefStore } from "./automergeStore.js";
 import helloWorld from "../initgraph.json" assert { type: "json" };
 import { run_h } from "./hyperapp.js";
+import { urlRefStore } from "src/store.js";
 
 customElements.define("autocomplete-list", Autocomplete);
 
@@ -411,7 +410,7 @@ const runapp = (init, _lib) => {
       [
         (dispatch) =>
           wrapPromise(nolib.no.runtime.ref_graphs()).then((rgs) =>
-            dispatch((s) => ({ ...s, refGraphs: rgs.concat(EXAMPLES) })),
+            dispatch((s) => ({ ...s, refGraphs: rgs })),
           ),
       ],
     ],
@@ -1178,18 +1177,21 @@ const runapp = (init, _lib) => {
   });
 };
 
+
 const editor = async function (html_id, editingGraphId, lib, inputNorun) {
   // Has to happen before runtime is started
   const url_params = new URLSearchParams(document.location.search);
   const norun = inputNorun || url_params.get("norun") !== null;
   // TODO: rewrite this shitty code that deals with shareworker not being defined
   let sharedWorker, nodysseusStore, ports, initQueue;
+
+  const fallbackRefStore = urlRefStore((typeof window !== "undefined" && window.location.host === "nodysseus.io") || (typeof self !== "undefined" && self.location.host === "nodysseus.io") ? "https://nodysseus.azurewebsites.net" : "http://localhost:7071");
   if (typeof self.SharedWorker !== "undefined") {
     sharedWorker = new SharedWorker("./sharedWorker.js" + location.search, {
       type: "module",
     });
     nodysseusStore = await webClientStore(() =>
-      sharedWorkerRefStore(sharedWorker.port),
+      sharedWorkerRefStore(sharedWorker.port, fallbackRefStore),
     );
   } else {
     ports = [];
@@ -1200,6 +1202,7 @@ const editor = async function (html_id, editingGraphId, lib, inputNorun) {
         persist: true,
         graphChangeCallback: (graph, changedNodes) =>
           nolib.no.runtime.change_graph(graph, nolibLib, changedNodes, true),
+        fallbackRefStore
       }),
     );
   }
@@ -1265,9 +1268,7 @@ const editor = async function (html_id, editingGraphId, lib, inputNorun) {
         await hlibLib.data.no.runtime.add_ref(helloWorld),
         helloWorld)
       : (await hlibLib.data.no.runtime.get_ref(editingGraphId)) ??
-        (EXAMPLES.includes(editingGraphId)
-          ? await graphFromExample(editingGraphId)
-          : helloWorld);
+        helloWorld;
 
   const init: HyperappState = {
     editingGraphId,
