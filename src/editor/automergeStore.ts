@@ -444,17 +444,18 @@ export const automergeRefStore = async ({
           "argsupdate",
           "__websocket",
           ({ id, changes, mutate, source }, lib) => {
+            if(source.type === "ws") return;
             if (mutate) return;
             const current =
               sentStates.get(id) ??
               (sentStates.set(id, {}), sentStates.get(id));
             Object.entries(changes).forEach((kv) => {
-              if (kv[1] !== undefined && !compare(current[kv[0]], kv[1])) {
+              if (kv[1] !== undefined && !compare(current[kv[0]], kv[1]) && source.id !== peerId) {
                 source !== "ws" &&
                   syncWS.send(
                     new Blob([
                       Uint8Array.of(syncMessageTypesRev["argsupdate"]),
-                      JSON.stringify({ id, changes, sourceId: peerId }),
+                      JSON.stringify({ id, changes, source:{id:  peerId, type: "ws"}}),
                     ]),
                   );
                 current[kv[0]] = kv[1];
@@ -556,10 +557,10 @@ export const automergeRefStore = async ({
                 .then((dataText) => {
 
                   const  message = JSON.parse(dataText);
-                  if(message.sourceId !== peerId) {
+                  if(message.source.id !== peerId) {
                     nolib.no.runtime.publish(
                       "argsupdate",
-                      { ...JSON.parse(dataText), mutate: false},
+                      { ...JSON.parse(dataText), mutate: false, source: {type: "ws", id: message.source.id}},
                       nolibLib,
                     )
                   }

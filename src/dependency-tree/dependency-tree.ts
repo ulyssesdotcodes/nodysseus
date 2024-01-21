@@ -1467,11 +1467,14 @@ export class NodysseusRuntime {
                     nolib.no.runtime.addListener(
                       "argsupdate",
                       this.id + nodeGraphId,
-                      ({ id, changes, sourceId }) => {
-                        if (id === nodeGraphId && sourceId !== "syncWS_" + clientId) {
+                      ({ id, changes, source }) => {
+                        if (id === nodeGraphId && !(source.type === "var" && source.id !== clientId)) {
                           (
                             scope.get(nodeGraphId + "-refset") as VarNode<T>
                           ).set(changes.state);
+                          if (persist) {
+                            this.store.persist.set(nodeGraphId, changes.state);
+                          }
                         }
                       },
                     );
@@ -1514,7 +1517,10 @@ export class NodysseusRuntime {
                                   id: nodeGraphId,
                                   changes: { state: value },
                                   mutate: false,
-                                  sourceId: clientId,
+                                  source: {
+                                    id: clientId,
+                                    type: "var"
+                                  }
                                 },
                                 nolibLib,
                                 {},
