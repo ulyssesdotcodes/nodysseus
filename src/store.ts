@@ -184,7 +184,7 @@ export const urlRefStore = (url: string): RefStore => {
     addFromUrl: () => {
       throw new Error("not implemented");
     },
-    keys: () => fetch(`${url}`).then(r => r.json()).then(r => r.graphs).catch(() => []),
+    keys: () => fetch(`${url}`, {mode: "cors"}).then(r => r.json()).then(r => r.graphs).catch(() => []),
     add_node: (graph, node) => {
       throw new Error("not implemented");
     },
