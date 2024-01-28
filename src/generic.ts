@@ -517,7 +517,7 @@ const generic = {
         "predval": {
           "id": "predval",
           "ref": "@js.script",
-          "value": "return !!pred ? 'true_val' : 'false_val'"
+          "value": "return pred === undefined || pred === false || pred === null ? 'false_val' : 'true_val'"
         },
         "out": {
           "id": "out",
