@@ -50,6 +50,7 @@ import {
   mergeLib,
   newEnv,
   newLib,
+  nodeEdgesIn,
   parseArg,
   wrapPromise,
   wrapPromiseAll,
@@ -777,7 +778,7 @@ export class NodysseusRuntime {
           node,
           node.out ?? "out",
           nodeGraphId,
-          this.constNode(calculateInputs(), nodeGraphId + "-inputs"),
+          this.mergeClosure(closure, this.constNode(calculateInputs(), nodeGraphId + "closure", useExisting), appendGraphId(nodeGraphId, node.id)),
           useExisting,
         ),
         "value",
@@ -1209,7 +1210,7 @@ export class NodysseusRuntime {
             },
             ({ fn, array }) =>
               wrapPromiseAll(
-                (ArrayBuffer.isView(array) ? Array.from(array) : array).map(
+                (ArrayBuffer.isView(array) ? Array.from(array) : Array.isArray(array) ? array : Object.entries(array)).map(
                   (element, index) => fn({ element, index }),
                 ),
               ),
@@ -1858,7 +1859,7 @@ export class NodysseusRuntime {
               edge.as !== "lib" &&
               edge.as !== "args"
                 ? graph.nodes[
-                    Object.values(graph.edges_in[nodeId]).find(
+                    nodeEdgesIn(graph, nodeId).find(
                       (e) => e.as === "args",
                     )?.from
                   ]
@@ -1866,7 +1867,7 @@ export class NodysseusRuntime {
                     isNodeRef(descNode) &&
                     descNode.ref === "@flow.runnable"
                   ? graph.nodes[
-                      Object.values(graph.edges_in[nodeId]).find(
+                      nodeEdgesIn(graph, nodeId).find(
                         (e) => e.as === "parameters",
                       )?.from
                     ]
@@ -1874,14 +1875,14 @@ export class NodysseusRuntime {
 
             if (dataNode) {
               if (
-                (graph.edges_in[dataNode.id] &&
+                (nodeEdgesIn(graph, nodeId) &&
                   !(isNodeRef(dataNode) && dataNode.value === undefined)) ||
                 (isNodeRef(dataNode) &&
                   ((dataNode.ref === "extern" &&
                     dataNode.value === "extern.data") ||
                     dataNode.ref === "@data.object"))
               ) {
-                Object.values(graph.edges_in[dataNode.id] ?? {})
+                nodeEdgesIn(graph, nodeId)
                   .map((e) => e.as)
                   .forEach((k) => keys.push(k));
               }
@@ -1898,7 +1899,7 @@ export class NodysseusRuntime {
                   [
                     e[0],
                     this.accessor(
-                      this.fromNode(graph.id, e[0]) as NodeOutputsU,
+                      this.fromNode(graph, e[0]) as NodeOutputsU,
                       "metadata",
                       nodeGraphId + e[0] + "-metadata",
                       true,
@@ -2080,9 +2081,7 @@ export class NodysseusRuntime {
       {
         graph,
         node: graph.nodes[node.id],
-        edgesIn: graph.edges_in?.[node.id]
-          ? Object.values(graph.edges_in?.[node.id])
-          : Object.values(graph.edges).filter((e: Edge) => e.to === node.id),
+        edgesIn: nodeEdgesIn(graph, nodeId)
       },
       compareGraphNodes,
       nodeGraphId + "-graphnode",

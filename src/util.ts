@@ -691,3 +691,8 @@ export const handleError = (e, lib, graph, node, graphid) => {
 
 export const appendGraphId = (graphId: string, nodeId: string) =>
   `${graphId}/${nodeId}`;
+
+// Get edges in for a node from a regular graph or a embedded graph with no edges_in
+// note that with no edges_in, this is resource intensive
+export const nodeEdgesIn = (graph: Graph, nodeId: string): Edge[] => 
+  graph.edges_in?.[nodeId] ? Object.values(graph.edges_in[nodeId]) : Object.values(graph.edges).filter(e => e.to === nodeId)
