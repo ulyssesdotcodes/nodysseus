@@ -1245,11 +1245,15 @@ export class NodysseusRuntime {
             useExisting,
           ) as AnyNode<T>;
         } else if (refNode.value === "extern.ap") {
+          const fnEdge = edgesIn.find((e) => e.as === "fn");
+          if(!fnEdge) {
+            return this.constNode(undefined, nodeGraphId, useExisting)
+          }
           const fn: AnyNode<Array<(mapArgs: Record<string, unknown>) => T>> =
             this.valueMap(
               this.fromNodeInternal(
                 graph,
-                edgesIn.find((e) => e.as === "fn").from,
+                fnEdge.from,
                 graphId,
                 closure,
                 useExisting,
