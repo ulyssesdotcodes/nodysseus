@@ -1185,7 +1185,7 @@ const editor = async function (html_id, editingGraphId, lib, inputNorun) {
   // TODO: rewrite this shitty code that deals with shareworker not being defined
   let sharedWorker, nodysseusStore, ports, initQueue;
 
-  const fallbackRefStore = urlRefStore((typeof window !== "undefined" && window.location.host === "nodysseus.io") || (typeof self !== "undefined" && self.location.host === "nodysseus.io") ? "https://nodysseus.azurewebsites.net" : "http://localhost:7071");
+  const fallbackRefStore = urlRefStore((typeof window !== "undefined" && window.location.host === "nodysseus.io") || (typeof self !== "undefined" && self.location.host === "nodysseus.io") ? "https://nodysseus.azurewebsites.net/api/graphs" : "http://localhost:7071");
   if (typeof self.SharedWorker !== "undefined") {
     sharedWorker = new SharedWorker("./sharedWorker.js" + location.search, {
       type: "module",
