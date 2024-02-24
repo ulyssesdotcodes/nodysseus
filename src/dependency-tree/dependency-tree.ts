@@ -2126,7 +2126,8 @@ export class NodysseusRuntime {
           graphNodeNode.previous &&
           isNodeRef(graphNodeNode.previous) &&
           isNodeRef(graphNodeNode.node) &&
-          graphNodeNode.node.ref !== graphNodeNode.previous?.ref &&
+        (graphNodeNode.node.ref !== graphNodeNode.previous?.ref ||
+        graphNodeNode.node.value !== graphNodeNode.previous?.value) &&
           this.scope.has(nodeGraphId + "value")
         ) {
           this.scope.removeAll(nodeGraphId);

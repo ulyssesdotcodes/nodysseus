@@ -877,12 +877,11 @@ export const UpdateNodeEffect: ha.Effecter<
         }
       });
 
-      dispatch((s) => [
-        { ...s, selectedMetadata: metadata },
-        [
-          CalculateSelectedNodeArgsEffect,
-          { graph, node_id: node.id, cachedMetadata: s.cachedMetadata },
-        ],
+      dispatch(state => [{...state, selectedMetadata: metadata}, 
+         state.selected[0] === node.id && [CalculateSelectedNodeArgsEffect, {graph, node_id: node.id, cachedMetadata: state.cachedMetadata}],
+         state.selected[0] === node.id && [UpdateSelectedNodeMetadataEffect, remap(state, {
+           editingGraph: "graph",
+         }, pick(state, ["code_editor", "code_editor_nodeid_field", "code_editor_nodeid", "codeEditorExtensions", "cachedMetadata"], {id: node.id}))],
       ]);
     });
 };
