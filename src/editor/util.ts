@@ -2023,7 +2023,7 @@ export const HTMLComponent = ({
 }) => {
   ref && console.log("has ref", ref);
   return dom_type === "text_value"
-    ? text
+    ? createElement("span", null, typeof text === "object" ? "" : text)
     : createElement(
         dom_type,
         Object.fromEntries(

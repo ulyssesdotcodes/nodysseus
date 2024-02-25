@@ -2,30 +2,49 @@
 
 A generic node-based editor. Built with hyperapp.
 
-## Why use Nodysseus?
-
-### Simple low-code environment
-
-A user needs to know and/or write very little actual code to be able to use Nodysseus effectively. Simple graphs can be created from scratch by anyone, and more complex graphs containing complex programming logic can still be edited by someone without prior programming experience.
-
-Nodysseus also aims to simplify the experience of node-based editing by changing the paradigms employed by many industry-standard applications today. There are a few simple rules taht make it easier to avoid spaghetti networks and allow nodysseus to automatically layout the graph:
-
-1. Nodes can have many inputs but only one output. Edges are labeled to allow function-argument-like access.
-2. There is only one node that stores information - the `state` node
-3. The `return` node is the main utility that allows argument reuse, event publish/subscribe, and library management
-
-These rules are derived from a mixture of functional programming paradigms, design decisions of the React library, and experimentation within the platform itself.
+[https://nodysssus.io/](https://nodysssus.io/)
 
 ## Getting started
 
-The most simple graph is the [helloWorld](https://nodysseus.io/#helloWorld) which just shows "Hello, world!" in the result display. Try editing the html_text node to put your name, or create a "text" input using the "+text" button on the node.
+The most simple graph is the [helloWorld](https://nodysseus.io/#helloWorld) default graph which just shows "Hello, world!" in the result display. Head there now to follow along for the rest of this section.
 
-A number of the basic nodes can be found in the references doc.
+### Changing graphs
+
+To create a new graph that's a copy of this one, click on the output node and change the `graph` field that currently shows "helloWorld" to "gettingStarted" (or any name you'd like that's *not* available in the dropdown). You can also see graphs you've created before and graphs in the standard library.
+
+#### Changing node value
+
+Try editing the `@html/html_text` node to put your name: 
+1. Click on the node, 
+2. Edit the text field that has "Hello, world!" in it
+3. Your new text should show up in the bottom left of the screen
+
+#### Creating new nodes
+
+Create a new node by clicking "+text" at the top of the node. The  will create a new node as the "text" input for the `@html.html_text` node.
+
+All the inputs for a node can be found at the top of the node. Clicking an existing input will take you to that node, and clicking a non-existing input will create a new node for that input.
+
+#### Changing graph references
+
+Click on the new node that was created. In the graph field, enter `@time.frame`. The display in the bottom right will now show the frames since the node was changed.
 
 ### Examples
-New nodes introduced in the example are included in parentheses.
 
-[Three.js](https://nodysseus.ulysses.codes/#threejs_example)
+There are a number of example graphs to get a sense of how Nodysseus works. These can be accessed using the links below or by changing the graph. The standard library graphs are also all visible, although to make changes to them you'll need to rename them to something new.
+
+
+Some examples use only the standard library:
+
+[@debug.inputValue](https://nodysseus.ulysses.codes/#@example.debugInputValue): shows how the @debug.inputValue node works
+[@flow.switchInputs](https://nodysseus.ulysses.codes/#@example.debugInputValue): shows how the @flow.switchInputs node works
+[@html.ramp](https://nodysseus.ulysses.codes/#@example.debugInputValue): introduces a new node, @html.ramp, that demonstrates custom html controls
+
+And some integrate third party libraries using ESM modules:
+
+[Markdown](https://nodysseus.ulysses.codes/#@example.markdown): markdown using marked.js
+[Three.js](https://nodysseus.ulysses.codes/#@example.threejs): 3D shapes and rendering using Three.js
+[Strudel](https://nodysseus.ulysses.codes/#@example.strudel): sounds and music with strudel
 
 
 ## Reading a graph
@@ -46,12 +65,13 @@ You can edit the graph name by clicking the graph menu in the top right.
 
 ## Graph execution
 
-The graph is rerun whenever it changes.
-- Using `switch`, `if`, or `default` will only evaluate the branches that are chosen. All the other branches will not execute.
+In the default mode, the graph is rerun whenever it changes.
+- Using `@flow.switch`, `@flow.if`, or `@flow.default` will only evaluate the branches that are chosen. All the other branches will not execute.
 - If the return value of any executed node is a Promise, the nodes following that node will all return promises. 
 - If the return value contains the key `display`, then `display` will be added to the html document using hyperapp. 
 
-The graph is executed using a pull model - each node asks its parents (if it has any) for new data before running itself. It uses a [Proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) object for inputs until they are needed, allowing lazy evaluation while retaining js-compatible objects and correct handling of `switch`, `if`, etc.
+Pressing the pause button in the top right turns on rerun mode. The graph will only be rerun when pressing ctrl + enter or clicing the forward icon next to the play button. Pressing the play button returns to the default mode.
+
 
 ## Exporting
 
@@ -81,7 +101,6 @@ The npm package can be used to run graphs from javascript and includes Typescrip
 ## Shortcuts
 
 ### graph actions
-- **ctrl-s** save
 - **ctrl-z** undo
 - **ctrl-y** redo
 
@@ -114,6 +133,19 @@ The npm package can be used to run graphs from javascript and includes Typescrip
 
 - **e** edit output edge
 
+## Why use Nodysseus?
+
+### Simple low-code environment
+
+A user needs to know and/or write very little actual code to be able to use Nodysseus effectively. Simple graphs can be created from scratch by anyone, and more complex graphs containing complex programming logic can still be edited by someone without prior programming experience.
+
+Nodysseus also aims to simplify the experience of node-based editing by changing the paradigms employed by many industry-standard applications today. There are a few simple rules taht make it easier to avoid spaghetti networks and allow nodysseus to automatically layout the graph:
+
+1. Nodes can have many inputs but only one output. Edges are labeled to allow function-argument-like access.
+2. There is only one node that stores information - the `state` node
+3. The `return` node is the main utility that allows argument reuse, event publish/subscribe, and library management
+
+These rules are derived from a mixture of functional programming paradigms, design decisions of the React library, and experimentation within the platform itself.
 
 ## Notes
 
