@@ -1443,6 +1443,20 @@ export class NodysseusRuntime {
               nodeGraphId + "valmappublish",
               useExisting,
             );
+          const listenerEdge = edgesIn.find((e) => e.as === "listener");
+          const listenerNode =
+            listenerEdge &&
+            this.valueMap(
+              this.fromNodeInternal(
+                graph,
+                listenerEdge.from,
+                graphId,
+                closure,
+                useExisting,
+              ),
+              nodeGraphId + "valmaplistener",
+              useExisting,
+            );
           const setNode = this.varNode<T>(
             undefined,
             undefined,
@@ -1455,8 +1469,9 @@ export class NodysseusRuntime {
             {
               persistNode,
               publishNode,
+              listenerNode,
             },
-            ({ persistNode: persist, publishNode: publish }) =>
+            ({ persistNode: persist, publishNode: publish, listenerNode: listener }) =>
               wrapPromise(persist && this.store.persist.get(nodeGraphId))
                 .then(
                   (persisted) =>
@@ -1473,12 +1488,15 @@ export class NodysseusRuntime {
                       "argsupdate",
                       this.id + nodeGraphId,
                       ({ id, changes, source }) => {
-                        if (id === nodeGraphId && !(source.type === "var" && source.id !== clientId)) {
-                          (
-                            scope.get(nodeGraphId + "-refset") as VarNode<T>
-                          ).set(changes.state);
-                          if (persist) {
-                            this.store.persist.set(nodeGraphId, changes.state);
+                        if (id === nodeGraphId) {
+                          if(listener) listener({value: changes.state});
+                          if(!(source.type === "var" && source.id !== clientId)) {
+                            (
+                              scope.get(nodeGraphId + "-refset") as VarNode<T>
+                            ).set(changes.state);
+                            if (persist) {
+                              this.store.persist.set(nodeGraphId, changes.state);
+                            }
                           }
                         }
                       },

@@ -2194,7 +2194,7 @@ const nolib: Record<string, any> & {
       args: ["reference"],
       fn: (reference) => {
         const ret = reference.value.value.read();
-        if (ret && ret.__kind === "nodthing") {
+        if (ret && ret.__kind === "nothing") {
           return undefined;
         }
       },
@@ -2205,7 +2205,7 @@ const nolib: Record<string, any> & {
         display: true,
       },
       args: [
-        "onframe",
+        "listener",
         "_lib",
         "__graphid",
         "_runoptions",
@@ -3061,7 +3061,10 @@ const nolib: Record<string, any> & {
     merge_objects_mutable: {
       args: ["target: default", "_node_args", "_lib", "_runoptions"],
       fn: (target, args, lib, options) => {
-        const merge = (target = {}, value) =>
+        const seen = new Set();
+        const merge = (target = {}, value) => {
+          if(seen.has(value)) return target;
+          seen.add(value);
           Object.entries(value)
             .filter((kv) => !kv[0].startsWith("_"))
             .map((kv) =>
@@ -3079,6 +3082,7 @@ const nolib: Record<string, any> & {
                 target[k] = v;
               }
             });
+        }
 
         return wrapPromiseAll(
           Object.keys(args)
