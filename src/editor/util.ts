@@ -416,7 +416,7 @@ export const ChangeEditingGraphId: ha.Effecter<
               }
 
               nolib.no.runtime.change_graph(new_graph, hlibLib);
-              // nolib.no.runtime.removeGraphListeners(state.editingGraphId);
+              nolib.no.runtime.clearListeners();
               dispatch((s) => {
                 const news = {
                   ...s,
@@ -961,22 +961,18 @@ export const refresh_graph: ha.Effecter<HyperappState, any> = async (
   },
 ) => {
   selectedGraphOutputs(graph, (display) => {
-    display &&
-      (!display.background || display.resultPanel) &&
-      result_display_dispatch(UpdateResultDisplay, {
-        el: display?.resultPanel
-          ? display.resultPanel
-          : display?.dom_type
-            ? display
-            : { dom_type: "div", props: {}, children: [] },
-      });
-    display &&
-      display.background &&
-      result_background_display_dispatch({
-        el: display?.background
-          ? display.background
+    result_display_dispatch(UpdateResultDisplay, {
+      el: display?.resultPanel
+        ? display.resultPanel
+        : display?.dom_type
+          ? display
           : { dom_type: "div", props: {}, children: [] },
-      });
+    });
+    result_background_display_dispatch({
+      el: display?.background
+        ? display.background
+        : { dom_type: "div", props: {}, children: [] },
+    });
   });
 };
 

@@ -3371,6 +3371,7 @@ const nolib: Record<string, any> & {
     functionParameters: {
       args: ["fn"],
       fn: (fn) => {
+        if(!fn) return [];
         const fnstring = fn.toString();
         // hacky: return the first set of parameters we find
         let foundParams = false,
