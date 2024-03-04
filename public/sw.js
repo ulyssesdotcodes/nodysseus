@@ -23,6 +23,8 @@ const network = r => fetch(r).then(d => d.ok && r.method.toLowerCase() === "get"
   ? caches.open(assetCacheName).then(c => c.delete(r).then(() => c.put(r, d.clone())).then(_ => d)) 
   : d);
 
+const tryCache = (req) => caches.open(assetCacheName).then(c => c.match(req))
+
 self.addEventListener('fetch', (e) => {
   if(!(e.request.url.startsWith("http"))) {
       return;
@@ -32,8 +34,8 @@ self.addEventListener('fetch', (e) => {
      (e.request.url.endsWith("/esbuild") 
        ? fetch(e.request)
        : navigator.onLine || e.request.url.includes("localhost")
-       ? network(e.request).catch(ne => (console.log("[Service Worker] Network request failed, trying cache"), caches.open(assetCacheName).then(cache => cache.match(e.request)))) 
-       : caches.open(assetCacheName).then(c => c.match(e.request))
+       ? Promise.race([network(e.request),  new Promise((res, rej) => setTimeout(() => tryCache(e.request), 1000))]).catch(ne => (console.log("[Service Worker] Network request failed, trying cache"), tryCache(e.request) )) 
+       : tryCache(e.request)
         .catch(ce => (console.log("[Service Worker] Request failed"), console.error(ne), console.error(ce))))
     .then(resp => resp && resp.url.endsWith(".js") ? resp.text().then(rtext => [rtext, resp]) : resp)
     .then(r => Array.isArray(r) ? new Response(r[0]
