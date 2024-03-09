@@ -985,21 +985,21 @@ const runapp = (init, _lib) => {
                 ];
                 break;
               }
-              case "graph_n": {
+              case "graph_c": {
                 action = [
                   SelectNode,
                   { node_id: state.selected[0], focus_property: "name" },
                 ];
                 break;
               }
-              case "graph_v": {
+              case "graph_d": {
                 action = [
                   SelectNode,
                   { node_id: state.selected[0], focus_property: "value" },
                 ];
                 break;
               }
-              case "graph_r": {
+              case "graph_g": {
                 action = [
                   SelectNode,
                   { node_id: state.selected[0], focus_property: "ref" },
@@ -1113,6 +1113,11 @@ const runapp = (init, _lib) => {
                   );
                   return s;
                 };
+                break;
+              }
+              case "editing_escape": {
+                action = s => ({...s, editing: false});
+                break;
               }
               default: {
                 nolib.no.runtime.publish(

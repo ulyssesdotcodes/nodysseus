@@ -112,6 +112,8 @@ export default class AutocompleteList extends HTMLElement {
         }
 
         this.selectOption(this.inputEl.value);
+      } else if (evt.key === "Escape") {
+        this.blur();
       }
     };
 
@@ -170,18 +172,23 @@ export default class AutocompleteList extends HTMLElement {
   selectOption(value: string) {
     this.selectedIndex = undefined;
     this.inputEl.value = value;
-    if (this.initialOption !== value) {
-      this.dispatchEvent(new CustomEvent("select", { detail: value }));
-      this.initialOption = value;
-    }
-    this.listEl.classList.add("hidden");
-    this.focused = false;
+    this.blur();
   }
 
   focus() {
     this.focused = true;
     this.initialOption = this.inputEl.value;
     this.inputEl.focus();
+  }
+
+  blur() {
+    if (this.initialOption !== this.inputEl.value) {
+      this.dispatchEvent(new CustomEvent("select", { detail: this.inputEl.value }));
+      this.initialOption = this.inputEl.value;
+    }
+    this.focused = false;
+    this.listEl.classList.add("hidden");
+    this.inputEl.blur();
   }
 
   select() {

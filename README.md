@@ -116,10 +116,9 @@ The npm package can be used to run graphs from javascript and includes Typescrip
 
 ### node edit mode
 
-- **v** change value
-- **s** change script
-- **r** change reference
-- **n** change name
+- **d** change data
+- **g** change graph
+- **c** change comment
 - **shift-enter** expand / collapse
 
 ### node creation/deletion
