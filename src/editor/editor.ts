@@ -337,7 +337,40 @@ const helpmd = run_h({
   dom_type: "div",
   props: {
     innerHTML:
-      '<h2 id="welcome-to-nodysseus">Welcome to Nodysseus!</h2>\n<p>To get started, checkout:</p>\n<ul>\n<li>the <a href="https://gitlab.com/ulysses.codes/nodysseus/-/tree/main/docs/guides" target="_blank" >guides</a></li>\n<li>youtube <a href="https://www.youtube.com/playlist?list=PLNf6veBQIZNohZk_htvTvPCB2UnEl3Tlh" target="_blank" >tutorials</a> and <a href="https://www.youtube.com/playlist?list=PLNf6veBQIZNpd8Djjie5W2lo70BkLZotv" target="_blank" >videos</a></li>\n<li>a reference for all the <a href="https://gitlab.com/ulysses.codes/nodysseus/-/blob/main/docs/reference/nodes.md" target="_blank" >standard</a> and <a href="https://gitlab.com/ulysses.codes/nodysseus/-/blob/main/docs/reference/three.md" target="_blank" >threejs</a> nodes</li>\n</ul>\n<p>Handy example files and boilerplates</p>\n<ul>\n<li><a href="https://nodysseus.io/#threejs_boilerplate" target="_blank" >threejs boilerplate</a>: the simplest threejs code without any objects</li>\n<li><a href="https://nodysseus.io/#threejs_example" target="_blank" >threejs cube</a>: a rotating cube</li>\n<li><a href="https://nodysseus.io/#threejs_force_attribute_example" target="_blank" >threejs force attribute</a>: instanced cubes driven by a force geometry attribute</li>\n<li><a href="https://nodysseus.io/#hydra_example" target="_blank" >hydra</a>: hydra synth</li>\n</ul>\n',
+      `<h2>Welcome to Nodysseus!</h2>
+<p>To get started, checkout:</p>
+<ul>
+<li>youtube <a href="https://www.youtube.com/playlist?list=PLNf6veBQIZNohZk_htvTvPCB2UnEl3Tlh">tutorials</a> and <a href="https://www.youtube.com/playlist?list=PLNf6veBQIZNpd8Djjie5W2lo70BkLZotv">videos</a></li>
+</ul>
+<p>Examples for general editor functionality:</p>
+<ul>
+<li><p><a href="https://nodysseus.ulysses.codes/#@example.script">@example.script</a>: using javascript with the <code>@js.script</code> node</p>
+</li>
+<li><p><a href="https://nodysseus.ulysses.codes/#@example.debugInputValue">@example.debugInputValue</a>: debugging using the <code>@debug.inputValue</code> node</p>
+</li>
+<li><p><a href="https://nodysseus.ulysses.codes/#@example.htmlEvent">@example.htmlEvent</a>: responding to user input with html events</p>
+</li>
+<li><p><a href="https://nodysseus.ulysses.codes/#@example.referencePersist">@example.referencePersist</a>: storing and persisting values in variables using <code>@memory.reference</code></p>
+</li>
+<li><p><a href="https://nodysseus.ulysses.codes/#@example.switchInputs">@example.switchInputs</a>: switching inputs with a dropdown using the @flow.switchInputs node</p>
+</li>
+<li><p><a href="https://nodysseus.ulysses.codes/#@example.returnDependencies">@example.returnDependencies</a>: fine-grained control over whether a node reruns or keeps its value</p>
+</li>
+<li><p><a href="https://nodysseus.ulysses.codes/#@example.ramp">@example.ramp</a>: introduces a new node, @html.ramp, that remaps a 0 - 1 value to a custom range.</p>
+</li>
+<li><p><a href="https://nodysseus.ulysses.codes/#@example.nodeDisplay">@example.nodeDisplay</a>: using the display of a node in the graph&#39;s display</p>
+</li>
+</ul>
+<p>And some integrate third party libraries using ESM modules:</p>
+<ul>
+<li><p><a href="https://nodysseus.ulysses.codes/#@example.markdown">Markdown</a>: markdown using marked.js</p>
+</li>
+<li><p><a href="https://nodysseus.ulysses.codes/#@example.threejs">Three.js</a>: 3D shapes and rendering using Three.js</p>
+</li>
+<li><p><a href="https://nodysseus.ulysses.codes/#@example.strudel">Strudel</a>: sounds and music with strudel</p>
+</li>
+</ul>`
+        
   },
   children: [],
 });

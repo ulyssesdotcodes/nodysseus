@@ -73,22 +73,6 @@ And some integrate third party libraries using ESM modules:
 [Strudel](https://nodysseus.ulysses.codes/#@example.strudel): sounds and music with strudel
 
 
-## Reading a graph
-
-- Each node does something or passes data to its child. 
-- Edges (connections/lines) define the relationships between nodes. 
-- A node can have many parents, which pass data in, but only one child. 
-- A node can reference another hidden node to copy its functionality. By default, nodes have no reference and simply pass along input data to their child
-- If a node references `arg`, it will use its `value` like a javascript variable or function argument
-
-## Editing
-
-You can edit a node by using keybindings or by clicking/tapping the selected node's value or reference.
-
-You can edit an edge by using keybindings or clicking/tapping the edge name.
-
-You can edit the graph name by clicking the graph menu in the top right.
-
 ## Graph execution
 
 In the default mode, the graph is rerun whenever it changes.
