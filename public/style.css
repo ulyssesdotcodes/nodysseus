@@ -567,7 +567,7 @@ svg.edge-info.selected rect {
 /* actions */
 
 .actions {
-    flex-basis: 20em;
+    flex-basis: fit-content;
     padding-right: 1em;
     cursor: pointer;
     display: flex;
@@ -575,6 +575,7 @@ svg.edge-info.selected rect {
     z-index: 12;
     flex-direction: row;
     flex-wrap: wrap;
+    
 }
 
 #graph-actions .graph-action {
