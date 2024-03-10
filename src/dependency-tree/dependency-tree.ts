@@ -13,7 +13,6 @@
 // }
 
 import {
-  ConstRunnable,
   Edge,
   GenericHTMLElement,
   Graph,
@@ -23,7 +22,6 @@ import {
   NonErrorResult,
   RefNode,
   Result,
-  Runnable,
   isGraph,
   isNodeRef,
   isNodeValue,
@@ -36,7 +34,6 @@ import {
   node_value,
   nolib,
   nolibLib,
-  run_extern,
 } from "../nodysseus.js";
 import { v4 as uuid } from "uuid";
 import {
@@ -426,10 +423,7 @@ export class NodysseusRuntime {
     }
 
     if (changed) {
-      // console.log("reset changed", id)
       this.dirty(id);
-    } else {
-      // console.log("reset not changed", id)
     }
   }
 
@@ -1456,13 +1450,15 @@ export class NodysseusRuntime {
               ),
               nodeGraphId + "valmaplistener",
               useExisting,
-            );
+            ) as AnyNode<Function>;
+
           const setNode = this.varNode<T>(
             undefined,
             undefined,
             nodeGraphId + "-refset",
             true,
           );
+
           const scope = this.scope;
 
           return this.mapNode(
@@ -1670,7 +1666,7 @@ export class NodysseusRuntime {
           return wrapPromise(
             this.fromNodeInternal(graph, node.value, graphId, closure, true),
             (e) => {
-              console.log("error in nodeDisplay", e);
+              console.error("error in nodeDisplay", e);
               handleError(e, nodeGraphId);
             },
           ).then((targetNode) =>

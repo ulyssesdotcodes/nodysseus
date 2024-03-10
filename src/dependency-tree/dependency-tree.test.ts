@@ -188,7 +188,6 @@ describe("dependency tree", () => {
         }
       }
       const gnode = runtime.fromNode(graph, "testinput");
-      console.log("gnode", gnode)
       const node = await wrapPromise(runtime.run(gnode)).then(nodeOutput =>  nodeOutput.value);
       expect(runtime.run(node)).toBe(6);
     });
@@ -261,9 +260,7 @@ describe("dependency tree", () => {
       }
 
       const runtime = new NodysseusRuntime(store, nolibLib);
-      console.log("pre ret args")
       const node = await wrapPromise(runtime.run(runtime.fromNode(graph, "testfn"))).then(nodeOutput =>  nodeOutput.value);
-      console.log("post ret args", node)
       expect(runtime.run(node)).toBe(4);
     })
   })

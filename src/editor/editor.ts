@@ -318,7 +318,7 @@ const mutationObserverSubscription = (dispatch, { selector }) => {
   );
   const els = document.querySelectorAll(selector);
   els.forEach((el) => mutobs.observe(el, { childList: true, subtree: true }));
-  return () => (console.log("disconnect"), mutobs).disconnect();
+  return () => mutobs.disconnect();
 };
 
 const error_nodes = (error) =>

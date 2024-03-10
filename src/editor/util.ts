@@ -8,7 +8,6 @@ import {
   initStore,
   nodysseus_get,
   nolib,
-  run,
   NodysseusError,
   nolibLib,
 } from "../nodysseus.js";
@@ -221,9 +220,6 @@ export const pzobj: {
   },
   getTransform: function () {
     const ret = (hlib?.panzoom?.instance as pz.PanZoom)?.getTransform?.();
-    // if(ret){
-    // console.log("pzxy", ret.x, ret.y);
-    // }
 
     return ret;
   },
@@ -792,7 +788,7 @@ export const FocusEffect: ha.Effecter<HyperappState, { selector: string }> = (
   setTimeout(() => {
     const el: HTMLInputElement = document.querySelector(selector);
     if (!el) {
-      console.log(`couldn't find ${selector}`);
+      console.info(`couldn't find ${selector}`);
       return;
     }
 
@@ -1080,7 +1076,6 @@ export const result_subscription = (
 
   const noderun_listener = (data) => {
     if (data.graphId === editingGraphId) {
-      // console.log("noderun", data.graphId, data.nodeId)
       const nodeId = data.nodeId;
       const timeout = timeouts[nodeId];
       const nodeanimframe = animframes[nodeId];
@@ -1234,7 +1229,6 @@ export const setCodeEditorText = ({
   node: NodysseusNode;
 }) => {
   if (codeEditor && isNodeRef(node) && metadata && metadata.codeEditor) {
-    // console.log(selectedMetadata)
     const jsonlang = json();
     requestAnimationFrame(() => {
       if (metadata?.codeEditor?.language === "json") {
@@ -1408,112 +1402,6 @@ export const infoWindowSubscription = (
         }),
     });
   }
-  // if(!selectedVarNode && info_display_dispatch) {
-  //   const runtime = hlib.runtime();
-  //   selectedVarNode = runtime.varNode({graph, id: selected[0]}, undefined, "selectedVarNode", true, false);
-
-  // const haselectedbind = runtime.bindNode(
-  // {selectedVarNode},
-  // ({selectedVarNode}) =>
-  //   wrapPromise(runtime.fromNode(selectedVarNode.graph, selectedVarNode.id))
-  //     .then(node => node).value, undefined, "hyperappselectedbind");
-
-  // const hadisplaymap =       runtime.mapNode({
-  //   bound: runtime.bindNode({
-  //     bound: haselectedbind
-  //   }, ({bound}) => wrapPromise(runtime.runNode(bound)).then(b => b.display).value, undefined, "hyperappdisplaybind")
-  // }, ({bound}) => runtime.runNode(bound), undefined, "hyperappdisplaymap");
-
-  // runtime.createWatch(hadisplaymap, display => {
-  //   wrapPromise(display).then(display =>
-  //   info_display_dispatch({el: display?.dom_type ? display : display?.resultPanel?.dom_type ? display.resultPanel : {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: typeof display === "number" || typeof display === "string" ? display : ""}]}}));
-  // });
-  //
-  // dispatch(s => ({
-  //   ...s,
-  //   selectedVarNode
-  // }));
-  //
-  // const hametadatamap =
-  //   runtime.mapNode({
-  //   bound: runtime.bindNode({
-  //     bound: haselectedbind
-  //   }, ({bound}) => wrapPromise(runtime.runNode(bound)).then(b => b.metadata).value, undefined, "hyperappmetadatabind")
-  // }, ({bound}) => runtime.runNode(bound), undefined, "hyperappmetadatamap");
-  //
-  // runtime.addWatchFn(hametadatamap, metadata => {
-  //   const selected = selectedVarNode.value.read();
-  //   if(!isNothing(selected)) {
-  //     wrapPromiseAll([
-  //       metadata,
-  //       runtime.store.refs.get(selected.graph)
-  //     ]).then(([metadata, graph]) => {
-  //       cachedMetadata[selected.graph + "/" + selected.id] = metadata;
-  //
-  //       dispatch(s => [{...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: selected.id, cachedMetadata}]])
-  //       requestAnimationFrame(() => {
-  //         const node = graph.nodes[selected.id];
-  //       })
-  //     })
-  //     }
-  // });
-
-  // dispatch(s => ({
-  //   ...s,
-  //   selectedVarNode
-  // }));
-  // }
-
-  // if(selectedVarNode) {
-  //   selectedVarNode.set({id: selected[0], graph})
-  //   wrapPromise(runtime.runGraphNode(graph, selected[0])).then((nodeOutputs: any) => {
-  //     wrapPromise(runtime.run(nodeOutputs.display)).then(display =>  {
-  //       wrapPromise(display).then((display: any) =>
-  //         info_display_dispatch({el: display?.dom_type ? display : display?.resultPanel?.dom_type ? display.resultPanel : {dom_type: "div", props: {}, children: [{dom_type: "text_value", text: typeof display === "number" || typeof display === "string" ? display : ""}]}}))
-  //     });
-  //     wrapPromise(runtime.run(nodeOutputs.metadata)).then(metadata =>  {
-  //       wrapPromiseAll([
-  //         metadata,
-  //         runtime.store.refs.get(graph)
-  //       ]).then(([metadata, graph]) => {
-  //
-  //         cachedMetadata[graph + "/" + selected[0]] = metadata;
-  //
-  //         requestAnimationFrame(() => {
-  //           dispatch(s => [{...s, selectedMetadata: metadata}, [CalculateSelectedNodeArgsEffect, {graph, node_id: selected[0], cachedMetadata}]])
-  //           const node = graph.nodes[selected[0]];
-  //           if(code_editor && isNodeRef(node) && metadata.codeEditor) {
-  //             // console.log(selectedMetadata)
-  //             const jsonlang = json()
-  //             requestAnimationFrame(() => {
-  //               if(metadata?.codeEditor?.language === "json") {
-  //                 customFoldAll(code_editor)
-  //               }
-  //             })
-  //             const newText = metadata?.codeEditor?.editorText ?? node.value
-  //             code_editor.dispatch({
-  //               changes: code_editor.state.field(code_editor_nodeid_field) !== node.id &&
-  //                 newText !== code_editor.state.doc.toString() && {
-  //                 from: 0,
-  //                 to: code_editor.state.doc.length,
-  //                 insert: newText
-  //               },
-  //               effects: [
-  //                 code_editor_nodeid.of(node.id),
-  //                 codeEditorExtensions.reconfigure([
-  //                   metadata?.codeEditor?.language === "json" ? [jsonlang, linter(jsonParseLinter()), lintGutter()] : javascript(),
-  //                   metadata?.codeEditor?.onChange &&
-  //                       EditorView.updateListener.of(
-  //                         (viewUpdate) => viewUpdate.docChanged && wrapPromise(nolib.no.runtime.run(metadata.codeEditor?.onChange, new Map([["editorText", (console.log(viewUpdate.state.doc.toString()), viewUpdate.state.doc.toString())]]))))
-  //                 ].filter(e => e).flat()),
-  //               ].filter(e => e)
-  //             })
-  //           }
-  //         })
-  //       })
-  //     });
-  //   });
-  // }
 
   return () => {};
 };
@@ -2017,7 +1905,6 @@ export const HTMLComponent = ({
   text?: string;
   ref?: (ref: { ref: HTMLElement }) => void;
 }) => {
-  ref && console.log("has ref", ref);
   return dom_type === "text_value"
     ? createElement("span", null, typeof text === "object" ? "" : text)
     : createElement(
@@ -2098,7 +1985,7 @@ export const hlibLib = mergeLib(
     panzoom: pzobj,
     run: (targetRuntime, graph, fn, _output) => {
       if (!targetRuntime) {
-        console.log("no runtime", graph, fn);
+        console.info("no runtime", graph, fn);
         return;
       }
       try {
@@ -2146,11 +2033,6 @@ export const hlibLib = mergeLib(
         args: Map<string, any>,
         transferableObjects?: Array<any>,
       ) => {
-        console.log("worker post message", {
-          runnable,
-          args,
-          transferableObjects,
-        });
         wrapPromise(hlib.worker()).then((worker) =>
           worker.postMessage(
             {
@@ -2255,7 +2137,6 @@ export const hlibLib = mergeLib(
               this.traverse(path);
               if (path.parentPath.name === "children") {
                 // popped by the identifier
-                //console.log("jsxexpression popped idx", outputPath.pop());
                 if (path.name === path.parent.node.children.length - 1) {
                   outputPath.pop();
                 }
@@ -2341,7 +2222,7 @@ export const hlibLib = mergeLib(
                   : justSet(output, e[0] + ".dom_type", "div"),
               ),
             ),
-          ).then(() => (console.log("returning output", output), output)).value;
+          ).then(() => output).value;
         },
       },
     },

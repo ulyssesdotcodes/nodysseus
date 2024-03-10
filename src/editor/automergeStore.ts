@@ -33,6 +33,7 @@ import {
   stringify as uuidstringify,
 } from "uuid";
 import custom_editor from "../custom_editor.json" assert { type: "json" };
+import { NodysseusRuntime } from "src/dependency-tree/dependency-tree.js";
 
 const generic_nodes = generic.nodes;
 const generic_node_ids = new Set(Object.keys(generic_nodes));
@@ -44,11 +45,13 @@ export const automergeRefStore = async ({
   nodysseusidb,
   persist = false,
   graphChangeCallback,
-  fallbackRefStore
+  run,
+  fallbackRefStore,
 }: {
   persist: boolean;
   nodysseusidb: IDBPDatabase<NodysseusStoreTypes>;
   graphChangeCallback?: (graph: Graph, changedNodes: Array<string>) => void;
+  run: (graph: Graph, id: string) => Promise<unknown>,
   fallbackRefStore?: RefStore;
 }): Promise<RefStore> => {
   const undoHistory = new Map<string, Array<Automerge.Doc<Graph>>>();
@@ -430,7 +433,9 @@ export const automergeRefStore = async ({
               refs.set("custom_editor", custom_editor);
               ce = custom_editor;
             }
-            return nolib.no.runtime.run({ graph: ce.id, fn: ce.out ?? "out" });
+
+            // TODO: remove circular dependency
+            return run(ce, ce.out ?? "out")
           })
           .then((cer) => cer.room)
     ).then((rtcroom) => {

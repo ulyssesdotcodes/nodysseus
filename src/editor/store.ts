@@ -166,7 +166,7 @@ const sendUpdateMessages =
       .filter((p) => p !== originPort)
       .forEach((p) =>
         typedPostMessage(p, {
-          kind: (console.log("sending update", graphs), "update"),
+          kind:  "update",
           graphs: Array.isArray(graphs) ? graphs : [graphs],
         }),
       );

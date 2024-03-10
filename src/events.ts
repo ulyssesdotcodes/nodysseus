@@ -14,7 +14,7 @@ import {
   RunOptions,
 } from "./types.js";
 import { v4 as uuid } from "uuid";
-import { ispromise, nolib, run } from "./nodysseus.js";
+import { ispromise, nolib } from "./nodysseus.js";
 import { mergeLib, set_mutable, wrapPromise } from "./util.js";
 
 const windowSelf =
@@ -41,7 +41,7 @@ export const initListeners = () => {
   const hasRequestAnimationFrame = typeof requestAnimationFrame !== "undefined";
   const event_listeners = new Map<
     string,
-    Map<string, { fn: Function | Runnable; graphid?: string }>
+    Map<string, { fn: Function; graphid?: string }>
   >();
   const event_listeners_by_graph = new Map<string, Map<string, string>>();
   const pausedGraphIds = new Set<string>();
@@ -110,15 +110,10 @@ export const initListeners = () => {
     );
     const listeners = [...listenerMap.entries()];
 
-    const runlistener = (l: Function | Runnable) => {
+    const runlistener = (l: Function) => {
       try {
         if (typeof l === "function") {
           l(data, lib, { ...options, timings: {} });
-        } else if (typeof l === "object" && !isValue(l) && !isError(l)) {
-          run(l, Object.assign({}, isApRunnable(l) ? l.args : {}, { data }), {
-            ...options,
-            lib: mergeLib(l.lib, lib),
-          });
         }
       } catch (e) {
         console.error(e);
@@ -177,15 +172,15 @@ export const initListeners = () => {
   const addListener = (
     event,
     listener_id,
-    input_fn,
+    fn,
     remove = false,
     graph_id: false | string = false,
     prevent_initial_trigger = false,
     lib: Lib = { __kind: "lib", data: nolib },
     options: RunOptions = {},
   ) => {
-    if (ispromise(input_fn)) {
-      return input_fn.then((fn) =>
+    if (ispromise(fn)) {
+      return fn.then((fn) =>
         addListener(
           event,
           listener_id,
@@ -219,17 +214,6 @@ export const initListeners = () => {
               (graph) => ({ ...runnable, graph }),
             ).value;
 
-    const fn =
-      typeof input_fn === "function"
-        ? input_fn
-        : (args) => {
-            wrapPromise(replaceGraphs(input_fn)).then((replaced) =>
-              run(replaced, args, {
-                ...options,
-                lib: mergeLib(input_fn.lib, lib),
-              }),
-            );
-          };
     if (!listeners.has(listener_id)) {
       if (graph_id) {
         const graph_id_listeners = getorset(

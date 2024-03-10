@@ -230,7 +230,6 @@ export const expand_node = (data: {
   const node: NodysseusNode = data.editingGraph.nodes[node_id];
 
   if (!isNodeGraph(node)) {
-    console.log("no nodes?");
     return { editingGraph: data.editingGraph, selected: [data.node_id] };
   }
 
