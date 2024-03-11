@@ -1478,7 +1478,9 @@ export class NodysseusRuntime {
                   const setNode = scope.get(nodeGraphId + "-refset");
                   if (initial !== undefined) {
                     setNode.value.write(initial);
+                    if(listener) listener({value: initial});
                   }
+
                   if (publish) {
                     nolib.no.runtime.addListener(
                       "argsupdate",

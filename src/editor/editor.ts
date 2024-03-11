@@ -338,6 +338,7 @@ const helpmd = run_h({
   props: {
     innerHTML:
       `<h2>Welcome to Nodysseus!</h2>
+    <p> <a href="https://github.com/ulyssesdotcodes/nodysseus" target="_new">Github</a>
 <p>To get started, checkout:</p>
 <ul>
 <li>youtube <a href="https://www.youtube.com/playlist?list=PLNf6veBQIZNohZk_htvTvPCB2UnEl3Tlh">tutorials</a> and <a href="https://www.youtube.com/playlist?list=PLNf6veBQIZNpd8Djjie5W2lo70BkLZotv">videos</a></li>
