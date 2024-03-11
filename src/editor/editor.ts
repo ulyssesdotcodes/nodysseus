@@ -1239,6 +1239,7 @@ const editor = async function (html_id, editingGraphId, lib, inputNorun) {
       automergeRefStore({
         nodysseusidb: idb,
         persist: true,
+        run: (g, id) => wrapPromise(hlib.runtime().runGraphNode(g, id)).then(outputs => hlib.runtime().run(outputs.value)),
         graphChangeCallback: (graph, changedNodes) =>
           nolib.no.runtime.change_graph(graph, nolibLib, changedNodes, true),
         fallbackRefStore
