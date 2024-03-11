@@ -66,6 +66,7 @@ import * as externs from "./externs.js";
 import { initListeners } from "./events.js";
 import { objectRefStore } from "./store.js";
 import { parser } from "@lezer/javascript";
+import { json } from "@codemirror/lang-json";
 
 const generic_nodes = generic.nodes;
 
@@ -276,6 +277,9 @@ const hashcode = function (str, seed = 0) {
 
 export const node_value = (node: ValueNode | RefNode) =>
   externs.parseValue(node.value);
+  
+const resolve_args = (data: Record<string, unknown> | Map<string, unknown>) => 
+  Object.fromEntries((data instanceof Map ? data.entries() : Object.entries(data)).map(kv => [kv[0], isValue(kv[1]) ? kv[1].value : kv[1]]));
 
 export const run_extern = (
   extern: ApFunction,
@@ -294,12 +298,12 @@ export const run_extern = (
         return [argColonIdx >= 0 ? a.substring(0, argColonIdx) : a, "any"];
       })
     : Object.entries(extern.args);
-  const args = externArgs.map(([arg]) => {
+  const args = typeof extern === "function" ? resolve_args(data) : externArgs.map(([arg]) => {
           let newval;
           if (arg === "_node") {
             newval = node;
           } else if (arg === "_node_args") {
-            newval = data;
+            newval = extern.rawArgs ? data : resolve_args(data);
             newval = ispromise(newval)
               ? newval.then((v: Result | undefined) =>
                   isError(v) ? v : v?.value,
@@ -319,7 +323,8 @@ export const run_extern = (
           } else if (arg == "_output") {
             newval = graphArgs._output;
           } else {
-            newval = data.get(arg);
+            const dataval = data.get(arg);
+            newval = isValue(dataval) ? dataval.value : dataval;
           }
 
           argspromise ||= ispromise(newval);
@@ -344,7 +349,7 @@ export const run_extern = (
       ).value;
     });
   } else if (!ispromise(args)) {
-    const resArgs = args
+    const resArgs = Array.isArray(args) ? args : isValue(args) ? args.value.args : args;
     const res = (typeof extern === "function" ? extern : extern.fn)(
       ...(isArgsArray
         ? resArgs
