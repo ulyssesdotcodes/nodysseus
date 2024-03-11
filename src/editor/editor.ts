@@ -1248,7 +1248,7 @@ const editor = async function (html_id, editingGraphId, lib, inputNorun) {
   }
   let worker: Worker, workerPromise;
   hlib.initStore(nodysseusStore, !norun);
-  hlib.worker = () => {
+  hlib.worker.current = () => {
     if (!worker) {
       const workerMessageChannel = new MessageChannel();
       if (sharedWorker) {

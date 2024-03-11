@@ -2025,15 +2025,17 @@ export const hlibLib = mergeLib(
       forceCollide,
       forceX,
     },
-    worker: undefined,
+    worker: {
+      current: undefined
+    },
     workerPostMessage: {
       args: ["runnable", "args", "transferableObjects"],
       fn: (
-        runnable: FunctorRunnable,
+        runnable: {graph: string, fn: string},
         args: Map<string, any>,
         transferableObjects?: Array<any>,
       ) => {
-        wrapPromise(hlib.worker()).then((worker) =>
+        wrapPromise(hlib.worker.current()).then((worker) =>
           worker.postMessage(
             {
               graph: runnable.graph,

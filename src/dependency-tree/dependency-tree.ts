@@ -1116,6 +1116,12 @@ export class NodysseusRuntime {
               ) as AnyNode<T>)
             : this.constNode(undefined, nodeGraphId, false);
         } else if (refNode.value === "extern.runnable") {
+          if(extraNodeGraphId === "metadata") {
+            return this.constNode({parameters: {
+              fn: "any",
+              parameters: "any"
+            }}, nodeGraphId + extraNodeGraphId, useExisting);
+          }
           const fnArgs = this.varNode<Record<string, unknown>>(
             {},
             undefined,
@@ -1795,6 +1801,17 @@ export class NodysseusRuntime {
             useExisting,
           );
         } else {
+          if(extraNodeGraphId === "metadata") {
+            const libExternFn =
+              refNode.value.startsWith("extern.") && refNode.value.substring(7);
+            const extern = 
+              libExternFn
+                ? this.lib.extern[libExternFn]
+                : get(this.lib, refNode.value);
+            return this.constNode({
+              parameters: Array.isArray(extern?.args) ? Object.fromEntries(extern.args.map(v => [v, "any"])) : extern?.args
+            }, nodeGraphId + extraNodeGraphId, useExisting)
+          }
           const inputs = calculateInputs();
           const systemValues: Array<[string, Result]> = (
             [
