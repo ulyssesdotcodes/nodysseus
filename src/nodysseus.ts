@@ -279,7 +279,8 @@ export const node_value = (node: ValueNode | RefNode) =>
   externs.parseValue(node.value);
   
 const resolve_args = (data: Record<string, unknown> | Map<string, unknown>) => 
-  Object.fromEntries((data instanceof Map ? data.entries() : Object.entries(data)).map(kv => [kv[0], isValue(kv[1]) ? kv[1].value : kv[1]]));
+  nolib.no.of(Object.fromEntries((data instanceof Map ? data.entries() : Object.entries(data)).filter(kv => !kv[0].startsWith("__"))
+                                 .map(kv => [kv[0], isValue(kv[1]) ? kv[1].value : kv[1]])));
 
 export const run_extern = (
   extern: ApFunction,
