@@ -1007,14 +1007,13 @@ export class NodysseusRuntime {
             useExisting,
           );
 
-        const output = this.mapNode(
+        const output = this.runNodeNode(this.bindNode(
           {
-            result: dependencies ? undefined : resultNode,
-            dependencies: dependencies || undefined,
+            dependencies: dependencies || resultNode || undefined, // need to bind something if dependencies isn't used
             subscribe,
           },
-          ({ subscribe: subscriptions, result, dependencies }) => {
-            result = dependencies ? this.runNode(resultNode) : result;
+          ({ subscribe: subscriptions,  dependencies }) => {
+            // result = dependencies ? this.runNode(resultNode) : result;
             subscriptions &&
               Object.entries(subscriptions).forEach(
                 (kv) =>
@@ -1033,17 +1032,17 @@ export class NodysseusRuntime {
                     nolibLib,
                   ),
               );
-            return result;
+            return resultNode || undefined;
           },
           extraNodeGraphId === "value" && dependencies
             ? ({ dependencies: previous }, { dependencies: next }) =>
                 (isNothingOrUndefined(previous) &&
                   isNothingOrUndefined(next)) ||
-                !compareObjects(previous, next)
+                !(console.log("comparing", previous, next), compareObjects)(previous, next)
             : undefined,
-          nodeGraphId + extraNodeGraphId,
+          nodeGraphId + extraNodeGraphId + "-resultbind",
           useExisting,
-        ) as AnyNode<T>;
+        ), nodeGraphId + extraNodeGraphId, useExisting) as AnyNode<T>;
 
         const libNode =
           edgesIn.find((e) => e.as === "lib") &&

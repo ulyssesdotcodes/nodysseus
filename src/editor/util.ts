@@ -1848,6 +1848,7 @@ export const node_args = (
                   (externArgs &&
                     externArgs.map((a) => a[0]).includes("_node_args")) ||
                     baseargs.map((a) => a[0]).includes("_args") ||
+                    node.ref === "@js.script" ||
                     (node.ref === undefined && !node.value)
                     ? [[nextIndexedArg, { type: "any", additionalArg: true }]]
                     : [],
