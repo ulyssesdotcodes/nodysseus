@@ -1457,6 +1457,21 @@ export class NodysseusRuntime {
               useExisting,
             ) as AnyNode<Function>;
 
+          const shareEdge = edgesIn.find((e) => e.as === "share");
+          const shareNode =
+            shareEdge &&
+            this.valueMap(
+              this.fromNodeInternal(
+                graph,
+                shareEdge.from,
+                graphId,
+                closure,
+                useExisting,
+              ),
+              nodeGraphId + "valmapshare",
+              useExisting,
+            );
+
           const setNode = this.varNode<T>(
             undefined,
             undefined,
@@ -1471,8 +1486,9 @@ export class NodysseusRuntime {
               persistNode,
               publishNode,
               listenerNode,
+              shareNode,
             },
-            ({ persistNode: persist, publishNode: publish, listenerNode: listener }) =>
+            ({ persistNode: persist, publishNode: publish, listenerNode: listener, shareNode: share }) =>
               wrapPromise(persist && this.store.persist.get(nodeGraphId))
                 .then(
                   (persisted) =>
@@ -1481,19 +1497,22 @@ export class NodysseusRuntime {
                 )
                 .then((initial) => {
                   const setNode = scope.get(nodeGraphId + "-refset");
-                  if (initial !== undefined) {
+                  if(share && this.store.state.get(nodeGraphId)?.value !== undefined) {
+                    setNode.value.write(this.store.state.get(nodeGraphId)?.value)
+                  } else if (initial !== undefined) {
                     setNode.value.write(initial);
+                    this.store.state.set(nodeGraphId, {value: initial})
                     if(listener) listener({value: initial});
                   }
 
                   if (publish) {
                     nolib.no.runtime.addListener(
                       "argsupdate",
-                      this.id + nodeGraphId,
+                      (share ? "shared" : this.id) + nodeGraphId,
                       ({ id, changes, source }) => {
                         if (id === nodeGraphId) {
                           if(listener) listener({value: changes.state});
-                          if(!(source.type === "var" && source.clientId === clientId && source.id === this.id)) {
+                          if(!(source.type === "var" && source.clientId === clientId && source.id === (share ? "shared" : this.id))) {
                             (
                               scope.get(nodeGraphId + "-refset") as VarNode<T>
                             ).set(changes.state);
@@ -1505,6 +1524,7 @@ export class NodysseusRuntime {
                       },
                     );
                   }
+                  const runtime = this;
                   return extraNodeGraphId === "display"
                     ? {
                         dom_type: "div",
@@ -1522,6 +1542,9 @@ export class NodysseusRuntime {
                         __kind: "varNode",
                         id: nodeGraphId,
                         get value() {
+                          if(share && setNode.value.read() !== runtime.store.state.get(nodeGraphId)?.value){
+                            setNode.value.write(runtime.store.state.get(nodeGraphId)?.value)
+                          }
                           return setNode as VarNode<T>;
                         },
                         set: (t: { value: T } | T) => {
@@ -1535,8 +1558,11 @@ export class NodysseusRuntime {
                                 ? (t as { value: T }).value
                                 : (t as T);
                             (setNode as VarNode<T>).set(value);
+                            if(share) {
+                              runtime.store.state.set(nodeGraphId, {value});
+                            }
                             if (persist) {
-                              this.store.persist.set(nodeGraphId, value);
+                              runtime.store.persist.set(nodeGraphId, value);
                             }
                             if (publish) {
                               nolib.no.runtime.publish(
@@ -1546,7 +1572,7 @@ export class NodysseusRuntime {
                                   changes: { state: value },
                                   mutate: false,
                                   source: {
-                                    id: this.id,
+                                    id: (share ? "shared" : this.id),
                                     clientId,
                                     type: "var"
                                   }
