@@ -1922,7 +1922,7 @@ export const HTMLComponent = ({
         children
           ?.map((c) => c.el ?? c)
           .filter((c) => !!c)
-          .map((c) => createElement(HTMLComponent, c)) ?? [],
+          .map((c) => c.dom_type === "text_value" ? c.text : createElement(HTMLComponent, c)) ?? [],
       );
 };
 
