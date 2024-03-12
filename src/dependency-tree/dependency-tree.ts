@@ -1520,6 +1520,8 @@ export class NodysseusRuntime {
                         ],
                       }
                     : {
+                        __kind: "varNode",
+                        id: nodeGraphId,
                         get value() {
                           return setNode as VarNode<T>;
                         },
@@ -1687,7 +1689,7 @@ export class NodysseusRuntime {
           ).value as AnyNode<T>;
         } else if (refNode.value === "extern.workerRunnable") {
           return this.constNode(
-            { graph: graph.id, fn: edgesIn.find((e) => e.as === "graph").from },
+            { graph: graph.id, fn: edgesIn.find((e) => e.as === "graph").from, nodeGraphId: appendGraphId(graph.id, edgesIn.find((e) => e.as === "graph").from) },
             nodeGraphId,
             useExisting,
           ) as AnyNode<T>;

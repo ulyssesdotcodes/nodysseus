@@ -1,7 +1,7 @@
 import { nolib, NodysseusError, initStore, run, nolibLib } from "./nodysseus"
 import {sharedWorkerRefStore, webClientStore} from "./editor/store"
 import {isNodysseusError} from "./editor/util"
-import { wrapPromise } from "./util"
+import { wrapPromise, wrapPromiseAll } from "./util"
 import { NodysseusRuntime,  isNothing } from "./dependency-tree/dependency-tree.js"
 
 
@@ -20,26 +20,27 @@ const runningGraphs = new Map()
 let runtime;
 
 const processMessage = e => {
-  try{
     const graph = e.data.graph
-
-    runtime.fromNode(graph, e.data.fn).then(nodeNode => runtime.runNode(nodeNode)).then(
-      runNode =>  {
-
-        const run = async (_output) => {
-          for await(const value of runtime.createWatch(runNode[_output], _output)) {
-            const val = await value(e.data.env.data)
+    wrapPromiseAll([...e.data.env.data].map(e => wrapPromise(e[1]?.__kind === "varNode" ? wrapPromise(runtime.fromNode(graph, e[1].id.substring(e[1].id.lastIndexOf("/") + 1))).then(node => runtime.accessor(node, "value", e[1].id + "-closurevalueMapOut", false)).value : e[1]).then(v => [e[0], v]).value))
+      .then(kvs =>
+        runtime.fromNode(
+          graph, 
+          e.data.fn,
+          Object.fromEntries(kvs)
+        )
+      ).then(runNode => {
+        const run = async () => {
+          const valueNode = runtime.accessor(runNode, "value", e.data.nodeGraphId + "-valueOutput", true);
+          for await (const result of runtime.createWatch(valueNode)) {
+            console.log("watch node output", result)
           }
         }
 
-        wrapPromise(runtime.run(runNode.value))
-          .then(async value => {
-            await value(e.data.env.data)
-            run("value");
-          })
-      }
-    ).catch(e => console.error(e))
-  } catch (e) { console.error(e) }
+        run();
+        runtime.runNode(runNode)
+      },
+        e => console.error(e)
+      )
 }
 
 onmessage = e => e.data.kind === "connect" ? createStore(e.data.port) : initQueue ? initQueue.push(e) : processMessage(e)
