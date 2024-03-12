@@ -1494,7 +1494,7 @@ export class NodysseusRuntime {
                       ({ id, changes, source }) => {
                         if (id === nodeGraphId) {
                           if(listener) listener({value: changes.state});
-                          if(!(source.type === "var" && source.id !== clientId)) {
+                          if(!(source.type === "var" && source.clientId === clientId && source.id === this.id)) {
                             (
                               scope.get(nodeGraphId + "-refset") as VarNode<T>
                             ).set(changes.state);
@@ -1547,7 +1547,8 @@ export class NodysseusRuntime {
                                   changes: { state: value },
                                   mutate: false,
                                   source: {
-                                    id: clientId,
+                                    id: this.id,
+                                    clientId,
                                     type: "var"
                                   }
                                 },

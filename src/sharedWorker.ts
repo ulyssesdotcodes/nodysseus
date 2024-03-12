@@ -30,7 +30,7 @@ Promise.all([
         ports.forEach((p) =>
           p.postMessage({ kind: "update", graphs: [graph] }),
         ),
-      run: (g, id) => wrapPromise(runtime.runGraphNode(g, id)).then(outputs => (console.log(outputs), runtime).run(outputs.value)),
+      run: (g, id) => wrapPromise(runtime.runGraphNode(g, id)).then(outputs => runtime.run(outputs.value)),
       fallbackRefStore: urlRefStore(examplesUrl)
     }),
   ).then((resStore) => {
