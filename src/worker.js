@@ -23,7 +23,7 @@ const processMessage = e =>
     wrapPromiseAll([...e.data.env.data].map(kv => wrapPromise(kv[1]?.__kind === "varNode" 
       ? wrapPromise(runtime.fromNode(e.data.graph, kv[1].id.substring(kv[1].id.lastIndexOf("/") + 1)))
         .then(node => runtime.accessor(node, "value", kv[1].id + "-closurevalueMapOut", false)).value 
-      : kv[1]).then(v => [kv[0], v]).value))
+      : runtime.constNode(kv[1], "workerclosure" + kv[0], false)).then(v => [kv[0], v]).value))
       .then(kvs =>
         runtime.fromNode(
           e.data.graph, 

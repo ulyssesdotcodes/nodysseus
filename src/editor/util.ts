@@ -2042,7 +2042,7 @@ export const hlibLib = mergeLib(
               graph: runnable.graph,
               fn: runnable.fn,
               nodeGraphId: runnable.nodeGraphId,
-              env: { data: new Map(Object.entries(args).map(e => [e[0], e[1].__kind === "varNode" ? {__kind: "varNode", id: e[1].id } : e[1]])) },
+              env: { data: new Map(Object.entries(args).map(e => [e[0], e[1]?.__kind === "varNode" ? {__kind: "varNode", id: e[1].id } : e[1]])) },
             },
             transferableObjects,
           ),
