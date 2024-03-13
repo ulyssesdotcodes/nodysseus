@@ -1038,7 +1038,7 @@ export class NodysseusRuntime {
             ? ({ dependencies: previous }, { dependencies: next }) =>
                 (isNothingOrUndefined(previous) &&
                   isNothingOrUndefined(next)) ||
-                !(console.log("comparing", previous, next), compareObjects)(previous, next)
+                !compareObjects(previous, next)
             : undefined,
           nodeGraphId + extraNodeGraphId + "-resultbind",
           useExisting,
