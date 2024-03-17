@@ -627,7 +627,9 @@ a, a:visited {
   background: #000000EE;
   padding: 2em;
   width: 50vw;
+  max-height: 100vh;
   box-sizing: border-box;
+  overflow: auto;
 }
 
 @media (max-width: 600px) {
