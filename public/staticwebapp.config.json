@@ -2,5 +2,13 @@
   "globalHeaders": {
     "Cross-Origin-Opener-Policy": "same-origin",
     "Cross-Origin-Embedder-Policy": "credentialless"
-  }
+  },
+  "routes": [
+    {
+      "route": "*.wasm",
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      }
+    }
+  ]
 }
