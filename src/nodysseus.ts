@@ -2453,7 +2453,7 @@ const nolib: Record<string, any> & {
       },
     },
     stringify: {
-      args: ["object", "spacer"],
+      args: ["object: default", "spacer"],
       resolve: true,
       fn: (obj, spacer) => JSON.stringify(obj, (key, value) => value, spacer),
     },
