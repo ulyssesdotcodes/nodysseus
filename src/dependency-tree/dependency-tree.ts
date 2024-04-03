@@ -1200,6 +1200,12 @@ export class NodysseusRuntime {
             useExisting,
           );
         } else if (refNode.value === "extern.map") {
+          if(extraNodeGraphId === "metadata") {
+            return this.constNode({parameters: {
+              fn: "@flow.runnable",
+              array: "any: default"
+            }}, nodeGraphId + extraNodeGraphId, useExisting);
+          }
           return this.mapNode(
             calculateInputs() as {
               fn: AnyNode<
