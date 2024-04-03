@@ -1497,22 +1497,23 @@ export class NodysseusRuntime {
                 )
                 .then((initial) => {
                   const setNode = scope.get(nodeGraphId + "-refset");
-                  if(share && this.store.state.get(nodeGraphId)?.value !== undefined) {
-                    setNode.value.write(this.store.state.get(nodeGraphId)?.value)
+                  const stateId = share ? "__shared_" + share : nodeGraphId;
+                  if(share && this.store.state.get(stateId)?.value !== undefined) {
+                    setNode.value.write(this.store.state.get(stateId)?.value)
                   } else if (initial !== undefined) {
                     setNode.value.write(initial);
-                    this.store.state.set(nodeGraphId, {value: initial})
+                    this.store.state.set(stateId, {value: initial})
                     if(listener) listener({value: initial});
                   }
 
                   if (publish) {
                     nolib.no.runtime.addListener(
                       "argsupdate",
-                      (share ? "shared" : this.id) + nodeGraphId,
+                      stateId,
                       ({ id, changes, source }) => {
                         if (id === nodeGraphId) {
                           if(listener) listener({value: changes.state});
-                          if(!(source.type === "var" && source.clientId === clientId && source.id === (share ? "shared" : this.id))) {
+                          if(!(source.type === "var" && source.clientId === clientId && source.id === this.id)) {
                             (
                               scope.get(nodeGraphId + "-refset") as VarNode<T>
                             ).set(changes.state);
@@ -1542,8 +1543,8 @@ export class NodysseusRuntime {
                         __kind: "varNode",
                         id: nodeGraphId,
                         get value() {
-                          if(share && setNode.value.read() !== runtime.store.state.get(nodeGraphId)?.value){
-                            setNode.value.write(runtime.store.state.get(nodeGraphId)?.value)
+                          if(share && setNode.value.read() !== runtime.store.state.get(stateId)?.value){
+                            setNode.value.write(runtime.store.state.get(stateId)?.value)
                           }
                           return setNode as VarNode<T>;
                         },
@@ -1559,7 +1560,7 @@ export class NodysseusRuntime {
                                 : (t as T);
                             (setNode as VarNode<T>).set(value);
                             if(share) {
-                              runtime.store.state.set(nodeGraphId, {value});
+                              runtime.store.state.set(stateId, {value});
                             }
                             if (persist) {
                               runtime.store.persist.set(nodeGraphId, value);
@@ -1572,7 +1573,7 @@ export class NodysseusRuntime {
                                   changes: { state: value },
                                   mutate: false,
                                   source: {
-                                    id: (share ? "shared" : this.id),
+                                    id: this.id,
                                     clientId,
                                     type: "var"
                                   }
