@@ -26,6 +26,7 @@ const network = r => fetch(r).then(d => d.ok && r.method.toLowerCase() === "get"
   : d);
 
 const tryCache = (req) => caches.open(assetCacheName).then(c => c.match(req))
+const checkCache = (req) => caches.open(assetCacheName).then(c => c.match(req))
 
 self.addEventListener('fetch', (e) => {
   if(!(e.request.url.startsWith("http"))) {
@@ -35,8 +36,13 @@ self.addEventListener('fetch', (e) => {
   e.respondWith(
      (e.request.url.endsWith("/esbuild") 
        ? fetch(e.request)
+       : e.request.url.startsWith("https://cdn.jsdelivr.net/npm/")
+       ? tryCache(e.request).then(res => res ?? network(e.request))
        : navigator.onLine || e.request.url.includes("localhost")
-       ? Promise.race([network(e.request),  new Promise((res, rej) => setTimeout(() => tryCache(e.request), 1000))]).catch(ne => (console.log("[Service Worker] Network request failed, trying cache"), tryCache(e.request) )) 
+       ? Promise.race([
+         network(e.request),
+         new Promise((res, rej) => setTimeout(() => tryCache(e.request), 1000))
+       ]).catch(ne => (console.log("[Service Worker] Network request failed, trying cache"), tryCache(e.request))) 
        : tryCache(e.request)
         .catch(ce => (console.log("[Service Worker] Request failed"), console.error(ne), console.error(ce))))
     .then(resp => resp && resp.url.endsWith(".js") ? resp.text().then(rtext => [rtext, resp]) : resp)
