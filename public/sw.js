@@ -5,7 +5,7 @@ const assets = [
   "https://cdn.jsdelivr.net/npm/material-icons@1.13.3/iconfont/material-icons.min.css",
   "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,200,0,0",
   "https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.13.1/cdn/themes/dark.css",
-  "https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.13.1/cdn/shoelace-autoloader.js
+  "https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.13.1/cdn/shoelace-autoloader.js"
 ]
 
 self.addEventListener('install', e => {
