@@ -1547,7 +1547,7 @@ export class NodysseusRuntime {
                   if (publish) {
                     nolib.no.runtime.addListener(
                       "argsupdate",
-                      stateId,
+                      this.id + "-" + stateId,
                       ({ id, changes, source }) => {
                         if (id === nodeGraphId) {
                           if (listener) listener({ value: changes.state });
