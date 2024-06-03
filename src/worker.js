@@ -20,6 +20,8 @@ const runningGraphs = new Map()
 
 let runtime;
 
+const running = new Set();
+
 const processMessage = e => 
     wrapPromiseAll([...e.data.env.data].map(kv => wrapPromise(kv[1]?.__kind === "varNode" 
       ? wrapPromise(runtime.fromNode(e.data.graph, kv[1].id.substring(kv[1].id.lastIndexOf("/") + 1)))
@@ -35,11 +37,12 @@ const processMessage = e =>
       ).then(runNode => {
         const run = async () => {
           const valueNode = runtime.accessor(runNode, "value", e.data.nodeGraphId + "-valueOutput", true);
+          running.add(e.data.graph + "/" + e.data.fn)
           for await (const result of runtime.createWatch(valueNode)) {
           }
         }
 
-        run();
+        !running.has(e.data.graph + "/" + e.data.fn) && run();
         runtime.runNode(runNode)
       },
         e => console.error(e)
