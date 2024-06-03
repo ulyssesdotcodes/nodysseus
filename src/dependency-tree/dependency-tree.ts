@@ -1012,43 +1012,40 @@ export class NodysseusRuntime {
             useExisting,
           );
 
-        const output = this.runNodeNode(
-          this.bindNode(
-            {
-              dependencies: dependencies || resultNode || undefined, // need to bind something if dependencies isn't used
-              subscribe,
-            },
-            ({ subscribe: subscriptions, dependencies }) => {
-              // result = dependencies ? this.runNode(resultNode) : result;
-              subscriptions &&
-                Object.entries(subscriptions).forEach(
-                  (kv) =>
-                    kv[1] &&
-                    nolib.no.runtime.addListener(
-                      kv[0],
-                      this.id + nodeGraphId,
-                      (payload) => {
-                        if (this.running.size > 0)
-                          this.eventQueue.push(() => kv[1](payload));
-                        else kv[1](payload);
-                      },
-                      false,
-                      graphId,
-                      true,
-                      nolibLib,
-                    ),
-                );
-              return resultNode || undefined;
-            },
-            extraNodeGraphId === "value" && dependencies
-              ? ({ dependencies: previous }, { dependencies: next }) =>
-                  (isNothingOrUndefined(previous) &&
-                    isNothingOrUndefined(next)) ||
-                  !compareObjects(previous, next)
-              : undefined,
-            nodeGraphId + extraNodeGraphId + "-resultbind",
-            useExisting,
-          ),
+        const output = this.mapNode(
+          {
+            result: dependencies ? undefined : resultNode,
+            dependencies: dependencies || undefined,
+            subscribe,
+          },
+          ({ subscribe: subscriptions, result, dependencies }) => {
+            result = dependencies ? this.runNode(resultNode) : result;
+            subscriptions &&
+              Object.entries(subscriptions).forEach(
+                (kv) =>
+                  kv[1] &&
+                  nolib.no.runtime.addListener(
+                    kv[0],
+                    this.id + nodeGraphId,
+                    (payload) => {
+                      if (this.running.size > 0)
+                        this.eventQueue.push(() => kv[1](payload));
+                      else kv[1](payload);
+                    },
+                    false,
+                    graphId,
+                    true,
+                    nolibLib,
+                  ),
+              );
+            return result;
+          },
+          extraNodeGraphId === "value" && dependencies
+            ? ({ dependencies: previous }, { dependencies: next }) =>
+                (isNothingOrUndefined(previous) &&
+                  isNothingOrUndefined(next)) ||
+                !compareObjects(previous, next)
+            : undefined,
           nodeGraphId + extraNodeGraphId,
           useExisting,
         ) as AnyNode<T>;
