@@ -475,7 +475,10 @@ export class NodysseusRuntime {
   }
 
   constNode<T>(v: T, id?: string, useExisting: boolean = true): AnyNode<T> {
-    const node = constNode(v, id);
+    const node =
+      useExisting && this.scope.has(id)
+        ? (this.scope.get(id) as AnyNode<T>)
+        : constNode(v, id);
     this.scope.add(node);
     this.resetOutputs(node.id);
     this.dirty(node.id);
@@ -1019,7 +1022,9 @@ export class NodysseusRuntime {
             subscribe,
           },
           ({ subscribe: subscriptions, result, dependencies }) => {
-            result = dependencies ? resultNode && this.runNode(resultNode) : result;
+            result = dependencies
+              ? resultNode && this.runNode(resultNode)
+              : result;
             subscriptions &&
               Object.entries(subscriptions).forEach(
                 (kv) =>
@@ -2346,7 +2351,7 @@ export class NodysseusRuntime {
           const inputNode = this.scope.get(updatedNode.inputs[key]);
           const res = this.runNode(inputNode);
           if (inputNode) {
-            _inputPromises.push(wrapPromise(res));
+            _inputPromises.push(wrapPromise(res).value);
           }
         }
 
