@@ -55,7 +55,7 @@ const createStore = (port) =>
   webClientStore(() => sharedWorkerRefStore(port))
     .then(store => {
       initStore(store);
-      runtime = new NodysseusRuntime("worker", store, nolibLib, "graphChange");
+      runtime = new NodysseusRuntime("worker", store, nolibLib, "graphchange");
     }) 
     .then(() => {
       while(initQueue.length > 0){
