@@ -174,18 +174,16 @@ const isMapNode = <T, S extends Record<string, unknown>>(
   a: AnyNode<T>,
 ): a is MapNode<T, S> => (a as MapNode<T, S>)?.__kind === "map";
 
-export type BindNode<
-  T,
-  S extends Record<string, unknown>,
-> = T extends AnyNode<unknown>
-  ? Node<"bind", T> & {
-      isStale: (p: S, n: S) => boolean;
-      fn: (s: S) => T;
-      inputs: { [k in keyof S]: string };
-      cachedInputs: State<S>;
-      isDirty: State<boolean>;
-    }
-  : never;
+export type BindNode<T, S extends Record<string, unknown>> =
+  T extends AnyNode<unknown>
+    ? Node<"bind", T> & {
+        isStale: (p: S, n: S) => boolean;
+        fn: (s: S) => T;
+        inputs: { [k in keyof S]: string };
+        cachedInputs: State<S>;
+        isDirty: State<boolean>;
+      }
+    : never;
 
 const isBindNode = <T, S extends Record<string, unknown>>(
   a: AnyNode<T>,
@@ -459,7 +457,6 @@ export class NodysseusRuntime {
   }
 
   private dirty(id: string, breakOnNode?: string) {
-
     // logAfterLoad("dirty", id);
     const node = this.scope.get(id);
     if (isMapNode(node) || isBindNode(node)) {
@@ -772,7 +769,15 @@ export class NodysseusRuntime {
           node,
           node.out ?? "out",
           nodeGraphId,
-          this.mergeClosure(closure, this.constNode(calculateInputs(), nodeGraphId + "closure", useExisting), appendGraphId(nodeGraphId, node.id)),
+          this.mergeClosure(
+            closure,
+            this.constNode(
+              calculateInputs(),
+              nodeGraphId + "closure",
+              useExisting,
+            ),
+            appendGraphId(nodeGraphId, node.id),
+          ),
           useExisting,
         ),
         "value",
@@ -1007,42 +1012,46 @@ export class NodysseusRuntime {
             useExisting,
           );
 
-        const output = this.runNodeNode(this.bindNode(
-          {
-            dependencies: dependencies || resultNode || undefined, // need to bind something if dependencies isn't used
-            subscribe,
-          },
-          ({ subscribe: subscriptions,  dependencies }) => {
-            // result = dependencies ? this.runNode(resultNode) : result;
-            subscriptions &&
-              Object.entries(subscriptions).forEach(
-                (kv) =>
-                  kv[1] &&
-                  nolib.no.runtime.addListener(
-                    kv[0],
-                    this.id + nodeGraphId,
-                    (payload) => {
-                      if (this.running.size > 0)
-                        this.eventQueue.push(() => kv[1](payload));
-                      else kv[1](payload);
-                    },
-                    false,
-                    graphId,
-                    true,
-                    nolibLib,
-                  ),
-              );
-            return resultNode || undefined;
-          },
-          extraNodeGraphId === "value" && dependencies
-            ? ({ dependencies: previous }, { dependencies: next }) =>
-                (isNothingOrUndefined(previous) &&
-                  isNothingOrUndefined(next)) ||
-                !compareObjects(previous, next)
-            : undefined,
-          nodeGraphId + extraNodeGraphId + "-resultbind",
+        const output = this.runNodeNode(
+          this.bindNode(
+            {
+              dependencies: dependencies || resultNode || undefined, // need to bind something if dependencies isn't used
+              subscribe,
+            },
+            ({ subscribe: subscriptions, dependencies }) => {
+              // result = dependencies ? this.runNode(resultNode) : result;
+              subscriptions &&
+                Object.entries(subscriptions).forEach(
+                  (kv) =>
+                    kv[1] &&
+                    nolib.no.runtime.addListener(
+                      kv[0],
+                      this.id + nodeGraphId,
+                      (payload) => {
+                        if (this.running.size > 0)
+                          this.eventQueue.push(() => kv[1](payload));
+                        else kv[1](payload);
+                      },
+                      false,
+                      graphId,
+                      true,
+                      nolibLib,
+                    ),
+                );
+              return resultNode || undefined;
+            },
+            extraNodeGraphId === "value" && dependencies
+              ? ({ dependencies: previous }, { dependencies: next }) =>
+                  (isNothingOrUndefined(previous) &&
+                    isNothingOrUndefined(next)) ||
+                  !compareObjects(previous, next)
+              : undefined,
+            nodeGraphId + extraNodeGraphId + "-resultbind",
+            useExisting,
+          ),
+          nodeGraphId + extraNodeGraphId,
           useExisting,
-        ), nodeGraphId + extraNodeGraphId, useExisting) as AnyNode<T>;
+        ) as AnyNode<T>;
 
         const libNode =
           edgesIn.find((e) => e.as === "lib") &&
@@ -1115,11 +1124,17 @@ export class NodysseusRuntime {
               ) as AnyNode<T>)
             : this.constNode(undefined, nodeGraphId, false);
         } else if (refNode.value === "extern.runnable") {
-          if(extraNodeGraphId === "metadata") {
-            return this.constNode({parameters: {
-              fn: "any",
-              parameters: "any"
-            }}, nodeGraphId + extraNodeGraphId, useExisting);
+          if (extraNodeGraphId === "metadata") {
+            return this.constNode(
+              {
+                parameters: {
+                  fn: "any",
+                  parameters: "any",
+                },
+              },
+              nodeGraphId + extraNodeGraphId,
+              useExisting,
+            );
           }
           const fnArgs = this.varNode<Record<string, unknown>>(
             {},
@@ -1200,11 +1215,17 @@ export class NodysseusRuntime {
             useExisting,
           );
         } else if (refNode.value === "extern.map") {
-          if(extraNodeGraphId === "metadata") {
-            return this.constNode({parameters: {
-              fn: "@flow.runnable",
-              array: "any: default"
-            }}, nodeGraphId + extraNodeGraphId, useExisting);
+          if (extraNodeGraphId === "metadata") {
+            return this.constNode(
+              {
+                parameters: {
+                  fn: "@flow.runnable",
+                  array: "any: default",
+                },
+              },
+              nodeGraphId + extraNodeGraphId,
+              useExisting,
+            );
           }
           return this.mapNode(
             calculateInputs() as {
@@ -1215,9 +1236,12 @@ export class NodysseusRuntime {
             },
             ({ fn, array }) =>
               wrapPromiseAll(
-                (ArrayBuffer.isView(array) ? Array.from(array) : Array.isArray(array) ? array : Object.entries(array)).map(
-                  (element, index) => fn({ element, index }),
-                ),
+                (ArrayBuffer.isView(array)
+                  ? Array.from(array)
+                  : Array.isArray(array)
+                    ? array
+                    : Object.entries(array)
+                ).map((element, index) => fn({ element, index })),
               ),
             undefined,
             nodeGraphId,
@@ -1251,8 +1275,8 @@ export class NodysseusRuntime {
           ) as AnyNode<T>;
         } else if (refNode.value === "extern.ap") {
           const fnEdge = edgesIn.find((e) => e.as === "fn");
-          if(!fnEdge) {
-            return this.constNode(undefined, nodeGraphId, useExisting)
+          if (!fnEdge) {
+            return this.constNode(undefined, nodeGraphId, useExisting);
           }
           const fn: AnyNode<Array<(mapArgs: Record<string, unknown>) => T>> =
             this.valueMap(
@@ -1451,7 +1475,7 @@ export class NodysseusRuntime {
           const listenerEdge = edgesIn.find((e) => e.as === "listener");
           const listenerNode =
             listenerEdge &&
-            this.valueMap(
+            (this.valueMap(
               this.fromNodeInternal(
                 graph,
                 listenerEdge.from,
@@ -1461,7 +1485,7 @@ export class NodysseusRuntime {
               ),
               nodeGraphId + "valmaplistener",
               useExisting,
-            ) as AnyNode<Function>;
+            ) as AnyNode<Function>);
 
           const shareEdge = edgesIn.find((e) => e.as === "share");
           const shareNode =
@@ -1494,7 +1518,12 @@ export class NodysseusRuntime {
               listenerNode,
               shareNode,
             },
-            ({ persistNode: persist, publishNode: publish, listenerNode: listener, shareNode: share }) =>
+            ({
+              persistNode: persist,
+              publishNode: publish,
+              listenerNode: listener,
+              shareNode: share,
+            }) =>
               wrapPromise(persist && this.store.persist.get(nodeGraphId))
                 .then(
                   (persisted) =>
@@ -1504,12 +1533,15 @@ export class NodysseusRuntime {
                 .then((initial) => {
                   const setNode = scope.get(nodeGraphId + "-refset");
                   const stateId = share ? "__shared_" + share : nodeGraphId;
-                  if(share && this.store.state.get(stateId)?.value !== undefined) {
-                    setNode.value.write(this.store.state.get(stateId)?.value)
+                  if (
+                    share &&
+                    this.store.state.get(stateId)?.value !== undefined
+                  ) {
+                    setNode.value.write(this.store.state.get(stateId)?.value);
                   } else if (initial !== undefined) {
                     setNode.value.write(initial);
-                    this.store.state.set(stateId, {value: initial})
-                    if(listener) listener({value: initial});
+                    this.store.state.set(stateId, { value: initial });
+                    if (listener) listener({ value: initial });
                   }
 
                   if (publish) {
@@ -1518,13 +1550,22 @@ export class NodysseusRuntime {
                       stateId,
                       ({ id, changes, source }) => {
                         if (id === nodeGraphId) {
-                          if(listener) listener({value: changes.state});
-                          if(!(source.type === "var" && source.clientId === clientId && source.id === this.id)) {
+                          if (listener) listener({ value: changes.state });
+                          if (
+                            !(
+                              source.type === "var" &&
+                              source.clientId === clientId &&
+                              source.id === this.id
+                            )
+                          ) {
                             (
                               scope.get(nodeGraphId + "-refset") as VarNode<T>
                             ).set(changes.state);
                             if (persist) {
-                              this.store.persist.set(nodeGraphId, changes.state);
+                              this.store.persist.set(
+                                nodeGraphId,
+                                changes.state,
+                              );
                             }
                           }
                         }
@@ -1549,8 +1590,14 @@ export class NodysseusRuntime {
                         __kind: "varNode",
                         id: nodeGraphId,
                         get value() {
-                          if(share && setNode.value.read() !== runtime.store.state.get(stateId)?.value){
-                            setNode.value.write(runtime.store.state.get(stateId)?.value)
+                          if (
+                            share &&
+                            setNode.value.read() !==
+                              runtime.store.state.get(stateId)?.value
+                          ) {
+                            setNode.value.write(
+                              runtime.store.state.get(stateId)?.value,
+                            );
                           }
                           return setNode as VarNode<T>;
                         },
@@ -1565,8 +1612,8 @@ export class NodysseusRuntime {
                                 ? (t as { value: T }).value
                                 : (t as T);
                             (setNode as VarNode<T>).set(value);
-                            if(share) {
-                              runtime.store.state.set(stateId, {value});
+                            if (share) {
+                              runtime.store.state.set(stateId, { value });
                             }
                             if (persist) {
                               runtime.store.persist.set(nodeGraphId, value);
@@ -1581,8 +1628,8 @@ export class NodysseusRuntime {
                                   source: {
                                     id: this.id,
                                     clientId,
-                                    type: "var"
-                                  }
+                                    type: "var",
+                                  },
                                 },
                                 nolibLib,
                                 {},
@@ -1722,7 +1769,14 @@ export class NodysseusRuntime {
           ).value as AnyNode<T>;
         } else if (refNode.value === "extern.workerRunnable") {
           return this.constNode(
-            { graph: graph.id, fn: edgesIn.find((e) => e.as === "graph").from, nodeGraphId: appendGraphId(graph.id, edgesIn.find((e) => e.as === "graph").from) },
+            {
+              graph: graph.id,
+              fn: edgesIn.find((e) => e.as === "graph").from,
+              nodeGraphId: appendGraphId(
+                graph.id,
+                edgesIn.find((e) => e.as === "graph").from,
+              ),
+            },
             nodeGraphId,
             useExisting,
           ) as AnyNode<T>;
@@ -1836,16 +1890,21 @@ export class NodysseusRuntime {
             useExisting,
           );
         } else {
-          if(extraNodeGraphId === "metadata") {
+          if (extraNodeGraphId === "metadata") {
             const libExternFn =
               refNode.value.startsWith("extern.") && refNode.value.substring(7);
-            const extern = 
-              libExternFn
-                ? this.lib.extern[libExternFn]
-                : get(this.lib, refNode.value);
-            return this.constNode({
-              parameters: Array.isArray(extern?.args) ? Object.fromEntries(extern.args.map(v => [v, "any"])) : extern?.args
-            }, nodeGraphId + extraNodeGraphId, useExisting)
+            const extern = libExternFn
+              ? this.lib.extern[libExternFn]
+              : get(this.lib, refNode.value);
+            return this.constNode(
+              {
+                parameters: Array.isArray(extern?.args)
+                  ? Object.fromEntries(extern.args.map((v) => [v, "any"]))
+                  : extern?.args,
+              },
+              nodeGraphId + extraNodeGraphId,
+              useExisting,
+            );
           }
           const inputs = calculateInputs();
           const systemValues: Array<[string, Result]> = (
@@ -1931,9 +1990,8 @@ export class NodysseusRuntime {
               edge.as !== "lib" &&
               edge.as !== "args"
                 ? graph.nodes[
-                    nodeEdgesIn(graph, nodeId).find(
-                      (e) => e.as === "args",
-                    )?.from
+                    nodeEdgesIn(graph, nodeId).find((e) => e.as === "args")
+                      ?.from
                   ]
                 : nodeId &&
                     isNodeRef(descNode) &&
@@ -2153,7 +2211,7 @@ export class NodysseusRuntime {
       {
         graph,
         node: graph.nodes[node.id],
-        edgesIn: nodeEdgesIn(graph, nodeId)
+        edgesIn: nodeEdgesIn(graph, nodeId),
       },
       compareGraphNodes,
       nodeGraphId + "-graphnode",
@@ -2194,8 +2252,8 @@ export class NodysseusRuntime {
           graphNodeNode.previous &&
           isNodeRef(graphNodeNode.previous) &&
           isNodeRef(graphNodeNode.node) &&
-        (graphNodeNode.node.ref !== graphNodeNode.previous?.ref ||
-        graphNodeNode.node.value !== graphNodeNode.previous?.value) &&
+          (graphNodeNode.node.ref !== graphNodeNode.previous?.ref ||
+            graphNodeNode.node.value !== graphNodeNode.previous?.value) &&
           this.scope.has(nodeGraphId + "value")
         ) {
           this.scope.removeAll(nodeGraphId);
