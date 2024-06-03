@@ -1019,7 +1019,7 @@ export class NodysseusRuntime {
             subscribe,
           },
           ({ subscribe: subscriptions, result, dependencies }) => {
-            result = dependencies ? this.runNode(resultNode) : result;
+            result = dependencies ? resultNode && this.runNode(resultNode) : result;
             subscriptions &&
               Object.entries(subscriptions).forEach(
                 (kv) =>
