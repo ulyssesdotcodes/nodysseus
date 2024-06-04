@@ -55,7 +55,8 @@ const createStore = (port) =>
   webClientStore(() => sharedWorkerRefStore(port))
     .then(store => {
       initStore(store);
-      runtime = new NodysseusRuntime("worker", store, nolibLib, "graphchange");
+      const autorun = new URLSearchParams(location.search).get("norun") !== "true";
+      runtime = new NodysseusRuntime("worker", store, nolibLib, autorun ? "graphchange" : "graphchangeready");
     }) 
     .then(() => {
       while(initQueue.length > 0){

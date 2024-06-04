@@ -336,8 +336,7 @@ const error_nodes = (error) =>
 const helpmd = run_h({
   dom_type: "div",
   props: {
-    innerHTML:
-      `<h2>Welcome to Nodysseus!</h2>
+    innerHTML: `<h2>Welcome to Nodysseus!</h2>
     <p> <a href="https://github.com/ulyssesdotcodes/nodysseus" target="_new">Github</a>
 <p>To get started, checkout:</p>
 <ul>
@@ -370,8 +369,7 @@ const helpmd = run_h({
 </li>
 <li><p><a href="https://nodysseus.ulysses.codes/#@example.strudel">Strudel</a>: sounds and music with strudel</p>
 </li>
-</ul>`
-        
+</ul>`,
   },
   children: [],
 });
@@ -655,32 +653,28 @@ const runapp = (init, _lib) => {
                           s.editingGraph.out ?? "out",
                           "display",
                         ),
-                      )
-                        .then((nodeOutputs) =>
-                          hlib.runtime().run(nodeOutputs.display),
-                        )
-                        .then((display) => {
-                          display &&
-                            (!display.background || display.resultPanel) &&
-                            result_display_dispatch(UpdateResultDisplay, {
-                              el: display?.resultPanel
-                                ? display.resultPanel
-                                : display?.dom_type
-                                  ? display
-                                  : {
-                                      dom_type: "div",
-                                      props: {},
-                                      children: [],
-                                    },
-                            });
-                          display &&
-                            display.background &&
-                            result_background_display_dispatch({
-                              el: display?.background
-                                ? display.background
-                                : { dom_type: "div", props: {}, children: [] },
-                            });
-                        });
+                      ).then((display) => {
+                        display &&
+                          (!display.background || display.resultPanel) &&
+                          result_display_dispatch(UpdateResultDisplay, {
+                            el: display?.resultPanel
+                              ? display.resultPanel
+                              : display?.dom_type
+                                ? display
+                                : {
+                                    dom_type: "div",
+                                    props: {},
+                                    children: [],
+                                  },
+                          });
+                        display &&
+                          display.background &&
+                          result_background_display_dispatch({
+                            el: display?.background
+                              ? display.background
+                              : { dom_type: "div", props: {}, children: [] },
+                          });
+                      });
                     },
                     [
                       UpdateNodeMetadata,
@@ -1150,7 +1144,7 @@ const runapp = (init, _lib) => {
                 break;
               }
               case "editing_escape": {
-                action = s => ({...s, editing: false});
+                action = (s) => ({ ...s, editing: false });
                 break;
               }
               default: {
@@ -1216,7 +1210,6 @@ const runapp = (init, _lib) => {
   });
 };
 
-
 const editor = async function (html_id, editingGraphId, lib, inputNorun) {
   // Has to happen before runtime is started
   const url_params = new URLSearchParams(document.location.search);
@@ -1224,7 +1217,13 @@ const editor = async function (html_id, editingGraphId, lib, inputNorun) {
   // TODO: rewrite this shitty code that deals with shareworker not being defined
   let sharedWorker, nodysseusStore, ports, initQueue;
 
-  const fallbackRefStore = urlRefStore((typeof window !== "undefined" && window.location.host === "nodysseus.io") || (typeof self !== "undefined" && self.location.host === "nodysseus.io") ? "https://nodysseus.azurewebsites.net/api/graphs" : "http://localhost:7071");
+  const fallbackRefStore = urlRefStore(
+    (typeof window !== "undefined" &&
+      window.location.host === "nodysseus.io") ||
+      (typeof self !== "undefined" && self.location.host === "nodysseus.io")
+      ? "https://nodysseus.azurewebsites.net/api/graphs"
+      : "http://localhost:7071",
+  );
   if (typeof self.SharedWorker !== "undefined") {
     sharedWorker = new SharedWorker("./sharedWorker.js" + location.search, {
       type: "module",
@@ -1239,10 +1238,13 @@ const editor = async function (html_id, editingGraphId, lib, inputNorun) {
       automergeRefStore({
         nodysseusidb: idb,
         persist: true,
-        run: (g, id) => wrapPromise(hlib.runtime().runGraphNode(g, id)).then(outputs => hlib.runtime().run(outputs.value)),
+        run: (g, id) =>
+          wrapPromise(hlib.runtime().runGraphNode(g, id)).then((outputs) =>
+            hlib.runtime().run(outputs.value),
+          ),
         graphChangeCallback: (graph, changedNodes) =>
           nolib.no.runtime.change_graph(graph, nolibLib, changedNodes, true),
-        fallbackRefStore
+        fallbackRefStore,
       }),
     );
   }
@@ -1263,7 +1265,7 @@ const editor = async function (html_id, editingGraphId, lib, inputNorun) {
           workerMessageChannel.port1,
         );
       }
-      worker = new Worker("./worker.js", { type: "module" });
+      worker = new Worker("./worker.js" + location.search, { type: "module" });
       workerPromise = new Promise((res, rej) => {
         worker.addEventListener("message", (msg) => {
           if (msg.data.type === "started") {
@@ -1307,8 +1309,7 @@ const editor = async function (html_id, editingGraphId, lib, inputNorun) {
         )),
         await hlibLib.data.no.runtime.add_ref(helloWorld),
         helloWorld)
-      : (await hlibLib.data.no.runtime.get_ref(editingGraphId)) ??
-        helloWorld;
+      : (await hlibLib.data.no.runtime.get_ref(editingGraphId)) ?? helloWorld;
 
   const init: HyperappState = {
     editingGraphId,
