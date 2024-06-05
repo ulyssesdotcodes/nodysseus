@@ -1015,16 +1015,13 @@ export class NodysseusRuntime {
             useExisting,
           );
 
-        const output = this.mapNode(
+        const output = dependencies ? this.mapNode(
           {
-            result: dependencies ? undefined : resultNode,
             dependencies: dependencies || undefined,
             subscribe,
           },
-          ({ subscribe: subscriptions, result, dependencies }) => {
-            result = dependencies
-              ? resultNode && this.runNode(resultNode)
-              : result;
+          ({ subscribe: subscriptions, dependencies }) => {
+            const result = resultNode && this.runNode(resultNode)
             subscriptions &&
               Object.entries(subscriptions).forEach(
                 (kv) =>
@@ -1045,15 +1042,44 @@ export class NodysseusRuntime {
               );
             return result;
           },
-          extraNodeGraphId === "value" && dependencies
-            ? ({ dependencies: previous }, { dependencies: next }) =>
+            ({ dependencies: previous }, { dependencies: next }) =>
                 (isNothingOrUndefined(previous) &&
                   isNothingOrUndefined(next)) ||
-                !compareObjects(previous, next)
-            : undefined,
+                !compareObjects(previous, next),
+          nodeGraphId + extraNodeGraphId,
+          useExisting,
+        ) as AnyNode<T>
+        : this.mapNode(
+          {
+            result: resultNode,
+            subscribe,
+          },
+          ({ subscribe: subscriptions, result }) => {
+            subscriptions &&
+              Object.entries(subscriptions).forEach(
+                (kv) =>
+                  kv[1] &&
+                  nolib.no.runtime.addListener(
+                    kv[0],
+                    this.id + nodeGraphId,
+                    (payload) => {
+                      if (this.running.size > 0)
+                        this.eventQueue.push(() => kv[1](payload));
+                      else kv[1](payload);
+                    },
+                    false,
+                    graphId,
+                    true,
+                    nolibLib,
+                  ),
+              );
+            return result;
+          },
+          undefined,
           nodeGraphId + extraNodeGraphId,
           useExisting,
         ) as AnyNode<T>;
+
 
         const libNode =
           edgesIn.find((e) => e.as === "lib") &&
