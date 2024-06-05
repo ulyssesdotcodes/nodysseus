@@ -37,7 +37,7 @@ self.addEventListener('fetch', (e) => {
      (e.request.url.endsWith("/esbuild") 
        ? fetch(e.request)
        : e.request.url.startsWith("https://cdn.jsdelivr.net/npm/")
-       ? tryCache(e.request).then(res => res ?? network(e.request))
+       ? network(e.request)
        : navigator.onLine || e.request.url.includes("localhost")
        ? Promise.race([
          network(e.request),
