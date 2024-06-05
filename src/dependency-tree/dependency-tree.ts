@@ -319,7 +319,8 @@ export class NodysseusRuntime {
   private lib: Record<string, any> = { runtime: this };
   private eventQueue: Array<Function> = [];
   private running: Map<string, number> = new Map();
-  private dirtying: Set<string> = new Set();
+  private torun: Set<string> = new Set();
+  private dirtying = 0;
 
   // id is used so addListener works for multiple runtimes
   constructor(
@@ -457,21 +458,32 @@ export class NodysseusRuntime {
   }
 
   private dirty(id: string, breakOnNode?: string) {
+    this.dirtying += 1;
     // logAfterLoad("dirty", id);
     const node = this.scope.get(id);
     if (isMapNode(node) || isBindNode(node)) {
       if (node.isDirty.read()) {
+        this.dirtying -= 1;
         return;
       }
       node.isDirty.write(true);
     }
-    if (id === breakOnNode) return;
+    if (id === breakOnNode) {
+      this.dirtying -= 1;
+        return;
+    }
     let nid;
     const nodeOuts = this.outputs.get(id);
     for (nid of nodeOuts) {
       this.dirty(nid, breakOnNode);
     }
-    this.checkWatch(id);
+    this.dirtying -= 1;
+    if(this.dirtying === 0) {
+      [...this.torun].map(id => this.checkWatch(id));
+      this.torun.clear();
+    } else {
+      this.torun.add(id)
+    }
   }
 
   constNode<T>(v: T, id?: string, useExisting: boolean = true): AnyNode<T> {
@@ -1021,7 +1033,6 @@ export class NodysseusRuntime {
             subscribe,
           },
           ({ subscribe: subscriptions, dependencies }) => {
-            const result = resultNode && this.runNode(resultNode)
             subscriptions &&
               Object.entries(subscriptions).forEach(
                 (kv) =>
@@ -1040,7 +1051,8 @@ export class NodysseusRuntime {
                     nolibLib,
                   ),
               );
-            return result;
+            const result = resultNode && this.runNode(resultNode)
+            return resultNode && new Promise((res, rej) => setTimeout(() => res(this.runNode(resultNode), 100)));
           },
             ({ dependencies: previous }, { dependencies: next }) =>
                 (isNothingOrUndefined(previous) &&
