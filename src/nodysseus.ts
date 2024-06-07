@@ -2222,6 +2222,8 @@ const nolib: Record<string, any> & {
             .forEach(([k, v]: [string, unknown]) => {
               if (
                 typeof v === "object" &&
+                !Array.isArray(v) &&
+                !ArrayBuffer.isView(v) &&
                 v !== null &&
                 typeof target[k] === "object" &&
                 target[k] !== null
