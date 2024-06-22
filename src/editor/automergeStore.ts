@@ -51,7 +51,7 @@ export const automergeRefStore = async ({
   persist: boolean;
   nodysseusidb: IDBPDatabase<NodysseusStoreTypes>;
   graphChangeCallback?: (graph: Graph, changedNodes: Array<string>) => void;
-  run: (graph: Graph, id: string) => Promise<unknown>,
+  run: (graph: Graph, id: string) => unknown | Promise<unknown>;
   fallbackRefStore?: RefStore;
 }): Promise<RefStore> => {
   const undoHistory = new Map<string, Array<Automerge.Doc<Graph>>>();
@@ -268,7 +268,7 @@ export const automergeRefStore = async ({
     });
   };
 
-  const fallbackKeys = await fallbackRefStore?.keys() ?? [];
+  const fallbackKeys = (await fallbackRefStore?.keys()) ?? [];
 
   const refs: RefStore = {
     addFromUrl: (url) =>
@@ -283,15 +283,22 @@ export const automergeRefStore = async ({
       generic_nodes[id] ??
       (structuredCloneMap.has(id)
         ? structuredCloneMap.get(id)
-        : wrapPromise(getDoc(id)).then((d) => {
-            return structuredCloneMap.get(id);
-          }).then(graph => graph || !fallbackKeys.includes(id) ? graph : wrapPromise(fallbackRefStore.get(id)).then(fallbackGraph => changeDoc(fallbackGraph.id, setFromGraph(fallbackGraph))).value).value),
+        : wrapPromise(getDoc(id))
+            .then((d) => {
+              return structuredCloneMap.get(id);
+            })
+            .then((graph) =>
+              graph || !fallbackKeys.includes(id)
+                ? graph
+                : wrapPromise(fallbackRefStore.get(id)).then((fallbackGraph) =>
+                    changeDoc(fallbackGraph.id, setFromGraph(fallbackGraph)),
+                  ).value,
+            ).value),
     set: (id, graph) =>
-      wrapPromise(refs.get(id))
-        .then((current) =>
-          current && graphCompare(current, graph)
-            ? (console.info("skipping", id), current)
-            : changeDoc(id, setFromGraph(graph)),
+      wrapPromise(refs.get(id)).then((current) =>
+        current && graphCompare(current, graph)
+          ? (console.info("skipping", id), current)
+          : changeDoc(id, setFromGraph(graph)),
       ).value,
     delete: (id) => {
       refsmap.delete(id);
@@ -435,9 +442,9 @@ export const automergeRefStore = async ({
             }
 
             // TODO: remove circular dependency
-            return run(ce, ce.out ?? "out")
+            return run(ce, ce.out ?? "out");
           })
-          .then((cer) => cer.room)
+          .then((cer) => (cer as { room: string }).room)
     ).then((rtcroom) => {
       if (!rtcroom) return;
 
@@ -449,18 +456,26 @@ export const automergeRefStore = async ({
           "argsupdate",
           "__websocket",
           ({ id, changes, mutate, source }, lib) => {
-            if(source.type === "ws") return;
+            if (source.type === "ws") return;
             if (mutate) return;
             const current =
               sentStates.get(id) ??
               (sentStates.set(id, {}), sentStates.get(id));
             Object.entries(changes).forEach((kv) => {
-              if (kv[1] !== undefined && !compare(current[kv[0]], kv[1]) && source.id !== peerId) {
+              if (
+                kv[1] !== undefined &&
+                !compare(current[kv[0]], kv[1]) &&
+                source.id !== peerId
+              ) {
                 source !== "ws" &&
                   syncWS.send(
                     new Blob([
                       Uint8Array.of(syncMessageTypesRev["argsupdate"]),
-                      JSON.stringify({ id, changes, source:{id:  peerId, type: "ws"}}),
+                      JSON.stringify({
+                        id,
+                        changes,
+                        source: { id: peerId, type: "ws" },
+                      }),
                     ]),
                   );
                 current[kv[0]] = kv[1];
@@ -560,17 +575,19 @@ export const automergeRefStore = async ({
                 .slice(1)
                 .text()
                 .then((dataText) => {
-
-                  const  message = JSON.parse(dataText);
-                  if(message.source.id !== peerId) {
+                  const message = JSON.parse(dataText);
+                  if (message.source.id !== peerId) {
                     nolib.no.runtime.publish(
                       "argsupdate",
-                      { ...JSON.parse(dataText), mutate: false, source: {type: "ws", id: message.source.id}},
+                      {
+                        ...JSON.parse(dataText),
+                        mutate: false,
+                        source: { type: "ws", id: message.source.id },
+                      },
                       nolibLib,
-                    )
+                    );
                   }
-                }
-                );
+                });
             } catch (e) {
               console.error(e);
             }

@@ -4,6 +4,8 @@ import { urlRefStore } from "./store.js";
 import { NodysseusRuntime } from "./dependency-tree/dependency-tree.js";
 import { json } from "@codemirror/lang-json";
 import { wrapPromise } from "./util.js";
+import { NodeOutputsU } from "./dependency-tree/dependency-tree.js";
+import { NodeType } from "./dependency-tree/dependency-tree.js";
 
 // TODO: get/set have ids to give responses. whenever a graph is updated, send update to all clients
 
@@ -14,7 +16,11 @@ const ports: Array<MessagePort> = [];
 
 self.onconnect = (e) => initPort(store, ports, e.ports[0]);
 
-const examplesUrl = (typeof window !== "undefined" && window.location.host === "nodysseus.io") || (typeof self !== "undefined" && self.location.host === "nodysseus.io") ? "https://nodysseus.azurewebsites.net/api/graphs" : "http://localhost:7071/api/graphs";
+const examplesUrl =
+  (typeof window !== "undefined" && window.location.host === "nodysseus.io") ||
+  (typeof self !== "undefined" && self.location.host === "nodysseus.io")
+    ? "https://nodysseus.azurewebsites.net/api/graphs"
+    : "http://localhost:7071/api/graphs";
 
 Promise.all([
   import("./editor/store.js"),
@@ -30,13 +36,16 @@ Promise.all([
         ports.forEach((p) =>
           p.postMessage({ kind: "update", graphs: [graph] }),
         ),
-      run: (g, id) => wrapPromise(runtime.runGraphNode(g, id)).then(outputs => runtime.run(outputs.value)),
-      fallbackRefStore: urlRefStore(examplesUrl)
+      run: (g, id) =>
+        wrapPromise(runtime.runGraphNode(g, id)).then(
+          (outputs: NodeType<NodeOutputsU>) => runtime.run(outputs.value),
+        ).value,
+      fallbackRefStore: urlRefStore(examplesUrl),
     }),
   ).then((resStore) => {
     store.value = resStore.refs;
     initStore(resStore);
-    runtime = new NodysseusRuntime("sharedworker", resStore, nolibLib)
+    runtime = new NodysseusRuntime("sharedworker", resStore, nolibLib);
     store.initQueue.forEach((e) =>
       processMessage(store.value, ports, e[0], e[1]),
     );

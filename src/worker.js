@@ -1,4 +1,4 @@
-import { nolib, NodysseusError, initStore, run, nolibLib } from "./nodysseus"
+import { nolib, NodysseusError, initStore, nolibLib } from "./nodysseus"
 import {sharedWorkerRefStore, webClientStore} from "./editor/store"
 import {isNodysseusError} from "./editor/util"
 import { wrapPromise, wrapPromiseAll } from "./util"

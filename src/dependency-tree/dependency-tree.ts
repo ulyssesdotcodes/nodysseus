@@ -1,4 +1,5 @@
 // export class DependencyTreeNode<T, R extends Record<string, unknown>> {
+//
 //   private cachedValue;
 //   private isInvalid = true;
 //   constructor(private fn: (args: R) => T, private inputs: {[k in keyof R]: DependencyTreeNode<R[k], R extends Record<string, unknown>>}){
@@ -19,13 +20,10 @@ import {
   Lib,
   NodysseusNode,
   NodysseusStore,
-  NonErrorResult,
   RefNode,
-  Result,
   isGraph,
   isNodeRef,
   isNodeValue,
-  isValue,
 } from "../types.js";
 import {
   compare,
@@ -301,6 +299,7 @@ type NodeOutputs<T, D, M> = AnyNode<{
 };
 
 export type NodeOutputsU = NodeOutputs<unknown, unknown, unknown>;
+export type NodeType<N> = N extends AnyNode<infer T> ? T : never;
 
 const isNodeOutputs = (
   value: NodeOutputsU | AnyNode<unknown>,
@@ -470,7 +469,7 @@ export class NodysseusRuntime {
     }
     if (id === breakOnNode) {
       this.dirtying -= 1;
-        return;
+      return;
     }
     let nid;
     const nodeOuts = this.outputs.get(id);
@@ -478,11 +477,11 @@ export class NodysseusRuntime {
       this.dirty(nid, breakOnNode);
     }
     this.dirtying -= 1;
-    if(this.dirtying === 0) {
-      [...this.torun].map(id => this.checkWatch(id));
+    if (this.dirtying === 0) {
+      [...this.torun].map((id) => this.checkWatch(id));
       this.torun.clear();
     } else {
-      this.torun.add(id)
+      this.torun.add(id);
     }
   }
 
@@ -1027,71 +1026,70 @@ export class NodysseusRuntime {
             useExisting,
           );
 
-        const output = dependencies ? this.mapNode(
-          {
-            dependencies: dependencies || undefined,
-            subscribe,
-          },
-          ({ subscribe: subscriptions, dependencies }) => {
-            subscriptions &&
-              Object.entries(subscriptions).forEach(
-                (kv) =>
-                  kv[1] &&
-                  nolib.no.runtime.addListener(
-                    kv[0],
-                    this.id + nodeGraphId,
-                    (payload) => {
-                      if (this.running.size > 0)
-                        this.eventQueue.push(() => kv[1](payload));
-                      else kv[1](payload);
-                    },
-                    false,
-                    graphId,
-                    true,
-                    nolibLib,
-                  ),
-              );
-            const result = resultNode && this.runNode(resultNode)
-            return resultNode && new Promise((res, rej) => setTimeout(() => res(this.runNode(resultNode), 100)));
-          },
-            ({ dependencies: previous }, { dependencies: next }) =>
+        const output = dependencies
+          ? (this.mapNode(
+              {
+                dependencies: dependencies || undefined,
+                subscribe,
+              },
+              ({ subscribe: subscriptions, dependencies }) => {
+                subscriptions &&
+                  Object.entries(subscriptions).forEach(
+                    (kv) =>
+                      kv[1] &&
+                      nolib.no.runtime.addListener(
+                        kv[0],
+                        this.id + nodeGraphId,
+                        (payload) => {
+                          if (this.running.size > 0)
+                            this.eventQueue.push(() => kv[1](payload));
+                          else kv[1](payload);
+                        },
+                        false,
+                        graphId,
+                        true,
+                        nolibLib,
+                      ),
+                  );
+                return resultNode && this.runNode(resultNode);
+              },
+              ({ dependencies: previous }, { dependencies: next }) =>
                 (isNothingOrUndefined(previous) &&
                   isNothingOrUndefined(next)) ||
                 !compareObjects(previous, next),
-          nodeGraphId + extraNodeGraphId,
-          useExisting,
-        ) as AnyNode<T>
-        : this.mapNode(
-          {
-            result: resultNode,
-            subscribe,
-          },
-          ({ subscribe: subscriptions, result }) => {
-            subscriptions &&
-              Object.entries(subscriptions).forEach(
-                (kv) =>
-                  kv[1] &&
-                  nolib.no.runtime.addListener(
-                    kv[0],
-                    this.id + nodeGraphId,
-                    (payload) => {
-                      if (this.running.size > 0)
-                        this.eventQueue.push(() => kv[1](payload));
-                      else kv[1](payload);
-                    },
-                    false,
-                    graphId,
-                    true,
-                    nolibLib,
-                  ),
-              );
-            return result;
-          },
-          undefined,
-          nodeGraphId + extraNodeGraphId,
-          useExisting,
-        ) as AnyNode<T>;
-
+              nodeGraphId + extraNodeGraphId,
+              useExisting,
+            ) as AnyNode<T>)
+          : (this.mapNode(
+              {
+                result: resultNode,
+                subscribe,
+              },
+              ({ subscribe: subscriptions, result }) => {
+                subscriptions &&
+                  Object.entries(subscriptions).forEach(
+                    (kv) =>
+                      kv[1] &&
+                      nolib.no.runtime.addListener(
+                        kv[0],
+                        this.id + nodeGraphId,
+                        (payload) => {
+                          if (this.running.size > 0)
+                            this.eventQueue.push(() => kv[1](payload));
+                          else kv[1](payload);
+                        },
+                        false,
+                        graphId,
+                        true,
+                        nolibLib,
+                      ),
+                  );
+                return result;
+              },
+              undefined,
+              nodeGraphId + extraNodeGraphId,
+              useExisting,
+            ) as AnyNode<T>);
 
         const libNode =
           edgesIn.find((e) => e.as === "lib") &&
@@ -1174,7 +1172,7 @@ export class NodysseusRuntime {
               },
               nodeGraphId + extraNodeGraphId,
               useExisting,
-            );
+            ) as AnyNode<T>;
           }
           const fnArgs = this.varNode<Record<string, unknown>>(
             {},
@@ -1265,7 +1263,7 @@ export class NodysseusRuntime {
               },
               nodeGraphId + extraNodeGraphId,
               useExisting,
-            );
+            ) as AnyNode<T>;
           }
           return this.mapNode(
             calculateInputs() as {
@@ -1944,15 +1942,15 @@ export class NodysseusRuntime {
               },
               nodeGraphId + extraNodeGraphId,
               useExisting,
-            );
+            ) as AnyNode<T>;
           }
           const inputs = calculateInputs();
-          const systemValues: Array<[string, Result]> = (
+          const systemValues: Array<[string, unknown]> = (
             [
-              ["__graphid", nolib.no.of(graphId)],
-              ["__graph_value", nolib.no.of(node.value)],
-            ] as Array<[string, Result] | false>
-          ).filter((e): e is [string, Result] => e !== false);
+              ["__graphid", graphId],
+              ["__graph_value", node.value],
+            ] as Array<[string, unknown] | false>
+          ).filter((e): e is [string, unknown] => e !== false);
           return this.mapNode(
             { ...inputs },
             (nodeArgs) =>
@@ -1961,14 +1959,13 @@ export class NodysseusRuntime {
                   refNode,
                   new Map(
                     Object.entries(nodeArgs)
-                      .map((e) => [e[0], nolib.no.of(e[1])])
-                      .concat(systemValues) as Array<[string, Result]>,
+                      .map((e) => [e[0], e[1]])
+                      .concat(systemValues) as Array<[string, unknown]>,
                   ),
-                  newEnv(new Map(), extraNodeGraphId),
                   newLib(this.lib),
                   {},
                 ),
-              ).then((r) => (r as NonErrorResult).value).value,
+              ).value,
             undefined,
             nodeGraphId + extraNodeGraphId,
             useExisting,

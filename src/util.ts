@@ -1,28 +1,14 @@
 import {
+  Args,
   Edge,
   Graph,
   GraphNode,
   NodysseusNode,
-  isNodeRef,
   isNodeGraph,
   isNodeValue,
-  NodeArg,
-  Runnable,
   isEnv,
-  isRunnable,
-  isValue,
   Lib,
-  isLib,
   Env,
-  Args,
-  ValueNode,
-  Result,
-  isArgs,
-  isConstRunnable,
-  isApRunnable,
-  isError,
-  ConstRunnable,
-  TypedArg,
   SavedGraph,
   isEdgesInGraph,
   FullyTypedArg,
@@ -506,35 +492,6 @@ export const combineEnv = (
   return { __kind: "env", data, env, node_id, _output };
 };
 
-export const mergeEnv = (data: Args, env: Env): Env => {
-  if (isRunnable(data)) {
-    throw new Error("Can't merge a runnable");
-  }
-
-  // Has to be .has because we want to preserve "_output" being set to undefined
-  const _output: false | Result | ConstRunnable =
-    isArgs(data) && data.has("_output") ? data.get("_output") : false;
-
-  return data.size > 0
-    ? {
-        __kind: "env",
-        data:
-          env?.data?.size > 0
-            ? new Map([...env.data, ...data, ["_output", undefined]])
-            : data.has("_output")
-              ? new Map([...data])
-              : data,
-        env: env.env,
-        _output:
-          _output === false
-            ? env._output
-            : isValue(_output)
-              ? _output.value
-              : data.get("_output"),
-      }
-    : env;
-};
-
 export const newLib = (data): Lib => ({ __kind: "lib", data });
 export const mergeLib = (a: Record<string, any> | Lib, b: Lib): Lib =>
   a
@@ -558,32 +515,27 @@ const mergeDeep = (a: Record<string, unknown>, b: Record<string, unknown>) => {
   const aKeys = Object.keys(a);
   const bKeys = Object.keys(b);
 
-  return aKeys
-    .concat(bKeys)
-    .reduce(
-      (acc, key) =>
-        acc[key]
-          ? acc
-          : a[key] === b[key]
-            ? ((acc[key] = a[key]), acc)
-            : {
-                ...acc,
-                [key]:
-                  MERGE_KEYS.includes(key) &&
-                  typeof a[key] === "object" &&
-                  typeof b[key] === "object"
-                    ? mergeDeep(
-                        a[key] as Record<string, unknown>,
-                        b[key] as Record<string, unknown>,
-                      )
-                    : a[key] ?? b[key],
-              },
-      {},
-    );
+  return aKeys.concat(bKeys).reduce(
+    (acc, key) =>
+      acc[key]
+        ? acc
+        : a[key] === b[key]
+          ? ((acc[key] = a[key]), acc)
+          : {
+              ...acc,
+              [key]:
+                MERGE_KEYS.includes(key) &&
+                typeof a[key] === "object" &&
+                typeof b[key] === "object"
+                  ? mergeDeep(
+                      a[key] as Record<string, unknown>,
+                      b[key] as Record<string, unknown>,
+                    )
+                  : a[key] ?? b[key],
+            },
+    {},
+  );
 };
-
-export const runnableId = (runnable: Runnable) =>
-  isConstRunnable(runnable) ? `${runnable.graph}/${runnable.fn}` : false;
 
 const emptySet = new Set<string>();
 export function compareObjects(
@@ -693,5 +645,7 @@ export const appendGraphId = (graphId: string, nodeId: string) =>
 
 // Get edges in for a node from a regular graph or a embedded graph with no edges_in
 // note that with no edges_in, this is resource intensive
-export const nodeEdgesIn = (graph: Graph, nodeId: string): Edge[] => 
-  graph.edges_in?.[nodeId] ? Object.values(graph.edges_in[nodeId]) : Object.values(graph.edges).filter(e => e.to === nodeId)
+export const nodeEdgesIn = (graph: Graph, nodeId: string): Edge[] =>
+  graph.edges_in?.[nodeId]
+    ? Object.values(graph.edges_in[nodeId])
+    : Object.values(graph.edges).filter((e) => e.to === nodeId);

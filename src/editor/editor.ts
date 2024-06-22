@@ -4,7 +4,6 @@ import { signal } from "@preact/signals";
 import {
   resfetch,
   nolib,
-  run,
   initStore,
   NodysseusError,
   nolibLib,
@@ -1241,7 +1240,7 @@ const editor = async function (html_id, editingGraphId, lib, inputNorun) {
         run: (g, id) =>
           wrapPromise(hlib.runtime().runGraphNode(g, id)).then((outputs) =>
             hlib.runtime().run(outputs.value),
-          ),
+          ).value,
         graphChangeCallback: (graph, changedNodes) =>
           nolib.no.runtime.change_graph(graph, nolibLib, changedNodes, true),
         fallbackRefStore,
@@ -1355,4 +1354,4 @@ const editor = async function (html_id, editingGraphId, lib, inputNorun) {
   runapp(init, lib);
 };
 
-export { editor, run };
+export { editor };

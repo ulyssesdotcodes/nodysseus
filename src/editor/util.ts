@@ -14,18 +14,14 @@ import {
 import {
   Args,
   compareNodes,
-  ConstRunnable,
   Edge,
   ExportedGraph,
   FullyTypedArg,
-  FunctorRunnable,
-  getRunnableGraphId,
   Graph,
   isArgs,
   isExportedGraph,
   isNodeGraph,
   isNodeRef,
-  isRunnable,
   isTypedArg,
   NodeArg,
   NodeMetadata,
@@ -385,10 +381,11 @@ export const ChangeEditingGraphId: ha.Effecter<
 > = (dispatch, { id, select_out, editingGraphId }) => {
   requestAnimationFrame(() => {
     const graphPromise = wrapPromise(nolib.no.runtime.refs()).then((refs) =>
-        nolib.no.runtime.get_ref(
-            id,
-            editingGraphId && nolib.no.runtime.get_ref(editingGraphId),
-          ));
+      nolib.no.runtime.get_ref(
+        id,
+        editingGraphId && nolib.no.runtime.get_ref(editingGraphId),
+      ),
+    );
 
     window.location.hash = "#" + id;
     graphPromise.then((graph) =>
@@ -816,7 +813,6 @@ export const UpdateNodeMetadata: ha.Effecter<
   wrapPromise(
     hlib.run(hlib.infoRuntime(), editingGraph, node.id, "metadata"),
   ).then((metadata) =>
-
     dispatch((s) => [
       {
         ...s,
@@ -873,11 +869,32 @@ export const UpdateNodeEffect: ha.Effecter<
         }
       });
 
-      dispatch(state => [{...state, selectedMetadata: metadata}, 
-         state.selected[0] === node.id && [CalculateSelectedNodeArgsEffect, {graph, node_id: node.id, cachedMetadata: state.cachedMetadata}],
-         state.selected[0] === node.id && [UpdateSelectedNodeMetadataEffect, remap(state, {
-           editingGraph: "graph",
-         }, pick(state, ["code_editor", "code_editor_nodeid_field", "code_editor_nodeid", "codeEditorExtensions", "cachedMetadata"], {id: node.id}))],
+      dispatch((state) => [
+        { ...state, selectedMetadata: metadata },
+        state.selected[0] === node.id && [
+          CalculateSelectedNodeArgsEffect,
+          { graph, node_id: node.id, cachedMetadata: state.cachedMetadata },
+        ],
+        state.selected[0] === node.id && [
+          UpdateSelectedNodeMetadataEffect,
+          remap(
+            state,
+            {
+              editingGraph: "graph",
+            },
+            pick(
+              state,
+              [
+                "code_editor",
+                "code_editor_nodeid_field",
+                "code_editor_nodeid",
+                "codeEditorExtensions",
+                "cachedMetadata",
+              ],
+              { id: node.id },
+            ),
+          ),
+        ],
       ]);
     });
 };
@@ -1123,12 +1140,11 @@ export const graph_subscription = (
   let animframe: false | number = false;
   const listener = ({ graph }) => {
     dispatch((s) => (s.error ? Object.assign({}, s, { error: false }) : s));
-    wrapPromise(nolib.no.runtime.refs())
-      .then((refGraphs) =>
-        dispatch((s) =>
-          s.refGraphs.length !== refGraphs.length ? { ...s, refGraphs } : s,
-        ),
-      );
+    wrapPromise(nolib.no.runtime.refs()).then((refGraphs) =>
+      dispatch((s) =>
+        s.refGraphs.length !== refGraphs.length ? { ...s, refGraphs } : s,
+      ),
+    );
     if (props.editingGraphId === graph.id) {
       if (animframe) {
         cancelAnimationFrame(animframe);
@@ -1250,13 +1266,15 @@ export const setCodeEditorText = ({
             metadata?.codeEditor?.language === "json"
               ? [jsonlang, linter(jsonParseLinter()), lintGutter()]
               : metadata?.codeEditor?.language === "markdown"
-              ? markdown()
-              : javascript(),
+                ? markdown()
+                : javascript(),
             metadata?.codeEditor?.onChange &&
               EditorView.updateListener.of(
                 (viewUpdate) =>
                   viewUpdate.docChanged &&
-                    metadata.codeEditor.onChange({editorText: viewUpdate.state.doc.toString()})
+                  metadata.codeEditor.onChange({
+                    editorText: viewUpdate.state.doc.toString(),
+                  }),
               ),
           ]
             .filter((e) => e)
@@ -1921,7 +1939,11 @@ export const HTMLComponent = ({
         children
           ?.map((c) => c.el ?? c)
           .filter((c) => !!c)
-          .map((c) => c.dom_type === "text_value" ? c.text : createElement(HTMLComponent, c)) ?? [],
+          .map((c) =>
+            c.dom_type === "text_value"
+              ? c.text
+              : createElement(HTMLComponent, c),
+          ) ?? [],
       );
 };
 
@@ -1989,8 +2011,9 @@ export const hlibLib = mergeLib(
         return;
       }
       try {
-        const result = wrapPromise(targetRuntime.runGraphNode(graph, fn))
-          .then(nodeOutput => targetRuntime.runNode(nodeOutput[_output ?? "value"])).value;
+        const result = wrapPromise(targetRuntime.runGraphNode(graph, fn)).then(
+          (nodeOutput) => targetRuntime.runNode(nodeOutput[_output ?? "value"]),
+        ).value;
         if (ispromise(result)) {
           return result.catch((e) => console.error(e));
         }
@@ -2026,12 +2049,12 @@ export const hlibLib = mergeLib(
       forceX,
     },
     worker: {
-      current: undefined
+      current: undefined,
     },
     workerPostMessage: {
       args: ["runnable", "args", "transferableObjects"],
       fn: (
-        runnable: {graph: string, fn: string},
+        runnable: { graph: string; fn: string; nodeGraphId: string },
         args: Map<string, any>,
         transferableObjects?: Array<any>,
       ) => {
@@ -2041,7 +2064,16 @@ export const hlibLib = mergeLib(
               graph: runnable.graph,
               fn: runnable.fn,
               nodeGraphId: runnable.nodeGraphId,
-              env: { data: new Map(Object.entries(args).map(e => [e[0], e[1]?.__kind === "varNode" ? {__kind: "varNode", id: e[1].id } : e[1]])) },
+              env: {
+                data: new Map(
+                  Object.entries(args).map((e) => [
+                    e[0],
+                    e[1]?.__kind === "varNode"
+                      ? { __kind: "varNode", id: e[1].id }
+                      : e[1],
+                  ]),
+                ),
+              },
             },
             transferableObjects,
           ),

@@ -17,19 +17,8 @@ import {
   NodysseusNode,
   NodysseusStore,
   Store,
-  Result,
-  Runnable,
-  isValue,
-  isNodeRef,
   RefNode,
   Edge,
-  isApRunnable,
-  ApRunnable,
-  FunctorRunnable,
-  isConstRunnable,
-  ConstRunnable,
-  isRunnable,
-  InputRunnable,
   Lib,
   Env,
   isEnv,
@@ -37,30 +26,18 @@ import {
   isArgs,
   ResolvedArgs,
   RunOptions,
-  isError,
-  FUNCTOR,
-  CONST,
-  AP,
   TypedArg,
-  ApFunctorLike,
-  ApFunction,
-  isApFunction,
-  isApFunctorLike,
   Extern,
-  getRunnableGraph,
   ValueNode,
   isLib,
-  isFunctorRunnable,
   isGraph,
-  isInputRunnable,
   MemoryState,
   MemoryReference,
   isMemory,
-  isResult,
   NodeMetadata,
-  NonErrorResult,
+  ApFunction,
 } from "./types.js";
-import { combineEnv, newLib, newEnv, mergeEnv, mergeLib } from "./util.js";
+import { combineEnv, newLib, newEnv, mergeLib } from "./util.js";
 import generic from "./generic.js";
 import * as externs from "./externs.js";
 import { initListeners } from "./events.js";
@@ -153,7 +130,6 @@ export const nodysseus_get = (
   }
 
   while (props.length) {
-
     if (obj && ispromise(obj)) {
       return obj.then((r) =>
         props.length > 0
@@ -277,10 +253,6 @@ const hashcode = function (str, seed = 0) {
 
 export const node_value = (node: ValueNode | RefNode) =>
   externs.parseValue(node.value);
-  
-const resolve_args = (data: Record<string, unknown> | Map<string, unknown>) => 
-  nolib.no.of(Object.fromEntries((data instanceof Map ? data.entries() : Object.entries(data)).filter(kv => !kv[0].startsWith("__"))
-                                 .map(kv => [kv[0], isValue(kv[1]) ? kv[1].value : kv[1]])));
 
 export const run_extern = (
   extern: ApFunction,
@@ -288,7 +260,6 @@ export const run_extern = (
   lib: Lib,
   options: RunOptions,
   node?: NodysseusNode,
-  graphArgs?: Env,
 ) => {
   let argColonIdx;
   let argspromise = false;
@@ -299,58 +270,44 @@ export const run_extern = (
         return [argColonIdx >= 0 ? a.substring(0, argColonIdx) : a, "any"];
       })
     : Object.entries(extern.args);
-  const args = typeof extern === "function" ? resolve_args(data) : externArgs.map(([arg]) => {
-          let newval;
-          if (arg === "_node") {
-            newval = node;
-          } else if (arg === "_node_args") {
-            newval = extern.rawArgs ? data : resolve_args(data);
-            newval = ispromise(newval)
-              ? newval.then((v: Result | undefined) =>
-                  isError(v) ? v : v?.value,
-                )
-              : extern.rawArgs
-                ? newval
-                : newval.value;
-          } else if (arg == "_lib") {
-            newval = lib;
-          } else if (arg == "_graph_input_value") {
-            newval = graphArgs;
-          } else if (arg == "_runoptions") {
-            newval = options;
-          } else if (arg == "__graphid") {
-            newval = (graphArgs.data.get("__graphid") as { value: string })
-              .value;
-          } else if (arg == "_output") {
-            newval = graphArgs._output;
-          } else {
-            const dataval = data.get(arg);
-            newval = isValue(dataval) ? dataval.value : dataval;
-          }
+  const args = externArgs.map(([arg]) => {
+    let newval;
+    if (arg === "_node") {
+      newval = node;
+    } else if (arg === "_node_args") {
+      newval = extern.rawArgs
+        ? data
+        : [...data.keys()]
+            .filter((k) => !k.startsWith("_"))
+            .map((k) => data.get(k));
+    } else if (arg == "_lib") {
+      newval = lib;
+    } else if (arg == "_runoptions") {
+      newval = options;
+    } else if (arg == "__graphid") {
+      newval = (data.get("__graphid") as { value: string }).value;
+    } else {
+      const dataval = data.get(arg);
+      newval = dataval;
+    }
 
-          argspromise ||= ispromise(newval);
-          return newval;
-        });
+    argspromise ||= ispromise(newval);
+    return newval;
+  });
 
   argspromise ||= ispromise(args);
 
   if (argspromise && !extern.promiseArgs) {
-    return (
-      Array.isArray(args)
-        ? Promise.all(args)
-        : (args as Promise<Result>).then((v) => (isValue(v) ? v.value.args : v))
-    ).then((as) => {
+    return Promise.all(args).then((as) => {
       const res = (typeof extern === "function" ? extern : extern.fn)(
         ...(isArgsArray
           ? as
           : [Object.fromEntries(externArgs.map((a, idx) => [a[0], as[idx]]))]),
       );
-      return wrapPromise(res).then((res) =>
-        extern.rawArgs ? res : lib.data.no.of(res),
-      ).value;
+      return res;
     });
   } else if (!ispromise(args)) {
-    const resArgs = Array.isArray(args) ? args : isValue(args) ? args.value.args : args;
+    const resArgs = args;
     const res = (typeof extern === "function" ? extern : extern.fn)(
       ...(isArgsArray
         ? resArgs
@@ -360,16 +317,13 @@ export const run_extern = (
             ),
           ]),
     );
-    return wrapPromise(res).then((res) =>
-      extern.rawArgs ? res : lib.data.no.of(res),
-    ).value;
+    return res;
   }
 };
 
 export const node_extern = (
   node: RefNode,
   data: Args,
-  graphArgs: Env,
   lib: Lib,
   options: RunOptions,
 ) => {
@@ -383,7 +337,6 @@ export const node_extern = (
     lib,
     options,
     node,
-    graphArgs,
   );
 };
 
@@ -397,86 +350,6 @@ const initStore = (store: NodysseusStore | undefined = undefined) => {
   }
 };
 
-export const run = (
-  node: Runnable | InputRunnable,
-  args: ResolvedArgs | Record<string, unknown> = new Map(),
-  options: { lib?: Lib; store?: NodysseusStore } & RunOptions = {},
-) => {
-  nodysseus = nodysseus ??
-    options.store ?? {
-      refs: objectRefStore(
-        (isInputRunnable(node) || isFunctorRunnable(node)) &&
-          isGraph(node.graph)
-          ? { [node.graph.id]: node.graph }
-          : {},
-      ),
-      persist: mapStore(),
-      state: mapStore(),
-      parents: mapStore(),
-      fns: mapStore(),
-      assets: mapStore(),
-    };
-
-  initStore(options.store ?? nodysseus);
-
-  let _lib: Lib = mergeLib(options.lib, newLib(nolib));
-  return wrapPromise(getRunnableGraph(node, _lib)).then((nodeGraph) => {
-    const cachedGraphLib =
-      nodeGraph && nodysseus.state.get(`${nodeGraph.id}-lib`);
-    if (cachedGraphLib) {
-      _lib = mergeLib(cachedGraphLib, _lib);
-    }
-    if (isRunnable(node)) {
-      if (isValue(node)) {
-        return node.value;
-      } else if (isError(node)) {
-        return node;
-      }
-    }
-
-    // isRunnable(node) && isFunctorRunnable(node) && getRunnableGraph(node, _lib) && _lib.data.no.runtime.change_graph(node.graph)
-    // isRunnable(node) && isFunctorRunnable(node) && _lib.data.no.runtime.update_graph(node.graph, _lib);
-
-    if (!(args instanceof Map)) {
-      args = new Map(Object.entries(args));
-    }
-
-    for (const k of args.keys()) {
-      if (!isValue(args.get(k) as Runnable)) {
-        args.set(k, nolib.no.of(args.get(k)));
-      }
-    }
-
-    const res = run_runnable(
-      isRunnable(node)
-        ? { ...node, lib: node.lib ? mergeLib(node.lib, _lib) : _lib }
-        : {
-            ...node,
-            __kind: CONST,
-            env:
-              node.env ??
-              newEnv(new Map().set("__graphid", _lib.data.no.of(node.graph))),
-            lib: mergeLib(node.lib, _lib),
-            // mergeEnv(
-            //   Object.fromEntries(Object.entries(args ?? {}).map(e => [e[0], _lib.data.no.of(e[1])])),
-            //   node.env ?? newEnv({__graphid: _lib.data.no.of(node.graph.id)})
-            // )
-          },
-      _lib,
-      args,
-      options,
-    );
-    return wrapPromise(res)
-      .then((r) => (isValue(r) ? r?.value : r))
-      .then(
-        (v) => (
-          options.profile &&
-            console.info(JSON.stringify(options.timings, null, 2)),
-          isArgs(v) ? Object.fromEntries(v) : v
-        ),
-      ).value;
-  }).value;
-};
 const runtimefn = () => {
   Object.values(generic_nodes).forEach((graph) => {
     if (isNodeGraph(graph)) {
@@ -700,7 +573,6 @@ const runtimefn = () => {
   };
 
   return {
-    run: run,
     get_ref,
     add_ref,
     add_refs: (gs) => gs.forEach((g) => nodysseus.refs.set(g.id, g)),
@@ -739,12 +611,9 @@ const runtimefn = () => {
         ? ([] as Array<Graph>)
         : wrapPromise(get_graph(graphid)).then(
             (graph) =>
-              wrapPromiseAll(
-                Object.values(graph.nodes).map((node) =>
-                  isNodeRef(node) ? nolib.no.runtime.graphExport(node.ref) : [],
-                ),
-              ).then<Graph[]>((nodeGraphs) => nodeGraphs.flat().concat([graph]))
-                .value,
+              wrapPromiseAll(Object.values(graph.nodes).map((node) => [])).then<
+                Graph[]
+              >((nodeGraphs) => nodeGraphs.flat().concat([graph])).value,
           ).value,
     change_graph,
     update_graph: (graphid, lib: Lib) =>
@@ -940,91 +809,6 @@ const nolib: Record<string, any> & {
   no: { runtime: Runtime } & Record<string, any>;
 } = {
   no: {
-    of: (value): Result | Promise<Runnable> =>
-      ispromise(value)
-        ? value.then(nolib.no.of)
-        : isValue(value)
-          ? value
-          : { __kind: "result", value: value },
-    arg: (node, target: Env, lib: Lib, value, options: RunOptions) => {
-      value = node.value;
-      if (!value) return;
-      let valuetype, nodevalue;
-      const colonIdx = value.indexOf(":");
-      if (colonIdx >= 0) {
-        nodevalue = value.substring(0, colonIdx);
-        valuetype = value.substring(colonIdx + 2);
-      } else {
-        nodevalue = value;
-      }
-
-      const newtarget = () => {
-        const newt = new Map(target.data);
-        for (const k in newt) {
-          if (k.startsWith("_")) {
-            newt.delete(k);
-          }
-        }
-        return newt;
-      };
-
-      const parenttarget = () => {
-        const newt = new Map(target.env.data);
-        for (const k in newt) {
-          if (k.startsWith("_")) {
-            newt.delete(k);
-          }
-        }
-        return newt;
-      };
-
-      const ret =
-        nodevalue === undefined || target === undefined
-          ? undefined
-          : nodevalue === "__node"
-            ? node
-            : nodevalue.startsWith("__node.")
-              ? node[nodevalue.substring("__node.".length)]
-              : nodevalue.startsWith("_lib.")
-                ? nodysseus_get(
-                    lib.data,
-                    nodevalue.substring("_lib.".length),
-                    lib,
-                  )
-                : nodevalue === "_args"
-                  ? newtarget()
-                  : nodevalue === "_argsdata"
-                    ? resolve_args(newtarget(), lib, options)
-                    : nodevalue === "__args"
-                      ? parenttarget()
-                      : nodysseus_get(
-                          node.type === "local" ||
-                            node.type?.includes?.("local")
-                            ? newtarget()
-                            : node.type === "parent" ||
-                                node.type?.includes?.("parent")
-                              ? target.env
-                              : target,
-                          nodevalue,
-                          lib,
-                        );
-
-      // let retrun = run_runnable(ret, lib);
-      // let resolveret = (rr) => {
-      //   const retrun = isValue(rr) && isConstRunnable(rr.value) && valuetype !== "raw" ? run_runnable(rr, lib, undefined, options) : undefined
-      //   return  ispromise(retrun) ? retrun.then(v => isError(v) ? v : v?.value) : retrun ? isValue(retrun) || isWrappedPromise(retrun) ? retrun?.value : retrun : rr;
-      // }
-      const resolveret = (rr) =>
-        wrapPromise(rr)
-          .then((rrr) => (isValue(rrr) ? rrr.value : rrr))
-          .then((rrr) =>
-            isConstRunnable(rrr) && valuetype !== "raw"
-              ? resolveret(run_runnable(rrr, lib, new Map(), options))
-              : rrr,
-          ).value;
-
-      return resolveret(ret);
-    },
     base_graph,
     base_node,
     nodysseus_get,
@@ -1037,51 +821,6 @@ const nolib: Record<string, any> & {
   },
   extern: {
     // runGraph: F<A> => A
-    ap: {
-      rawArgs: true,
-      promiseArgs: true,
-      args: ["fn", "args", "run", "isScope", "_lib"],
-      fn: (fn, args, run, lib: Lib) => {
-        const resolveRunnable = (runnable) =>
-          (isRunnable(runnable) && isConstRunnable(runnable)
-            ? wrapPromise(run_runnable(runnable, lib)).then((r) =>
-                resolveRunnable(isValue(r) ? r.value : r),
-              )
-            : wrapPromise(runnable)
-          ).then((r) => (isValue(r) ? r.value : r)).value;
-
-        const apRunnable = (
-          fnRunnable: ApFunctorLike | Array<ApFunctorLike>,
-          run: boolean,
-        ): ApRunnable => ({
-          __kind: AP,
-          fn: Array.isArray(fnRunnable)
-            ? fnRunnable.filter((v) => v)
-            : fnRunnable,
-          args: args ?? (run ? fn.env : undefined),
-          lib,
-        });
-
-        return wrapPromise(run_runnable(fn, lib))
-          .then((fnr) =>
-            isValue(fnr)
-              ? Array.isArray(fnr.value)
-                ? fnr.value.map((fnrv) => resolveRunnable(fnrv))
-                : resolveRunnable(fnr)
-              : fnr,
-          )
-          .then((fnr) =>
-            !(Array.isArray(fnr) ? fnr : [fnr])
-              .filter((fnrv) => fnrv)
-              .every(isApFunctorLike)
-              ? fnr
-              : run
-                ? run_runnable(apRunnable(fnr, run), lib)
-                : apRunnable(fnr, run),
-          )
-          .then((res) => lib.data.no.of(res)).value;
-      },
-    },
     create_fn: {
       args: ["function", "_lib"],
       fn: externs.create_fn,
@@ -1089,243 +828,6 @@ const nolib: Record<string, any> & {
     parseValue: {
       args: ["value"],
       fn: externs.parseValue,
-    },
-    switch: {
-      rawArgs: true,
-      args: [
-        "input",
-        "args",
-        "_node_args",
-        "_lib",
-        "_runoptions",
-        "otherwise",
-        "removeSubscriptions",
-        "__graphid",
-      ],
-      fn: (
-        input,
-        args,
-        node_args: Args,
-        lib: Lib,
-        options,
-        otherwise,
-        removeSubscriptions,
-        graphid,
-      ) => {
-        return wrapPromiseAll([
-          run_runnable(input, lib, undefined, options),
-          run_runnable(args, lib, undefined, options),
-          run_runnable(removeSubscriptions, lib, undefined, options),
-        ])
-          .then(([inputval, runargs, removeSubscriptions]) => [
-            isValue(inputval) ? inputval.value : inputval,
-            (isValue(runargs) ? runargs.value : runargs) ?? node_args,
-            isValue(removeSubscriptions) ? removeSubscriptions.value : false,
-          ])
-          .then(([ival, args, removeSubscriptions]) => {
-            if (
-              removeSubscriptions &&
-              lib.data.no.runtime.get_args(graphid).value !== ival
-            ) {
-              removeSubscriptions &&
-                (isArgs(args) ? [...args.entries()] : Object.entries(args))
-                  .filter((e) => !e[0].startsWith("__"))
-                  .flatMap((runnableEntry: [string, ConstRunnable]) =>
-                    Object.values(
-                      ancestor_graph(
-                        runnableEntry[1].fn,
-                        lib.data.no.runtime.get_ref(runnableEntry[1].graph),
-                        lib,
-                      ).nodes,
-                    ).map((n) => [runnableEntry[0], runnableEntry[1].graph, n]),
-                  )
-                  .forEach(
-                    ([inputid, graph, node]: [string, Graph, NodysseusNode]) =>
-                      lib.data.no.runtime.pauseGraphListeners(
-                        `${graph.id}/${node.id}`,
-                        ival !== inputid,
-                      ),
-                  );
-              lib.data.no.runtime.update_args(graphid, { value: ival });
-            }
-
-            return isError(ival)
-              ? ival
-              : run_runnable(
-                  isArgs(args) ? args.get(ival) : args[ival],
-                  lib,
-                  undefined,
-                  options,
-                ) ?? run_runnable(otherwise, lib, undefined, options);
-          })
-          .then((res) => {
-            return res;
-          });
-      },
-    },
-    resolve: {
-      rawArgs: false,
-      args: ["object", "_lib"],
-      fn: (object: Args, lib) => {
-        return Object.fromEntries(
-          Object.entries(object).map((e) => [e[0], run_runnable(e[1], lib)]),
-        );
-      },
-    },
-    map: {
-      rawArgs: true,
-      outputs: {
-        metadata: true,
-      },
-      args: ["fn", "array", "_lib", "_runoptions", "_output"],
-      fn: (fn, array, lib, options, _output) =>
-        _output === "metadata"
-          ? {
-              parameters: {
-                fn: {
-                  type: "@flow.runnable",
-                  runnableParameters: ["element", "index"],
-                },
-                array: "@data.array",
-              },
-            }
-          : wrapPromise(run_runnable(array, lib, undefined, options))
-              .then((arr) => (isValue(arr) ? arr.value : arr))
-              .then((arr) =>
-                Array.isArray(arr)
-                  ? wrapPromise(run_runnable(fn, lib, undefined, options))
-                      .then((fnr) => (isError(fnr) ? fnr : fnr.value))
-                      .then((fnr) =>
-                        isApFunctorLike(fnr)
-                          ? wrapPromiseAll(
-                              arr
-                                .map((element, index) =>
-                                  typeof fnr === "function"
-                                    ? (fnr(
-                                        mergeEnv(
-                                          new Map([
-                                            [
-                                              "element",
-                                              lib.data.no.of(element),
-                                            ],
-                                            ["index", lib.data.no.of(index)],
-                                          ]),
-                                          fn.env,
-                                        ),
-                                      ) as Result | Promise<Result>)
-                                    : run_runnable(
-                                        fnr,
-                                        lib,
-                                        new Map([
-                                          ["element", lib.data.no.of(element)],
-                                          ["index", lib.data.no.of(index)],
-                                        ]),
-                                        options,
-                                      ),
-                                )
-                                .map((v) =>
-                                  wrapPromise(v).then((v) =>
-                                    isValue(v) ? v.value : v,
-                                  ),
-                                ),
-                            ).then((vs) => lib.data.no.of(vs))
-                          : isError(fnr)
-                            ? fnr
-                            : arr,
-                      )
-                  : arr,
-              ).value,
-    },
-    fold: {
-      rawArgs: true,
-      args: ["fn", "object", "initial", "_lib", "_runoptions", "_output"],
-      fn: (fn, object, initial, lib: Lib, options, _output) =>
-        _output === "metadata"
-          ? {
-              parameters: {
-                fn: {
-                  type: "@flow.runnable",
-                  runnableParameters: ["element", "index"],
-                },
-                array: "@data.array",
-              },
-            }
-          : wrapPromise(run_runnable(object, lib, undefined, options))
-              .then((ov) => (isError(ov) ? ov : ov.value))
-              .then((objectvalue) =>
-                objectvalue === undefined
-                  ? undefined
-                  : isError(objectvalue)
-                    ? objectvalue
-                    : wrapPromise(run_runnable(fn, lib, undefined, options))
-                        .then((fnr) => (isError(fnr) ? fnr : fnr.value))
-                        .then((fnrunnable) =>
-                          wrapPromise(
-                            run_runnable(initial, lib, undefined, options),
-                          )
-                            .then((initial) =>
-                              isError(initial) ? initial : initial.value,
-                            )
-                            .then((initial) => {
-                              const mapobjarr = (mapobj, mapfn, mapinit) =>
-                                typeof mapobj.reduce === "function"
-                                  ? mapobj.reduce(mapfn, mapinit)
-                                  : Object.entries(mapobj)
-                                      .sort((a, b) => a[0].localeCompare(b[0]))
-                                      .reduce(mapfn, mapinit);
-
-                              initial =
-                                initial ??
-                                (typeof objectvalue.reduce === "function"
-                                  ? []
-                                  : {});
-
-                              let errored = false;
-                              // const errorlistener = (error) => errored = true
-
-                              // TODO: rethink. Too costly for now
-                              // lib.data.no.runtime.addListener('grapherror', fnrunnable.graph.id + "/" + fnrunnable.fn, errorlistener)
-
-                              const ret = mapobjarr(
-                                objectvalue,
-                                (previousValue, currentValue) =>
-                                  !errored &&
-                                  wrapPromise(previousValue)
-                                    .then((prevVal) => {
-                                      const args = new Map()
-                                        .set(
-                                          "previousValue",
-                                          lib.data.no.of(prevVal),
-                                        )
-                                        .set(
-                                          "currentValue",
-                                          lib.data.no.of(currentValue),
-                                        );
-                                      return typeof fnrunnable === "function"
-                                        ? fnrunnable(args)
-                                        : run_runnable(
-                                            fnrunnable,
-                                            lib,
-                                            args,
-                                            options,
-                                          );
-                                    })
-                                    .then((rv) => {
-                                      if (isError(rv)) {
-                                        errored = true;
-                                        return rv;
-                                      }
-                                      return rv.value;
-                                    }).value,
-                                initial,
-                              );
-
-                              // lib.data.no.runtime.removeListener('grapherror', fnrunnable.graph.id + "/" + fnrunnable.fn, errorlistener)
-
-                              return lib.data.no.of(ret);
-                            }),
-                        ),
-              ).value,
     },
     workerRunnable: {
       args: ["graph"],
@@ -1351,127 +853,6 @@ const nolib: Record<string, any> & {
       args: ["value", "recache"],
       fn: () => {},
     },
-    readReference: {
-      args: ["reference"],
-      fn: (reference) => {
-        const ret = reference.value.value.read();
-        if (ret && ret.__kind === "nothing") {
-          return undefined;
-        }
-      },
-    },
-    reference: {
-      rawArgs: true,
-      outputs: {
-        display: true,
-      },
-      args: [
-        "listener",
-        "_lib",
-        "__graphid",
-        "_runoptions",
-        "_output",
-        "initial",
-        "publish",
-        "persist",
-      ],
-      fn: (onframe, lib, graphid, options, output, initial, publish, id) => {
-        return wrapPromiseAll([
-          publish && run_runnable(publish, lib, undefined, options),
-          id && run_runnable(id, lib, undefined, options),
-        ])
-          .then(([publish, id]) => [
-            isValue(publish) ? publish.value : publish,
-            isValue(id) ? id.value : id,
-          ])
-          .then(([publish, id]) => {
-            const stateId = id
-              ? `${lib.data.no.runtime.get_parent(graphid)}#${id}`
-              : graphid;
-            const args = lib.data.no.runtime.get_args(stateId);
-
-            const store =
-              args["store"] ??
-              ({
-                __kind: "reference",
-                id: stateId,
-                set: {
-                  __kind: "apFunction",
-                  fn: (value) => {
-                    if (store["publish"]) {
-                      lib.data.no.runtime.publish(
-                        "argsupdate",
-                        {
-                          id: stateId,
-                          changes: [["store.value", value]],
-                          mutate: true,
-                        },
-                        lib,
-                        options,
-                      );
-                    } else {
-                      store["value"] = value;
-                    }
-                    return value;
-                  },
-                  args: ["value"],
-                },
-                publish,
-                value: undefined,
-              } as MemoryReference);
-
-            if (!args["store"]) {
-              lib.data.no.runtime.update_args(stateId, { store }, lib);
-              if (initial) {
-                return wrapPromise(
-                  run_runnable(initial, lib, undefined, options),
-                )
-                  .then((res) => (isValue(res) ? res.value : res))
-                  .then((value) => {
-                    store.value = value;
-                    return store;
-                  }).value;
-              }
-            } else {
-              args["store"].publish = publish;
-            }
-
-            if (onframe) {
-              const onframeArgs = new Map([["reference", store]]);
-              wrapPromise(run_runnable(onframe, lib)).then(
-                (onframeRunnable) =>
-                  isValue(onframeRunnable) &&
-                  nolib.no.runtime.addListener(
-                    "animationframe",
-                    stateId,
-                    () => {
-                      wrapPromise(
-                        run_runnable(onframeRunnable.value, lib, onframeArgs),
-                      ).then((frameresult) => {
-                        if (isValue(frameresult)) {
-                          args["store"].value = frameresult.value;
-                        }
-                      });
-                    },
-                  ),
-              );
-            }
-
-            return output === "display"
-              ? {
-                  dom_type: "div",
-                  props: {},
-                  children: [
-                    {
-                      dom_type: "text_value",
-                      text: JSON.stringify(store.value),
-                    },
-                  ],
-                }
-              : store;
-          }).value;
-      },
-    },
     persistState: {
       args: ["kvs"],
       fn: (kvs) =>
@@ -1480,232 +861,6 @@ const nolib: Record<string, any> & {
         wrapPromiseAll(
           Object.entries(kvs).map((kv) => nodysseus.persist.set(...kv)),
         ).value,
-    },
-    state: {
-      rawArgs: true,
-      outputs: {
-        display: true,
-      },
-      args: [
-        "value",
-        "_lib",
-        "__graphid",
-        "_runoptions",
-        "_output",
-        "persist",
-        "publish",
-      ],
-      fn: (value, lib, graphid, options, output, persist, publish, id) => {
-        return wrapPromiseAll([
-          publish && run_runnable(publish, lib, undefined, options),
-          persist && run_runnable(persist, lib, undefined, options),
-          id && run_runnable(id, lib, undefined, options),
-        ])
-          .then(([publish, persist, id]) => [
-            isValue(publish) ? publish.value : publish,
-            isValue(persist) ? persist.value : persist,
-            isValue(id) ? id.value : id,
-          ])
-          .then(([publish, persist, id]) => {
-            const stateId = id
-              ? `${lib.data.no.runtime.get_parent(graphid)}#${id}`
-              : graphid;
-            return {
-              publish,
-              persist: persist,
-              stateId,
-              rawstate: lib.data.no.runtime.get_args(stateId)["state"],
-            };
-          })
-          .then(({ publish, persist, stateId, rawstate }) => {
-            if (rawstate !== undefined)
-              return { publish, persist, stateId, rawstate };
-            const persistedState =
-              persist &&
-              rawstate === undefined &&
-              nodysseus.persist.get(stateId);
-            const initialState = wrapPromise(persistedState).then((ps) =>
-              ps
-                ? JSON.parse(ps)
-                : value && (rawstate === undefined || rawstate === null)
-                  ? wrapPromise(
-                      run_runnable(value, lib, undefined, options),
-                    ).then((result) =>
-                      isValue(result) ? result.value : result,
-                    )
-                  : undefined,
-            );
-            return initialState
-              ? initialState
-                  .then((initial) => {
-                    if (publish) {
-                      lib.data.no.runtime.publish(
-                        "argsupdate",
-                        {
-                          id: stateId,
-                          changes: { state: initial },
-                          mutate: false,
-                        },
-                        lib,
-                        options,
-                        true,
-                      );
-                    } else {
-                      lib.data.no.runtime.update_args(stateId, {
-                        state: initial,
-                      });
-                    }
-
-                    return initial;
-                  })
-                  .then((initial) => ({ publish, persist, initial, stateId }))
-                  .value
-              : { publish, persist, stateId };
-          })
-          .then(
-            ({
-              persist,
-              publish,
-              initial,
-              stateId,
-              rawstate,
-            }: {
-              persist;
-              publish;
-              stateId;
-              rawstate;
-              initial?;
-            }) =>
-              wrapPromise(rawstate)
-                .then((rawstate) =>
-                  isValue(rawstate) ? rawstate.value : rawstate,
-                )
-                .then((state) => ({
-                  publish,
-                  persist,
-                  state,
-                  stateId,
-                  initial,
-                })).value,
-          )
-          .then(({ persist, publish, state, stateId, initial }) =>
-            output === "display"
-              ? lib.data.no.of({
-                  dom_type: "div",
-                  props: {},
-                  children: [
-                    { dom_type: "text_value", text: JSON.stringify(state) },
-                  ],
-                })
-              : ({
-                  __kind: "state",
-                  id: stateId,
-                  set: {
-                    __kind: "apFunction",
-                    promiseArgs: true,
-                    fn: (value) => {
-                      const result =
-                        value === undefined || value === null
-                          ? undefined
-                          : run_runnable(value, lib, undefined, {
-                              resolvePromises: false,
-                            });
-                      const promiseresult = ispromise(result)
-                        ? result.then((r) => (isValue(r) ? r.value : r))
-                        : isValue(result)
-                          ? result.value
-                          : result;
-                      const isresultpromise = ispromise(promiseresult);
-
-                      if (publish) {
-                        nolib.no.runtime.publish(
-                          "argsupdate",
-                          {
-                            id: stateId,
-                            changes: { state: promiseresult },
-                            mutate: false,
-                          },
-                          lib,
-                          options,
-                          true,
-                        );
-                      } else {
-                        if (!(isresultpromise && state)) {
-                          lib.data.no.runtime.update_args(
-                            stateId,
-                            { state: promiseresult },
-                            lib,
-                          );
-                        }
-                      }
-
-                      if (!isresultpromise && persist) {
-                        nodysseus.persist.set(
-                          stateId,
-                          JSON.stringify(promiseresult),
-                        );
-                      }
-
-                      return isresultpromise
-                        ? promiseresult.then((pr) => {
-                            if (persist) {
-                              nodysseus.persist.set(
-                                stateId,
-                                JSON.stringify(pr),
-                              );
-                            }
-
-                            if (publish) {
-                              lib.data.no.runtime.publish(
-                                "argsupdate",
-                                {
-                                  id: stateId,
-                                  changes: { state: pr },
-                                  mutate: false,
-                                },
-                                lib,
-                                options,
-                                true,
-                              );
-                            } else {
-                              lib.data.no.runtime.update_args(
-                                stateId,
-                                { state: pr },
-                                lib,
-                              );
-                            }
-                            return pr;
-                          })
-                        : promiseresult;
-                    },
-                    args: ["value"],
-                  },
-                  state: state ?? initial,
-                } as MemoryState),
-          ).value;
-      },
-    },
-    // cache: {
-    //   args: ["value", "recache", ]
-    // },
-    frame: {
-      args: ["_lib", "__graphid"],
-      fn: (_lib, __graphid) => {
-        const current = _lib.data.no.runtime.get_args(__graphid)?.cache;
-        if (current) return current;
-        let frame = 0;
-        const updateFrame = () => {
-          frame += 1;
-          requestAnimationFrame(updateFrame);
-        };
-        const cache = externs.memoryCacheOf(
-          (cachedFrame) => cachedFrame !== frame,
-          () => frame,
-        );
-        _lib.data.no.runtime.update_args(__graphid, { cache });
-        updateFrame();
-        return cache;
-      },
     },
     memoryUnwrap: {
       args: ["value: default"],
@@ -1716,211 +871,8 @@ const nolib: Record<string, any> & {
       fn: () => {},
     },
     nodeDisplay: {
-      args: ["__grph_value"],
+      args: ["__graph_value"],
       fn: () => {},
-    },
-    return: {
-      outputs: {
-        display: true,
-        lib: true,
-        metadata: true,
-      },
-      resolve: false,
-      rawArgs: true,
-      promiseArgs: true,
-      args: {
-        value: {
-          type: "any",
-          default: true,
-        },
-        display: {
-          type: {
-            background: "@html.html_element",
-            resultPanel: "@html.html_element",
-          },
-        },
-        subscribe: "any",
-        dependencies: "any",
-        metadata: {
-          type: {
-            parameters: (graph: Graph, nodeId: string) => ({
-              type: Object.fromEntries(
-                Object.values(ancestor_graph(nodeId, graph).nodes)
-                  .filter(
-                    (n) =>
-                      isNodeRef(n) &&
-                      n.ref === "arg" &&
-                      n.value &&
-                      !n.value.startsWith("_"),
-                  )
-                  .map((n: ValueNode & RefNode) => [
-                    n.value.includes(".") ? n.value.split(".")[0] : n.value,
-                    "any",
-                  ]),
-              ),
-            }),
-            values: "any",
-            dataLabel: "any",
-            language: "any",
-          },
-        },
-        args: "any",
-        lib: "any",
-        _output: "string",
-        _lib: "any",
-        _runoptions: "any",
-        __graphid: "string",
-      },
-      fn: ({
-        value,
-        display,
-        subscribe,
-        metadata,
-        args,
-        lib,
-        _output,
-        _lib,
-        _runoptions,
-        __graphid,
-      }) => {
-        const output = _output;
-        const argsfn = args;
-        const graphid = __graphid;
-        const options = _runoptions;
-        const edgemap = { value, display, subscribe, metadata, lib };
-
-        if (
-          (output === "display" || output === "metadata") &&
-          !edgemap[output]
-        ) {
-          return;
-        }
-
-        const runedge =
-          output && output === display
-            ? display
-            : edgemap[output]
-              ? output
-              : "value";
-
-        // _lib.data.no.runtime.removeAncestorListeners(graphid)
-
-        const return_result = (_lib: Lib, args: Args) => {
-          args = args && !isArgs(args) ? new Map(Object.entries(args)) : args;
-
-          const runnable = edgemap[runedge]
-            ? edgemap[runedge]
-            : runedge === "value" && !value && display
-              ? display
-              : _lib.data.no.of(undefined);
-          if (
-            isRunnable(runnable) &&
-            !isError(runnable) &&
-            !isValue(runnable) &&
-            !isApRunnable(runnable)
-          ) {
-            runnable.env = combineEnv(
-              runnable.env.data,
-              newEnv(
-                args,
-                _lib.data.no.of(runedge === "display" ? "display" : "value"),
-                runnable.env,
-              ),
-            );
-          }
-
-          if (lib !== undefined) {
-            runnable.lib = _lib;
-          }
-
-          const runedgeresult = run_runnable(
-            runnable,
-            _lib,
-            undefined,
-            options,
-          );
-          if (
-            edgemap.subscribe &&
-            (runedge === "display" || runedge === "value")
-          ) {
-            const newgraphid = graphid;
-
-            wrapPromise(
-              run_runnable(edgemap.subscribe, _lib, args, {
-                ...options,
-                resolvePromises: true,
-              }),
-            )
-              .then((subscriptions) =>
-                isValue(subscriptions) ? subscriptions.value : subscriptions,
-              )
-              .then(
-                (subscriptions) =>
-                  subscriptions &&
-                  Object.entries(subscriptions).forEach(
-                    (kv) =>
-                      kv[1] &&
-                      _lib.data.no.runtime.addListener(
-                        kv[0],
-                        newgraphid,
-                        kv[1],
-                        false,
-                        graphid,
-                        true,
-                        _lib,
-                        options,
-                      ),
-                  ),
-              );
-          }
-
-          if (edgemap.display) {
-            const displayStateId = `${
-              display.env.data.get("__graphid").value
-            }/${display.fn}-display-runnable`;
-            nodysseus.state.set(displayStateId, display);
-          }
-
-          return runedgeresult;
-        };
-
-        const ret = wrapPromise(
-          run_runnable(lib, _lib, undefined, {
-            ...options,
-            resolvePromises: true,
-          }),
-        )
-          .then((libr) => (isError(libr) ? libr : libr?.value))
-          .then(
-            (libr) => (
-              libr &&
-                `${lib.graph.id}/${lib.graph.out ?? "out"}` === graphid &&
-                nodysseus.state.set(`${lib.graph.id ?? lib.graph}-lib`, libr),
-              libr
-            ),
-          )
-          .then((libr) =>
-            wrapPromise(
-              argsfn
-                ? run_runnable(
-                    {
-                      ...argsfn,
-                      lib: mergeLib(newLib(libr), _lib),
-                    },
-                    _lib,
-                    undefined,
-                    { ...options, isNoResolve: true, resolvePromises: true },
-                  )
-                : undefined,
-            ).then((args) =>
-              return_result(
-                mergeLib(newLib(libr), _lib),
-                isValue(args) ? args?.value : args,
-              ),
-            ),
-          ).value;
-        return ret;
-      },
     },
     compare: {
       args: ["_node_args"],
@@ -2056,7 +1008,7 @@ const nolib: Record<string, any> & {
               Object.entries(args)
                 .sort((akv, bkv) => akv[0].localeCompare(bkv[0]))
                 .map((kv: [string, any]) => wrapPromise(kv[1])),
-            ).then((r) => r.map((rv) => (isValue(rv) ? rv.value : rv))).value,
+            ).then((r) => r.map((rv) => rv)).value,
     },
     fetch: {
       resolve: true,
@@ -2078,33 +1030,6 @@ const nolib: Record<string, any> & {
           );
         nodysseus.state.set(stateid, promise);
         return promise;
-      },
-    },
-    update_args: {
-      promiseArgs: true,
-      args: ["path", "value", "__graphid", "_lib"],
-      resolve: false,
-      fn: (path, value, graphid, lib) => {
-        const pathresult = run_runnable(path, lib) as Result;
-        path = isValue(pathresult) ? pathresult.value : pathresult;
-        const result =
-          value === undefined || value === null
-            ? undefined
-            : run_runnable(value, lib);
-
-        if (isError(pathresult)) {
-          throw pathresult;
-        }
-
-        const promiseresult = ispromise(result)
-          ? result.then((r) => (isValue(r) ? r.value : r))
-          : isValue(result)
-            ? result.value
-            : result;
-
-        lib.data.no.runtime.update_args(graphid, { [path]: promiseresult });
-
-        return promiseresult;
       },
     },
     call: {
@@ -2191,13 +1116,11 @@ const nolib: Record<string, any> & {
               : args === undefined
                 ? []
                 : [args];
-            const ret = (_lib.data ?? _lib).no.of(
-              (_lib.data ?? _lib).no.ispromise(ng_fn)
-                ? ng_fn.then((f: any) => f.apply(fnargs))
-                : typeof ng_fn === "function"
-                  ? ng_fn.apply(ng_self, fnargs)
-                  : ng_self,
-            );
+            const ret = (_lib.data ?? _lib).no.ispromise(ng_fn)
+              ? ng_fn.then((f: any) => f.apply(fnargs))
+              : typeof ng_fn === "function"
+                ? ng_fn.apply(ng_self, fnargs)
+                : ng_self;
             return ret;
           }
         };
@@ -2212,7 +1135,7 @@ const nolib: Record<string, any> & {
       fn: (target, args, lib, options) => {
         const seen = new Set();
         const merge = (target = {}, value) => {
-          if(seen.has(value)) return target;
+          if (seen.has(value)) return target;
           seen.add(value);
           Object.entries(value)
             .filter((kv) => !kv[0].startsWith("_"))
@@ -2233,31 +1156,22 @@ const nolib: Record<string, any> & {
                 target[k] = v;
               }
             });
-        }
+        };
 
         return wrapPromiseAll(
           Object.keys(args)
-            .filter((k) => k !== "target")
-            .map((k) => [
-              k,
-              isRunnable(args[k]) ? run_runnable(args[k], lib) : args[k],
-            ]),
+            .filter((k) => k !== "target" && !k.startsWith("_"))
+            .map((k) => [k, args[k]]),
         )
           .then(
             (inputs) =>
               wrapPromiseAll(
-                inputs
-                  .map((kv) => [kv[0], isValue(kv[1]) ? kv[1].value : kv[1]])
-                  .map((kv) => [
-                    kv[0],
-                    isArgs(kv[1]) ? resolve_args(kv[1], lib, options) : kv[1],
-                  ]),
+                inputs.map((kv) => [kv[0], kv[1]]).map((kv) => [kv[0], kv[1]]),
               ).then((kvs) =>
                 Object.fromEntries(
-                  kvs.map((kv) => [
-                    kv[0],
-                    isValue(kv[1]) ? kv[1].value : kv[1],
-                  ]),
+                  kvs
+                    .filter((kv) => kv[1] !== undefined)
+                    .map((kv) => [kv[0], kv[1]]),
                 ),
               ).value,
           )
@@ -2306,33 +1220,7 @@ const nolib: Record<string, any> & {
     add: {
       args: ["_node_args"],
       resolve: true,
-      fn: (args) =>
-        wrapPromiseAll(
-          Object.entries(args)
-            .sort((a, b) => a[0].localeCompare(b[0]))
-            .map((kv) => kv[1]),
-        ).then((inputs) =>
-          inputs
-            .map((i) => (i && isResult(i) ? i.value : i))
-            .reduce((acc, v) => {
-              if (acc?.__kind === "cache" && v?.__kind !== "cache") {
-                return externs.bindMemoryCache(acc)((value) =>
-                  externs.memoryCacheOf(
-                    () => false,
-                    () => value + externs.memoryUnwrap(v),
-                  ),
-                );
-              } else if (acc?.__kind !== "cache" && v?.__kind === "cache") {
-                return externs.bindMemoryCache(v)((value) =>
-                  externs.memoryCacheOf(
-                    () => false,
-                    () => value + externs.memoryUnwrap(acc),
-                  ),
-                );
-              }
-              return ((acc as any) + externs.memoryUnwrap(v)) as any;
-            }),
-        ),
+      fn: (args) => {},
     },
     and: {
       args: ["_node_args"],
@@ -2352,34 +1240,6 @@ const nolib: Record<string, any> & {
         Object.entries(args).reduce(
           (acc, e) => acc * (typeof e[1] === "number" ? e[1] : 1),
           1,
-        ),
-      _fn: (args) =>
-        wrapPromiseAll(
-          Object.entries(args)
-            .sort((a, b) => a[0].localeCompare(b[0]))
-            .map((kv) => kv[1]),
-        ).then((inputs) =>
-          inputs
-            .map((i) => (i && isResult(i) ? i.value : i))
-            .reduce((acc, v) => {
-              if (acc?.__kind === "cache" && v?.__kind !== "cache") {
-                const ret = externs.bindMemoryCache(acc)((value: number) =>
-                  externs.memoryCacheOf(
-                    (val) => val === undefined,
-                    () => value * externs.memoryUnwrap(v),
-                  ),
-                );
-                return ret;
-              } else if (acc?.__kind !== "cache" && v?.__kind === "cache") {
-                return externs.bindMemoryCache(v)((value: number) =>
-                  externs.memoryCacheOf(
-                    (val) => val === undefined,
-                    () => value * externs.memoryUnwrap(acc),
-                  ),
-                );
-              }
-              return ((acc as any) + externs.memoryUnwrap(v)) as any;
-            }),
         ),
     },
     negate: {
@@ -2416,43 +1276,6 @@ const nolib: Record<string, any> & {
           t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
           return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
         },
-    },
-    modify: {
-      args: [
-        "target",
-        "path",
-        "fn",
-        "_node",
-        "_lib",
-        "_graph_input_value",
-        "_runoptions",
-      ],
-      resolve: false,
-      fn: (target, path, fn, node, _lib, args, options) => {
-        const keys = (node.value || path).split(".");
-        const check = (o, fn, k) =>
-          k.length === 1
-            ? {
-                ...o,
-                [k[0]]: run_graph(
-                  fn.graph,
-                  fn.fn,
-                  {
-                    ...args,
-                    value: o[k[0]],
-                  },
-                  _lib,
-                  options,
-                ),
-              }
-            : o && typeof o === "object" && Object.hasOwn(o, k[0])
-              ? {
-                  ...o,
-                  [k[0]]: check(o[k[0]], fn, k.slice(1)),
-                }
-              : o;
-        return check(target, fn, keys);
-      },
     },
     stringify: {
       args: ["object: default", "spacer"],
@@ -2494,19 +1317,6 @@ const nolib: Record<string, any> & {
         );
       },
     },
-    addEventListeners: {
-      args: ["target", "_node_args", "_lib"],
-      fn: (target, nodeargs, lib: Lib) => {
-        Object.entries(nodeargs)
-          .filter((kv) => kv[0] !== "target")
-          .forEach(
-            ([k, fn]: [string, Runnable]) =>
-              (target[k] = (event) =>
-                fn && run_runnable(fn, lib, new Map().set("event", event))),
-          );
-        return target;
-      },
-    },
     data: {
       args: ["_node_args"],
       fn: (node_args) => node_args,
@@ -2526,7 +1336,7 @@ const nolib: Record<string, any> & {
     functionParameters: {
       args: ["fn"],
       fn: (fn) => {
-        if(!fn) return [];
+        if (!fn) return [];
         const fnstring = fn.toString();
         // hacky: return the first set of parameters we find
         let foundParams = false,
@@ -2569,5 +1379,4 @@ export {
   ispromise,
   NodysseusError,
   resfetch,
-  resolve_args,
 };

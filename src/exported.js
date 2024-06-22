@@ -11,7 +11,7 @@ initStore(store)
 
 const display = await nolib.no.runtime.run({
   graph: "strudel_example", 
-  env: newEnv(new Map([["__graphid", nolib.no.of("strudel_example")]]), "display"),
+  env: newEnv(new Map([["__graphid", "strudel_example"]]), "display"),
   fn: strudelExample.graphs.find(g => g.id === "strudel_example").out,
   lib: nolibLib
 })

@@ -1,4 +1,4 @@
-import { editor, run} from "./editor/editor.ts"
+import { editor } from "./editor/editor.ts"
 
 if (!window.IS_PRODUCTION) new EventSource("/esbuild").addEventListener("change", () => location.reload())
 

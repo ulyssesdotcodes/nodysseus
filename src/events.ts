@@ -1,18 +1,4 @@
-import {
-  ApFunctorLike,
-  Graph,
-  isApFunction,
-  isApRunnable,
-  isConstRunnable,
-  isError,
-  isFunctorRunnable,
-  isRunnable,
-  isValue,
-  Lib,
-  NodysseusNode,
-  Runnable,
-  RunOptions,
-} from "./types.js";
+import { Graph, Lib, NodysseusNode, RunOptions } from "./types.js";
 import { v4 as uuid } from "uuid";
 import { ispromise, nolib } from "./nodysseus.js";
 import { mergeLib, set_mutable, wrapPromise } from "./util.js";
@@ -195,24 +181,6 @@ export const initListeners = () => {
     }
 
     const listeners = getorset(event_listeners, event, () => new Map());
-    const replaceGraphs = (runnable: Runnable | ApFunctorLike) =>
-      isApFunction(runnable) ||
-      typeof runnable === "function" ||
-      isValue(runnable) ||
-      isError(runnable) ||
-      runnable === undefined ||
-      (isFunctorRunnable(runnable) && typeof runnable.graph === "object")
-        ? runnable
-        : isApRunnable(runnable)
-          ? {
-              ...runnable,
-              fn: Array.isArray(runnable.fn)
-                ? runnable.fn.map(replaceGraphs)
-                : replaceGraphs(runnable.fn),
-            }
-          : wrapPromise(lib.data.no.runtime.get_ref(runnable.graph)).then(
-              (graph) => ({ ...runnable, graph }),
-            ).value;
 
     if (!listeners.has(listener_id)) {
       if (graph_id) {

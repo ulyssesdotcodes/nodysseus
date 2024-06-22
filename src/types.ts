@@ -101,109 +101,6 @@ export type LokiT<T> = {
   data: T;
 };
 
-export type NonErrorResult = { __kind: "result"; value: any };
-
-export type Result = NonErrorResult | Error;
-export const isResult = (r: any): r is NonErrorResult => r.__kind === "result";
-
-export type BaseRunnable = {
-  __kind: unknown;
-  fn: string;
-  graph: string | Graph;
-  env: Env;
-  lib: Lib;
-};
-
-export type InputRunnable = Omit<BaseRunnable, "__kind" | "env" | "lib"> & {
-  env?: Env;
-  lib?: Lib;
-};
-
-export const AP = "ap";
-export type ApFunction = {
-  __kind: "apFunction";
-  fn: Function;
-  args: Array<string>;
-  promiseArgs?: boolean;
-  rawArgs?: boolean;
-  outputs?: {
-    lib?: boolean;
-    display?: boolean;
-  };
-};
-export const isApFunction = (a: any): a is ApFunction =>
-  a && (a as ApFunction).__kind === "apFunction";
-
-export type ApFunctorLike =
-  | FunctorRunnable
-  | ApRunnable
-  | ApFunction
-  | Function;
-
-export const isApFunctorLike = (a: any) =>
-  !!a &&
-  (typeof a === "function" ||
-    isApFunction(a) ||
-    isApRunnable(a) ||
-    isFunctorRunnable(a));
-
-export type ApRunnable = {
-  __kind: "ap";
-  fn: ApFunctorLike | Array<ApFunctorLike>;
-  args: ConstRunnable | Env;
-  lib: Lib;
-};
-
-export const CONST = "const";
-export type ConstRunnable = BaseRunnable & {
-  __kind: "const";
-};
-
-export const FUNCTOR = "functor";
-export type FunctorRunnable = BaseRunnable & {
-  __kind: "functor";
-  parameters: Array<string>;
-};
-
-export type Runnable = Result | ApRunnable | FunctorRunnable | ConstRunnable;
-
-export const isRunnable = (r: any): r is Runnable =>
-  isValue(r as Runnable) ||
-  isConstRunnable(r as Runnable) ||
-  isApRunnable(r as Runnable) ||
-  isFunctorRunnable(r as Runnable);
-export const isError = (r: any): r is Error => r instanceof Error;
-export const isValue = (r: unknown): r is NonErrorResult => {
-  const result = r as Result;
-  return !isError(result) && result?.__kind === "result";
-};
-export const isConstRunnable = (r: Runnable): r is ConstRunnable =>
-  !(r instanceof Error) && r?.__kind == CONST;
-export const isApRunnable = (r: Runnable): r is ApRunnable =>
-  !(r instanceof Error) && r?.__kind == AP;
-export const isFunctorRunnable = (r: Runnable): r is FunctorRunnable =>
-  !(r instanceof Error) && r?.__kind == FUNCTOR;
-export const isInputRunnable = (
-  r: Runnable | InputRunnable,
-): r is InputRunnable =>
-  !Object.hasOwn(r, "__kind") &&
-  Object.hasOwn(r, "fn") &&
-  Object.hasOwn(r, "graph");
-export const getRunnableGraph = (
-  r: Runnable | InputRunnable,
-  lib: Lib,
-): Graph =>
-  typeof (r as BaseRunnable).graph === "string"
-    ? lib.data.no.runtime.get_ref((r as BaseRunnable).graph)
-    : (r as BaseRunnable).graph;
-export const getRunnableGraphId = (
-  r: Runnable | InputRunnable,
-  lib: Lib,
-): string =>
-  typeof (r as BaseRunnable).graph === "string"
-    ? ((r as BaseRunnable).graph as string)
-    : ((r as BaseRunnable).graph as Graph).id;
-
 export type Lib = {
   __kind: "lib";
   data: Record<string, any>;
@@ -223,6 +120,18 @@ export const isEnv = (env: any): env is Env => env?.__kind === "env";
 
 //export const isApRunnable = (r: Runnable): r is ApRunnable => isGraphRunnable((r as ApRunnable).fn)
 
+export type ApFunction = {
+  __kind: "apFunction";
+  fn: Function;
+  args: Array<string>;
+  promiseArgs?: boolean;
+  rawArgs?: boolean;
+  outputs?: {
+    lib?: boolean;
+    display?: boolean;
+  };
+};
+
 // TODO: type this better
 export type Extern = {
   args: Array<string | FullyTypedArg> | Record<string, string | FullyTypedArg>;
@@ -233,7 +142,7 @@ export type NodeArg = {
   name: string;
 } & Partial<FullyTypedArg>;
 
-export type Args = Map<string, ConstRunnable | Result>;
+export type Args = Map<string, unknown>;
 export type ResolvedArgs = Map<string, unknown>;
 export const isArgs = (args: any): args is Args =>
   typeof args?.get === "function";
