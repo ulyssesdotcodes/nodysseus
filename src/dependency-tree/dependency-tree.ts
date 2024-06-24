@@ -927,6 +927,59 @@ export class NodysseusRuntime {
           useExisting,
         );
       } else if (refNode.ref === "return") {
+        if (extraNodeGraphId === "metadata") {
+          return this.constNode(
+            {
+              parameters: {
+                value: {
+                  type: "any",
+                  default: true,
+                },
+                display: {
+                  type: {
+                    background: "@html.html_element",
+                    resultPanel: "@html.html_element",
+                  },
+                },
+                subscribe: "any",
+                dependencies: "any",
+                metadata: {
+                  type: {
+                    parameters: (graph: Graph, nodeId: string) => ({
+                      type: Object.fromEntries(
+                        Object.values(ancestor_graph(nodeId, graph).nodes)
+                          .filter(
+                            (n) =>
+                              isNodeRef(n) &&
+                              n.ref === "arg" &&
+                              n.value &&
+                              !n.value.startsWith("_"),
+                          )
+                          .map((n) => [
+                            n.value.includes(".")
+                              ? n.value.split(".")[0]
+                              : n.value,
+                            "any",
+                          ]),
+                      ),
+                    }),
+                    values: "any",
+                    dataLabel: "any",
+                    language: "any",
+                  },
+                },
+                args: "any",
+                lib: "any",
+                _output: "string",
+                _lib: "any",
+                _runoptions: "any",
+                __graphid: "string",
+              },
+            },
+            nodeGraphId + extraNodeGraphId,
+            useExisting,
+          ) as AnyNode<T>;
+        }
         const argsEdge = edgesIn.find((e) => e.as === "args");
         const chainedscope: AnyNode<AnyNodeMap<S>> = argsEdge
           ? this.mergeClosure(
@@ -1312,6 +1365,20 @@ export class NodysseusRuntime {
             useExisting,
           ) as AnyNode<T>;
         } else if (refNode.value === "extern.ap") {
+          if (extraNodeGraphId === "metadata") {
+            return this.constNode(
+              {
+                parameters: {
+                  fn: "any",
+                  args: "any",
+                  run: "any",
+                  isScope: "any",
+                },
+              },
+              nodeGraphId + extraNodeGraphId,
+              useExisting,
+            ) as AnyNode<T>;
+          }
           const fnEdge = edgesIn.find((e) => e.as === "fn");
           if (!fnEdge) {
             return this.constNode(undefined, nodeGraphId, useExisting);
