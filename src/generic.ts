@@ -9451,6 +9451,11 @@ const generic = {
       ref: "extern",
       value: "extern.frame",
     },
+    "@time.seconds": {
+      id: "@time.seconds",
+      ref: "extern",
+      value: "extern.time",
+    },
   },
   edges: {},
 };

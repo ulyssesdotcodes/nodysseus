@@ -1844,6 +1844,21 @@ export class NodysseusRuntime {
           };
           requestAnimationFrame(update);
           return varNode;
+        } else if (refNode.value === "extern.time") {
+          const varNode: VarNode<T> = this.varNode(
+            1 as T,
+            undefined,
+            nodeGraphId,
+            useExisting,
+          );
+          const update = (time) => {
+            varNode.set((time * 0.001) as T);
+            if (this.scope.get(nodeGraphId) === varNode) {
+              requestAnimationFrame(update);
+            }
+          };
+          requestAnimationFrame(update);
+          return varNode;
         } else if (refNode.value === "extern.runNode") {
           const nodeNode = this.valueMap(
             this.fromNodeInternal(
