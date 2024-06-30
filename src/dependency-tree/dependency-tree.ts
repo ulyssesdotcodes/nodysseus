@@ -927,7 +927,11 @@ export class NodysseusRuntime {
           useExisting,
         );
       } else if (refNode.ref === "return") {
-        if (extraNodeGraphId === "metadata") {
+        if (
+          extraNodeGraphId === "metadata" &&
+          (node.id !== (graph.out ?? "out") ||
+            nodeGraphId === appendGraphId(graph.id, node.id))
+        ) {
           return this.constNode(
             {
               parameters: {
