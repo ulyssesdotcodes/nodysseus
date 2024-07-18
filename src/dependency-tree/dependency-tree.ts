@@ -1777,6 +1777,17 @@ export class NodysseusRuntime {
           refNode.value === "extern.readReference" ||
           refNode.value === "extern.memoryUnwrap"
         ) {
+          if (extraNodeGraphId === "metadata") {
+            return this.constNode(
+              {
+                parameters: {
+                  reference: "any",
+                },
+              },
+              nodeGraphId + extraNodeGraphId,
+              useExisting,
+            ) as AnyNode<T>;
+          }
           return this.mapNode(
             {
               ref: this.bindNode(
