@@ -1538,6 +1538,21 @@ export class NodysseusRuntime {
           refNode.value === "extern.reference" ||
           refNode.value === "extern.state"
         ) {
+          if (extraNodeGraphId === "metadata") {
+            return this.constNode(
+              {
+                parameters: {
+                  initial: "any",
+                  persist: "any",
+                  publish: "any",
+                  listener: "any",
+                  share: "any",
+                },
+              },
+              nodeGraphId + extraNodeGraphId,
+              useExisting,
+            ) as AnyNode<T>;
+          }
           const initialNode =
             edgesIn.find((e) => e.as === "initial" || e.as === "value")?.from &&
             this.valueMap(
