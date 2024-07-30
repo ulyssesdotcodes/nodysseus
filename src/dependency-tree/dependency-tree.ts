@@ -634,7 +634,7 @@ export class NodysseusRuntime {
       { bound: binding },
       ({ bound }) => {
         const res = !isNothing(bound) && this.runNode(bound);
-        return res && !isNothing(res) ? res : undefined;
+        return res !== undefined && !isNothing(res) ? res : undefined;
       },
       undefined,
       id,
