@@ -47,8 +47,8 @@ self.addEventListener('fetch', (e) => {
         .catch(ce => (console.log("[Service Worker] Request failed"), console.error(ne), console.error(ce))))
     .then(resp => resp && resp.url.endsWith(".js") ? resp.text().then(rtext => [rtext, resp]) : resp)
     .then(r => Array.isArray(r) ? new Response(r[0]
-      .replaceAll(/(from|import) ['"]three['"]/g, "$1 'https://cdn.jsdelivr.net/npm/three/build/three.module.js'")
-      .replaceAll(/(from|import) ['"]three\/nodes['"]/g, "$1 'https://cdn.jsdelivr.net/npm/three/examples/jsm/nodes/Nodes.js'"),
+      .replaceAll(/(from|import) ['"]three['"]/g, "$1 'https://cdn.jsdelivr.net/npm/three/build/three.webgpu.js'")
+      .replaceAll(/(from|import) ['"]three\/nodes['"]/g, "$1 'https://cdn.jsdelivr.net/npm/three/src/nodes/Nodes.js'"),
       {
       headers: r[1].headers
     }) : r)
