@@ -1882,7 +1882,7 @@ export class NodysseusRuntime {
             useExisting,
           );
           const update = (time) => {
-            varNode.set((time * 0.001) as T);
+            varNode.set((time * 0.001 * (node.value ?? 1)) as T);
             if (this.scope.get(nodeGraphId) === varNode) {
               requestAnimationFrame(update);
             }
