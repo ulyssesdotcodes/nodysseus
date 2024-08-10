@@ -1260,6 +1260,14 @@ const nolib: Record<string, any> & {
           1,
         ),
     },
+    mod: {
+      args: ["__graph_value", "value"],
+      resolve: true,
+      fn: (graph_value, value) => {
+        value = externs.memoryUnwrap(value);
+        return ((value % graph_value) + value) % graph_value;
+      },
+    },
     convertAngle: {
       args: ["degrees", "radians"],
       fn: (degrees, radians) => {
