@@ -23,7 +23,7 @@ let runtime;
 const running = new Set();
 
 const processMessage = e => 
-    wrapPromiseAll([...e.data.env.data].map(kv => wrapPromise(kv[1]?.__kind === "varNode" 
+    (console.log("got message", e), wrapPromiseAll)([...e.data.env.data].map(kv => wrapPromise(kv[1]?.__kind === "varNode" 
       ? wrapPromise(runtime.fromNode(e.data.graph, kv[1].id.substring(kv[1].id.lastIndexOf("/") + 1)))
         .then(node => runtime.accessor(node, "value", kv[1].id + "-closurevalueMapOut", true)).then(node => wrapPromise(runtime.runNode(node)).then(_ =>  node).value).value 
       // ? wrapPromise(runtime.varNode(undefined, undefined, kv[1].id))
