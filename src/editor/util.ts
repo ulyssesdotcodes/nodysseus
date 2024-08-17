@@ -2059,7 +2059,7 @@ export const hlibLib = mergeLib(
       ) => {
         return wrapPromise(hlib.worker.current()).then((worker) => {
           const transferableObjects = [...args.entries()].filter(
-            (kv) => kv[1]?.isTransferrable,
+            (kv) => kv[1]?.isTransferable,
           );
           transferableObjects.forEach((e) => args.set(e[0], e[1].value));
           return worker.postMessage(
