@@ -2052,7 +2052,7 @@ export const hlibLib = mergeLib(
       current: undefined,
     },
     workerPostMessage: {
-      args: ["runnable", "args", "transferableObjects"],
+      args: ["runnable", "args"],
       fn: (
         runnable: { graph: string; fn: string; nodeGraphId: string },
         args: Map<string, any>,
@@ -2078,7 +2078,7 @@ export const hlibLib = mergeLib(
                 ),
               },
             },
-            transferableObjects,
+            transferableObjects.map(kv => kv[1]),
           );
         });
       },
