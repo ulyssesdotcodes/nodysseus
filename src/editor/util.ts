@@ -2078,7 +2078,7 @@ export const hlibLib = mergeLib(
                 ),
               },
             },
-            transferableObjects.map((kv) => kv[1]),
+            transferableObjects.map((kv) => kv[1].value),
           );
         });
       },
