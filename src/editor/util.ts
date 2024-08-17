@@ -2056,10 +2056,13 @@ export const hlibLib = mergeLib(
       fn: (
         runnable: { graph: string; fn: string; nodeGraphId: string },
         args: Map<string, any>,
-        transferableObjects?: Array<any>,
       ) => {
-        wrapPromise(hlib.worker.current()).then((worker) =>
-          worker.postMessage(
+        return wrapPromise(hlib.worker.current()).then((worker) => {
+          const transferableObjects = [...args.entries()].filter(
+            (kv) => kv[1]?.isTransferrable,
+          );
+          transferableObjects.forEach((e) => args.set(e[0], e[1].value));
+          return worker.postMessage(
             {
               graph: runnable.graph,
               fn: runnable.fn,
@@ -2076,8 +2079,8 @@ export const hlibLib = mergeLib(
               },
             },
             transferableObjects,
-          ),
-        );
+          );
+        });
       },
     },
     domTypes,
