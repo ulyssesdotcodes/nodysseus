@@ -43,7 +43,7 @@ self.addEventListener('fetch', (e) => {
          network(e.request),
         tryCache(e.request)
        ])
-       : tryCache(e.request)
+      : tryCache(e.request))
         .catch(ce => (console.log("[Service Worker] Request failed"), console.error(ne), console.error(ce))))
     .then(resp => resp && resp.url.endsWith(".js") ? resp.text().then(rtext => [rtext, resp]) : resp)
     .then(r => Array.isArray(r) ? new Response(r[0]
