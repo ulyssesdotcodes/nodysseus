@@ -33,17 +33,18 @@ self.addEventListener('fetch', (e) => {
       return;
   }
   // console.log(`[Service Worker] Fetching resource ${e.request.url}`);
-  e.respondWith(
-     (e.request.url.endsWith("/esbuild") 
+  const maybeCachedRequest =
+        (e.request.url.endsWith("/esbuild")
        ? fetch(e.request)
        : e.request.url.startsWith("https://cdn.jsdelivr.net/npm/")
        ? network(e.request)
        : navigator.onLine || e.request.url.includes("localhost")
       ? Promise.any([
-         network(e.request),
-        tryCache(e.request)
+         network(e.request).then(v => (console.log("got network", v), v)),
+        tryCache(e.request).then(v => (console.log("got cache", v), v))
        ])
-      : tryCache(e.request))
+         .then(v => (console.log("got request", v), v))
+        : tryCache(e.request))
         .catch(ce => (console.log("[Service Worker] Request failed"), console.error(ne), console.error(ce)))
     .then(resp => resp && resp.url.endsWith(".js") ? resp.text().then(rtext => [rtext, resp]) : resp)
     .then(r => Array.isArray(r) ? new Response(r[0]
@@ -51,5 +52,9 @@ self.addEventListener('fetch', (e) => {
       .replaceAll(/(from|import) ['"]three\/nodes['"]/g, "$1 'https://cdn.jsdelivr.net/npm/three/src/nodes/Nodes.js'"),
       {
       headers: r[1].headers
-      }) : r));
+      }) : r);
+
+  console.log("responding with", maybeCachedRequest);
+
+  e.respondWith(maybeCachedRequest);
 });
