@@ -1668,12 +1668,12 @@ export class NodysseusRuntime {
                     if (listener) listener({ value: initial });
                   }
 
-                  if (publish) {
+                  if (publish || share) {
                     nolib.no.runtime.addListener(
                       "argsupdate",
                       this.id + "-" + stateId,
                       ({ id, changes, source }) => {
-                        if (id === nodeGraphId) {
+                        if (publish && id === nodeGraphId) {
                           if (listener) listener({ value: changes.state });
                           if (
                             !(
@@ -1692,6 +1692,18 @@ export class NodysseusRuntime {
                               );
                             }
                           }
+                        }
+                        else if(share && id !== nodeGraphId) {
+                          if (listener) listener({ value: changes.state });
+                            (
+                              scope.get(nodeGraphId + "-refset") as VarNode<T>
+                            ).set(changes.state);
+                            if (persist) {
+                              this.store.persist.set(
+                                nodeGraphId,
+                                changes.state,
+                              );
+                            }
                         }
                       },
                     );
