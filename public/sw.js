@@ -21,11 +21,17 @@ self.addEventListener("activate", e => {
   e.waitUntil(clients.claim())
 })
 
-const network = r => fetch(r).then(d => d.ok && r.method.toLowerCase() === "get"
+const network = (r, shouldCache) => fetch(r)
+      .then(d => shouldCache && d.ok && r.method.toLowerCase() === "get"
   ? caches.open(assetCacheName).then(c => c.delete(r).then(() => c.put(r, d.clone())).then(_ => d)) 
   : d);
 
-const tryCache = (req) => caches.open(assetCacheName).then(c => c.match(req))
+const tryCache = (req) => caches.open(assetCacheName).then(c => c.match(req)).then(r => {
+  if(r === undefined) {
+    throw new Error("cache failed")
+  }
+  return r
+});
 const checkCache = (req) => caches.open(assetCacheName).then(c => c.match(req))
 
 self.addEventListener('fetch', (e) => {
@@ -34,27 +40,18 @@ self.addEventListener('fetch', (e) => {
   }
   // console.log(`[Service Worker] Fetching resource ${e.request.url}`);
   const maybeCachedRequest =
-        (e.request.url.endsWith("/esbuild")
+        (e.request.url.endsWith("/esbuild" || e.request.url.includes("sw.js"))
        ? fetch(e.request)
-       : e.request.url.startsWith("https://cdn.jsdelivr.net/npm/")
-       ? network(e.request)
        : navigator.onLine || e.request.url.includes("localhost")
       ? Promise.any([
-         network(e.request).then(v => (console.log("got network", v), v)),
-        tryCache(e.request).then(v => (console.log("got cache", v), v))
+        network(e.request, e.request.url.startsWith("https://cdn.jsdelivr.net/")
+                || e.request.url.includes("localhost")
+                || e.request.url.startsWith("https://nodysseus.io")),
+        tryCache(e.request)
        ])
-         .then(v => (console.log("got request", v), v))
         : tryCache(e.request))
-        .catch(ce => (console.log("[Service Worker] Request failed"), console.error(ne), console.error(ce)))
-    .then(resp => resp && resp.url.endsWith(".js") ? resp.text().then(rtext => [rtext, resp]) : resp)
-    .then(r => Array.isArray(r) ? new Response(r[0]
-      .replaceAll(/(from|import) ['"]three['"]/g, "$1 'https://cdn.jsdelivr.net/npm/three/build/three.webgpu.js'")
-      .replaceAll(/(from|import) ['"]three\/nodes['"]/g, "$1 'https://cdn.jsdelivr.net/npm/three/src/nodes/Nodes.js'"),
-      {
-      headers: r[1].headers
-      }) : r);
-
-  console.log("responding with", maybeCachedRequest);
+        .catch(ce => (console.log("[Service Worker] Request failed", e.request),  console.error(ce)))
+    ;
 
   e.respondWith(maybeCachedRequest);
 });
