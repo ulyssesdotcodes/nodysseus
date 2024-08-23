@@ -39,10 +39,9 @@ self.addEventListener('fetch', (e) => {
        : e.request.url.startsWith("https://cdn.jsdelivr.net/npm/")
        ? network(e.request)
        : navigator.onLine || e.request.url.includes("localhost")
-       ? Promise.race([
-         network(e.request),
-         new Promise((res, rej) => setTimeout(() => tryCache(e.request), 1000))
-       ]).catch(ne => (console.log("[Service Worker] Network request failed, trying cache"), tryCache(e.request))) 
+      ? Promise.any([
+         network(e.request), tryCache(e.request)
+       ]).catch(ne => (console.log("[Service Worker] Network request failed, trying cache"), tryCache(e.request)))
        : tryCache(e.request)
         .catch(ce => (console.log("[Service Worker] Request failed"), console.error(ne), console.error(ce))))
     .then(resp => resp && resp.url.endsWith(".js") ? resp.text().then(rtext => [rtext, resp]) : resp)
