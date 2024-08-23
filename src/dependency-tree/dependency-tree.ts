@@ -1781,7 +1781,10 @@ export class NodysseusRuntime {
             return this.constNode(
               {
                 parameters: {
-                  reference: "any",
+                  reference: {
+                    type: "arg",
+                    default: true
+                  },
                 },
               },
               nodeGraphId + extraNodeGraphId,
