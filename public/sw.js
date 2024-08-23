@@ -21,8 +21,8 @@ self.addEventListener("activate", e => {
   e.waitUntil(clients.claim())
 })
 
-const network = (r, shouldCache) => fetch(r)
-      .then(d => shouldCache && d.ok && r.method.toLowerCase() === "get"
+const network = (r) => fetch(r)
+      .then(d => d.ok && r.method.toLowerCase() === "get"
   ? caches.open(assetCacheName).then(c => c.delete(r).then(() => c.put(r, d.clone())).then(_ => d)) 
   : d);
 
@@ -44,10 +44,12 @@ self.addEventListener('fetch', (e) => {
        ? fetch(e.request)
        : navigator.onLine || e.request.url.includes("localhost")
       ? Promise.any([
-        network(e.request, e.request.url.startsWith("https://cdn.jsdelivr.net/")
+        // try network first, and for some requests delay the trycache
+        network(e.request),
+        new Promise((res, rej) => setTimeout(res,
+                                             e.request.url.startsWith("https://cdn.jsdelivr.net/")
                 || e.request.url.includes("localhost")
-                || e.request.url.startsWith("https://nodysseus.io")),
-        tryCache(e.request)
+                                             || e.request.url.startsWith("https://nodysseus.io") ? 0 : 1000 , tryCache(e.request)))
        ])
         : tryCache(e.request))
         .catch(ce => (console.log("[Service Worker] Request failed", e.request),  console.error(ce)))
