@@ -335,8 +335,8 @@ const error_nodes = (error) =>
 const helpmd = run_h({
   dom_type: "div",
   props: {
-    innerHTML: `<h2>Welcome to Nodysseus!</h2>
-    <p> <a href="https://github.com/ulyssesdotcodes/nodysseus" target="_new">Github</a>
+    innerHTML: `
+<h2>Welcome to Nodysseus!</h2>
 <p>To get started, checkout:</p>
 <ul>
 <li>youtube <a href="https://www.youtube.com/playlist?list=PLNf6veBQIZNohZk_htvTvPCB2UnEl3Tlh">tutorials</a> and <a href="https://www.youtube.com/playlist?list=PLNf6veBQIZNpd8Djjie5W2lo70BkLZotv">videos</a></li>
@@ -360,15 +360,25 @@ const helpmd = run_h({
 <li><p><a href="https://nodysseus.io/#@example.nodeDisplay">@example.nodeDisplay</a>: using the display of a node in the graph&#39;s display</p>
 </li>
 </ul>
+<p>Some three.js specific examples:</p>
+<ul>
+<li><p><a href="https://nodysseus.io/#@example.threejs">@example.threejs</a>: Basic scene to build on</p>
+</li>
+<li><p><a href="https://nodysseus.io/#@example.threejsDataAttributes">@example.threejsDataAttributes</a>: Converting from three.js geometry to an object with float arrays for easier manipulation of data.</p>
+</li>
+<li><p><a href="https://nodysseus.io/#@example.threejsLoader">@example.threejsLoader</a>: Loading geometry from a file and storing it in the browser.</p>
+</li>
+<li><p><a href="https://nodysseus.io/#@example.threejsWorker">@example.threejsWorker</a>: Using three.js from a web worker to keep the main thread free for interaction</p>
+</li>
+</ul>
 <p>And some integrate third party libraries using ESM modules:</p>
 <ul>
-<li><p><a href="https://nodysseus.io/#@example.markdown">Markdown</a>: markdown using marked.js</p>
-</li>
-<li><p><a href="https://nodysseus.io/#@example.threejs">Three.js</a>: 3D shapes and rendering using Three.js</p>
+<li><p><a href="https://nodysseus.io/#@example.markdown">Markdown</a>: markdown using marked.js (this help was written using it then a @nodysseus.writeClipboard node)</p>
 </li>
 <li><p><a href="https://nodysseus.io/#@example.strudel">Strudel</a>: sounds and music with strudel</p>
 </li>
-</ul>`,
+</ul>
+`,
   },
   children: [],
 });
