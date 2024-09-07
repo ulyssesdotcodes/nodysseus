@@ -388,6 +388,7 @@ export const ChangeEditingGraphId: ha.Effecter<
     );
 
     window.location.hash = "#" + id;
+    document.title = "Nodysseus - " + id;
     graphPromise.then((graph) =>
       dispatch((state) => [
         { ...state, editingGraphId: id },

@@ -343,30 +343,30 @@ const helpmd = run_h({
 </ul>
 <p>Examples for general editor functionality:</p>
 <ul>
-<li><p><a href="https://nodysseus.ulysses.codes/#@example.script">@example.script</a>: using javascript with the <code>@js.script</code> node</p>
+<li><p><a href="https://nodysseus.io/#@example.script">@example.script</a>: using javascript with the <code>@js.script</code> node</p>
 </li>
-<li><p><a href="https://nodysseus.ulysses.codes/#@example.debugInputValue">@example.debugInputValue</a>: debugging using the <code>@debug.inputValue</code> node</p>
+<li><p><a href="https://nodysseus.io/#@example.debugInputValue">@example.debugInputValue</a>: debugging using the <code>@debug.inputValue</code> node</p>
 </li>
-<li><p><a href="https://nodysseus.ulysses.codes/#@example.htmlEvent">@example.htmlEvent</a>: responding to user input with html events</p>
+<li><p><a href="https://nodysseus.io/#@example.htmlEvent">@example.htmlEvent</a>: responding to user input with html events</p>
 </li>
-<li><p><a href="https://nodysseus.ulysses.codes/#@example.referencePersist">@example.referencePersist</a>: storing and persisting values in variables using <code>@memory.reference</code></p>
+<li><p><a href="https://nodysseus.io/#@example.referencePersist">@example.referencePersist</a>: storing and persisting values in variables using <code>@memory.reference</code></p>
 </li>
-<li><p><a href="https://nodysseus.ulysses.codes/#@example.switchInputs">@example.switchInputs</a>: switching inputs with a dropdown using the @flow.switchInputs node</p>
+<li><p><a href="https://nodysseus.io/#@example.switchInputs">@example.switchInputs</a>: switching inputs with a dropdown using the @flow.switchInputs node</p>
 </li>
-<li><p><a href="https://nodysseus.ulysses.codes/#@example.returnDependencies">@example.returnDependencies</a>: fine-grained control over whether a node reruns or keeps its value</p>
+<li><p><a href="https://nodysseus.io/#@example.returnDependencies">@example.returnDependencies</a>: fine-grained control over whether a node reruns or keeps its value</p>
 </li>
-<li><p><a href="https://nodysseus.ulysses.codes/#@example.ramp">@example.ramp</a>: introduces a new node, @html.ramp, that remaps a 0 - 1 value to a custom range.</p>
+<li><p><a href="https://nodysseus.io/#@example.ramp">@example.ramp</a>: introduces a new node, @html.ramp, that remaps a 0 - 1 value to a custom range.</p>
 </li>
-<li><p><a href="https://nodysseus.ulysses.codes/#@example.nodeDisplay">@example.nodeDisplay</a>: using the display of a node in the graph&#39;s display</p>
+<li><p><a href="https://nodysseus.io/#@example.nodeDisplay">@example.nodeDisplay</a>: using the display of a node in the graph&#39;s display</p>
 </li>
 </ul>
 <p>And some integrate third party libraries using ESM modules:</p>
 <ul>
-<li><p><a href="https://nodysseus.ulysses.codes/#@example.markdown">Markdown</a>: markdown using marked.js</p>
+<li><p><a href="https://nodysseus.io/#@example.markdown">Markdown</a>: markdown using marked.js</p>
 </li>
-<li><p><a href="https://nodysseus.ulysses.codes/#@example.threejs">Three.js</a>: 3D shapes and rendering using Three.js</p>
+<li><p><a href="https://nodysseus.io/#@example.threejs">Three.js</a>: 3D shapes and rendering using Three.js</p>
 </li>
-<li><p><a href="https://nodysseus.ulysses.codes/#@example.strudel">Strudel</a>: sounds and music with strudel</p>
+<li><p><a href="https://nodysseus.io/#@example.strudel">Strudel</a>: sounds and music with strudel</p>
 </li>
 </ul>`,
   },
