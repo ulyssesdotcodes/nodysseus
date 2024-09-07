@@ -1808,7 +1808,7 @@ const generic = {
         },
         i5m8bp1: {
           id: "i5m8bp1",
-          value: "_lib.runtime.publish(name, {data})",
+          value: "_lib.no.runtime.publish(name, {data})",
           ref: "@js.script",
         },
         "3pnfu3c": {
@@ -2253,7 +2253,7 @@ const generic = {
           id: "lapeojg",
           ref: "@js.script",
           value:
-            "return _lib.runtime.addRefsFromUrl(url).then(gs => _lib.runtime.change_graph(graphid, _lib))",
+            "return _lib.no.runtime.addRefsFromUrl(url).then(gs => _lib.no.runtime.change_graph(graphid, _lib))",
           name: "out",
         },
         graphid: {
@@ -5335,7 +5335,7 @@ const generic = {
         },
         "8zvzwb5": {
           id: "8zvzwb5",
-          value: "return _lib.runtime.graphExport(ref)",
+          value: "return _lib.no.runtime.graphExport(ref)",
           ref: "@js.script",
         },
         a1vqjzz: {
@@ -5373,7 +5373,7 @@ const generic = {
         refspromise: {
           id: "refspromise",
           ref: "@js.script",
-          value: "return _lib.runtime.refs()",
+          value: "return _lib.no.runtime.refs()",
         },
         aem1lk9: {
           id: "aem1lk9",
@@ -5482,7 +5482,7 @@ const generic = {
         "9tv13iq": {
           id: "9tv13iq",
           ref: "@js.script",
-          value: "return _lib.runtime.refs()",
+          value: "return _lib.no.runtime.refs()",
         },
         "2yur4h7": {
           id: "2yur4h7",
@@ -5652,7 +5652,7 @@ const generic = {
         "8zvzwb5": {
           id: "8zvzwb5",
           ref: "@js.script",
-          value: "return _lib.runtime.graphExport(ref)",
+          value: "return _lib.no.runtime.graphExport(ref)",
         },
         a1vqjzz: { id: "a1vqjzz", ref: "arg", value: "element" },
         i60dlmh: { id: "i60dlmh" },
@@ -5669,7 +5669,7 @@ const generic = {
         refspromise: {
           id: "refspromise",
           ref: "@js.script",
-          value: "return _lib.runtime.refs()",
+          value: "return _lib.no.runtime.refs()",
         },
         aem1lk9: { id: "aem1lk9", ref: "@debug.log", value: "state?" },
         "47sbfib": { id: "47sbfib", ref: "extern", value: "extern.graphState" },
@@ -5709,7 +5709,7 @@ const generic = {
         "9tv13iq": {
           id: "9tv13iq",
           ref: "@js.script",
-          value: "return _lib.runtime.refs()",
+          value: "return _lib.no.runtime.refs()",
         },
         "2yur4h7": { id: "2yur4h7", ref: "@flow.runnable" },
         "6ag8lnc": { id: "6ag8lnc" },
@@ -5775,7 +5775,7 @@ const generic = {
         },
         "5hesw9s": {
           id: "5hesw9s",
-          value: "return _lib.runtime.list_assets()",
+          value: "return _lib.no.runtime.list_assets()",
           ref: "@js.script",
         },
         "49od031": {
@@ -5831,7 +5831,7 @@ const generic = {
         },
         "6c04ryh": {
           id: "6c04ryh",
-          value: "_lib.runtime.add_asset(name, files[0])",
+          value: "_lib.no.runtime.add_asset(name, files[0])",
           ref: "@js.script",
         },
         d4sx4ej: {
@@ -5860,7 +5860,7 @@ const generic = {
         },
         vg773lv: {
           id: "vg773lv",
-          value: "return _lib.runtime.get_asset(asset);",
+          value: "return _lib.no.runtime.get_asset(asset);",
           ref: "@js.script",
         },
         jhyu5pk: {
@@ -5903,7 +5903,7 @@ const generic = {
         },
         gzki6r1: {
           id: "gzki6r1",
-          value: "return _lib.runtime.get_asset(asset);",
+          value: "return _lib.no.runtime.get_asset(asset);",
           ref: "@js.script",
         },
         l7ahauw: {
@@ -8999,7 +8999,7 @@ const generic = {
         akna0ig: {
           id: "akna0ig",
           ref: "@js.script",
-          value: "return _lib.runtime.refs()",
+          value: "return _lib.no.runtime.refs()",
         },
         d6hbagr: {
           id: "d6hbagr",
