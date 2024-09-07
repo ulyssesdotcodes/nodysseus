@@ -2108,7 +2108,7 @@ export class NodysseusRuntime {
               ({ closure: innerClosure }: { closure: AnyNodeMap<S> }) =>
                 this.mapNode(
                   innerClosure,
-                  (innerClosure) => innerClosure as S[keyof S],
+                  (innerClosure) => Object.fromEntries(Object.entries(innerClosure).filter(kv => !kv[0].startsWith("_"))) as S[keyof S],
                   undefined,
                   nodeGraphId + "-allargsmap",
                   useExisting,
