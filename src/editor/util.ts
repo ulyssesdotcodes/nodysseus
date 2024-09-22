@@ -417,8 +417,8 @@ export const ChangeEditingGraphId: ha.Effecter<
                   editingGraph: new_graph,
                   selected: [new_graph.out],
                   editingGraphId: new_graph.id,
-                  displayGraph: new_graph,
-                  displayGraphId: new_graph.id,
+                  displayGraph: s.displayGraph ?? false,
+                  displayGraphId: s.displayGraph ? s.displayGraph.id : false as string | false,
                 };
                 return [
                   news,
@@ -433,7 +433,7 @@ export const ChangeEditingGraphId: ha.Effecter<
                     },
                     {},
                   ],
-                  [refresh_graph, { ...state, graph: new_graph }],
+                  !state.displayGraphId && [refresh_graph_display, { ...state, graph: new_graph }],
                 ];
               });
               // if(!graph) {
@@ -961,7 +961,7 @@ export const keydownSubscription = (dispatch, options) => {
   return () => removeEventListener("keydown", handler);
 };
 
-export const refresh_graph: ha.Effecter<HyperappState, any> = async (
+export const refresh_graph_display: ha.Effecter<HyperappState, any> = async (
   dispatch,
   {
     graph,

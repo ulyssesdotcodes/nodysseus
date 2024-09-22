@@ -36,7 +36,7 @@ import {
   listen,
   Paste,
   pzobj,
-  refresh_graph,
+  refresh_graph_display,
   result_subscription,
   SaveGraph,
   SelectNode,
@@ -419,7 +419,7 @@ const runapp = (init, _lib) => {
                 },
               ],
               [
-                refresh_graph,
+                refresh_graph_display,
                 {
                   ...init,
                   graph: init.editingGraph,
@@ -835,7 +835,7 @@ const runapp = (init, _lib) => {
         {
           selected: s.selected,
           selectedVarNode: s.selectedVarNode,
-          graph: s.displayGraph.id ?? s.editingGraph.id,
+          graph: s.editingGraph.id,
           info_display_dispatch: s.info_display_dispatch,
           code_editor: s.code_editor,
           code_editor_nodeid: s.code_editor_nodeid,
