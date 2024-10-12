@@ -642,6 +642,22 @@ export class NodysseusRuntime {
     );
   }
 
+  public accessorMap<T, S extends Record<string, unknown>>(
+    map: AnyNode<S> | NodeOutputsU,
+    key: string,
+    id: string,
+    useExisting: boolean,
+    isNodeRun: boolean = false,
+  ): AnyNode<T> {
+    return this.mapNode(
+      {map},
+      ({map}) => map[key],
+      undefined,
+      id + key + "-map",
+      useExisting,
+    ) as AnyNode<T>;
+  }
+
   public accessor<T, S extends Record<string, unknown>>(
     map: AnyNode<AnyNodeMap<S>> | NodeOutputsU,
     key: string,
@@ -778,6 +794,13 @@ export class NodysseusRuntime {
     } else if (isNodeValue(node)) {
       return this.constNode(node_value(node), nodeGraphId, false);
     } else if (isGraph(node)) {
+      closure = this.mapNode(
+        {closure},
+        ({closure}) =>({
+          ...closure,
+          "__graph_value": this.accessorMap(closure.systemValues, "__graph_value", appendGraphId(nodeGraphId, "-closure-__graph_value"), useExisting),
+          "__graph_id": this.accessorMap(closure.systemValues, "__graph_value", appendGraphId(nodeGraphId, "-closure-__graph_id"), useExisting)
+      }), undefined, appendGraphId(nodeGraphId, "-closure-with-system-values-graph"))
       return this.accessor(
         this.fromNodeInternal(
           node,
@@ -2072,22 +2095,16 @@ export class NodysseusRuntime {
             ) as AnyNode<T>;
           }
           const inputs = calculateInputs();
-          const systemValues: Array<[string, unknown]> = (
-            [
-              ["__graphid", graphId],
-              ["__graph_value", node.value],
-            ] as Array<[string, unknown] | false>
-          ).filter((e): e is [string, unknown] => e !== false);
+          const systemValues = this.accessor(closure, "systemValues", appendGraphId(nodeGraphId, "-extern-system-values"), useExisting);
           return this.mapNode(
-            { ...inputs },
+            { ...inputs, systemValues },
             (nodeArgs) =>
               wrapPromise(
                 node_extern(
                   refNode,
                   new Map(
                     Object.entries(nodeArgs)
-                      .map((e) => [e[0], e[1]])
-                      .concat(systemValues) as Array<[string, unknown]>,
+                      .concat(Object.entries(nodeArgs.systemValues ?? {}))
                   ),
                   newLib(this.lib),
                   {},
@@ -2341,7 +2358,7 @@ export class NodysseusRuntime {
     graph: Graph,
     nodeId: string,
     graphId: string,
-    closure?: AnyNode<AnyNodeMap<S>>,
+    inputClosure?: AnyNode<AnyNodeMap<S>>,
     useExisting: boolean = true,
   ): NodeOutputs<T, D, M> {
     const node = graph.nodes[nodeId];
@@ -2408,6 +2425,14 @@ export class NodysseusRuntime {
       },
     );
 
+    const systemValues =
+      this.mapNode({graphNodeNode}, ({graphNodeNode}) => ({
+        "__graph_value" : graphNodeNode.node.value,
+        "__graph_id" : graphNodeNode.node.id,
+      }), undefined, appendGraphId(nodeGraphId, "-system-values"));
+
+    const closure = this.mapNode({inputClosure}, ({inputClosure}) => ({...inputClosure, systemValues}), undefined, appendGraphId(nodeGraphId, "-closure-with-system"))
+
     const ret: NodeOutputs<T, D, M> = this.mapNode(
       { graphNodeNode },
       ({ graphNodeNode }) => {
@@ -2416,8 +2441,7 @@ export class NodysseusRuntime {
           graphNodeNode.previous &&
           isNodeRef(graphNodeNode.previous) &&
           isNodeRef(graphNodeNode.node) &&
-          (graphNodeNode.node.ref !== graphNodeNode.previous?.ref ||
-            graphNodeNode.node.value !== graphNodeNode.previous?.value) &&
+          graphNodeNode.node.ref !== graphNodeNode.previous?.ref &&
           this.scope.has(nodeGraphId + "value")
         ) {
           this.scope.removeAll(nodeGraphId);
