@@ -798,8 +798,7 @@ export class NodysseusRuntime {
         {closure},
         ({closure}) =>({
           ...closure,
-          "__graph_value": this.accessorMap(closure.systemValues, "__graph_value", appendGraphId(nodeGraphId, "-closure-__graph_value"), useExisting),
-          "__graph_id": this.accessorMap(closure.systemValues, "__graph_value", appendGraphId(nodeGraphId, "-closure-__graph_id"), useExisting)
+          "__graph_value": closure["__parent_graph_value"],
       }), undefined, appendGraphId(nodeGraphId, "-closure-with-system-values-graph"))
       return this.accessor(
         this.fromNodeInternal(
@@ -2095,7 +2094,7 @@ export class NodysseusRuntime {
             ) as AnyNode<T>;
           }
           const inputs = calculateInputs();
-          const systemValues = this.accessor(closure, "systemValues", appendGraphId(nodeGraphId, "-extern-system-values"), useExisting);
+          const systemValues = this.accessor(closure, "__parent_graph_value", appendGraphId(nodeGraphId, "-extern-system-values"), useExisting);
           return this.mapNode(
             { ...inputs, systemValues },
             (nodeArgs) =>
@@ -2104,7 +2103,7 @@ export class NodysseusRuntime {
                   refNode,
                   new Map(
                     Object.entries(nodeArgs)
-                      .concat(Object.entries(nodeArgs.systemValues ?? {}))
+                      .concat([["__graph_value", nodeArgs.systemValues ]])
                   ),
                   newLib(this.lib),
                   {},
@@ -2305,8 +2304,9 @@ export class NodysseusRuntime {
             this.constNode(
               {
                 ...inputs,
-                __graph_value: this.constNode(
-                  node.value,
+                __graph_value: this.accessor(
+                  closure,
+                  "__parent_graph_value",
                   `${nodeGraphId}-internalnodegraphvalue`,
                   false,
                 ),
@@ -2425,13 +2425,11 @@ export class NodysseusRuntime {
       },
     );
 
-    const systemValues =
-      this.mapNode({graphNodeNode}, ({graphNodeNode}) => ({
-        "__graph_value" : graphNodeNode.node.value,
-        "__graph_id" : graphNodeNode.node.id,
-      }), undefined, appendGraphId(nodeGraphId, "-system-values"));
+    const nodeValue =
+      this.mapNode({graphNodeNode}, ({graphNodeNode}) => graphNodeNode.node.value
+                   , undefined, appendGraphId(nodeGraphId, "-system-values"));
 
-    const closure = this.mapNode({inputClosure}, ({inputClosure}) => ({...inputClosure, systemValues}), undefined, appendGraphId(nodeGraphId, "-closure-with-system"))
+    const closure = this.mapNode({inputClosure}, ({inputClosure}) => ({...inputClosure, __parent_graph_value: nodeValue}), undefined, appendGraphId(nodeGraphId, "-closure-with-system"))
 
     const ret: NodeOutputs<T, D, M> = this.mapNode(
       { graphNodeNode },
