@@ -1006,6 +1006,30 @@ export class NodysseusRuntime {
             useExisting,
           ) as AnyNode<T>;
         }
+
+        const libNode =
+          edgesIn.find((e) => e.as === "lib") &&
+          (this.scope.get(nodeGraphId + "-libnode") ??
+            this.mapNode(
+              {
+                lib: this.valueMap(
+                  this.fromNodeInternal(
+                    graph,
+                    edgesIn.find((e) => e.as === "lib").from,
+                    graphId,
+                    this.constNode({}, nodeGraphId + "-libnodeclosure"),
+                    useExisting,
+                  ),
+                  nodeGraphId + "-libvalmap",
+                  useExisting,
+                ),
+              },
+              ({ lib }) => Object.assign(this.lib, lib),
+              () => false,
+              nodeGraphId + "-libnode",
+              useExisting,
+            ));
+
         const argsEdge = edgesIn.find((e) => e.as === "args");
         const chainedscope: AnyNode<AnyNodeMap<S>> = argsEdge
           ? this.mergeClosure(
@@ -1110,6 +1134,7 @@ export class NodysseusRuntime {
               {
                 dependencies: dependencies || undefined,
                 subscribe,
+                libNode
               },
               ({ subscribe: subscriptions, dependencies }) => {
                 subscriptions &&
@@ -1169,29 +1194,6 @@ export class NodysseusRuntime {
               nodeGraphId + extraNodeGraphId,
               useExisting,
             ) as AnyNode<T>);
-
-        const libNode =
-          edgesIn.find((e) => e.as === "lib") &&
-          (this.scope.get(nodeGraphId + "-libnode") ??
-            this.mapNode(
-              {
-                lib: this.valueMap(
-                  this.fromNodeInternal(
-                    graph,
-                    edgesIn.find((e) => e.as === "lib").from,
-                    graphId,
-                    this.constNode({}, nodeGraphId + "-libnodeclosure"),
-                    useExisting,
-                  ),
-                  nodeGraphId + "-libvalmap",
-                  useExisting,
-                ),
-              },
-              ({ lib }) => Object.assign(this.lib, lib),
-              () => false,
-              nodeGraphId + "-libnode",
-              useExisting,
-            ));
 
         return wrapPromise(
           this.scope.get(nodeGraphId + "-libvalmap")?.value.read() ??
