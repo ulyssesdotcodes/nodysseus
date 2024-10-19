@@ -902,10 +902,20 @@ export class NodysseusRuntime {
     return wrapPromise(this.store.refs.get(refNode.ref) as Graph, (e) =>
       handleError(e, nodeGraphId),
     ).then((nodeRef): AnyNode<T> => {
+      const outputNodeGraphId = appendGraphId(nodeGraphId, extraNodeGraphId);
       if (nodeRef === undefined) {
         throw new Error(`invalid node ref ${refNode.ref}`);
       }
       if (refNode.ref === "@js.script") {
+        if (extraNodeGraphId === "metadata") {
+          return this.constNode({
+            dataLabel: "script",
+            codeEditor: { language: "javascript", editorText: node.value },
+          } as T, outputNodeGraphId, useExisting );
+        } else if (extraNodeGraphId === "display") {
+          return this.constNode({ dom_type: "text_value", text: "" } as T, outputNodeGraphId, useExisting);
+        }
+
         let scriptFn;
         try {
           scriptFn = new Function(
@@ -918,20 +928,14 @@ export class NodysseusRuntime {
           ) as (...args: any[]) => any;
         } catch (e) {
           handleError(e, nodeGraphId);
+          const existing = this.scope.get(outputNodeGraphId);
+          if(existing) return existing as AnyNode<T>
           scriptFn = () => {};
         }
 
         return this.mapNode(
           calculateInputs(),
           (args) => {
-            if (extraNodeGraphId === "metadata") {
-              return {
-                dataLabel: "script",
-                codeEditor: { language: "javascript", editorText: node.value },
-              };
-            } else if (extraNodeGraphId === "display") {
-              return { dom_type: "text_value", text: "" };
-            }
             try {
               return scriptFn(
                 this.lib,
@@ -945,7 +949,7 @@ export class NodysseusRuntime {
             }
           },
           undefined,
-          nodeGraphId + extraNodeGraphId,
+          outputNodeGraphId,
           useExisting,
         );
       } else if (refNode.ref === "return") {
@@ -1005,6 +1009,10 @@ export class NodysseusRuntime {
             nodeGraphId + extraNodeGraphId,
             useExisting,
           ) as AnyNode<T>;
+        }
+
+        if(!edgesIn.find(e => e.as === extraNodeGraphId)) {
+          return this.constNode(undefined, appendGraphId(nodeGraphId, extraNodeGraphId), useExisting)
         }
 
         const libNode =
@@ -1135,8 +1143,9 @@ export class NodysseusRuntime {
                 dependencies: dependencies || undefined,
                 subscribe,
                 libNode
+
               },
-              ({ subscribe: subscriptions, dependencies }) => {
+              ({ subscribe: subscriptions }) => {
                 subscriptions &&
                   Object.entries(subscriptions).forEach(
                     (kv) =>
@@ -1203,6 +1212,14 @@ export class NodysseusRuntime {
         ).then(() => output).value;
       } else if (refNode.ref === "extern") {
         if (refNode.value === "extern.switch") {
+          const outputNodeGraphId = appendGraphId(nodeGraphId, graphId);
+
+          if(extraNodeGraphId === "display") {
+          return this.constNode({ dom_type: "text_value", text: "" } as T, outputNodeGraphId, useExisting);
+          } else if (extraNodeGraphId === "metadata") {
+            return this.constNode({ dom_type: "text_value", text: "" } as T, outputNodeGraphId, useExisting)
+          }
+
           const inputEdge = edgesIn.find((e) => e.as === "input");
           return inputEdge
             ? (this.switchNode(
@@ -1650,7 +1667,7 @@ export class NodysseusRuntime {
               useExisting,
             );
 
-          const setNode = this.varNode<T>(
+          this.varNode<T>(
             undefined,
             undefined,
             nodeGraphId + "-refset",
@@ -2119,28 +2136,6 @@ export class NodysseusRuntime {
       } else if (refNode.ref === "arg") {
         const argname = refNode.value && parseArg(refNode.value).name;
         const isAccessor = argname?.includes(".");
-        const argsdata = this.mapNode(
-          {
-            bound: this.bindNode(
-              { closure },
-              ({ closure: innerClosure }: { closure: AnyNodeMap<S> }) =>
-                this.mapNode(
-                  innerClosure,
-                  (innerClosure) => Object.fromEntries(Object.entries(innerClosure).filter(kv => !kv[0].startsWith("_"))) as S[keyof S],
-                  undefined,
-                  nodeGraphId + "-allargsmap",
-                  useExisting,
-                ),
-              undefined,
-              nodeGraphId + "-allargs",
-              useExisting,
-            ),
-          },
-          ({ bound }) => this.runNode(bound),
-          undefined,
-          nodeGraphId + "-outerbind",
-          useExisting,
-        );
         const libNode = this.constNode(this.lib, "runtime-lib", true);
         const graphIdNode = this.constNode(
           graphId,
@@ -2251,6 +2246,29 @@ export class NodysseusRuntime {
             useExisting,
           );
         }
+        const argsdata = this.mapNode(
+          {
+            bound: this.bindNode(
+              { closure },
+              ({ closure: innerClosure }: { closure: AnyNodeMap<S> }) =>
+                this.mapNode(
+                  innerClosure,
+                  (innerClosure) => Object.fromEntries(Object.entries(innerClosure).filter(kv => !kv[0].startsWith("_"))) as S[keyof S],
+                  undefined,
+                  nodeGraphId + "-argsdatamap",
+                  useExisting,
+                ),
+              undefined,
+              nodeGraphId + "-argsdata",
+              useExisting,
+            ),
+          },
+          ({ bound }) => this.runNode(bound),
+          undefined,
+          nodeGraphId + "-argsdataouterbind",
+          useExisting,
+        );
+
         const mnode = this.mapNode(
           {
             bound: this.bindNode(
