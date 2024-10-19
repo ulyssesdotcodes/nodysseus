@@ -1827,17 +1827,24 @@ export const node_args = (
                 enter: (syntaxNode) =>
                   syntaxNode.name === "VariableName" &&
                   !window[node.value.substring(syntaxNode.from, syntaxNode.to)]
+                    && node.value.substring(syntaxNode.from, syntaxNode.from + 1) !== "_"
                     ? !!scriptVarNames.add(
                         node.value.substring(syntaxNode.from, syntaxNode.to),
                       )
-                    : syntaxNode.name === "VariableDeclaration" &&
-                        syntaxNode.node.getChild("VariableDefinition")
-                      ? !!scriptVarDecs.add(
-                          node.value.substring(
-                            syntaxNode.node.getChild("VariableDefinition").from,
-                            syntaxNode.node.getChild("VariableDefinition").to,
-                          ),
-                        )
+                    : syntaxNode.name === "VariableDeclaration"
+                      ? syntaxNode.node.getChild("VariableDefinition")
+                          ? !!scriptVarDecs.add(
+                              node.value.substring(
+                                syntaxNode.node.getChild("VariableDefinition").from,
+                                syntaxNode.node.getChild("VariableDefinition").to,
+                              ),
+                            )
+                        : syntaxNode.node.getChild("ObjectPattern")?.getChild("PatternProperty")
+                          ? syntaxNode.node.getChild("ObjectPattern")?.getChildren("PatternProperty").forEach(n => {
+                            const nameNode = n.getChild("PropertyName");
+                            scriptVarDecs.add(node.value.substring(nameNode.from, nameNode.to));
+                        })
+                          : undefined
                       : undefined,
               });
               scriptVarDecs.forEach((dec) => scriptVarNames.delete(dec));

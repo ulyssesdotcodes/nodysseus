@@ -928,8 +928,7 @@ export class NodysseusRuntime {
           ) as (...args: any[]) => any;
         } catch (e) {
           handleError(e, nodeGraphId);
-          const existing = this.scope.get(outputNodeGraphId);
-          if(existing) return existing as AnyNode<T>
+          if(this.scope.has(outputNodeGraphId)) return this.scope.get(outputNodeGraphId) as AnyNode<T>
           scriptFn = () => {};
         }
 
