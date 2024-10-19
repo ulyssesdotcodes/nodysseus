@@ -1010,7 +1010,7 @@ export class NodysseusRuntime {
           ) as AnyNode<T>;
         }
 
-        if(!edgesIn.find(e => e.as === extraNodeGraphId)) {
+        if(!edgesIn.find(e => e.as === extraNodeGraphId || (extraNodeGraphId === "value" && e.as === "display"))) {
           return this.constNode(undefined, appendGraphId(nodeGraphId, extraNodeGraphId), useExisting)
         }
 
