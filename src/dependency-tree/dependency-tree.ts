@@ -1149,7 +1149,7 @@ export class NodysseusRuntime {
                 subscribe,
                 libNode,
               },
-              ({ subscribe: subscriptions }) => {
+            ({ subscribe: subscriptions, dependencies }) => {
                 subscriptions &&
                   Object.entries(subscriptions).forEach(
                     (kv) =>
@@ -1168,6 +1168,7 @@ export class NodysseusRuntime {
                         nolibLib,
                       ),
                   );
+              // TODO: For some reason even if resultNode and dependencies are the same structure, replacing this with dependencies works when resultNode doesn't.
                 return resultNode && wrapPromise(this.runNode(resultNode)).value;
               },
               ({ dependencies: previous }, { dependencies: next }) =>
