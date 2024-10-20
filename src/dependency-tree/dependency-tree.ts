@@ -1209,13 +1209,12 @@ export class NodysseusRuntime {
               useExisting,
             ) as AnyNode<T>);
 
-        return output;
-        // return wrapPromise(
-        //   this.scope.get(nodeGraphId + "-libvalmap")?.value.read() ??
-        //     edgesIn.find((e) => e.as === "lib")
-        //     ? this.runNode(libNode)
-        //     : undefined,
-        // ).then(() => output).value;
+        return wrapPromise(
+          this.scope.get(nodeGraphId + "-libvalmap")?.value.read() ??
+            edgesIn.find((e) => e.as === "lib")
+            ? this.runNode(libNode)
+            : undefined,
+        ).then(() => output).value;
       } else if (refNode.ref === "extern") {
         if (refNode.value === "extern.switch") {
           const outputNodeGraphId = appendGraphId(nodeGraphId, graphId);
