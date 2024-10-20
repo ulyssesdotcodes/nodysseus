@@ -474,7 +474,7 @@ const runtimefn = () => {
       (graph) => {
         if(graph) return graph;
 
-        const newGraph = {
+        const newGraph = otherwise && {
           ...otherwise,
           id,
           nodes: {
@@ -484,11 +484,15 @@ const runtimefn = () => {
               name: id,
             },
           },
-          edges: {
-            ...otherwise.edges
-          },
-          edges_in: undefined
+          // edges: {
+          //   ...otherwise.edges
+          // },
+          // edges_in: undefined
         }
+
+        return otherwise && nodysseus.refs.set(id, newGraph)
+
+        // TODO: make creating a graph create new ids
 
         const nodeIdMap = new Map();
         const nodes = Object.values(newGraph.nodes) as NodysseusNode[];
