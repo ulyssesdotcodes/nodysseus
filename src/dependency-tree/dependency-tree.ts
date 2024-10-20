@@ -21,8 +21,10 @@ import {
   NodysseusNode,
   NodysseusStore,
   RefNode,
+  ValueNode,
   isGraph,
   isNodeRef,
+  isNodeGraph,
   isNodeValue,
 } from "../types.js";
 import {
@@ -33,6 +35,7 @@ import {
   nolib,
   nolibLib,
 } from "../nodysseus.js";
+import * as externs from "../externs.js";
 import { v4 as uuid } from "uuid";
 import {
   NodysseusError,
@@ -792,14 +795,17 @@ export class NodysseusRuntime {
         useExisting,
       );
     } else if (isNodeValue(node)) {
-      return this.constNode(node_value(node), nodeGraphId, false);
+      // return this.mapNode({__graph_value: this.accessor(closure, "__parent_graph_value", appendGraphId(nodeGraphId, "-accessvalue"), useExisting)}, ({__graph_value}) => ( __graph_value && console.log("got value", __graph_value), externs).parseValue(__graph_value), undefined, nodeGraphId, useExisting)
+      
+
+      return this.constNode(node_value(node), nodeGraphId, false)
     } else if (isGraph(node)) {
       closure = this.mapNode(
         {closure},
         ({closure}) =>({
           ...closure,
           "__graph_value": closure["__parent_graph_value"],
-      }), undefined, appendGraphId(nodeGraphId, "-closure-with-system-values-graph"))
+        }), undefined, appendGraphId(nodeGraphId, "-closure-with-system-values-graph"))
       return this.accessor(
         this.fromNodeInternal(
           node,
@@ -1120,29 +1126,28 @@ export class NodysseusRuntime {
           (extraNodeGraphId === "value" && inputs["display"]);
 
         const dependenciesEdge =
-          extraNodeGraphId === "value" &&
+          resultNode &&
           edgesIn.find((e) => e.as === "dependencies");
         const dependencies =
           dependenciesEdge &&
-          this.valueMap(
-            this.fromNodeInternal(
-              graph,
-              dependenciesEdge.from,
-              graphId,
-              chainedscope,
-              useExisting,
-            ),
-            nodeGraphId + extraNodeGraphId + "-depvalmap",
-            useExisting,
-          );
+            this.valueMap(
+                this.fromNodeInternal(
+                  graph,
+                  dependenciesEdge.from,
+                  graphId,
+                  chainedscope,
+                  true,
+                ),
+                nodeGraphId + `-depsval-${extraNodeGraphId}`,
+                useExisting,
+            );
 
         const output = dependencies
           ? (this.mapNode(
               {
-                dependencies: dependencies || undefined,
+                dependencies,
                 subscribe,
-                libNode
-
+                libNode,
               },
               ({ subscribe: subscriptions }) => {
                 subscriptions &&
@@ -1163,12 +1168,12 @@ export class NodysseusRuntime {
                         nolibLib,
                       ),
                   );
-                return resultNode && this.runNode(resultNode);
+                return resultNode && wrapPromise(this.runNode(resultNode)).value;
               },
               ({ dependencies: previous }, { dependencies: next }) =>
                 (isNothingOrUndefined(previous) &&
                   isNothingOrUndefined(next)) ||
-                !compareObjects(previous, next),
+                  !compareObjects(previous, next),
               nodeGraphId + extraNodeGraphId,
               useExisting,
             ) as AnyNode<T>)
@@ -1176,9 +1181,10 @@ export class NodysseusRuntime {
               {
                 result: resultNode,
                 subscribe,
+                libNode
               },
-              ({ subscribe: subscriptions, result }) => {
-                subscriptions &&
+            ({ subscribe: subscriptions, result }) => {
+              subscriptions &&
                   Object.entries(subscriptions).forEach(
                     (kv) =>
                       kv[1] &&
@@ -1203,12 +1209,13 @@ export class NodysseusRuntime {
               useExisting,
             ) as AnyNode<T>);
 
-        return wrapPromise(
-          this.scope.get(nodeGraphId + "-libvalmap")?.value.read() ??
-            edgesIn.find((e) => e.as === "lib")
-            ? this.runNode(libNode)
-            : undefined,
-        ).then(() => output).value;
+        return output;
+        // return wrapPromise(
+        //   this.scope.get(nodeGraphId + "-libvalmap")?.value.read() ??
+        //     edgesIn.find((e) => e.as === "lib")
+        //     ? this.runNode(libNode)
+        //     : undefined,
+        // ).then(() => output).value;
       } else if (refNode.ref === "extern") {
         if (refNode.value === "extern.switch") {
           const outputNodeGraphId = appendGraphId(nodeGraphId, graphId);
@@ -2245,18 +2252,31 @@ export class NodysseusRuntime {
             useExisting,
           );
         }
-        const argsdata = this.mapNode(
+        let isargsdata  = false;
+
+        const mnode = this.mapNode(
           {
             bound: this.bindNode(
               { closure },
-              ({ closure: innerClosure }: { closure: AnyNodeMap<S> }) =>
+              ({ closure: innerClosure }): AnyNode<unknown> => {
+                if (!argname) return;
+                if (argname === "_argsdata") {
+                  // Object.values(argsdata).map(argnode => argnode && this.outputs.get(argnode.id).add(mnode.id))
+        return this.mapNode(
+          {
+            bound: this.bindNode(
+              { closure },
+              ({ closure: innerClosure }: { closure: AnyNodeMap<S> }) => {
+                const argsdataout = 
                 this.mapNode(
-                  innerClosure,
-                  (innerClosure) => Object.fromEntries(Object.entries(innerClosure).filter(kv => !kv[0].startsWith("_"))) as S[keyof S],
+                  Object.fromEntries(Object.entries(innerClosure).filter(kv => !kv[0].startsWith("_"))),
+                  (innerInnerClosure) => innerInnerClosure as S[keyof S],
                   undefined,
                   nodeGraphId + "-argsdatamap",
                   useExisting,
-                ),
+                )
+                return argsdataout
+              },
               undefined,
               nodeGraphId + "-argsdata",
               useExisting,
@@ -2267,20 +2287,9 @@ export class NodysseusRuntime {
           nodeGraphId + "-argsdataouterbind",
           useExisting,
         );
-
-        const mnode = this.mapNode(
-          {
-            bound: this.bindNode(
-              { closure },
-              ({ closure: innerClosure }): AnyNode<unknown> => {
-                if (!argname) return;
-                if (argname === "_argsdata") {
-                  // Object.values(closure).map(argnode => argnode && this.outputs.get(argnode.id).add(mnode.id))
                 }
 
-                return argname === "_argsdata"
-                  ? argsdata
-                  : argname === "_args"
+                return argname === "_args"
                     ? closure
                     : argname.startsWith("_lib")
                       ? libNode
@@ -2445,7 +2454,7 @@ export class NodysseusRuntime {
     );
 
     const nodeValue =
-      this.mapNode({graphNodeNode}, ({graphNodeNode}) => graphNodeNode.node.value
+      this.mapNode({graphNodeNode}, ({graphNodeNode}) => (graphNodeNode).node.value
                    , undefined, appendGraphId(nodeGraphId, "-system-values"));
 
     const closure = this.mapNode({inputClosure}, ({inputClosure}) => ({...inputClosure, __parent_graph_value: nodeValue}), undefined, appendGraphId(nodeGraphId, "-closure-with-system"))
@@ -2456,10 +2465,10 @@ export class NodysseusRuntime {
         // if ref has changed, remove all current graph nodes
         if (
           graphNodeNode.previous &&
-          isNodeRef(graphNodeNode.previous) &&
-          isNodeRef(graphNodeNode.node) &&
-          graphNodeNode.node.ref !== graphNodeNode.previous?.ref &&
-          this.scope.has(nodeGraphId + "value")
+            isNodeRef(graphNodeNode.previous) &&
+            isNodeRef(graphNodeNode.node) &&
+            graphNodeNode.node.ref !== graphNodeNode.previous?.ref &&
+            this.scope.has(nodeGraphId + "value")
         ) {
           this.scope.removeAll(nodeGraphId);
         }
