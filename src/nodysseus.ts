@@ -10,6 +10,7 @@ import {
   descendantGraph,
   handleError,
   NodysseusError,
+  create_randid
 } from "./util.js";
 import {
   isNodeGraph,
@@ -471,20 +472,45 @@ const runtimefn = () => {
   const get_ref = (id, otherwise?) => {
     return wrapPromise(generic_nodes[id] ?? nodysseus.refs.get(id)).then(
       (graph) => {
+        if(graph) return graph;
+
+        const newGraph = {
+          ...otherwise,
+          id,
+          nodes: {
+            ...otherwise.nodes,
+            [otherwise.out ?? "out"]: {
+              ...otherwise.nodes[otherwise.out ?? "out"],
+              name: id,
+            },
+          },
+          edges: {
+            ...otherwise.edges
+          },
+          edges_in: undefined
+        }
+
+        const nodeIdMap = new Map();
+        const nodes = Object.values(newGraph.nodes) as NodysseusNode[];
+        for(let node of nodes) {
+          if(node.id === "out") {
+            nodeIdMap.set("out", "out")
+            continue;
+          }
+          const oldId = node.id;
+          delete newGraph.nodes[oldId];
+          node.id = create_randid(newGraph);
+          newGraph.nodes[node.id] = node;
+          nodeIdMap.set(oldId, node.id)
+        }
+
+        newGraph.edges = Object.fromEntries((Object.values(newGraph.edges) as Edge[])
+          .map(e => [nodeIdMap.get(e.from), {...e, to: nodeIdMap.get(e.to ), from: nodeIdMap.get(e.from)}]));
+        console.log(newGraph)
+
         return (
-          graph ??
           (otherwise &&
-            nodysseus.refs.set(id, {
-              ...otherwise,
-              id,
-              nodes: {
-                ...otherwise.nodes,
-                [otherwise.out ?? "out"]: {
-                  ...otherwise.nodes[otherwise.out ?? "out"],
-                  name: id,
-                },
-              },
-            }))
+            nodysseus.refs.set(id, newGraph))
         );
       },
     ).value;

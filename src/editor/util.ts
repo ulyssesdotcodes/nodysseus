@@ -399,6 +399,7 @@ export const ChangeEditingGraphId: ha.Effecter<
               const new_graph =
                 graph ??
                 Object.assign({}, base_graph(state.editingGraph), { id });
+
               if (!new_graph.edges_in) {
                 new_graph.edges_in = Object.values(new_graph.edges).reduce(
                   (acc: any, edge: Edge) => ({
@@ -436,17 +437,6 @@ export const ChangeEditingGraphId: ha.Effecter<
                   !state.displayGraphId && [refresh_graph_display, { ...state, graph: new_graph }],
                 ];
               });
-              // if(!graph) {
-              //     wrapPromise(nolib.no.runtime.get_node(new_graph, new_graph.out))
-              //       .then(node =>{
-              //         dispatch(UpdateNode, {
-              //             node,
-              //             property: "name",
-              //             value: id,
-              //             editingGraph: new_graph
-              //         })
-              //       })
-              // }
             });
           },
           {},
