@@ -191,7 +191,7 @@ export type SharedWorkerMessageKind = _SharedWorkerMessageKind;
 export type TRespondableSharedWorkerMessage<T> =
   T extends _SharedWorkerMessageKind
     ? _SharedWorkerMessages[T] extends { to: any; from: any }
-      ? TSharedWorkerMessageTo<T> | TSharedWorkerMessageFrom<T>
+      ? (TSharedWorkerMessageTo<T> | TSharedWorkerMessageFrom<T>) & { messageId: string }
       : never
     : never;
 

@@ -35,7 +35,6 @@ import {
   nolib,
   nolibLib,
 } from "../nodysseus.js";
-import * as externs from "../externs.js";
 import { v4 as uuid } from "uuid";
 import {
   NodysseusError,
@@ -56,8 +55,8 @@ import {
 } from "../util.js";
 import get from "just-safe-get";
 import generic from "../generic.js";
-import { create_fn } from "src/externs.js";
-import { json } from "@codemirror/lang-json";
+import { create_fn } from "../externs.js";
+import * as externs from "../externs.js"
 
 type RUnknown = Record<string, unknown>;
 
@@ -795,10 +794,9 @@ export class NodysseusRuntime {
         useExisting,
       );
     } else if (isNodeValue(node)) {
-      // return this.mapNode({__graph_value: this.accessor(closure, "__parent_graph_value", appendGraphId(nodeGraphId, "-accessvalue"), useExisting)}, ({__graph_value}) => ( __graph_value && console.log("got value", __graph_value), externs).parseValue(__graph_value), undefined, nodeGraphId, useExisting)
-      
+      return this.mapNode({__graph_value: this.accessor(closure, "__parent_graph_value", appendGraphId(nodeGraphId, "-accessvalue"), useExisting)}, ({__graph_value}) => externs.parseValue(__graph_value), undefined, nodeGraphId, useExisting)
 
-      return this.constNode(node_value(node), nodeGraphId, false)
+      // return this.constNode(node_value(node), nodeGraphId, false)
     } else if (isGraph(node)) {
       closure = this.mapNode(
         {closure},
@@ -1016,10 +1014,6 @@ export class NodysseusRuntime {
           ) as AnyNode<T>;
         }
 
-        if(!edgesIn.find(e => e.as === extraNodeGraphId || (extraNodeGraphId === "value" && e.as === "display"))) {
-          return this.constNode(undefined, appendGraphId(nodeGraphId, extraNodeGraphId), useExisting)
-        }
-
         const libNode =
           edgesIn.find((e) => e.as === "lib") &&
           (this.scope.get(nodeGraphId + "-libnode") ??
@@ -1063,13 +1057,16 @@ export class NodysseusRuntime {
             )
           : closure;
 
+        // if(!edgesIn.find(e => e.as === extraNodeGraphId || (extraNodeGraphId === "value" && e.as === "display"))) {
+        //   return this.constNode(undefined, appendGraphId(nodeGraphId, extraNodeGraphId), useExisting)
+        // }
+
         const inputs = Object.fromEntries(
           edgesIn
             .filter(
               (e) =>
                 e.as !== "args" &&
-                e.as !== "subscribe" &&
-                e.as !== "dependencies",
+                e.as !== "subscribe"
             )
             .map((e) => [
               e.as,
@@ -1079,7 +1076,7 @@ export class NodysseusRuntime {
                   e.from,
                   graphId,
                   chainedscope,
-                  true,
+                  useExisting,
                 ),
                 nodeGraphId + `-inputsvalmap-${e.as}-${extraNodeGraphId}`,
                 useExisting,
@@ -1128,28 +1125,48 @@ export class NodysseusRuntime {
         const dependenciesEdge =
           resultNode &&
           edgesIn.find((e) => e.as === "dependencies");
-        const dependencies =
-          dependenciesEdge &&
-            this.valueMap(
+        const depschainedscope: AnyNode<AnyNodeMap<S>> = argsEdge
+          ? this.mergeClosure(
+            closure,
+              this.valueMap(
                 this.fromNodeInternal(
                   graph,
-                  dependenciesEdge.from,
+                  argsEdge.from,
                   graphId,
-                  chainedscope,
-                  true,
+                  closure,
+                  useExisting,
                 ),
-                nodeGraphId + `-depsval-${extraNodeGraphId}`,
+                nodeGraphId + "-depsargsvalmap",
                 useExisting,
-            );
+              ),
+              nodeGraphId + "-depsreturnchained",
+              useExisting,
+            )
+          : closure;
+        const dependencies =
+          dependenciesEdge && inputs["dependencies"]
+            // this.valueMap(
+            //     this.fromNodeInternal(
+            //       graph,
+            //       dependenciesEdge.from,
+            //       graphId,
+            //       chainedscope,
+            //       true,
+            //     ),
+            //     nodeGraphId + `-depsval-${extraNodeGraphId}`,
+            //     useExisting,
+            // );
+
+        const dependenciesNode = dependencies;
 
         const output = dependencies
           ? (this.mapNode(
               {
                 dependencies,
                 subscribe,
-                libNode,
               },
-            ({ subscribe: subscriptions, dependencies }) => {
+            ({ subscribe: subscriptions, dependencies  }) => {
+              // console.log("deptree deps", dependencies, resultNode);
                 subscriptions &&
                   Object.entries(subscriptions).forEach(
                     (kv) =>
@@ -1168,9 +1185,19 @@ export class NodysseusRuntime {
                         nolibLib,
                       ),
                   );
+              // console.log("bound", bound)
               // TODO: For some reason even if resultNode and dependencies are the same structure, replacing this with dependencies works when resultNode doesn't.
-                return resultNode && wrapPromise(this.runNode(resultNode)).value;
+              // dependencies
+              // console.log("result node", resultNode)
+              let result = resultNode && this.runNode(resultNode);
+              return result
+              // console.log("result", result)
+              // resultNode.isDirty.write(false);
+              // this.dirty(resultNode.id);
+              return dependencies
+              // return dependencies;
               },
+            // undefined,
               ({ dependencies: previous }, { dependencies: next }) =>
                 (isNothingOrUndefined(previous) &&
                   isNothingOrUndefined(next)) ||
@@ -1182,7 +1209,6 @@ export class NodysseusRuntime {
               {
                 result: resultNode,
                 subscribe,
-                libNode
               },
             ({ subscribe: subscriptions, result }) => {
               subscriptions &&
@@ -1210,7 +1236,10 @@ export class NodysseusRuntime {
               useExisting,
             ) as AnyNode<T>);
 
-        return wrapPromise(
+        // console.log("output node", output)
+
+        return output;
+        wrapPromise(
           this.scope.get(nodeGraphId + "-libvalmap")?.value.read() ??
             edgesIn.find((e) => e.as === "lib")
             ? this.runNode(libNode)
@@ -2128,7 +2157,7 @@ export class NodysseusRuntime {
                   refNode,
                   new Map(
                     Object.entries(nodeArgs)
-                      .concat([["__graph_value", nodeArgs.systemValues ]])
+                      .filter(e => e[0] !== "systemValues" && !e[0].startsWith("_"))
                   ),
                   newLib(this.lib),
                   {},

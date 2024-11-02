@@ -1,6 +1,6 @@
-import type { JestConfigWithTsJest } from "ts-jest"
+import type { Config } from "@jest/types"
 
-const jestConfig: JestConfigWithTsJest = {
+const jestConfig: Config.InitialOptions = {
   // [...],
   preset: "ts-jest/presets/default-esm", // or other ESM presets
   moduleNameMapper: {

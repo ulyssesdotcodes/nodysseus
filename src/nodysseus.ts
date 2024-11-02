@@ -1254,7 +1254,7 @@ const nolib: Record<string, any> & {
     add: {
       args: ["_node_args"],
       resolve: true,
-      fn: (args) => {},
+      fn: (args) => Object.values(args).reduce((acc : number, v : number) => acc + v, 0),
     },
     and: {
       args: ["_node_args"],

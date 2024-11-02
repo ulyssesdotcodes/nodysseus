@@ -1,4 +1,4 @@
-import {default as htmlSlider} from "./@html.slider.json" assert { type: "json" };
+import {default as htmlSlider} from "./@html.slider.json";
 export const nodes = [
   htmlSlider
 ]

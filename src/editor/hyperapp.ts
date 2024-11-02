@@ -7,7 +7,7 @@ import * as acorn from "acorn";
 import jsx from "acorn-jsx";
 import { Node as ESTreeNode } from "estree";
 import { namedTypes as n, builders as b, visit } from "ast-types";
-import domTypes from "../html-dom-types.json" assert { type: "json" };
+import domTypes from "../html-dom-types.json";
 
 import {
   ispromise,

@@ -32,7 +32,7 @@ import {
   parse as uuidparse,
   stringify as uuidstringify,
 } from "uuid";
-import custom_editor from "../custom_editor.json" assert { type: "json" };
+import custom_editor from "../custom_editor.json";
 import { NodysseusRuntime } from "src/dependency-tree/dependency-tree.js";
 
 const generic_nodes = generic.nodes;
