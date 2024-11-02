@@ -528,6 +528,7 @@ export class NodysseusRuntime {
     this.scope.add(node);
     this.resetOutputs(node.id);
     if (initial !== undefined) node.set(initial);
+    this.dirty(node.id);
     return node;
   }
 
@@ -1128,38 +1129,38 @@ export class NodysseusRuntime {
         const dependenciesEdge =
           resultNode &&
           edgesIn.find((e) => e.as === "dependencies");
-        const depschainedscope: AnyNode<AnyNodeMap<S>> = argsEdge
-          ? this.mergeClosure(
-            closure,
-              this.valueMap(
-                this.fromNodeInternal(
-                  graph,
-                  argsEdge.from,
-                  graphId,
-                  closure,
-                  useExisting,
-                ),
-                nodeGraphId + "-depsargsvalmap",
-                useExisting,
-              ),
-              nodeGraphId + "-depsreturnchained",
-              useExisting,
-            )
-          : closure;
+        // const depschainedscope: AnyNode<AnyNodeMap<S>> = argsEdge
+        //   ? this.mergeClosure(
+        //     closure,
+        //       this.valueMap(
+        //         this.fromNodeInternal(
+        //           graph,
+        //           argsEdge.from,
+        //           graphId,
+        //           closure,
+        //           useExisting,
+        //         ),
+        //         nodeGraphId + "-depsargsvalmap",
+        //         useExisting,
+        //       ),
+        //       nodeGraphId + "-depsreturnchained",
+        //       useExisting,
+        //     )
+        //   : closure;
         const dependencies =
           dependenciesEdge && 
-            // inputs["dependencies"]
-            this.valueMap(
-                this.fromNodeInternal(
-                  graph,
-                  dependenciesEdge.from,
-                  graphId,
-                  chainedscope,
-                  true,
-                ),
-                nodeGraphId + `-depsval-${extraNodeGraphId}`,
-                useExisting,
-            );
+            inputs["dependencies"]
+            // this.valueMap(
+            //     this.fromNodeInternal(
+            //       graph,
+            //       dependenciesEdge.from,
+            //       graphId,
+            //       chainedscope,
+            //       true,
+            //     ),
+            //     nodeGraphId + `-depsval-${extraNodeGraphId}`,
+            //     useExisting,
+            // );
 
         const dependenciesNode = dependencies;
 
