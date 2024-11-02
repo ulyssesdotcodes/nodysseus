@@ -491,12 +491,16 @@ export class NodysseusRuntime {
   }
 
   constNode<T>(v: T, id?: string, useExisting: boolean = true): AnyNode<T> {
-    const node =
-      useExisting && this.scope.has(id)
-        ? (this.scope.get(id) as AnyNode<T>)
-        : constNode(v, id);
+    const existing = this.scope.get(id) as ConstNode<T>;
+    const existingValue = existing?.value.read();
+    if(useExisting && compare(existingValue, v)) {
+      return existing as AnyNode<T>;
+    }
+
+    const node = useExisting && existing ? existing : constNode(v, id);
     this.scope.add(node);
     this.resetOutputs(node.id);
+    this.dirty(node.id);
     return node;
   }
 
