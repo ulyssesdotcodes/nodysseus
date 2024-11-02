@@ -1,0 +1,31 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`dependency tree dependencies basic change arg 1`] = `
+{
+  "children": [
+    {
+      "dom_type": "text_value",
+      "text": "abc",
+    },
+  ],
+  "dom_type": "div",
+  "props": {},
+  "ref": undefined,
+  "value": undefined,
+}
+`;
+
+exports[`dependency tree dependencies with args change arg 1`] = `
+{
+  "children": [
+    {
+      "dom_type": "text_value",
+      "text": "abc",
+    },
+  ],
+  "dom_type": "div",
+  "props": {},
+  "ref": undefined,
+  "value": undefined,
+}
+`;

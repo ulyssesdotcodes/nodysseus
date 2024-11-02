@@ -65,6 +65,8 @@ const NAME_FIELD = new Set(["name"]);
 const logAfterLoad = (...logs) =>
   performance.now() > 5000 && console.log(performance.now(), ...logs);
 
+const logId =  "jhpw7dr";
+
 export function compareObjectsNeq(value1, value2) {
   const keys1 = Object.keys(value1);
   const keys2 = Object.keys(value2);
@@ -458,6 +460,7 @@ export class NodysseusRuntime {
     }
   }
 
+  // WARNING: calling this multiple times efs things up. Don't do it.
   private dirty(id: string, breakOnNode?: string) {
     this.dirtying += 1;
     // logAfterLoad("dirty", id);
@@ -494,7 +497,6 @@ export class NodysseusRuntime {
         : constNode(v, id);
     this.scope.add(node);
     this.resetOutputs(node.id);
-    this.dirty(node.id);
     return node;
   }
 
@@ -526,7 +528,6 @@ export class NodysseusRuntime {
     this.scope.add(node);
     this.resetOutputs(node.id);
     if (initial !== undefined) node.set(initial);
-    this.dirty(node.id);
     return node;
   }
 
@@ -763,7 +764,8 @@ export class NodysseusRuntime {
     node: NodysseusNode,
     graphId: string,
     nodeGraphId: string,
-    closure: AnyNode<AnyNodeMap<S>>,
+    nodeClosure: AnyNode<AnyNodeMap<S>>,
+    graphClosure: AnyNode<AnyNodeMap<S>>,
     edgesIn: Edge[],
     useExisting: boolean,
     extraNodeGraphId: Output = "value",
@@ -773,7 +775,8 @@ export class NodysseusRuntime {
         edgesIn.map((e) => [
           e.as,
           this.valueMap(
-            this.fromNodeInternal(graph, e.from, graphId, closure, true),
+            this.fromNodeInternal(graph, e.from, graphId, graphClosure, true),
+
             nodeGraphId + `-valmapinput${e.as}`,
             useExisting,
           ),
@@ -788,18 +791,18 @@ export class NodysseusRuntime {
         edgesIn,
         graphId,
         nodeGraphId,
-        closure,
+        nodeClosure,
         calculateInputs,
         extraNodeGraphId,
         useExisting,
       );
     } else if (isNodeValue(node)) {
-      return this.mapNode({__graph_value: this.accessor(closure, "__parent_graph_value", appendGraphId(nodeGraphId, "-accessvalue"), useExisting)}, ({__graph_value}) => externs.parseValue(__graph_value), undefined, nodeGraphId, useExisting)
+      return this.mapNode({__graph_value: this.accessor(nodeClosure, "__parent_graph_value", nodeGraphId + "-accessvalue", useExisting)}, ({__graph_value}) => externs.parseValue(__graph_value), undefined, nodeGraphId, useExisting)
 
       // return this.constNode(node_value(node), nodeGraphId, false)
     } else if (isGraph(node)) {
-      closure = this.mapNode(
-        {closure},
+      const closure = this.mapNode(
+        {closure: nodeClosure},
         ({closure}) =>({
           ...closure,
           "__graph_value": closure["__parent_graph_value"],
@@ -1144,18 +1147,19 @@ export class NodysseusRuntime {
             )
           : closure;
         const dependencies =
-          dependenciesEdge && inputs["dependencies"]
-            // this.valueMap(
-            //     this.fromNodeInternal(
-            //       graph,
-            //       dependenciesEdge.from,
-            //       graphId,
-            //       chainedscope,
-            //       true,
-            //     ),
-            //     nodeGraphId + `-depsval-${extraNodeGraphId}`,
-            //     useExisting,
-            // );
+          dependenciesEdge && 
+            // inputs["dependencies"]
+            this.valueMap(
+                this.fromNodeInternal(
+                  graph,
+                  dependenciesEdge.from,
+                  graphId,
+                  chainedscope,
+                  true,
+                ),
+                nodeGraphId + `-depsval-${extraNodeGraphId}`,
+                useExisting,
+            );
 
         const dependenciesNode = dependencies;
 
@@ -1164,9 +1168,9 @@ export class NodysseusRuntime {
               {
                 dependencies,
                 subscribe,
+                libNode
               },
             ({ subscribe: subscriptions, dependencies  }) => {
-              // console.log("deptree deps", dependencies, resultNode);
                 subscriptions &&
                   Object.entries(subscriptions).forEach(
                     (kv) =>
@@ -1185,17 +1189,8 @@ export class NodysseusRuntime {
                         nolibLib,
                       ),
                   );
-              // console.log("bound", bound)
-              // TODO: For some reason even if resultNode and dependencies are the same structure, replacing this with dependencies works when resultNode doesn't.
-              // dependencies
-              // console.log("result node", resultNode)
               let result = resultNode && this.runNode(resultNode);
               return result
-              // console.log("result", result)
-              // resultNode.isDirty.write(false);
-              // this.dirty(resultNode.id);
-              return dependencies
-              // return dependencies;
               },
             // undefined,
               ({ dependencies: previous }, { dependencies: next }) =>
@@ -1209,6 +1204,7 @@ export class NodysseusRuntime {
               {
                 result: resultNode,
                 subscribe,
+                libNode
               },
             ({ subscribe: subscriptions, result }) => {
               subscriptions &&
@@ -1236,10 +1232,8 @@ export class NodysseusRuntime {
               useExisting,
             ) as AnyNode<T>);
 
-        // console.log("output node", output)
 
-        return output;
-        wrapPromise(
+        return wrapPromise(
           this.scope.get(nodeGraphId + "-libvalmap")?.value.read() ??
             edgesIn.find((e) => e.as === "lib")
             ? this.runNode(libNode)
@@ -2158,6 +2152,7 @@ export class NodysseusRuntime {
                   new Map(
                     Object.entries(nodeArgs)
                       .filter(e => e[0] !== "systemValues" && !e[0].startsWith("_"))
+                      .concat([["__graph_value", nodeArgs.systemValues]])
                   ),
                   newLib(this.lib),
                   {},
@@ -2415,7 +2410,7 @@ export class NodysseusRuntime {
     graph: Graph,
     nodeId: string,
     graphId: string,
-    inputClosure?: AnyNode<AnyNodeMap<S>>,
+    graphClosure?: AnyNode<AnyNodeMap<S>>,
     useExisting: boolean = true,
   ): NodeOutputs<T, D, M> {
     const node = graph.nodes[nodeId];
@@ -2484,9 +2479,9 @@ export class NodysseusRuntime {
 
     const nodeValue =
       this.mapNode({graphNodeNode}, ({graphNodeNode}) => (graphNodeNode).node.value
-                   , undefined, appendGraphId(nodeGraphId, "-system-values"));
+        , (prev, next) => prev.graphNodeNode.node.value !== next.graphNodeNode.node.value, appendGraphId(nodeGraphId, "-system-values"));
 
-    const closure = this.mapNode({inputClosure}, ({inputClosure}) => ({...inputClosure, __parent_graph_value: nodeValue}), undefined, appendGraphId(nodeGraphId, "-closure-with-system"))
+    const nodeClosure = this.mapNode({graphClosure}, ({graphClosure}) => ({...graphClosure, __parent_graph_value: nodeValue}), undefined, nodeGraphId + "-closure-with-system")
 
     const ret: NodeOutputs<T, D, M> = this.mapNode(
       { graphNodeNode },
@@ -2507,7 +2502,8 @@ export class NodysseusRuntime {
             graphNodeNode.node,
             graphId,
             nodeGraphId,
-            closure,
+            nodeClosure,
+            graphClosure,
             graphNodeNode.edgesIn,
             false,
           ),
@@ -2519,7 +2515,8 @@ export class NodysseusRuntime {
                 graphNodeNode.node,
                 graphId,
                 nodeGraphId,
-                closure,
+                nodeClosure,
+                graphClosure,
                 graphNodeNode.edgesIn,
                 true,
                 "display",
@@ -2529,7 +2526,8 @@ export class NodysseusRuntime {
                 graphNodeNode.node,
                 graphId,
                 nodeGraphId,
-                closure,
+                nodeClosure,
+                graphClosure,
                 graphNodeNode.edgesIn,
                 true,
                 "metadata",
