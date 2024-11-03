@@ -802,7 +802,8 @@ export class NodysseusRuntime {
         useExisting,
       );
     } else if (isNodeValue(node)) {
-      // return this.mapNode({__graph_value: this.accessor(nodeClosure, "__parent_graph_value", nodeGraphId + "-accessvalue", useExisting)}, ({__graph_value}) => externs.parseValue(__graph_value), undefined, nodeGraphId, useExisting)
+      // TODO: make this work better
+      return this.mapNode({__graph_value: this.accessor(nodeClosure, "__parent_graph_value", nodeGraphId + "-accessvalue", useExisting)}, ({__graph_value}) => externs.parseValue(__graph_value), undefined, nodeGraphId, useExisting)
 
       return this.constNode(node_value(node), nodeGraphId, false)
     } else if (isGraph(node)) {
