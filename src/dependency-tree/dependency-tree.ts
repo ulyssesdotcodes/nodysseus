@@ -2608,7 +2608,7 @@ export class NodysseusRuntime {
       return (
         wrapPromise(
           inputPromises(),
-          (e) => (console.error(e), Object.entries(node.cachedInputs.read())),
+          (e) => (console.error(e), node.cachedInputs.read()),
         )
           // .then(allPromises => wrapPromiseAll(allPromises, e => (console.error(e), Object.entries(node.cachedInputs.read()))))
           .then((next) => {
