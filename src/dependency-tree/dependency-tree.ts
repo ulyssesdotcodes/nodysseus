@@ -536,6 +536,34 @@ export class NodysseusRuntime {
     return node;
   }
 
+ 
+public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
+          nolib.no.runtime.addListener(
+            "argsupdate",
+            this.id + "-" + stateId,
+            ({ id, changes, source }) => {
+              if(
+(id === nodeGraphId || id === stateId) &&
+                  !(
+                    source.type === "var" &&
+                    source.clientId === clientId &&
+                    source.id === this.id
+                  )){
+                    (
+                      this.scope.get(nodeGraphId + "-refset") as VarNode<T>
+                    ).set(changes.state);
+                  }
+                  listener(id, changes.state, source)
+            },
+          );
+
+          if(!this.outputs.has(nodeGraphId)) {
+            this.outputs.set(nodeGraphId, new Set());
+          }
+          const setNode = this.scope.get(nodeGraphId + "-refset");
+          return setNode
+}
+
   mapNode<T, S extends Record<string, unknown>>(
     inputs: { [k in keyof S]: AnyNode<S[k]> },
     fn: (s: S) => T,
@@ -1702,14 +1730,13 @@ export class NodysseusRuntime {
               useExisting,
             );
 
+          const scope = this.scope;
           this.varNode<T>(
             undefined,
             undefined,
             nodeGraphId + "-refset",
             true,
           );
-
-          const scope = this.scope;
 
           return this.mapNode(
             {
@@ -1745,6 +1772,7 @@ export class NodysseusRuntime {
                   }
 
                   if (publish || share) {
+
                     nolib.no.runtime.addListener(
                       "argsupdate",
                       this.id + "-" + stateId,
@@ -1770,6 +1798,7 @@ export class NodysseusRuntime {
                           }
                         }
                         else if(share && id !== nodeGraphId) {
+
                           if (listener) listener({ value: changes.state });
                             (
                               scope.get(nodeGraphId + "-refset") as VarNode<T>
@@ -1777,12 +1806,11 @@ export class NodysseusRuntime {
                             if (persist) {
                               this.store.persist.set(
                                 nodeGraphId,
-                                changes.state,
+                                changes.state
                               );
                             }
                         }
-                      },
-                    );
+                    })
                   }
                   const runtime = this;
                   return extraNodeGraphId === "display"

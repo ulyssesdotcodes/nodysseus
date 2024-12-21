@@ -23,11 +23,31 @@ let runtime;
 const running = new Set();
 
 const processMessage = e => 
-    (console.log("got message", e), wrapPromiseAll)([...e.data.env.data].map(kv => wrapPromise(kv[1]?.__kind === "varNode" 
-      ? wrapPromise(runtime.fromNode(e.data.graph, kv[1].id.substring(kv[1].id.lastIndexOf("/") + 1)))
-        .then(node => runtime.accessor(node, "value", kv[1].id + "-closurevalueMapOut", true)).then(node => wrapPromise(runtime.runNode(node)).then(_ =>  node).value).value 
-      // ? wrapPromise(runtime.varNode(undefined, undefined, kv[1].id))
-      : runtime.constNode(kv[1], "workerclosure" + kv[0], false)).then(v => [kv[0], v]).value))
+    (console.log("got message", e), wrapPromiseAll)([...e.data.env.data].map(kv => 
+      wrapPromise(kv[1]?.__kind === "varNode" 
+        ? wrapPromise(
+
+            (runtime.varNode(undefined, undefined, kv[1].id + "-refset", true),
+            runtime.addListenerVarNode(kv[1].id, (id, value, source) => { 
+
+            }))
+          ).then(setNode => 
+            runtime.mapNode({}, () => ({
+                        __kind: "varNode",
+                        id: kv[1].id,
+                        get value() {
+                          return setNode
+                        }
+                      }), () => false, kv[1] + "value", true)
+          )
+          // runtime.fromNode(e.data.graph, kv[1].id.substring(kv[1].id.lastIndexOf("/") + 1))
+        
+          // .then(node => runtime.accessor(node, "value", kv[1].id + "-closurevalueMapOut", true))
+          // .then(node => wrapPromise(runtime.runNode(node)).then(_ =>  node).value)
+          .value 
+        // ? wrapPromise(runtime.varNode(undefined, undefined, kv[1].id))
+        : runtime.constNode(kv[1], "workerclosure" + kv[0], false)
+      ).then(v => [kv[0], v]).value))
       .then(kvs =>
         runtime.fromNode(
           e.data.graph, 
