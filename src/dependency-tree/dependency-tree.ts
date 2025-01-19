@@ -57,6 +57,7 @@ import get from "just-safe-get";
 import generic from "../generic.js";
 import { create_fn } from "../externs.js";
 import * as externs from "../externs.js"
+import { convertCompilerOptionsFromJson } from "typescript";
 
 type RUnknown = Record<string, unknown>;
 
@@ -446,9 +447,9 @@ export class NodysseusRuntime {
     if (
       this.watches.has(id) &&
       !this.rerun.has(id) &&
-      isMapNode(node) &&
-      node.isDirty.read() &&
-      !this.running.has(id)
+      !this.running.has(id) &&
+      (!isMapNode(node) ||
+      node.isDirty.read())
     ) {
       new Promise(() => runIfClean());
     }
@@ -484,6 +485,7 @@ export class NodysseusRuntime {
     this.dirtying -= 1;
     if (this.dirtying === 0) {
       [...this.torun].map((id) => this.checkWatch(id));
+      this.checkWatch(id);
       this.torun.clear();
     } else {
       this.torun.add(id);
@@ -510,14 +512,20 @@ export class NodysseusRuntime {
     id?: string,
     useExisting: boolean = true,
     dirty = true,
+    unwrapValue = false
   ): VarNode<T> {
     if (useExisting && id && this.scope.has(id)) {
       const node = this.scope.get(id) as VarNode<T>;
       node.set(initial);
       return node;
     }
-    const node = varNode(
-      (newValue: T) => {
+    const node = varNode<T>(
+      (newValueWrapper: T | {value: T}) => {
+        const newValue : T =
+        unwrapValue && typeof newValueWrapper === "object" && Object.hasOwn(newValueWrapper, "value") ?
+          (newValueWrapper as {value : T }).value : newValueWrapper as T
+
+        
         const currentValue = node.value.read();
         if (isNothing(currentValue) || !node.compare(currentValue, newValue)) {
           node.value.write(newValue);
@@ -1736,6 +1744,8 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
             undefined,
             nodeGraphId + "-refset",
             true,
+            true,
+            true
           );
 
           return this.mapNode(
@@ -1774,9 +1784,12 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
                   if (publish || share) {
 
                     nolib.no.runtime.addListener(
-                      "argsupdate",
+                      nodeGraphId + "-argsupdate",
                       this.id + "-" + stateId,
-                      ({ id, changes, source }) => {
+                      ({ id, changes, source, timeModified }) => {
+                        const currentTimeModified = this.store.state.get(nodeGraphId + "-timeModified")?.timeModified;
+                        console.log(currentTimeModified, timeModified)
+                        if(!currentTimeModified || currentTimeModified < timeModified) {
                         if (publish && id === nodeGraphId) {
                           if (listener) listener({ value: changes.state });
                           if (
@@ -1810,9 +1823,47 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
                               );
                             }
                         }
+                      }
                     })
                   }
-                  const runtime = this;
+
+                  this.watches.set(setNode.id, []);
+                  this.addWatchFn(setNode, value => {
+                    if (
+                      value !== undefined
+                    ) {
+                      
+                      const timeModified = performance.now();
+                      this.store.state.set(nodeGraphId + "-timeModified", {timeModified});
+                      if (share) {
+                        this.store.state.set(stateId, { value });
+                      }
+                      if (persist) {
+                        this.store.persist.set(nodeGraphId, value);
+                      }
+                      if (publish) {
+                        nolib.no.runtime.publish(
+                          nodeGraphId + "-argsupdate",
+                          {
+                            id: nodeGraphId,
+                            changes: { state: value},
+                            mutate: false,
+                            source: {
+                              id: this.id,
+                              clientId,
+                              type: "var",
+                            },
+                            timeModified 
+                          },
+                          nolibLib,
+                          {},
+                          true,
+                        );
+                      }
+                    }
+                  })
+
+
                   return extraNodeGraphId === "display"
                     ? {
                         dom_type: "div",
@@ -1826,7 +1877,9 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
                           },
                         ],
                       }
-                    : {
+                    : setNode;
+                    
+                   /* {
                         __kind: "varNode",
                         id: nodeGraphId,
                         get value() {
@@ -1883,7 +1936,7 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
                             .get(nodeGraphId + "-refset")
                             .value.read();
                         },
-                      };
+                      };*/
                 }).value,
             () => false,
             nodeGraphId + extraNodeGraphId,
@@ -1911,7 +1964,7 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
             {
               ref: this.bindNode(
                 { reference: calculateInputs()["reference"] },
-                ({ reference }) => (reference as { value: AnyNode<T> })?.value,
+                ({ reference }) => (reference as AnyNode<T> ),
                 undefined,
                 nodeGraphId + "-bindreadref",
                 useExisting,
