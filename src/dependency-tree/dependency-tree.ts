@@ -1788,7 +1788,6 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
                       this.id + "-" + stateId,
                       ({ id, changes, source, timeModified }) => {
                         const currentTimeModified = this.store.state.get(nodeGraphId + "-timeModified")?.timeModified;
-                        console.log(currentTimeModified, timeModified)
                         if(!currentTimeModified || currentTimeModified < timeModified) {
                         if (publish && id === nodeGraphId) {
                           if (listener) listener({ value: changes.state });
