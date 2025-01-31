@@ -1761,7 +1761,7 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
               listenerNode: listener,
               shareNode: share,
             }) =>
-              wrapPromise(persist && this.store.persist.get(nodeGraphId))
+              wrapPromise(persist ? this.store.persist.get(nodeGraphId) : undefined)
                 .then(
                   (persisted) =>
                     persisted ??
