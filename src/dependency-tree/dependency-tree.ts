@@ -2228,7 +2228,7 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
             ) as AnyNode<T>;
           }
           const inputs = calculateInputs();
-          const systemValues = this.accessor(closure, "__parent_graph_value", appendGraphId(nodeGraphId, "-extern-system-values"), useExisting);
+          const systemValues = this.accessor(closure, "__parent_graph_value", appendGraphId(nodeGraphId + extraNodeGraphId, "-extern-system-values"), useExisting);
           return this.mapNode(
             { ...inputs, systemValues },
             (nodeArgs) =>
@@ -2445,7 +2445,7 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
                 __graph_value: this.accessor(
                   closure,
                   "__parent_graph_value",
-                  `${nodeGraphId}-internalnodegraphvalue`,
+                  `${nodeGraphId + extraNodeGraphId}-internalnodegraphvalue`,
                   false,
                 ),
               },
