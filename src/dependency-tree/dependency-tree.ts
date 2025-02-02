@@ -2706,7 +2706,7 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
               if (this.running.get(node.id) === 1) {
                 this.running.delete(node.id);
                 this.checkEvents();
-                this.checkWatches()
+                this.checkWatch(node.id)
               } else this.running.set(node.id, this.running.get(node.id) - 1);
 
               return result;
