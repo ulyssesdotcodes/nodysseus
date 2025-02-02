@@ -28,7 +28,7 @@ const network = (r) => fetch(r)
 
 const tryCache = (req) => caches.open(assetCacheName).then(c => c.match(req)).then(r => {
   if(r === undefined) {
-    throw new Error("cache failed")
+    return Promise.reject("cache failed")
   }
   return r
 });
