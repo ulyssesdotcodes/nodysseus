@@ -1088,7 +1088,7 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
               useExisting,
             ));
 
-        const argsEdge = edgesIn.find((e) => e.as === "args" && Object.keys(graph.edges_in[e.from]).length > 0);
+        const argsEdge = edgesIn.find((e) => e.as === "args");
         const chainedscope: AnyNode<AnyNodeMap<S>> = argsEdge
           ? this.mergeClosure(
               closure,
