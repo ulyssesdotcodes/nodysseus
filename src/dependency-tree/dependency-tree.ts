@@ -57,7 +57,6 @@ import get from "just-safe-get";
 import generic from "../generic.js";
 import { create_fn } from "../externs.js";
 import * as externs from "../externs.js"
-import { convertCompilerOptionsFromJson } from "typescript";
 
 type RUnknown = Record<string, unknown>;
 
@@ -355,7 +354,7 @@ export class NodysseusRuntime {
       : wrapPromise(this.store.refs.get(graphid)).then((graph) =>
           wrapPromiseAll(
             Object.values(graph.nodes).map((node) =>
-              isNodeRef(node) ? this.graphExport(node.ref) : [],
+              (isNodeRef(node) ? this.graphExport(node.ref) : []),
             ),
           ).then<Graph[]>((nodeGraphs) => nodeGraphs.flat().concat([graph])),
         ).value;
@@ -464,17 +463,30 @@ export class NodysseusRuntime {
   // WARNING: calling this multiple times efs things up. Don't do it.
   private dirty(id: string, breakOnNode?: string) {
     this.dirtying += 1;
+
+    const finalize = () => {
+      this.dirtying -= 1;
+      if (this.dirtying === 0) {
+        [...this.torun].map((id) => this.checkWatch(id));
+        this.checkWatch(id);
+        // this.checkWatches();
+        this.torun.clear();
+      } else {
+        this.torun.add(id);
+      }
+    }
+
     // logAfterLoad("dirty", id);
     const node = this.scope.get(id);
     if (isMapNode(node) || isBindNode(node)) {
       if (node.isDirty.read()) {
-        this.dirtying -= 1;
+        finalize();
         return;
       }
       node.isDirty.write(true);
     }
     if (id === breakOnNode) {
-      this.dirtying -= 1;
+      finalize();
       return;
     }
     let nid;
@@ -482,14 +494,7 @@ export class NodysseusRuntime {
     for (nid of nodeOuts) {
       this.dirty(nid, breakOnNode);
     }
-    this.dirtying -= 1;
-    if (this.dirtying === 0) {
-      [...this.torun].map((id) => this.checkWatch(id));
-      this.checkWatch(id);
-      this.torun.clear();
-    } else {
-      this.torun.add(id);
-    }
+    finalize();
   }
 
   constNode<T>(v: T, id?: string, useExisting: boolean = true): AnyNode<T> {
@@ -712,15 +717,7 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
     return this.mapNode(
       {
         bound: this.bindNode(
-          {
-            map: this.mapNode(
-              { map },
-              ({ map }) => map,
-              undefined,
-              id + key + "-bindmap",
-              useExisting,
-            ),
-          },
+          { map },
           ({ map }) => map[key],
           undefined,
           id + key + "-bind",
@@ -839,7 +836,13 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
       );
     } else if (isNodeValue(node)) {
       // TODO: make this work better
-      //return this.mapNode({__graph_value: this.accessor(nodeClosure, "__parent_graph_value", nodeGraphId + "-accessvalue", useExisting)}, ({__graph_value}) => externs.parseValue(__graph_value), undefined, nodeGraphId, useExisting)
+      return this.mapNode({
+          __graph_value: this.accessor(nodeClosure, "__parent_graph_value", nodeGraphId + "-accessvalue", useExisting)
+        }, ({__graph_value}) => externs.parseValue(__graph_value), 
+        undefined, 
+        nodeGraphId, 
+        useExisting
+      )
 
       return this.constNode(node_value(node), nodeGraphId, false)
     } else if (isGraph(node)) {
@@ -1043,7 +1046,10 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
                     }),
                     values: "any",
                     dataLabel: "any",
-                    language: "any",
+                    codeEditor: {
+                      language: "any",
+                      onChange: "any"
+                    },
                   },
                 },
                 args: "any",
@@ -1082,7 +1088,7 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
               useExisting,
             ));
 
-        const argsEdge = edgesIn.find((e) => e.as === "args");
+        const argsEdge = edgesIn.find((e) => e.as === "args" && Object.keys(graph.edges_in[e.from]).length > 0);
         const chainedscope: AnyNode<AnyNodeMap<S>> = argsEdge
           ? this.mergeClosure(
               closure,
@@ -1111,7 +1117,7 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
             .filter(
               (e) =>
                 e.as !== "args" &&
-                e.as !== "subscribe"
+                e.as !== "lib"
             )
             .map((e) => [
               e.as,
@@ -1129,81 +1135,13 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
             ]),
         );
 
-        const subscribechainedscope: AnyNode<AnyNodeMap<S>> = argsEdge
-          ? this.mergeClosure(
-              closure,
-              this.valueMap(
-                this.fromNodeInternal(
-                  graph,
-                  argsEdge.from,
-                  graphId,
-                  closure,
-                  true,
-                ),
-                nodeGraphId + "-subargsvalmap",
-                useExisting,
-              ),
-              nodeGraphId + "-subscribereturnchained",
-              useExisting,
-            )
-          : closure;
-
-        const subscribeEdge = edgesIn.find((e) => e.as === "subscribe");
-        const subscribe =
-          subscribeEdge &&
-          this.valueMap(
-            this.fromNodeInternal(
-              graph,
-              subscribeEdge.from,
-              graphId,
-              subscribechainedscope,
-              useExisting,
-            ),
-            nodeGraphId + "-subvalmap",
-            useExisting,
-          );
+        const subscribe = inputs["subscribe"];
 
         const resultNode =
           inputs[extraNodeGraphId] ??
           (extraNodeGraphId === "value" && inputs["display"]);
 
-        const dependenciesEdge =
-          resultNode &&
-          edgesIn.find((e) => e.as === "dependencies");
-        // const depschainedscope: AnyNode<AnyNodeMap<S>> = argsEdge
-        //   ? this.mergeClosure(
-        //     closure,
-        //       this.valueMap(
-        //         this.fromNodeInternal(
-        //           graph,
-        //           argsEdge.from,
-        //           graphId,
-        //           closure,
-        //           useExisting,
-        //         ),
-        //         nodeGraphId + "-depsargsvalmap",
-        //         useExisting,
-        //       ),
-        //       nodeGraphId + "-depsreturnchained",
-        //       useExisting,
-        //     )
-        //   : closure;
-        const dependencies =
-          dependenciesEdge && 
-            inputs["dependencies"]
-            // this.valueMap(
-            //     this.fromNodeInternal(
-            //       graph,
-            //       dependenciesEdge.from,
-            //       graphId,
-            //       chainedscope,
-            //       true,
-            //     ),
-            //     nodeGraphId + `-depsval-${extraNodeGraphId}`,
-            //     useExisting,
-            // );
-
-        const dependenciesNode = dependencies;
+        const dependencies = inputs["dependencies"]
 
         const output = dependencies
           ? (this.mapNode(
@@ -1231,6 +1169,7 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
                         nolibLib,
                       ),
                   );
+
               let result = resultNode && this.runNode(resultNode);
               return result
               },
@@ -2434,25 +2373,27 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
         return mnode;
       } else if (isGraph(nodeRef)) {
         const inputs = calculateInputs();
+        const graphvalue = this.accessor(
+                  closure,
+                  "__parent_graph_value",
+                  `${nodeGraphId}-${extraNodeGraphId}-internalnodegraphvalue`,
+                  useExisting,
+                );
         const innerGraphNode = this.accessor(
           this.fromNodeInternal(
             nodeRef,
             nodeRef.out ?? "out",
             nodeGraphId,
+            // this.mapNode({graphvalue, ...inputs}, (args) => this.constNode(args, nodeGraphId + "-innergraphclosure", useExisting), undefined, appendGraphId(nodeGraphId, "-graphclosure"), useExisting),
             this.constNode(
               {
                 ...inputs,
-                __graph_value: this.accessor(
-                  closure,
-                  "__parent_graph_value",
-                  `${nodeGraphId + extraNodeGraphId}-internalnodegraphvalue`,
-                  false,
-                ),
+                __graph_value: graphvalue,
               },
               nodeGraphId + "-args",
               false,
             ),
-            false,
+            useExisting,
           ),
           extraNodeGraphId,
           nodeGraphId + "-innergraphnodeval",
@@ -2565,7 +2506,8 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
 
     const nodeValue =
       this.mapNode({graphNodeNode}, ({graphNodeNode}) => (graphNodeNode).node.value
-        , (prev, next) => prev.graphNodeNode.node.value !== next.graphNodeNode.node.value, appendGraphId(nodeGraphId, "-system-values"));
+        , (prev, next) => prev.graphNodeNode.node.value !== next.graphNodeNode.node.value
+        , appendGraphId(nodeGraphId, "-system-values"));
 
     const nodeClosure = this.mapNode({graphClosure}, ({graphClosure}) => ({...graphClosure, __parent_graph_value: nodeValue}), undefined, nodeGraphId + "-closure-with-system")
 
@@ -2702,10 +2644,11 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
               })
             ) {
               const result = this.runNode(innode);
-              if (this.running.get(node.id) === 1) {
+              const currentRunning = this.running.get(node.id);
+              if (currentRunning === 1) {
                 this.running.delete(node.id);
                 this.checkEvents();
-              } else this.running.set(node.id, this.running.get(node.id) - 1);
+              } else this.running.set(node.id, currentRunning - 1);
               return result;
             }
 
@@ -2750,6 +2693,7 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
                 if (this.running.get(node.id) === 1) {
                   this.running.delete(node.id);
                   this.checkEvents();
+                  // this.checkWatches()
                 } else this.running.set(node.id, this.running.get(node.id) - 1);
                 return r;
               }).value;
@@ -2762,6 +2706,7 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
               if (this.running.get(node.id) === 1) {
                 this.running.delete(node.id);
                 this.checkEvents();
+                this.checkWatches()
               } else this.running.set(node.id, this.running.get(node.id) - 1);
 
               return result;

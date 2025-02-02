@@ -2,6 +2,7 @@ import { nodes as htmlNodes } from "./json/html.js";
 import { nodes as flowNodes } from "./json/flow.js";
 import { nodes as debugNodes } from "./json/debug.js";
 import { nodes as nodysseusNodes } from "./json/nodysseus.js";
+import { nodes as editorNodes } from "./json/editor.js";
 
 const generic = {
   id: "generic",
@@ -10,6 +11,7 @@ const generic = {
     ...Object.fromEntries(flowNodes.map((node) => [node.id, node])),
     ...Object.fromEntries(debugNodes.map((node) => [node.id, node])),
     ...Object.fromEntries(nodysseusNodes.map((node) => [node.id, node])),
+    ...Object.fromEntries(editorNodes.map((node) => [node.id, node])),
     "@templates.simple": {
       id: "@templates.simple",
       out: "out",
