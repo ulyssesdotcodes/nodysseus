@@ -1723,7 +1723,7 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
                   if (publish || share) {
 
                     nolib.no.runtime.addListener(
-                      nodeGraphId + "-argsupdate",
+                      stateId + "-argsupdate",
                       this.id + "-" + stateId,
                       ({ id, changes, source, timeModified }) => {
                         const currentTimeModified = this.store.state.get(nodeGraphId + "-timeModified")?.timeModified;
@@ -1779,9 +1779,9 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
                       if (persist) {
                         this.store.persist.set(nodeGraphId, value);
                       }
-                      if (publish) {
+                      if (publish || share) {
                         nolib.no.runtime.publish(
-                          nodeGraphId + "-argsupdate",
+                          stateId + "-argsupdate",
                           {
                             id: nodeGraphId,
                             changes: { state: value},
@@ -1909,7 +1909,7 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
               ),
             },
             ({ ref }) => {
-              const result = this.runNode(ref) as T;
+              const result = ref.value.read() as T;
               if ((result as Nothing)?.__kind === "nothing") return undefined;
               else return result;
             },
