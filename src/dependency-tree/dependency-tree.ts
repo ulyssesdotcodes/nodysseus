@@ -1067,8 +1067,7 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
 
         const libNode =
           edgesIn.find((e) => e.as === "lib") &&
-          (this.scope.get(nodeGraphId + "-libnode") ??
-            this.mapNode(
+          (this.mapNode(
               {
                 lib: this.valueMap(
                   this.fromNodeInternal(
@@ -1083,7 +1082,7 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
                 ),
               },
               ({ lib }) => Object.assign(this.lib, lib),
-              () => false,
+              undefined,
               nodeGraphId + "-libnode",
               useExisting,
             ));
@@ -1143,14 +1142,19 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
 
         const dependencies = inputs["dependencies"]
 
-        const output = dependencies
+
+
+        return wrapPromise(
+          libNode && this.runNode(libNode),
+        ).then(() =>
+         dependencies
           ? (this.mapNode(
               {
                 dependencies,
-                subscribe,
-                libNode
+                subscribe
               },
-            ({ subscribe: subscriptions, dependencies  }) => {
+            ({ subscribe: subscriptions, dependencies }) => {
+
                 subscriptions &&
                   Object.entries(subscriptions).forEach(
                     (kv) =>
@@ -1184,8 +1188,7 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
           : (this.mapNode(
               {
                 result: resultNode,
-                subscribe,
-                libNode
+                subscribe
               },
             ({ subscribe: subscriptions, result }) => {
               subscriptions &&
@@ -1211,15 +1214,8 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
               undefined,
               nodeGraphId + extraNodeGraphId,
               useExisting,
-            ) as AnyNode<T>);
-
-
-        return wrapPromise(
-          this.scope.get(nodeGraphId + "-libvalmap")?.value.read() ??
-            edgesIn.find((e) => e.as === "lib")
-            ? this.runNode(libNode)
-            : undefined,
-        ).then(() => output).value;
+            ) as AnyNode<T>)
+      ).value;
       } else if (refNode.ref === "extern") {
         if (refNode.value === "extern.switch") {
           const outputNodeGraphId = appendGraphId(nodeGraphId, graphId);

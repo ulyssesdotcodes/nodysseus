@@ -53,6 +53,13 @@ self.addEventListener('fetch', (e) => {
        ])
         : tryCache(e.request))
         .catch(ce => (console.log("[Service Worker] Request failed", e.request),  console.error(ce)))
+      .then(resp => resp && resp.url.endsWith(".js") ? resp.text().then(rtext => [rtext, resp]) : resp)
+          .then(r => Array.isArray(r) ? new Response(r[0]
+            .replaceAll(/(from|import) ['"]three['"]/g, "$1 'https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.webgpu.js'")
+            .replaceAll(/(from|import) ['"]three\/nodes['"]/g, "$1 'https://cdn.jsdelivr.net/npm/three@0.169.0/src/nodes/Nodes.js'"),
+            {
+            headers: r[1].headers
+            }) : r);
     ;
 
   e.respondWith(maybeCachedRequest);
