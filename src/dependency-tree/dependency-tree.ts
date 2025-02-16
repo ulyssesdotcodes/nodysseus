@@ -1906,7 +1906,7 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
               ),
             },
             ({ ref }) => {
-              const result = ref.value.read() as T;
+              const result = ref?.value?.read() as T;
               if ((result as Nothing)?.__kind === "nothing") return undefined;
               else return result;
             },
@@ -1914,58 +1914,6 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
             nodeGraphId,
             useExisting,
           );
-        } else if (refNode.value === "extern.cache") {
-          const value = edgesIn.find((e) => e.as === "value")?.from
-            ? this.valueMap(
-                this.fromNodeInternal(
-                  graph,
-                  edgesIn.find((e) => e.as === "value").from,
-                  graphId,
-                  closure,
-                  useExisting,
-                ),
-                nodeGraphId + "-valvalmap",
-                useExisting,
-              )
-            : this.constNode(undefined, nodeGraphId + "-stateconst", false);
-
-          const recache = edgesIn.find((e) => e.as === "recache")?.from
-            ? this.valueMap(
-                this.fromNodeInternal(
-                  graph,
-                  edgesIn.find((e) => e.as === "recache").from,
-                  graphId,
-                  closure,
-                  useExisting,
-                ),
-                nodeGraphId + "-recachevalmap",
-                useExisting,
-              )
-            : this.constNode<false>(
-                false,
-                nodeGraphId + "-stateconst",
-                useExisting,
-              );
-
-          const outNode = this.mapNode(
-            {
-              recache,
-              value: this.bindNode(
-                { value },
-                () => value,
-                undefined,
-                nodeGraphId + "-value",
-                useExisting,
-              ),
-            },
-            ({ value }) => wrapPromise(this.runNode(value)).value,
-            ({ recache: r1, value: previous }, { recache, value: next }) =>
-              !!recache ||
-              isNothing(outNode.value.read()) ||
-              outNode.value.read() === undefined,
-            nodeGraphId + extraNodeGraphId,
-          );
-          return outNode;
         } else if (refNode.value === "extern.frame") {
           const varNode: VarNode<T> = this.varNode(
             1 as T,
