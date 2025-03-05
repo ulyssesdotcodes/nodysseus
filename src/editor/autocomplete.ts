@@ -14,7 +14,7 @@ export default class AutocompleteList extends HTMLElement {
     | Array<{ kind: "value" | "category"; value: string }>
     | undefined;
   optionEls: Record<string, HTMLLIElement>;
-  // @ts-ignore
+  // @ts-expect-error fuze issues
   fuse: Fuse.Fuse<Option>;
   selectedIndex: number | undefined;
   initialOption: string;
@@ -107,7 +107,7 @@ export default class AutocompleteList extends HTMLElement {
         if (this.selectedIndex !== undefined && this.fuseOptions.length > 0) {
           const count = this.fuseOptions.length;
           this.inputEl.value = this.shownOptions.filter(
-            (o) => o.kind === "value",
+            (o) => o.kind === "value"
           )[((this.selectedIndex % count) + count) % count].value;
         }
 
@@ -117,11 +117,11 @@ export default class AutocompleteList extends HTMLElement {
       }
     };
 
-    this.inputEl.onkeyup = (evt: KeyboardEvent) => {
+    this.inputEl.onkeyup = (_evt: KeyboardEvent) => {
       this.populateOptions();
     };
 
-    wrapper.addEventListener("focusin", (evt: FocusEvent) => {
+    wrapper.addEventListener("focusin", (_evt: FocusEvent) => {
       if (!this.focused) {
         this.initialOption = this.inputEl.value;
       }
@@ -183,7 +183,9 @@ export default class AutocompleteList extends HTMLElement {
 
   blur() {
     if (this.initialOption !== this.inputEl.value) {
-      this.dispatchEvent(new CustomEvent("select", { detail: this.inputEl.value }));
+      this.dispatchEvent(
+        new CustomEvent("select", { detail: this.inputEl.value })
+      );
       this.initialOption = this.inputEl.value;
     }
     this.focused = false;
@@ -201,9 +203,9 @@ export default class AutocompleteList extends HTMLElement {
       [...this.querySelectorAll("option")].map((el) => [
         el.textContent,
         { value: el.textContent, category: el.dataset.category },
-      ]),
+      ])
     );
-    //@ts-ignore
+    //@ts-expect-error fuze issues
     this.fuse = new Fuse<Option>(Object.values(this.options), {
       keys: ["value"],
       ignoreLocation: true,
@@ -223,9 +225,9 @@ export default class AutocompleteList extends HTMLElement {
                     ? { kind: "category", value: option.category }
                     : undefined,
                   { kind: "value", value: option.value },
-                ]),
+                ])
               ),
-            new Map(),
+            new Map()
           )
           .values(),
       ]
@@ -256,7 +258,7 @@ export default class AutocompleteList extends HTMLElement {
     this.shownOptions?.forEach((option) => {
       const itemEl = document.createElement("li");
       itemEl.classList.add(
-        option.kind === "value" ? "autocomplete-item" : "autocomplete-group",
+        option.kind === "value" ? "autocomplete-item" : "autocomplete-group"
       );
       itemEl.textContent = option.value;
       itemEl.setAttribute("value", option.value);

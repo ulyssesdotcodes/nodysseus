@@ -1,28 +1,21 @@
-import { IDBPDatabase, openDB, wrap } from "idb";
+import { IDBPDatabase, openDB } from "idb";
 import generic from "../generic.js";
 import { mapStore, nolib, nolibLib } from "../nodysseus.js";
 import {
   Edge,
   EdgeNoAs,
-  EdgesIn,
   Graph,
-  GraphNode,
   isEdgesInGraph,
-  isNodeRef,
   NodysseusNode,
   NodysseusStore,
   NodysseusStoreTypes,
-  RefNode,
   RefStore,
-  Store,
-  ValueNode,
 } from "../types.js";
 import { wrapPromise } from "../util.js";
 import { v4 as uuid } from "uuid";
 
 import {
   expectSharedWorkerMessageResponse,
-  RespondableSharedWorkerMessage,
   RespondableSharedWorkerMessageData,
   SharedWorkerMessageFrom,
   SharedWorkerMessageKind,
@@ -34,7 +27,7 @@ import {
 } from "./types.js";
 
 const generic_nodes = generic.nodes;
-const generic_node_ids = new Set(Object.keys(generic_nodes));
+// const generic_node_ids = new Set(Object.keys(generic_nodes));
 
 export const addNode = (graph: Graph, node: NodysseusNode) => {
   if (graph.nodes[node.id]) {
@@ -51,7 +44,7 @@ export const addNode = (graph: Graph, node: NodysseusNode) => {
       });
   } else {
     Object.entries(node).forEach(
-      (kv) => kv[1] === undefined && delete node[kv[0]],
+      (kv) => kv[1] === undefined && delete node[kv[0]]
     );
     graph.nodes[node.id] = node;
   }
@@ -102,14 +95,14 @@ export const addNodesEdges = (
   addedNodes: Array<NodysseusNode> = [],
   addedEdges: Array<Edge> = [],
   removedNodes: Array<NodysseusNode> = [],
-  removedEdges: Array<EdgeNoAs> = [],
+  removedEdges: Array<EdgeNoAs> = []
 ) => {
   removedNodes?.forEach((node) => removeNode(node)(graph));
   removedEdges?.forEach((edge) => removeEdge(edge)(graph));
 
   addedNodes.forEach((node) => {
     Object.entries(node).forEach(
-      (kv) => kv[1] === undefined && delete node[kv[0]],
+      (kv) => kv[1] === undefined && delete node[kv[0]]
     );
     graph.nodes[node.id] = node;
   });
@@ -138,7 +131,7 @@ export type SWState = {
 export const initPort = (
   store: SWState,
   ports: MessagePort[],
-  port: MessagePort,
+  port: MessagePort
 ) => {
   ports.push(port);
 
@@ -166,113 +159,111 @@ const sendUpdateMessages =
       .filter((p) => p !== originPort)
       .forEach((p) =>
         typedPostMessage(p, {
-          kind:  "update",
+          kind: "update",
           graphs: Array.isArray(graphs) ? graphs : [graphs],
-        }),
+        })
       );
 
 export const processMessage = (
   store: RefStore,
   ports: MessagePort[],
   port: MessagePort,
-  m: SharedWorkerMessageTo,
+  m: SharedWorkerMessageTo
 ) =>
   m.kind === "addPort"
     ? wrapPromise(initPort({ value: store, initQueue: [] }, ports, m.port))
     : m.kind === "get"
-      ? wrapPromise(store.get(m.graphId)).then((graph) =>
-          typedPostMessage(port, {
-            kind: "get",
-            messageId: m.messageId,
-            graph,
-          }),
-        )
-      : m.kind === "keys"
-        ? wrapPromise(store.keys()).then((keys) =>
-            typedPostMessage(port, {
-              kind: "keys",
-              messageId: m.messageId,
-              keys,
-            }),
-          )
-        : m.kind === "add_node"
-          ? wrapPromise(store.add_node(m.graphId, m.node)).then(
-              sendUpdateMessages(ports, port),
-            )
-          : m.kind === "add_edge"
-            ? wrapPromise(store.add_edge(m.graphId, m.edge)).then(
-                sendUpdateMessages(ports, port),
-              )
-            : m.kind === "add_nodes_edges"
-              ? wrapPromise(store.add_nodes_edges(m)).then(
-                  sendUpdateMessages(ports, port),
-                )
-              : m.kind === "set"
-                ? wrapPromise(store.set(m.graph.id, m.graph)).then(
-                    sendUpdateMessages(ports, port),
-                  )
-                : m.kind === "delete"
-                  ? wrapPromise(store.delete(m.graphId)).then(() =>
-                      typedPostMessage(port, {
-                        kind: "delete",
-                        messageId: m.messageId,
-                      }),
-                    )
-                  : store.undo && m.kind === "undo"
-                    ? wrapPromise(store.undo(m.graphId)).then((graph) =>
-                        typedPostMessage(port, {
-                          kind: "undo",
-                          messageId: m.messageId,
-                          graph,
-                        }),
-                      )
-                    : store.redo && m.kind === "redo"
-                      ? wrapPromise(store.redo(m.graphId)).then((graph) =>
-                          typedPostMessage(port, {
-                            kind: "redo",
-                            messageId: m.messageId,
-                            graph,
-                          }),
-                        )
-                      : m.kind === "addFromUrl"
-                        ? wrapPromise(store.addFromUrl(m.url)).then((gs) => {
-                            typedPostMessage(port, {
-                              kind: "addFromUrl",
-                              messageId: m.messageId,
-                              graphs: gs,
-                            });
-                            sendUpdateMessages(ports, port)(gs);
-                          })
-                        : wrapPromise(false);
+    ? wrapPromise(store.get(m.graphId)).then((graph) =>
+        typedPostMessage(port, {
+          kind: "get",
+          messageId: m.messageId,
+          graph,
+        })
+      )
+    : m.kind === "keys"
+    ? wrapPromise(store.keys()).then((keys) =>
+        typedPostMessage(port, {
+          kind: "keys",
+          messageId: m.messageId,
+          keys,
+        })
+      )
+    : m.kind === "add_node"
+    ? wrapPromise(store.add_node(m.graphId, m.node)).then(
+        sendUpdateMessages(ports, port)
+      )
+    : m.kind === "add_edge"
+    ? wrapPromise(store.add_edge(m.graphId, m.edge)).then(
+        sendUpdateMessages(ports, port)
+      )
+    : m.kind === "add_nodes_edges"
+    ? wrapPromise(store.add_nodes_edges(m)).then(
+        sendUpdateMessages(ports, port)
+      )
+    : m.kind === "set"
+    ? wrapPromise(store.set(m.graph.id, m.graph)).then(
+        sendUpdateMessages(ports, port)
+      )
+    : m.kind === "delete"
+    ? wrapPromise(store.delete(m.graphId)).then(() =>
+        typedPostMessage(port, {
+          kind: "delete",
+          messageId: m.messageId,
+        })
+      )
+    : store.undo && m.kind === "undo"
+    ? wrapPromise(store.undo(m.graphId)).then((graph) =>
+        typedPostMessage(port, {
+          kind: "undo",
+          messageId: m.messageId,
+          graph,
+        })
+      )
+    : store.redo && m.kind === "redo"
+    ? wrapPromise(store.redo(m.graphId)).then((graph) =>
+        typedPostMessage(port, {
+          kind: "redo",
+          messageId: m.messageId,
+          graph,
+        })
+      )
+    : m.kind === "addFromUrl"
+    ? wrapPromise(store.addFromUrl(m.url)).then((gs) => {
+        typedPostMessage(port, {
+          kind: "addFromUrl",
+          messageId: m.messageId,
+          graphs: gs,
+        });
+        sendUpdateMessages(ports, port)(gs);
+      })
+    : wrapPromise(false);
 
 export const sharedWorkerRefStore = async (
   port: MessagePort,
-  fallbackRefStore?: RefStore
+  _fallbackRefStore?: RefStore
 ): Promise<RefStore> => {
   const inflightRequests = new Map<
     string,
     (e: SharedWorkerMessageFrom) => void
   >();
   let connectres;
-  const connectPromise = new Promise((res, rej) => (connectres = res));
+  const connectPromise = new Promise((res, _rej) => (connectres = res));
   port.onmessageerror = (e) => console.error("shared worker error", e);
   onerror = (e) => console.error("shared worker error", e);
-  port.addEventListener(
-    "message",
-    (e: MessageEvent<SharedWorkerMessageFrom>) =>
-      e.data.kind === "connect"
-        ? connectres()
-        : e.data.kind === "update"
-          ? e.data.graphs.forEach((graph) => {
-              nolib.no.runtime.change_graph(graph, nolibLib);
-              contextKeysCache.add(graph.id);
-              contextGraphCache.set(graph.id, graph);
-            })
-          : expectSharedWorkerMessageResponse(e.data) &&
-            inflightRequests.get(e.data.messageId)(e.data),
+  port.addEventListener("message", (e: MessageEvent<SharedWorkerMessageFrom>) =>
+    e.data.kind === "connect"
+      ? connectres()
+      : e.data.kind === "update"
+      ? e.data.graphs.forEach((graph) => {
+          nolib.no.runtime.change_graph(graph, nolibLib);
+          contextKeysCache.add(graph.id);
+          contextGraphCache.set(graph.id, graph);
+        })
+      : expectSharedWorkerMessageResponse(e.data) &&
+        inflightRequests.get(e.data.messageId)(e.data)
   );
   self.addEventListener("beforeunload", () =>
-    port.postMessage({ kind: "disconnect" }),
+    port.postMessage({ kind: "disconnect" })
   );
   port.start();
 
@@ -282,7 +273,7 @@ export const sharedWorkerRefStore = async (
     port.postMessage(message);
   };
   const messagePromise = <T extends SharedWorkerMessageKind>(
-    request: RespondableSharedWorkerMessageData & TSharedWorkerMessageToData<T>,
+    request: RespondableSharedWorkerMessageData & TSharedWorkerMessageToData<T>
   ): Promise<TSharedWorkerMessageFrom<T>> => {
     const message: TSharedWorkerMessageTo<T> &
       TRespondableSharedWorkerMessage<T> = {
@@ -290,9 +281,9 @@ export const sharedWorkerRefStore = async (
       ...request,
     };
     sendMessage(message);
-    return new Promise((res, rej) => {
+    return new Promise((res, _rej) => {
       inflightRequests.set(message.messageId, (e) =>
-        res(e as TSharedWorkerMessageFrom<T>),
+        res(e as TSharedWorkerMessageFrom<T>)
       );
     });
   };
@@ -312,9 +303,9 @@ export const sharedWorkerRefStore = async (
             contextKeysCache.add(graph.id);
             contextGraphCache.set(graph.id, graph);
           }
-        },
+        }
       ),
-    100,
+    100
   );
 
   return {
@@ -328,7 +319,7 @@ export const sharedWorkerRefStore = async (
             contextGraphCache.set(graphId, graph),
             contextKeysCache.add(graphId),
             graph
-          ),
+          )
         ),
     addFromUrl: (url) =>
       messagePromise({ kind: "addFromUrl", url })
@@ -338,7 +329,7 @@ export const sharedWorkerRefStore = async (
             contextGraphCache.set(graph.id, graph);
             contextKeysCache.add(graph.id);
             return graph;
-          }),
+          })
         ),
     set: (k, g) => {
       sendMessage({ kind: "set", graph: g });
@@ -358,7 +349,7 @@ export const sharedWorkerRefStore = async (
             contextKeysArrayCache.splice(
               0,
               contextKeysArrayCache.length,
-              ...contextKeysCache.values(),
+              ...contextKeysCache.values()
             ),
           contextKeysArrayCache)
         : messagePromise({ kind: "keys" }).then(
@@ -366,7 +357,7 @@ export const sharedWorkerRefStore = async (
               e.keys.forEach((k) => k && contextKeysCache.add(k)),
               (hasSharedWorkerKeys = true),
               e.keys.filter((k) => k)
-            ),
+            )
           ),
     add_edge: () => {
       throw new Error("not implemented");
@@ -405,7 +396,7 @@ export const sharedWorkerRefStore = async (
         addedNodes,
         addedEdges,
         removedNodes,
-        removedEdges,
+        removedEdges
       );
       contextGraphCache.set(graphId, graphAddedNodesEdges);
       return graphAddedNodesEdges;
@@ -418,7 +409,7 @@ export const sharedWorkerRefStore = async (
             graph &&
             (contextGraphCache.set(graphId, graph),
             contextKeysCache.add(graphId),
-            graph),
+            graph)
         )
         .then(
           (graph) =>
@@ -426,8 +417,8 @@ export const sharedWorkerRefStore = async (
             nolib.no.runtime.publish(
               "graphchange",
               { graph, dirtyNodes: [], source: "undo" },
-              nolibLib,
-            ),
+              nolibLib
+            )
         ),
     redo: (graphId) =>
       messagePromise({ kind: "redo", graphId })
@@ -437,7 +428,7 @@ export const sharedWorkerRefStore = async (
             graph &&
             (contextGraphCache.set(graphId, graph),
             contextKeysCache.add(graphId),
-            graph),
+            graph)
         )
         .then(
           (graph) =>
@@ -445,15 +436,15 @@ export const sharedWorkerRefStore = async (
             nolib.no.runtime.publish(
               "graphchange",
               { graph, dirtyNodes: [], source: "undo" },
-              nolibLib,
-            ),
+              nolibLib
+            )
         ),
   };
 };
 
 export const openNodysseusDB = () =>
   openDB<NodysseusStoreTypes>("nodysseus", 5, {
-    upgrade(db, oldVersion, newVersion) {
+    upgrade(db, oldVersion, _newVersion) {
       if (oldVersion < 2) {
         db.createObjectStore("assets");
       }
@@ -473,7 +464,7 @@ export const openNodysseusDB = () =>
   });
 
 export const webClientStore = async (
-  refStore: (idb: IDBPDatabase<NodysseusStoreTypes>) => Promise<RefStore>,
+  refStore: (idb: IDBPDatabase<NodysseusStoreTypes>) => Promise<RefStore>
 ): Promise<NodysseusStore> => {
   const nodysseusidb = await openNodysseusDB();
 
@@ -504,4 +495,3 @@ export const webClientStore = async (
     },
   };
 };
-

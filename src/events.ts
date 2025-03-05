@@ -1,14 +1,13 @@
-import { Graph, Lib, NodysseusNode, RunOptions } from "./types.js";
+import { Lib, RunOptions } from "./types.js";
 import { v4 as uuid } from "uuid";
 import { ispromise, nolib } from "./nodysseus.js";
-import { mergeLib, set_mutable, wrapPromise } from "./util.js";
 
 const windowSelf =
   typeof window !== "undefined"
     ? window
     : typeof self !== "undefined"
-      ? self
-      : undefined;
+    ? self
+    : undefined;
 
 const getorset = (map, id, value_fn = undefined) => {
   const val = map.get(id);
@@ -52,7 +51,7 @@ export const initListeners = () => {
     event,
     lib,
     options: RunOptions = {},
-    broadcast = true,
+    broadcast = true
   ) => {
     if (event.startsWith("bc")) {
       event = event.substring(3);
@@ -92,7 +91,7 @@ export const initListeners = () => {
     const listenerMap: ReturnType<(typeof event_listeners)["get"]> = getorset(
       event_listeners,
       event,
-      () => new Map(),
+      () => new Map()
     );
     const listeners = [...listenerMap.entries()];
 
@@ -144,7 +143,7 @@ export const initListeners = () => {
     data,
     lib: Lib,
     options: RunOptions = {},
-    broadcast = true,
+    broadcast = true
   ) => {
     if (typeof data === "object" && ispromise(data)) {
       data.then((d) => runpublish(d, event, lib, options, broadcast));
@@ -163,7 +162,7 @@ export const initListeners = () => {
     graph_id: false | string = false,
     prevent_initial_trigger = false,
     lib: Lib = { __kind: "lib", data: nolib },
-    options: RunOptions = {},
+    options: RunOptions = {}
   ) => {
     if (ispromise(fn)) {
       return fn.then((fn) =>
@@ -175,8 +174,8 @@ export const initListeners = () => {
           graph_id,
           prevent_initial_trigger,
           lib,
-          options,
-        ),
+          options
+        )
       );
     }
 
@@ -187,7 +186,7 @@ export const initListeners = () => {
         const graph_id_listeners = getorset(
           event_listeners_by_graph,
           graph_id,
-          () => new Map(),
+          () => new Map()
         );
         graph_id_listeners.set(event, listener_id);
       }
@@ -207,23 +206,24 @@ export const initListeners = () => {
   // Adding a listener to listen for errors during animationframe. If there are errors, don't keep running.
   addListener("grapherror", "__system", (e) => animationerrors.push(e));
 
-  const systemgraphchangelistener = ({
-    graph,
-    dirtyNodes,
-  }: {
-    graph: Graph;
-    dirtyNodes: Array<NodysseusNode>;
-  }) => {
-    if (animationerrors.length > 0) {
-      event_listeners.get("animationframe")?.clear();
-    }
+  const systemgraphchangelistener = () =>
+    //   {
+    //   graph,
+    //   dirtyNodes,
+    // }: {
+    //   graph: Graph;
+    //   dirtyNodes: Array<NodysseusNode>;}
+    {
+      if (animationerrors.length > 0) {
+        event_listeners.get("animationframe")?.clear();
+      }
 
-    animationerrors.splice(0, animationerrors.length);
+      animationerrors.splice(0, animationerrors.length);
 
-    // dirtyNodes?.forEach(n => {
-    //   pauseGraphListeners(`${graph.id}/${n}`);
-    // })
-  };
+      // dirtyNodes?.forEach(n => {
+      //   pauseGraphListeners(`${graph.id}/${n}`);
+      // })
+    };
   addListener("graphchange", "__system", systemgraphchangelistener);
   addListener("graphupdate", "__system", systemgraphchangelistener);
 
@@ -236,9 +236,9 @@ export const initListeners = () => {
   //   }
   // })
 
-  addListener("cachedelete", "__system", (e) => nolib.no.runtime.clearState());
+  addListener("cachedelete", "__system", () => nolib.no.runtime.clearState());
 
-  addListener("listenersclear", "__system", (e) => {
+  addListener("listenersclear", "__system", () => {
     for (const eventListener of event_listeners.entries()) {
       if (eventListener[0].startsWith("__system")) {
         eventListener[1].clear();

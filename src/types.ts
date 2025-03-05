@@ -42,7 +42,7 @@ export const isGraph = (graph: any): graph is Graph =>
 export const isEdgesInGraph = (graph: Graph | SavedGraph): graph is Graph =>
   Object.hasOwn(graph, "edges_in");
 export const isExportedGraph = (
-  g: ExportedGraph | unknown,
+  g: ExportedGraph | unknown
 ): g is ExportedGraph => g && (g as ExportedGraph).graphs.length > 0;
 
 export type EdgesIn = Record<string, Record<string, Edge>>;
@@ -213,7 +213,7 @@ export class MemoryCache<T = any> {
   private cachedValue: T;
   constructor(
     private recacheFn: (value: T) => boolean,
-    private valueFn: () => T,
+    private valueFn: () => T
   ) {
     this.cachedValue = valueFn();
   }

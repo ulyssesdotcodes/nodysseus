@@ -4,10 +4,10 @@ import { mapStore } from "./nodysseus.js";
 import { Graph, LokiT, NodysseusStore, RefStore, Store } from "./types.js";
 
 const generic_nodes = generic.nodes;
-const generic_node_ids = new Set(Object.keys(generic_nodes));
+//const generic_node_ids = new Set(Object.keys(generic_nodes));
 
 export const lokidbToStore = <T>(
-  collection: loki.Collection<LokiT<T>>,
+  collection: loki.Collection<LokiT<T>>
 ): Store<T> => ({
   set: (id: string, data: T) => {
     const existing = collection.by("id", id);
@@ -26,7 +26,7 @@ export const lokidbToStore = <T>(
     }
   },
   clear: () => collection.clear(),
-  keys: () => collection.where((_) => true).map((v) => v.id),
+  keys: () => collection.where(() => true).map((v) => v.id),
 });
 
 export const lokiStore = (): NodysseusStore => {
@@ -39,10 +39,10 @@ export const lokiStore = (): NodysseusStore => {
     unique: ["id"],
   });
 
-  const db = new loki("nodysseus.db", {
-    env: isBrowser ? "BROWSER" : "NODEJS",
-    persistenceMethod: "memory",
-  });
+  // const db = new loki("nodysseus.db", {
+  //   env: isBrowser ? "BROWSER" : "NODEJS",
+  //   persistenceMethod: "memory",
+  // });
 
   // const graphsdb = db.addCollection<LokiT<Graph>>("nodes", { unique: ["id"] });
   // const statedb = db.addCollection<LokiT<any>>("state", { unique: ["id"] });
@@ -75,13 +75,13 @@ export const lokiStore = (): NodysseusStore => {
     state: mapStore(),
     fns: mapStore(),
     assets: {
-      get: (id) => {
+      get: () => {
         throw new Error("not implemented");
       },
-      set: (id, value) => {
+      set: () => {
         throw new Error("not implemented");
       },
-      delete: (id) => {
+      delete: () => {
         throw new Error("not implemented");
       },
       clear: () => {
@@ -92,13 +92,13 @@ export const lokiStore = (): NodysseusStore => {
       },
     },
     persist: {
-      get: (id) => {
+      get: () => {
         throw new Error("not implemented");
       },
-      set: (id, value) => {
+      set: () => {
         throw new Error("not implemented");
       },
-      delete: (id) => {
+      delete: () => {
         throw new Error("not implemented");
       },
       clear: () => {
@@ -133,7 +133,7 @@ export const objectRefStore = (graphs: Record<string, Graph>): RefStore => {
       return data;
     },
     keys: () => Object.keys(generic_nodes).concat(Object.keys(graphs)),
-    delete: (id: string) => {
+    delete: () => {
       throw new Error("not implemented");
     },
     clear: () => {
@@ -147,8 +147,8 @@ export const objectRefStore = (graphs: Record<string, Graph>): RefStore => {
             refsToAdd.map((ref: Graph) => {
               graphs[ref.id] = ref;
               return ref;
-            }),
-          ).then((gs) => gs),
+            })
+          ).then((gs) => gs)
         ),
     add_node: (graph, node) => {
       graphs[graph].nodes[node.id] = node;
@@ -177,15 +177,20 @@ export const objectRefStore = (graphs: Record<string, Graph>): RefStore => {
 
 export const urlRefStore = (url: string): RefStore => {
   return {
-    get: (id: string) => fetch(`${url}/${id}`, {mode: "cors"}).then((res) => res.json()),
+    get: (id: string) =>
+      fetch(`${url}/${id}`, { mode: "cors" }).then((res) => res.json()),
     set: () => {
       throw new Error("not implemented");
     },
     addFromUrl: () => {
       throw new Error("not implemented");
     },
-    keys: () => fetch(`${url}`, {mode: "cors"}).then(r => r.json()).then(r => r.graphs).catch(() => []),
-    add_node: (graph, node) => {
+    keys: () =>
+      fetch(`${url}`, { mode: "cors" })
+        .then((r) => r.json())
+        .then((r) => r.graphs)
+        .catch(() => []),
+    add_node: () => {
       throw new Error("not implemented");
     },
     add_edge: () => {
@@ -206,11 +211,11 @@ export const urlRefStore = (url: string): RefStore => {
     add_nodes_edges: () => {
       throw new Error("not implemented");
     },
-    delete: (id: string) => {
+    delete: () => {
       throw new Error("not implemented");
     },
     clear: () => {
       throw new Error("not implemented");
     },
-  }
-}
+  };
+};
